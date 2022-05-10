@@ -650,7 +650,9 @@ package body Buffer_Views is
       pragma Unreferenced (Column);
 
    begin
-      if Get_MDI (V.Kernel) = null then
+      if V.Kernel.Is_In_Destruction
+        or else Get_MDI (V.Kernel) = null
+      then
          return;
       end if;
 

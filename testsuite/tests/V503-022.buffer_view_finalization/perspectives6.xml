@@ -1,0 +1,1684 @@
+<?xml version="1.0"?>
+<GNAT_Studio >
+  <perspectives state=" 0" mdi_height=" 2031" mdi_width=" 1884" height=" 2096" width=" 1884"  >
+    <perspective name="Default">
+      <Pane width=" 1.00000E+02%" Orientation="ORIENTATION_VERTICAL" >
+        <Pane height=" 8.27484E+01%" Orientation="ORIENTATION_HORIZONTAL" >
+          <Pane width=" 2.16346E+01%" Orientation="ORIENTATION_VERTICAL" >
+            <Notebook height=" 6.00240E+01%" Tabs="POS_LEFT" >
+              <Child Raised="True" Group=" 106" State="NORMAL" >
+                <Project_Explorer_Project />
+              </Child>
+              <Child Group=" 106" State="NORMAL" >
+                <Scenario_View />
+              </Child>
+              <Child Group=" 106" State="NORMAL" >
+                <Files_View />
+              </Child>
+            </Notebook>
+            <Notebook height=" 4.02161E+01%" Tabs="POS_LEFT" >
+              <Child Group=" 106" State="NORMAL" >
+                <Learn_View />
+              </Child>
+              <Child Raised="True" Group=" 106" State="NORMAL" >
+                <Outline_View />
+              </Child>
+              <Child Group=" 106" State="NORMAL" >
+                <Windows_View />
+              </Child>
+            </Notebook>
+          </Pane>
+          <central width=" 4.46047E+01%"  />
+          <Notebook width=" 3.39744E+01%" Tabs="POS_TOP" >
+            <Child Raised="True" Group=" 107" State="NORMAL" >
+              <Message_Window />
+            </Child>
+            <Child Group=" 107" State="NORMAL" >
+              <Location_View_Record />
+            </Child>
+          </Notebook>
+        </Pane>
+        <Notebook height=" 1.74493E+01%" Tabs="POS_TOP" >
+          <Child Raised="True" Group=" 107" State="NORMAL" >
+            <gnatfuzz_view.GNATfuzzView>gnatfuzz_view.GNATfuzzView</gnatfuzz_view.GNATfuzzView>
+          </Child>
+        </Notebook>
+      </Pane>
+    </perspective>
+    <perspective name="Debug" save_as_central="false">
+      <Pane width=" 1.00000E+02%" Orientation="ORIENTATION_HORIZONTAL">
+        <Pane width=" 1.81296E+01%" Orientation="ORIENTATION_VERTICAL">
+          <Notebook height=" 5.01019E+01%" Tabs="POS_LEFT">
+            <Child Raised="True" Group=" 106" State="NORMAL">
+              <Project_Explorer_Project  />
+            </Child>
+            <Child Group=" 106" State="NORMAL">
+              <Windows_View  />
+            </Child>
+            <Child Group=" 106" State="NORMAL">
+              <Files_View  />
+            </Child>
+          </Notebook>
+          <Notebook height=" 5.01019E+01%" Tabs="POS_LEFT">
+            <Child Raised="True" Group=" 107" State="NORMAL">
+              <Breakpoints  />
+            </Child>
+            <Child Group=" 106" State="NORMAL">
+              <Outline_View  />
+            </Child>
+          </Notebook>
+        </Pane>
+        <Pane width=" 8.20054E+01%" Orientation="ORIENTATION_VERTICAL">
+          <Pane height=" 5.90724E+01%" Orientation="ORIENTATION_HORIZONTAL">
+            <central width=" 6.10078E+01%" />
+            <Pane width=" 3.91574E+01%" Orientation="ORIENTATION_VERTICAL">
+              <Notebook height=" 5.01303E+01%" Tabs="POS_RIGHT">
+                <Child Raised="True" Group=" 107" State="NORMAL">
+                  <Debugger_Variables  />
+                </Child>
+              </Notebook>
+              <Notebook height=" 5.01303E+01%" Tabs="POS_RIGHT">
+                <Child Raised="True" Focus="True" Group=" 103" State="NORMAL">
+                  <Call_Stack  />
+                </Child>
+              </Notebook>
+            </Pane>
+          </Pane>
+          <Pane height=" 4.11315E+01%" Orientation="ORIENTATION_HORIZONTAL">
+            <Notebook width=" 5.01033E+01%" Tabs="POS_TOP">
+              <Child Group=" 107" State="NORMAL">
+                <Message_Window  />
+              </Child>
+              <Child Group=" 107" State="NORMAL">
+                <Debugger_Console  />
+              </Child>
+              <Child Raised="True" Group=" 107" State="NORMAL">
+                <Debugger_Execution  />
+              </Child>
+              <Child Group=" 107" State="NORMAL">
+                <gnatfuzz_view.GNATfuzzView >gnatfuzz_view.GNATfuzzView</gnatfuzz_view.GNATfuzzView>
+              </Child>
+            </Notebook>
+            <Notebook width=" 5.01033E+01%" Tabs="POS_TOP">
+              <Child Raised="True" Group=" 107" State="NORMAL">
+                <Location_View_Record  />
+              </Child>
+            </Notebook>
+          </Pane>
+        </Pane>
+      </Pane>
+    </perspective>
+    <perspective name="Analyze">
+      <Pane width=" 1.00000E+02%" Orientation="ORIENTATION_HORIZONTAL">
+        <Notebook width=" 2.10251E+01%" Tabs="POS_LEFT">
+          <Child Group=" 106" State="NORMAL">
+            <Project_Explorer_Project  />
+          </Child>
+          <Child Group=" 106" State="NORMAL">
+            <Outline_View  />
+          </Child>
+          <Child Group=" 106" State="NORMAL">
+            <Scenario_View  />
+          </Child>
+          <Child Raised="True" Group=" 106" State="NORMAL">
+            <gnathub_filters  />
+          </Child>
+        </Notebook>
+        <Pane width=" 7.91841E+01%" Orientation="ORIENTATION_VERTICAL">
+          <central height=" 7.82518E+01%" />
+          <Notebook height=" 2.21644E+01%" Tabs="POS_TOP">
+            <Child Group=" 107" State="NORMAL">
+              <Message_Window  />
+            </Child>
+            <Child Raised="True" Focus="True" Group=" 107" State="NORMAL">
+              <Location_View_Record  />
+            </Child>
+          </Notebook>
+        </Pane>
+      </Pane>
+    </perspective>
+    <perspective name="VCS">
+      <Pane width=" 100%" Orientation="ORIENTATION_HORIZONTAL">
+        <Notebook width=" 1.38913E+01%" Tabs="POS_LEFT">
+          <Child Raised="True" Group=" 106" State="NORMAL">
+            <Project_Explorer_Project  />
+          </Child>
+        </Notebook>
+        <Pane width=" 3.65833E+01%" Orientation="ORIENTATION_VERTICAL">
+          <central height=" 6.61446E+01%" />
+          <Notebook height=" 3.43373E+01%" Tabs="POS_TOP">
+            <Child Group=" 107" State="NORMAL">
+              <Message_Window  />
+            </Child>
+            <Child Raised="True" Focus="True" Group=" 106" State="NORMAL">
+              <Branches  />
+            </Child>
+          </Notebook>
+        </Pane>
+        <Notebook width=" 2.55393E+01%" Tabs="POS_TOP">
+          <Child Raised="True" Group=" 106" State="NORMAL">
+            <VCS_History  />
+          </Child>
+        </Notebook>
+        <Notebook width=" 2.43313E+01%" Tabs="POS_TOP">
+          <Child Raised="True" Group=" 106" State="NORMAL">
+            <Commits  />
+          </Child>
+        </Notebook>
+      </Pane>
+    </perspective>
+    <perspective name="Maximized Editors">
+      <Pane width=" 1.00000E+02%" Orientation="ORIENTATION_HORIZONTAL">
+        <Pane width=" 2.57886E+01%" Orientation="ORIENTATION_VERTICAL">
+          <Notebook height=" 5.02387E+01%" Tabs="POS_LEFT">
+            <Child Raised="True" Group=" 106" State="NORMAL">
+              <Project_Explorer_Project  />
+            </Child>
+            <Child Group=" 106" State="NORMAL">
+              <Scenario_View  />
+            </Child>
+          </Notebook>
+          <Notebook height=" 5.02387E+01%" Tabs="POS_LEFT">
+            <Child Raised="True" Group=" 106" State="NORMAL">
+              <Outline_View  />
+            </Child>
+          </Notebook>
+        </Pane>
+        <central width=" 4.81861E+01%" />
+        <Pane width=" 2.63407E+01%" Orientation="ORIENTATION_VERTICAL">
+          <Notebook height=" 5.02387E+01%" Tabs="POS_RIGHT">
+            <Child Raised="True" Group=" 107" State="NORMAL">
+              <Message_Window  />
+            </Child>
+          </Notebook>
+          <Notebook height=" 5.02387E+01%" Tabs="POS_RIGHT">
+            <Child Raised="True" Group=" 107" State="NORMAL">
+              <Location_View_Record  />
+            </Child>
+          </Notebook>
+        </Pane>
+      </Pane>
+    </perspective>
+    <perspective name="DAP_Debug" save_as_central="false">
+      <Pane width=" 1.00000E+02%" Orientation="ORIENTATION_HORIZONTAL">
+        <Pane width=" 2.75157E+01%" Orientation="ORIENTATION_VERTICAL">
+          <Notebook height=" 5.02387E+01%" Tabs="POS_LEFT">
+            <Child Raised="True" Group=" 106" State="NORMAL">
+              <Project_Explorer_Project  />
+            </Child>
+          </Notebook>
+          <Notebook height=" 5.02387E+01%" Tabs="POS_LEFT">
+            <Child Group=" 107" State="NORMAL">
+              <Breakpoints  />
+            </Child>
+            <Child Raised="True" Group=" 106" State="NORMAL">
+              <Outline_View  />
+            </Child>
+          </Notebook>
+        </Pane>
+        <Pane width=" 7.27987E+01%" Orientation="ORIENTATION_VERTICAL">
+          <Pane height=" 3.22196E+01%" Orientation="ORIENTATION_HORIZONTAL">
+            <Notebook width=" 5.02179E+01%" Tabs="POS_TOP">
+              <Child Group=" 107" State="NORMAL">
+                <Message_Window  />
+              </Child>
+            </Notebook>
+            <Notebook width=" 5.02179E+01%" Tabs="POS_TOP">
+              <Child Raised="True" Focus="True" Group=" 107" State="NORMAL">
+                <Location_View_Record  />
+              </Child>
+            </Notebook>
+          </Pane>
+        </Pane>
+      </Pane>
+    </perspective>
+  </perspectives>
+  <desktops >
+    <desktop perspective="Default" >
+      <vfs_project>/home/setton/ancr/src/gnatstudio/gnatstudio/gps.gpr</vfs_project>
+      <Learn_View>
+        <learn position=" 4.97660E+01%"  />
+      </Learn_View>
+      <Pane width=" 1.00000E+02%" Orientation="ORIENTATION_HORIZONTAL" >
+        <Notebook width=" 1.00481E+02%" Tabs="POS_TOP" >
+          <Child Raised="True" Focus="True" Group=" 1" State="NORMAL" >
+            <Source_Editor>
+              <project>/home/setton/ancr/src/gnatstudio/gnatstudio/gps.gpr</project>
+              <Column_End>1</Column_End>
+              <Column>1</Column>
+              <Line>1</Line>
+              <vfs_File>/home/setton/ancr/src/gnatstudio/gnatstudio/src/gps-callbacks.adb</vfs_File>
+            </Source_Editor>
+          </Child>
+        </Notebook>
+      </Pane>
+    </desktop>
+    <desktop perspective="Default">
+      <vfs_project >/home/paul/Development/ancr/src/gnatfuzz/testsuite/tests/agcf-in_process_fuzzing/obj/fuzz_harness/fuzz_testing/fuzz_test.gpr</vfs_project>
+      <Learn_View >
+        <learn position=" 4.97537E+01%" />
+      </Learn_View>
+      <Pane width=" 1.00000E+02%" Orientation="ORIENTATION_HORIZONTAL">
+        <Notebook width=" 1.00304E+02%" Tabs="POS_TOP">
+          <Child Raised="True" Focus="True" Group=" 1" State="NORMAL">
+            <Source_Editor >
+              <project >/home/paul/Development/ancr/src/gnatfuzz/testsuite/tests/agcf-in_process_fuzzing/user_project.gpr</project>
+              <Column_End >76</Column_End>
+              <Column >76</Column>
+              <Line >51</Line>
+              <vfs_File >/home/paul/Development/ancr/src/gnatfuzz/testsuite/tests/agcf-in_process_fuzzing/src__system_under_test/procedure_under_test.adb</vfs_File>
+            </Source_Editor>
+          </Child>
+          <Child Group=" 1" State="NORMAL">
+            <Source_Editor >
+              <project >/home/paul/Development/ancr/src/gnatfuzz/testsuite/tests/agcf-in_process_fuzzing/user_project.gpr</project>
+              <Column_End >1</Column_End>
+              <Column >1</Column>
+              <Line >1</Line>
+              <vfs_File >/home/paul/Development/ancr/src/gnatfuzz/testsuite/tests/agcf-in_process_fuzzing/src__system_under_test/procedure_under_test.ads</vfs_File>
+            </Source_Editor>
+          </Child>
+          <Child Group=" 1" State="NORMAL">
+            <Code_Analysis_Tree name="Coverage" />
+          </Child>
+        </Notebook>
+      </Pane>
+    </desktop>
+    <desktop perspective="Default">
+      <vfs_project >/home/paul/Development/ancr/src/gnatfuzz/testsuite/tests/agcf-in_process_fuzzing/user_project.gpr</vfs_project>
+      <Learn_View >
+        <learn position=" 4.96711E+01%" />
+      </Learn_View>
+      <Pane width=" 1.00000E+02%" Orientation="ORIENTATION_HORIZONTAL">
+        <Notebook width=" 1.00371E+02%" Tabs="POS_TOP">
+          <Child Group=" 1" State="NORMAL">
+            <Source_Editor >
+              <project >/home/paul/Development/ancr/src/gnatfuzz/testsuite/tests/agcf-in_process_fuzzing/user_project.gpr</project>
+              <Column_End >1</Column_End>
+              <Column >1</Column>
+              <Line >30</Line>
+              <vfs_File >/home/paul/Development/ancr/src/gnatfuzz/testsuite/tests/agcf-in_process_fuzzing/src__system_under_test/procedure_under_test.adb</vfs_File>
+            </Source_Editor>
+          </Child>
+          <Child Group=" 1" State="NORMAL">
+            <Source_Editor >
+              <project >/home/paul/Development/ancr/src/gnatfuzz/testsuite/tests/agcf-in_process_fuzzing/user_project.gpr</project>
+              <Column_End >1</Column_End>
+              <Column >1</Column>
+              <Line >5</Line>
+              <vfs_File >/home/paul/Development/ancr/src/gnatfuzz/testsuite/tests/agcf-in_process_fuzzing/src__system_under_test/main.adb</vfs_File>
+            </Source_Editor>
+          </Child>
+          <Child Raised="True" Focus="True" Group=" 1" State="NORMAL">
+            <Source_Editor >
+              <project >/home/paul/Development/ancr/src/gnatfuzz/testsuite/tests/agcf-in_process_fuzzing/user_project.gpr</project>
+              <Column_End >1</Column_End>
+              <Column >1</Column>
+              <Line >22</Line>
+              <vfs_File >/home/paul/Development/ancr/src/gnatfuzz/testsuite/tests/agcf-in_process_fuzzing/src__system_under_test/procedure_under_test.ads</vfs_File>
+            </Source_Editor>
+          </Child>
+        </Notebook>
+      </Pane>
+    </desktop>
+    <desktop perspective="Default">
+      <vfs_project >/home/paul/Development/ancr/src/gnatfuzz/testsuite/tests/agcf-in_process_fuzzing/generate_output/fuzz_testing/fuzz_test.gpr</vfs_project>
+      <Learn_View >
+        <learn position=" 4.96700E+01%" />
+      </Learn_View>
+      <Pane width=" 1.00000E+02%" Orientation="ORIENTATION_HORIZONTAL">
+        <Notebook width=" 1.00212E+02%" Tabs="POS_TOP">
+          <Child Raised="True" Focus="True" Group=" 1" State="NORMAL">
+            <Source_Editor >
+              <project >/home/paul/Development/ancr/src/gnatfuzz/testsuite/tests/agcf-in_process_fuzzing/generate_output/fuzz_testing/fuzz_test.gpr</project>
+              <Column_End >14</Column_End>
+              <Column >14</Column>
+              <Line >44</Line>
+              <vfs_File >/home/paul/Development/ancr/src/gnatfuzz/testsuite/tests/agcf-in_process_fuzzing/generate_output/fuzz_testing/generated_src/gnatfuzz-fuzz_test_harness.adb</vfs_File>
+            </Source_Editor>
+          </Child>
+          <Child Group=" 1" State="NORMAL">
+            <Source_Editor >
+              <project >/home/paul/Development/ancr/src/gnatfuzz/testsuite/tests/agcf-in_process_fuzzing/generate_output/fuzz_testing/fuzz_test.gpr</project>
+              <Column_End >16</Column_End>
+              <Column >16</Column>
+              <Line >33</Line>
+              <vfs_File >/home/paul/Development/ancr/src/gnatfuzz/testsuite/tests/agcf-in_process_fuzzing/generate_output/gnatfuzz_shared/src__aflc_resources/gnatfuzz-fuzz_test_harness_driver.adb</vfs_File>
+            </Source_Editor>
+          </Child>
+          <Child Group=" 1" State="NORMAL">
+            <Source_Editor >
+              <project >/home/paul/Development/ancr/src/gnatfuzz/testsuite/tests/agcf-in_process_fuzzing/generate_output/fuzz_testing/fuzz_test.gpr</project>
+              <Column_End >13</Column_End>
+              <Column >13</Column>
+              <Line >21</Line>
+              <vfs_File >/home/paul/Development/ancr/src/gnatfuzz/testsuite/tests/agcf-in_process_fuzzing/generate_output/fuzz_testing/user_configuration/external_execute-gnatfuzz_user_configuration.ads</vfs_File>
+            </Source_Editor>
+          </Child>
+          <Child Group=" 1" State="NORMAL">
+            <Source_Editor >
+              <project >/home/paul/Development/ancr/src/gnatfuzz/testsuite/tests/agcf-in_process_fuzzing/generate_output/fuzz_testing/fuzz_test.gpr</project>
+              <Column_End >13</Column_End>
+              <Column >13</Column>
+              <Line >70</Line>
+              <vfs_File >/home/paul/Development/ancr/src/gnatfuzz/testsuite/tests/agcf-in_process_fuzzing/generate_output/fuzz_testing/user_configuration/external_execute-gnatfuzz_user_configuration.adb</vfs_File>
+            </Source_Editor>
+          </Child>
+          <Child Group=" 1" State="NORMAL">
+            <Source_Editor >
+              <project >/home/paul/Development/ancr/src/gnatfuzz/testsuite/tests/agcf-in_process_fuzzing/user_project.gpr</project>
+              <Column_End >25</Column_End>
+              <Column >25</Column>
+              <Line >29</Line>
+              <vfs_File >/home/paul/Development/ancr/src/gnatfuzz/testsuite/tests/agcf-in_process_fuzzing/src__system_under_test/external_execute.ads</vfs_File>
+            </Source_Editor>
+          </Child>
+        </Notebook>
+      </Pane>
+    </desktop>
+    <desktop perspective="Default">
+      <vfs_project >/home/paul/Development/ancr/src/gnatfuzz/gnatfuzz.gpr</vfs_project>
+      <Learn_View >
+        <learn position=" 4.94845E+01%" />
+      </Learn_View>
+      <Pane width=" 1.00000E+02%" Orientation="ORIENTATION_HORIZONTAL">
+        <Notebook width=" 1.00382E+02%" Tabs="POS_TOP">
+          <Child Group=" 1" State="NORMAL">
+            <Source_Editor >
+              <project >/home/paul/Development/ancr/src/gnatfuzz/gnatfuzz.gpr</project>
+              <Column_End >31</Column_End>
+              <Column >31</Column>
+              <Line >227</Line>
+              <vfs_File >/home/paul/Development/ancr/src/gnatfuzz/src/cmdline/fuzz_mode_switches.ads</vfs_File>
+            </Source_Editor>
+          </Child>
+          <Child Group=" 1" State="NORMAL">
+            <Source_Editor >
+              <project >/home/paul/Development/ancr/src/gnatfuzz/gnatfuzz.gpr</project>
+              <Column_End >1</Column_End>
+              <Column >1</Column>
+              <Line >1</Line>
+              <vfs_File >/home/paul/Development/ancr/src/gnatfuzz/gnatfuzz.gpr</vfs_File>
+            </Source_Editor>
+          </Child>
+          <Child Group=" 1" State="NORMAL">
+            <Source_Editor >
+              <project >/home/paul/Development/ancr/src/gnatfuzz/gnatfuzz.gpr</project>
+              <Column_End >25</Column_End>
+              <Column >25</Column>
+              <Line >111</Line>
+              <vfs_File >/home/paul/Development/ancr/src/gnatfuzz/src/external_execute.adb</vfs_File>
+            </Source_Editor>
+          </Child>
+          <Child Group=" 1" State="NORMAL">
+            <Source_Editor >
+              <project >/home/paul/Development/ancr/src/gnatfuzz/gnatfuzz.gpr</project>
+              <Column_End >33</Column_End>
+              <Column >33</Column>
+              <Line >34</Line>
+              <vfs_File >/home/paul/Development/ancr/src/gnatfuzz/src/external_execute.ads</vfs_File>
+            </Source_Editor>
+          </Child>
+          <Child Raised="True" Group=" 1" State="NORMAL">
+            <Source_Editor >
+              <project >/home/paul/Development/ancr/src/gnatfuzz/gnatfuzz.gpr</project>
+              <Column_End >29</Column_End>
+              <Column >29</Column>
+              <Line >602</Line>
+              <vfs_File >/home/paul/Development/ancr/src/gnatfuzz/src/run_options.adb</vfs_File>
+            </Source_Editor>
+          </Child>
+        </Notebook>
+      </Pane>
+    </desktop>
+    <desktop perspective="Default">
+      <vfs_project >/home/paul/Development/ancr/src/gnatfuzz/testsuite/tests/internal-fuzz-testsuite/demos/Exploring_Paths_Demo/project_under_test/obj/fuzz_harness/fuzz_testing/fuzz_test.gpr</vfs_project>
+      <Learn_View >
+        <learn position=" 4.95575E+01%" />
+      </Learn_View>
+      <Pane width=" 1.00000E+02%" Orientation="ORIENTATION_HORIZONTAL">
+        <Notebook width=" 1.00546E+02%" Tabs="POS_TOP">
+          <Child Raised="True" Group=" 1" State="NORMAL">
+            <Source_Editor >
+              <project >/home/paul/Development/ancr/src/gnatfuzz/testsuite/tests/internal-fuzz-testsuite/demos/Exploring_Paths_Demo/project_under_test/user_project.gpr</project>
+              <Column_End >1</Column_End>
+              <Column >1</Column>
+              <Line >1</Line>
+              <vfs_File >/home/paul/Development/ancr/src/gnatfuzz/testsuite/tests/internal-fuzz-testsuite/demos/Exploring_Paths_Demo/project_under_test/exploring_paths.adb</vfs_File>
+            </Source_Editor>
+          </Child>
+          <Child Group=" 1" State="NORMAL">
+            <Code_Analysis_Tree name="Coverage" />
+          </Child>
+        </Notebook>
+      </Pane>
+    </desktop>
+    <desktop perspective="Default">
+      <vfs_project >/home/paul/Development/ancr/src/gnatfuzz/testsuite/tests/fuzz-test_application_flags/fuzz-using_stdin/user_project.gpr</vfs_project>
+      <Learn_View >
+        <learn position=" 4.95575E+01%" />
+      </Learn_View>
+      <Pane width=" 1.00000E+02%" Orientation="ORIENTATION_HORIZONTAL">
+        <Notebook width=" 1.00370E+02%" Tabs="POS_TOP">
+          <Child Raised="True" Focus="True" Group=" 1" State="NORMAL">
+            <Source_Editor >
+              <project >/home/paul/Development/ancr/src/gnatfuzz/testsuite/tests/fuzz-test_application_flags/fuzz-using_stdin/user_project.gpr</project>
+              <Column_End >62</Column_End>
+              <Column >62</Column>
+              <Line >36</Line>
+              <vfs_File >/home/paul/Development/ancr/src/gnatfuzz/testsuite/tests/fuzz-test_application_flags/fuzz-using_stdin/src__system_under_test/procedure_under_test.adb</vfs_File>
+            </Source_Editor>
+          </Child>
+          <Child Group=" 1" State="NORMAL">
+            <Source_Editor >
+              <project >/home/paul/Development/ancr/src/gnatfuzz/testsuite/tests/fuzz-test_application_flags/fuzz-using_stdin/user_project.gpr</project>
+              <Column_End >33</Column_End>
+              <Column >33</Column>
+              <Line >17</Line>
+              <vfs_File >/home/paul/Development/ancr/wave/x86_64-linux/gnatall/install/lib/gcc/x86_64-pc-linux-gnu/11.3.1/rts-native/adainclude/a-titest.ads</vfs_File>
+            </Source_Editor>
+          </Child>
+        </Notebook>
+      </Pane>
+    </desktop>
+    <desktop perspective="Default">
+      <vfs_project >/home/paul/Development/ancr/src/gnatfuzz/testsuite/tests/fuzz-test_application_flags/agcf-using_stdin/generate_output/fuzz_testing/fuzz_test.gpr</vfs_project>
+    </desktop>
+    <desktop perspective="Default">
+      <vfs_project >/home/paul/Development/ancr/src/gnatfuzz/share/gnatfuzz/modules/modules.gpr</vfs_project>
+      <Learn_View >
+        <learn position=" 4.95575E+01%" />
+      </Learn_View>
+      <Pane width=" 1.00000E+02%" Orientation="ORIENTATION_HORIZONTAL">
+        <Notebook width=" 1.00357E+02%" Tabs="POS_TOP">
+          <Child Group=" 1" State="NORMAL">
+            <Source_Editor >
+              <project >/home/paul/Development/ancr/src/gnatfuzz/share/gnatfuzz/modules/modules.gpr</project>
+              <Column_End >15</Column_End>
+              <Column >15</Column>
+              <Line >506</Line>
+              <vfs_File >/home/paul/Development/ancr/src/gnatfuzz/share/gnatfuzz/modules/gnatfuzz_runtime_library/gnatfuzz-afl_seeds.adb</vfs_File>
+            </Source_Editor>
+          </Child>
+          <Child Group=" 1" State="NORMAL">
+            <Source_Editor >
+              <project >/home/paul/Development/ancr/src/gnatfuzz/share/gnatfuzz/modules/modules.gpr</project>
+              <Column_End >14</Column_End>
+              <Column >14</Column>
+              <Line >110</Line>
+              <vfs_File >/home/paul/Development/ancr/src/gnatfuzz/share/gnatfuzz/modules/gnatfuzz_runtime_library/gnatfuzz-abstract_afl_seeds.ads</vfs_File>
+            </Source_Editor>
+          </Child>
+          <Child Group=" 1" State="NORMAL">
+            <Source_Editor >
+              <project >/home/paul/Development/ancr/src/gnatfuzz/share/gnatfuzz/modules/modules.gpr</project>
+              <Column_End >26</Column_End>
+              <Column >26</Column>
+              <Line >31</Line>
+              <vfs_File >/home/paul/Development/ancr/src/gnatfuzz/share/gnatfuzz/modules/gnatfuzz_runtime_library/gnatfuzz-abstract_afl_seeds.adb</vfs_File>
+            </Source_Editor>
+          </Child>
+          <Child Group=" 1" State="NORMAL">
+            <Source_Editor >
+              <project >/home/paul/Development/ancr/wave/x86_64-linux/gnatall/install/share/gpr/gnatcoll.gpr</project>
+              <Column_End >19</Column_End>
+              <Column >19</Column>
+              <Line >141</Line>
+              <vfs_File >/home/paul/Development/ancr/wave/x86_64-linux/gnatall/install/include/gnatcoll/gnatcoll-vfs.ads</vfs_File>
+            </Source_Editor>
+          </Child>
+          <Child Raised="True" Focus="True" Group=" 1" State="NORMAL">
+            <Source_Editor >
+              <project >/home/paul/Development/ancr/src/gnatfuzz/share/gnatfuzz/modules/modules.gpr</project>
+              <Column_End >29</Column_End>
+              <Column >29</Column>
+              <Line >102</Line>
+              <vfs_File >/home/paul/Development/ancr/src/gnatfuzz/share/gnatfuzz/modules/gnatfuzz_runtime_library/gnatfuzz-afl_seed_data_chunks.adb</vfs_File>
+            </Source_Editor>
+          </Child>
+        </Notebook>
+      </Pane>
+    </desktop>
+    <desktop perspective="Default">
+      <vfs_project >/home/paul/Development/ancr/src/gnatfuzz/testsuite/tests/internal-fuzz-testsuite/demos/Exploring_Paths_Demo/project_under_test/user_project.gpr</vfs_project>
+      <Learn_View >
+        <learn position=" 4.95575E+01%" />
+      </Learn_View>
+      <Pane width=" 1.00000E+02%" Orientation="ORIENTATION_HORIZONTAL">
+        <Notebook width=" 1.00493E+02%" Tabs="POS_TOP">
+          <Child Group=" 1" State="NORMAL">
+            <Source_Editor >
+              <project >/home/paul/Development/ancr/src/gnatfuzz/testsuite/tests/internal-fuzz-testsuite/demos/Exploring_Paths_Demo/project_under_test/user_project.gpr</project>
+              <Column_End >1</Column_End>
+              <Column >1</Column>
+              <Line >25</Line>
+              <vfs_File >/home/paul/Development/ancr/src/gnatfuzz/testsuite/tests/internal-fuzz-testsuite/demos/Exploring_Paths_Demo/project_under_test/aha_mont64.ads</vfs_File>
+            </Source_Editor>
+          </Child>
+          <Child Raised="True" Focus="True" Group=" 1" State="NORMAL">
+            <Source_Editor >
+              <project >/home/paul/Development/ancr/src/gnatfuzz/testsuite/tests/internal-fuzz-testsuite/demos/Exploring_Paths_Demo/project_under_test/user_project.gpr</project>
+              <Column_End >1</Column_End>
+              <Column >1</Column>
+              <Line >24</Line>
+              <vfs_File >/home/paul/Development/ancr/src/gnatfuzz/testsuite/tests/internal-fuzz-testsuite/demos/Exploring_Paths_Demo/project_under_test/exploring_paths.ads</vfs_File>
+            </Source_Editor>
+          </Child>
+        </Notebook>
+      </Pane>
+    </desktop>
+    <desktop perspective="Default">
+      <vfs_project >/tmp/tmpean8ivu4/internal-fuzz-testsuite__benchmarks__fuzz-calculator/fuzz_testing/fuzz_test.gpr</vfs_project>
+      <Learn_View >
+        <learn position=" 4.95575E+01%" />
+      </Learn_View>
+      <Pane width=" 1.00000E+02%" Orientation="ORIENTATION_HORIZONTAL">
+        <Notebook width=" 1.00300E+02%" Tabs="POS_TOP">
+          <Child Group=" 1" State="NORMAL">
+            <Source_Editor >
+              <project >/tmp/tmpean8ivu4/internal-fuzz-testsuite__benchmarks__fuzz-calculator/fuzz_testing/fuzz_test.gpr</project>
+              <Column_End >1</Column_End>
+              <Column >1</Column>
+              <Line >1</Line>
+              <vfs_File >/tmp/tmpean8ivu4/internal-fuzz-testsuite__benchmarks__fuzz-calculator/fuzz_testing/fuzz_test.gpr</vfs_File>
+            </Source_Editor>
+          </Child>
+          <Child Group=" 1" State="NORMAL">
+            <Source_Editor >
+              <project >/tmp/tmpean8ivu4/internal-fuzz-testsuite__benchmarks__fuzz-calculator/fuzz_testing/fuzz_test.gpr</project>
+              <Column_End >27</Column_End>
+              <Column >27</Column>
+              <Line >45</Line>
+              <vfs_File >/tmp/tmpean8ivu4/internal-fuzz-testsuite__benchmarks__fuzz-calculator/fuzz_testing/generated_src/gnatfuzz-fuzz_test_harness.adb</vfs_File>
+            </Source_Editor>
+          </Child>
+          <Child Group=" 1" State="NORMAL">
+            <Source_Editor >
+              <project >/tmp/tmpean8ivu4/internal-fuzz-testsuite__benchmarks__fuzz-calculator/user_project.gpr</project>
+              <Column_End >14</Column_End>
+              <Column >14</Column>
+              <Line >2</Line>
+              <vfs_File >/tmp/tmpean8ivu4/internal-fuzz-testsuite__benchmarks__fuzz-calculator/benchmark/advanced_calculator.ads</vfs_File>
+            </Source_Editor>
+          </Child>
+          <Child Raised="True" Focus="True" Group=" 1" State="NORMAL">
+            <Source_Editor >
+              <project >/tmp/tmpean8ivu4/internal-fuzz-testsuite__benchmarks__fuzz-calculator/user_project.gpr</project>
+              <Column_End >24</Column_End>
+              <Column >24</Column>
+              <Line >29</Line>
+              <vfs_File >/tmp/tmpean8ivu4/internal-fuzz-testsuite__benchmarks__fuzz-calculator/benchmark/advanced_calculator.adb</vfs_File>
+            </Source_Editor>
+          </Child>
+        </Notebook>
+      </Pane>
+    </desktop>
+    <desktop perspective="Default">
+      <vfs_project >/tmp/tmpnkps2_46/fuzz-test_application_flags__agcf-using_stdin/obj/fuzz_harness/fuzz_testing/fuzz_test.gpr</vfs_project>
+      <Learn_View >
+        <learn position=" 4.95575E+01%" />
+      </Learn_View>
+      <Pane width=" 1.00000E+02%" Orientation="ORIENTATION_HORIZONTAL">
+        <Notebook width=" 1.00633E+02%" Tabs="POS_TOP">
+          <Child Group=" 1" State="NORMAL">
+            <Code_Analysis_Tree name="Coverage" />
+          </Child>
+          <Child Raised="True" Focus="True" Group=" 1" State="NORMAL">
+            <Source_Editor >
+              <project >/tmp/tmpnkps2_46/fuzz-test_application_flags__agcf-using_stdin/user_project.gpr</project>
+              <Column_End >1</Column_End>
+              <Column >1</Column>
+              <Line >26</Line>
+              <vfs_File >/tmp/tmpnkps2_46/fuzz-test_application_flags__agcf-using_stdin/src__system_under_test/procedure_under_test.adb</vfs_File>
+            </Source_Editor>
+          </Child>
+        </Notebook>
+      </Pane>
+    </desktop>
+    <desktop perspective="Default">
+      <vfs_project >/tmp/tmpnkps2_46/fuzz-test_application_flags__agcf-using_stdin/user_project.gpr</vfs_project>
+      <Learn_View >
+        <learn position=" 4.95575E+01%" />
+      </Learn_View>
+      <Pane width=" 1.00000E+02%" Orientation="ORIENTATION_HORIZONTAL">
+        <Notebook width=" 1.00390E+02%" Tabs="POS_TOP">
+          <Child Raised="True" Focus="True" Group=" 1" State="NORMAL">
+            <Source_Editor >
+              <project >/tmp/tmpnkps2_46/fuzz-test_application_flags__agcf-using_stdin/user_project.gpr</project>
+              <Column_End >1</Column_End>
+              <Column >1</Column>
+              <Line >24</Line>
+              <vfs_File >/tmp/tmpnkps2_46/fuzz-test_application_flags__agcf-using_stdin/src__system_under_test/procedure_under_test.ads</vfs_File>
+            </Source_Editor>
+          </Child>
+        </Notebook>
+      </Pane>
+    </desktop>
+    <desktop perspective="Default">
+      <vfs_project >/tmp/tmpm3d2ty28/fuzz-test_application_flags__agcf-using_stdin/obj/fuzz_harness/fuzz_testing/fuzz_test.gpr</vfs_project>
+      <Learn_View >
+        <learn position=" 4.95575E+01%" />
+      </Learn_View>
+      <Pane width=" 1.00000E+02%" Orientation="ORIENTATION_HORIZONTAL">
+        <Notebook width=" 1.00390E+02%" Tabs="POS_TOP">
+          <Child Group=" 1" State="NORMAL">
+            <Source_Editor >
+              <project >/tmp/tmpm3d2ty28/fuzz-test_application_flags__agcf-using_stdin/obj/fuzz_harness/fuzz_testing/fuzz_test.gpr</project>
+              <Column_End >1</Column_End>
+              <Column >1</Column>
+              <Line >1</Line>
+              <vfs_File >/tmp/tmpm3d2ty28/fuzz-test_application_flags__agcf-using_stdin/obj/fuzz_harness/fuzz_testing/generated_src/gnatfuzz-fuzz_test_harness.adb</vfs_File>
+            </Source_Editor>
+          </Child>
+          <Child Raised="True" Group=" 1" State="NORMAL">
+            <Source_Editor >
+              <project >/tmp/tmpm3d2ty28/fuzz-test_application_flags__agcf-using_stdin/user_project.gpr</project>
+              <Column_End >1</Column_End>
+              <Column >1</Column>
+              <Line >1</Line>
+              <vfs_File >/tmp/tmpm3d2ty28/fuzz-test_application_flags__agcf-using_stdin/src__system_under_test/procedure_under_test.adb</vfs_File>
+            </Source_Editor>
+          </Child>
+        </Notebook>
+      </Pane>
+    </desktop>
+    <desktop perspective="Default">
+      <vfs_project >/tmp/tmpm3d2ty28/fuzz-test_application_flags__agcf-using_stdin/user_project.gpr</vfs_project>
+      <Learn_View >
+        <learn position=" 4.95575E+01%" />
+      </Learn_View>
+      <Pane width=" 1.00000E+02%" Orientation="ORIENTATION_HORIZONTAL">
+        <Notebook width=" 1.00366E+02%" Tabs="POS_TOP">
+          <Child Group=" 1" State="NORMAL">
+            <Source_Editor >
+              <project >/tmp/tmpm3d2ty28/fuzz-test_application_flags__agcf-using_stdin/user_project.gpr</project>
+              <Column_End >1</Column_End>
+              <Column >1</Column>
+              <Line >1</Line>
+              <vfs_File >/tmp/tmpm3d2ty28/fuzz-test_application_flags__agcf-using_stdin/src__system_under_test/procedure_under_test.adb</vfs_File>
+            </Source_Editor>
+          </Child>
+          <Child Raised="True" Focus="True" Group=" 1" State="NORMAL">
+            <Source_Editor >
+              <project >/tmp/tmpm3d2ty28/fuzz-test_application_flags__agcf-using_stdin/user_project.gpr</project>
+              <Column_End >1</Column_End>
+              <Column >1</Column>
+              <Line >24</Line>
+              <vfs_File >/tmp/tmpm3d2ty28/fuzz-test_application_flags__agcf-using_stdin/src__system_under_test/procedure_under_test.ads</vfs_File>
+            </Source_Editor>
+          </Child>
+        </Notebook>
+      </Pane>
+    </desktop>
+    <desktop perspective="Default">
+      <vfs_project >/tmp/tmpean8ivu4/internal-fuzz-testsuite__benchmarks__fuzz-calculator/user_project.gpr</vfs_project>
+      <Learn_View >
+        <learn position=" 4.95575E+01%" />
+      </Learn_View>
+      <Pane width=" 1.00000E+02%" Orientation="ORIENTATION_HORIZONTAL">
+        <Notebook width=" 1.00366E+02%" Tabs="POS_TOP">
+          <Child Group=" 1" State="NORMAL">
+            <Source_Editor >
+              <project >/tmp/tmpean8ivu4/internal-fuzz-testsuite__benchmarks__fuzz-calculator/user_project.gpr</project>
+              <Column_End >1</Column_End>
+              <Column >1</Column>
+              <Line >1</Line>
+              <vfs_File >/tmp/tmpean8ivu4/internal-fuzz-testsuite__benchmarks__fuzz-calculator/benchmark/advanced_calculator.adb</vfs_File>
+            </Source_Editor>
+          </Child>
+          <Child Group=" 1" State="NORMAL">
+            <Source_Editor >
+              <project >/tmp/tmpean8ivu4/internal-fuzz-testsuite__benchmarks__fuzz-calculator/user_project.gpr</project>
+              <Column_End >1</Column_End>
+              <Column >1</Column>
+              <Line >1</Line>
+              <vfs_File >/tmp/tmpean8ivu4/internal-fuzz-testsuite__benchmarks__fuzz-calculator/benchmark/stack.adb</vfs_File>
+            </Source_Editor>
+          </Child>
+          <Child Group=" 1" State="NORMAL">
+            <Source_Editor >
+              <project >/tmp/tmpean8ivu4/internal-fuzz-testsuite__benchmarks__fuzz-calculator/user_project.gpr</project>
+              <Column_End >1</Column_End>
+              <Column >1</Column>
+              <Line >1</Line>
+              <vfs_File >/tmp/tmpean8ivu4/internal-fuzz-testsuite__benchmarks__fuzz-calculator/benchmark/list.adb</vfs_File>
+            </Source_Editor>
+          </Child>
+          <Child Raised="True" Focus="True" Group=" 1" State="NORMAL">
+            <Source_Editor >
+              <project >/tmp/tmpean8ivu4/internal-fuzz-testsuite__benchmarks__fuzz-calculator/user_project.gpr</project>
+              <Column_End >18</Column_End>
+              <Column >18</Column>
+              <Line >11</Line>
+              <vfs_File >/tmp/tmpean8ivu4/internal-fuzz-testsuite__benchmarks__fuzz-calculator/user_project.gpr</vfs_File>
+            </Source_Editor>
+          </Child>
+        </Notebook>
+      </Pane>
+    </desktop>
+    <desktop perspective="Default">
+      <vfs_project >/home/paul/Development/ancr/src/gnatfuzz/testsuite/tests/internal-fuzz-testsuite/demos/Exploring_Paths_Demo/generate_output/fuzz_testing/fuzz_test.gpr</vfs_project>
+      <Learn_View >
+        <learn position=" 4.95575E+01%" />
+      </Learn_View>
+      <Pane width=" 1.00000E+02%" Orientation="ORIENTATION_HORIZONTAL">
+        <Notebook width=" 1.00366E+02%" Tabs="POS_TOP">
+          <Child Group=" 1" State="NORMAL">
+            <Source_Editor >
+              <project >/home/paul/Development/ancr/src/gnatfuzz/testsuite/tests/internal-fuzz-testsuite/demos/Exploring_Paths_Demo/generate_output/fuzz_testing/fuzz_test.gpr</project>
+              <Column_End >11</Column_End>
+              <Column >11</Column>
+              <Line >26</Line>
+              <vfs_File >/home/paul/Development/ancr/src/gnatfuzz/testsuite/tests/internal-fuzz-testsuite/demos/Exploring_Paths_Demo/generate_output/fuzz_testing/generated_src/gnatfuzz-fuzz_test_harness.adb</vfs_File>
+            </Source_Editor>
+          </Child>
+          <Child Group=" 1" State="NORMAL">
+            <Source_Editor >
+              <project >/home/paul/Development/ancr/src/gnatfuzz/testsuite/tests/internal-fuzz-testsuite/demos/Exploring_Paths_Demo/generate_output/fuzz_testing/fuzz_test.gpr</project>
+              <Column_End >1</Column_End>
+              <Column >1</Column>
+              <Line >19</Line>
+              <vfs_File >/home/paul/Development/ancr/src/gnatfuzz/testsuite/tests/internal-fuzz-testsuite/demos/Exploring_Paths_Demo/generate_output/gnatfuzz_shared/src__aflc_resources/gnatfuzz-fuzz_test_harness_driver.adb</vfs_File>
+            </Source_Editor>
+          </Child>
+          <Child Raised="True" Focus="True" Group=" 1" State="NORMAL">
+            <Source_Editor >
+              <project >/home/paul/Development/ancr/src/gnatfuzz/testsuite/tests/internal-fuzz-testsuite/demos/Exploring_Paths_Demo/generate_output/fuzz_testing/fuzz_test.gpr</project>
+              <Column_End >51</Column_End>
+              <Column >51</Column>
+              <Line >7</Line>
+              <vfs_File >/home/paul/Development/ancr/src/gnatfuzz/testsuite/tests/internal-fuzz-testsuite/demos/Exploring_Paths_Demo/generate_output/fuzz_testing/generated_src/gnatfuzz-decode_test.adb</vfs_File>
+            </Source_Editor>
+          </Child>
+        </Notebook>
+      </Pane>
+    </desktop>
+    <desktop perspective="Default">
+      <vfs_project >/home/paul/Development/ancr/src/gnatfuzz/testsuite/tests/internal-fuzz-testsuite/benchmarks/rts-debug_11_2_1/adainclude/gen1/fuzz_testing/fuzz_test.gpr</vfs_project>
+      <Learn_View >
+        <learn position=" 4.97118E+01%" />
+      </Learn_View>
+    </desktop>
+    <desktop perspective="Default">
+      <vfs_project >/home/paul/Development/ancr/src/gnatfuzz/testsuite/tests/internal-fuzz-testsuite/benchmarks/rts-debug_11_2_1/adainclude/generate/generate_sub11/fuzz_testing/fuzz_test.gpr</vfs_project>
+      <Learn_View >
+        <learn position=" 4.97118E+01%" />
+      </Learn_View>
+      <Pane width=" 1.00000E+02%" Orientation="ORIENTATION_HORIZONTAL">
+        <Notebook width=" 1.00248E+02%" Tabs="POS_TOP">
+          <Child Group=" 1" State="NORMAL">
+            <Source_Editor >
+              <project >/home/paul/Development/ancr/src/gnatfuzz/testsuite/tests/internal-fuzz-testsuite/benchmarks/rts-debug_11_2_1/adainclude/generate/generate_sub11/fuzz_testing/fuzz_test.gpr</project>
+              <Column_End >14</Column_End>
+              <Column >14</Column>
+              <Line >29</Line>
+              <vfs_File >/home/paul/Development/ancr/src/gnatfuzz/testsuite/tests/internal-fuzz-testsuite/benchmarks/rts-debug_11_2_1/adainclude/generate/generate_sub11/fuzz_testing/generated_src/gnatfuzz-fuzz_test_harness.adb</vfs_File>
+            </Source_Editor>
+          </Child>
+          <Child Group=" 1" State="NORMAL">
+            <Source_Editor >
+              <project >/home/paul/Development/ancr/src/gnatfuzz/testsuite/tests/internal-fuzz-testsuite/benchmarks/rts-debug_11_2_1/adainclude/generate/generate_sub11/fuzz_testing/fuzz_test.gpr</project>
+              <Column_End >14</Column_End>
+              <Column >14</Column>
+              <Line >27</Line>
+              <vfs_File >/home/paul/Development/ancr/src/gnatfuzz/testsuite/tests/internal-fuzz-testsuite/benchmarks/rts-debug_11_2_1/adainclude/generate/generate_sub11/fuzz_testing/user_configuration/gnatfuzz-gnatfuzz_user_configuration.ads</vfs_File>
+            </Source_Editor>
+          </Child>
+          <Child Group=" 1" State="NORMAL">
+            <Source_Editor >
+              <project >/home/paul/Development/ancr/src/gnatfuzz/testsuite/tests/internal-fuzz-testsuite/benchmarks/rts-debug_11_2_1/adainclude/generate/generate_sub11/fuzz_testing/fuzz_test.gpr</project>
+              <Column_End >34</Column_End>
+              <Column >34</Column>
+              <Line >89</Line>
+              <vfs_File >/home/paul/Development/ancr/src/gnatfuzz/testsuite/tests/internal-fuzz-testsuite/benchmarks/rts-debug_11_2_1/adainclude/generate/generate_sub11/fuzz_testing/user_configuration/gnatfuzz-gnatfuzz_user_configuration.adb</vfs_File>
+            </Source_Editor>
+          </Child>
+          <Child Group=" 1" State="NORMAL">
+            <Source_Editor >
+              <project >/home/paul/Development/ancr/src/gnatfuzz/testsuite/tests/internal-fuzz-testsuite/benchmarks/rts-debug_11_2_1/adainclude/libgnat_fuzz.gpr</project>
+              <Column_End >26</Column_End>
+              <Column >26</Column>
+              <Line >86</Line>
+              <vfs_File >/home/paul/Development/ancr/src/gnatfuzz/testsuite/tests/internal-fuzz-testsuite/benchmarks/rts-debug_11_2_1/adainclude/a-calcon.ads</vfs_File>
+            </Source_Editor>
+          </Child>
+          <Child Group=" 1" State="NORMAL">
+            <Source_Editor >
+              <project >/home/paul/Development/ancr/src/gnatfuzz/testsuite/tests/internal-fuzz-testsuite/benchmarks/rts-debug_11_2_1/adainclude/generate/generate_sub11/fuzz_testing/fuzz_test.gpr</project>
+              <Column_End >48</Column_End>
+              <Column >48</Column>
+              <Line >28</Line>
+              <vfs_File >/home/paul/Development/ancr/src/gnatfuzz/testsuite/tests/internal-fuzz-testsuite/benchmarks/rts-debug_11_2_1/adainclude/generate/generate_sub11/fuzz_testing/generated_src/gnatfuzz-data_factory.ads</vfs_File>
+            </Source_Editor>
+          </Child>
+          <Child Group=" 1" State="NORMAL">
+            <Source_Editor >
+              <project >/home/paul/Development/ancr/src/gnatfuzz/testsuite/tests/internal-fuzz-testsuite/benchmarks/rts-debug_11_2_1/adainclude/generate/generate_sub11/fuzz_testing/fuzz_test.gpr</project>
+              <Column_End >59</Column_End>
+              <Column >59</Column>
+              <Line >11</Line>
+              <vfs_File >/home/paul/Development/ancr/src/gnatfuzz/testsuite/tests/internal-fuzz-testsuite/benchmarks/rts-debug_11_2_1/adainclude/generate/generate_sub11/fuzz_testing/generated_src/gnatfuzz-ada_calendar_time_values_checker.ads</vfs_File>
+            </Source_Editor>
+          </Child>
+          <Child Raised="True" Focus="True" Group=" 1" State="NORMAL">
+            <Source_Editor >
+              <project >/home/paul/Development/ancr/src/gnatfuzz/testsuite/tests/internal-fuzz-testsuite/benchmarks/rts-debug_11_2_1/adainclude/libgnat_fuzz.gpr</project>
+              <Column_End >25</Column_End>
+              <Column >25</Column>
+              <Line >42</Line>
+              <vfs_File >/home/paul/Development/ancr/src/gnatfuzz/testsuite/tests/internal-fuzz-testsuite/benchmarks/rts-debug_11_2_1/adainclude/a-calend.ads</vfs_File>
+            </Source_Editor>
+          </Child>
+        </Notebook>
+      </Pane>
+    </desktop>
+    <desktop perspective="Default">
+      <vfs_project >/home/paul/Development/ancr/src/gnatfuzz/testsuite/tests/internal-fuzz-testsuite/benchmarks/rts-debug_11_2_1/adainclude/generate/generate_sub3/fuzz_testing/fuzz_test.gpr</vfs_project>
+      <Learn_View >
+        <learn position=" 4.97836E+01%" />
+      </Learn_View>
+      <Pane width=" 1.00000E+02%" Orientation="ORIENTATION_HORIZONTAL">
+        <Notebook width=" 1.00244E+02%" Tabs="POS_TOP">
+          <Child Group=" 1" State="NORMAL">
+            <Source_Editor >
+              <project >/home/paul/Development/ancr/src/gnatfuzz/testsuite/tests/internal-fuzz-testsuite/benchmarks/rts-debug_11_2_1/adainclude/generate/generate_sub3/fuzz_testing/fuzz_test.gpr</project>
+              <Column_End >1</Column_End>
+              <Column >1</Column>
+              <Line >1</Line>
+              <vfs_File >/home/paul/Development/ancr/src/gnatfuzz/testsuite/tests/internal-fuzz-testsuite/benchmarks/rts-debug_11_2_1/adainclude/generate/generate_sub3/fuzz_testing/user_configuration/gnatfuzz-gnatfuzz_user_configuration.ads</vfs_File>
+            </Source_Editor>
+          </Child>
+          <Child Group=" 1" State="NORMAL">
+            <Source_Editor >
+              <project >/home/paul/Development/ancr/src/gnatfuzz/testsuite/tests/internal-fuzz-testsuite/benchmarks/rts-debug_11_2_1/adainclude/generate/generate_sub3/fuzz_testing/fuzz_test.gpr</project>
+              <Column_End >1</Column_End>
+              <Column >1</Column>
+              <Line >1</Line>
+              <vfs_File >/home/paul/Development/ancr/src/gnatfuzz/testsuite/tests/internal-fuzz-testsuite/benchmarks/rts-debug_11_2_1/adainclude/generate/generate_sub3/fuzz_testing/user_configuration/gnatfuzz-gnatfuzz_user_configuration.adb</vfs_File>
+            </Source_Editor>
+          </Child>
+          <Child Group=" 1" State="NORMAL">
+            <Source_Editor >
+              <project >/home/paul/Development/ancr/src/gnatfuzz/testsuite/tests/internal-fuzz-testsuite/benchmarks/rts-debug_11_2_1/adainclude/generate/generate_sub3/fuzz_testing/fuzz_test.gpr</project>
+              <Column_End >17</Column_End>
+              <Column >17</Column>
+              <Line >29</Line>
+              <vfs_File >/home/paul/Development/ancr/src/gnatfuzz/testsuite/tests/internal-fuzz-testsuite/benchmarks/rts-debug_11_2_1/adainclude/generate/generate_sub3/fuzz_testing/generated_src/gnatfuzz-fuzz_test_harness.adb</vfs_File>
+            </Source_Editor>
+          </Child>
+          <Child Group=" 1" State="NORMAL">
+            <Source_Editor >
+              <project >/home/paul/Development/ancr/src/gnatfuzz/testsuite/tests/internal-fuzz-testsuite/benchmarks/rts-debug_11_2_1/adainclude/generate/generate_sub3/fuzz_testing/fuzz_test.gpr</project>
+              <Column_End >81</Column_End>
+              <Column >81</Column>
+              <Line >28</Line>
+              <vfs_File >/home/paul/Development/ancr/src/gnatfuzz/testsuite/tests/internal-fuzz-testsuite/benchmarks/rts-debug_11_2_1/adainclude/generate/generate_sub3/fuzz_testing/generated_src/gnatfuzz-data_factory.ads</vfs_File>
+            </Source_Editor>
+          </Child>
+          <Child Group=" 1" State="NORMAL">
+            <Source_Editor >
+              <project >/home/paul/Development/ancr/src/gnatfuzz/testsuite/tests/internal-fuzz-testsuite/benchmarks/rts-debug_11_2_1/adainclude/generate/generate_sub3/fuzz_testing/fuzz_test.gpr</project>
+              <Column_End >6</Column_End>
+              <Column >6</Column>
+              <Line >11</Line>
+              <vfs_File >/home/paul/Development/ancr/src/gnatfuzz/testsuite/tests/internal-fuzz-testsuite/benchmarks/rts-debug_11_2_1/adainclude/generate/generate_sub3/fuzz_testing/generated_src/gnatfuzz-ada_calendar_time_values_checker.ads</vfs_File>
+            </Source_Editor>
+          </Child>
+          <Child Raised="True" Focus="True" Group=" 1" State="NORMAL">
+            <Source_Editor >
+              <project >/home/paul/Development/ancr/src/gnatfuzz/testsuite/tests/internal-fuzz-testsuite/benchmarks/rts-debug_11_2_1/adainclude/generate/generate_sub3/gnatfuzz_shared/modules.gpr</project>
+              <Column_End >11</Column_End>
+              <Column >11</Column>
+              <Line >28</Line>
+              <vfs_File >/home/paul/Development/ancr/src/gnatfuzz/testsuite/tests/internal-fuzz-testsuite/benchmarks/rts-debug_11_2_1/adainclude/generate/generate_sub3/gnatfuzz_shared/gnatfuzz_runtime_library/gnatfuzz-constraint_validation.ads</vfs_File>
+            </Source_Editor>
+          </Child>
+        </Notebook>
+      </Pane>
+    </desktop>
+    <desktop perspective="Default">
+      <vfs_project >/tmp/tmpn3pb_vsk/internal-fuzz-testsuite__benchmarks__fuzz-svd2ada/fuzz_testing/fuzz_test.gpr</vfs_project>
+      <Learn_View >
+        <learn position=" 4.97118E+01%" />
+      </Learn_View>
+      <Pane width=" 1.00000E+02%" Orientation="ORIENTATION_HORIZONTAL">
+        <Notebook width=" 1.00244E+02%" Tabs="POS_TOP">
+          <Child Group=" 1" State="NORMAL">
+            <Source_Editor >
+              <project  />
+              <Column_End >9</Column_End>
+              <Column >9</Column>
+              <Line >8</Line>
+              <vfs_File >/tmp/tmpn3pb_vsk/internal-fuzz-testsuite__benchmarks__fuzz-svd2ada/fuzz_testing/fuzz_test.gpr</vfs_File>
+            </Source_Editor>
+          </Child>
+          <Child Raised="True" Focus="True" Group=" 1" State="NORMAL">
+            <Source_Editor >
+              <project >/tmp/tmpn3pb_vsk/internal-fuzz-testsuite__benchmarks__fuzz-svd2ada/fuzz_testing/fuzz_test.gpr</project>
+              <Column_End >24</Column_End>
+              <Column >24</Column>
+              <Line >27</Line>
+              <vfs_File >/tmp/tmpn3pb_vsk/internal-fuzz-testsuite__benchmarks__fuzz-svd2ada/fuzz_testing/generated_src/gnatfuzz-fuzz_test_harness.adb</vfs_File>
+            </Source_Editor>
+          </Child>
+        </Notebook>
+      </Pane>
+    </desktop>
+    <desktop perspective="Default">
+      <vfs_project >/home/paul/Development/ancr/src/gnatfuzz/testsuite/tests/g-function_rename/user_project.gpr</vfs_project>
+      <Learn_View >
+        <learn position=" 4.97854E+01%" />
+      </Learn_View>
+      <Pane width=" 1.00000E+02%" Orientation="ORIENTATION_HORIZONTAL">
+        <Notebook width=" 1.00283E+02%" Tabs="POS_TOP">
+          <Child Raised="True" Focus="True" Group=" 1" State="NORMAL">
+            <Source_Editor >
+              <project >/home/paul/Development/ancr/src/gnatfuzz/testsuite/tests/g-function_rename/user_project.gpr</project>
+              <Column_End >1</Column_End>
+              <Column >1</Column>
+              <Line >16</Line>
+              <vfs_File >/home/paul/Development/ancr/src/gnatfuzz/testsuite/tests/g-function_rename/src__system_under_test/test.ads</vfs_File>
+            </Source_Editor>
+          </Child>
+          <Child Group=" 1" State="NORMAL">
+            <Source_Editor >
+              <project  />
+              <Column_End >1</Column_End>
+              <Column >1</Column>
+              <Line >44</Line>
+              <vfs_File >/home/paul/Development/ancr/wave/x86_64-linux/gnatall/install/lib/gcc/x86_64-pc-linux-gnu/11.2.1/rts-native/adainclude/a-exctra.ads</vfs_File>
+            </Source_Editor>
+          </Child>
+        </Notebook>
+      </Pane>
+    </desktop>
+    <desktop perspective="Default">
+      <vfs_project >/home/paul/Development/ancr/src/gnatfuzz/testsuite/tests/g-function_rename/obj/fuzz_harness/fuzz_testing/fuzz_test.gpr</vfs_project>
+      <Learn_View >
+        <learn position=" 4.97854E+01%" />
+      </Learn_View>
+      <Pane width=" 1.00000E+02%" Orientation="ORIENTATION_HORIZONTAL">
+        <Notebook width=" 1.00283E+02%" Tabs="POS_TOP">
+          <Child Group=" 1" State="NORMAL">
+            <Source_Editor >
+              <project >/home/paul/Development/ancr/src/gnatfuzz/testsuite/tests/g-function_rename/obj/fuzz_harness/fuzz_testing/fuzz_test.gpr</project>
+              <Column_End >16</Column_End>
+              <Column >16</Column>
+              <Line >26</Line>
+              <vfs_File >/home/paul/Development/ancr/src/gnatfuzz/testsuite/tests/g-function_rename/obj/fuzz_harness/fuzz_testing/generated_src/gnatfuzz-fuzz_test_harness.adb</vfs_File>
+            </Source_Editor>
+          </Child>
+          <Child Group=" 1" State="NORMAL">
+            <Source_Editor >
+              <project >/home/paul/Development/ancr/src/gnatfuzz/testsuite/tests/g-function_rename/user_project.gpr</project>
+              <Column_End >29</Column_End>
+              <Column >29</Column>
+              <Line >13</Line>
+              <vfs_File >/home/paul/Development/ancr/src/gnatfuzz/testsuite/tests/g-function_rename/src__system_under_test/test.ads</vfs_File>
+            </Source_Editor>
+          </Child>
+          <Child Raised="True" Focus="True" Group=" 1" State="NORMAL">
+            <Source_Editor >
+              <project >/home/paul/Development/ancr/src/gnatfuzz/testsuite/tests/g-function_rename/obj/fuzz_harness/fuzz_testing/fuzz_test.gpr</project>
+              <Column_End >1</Column_End>
+              <Column >1</Column>
+              <Line >41</Line>
+              <vfs_File >/home/paul/Development/ancr/src/gnatfuzz/testsuite/tests/g-function_rename/obj/fuzz_harness/fuzz_testing/generated_src/gnatfuzz-data_factory.ads</vfs_File>
+            </Source_Editor>
+          </Child>
+          <Child Group=" 1" State="NORMAL">
+            <Source_Editor >
+              <project >/home/paul/Development/ancr/src/gnatfuzz/testsuite/tests/g-function_rename/obj/fuzz_harness/fuzz_testing/fuzz_test.gpr</project>
+              <Column_End >71</Column_End>
+              <Column >71</Column>
+              <Line >11</Line>
+              <vfs_File >/home/paul/Development/ancr/src/gnatfuzz/testsuite/tests/g-function_rename/obj/fuzz_harness/fuzz_testing/generated_src/gnatfuzz-system_traceback_entries_traceback_entry_values_checker.ads</vfs_File>
+            </Source_Editor>
+          </Child>
+          <Child Group=" 1" State="NORMAL">
+            <Source_Editor >
+              <project >/home/paul/Development/ancr/src/gnatfuzz/testsuite/tests/g-function_rename/obj/fuzz_harness/gnatfuzz_shared/modules.gpr</project>
+              <Column_End >38</Column_End>
+              <Column >38</Column>
+              <Line >24</Line>
+              <vfs_File >/home/paul/Development/ancr/src/gnatfuzz/testsuite/tests/g-function_rename/obj/fuzz_harness/gnatfuzz_shared/gnatfuzz_runtime_library/gnatfuzz-constraint_validation.ads</vfs_File>
+            </Source_Editor>
+          </Child>
+          <Child Group=" 1" State="NORMAL">
+            <Source_Editor >
+              <project >/home/paul/Development/ancr/src/gnatfuzz/testsuite/tests/g-function_rename/obj/fuzz_harness/fuzz_testing/fuzz_test.gpr</project>
+              <Column_End >12</Column_End>
+              <Column >12</Column>
+              <Line >44</Line>
+              <vfs_File >/home/paul/Development/ancr/wave/x86_64-linux/gnatall/install/lib/gcc/x86_64-pc-linux-gnu/11.2.1/rts-native/adainclude/s-traent.ads</vfs_File>
+            </Source_Editor>
+          </Child>
+          <Child Group=" 1" State="NORMAL">
+            <Source_Editor >
+              <project >/home/paul/Development/ancr/src/gnatfuzz/testsuite/tests/g-function_rename/obj/fuzz_harness/fuzz_testing/fuzz_test.gpr</project>
+              <Column_End >16</Column_End>
+              <Column >16</Column>
+              <Line >67</Line>
+              <vfs_File >/home/paul/Development/ancr/wave/x86_64-linux/gnatall/install/lib/gcc/x86_64-pc-linux-gnu/11.2.1/rts-native/adainclude/system.ads</vfs_File>
+            </Source_Editor>
+          </Child>
+        </Notebook>
+      </Pane>
+    </desktop>
+    <desktop perspective="Default">
+      <vfs_project >/home/paul/Development/ancr/src/gnatfuzz/testsuite/tests/a-generic_index_package/user_project.gpr</vfs_project>
+      <Learn_View >
+        <learn position=" 4.97854E+01%" />
+      </Learn_View>
+      <Pane width=" 1.00000E+02%" Orientation="ORIENTATION_HORIZONTAL">
+        <Notebook width=" 1.00328E+02%" Tabs="POS_TOP">
+          <Child Group=" 1" State="NORMAL">
+            <Source_Editor >
+              <project >/home/paul/Development/ancr/src/gnatfuzz/testsuite/tests/a-generic_index_package/user_project.gpr</project>
+              <Column_End >1</Column_End>
+              <Column >1</Column>
+              <Line >6</Line>
+              <vfs_File >/home/paul/Development/ancr/src/gnatfuzz/testsuite/tests/a-generic_index_package/src__system_under_test/bob-bar.ads</vfs_File>
+            </Source_Editor>
+          </Child>
+          <Child Raised="True" Focus="True" Group=" 1" State="NORMAL">
+            <Source_Editor >
+              <project  />
+              <Column_End >1</Column_End>
+              <Column >1</Column>
+              <Line >107</Line>
+              <vfs_File >/home/paul/Development/ancr/wave/x86_64-linux/gnatall/install/lib/gcc/x86_64-pc-linux-gnu/11.2.1/rts-native/adainclude/a-nbnbig.ads</vfs_File>
+            </Source_Editor>
+          </Child>
+        </Notebook>
+      </Pane>
+    </desktop>
+    <desktop perspective="Default">
+      <vfs_project >/home/paul/Development/ancr/src/gnatfuzz/testsuite/tests/a-spark_ghost_code/user_project.gpr</vfs_project>
+      <Learn_View >
+        <learn position=" 4.97854E+01%" />
+      </Learn_View>
+      <Pane width=" 1.00000E+02%" Orientation="ORIENTATION_HORIZONTAL">
+        <Notebook width=" 1.00225E+02%" Tabs="POS_TOP">
+          <Child Raised="True" Focus="True" Group=" 1" State="NORMAL">
+            <Source_Editor >
+              <project >/home/paul/Development/ancr/src/gnatfuzz/testsuite/tests/a-spark_ghost_code/user_project.gpr</project>
+              <Column_End >12</Column_End>
+              <Column >12</Column>
+              <Line >2</Line>
+              <vfs_File >/home/paul/Development/ancr/src/gnatfuzz/testsuite/tests/a-spark_ghost_code/src__system_under_test/system_under_test.ads</vfs_File>
+            </Source_Editor>
+          </Child>
+          <Child Group=" 1" State="NORMAL">
+            <Source_Editor >
+              <project >/home/paul/Development/ancr/src/gnatfuzz/testsuite/tests/a-spark_ghost_code/user_project.gpr</project>
+              <Column_End >23</Column_End>
+              <Column >23</Column>
+              <Line >11</Line>
+              <vfs_File >/home/paul/Development/ancr/src/gnatfuzz/testsuite/tests/a-spark_ghost_code/src__system_under_test/system_under_test.adb</vfs_File>
+            </Source_Editor>
+          </Child>
+          <Child Group=" 1" State="NORMAL">
+            <Source_Editor >
+              <project >/home/paul/Development/ancr/src/gnatfuzz/testsuite/tests/a-spark_ghost_code/user_project.gpr</project>
+              <Column_End >6</Column_End>
+              <Column >6</Column>
+              <Line >1</Line>
+              <vfs_File >/home/paul/Development/ancr/src/gnatfuzz/testsuite/tests/a-spark_ghost_code/src__system_under_test/generic_test.ads</vfs_File>
+            </Source_Editor>
+          </Child>
+          <Child Group=" 1" State="NORMAL">
+            <Source_Editor >
+              <project >/home/paul/Development/ancr/src/gnatfuzz/testsuite/tests/a-spark_ghost_code/user_project.gpr</project>
+              <Column_End >52</Column_End>
+              <Column >52</Column>
+              <Line >30</Line>
+              <vfs_File >/home/paul/Development/ancr/wave/x86_64-linux/gnatall/install/lib/gcc/x86_64-pc-linux-gnu/11.2.1/rts-native/adainclude/a-nbnbig.ads</vfs_File>
+            </Source_Editor>
+          </Child>
+        </Notebook>
+      </Pane>
+    </desktop>
+    <desktop perspective="Default">
+      <vfs_project >/home/paul/Development/ancr/src/gnatfuzz/testsuite/tests/a-spark_ghost_code/generate/fuzz_testing/fuzz_test.gpr</vfs_project>
+      <Learn_View >
+        <learn position=" 4.97854E+01%" />
+      </Learn_View>
+      <Pane width=" 1.00000E+02%" Orientation="ORIENTATION_HORIZONTAL">
+        <Notebook width=" 1.00328E+02%" Tabs="POS_TOP">
+          <Child Raised="True" Focus="True" Group=" 1" State="NORMAL">
+            <Source_Editor >
+              <project >/home/paul/Development/ancr/src/gnatfuzz/testsuite/tests/a-spark_ghost_code/generate/fuzz_testing/fuzz_test.gpr</project>
+              <Column_End >41</Column_End>
+              <Column >41</Column>
+              <Line >5</Line>
+              <vfs_File >/home/paul/Development/ancr/src/gnatfuzz/testsuite/tests/a-spark_ghost_code/generate/fuzz_testing/generated_src/gnatfuzz-fuzz_test_harness.adb</vfs_File>
+            </Source_Editor>
+          </Child>
+          <Child Group=" 1" State="NORMAL">
+            <Source_Editor >
+              <project >/home/paul/Development/ancr/src/gnatfuzz/testsuite/tests/a-spark_ghost_code/generate/fuzz_testing/fuzz_test.gpr</project>
+              <Column_End >52</Column_End>
+              <Column >52</Column>
+              <Line >30</Line>
+              <vfs_File >/home/paul/Development/ancr/wave/x86_64-linux/gnatall/install/lib/gcc/x86_64-pc-linux-gnu/11.2.1/rts-native/adainclude/a-nbnbig.ads</vfs_File>
+            </Source_Editor>
+          </Child>
+        </Notebook>
+      </Pane>
+    </desktop>
+    <desktop perspective="Default">
+      <vfs_project >/tmp/tmpaq2tzy9j/internal-fuzz-testsuite__benchmarks__agcf-aha_mont64/user_project.gpr</vfs_project>
+      <Learn_View >
+        <learn position=" 4.97854E+01%" />
+      </Learn_View>
+      <Pane width=" 1.00000E+02%" Orientation="ORIENTATION_HORIZONTAL">
+        <Notebook width=" 1.00233E+02%" Tabs="POS_TOP">
+          <Child Raised="True" Focus="True" Group=" 1" State="NORMAL">
+            <Source_Editor >
+              <project >/tmp/tmpaq2tzy9j/internal-fuzz-testsuite__benchmarks__agcf-aha_mont64/user_project.gpr</project>
+              <Column_End >16</Column_End>
+              <Column >16</Column>
+              <Line >58</Line>
+              <vfs_File >/tmp/tmpaq2tzy9j/internal-fuzz-testsuite__benchmarks__agcf-aha_mont64/benchmark/aha_mont64.adb</vfs_File>
+            </Source_Editor>
+          </Child>
+        </Notebook>
+      </Pane>
+    </desktop>
+    <desktop perspective="Default">
+      <vfs_project >/tmp/tmpajn5hfwr/internal-fuzz-testsuite__benchmarks__agcf-aha_mont64/generate_output/fuzz_testing/fuzz_test.gpr</vfs_project>
+      <Learn_View >
+        <learn position=" 4.97854E+01%" />
+      </Learn_View>
+    </desktop>
+    <desktop perspective="Default">
+      <vfs_project >/tmp/tmp86_abs0i/agcf-test_invalid_stop_rules_overflow/generate_output/fuzz_testing/fuzz_test.gpr</vfs_project>
+      <Learn_View >
+        <learn position=" 4.97854E+01%" />
+      </Learn_View>
+      <Pane width=" 1.00000E+02%" Orientation="ORIENTATION_HORIZONTAL">
+        <Notebook width=" 1.00233E+02%" Tabs="POS_TOP">
+          <Child Raised="True" Focus="True" Group=" 1" State="NORMAL">
+            <Source_Editor >
+              <project >/tmp/tmp86_abs0i/agcf-test_invalid_stop_rules_overflow/generate_output/fuzz_testing/fuzz_test.gpr</project>
+              <Column_End >46</Column_End>
+              <Column >46</Column>
+              <Line >49</Line>
+              <vfs_File >/tmp/tmp86_abs0i/agcf-test_invalid_stop_rules_overflow/generate_output/fuzz_testing/generated_src/gnatfuzz-fuzz_test_harness.adb</vfs_File>
+            </Source_Editor>
+          </Child>
+        </Notebook>
+      </Pane>
+    </desktop>
+    <desktop perspective="Default">
+      <vfs_project >/tmp/tmphn7i_r8b/agc-test_1/generate_output/fuzz_testing/fuzz_test.gpr</vfs_project>
+      <Learn_View >
+        <learn position=" 4.97854E+01%" />
+      </Learn_View>
+      <Pane width=" 1.00000E+02%" Orientation="ORIENTATION_HORIZONTAL">
+        <Notebook width=" 1.00233E+02%" Tabs="POS_TOP">
+          <Child Raised="True" Focus="True" Group=" 1" State="NORMAL">
+            <Source_Editor >
+              <project >/tmp/tmphn7i_r8b/agc-test_1/generate_output/fuzz_testing/fuzz_test.gpr</project>
+              <Column_End >1</Column_End>
+              <Column >1</Column>
+              <Line >1</Line>
+              <vfs_File >/tmp/tmphn7i_r8b/agc-test_1/generate_output/fuzz_testing/generated_src/gnatfuzz-fuzz_test_harness.adb</vfs_File>
+            </Source_Editor>
+          </Child>
+        </Notebook>
+      </Pane>
+    </desktop>
+    <desktop perspective="Default">
+      <vfs_project >/tmp/tmp_cix2kyj/agc-test_1/generate_output/fuzz_testing/fuzz_test.gpr</vfs_project>
+      <Learn_View >
+        <learn position=" 4.97854E+01%" />
+      </Learn_View>
+      <Pane width=" 1.00000E+02%" Orientation="ORIENTATION_HORIZONTAL">
+        <Notebook width=" 1.00233E+02%" Tabs="POS_TOP">
+          <Child Raised="True" Focus="True" Group=" 1" State="NORMAL">
+            <Source_Editor >
+              <project >/tmp/tmp_cix2kyj/agc-test_1/generate_output/fuzz_testing/fuzz_test.gpr</project>
+              <Column_End >10</Column_End>
+              <Column >10</Column>
+              <Line >63</Line>
+              <vfs_File >/tmp/tmp_cix2kyj/agc-test_1/generate_output/fuzz_testing/generated_src/gnatfuzz-fuzz_test_harness.adb</vfs_File>
+            </Source_Editor>
+          </Child>
+        </Notebook>
+      </Pane>
+    </desktop>
+    <desktop perspective="Default">
+      <vfs_project >/tmp/tmpf6m2t582/agc-first_parameter_has_out_mode/generate_output/fuzz_testing/fuzz_test.gpr</vfs_project>
+      <Learn_View >
+        <learn position=" 4.97854E+01%" />
+      </Learn_View>
+      <Pane width=" 1.00000E+02%" Orientation="ORIENTATION_HORIZONTAL">
+        <Notebook width=" 1.00233E+02%" Tabs="POS_TOP">
+          <Child Raised="True" Focus="True" Group=" 1" State="NORMAL">
+            <Source_Editor >
+              <project >/tmp/tmpf6m2t582/agc-first_parameter_has_out_mode/generate_output/fuzz_testing/fuzz_test.gpr</project>
+              <Column_End >36</Column_End>
+              <Column >36</Column>
+              <Line >54</Line>
+              <vfs_File >/tmp/tmpf6m2t582/agc-first_parameter_has_out_mode/generate_output/fuzz_testing/generated_src/gnatfuzz-fuzz_test_harness.adb</vfs_File>
+            </Source_Editor>
+          </Child>
+        </Notebook>
+      </Pane>
+    </desktop>
+    <desktop perspective="Default">
+      <vfs_project >/tmp/tmpqih9fpts/agc-first_parameter_has_out_mode/generate_output/fuzz_testing/fuzz_test.gpr</vfs_project>
+      <Learn_View >
+        <learn position=" 4.97854E+01%" />
+      </Learn_View>
+      <Pane width=" 1.00000E+02%" Orientation="ORIENTATION_HORIZONTAL">
+        <Notebook width=" 1.00233E+02%" Tabs="POS_TOP">
+          <Child Raised="True" Focus="True" Group=" 1" State="NORMAL">
+            <Source_Editor >
+              <project >/tmp/tmpqih9fpts/agc-first_parameter_has_out_mode/generate_output/fuzz_testing/fuzz_test.gpr</project>
+              <Column_End >38</Column_End>
+              <Column >38</Column>
+              <Line >62</Line>
+              <vfs_File >/tmp/tmpqih9fpts/agc-first_parameter_has_out_mode/generate_output/fuzz_testing/generated_src/gnatfuzz-fuzz_test_harness.adb</vfs_File>
+            </Source_Editor>
+          </Child>
+        </Notebook>
+      </Pane>
+    </desktop>
+    <desktop perspective="Default">
+      <vfs_project >/tmp/tmpb6onqwp5/agc-first_parameter_has_out_mode/generate_output/fuzz_testing/fuzz_test.gpr</vfs_project>
+      <Learn_View >
+        <learn position=" 4.97854E+01%" />
+      </Learn_View>
+      <Pane width=" 1.00000E+02%" Orientation="ORIENTATION_HORIZONTAL">
+        <Notebook width=" 1.00233E+02%" Tabs="POS_TOP">
+          <Child Raised="True" Focus="True" Group=" 1" State="NORMAL">
+            <Source_Editor >
+              <project >/tmp/tmpb6onqwp5/agc-first_parameter_has_out_mode/generate_output/fuzz_testing/fuzz_test.gpr</project>
+              <Column_End >23</Column_End>
+              <Column >23</Column>
+              <Line >50</Line>
+              <vfs_File >/tmp/tmpb6onqwp5/agc-first_parameter_has_out_mode/generate_output/fuzz_testing/generated_src/gnatfuzz-fuzz_test_harness.adb</vfs_File>
+            </Source_Editor>
+          </Child>
+        </Notebook>
+      </Pane>
+    </desktop>
+    <desktop perspective="Default">
+      <vfs_project >/tmp/tmpj_stzwqp/agc-first_parameter_has_out_mode/generate_output/fuzz_testing/fuzz_test.gpr</vfs_project>
+      <Learn_View >
+        <learn position=" 4.97854E+01%" />
+      </Learn_View>
+      <Pane width=" 1.00000E+02%" Orientation="ORIENTATION_HORIZONTAL">
+        <Notebook width=" 1.00233E+02%" Tabs="POS_TOP">
+          <Child Group=" 1" State="NORMAL">
+            <Source_Editor >
+              <project >/tmp/tmpj_stzwqp/agc-first_parameter_has_out_mode/generate_output/fuzz_testing/fuzz_test.gpr</project>
+              <Column_End >13</Column_End>
+              <Column >13</Column>
+              <Line >121</Line>
+              <vfs_File >/tmp/tmpj_stzwqp/agc-first_parameter_has_out_mode/generate_output/fuzz_testing/generated_src/gnatfuzz-fuzz_test_harness.adb</vfs_File>
+            </Source_Editor>
+          </Child>
+          <Child Raised="True" Focus="True" Group=" 1" State="NORMAL">
+            <Source_Editor >
+              <project >/tmp/tmpj_stzwqp/agc-first_parameter_has_out_mode/generate_output/fuzz_testing/fuzz_test.gpr</project>
+              <Column_End >1</Column_End>
+              <Column >1</Column>
+              <Line >1</Line>
+              <vfs_File >/tmp/tmpj_stzwqp/agc-first_parameter_has_out_mode/generate_output/fuzz_testing/generated_src/gnatfuzz-data_factory.ads</vfs_File>
+            </Source_Editor>
+          </Child>
+        </Notebook>
+      </Pane>
+    </desktop>
+    <desktop perspective="Default">
+      <vfs_project >/tmp/tmpstxb3jsc/agc-first_parameter_has_out_mode/generate_output/fuzz_testing/fuzz_test.gpr</vfs_project>
+      <Learn_View >
+        <learn position=" 4.97854E+01%" />
+      </Learn_View>
+      <Pane width=" 1.00000E+02%" Orientation="ORIENTATION_HORIZONTAL" />
+    </desktop>
+    <desktop perspective="Default">
+      <vfs_project >/tmp/tmplay6pqbk/agc-first_parameter_has_out_mode/generate_output/fuzz_testing/fuzz_test.gpr</vfs_project>
+      <Learn_View >
+        <learn position=" 4.97854E+01%" />
+      </Learn_View>
+      <Pane width=" 1.00000E+02%" Orientation="ORIENTATION_HORIZONTAL">
+        <Notebook width=" 1.00233E+02%" Tabs="POS_TOP">
+          <Child Group=" 1" State="NORMAL">
+            <Source_Editor >
+              <project >/tmp/tmplay6pqbk/agc-first_parameter_has_out_mode/generate_output/fuzz_testing/fuzz_test.gpr</project>
+              <Column_End >14</Column_End>
+              <Column >14</Column>
+              <Line >23</Line>
+              <vfs_File >/tmp/tmplay6pqbk/agc-first_parameter_has_out_mode/generate_output/fuzz_testing/generated_src/gnatfuzz-data_factory.adb</vfs_File>
+            </Source_Editor>
+          </Child>
+          <Child Raised="True" Focus="True" Group=" 1" State="NORMAL">
+            <Source_Editor >
+              <project >/tmp/tmplay6pqbk/agc-first_parameter_has_out_mode/generate_output/fuzz_testing/fuzz_test.gpr</project>
+              <Column_End >29</Column_End>
+              <Column >29</Column>
+              <Line >57</Line>
+              <vfs_File >/tmp/tmplay6pqbk/agc-first_parameter_has_out_mode/generate_output/fuzz_testing/generated_src/gnatfuzz-data_factory.ads</vfs_File>
+            </Source_Editor>
+          </Child>
+        </Notebook>
+      </Pane>
+    </desktop>
+    <desktop perspective="Default">
+      <vfs_project >/home/paul/Development/ancr/src/gnatfuzz/testsuite/tests/agc-first_parameter_has_out_mode/user_project.gpr</vfs_project>
+      <Learn_View >
+        <learn position=" 4.97854E+01%" />
+      </Learn_View>
+      <Pane width=" 1.00000E+02%" Orientation="ORIENTATION_HORIZONTAL">
+        <Notebook width=" 1.00233E+02%" Tabs="POS_TOP">
+          <Child Raised="True" Focus="True" Group=" 1" State="NORMAL">
+            <Source_Editor >
+              <project >/home/paul/Development/ancr/src/gnatfuzz/testsuite/tests/agc-first_parameter_has_out_mode/user_project.gpr</project>
+              <Column_End >1</Column_End>
+              <Column >1</Column>
+              <Line >9</Line>
+              <vfs_File >/home/paul/Development/ancr/src/gnatfuzz/testsuite/tests/agc-first_parameter_has_out_mode/src__system_under_test/system_under_test.ads</vfs_File>
+            </Source_Editor>
+          </Child>
+          <Child Group=" 1" State="NORMAL">
+            <Source_Editor >
+              <project >/home/paul/Development/ancr/src/gnatfuzz/testsuite/tests/agc-first_parameter_has_out_mode/user_project.gpr</project>
+              <Column_End >27</Column_End>
+              <Column >27</Column>
+              <Line >3</Line>
+              <vfs_File >/home/paul/Development/ancr/src/gnatfuzz/testsuite/tests/agc-first_parameter_has_out_mode/src__system_under_test/system_under_test.adb</vfs_File>
+            </Source_Editor>
+          </Child>
+        </Notebook>
+      </Pane>
+    </desktop>
+    <desktop perspective="Default">
+      <vfs_project >/tmp/tmpfsjileva/agc-first_parameter_has_out_mode/generate_output/fuzz_testing/fuzz_test.gpr</vfs_project>
+      <Learn_View >
+        <learn position=" 4.97854E+01%" />
+      </Learn_View>
+      <Pane width=" 1.00000E+02%" Orientation="ORIENTATION_HORIZONTAL">
+        <Notebook width=" 1.00233E+02%" Tabs="POS_TOP">
+          <Child Raised="True" Focus="True" Group=" 1" State="NORMAL">
+            <Source_Editor >
+              <project >/tmp/tmpfsjileva/agc-first_parameter_has_out_mode/generate_output/fuzz_testing/fuzz_test.gpr</project>
+              <Column_End >41</Column_End>
+              <Column >41</Column>
+              <Line >50</Line>
+              <vfs_File >/tmp/tmpfsjileva/agc-first_parameter_has_out_mode/generate_output/fuzz_testing/generated_src/gnatfuzz-data_factory.adb</vfs_File>
+            </Source_Editor>
+          </Child>
+        </Notebook>
+      </Pane>
+    </desktop>
+    <desktop perspective="Default">
+      <vfs_project >/tmp/tmpmq9ns_ll/global-default_corpus_gen_dir/output/fuzz_testing/fuzz_test.gpr</vfs_project>
+      <Learn_View >
+        <learn position=" 4.95652E+01%" />
+      </Learn_View>
+      <Pane width=" 1.00000E+02%" Orientation="ORIENTATION_HORIZONTAL">
+        <Notebook width=" 1.00467E+02%" Tabs="POS_TOP">
+          <Child Raised="True" Focus="True" Group=" 1" State="NORMAL">
+            <Source_Editor >
+              <project >/tmp/tmpmq9ns_ll/global-default_corpus_gen_dir/output/fuzz_testing/fuzz_test.gpr</project>
+              <Column_End >24</Column_End>
+              <Column >24</Column>
+              <Line >59</Line>
+              <vfs_File >/tmp/tmpmq9ns_ll/global-default_corpus_gen_dir/output/fuzz_testing/generated_src/gnatfuzz-data_factory.adb</vfs_File>
+            </Source_Editor>
+          </Child>
+          <Child Group=" 1" State="NORMAL">
+            <Source_Editor >
+              <project >/tmp/tmpmq9ns_ll/global-default_corpus_gen_dir/output/fuzz_testing/fuzz_test.gpr</project>
+              <Column_End >1</Column_End>
+              <Column >1</Column>
+              <Line >1</Line>
+              <vfs_File >/tmp/tmpmq9ns_ll/global-default_corpus_gen_dir/output/fuzz_testing/generated_src/gnatfuzz-data_factory.ads</vfs_File>
+            </Source_Editor>
+          </Child>
+        </Notebook>
+      </Pane>
+    </desktop>
+    <desktop perspective="Default">
+      <vfs_project >/tmp/tmpx45n53z8/agc-first_parameter_has_out_mode/generate_output/fuzz_testing/fuzz_test.gpr</vfs_project>
+      <Learn_View >
+        <learn position=" 4.95652E+01%" />
+      </Learn_View>
+      <Pane width=" 1.00000E+02%" Orientation="ORIENTATION_HORIZONTAL">
+        <Notebook width=" 1.00467E+02%" Tabs="POS_TOP">
+          <Child Raised="True" Focus="True" Group=" 1" State="NORMAL">
+            <Source_Editor >
+              <project >/tmp/tmpx45n53z8/agc-first_parameter_has_out_mode/generate_output/fuzz_testing/fuzz_test.gpr</project>
+              <Column_End >18</Column_End>
+              <Column >18</Column>
+              <Line >26</Line>
+              <vfs_File >/tmp/tmpx45n53z8/agc-first_parameter_has_out_mode/generate_output/fuzz_testing/generated_src/gnatfuzz-fuzz_test_harness.adb</vfs_File>
+            </Source_Editor>
+          </Child>
+          <Child Group=" 1" State="NORMAL">
+            <Source_Editor >
+              <project >/tmp/tmpx45n53z8/agc-first_parameter_has_out_mode/generate_output/fuzz_testing/fuzz_test.gpr</project>
+              <Column_End >54</Column_End>
+              <Column >54</Column>
+              <Line >35</Line>
+              <vfs_File >/tmp/tmpx45n53z8/agc-first_parameter_has_out_mode/generate_output/fuzz_testing/generated_src/gnatfuzz-data_factory.ads</vfs_File>
+            </Source_Editor>
+          </Child>
+        </Notebook>
+      </Pane>
+    </desktop>
+    <desktop perspective="Default">
+      <vfs_project >/tmp/tmpnjy81kis/agc-first_parameter_has_out_mode/generate_output/fuzz_testing/fuzz_test.gpr</vfs_project>
+      <Learn_View >
+        <learn position=" 4.95652E+01%" />
+      </Learn_View>
+      <Pane width=" 1.00000E+02%" Orientation="ORIENTATION_HORIZONTAL">
+        <Notebook width=" 1.00467E+02%" Tabs="POS_TOP">
+          <Child Raised="True" Focus="True" Group=" 1" State="NORMAL">
+            <Source_Editor >
+              <project >/tmp/tmpnjy81kis/agc-first_parameter_has_out_mode/generate_output/fuzz_testing/fuzz_test.gpr</project>
+              <Column_End >23</Column_End>
+              <Column >23</Column>
+              <Line >26</Line>
+              <vfs_File >/tmp/tmpnjy81kis/agc-first_parameter_has_out_mode/generate_output/fuzz_testing/generated_src/gnatfuzz-fuzz_test_harness.adb</vfs_File>
+            </Source_Editor>
+          </Child>
+        </Notebook>
+      </Pane>
+    </desktop>
+    <desktop perspective="Default">
+      <vfs_project >/tmp/tmp1p0vn98e/agc-first_parameter_has_out_mode/generate_output/fuzz_testing/fuzz_test.gpr</vfs_project>
+      <Learn_View >
+        <learn position=" 4.95652E+01%" />
+      </Learn_View>
+      <Pane width=" 1.00000E+02%" Orientation="ORIENTATION_HORIZONTAL" />
+    </desktop>
+    <desktop perspective="Default">
+      <vfs_project >/tmp/tmpane5s8cq/agc-first_parameter_has_out_mode/generate_output/fuzz_testing/fuzz_test.gpr</vfs_project>
+      <Learn_View >
+        <learn position=" 7.50725E+01%" />
+      </Learn_View>
+      <Pane width=" 1.00000E+02%" Orientation="ORIENTATION_HORIZONTAL" />
+    </desktop>
+    <desktop perspective="Default">
+      <vfs_project >/home/paul/Development/ancr/src/gnatfuzz/share/examples/access_types/user_project.gpr</vfs_project>
+      <Learn_View >
+        <learn position=" 7.61087E+01%" />
+      </Learn_View>
+      <Pane width=" 1.00000E+02%" Orientation="ORIENTATION_HORIZONTAL">
+        <Notebook width=" 1.00145E+02%" Tabs="POS_TOP">
+          <Child Raised="True" Focus="True" Group=" 1" State="NORMAL">
+            <Source_Editor >
+              <project >/home/paul/Development/ancr/src/gnatfuzz/share/examples/access_types/user_project.gpr</project>
+              <Column_End >15</Column_End>
+              <Column >15</Column>
+              <Line >26</Line>
+              <vfs_File >/home/paul/Development/ancr/src/gnatfuzz/share/examples/access_types/src__access_types_example/access_type_example.ads</vfs_File>
+            </Source_Editor>
+          </Child>
+          <Child Group=" 1" State="NORMAL">
+            <Source_Editor >
+              <project >/home/paul/Development/ancr/src/gnatfuzz/share/examples/access_types/user_project.gpr</project>
+              <Column_End >41</Column_End>
+              <Column >41</Column>
+              <Line >24</Line>
+              <vfs_File >/home/paul/Development/ancr/src/gnatfuzz/share/examples/access_types/src__access_types_example/access_type_example.adb</vfs_File>
+            </Source_Editor>
+          </Child>
+        </Notebook>
+      </Pane>
+    </desktop>
+    <desktop perspective="Default">
+      <vfs_project >/home/paul/Development/ancr/src/gnatfuzz/share/examples/access_types/output3/fuzz_testing/fuzz_test.gpr</vfs_project>
+      <Learn_View >
+        <learn position=" 7.52504E+01%" />
+      </Learn_View>
+      <Pane width=" 1.00000E+02%" Orientation="ORIENTATION_HORIZONTAL">
+        <Notebook width=" 1.00216E+02%" Tabs="POS_TOP">
+          <Child Group=" 1" State="NORMAL">
+            <Source_Editor >
+              <project >/home/paul/Development/ancr/src/gnatfuzz/share/examples/access_types/output3/fuzz_testing/fuzz_test.gpr</project>
+              <Column_End >51</Column_End>
+              <Column >51</Column>
+              <Line >25</Line>
+              <vfs_File >/home/paul/Development/ancr/src/gnatfuzz/share/examples/access_types/output3/fuzz_testing/user_configuration/class_a_access_specialized_data_marshal.ads</vfs_File>
+            </Source_Editor>
+          </Child>
+          <Child Group=" 1" State="NORMAL">
+            <Source_Editor >
+              <project >/home/paul/Development/ancr/src/gnatfuzz/share/examples/access_types/output3/fuzz_testing/fuzz_test.gpr</project>
+              <Column_End >17</Column_End>
+              <Column >17</Column>
+              <Line >93</Line>
+              <vfs_File >/home/paul/Development/ancr/src/gnatfuzz/share/examples/access_types/output3/fuzz_testing/generated_src/gnatfuzz-data_factory.adb</vfs_File>
+            </Source_Editor>
+          </Child>
+          <Child Group=" 1" State="NORMAL">
+            <Source_Editor >
+              <project >/home/paul/Development/ancr/src/gnatfuzz/share/examples/access_types/output3/fuzz_testing/fuzz_test.gpr</project>
+              <Column_End >25</Column_End>
+              <Column >25</Column>
+              <Line >35</Line>
+              <vfs_File >/home/paul/Development/ancr/src/gnatfuzz/share/examples/access_types/output3/fuzz_testing/generated_src/gnatfuzz-data_factory.ads</vfs_File>
+            </Source_Editor>
+          </Child>
+          <Child Raised="True" Focus="True" Group=" 1" State="NORMAL">
+            <Source_Editor >
+              <project >/home/paul/Development/ancr/src/gnatfuzz/share/examples/access_types/output3/gnatfuzz_shared/modules.gpr</project>
+              <Column_End >64</Column_End>
+              <Column >64</Column>
+              <Line >86</Line>
+              <vfs_File >/home/paul/Development/ancr/src/gnatfuzz/share/examples/access_types/output3/gnatfuzz_shared/gnatfuzz_runtime_library/gnatfuzz-afl_seed_data_chunks.ads</vfs_File>
+            </Source_Editor>
+          </Child>
+        </Notebook>
+      </Pane>
+    </desktop>
+    <desktop perspective="Default">
+      <vfs_project >/home/paul/Development/ancr/src/gnatfuzz/share/examples/access_types/solution/subprogram_wrapper/output2/fuzz_testing/fuzz_test.gpr</vfs_project>
+      <Learn_View >
+        <learn position=" 5.00715E+01%" />
+      </Learn_View>
+      <Pane width=" 1.00000E+02%" Orientation="ORIENTATION_HORIZONTAL">
+        <Notebook width=" 1.00145E+02%" Tabs="POS_TOP">
+          <Child Group=" 1" State="NORMAL">
+            <Source_Editor >
+              <project >/home/paul/Development/ancr/src/gnatfuzz/share/examples/access_types/solution/subprogram_wrapper/output2/fuzz_testing/fuzz_test.gpr</project>
+              <Column_End >6</Column_End>
+              <Column >6</Column>
+              <Line >19</Line>
+              <vfs_File >/home/paul/Development/ancr/src/gnatfuzz/share/examples/access_types/solution/subprogram_wrapper/output2/fuzz_testing/generated_src/gnatfuzz-fuzz_test_harness.adb</vfs_File>
+            </Source_Editor>
+          </Child>
+          <Child Group=" 1" State="NORMAL">
+            <Source_Editor >
+              <project >/home/paul/Development/ancr/src/gnatfuzz/share/examples/access_types/user_project.gpr</project>
+              <Column_End >27</Column_End>
+              <Column >27</Column>
+              <Line >33</Line>
+              <vfs_File >/home/paul/Development/ancr/src/gnatfuzz/share/examples/access_types/src__access_types_example/access_type_example.ads</vfs_File>
+            </Source_Editor>
+          </Child>
+          <Child Group=" 1" State="NORMAL">
+            <Source_Editor >
+              <project >/home/paul/Development/ancr/src/gnatfuzz/share/examples/access_types/solution/subprogram_wrapper/output2/gnatfuzz_shared/modules.gpr</project>
+              <Column_End >43</Column_End>
+              <Column >43</Column>
+              <Line >39</Line>
+              <vfs_File >/home/paul/Development/ancr/src/gnatfuzz/share/examples/access_types/solution/subprogram_wrapper/output2/gnatfuzz_shared/gnatfuzz_runtime_library/gnatfuzz-afl_seed_data_chunks.ads</vfs_File>
+            </Source_Editor>
+          </Child>
+          <Child Raised="True" Focus="True" Group=" 1" State="NORMAL">
+            <Source_Editor >
+              <project >/home/paul/Development/ancr/src/gnatfuzz/share/examples/access_types/solution/subprogram_wrapper/output2/gnatfuzz_shared/modules.gpr</project>
+              <Column_End >43</Column_End>
+              <Column >43</Column>
+              <Line >28</Line>
+              <vfs_File >/home/paul/Development/ancr/src/gnatfuzz/share/examples/access_types/solution/subprogram_wrapper/output2/gnatfuzz_shared/gnatfuzz_runtime_library/gnatfuzz-specialized_data_marshal.ads</vfs_File>
+            </Source_Editor>
+          </Child>
+        </Notebook>
+      </Pane>
+    </desktop>
+    <desktop perspective="Default">
+      <vfs_project >/home/paul/Development/ancr/src/gnatfuzz/share/examples/access_types/solution/subprogram_wrapper/output/fuzz_testing/fuzz_test.gpr</vfs_project>
+      <Learn_View >
+        <learn position=" 7.55365E+01%" />
+      </Learn_View>
+      <Pane width=" 1.00000E+02%" Orientation="ORIENTATION_HORIZONTAL">
+        <Notebook width=" 1.00145E+02%" Tabs="POS_TOP">
+          <Child Group=" 1" State="NORMAL">
+            <Source_Editor >
+              <project >/home/paul/Development/ancr/src/gnatfuzz/share/examples/access_types/solution/subprogram_wrapper/output/fuzz_testing/fuzz_test.gpr</project>
+              <Column_End >7</Column_End>
+              <Column >7</Column>
+              <Line >52</Line>
+              <vfs_File >/home/paul/Development/ancr/src/gnatfuzz/share/examples/access_types/solution/subprogram_wrapper/output/fuzz_testing/generated_src/gnatfuzz-data_factory.adb</vfs_File>
+            </Source_Editor>
+          </Child>
+          <Child Group=" 1" State="NORMAL">
+            <Source_Editor >
+              <project >/home/paul/Development/ancr/src/gnatfuzz/share/examples/access_types/solution/subprogram_wrapper/output/fuzz_testing/fuzz_test.gpr</project>
+              <Column_End >67</Column_End>
+              <Column >67</Column>
+              <Line >25</Line>
+              <vfs_File >/home/paul/Development/ancr/src/gnatfuzz/share/examples/access_types/solution/subprogram_wrapper/output/fuzz_testing/generated_src/gnatfuzz-data_factory.ads</vfs_File>
+            </Source_Editor>
+          </Child>
+          <Child Raised="True" Focus="True" Group=" 1" State="NORMAL">
+            <Source_Editor >
+              <project >/home/paul/Development/ancr/src/gnatfuzz/share/examples/access_types/user_project.gpr</project>
+              <Column_End >26</Column_End>
+              <Column >26</Column>
+              <Line >22</Line>
+              <vfs_File >/home/paul/Development/ancr/src/gnatfuzz/share/examples/access_types/src__access_types_example/access_type_example.ads</vfs_File>
+            </Source_Editor>
+          </Child>
+          <Child Group=" 1" State="NORMAL">
+            <Source_Editor >
+              <project >/home/paul/Development/ancr/src/gnatfuzz/share/examples/access_types/solution/subprogram_wrapper/output/gnatfuzz_shared/modules.gpr</project>
+              <Column_End >35</Column_End>
+              <Column >35</Column>
+              <Line >39</Line>
+              <vfs_File >/home/paul/Development/ancr/src/gnatfuzz/share/examples/access_types/solution/subprogram_wrapper/output/gnatfuzz_shared/gnatfuzz_runtime_library/gnatfuzz-afl_seed_data_chunks.ads</vfs_File>
+            </Source_Editor>
+          </Child>
+          <Child Group=" 1" State="NORMAL">
+            <Source_Editor >
+              <project >/home/paul/Development/ancr/src/gnatfuzz/share/examples/access_types/user_project.gpr</project>
+              <Column_End >1</Column_End>
+              <Column >1</Column>
+              <Line >30</Line>
+              <vfs_File >/home/paul/Development/ancr/src/gnatfuzz/share/examples/access_types/src__access_types_example/access_type_example.adb</vfs_File>
+            </Source_Editor>
+          </Child>
+        </Notebook>
+      </Pane>
+    </desktop>
+  </desktops>
+</GNAT_Studio>
