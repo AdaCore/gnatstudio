@@ -516,9 +516,6 @@ package body Project_Properties is
    procedure On_Selection_Changed (Editor : access GObject_Record'Class);
    --  Called when a new page is selected by the user
 
-   function Paths_Are_Relative (Project : Project_Type) return Boolean;
-   --  Return True if the paths in the project should be relative paths
-
    function Select_Files_Or_Directories
      (Toplevel       : access Gtk_Window_Record'Class;
       Kernel         : not null access Kernel_Handle_Record'Class;

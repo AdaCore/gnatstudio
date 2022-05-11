@@ -18,7 +18,10 @@
 with Ada.Strings.Unbounded;     use Ada.Strings.Unbounded;
 with Ada.Unchecked_Deallocation;
 with GNAT.Strings;              use GNAT.Strings;
+
+with GNATCOLL.Arg_Lists;        use GNATCOLL.Arg_Lists;
 with GNATCOLL.Utils;            use GNATCOLL.Utils;
+with GNATCOLL.Traces;           use GNATCOLL.Traces;
 
 with Glib;                      use Glib;
 
@@ -30,8 +33,6 @@ with Gtk.Widget;                use Gtk.Widget;
 
 with Gtkada.Handlers;           use Gtkada.Handlers;
 
-with Commands;                  use Commands;
-with Dialog_Utils;              use Dialog_Utils;
 with GPS.Intl;                  use GPS.Intl;
 with GPS.Kernel.Contexts;       use GPS.Kernel.Contexts;
 with GPS.Kernel.Hooks;          use GPS.Kernel.Hooks;
@@ -39,11 +40,13 @@ with GPS.Kernel.MDI;            use GPS.Kernel.MDI;
 with GPS.Kernel.Preferences;    use GPS.Kernel.Preferences;
 with GPS.Kernel.Project;        use GPS.Kernel.Project;
 with GPS.Main_Window;           use GPS.Main_Window;
+
+with Commands;                  use Commands;
+with Dialog_Utils;              use Dialog_Utils;
 with Scenario_Selectors;        use Scenario_Selectors;
 with Switches_Chooser.Gtkada;   use Switches_Chooser, Switches_Chooser.Gtkada;
-with GNATCOLL.Traces;           use GNATCOLL.Traces;
 with Histories;                 use Histories;
-with GNATCOLL.Arg_Lists;        use GNATCOLL.Arg_Lists;
+with Project_Properties;        use Project_Properties;
 
 package body Switches_Editors is
 
@@ -259,6 +262,82 @@ package body Switches_Editors is
          declare
             Args : String_List_Access :=
               Self.Switches.Get_Command_Line (Expanded => False);
+
+            -- Correct_Paths --
+            procedure Correct_Paths;
+            --  Converts absolute file path to relative when Relative_Paths
+            --  preference is checked.
+
+            -------------------
+            -- Correct_Paths --
+            -------------------
+
+            procedure Correct_Paths is
+               Conf      : Switches_Editor_Config;
+               New_Value : Ada.Strings.Unbounded.Unbounded_String;
+               F         : Virtual_File;
+
+               function Is_Path
+                 (Description : Switch_Description) return Boolean;
+               --  Returns True when Switch is a path to a directory or file
+
+               -------------
+               -- Is_Path --
+               -------------
+
+               function Is_Path
+                 (Description : Switch_Description) return Boolean is
+               begin
+                  return Description.Get_Type = Switch_Field
+                    and then (Description.Is_Field_As_File
+                              or else Description.Is_Field_As_Directory);
+               end Is_Path;
+
+            begin
+               Conf := Self.Switches.Get_Config;
+               for Index in 0 .. Natural (Conf.Get_Switches_Length) - 1 loop
+                  if Is_Path (Conf.Get_Switches_Element (Natural (Index))) then
+                     declare
+                        Switch : constant String :=
+                          Conf.Get_Switches_Element
+                            (Natural (Index)).Get_Switch &
+                            Conf.Get_Switches_Element
+                          (Natural (Index)).Get_Separator;
+
+                     begin
+                        for Value of Args.all loop
+                           if Starts_With (Value.all, Switch) then
+                              begin
+                                 F := Create_From_UTF8
+                                   (Value.all
+                                      (Switch'Length + 1 .. Value.all'Last));
+
+                                 if Is_Absolute_Path (F) then
+                                    New_Value := To_Unbounded_String
+                                      (Replace
+                                         (+Relative_Path
+                                              (F, Dir (Project.Project_Path)),
+                                          "\", "/"));
+
+                                    Free (Value);
+                                    Value := new String'
+                                      (Switch & To_String (New_Value));
+                                 end if;
+                              exception
+                                 when E : others =>
+                                    --  Defensive code to prevent problems
+                                    --  when we can't convert string to file.
+                                    --  In this case we just skip such switch
+                                    Trace
+                                      (Me, E, "Can't process: " & Value.all);
+                              end;
+                           end if;
+                        end loop;
+                     end;
+                  end if;
+               end loop;
+            end Correct_Paths;
+
          begin
             if Project = No_Project then
                Is_Default_Value := False;
@@ -291,7 +370,8 @@ package body Switches_Editors is
                   declare
                      Default_Args : GNAT.Strings.String_List :=
                        Get_Switches
-                         (Project, Self.Tool.all,
+                         (Project,
+                          Self.Tool.all,
                           File              => File_Name,
                           Use_Initial_Value => Is_Default_Value);
                   begin
@@ -399,6 +479,10 @@ package body Switches_Editors is
                          & To_String (Self.Tool.Project_Package) & "."
                          & To_String (Self.Tool.Project_Attribute)
                          & "' when we had none");
+                  if Paths_Are_Relative (Project) then
+                     Correct_Paths;
+                  end if;
+
                   Project.Set_Attribute
                     (Scenario  => Scenario_Variables,
                      Attribute =>
