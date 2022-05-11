@@ -2390,9 +2390,9 @@ package body Codefix.GNAT_Parser is
    begin
       Solutions :=
         Unexpected
-          (Current_Text,
-           Message,
-           To_Unbounded_String
+          (Current_Text      => Current_Text,
+           Message           => Message,
+           String_Unexpected => To_Unbounded_String
              (Get_Message (Message) (Matches (1).First .. Matches (1).Last)));
    end Fix;
 
@@ -4140,7 +4140,6 @@ package body Codefix.GNAT_Parser is
       if Length (Solutions) = 0 then
          raise Uncorrectable_Message;
       end if;
-
    end Fix;
 
    ----------------
