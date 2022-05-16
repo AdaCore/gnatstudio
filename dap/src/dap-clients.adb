@@ -15,10 +15,19 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
+with Ada.Strings.Unbounded;      use Ada.Strings.Unbounded;
 with Ada.Unchecked_Deallocation;
 
-with GNATCOLL.Traces;       use GNATCOLL.Traces;
+with GNAT.Directory_Operations;  use GNAT.Directory_Operations;
+with GNAT.OS_Lib;
+with GNAT.Strings;
+
+with GNATCOLL.Traces;            use GNATCOLL.Traces;
+with GNATCOLL.Utils;
 with Spawn.String_Vectors;
+
+with Gtkada.Dialogs;
+with Gtkada.MDI;                 use Gtkada.MDI;
 
 with VSS.JSON.Pull_Readers.Simple;
 with VSS.Stream_Element_Vectors.Conversions;
@@ -27,7 +36,15 @@ with VSS.Text_Streams.Memory_UTF8_Input;
 with VSS.Text_Streams.Memory_UTF8_Output;
 with VSS.JSON.Push_Writers;
 
+with GPS.Default_Styles;
+with GPS.Editors;                  use GPS.Editors;
+with GPS.Editors.GtkAda;           use GPS.Editors.GtkAda;
+with GPS.Editors.Line_Information; use GPS.Editors.Line_Information;
+with GPS.Kernel;                   use GPS.Kernel;
 with GPS.Kernel.Hooks;
+with GPS.Kernel.Messages;          use GPS.Kernel.Messages;
+with GPS.Kernel.Messages.Simple;   use GPS.Kernel.Messages.Simple;
+with GPS.Kernel.Project;
 
 with LSP.Types;
 with LSP.JSON_Streams;
@@ -41,11 +58,19 @@ with DAP.Tools;
 with DAP.Tools.Inputs;
 with DAP.Views;
 
+with GUI_Utils;
+with Remote;
+with Language_Handlers;          use Language_Handlers;
+
 package body DAP.Clients is
 
    Me : constant Trace_Handle := Create ("GPS.DAP.Clients", On);
 
    Node_Binary : constant String := "/usr/bin/node";
+
+   Debugger_Messages_Category : constant String := "debugger-current-line";
+   Current_Line_Pixbuf        : constant Unbounded_String :=
+     To_Unbounded_String ("gps-emblem-debugger-current");
 
    procedure Free is new Ada.Unchecked_Deallocation
      (DAP.Modules.Breakpoint_Managers.DAP_Client_Breakpoint_Manager'Class,
@@ -192,14 +217,13 @@ package body DAP.Clients is
      (Self   : in out DAP_Client;
       Status : Debugger_Status_Kind)
    is
-      use DAP.Modules.Breakpoint_Managers;
       use type Generic_Views.Abstract_View_Access;
    begin
       if Self.Status /= Terminating then
          Self.Status := Status;
 
-         if Self.Breakpoints /= null then
-            Self.Breakpoints.Status_Changed (Self.Status);
+         if Self.Status /= Stopped then
+            Self.Unhighlight_Current_Line;
          end if;
 
          if Self.Breakpoints_View /= null then
@@ -299,6 +323,17 @@ package body DAP.Clients is
       Self.Breakpoints_View := View;
    end Set_Breakpoints_View;
 
+   ----------------------
+   -- Set_Source_Files --
+   ----------------------
+
+   procedure Set_Source_Files
+     (Self         : in out DAP_Client;
+      Source_Files : VSS.String_Vectors.Virtual_String_Vector) is
+   begin
+      Self.Source_Files := Source_Files;
+   end Set_Source_Files;
+
    --------------------
    -- Get_Request_ID --
    --------------------
@@ -390,15 +425,245 @@ package body DAP.Clients is
       DAP.Module.Finished (Self.Id);
    end On_Finished;
 
+   ----------------------------------
+   -- Load_Project_From_Executable --
+   ----------------------------------
+
+   procedure Load_Project_From_Executable (Self : in out DAP_Client) is
+      use GNAT.Strings;
+      use GNATCOLL.Projects;
+      use GNATCOLL.VFS;
+      use Gtkada.Dialogs;
+      use GPS.Kernel.Project;
+
+      Project : GNATCOLL.Projects.Project_Type := Get_Project (Self.Kernel);
+   begin
+      --  Do nothing unless the current project was already generated from an
+      --  executable.
+
+      if Get_Registry (Self.Kernel).Tree.Status /= From_Executable
+      then
+         return;
+      end if;
+
+      if Self.File /= No_File and then not Is_Regular_File (Self.File) then
+         declare
+            Buttons : Message_Dialog_Buttons;
+            pragma Unreferenced (Buttons);
+         begin
+            Buttons := GUI_Utils.GPS_Message_Dialog
+              (Msg         =>
+                 "The executable specified with" &
+                   " --debug does not exist on disk",
+               Dialog_Type => Error,
+               Buttons     => Button_OK,
+               Title       => "Executable not found",
+               Parent      => GPS.Kernel.Get_Main_Window (Self.Kernel));
+         end;
+      end if;
+
+      declare
+         List : String_List_Access := Project.Attribute_Value (Main_Attribute);
+      begin
+         if List /= null then
+            for L in List'Range loop
+               if Equal (+List (L).all, Full_Name (Self.File)) then
+                  Free (List);
+                  return;
+               end if;
+            end loop;
+            Free (List);
+         end if;
+      end;
+
+      --  No handling of desktop is done here, we want to leave all windows
+      --  as-is.
+
+      Get_Registry (Self.Kernel).Tree.Unload;
+
+      --  Create an empty project, and we'll add properties to it
+
+      if Self.File /= GNATCOLL.VFS.No_File then
+         Get_Registry (Self.Kernel).Tree.Load_Empty_Project
+           (Get_Registry (Self.Kernel).Environment,
+            Name           => "debugger_" & (+Base_Name (Self.File)),
+            Recompute_View => False);
+      else
+         Get_Registry (Self.Kernel).Tree.Load_Empty_Project
+           (Get_Registry (Self.Kernel).Environment,
+            Name           => "debugger_no_file",
+            Recompute_View => False);
+      end if;
+
+      Project := Get_Registry (Self.Kernel).Tree.Root_Project;
+
+      declare
+         Bases       : GNAT.OS_Lib.Argument_List
+           (1 .. Self.Source_Files.Length);
+         Bases_Index : Natural := Bases'First;
+         Dirs        : GNAT.OS_Lib.Argument_List
+           (1 .. Self.Source_Files.Length);
+         Dirs_Index  : Natural := Dirs'First;
+         Main        : GNAT.OS_Lib.Argument_List (1 .. 1);
+         Langs       : GNAT.OS_Lib.Argument_List
+           (1 .. Self.Source_Files.Length);
+         Lang_Index  : Natural := Langs'First;
+
+      begin
+         --  Source_Files, Source_Dirs & Languages
+
+         for L in 1 .. Self.Source_Files.Length loop
+            declare
+               Remote_File : constant Virtual_File :=
+                 Create_From_Base
+                   (+VSS.Strings.Conversions.To_UTF_8_String
+                      (Self.Source_Files.Element (L)),
+                    Dir_Name (Self.File),
+                    Remote.Get_Nickname (Remote.Debug_Server));
+               Local_File  : constant Virtual_File := To_Local (Remote_File);
+               Dir         : constant Virtual_File := Local_File.Dir;
+               Base        : constant Filesystem_String :=
+                 Base_Name (Local_File);
+               Lang        : constant String :=
+                 Get_Language_From_File
+                   (GPS.Kernel.Get_Language_Handler (Self.Kernel),
+                    Local_File);
+               Found       : Boolean;
+
+            begin
+               Found := False;
+
+               if Is_Directory (Dir) then
+                  for D in Dirs'First .. Dirs_Index - 1 loop
+                     if Equal (+Dirs (D).all, Dir.Full_Name) then
+                        Found := True;
+                        exit;
+                     end if;
+                  end loop;
+
+                  if not Found then
+                     Dirs (Dirs_Index) := new String'(+Dir.Full_Name);
+                     Dirs_Index := Dirs_Index + 1;
+                  end if;
+
+                  Found := False;
+                  for J in Bases'First .. Bases_Index - 1 loop
+                     if Equal (+Bases (J).all, Base) then
+                        Found := True;
+                        exit;
+                     end if;
+                  end loop;
+
+                  if not Found then
+                     Bases (Bases_Index) := new String'
+                       (Base_Name
+                          (VSS.Strings.Conversions.To_UTF_8_String
+                               (Self.Source_Files.Element (L))));
+                     Bases_Index := Bases_Index + 1;
+                  end if;
+
+                  Found := False;
+                  if Lang /= "" then
+                     for La in Langs'First .. Lang_Index - 1 loop
+                        if Langs (La).all = Lang then
+                           Found := True;
+                           exit;
+                        end if;
+                     end loop;
+
+                     if not Found then
+                        Langs (Lang_Index) := new String'(Lang);
+                        Lang_Index := Lang_Index + 1;
+                     end if;
+                  end if;
+               end if;
+            end;
+         end loop;
+
+         GNATCOLL.Traces.Trace (Me, "Setting Source_Dirs:");
+         for D in Dirs'First .. Dirs_Index - 1 loop
+            GNATCOLL.Traces.Trace (Me, "   " & Dirs (D).all);
+         end loop;
+
+         Project.Set_Attribute
+           (Attribute          => Source_Dirs_Attribute,
+            Values             => Dirs (Dirs'First .. Dirs_Index - 1));
+         GNATCOLL.Utils.Free (Dirs);
+
+         GNATCOLL.Traces.Trace (Me, "Setting Source_Files:");
+         for B in Bases'First .. Bases_Index - 1 loop
+            GNATCOLL.Traces.Trace (Me, "   " & Bases (B).all);
+         end loop;
+
+         Project.Set_Attribute
+           (Attribute          => Source_Files_Attribute,
+            Values             => Bases (Bases'First .. Bases_Index - 1));
+         GNATCOLL.Utils.Free (Bases);
+
+         GNATCOLL.Traces.Trace (Me, "Setting Languages:");
+         for L in Langs'First .. Lang_Index - 1 loop
+            GNATCOLL.Traces.Trace (Me, "   " & Langs (L).all);
+         end loop;
+
+         if Lang_Index = Langs'First then
+            Project.Set_Attribute
+              (Scenario  => All_Scenarios,
+               Attribute => Languages_Attribute,
+               Values    =>
+                 (new String'("ada"), new String'("c"), new String'("c++")));
+         else
+            Project.Set_Attribute
+              (Attribute          => Languages_Attribute,
+               Values             => Langs (Langs'First .. Lang_Index - 1));
+         end if;
+
+         GNATCOLL.Utils.Free (Langs);
+
+         --  Object_Dir, Exec_Dir, Main
+
+         if Self.File /= GNATCOLL.VFS.No_File then
+            Project.Set_Attribute
+              (Attribute          => Obj_Dir_Attribute,
+               Value              => +Dir_Name (Self.File));
+            Project.Set_Attribute
+              (Attribute          => Exec_Dir_Attribute,
+               Value              => +Dir_Name (Self.File));
+
+            Main (Main'First) := new String'(+Full_Name (Self.File));
+            Project.Set_Attribute
+              (Attribute          => Main_Attribute,
+               Values             => Main);
+            GNATCOLL.Utils.Free (Main);
+         end if;
+      end;
+
+      --  Is the information for this executable already cached? If yes,
+      --  we simply reuse it to avoid the need to interact with the debugger.
+
+      Project.Set_Modified (False);
+      Get_Registry (Self.Kernel).Tree.Set_Status (From_Executable);
+      GPS.Kernel.Hooks.Project_Changed_Hook.Run (Self.Kernel);
+      Recompute_View (Self.Kernel);
+   end Load_Project_From_Executable;
+
    -----------------
    -- On_Launched --
    -----------------
 
    procedure On_Launched (Self : in out DAP_Client) is
    begin
+      if Self.Source_Files.Is_Empty then
+         Self.Load_Project_From_Executable;
+      end if;
+
+      --  Show Main file when 'info line' command is in the protocol
+
       Self.Breakpoints := new DAP.Modules.Breakpoint_Managers.
         DAP_Client_Breakpoint_Manager (Self.Kernel, Self.This);
       DAP.Modules.Breakpoint_Managers.Initialize (Self.Breakpoints);
+
+      GPS.Kernel.Hooks.Debugger_Started_Hook.Run (Self.Kernel, null);
+      Self.Kernel.Refresh_Context;
    end On_Launched;
 
    --------------------
@@ -561,8 +826,6 @@ package body DAP.Clients is
                   end;
 
                else
-                  declare
-                     use type GPS.Kernel.Kernel_Handle;
                   begin
                      if Request.Kernel = null
                        or else not Request.Kernel.Is_In_Destruction
@@ -593,6 +856,22 @@ package body DAP.Clients is
       end if;
    end On_Raw_Message;
 
+   --------------------
+   -- Get_StackTrace --
+   --------------------
+
+   procedure Get_StackTrace
+     (Self      : in out DAP_Client;
+      Thread_Id : Integer)
+   is
+      Req : StackTrace_Request_Access :=
+        new StackTrace_Request (Self.Kernel);
+   begin
+      Req.Client := Self.This;
+      Req.Parameters.arguments.threadId := Thread_Id;
+      Self.Enqueue (DAP.Requests.DAP_Request_Access (Req));
+   end Get_StackTrace;
+
    -------------------
    -- Process_Event --
    -------------------
@@ -604,18 +883,6 @@ package body DAP.Clients is
    is
       use VSS.Strings;
       use DAP.Tools.Enum;
-
-      -- Get_StackTrace --
-
-      procedure Get_StackTrace (Id : Integer);
-      procedure Get_StackTrace (Id : Integer) is
-         Req : StackTrace_Request_Access :=
-           new StackTrace_Request (Self.Kernel);
-      begin
-         Req.Client := Self.This;
-         Req.Parameters.arguments.threadId := Id;
-         Self.Enqueue (DAP.Requests.DAP_Request_Access (Req));
-      end Get_StackTrace;
 
       Success : Boolean := True;
    begin
@@ -675,13 +942,13 @@ package body DAP.Clients is
                if Self.Stopped_Line = 0
                  and then stop.a_body.threadId.Is_Set
                then
-                  Get_StackTrace (stop.a_body.threadId.Value);
+                  Self.Get_StackTrace (stop.a_body.threadId.Value);
                end if;
 
             elsif stop.a_body.reason = step
               and then stop.a_body.threadId.Is_Set
             then
-               Get_StackTrace (stop.a_body.threadId.Value);
+               Self.Get_StackTrace (stop.a_body.threadId.Value);
 
             else
                Self.Kernel.Get_Messages_Window.Insert_Error
@@ -729,8 +996,7 @@ package body DAP.Clients is
                   (Frame.source.Value.path)));
                Self.Client.Stopped_Line := Frame.line;
 
-               Self.Client.Breakpoints.On_Location_Changed
-                 (Self.Client.Stopped_File, Self.Client.Stopped_Line);
+               Self.Client.On_Location_Changed;
 
                if Self.Client.Breakpoints_View /= null then
                   DAP.Views.View_Access
@@ -741,6 +1007,93 @@ package body DAP.Clients is
          end;
       end if;
    end On_Result_Message;
+
+   -------------------------
+   -- On_Location_Changed --
+   -------------------------
+
+   procedure On_Location_Changed
+     (Self : in out DAP_Client) is
+   begin
+      Self.Highlight_Current_File_And_Line
+        (Self.Stopped_File, Self.Stopped_Line);
+   end On_Location_Changed;
+
+   -------------------------------------
+   -- Highlight_Current_File_And_Line --
+   -------------------------------------
+
+   procedure Highlight_Current_File_And_Line
+     (Self  : in out DAP_Client;
+      File  : GNATCOLL.VFS.Virtual_File;
+      Line  : Integer)
+   is
+      Msg    : Simple_Message_Access;
+      Action : GPS.Editors.Line_Information.Line_Information_Access;
+   begin
+      Self.Stopped_File := File;
+      Self.Stopped_Line := Line;
+
+      Self.Unhighlight_Current_Line;
+
+      Msg := Create_Simple_Message
+        (Get_Messages_Container (Self.Kernel),
+         Category                 =>
+           Debugger_Messages_Category,
+         File                     => File,
+         Line                     => Line,
+         Column                   => 1,
+         Text                     => "",
+         Importance               => Unspecified,
+         Flags                    => GPS.Kernel.Messages.Sides_Only,
+         Allow_Auto_Jump_To_First => False);
+
+      Msg.Set_Highlighting
+        (GPS.Default_Styles.Debugger_Current_Line_Style,
+         Highlight_Whole_Line);
+
+      Action := new Line_Information_Record'
+        (Text         => Null_Unbounded_String,
+         Tooltip_Text =>
+           To_Unbounded_String ("Current line in debugger"),
+         Image        => Current_Line_Pixbuf,
+         others       => <>);
+      Msg.Set_Action (Action);
+
+      --  Jump to current location
+      declare
+         Buffer : constant Editor_Buffer'Class :=
+           Self.Kernel.Get_Buffer_Factory.Get
+             (File,
+              Open_Buffer   => True,
+              Focus         => True,
+              Unlocked_Only => True);
+      begin
+         Buffer.Current_View.Cursor_Goto
+           (Location   => Buffer.New_Location_At_Line (Line),
+            Raise_View => True);
+
+         --  raise the source editor without giving a focus
+         declare
+            C : constant MDI_Child := GPS.Editors.GtkAda.Get_MDI_Child
+              (Buffer.Current_View);
+         begin
+            if C /= null then
+               Raise_Child (C, False);
+            end if;
+         end;
+      end;
+   end Highlight_Current_File_And_Line;
+
+   ------------------------------
+   -- Unhighlight_Current_Line --
+   ------------------------------
+
+   procedure Unhighlight_Current_Line (Self : in out DAP_Client) is
+   begin
+      GPS.Kernel.Get_Messages_Container (Self.Kernel).Remove_Category
+        (Debugger_Messages_Category, GPS.Kernel.Messages.Sides_Only);
+   end Unhighlight_Current_Line;
 
    ----------------
    -- On_Started --

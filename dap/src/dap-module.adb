@@ -231,6 +231,8 @@ package body DAP.Module is
 
       if DAP_Module_ID.Clients.Is_Empty then
          --  Start first debugger
+
+         --  Switch to the "Debug" perspective if available
          GPS.Kernel.MDI.Load_Perspective
            (DAP_Module_ID.Get_Kernel, "DAP_Debug");
 
@@ -244,10 +246,6 @@ package body DAP.Module is
          Project,
          File,
          Args);
-
-      Debugger_Started_Hook.Run (Kernel, null);
-
-      Kernel.Refresh_Context;
    end Debug_Init;
 
    -------------

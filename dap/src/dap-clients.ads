@@ -18,14 +18,18 @@
 with GNATCOLL.Projects;
 with GNATCOLL.VFS;
 
-with Basic_Types;          use Basic_Types;
 with VSS.Strings;
+with VSS.String_Vectors;
+
 with GPS.Kernel;
+
 with LSP.Raw_Clients;
 
 with DAP.Requests;
 with DAP.Types;            use DAP.Types;
 with DAP.Breakpoint_Maps;
+
+with Basic_Types;          use Basic_Types;
 with Generic_Views;
 
 private with Ada.Containers.Hashed_Maps;
@@ -60,12 +64,15 @@ package DAP.Clients is
 
    procedure Quit (Self : in out DAP_Client);
 
+   --  Notification about debugging process' status changing --
+
    procedure On_Launched (Self : in out DAP_Client);
+   --  Inform that the debugger is ready for debugging
    procedure On_Ready (Self : in out DAP_Client);
    procedure On_Configured (Self : in out DAP_Client);
+   --  Debugger starts executing debugree program
    procedure On_Continue (Self : in out DAP_Client);
    procedure On_Terminated (Self : in out DAP_Client);
-   --  Notification about debugging process' status changing
 
    function Get_Status (Self : in out DAP_Client) return Debugger_Status_Kind;
 
@@ -136,6 +143,17 @@ package DAP.Clients is
      (Self : in out DAP_Client) return GNATCOLL.VFS.Virtual_File;
    --  Return the name of the executable currently debugged.
 
+   procedure Highlight_Current_File_And_Line
+     (Self : in out DAP_Client;
+      File  : GNATCOLL.VFS.Virtual_File;
+      Line  : Integer);
+
+   procedure Unhighlight_Current_Line (Self : in out DAP_Client);
+
+   procedure Set_Source_Files
+     (Self         : in out DAP_Client;
+      Source_Files : VSS.String_Vectors.Virtual_String_Vector);
+
 private
 
    function Hash
@@ -154,24 +172,25 @@ private
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
       Id     : Positive) is new LSP.Raw_Clients.Raw_Client
    with record
-      This    : DAP_Client_Access := DAP_Client'Unchecked_Access;
-      Project : GNATCOLL.Projects.Project_Type;
-      File    : GNATCOLL.VFS.Virtual_File;
-      Args    : Ada.Strings.Unbounded.Unbounded_String;
+      This         : DAP_Client_Access := DAP_Client'Unchecked_Access;
+      Project      : GNATCOLL.Projects.Project_Type;
+      File         : GNATCOLL.VFS.Virtual_File;
+      Args         : Ada.Strings.Unbounded.Unbounded_String;
+      Source_Files : VSS.String_Vectors.Virtual_String_Vector;
 
-      Is_Attached : Boolean := False;
-      Status      : Debugger_Status_Kind := Initialization;
+      Is_Attached  : Boolean := False;
+      Status       : Debugger_Status_Kind := Initialization;
 
-      Sent        : Requests_Maps.Map;
+      Sent         : Requests_Maps.Map;
 
-      Request_Id  : Integer := 1;
-      Error_Msg   : VSS.Strings.Virtual_String;
+      Request_Id   : Integer := 1;
+      Error_Msg    : VSS.Strings.Virtual_String;
 
       Stopped_File : GNATCOLL.VFS.Virtual_File;
       Stopped_Line : Integer;
 
       --  Modules --
-      Breakpoints : DAP.Modules.Breakpoint_Managers.
+      Breakpoints  : DAP.Modules.Breakpoint_Managers.
         DAP_Client_Breakpoint_Manager_Access;
       Breakpoints_View : Generic_Views.Abstract_View_Access;
    end record;
@@ -216,5 +235,14 @@ private
      (Self   : in out DAP_Client;
       Status : Debugger_Status_Kind);
    --  Set the current debugging status
+
+   procedure Load_Project_From_Executable (Self : in out DAP_Client);
+
+   procedure On_Location_Changed
+     (Self : in out DAP_Client);
+
+   procedure Get_StackTrace
+     (Self      : in out DAP_Client;
+      Thread_Id : Integer);
 
 end DAP.Clients;
