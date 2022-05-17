@@ -18,29 +18,18 @@
 with Ada.Strings.Unbounded;   use Ada.Strings.Unbounded;
 with VSS.Strings.Conversions;
 
-with Gtkada.MDI;              use Gtkada.MDI;
-
 with DAP.Persistent_Breakpoints;
 with DAP.Views.Breakpoints;
 with DAP.Clients;
 
-with GPS.Default_Styles;
 with GPS.Editors;                  use GPS.Editors;
-with GPS.Editors.GtkAda;
-with GPS.Editors.Line_Information; use GPS.Editors.Line_Information;
 with GPS.Kernel;                   use GPS.Kernel;
-with GPS.Kernel.Messages;          use GPS.Kernel.Messages;
-with GPS.Kernel.Messages.Simple;   use GPS.Kernel.Messages.Simple;
 with Generic_Views;
 
 package body DAP.Modules.Breakpoint_Managers is
 
    --  To-Do: remove temporary breakpoints on hit
    --         use Breakpoint.Enabled
-
-   Debugger_Messages_Category : constant String := "debugger-current-line";
-   Current_Line_Pixbuf        : constant Unbounded_String :=
-     To_Unbounded_String ("gps-emblem-debugger-current");
 
    -----------------
    -- Break_Sorce --
@@ -625,29 +614,6 @@ package body DAP.Modules.Breakpoint_Managers is
       Self.Send_Subprogram (Empty);
    end Remove_All_Breakpoints;
 
-   --------------------
-   -- Status_Changed --
-   --------------------
-
-   procedure Status_Changed
-     (Self   : DAP_Client_Breakpoint_Manager;
-      Status : Debugger_Status_Kind) is
-   begin
-      if Status /= Stopped then
-         Self.Unhighlight_Current_Line;
-      end if;
-   end Status_Changed;
-
-   ------------------------------
-   -- Unhighlight_Current_Line --
-   ------------------------------
-
-   procedure Unhighlight_Current_Line (Self : DAP_Client_Breakpoint_Manager) is
-   begin
-      GPS.Kernel.Get_Messages_Container (Self.Kernel).Remove_Category
-        (Debugger_Messages_Category, GPS.Kernel.Messages.Sides_Only);
-   end Unhighlight_Current_Line;
-
    -------------
    -- Stopped --
    -------------
@@ -675,7 +641,7 @@ package body DAP.Modules.Breakpoint_Managers is
                      Stopped_Line := Integer
                        (GPS.Editors.Get_Line (Data.Location));
 
-                     Self.Highlight_Current_File_And_Line
+                     Self.Client.Highlight_Current_File_And_Line
                        (Stopped_File, Stopped_Line);
                      return;
                   end if;
@@ -695,7 +661,7 @@ package body DAP.Modules.Breakpoint_Managers is
                   Stopped_Line := Integer
                     (GPS.Editors.Get_Line (Data.Location));
 
-                  Self.Highlight_Current_File_And_Line
+                  Self.Client.Highlight_Current_File_And_Line
                     (Stopped_File, Stopped_Line);
                   return;
                end if;
@@ -703,80 +669,5 @@ package body DAP.Modules.Breakpoint_Managers is
          end;
       end loop;
    end Stopped;
-
-   -------------------------
-   -- On_Location_Changed --
-   -------------------------
-
-   procedure On_Location_Changed
-     (Self         : DAP_Client_Breakpoint_Manager;
-      Stopped_File : GNATCOLL.VFS.Virtual_File;
-      Stopped_Line : Integer) is
-   begin
-      Self.Highlight_Current_File_And_Line (Stopped_File, Stopped_Line);
-   end On_Location_Changed;
-
-   -------------------------------------
-   -- Highlight_Current_File_And_Line --
-   -------------------------------------
-
-   procedure Highlight_Current_File_And_Line
-     (Self  : DAP_Client_Breakpoint_Manager;
-      File  : Virtual_File;
-      Line  : Integer)
-   is
-      Msg    : Simple_Message_Access;
-      Action : GPS.Editors.Line_Information.Line_Information_Access;
-   begin
-      Self.Unhighlight_Current_Line;
-
-      Msg := Create_Simple_Message
-        (Get_Messages_Container (Self.Kernel),
-         Category                 =>
-           Debugger_Messages_Category,
-         File                     => File,
-         Line                     => Line,
-         Column                   => 1,
-         Text                     => "",
-         Importance               => Unspecified,
-         Flags                    => GPS.Kernel.Messages.Sides_Only,
-         Allow_Auto_Jump_To_First => False);
-
-      Msg.Set_Highlighting
-        (GPS.Default_Styles.Debugger_Current_Line_Style,
-         Highlight_Whole_Line);
-
-      Action := new Line_Information_Record'
-        (Text         => Null_Unbounded_String,
-         Tooltip_Text =>
-           To_Unbounded_String ("Current line in debugger"),
-         Image        => Current_Line_Pixbuf,
-         others       => <>);
-      Msg.Set_Action (Action);
-
-      --  Jump to current location
-      declare
-         Buffer : constant Editor_Buffer'Class :=
-           Self.Kernel.Get_Buffer_Factory.Get
-             (File,
-              Open_Buffer   => True,
-              Focus         => True,
-              Unlocked_Only => True);
-      begin
-         Buffer.Current_View.Cursor_Goto
-           (Location   => Buffer.New_Location_At_Line (Line),
-            Raise_View => True);
-
-         --  raise the source editor without giving a focus
-         declare
-            C : constant MDI_Child := GPS.Editors.GtkAda.Get_MDI_Child
-              (Buffer.Current_View);
-         begin
-            if C /= null then
-               Raise_Child (C, False);
-            end if;
-         end;
-      end;
-   end Highlight_Current_File_And_Line;
 
 end DAP.Modules.Breakpoint_Managers;

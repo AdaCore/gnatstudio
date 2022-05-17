@@ -22,9 +22,12 @@ with GNATCOLL.VFS_Utils;
 
 with VSS.Strings.Conversions;
 
+with GPS.Kernel.Project;
+
 with DAP.Clients;
 with DAP.Tools.Inputs;
 with DAP.Tools.Outputs;
+with DAP.Requests.Loaded_Sources;
 
 with Toolchains_Old;
 
@@ -185,10 +188,28 @@ package body DAP.Requests.Launch is
    procedure On_Result_Message
      (Self        : in out Launch_DAP_Request;
       Result      : DAP.Tools.LaunchResponse;
-      New_Request : in out DAP_Request_Access) is
+      New_Request : in out DAP_Request_Access)
+   is
+      use GNATCOLL.Projects;
    begin
-      New_Request := null;
-      Self.Client.On_Launched;
+      if GPS.Kernel.Project.Get_Registry
+        (Self.Kernel).Tree.Status = From_Executable
+      then
+         --  Debugging is started for executable, so prepare the
+         --  source files list to prepare a project file for such debugging
+         declare
+            Sources : constant DAP.Requests.Loaded_Sources.
+              Loaded_Sources_DAP_Request_Access :=
+                new DAP.Requests.Loaded_Sources.
+                  Loaded_Sources_DAP_Request (Self.Kernel);
+         begin
+            New_Request := DAP_Request_Access (Sources);
+         end;
+
+      else
+         New_Request := null;
+         Self.Client.On_Launched;
+      end if;
    end On_Result_Message;
 
    -----------------

@@ -319,7 +319,6 @@ package body DAP.Views.Breakpoints is
       --  Initial display
       Update (Self);
 
-      Trace (Me, "<-Initialize");
       return Gtk_Widget (Self.List);
    end Initialize;
 

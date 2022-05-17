@@ -45,23 +45,12 @@ package DAP.Modules.Breakpoint_Managers is
    procedure Initialize (Self : DAP_Client_Breakpoint_Manager_Access);
    procedure On_Finished (Self : DAP_Client_Breakpoint_Manager_Access);
 
-   procedure Status_Changed
-     (Self   : DAP_Client_Breakpoint_Manager;
-      Status : Debugger_Status_Kind);
-   --  Called when debugger status has been changed
-
    procedure Stopped
      (Self         : DAP_Client_Breakpoint_Manager;
       Event        : in out DAP.Tools.StoppedEvent;
       Stopped_File : out GNATCOLL.VFS.Virtual_File;
       Stopped_Line : out Integer);
    --  Called when the debugger is stopped
-
-   procedure On_Location_Changed
-     (Self         : DAP_Client_Breakpoint_Manager;
-      Stopped_File : GNATCOLL.VFS.Virtual_File;
-      Stopped_Line : Integer);
-   --  Called when the location when the debugger is stopped changed
 
    procedure Break_Sorce
      (Self      : DAP_Client_Breakpoint_Manager_Access;
@@ -113,15 +102,6 @@ private
       Actual         : All_Breakpoints;
       --  actual breakpoints
    end record;
-
-   procedure Highlight_Current_File_And_Line
-     (Self  : DAP_Client_Breakpoint_Manager;
-      File  : Virtual_File;
-      Line  : Integer);
-   --  Highlight current stopped line
-
-   procedure Unhighlight_Current_Line (Self : DAP_Client_Breakpoint_Manager);
-   --  Removes highlighting of the stopped line
 
    procedure Dec_Response (Self : in out DAP_Client_Breakpoint_Manager);
    --  To calculate responses and make actions when all of them are processed
