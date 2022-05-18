@@ -12,6 +12,7 @@ from gs_utils.internal.utils import (
     gps_assert,
     idle_modal_dialog,
     wait_for_mdi_child,
+    wait_idle,
 )
 from pygps import double_click_events
 from pygps.tree import click_in_tree
@@ -86,3 +87,21 @@ def driver():
 
     gps_assert(expected_text in debugger_text, True,
                f"{expected_text} didn't appear in output:\n{debugger_text}")
+
+    # Quit the debugger
+    GPS.execute_action("terminate all debuggers")
+    yield wait_idle()
+
+    # Restart a fuzz session...
+    yield idle_modal_dialog(lambda: GPS.execute_action("gnatfuzz fuzz workflow"))
+    yield wait_for_mdi_child("gnatfuzz fuzz")
+    dialog = get_window_by_title("gnatfuzz fuzz")
+    get_button_from_label("Execute", dialog).clicked()
+
+    # ... and kill it immediately
+    yield timeout(100)
+    GPS.execute_action("gnatfuzz fuzz workflow")
+
+    # And verify that the Fuzz crashes view is empty
+    gps_assert(len(model), 0,
+               "The Fuzz crashes view should clear when starting a session")
