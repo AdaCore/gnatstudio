@@ -3,6 +3,7 @@
 import GPS
 from modules import Module
 from gs_utils import make_interactive
+import pygps
 import workflows
 from workflows.promises import ProcessWrapper, TargetWrapper
 
@@ -32,13 +33,22 @@ def coverage_executable():
 
 def fuzz_executable():
     """Utility function, returns the executable instrumented for fuzzing"""
-    return os.path.join(
-        os.path.dirname(GPS.Project.root().file().name()),
-        "session",
-        "build",
-        "obj-AFL_PLAIN",
-        "fuzz_test_harness.afl_fuzz",
-    )
+    # We don't know if the AFL_PLAIN or the AFL_PERSIST object was generated.
+
+    # They should be the same for the purposes of the GNAT Studio integration:
+    # try one, then the other.
+
+    for mode in ("AFL_PLAIN", "AFL_PERSIST"):
+        candidate = os.path.join(
+            os.path.dirname(GPS.Project.root().file().name()),
+            "session",
+            "build",
+            f"obj-{mode}",
+            "fuzz_test_harness.afl_fuzz",
+        )
+        if os.path.exists(candidate):
+            return candidate
+    return None
 
 
 class FuzzCrash(object):
@@ -110,11 +120,8 @@ class FuzzCrashList(object):
         """Workflow to launch a debugger session on the given crash"""
         t = TargetWrapper("Build Main")
         yield t.wait_on_execute(main_name="gnatfuzz-fuzz_test_harness.adb")
-        proj = GPS.Project.root()
         exec = fuzz_executable()
-        d = GPS.Debugger.spawn(
-            executable=GPS.File(os.path.join(proj.object_dirs()[0], exec))
-        )
+        d = GPS.Debugger.spawn(executable=GPS.File(exec))
         d.send("delete")
         d.send(f"start {self.target_candidate}")
         d.send("catch exception")
@@ -167,6 +174,15 @@ class GNATfuzzView(Module):
 
     def setup(self):
         make_interactive(self.get_view, category="Views", name="open GNATfuzz View")
+        make_interactive(self.clear_view, category="Views", name="clear GNATfuzz View")
+
+    def clear_view(self):
+        """Clear the Fuzz crashes view"""
+        global counter
+        counter = 1
+        t = pygps.get_widget_by_name("fuzz_crash_list_view")
+        if t is not None:
+            t.get_model().clear()
 
     def preferences_changed(self, name="", pref=None):
         """React to preferences changed"""
