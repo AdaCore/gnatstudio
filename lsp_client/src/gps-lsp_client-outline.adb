@@ -376,7 +376,6 @@ package body GPS.LSP_Client.Outline is
         Iterate (Self.Result.Tree);
       Holder : constant GPS.Editors.Controlled_Editor_Buffer_Holder :=
         Self.Kernel.Get_Buffer_Factory.Get_Holder (File => Self.File);
-
    begin
       Trace (Me_Debug, "On_Idle_Load_Tree");
       if Is_Root (Self.Tree_Cursor) then
@@ -523,13 +522,18 @@ package body GPS.LSP_Client.Outline is
      (Self    : Outline_LSP_Provider_Access;
       Stopped : Boolean) is
    begin
+      Self.Loader_Id := No_Source_Id;
+
       Trace (Me_Debug, "Free_Idle");
       if Self.Model /= null then
          Trace (Me_Debug, "Free_Idle free model");
+         if Stopped then
+            --  Clear the model, we stop to restart
+            Outline_View.Clear_Outline_Model (Self.Model);
+         end if;
          Outline_View.Free (Self.Model);
       end if;
 
-      Self.Loader_Id := No_Source_Id;
       if Stopped then
          Outline_View.Finished_Computing
            (Self.Kernel, Status => Outline_View.Stopped);
@@ -537,6 +541,7 @@ package body GPS.LSP_Client.Outline is
          Outline_View.Finished_Computing
            (Self.Kernel, Status => Outline_View.Succeeded);
       end if;
+
       Trace (Me_Debug, "Free_Idle done");
    end Free_Idle;
 

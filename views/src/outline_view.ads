@@ -168,9 +168,9 @@ private
      (Self : Language_Category)
       return Ada.Containers.Hash_Type
    is (Ada.Containers.Hash_Type (Language_Category'Pos (Self)));
-   package Category_To_Iter_Map is new Ada.Containers.Indefinite_Hashed_Maps
+   package Category_To_Path_Map is new Ada.Containers.Indefinite_Hashed_Maps
      (Key_Type        => Language_Category,
-      Element_Type    => Gtk_Tree_Iter,
+      Element_Type    => Gtk_Tree_Path,
       Hash            => Identity,
       Equivalent_Keys => "=");
    --  Map used for the preferences Group_By_Categories
@@ -204,7 +204,7 @@ private
    type Outline_Model is limited record
       Model        : Expansion.Detached_Model;
       Current_Path : Gtk_Tree_Path;
-      Category_Map : Category_To_Iter_Map.Map;
+      Category_Map : Category_To_Path_Map.Map;
       Filter       : Tree_Filter;
    end record;
 
