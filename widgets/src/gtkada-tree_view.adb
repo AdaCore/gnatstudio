@@ -1349,6 +1349,10 @@ package body Gtkada.Tree_View is
             Self.Set_Model (Null_Gtk_Tree_Model);
          end if;
 
+         if Self.Sortable_Model /= null then
+            Self.Sortable_Model.Clear_Cache;
+         end if;
+
          if Self.Filter /= null then
             Self.Filter.Clear_Cache;
          end if;
@@ -1368,12 +1372,14 @@ package body Gtkada.Tree_View is
             return;
          end if;
 
-         if Self.Data.Tree.Filter /= null then
-            Self.Data.Tree.Filter.Clear_Cache;
-         end if;
-
+         --  Using order is Sortable<-Filter<-model so
+         --  clearing in the reverse order
          if Self.Data.Tree.Sortable_Model /= null then
             Self.Data.Tree.Sortable_Model.Clear_Cache;
+         end if;
+
+         if Self.Data.Tree.Filter /= null then
+            Self.Data.Tree.Filter.Clear_Cache;
          end if;
 
          Self.Data.Tree.Model.Clear;

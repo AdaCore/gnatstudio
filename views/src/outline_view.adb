@@ -747,13 +747,14 @@ package body Outline_View is
 
       function Compare_Name (Col : Gint) return Gint
       is
-         S_A : constant String := Get_String (Model, A, Col);
-         S_B : constant String := Get_String (Model, B, Col);
+         S_A    : constant String := Get_String (Model, A, Col);
+         S_B    : constant String := Get_String (Model, B, Col);
          Name_A : constant String := Decode_Name (S_A);
          Name_B : constant String := Decode_Name (S_B);
       begin
          if Name_A < Name_B then
             return -1;
+
          elsif Name_A > Name_B then
             return 1;
          else
@@ -1737,6 +1738,11 @@ package body Outline_View is
             return Decoded;
          end if;
       end;
+   exception
+      when E : others =>
+         --  Defensive code to not pass the exception to Gtk
+         Trace (Me, E);
+         return "";
    end Decode_Name;
 
    --------------------
@@ -1808,7 +1814,7 @@ package body Outline_View is
                                       Save_Scrolling => Is_Refresh),
                                  Current_Path => Null_Gtk_Tree_Path,
                                  Category_Map =>
-                                   Category_To_Iter_Map.Empty_Map,
+                                   Category_To_Path_Map.Empty_Map,
                                  Filter       => Outline.Filter);
          begin
             Outline.Prev_File := Outline.File;
@@ -1895,7 +1901,7 @@ package body Outline_View is
       begin
          if Self.Filter.Group_By_Category then
             if Self.Category_Map.Contains (Category) then
-               return Self.Category_Map (Category);
+               return Model.Get_Iter (Self.Category_Map (Category));
             else
                declare
                   Cat_Iter : Gtk_Tree_Iter;
@@ -1917,7 +1923,8 @@ package body Outline_View is
                       Category_Column     =>
                         As_Int (Gint (Sort_Entities (Category))),
                       Id_Column           => As_String ("")));
-                  Self.Category_Map.Include (Category, Cat_Iter);
+                  Self.Category_Map.Include
+                    (Category, Get_Path (Model, Cat_Iter));
                   return Cat_Iter;
                end;
             end if;
@@ -2070,6 +2077,9 @@ package body Outline_View is
       if Self /= null then
          Trace (Me, "Free Outline_Access");
          Path_Free (Self.Current_Path);
+         for Item of Self.Category_Map loop
+            Path_Free (Item);
+         end loop;
          Self.Category_Map.Clear;
          Unchecked_Free (Self);
       end if;
