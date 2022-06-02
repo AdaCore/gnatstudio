@@ -19,12 +19,11 @@ with Ada.Strings.Unbounded;   use Ada.Strings.Unbounded;
 with VSS.Strings.Conversions;
 
 with DAP.Persistent_Breakpoints;
-with DAP.Views.Breakpoints;
 with DAP.Clients;
 
 with GPS.Editors;                  use GPS.Editors;
 with GPS.Kernel;                   use GPS.Kernel;
-with Generic_Views;
+with GPS.Kernel.Hooks;
 
 package body DAP.Modules.Breakpoint_Managers is
 
@@ -81,20 +80,32 @@ package body DAP.Modules.Breakpoint_Managers is
    procedure Initialize (Self : DAP_Client_Breakpoint_Manager_Access) is
    begin
       DAP.Persistent_Breakpoints.Debugger_Initialization;
-      for Vector of DAP.Persistent_Breakpoints.
-        Get_Persistent_Breakpoints.Sources
-      loop
-         Self.Requests_Count := Self.Requests_Count + 1;
-         Self.Send_Line
-           (GPS.Editors.Get_File (Vector.First_Element.Location), Vector);
-      end loop;
+      if Self.Client.Get_Executable /= No_File then
+         for Vector of DAP.Persistent_Breakpoints.
+           Get_Persistent_Breakpoints.Sources
+         loop
+            Self.Requests_Count := Self.Requests_Count + 1;
+            Self.Send_Line
+              (GPS.Editors.Get_File (Vector.First_Element.Location), Vector);
+         end loop;
 
-      if not DAP.Persistent_Breakpoints.Get_Persistent_Breakpoints.
-        Subprograms.Is_Empty
+         if not DAP.Persistent_Breakpoints.Get_Persistent_Breakpoints.
+           Subprograms.Is_Empty
+         then
+            Self.Requests_Count := Self.Requests_Count + 1;
+            Self.Send_Subprogram
+              (DAP.Persistent_Breakpoints.Get_Persistent_Breakpoints.
+                 Subprograms);
+         end if;
+      end if;
+
+      if Self.Client.Get_Executable = No_File
+        or else (DAP.Persistent_Breakpoints.
+                   Get_Persistent_Breakpoints.Sources.Is_Empty
+                 and then DAP.Persistent_Breakpoints.
+                   Get_Persistent_Breakpoints.Subprograms.Is_Empty)
       then
-         Self.Requests_Count := Self.Requests_Count + 1;
-         Self.Send_Subprogram
-           (DAP.Persistent_Breakpoints.Get_Persistent_Breakpoints.Subprograms);
+         Self.Client.On_Ready;
       end if;
    end Initialize;
 
@@ -116,8 +127,6 @@ package body DAP.Modules.Breakpoint_Managers is
       Result      : in out DAP.Tools.SetBreakpointsResponse;
       New_Request : in out DAP_Request_Access)
    is
-      use type Generic_Views.Abstract_View_Access;
-
       use DAP.Tools;
       use Breakpoint_Vectors;
 
@@ -182,10 +191,8 @@ package body DAP.Modules.Breakpoint_Managers is
       Self.List.Dec_Response;
 
       Self.List.Show_Breakpoints;
-      if Self.List.Client.Get_Breakpoints_View /= null then
-         DAP.Views.View_Access
-           (Self.List.Client.Get_Breakpoints_View).Update;
-      end if;
+      GPS.Kernel.Hooks.Debugger_Breakpoints_Changed_Hook.Run
+        (Self.Kernel, Self.List.Client.Get_Visual);
    end On_Result_Message;
 
    -----------------------
@@ -259,6 +266,8 @@ package body DAP.Modules.Breakpoint_Managers is
 
       Self.List.Dec_Response;
       Self.List.Show_Breakpoints;
+      GPS.Kernel.Hooks.Debugger_Breakpoints_Changed_Hook.Run
+        (Self.Kernel, Self.List.Client.Get_Visual);
    end On_Result_Message;
 
    -----------------
@@ -328,7 +337,6 @@ package body DAP.Modules.Breakpoint_Managers is
       if Self.Requests_Count = 0 then
          Self.Client.On_Ready;
          Self.Show_Breakpoints;
-         DAP.Views.Breakpoints.Attach_View (Self.Kernel, Self.Client);
       end if;
    end Dec_Response;
 

@@ -111,12 +111,10 @@ package body DAP.Views.Breakpoints is
 
    overriding procedure On_Status_Changed
      (Self   : not null access Breakpoint_View_Record;
-      Status : DAP.Types.Debugger_Status_Kind);
+      Status : GPS.Debuggers.Debugger_State);
 
    overriding procedure On_Location_Changed
-     (Self         : not null access Breakpoint_View_Record;
-      Stopped_File : GNATCOLL.VFS.Virtual_File;
-      Stopped_Line : Integer);
+     (Self : not null access Breakpoint_View_Record);
 
    overriding procedure Update (View : not null access Breakpoint_View_Record);
 
@@ -351,9 +349,7 @@ package body DAP.Views.Breakpoints is
    -------------------------
 
    overriding procedure On_Location_Changed
-     (Self         : not null access Breakpoint_View_Record;
-      Stopped_File : GNATCOLL.VFS.Virtual_File;
-      Stopped_Line : Integer)
+     (Self : not null access Breakpoint_View_Record)
    is
       Client : DAP.Clients.DAP_Client_Access := Get_Client (Self);
       Model  : Gtk_Tree_Store;
@@ -361,7 +357,8 @@ package body DAP.Views.Breakpoints is
       Id     : Breakpoint_Identifier := 0;
    begin
       if Self.Prevent_Bp_Selection
-        or else Stopped_File = No_File
+        or else (Client /= null
+                 and then Client.Current_File = No_File)
       then
          return;
       end if;
@@ -370,8 +367,9 @@ package body DAP.Views.Breakpoints is
          for Vector of Client.Get_Breakpoints.Sources loop
             for Data of Vector loop
                if Data.Location /= No_Marker
-                 and then Get_File (Data.Location) = Stopped_File
-                 and then Natural (Get_Line (Data.Location)) = Stopped_Line
+                 and then Get_File (Data.Location) = Client.Current_File
+                 and then Natural
+                   (Get_Line (Data.Location)) = Client.Current_Line
                then
                   Id := Data.Num;
                   exit;
@@ -403,16 +401,8 @@ package body DAP.Views.Breakpoints is
    ---------------------------
 
    overriding procedure On_Process_Terminated
-     (View : not null access Breakpoint_View_Record)
-   is
-      Client : constant DAP.Clients.DAP_Client_Access := Get_Client (View);
+     (View : not null access Breakpoint_View_Record) is
    begin
-      if Client /= null then
-         View.On_Detach (Client);
-         Client.Set_Breakpoints_View (null);
-         View.Set_Client (null);
-      end if;
-
       if DAP.Module.Count_Running_Debuggers < 2 then
          --  The last debugger is exiting
          --  Show the persistent breakpoints
@@ -428,12 +418,12 @@ package body DAP.Views.Breakpoints is
 
    overriding procedure On_Status_Changed
      (Self   : not null access Breakpoint_View_Record;
-      Status : DAP.Types.Debugger_Status_Kind)
+      Status : GPS.Debuggers.Debugger_State)
    is
       Model : constant Gtk_Tree_Store := -Get_Model (Self.List);
       Iter  : Gtk.Tree_Model.Gtk_Tree_Iter;
    begin
-      if Status = Stopped then
+      if Status = Debug_Available then
          Self.Activatable := True;
       else
          Self.Activatable := False;
@@ -476,18 +466,6 @@ package body DAP.Views.Breakpoints is
 
       Client.Set_Breakpoints_View (Generic_Views.Abstract_View_Access (View));
    end Set_View;
-
-   -----------------
-   -- Attach_View --
-   -----------------
-
-   procedure Attach_View
-     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
-      Client : not null access DAP.Clients.DAP_Client'Class) is
-   begin
-      Simple_Views.Attach_To_View
-        (Client, Kernel, Create_If_Necessary => False);
-   end Attach_View;
 
    ------------
    -- Update --
@@ -622,7 +600,7 @@ package body DAP.Views.Breakpoints is
             Fill (Data);
          end loop;
 
-         View.On_Location_Changed (Client.Current_File, Client.Current_Line);
+         View.On_Location_Changed;
       end if;
    end Update;
 

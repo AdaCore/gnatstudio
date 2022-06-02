@@ -1352,7 +1352,7 @@ package body GVD.Process is
          Watch => Process);
 
       Debugger_State_Changed_Hook.Run
-         (Process.Kernel, Process, Debug_Available);
+        (Process.Kernel, Process, Debug_Available);
       Debugger_Started_Hook.Run (Process.Kernel, Process);
 
       --  Give the focus to the Debugger Console

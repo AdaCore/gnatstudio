@@ -41,6 +41,8 @@ package DAP.Module is
    function Get_Current_Debugger return DAP.Clients.DAP_Client_Access;
    --  Returns the debugger that is "selected" now if several are started
 
+   function Get_Debugger (Id : Integer) return DAP.Clients.DAP_Client_Access;
+
    function Count_Running_Debuggers return Natural;
    --  Returns the count for the running debuggers
 

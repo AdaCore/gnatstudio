@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                               GNAT Studio                                --
 --                                                                          --
---                     Copyright (C) 2000-2022, AdaCore                     --
+--                        Copyright (C) 2022, AdaCore                       --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -15,35 +15,12 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-package body DAP.Preferences is
+with GPS.Kernel;
 
-   ----------------------------------
-   -- Register_Default_Preferences --
-   ----------------------------------
+package DAP.Views.Call_Stack is
 
-   procedure Register_Default_Preferences
-     (Prefs : access Preferences_Manager_Record'Class) is
-   begin
-      Preserve_State_On_Exit := Create
-        (Manager    => Prefs,
-         Name       => "Debugger-Preserve_State-On-Exit",
-         Label      => "Preserve state on exit",
-         Path       => "Debugger:General",
-         Doc        =>
-            "Save breakpoints and data window on exit, and restore them"
-              & " when debugging the same executable.",
-         Default    => True);
+   procedure Register_Module
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class);
+   --  Register menus and other functions to support the breakpoint editor
 
-      Frames_Limit := Create
-        (Manager  => Prefs,
-         Name     => "debugger-frames-limit",
-         Path     => "Debugger:Call Stack",
-         Label    => "Frames limit",
-         Doc      => "How many frames will be fetched at one time" &
-           " (unlimited - 0).",
-         Minimum  => 0,
-         Maximum  => Integer'Last,
-         Default  => 0);
-   end Register_Default_Preferences;
-
-end DAP.Preferences;
+end DAP.Views.Call_Stack;

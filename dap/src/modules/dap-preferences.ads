@@ -27,4 +27,8 @@ package DAP.Preferences is
    -- General --
    Preserve_State_On_Exit        : Boolean_Preference;
 
+   --  Call stack
+   Frames_Limit                  : Integer_Preference;
+   --  How many frames will be fetched at one time
+
 end DAP.Preferences;

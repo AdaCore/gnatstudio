@@ -27,7 +27,6 @@ with GNATCOLL.Utils;
 with Spawn.String_Vectors;
 
 with Gtkada.Dialogs;
-with Gtkada.MDI;                 use Gtkada.MDI;
 
 with VSS.JSON.Pull_Readers.Simple;
 with VSS.Stream_Element_Vectors.Conversions;
@@ -36,14 +35,9 @@ with VSS.Text_Streams.Memory_UTF8_Input;
 with VSS.Text_Streams.Memory_UTF8_Output;
 with VSS.JSON.Push_Writers;
 
-with GPS.Default_Styles;
 with GPS.Editors;                  use GPS.Editors;
-with GPS.Editors.GtkAda;           use GPS.Editors.GtkAda;
-with GPS.Editors.Line_Information; use GPS.Editors.Line_Information;
 with GPS.Kernel;                   use GPS.Kernel;
 with GPS.Kernel.Hooks;
-with GPS.Kernel.Messages;          use GPS.Kernel.Messages;
-with GPS.Kernel.Messages.Simple;   use GPS.Kernel.Messages.Simple;
 with GPS.Kernel.Project;
 
 with LSP.Types;
@@ -56,7 +50,7 @@ with DAP.Requests.Disconnects;
 with DAP.Requests.StackTraces;
 with DAP.Tools;
 with DAP.Tools.Inputs;
-with DAP.Views;
+with DAP.Utils;
 
 with GUI_Utils;
 with Remote;
@@ -67,10 +61,6 @@ package body DAP.Clients is
    Me : constant Trace_Handle := Create ("GPS.DAP.Clients", On);
 
    Node_Binary : constant String := "/usr/bin/node";
-
-   Debugger_Messages_Category : constant String := "debugger-current-line";
-   Current_Line_Pixbuf        : constant Unbounded_String :=
-     To_Unbounded_String ("gps-emblem-debugger-current");
 
    procedure Free is new Ada.Unchecked_Deallocation
      (DAP.Modules.Breakpoint_Managers.DAP_Client_Breakpoint_Manager'Class,
@@ -215,21 +205,21 @@ package body DAP.Clients is
 
    procedure Set_Status
      (Self   : in out DAP_Client;
-      Status : Debugger_Status_Kind)
-   is
-      use type Generic_Views.Abstract_View_Access;
+      Status : Debugger_Status_Kind) is
    begin
       if Self.Status /= Terminating then
          Self.Status := Status;
 
          if Self.Status /= Stopped then
-            Self.Unhighlight_Current_Line;
+            Self.Stopped_Line := 0;
+            DAP.Utils.Unhighlight_Current_Line (Self.Kernel);
          end if;
 
-         if Self.Breakpoints_View /= null then
-            DAP.Views.View_Access (Self.Breakpoints_View).On_Status_Changed
-              (Self.Status);
-         end if;
+         GPS.Kernel.Hooks.Debugger_State_Changed_Hook.Run
+           (Self.Kernel, Self.Visual'Access,
+            (if Self.Status /= Stopped
+             then GPS.Debuggers.Debug_Busy
+             else GPS.Debuggers.Debug_Available));
       end if;
    end Set_Status;
 
@@ -284,6 +274,17 @@ package body DAP.Clients is
       return Self.Breakpoints_View;
    end Get_Breakpoints_View;
 
+   -------------------------
+   -- Get_Call_Stack_View --
+   -------------------------
+
+   function Get_Call_Stack_View
+     (Self : DAP_Client)
+      return Generic_Views.Abstract_View_Access is
+   begin
+      return Self.Call_Stack_View;
+   end Get_Call_Stack_View;
+
    --------------------
    -- Get_Executable --
    --------------------
@@ -322,6 +323,17 @@ package body DAP.Clients is
    begin
       Self.Breakpoints_View := View;
    end Set_Breakpoints_View;
+
+   -------------------------
+   -- Set_Call_Stack_View --
+   -------------------------
+
+   procedure Set_Call_Stack_View
+     (Self : in out DAP_Client;
+      View : Generic_Views.Abstract_View_Access) is
+   begin
+      Self.Call_Stack_View := View;
+   end Set_Call_Stack_View;
 
    ----------------------
    -- Set_Source_Files --
@@ -362,6 +374,16 @@ package body DAP.Clients is
       return Self.Status;
    end Get_Status;
 
+   ----------------
+   -- Get_Visual --
+   ----------------
+
+   function Get_Visual
+     (Self : in out DAP_Client) return Visual_Debugger_Access is
+   begin
+      return Self.Visual'Unchecked_Access;
+   end Get_Visual;
+
    -------------------
    -- Error_Message --
    -------------------
@@ -388,6 +410,9 @@ package body DAP.Clients is
    procedure On_Ready (Self : in out DAP_Client) is
    begin
       Self.Set_Status (Ready);
+      GPS.Kernel.Hooks.Debugger_Started_Hook.Run
+        (Self.Kernel, Self.Visual'Access);
+      Self.Kernel.Refresh_Context;
    end On_Ready;
 
    -----------------
@@ -403,21 +428,12 @@ package body DAP.Clients is
    -- On_Finished --
    -----------------
 
-   overriding procedure On_Finished (Self : in out DAP_Client)
-   is
-      use type Generic_Views.Abstract_View_Access;
+   overriding procedure On_Finished (Self : in out DAP_Client) is
    begin
       Self.Reject_All_Requests;
-      begin
-         if Self.Breakpoints_View /= null then
-            DAP.Views.View_Access
-              (Self.Breakpoints_View).On_Process_Terminated;
-            Self.Breakpoints_View := null;
-         end if;
-      exception
-         when E : others =>
-            Trace (Me, E);
-      end;
+
+      GPS.Kernel.Hooks.Debugger_Process_Terminated_Hook.Run
+        (Self.Kernel, Self.Visual'Access);
 
       DAP.Modules.Breakpoint_Managers.On_Finished (Self.Breakpoints);
       Free (Self.Breakpoints);
@@ -661,9 +677,6 @@ package body DAP.Clients is
       Self.Breakpoints := new DAP.Modules.Breakpoint_Managers.
         DAP_Client_Breakpoint_Manager (Self.Kernel, Self.This);
       DAP.Modules.Breakpoint_Managers.Initialize (Self.Breakpoints);
-
-      GPS.Kernel.Hooks.Debugger_Started_Hook.Run (Self.Kernel, null);
-      Self.Kernel.Refresh_Context;
    end On_Launched;
 
    --------------------
@@ -980,7 +993,6 @@ package body DAP.Clients is
    is
       use GNATCOLL.VFS;
       use DAP.Tools;
-      use type Generic_Views.Abstract_View_Access;
       pragma Unreferenced (New_Request);
 
    begin
@@ -997,12 +1009,6 @@ package body DAP.Clients is
                Self.Client.Stopped_Line := Frame.line;
 
                Self.Client.On_Location_Changed;
-
-               if Self.Client.Breakpoints_View /= null then
-                  DAP.Views.View_Access
-                    (Self.Client.Breakpoints_View).On_Location_Changed
-                    (Self.Client.Stopped_File, Self.Client.Stopped_Line);
-               end if;
             end if;
          end;
       end if;
@@ -1015,85 +1021,12 @@ package body DAP.Clients is
    procedure On_Location_Changed
      (Self : in out DAP_Client) is
    begin
-      Self.Highlight_Current_File_And_Line
-        (Self.Stopped_File, Self.Stopped_Line);
+      DAP.Utils.Highlight_Current_File_And_Line
+        (Self.Kernel, Self.Stopped_File, Self.Stopped_Line);
+
+      GPS.Kernel.Hooks.Debugger_Location_Changed_Hook.Run
+        (Self.Kernel, Self.Visual'Access);
    end On_Location_Changed;
-
-   -------------------------------------
-   -- Highlight_Current_File_And_Line --
-   -------------------------------------
-
-   procedure Highlight_Current_File_And_Line
-     (Self  : in out DAP_Client;
-      File  : GNATCOLL.VFS.Virtual_File;
-      Line  : Integer)
-   is
-      Msg    : Simple_Message_Access;
-      Action : GPS.Editors.Line_Information.Line_Information_Access;
-   begin
-      Self.Stopped_File := File;
-      Self.Stopped_Line := Line;
-
-      Self.Unhighlight_Current_Line;
-
-      Msg := Create_Simple_Message
-        (Get_Messages_Container (Self.Kernel),
-         Category                 =>
-           Debugger_Messages_Category,
-         File                     => File,
-         Line                     => Line,
-         Column                   => 1,
-         Text                     => "",
-         Importance               => Unspecified,
-         Flags                    => GPS.Kernel.Messages.Sides_Only,
-         Allow_Auto_Jump_To_First => False);
-
-      Msg.Set_Highlighting
-        (GPS.Default_Styles.Debugger_Current_Line_Style,
-         Highlight_Whole_Line);
-
-      Action := new Line_Information_Record'
-        (Text         => Null_Unbounded_String,
-         Tooltip_Text =>
-           To_Unbounded_String ("Current line in debugger"),
-         Image        => Current_Line_Pixbuf,
-         others       => <>);
-      Msg.Set_Action (Action);
-
-      --  Jump to current location
-      declare
-         Buffer : constant Editor_Buffer'Class :=
-           Self.Kernel.Get_Buffer_Factory.Get
-             (File,
-              Open_Buffer   => True,
-              Focus         => True,
-              Unlocked_Only => True);
-      begin
-         Buffer.Current_View.Cursor_Goto
-           (Location   => Buffer.New_Location_At_Line (Line),
-            Raise_View => True);
-
-         --  raise the source editor without giving a focus
-         declare
-            C : constant MDI_Child := GPS.Editors.GtkAda.Get_MDI_Child
-              (Buffer.Current_View);
-         begin
-            if C /= null then
-               Raise_Child (C, False);
-            end if;
-         end;
-      end;
-   end Highlight_Current_File_And_Line;
-
-   ------------------------------
-   -- Unhighlight_Current_Line --
-   ------------------------------
-
-   procedure Unhighlight_Current_Line (Self : in out DAP_Client) is
-   begin
-      GPS.Kernel.Get_Messages_Container (Self.Kernel).Remove_Category
-        (Debugger_Messages_Category, GPS.Kernel.Messages.Sides_Only);
-   end Unhighlight_Current_Line;
 
    ----------------
    -- On_Started --
@@ -1116,6 +1049,8 @@ package body DAP.Clients is
 
    procedure On_Terminated (Self : in out DAP_Client) is
    begin
+      GPS.Kernel.Hooks.Debugger_Terminated_Hook.Run
+        (Self.Kernel, Self.Visual'Access);
       Self.Stop;
    end On_Terminated;
 
@@ -1198,6 +1133,20 @@ package body DAP.Clients is
       Self.Set_Arguments (Node_Args);
       Self.Start;
    end Start;
+
+   -------------------------------------
+   -- Highlight_Current_File_And_Line --
+   -------------------------------------
+
+   procedure Highlight_Current_File_And_Line
+     (Self  : in out DAP_Client;
+      File  : GNATCOLL.VFS.Virtual_File;
+      Line  : Integer) is
+   begin
+      Self.Stopped_File := File;
+      Self.Stopped_Line := Line;
+      DAP.Utils.Highlight_Current_File_And_Line (Self.Kernel, File, Line);
+   end Highlight_Current_File_And_Line;
 
    ----------
    -- Quit --

@@ -391,8 +391,7 @@ package body DAP.Persistent_Breakpoints is
          Breakpoints.Persistent.Subprograms.Clear;
 
          Reindex_Breakpoints;
-         GPS.Kernel.Hooks.Debugger_Breakpoints_Changed_Hook.Run
-           (Kernel, null);
+         GPS.Kernel.Hooks.Debugger_Breakpoints_Changed_Hook.Run (Kernel, null);
          Show_Breakpoints_In_All_Editors (Kernel);
 
       else
@@ -1019,8 +1018,7 @@ package body DAP.Persistent_Breakpoints is
       --         several debugger is running/finishing
 
       Reindex_Breakpoints;
-      GPS.Kernel.Hooks.Debugger_Breakpoints_Changed_Hook.Run
-        (Kernel, null);
+      GPS.Kernel.Hooks.Debugger_Breakpoints_Changed_Hook.Run (Kernel, null);
       Show_Breakpoints_In_All_Editors (Kernel);
       Save_Persistent_Breakpoints (Kernel);
    end Synchronize;
