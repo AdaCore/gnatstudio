@@ -38,6 +38,9 @@ package Project_Properties is
    --  Edit the properties for Project_View.
    --  If Name is set and a corresponding Page exists then select it.
 
+   function Paths_Are_Relative (Project : Project_Type) return Boolean;
+   --  Return True if the paths in the project should be relative paths
+
    type Project_Properties_Editor_Command
      is new Commands.Interactive.Interactive_Command with null record;
    overriding function Execute
