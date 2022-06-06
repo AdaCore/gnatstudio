@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                               GNAT Studio                                --
 --                                                                          --
---                     Copyright (C) 2000-2022, AdaCore                     --
+--                        Copyright (C) 2022, AdaCore                       --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -15,35 +15,27 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-package body DAP.Preferences is
+with GNATCOLL.VFS;   use GNATCOLL.VFS;
+with GPS.Kernel;
 
-   ----------------------------------
-   -- Register_Default_Preferences --
-   ----------------------------------
+package DAP.Utils is
 
-   procedure Register_Default_Preferences
-     (Prefs : access Preferences_Manager_Record'Class) is
-   begin
-      Preserve_State_On_Exit := Create
-        (Manager    => Prefs,
-         Name       => "Debugger-Preserve_State-On-Exit",
-         Label      => "Preserve state on exit",
-         Path       => "Debugger:General",
-         Doc        =>
-            "Save breakpoints and data window on exit, and restore them"
-              & " when debugging the same executable.",
-         Default    => True);
+   procedure Highlight_Current_File_And_Line
+     (Kernel          : access GPS.Kernel.Kernel_Handle_Record'Class;
+      File            : GNATCOLL.VFS.Virtual_File;
+      Line            : Integer;
+      Additional_File : GNATCOLL.VFS.Virtual_File := GNATCOLL.VFS.No_File;
+      Additional_Line : Integer := 0);
+   --  Mark current debugging line in editors
 
-      Frames_Limit := Create
-        (Manager  => Prefs,
-         Name     => "debugger-frames-limit",
-         Path     => "Debugger:Call Stack",
-         Label    => "Frames limit",
-         Doc      => "How many frames will be fetched at one time" &
-           " (unlimited - 0).",
-         Minimum  => 0,
-         Maximum  => Integer'Last,
-         Default  => 0);
-   end Register_Default_Preferences;
+   procedure Unhighlight_Current_Line
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class);
+   --  Clear current debugging line in editors
 
-end DAP.Preferences;
+   procedure Goto_Location
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
+      File   : GNATCOLL.VFS.Virtual_File;
+      Line   : Integer);
+   --  Open the file and set the cursor on the line.
+
+end DAP.Utils;

@@ -21,11 +21,12 @@ with Gtk.Widget;
 with Gtkada.Handlers;
 
 with Generic_Views;
+with GPS.Debuggers;
 with GPS.Kernel;       use GPS.Kernel;
+with GPS.Kernel.Hooks;
 with GPS.Kernel.MDI;
 
 with DAP.Clients;
-with DAP.Types;
 
 package DAP.Views is
 
@@ -57,12 +58,10 @@ package DAP.Views is
 
    procedure On_Status_Changed
      (Self   : not null access View_Interface;
-      Status : DAP.Types.Debugger_Status_Kind) is null;
+      Status : GPS.Debuggers.Debugger_State) is null;
 
    procedure On_Location_Changed
-     (Self         : not null access View_Interface;
-      Stopped_File : GNATCOLL.VFS.Virtual_File;
-      Stopped_Line : Integer) is null;
+     (Self : not null access View_Interface) is null;
 
    procedure Update (Self : not null access View_Interface) is null;
 
@@ -141,6 +140,45 @@ package DAP.Views is
       --  Callback for the "destroy_event" signal on the Call Stack window.
       --  This needs to be in the spec since it is used as a callback in the
       --  body.
+
+      type On_Debugger_Started is
+        new GPS.Kernel.Hooks.Debugger_Hooks_Function with null record;
+      overriding procedure Execute
+        (Self     : On_Debugger_Started;
+         Kernel   : not null access Kernel_Handle_Record'Class;
+         Debugger : access GPS.Debuggers.Base_Visual_Debugger'Class);
+      --  Called when the debugger is started, to connect non-attached views
+
+      type On_Debugger_State_Changed is
+        new GPS.Kernel.Hooks.Debugger_States_Hooks_Function with null record;
+      overriding procedure Execute
+        (Self      : On_Debugger_State_Changed;
+         Kernel    : not null access GPS.Kernel.Kernel_Handle_Record'Class;
+         Debugger  : access GPS.Debuggers.Base_Visual_Debugger'Class;
+         New_State : GPS.Debuggers.Debugger_State);
+      --  Hook called when the state of the debugger changes
+
+      type On_Debug_Location_Changed is
+        new GPS.Kernel.Hooks.Debugger_Hooks_Function with null record;
+      overriding procedure Execute
+        (Self     : On_Debug_Location_Changed;
+         Kernel   : not null access GPS.Kernel.Kernel_Handle_Record'Class;
+         Debugger : access GPS.Debuggers.Base_Visual_Debugger'Class);
+
+      type On_Debug_Process_Terminated is
+        new GPS.Kernel.Hooks.Debugger_Hooks_Function with null record;
+      overriding procedure Execute
+        (Self     : On_Debug_Process_Terminated;
+         Kernel   : not null access GPS.Kernel.Kernel_Handle_Record'Class;
+         Debugger : access GPS.Debuggers.Base_Visual_Debugger'Class);
+      --  Called when the process has terminated
+
+      type On_Debugger_Terminate is
+        new GPS.Kernel.Hooks.Debugger_Hooks_Function with null record;
+      overriding procedure Execute
+        (Self     : On_Debugger_Terminate;
+         Kernel   : not null access GPS.Kernel.Kernel_Handle_Record'Class;
+         Debugger : access GPS.Debuggers.Base_Visual_Debugger'Class);
 
    end Simple_Views;
 

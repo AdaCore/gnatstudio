@@ -21,6 +21,9 @@ with GNATCOLL.VFS;
 with VSS.Strings;
 with VSS.String_Vectors;
 
+with Glib.Object;
+
+with GPS.Debuggers;
 with GPS.Kernel;
 
 with LSP.Raw_Clients;
@@ -131,6 +134,16 @@ package DAP.Clients is
       View : Generic_Views.Abstract_View_Access);
    --  Attach the breakpoints view to the client
 
+   function Get_Call_Stack_View
+     (Self : DAP_Client)
+      return Generic_Views.Abstract_View_Access;
+   --  Returns the callstack view, if any.
+
+   procedure Set_Call_Stack_View
+     (Self : in out DAP_Client;
+      View : Generic_Views.Abstract_View_Access);
+   --  Attach the callstack view to the client
+
    function Current_File
      (Self : in out DAP_Client) return GNATCOLL.VFS.Virtual_File;
    --  Returns the file where the debugging is stopped
@@ -143,16 +156,33 @@ package DAP.Clients is
      (Self : in out DAP_Client) return GNATCOLL.VFS.Virtual_File;
    --  Return the name of the executable currently debugged.
 
-   procedure Highlight_Current_File_And_Line
-     (Self : in out DAP_Client;
-      File  : GNATCOLL.VFS.Virtual_File;
-      Line  : Integer);
-
-   procedure Unhighlight_Current_Line (Self : in out DAP_Client);
-
    procedure Set_Source_Files
      (Self         : in out DAP_Client;
       Source_Files : VSS.String_Vectors.Virtual_String_Vector);
+
+   procedure Highlight_Current_File_And_Line
+     (Self  : in out DAP_Client;
+      File  : GNATCOLL.VFS.Virtual_File;
+      Line  : Integer);
+
+   -- Visual_Debugger --
+
+   type Visual_Debugger is new GPS.Debuggers.Base_Visual_Debugger with record
+      Client : DAP_Client_Access;
+   end record;
+
+   type Visual_Debugger_Access is access all Visual_Debugger;
+
+   overriding function Get_Num
+     (Self : not null access Visual_Debugger) return Glib.Gint is
+     (Glib.Gint (Self.Client.Id));
+
+   overriding function Command_In_Process
+     (Self : not null access Visual_Debugger) return Boolean is
+      (Self.Client.Get_Status /= Stopped);
+
+   function Get_Visual
+     (Self : in out DAP_Client) return Visual_Debugger_Access;
 
 private
 
@@ -173,6 +203,9 @@ private
       Id     : Positive) is new LSP.Raw_Clients.Raw_Client
    with record
       This         : DAP_Client_Access := DAP_Client'Unchecked_Access;
+      Visual       : aliased Visual_Debugger := Visual_Debugger'
+        (Glib.Object.GObject_Record with
+           Client => DAP_Client'Unchecked_Access);
       Project      : GNATCOLL.Projects.Project_Type;
       File         : GNATCOLL.VFS.Virtual_File;
       Args         : Ada.Strings.Unbounded.Unbounded_String;
@@ -192,7 +225,10 @@ private
       --  Modules --
       Breakpoints  : DAP.Modules.Breakpoint_Managers.
         DAP_Client_Breakpoint_Manager_Access;
+
+      --  Views --
       Breakpoints_View : Generic_Views.Abstract_View_Access;
+      Call_Stack_View  : Generic_Views.Abstract_View_Access;
    end record;
 
    overriding function Error_Message

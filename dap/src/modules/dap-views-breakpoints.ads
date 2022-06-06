@@ -16,16 +16,11 @@
 ------------------------------------------------------------------------------
 
 with GPS.Kernel;
-with DAP.Clients;
 
 package DAP.Views.Breakpoints is
 
    procedure Register_Module
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class);
    --  Register menus and other functions to support the breakpoint editor
-
-   procedure Attach_View
-     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
-      Client : not null access DAP.Clients.DAP_Client'Class);
 
 end DAP.Views.Breakpoints;

@@ -150,9 +150,9 @@ package body GVD_Module is
    type On_Debugger_Location_Changed is new Debugger_Hooks_Function with
      null record;
    overriding procedure Execute
-     (Self        : On_Debugger_Location_Changed;
-      Kernel      : not null access Kernel_Handle_Record'Class;
-      Debugger    : access Base_Visual_Debugger'Class);
+     (Self     : On_Debugger_Location_Changed;
+      Kernel   : not null access Kernel_Handle_Record'Class;
+      Debugger : access Base_Visual_Debugger'Class);
    --  Called when the current debugger's location changes.
    --  Used to remove the "Continue to line" clickable icon on the debugger's
    --  current location.
@@ -1764,9 +1764,9 @@ package body GVD_Module is
    -------------
 
    overriding procedure Execute
-     (Self        : On_Debugger_Location_Changed;
-      Kernel      : not null access Kernel_Handle_Record'Class;
-      Debugger    : access Base_Visual_Debugger'Class)
+     (Self     : On_Debugger_Location_Changed;
+      Kernel   : not null access Kernel_Handle_Record'Class;
+      Debugger : access Base_Visual_Debugger'Class)
    is
       pragma Unreferenced (Self, Debugger);
    begin

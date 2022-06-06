@@ -46,6 +46,7 @@ with DAP.Requests.Step_In_Request;
 with DAP.Scripts;
 with DAP.Tools;                    use DAP.Tools;
 with DAP.Types;
+with DAP.Views.Call_Stack;
 
 package body DAP.Module is
 
@@ -80,6 +81,11 @@ package body DAP.Module is
 
    function Get_Current_Debugger
      (Id : DAP_Module)
+      return DAP.Clients.DAP_Client_Access;
+
+   function Get_Debugger
+     (Id  : DAP_Module;
+      Num : Integer)
       return DAP.Clients.DAP_Client_Access;
 
    -- Hooks callbacks --
@@ -659,6 +665,15 @@ package body DAP.Module is
       return Get_Current_Debugger (DAP_Module_ID);
    end Get_Current_Debugger;
 
+   ------------------
+   -- Get_Debugger --
+   ------------------
+
+   function Get_Debugger (Id : Integer) return DAP.Clients.DAP_Client_Access is
+   begin
+      return Get_Debugger (DAP_Module_ID, Id);
+   end Get_Debugger;
+
    --------------------------
    -- Get_Current_Debugger --
    --------------------------
@@ -675,6 +690,24 @@ package body DAP.Module is
 
       return null;
    end Get_Current_Debugger;
+
+   ------------------
+   -- Get_Debugger --
+   ------------------
+
+   function Get_Debugger
+     (Id  : DAP_Module;
+      Num : Integer)
+      return DAP.Clients.DAP_Client_Access is
+   begin
+      for C of Id.Clients loop
+         if C.Id = Num then
+            return C;
+         end if;
+      end loop;
+
+      return null;
+   end Get_Debugger;
 
    -------------------------
    -- Initialize_Debugger --
@@ -891,6 +924,7 @@ package body DAP.Module is
          Category    => "Debug");
 
       DAP.Persistent_Breakpoints.Register_Module (Kernel);
+      DAP.Views.Call_Stack.Register_Module (Kernel);
       DAP.Scripts.Register_Module (Kernel);
    end Register_Module;
 
