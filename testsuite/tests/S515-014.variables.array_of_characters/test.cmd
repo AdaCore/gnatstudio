@@ -1,7 +1,7 @@
 
 # lldb doesn't support ada
 #if [ "$OS" == "Windows_NT" ]; then
-  list="Gdb Gdb_MI"
+  list="Gdb_MI"
 #else
 #  if which lldb >/dev/null 2>&1; then
 #    list="Gdb Gdb_MI LLDB"
