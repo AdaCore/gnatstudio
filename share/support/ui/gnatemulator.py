@@ -170,7 +170,7 @@ class GNATemulator(Module):
         if in_console:
             yield Console_Process(command=command, force=False,
                                   close_on_exit=False, task_manager=True,
-                                  manage_prompt=False)
+                                  manage_prompt=True)
         else:
             builder = promises.TargetWrapper("Run GNATemulator")
             yield builder.wait_on_execute(extra_args=args, quiet=False)
