@@ -11,7 +11,7 @@ from gs_utils.internal.utils import *
 @run_test_driver
 def test_driver():
     yield modal_dialog(lambda: GPS.execute_action("edit gnatcheck rules"))
-    yield timeout(1000)
+    yield timeout(2000)
     dialog = get_window_by_title("Comments lost on file save")
 
 
