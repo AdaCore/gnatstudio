@@ -107,11 +107,10 @@ gnatcov_install_dir = (
 gnatcov_doc_path = None
 if gnatcov_install_dir:
     for name in ('gnatcoverage', 'gnatdas'):
-        gnatcov_doc_path = os.path.join(
-            gnatcov_install_dir, 'share', 'doc', name, 'html'
-        )
-        if not os.path.isdir(gnatcov_doc_path):
-            gnatcov_doc_path = None
+        path = os.path.join(gnatcov_install_dir, 'share', 'doc', name, 'html')
+        if os.path.isdir(path):
+            gnatcov_doc_path = path
+            break
 
 # Finally, also look for the index file. In legacy documentations, GNATcoverage
 # was the only product documented, so we could just take the global doc index.
