@@ -47,6 +47,7 @@ with DAP.Scripts;
 with DAP.Tools;                    use DAP.Tools;
 with DAP.Types;
 with DAP.Views.Call_Stack;
+with DAP.Views.Threads;
 
 package body DAP.Module is
 
@@ -925,6 +926,7 @@ package body DAP.Module is
 
       DAP.Persistent_Breakpoints.Register_Module (Kernel);
       DAP.Views.Call_Stack.Register_Module (Kernel);
+      DAP.Views.Threads.Register_Module (Kernel);
       DAP.Scripts.Register_Module (Kernel);
    end Register_Module;
 

@@ -144,6 +144,15 @@ package DAP.Clients is
       View : Generic_Views.Abstract_View_Access);
    --  Attach the callstack view to the client
 
+   function Get_Thread_View
+     (Self : DAP_Client)
+      return Generic_Views.Abstract_View_Access;
+   --  Returns the thread view, if any.
+   procedure Set_Thread_View
+     (Self : in out DAP_Client;
+      View : Generic_Views.Abstract_View_Access);
+   --  Attach the thread view to the client
+
    function Current_File
      (Self : in out DAP_Client) return GNATCOLL.VFS.Virtual_File;
    --  Returns the file where the debugging is stopped
@@ -229,6 +238,7 @@ private
       --  Views --
       Breakpoints_View : Generic_Views.Abstract_View_Access;
       Call_Stack_View  : Generic_Views.Abstract_View_Access;
+      Thread_View      : Generic_Views.Abstract_View_Access;
    end record;
 
    overriding function Error_Message

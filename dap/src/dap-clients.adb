@@ -285,6 +285,17 @@ package body DAP.Clients is
       return Self.Call_Stack_View;
    end Get_Call_Stack_View;
 
+   ---------------------
+   -- Get_Thread_View --
+   ---------------------
+
+   function Get_Thread_View
+     (Self : DAP_Client)
+      return Generic_Views.Abstract_View_Access is
+   begin
+      return Self.Thread_View;
+   end Get_Thread_View;
+
    --------------------
    -- Get_Executable --
    --------------------
@@ -334,6 +345,17 @@ package body DAP.Clients is
    begin
       Self.Call_Stack_View := View;
    end Set_Call_Stack_View;
+
+   ---------------------
+   -- Set_Thread_View --
+   ---------------------
+
+   procedure Set_Thread_View
+     (Self : in out DAP_Client;
+      View : Generic_Views.Abstract_View_Access) is
+   begin
+      Self.Thread_View := View;
+   end Set_Thread_View;
 
    ----------------------
    -- Set_Source_Files --
