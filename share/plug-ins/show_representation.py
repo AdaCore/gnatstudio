@@ -75,19 +75,22 @@ def parse_value(component, name):
             return str(elem)
         code = elem.get("code", "")
         operands = elem.get("operands", [])
-        eval_list = [compute_formula(op) for op in elem["operands"]]
         if not code or not operands:
             return ""
-        elif len(operands) == 1:
-            return code + eval_list[0]
-        elif code in ["max", "min"]:
-            return code + "(" + ", ".join(eval_list) + ")"
-        elif code == "?<>":
+
+        if code == "?<>":
             return \
                "(if " + compute_formula(operands[0]) + \
                " then " + compute_formula(operands[1]) + \
                " else " + compute_formula(operands[2]) + \
                " end)"
+
+        eval_list = [compute_formula(op) for op in elem["operands"]]
+
+        if len(operands) == 1:
+            return code + eval_list[0]
+        elif code in ["max", "min"]:
+            return code + "(" + ", ".join(eval_list) + ")"
         else:
             code = " " + code + " "
             return "(" + code.join(eval_list) + ")"
