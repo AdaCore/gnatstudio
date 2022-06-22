@@ -16,7 +16,6 @@
 ------------------------------------------------------------------------------
 
 with Ada.Containers.Vectors;
-with Ada.Strings.Unbounded;
 with Ada.Unchecked_Deallocation;
 
 with GNATCOLL.Any_Types;           use GNATCOLL.Any_Types;
@@ -223,8 +222,6 @@ package body DAP.Module is
       return GNATCOLL.VFS.Virtual_File;
 
    DAP_Module_Name : constant String := "DAP";
-   Debug_Adapter   : Ada.Strings.Unbounded.Unbounded_String;
-
    DAP_Module_ID   : DAP_Module;
 
    ----------------
@@ -261,8 +258,7 @@ package body DAP.Module is
 
       DAP_Module_ID.Clients.Append (Client);
       Client.Start
-        (Ada.Strings.Unbounded.To_String (Debug_Adapter),
-         Project,
+        (Project,
          File,
          Args);
    end Debug_Init;
@@ -877,8 +873,8 @@ package body DAP.Module is
    ---------------------
 
    procedure Register_Module
-     (Kernel     : access GPS.Kernel.Kernel_Handle_Record'Class;
-      Prefix_Dir : Virtual_File)
+     (Kernel   : access GPS.Kernel.Kernel_Handle_Record'Class;
+      Base_Dir : Virtual_File)
    is
       Debugger_Active        : Action_Filter;
       Debugger_Ready         : Action_Filter;
@@ -888,7 +884,8 @@ package body DAP.Module is
       Debugger_Stopped       : Action_Filter;
 
    begin
-      DAP.Preferences.Register_Default_Preferences (Kernel.Get_Preferences);
+      DAP.Preferences.Register_Default_Preferences
+        (Kernel.Get_Preferences, Base_Dir);
 
       DAP_Module_ID := new DAP_Module_Record;
       if Kernel /= null then
@@ -898,10 +895,6 @@ package body DAP.Module is
             Module_Name     => DAP_Module_Name,
             Priority        => Default_Priority + 20);
       end if;
-
-      Debug_Adapter := Ada.Strings.Unbounded.To_Unbounded_String
-        (+Prefix_Dir.Create_From_Dir
-           ("share/gnatstudio/cdt-gdb-adapter/debugAdapter.js").Full_Name);
 
       -- Filters --
 
