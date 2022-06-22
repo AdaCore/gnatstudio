@@ -1170,14 +1170,14 @@ package DAP.Tools is
    end record;
 
    type LaunchRequestArguments is record
-      noDebug : Boolean;
+      noDebug  : Boolean;
       --  If noDebug is true the launch request should launch the program
       --  without enabling debugging.
-      restart : Any_Value;
+      restart  : Any_Value;
       --  Optional data from the previous, restarted session. The data is sent
       --  as the 'restart' attribute of the 'terminated' event. The client
       --  should leave the data intact.
-      program : VSS.Strings.Virtual_String;
+      program  : VSS.Strings.Virtual_String;
    end record;
 
    type ExitedEvent_body is record

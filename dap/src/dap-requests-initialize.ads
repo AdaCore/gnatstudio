@@ -80,7 +80,7 @@ private
               supportsProgressReporting    => True,
               supportsRunInTerminalRequest => False,
               supportsVariablePaging       => False,
-              supportsVariableType         => False));
+              supportsVariableType         => True));
 
       Project : GNATCOLL.Projects.Project_Type;
       File    : GNATCOLL.VFS.Virtual_File;

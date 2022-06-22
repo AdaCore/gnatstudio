@@ -23,20 +23,27 @@ with GNATCOLL.Any_Types;           use GNATCOLL.Any_Types;
 with GNATCOLL.Projects;            use GNATCOLL.Projects;
 with GNATCOLL.Traces;              use GNATCOLL.Traces;
 
+with Gtk.Label;                    use Gtk.Label;
+with Gtk.Widget;                   use Gtk.Widget;
+
 with Gtkada.Dialogs;
 
 with Commands;                     use Commands;
 with Commands.Interactive;         use Commands.Interactive;
+with Language;                     use Language;
+with GPS.Editors;                  use GPS.Editors;
 with GPS.Kernel.Actions;
 with GPS.Kernel.Contexts;          use GPS.Kernel.Contexts;
 with GPS.Kernel.Hooks;             use GPS.Kernel.Hooks;
 with GPS.Kernel.MDI;
 with GPS.Kernel.Modules;           use GPS.Kernel.Modules;
 with GPS.Kernel.Modules.UI;
+with GPS.Kernel.Preferences;
 with GPS.Kernel.Project;
 with GUI_Utils;
 with Remote;
 
+with DAP.Contexts;
 with DAP.Persistent_Breakpoints;
 with DAP.Preferences;
 with DAP.Requests.ConfigurationDone;
@@ -47,6 +54,7 @@ with DAP.Scripts;
 with DAP.Tools;                    use DAP.Tools;
 with DAP.Types;
 with DAP.Views.Call_Stack;
+with DAP.Views.Threads;
 
 package body DAP.Module is
 
@@ -87,6 +95,11 @@ package body DAP.Module is
      (Id  : DAP_Module;
       Num : Integer)
       return DAP.Clients.DAP_Client_Access;
+
+   overriding function Tooltip_Handler
+     (Module  : access DAP_Module_Record;
+      Context : Selection_Context) return Gtk_Widget;
+   --  See inherited documentation
 
    -- Hooks callbacks --
 
@@ -269,6 +282,68 @@ package body DAP.Module is
          end;
       end loop;
    end Destroy;
+
+   ---------------------
+   -- Tooltip_Handler --
+   ---------------------
+
+   overriding function Tooltip_Handler
+     (Module  : access DAP_Module_Record;
+      Context : Selection_Context) return Gtk_Widget
+   is
+      pragma Unreferenced (Module);
+      use type DAP.Clients.DAP_Client_Access;
+      Kernel : constant Kernel_Handle := Get_Kernel (Context);
+      Client : constant DAP.Clients.DAP_Client_Access :=
+        Get_Current_Debugger;
+      W      : Gtk_Widget;
+      Label  : Gtk_Label;
+   begin
+      if Client = null then
+         return null;
+      end if;
+
+      --  Return immediately if we are not hovering on an entity
+      if not Has_Entity_Name_Information (Context) then
+         return null;
+      end if;
+
+      --  Get the name of the entity and try to display a tooltip with it's
+      --  current value if possible.
+      declare
+         Variable_Name : constant String := DAP.Contexts.Get_Variable_Name
+           (Context, Dereference => False);
+      begin
+         if Variable_Name = ""
+           or else not Can_Tooltip_On_Entity
+             (Kernel.Get_Language_Handler.Get_Language_From_File
+                (File_Information (Context)), Variable_Name)
+         then
+            return null;
+         end if;
+         Gtk_New (Label, "<b>Debugger value :</b> ...");
+         --  Retrieve the debugger output
+         Client.Value_Of
+           (Entity => Variable_Name,
+            Label  => Label);
+         --  If the tooltips is too long wrap it
+         Label.Set_Line_Wrap (True);
+         Label.Set_Max_Width_Chars (80);
+         Label.Set_Use_Markup (True);
+         Label.Modify_Font
+           (GPS.Kernel.Preferences.View_Fixed_Font.Get_Pref);
+         Label.Set_Alignment (0.0, 0.5);
+         W := Gtk_Widget (Label);
+         return W;
+      end;
+
+   exception
+      when Language.Unexpected_Type | Constraint_Error =>
+         return null;
+      when E : others =>
+         Trace (Me, E);
+         return null;
+   end Tooltip_Handler;
 
    -------------
    -- Execute --
@@ -732,7 +807,7 @@ package body DAP.Module is
       use DAP_Client_Vectors;
       use type DAP.Clients.DAP_Client_Access;
 
-      C      : Cursor := DAP_Module_ID.Clients.First;
+      C      : DAP_Client_Vectors.Cursor := DAP_Module_ID.Clients.First;
       Client : DAP.Clients.DAP_Client_Access := null;
    begin
       while Has_Element (C) loop
@@ -925,6 +1000,7 @@ package body DAP.Module is
 
       DAP.Persistent_Breakpoints.Register_Module (Kernel);
       DAP.Views.Call_Stack.Register_Module (Kernel);
+      DAP.Views.Threads.Register_Module (Kernel);
       DAP.Scripts.Register_Module (Kernel);
    end Register_Module;
 

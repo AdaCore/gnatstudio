@@ -24,7 +24,8 @@ def run_test():
 
     # Popup the completion view by adding '.'
     send_key_event(ord("."))
-    yield timeout(100)
+    yield wait_until_true(
+        lambda: get_widget_by_name("completion-view") != None)
 
     pop_tree = get_widget_by_name("completion-view")
     model = pop_tree.get_model()
