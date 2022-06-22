@@ -267,8 +267,7 @@ package body DAP.Views.Call_Stack is
       use DAP.Clients;
 
       Client : constant DAP.Clients.DAP_Client_Access := Get_Client (View);
-      Req    : StackTrace_Request_Access :=
-        new StackTrace_Request (View.Kernel);
+      Req    : StackTrace_Request_Access;
    begin
       --  If the debugger was killed, no need to refresh
 
@@ -276,6 +275,8 @@ package body DAP.Views.Call_Stack is
          Clear (View.Model);
          return;
       end if;
+
+      Req := new StackTrace_Request (View.Kernel);
 
       Req.Client := Client;
       Req.From   := From;
@@ -357,6 +358,9 @@ package body DAP.Views.Call_Stack is
          Self.Tree.Get_Selection.Get_Selected (Model, Iter);
          if Iter /= Null_Iter then
             begin
+               Self.Client.Set_Selected_Frame
+                 (Integer (Model.Get_Int (Iter, Frame_Num_Column)));
+
                File := GNATCOLL.VFS.Create
                  (+Model.Get_String (Iter, Sourse_Column));
                Line := Integer (Model.Get_Int (Iter, Line_Column));
@@ -557,9 +561,10 @@ package body DAP.Views.Call_Stack is
       New_Request : in out DAP.Requests.DAP_Request_Access)
    is
       pragma Unreferenced (New_Request);
-      View : constant Call_Stack := Get_View (Self.Client);
-      Iter : Gtk_Tree_Iter;
-      Path : Gtk_Tree_Path;
+      View  : constant Call_Stack := Get_View (Self.Client);
+      Model : Gtk.Tree_Model.Gtk_Tree_Model;
+      Iter  : Gtk_Tree_Iter;
+      Path  : Gtk_Tree_Path;
    begin
       if View = null then
          return;
@@ -634,6 +639,17 @@ package body DAP.Views.Call_Stack is
             View.Tree.Get_Selection.Select_Iter
               (View.Tree.Convert_To_Filter_Iter (View.Model.Get_Iter_First));
          end if;
+      end if;
+
+      View.Tree.Get_Selection.Get_Selected (Model, Iter);
+      if Iter /= Null_Iter then
+         Self.Client.Set_Selected_Frame
+           (Integer (Model.Get_Int (Iter, Frame_Num_Column)));
+      else
+         Self.Client.Set_Selected_Frame
+           (Integer
+              (View.Model.Get_Int
+                   (View.Model.Get_Iter_First, Frame_Num_Column)));
       end if;
 
       View.Kernel.Context_Changed (No_Context);

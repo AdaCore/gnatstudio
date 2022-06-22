@@ -23,6 +23,8 @@ with VSS.String_Vectors;
 
 with Glib.Object;
 
+with Gtk.Label;
+
 with GPS.Debuggers;
 with GPS.Kernel;
 
@@ -148,10 +150,18 @@ package DAP.Clients is
      (Self : DAP_Client)
       return Generic_Views.Abstract_View_Access;
    --  Returns the thread view, if any.
+
    procedure Set_Thread_View
      (Self : in out DAP_Client;
       View : Generic_Views.Abstract_View_Access);
    --  Attach the thread view to the client
+
+   procedure Set_Selected_Frame
+     (Self : in out DAP_Client;
+      Id   : Integer);
+
+   function Get_Selected_Frame
+     (Self : in out DAP_Client) return Integer;
 
    function Current_File
      (Self : in out DAP_Client) return GNATCOLL.VFS.Virtual_File;
@@ -193,6 +203,11 @@ package DAP.Clients is
    function Get_Visual
      (Self : in out DAP_Client) return Visual_Debugger_Access;
 
+   procedure Value_Of
+     (Self   : in out DAP_Client;
+      Entity : String;
+      Label  : Gtk.Label.Gtk_Label);
+
 private
 
    function Hash
@@ -215,24 +230,25 @@ private
       Visual       : aliased Visual_Debugger := Visual_Debugger'
         (Glib.Object.GObject_Record with
            Client => DAP_Client'Unchecked_Access);
-      Project      : GNATCOLL.Projects.Project_Type;
-      File         : GNATCOLL.VFS.Virtual_File;
-      Args         : Ada.Strings.Unbounded.Unbounded_String;
-      Source_Files : VSS.String_Vectors.Virtual_String_Vector;
+      Project        : GNATCOLL.Projects.Project_Type;
+      File           : GNATCOLL.VFS.Virtual_File;
+      Args           : Ada.Strings.Unbounded.Unbounded_String;
+      Source_Files   : VSS.String_Vectors.Virtual_String_Vector;
 
-      Is_Attached  : Boolean := False;
-      Status       : Debugger_Status_Kind := Initialization;
+      Is_Attached    : Boolean := False;
+      Status         : Debugger_Status_Kind := Initialization;
 
-      Sent         : Requests_Maps.Map;
+      Sent           : Requests_Maps.Map;
 
-      Request_Id   : Integer := 1;
-      Error_Msg    : VSS.Strings.Virtual_String;
+      Request_Id     : Integer := 1;
+      Error_Msg      : VSS.Strings.Virtual_String;
 
-      Stopped_File : GNATCOLL.VFS.Virtual_File;
-      Stopped_Line : Integer;
+      Stopped_File   : GNATCOLL.VFS.Virtual_File;
+      Stopped_Line   : Integer;
+      Selected_Frame : Integer;
 
       --  Modules --
-      Breakpoints  : DAP.Modules.Breakpoint_Managers.
+      Breakpoints    : DAP.Modules.Breakpoint_Managers.
         DAP_Client_Breakpoint_Manager_Access;
 
       --  Views --

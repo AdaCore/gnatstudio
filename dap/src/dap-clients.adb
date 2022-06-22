@@ -26,6 +26,9 @@ with GNATCOLL.Traces;            use GNATCOLL.Traces;
 with GNATCOLL.Utils;
 with Spawn.String_Vectors;
 
+with Glib.Convert;
+with Glib.Object;                use Glib.Object;
+
 with Gtkada.Dialogs;
 
 with VSS.JSON.Pull_Readers.Simple;
@@ -45,6 +48,7 @@ with LSP.JSON_Streams;
 
 with DAP.Persistent_Breakpoints;
 with DAP.Module;
+with DAP.Requests.Evaluate;
 with DAP.Requests.Initialize;
 with DAP.Requests.Disconnects;
 with DAP.Requests.StackTraces;
@@ -81,6 +85,21 @@ package body DAP.Clients is
       Result      : in out DAP.Tools.StackTraceResponse;
       New_Request : in out DAP.Requests.DAP_Request_Access);
 
+   -- Evaluate_Request --
+   type Evaluate_Request is
+     new DAP.Requests.Evaluate.Evaluate_DAP_Request
+   with record
+      Label : Gtk.Label.Gtk_Label;
+   end record;
+   type Evaluate_Request_Access is access all Evaluate_Request;
+   overriding procedure On_Result_Message
+     (Self        : in out Evaluate_Request;
+      Result      : in out DAP.Tools.EvaluateResponse;
+      New_Request : in out DAP.Requests.DAP_Request_Access);
+   overriding procedure On_Rejected (Self : in out Evaluate_Request);
+   overriding procedure On_Error_Message
+     (Self    : in out Evaluate_Request;
+      Message : VSS.Strings.Virtual_String);
    ------------------
    -- Break_Source --
    ------------------
@@ -211,7 +230,8 @@ package body DAP.Clients is
          Self.Status := Status;
 
          if Self.Status /= Stopped then
-            Self.Stopped_Line := 0;
+            Self.Stopped_Line   := 0;
+            Self.Selected_Frame := 0;
             DAP.Utils.Unhighlight_Current_Line (Self.Kernel);
          end if;
 
@@ -356,6 +376,27 @@ package body DAP.Clients is
    begin
       Self.Thread_View := View;
    end Set_Thread_View;
+
+   ------------------------
+   -- Set_Selected_Frame --
+   ------------------------
+
+   procedure Set_Selected_Frame
+     (Self : in out DAP_Client;
+      Id   : Integer) is
+   begin
+      Self.Selected_Frame := Id;
+   end Set_Selected_Frame;
+
+   ------------------------
+   -- Get_Selected_Frame --
+   ------------------------
+
+   function Get_Selected_Frame
+     (Self : in out DAP_Client) return Integer is
+   begin
+      return Self.Selected_Frame;
+   end Get_Selected_Frame;
 
    ----------------------
    -- Set_Source_Files --
@@ -1184,5 +1225,65 @@ package body DAP.Clients is
          Self.Set_Status (Terminating);
       end if;
    end Quit;
+
+   --------------
+   -- Value_Of --
+   --------------
+
+   procedure Value_Of
+     (Self   : in out DAP_Client;
+      Entity : String;
+      Label  : Gtk.Label.Gtk_Label)
+   is
+      Req : Evaluate_Request_Access :=
+        new Evaluate_Request (Self.Kernel);
+   begin
+      Req.Label := Label;
+      Ref (GObject (Label));
+      Req.Parameters.arguments.expression :=
+        VSS.Strings.Conversions.To_Virtual_String (Entity);
+      Req.Parameters.arguments.frameId :=
+        (Is_Set => True, Value => Self.Selected_Frame);
+      Req.Parameters.arguments.context :=
+        (Is_Set => True, Value => DAP.Tools.Enum.hover);
+      Self.Enqueue (DAP.Requests.DAP_Request_Access (Req));
+   end Value_Of;
+
+   -----------------------
+   -- On_Result_Message --
+   -----------------------
+
+   overriding procedure On_Result_Message
+     (Self        : in out Evaluate_Request;
+      Result      : in out DAP.Tools.EvaluateResponse;
+      New_Request : in out DAP.Requests.DAP_Request_Access)
+   is
+      pragma Unreferenced (New_Request);
+   begin
+      Self.Label.Set_Markup
+        ("<b>Debugger value :</b> " & Glib.Convert.Escape_Text
+           (VSS.Strings.Conversions.To_UTF_8_String (Result.a_body.result)));
+      Unref (GObject (Self.Label));
+   end On_Result_Message;
+
+   -----------------
+   -- On_Rejected --
+   -----------------
+
+   overriding procedure On_Rejected (Self : in out Evaluate_Request) is
+   begin
+      Unref (GObject (Self.Label));
+   end On_Rejected;
+
+   ----------------------
+   -- On_Error_Message --
+   ----------------------
+
+   overriding procedure On_Error_Message
+     (Self    : in out Evaluate_Request;
+      Message : VSS.Strings.Virtual_String) is
+   begin
+      Unref (GObject (Self.Label));
+   end On_Error_Message;
 
 end DAP.Clients;
