@@ -48,6 +48,7 @@ with LSP.JSON_Streams;
 
 with DAP.Persistent_Breakpoints;
 with DAP.Module;
+with DAP.Preferences;
 with DAP.Requests.Evaluate;
 with DAP.Requests.Initialize;
 with DAP.Requests.Disconnects;
@@ -63,8 +64,6 @@ with Language_Handlers;          use Language_Handlers;
 package body DAP.Clients is
 
    Me : constant Trace_Handle := Create ("GPS.DAP.Clients", On);
-
-   Node_Binary : constant String := "/usr/bin/node";
 
    procedure Free is new Ada.Unchecked_Deallocation
      (DAP.Modules.Breakpoint_Managers.DAP_Client_Breakpoint_Manager'Class,
@@ -1176,23 +1175,31 @@ package body DAP.Clients is
 
    procedure Start
      (Self    : in out DAP_Client;
-      Adapter : String;
       Project : GNATCOLL.Projects.Project_Type;
       File    : GNATCOLL.VFS.Virtual_File;
       Args    : String)
    is
       Node_Args : Spawn.String_Vectors.UTF_8_String_Vector;
+      Adapter   : constant String := DAP.Preferences.DAP_Adapter.Get_Pref;
 
    begin
-      Trace
-        (Me, "Launching the debug adapter: " & Node_Binary & " " & Adapter);
+      Trace (Me, "Launching the debug adapter: " & Adapter);
 
       Self.Project := Project;
       Self.File    := File;
       Self.Args    := Ada.Strings.Unbounded.To_Unbounded_String (Args);
 
-      Self.Set_Program (Node_Binary);
-      Node_Args.Append (Adapter);
+      declare
+         Vals : GNAT.Strings.String_List_Access := GNATCOLL.Utils.Split
+           (Adapter, On => ' ');
+      begin
+         Self.Set_Program (Vals (Vals'First).all);
+         for Index in Vals'First + 1 .. Vals'Last loop
+            Node_Args.Append (Vals (Index).all);
+         end loop;
+         GNAT.Strings.Free (Vals);
+      end;
+
       Self.Set_Arguments (Node_Args);
       Self.Start;
    end Start;

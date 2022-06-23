@@ -53,7 +53,6 @@ package DAP.Clients is
 
    procedure Start
      (Self    : in out DAP_Client;
-      Adapter : String;
       Project : GNATCOLL.Projects.Project_Type;
       File    : GNATCOLL.VFS.Virtual_File;
       Args    : String);

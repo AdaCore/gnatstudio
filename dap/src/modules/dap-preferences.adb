@@ -22,8 +22,19 @@ package body DAP.Preferences is
    ----------------------------------
 
    procedure Register_Default_Preferences
-     (Prefs : access Preferences_Manager_Record'Class) is
+     (Prefs    : access Preferences_Manager_Record'Class;
+      Base_Dir : Virtual_File) is
    begin
+      DAP_Adapter := Create
+        (Manager => Prefs,
+         Name    => "DAP-Adapter",
+         Label   => "DAP Adapter",
+         Doc     => "The adapter for the DAP protocol",
+         Default => "/usr/bin/node " &
+         (+Base_Dir.Create_From_Dir
+           ("share/gnatstudio/cdt-gdb-adapter/debugAdapter.js").Full_Name),
+         Path    => "Debugger:General");
+
       Preserve_State_On_Exit := Create
         (Manager    => Prefs,
          Name       => "Debugger-Preserve_State-On-Exit",
