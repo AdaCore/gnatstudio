@@ -15,6 +15,7 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
+--  "loadedSources" request
 --  Service request to get the list of sources
 
 with DAP.Tools;
