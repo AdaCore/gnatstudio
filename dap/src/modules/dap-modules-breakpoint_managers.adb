@@ -550,7 +550,6 @@ package body DAP.Modules.Breakpoint_Managers is
      (Self : DAP_Client_Breakpoint_Manager_Access;
       List : DAP.Types.Breakpoint_Identifier_Lists.List)
    is
-      use Breakpoint_Hash_Maps;
       use Breakpoint_Vectors;
 
       Actual  : Breakpoint_Vectors.Vector;
@@ -608,7 +607,6 @@ package body DAP.Modules.Breakpoint_Managers is
    procedure Remove_All_Breakpoints
      (Self : DAP_Client_Breakpoint_Manager_Access)
    is
-      use Breakpoint_Hash_Maps;
       use Breakpoint_Vectors;
 
       Empty : Breakpoint_Vectors.Vector;
