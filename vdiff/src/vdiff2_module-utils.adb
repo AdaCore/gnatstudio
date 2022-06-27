@@ -613,8 +613,6 @@ package body Vdiff2_Module.Utils is
          return Execute_GPS_Shell_Command (Kernel, CL) /= "null";
       end Is_Ref_Editor_Opened;
 
-      use Diff_Chunk_List.Std_Vectors;
-
    begin
       if Ref = 1 then
          Other := 2;
@@ -818,7 +816,6 @@ package body Vdiff2_Module.Utils is
       Item   : access Diff_Head)
    is
       use Ada.Strings.Unbounded;
-      use Diff_Chunk_List.Std_Vectors;
 
       Ref        : constant T_Loc := Item.Ref_File;
       File       : constant Virtual_File := Item.Files (3 - Ref);

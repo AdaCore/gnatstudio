@@ -64,7 +64,7 @@ project Shared is
 	 when "AddressSanitizer" =>
             for Switches ("Ada") use Common &
               ("-O0", "-gnata", "-gnatVa", "-gnatQ", "-gnatygO",
-               "-gnatwaCJe", "-gnateE", "-fsanitize=address");
+               "-gnatwaCJ", "-gnateE", "-fsanitize=address");
             for Switches ("C") use ("-g", "-O1", "-fsanitize=address");
       end case;
    end Compiler;

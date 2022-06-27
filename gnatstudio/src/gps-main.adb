@@ -2499,10 +2499,15 @@ procedure GPS.Main is
 
          if not Create ("GPS.DEBUGGING.DAP_MODULE").Is_Active then
             GVD.Preferences.Debugger_Kind.Hide (GVD.Types.DAP);
+            if GVD.Preferences.Debugger_Kind.Get_Pref = GVD.Types.DAP then
+               GVD.Preferences.Debugger_Kind.Set_Pref
+                 (GPS_Main.Kernel.Get_Preferences, "Gdb_MI");
+            end if;
          end if;
 
          if GVD.Preferences.Debugger_Kind.Get_Pref = GVD.Types.DAP then
             DAP.Module.Register_Module (GPS_Main.Kernel, Prefix_Dir);
+
          else
             GVD_Module.Register_Module (GPS_Main.Kernel);
             GVD.Breakpoints_List.Register_Module (GPS_Main.Kernel);

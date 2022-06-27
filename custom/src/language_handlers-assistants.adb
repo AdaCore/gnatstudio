@@ -343,14 +343,17 @@ package body Language_Handlers.Assistants is
         (Text      : String;
          Error_Msg : out Unbounded_String) return Boolean is
       begin
-         if Contains (Keywords, Text)
-           or else Ends_With (Text, Body_Ext)
-           or else Ends_With (Text, Spec_Ext)
+         if Contains (Keywords, To_Lower (Text)) then
+            Error_Msg := To_Unbounded_String
+              ("You can't use Ada keywords as unit names.");
+            return False;
+
+         elsif Ends_With (To_Lower (Text), Body_Ext)
+           or else Ends_With (To_Lower (Text), Spec_Ext)
          then
             Error_Msg := To_Unbounded_String
               ("You should specify the unit name, not the filename (e.g: "
                & " for an Ada main, enter ""Main"" and not ""main.adb"".");
-
             return False;
          end if;
 
