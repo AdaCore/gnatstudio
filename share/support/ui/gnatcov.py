@@ -776,7 +776,7 @@ class GNATcovPlugin(Module):
         r = yield p.wait_on_execute(exe)
 
     @workflows.run_as_workflow
-    def run_instrumented_main_wf(self, main_name):
+    def run_instrumented_main_wf(self, main_name, generate=False):
         exe = str(GPS.File(main_name).executable_path)
         # Go to the object directory before executing the instrumented main: we
         # want to produce the trace file in the object dir and not in the
@@ -830,6 +830,13 @@ class GNATcovPlugin(Module):
                 GPS.Console().write(
                     "Could not extract traces info from executable's output",
                     mode="error")
+
+        if status == 0 and generate:
+            # Generate and display the GNATcov Coverage Report
+            p = promises.TargetWrapper(
+                    "Generate GNATcov Instrumented Main Report")
+            yield p.wait_on_execute(exe, quiet=True)
+
         return status
 
     def run_gnatcov_with_instrumentation_wf(self, main_name):
@@ -874,11 +881,7 @@ class GNATcovPlugin(Module):
                                           "the GNATcov switches", mode="error")
             return
 
-        self.run_instrumented_main_wf(main_name)
-
-        # Generate and display the GNATcov Coverage Report
-        p = promises.TargetWrapper("Generate GNATcov Instrumented Main Report")
-        r = yield p.wait_on_execute(exe, quiet=True)
+        self.run_instrumented_main_wf(main_name, True)
 
     def reload_gnatcov_data(self):
         """Clean the coverage report and reload it from the files."""
