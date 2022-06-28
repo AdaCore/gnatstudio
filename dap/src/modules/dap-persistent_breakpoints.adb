@@ -1037,7 +1037,7 @@ package body DAP.Persistent_Breakpoints is
       Before_Exit_Action_Hook.Add (new On_Before_Exit);
 
       No_Debugger_Or_Stopped := Kernel.Lookup_Filter
-        ("No debugger or stopped");
+        ("No debugger or ready or stopped");
 
       GPS.Kernel.Actions.Register_Action
         (Kernel, "debug set line breakpoint",

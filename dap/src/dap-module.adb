@@ -132,6 +132,12 @@ package body DAP.Module is
      (Filter  : access No_Debugger_Or_Stopped_Filter;
       Context : Selection_Context) return Boolean;
 
+   type No_Debugger_Or_Ready_Or_Stopped_Filter is
+     new Action_Filter_Record with null record;
+   overriding function Filter_Matches_Primitive
+     (Filter  : access No_Debugger_Or_Ready_Or_Stopped_Filter;
+      Context : Selection_Context) return Boolean;
+
    type Breakable_Source_Filter is new Action_Filter_Record with null record;
    overriding function Filter_Matches_Primitive
      (Filter  : access Breakable_Source_Filter;
@@ -697,6 +703,22 @@ package body DAP.Module is
    ------------------------------
 
    overriding function Filter_Matches_Primitive
+     (Filter  : access No_Debugger_Or_Ready_Or_Stopped_Filter;
+      Context : Selection_Context) return Boolean
+   is
+      use type DAP.Types.Debugger_Status_Kind;
+      pragma Unreferenced (Filter);
+   begin
+      return DAP_Module_ID.Clients.Is_Empty
+        or else Get_Current_Debugger.Get_Status = DAP.Types.Ready
+        or else Get_Current_Debugger.Get_Status = DAP.Types.Stopped;
+   end Filter_Matches_Primitive;
+
+   ------------------------------
+   -- Filter_Matches_Primitive --
+   ------------------------------
+
+   overriding function Filter_Matches_Primitive
      (Filter  : access Entity_Name_Filter;
       Context : Selection_Context) return Boolean
    is
@@ -876,12 +898,13 @@ package body DAP.Module is
      (Kernel   : access GPS.Kernel.Kernel_Handle_Record'Class;
       Base_Dir : Virtual_File)
    is
-      Debugger_Active        : Action_Filter;
-      Debugger_Ready         : Action_Filter;
-      Breakable_Filter       : Action_Filter;
-      No_Debugger_Or_Stopped : Action_Filter;
-      Entity_Filter          : Action_Filter;
-      Debugger_Stopped       : Action_Filter;
+      Debugger_Active                 : Action_Filter;
+      Debugger_Ready                  : Action_Filter;
+      Breakable_Filter                : Action_Filter;
+      No_Debugger_Or_Stopped          : Action_Filter;
+      Entity_Filter                   : Action_Filter;
+      Debugger_Stopped                : Action_Filter;
+      No_Debugger_Or_Ready_Or_Stopped : Action_Filter;
 
    begin
       DAP.Preferences.Register_Default_Preferences
@@ -907,6 +930,12 @@ package body DAP.Module is
       No_Debugger_Or_Stopped := new No_Debugger_Or_Stopped_Filter;
       Register_Filter
         (Kernel, No_Debugger_Or_Stopped, "No debugger or stopped");
+
+      No_Debugger_Or_Ready_Or_Stopped := new
+        No_Debugger_Or_Ready_Or_Stopped_Filter;
+      Register_Filter
+        (Kernel, No_Debugger_Or_Ready_Or_Stopped,
+         "No debugger or ready or stopped");
 
       Breakable_Filter := new Breakable_Source_Filter;
       Register_Filter
