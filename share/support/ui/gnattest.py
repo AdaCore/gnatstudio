@@ -368,7 +368,7 @@ XML = r"""<?xml version="1.0" ?>
     """object directory of the project file."
     hide_in="wizard library_wizard"
     >
-    <string type="directory" default=""/>
+    <string default=""/>
   </project_attribute>
 
   <project_attribute package="gnattest"
@@ -378,8 +378,13 @@ XML = r"""<?xml version="1.0" ?>
     disable_if_not_set="true"
     disable="gnattest.tests_root gnattest.subdir"
     label="Tests Directory"
-    description="Directory in which Test Files are put."
-    hide_in="wizard library_wizard"
+    description="All test packages are placed in this directory. """ \
+    """If it's a relative path, it is considered relative """ \
+    """to the object directory of the project file. When all """ \
+    """sources from all projects are taken recursively from """ \
+    """all projects, directories with the given relative path are """ \
+    """created for each project in their object directories and test """ \
+    """packages are placed accordingly."
     >
     <string default="gnatest/tests"/>
   </project_attribute>
@@ -392,7 +397,12 @@ XML = r"""<?xml version="1.0" ?>
     disable="gnattest.tests_dir gnattest.subdir"
     label="Tests Root"
     description="Test files are put in a same directory hierarchy """ \
-    """as the sources with this directory as the root directory."
+    """as the sources with this directory as the root directory. If """ \
+    """it's a relative path, it is considered relative to the """ \
+    """object directory of the project file. When projects are """ \
+    """considered recursively, directory hierarchies of tested """ \
+    """sources are recreated for each project in their object """ \
+    """directories and test packages are placed accordingly."
     hide_in="wizard library_wizard"
     />
 
@@ -403,8 +413,30 @@ XML = r"""<?xml version="1.0" ?>
     disable_if_not_set="true"
     disable="gnattest.tests_dir gnattest.tests_root"
     label="Tests Subdir"
-    description="Place the Test Packages in subdirectories."
+    description="Test packages are placed in a subdirectory of the """ \
+    """corresponding source directory, with the specified name. Thus, """ \
+    """each set of unit tests are placed in a subdirectory of the code """ \
+    """under test. If the sources are in separate directories, each """ \
+    """source directory will have a test subdirectory."
     hide_in="wizard library_wizard"
+    >
+  </project_attribute>
+
+  <project_attribute package="gnattest"
+    name="stubs_dir"
+    editor_page="GNATtest"
+    editor_section="Directories"
+    disable_if_not_set="true"
+    disable="gnattest.tests_dir gnattest.tests_root"
+    label="Stubs Directories"
+    description="The hierarchy of directories containing stubbed units """ \
+    """is recreated in the specified directory, with stubs placed """ \
+    """in directories corresponding to projects they are derived from. """ \
+    """If it's a relative path, it is considered relative to the object """ \
+    """directory of the project file. When projects are considered """ \
+    """recursively, directory hierarchies of stubs are recreated for """ \
+    """each project in their object directories and test packages """ \
+    """are placed accordingly."
     >
   </project_attribute>
 
