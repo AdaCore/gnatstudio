@@ -41,15 +41,18 @@ package GNATTest_Module is
    --  Find tested subprogram for given test unit
 
    procedure Open_File
-     (Kernel          : GPS.Kernel.Kernel_Handle;
-      Project         : GNATCOLL.Projects.Project_Type;
-      File            : Virtual_File;
-      Line            : Natural;
-      Column          : Basic_Types.Visible_Column_Type;
-      Subprogram_Name : String := "");
+     (Kernel                      : GPS.Kernel.Kernel_Handle;
+      Project                     : GNATCOLL.Projects.Project_Type;
+      File                        : Virtual_File;
+      Line                        : Natural;
+      Column                      : Basic_Types.Visible_Column_Type;
+      Subprogram_Name             : String := "";
+      Display_Msg_On_Non_Accurate : Boolean := False);
    --  Open unit in editor and place cursor to given Line and Column.
    --  Project is recommended for cross-references in the case of aggregate
    --  projects.
+   --  When Display_Msg_On_Non_Accurate is True, a message is displayed in the
+   --  Messages view to warn the user that a xref mismatch occured.
 
    type Source_Entity is record
       Source_File      : Virtual_File;

@@ -942,21 +942,22 @@ package body GNATTest_Module is
    ---------------
 
    procedure Open_File
-     (Kernel          : GPS.Kernel.Kernel_Handle;
-      Project         : GNATCOLL.Projects.Project_Type;
-      File            : Virtual_File;
-      Line            : Natural;
-      Column          : Basic_Types.Visible_Column_Type;
-      Subprogram_Name : String := "") is
-
+     (Kernel                      : GPS.Kernel.Kernel_Handle;
+      Project                     : GNATCOLL.Projects.Project_Type;
+      File                        : Virtual_File;
+      Line                        : Natural;
+      Column                      : Basic_Types.Visible_Column_Type;
+      Subprogram_Name             : String := "";
+      Display_Msg_On_Non_Accurate : Boolean := False) is
    begin
       Src_Editor_Box.Go_To_Closest_Match
-        (Kernel      => Kernel,
-         Filename    => File,
-         Project     => Project,
-         Line        => Editable_Line_Type (Line),
-         Column      => Column,
-         Entity_Name => Subprogram_Name);
+        (Kernel                      => Kernel,
+         Filename                    => File,
+         Project                     => Project,
+         Line                        => Editable_Line_Type (Line),
+         Column                      => Column,
+         Entity_Name                 => Subprogram_Name,
+         Display_Msg_On_Non_Accurate => Display_Msg_On_Non_Accurate);
    end Open_File;
 
    ---------------------
