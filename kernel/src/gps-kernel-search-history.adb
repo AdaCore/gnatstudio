@@ -15,7 +15,10 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with Interfaces.C;               use Interfaces.C;
+pragma Warnings (Off, ".*is an internal GNAT unit");
+with Ada.Strings.Unbounded.Aux;
+pragma Warnings (On, ".*is an internal GNAT unit");
+
 with GNAT.Strings;               use GNAT.Strings;
 with GNATCOLL.Projects;          use GNATCOLL.Projects;
 with GNATCOLL.VFS;               use GNATCOLL.VFS;
@@ -24,13 +27,14 @@ with GNATCOLL.Utils;
 with Cairo.Region;               use Cairo.Region;
 with Gdk.Window;                 use Gdk.Window;
 with Glib.Object;                use Glib.Object;
-with Gtkada.Types;               use Gtkada.Types;
 with Gtk.Enums;                  use Gtk.Enums;
 with Gtk.Text_Buffer;            use Gtk.Text_Buffer;
 with Gtk.Text_Iter;              use Gtk.Text_Iter;
 with Gtk.Text_Tag;               use Gtk.Text_Tag;
 with Gtk.Text_View;              use Gtk.Text_View;
 with Gtk.Widget;                 use Gtk.Widget;
+
+with VSS.Strings.Conversions;
 
 with Basic_Types;                use Basic_Types;
 with GPS.Editors;                use GPS.Editors;
@@ -213,29 +217,18 @@ package body GPS.Kernel.Search.History is
      (Self : not null access History_Search_Result)
      return Gtk.Widget.Gtk_Widget
    is
-      Tmp    : GNAT.Strings.String_Access;
+      Text   : VSS.Strings.Virtual_String;
       View   : Result_View_Access;
       Buffer : Gtk_Text_Buffer;
       First  : Gtk_Text_Iter;
-
-      UTF8   : Gtkada.Types.Chars_Ptr;
-      Length : Natural;
-      Count  : Natural;
       Props  : File_Props;
+
    begin
-      Read_File_With_Charset
-        (Self.File,
-         UTF8     => UTF8,
-         UTF8_Len => Length,
-         Props    => Props);
+      Read_File_With_Charset (Self.File, Text, Props);
 
-      Tmp := new String (1 .. Length);
-      To_Ada (Value (UTF8, size_t (Length)), Tmp.all, Count, False);
-      g_free (UTF8);
-
-      if Count <= 0 then
-         GNAT.Strings.Free (Tmp);
+      if Text.Is_Empty then
          return null;
+
       else
          Gtk_New (Buffer);
          View := new Result_View;
@@ -249,8 +242,22 @@ package body GPS.Kernel.Search.History is
          View.Modify_Font (Default_Style.Get_Pref_Font);
 
          Buffer.Get_End_Iter (First);
-         Buffer.Insert (First, Tmp (1 .. Count));
-         GNAT.Strings.Free (Tmp);
+
+         declare
+            use type Ada.Strings.Unbounded.Aux.Big_String_Access;
+
+            U : constant Unbounded_String :=
+              VSS.Strings.Conversions.To_Unbounded_UTF_8_String (Text);
+            S : Ada.Strings.Unbounded.Aux.Big_String_Access;
+            L : Natural;
+
+         begin
+            Ada.Strings.Unbounded.Aux.Get_String (U, S, L);
+
+            if S /= null then
+               Buffer.Insert (First, S (1 .. L));
+            end if;
+         end;
 
          View.On_Size_Allocate (On_Size_Allocate'Access, After => False);
 

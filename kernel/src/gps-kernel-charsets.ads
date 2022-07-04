@@ -22,9 +22,10 @@ with Default_Preferences;  use Default_Preferences;
 with Glib.Object;          use Glib.Object;
 with Gtk.Combo_Box_Text;
 with Gtk.Widget;
-with Gtkada.Types;
 
 with GNATCOLL.VFS;
+
+with VSS.Strings;
 
 package GPS.Kernel.Charsets is
 
@@ -99,15 +100,13 @@ package GPS.Kernel.Charsets is
    --  Various properties automatically detected for files
 
    procedure Read_File_With_Charset
-     (File     : GNATCOLL.VFS.Virtual_File;
-      UTF8     : out Gtkada.Types.Chars_Ptr;
-      UTF8_Len : out Natural;
-      Props    : out File_Props);
+     (File  : GNATCOLL.VFS.Virtual_File;
+      Text  : out VSS.Strings.Virtual_String;
+      Props : out File_Props);
    --  Read the file from the disk, and apply charset conversions as needed.
-   --  The returned string is UTF8. Only the UTF8_Len first characters should
-   --  be used.
    --  This also normalizes newline characters.
-   --  Caller must free UTF8. NOTE: make sure to free the string with g_free,
-   --  not Interfaces.C.Strings.Free!
+   --  Note, Text is in null state when file can't be read, and an empty
+   --  string when it has no text inside. This is usefd by source editor to
+   --  distinguish missing file and present but empty file.
 
 end GPS.Kernel.Charsets;

@@ -15,28 +15,29 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
+with Ada.Streams;
 with Ada.Unchecked_Conversion;
 with GNAT.OS_Lib;                use GNAT.OS_Lib;
 with GNATCOLL.Traces;            use GNATCOLL.Traces;
 with GNATCOLL.VFS;               use GNATCOLL.VFS;
 
 with Glib.Convert;               use Glib.Convert;
-with Glib.Unicode;               use Glib.Unicode;
 
 with Gtk.Combo_Box;
 with Gtk.Combo_Box_Text;         use Gtk.Combo_Box_Text;
 with Gtk.GEntry;                 use Gtk.GEntry;
 with Gtk.Widget;                 use Gtk.Widget;
 
-with Basic_Types;                use Basic_Types;
+with VSS.Characters.Punctuations;
+with VSS.Characters.Specials;
+with VSS.Strings.Character_Iterators;
+with VSS.Strings.Converters.Decoders;
+
 with GPS.Properties;             use GPS.Properties;
 with GPS.Kernel.Properties;      use GPS.Kernel.Properties;
 with GPS.Intl;                   use GPS.Intl;
 with String_Utils;               use String_Utils;
 with Gtkada.Types;               use Gtkada.Types;
-with Unicode;
-with Unicode.CES.Utf8;
-with Unicode.Names.General_Punctuation;
 
 package body GPS.Kernel.Charsets is
    CHARSET : constant GNAT.Strings.String_Access := Getenv ("CHARSET");
@@ -331,22 +332,17 @@ package body GPS.Kernel.Charsets is
    ----------------------------
 
    procedure Read_File_With_Charset
-     (File     : GNATCOLL.VFS.Virtual_File;
-      UTF8     : out Gtkada.Types.Chars_Ptr;
-      UTF8_Len : out Natural;
-      Props    : out File_Props)
+     (File  : GNATCOLL.VFS.Virtual_File;
+      Text  : out VSS.Strings.Virtual_String;
+      Props : out File_Props)
    is
       Contents      : GNAT.Strings.String_Access;
       Last          : Natural;
       Ignore        : aliased Natural;
       Length        : aliased Natural;
-      Valid         : Boolean;
-      First_Invalid : Natural;
-      Charset : constant String := Get_File_Charset (File);
+      Charset       : constant String := Get_File_Charset (File);
       C             : Integer := Charsets'First;
-
-      function To_Unchecked_String is new Ada.Unchecked_Conversion
-        (Chars_Ptr, Unchecked_String_Access);
+      UTF8          : Gtkada.Types.Chars_Ptr;
 
    begin
       Trace (Me, "Reading file: " & File.Display_Full_Name);
@@ -359,9 +355,10 @@ package body GPS.Kernel.Charsets is
                 Bidirectional_Unicode => False);
 
       Contents := File.Read_File;
+
       if Contents = null then
-         UTF8 := Null_Ptr;
-         UTF8_Len := 0;
+         Text.Clear;
+
          return;
       end if;
 
@@ -399,50 +396,81 @@ package body GPS.Kernel.Charsets is
 
       GNAT.Strings.Free (Contents);
 
-      if UTF8 /= Null_Ptr then
+      if UTF8 = Null_Ptr then
+         Text.Clear;
+
+         return;
+      end if;
+
+      declare
+         type Character_Access is access all Character;
+
+         function To is
+           new Ada.Unchecked_Conversion
+             (Gtkada.Types.Chars_Ptr, Character_Access);
+
+         Buffer  : Ada.Streams.Stream_Element_Array
+           (1 .. Ada.Streams.Stream_Element_Count (Length))
+             with Address => To (UTF8).all'Address;
+         Decoder : VSS.Strings.Converters.Decoders.Virtual_String_Decoder;
+
+      begin
+         Decoder.Initialize ("utf-8");
+
+         Text := Decoder.Decode (Buffer);
+
+         if Text.Is_Null then
+            --  Decoder doesn't allocate memory when there is no data to
+            --  convert, but "null" state of the string is used to report
+            --  file errors; thus, assign an empty string to the result.
+
+            Text := "";
+         end if;
+
          declare
-            use Unicode.Names.General_Punctuation;
-            UTF8_Contents : constant Glib.UTF8_String :=
-              To_Unchecked_String (UTF8) (1 .. Length);
-            J             : Natural := UTF8_Contents'First;
-            C             : Unicode.Unicode_Char;
+            use VSS.Characters.Punctuations;
+            use VSS.Characters.Specials;
+
+            Iterator : VSS.Strings.Character_Iterators.Character_Iterator :=
+              Text.Before_First_Character;
+
          begin
-            --  Check if the content is valid in UTF8
-            UTF8_Validate
-              (UTF8_Contents, Valid, First_Invalid);
+            --  Scan text for some special characters.
 
-            --  Scan the file to see if it contains Unicode bidirectional
-            --  override characters.
-            while J <= UTF8_Contents'Last loop
-               Unicode.CES.Utf8.Utf8_Get_Char (UTF8_Contents, J, C);
+            while Iterator.Forward loop
+               case Iterator.Element is
+                  when Replacement_Character =>
+                     --  Decoder inserts REPLACEMENT CHARACTER when it is
+                     --  unable to decode byte sequence. This character may
+                     --  come from the file too, however, most probably it
+                     --  means the same: content of the file was corrupted
+                     --  at some stage.
 
-               if C in
-                 Left_To_Right_Embedding
-                   | Right_To_Left_Embedding
-                   | Left_To_Right_Override
-                   | Right_To_Left_Override
-                   | Left_To_Right_Isolate
-                   | Right_To_Left_Isolate
-                   | First_Strong_Isolate
-                   | Pop_Directional_Formatting
-                   | Pop_Directional_Isolate
-               then
-                  Props.Bidirectional_Unicode := True;
-                  exit;
-               end if;
+                     Props.Invalid_UTF8 := True;
+
+                  when Left_To_Right_Embedding
+                     | Right_To_Left_Embedding
+                     | Pop_Directional_Formatting
+                     | Left_To_Right_Override
+                     | Right_To_Left_Override
+                     | Left_To_Right_Isolate
+                     | Right_To_Left_Isolate
+                     | First_Strong_Isolate
+                     | Pop_Directional_Isolate
+                     =>
+                     --  Some of Unicode bidirectional override characters
+                     --  is present in the text.
+
+                     Props.Bidirectional_Unicode := True;
+
+                  when others =>
+                     null;
+               end case;
             end loop;
          end;
-      else
-         Valid := False;
-         First_Invalid := 1;
-      end if;
+      end;
 
-      if not Valid then
-         UTF8_Len := First_Invalid - 1;
-         Props.Invalid_UTF8 := True;
-      else
-         UTF8_Len := Length;
-      end if;
+      g_free (UTF8);
    end Read_File_With_Charset;
 
 end GPS.Kernel.Charsets;
