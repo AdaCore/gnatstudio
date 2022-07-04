@@ -20,7 +20,7 @@ with Ada.Text_IO;
 with System.Address_To_Access_Conversions;
 
 pragma Warnings (Off, ".*is an internal GNAT unit");
-with Ada.Strings.Unbounded.Aux;           use Ada.Strings.Unbounded.Aux;
+with Ada.Strings.Unbounded.Aux;
 pragma Warnings (On, ".*is an internal GNAT unit");
 with Ada.Strings.Maps;                    use Ada.Strings.Maps;
 
@@ -38,6 +38,8 @@ with GNATCOLL.Symbols;                    use GNATCOLL.Symbols;
 with GNATCOLL.Traces;                     use GNATCOLL.Traces;
 with GNATCOLL.Utils;                      use GNATCOLL.Utils;
 with GNATCOLL.VFS;                        use GNATCOLL.VFS;
+
+with VSS.Strings.Conversions;
 
 with Gdk.RGBA;                            use Gdk.RGBA;
 with Glib.Convert;
@@ -3694,21 +3696,17 @@ package body Src_Editor_Buffer is
          Buffer.Block_Highlighting_Column := -1;
       end Reset_Buffer;
 
-      UTF8          : Gtkada.Types.Chars_Ptr;
-      Length        : Natural;
-      Props         : File_Props;
+      Text  : VSS.Strings.Virtual_String;
+      Props : File_Props;
+
    begin
       Trace (Me, "Loading " & From_File.Display_Full_Name
              & " as autosave ? " & Is_Auto_Save'Img
              & " is new ? " & File_Is_New'Img);
       Success := True;
-      Read_File_With_Charset
-        (File                  => From_File,
-         UTF8                  => UTF8,
-         UTF8_Len              => Length,
-         Props                 => Props);
+      Read_File_With_Charset (From_File, Text, Props);
 
-      if UTF8 = Gtkada.Types.Null_Ptr then
+      if Text.Is_Null then
          --  The file does not exist on disk, this is a new file that has
          --  never been saved.
          Trace (Me, "Load_File: Couldn't read contents of "
@@ -3773,14 +3771,25 @@ package body Src_Editor_Buffer is
 
          --  Insert the new text
 
+         declare
+            use type Ada.Strings.Unbounded.Aux.Big_String_Access;
+
+            U : constant Unbounded_String :=
+              VSS.Strings.Conversions.To_Unbounded_UTF_8_String (Text);
+            S : Ada.Strings.Unbounded.Aux.Big_String_Access;
+            L : Natural;
+
          begin
-            Insert_At_Cursor (Buffer, UTF8, Gint (Length));
+            Ada.Strings.Unbounded.Aux.Get_String (U, S, L);
+
+            if S /= null then
+               Insert_At_Cursor (Buffer, S (1 .. L));
+            end if;
+
          exception
             when E : others =>
                Trace (Me, E);
          end;
-
-         g_free (UTF8);
 
          if not Is_Auto_Save and then File_Is_New then
             Buffer.End_Inserting;  --  reenable undo
@@ -3992,8 +4001,6 @@ package body Src_Editor_Buffer is
       Terminator  : Line_Terminator_Style := Buffer.Line_Terminator;
       --  Whether the file mode has been forced to writable
       U_Buffer    : Unbounded_String;
-      S           : Ada.Strings.Unbounded.Aux.Big_String_Access;
-      Length      : Natural;
       Has_Errors  : Boolean := False;
       Buttons     : Message_Dialog_Buttons := Button_None;
 
@@ -4186,6 +4193,12 @@ package body Src_Editor_Buffer is
          end if;
       end if;
 
+      declare
+         use type Ada.Strings.Unbounded.Aux.Big_String_Access;
+
+         S : Ada.Strings.Unbounded.Aux.Big_String_Access;
+         L : Natural;
+
       begin
          FD := Write_File (Filename);
 
@@ -4201,10 +4214,10 @@ package body Src_Editor_Buffer is
             return;
          end if;
 
-         Get_String (U_Buffer, S, Length);
+         Ada.Strings.Unbounded.Aux.Get_String (U_Buffer, S, L);
 
          if S /= null then
-            Write (FD, S (1 .. Length));
+            Write (FD, S (1 .. L));
          end if;
 
          U_Buffer := Null_Unbounded_String;

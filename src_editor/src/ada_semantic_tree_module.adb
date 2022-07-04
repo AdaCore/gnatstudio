@@ -16,20 +16,23 @@
 ------------------------------------------------------------------------------
 
 with Ada.Calendar;                 use Ada.Calendar;
-with Ada.Unchecked_Conversion;
+with Ada.Strings.Unbounded;
+pragma Warnings (Off, ".*is an internal GNAT unit");
+with Ada.Strings.Unbounded.Aux;
+pragma Warnings (On, ".*is an internal GNAT unit");
 
 with GNAT.Strings;                 use GNAT.Strings;
 with GNATCOLL.Projects;            use GNATCOLL.Projects;
 with GNATCOLL.Traces;              use GNATCOLL.Traces;
 with GNATCOLL.Utils;
 
-with Basic_Types;                  use Basic_Types;
+with VSS.Strings.Conversions;
+
 with GPS.Kernel.Charsets;          use GPS.Kernel.Charsets;
 with Language.Tree.Database;       use Language.Tree.Database;
 with Ada_Semantic_Tree.Assistants;
 with Gtkada.MDI;                   use Gtkada.MDI;
 with Gtkada;                       use Gtkada;
-with Gtkada.Types;                 use Gtkada.Types;
 with Src_Editor_Module;            use Src_Editor_Module;
 with Src_Editor_Buffer;            use Src_Editor_Buffer;
 with Src_Editor_Box;               use Src_Editor_Box;
@@ -123,28 +126,27 @@ package body Ada_Semantic_Tree_Module is
       --  Ensure result is UTF8 encoded
 
       declare
-         UTF8     : Gtkada.Types.Chars_Ptr;
-         UTF8_Len : Natural;
-         Props    : File_Props;
-         Result   : String_Access;
+         use Ada.Strings.Unbounded;
+         use type Ada.Strings.Unbounded.Aux.Big_String_Access;
 
-         function To_Unchecked_String is new Ada.Unchecked_Conversion
-           (Gtkada.Types.Chars_Ptr, Unchecked_String_Access);
+         Text  : VSS.Strings.Virtual_String;
+         Props : File_Props;
+         U     : Unbounded_String;
+         S     : Ada.Strings.Unbounded.Aux.Big_String_Access;
+         L     : Natural;
+
       begin
-         Read_File_With_Charset (File, UTF8, UTF8_Len, Props);
-         --  We don't use Interfaces.C.Strings.Value function here to
-         --  avoid stack overflow.
+         Read_File_With_Charset (File, Text, Props);
 
-         if UTF8 = Gtkada.Types.Null_Ptr then
-            --  This can legitimately happen if File does not exist
+         U := VSS.Strings.Conversions.To_Unbounded_UTF_8_String (Text);
+         Ada.Strings.Unbounded.Aux.Get_String (U, S, L);
+
+         if S = null then
             return new String'("");
+
+         else
+            return new String'(S (1 .. L));
          end if;
-
-         Result := new String (1 .. UTF8_Len);
-         Result.all := To_Unchecked_String (UTF8) (1 .. UTF8_Len);
-         g_free (UTF8);
-
-         return Result;
       end;
    end Get_Buffer;
 

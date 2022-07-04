@@ -19,7 +19,6 @@
 --  strings.
 
 with GNAT.Strings;
-with Interfaces.C.Strings;
 with Basic_Types; use Basic_Types;
 with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
 
@@ -61,10 +60,6 @@ package String_Utils is
       Finish : Natural) return String;
    --  Return the line surrounding the substring Str (Start .. Finish) without
    --  leading whitespaces.
-
-   function First_Word_Start (Str : String; P : Natural) return Natural;
-   --  Return the beginning index of the first word in P.
-   --  In this context, word begins with any non-whitespace ASCII character.
 
    procedure Skip_To_Blank
      (Type_Str : String;
@@ -262,9 +257,6 @@ package String_Utils is
    --  Convert S to a Natural, making sure there is no exception raised.
    --  If S doesn't contain a valid number, Default is returned.
 
-   function Number_Of_Digits (N : Integer) return Natural;
-   --  Return the number of digits for the given Integer number;
-
    function Is_Entity_Letter (Char : Wide_Wide_Character) return Boolean;
    pragma Inline (Is_Entity_Letter);
    --  Return True if the given letter is a valid letter for an entity name
@@ -276,16 +268,6 @@ package String_Utils is
    function Is_File_Letter (Char : Wide_Wide_Character) return Boolean;
    pragma Inline (Is_File_Letter);
    --  Return True if the given letter is a valid letter for a file name.
-
-   procedure Replace
-     (S     : in out GNAT.Strings.String_Access;
-      Value : String);
-   --  Set S to Value, free previous content if any
-
-   procedure Replace
-     (S     : in out GNAT.Strings.String_Access;
-      Value : GNAT.Strings.String_Access);
-   --  Idem, but does nothing if Value is null
 
    function Has_Include_Directive (Str : String) return Boolean;
    --  Return True is Str contains an #include directive
@@ -324,16 +306,6 @@ package String_Utils is
    --  Return a concatenation of all arguments contained in Args, separated
    --  with a space character.
 
-   ---------------------------
-   -- C String manipulation --
-   ---------------------------
-
-   procedure Copy_String
-     (Item : Interfaces.C.Strings.chars_ptr;
-      Str  : out String;
-      Len  : Natural);
-   --  Copy Len characters from Item to Str
-
    ----------------------------
    -- Arguments manipulation --
    ----------------------------
@@ -353,11 +325,6 @@ package String_Utils is
 
    function Unquote (S : String) return String;
    --  Remove the leading and ending '"' if present
-
-   function Revert (S : String; Separator : String := ".") return String;
-   --  Given a string S composed of names separated with Separator
-   --  (e.g. Put_Line.Text_IO.Ada), return the names reversed
-   --  (e.g. Ada.Text_IO.Put_Line).
 
    ----------------------
    -- URL manipulation --
@@ -385,16 +352,9 @@ package String_Utils is
    function Hash (Key : String) return Header_Num;
    --  A generic hashing function working on String keys
 
-   generic
-      type Header_Num is range <>;
-   function Case_Insensitive_Hash (Key : String) return Header_Num;
-   --  A generic hashing function working on case insensitive String keys
-
 private
    pragma Inline (Is_Blank);
    pragma Inline (Looking_At);
    pragma Inline (Skip_To_Char);
-   pragma Inline (Copy_String);
-   pragma Inline (Replace);
    pragma Inline (Compare);
 end String_Utils;

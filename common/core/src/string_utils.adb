@@ -19,7 +19,6 @@ with Ada.Characters.Handling;           use Ada.Characters.Handling;
 with Ada.Containers;                    use Ada.Containers;
 with Ada.Float_Text_IO;
 with Ada.Strings.Hash;
-with Ada.Strings.Hash_Case_Insensitive;
 with Ada.Strings.Fixed;
 with Ada.Strings.Maps;                  use Ada.Strings.Maps;
 with Ada.Unchecked_Deallocation;
@@ -38,6 +37,10 @@ with UTF8_Utils;                        use UTF8_Utils;
 package body String_Utils is
 
    use type Basic_Types.Visible_Column_Type;
+
+   function First_Word_Start (Str : String; P : Natural) return Natural;
+   --  Return the beginning index of the first word in P.
+   --  In this context, word begins with any non-whitespace ASCII character.
 
    -----------------
    -- Lines_Count --
@@ -72,38 +75,6 @@ package body String_Utils is
          return (1 .. Count => ' ');
       end if;
    end Blank_Slice;
-
-   -------------
-   -- Replace --
-   -------------
-
-   procedure Replace
-     (S     : in out GNAT.Strings.String_Access;
-      Value : String) is
-   begin
-      if S /= null then
-         if S'Length = Value'Length then
-            --  Let's try to avoid memory fragmentation
-            S.all := Value;
-            return;
-         else
-            GNAT.Strings.Free (S);
-         end if;
-      end if;
-
-      S := new String'(Value);
-   end Replace;
-
-   procedure Replace
-     (S     : in out GNAT.Strings.String_Access;
-      Value : GNAT.Strings.String_Access) is
-   begin
-      if Value = null then
-         GNAT.Strings.Free (S);
-      else
-         Replace (S, Value.all);
-      end if;
-   end Replace;
 
    ------------------
    -- Format_Bytes --
@@ -1220,28 +1191,6 @@ package body String_Utils is
    end Image;
 
    ----------------------
-   -- Number_Of_Digits --
-   ----------------------
-
-   function Number_Of_Digits (N : Integer) return Natural is
-   begin
-      case N is
-         when 0 .. 9 =>
-            return 1;
-         when 10 .. 99 =>
-            return 2;
-         when 100 .. 999 =>
-            return 3;
-         when 1_000 .. 9_999 =>
-            return 4;
-         when 10_000 .. 99_999 =>
-            return 5;
-         when others =>
-            return Image (N)'Length;
-      end case;
-   end Number_Of_Digits;
-
-   ----------------------
    -- Is_Entity_Letter --
    ----------------------
 
@@ -1284,25 +1233,6 @@ package body String_Utils is
             return True;
       end case;
    end Is_File_Letter;
-
-   -----------------
-   -- Copy_String --
-   -----------------
-
-   procedure Copy_String
-     (Item : Interfaces.C.Strings.chars_ptr;
-      Str  : out String;
-      Len  : Natural)
-   is
-      procedure Strncpy
-        (Dest : out String;
-         Src  : Interfaces.C.Strings.chars_ptr;
-         Len  : Interfaces.C.size_t);
-      pragma Import (C, Strncpy, "strncpy");
-
-   begin
-      Strncpy (Str, Item, Interfaces.C.size_t (Len));
-   end Copy_String;
 
    -----------
    -- Clone --
@@ -1495,43 +1425,6 @@ package body String_Utils is
       return Res (1 .. K);
    end URL_Decode;
 
-   ------------
-   -- Revert --
-   ------------
-
-   function Revert (S : String; Separator : String := ".") return String is
-      Result : String (S'Range);
-      Index  : Natural := S'First;
-      Last   : Natural := S'Last;
-      Len, J : Integer;
-      First  : constant Natural := S'First + Separator'Length - 1;
-
-   begin
-      J := S'Last;
-
-      loop
-         exit when J < First;
-
-         if S (J - Separator'Length + 1 .. J) = Separator then
-            Len := Last - J;
-            Result (Index .. Index + Len - 1) := S (J + 1 .. Last);
-            J := J - Separator'Length + 1;
-            Last := J - 1;
-            Index := Index + Len;
-            Result (Index .. Index + Separator'Length - 1) := Separator;
-            Index := Index + Separator'Length;
-         end if;
-
-         J := J - 1;
-      end loop;
-
-      if Last >= S'First then
-         Result (Index .. Result'Last) := S (S'First .. Last);
-      end if;
-
-      return Result;
-   end Revert;
-
    -------------------------------------------
    -- Strip_Single_And_Unescape_Underscores --
    -------------------------------------------
@@ -1595,18 +1488,6 @@ package body String_Utils is
       return Header_Num'First +
                Header_Num'Base (Tmp mod Header_Num'Range_Length);
    end Hash;
-
-   ---------------------------
-   -- Case_Insensitive_Hash --
-   ---------------------------
-
-   function Case_Insensitive_Hash (Key : String) return Header_Num is
-      Tmp : constant Ada.Containers.Hash_Type :=
-        Ada.Strings.Hash_Case_Insensitive (Key);
-   begin
-      return Header_Num'First +
-               Header_Num'Base (Tmp mod Header_Num'Range_Length);
-   end Case_Insensitive_Hash;
 
    ---------------------------
    -- Has_Include_Directive --
