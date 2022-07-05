@@ -177,6 +177,23 @@ package body GPS.LSP_Clients is
    end Get_Running_Request;
 
    ------------------
+   -- Get_Requests --
+   ------------------
+
+   function Get_Requests
+     (Self : LSP_Client'Class)
+      return GPS.LSP_Client.Requests.Requests_Lists.List
+   is
+      Res : GPS.LSP_Client.Requests.Requests_Lists.List;
+   begin
+      for R of Self.Requests loop
+         Res.Append (R);
+      end loop;
+
+      return Res;
+   end Get_Requests;
+
+   ------------------
    -- Capabilities --
    ------------------
 

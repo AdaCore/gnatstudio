@@ -1379,6 +1379,8 @@ Classes
 
    .. automethod:: GPS.LanguageServer.get_log_file
 
+   .. automethod:: GPS.LanguageServer.get_requests
+
    .. automethod:: GPS.LanguageServer.is_enabled_for_language_name
 
    .. automethod:: GPS.LanguageServer.request

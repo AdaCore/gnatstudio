@@ -22,13 +22,13 @@ with GNATCOLL.JSON;
 with GNATCOLL.Scripts;        use GNATCOLL.Scripts;
 with GNATCOLL.VFS;
 
-with VSS.Strings.Conversions;
-
 with Language;
 with GPS.Kernel.Scripts;
 with GPS.LSP_Client.Language_Servers;
 with GPS.LSP_Client.Requests.Shell;
 with GPS.LSP_Module;
+
+with VSS.Strings.Conversions;
 
 package body GPS.LSP_Client.Shell is
 
@@ -43,6 +43,7 @@ package body GPS.LSP_Client.Shell is
    Restart_Method              : constant String := "restart";
    Request_Low_Level_Method    : constant String := "request_low_level";
    Get_Log_File_Method         : constant String := "get_log_file";
+   Get_Requests_Method         : constant String := "get_requests";
 
    Is_Enabled_Name_Method      : constant String :=
      "is_enabled_for_language_name";
@@ -53,7 +54,6 @@ package body GPS.LSP_Client.Shell is
      new GNATCOLL.Scripts.Instance_Property_Record with record
       Language : Ada.Strings.Unbounded.Unbounded_String;
    end record;
-
    type LanguageServer_Properties_Access is
      access all LanguageServer_Properties_Record'Class;
 
@@ -218,6 +218,29 @@ package body GPS.LSP_Client.Shell is
             end if;
             Set_Return_Value (Data, Result);
          end;
+      elsif Command = Get_Requests_Method then
+         declare
+            Instance : constant Class_Instance := Nth_Arg (Data, 1);
+            Language : constant Standard.Language.Language_Access :=
+              Get_Language (Instance);
+            use type GPS.LSP_Client.Language_Servers.Language_Server_Access;
+            Server   : constant
+              GPS.LSP_Client.Language_Servers.Language_Server_Access :=
+                GPS.LSP_Module.Get_Language_Server (Language);
+         begin
+            if Server = null then
+               return;
+            end if;
+            Set_Return_Value_As_List (Data);
+            for R of Server.Get_Client.Get_Requests loop
+               declare
+                  Name : constant String :=
+                    VSS.Strings.Conversions.To_UTF_8_String (R.Method);
+               begin
+                  Set_Return_Value (Data, Name);
+               end;
+            end loop;
+         end;
       end if;
    end Command_Handler;
 
@@ -306,6 +329,12 @@ package body GPS.LSP_Client.Shell is
          Params  => No_Params,
          Handler => Command_Handler'Access,
          Class   => LanguageServer_Class);
+
+      Kernel.Scripts.Register_Command
+        (Command       => Get_Requests_Method,
+         Params        => No_Params,
+         Handler       => Command_Handler'Access,
+         Class         => LanguageServer_Class);
 
       Kernel.Scripts.Register_Command
         (Command       => Is_Enabled_Name_Method,

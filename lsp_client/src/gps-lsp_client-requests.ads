@@ -53,7 +53,7 @@
 --  reference in case when request was executed/rejected during execution
 --  of the Execute function.
 
-private with Ada.Containers.Doubly_Linked_Lists;
+with Ada.Containers.Doubly_Linked_Lists;
 private with Ada.Finalization;
 
 with GNATCOLL.JSON;
@@ -80,6 +80,9 @@ package GPS.LSP_Client.Requests is
    type Request_Access is access all LSP_Request'Class;
 
    type Reference is tagged private;
+
+   package Requests_Lists is
+     new Ada.Containers.Doubly_Linked_Lists (Request_Access);
 
    -----------------
    -- LSP_Request --
