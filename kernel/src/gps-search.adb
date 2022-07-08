@@ -521,9 +521,12 @@ package body GPS.Search is
             end if;
 
             if T > Self.Text'Last then
+
                --  The score should be higher when the characters are closer
-               --  together
-               Score := Integer'Max (101 - (B - Start) - Malus, 0);
+               --  together, and when the first matching character is closer
+               --  to the start of the pattern.
+               Score := Integer'Max
+                 (101 - (B - Start) - (Start - S) - Malus, 0);
 
                if Self.Negate then
                   return GPS.Search.No_Match;
