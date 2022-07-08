@@ -4,6 +4,6 @@ package Bar is
       A : Integer;
    end record;
 
-   procedure Do_Nothing (Obj : My_Int; A :Integer; B : Integer) is null;
+   procedure Do_Nothin (Obj : My_Int; A :Integer; B : Integer) is null;
 
 end Bar;

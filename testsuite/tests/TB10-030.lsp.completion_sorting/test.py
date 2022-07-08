@@ -31,5 +31,5 @@ def run_test():
     # the visible one
     gps_assert(
         dump_tree_model(pop_tree.get_model(), LABEL_COLUMN),
-        ['Do_Nothing', 'Do_Nothing (invisible)'],
+        ['Do_Nothing', 'Do_Nothin (invisible)'],
         "Wrong order for completion between visible and invisible symbols")
