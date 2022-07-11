@@ -1,6 +1,7 @@
 """
-This test checks that ALS completion snippets are handled properly
-by GNAT Studio.
+This test checks that completion items that match the prefix
+with matching characters closer to the start of the prefix are
+correctly sorted (i.e: higher score).
 """
 
 import GPS
@@ -15,10 +16,10 @@ def run_test():
     GPS.Preference("Smart-Completion-Mode").set("3")
     buf = GPS.EditorBuffer.get(GPS.File("main.adb"))
     view = buf.current_view()
-    view.goto(buf.at(7, 1).end_of_line())
+    view.goto(buf.at(8, 1).end_of_line())
     yield wait_idle()
 
-    for ch in "Do_N":
+    for ch in "No":
         send_key_event(ord(ch))
         yield timeout(100)
 
@@ -31,5 +32,5 @@ def run_test():
     # the visible one
     gps_assert(
         dump_tree_model(pop_tree.get_model(), LABEL_COLUMN),
-        ['Do_Nothing', 'Do_Nothin (invisible)'],
-        "Wrong order for completion between visible and invisible symbols")
+        ['Nothing', 'Do_Nothing'],
+        "Wrong order in completion")

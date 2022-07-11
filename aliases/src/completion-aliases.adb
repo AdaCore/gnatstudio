@@ -129,7 +129,8 @@ package body Completion.Aliases is
 
       --  Don't propose aliases completion on empty words or dotted names
       if Word = "" or else
-        (Offset > 0 and then Context.Buffer (Natural (Offset)) = '.')
+        (Offset > 0
+         and then (Context.Buffer (Natural (Offset)) in '.' | ':'))
       then
          return;
       end if;

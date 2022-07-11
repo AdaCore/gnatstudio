@@ -8,6 +8,7 @@ import workflows
 from workflows.promises import ProcessWrapper, TargetWrapper
 
 import os
+import json
 import glob
 from gi.repository import Gtk, Gdk
 
@@ -18,6 +19,21 @@ COL_TEST_FILENAME = 2
 COL_FOREGROUND = 3
 
 counter = 1
+
+# Expected json attributes in the decoded test output
+DECODED_IN_PARAMETERS = "Decoded_In_Parameters"
+DECODED_OUT_PARAMETERS = "Decoded_Out_Parameters"
+PARAM_NAME = "Parameter_Name"
+PARAM_TYPE = "Parameter_Type"
+PARAM_VALUE = "Parameter_Value"
+DECODED_FUNCTION_RETURN = "Decoded_Function_Return"
+FUNCTION_RETURN_TYPE = "Function_Return_Type"
+FUNCTION_RETURN_VALUE = "Function_Return_Value"
+
+TESTCASE_EXCEPTION = "Testcase_Exception"
+EXC_NAME = "Exception_Name"
+EXC_MESSAGE = "Exception_Message"
+EXC_INFO = "Exception_Information"
 
 
 def coverage_executable():
@@ -224,17 +240,92 @@ class GNATfuzzView(Module):
                 c.label = f"{str(counter)} ({issue_label})"
                 counter += 1
                 c.params = []
+
+                # Extract the json section of the output;
+                # it should start after "GNATfuzz : " and end at "^}"
+                json_str = ""
+                accumulating = False
+
                 # Replace this code when the output of harness programs
                 # is simpler to parse.
                 for line in output.splitlines():
-                    if line.startswith("Parameter:"):
-                        param, value = line.split("=", 1)
-                        c.params.append((param, value))
+                    if line.startswith("@@@GNATFUZZ_OUTPUT_START@@@"):
+                        accumulating = True
+                        json_str = ""
+                    elif line == "@@@GNATFUZZ_OUTPUT_END@@@":
+                        accumulating = False
+                    elif accumulating:
+                        json_str += line
 
-                    # Very crude, need a proper parsable output for this
-                    if "raised" in line:
-                        _, msg = line.split("raised")
-                        c.message = msg
+                try:
+                    decoded = json.loads(json_str)
+
+                    # Let's see if we have an exception
+                    if TESTCASE_EXCEPTION in decoded:
+                        exc = decoded[TESTCASE_EXCEPTION]
+                        if (EXC_NAME in exc) and (EXC_MESSAGE in exc):
+                            c.message = f"{exc[EXC_NAME]} : {exc[EXC_MESSAGE]}"
+                        else:
+                            c.message = "exception"
+
+                    # Let's decode parameters
+                    # First In parameters
+                    if DECODED_IN_PARAMETERS in decoded:
+                        for param in decoded[DECODED_IN_PARAMETERS]:
+                            if (
+                                (PARAM_NAME in param)
+                                and (PARAM_TYPE in param)
+                                and (PARAM_VALUE in param)
+                            ):
+                                value = param[PARAM_VALUE].strip()
+                                typ = param[PARAM_TYPE]
+                                c.params.append(
+                                    (
+                                        f"{param[PARAM_NAME]} : in {typ} :=",
+                                        f"{value}",
+                                    ),
+                                )
+                            else:
+                                c.params.append(("(unknown)", "(unknown)"))
+
+                    # Now Out parameters
+                    if DECODED_OUT_PARAMETERS in decoded:
+                        for param in decoded[DECODED_OUT_PARAMETERS]:
+                            if (
+                                (PARAM_NAME in param)
+                                and (PARAM_TYPE in param)
+                                and (PARAM_VALUE in param)
+                            ):
+                                value = param[PARAM_VALUE].strip()
+                                typ = param[PARAM_TYPE]
+                                c.params.append(
+                                    (
+                                        f"{param[PARAM_NAME]} : out {typ} :=",
+                                        f"{value}",
+                                    ),
+                                )
+                            else:
+                                c.params.append(("(unknown)", "(unknown)"))
+
+                    # Finally the function return
+                    if DECODED_FUNCTION_RETURN in decoded:
+                        function_return = decoded[DECODED_FUNCTION_RETURN]
+                        if (FUNCTION_RETURN_TYPE in function_return) and (
+                            FUNCTION_RETURN_VALUE in function_return
+                        ):
+                            value = function_return[FUNCTION_RETURN_VALUE].strip()
+                            rt = function_return[FUNCTION_RETURN_TYPE]
+                            c.params.append(
+                                (
+                                    f"function return value : {rt} :=",
+                                    f"{value}",
+                                ),
+                            )
+                        else:
+                            c.params.append(("(unknown)", "(unknown)"))
+
+                except json.decoder.JSONDecodeError:
+                    c.message = f"could not decode:\n{json_str}"
 
                 self.fcl.add_crash(c)
 
