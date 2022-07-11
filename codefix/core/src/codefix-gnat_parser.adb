@@ -1357,6 +1357,19 @@ package body Codefix.GNAT_Parser is
       Matches      : Match_Array);
    --  Fix problem 'expect attribute 'Range'.
 
+   type Suppress_Warning is new Error_Parser (1) with null record;
+
+   overriding procedure Initialize (This : in out Suppress_Warning);
+
+   overriding procedure Fix
+     (This         : Suppress_Warning;
+      Current_Text : Text_Navigator_Abstr'Class;
+      Message_It   : Error_Message_Iterator;
+      Options      : Fix_Options;
+      Solutions    : out Solution_List;
+      Matches      : Match_Array);
+   --  Supress a warning
+
    ----------------
    -- Initialize --
    ----------------
@@ -4682,6 +4695,68 @@ package body Codefix.GNAT_Parser is
    end Fix;
 
    ----------------------
+   -- Suppress_Warning --
+   ----------------------
+
+   overriding procedure Initialize (This : in out Suppress_Warning) is
+   begin
+      This.Matcher := (1 => new Pattern_Matcher'(Compile ("warning:")));
+   end Initialize;
+
+   overriding procedure Fix
+     (This         : Suppress_Warning;
+      Current_Text : Text_Navigator_Abstr'Class;
+      Message_It   : Error_Message_Iterator;
+      Options      : Fix_Options;
+      Solutions    : out Solution_List;
+      Matches      : Match_Array)
+   is
+      pragma Unreferenced (This, Options);
+
+      Message : constant Error_Message := Get_Message (Message_It);
+      Start   : File_Cursor := Clone (File_Cursor (Message));
+      Last    : File_Cursor;
+      Msg     : constant String := Get_Message (Message);
+      Prefix  : constant String := "warning: ";
+
+   begin
+      Set_Column (Start, 0);
+      Last := Clone (Start);
+      Set_Column
+        (Last, Visible_Column_Type (Current_Text.Line_Length (Start)));
+
+      declare
+         Line : constant String := Get_Line (Current_Text, Start);
+         Idx  : Integer := Line'First;
+      begin
+         while Idx <= Line'Last
+           and then Line (Idx) = ' '
+         loop
+            Idx := Idx + 1;
+         end loop;
+
+         Solutions :=
+           Replace_Slice
+             (Current_Text,
+              Start, Last,
+              To_Unbounded_String
+                (Line (Line'First .. Idx - 1) &
+                   "pragma Warnings" & ASCII.LF &
+                   Line (Line'First .. Idx - 1) & "  (Off," & ASCII.LF &
+                   Line (Line'First .. Idx - 1) & "   """ &
+                 (if Msg (Msg'First .. Msg'First + Prefix'Length - 1) =
+                      Prefix
+                    then Msg (Msg'First + Prefix'Length .. Msg'Last)
+                    else Msg) &
+                   """" & ");" & ASCII.LF &
+                   Line (Line'First .. Idx - 1) &
+                   "--  TODO: Add explanations" & ASCII.LF &
+                   Line & ASCII.LF &
+                   Line (Line'First .. Idx - 1) & "pragma Warnings (On);"));
+      end;
+   end Fix;
+
+   ----------------------
    -- Register_Parsers --
    ----------------------
 
@@ -4770,6 +4845,7 @@ package body Codefix.GNAT_Parser is
       Add_Parser (Processor, new Attribute_Expected);
       Add_Parser (Processor, new Inefficient_Use);
       Add_Parser (Processor, new No_Legal_Interpretation);
+      Add_Parser (Processor, new Suppress_Warning);
 
       --  GNATCheck parsers
 
