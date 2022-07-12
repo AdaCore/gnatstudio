@@ -27,6 +27,11 @@ with GNATCOLL.Traces;           use GNATCOLL.Traces;
 package body Projects is
    Me : constant Trace_Handle := Create ("GPS.KERNEL.PROJECTS");
 
+   procedure Append
+     (Files : in out File_And_Project_Array_Access;
+      F     : File_And_Project_Array);
+   --  Append the elements contained in F to Files.
+
    -----------------------
    -- Project_Name_Hash --
    -----------------------
@@ -261,23 +266,50 @@ package body Projects is
       Unchecked_Free (Self);
    end Free;
 
+   ------------
+   -- Append --
+   ------------
+
+   procedure Append
+     (Files : in out File_And_Project_Array_Access;
+      F     : File_And_Project_Array)
+   is
+      Tmp : File_And_Project_Array_Access;
+   begin
+      if Files = null then
+         Files := new File_And_Project_Array'(F);
+      else
+         Tmp := new File_And_Project_Array (1 .. Files'Length + F'Length);
+         Tmp (1 .. Files'Length) := Files.all;
+         Tmp (Files'Length + 1 .. Tmp'Last) := F;
+         Free (Files);
+         Files := Tmp;
+      end if;
+   end Append;
+
    --------------------------------
    -- Source_Files_Non_Recursive --
    --------------------------------
 
    function Source_Files_Non_Recursive
-     (Projects : Project_Type_Array) return GNATCOLL.VFS.File_Array_Access
+     (Projects              : Project_Type_Array;
+      Include_Project_Files : Boolean := False)
+      return GNATCOLL.Projects.File_And_Project_Array_Access
    is
-      Result : File_Array_Access;
-      Tmp    : File_Array_Access;
+      Result : File_And_Project_Array_Access;
+      Tmp    : File_And_Project_Array_Access;
    begin
       for P in Projects'Range loop
-         Tmp := Projects (P).Source_Files (Recursive => False);
+         Tmp := Projects (P).Source_Files
+           (Recursive             => False,
+            Include_Project_Files => Include_Project_Files);
+
          if Tmp /= null then
             Append (Result, Tmp.all);
-            Unchecked_Free (Tmp);
+            Free (Tmp);
          end if;
       end loop;
+
       return Result;
    end Source_Files_Non_Recursive;
 

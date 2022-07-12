@@ -139,6 +139,11 @@ package GPS.LSP_Clients is
    --  Clients must NOT free the result: the request remains owned by
    --  the server.
 
+   function Get_Requests
+     (Self : LSP_Client'Class)
+      return GPS.LSP_Client.Requests.Requests_Lists.List;
+   --  Do not free the results
+
    function Capabilities
      (Self : LSP_Client'Class) return LSP.Messages.ServerCapabilities;
 

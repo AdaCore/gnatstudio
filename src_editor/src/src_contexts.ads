@@ -17,6 +17,7 @@
 
 with Ada.Strings.Unbounded;
 with GNAT.Regexp;
+with GNATCOLL.Projects;
 with GNATCOLL.VFS;          use GNATCOLL.VFS;
 
 with Gtk.Combo_Box_Text;
@@ -325,6 +326,9 @@ package Src_Contexts is
    procedure Set_File_List
      (Context : access Files_Project_Context;
       Files   : GNATCOLL.VFS.File_Array_Access);
+   procedure Set_File_List
+     (Context : access Files_Project_Context;
+      Files   : not null GNATCOLL.Projects.File_And_Project_Array_Access);
    --  Set the list of files to search.
    --  No copy of Files is made, and it will be freed when the context no
    --  longer needs it.

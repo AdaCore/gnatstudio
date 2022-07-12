@@ -320,7 +320,7 @@ package body Src_Contexts is
 
    function Get_Project_Files
      (Projects : Standard.Projects.Project_Type_Array)
-      return GNATCOLL.VFS.File_Array;
+      return GNATCOLL.VFS.File_Array with Unreferenced;
    --  Return all the project files corresponding to the given projects.
 
    --------------
@@ -1314,6 +1314,7 @@ package body Src_Contexts is
       Unchecked_Free (Context.Files);
       Context.Files := new File_Array (1 .. Integer (Files.Length));
       Idx := Context.Files'First;
+
       for F of Files loop
          Context.Files (Idx) := F;
          Idx := Idx + 1;
@@ -1332,6 +1333,28 @@ package body Src_Contexts is
    begin
       Unchecked_Free (Context.Files);
       Context.Files := Files;
+      Context.Current_File := Context.Files'First - 1;
+   end Set_File_List;
+
+   -------------------
+   -- Set_File_List --
+   -------------------
+
+   procedure Set_File_List
+     (Context : access Files_Project_Context;
+      Files   : not null GNATCOLL.Projects.File_And_Project_Array_Access)
+   is
+      Idx : Integer;
+   begin
+      Unchecked_Free (Context.Files);
+      Context.Files := new File_Array (1 .. Integer (Files'Length));
+      Idx := Context.Files'First;
+
+      for F of Files.all loop
+         Context.Files (Idx) := F.File;
+         Idx := Idx + 1;
+      end loop;
+
       Context.Current_File := Context.Files'First - 1;
    end Set_File_List;
 
@@ -1813,14 +1836,14 @@ package body Src_Contexts is
       Context  : constant Files_Project_Context_Access :=
         new Files_Project_Context;
       Project  : constant Project_Type := Get_Project (Kernel);
-      Projects : constant Project_Type_Array (1 .. 1) := (1 => Project);
-      Files    : GNATCOLL.VFS.File_Array_Access;
+      Files    : GNATCOLL.Projects.File_And_Project_Array_Access;
    begin
       Context.Scope := Search_Scope'Val (Selector.Get_Scope_Combo.Get_Active);
       Context.All_Occurrences := All_Occurrences;
       Context.Current         := GPS.Search.No_Match;
-      Files := Project.Source_Files (True);
-      Append (Files, Get_Project_Files (Projects));
+      Files := Project.Source_Files
+        (Recursive             => True,
+         Include_Project_Files => True);
       Set_File_List (Context, Files);
       return Root_Search_Context_Access (Context);
    end Create_Context;
@@ -1871,26 +1894,28 @@ package body Src_Contexts is
       return Root_Search_Context_Access
    is
       pragma Unreferenced (Module);
-      Project  : constant Standard.Projects.Project_Type_Array :=
+      Projects  : constant Standard.Projects.Project_Type_Array :=
         Vsearch.Get_Selected_Project (Kernel);
-      Context  : constant Files_Project_Context_Access :=
+      Context   : constant Files_Project_Context_Access :=
         new Files_Project_Context;
-      Files : GNATCOLL.VFS.File_Array_Access;
+      Files     : GNATCOLL.Projects.File_And_Project_Array_Access;
    begin
       Context.Scope           :=
         Search_Scope'Val (Selector.Get_Scope_Combo.Get_Active);
       Context.All_Occurrences := All_Occurrences;
       Context.Current         := GPS.Search.No_Match;
 
-      if Project'Length /= 0 then
+      if Projects'Length /= 0 then
          --  Search in selected project if any
-         Files := Source_Files_Non_Recursive (Project);
-         Append (Files, Get_Project_Files (Project));
+         Files := Source_Files_Non_Recursive
+           (Projects              => Projects,
+            Include_Project_Files => True);
          Set_File_List (Context, Files);
       else
          --  Search in root project if no project selected
-         Files := Get_Project (Kernel).Source_Files (False);
-         Append (Files, Get_Project_Files (Project));
+         Files := Get_Project (Kernel).Source_Files
+           (Recursive             => False,
+            Include_Project_Files => True);
          Set_File_List (Context, Files);
       end if;
 

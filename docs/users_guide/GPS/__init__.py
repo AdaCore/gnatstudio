@@ -11255,7 +11255,7 @@ class LanguageServer(object):
         """
         Return the language server for the given language info
 
-        :param LanguageInfo language: Info of the lanuage
+        :param LanguageInfo language: Info of the language
         """
         pass  # implemented in Ada
 
@@ -11264,7 +11264,7 @@ class LanguageServer(object):
         """
         Return the language server for the given language
 
-        :param string language: Name of the lanuage
+        :param string language: Name of the language
         """
         pass  # implemented in Ada
 
@@ -11310,6 +11310,13 @@ class LanguageServer(object):
         """
         pass  # implemented in Ada
 
+    def get_requests(self):
+        """
+        Return the list of requests queued by the client.
+
+        :return: A list of String.
+        """
+        pass  # implemented in Ada
 
 ###########################################################
 # Globals

@@ -69,14 +69,16 @@ Note: this plugin activates only when the command-line tool
 
 import os.path
 
+import json
+import re
+import shutil
+import tempfile
+
 import GPS
 from extensions.private.xml import X
 from gs_utils import interactive
 from modules import Module
 import os_utils
-import re
-import shutil
-import tempfile
 import workflows.promises as promises
 import workflows
 
@@ -411,6 +413,31 @@ class GNATcovPlugin(Module):
     ]
 
     SOURCE_TRACES_BUILD_TARGETS = [
+        X('target', model='gnatcov-build-main', category='_GNATcov_',
+          name='GNATcov Setup Instrumentation Runtime',
+          menu=SOURCE_TRACES_MENU + '/Setup/').children(
+            X('target-type').children('executable'),
+            X('in-toolbar').children('FALSE'),
+            X('in-menu').children('TRUE'),
+            X('read-only').children('TRUE'),
+            X('output-parsers').children(
+                'output_chopper utf_converter console_writer end_of_build'),
+            X('iconname').children('gps-build-all-symbolic'),
+            X('launch-mode').children('MANUALLY'),
+            X('command-line').children(
+                X('arg').children('gnatcov'),
+                X('arg').children('setup'),
+                X('arg').children('%target'),
+                X('arg').children(
+                    '%python' +
+                    '(gnatcov.GNATcovPlugin.' +
+                    'get_rts_arg())'),
+                X('arg').children(
+                    '%python' +
+                    '(gnatcov.GNATcovPlugin.get_prefix_arg())')
+            )
+        ),
+
         X('target', model='gnatcov-run', category='_GNATcov_',
           name='Run GNATcov with instrumentation',
           menu=SOURCE_TRACES_MENU + '/Instrumentation/').children(
@@ -429,6 +456,10 @@ class GNATcovPlugin(Module):
                 X('arg').children('%subdirsarg'),
                 X('arg').children('--level'),
                 X('arg').children("%attr(ide_coverage'level_run,stmt)"),
+                X('arg').children(
+                    '%python' +
+                    '(gnatcov.GNATcovPlugin.' +
+                    'get_runtime_project_arg())'),
                 X('arg').children(
                     '%python' +
                     '(gnatcov.GNATcovPlugin.' +
@@ -534,7 +565,7 @@ class GNATcovPlugin(Module):
                 X('arg').children(
                     '%python' +
                     '(gnatcov.GNATcovPlugin.' +
-                    'get_installed_coverage_runtime_project_arg())')
+                    'get_implicit_with_arg())')
             )
         ),
 
@@ -598,7 +629,7 @@ class GNATcovPlugin(Module):
 
     def setup(self):
         # This plugin makes sense only if GNATcoverage is available.
-        if not self.is_gnatcov_available():
+        if not self.is_gnatcov_available:
             return
 
         # Create all custom things that do not require GPS' GUI to be ready
@@ -628,11 +659,11 @@ class GNATcovPlugin(Module):
         GNATcovPlugin.remove_secure_temp_dir()
 
     def project_view_changed(self):
-        if self.is_gnatcov_available():
+        if self.is_gnatcov_available:
             self.update_worflow_build_targets()
 
     def update_worflow_build_targets(self):
-        gnatcov_available = self.is_gnatcov_available()
+        gnatcov_available = self.is_gnatcov_available
         instrumentation_supported = self.is_instrumentation_supported()
 
         if gnatcov_available and not self.__run_gnatcov_wf_build_target:
@@ -651,6 +682,7 @@ class GNATcovPlugin(Module):
                 GPS.parse_xml(list_to_xml(self.BINARY_TRACES_BUILD_TARGETS))
 
             if instrumentation_supported:
+
                 workflows.create_target_from_workflow(
                     target_name="Run GNATcoverage with instrumentation",
                     workflow_name="run-gnatcov-with-instrumentation",
@@ -679,7 +711,7 @@ class GNATcovPlugin(Module):
 
                 # Instrument and Build
 
-                GPS.parse_xml(list_to_xml(self.SOURCE_TRACES_BUILD_TARGETS[:4]))
+                GPS.parse_xml(list_to_xml(self.SOURCE_TRACES_BUILD_TARGETS[:5]))
 
                 workflows.create_target_from_workflow(
                     target_name="Run instrumented main",
@@ -691,7 +723,7 @@ class GNATcovPlugin(Module):
 
                 # Generate Report
 
-                GPS.parse_xml(list_to_xml(self.SOURCE_TRACES_BUILD_TARGETS[4:]))
+                GPS.parse_xml(list_to_xml(self.SOURCE_TRACES_BUILD_TARGETS[5:]))
 
         if not gnatcov_available:
             if self.__run_gnatcov_wf_build_target:
@@ -704,11 +736,13 @@ class GNATcovPlugin(Module):
             if self.__run_gnatcov_instr_wf_build_target:
                 self. __run_gnatcov_instr_wf_build_target.hide()
 
+    @property
     def is_gnatcov_available(self):
         return os_utils.locate_exec_on_path('gnatcov') != ""
 
     # Return the tool version as (major version, minor version)
-    def version(self, exe):
+    @staticmethod
+    def version(exe):
         latest_version = (23, 0)
         version_out = GPS.Process(exe + " --version").get_result()
 
@@ -719,24 +753,26 @@ class GNATcovPlugin(Module):
         matches = TOOL_VERSION_REGEXP.findall(version_out.splitlines()[0])
         return matches[0]
 
-    def is_binary_supported(self):
+    @staticmethod
+    def is_binary_supported():
         # Starting from GNATcov version 22.0, binary traces are no longer
         # supported in native.
 
         try:
-            version_major, _ = self.version("gnatcov")
+            version_major, _ = GNATcovPlugin.version("gnatcov")
         except Exception:
             # Can happen with the GS testuite if we use a fake gnatcov exe
             return True
 
         return GPS.get_target() != "" or int(version_major) < 22
 
-    def is_instrumentation_supported(self):
+    @staticmethod
+    def is_instrumentation_supported():
         # Check if GNATcov and GPRbuild are recent enough (after the 21
         # release)
         for exe in 'gnatcov', 'gprbuild':
             try:
-                version_major, version_minor = self.version(exe)
+                version_major, version_minor = GNATcovPlugin.version(exe)
             except Exception as e:
                 # Can happen with the GS testuite if we use a fake gnatcov exe
                 GPS.Console().write(str(e))
@@ -750,6 +786,19 @@ class GNATcovPlugin(Module):
                 return False
 
         return True
+
+    # TODO: assume this predicate is true in GS 24.0.
+    @staticmethod
+    def is_gnatcov_setup_supported():
+        # Check if GNATcov is recent enough (23 wavefronts and 24 releases or
+        # later).
+        try:
+            version_major, version_minor = GNATcovPlugin.version("gnatcov")
+        except Exception as e:
+            # Can happen with the GS testuite if we use a fake gnatcov exe
+            GPS.Console().write(str(e))
+            return False
+        return int(version_major) >= 23
 
     def run_gnatcov_wf(self, main_name):
         # Build the project with GNATcov switches
@@ -805,6 +854,10 @@ class GNATcovPlugin(Module):
             if status != 0:
                 GPS.Console("Messages").write(
                     "Failed to execute main with status " + str(status))
+
+            # TODO: suppress code below in GS 24.0.
+            dump_channel = "bin-file"
+
         else:
             # Launch the instrumented executable through GNATemulator
             cmdargs = GPS.BuildTarget(
@@ -815,8 +868,35 @@ class GNATcovPlugin(Module):
             status, output = yield gnatemu_promise.wait_until_terminate(
                 show_if_error=True)
 
+            # TODO: suppress code below in GS 24.0.
+            dump_channel = "base64-stdout"
+
+        # TODO: suppress code below in GS 24.0.
+        dump_trigger = None
+
+        if self.is_gnatcov_setup_supported():
+            # In that case, we use the gnatcov-instr.json file that gnatcov
+            # instrument creates to know where traces were produced (dumped to a
+            # binary file or dumped to the standard output).
+            obj_dir = GPS.Project.root().object_dirs()[0]
+            params_file = os.path.join(obj_dir, "gnatcov-instr.json")
+            with open(params_file) as f:
+                params = json.load(f)
+                dump_channel = params["dump-channel"]
+                dump_trigger = params["dump-trigger"]
+
+        if dump_trigger == "manual":
+            GPS.Console("Messages").write(
+                "\nManual dump trigger is not supported in the GNAT Studio"
+                " workflow. Please compute the coverage report manually and use"
+                " the GNAT Studio action to load it.",
+                mode="error"
+            )
+            return status
+
+        if dump_channel == "base64-stdout":
             # Put the output in a file and use 'gnatcov extract-base64-trace'
-            # to retrieve the traces information from it
+            # to retrieve the traces information from it.
             out_filename = os.path.join(obj_dir, exe + ".out")
 
             with open(out_filename, "w") as f:
@@ -827,7 +907,7 @@ class GNATcovPlugin(Module):
             status = GPS.Process(extract_trace_cmd).wait()
 
             if status != 0:
-                GPS.Console().write(
+                GPS.Console("Messages").write(
                     "Could not extract traces info from executable's output",
                     mode="error")
 
@@ -846,21 +926,34 @@ class GNATcovPlugin(Module):
         # Don't build/install the GNATcov runtime if a prebuilt one has been
         # specified.
         if not prebuilt_runtime_path:
-            # Build the coverage runtime
-            p = promises.TargetWrapper("GNATcov Build Coverage Runtime")
-            r = yield p.wait_on_execute(quiet=True)
-            if r != 0:
-                GPS.Console("Messages").write(
-                    "GNATcov runtime build failed ", mode="error")
-                return
+            # Use "gnatcov setup" if it is available; otherwise, fallback on
+            # our old build + install process.
+            if self.is_gnatcov_setup_supported():
+                p = promises.TargetWrapper(
+                    "GNATcov Setup Instrumentation Runtime"
+                )
+                r = yield p.wait_on_execute()
+                if r != 0:
+                    GPS.Console("Messages").write(
+                        "GNATcov setup failed ", mode="error")
+                    return
 
-            # Install the coverage runtime
-            p = promises.TargetWrapper("GNATcov Install Coverage Runtime")
-            r = yield p.wait_on_execute(quiet=True)
-            if r != 0:
-                GPS.Console("Messages").write(
-                    "GNATcov runtime build failed ", mode="error")
-                return
+            else:
+                # Build the coverage runtime
+                p = promises.TargetWrapper("GNATcov Build Coverage Runtime")
+                r = yield p.wait_on_execute(quiet=True)
+                if r != 0:
+                    GPS.Console("Messages").write(
+                        "GNATcov runtime build failed ", mode="error")
+                    return
+
+                # Install the coverage runtime
+                p = promises.TargetWrapper("GNATcov Install Coverage Runtime")
+                r = yield p.wait_on_execute(quiet=True)
+                if r != 0:
+                    GPS.Console("Messages").write(
+                        "GNATcov runtime installation failed ", mode="error")
+                    return
         else:
             GPS.Console().write(
                 "\nPrebuilt runtime is used: %s\n" % prebuilt_runtime_path)
@@ -1027,6 +1120,9 @@ class GNATcovPlugin(Module):
 
     @staticmethod
     def get_dump_trigger_arg():
+        if GNATcovPlugin.is_gnatcov_setup_supported():
+            return ""
+
         runtime_attr = GPS.get_runtime()
 
         # If we have a BB runtime profile around, pick the closest
@@ -1042,14 +1138,34 @@ class GNATcovPlugin(Module):
         else:
             return "--dump-trigger=atexit"
 
+    # TODO: remove code below in GS 24.0.
     @staticmethod
     def get_dump_channel_arg():
+        if GNATcovPlugin.is_gnatcov_setup_supported():
+            return ""
+
         target_attr = GPS.get_target()
 
         if target_attr == "":
             return "--dump-channel=bin-file"
         else:
             return "--dump-channel=base64-stdout"
+
+    @staticmethod
+    def get_runtime_project_arg():
+        if GNATcovPlugin.is_gnatcov_setup_supported():
+            return (
+                "--runtime-project=" +
+                GNATcovPlugin.get_installed_coverage_runtime_project_path()
+            )
+        return ""
+
+    @staticmethod
+    def get_implicit_with_arg():
+        return (
+            "--implicit-with=" +
+            GNATcovPlugin.get_installed_coverage_runtime_project_path()
+        )
 
     @staticmethod
     def get_dump_filename_simple_arg():
@@ -1069,9 +1185,9 @@ class GNATcovPlugin(Module):
         return "--prefix=" + GNATcovPlugin.get_secure_temp_dir()
 
     @staticmethod
-    def get_installed_coverage_runtime_project_arg():
+    def get_installed_coverage_runtime_project_path():
         if prebuilt_runtime_path:
-            return "--implicit-with=%s" % prebuilt_runtime_path
+            return prebuilt_runtime_path
         else:
             install_dir = os.path.join(
                 GNATcovPlugin.get_secure_temp_dir(), "share", "gpr"
@@ -1079,4 +1195,4 @@ class GNATcovPlugin(Module):
             gpr_name = os.path.basename(
                 GNATcovPlugin.get_coverage_runtime_gpr_name()
             )
-            return "--implicit-with=" + os.path.join(install_dir, gpr_name)
+            return os.path.join(install_dir, gpr_name)
