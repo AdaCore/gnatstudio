@@ -1158,6 +1158,7 @@ class GNATcovPlugin(Module):
                 "--runtime-project=" +
                 GNATcovPlugin.get_installed_coverage_runtime_project_path()
             )
+        return ""
 
     @staticmethod
     def get_implicit_with_arg():
