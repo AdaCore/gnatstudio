@@ -1,0 +1,4 @@
+--  Comment in root project
+with "imported/b";
+
+project A is end A;

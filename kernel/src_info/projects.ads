@@ -78,9 +78,13 @@ package Projects is
    --  No_File is returned if the project is No_Project.
 
    function Source_Files_Non_Recursive
-     (Projects : Project_Type_Array) return GNATCOLL.VFS.File_Array_Access;
+     (Projects              : Project_Type_Array;
+      Include_Project_Files : Boolean := False)
+      return GNATCOLL.Projects.File_And_Project_Array_Access;
    --  Return the list of all direct source files for all projects.
-   --  Result must be freed by user.
+   --  If Include_Project_Files is true, then the .gpr files themselves will
+   --  be included in the result.
+   --  Result must be freed by the caller.
 
    function Source_Dirs_With_VCS
      (Project   : Project_Type;

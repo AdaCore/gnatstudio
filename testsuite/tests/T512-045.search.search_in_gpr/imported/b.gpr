@@ -1,0 +1,3 @@
+--  Comment in imported project
+project B extends "../extended/extended.gpr" is
+end B;
