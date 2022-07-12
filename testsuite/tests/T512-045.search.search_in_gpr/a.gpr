@@ -1,3 +1,0 @@
-with "imported/b";
-
-project A is end A;
