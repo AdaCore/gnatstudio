@@ -405,6 +405,7 @@ try:
         GDK_DOWN = 65364
         GDK_UP = Gdk.KEY_Up
         GDK_RIGHT = Gdk.KEY_Right
+        GDK_LEFT = Gdk.KEY_Left
         GDK_PAGE_DOWN = 0xFF56
         GDK_F4 = Gdk.KEY_F4
         GDK_F5 = Gdk.KEY_F5
@@ -416,6 +417,7 @@ try:
         GDK_CONTROL_L = Key.ctrl
         GDK_DOWN = Key.down
         GDK_UP = Key.up
+        GDK_LEFT = Key.left
         GDK_RIGHT = Key.right
         GDK_PAGE_DOWN = Key.page_down
         GDK_F4 = Key.f4

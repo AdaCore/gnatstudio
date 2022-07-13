@@ -8,7 +8,6 @@ from gs_utils.internal.utils import *
 
 FIRST_PARAM = "procedure Do_Something (<b>A</b> : Integer; B : Integer)"
 SECOND_PARAM = "procedure Do_Something (A : Integer; <b>B</b> : Integer)"
-GDK_LEFT_ARROW = 0xFF51
 
 
 @run_test_driver
@@ -30,9 +29,9 @@ def run_test():
     gps_assert(labels[1].get_label(), SECOND_PARAM,
                "issue when opening the signatureHelp")
 
-    send_key_event(GDK_LEFT_ARROW, window=main_window)
+    send_key_event(GDK_LEFT, window=main_window)
     yield wait_language_server("textDocument/signatureHelp", "Ada")
-    send_key_event(GDK_LEFT_ARROW, window=main_window)
+    send_key_event(GDK_LEFT, window=main_window)
     yield wait_language_server("textDocument/signatureHelp", "Ada")
     gps_assert(labels[1].get_label(), FIRST_PARAM,
                "signatureHelp has not been updated for the location changed")
