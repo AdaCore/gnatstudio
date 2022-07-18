@@ -801,28 +801,52 @@ package body GPS.Kernel is
    procedure Refresh_Context
      (Kernel : not null access Kernel_Handle_Record'Class)
    is
-      Child : MDI_Child;
+      Child    : MDI_Child;
+      --  The child which should create the context
+
+      Toplevel : Gtk_Widget;
    begin
-      if not Kernel.Is_In_Destruction then
-         Child := Get_MDI (Kernel).Get_Focus_Child;
+      --  Do not emit a new context when the kernel is being destroyed
 
+      if Kernel.Is_In_Destruction then
+         return;
+      end if;
+
+      --  Get the context from the currently selected child.
+
+      Child := Get_MDI (Kernel).Get_Focus_Child;
+
+      if Child = null then
          if Active (Me) then
-            if Child /= null then
-               Trace
-                 (Me, "Refreshing context, focused child now is: "
-                  & Child.Get_Title);
-            else
-               Trace (Me, "Refresh_Context: no child focused");
-            end if;
+            Trace (Me, "Refresh_Context: no child focused");
+         end if;
+      else
+         if Active (Me) then
+            Trace
+              (Me, "Refreshing context, focused child now is: "
+               & Child.Get_Title);
          end if;
 
-         if Child /= null
-           and then Child.all in GPS_MDI_Child_Record'Class
+         --  Additional check: make sure the selected child has
+         --  the focus - if the focus happens to be in another
+         --  window, create a context as if no child was selected.
+
+         Toplevel := Child.Get_Toplevel;
+         if Toplevel.all in Gtk_Window_Record'Class and then
+           not Gtk_Window (Toplevel).Has_Toplevel_Focus
          then
-            Kernel.Context_Changed (GPS_MDI_Child (Child).Build_Context);
-         else
-            Kernel.Context_Changed (New_Context (Kernel));
+            if Active (Me) then
+               Trace (Me, "The window does not have the toplevel focus");
+            end if;
+
+            Child := null;
          end if;
+      end if;
+
+      if Child = null then
+         Kernel.Context_Changed (New_Context (Kernel));
+      else
+         Kernel.Context_Changed (GPS_MDI_Child (Child).Build_Context);
       end if;
    end Refresh_Context;
 
