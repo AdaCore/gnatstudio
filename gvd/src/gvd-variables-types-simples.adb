@@ -17,8 +17,11 @@
 
 with Ada.Characters.Handling; use Ada.Characters.Handling;
 with Ada.Strings.Fixed;       use Ada.Strings.Fixed;
+with Ada.Unchecked_Deallocation;
 
 with GNAT.Strings;            use GNAT.Strings;
+with GNAT.Regpat;             use GNAT.Regpat;
+
 with GNATCOLL.Utils;          use GNATCOLL.Utils;
 with Language;                use Language;
 with String_Utils;            use String_Utils;
@@ -373,7 +376,12 @@ package body GVD.Variables.Types.Simples is
      (Self  : not null access GVD_Debugger_Output_Type;
       Value : String)
    is
-      Old : constant Line_Vector.Vector := Self.Value;
+      Old        : constant Line_Vector.Vector := Self.Value;
+      Locals_Txt : aliased String := "locals=[";
+      Args_Txt   : aliased String := "stack-args=[";
+      MI_Output  : Boolean := False;
+      Prefix     : GNAT.Strings.String_Access;
+
    begin
       if Starts_With (Value, "^done,") then
          Self.Value.Clear;
@@ -486,14 +494,87 @@ package body GVD.Variables.Types.Simples is
                Modified => False));
 
       else
+         if Starts_With (Value, Locals_Txt) then
+            MI_Output := True;
+            Prefix    := Locals_Txt'Unchecked_Access;
+         elsif Starts_With (Value, Args_Txt) then
+            MI_Output := True;
+            Prefix    := Args_Txt'Unchecked_Access;
+         end if;
+
          declare
+
+            --------------
+            -- Split_MI --
+            --------------
+
+            function Split_MI return String_List_Access;
+            function Split_MI return String_List_Access is
+
+               procedure Deallocate is new Ada.Unchecked_Deallocation
+                 (Object => String_List, Name => String_List_Access);
+
+               S             : constant String := Value
+                 (Value'First + Prefix'Length .. Value'Last - 2);
+               --  Cut prefix at the start and "]LF" at the end
+
+               Local_Pattern : constant Pattern_Matcher := Compile
+                 ("level=""(\d*)""|" &
+                    "{name=""([^""]*)"",value=""([^""]*)""},?");
+               From          : Integer := S'First;
+               Matched       : Match_Array (0 .. 3);
+
+               Result, Tmp : String_List_Access;
+            begin
+               while From <= S'Last loop
+                  Match (Local_Pattern, S (From .. S'Last), Matched);
+                  exit when Matched (0) = No_Match;
+                  From := Matched (0).Last + 1;
+
+                  if Result = null then
+                     Result := new String_List (1 .. 1);
+                  else
+                     Tmp := Result;
+                     Result := new String_List (1 .. Tmp'Last + 1);
+                     Result (1 .. Tmp'Last) := Tmp.all;
+                     Deallocate (Tmp);
+                  end if;
+
+                  if Matched (2) = No_Match then
+                     Result (Result'Last) := new String'
+                       ("level - " &
+                          S (Matched (1).First .. Matched (1).Last));
+                  else
+                     Result (Result'Last) := new String'
+                       (S (Matched (2).First .. Matched (2).Last) & " = " &
+                          S (Matched (3).First .. Matched (3).Last));
+                  end if;
+               end loop;
+
+               if Prefix.all = Args_Txt
+                 and then Result'Length = 1
+               then
+                  Free (Result (Result'First));
+                  Result (Result'First) := new String'("No value");
+               end if;
+
+               if Result = null then
+                  Result := new GNAT.Strings.String_List (1 .. 0);
+               end if;
+
+               return Result;
+            end Split_MI;
+
             S     : constant String    := Do_Tab_Expansion (Value, 8);
-            Lines : String_List_Access := Split (S, ASCII.LF);
+            Lines : String_List_Access :=
+              (if MI_Output
+               then Split_MI
+               else Split (S, ASCII.LF));
          begin
             --  Compute which lines have changed since the last update.
 
             Self.Value := Line_Vector.To_Vector (Lines'Length);
-            for L in 1 .. Positive (Self.Value.Length) loop
+            for L in 1 .. Natural (Self.Value.Length) loop
                Self.Value (L).Value := To_Unbounded_String (Lines (L).all);
                if Old.Is_Empty then
                   Self.Value (L).Modified := True;
