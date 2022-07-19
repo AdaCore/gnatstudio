@@ -281,7 +281,8 @@ package body DAP.Views.Call_Stack is
       Req.Client := Client;
       Req.From   := From;
       Req.To     := To;
-      Req.Parameters.arguments.threadId := 0;
+      Req.Parameters.arguments.threadId :=
+        Get_Client (View).Get_Current_Thread;
       if From /= -1 then
          Req.Parameters.arguments.startFrame := (True, From);
          Req.Parameters.arguments.levels     := (True, To - From + 1);

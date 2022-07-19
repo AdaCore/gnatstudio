@@ -231,6 +231,7 @@ package body DAP.Clients is
          if Self.Status /= Stopped then
             Self.Stopped_Line   := 0;
             Self.Selected_Frame := 0;
+
             DAP.Utils.Unhighlight_Current_Line (Self.Kernel);
          end if;
 
@@ -303,6 +304,27 @@ package body DAP.Clients is
    begin
       return Self.Call_Stack_View;
    end Get_Call_Stack_View;
+
+   ------------------------
+   -- Get_Current_Thread --
+   ------------------------
+
+   function Get_Current_Thread (Self  : in out DAP_Client) return Integer
+   is
+      use type Generic_Views.Abstract_View_Access;
+   begin
+      if Self.Stopped_Threads.Is_Empty then
+         return 0;
+      end if;
+
+      if Self.Thread_View /= null
+        and then Self.Selected_Thread /= 0
+      then
+         return Self.Selected_Thread;
+      else
+         return Self.Stopped_Threads.Element (Self.Stopped_Threads.First);
+      end if;
+   end Get_Current_Thread;
 
    ---------------------
    -- Get_Thread_View --
@@ -396,6 +418,15 @@ package body DAP.Clients is
    begin
       return Self.Selected_Frame;
    end Get_Selected_Frame;
+
+   -------------------------
+   -- Set_Selected_Thread --
+   -------------------------
+
+   procedure Set_Selected_Thread (Self : in out DAP_Client; Id : Integer) is
+   begin
+      Self.Selected_Thread := Id;
+   end Set_Selected_Thread;
 
    ----------------------
    -- Set_Source_Files --
@@ -1010,6 +1041,12 @@ package body DAP.Clients is
                return;
             end if;
 
+            if stop.a_body.threadId.Is_Set then
+               Integer_Sets.Include
+                 (Self.Stopped_Threads, stop.a_body.threadId.Value);
+            end if;
+            Self.All_Threads_Stopped := stop.a_body.allThreadsStopped;
+
             if stop.a_body.reason = breakpoint then
                Self.Breakpoints.Stopped
                  (stop, Self.Stopped_File, Self.Stopped_Line);
@@ -1032,6 +1069,20 @@ package body DAP.Clients is
 
                Trace (Me, "Debugger" & Self.Id'Img & " stopped:" &
                         stop.a_body.reason'Img);
+            end if;
+         end;
+
+      elsif Event = "continued" then
+         declare
+            Continued : DAP.Tools.ContinuedEvent;
+         begin
+            DAP.Tools.Inputs.Input_ContinuedEvent (Stream, Continued, Success);
+            if Continued.a_body.allThreadsContinued then
+               Self.All_Threads_Stopped := False;
+               Integer_Sets.Clear (Self.Stopped_Threads);
+            else
+               Integer_Sets.Exclude
+                 (Self.Stopped_Threads, Continued.a_body.threadId);
             end if;
          end;
 

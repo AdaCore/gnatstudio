@@ -556,6 +556,8 @@ package body DAP.Module is
         new DAP.Requests.Continue.Continue_DAP_Request
           (GPS.Kernel.Get_Kernel (Context.Context));
    begin
+      Req.Parameters.arguments.threadId :=
+        Get_Current_Debugger.Get_Current_Thread;
       Get_Current_Debugger.Enqueue (DAP.Requests.DAP_Request_Access (Req));
       return Commands.Success;
    end Execute;
@@ -573,6 +575,8 @@ package body DAP.Module is
         new DAP.Requests.Next.Next_DAP_Request
           (GPS.Kernel.Get_Kernel (Context.Context));
    begin
+      Req.Parameters.arguments.threadId :=
+        Get_Current_Debugger.Get_Current_Thread;
       Get_Current_Debugger.Enqueue (DAP.Requests.DAP_Request_Access (Req));
       return Commands.Success;
    end Execute;
@@ -590,6 +594,8 @@ package body DAP.Module is
         new DAP.Requests.Next.Next_DAP_Request
           (GPS.Kernel.Get_Kernel (Context.Context));
    begin
+      Req.Parameters.arguments.threadId :=
+        Get_Current_Debugger.Get_Current_Thread;
       Req.Parameters.arguments.granularity :=
         (Is_Set => True, Value => Enum.instruction);
       Get_Current_Debugger.Enqueue (DAP.Requests.DAP_Request_Access (Req));
@@ -609,6 +615,8 @@ package body DAP.Module is
         new DAP.Requests.Step_In_Request.Step_In_DAP_Request
           (GPS.Kernel.Get_Kernel (Context.Context));
    begin
+      Req.Parameters.arguments.threadId :=
+        Get_Current_Debugger.Get_Current_Thread;
       Get_Current_Debugger.Enqueue (DAP.Requests.DAP_Request_Access (Req));
       return Commands.Success;
    end Execute;
@@ -626,6 +634,8 @@ package body DAP.Module is
         new DAP.Requests.Step_In_Request.Step_In_DAP_Request
           (GPS.Kernel.Get_Kernel (Context.Context));
    begin
+      Req.Parameters.arguments.threadId :=
+        Get_Current_Debugger.Get_Current_Thread;
       Req.Parameters.arguments.granularity :=
         (Is_Set => True, Value => Enum.instruction);
       Get_Current_Debugger.Enqueue (DAP.Requests.DAP_Request_Access (Req));

@@ -38,6 +38,7 @@ with Basic_Types;          use Basic_Types;
 with Generic_Views;
 
 private with Ada.Containers.Hashed_Maps;
+private with Ada.Containers.Hashed_Sets;
 private with Ada.Strings.Unbounded;
 private with VSS.JSON.Pull_Readers;
 private with DAP.Modules.Breakpoint_Managers;
@@ -183,6 +184,13 @@ package DAP.Clients is
       File  : GNATCOLL.VFS.Virtual_File;
       Line  : Integer);
 
+   procedure Set_Selected_Thread (Self : in out DAP_Client; Id : Integer);
+   --  Set the Thread ID that has been selected in the thread view
+
+   function Get_Current_Thread (Self  : in out DAP_Client) return Integer;
+   --  Returns current selected stopped thread Id or
+   --  the first stopped thread or 0
+
    -- Visual_Debugger --
 
    type Visual_Debugger is new GPS.Debuggers.Base_Visual_Debugger with record
@@ -221,6 +229,11 @@ private
       Equivalent_Keys => "=",
       "="             => DAP.Requests."=");
 
+   package Integer_Sets is new Ada.Containers.Hashed_Sets
+     (Element_Type        => Integer,
+      Hash                => Hash,
+      Equivalent_Elements => "=");
+
    type DAP_Client
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
       Id     : Positive) is new LSP.Raw_Clients.Raw_Client
@@ -242,9 +255,14 @@ private
       Request_Id     : Integer := 1;
       Error_Msg      : VSS.Strings.Virtual_String;
 
-      Stopped_File   : GNATCOLL.VFS.Virtual_File;
-      Stopped_Line   : Integer;
-      Selected_Frame : Integer;
+      Stopped_File        : GNATCOLL.VFS.Virtual_File;
+      Stopped_Line        : Integer;
+      Selected_Frame      : Integer;
+
+      --  to monitoring stoped threads
+      Stopped_Threads     : Integer_Sets.Set;
+      All_Threads_Stopped : Boolean := False;
+      Selected_Thread     : Integer := 0;
 
       --  Modules --
       Breakpoints    : DAP.Modules.Breakpoint_Managers.
