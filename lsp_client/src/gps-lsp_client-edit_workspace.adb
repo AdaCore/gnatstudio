@@ -19,6 +19,8 @@ with Ada.Containers.Indefinite_Ordered_Maps;
 with Ada.Strings.Unbounded;           use Ada.Strings.Unbounded;
 with Ada.Strings.UTF_Encoding;
 
+with GNAT.Strings;
+
 with GNATCOLL.VFS;                    use GNATCOLL.VFS;
 
 with VSS.Strings.Conversions;
@@ -42,6 +44,7 @@ with LSP.Types;                       use LSP.Types;
 
 with Refactoring.Services;
 with Refactoring.UI;
+with String_Utils;
 with Src_Editor_Module;
 with VFS_Module;
 with GNATCOLL.Traces;                 use GNATCOLL.Traces;
@@ -55,6 +58,13 @@ package body GPS.LSP_Client.Edit_Workspace is
 
    package Maps is new Ada.Containers.Indefinite_Ordered_Maps
      (LSP.Messages.Span, Ada.Strings.UTF_Encoding.UTF_8_String);
+
+   procedure Insert_Change
+     (Map    : in out Maps.Map;
+      Span   : LSP.Messages.Span;
+      Change : VSS.Strings.Virtual_String);
+   --  Add to Map the contents of Change, converted to fit the needs
+   --  of editor buffers.
 
    type Edit_Workspace_Command is new Interactive_Command with
       record
@@ -86,6 +96,31 @@ package body GPS.LSP_Client.Edit_Workspace is
       Context : Interactive_Command_Context) return Command_Return_Type;
    overriding function Undo
      (Command : access Edit_Workspace_Command) return Boolean;
+
+   -------------------
+   -- Insert_Change --
+   -------------------
+
+   procedure Insert_Change
+     (Map    : in out Maps.Map;
+      Span   : LSP.Messages.Span;
+      Change : VSS.Strings.Virtual_String)
+   is
+      Contents : GNAT.Strings.String_Access;
+      --  We use a String_Access here to avoid allocating a potentially
+      --  large string on the stack.
+      Last     : Integer;
+      Ignored  : Boolean;
+   begin
+      --  Convert the contents to UTF8
+      Contents := new String'
+        (VSS.Strings.Conversions.To_UTF_8_String (Change));
+
+      --  Strip any CRs from the text
+      String_Utils.Strip_CR (Contents.all, Last, Ignored);
+      Map.Insert (Span, Contents (Contents'First .. Last));
+      GNAT.Strings.Free (Contents);
+   end Insert_Change;
 
    -------
    -- < --
@@ -362,9 +397,7 @@ package body GPS.LSP_Client.Edit_Workspace is
       begin
          while Has_Element (C) loop
             for Change of Element (C) loop
-               Map.Insert
-                 (Change.span,
-                  VSS.Strings.Conversions.To_UTF_8_String (Change.newText));
+               Insert_Change (Map, Change.span, Change.newText);
             end loop;
 
             Process_File
@@ -390,10 +423,7 @@ package body GPS.LSP_Client.Edit_Workspace is
                case Item.Kind is
                   when LSP.Messages.Text_Document_Edit =>
                      for Change of Item.Text_Document_Edit.edits loop
-                        Map.Insert
-                          (Change.span,
-                           VSS.Strings.Conversions.To_UTF_8_String
-                             (Change.newText));
+                        Insert_Change (Map, Change.span, Change.newText);
                      end loop;
 
                      Process_File
@@ -680,9 +710,7 @@ package body GPS.LSP_Client.Edit_Workspace is
       begin
          while Has_Element (C) loop
             for Change of Element (C) loop
-               Map.Insert
-                 (Change.span,
-                  VSS.Strings.Conversions.To_UTF_8_String (Change.newText));
+               Insert_Change (Map, Change.span, Change.newText);
             end loop;
 
             Process_File
