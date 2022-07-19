@@ -45,6 +45,7 @@ with GPS.Kernel.Messages.Tools_Output;
 
 with GUI_Utils;
 with Language;                      use Language;
+with Language.Ada;                  use Language.Ada;
 with Src_Editor_Box;                use Src_Editor_Box;
 with Src_Editor_Buffer;             use Src_Editor_Buffer;
 with Src_Editor_Module;
@@ -66,7 +67,11 @@ package body GPS.LSP_Client.Editors.Formatting is
 
    LSP_FORMATTING_ON : constant Trace_Handle := Create
      ("GPS.LSP.FORMATTING", On);
-   --  Enable/disable LSP formatting
+   --  Enable/disable overall LSP formatting
+
+   LSP_FORMATTING_ADA_ON : constant Trace_Handle := Create
+     ("GPS.LSP.FORMATTING.ADA", Off);
+   --  Enable/disable Ada LSP formatting
 
    -- Document_Formatting_Request --
 
@@ -411,7 +416,11 @@ package body GPS.LSP_Client.Editors.Formatting is
       Request      : Range_Formatting_Request_Access;
 
    begin
-      if not LSP_FORMATTING_ON.Is_Active then
+      Lang := Self.Kernel.Get_Language_Handler.Get_Language_From_File (File);
+
+      if not LSP_FORMATTING_ON.Is_Active
+        or else (Lang = Ada_Lang and then not LSP_FORMATTING_ADA_ON.Is_Active)
+      then
          return False;
       end if;
 
@@ -465,11 +474,14 @@ package body GPS.LSP_Client.Editors.Formatting is
       --  with LSP specification and enchanced to support multicharacter
       --  triggers, which is degenerate case for Ada/C/C++.
 
-      if not LSP_FORMATTING_ON.Is_Active then
+      Lang := Self.Kernel.Get_Language_Handler.Get_Language_From_File (File);
+
+      if not LSP_FORMATTING_ON.Is_Active
+        or else (Lang = Ada_Lang and then not LSP_FORMATTING_ADA_ON.Is_Active)
+      then
          return False;
       end if;
 
-      Lang := Self.Kernel.Get_Language_Handler.Get_Language_From_File (File);
       C    := Self.Triggers.Find (Lang.Get_Name);
 
       if not Has_Element (C) then
@@ -608,10 +620,6 @@ package body GPS.LSP_Client.Editors.Formatting is
       Request      : Document_Formatting_Request_Access;
 
    begin
-      if not LSP_FORMATTING_ON.Is_Active then
-         return Failure;
-      end if;
-
       Editor := Src_Editor_Module.Find_Current_Editor (Kernel);
       Box    := Src_Editor_Module.Get_Source_Box_From_MDI (Editor);
       View   := Get_View (Box);
@@ -664,18 +672,16 @@ package body GPS.LSP_Client.Editors.Formatting is
       Provider.Kernel := Kernel;
       Src_Editor_Buffer.Set_Formatting_Provider (Provider'Access);
 
-      if LSP_FORMATTING_ON.Is_Active then
-         GPS.Kernel.Actions.Register_Action
-           (Kernel       => Kernel,
-            Name         =>  "format file",
-            Command      => new Indentation_File_Command,
-            Description  => "Format the current file",
-            Category     => "Editor",
-            Filter       =>
-              Lookup_Filter (Kernel, "Writable source editor") and
-                Lookup_Filter (Kernel, "Is not Makefile"),
-            Icon_Name    => "gps-case-sensitive-symbolic");
-      end if;
+      GPS.Kernel.Actions.Register_Action
+        (Kernel       => Kernel,
+         Name         =>  "format file",
+         Command      => new Indentation_File_Command,
+         Description  => "Format the current file",
+         Category     => "Editor",
+         Filter       =>
+           Lookup_Filter (Kernel, "Writable source editor") and
+             Lookup_Filter (Kernel, "Is not Makefile"),
+         Icon_Name    => "gps-case-sensitive-symbolic");
    end Register_Module;
 
 end GPS.LSP_Client.Editors.Formatting;
