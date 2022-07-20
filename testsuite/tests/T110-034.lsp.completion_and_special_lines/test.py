@@ -27,6 +27,9 @@ def run_test():
         send_key_event(ord(ch))
         yield timeout(100)
 
+    yield wait_until_true(
+        lambda: get_widget_by_name("completion-view") != None)
+
     pop_tree = get_widget_by_name("completion-view")
     model = pop_tree.get_model()
     yield wait_until_true(
