@@ -53,6 +53,6 @@ def test_driver():
     yield timeout(1000)
 
     gps_assert(GPS.Locations.list_locations("Diagnostics", f.path),
-               [GPS.FileLocation(f, 1, 17), 'Invalid token, ignored',
-                GPS.FileLocation(f, 1, 18), "Missing ';'"],
+               [GPS.FileLocation(f, 1, 17), "Missing ';'",
+                GPS.FileLocation(f, 1, 17), "Skipped token _Called"],
                "Unexpected diagnostics")
