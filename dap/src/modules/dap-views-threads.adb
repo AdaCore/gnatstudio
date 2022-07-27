@@ -20,6 +20,7 @@ with GNAT.Strings;
 with VSS.Strings.Conversions;
 
 with Glib;                       use Glib;
+with Glib.Object;
 with Glib_Values_Utils;          use Glib_Values_Utils;
 
 with Gtk.Box;                    use Gtk.Box;
@@ -27,6 +28,7 @@ with Gtk.Enums;                  use Gtk.Enums;
 with Gtk.Scrolled_Window;        use Gtk.Scrolled_Window;
 with Gtk.Tree_Model;             use Gtk.Tree_Model;
 with Gtk.Tree_View;              use Gtk.Tree_View;
+with Gtk.Tree_View_Column;
 with Gtk.Tree_Store;             use Gtk.Tree_Store;
 with Gtk.Widget;                 use Gtk.Widget;
 
@@ -109,6 +111,12 @@ package body DAP.Views.Threads is
       Result      : in out DAP.Tools.ThreadsResponse;
       New_Request : in out DAP_Request_Access);
 
+   procedure On_Clicked
+     (Self   : access Glib.Object.GObject_Record'Class;
+      Path   : Gtk.Tree_Model.Gtk_Tree_Path;
+      Column : not null
+      access Gtk.Tree_View_Column.Gtk_Tree_View_Column_Record'Class);
+
    --------------
    -- Get_View --
    --------------
@@ -140,9 +148,32 @@ package body DAP.Views.Threads is
 
       View.Scrolled.Add (View.Tree);
       View.Tree.Show_All;
+      View.Tree.On_Row_Activated (On_Clicked'Access, View);
 
       return Gtk_Widget (View);
    end Initialize;
+
+   ----------------
+   -- On_Clicked --
+   ----------------
+
+   procedure On_Clicked
+     (Self   : access Glib.Object.GObject_Record'Class;
+      Path   : Gtk.Tree_Model.Gtk_Tree_Path;
+      Column : not null
+      access Gtk.Tree_View_Column.Gtk_Tree_View_Column_Record'Class)
+   is
+      pragma Unreferenced (Column);
+      View  : constant Thread_View := Thread_View (Self);
+      Model : Gtk_Tree_Model;
+      Iter  : Gtk_Tree_Iter;
+
+   begin
+      View.Tree.Get_Selection.Select_Path (Path);
+      View.Tree.Get_Selection.Get_Selected (Model, Iter);
+      Get_Client (View).Set_Selected_Thread
+        (Integer'Value (Get_String (Model, Iter, Num_Column)));
+   end On_Clicked;
 
    ---------------------------
    -- On_Process_Terminated --
@@ -177,6 +208,8 @@ package body DAP.Views.Threads is
            (-Get_Model (View.Tree), Iter, (Num_Column, Name_Column),
             (1 => As_Int (0),
              2 => As_String ("Running...")));
+
+         Get_Client (View).Set_Selected_Thread (0);
       else
          View.Update;
       end if;
