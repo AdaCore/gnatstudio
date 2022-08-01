@@ -17,6 +17,7 @@
 
 with Ada.Exceptions;             use Ada.Exceptions;
 with Ada.Characters.Handling;    use Ada.Characters.Handling;
+with Ada.Characters.Latin_1;
 with GNAT.Directory_Operations;  use GNAT.Directory_Operations;
 with GNATCOLL.Python;            use GNATCOLL.Python;
 with GNATCOLL.Python.State;
@@ -2204,5 +2205,18 @@ package body GPS.Kernel.Preferences is
 
       Dialog.Destroy;
    end On_Color_Menu_Item_Activated;
+
+   -------------------------
+   -- Get_Line_Terminator --
+   -------------------------
+
+   function Get_Line_Terminator return String is
+   begin
+      if Line_Terminator.Get_Pref = Windows then
+         return Ada.Characters.Latin_1.CR & Ada.Characters.Latin_1.LF;
+      else
+         return "" & Ada.Characters.Latin_1.LF;
+      end if;
+   end Get_Line_Terminator;
 
 end GPS.Kernel.Preferences;

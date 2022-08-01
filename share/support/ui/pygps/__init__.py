@@ -399,7 +399,7 @@ try:
     if "linux" in sys.platform:
         GDK_BACKSPACE = 65288
         GDK_TAB = 65289
-        GDK_RETURN = 65293
+        GDK_RETURN = Gdk.KEY_Return
         GDK_ESCAPE = 65307
         GDK_CONTROL_L = 65507
         GDK_DOWN = 65364
@@ -438,7 +438,6 @@ try:
            passes the event to the key manager, but synthesize the event
            in Python directly.
         """
-
         if not bypass_keymanager:
             keycode = 0
 

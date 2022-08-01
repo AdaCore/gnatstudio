@@ -354,6 +354,13 @@ package GPS.Kernel.Preferences is
    package Action_On_New_Line_Preferences is new
      Default_Preferences.Enums.Generics (Language.Action_On_New_Line);
 
+   -----------
+   -- Utils --
+   -----------
+
+   function Get_Line_Terminator return String;
+   --  Returns the line terminator based on the preferences
+
 private
 
    type GPS_Preferences_Manager_Record is new Preferences_Manager_Record

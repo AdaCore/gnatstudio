@@ -92,4 +92,30 @@ package Src_Editor_View.Commands is
       return Standard.Commands.Command_Return_Type;
    --  Lock or unlock the current editor.
 
+   type Add_String_Comment_Command is
+     new Interactive_Command with null record;
+   overriding function Execute
+     (Command : access Add_String_Comment_Command;
+      Context : Interactive_Command_Context)
+      return Standard.Commands.Command_Return_Type;
+   --  Split string literal on two lines or add new line to continue
+   --  string literal or comment
+
+   type Split_String_Command is
+     new Interactive_Command with null record;
+   overriding function Execute
+     (Command : access Split_String_Command;
+      Context : Interactive_Command_Context)
+      return Standard.Commands.Command_Return_Type;
+   --  Split string literal on two parts
+
+   type Paste_Into_String_Command is
+     new Interactive_Command with null record;
+   overriding function Execute
+     (Command : access Paste_Into_String_Command;
+      Context : Interactive_Command_Context)
+      return Standard.Commands.Command_Return_Type;
+   --  Split string literal and paste clipboard content as a variable
+   --  between these two parts
+
 end Src_Editor_View.Commands;

@@ -331,6 +331,13 @@ package body Src_Editor_Module is
    --  Filter which passes when the context contains a file which is not
    --  a Makefile.
 
+   type Is_Ada_File_Context is new GPS.Kernel.Action_Filter_Record
+      with null record;
+   overriding function Filter_Matches_Primitive
+     (Context : access Is_Ada_File_Context;
+      Ctxt    : GPS.Kernel.Selection_Context) return Boolean;
+   --  Filter which passes when the context contains an Ada file.
+
    type Undo_Command is new Interactive_Command with null record;
    overriding function Execute
      (Command : access Undo_Command;
@@ -2302,6 +2309,24 @@ package body Src_Editor_Module is
       return not (Starts_With (To_Lower (+File.Base_Name), "makefile"));
    end Filter_Matches_Primitive;
 
+   ------------------------------
+   -- Filter_Matches_Primitive --
+   ------------------------------
+
+   overriding function Filter_Matches_Primitive
+     (Context : access Is_Ada_File_Context;
+      Ctxt    : GPS.Kernel.Selection_Context) return Boolean is
+   begin
+      if not Has_File_Information (Ctxt) then
+         return False;
+      end if;
+
+      return Ada.Characters.Handling.To_Lower
+        (Get_Kernel
+           (Ctxt).Get_Language_Handler.Get_Language_From_File
+             (File_Information (Ctxt)).Get_Name) = "ada";
+   end Filter_Matches_Primitive;
+
    ---------------------
    -- Register_Module --
    ---------------------
@@ -2336,7 +2361,8 @@ package body Src_Editor_Module is
                                       new Last_Editor_Action_Context;
       Context_Has_Selection       : constant Action_Filter :=
                                       new Has_Selection_Filter;
-
+      Is_Ada_File_Filter          : constant Action_Filter :=
+                                      new Is_Ada_File_Context;
       --  Memory is never freed, but this is needed for the whole life of
       --  the application.
 
@@ -2540,6 +2566,29 @@ package body Src_Editor_Module is
            & " as set in the Preferences for the corresponding language"),
          Category => "Editor",
          Filter   => Writable_Src_Action_Context);
+
+      Command := new Add_String_Comment_Command;
+      Register_Action
+        (Kernel, "Wrap string/comment", Command,
+           -"Wrap string or comment using the cursor location",
+         Category => "Editor",
+         Filter   => Is_Ada_File_Filter and Writable_Src_Action_Context);
+
+      Command := new Split_String_Command;
+      Register_Action
+        (Kernel, "Insert in string template", Command,
+         -("Template splitting the string at cursor location using " &
+           "concatenation operators"),
+         Category => "Editor",
+         Filter   => Is_Ada_File_Filter and Writable_Src_Action_Context);
+
+      Command := new Paste_Into_String_Command;
+      Register_Action
+        (Kernel, "Paste into string literal", Command,
+         -("Paste clipboard at cursor location inside a string using" &
+             " concatenation operators"),
+         Category => "Editor",
+         Filter   => Is_Ada_File_Filter and Writable_Src_Action_Context);
 
       Register_Module
         (Module      => Src_Editor_Module_Id,

@@ -79,4 +79,8 @@
 
   <key action="exit search">Escape</key>
   <key action="Global Search in context: File Names">shift-F3</key>
+
+  <key action="Wrap string/comment">shift-Return</key>
+  <key action="Insert in string template">shift-space</key>
+  <key action="Paste into string literal">shift-control-V</key>
 </GNAT_Studio>

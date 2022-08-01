@@ -15,21 +15,26 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with Ada_Semantic_Tree;              use Ada_Semantic_Tree;
-with Ada_Semantic_Tree.Declarations; use Ada_Semantic_Tree.Declarations;
-with Ada_Semantic_Tree.Parts;        use Ada_Semantic_Tree.Parts;
-with Ada_Semantic_Tree.Generics;     use Ada_Semantic_Tree.Generics;
-with Codefix.Error_Lists;            use Codefix.Error_Lists;
-with Codefix.Text_Manager;           use Codefix.Text_Manager;
-with Codefix.Formal_Errors;          use Codefix.Formal_Errors;
 with Ada.Strings.Fixed;
 with GNAT.Strings;                   use GNAT.Strings;
 with GNAT.Regpat;                    use GNAT.Regpat;
 with GNATCOLL.Projects;              use GNATCOLL.Projects;
 with GNATCOLL.VFS;                   use GNATCOLL.VFS;
+
+with Ada_Semantic_Tree;              use Ada_Semantic_Tree;
+with Ada_Semantic_Tree.Declarations; use Ada_Semantic_Tree.Declarations;
+with Ada_Semantic_Tree.Parts;        use Ada_Semantic_Tree.Parts;
+with Ada_Semantic_Tree.Generics;     use Ada_Semantic_Tree.Generics;
+
+with Codefix.Error_Lists;            use Codefix.Error_Lists;
+with Codefix.Text_Manager;           use Codefix.Text_Manager;
+with Codefix.Formal_Errors;          use Codefix.Formal_Errors;
+
 with Language;                       use Language;
 with Language.Tree;                  use Language.Tree;
 with Language.Tree.Database;         use Language.Tree.Database;
+
+with GPS.Kernel.Preferences;         use GPS.Kernel.Preferences;
 
 package body Codefix.GNAT_Parser is
 
@@ -4741,17 +4746,18 @@ package body Codefix.GNAT_Parser is
               Start, Last,
               To_Unbounded_String
                 (Line (Line'First .. Idx - 1) &
-                   "pragma Warnings" & ASCII.LF &
-                   Line (Line'First .. Idx - 1) & "  (Off," & ASCII.LF &
+                   "pragma Warnings" & Get_Line_Terminator &
+                   Line (Line'First .. Idx - 1) & "  (Off," &
+                   Get_Line_Terminator &
                    Line (Line'First .. Idx - 1) & "   """ &
                  (if Msg (Msg'First .. Msg'First + Prefix'Length - 1) =
                       Prefix
                     then Msg (Msg'First + Prefix'Length .. Msg'Last)
                     else Msg) &
-                   """" & ");" & ASCII.LF &
+                   """" & ");" & Get_Line_Terminator &
                    Line (Line'First .. Idx - 1) &
-                   "--  TODO: Add explanations" & ASCII.LF &
-                   Line & ASCII.LF &
+                   "--  TODO: Add explanations" & Get_Line_Terminator &
+                   Line & Get_Line_Terminator &
                    Line (Line'First .. Idx - 1) & "pragma Warnings (On);"));
       end;
    end Fix;
