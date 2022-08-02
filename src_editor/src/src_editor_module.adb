@@ -1791,25 +1791,20 @@ package body Src_Editor_Module is
            (Child, Signal_Destroy, On_Editor_Destroy'Access);
 
          if File /= GNATCOLL.VFS.No_File and then not File.Is_Directory then
-            declare
-               Context : Selection_Context;
-            begin
-               if Title /= "" then
-                  Editor.Get_Buffer.Set_Title (Title);
-               end if;
+            if Title /= "" then
+               Editor.Get_Buffer.Set_Title (Title);
+            end if;
 
-               --  Force update of MDI titles (thus emits context_changed)
-               Editor.Get_Buffer.Filename_Changed;
+            --  Force update of MDI titles (thus emits context_changed)
+            Editor.Get_Buffer.Filename_Changed;
 
-               --  Build a context from the newly created editor, in particular
-               --  to change the current context's file information before
-               --  running the File_Edited hook.
-               Context := Build_Editor_Context (Get_View (Editor));
-               Kernel.Context_Changed (Context);
+            --  Build a context from the newly created editor, in particular
+            --  to change the current context's file information before
+            --  running the File_Edited hook.
+            Kernel.Refresh_Context;
 
-               --  Update the caches (timestamp+checksum) for this file
-               File_Edited_Hook.Run (Kernel, Get_Filename (MDI_Child (Child)));
-            end;
+            --  Update the caches (timestamp+checksum) for this file
+            File_Edited_Hook.Run (Kernel, Get_Filename (MDI_Child (Child)));
          else
             --  Determine the number of "Untitled" files open
 

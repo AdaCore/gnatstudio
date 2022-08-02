@@ -409,6 +409,7 @@ try:
         GDK_PAGE_DOWN = 0xFF56
         GDK_F4 = Gdk.KEY_F4
         GDK_F5 = Gdk.KEY_F5
+        GDK_DELETE = Gdk.KEY_Delete
     else:
         GDK_BACKSPACE = Key.backspace
         GDK_TAB = Key.tab
@@ -422,6 +423,7 @@ try:
         GDK_PAGE_DOWN = Key.page_down
         GDK_F4 = Key.f4
         GDK_F5 = Key.f5
+        GDK_DELETE = Key.delete
 
     def send_key_event(keyval, primary=0, alt=0, shift=0, control=0,
                        window=None,
