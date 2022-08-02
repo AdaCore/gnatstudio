@@ -192,18 +192,37 @@ def wait_for_mdi_child(name, step=500, n=10):
         yield timeout(step)
         k += 1
 
+class TimeoutExceeded(Exception):
+    pass
 
 @workflows.run_as_workflow
 def wait_until_true(test_func, *args, **kwargs):
     """
     Wait for the the  :param func test_func: to return True, without
     blocking the UI.
+
+    If "timeout" is specified as part of the kwargs, as in
+
+        wait_until_true(lambda:<test>, timeout=X),
+
+    wait until X milliseconds at most; if the timeout is exceeded,
+    raise TimeoutExceeded.
     """
     k = 0
     n = 30
+    increment = 500
+    total_waited = 0
+    timeout = None
+    if "timeout" in kwargs:
+        timeout = kwargs["timeout"]
+        del(kwargs["timeout"])
 
     while not test_func(*args, **kwargs) and k < n:
-        yield timeout(500)
+        # Check for the timeout
+        if timeout is not None and total_waited > timeout:
+            raise TimeoutExceeded
+        yield workflows.promises.timeout(increment)
+        total_waited += increment
         k += 1
 
 

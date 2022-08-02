@@ -821,6 +821,22 @@ package body GPS.LSP_Clients is
       function Get_Supported_ResourceOperations
         return LSP.Messages.ResourceOperationKindSet;
 
+      function Get_Experimental_Features return LSP.Types.LSP_Any;
+      --  Return the selection of experimental features that are supported
+
+      function Get_Experimental_Features return LSP.Types.LSP_Any is
+         --  Craft something like:
+         --     {"advanced_refactorings":["add_parameter"
+         use GNATCOLL.JSON;
+         use LSP.Types;
+         Result       : constant LSP_Any := Create_Object;
+         Refactorings : JSON_Array;
+      begin
+         Refactorings.Append (Create ("add_parameter"));
+         Result.Set_Field ("advanced_refactorings", Refactorings);
+         return Result;
+      end Get_Experimental_Features;
+
       ------------------------------------------
       -- Get_Completion_Documentation_Formats --
       ------------------------------------------
@@ -949,7 +965,8 @@ package body GPS.LSP_Clients is
                          others         => <>),
                       window       => (Is_Set => False),
                       general      => (Is_Set => False),
-                      experimental => (Is_Set => False)),
+                      experimental => (Is_Set => True,
+                                       Value  => Get_Experimental_Features)),
                    trace            => (Is_Set => False),
                    workspaceFolders => (Is_Set => False),
                    workDoneToken    => (Is_Set => False),
