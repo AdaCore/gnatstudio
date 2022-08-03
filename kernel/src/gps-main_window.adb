@@ -713,6 +713,11 @@ package body GPS.Main_Window is
    function On_Focus_In (W : access Gtk_Widget_Record'Class) return Boolean is
    begin
       Check_Monitored_Files_In_Background (GPS_Window (W).Kernel);
+
+      --  After the main window regains the focus, generate a context
+      --  with the currently focused MDI child.
+      GPS_Window (W).Kernel.Refresh_Context;
+
       return False;
    end On_Focus_In;
 
@@ -902,7 +907,7 @@ package body GPS.Main_Window is
          After => False);
 
       Return_Callback.Connect
-        (Main_Window, Signal_Focus_In_Event, On_Focus_In'Access);
+        (Main_Window, Signal_Focus_In_Event, On_Focus_In'Access, True);
 
       --  Support for Win32 WM_DROPFILES drag'n'drop
 
