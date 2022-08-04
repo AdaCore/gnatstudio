@@ -262,11 +262,17 @@ def on_mdi_child_change(hook_name, child):
 
 
 def strip_alias(s, from_lsp=False):
+    """
+    Used to remove the '%(..)' if we are dealing with GS aliases, or the
+    '${1:..}' and '$1' patterns when dealing with LSP snippets.
+    """
     res = s
+
     if not from_lsp:
         res = s[2:-1] if s.startswith("%(") else s
     elif "$" in s:
-        res = " "
+        res = s[4:-1] if not s[1:2].isdigit() else " "
+
     return res
 
 
@@ -294,13 +300,8 @@ def expand_alias(editor, alias, from_lsp=False):
     last_mark_pattern = "$0" if from_lsp else "%_"
 
     # Get the parameter substitutions via the appropriate regexp.
-    # The "${<number>:" at the beginning and the '}' at the end
-    # are removed from the LSP parameter substitutions
-    # through the 's[4:-1] if not s[1:2].isalpha()' list comprehension
-    # condition.
     if from_lsp:
-        substs = [s[4:-1] if not s[1:2].isdigit() else s
-                  for s in lsp_subst_pattern.findall(expansion)]
+        substs = lsp_subst_pattern.findall(expansion)
     else:
         substs = subst_pattern.findall(expansion)
 
