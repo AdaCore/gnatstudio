@@ -17,8 +17,6 @@
 
 with Glib.Convert; use Glib.Convert;
 
-with VSS.Strings.Conversions;
-
 with Basic_Types;  use Basic_Types;
 with Commands;     use Commands;
 
@@ -26,11 +24,11 @@ with Language;                      use Language;
 with Language_Handlers;             use Language_Handlers;
 with GPS.Editors; use GPS.Editors;
 with GPS.LSP_Client.Requests.Code_Action;
-with GPS.LSP_Client.Requests.Execute_Command;
-with GPS.LSP_Client.Requests;       use GPS.LSP_Client.Requests;
 with GPS.LSP_Client.Utilities;      use GPS.LSP_Client.Utilities;
 
 with Refactoring.Code_Actions;
+with GPS.LSP_Client.Editors.Code_Actions.Dialog;
+use GPS.LSP_Client.Editors.Code_Actions.Dialog;
 
 package body GPS.LSP_Client.Editors.Code_Actions is
 
@@ -58,33 +56,6 @@ package body GPS.LSP_Client.Editors.Code_Actions is
      (Self   : in out Code_Action_Request;
       Result : LSP.Messages.CodeAction_Vector);
 
-   -----------------------------
-   -- Execute_Command_Request --
-   -----------------------------
-
-   --  This part handles the emission of the textDocument/codeAction request
-   --  and the processing of its results.
-
-   type Execute_Command_Request is new
-     GPS.LSP_Client.Requests.Execute_Command.Abstract_Execute_Command_Request
-   with record
-      Params : LSP.Messages.ExecuteCommandParams (True);
-   end record;
-   type Execute_Command_Request_Access is
-     access all Execute_Command_Request'Class;
-
-   overriding function Params
-     (Self : Execute_Command_Request)
-      return LSP.Messages.ExecuteCommandParams is (Self.Params);
-
-   overriding procedure On_Result_Message
-     (Self : in out Execute_Command_Request) is null;
-
-   overriding function Get_Task_Label
-     (Self : Execute_Command_Request) return String
-   is
-     (VSS.Strings.Conversions.To_UTF_8_String (Self.Params.command));
-
    -------------------------
    -- Code_Action_Command --
    -------------------------
@@ -105,20 +76,21 @@ package body GPS.LSP_Client.Editors.Code_Actions is
    -------------
 
    overriding function Execute
-     (Command : access Code_Action_Command)
-      return Command_Return_Type
-   is
+     (Command : access Code_Action_Command) return Command_Return_Type is
       Request : Execute_Command_Request_Access;
    begin
-      Request := new Execute_Command_Request'
-        (LSP_Request with
-           Kernel => Command.Kernel,
-         Params => (Is_Unknown => True,
-                    Base       => (workDoneToken => (Is_Set => False)),
-                    command    => Command.Command.command,
-                    arguments  => Command.Command.arguments));
+      Request :=
+        new Execute_Command_Request'
+          (LSP_Request with Kernel => Command.Kernel,
+           Params =>
+             (Is_Unknown => True, Base => (workDoneToken => (Is_Set => False)),
+              command => Command.Command.command,
+              arguments => Command.Command.arguments));
 
-      GPS.LSP_Client.Requests.Execute (Command.Lang, Request_Access (Request));
+      Execute_Request_Via_Dialog
+        (Kernel  => Command.Kernel,
+         Lang    => Command.Lang,
+         Request => Request);
       return Success;
    end Execute;
 

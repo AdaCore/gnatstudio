@@ -637,3 +637,11 @@ textview.view.readonly text {
 #gnathub-report-tree {
    padding-left: 10px;
 }
+
+/**********************************
+ * Refactoring input window
+ **********************************/
+
+.gnatstudio-refactor-input box {
+   padding: 4pt;
+}

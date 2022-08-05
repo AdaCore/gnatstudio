@@ -17,9 +17,14 @@
 
 --  This package implements supports for code action requests in the editors
 
-with GNATCOLL.VFS;  use GNATCOLL.VFS;
+with VSS.Strings.Conversions;
 
+with GNATCOLL.VFS;  use GNATCOLL.VFS;
 with GPS.Kernel;    use GPS.Kernel;
+
+with LSP.Messages;
+with GPS.LSP_Client.Requests; use GPS.LSP_Client.Requests;
+with GPS.LSP_Client.Requests.Execute_Command;
 
 package GPS.LSP_Client.Editors.Code_Actions is
 
@@ -28,5 +33,32 @@ package GPS.LSP_Client.Editors.Code_Actions is
       File   : Virtual_File);
    --  Initiate a code action request at the location marked by the current
    --  context.
+
+   -----------------------------
+   -- Execute_Command_Request --
+   -----------------------------
+
+   --  This part handles the emission of the textDocument/codeAction request
+   --  and the processing of its results.
+
+   type Execute_Command_Request is new
+     GPS.LSP_Client.Requests.Execute_Command.Abstract_Execute_Command_Request
+   with record
+      Params : LSP.Messages.ExecuteCommandParams (True);
+   end record;
+   type Execute_Command_Request_Access is
+     access all Execute_Command_Request'Class;
+
+   overriding function Params
+     (Self : Execute_Command_Request)
+      return LSP.Messages.ExecuteCommandParams is (Self.Params);
+
+   overriding procedure On_Result_Message
+     (Self : in out Execute_Command_Request) is null;
+
+   overriding function Get_Task_Label
+     (Self : Execute_Command_Request) return String
+   is
+     (VSS.Strings.Conversions.To_UTF_8_String (Self.Params.command));
 
 end GPS.LSP_Client.Editors.Code_Actions;
