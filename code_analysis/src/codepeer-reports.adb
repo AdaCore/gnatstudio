@@ -18,8 +18,6 @@
 with Ada.Calendar.Formatting;
 with Ada.Characters.Latin_1;
 
-with String_Utils; use String_Utils;
-
 with Gtk.Label;
 with Gtk.Notebook;
 
@@ -81,8 +79,11 @@ package body CodePeer.Reports is
       Gtk.Label.Gtk_New (Baseline_Inspection, "baseline");
       Baseline_Inspection.Set_Alignment (0.1, 0.0);
       Baseline_Inspection.Set_Label
-        ("Base run #"
-         & Image (Project_Data.Baseline.Inspection)
+        ((if Is_CPL then
+            "Base run: "
+         else
+            "Base run #")
+         & To_String (Project_Data.Baseline.Inspection)
          & (if Project_Data.Baseline.Timestamp = Unknown_Timestamp then ""
            else ASCII.LF & Ada.Calendar.Formatting.Image
              (Project_Data.Baseline.Timestamp)));
@@ -102,8 +103,11 @@ package body CodePeer.Reports is
       Gtk.Label.Gtk_New (Current_Inspection, "current");
       Current_Inspection.Set_Alignment (0.9, 0.0);
       Current_Inspection.Set_Label
-        ("Current run #"
-         & Image (Project_Data.Current.Inspection)
+        ((if Is_CPL then
+            "Current run: "
+         else
+            "Current run #")
+         & To_String (Project_Data.Current.Inspection)
          & (if Project_Data.Current.Timestamp = Unknown_Timestamp then ""
            else ASCII.LF & Ada.Calendar.Formatting.Image
              (Project_Data.Current.Timestamp)));

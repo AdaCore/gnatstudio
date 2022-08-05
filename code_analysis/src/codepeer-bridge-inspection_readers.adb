@@ -94,6 +94,10 @@ package body CodePeer.Bridge.Inspection_Readers is
           (Abstract_Inspection_Reader'Class, Inspection_Reader_Access);
 
    begin
+      if Is_CPL then
+         Annot_Files.Clear;
+      end if;
+
       Self.Kernel          := Kernel;
       Self.Base_Directory  :=
         GNATCOLL.VFS.Create (Filesystem_String (Input.Get_System_Id)).Dir;
@@ -199,7 +203,7 @@ package body CodePeer.Bridge.Inspection_Readers is
 
          begin
             Data.Current.Inspection :=
-              Natural'Value (Attrs.Get_Value (Identifier_Attribute));
+              Get_Value (Attrs, Identifier_Attribute);
             Data.Current.Timestamp := Get_Value (Attrs, Timestamp_Attribute);
             Data.Current.Main :=
               Get_Value (Attrs, Command_Line_Main_Attribute);
@@ -208,8 +212,12 @@ package body CodePeer.Bridge.Inspection_Readers is
             Data.Current.Library_File :=
               Get_Value (Attrs, Library_File_Attribute);
 
+            if Is_CPL then
+               CPM_File := Get_Value (Attrs, "cpm_file");
+            end if;
+
             Data.Baseline.Inspection :=
-              Natural'Value (Attrs.Get_Value (Previous_Attribute));
+              Get_Value (Attrs, Previous_Attribute);
             Data.Baseline.Timestamp :=
               Get_Value (Attrs, Previous_Timestamp_Attribute);
             Data.Baseline.Main :=

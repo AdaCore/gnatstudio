@@ -155,10 +155,15 @@ package body CodePeer is
       procedure Free is
         new Ada.Unchecked_Deallocation (Audit_Record, Audit_Record_Access);
 
+      procedure Free_CPL_Id is
+        new Ada.Unchecked_Deallocation (CPL_Id_Type, CPL_Id_Access);
+
    begin
       for J of Self.Audit loop
          Free (J);
       end loop;
+
+      Free_CPL_Id (Self.CPL_Id);
 
       Self.Audit.Clear;
 

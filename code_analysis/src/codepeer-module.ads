@@ -118,7 +118,8 @@ package CodePeer.Module is
       From_Line        : Positive;
       From_Column      : Positive;
       Checks           : Message_Category_Sets.Set;
-      CWEs             : CWE_Category_Sets.Set)
+      CWEs             : CWE_Category_Sets.Set;
+      CPL_Id           : CPL_Id_Access)
       return Message_Access;
 
    procedure Set_Review_Action (Message : Message_Access);
@@ -244,6 +245,12 @@ private
       return GNATCOLL.VFS.Virtual_File;
    --  Return directory which is used by CodePeer for output inspection
    --  results.
+
+   function Codepeer_CPM_Directory
+     (Kernel : not null access Kernel_Handle_Record'Class)
+      return GNATCOLL.VFS.Virtual_File;
+   --  Return directory which is used by CodePeer for runs_info.json & cpm
+   --  files.
 
    function Codepeer_Message_Patterns
      (Project : Project_Type) return GNATCOLL.VFS.Virtual_File;

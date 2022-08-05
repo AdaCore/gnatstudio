@@ -22,9 +22,12 @@ package CodePeer.Module.Bridge is
 
    procedure Inspection
      (Module          : not null access CodePeer.Module.Module_Id_Record'Class;
-      Preserve_Output : Boolean);
+      Preserve_Output : Boolean;
+      Just_Load       : Boolean := False);
    --  Runs gps_codepeer_bridge to retrive inspection's information.
    --  Reuses existent XML file if it is exists and up-to-date.
+   --  If Just_Load is set to True, do not call the bridge and only set
+   --  Module's variables.
 
    procedure Remove_Inspection_Cache_File
       (Module : not null access CodePeer.Module.Module_Id_Record'Class);
