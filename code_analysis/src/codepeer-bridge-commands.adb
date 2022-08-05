@@ -36,6 +36,7 @@ package body CodePeer.Bridge.Commands is
    function Create_Database_Node
      (Server_URL          : String;
       Output_Directory    : Virtual_File;
+      CPM_Directory       : Virtual_File;
       DB_Directory        : Virtual_File;
       Message_Patterns    : Virtual_File;
       Additional_Patterns : Virtual_File) return XML_Utils.Node_Ptr;
@@ -49,16 +50,33 @@ package body CodePeer.Bridge.Commands is
      (Command_File_Name   : Virtual_File;
       Server_URL          : String;
       Output_Directory    : Virtual_File;
+      CPM_Directory       : Virtual_File;
       DB_Directory        : Virtual_File;
       Message_Patterns    : Virtual_File;
       Additional_Patterns : Virtual_File;
       Messages            : Message_Vectors.Vector;
       Version             : Supported_Format_Version)
    is
+      procedure Add_Simple_Child
+        (Parent : XML_Utils.Node_Ptr; Tag : String; Val : String);
+
+      procedure Add_Simple_Child
+        (Parent : XML_Utils.Node_Ptr; Tag : String; Val : String)
+      is
+         Node : constant XML_Utils.Node_Ptr :=
+           new XML_Utils.Node'
+             (Tag    => new String'(Tag),
+              Value  => new String'(Val),
+              others => <>);
+      begin
+         XML_Utils.Add_Child (Parent, Node);
+      end Add_Simple_Child;
+
       Database_Node  : XML_Utils.Node_Ptr :=
                          Create_Database_Node
                            (Server_URL          => Server_URL,
                             Output_Directory    => Output_Directory,
+                            CPM_Directory       => CPM_Directory,
                             DB_Directory        => DB_Directory,
                             Message_Patterns    => Message_Patterns,
                             Additional_Patterns => Additional_Patterns);
@@ -94,9 +112,32 @@ package body CodePeer.Bridge.Commands is
             "status_category",
             Audit_Status_Category'Image
               (Message.Audit.First_Element.Status.Category));
-            XML_Utils.Set_Attribute
+         XML_Utils.Set_Attribute
            (Message_Node,
             "approved", To_String (Message.Audit.First_Element.Approved_By));
+
+         if Is_CPL then
+            XML_Utils.Set_Attribute
+              (Message_Node, "subp", To_String (Message.CPL_Id.Subp));
+            XML_Utils.Set_Attribute
+              (Message_Node, "kind", To_String (Message.CPL_Id.Kind));
+            XML_Utils.Set_Attribute
+              (Message_Node, "tool", To_String (Message.CPL_Id.Tool));
+            XML_Utils.Set_Attribute
+              (Message_Node, "key_seq", To_String (Message.CPL_Id.Key_Seq));
+
+            --  Add those as data of subnodes so that we correctly deal with
+            --  possible spaces.
+            Add_Simple_Child
+              (Message_Node, "prj", To_String (Message.CPL_Id.Prj));
+            Add_Simple_Child
+              (Message_Node, "file", To_String (Message.CPL_Id.File));
+            Add_Simple_Child
+              (Message_Node, "key", To_String (Message.CPL_Id.Key));
+            Add_Simple_Child
+              (Message_Node, "comment",
+               To_String (Message.Audit.First_Element.Comment));
+         end if;
 
          XML_Utils.Add_Child (Add_Audit_Node, Message_Node);
       end loop;
@@ -154,6 +195,7 @@ package body CodePeer.Bridge.Commands is
                            Create_Database_Node
                              (Server_URL          => Server_URL,
                               Output_Directory    => Output_Directory,
+                              CPM_Directory       => No_File,
                               DB_Directory        => DB_Directory,
                               Message_Patterns    => Message_Patterns,
                               Additional_Patterns => Additional_Patterns);
@@ -170,6 +212,7 @@ package body CodePeer.Bridge.Commands is
       for Message of Messages loop
          if not Message.Audit_Loaded then
             Append (Ids, Natural'Image (Message.Id));
+
          elsif Server_URL /= "" then
             Message.Audit.Clear;
             Message.Audit_Loaded := False;
@@ -199,6 +242,7 @@ package body CodePeer.Bridge.Commands is
    function Create_Database_Node
      (Server_URL          : String;
       Output_Directory    : Virtual_File;
+      CPM_Directory       : Virtual_File;
       DB_Directory        : Virtual_File;
       Message_Patterns    : Virtual_File;
       Additional_Patterns : Virtual_File) return XML_Utils.Node_Ptr is
@@ -214,8 +258,20 @@ package body CodePeer.Bridge.Commands is
          else
             XML_Utils.Set_Attribute
               (Database_Node, "output_directory", +Output_Directory.Full_Name);
-            XML_Utils.Set_Attribute
-              (Database_Node, "db_directory", +DB_Directory.Full_Name);
+
+            if Is_CPL then
+               if CPM_File /= Null_Unbounded_String then
+                  XML_Utils.Set_Attribute
+                    (Database_Node, "cpm_file", To_String (CPM_File));
+               end if;
+
+               XML_Utils.Set_Attribute
+                 (Database_Node, "cpm_directory", +CPM_Directory.Full_Name);
+
+            else
+               XML_Utils.Set_Attribute
+                 (Database_Node, "db_directory", +DB_Directory.Full_Name);
+            end if;
          end if;
 
          if Message_Patterns /= No_File then
@@ -239,6 +295,7 @@ package body CodePeer.Bridge.Commands is
      (Command_File_Name    : Virtual_File;
       Server_URL           : String;
       Output_Directory     : Virtual_File;
+      CPM_Directory        : Virtual_File;
       DB_Directory         : Virtual_File;
       Message_Patterns     : Virtual_File;
       Additional_Patterns  : Virtual_File;
@@ -252,6 +309,7 @@ package body CodePeer.Bridge.Commands is
                          Create_Database_Node
                            (Server_URL          => Server_URL,
                             Output_Directory    => Output_Directory,
+                            CPM_Directory       => CPM_Directory,
                             DB_Directory        => DB_Directory,
                             Message_Patterns    => Message_Patterns,
                             Additional_Patterns => Additional_Patterns);
@@ -260,13 +318,34 @@ package body CodePeer.Bridge.Commands is
                             (Tag    => new String'("inspection"),
                              others => <>);
 
+      --  Write one annotation file path
+      procedure Do_Annot_File (P : Annot_File_Sets.Cursor);
+
+      procedure Do_Annot_File (P : Annot_File_Sets.Cursor) is
+         File : constant String :=
+           To_String (Annot_File_Sets.Element (Annot_Files, P));
+
+         Node  : constant XML_Utils.Node_Ptr :=
+           new XML_Utils.Node'
+             (Tag    => new String'("annotation_file"),
+              Value => new String'(File),
+              others => <>);
+      begin
+         XML_Utils.Add_Child (Database_Node, Node);
+      end Do_Annot_File;
+
    begin
       XML_Utils.Set_Attribute
         (Database_Node,
          "maximum_format",
          Format_Version'Image (Maximum_Version));
 
-      --  ??? Potentially non-utf8 string should not be
+      if Is_CPL then
+         --  write annotation files' paths.
+         Annot_File_Sets.Iterate (Annot_Files, Do_Annot_File'Access);
+      end if;
+
+   --  ??? Potentially non-utf8 string should not be
       --  stored in an XML attribute.
       XML_Utils.Set_Attribute
         (Database_Node,

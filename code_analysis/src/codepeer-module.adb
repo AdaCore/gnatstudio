@@ -182,7 +182,9 @@ package body CodePeer.Module is
       return GPS.Kernel.Messages.Filter_Result;
 
    Output_Directory_Attribute   :
-   constant Attribute_Pkg_String := Build ("CodePeer", "Output_Directory");
+     constant Attribute_Pkg_String := Build ("CodePeer", "Output_Directory");
+   CPM_Directory_Attribute : constant Attribute_Pkg_String :=
+     Build ("CodePeer", "cpm_directory");
    Database_Directory_Attribute : constant Attribute_Pkg_String :=
      Build ("CodePeer", "Database_Directory");
    Server_URL_Attribute : constant Attribute_Pkg_String :=
@@ -403,7 +405,8 @@ package body CodePeer.Module is
       From_Line        : Positive;
       From_Column      : Positive;
       Checks           : Message_Category_Sets.Set;
-      CWEs             : CWE_Category_Sets.Set)
+      CWEs             : CWE_Category_Sets.Set;
+      CPL_Id           : CPL_Id_Access)
       return Message_Access
    is
       Project : constant Project_Type :=
@@ -425,6 +428,7 @@ package body CodePeer.Module is
          Audit           => <>,
          Checks          => Checks,
          CWEs            => CWEs,
+         CPL_Id          => CPL_Id,
          Display_CWEs    =>
            Project.Has_Attribute (CWE_Attribute)
          and then Ada.Characters.Handling.To_Lower
@@ -621,6 +625,10 @@ package body CodePeer.Module is
       Ensure_Build_Mode : CodePeer_Build_Mode (Kernel_Handle (Module.Kernel));
       pragma Unreferenced (Ensure_Build_Mode);
 
+      Extra_Args : constant String :=
+        (if Is_CPL and then Module.Import_Annotations.Get_Pref
+         then "--show-annotations"
+         else "");
    begin
       if Project.Has_Attribute (Switches_Attribute) then
          Switches := Project.Attribute_Value (Switches_Attribute);
@@ -637,6 +645,7 @@ package body CodePeer.Module is
            (Module.Get_Kernel, Build_Target),
          Force       => Force,
          Build_Mode  => "codepeer",
+         Extra_Args  => Extra_Args,
          Synchronous => False,
          Dir         => CodePeer_Object_Directory (Project));
    end Review;
@@ -868,6 +877,42 @@ package body CodePeer.Module is
       end if;
    end Codepeer_Output_Directory;
 
+   function Codepeer_CPM_Directory
+     (Kernel : not null access Kernel_Handle_Record'Class)
+      return GNATCOLL.VFS.Virtual_File
+   is
+      Ensure_Build_Mode : CodePeer_Build_Mode (Kernel);
+      pragma Unreferenced (Ensure_Build_Mode);
+
+      Project   : constant Project_Type := Get_Project (Kernel);
+      Name      : constant Filesystem_String :=
+        Filesystem_String
+          (Ada.Characters.Handling.To_Lower
+             (String (Project_Path (Project).Base_Name)));
+      Extension : constant GNATCOLL.VFS.Filesystem_String :=
+        Project_Path (Project).File_Extension;
+
+   begin
+      if Project.Has_Attribute (CPM_Directory_Attribute) then
+         declare
+            Dir : constant GNATCOLL.VFS.Filesystem_String :=
+              GNATCOLL.VFS.Filesystem_String
+                (Project.Attribute_Value (CPM_Directory_Attribute));
+
+         begin
+            return
+              GNATCOLL.VFS.Create_From_Base
+                (Dir, Project.Project_Path.Dir.Full_Name.all);
+         end;
+
+      else
+         return
+           GNATCOLL.VFS.Create_From_Dir
+             (CodePeer_Object_Directory (Project),
+              Name (Name'First .. Name'Last - Extension'Length) & ".cpms");
+      end if;
+   end Codepeer_CPM_Directory;
+
    -------------------
    -- Hide_Messages --
    -------------------
@@ -969,7 +1014,11 @@ package body CodePeer.Module is
 
          --  Load messages' review status data.
 
-         if Status_File.Is_Regular_File then
+         if Is_CPL then
+            --  statuses are directly parsed from inspection data with cpl.
+            null;
+
+         elsif Status_File.Is_Regular_File then
             declare
                Input  : Input_Sources.File.File_Input;
                Reader : CodePeer.Bridge.Status_Readers.Reader;
@@ -1181,7 +1230,16 @@ package body CodePeer.Module is
 
       case Action is
          when Load_UI =>
-            CodePeer.Module.Bridge.Inspection (Module, True);
+            CodePeer.Module.Bridge.Inspection
+              (Module, True, Just_Load => Is_CPL);
+
+            if Is_CPL then
+               Module.Load
+                 (Module.Inspection_File,
+                  Module.Status_File,
+                  Module.Bts_Directory,
+                  Module.Output_Directory);
+            end if;
 
          when Audit_Trail =>
             Module.Review_Messages
@@ -1529,14 +1587,14 @@ package body CodePeer.Module is
       Need_Reload : Boolean)
    is
       Review : CodePeer.Multiple_Message_Review_Dialogs.Message_Review_Dialog;
-      Loaded : Boolean := not Need_Reload;
+      Loaded : Boolean := not Need_Reload or else CodePeer.Is_CPL;
 
    begin
       --  Check that all messages have loaded audit trail.
       --  In client/server mode, always reload since another user might have
       --  posted a manual analysis under another session.
 
-      if Need_Reload
+      if not Loaded
         and then Codepeer_Server_URL (Get_Project (Module.Kernel)) = ""
       then
          for Message of Messages loop
@@ -1699,6 +1757,10 @@ package body CodePeer.Module is
          return;
       end if;
 
+      if Is_Regular_File (Executable.Dir / "cpm-gs-bridge") then
+         CodePeer.Is_CPL := True;
+      end if;
+
       Module          := new Module_Id_Record (Kernel);
       Submenu_Factory := new Submenu_Factory_Record (Module);
 
@@ -1738,22 +1800,36 @@ package body CodePeer.Module is
            Default => True);
 
       Module.Import_Backtraces :=
-        Default_Preferences.Create
-          (Kernel.Get_Preferences,
-           Name    => "CodePeer-Import-Backtraces",
-           Label   => -"Import CodePeer backtraces",
-           Path    => -"CodePeer:General",
-           Doc     => -("Import and display CodePeer backtraces"),
-           Default => True);
+        (if Is_CPL then
+            Default_Preferences.Create_Invisible_Pref
+              (Kernel.Get_Preferences,
+               Name    => "CodePeer-Import-Backtraces",
+               Label   => -"[Deprecated] Import CodePeer backtraces",
+               Default => True)
+         else
+            Default_Preferences.Create
+              (Kernel.Get_Preferences,
+               Name    => "CodePeer-Import-Backtraces",
+               Label   => -"Import CodePeer backtraces",
+               Path    => -"CodePeer:General",
+               Doc     => -("Import and display CodePeer backtraces"),
+               Default => True));
 
       Module.Show_Msg_Id :=
-        Default_Preferences.Create
-          (Kernel.Get_Preferences,
-           Name    => "CodePeer-Show-Msg-Id",
-           Label   => -"Show CodePeer Message IDs",
-           Path    => -"CodePeer:General",
-           Doc     => -("Show message IDs in Locations view"),
-           Default => False);
+        (if Is_CPL then
+            Default_Preferences.Create_Invisible_Pref
+              (Kernel.Get_Preferences,
+               Name    => "CodePeer-Show-Msg-Id",
+               Label   => -"[Deprecated] Show CodePeer Message IDs",
+               Default => False)
+         else
+            Default_Preferences.Create
+              (Kernel.Get_Preferences,
+               Name    => "CodePeer-Show-Msg-Id",
+               Label   => -"Show CodePeer Message IDs",
+               Path    => -"CodePeer:General",
+               Doc     => -("Show message IDs in Locations view"),
+               Default => False));
 
       --  Create CodePeer own preferences for CodePeer specific messages
 

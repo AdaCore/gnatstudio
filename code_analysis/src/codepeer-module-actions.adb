@@ -778,11 +778,13 @@ package body CodePeer.Module.Actions is
            Lookup_Filter (Module.Kernel, "File")
              and Create (Language => "ada")
              and Is_Local_Mode);
-      Register_Action
-        (Kernel  => Module.Kernel,
-         Name    => "codepeer analyze file by file",
-         Command => new Analyze_File_By_File_Command,
-         Filter  => Is_Local_Mode);
+      if not Is_CPL then
+         Register_Action
+           (Kernel  => Module.Kernel,
+            Name    => "codepeer analyze file by file",
+            Command => new Analyze_File_By_File_Command,
+            Filter  => Is_Local_Mode);
+      end if;
       Register_Action
         (Kernel  => Module.Kernel,
          Name    => "codepeer display code review",

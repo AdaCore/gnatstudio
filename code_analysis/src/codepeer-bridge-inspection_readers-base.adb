@@ -38,6 +38,7 @@ package body CodePeer.Bridge.Inspection_Readers.Base is
    Object_Race_Tag         : constant String := "object_race";
    Object_Access_Tag       : constant String := "object_access";
    Subprogram_Tag          : constant String := "subprogram";
+   Review_Tag              : constant String := "review";
 
    Annotations_Attribute        : constant String := "annotations";
    Category_Attribute           : constant String := "category";
@@ -104,6 +105,10 @@ package body CodePeer.Bridge.Inspection_Readers.Base is
      (Self  : in out Base_Inspection_Reader'Class;
       Attrs : Sax.Attributes.Attributes'Class);
    --  Process starting tag of 'object_race' element
+
+   procedure Start_Review
+     (Self  : in out Base_Inspection_Reader;
+      Attrs : Sax.Attributes.Attributes'Class);
 
    procedure End_Object_Race (Self : in out Base_Inspection_Reader'Class);
    --  Process ending tag of 'object_race' element
@@ -422,6 +427,9 @@ package body CodePeer.Bridge.Inspection_Readers.Base is
       elsif Name = Message_Tag then
          Base_Inspection_Reader'Class (Self).Start_Message (Attrs);
 
+      elsif Name = Review_Tag then
+         Start_Review (Self, Attrs);
+
       elsif Name = Entry_Point_Tag then
          Self.Start_Entry_Point (Attrs);
 
@@ -433,6 +441,10 @@ package body CodePeer.Bridge.Inspection_Readers.Base is
 
       elsif Name = Object_Access_Tag then
          Self.Start_Object_Access (Attrs);
+
+      elsif Name = "annotation_file" then
+         Annot_File_Sets.Insert
+           (Annot_Files, To_Unbounded_String (Attrs.Get_Value ("path")));
 
       else
          --  Activate ignore of nested XML elements to be able to load data
@@ -686,6 +698,7 @@ package body CodePeer.Bridge.Inspection_Readers.Base is
       From_Line   : Positive := 1;
       From_Column : Positive := 1;
       CWEs        : CWE_Category_Sets.Set;
+      CPL_Id      : CPL_Id_Access;
 
    begin
       --  Only primary checks need to be displayed.
@@ -719,6 +732,31 @@ package body CodePeer.Bridge.Inspection_Readers.Base is
            Positive'Value (Attrs.Get_Value ("from_column"));
       end if;
 
+      if Is_CPL then
+         CPL_Id := new CPL_Id_Type'
+           (Prj =>
+              Ada.Strings.Unbounded.To_Unbounded_String
+                (Attrs.Get_Value ("id_prj")),
+            File =>
+              Ada.Strings.Unbounded.To_Unbounded_String
+                (Attrs.Get_Value ("id_file")),
+            Subp =>
+              Ada.Strings.Unbounded.To_Unbounded_String
+                (Attrs.Get_Value ("id_subp")),
+            Kind =>
+              Ada.Strings.Unbounded.To_Unbounded_String
+                (Attrs.Get_Value ("id_kind")),
+            Tool =>
+              Ada.Strings.Unbounded.To_Unbounded_String
+                (Attrs.Get_Value ("id_tool")),
+            Key =>
+              Ada.Strings.Unbounded.To_Unbounded_String
+                (Attrs.Get_Value ("id_key")),
+            Key_Seq =>
+              Ada.Strings.Unbounded.To_Unbounded_String
+                (Attrs.Get_Value ("id_key_seq")));
+      end if;
+
       Self.Update_CWE
         (CWEs,
          (if Attrs.Get_Index (CWE_Attribute) /= -1
@@ -745,7 +783,8 @@ package body CodePeer.Bridge.Inspection_Readers.Base is
            From_Line   => From_Line,
            From_Column => From_Column,
            Checks      => Checks,
-           CWEs        => CWEs);
+           CWEs        => CWEs,
+           CPL_Id      => CPL_Id);
 
       if Self.Messages.Contains (Self.Current_Message.Id) then
          Self.Kernel.Insert
@@ -773,7 +812,58 @@ package body CodePeer.Bridge.Inspection_Readers.Base is
            (Self.Root_Inspection.all).Warning_Subcategories.Include
            (Self.Current_Message.Category);
       end if;
+
+      if Is_CPL and then Attrs.Get_Index ("status") /= -1 then
+         --  read review statuses directly from inspection_data.xml
+
+         declare
+            Editable_Attribute        : constant String := "editable";
+            Status_Attribute          : constant String := "status";
+            Status_Category_Attribute : constant String := "status_category";
+
+         begin
+            if Attrs.Get_Index (Status_Category_Attribute) /= -1 then
+               --  if a status category is specified (should always be the case
+               --  with recent codepeer)
+               Self.Current_Message.Status := Get_Status
+                 (Attrs.Get_Value (Status_Attribute),
+                  Audit_Status_Category'Value
+                    (Attrs.Get_Value (Status_Category_Attribute)));
+
+            else
+               --  For backward compatibility
+               Self.Current_Message.Status :=
+                 Get_Status (Attrs.Get_Value (Status_Attribute));
+            end if;
+
+            if Attrs.Get_Index (Editable_Attribute) /= -1 then
+               Self.Current_Message.Status_Editable :=
+                 Boolean'Value (Attrs.Get_Value (Editable_Attribute));
+
+            else
+               Self.Current_Message.Status_Editable := True;
+            end if;
+         end;
+
+         CodePeer.Module.Set_Review_Action (Self.Current_Message);
+      end if;
    end Start_Message;
+
+   procedure Start_Review
+     (Self  : in out Base_Inspection_Reader;
+      Attrs : Sax.Attributes.Attributes'Class)
+   is
+      --  read reviews directly from inspection_data.xml
+
+      Audit : constant CodePeer.Audit_Record_Access :=
+        new CodePeer.Audit_Record'
+          (Status => Get_Status (Attrs.Get_Value ("status")),
+           Approved_By => To_Unbounded_String (Attrs.Get_Value ("author")),
+           Timestamp => To_Unbounded_String (Attrs.Get_Value ("date")),
+           Comment => To_Unbounded_String (Attrs.Get_Value ("text")));
+   begin
+      Self.Current_Message.Audit.Append (Audit);
+   end Start_Review;
 
    ----------------------------
    -- Start_Message_Category --

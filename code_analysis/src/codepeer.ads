@@ -41,6 +41,17 @@ package CodePeer is
    Unknown_Timestamp : constant Ada.Calendar.Time :=
      Ada.Calendar.Time_Of (Ada.Calendar.Year_Number'First, 1, 1, 0.0);
 
+   Is_CPL : Boolean := False;
+   --  are we with a cpl codepeer?
+
+   CPM_File : Unbounded_String;
+   --  current cpm_file displayed, if any.
+
+   package Annot_File_Sets is
+     new Ada.Containers.Ordered_Sets (Unbounded_String);
+   Annot_Files : Annot_File_Sets.Set;
+   --  annotation files displayed, if any (for CPL use).
+
    ----------------
    --  Messages  --
    ----------------
@@ -153,6 +164,18 @@ package CodePeer is
    package Natural_Sets is
      new Ada.Containers.Ordered_Sets (Natural);
 
+   type CPL_Id_Type is record
+      Prj : Ada.Strings.Unbounded.Unbounded_String;
+      File : Ada.Strings.Unbounded.Unbounded_String;
+      Subp : Ada.Strings.Unbounded.Unbounded_String;
+      Kind : Ada.Strings.Unbounded.Unbounded_String;
+      Tool : Ada.Strings.Unbounded.Unbounded_String;
+      Key : Ada.Strings.Unbounded.Unbounded_String;
+      Key_Seq : Ada.Strings.Unbounded.Unbounded_String;
+   end record;
+
+   type CPL_Id_Access is access all CPL_Id_Type;
+
    type Message is new GPS.Kernel.Messages.Primary_Abstract_Message with record
       Id              : Natural;
       File            : Code_Analysis.File_Access;
@@ -177,6 +200,7 @@ package CodePeer is
       --  Reference to preference value of which is used for foreground color
       --  of removed messages.
       Show_Msg_Id     : Boolean;
+      CPL_Id          : CPL_Id_Access;
    end record;
    type Message_Access is access all Message;
 
@@ -285,7 +309,7 @@ package CodePeer is
      new Ada.Containers.Vectors (Positive, Object_Race_Information);
 
    type Inspection_Information is record
-      Inspection   : Natural;
+      Inspection   : Ada.Strings.Unbounded.Unbounded_String;
       Timestamp    : Ada.Calendar.Time;
       Main         : Ada.Strings.Unbounded.Unbounded_String;
       Switches     : Ada.Strings.Unbounded.Unbounded_String;
