@@ -18,6 +18,8 @@ subst_pattern = re.compile("%\(.*?\)|%_")
 lsp_subst_pattern = re.compile("\${[^}]*}|\$[0-9]")
 # The regexp used to detect LSP snippets parameters
 
+lsp_get_placeholder = re.compile("\${[0-9]+:([^}]*)}")
+
 color_pref_name = "Src-Editor-Ephemeral-Smart"
 
 aliases_editor_filename = None
@@ -271,7 +273,7 @@ def strip_alias(s, from_lsp=False):
     if not from_lsp:
         res = s[2:-1] if s.startswith("%(") else s
     elif "$" in s:
-        res = s[4:-1] if not s[1:2].isdigit() else " "
+        res = " " if s[1:2].isdigit() else lsp_get_placeholder.match(s)[1]
 
     return res
 
