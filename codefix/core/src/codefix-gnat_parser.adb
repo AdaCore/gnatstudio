@@ -35,6 +35,7 @@ with Language.Tree;                  use Language.Tree;
 with Language.Tree.Database;         use Language.Tree.Database;
 
 with GPS.Kernel.Preferences;         use GPS.Kernel.Preferences;
+with String_Utils;                   use String_Utils;
 
 package body Codefix.GNAT_Parser is
 
@@ -4749,9 +4750,10 @@ package body Codefix.GNAT_Parser is
                    "pragma Warnings" & Get_Line_Terminator &
                    Line (Line'First .. Idx - 1) & "  (Off," &
                    Get_Line_Terminator &
-                   Line (Line'First .. Idx - 1) & "   """ &
-                 (if Msg (Msg'First .. Msg'First + Prefix'Length - 1) =
-                      Prefix
+                   Line (Line'First .. Idx - 1) & "   Reason => """ &
+                   Escape_String_Literal
+                   (if Msg (Msg'First .. Msg'First + Prefix'Length - 1) =
+                        Prefix
                     then Msg (Msg'First + Prefix'Length .. Msg'Last)
                     else Msg) &
                    """" & ");" & Get_Line_Terminator &
