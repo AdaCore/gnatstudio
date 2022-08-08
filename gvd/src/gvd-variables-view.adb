@@ -15,7 +15,6 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with Ada.Characters.Latin_1;
 with Ada.Containers.Vectors;
 with Ada.Strings.Unbounded;       use Ada.Strings.Unbounded;
 with Ada.Strings.Fixed;           use Ada.Strings.Fixed;
@@ -2032,11 +2031,7 @@ package body GVD.Variables.View is
                Write (WF, " | " & To_String (Types.Element (Index)));
             end if;
 
-            Write
-              (WF,
-               (if GPS.Kernel.Preferences.Line_Terminator.Get_Pref = Unix
-                then "" & Ada.Characters.Latin_1.LF
-                else Ada.Characters.Latin_1.CR & Ada.Characters.Latin_1.LF));
+            Write (WF, GPS.Kernel.Preferences.Get_Line_Terminator);
          end loop;
 
          Close (WF);

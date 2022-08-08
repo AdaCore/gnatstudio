@@ -1584,4 +1584,24 @@ package body String_Utils is
       return Res;
    end Wrap_At_Words;
 
+   ---------------------------
+   -- Escape_String_Literal --
+   ---------------------------
+
+   function Escape_String_Literal (S : String) return String is
+      US    : Unbounded_String := To_Unbounded_String (S);
+      From  : Positive := 1;
+      Pos   : Natural;
+      Quote : constant String := '"' & "";
+   begin
+      loop
+         Pos := Index (US, Quote, From);
+         exit when Pos < 1;
+         Insert (US, Pos, Quote);
+         From := Pos + 2;
+         exit when From > Length (US);
+      end loop;
+      return To_String (US);
+   end Escape_String_Literal;
+
 end String_Utils;

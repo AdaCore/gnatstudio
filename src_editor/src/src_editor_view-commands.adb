@@ -27,6 +27,7 @@ with Basic_Types;                     use Basic_Types;
 with Commands;                        use Commands;
 with Completion_Module;               use Completion_Module;
 with GPS.Kernel;                      use GPS.Kernel;
+with GPS.Kernel.Clipboard;            use GPS.Kernel.Clipboard;
 with GPS.Kernel.MDI;                  use GPS.Kernel.MDI;
 with GPS.Kernel.Modules;              use GPS.Kernel.Modules;
 with GUI_Utils;                       use GUI_Utils;
@@ -539,6 +540,219 @@ package body Src_Editor_View.Commands is
         (MDI     => Get_MDI (Kernel),
          Widget  => Editor,
          Present => True);
+
+      return Success;
+   end Execute;
+
+   -------------
+   -- Execute --
+   -------------
+
+   overriding function Execute
+     (Command : access Add_String_Comment_Command;
+      Context : Interactive_Command_Context)
+      return Standard.Commands.Command_Return_Type
+   is
+      pragma Unreferenced (Context, Command);
+      Kernel          : constant Kernel_Handle := Get_Kernel
+        (Src_Editor_Module_Id.all);
+      Editor          : constant MDI_Child := Find_Current_Editor (Kernel);
+      Source_Box      : constant Source_Editor_Box :=
+                        Get_Source_Box_From_MDI (Editor);
+      View            : constant Source_View := Source_Box.Get_View;
+      Buffer          : constant Source_Buffer := Source_Box.Get_Buffer;
+      Line            : Editable_Line_Type;
+      Column          : Character_Offset_Type;
+      Iter            : Gtk_Text_Iter;
+      Cursor_Position : Character_Offset_Type := 4;
+      --  Set cursor after the `& "` pattern on the new line
+
+      Dummy           : Boolean;
+
+   begin
+      if View = null then
+         return Failure;
+      end if;
+
+      --  Get the cursor position
+      Buffer.Get_Cursor_Position (Iter);
+      Buffer.Get_Iter_Position (Iter, Line, Column);
+
+      declare
+
+         --------------
+         -- Get_Text --
+         --------------
+
+         function Get_Text return String;
+         function Get_Text return String
+         is
+            Result : Boolean;
+         begin
+            if Buffer.Is_In_Comment (Iter) then
+               Cursor_Position := 5;
+               return Get_Line_Terminator & "--  ";
+            end if;
+
+            if Buffer.Is_In_String (Iter) then
+               return '"' & Get_Line_Terminator & "& """;
+            end if;
+
+            Backward_Char (Iter, Result);
+
+            while Result loop
+               if Buffer.Is_In_Comment (Iter) then
+                  Cursor_Position := 5;
+                  return Get_Line_Terminator & "--  ";
+
+               elsif Get_Char (Iter) = '"' then
+                  return Get_Line_Terminator & "& " & '"' & '"';
+
+               elsif Get_Char (Iter) = ' ' then
+                  null;
+
+               else
+                  return "";
+               end if;
+
+               Backward_Char (Iter, Result);
+            end loop;
+
+            return "";
+         end Get_Text;
+
+         Text : constant String := Get_Text;
+      begin
+         --  Text is not prepared, do nothing
+         if Text = "" then
+            return Success;
+         end if;
+
+         --  Insert the string prepared text
+         Replace_Slice (Buffer, Text, Line, Column, Before => 0, After => 0);
+      end;
+
+      --  Set cursor after the inserted text
+      Buffer.Set_Cursor_Position
+        (Line => Line + 1, Column => Cursor_Position, Internal => True);
+
+      --  Indent added text
+      Dummy := Do_Indentation
+        (Buffer,
+         Current_Line_Only => True,
+         Force             => True,
+         Formatting        => False);
+
+      Grab_Toplevel_Focus
+        (MDI     => Get_MDI (Kernel),
+         Widget  => Editor,
+         Present => True);
+
+      return Success;
+   end Execute;
+
+   -------------
+   -- Execute --
+   -------------
+
+   overriding function Execute
+     (Command : access Split_String_Command;
+      Context : Interactive_Command_Context)
+      return Standard.Commands.Command_Return_Type
+   is
+      pragma Unreferenced (Context, Command);
+      Kernel          : constant Kernel_Handle := Get_Kernel
+        (Src_Editor_Module_Id.all);
+      Editor          : constant MDI_Child := Find_Current_Editor (Kernel);
+      Source_Box      : constant Source_Editor_Box :=
+                        Get_Source_Box_From_MDI (Editor);
+      View            : constant Source_View := Source_Box.Get_View;
+      Buffer          : constant Source_Buffer := Source_Box.Get_Buffer;
+      Line            : Editable_Line_Type;
+      Column          : Character_Offset_Type;
+      Iter            : Gtk_Text_Iter;
+      Dummy           : Boolean;
+
+   begin
+      if View = null then
+         return Failure;
+      end if;
+
+      --  Get the cursor position
+      Buffer.Get_Cursor_Position (Iter);
+      Buffer.Get_Iter_Position (Iter, Line, Column);
+
+      if Buffer.Is_In_String (Iter) then
+         Replace_Slice
+           (Buffer, """ &  & """, Line, Column, Before => 0, After => 0);
+
+         --  Set cursor inside the inserted text
+         Buffer.Set_Cursor_Position
+           (Line => Line, Column => Column + 4, Internal => True);
+
+         Grab_Toplevel_Focus
+           (MDI     => Get_MDI (Kernel),
+            Widget  => Editor,
+            Present => True);
+      end if;
+
+      return Success;
+   end Execute;
+
+   -------------
+   -- Execute --
+   -------------
+
+   overriding function Execute
+     (Command : access Paste_Into_String_Command;
+      Context : Interactive_Command_Context)
+      return Standard.Commands.Command_Return_Type
+   is
+      pragma Unreferenced (Context, Command);
+      Kernel          : constant Kernel_Handle := Get_Kernel
+        (Src_Editor_Module_Id.all);
+      Editor          : constant MDI_Child := Find_Current_Editor (Kernel);
+      Source_Box      : constant Source_Editor_Box :=
+                        Get_Source_Box_From_MDI (Editor);
+      View            : constant Source_View := Source_Box.Get_View;
+      Buffer          : constant Source_Buffer := Source_Box.Get_Buffer;
+      Line            : Editable_Line_Type;
+      Column          : Character_Offset_Type;
+      Iter            : Gtk_Text_Iter;
+      Dummy           : Boolean;
+
+      List            : constant Selection_List :=
+        Get_Clipboard (Kernel).Get_Content;
+   begin
+      if View = null then
+         return Failure;
+      end if;
+
+      --  Get the cursor position
+      Buffer.Get_Cursor_Position (Iter);
+      Buffer.Get_Iter_Position (Iter, Line, Column);
+
+      if List'Length > 0
+        and then Buffer.Is_In_String (Iter)
+      then
+         declare
+            Txt : constant String := """ & " & List (List'First).all & " & """;
+         begin
+            Replace_Slice
+              (Buffer, Txt, Line, Column, Before => 0, After => 0);
+
+            --  Set cursor after the inserted text
+            Buffer.Set_Cursor_Position
+              (Line     => Line,
+               Column   => Column + Txt'Length,
+               Internal => True);
+         end;
+
+         Grab_Toplevel_Focus
+           (MDI     => Get_MDI (Kernel),
+            Widget  => Editor,
+            Present => True);
+      end if;
 
       return Success;
    end Execute;

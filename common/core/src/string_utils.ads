@@ -283,6 +283,9 @@ package String_Utils is
    --  Return a new string based on U which doesn't exceed Limit for its line
    --  width by wrapping at words.
 
+   function Escape_String_Literal (S : String) return String;
+   --  Replaces `"` by `""` in string that it can be used as a string literal
+
    -------------------
    -- Argument_List --
    -------------------

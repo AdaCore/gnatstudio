@@ -11,7 +11,7 @@ expected = """with Ada.Text_IO;
 procedure Main is
    pragma Warnings
      (Off,
-      "variable "B" is read but never assigned [-gnatwv]");
+      Reason => "variable ""B"" is read but never assigned [-gnatwv]");
    --  TODO: Add explanations
    B : Boolean;
    pragma Warnings (On);
@@ -30,3 +30,7 @@ def run_test():
     ed.click_on_side_column(line=4, column=1,
                             icon_name="gps-codefix")
     gps_assert(ed.get_chars(), expected)
+
+    GPS.BuildTarget("Build All").execute(force=True)
+    yield wait_tasks()
+    gps_assert(dump_locations_tree(), [])

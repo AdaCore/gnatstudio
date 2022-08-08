@@ -366,7 +366,7 @@ package body CodePeer.Module is
             Tooltip_Text             => To_Unbounded_String
               (if Message.Status.Category = Uncategorized
                then "Manual review"
-               else Image (Message.Status) & ASCII.LF &
+               else Image (Message.Status) & Get_Line_Terminator &
                  "Update manual review"),
             Image                    => To_Unbounded_String
               (case Message.Status.Category is
@@ -1580,25 +1580,13 @@ package body CodePeer.Module is
       Location : constant Editor_Location'Class :=
         Message.Get_Editor_Mark.Location.End_Of_Line;
 
-      --------
-      -- LF --
-      --------
-      function LF return String;
-      function LF return String is
-      begin
-         if GPS.Kernel.Preferences.Line_Terminator.Get_Pref = Windows then
-            return Ada.Characters.Latin_1.CR & Ada.Characters.Latin_1.LF;
-         else
-            return "" & Ada.Characters.Latin_1.LF;
-         end if;
-      end LF;
-
    begin
       declare
          G : Group_Block := Editor.New_Undo_Group;
       begin
          Editor.Insert
-           (Location.End_Of_Line, LF & "pragma Annotate" & LF &
+           (Location.End_Of_Line, Get_Line_Terminator &
+              "pragma Annotate" & Get_Line_Terminator &
               "(CodePeer, False_Positive, """ &
               To_String (Message.Category.Name) &
               """, ""<insert review>"");");
