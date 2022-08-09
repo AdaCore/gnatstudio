@@ -444,6 +444,44 @@ package body GPS.LSP_Client.Completion is
              = 0;
    end Insert_Text_On_Selected;
 
+   ------------------------------
+   -- Delete_Range_On_Selected --
+   ------------------------------
+
+   overriding function Should_Delete_Range_On_Selected
+     (Proposal    : LSP_Completion_Proposal;
+      Kernel      : Kernel_Handle;
+      Range_Start : out File_Location;
+      Range_End   : out File_Location)
+      return Boolean
+   is
+   begin
+      if Proposal.Span = Empty_Span then
+         return False;
+      end if;
+
+      --  Convert Proposal.Span into Editor_Location(s)
+      declare
+         Editor_Context : constant Selection_Context :=
+           Kernel.Get_Current_Context;
+         File           : constant Virtual_File :=
+           File_Information (Editor_Context);
+         Holder         : constant Controlled_Editor_Buffer_Holder :=
+           Kernel.Get_Buffer_Factory.Get_Holder (File);
+         Start_Loc      : constant Editor_Location'Class :=
+           GPS.LSP_Client.Utilities.LSP_Position_To_Location
+             (Holder.Editor, Proposal.Span.first);
+         End_Loc        : constant Editor_Location'Class :=
+           GPS.LSP_Client.Utilities.LSP_Position_To_Location
+             (Holder.Editor, Proposal.Span.last);
+      begin
+         Range_Start := (File, Line (Start_Loc), Column (Start_Loc));
+         Range_End := (File, Line (End_Loc), Column (End_Loc));
+      end;
+
+      return True;
+   end Should_Delete_Range_On_Selected;
+
    ----------------
    -- Get_Detail --
    ----------------
@@ -744,9 +782,18 @@ package body GPS.LSP_Client.Completion is
            LSP_Completion_Proposal'
              (Resolver             => It.Resolver,
               Text                 =>
-                (if Item.insertText.Is_Set
-                 then Item.insertText.Value
-                 else Item.label),
+                (if Item.textEdit.Is_Set
+                   and then Item.textEdit.Value.Is_TextEdit
+                 then Item.textEdit.Value.TextEdit.newText
+                 else
+                   (if Item.insertText.Is_Set
+                    then Item.insertText.Value
+                    else Item.label)),
+              Span                 =>
+                (if Item.textEdit.Is_Set
+                   and then Item.textEdit.Value.Is_TextEdit
+                 then Item.textEdit.Value.TextEdit.span
+                 else Empty_Span),
               Label                => Item.label,
               Sort_Text            =>
                 (if Item.sortText.Is_Set

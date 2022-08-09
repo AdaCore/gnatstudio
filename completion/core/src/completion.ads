@@ -375,6 +375,16 @@ package Completion is
      (Proposal : Completion_Proposal) return Construct_Visibility is abstract;
    --  Return the visibility of the object proposed for completion
 
+   function Should_Delete_Range_On_Selected
+     (Proposal    : Completion_Proposal;
+      Kernel      : Kernel_Handle;
+      Range_Start : out File_Location;
+      Range_End   : out File_Location)
+      return Boolean;
+   --  When True, delete between Range_Start and Range_End before inserting
+   --  the selected completion result.
+   --  It overrides the Insert_Mode behavior (both insert and replace)
+
    function Insert_Text_On_Selected
      (Proposal : Completion_Proposal) return Boolean
    is
