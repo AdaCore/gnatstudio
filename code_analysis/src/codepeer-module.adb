@@ -366,7 +366,7 @@ package body CodePeer.Module is
             Tooltip_Text             => To_Unbounded_String
               (if Message.Status.Category = Uncategorized
                then "Manual review"
-               else Image (Message.Status) & Get_Line_Terminator &
+               else Image (Message.Status) & ASCII.LF &
                  "Update manual review"),
             Image                    => To_Unbounded_String
               (case Message.Status.Category is
@@ -1585,8 +1585,8 @@ package body CodePeer.Module is
          G : Group_Block := Editor.New_Undo_Group;
       begin
          Editor.Insert
-           (Location.End_Of_Line, Get_Line_Terminator &
-              "pragma Annotate" & Get_Line_Terminator &
+           (Location.End_Of_Line, ASCII.LF &
+              "pragma Annotate" & ASCII.LF &
               "(CodePeer, False_Positive, """ &
               To_String (Message.Category.Name) &
               """, ""<insert review>"");");
