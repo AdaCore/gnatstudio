@@ -359,7 +359,10 @@ package GPS.Kernel.Preferences is
    -----------
 
    function Get_Line_Terminator return String;
-   --  Returns the line terminator based on the preferences
+   --  Returns the line terminator based on the preferences. Used when working
+   --  with external files etc. Do not use for "internal" opened source
+   --  buffers. You should use LF only in this case because GS converts line
+   --  terminators on saving.
 
 private
 

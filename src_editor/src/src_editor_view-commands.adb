@@ -591,11 +591,11 @@ package body Src_Editor_View.Commands is
          begin
             if Buffer.Is_In_Comment (Iter) then
                Cursor_Position := 5;
-               return Get_Line_Terminator & "--  ";
+               return ASCII.LF & "--  ";
             end if;
 
             if Buffer.Is_In_String (Iter) then
-               return '"' & Get_Line_Terminator & "& """;
+               return '"' & ASCII.LF & "& """;
             end if;
 
             Backward_Char (Iter, Result);
@@ -603,10 +603,10 @@ package body Src_Editor_View.Commands is
             while Result loop
                if Buffer.Is_In_Comment (Iter) then
                   Cursor_Position := 5;
-                  return Get_Line_Terminator & "--  ";
+                  return ASCII.LF & "--  ";
 
                elsif Get_Char (Iter) = '"' then
-                  return Get_Line_Terminator & "& " & '"' & '"';
+                  return ASCII.LF & "& " & '"' & '"';
 
                elsif Get_Char (Iter) = ' ' then
                   null;
