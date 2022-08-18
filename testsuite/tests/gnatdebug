@@ -41,3 +41,6 @@ GPS.LSP.CODE_ACTIONS=yes
 
 --  Deactivate DAP traces
 GPS.DAP.Clients=no
+
+--  Disable logging
+GPS.LSP.SEARCH_ENTITIES_SUPPORT.ADVANCED=no

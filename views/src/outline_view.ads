@@ -29,6 +29,7 @@ with VSS.Strings;
 
 with Basic_Types;      use Basic_Types;
 with Language;         use Language;
+with LSP.Messages;
 
 package Outline_View is
 
@@ -81,11 +82,20 @@ package Outline_View is
       return Boolean is abstract;
    --  Ask the provider if Lang is supported
 
+   function Get_Last_Result
+     (Self : access Outline_Provider; File : Virtual_File)
+      return LSP.Messages.Symbol_Vector is abstract;
+   --  Returns last LSP result for the file, if exist. Needed to reuse result
+   --  in others providers like entity search provider.
+
    procedure Set_Default_Provider (Provider : Outline_Provider_Access);
    --  Set the provider used for language non supported by the LSP
 
    procedure Set_LSP_Provider (Provider : Outline_Provider_Access);
    --  Set the provider using LSP requests
+
+   function Get_LSP_Provider return Outline_Provider_Access;
+   --  Get current LSP provider
 
    --------------------------
    -- Utility For Provider --
