@@ -64,9 +64,9 @@ package body Language.Icons is
                "gps-emblem-entity-constant" &
                Suffix & (if Gtk_Theme.Get_Pref.Dark then "-dark" else ""),
             when Cat_Snippet =>
-               "gps-emblem-alias-symbolic");
-
+               "gps-emblem-alias");
    begin
+
       if Is_Declaration then
          case Visibility is
             when Visibility_Public    => return Get_Name ("-spec");
