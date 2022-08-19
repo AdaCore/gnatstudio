@@ -1107,10 +1107,12 @@ package body GPS.Kernel.Scripts is
       elsif Command = "write_with_links" then
          Name_Parameters (Data, Write_With_Link_Args);
          Console := Interactive_Console (GObject'(Get_Data (Inst)));
-         Insert_With_Links
-           (Console,
-            Text      => Nth_Arg (Data, 2),
-            Add_LF    => False);
+         if Console /= null then
+            Insert_With_Links
+              (Console,
+               Text      => Nth_Arg (Data, 2),
+               Add_LF    => False);
+         end if;
       elsif Command = "insert_link" then
          Console := Interactive_Console (GObject'(Get_Data (Inst)));
          declare

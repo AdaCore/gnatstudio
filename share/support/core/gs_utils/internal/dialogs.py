@@ -1194,6 +1194,19 @@ class Save_As(Dialog):
         self.entry.set_text(text)
 
 
+################
+# Saving_Files #
+################
+
+class Saving_Files(Dialog):
+
+    def open_and_yield(self):
+        yield self._open_and_yield("save files and projects")
+
+    def ok(self):
+        get_button_from_label("Save", self.dialogs).clicked()
+
+
 ############
 # GNATtest #
 ############
