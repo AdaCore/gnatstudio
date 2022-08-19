@@ -38,9 +38,15 @@ with LSP.Types;     use LSP.Types;
 with LSP.Messages;  use LSP.Messages;
 
 with GPS.Kernel; use GPS.Kernel;
+with GUI_Utils; use GUI_Utils;
 
 with GPS.LSP_Client.Requests.Check_Syntax;
 use  GPS.LSP_Client.Requests.Check_Syntax;
+with Gdk.Window; use Gdk.Window;
+with Glib; use Glib;
+with GPS.Editors; use GPS.Editors;
+with Src_Editor_Box; use Src_Editor_Box;
+with Src_Editor_Module; use Src_Editor_Module;
 
 package body GPS.LSP_Client.Editors.Code_Actions.Dialog is
 
@@ -255,6 +261,7 @@ package body GPS.LSP_Client.Editors.Code_Actions.Dialog is
       Vbox : Gtk_Vbox;
       Hbox : Gtk_Hbox;
       Help : Gtk_Label;
+      Total_Height, Total_Width, Dummy : Gint;
    begin
       Win := new Code_Action_Window_Record;
       Win.Kernel  := Kernel;
@@ -273,7 +280,11 @@ package body GPS.LSP_Client.Editors.Code_Actions.Dialog is
       --  of the main window. We don't want it to be an actual dialog,
       --  because we don't want a nested main loop.
       Win.Set_Transient_For (Kernel.Get_Main_Window);
-
+      Win.Set_Type_Hint (Window_Type_Hint_Menu);
+      Win.Set_Decorated (False);
+      Win.Set_Skip_Taskbar_Hint (True);
+      Win.Set_Skip_Pager_Hint (True);
+      Win.Set_Resizable (False);
       Gtk_New_Vbox (Vbox);
 
       Gtk_New (Win.Input);
@@ -296,7 +307,7 @@ package body GPS.LSP_Client.Editors.Code_Actions.Dialog is
       Vbox.Pack_Start (Child => Hbox, Expand => False, Fill => False);
 
       Gtk_New (Help);
-      Help.Set_Text ("('Enter' to confirm or 'Escape' to cancel.");
+      Help.Set_Markup ("<b>Enter</b> to confirm or <b>Escape</b> to cancel.");
       Gtk_New_Hbox (Hbox);
       Hbox.Pack_Start (Child => Help, Expand => False, Fill => False);
       Vbox.Pack_Start (Child => Hbox, Expand => False, Fill => False);
@@ -329,6 +340,18 @@ package body GPS.LSP_Client.Editors.Code_Actions.Dialog is
       --  loses the focus.
       Win.Input.Grab_Focus;
 
+      Win.Get_Preferred_Height (Dummy, Total_Height);
+      Win.Get_Preferred_Width (Dummy, Total_Width);
+
+      Place_Window_On_Cursor
+        (Editor       => Get_Source_Box_From_MDI
+           (Find_Current_Editor
+                (Kernel,
+                 Only_If_Focused => True)),
+         Win          => Gtk_Window (Win),
+         Total_Height => Total_Height,
+         Total_Width  => Total_Width);
+
       --  Set the global variable
       The_Win := Win;
    end Dialog;
@@ -355,7 +378,7 @@ package body GPS.LSP_Client.Editors.Code_Actions.Dialog is
          Dialog (Kernel, Lang, Request,
                  Rules,
                  "Insert one or more comma-separated parameter names" &
-                 ASCII.LF & " or a full parameter specification.");
+                 ASCII.LF & "or a full parameter specification.");
       else
          GPS.LSP_Client.Requests.Execute (Lang, Request_Access (Request));
       end if;

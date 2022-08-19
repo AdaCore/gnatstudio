@@ -27,7 +27,7 @@
 with GNATCOLL.Projects;
 with GNATCOLL.VFS;
 
-with Glib;
+with Glib; use Glib;
 
 with Gtk.Box;
 with Gtk.Event_Box;
@@ -43,6 +43,7 @@ with Src_Editor_Buffer;     use Src_Editor_Buffer;
 with Src_Editor_Status_Bar; use Src_Editor_Status_Bar;
 with Src_Editor_View;
 with Xref;
+with Gtk.Window; use Gtk.Window;
 
 package Src_Editor_Box is
 
@@ -338,6 +339,20 @@ package Src_Editor_Box is
    function Is_Locked
      (Box : not null access Source_Editor_Box_Record) return Boolean;
    --  Return True if the editor is locked, False otherwise.
+
+   -------------
+   -- Helpers --
+   -------------
+
+   procedure Place_Window_On_Cursor
+     (Editor       : not null access Source_Editor_Box_Record'Class;
+      Win          : not null Gtk_Window;
+      Total_Height : Gint;
+      Total_Width  : Gint);
+   --  Place the given window above the editor's cursor, or under if there
+   --  is not enough space. Total_Height and Total_Width should be set to the
+   --  window's natural size: it's then used to compute the window's position
+   --  correctly.
 
 private
 

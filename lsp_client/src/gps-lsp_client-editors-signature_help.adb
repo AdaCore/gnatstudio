@@ -16,19 +16,15 @@
 ------------------------------------------------------------------------------
 
 with Ada.Exceptions;                  use Ada.Exceptions;
-with Basic_Types;                     use Basic_Types;
 with Completion_Module;               use Completion_Module;
 with Dialog_Utils;                    use Dialog_Utils;
 with Gdk.Event;                       use Gdk.Event;
-with Gdk.Rectangle;                   use Gdk.Rectangle;
-with Gdk.Screen;                      use Gdk.Screen;
 with Gdk.Types.Keysyms;               use Gdk.Types.Keysyms;
 with Gdk.Types;                       use Gdk.Types;
 with Gdk.Window;                      use Gdk.Window;
 with Glib.Convert;                    use Glib.Convert;
 with Glib.Main;
 with Glib.Object;
-with Glib;                            use Glib;
 with GNAT.Regpat;                     use GNAT.Regpat;
 with GNATCOLL.JSON;
 with GNATCOLL.Projects;
@@ -68,13 +64,12 @@ with Pango.Enums;                     use Pango.Enums;
 with Src_Editor_Box;                  use Src_Editor_Box;
 with Src_Editor_Module;               use Src_Editor_Module;
 with Src_Editor_View;                 use Src_Editor_View;
+with Glib; use Glib;
 
 package body GPS.LSP_Client.Editors.Signature_Help is
 
    Me          : constant Trace_Handle :=
      Create ("GPS.LSP.SIGNATURE_HELP", On);
-   Me_Advanced : constant Trace_Handle :=
-     Create ("GPS.LSP.SIGNATURE_HELP.ADVANCED", Off);
    Me_Use_Toplevel : constant Trace_Handle :=
      Create ("GPS.LSP.SIGNATURE_HELP.USE_TOPLEVEL", Off);
 
@@ -254,10 +249,6 @@ package body GPS.LSP_Client.Editors.Signature_Help is
       procedure Refresh_Size;
       --  Refresh the signature help window's size depending on its contents.
 
-      procedure Refresh_Position;
-      --  Refresh the signature help window's position, depending on its size,
-      --  the screen boundaries, and the presence of the completion window.
-
       ------------------
       -- Refresh_Size --
       ------------------
@@ -295,152 +286,6 @@ package body GPS.LSP_Client.Editors.Signature_Help is
 
          Self.Get_Preferred_Width (Dummy, Total_Width);
       end Refresh_Size;
-
-      ----------------------
-      -- Refresh_Position --
-      ----------------------
-
-      procedure Refresh_Position is
-         Completion_Window : constant Gtk_Window :=
-           Gtk_Window (Completion_Module.Get_Completion_Display);
-         Context           : constant Selection_Context :=
-           Get_Current_Context (Self.Kernel);
-         Editor            : constant Source_Editor_Box :=
-           Get_Source_Box_From_MDI
-             (Find_Current_Editor (Self.Kernel, Only_If_Focused => True));
-         Toplevel          : constant Gtk_Window :=
-           Gtk_Window (Editor.Get_Toplevel);
-         Screen            : constant Gdk_Screen := Toplevel.Get_Screen;
-         Line              : constant Integer := Line_Information (Context);
-         Column            : constant Visible_Column_Type :=
-           Column_Information (Context);
-         Geom              : Gdk_Rectangle;
-         Monitor           : Gint;
-         Root_X            : Gint;
-         Root_Y            : Gint;
-         Completion_X      : Gint;
-         Completion_Y      : Gint;
-         Completion_Height : Gint;
-         Screen_Width      : Gint;
-         Screen_Height     : Gint;
-         Dummy             : Gint;
-      begin
-         if Editor = null then
-            return;
-         end if;
-
-         --  Get the root coordinates of the editor's cursor
-
-         Editor.Get_View.Get_Root_Coords_For_Location
-           (Line   => Editable_Line_Type (Line), Column => Column,
-            Root_X => Root_X, Root_Y => Root_Y);
-
-         Trace (Me_Advanced, "Cursor X: " & Root_X'Img);
-         Trace (Me_Advanced, "Cursor Y: " & Root_Y'Img);
-
-         Trace (Me_Advanced, "Signature help width: " & Total_Width'Img);
-         Trace (Me_Advanced, "Signature help height: " & Total_Height'Img);
-
-         --  Get the screen size
-
-         Monitor := Screen.Get_Monitor_At_Point (Root_X, Root_Y);
-         Screen.Get_Monitor_Geometry (Monitor, Geom);
-
-         Screen_Width  := Geom.Width;
-         Screen_Height := Geom.Height;
-
-         Trace (Me_Advanced, "Screen width: " & Screen_Width'Img);
-         Trace (Me_Advanced, "Screen height: " & Screen_Height'Img);
-
-         --  If there is no completion window, display the signature help
-         --  window above the cursor or just under if there is not enough place
-         --  above.
-         --  Otherwise, make sure to not overlap the completion window, by
-         --  moving it when it's needed.
-
-         if Completion_Window = null
-           or else not Completion_Window.Is_Visible
-         then
-
-            --  Check if the window does not go outside of the screen
-            --  on the x-axis. Move it if necessary.
-
-            if Root_X - Geom.X + Total_Width > Screen_Width then
-               Root_X := Screen_Width + Geom.X - Total_Width;
-            end if;
-
-            --  Check if the window does not go outside of the screen
-            --  on the y-axis when placed above the cursor (default).
-            --  Otherwise, place it right under the cursor.
-
-            if Root_Y - Geom.Y - Total_Height >= 0 then
-               Root_Y := Root_Y - Total_Height;
-            else
-               Editor.Get_View.Get_Root_Coords_For_Location
-                 (Line   => Editable_Line_Type (Line + 1), Column => Column,
-                  Root_X => Dummy, Root_Y => Root_Y);
-            end if;
-         else
-            --  Get the coordinates and the height of the completion window.
-
-            Get_Origin
-              (Self => Completion_Window.Get_Window,
-               X    => Completion_X,
-               Y    => Completion_Y);
-            Completion_Height := Completion_Window.Get_Allocated_Height;
-
-            --   If the completion window is present, two cases:
-            --
-            --     . The completion window is under the cursor:
-            --        - we should place the signature help window above the
-            --          cursor
-            --        - if not possible, place the signature help window under
-            --          the cursor, moving the completion window if necessary
-            --          to avoid overlapping.
-            --
-            --     . The completion window is above the cursor:
-            --        - we should place the signature help window under the
-            --          cursor
-            --        - if not possible, place the signature help window above
-            --          the cursor, moving the completion window if necessary
-            --          to avoid overlapping.
-
-            if Completion_Y > Root_Y then
-               if Root_Y - Total_Height >= 0 then
-                  Root_Y := Root_Y - Total_Height;
-               else
-                  Editor.Get_View.Get_Root_Coords_For_Location
-                    (Line   => Editable_Line_Type (Line + 1), Column => Column,
-                     Root_X => Dummy, Root_Y => Root_Y);
-
-                  if Completion_Y in Root_Y .. Root_Y + Total_Height then
-                     Completion_Window.Move
-                       (Completion_X, Completion_Y + Total_Height);
-                  end if;
-               end if;
-            else
-               if Root_Y + Total_Height > Screen_Height then
-                  Root_Y := Root_Y - Total_Height;
-
-                  if Completion_Y + Completion_Height in
-                    Root_Y .. Root_Y + Total_Height
-                  then
-                     Completion_Window.Move
-                       (Completion_X, Completion_Y - Total_Height);
-                  end if;
-               else
-                  Editor.Get_View.Get_Root_Coords_For_Location
-                    (Line   => Editable_Line_Type (Line + 1), Column => Column,
-                     Root_X => Dummy, Root_Y => Root_Y);
-               end if;
-            end if;
-         end if;
-
-         Trace (Me_Advanced, "Window X: " & Root_X'Img);
-         Trace (Me_Advanced, "Window Y: " & Root_Y'Img);
-
-         Signature_Help_Provider.Global_Window.Move (Root_X, Root_Y);
-      end Refresh_Position;
 
       Active_Param_Num : Natural;
 
@@ -561,7 +406,14 @@ package body GPS.LSP_Client.Editors.Signature_Help is
         not Signature_Help_Provider.Global_Window.In_DnD
       then
          Refresh_Size;
-         Refresh_Position;
+         Place_Window_On_Cursor
+           (Editor       => Get_Source_Box_From_MDI
+              (Find_Current_Editor
+                   (Self.Kernel,
+                    Only_If_Focused => True)),
+            Win          => Gtk_Window (Self),
+            Total_Height => Total_Height,
+            Total_Width  => Total_Width);
       end if;
 
       Signature_Help_Provider.Global_Window.Show;
