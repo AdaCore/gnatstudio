@@ -58,10 +58,23 @@ package body Switches_Chooser.Gtkada is
    use Switch_Description_Vectors, Combo_Switch_Vectors;
    use Frame_Description_Vectors;
 
-   type Switch_Data is record
+   type Select_File_Data is record
+      File_Filter   : Unbounded_String;
+      Base_Dir      : Unbounded_String;
+      Except_Filter : Unbounded_String;
+   end record;
+
+   type Switch_Data (Is_Select_File : Boolean := False) is record
       Editor : Switches_Editor;
       Switch : Switch_Description_Vectors.Cursor;
+      case Is_Select_File is
+      when True =>
+         Select_File_D : Select_File_Data;
+      when others =>
+         null;
+      end case;
    end record;
+
    package User_Widget_Callback is new Gtk.Handlers.User_Callback
      (Gtk_Widget_Record, Switch_Data);
 
@@ -389,16 +402,31 @@ package body Switches_Chooser.Gtkada is
      (Field  : access Gtk_Widget_Record'Class;
       Data   : Switch_Data)
    is
-      F    : constant Gtk_Entry := Gtk_Entry (Field);
-      VF   : constant Virtual_File := Create_From_UTF8 (Get_Text (F));
-      File : constant Virtual_File := Select_File
-        (Base_Directory    => Dir (VF),
+      F        : constant Gtk_Entry := Gtk_Entry (Field);
+      VF       : constant Virtual_File := Create_From_UTF8 (Get_Text (F));
+      Base_Dir : constant Virtual_File :=
+        (if Data.Select_File_D.Base_Dir = Null_Unbounded_String
+         then Dir (VF)
+         else Create_From_UTF8 (To_String (Data.Select_File_D.Base_Dir)));
+      File_Pattern  : constant String :=
+        (if Data.Select_File_D.File_Filter = Null_Unbounded_String
+         then "*;*.ad?;{*.c,*.h,*.cpp,*.cc,*.C}"
+         else To_String (Data.Select_File_D.File_Filter));
+      Pattern_Name  : constant String :=
+        (if Data.Select_File_D.File_Filter = Null_Unbounded_String
+         then "All files;Ada files;C/C++ files"
+         else File_Pattern);
+      Except_Pattern : constant String :=
+        To_String (Data.Select_File_D.Except_Filter);
+      File     : constant Virtual_File := Select_File
+        (Base_Directory    => Base_Dir,
          Default_Name      => Base_Name (VF),
          Parent            => Gtk_Window (Get_Toplevel (F)),
          Kind              => Open_File,
-         File_Pattern      => "*;*.ad?;{*.c,*.h,*.cpp,*.cc,*.C}",
-         Pattern_Name      => -"All files;Ada files;C/C++ files",
-         Use_Native_Dialog => Data.Editor.Native_Dialogs);
+         File_Pattern      => +File_Pattern,
+         Pattern_Name      => -Pattern_Name,
+         Use_Native_Dialog => Data.Editor.Native_Dialogs,
+         Except_Pattern    => +Except_Pattern);
    begin
       if File /= GNATCOLL.VFS.No_File then
          Set_Text (F, Display_Full_Name (File));
@@ -432,7 +460,7 @@ package body Switches_Chooser.Gtkada is
       Set_Widget (Editor.all, To_Index (Switch), Gtk_Widget (W));
       User_Widget_Callback.Connect
         (W, Gtk.Widget.Signal_Destroy, On_Destroy'Access,
-         (Switches_Editor (Editor), Switch));
+         (False, Switches_Editor (Editor), Switch));
       if S.Tip /= "" then
          Set_Tooltip_Text
            (W,
@@ -494,7 +522,7 @@ package body Switches_Chooser.Gtkada is
             User_Widget_Callback.Connect
               (Check, Gtk.Toggle_Button.Signal_Toggled,
                On_Toggle_Check'Access,
-               (Switches_Editor (Editor), Switch));
+               (False, Switches_Editor (Editor), Switch));
 
          when Switch_Field =>
             Gtk_New (Field);
@@ -504,7 +532,7 @@ package body Switches_Chooser.Gtkada is
             User_Widget_Callback.Connect
               (Field, Gtk.Editable.Signal_Changed,
                On_Field_Changed'Access,
-               (Switches_Editor (Editor), Switch));
+               (False, Switches_Editor (Editor), Switch));
 
             if S.As_File then
                Gtk_New (Button, -"Browse");
@@ -513,7 +541,10 @@ package body Switches_Chooser.Gtkada is
                User_Widget_Callback.Object_Connect
                  (Button, Signal_Clicked, Browse_File'Access,
                   Slot_Object => Field, User_Data =>
-                    (Switches_Editor (Editor), Switch));
+                    (True,
+                     Switches_Editor (Editor),
+                     Switch,
+                     (S.File_Filter, S.Base_Dir, S.Except_Filter)));
 
             elsif S.As_Directory then
                Gtk_New (Button, -"Browse");
@@ -523,7 +554,7 @@ package body Switches_Chooser.Gtkada is
                  (Button, Signal_Clicked,
                   Browse_Directory'Access,
                   Slot_Object => Field, User_Data =>
-                    (Switches_Editor (Editor), Switch));
+                    (False, Switches_Editor (Editor), Switch));
             end if;
 
          when Switch_Spin =>
@@ -541,7 +572,7 @@ package body Switches_Chooser.Gtkada is
             User_Widget_Callback.Connect
               (Spin, Gtk.Spin_Button.Signal_Value_Changed,
                On_Spin_Changed'Access,
-               (Switches_Editor (Editor), Switch));
+               (False, Switches_Editor (Editor), Switch));
 
          when Switch_Radio =>
             if not S.Is_Entry then
@@ -581,7 +612,7 @@ package body Switches_Chooser.Gtkada is
                         User_Widget_Callback.Connect
                           (Radio, Gtk.Toggle_Button.Signal_Toggled,
                            On_Toggle_Radio'Access,
-                           (Switches_Editor (Editor), Switch));
+                           (False, Switches_Editor (Editor), Switch));
                      end if;
                   end;
 
@@ -604,7 +635,7 @@ package body Switches_Chooser.Gtkada is
             User_Widget_Callback.Object_Connect
               (Combo, Gtk.Combo_Box.Signal_Changed,
                On_Combo_Changed'Access, Combo,
-               (Switches_Editor (Editor), Switch));
+               (False, Switches_Editor (Editor), Switch));
 
          when Switch_Popup =>
             Pop := new Popup_Button_Record'
@@ -628,7 +659,7 @@ package body Switches_Chooser.Gtkada is
             User_Widget_Callback.Connect
               (Pop, Gtk.Button.Signal_Clicked,
                On_Popup_Button_Clicked'Access,
-               (Switches_Editor (Editor), Switch));
+               (False, Switches_Editor (Editor), Switch));
       end case;
    end Create_Widget;
 

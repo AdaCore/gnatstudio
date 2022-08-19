@@ -490,19 +490,22 @@ package body Switches_Parser is
 
          Add_Field
            (Current_Tool_Config,
-            Label        => Label,
-            Switch       => Switch,
-            Separator    => Get_Attribute (N, "separator", Default_Sep),
-            Section      => Get_Attribute (N, "section"),
-            Tip          => Get_Tip_Value (N),
-            As_Directory =>
+            Label         => Label,
+            Switch        => Switch,
+            Separator     => Get_Attribute (N, "separator", Default_Sep),
+            Section       => Get_Attribute (N, "section"),
+            Tip           => Get_Tip_Value (N),
+            As_Directory  =>
               Get_Attribute (N, "as-directory", "false") = "true",
-            As_File      => Get_Attribute (N, "as-file", "false") = "true",
-            Line         => Line,
-            Column       => Col,
-            Add_Before   => Get_Attribute (N, "before") = "true",
-            Popup        => Popup,
-            Filter       => Filter);
+            As_File       => Get_Attribute (N, "as-file", "false") = "true",
+            File_Filter   => Get_Attribute (N, "file-filter", ""),
+            Base_Dir      => Get_Attribute (N, "base-dir", ""),
+            Except_Filter => Get_Attribute (N, "except-filter", ""),
+            Line          => Line,
+            Column        => Col,
+            Add_Before    => Get_Attribute (N, "before") = "true",
+            Popup         => Popup,
+            Filter        => Filter);
       end Process_Field_Node;
 
       -----------------------

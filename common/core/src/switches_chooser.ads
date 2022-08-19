@@ -116,19 +116,22 @@ package Switches_Chooser is
    --  otherwise it is omitted
 
    procedure Add_Field
-     (Config       : Switches_Editor_Config;
-      Label        : String;
-      Switch       : String;
-      Separator    : String := ""; --  no separator
-      Section      : String := "";
-      Tip          : String := "";
-      As_Directory : Boolean := False;
-      As_File      : Boolean := False;
-      Line         : Positive := 1;
-      Column       : Positive := 1;
-      Add_Before   : Boolean := False;
-      Popup        : Popup_Index := Main_Window;
-      Filter       : String := "");
+     (Config        : Switches_Editor_Config;
+      Label         : String;
+      Switch        : String;
+      Separator     : String := ""; --  no separator
+      Section       : String := "";
+      Tip           : String := "";
+      As_Directory  : Boolean := False;
+      As_File       : Boolean := False;
+      File_Filter   : String := "";
+      Base_Dir      : String := "";
+      Except_Filter : String := "";
+      Line          : Positive := 1;
+      Column        : Positive := 1;
+      Add_Before    : Boolean := False;
+      Popup         : Popup_Index := Main_Window;
+      Filter        : String := "");
    --  Add a text field
 
    procedure Add_Spin
@@ -652,8 +655,11 @@ private
             Initial_State : Boolean;
             Dependencies  : Default_Value_Dependency;
          when Switch_Field =>
-            As_Directory : Boolean;
-            As_File      : Boolean;
+            As_Directory  : Boolean;
+            As_File       : Boolean;
+            File_Filter   : Ada.Strings.Unbounded.Unbounded_String;
+            Base_Dir      : Ada.Strings.Unbounded.Unbounded_String;
+            Except_Filter : Ada.Strings.Unbounded.Unbounded_String;
          when Switch_Spin =>
             Min, Max, Default : Integer;
          when Switch_Radio =>
