@@ -753,8 +753,7 @@ package body Src_Editor_View is
 
          --  We have changed the cursor position: emit "context_changed" here.
          if not Buffer.Context_Is_Frozen then
-            User.Kernel.Context_Changed
-              (Build_Editor_Context (User, Location_Cursor));
+            User.Kernel.Refresh_Context;
          end if;
       end if;
 

@@ -78,6 +78,11 @@ package body GPS.LSP_Client.Editors.Code_Actions.Dialog is
       Event : Gdk.Event.Gdk_Event_Focus) return Boolean;
    --  React to a focus out event on Entry
 
+   function On_Entry_Focus_In
+     (Self  : access Glib.Object.GObject_Record'Class;
+      Event : Gdk.Event.Gdk_Event_Focus) return Boolean;
+   --  React to a focus in event on Entry
+
    function On_Entry_Key_Press
      (Self  : access Glib.Object.GObject_Record'Class;
       Event : Gdk.Event.Gdk_Event_Key) return Boolean;
@@ -162,6 +167,25 @@ package body GPS.LSP_Client.Editors.Code_Actions.Dialog is
       Win.Close;
       return True;
    end On_Entry_Focus_Out;
+
+   -----------------------
+   -- On_Entry_Focus_In --
+   -----------------------
+
+   function On_Entry_Focus_In
+     (Self  : access Glib.Object.GObject_Record'Class;
+      Event : Gdk.Event.Gdk_Event_Focus) return Boolean
+   is
+      pragma Unreferenced (Event);
+      Win : constant Code_Action_Window := Code_Action_Window (Self);
+   begin
+      --  When the window gets the focus, refresh the context -
+      --  this will be a null context. This prevents some keys
+      --  (such as backspace) to have effect on editors.
+
+      Win.Kernel.Refresh_Context;
+      return False;
+   end On_Entry_Focus_In;
 
    ------------------------
    -- On_Entry_Key_Press --
@@ -279,17 +303,21 @@ package body GPS.LSP_Client.Editors.Code_Actions.Dialog is
 
       Win.Add (Vbox);
 
-      --  Refresh the context - the new window has the focus, so
-      --  this will be a null context. This prevents some keys
-      --  (such as backspace) to have effect on editors.
-      Kernel.Refresh_Context;
-
       --  Connect signals
       Win.On_Destroy
         (On_Win_Destroy'Access, Slot => Win, After => False);
 
       Win.Input.On_Focus_Out_Event
         (On_Entry_Focus_Out'Access, Slot => Win, After => True);
+
+      --  When the dialog appears, we need to generate an empty
+      --  context, so that "Backspace" (or other keys) won't act
+      --  on the open editor that is currently stored in the context.
+      --  We'll do this by calling Refresh_Context. However, that
+      --  procedure looks at who has the focus, so we need to make
+      --  sure to call it once this entry has the focus.
+      Win.Input.On_Focus_In_Event
+        (On_Entry_Focus_In'Access, Slot => Win, After => True);
 
       Win.Input.On_Key_Press_Event
         (On_Entry_Key_Press'Access, Slot => Win, After => False);
