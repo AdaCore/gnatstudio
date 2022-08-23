@@ -32,7 +32,6 @@ with Gdk.Event;                      use Gdk.Event;
 
 with Glib.Object;                    use Glib.Object;
 with Glib.Values;                    use Glib.Values;
-with Glib;                           use Glib;
 
 with Gtk;                            use Gtk;
 with Gtk.Box;                        use Gtk.Box;
@@ -64,6 +63,7 @@ with GPS.Kernel.Modules.UI;          use GPS.Kernel.Modules.UI;
 with GPS.Kernel.Preferences;         use GPS.Kernel.Preferences;
 with GPS.Kernel.Project;             use GPS.Kernel.Project;
 
+with Completion_Module;
 with Language;                       use Language;
 with Language.Ada;                   use Language.Ada;
 with Language_Handlers;              use Language_Handlers;
@@ -79,12 +79,18 @@ with String_Utils;
 with Tooltips;                       use Tooltips;
 with Xref;                           use Xref;
 with Gtk.Style_Context; use Gtk.Style_Context;
+with Gdk.Screen; use Gdk.Screen;
+with Gdk.Rectangle; use Gdk.Rectangle;
+with Gdk.Window; use Gdk.Window;
 
 package body Src_Editor_Box is
 
    use type Basic_Types.Visible_Column_Type;
 
-   Me : constant Trace_Handle := Create ("GPS.SOURCE_EDITOR.EDITOR_BOX");
+   Me          : constant Trace_Handle :=
+     Create ("GPS.SOURCE_EDITOR.EDITOR_BOX");
+   Me_Advanced : constant Trace_Handle :=
+     Create ("GPS.SOURCE_EDITOR.EDITOR_BOX.ADVANCED");
 
    procedure Setup (Data : Source_Editor_Box; Id : Handler_Id);
    package Box_Callback is new Gtk.Handlers.User_Callback_With_Setup
@@ -1008,6 +1014,157 @@ package body Src_Editor_Box is
 
       Editor.Source_Buffer.Mark_Buffer_Writable (Writable);
    end Check_Writable;
+
+   ----------------------------
+   -- Place_Window_On_Cursor --
+   ----------------------------
+
+   procedure Place_Window_On_Cursor
+     (Editor       : not null access Source_Editor_Box_Record'Class;
+      Win          : not null Gtk_Window;
+      Total_Height : Gint;
+      Total_Width  : Gint)
+   is
+      Completion_Window : constant Gtk_Window :=
+        Gtk_Window (Completion_Module.Get_Completion_Display);
+      Toplevel          : constant Gtk_Window :=
+        Gtk_Window (Editor.Get_Toplevel);
+      Screen            : constant Gdk_Screen := Toplevel.Get_Screen;
+      Line              : Editable_Line_Type;
+      Column            : Visible_Column_Type;
+      Geom              : Gdk_Rectangle;
+      Monitor           : Gint;
+      Root_X            : Gint;
+      Root_Y            : Gint;
+      Completion_X      : Gint;
+      Completion_Y      : Gint;
+      Completion_Height : Gint;
+      Screen_Width      : Gint;
+      Screen_Height     : Gint;
+      Dummy             : Gint;
+   begin
+      if Editor = null then
+         return;
+      end if;
+
+      Editor.Source_Buffer.Get_Cursor_Position
+        (Line   => Line,
+         Column => Column);
+
+      --  Get the root coordinates of the editor's cursor
+
+      Editor.Get_View.Get_Root_Coords_For_Location
+        (Line   => Line,
+         Column => Column,
+         Root_X => Root_X,
+         Root_Y => Root_Y);
+
+      Trace (Me_Advanced, "Cursor X: " & Root_X'Img);
+      Trace (Me_Advanced, "Cursor Y: " & Root_Y'Img);
+
+      Trace (Me_Advanced, "New window width: " & Total_Width'Img);
+      Trace (Me_Advanced, "New window height: " & Total_Height'Img);
+
+      --  Get the screen size
+
+      Monitor := Screen.Get_Monitor_At_Point (Root_X, Root_Y);
+      Screen.Get_Monitor_Geometry (Monitor, Geom);
+
+      Screen_Width  := Geom.Width;
+      Screen_Height := Geom.Height;
+
+      Trace (Me_Advanced, "Screen width: " & Screen_Width'Img);
+      Trace (Me_Advanced, "Screen height: " & Screen_Height'Img);
+
+      --  If there is no completion window, display the signature help
+      --  window above the cursor or just under if there is not enough place
+      --  above.
+      --  Otherwise, make sure to not overlap the completion window, by
+      --  moving it when it's needed.
+
+      if Completion_Window = null
+        or else not Completion_Window.Is_Visible
+      then
+
+         --  Check if the window does not go outside of the screen
+         --  on the x-axis. Move it if necessary.
+
+         if Root_X - Geom.X + Total_Width > Screen_Width then
+            Root_X := Screen_Width + Geom.X - Total_Width;
+         end if;
+
+         --  Check if the window does not go outside of the screen
+         --  on the y-axis when placed above the cursor (default).
+         --  Otherwise, place it right under the cursor.
+
+         if Root_Y - Geom.Y - Total_Height >= 0 then
+            Root_Y := Root_Y - Total_Height;
+         else
+            Editor.Get_View.Get_Root_Coords_For_Location
+              (Line   => Editable_Line_Type (Line + 1), Column => Column,
+               Root_X => Dummy, Root_Y => Root_Y);
+         end if;
+      else
+         --  Get the coordinates and the height of the completion window.
+
+         Get_Origin
+           (Self => Completion_Window.Get_Window,
+            X    => Completion_X,
+            Y    => Completion_Y);
+         Completion_Height := Completion_Window.Get_Allocated_Height;
+
+         --   If the completion window is present, two cases:
+         --
+         --     . The completion window is under the cursor:
+         --        - we should place the signature help window above the
+         --          cursor
+         --        - if not possible, place the signature help window under
+         --          the cursor, moving the completion window if necessary
+         --          to avoid overlapping.
+         --
+         --     . The completion window is above the cursor:
+         --        - we should place the signature help window under the
+         --          cursor
+         --        - if not possible, place the signature help window above
+         --          the cursor, moving the completion window if necessary
+         --          to avoid overlapping.
+
+         if Completion_Y > Root_Y then
+            if Root_Y - Total_Height >= 0 then
+               Root_Y := Root_Y - Total_Height;
+            else
+               Editor.Get_View.Get_Root_Coords_For_Location
+                 (Line   => Editable_Line_Type (Line + 1), Column => Column,
+                  Root_X => Dummy, Root_Y => Root_Y);
+
+               if Completion_Y in Root_Y .. Root_Y + Total_Height then
+                  Completion_Window.Move
+                    (Completion_X, Completion_Y + Total_Height);
+               end if;
+            end if;
+         else
+            if Root_Y + Total_Height > Screen_Height then
+               Root_Y := Root_Y - Total_Height;
+
+               if Completion_Y + Completion_Height in
+                 Root_Y .. Root_Y + Total_Height
+               then
+                  Completion_Window.Move
+                    (Completion_X, Completion_Y - Total_Height);
+               end if;
+            else
+               Editor.Get_View.Get_Root_Coords_For_Location
+                 (Line   => Editable_Line_Type (Line + 1), Column => Column,
+                  Root_X => Dummy, Root_Y => Root_Y);
+            end if;
+         end if;
+      end if;
+
+      Trace (Me_Advanced, "Window X: " & Root_X'Img);
+      Trace (Me_Advanced, "Window Y: " & Root_Y'Img);
+
+      Win.Move (Root_X, Root_Y);
+   end Place_Window_On_Cursor;
 
    ------------------
    -- Save_To_File --

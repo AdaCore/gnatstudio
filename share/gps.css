@@ -642,6 +642,10 @@ textview.view.readonly text {
  * Refactoring input window
  **********************************/
 
+.gnatstudio-refactor-input {
+   border: 1pt solid @popup_border_color;
+}
+
 .gnatstudio-refactor-input box {
    padding: 4pt;
 }

@@ -890,7 +890,10 @@ class ProcessWrapper(object):
         Called when the console is being destroyed.
         Interrupt the attached process.
         """
-        self.__process.interrupt()
+        try:
+            self.__process.interrupt()
+        except GPS.Exception:
+            pass  # Silence exception if the process already finished by itself
         self.finished = True
         self.__console = None
 
