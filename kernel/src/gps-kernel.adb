@@ -799,7 +799,8 @@ package body GPS.Kernel is
    ---------------------
 
    procedure Refresh_Context
-     (Kernel : not null access Kernel_Handle_Record'Class)
+     (Kernel      : not null access Kernel_Handle_Record'Class;
+      Focus_Check : Boolean := True)
    is
       Child    : MDI_Child;
       --  The child which should create the context
@@ -830,16 +831,17 @@ package body GPS.Kernel is
          --  Additional check: make sure the selected child has
          --  the focus - if the focus happens to be in another
          --  window, create a context as if no child was selected.
+         if Focus_Check then
+            Toplevel := Child.Get_Toplevel;
+            if Toplevel.all in Gtk_Window_Record'Class and then
+              not Gtk_Window (Toplevel).Has_Toplevel_Focus
+            then
+               if Active (Me) then
+                  Trace (Me, "The window does not have the toplevel focus");
+               end if;
 
-         Toplevel := Child.Get_Toplevel;
-         if Toplevel.all in Gtk_Window_Record'Class and then
-           not Gtk_Window (Toplevel).Has_Toplevel_Focus
-         then
-            if Active (Me) then
-               Trace (Me, "The window does not have the toplevel focus");
+               Child := null;
             end if;
-
-            Child := null;
          end if;
       end if;
 

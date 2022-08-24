@@ -716,12 +716,16 @@ package body GPS.Kernel.Scripts is
         or else Command = "contextual_context"
       then
          if Command = "current_context" then
-            if Nth_Arg (Data, 1, False) then
-               Kernel.Refresh_Context;
-            end if;
+            declare
+               Refresh     : constant Boolean := Nth_Arg (Data, 1, False);
+               Focus_Check : constant Boolean := Nth_Arg (Data, 2, True);
+            begin
+               if Refresh then
+                  Kernel.Refresh_Context (Focus_Check);
+               end if;
 
-            Context := Kernel.Get_Current_Context;
-
+               Context := Kernel.Get_Current_Context;
+            end;
          else
             Context := Kernel.Last_Context_For_Contextual;
          end if;
@@ -1614,7 +1618,8 @@ package body GPS.Kernel.Scripts is
       Kernel.Scripts.Register_Command
         ("current_context",
          Handler => Context_Command_Handler'Access,
-         Params  => (1 => Param ("refresh", Optional => True)));
+         Params  => (1 => Param ("refresh", Optional => True),
+                     2 => Param ("focus_check", Optional => True)));
       Kernel.Scripts.Register_Command
         ("contextual_context",
          Handler      => Context_Command_Handler'Access);
