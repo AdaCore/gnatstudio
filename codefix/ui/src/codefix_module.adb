@@ -937,7 +937,7 @@ package body Codefix_Module is
       Register_Preferences (Kernel);
 
       Codefix.GNAT_Parser.Register_Parsers
-        (Kernel, Codefix_Module_ID.Codefix_Processor);
+        (Codefix_Module_ID.Codefix_Processor);
 
       Codefix.SPARK_Parser.Register_Parsers
         (Codefix_Module_ID.Codefix_Processor);

@@ -15,7 +15,6 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with Ada.Characters.Handling;
 with Ada.Strings.Fixed;
 with GNAT.Strings;                   use GNAT.Strings;
 with GNAT.Regpat;                    use GNAT.Regpat;
@@ -1363,10 +1362,7 @@ package body Codefix.GNAT_Parser is
       Matches      : Match_Array);
    --  Fix problem 'expect attribute 'Range'.
 
-   type Suppress_Warning is new Error_Parser (1) with record
-      Kernel : Kernel_Handle;
-   end record;
-   type Suppress_Warning_Access is access all Suppress_Warning;
+   type Suppress_Warning is new Error_Parser (1) with null record;
 
    overriding procedure Initialize (This : in out Suppress_Warning);
 
@@ -4720,7 +4716,7 @@ package body Codefix.GNAT_Parser is
       Solutions    : out Solution_List;
       Matches      : Match_Array)
    is
-      pragma Unreferenced (Options);
+      pragma Unreferenced (This, Options);
 
       Message : constant Error_Message := Get_Message (Message_It);
       Start   : File_Cursor := Clone (File_Cursor (Message));
@@ -4729,13 +4725,6 @@ package body Codefix.GNAT_Parser is
       Prefix  : constant String := "warning: ";
 
    begin
-      if Ada.Characters.Handling.To_Lower
-        (This.Kernel.Get_Language_Handler.Get_Language_From_File
-           (Get_File (Start)).Get_Name) /= "ada"
-      then
-         return;
-      end if;
-
       Set_Column (Start, 0);
       Last := Clone (Start);
       Set_Column
@@ -4776,11 +4765,7 @@ package body Codefix.GNAT_Parser is
    -- Register_Parsers --
    ----------------------
 
-   procedure Register_Parsers
-     (Kernel    : access GPS.Kernel.Kernel_Handle_Record'Class;
-      Processor : in out Fix_Processor)
-   is
-      Ptr : Suppress_Warning_Access;
+   procedure Register_Parsers (Processor : in out Fix_Processor) is
    begin
       Add_Parser (Processor, new Agregate_Misspelling);
       Add_Parser (Processor, new Double_Misspelling);
@@ -4865,12 +4850,7 @@ package body Codefix.GNAT_Parser is
       Add_Parser (Processor, new Attribute_Expected);
       Add_Parser (Processor, new Inefficient_Use);
       Add_Parser (Processor, new No_Legal_Interpretation);
-
-      if Kernel /= null then
-         Ptr := new Suppress_Warning;
-         Ptr.Kernel := GPS.Kernel.Kernel_Handle (Kernel);
-         Add_Parser (Processor, Ptr_Parser (Ptr));
-      end if;
+      Add_Parser (Processor, new Suppress_Warning);
 
       --  GNATCheck parsers
 

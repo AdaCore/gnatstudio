@@ -1,7 +1,6 @@
 project Hello is
 
    for Main use ("main.adb");
-   for Languages use ("Ada", "Configuration Pragmas File");
 
    package Compiler is
       for Switches ("ada") use ("-g", "-gnatf", "-gnatVa", "-gnatw.e", "-gnatyr");
