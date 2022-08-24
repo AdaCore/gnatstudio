@@ -55,6 +55,7 @@ with DAP.Requests.Disconnects;
 with DAP.Requests.StackTraces;
 with DAP.Tools;
 with DAP.Tools.Inputs;
+with DAP.Views.Call_Stack;
 with DAP.Utils;
 
 with GUI_Utils;
@@ -223,7 +224,9 @@ package body DAP.Clients is
 
    procedure Set_Status
      (Self   : in out DAP_Client;
-      Status : Debugger_Status_Kind) is
+      Status : Debugger_Status_Kind)
+   is
+      use type Generic_Views.Abstract_View_Access;
    begin
       if Self.Status /= Terminating then
          Self.Status := Status;
@@ -240,6 +243,12 @@ package body DAP.Clients is
             (if Self.Status /= Stopped
              then GPS.Debuggers.Debug_Busy
              else GPS.Debuggers.Debug_Available));
+
+         if Self.Status = Stopped
+           and then Self.Call_Stack_View = null
+         then
+            DAP.Views.Call_Stack.Get_Frame (Self.Kernel, Self.This);
+         end if;
       end if;
    end Set_Status;
 
@@ -1293,15 +1302,14 @@ package body DAP.Clients is
       Entity : String;
       Label  : Gtk.Label.Gtk_Label)
    is
-      Req : Evaluate_Request_Access :=
-        new Evaluate_Request (Self.Kernel);
+      Req : Evaluate_Request_Access := new Evaluate_Request (Self.Kernel);
    begin
       Req.Label := Label;
       Ref (GObject (Label));
       Req.Parameters.arguments.expression :=
         VSS.Strings.Conversions.To_Virtual_String (Entity);
       Req.Parameters.arguments.frameId :=
-        (Is_Set => True, Value => Self.Selected_Frame);
+        (Is_Set => True, Value => Self.Get_Selected_Frame);
       Req.Parameters.arguments.context :=
         (Is_Set => True, Value => DAP.Tools.Enum.hover);
       Self.Enqueue (DAP.Requests.DAP_Request_Access (Req));
