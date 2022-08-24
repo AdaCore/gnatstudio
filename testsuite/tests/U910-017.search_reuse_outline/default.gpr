@@ -1,0 +1,6 @@
+project Default is
+
+   for Main use ("main.adb") & project'Main;
+   for Source_Dirs use ("src");
+
+end Default;

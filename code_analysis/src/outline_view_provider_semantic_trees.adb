@@ -31,6 +31,8 @@ with Language.Abstract_Language_Tree;
 use Language.Abstract_Language_Tree;
 with Outline_View;      use Outline_View;
 
+with LSP.Messages;      use LSP.Messages;
+
 package body Outline_View_Provider_Semantic_Trees is
 
    Me : constant Trace_Handle := Create ("OUTLINE_PROVIDER.SEMANTIC_TREE");
@@ -49,6 +51,10 @@ package body Outline_View_Provider_Semantic_Trees is
      (Self : access Semantic_Provider;
       Lang : Language_Access)
       return Boolean;
+
+   overriding function Get_Last_Result
+     (Self : access Semantic_Provider; File : Virtual_File)
+      return LSP.Messages.Symbol_Vector is ((Is_Tree => False, Vector  => <>));
 
    type On_Semantic_Tree_Updated is new File_Hooks_Function with record
       Provider : Semantic_Provider_Access;

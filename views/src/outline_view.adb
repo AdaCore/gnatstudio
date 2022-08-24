@@ -1479,8 +1479,7 @@ package body Outline_View is
    overriding function Is_Visible
      (Self : not null access Outline_Tree_Record;
       Iter : Gtk.Tree_Model.Gtk_Tree_Iter)
-      return Boolean
-   is
+      return Boolean is
    begin
       return
         Iter = Null_Iter
@@ -1757,6 +1756,15 @@ package body Outline_View is
    exception
          when others => return "";
    end Decode_Profile;
+
+   ----------------------
+   -- Get_LSP_Provider --
+   ----------------------
+
+   function Get_LSP_Provider return Outline_Provider_Access is
+   begin
+      return Outline_View_Module.LSP_Provider;
+   end Get_LSP_Provider;
 
    -----------
    -- Clear --

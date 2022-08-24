@@ -15,6 +15,7 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
+with Ada.Unchecked_Deallocation;
 with VSS.Strings.Conversions;
 
 with Glib;                            use Glib;
@@ -54,6 +55,9 @@ package body GPS.LSP_Client.Outline is
 
    type Result_Access is access LSP.Messages.Symbol_Vector;
 
+   procedure Free is new Ada.Unchecked_Deallocation
+     (LSP.Messages.Symbol_Vector, Result_Access);
+
    type Outline_LSP_Provider is new Outline_View.Outline_Provider with record
       Kernel        : Kernel_Handle;
       File          : Virtual_File := No_File;
@@ -77,6 +81,10 @@ package body GPS.LSP_Client.Outline is
      (Self : access Outline_LSP_Provider;
       Lang : Language_Access)
       return Boolean;
+
+   overriding function Get_Last_Result
+     (Self : access Outline_LSP_Provider; File : Virtual_File)
+      return LSP.Messages.Symbol_Vector;
 
    -----------------
    -- LSP Request --
@@ -190,6 +198,7 @@ package body GPS.LSP_Client.Outline is
          Outline_View.Clear_Outline_Model (Self.Provider.Model);
       end if;
 
+      Free (Self.Provider.Result);
       Self.Provider.Result := new LSP.Messages.Symbol_Vector'(Result);
 
       if Result.Is_Tree then
@@ -544,6 +553,23 @@ package body GPS.LSP_Client.Outline is
 
       Trace (Me_Debug, "Free_Idle done");
    end Free_Idle;
+
+   ---------------------
+   -- Get_Last_Result --
+   ---------------------
+
+   overriding function Get_Last_Result
+     (Self : access Outline_LSP_Provider; File : Virtual_File)
+      return LSP.Messages.Symbol_Vector is
+   begin
+      if Self.File = File
+        and then Self.Result /= null
+      then
+         return Self.Result.all;
+      else
+         return (Is_Tree => False, Vector  => <>);
+      end if;
+   end Get_Last_Result;
 
    --------------------------
    -- Get_Optional_Boolean --

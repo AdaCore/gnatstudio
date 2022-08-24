@@ -58,11 +58,18 @@ with GPS.LSP_Client.Requests.Document_Symbols;
 with GPS.LSP_Client.Requests.Symbols;
 with GPS.LSP_Client.Editors.Tooltips;
 
+with Outline_View; use Outline_View;
+
 package body GPS.LSP_Client.Search.Entities is
 
    Me_Search_Entities_Support : constant GNATCOLL.Traces.Trace_Handle :=
      GNATCOLL.Traces.Create
        ("GPS.LSP.SEARCH_ENTITIES_SUPPORT", GNATCOLL.Traces.On);
+
+   Me : constant GNATCOLL.Traces.Trace_Handle :=
+     GNATCOLL.Traces.Create
+       ("GPS.LSP.SEARCH_ENTITIES_SUPPORT.ADVANCED", GNATCOLL.Traces.On);
+   --  For logging
 
    package Reference_Vectors is new Ada.Containers.Vectors
      (Positive, GPS.LSP_Client.Requests.Reference,
@@ -769,8 +776,7 @@ package body GPS.LSP_Client.Search.Entities is
          Self.Request.Cancel;
       end if;
 
-      Self.Result := (Is_Tree => False, Vector  => <>);
-
+      Self.Result        := (Is_Tree => False, Vector  => <>);
       Self.Tree_Cursor   := DocumentSymbol_Trees.No_Element;
       Self.Vector_Cursor := SymbolInformation_Vectors.Element_Vectors.
         No_Element;
@@ -781,6 +787,23 @@ package body GPS.LSP_Client.Search.Entities is
       end if;
 
       Self.Pattern := Search_Pattern_Access (Pattern);
+
+      --  Try to reuse the outline view result
+      if Outline_View.Get_LSP_Provider /= null then
+         Self.Result :=
+           Outline_View.Get_LSP_Provider.Get_Last_Result (Self.File);
+      end if;
+
+      if Self.Result /= (Is_Tree => False, Vector  => <>) then
+         if Self.Result.Is_Tree then
+            Self.Tree_Cursor := Self.Result.Tree.Root;
+         else
+            Self.Vector_Cursor := Self.Result.Vector.First;
+         end if;
+
+         Me.Trace ("Reuse the result from the outline view");
+         return;
+      end if;
 
       declare
          use type GPS.LSP_Client.Requests.Request_Access;
@@ -986,7 +1009,6 @@ package body GPS.LSP_Client.Search.Entities is
       P : Kernel_Search_Provider_Access;
    begin
       if Me_Search_Entities_Support.Active then
-
          P := new Entities_Search_Provider;
          Register_Provider_And_Action (Kernel, P);
 

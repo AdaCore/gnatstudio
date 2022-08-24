@@ -16,7 +16,7 @@ else
 endif
 
 GPRBUILD=gprbuild
-GPRBUILD_FLAGS=
+GPRBUILD_FLAGS=-j0
 PYTHON=python
 
 BUILD?=Debug

@@ -4178,6 +4178,32 @@ Here are the valid children for :file:`<switches>`:
     of a directory. If both attributes are :command:`true`, GNAT Studio displays
     a file selector.
 
+  * :file:`file-filter`
+
+    .. index:: file-filter
+
+    A file filter can be defined (such as "*.ads") to show only a
+    category of files.
+    :file:`as-file` is required.
+
+  * :file:`base-dir`
+
+    .. index:: base-dir
+
+    A base directory can be specified in order to start the dialog from it.
+    When not specified, the base directory is the last one that was visited
+    by the dialog, defaulting to the current directory.
+    :file:`as-file` is required.
+
+  * :file:`except-filter`
+
+    .. index:: except-filter
+
+    An exception filter can be defined to show only files that don't
+    match the specified pattern. For instance, if you need files without
+    extension, use except_filter='*.*'.
+    :file:`as-file` is required.
+
 * :file:`<combo>`
 
   .. index:: <combo>

@@ -347,36 +347,42 @@ package body Switches_Chooser is
    ---------------
 
    procedure Add_Field
-     (Config       : Switches_Editor_Config;
-      Label        : String;
-      Switch       : String;
-      Separator    : String := ""; --  no separator
-      Section      : String := "";
-      Tip          : String := "";
-      As_Directory : Boolean := False;
-      As_File      : Boolean := False;
-      Line         : Positive := 1;
-      Column       : Positive := 1;
-      Add_Before   : Boolean := False;
-      Popup        : Popup_Index := Main_Window;
-      Filter       : String := "") is
+     (Config        : Switches_Editor_Config;
+      Label         : String;
+      Switch        : String;
+      Separator     : String := ""; --  no separator
+      Section       : String := "";
+      Tip           : String := "";
+      As_Directory  : Boolean := False;
+      As_File       : Boolean := False;
+      File_Filter   : String := "";
+      Base_Dir      : String := "";
+      Except_Filter : String := "";
+      Line          : Positive := 1;
+      Column        : Positive := 1;
+      Add_Before    : Boolean := False;
+      Popup         : Popup_Index := Main_Window;
+      Filter        : String := "") is
    begin
       Append
         (Config.Switches,
          Switch_Description'
-           (Typ          => Switch_Field,
-            Switch       => To_Unbounded_String (Switch),
-            Label        => To_Unbounded_String (Label),
-            Tip          => To_Unbounded_String (Tip),
-            Section      => To_Unbounded_String (Section),
-            Separator    => To_Unbounded_String (Separator),
-            As_Directory => As_Directory,
-            As_File      => As_File,
-            Line         => Line,
-            Column       => Column,
-            Add_First    => Add_Before,
-            Popup        => Popup,
-            Active       => True));
+           (Typ           => Switch_Field,
+            Switch        => To_Unbounded_String (Switch),
+            Label         => To_Unbounded_String (Label),
+            Tip           => To_Unbounded_String (Tip),
+            Section       => To_Unbounded_String (Section),
+            Separator     => To_Unbounded_String (Separator),
+            As_Directory  => As_Directory,
+            As_File       => As_File,
+            File_Filter   => To_Unbounded_String (File_Filter),
+            Base_Dir      => To_Unbounded_String (Base_Dir),
+            Except_Filter => To_Unbounded_String (Except_Filter),
+            Line          => Line,
+            Column        => Column,
+            Add_First     => Add_Before,
+            Popup         => Popup,
+            Active        => True));
       Add_To_Getopt
         (Config,
          Switch    => Switch,
