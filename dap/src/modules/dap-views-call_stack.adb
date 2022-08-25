@@ -200,6 +200,7 @@ package body DAP.Views.Call_Stack is
       Client : DAP.Clients.DAP_Client_Access;
       From   : Integer;
       To     : Integer;
+      Get    : Boolean := False;
    end record;
 
    type StackTrace_Request_Access is access all StackTrace_Request;
@@ -254,6 +255,24 @@ package body DAP.Views.Call_Stack is
    begin
       return S (S'First + 1 .. S'Last);
    end Image;
+
+   ---------------
+   -- Get_Frame --
+   ---------------
+
+   procedure Get_Frame
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
+      Client : DAP.Clients.DAP_Client_Access)
+   is
+      Req : StackTrace_Request_Access;
+   begin
+      Req := new StackTrace_Request (GPS.Kernel.Kernel_Handle (Kernel));
+
+      Req.Client := Client;
+      Req.Get    := True;
+      Req.Parameters.arguments.threadId := Client.Get_Current_Thread;
+      Client.Enqueue (DAP.Requests.DAP_Request_Access (Req));
+   end Get_Frame;
 
    ------------------
    -- Send_Request --
@@ -567,6 +586,20 @@ package body DAP.Views.Call_Stack is
       Iter  : Gtk_Tree_Iter;
       Path  : Gtk_Tree_Path;
    begin
+      if Self.Get then
+         if Length (Result.a_body.stackFrames) > 0 then
+            declare
+               Frame : constant StackFrame_Variable_Reference :=
+                 Get_StackFrame_Variable_Reference
+                   (Result.a_body.stackFrames, 1);
+            begin
+               Self.Client.Set_Selected_Frame (Frame.id);
+            end;
+         end if;
+
+         return;
+      end if;
+
       if View = null then
          return;
       end if;
