@@ -77,6 +77,7 @@ def test_driver():
     current_buffer.close()
     buffer = GPS.EditorBuffer.get(GPS.File('class_definition.ads'))
     buffer.current_view().goto(buffer.at(8, 15))
+    yield timeout(1000)
 
     GPS.execute_action("goto body")
     yield wait_language_server('textDocument/implementation')
