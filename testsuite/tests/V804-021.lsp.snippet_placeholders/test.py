@@ -8,11 +8,11 @@ from gs_utils.internal.utils import *
 
 
 def generate_expected(map_param_value, nb_iteration=10):
-    res = "("
+    res = ""
     for key, value in map_param_value.items():
         for i in range(1, nb_iteration):
-            res = res + "%s%d => %s, " % (key, i, value)
-    res = res[:-2] + ")"
+            res = res + "    %s%d => %s,\n" % (key, i, value)
+    res = "(" + res[4:-2] + ")"
     return res
 
 
@@ -39,7 +39,7 @@ def run_test():
     yield wait_idle()
 
     # Verify that it has been correctly parsed by the aliases plugin
-    line = buf.get_chars(buf.at(7, 19), buf.at(7, 1).end_of_line())
+    line = buf.get_chars(buf.at(7, 19), buf.at(25, 1).end_of_line())
     gps_assert(line.strip(),
                generate_expected({"A": "Integer", "B": "Float"}),
                "The completion snippet has not been correctly inserted")

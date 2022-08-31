@@ -129,6 +129,14 @@ package GPS.LSP_Client.Completion is
      (Proposal : LSP_Completion_Proposal) return Boolean;
    --  See inherited documentation
 
+   overriding function Should_Delete_Range_On_Selected
+     (Proposal    : LSP_Completion_Proposal;
+      Kernel      : Kernel_Handle;
+      Range_Start : out File_Location;
+      Range_End   : out File_Location)
+      return Boolean;
+   --  See inherited documentation
+
    overriding procedure On_Selected
      (Proposal : LSP_Completion_Proposal;
       Kernel   : not null Kernel_Handle);
@@ -179,6 +187,9 @@ private
       --  The text that will replace the completion prefix if this proposal
       --  gets selected.
 
+      Span                     : LSP.Messages.Span := LSP.Messages.Empty_Span;
+      --  When not empty, delete the content in span before inserting text
+
       Label                    : VSS.Strings.Virtual_String;
       --  The label displayed in the completion window.
 
@@ -217,6 +228,7 @@ private
      LSP_Completion_Proposal'
        (Resolver             => null,
         Text                 => <>,
+        Span                 => <>,
         Label                => <>,
         Sort_Text            => <>,
         Filter_Text          => <>,

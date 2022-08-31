@@ -11498,7 +11498,7 @@ def contextual_context():
     pass  # implemented in Ada
 
 
-def current_context(refresh=False):
+def current_context(refresh=False, focus_check=True):
     """
     Returns the current context in GPS. This is the currently selected file,
     line, column, project, etc. depending on what window is currently
@@ -11512,6 +11512,10 @@ def current_context(refresh=False):
        context. This is only useful when your script has executed a number of
        commands and needs to ensure that the context is properly refresh
        synchronously.
+
+    :param boolean focus_check: If False, generate a context with the
+       current MDI child even if the toplevel window doesn't have the
+       input focus. This is used for running automated tests.
 
     :return: An instance of :class:`GPS.Context`
 

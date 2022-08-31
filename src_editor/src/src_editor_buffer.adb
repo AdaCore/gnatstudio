@@ -2565,19 +2565,6 @@ package body Src_Editor_Buffer is
       Editable_Line_End :=
         Get_Editable_Line (Buffer, Buffer_Line_Type (Line_End + 1));
 
-      if Buffer.Modifying_Editable_Lines then
-         for Listener of Buffer.Listeners loop
-            Listener.Before_Delete_Range
-              (Buffer.Editor_Buffer.New_Location
-                 (Integer (Editable_Line_Start),
-                  Visible_Column_Type (Column_Start + 1)),
-               Buffer.Editor_Buffer.New_Location
-                 (Integer (Editable_Line_End),
-                  Visible_Column_Type (Column_End + 1)),
-               not Buffer.Inserting);
-         end loop;
-      end if;
-
       Buffer.Get_Iter_At_Mark (Sel_Pos_Iter, Sel_Mark);
       Get_Iter_Position
         (Source_Buffer (Buffer), Sel_Pos_Iter, Sel_Pos.Line, Sel_Pos.Col);
@@ -2661,6 +2648,19 @@ package body Src_Editor_Buffer is
             end if;
             return;
          end;
+      end if;
+
+      if Buffer.Modifying_Editable_Lines then
+         for Listener of Buffer.Listeners loop
+            Listener.Before_Delete_Range
+              (Buffer.Editor_Buffer.New_Location
+                 (Integer (Editable_Line_Start),
+                  Visible_Column_Type (Column_Start + 1)),
+               Buffer.Editor_Buffer.New_Location
+                 (Integer (Editable_Line_End),
+                  Visible_Column_Type (Column_End + 1)),
+               not Buffer.Inserting);
+         end loop;
       end if;
 
       --  Remove the lines in the side information column

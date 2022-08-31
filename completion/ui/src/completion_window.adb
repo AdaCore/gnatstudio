@@ -1380,18 +1380,21 @@ package body Completion_Window is
 
    procedure Complete_And_Exit (Window : access Completion_Window_Record'Class)
    is
-      Iter  : Gtk_Tree_Iter;
-      Model : Gtk_Tree_Model;
+      Iter        : Gtk_Tree_Iter;
+      Model       : Gtk_Tree_Model;
 
-      Raw_Pos    : Gint;
-      Pos        : Natural;
-      Text_Iter  : Gtk_Text_Iter;
-      Text_End   : Gtk_Text_Iter;
+      Raw_Pos     : Gint;
+      Pos         : Natural;
+      Text_Iter   : Gtk_Text_Iter;
+      Text_End    : Gtk_Text_Iter;
 
-      Result     : Boolean;
+      Range_Start : File_Location;
+      Range_End   : File_Location;
 
-      Proposal : Completion_Proposal_Access := null;
-      Kernel   : constant Kernel_Handle := Window.Explorer.Kernel;
+      Result      : Boolean;
+
+      Proposal    : Completion_Proposal_Access := null;
+      Kernel      : constant Kernel_Handle := Window.Explorer.Kernel;
    begin
       Get_Selected (Get_Selection (Window.Explorer.View), Model, Iter);
 
@@ -1430,15 +1433,68 @@ package body Completion_Window is
                  (Window.Explorer.Info (Pos).Proposals.First_Element.all));
          end if;
 
-         --  Delete the text already present before inserting the selected
-         --  proposal.
-         --  If we are in insert mode, we only delete the completion prefix.
-         --  In replace mode, the text belonging to the same word on the right
-         --  of the cursor is also deleted.
+         if Proposal /= null
+           and then Proposal.Should_Delete_Range_On_Selected
+             (Kernel      => Kernel,
+              Range_Start => Range_Start,
+              Range_End   => Range_End)
+         then
+            --  A specific range has been defined to be deleted
+            Get_Iter_At_Line_Offset
+              (Buffer      => Window.Buffer,
+               Iter        => Text_Iter,
+               Line_Number => Gint (Range_Start.Line) - 1,
+               Char_Offset => Gint (Range_Start.Column) - 1);
+            Get_Iter_At_Line_Offset
+              (Buffer      => Window.Buffer,
+               Iter        => Text_End,
+               Line_Number => Gint (Range_End.Line) - 1,
+               Char_Offset => Gint (Range_End.Column) - 1);
 
-         Get_Iter_At_Mark (Window.Buffer, Text_Iter, Window.Start_Mark);
+            declare
+               Tmp_Iter : Gtk_Text_Iter;
+               Cursor_Loc   : constant GPS.Editors.Editor_Location'Class :=
+                 Window.Editor.Element.Current_View.Cursor;
+               End_Word_Loc : constant GPS.Editors.Editor_Location'Class :=
+                 Cursor_Loc.Forward_To_Word_End;
+            begin
+               --  At minimum delete the same as if we were inserting
 
-         case Window.Insert_Mode is
+               Get_Iter_At_Mark (Window.Buffer, Tmp_Iter, Window.Start_Mark);
+               if Compare (Tmp_Iter, Text_Iter) < 0 then
+                  Text_Iter := Tmp_Iter;
+               end if;
+
+               --  If we are in the middle of a word, we want to delete the
+               --  text belonging to this word on right of the cursor too,
+               --  so set Text_End after the last word character.
+               --  Othwerise, set Text_End to the cursor location.
+               if End_Word_Loc.Offset > Cursor_Loc.Offset then
+                  Get_Iter_At_Offset
+                    (Window.Buffer,
+                     Tmp_Iter,
+                     Gint (End_Word_Loc.Offset + 1));
+               else
+                  Get_Iter_At_Mark
+                    (Window.Buffer,
+                     Tmp_Iter,
+                     Get_Insert (Window.Buffer));
+               end if;
+               if Compare (Tmp_Iter, Text_End) > 0 then
+                  Text_End := Tmp_Iter;
+               end if;
+            end;
+
+         else
+            --  Delete the text already present before inserting the selected
+            --  proposal.
+            --  If we are in insert mode, we only delete the completion prefix.
+            --  In replace mode, the text belonging to the same word on the
+            --  right of the cursor is also deleted.
+
+            Get_Iter_At_Mark (Window.Buffer, Text_Iter, Window.Start_Mark);
+
+            case Window.Insert_Mode is
             when Insert =>
                Get_Iter_At_Mark
                  (Window.Buffer, Text_End, Get_Insert (Window.Buffer));
@@ -1467,7 +1523,8 @@ package body Completion_Window is
                         Get_Insert (Window.Buffer));
                   end if;
                end;
-         end case;
+            end case;
+         end if;
 
          Delete (Window.Buffer, Text_Iter, Text_End);
 

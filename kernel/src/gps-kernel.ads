@@ -399,11 +399,12 @@ package GPS.Kernel is
    --  instance a new child has been selected automatically at that point)
 
    procedure Refresh_Context
-     (Kernel : not null access Kernel_Handle_Record'Class);
+     (Kernel      : not null access Kernel_Handle_Record'Class;
+      Focus_Check : Boolean := True);
    --  Force a refresh of the current context, based on which window currently
    --  has the focus. This also forces a "context_changed" hook.
-   --  This function should be used rarely, since in theory the views are
-   --  supposed to update the context when their selection changes.
+   --  This checks that the current MDI child is in a window that has
+   --  the toplevel focus, unless Focus_Check is set to False.
 
    procedure Set_Search_Context
      (Kernel  : not null access Kernel_Handle_Record'Class;

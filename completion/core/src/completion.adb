@@ -466,6 +466,22 @@ package body Completion is
       end loop;
    end Next;
 
+   ------------------------------
+   -- Delete_Range_On_Selected --
+   ------------------------------
+
+   function Should_Delete_Range_On_Selected
+     (Proposal    : Completion_Proposal;
+      Kernel      : Kernel_Handle;
+      Range_Start : out File_Location;
+      Range_End   : out File_Location)
+      return Boolean
+   is
+      pragma Unreferenced (Proposal, Kernel, Range_Start, Range_End);
+   begin
+      return False;
+   end Should_Delete_Range_On_Selected;
+
    --------------
    -- Is_Valid --
    --------------
