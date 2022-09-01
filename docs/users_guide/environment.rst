@@ -197,7 +197,7 @@ Files
   key shortcuts editor (see :ref:`The_Key_Shortcuts_Editor`).
 
 
-* :file:`$HOME/.gnatstudio/gnatstudio.css`
+* :file:`$HOME/.gnatstudio/gps.css`
 
   .. index:: CSS
 
