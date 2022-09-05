@@ -55,7 +55,6 @@ with DAP.Requests.Disconnects;
 with DAP.Requests.StackTraces;
 with DAP.Tools;
 with DAP.Tools.Inputs;
-with DAP.Views.Call_Stack;
 with DAP.Utils;
 
 with GUI_Utils;
@@ -140,7 +139,7 @@ package body DAP.Clients is
    function Current_File
      (Self : in out DAP_Client) return GNATCOLL.VFS.Virtual_File is
    begin
-      return Self.Stopped_File;
+      return Self.Selected_File;
    end Current_File;
 
    ------------------
@@ -150,8 +149,18 @@ package body DAP.Clients is
    function Current_Line
      (Self : in out DAP_Client) return Integer is
    begin
-      return Self.Stopped_Line;
+      return Self.Selected_Line;
    end Current_Line;
+
+   ---------------------
+   -- Current_Address --
+   ---------------------
+
+   function Current_Address
+     (Self : in out DAP_Client) return Address_Type is
+   begin
+      return Self.Selected_Address;
+   end Current_Address;
 
    --------------------------
    -- Remove_Breakpoint_At --
@@ -224,16 +233,16 @@ package body DAP.Clients is
 
    procedure Set_Status
      (Self   : in out DAP_Client;
-      Status : Debugger_Status_Kind)
-   is
-      use type Generic_Views.Abstract_View_Access;
+      Status : Debugger_Status_Kind) is
    begin
       if Self.Status /= Terminating then
          Self.Status := Status;
 
          if Self.Status /= Stopped then
-            Self.Stopped_Line   := 0;
-            Self.Selected_Frame := 0;
+            Self.Selected_File    := GNATCOLL.VFS.No_File;
+            Self.Selected_Line    := 0;
+            Self.Selected_Address := Invalid_Address;
+            Self.Selected_Frame   := 0;
 
             DAP.Utils.Unhighlight_Current_Line (Self.Kernel);
          end if;
@@ -243,12 +252,6 @@ package body DAP.Clients is
             (if Self.Status /= Stopped
              then GPS.Debuggers.Debug_Busy
              else GPS.Debuggers.Debug_Available));
-
-         if Self.Status = Stopped
-           and then Self.Call_Stack_View = null
-         then
-            DAP.Views.Call_Stack.Get_Frame (Self.Kernel, Self.This);
-         end if;
       end if;
    end Set_Status;
 
@@ -270,6 +273,17 @@ package body DAP.Clients is
 
       Request := null;
    end Enqueue;
+
+   -----------------------
+   -- Get_Assembly_View --
+   -----------------------
+
+   function Get_Assembly_View
+     (Self : DAP_Client)
+      return Generic_Views.Abstract_View_Access is
+   begin
+      return Self.Assembly_View;
+   end Get_Assembly_View;
 
    ---------------------
    -- Get_Breakpoints --
@@ -356,6 +370,17 @@ package body DAP.Clients is
       return Self.File;
    end Get_Executable;
 
+   -----------------------
+   -- Set_Assembly_View --
+   -----------------------
+
+   procedure Set_Assembly_View
+     (Self : in out DAP_Client;
+      View : Generic_Views.Abstract_View_Access) is
+   begin
+      Self.Assembly_View := View;
+   end Set_Assembly_View;
+
    ---------------------------
    -- Set_Breakpoints_State --
    ---------------------------
@@ -412,10 +437,18 @@ package body DAP.Clients is
    ------------------------
 
    procedure Set_Selected_Frame
-     (Self : in out DAP_Client;
-      Id   : Integer) is
+     (Self    : in out DAP_Client;
+      Id      : Integer;
+      File    : GNATCOLL.VFS.Virtual_File;
+      Line    : Integer;
+      Address : Address_Type) is
    begin
-      Self.Selected_Frame := Id;
+      Self.Selected_Frame   := Id;
+      Self.Selected_File    := File;
+      Self.Selected_Line    := Line;
+      Self.Selected_Address := Address;
+
+      Self.On_Location_Changed;
    end Set_Selected_Frame;
 
    ------------------------
@@ -1058,18 +1091,12 @@ package body DAP.Clients is
 
             if stop.a_body.reason = breakpoint then
                Self.Breakpoints.Stopped
-                 (stop, Self.Stopped_File, Self.Stopped_Line);
-
-               if Self.Stopped_Line = 0
-                 and then stop.a_body.threadId.Is_Set
-               then
-                  Self.Get_StackTrace (stop.a_body.threadId.Value);
-               end if;
+                 (stop, Self.Selected_File, Self.Selected_Line);
 
             elsif stop.a_body.reason = step
               and then stop.a_body.threadId.Is_Set
             then
-               Self.Get_StackTrace (stop.a_body.threadId.Value);
+               null;
 
             else
                Self.Kernel.Get_Messages_Window.Insert_Error
@@ -1078,6 +1105,11 @@ package body DAP.Clients is
 
                Trace (Me, "Debugger" & Self.Id'Img & " stopped:" &
                         stop.a_body.reason'Img);
+            end if;
+
+            --  Get stopped frameId/file/line/address
+            if stop.a_body.threadId.Is_Set then
+               Self.Get_StackTrace (stop.a_body.threadId.Value);
             end if;
          end;
 
@@ -1124,11 +1156,17 @@ package body DAP.Clients is
               Get_StackFrame_Variable_Reference
                 (Result.a_body.stackFrames, 1);
          begin
+            Self.Client.Selected_Frame := Frame.id;
+
+            Self.Client.Selected_Address := String_To_Address
+              (VSS.Strings.Conversions.To_UTF_8_String
+                 (Frame.instructionPointerReference));
+
             if Frame.source.Is_Set then
-               Self.Client.Stopped_File := Create
+               Self.Client.Selected_File := Create
                  (+(VSS.Strings.Conversions.To_UTF_8_String
                   (Frame.source.Value.path)));
-               Self.Client.Stopped_Line := Frame.line;
+               Self.Client.Selected_Line := Frame.line;
 
                Self.Client.On_Location_Changed;
             end if;
@@ -1144,7 +1182,7 @@ package body DAP.Clients is
      (Self : in out DAP_Client) is
    begin
       DAP.Utils.Highlight_Current_File_And_Line
-        (Self.Kernel, Self.Stopped_File, Self.Stopped_Line);
+        (Self.Kernel, Self.Selected_File, Self.Selected_Line);
 
       GPS.Kernel.Hooks.Debugger_Location_Changed_Hook.Run
         (Self.Kernel, Self.Visual'Access);
@@ -1264,20 +1302,6 @@ package body DAP.Clients is
       Self.Start;
    end Start;
 
-   -------------------------------------
-   -- Highlight_Current_File_And_Line --
-   -------------------------------------
-
-   procedure Highlight_Current_File_And_Line
-     (Self  : in out DAP_Client;
-      File  : GNATCOLL.VFS.Virtual_File;
-      Line  : Integer) is
-   begin
-      Self.Stopped_File := File;
-      Self.Stopped_Line := Line;
-      DAP.Utils.Highlight_Current_File_And_Line (Self.Kernel, File, Line);
-   end Highlight_Current_File_And_Line;
-
    ----------
    -- Quit --
    ----------
@@ -1302,14 +1326,16 @@ package body DAP.Clients is
       Entity : String;
       Label  : Gtk.Label.Gtk_Label)
    is
-      Req : Evaluate_Request_Access := new Evaluate_Request (Self.Kernel);
+      Req   : Evaluate_Request_Access := new Evaluate_Request (Self.Kernel);
+      Frame : constant Integer := Self.Get_Selected_Frame;
    begin
       Req.Label := Label;
       Ref (GObject (Label));
       Req.Parameters.arguments.expression :=
         VSS.Strings.Conversions.To_Virtual_String (Entity);
-      Req.Parameters.arguments.frameId :=
-        (Is_Set => True, Value => Self.Get_Selected_Frame);
+      if Frame /= 0 then
+         Req.Parameters.arguments.frameId := (Is_Set => True, Value => Frame);
+      end if;
       Req.Parameters.arguments.context :=
         (Is_Set => True, Value => DAP.Tools.Enum.hover);
       Self.Enqueue (DAP.Requests.DAP_Request_Access (Req));

@@ -121,6 +121,16 @@ package DAP.Clients is
       State : Boolean);
    --  Enable/disable breakpoints
 
+   function Get_Assembly_View
+     (Self : DAP_Client)
+      return Generic_Views.Abstract_View_Access;
+   --  Returns the assembly view, if any.
+
+   procedure Set_Assembly_View
+     (Self : in out DAP_Client;
+      View : Generic_Views.Abstract_View_Access);
+   --  Attach the assembly view to the client
+
    function Get_Breakpoints
      (Self : DAP_Client)
       return DAP.Breakpoint_Maps.All_Breakpoints;
@@ -157,8 +167,11 @@ package DAP.Clients is
    --  Attach the thread view to the client
 
    procedure Set_Selected_Frame
-     (Self : in out DAP_Client;
-      Id   : Integer);
+     (Self    : in out DAP_Client;
+      Id      : Integer;
+      File    : GNATCOLL.VFS.Virtual_File;
+      Line    : Integer;
+      Address : Address_Type);
 
    function Get_Selected_Frame
      (Self : in out DAP_Client) return Integer;
@@ -171,6 +184,10 @@ package DAP.Clients is
      (Self : in out DAP_Client) return Integer;
    --  Returns the line where the debugging is stopped
 
+   function Current_Address
+     (Self : in out DAP_Client) return Address_Type;
+   --  Returns the address where the debugging is stopped
+
    function Get_Executable
      (Self : in out DAP_Client) return GNATCOLL.VFS.Virtual_File;
    --  Return the name of the executable currently debugged.
@@ -178,11 +195,6 @@ package DAP.Clients is
    procedure Set_Source_Files
      (Self         : in out DAP_Client;
       Source_Files : VSS.String_Vectors.Virtual_String_Vector);
-
-   procedure Highlight_Current_File_And_Line
-     (Self  : in out DAP_Client;
-      File  : GNATCOLL.VFS.Virtual_File;
-      Line  : Integer);
 
    procedure Set_Selected_Thread (Self : in out DAP_Client; Id : Integer);
    --  Set the Thread ID that has been selected in the thread view
@@ -255,8 +267,9 @@ private
       Request_Id     : Integer := 1;
       Error_Msg      : VSS.Strings.Virtual_String;
 
-      Stopped_File        : GNATCOLL.VFS.Virtual_File;
-      Stopped_Line        : Integer;
+      Selected_File       : GNATCOLL.VFS.Virtual_File;
+      Selected_Line       : Integer;
+      Selected_Address    : Address_Type := Invalid_Address;
       Selected_Frame      : Integer;
 
       --  to monitoring stoped threads
@@ -272,6 +285,7 @@ private
       Breakpoints_View : Generic_Views.Abstract_View_Access;
       Call_Stack_View  : Generic_Views.Abstract_View_Access;
       Thread_View      : Generic_Views.Abstract_View_Access;
+      Assembly_View    : Generic_Views.Abstract_View_Access;
    end record;
 
    overriding function Error_Message

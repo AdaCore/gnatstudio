@@ -55,6 +55,35 @@ package body DAP.Preferences is
          Minimum  => 0,
          Maximum  => Integer'Last,
          Default  => 0);
+
+      Assembly_Range_Size := Create
+        (Manager  => Prefs,
+         Name     => "Debugger-Assembly-Range-Size",
+         Path     => "Debugger:Assembly",
+         Label    => "Assembly range size",
+         Doc      =>
+         "Number of lines to display initially (0 to show whole subprogram).",
+         Minimum  => 0,
+         Maximum  => 100000,
+         Default  => 200);
+
+      Asm_Show_Addresses := Create_Invisible_Pref
+        (Manager  => Prefs,
+         Name     => "assembly_view-show-addresses",
+         Label    => "Show addresses",
+         Default  => True);
+
+      Asm_Show_Offset := Create_Invisible_Pref
+        (Manager  => Prefs,
+         Name     => "assembly_view-show-offset",
+         Label    => "Show offsets",
+         Default  => True);
+
+      Asm_Show_Opcodes := Create_Invisible_Pref
+        (Manager  => Prefs,
+         Name     => "assembly_view-show-opcodes",
+         Label    => "Show opcodes",
+         Default  => False);
    end Register_Default_Preferences;
 
 end DAP.Preferences;
