@@ -11,8 +11,8 @@ def generate_expected(map_param_value, nb_iteration=10):
     res = ""
     for key, value in map_param_value.items():
         for i in range(1, nb_iteration):
-            res = res + "    %s%d => %s,\n" % (key, i, value)
-    res = "(" + res[4:-2] + ")"
+            res = res + "      %s%d => %s,\n" % (key, i, value)
+    res = "(" + res[6:-2] + ")"
     return res
 
 
