@@ -8,13 +8,13 @@ from gs_utils.internal.utils import *
 
 
 EXPECTED_SNIPPET = """  Obj.Do_Nothing
-   (A => Integer,
-    B => Integer,
-    C => Integer)"""
+     (A => Integer,
+      B => Integer,
+      C => Integer)"""
 EXPECTED_RESULT = """  Obj.Do_Nothing
-   (A => 1,
-    B => 2,
-    C => 3)"""
+     (A => 1,
+      B => 2,
+      C => 3)"""
 
 
 @run_test_driver

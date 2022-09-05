@@ -7,9 +7,9 @@ from gs_utils.internal.utils import *
 
 
 EXPECTED = """   Obj.Do_Nothing
-   (AAAAAAAAAAAAA => Integer,
-    BBBBBBB       => Float,
-    D             => String)
+     (AAAAAAAAAAAAA => Integer,
+      BBBBBBB       => Float,
+      D             => String)
 end Main;
 """
 
