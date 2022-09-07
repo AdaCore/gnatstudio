@@ -76,7 +76,7 @@ package body DAP.Views.Threads is
       View_Name                       => "Threads",
       Formal_View_Record              => Thread_View_Record,
       Formal_MDI_Child                => GPS_MDI_Child_Record,
-      Reuse_If_Exist                  => False,
+      Reuse_If_Exist                  => True,
       Save_Duplicates_In_Perspectives => False,
       Commands_Category               => "",
       Areas                           => Gtkada.MDI.Sides_Only,

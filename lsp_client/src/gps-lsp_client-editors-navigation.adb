@@ -215,6 +215,11 @@ package body GPS.LSP_Client.Editors.Navigation is
    --  Called when the entity proposals menu is shown.
    --  Used to grab the keyboard focus.
 
+   procedure On_Entity_Proposals_Menu_Destroy
+     (Self : access Gtk_Widget_Record'Class);
+   --  Called when the entity proposals menu is destroyed.
+   --  Used to make sure we ungrab the keyboard focus.
+
    procedure On_Entity_Item_Clicked
      (Self   : access GObject_Record'Class;
       Path   : Gtk_Tree_Path;
@@ -911,6 +916,8 @@ package body GPS.LSP_Client.Editors.Navigation is
         (On_Entity_Proposals_Menu_Key_Press'Access);
       Proposals_Menu.On_Show
         (On_Entity_Proposals_Menu_Show'Access);
+      Proposals_Menu.On_Destroy
+        (On_Entity_Proposals_Menu_Destroy'Access);
 
       --  Create the menu's hbox
 
@@ -1077,7 +1084,6 @@ package body GPS.LSP_Client.Editors.Navigation is
       Menu : constant Entity_Proposals_Menu := Entity_Proposals_Menu (Self);
    begin
       if Event.Keyval = GDK_Escape then
-         Keyboard_Ungrab;
          Menu.Notes_Window.Destroy;
          Menu.Destroy;
 
@@ -1104,6 +1110,18 @@ package body GPS.LSP_Client.Editors.Navigation is
       Dummy := Keyboard_Grab (Menu.Get_Window, False);
    end On_Entity_Proposals_Menu_Show;
 
+   --------------------------------------
+   -- On_Entity_Proposals_Menu_Destroy --
+   --------------------------------------
+
+   procedure On_Entity_Proposals_Menu_Destroy
+     (Self : access Gtk_Widget_Record'Class)
+   is
+      pragma Unreferenced (Self);
+   begin
+      Keyboard_Ungrab;
+   end On_Entity_Proposals_Menu_Destroy;
+
    ----------------------------
    -- On_Entity_Item_Clicked --
    ----------------------------
@@ -1128,7 +1146,6 @@ package body GPS.LSP_Client.Editors.Navigation is
       Line         :  constant Gint := Get_Int (Model, Iter, Col_Line);
       Col          :  constant Gint := Get_Int (Model, Iter, Col_Column);
    begin
-      Keyboard_Ungrab;
       Menu.Notes_Window.Destroy;
       Menu.Destroy;
 

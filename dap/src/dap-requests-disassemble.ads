@@ -15,12 +15,43 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with GPS.Kernel;
+--  "disassemble" request
 
-package DAP.Views.Call_Stack is
+with DAP.Tools;
 
-   procedure Register_Module
-     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class);
-   --  Register menus and other functions to support the breakpoint editor
+package DAP.Requests.Disassemble is
 
-end DAP.Views.Call_Stack;
+   -- Disassemble_DAP_Request --
+
+   type Disassemble_DAP_Request is abstract new DAP_Request with record
+      Parameters : aliased DAP.Tools.DisassembleRequest :=
+        DAP.Tools.DisassembleRequest'
+          (seq       => 0,
+           arguments => <>);
+   end record;
+
+   type Disassemble_DAP_Request_Access is access all Disassemble_DAP_Request;
+
+   overriding procedure Write
+     (Self   : Disassemble_DAP_Request;
+      Stream : in out VSS.JSON.Content_Handlers.JSON_Content_Handler'Class);
+
+   overriding procedure On_Result_Message
+     (Self        : in out Disassemble_DAP_Request;
+      Stream      : in out VSS.JSON.Pull_Readers.JSON_Pull_Reader'Class;
+      New_Request : in out DAP_Request_Access);
+
+   procedure On_Result_Message
+     (Self        : in out Disassemble_DAP_Request;
+      Result      : in out DAP.Tools.DisassembleResponse;
+      New_Request : in out DAP_Request_Access) is abstract;
+
+   overriding procedure Set_Seq
+     (Self : in out Disassemble_DAP_Request;
+      Id   : Integer);
+
+   overriding function Method
+     (Self : in out Disassemble_DAP_Request)
+      return String is ("disassemble");
+
+end DAP.Requests.Disassemble;

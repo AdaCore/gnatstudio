@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                               GNAT Studio                                --
 --                                                                          --
---                     Copyright (C) 2000-2022, AdaCore                     --
+--                        Copyright (C) 2022, AdaCore                       --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -14,31 +14,12 @@
 -- COPYING3.  If not, go to http://www.gnu.org/licenses for a complete copy --
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
+with GPS.Kernel;
 
-with GNATCOLL.VFS;             use GNATCOLL.VFS;
-with Default_Preferences;      use Default_Preferences;
+package DAP.Views.Assembly is
 
-package DAP.Preferences is
+   procedure Register_Module
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class);
+   --  Register menus and other functions to support the breakpoint editor
 
-   procedure Register_Default_Preferences
-     (Prefs    : access Preferences_Manager_Record'Class;
-      Base_Dir : Virtual_File);
-   --  Register all the preferences relative to GVD, and their default
-   --  values. This doesn't override existing values of the preferences.
-
-   DAP_Adapter                   : String_Preference;
-
-   -- General --
-   Preserve_State_On_Exit        : Boolean_Preference;
-
-   --  Call stack
-   Frames_Limit                  : Integer_Preference;
-   --  How many frames will be fetched at one time
-
-   -- Assembly Window --
-   Assembly_Range_Size           : Integer_Preference;
-   Asm_Show_Addresses            : Boolean_Preference;
-   Asm_Show_Offset               : Boolean_Preference;
-   Asm_Show_Opcodes              : Boolean_Preference;
-
-end DAP.Preferences;
+end DAP.Views.Assembly;

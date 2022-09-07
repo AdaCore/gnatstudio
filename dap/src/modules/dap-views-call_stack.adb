@@ -51,7 +51,7 @@ with Filter_Panels;              use Filter_Panels;
 with DAP.Preferences;
 with DAP.Requests.StackTraces;
 with DAP.Tools;                  use DAP.Tools;
-with DAP.Utils;
+with DAP.Types;                  use DAP.Types;
 
 package body DAP.Views.Call_Stack is
 
@@ -135,7 +135,7 @@ package body DAP.Views.Call_Stack is
       View_Name                       => "Call Stack",
       Formal_View_Record              => Call_Stack_Record,
       Formal_MDI_Child                => GPS_MDI_Child_Record,
-      Reuse_If_Exist                  => False,
+      Reuse_If_Exist                  => True,
       Save_Duplicates_In_Perspectives => False,
       Commands_Category               => "",
       Local_Config                    => True,
@@ -200,7 +200,6 @@ package body DAP.Views.Call_Stack is
       Client : DAP.Clients.DAP_Client_Access;
       From   : Integer;
       To     : Integer;
-      Get    : Boolean := False;
    end record;
 
    type StackTrace_Request_Access is access all StackTrace_Request;
@@ -255,24 +254,6 @@ package body DAP.Views.Call_Stack is
    begin
       return S (S'First + 1 .. S'Last);
    end Image;
-
-   ---------------
-   -- Get_Frame --
-   ---------------
-
-   procedure Get_Frame
-     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
-      Client : DAP.Clients.DAP_Client_Access)
-   is
-      Req : StackTrace_Request_Access;
-   begin
-      Req := new StackTrace_Request (GPS.Kernel.Kernel_Handle (Kernel));
-
-      Req.Client := Client;
-      Req.Get    := True;
-      Req.Parameters.arguments.threadId := Client.Get_Current_Thread;
-      Client.Enqueue (DAP.Requests.DAP_Request_Access (Req));
-   end Get_Frame;
 
    ------------------
    -- Send_Request --
@@ -368,26 +349,31 @@ package body DAP.Views.Call_Stack is
    procedure Goto_Location (Self : not null access Call_Stack_Record'Class) is
       use DAP.Clients;
 
-      Client : constant DAP.Clients.DAP_Client_Access := Get_Client (Self);
-      Model  : Gtk_Tree_Model;
-      Iter   : Gtk_Tree_Iter;
-      File   : GNATCOLL.VFS.Virtual_File;
-      Line   : Integer;
+      Client  : constant DAP.Clients.DAP_Client_Access := Get_Client (Self);
+      Model   : Gtk_Tree_Model;
+      Iter    : Gtk_Tree_Iter;
+      File    : GNATCOLL.VFS.Virtual_File;
+      Line    : Integer;
+      Address : Address_Type;
    begin
       if Client /= null then
          Self.Tree.Get_Selection.Get_Selected (Model, Iter);
          if Iter /= Null_Iter then
+            declare
+               S : constant String := Model.Get_String (Iter, Memory_Column);
             begin
-               Self.Client.Set_Selected_Frame
-                 (Integer (Model.Get_Int (Iter, Frame_Num_Column)));
-
-               File := GNATCOLL.VFS.Create
+               File    := GNATCOLL.VFS.Create
                  (+Model.Get_String (Iter, Sourse_Column));
-               Line := Integer (Model.Get_Int (Iter, Line_Column));
+               Line    := Integer (Model.Get_Int (Iter, Line_Column));
+               Address :=
+                 (if S /= "<>"
+                  then String_To_Address (S)
+                  else Invalid_Address);
 
-               DAP.Utils.Highlight_Current_File_And_Line
-                 (Self.Kernel, Client.Current_File, Client.Current_Line,
-                  File, Line);
+               Self.Client.Set_Selected_Frame
+                 (Integer (Model.Get_Int (Iter, Frame_Num_Column)),
+                  File, Line, Address);
+
             exception
                when E : others =>
                   Trace (Me, E);
@@ -586,20 +572,6 @@ package body DAP.Views.Call_Stack is
       Iter  : Gtk_Tree_Iter;
       Path  : Gtk_Tree_Path;
    begin
-      if Self.Get then
-         if Length (Result.a_body.stackFrames) > 0 then
-            declare
-               Frame : constant StackFrame_Variable_Reference :=
-                 Get_StackFrame_Variable_Reference
-                   (Result.a_body.stackFrames, 1);
-            begin
-               Self.Client.Set_Selected_Frame (Frame.id);
-            end;
-         end if;
-
-         return;
-      end if;
-
       if View = null then
          return;
       end if;
@@ -676,15 +648,28 @@ package body DAP.Views.Call_Stack is
       end if;
 
       View.Tree.Get_Selection.Get_Selected (Model, Iter);
-      if Iter /= Null_Iter then
-         Self.Client.Set_Selected_Frame
-           (Integer (Model.Get_Int (Iter, Frame_Num_Column)));
-      else
-         Self.Client.Set_Selected_Frame
-           (Integer
-              (View.Model.Get_Int
-                   (View.Model.Get_Iter_First, Frame_Num_Column)));
+      if Iter = Null_Iter then
+         Iter := View.Model.Get_Iter_First;
       end if;
+
+      declare
+         File    : GNATCOLL.VFS.Virtual_File;
+         Line    : Integer;
+         Address : Address_Type;
+         S       : constant String := Model.Get_String (Iter, Memory_Column);
+      begin
+         File    := GNATCOLL.VFS.Create
+           (+Model.Get_String (Iter, Sourse_Column));
+         Line    := Integer (Model.Get_Int (Iter, Line_Column));
+         Address :=
+           (if S /= "<>"
+            then String_To_Address (S)
+            else Invalid_Address);
+
+         Self.Client.Set_Selected_Frame
+           (Integer (Model.Get_Int (Iter, Frame_Num_Column)),
+            File, Line, Address);
+      end;
 
       View.Kernel.Context_Changed (No_Context);
    end On_Result_Message;

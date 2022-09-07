@@ -145,7 +145,7 @@ package body DAP.Views.Breakpoints is
       View_Name                       => "Breakpoints",
       Formal_View_Record              => Breakpoint_View_Record,
       Formal_MDI_Child                => GPS_MDI_Child_Record,
-      Reuse_If_Exist                  => False,
+      Reuse_If_Exist                  => True,
       Save_Duplicates_In_Perspectives => False,
       Commands_Category               => "",
       Local_Toolbar                   => True,
@@ -613,13 +613,15 @@ package body DAP.Views.Breakpoints is
        Kernel   : not null access GPS.Kernel.Kernel_Handle_Record'Class;
        Debugger : access Base_Visual_Debugger'Class)
    is
-      pragma Unreferenced (Self, Debugger);
-      View : constant Breakpoint_View :=
-        Breakpoint_View
-           (Breakpoints_MDI_Views.Retrieve_View
-                (Kernel,
-                 Visible_Only => True));
+      pragma Unreferenced (Self, Kernel);
+      View : Breakpoint_View;
+
    begin
+      if Debugger /= null then
+         View := Get_View
+           (DAP.Clients.Visual_Debugger_Access (Debugger).Client);
+      end if;
+
       if View /= null then
          Update (View);
       end if;

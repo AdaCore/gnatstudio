@@ -647,8 +647,6 @@ package body DAP.Modules.Breakpoint_Managers is
                      Stopped_Line := Integer
                        (GPS.Editors.Get_Line (Data.Location));
 
-                     Self.Client.Highlight_Current_File_And_Line
-                       (Stopped_File, Stopped_Line);
                      return;
                   end if;
                end loop;
@@ -667,8 +665,6 @@ package body DAP.Modules.Breakpoint_Managers is
                   Stopped_Line := Integer
                     (GPS.Editors.Get_Line (Data.Location));
 
-                  Self.Client.Highlight_Current_File_And_Line
-                    (Stopped_File, Stopped_Line);
                   return;
                end if;
             end loop;
