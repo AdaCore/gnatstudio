@@ -1428,6 +1428,10 @@ package body GVD.Variables.View is
          Lang := Get_Language (Process.Debugger);
       end if;
 
+      if Lang = null then
+         return;
+      end if;
+
       --  Now display them, and preserve the expansion of items
 
       Expansions.Get_Expansion_Status (Self.Tree, Expansion);
