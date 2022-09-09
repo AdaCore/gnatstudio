@@ -1147,6 +1147,7 @@ package body GPS.LSP_Client.Editors.Navigation is
       Line         :  constant Gint := Get_Int (Model, Iter, Col_Line);
       Col          :  constant Gint := Get_Int (Model, Iter, Col_Column);
    begin
+      Keyboard_Ungrab;
       Menu.Notes_Window.Destroy;
       Menu.Destroy;
 
