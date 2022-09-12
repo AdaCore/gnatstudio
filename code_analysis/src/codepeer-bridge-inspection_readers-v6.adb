@@ -18,7 +18,7 @@
 with Ada.Strings.Fixed;
 
 with Basic_Types;
-with GPS.Kernel.Messages.Simple;
+with GPS.Kernel.Messages.Hyperlink;
 
 with CodePeer.Bridge.Reader_Utilities;
 
@@ -154,28 +154,28 @@ package body CodePeer.Bridge.Inspection_Readers.V6 is
               Basic_Types.Visible_Column_Type'Value
                 (Attrs.Get_Value ("column"));
             Text      : constant String := Attrs.Get_Value ("text");
-
-            Dummy     : GPS.Kernel.Messages.Simple.Simple_Message_Access;
-
+            New_Text  : constant String :=
+              Text
+               & " at "
+               & File_Name.Display_Base_Name
+               & ":"
+               & Ada.Strings.Fixed.Trim
+                 (Integer'Image (Line), Ada.Strings.Both)
+               & ":"
+               & Ada.Strings.Fixed.Trim
+                 (Basic_Types.Visible_Column_Type'Image (Column),
+                  Ada.Strings.Both);
          begin
-            Dummy :=
-              GPS.Kernel.Messages.Simple.Create_Simple_Message
-                (Parent => GPS.Kernel.Messages.Message_Access (Self.Message),
-                 File   => File_Name,
-                 Line   => Line,
-                 Column => Column,
-                 Text   =>
-                   Text
-                 & " at "
-                 & File_Name.Display_Base_Name
-                 & ":"
-                 & Ada.Strings.Fixed.Trim
-                   (Integer'Image (Line), Ada.Strings.Both)
-                 & ":"
-                 & Ada.Strings.Fixed.Trim
-                   (Basic_Types.Visible_Column_Type'Image (Column),
-                    Ada.Strings.Both),
-                 Flags  => (Locations => True, others => False));
+            GPS.Kernel.Messages.Hyperlink.Create_Hyperlink_Message
+              (Parent => GPS.Kernel.Messages.Message_Access (Self.Message),
+               File   => File_Name,
+               Line   => Line,
+               Column => Column,
+               Text   => New_Text,
+               --  +1 for the next char and +4 to not highlight " at "
+               First  => Text'Last + 5,
+               Last   => New_Text'Last,
+               Flags  => (Locations => True, others => False));
          end;
 
       else

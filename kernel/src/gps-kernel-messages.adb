@@ -922,6 +922,32 @@ package body GPS.Kernel.Messages is
       end case;
    end Get_Parent;
 
+   ------------------
+   -- Get_Children --
+   ------------------
+
+   function Get_Children
+     (Self : not null access Abstract_Message'Class)
+      return Message_Array is
+   begin
+      case Self.Level is
+         when Primary =>
+            declare
+               Result : Message_Array
+                 (1 .. Natural (Self.Children.Length));
+            begin
+               for J in Result'Range loop
+                  Result (J) :=
+                    Message_Access (Self.Children.Element (J));
+               end loop;
+               return Result;
+            end;
+
+         when Secondary =>
+            return Result : Message_Array (1 .. 0);
+      end case;
+   end Get_Children;
+
    --------------
    -- Has_Note --
    --------------

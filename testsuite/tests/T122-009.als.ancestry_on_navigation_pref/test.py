@@ -25,6 +25,7 @@ def test_driver():
 
     buffer = EditorBuffer.get(File("gb.adb"))
     buffer.current_view().goto(buffer.at(11, 21))
+
     GPS.execute_action("goto declaration")
     yield wait_language_server('textDocument/declaration')
 
@@ -44,10 +45,12 @@ def test_driver():
 
     # Close the menu and set the preference to 'Never': the menu should not
     # popup this time
-    menu.destroy()
+    send_key_event(GDK_ESCAPE)
+    yield wait_idle()
     buffer.close()
     buffer = EditorBuffer.get(File("gb.adb"))
     buffer.current_view().goto(buffer.at(11, 21))
+    yield wait_idle()
 
     GPS.Preference('display-ancestry-on-navigation').set('Never')
     GPS.execute_action("goto declaration")
@@ -61,6 +64,7 @@ def test_driver():
 
     current_buffer = GPS.EditorBuffer.get()
     current_loc = current_buffer.current_view().cursor()
+    yield wait_idle()
 
     gps_assert(
         current_buffer.file(), GPS.File("class_definition.ads"),
@@ -76,8 +80,9 @@ def test_driver():
 
     current_buffer.close()
     buffer = GPS.EditorBuffer.get(GPS.File('class_definition.ads'))
+    yield wait_idle()
     buffer.current_view().goto(buffer.at(8, 15))
-    yield timeout(1000)
+    yield wait_idle()
 
     GPS.execute_action("goto body")
     yield wait_language_server('textDocument/implementation')

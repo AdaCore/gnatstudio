@@ -166,6 +166,12 @@ package GPS.Kernel.Messages is
    --  For secondary message it returns parent message, for primary message it
    --  returns null.
 
+   function Get_Children
+     (Self : not null access Abstract_Message'Class)
+      return Message_Array;
+   --  For primary message it returns the children, for secondary message it
+   --  returns an empty array.
+
    procedure Set_Action
      (Self   : not null access Abstract_Message'Class;
       Action : GPS.Editors.Line_Information.Line_Information_Access);

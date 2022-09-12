@@ -514,19 +514,27 @@ package body GPS.Location_View is
    function Format_Message
      (Message       : Message_Access;
       Add_File_Name : Boolean := True)
-      return String is
+      return String
+   is
+      Result : Unbounded_String;
    begin
-      return ((if Add_File_Name
-              then String (Message.Get_File.Base_Name) & ':'
-              else "")
-              & Trim (Integer'Image (Message.Get_Line), Both)
-              & ':'
-              & Trim
-                (Basic_Types.Visible_Column_Type'Image
-                   (Message.Get_Column),
-                 Both)
-              & (if Add_File_Name then ": " else " ")
-              & To_String (Message.Get_Text));
+      Append
+        (Result,
+         ((if Add_File_Name
+           then String (Message.Get_File.Base_Name) & ':'
+           else "")
+          & Trim (Integer'Image (Message.Get_Line), Both)
+          & ':'
+          & Trim
+            (Basic_Types.Visible_Column_Type'Image
+               (Message.Get_Column),
+             Both)
+          & (if Add_File_Name then ": " else " ")
+          & To_String (Message.Get_Text)));
+      for Secondary of Message.Get_Children loop
+         Append (Result, ASCII.LF & Format_Message (Secondary));
+      end loop;
+      return To_String (Result);
    end Format_Message;
 
    ---------------
