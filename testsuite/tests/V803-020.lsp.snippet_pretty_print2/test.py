@@ -29,19 +29,20 @@ def run_test():
         lambda: get_widget_by_name("completion-view") is not None)
     pop_tree = get_widget_by_name("completion-view")
     model = pop_tree.get_model()
-    yield wait_idle()
+    yield timeout(500)
     click_in_tree(pop_tree, path="0", events=double_click_events)
     yield wait_idle()
 
     gps_assert(buf.get_chars(frm=buf.at(7, 1)),
                EXPECTED,
-               "Wrong completion when for ',' without newline")
+               "Wrong completion for ',' without newline")
 
     # Remove completion and ","
     buf.undo()
     buf.undo()
     buf.undo()
     yield wait_idle()
+    yield timeout(500)
 
     # It should still work even with a new line
     buf.insert(buf.at(7, 1).end_of_line(), "\n")
@@ -50,10 +51,10 @@ def run_test():
         lambda: get_widget_by_name("completion-view") is not None)
     pop_tree = get_widget_by_name("completion-view")
     model = pop_tree.get_model()
-    yield wait_idle()
+    yield timeout(500)
     click_in_tree(pop_tree, path="0", events=double_click_events)
     yield wait_idle()
 
     gps_assert(buf.get_chars(frm=buf.at(7, 1)),
                EXPECTED,
-               "Wrong completion when for ',' without newline")
+               "Wrong completion for ',' with newline")
