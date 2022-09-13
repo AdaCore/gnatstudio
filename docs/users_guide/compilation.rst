@@ -39,6 +39,7 @@ or through XML configuration.
 See :ref:`Customizing_build_Targets_and_Models`.
 
 .. image:: target-configuration-editor.png
+   :width: 100%
 
 This editor is divided in two areas: on the left is a tree listing Targets
 and in the main area is a panel for configuring the Target which is

@@ -300,6 +300,7 @@ information:
   These breakpoints can be set or unset even when no debugger is running.
 
 .. image:: tooltips.png
+   :width: 100%
 
 .. index:: syntax highlighting
 .. index:: tooltip

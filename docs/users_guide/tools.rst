@@ -118,6 +118,7 @@ Editors involved in a visual comparison have a contextual menu
 
 .. index:: screen shot
 .. image:: visual-diff.jpg
+   :width: 100%
 
 .. _Code_Fixing:
 
@@ -416,6 +417,7 @@ future analysis.
 
 .. index:: screen shot
 .. image:: stack-usage-editor.jpg
+   :width: 100%
 
 The :guilabel:`Stack Usage Editor` contains two main areas. The notebook on
 the top allows you to select the file to edit. It displays the contents of the

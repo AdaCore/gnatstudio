@@ -55,6 +55,7 @@ The Key Shortcuts Editor
 ========================
 
 .. image:: key-shortcuts.png
+   :width: 100%
 
 This editor is started through the :menuselection:`Edit --> Preferences`
 menu, then by selecting the :guilabel:`Preferences` page.
@@ -4182,7 +4183,7 @@ Here are the valid children for :file:`<switches>`:
 
     .. index:: file-filter
 
-    A file filter can be defined (such as "*.ads") to show only a
+    A file filter can be defined (such as `"*.ads"`) to show only a
     category of files.
     :file:`as-file` is required.
 

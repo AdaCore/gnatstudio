@@ -5,6 +5,8 @@ Description of the Main Window
 ******************************
 
 .. image:: gps-main-window.png
+   :width: 100%
+   :align: center
 
 GNAT Studio has one main window, which is where you perform
 most of your work.  However, GNAT Studio is very flexible and lets you
@@ -253,6 +255,7 @@ The Preferences Assistant
 =========================
 
 .. image:: preferences_assistant.png
+   :width: 100%
 
 When starting GNAT Studio for the first time, a preferences assistant window
 opens, allowing you to configure some general preferences (color theme,
@@ -270,6 +273,7 @@ The Welcome Dialog
 ==================
 
 .. image:: welcome.png
+   :width: 100%
 .. index:: command line; -P
 .. index:: project; startup
 
@@ -325,7 +329,9 @@ The Tool Bar
 ============
 
 .. image:: toolbar.png
+   :width: 100%
 .. image:: toolbar_hud.png
+   :width: 100%
 
 The tool bar provides shortcuts to some common actions:
 
@@ -365,6 +371,7 @@ The omni-search
 ===============
 
 .. image:: omnisearch.png
+   :width: 100%
 
 The final item in the toolbar is "omni-search".  Use this to search for
 text in various contexts in GNAT Studio, such as filenames (for convenient
@@ -408,8 +415,8 @@ containing the bookmark.
 Press :kbd:`enter` at any point to select the top item in the list of
 search results.
 
-
 .. image:: omnisearch-settings.png
+   :width: 100%
 
 .. index:: menu; file --> open from project
 
