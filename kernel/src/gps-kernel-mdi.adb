@@ -177,7 +177,9 @@ package body GPS.Kernel.MDI is
 
    type Close_Command_Mode is (Close_One, Close_All, Close_All_Except_Current);
    type Close_Command is new Interactive_Command with record
-      Mode      : Close_Command_Mode;
+      Mode   : Close_Command_Mode;
+      Parent : Gtk_Widget := null;
+      Child  : MDI_Child  := null;
    end record;
    overriding function Execute
      (Command : access Close_Command;
@@ -191,7 +193,7 @@ package body GPS.Kernel.MDI is
 
    procedure On_Close_Other_Tabs
      (Widget : access GObject_Record'Class;
-      Kernel : Kernel_Handle);
+      User   : Kernel_MDI);
    --  Called when the "Close all other tabs" contextual menu is clicked.
 
    -----------------------
@@ -409,10 +411,11 @@ package body GPS.Kernel.MDI is
    begin
       Gtk_New (Item, "Close all other tabs");
 
-      Kernel_Callback.Connect
-        (Item, Gtk.Menu_Item.Signal_Activate,
+      Kernel_MDI_Callback.Connect
+        (Item,
+         Gtk.Menu_Item.Signal_Activate,
          On_Close_Other_Tabs'Access,
-         Child.Kernel);
+         (Child.Kernel, Child));
 
       --  Insert it just after the "Close" menu item and add a separator under
       --  it.
@@ -1136,7 +1139,7 @@ package body GPS.Kernel.MDI is
 
    procedure On_Close_Other_Tabs
      (Widget : access GObject_Record'Class;
-      Kernel : Kernel_Handle)
+      User   : Kernel_MDI)
    is
       pragma Unreferenced (Widget);
       Command : Interactive_Command_Access;
@@ -1145,11 +1148,24 @@ package body GPS.Kernel.MDI is
       Command := new Close_Command;
       Close_Command (Command.all).Mode := Close_All_Except_Current;
 
+      if User.Child /= null then
+         Close_Command (Command.all).Child := User.Child;
+         declare
+            Parent : constant Gtk_Widget := User.Child.Get_Parent;
+         begin
+            if Parent /= null
+              and then Parent.all in Gtk_Notebook_Record'Class
+            then
+               Close_Command (Command.all).Parent := Parent;
+            end if;
+         end;
+      end if;
+
       Proxy := Create_Proxy
         (Command,
-         Create_Null_Context (New_Context (Kernel, UI_Module)));
+         Create_Null_Context (New_Context (User.Kernel, UI_Module)));
       Launch_Background_Command
-        (Kernel          => Kernel,
+        (Kernel          => User.Kernel,
          Command         => Proxy,
          Active          => True,
          Show_Bar        => False,
@@ -1181,6 +1197,25 @@ package body GPS.Kernel.MDI is
       Kernel : constant Kernel_Handle := Get_Kernel (Context.Context);
       MDI    : MDI_Window;
       Child  : MDI_Child;
+      Parent : Gtk_Widget;
+
+      procedure Close_Child_From_Same_Notebook
+        (C : not null access GPS_MDI_Child_Record'Class);
+
+      ------------------------------------
+      -- Close_Child_From_Same_Notebook --
+      ------------------------------------
+
+      procedure Close_Child_From_Same_Notebook
+        (C : not null access GPS_MDI_Child_Record'Class) is
+      begin
+         if Child /= MDI_Child (C)
+           and then C.Get_Parent = Parent
+         then
+            Gtkada.MDI.Close_Child (C);
+         end if;
+      end Close_Child_From_Same_Notebook;
+
    begin
       case Command.Mode is
          when Close_All =>
@@ -1197,48 +1232,29 @@ package body GPS.Kernel.MDI is
             end if;
 
          when Close_All_Except_Current =>
-            MDI   := Get_MDI (Kernel);
-            Child := Get_Focus_Child (MDI);
+            if Command.Parent = null then
+               MDI   := Get_MDI (Kernel);
+               Child := Get_Focus_Child (MDI);
 
-            if Child = null then
-               return Standard.Commands.Success;
-            end if;
-
-            declare
-               Parent   : constant Gtk_Widget := Child.Get_Parent;
-               Notebook : constant Gtk_Notebook :=
-                 (if Parent /= null
-                  and then Parent.all in Gtk_Notebook_Record'Class
-                  then
-                     Gtk_Notebook (Parent)
-                  else
-                     null);
-
-               procedure Close_Child_From_Same_Notebook
-                 (C : not null access GPS_MDI_Child_Record'Class);
-
-               ------------------------------------
-               -- Close_Child_From_Same_Notebook --
-               ------------------------------------
-
-               procedure Close_Child_From_Same_Notebook
-                 (C : not null access GPS_MDI_Child_Record'Class) is
-               begin
-                  if Child /= MDI_Child (C)
-                    and then C.Get_Parent = Parent
-                  then
-                     Gtkada.MDI.Close_Child (C);
-                  end if;
-               end Close_Child_From_Same_Notebook;
-
-            begin
-               if Notebook = null then
+               if Child = null then
                   return Standard.Commands.Success;
                end if;
 
-               For_All_MDI_Children
-                 (Kernel, Close_Child_From_Same_Notebook'Access);
-            end;
+               Parent := Child.Get_Parent;
+
+               if Parent = null
+                 or else Parent.all not in Gtk_Notebook_Record'Class
+               then
+                  return Standard.Commands.Success;
+               end if;
+
+            else
+               Child  := Command.Child;
+               Parent := Command.Parent;
+            end if;
+
+            For_All_MDI_Children
+              (Kernel, Close_Child_From_Same_Notebook'Access);
       end case;
 
       return Standard.Commands.Success;

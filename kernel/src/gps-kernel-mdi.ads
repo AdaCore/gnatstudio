@@ -544,6 +544,17 @@ package GPS.Kernel.MDI is
      (Glib.Object.GObject_Record, Boolean, Kernel_Handle);
    --  Generic callback that can be used to connect a signal to a kernel
 
+   type Kernel_MDI is record
+      Kernel : Kernel_Handle;
+      Child  : access GPS_MDI_Child_Record;
+   end record;
+
+   package Kernel_MDI_Callback is new Gtk.Handlers.User_Callback
+     (Glib.Object.GObject_Record, Kernel_MDI);
+   package Kernel_MDI_Return_Callback is new Gtk.Handlers.User_Return_Callback
+     (Glib.Object.GObject_Record, Boolean, Kernel_MDI);
+   --  Generic callback that can be used to connect a signal to a kernel
+
 private
 
    type General_UI_Module_Record is new Module_ID_Record with record
