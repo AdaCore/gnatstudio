@@ -348,9 +348,14 @@ class CLI(GPS.Process):
             outdir = Project_Support.get_output_dir(file)
             switches = Project_Support.get_switches(file)
 
-            # always ignoring -o and --output should be defined
-            # using the Output_Dir attribute instead
-            remove_list.extend([('-o', True), ('--output', True)])
+            # Always ignore -o and --output.  The Output_Dir project attribute
+            # should be used instead. Also ignore --pre-process-xmi as it will
+            # be added automatically if needed.
+            remove_list.extend([
+                ('-o', True),
+                ('--output', True),
+                ('--pre-process-xmi', False)
+            ])
             for arg, has_param in remove_list:
                 switches = remove_arg(switches, arg, has_param)
 
@@ -381,8 +386,6 @@ class CLI(GPS.Process):
         switches = CLI.get_qgenc_switches(
             file, extra=['--with-gui-only', '--incremental', "--no-misra"],
             remove_list=[('-c', False), ('--clean', False)])
-        if os.path.splitext(filepath)[1] == ".xmi":
-            switches += " --pre-process-xmi"
         outdir = Project_Support.get_output_dir(file)
         result_path = os.path.join(
             outdir, '.qgeninfo',
