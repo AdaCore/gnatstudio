@@ -1159,7 +1159,7 @@ def add_lemma_menu():
     # Create the menus (Note: underscores must be escaped by underscore to be
     # visible in Gtk menu)
     for action in actions:
-        action.menu("/Help/{}/Lemmas/{}/{}".format(
+        action.menu("/Help/{}/SPARK Library/{}/{}".format(
             prefix, action.menu_postfix, action.name.replace("_", "__")))
 
 
