@@ -2,5 +2,5 @@
 
 host = git.adacore.com
 project = gnatstudio
-defaultbranch = master
+defaultbranch = topic/cpl-codepeer_bridge
 defaultremote = origin
