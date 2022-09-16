@@ -72,12 +72,6 @@ The File Menu
 
    Open remote project
 
-.. index:: menu; file --> open recent projects
-
-* :menuselection:`File --> Open Recent Projects`
-
-   Use this menu to load one of the recently open projects.
-
 .. index:: menu; file --> project --> add complex file naming conventions...
 
 * :menuselection:`File --> Project --> Add Complex File Naming Conventions...`
