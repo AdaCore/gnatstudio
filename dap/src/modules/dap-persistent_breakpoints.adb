@@ -921,6 +921,7 @@ package body DAP.Persistent_Breakpoints is
                Enabled       => Item.Get ("enabled"),
                Subprogram    => Item.Get ("subprogram"),
                Location      => Loc,
+               Address       => Invalid_Address,
                Ignore        => Item.Get ("ignore"),
                Condition     => Item.Get ("condition"));
 
