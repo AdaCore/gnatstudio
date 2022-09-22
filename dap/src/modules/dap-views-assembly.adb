@@ -49,7 +49,6 @@ with VSS.Strings.Conversions;
 
 with GPS.Debuggers;              use GPS.Debuggers;
 with GPS.Default_Styles;
-with GPS.Editors;
 with GPS.Kernel.Actions;
 with GPS.Kernel.Hooks;           use GPS.Kernel.Hooks;
 with GPS.Kernel.MDI;             use GPS.Kernel.MDI;
@@ -201,15 +200,6 @@ package body DAP.Views.Assembly is
       Iter     : out Gtk_Tree_Iter;
       Found    : out Boolean);
    --  Return an iterator pointing to the row belong to the Address.
-   --  Found indicates whether the address was found.
-
-   procedure Iter_From_Location
-     (View    : not null access Assembly_View_Record'Class;
-      File    : Virtual_File;
-      Line    : Integer;
-      Iter    : out Gtk_Tree_Iter;
-      Found   : out Boolean);
-   --  Return an iterator pointing to the row belong to the File:Line.
    --  Found indicates whether the address was found.
 
    procedure Highlight
@@ -721,34 +711,6 @@ package body DAP.Views.Assembly is
       Modify_Font (Self.Tree, Font);
    end Set_Font;
 
-   ------------------------
-   -- Iter_From_Location --
-   ------------------------
-
-   procedure Iter_From_Location
-     (View    : not null access Assembly_View_Record'Class;
-      File    : Virtual_File;
-      Line    : Integer;
-      Iter    : out Gtk_Tree_Iter;
-      Found   : out Boolean)
-   is
-      Model : Gtk.Tree_Store.Gtk_Tree_Store renames View.Model;
-   begin
-      Found := False;
-
-      while Iter /= Null_Iter loop
-         if GNATCOLL.VFS.Create
-           (+(Model.Get_String (Iter, File_Column))) = File
-           and then Integer (Model.Get_Int (Iter, Line_Column)) = Line
-         then
-            Found := True;
-            return;
-         end if;
-
-         Model.Next (Iter);
-      end loop;
-   end Iter_From_Location;
-
    -----------------------
    -- Iter_From_Address --
    -----------------------
@@ -786,15 +748,15 @@ package body DAP.Views.Assembly is
    is
       use Ada.Strings.Unbounded;
 
-      Client     : constant DAP.Clients.DAP_Client_Access := Get_Client (View);
-      Model      : Gtk.Tree_Store.Gtk_Tree_Store renames View.Model;
-      Values     : Glib.Values.GValue_Array (1 .. 3);
-      Columns    : Columns_Array (Values'Range);
-      Start_Iter : Gtk_Tree_Iter;
-      Found      : Boolean;
+      Client   : constant DAP.Clients.DAP_Client_Access := Get_Client (View);
+      Model    : Gtk.Tree_Store.Gtk_Tree_Store renames View.Model;
+      Values   : Glib.Values.GValue_Array (1 .. 3);
+      Columns  : Columns_Array (Values'Range);
+      Iter     : Gtk_Tree_Iter;
+      Found    : Boolean;
 
-      Detached   : Gtk.Tree_Model.Gtk_Tree_Model;
-      Last       : Address_Type := Invalid_Address;
+      Detached : Gtk.Tree_Model.Gtk_Tree_Model;
+      Last     : Address_Type := Invalid_Address;
 
       First_Visible_Line_Iter : Gtk_Tree_Iter := Null_Iter;
       Selected_Line_Iter      : Gtk_Tree_Iter := Null_Iter;
@@ -830,16 +792,16 @@ package body DAP.Views.Assembly is
 
       Columns := (FG_Color_Column, BG_Color_Column, PC_Pixmap_Column);
 
-      Start_Iter := Model.Get_Iter_First;
+      Iter := Model.Get_Iter_First;
       Glib.Values.Init (Values (1), Gdk.RGBA.Get_Type);
       Gdk.RGBA.Set_Value (Values (1), Null_RGBA);
       Glib.Values.Init (Values (2), Gdk.RGBA.Get_Type);
       Gdk.RGBA.Set_Value (Values (2), Null_RGBA);
       Values (3) := As_String ("");
 
-      while Start_Iter /= Null_Iter loop
-         Model.Set (Start_Iter, Glib.Gint_Array (Columns), Values);
-         Model.Next (Start_Iter);
+      while Iter /= Null_Iter loop
+         Model.Set (Iter, Glib.Gint_Array (Columns), Values);
+         Model.Next (Iter);
       end loop;
       Unset (Values);
 
@@ -848,7 +810,7 @@ package body DAP.Views.Assembly is
       if View.Source_Line_Start /= Invalid_Address
         and then View.Source_Line_End /= Invalid_Address
       then
-         Iter_From_Address (View, View.Source_Line_Start, Start_Iter, Found);
+         Iter_From_Address (View, View.Source_Line_Start, Iter, Found);
 
          --  Highlight the new range
 
@@ -858,17 +820,17 @@ package body DAP.Views.Assembly is
             Gdk.RGBA.Set_Value
               (Values (1), Debugger_Current_Line_Color.Get_Pref);
 
-            while Start_Iter /= Null_Iter
+            while Iter /= Null_Iter
               and then String_To_Address
-                (Model.Get_String (Start_Iter, Address_Column)) <=
+                (Model.Get_String (Iter, Address_Column)) <=
                   View.Source_Line_End
             loop
                Model.Set
-                 (Start_Iter,
+                 (Iter,
                   Glib.Gint_Array (Columns (1 .. 1)),
                   Values (1 .. 1));
 
-               Model.Next (Start_Iter);
+               Model.Next (Iter);
             end loop;
             Unset (Values (1 .. 1));
          end if;
@@ -879,16 +841,13 @@ package body DAP.Views.Assembly is
       Columns (1) := BG_Color_Column;
       for V of Client.Get_Breakpoints.Sources loop
          for B of V loop
-            Start_Iter := View.Model.Get_Iter_First;
-            loop
-               Iter_From_Location
-                 (View => View,
-                  File => GPS.Editors.Get_File (B.Location),
-                  Line => Integer (GPS.Editors.Get_Line (B.Location)),
-                  Iter => Start_Iter, Found => Found);
+            Iter_From_Address
+              (View    => View,
+               Address => B.Address,
+               Iter    => Iter,
+               Found   => Found);
 
-               exit when not Found;
-
+            if Found then
                Glib.Values.Init (Values (1), Gdk.RGBA.Get_Type);
                Gdk.RGBA.Set_Value
                  (Values (1),
@@ -904,21 +863,19 @@ package body DAP.Views.Assembly is
 
                Set_And_Clear
                  (Model,
-                  Start_Iter,
+                  Iter,
                   Columns (1 .. 1),
                   Values (1 .. 1));
-
-               View.Model.Next (Start_Iter);
-            end loop;
+            end if;
          end loop;
       end loop;
 
       --  Highlight PC line
 
-      Iter_From_Address (View, Client.Current_Address, Start_Iter, Found);
+      Iter_From_Address (View, Client.Current_Address, Iter, Found);
       if Found then
          Model.Set
-           (Start_Iter, PC_Pixmap_Column,
+           (Iter, PC_Pixmap_Column,
             To_String (Debugger_Pixmaps.Current_Line_Pixbuf));
 
       elsif In_Range (Client.Current_Address, View.Current_Range) then
@@ -930,10 +887,10 @@ package body DAP.Views.Assembly is
          end loop;
 
          if Last /= Invalid_Address then
-            Iter_From_Address (View, Last, Start_Iter, Found);
+            Iter_From_Address (View, Last, Iter, Found);
             if Found then
                Model.Set
-                 (Start_Iter, PC_Pixmap_Column,
+                 (Iter, PC_Pixmap_Column,
                   To_String (Debugger_Pixmaps.Current_Line_Inside_Pixbuf));
             end if;
          end if;
@@ -942,13 +899,13 @@ package body DAP.Views.Assembly is
       View.Tree.Set_Model (Detached);
 
       if Scroll_To_Pc then
-         if Start_Iter /= Null_Iter then
-            View.Tree.Get_Selection.Select_Iter (Start_Iter);
+         if Iter /= Null_Iter then
+            View.Tree.Get_Selection.Select_Iter (Iter);
 
             declare
                P : Gtk_Tree_Path;
             begin
-               P := Get_Path (View.Tree.Get_Model, Start_Iter);
+               P := Get_Path (View.Tree.Get_Model, Iter);
                View.Tree.Scroll_To_Cell (P, null, True, 0.0, 0.0);
                Path_Free (P);
             end;

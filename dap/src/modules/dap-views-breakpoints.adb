@@ -553,12 +553,12 @@ package body DAP.Views.Breakpoints is
               (Values (Last), Escape_Text (To_String (Data.Subprogram)));
          end if;
 
-         --  if Br.Address /= Invalid_Address then
-         --     Last := Last + 1;
-         --     Columns (Last) := Col_Address;
-         --     Glib.Values.Init_Set_String
-         --   (Values (Last), Escape_Text (Address_To_String (Br.Address)));
-         --  end if;
+         if Data.Address /= Invalid_Address then
+            Last := Last + 1;
+            Columns (Last) := Col_Address;
+            Glib.Values.Init_Set_String
+          (Values (Last), Escape_Text (Address_To_String (Data.Address)));
+         end if;
 
          Set_And_Clear (Model, Iter, Columns (1 .. Last), Values (1 .. Last));
       end Fill;

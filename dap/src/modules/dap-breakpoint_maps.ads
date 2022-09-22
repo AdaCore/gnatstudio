@@ -42,6 +42,7 @@ package DAP.Breakpoint_Maps is
       Location    : Location_Marker   := No_Marker;
       --  The location of the breakpoint
 
+      Address     : Address_Type := Invalid_Address;
       Subprogram  : Ada.Strings.Unbounded.Unbounded_String;
 
       Disposition : Breakpoint_Disposition := Keep;

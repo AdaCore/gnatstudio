@@ -169,6 +169,12 @@ package body DAP.Modules.Breakpoint_Managers is
                        (DAP_Bp.line.Value);
                   end if;
 
+                  if not DAP_Bp.instructionReference.Is_Empty then
+                     Data.Address := String_To_Address
+                       (VSS.Strings.Conversions.To_UTF_8_String
+                          (DAP_Bp.instructionReference));
+                  end if;
+
                   Data.Location := Self.Kernel.Get_Buffer_Factory.
                     Create_Marker
                       (File   => Self.File,

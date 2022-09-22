@@ -63,7 +63,9 @@ with Language_Handlers;          use Language_Handlers;
 
 package body DAP.Clients is
 
-   Me : constant Trace_Handle := Create ("GPS.DAP.Clients", On);
+   Me      : constant Trace_Handle := Create ("GPS.DAP.Clients", On);
+   DAP_Log : constant GNATCOLL.Traces.Trace_Handle :=
+     Create ("GPS.DAP.IN_OUT", Off);
 
    procedure Free is new Ada.Unchecked_Deallocation
      (DAP.Modules.Breakpoint_Managers.DAP_Client_Breakpoint_Manager'Class,
@@ -944,6 +946,10 @@ package body DAP.Clients is
       New_Request : DAP.Requests.DAP_Request_Access := null;
 
    begin
+      if DAP_Log.Is_Active then
+         Trace (DAP_Log, "[" & Self.Id'Img & "<-]" & To_String (Data));
+      end if;
+
       Memory.Set_Data
         (VSS.Stream_Element_Vectors.Conversions.Unchecked_From_Unbounded_String
            (Data));
@@ -1127,6 +1133,18 @@ package body DAP.Clients is
             end if;
          end;
 
+      elsif Event = "breakpoint" then
+         --  We process breakpoint responses so do nothing with event for now.
+         null;
+
+      elsif Event = "thread" then
+         --  The tread view uses requests to get the list of threads.
+         null;
+
+      elsif Event = "exited" then
+         --  Do not handle, at least for now.
+         null;
+
       else
          Self.Kernel.Get_Messages_Window.Insert_Error
            ("Event:" & VSS.Strings.Conversions.To_UTF_8_String (Event));
@@ -1240,6 +1258,13 @@ package body DAP.Clients is
          --  Send request's message
 
          Self.Send_Buffer (Stream.Buffer);
+
+         if DAP_Log.Is_Active then
+            Trace (DAP_Log,
+                   "[" & Self.Id'Img & "->]"
+                   & VSS.Stream_Element_Vectors.Conversions.Unchecked_To_String
+                     (Stream.Buffer));
+         end if;
 
          --  Add request to the map
 

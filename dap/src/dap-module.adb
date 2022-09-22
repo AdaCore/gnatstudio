@@ -302,7 +302,9 @@ package body DAP.Module is
       W      : Gtk_Widget;
       Label  : Gtk_Label;
    begin
-      if Client = null then
+      if Client = null
+        or else not Client.Is_Stopped
+      then
          return null;
       end if;
 
