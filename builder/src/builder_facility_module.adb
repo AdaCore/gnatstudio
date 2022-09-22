@@ -1116,11 +1116,11 @@ package body Builder_Facility_Module is
    begin
       if Kind = "main" then
          declare
-            Mains  : constant Project_And_Main_Array :=
+            Mains  : constant Project_And_Main_Vector :=
                Get_Mains (Get_Registry (Kernel_Handle (Kernel)));
-            Result : Any_Type (List_Type, Mains'Length);
+            Result : Any_Type (List_Type, Integer (Mains.Length));
          begin
-            for J in Mains'Range loop
+            for J in Mains.First_Index .. Mains.Last_Index loop
                declare
                   Base : constant String := Mains (J).Main.Display_Base_Name;
                   Full : constant String := +Mains (J).Main.Full_Name;
@@ -1133,7 +1133,7 @@ package body Builder_Facility_Module is
                   Project_Name : constant Any_Type :=
                     (String_Type, P_Name'Length, P_Name);
                begin
-                  Result.List (1 + J - Mains'First) := new Any_Type'
+                  Result.List (1 + J - Mains.First_Index) := new Any_Type'
                     ((Tuple_Type, 3,
                      Tuple => (1 => new Any_Type'(Display_Name),
                                2 => new Any_Type'(Full_Name),
@@ -1146,11 +1146,11 @@ package body Builder_Facility_Module is
 
       elsif Kind = "executable" then
          declare
-            Mains  : constant Project_And_Main_Array :=
+            Mains  : constant Project_And_Main_Vector :=
                Get_Mains (Get_Registry (Kernel_Handle (Kernel)));
-            Result : Any_Type (List_Type, Mains'Length);
+            Result : Any_Type (List_Type, Integer (Mains.Length));
          begin
-            for J in Mains'Range loop
+            for J in Mains.First_Index .. Mains.Last_Index loop
                if Mains (J).Project_Path = No_File then
                   --  This can happen when the project can not find the source
                   --  corresponding to the main file, for instance
@@ -1198,7 +1198,7 @@ package body Builder_Facility_Module is
                        (String_Type, P_Name'Length, P_Name);
 
                   begin
-                     Result.List (1 + J - Mains'First) := new Any_Type'
+                     Result.List (1 + J - Mains.First_Index) := new Any_Type'
                        ((Tuple_Type, 3,
                         Tuple => (1 => new Any_Type'(Display_Name),
                                   2 => new Any_Type'(Full_Name),
