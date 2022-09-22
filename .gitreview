@@ -2,5 +2,5 @@
 
 host = git.adacore.com
 project = gnatstudio
-defaultbranch = master
+defaultbranch = 23.0
 defaultremote = origin
