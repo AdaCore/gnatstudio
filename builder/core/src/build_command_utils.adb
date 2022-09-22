@@ -35,10 +35,6 @@ package body Build_Command_Utils is
 
    Me : constant Trace_Handle := Create ("GPS.BUILD.BUILD_COMMAND_MANAGER");
 
-   Max_Number_Of_Mains : constant := 128;
-   --  The maximum number of Mains that we accept to display in the Menus
-   --  and toolbar.
-
    function Is_Server_In_Mode
      (Registry   : Build_Config_Registry_Access;
       Mode : String) return Boolean;
@@ -133,10 +129,9 @@ package body Build_Command_Utils is
    ---------------
 
    function Get_Mains
-     (Registry : Project_Registry_Access) return Project_And_Main_Array
+     (Registry : Project_Registry_Access) return Project_And_Main_Vector
    is
-      Result       : Project_And_Main_Array (1 .. Max_Number_Of_Mains);
-      Index        : Natural := Result'Last;
+      Result       : Project_And_Main_Vector;
       The_Project  : Project_Type;
       M            : String_List_Access;
       File         : Virtual_File;
@@ -169,8 +164,7 @@ package body Build_Command_Utils is
 
             if M /= null then
                declare
-                  This_Project : Project_And_Main_Array (1 .. M'Length);
-                  This_Index   : Natural := 1;
+                  This_Project : Project_And_Main_Vector;
                begin
                   for Basename of M.all loop
                      if Basename.all /= "" then
@@ -198,10 +192,10 @@ package body Build_Command_Utils is
                            File := Create_From_Base (+Basename.all);
                         end if;
 
-                        This_Project (This_Index) :=
-                          (Project_Path => The_Project.Project_Path,
-                           Main => File);
-                        This_Index := This_Index + 1;
+                        This_Project.Prepend
+                          (Project_And_Main'
+                             (Project_Path => The_Project.Project_Path,
+                              Main         => File));
                      end if;
 
                   end loop;
@@ -209,9 +203,9 @@ package body Build_Command_Utils is
                   --  Do this gymnastics so that we list projects in reverse
                   --  from the iterator, but the target order is preserved
                   --  within one project.
-                  Result (Index - This_Index + 2 .. Index) := This_Project
-                    (1 .. This_Index - 1);
-                  Index := Index - This_Index + 1;
+                  for Item of This_Project loop
+                     Result.Prepend (Item);
+                  end loop;
                end;
 
                Free (M);
@@ -221,7 +215,7 @@ package body Build_Command_Utils is
          Next (Iterator);
       end loop;
 
-      return Result (Index + 1 .. Result'Last);
+      return Result;
    end Get_Mains;
 
    --------------------------
@@ -231,10 +225,11 @@ package body Build_Command_Utils is
    function Get_Mains_Files_Only (Registry : Project_Registry_Access)
       return GNATCOLL.VFS.File_Array
    is
-      Mains        : constant Project_And_Main_Array := Get_Mains (Registry);
-      Result       : GNATCOLL.VFS.File_Array (Mains'First .. Mains'Last);
+      Mains        : constant Project_And_Main_Vector := Get_Mains (Registry);
+      Result       : GNATCOLL.VFS.File_Array
+        (Mains.First_Index .. Mains.Last_Index);
    begin
-      for J in Mains'First .. Mains'Last loop
+      for J in Mains.First_Index .. Mains.Last_Index loop
          Result (J) := Mains (J).Main;
       end loop;
       return Result;
