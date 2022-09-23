@@ -22,6 +22,7 @@
 --  See spec of Builder_Facility_Module for an overview of the build system.
 
 with Ada.Containers.Hashed_Maps;
+with Ada.Containers.Vectors;
 with Ada.Strings.Unbounded;            use Ada.Strings.Unbounded;
 with Ada.Strings.Unbounded.Hash;
 
@@ -65,14 +66,15 @@ package Build_Command_Utils is
       Project_Path : GNATCOLL.VFS.Virtual_File;
       Main         : GNATCOLL.VFS.Virtual_File;
    end record;
-   type Project_And_Main_Array is array (Positive range <>)
-     of Project_And_Main;
+   package Project_And_Main_Vectors is new Ada.Containers.Vectors
+     (Positive, Project_And_Main);
+   subtype Project_And_Main_Vector is Project_And_Main_Vectors.Vector;
 
    function Get_Project (P : Project_And_Main) return Project_Type;
    --  Return the project from P
 
    function Get_Mains
-     (Registry : Project_Registry_Access) return Project_And_Main_Array;
+     (Registry : Project_Registry_Access) return Project_And_Main_Vector;
    --  Return the list of mains corresponding to the loaded project tree.
 
    function Get_Mains_Files_Only (Registry : Project_Registry_Access)
