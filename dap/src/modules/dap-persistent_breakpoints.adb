@@ -1071,19 +1071,6 @@ package body DAP.Persistent_Breakpoints is
          Label  => "Debug/Set breakpoint on %e",
          Action => "debug set subprogram breakpoint");
 
-      --  Register_Action
-      --    (Kernel, "continue till line",
-      --     Command     => new Set_Breakpoint_Command_Context'
-      --    (Interactive_Command with On_Line => True, Continue_Till => True),
-      --     Description => "Continue executing until the given line",
-      --     Filter      => Kernel.Lookup_Filter ("Debugger stopped") and
-      --       Kernel.Lookup_Filter ("Source editor"),
-      --     Category    => -"Debug");
-      --  Register_Contextual_Menu
-      --    (Kernel => Kernel,
-      --     Label  => -"Debug/Continue until line %l",
-      --     Action => "continue till line");
-
       GPS.Kernel.Actions.Register_Action
         (Kernel, "debug remove breakpoint",
          Command     => new Remove_Breakpoint_Command,
