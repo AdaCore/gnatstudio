@@ -19,34 +19,34 @@ with VSS.Strings;             use VSS.Strings;
 with VSS.Strings.Conversions; use VSS.Strings.Conversions;
 with VSS.String_Vectors;      use VSS.String_Vectors;
 
-with Glib.Object; use Glib.Object;
-with Glib.Main;   use Glib.Main;
+with Glib.Object;             use Glib.Object;
+with Glib.Main;               use Glib.Main;
 
-with Gdk.Event;         use Gdk.Event;
-with Gdk.Types;         use Gdk.Types;
-with Gdk.Types.Keysyms; use Gdk.Types.Keysyms;
+with Gdk.Event;               use Gdk.Event;
+with Gdk.Types;               use Gdk.Types;
+with Gdk.Types.Keysyms;       use Gdk.Types.Keysyms;
 
-with Gtk.Window;  use Gtk.Window;
-with Gtk.Box;     use Gtk.Box;
+with Gtk.Window;              use Gtk.Window;
+with Gtk.Box;                 use Gtk.Box;
 with Gtk.Enums;
-with Gtk.Label;  use Gtk.Label;
-with Gtk.GEntry; use Gtk.GEntry;
+with Gtk.Label;               use Gtk.Label;
+with Gtk.GEntry;              use Gtk.GEntry;
 with Gtk.Style_Context;
 
-with GNATCOLL.JSON; use GNATCOLL.JSON;
-with LSP.Types;     use LSP.Types;
-with LSP.Messages;  use LSP.Messages;
+with GNATCOLL.JSON;           use GNATCOLL.JSON;
+with LSP.Types;               use LSP.Types;
+with LSP.Messages;            use LSP.Messages;
 
-with GPS.Kernel; use GPS.Kernel;
-with GUI_Utils; use GUI_Utils;
+with GPS.Kernel;              use GPS.Kernel;
+with GUI_Utils;               use GUI_Utils;
 
 with GPS.LSP_Client.Requests.Check_Syntax;
 use  GPS.LSP_Client.Requests.Check_Syntax;
-with Gdk.Window; use Gdk.Window;
-with Glib; use Glib;
-with GPS.Editors; use GPS.Editors;
-with Src_Editor_Box; use Src_Editor_Box;
-with Src_Editor_Module; use Src_Editor_Module;
+with Gdk.Window;              use Gdk.Window;
+with Glib;                    use Glib;
+with GPS.Editors;             use GPS.Editors;
+with Src_Editor_Box;          use Src_Editor_Box;
+with Src_Editor_Module;       use Src_Editor_Module;
 
 package body GPS.LSP_Client.Editors.Code_Actions.Dialog is
 
@@ -280,7 +280,8 @@ package body GPS.LSP_Client.Editors.Code_Actions.Dialog is
       --  of the main window. We don't want it to be an actual dialog,
       --  because we don't want a nested main loop.
       Win.Set_Transient_For (Kernel.Get_Main_Window);
-      Win.Set_Type_Hint (Window_Type_Hint_Menu);
+      Win.Set_Keep_Above (True);
+      Win.Set_Type_Hint (Window_Type_Hint_Popup_Menu);
       Win.Set_Decorated (False);
       Win.Set_Skip_Taskbar_Hint (True);
       Win.Set_Skip_Pager_Hint (True);
@@ -336,12 +337,13 @@ package body GPS.LSP_Client.Editors.Code_Actions.Dialog is
       --  Show the window
       Win.Show_All;
 
-      --  Grab the focus. The window will disappear when the entry
-      --  loses the focus.
-      Win.Input.Grab_Focus;
-
       Win.Get_Preferred_Height (Dummy, Total_Height);
       Win.Get_Preferred_Width (Dummy, Total_Width);
+
+      --  Grab the focus and present the window, to make sure it gets the
+      --  focus. The window will disappear when the entry loses the focus.
+      Win.Input.Grab_Focus;
+      Win.Present;
 
       Place_Window_On_Cursor
         (Editor       => Get_Source_Box_From_MDI
