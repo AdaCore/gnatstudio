@@ -194,6 +194,13 @@ package body DAP.Views.Breakpoints is
       Context : Interactive_Command_Context) return Command_Return_Type;
    --  Remove all breakpoints
 
+   type Set_Breakpoints_State_Command (Is_Enabled : Boolean) is
+     new Interactive_Command with null record;
+   overriding function Execute
+     (Command : access Set_Breakpoints_State_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type;
+   --  Set the state of the selected breakpoints to Is_Enabled
+
    type Dummy_Command is new Interactive_Command with null record;
    overriding function Execute
      (Command : access Dummy_Command;
@@ -679,6 +686,47 @@ package body DAP.Views.Breakpoints is
       return Success;
    end Execute;
 
+   -------------
+   -- Execute --
+   -------------
+
+   overriding function Execute
+     (Command : access Set_Breakpoints_State_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type
+   is
+      Kernel  : constant Kernel_Handle   := Get_Kernel (Context.Context);
+      View    : constant Breakpoint_View :=
+        Breakpoint_View
+           (Breakpoints_MDI_Views.Retrieve_View
+                (Kernel,
+                 Visible_Only => True));
+      Id_List : Breakpoint_Identifier_Lists.List;
+   begin
+      if View = null then
+         return Commands.Failure;
+      end if;
+
+      --  Get the list of selected breakpoints
+      Get_Selected_Breakpoints_Or_Set_State (View    => View,
+                                             Is_Set  => False,
+                                             State   => Command.Is_Enabled,
+                                             Id_List => Id_List);
+
+      --  Put them in numerical order
+      Breakpoint_Identifier_Lists.Reverse_Elements (Id_List);
+      Set_Breakpoints_State (View.Kernel, Id_List, Command.Is_Enabled);
+
+      Breakpoint_Identifier_Lists.Clear (Id_List);
+
+      --  Need to modify the toggle buttons in the model
+      Get_Selected_Breakpoints_Or_Set_State (View    => View,
+                                             Is_Set  => True,
+                                             State   => Command.Is_Enabled,
+                                             Id_List => Id_List);
+
+      return Commands.Success;
+   end Execute;
+
    ------------------------------
    -- Filter_Matches_Primitive --
    ------------------------------
@@ -712,18 +760,18 @@ package body DAP.Views.Breakpoints is
    procedure Register_Module
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
    is
-      F                  : Action_Filter := new No_View_Filter;
-      No_Debugger_Filter : Action_Filter;
-      Dummy              : Action_Filter;
+      No_View              : Action_Filter := new No_View_Filter;
+      No_Or_Stopped_Filter : Action_Filter;
+      Dummy                : Action_Filter;
    begin
       Simple_Views.Register_Module (Kernel);
       Simple_Views.Register_Open_View_Action
         (Kernel,
          Action_Name => "open breakpoints editor",
          Description => "Open the Breakpoints Editor for the debugger",
-         Filter      => F);
+         Filter      => No_View);
 
-      No_Debugger_Filter := Kernel.Lookup_Filter ("No debugger or stopped");
+      No_Or_Stopped_Filter := Kernel.Lookup_Filter ("No debugger or stopped");
 
       GPS.Kernel.Actions.Register_Action
         (Kernel,
@@ -732,7 +780,7 @@ package body DAP.Views.Breakpoints is
            & " (from the Breakpoints view)",
          Icon_Name => "gps-remove-symbolic",
          Category  => "Debug",
-         Filter    => No_Debugger_Filter);
+         Filter    => No_Or_Stopped_Filter);
 
       GPS.Kernel.Actions.Register_Action
         (Kernel,
@@ -740,9 +788,27 @@ package body DAP.Views.Breakpoints is
          "Delete all existing breakpoints",
          Icon_Name => "gps-clear-symbolic",
          Category  => "Debug",
-         Filter    => No_Debugger_Filter);
+         Filter    => No_Or_Stopped_Filter);
 
-      ---
+      GPS.Kernel.Actions.Register_Action
+        (Kernel,
+         "debug enable breakpoints",
+         new Set_Breakpoints_State_Command (True),
+         "Enable the selected breakpoints",
+         Icon_Name => "gps-syntax-check-symbolic",
+         Category  => "Debug",
+         Filter    => No_Or_Stopped_Filter);
+
+      GPS.Kernel.Actions.Register_Action
+        (Kernel,
+         "debug disable breakpoints",
+         new Set_Breakpoints_State_Command (False),
+         "Disable the selected breakpoints",
+         Icon_Name => "gps-stop-symbolic",
+         Category  => "Debug",
+         Filter    => No_Or_Stopped_Filter);
+
+      --  Not implemented yet
       Dummy := new Dummy_Filter;
       Register_Filter (Kernel, Dummy, "Dummy");
 
@@ -770,24 +836,6 @@ package body DAP.Views.Breakpoints is
          "debug create breakpoint", new Dummy_Command,
          "Create a new breakpoint, from the Breakpoints view",
          Icon_Name => "gps-add-symbolic",
-         Category  => "Debug",
-         Filter    => Dummy);
-
-      GPS.Kernel.Actions.Register_Action
-        (Kernel,
-         "debug enable breakpoints",
-         new Dummy_Command,
-         "Enable the selected breakpoints",
-         Icon_Name => "gps-syntax-check-symbolic",
-         Category  => "Debug",
-         Filter    => Dummy);
-
-      GPS.Kernel.Actions.Register_Action
-        (Kernel,
-         "debug disable breakpoints",
-         new Dummy_Command,
-         "Disable the selected breakpoints",
-         Icon_Name => "gps-stop-symbolic",
          Category  => "Debug",
          Filter    => Dummy);
    end Register_Module;
