@@ -940,7 +940,8 @@ package body VCS2.Scripts is
 
       elsif Command = "supported_systems" then
          declare
-            Choices : Unbounded_String := To_Unbounded_String ("Auto");
+            Choices : Unbounded_String := To_Unbounded_String
+              ("auto" & ASCII.LF & "none");
 
             procedure On_Name (Name : String);
             procedure On_Name (Name : String) is
