@@ -1,8 +1,8 @@
 .. _Using_GNAT_Studio_for_Remote_Development:
 
-****************************************
-Using GNAT Studio for Remote Development
-****************************************
+*****************************************************
+Using GNAT Studio for Remote Development (sunsetted)
+*****************************************************
 
 .. index:: remote
 .. index:: network
@@ -25,6 +25,12 @@ the desktop used to access the network is often a powerful PC that remains
 idle most of the time. To address this situation, GNAT Studio offers the
 option of running natively on the desktop, with compilation, execution, and/or
 debugging activities performed transparently on one or more remote servers.
+
+Note that this mode is sunsetted: we will no longer develop new features for
+the GNAT Studio remote mode. Instead, we strongly encourage you to have a look
+at our `Ada VS Code extension <https://github.com/AdaCore/ada_language_server#how-to-use-the-vscode-extension>`_, since VS Code provides a very powerful remote mode via a
+`dedicated extension <https://code.visualstudio.com/docs/remote/remote-overview>`_.
+
 
 .. _Requirements:
 
