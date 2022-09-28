@@ -265,9 +265,9 @@ XML = r"""<?xml version="1.0" ?>
        package="IDE"
        editor_page="Version Control"
        editor_section="System"
-       description="Name of the version control system that you are using."
+       description="Name of the version control system that you are using. When set to 'auto', GNAT Studio will try to detect the uderlying version control system. Set this attribute to 'none' if you want to disable VCS for this project."
        label="System">
-       <shell default="None" lang="python">
+       <shell default="auto" lang="python">
 GPS.VCS2.supported_systems() if hasattr(GPS, 'VCS2') else GPS.VCS.supported_systems()
        </shell>
    </project_attribute>
