@@ -44,25 +44,6 @@ This behavior is controlled by the :menuselection:`General --> Hyper links`
 preference.
 
 
-.. index:: dispatching
-.. index:: plugins; dispatching.py
-.. _Highlighting_dispatching_calls:
-
-Highlighting dispatching calls
-==============================
-
-By default, GNAT Studio highlights dispatching calls in Ada and C++ source
-code via the :file:`dispatching.py` plugin.  Based on the cross-reference
-information, this plugin highlights (with a special color you can
-configure in the preferences dialog) all Ada dispatching calls or calls to
-virtual methods in C++.  A dispatching call in Ada is a subprogram call
-where the actual subprogram called is not known until run time and is
-chosen based on the tag of the object.
-
-Disable this highlighting (which may be slow if you have large sources) by
-using the :menuselection:`Edit --> Preferences...` menu, going to the Plugins
-section and disabling the :file:`dispatching.py` plugin.
-
 Contextual Menus for Source Navigation
 ======================================
 
