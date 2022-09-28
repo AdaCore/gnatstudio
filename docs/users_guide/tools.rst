@@ -432,3 +432,68 @@ the currently selected file. When a negative value is specified, the
 subprogram is moved to the bottom table.
 
 GNAT Studio saves all changes when the stack usage editor window is closed.
+
+The automatic code reducer
+==========================
+
+.. index:: code reducer
+
+GNAT Studio ships with the :guilabel:`gnatstudio_cli` command-line tool
+which can reduce an Ada code base. You can use this tool to obtain a
+small reproducer which shows a particular issue.
+
+The way this tool works is by removing statements from the Ada closure
+of a project, while preserving a given set of properties (the "oracle"),
+in a way that preserves the validity of the Ada code as much as possible.
+
+Collecting the project in a sandbox area
+----------------------------------------
+
+The automatic reducer will edit files in place. If you don't want to
+break your development environment, you might want to copy the sources
+and work in a sandbox area. The GNAT Studio menu
+:guilabel:`Analyze -> Automatic code reducer -> Collect sources in Sandbox project`
+can do this and collect all Ada sources in the project closure within a
+given directory.
+
+Writing an oracle script
+------------------------
+
+To use this tool, you'll first need to write an oracle
+script. This is a script that returns with an error code 0 if the property
+of interest is observed, and nonzero otherwise.
+
+For instance, if the property being tested is that the program should
+print "hello", the oracle script should first build the project, returning
+nonzero if the project does not build, then run the program, and return
+zero if the output of the program is "hello".
+
+The oracle script is going to be invoked repeatedly in the same area, so you
+will need to ensure that it is not influenced by leftovers from previous
+invocations.
+
+This script might be called more than once per second, so make sure its
+behavior supports this. For instance, if this script uses
+:guilabel:`gprbuild` to build the project, you will need to pass the option
+:guilabel:`-m2` so that the checksums of files, rather than the timestamps,
+are taken into account when determining whether to rebuild.
+
+The speed of this script has a strong influence on the overall speed of
+the reducer, so it's worth taking the time to optimize the oracle script.
+For instance, if the property to preserve is "the program should print hello",
+then it might help to add a call to :guilabel:`grep` to verify that the word
+"hello" is present in the sources: this will allow the reducer to quickly
+eliminate bad candidates without having to take time to compile them.
+
+You can test your oracle script from GNAT Studio, with the menu
+:guilabel:`Analyze -> Automatic code reducer-> Test the Oracle script`
+
+Running the reducer
+-------------------
+
+The command line has the following format:
+
+    gnatstudio_cli adareducer -P<your project> -s <your oracle script>
+
+You can launch this from GNAT Studio with the menu
+:guilabel:`Analyze -> Automatic code reducer-> Launch Automatic Reducer`

@@ -6,6 +6,7 @@ with "../builder/builder_core";
 with "../ada_module/core/ada_module_core";
 with "../gnatdoc/gnatdoc";
 with "../prj_editor/prj_core";
+with "../lal/lal_core";
 
 project CLI is
 

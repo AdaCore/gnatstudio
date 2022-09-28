@@ -367,6 +367,14 @@
             <menu label="Generate _Current File"
                   action="documentation generate for current file"/>
          </menu>
+
+         <separator/>
+
+         <menu label="Automatic code reducer">
+            <menu label="Collect sources in Sandbox Project"   action="collect sandbox project"/>
+            <menu label="Test the Oracle Script"               action="test oracle script"/>
+            <menu label="Launch Automatic Reducer"             action="launch adareducer"/>
+         </menu>
       </menu>
 
       <menu label='_Debug'>

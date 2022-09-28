@@ -1177,6 +1177,24 @@ The Analyze Menu
 
    Launch GNATdoc on the current project
 
+.. index:: menu; analyze --> automatic code reducer --> collect sources in sandbox project
+
+* :menuselection:`Analyze --> Automatic code reducer --> Collect sources in Sandbox Project`
+
+   Collect the source files into a 'sandbox' project
+
+.. index:: menu; analyze --> automatic code reducer --> test the oracle script
+
+* :menuselection:`Analyze --> Automatic code reducer --> Test the Oracle Script`
+
+   Create the oracle script if it doesn't exist, launch it if needed.
+
+.. index:: menu; analyze --> automatic code reducer --> launch automatic reducer
+
+* :menuselection:`Analyze --> Automatic code reducer --> Launch Automatic Reducer`
+
+
+
 .. index:: debug
 
 .. _The_Debug_Menu:
