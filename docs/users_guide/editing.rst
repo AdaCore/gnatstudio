@@ -535,6 +535,10 @@ them. However, you can choose to make them writable just as if you had clicked
 on the :guilabel:`Read-Only` button in the status bar of the editor and have
 GNAT Studio perform the renaming in them as well.
 
+When renaming an Ada package, GNAT Studio will now also rename the corresponding
+files when needed. You can control this via the *Allow file renaming*
+option in the rename dialog.
+
 .. _Name_Parameters:
 
 Name Parameters
@@ -550,248 +554,24 @@ example::
      Call (Param1 => 1, Param2 => 2);
 
 
-.. _Extract_Subprogram:
+.. _Other_Ada_refactorings:
 
-Extract Subprogram
+Other Refactorings
 ------------------
 
-This refactoring moves some code into a separate subprogram to simplify the
-original subprogram by moving part of its code elsewhere.  Here is an
-example from the "Refactoring" book. The refactoring takes place in the
-body of the package :file:`pkg.adb`, but the spec is needed so you can
-compile the source code (a preliminary, but mandatory, step before you can
-refactor the code)::
+You can find a list of all the Ada-specific refactorings provided by
+the `Ada Language Server <https://github.com/AdaCore/ada_language_server>`_, with some GIFs showing how they work,
+`here <https://github.com/AdaCore/ada_language_server/blob/master/doc/refactoring_tools.md>`_.
 
-  pragma Ada_05;
+All these refactorings are available through what we call *Code Actions*. They are available
+via the light-bulb that appears on the left-side of the current editor when placing the cursor
+on a place where these refactorings can work (e.g: within a subprogram declaration for the
+*Add Parameter* refactoring).
 
-  with Ada.Containers.Indefinite_Doubly_Linked_Lists;
-  with Ada.Strings.Unbounded;
+.. image:: refactoring-lightbulb.png
 
-  package Pkg is
-
-     type Order is tagged null record;
-     function Get_Amount (Self : Order) return Integer;
-
-     package Order_Lists is new
-        Ada.Containers.Indefinite_Doubly_Linked_Lists (Order);
-
-     type Invoice is tagged record
-        Orders : Order_Lists.List;
-        Name   : Ada.Strings.Unbounded.Unbounded_String;
-     end record;
-
-     procedure Print_Owing (Self : Invoice);
-
-  end Pkg;
-
-An initial implementation for this is the following::
-
-  pragma Ada_05;
-  with Ada.Strings.Unbounded;  use Ada.Strings.Unbounded;
-  with Ada.Text_IO;            use Ada.Text_IO;
-
-  package body Pkg is
-     use Order_Lists;
-
-     ----------------
-     -- Get_Amount --
-     ----------------
-
-     function Get_Amount (Self : Order) return Integer is
-     begin
-        return 0;
-     end Get_Amount;
-
-     -----------------
-     -- Print_Owing --
-     -----------------
-
-     procedure Print_Owing (Self : Invoice) is
-        E : Order_Lists.Cursor := First (Self.Orders);
-        Outstanding : Natural := 0;
-        Each : Order;
-     begin
-        --  <<< line 30
-        --  Print Banner
-
-        Put_Line ("");
-        Put_Line (" Customer Owes         ");
-        Put_Line ("");  --  << line 35
-
-        --  Calculate Outstanding
-
-        while Has_Element (E) loop
-           Each := Element (E);
-           Outstanding := Outstanding + Each.Get_Amount;
-           Next (E);
-        end loop;
-
-        --  Print Details
-
-        Put_Line ("Name: " & To_String (Self.Name));
-        Put_Line ("Outstanding:" & Outstanding'Img);
-     end Print_Owing;
-  end Pkg;
-
-Suppose we feel the procedure :command:`Print_Owing` is too long and does
-several independent actions.  We will perform a series of three successive
-refactoring steps to extract the code and move it elsewhere.
-
-First, we move the code that prints the banner. Moving it is easy, since
-this code does not depend on any context. We could just do a copy-paste,
-but then we would have to create the new subprogram. Instead, we select lines
-30 to 35 and then select the :menuselection:`Refactoring --> Extract
-Subprogram` contextual menu.  GNAT Studio removes those lines from the
-subprogram :command:`Print_Owing` and creates a new procedure :command:`Print_Banner`
-(the name is specified by the user; GNAT Studio does not try to guess a name).
-Also, since the chunk of code that is extracted starts with a comment,
-GNAT Studio automatically uses that comment as the documentation for the new
-subprogram.  Here is the relevant part of the resulting file::
-
-  package body Pkg is
-
-     procedure Print_Banner;
-     --  Print Banner
-
-     ------------------
-     -- Print_Banner --
-     ------------------
-
-     procedure Print_Banner is
-     begin
-        Put_Line ("");
-        Put_Line (" Customer Owes         ");
-        Put_Line ("");
-     end Print_Banner;
-
-     ... (code not shown)
-
-     procedure Print_Owing (Self : Invoice) is
-        E : Order_Lists.Cursor := First (Self.Orders);
-        Outstanding : Natural := 0;
-        Each : Order;
-     begin
-        Print_Banner;
-
-        --  Calculate Outstanding
-
-        while Has_Element (E) loop
-           Each := Element (E);
-           Outstanding := Outstanding + Each.Get_Amount;
-           Next (E);
-        end loop;
-
-        --  Print Details   <<< line  54
-
-        Put_Line ("Name: " & To_String (Self.Name));
-        Put_Line ("Outstanding:" & Outstanding'Img);  --  line 57
-     end Print_Owing;
-  end Pkg;
-
-A more interesting example is when we want to extract the code to print the
-details of the invoice. This code depends on one local variable and the
-parameter to :command:`Print_Owing`.  When we select lines 54 to 57 and
-extract it into a new :command:`Print_Details` subprogram, GNAT Studio
-automatically decides which variables to extract and whether they should
-become parameters of the new subprogram or local variables. In the former
-case, it also automatically decides whether to create :samp:`in`,
-:samp:`out` or :samp:`in out` parameters. If there is a single :samp:`out`
-parameter, GNAT Studio automatically creates a function instead of a procedure.
-
-GNAT Studio uses the same name for the local variable for the parameters.
-Often, it makes sense to recompile the new version of the source and apply the
-:menuselection:`Refactoring --> Rename Entity` refactoring to have more
-specific names for the parameters, or the :menuselection:`Refactoring -->
-Name Parameters` refactoring so that calls to the new method uses named
-parameters to further clarify the code::
-
-     ... code not shown
-
-     procedure Print_Details
-       (Self : Invoice'Class;
-        Outstanding : Natural);
-     --  Print Details
-
-     -------------------
-     -- Print_Details --
-     -------------------
-
-     procedure Print_Details
-       (Self : Invoice'Class;
-        Outstanding : Natural)
-     is
-     begin
-        Put_Line ("Name: " & To_String (Self.Name));
-        Put_Line ("Outstanding:" & Outstanding'Img);
-     end Print_Details;
-
-     procedure Print_Owing (Self : Invoice) is
-        E : Order_Lists.Cursor := First (Self.Orders);
-        Outstanding : Natural := 0;
-        Each : Order;
-     begin
-        Print_Banner;
-
-        --  Calculate Outstanding
-
-        while Has_Element (E) loop
-           Each := Element (E);
-           Outstanding := Outstanding + Each.Get_Amount;
-           Next (E);
-        end loop;
-
-        Print_Details (Self, Outstanding);
-     end Print_Owing;
-
-Finally, we want to extract the code that computes the outstanding
-balance. When this code is moved, the variables :command:`E` and
-:command:`Each` become dead in :command:`Print_Owing` and are moved into
-the new subprogram (which we call :command:`Get_Outstanding`). The initial
-selection should include the blank lines before and after the code to keep
-the resulting :command:`Print_Owing` simpler. GNAT Studio automatically ignores
-those blank lines.  Here is the result of that last refactoring ::
-
-     ... code not shown
-
-     procedure Get_Outstanding (Outstanding : in out Natural);
-     --  Calculate Outstanding
-
-     ---------------------
-     -- Get_Outstanding --
-     ---------------------
-
-     procedure Get_Outstanding (Outstanding : in out Natural) is
-        E : Order_Lists.Cursor := First (Self.Orders);
-        Each : Order;
-     begin
-        while Has_Element (E) loop
-           Each := Element (E);
-           Outstanding := Outstanding + Each.Get_Amount;
-           Next (E);
-        end loop;
-     end Get_Outstanding;
-
-     procedure Print_Owing (Self : Invoice) is
-        Outstanding : Natural := 0;
-     begin
-        Print_Banner;
-        Get_Outstanding (Outstanding);
-        Print_Details (Self, Outstanding);
-     end Print_Owing;
-
-The final version of :command:`Print_Owing` is not perfect. For example,
-passing the initial value 0 to :command:`Get_Outstanding` is useless and,
-in fact, it should probably be a function with no parameter. But GNAT Studio
-already saves a lot of time and manipulation even given these
-imperfections.
-
-Finally, a word of caution: this refactoring does not check that you are
-starting with valid input. For example, if the text you select includes a
-:command:`declare` block, you should always include the full block, not
-just a part of it (or select text between :command:`begin` and
-:command:`end`). Likewise, GNAT Studio does not expect you to select any part
-of the variable declarations, just the code.
-
+Note that GNAT Studio's underlying C/C++ engine called `clangd <https://clangd.llvm.org/>`_ also provides
+some refactorings through *Code Actions*.
 
 .. index:: external editor
 .. _Using_an_External_Editor:

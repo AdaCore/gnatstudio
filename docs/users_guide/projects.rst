@@ -353,7 +353,8 @@ You can change the current value of any of these variables by clicking on
 one, which displays a pop-up window with the list of possible values, from
 which you select the one you want to use.
 
-Just click on the :guilabel:`Apply` button to apply your changes: GNAT Studio
+Just click on the :guilabel:`Apply` button (i.e: with the *check* icon, on
+the left-side vertical toolbar) to apply your changes: GNAT Studio
 will recompute the :guilabel:`Project` view (in case source directories, object
 directories or list of source files have changed). GNAT Studio will also update
 other items such as the list of
