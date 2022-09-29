@@ -91,3 +91,5 @@ class History(Dialog):
 
     def open_and_yield(self):
         yield self._open_and_yield('open History')
+        self.view = GPS.MDI.get("History")
+        self.tree = get_widgets_by_type(Gtk.TreeView, self.view.pywidget())[0]

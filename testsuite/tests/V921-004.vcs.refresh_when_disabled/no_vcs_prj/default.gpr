@@ -1,0 +1,8 @@
+project Default is
+
+   package Ide is
+      for Vcs_Kind use "none";
+   end Ide;
+
+end Default;
+
