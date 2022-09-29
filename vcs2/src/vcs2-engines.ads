@@ -645,7 +645,7 @@ package VCS2.Engines is
       return Gtk_Widget;
    procedure Set_Active_VCS
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
-      VCS    : not null access VCS_Engine'Class);
+      VCS    : access VCS_Engine'Class);
    function Active_VCS
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
       return VCS_Engine_Access;

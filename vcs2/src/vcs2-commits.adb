@@ -121,10 +121,6 @@ package body VCS2.Commits is
       Hash           => GNATCOLL.VFS.Full_Name_Hash);
 
    type Commit_View_Record is new Base_VCS_View_Record with record
-      Active_VCS  : VCS_Engine_Access;
-      --  A cache for the active VCS. This is used to save the commit message
-      --  for the proper VCS.
-
       Computing_File_Status : Boolean := False;
       --  Whether there is background work to recompute the status of all
       --  files. During that time, we do not react to VCS_File_Status_Changed
@@ -415,7 +411,7 @@ package body VCS2.Commits is
       VCS          : not null access VCS_Engine'Class;
       Select_Nodes : Boolean := False)
    is
-      Is_Active : constant Boolean := VCS = Self.Active_VCS;
+      Is_Active : constant Boolean := VCS = Active_VCS (Self.Kernel);
       Staged    : constant Boolean := (Props.Status and Mask_Staged) /= 0;
       Unstaged  : constant Boolean :=
         (Props.Status and Mask_Modified_Unstaged) /= 0;
@@ -649,15 +645,16 @@ package body VCS2.Commits is
 
    procedure Refresh
      (Self : not null access Commit_View_Record'Class;
-      From_User : Boolean) is
+      From_User : Boolean)
+   is
+      VCS : constant VCS_Engine_Access := Active_VCS (Self.Kernel);
    begin
       --  Save and restore commit message
       Save_Commit_Message (Self);
-      Self.Active_VCS := Active_VCS (Self.Kernel);
 
-      if Self.Active_VCS /= null then
+      if VCS /= null then
          Self.Commit.Get_Buffer.Set_Text
-           (Get_Commit_Message_From_Properties (Self.Active_VCS));
+           (Get_Commit_Message_From_Properties (VCS));
          Self.Set_Activity_Progress_Bar_Visibility (True);
       else
          Self.Commit.Get_Buffer.Set_Text ("");
@@ -725,7 +722,7 @@ package body VCS2.Commits is
                end loop;
 
                if Files /= null then
-                  V.Active_VCS.Stage_Or_Unstage_Files
+                  Active_VCS (V.Kernel).Stage_Or_Unstage_Files
                     (Files.all, Stage => True);
                   Unchecked_Free (Files);
                end if;
@@ -742,7 +739,7 @@ package body VCS2.Commits is
      (Self : not null access Commit_View_Record'Class)
    is
       Text : constant String := Get_Text_Without_Placeholder (Self.Commit);
-      VCS  : constant VCS_Engine_Access := Self.Active_VCS;
+      VCS  : constant VCS_Engine_Access := Active_VCS (Self.Kernel);
    begin
       if VCS /= null then
          Set_Commit_Message (VCS, Text);
@@ -776,10 +773,12 @@ package body VCS2.Commits is
         Gtk_Tree_Path_New_From_String (Path);
       Iter        : constant Gtk_Tree_Iter :=
         View.Tree.Get_Store_Iter_For_Filter_Path (Filter_Path);
-      File : constant Virtual_File := Get_File_From_Node (View.Tree, Iter);
+      File        : constant Virtual_File :=
+        Get_File_From_Node (View.Tree, Iter);
+      VCS         : constant VCS_Engine_Access := Active_VCS (View.Kernel);
    begin
-      if View.Active_VCS /= null then
-         View.Active_VCS.Stage_Or_Unstage_Files
+      if VCS /= null then
+         VCS.Stage_Or_Unstage_Files
            ((1 => File),
             Stage => not View.Tree.Model.Get_Boolean (Iter, Column_Staged));
       end if;
@@ -825,7 +824,7 @@ package body VCS2.Commits is
            (On_Selection'Unrestricted_Access);
 
          if Files /= null then
-            View.Active_VCS.Stage_Or_Unstage_Files
+            Active_VCS (View.Kernel).Stage_Or_Unstage_Files
               (Files.all, Stage => not Staged);
             Unchecked_Free (Files);
          end if;
@@ -886,7 +885,7 @@ package body VCS2.Commits is
                Title          => -"Confirm discard",
                Parent         => Get_Main_Window (View.Kernel)) = Button_Yes
             then
-               View.Active_VCS.Queue_Discard_Local_Changes
+               Active_VCS (View.Kernel).Queue_Discard_Local_Changes
                  (Files   => Files,  --  freed by Queue_Discard_Local_Changes
                   Visitor => Refresh_On_Terminate (View.Kernel));
             end if;
@@ -938,7 +937,7 @@ package body VCS2.Commits is
             --  yet because the editor still has focus) is taken into account.
 
             Msg : constant String :=
-              (if View /= null and then View.Active_VCS = VCS
+              (if View /= null
                then Get_Text_Without_Placeholder (View.Commit)
                else Get_Commit_Message_From_Properties (VCS));
          begin
