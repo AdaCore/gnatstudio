@@ -405,7 +405,7 @@ def task_workflow(task_name, workflow, active=False, **kwargs):
     :return: the task which monitors the workflow.
     """
 
-    def execute(t):
+    def _execute(t):
         """ The execute function for our task """
 
         # The task manager might try to run "execute" right after the creation
@@ -465,6 +465,23 @@ def task_workflow(task_name, workflow, active=False, **kwargs):
             # nor another generator: treat this as a yielded result.
             t.return_val = el
             return GPS.Task.EXECUTE_AGAIN
+
+    def execute(t):
+        """A wrapper around execute(), with a global exception handler
+
+           This is used to make sure exception raised in user-defined tasks
+              - are properly printed to the console
+              - do not propagate to the task manager
+        """
+        try:
+            return _execute(t)
+        except Exception:
+            exc_type, exc_value, exc_tb = sys.exc_info()
+            GPS.Console().write(
+                "Unexpected exception in workflow:\n%s\n%s\n" %
+                (exc_value,
+                 " ".join(traceback.format_tb(exc_tb))))
+            return GPS.Task.FAILURE
 
     # Create a task with our execute function
     t = GPS.Task(task_name, execute, active=active)
