@@ -1218,12 +1218,10 @@ package body VCS2.History is
 
    procedure Hide_Progress_Bar (Self : access History_View_Record'Class) is
    begin
-      if not Self.Paned.Is_Visible then
-         Self.Set_Activity_Progress_Bar_Visibility (False);
-         Set_No_Show_All (Self.Paned, False);
-         Show_All (Self.Paned);
-         Set_No_Show_All (Self.Paned, True);
-      end if;
+      Self.Set_Activity_Progress_Bar_Visibility (False);
+      Set_No_Show_All (Self.Paned, False);
+      Show_All (Self.Paned);
+      Set_No_Show_All (Self.Paned, True);
    end Hide_Progress_Bar;
 
    -----------------------

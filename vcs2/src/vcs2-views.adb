@@ -80,6 +80,59 @@ package body VCS2.Views is
      (Self   : On_Active_VCS_Changed;
       Kernel : not null access Kernel_Handle_Record'Class);
 
+   procedure Hide_Or_Show_No_VCS_Label
+     (Kernel : not null access Kernel_Handle_Record'Class;
+      View   : not null Base_VCS_View);
+
+   -------------------------------
+   -- Hide_Or_Show_No_VCS_Label --
+   -------------------------------
+
+   procedure Hide_Or_Show_No_VCS_Label
+     (Kernel : not null access Kernel_Handle_Record'Class;
+      View   : not null Base_VCS_View)
+   is
+      Has_Active_VCS : Boolean := True;
+
+      procedure Set_Child_Visibility
+        (Widget : not null access Gtk.Widget.Gtk_Widget_Record'Class);
+      --  Used to hide/show the view's children widgets when needed (i.e: show
+      --  when there is an active VCS, hide them otherwise, and show the 'No
+      --  VCS' label instead).
+
+      ----------------
+      -- Show_Child --
+      ----------------
+
+      procedure Set_Child_Visibility
+        (Widget : not null access Gtk.Widget.Gtk_Widget_Record'Class) is
+      begin
+         if Widget /= View.No_VCS_Help then
+            Widget.Set_No_Show_All (not Has_Active_VCS);
+
+            if Has_Active_VCS then
+               Widget.Show_All;
+            else
+               Widget.Hide;
+            end if;
+         end if;
+      end Set_Child_Visibility;
+
+   begin
+      if Active_VCS (Kernel) /= null then
+         Has_Active_VCS := True;
+         View.No_VCS_Help.Set_No_Show_All (True);
+         View.No_VCS_Help.Hide;
+         View.Show_All;
+      else
+         Has_Active_VCS := False;
+         View.No_VCS_Help.Set_No_Show_All (False);
+         View.No_VCS_Help.Show_All;
+      end if;
+
+      View.Foreach (Set_Child_Visibility'Unrestricted_Access);
+   end Hide_Or_Show_No_VCS_Label;
+
    -------------
    -- Execute --
    -------------
@@ -88,25 +141,8 @@ package body VCS2.Views is
      (Self   : On_Active_VCS_Changed;
       Kernel : not null access Kernel_Handle_Record'Class)
    is
-      procedure Show_Child
-        (Widget : not null access Gtk.Widget.Gtk_Widget_Record'Class);
-
-      ----------------
-      -- Show_Child --
-      ----------------
-
-      procedure Show_Child
-        (Widget : not null access Gtk.Widget.Gtk_Widget_Record'Class) is
-      begin
-         Widget.Set_No_Show_All (False);
-         Widget.Show_All;
-      end Show_Child;
-
    begin
-      if Self.View.No_VCS_Help /= null then
-         Self.View.No_VCS_Help.Destroy;
-      end if;
-      Self.View.Foreach (Show_Child'Unrestricted_Access);
+      Hide_Or_Show_No_VCS_Label (Kernel, Self.View);
    end Execute;
 
    --------------------
@@ -216,60 +252,36 @@ package body VCS2.Views is
 
    procedure No_VCS_Help (Self : not null access Base_VCS_View_Record'Class)
    is
-      Kernel      : constant Kernel_Handle := Self.Kernel;
-      VCS         : constant VCS_Engine_Access := Active_VCS (Kernel);
       Label       : Gtk_Label;
       Vbox        : Gtk_Vbox;
       Link_Button : Gtk_Link_Button;
-
-      procedure Hide_Child
-        (Widget : not null access Gtk.Widget.Gtk_Widget_Record'Class);
-
-      ----------------
-      -- Hide_Child --
-      ----------------
-
-      procedure Hide_Child
-        (Widget : not null access Gtk.Widget.Gtk_Widget_Record'Class) is
-      begin
-         Widget.Hide;
-         Widget.Set_No_Show_All (True);
-      end Hide_Child;
-
    begin
-      if VCS = null or else VCS.Name = "unknown" then
 
-         --  Hide all the VCS view children...
+      --  Display a label to warn the user that no VCS has been
+      --  found for the current project, with a link button to the VCS
+      --  page of the Project Properties.
 
-         Self.Foreach (Hide_Child'Unrestricted_Access);
+      Gtk_New (Self.No_VCS_Help);
+      Self.No_VCS_Help.Set_Policy (Policy_Automatic, Policy_Automatic);
+      Gtk_New_Vbox (Vbox, Homogeneous => False);
+      Self.No_VCS_Help.Add (Vbox);
+      Self.Pack_Start (Self.No_VCS_Help);
 
-         --  ... And display a label to warn the user that no VCS has been
-         --  found for the current project, with a link button to the VCS
-         --  page of the Project Properties.
+      Gtk_New (Label, "No VCS repository found: you can set one via the ");
+      Label.Set_Selectable (True);
+      Vbox.Pack_Start (Label);
+      Label.Set_Alignment (0.5, 1.0);
 
-         Gtk_New (Self.No_VCS_Help);
-         Self.No_VCS_Help.Set_Policy (Policy_Automatic, Policy_Automatic);
-         Gtk_New_Vbox (Vbox, Homogeneous => False);
-         Self.No_VCS_Help.Add (Vbox);
-         Self.Pack_Start (Self.No_VCS_Help);
-
-         Gtk_New (Label, "No VCS repository found: you can set one via the ");
-         Label.Set_Selectable (True);
-         Vbox.Pack_Start (Label);
-         Label.Set_Alignment (0.5, 1.0);
-
-         Gtk_New_With_Label
-           (Link_Button,
-            "Project Properties",
-            "Project Properties");
-         Link_Button.On_Clicked
-           (On_Project_Properties_Link_Clicked'Access,
-            Slot => Self);
-         Link_Button.Set_Alignment (0.5, 0.0);
-         Vbox.Pack_Start (Link_Button);
-
-         Self.No_VCS_Help.Show_All;
-      end if;
+      Gtk_New_With_Label
+        (Link_Button,
+         "Project Properties",
+         "Project Properties");
+      Link_Button.On_Clicked
+        (On_Project_Properties_Link_Clicked'Access,
+         Slot => Self);
+      Link_Button.Set_Alignment (0.5, 0.0);
+      Vbox.Pack_Start (Link_Button);
+      Self.No_VCS_Help.Set_No_Show_All (True);
    end No_VCS_Help;
 
    ---------------
@@ -300,6 +312,8 @@ package body VCS2.Views is
       P := new On_Pref_Changed'(Preferences_Hooks_Function with View => Self);
       Preferences_Changed_Hook.Add (Obj => P, Watch => Self);
       P.Execute (Self.Kernel, null);   --   initial setup
+
+      Hide_Or_Show_No_VCS_Label (Self.Kernel, Base_VCS_View (Self));
    end On_Create;
 
    -----------------------------

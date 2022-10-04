@@ -484,8 +484,7 @@ package body VCS2.Engines is
    procedure Reset_VCS_Engines
       (Kernel : not null access Kernel_Handle_Record'Class)
    is
-      pragma Unreferenced (Kernel);
-      E      : VCS_Engine_Access;
+      E : VCS_Engine_Access;
    begin
       while not Global_Data.All_Engines.Is_Empty loop
          E := Global_Data.All_Engines.First_Element;
@@ -495,7 +494,7 @@ package body VCS2.Engines is
       end loop;
 
       Global_Data.VCS_Engines.Clear;
-      Global_Data.Active_VCS := null;
+      Set_Active_VCS (Kernel, null);
    end Reset_VCS_Engines;
 
    -------------------------
@@ -1694,10 +1693,16 @@ package body VCS2.Engines is
       Kernel : not null access Kernel_Handle_Record'Class)
    is
       VCS : constant VCS_Engine_Access := Active_VCS (Kernel);
-      N   : constant String :=
-        VCS.Name & " (" & VCS.Working_Directory.Display_Full_Name & ")";
    begin
-      Self.Combo.Select_Item (N);
+      --  Select the new active VCS in the VCS selector, if not null
+      if VCS /= null then
+         declare
+            N : constant String :=
+              VCS.Name & " (" & VCS.Working_Directory.Display_Full_Name & ")";
+         begin
+            Self.Combo.Select_Item (N);
+         end;
+      end if;
    end Execute;
 
    -------------------------
@@ -1783,7 +1788,7 @@ package body VCS2.Engines is
 
    procedure Set_Active_VCS
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
-      VCS    : not null access VCS_Engine'Class)
+      VCS    : access VCS_Engine'Class)
    is
    begin
       if VCS /= Global_Data.Active_VCS then
