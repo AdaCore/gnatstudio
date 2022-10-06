@@ -321,7 +321,7 @@ class gnatMakeProc:
                         # is now determined by '+' sign after the switch
                         # definition
                         exception = re.split(
-                            "\(except ([a-zA-Z. ]*)\) *$", res[i_desc])
+                            r"\(except ([a-zA-Z. ]*)\) *$", res[i_desc])
                         if len(exception) > 1:
                             self.all_warnings_exception_list = re.findall(
                                 "[.]?[a-zA-Z]", exception[1] + ".e")
@@ -560,7 +560,7 @@ the specified version.">
               <radio-entry label="Ada 95" switch="-gnat95"/>
               <radio-entry label="Ada 2005" switch="-gnat05"/>
               <radio-entry label="Ada 2012" switch="-gnat12"/>
-              <radio-entry label="Ada 2020" switch="-gnat2020"/>
+              <radio-entry label="Ada 2020" switch="-gnat2022"/>
               <radio-entry label="GNAT Extensions" switch="-gnatX"/>
           </radio>
 """
