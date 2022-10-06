@@ -109,6 +109,8 @@ class BoardLoader(Module):
         """
         Used to know if the project's target is supported or not.
         """
+        if GPS.Logger("GNATSTUDIO.MENU_GENERATION").active:
+            return True
 
         return self.__target != "" and \
             self.__target in self.__supported_targets
@@ -257,9 +259,9 @@ class BoardLoader(Module):
         elif self.__flashing_tool == "openocd":
             return "Verified OK"
         elif self.__flashing_tool == "pyocd":
-            return "INFO:loader:Erased \d+ bytes \(\d+ sectors\), " \
-              "programmed \d+ bytes \(\d+ pages\), skipped \d+ bytes " \
-              "\(\d+ pages\) at [\d\.]+ kB\/s|^No operation performed"
+            return r"INFO:loader:Erased \d+ bytes \(\d+ sectors\), " \
+              r"programmed \d+ bytes \(\d+ pages\), skipped \d+ bytes " \
+              r"\(\d+ pages\) at [\d\.]+ kB\/s|^No operation performed"
         else:
             return ""
 
@@ -356,7 +358,7 @@ class BoardLoader(Module):
         elif self.__connection_tool == "openocd":
             return ".cpu: hardware has"
         elif self.__connection_tool == "pyocd":
-            return "INFO:gdbserver:GDB server started on port \d+"
+            return r"INFO:gdbserver:GDB server started on port \d+"
         else:
             return ""
 
