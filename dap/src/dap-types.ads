@@ -40,6 +40,8 @@ package DAP.Types is
 
    package Numbers is new Ada.Containers.Vectors (Positive, Positive);
 
+   type Command_Type is (Internal, Hidden, Visible, User);
+
    ---------------
    -- Addresses --
    ---------------

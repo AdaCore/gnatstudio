@@ -19,7 +19,6 @@ with Ada.Strings.Unbounded;      use Ada.Strings.Unbounded;
 with Ada.Unchecked_Deallocation;
 
 with GNAT.Directory_Operations;  use GNAT.Directory_Operations;
-with GNAT.OS_Lib;
 with GNAT.Strings;
 
 with GNATCOLL.Traces;            use GNATCOLL.Traces;
@@ -46,6 +45,7 @@ with GPS.Kernel.Project;
 with LSP.Types;
 with LSP.JSON_Streams;
 
+with DAP.Consoles;
 with DAP.Persistent_Breakpoints;
 with DAP.Module;
 with DAP.Preferences;
@@ -57,6 +57,7 @@ with DAP.Tools;
 with DAP.Tools.Inputs;
 with DAP.Utils;
 
+with Interactive_Consoles;       use Interactive_Consoles;
 with GUI_Utils;
 with Remote;
 with Language_Handlers;          use Language_Handlers;
@@ -101,6 +102,7 @@ package body DAP.Clients is
    overriding procedure On_Error_Message
      (Self    : in out Evaluate_Request;
       Message : VSS.Strings.Virtual_String);
+
    ------------------
    -- Break_Source --
    ------------------
@@ -329,6 +331,39 @@ package body DAP.Clients is
    begin
       return Self.Call_Stack_View;
    end Get_Call_Stack_View;
+
+   -------------------------
+   -- Get_Command_History --
+   -------------------------
+
+   function Get_Command_History
+     (Self : in out DAP_Client)
+      return History_List_Access is
+   begin
+      return Self.Command_History'Unchecked_Access;
+   end Get_Command_History;
+
+   --------------------------
+   -- Get_Debugger_Console --
+   --------------------------
+
+   function Get_Debugger_Console
+     (Self : DAP_Client)
+      return Generic_Views.Abstract_View_Access is
+   begin
+      return Self.Debugger_Console;
+   end Get_Debugger_Console;
+
+   --------------------------
+   -- Set_Debugger_Console --
+   --------------------------
+
+   procedure Set_Debugger_Console
+     (Self : in out DAP_Client;
+      View : Generic_Views.Abstract_View_Access) is
+   begin
+      Self.Debugger_Console := View;
+   end Set_Debugger_Console;
 
    ------------------------
    -- Get_Current_Thread --
@@ -616,7 +651,8 @@ package body DAP.Clients is
       end if;
 
       declare
-         List : String_List_Access := Project.Attribute_Value (Main_Attribute);
+         List : GNAT.Strings.String_List_Access :=
+           Project.Attribute_Value (Main_Attribute);
       begin
          if List /= null then
             for L in List'Range loop
@@ -1050,29 +1086,33 @@ package body DAP.Clients is
             end if;
 
             if output.a_body.category.Is_Set
-              and then output.a_body.category.Value = console
+              and then
+                ((output.a_body.category.Value = console
+                  and then DAP.Preferences.Debugger_Console_Console.Get_Pref)
+                 or else
+                   (output.a_body.category.Value = stdout
+                    and then DAP.Preferences.Debugger_Console_Stdout.Get_Pref)
+                 or else output.a_body.category.Value = stderr)
             then
-               Self.Kernel.Get_Messages_Window.Insert_Text
-                 ("Debugger adapter" & Self.Id'Img & ":"  &
+               declare
+                  Console : constant access Interactive_Console_Record'Class :=
+                    DAP.Consoles.Get_Debugger_Interactive_Console (Self);
+                  S       : constant String :=
                     VSS.Strings.Conversions.To_UTF_8_String
-                    (output.a_body.output));
+                      (output.a_body.output);
+               begin
+                  if Console /= null then
+                     Console.Insert
+                       ((if output.a_body.category.Value = stderr
+                        then "[ERROR] "
+                        else "") & S,
+                        Add_LF => False);
+                  end if;
 
-            elsif output.a_body.category.Is_Set
-              and then output.a_body.category.Value = stdout
-            then
-               --  Adapter writes debuggee output in a log file
-               null;
-
-            elsif output.a_body.category.Is_Set
-              and then output.a_body.category.Value = stderr
-            then
-               Self.Kernel.Get_Messages_Window.Insert_Error
-                 ("Debugger" & Self.Id'Img & " [stderr]:"  &
-                    VSS.Strings.Conversions.To_UTF_8_String
-                    (output.a_body.output));
-               Trace (Me, "Debugger" & Self.Id'Img & " [stderr]:" &
-                        VSS.Strings.Conversions.To_UTF_8_String
-                        (output.a_body.output));
+                  if output.a_body.category.Value = stderr then
+                     Trace (Me, "Debugger" & Self.Id'Img & " [stderr]:" & S);
+                  end if;
+               end;
             end if;
          end;
 
@@ -1105,10 +1145,6 @@ package body DAP.Clients is
                null;
 
             else
-               Self.Kernel.Get_Messages_Window.Insert_Error
-                 ("Debugger" & Self.Id'Img & " stopped:"  &
-                    stop.a_body.reason'Img);
-
                Trace (Me, "Debugger" & Self.Id'Img & " stopped:" &
                         stop.a_body.reason'Img);
             end if;
@@ -1152,6 +1188,10 @@ package body DAP.Clients is
          Trace (Me, "Event:" &
                   VSS.Strings.Conversions.To_UTF_8_String (Event));
       end if;
+
+   exception
+      when E : others =>
+         Trace (Me, E);
    end Process_Event;
 
    -----------------------

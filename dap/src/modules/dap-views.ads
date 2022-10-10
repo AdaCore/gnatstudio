@@ -119,7 +119,10 @@ package DAP.Views is
       procedure Attach_To_View
         (Client              : access DAP.Clients.DAP_Client'Class;
          Kernel              : not null access Kernel_Handle_Record'Class;
-         Create_If_Necessary : Boolean);
+         Create_If_Necessary : Boolean;
+         Update_On_Attach    : Boolean := True);
+      --  Call Update for the view after attaching when
+      --  Update_On_Attach is True.
 
       procedure Register_Module
         (Kernel : not null access GPS.Kernel.Kernel_Handle_Record'Class);

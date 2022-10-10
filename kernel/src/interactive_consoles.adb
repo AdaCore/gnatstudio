@@ -216,7 +216,7 @@ package body Interactive_Consoles is
    --  only results in moving the prompt mark
 
    procedure Insert_UTF8_With_Tag
-     (Console        : access Interactive_Console_Record;
+     (Console        : not null access Interactive_Console_Record;
       UTF8           : Glib.UTF8_String;
       Add_LF         : Boolean := True;
       Highlight      : Boolean := False;
@@ -527,7 +527,7 @@ package body Interactive_Consoles is
    ------------
 
    procedure Insert
-     (Console        : access Interactive_Console_Record;
+     (Console        : not null access Interactive_Console_Record;
       Text           : String;
       Add_LF         : Boolean := True;
       Highlight      : Boolean := False;
@@ -564,7 +564,7 @@ package body Interactive_Consoles is
    -----------------
 
    procedure Insert_UTF8
-     (Console        : access Interactive_Console_Record;
+     (Console        : not null access Interactive_Console_Record;
       UTF8           : Glib.UTF8_String;
       Add_LF         : Boolean := True;
       Highlight      : Boolean := False;
@@ -690,7 +690,7 @@ package body Interactive_Consoles is
    --------------------------
 
    procedure Insert_UTF8_With_Tag
-     (Console        : access Interactive_Console_Record;
+     (Console        : not null access Interactive_Console_Record;
       UTF8           : Glib.UTF8_String;
       Add_LF         : Boolean := True;
       Highlight      : Boolean := False;
@@ -703,8 +703,7 @@ package body Interactive_Consoles is
       Internal      : Boolean;
       Text_Inserted_In_Console : Boolean := False;
    begin
-      if Console /= null
-        and then Console.Kernel /= null
+      if Console.Kernel /= null
         and then Console.Kernel.Is_In_Destruction
       then
          --  Trying to write in a buffer while the kernel is being destroyed
@@ -750,7 +749,7 @@ package body Interactive_Consoles is
       if Text_Inserted_In_Console then
          declare
             Child : constant MDI_Child :=
-              Find_MDI_Child_From_Widget (Console);
+              Find_MDI_Child_From_Widget (Gtk_Widget (Console));
          begin
             if Child /= null then
                Highlight_Child (Child);

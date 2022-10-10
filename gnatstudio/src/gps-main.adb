@@ -205,6 +205,8 @@ with GPS.Valgrind;
 with Serial_Ports_Views;
 with Xref;
 
+with DAP.Preferences;
+
 procedure GPS.Main is
    package ICS renames Interfaces.C.Strings;
    use type ICS.chars_ptr;
@@ -795,6 +797,17 @@ procedure GPS.Main is
          Setenv ("PYTHONPATH", New_Val.all);
          Trace (Me, "PYTHONPATH=" & New_Val.all);
          Free (New_Val);
+      end;
+
+      --  Temporary for DAP testing, to set gdb 13.x version
+      --  Will be removed when gdb v. 13.x is default
+      declare
+         DAP_GDB_Path : constant String := Env.Value ("DAP_GDB", "");
+      begin
+         if DAP_GDB_Path /= "" then
+            DAP.Preferences.DAP_Adapter.Set_Pref
+              (GPS_Main.Kernel.Get_Preferences, DAP_GDB_Path & " -i=dap");
+         end if;
       end;
 
       for J of Env.Keys loop
