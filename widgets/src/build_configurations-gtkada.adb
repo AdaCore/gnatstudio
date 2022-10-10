@@ -1802,7 +1802,10 @@ package body Build_Configurations.Gtkada is
 
             --  Look for existing top-level iter with the right name
             while Iter /= Null_Iter loop
-               if Get_String (View.Model, Iter, Name_Column) = Cat_Name then
+               --  Prevent creating 2 categories with the same name
+               if To_Lower (Get_String (View.Model, Iter, Name_Column))
+                 = To_Lower (Cat_Name)
+               then
                   return Iter;
                end if;
 
