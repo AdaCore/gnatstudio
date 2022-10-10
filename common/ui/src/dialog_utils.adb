@@ -590,15 +590,16 @@ package body Dialog_Utils is
    ------------------
 
    function Create_Child
-     (Self        : not null access Dialog_Group_Widget_Record'Class;
-      Widget      : not null access Gtk_Widget_Record'Class;
-      Button      : access Gtk_Button_Record'Class := null;
-      Label       : String := "";
-      Doc         : String := "";
-      Child_Key   : String := "";
-      Expand      : Boolean := True;
-      Fill        : Boolean := True;
-      Same_Height : Boolean := True) return Gtk_Widget
+     (Self         : not null access Dialog_Group_Widget_Record'Class;
+      Widget       : not null access Gtk_Widget_Record'Class;
+      Button       : access Gtk_Button_Record'Class := null;
+      Label        : String := "";
+      Doc          : String := "";
+      Child_Key    : String := "";
+      Expand       : Boolean := True;
+      Fill         : Boolean := True;
+      Same_Height  : Boolean := True;
+      Expand_Child : Boolean := False) return Gtk_Widget
    is
       Label_Widget : Gtk_Label;
    begin
@@ -617,7 +618,8 @@ package body Dialog_Utils is
          Child_Key    => Child_Key,
          Expand       => Expand,
          Fill         => Fill,
-         Same_Height  => Same_Height);
+         Same_Height  => Same_Height,
+         Expand_Child => Expand_Child);
    end Create_Child;
 
    ------------------
@@ -633,7 +635,8 @@ package body Dialog_Utils is
       Child_Key    : String := "";
       Expand       : Boolean := True;
       Fill         : Boolean := True;
-      Same_Height  : Boolean := True) return Gtk_Widget
+      Same_Height  : Boolean := True;
+      Expand_Child : Boolean := False) return Gtk_Widget
    is
       Child_Box : Gtk_Box;
       Spacing   : constant Gint := 5;
@@ -685,7 +688,7 @@ package body Dialog_Utils is
          end;
       end if;
 
-      Self.Append_Child (Child_Box, Expand => False);
+      Self.Append_Child (Child_Box, Expand => Expand_Child);
 
       --  Insert it in the dialog view children map if a key has been specified
       if Child_Key /= "" then
@@ -701,27 +704,29 @@ package body Dialog_Utils is
    ------------------
 
    procedure Create_Child
-     (Self        : not null access Dialog_Group_Widget_Record'Class;
-      Widget      : not null access Gtk_Widget_Record'Class;
-      Button      : access Gtk_Button_Record'Class := null;
-      Label       : String := "";
-      Doc         : String := "";
-      Child_Key   : String := "";
-      Expand      : Boolean := True;
-      Fill        : Boolean := True;
-      Same_Height : Boolean := True)
+     (Self         : not null access Dialog_Group_Widget_Record'Class;
+      Widget       : not null access Gtk_Widget_Record'Class;
+      Button       : access Gtk_Button_Record'Class := null;
+      Label        : String := "";
+      Doc          : String := "";
+      Child_Key    : String := "";
+      Expand       : Boolean := True;
+      Fill         : Boolean := True;
+      Same_Height  : Boolean := True;
+      Expand_Child : Boolean := False)
    is
       Row : constant Gtk_Widget :=
               Create_Child
-                (Self        => Self,
-                 Widget      => Widget,
-                 Button      => Button,
-                 Label       => Label,
-                 Doc         => Doc,
-                 Child_Key   => Child_Key,
-                 Expand      => Expand,
-                 Fill        => Fill,
-                 Same_Height => Same_Height);
+                (Self         => Self,
+                 Widget       => Widget,
+                 Button       => Button,
+                 Label        => Label,
+                 Doc          => Doc,
+                 Child_Key    => Child_Key,
+                 Expand       => Expand,
+                 Fill         => Fill,
+                 Same_Height  => Same_Height,
+                 Expand_Child => Expand_Child);
       pragma Unreferenced (Row);
    begin
       null;
@@ -740,7 +745,8 @@ package body Dialog_Utils is
       Child_Key    : String := "";
       Expand       : Boolean := True;
       Fill         : Boolean := True;
-      Same_Height  : Boolean := True)
+      Same_Height  : Boolean := True;
+      Expand_Child : Boolean := False)
    is
       Row : constant Gtk_Widget :=
               Create_Child
@@ -752,7 +758,8 @@ package body Dialog_Utils is
                  Child_Key    => Child_Key,
                  Expand       => Expand,
                  Fill         => Fill,
-                 Same_Height  => Same_Height);
+                 Same_Height  => Same_Height,
+                 Expand_Child => Expand_Child);
       pragma Unreferenced (Row);
    begin
       null;
