@@ -15,6 +15,8 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
+with Ada.Characters.Handling;  use Ada.Characters.Handling;
+
 with Glib;                     use Glib;
 with Glib.Object;              use Glib.Object;
 with Glib_Values_Utils;        use Glib_Values_Utils;
@@ -116,13 +118,16 @@ package body Build_Configurations.Gtkada.Dialogs is
       ----------------------------
 
       function Get_Or_Create_Category (Cat : String) return Gtk_Tree_Iter is
-         It : Gtk_Tree_Iter;
-
+         It     : Gtk_Tree_Iter;
+         PP_Cat : constant String := "<b>" & Cat & "</b>";
       begin
          It := Get_Iter_First (Model);
 
          while It /= Null_Iter loop
-            if Get_String (Model, It, Desc_Column) = Cat then
+            --  Prevent creating 2 categories with the same name
+            if To_Lower (Get_String (Model, It, Desc_Column)) =
+              To_Lower (PP_Cat)
+            then
                return It;
             end if;
             Next (Model, It);
@@ -132,7 +137,7 @@ package body Build_Configurations.Gtkada.Dialogs is
          Append (Model, It, Null_Iter);
          Set_And_Clear
            (Model, It, (Desc_Column, Name_Column),
-            (As_String  ("<b>" & Cat & "</b>"), As_String  ("")));
+            (As_String  (PP_Cat), As_String  ("")));
 
          return It;
       end Get_Or_Create_Category;

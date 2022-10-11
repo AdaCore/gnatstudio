@@ -1,6 +1,6 @@
 import inspect
 import GPS
-from gs_utils.internal.utils import dump_menu
+from gs_utils.internal.utils import dump_menu, run_test_driver, timeout
 
 
 class Inspect(object):
@@ -316,7 +316,11 @@ def print_menu(f, lis, parent_path, indent):
                 prev_entry = entry
 
 
-def on_start(hook):
+@run_test_driver
+def driver():
+    while len(dump_menu("/File/Open Recent Projects")) == 0:
+        yield timeout(100)
+
     with open("menus.rst", "w", newline="\n") as f:
         f.write(menu_file_header)
 
@@ -333,8 +337,3 @@ def on_start(hook):
             parent_path = "/{}".format(m)
             menu_list = dump_menu(parent_path) + ["", ""]
             print_menu(f, menu_list[1], parent_path, "")
-
-    GPS.exit()
-
-
-GPS.Hook("gps_started").add(on_start)

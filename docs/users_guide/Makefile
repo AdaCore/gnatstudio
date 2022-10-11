@@ -38,8 +38,15 @@ generate:
 	rm -rf generated/.gnatstudio
 	touch generated/codepeer
 	chmod +x generated/codepeer
+
+	# Run gnatstudio a first time so the 'open recent projects' menu
+	# gets documented.
 	PATH="generated:$(PATH)" GNATSTUDIO_HOME=generated/ \
-	     ../../gnatstudio/obj/gnatstudio -P project_for_doc \
+	     gnatstudio -P project_for_doc \
+	     --load=python:exit.py
+
+	PATH="generated:$(PATH)" GNATSTUDIO_HOME=generated/ \
+	     gnatstudio -P project_for_doc \
 	     --load=python:generate.py --traceon=GPS.VCS.MODULE \
              --traceon=GNATSTUDIO.MENU_GENERATION
 
