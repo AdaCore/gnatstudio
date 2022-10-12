@@ -177,6 +177,11 @@ Level 4 is equivalent to --prover=cvc4,z3,altergo --timeout=60 --memlimit=2000 -
           switch="--proof-warnings"
           column="2"
           tip="Enable warnings by proof to detect inconsistencies" />
+      <check
+          label="Disable sandboxing of function contracts"
+          switch="--function-sandboxing=off"
+          column="2"
+          tip="To minimize the effect of an incorrect contract, GNATprove sandboxes the contracts of functions by default. Disabling it might increase provability." />
     </switches>
   </tool>
 
@@ -302,6 +307,11 @@ Level 4 is equivalent to --prover=cvc4,z3,altergo --timeout=60 --memlimit=2000 -
           switch="--proof-warnings"
           column="2"
           tip="Enable warnings by proof to detect inconsistencies" />
+      <check
+          label="Disable sandboxing of function contracts"
+          switch="--function-sandboxing=off"
+          column="2"
+          tip="To minimize the effect of an incorrect contract, GNATprove sandboxes the contracts of functions by default. Disabling it might increase provability." />
     </switches>
     <persistent-history>False</persistent-history>
   </target-model>
@@ -469,6 +479,11 @@ Level 4 is equivalent to --prover=cvc4,z3,altergo --timeout=60 --memlimit=2000 -
           switch="--proof-warnings"
           column="2"
           tip="Enable warnings by proof to detect inconsistencies" />
+      <check
+          label="Disable sandboxing of function contracts"
+          switch="--function-sandboxing=off"
+          column="2"
+          tip="To minimize the effect of an incorrect contract, GNATprove sandboxes the contracts of functions by default. Disabling it might increase provability." />
     </switches>
     <persistent-history>False</persistent-history>
   </target-model>
