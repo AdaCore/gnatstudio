@@ -168,11 +168,6 @@ Level 4 is equivalent to --prover=cvc4,z3,altergo --timeout=60 --memlimit=2000 -
           column="2"
           tip="Comma-separated list (no spaces) of provers among cvc4,z3,colibri,alt-ergo or 'all' for all four provers" />
       <check
-          label="CodePeer Static Analysis"
-          switch="--codepeer=on"
-          column="2"
-          tip="Enable CodePeer analysis in addition to provers" />
-      <check
           label="Enable proof warnings"
           switch="--proof-warnings"
           column="2"
@@ -297,11 +292,6 @@ Level 4 is equivalent to --prover=cvc4,z3,altergo --timeout=60 --memlimit=2000 -
             label="4 (slowest, most provers)"
             value="4"/>
       </combo>
-      <check
-          label="CodePeer Static Analysis"
-          switch="--codepeer=on"
-          column="2"
-          tip="Enable CodePeer analysis in addition to provers" />
       <check
           label="Enable proof warnings"
           switch="--proof-warnings"
@@ -469,11 +459,6 @@ Level 4 is equivalent to --prover=cvc4,z3,altergo --timeout=60 --memlimit=2000 -
           switch="--prover="
           column="2"
           tip="Comma-separated list (no spaces) of provers among cvc4,z3,colibri,alt-ergo or 'all' for all four provers" />
-      <check
-          label="CodePeer Static Analysis"
-          switch="--codepeer=on"
-          column="2"
-          tip="Enable CodePeer analysis in addition to provers" />
       <check
           label="Enable proof warnings"
           switch="--proof-warnings"

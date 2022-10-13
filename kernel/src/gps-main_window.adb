@@ -1812,8 +1812,9 @@ package body GPS.Main_Window is
 
                   Group_Widget.Create_Child
                     (Text (N),
-                     Label       => Arg (First .. Index - 1),
-                     Same_Height => False);
+                     Label        => Arg (First .. Index - 1),
+                     Same_Height  => False,
+                     Expand_Child => True);
 
                   if Focus then
                      Dialog.Set_Focus (Text (N));

@@ -251,15 +251,16 @@ package Dialog_Utils is
    --  Set the spacing between the dialog group's rows
 
    function Create_Child
-     (Self        : not null access Dialog_Group_Widget_Record'Class;
-      Widget      : not null access Gtk_Widget_Record'Class;
-      Button      : access Gtk_Button_Record'Class := null;
-      Label       : String := "";
-      Doc         : String := "";
-      Child_Key   : String := "";
-      Expand      : Boolean := True;
-      Fill        : Boolean := True;
-      Same_Height : Boolean := True) return Gtk_Widget;
+     (Self         : not null access Dialog_Group_Widget_Record'Class;
+      Widget       : not null access Gtk_Widget_Record'Class;
+      Button       : access Gtk_Button_Record'Class := null;
+      Label        : String := "";
+      Doc          : String := "";
+      Child_Key    : String := "";
+      Expand       : Boolean := True;
+      Fill         : Boolean := True;
+      Same_Height  : Boolean := True;
+      Expand_Child : Boolean := False) return Gtk_Widget;
    --  Create a new child in the group widget containing the given Widget,
    --  associating it with an optional Child_Key.
    --
@@ -288,6 +289,8 @@ package Dialog_Utils is
    --
    --  If Same_Height is True, the widget's height will be equal to the height
    --  of the widgets previously inserted in the group.
+   --
+   --  If Expand_Child is True, the child will be expanded within Dialog.
 
    function Create_Child
      (Self         : not null access Dialog_Group_Widget_Record'Class;
@@ -298,20 +301,22 @@ package Dialog_Utils is
       Child_Key    : String := "";
       Expand       : Boolean := True;
       Fill         : Boolean := True;
-      Same_Height  : Boolean := True) return Gtk_Widget;
+      Same_Height  : Boolean := True;
+      Expand_Child : Boolean := False) return Gtk_Widget;
    --  Same as above, but allowing to add a custom label widget
    --  (e.g : a check box).
 
    procedure Create_Child
-     (Self        : not null access Dialog_Group_Widget_Record'Class;
-      Widget      : not null access Gtk_Widget_Record'Class;
-      Button      : access Gtk_Button_Record'Class := null;
-      Label       : String := "";
-      Doc         : String := "";
-      Child_Key   : String := "";
-      Expand      : Boolean := True;
-      Fill        : Boolean := True;
-      Same_Height : Boolean := True);
+     (Self         : not null access Dialog_Group_Widget_Record'Class;
+      Widget       : not null access Gtk_Widget_Record'Class;
+      Button       : access Gtk_Button_Record'Class := null;
+      Label        : String := "";
+      Doc          : String := "";
+      Child_Key    : String := "";
+      Expand       : Boolean := True;
+      Fill         : Boolean := True;
+      Same_Height  : Boolean := True;
+      Expand_Child : Boolean := False);
    procedure Create_Child
      (Self         : not null access Dialog_Group_Widget_Record'Class;
       Widget       : not null access Gtk_Widget_Record'Class;
@@ -321,7 +326,8 @@ package Dialog_Utils is
       Child_Key    : String := "";
       Expand       : Boolean := True;
       Fill         : Boolean := True;
-      Same_Height  : Boolean := True);
+      Same_Height  : Boolean := True;
+      Expand_Child : Boolean := False);
    --  Same as above, but without returning the newly created child
 
    procedure Append_Child

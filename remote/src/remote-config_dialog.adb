@@ -49,6 +49,7 @@ with Gtk.Paned;                  use Gtk.Paned;
 with Gtk.Scrolled_Window;        use Gtk.Scrolled_Window;
 with Gtk.Spin_Button;            use Gtk.Spin_Button;
 with Gtk.Stock;                  use Gtk.Stock;
+with Gtk.Style_Context;          use Gtk.Style_Context;
 with Gtk.Table;                  use Gtk.Table;
 with Gtk.Text_Buffer;            use Gtk.Text_Buffer;
 with Gtk.Tree_Model;             use Gtk.Tree_Model;
@@ -72,6 +73,9 @@ with GPS.Main_Window;            use GPS.Main_Window;
 with GUI_Utils;                  use GUI_Utils;
 with String_Utils;               use String_Utils;
 with GNATCOLL.Traces;            use GNATCOLL.Traces;
+
+with Pango.Enums;                use Pango.Enums;
+with Pango.Font;                 use Pango.Font;
 
 with Remote.Db;                  use Remote, Remote.Db;
 with Remote_Module;              use Remote_Module;
@@ -1036,11 +1040,8 @@ package body Remote.Config_Dialog is
               Fill or Expand, 0, 10);
 
       Gtk_New (Dialog.Init_Cmds_View);
-      Gtk_New (Scrolled);
-      Set_Policy (Scrolled, Policy_Automatic, Policy_Automatic);
-      Add (Scrolled, Dialog.Init_Cmds_View);
       Set_Tooltip_Text
-        (Scrolled,
+        (Dialog.Init_Cmds_View.Get_Scrolled_Window,
          -("The Extra Init Commands field represents initialization commands"
            & " sent to the server upon connection: when GNAT Studio connects"
            & " to your remote machine, the chosen shell is launched, and your"
@@ -1048,11 +1049,15 @@ package body Remote.Config_Dialog is
            & " the bash shell). Then GNAT Studio sends these extra init"
            & " commands, allowing you for example to specify a compilation"
            & " toolchain."));
+      --  Set minimal size to at least see the first 2 lines fully when
+      --  the window is too crowded.
+      Dialog.Init_Cmds_View.Get_Scrolled_Window.Set_Min_Content_Height
+        (Get_Size (View_Fixed_Font.Get_Pref) / Pango_Scale * 4);
 
       Gtk_New (Frame);
-      Add (Frame, Scrolled);
+      Add (Frame, Dialog.Init_Cmds_View);
       Attach (Dialog.Right_Table, Frame, 1, 2,
-              Line_Nb, Line_Nb + 1, Fill or Expand, Fill);
+              Line_Nb, Line_Nb + 1);
 
       Line_Nb := Line_Nb + 1;
       Gtk_New (Dialog.Advanced_Pane, -"Advanced configuration");
@@ -1234,6 +1239,7 @@ package body Remote.Config_Dialog is
       Tmp := Add_Button (Dialog, Stock_Apply, Gtk_Response_Apply);
       Tmp := Add_Button (Dialog, Stock_Cancel, Gtk_Response_Cancel);
 
+      Get_Style_Context (Dialog).Add_Class ("remote-dialog");
       Show_All (Dialog);
    end Gtk_New;
 

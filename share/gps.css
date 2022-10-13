@@ -649,3 +649,11 @@ textview.view.readonly text {
 .gnatstudio-refactor-input box {
    padding: 4pt;
 }
+
+/**********************************
+ * Multiline Entry
+ **********************************/
+
+.entry.multiline {
+   border: 1pt solid @popup_border_color;
+}
