@@ -597,10 +597,10 @@ XML = r"""<?xml version="1.0" ?>
              switch="--harness-only"
              tip="Create a harness for all sources, treating them as """ \
     """test packages." />
-      <check label="recursive"
+      <check label="no-subprojects"
              line="1"  column="2"
-             switch="-r"
-             tip="Recursively consider all sources from all projects." />
+             switch="--no-subprojects"
+             tip="Consider only the root project's source files." />
       <check label="silent"
              line="1"  column="2"
              switch="-q"
