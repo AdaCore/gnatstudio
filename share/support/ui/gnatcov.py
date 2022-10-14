@@ -990,7 +990,7 @@ class GNATcovPlugin(Module):
         GPS.execute_action("coverage clear from memory")
 
         if GPS.Project.root().is_harness_project():
-            a = GPS.CodeAnalysis.get("Coverage Report")
+            a = GPS.CodeAnalysis.get("Coverage")
             original = GPS.Project.root().original_project().file()
             a.add_gcov_project_info(original)
         else:
