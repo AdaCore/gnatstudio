@@ -53,11 +53,6 @@ package UTF8_Utils is
    --  Warning: Never reference Output (Output'Range) or Output'Last,
    --  use Output (1 .. Len) and Len instead.
 
-   function UTF8_To_Locale (Input : UTF8_String) return String;
-   --  Convert Input to the GNAT Studio locale (ie, the contents of the
-   --  environment variable CHARSET, defaulting to ISO-8859-1).
-   --  If Input could not be converted, Input is returned as-is.
-
    function Locale_To_UTF8 (Input : String) return UTF8_String;
    --  Convert Input from the GNAT Studio locale (ie, the contents of the
    --  environment variable CHARSET, defaulting to ISO-8859-1).

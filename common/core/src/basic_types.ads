@@ -19,9 +19,6 @@ with Ada.Calendar;
 with Ada.Containers.Hashed_Sets;
 with Ada.Strings.Unbounded;
 with Ada.Unchecked_Deallocation;
-with Ada.Unchecked_Conversion;
-with Interfaces.C.Strings;
-with System;
 
 with GNAT.OS_Lib;
 with GNAT.Expect;
@@ -31,9 +28,6 @@ with GNATCOLL.VFS;                use GNATCOLL.VFS;
 with GNATCOLL.Xref;
 
 package Basic_Types is
-
-   subtype Pixmap_Array is Interfaces.C.Strings.chars_ptr_array (0 .. 0);
-   type Pixmap_Access is access all Pixmap_Array;
 
    procedure Unchecked_Free is new Ada.Unchecked_Deallocation
      (GNAT.Strings.String_List, GNAT.Strings.String_List_Access);
@@ -49,15 +43,6 @@ package Basic_Types is
    type Unchecked_String_Access is access all Unchecked_String;
    --  For efficiency reasons, use this type compatible with C char*,
    --  so that C strings can be reused without making extra copies.
-
-   function To_Unchecked_String is new Ada.Unchecked_Conversion
-     (System.Address, Unchecked_String_Access);
-
-   function To_Unchecked_String is new Ada.Unchecked_Conversion
-     (Interfaces.C.Strings.chars_ptr, Unchecked_String_Access);
-
-   procedure Free is new Ada.Unchecked_Deallocation
-     (Unchecked_String, Unchecked_String_Access);
 
    subtype UTF8_String is String;
    subtype UTF8_Unbounded_String is Ada.Strings.Unbounded.Unbounded_String;

@@ -18,22 +18,9 @@
 --  This package provides a set of subprograms that give high level access
 --  to OS functionnalities.
 
-with GNAT.OS_Lib;  use GNAT.OS_Lib;
 with GNATCOLL.VFS;
 
 package OS_Utils is
-
-   function Max_Path_Len return Natural;
-   --  Return the maximum length of a pathname for the current host
-
-   procedure Put (File : File_Descriptor; Str : String);
-   --  Write Str to File
-
-   procedure Put_Line (File : File_Descriptor; Str : String);
-   --  Write Str to File, and appends an end-of-line sequence
-
-   procedure New_Line (File : File_Descriptor; Count : Natural := 1);
-   --  Write an end-of-line sequence to File
 
    type Ctrl_C_Handler is access procedure;
    pragma Convention (C, Ctrl_C_Handler);

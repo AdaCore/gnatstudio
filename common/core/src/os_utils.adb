@@ -20,6 +20,7 @@ with Ada.Directories;           use Ada.Directories;
 
 with GNAT.Case_Util;
 with GNAT.Directory_Operations; use GNAT, GNAT.Directory_Operations;
+with GNAT.OS_Lib;               use GNAT.OS_Lib;
 
 with GNATCOLL.VFS;              use GNATCOLL.VFS;
 with GNATCOLL.VFS_Utils;        use GNATCOLL.VFS_Utils;
@@ -53,19 +54,6 @@ package body OS_Utils is
       end;
    end Create_Tmp_File;
 
-   ------------------
-   -- Max_Path_Len --
-   ------------------
-
-   Max_Path : Integer;
-   pragma Import (C, Max_Path, "max_path_len");
-   --  Take advantage of max_path_len defined in the GNAT run time
-
-   function Max_Path_Len return Natural is
-   begin
-      return Max_Path;
-   end Max_Path_Len;
-
    ------------------------
    -- Make_Dir_Recursive --
    ------------------------
@@ -81,49 +69,6 @@ package body OS_Utils is
          Name.Make_Dir;
       end if;
    end Make_Dir_Recursive;
-
-   --------------
-   -- New_Line --
-   --------------
-
-   EOL : aliased constant String := (1 => ASCII.LF);
-
-   procedure New_Line (File : File_Descriptor; Count : Natural := 1) is
-      N : Integer;
-      pragma Unreferenced (N);
-   begin
-      for J in 1 .. Count loop
-         N := Write (File, EOL'Address, EOL'Length);
-      end loop;
-   end New_Line;
-
-   ---------
-   -- Put --
-   ---------
-
-   procedure Put (File : File_Descriptor; Str : String) is
-      N : Integer;
-      pragma Unreferenced (N);
-   begin
-      if Str'Length /= 0 then
-         N := Write (File, Str (Str'First)'Address, Str'Length);
-      end if;
-   end Put;
-
-   --------------
-   -- Put_Line --
-   --------------
-
-   procedure Put_Line (File : File_Descriptor; Str : String) is
-      N : Integer;
-      pragma Unreferenced (N);
-   begin
-      if Str'Length /= 0 then
-         N := Write (File, Str (Str'First)'Address, Str'Length);
-      end if;
-
-      N := Write (File, EOL'Address, EOL'Length);
-   end Put_Line;
 
    --------------------
    -- Is_Cygwin_Path --
