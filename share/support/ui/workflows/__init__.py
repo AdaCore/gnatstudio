@@ -141,6 +141,8 @@ def run_registered_workflows(workflow_name, target_name, main_name):
     # The BuildTarget wrapper may have registered an on exit handler for us to
     # call at the end of the workflow execution. Check if there is one in the
     # exit_handlers_table
+    GPS.Logger("BUILDTARGET").log("Registering workflow (%s, %s, %s)"
+                                  % (workflow_name, target_name, main_name))
     on_exit_handler = exit_handlers_table.get((target_name, main_name), None)
 
     try:
@@ -164,6 +166,9 @@ def run_registered_workflows(workflow_name, target_name, main_name):
                 if on_exit_handler:
                     on_exit_handler(exit_value)
                 exit_handlers_table[(target_name, main_name)] = None
+                GPS.Logger("BUILDTARGET").log(
+                    "Freeing workflow (%s, %s, %s)"
+                    % (workflow_name, target_name, main_name))
 
         driver(wrapper())
     except KeyError:
