@@ -369,7 +369,10 @@ class BuildTarget(object):
 
         if self.target_name in wf.workflows_target_name_set:
             idt = (self.target_name, main_name)
-            if idt in wf.exit_handlers_table:
+            # The workflow was already launched ...
+            if (idt in wf.exit_handlers_table
+                    # ... and it has not finished
+                    and wf.exit_handlers_table[idt]):
                 GPS.Logger("BUILDTARGET").log(
                     "Workflow {} already in execution".format(idt))
                 return

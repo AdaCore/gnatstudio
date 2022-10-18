@@ -16,30 +16,30 @@
 ------------------------------------------------------------------------------
 
 with Ada.Streams;
-with Ada.Unchecked_Conversion;
 with GNAT.OS_Lib;                use GNAT.OS_Lib;
 with GNATCOLL.Traces;            use GNATCOLL.Traces;
 with GNATCOLL.VFS;               use GNATCOLL.VFS;
-
-with Glib.Convert;               use Glib.Convert;
 
 with Gtk.Combo_Box;
 with Gtk.Combo_Box_Text;         use Gtk.Combo_Box_Text;
 with Gtk.GEntry;                 use Gtk.GEntry;
 with Gtk.Widget;                 use Gtk.Widget;
 
+with VSS.Characters.Latin;
 with VSS.Characters.Punctuations;
-with VSS.Characters.Specials;
 with VSS.Strings.Character_Iterators;
 with VSS.Strings.Converters.Decoders;
+with VSS.Strings.Conversions;
 
 with GPS.Properties;             use GPS.Properties;
 with GPS.Kernel.Properties;      use GPS.Kernel.Properties;
 with GPS.Intl;                   use GPS.Intl;
 with String_Utils;               use String_Utils;
-with Gtkada.Types;               use Gtkada.Types;
 
 package body GPS.Kernel.Charsets is
+
+   use all type VSS.Strings.Converters.Converter_Flag;
+
    CHARSET : constant GNAT.Strings.String_Access := Getenv ("CHARSET");
 
    Default_Charset : Charset_Preference;
@@ -89,9 +89,26 @@ package body GPS.Kernel.Charsets is
    --  The list comes from "man charsets", or "`iconv -l`".
    --  See also the list in "gedit  File->Open  Available Encodings"
 
+   Decoder_Flags : constant VSS.Strings.Converters.Converter_Flags :=
+     (Stateless     => True,
+      --  Data is decoded as single chunk, don't save state but report error
+      --  for incomplete byte sequences at the end of data
+      Stop_On_Error => False,
+      --  Errors should be reported but not to stop decoding of the following
+      --  data
+      Process_BOM   => True);
+      --  Byte-Order-Mark at the beginning of the data should be ignored if
+      --  present
+   --  Default flags for the text decoder.
+
    procedure Charset_Changed
      (Combo : access GObject_Record'Class; Data : Manager_Preference);
    --  Called when the contents of the Combo has changed, to set the pref
+
+   function Is_Ada_Separator
+     (Item : VSS.Characters.Virtual_Character) return Boolean;
+   --  Return True when given character belongs to 'separator' category,
+   --  defined by Ada 2012 Reference Manual.
 
    ---------------------
    -- Charset_Changed --
@@ -336,13 +353,10 @@ package body GPS.Kernel.Charsets is
       Text  : out VSS.Strings.Virtual_String;
       Props : out File_Props)
    is
-      Contents      : GNAT.Strings.String_Access;
-      Last          : Natural;
-      Ignore        : aliased Natural;
-      Length        : aliased Natural;
-      Charset       : constant String := Get_File_Charset (File);
-      C             : Integer := Charsets'First;
-      UTF8          : Gtkada.Types.Chars_Ptr;
+      Contents : GNAT.Strings.String_Access;
+      Last     : Natural;
+      Charset  : constant VSS.Strings.Virtual_String :=
+        VSS.Strings.Conversions.To_Virtual_String (Get_File_Charset (File));
 
    begin
       Trace (Me, "Reading file: " & File.Display_Full_Name);
@@ -357,6 +371,8 @@ package body GPS.Kernel.Charsets is
       Contents := File.Read_File;
 
       if Contents = null then
+         --  Reset Text to null state to report "file" error.
+
          Text.Clear;
 
          return;
@@ -366,58 +382,39 @@ package body GPS.Kernel.Charsets is
         (Contents.all, Last,
          Props.CR_Found, Props.NUL_Found, Props.Trailing_Spaces_Found);
 
-      UTF8 := Glib.Convert.Convert
-        (Contents (Contents'First .. Last), "UTF-8", Charset,
-         Ignore'Unchecked_Access, Length'Unchecked_Access);
-
-      --  In case conversion failed, use a default encoding so that we
-      --  can at least show something in the editor
-
-      while UTF8 = Gtkada.Types.Null_Ptr
-        and then C <= Charsets'Last
-      loop
-         UTF8 := Glib.Convert.Convert
-           (Contents (Contents'First .. Last), "UTF-8",
-            Charsets (C).Name.all,
-            Ignore'Unchecked_Access, Length'Unchecked_Access);
-         C := C + 1;
-      end loop;
-
-      for J in reverse Contents'Range loop
-         if Contents (J) = ASCII.LF then
-            if J /= Length - 1 then
-               Props.Trailing_Lines_Found := True;
-               exit;
-            end if;
-         elsif Contents (J) /= ' ' and then Contents (J) /= ASCII.HT then
-            exit;
-         end if;
-      end loop;
-
-      GNAT.Strings.Free (Contents);
-
-      if UTF8 = Null_Ptr then
-         Text.Clear;
-
-         return;
-      end if;
-
       declare
-         type Character_Access is access all Character;
-
-         function To is
-           new Ada.Unchecked_Conversion
-             (Gtkada.Types.Chars_Ptr, Character_Access);
-
-         Buffer  : Ada.Streams.Stream_Element_Array
-           (1 .. Ada.Streams.Stream_Element_Count (Length))
-             with Address => To (UTF8).all'Address;
+         Buffer  : constant Ada.Streams.Stream_Element_Array
+           (1 .. Ada.Streams.Stream_Element_Offset (Last - Contents'First + 1))
+             with Import, Address => Contents.all'Address;
          Decoder : VSS.Strings.Converters.Decoders.Virtual_String_Decoder;
+         Aux     : VSS.Strings.Virtual_String;
 
       begin
-         Decoder.Initialize ("utf-8");
+         --  Attempt to decode text from specified encoding.
 
-         Text := Decoder.Decode (Buffer);
+         Decoder.Initialize (Charset, Decoder_Flags);
+
+         if Decoder.Is_Valid then
+            Text               := Decoder.Decode (Buffer);
+            Props.Invalid_UTF8 := Decoder.Has_Error;
+         end if;
+
+         if not Decoder.Is_Valid or else Decoder.Has_Error then
+            --  If there is an error, try to fallback to "utf-8" encoding.
+
+            Decoder.Initialize ("utf-8", Decoder_Flags);
+
+            Aux := Decoder.Decode (Buffer);
+
+            if not Props.Invalid_UTF8 or else not Decoder.Has_Error then
+               --  "not Props.Invalid_UTF8" means that specified encoding is
+               --  not supported, thus Text is empty, so use text decoded by
+               --  "utf-8" decoder even if there are errors.
+
+               Text               := Aux;
+               Props.Invalid_UTF8 := Decoder.Has_Error;
+            end if;
+         end if;
 
          if Text.Is_Null then
             --  Decoder doesn't allocate memory when there is no data to
@@ -427,27 +424,44 @@ package body GPS.Kernel.Charsets is
             Text := "";
          end if;
 
+         --  Detect multiple empty lines at the end of the file.
+
+         declare
+            use type VSS.Characters.Virtual_Character;
+
+            Iterator   : VSS.Strings.Character_Iterators.Character_Iterator :=
+              Text.After_Last_Character;
+            Line_Found : Boolean := False;
+
+         begin
+            while Iterator.Backward loop
+               if Iterator.Element = VSS.Characters.Latin.Line_Feed then
+                  if Line_Found then
+                     Props.Trailing_Lines_Found := True;
+
+                     exit;
+
+                  else
+                     Line_Found := True;
+                  end if;
+
+               elsif not Is_Ada_Separator (Iterator.Element) then
+                  exit;
+               end if;
+            end loop;
+         end;
+
+         --  Scan text for some special characters.
+
          declare
             use VSS.Characters.Punctuations;
-            use VSS.Characters.Specials;
 
             Iterator : VSS.Strings.Character_Iterators.Character_Iterator :=
               Text.Before_First_Character;
 
          begin
-            --  Scan text for some special characters.
-
             while Iterator.Forward loop
                case Iterator.Element is
-                  when Replacement_Character =>
-                     --  Decoder inserts REPLACEMENT CHARACTER when it is
-                     --  unable to decode byte sequence. This character may
-                     --  come from the file too, however, most probably it
-                     --  means the same: content of the file was corrupted
-                     --  at some stage.
-
-                     Props.Invalid_UTF8 := True;
-
                   when Left_To_Right_Embedding
                      | Right_To_Left_Embedding
                      | Pop_Directional_Formatting
@@ -470,7 +484,47 @@ package body GPS.Kernel.Charsets is
          end;
       end;
 
-      g_free (UTF8);
+      GNAT.Strings.Free (Contents);
    end Read_File_With_Charset;
+
+   ----------------------
+   -- Is_Ada_Separator --
+   ----------------------
+
+   function Is_Ada_Separator
+     (Item : VSS.Characters.Virtual_Character) return Boolean is
+   begin
+      --  Ada 2012's RM defines separator as 'separator_space',
+      --  'format_efector' or end of a line, with some exceptions inside
+      --  comments.
+      --
+      --  'separator_space' is defined as a set of characters with
+      --  'General Category' defined as 'Separator, Space'.
+      --
+      --  'format_effector' is set of characters:
+      --    - CHARACTER TABULATION
+      --    - LINE FEED
+      --    - LINE TABULATION
+      --    - FORM FEED
+      --    - CARRIAGE RETURN
+      --    - NEXT LINE
+      --    - characters with General Category defined as
+      --      'Separator, Line'
+      --    - characters with General Category defined as
+      --      'Separator, Paragraph'
+
+      return
+        Item in
+            VSS.Characters.Virtual_Character'Val (16#09#)
+          | VSS.Characters.Virtual_Character'Val (16#0A#)
+          | VSS.Characters.Virtual_Character'Val (16#0B#)
+          | VSS.Characters.Virtual_Character'Val (16#0C#)
+          | VSS.Characters.Virtual_Character'Val (16#0D#)
+          | VSS.Characters.Virtual_Character'Val (16#85#)
+        or VSS.Characters.Get_General_Category (Item) in
+            VSS.Characters.Space_Separator
+          | VSS.Characters.Line_Separator
+          | VSS.Characters.Paragraph_Separator;
+   end Is_Ada_Separator;
 
 end GPS.Kernel.Charsets;

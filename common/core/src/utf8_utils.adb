@@ -25,7 +25,6 @@ package body UTF8_Utils is
    Me : constant Trace_Handle := Create ("UFT8_UTILS");
 
    Locale_To_UTF_8 : Iconv_T;
-   UTF_8_To_Locale : Iconv_T;
    Latin1_To_UTF_8 : Iconv_T;
    UTF_8_To_UTF_32 : Iconv_T;
    Is_Opened       : Boolean := False;
@@ -42,8 +41,6 @@ package body UTF8_Utils is
       if not Is_Opened then
          Locale_To_UTF_8 := Iconv_Open
            (To_Code => UTF8, From_Code => Config.Default_Charset);
-         UTF_8_To_Locale := Iconv_Open
-           (From_Code => UTF8, To_Code => Config.Default_Charset);
          Latin1_To_UTF_8 := Iconv_Open
            (From_Code => ISO_8859_1, To_Code => UTF8);
          UTF_8_To_UTF_32 := Iconv_Open
@@ -118,16 +115,6 @@ package body UTF8_Utils is
          return "<could not convert to UTF8>";
       end if;
    end Unknown_To_UTF8;
-
-   --------------------
-   -- UTF8_To_Locale --
-   --------------------
-
-   function UTF8_To_Locale (Input : UTF8_String) return String is
-   begin
-      Open;
-      return Iconv (UTF_8_To_Locale, Input);
-   end UTF8_To_Locale;
 
    --------------------
    -- Locale_To_UTF8 --
