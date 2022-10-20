@@ -9004,6 +9004,15 @@ class Project(object):
         """
         pass  # implemented in Ada
 
+    def get_extended_project(self):
+        """
+        Return the project extended by project.
+
+        :return: An instance of :class:`GPS.Project`
+
+        """
+        pass  # implemented in Ada
+
     @staticmethod
     def get_main_units():
         """

@@ -1,0 +1,6 @@
+project Hello is
+
+   for Languages use ("ada");
+
+end Hello;
+

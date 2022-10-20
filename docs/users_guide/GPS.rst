@@ -1823,6 +1823,8 @@ Classes
 
    .. automethod:: GPS.Project.get_executable_name
 
+   .. automethod:: GPS.Project.get_extended_project
+
    .. automethod:: GPS.Project.get_main_units
 
    .. automethod:: GPS.Project.get_property

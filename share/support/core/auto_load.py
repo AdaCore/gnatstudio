@@ -23,6 +23,7 @@ from gs_utils import hook
 # to be changed in per project plugin:
 initialize_project_plugin = (lambda: None)
 finalize_project_plugin = (lambda: None)
+suffix = ".ide.py"
 
 
 @hook('project_changed')
@@ -33,9 +34,15 @@ def __on_project_changed():
     finalize_project_plugin()
     finalize_project_plugin = (lambda: None)
 
-    project = GPS.Project.root().file()
-    plugin_name = project.name()[0:-4] + ".ide.py"
-    if os.path.exists(plugin_name):
-        exec(compile(open(plugin_name, "rb").read(), plugin_name, 'exec'), globals())
-        initialize_project_plugin()
-        initialize_project_plugin = (lambda: None)
+    plugin_name = []
+    project = GPS.Project.root()
+    while project is not None:
+        plugin_name.append(project.file().name()[0:-4] + suffix)
+        project = project.get_extended_project()
+
+    for name in plugin_name:
+        if os.path.exists(name):
+            exec(compile(open(name, "rb").read(), name, 'exec'), globals())
+            initialize_project_plugin()
+            initialize_project_plugin = (lambda: None)
+            break

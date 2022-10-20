@@ -1440,6 +1440,18 @@ package body Project_Properties is
             Set_Return_Value (Data, Project.Modified (Recursive));
          end;
 
+      elsif Command = "get_extended_project" then
+         declare
+            Project : constant Project_Type := Get_Data (Data, 1);
+            Ext     : Project_Type;
+         begin
+            Ext := Project.Extended_Project;
+            if Ext /= No_Project then
+               Set_Return_Value
+                 (Data, Create_Project (Get_Script (Data), Ext));
+            end if;
+         end;
+
       elsif Command = "set_attribute_as_string" then
          Name_Parameters (Data, Set_Attribute_Parameters);
          declare
@@ -1615,6 +1627,12 @@ package body Project_Properties is
          Maximum_Args => 1,
          Class        => Get_Project_Class (Kernel),
          Handler      => Create_Project_Command_Handler'Access);
+      Register_Command
+        (Kernel, "get_extended_project",
+         Minimum_Args  => 0,
+         Maximum_Args  => 0,
+         Class         => Get_Project_Class (Kernel),
+         Handler       => Create_Project_Command_Handler'Access);
    end Register_Module_Reader;
 
    ----------------------------
