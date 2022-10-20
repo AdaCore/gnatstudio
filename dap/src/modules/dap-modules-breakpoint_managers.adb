@@ -28,7 +28,6 @@ with GPS.Kernel.Hooks;
 package body DAP.Modules.Breakpoint_Managers is
 
    --  To-Do: remove temporary breakpoints on hit
-   --         use Breakpoint.Enabled
 
    -----------------
    -- Break_Sorce --

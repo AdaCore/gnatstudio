@@ -63,7 +63,9 @@ package body DAP.Views is
       procedure Attach_To_View
         (Client              : access DAP.Clients.DAP_Client'Class;
          Kernel              : not null access Kernel_Handle_Record'Class;
-         Create_If_Necessary : Boolean)
+         Create_If_Necessary : Boolean;
+         Update_On_Attach    : Boolean := True)
+
       is
          use DAP.Clients;
 
@@ -125,17 +127,19 @@ package body DAP.Views is
 
                   On_Attach (View, Client);
 
-                  if Client.Get_Status in Initialized .. Stopped then
-                     Update (View);
-                  else
-                     declare
-                        Info_Msg : constant String :=
-                          "Cannot update " & Formal_Views.View_Name
-                          & " while the debugger is busy";
-                     begin
-                        Trace (Me, Info_Msg);
-                        View.Kernel.Insert (Info_Msg, Mode => Info);
-                     end;
+                  if Update_On_Attach then
+                     if Client.Get_Status in Initialized .. Stopped then
+                        Update (View);
+                     else
+                        declare
+                           Info_Msg : constant String :=
+                             "Cannot update " & Formal_Views.View_Name
+                             & " while the debugger is busy";
+                        begin
+                           Trace (Me, Info_Msg);
+                           View.Kernel.Insert (Info_Msg, Mode => Info);
+                        end;
+                     end if;
                   end if;
 
                   Widget_Callback.Connect

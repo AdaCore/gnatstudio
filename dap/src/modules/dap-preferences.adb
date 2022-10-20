@@ -31,8 +31,7 @@ package body DAP.Preferences is
          Label   => "DAP Adapter",
          Doc     => "The adapter for the DAP protocol",
          Default => "/usr/bin/node " &
-         (+Base_Dir.Create_From_Dir
-           ("share/gnatstudio/cdt-gdb-adapter/debugAdapter.js").Full_Name),
+         (+Base_Dir.Create_From_Dir ("gdb -i=dap").Full_Name),
          Path    => "Debugger:General");
 
       Preserve_State_On_Exit := Create
@@ -84,6 +83,30 @@ package body DAP.Preferences is
          Name     => "assembly_view-show-opcodes",
          Label    => "Show opcodes",
          Default  => False);
+
+      Continue_To_Line_Buttons := Create
+        (Manager   => Prefs,
+         Name      => "Debugger-Continue-To-Line-Buttons",
+         Path      => "Debugger:Editors",
+         Label     => "Display 'Continue to line' buttons",
+         Doc       =>
+           "Display the 'Continue to line' buttons on the left-side of "
+           & "editors.",
+         Default   => True);
+
+      Debugger_Console_Console := Create_Invisible_Pref
+        (Manager  => Prefs,
+         Name     => "debugger-console-console",
+         Default  =>  True,
+         Label    => "Display console layer",
+         Doc      => "Display console layer in the console.");
+
+      Debugger_Console_Stdout := Create_Invisible_Pref
+        (Manager  => Prefs,
+         Name     => "debugger-console-stdout",
+         Default  =>  False,
+         Label    => "Display stdout layer",
+         Doc      => "Display stdout layer in the console.");
    end Register_Default_Preferences;
 
 end DAP.Preferences;

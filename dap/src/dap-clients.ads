@@ -15,6 +15,8 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
+with GNAT.OS_Lib;
+
 with GNATCOLL.Projects;
 with GNATCOLL.VFS;
 
@@ -30,11 +32,12 @@ with GPS.Kernel;
 
 with LSP.Raw_Clients;
 
+with DAP.Histories;
 with DAP.Requests;
-with DAP.Types;            use DAP.Types;
+with DAP.Types;                  use DAP.Types;
 with DAP.Breakpoint_Maps;
 
-with Basic_Types;          use Basic_Types;
+with Basic_Types;                use Basic_Types;
 with Generic_Views;
 
 private with Ada.Containers.Hashed_Maps;
@@ -44,6 +47,19 @@ private with VSS.JSON.Pull_Readers;
 private with DAP.Modules.Breakpoint_Managers;
 
 package DAP.Clients is
+
+   -- String_History --
+
+   type History_Data is record
+      Mode    : DAP.Types.Command_Type;
+      Command : GNAT.OS_Lib.String_Access;
+   end record;
+
+   package String_History is new DAP.Histories (History_Data);
+   use String_History;
+   --  Used for holding commands history in the debugging console
+
+   -- DAP_Client --
 
    type DAP_Client
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
@@ -166,6 +182,16 @@ package DAP.Clients is
       View : Generic_Views.Abstract_View_Access);
    --  Attach the thread view to the client
 
+   function Get_Debugger_Console
+     (Self : DAP_Client)
+      return Generic_Views.Abstract_View_Access;
+   --  Returns the debugger console, if any.
+
+   procedure Set_Debugger_Console
+     (Self : in out DAP_Client;
+      View : Generic_Views.Abstract_View_Access);
+   --  Attach the debugger console to the client
+
    procedure Set_Selected_Frame
      (Self    : in out DAP_Client;
       Id      : Integer;
@@ -202,6 +228,11 @@ package DAP.Clients is
    function Get_Current_Thread (Self  : in out DAP_Client) return Integer;
    --  Returns current selected stopped thread Id or
    --  the first stopped thread or 0
+
+   function Get_Command_History
+     (Self : in out DAP_Client)
+      return History_List_Access;
+   --  Returns debugging console commands history
 
    -- Visual_Debugger --
 
@@ -278,14 +309,17 @@ private
       Selected_Thread     : Integer := 0;
 
       --  Modules --
-      Breakpoints    : DAP.Modules.Breakpoint_Managers.
+      Breakpoints      : DAP.Modules.Breakpoint_Managers.
         DAP_Client_Breakpoint_Manager_Access;
 
+      Command_History  : aliased String_History.History_List;
+
       --  Views --
-      Breakpoints_View : Generic_Views.Abstract_View_Access;
-      Call_Stack_View  : Generic_Views.Abstract_View_Access;
-      Thread_View      : Generic_Views.Abstract_View_Access;
-      Assembly_View    : Generic_Views.Abstract_View_Access;
+      Breakpoints_View : Generic_Views.Abstract_View_Access := null;
+      Call_Stack_View  : Generic_Views.Abstract_View_Access := null;
+      Thread_View      : Generic_Views.Abstract_View_Access := null;
+      Assembly_View    : Generic_Views.Abstract_View_Access := null;
+      Debugger_Console : Generic_Views.Abstract_View_Access := null;
    end record;
 
    overriding function Error_Message

@@ -151,7 +151,7 @@ package Interactive_Consoles is
    --  Internal initialization function
 
    procedure Insert
-     (Console        : access Interactive_Console_Record;
+     (Console        : not null access Interactive_Console_Record;
       Text           : String;
       Add_LF         : Boolean := True;
       Highlight      : Boolean := False;
@@ -159,7 +159,7 @@ package Interactive_Consoles is
       Show_Prompt    : Boolean := True;
       Text_Is_Input  : Boolean := False);
    procedure Insert_UTF8
-     (Console        : access Interactive_Console_Record;
+     (Console        : not null access Interactive_Console_Record;
       UTF8           : Glib.UTF8_String;
       Add_LF         : Boolean := True;
       Highlight      : Boolean := False;

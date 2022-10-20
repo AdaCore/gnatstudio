@@ -22,6 +22,9 @@ with GNATCOLL.Any_Types;           use GNATCOLL.Any_Types;
 with GNATCOLL.Projects;            use GNATCOLL.Projects;
 with GNATCOLL.Traces;              use GNATCOLL.Traces;
 
+with Glib.Object;                  use Glib.Object;
+
+with Gtk.Handlers;
 with Gtk.Label;                    use Gtk.Label;
 with Gtk.Widget;                   use Gtk.Widget;
 
@@ -40,9 +43,12 @@ with GPS.Kernel.Modules.UI;
 with GPS.Kernel.Preferences;
 with GPS.Kernel.Project;
 with GUI_Utils;
+
+with Generic_Views;
 with Remote;
 
 with DAP.Contexts;
+with DAP.Consoles;
 with DAP.Persistent_Breakpoints;
 with DAP.Preferences;
 with DAP.Requests.ConfigurationDone;
@@ -68,7 +74,9 @@ package body DAP.Module is
    procedure Free is new Ada.Unchecked_Deallocation
      (DAP.Clients.DAP_Client'Class, DAP.Clients.DAP_Client_Access);
 
-   type DAP_Module_Record is new Module_ID_Record with record
+   type DAP_Module_Record
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class) is new
+     Module_ID_Record with record
       Dynamic_Actions : Action_Lists.List;
       --  Actions that have been registered dynamically by this module,
       --  for the dynamic menus
@@ -96,10 +104,22 @@ package body DAP.Module is
       Num : Integer)
       return DAP.Clients.DAP_Client_Access;
 
+   procedure Set_Current_Debugger
+     (Id : DAP_Module; Current : DAP.Clients.DAP_Client_Access);
+
    overriding function Tooltip_Handler
      (Module  : access DAP_Module_Record;
       Context : Selection_Context) return Gtk_Widget;
    --  See inherited documentation
+
+   package Client_ID_Callback is new Gtk.Handlers.User_Callback
+     (Generic_Views.View_Record, Integer);
+
+   procedure On_Console_Destroy
+     (Console : access Generic_Views.View_Record'Class;
+      Id      : Integer);
+   --  Called when the debugger console is destroyed, which also terminates the
+   --  debugger itself
 
    -- Hooks callbacks --
 
@@ -241,6 +261,8 @@ package body DAP.Module is
       File    : GNATCOLL.VFS.Virtual_File;
       Args    : String)
    is
+      use type Generic_Views.Abstract_View_Access;
+
       Client : constant DAP.Clients.DAP_Client_Access :=
         new DAP.Clients.DAP_Client (Kernel, DAP_Module_ID.Client_ID);
    begin
@@ -264,6 +286,22 @@ package body DAP.Module is
       end if;
 
       DAP_Module_ID.Clients.Append (Client);
+
+      --  Create console
+      DAP.Consoles.Attach_To_Debugger_Console
+        (Client, Kernel, Create_If_Necessary => True);
+      if Client.Get_Debugger_Console /= null then
+         Client_ID_Callback.Connect
+           (Client.Get_Debugger_Console,
+            Signal_Destroy,
+            On_Console_Destroy'Access,
+            After       => True,
+            User_Data   => Client.Id);
+
+         DAP.Consoles.Get_Debugger_Interactive_Console
+           (DAP.Clients.DAP_Client (Client.all)).Display_Prompt;
+      end if;
+
       Client.Start
         (Project,
          File,
@@ -830,6 +868,25 @@ package body DAP.Module is
          Args);
    end Initialize_Debugger;
 
+   ------------------------
+   -- On_Console_Destroy --
+   ------------------------
+
+   procedure On_Console_Destroy
+     (Console : access Generic_Views.View_Record'Class;
+      Id      : Integer)
+   is
+      pragma Unreferenced (Console);
+      use type DAP.Clients.DAP_Client_Access;
+
+      Client : constant DAP.Clients.DAP_Client_Access := Get_Debugger (Id);
+   begin
+      if Client /= null then
+         Client.Set_Debugger_Console (null);
+         Client.Quit;
+      end if;
+   end On_Console_Destroy;
+
    --------------
    -- Finished --
    --------------
@@ -875,6 +932,54 @@ package body DAP.Module is
          DAP_Module_ID.Get_Kernel.Refresh_Context;
       end if;
    end Finished;
+
+   --------------------------
+   -- Set_Current_Debugger --
+   --------------------------
+
+   procedure Set_Current_Debugger (Current : DAP.Clients.DAP_Client_Access) is
+   begin
+      Set_Current_Debugger (DAP_Module_ID, Current);
+   end Set_Current_Debugger;
+
+   --------------------------
+   -- Set_Current_Debugger --
+   --------------------------
+
+   procedure Set_Current_Debugger
+     (Id : DAP_Module; Current : DAP.Clients.DAP_Client_Access)
+   is
+      use type DAP.Clients.DAP_Client_Access;
+   begin
+      if Current /= null
+        and then Id.Current_Debuger_ID = Current.Id
+      then
+         return;
+      end if;
+
+      Trace (Me, "Set_Current_Debugger");
+
+      if DAP.Preferences.Continue_To_Line_Buttons.Get_Pref then
+
+         --  If we are creating a debugger, enable the 'Continue to line' icons
+         --  on editors.
+         --  If we are setting the current debugger to null (i.e: when all the
+         --  debuggers are closed), make sure to disable them
+
+         --  To_Do: Implement Continue_To_Line
+         null;
+
+         --  if Id.Current_Debuger_ID = 0
+         --    and then Current /= null
+         --  then
+         --     Enable_Continue_To_Line_On_Editors (Id.Kernel);
+         --  elsif Current = null then
+         --     Disable_Continue_To_Line_On_Editors (Id.Kernel);
+         --  end if;
+      end if;
+
+      Id.Current_Debuger_ID := Current.Id;
+   end Set_Current_Debugger;
 
    -------------------
    -- Start_Program --
@@ -923,7 +1028,7 @@ package body DAP.Module is
       DAP.Preferences.Register_Default_Preferences
         (Kernel.Get_Preferences, Base_Dir);
 
-      DAP_Module_ID := new DAP_Module_Record;
+      DAP_Module_ID := new DAP_Module_Record (Kernel);
       if Kernel /= null then
          Register_Module
            (Module          => Module_ID (DAP_Module_ID),
@@ -1038,6 +1143,7 @@ package body DAP.Module is
       DAP.Views.Threads.Register_Module (Kernel);
       DAP.Views.Assembly.Register_Module (Kernel);
       DAP.Scripts.Register_Module (Kernel);
+      DAP.Consoles.Register_Module (Kernel);
    end Register_Module;
 
    -------------

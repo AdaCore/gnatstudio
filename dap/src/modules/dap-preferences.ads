@@ -31,6 +31,14 @@ package DAP.Preferences is
    -- General --
    Preserve_State_On_Exit        : Boolean_Preference;
 
+   -- Source Window --
+   Continue_To_Line_Buttons      : Boolean_Preference;
+
+   -- Console --
+   Debugger_Console_Console : Boolean_Preference;
+   Debugger_Console_Stdout  : Boolean_Preference;
+   --  Whether display layers in the debugger console
+
    --  Call stack
    Frames_Limit                  : Integer_Preference;
    --  How many frames will be fetched at one time
