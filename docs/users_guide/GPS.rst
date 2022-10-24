@@ -1049,8 +1049,6 @@ Classes
 
    .. automethod:: GPS.Entity.called_by
 
-   .. automethod:: GPS.Entity.called_by_browser
-
    .. automethod:: GPS.Entity.calls
 
    .. automethod:: GPS.Entity.category

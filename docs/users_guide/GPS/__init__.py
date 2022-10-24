@@ -5400,14 +5400,6 @@ class Entity(object):
         """
         pass  # implemented in Ada
 
-    def called_by_browser(self):
-        """
-        OBSOLESCENT.
-
-        Opens the call graph browser to show what entities call self.
-        """
-        pass  # implemented in Ada
-
     def calls(self, dispatching_calls=False):
         """
         OBSOLESCENT.
