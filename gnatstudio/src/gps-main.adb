@@ -2394,7 +2394,9 @@ procedure GPS.Main is
 
       Browsers.Canvas.Register_Actions (GPS_Main.Kernel);
 
-      if Active (Call_Graph_Trace) then
+      if Active (Call_Graph_Trace)
+        and then not GPS.LSP_Module.LSP_Ada_Support_Trace_Is_Active
+      then
          Browsers.Call_Graph.Register_Module (GPS_Main.Kernel);
       end if;
 
