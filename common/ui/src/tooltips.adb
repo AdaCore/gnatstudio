@@ -22,6 +22,7 @@ with GNATCOLL.Traces;      use GNATCOLL.Traces;
 with Gdk;                  use Gdk;
 with Gdk.Device;           use Gdk.Device;
 with Gdk.Event;            use Gdk.Event;
+with Gdk.Types.Keysyms;    use Gdk.Types.Keysyms;
 with Gdk.Screen;           use Gdk.Screen;
 with Gdk.Types;            use Gdk.Types;
 with Gdk.Window;           use Gdk.Window;
@@ -714,7 +715,7 @@ package body Tooltips is
              (Gtk_Window (Widget.Get_Toplevel), Has_Toplevel_Focus_Property))
       then
          Show_Tooltip (Widget);
-      elsif T /= Key_Press then
+      elsif T /= Key_Press or else Get_Key_Val (Event) = GDK_Escape then
          Hide_Tooltip;
       end if;
 

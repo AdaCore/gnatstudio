@@ -34,9 +34,10 @@ with GUI_Utils;                       use GUI_Utils;
 with Language;                        use Language;
 with Src_Editor_Buffer;               use Src_Editor_Buffer;
 with Src_Editor_Buffer.Text_Handling; use Src_Editor_Buffer.Text_Handling;
-with Src_Editor_Buffer.Cursors; use Src_Editor_Buffer.Cursors;
+with Src_Editor_Buffer.Cursors;       use Src_Editor_Buffer.Cursors;
 with Src_Editor_Box;                  use Src_Editor_Box;
 with Src_Editor_Module;               use Src_Editor_Module;
+with Tooltips;                        use Tooltips;
 
 package body Src_Editor_View.Commands is
 
@@ -214,6 +215,7 @@ package body Src_Editor_View.Commands is
       pragma Unreferenced (Context, Moved);
    begin
       Remove_Completion;
+      Hide_Tooltip;
       Set_Manual_Sync (C);
 
       if Command.Kind = Page then
