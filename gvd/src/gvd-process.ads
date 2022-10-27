@@ -197,7 +197,8 @@ package GVD.Process is
    --  if Has_Died is True.
 
    procedure Interrupt
-     (Process : access Visual_Debugger_Record);
+     (Process            : access Visual_Debugger_Record;
+      Display_In_Console : Boolean := True);
    --  Interrupt execution
 
    function Get_Kernel

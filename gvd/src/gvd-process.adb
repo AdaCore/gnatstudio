@@ -744,11 +744,15 @@ package body GVD.Process is
    ----------------
 
    procedure Interrupt
-     (Process : access Visual_Debugger_Record) is
+     (Process            : access Visual_Debugger_Record;
+      Display_In_Console : Boolean := True) is
    begin
       --  Give some visual feedback to the user
 
-      Process.Output_Text ("<^C>" & ASCII.LF, Is_Command => True);
+      if Display_In_Console then
+         Process.Output_Text ("<^C>" & ASCII.LF, Is_Command => True);
+      end if;
+
       Process.Unregister_Dialog;
 
       --  Need to flush the queue of commands
@@ -798,9 +802,16 @@ package body GVD.Process is
          return;
       end if;
 
+      if Is_Interrupt_Command (Debugger.Debugger, Lowered_Command) then
+         Debugger.Interrupt (Display_In_Console => False);
+         return;
+      end if;
+
       Busy := Debugger.Debugger.Get_Process.Command_In_Process;
 
-      if Output /= null and then Busy then
+      if Output /= null
+        and then Busy
+      then
          GNATCOLL.Traces.Trace
            (Me, "Process_User_Command: Debugger is already busy");
          return;
