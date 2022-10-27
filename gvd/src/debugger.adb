@@ -876,6 +876,10 @@ package body Debugger is
       Process : constant Visual_Debugger := GVD.Process.Convert (Debugger);
       Dummy   : Message_Dialog_Buttons;
    begin
+      if Debugger /= null and then Debugger.Get_Process /= null then
+         Debugger.Get_Process.Set_Command_In_Process (False);
+      end if;
+
       if Process /= null then
          Free (Process.Current_Command);
 
@@ -1073,6 +1077,9 @@ package body Debugger is
 
       while Current_Process /= null
         and then Current_Process.Command_In_Process
+        and then
+          (Debugger.Kernel /= null
+           and then not Debugger.Kernel.Is_In_Destruction)
       loop
          Num_Events := 1;
 

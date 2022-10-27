@@ -1,0 +1,6 @@
+project Ext extends "hello.gpr" is
+
+   for Main use ("main.adb");
+
+end Ext;
+

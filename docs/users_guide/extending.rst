@@ -307,7 +307,8 @@ versions of GNAT Studio you should not have to keep other files in these directo
   In this file, you are expected to define two parameterless subprograms, called
   :guilabel:`initialize_project_plugin` and :guilabel:`finalize_project_plugin`;
   GNAT Studio will call the first one when the project is loaded, and call the
-  second one if/when another project is loaded.
+  second one if/when another project is loaded. If the file is not found
+  GNAT Studio looks for such file for all projects that the root project extends.
 
   This method is convenient for providing project-specific behaviors, and means
   that the GNAT Studio plugin can be checked under version control together with

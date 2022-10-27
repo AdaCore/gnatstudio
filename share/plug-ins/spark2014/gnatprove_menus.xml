@@ -223,7 +223,7 @@
 
     <action name="spark2014_example_adacore_u" category=""
             show-command="false" output="none">
-      <shell>Project.load "{example}/adacore_u/adacore_u.gpr"</shell>
+      <shell lang="python">spark2014.load_example_adacore_u()</shell>
     </action>
 
     <submenu before="About">
@@ -235,7 +235,7 @@
 
     <action name="spark2014_example_allocators" category=""
             show-command="false" output="none">
-      <shell>Project.load "{example}/allocators/allocators.gpr"</shell>
+      <shell lang="python">spark2014.load_example_allocators()</shell>
       <shell>Editor.edit "simple_allocator.ads"</shell>
       <shell>Editor.edit "simple_allocator.adb"</shell>
     </action>
@@ -318,7 +318,7 @@
 
     <action name="spark2014_example_linear_search" category=""
             show-command="false" output="none">
-      <shell>Project.load "@EXAMPLE@/linear_search/test.gpr"</shell>
+      <shell>Project.load "{example}/linear_search/test.gpr"</shell>
       <shell>Editor.edit "linear_search.adb"</shell>
       <shell>Editor.edit "linear_search.ads"</shell>
     </action>

@@ -1049,8 +1049,6 @@ Classes
 
    .. automethod:: GPS.Entity.called_by
 
-   .. automethod:: GPS.Entity.called_by_browser
-
    .. automethod:: GPS.Entity.calls
 
    .. automethod:: GPS.Entity.category
@@ -1822,6 +1820,8 @@ Classes
    .. automethod:: GPS.Project.get_attribute_as_string
 
    .. automethod:: GPS.Project.get_executable_name
+
+   .. automethod:: GPS.Project.get_extended_project
 
    .. automethod:: GPS.Project.get_main_units
 

@@ -1540,3 +1540,23 @@ def exit_ITP(dummy_arg):
             return True
     else:
         print_error("Interactive theorem proving requires version 18 of SPARK")
+
+
+def load_example_adacore_u():
+    """ load AdaCore U example project, which requires specific code to set
+        SPARKLIB_OBJECT_DIR environment variable.
+    """
+    import os
+    example_root = os.path.join(get_example_root(), 'adacore_u')
+    os.environ["SPARKLIB_OBJECT_DIR"] = '.'
+    GPS.Project.load(os.path.join(example_root, 'adacore_u.gpr'))
+
+
+def load_example_allocators():
+    """ load Allocators example project, which requires specific code to set
+        SPARKLIB_OBJECT_DIR environment variable.
+    """
+    import os
+    example_root = os.path.join(get_example_root(), 'allocators')
+    os.environ["SPARKLIB_OBJECT_DIR"] = '.'
+    GPS.Project.load(os.path.join(example_root, 'allocators.gpr'))

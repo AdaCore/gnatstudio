@@ -621,12 +621,6 @@ The View Menu
 
    Open (or reuse if it already exists) the 'Messages' view
 
-.. index:: menu; view --> browsers --> call graph browser
-
-* :menuselection:`View --> Browsers --> Call Graph Browser`
-
-   Open (or reuse if it already exists) the 'Call Graph Browser' view
-
 .. index:: menu; view --> browsers --> dependency browser
 
 * :menuselection:`View --> Browsers --> Dependency Browser`

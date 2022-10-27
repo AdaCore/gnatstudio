@@ -5400,14 +5400,6 @@ class Entity(object):
         """
         pass  # implemented in Ada
 
-    def called_by_browser(self):
-        """
-        OBSOLESCENT.
-
-        Opens the call graph browser to show what entities call self.
-        """
-        pass  # implemented in Ada
-
     def calls(self, dispatching_calls=False):
         """
         OBSOLESCENT.
@@ -9000,6 +8992,15 @@ class Project(object):
 
         :param GPS.File main: the main source file.
         :return: A string
+
+        """
+        pass  # implemented in Ada
+
+    def get_extended_project(self):
+        """
+        Return the project extended by project.
+
+        :return: An instance of :class:`GPS.Project`
 
         """
         pass  # implemented in Ada

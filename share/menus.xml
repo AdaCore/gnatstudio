@@ -440,7 +440,8 @@
          <menu label="_Messages"                  action="open messages"/>
       <separator />
          <menu label='Browsers'>
-            <menu label="_Call Graph Browser"                action="open call graph browser"/>
+            <menu label="_Call Graph Browser"                action="open call graph browser"
+                  optional='true'                            hide='true'/>
             <menu label="_Dependency Browser"                action="open dependency browser"/>
             <menu label="_Elaboration Circularities Browser" action="open elaboration circularities"/>
             <menu label="E_ntity Browser"                    action="open entity browser"/>
