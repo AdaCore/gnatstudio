@@ -1401,6 +1401,19 @@ package body Debugger is
       return False;
    end Is_Quit_Command;
 
+   --------------------------
+   -- Is_Interrupt_Command --
+   --------------------------
+
+   function Is_Interrupt_Command
+     (Debugger : access Debugger_Root;
+      Command  : String) return Boolean
+   is
+      pragma Unreferenced (Debugger);
+   begin
+      return Command = "interrupt";
+   end Is_Interrupt_Command;
+
    -----------------------------
    -- Is_Set_Register_Command --
    -----------------------------

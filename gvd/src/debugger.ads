@@ -1109,6 +1109,13 @@ package Debugger is
    --  Note that Command is assumed to be all lower case, the caller is
    --  responsible for ensuring that.
 
+   function Is_Interrupt_Command
+     (Debugger : access Debugger_Root;
+      Command : String) return Boolean;
+   --  Return true if Command will interrupt the debugger.
+   --  Note that Command is assumed to be all lower case, the caller is
+   --  responsible for ensuring that.
+
    function Is_Set_Register_Command
      (Debugger : access Debugger_Root;
       Command : String) return Boolean;
