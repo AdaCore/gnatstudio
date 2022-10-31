@@ -802,16 +802,17 @@ package body GVD.Process is
          return;
       end if;
 
-      if Is_Interrupt_Command (Debugger.Debugger, Lowered_Command) then
-         Debugger.Interrupt (Display_In_Console => False);
-         return;
-      end if;
-
       Busy := Debugger.Debugger.Get_Process.Command_In_Process;
 
       if Output /= null
         and then Busy
       then
+         --  Catch interrupt command when gdb is busy
+         if Is_Interrupt_Command (Debugger.Debugger, Lowered_Command) then
+            Debugger.Interrupt (Display_In_Console => False);
+            return;
+         end if;
+
          GNATCOLL.Traces.Trace
            (Me, "Process_User_Command: Debugger is already busy");
          return;
