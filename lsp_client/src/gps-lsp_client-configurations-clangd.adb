@@ -54,6 +54,9 @@ with Cpp_Module;                use Cpp_Module;
 package body GPS.LSP_Client.Configurations.Clangd is
 
    Me : constant Trace_Handle :=
+     GNATCOLL.Traces.Create ("GPS.LSP.CLANGD_SUPPORT", On);
+
+   Me_Diagnostics : constant Trace_Handle :=
      GNATCOLL.Traces.Create ("GPS.LSP.CLANGD_SUPPORT.DIAGNOSTICS", Off);
 
    Me_Avoid_Dialog : constant Trace_Handle :=
@@ -754,7 +757,7 @@ package body GPS.LSP_Client.Configurations.Clangd is
       --  Set logging to verbose if the GPS.LSP.CLANGD_SUPPORT.DIAGNOSTICS
       --  trace is enabled. Just log the errors othwerwise.
       Self.Server_Arguments.Append
-        ("--log=" & (if Me.Is_Active then "verbose" else "error"));
+        ("--log=" & (if Me_Diagnostics.Is_Active then "verbose" else "error"));
 
       Self.Server_Arguments.Append ("--query-driver=" & To_String (Drivers));
 
@@ -979,14 +982,24 @@ package body GPS.LSP_Client.Configurations.Clangd is
                  Create_From_Dir (D, Clang_Format_File_Name);
                WF : Writable_File;
             begin
-               if Override_Existing or else not F.Is_Regular_File then
-                  WF := Write_File (F);
+               if D.Is_Writable then
+                  if Override_Existing
+                    or else not F.Is_Regular_File
+                  then
 
-                  for Item of Current_Formatting_Options loop
-                     Write (WF, To_String (Item) & ASCII.LF);
-                  end loop;
+                     WF := Write_File (F);
 
-                  Close (WF);
+                     for Item of Current_Formatting_Options loop
+                        Write (WF, To_String (Item) & ASCII.LF);
+                     end loop;
+
+                     Close (WF);
+                  end if;
+
+               else
+                  Me.Trace
+                    ("Can't create clangd formatting configuration file, " &
+                     (+D.Full_Name) & " is not writable.");
                end if;
             end;
 
