@@ -21,9 +21,7 @@
 --  also line or word highlighting, etc).
 --  </description>
 
-with Gdk.RGBA;
 with Gtk.Text_Tag;
-with Pango.Font;
 
 with Language;
 
@@ -62,23 +60,5 @@ package Src_Highlighting is
 
    procedure Unref (Tags : in out Highlighting_Tags);
    --  Free memory
-
-   procedure New_Tag
-     (Tag        : in out Gtk.Text_Tag.Gtk_Text_Tag;
-      Tag_Name   : String;
-      Fore_Color : Gdk.RGBA.Gdk_RGBA := Gdk.RGBA.Null_RGBA;
-      Back_Color : Gdk.RGBA.Gdk_RGBA := Gdk.RGBA.Null_RGBA;
-      Font_Desc  : Pango.Font.Pango_Font_Description := null);
-   --  Create a new Gtk_Text_Tag with the given name.
-   --  If the tag already exists, its properties are changed accordingly.
-
-   procedure Create_Highlight_Line_Tag
-     (Tag   : out Gtk.Text_Tag.Gtk_Text_Tag;
-      Color : Gdk.RGBA.Gdk_RGBA);
-   --  Create a tag and set the Background_Gdk property using the given Color.
-   --  The priority of this Tag is guarantied to exceed the priority of the
-   --  syntax highlighting tags to ensure that highlighting a part of the
-   --  buffer using this tag will always override their colors and font
-   --  attributes.
 
 end Src_Highlighting;
