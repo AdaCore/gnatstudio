@@ -52,7 +52,6 @@ with Gtk.Stock;                 use Gtk.Stock;
 with Gtk.Spin_Button;           use Gtk.Spin_Button;
 with Gtk.Text_Buffer;           use Gtk.Text_Buffer;
 with Gtk.Text_Iter;             use Gtk.Text_Iter;
-with Gtk.Text_View;             use Gtk.Text_View;
 with Gtk.Tree_Model;            use Gtk.Tree_Model;
 with Gtk.Tree_Selection;        use Gtk.Tree_Selection;
 with Gtk.Tree_Store;            use Gtk.Tree_Store;
@@ -61,6 +60,7 @@ with Gtk.Tree_View_Column;      use Gtk.Tree_View_Column;
 with Gtk.Widget;                use Gtk.Widget;
 
 with Gtkada.MDI;                use Gtkada.MDI;
+with Gtkada.Multiline_Entry;    use Gtkada.Multiline_Entry;
 
 with GPS.Debuggers;             use GPS.Debuggers;
 with GPS.Editors;               use GPS.Editors;
@@ -179,7 +179,7 @@ package body GVD.Breakpoints is
       Ignore_Count_Combo   : Gtk_Spin_Button;
 
       Command_Frame        : Gtk_Frame;
-      Command_Descr        : Gtk_Text_View;
+      Command_Descr        : Gtkada_Multiline_Entry;
 
       Scope_Frame          : Gtk_Frame;
       Scope_Task           : Gtk_Radio_Button;
@@ -772,7 +772,7 @@ package body GVD.Breakpoints is
 
       Gtk_New (Frame);
       Frame.Set_Label_Widget (Self.Breakpoint_Type);
-      Self.Get_Content_Area.Pack_Start (Frame, Expand => False, Fill => False);
+      Self.Get_Content_Area.Pack_Start (Frame, Expand => True, Fill => True);
 
       Gtk_New_Vbox (Details);
       Frame.Add (Details);
@@ -782,7 +782,7 @@ package body GVD.Breakpoints is
       ------------
 
       Gtk_New_Vbox (Self.Location_Box);
-      Details.Pack_Start (Self.Location_Box, Expand => True, Fill => True);
+      Details.Pack_Start (Self.Location_Box, Expand => False, Fill => True);
 
       Gtk_New (Size);
 
@@ -980,7 +980,7 @@ package body GVD.Breakpoints is
       --------------
 
       Gtk_New (Self.Command_Frame, -"Commands");
-      Details.Pack_Start (Self.Command_Frame, False, True, 0);
+      Details.Pack_Start (Self.Command_Frame, True, True, 5);
 
       Gtk_New_Vbox (Vbox9, False, 0);
       Self.Command_Frame.Add (Vbox9);
@@ -991,7 +991,7 @@ package body GVD.Breakpoints is
 
       Gtk_New (Scroll);
       Scroll.Set_Policy (Policy_Automatic, Policy_Automatic);
-      Vbox9.Pack_Start (Scroll, False, False, 0);
+      Vbox9.Pack_Start (Scroll, True, True, 0);
 
       Gtk_New (Self.Command_Descr);
       Set_Name (Self.Command_Descr, "Commands");
