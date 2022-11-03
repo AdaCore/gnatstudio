@@ -1141,13 +1141,26 @@ package body GVD.Variables.View is
    is
       It : Item;
    begin
-      if Store_Iter /= Null_Iter and then View_Column = Column_Value then
+      if Store_Iter /= Null_Iter
+        and then View_Column = Column_Value
+      then
          It := Item_From_Iter (Self, Store_Iter);
 
-         if Self.Process /= null and then Self.Process.Debugger /= null then
-            Self.Process.Debugger.Set_Variable
-              (Var_Name => To_String (It.Info.Varname),
-               Value    => Text);
+         if Self.Process /= null
+           and then Self.Process.Debugger /= null
+           and then It /= No_Item
+         then
+            if It.Info.Cmd /= Null_Unbounded_String then
+               Self.Process.Debugger.Set_Variable
+                 (Var_Name => Name (It.Info),
+                  Value    => Text);
+
+            elsif It.Info.Varname /= Null_Unbounded_String then
+               Self.Process.Debugger.Set_Variable
+                 (Var_Name => Self.Model.Get_String
+                    (Store_Iter, Column_Full_Name),
+                  Value    => Text);
+            end if;
          end if;
       end if;
    end On_Edited;
