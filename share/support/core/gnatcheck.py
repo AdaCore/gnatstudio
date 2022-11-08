@@ -106,7 +106,13 @@ class gnatCheckProc:
         ):
             res = re.split("^\-from\=(.*)$", opt)
             if len(res) > 1:
-                return GPS.File(res[1])
+                # Go to the project's directory to resolve potential
+                # relative paths from the right location
+                project_dir = GPS.Project.root().file().directory()
+                rules_file = res[1]
+                path_to_rules_file = GPS.File(
+                    os.path.join(project_dir, rules_file))
+                return path_to_rules_file
         return None
 
     def updateGnatCmd(self):
