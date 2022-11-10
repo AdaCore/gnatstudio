@@ -14,26 +14,9 @@ this build mode are generated in a subdirectory "gnatcov"
 in all object and executable directories specified
 the project hierarchy.
 
-The following Project Properties are added, which are
-available in the "GNATcov" section of the Project
-Properties editor, and which map to attributes in a
-package "IDE_Coverage" in the project files.
-
-  * Gnatcov_Mode_Switches: switches that GPS will pass
-    to the command line used to build while the "gnatcov"
-    Build Mode is selected
-
-  * Level_Run: the coverage level to pass to the
-    "gnatcov run" command
-
-  * Switches_Run: additional switches to pass to
-    the "gnatcov run" command
-
-  * Level_Coverage: the coverage level to pass to
-    the "gnatcov coverage" command
-
-  * Switches_Coverage: additional switches to pass
-    to the "gnatcov coverage" command
+We expose a way to specify the coverage level of all commands
+via the Project Properties, using GNATcoverage's Coverage project
+package.
 
 To use GNATcoverage with binary traces, click on the
 Analyze/Coverage/GNATcoverage Binary Traces/Run all actions menu.
@@ -139,81 +122,29 @@ prebuilt_runtime_path = None
 # Used to store the prebuilt GNATcov runtime path, if the user specified
 # one.
 
-PROJECT_ATTRIBUTES = [
-    X(
-        'project_attribute',
-        package='IDE_Coverage',
-        name='Gnatcov_Mode_Switches',
-
-        label="Switches in 'gnatcov' mode",
-        description=("Extra build switches to pass to the builder when in"
-                     " 'gnatcov' mode."),
-
-        editor_page='GNATcov',
-        editor_section='Build',
-        hide_in='wizard library_wizard',
-    ).children(X('string')),
-
-    X(
-        'project_attribute',
-        name='Level_Run',
-        label='Coverage Level',
-        package='IDE_Coverage',
-        editor_page='GNATcov',
-        editor_section='Run',
-        hide_in='wizard library_wizard',
-        description='The coverage level to pass to gnatcov run.',
-    ).children(
-        X('choice').children('branch'),
-        X('choice').children('insn'),
-        X('choice', default='true').children('stmt'),
-        X('choice').children('stmt+decision'),
-        X('choice').children('stmt+mcdc'),
-    ),
-
-    X(
-        'project_attribute',
-        name='Switches_Run',
-        label='Extra switches',
-        package='IDE_Coverage',
-        editor_page='GNATcov',
-        editor_section='Run',
-        hide_in='wizard library_wizard',
-        description='Extra build switches to pass to gnatcov run.',
-    ).children(X('string')),
-
-    X(
-        'project_attribute',
-        name='Level_Coverage',
-        label='Coverage Level',
-        package='IDE_Coverage',
-        editor_page='GNATcov',
-        editor_section='Coverage',
-        hide_in='wizard library_wizard',
-        description='The coverage level to pass to gnatcov coverage.',
-    ).children(
-        X('choice').children('branch'),
-        X('choice').children('insn'),
-        X('choice', default='true').children('stmt'),
-        X('choice').children('stmt+decision'),
-        X('choice').children('stmt+mcdc'),
-    ),
-    X(
-        'project_attribute',
-        name='Switches_Coverage',
-        label='Extra switches',
-        package='IDE_Coverage',
-        editor_page='GNATcov',
-        editor_section='Coverage',
-        hide_in='wizard library_wizard',
-        description='Extra build switches to pass to gnatcov coverage.',
-    ).children(X('string')),
-]
-
 # The project attributes must be created when the plugin is loaded or they
 # will not be found when opening the first project.
 if gnatcov_path:
-    GPS.parse_xml(list_to_xml(PROJECT_ATTRIBUTES))
+    GPS.parse_xml("""
+        <tool name="GNATcoverage" package="Coverage" index="*" override="false"
+        attribute="switches">
+            <language>Ada</language>
+            <switches>
+                <title line="1" column="1">Coverage Level</title>
+                <combo label="Level"
+                    line="1"  column="1"
+                    switch="--level"
+                    separator="="
+                    noswitch="stmt"
+                    tip="Used to specify the coverage level.">
+                    <combo-entry label="stmt" value="stmt"/>
+                    <combo-entry label="stmt+decision" value="stmt+decision"/>
+                    <combo-entry label="stmt+mcdc" value="stmt+mcdc"/>
+                    <combo-entry label="stmt+uc_mcdc" value="stmt+uc_mcdc"/>
+                </combo>
+            </switches>
+        </tool>
+""")
 
 
 class GNATcovPlugin(Module):
@@ -234,7 +165,6 @@ class GNATcovPlugin(Module):
             X('supported-model', filter='--subdirs=').children(
                 'GNATtest execution mode'),
             X('extra-args', sections='-cargs:Ada -cargs:C').children(
-                X('arg').children("%attr(ide_coverage'gnatcov_mode_switches)"),
                 X('arg').children('--subdirs=%subdir'),
                 X('arg', section='-cargs:Ada').children('-g'),
                 X('arg', section='-cargs:Ada').children('-fdump-scos'),
@@ -374,11 +304,9 @@ class GNATcovPlugin(Module):
                 X('arg').children('--recursive'),
                 X('arg').children('%target'),
                 X('arg').children('-c'),
-                X('arg').children("%attr(ide_coverage'level_coverage,stmt)"),
                 X('arg').children('-o'),
                 X('arg').children('%O%T.trace'),
                 X('arg').children('%E'),
-                X('arg').children("%attr(ide_coverage'switches_run)"),
                 X('arg').children('%X'),
             ),
         ),
@@ -401,12 +329,10 @@ class GNATcovPlugin(Module):
                 X('arg').children('--recursive'),
                 X('arg').children('%target'),
                 X('arg').children('-c'),
-                X('arg').children("%attr(ide_coverage'level_coverage,stmt)"),
                 X('arg').children('--annotate=xcov+'),
                 X('arg').children('--output-dir=%O'),
                 X('arg').children('-T'),
                 X('arg').children('%O%T.trace'),
-                X('arg').children("%attr(ide_coverage'switches_coverage)"),
                 X('arg').children('%X'),
             ),
         ),
@@ -454,8 +380,6 @@ class GNATcovPlugin(Module):
                 X('arg').children('instrument'),
                 X('arg').children('-P%PP'),
                 X('arg').children('%subdirsarg'),
-                X('arg').children('--level'),
-                X('arg').children("%attr(ide_coverage'level_run,stmt)"),
                 X('arg').children(
                     '%python' +
                     '(gnatcov.GNATcovPlugin.' +
@@ -585,13 +509,10 @@ class GNATcovPlugin(Module):
                 X('arg').children('-P%PP'),
                 X('arg').children('%subdirsarg'),
                 X('arg').children('%target'),
-                X('arg').children('-c'),
-                X('arg').children("%attr(ide_coverage'level_coverage,stmt)"),
                 X('arg').children('--annotate=xcov+'),
                 X('arg').children('--output-dir=%O'),
                 X('arg').children('-T'),
                 X('arg').children('%O%T.srctrace'),
-                X('arg').children("%attr(ide_coverage'switches_coverage)"),
                 X('arg').children('%X'),
             ),
 
