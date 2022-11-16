@@ -37,5 +37,6 @@ def test():
         buffer.get_start_iter(),
         buffer.get_end_iter(),
         True)
-    gps_assert(doc_substring in text, True,
-               "help function not working for Python console")
+    gps_assert(
+        doc_substring in text, True,
+        "help function not working for Python console, got: %s" % text)
