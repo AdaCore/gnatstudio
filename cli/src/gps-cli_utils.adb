@@ -57,6 +57,17 @@ package body GPS.CLI_Utils is
      (Builder : in out Build_Command_Utils.Builder_Context_Record);
    --     --  Register tool output parsers.
 
+   function Execute_Batch
+     (Kernel      : access GPS.CLI_Kernels.CLI_Kernel_Record'Class;
+      Lang_Name   : String;
+      Script_Name : String) return Boolean;
+   --  Execute a batch Script_Name in Lang_Name language.
+   --
+   --  Lang_Name: Scription language
+   --  Script_Name: script to execute
+   --  Return: False if could not execute script because scripting language
+   --          is unknown. True otherwises
+
    ----------------------
    -- Register_Classes --
    ----------------------
