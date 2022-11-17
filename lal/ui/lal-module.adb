@@ -137,6 +137,7 @@ package body LAL.Module is
          Editable_Line_Type (From),
          Editable_Line_Type (To));
    end Remove_Highlighting;
+
    ----------------------
    -- Highlight_Buffer --
    ----------------------
