@@ -90,6 +90,7 @@ package body CodePeer.Module.Bridge is
               (Command_File_Name,
                Codepeer_Server_URL (Project),
                Codepeer_Output_Directory (Module.Kernel),
+               Codepeer_CPM_Directory (Module.Kernel),
                Codepeer_Database_Directory (Project),
                Codepeer_Message_Patterns (Project),
                Codepeer_Additional_Patterns (Project),
@@ -109,7 +110,8 @@ package body CodePeer.Module.Bridge is
 
    procedure Inspection
      (Module          : not null access CodePeer.Module.Module_Id_Record'Class;
-      Preserve_Output : Boolean)
+      Preserve_Output : Boolean;
+      Just_Load       : Boolean := False)
    is
       Ensure_Build_Mode : CodePeer_Build_Mode (Module.Kernel);
       pragma Unreferenced (Ensure_Build_Mode);
@@ -126,6 +128,8 @@ package body CodePeer.Module.Bridge is
         Create_From_Dir (Object_Directory, Review_Status_File_Name);
       Output_Directory      : constant Virtual_File :=
         Codepeer_Output_Directory (Module.Kernel);
+      CPM_Directory         : constant Virtual_File :=
+        Codepeer_CPM_Directory (Module.Kernel);
       Bts_Directory         : constant Virtual_File :=
         Output_Directory.Create_From_Dir ("bts");
       Success               : Boolean;
@@ -147,23 +151,29 @@ package body CodePeer.Module.Bridge is
 
       --  Generate command file
 
-      CodePeer.Bridge.Commands.Inspection
-        (Command_File_Name    => Command_File_Name,
-         Server_URL           => Codepeer_Server_URL (Project),
-         Output_Directory     => Output_Directory,
-         DB_Directory         => Codepeer_Database_Directory (Project),
-         Message_Patterns     => Codepeer_Message_Patterns (Project),
-         Additional_Patterns  => Codepeer_Additional_Patterns (Project),
-         Inspection_File_Name => Reply_File_Name,
-         Status_File_Name     => Status_File_Name,
-         Import_Annotations   => Module.Import_Annotations.Get_Pref,
-         Import_Backtraces    => Module.Import_Backtraces.Get_Pref,
-         Maximum_Version      => Supported_Format_Version'Last);
+      if not Just_Load then
+         CodePeer.Bridge.Commands.Inspection
+           (Command_File_Name    => Command_File_Name,
+            Server_URL           => Codepeer_Server_URL (Project),
+            Output_Directory     => Output_Directory,
+            CPM_Directory        => CPM_Directory,
+            DB_Directory         => Codepeer_Database_Directory (Project),
+            Message_Patterns     => Codepeer_Message_Patterns (Project),
+            Additional_Patterns  => Codepeer_Additional_Patterns (Project),
+            Inspection_File_Name => Reply_File_Name,
+            Status_File_Name     => Status_File_Name,
+            Import_Annotations   => Module.Import_Annotations.Get_Pref,
+            Import_Backtraces    => Module.Import_Backtraces.Get_Pref,
+            Maximum_Version      => Supported_Format_Version'Last);
+      end if;
 
       Module.Action := Load_Bridge_Results;
       Module.Inspection_File := Reply_File_Name;
       Module.Status_File := Status_File_Name;
-      Run_GPS_Codepeer_Bridge (Module, Command_File_Name, Preserve_Output);
+
+      if not Just_Load then
+         Run_GPS_Codepeer_Bridge (Module, Command_File_Name, Preserve_Output);
+      end if;
    end Inspection;
 
    ----------------------

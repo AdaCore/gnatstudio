@@ -27,6 +27,7 @@ package CodePeer.Bridge.Commands is
      (Command_File_Name    : Virtual_File;
       Server_URL           : String;
       Output_Directory     : Virtual_File;
+      CPM_Directory        : Virtual_File;
       DB_Directory         : Virtual_File;
       Message_Patterns     : Virtual_File;
       Additional_Patterns  : Virtual_File;
@@ -55,6 +56,7 @@ package CodePeer.Bridge.Commands is
      (Command_File_Name   : Virtual_File;
       Server_URL          : String;
       Output_Directory    : Virtual_File;
+      CPM_Directory       : Virtual_File;
       DB_Directory        : Virtual_File;
       Message_Patterns    : Virtual_File;
       Additional_Patterns : Virtual_File;

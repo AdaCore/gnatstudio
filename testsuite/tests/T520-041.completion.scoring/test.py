@@ -25,6 +25,9 @@ def run_test():
         yield timeout(100)
 
     # Verify that the completion window is there
+    yield wait_until_true(
+        lambda: get_widget_by_name("completion-view") != None,
+        timeout=2000)
     pop_tree = get_widget_by_name("completion-view")
     gps_assert(pop_tree is not None, True,
                "The completion window should be open at that point")
