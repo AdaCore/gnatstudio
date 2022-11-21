@@ -14,8 +14,8 @@ EXPECT_FIRST = [
 EXPECT_SECOND = [
     'Renaming (2 items in 1 file)',
     ['foo.adb (2 items)',
-     ['<b>3:13</b>      Renaming Bar to Foo_Bar creates a name collision',
-      '<b>2:4</b>       Renaming Foo_Bar to Bar creates a name collision']]]
+     ['<b>2:4</b>       Renaming Foo_Bar to Bar creates a name collision',
+      '<b>3:13</b>      Renaming Bar to Foo_Bar creates a name collision']]]
 
 
 @run_test_driver
@@ -31,6 +31,7 @@ def driver():
         dialog = get_window_by_title("Renaming entity")
         yield idle_modal_dialog(
             lambda: get_stock_button(dialog, Gtk.STOCK_OK).clicked())
+        yield wait_idle()
 
     yield rename(buf.at(5, 11), "Foo_Bar")
     gps_assert(dump_locations_tree(),
