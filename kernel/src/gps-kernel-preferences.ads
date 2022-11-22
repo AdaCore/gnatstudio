@@ -149,7 +149,18 @@ package GPS.Kernel.Preferences is
      (Menu    : not null access Gtk_Menu_Record'Class;
       Kernel  : not null access Kernel_Handle_Record'Class;
       Pref    : Color_Preference);
-   --  Some as above but for color preference.
+   --  Some as above but for color
+
+   generic
+      type Enumeration is (<>);
+   procedure Append_Enum_To_Menu
+     (Menu    : not null access Gtk_Menu_Record'Class;
+      Kernel  : not null access Kernel_Handle_Record'Class;
+      Pref    : Enum_Preference);
+   --  Append new radio menu items for each value of the given enumeration
+   --  type, grouping them in one group. It will keep the associated enum
+   --  preference in sync with the changes made regarding the selected value
+   --  within the radio group.
 
    -----------------------
    -- List of constants --

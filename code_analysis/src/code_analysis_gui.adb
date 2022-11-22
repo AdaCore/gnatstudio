@@ -43,13 +43,11 @@ package body Code_Analysis_GUI is
    ---------------------------
 
    function Build_Analysis_Report
-     (Kernel   : Kernel_Handle;
-      Name     : GNAT.Strings.String_Access;
-      Projects : Code_Analysis_Tree;
-      Binary   : Boolean) return Code_Analysis_View
+     (Kernel      : Kernel_Handle;
+      Binary_Mode : Boolean) return Code_Analysis_Report_Access
    is
-      View        : constant Code_Analysis_View :=
-                      new Code_Analysis_View_Record;
+      View        : constant Code_Analysis_Report_Access :=
+                      new Code_Analysis_Report;
       Scrolled    : Gtk_Scrolled_Window;
       Text_Render : Gtk_Cell_Renderer_Text;
       Pixbuf_Rend : Gtk_Cell_Renderer_Pixbuf;
@@ -63,9 +61,8 @@ package body Code_Analysis_GUI is
       Label_And_Button : Gtk_Vbox;
       Button_Box       : Gtk_Hbox;
    begin
-      View.Binary_Mode       := Binary;
+      View.Binary_Mode       := Binary_Mode;
       Initialize_Vbox (View, False, 0);
-      View.Projects := Projects;
       Gtk_New (View.Model, GType_Array'
           (Icon_Name_Col => GType_String,
            Name_Col    => GType_String,
@@ -77,17 +74,12 @@ package body Code_Analysis_GUI is
            Cov_Bar_Txt => GType_String,
            Cov_Bar_Val => GType_Int));
       Gtk_New (View.Tree, View.Model);
-      --  Ideally, we should have used Set_Name on the view itself, but for
-      --  historical reasons we set it on View.Tree. This name can be retrieved
-      --  using the Name function below.
-      Set_Name (View.Tree, Name.all); --  testsuite
 
       ------------------
       --  Error_Board --
       ------------------
 
       Gtk_New_Hbox (View.Error_Board, False, 7);
-      Set_Name (View.Error_Board, Name.all & "_Error_Board"); --  testsuite
       Gtk_New_Vbox (Label_And_Button, False, 7);
       Gtk_New_Hbox (Button_Box);
       Gtk_New_From_Icon_Name
@@ -102,7 +94,6 @@ package body Code_Analysis_GUI is
       Set_Line_Wrap (Board_Label, True);
       Set_Justify (Board_Label, Justify_Left);
       Gtk_New (View.Load_Button, -"Load data for all projects");
-      Set_Name (View.Load_Button, Name.all & "_Load_Button"); --  testsuite
       Pack_Start (View.Error_Board, Warning_Image, False, False, 7);
       Pack_Start (Label_And_Button, Board_Label, False, True, 7);
       Pack_Start (Button_Box, View.Load_Button, False, False, 0);
@@ -205,11 +196,30 @@ package body Code_Analysis_GUI is
       return View;
    end Build_Analysis_Report;
 
+   ---------------------------
+   -- Set_Projects_And_Name --
+   ---------------------------
+
+   procedure Set_Projects_And_Name
+     (Self     : not null access Code_Analysis_Report'Class;
+      Name     : Unbounded_String;
+      Projects : Code_Analysis_Tree) is
+   begin
+      Self.Projects := Projects;
+
+      --  Ideally, we should have used Set_Name on the view itself, but
+      --  for historical reasons we set it `on View.Tree. This name can
+      --  be retrieved using the Name function below.
+      Set_Name (Self.Tree, To_String (Name)); --  testsuite
+      Set_Name (Self.Error_Board, To_String (Name) & "_Error_Board");
+      Set_Name (Self.Load_Button, To_String (Name) & "_Load_Button");
+   end Set_Projects_And_Name;
+
    ----------
    -- Name --
    ----------
 
-   function Name (View : access Code_Analysis_View_Record'Class) return String
+   function Name (View : access Code_Analysis_Report'Class) return String
    is
    begin
       return Get_Name (View.Tree);
@@ -219,41 +229,18 @@ package body Code_Analysis_GUI is
    -- Clear --
    -----------
 
-   procedure Clear (View : access Code_Analysis_View_Record'Class) is
+   procedure Clear (View : access Code_Analysis_Report'Class) is
    begin
       View.Model.Clear;
    end Clear;
-
-   ----------------------------
-   -- Expand_All_From_Report --
-   ----------------------------
-
-   procedure Expand_All_From_Report
-     (Object : access Gtk_Widget_Record'Class)
-   is
-      View : constant Code_Analysis_View := Code_Analysis_View (Object);
-   begin
-      Expand_All (View.Tree);
-   end Expand_All_From_Report;
-
-   ------------------------------
-   -- Collapse_All_From_Report --
-   ------------------------------
-
-   procedure Collapse_All_From_Report
-     (Object : access Gtk_Widget_Record'Class)
-   is
-      View : constant Code_Analysis_View := Code_Analysis_View (Object);
-   begin
-      Collapse_All (View.Tree);
-   end Collapse_All_From_Report;
 
    --------------------
    -- Show_Full_Tree --
    --------------------
 
    procedure Show_Full_Tree (Object : access Gtk_Widget_Record'Class) is
-      View : constant Code_Analysis_View := Code_Analysis_View (Object);
+      View : constant Code_Analysis_Report_Access :=
+        Code_Analysis_Report_Access (Object);
       Iter : Gtk_Tree_Iter := Get_Iter_First (View.Model);
       Path : Gtk_Tree_Path;
    begin
@@ -277,7 +264,8 @@ package body Code_Analysis_GUI is
    procedure Show_Flat_List_Of_Files
      (Object : access Gtk_Widget_Record'Class)
    is
-      View : constant Code_Analysis_View := Code_Analysis_View (Object);
+      View : constant Code_Analysis_Report_Access :=
+        Code_Analysis_Report_Access (Object);
       Iter : Gtk_Tree_Iter := Get_Iter_First (View.Model);
    begin
       Clear (View.Model);
@@ -300,7 +288,8 @@ package body Code_Analysis_GUI is
    procedure Show_Flat_List_Of_Subprograms
      (Object : access Gtk_Widget_Record'Class)
    is
-      View : constant Code_Analysis_View := Code_Analysis_View (Object);
+      View : constant Code_Analysis_Report_Access :=
+        Code_Analysis_Report_Access (Object);
       Iter : Gtk_Tree_Iter := Get_Iter_First (View.Model);
    begin
       Clear (View.Model);
@@ -325,7 +314,8 @@ package body Code_Analysis_GUI is
       Event  : Gdk_Event;
       Kernel : Kernel_Handle) return Boolean
    is
-      View  : constant Code_Analysis_View := Code_Analysis_View (Object);
+      View  : constant Code_Analysis_Report_Access :=
+        Code_Analysis_Report_Access (Object);
       Tree  : constant Gtk_Tree_View := View.Tree;
       Iter  : Gtk_Tree_Iter;
       Model : Gtk_Tree_Model;
@@ -367,7 +357,7 @@ package body Code_Analysis_GUI is
 
    procedure Open_File_Editor
      (Kernel    : Kernel_Handle;
-      View      : Code_Analysis_View;
+      View      : Code_Analysis_Report_Access;
       File_Node : Code_Analysis.File_Access;
       Quiet     : Boolean;
       Line      : Natural := 1;
@@ -394,7 +384,7 @@ package body Code_Analysis_GUI is
 
    procedure Open_File_Editor_On_File
      (Kernel : Kernel_Handle;
-      View   : Code_Analysis_View;
+      View   : Code_Analysis_Report_Access;
       Iter   : Gtk_Tree_Iter)
    is
       File_Node : constant File_Access := File_Access
@@ -409,7 +399,7 @@ package body Code_Analysis_GUI is
 
    procedure Open_File_Editor_On_Subprogram
      (Kernel : Kernel_Handle;
-      View   : Code_Analysis_View;
+      View   : Code_Analysis_Report_Access;
       Iter   : Gtk_Tree_Iter)
    is
       File_Node : constant File_Access := File_Access
@@ -421,27 +411,19 @@ package body Code_Analysis_GUI is
         (Kernel, View, File_Node, True, Subp_Node.Start, Subp_Node.Column);
    end Open_File_Editor_On_Subprogram;
 
-   -------------------------------------------
-   -- Code_Analysis_Contextual_Menu_Factory --
-   -------------------------------------------
+   ----------------------
+   -- Setup_Local_Menu --
+   ----------------------
 
-   procedure Code_Analysis_Contextual_Menu_Factory
-     (Context : Selection_Context;
-      Menu    : Gtk.Menu.Gtk_Menu)
+   procedure Setup_Local_Menu
+     (View    : not null access Code_Analysis_Report'Class;
+      Menu    : not null access Gtk.Menu.Gtk_Menu_Record'Class)
    is
       use Project_Maps;
-
-      --  ??? This is a hack. We should really be using generic_views here
-      View      : constant Code_Analysis_View :=
-        Code_Analysis_View
-          (Get_MDI (Get_Kernel (Context)).Find_MDI_Child_By_Tag
-           (Code_Analysis_View_Record'Tag).Get_Widget);
 
       Item : Gtk_Menu_Item;
       Iter : constant Gtk_Tree_Iter := Get_Iter_First (View.Model);
    begin
-      --  ??? Should be in a local config menu instead
-
       if First (View.Projects.all) /= No_Element then
          Gtk_New (Item, -"Show flat list of files");
          Gtkada.Handlers.Widget_Callback.Object_Connect
@@ -460,19 +442,8 @@ package body Code_Analysis_GUI is
               (Item, Gtk.Menu_Item.Signal_Activate,
                Show_Full_Tree'Access, View);
             Append (Menu, Item);
-         else
-            Gtk_New (Item, -"Expand all");
-            Gtkada.Handlers.Widget_Callback.Object_Connect
-              (Item, Gtk.Menu_Item.Signal_Activate,
-               Expand_All_From_Report'Access, View);
-            Append (Menu, Item);
-            Gtk_New (Item, -"Collapse all");
-            Gtkada.Handlers.Widget_Callback.Object_Connect
-              (Item, Gtk.Menu_Item.Signal_Activate,
-               Collapse_All_From_Report'Access, View);
-            Append (Menu, Item);
          end if;
       end if;
-   end Code_Analysis_Contextual_Menu_Factory;
+   end Setup_Local_Menu;
 
 end Code_Analysis_GUI;
