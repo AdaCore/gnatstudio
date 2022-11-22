@@ -35,6 +35,7 @@ with Gtk.Check_Menu_Item;        use Gtk.Check_Menu_Item;
 with Gtk.Color_Selection_Dialog; use Gtk.Color_Selection_Dialog;
 with Gtk.Dialog;                 use Gtk.Dialog;
 with Gtk.Menu_Item;              use Gtk.Menu_Item;
+with Gtk.Radio_Menu_Item;        use Gtk.Radio_Menu_Item;
 with Gtk.Tree_Model;             use Gtk.Tree_Model;
 with Gtk.Tree_View_Column;       use Gtk.Tree_View_Column;
 with Gtk.Widget;                 use Gtk.Widget;
@@ -2157,6 +2158,38 @@ package body GPS.Kernel.Preferences is
    procedure On_Color_Menu_Item_Activated
      (Item : access Gtk_Menu_Item_Record'Class);
 
+   -------------------------
+   -- Enum_Menu_Item_Pref --
+   -------------------------
+
+   type Enum_Menu_Item_Pref_Record is new Gtk_Radio_Menu_Item_Record with
+      record
+         Kernel : access Kernel_Handle_Record'Class;
+         Pref   : Enum_Preference;
+         Value  : Unbounded_String;
+      end record;
+   type Enum_Menu_Item_Pref is access all Enum_Menu_Item_Pref_Record'Class;
+
+   procedure On_Enum_Menu_Item_Activated
+     (Item : access Gtk_Menu_Item_Record'Class);
+   --  Called when a enum menu item is activated. Used to change the
+   --  associated enum preference value.
+
+   ---------------------------------
+   -- On_Enum_Menu_Item_Activated --
+   ---------------------------------
+
+   procedure On_Enum_Menu_Item_Activated
+     (Item : access Gtk_Menu_Item_Record'Class)
+   is
+      Menu_Item : constant Enum_Menu_Item_Pref := Enum_Menu_Item_Pref (Item);
+   begin
+      Set_Pref
+        (Menu_Item.Pref,
+         Menu_Item.Kernel.Get_Preferences,
+         To_String (Menu_Item.Value));
+   end On_Enum_Menu_Item_Activated;
+
    -----------------
    -- Append_Menu --
    -----------------
@@ -2181,6 +2214,38 @@ package body GPS.Kernel.Preferences is
 
       C.On_Activate (On_Color_Menu_Item_Activated'Access);
    end Append_Menu;
+
+   -----------------
+   -- Append_Menu --
+   -----------------
+
+   procedure Append_Enum_To_Menu
+     (Menu    : not null access Gtk_Menu_Record'Class;
+      Kernel  : not null access Kernel_Handle_Record'Class;
+      Pref    : Enum_Preference)
+   is
+      Menu_Item : Enum_Menu_Item_Pref;
+      Group     : Widget_SList.GSlist := Widget_SList.Null_List;
+   begin
+      for J in Enumeration loop
+         declare
+            Value : constant String := Enumeration'Image (J);
+         begin
+            Menu_Item := new Enum_Menu_Item_Pref_Record;
+            Gtk.Radio_Menu_Item.Initialize
+              (Radio_Menu_Item => Menu_Item,
+               Group           => Group,
+               Label           => Default_Preferences.Enums.Enum_Value_To_Label
+                 (Value));
+            Group := Menu_Item.Get_Group;
+            Menu_Item.Kernel := Kernel;
+            Menu_Item.Pref := Pref;
+            Menu_Item.Value := To_Unbounded_String (Value);
+            Menu.Add (Menu_Item);
+            Menu_Item.On_Activate (On_Enum_Menu_Item_Activated'Access);
+         end;
+      end loop;
+   end Append_Enum_To_Menu;
 
    ----------------------------------
    -- On_Color_Menu_Item_Activated --
