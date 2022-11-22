@@ -1,0 +1,20 @@
+## TEST HELP
+GNAT Studio command line interface (adareducer mode)
+Usage: gnatstudio_cli [switches] [arguments]
+
+ -P, --project=ARG       Load the given project (mandatory)
+ --single_file=ARG       Specify the base name of a file where processing should start.
+ --follow-closure        Follow the closure of the file
+ -s, --oracle_script=ARG The reduction oracle script.
+
+## TEST MISSING PROJECT
+Specify a project with the -P switch
+
+## TEST MISSING ORACLE
+Specify an oracle with the -s/--oracle_script switch
+
+## TEST FUNCTIONALITY
+procedure Hello is
+begin
+   null;
+end Hello;
