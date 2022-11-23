@@ -37,6 +37,9 @@ def driver():
     gps_assert(dump_locations_tree(),
                EXPECT_FIRST,
                "Missing error for first renaming")
+
+    yield timeout(500)
+
     yield rename(buf.at(5, 17), "Bar")
     gps_assert(dump_locations_tree(),
                EXPECT_SECOND,
