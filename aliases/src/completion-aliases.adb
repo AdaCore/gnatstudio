@@ -128,7 +128,9 @@ package body Completion.Aliases is
       end if;
 
       --  Don't propose aliases completion on empty words or dotted names
-      if Word = "" or else
+      if Word = ""
+        or else Context.In_Comment
+        or else
         (Offset > 0
          and then (Context.Buffer (Natural (Offset)) in '.' | ':'))
       then

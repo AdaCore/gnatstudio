@@ -113,6 +113,10 @@ package Completion is
      (Context : Completion_Context) return Completion_Trigger_Kind;
    --  Return the trigger kind asoociated with this context
 
+   function Is_In_Comment
+     (Context : Completion_Context) return Boolean;
+   --  Return True if the completion was trigerred within a comment.
+
    function Deep_Copy
      (Context : Completion_Context) return Completion_Context;
    --  Make a deep copy of Context. Result should be freed by the caller.
@@ -246,7 +250,8 @@ package Completion is
       Lang         : Language_Access;
       Start_Offset : String_Index_Type;
       End_Offset   : String_Index_Type;
-      Trigger_Kind : Completion_Trigger_Kind) return Completion_Context;
+      Trigger_Kind : Completion_Trigger_Kind;
+      In_Comment   : Boolean) return Completion_Context;
    --  Creates a new context for this manager, with the completion's start and
    --  end offsets and the buffer given in parameter.
 
@@ -526,6 +531,9 @@ private
 
       Trigger_Kind : Completion_Trigger_Kind;
       --  The event that triggered completion.
+
+      In_Comment   : Boolean;
+      --  True if the completion was trigerred within a comment.
    end record;
 
    type Completion_Context is access all Completion_Context_Record'Class;

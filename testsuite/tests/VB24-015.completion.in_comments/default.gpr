@@ -1,0 +1,6 @@
+project Default is
+
+   for Languages use ("Ada");
+   for Source_Dirs use ("src");
+   for Main use ("main.adb");
+end Default;

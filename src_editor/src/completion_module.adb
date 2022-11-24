@@ -1013,6 +1013,7 @@ package body Completion_Module is
                                                Completion_Module.Data;
             Cursor_Iter           : Gtk_Text_Iter;
             Prefix_Iter           : Gtk_Text_Iter;
+            Previous_Char_Iter    : Gtk_Text_Iter;
             Movement              : Boolean;
             Context               : Completion.Completion_Context;
          begin
@@ -1096,6 +1097,11 @@ package body Completion_Module is
 
             Start_Completion (View);
 
+            --  Get the previous char iter, to check if it's within a comment
+            --  or not
+            Copy (Prefix_Iter, Previous_Char_Iter);
+            Backward_Chars (Previous_Char_Iter, 1, Movement);
+
             Context := Create_Context
               (Manager      => Data.Manager,
                File         => Get_Filename (Buffer),
@@ -1105,7 +1111,8 @@ package body Completion_Module is
                  (Get_Byte_Index (Prefix_Iter)),
                End_Offset   => String_Index_Type
                  (Get_Byte_Index (Cursor_Iter)),
-              Trigger_Kind => Trigger_Kind);
+               Trigger_Kind => Trigger_Kind,
+               In_Comment   => Is_In_Comment (Buffer, Previous_Char_Iter));
 
             Start_Completion
               (Window      => Win,
