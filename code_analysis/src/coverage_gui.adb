@@ -668,9 +668,31 @@ package body Coverage_GUI is
                Base_Name (Source) & Gcov_Extension_Cst);
 
          when GNATcov =>
-            return Create_From_Dir
-              (Object_Dir (Get_Registry (Kernel).Tree.Root_Project),
-               Base_Name (Source) & GNATcov_Extension_Cst);
+
+            --  Look for xcov files in <object_dir>/xcov+ as if multiple report
+            --  formats are specified on the gnatcov command line,
+            --  (for instance with --annotate=xcov+,dhtml) then each report
+            --  is placed in a subdirectory of the output dir of the name of
+            --  the format. If not such file exist, fall back to using the file
+            --  in the object directory. Checking the xcov+ directory first
+            --  without looking at the command line options is ok since gnatcov
+            --  is supposed to clean both the output dir as well as the xcov+
+            --  subdirectory before creating a new report.
+
+            declare
+               Multiple_Format_File : constant Virtual_File :=
+                 Create_From_Dir
+                   (Object_Dir
+                      (Get_Registry (Kernel).Tree.Root_Project) / (+"xcov+"),
+                    Base_Name (Source) & GNATcov_Extension_Cst);
+            begin
+               if Multiple_Format_File.Is_Regular_File then
+                  return Multiple_Format_File;
+               end if;
+               return Create_From_Dir
+                 (Object_Dir (Get_Registry (Kernel).Tree.Root_Project),
+                  Base_Name (Source) & GNATcov_Extension_Cst);
+            end;
       end case;
    end Find_Gcov_File;
 
