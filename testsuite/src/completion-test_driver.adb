@@ -401,7 +401,8 @@ procedure Completion.Test_Driver is
                     Ada_Lang,
                     String_Index_Type (Start_Word),
                     String_Index_Type (End_Word),
-                    Invoked)));
+                    Invoked,
+                    False)));
       end loop;
    end Extract_Constructs;
 
@@ -447,7 +448,8 @@ procedure Completion.Test_Driver is
                Ada_Lang,
                String_Index_Type (Start_Word),
                String_Index_Type (End_Word),
-               Invoked)));
+               Invoked,
+               False)));
       end loop;
    end Analyze_Proposal;
 
@@ -489,7 +491,8 @@ procedure Completion.Test_Driver is
                Ada_Lang,
                String_Index_Type (Start_Word),
                String_Index_Type (End_Word),
-               Invoked),
+               Invoked,
+               False),
             Result   => Result);
 
          Display (Result, Buffer (Start_Word .. End_Word));
@@ -554,7 +557,8 @@ procedure Completion.Test_Driver is
                   Ada_Lang,
                   String_Index_Type (Start_Word),
                   String_Index_Type (End_Word),
-                  Invoked)));
+                  Invoked,
+                  False)));
       end loop;
    end Full_Test;
 

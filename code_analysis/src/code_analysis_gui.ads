@@ -21,7 +21,6 @@
 --  </description>
 
 with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
-with GNAT.Strings;          use GNAT.Strings;
 
 with Glib;                  use Glib;
 with Gdk.Event;             use Gdk.Event;
@@ -104,7 +103,7 @@ package Code_Analysis_GUI is
    --  Pixbufs containing the line information icons.
    --  Call Initialize_Graphics before referencing these variables.
 
-   type Code_Analysis_View_Record is new Gtk_Vbox_Record with record
+   type Code_Analysis_Report is new Gtk_Vbox_Record with record
       Tree             : Gtk_Tree_View;
       Model            : Gtk_Tree_Store;
       Node_Column      : Gtk.Tree_View_Column.Gtk_Tree_View_Column;
@@ -119,22 +118,26 @@ package Code_Analysis_GUI is
       Binary_Mode      : Boolean := True;
    end record;
 
-   type Code_Analysis_View is access all Code_Analysis_View_Record;
+   type Code_Analysis_Report_Access is access all Code_Analysis_Report;
 
    function Build_Analysis_Report
-     (Kernel   : Kernel_Handle;
-      Name     : GNAT.Strings.String_Access;
-      Projects : Code_Analysis_Tree;
-      Binary   : Boolean) return Code_Analysis_View;
-   --  Actually builds the tree view report.
-   --  If Is_Error is True, then the Report of Analysis will be built with an
-   --  emptiness warning header.
-   --  Should be called by Show_Analysis_Report or Show_Empty_Analysis_Report
+     (Kernel      : Kernel_Handle;
+      Binary_Mode : Boolean) return Code_Analysis_Report_Access;
+   --  Create a new analysis report.
+   --  Binary_Mode determines wether we are in binary coverage mode or not. If
+   --  True, then no line execution coverage count will be displayed.
 
-   function Name (View : access Code_Analysis_View_Record'Class) return String;
+   procedure Set_Projects_And_Name
+     (Self     : not null access Code_Analysis_Report'Class;
+      Name     : Unbounded_String;
+      Projects : Code_Analysis_Tree);
+   --  Attach a project and a name to the given analysis report. Used mainly
+   --  for testsuite purposes.
+
+   function Name (View : access Code_Analysis_Report'Class) return String;
    --  Get the View's name.
 
-   procedure Clear (View : access Code_Analysis_View_Record'Class);
+   procedure Clear (View : access Code_Analysis_Report'Class);
    --  Clear data from the view.
 
    function On_Double_Click (Object : access Gtk_Widget_Record'Class;
@@ -143,35 +146,32 @@ package Code_Analysis_GUI is
    --  Callback for the "2button_press" signal that show the File or Subprogram
    --  indicated by the selected Report of Analysis tree node
 
-   procedure Code_Analysis_Contextual_Menu_Factory
-     (Context : Selection_Context;
-      Menu    : Gtk.Menu.Gtk_Menu);
-   --  Add custom entries to contextual menus created in this module.
+   procedure Setup_Local_Menu
+     (View  : not null access Code_Analysis_Report'Class;
+      Menu  : not null access Gtk.Menu.Gtk_Menu_Record'Class);
+   --  Add custom entries to the given local menu.
 
    procedure Open_File_Editor_On_File
-     (Kernel : Kernel_Handle; View : Code_Analysis_View; Iter : Gtk_Tree_Iter);
+     (Kernel : Kernel_Handle;
+      View   : Code_Analysis_Report_Access;
+      Iter   : Gtk_Tree_Iter);
    --  Opens a file editor on the source file pointed out by Iter in Model
 
    procedure Open_File_Editor_On_Subprogram
-     (Kernel : Kernel_Handle; View : Code_Analysis_View; Iter : Gtk_Tree_Iter);
+     (Kernel : Kernel_Handle;
+      View   : Code_Analysis_Report_Access;
+      Iter   : Gtk_Tree_Iter);
    --  Opens a file editor on the source file containing the Subprogram
    --  pointed out by Iter in Model
 
    procedure Open_File_Editor
      (Kernel    : Kernel_Handle;
-      View      : Code_Analysis_View;
+      View      : Code_Analysis_Report_Access;
       File_Node : Code_Analysis.File_Access;
       Quiet     : Boolean;
       Line      : Natural := 1;
       Column    : Natural := 1);
    --  Factorizes the code of Open_File_Editor_On_File and _On_Subprogram
-
-   procedure Expand_All_From_Report (Object : access Gtk_Widget_Record'Class);
-   --  Expand the whole tree vien in a code_analysis report
-
-   procedure Collapse_All_From_Report
-     (Object : access Gtk_Widget_Record'Class);
-   --  Collapse the whole tree vien in a code_analysis report
 
    procedure Show_Full_Tree (Object : access Gtk_Widget_Record'Class);
    --  Fill again the Gtk_Tree_Store with the full tree

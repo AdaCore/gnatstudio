@@ -35,6 +35,10 @@ package Default_Preferences.Enums is
    --  Choices will be freed when the preference itself is destroyed, and must
    --  not be destroyed by the caller
 
+   function Enum_Value_To_Label (Value : String) return String;
+   --  Return a suitable label for UI representation of a given enum value (the
+   --  one retrieved with 'Image).
+
    generic
       type Enumeration is (<>);
    package Generics is

@@ -602,6 +602,11 @@
       <button action='gnathub report collapse rows'/>
    </toolbar>
 
+   <toolbar id="Coverage Report">
+      <button action='Coverage report expand rows'/>
+      <button action='Coverage report collapse rows'/>
+   </toolbar>
+
    <toolbar id='Files'>
       <button action='refresh files view'/>
       <button action='files view select directory'/>

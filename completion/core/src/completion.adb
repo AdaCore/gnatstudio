@@ -115,6 +115,15 @@ package body Completion is
       return Context.Trigger_Kind;
    end Get_Trigger_Kind;
 
+   -------------------
+   -- Is_In_Comment --
+   -------------------
+
+   function Is_In_Comment
+     (Context : Completion_Context) return Boolean
+   is
+     (Context.In_Comment);
+
    ---------------
    -- Deep_Copy --
    ---------------
@@ -128,7 +137,8 @@ package body Completion is
          End_Offset   => Context.End_Offset,
          Lang         => Context.Lang,
          File         => Context.File,
-         Trigger_Kind => Context.Trigger_Kind);
+         Trigger_Kind => Context.Trigger_Kind,
+         In_Comment   => Context.In_Comment);
    end Deep_Copy;
 
    ---------
@@ -241,7 +251,8 @@ package body Completion is
       Lang         : Language_Access;
       Start_Offset : String_Index_Type;
       End_Offset   : String_Index_Type;
-      Trigger_Kind : Completion_Trigger_Kind) return Completion_Context
+      Trigger_Kind : Completion_Trigger_Kind;
+      In_Comment   : Boolean) return Completion_Context
    is
       New_Context : constant Completion_Context :=
         new Completion_Context_Record;
@@ -252,6 +263,7 @@ package body Completion is
       New_Context.File := File;
       New_Context.Lang := Lang;
       New_Context.Trigger_Kind := Trigger_Kind;
+      New_Context.In_Comment := In_Comment;
 
       Append (Manager.Contexts, New_Context);
 

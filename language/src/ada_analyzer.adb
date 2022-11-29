@@ -844,13 +844,20 @@ package body Ada_Analyzer is
       --  skipping nested ones. Intended to go at the end of a variable or
       --  parameter declaration.
 
+      function Look_For_Block_Declaration (Index : Natural) return Boolean;
+      --  Return True if Buffer (Index) contains a block declaration.
+
       procedure Look_For (Sloc : in out Source_Location; Char : Character);
       --  Search Char in Buffer starting from Sloc.
       --  Sloc is updated to the first occurrence of Char in Buffer, or
       --  Buffer_Last if not found.
 
-      function Look_For (Index : Natural; S : String) return Boolean;
+      function Look_For
+        (Index           : Natural;
+         S               : String;
+         Need_Whitespace : Boolean := True) return Boolean;
       --  Return True if Buffer (Index) contains the word S
+      --  Need_Whitespace indicates if S must be prefixed by a whitespace
 
       procedure New_Line (Count : in out Natural);
       pragma Inline (New_Line);
@@ -1662,15 +1669,51 @@ package body Ada_Analyzer is
          end loop;
       end Look_For;
 
-      function Look_For (Index : Natural; S : String) return Boolean is
+      function Look_For
+        (Index           : Natural;
+         S               : String;
+         Need_Whitespace : Boolean := True) return Boolean is
       begin
-         return Is_Blank (Buffer (Index - 1))
+         return (Is_Blank (Buffer (Index - 1)) or else not Need_Whitespace)
            and then Index + S'Length < Buffer'Last
            and then To_Lower (Buffer (Index .. Index + S'Length - 1)) = S
            and then (Buffer (Index + S'Length) = ';'
                      or else Buffer (Index + S'Length) = '-'
                      or else Is_Blank (Buffer (Index + S'Length)));
       end Look_For;
+
+      --------------------------------
+      -- Look_For_Block_Declaration --
+      --------------------------------
+
+      function Look_For_Block_Declaration (Index : Natural) return Boolean
+      is
+         --  Searching for (\w)*:(\w)*(declare|begin)
+         Cur_Index   : Natural := Index;
+         Found_Colon : Boolean := False;
+      begin
+         while Cur_Index < Buffer'Last loop
+            if Is_Blank (Buffer (Cur_Index)) then
+               --  Don't care about the amount of blank characters
+               Cur_Index := Cur_Index + 1;
+            else
+               if not Found_Colon then
+                  if Buffer (Cur_Index) = ':' then
+                     Found_Colon := True;
+                     Cur_Index := Cur_Index + 1;
+                  else
+                     return False;
+                  end if;
+               else
+                  return
+                    Look_For (Cur_Index, "declare", Need_Whitespace => False)
+                    or else
+                      Look_For (Cur_Index, "begin", Need_Whitespace => False);
+               end if;
+            end if;
+         end loop;
+         return False;
+      end Look_For_Block_Declaration;
 
       --------------
       -- New_Line --
@@ -4778,10 +4821,9 @@ package body Ada_Analyzer is
                  or else Prev_Token = Tok_Package
                  or else (Prev_Token = Tok_Renames
                           and then Prev_Prev_Token = Tok_Right_Paren)
-                 or else (Current + 8 <= Buffer_Last
-                          and then Buffer (Current + 2) = ':'
-                          and then (Look_For (Current + 4, "begin")
-                                    or else Look_For (Current + 4, "declare")))
+                 or else
+                   (Current < Buffer'Last
+                    and then Look_For_Block_Declaration (Current + 1))
                then
                   Entity := Block_Text;
                end if;

@@ -20,7 +20,8 @@ with Ada.Containers.Indefinite_Ordered_Sets; use Ada.Containers;
 with Ada.Unchecked_Deallocation;
 with Ada.Strings.Unbounded;                  use Ada.Strings.Unbounded;
 with Commands.Interactive;                  use Commands, Commands.Interactive;
-with GNAT.Strings;
+with Default_Preferences;                    use Default_Preferences;
+with Default_Preferences.Enums;
 with GNATCOLL.Projects;                      use GNATCOLL.Projects;
 with GNATCOLL.Scripts;                       use GNATCOLL.Scripts;
 with GNATCOLL.Traces;                        use GNATCOLL.Traces;
@@ -54,6 +55,7 @@ with GPS.Kernel.MDI;                         use GPS.Kernel.MDI;
 with GPS.Kernel.Messages;                    use GPS.Kernel.Messages;
 with GPS.Kernel.Modules;                     use GPS.Kernel.Modules;
 with GPS.Kernel.Modules.UI;                  use GPS.Kernel.Modules.UI;
+with GPS.Kernel.Preferences;
 with GPS.Kernel.Project;                     use GPS.Kernel.Project;
 with GPS.Kernel.Scripts;                     use GPS.Kernel.Scripts;
 with Projects;                               use Projects;
@@ -64,6 +66,8 @@ with Code_Analysis_GUI;                      use Code_Analysis_GUI;
 with Code_Analysis_XML;                      use Code_Analysis_XML;
 with Code_Analysis_Tree_Model;               use Code_Analysis_Tree_Model;
 with Coverage_GUI;                           use Coverage_GUI;
+with Generic_Views;
+with GUI_Utils;                              use GUI_Utils;
 
 package body Code_Analysis_Module is
    Me : constant Trace_Handle := Create
@@ -90,6 +94,12 @@ package body Code_Analysis_Module is
    Style : Virtual_File;
    --  XSL file name to include in coverage XML dump
 
+   type Coverage_Display_Type is (Full_Tree, Files_Only, Subprograms_Only);
+   package Coverage_Display_Preferences is new
+     Default_Preferences.Enums.Generics (Coverage_Display_Type);
+
+   Coverage_Display_Pref : Coverage_Display_Preferences.Preference;
+
    package Kernel_Return_Cb is new User_Return_Callback
      (Gtk.Widget.Gtk_Widget_Record, Boolean, Kernel_Handle);
 
@@ -99,14 +109,14 @@ package body Code_Analysis_Module is
 
    type Code_Analysis_Instance_Record is record
       Projects  : Code_Analysis_Tree;
-      Name      : GNAT.Strings.String_Access;
+      Name      : Unbounded_String;
       Date      : Time;
    end record;
 
    type Code_Analysis_Instance is access Code_Analysis_Instance_Record;
 
    function Get_Analysis
-     (View : Code_Analysis_View) return Code_Analysis_Instance;
+     (View : Code_Analysis_Report_Access) return Code_Analysis_Instance;
    --  Retrieve the analysis from the view.
 
    --------------
@@ -130,9 +140,9 @@ package body Code_Analysis_Module is
    ------------------------
 
    type Code_Analysis_Module_ID_Record is new Module_ID_Record with record
-      Class    : Class_Type;
+      Class               : Class_Type;
       Registered_Analysis : String_Set.Set;
-      Analyzes : Code_Analysis_Instances.Set;
+      Analyzes            : Code_Analysis_Instances.Set;
    end record;
 
    type CA_Child_Record is new GPS_MDI_Child_Record with null record;
@@ -146,6 +156,31 @@ package body Code_Analysis_Module is
 
    overriding procedure Destroy
      (Module : in out Code_Analysis_Module_ID_Record);
+
+   type Code_Analysis_View_Record
+   is new Generic_Views.View_Record with record
+      Analysis : Code_Analysis_Instance;
+      Report   : Code_Analysis_Report_Access;
+   end record;
+
+   function Initialize
+     (Self : access Code_Analysis_View_Record'Class)
+      return Gtk.Widget.Gtk_Widget;
+
+   overriding procedure Create_Menu
+     (View : not null access Code_Analysis_View_Record;
+      Menu : not null access Gtk.Menu.Gtk_Menu_Record'Class);
+
+   package Views is new Generic_Views.Simple_Views
+     (Module_Name        => "code_analysis",
+      View_Name          => "Coverage Report",
+      Formal_View_Record => Code_Analysis_View_Record,
+      Formal_MDI_Child   => CA_Child_Record,
+      Reuse_If_Exist     => True,
+      Local_Config       => True,
+      Areas              => Gtkada.MDI.Central_Only,
+      Position           => Gtkada.MDI.Position_Automatic,
+      Initialize         => Initialize);
 
    Code_Analysis_Module_ID : Code_Analysis_Module_ID_Access;
 
@@ -217,6 +252,24 @@ package body Code_Analysis_Module is
       Context : Interactive_Command_Context) return Command_Return_Type;
    --  Show the coverage report when we are in single analysis mode
 
+   type Expand_Or_Collapse_Command (Command : Expansion_Command_Type) is
+     new Interactive_Command with null record;
+   overriding function Execute
+     (Self    : access Expand_Or_Collapse_Command;
+      Context : Commands.Interactive.Interactive_Command_Context)
+      return Commands.Command_Return_Type;
+   --  Command used to expand/collapse the rows selected in the messages
+   --  report.
+
+   type On_Pref_Changed is new Preferences_Hooks_Function with record
+      View : Views.View_Access;
+   end record;
+   overriding procedure Execute
+     (Self   : On_Pref_Changed;
+      Kernel : not null access Kernel_Handle_Record'Class;
+      Pref   : Default_Preferences.Preference);
+   --  Called when the preferences have changed.
+
    procedure Show_Analysis_Report_From_Menu
      (Widget  : access Glib.Object.GObject_Record'Class;
       CB_Data : CB_Data_Record);
@@ -247,7 +300,7 @@ package body Code_Analysis_Module is
    function Get_Or_Create
      (Kernel   : Kernel_Handle;
       Analysis : Code_Analysis_Instance;
-      Create   : Boolean) return GPS_MDI_Child;
+      Create   : Boolean) return Views.View_Access;
    --  Get the report widget for the given context. If no such widget exist,
    --  and 'Create' is true, then this creates the report.
 
@@ -485,14 +538,14 @@ package body Code_Analysis_Module is
    ------------------
 
    function Get_Analysis
-     (View : Code_Analysis_View) return Code_Analysis_Instance
+     (View : Code_Analysis_Report_Access) return Code_Analysis_Instance
    is
       use Code_Analysis_Instances;
       Cursor : Code_Analysis_Instances.Cursor :=
                  Code_Analysis_Module_ID.Analyzes.First;
    begin
       while Has_Element (Cursor) loop
-         if View.Name = Element (Cursor).Name.all then
+         if View.Name = To_String (Element (Cursor).Name) then
             return Element (Cursor);
          end if;
 
@@ -584,7 +637,7 @@ package body Code_Analysis_Module is
       while Has_Element (Cur) loop
          Analysis := Element (Cur);
 
-         if Element (Cur).Name.all = Name then
+         if To_String (Element (Cur).Name) = Name then
             Analysis := Element (Cur);
 
             exit;
@@ -599,7 +652,7 @@ package body Code_Analysis_Module is
          Analysis.Date := Date;
          Code_Analysis_Module_ID.Analyzes.Insert (Analysis);
 
-         Analysis.Name      := new String'(Name);
+         Analysis.Name      := To_Unbounded_String (Name);
          Analysis.Projects  := new Project_Maps.Map;
       end if;
 
@@ -1180,15 +1233,17 @@ package body Code_Analysis_Module is
       Local_Project : Projects.Views.Project_View_Reference;
       Iter          : Gtk_Tree_Iter := Null_Iter;
       Path          : Gtk_Tree_Path;
+      View        : Views.View_Access;
       Child         : GPS_MDI_Child;
-      View          : Code_Analysis_View;
+      Report        : Code_Analysis_Report_Access;
 
    begin
       --  Build the report view
 
-      Child := Get_Or_Create (Kernel, Analysis, Create => True);
-      View := Code_Analysis_View (Get_Widget (Child));
-      Clear (View.Model);
+      View := Get_Or_Create (Kernel, Analysis, Create => True);
+      Report := View.Report;
+      Child := Views.Child_From_View (View);
+      Clear (Report.Model);
 
       --  Check for analysis information:
 
@@ -1213,11 +1268,11 @@ package body Code_Analysis_Module is
 
             if Prj_Name = No_Project then
                --  Show the empty report warning board
-               if Get_No_Show_All (View.Error_Board) then
-                  Set_No_Show_All (View.Error_Board, False);
+               if Get_No_Show_All (Report.Error_Board) then
+                  Set_No_Show_All (Report.Error_Board, False);
                end if;
 
-               Show_All (View.Error_Board);
+               Show_All (Report.Error_Board);
                --  Removes Prj_Node from its container as we just created it
                Analysis.Projects.Delete (Prj_Node.View);
                --  Free Prj_Node
@@ -1228,7 +1283,7 @@ package body Code_Analysis_Module is
                end if;
             end if;
          else
-            Hide (View.Error_Board);
+            Hide (Report.Error_Board);
          end if;
       end;
 
@@ -1238,23 +1293,23 @@ package body Code_Analysis_Module is
       --  Fill the report:
 
       Fill_Iter
-        (View.Model, Iter,
+        (Report.Model, Iter,
          Analysis.Projects,
          Binary_Coverage_Mode);
 
       --  Selection of the context caller:
 
-      Iter := Get_Iter_From_Context (Local_Project, File, View.Model);
+      Iter := Get_Iter_From_Context (Local_Project, File, Report.Model);
 
       if Iter = Null_Iter then
-         Iter := Get_Iter_First (View.Model);
+         Iter := Get_Iter_First (Report.Model);
       end if;
 
       if Iter /= Null_Iter then
-         Path := Get_Path (View.Model, Iter);
-         Collapse_All (View.Tree);
-         Expand_To_Path (View.Tree, Path);
-         Select_Path (Get_Selection (View.Tree), Path);
+         Path := Get_Path (Report.Model, Iter);
+         Collapse_All (Report.Tree);
+         Expand_To_Path (Report.Tree, Path);
+         Select_Path (Get_Selection (Report.Tree), Path);
          Path_Free (Path);
       end if;
 
@@ -1265,6 +1320,41 @@ package body Code_Analysis_Module is
       return;
    end Show_Analysis_Report;
 
+   ----------------
+   -- Initialize --
+   ----------------
+
+   function Initialize
+     (Self : access Code_Analysis_View_Record'Class)
+      return Gtk.Widget.Gtk_Widget
+   is
+   begin
+      Self.Report := Build_Analysis_Report
+        (Self.Kernel,
+         Binary_Coverage_Mode);
+
+      Self.Pack_Start (Self.Report);
+
+      return Gtk_Widget (Self.Report);
+   end Initialize;
+
+   -----------------
+   -- Create_Menu --
+   -----------------
+
+   overriding procedure Create_Menu
+     (View : not null access Code_Analysis_View_Record;
+      Menu : not null access Gtk.Menu.Gtk_Menu_Record'Class)
+   is
+      procedure Append_Show_Flat_Pref_To_Menu is
+        new GPS.Kernel.Preferences.Append_Enum_To_Menu (Coverage_Display_Type);
+   begin
+      Append_Show_Flat_Pref_To_Menu
+        (Menu,
+         View.Kernel,
+         Enum_Preference (Coverage_Display_Pref));
+   end Create_Menu;
+
    -------------------
    -- Get_Or_Create --
    -------------------
@@ -1272,68 +1362,73 @@ package body Code_Analysis_Module is
    function Get_Or_Create
      (Kernel   : Kernel_Handle;
       Analysis : Code_Analysis_Instance;
-      Create   : Boolean) return GPS_MDI_Child
+      Create   : Boolean) return Views.View_Access
    is
-      Child : GPS_MDI_Child;
-      View  : Code_Analysis_View;
+      View : Views.View_Access;
 
-   begin
-      if Kernel.Is_In_Destruction then
-         return null;
-      end if;
+      procedure Init_Code_Analysis_View
+        (Self : not null access Code_Analysis_View_Record'Class);
+      --  Initialize the code analysis view, associating it to a project and
+      --  connecting all the needed handlers.
 
-      Child := GPS_MDI_Child
-        (Find_MDI_Child_By_Name
-           (Get_MDI (Kernel),
-            Analysis.Name.all & (-" Report")));
+      -----------------------------
+      -- Init_Code_Analysis_View --
+      -----------------------------
 
-      if Child = null and then Create then
-         --  Create the report view
-
-         View := Build_Analysis_Report
-           (Kernel,
-            Analysis.Name,
-            Analysis.Projects,
-            Binary_Coverage_Mode);
-
-         --  Create the MDI child
-
-         Child := new CA_Child_Record;
-         GPS.Kernel.MDI.Initialize
-           (Child, View,
-            Kernel => Kernel,
-            Group  => Group_Default,
-            Module => Code_Analysis_Module_ID);
-         Set_Title
-           (Child,
-            Analysis.Name.all & (-" Report"));
+      procedure Init_Code_Analysis_View
+         (Self : not null access Code_Analysis_View_Record'Class) is
+      begin
+         Code_Analysis_GUI.Set_Projects_And_Name
+           (Self     => Self.Report,
+            Name     => Analysis.Name,
+            Projects => Analysis.Projects);
 
          --  Connect handlers
 
+         Setup_Contextual_Menu
+           (Kernel          => Kernel,
+            Event_On_Widget => Self.Report.Tree);
+
          Analysis_CB.Connect
-           (View.Load_Button,
+           (Self.Report.Load_Button,
             Gtk.Button.Signal_Clicked,
             Analysis_CB.To_Marshaller
               (Add_All_Gcov_Project_Info_From_Menu'Access),
             CB_Data_Record'
-              (Kernel       => Kernel,
-               Analysis     => To_Unbounded_String (Analysis.Name.all),
+              (Kernel       => Self.Kernel,
+               Analysis     => Analysis.Name,
                Project_View => <>,
                File         => <>));
 
-         Setup_Contextual_Menu
-           (Kernel          => Kernel,
-            Event_On_Widget => View.Tree,
-            Context_Func    => Code_Analysis_Contextual_Menu_Factory'Access);
          Kernel_Return_Cb.Object_Connect
-           (View.Tree, Signal_Button_Press_Event,
+           (Self.Report.Tree, Signal_Button_Press_Event,
             Kernel_Return_Cb.To_Marshaller
-              (On_Double_Click'Access), View, Kernel);
+              (On_Double_Click'Access), Self.Report, Self.Kernel);
 
-         Put (Get_MDI (Kernel), Child);
+         Preferences_Changed_Hook.Add
+           (new On_Pref_Changed'(Hook_Function with
+                View => Views.View_Access (Self)),
+            Watch => Self);
+      end Init_Code_Analysis_View;
+
+      use Views;
+   begin
+
+      if Kernel.Is_In_Destruction then
+         return null;
       end if;
 
-      return Child;
+      View := Views.Retrieve_View (Kernel, Visible_Only => True);
+
+      if View = null and then Create then
+         --  Create the report view
+         View := Views.Get_Or_Create_View
+           (Kernel => Kernel,
+            Focus  => False,
+            Init   => Init_Code_Analysis_View'Unrestricted_Access);
+      end if;
+
+      return View;
    end Get_Or_Create;
 
    -------------------
@@ -1345,19 +1440,19 @@ package body Code_Analysis_Module is
       Event : Gdk.Event.Gdk_Event := null)
       return Selection_Context
    is
-      View      : constant Code_Analysis_View :=
-        Code_Analysis_View (GPS_MDI_Child (Self).Get_Actual_Widget);
-      Context   : Selection_Context;
-      X, Y      : Gdouble;
-      Path      : Gtk_Tree_Path;
-      Column    : Gtk_Tree_View_Column;
+      View                : constant Code_Analysis_Report_Access :=
+        Views.View_From_Child (Self).Report;
+      Context             : Selection_Context;
+      X, Y                : Gdouble;
+      Path                : Gtk_Tree_Path;
+      Column              : Gtk_Tree_View_Column;
       Buffer_X, Buffer_Y  : Gint;
-      Row_Found : Boolean;
-      Iter      : Gtk_Tree_Iter := Null_Iter;
-      Prj_Node  : Code_Analysis.Project_Access;
-      File_Node : Code_Analysis.File_Access;
-      Node      : Node_Access;
-      Model     : Gtk_Tree_Model;
+      Row_Found           : Boolean;
+      Iter                : Gtk_Tree_Iter := Null_Iter;
+      Prj_Node            : Code_Analysis.Project_Access;
+      File_Node           : Code_Analysis.File_Access;
+      Node                : Node_Access;
+      Model               : Gtk_Tree_Model;
    begin
       Context := GPS_MDI_Child_Record (Self.all).Build_Context (Event);
 
@@ -1424,6 +1519,7 @@ package body Code_Analysis_Module is
      (Kernel   : Kernel_Handle;
       Analysis : Code_Analysis_Instance)
    is
+      use Views;
    begin
       if Get_Or_Create (Kernel, Analysis, False) /= null then
          Show_Analysis_Report (Kernel, Analysis, No_Project, No_File, False);
@@ -1567,7 +1663,7 @@ package body Code_Analysis_Module is
       Child := GPS_MDI_Child
         (Find_MDI_Child_By_Name
            (Get_MDI (Kernel),
-            Analysis.Name.all & (-" Report")));
+            To_String (Analysis.Name) & (-" Report")));
 
       if Child = null then
          return;
@@ -1623,18 +1719,24 @@ package body Code_Analysis_Module is
    is
       procedure Unchecked_Free is new Ada.Unchecked_Deallocation
         (Code_Analysis_Instance_Record, Code_Analysis_Instance);
-      Child     : GPS_MDI_Child;
-      View      : Code_Analysis_View;
+      Child       : GPS_MDI_Child;
+      View        : Views.View_Access;
+      Report      : Code_Analysis_Report_Access;
 
+      use Views;
    begin
-      Child := Get_Or_Create (Kernel, Analysis, False);
+      View := Get_Or_Create (Kernel, Analysis, False);
+
+      if View /= null then
+         Report := View.Report;
+         Child := Views.Child_From_View (View);
+      end if;
 
       if Child /= null then
          if Close_View then
             Close_Child (Child, Force => True);
          else
-            View := Code_Analysis_View (Get_Widget (Child));
-            View.Clear;
+            Report.Clear;
          end if;
       end if;
 
@@ -1652,7 +1754,6 @@ package body Code_Analysis_Module is
          Code_Analysis_Module_ID.Analyzes.Delete (Analysis);
       end if;
 
-      GNAT.Strings.Free (Analysis.Name);
       Unchecked_Free (Analysis);
    end Destroy_Analysis_Instance;
 
@@ -1798,30 +1899,38 @@ package body Code_Analysis_Module is
       CB_Data : CB_Data_Record)
    is
       pragma Unreferenced (Widget);
-      Analysis  : constant Code_Analysis_Instance :=
-                    Get_Or_Create (To_String (CB_Data.Analysis));
-      Prj_Node  : constant Project_Access :=
-                    Get_Or_Create (Analysis.Projects, CB_Data.Project_View);
-      File_Node : Code_Analysis.File_Access :=
-                    Get_Or_Create (Prj_Node, CB_Data.File);
-      File_Iter : Gtk_Tree_Iter;
-      Prj_Iter  : Gtk_Tree_Iter;
-      Child     : GPS_MDI_Child;
-      View      : Code_Analysis_View;
+      Analysis    : constant Code_Analysis_Instance :=
+        Get_Or_Create (To_String (CB_Data.Analysis));
+      Prj_Node    : constant Project_Access :=
+        Get_Or_Create (Analysis.Projects, CB_Data.Project_View);
+      File_Node   : Code_Analysis.File_Access :=
+        Get_Or_Create (Prj_Node, CB_Data.File);
+      File_Iter   : Gtk_Tree_Iter;
+      Prj_Iter    : Gtk_Tree_Iter;
+      Child       : GPS_MDI_Child;
+      View        : Views.View_Access;
+      Report      : Code_Analysis_Report_Access;
 
+      use Views;
    begin
-      Child := Get_Or_Create (CB_Data.Kernel, Analysis, False);
+      View := Get_Or_Create (CB_Data.Kernel, Analysis, False);
 
+      if View /= null then
+         Child := Views.Child_From_View (View);
+         Report := View.Report;
+      end if;
+
+      --  If the view is not present yet, show it first.
       if Child = null then
          Show_Analysis_Report
            (CB_Data.Kernel,
             Analysis,
             CB_Data.Project_View.Get_Project_Type,
             CB_Data.File);
-         Child := Get_Or_Create (CB_Data.Kernel, Analysis, False);
+         View := Get_Or_Create (CB_Data.Kernel, Analysis, False);
+         Child := Views.Child_From_View (View);
+         Report := View.Report;
       end if;
-
-      View := Code_Analysis_View (Get_Widget (Child));
 
       if Have_Gcov_Info
         (Analysis.Projects, CB_Data.Project_View, CB_Data.File)
@@ -1851,14 +1960,14 @@ package body Code_Analysis_Module is
       end if;
 
       File_Iter := Get_Iter_From_Context
-        (CB_Data.Project_View, CB_Data.File, View.Model);
+        (CB_Data.Project_View, CB_Data.File, Report.Model);
 
       if File_Iter /= Null_Iter then
-         Prj_Iter  := Parent (View.Model, File_Iter);
-         Fill_Iter (View.Model, Prj_Iter,
+         Prj_Iter  := Parent (Report.Model, File_Iter);
+         Fill_Iter (Report.Model, Prj_Iter,
                     Prj_Node.Analysis_Data, Binary_Coverage_Mode);
          --  Removes File_Iter from the report
-         Remove (View.Model, File_Iter);
+         Remove (Report.Model, File_Iter);
       end if;
 
       --  Removes File_Node from its container
@@ -1879,31 +1988,34 @@ package body Code_Analysis_Module is
       CB_Data : CB_Data_Record)
    is
       pragma Unreferenced (Widget);
-      Iter     : Gtk_Tree_Iter;
-      Analysis : constant Code_Analysis_Instance :=
-                   Get_Or_Create (To_String (CB_Data.Analysis));
-      Prj_Node : Project_Access :=
-                   Get_Or_Create (Analysis.Projects, CB_Data.Project_View);
-      Child    : GPS_MDI_Child;
-      View     : Code_Analysis_View;
+      Iter       : Gtk_Tree_Iter;
+      Analysis   : constant Code_Analysis_Instance :=
+        Get_Or_Create (To_String (CB_Data.Analysis));
+      Prj_Node   : Project_Access :=
+        Get_Or_Create (Analysis.Projects, CB_Data.Project_View);
+      Child      : GPS_MDI_Child;
+      View       : Views.View_Access;
+      Report     : Code_Analysis_Report_Access;
 
    begin
-      Child := Get_Or_Create (CB_Data.Kernel, Analysis, False);
+      View := Get_Or_Create (CB_Data.Kernel, Analysis, False);
 
       if Child = null then
          Show_Analysis_Report
-           (CB_Data.Kernel, Analysis, CB_Data.Project_View.Get_Project_Type);
-         Child := Get_Or_Create (CB_Data.Kernel, Analysis, False);
+           (Kernel   => CB_Data.Kernel,
+            Analysis => Analysis,
+            Project  => CB_Data.Project_View.Get_Project_Type);
+         View := Get_Or_Create (CB_Data.Kernel, Analysis, False);
+         Report := View.Report;
+         Child := Views.Child_From_View (View);
       end if;
 
-      View := Code_Analysis_View (Get_Widget (Child));
-
       Iter :=
-        Get_Iter_From_Context (CB_Data.Project_View, No_File, View.Model);
+        Get_Iter_From_Context (CB_Data.Project_View, No_File, Report.Model);
 
       if Iter /= Null_Iter then
          --  Removes Iter from the report
-         Remove (View.Model, Iter);
+         Remove (Report.Model, Iter);
       end if;
 
       --  Removes potential listed locations
@@ -2211,6 +2323,53 @@ package body Code_Analysis_Module is
       return Commands.Success;
    end Execute;
 
+   -------------
+   -- Execute --
+   -------------
+
+   overriding function Execute
+     (Self    : access Expand_Or_Collapse_Command;
+      Context : Commands.Interactive.Interactive_Command_Context)
+      return Commands.Command_Return_Type
+   is
+      View : constant Views.View_Access :=
+        Views.Retrieve_View
+          (Get_Kernel (Context.Context));
+
+      use Views;
+   begin
+      if View /= null then
+         GUI_Utils.Expand_Or_Collapse_Selected_Rows
+           (Tree    => View.Report.Tree,
+            Command => Self.Command);
+         return Commands.Success;
+
+      else
+         return Commands.Failure;
+      end if;
+   end Execute;
+
+   -------------
+   -- Execute --
+   -------------
+
+   overriding procedure Execute
+     (Self   : On_Pref_Changed;
+      Kernel : not null access Kernel_Handle_Record'Class;
+      Pref   : Default_Preferences.Preference) is
+   begin
+      if Pref = Preference (Coverage_Display_Pref) then
+         case Coverage_Display_Type'(Coverage_Display_Pref.Get_Pref) is
+            when Full_Tree =>
+               Show_Full_Tree (Self.View.Report);
+            when Subprograms_Only =>
+               Show_Flat_List_Of_Subprograms (Self.View.Report);
+            when Files_Only =>
+               Show_Flat_List_Of_Files (Self.View.Report);
+         end case;
+      end if;
+   end Execute;
+
    ---------------------------
    -- Activate_Pango_Markup --
    ---------------------------
@@ -2237,11 +2396,11 @@ package body Code_Analysis_Module is
 
    begin
       if Widget.all in Code_Analysis_View_Record'Class then
-         Analysis := Get_Analysis (Code_Analysis_View (Widget));
+         Analysis := Get_Analysis (Code_Analysis_Report_Access (Widget));
          Root     := new XML_Utils.Node;
          Root.Tag := new String'("Code_Analysis_Tree");
          if Analysis /= null then
-            Set_Attribute (Root, "name", Analysis.Name.all);
+            Set_Attribute (Root, "name", To_String (Analysis.Name));
          else
             Set_Attribute (Root, "name", -"Coverage");
          end if;
@@ -2263,7 +2422,7 @@ package body Code_Analysis_Module is
    is
       pragma Unreferenced (MDI);
       Analysis    : Code_Analysis_Instance;
-
+      View        : Views.View_Access;
    begin
       if Node.Tag.all = "Code_Analysis_Tree" then
          Analysis := Get_Or_Create (Get_Attribute (Node, "name"));
@@ -2272,7 +2431,8 @@ package body Code_Analysis_Module is
          --  and we need it loaded to restore the view. This will be done later
          --  upon "project_changed" hook.
          --  We just create the report view and display it.
-         return MDI_Child (Get_Or_Create (User, Analysis, Create => True));
+         View := Get_Or_Create (User, Analysis, Create => True);
+         return Views.Child_From_View (View);
       else
          return null;
       end if;
@@ -2291,7 +2451,7 @@ package body Code_Analysis_Module is
    begin
       Root     := new XML_Utils.Node;
       Root.Tag := new String'("Code_Analysis_Tree");
-      Set_Attribute (Root, "name", Analysis.Name.all);
+      Set_Attribute (Root, "name", To_String (Analysis.Name));
       Dump_Full_XML (Analysis.Projects, Root);
       Print (Root, File, Success_1, Style.Display_Base_Name);
       Style.Copy (File.Dir_Name, Success_2);
@@ -2429,7 +2589,7 @@ package body Code_Analysis_Module is
         (Kernel      => Kernel,
          Name        => -"Coverage",
          Filter      => Lookup_Filter (Kernel, "Project only")
-            or Lookup_Filter (Kernel, "In project"),
+         or Lookup_Filter (Kernel, "In project"),
          Submenu     => Submenu_Factory (Contextual_Menu));
 
       Register_Action
@@ -2459,6 +2619,20 @@ package body Code_Analysis_Module is
         (Kernel, "Coverage clear from memory", new Clear_Memory_Command,
          Category    => -"Coverage",
          Description => -"Clear coverage information from memory");
+
+      Register_Action
+        (Kernel, "Coverage report expand rows",
+         Command     => new Expand_Or_Collapse_Command (Expand_All_Rows),
+         Category    => "Coverage",
+         Icon_Name   => "gps-expand-all-symbolic",
+         Description => "Expand the rows selected in the Coverage Report.");
+
+      Register_Action
+        (Kernel, "Coverage report collapse rows",
+         Command     => new Expand_Or_Collapse_Command (Collapse_Rows),
+         Category    => "Coverage",
+         Icon_Name   => "gps-collapse-all-symbolic",
+         Description => "Collapse the rows selected in the Coverage Report.");
 
       File_Closed_Hook.Add (new On_File_Closed);
       Project_Changing_Hook.Add (new On_Project_Changing);
@@ -2538,6 +2712,15 @@ package body Code_Analysis_Module is
 
       Style := Create_From_Dir
         (Get_System_Dir (Kernel), "share/gnatstudio/show_coverage.xsl");
+
+      --  Register local preferences
+      Coverage_Display_Pref := Coverage_Display_Preferences.Create
+        (Manager => Kernel.Get_Preferences,
+         Path    => ":Local Configuration",
+         Name    => "coverage-display-type",
+         Label   => "Coverage display type",
+         Doc     => "Choose the way we display coverage.",
+         Default => Full_Tree);
 
       Coverage_GUI.Register_Module (Kernel);
    end Register_Module;
