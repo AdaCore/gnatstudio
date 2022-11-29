@@ -5108,7 +5108,7 @@ See \`config.log' for more details" "$LINENO" 5; }
 
 
 
-   value=$PYTHON_LIBS $PYTHON_EXTRA_LIBS $PYTHON_EXTRA_LDFLAGS
+   value="$PYTHON_LIBS $PYTHON_EXTRA_LIBS $PYTHON_EXTRA_LDFLAGS"
 
    # Special handling on darwin for gcc 4.5 and 4.7
    case "$build_os" in
