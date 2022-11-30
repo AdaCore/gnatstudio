@@ -1112,7 +1112,8 @@ package body Completion_Module is
                End_Offset   => String_Index_Type
                  (Get_Byte_Index (Cursor_Iter)),
                Trigger_Kind => Trigger_Kind,
-               In_Comment   => Is_In_Comment (Buffer, Previous_Char_Iter));
+               In_Comment   => Is_In_Comment (Buffer, Previous_Char_Iter),
+               In_String    => Is_In_String (Buffer, Previous_Char_Iter));
 
             Start_Completion
               (Window      => Win,

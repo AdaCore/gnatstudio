@@ -127,9 +127,11 @@ package body Completion.Aliases is
          Word := UTF8_Strdown (Word);
       end if;
 
-      --  Don't propose aliases completion on empty words or dotted names
+      --  Don't propose aliases completion on empty words, dotted names,
+      --  comments or strings.
       if Word = ""
         or else Context.In_Comment
+        or else Context.In_String
         or else
         (Offset > 0
          and then (Context.Buffer (Natural (Offset)) in '.' | ':'))

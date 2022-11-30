@@ -117,6 +117,10 @@ package Completion is
      (Context : Completion_Context) return Boolean;
    --  Return True if the completion was trigerred within a comment.
 
+   function Is_In_String
+     (Context : Completion_Context) return Boolean;
+   --  Return True if the completion was trigerred within a string.
+
    function Deep_Copy
      (Context : Completion_Context) return Completion_Context;
    --  Make a deep copy of Context. Result should be freed by the caller.
@@ -251,7 +255,8 @@ package Completion is
       Start_Offset : String_Index_Type;
       End_Offset   : String_Index_Type;
       Trigger_Kind : Completion_Trigger_Kind;
-      In_Comment   : Boolean) return Completion_Context;
+      In_Comment   : Boolean;
+      In_String    : Boolean) return Completion_Context;
    --  Creates a new context for this manager, with the completion's start and
    --  end offsets and the buffer given in parameter.
 
@@ -534,6 +539,9 @@ private
 
       In_Comment   : Boolean;
       --  True if the completion was trigerred within a comment.
+
+      In_String   : Boolean;
+      --  True if the completion was trigerred within a string.
    end record;
 
    type Completion_Context is access all Completion_Context_Record'Class;
