@@ -27,11 +27,12 @@ with Gdk.Event;             use Gdk.Event;
 with Gtk.Menu;
 with Gtk.Box;               use Gtk.Box;
 with Gtk.Button;            use Gtk.Button;
-with Gtk.Tree_View;         use Gtk.Tree_View;
 with Gtk.Tree_Store;        use Gtk.Tree_Store;
 with Gtk.Tree_Model;        use Gtk.Tree_Model;
 with Gtk.Tree_View_Column;  use Gtk.Tree_View_Column;
 with Gtk.Widget;            use Gtk.Widget;
+
+with Gtkada.Tree_View;      use Gtkada.Tree_View;
 
 with GPS.Kernel;            use GPS.Kernel;
 with Code_Analysis;         use Code_Analysis;
@@ -103,8 +104,22 @@ package Code_Analysis_GUI is
    --  Pixbufs containing the line information icons.
    --  Call Initialize_Graphics before referencing these variables.
 
+   type Code_Analysis_Tree_View_Record is
+     new Gtkada.Tree_View.Tree_View_Record with record
+      Show_Non_Analyzed : Boolean := True;
+      --  Whether we should display nodes that don't have any coverage
+      --  (i.e: "n/a" nodes).
+   end record;
+   type Code_Analysis_Tree_View is
+     access all Code_Analysis_Tree_View_Record'Class;
+   --  The tree view used for the coverage analysis report.
+
+   overriding function Is_Visible
+     (Self       : not null access Code_Analysis_Tree_View_Record;
+      Store_Iter : Gtk_Tree_Iter) return Boolean;
+
    type Code_Analysis_Report is new Gtk_Vbox_Record with record
-      Tree             : Gtk_Tree_View;
+      Tree             : Code_Analysis_Tree_View;
       Model            : Gtk_Tree_Store;
       Node_Column      : Gtk.Tree_View_Column.Gtk_Tree_View_Column;
       Cov_Column       : Gtk.Tree_View_Column.Gtk_Tree_View_Column;
@@ -182,5 +197,12 @@ package Code_Analysis_GUI is
    procedure Show_Flat_List_Of_Subprograms
      (Object : access Gtk_Widget_Record'Class);
    --  Fill the Gtk_Tree_Store with only on level of subprograms
+
+   procedure Set_Non_Analyzed_Visibility
+     (View    : not null access Code_Analysis_Report'Class;
+      Visible : Boolean);
+   --  Show/hide the nodes that have not been analyzed, either because they
+   --  don't contain executable code or because they have been explcitly
+   --  excluded by the user.
 
 end Code_Analysis_GUI;
