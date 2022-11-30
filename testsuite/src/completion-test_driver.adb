@@ -402,6 +402,7 @@ procedure Completion.Test_Driver is
                     String_Index_Type (Start_Word),
                     String_Index_Type (End_Word),
                     Invoked,
+                    False,
                     False)));
       end loop;
    end Extract_Constructs;
@@ -449,6 +450,7 @@ procedure Completion.Test_Driver is
                String_Index_Type (Start_Word),
                String_Index_Type (End_Word),
                Invoked,
+               False,
                False)));
       end loop;
    end Analyze_Proposal;
@@ -492,6 +494,7 @@ procedure Completion.Test_Driver is
                String_Index_Type (Start_Word),
                String_Index_Type (End_Word),
                Invoked,
+               False,
                False),
             Result   => Result);
 
@@ -558,6 +561,7 @@ procedure Completion.Test_Driver is
                   String_Index_Type (Start_Word),
                   String_Index_Type (End_Word),
                   Invoked,
+                  False,
                   False)));
       end loop;
    end Full_Test;
