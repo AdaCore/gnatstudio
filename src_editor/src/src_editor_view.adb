@@ -39,7 +39,6 @@ with Glib.Object;                use Glib.Object;
 with Glib.Values;                use Glib.Values;
 
 with Gtk;                        use Gtk;
-with Gtk.Accel_Group;
 with Gtk.Adjustment;             use Gtk.Adjustment;
 with Gtk.Drawing_Area;           use Gtk.Drawing_Area;
 with Gtk.Enums;                  use Gtk.Enums;
@@ -97,6 +96,8 @@ with Gtkada.Types;               use Gtkada.Types;
 
 with GUI_Utils;                  use GUI_Utils;
 with String_Utils;               use String_Utils;
+
+with Darwin_Extras;
 
 --  Drawing the side info is organized this way:
 --
@@ -2641,7 +2642,7 @@ package body Src_Editor_View is
       --  when the user scrolls while pressing the primary key
       --  (e.g: Ctrl on Linux, Cmd on Mac)
 
-      if (Get_State (Event) and Gtk.Accel_Group.Get_Default_Mod_Mask) =
+      if (Get_State (Event) and Darwin_Extras.Get_Default_Mod_Mask) =
         View.Get_Modifier_Mask (Primary_Accelerator)
       then
          Get_Scroll_Direction (Event, Direction);

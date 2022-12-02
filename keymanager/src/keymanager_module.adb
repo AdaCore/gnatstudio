@@ -30,7 +30,7 @@ with Gdk.Types;                      use Gdk.Types;
 with Gdk.Window;                     use Gdk.Window;
 with Glib.Convert;                   use Glib.Convert;
 with Glib;                           use Glib;
-with Gtk.Accel_Group;                use Gtk.Accel_Group;
+with Gtk.Accel_Group;
 with Gtk.Main;
 with Gtk.Widget;                     use Gtk.Widget;
 with Gtk.Window;                     use Gtk.Window;
@@ -57,6 +57,8 @@ with KeyManager_Module.GUI;
 with System.Assertions;              use System.Assertions;
 with XML_Parsers;
 with XML_Utils;                      use XML_Utils;
+
+with Darwin_Extras;
 
 package body KeyManager_Module is
 
@@ -1079,7 +1081,7 @@ package body KeyManager_Module is
       end if;
 
       --  Remove any num-lock and caps-lock modifiers
-      Modifier := State and Get_Default_Mod_Mask;
+      Modifier := State and Darwin_Extras.Get_Default_Mod_Mask;
 
       --  If Caps lock in on, and the key is an upper-case character,
       --  lower-case it.

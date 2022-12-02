@@ -81,6 +81,8 @@ with GPS.Kernel.Modules.UI;    use GPS.Kernel.Modules.UI;
 with GPS.Kernel.Scripts;       use GPS.Kernel.Scripts;
 with GPS.Kernel.Style_Manager; use GPS.Kernel.Style_Manager;
 
+with Darwin_Extras;
+
 package body Interactive_Consoles is
 
    Me : constant Trace_Handle := Create ("GPS.KERNEL.INTERACTIVE_CONSOLE");
@@ -1152,7 +1154,8 @@ package body Interactive_Consoles is
    begin
       if Console.On_Key /= null then
          if Console.On_Key (Console   => Console,
-                            Modifier  => Get_State (Event),
+                            Modifier  => Get_State (Event) and
+                              Darwin_Extras.Get_Default_Mod_Mask,
                             Key       => Key,
                             Uni       => To_Unicode (Key),
                             User_Data => Console.Key_User_Data)

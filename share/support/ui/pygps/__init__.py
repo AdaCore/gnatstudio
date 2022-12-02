@@ -396,7 +396,7 @@ try:
     # it is better to directly call the appropriate GPS action or menu
     # rather than rely on these functions
 
-    if "linux" in sys.platform:
+    if "linux" in sys.platform or sys.platform == "darwin":
         GDK_BACKSPACE = 65288
         GDK_TAB = 65289
         GDK_RETURN = Gdk.KEY_Return
@@ -440,7 +440,7 @@ try:
            passes the event to the key manager, but synthesize the event
            in Python directly.
         """
-        if not bypass_keymanager:
+        if not bypass_keymanager or sys.platform == "darwin":
             keycode = 0
 
             # Try to retrieve the hardware keycode with the appropriate
@@ -479,7 +479,7 @@ try:
                 keyboard.press(key)
                 keyboard.release(key)
 
-        if process_events:
+        if process_events or sys.platform == "darwin":
             process_all_events()
 
     def get_notebook(widget):
