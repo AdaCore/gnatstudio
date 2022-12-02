@@ -115,6 +115,8 @@ private
 
       Should_Free_View : Boolean := False;
    end record;
+   type Construct_Completion_Proposal_Access is
+     access all Construct_Completion_Proposal;
 
    overriding
    function Get_Documentation

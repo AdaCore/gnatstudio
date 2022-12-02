@@ -15,16 +15,19 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with Language.Ada;                      use Language.Ada;
-with Language.Profile_Formaters;        use Language.Profile_Formaters;
+with GNAT.Strings;
+with GNATCOLL.Symbols;                  use GNATCOLL.Symbols;
+
+with Glib.Unicode;                      use Glib.Unicode;
+
 with Ada_Semantic_Tree.Visibility;      use Ada_Semantic_Tree.Visibility;
 with Ada_Semantic_Tree.Dependency_Tree; use Ada_Semantic_Tree.Dependency_Tree;
-with Glib.Unicode;                      use Glib.Unicode;
-with GNAT.Strings;
-with GNATCOLL.Symbols;               use GNATCOLL.Symbols;
-with Ada_Semantic_Tree.Declarations; use Ada_Semantic_Tree.Declarations;
-with Ada_Semantic_Tree.Generics;     use Ada_Semantic_Tree.Generics;
-with Ada_Semantic_Tree.Lang;         use Ada_Semantic_Tree.Lang;
+with Ada_Semantic_Tree.Declarations;    use Ada_Semantic_Tree.Declarations;
+with Ada_Semantic_Tree.Generics;        use Ada_Semantic_Tree.Generics;
+with Ada_Semantic_Tree.Lang;            use Ada_Semantic_Tree.Lang;
+
+with Language.Ada;                      use Language.Ada;
+with Language.Profile_Formaters;        use Language.Profile_Formaters;
 
 package body Completion.Ada.Constructs_Extractor is
 
@@ -87,32 +90,32 @@ package body Completion.Ada.Constructs_Extractor is
    is
       pragma Unreferenced (Context);
 
-      Result : constant Completion_Proposal_Access :=
-        new Construct_Completion_Proposal;
-
-      Constr_Result : Construct_Completion_Proposal renames
-        Construct_Completion_Proposal (Result.all);
-
-      Entity : Entity_Access;
+      Result   : Construct_Completion_Proposal_Access;
+      Resolver : constant Completion_Resolver_Access :=
+        Get_Resolver (Manager, Resolver_ID);
+      Entity   : Entity_Access;
    begin
-      if not Exists (Stored.Persistent_Entity) then
+      if not Exists (Stored.Persistent_Entity)
+        or else Resolver = null
+      then
          return null;
       end if;
 
+      Result := new Construct_Completion_Proposal;
       Entity := To_Entity_Access (Stored.Persistent_Entity);
 
-      Constr_Result.View := To_Declaration (Entity);
-      Set_Is_All (Constr_Result.View, Stored.Is_All);
+      Result.View := To_Declaration (Entity);
+      Set_Is_All (Result.View, Stored.Is_All);
 
-      Constr_Result.Is_In_Call := Stored.Is_In_Call;
-      Constr_Result.Resolver := Get_Resolver (Manager, Resolver_ID);
+      Result.Is_In_Call := Stored.Is_In_Call;
+      Result.Resolver   := Resolver;
 
-      if Constr_Result.Actual_Params /= null then
-         Constr_Result.Actual_Params :=
+      if Result.Actual_Params /= null then
+         Result.Actual_Params :=
            new Actual_Parameter_Resolver'(Stored.Actual_Params.all);
       end if;
 
-      return Result;
+      return Completion_Proposal_Access (Result);
    end From_Stored_Proposal;
 
    --------------

@@ -290,8 +290,14 @@ package body Completion is
      (Manager : access Completion_Manager;
       Name    : String) return Completion_Resolver_Access
    is
+      It : constant Completion_Resolver_Map_Pckg.Cursor :=
+        Manager.Resolvers.Find (Name);
    begin
-      return Element (Manager.Resolvers, Name);
+      if Completion_Resolver_Map_Pckg.Has_Element (It) then
+         return Element (It);
+      else
+         return null;
+      end if;
    end Get_Resolver;
 
    -------------------
