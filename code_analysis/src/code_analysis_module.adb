@@ -36,7 +36,6 @@ with Gtk.Menu;                               use Gtk.Menu;
 with Gtk.Menu_Item;                          use Gtk.Menu_Item;
 with Gtk.Separator_Menu_Item;                use Gtk.Separator_Menu_Item;
 with Gtk.Tree_Selection;                     use Gtk.Tree_Selection;
-with Gtk.Tree_View;                          use Gtk.Tree_View;
 with Gtk.Tree_Model;                         use Gtk.Tree_Model;
 with Gtk.Tree_Store;                         use Gtk.Tree_Store;
 with Gtk.Tree_View_Column;                   use Gtk.Tree_View_Column;
@@ -99,6 +98,8 @@ package body Code_Analysis_Module is
      Default_Preferences.Enums.Generics (Coverage_Display_Type);
 
    Coverage_Display_Pref : Coverage_Display_Preferences.Preference;
+
+   Hide_Non_Analyzed_Pref : Boolean_Preference;
 
    package Kernel_Return_Cb is new User_Return_Callback
      (Gtk.Widget.Gtk_Widget_Record, Boolean, Kernel_Handle);
@@ -1233,7 +1234,7 @@ package body Code_Analysis_Module is
       Local_Project : Projects.Views.Project_View_Reference;
       Iter          : Gtk_Tree_Iter := Null_Iter;
       Path          : Gtk_Tree_Path;
-      View        : Views.View_Access;
+      View          : Views.View_Access;
       Child         : GPS_MDI_Child;
       Report        : Code_Analysis_Report_Access;
 
@@ -1243,7 +1244,7 @@ package body Code_Analysis_Module is
       View := Get_Or_Create (Kernel, Analysis, Create => True);
       Report := View.Report;
       Child := Views.Child_From_View (View);
-      Clear (Report.Model);
+      Clear (Report);
 
       --  Check for analysis information:
 
@@ -1348,11 +1349,19 @@ package body Code_Analysis_Module is
    is
       procedure Append_Show_Flat_Pref_To_Menu is
         new GPS.Kernel.Preferences.Append_Enum_To_Menu (Coverage_Display_Type);
+
+      Sep : Gtk_Separator_Menu_Item;
    begin
       Append_Show_Flat_Pref_To_Menu
         (Menu,
          View.Kernel,
          Enum_Preference (Coverage_Display_Pref));
+
+      Gtk_New (Sep);
+      Menu.Append (Sep);
+
+      GPS.Kernel.Preferences.Append_Menu
+        (Menu, View.Kernel, Hide_Non_Analyzed_Pref);
    end Create_Menu;
 
    -------------------
@@ -1469,6 +1478,7 @@ package body Code_Analysis_Module is
       else
          --  Use current selection
          View.Tree.Get_Selection.Get_Selected (Model, Iter);
+         Iter := View.Tree.Convert_To_Store_Iter (Iter);
       end if;
 
       if Iter /= Null_Iter then
@@ -2367,6 +2377,11 @@ package body Code_Analysis_Module is
             when Files_Only =>
                Show_Flat_List_Of_Files (Self.View.Report);
          end case;
+
+      elsif Pref = Preference (Hide_Non_Analyzed_Pref) then
+         Set_Non_Analyzed_Visibility
+           (View    => Self.View.Report,
+            Visible => not Hide_Non_Analyzed_Pref.Get_Pref);
       end if;
    end Execute;
 
@@ -2721,6 +2736,14 @@ package body Code_Analysis_Module is
          Label   => "Coverage display type",
          Doc     => "Choose the way we display coverage.",
          Default => Full_Tree);
+
+      Hide_Non_Analyzed_Pref := Kernel.Get_Preferences.Create
+        (Path     => ":Local Configuration",
+         Name     => "coverage-hide-non-analyzed",
+         Label    => "Hide non-analyzed nodes",
+         Doc      => "Hide the non-analyzed nodes in the coverage report"
+         & "(e.g: files that don't contain executable code).",
+         Default  => True);
 
       Coverage_GUI.Register_Module (Kernel);
    end Register_Module;

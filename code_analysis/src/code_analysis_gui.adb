@@ -63,17 +63,22 @@ package body Code_Analysis_GUI is
    begin
       View.Binary_Mode       := Binary_Mode;
       Initialize_Vbox (View, False, 0);
-      Gtk_New (View.Model, GType_Array'
-          (Icon_Name_Col => GType_String,
-           Name_Col    => GType_String,
-           Node_Col    => GType_Pointer,
-           File_Col    => GType_Pointer,
-           Prj_Col     => GType_Pointer,
-           Cov_Col     => GType_String,
-           Cov_Sort    => GType_Int,
-           Cov_Bar_Txt => GType_String,
-           Cov_Bar_Val => GType_Int));
-      Gtk_New (View.Tree, View.Model);
+
+      View.Tree := new Code_Analysis_Tree_View_Record;
+      Initialize
+        (View.Tree,
+         (Icon_Name_Col => GType_String,
+          Name_Col      => GType_String,
+          Node_Col      => GType_Pointer,
+          File_Col      => GType_Pointer,
+          Prj_Col       => GType_Pointer,
+          Cov_Col       => GType_String,
+          Cov_Sort      => GType_Int,
+          Cov_Bar_Txt   => GType_String,
+          Cov_Bar_Val   => GType_Int),
+         Capability_Type  => Filtered_And_Sortable,
+         Set_Visible_Func => True);
+      View.Model := View.Tree.Model;
 
       ------------------
       --  Error_Board --
@@ -234,6 +239,20 @@ package body Code_Analysis_GUI is
       View.Model.Clear;
    end Clear;
 
+   ----------------
+   -- Is_Visible --
+   ----------------
+
+   overriding function Is_Visible
+     (Self       : not null access Code_Analysis_Tree_View_Record;
+      Store_Iter : Gtk_Tree_Iter) return Boolean
+   is
+      Coverage : constant String :=
+        Get_String (Self.Model, Store_Iter, Cov_Bar_Txt);
+   begin
+      return Self.Show_Non_Analyzed or else Coverage /= "n/a";
+   end Is_Visible;
+
    --------------------
    -- Show_Full_Tree --
    --------------------
@@ -305,6 +324,18 @@ package body Code_Analysis_GUI is
       end if;
    end Show_Flat_List_Of_Subprograms;
 
+   ---------------------------------
+   -- Set_Non_Analyzed_Visibility --
+   ---------------------------------
+
+   procedure Set_Non_Analyzed_Visibility
+     (View    : not null access Code_Analysis_Report'Class;
+      Visible : Boolean) is
+   begin
+      View.Tree.Show_Non_Analyzed := Visible;
+      View.Tree.Refilter;
+   end Set_Non_Analyzed_Visibility;
+
    ---------------------
    -- On_Double_Click --
    ---------------------
@@ -316,7 +347,7 @@ package body Code_Analysis_GUI is
    is
       View  : constant Code_Analysis_Report_Access :=
         Code_Analysis_Report_Access (Object);
-      Tree  : constant Gtk_Tree_View := View.Tree;
+      Tree  : constant Code_Analysis_Tree_View := View.Tree;
       Iter  : Gtk_Tree_Iter;
       Model : Gtk_Tree_Model;
       M     : Gtk_Tree_Store;
@@ -326,9 +357,10 @@ package body Code_Analysis_GUI is
         and then Get_Event_Type (Event) = Gdk_2button_Press
       then
          Get_Selected (Get_Selection (Tree), Model, Iter);
+         Iter := View.Tree.Convert_To_Store_Iter (Iter);
 
          if Iter /= Null_Iter then
-            M := -Model;
+            M := View.Model;
             declare
                Node : constant Node_Access := Code_Analysis.Node_Access
                  (Node_Set.Get (M, Iter, Node_Col));
