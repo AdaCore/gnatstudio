@@ -66,9 +66,14 @@ package body GPS.LSP_Client.Requests.Execute_Command is
    overriding function Is_Request_Supported
      (Self    : Abstract_Execute_Command_Request;
       Options : LSP.Messages.ServerCapabilities)
-      return Boolean is
+      return Boolean
+   is
+      Command_Name : constant VSS.Strings.Virtual_String :=
+        Abstract_Execute_Command_Request'Class (Self).Command_Name;
    begin
-      return Options.executeCommandProvider.Is_Set;
+      return Options.executeCommandProvider.Is_Set
+        and then Options.executeCommandProvider.Value.commands.Contains
+          (Command_Name);
    end Is_Request_Supported;
 
 end GPS.LSP_Client.Requests.Execute_Command;

@@ -20,6 +20,11 @@ package GPS.LSP_Client.Requests.Execute_Command is
    type Abstract_Execute_Command_Request is
      abstract new LSP_Request with null record;
 
+   function Command_Name
+     (Self : Abstract_Execute_Command_Request)
+      return VSS.Strings.Virtual_String is abstract;
+   --  Return command name as it send to the server.
+
    function Params
      (Self : Abstract_Execute_Command_Request)
       return LSP.Messages.ExecuteCommandParams is abstract;
