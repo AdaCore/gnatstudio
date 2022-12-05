@@ -60,6 +60,7 @@ import tempfile
 import GPS
 from extensions.private.xml import X
 from gs_utils import interactive
+from gs_utils.internal.dialogs import Project_Properties_Editor
 from modules import Module
 import os_utils
 import workflows.promises as promises
@@ -135,7 +136,7 @@ if gnatcov_path:
                     line="1"  column="1"
                     switch="--level"
                     separator="="
-                    noswitch="stmt"
+                    noswitch=""
                     tip="Used to specify the coverage level.">
                     <combo-entry label="stmt" value="stmt"/>
                     <combo-entry label="stmt+decision" value="stmt+decision"/>
@@ -719,9 +720,55 @@ class GNATcovPlugin(Module):
             return False
         return int(version_major) >= 23
 
-    def run_gnatcov_wf(self, main_name):
-        # Build the project with GNATcov switches
+    @staticmethod
+    def check_for_defined_level(cmds):
+        """
+        Check if the level is correcly specified in the root project for the given
+        commands.
+        This is done by checking for "--level" in the Coverage'Switches project
+        attribute.
+        """
+        project = GPS.Project.root()
 
+        @workflows.run_as_workflow
+        def open_gnatcoverage_project_properties(text):
+            """
+            Open the Project Properties editor and go to the page
+            defining the GNATcoverage settings.
+            """
+
+            editor = Project_Properties_Editor()
+            yield editor.open_and_yield(wait_scan=False)
+            yield editor.select("Build/Switches/GNATcoverage")
+
+        # Check if the level is specified for all commands first (via the "*" index)
+        if "--level" in project.get_attribute_as_string(
+          "switches", package="coverage", index="*"):
+            return
+
+        # Check if we are missing the level for the given commands
+        missing_cmds = []
+        for cmd in cmds:
+            if "--level" not in project.get_attribute_as_string(
+              "switches", package="coverage", index=cmd):
+                missing_cmds.append(cmd)
+
+        # If we are missing the level, display a message in th Messsages view with
+        # an hyperlink to open the GNATcoverage Project Properties page.
+        if missing_cmds:
+            console = GPS.Console()
+            console.write(("warning: no level specified for the given commands: %s\n"
+                           % (missing_cmds)))
+            console.write("Please specify the coverage level via the ")
+            console.insert_link("Coverage'Switches",
+                                open_gnatcoverage_project_properties)
+            console.write(" project attribute\n")
+
+    def run_gnatcov_wf(self, main_name):
+        # Check if the level is specified for the commands executed by the wf
+        GNATcovPlugin.check_for_defined_level(cmds=["run", "coverage"])
+
+        # Build the project with GNATcov switches
         p = promises.TargetWrapper("GNATcov Build Main")
         r = yield p.wait_on_execute()
         if r != 0:
@@ -839,6 +886,9 @@ class GNATcovPlugin(Module):
         return status
 
     def run_gnatcov_with_instrumentation_wf(self, main_name):
+        # Check if the level is specified for the commands executed by the wf
+        GNATcovPlugin.check_for_defined_level(cmds=["instrument", "coverage"])
+
         # Get the executable to analyze
         exe = str(GPS.File(main_name).executable_path)
 
