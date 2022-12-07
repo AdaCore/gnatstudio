@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                               GNAT Studio                                --
 --                                                                          --
---                     Copyright (C) 2005-2021, AdaCore                     --
+--                     Copyright (C) 2005-2022, AdaCore                     --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -1989,7 +1989,7 @@ package body GPS.Kernel.MDI is
 
       elsif JSON /= JSON_Null
         and then JSON.Has_Field ("tag")
-        and then JSON.Get ("tag") = String'("mdi_marker")
+        and then String'(JSON.Get ("tag")) = "mdi_marker"
       then
          return Create_MDI_Marker (Module.Get_Kernel, JSON.Get ("title"));
       end if;

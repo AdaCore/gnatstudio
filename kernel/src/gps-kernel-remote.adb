@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                               GNAT Studio                                --
 --                                                                          --
---                     Copyright (C) 2006-2021, AdaCore                     --
+--                     Copyright (C) 2006-2022, AdaCore                     --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -212,7 +212,7 @@ package body GPS.Kernel.Remote is
             Item := JSON_Null;
             for Index in 1 .. Length (Values) loop
                Item := Get (Values, Index);
-               exit when Item.Get ("name") = Server_Type'Image (J);
+               exit when String'(Item.Get ("name")) = Server_Type'Image (J);
             end loop;
 
             Free (Property.Servers (J).Nickname);
