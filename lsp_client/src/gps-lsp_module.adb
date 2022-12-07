@@ -95,6 +95,7 @@ with GPS.LSP_Client.Language_Servers.Real;
 with GPS.LSP_Client.Language_Servers.Stub;
 with GPS.LSP_Client.References;
 with GPS.LSP_Client.Refactoring;
+with GPS.LSP_Client.Requests.Execute_Command.Reload_Project;
 with GPS.LSP_Client.Search;
 with GPS.LSP_Client.Shell;
 with GPS.LSP_Client.Tasks;
@@ -370,6 +371,13 @@ package body GPS.LSP_Module is
       (Self   : On_Project_View_Changed;
        Kernel : not null access Kernel_Handle_Record'Class);
 
+   type On_Variable_Changed is new Simple_Hooks_Function with null record;
+   overriding procedure Execute
+     (Self   : On_Variable_Changed;
+      Kernel : not null access Kernel_Handle_Record'Class);
+   --  Send didConfigurationChanage notification to language servers when a
+   --  scenario variable changes.
+
    type On_Preference_Changed is
      new Preferences_Hooks_Function with null record;
    overriding procedure Execute
@@ -571,6 +579,19 @@ package body GPS.LSP_Module is
             Server.Configuration_Changed;
          end loop;
       end if;
+   end Execute;
+
+   -------------
+   -- Execute --
+   -------------
+
+   overriding procedure Execute
+     (Self   : On_Variable_Changed;
+      Kernel : not null access Kernel_Handle_Record'Class) is
+   begin
+      for Server of Module.Language_Servers loop
+         Server.Configuration_Changed;
+      end loop;
    end Execute;
 
    -------------
@@ -873,9 +894,18 @@ package body GPS.LSP_Module is
                Language_Server_Maps.Delete (Running_Servers, Position);
                Module.Language_Servers.Insert (Lang, Server);
 
-               --  And notify about change of the configuration.
+               declare
+                  Handle : constant GPS.Kernel.Kernel_Handle :=
+                    GPS.Kernel.Kernel_Handle (Kernel);
 
-               Server.Configuration_Changed;
+                  Reload_Project : GPS.LSP_Client.Requests.Request_Access :=
+                    new GPS.LSP_Client.Requests.Execute_Command.Reload_Project
+                      .Reload_Project_Command_Request (Handle);
+               begin
+                  --  Ask ALS reload the project.
+
+                  Server.Execute (Reload_Project);
+               end;
             elsif not Module.Language_Servers.Contains (Lang) then
                --  Start new language server if configured
 
@@ -1584,6 +1614,7 @@ package body GPS.LSP_Module is
       Project_Changing_Hook.Add (new On_Project_Changing);
       Project_View_Changed_Hook.Add (new On_Project_View_Changed);
       Preferences_Changed_Hook.Add (new On_Preference_Changed);
+      Variable_Changed_Hook.Add (new On_Variable_Changed);
       Language_Server_Stopped_Hook.Add (new On_Server_Stopped_Hook);
 
       Location_Changed_Hook.Add_Debounce (new On_Location_Changed);

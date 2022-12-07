@@ -976,8 +976,6 @@ procedure GPS.Main is
                   & ASCII.LF
                   & "ALS.MAIN=yes" & ASCII.LF
                   & ASCII.LF
-                  & "ALS.COMPLETION.FORMATTING=yes" & ASCII.LF
-                  & ASCII.LF
                   & "## uncomment the following 2 lines"
                   & " to activate full traces" & ASCII.LF
                   & "#ALS.IN=yes" & ASCII.LF

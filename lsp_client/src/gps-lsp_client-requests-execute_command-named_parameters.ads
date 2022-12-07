@@ -35,4 +35,8 @@ package GPS.LSP_Client.Requests.Execute_Command.Named_Parameters is
      (Self : Abstract_Named_Parameters_Command_Request)
       return GNATCOLL.VFS.Virtual_File;
 
+   overriding function Command_Name
+     (Self : Abstract_Named_Parameters_Command_Request)
+        return VSS.Strings.Virtual_String is ("als-named-parameters");
+
 end GPS.LSP_Client.Requests.Execute_Command.Named_Parameters;

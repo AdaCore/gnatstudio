@@ -56,7 +56,7 @@ package body GPS.LSP_Client.Requests.Execute_Command.Named_Parameters is
       return
         (Is_Unknown => True,
          Base       => <>,
-         command    => "als-named-parameters",
+         command    => Self.Command_Name,
          arguments  => (Is_Set => True, Value => Arguments));
    end Params;
 

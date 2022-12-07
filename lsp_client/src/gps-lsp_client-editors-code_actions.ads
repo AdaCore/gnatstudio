@@ -61,4 +61,8 @@ package GPS.LSP_Client.Editors.Code_Actions is
    is
      (VSS.Strings.Conversions.To_UTF_8_String (Self.Params.command));
 
+   overriding function Command_Name
+     (Self : Execute_Command_Request)
+        return VSS.Strings.Virtual_String is (Self.Params.command);
+
 end GPS.LSP_Client.Editors.Code_Actions;
