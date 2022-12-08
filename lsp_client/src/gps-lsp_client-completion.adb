@@ -863,12 +863,12 @@ package body GPS.LSP_Client.Completion is
         (Editor_Context);
       Lang           : constant Language_Access :=
                          Kernel.Get_Language_Handler.Get_Language_From_File
-                           (File);
+          (File);
+      Resolver_ID    : constant String :=
+        LSP_Resolver_ID_Prefix & To_Lower (Lang.Get_Name);
       Resolver       : constant LSP_Completion_Resolver_Access :=
-                         LSP_Completion_Resolver_Access
-                           (Manager.Get_Resolver
-                              (LSP_Resolver_ID_Prefix
-                               & To_Lower (Lang.Get_Name)));
+        LSP_Completion_Resolver_Access
+          (Manager.Get_Resolver (Resolver_ID));
       Holder         : constant Controlled_Editor_Buffer_Holder :=
         Kernel.Get_Buffer_Factory.Get_Holder (File);
       Location       : constant Editor_Location'Class :=
@@ -888,6 +888,22 @@ package body GPS.LSP_Client.Completion is
                              (Get_Trigger_Kind (Context)), others => <>));
 
    begin
+      if Resolver = null then
+         Trace (Me, Resolver_ID & " resolver not found.");
+         return;
+      end if;
+
+      Request := new LSP_Completion_Request'
+        (GPS.LSP_Client.Requests.LSP_Request with
+           Kernel        => Resolver.Kernel,
+         Resolver      => Resolver,
+         File          => File,
+         Result        => Initial_List,
+         Position      =>
+           GPS.LSP_Client.Utilities.Location_To_LSP_Position (Location),
+         Context       => (To_LSP_Completion_Trigger_Kind
+                           (Get_Trigger_Kind (Context)), others => <>));
+
       Resolver.Completions.items.Clear;
 
       GPS.LSP_Client.Requests.Execute
