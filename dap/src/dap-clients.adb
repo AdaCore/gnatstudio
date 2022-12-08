@@ -46,14 +46,12 @@ with LSP.Types;
 with LSP.JSON_Streams;
 
 with DAP.Consoles;
-with DAP.Persistent_Breakpoints;
 with DAP.Module;
 with DAP.Preferences;
 with DAP.Requests.Evaluate;
 with DAP.Requests.Initialize;
 with DAP.Requests.Disconnects;
 with DAP.Requests.StackTraces;
-with DAP.Tools;
 with DAP.Tools.Inputs;
 with DAP.Utils;
 
@@ -61,6 +59,7 @@ with Interactive_Consoles;       use Interactive_Consoles;
 with GUI_Utils;
 with Remote;
 with Language_Handlers;          use Language_Handlers;
+with Toolchains;                 use Toolchains;
 
 package body DAP.Clients is
 
@@ -223,6 +222,18 @@ package body DAP.Clients is
    end Has_Breakpoint;
 
    ----------------
+   -- Initialize --
+   ----------------
+
+   procedure Initialize (Self : not null access DAP_Client) is
+   begin
+      Self.Visual := new DAP_Visual_Debugger'
+        (Glib.Object.GObject_Record with Client => Self.This);
+      Glib.Object.Initialize (Self.Visual);
+      Ref (Self.Visual);
+   end Initialize;
+
+   ----------------
    -- Is_Stopped --
    ----------------
 
@@ -230,6 +241,37 @@ package body DAP.Clients is
    begin
       return Self.Status = Stopped;
    end Is_Stopped;
+
+   --------------------------
+   -- Is_Ready_For_Command --
+   --------------------------
+
+   function Is_Ready_For_Command (Self : DAP_Client) return Boolean is
+   begin
+      return Self.Status = Stopped or else Self.Status = Ready;
+   end Is_Ready_For_Command;
+
+   ----------------------
+   -- Set_Capabilities --
+   ----------------------
+
+   procedure Set_Capabilities
+     (Self         : in out DAP_Client;
+      Capabilities : DAP.Tools.Optional_Capabilities) is
+   begin
+      Self.Capabilities := Capabilities;
+   end Set_Capabilities;
+
+   ----------------------
+   -- Get_Capabilities --
+   ----------------------
+
+   function Get_Capabilities
+     (Self : in out DAP_Client)
+      return DAP.Tools.Optional_Capabilities is
+   begin
+      return Self.Capabilities;
+   end Get_Capabilities;
 
    ----------------
    -- Set_Status --
@@ -252,8 +294,8 @@ package body DAP.Clients is
          end if;
 
          GPS.Kernel.Hooks.Debugger_State_Changed_Hook.Run
-           (Self.Kernel, Self.Visual'Access,
-            (if Self.Status /= Stopped
+           (Self.Kernel, Self.Visual,
+            (if Self.Status /= Stopped and then Self.Status /= Ready
              then GPS.Debuggers.Debug_Busy
              else GPS.Debuggers.Debug_Available));
       end if;
@@ -295,31 +337,19 @@ package body DAP.Clients is
 
    function Get_Breakpoints
      (Self : DAP_Client)
-      return DAP.Breakpoint_Maps.All_Breakpoints
+      return DAP.Breakpoint_Maps.Breakpoint_Vectors.Vector
    is
       use type DAP.Modules.Breakpoint_Managers.
         DAP_Client_Breakpoint_Manager_Access;
 
-      Empty : DAP.Breakpoint_Maps.All_Breakpoints;
+      Empty : DAP.Breakpoint_Maps.Breakpoint_Vectors.Vector;
    begin
       if Self.Breakpoints /= null then
-         return DAP.Modules.Breakpoint_Managers.Get_Breakpoints
-           (Self.Breakpoints);
+         return Self.Breakpoints.Get_Breakpoints;
       else
          return Empty;
       end if;
    end Get_Breakpoints;
-
-   --------------------------
-   -- Get_Breakpoints_View --
-   --------------------------
-
-   function Get_Breakpoints_View
-     (Self : DAP_Client)
-      return Generic_Views.Abstract_View_Access is
-   begin
-      return Self.Breakpoints_View;
-   end Get_Breakpoints_View;
 
    -------------------------
    -- Get_Call_Stack_View --
@@ -436,17 +466,6 @@ package body DAP.Clients is
       end if;
    end Set_Breakpoints_State;
 
-   --------------------------
-   -- Set_Breakpoints_View --
-   --------------------------
-
-   procedure Set_Breakpoints_View
-     (Self : in out DAP_Client;
-      View : Generic_Views.Abstract_View_Access) is
-   begin
-      Self.Breakpoints_View := View;
-   end Set_Breakpoints_View;
-
    -------------------------
    -- Set_Call_Stack_View --
    -------------------------
@@ -551,9 +570,10 @@ package body DAP.Clients is
    ----------------
 
    function Get_Visual
-     (Self : in out DAP_Client) return Visual_Debugger_Access is
+     (Self : in out DAP_Client)
+      return DAP_Visual_Debugger_Access is
    begin
-      return Self.Visual'Unchecked_Access;
+      return Self.Visual;
    end Get_Visual;
 
    -------------------
@@ -582,8 +602,7 @@ package body DAP.Clients is
    procedure On_Ready (Self : in out DAP_Client) is
    begin
       Self.Set_Status (Ready);
-      GPS.Kernel.Hooks.Debugger_Started_Hook.Run
-        (Self.Kernel, Self.Visual'Access);
+      GPS.Kernel.Hooks.Debugger_Started_Hook.Run (Self.Kernel, Self.Visual);
       Self.Kernel.Refresh_Context;
    end On_Ready;
 
@@ -605,11 +624,13 @@ package body DAP.Clients is
       Self.Reject_All_Requests;
 
       GPS.Kernel.Hooks.Debugger_Process_Terminated_Hook.Run
-        (Self.Kernel, Self.Visual'Access);
+        (Self.Kernel, Self.Visual);
 
-      DAP.Modules.Breakpoint_Managers.On_Finished (Self.Breakpoints);
+      Self.Breakpoints.Finalize;
       Free (Self.Breakpoints);
-      DAP.Persistent_Breakpoints.Show_Breakpoints_In_All_Editors (Self.Kernel);
+
+      Unref (Self.Visual);
+
       DAP.Module.Finished (Self.Id);
    end On_Finished;
 
@@ -1170,8 +1191,18 @@ package body DAP.Clients is
          end;
 
       elsif Event = "breakpoint" then
-         --  We process breakpoint responses so do nothing with event for now.
-         null;
+         declare
+            Event   : DAP.Tools.BreakpointEvent;
+            Console : constant access Interactive_Console_Record'Class :=
+              DAP.Consoles.Get_Debugger_Interactive_Console (Self);
+         begin
+            DAP.Tools.Inputs.Input_BreakpointEvent (Stream, Event, Success);
+            Console.Insert
+              ("Breakpoint:" & Event.a_body.reason'Img & " "
+               & (if Event.a_body.breakpoint.id.Is_Set
+                 then Event.a_body.breakpoint.id.Value'Img
+                 else "-"));
+         end;
 
       elsif Event = "thread" then
          --  The tread view uses requests to get the list of threads.
@@ -1193,6 +1224,23 @@ package body DAP.Clients is
       when E : others =>
          Trace (Me, E);
    end Process_Event;
+
+   ---------------------------------
+   -- Display_In_Debugger_Console --
+   ---------------------------------
+
+   procedure Display_In_Debugger_Console
+     (Self : in out DAP_Client;
+      Msg  : String)
+   is
+      Console : constant access Interactive_Console_Record'Class :=
+        DAP.Consoles.Get_Debugger_Interactive_Console (Self);
+
+   begin
+      if Console /= null then
+         Console.Insert (Msg, Add_LF => True);
+      end if;
+   end Display_In_Debugger_Console;
 
    -----------------------
    -- On_Result_Message --
@@ -1243,7 +1291,7 @@ package body DAP.Clients is
         (Self.Kernel, Self.Selected_File, Self.Selected_Line);
 
       GPS.Kernel.Hooks.Debugger_Location_Changed_Hook.Run
-        (Self.Kernel, Self.Visual'Access);
+        (Self.Kernel, Self.Visual);
    end On_Location_Changed;
 
    ----------------
@@ -1267,8 +1315,6 @@ package body DAP.Clients is
 
    procedure On_Terminated (Self : in out DAP_Client) is
    begin
-      GPS.Kernel.Hooks.Debugger_Terminated_Hook.Run
-        (Self.Kernel, Self.Visual'Access);
       Self.Stop;
    end On_Terminated;
 
@@ -1343,7 +1389,46 @@ package body DAP.Clients is
       Args    : String)
    is
       Node_Args : Spawn.String_Vectors.UTF_8_String_Vector;
-      Adapter   : constant String := DAP.Preferences.DAP_Adapter.Get_Pref;
+
+      function Get_Debugger_Executable return String;
+      --  Returns name of debugger and parameters for it
+
+      -----------------------------
+      -- Get_Debugger_Executable --
+      -----------------------------
+
+      function Get_Debugger_Executable return String is
+      begin
+         if DAP.Preferences.DAP_Adapter.Get_Pref /= "" then
+            return DAP.Preferences.DAP_Adapter.Get_Pref;
+         end if;
+
+         if Project.Has_Attribute
+           (GNATCOLL.Projects.Debugger_Command_Attribute)
+         then
+            --  return debuger from project
+            declare
+               Name : constant String := Project.Attribute_Value
+                 (GNATCOLL.Projects.Debugger_Command_Attribute);
+            begin
+
+               return Name;
+            end;
+         end if;
+
+         declare
+            Tc      : constant Toolchain :=
+              Self.Kernel.Get_Toolchains_Manager.Get_Toolchain (Project);
+            Command : constant String := Get_Command
+              (Tc, Toolchains.Debugger);
+         begin
+            --  return debugger from toolchain
+
+            return Command;
+         end;
+      end Get_Debugger_Executable;
+
+      Adapter : constant String := Get_Debugger_Executable;
 
    begin
       Trace (Me, "Launching the debug adapter: " & Adapter);
@@ -1357,6 +1442,7 @@ package body DAP.Clients is
            (Adapter, On => ' ');
       begin
          Self.Set_Program (Vals (Vals'First).all);
+         Node_Args.Append ("-i=dap");
          for Index in Vals'First + 1 .. Vals'Last loop
             Node_Args.Append (Vals (Index).all);
          end loop;
@@ -1442,5 +1528,29 @@ package body DAP.Clients is
    begin
       Unref (GObject (Self.Label));
    end On_Error_Message;
+
+   ------------------------
+   -- Command_In_Process --
+   ------------------------
+
+   overriding function Command_In_Process
+     (Visual : not null access DAP_Visual_Debugger) return Boolean is
+   begin
+      return Visual.Client /= null
+        and then not Visual.Client.Is_Ready_For_Command;
+   end Command_In_Process;
+
+   ----------------------
+   -- Show_Breakpoints --
+   ----------------------
+
+   procedure Show_Breakpoints (Self : DAP_Client) is
+      use type DAP.Modules.Breakpoint_Managers.
+        DAP_Client_Breakpoint_Manager_Access;
+   begin
+      if Self.Breakpoints /= null then
+         Self.Breakpoints.Show_Breakpoints;
+      end if;
+   end Show_Breakpoints;
 
 end DAP.Clients;

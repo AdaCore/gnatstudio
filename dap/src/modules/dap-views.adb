@@ -114,7 +114,9 @@ package body DAP.Views is
                   View.Set_Client (Client);
                   Set_View (Client, View);
 
-                  if DAP.Module.Count_Running_Debuggers < 2 then
+                  if DAP.Module.Count_Running_Debuggers < 2
+                    or else Formal_Views.Reuse_If_Exist
+                  then
                      Set_Title (Child, Formal_Views.View_Name);
                   else
                      Set_Title
@@ -199,7 +201,7 @@ package body DAP.Views is
          use type DAP.Clients.DAP_Client_Access;
 
          Client : constant DAP.Clients.DAP_Client_Access :=
-           DAP.Clients.Visual_Debugger_Access (Debugger).Client;
+           DAP.Clients.DAP_Visual_Debugger_Access (Debugger).Client;
 
       begin
          if Client /= null then
@@ -220,7 +222,7 @@ package body DAP.Views is
          pragma Unreferenced (Self, Kernel);
          use type DAP.Clients.DAP_Client_Access;
          Client : constant DAP.Clients.DAP_Client_Access :=
-           DAP.Clients.Visual_Debugger_Access (Debugger).Client;
+           DAP.Clients.DAP_Visual_Debugger_Access (Debugger).Client;
 
          V : access Formal_View_Record'Class;
       begin
@@ -245,7 +247,7 @@ package body DAP.Views is
          pragma Unreferenced (Self, Kernel);
          use type DAP.Clients.DAP_Client_Access;
          Client : constant DAP.Clients.DAP_Client_Access :=
-           DAP.Clients.Visual_Debugger_Access (Debugger).Client;
+           DAP.Clients.DAP_Visual_Debugger_Access (Debugger).Client;
 
          V : access Formal_View_Record'Class;
       begin
@@ -269,7 +271,7 @@ package body DAP.Views is
       is
          pragma Unreferenced (Kernel);
          Client : constant DAP.Clients.DAP_Client_Access :=
-           DAP.Clients.Visual_Debugger_Access (Debugger).Client;
+           DAP.Clients.DAP_Visual_Debugger_Access (Debugger).Client;
          V      : constant access Formal_View_Record'Class :=
            Get_View (Client);
       begin
@@ -292,7 +294,7 @@ package body DAP.Views is
          pragma Unreferenced (Self, Kernel);
          use type DAP.Clients.DAP_Client_Access;
          Client : constant DAP.Clients.DAP_Client_Access :=
-           DAP.Clients.Visual_Debugger_Access (Debugger).Client;
+           DAP.Clients.DAP_Visual_Debugger_Access (Debugger).Client;
 
          V : access Formal_View_Record'Class;
       begin

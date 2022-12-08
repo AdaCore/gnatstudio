@@ -15,10 +15,13 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with GNATCOLL.VFS;   use GNATCOLL.VFS;
-with GPS.Kernel;     use GPS.Kernel;
+with GNATCOLL.Projects; use GNATCOLL.Projects;
+with GNATCOLL.VFS;      use GNATCOLL.VFS;
+
+with GPS.Kernel;        use GPS.Kernel;
 
 with DAP.Clients;
+with Generic_Views;
 
 package DAP.Module is
 
@@ -32,6 +35,12 @@ package DAP.Module is
    procedure Initialize_Debugger
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
       Args   : String);
+   function Initialize_Debugger
+     (Kernel  : access GPS.Kernel.Kernel_Handle_Record'Class;
+      File    : GNATCOLL.VFS.Virtual_File;
+      Project : Project_Type;
+      Args    : String)
+      return DAP.Clients.DAP_Client_Access;
    --  Initialize the debugger. Uses when debugging is demanded
    --  by the command line switch.
 
@@ -51,5 +60,16 @@ package DAP.Module is
    procedure For_Each_Debugger
      (Callback : access procedure (Debugger : DAP.Clients.DAP_Client_Access));
    --  Calls Callback for each debugger
+
+   procedure Start_Program
+     (Kernel : Kernel_Handle;
+      Client : DAP.Clients.DAP_Client_Access);
+
+   function Get_Started_Per_Session_Debuggers return Integer;
+   --  Returns count of debuggers that have been started in parallel
+   --  in current session.
+
+   function Get_Breakpoints_View return Generic_Views.Abstract_View_Access;
+   procedure Set_Breakpoints_View (View : Generic_Views.Abstract_View_Access);
 
 end DAP.Module;

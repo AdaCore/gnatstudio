@@ -1143,10 +1143,11 @@ package body GVD.Process is
          case Prefered_Kind is
             when GVD.Types.Gdb =>
                return GVD.Types.Gdb;
-            when GVD.Types.Gdb_MI | GVD.Types.DAP =>
-               --  DAP should not be here, added just for transition period
-               --  until we remove GVD after migration to DAP
 
+            when GVD.Types.DAP =>
+               return GVD.Types.DAP;
+
+            when GVD.Types.Gdb_MI =>
                if Is_MI_Protocol_Allowed (CL) then
                   return GVD.Types.Gdb_MI;
                else

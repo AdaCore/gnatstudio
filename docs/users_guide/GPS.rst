@@ -575,6 +575,8 @@ Classes
 
    .. automethod:: GPS.Debugger.spawn
 
+   .. automethod:: GPS.Debugger.start
+
    .. automethod:: GPS.Debugger.unbreak_at_location
 
    .. automethod:: GPS.Debugger.value_of

@@ -2516,6 +2516,14 @@ class Debugger(object):
         .. seealso:: :func:`GPS.Debugger.unbreak_at_location`
         """
 
+
+    def start(self):
+        """
+        Start the execution of the executable and stop at the first user line.
+        """
+        pass  # implemented in Ada
+
+
     def value_of(self, expression):
         """
         Compute the value of expression in the current context.

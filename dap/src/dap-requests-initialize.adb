@@ -19,6 +19,7 @@ with GNATCOLL.Traces;       use GNATCOLL.Traces;
 
 with VSS.Strings.Conversions;
 
+with DAP.Clients;
 with DAP.Tools.Inputs;
 with DAP.Tools.Outputs;
 with DAP.Requests.Launch;
@@ -109,6 +110,7 @@ package body DAP.Requests.Initialize is
       Launch : constant DAP.Requests.Launch.Launch_DAP_Request_Access :=
         new DAP.Requests.Launch.Launch_DAP_Request (Self.Kernel);
    begin
+      Self.Client.Set_Capabilities (Result.a_body);
       Launch.Initialize (Self.Project, Self.File, Self.Args);
       New_Request := DAP_Request_Access (Launch);
    end On_Result_Message;

@@ -26,7 +26,10 @@ package DAP.Persistent_Breakpoints is
    procedure Register_Module
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class);
 
-   function Get_Persistent_Breakpoints return All_Breakpoints;
+   function Get_Persistent_Breakpoints return Breakpoint_Vectors.Vector;
+
+   function Get_Persistent_For_Executable
+     (Executable : Virtual_File) return Breakpoint_Vectors.Vector;
 
    procedure Show_Breakpoint
      (Kernel  : not null access Kernel_Handle_Record'Class;
@@ -55,10 +58,14 @@ package DAP.Persistent_Breakpoints is
       List   : Breakpoint_Identifier_Lists.List;
       State  : Boolean);
 
-   procedure Debugger_Initialization;
+   procedure On_Debugging_Terminated
+     (Kernel : not null access Kernel_Handle_Record'Class);
+   --  Called when the last debugger is finished
 
-   procedure Synchronize
-     (Kernel : not null access Kernel_Handle_Record'Class;
-      Actual : All_Breakpoints);
+   function Get_Next_Id return Breakpoint_Identifier;
+
+   procedure Store
+     (Executable : Virtual_File;
+      List       : Breakpoint_Vectors.Vector);
 
 end DAP.Persistent_Breakpoints;

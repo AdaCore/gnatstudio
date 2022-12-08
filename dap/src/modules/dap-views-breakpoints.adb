@@ -75,13 +75,14 @@ package body DAP.Views.Breakpoints is
    Col_Subprogs    : constant Gint := 7;
    Col_Address     : constant Gint := 8;
    Col_Activatable : constant Gint := 9;
+   Col_Executable  : constant Gint := 10;
 
-   Column_Types : constant Glib.GType_Array (0 .. 9) :=
+   Column_Types : constant Glib.GType_Array (0 .. 10) :=
      (Guint (Col_Enb)         => GType_Boolean,
       Guint (Col_Activatable) => GType_Boolean,
       others                  => GType_String);
 
-   Column_Names : constant GNAT.Strings.String_List (1 .. 10) :=
+   Column_Names : constant GNAT.Strings.String_List (1 .. 11) :=
      (new String'("Num"),
       new String'("Enb"),
       new String'("Type"),
@@ -91,7 +92,8 @@ package body DAP.Views.Breakpoints is
       new String'("Exception"),
       new String'("Subprograms"),
       new String'("Address"),
-      new String'("Activatable"));
+      new String'("Activatable"),
+      new String'("Executable"));
 
    type Breakpoint_View_Record is new View_Record with
       record
@@ -266,7 +268,7 @@ package body DAP.Views.Breakpoints is
      (Client : not null access DAP.Clients.DAP_Client'Class)
       return access Breakpoint_View_Record'Class is
    begin
-      return Breakpoint_View (Client.Get_Breakpoints_View);
+      return Breakpoint_View (DAP.Module.Get_Breakpoints_View);
    end Get_View;
 
    ----------------
@@ -358,7 +360,8 @@ package body DAP.Views.Breakpoints is
    overriding procedure On_Location_Changed
      (Self : not null access Breakpoint_View_Record)
    is
-      Client : DAP.Clients.DAP_Client_Access := Get_Client (Self);
+      Client : DAP.Clients.DAP_Client_Access :=
+        DAP.Module.Get_Current_Debugger;
       Model  : Gtk_Tree_Store;
       Iter   : Gtk_Tree_Iter;
       Id     : Breakpoint_Identifier := 0;
@@ -371,12 +374,11 @@ package body DAP.Views.Breakpoints is
       end if;
 
       if Client /= null then
-         for Vector of Client.Get_Breakpoints.Sources loop
-            for Data of Vector loop
-               if Data.Location /= No_Marker
-                 and then Get_File (Data.Location) = Client.Current_File
+         for Data of Client.Get_Breakpoints loop
+            for L of Data.Locations loop
+               if Get_File (L.Location) = Client.Current_File
                  and then Natural
-                   (Get_Line (Data.Location)) = Client.Current_Line
+                   (Get_Line (L.Location)) = Client.Current_Line
                then
                   Id := Data.Num;
                   exit;
@@ -467,11 +469,13 @@ package body DAP.Views.Breakpoints is
    is
       use type Generic_Views.Abstract_View_Access;
    begin
-      if Client.Get_Breakpoints_View /= null then
-         Breakpoint_View (Client.Get_Breakpoints_View).On_Process_Terminated;
+      if DAP.Module.Get_Breakpoints_View /= null then
+         Breakpoint_View
+           (DAP.Module.Get_Breakpoints_View).On_Process_Terminated;
       end if;
 
-      Client.Set_Breakpoints_View (Generic_Views.Abstract_View_Access (View));
+      DAP.Module.Set_Breakpoints_View
+        (Generic_Views.Abstract_View_Access (View));
    end Set_View;
 
    ------------
@@ -480,10 +484,11 @@ package body DAP.Views.Breakpoints is
 
    overriding procedure Update (View : not null access Breakpoint_View_Record)
    is
-      Client  : DAP.Clients.DAP_Client_Access := Get_Client (View);
+      Client  : DAP.Clients.DAP_Client_Access :=
+        DAP.Module.Get_Current_Debugger;
       Model   : constant Gtk_Tree_Store := -Get_Model (View.List);
       Iter    : Gtk_Tree_Iter;
-      Values  : Glib.Values.GValue_Array (1 .. 10);
+      Values  : Glib.Values.GValue_Array (1 .. 11);
       Columns : Columns_Array (Values'Range);
       Last    : Gint;
 
@@ -529,7 +534,7 @@ package body DAP.Views.Breakpoints is
          --       (Values (Last), To_String (Br.Expression));
          --  end if;
 
-         if Data.Location /= No_Marker then
+         if not Data.Locations.Is_Empty then
             if Last < 6 then
                Last := Last + 1;
                Columns (Last) := Col_File;
@@ -538,12 +543,12 @@ package body DAP.Views.Breakpoints is
             end if;
             Glib.Values.Set_String
               (Values (Last), Escape_Text
-               (+Base_Name (Get_File (Data.Location))));
+               (+Base_Name (Get_File (Get_Location (Data)))));
 
             Last := Last + 1;
             Columns (Last) := Col_Line;
             Glib.Values.Init_Set_String
-              (Values (Last), Get_Line (Data.Location)'Img);
+              (Values (Last), Get_Line (Get_Location (Data))'Img);
          end if;
 
          --  if Br.Except /= "" then
@@ -560,11 +565,20 @@ package body DAP.Views.Breakpoints is
               (Values (Last), Escape_Text (To_String (Data.Subprogram)));
          end if;
 
-         if Data.Address /= Invalid_Address then
+         if Get_Address (Data) /= Invalid_Address then
             Last := Last + 1;
             Columns (Last) := Col_Address;
             Glib.Values.Init_Set_String
-          (Values (Last), Escape_Text (Address_To_String (Data.Address)));
+              (Values (Last),
+               Escape_Text (Address_To_String (Get_Address (Data))));
+         end if;
+
+         if Data.Executable /= Null_Unbounded_String then
+            Last := Last + 1;
+            Columns (Last) := Col_Executable;
+            Glib.Values.Init_Set_String
+              (Values (Last),
+               Escape_Text (To_String (Data.Executable)));
          end if;
 
          Set_And_Clear (Model, Iter, Columns (1 .. Last), Values (1 .. Last));
@@ -572,38 +586,17 @@ package body DAP.Views.Breakpoints is
 
    begin
       Trace (Me, "Update" & DAP.Persistent_Breakpoints.
-           Get_Persistent_Breakpoints.Sources.Length'Img);
-      --  If the view is being detached (but the process has not been reset
-      --  yet), we load the list of persistent breakpoints
-      if Client /= null and then Get_View (Client) = null then
-         Client := null;
-      end if;
+           Get_Persistent_Breakpoints.Length'Img);
 
       Clear (Model);
 
       if Client = null then
-         for Vector of DAP.Persistent_Breakpoints.
-           Get_Persistent_Breakpoints.Sources
-         loop
-            for Data of Vector loop
-               Fill (Data);
-            end loop;
-         end loop;
-
-         for Data of DAP.Persistent_Breakpoints.Get_Persistent_Breakpoints.
-           Subprograms
-         loop
+         for Data of DAP.Persistent_Breakpoints.Get_Persistent_Breakpoints loop
             Fill (Data);
          end loop;
 
       else
-         for Vector of Client.Get_Breakpoints.Sources loop
-            for Data of Vector loop
-               Fill (Data);
-            end loop;
-         end loop;
-
-         for Data of Client.Get_Breakpoints.Subprograms loop
+         for Data of Client.Get_Breakpoints loop
             Fill (Data);
          end loop;
 
@@ -620,14 +613,20 @@ package body DAP.Views.Breakpoints is
        Kernel   : not null access GPS.Kernel.Kernel_Handle_Record'Class;
        Debugger : access Base_Visual_Debugger'Class)
    is
-      pragma Unreferenced (Self, Kernel);
+      pragma Unreferenced (Self);
       View : Breakpoint_View;
 
    begin
-      if Debugger /= null then
-         View := Get_View
-           (DAP.Clients.Visual_Debugger_Access (Debugger).Client);
+      if Debugger /= null
+        and then Positive (Debugger.Get_Num) /=
+        DAP.Module.Get_Current_Debugger.Id
+      then
+         return;
       end if;
+
+      View := Breakpoint_View
+        (Breakpoints_MDI_Views.Retrieve_View
+           (Kernel, Visible_Only => True));
 
       if View /= null then
          Update (View);
@@ -760,9 +759,9 @@ package body DAP.Views.Breakpoints is
    procedure Register_Module
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
    is
-      No_View              : Action_Filter := new No_View_Filter;
-      No_Or_Stopped_Filter : Action_Filter;
-      Dummy                : Action_Filter;
+      No_View            : Action_Filter := new No_View_Filter;
+      No_Or_Ready_Filter : Action_Filter;
+      Dummy              : Action_Filter;
    begin
       Simple_Views.Register_Module (Kernel);
       Simple_Views.Register_Open_View_Action
@@ -771,7 +770,7 @@ package body DAP.Views.Breakpoints is
          Description => "Open the Breakpoints Editor for the debugger",
          Filter      => No_View);
 
-      No_Or_Stopped_Filter := Kernel.Lookup_Filter ("No debugger or stopped");
+      No_Or_Ready_Filter := Kernel.Lookup_Filter ("No debugger or ready");
 
       GPS.Kernel.Actions.Register_Action
         (Kernel,
@@ -780,7 +779,7 @@ package body DAP.Views.Breakpoints is
            & " (from the Breakpoints view)",
          Icon_Name => "gps-remove-symbolic",
          Category  => "Debug",
-         Filter    => No_Or_Stopped_Filter);
+         Filter    => No_Or_Ready_Filter);
 
       GPS.Kernel.Actions.Register_Action
         (Kernel,
@@ -788,7 +787,7 @@ package body DAP.Views.Breakpoints is
          "Delete all existing breakpoints",
          Icon_Name => "gps-clear-symbolic",
          Category  => "Debug",
-         Filter    => No_Or_Stopped_Filter);
+         Filter    => No_Or_Ready_Filter);
 
       GPS.Kernel.Actions.Register_Action
         (Kernel,
@@ -797,7 +796,7 @@ package body DAP.Views.Breakpoints is
          "Enable the selected breakpoints",
          Icon_Name => "gps-syntax-check-symbolic",
          Category  => "Debug",
-         Filter    => No_Or_Stopped_Filter);
+         Filter    => No_Or_Ready_Filter);
 
       GPS.Kernel.Actions.Register_Action
         (Kernel,
@@ -806,7 +805,7 @@ package body DAP.Views.Breakpoints is
          "Disable the selected breakpoints",
          Icon_Name => "gps-stop-symbolic",
          Category  => "Debug",
-         Filter    => No_Or_Stopped_Filter);
+         Filter    => No_Or_Ready_Filter);
 
       --  Not implemented yet
       Dummy := new Dummy_Filter;

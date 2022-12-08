@@ -34,6 +34,10 @@ package DAP.Preferences is
    -- Source Window --
    Continue_To_Line_Buttons      : Boolean_Preference;
 
+   -- Breakpoints --
+   Breakpoints_For_All_Debuggers : Boolean_Preference;
+   Pending_Breakpoints           : Boolean_Preference;
+
    -- Console --
    Debugger_Console_Console : Boolean_Preference;
    Debugger_Console_Stdout  : Boolean_Preference;
