@@ -49,14 +49,14 @@ package DAP.Requests is
    --  Called when a "result" response is received from the server.
    --  Fill New_Request is new request should be sent after this one.
 
-   procedure On_Rejected (Self : in out DAP_Request) is null;
+   procedure On_Rejected (Self : in out DAP_Request);
    --  Called when the processing of the request rejected by any reason, for
    --  example server is not ready, or dies before request is sent, it dies
    --  after request was send but before response or error is received.
 
    procedure On_Error_Message
      (Self    : in out DAP_Request;
-      Message : VSS.Strings.Virtual_String) is null;
+      Message : VSS.Strings.Virtual_String);
 
    procedure Destroy (Item : in out DAP_Request_Access);
    --  Call Finalize and deallocate memory. All references are reset to null.

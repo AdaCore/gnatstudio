@@ -327,6 +327,11 @@ package body GVD.Scripts is
             For_Each_Debugger (Kernel, Callback'Access);
          end;
 
+      elsif Command = "start" then
+         Inst := Nth_Arg (Data, 1, New_Class (Kernel, "Debugger"));
+         Process := Visual_Debugger (GObject'(Get_Data (Inst)));
+         Process.Debugger.Start;
+
       elsif Command = "send" then
          Inst := Nth_Arg (Data, 1, New_Class (Kernel, "Debugger"));
          Process := Visual_Debugger (GObject'(Get_Data (Inst)));
@@ -738,6 +743,10 @@ package body GVD.Scripts is
          Handler       => Shell_Handler'Access,
          Class         => Class,
          Static_Method => True);
+      Kernel.Scripts.Register_Command
+        ("start",
+         Handler      => Shell_Handler'Access,
+         Class        => Class);
       Kernel.Scripts.Register_Command
         ("command",
          Handler      => Shell_Handler'Access,

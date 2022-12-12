@@ -36,14 +36,15 @@ package DAP.Modules.Breakpoint_Managers is
 
    type DAP_Client_Breakpoint_Manager
      (Kernel : GPS.Kernel.Kernel_Handle;
-      Client : not null access DAP.Clients.DAP_Client'Class) is tagged private;
+      Client : not null access DAP.Clients.DAP_Client'Class) is
+     tagged limited private;
    --  Breakpoints manager when debugging is in progress
 
    type DAP_Client_Breakpoint_Manager_Access is access
      all DAP_Client_Breakpoint_Manager'Class;
 
    procedure Initialize (Self : DAP_Client_Breakpoint_Manager_Access);
-   procedure On_Finished (Self : DAP_Client_Breakpoint_Manager_Access);
+   procedure Finalize (Self : DAP_Client_Breakpoint_Manager_Access);
 
    procedure Stopped
      (Self         : DAP_Client_Breakpoint_Manager;
@@ -82,55 +83,79 @@ package DAP.Modules.Breakpoint_Managers is
 
    procedure Set_Breakpoints_State
      (Self  : DAP_Client_Breakpoint_Manager_Access;
-      List  : Breakpoint_Identifier_Lists.List;
+      Nums  : Breakpoint_Identifier_Lists.List;
       State : Boolean);
    --  Enable/disable breakpoints
 
    function Get_Breakpoints
      (Self : DAP_Client_Breakpoint_Manager_Access)
-      return All_Breakpoints;
+      return DAP.Breakpoint_Maps.Breakpoint_Vectors.Vector;
    --  Returns the list of the breakpoints
+
+   procedure Show_Breakpoints (Self : in out DAP_Client_Breakpoint_Manager);
+   --  Show breakpoints on the side column of the editors
 
 private
 
    type DAP_Client_Breakpoint_Manager
      (Kernel : GPS.Kernel.Kernel_Handle;
       Client : not null access DAP.Clients.DAP_Client'Class) is
-     tagged record
+     tagged limited record
       Requests_Count : Integer := 0;
-
-      Actual         : All_Breakpoints;
+      Holder         : Breakpoint_Holder;
       --  actual breakpoints
    end record;
 
-   procedure Dec_Response (Self : in out DAP_Client_Breakpoint_Manager);
-   --  To calculate responses and make actions when all of them are processed
+   type Action_Kind is (Init, Add, Edit, Delete, Change_Status, Feedback);
+   --  Type of a request to DAP adapter:
+   --   Init: set breakpoints initially
+   --   Add: add one new breakpoint
+   --   Edit:
+   --   Delete: delete one or multiple breakpoints
+   --   Change_Status: Enable/disable one or more breakpoints
+   --   Feedback: set actual breakpoints after delete duplicates for example
 
-   procedure Show_Breakpoints (Self : in out DAP_Client_Breakpoint_Manager);
-   --  Show breakpoints on the side column of the editors
+   function Send_Line
+     (Self   : not null access DAP_Client_Breakpoint_Manager;
+      File   : GNATCOLL.VFS.Virtual_File;
+      Actual : Breakpoint_Vectors.Vector;
+      Action : Action_Kind) return DAP_Request_Access;
 
    procedure Send_Line
      (Self   : not null access DAP_Client_Breakpoint_Manager;
       File   : GNATCOLL.VFS.Virtual_File;
-      Actual : Breakpoint_Vectors.Vector);
+      Actual : Breakpoint_Vectors.Vector;
+      Action : Action_Kind);
    --  Send a request for line breakpoints
+
+   function Send_Subprogram
+     (Self   : not null access DAP_Client_Breakpoint_Manager;
+      Data   : Breakpoint_Data;
+      Actual : Breakpoint_Vectors.Vector;
+      Action : Action_Kind)
+      return DAP_Request_Access;
 
    procedure Send_Subprogram
      (Self   : not null access DAP_Client_Breakpoint_Manager;
-      Actual : Breakpoint_Vectors.Vector);
+      Data   : Breakpoint_Data;
+      Actual : Breakpoint_Vectors.Vector;
+      Action : Action_Kind);
    --  Send a request for subprogram breakpoints
 
-   -- Source_Line_Request --
+   procedure Dec_Response
+     (Self   : in out DAP_Client_Breakpoint_Manager;
+      Action : Action_Kind);
+   --  To calculate responses and make actions when all of them are processed
 
-   type Request_Kind is (Init, Add, Edit, Remove);
-   --  Type of a request to DAP adapter
+   -- Source_Line_Request --
 
    type Source_Line_Request is
      new DAP.Requests.Breakpoints.Breakpoint_DAP_Request
    with record
-      List   : DAP_Client_Breakpoint_Manager_Access;
-      File   : GNATCOLL.VFS.Virtual_File;
-      Actual : Breakpoint_Vectors.Vector;
+      Manager : DAP_Client_Breakpoint_Manager_Access;
+      File    : GNATCOLL.VFS.Virtual_File;
+      Action  : Action_Kind;
+      Sent    : Breakpoint_Vectors.Vector;
    end record;
 
    type Source_Line_Request_Access is access all Source_Line_Request;
@@ -151,8 +176,10 @@ private
    type Function_Breakpoint_Request is
      new DAP.Requests.Function_Breakpoints.Function_Breakpoint_DAP_Request
    with record
-      List   : DAP_Client_Breakpoint_Manager_Access;
-      Actual : Breakpoint_Vectors.Vector;
+      Manager : DAP_Client_Breakpoint_Manager_Access;
+      Action  : Action_Kind;
+      Data    : Breakpoint_Data;
+      Sent    : Breakpoint_Vectors.Vector;
    end record;
 
    type Function_Breakpoint_Request_Access is

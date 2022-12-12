@@ -16,8 +16,12 @@
 ------------------------------------------------------------------------------
 
 with Ada.Unchecked_Deallocation;
+with GNATCOLL.Traces;              use GNATCOLL.Traces;
+with VSS.Strings.Conversions;
 
 package body DAP.Requests is
+
+   Me : constant Trace_Handle := Create ("GPS.DEBUGGING.DAP_REQUESTS", Off);
 
    -------------
    -- Destroy --
@@ -45,5 +49,26 @@ package body DAP.Requests is
    begin
       Self.Client := Client;
    end Set_Client;
+
+   -----------------
+   -- On_Rejected --
+   -----------------
+
+   procedure On_Rejected (Self : in out DAP_Request) is
+   begin
+      Trace (Me, "Rejected:" & DAP_Request'Class (Self).Method);
+   end On_Rejected;
+
+   ----------------------
+   -- On_Error_Message --
+   ----------------------
+
+   procedure On_Error_Message
+     (Self    : in out DAP_Request;
+      Message : VSS.Strings.Virtual_String) is
+   begin
+      Trace (Me, "Error:" & DAP_Request'Class (Self).Method & ". "
+             & VSS.Strings.Conversions.To_UTF_8_String (Message));
+   end On_Error_Message;
 
 end DAP.Requests;

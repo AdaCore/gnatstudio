@@ -90,4 +90,27 @@ package body DAP.Requests.Loaded_Sources is
       Self.Client.On_Launched;
    end On_Result_Message;
 
+   -----------------
+   -- On_Rejected --
+   -----------------
+
+   overriding procedure On_Rejected
+     (Self : in out Loaded_Sources_DAP_Request) is
+   begin
+      DAP_Request (Self).On_Rejected;
+      Self.Client.On_Launched;
+   end On_Rejected;
+
+   ----------------------
+   -- On_Error_Message --
+   ----------------------
+
+   overriding procedure On_Error_Message
+     (Self    : in out Loaded_Sources_DAP_Request;
+      Message : VSS.Strings.Virtual_String) is
+   begin
+      DAP_Request (Self).On_Error_Message (Message);
+      Self.Client.On_Launched;
+   end On_Error_Message;
+
 end DAP.Requests.Loaded_Sources;

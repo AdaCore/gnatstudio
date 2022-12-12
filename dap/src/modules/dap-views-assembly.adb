@@ -61,6 +61,7 @@ with Commands.Interactive;       use Commands.Interactive;
 
 with Debugger_Pixmaps;
 
+with DAP.Breakpoint_Maps;
 with DAP.Clients;                use DAP.Clients;
 with DAP.Tools;                  use DAP.Tools;
 with DAP.Types;                  use DAP.Types;
@@ -839,35 +840,33 @@ package body DAP.Views.Assembly is
          --  Highlight breakpoint lines
 
       Columns (1) := BG_Color_Column;
-      for V of Client.Get_Breakpoints.Sources loop
-         for B of V loop
-            Iter_From_Address
-              (View    => View,
-               Address => B.Address,
-               Iter    => Iter,
-               Found   => Found);
+      for Data of Client.Get_Breakpoints loop
+         Iter_From_Address
+           (View    => View,
+            Address => DAP.Breakpoint_Maps.Get_Address (Data),
+            Iter    => Iter,
+            Found   => Found);
 
-            if Found then
-               Glib.Values.Init (Values (1), Gdk.RGBA.Get_Type);
-               Gdk.RGBA.Set_Value
-                 (Values (1),
-                  (if not B.Enabled then
-                        GPS.Kernel.Style_Manager.Background
-                     (GPS.Default_Styles.Debugger_Disabled_Breakpoint_Style)
-                   elsif B.Condition /= "" then
-                      GPS.Kernel.Style_Manager.Background
-                     (GPS.Default_Styles.Debugger_Conditional_Breakpoint_Style)
-                   else
-                      GPS.Kernel.Style_Manager.Background
-                     (GPS.Default_Styles.Debugger_Breakpoint_Style)));
+         if Found then
+            Glib.Values.Init (Values (1), Gdk.RGBA.Get_Type);
+            Gdk.RGBA.Set_Value
+              (Values (1),
+               (if not Data.Enabled then
+                     GPS.Kernel.Style_Manager.Background
+                  (GPS.Default_Styles.Debugger_Disabled_Breakpoint_Style)
+                elsif Data.Condition /= "" then
+                   GPS.Kernel.Style_Manager.Background
+                  (GPS.Default_Styles.Debugger_Conditional_Breakpoint_Style)
+                else
+                   GPS.Kernel.Style_Manager.Background
+                  (GPS.Default_Styles.Debugger_Breakpoint_Style)));
 
-               Set_And_Clear
-                 (Model,
-                  Iter,
-                  Columns (1 .. 1),
-                  Values (1 .. 1));
-            end if;
-         end loop;
+            Set_And_Clear
+              (Model,
+               Iter,
+               Columns (1 .. 1),
+               Values (1 .. 1));
+         end if;
       end loop;
 
       --  Highlight PC line
@@ -1349,7 +1348,7 @@ package body DAP.Views.Assembly is
    begin
       if Debugger /= null then
          View := Get_View
-           (DAP.Clients.Visual_Debugger_Access (Debugger).Client);
+           (DAP.Clients.DAP_Visual_Debugger_Access (Debugger).Client);
       end if;
 
       if View /= null then

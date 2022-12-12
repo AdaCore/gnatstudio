@@ -107,6 +107,26 @@ package body DAP.Preferences is
          Default  =>  False,
          Label    => "Display stdout layer",
          Doc      => "Display stdout layer in the console.");
+
+      Pending_Breakpoints := Create
+        (Manager   => Prefs,
+         Name      => "Debugger-Pending-Breakpoints",
+         Path      => "Debugger:General",
+         Label     => "Pending breakpoints",
+         Doc       =>
+           "Enable pending breakpoints. A pending breakpoint will not be "
+           & "removed when debugger can't set it.",
+         Default   => True);
+
+      Breakpoints_For_All_Debuggers  := Create
+        (Manager   => Prefs,
+         Name      => "Debugger-For_All-Breakpoints",
+         Path      => "Debugger:General",
+         Label     => "Breakpoints for all debuggers",
+         Doc       =>
+           "Add/Edit/Delete breakpoints for all debuggers. "
+           & "Use only current debugger if not.",
+         Default   => False);
    end Register_Default_Preferences;
 
 end DAP.Preferences;

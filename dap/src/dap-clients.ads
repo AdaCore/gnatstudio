@@ -23,18 +23,18 @@ with GNATCOLL.VFS;
 with VSS.Strings;
 with VSS.String_Vectors;
 
-with Glib.Object;
-
+with Glib;
 with Gtk.Label;
 
-with GPS.Debuggers;
 with GPS.Kernel;
+with GPS.Debuggers;
 
 with LSP.Raw_Clients;
 
 with DAP.Histories;
 with DAP.Requests;
 with DAP.Types;                  use DAP.Types;
+with DAP.Tools;
 with DAP.Breakpoint_Maps;
 
 with Basic_Types;                use Basic_Types;
@@ -68,6 +68,18 @@ package DAP.Clients is
 
    type DAP_Client_Access is access all DAP_Client'Class;
 
+   -- DAP_Visual_Debugger --
+
+   type DAP_Visual_Debugger is
+     new GPS.Debuggers.Base_Visual_Debugger with record
+      Client : DAP_Client_Access;
+   end record;
+   type DAP_Visual_Debugger_Access is access all DAP_Visual_Debugger'Class;
+
+   --  DAP_Client --
+
+   procedure Initialize (Self : not null access DAP_Client);
+
    procedure Start
      (Self    : in out DAP_Client;
       Project : GNATCOLL.Projects.Project_Type;
@@ -77,6 +89,8 @@ package DAP.Clients is
 
    function Is_Stopped (Self : DAP_Client) return Boolean;
    --  Debugging program is stopped and new command can be accepted
+   function Is_Ready_For_Command (Self : DAP_Client) return Boolean;
+   --  Debugger can accept new command. Debugging can be not started yet.
 
    procedure Enqueue
      (Self    : in out DAP_Client;
@@ -149,18 +163,8 @@ package DAP.Clients is
 
    function Get_Breakpoints
      (Self : DAP_Client)
-      return DAP.Breakpoint_Maps.All_Breakpoints;
+      return DAP.Breakpoint_Maps.Breakpoint_Vectors.Vector;
    --  Returns the list of breakpoints
-
-   function Get_Breakpoints_View
-     (Self : DAP_Client)
-      return Generic_Views.Abstract_View_Access;
-   --  Returns the breakpoints view, if any.
-
-   procedure Set_Breakpoints_View
-     (Self : in out DAP_Client;
-      View : Generic_Views.Abstract_View_Access);
-   --  Attach the breakpoints view to the client
 
    function Get_Call_Stack_View
      (Self : DAP_Client)
@@ -234,29 +238,37 @@ package DAP.Clients is
       return History_List_Access;
    --  Returns debugging console commands history
 
-   -- Visual_Debugger --
-
-   type Visual_Debugger is new GPS.Debuggers.Base_Visual_Debugger with record
-      Client : DAP_Client_Access;
-   end record;
-
-   type Visual_Debugger_Access is access all Visual_Debugger;
-
-   overriding function Get_Num
-     (Self : not null access Visual_Debugger) return Glib.Gint is
-     (Glib.Gint (Self.Client.Id));
-
-   overriding function Command_In_Process
-     (Self : not null access Visual_Debugger) return Boolean is
-      (Self.Client.Get_Status /= Stopped);
-
    function Get_Visual
-     (Self : in out DAP_Client) return Visual_Debugger_Access;
+     (Self : in out DAP_Client)
+      return DAP_Visual_Debugger_Access;
 
    procedure Value_Of
      (Self   : in out DAP_Client;
       Entity : String;
       Label  : Gtk.Label.Gtk_Label);
+
+   procedure Set_Capabilities
+     (Self         : in out DAP_Client;
+      Capabilities : DAP.Tools.Optional_Capabilities);
+
+   function Get_Capabilities
+     (Self : in out DAP_Client)
+      return DAP.Tools.Optional_Capabilities;
+
+   procedure Display_In_Debugger_Console
+     (Self : in out DAP_Client;
+      Msg  : String);
+
+   procedure Show_Breakpoints (Self : DAP_Client);
+
+   -- DAP_Visual_Debugger --
+
+   overriding function Get_Num
+     (Self : not null access DAP_Visual_Debugger) return Glib.Gint
+      is (Glib.Gint (Self.Client.Id));
+
+   overriding function Command_In_Process
+     (Visual : not null access DAP_Visual_Debugger) return Boolean;
 
 private
 
@@ -281,16 +293,15 @@ private
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
       Id     : Positive) is new LSP.Raw_Clients.Raw_Client
    with record
-      This         : DAP_Client_Access := DAP_Client'Unchecked_Access;
-      Visual       : aliased Visual_Debugger := Visual_Debugger'
-        (Glib.Object.GObject_Record with
-           Client => DAP_Client'Unchecked_Access);
+      This           : DAP_Client_Access := DAP_Client'Unchecked_Access;
+      Visual         : DAP_Visual_Debugger_Access;
       Project        : GNATCOLL.Projects.Project_Type;
       File           : GNATCOLL.VFS.Virtual_File;
       Args           : Ada.Strings.Unbounded.Unbounded_String;
       Source_Files   : VSS.String_Vectors.Virtual_String_Vector;
 
       Is_Attached    : Boolean := False;
+      Capabilities   : DAP.Tools.Optional_Capabilities;
       Status         : Debugger_Status_Kind := Initialization;
 
       Sent           : Requests_Maps.Map;
@@ -315,7 +326,6 @@ private
       Command_History  : aliased String_History.History_List;
 
       --  Views --
-      Breakpoints_View : Generic_Views.Abstract_View_Access := null;
       Call_Stack_View  : Generic_Views.Abstract_View_Access := null;
       Thread_View      : Generic_Views.Abstract_View_Access := null;
       Assembly_View    : Generic_Views.Abstract_View_Access := null;

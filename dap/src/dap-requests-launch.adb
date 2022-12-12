@@ -192,8 +192,14 @@ package body DAP.Requests.Launch is
    is
       use GNATCOLL.Projects;
    begin
+      New_Request := null;
+
       if GPS.Kernel.Project.Get_Registry
         (Self.Kernel).Tree.Status = From_Executable
+        and then
+          (not Self.Client.Get_Capabilities.Is_Set
+           or else Self.Client.Get_Capabilities.
+             Value.supportsLoadedSourcesRequest)
       then
          --  Debugging is started for executable, so prepare the
          --  source files list to prepare a project file for such debugging
@@ -207,7 +213,6 @@ package body DAP.Requests.Launch is
          end;
 
       else
-         New_Request := null;
          Self.Client.On_Launched;
       end if;
    end On_Result_Message;

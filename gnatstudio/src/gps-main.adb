@@ -42,7 +42,7 @@ with GNATCOLL.VFS.VSS_Utils;           use GNATCOLL.VFS.VSS_Utils;
 with GNATCOLL.VFS_Utils;               use GNATCOLL.VFS_Utils;
 
 with VSS.Standard_Paths;
-with VSS.Strings;
+with VSS.Strings.Conversions;
 
 with Glib;
 with Glib.Application;                 use Glib.Application;
@@ -379,6 +379,7 @@ procedure GPS.Main is
    Target                     : String_Access;
    Protocol                   : String_Access;
    Debugger_Name              : String_Access;
+   DAP_GDB_Adapter            : VSS.Strings.Virtual_String;
    Startup_Dir                : String_Access;
    Passed_Project_Name        : String_Access;
    Program_Args               : String_Access;
@@ -805,8 +806,8 @@ procedure GPS.Main is
          DAP_GDB_Path : constant String := Env.Value ("DAP_GDB", "");
       begin
          if DAP_GDB_Path /= "" then
-            DAP.Preferences.DAP_Adapter.Set_Pref
-              (GPS_Main.Kernel.Get_Preferences, DAP_GDB_Path & " -i=dap");
+            DAP_GDB_Adapter := VSS.Strings.Conversions.To_Virtual_String
+              (DAP_GDB_Path);
          end if;
       end;
 
@@ -2522,6 +2523,17 @@ procedure GPS.Main is
 
          if GVD.Preferences.Debugger_Kind.Get_Pref = GVD.Types.DAP then
             DAP.Module.Register_Module (GPS_Main.Kernel, Prefix_Dir);
+
+            declare
+               use VSS.Strings;
+            begin
+               if DAP_GDB_Adapter /= Empty_Virtual_String then
+                  DAP.Preferences.DAP_Adapter.Set_Pref
+                    (GPS_Main.Kernel.Get_Preferences,
+                     VSS.Strings.Conversions.To_UTF_8_String
+                       (DAP_GDB_Adapter));
+               end if;
+            end;
 
          else
             GVD_Module.Register_Module (GPS_Main.Kernel);
