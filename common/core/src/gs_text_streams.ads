@@ -14,11 +14,17 @@
 -- COPYING3.  If not, go to http://www.gnu.org/licenses for a complete copy --
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
---  Text stream to write otput text into the file using UTF-8 encoding.
+--  Text stream to write output text into the file using UTF-8 encoding.
+--
+--  Note, this stream build on top of GNATCOLL.VFS.Writable_File, thus
+--  it provides "atomic update" of the written file; which is important,
+--  for example, when updating of configuration files. Otherwise
+--  VSS.Text_Streams.File_Output is recommended for use.
 
 with GNATCOLL.VFS;
 
 private with VSS.Characters;
+private with VSS.Strings;
 with VSS.Text_Streams;
 
 package GS_Text_Streams is
@@ -47,5 +53,12 @@ private
      (Self    : in out File_UTF8_Output_Stream;
       Item    : VSS.Characters.Virtual_Character;
       Success : in out Boolean);
+
+   overriding function Has_Error
+     (Self : File_UTF8_Output_Stream) return Boolean is (False);
+
+   overriding function Error_Message
+     (Self : File_UTF8_Output_Stream) return VSS.Strings.Virtual_String
+   is (VSS.Strings.Empty_Virtual_String);
 
 end GS_Text_Streams;
