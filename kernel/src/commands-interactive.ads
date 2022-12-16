@@ -92,6 +92,10 @@ package Commands.Interactive is
       return Command_Return_Type;
    --  Execute the command non-interactively, with a Null_Context
 
+   function Is_Active_Command
+     (Command : access Interactive_Command) return Boolean is (True);
+   --  Whether the command is active or passive
+
    -------------------------------
    -- Interactive_Command_Proxy --
    -------------------------------

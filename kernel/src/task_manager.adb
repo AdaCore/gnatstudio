@@ -56,7 +56,8 @@ package body Task_Manager is
    function Execute_Incremental
      (Manager : Task_Manager_Access;
       Active  : Boolean) return Boolean;
-   --  Incremental function to execute the task manager
+   --  Incremental function to execute the task manager. Ruturn False when no
+   --  more tasks to execute.
 
    function Safe_Execute
      (Command : in out Scheduled_Command_Access) return Command_Return_Type;
@@ -203,16 +204,14 @@ package body Task_Manager is
    function Passive_Incremental
      (Manager : Task_Manager_Access) return Boolean
    is
-      Ignore      : Boolean;
-      pragma Unreferenced (Ignore);
+      Continue : Boolean;
    begin
-      Ignore := Execute_Incremental (Manager, False);
+      Continue := Execute_Incremental (Manager, False);
 
-      --  The passive loop ends when there are no more queues left
-
-      if Manager.Queues /= null then
+      if Continue then
          return True;
       else
+         --  The passive loop ends when there are no more queues left
          Manager.Passive_Handler_Id := No_Source_Id;
          return False;
       end if;
@@ -304,7 +303,6 @@ package body Task_Manager is
          end if;
 
          if First > Last then
-            --   ??? Should we disable the corresponding timeout or idle ?
             return False;
          end if;
 
@@ -331,7 +329,7 @@ package body Task_Manager is
          --   ??? Shouldn't we be looking for another unpaused queue with
          --  a lower priority ? Or ignore paused queues in the loop above
          if Queue.Status = Paused then
-            return False;
+            return True;
          end if;
 
          --  ??? Shouldn't we always start by cleaning up empty queues (the

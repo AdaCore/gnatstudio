@@ -142,6 +142,9 @@ package Commands.Custom is
    overriding procedure Interrupt (Command : in out Custom_Command);
    --  See doc from inherited subprograms
 
+   overriding function Is_Active_Command
+     (Command : access Custom_Command) return Boolean is (False);
+
 private
    type Boolean_Array is array (Natural range <>) of Boolean;
    type Boolean_Array_Access is access Boolean_Array;
