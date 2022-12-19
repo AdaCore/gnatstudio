@@ -127,6 +127,17 @@ project Shared is
             null;
       end case;
 
+      --  Temporary workaround to allow us to force PIE to be disabled
+      --  when linking. See V322-002 for more details.
+      Disable_PIE : Boolean_Type := external ("NO_PIE", "false");
+      case Disable_PIE is
+         when "true" =>
+            for Switches ("Ada") use Linker'Switches ("Ada")
+               & ("-v", "-no-pie");
+         when others =>
+            null;
+      end case;
+
    end Linker;
 
    package IDE is
