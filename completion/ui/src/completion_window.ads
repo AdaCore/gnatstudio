@@ -202,12 +202,12 @@ private
    --  Select the next item in the explorer
 
    type Information_Record is record
-      Markup   : String_Access;
-      Text     : String_Access;
-      Icon_Name : String_Access;
-      Offset   : Character_Offset_Type;
+      Markup     : String_Access;
+      Text       : String_Access;
+      Icon_Name  : String_Access;
+      Offset     : Character_Offset_Type;
       --  The offset at which to place the cursor after completion.
-      Proposals : Proposals_List.List;
+      Proposals  : Proposals_List.List;
       Accessible : Boolean;
    end record;
 

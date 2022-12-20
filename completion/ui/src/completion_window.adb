@@ -570,16 +570,34 @@ package body Completion_Window is
      (Explorer : Completion_Explorer_Access) return Boolean
    is
       use Proposals_List;
+      Copy_C : Proposals_List.Cursor := Explorer.Notes_Info.C;
    begin
+      --  Check if we have documentation to add
       if Explorer.Notes_Need_Completion
         and then Has_Element (Explorer.Notes_Info.C)
-        and then
-          not Element (Explorer.Notes_Info.C).On_Documentation_Query
       then
+         --  Iterate over all the proposals and query their documentation if
+         --  needed (i.e: when documentation is computed lazily).
+         while Has_Element (Copy_C) and then
+           Element (Copy_C).On_Documentation_Query
+         loop
+            Next (Copy_C);
+         end loop;
+
+         --  If documentation has been queried for all proposals, return
+         --  immediately: the documentation for these proposals will be
+         --  added once computed.
+         if not Has_Element (Copy_C) then
+            Explorer.Notes_Need_Completion := False;
+            return False;
+         end if;
+
+         --  Otherwise, just add documentation for the current proposal
          Add_Next_Item_Doc
-           (Explorer.Notes_Info,
-            Explorer.Kernel,
-            Explorer.Fixed_Width_Font);
+           (Notes_Info       => Explorer.Notes_Info,
+            Kernel           => Explorer.Kernel,
+            Fixed_Width_Font => Explorer.Fixed_Width_Font);
+
          return True;
       else
          Explorer.Notes_Need_Completion := False;
@@ -873,13 +891,13 @@ package body Completion_Window is
                   Score          => Score));
          begin
             --  Check whether the current iter contains the same completion
-            --  by comparing their markups (i.e: the labels displayed in the
-            --  completion window).
+            --  by comparing their completion text (i.e: the text that gets
+            --  inserted in the editor).
             if
               Explorer.Index = 1
-              or else Explorer.Info (Explorer.Index - 1).Markup = null
+              or else Explorer.Info (Explorer.Index - 1).Text = null
               or else
-                Explorer.Info (Explorer.Index - 1).Markup.all /= Markup.all
+                Explorer.Info (Explorer.Index - 1).Text.all /= Completion
               or else
                 Proposal.Get_Category /= Last_Comp_Cat
             then
