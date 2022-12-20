@@ -572,7 +572,7 @@ package body LAL.Highlighters is
             when Ada_Subunit =>
                Highlight_Name (Node.As_Subunit.F_Name, Block);
             when Ada_Accept_Stmt_Range =>
-               Highlight_Name (Node.As_Accept_Stmt.F_Name, Block);
+               Highlight_Name (Node.As_Accept_Stmt.F_Body_Decl.F_Name, Block);
             when Ada_Base_Type_Decl =>
                Highlight_Name (Node.As_Base_Type_Decl.F_Name, Block);
             when Ada_Single_Protected_Decl =>
