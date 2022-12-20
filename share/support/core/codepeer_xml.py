@@ -477,6 +477,8 @@ creating/updating the database" />
        <iconname>gps-build-all-symbolic</iconname>
        <command-line>
           <arg>cpm-gs-bridge</arg>
+          <arg>--log-to</arg>
+          <arg>%O</arg>
        </command-line>
     </target-model>
 
@@ -559,6 +561,8 @@ creating/updating the database" />
        <read-only>TRUE</read-only>
        <command-line>
           <arg>cpm-gs-bridge</arg>
+          <arg>--log-to</arg>
+          <arg>%O</arg>
        </command-line>
     </target>
 
