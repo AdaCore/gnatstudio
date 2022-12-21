@@ -165,6 +165,7 @@ package body Project_Templates.GPS is
 
       Install_Template
         (Templates     => Templates_Scripts,
+         Kernel        => Kernel_Handle (Kernel),
          Parent        => Parent,
          Chosen        => Chosen,
          Installed     => Installed,

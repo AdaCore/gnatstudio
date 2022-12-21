@@ -100,10 +100,13 @@ package body Project_Templates.GUI is
 
    procedure Gtk_New
      (Widget   : out Template_Page;
-      Template : Template_Script_Object);
+      Template : Template_Script_Object;
+      Kernel   : Kernel_Handle);
+
    procedure Initialize
      (Widget   : access Template_Page_Record'Class;
-      Template : Template_Script_Object);
+      Template : Template_Script_Object;
+      Kernel   : Kernel_Handle);
    --  Initialization functions
 
    function Is_Complete
@@ -125,10 +128,11 @@ package body Project_Templates.GUI is
 
    procedure Gtk_New
      (Widget   : out Template_Page;
-      Template : Template_Script_Object) is
+      Template : Template_Script_Object;
+      Kernel   : Kernel_Handle) is
    begin
       Widget := new Template_Page_Record;
-      Initialize (Widget, Template);
+      Initialize (Widget, Template, Kernel);
    end Gtk_New;
 
    ----------------
@@ -137,7 +141,8 @@ package body Project_Templates.GUI is
 
    procedure Initialize
      (Widget   : access Template_Page_Record'Class;
-      Template : Template_Script_Object)
+      Template : Template_Script_Object;
+      Kernel   : Kernel_Handle)
    is
       use Variables_List;
       C            : Cursor;
@@ -216,6 +221,23 @@ package body Project_Templates.GUI is
             Expand    => False);
       end Create_Var_Widget;
 
+      function Get_Current_Dir return String;
+      --  Get current directory or user home directory when the current one
+      --  points to the windows directory. This may happens when GNAT Studio
+      --  is started from the windows start menu.
+
+      function Get_Current_Dir return String is
+         Env_WINDIR  : constant Virtual_File := Create
+           (+Kernel.Get_Original_Environment.Value ("WINDIR", ""));
+         Current_Dir : constant Virtual_File := GNATCOLL.VFS.Get_Current_Dir;
+      begin
+         if Is_Parent (Env_WINDIR, Current_Dir) then
+            return Kernel.Get_Original_Environment.Value ("HOMEPATH", "");
+         else
+            return +GNATCOLL.VFS.Get_Current_Dir.Full_Name.all;
+         end if;
+      end Get_Current_Dir;
+
    begin
       Dialog_Utils.Initialize (Widget);
       Widget.Template := Template;
@@ -232,7 +254,7 @@ package body Project_Templates.GUI is
       --  Create the location entry and its associated 'Browse' button
 
       Gtk_New (Widget.Location_Ent);
-      Widget.Location_Ent.Set_Text (+Get_Current_Dir.Full_Name.all);
+      Widget.Location_Ent.Set_Text (Get_Current_Dir);
 
       Gtk_New (Widget.Browse_Button, "Browse");
       Widget.Browse_Button.On_Clicked
@@ -335,6 +357,7 @@ package body Project_Templates.GUI is
 
    procedure Install_Template
      (Templates     : Templates_Script_Objects_List.List;
+      Kernel        : Kernel_Handle;
       Parent        : not null access Gtk_Window_Record'Class;
       Chosen        : out Template_Script_Object;
       Installed     : out Boolean;
@@ -524,7 +547,7 @@ package body Project_Templates.GUI is
       begin
 
          --  Create the page
-         Gtk_New (Page, Template);
+         Gtk_New (Page, Template, Kernel);
 
          --  In the case when we have a python script we can let it
          --  create its own pages. However, we add the final page in all cases.
