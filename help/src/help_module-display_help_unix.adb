@@ -21,6 +21,7 @@ with GPS.Kernel.Preferences; use GPS.Kernel.Preferences;
 with GNATCOLL.Templates;     use GNATCOLL.Templates;
 with GNATCOLL.Traces;        use GNATCOLL.Traces;
 with String_Utils;           use String_Utils;
+with Spawn.Process_Listeners;
 
 separate (Help_Module)
 procedure Display_Help
@@ -136,7 +137,7 @@ is
          Listener.Process.Set_Arguments (Vector);
          Listener.Process.Set_Environment (Kernel.Get_Original_Environment);
          Listener.Process.Set_Listener
-           (Spawn.Processes.Process_Listener_Access (Listener));
+           (Spawn.Process_Listeners.Process_Listener_Access (Listener));
 
          Insert
            (Kernel, (-"Launching ") & Browser & (-" to view ") & URL,
