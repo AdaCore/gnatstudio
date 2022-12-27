@@ -19,6 +19,7 @@
 --  NOTE: this should remain independent from the GNAT Studio Kernel, so that
 --  it can be reused in a stand-alone executable.
 
+with GPS.Kernel;                       use GPS.Kernel;
 with Gtk.Window;                       use Gtk.Window;
 
 with Project_Templates.Script_Objects; use Project_Templates.Script_Objects;
@@ -35,6 +36,7 @@ package Project_Templates.GUI is
 
    procedure Install_Template
      (Templates     : Templates_Script_Objects_List.List;
+      Kernel        : Kernel_Handle;
       Parent        : not null access Gtk_Window_Record'Class;
       Chosen        : out Template_Script_Object;
       Installed     : out Boolean;
