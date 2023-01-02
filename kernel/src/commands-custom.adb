@@ -77,7 +77,7 @@ package body Commands.Custom is
             when Component_External =>
                Server               : Server_Type;      --  "server" attribute
                Check_Password       : Boolean := False; --  "check-password"
-               Show_In_Task_Manager : Boolean;          --  "show-task-manager"
+               Show_In_Task_Manager : Boolean := False; --  "show-task-manager"
                Progress_Regexp      : String_Access;    --  "progress-regexp"
                Progress_Current     : Natural := 1;     --  "progress-current"
                Progress_Final       : Natural := 2;     --  "progress-final"
@@ -688,7 +688,7 @@ package body Commands.Custom is
       Show_C            : Boolean := Show_Command = "true";
       Show_Task_Manager : constant String :=
                             Get_Attribute (Command, "show-task-manager");
-      Show_TM           : Boolean := Show_Task_Manager = "false";
+      Show_TM           : Boolean := Show_Task_Manager = "true";
       Progress_Regexp   : constant String :=
                             Get_Attribute (Command, "progress-regexp", "");
       Progress_Current  : constant Integer :=

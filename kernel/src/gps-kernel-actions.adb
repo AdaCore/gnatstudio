@@ -649,7 +649,7 @@ package body GPS.Kernel.Actions is
                  (Kernel,
                   Custom,
                   Block_Exit      => Block_Exit,
-                  Active          => True,  --  immediately if possible
+                  Active          => Act.Command.Is_Active_Command,
                   Show_Bar        => Show_Bar,
                   Queue_Id        => "");
             end if;
