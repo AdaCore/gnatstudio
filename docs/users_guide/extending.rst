@@ -496,6 +496,12 @@ following attributes:
   The icon name which will be displayed, if the action is added to a toolbar
   for example.
 
+* :file:`active-execution` (optional, default :command:`true`)
+
+  When true, the action will be launched in active mode, ie
+  executed as fast as possible in an idle loop. Otherwise, it is launched
+  in background mode, ie executed more slowly in a timeout.
+
 If you define the same action multiple times, the last definition is used.
 However, items such as menus and buttons that reference the action keep
 their existing semantics: the new definition is only used for items created

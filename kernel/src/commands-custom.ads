@@ -84,6 +84,7 @@ package Commands.Custom is
       Name    : String;
       Kernel  : Kernel_Handle;
       Command : String;
+      Active  : Boolean;
       Script  : GNATCOLL.Scripts.Scripting_Language);
    --  Create a new custom command.
    --  If Script is null, the command is launched as a system
@@ -92,12 +93,18 @@ package Commands.Custom is
    --  Filter is the filter that needs to be tested to make sure that all
    --  parameters can be satisfied.
    --  Name is used in the progress bar while the command is executing
+   --  If Active is True, the command will be launched in active mode, ie
+   --  executed as fast as possible in an idle loop. Otherwise, it is launched
+   --  in background mode, ie executed more slowly in a timeout. If a queue is
+   --  specified, the command is put in front of the queue if Active is false,
+   --  and at the back otherwise.
 
    procedure Create
      (Item                 : out Custom_Command_Access;
       Name                 : String;
       Kernel               : Kernel_Handle;
       Command              : XML_Utils.Node_Ptr;
+      Active               : Boolean;
       Default_Output       : String := Console_Output;
       Show_Command         : Boolean := True;
       Show_In_Task_Manager : Boolean := False);
@@ -113,6 +120,8 @@ package Commands.Custom is
    --  If Show_In_Task_Manager is true, then the command will be shown in the
    --  task manager.
    --  Name is used in the progress bar while the command is executing
+   --  If Active is True, the command will be launched in active mode.
+   --  See above for details.
 
    function Create_Filter
      (Kernel  : not null access Kernel_Handle_Record'Class;
@@ -143,7 +152,7 @@ package Commands.Custom is
    --  See doc from inherited subprograms
 
    overriding function Is_Active_Command
-     (Command : access Custom_Command) return Boolean is (False);
+     (Command : access Custom_Command) return Boolean;
 
 private
    type Boolean_Array is array (Natural range <>) of Boolean;
@@ -246,6 +255,9 @@ private
       --  null, no command is currently executing
 
       Sub_Command : Scheduled_Command_Access;
+
+      Active : Boolean := True;
+      --  Execute command in Active/Passive mode
    end record;
 
 end Commands.Custom;
