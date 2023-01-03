@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                               GNAT Studio                                --
 --                                                                          --
---                     Copyright (C) 2001-2022, AdaCore                     --
+--                     Copyright (C) 2001-2023, AdaCore                     --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -74,7 +74,7 @@ package body GPS.Kernel.Console is
       Reuse_If_Exist     => True,
       Initialize         => Initialize,
       Local_Toolbar      => False,
-      Local_Config       => False,
+      Local_Config       => True,
       MDI_Flags          => 0,  --  prevent explicit delete
       Areas              => Gtkada.MDI.Sides_Only,
       Group              => Group_Consoles);
