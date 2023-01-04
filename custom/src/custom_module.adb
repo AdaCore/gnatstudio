@@ -825,6 +825,8 @@ package body Custom_Module is
                  Name                 => Name,
                  Kernel               => Kernel,
                  Command              => Node.Child,
+                 Active               => To_Lower
+                   (Get_Attribute (Node, "active-execution", "true")) = "true",
                  Default_Output       => Get_Attribute
                    (Node, "output", Console_Output),
                  Show_In_Task_Manager => To_Lower

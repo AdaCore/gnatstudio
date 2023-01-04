@@ -349,21 +349,14 @@ class CLI(GPS.Process):
             switches = Project_Support.get_switches(file)
 
             # Always ignore -o and --output.  The Output_Dir project attribute
-            # should be used instead. Also ignore --pre-process-xmi as it will
-            # be added automatically if needed.
+            # should be used instead.
             remove_list.extend([
                 ('-o', True),
-                ('--output', True),
-                ('--pre-process-xmi', False)
+                ('--output', True)
             ])
             for arg, has_param in remove_list:
                 switches = remove_arg(switches, arg, has_param)
 
-            if os.path.splitext(file.path)[1] == ".xmi":
-                extra.extend(['--pre-process-xmi'])
-            elif '--typing' not in switches and '-t' not in switches:
-                typing_file = os.path.splitext(file.path)[0] + '_types.txt'
-                extra.extend(['-t', typing_file])
             extra.extend(['-o', outdir])
 
             for extra_switch in extra:

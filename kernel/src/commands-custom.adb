@@ -182,6 +182,16 @@ package body Commands.Custom is
       return Action_Filter (Filter);
    end Create_Filter;
 
+   -----------------------
+   -- Is_Active_Command --
+   -----------------------
+
+   overriding function Is_Active_Command
+     (Command : access Custom_Command) return Boolean is
+   begin
+      return Command.Active;
+   end Is_Active_Command;
+
    -------------
    -- On_Exit --
    -------------
@@ -620,11 +630,13 @@ package body Commands.Custom is
       Name    : String;
       Kernel  : Kernel_Handle;
       Command : String;
-      Script  : Scripting_Language) is
+      Active  : Boolean;
+      Script  : GNATCOLL.Scripts.Scripting_Language) is
    begin
       Item := new Custom_Command;
       Item.Kernel := Kernel;
       Item.Name   := new String'(Name);
+      Item.Active := Active;
       Item.Components := new Components_Array'
         (1 => (Component => new Custom_Component_Record'
                  (Command_Component_Record with
@@ -888,6 +900,7 @@ package body Commands.Custom is
       Name                 : String;
       Kernel               : Kernel_Handle;
       Command              : XML_Utils.Node_Ptr;
+      Active               : Boolean;
       Default_Output       : String := Console_Output;
       Show_Command         : Boolean := True;
       Show_In_Task_Manager : Boolean := False) is
@@ -897,6 +910,7 @@ package body Commands.Custom is
       Item.Default_Output_Destination := new String'(Default_Output);
       Item.Default_Show_Command := Show_Command;
       Item.Name := new String'(Name);
+      Item.Active := Active;
       Item.Components := From_XML
         (Kernel, Command, Name,
          Default_Show_In_Task_Manager => Show_In_Task_Manager,
