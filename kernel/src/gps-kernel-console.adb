@@ -74,7 +74,7 @@ package body GPS.Kernel.Console is
       Reuse_If_Exist     => True,
       Initialize         => Initialize,
       Local_Toolbar      => False,
-      Local_Config       => True,
+      Local_Config       => False,
       MDI_Flags          => 0,  --  prevent explicit delete
       Areas              => Gtkada.MDI.Sides_Only,
       Group              => Group_Consoles);
