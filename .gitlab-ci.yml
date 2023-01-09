@@ -1,0 +1,71 @@
+variables:
+   # The common part of the URL for cloning from within a CI
+   GIT_CLONE_BASE: https://gitlab-ci-token:${CI_JOB_TOKEN}@${CI_SERVER_HOST}:${CI_SERVER_PORT}
+
+stages:
+  - build_and_test
+
+build_and_test:
+  services:
+     - image:gtk-deps
+     - cpu:8
+     - mem:16
+  stage: build_and_test
+  script:
+    # Temporary, until the image is updated
+    - apt install  -y --no-install-recommends patch xvfb subversion
+    - which patch
+    - which Xvfb
+    - which svn
+
+    - . ~/.aws_container_credentials
+    - export PATH=/it/e3/bin:$PATH
+
+    # Setup the 'anod vcs' for this repo
+    - cd /it/wave
+    - anod vcs --add-repo gnatstudio $CI_PROJECT_DIR
+
+    # Figure out if we're on a sync branch
+    - BRANCH=master
+    - if [[ $CI_COMMIT_BRANCH =~ ^sync/ ]]; then
+         BRANCH=$CI_COMMIT_BRANCH;
+      elif [[ $CI_MERGE_REQUEST_SOURCE_BRANCH_NAME =~ ^sync/ ]]; then
+         BRANCH=$CI_MERGE_REQUEST_SOURCE_BRANCH_NAME;
+      fi
+
+    # Setup the 'anod vcs' for the other repos, if we're on
+    # a "sync" branch.
+    - if [ $BRANCH != master ]; then
+      for subproject in gtkada gnatstudio-internal ; do
+         cd /tmp ;
+         git clone $GIT_CLONE_BASE/eng/ide/$subproject ;
+         cd $subproject ;
+         if `git show-ref $BRANCH > /dev/null` ; then
+             git checkout $BRANCH ;
+             cd /it/wave ;
+             anod vcs --add-repo $subproject /tmp/$subproject ;
+         fi ;
+      done ;
+      fi
+
+    # Build & test using anod
+    - cd /it/wave
+    - anod build gps --minimal
+    - anod build gps_testsuite_drivers --minimal
+    # Set this to deactivate some event-synth tests
+    - export GITLAB_CI=1
+    - anod test gps --minimal
+
+    # Process the report
+    - e3-testsuite-report
+       --failure-exit-code 1
+       --xunit-output $CI_PROJECT_DIR/xunit_output.xml
+       x86_64-linux/gps-test/results/new/ || FAILED=true
+
+    - if [ ! -z ${FAILED+x} ]; then echo "There was at least one testcase failure" && exit 1; fi
+
+  artifacts:
+     paths:
+        - xunit_output.xml
+     reports:
+       junit: xunit_output.xml
