@@ -73,8 +73,8 @@ package body GPS.Kernel.Console is
       Formal_MDI_Child   => GPS_MDI_Child_Record,
       Reuse_If_Exist     => True,
       Initialize         => Initialize,
-      Local_Toolbar      => False,
-      Local_Config       => False,
+      Local_Toolbar      => True,
+      Local_Config       => True,
       MDI_Flags          => 0,  --  prevent explicit delete
       Areas              => Gtkada.MDI.Sides_Only,
       Group              => Group_Consoles);
@@ -459,7 +459,6 @@ package body GPS.Kernel.Console is
          ANSI_Support => Host /= Windows, --  ANSI_Support does not work
                                           --  well under Windows ???
          Key          => "",
-         Toolbar_Name => "Messages",
          Wrap_Mode    => Wrap_Char);
       On_Toggle_Line_Wrap (Console);
       Console.Enable_Prompt_Display (False);
