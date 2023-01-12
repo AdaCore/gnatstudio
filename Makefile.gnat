@@ -1,7 +1,5 @@
 GNAT_SOURCES= \
-  doc/gnat_ugn/building_executable_programs_with_gnat.rst \
-  impunit.ads \
-  impunit.adb
+  doc/gnat_ugn/building_executable_programs_with_gnat.rst
 
 list-sources:
 	@echo $(GNAT_SOURCES)
