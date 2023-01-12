@@ -1977,6 +1977,36 @@ package body Codefix.Formal_Errors is
       return Result;
    end Add_Line;
 
+   --------------------
+   -- Wrap_Statement --
+   --------------------
+
+   function Wrap_Statement
+     (Current_Text  : Text_Navigator_Abstr'Class;
+      Object_Cursor : File_Cursor'Class;
+      Prepend_Text  : Unbounded_String;
+      Append_Text   : Unbounded_String;
+      Indent        : Boolean) return Solution_List
+   is
+      Result : Solution_List;
+
+      Command_Ptr : constant Ptr_Command := new Wrap_Statement_Cmd (Simple);
+      Command     : Wrap_Statement_Cmd renames
+        Wrap_Statement_Cmd (Command_Ptr.all);
+   begin
+      Command.Initialize
+        (Current_Text => Current_Text,
+         Position     => Object_Cursor,
+         Prepend_Text => Prepend_Text,
+         Append_Text  => Append_Text,
+         Indent       => Indent);
+      Command.Set_Caption (To_Unbounded_String ("Wrap statement"));
+
+      Append (Result, Command_Ptr);
+
+      return Result;
+   end Wrap_Statement;
+
    ---------------------------
    -- Move_Tilde_Or_Percent --
    ---------------------------
