@@ -302,6 +302,15 @@ package Codefix.Formal_Errors is
       Indent        : Boolean) return Solution_List;
    --  Add a line at the given location
 
+   function Wrap_Statement
+     (Current_Text  : Text_Navigator_Abstr'Class;
+      Object_Cursor : File_Cursor'Class;
+      Prepend_Text  : Unbounded_String;
+      Append_Text   : Unbounded_String;
+      Indent        : Boolean) return Solution_List;
+   --  Wrap the statetement at the given location with Prepend_Text
+   --  and Append_Text
+
    function Replace_Slice
      (Current_Text : Text_Navigator_Abstr'Class;
       Start_Cursor : File_Cursor'Class;
