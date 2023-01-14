@@ -901,6 +901,7 @@ package body GPS.LSP_Clients is
                      (True,
                       LSP.Types.To_Virtual_String
                         (GPS.LSP_Client.Utilities.To_URI (Root))),
+                   initializationOptions => (Is_Set => False),
                    capabilities =>
                      (workspace    =>
                           (applyEdit => LSP.Types.True,
