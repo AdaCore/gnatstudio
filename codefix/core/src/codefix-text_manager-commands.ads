@@ -184,6 +184,27 @@ package Codefix.Text_Manager.Commands is
       Current_Text : in out Text_Navigator_Abstr'Class);
    --  Set an extract with the invertion add of the line
 
+   ------------------------
+   -- Wrap_Statement_Cmd --
+   ------------------------
+
+   type Wrap_Statement_Cmd is new Text_Command with private;
+
+   procedure Initialize
+     (This         : in out Wrap_Statement_Cmd;
+      Current_Text : Text_Navigator_Abstr'Class;
+      Position     : File_Cursor'Class;
+      Prepend_Text : Unbounded_String;
+      Append_Text  : Unbounded_String;
+      Indent       : Boolean);
+   --  Set all the marks that will be needed to add the lines later
+
+   overriding
+   procedure Execute
+     (This         : Wrap_Statement_Cmd;
+      Current_Text : in out Text_Navigator_Abstr'Class);
+   --  Add the extra lines
+
    -----------------------
    -- Replace_Slice_Cmd --
    -----------------------
@@ -292,6 +313,12 @@ private
    type Add_Line_Cmd is new Text_Command with record
       Line     : Unbounded_String;
       Indent   : Boolean;
+   end record;
+
+   type Wrap_Statement_Cmd is new Text_Command with record
+      Prepend_Text : Unbounded_String;
+      Append_Text  : Unbounded_String;
+      Indent       : Boolean;
    end record;
 
    type Replace_Slice_Cmd is new Text_Command with record

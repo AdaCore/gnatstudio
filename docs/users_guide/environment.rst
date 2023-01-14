@@ -135,6 +135,14 @@ settings in GNAT Studio:
   allocated using the :command:`GPS.debug_memory_usage` Python
   command.  Setting this variable will slow GPS down.
 
+* :file:`GPR_CONFIG`
+
+  .. index:: GPR_CONFIG
+
+  If set, this variable points to the configuration file (:samp:`.cgpr`).
+  The command line :samp:`--config` option takes precedence over the
+  environment variable.
+
 Note that, for backwards compatibility purposes, for all variables of the
 form :file:`GNATSTUDIO_<something>`, if this variable is not defined but
 the variable :file`GPS_<something>` is, then the value for that one will

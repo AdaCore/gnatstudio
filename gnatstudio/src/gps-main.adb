@@ -2802,6 +2802,19 @@ procedure GPS.Main is
         (Get_MDI (GPS_Main.Kernel), Signal_Child_Selected,
          Child_Selected'Access, GPS_Main.Kernel);
 
+      --  Take config file from GPR_CONFIG environment if any
+      declare
+         GPR_CONFIG : constant String :=
+           GPS_Main.Kernel.Get_Original_Environment.Value ("GPR_CONFIG");
+      begin
+         if Config_Files.Config_File = GNATCOLL.VFS.No_File
+           and then GPR_CONFIG /= ""
+         then
+            Config_Files.Config_File := Create_From_Base
+              (+GPR_CONFIG, Get_Current_Dir.Full_Name);
+         end if;
+      end;
+
       --  Setup config files before we load projects
 
       Get_Registry (GPS_Main.Kernel).Environment.Set_Config_File

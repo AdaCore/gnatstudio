@@ -9,12 +9,10 @@ import traceback
 expected = """with Ada.Text_IO;
 
 procedure Main is
-   pragma Warnings
-     (Off,
-      Reason => "variable ""B"" is read but never assigned [-gnatwv]");
-   --  TODO: Add explanations
-   B : Boolean;
-   pragma Warnings (On);
+   pragma Warnings (Off, "variable * is read but never assigned", Reason => "TBD");
+   B :
+     Boolean;
+   pragma Warnings (On, "variable * is read but never assigned");
 begin
    Ada.Text_IO.Put_Line ("Hello" & B'Img);
 end Main;

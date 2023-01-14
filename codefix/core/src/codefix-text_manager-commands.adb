@@ -543,6 +543,65 @@ package body Codefix.Text_Manager.Commands is
    ----------------
 
    procedure Initialize
+     (This         : in out Wrap_Statement_Cmd;
+      Current_Text : Text_Navigator_Abstr'Class;
+      Position     : File_Cursor'Class;
+      Prepend_Text : Unbounded_String;
+      Append_Text  : Unbounded_String;
+      Indent       : Boolean) is
+   begin
+      Init (This, Current_Text, Position);
+      This.Prepend_Text := Prepend_Text;
+      This.Append_Text := Append_Text;
+      This.Indent := Indent;
+   end Initialize;
+
+   -------------
+   -- Execute --
+   -------------
+
+   overriding procedure Execute
+     (This         : Wrap_Statement_Cmd;
+      Current_Text : in out Text_Navigator_Abstr'Class)
+   is
+      Start_Cursor     : File_Cursor'Class :=
+        Clone (Current_Text.Get_Current_Cursor (This.Cursor.all));
+      End_Cursor       : File_Cursor;
+      Before_Statement : constant Construct_Tree_Iterator :=
+        Get_Iterator_At
+          (Current_Text,
+           Start_Cursor,
+           Start_Construct,
+           Position => Before);
+      After_Statement : constant Construct_Tree_Iterator :=
+        Get_Iterator_At
+          (Current_Text,
+           Start_Cursor,
+           Start_Construct,
+           Position => After);
+   begin
+      Set_File (Start_Cursor, Get_File (Start_Cursor));
+      Set_Location
+        (Start_Cursor, Get_Construct (Before_Statement).Sloc_Start.Line, 1);
+      Set_File (End_Cursor, Get_File (Start_Cursor));
+      Set_Location
+        (End_Cursor, Get_Construct (After_Statement).Sloc_End.Line, 1);
+
+      --  End before Start to prevent line shifting
+      Current_Text.Add_Line
+        (End_Cursor, To_String (This.Append_Text), This.Indent);
+      Current_Text.Add_Line
+        (Start_Cursor, To_String (This.Prepend_Text), This.Indent);
+
+      Free (Start_Cursor);
+      Free (End_Cursor);
+   end Execute;
+
+   ----------------
+   -- Initialize --
+   ----------------
+
+   procedure Initialize
      (This                     : in out Replace_Slice_Cmd;
       Current_Text             : Text_Navigator_Abstr'Class;
       Start_Cursor, End_Cursor : File_Cursor'Class;

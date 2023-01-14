@@ -4709,7 +4709,18 @@ package body Codefix.GNAT_Parser is
 
    overriding procedure Initialize (This : in out Suppress_Warning) is
    begin
-      This.Matcher := (1 => new Pattern_Matcher'(Compile ("warning:")));
+      --  According to the ADA RM:
+      --  The string argument is a pattern that is used to match against
+      --  the text of individual warning messages (not including the
+      --  initial "warning: " tag).
+      --  The pattern may contain asterisks, which match zero or more
+      --  characters in the message. For example, you can use
+      --  pragma Warnings (Off, "bits of*unused") to suppress the warning
+      --  message warning: 960 bits of "a" unused. No other regular expression
+      --  notations are permitted
+      This.Matcher :=
+        (1 => new Pattern_Matcher'(
+           Compile ("warning: ([^""]+)""[^""]+""([^""[]+)")));
    end Initialize;
 
    overriding procedure Fix
@@ -4726,8 +4737,17 @@ package body Codefix.GNAT_Parser is
       Start   : File_Cursor := Clone (File_Cursor (Message));
       Last    : File_Cursor;
       Msg     : constant String := Get_Message (Message);
-      Prefix  : constant String := "warning: ";
-
+      --  From 'warning: foo "Name" bar [-gnatX]' generates 'foo * bar'
+      Warning : constant String :=
+        """"
+        & Escape_String_Literal
+        (Msg (Matches (1).First .. Matches (1).Last)
+         & "*"
+         & (if Msg (Matches (2).Last) = ' '
+            then Msg (Matches (2).First .. Matches (2).Last - 1)
+            else Msg (Matches (2).First .. Matches (2).Last)))
+        & """";
+      Reason : constant String := ", Reason => ""TBD""";
    begin
       if Ada.Characters.Handling.To_Lower
         (This.Kernel.Get_Language_Handler.Get_Language_From_File
@@ -4741,35 +4761,17 @@ package body Codefix.GNAT_Parser is
       Set_Column
         (Last, Visible_Column_Type (Current_Text.Line_Length (Start)));
 
-      declare
-         Line : constant String := Get_Line (Current_Text, Start);
-         Idx  : Integer := Line'First;
-      begin
-         while Idx <= Line'Last
-           and then Line (Idx) = ' '
-         loop
-            Idx := Idx + 1;
-         end loop;
-
-         Solutions :=
-           Replace_Slice
-             (Current_Text,
-              Start, Last,
-              To_Unbounded_String
-                (Line (Line'First .. Idx - 1) &
-                   "pragma Warnings" & ASCII.LF &
-                   Line (Line'First .. Idx - 1) & "  (Off," & ASCII.LF &
-                   Line (Line'First .. Idx - 1) & "   Reason => """ &
-                   Escape_String_Literal
-                   (if Msg (Msg'First .. Msg'First + Prefix'Length - 1) =
-                        Prefix
-                    then Msg (Msg'First + Prefix'Length .. Msg'Last)
-                    else Msg) &
-                   """" & ");" & ASCII.LF & Line (Line'First .. Idx - 1) &
-                   "--  TODO: Add explanations" & ASCII.LF &
-                   Line & ASCII.LF &
-                   Line (Line'First .. Idx - 1) & "pragma Warnings (On);"));
-      end;
+      Solutions :=
+        Wrap_Statement
+          (Current_Text  => Current_Text,
+           Object_Cursor => Start,
+           Prepend_Text  =>
+             To_Unbounded_String
+               ("pragma Warnings (Off, " & Warning & Reason & ");"),
+           Append_Text   =>
+             To_Unbounded_String
+               ("pragma Warnings (On, " & Warning & ");"),
+           Indent        => True);
    end Fix;
 
    ----------------------
