@@ -862,6 +862,7 @@ The Code Menu
        the subprogram. This provides helpful separations between subprograms, and
        is similar to the style used in the GNAT compiler or GPS themselves
 
+   Shortcut: Ctrl+H
 .. index:: menu; code --> smart completion
 
 * :menuselection:`Code --> Smart Completion`
