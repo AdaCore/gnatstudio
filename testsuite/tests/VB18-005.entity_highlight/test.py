@@ -1,5 +1,10 @@
 """
-This text checks if entity auto-highlighting works fine.
+This test checks that auto-highlighting works fine when the cursor is placed
+at the end of an entity
+
+Example:  Some_Entity^;
+
+where ^ is the cursor location
 """
 
 
