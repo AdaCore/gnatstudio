@@ -452,14 +452,16 @@ package GPS.Kernel.Modules.UI is
    --  the name of the section, and ends just before the next separator.
 
    procedure Create_Toolbar
-     (Kernel          : not null access Kernel_Handle_Record'Class;
-      Toolbar         : in out Gtk.Toolbar.Gtk_Toolbar;
-      Id              : String);
+     (Kernel        : not null access Kernel_Handle_Record'Class;
+      Toolbar       : in out Gtk.Toolbar.Gtk_Toolbar;
+      Id            : String;
+      Force_Refresh : Boolean := True);
    --  Populate Toolbar with the predefined actions defined from the XML in
    --  Install_Menus.
-   --  Toolbar is created if null, or emptied otherwise and then reused.
-   --  Any button registered for it later on will be dynamically added to
-   --  the toolbar.
+   --  Toolbar is created if null. When non-null, the toolbar will be
+   --  re-created from scratch if Force_Refresh is True. If Force_Refresh is
+   --  False, the subprogram will just apply the common style for toolbars and
+   --  set the toobar's name according to the given Id.
 
    procedure Declare_Toolbar
      (Kernel        : not null access Kernel_Handle_Record'Class;

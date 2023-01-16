@@ -19,7 +19,7 @@
 
 with System;
 
-with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
+with Ada.Strings.Unbounded;
 with Ada.Containers.Doubly_Linked_Lists;
 
 with GNAT.Expect;
@@ -38,7 +38,6 @@ with Gtk.Text_Buffer;
 with Gtk.Text_View;
 with Gtk.Text_Mark;
 with Gtk.Text_Tag;
-with Gtk.Toolbar;
 with Gtkada.Terminal;
 
 with Generic_Views;
@@ -62,10 +61,6 @@ package Interactive_Consoles is
    overriding procedure Filter_Changed
      (Self    : not null access Interactive_Console_Record;
       Pattern : in out GPS.Search.Search_Pattern_Access);
-
-   overriding procedure Create_Toolbar
-     (View    : not null access Interactive_Console_Record;
-      Toolbar : not null access Gtk.Toolbar.Gtk_Toolbar_Record'Class);
 
    type Command_Handler is access
      function
@@ -117,27 +112,27 @@ package Interactive_Consoles is
       ANSI_Support        : Boolean := False;
       Manage_Prompt       : Boolean := True;
       Toolbar_Name        : String := "");
-   --  Create a new console. History_List and Key are used to handle the
-   --  history of commands entered by the user in the interactive window. No
-   --  history is provided if History_List is null If Empty_Equals_Repeat is
-   --  True, an empty command will execute the last command. If _manage_prompt_
-   --  is True, then GNAT Studio will do some higher level handling of prompts:
-   --  when some output is done by the process, GNAT Studio will temporarily
-   --  hide what the user was typing, insert the output, and append what the
-   --  user was typing. This is in general suitable but might interfer with
-   --  external programs that do their own screen management through ANSI
-   --  commands (like a Unix shell for instance). This is not the same as
-   --  having an empty Prompt! If _manage_prompt_ is set to False, the text
-   --  passed to Handler will be incorrect If _ANSI_Support_ is True, the
-   --  console will recognize, and either handle or hide the escape sequences
-   --  generates by application to move cursor, change colors or text
-   --  attributes,... Highlight can be a Color_Preference, a Variant_Preference
-   --  or a Style_Preference.
-   --  if Toolbar_Name is not empty and if Local_Toolbar is True when
-   --  instantiating the Generic_Views package that will contain the console,
-   --  then a toolbar will be created, with a search entry that allows to
-   --  search among the console contents. Toolbar_Name will be used as the
-   --  toolbar ID.
+   --  Create a new console.
+   --  History_List and Key are used to handle the history of commands entered
+   --  by the user in the interactive window. No history is provided if
+   --  History_List is null
+   --  If Empty_Equals_Repeat is True, an empty command will execute the last
+   --  command.
+   --  If _manage_prompt_ is True, then GNAT Studio will do some higher level
+   --  handling of prompts: when some output is done by the process,
+   --  GNAT Studio will temporarily hide what the user was typing, insert the
+   --  output, and append what the user was typing. This is in general
+   --  suitable but might interfer with external programs that do their own
+   --  screen management through ANSI commands (like a Unix shell for
+   --  instance). This is not the same as having an empty Prompt!
+   --  If _manage_prompt_ is set to False, the text passed to Handler will be
+   --  incorrect If _ANSI_Support_ is True, the console will recognize,
+   --  and either handle or hide the escape sequences generates by application
+   --  to move cursor, change colors or text attributes,...
+   --  Highlight can be a Color_Preference, a Variant_Preference or a
+   --  Style_Preference.
+   --  If Toolbar_Name is not empty then toolbar will be created. Given name
+   --  will be used as Id of toolbar.
 
    procedure Initialize
      (Console             : access Interactive_Console_Record'Class;
@@ -547,9 +542,6 @@ private
       Key     : GNAT.Strings.String_Access;
       --  The command history. The most recent commands are at the
       --  beginning.
-
-      Toolbar_Name : Unbounded_String;
-      --  The toolbar's name, if any
 
       Current_Position : Integer := -1;
       --  The current position when browsing the command history
