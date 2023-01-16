@@ -47,7 +47,7 @@ package DAP.Modules.Breakpoint_Managers is
    procedure Finalize (Self : DAP_Client_Breakpoint_Manager_Access);
 
    procedure Stopped
-     (Self         : DAP_Client_Breakpoint_Manager;
+     (Self         : DAP_Client_Breakpoint_Manager_Access;
       Event        : in out DAP.Tools.StoppedEvent;
       Stopped_File : out GNATCOLL.VFS.Virtual_File;
       Stopped_Line : out Integer);

@@ -68,6 +68,9 @@ package DAP.Breakpoint_Maps is
       Enabled      : Boolean := True;
       Change_State : Boolean := False;
 
+      Temporary    : Boolean := False;
+      --  Temporary breakpoint that should be removed on the first hit.
+
       Executable   : Unbounded_String;
    end record;
 

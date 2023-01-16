@@ -31,8 +31,6 @@ with GPS.Debuggers;
 
 package body DAP.Modules.Breakpoint_Managers is
 
-   --  To-Do: remove temporary breakpoints on hit
-
    function Convert
      (Kernel : GPS.Kernel.Kernel_Handle;
       File   : Virtual_File;
@@ -564,12 +562,13 @@ package body DAP.Modules.Breakpoint_Managers is
    -------------
 
    procedure Stopped
-     (Self         : DAP_Client_Breakpoint_Manager;
+     (Self         : DAP_Client_Breakpoint_Manager_Access;
       Event        : in out DAP.Tools.StoppedEvent;
       Stopped_File : out GNATCOLL.VFS.Virtual_File;
       Stopped_Line : out Integer)
    is
       use DAP.Tools;
+      Ids : DAP.Types.Breakpoint_Identifier_Lists.List;
    begin
       Stopped_File := No_File;
       Stopped_Line := 0;
@@ -587,6 +586,12 @@ package body DAP.Modules.Breakpoint_Managers is
                           (Get_Location (Data));
                         Stopped_Line := Integer
                           (GPS.Editors.Get_Line (Get_Location (Data)));
+
+                        if Data.Temporary then
+                           Ids.Append (Data.Num);
+                           Self.Remove_Breakpoints (Ids);
+                        end if;
+
                         return;
                      end if;
                   end loop;
