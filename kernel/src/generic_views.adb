@@ -1021,7 +1021,15 @@ package body Generic_Views is
          if Toolbar /= null then
             Trace (Me, "Create toolbar, from id=" & Toolbar_Id);
 
-            Create_Toolbar (View.Kernel, Toolbar, Id => Toolbar_Id);
+            --  We don't want to force refreshing the toolbar if non-empty,
+            --  because some custom toolbar items might have been added if
+            --  the toolbar was created during the view's initialization.
+            Create_Toolbar
+              (Kernel        => View.Kernel,
+               Toolbar       => Toolbar,
+               Id            => Toolbar_Id,
+               Force_Refresh => False);
+
             Get_Style_Context (Toolbar).Add_Class ("gps-local-toolbar");
 
             View.Create_Toolbar (Toolbar);
@@ -1055,7 +1063,7 @@ package body Generic_Views is
          Toolbar_Id : String := View_Name) return Gtk_Widget
       is
          Box            : Gtk_Box;
-         Toolbar        : Gtk_Toolbar;
+         Toolbar        : Gtk_Toolbar := View.Get_Toolbar;
       begin
          --  If no local toolbar is needed, either to contain a custom toolbar
          --  or for a local config menu, return View.
@@ -1068,11 +1076,16 @@ package body Generic_Views is
          Initialize_Vbox (Box);
          Toplevel_Box (Box.all).Initial := View_Access (View);
 
-         Gtk_New (Toolbar);
-         Box.Pack_Start (Toolbar, Expand => False, Fill => False);
+         --  Create a new toolbar only if there is none associated to the view
+         --  already.
+         if Toolbar = null then
+            Gtk_New (Toolbar);
+            View.Set_Toolbar (Toolbar);
+            Box.Pack_Start (Toolbar, Expand => False, Fill => False);
+         end if;
+
          Box.Pack_Start (View, Expand => True, Fill => True);
 
-         View.Set_Toolbar (Toolbar);
          Reset_Toolbar (View, Toolbar_Id);
 
          View.On_Destroy (On_Destroy_View'Access);
