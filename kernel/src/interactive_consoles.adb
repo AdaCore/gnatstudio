@@ -17,6 +17,7 @@
 
 with Ada.Calendar;             use Ada.Calendar;
 with Ada.Strings.Fixed;        use Ada.Strings.Fixed;
+with Ada.Strings.Unbounded;    use Ada.Strings.Unbounded;
 with Ada.Unchecked_Deallocation;
 with GNATCOLL.Xref;
 with System;                   use System;
@@ -76,6 +77,7 @@ with GPS.Default_Styles;       use GPS.Default_Styles;
 with GPS.Kernel.Hooks;         use GPS.Kernel.Hooks;
 with GPS.Kernel.Preferences;   use GPS.Kernel.Preferences;
 with GPS.Kernel.MDI;           use GPS.Kernel.MDI;
+with GPS.Kernel.Modules.UI;    use GPS.Kernel.Modules.UI;
 with GPS.Kernel.Scripts;       use GPS.Kernel.Scripts;
 with GPS.Kernel.Style_Manager; use GPS.Kernel.Style_Manager;
 
@@ -1572,7 +1574,34 @@ package body Interactive_Consoles is
 
       Initialize_Vbox (Console, Homogeneous => False);
 
-      Console.Toolbar_Name := To_Unbounded_String (Toolbar_Name);
+      if Toolbar_Name /= "" then
+         declare
+            Toolbar : Gtk_Toolbar;
+            Sep     : Gtk_Separator_Tool_Item;
+         begin
+            Create_Toolbar (Kernel, Toolbar, Id => Toolbar_Name);
+            Toolbar.Set_Style (Toolbar_Icons);
+            Get_Style_Context (Toolbar).Add_Class ("gps-local-toolbar");
+            Console.Pack_Start (Toolbar, Expand => False, Fill => False);
+            Console.Set_Toolbar (Toolbar);
+
+            Gtk_New (Sep);
+            Append_Toolbar (Console, Toolbar, Sep);
+
+            Build_Filter
+              (Self        => Console,
+               Toolbar     => Toolbar,
+               Hist_Prefix => "search-" & Key,
+               Tooltip     => "Search in console.",
+               Options     => Has_Whole_Word or Has_Case_Sensitive,
+               Placeholder => "search");
+
+            Console.Get_Filter.Get_Focus_Widget.On_Key_Press_Event
+              (Search_Key_Press_Handler'Access, Console);
+
+            Toolbar.Show_All;
+         end;
+      end if;
 
       Gtk_New (Console.Scrolled);
       Console.Pack_Start (Console.Scrolled, Expand => True, Fill => True);
@@ -1804,34 +1833,6 @@ package body Interactive_Consoles is
    begin
       Search_Occurrence (Self, Pattern, Filter_Changed => True);
    end Filter_Changed;
-
-   --------------------
-   -- Create_Toolbar --
-   --------------------
-
-   overriding procedure Create_Toolbar
-     (View    : not null access Interactive_Console_Record;
-      Toolbar : not null access Gtk.Toolbar.Gtk_Toolbar_Record'Class)
-   is
-      Sep : Gtk_Separator_Tool_Item;
-   begin
-      Toolbar.Set_Style (Toolbar_Icons);
-      Get_Style_Context (Toolbar).Add_Class ("gps-local-toolbar");
-
-      Gtk_New (Sep);
-      Append_Toolbar (View, Toolbar, Sep);
-
-      Build_Filter
-        (Self        => View,
-         Toolbar     => Toolbar,
-         Hist_Prefix => Histories.History_Key ("search-" & View.Key.all),
-         Tooltip     => "Search in console.",
-         Options     => Has_Whole_Word or Has_Case_Sensitive,
-         Placeholder => "search");
-
-      View.Get_Filter.Get_Focus_Widget.On_Key_Press_Event
-        (Search_Key_Press_Handler'Access, View);
-   end Create_Toolbar;
 
    -------------------------
    -- Set_Command_Handler --

@@ -2263,9 +2263,10 @@ package body GPS.Kernel.Modules.UI is
    --------------------
 
    procedure Create_Toolbar
-     (Kernel          : not null access Kernel_Handle_Record'Class;
-      Toolbar         : in out Gtk.Toolbar.Gtk_Toolbar;
-      Id              : String)
+     (Kernel        : not null access Kernel_Handle_Record'Class;
+      Toolbar       : in out Gtk.Toolbar.Gtk_Toolbar;
+      Id            : String;
+      Force_Refresh : Boolean := True)
    is
       procedure Process_Toolbar (Descr : Toolbar_Description);
       --  Create a toolbar from its description
@@ -2309,12 +2310,9 @@ package body GPS.Kernel.Modules.UI is
                   (To_String (Descr.Inherit)));
          end if;
       end Process_Toolbar;
-
    begin
       if Toolbar = null then
          Gtk_New (Toolbar);
-      else
-         Remove_All_Children (Toolbar);
       end if;
 
       Toolbar.Set_Name (Id);  --  used in For_Each_Toolbar
@@ -2322,7 +2320,13 @@ package body GPS.Kernel.Modules.UI is
       Toolbar.Set_Style (Toolbar_Icons);
       Toolbar.Set_Show_Arrow (True);
 
-      if Globals.Toolbars.Contains (Id) then
+      if Force_Refresh then
+         Remove_All_Children (Toolbar);
+      end if;
+
+      if not Has_Children (Toolbar)
+        and then Globals.Toolbars.Contains (Id)
+      then
          Process_Toolbar (Globals.Toolbars.Constant_Reference (Id));
       end if;
    end Create_Toolbar;
