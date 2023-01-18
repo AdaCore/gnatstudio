@@ -850,6 +850,7 @@ package body DAP.Persistent_Breakpoints is
                Locations     => Locations_Vectors.To_Vector
                  ((Id, Loc, Invalid_Address), 1),
                Ignore        => Item.Get ("ignore"),
+               Temporary     => False,
                Condition     => Item.Get ("condition"),
                Executable    =>
                  (if Item.Has_Field ("executable")
