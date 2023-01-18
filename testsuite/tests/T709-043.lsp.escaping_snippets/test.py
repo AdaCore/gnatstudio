@@ -23,7 +23,7 @@ def run_test():
 
     buf.insert("No")
     send_key_event(ord('t'))
-    yield hook('language_server_response_processed')
+    yield wait_language_server("textDocument/completion")
     yield wait_idle()
 
     pop_tree = get_widget_by_name("completion-view")
@@ -34,7 +34,6 @@ def run_test():
     send_key_event(ord("V"))
     yield hook('language_server_response_processed')
     yield wait_idle()
-
     line = buf.get_chars(buf.at(8, 1), buf.at(8, 1).end_of_line())
     gps_assert("Obj.Do_Nothing (V" in line.strip(), True,
                "V has not been inserted properly")

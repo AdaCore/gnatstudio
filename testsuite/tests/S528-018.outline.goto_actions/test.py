@@ -15,7 +15,8 @@ def run_test():
     GPS.execute_action("open Outline")
     outline = get_widget_by_name("Outline View Tree")
     outline.grab_focus()
-    yield wait_idle()
+    yield wait_until_true(
+        lambda: dump_tree_model(outline.get_model()) != [])
 
     windows = Gtk.Window.list_toplevels()
     click_in_tree(outline, button=3)

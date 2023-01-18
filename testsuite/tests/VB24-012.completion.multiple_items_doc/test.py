@@ -14,7 +14,8 @@ def run_test():
     GPS.Preference("LSP-Completion-Use-Snippets").set(False)
     GPS.execute_action("Restart ada language server")
     yield hook('language_server_started')
-
+    yield wait_tasks()
+    
     # Enable dynamic completion and insert text to get completion
     # proposals
     GPS.Preference("Smart-Completion-Mode").set("3")

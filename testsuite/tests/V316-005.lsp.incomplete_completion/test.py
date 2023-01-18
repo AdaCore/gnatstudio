@@ -23,7 +23,7 @@ def run_test():
     )
     GPS.execute_action("undo")
 
-    for ch in "std::f":
+    for ch in "std::fa":
         send_key_event(ord(ch))
         yield timeout(100)
 
