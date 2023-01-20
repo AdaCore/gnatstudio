@@ -24,7 +24,6 @@ with GNATCOLL.Traces;                use GNATCOLL.Traces;
 with Commands;                       use Commands;
 with Commands.Interactive;           use Commands.Interactive;
 
-with Basic_Types;                    use Basic_Types;
 with GPS.Default_Styles;
 with GPS.Editors;                    use GPS.Editors;
 with GPS.Editors.Line_Information;
@@ -69,19 +68,6 @@ package body DAP.Persistent_Breakpoints is
       Mode   : Breakpoint_Command_Mode) return Command_Access;
    --  Create a new instance of the command that sets or removes a breakpoint
    --  at a specific location.
-
-   procedure Break_Source
-     (Kernel        : not null access Kernel_Handle_Record'Class;
-      File          : Virtual_File;
-      Line          : Editable_Line_Type;
-      Temporary     : Boolean := False);
-   --  Add breakpoint for the source line
-
-   procedure Break_Subprogram
-     (Kernel        : not null access Kernel_Handle_Record'Class;
-      Subprogram    : String;
-      Temporary     : Boolean := False);
-   --  Add breakpoint for the subprogram
 
    procedure Unbreak_Source
      (Kernel        : not null access Kernel_Handle_Record'Class;
@@ -760,7 +746,7 @@ package body DAP.Persistent_Breakpoints is
                   Mode => Unset));
             Msg.Set_Action (Action);
 
-            if not B.Enabled
+            if B.Disposition = Disable
               or else B.Num = 0
             then
                Msg.Set_Highlighting
@@ -844,13 +830,11 @@ package body DAP.Persistent_Breakpoints is
                Num           => Id,
                Disposition   => Breakpoint_Disposition'Value
                  (Item.Get ("disposition")),
-               Enabled       => Item.Get ("enabled"),
                Change_State  => False,
                Subprogram    => Item.Get ("subprogram"),
                Locations     => Locations_Vectors.To_Vector
                  ((Id, Loc, Invalid_Address), 1),
                Ignore        => Item.Get ("ignore"),
-               Temporary     => False,
                Condition     => Item.Get ("condition"),
                Executable    =>
                  (if Item.Has_Field ("executable")
@@ -896,7 +880,6 @@ package body DAP.Persistent_Breakpoints is
          Value.Set_Field
            ("disposition",
             Breakpoint_Disposition'Image (B.Disposition));
-         Value.Set_Field ("enabled", B.Enabled);
          if B.Locations.Is_Empty then
             Value.Set_Field ("file", "");
             Value.Set_Field ("line", "");

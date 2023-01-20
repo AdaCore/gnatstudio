@@ -56,7 +56,6 @@ with DAP.Requests.Next;
 with DAP.Requests.Step_In_Request;
 with DAP.Scripts;
 with DAP.Tools;                    use DAP.Tools;
-with DAP.Types;
 with DAP.Views.Call_Stack;
 with DAP.Views.Threads;
 with DAP.Views.Assembly;
@@ -315,7 +314,10 @@ package body DAP.Module is
 
       --  Create console
       DAP.Consoles.Attach_To_Debugger_Console
-        (Client, Kernel, Create_If_Necessary => True);
+        (Client, Kernel,
+         Create_If_Necessary => True,
+         Name                => " " & (+Base_Name (File)));
+
       if Client.Get_Debugger_Console /= null then
          Client_ID_Callback.Connect
            (Client.Get_Debugger_Console,
@@ -489,11 +491,11 @@ package body DAP.Module is
          if Mains.List (J).Length /= 0 then
             declare
                Main : constant Virtual_File :=
-                  To_File (Kernel, Mains.List (J).Tuple (2).Str);
+                 To_File (Kernel, Mains.List (J).Tuple (2).Str);
                Prj  : constant Virtual_File :=
-                  To_File (Kernel, Mains.List (J).Tuple (3).Str);
+                 To_File (Kernel, Mains.List (J).Tuple (3).Str);
                P    : constant Project_Type :=
-                  Kernel.Registry.Tree.Project_From_Path (Prj);
+                 Kernel.Registry.Tree.Project_From_Path (Prj);
             begin
                Create_Action_And_Menu (P, Main);
             end;
@@ -526,7 +528,7 @@ package body DAP.Module is
       Dummy : DAP.Clients.DAP_Client_Access;
    begin
       Dummy := Debug_Init
-         (Get_Kernel (Context.Context), Command.Project, Command.Exec, "");
+        (Get_Kernel (Context.Context), Command.Project, Command.Exec, "");
 
       return Success;
    exception
@@ -600,8 +602,8 @@ package body DAP.Module is
       if Client.Get_Status /= DAP.Types.Ready then
          Ignore := GUI_Utils.GPS_Message_Dialog
            ("Cannot rerun while the underlying debugger is busy." &
-            ASCII.LF &
-            "Interrupt the debugger or wait for its availability.",
+              ASCII.LF &
+              "Interrupt the debugger or wait for its availability.",
             Dialog_Type => Gtkada.Dialogs.Warning,
             Buttons     => Gtkada.Dialogs.Button_OK,
             Parent      => Kernel.Get_Main_Window);
@@ -938,6 +940,9 @@ package body DAP.Module is
       end loop;
 
       if Client /= null then
+         Debugger_Terminated_Hook.Run
+           (DAP_Module_ID.Get_Kernel, Client.Get_Visual);
+
          DAP_Module_ID.Clients.Delete (C);
          Free (Client);
 
@@ -1058,6 +1063,41 @@ package body DAP.Module is
       end if;
    end Terminate_Debuggers;
 
+   ----------------------------
+   -- Get_Breakpoint_From_Id --
+   ----------------------------
+
+   function Get_Breakpoint_From_Id
+     (Id : DAP.Types.Breakpoint_Identifier)
+      return DAP.Breakpoint_Maps.Breakpoint_Data
+   is
+      use type DAP.Clients.DAP_Client_Access;
+      use type DAP.Types.Breakpoint_Identifier;
+   begin
+      if Get_Current_Debugger = null then
+         for Data of DAP.Persistent_Breakpoints.Get_Persistent_Breakpoints loop
+            if Data.Num = Id then
+               return Data;
+            end if;
+         end loop;
+
+      else
+         for Data of Get_Current_Debugger.Get_Breakpoints loop
+            if Data.Num = Id then
+               return Data;
+            else
+               for L of Data.Locations loop
+                  if L.Num = Id then
+                     return Data;
+                  end if;
+               end loop;
+            end if;
+         end loop;
+      end if;
+
+      return DAP.Breakpoint_Maps.Empty_Breakpoint_Data;
+   end Get_Breakpoint_From_Id;
+
    ---------------------
    -- Register_Module --
    ---------------------
@@ -1143,7 +1183,7 @@ package body DAP.Module is
          Filter       => Debugger_Stopped,
          Description  =>
            "Continue execution until next breakpoint." & ASCII.LF
-           & "Start the debugger if not started yet",
+         & "Start the debugger if not started yet",
          Category     => "Debug",
          For_Learning => True);
 
@@ -1153,7 +1193,7 @@ package body DAP.Module is
          Filter       => Debugger_Stopped,
          Description  =>
            "Execute the program until the next source line, stepping over"
-             & " subprogram calls",
+         & " subprogram calls",
          Category     => "Debug",
          For_Learning => True);
 
@@ -1162,7 +1202,7 @@ package body DAP.Module is
          Filter      => Debugger_Stopped,
          Description =>
            "Execute the program until the next machine instruction, stepping"
-             & " over subprogram calls",
+         & " over subprogram calls",
          Category    => "Debug");
 
       GPS.Kernel.Actions.Register_Action
@@ -1196,7 +1236,7 @@ package body DAP.Module is
    function To_File
      (Kernel  : not null access Kernel_Handle_Record'Class;
       Name    : String)
-     return GNATCOLL.VFS.Virtual_File
+      return GNATCOLL.VFS.Virtual_File
    is
       F : Virtual_File;
    begin
