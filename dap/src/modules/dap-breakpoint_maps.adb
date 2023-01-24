@@ -438,7 +438,7 @@ package body DAP.Breakpoint_Maps is
             if GPS.Editors.Get_Line (L.Location) = Line
               and then GPS.Editors.Get_File (L.Location) = File
             then
-               if Data.Enabled then
+               if Data.Disposition /= Disable then
                   Self.Delete_From_Changed (Data, Changed);
                else
                   Updated := True;
@@ -470,7 +470,7 @@ package body DAP.Breakpoint_Maps is
          while Idx <= Self.All_Breakpoints.Last_Index loop
             Data := Self.All_Breakpoints.Element (Idx);
             if Data.Num = Num then
-               if Data.Enabled then
+               if Data.Disposition /= Disable then
                   Self.Delete_From_Changed (Data, Changed);
                else
                   Updated := True;
@@ -493,7 +493,7 @@ package body DAP.Breakpoint_Maps is
    begin
       while Idx <= Self.All_Breakpoints.Last_Index loop
          Data := Self.All_Breakpoints.Element (Idx);
-         if not Data.Enabled then
+         if Data.Disposition = Disable then
             Self.All_Breakpoints.Delete (Idx);
             Idx := Idx - 1;
          end if;
@@ -873,7 +873,7 @@ package body DAP.Breakpoint_Maps is
       V    : Breakpoint_Vectors.Vector;
    begin
       for Data of Self.All_Breakpoints loop
-         if Data.Enabled then
+         if Data.Disposition /= Disable then
             if Data.Subprogram /= Null_Unbounded_String then
                Self.Subprograms.Append (Data);
 
@@ -929,7 +929,7 @@ package body DAP.Breakpoint_Maps is
             loop
                Data := Self.All_Breakpoints.Element (Index);
                if Data.Num = Num
-                 and then not Data.Enabled
+                 and then Data.Disposition = Disable
                then
                   Data.Change_State := True;
                   Self.All_Breakpoints.Replace_Element (Index, Data);
@@ -953,7 +953,7 @@ package body DAP.Breakpoint_Maps is
             loop
                Data := Self.All_Breakpoints.Element (Index);
                if Data.Num = Num
-                 and then Data.Enabled
+                 and then Data.Disposition /= Disable
                then
                   Data.Change_State := True;
                   Self.All_Breakpoints.Replace_Element (Index, Data);
@@ -995,7 +995,7 @@ package body DAP.Breakpoint_Maps is
             Cursor  := Self.All_Breakpoints.Find (Old.Element (Idx));
             Data    := Element (Cursor);
 
-            Data.Enabled      := False;
+            Data.Disposition  := Disable;
             Data.Change_State := False;
 
             Self.All_Breakpoints.Replace_Element (Cursor, Data);
@@ -1008,7 +1008,7 @@ package body DAP.Breakpoint_Maps is
          Data    := Element (Cursor);
          Copy (Data, Actual.Element (Idx));
 
-         Data.Enabled      := True;
+         Data.Disposition  := Keep;
          Data.Change_State := False;
 
          Self.All_Breakpoints.Replace_Element (Cursor, Data);
@@ -1076,7 +1076,7 @@ package body DAP.Breakpoint_Maps is
             Cursor  := Self.All_Breakpoints.Find (Old.Element (Idx));
             Data    := Element (Cursor);
 
-            Data.Enabled      := False;
+            Data.Disposition  := Disable;
             Data.Change_State := False;
 
             Self.All_Breakpoints.Replace_Element (Cursor, Data);
@@ -1111,7 +1111,7 @@ package body DAP.Breakpoint_Maps is
                Data := Self.All_Breakpoints.Element (Index);
                Copy (Data, Actual.Element (Idx));
 
-               Data.Enabled      := True;
+               Data.Disposition  := Keep;
                Data.Change_State := False;
 
                Self.All_Breakpoints.Replace_Element (Index, Data);
@@ -1325,7 +1325,11 @@ package body DAP.Breakpoint_Maps is
          loop
             Data := Self.All_Breakpoints.Element (Index);
             if Data.Id = Id then
-               Data.Enabled := State;
+               if State then
+                  Data.Disposition := Keep;
+               else
+                  Data.Disposition := Disable;
+               end if;
                Self.All_Breakpoints.Replace_Element (Index, Data);
 
                exit;

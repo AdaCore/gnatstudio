@@ -151,10 +151,11 @@ package body DAP.Consoles is
    procedure Attach_To_Debugger_Console
      (Client              : access DAP_Client'Class;
       Kernel              : not null access Kernel_Handle_Record'Class;
-      Create_If_Necessary : Boolean) is
+      Create_If_Necessary : Boolean;
+      Name                : String) is
    begin
       Console_Views.Attach_To_View
-        (Client, Kernel, Create_If_Necessary, False);
+        (Client, Kernel, Create_If_Necessary, False, Name);
    end Attach_To_Debugger_Console;
 
    -----------------

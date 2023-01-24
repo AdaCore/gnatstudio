@@ -30,21 +30,43 @@ with Glib.Object;                use Glib.Object;
 with Glib.Values;                use Glib.Values;
 with Glib_Values_Utils;          use Glib_Values_Utils;
 
+with Gtk.Adjustment;             use Gtk.Adjustment;
 with Gtk.Box;                    use Gtk.Box;
+with Gtk.Button;                 use Gtk.Button;
 with Gtk.Cell_Renderer;          use Gtk.Cell_Renderer;
 with Gtk.Cell_Renderer_Toggle;   use Gtk.Cell_Renderer_Toggle;
+with Gtk.Check_Button;           use Gtk.Check_Button;
+with Gtk.Combo_Box_Text;         use Gtk.Combo_Box_Text;
+with Gtk.Dialog;                 use Gtk.Dialog;
 with Gtk.Enums;                  use Gtk.Enums;
+with Gtk.Frame;                  use Gtk.Frame;
+with Gtk.GEntry;                 use Gtk.GEntry;
+with Gtk.Gesture_Long_Press;     use Gtk.Gesture_Long_Press;
+with Gtk.Gesture_Multi_Press;    use Gtk.Gesture_Multi_Press;
+with Gtk.Label;                  use Gtk.Label;
+with Gtk.List_Store;             use Gtk.List_Store;
 with Gtk.Scrolled_Window;        use Gtk.Scrolled_Window;
+with Gtk.Size_Group;             use Gtk.Size_Group;
+with Gtk.Stock;                  use Gtk.Stock;
+with Gtk.Spin_Button;            use Gtk.Spin_Button;
+with Gtk.Text_Buffer;            use Gtk.Text_Buffer;
+with Gtk.Text_Iter;              use Gtk.Text_Iter;
 with Gtk.Tree_Model;             use Gtk.Tree_Model;
+with Gtk.Tree_Selection;         use Gtk.Tree_Selection;
 with Gtk.Tree_View;              use Gtk.Tree_View;
 with Gtk.Tree_Selection;
 with Gtk.Tree_Store;             use Gtk.Tree_Store;
+with Gtk.Radio_Button;           use Gtk.Radio_Button;
 with Gtk.Widget;                 use Gtk.Widget;
 
 with Gtkada.MDI;                 use Gtkada.MDI;
+with Gtkada.Multiline_Entry;     use Gtkada.Multiline_Entry;
+
+with Basic_Types;                use Basic_Types;
 
 with GPS.Debuggers;              use GPS.Debuggers;
 with GPS.Editors;                use GPS.Editors;
+with GPS.Main_Window;
 with GPS.Kernel.MDI;             use GPS.Kernel.MDI;
 with GPS.Kernel.Hooks;           use GPS.Kernel.Hooks;
 with GPS.Markers;                use GPS.Markers;
@@ -58,6 +80,7 @@ with DAP.Breakpoint_Maps;        use DAP.Breakpoint_Maps;
 with DAP.Persistent_Breakpoints; use DAP.Persistent_Breakpoints;
 with DAP.Clients;                use DAP.Clients;
 with DAP.Module;
+with DAP.Utils;
 
 with GUI_Utils;                  use GUI_Utils;
 
@@ -95,9 +118,16 @@ package body DAP.Views.Breakpoints is
       new String'("Activatable"),
       new String'("Executable"));
 
+   type Breakpoint_Type is
+     (Break_On_Source_Loc,
+      Break_On_Subprogram);
+   --  The various types of breakpoints
+
    type Breakpoint_View_Record is new View_Record with
       record
          List                 : Gtk_Tree_View;
+         Multipress           : Gtk_Gesture_Multi_Press;
+         Longpress            : Gtk_Gesture_Long_Press;
          Activatable          : Boolean := True;
          Prevent_Bp_Selection : Boolean := False;
       end record;
@@ -125,6 +155,25 @@ package body DAP.Views.Breakpoints is
       Is_Set  : Boolean;
       State   : Boolean;
       Id_List : in out Breakpoint_Identifier_Lists.List);
+
+   procedure Show_Selected_Breakpoint_Details
+     (View : not null access Breakpoint_View_Record'Class);
+
+   procedure Show_Selected_Breakpoint_In_Editor
+     (View : not null access Breakpoint_View_Record'Class);
+
+   procedure On_Longpress
+     (Self : access Glib.Object.GObject_Record'Class;
+      X, Y : Gdouble);
+
+   procedure On_Multipress
+     (Self    : access Glib.Object.GObject_Record'Class;
+      N_Press : Gint;
+      X, Y    : Gdouble);
+
+   function Get_Selection
+     (View : access Breakpoint_View_Record'Class) return Breakpoint_Data;
+   --  Return information on the currently selected breakpoint.
 
    function Get_View
      (Client : not null access DAP.Clients.DAP_Client'Class)
@@ -162,6 +211,8 @@ package body DAP.Views.Breakpoints is
       Get_View               => Get_View,
       Set_View               => Set_View);
 
+   --  Filters --
+
    type No_View_Filter is new Action_Filter_Record with null record;
 
    overriding function Filter_Matches_Primitive
@@ -174,6 +225,15 @@ package body DAP.Views.Breakpoints is
      (Filter  : access Dummy_Filter;
       Context : Selection_Context) return Boolean;
 
+   type Breakpoint_Single_Selection is
+     new Action_Filter_Record with null record;
+   overriding function Filter_Matches_Primitive
+     (Filter  : access Breakpoint_Single_Selection;
+      Context : Selection_Context) return Boolean;
+   --  True if only one row is selected.
+
+   --  Hooks --
+
    type On_Breakpoints_Changed is new Debugger_Hooks_Function
       with null record;
    overriding procedure Execute
@@ -181,6 +241,78 @@ package body DAP.Views.Breakpoints is
        Kernel   : not null access GPS.Kernel.Kernel_Handle_Record'Class;
        Debugger : access Base_Visual_Debugger'Class);
    --  Hook for "debugger_breakpoints_changed"
+
+   -- Properties_Editor --
+
+   type Properties_Editor_Record is new Gtk_Dialog_Record with record
+      Kernel               : access Kernel_Handle_Record'Class;
+
+      Temporary            : Gtk_Check_Button;
+
+      Location_Box         : Gtk_Box;
+      Subprogram_Box       : Gtk_Box;
+      Address_Box          : Gtk_Box;
+      Regexp_Box           : Gtk_Box;
+      Variable_Box         : Gtk_Box;
+      Exception_Box        : Gtk_Box;
+
+      Stop_Always_Exception      : Gtk_Radio_Button;
+      Stop_Not_Handled_Exception : Gtk_Radio_Button;
+
+      Breakpoint_Type      : Gtk_Combo_Box_Text;
+
+      Exception_Name       : Gtk_Combo_Box_Text;
+
+      Watchpoint_Name      : Gtk_Entry;
+      Watchpoint_Type      : Gtk_Combo_Box_Text;
+      Watchpoint_Cond      : Gtk_Entry;
+
+      File_Name            : Gtk_Entry;
+      Line_Spin            : Gtk_Spin_Button;
+      Address_Combo        : Gtk_Combo_Box_Text;
+      Subprogram_Combo     : Gtk_Combo_Box_Text;
+      Regexp_Combo         : Gtk_Combo_Box_Text;
+
+      Condition_Frame      : Gtk_Frame;
+      Condition_Combo      : Gtk_Combo_Box_Text;
+
+      Ignore_Frame         : Gtk_Frame;
+      Ignore_Count_Combo   : Gtk_Spin_Button;
+
+      Command_Frame        : Gtk_Frame;
+      Command_Descr        : Gtkada_Multiline_Entry;
+
+      Scope_Frame          : Gtk_Frame;
+      Scope_Task           : Gtk_Radio_Button;
+      Scope_Pd             : Gtk_Radio_Button;
+      Scope_Any            : Gtk_Radio_Button;
+
+      Task_Frame           : Gtk_Frame;
+      Action_Task          : Gtk_Radio_Button;
+      Action_Pd            : Gtk_Radio_Button;
+      Action_All           : Gtk_Radio_Button;
+
+      Set_Default          : Gtk_Check_Button;
+   end record;
+   type Properties_Editor is access all Properties_Editor_Record'Class;
+
+   procedure Initialize
+     (Self   : not null access Properties_Editor_Record'Class;
+      Kernel : not null access Kernel_Handle_Record'Class);
+   --  Create the breakpoint properties editor
+
+   procedure Fill
+     (Self : not null access Properties_Editor_Record'Class;
+      Br   : Breakpoint_Data);
+   --  Show the information for the given breakpoint in the editor
+
+   procedure Apply
+     (Self : not null access Properties_Editor_Record'Class;
+      Br   : in out Breakpoint_Data);
+   --  Apply the settings to the given breakpoint
+
+   procedure On_Type_Changed (W : access GObject_Record'Class);
+   --  Callbacks for the various buttons
 
    -- Commands --
 
@@ -203,11 +335,74 @@ package body DAP.Views.Breakpoints is
       Context : Interactive_Command_Context) return Command_Return_Type;
    --  Set the state of the selected breakpoints to Is_Enabled
 
+   type Add_Command is new Interactive_Command with null record;
+   overriding function Execute
+     (Command : access Add_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type;
+   --  Create a new breakpoint
+
+   type Advanced_Command is new Interactive_Command with null record;
+   overriding function Execute
+     (Command : access Advanced_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type;
+   --  Edit the advanced properties of the selected breakpoint
+
    type Dummy_Command is new Interactive_Command with null record;
    overriding function Execute
      (Command : access Dummy_Command;
       Context : Interactive_Command_Context) return Command_Return_Type
      is (Success);
+
+   -----------
+   -- Apply --
+   -----------
+
+   procedure Apply
+     (Self : not null access Properties_Editor_Record'Class;
+      Br   : in out Breakpoint_Data)
+   is
+      use type Generic_Views.Abstract_View_Access;
+
+      Modified       : Boolean := False;
+      Start, The_End : Gtk_Text_Iter;
+      C              : Integer;
+      T              : constant Breakpoint_Type :=
+        Breakpoint_Type'Val (Get_Active (Self.Breakpoint_Type));
+      Temporary      : constant Boolean := Self.Temporary.Get_Active;
+      Num            : Breakpoint_Identifier := Br.Num;
+
+   begin
+      --  Create a new breakpoint if needed
+
+      if Num = 0 then
+         case T is
+         when Break_On_Source_Loc =>
+            declare
+               File : constant Filesystem_String := +Get_Text (Self.File_Name);
+            begin
+               Break_Source
+                 (Self.Kernel,
+                  File      => Create_From_Base (File),
+                  Line      =>
+                    Editable_Line_Type'Value (Self.Line_Spin.Get_Text),
+                  Temporary => Temporary);
+            end;
+
+         when Break_On_Subprogram =>
+            Break_Subprogram
+              (Self.Kernel,
+               Subprogram => Self.Subprogram_Combo.Get_Active_Text,
+               Temporary  => Temporary);
+
+         end case;
+      end if;
+
+      if Modified
+        and then DAP.Module.Get_Breakpoints_View /= null
+      then
+         DAP.Views.View_Access (DAP.Module.Get_Breakpoints_View).Update;
+      end if;
+   end Apply;
 
    -------------------------------------------
    -- Get_Selected_Breakpoints_Or_Set_State --
@@ -320,6 +515,14 @@ package body DAP.Views.Breakpoints is
          Cell_Renderer_List.Free (List);
       end;
 
+      Gtk_New (Self.Multipress, Widget => Self.List);
+      Self.Multipress.On_Pressed (On_Multipress'Access, Slot => Self);
+      Self.Multipress.Watch (Self);
+
+      Gtk_New (Self.Longpress, Widget => Self.List);
+      Self.Longpress.On_Pressed (On_Longpress'Access, Slot => Self);
+      Self.Longpress.Watch (Self);
+
       Debugger_Breakpoints_Changed_Hook.Add
          (new On_Breakpoints_Changed, Watch => Self);
 
@@ -327,6 +530,150 @@ package body DAP.Views.Breakpoints is
       Update (Self);
 
       return Gtk_Widget (Self.List);
+   end Initialize;
+
+   ----------------
+   -- Initialize --
+   ----------------
+
+   procedure Initialize
+     (Self   : not null access Properties_Editor_Record'Class;
+      Kernel : not null access Kernel_Handle_Record'Class)
+   is
+      Button  : Gtk_Button;
+      Frame   : Gtk_Frame;
+      Label   : Gtk_Label;
+      Scroll  : Gtk_Scrolled_Window;
+      Vbox9   : Gtk_Vbox;
+      Details : Gtk_Vbox;
+      Hbox    : Gtk_Box;
+      Size    : Gtk_Size_Group;
+      Adj     : Gtk_Adjustment;
+      M       : Gtk_List_Store;
+      Dummy   : Gtk_Widget;
+   begin
+      Gtk.Dialog.Initialize
+        (Self,
+         "Breakpoint editor",
+         Parent => Kernel.Get_Main_Window,
+         Flags  => Destroy_With_Parent);
+
+      GPS.Main_Window.Set_Default_Size_From_History
+        (Self, "breakpoints", Kernel, 600, 500);
+
+      Self.Kernel := Kernel;
+
+      ------------
+      --  Choosing the type of the breakpoint
+      ------------
+
+      Gtk_New (Self.Breakpoint_Type);
+      for T in Breakpoint_Type loop
+         case T is
+            when Break_On_Source_Loc =>
+               Self.Breakpoint_Type.Append_Text ("break on source location");
+            when Break_On_Subprogram =>
+               Self.Breakpoint_Type.Append_Text ("break on subprogram");
+         end case;
+      end loop;
+
+      Self.Breakpoint_Type.Set_Active
+        (Breakpoint_Type'Pos (Break_On_Source_Loc));
+
+      Self.Breakpoint_Type.On_Changed (On_Type_Changed'Access, Self);
+
+      Gtk_New (Frame);
+      Frame.Set_Label_Widget (Self.Breakpoint_Type);
+      Self.Get_Content_Area.Pack_Start (Frame, Expand => True, Fill => True);
+
+      Gtk_New_Vbox (Details);
+      Frame.Add (Details);
+
+      ------------
+      --  Break on source location
+      ------------
+
+      Gtk_New_Vbox (Self.Location_Box);
+      Details.Pack_Start (Self.Location_Box, Expand => False, Fill => True);
+
+      Gtk_New (Size);
+
+      Gtk_New_Hbox (Hbox, Spacing => 15);
+      Self.Location_Box.Pack_Start (Hbox, False, False);
+
+      Gtk_New (Label, "File:");
+      Label.Set_Alignment (1.0, 0.5);
+      Hbox.Pack_Start (Label, False, False, 0);
+      Size.Add_Widget (Label);
+
+      Gtk_New (Self.File_Name);
+      Self.File_Name.Set_Editable (True);
+      Self.File_Name.Set_Activates_Default (True);
+      Hbox.Pack_Start (Self.File_Name, True, True, 0);
+
+      Gtk_New_Hbox (Hbox, Spacing => 15);
+      Self.Location_Box.Pack_Start (Hbox, False, False);
+
+      Gtk_New (Label, "Line:");
+      Label.Set_Alignment (1.0, 0.5);
+      Hbox.Pack_Start (Label, False, False, 0);
+      Size.Add_Widget (Label);
+
+      Gtk_New (Self.Line_Spin, Min => 1.0, Max => 1.0e+08, Step => 1.0);
+      Self.Line_Spin.Set_Numeric (True);
+      Self.Line_Spin.Set_Value (1.0);
+      Self.Line_Spin.Set_Activates_Default (True);
+      Hbox.Pack_Start (Self.Line_Spin, True, True, 0);
+
+      ------------
+      --   Break on subprogram
+      ------------
+
+      Gtk_New_Vbox (Self.Subprogram_Box);
+      Details.Pack_Start (Self.Subprogram_Box, Expand => True, Fill => True);
+
+      Gtk_New_With_Entry (Self.Subprogram_Combo);
+      Self.Subprogram_Combo.Append_Text ("");
+      Self.Subprogram_Box.Pack_Start (Self.Subprogram_Combo, False, False);
+
+      -------------
+      --  A temporary breakpoint ?
+      -------------
+
+      Gtk_New (Self.Temporary, "Temporary breakpoint");
+      Self.Temporary.Set_Active (False);
+      Details.Pack_Start (Self.Temporary, False, False, 5);
+
+      --------------
+      --  Set proper visibility
+      --------------
+
+      Self.Show_All;
+      Self.Location_Box.Set_No_Show_All (True);
+      Self.Subprogram_Box.Set_No_Show_All (True);
+
+      --------------
+      --  Fill information
+      --------------
+
+      --  Reinitialize the contents of the file name entry
+      if DAP.Module.Get_Current_Debugger /= null then
+         Set_Text
+           (Self.File_Name,
+            +Relative_Path
+              (DAP.Module.Get_Current_Debugger.Current_File, Get_Current_Dir));
+      end if;
+
+      On_Type_Changed (Self);
+
+      ----------------
+      --  Action buttons
+      ----------------
+
+      Dummy := Self.Add_Button (Stock_Ok, Gtk_Response_Apply);
+      Dummy.Grab_Default;
+      Dummy := Self.Add_Button (Stock_Cancel, Gtk_Response_Cancel);
+      Self.Set_Default_Response (Gtk_Response_Apply);
    end Initialize;
 
    ---------------------------------
@@ -417,7 +764,7 @@ package body DAP.Views.Breakpoints is
          --  Show the persistent breakpoints
          Update (View);
       else
-         Clear (-Get_Model (View.List));
+         Gtk.Tree_Store.Clear (-Gtk.Tree_View.Get_Model (View.List));
       end if;
    end On_Process_Terminated;
 
@@ -509,30 +856,13 @@ package body DAP.Views.Breakpoints is
                   if Data.Num = Breakpoint_Identifier'Last
                   then "0"
                   else Breakpoint_Identifier'Image (Data.Num)),
-            2 => As_Boolean (Data.Enabled),
+            2 => As_Boolean (Data.Disposition /= Disable),
             3 => As_Boolean (View.Activatable));
          Last := 5;
 
-         --  case Data.The_Type is
-         --     when Breakpoint =>
          Glib.Values.Init_Set_String (Values (4), "break");
-            --  when Watchpoint =>
-            --     Glib.Values.Init_Set_String (Values (4), "watch");
-            --  when Catchpoint =>
-            --     Glib.Values.Init_Set_String (Values (4), "catch");
-            --  when Other =>
-            --     Glib.Values.Init_Set_String
-            --    (Values (4), Escape_Text (To_String (Data.The_Type_Name)));
-         --  end case;
          Glib.Values.Init_Set_String
            (Values (5), To_Lower (Data.Disposition'Img));
-
-         --  if Br.Expression /= "" then
-         --     Last := Last + 1;
-         --     Columns (Last) := Col_File;
-         --     Glib.Values.Init_Set_String
-         --       (Values (Last), To_String (Br.Expression));
-         --  end if;
 
          if not Data.Locations.Is_Empty then
             if Last < 6 then
@@ -550,13 +880,6 @@ package body DAP.Views.Breakpoints is
             Glib.Values.Init_Set_String
               (Values (Last), Get_Line (Get_Location (Data))'Img);
          end if;
-
-         --  if Br.Except /= "" then
-         --     Last := Last + 1;
-         --     Columns (Last) := Col_Exception;
-         --     Glib.Values.Init_Set_String
-         --       (Values (Last), Escape_Text (To_String (Br.Except)));
-         --  end if;
 
          if Data.Subprogram /= "" then
             Last := Last + 1;
@@ -638,6 +961,27 @@ package body DAP.Views.Breakpoints is
    -------------
 
    overriding function Execute
+     (Command : access Advanced_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type
+   is
+      pragma Unreferenced (Command);
+      View  : constant Breakpoint_View :=
+        Breakpoint_View
+          (Breakpoints_MDI_Views.Retrieve_View
+             (Get_Kernel (Context.Context),
+              Visible_Only => True));
+   begin
+      if View /= null then
+         Show_Selected_Breakpoint_Details (View);
+      end if;
+      return Success;
+   end Execute;
+
+   -------------
+   -- Execute --
+   -------------
+
+   overriding function Execute
      (Command : access Remove_Breakpoint_Command;
       Context : Interactive_Command_Context) return Command_Return_Type
    is
@@ -680,7 +1024,7 @@ package body DAP.Views.Breakpoints is
    begin
       if View /= null then
          Clear_All_Breakpoints (Kernel);
-         Clear (-Get_Model (View.List));
+         Gtk.Tree_Store.Clear (-Get_Model (View.List));
       end if;
       return Success;
    end Execute;
@@ -726,6 +1070,41 @@ package body DAP.Views.Breakpoints is
       return Commands.Success;
    end Execute;
 
+   -------------
+   -- Execute --
+   -------------
+
+   overriding function Execute
+     (Command : access Add_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type
+   is
+      pragma Unreferenced (Command);
+      View  : constant Breakpoint_View :=
+        Breakpoint_View
+          (Breakpoints_MDI_Views.Retrieve_View
+             (Get_Kernel (Context.Context),
+              Visible_Only => True));
+      Props : Properties_Editor;
+      Br    : Breakpoint_Data := (Num => 0, others => <>);
+   begin
+      if View /= null then
+         Props := new Properties_Editor_Record;
+         Initialize (Props, View.Kernel);
+         Fill (Props, Br);
+
+         if Props.Run = Gtk_Response_Apply then
+            Apply (Props, Br);
+         end if;
+
+         --  No need to free Br: either it has not been created, or it was set
+         --  by Apply as a copy of an internal field in Process.Breakpoints
+
+         Props.Destroy;
+      end if;
+
+      return Success;
+   end Execute;
+
    ------------------------------
    -- Filter_Matches_Primitive --
    ------------------------------
@@ -746,11 +1125,200 @@ package body DAP.Views.Breakpoints is
    ------------------------------
 
    overriding function Filter_Matches_Primitive
+     (Filter  : access Breakpoint_Single_Selection;
+      Context : Selection_Context) return Boolean
+   is
+      pragma Unreferenced (Filter);
+      View : constant Breakpoint_View :=
+        Breakpoint_View
+          (Breakpoints_MDI_Views.Retrieve_View
+             (Get_Kernel (Context),
+              Visible_Only => True));
+      Res  : Boolean                    := False;
+   begin
+      if View /= null then
+         declare
+            Selection : constant Gtk_Tree_Selection :=
+              Get_Selection (View.List);
+         begin
+            Res := Selection.Count_Selected_Rows = 1;
+         end;
+      end if;
+      return Res;
+   end Filter_Matches_Primitive;
+
+   ------------------------------
+   -- Filter_Matches_Primitive --
+   ------------------------------
+
+   overriding function Filter_Matches_Primitive
      (Filter  : access Dummy_Filter;
       Context : Selection_Context) return Boolean is
    begin
       return False;
    end Filter_Matches_Primitive;
+
+   ------------------
+   -- On_Longpress --
+   ------------------
+
+   procedure On_Longpress
+     (Self : access Glib.Object.GObject_Record'Class;
+      X, Y : Gdouble)
+   is
+      pragma Unreferenced (X, Y);
+      View : constant Breakpoint_View := Breakpoint_View (Self);
+   begin
+      Show_Selected_Breakpoint_Details (View);
+      View.Longpress.Set_State (Event_Sequence_Claimed);
+   end On_Longpress;
+
+   -------------------
+   -- On_Multipress --
+   -------------------
+
+   procedure On_Multipress
+     (Self    : access Glib.Object.GObject_Record'Class;
+      N_Press : Gint;
+      X, Y    : Gdouble)
+   is
+      pragma Unreferenced (X, Y);
+      View : constant Breakpoint_View := Breakpoint_View (Self);
+   begin
+      if N_Press = 2 then
+         Show_Selected_Breakpoint_In_Editor (View);
+         View.Multipress.Set_State (Event_Sequence_Claimed);
+      end if;
+   end On_Multipress;
+
+   --------------------------------------
+   -- Show_Selected_Breakpoint_Details --
+   --------------------------------------
+
+   procedure Show_Selected_Breakpoint_Details
+     (View : not null access Breakpoint_View_Record'Class)
+   is
+      Current : Breakpoint_Data;
+      Props   : Properties_Editor;
+   begin
+      Current := Get_Selection (View);
+      if Current /= Empty_Breakpoint_Data then
+         Props := new Properties_Editor_Record;
+         Initialize (Props, View.Kernel);
+         Fill (Props, Current);
+
+         if Props.Run = Gtk_Response_Apply then
+            Apply (Props, Current);
+         end if;
+
+         Props.Destroy;
+      end if;
+   end Show_Selected_Breakpoint_Details;
+
+   ----------------------------------------
+   -- Show_Selected_Breakpoint_In_Editor --
+   ----------------------------------------
+
+   procedure Show_Selected_Breakpoint_In_Editor
+     (View : not null access Breakpoint_View_Record'Class)
+   is
+      Selection : Breakpoint_Data;
+   begin
+      Selection := Get_Selection (View);
+      if Selection /= Empty_Breakpoint_Data then
+         View.Prevent_Bp_Selection := True;
+         DAP.Utils.Goto_Location
+           (Kernel    => View.Kernel,
+            File      => Get_File (Selection.Locations.First_Element.Location),
+            Line      => Natural
+              (Get_Line (Selection.Locations.First_Element.Location)));
+         View.Prevent_Bp_Selection := False;
+      end if;
+   end Show_Selected_Breakpoint_In_Editor;
+
+   -------------------
+   -- Get_Selection --
+   -------------------
+
+   function Get_Selection
+     (View : access Breakpoint_View_Record'Class) return Breakpoint_Data
+   is
+      Iter      : Gtk_Tree_Iter;
+      The_Model : Gtk_Tree_Model;
+      List      : Gtk_Tree_Path_List.Glist;
+      Path      : Gtk_Tree_Path;
+      Selection : constant Gtk_Tree_Selection := Get_Selection (View.List);
+   begin
+      if Selection.Count_Selected_Rows = 1 then
+         Get_Selected_Rows (Selection, The_Model, List);
+         Path := Gtk_Tree_Path
+           (Gtk_Tree_Path_List.Get_Data (Gtk_Tree_Path_List.First (List)));
+         Iter := Get_Iter (The_Model, Path);
+         Free_Path_List (List);
+
+         if Iter /= Null_Iter then
+            return DAP.Module.Get_Breakpoint_From_Id
+              (Breakpoint_Identifier'Value
+                 (Get_String (The_Model, Iter, Col_Num)));
+         end if;
+      end if;
+
+      return Empty_Breakpoint_Data;
+   end Get_Selection;
+
+   ---------------------
+   -- On_Type_Changed --
+   ---------------------
+
+   procedure On_Type_Changed (W : access GObject_Record'Class) is
+      Self : constant Properties_Editor := Properties_Editor (W);
+      T    : constant Breakpoint_Type :=
+        Breakpoint_Type'Val (Get_Active (Self.Breakpoint_Type));
+   begin
+      Self.Location_Box.Set_Sensitive (T = Break_On_Source_Loc);
+      Self.Location_Box.Set_Visible (T = Break_On_Source_Loc);
+
+      Self.Subprogram_Box.Set_Sensitive (T = Break_On_Subprogram);
+      Self.Subprogram_Box.Set_Visible (T = Break_On_Subprogram);
+   end On_Type_Changed;
+
+   ----------
+   -- Fill --
+   ----------
+
+   procedure Fill
+     (Self : not null access Properties_Editor_Record'Class;
+      Br   : Breakpoint_Data)
+   is
+      Start, The_End : Gtk_Text_Iter;
+      Buffer         : Gtk_Text_Buffer;
+   begin
+      --  When editing an existing breakpoint, we can't change its type
+      if Br.Num /= 0 then
+         if not Br.Locations.Is_Empty then
+            Set_Text
+              (Self.File_Name,
+               +Base_Name (Get_File (Br.Locations.First_Element.Location)));
+            Set_Value
+              (Self.Line_Spin,
+               Grange_Float (Get_Line (Br.Locations.First_Element.Location)));
+         end if;
+
+         if Br.Subprogram /= "" then
+            Self.Breakpoint_Type.Set_Active
+              (Breakpoint_Type'Pos (Break_On_Subprogram));
+
+            Add_Unique_Combo_Entry
+              (Self.Subprogram_Combo, To_String (Br.Subprogram), True);
+         end if;
+
+         Self.Breakpoint_Type.Set_Sensitive (False);
+         Self.Temporary.Set_Sensitive (False);
+         Self.File_Name.Set_Sensitive (False);
+         Self.Line_Spin.Set_Sensitive (False);
+         Self.Subprogram_Combo.Set_Sensitive (False);
+      end if;
+   end Fill;
 
    ---------------------
    -- Register_Module --
@@ -760,6 +1328,9 @@ package body DAP.Views.Breakpoints is
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
    is
       No_View            : Action_Filter := new No_View_Filter;
+      Selection_Filter   : constant Action_Filter :=
+        new Breakpoint_Single_Selection;
+
       No_Or_Ready_Filter : Action_Filter;
       Dummy              : Action_Filter;
    begin
@@ -807,6 +1378,24 @@ package body DAP.Views.Breakpoints is
          Category  => "Debug",
          Filter    => No_Or_Ready_Filter);
 
+      GPS.Kernel.Actions.Register_Action
+        (Kernel,
+         "debug create breakpoint", new Add_Command,
+         "Create a new breakpoint, from the Breakpoints view",
+         Icon_Name => "gps-add-symbolic",
+         Category  => "Debug",
+         Filter    => No_Or_Ready_Filter);
+
+      GPS.Kernel.Actions.Register_Action
+        (Kernel,
+         "debug edit breakpoint", new Advanced_Command,
+         "Edit the advanced properties of the selected breakpoint"
+           & " like its condition, repeat count,..."
+           & " (from the Breakpoints view)",
+         Icon_Name => "gps-settings-symbolic",
+         Category  => "Debug",
+         Filter    => No_Or_Ready_Filter and Selection_Filter);
+
       --  Not implemented yet
       Dummy := new Dummy_Filter;
       Register_Filter (Kernel, Dummy, "Dummy");
@@ -817,24 +1406,6 @@ package body DAP.Views.Breakpoints is
          "View the source editor containing the selected breakpoint"
            & " (from the Breakpoints view)",
          Icon_Name => "gps-goto-symbolic",
-         Category  => "Debug",
-         Filter    => Dummy);
-
-      GPS.Kernel.Actions.Register_Action
-        (Kernel,
-         "debug edit breakpoint", new Dummy_Command,
-         "Edit the advanced properties of the selected breakpoint"
-           & " like its condition, repeat count,..."
-           & " (from the Breakpoints view)",
-         Icon_Name => "gps-settings-symbolic",
-         Category  => "Debug",
-         Filter    => Dummy);
-
-      GPS.Kernel.Actions.Register_Action
-        (Kernel,
-         "debug create breakpoint", new Dummy_Command,
-         "Create a new breakpoint, from the Breakpoints view",
-         Icon_Name => "gps-add-symbolic",
          Category  => "Debug",
          Filter    => Dummy);
    end Register_Module;

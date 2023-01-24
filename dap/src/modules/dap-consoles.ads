@@ -28,7 +28,8 @@ package DAP.Consoles is
    procedure Attach_To_Debugger_Console
      (Client              : access DAP_Client'Class;
       Kernel              : not null access Kernel_Handle_Record'Class;
-      Create_If_Necessary : Boolean);
+      Create_If_Necessary : Boolean;
+      Name                : String);
    --  Attach debugger to a console
    --  If an unattached console exists in the desktop, it is reused.
    --  If none exists, one is created if Create_If_Necessary is true.

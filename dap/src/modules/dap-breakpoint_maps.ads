@@ -38,20 +38,20 @@ package DAP.Breakpoint_Maps is
    type Num_Location is record
       Num      : Breakpoint_Identifier := 0;
       Location : Location_Marker       := No_Marker;
-      Address  : Address_Type := Invalid_Address;
+      Address  : Address_Type          := Invalid_Address;
    end record;
 
    package Locations_Vectors is
      new Ada.Containers.Vectors (Positive, Num_Location);
 
    type Breakpoint_Data is record
-      Id          : Breakpoint_Identifier := No_Breakpoint;
+      Id           : Breakpoint_Identifier := No_Breakpoint;
       --  Unique breakpoint identifier because we can have
       --  the same Nums in the different debugging sessions
 
-      Num         : Breakpoint_Identifier := No_Breakpoint;
+      Num          : Breakpoint_Identifier := No_Breakpoint;
 
-      Locations   : Locations_Vectors.Vector;
+      Locations    : Locations_Vectors.Vector;
       --  The locations of the breakpoint, may have several for subprograms
 
       Subprogram   : Ada.Strings.Unbounded.Unbounded_String;
@@ -65,11 +65,7 @@ package DAP.Breakpoint_Maps is
       Ignore       : Natural := 0;
       --  Number of hits that will be ignored before actually stopping
 
-      Enabled      : Boolean := True;
       Change_State : Boolean := False;
-
-      Temporary    : Boolean := False;
-      --  Temporary breakpoint that should be removed on the first hit.
 
       Executable   : Unbounded_String;
    end record;

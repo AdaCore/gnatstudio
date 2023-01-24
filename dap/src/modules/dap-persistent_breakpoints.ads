@@ -17,6 +17,7 @@
 
 with GNATCOLL.VFS;        use GNATCOLL.VFS;
 
+with Basic_Types;         use Basic_Types;
 with GPS.Kernel;          use GPS.Kernel;
 with DAP.Types;           use DAP.Types;
 with DAP.Breakpoint_Maps; use DAP.Breakpoint_Maps;
@@ -67,5 +68,18 @@ package DAP.Persistent_Breakpoints is
    procedure Store
      (Executable : Virtual_File;
       List       : Breakpoint_Vectors.Vector);
+
+   procedure Break_Source
+     (Kernel        : not null access Kernel_Handle_Record'Class;
+      File          : Virtual_File;
+      Line          : Editable_Line_Type;
+      Temporary     : Boolean := False);
+   --  Add breakpoint for the source line
+
+   procedure Break_Subprogram
+     (Kernel        : not null access Kernel_Handle_Record'Class;
+      Subprogram    : String;
+      Temporary     : Boolean := False);
+   --  Add breakpoint for the subprogram
 
 end DAP.Persistent_Breakpoints;

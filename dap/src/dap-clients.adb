@@ -434,7 +434,7 @@ package body DAP.Clients is
    function Get_Executable
      (Self : in out DAP_Client) return GNATCOLL.VFS.Virtual_File is
    begin
-      return Self.File;
+      return GNATCOLL.VFS.Create (GNATCOLL.VFS."+"(To_String (Self.File)));
    end Get_Executable;
 
    -----------------------
@@ -655,7 +655,9 @@ package body DAP.Clients is
          return;
       end if;
 
-      if Self.File /= No_File and then not Is_Regular_File (Self.File) then
+      if Self.File /= Null_Unbounded_String
+        and then not Is_Regular_File (Self.Get_Executable)
+      then
          declare
             Buttons : Message_Dialog_Buttons;
             pragma Unreferenced (Buttons);
@@ -677,7 +679,7 @@ package body DAP.Clients is
       begin
          if List /= null then
             for L in List'Range loop
-               if Equal (+List (L).all, Full_Name (Self.File)) then
+               if Equal (+List (L).all, +To_String (Self.File)) then
                   Free (List);
                   return;
                end if;
@@ -693,10 +695,10 @@ package body DAP.Clients is
 
       --  Create an empty project, and we'll add properties to it
 
-      if Self.File /= GNATCOLL.VFS.No_File then
+      if Self.File /= Null_Unbounded_String then
          Get_Registry (Self.Kernel).Tree.Load_Empty_Project
            (Get_Registry (Self.Kernel).Environment,
-            Name           => "debugger_" & (+Base_Name (Self.File)),
+            Name           => "debugger_" & (+Base_Name (Self.Get_Executable)),
             Recompute_View => False);
       else
          Get_Registry (Self.Kernel).Tree.Load_Empty_Project
@@ -728,7 +730,7 @@ package body DAP.Clients is
                  Create_From_Base
                    (+VSS.Strings.Conversions.To_UTF_8_String
                       (Self.Source_Files.Element (L)),
-                    Dir_Name (Self.File),
+                    Dir_Name (Self.Get_Executable),
                     Remote.Get_Nickname (Remote.Debug_Server));
                Local_File  : constant Virtual_File := To_Local (Remote_File);
                Dir         : constant Virtual_File := Local_File.Dir;
@@ -831,15 +833,15 @@ package body DAP.Clients is
 
          --  Object_Dir, Exec_Dir, Main
 
-         if Self.File /= GNATCOLL.VFS.No_File then
+         if Self.File /= Null_Unbounded_String then
             Project.Set_Attribute
               (Attribute          => Obj_Dir_Attribute,
-               Value              => +Dir_Name (Self.File));
+               Value              => +Dir_Name (Self.Get_Executable));
             Project.Set_Attribute
               (Attribute          => Exec_Dir_Attribute,
-               Value              => +Dir_Name (Self.File));
+               Value              => +Dir_Name (Self.Get_Executable));
 
-            Main (Main'First) := new String'(+Full_Name (Self.File));
+            Main (Main'First) := new String'(To_String (Self.File));
             Project.Set_Attribute
               (Attribute          => Main_Attribute,
                Values             => Main);
@@ -1303,7 +1305,7 @@ package body DAP.Clients is
         new DAP.Requests.Initialize.Initialize_DAP_Request (Self.Kernel);
    begin
       Init.Initialize
-        (Self.Project, Self.File,
+        (Self.Project, Self.Get_Executable,
          Ada.Strings.Unbounded.To_String (Self.Args));
 
       Self.Process (DAP.Requests.DAP_Request_Access (Init));
@@ -1434,7 +1436,8 @@ package body DAP.Clients is
       Trace (Me, "Launching the debug adapter: " & Adapter);
 
       Self.Project := Project;
-      Self.File    := File;
+      Self.File    := To_Unbounded_String
+        (GNATCOLL.VFS."+" (GNATCOLL.VFS.Full_Name (File)));
       Self.Args    := Ada.Strings.Unbounded.To_Unbounded_String (Args);
 
       declare
