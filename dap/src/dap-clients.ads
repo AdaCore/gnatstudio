@@ -296,7 +296,7 @@ private
       This           : DAP_Client_Access := DAP_Client'Unchecked_Access;
       Visual         : DAP_Visual_Debugger_Access;
       Project        : GNATCOLL.Projects.Project_Type;
-      File           : GNATCOLL.VFS.Virtual_File;
+      File           : Ada.Strings.Unbounded.Unbounded_String;
       Args           : Ada.Strings.Unbounded.Unbounded_String;
       Source_Files   : VSS.String_Vectors.Virtual_String_Vector;
 

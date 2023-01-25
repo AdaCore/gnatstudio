@@ -61,7 +61,7 @@ with Commands.Interactive;       use Commands.Interactive;
 
 with Debugger_Pixmaps;
 
-with DAP.Breakpoint_Maps;
+with DAP.Breakpoint_Maps;        use DAP.Breakpoint_Maps;
 with DAP.Clients;                use DAP.Clients;
 with DAP.Tools;                  use DAP.Tools;
 with DAP.Types;                  use DAP.Types;
@@ -851,7 +851,7 @@ package body DAP.Views.Assembly is
             Glib.Values.Init (Values (1), Gdk.RGBA.Get_Type);
             Gdk.RGBA.Set_Value
               (Values (1),
-               (if not Data.Enabled then
+               (if Data.Disposition = Disable then
                      GPS.Kernel.Style_Manager.Background
                   (GPS.Default_Styles.Debugger_Disabled_Breakpoint_Style)
                 elsif Data.Condition /= "" then

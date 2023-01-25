@@ -27,7 +27,6 @@ with Commands.Interactive; use Commands.Interactive;
 
 with DAP.Module;
 with DAP.Types;            use DAP.Types;
-with String_Utils;
 
 package body DAP.Views is
 
@@ -64,7 +63,8 @@ package body DAP.Views is
         (Client              : access DAP.Clients.DAP_Client'Class;
          Kernel              : not null access Kernel_Handle_Record'Class;
          Create_If_Necessary : Boolean;
-         Update_On_Attach    : Boolean := True)
+         Update_On_Attach    : Boolean := True;
+         Name                : String := "")
 
       is
          use DAP.Clients;
@@ -99,7 +99,7 @@ package body DAP.Views is
             --  If no existing view was found, create one
 
             if Child = null and then Create_If_Necessary then
-               View := Formal_Views.Get_Or_Create_View (Kernel);
+               View  := Formal_Views.Get_Or_Create_View (Kernel);
                Child := Formal_Views.Child_From_View (View);
             end if;
 
@@ -114,19 +114,7 @@ package body DAP.Views is
                   View.Set_Client (Client);
                   Set_View (Client, View);
 
-                  if DAP.Module.Count_Running_Debuggers < 2
-                    or else Formal_Views.Reuse_If_Exist
-                  then
-                     Set_Title (Child, Formal_Views.View_Name);
-                  else
-                     Set_Title
-                       (Child,
-                        Formal_Views.View_Name
-                        & " <"
-                        & String_Utils.Image (Client.Id)
-                        & ">");
-                  end if;
-
+                  Set_Title (Child, Formal_Views.View_Name & Name);
                   On_Attach (View, Client);
 
                   if Update_On_Attach then

@@ -120,7 +120,8 @@ package DAP.Views is
         (Client              : access DAP.Clients.DAP_Client'Class;
          Kernel              : not null access Kernel_Handle_Record'Class;
          Create_If_Necessary : Boolean;
-         Update_On_Attach    : Boolean := True);
+         Update_On_Attach    : Boolean := True;
+         Name                : String := "");
       --  Call Update for the view after attaching when
       --  Update_On_Attach is True.
 

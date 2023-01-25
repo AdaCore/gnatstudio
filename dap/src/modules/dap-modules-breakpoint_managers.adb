@@ -50,15 +50,11 @@ package body DAP.Modules.Breakpoint_Managers is
       return Breakpoint_Data
    is
       Data    : Breakpoint_Data;
-      Line    : Basic_Types.Editable_Line_Type := 1;
+      Line    : Basic_Types.Editable_Line_Type := 0;
       Address : Address_Type := Invalid_Address;
    begin
       if Item.id.Is_Set then
          Data.Num := Breakpoint_Identifier (Item.id.Value);
-      end if;
-
-      if Item.line.Is_Set then
-         Line := Basic_Types.Editable_Line_Type (Item.line.Value);
       end if;
 
       if not Item.instructionReference.Is_Empty then
@@ -71,18 +67,23 @@ package body DAP.Modules.Breakpoint_Managers is
          end if;
       end if;
 
-      Data.Locations := Locations_Vectors.To_Vector
-        ((Data.Num,
-         Kernel.Get_Buffer_Factory.Create_Marker
-           (File   => File,
-            Line   => Line,
-            Column => Holder.Editor.Expand_Tabs
-              (Line,
-               (if Item.column.Is_Set
-                then Basic_Types.Character_Offset_Type (Item.column.Value)
-                else 1))),
-         Address),
-         1);
+      if Item.line.Is_Set then
+         Line := Basic_Types.Editable_Line_Type (Item.line.Value);
+
+         Data.Locations := Locations_Vectors.To_Vector
+           ((Data.Num,
+            Kernel.Get_Buffer_Factory.Create_Marker
+              (File   => File,
+               Line   => Line,
+               Column => Holder.Editor.Expand_Tabs
+                 (Line,
+                  (if Item.column.Is_Set
+                   then Basic_Types.Character_Offset_Type (Item.column.Value)
+                   else 1))),
+            Address),
+            1);
+      end if;
+
       return Data;
    end Convert;
 
@@ -587,7 +588,7 @@ package body DAP.Modules.Breakpoint_Managers is
                         Stopped_Line := Integer
                           (GPS.Editors.Get_Line (Get_Location (Data)));
 
-                        if Data.Temporary then
+                        if Data.Disposition = Delete then
                            Ids.Append (Data.Num);
                            Self.Remove_Breakpoints (Ids);
                         end if;
