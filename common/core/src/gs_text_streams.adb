@@ -15,7 +15,9 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
+with VSS.Characters.Latin;
 with VSS.Implementation.UTF8_Encoding;
+with VSS.Strings.Character_Iterators;
 with VSS.Unicode;
 
 package body GS_Text_Streams is
@@ -38,6 +40,17 @@ package body GS_Text_Streams is
          GNATCOLL.VFS.Close (Self.Writable);
       end if;
    end Close;
+
+   --------------
+   -- New_Line --
+   --------------
+
+   overriding procedure New_Line
+     (Self    : in out File_UTF8_Output_Stream;
+      Success : in out Boolean) is
+   begin
+      Self.Put (VSS.Characters.Latin.Line_Feed, Success);
+   end New_Line;
 
    ----------
    -- Open --
@@ -108,5 +121,36 @@ package body GS_Text_Streams is
          Success := False;
       end if;
    end Put;
+
+   ---------
+   -- Put --
+   ---------
+
+   overriding procedure Put
+     (Self    : in out File_UTF8_Output_Stream;
+      Item    : VSS.Strings.Virtual_String;
+      Success : in out Boolean)
+   is
+      Iterator : VSS.Strings.Character_Iterators.Character_Iterator :=
+        Item.Before_First_Character;
+
+   begin
+      while Iterator.Forward loop
+         Self.Put (Iterator.Element, Success);
+      end loop;
+   end Put;
+
+   --------------
+   -- Put_Line --
+   --------------
+
+   overriding procedure Put_Line
+     (Self    : in out File_UTF8_Output_Stream;
+      Item    : VSS.Strings.Virtual_String;
+      Success : in out Boolean) is
+   begin
+      Self.Put (Item, Success);
+      Self.New_Line (Success);
+   end Put_Line;
 
 end GS_Text_Streams;
