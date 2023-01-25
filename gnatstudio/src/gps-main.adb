@@ -205,7 +205,7 @@ with GPS.Valgrind;
 with Serial_Ports_Views;
 with Xref;
 
-with DAP.Preferences;
+with DAP.Modules.Preferences;
 
 procedure GPS.Main is
    package ICS renames Interfaces.C.Strings;
@@ -2528,7 +2528,7 @@ procedure GPS.Main is
                use VSS.Strings;
             begin
                if DAP_GDB_Adapter /= Empty_Virtual_String then
-                  DAP.Preferences.DAP_Adapter.Set_Pref
+                  DAP.Modules.Preferences.DAP_Adapter.Set_Pref
                     (GPS_Main.Kernel.Get_Preferences,
                      VSS.Strings.Conversions.To_UTF_8_String
                        (DAP_GDB_Adapter));

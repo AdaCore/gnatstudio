@@ -17,7 +17,7 @@
 
 with Ada.Unchecked_Deallocation;
 
-package body DAP.Histories is
+package body DAP.Modules.Histories is
 
    ------------
    -- Append --
@@ -200,4 +200,4 @@ package body DAP.Histories is
       end if;
    end Free;
 
-end DAP.Histories;
+end DAP.Modules.Histories;

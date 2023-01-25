@@ -65,7 +65,7 @@ with DAP.Breakpoint_Maps;        use DAP.Breakpoint_Maps;
 with DAP.Clients;                use DAP.Clients;
 with DAP.Tools;                  use DAP.Tools;
 with DAP.Types;                  use DAP.Types;
-with DAP.Preferences;            use DAP.Preferences;
+with DAP.Modules.Preferences;    use DAP.Modules.Preferences;
 
 with DAP.Requests.Disassemble;
 

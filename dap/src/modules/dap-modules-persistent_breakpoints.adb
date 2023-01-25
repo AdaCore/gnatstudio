@@ -41,7 +41,7 @@ with GPS.Properties;                 use GPS.Properties;
 
 with DAP.Clients;                    use DAP.Clients;
 with DAP.Module;
-with DAP.Preferences;                use DAP.Preferences;
+with DAP.Modules.Preferences;        use DAP.Modules.Preferences;
 with DAP.Views.Breakpoints;
 
 with GPS.Debuggers;
@@ -49,7 +49,7 @@ with Generic_Views;
 with Xref;                           use Xref;
 with JSON_Utils;
 
-package body DAP.Persistent_Breakpoints is
+package body DAP.Modules.Persistent_Breakpoints is
 
    Me : constant Trace_Handle := Create ("GPS.DAP.PERSISTENT_BREAKPOINTS");
 
@@ -1027,4 +1027,4 @@ package body DAP.Persistent_Breakpoints is
       DAP.Views.Breakpoints.Register_Module (Kernel);
    end Register_Module;
 
-end DAP.Persistent_Breakpoints;
+end DAP.Modules.Persistent_Breakpoints;

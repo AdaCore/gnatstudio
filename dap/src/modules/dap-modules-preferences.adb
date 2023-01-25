@@ -15,7 +15,7 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-package body DAP.Preferences is
+package body DAP.Modules.Preferences is
 
    ----------------------------------
    -- Register_Default_Preferences --
@@ -129,4 +129,4 @@ package body DAP.Preferences is
          Default   => False);
    end Register_Default_Preferences;
 
-end DAP.Preferences;
+end DAP.Modules.Preferences;

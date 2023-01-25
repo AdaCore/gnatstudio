@@ -47,18 +47,18 @@ with GUI_Utils;
 with Remote;
 
 with DAP.Contexts;
-with DAP.Consoles;
-with DAP.Persistent_Breakpoints;
-with DAP.Preferences;
+with DAP.Modules.Persistent_Breakpoints;
+with DAP.Modules.Preferences;
+with DAP.Modules.Scripts;
 with DAP.Requests.ConfigurationDone;
 with DAP.Requests.Continue;
 with DAP.Requests.Next;
 with DAP.Requests.Step_In_Request;
-with DAP.Scripts;
 with DAP.Tools;                    use DAP.Tools;
-with DAP.Views.Call_Stack;
-with DAP.Views.Threads;
 with DAP.Views.Assembly;
+with DAP.Views.Call_Stack;
+with DAP.Views.Consoles;
+with DAP.Views.Threads;
 
 package body DAP.Module is
 
@@ -305,7 +305,7 @@ package body DAP.Module is
            (DAP_Module_ID.Get_Kernel, "DAP_Debug");
 
          --  hide persistent breakpoints
-         DAP.Persistent_Breakpoints.Hide_Breakpoints (Kernel);
+         DAP.Modules.Persistent_Breakpoints.Hide_Breakpoints (Kernel);
       else
          Client_Started := Client_Started + 1;
       end if;
@@ -313,7 +313,7 @@ package body DAP.Module is
       DAP_Module_ID.Clients.Append (Client);
 
       --  Create console
-      DAP.Consoles.Attach_To_Debugger_Console
+      DAP.Views.Consoles.Attach_To_Debugger_Console
         (Client, Kernel,
          Create_If_Necessary => True,
          Name                => " " & (+Base_Name (File)));
@@ -326,13 +326,13 @@ package body DAP.Module is
             After       => True,
             User_Data   => Client.Id);
 
-         DAP.Consoles.Get_Debugger_Interactive_Console
+         DAP.Views.Consoles.Get_Debugger_Interactive_Console
            (DAP.Clients.DAP_Client (Client.all)).Display_Prompt;
       end if;
 
       Client.Start (Project, File, Args);
 
-      DAP.Persistent_Breakpoints.Hide_Breakpoints (Kernel);
+      DAP.Modules.Persistent_Breakpoints.Hide_Breakpoints (Kernel);
       Set_Current_Debugger (Client);
 
       return Client;
@@ -960,7 +960,7 @@ package body DAP.Module is
          DAP_Module_ID.Client_ID := 1;
          GPS.Kernel.MDI.Load_Perspective (DAP_Module_ID.Get_Kernel, "Default");
 
-         DAP.Persistent_Breakpoints.On_Debugging_Terminated
+         DAP.Modules.Persistent_Breakpoints.On_Debugging_Terminated
            (DAP_Module_ID.Get_Kernel);
 
          DAP_Module_ID.Get_Kernel.Refresh_Context;
@@ -1010,7 +1010,7 @@ package body DAP.Module is
 
       Trace (Me, "Set_Current_Debugger");
 
-      if DAP.Preferences.Continue_To_Line_Buttons.Get_Pref then
+      if DAP.Modules.Preferences.Continue_To_Line_Buttons.Get_Pref then
 
          --  If we are creating a debugger, enable the 'Continue to line' icons
          --  on editors.
@@ -1075,7 +1075,9 @@ package body DAP.Module is
       use type DAP.Types.Breakpoint_Identifier;
    begin
       if Get_Current_Debugger = null then
-         for Data of DAP.Persistent_Breakpoints.Get_Persistent_Breakpoints loop
+         for Data of DAP.Modules.Persistent_Breakpoints.
+           Get_Persistent_Breakpoints
+         loop
             if Data.Num = Id then
                return Data;
             end if;
@@ -1114,7 +1116,7 @@ package body DAP.Module is
       Debugger_Stopped     : Action_Filter;
 
    begin
-      DAP.Preferences.Register_Default_Preferences
+      DAP.Modules.Preferences.Register_Default_Preferences
         (Kernel.Get_Preferences, Base_Dir);
 
       DAP_Module_ID := new DAP_Module_Record (Kernel);
@@ -1221,12 +1223,12 @@ package body DAP.Module is
            "Execute the program for one machine instruction only",
          Category    => "Debug");
 
-      DAP.Persistent_Breakpoints.Register_Module (Kernel);
+      DAP.Modules.Persistent_Breakpoints.Register_Module (Kernel);
       DAP.Views.Call_Stack.Register_Module (Kernel);
       DAP.Views.Threads.Register_Module (Kernel);
       DAP.Views.Assembly.Register_Module (Kernel);
-      DAP.Scripts.Register_Module (Kernel);
-      DAP.Consoles.Register_Module (Kernel);
+      DAP.Modules.Scripts.Register_Module (Kernel);
+      DAP.Views.Consoles.Register_Module (Kernel);
    end Register_Module;
 
    -------------

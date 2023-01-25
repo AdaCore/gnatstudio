@@ -18,7 +18,7 @@
 with Ada.Strings.Unbounded;        use Ada.Strings.Unbounded;
 with VSS.Strings.Conversions;
 
-with DAP.Persistent_Breakpoints;
+with DAP.Modules.Persistent_Breakpoints;
 with DAP.Clients;
 with DAP.Module;
 with DAP.Views;
@@ -95,7 +95,7 @@ package body DAP.Modules.Breakpoint_Managers is
    begin
       if Self.Client.Get_Executable /= No_File then
          Self.Holder.Initialize
-           (DAP.Persistent_Breakpoints.Get_Persistent_For_Executable
+           (DAP.Modules.Persistent_Breakpoints.Get_Persistent_For_Executable
               (Self.Client.Get_Executable));
 
          if not Self.Holder.Get_For_Files.Is_Empty then
@@ -131,7 +131,7 @@ package body DAP.Modules.Breakpoint_Managers is
       Temporary : Boolean := False)
    is
       Id      : constant Breakpoint_Identifier :=
-        DAP.Persistent_Breakpoints.Get_Next_Id;
+        DAP.Modules.Persistent_Breakpoints.Get_Next_Id;
       Data    : Breakpoint_Data := Breakpoint_Data'
         (Id        => Id,
          Num       => Id,
@@ -170,7 +170,7 @@ package body DAP.Modules.Breakpoint_Managers is
       Temporary  : Boolean := False)
    is
       Id      : constant Breakpoint_Identifier :=
-        DAP.Persistent_Breakpoints.Get_Next_Id;
+        DAP.Modules.Persistent_Breakpoints.Get_Next_Id;
       Data    : Breakpoint_Data := Breakpoint_Data'
         (Id  => Id,
          Num => Id,
@@ -295,10 +295,11 @@ package body DAP.Modules.Breakpoint_Managers is
    procedure Show_Breakpoints
      (Self : in out DAP_Client_Breakpoint_Manager) is
    begin
-      DAP.Persistent_Breakpoints.Hide_Breakpoints (Self.Kernel);
+      DAP.Modules.Persistent_Breakpoints.Hide_Breakpoints (Self.Kernel);
 
       for Data of Self.Holder.Get_Breakpoints_List loop
-         DAP.Persistent_Breakpoints.Show_Breakpoint (Self.Kernel, Data);
+         DAP.Modules.Persistent_Breakpoints.Show_Breakpoint
+           (Self.Kernel, Data);
       end loop;
    end Show_Breakpoints;
 
@@ -896,7 +897,7 @@ package body DAP.Modules.Breakpoint_Managers is
       use Breakpoint_Vectors;
    begin
       --  Store breakpoints in the persistent storage
-      DAP.Persistent_Breakpoints.Store
+      DAP.Modules.Persistent_Breakpoints.Store
         (Self.Client.Get_Executable,
          Self.Holder.Get_Breakpoints_List & Self.Holder.Get_Pending);
    end Finalize;
