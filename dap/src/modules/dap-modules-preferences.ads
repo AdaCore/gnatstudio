@@ -18,7 +18,7 @@
 with GNATCOLL.VFS;             use GNATCOLL.VFS;
 with Default_Preferences;      use Default_Preferences;
 
-package DAP.Preferences is
+package DAP.Modules.Preferences is
 
    procedure Register_Default_Preferences
      (Prefs    : access Preferences_Manager_Record'Class;
@@ -53,4 +53,4 @@ package DAP.Preferences is
    Asm_Show_Offset               : Boolean_Preference;
    Asm_Show_Opcodes              : Boolean_Preference;
 
-end DAP.Preferences;
+end DAP.Modules.Preferences;

@@ -19,7 +19,7 @@ with GPS.Kernel;                 use GPS.Kernel;
 with DAP.Clients;                use DAP.Clients;
 with Interactive_Consoles;       use Interactive_Consoles;
 
-package DAP.Consoles is
+package DAP.Views.Consoles is
 
    procedure Register_Module
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class);
@@ -41,4 +41,4 @@ package DAP.Consoles is
    --  Return the interactive console associated with the given debugger.
    --  If no interactive console is associated with this debugger, return null.
 
-end DAP.Consoles;
+end DAP.Views.Consoles;

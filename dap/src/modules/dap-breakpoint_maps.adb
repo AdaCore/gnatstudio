@@ -16,8 +16,8 @@
 ------------------------------------------------------------------------------
 
 with GPS.Editors;
-with DAP.Persistent_Breakpoints;
-with DAP.Preferences;
+with DAP.Modules.Persistent_Breakpoints;
+with DAP.Modules.Preferences;
 
 package body DAP.Breakpoint_Maps is
 
@@ -239,7 +239,7 @@ package body DAP.Breakpoint_Maps is
             Updated := True;
 
             if Data.Id = 0 then
-               Data.Id := DAP.Persistent_Breakpoints.Get_Next_Id;
+               Data.Id := DAP.Modules.Persistent_Breakpoints.Get_Next_Id;
             end if;
 
             Self.All_Breakpoints.Append (Data);
@@ -327,7 +327,7 @@ package body DAP.Breakpoint_Maps is
             Updated := True;
 
             if Data.Id = 0 then
-               Data.Id := DAP.Persistent_Breakpoints.Get_Next_Id;
+               Data.Id := DAP.Modules.Persistent_Breakpoints.Get_Next_Id;
             end if;
 
             Self.All_Breakpoints.Append (Data);
@@ -673,7 +673,7 @@ package body DAP.Breakpoint_Maps is
                if Duplicate then
                   Self.All_Breakpoints.Delete (Index);
                else
-                  if DAP.Preferences.Pending_Breakpoints.Get_Pref then
+                  if DAP.Modules.Preferences.Pending_Breakpoints.Get_Pref then
                      Self.Pending.Append
                        (Self.All_Breakpoints.Element (Index));
                   end if;
@@ -755,7 +755,7 @@ package body DAP.Breakpoint_Maps is
       while Idx_Old <= List.Last_Index loop
          Cursor := Self.All_Breakpoints.Find (List.Element (Idx_Old));
          if Breakpoint_Vectors.Has_Element (Cursor) then
-            if DAP.Preferences.Pending_Breakpoints.Get_Pref then
+            if DAP.Modules.Preferences.Pending_Breakpoints.Get_Pref then
                Data     := Breakpoint_Vectors.Element (Cursor);
                Data.Num := 0;
                Self.All_Breakpoints.Replace_Element (Cursor, Data);

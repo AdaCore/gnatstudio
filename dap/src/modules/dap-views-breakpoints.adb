@@ -77,7 +77,8 @@ with Commands.Interactive;       use Commands.Interactive;
 
 with DAP.Types;                  use DAP.Types;
 with DAP.Breakpoint_Maps;        use DAP.Breakpoint_Maps;
-with DAP.Persistent_Breakpoints; use DAP.Persistent_Breakpoints;
+with DAP.Modules.Persistent_Breakpoints;
+use DAP.Modules.Persistent_Breakpoints;
 with DAP.Clients;                use DAP.Clients;
 with DAP.Module;
 with DAP.Utils;
@@ -908,13 +909,15 @@ package body DAP.Views.Breakpoints is
       end Fill;
 
    begin
-      Trace (Me, "Update" & DAP.Persistent_Breakpoints.
+      Trace (Me, "Update" & DAP.Modules.Persistent_Breakpoints.
            Get_Persistent_Breakpoints.Length'Img);
 
       Clear (Model);
 
       if Client = null then
-         for Data of DAP.Persistent_Breakpoints.Get_Persistent_Breakpoints loop
+         for Data of DAP.Modules.Persistent_Breakpoints.
+           Get_Persistent_Breakpoints
+         loop
             Fill (Data);
          end loop;
 

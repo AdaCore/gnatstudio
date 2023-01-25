@@ -30,7 +30,7 @@ with DAP.Breakpoint_Maps;
 with DAP.Clients;             use DAP.Clients;
 with DAP.Module;
 
-package body DAP.Scripts is
+package body DAP.Modules.Scripts is
 
    procedure Shell_Handler
      (Data    : in out Callback_Data'Class;
@@ -318,4 +318,4 @@ package body DAP.Scripts is
 
    end Register_Module;
 
-end DAP.Scripts;
+end DAP.Modules.Scripts;

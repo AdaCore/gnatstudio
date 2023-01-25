@@ -34,7 +34,7 @@ with Ada.Containers.Vectors;
 
 generic
    type Data_Type (<>) is private;
-package DAP.Histories is
+package DAP.Modules.Histories is
 
    type History_List is private;
    type History_List_Access is access all History_List;
@@ -107,4 +107,4 @@ private
       Current  : Hlist_Access;
    end record;
 
-end DAP.Histories;
+end DAP.Modules.Histories;
