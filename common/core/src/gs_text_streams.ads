@@ -14,6 +14,7 @@
 -- COPYING3.  If not, go to http://www.gnu.org/licenses for a complete copy --
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
+
 --  Text stream to write output text into the file using UTF-8 encoding.
 --
 --  Note, this stream build on top of GNATCOLL.VFS.Writable_File, thus
@@ -52,6 +53,20 @@ private
    overriding procedure Put
      (Self    : in out File_UTF8_Output_Stream;
       Item    : VSS.Characters.Virtual_Character;
+      Success : in out Boolean);
+
+   overriding procedure Put
+     (Self    : in out File_UTF8_Output_Stream;
+      Item    : VSS.Strings.Virtual_String;
+      Success : in out Boolean);
+
+   overriding procedure Put_Line
+     (Self    : in out File_UTF8_Output_Stream;
+      Item    : VSS.Strings.Virtual_String;
+      Success : in out Boolean);
+
+   overriding procedure New_Line
+     (Self    : in out File_UTF8_Output_Stream;
       Success : in out Boolean);
 
    overriding function Has_Error
