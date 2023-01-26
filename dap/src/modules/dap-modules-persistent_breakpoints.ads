@@ -22,7 +22,7 @@ with GPS.Kernel;          use GPS.Kernel;
 with DAP.Types;           use DAP.Types;
 with DAP.Breakpoint_Maps; use DAP.Breakpoint_Maps;
 
-package DAP.Persistent_Breakpoints is
+package DAP.Modules.Persistent_Breakpoints is
 
    procedure Register_Module
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class);
@@ -82,4 +82,4 @@ package DAP.Persistent_Breakpoints is
       Temporary     : Boolean := False);
    --  Add breakpoint for the subprogram
 
-end DAP.Persistent_Breakpoints;
+end DAP.Modules.Persistent_Breakpoints;

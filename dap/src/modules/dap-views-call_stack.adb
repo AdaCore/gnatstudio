@@ -48,7 +48,7 @@ with Default_Preferences;        use Default_Preferences;
 with Commands.Interactive;       use Commands.Interactive;
 with Filter_Panels;              use Filter_Panels;
 
-with DAP.Preferences;
+with DAP.Modules.Preferences;
 with DAP.Requests.StackTraces;
 with DAP.Tools;                  use DAP.Tools;
 with DAP.Types;                  use DAP.Types;
@@ -315,7 +315,7 @@ package body DAP.Views.Call_Stack is
    is
       pragma Unreferenced (Filter);
    begin
-      if DAP.Preferences.Frames_Limit.Get_Pref = 0 then
+      if DAP.Modules.Preferences.Frames_Limit.Get_Pref = 0 then
          return False;
       end if;
 
@@ -422,7 +422,8 @@ package body DAP.Views.Call_Stack is
         Call_Stack (CS_MDI_Views.Retrieve_View (Kernel));
    begin
       View.Send_Request
-        (View.Last + 1, View.Last + DAP.Preferences.Frames_Limit.Get_Pref);
+        (View.Last + 1,
+         View.Last + DAP.Modules.Preferences.Frames_Limit.Get_Pref);
 
       if View.Last = Integer'Last then
          Kernel.Context_Changed (No_Context);
@@ -725,7 +726,8 @@ package body DAP.Views.Call_Stack is
    ------------
 
    overriding procedure Update (View : not null access Call_Stack_Record) is
-      Limit : constant Integer := DAP.Preferences.Frames_Limit.Get_Pref;
+      Limit : constant Integer :=
+        DAP.Modules.Preferences.Frames_Limit.Get_Pref;
       From  : Integer;
       To    : Integer;
    begin

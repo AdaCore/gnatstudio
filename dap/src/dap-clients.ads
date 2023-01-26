@@ -31,11 +31,11 @@ with GPS.Debuggers;
 
 with LSP.Raw_Clients;
 
-with DAP.Histories;
+with DAP.Breakpoint_Maps;
+with DAP.Modules.Histories;
 with DAP.Requests;
 with DAP.Types;                  use DAP.Types;
 with DAP.Tools;
-with DAP.Breakpoint_Maps;
 
 with Basic_Types;                use Basic_Types;
 with Generic_Views;
@@ -55,7 +55,7 @@ package DAP.Clients is
       Command : GNAT.OS_Lib.String_Access;
    end record;
 
-   package String_History is new DAP.Histories (History_Data);
+   package String_History is new DAP.Modules.Histories (History_Data);
    use String_History;
    --  Used for holding commands history in the debugging console
 

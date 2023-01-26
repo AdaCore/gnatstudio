@@ -41,10 +41,9 @@ with GPS.Kernel.Modules.UI;      use GPS.Kernel.Modules.UI;
 with GPS.Kernel.Preferences;     use GPS.Kernel.Preferences;
 
 with DAP.Module;
-with DAP.Preferences;
+with DAP.Modules.Preferences;
 with DAP.Tools;
 with DAP.Requests.Evaluate;
-with DAP.Views;
 
 with Commands;                   use Commands;
 with Commands.Interactive;       use Commands.Interactive;
@@ -53,7 +52,7 @@ with Default_Preferences;        use Default_Preferences;
 with Generic_Views;              use Generic_Views;
 with Histories;                  use Histories;
 
-package body DAP.Consoles is
+package body DAP.Views.Consoles is
 
    type Debugger_Console_Record is new DAP.Views.View_Record with
       record
@@ -167,9 +166,9 @@ package body DAP.Consoles is
       Menu    : not null access Gtk.Menu.Gtk_Menu_Record'Class) is
    begin
       Append_Menu
-        (Menu, View.Kernel, DAP.Preferences.Debugger_Console_Console);
+        (Menu, View.Kernel, DAP.Modules.Preferences.Debugger_Console_Console);
       Append_Menu
-        (Menu, View.Kernel, DAP.Preferences.Debugger_Console_Stdout);
+        (Menu, View.Kernel, DAP.Modules.Preferences.Debugger_Console_Stdout);
    end Create_Menu;
 
    --------------------------------------
@@ -418,4 +417,4 @@ package body DAP.Consoles is
          Category  => "Debug");
    end Register_Module;
 
-end DAP.Consoles;
+end DAP.Views.Consoles;

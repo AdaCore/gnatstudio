@@ -45,9 +45,9 @@ with GPS.Kernel.Project;
 with LSP.Types;
 with LSP.JSON_Streams;
 
-with DAP.Consoles;
+with DAP.Views.Consoles;
 with DAP.Module;
-with DAP.Preferences;
+with DAP.Modules.Preferences;
 with DAP.Requests.Evaluate;
 with DAP.Requests.Initialize;
 with DAP.Requests.Disconnects;
@@ -1111,15 +1111,17 @@ package body DAP.Clients is
             if output.a_body.category.Is_Set
               and then
                 ((output.a_body.category.Value = console
-                  and then DAP.Preferences.Debugger_Console_Console.Get_Pref)
+                  and then DAP.Modules.Preferences.
+                    Debugger_Console_Console.Get_Pref)
                  or else
                    (output.a_body.category.Value = stdout
-                    and then DAP.Preferences.Debugger_Console_Stdout.Get_Pref)
+                    and then DAP.Modules.Preferences.
+                      Debugger_Console_Stdout.Get_Pref)
                  or else output.a_body.category.Value = stderr)
             then
                declare
                   Console : constant access Interactive_Console_Record'Class :=
-                    DAP.Consoles.Get_Debugger_Interactive_Console (Self);
+                    DAP.Views.Consoles.Get_Debugger_Interactive_Console (Self);
                   S       : constant String :=
                     VSS.Strings.Conversions.To_UTF_8_String
                       (output.a_body.output);
@@ -1196,7 +1198,7 @@ package body DAP.Clients is
          declare
             Event   : DAP.Tools.BreakpointEvent;
             Console : constant access Interactive_Console_Record'Class :=
-              DAP.Consoles.Get_Debugger_Interactive_Console (Self);
+              DAP.Views.Consoles.Get_Debugger_Interactive_Console (Self);
          begin
             DAP.Tools.Inputs.Input_BreakpointEvent (Stream, Event, Success);
             Console.Insert
@@ -1236,7 +1238,7 @@ package body DAP.Clients is
       Msg  : String)
    is
       Console : constant access Interactive_Console_Record'Class :=
-        DAP.Consoles.Get_Debugger_Interactive_Console (Self);
+        DAP.Views.Consoles.Get_Debugger_Interactive_Console (Self);
 
    begin
       if Console /= null then
@@ -1401,8 +1403,8 @@ package body DAP.Clients is
 
       function Get_Debugger_Executable return String is
       begin
-         if DAP.Preferences.DAP_Adapter.Get_Pref /= "" then
-            return DAP.Preferences.DAP_Adapter.Get_Pref;
+         if DAP.Modules.Preferences.DAP_Adapter.Get_Pref /= "" then
+            return DAP.Modules.Preferences.DAP_Adapter.Get_Pref;
          end if;
 
          if Project.Has_Attribute

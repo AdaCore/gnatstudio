@@ -17,9 +17,9 @@
 
 with GPS.Kernel;  use GPS.Kernel;
 
-package DAP.Scripts is
+package DAP.Modules.Scripts is
 
    procedure Register_Module
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class);
 
-end DAP.Scripts;
+end DAP.Modules.Scripts;
