@@ -12,12 +12,6 @@ build_and_test:
      - mem:16
   stage: build_and_test
   script:
-    # Temporary, until the image is updated
-    - apt install  -y --no-install-recommends patch xvfb subversion
-    - which patch
-    - which Xvfb
-    - which svn
-
     - . ~/.aws_container_credentials
     - export PATH=/it/e3/bin:$PATH
 
