@@ -28,7 +28,7 @@ package DAP.Types is
    type Debugger_Status_Kind is
      (Initialization, Initialized, Ready, Stopped, Running, Terminating);
 
-   type Breakpoint_Identifier is new Natural;
+   type Breakpoint_Identifier is new Integer;
    No_Breakpoint : constant Breakpoint_Identifier := 0;
    --  How breakpoints are identified. Currently, the debuggers supported
    --  by gvd all associate numbers with breakpoints.

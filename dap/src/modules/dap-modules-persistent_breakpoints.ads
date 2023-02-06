@@ -15,12 +15,12 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with GNATCOLL.VFS;        use GNATCOLL.VFS;
+with GNATCOLL.VFS;            use GNATCOLL.VFS;
 
-with Basic_Types;         use Basic_Types;
-with GPS.Kernel;          use GPS.Kernel;
-with DAP.Types;           use DAP.Types;
-with DAP.Breakpoint_Maps; use DAP.Breakpoint_Maps;
+with Basic_Types;             use Basic_Types;
+with GPS.Kernel;              use GPS.Kernel;
+with DAP.Types;               use DAP.Types;
+with DAP.Modules.Breakpoints; use DAP.Modules.Breakpoints;
 
 package DAP.Modules.Persistent_Breakpoints is
 

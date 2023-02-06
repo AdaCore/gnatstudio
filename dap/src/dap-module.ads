@@ -20,9 +20,10 @@ with GNATCOLL.VFS;      use GNATCOLL.VFS;
 
 with GPS.Kernel;        use GPS.Kernel;
 
-with DAP.Breakpoint_Maps;
+with DAP.Modules.Breakpoints;
 with DAP.Clients;
 with DAP.Types;
+
 with Generic_Views;
 
 package DAP.Module is
@@ -76,6 +77,6 @@ package DAP.Module is
 
    function Get_Breakpoint_From_Id
      (Id : DAP.Types.Breakpoint_Identifier)
-      return DAP.Breakpoint_Maps.Breakpoint_Data;
+      return DAP.Modules.Breakpoints.Breakpoint_Data;
 
 end DAP.Module;
