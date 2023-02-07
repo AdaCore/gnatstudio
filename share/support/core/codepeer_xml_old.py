@@ -728,8 +728,10 @@ many cores as available on the machine)." />
          <check label="Force analysis" switch="-f" column="2"
           tip="Force analysis of all files, ignoring previous run.
 Also force the generation of all SCIL files." />
-         <check label="GNATcheck" switch="--gnatcheck"
-                column="2" tip="Launch GNATcheck and collect its messages" />
+         <check label="User-defined GNATcheck rules" switch="--gnatcheck"
+                column="2" tip="Launch GNATcheck on the list of rules specified in the Check package of the project file, and the default rules (unless overriden by the next option)" />
+         <check label="Skip default GNATcheck rules" switch="--no-default-gnatcheck-rules"
+                column="2" tip="Do not launch GNATcheck with the rules enabled by default in CodePeer" />
          <check label="GNAT warnings" switch="--gnat-warnings"
                 column="2"
                 tip="Launch GNAT front-end and collect its warnings" />
