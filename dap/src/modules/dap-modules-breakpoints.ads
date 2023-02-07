@@ -135,7 +135,7 @@ package DAP.Modules.Breakpoints is
    procedure Deleted
      (Self : in out Breakpoint_Holder;
       Nums : Breakpoint_Identifier_Lists.List);
-   --  List of breakpoints hasve been deleted
+   --  List of breakpoints have been deleted
 
    procedure Deleted
      (Self : in out Breakpoint_Holder;
