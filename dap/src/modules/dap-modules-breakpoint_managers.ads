@@ -208,6 +208,6 @@ private
       Map    : Breakpoint_Hash_Maps.Map;
       Action : Action_Kind;
       Bunch  : Boolean);
-   -- Send breakpoints request (lines & subprograms)
+   --  Send breakpoints request (lines & subprograms)
 
 end DAP.Modules.Breakpoint_Managers;
