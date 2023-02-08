@@ -3181,6 +3181,9 @@ package body Debugger.Base_Gdb.Gdb_MI is
      ("^~""#(\d+) +((0x[0-9a-f]+) in )?(.+?)( at (.+))?""$",
       Multiple_Lines);
 
+   Main_Task_Pattern : constant Pattern_Matcher := Compile
+     ("^~""(.+)?\((0x[0-9a-f]+)?\) at (.+)""$", Multiple_Lines);
+
    Frame_File_Line_Pattern : constant Pattern_Matcher := Compile
      ("(.+):(\d+)(\\n)?$", Multiple_Lines);
    --  Regular expression to separate line from file name
@@ -3193,6 +3196,24 @@ package body Debugger.Base_Gdb.Gdb_MI is
       Addr        : out GVD.Types.Address_Type)
    is
       Matched : Match_Array (0 .. 6);
+
+      procedure Get_File_And_Line (Str : String);
+      procedure Get_File_And_Line (Str : String) is
+         MN : Match_Array (0 .. 2);
+      begin
+         Match (Frame_File_Line_Pattern, Str, MN);
+
+         if MN (0) /= No_Match then
+            Debugger.Current_Frame.File := To_Unbounded_String
+              (Strip_Escape (Str (MN (1).First .. MN (1).Last)));
+            Debugger.Current_Frame.Line := Integer'Value
+              (Str (MN (2).First .. MN (2).Last));
+         end if;
+
+         Name := Debugger.Current_Frame.File;
+         Line := Debugger.Current_Frame.Line;
+      end Get_File_And_Line;
+
    begin
       --  Default values if nothing better is found
       Addr := Invalid_Address;
@@ -3276,25 +3297,25 @@ package body Debugger.Base_Gdb.Gdb_MI is
          end if;
 
          if Matched (6) /= No_Match then
-            declare
-               Name : constant String :=
-                 Str (Matched (6).First .. Matched (6).Last);
-               MN   : Match_Array (0 .. 2);
-            begin
-               Match (Frame_File_Line_Pattern, Name, MN);
-
-               if MN (0) /= No_Match then
-                  Debugger.Current_Frame.File := To_Unbounded_String
-                    (Strip_Escape (Name (MN (1).First .. MN (1).Last)));
-                  Debugger.Current_Frame.Line := Integer'Value
-                    (Name (MN (2).First .. MN (2).Last));
-               end if;
-            end;
+            Get_File_And_Line (Str (Matched (6).First .. Matched (6).Last));
          end if;
 
          Addr := Debugger.Current_Frame.Addr;
-         Name := Debugger.Current_Frame.File;
-         Line := Debugger.Current_Frame.Line;
+         return;
+      end if;
+
+      Match (Main_Task_Pattern, Str, Matched);
+      if Matched (0) /= No_Match then
+         Debugger.Current_Frame := Null_Frame_Info;
+
+         if Matched (2) /= No_Match then
+            Debugger.Current_Frame.Addr := String_To_Address
+              (Str (Matched (2).First .. Matched (2).Last));
+         end if;
+
+         Get_File_And_Line (Str (Matched (3).First .. Matched (3).Last));
+
+         Addr := Debugger.Current_Frame.Addr;
       end if;
 
    exception
