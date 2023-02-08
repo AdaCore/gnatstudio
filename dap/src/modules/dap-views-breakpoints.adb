@@ -76,7 +76,7 @@ with Commands;                   use Commands;
 with Commands.Interactive;       use Commands.Interactive;
 
 with DAP.Types;                  use DAP.Types;
-with DAP.Breakpoint_Maps;        use DAP.Breakpoint_Maps;
+with DAP.Modules.Breakpoints;    use DAP.Modules.Breakpoints;
 with DAP.Modules.Persistent_Breakpoints;
 use DAP.Modules.Persistent_Breakpoints;
 with DAP.Clients;                use DAP.Clients;
@@ -724,9 +724,8 @@ package body DAP.Views.Breakpoints is
       if Client /= null then
          for Data of Client.Get_Breakpoints loop
             for L of Data.Locations loop
-               if Get_File (L.Location) = Client.Current_File
-                 and then Natural
-                   (Get_Line (L.Location)) = Client.Current_Line
+               if Get_File (L.Marker) = Client.Current_File
+                 and then Natural (Get_Line (L.Marker)) = Client.Current_Line
                then
                   Id := Data.Num;
                   exit;
@@ -857,7 +856,7 @@ package body DAP.Views.Breakpoints is
                   if Data.Num = Breakpoint_Identifier'Last
                   then "0"
                   else Breakpoint_Identifier'Image (Data.Num)),
-            2 => As_Boolean (Data.Disposition /= Disable),
+            2 => As_Boolean (Data.State = Enabled),
             3 => As_Boolean (View.Activatable));
          Last := 5;
 
@@ -880,6 +879,16 @@ package body DAP.Views.Breakpoints is
             Columns (Last) := Col_Line;
             Glib.Values.Init_Set_String
               (Values (Last), Get_Line (Get_Location (Data))'Img);
+
+            if Data.Locations.First_Element.Address /= Invalid_Address then
+               Last := Last + 1;
+               Columns (Last) := Col_Address;
+               Glib.Values.Init_Set_String
+                 (Values (Last),
+                  Escape_Text
+                    (Address_To_String
+                         (Data.Locations.First_Element.Address)));
+            end if;
          end if;
 
          if Data.Subprogram /= "" then
@@ -887,14 +896,6 @@ package body DAP.Views.Breakpoints is
             Columns (Last) := Col_Subprogs;
             Glib.Values.Init_Set_String
               (Values (Last), Escape_Text (To_String (Data.Subprogram)));
-         end if;
-
-         if Get_Address (Data) /= Invalid_Address then
-            Last := Last + 1;
-            Columns (Last) := Col_Address;
-            Glib.Values.Init_Set_String
-              (Values (Last),
-               Escape_Text (Address_To_String (Get_Address (Data))));
          end if;
 
          if Data.Executable /= Null_Unbounded_String then
@@ -1232,9 +1233,9 @@ package body DAP.Views.Breakpoints is
          View.Prevent_Bp_Selection := True;
          DAP.Utils.Goto_Location
            (Kernel    => View.Kernel,
-            File      => Get_File (Selection.Locations.First_Element.Location),
+            File      => Get_File (Selection.Locations.First_Element.Marker),
             Line      => Natural
-              (Get_Line (Selection.Locations.First_Element.Location)));
+              (Get_Line (Selection.Locations.First_Element.Marker)));
          View.Prevent_Bp_Selection := False;
       end if;
    end Show_Selected_Breakpoint_In_Editor;
@@ -1301,10 +1302,10 @@ package body DAP.Views.Breakpoints is
          if not Br.Locations.Is_Empty then
             Set_Text
               (Self.File_Name,
-               +Base_Name (Get_File (Br.Locations.First_Element.Location)));
+               +Base_Name (Get_File (Br.Locations.First_Element.Marker)));
             Set_Value
               (Self.Line_Spin,
-               Grange_Float (Get_Line (Br.Locations.First_Element.Location)));
+               Grange_Float (Get_Line (Br.Locations.First_Element.Marker)));
          end if;
 
          if Br.Subprogram /= "" then

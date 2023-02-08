@@ -32,6 +32,7 @@ with Gtkada.Dialogs;
 with Commands;                     use Commands;
 with Commands.Interactive;         use Commands.Interactive;
 with Language;                     use Language;
+
 with GPS.Debuggers;
 with GPS.Editors;                  use GPS.Editors;
 with GPS.Kernel.Actions;
@@ -1069,35 +1070,29 @@ package body DAP.Module is
 
    function Get_Breakpoint_From_Id
      (Id : DAP.Types.Breakpoint_Identifier)
-      return DAP.Breakpoint_Maps.Breakpoint_Data
+      return DAP.Modules.Breakpoints.Breakpoint_Data
    is
       use type DAP.Clients.DAP_Client_Access;
-      use type DAP.Types.Breakpoint_Identifier;
+      use DAP.Modules.Breakpoints;
    begin
       if Get_Current_Debugger = null then
          for Data of DAP.Modules.Persistent_Breakpoints.
            Get_Persistent_Breakpoints
          loop
-            if Data.Num = Id then
+            if Data = Id then
                return Data;
             end if;
          end loop;
 
       else
          for Data of Get_Current_Debugger.Get_Breakpoints loop
-            if Data.Num = Id then
+            if Data = Id then
                return Data;
-            else
-               for L of Data.Locations loop
-                  if L.Num = Id then
-                     return Data;
-                  end if;
-               end loop;
             end if;
          end loop;
       end if;
 
-      return DAP.Breakpoint_Maps.Empty_Breakpoint_Data;
+      return DAP.Modules.Breakpoints.Empty_Breakpoint_Data;
    end Get_Breakpoint_From_Id;
 
    ---------------------

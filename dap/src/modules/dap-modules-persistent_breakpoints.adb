@@ -51,7 +51,8 @@ with JSON_Utils;
 
 package body DAP.Modules.Persistent_Breakpoints is
 
-   Me : constant Trace_Handle := Create ("GPS.DAP.PERSISTENT_BREAKPOINTS");
+   Me : constant Trace_Handle := Create
+     ("GPS.DAP.MODULES_PERSISTENT_BREAKPOINTS");
 
    Messages_Category_For_Breakpoints : constant String := "breakpoints";
    Breakpoints_Message_Flags         : constant Message_Flags :=
@@ -160,7 +161,7 @@ package body DAP.Modules.Persistent_Breakpoints is
 
    -- Vars --
 
-   Breakpoints : Breakpoint_Persistent_Holder;
+   Breakpoints : Breakpoint_Holder;
    Shown       : Locations_Sets.Set;
 
    ---------
@@ -207,12 +208,11 @@ package body DAP.Modules.Persistent_Breakpoints is
          declare
             Id : constant Breakpoint_Identifier := Breakpoints.Get_Next_Id;
             B  : constant Breakpoint_Data := Breakpoint_Data'
-              (Id          => Id,
-               Num         => Id,
-               Locations   => Locations_Vectors.To_Vector
-                 (Num_Location'
-                      (Num      => 0,
-                       Location => Kernel.Get_Buffer_Factory.Create_Marker
+              (Num         => Id,
+               Locations   => Location_Vectors.To_Vector
+                 (DAP.Modules.Breakpoints.Location'
+                      (Num     => Id,
+                       Marker  => Kernel.Get_Buffer_Factory.Create_Marker
                          (File   => File,
                           Line   => Line,
                           Column => 1),
@@ -264,8 +264,7 @@ package body DAP.Modules.Persistent_Breakpoints is
          declare
             Id : constant Breakpoint_Identifier := Breakpoints.Get_Next_Id;
             B  : constant Breakpoint_Data := Breakpoint_Data'
-              (Id          => Id,
-               Num         => Id,
+              (Num         => Id,
                Subprogram  => To_Unbounded_String (Subprogram),
                Disposition => (if Temporary then Delete else Keep),
                others      => <>);
@@ -619,7 +618,7 @@ package body DAP.Modules.Persistent_Breakpoints is
 
    function Get_Persistent_Breakpoints return Breakpoint_Vectors.Vector is
    begin
-      return Breakpoints.Get_Breakpoints_List;
+      return Breakpoints.Get_Breakpoints;
    end Get_Persistent_Breakpoints;
 
    -----------------------------------
@@ -629,7 +628,7 @@ package body DAP.Modules.Persistent_Breakpoints is
    function Get_Persistent_For_Executable
      (Executable : Virtual_File) return Breakpoint_Vectors.Vector is
    begin
-      return Breakpoints.Get_Breakpoints_List (Executable);
+      return Breakpoints.Get_Breakpoints (Executable);
    end Get_Persistent_For_Executable;
 
    ---------------------------------
@@ -644,7 +643,7 @@ package body DAP.Modules.Persistent_Breakpoints is
          return;
       end if;
 
-      if Breakpoints.Get_Breakpoints_List.Is_Empty then
+      if Breakpoints.Get_Breakpoints.Is_Empty then
          Trace (Me, "No persistent breakpoint to save");
          GPS.Kernel.Properties.Remove_Property
            (Kernel, GPS.Kernel.Project.Get_Project (Kernel), "breakpoints");
@@ -660,7 +659,7 @@ package body DAP.Modules.Persistent_Breakpoints is
          Property   =>
             new Breakpoint_Property_Record'
            (Kernel      => Kernel,
-            Breakpoints => Breakpoints.Get_Breakpoints_List),
+            Breakpoints => Breakpoints.Get_Breakpoints),
          --  Filter breakpoints that are created automatically by GNAT Studio
          --  as a result of preferences.
          Persistent => True);
@@ -712,12 +711,12 @@ package body DAP.Modules.Persistent_Breakpoints is
          return;
       end if;
 
-      for L of B.Locations loop
-         if not Shown.Contains (L.Location) then
-            Shown.Insert (L.Location);
+      for Loc of B.Locations loop
+         if not Shown.Contains (Loc.Marker) then
+            Shown.Insert (Loc.Marker);
 
-            File := Get_File (L.Location);
-            Line := Get_Line (L.Location);
+            File := Get_File (Loc.Marker);
+            Line := Get_Line (Loc.Marker);
 
             Msg := Create_Simple_Message
               (Get_Messages_Container (Kernel),
@@ -746,7 +745,7 @@ package body DAP.Modules.Persistent_Breakpoints is
                   Mode => Unset));
             Msg.Set_Action (Action);
 
-            if B.Disposition = Disable
+            if B.State /= Enabled
               or else B.Num = 0
             then
                Msg.Set_Highlighting
@@ -774,7 +773,7 @@ package body DAP.Modules.Persistent_Breakpoints is
    begin
       Hide_Breakpoints (Kernel);
 
-      for Data of Breakpoints.Get_Breakpoints_List loop
+      for Data of Breakpoints.Get_Breakpoints loop
          Show_Breakpoint (Kernel, Data);
       end loop;
    end Show_Breakpoints_In_All_Editors;
@@ -826,13 +825,12 @@ package body DAP.Modules.Persistent_Breakpoints is
             end if;
 
             B :=
-              (Id            => Id,
-               Num           => Id,
+              (Num           => Id,
                Disposition   => Breakpoint_Disposition'Value
                  (Item.Get ("disposition")),
-               Change_State  => False,
+               State         => Enabled,
                Subprogram    => Item.Get ("subprogram"),
-               Locations     => Locations_Vectors.To_Vector
+               Locations     => Location_Vectors.To_Vector
                  ((Id, Loc, Invalid_Address), 1),
                Ignore        => Item.Get ("ignore"),
                Condition     => Item.Get ("condition"),
@@ -960,7 +958,7 @@ package body DAP.Modules.Persistent_Breakpoints is
          Breakpoints.Replace (Executable, List);
 
          if DAP.Module.Count_Running_Debuggers < 2 then
-            Breakpoints.Reorder;
+            Breakpoints.Set_Numbers;
          end if;
       end if;
    end Store;
