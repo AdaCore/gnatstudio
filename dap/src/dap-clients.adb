@@ -37,8 +37,8 @@ with VSS.Text_Streams.Memory_UTF8_Input;
 with VSS.Text_Streams.Memory_UTF8_Output;
 with VSS.JSON.Push_Writers;
 
-with GPS.Editors;                  use GPS.Editors;
-with GPS.Kernel;                   use GPS.Kernel;
+with GPS.Editors;                use GPS.Editors;
+with GPS.Kernel;                 use GPS.Kernel;
 with GPS.Kernel.Hooks;
 with GPS.Kernel.Project;
 
@@ -337,12 +337,12 @@ package body DAP.Clients is
 
    function Get_Breakpoints
      (Self : DAP_Client)
-      return DAP.Breakpoint_Maps.Breakpoint_Vectors.Vector
+      return DAP.Modules.Breakpoints.Breakpoint_Vectors.Vector
    is
       use type DAP.Modules.Breakpoint_Managers.
         DAP_Client_Breakpoint_Manager_Access;
 
-      Empty : DAP.Breakpoint_Maps.Breakpoint_Vectors.Vector;
+      Empty : DAP.Modules.Breakpoints.Breakpoint_Vectors.Vector;
    begin
       if Self.Breakpoints /= null then
          return Self.Breakpoints.Get_Breakpoints;
@@ -1196,16 +1196,12 @@ package body DAP.Clients is
 
       elsif Event = "breakpoint" then
          declare
-            Event   : DAP.Tools.BreakpointEvent;
-            Console : constant access Interactive_Console_Record'Class :=
-              DAP.Views.Consoles.Get_Debugger_Interactive_Console (Self);
+            Event : DAP.Tools.BreakpointEvent;
          begin
             DAP.Tools.Inputs.Input_BreakpointEvent (Stream, Event, Success);
-            Console.Insert
-              ("Breakpoint:" & Event.a_body.reason'Img & " "
-               & (if Event.a_body.breakpoint.id.Is_Set
-                 then Event.a_body.breakpoint.id.Value'Img
-                 else "-"));
+            if Success then
+               Self.Breakpoints.On_Notification (Event.a_body);
+            end if;
          end;
 
       elsif Event = "thread" then

@@ -31,7 +31,7 @@ with GPS.Debuggers;
 
 with LSP.Raw_Clients;
 
-with DAP.Breakpoint_Maps;
+with DAP.Modules.Breakpoints;
 with DAP.Modules.Histories;
 with DAP.Requests;
 with DAP.Types;                  use DAP.Types;
@@ -163,7 +163,7 @@ package DAP.Clients is
 
    function Get_Breakpoints
      (Self : DAP_Client)
-      return DAP.Breakpoint_Maps.Breakpoint_Vectors.Vector;
+      return DAP.Modules.Breakpoints.Breakpoint_Vectors.Vector;
    --  Returns the list of breakpoints
 
    function Get_Call_Stack_View

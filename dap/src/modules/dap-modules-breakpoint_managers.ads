@@ -22,7 +22,7 @@ with VSS.Strings;
 with Basic_Types;                 use Basic_Types;
 with GPS.Kernel;
 
-with DAP.Breakpoint_Maps;         use DAP.Breakpoint_Maps;
+with DAP.Modules.Breakpoints;     use DAP.Modules.Breakpoints;
 with DAP.Types;                   use DAP.Types;
 with DAP.Tools;
 with DAP.Requests;                use DAP.Requests;
@@ -74,7 +74,7 @@ package DAP.Modules.Breakpoint_Managers is
 
    procedure Remove_Breakpoints
      (Self : DAP_Client_Breakpoint_Manager_Access;
-      List : DAP.Types.Breakpoint_Identifier_Lists.List);
+      Nums : DAP.Types.Breakpoint_Identifier_Lists.List);
    --  Remove breakpoints included in the list
 
    procedure Remove_All_Breakpoints
@@ -89,11 +89,16 @@ package DAP.Modules.Breakpoint_Managers is
 
    function Get_Breakpoints
      (Self : DAP_Client_Breakpoint_Manager_Access)
-      return DAP.Breakpoint_Maps.Breakpoint_Vectors.Vector;
+      return DAP.Modules.Breakpoints.Breakpoint_Vectors.Vector;
    --  Returns the list of the breakpoints
 
    procedure Show_Breakpoints (Self : in out DAP_Client_Breakpoint_Manager);
    --  Show breakpoints on the side column of the editors
+
+   procedure On_Notification
+     (Self  : DAP_Client_Breakpoint_Manager_Access;
+      Event : DAP.Tools.BreakpointEvent_body);
+   --  Process DAP breakpoints notifications
 
 private
 
@@ -106,20 +111,21 @@ private
       --  actual breakpoints
    end record;
 
-   type Action_Kind is (Init, Add, Edit, Delete, Change_Status, Feedback);
+   type Action_Kind is
+     (Init, Add, Delete, Enable, Disable, Synch);
    --  Type of a request to DAP adapter:
    --   Init: set breakpoints initially
    --   Add: add one new breakpoint
-   --   Edit:
    --   Delete: delete one or multiple breakpoints
-   --   Change_Status: Enable/disable one or more breakpoints
-   --   Feedback: set actual breakpoints after delete duplicates for example
+   --   Enable/Disable: Enable/disable one or more breakpoints
+   --   Synch: set actual breakpoints after delete duplicates for example
 
    function Send_Line
      (Self   : not null access DAP_Client_Breakpoint_Manager;
       File   : GNATCOLL.VFS.Virtual_File;
       Actual : Breakpoint_Vectors.Vector;
       Action : Action_Kind) return DAP_Request_Access;
+   --  Send a request for line breakpoints
 
    procedure Send_Line
      (Self   : not null access DAP_Client_Breakpoint_Manager;
@@ -130,16 +136,16 @@ private
 
    function Send_Subprogram
      (Self   : not null access DAP_Client_Breakpoint_Manager;
-      Data   : Breakpoint_Data;
       Actual : Breakpoint_Vectors.Vector;
       Action : Action_Kind)
       return DAP_Request_Access;
+   --  Send a request for subprograms breakpoints
 
    procedure Send_Subprogram
      (Self   : not null access DAP_Client_Breakpoint_Manager;
-      Data   : Breakpoint_Data;
       Actual : Breakpoint_Vectors.Vector;
-      Action : Action_Kind);
+      Action : Action_Kind;
+      Bunch  : Boolean);
    --  Send a request for subprogram breakpoints
 
    procedure Dec_Response
@@ -178,8 +184,8 @@ private
    with record
       Manager : DAP_Client_Breakpoint_Manager_Access;
       Action  : Action_Kind;
-      Data    : Breakpoint_Data;
       Sent    : Breakpoint_Vectors.Vector;
+      Last    : Boolean := False;
    end record;
 
    type Function_Breakpoint_Request_Access is
@@ -196,5 +202,12 @@ private
    overriding procedure On_Error_Message
      (Self    : in out Function_Breakpoint_Request;
       Message : VSS.Strings.Virtual_String);
+
+   procedure Send
+     (Self   : not null access DAP_Client_Breakpoint_Manager;
+      Map    : Breakpoint_Hash_Maps.Map;
+      Action : Action_Kind;
+      Bunch  : Boolean);
+   --  Send breakpoints request (lines & subprograms)
 
 end DAP.Modules.Breakpoint_Managers;

@@ -15,19 +15,19 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with GNATCOLL.Scripts;        use GNATCOLL.Scripts;
-with GNATCOLL.Scripts.Gtkada; use GNATCOLL.Scripts.Gtkada;
-with GNATCOLL.VFS;            use GNATCOLL.VFS;
+with GNATCOLL.Scripts;         use GNATCOLL.Scripts;
+with GNATCOLL.Scripts.Gtkada;  use GNATCOLL.Scripts.Gtkada;
+with GNATCOLL.VFS;             use GNATCOLL.VFS;
 
 with Glib;
 with Glib.Object;
 
-with GPS.Editors;             use GPS.Editors;
+with GPS.Editors;              use GPS.Editors;
 with GPS.Kernel.Project;
-with GPS.Kernel.Scripts;      use GPS.Kernel.Scripts;
+with GPS.Kernel.Scripts;       use GPS.Kernel.Scripts;
 
-with DAP.Breakpoint_Maps;
-with DAP.Clients;             use DAP.Clients;
+with DAP.Modules.Breakpoints;
+with DAP.Clients;              use DAP.Clients;
 with DAP.Module;
 
 package body DAP.Modules.Scripts is
@@ -42,15 +42,15 @@ package body DAP.Modules.Scripts is
    Debugger_Breakpoint_Class_Name : constant String := "DebuggerBreakpoint";
 
    type Breakpoint_Info_Property is new Instance_Property_Record with record
-      Data : DAP.Breakpoint_Maps.Breakpoint_Data;
+      Data : DAP.Modules.Breakpoints.Breakpoint_Data;
    end record;
    function Create_Debugger_Breakpoint
      (Script : not null access Scripting_Language_Record'Class;
-      Data   : DAP.Breakpoint_Maps.Breakpoint_Data) return Class_Instance;
+      Data   : DAP.Modules.Breakpoints.Breakpoint_Data) return Class_Instance;
 
    function Get_Breakpoint
      (Inst : Class_Instance)
-      return DAP.Breakpoint_Maps.Breakpoint_Data;
+      return DAP.Modules.Breakpoints.Breakpoint_Data;
 
    procedure Breakpoint_Handler
      (Data    : in out Callback_Data'Class;
@@ -63,7 +63,7 @@ package body DAP.Modules.Scripts is
 
    function Create_Debugger_Breakpoint
      (Script : not null access Scripting_Language_Record'Class;
-      Data   : DAP.Breakpoint_Maps.Breakpoint_Data) return Class_Instance
+      Data   : DAP.Modules.Breakpoints.Breakpoint_Data) return Class_Instance
    is
       Inst : constant Class_Instance := Script.New_Instance
         (Script.Get_Repository.New_Class (Debugger_Breakpoint_Class_Name));
@@ -80,7 +80,7 @@ package body DAP.Modules.Scripts is
 
    function Get_Breakpoint
      (Inst : Class_Instance)
-      return DAP.Breakpoint_Maps.Breakpoint_Data
+      return DAP.Modules.Breakpoints.Breakpoint_Data
    is
       Data : constant Instance_Property :=
         Get_Data (Inst, Debugger_Breakpoint_Class_Name);
@@ -109,14 +109,14 @@ package body DAP.Modules.Scripts is
            (Create_File
               (Data.Get_Script,
                Get_File
-                 (DAP.Breakpoint_Maps.Get_Location
+                 (DAP.Modules.Breakpoints.Get_Location
                       (Get_Breakpoint (Data.Nth_Arg (1))))));
 
       elsif Command = "line" then
          Data.Set_Return_Value
            (Natural
               (Get_Line
-                   (DAP.Breakpoint_Maps.Get_Location
+                   (DAP.Modules.Breakpoints.Get_Location
                         (Get_Breakpoint (Data.Nth_Arg (1))))));
       end if;
    end Breakpoint_Handler;
