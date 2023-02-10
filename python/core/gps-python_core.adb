@@ -72,15 +72,26 @@ package body GPS.Python_Core is
          --  Dynamically load the gtk DLLs on windows for python3.8+
          --  if the DLLs are not relatively located to PYTHONHOME.
          if Config.Host = Windows then
+            Script.Execute_Command
+              (CL           => GNATCOLL.Arg_Lists.Create
+                 ("import os; import io;"
+                  & "save_stdout = sys.stdout; sys.stdout = io.StringIO()"),
+               Hide_Output  => True,
+               Errors       => Errors);
             for Path of Paths loop
                Script.Execute_Command
                  (CL           => GNATCOLL.Arg_Lists.Create
-                    ("import os; os.add_dll_directory('"
+                    ("os.add_dll_directory('"
                      & VSS.Strings.Conversions.To_UTF_8_String (Path)
                      & "')"),
                   Hide_Output  => True,
                   Errors       => Errors);
             end loop;
+            Script.Execute_Command
+              (CL           => GNATCOLL.Arg_Lists.Create
+                 ("sys.stdout = save_stdout"),
+               Hide_Output  => True,
+               Errors       => Errors);
          end if;
 
          --  Register GPS module as GS to use both in transition period
