@@ -1063,8 +1063,6 @@ Classes
 
    .. automethod:: GPS.Entity.discriminants
 
-   .. automethod:: GPS.Entity.documentation
-
    .. automethod:: GPS.Entity.end_of_scope
 
    .. automethod:: GPS.Entity.fields
@@ -1118,8 +1116,6 @@ Classes
    .. automethod:: GPS.Entity.requires_body
 
    .. automethod:: GPS.Entity.return_type
-
-   .. automethod:: GPS.Entity.show
 
    .. automethod:: GPS.Entity.type
 
