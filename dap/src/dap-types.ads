@@ -19,6 +19,7 @@
 
 with Ada.Containers.Vectors;
 with Ada.Containers.Doubly_Linked_Lists;
+with Ada.Containers.Ordered_Sets;
 with Ada.Strings.Unbounded;
 
 with GNATCOLL.VFS;
@@ -121,5 +122,7 @@ package DAP.Types is
      (Positive, Disassemble_Element);
 
    subtype Disassemble_Elements is Disassemble_Element_Vectors.Vector;
+
+   package Integer_Ordered_Set is new Ada.Containers.Ordered_Sets (Integer);
 
 end DAP.Types;

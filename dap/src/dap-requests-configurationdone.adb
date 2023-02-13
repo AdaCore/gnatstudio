@@ -70,7 +70,6 @@ package body DAP.Requests.ConfigurationDone is
    is
       pragma Unreferenced (New_Request);
    begin
-      Trace (Me, "Configured");
       Self.Client.On_Configured;
    end On_Result_Message;
 
