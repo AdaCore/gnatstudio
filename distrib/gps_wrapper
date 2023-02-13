@@ -24,7 +24,7 @@ save_and_export ()
 {
     while [ "$1" ]; do
         #  let 'GPS_STARTUP_$1' be ${!1} (aka double substitution of $1)
-        eval "GPS_STARTUP_$1=\"\${$1}\""
+        eval "GPS_STARTUP_$1=\"\${$1-_ABSENT_VARIABLE_}\""
         export GPS_STARTUP_$1
         case $1 in
             LD_LIBRARY_PATH)
