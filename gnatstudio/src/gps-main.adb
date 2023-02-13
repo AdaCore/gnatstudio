@@ -2434,7 +2434,9 @@ procedure GPS.Main is
          Browsers.Projects.Register_Module (GPS_Main.Kernel);
       end if;
 
-      if Active (Entities_Browser_Trace) then
+      if Active (Entities_Browser_Trace)
+        and then not GPS.LSP_Module.LSP_Ada_Support_Trace_Is_Active
+      then
          Browsers.Entities.Register_Module (GPS_Main.Kernel);
       end if;
 
