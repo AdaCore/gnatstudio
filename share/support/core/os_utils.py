@@ -22,8 +22,8 @@ def locate_exec_on_path(prog):
     alldirs = str.split(os.getenv('PATH'), os.pathsep)
     for file in [os.path.join(dir, prog) for dir in alldirs]:
         for ext in extensions:
-            if os.path.isfile(file + ext):
-                return file
+            if os.path.isfile(file + ext.lower()):
+                return file + ext.lower()
     return ""
 
 
