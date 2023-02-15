@@ -605,7 +605,12 @@ procedure GPS.Main is
                  Name (Name'First + Prefix'Length .. Name'Last);
 
             begin
-               Env.Insert (Unprefixed_Name, Value);
+               if Value /= "_ABSENT_VARIABLE_" then
+                  Env.Insert (Unprefixed_Name, Value);
+               elsif Env.Contains (Unprefixed_Name) then
+                  Env.Remove (Unprefixed_Name);
+               end if;
+
                Env.Remove (Name);
             end;
          end if;
@@ -2434,7 +2439,9 @@ procedure GPS.Main is
          Browsers.Projects.Register_Module (GPS_Main.Kernel);
       end if;
 
-      if Active (Entities_Browser_Trace) then
+      if Active (Entities_Browser_Trace)
+        and then not GPS.LSP_Module.LSP_Ada_Support_Trace_Is_Active
+      then
          Browsers.Entities.Register_Module (GPS_Main.Kernel);
       end if;
 

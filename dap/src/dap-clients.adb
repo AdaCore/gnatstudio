@@ -248,7 +248,8 @@ package body DAP.Clients is
 
    function Is_Ready_For_Command (Self : DAP_Client) return Boolean is
    begin
-      return Self.Status = Stopped or else Self.Status = Ready;
+      return (Self.Status = Stopped or else Self.Status = Ready)
+        and then Self.Sent.Is_Empty;
    end Is_Ready_For_Command;
 
    ----------------------
@@ -289,6 +290,7 @@ package body DAP.Clients is
             Self.Selected_Line    := 0;
             Self.Selected_Address := Invalid_Address;
             Self.Selected_Frame   := 0;
+            Self.Selected_Thread  := 0;
 
             DAP.Utils.Unhighlight_Current_Line (Self.Kernel);
          end if;
@@ -1096,6 +1098,7 @@ package body DAP.Clients is
    is
       use VSS.Strings;
       use DAP.Tools.Enum;
+      use GNATCOLL.VFS;
 
       Success : Boolean := True;
    begin
@@ -1157,6 +1160,7 @@ package body DAP.Clients is
             if stop.a_body.threadId.Is_Set then
                Integer_Sets.Include
                  (Self.Stopped_Threads, stop.a_body.threadId.Value);
+               Self.Selected_Thread := stop.a_body.threadId.Value;
             end if;
             Self.All_Threads_Stopped := stop.a_body.allThreadsStopped;
 
@@ -1175,7 +1179,9 @@ package body DAP.Clients is
             end if;
 
             --  Get stopped frameId/file/line/address
-            if stop.a_body.threadId.Is_Set then
+            if stop.a_body.threadId.Is_Set
+              and then Self.Selected_File = No_File
+            then
                Self.Get_StackTrace (stop.a_body.threadId.Value);
             end if;
          end;

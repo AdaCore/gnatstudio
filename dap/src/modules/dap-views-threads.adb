@@ -36,6 +36,7 @@ with Gtkada.MDI;                 use Gtkada.MDI;
 
 with GPS.Kernel.MDI;             use GPS.Kernel.MDI;
 
+with DAP.Types;                  use DAP.Types;
 with DAP.Tools;                  use DAP.Tools;
 with DAP.Requests;               use DAP.Requests;
 with DAP.Requests.Threads;       use DAP.Requests.Threads;
@@ -47,7 +48,7 @@ package body DAP.Views.Threads is
    Name_Column : constant := 1;
 
    Column_Types : constant GType_Array :=
-     (Num_Column  => GType_Int,
+     (Num_Column  => GType_String,
       Name_Column => GType_String);
 
    Titles : constant GNAT.Strings.String_List :=
@@ -117,6 +118,31 @@ package body DAP.Views.Threads is
       Column : not null
       access Gtk.Tree_View_Column.Gtk_Tree_View_Column_Record'Class);
 
+   function Image (I : Integer) return String;
+   function Value (Str : String) return Integer;
+
+   -----------
+   -- Image --
+   -----------
+
+   function Image (I : Integer) return String is
+      S : constant String := Integer'Image (I);
+   begin
+      return S (S'First + 1 .. S'Last);
+   end Image;
+
+   -----------
+   -- Value --
+   -----------
+   function Value (Str : String) return Integer is
+   begin
+      if Str (Str'First) = '*' then
+         return Integer'Value (Str (Str'First + 1 .. Str'Last));
+      else
+         return Integer'Value (Str);
+      end if;
+   end Value;
+
    --------------
    -- Get_View --
    --------------
@@ -133,8 +159,7 @@ package body DAP.Views.Threads is
    ----------------
 
    function Initialize
-     (View : access Thread_View_Record'Class) return Gtk_Widget
-   is
+     (View : access Thread_View_Record'Class) return Gtk_Widget is
    begin
       Initialize_Vbox (View, Homogeneous => False);
 
@@ -148,6 +173,8 @@ package body DAP.Views.Threads is
 
       View.Scrolled.Add (View.Tree);
       View.Tree.Show_All;
+
+      View.Tree.Set_Activate_On_Single_Click (True);
       View.Tree.On_Row_Activated (On_Clicked'Access, View);
 
       return Gtk_Widget (View);
@@ -172,7 +199,8 @@ package body DAP.Views.Threads is
       View.Tree.Get_Selection.Select_Path (Path);
       View.Tree.Get_Selection.Get_Selected (Model, Iter);
       Get_Client (View).Set_Selected_Thread
-        (Integer'Value (Get_String (Model, Iter, Num_Column)));
+        (Value (Get_String (Model, Iter, Num_Column)));
+      View.Update;
    end On_Clicked;
 
    ---------------------------
@@ -206,10 +234,8 @@ package body DAP.Views.Threads is
 
          Set_And_Clear
            (-Get_Model (View.Tree), Iter, (Num_Column, Name_Column),
-            (1 => As_Int (0),
+            (1 => As_String ("0"),
              2 => As_String ("Running...")));
-
-         Get_Client (View).Set_Selected_Thread (0);
       else
          View.Update;
       end if;
@@ -265,28 +291,45 @@ package body DAP.Views.Threads is
       pragma Unreferenced (New_Request);
       View : constant Thread_MDI := Get_View (Self.Client);
       Iter : Gtk_Tree_Iter;
+      Set  : Integer_Ordered_Set.Set;
    begin
       if View = null then
          return;
       end if;
 
-      Clear (-Get_Model (View.Tree));
+      --  Get sorted list
       for Index in 1 .. Length (Result.a_body.threads) loop
-         declare
-            Thread : constant Thread_Variable_Reference :=
-              Get_Thread_Variable_Reference
-                (Result.a_body.threads, Index);
-         begin
-            Append (-Get_Model (View.Tree), Iter, Null_Iter);
-            Set_All_And_Clear
-              (-Get_Model (View.Tree), Iter,
-               --  Id
-               (Num_Column => As_Int (Gint (Thread.id)),
-                --  Name
-                Name_Column => As_String
-                  (VSS.Strings.Conversions.To_UTF_8_String (Thread.name))));
+         Set.Include (Get_Thread_Variable_Reference
+                      (Result.a_body.threads, Index).id);
+      end loop;
 
-         end;
+      Clear (-Get_Model (View.Tree));
+
+      --  Fill list
+      for Id of Set loop
+         Th : for Index in 1 .. Length (Result.a_body.threads) loop
+            declare
+               Thread : constant Thread_Variable_Reference :=
+                 Get_Thread_Variable_Reference
+                   (Result.a_body.threads, Index);
+            begin
+               if Thread.id = Id then
+                  Append (-Get_Model (View.Tree), Iter, Null_Iter);
+                  Set_All_And_Clear
+                    (-Get_Model (View.Tree), Iter,
+                     --  Num
+                     (Num_Column  => As_String
+                          ((if Self.Client.Get_Current_Thread = Thread.id
+                           then "* "
+                           else "") & Image (Thread.id)),
+                      --  Name
+                      Name_Column => As_String
+                        (VSS.Strings.Conversions.To_UTF_8_String
+                           (Thread.name))));
+                  exit Th;
+               end if;
+            end;
+         end loop Th;
       end loop;
 
       View.Kernel.Context_Changed (No_Context);

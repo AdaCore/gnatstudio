@@ -51,7 +51,7 @@ Here is a summary of the features of GNAT Studio:
   parsers, GNAT Studio allows you to find program information such as the
   declaration of entities and their references, that would otherwise be
   hard to locate.  It also provides advanced capabilities such as call
-  graphs and UML-like entity browsers.
+  trees and UML-like browsers to explore package dependencies.
 
 * Full debugger integration (:ref:`Debugging`)
 

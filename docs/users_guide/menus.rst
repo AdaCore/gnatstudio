@@ -633,12 +633,6 @@ The View Menu
 
    Open (or reuse if it already exists) the 'Elaboration Circularities' view
 
-.. index:: menu; view --> browsers --> entity browser
-
-* :menuselection:`View --> Browsers --> Entity Browser`
-
-   Open (or reuse if it already exists) the 'Entity Browser' view
-
 .. index:: menu; view --> browsers --> project browser
 
 * :menuselection:`View --> Browsers --> Project Browser`
