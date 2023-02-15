@@ -49,6 +49,7 @@ package DAP.Modules.Breakpoints is
       --  The locations of the breakpoint, may have several for subprograms
 
       Subprogram  : Ada.Strings.Unbounded.Unbounded_String;
+      Address     : Address_Type := Invalid_Address;
 
       Disposition : Breakpoint_Disposition := Keep;
       --  What is done when the breakpoint is reached
@@ -256,6 +257,31 @@ package DAP.Modules.Breakpoints is
      (Self : in out Breakpoint_Holder;
       Data : Breakpoint_Data);
    --  The breakpoint data is changed.
+
+   procedure Break_Unbreak_Address
+     (Self       : in out Breakpoint_Holder;
+      Address    : Address_Type;
+      Executable : String;
+      Changed    : out Breakpoint_Vectors.Vector);
+   --  Add/delete breakpoint for the address
+
+   function Get_For_Address
+     (Self          : Breakpoint_Holder;
+      With_Changing : Boolean := False)
+      return Breakpoint_Vectors.Vector;
+   --  Get breakpoints for addresses
+
+   procedure Address_Response
+     (Self         : in out Breakpoint_Holder;
+      Last_Element : Breakpoint_Data);
+   --  Process response to update last (added) breakpoint data
+
+   procedure Address_Status_Changed
+     (Self    : in out Breakpoint_Holder;
+      Actual  : Breakpoint_Vectors.Vector);
+
+   Subprogram_File : constant Virtual_File := Create ("dap_subprogram");
+   Address_File    : constant Virtual_File := Create ("dap_address");
 
 private
 

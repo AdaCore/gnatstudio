@@ -131,6 +131,11 @@ package DAP.Clients is
       Temporary  : Boolean := False);
    --  Add a breakpoint for the subprogram
 
+   procedure Toggle_Instruction_Breakpoint
+     (Self    : in out DAP_Client;
+      Address : Address_Type);
+   --  Add/delete a breakpoint for the address
+
    procedure Remove_Breakpoints
      (Self : in out DAP_Client;
       List : DAP.Types.Breakpoint_Identifier_Lists.List);

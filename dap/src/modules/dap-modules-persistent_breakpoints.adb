@@ -830,6 +830,7 @@ package body DAP.Modules.Persistent_Breakpoints is
                  (Item.Get ("disposition")),
                State         => Enabled,
                Subprogram    => Item.Get ("subprogram"),
+               Address       => Invalid_Address,
                Locations     => Location_Vectors.To_Vector
                  ((Id, Loc, Invalid_Address), 1),
                Ignore        => Item.Get ("ignore"),
@@ -900,7 +901,9 @@ package body DAP.Modules.Persistent_Breakpoints is
       GNATCOLL.Traces.Trace (Me, "Saving breakpoints for future sessions");
 
       for Data of Property.Breakpoints loop
-         Save (Data);
+         if Data.Address = Invalid_Address then
+            Save (Data);
+         end if;
       end loop;
 
       Value.Set_Field ("breakpoints", Values);

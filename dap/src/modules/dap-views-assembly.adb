@@ -35,7 +35,6 @@ with Gtk.Enums;                  use Gtk.Enums;
 with Gtk.Handlers;
 with Gtk.Menu;
 with Gtk.Scrolled_Window;        use Gtk.Scrolled_Window;
-with Gtk.Toolbar;                use Gtk.Toolbar;
 with Gtk.Tree_Model;             use Gtk.Tree_Model;
 with Gtk.Tree_Store;             use Gtk.Tree_Store;
 with Gtk.Tree_View;              use Gtk.Tree_View;
@@ -113,10 +112,6 @@ package body DAP.Views.Assembly is
    overriding procedure On_Location_Changed
      (Self : not null access Assembly_View_Record);
    overriding procedure Update (Self : not null access Assembly_View_Record);
-
-   overriding procedure Create_Toolbar
-     (View    : not null access Assembly_View_Record;
-      Toolbar : not null access Gtk.Toolbar.Gtk_Toolbar_Record'Class);
 
    overriding procedure Create_Menu
      (Self : not null access Assembly_View_Record;
@@ -259,6 +254,12 @@ package body DAP.Views.Assembly is
       Pref   : Preference);
    --  Called when the preferences have changed, to refresh the editor
    --  appropriately.
+
+   type Breakpoint_Command is new Interactive_Command with null record;
+   overriding function Execute
+     (Command : access Breakpoint_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type;
+   --  Create/delete a breakpoint
 
    procedure Free (Data : in out Cache_Data_Access);
 
@@ -584,19 +585,6 @@ package body DAP.Views.Assembly is
    begin
       Unchecked_Free (Data);
    end Free;
-
-   --------------------
-   -- Create_Toolbar --
-   --------------------
-
-   overriding procedure Create_Toolbar
-     (View    : not null access Assembly_View_Record;
-      Toolbar : not null access Gtk.Toolbar.Gtk_Toolbar_Record'Class) is
-   begin
-      --  Remove "assembly_view toggle breakpoint" because it is not supported
-      --  to set breakpoint on address over DAP
-      Toolbar.Remove (Toolbar.Get_Nth_Item (3));
-   end Create_Toolbar;
 
    -----------------
    -- Create_Menu --
@@ -1430,6 +1418,41 @@ package body DAP.Views.Assembly is
       Self.View.Tree.Grab_Focus;
    end Finalize;
 
+   -------------
+   -- Execute --
+   -------------
+
+   overriding function Execute
+     (Command : access Breakpoint_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type
+   is
+      pragma Unreferenced (Command);
+      Kernel   : constant Kernel_Handle := Get_Kernel (Context.Context);
+      View     : constant Assembly_View :=
+        Assembly_View (Assembly_MDI_Views.Get_Or_Create_View (Kernel));
+      Model    : Gtk.Tree_Model.Gtk_Tree_Model;
+      Iter     : Gtk.Tree_Model.Gtk_Tree_Iter;
+   begin
+      View.Tree.Get_Selection.Get_Selected (Model, Iter);
+
+      if Iter = Null_Iter then
+         return Commands.Success;
+      end if;
+
+      declare
+         Client : constant DAP.Clients.DAP_Client_Access := Get_Client (View);
+         Str    : constant String := Get_String (Model, Iter, Address_Column);
+      begin
+         if Client = null or else Str = "" then
+            return Commands.Success;
+         end if;
+
+         Client.Toggle_Instruction_Breakpoint (String_To_Address (Str));
+      end;
+
+      return Commands.Success;
+   end Execute;
+
    ---------------------
    -- Register_Module --
    ---------------------
@@ -1437,7 +1460,7 @@ package body DAP.Views.Assembly is
    procedure Register_Module
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
    is
-      Debugger_Stopped : Action_Filter;
+      Debugger_Ready : Action_Filter;
    begin
       Invalid_Cache_Data.Data.Append
         (Disassemble_Element'
@@ -1452,8 +1475,7 @@ package body DAP.Views.Assembly is
          Action_Name => "open assembly view",
          Description => "Open the Assembly view for the debugger");
 
-      Debugger_Stopped := Kernel.Lookup_Filter
-        ("Debugger stopped");
+      Debugger_Ready := Kernel.Lookup_Filter ("Debugger ready");
 
       GPS.Kernel.Actions.Register_Action
         (Kernel, "assembly_view disassemble next",
@@ -1462,7 +1484,7 @@ package body DAP.Views.Assembly is
          Description => "Disassemble next code block",
          Icon_Name   => "gps-debugger-down-symbolic",
          Category    => "Debug",
-         Filter      => Debugger_Stopped);
+         Filter      => Debugger_Ready);
 
       GPS.Kernel.Actions.Register_Action
         (Kernel, "assembly_view disassemble previous",
@@ -1471,7 +1493,7 @@ package body DAP.Views.Assembly is
          Description => "Disassemble previous code block",
          Icon_Name   => "gps-debugger-up-symbolic",
          Category    => "Debug",
-         Filter      => Debugger_Stopped);
+         Filter      => Debugger_Ready);
 
       GPS.Kernel.Actions.Register_Action
         (Kernel, "assembly_view disassemble pc",
@@ -1479,7 +1501,15 @@ package body DAP.Views.Assembly is
          Description => "Disassemble $pc code block",
          Icon_Name   => "gps-debugger-step-symbolic",
          Category    => "Debug",
-         Filter      => Debugger_Stopped);
+         Filter      => Debugger_Ready);
+
+      GPS.Kernel.Actions.Register_Action
+        (Kernel, "assembly_view toggle breakpoint",
+         Command     => new Breakpoint_Command,
+         Description => "Create/delete a breakpoint on address",
+         Icon_Name   => "gps-emblem-debugger-current",
+         Category    => "Debug",
+         Filter      => Debugger_Ready);
    end Register_Module;
 
 end DAP.Views.Assembly;

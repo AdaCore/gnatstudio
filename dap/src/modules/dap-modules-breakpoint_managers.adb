@@ -38,6 +38,10 @@ package body DAP.Modules.Breakpoint_Managers is
       Data   : in out Breakpoint_Data;
       Item   : DAP.Tools.Breakpoint);
 
+   function Convert
+     (Kernel : GPS.Kernel.Kernel_Handle;
+      DAP_Bp : DAP.Tools.Breakpoint) return Breakpoint_Data;
+
    -------------
    -- Convert --
    -------------
@@ -84,6 +88,28 @@ package body DAP.Modules.Breakpoint_Managers is
             Address),
             1);
       end if;
+   end Convert;
+
+   -------------
+   -- Convert --
+   -------------
+
+   function Convert
+     (Kernel : GPS.Kernel.Kernel_Handle;
+      DAP_Bp : DAP.Tools.Breakpoint) return Breakpoint_Data
+   is
+      File   : constant Virtual_File :=
+        (if DAP_Bp.source.Is_Set
+         then Create
+           (+(VSS.Strings.Conversions.To_UTF_8_String
+            (DAP_Bp.source.Value.path)))
+         else No_File);
+      Holder : constant GPS.Editors.Controlled_Editor_Buffer_Holder :=
+        Kernel.Get_Buffer_Factory.Get_Holder (File => File);
+      Data : Breakpoint_Data;
+   begin
+      Convert (Kernel, File, Holder, Data, DAP_Bp);
+      return Data;
    end Convert;
 
    ----------------
@@ -189,6 +215,27 @@ package body DAP.Modules.Breakpoint_Managers is
       end if;
    end Break_Subprogram;
 
+   -----------------------------------
+   -- Toggle_Instruction_Breakpoint --
+   -----------------------------------
+
+   procedure Toggle_Instruction_Breakpoint
+     (Self    : DAP_Client_Breakpoint_Manager_Access;
+      Address : Address_Type)
+   is
+      Changed : Breakpoint_Vectors.Vector;
+   begin
+      if Self.Requests_Count /= 0 then
+         Self.Client.Display_In_Debugger_Console
+           ("Can't change breakpoints, another request is in progerss");
+         return;
+      end if;
+
+      Self.Holder.Break_Unbreak_Address
+        (Address, +Base_Name (Self.Client.Get_Executable), Changed);
+      Self.Send_Addresses (Changed, Add);
+   end Toggle_Instruction_Breakpoint;
+
    -----------------
    -- On_Rejected --
    -----------------
@@ -211,6 +258,19 @@ package body DAP.Modules.Breakpoint_Managers is
       DAP.Requests.Function_Breakpoints.On_Rejected
         (DAP.Requests.Function_Breakpoints.Function_Breakpoint_DAP_Request
            (Self));
+   end On_Rejected;
+
+   -----------------
+   -- On_Rejected --
+   -----------------
+
+   overriding procedure On_Rejected
+     (Self : in out Instruction_Breakpoint_Request) is
+   begin
+      Self.Manager.Dec_Response (Self.Action);
+      DAP.Requests.Instruction_Breakpoints.On_Rejected
+        (DAP.Requests.Instruction_Breakpoints.
+           Instruction_Breakpoint_DAP_Request (Self));
    end On_Rejected;
 
    ----------------------
@@ -238,6 +298,20 @@ package body DAP.Modules.Breakpoint_Managers is
       DAP.Requests.Function_Breakpoints.On_Error_Message
         (DAP.Requests.Function_Breakpoints.Function_Breakpoint_DAP_Request
            (Self), Message);
+   end On_Error_Message;
+
+   ----------------------
+   -- On_Error_Message --
+   ----------------------
+
+   overriding procedure On_Error_Message
+     (Self    : in out Instruction_Breakpoint_Request;
+      Message : VSS.Strings.Virtual_String) is
+   begin
+      Self.Manager.Dec_Response (Self.Action);
+      DAP.Requests.Instruction_Breakpoints.On_Error_Message
+        (DAP.Requests.Instruction_Breakpoints.
+           Instruction_Breakpoint_DAP_Request (Self), Message);
    end On_Error_Message;
 
    ------------------
@@ -415,6 +489,32 @@ package body DAP.Modules.Breakpoint_Managers is
       end if;
    end Send_Subprogram;
 
+   --------------------
+   -- Send_Addresses --
+   --------------------
+
+   procedure Send_Addresses
+     (Self   : not null access DAP_Client_Breakpoint_Manager;
+      Actual : Breakpoint_Vectors.Vector;
+      Action : Action_Kind)
+   is
+      Req : Instruction_Breakpoint_Request_Access :=
+        new Instruction_Breakpoint_Request (Self.Kernel);
+      Fb  : DAP.Tools.InstructionBreakpoint;
+   begin
+      Req.Manager := DAP_Client_Breakpoint_Manager_Access (Self);
+      Req.Action  := Action;
+      Req.Sent    := Actual;
+
+      for Data of Actual loop
+         Fb.instructionReference := VSS.Strings.Conversions.To_Virtual_String
+           (Address_To_String (Data.Address));
+         Req.Parameters.arguments.breakpoints.Append (Fb);
+      end loop;
+
+      Self.Client.Enqueue (DAP_Request_Access (Req));
+   end Send_Addresses;
+
    ----------
    -- Send --
    ----------
@@ -429,8 +529,12 @@ package body DAP.Modules.Breakpoint_Managers is
       Cursor : Breakpoint_Hash_Maps.Cursor := Map.First;
    begin
       while Has_Element (Cursor) loop
-         if Key (Cursor) = No_File then
+         if Key (Cursor) = Subprogram_File then
             Self.Send_Subprogram (Element (Cursor), Action, Bunch);
+
+         elsif Key (Cursor) = Address_File then
+            Self.Send_Addresses (Element (Cursor), Action);
+
          else
             Self.Send_Line (Key (Cursor), Element (Cursor), Action);
          end if;
@@ -569,7 +673,8 @@ package body DAP.Modules.Breakpoint_Managers is
      (Self         : DAP_Client_Breakpoint_Manager_Access;
       Event        : in out DAP.Tools.StoppedEvent;
       Stopped_File : out GNATCOLL.VFS.Virtual_File;
-      Stopped_Line : out Integer)
+      Stopped_Line : out Integer;
+      Address      : out Address_Type)
    is
       use DAP.Tools;
       Ids : DAP.Types.Breakpoint_Identifier_Lists.List;
@@ -586,10 +691,10 @@ package body DAP.Modules.Breakpoint_Managers is
                if Data = Breakpoint_Identifier (Num.Element.all) then
                   for L of Data.Locations loop
                      if L.Num = Breakpoint_Identifier (Num.Element.all) then
-                        Stopped_File := GPS.Editors.Get_File
-                          (Get_Location (Data));
+                        Stopped_File := GPS.Editors.Get_File (L.Marker);
                         Stopped_Line := Integer
-                          (GPS.Editors.Get_Line (Get_Location (Data)));
+                          (GPS.Editors.Get_Line (L.Marker));
+                        Address := L.Address;
 
                         if Data.Disposition = Delete then
                            Ids.Append (Data.Num);
@@ -646,6 +751,7 @@ package body DAP.Modules.Breakpoint_Managers is
                     (Self.File, Changed.Element (Self.File), Synch);
                end if;
             end;
+            Update := True;
 
          when Add =>
             declare
@@ -722,31 +828,6 @@ package body DAP.Modules.Breakpoint_Managers is
    is
       use DAP.Tools;
 
-      -------------
-      -- Convert --
-      -------------
-
-      function Convert (Index : Integer) return Breakpoint_Data;
-      function Convert (Index : Integer) return Breakpoint_Data
-      is
-         DAP_Bp : constant DAP.Tools.Breakpoint :=
-           Result.a_body.breakpoints (Index);
-         File   : constant Virtual_File :=
-           (if DAP_Bp.source.Is_Set
-            then Create
-              (+(VSS.Strings.Conversions.To_UTF_8_String
-               (DAP_Bp.source.Value.path)))
-            else No_File);
-         Holder : constant GPS.Editors.
-           Controlled_Editor_Buffer_Holder :=
-             Self.Kernel.Get_Buffer_Factory.Get_Holder
-               (File => File);
-         Data : Breakpoint_Data;
-      begin
-         Convert (Self.Kernel, File, Holder, Data, DAP_Bp);
-         return Data;
-      end Convert;
-
       Update : Boolean := False;
       Actual : Breakpoint_Vectors.Vector;
    begin
@@ -755,7 +836,8 @@ package body DAP.Modules.Breakpoint_Managers is
       case Self.Action is
          when Init =>
             for Index in 1 .. Length (Result.a_body.breakpoints) loop
-               Actual.Append (Convert (Index));
+               Actual.Append
+                 (Convert (Self.Kernel, Result.a_body.breakpoints (Index)));
             end loop;
 
             Self.Manager.Holder.Initialized_For_Subprograms
@@ -763,7 +845,8 @@ package body DAP.Modules.Breakpoint_Managers is
 
          when Add =>
             for Index in 1 .. Length (Result.a_body.breakpoints) loop
-               Actual.Append (Convert (Index));
+               Actual.Append
+                 (Convert (Self.Kernel, Result.a_body.breakpoints (Index)));
             end loop;
 
             Self.Manager.Holder.Added_Subprogram
@@ -776,7 +859,8 @@ package body DAP.Modules.Breakpoint_Managers is
 
          when Enable =>
             for Index in 1 .. Length (Result.a_body.breakpoints) loop
-               Actual.Append (Convert (Index));
+               Actual.Append
+                 (Convert (Self.Kernel, Result.a_body.breakpoints (Index)));
             end loop;
 
             Self.Manager.Holder.Subprogram_Status_Changed (Actual, Self.Last);
@@ -796,6 +880,55 @@ package body DAP.Modules.Breakpoint_Managers is
          GPS.Kernel.Hooks.Debugger_Breakpoints_Changed_Hook.Run
            (Self.Kernel, Self.Manager.Client.Get_Visual);
       end if;
+
+      Self.Manager.Dec_Response (Self.Action);
+   end On_Result_Message;
+
+   -----------------------
+   -- On_Result_Message --
+   -----------------------
+
+   overriding procedure On_Result_Message
+     (Self        : in out Instruction_Breakpoint_Request;
+      Result      : in out DAP.Tools.SetInstructionBreakpointsResponse;
+      New_Request : in out DAP_Request_Access)
+   is
+      use DAP.Tools;
+
+      Actual : Breakpoint_Vectors.Vector;
+      Data   : Breakpoint_Data;
+   begin
+      New_Request := null;
+
+      case Self.Action is
+         when Init | Delete | Disable | Synch =>
+            --  Do nothing
+            null;
+
+         when Add =>
+            if not Self.Sent.Is_Empty then
+               Data := Self.Sent.Last_Element;
+               Data.Locations := Convert
+                 (Self.Kernel,
+                  Result.a_body.breakpoints
+                    (Length (Result.a_body.breakpoints))).Locations;
+               Data.Num := Data.Locations.First_Element.Num;
+
+               Self.Manager.Holder.Address_Response (Data);
+            end if;
+
+         when Enable =>
+            for Index in 1 .. Length (Result.a_body.breakpoints) loop
+               Actual.Append
+                 (Convert (Self.Kernel, Result.a_body.breakpoints (Index)));
+            end loop;
+
+            Self.Manager.Holder.Address_Status_Changed (Actual);
+      end case;
+
+      Self.Manager.Show_Breakpoints;
+      GPS.Kernel.Hooks.Debugger_Breakpoints_Changed_Hook.Run
+        (Self.Kernel, Self.Manager.Client.Get_Visual);
 
       Self.Manager.Dec_Response (Self.Action);
    end On_Result_Message;
