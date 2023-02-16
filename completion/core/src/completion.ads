@@ -280,6 +280,22 @@ package Completion is
    --  be computed asynchronously, use the Asynchronous_Completion_Manager API
    --  instead.
 
+   function Accept_Comments
+     (Manager : not null access Completion_Manager) return Boolean
+   is
+     (False);
+   --  Whether the given completion manager accepts completion within comments.
+   --  Override it to True if you want completion queries to be performed
+   --  within comments.
+
+   function Accept_Strings
+     (Manager : not null access Completion_Manager) return Boolean
+   is
+     (False);
+   --  Whether the given completion manager accepts completion within strings.
+   --  Override it to True if you want completion queries to be performed
+   --  within strings.
+
    type Asynchronous_Completion_Manager is
      abstract new Completion_Manager with private;
    type Asynchronous_Completion_Manager_Access is
