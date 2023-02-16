@@ -135,6 +135,21 @@ package body DAP.Clients is
       end if;
    end Break_Subprogram;
 
+   -----------------------------------
+   -- Toggle_Instruction_Breakpoint --
+   -----------------------------------
+
+   procedure Toggle_Instruction_Breakpoint
+     (Self    : in out DAP_Client;
+      Address : Address_Type)
+   is
+      use DAP.Modules.Breakpoint_Managers;
+   begin
+      if Self.Breakpoints /= null then
+         Toggle_Instruction_Breakpoint (Self.Breakpoints, Address);
+      end if;
+   end Toggle_Instruction_Breakpoint;
+
    ------------------
    -- Current_File --
    ------------------
@@ -1166,7 +1181,8 @@ package body DAP.Clients is
 
             if stop.a_body.reason = breakpoint then
                Self.Breakpoints.Stopped
-                 (stop, Self.Selected_File, Self.Selected_Line);
+                 (stop, Self.Selected_File,
+                  Self.Selected_Line, Self.Selected_Address);
 
             elsif stop.a_body.reason = step
               and then stop.a_body.threadId.Is_Set
@@ -1179,9 +1195,10 @@ package body DAP.Clients is
             end if;
 
             --  Get stopped frameId/file/line/address
-            if stop.a_body.threadId.Is_Set
-              and then Self.Selected_File = No_File
-            then
+            if Self.Selected_File /= No_File then
+               Self.On_Location_Changed;
+
+            elsif stop.a_body.threadId.Is_Set then
                Self.Get_StackTrace (stop.a_body.threadId.Value);
             end if;
          end;

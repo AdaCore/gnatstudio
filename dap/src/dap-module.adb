@@ -136,14 +136,16 @@ package body DAP.Module is
      (Filter  : access Has_Debuggers_Filter;
       Context : Selection_Context) return Boolean;
 
-   type Debugger_Ready_Filter is new Action_Filter_Record with null record;
+   type Debugger_Ready_State_Filter is
+     new Action_Filter_Record with null record;
    overriding function Filter_Matches_Primitive
-     (Filter  : access Debugger_Ready_Filter;
+     (Filter  : access Debugger_Ready_State_Filter;
       Context : Selection_Context) return Boolean;
 
-   type Debuggers_Stopped_Filter is new Action_Filter_Record with null record;
+   type Debugger_Ready_Filter is
+     new Action_Filter_Record with null record;
    overriding function Filter_Matches_Primitive
-     (Filter  : access Debuggers_Stopped_Filter;
+     (Filter  : access Debugger_Ready_Filter;
       Context : Selection_Context) return Boolean;
 
    type No_Debugger_Or_Ready_Filter is
@@ -732,7 +734,7 @@ package body DAP.Module is
    ------------------------------
 
    overriding function Filter_Matches_Primitive
-     (Filter  : access Debugger_Ready_Filter;
+     (Filter  : access Debugger_Ready_State_Filter;
       Context : Selection_Context) return Boolean
    is
       use DAP.Types;
@@ -740,18 +742,6 @@ package body DAP.Module is
    begin
       return DAP.Module.Get_Current_Debugger /= null
         and then DAP.Module.Get_Current_Debugger.Get_Status = Ready;
-   end Filter_Matches_Primitive;
-
-   ------------------------------
-   -- Filter_Matches_Primitive --
-   ------------------------------
-
-   overriding function Filter_Matches_Primitive
-     (Filter  : access Debuggers_Stopped_Filter;
-      Context : Selection_Context) return Boolean is
-   begin
-      return not DAP_Module_ID.Clients.Is_Empty
-        and then Get_Current_Debugger.Is_Stopped;
    end Filter_Matches_Primitive;
 
    ------------------------------
@@ -780,6 +770,20 @@ package body DAP.Module is
    begin
       return DAP_Module_ID.Clients.Is_Empty
         or else Get_Current_Debugger.Is_Ready_For_Command;
+   end Filter_Matches_Primitive;
+
+   ------------------------------
+   -- Filter_Matches_Primitive --
+   ------------------------------
+
+   overriding function Filter_Matches_Primitive
+     (Filter  : access Debugger_Ready_Filter;
+      Context : Selection_Context) return Boolean
+   is
+      pragma Unreferenced (Filter);
+   begin
+      return not DAP_Module_ID.Clients.Is_Empty
+        and then Get_Current_Debugger.Is_Ready_For_Command;
    end Filter_Matches_Primitive;
 
    ------------------------------
@@ -1103,12 +1107,12 @@ package body DAP.Module is
      (Kernel   : access GPS.Kernel.Kernel_Handle_Record'Class;
       Base_Dir : Virtual_File)
    is
-      Debugger_Active      : Action_Filter;
-      Debugger_Ready       : Action_Filter;
-      Breakable_Filter     : Action_Filter;
+      Has_Debugger         : Action_Filter;
       No_Debugger_Or_Ready : Action_Filter;
+      Debugger_Ready       : Action_Filter;
+      Debugger_Ready_State : Action_Filter;
+      Breakable_Filter     : Action_Filter;
       Entity_Filter        : Action_Filter;
-      Debugger_Stopped     : Action_Filter;
 
    begin
       DAP.Modules.Preferences.Register_Default_Preferences
@@ -1125,15 +1129,15 @@ package body DAP.Module is
 
       -- Filters --
 
-      Debugger_Active := new Has_Debuggers_Filter;
-      Register_Filter (Kernel, Debugger_Active, "Has debuggers");
-
-      Debugger_Stopped := new Debuggers_Stopped_Filter;
-      Register_Filter (Kernel, Debugger_Stopped, "Debugger stopped");
+      Has_Debugger := new Has_Debuggers_Filter;
+      Register_Filter (Kernel, Has_Debugger, "Has debuggers");
 
       No_Debugger_Or_Ready := new No_Debugger_Or_Ready_Filter;
       Register_Filter
         (Kernel, No_Debugger_Or_Ready, "No debugger or ready");
+
+      Debugger_Ready := new Debugger_Ready_Filter;
+      Register_Filter (Kernel, Debugger_Ready, "Debugger ready");
 
       Breakable_Filter := new Breakable_Source_Filter;
       Register_Filter
@@ -1142,8 +1146,8 @@ package body DAP.Module is
       Entity_Filter := new Entity_Name_Filter;
       Register_Filter (Kernel, Entity_Filter, "Debugger entity name");
 
-      Debugger_Ready := new Debugger_Ready_Filter;
-      Register_Filter (Kernel, Debugger_Ready, "Debugger ready");
+      Debugger_Ready_State := new Debugger_Ready_State_Filter;
+      Register_Filter (Kernel, Debugger_Ready_State, "Debugger ready state");
       --  Actions --
 
       Project_View_Changed_Hook.Add (new On_Project_View_Changed);
@@ -1156,12 +1160,12 @@ package body DAP.Module is
         (Kernel, "terminate debugger", new Terminate_Command,
          Icon_Name   => "gps-debugger-terminate-symbolic",
          Description => "Terminate the current debugger",
-         Filter      => Debugger_Active);
+         Filter      => Has_Debugger);
 
       GPS.Kernel.Actions.Register_Action
         (Kernel, "terminate all debuggers", new Terminate_All_Command,
          Description => "Terminate all running debugger",
-         Filter      => Debugger_Active);
+         Filter      => Has_Debugger);
 
       GPS.Kernel.Modules.UI.Register_Contextual_Submenu
         (Kernel, "Debug",
@@ -1169,7 +1173,7 @@ package body DAP.Module is
 
       GPS.Kernel.Actions.Register_Action
         (Kernel, "debug run dialog", new Start_Command,
-         Filter      => Debugger_Ready,
+         Filter      => Debugger_Ready_State,
          Description =>
            "Choose the arguments to the program, and start running it",
          Category    => "Debug");
@@ -1177,7 +1181,7 @@ package body DAP.Module is
       GPS.Kernel.Actions.Register_Action
         (Kernel, "debug continue", new Continue_Command,
          Icon_Name    => "gps-debugger-run-symbolic",
-         Filter       => Debugger_Stopped,
+         Filter       => Debugger_Ready,
          Description  =>
            "Continue execution until next breakpoint." & ASCII.LF
          & "Start the debugger if not started yet",
@@ -1187,7 +1191,7 @@ package body DAP.Module is
       GPS.Kernel.Actions.Register_Action
         (Kernel, "debug next", new Next_Command,
          Icon_Name    => "gps-debugger-next-symbolic",
-         Filter       => Debugger_Stopped,
+         Filter       => Debugger_Ready,
          Description  =>
            "Execute the program until the next source line, stepping over"
          & " subprogram calls",
@@ -1196,7 +1200,7 @@ package body DAP.Module is
 
       GPS.Kernel.Actions.Register_Action
         (Kernel, "debug nexti", new Nexti_Command,
-         Filter      => Debugger_Stopped,
+         Filter      => Debugger_Ready,
          Description =>
            "Execute the program until the next machine instruction, stepping"
          & " over subprogram calls",
@@ -1205,7 +1209,7 @@ package body DAP.Module is
       GPS.Kernel.Actions.Register_Action
         (Kernel, "debug step", new Step_Command,
          Icon_Name    => "gps-debugger-step-symbolic",
-         Filter       => Debugger_Stopped,
+         Filter       => Debugger_Ready,
          Description  =>
            "Execute until program reaches a new line of source code",
          Category     => "Debug",
@@ -1213,7 +1217,7 @@ package body DAP.Module is
 
       GPS.Kernel.Actions.Register_Action
         (Kernel, "debug stepi", new Stepi_Command,
-         Filter      => Debugger_Stopped,
+         Filter      => Debugger_Ready,
          Description =>
            "Execute the program for one machine instruction only",
          Category    => "Debug");

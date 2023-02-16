@@ -31,6 +31,7 @@ limited with DAP.Clients;
 
 private with DAP.Requests.Breakpoints;
 private with DAP.Requests.Function_Breakpoints;
+private with DAP.Requests.Instruction_Breakpoints;
 
 package DAP.Modules.Breakpoint_Managers is
 
@@ -50,7 +51,8 @@ package DAP.Modules.Breakpoint_Managers is
      (Self         : DAP_Client_Breakpoint_Manager_Access;
       Event        : in out DAP.Tools.StoppedEvent;
       Stopped_File : out GNATCOLL.VFS.Virtual_File;
-      Stopped_Line : out Integer);
+      Stopped_Line : out Integer;
+      Address      : out Address_Type);
    --  Called when the debugger is stopped
 
    procedure Break_Sorce
@@ -65,6 +67,11 @@ package DAP.Modules.Breakpoint_Managers is
       Subprogram : String;
       Temporary  : Boolean := False);
    --  Add breakpoint for the subprogram
+
+   procedure Toggle_Instruction_Breakpoint
+     (Self    : DAP_Client_Breakpoint_Manager_Access;
+      Address : Address_Type);
+   --  Add/delete a breakpoint for the address
 
    procedure Remove_Breakpoint_At
      (Self      : DAP_Client_Breakpoint_Manager_Access;
@@ -148,6 +155,11 @@ private
       Bunch  : Boolean);
    --  Send a request for subprogram breakpoints
 
+   procedure Send_Addresses
+     (Self   : not null access DAP_Client_Breakpoint_Manager;
+      Actual : Breakpoint_Vectors.Vector;
+      Action : Action_Kind);
+
    procedure Dec_Response
      (Self   : in out DAP_Client_Breakpoint_Manager;
       Action : Action_Kind);
@@ -209,5 +221,31 @@ private
       Action : Action_Kind;
       Bunch  : Boolean);
    --  Send breakpoints request (lines & subprograms)
+
+   --  Instruction_Breakpoint_Request --
+
+   type Instruction_Breakpoint_Request is
+     new DAP.Requests.Instruction_Breakpoints.
+       Instruction_Breakpoint_DAP_Request
+   with record
+      Manager : DAP_Client_Breakpoint_Manager_Access;
+      Action  : Action_Kind;
+      Sent    : Breakpoint_Vectors.Vector;
+   end record;
+
+   type Instruction_Breakpoint_Request_Access is
+     access all Instruction_Breakpoint_Request;
+
+   overriding procedure On_Result_Message
+     (Self        : in out Instruction_Breakpoint_Request;
+      Result      : in out DAP.Tools.SetInstructionBreakpointsResponse;
+      New_Request : in out DAP_Request_Access);
+
+   overriding procedure On_Rejected
+     (Self : in out Instruction_Breakpoint_Request);
+
+   overriding procedure On_Error_Message
+     (Self    : in out Instruction_Breakpoint_Request;
+      Message : VSS.Strings.Virtual_String);
 
 end DAP.Modules.Breakpoint_Managers;

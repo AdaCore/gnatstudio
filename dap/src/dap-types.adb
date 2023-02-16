@@ -23,6 +23,10 @@ package body DAP.Types is
 
    Convert : constant String := "0123456789abcdef";
 
+   -----------------
+   -- Add_Address --
+   -----------------
+
    function Add_Address
      (Address : Address_Type;
       Offset  : Integer) return Address_Type

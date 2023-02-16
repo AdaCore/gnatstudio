@@ -34,6 +34,7 @@ package body DAP.Modules.Breakpoints is
 
    function Is_Line_Bp (Data : Breakpoint_Data) return Boolean;
    function Is_Subprogram_Bp (Data : Breakpoint_Data) return Boolean;
+   function Is_Address_Bp (Data : Breakpoint_Data) return Boolean;
 
    -------
    -- = --
@@ -113,12 +114,19 @@ package body DAP.Modules.Breakpoints is
 
    function Get_Location_File (Data : Breakpoint_Data) return Virtual_File
    is
-      Loc : constant Location_Marker := Get_Location (Data);
+      Loc : Location_Marker;
    begin
-      if Loc = No_Marker then
-         return No_File;
+      if Is_Subprogram_Bp (Data) then
+         return Subprogram_File;
+      elsif Is_Address_Bp (Data) then
+         return Address_File;
       else
-         return GPS.Editors.Get_File (Loc);
+         Loc := Get_Location (Data);
+         if Loc = No_Marker then
+            return No_File;
+         else
+            return GPS.Editors.Get_File (Loc);
+         end if;
       end if;
    end Get_Location_File;
 
@@ -128,7 +136,8 @@ package body DAP.Modules.Breakpoints is
 
    function Is_Line_Bp (Data : Breakpoint_Data) return Boolean is
    begin
-      return Data.Subprogram = Null_Unbounded_String;
+      return Data.Subprogram = Null_Unbounded_String
+        and then Data.Address = Invalid_Address;
    end Is_Line_Bp;
 
    ----------------------
@@ -139,6 +148,15 @@ package body DAP.Modules.Breakpoints is
    begin
       return Data.Subprogram /= Null_Unbounded_String;
    end Is_Subprogram_Bp;
+
+   -------------------
+   -- Is_Address_Bp --
+   -------------------
+
+   function Is_Address_Bp (Data : Breakpoint_Data) return Boolean is
+   begin
+      return Data.Address /= Invalid_Address;
+   end Is_Address_Bp;
 
    ----------------
    -- Initialize --
@@ -152,29 +170,29 @@ package body DAP.Modules.Breakpoints is
       Data : Breakpoint_Data;
       Id   : Breakpoint_Identifier := 0;
    begin
-      if Clear then
-         for Item of Vector loop
+      Self.Vector.Clear;
+      for Item of Vector loop
+         if not Is_Address_Bp (Data) then
             Data := Item;
-            if Data.State = Enabled then
-               Data.Num := 0;
-            else
-               Id := Id - 1;
-               Data.Num := Id;
-            end if;
+            if Clear then
+               if Data.State = Enabled then
+                  Data.Num := 0;
+               else
+                  Id := Id - 1;
+                  Data.Num := Id;
+               end if;
 
-            if Is_Line_Bp (Data) then
-               for Loc of Data.Locations loop
-                  Loc.Num := 0;
-               end loop;
-            else
-               Data.Locations.Clear;
+               if Is_Line_Bp (Data) then
+                  for Loc of Data.Locations loop
+                     Loc.Num := 0;
+                  end loop;
+               else
+                  Data.Locations.Clear;
+               end if;
             end if;
             Self.Vector.Append (Data);
-         end loop;
-
-      else
-         Self.Vector := Vector;
-      end if;
+         end if;
+      end loop;
       Self.In_Initialization := True;
    end Initialize;
 
@@ -556,6 +574,7 @@ package body DAP.Modules.Breakpoints is
       Data   : Breakpoint_Data;
       Cursor : Breakpoint_Hash_Maps.Cursor;
       File   : Virtual_File;
+
    begin
       for Num of Nums loop
          for Index in Self.Vector.First_Index .. Self.Vector.Last_Index loop
@@ -564,9 +583,7 @@ package body DAP.Modules.Breakpoints is
                if State then
                   if Data.State /= Enabled then
                      Changed.Include
-                       ((if Is_Line_Bp (Data)
-                        then Get_Location_File (Data)
-                        else No_File),
+                       (Get_Location_File (Data),
                         Breakpoint_Vectors.Empty_Vector);
                      Data.State := Changing;
                      Self.Vector.Replace_Element (Index, Data);
@@ -575,9 +592,7 @@ package body DAP.Modules.Breakpoints is
                else
                   if Data.State = Enabled then
                      Changed.Include
-                       ((if Is_Line_Bp (Data)
-                        then Get_Location_File (Data)
-                        else No_File),
+                       (Get_Location_File (Data),
                         Breakpoint_Vectors.Empty_Vector);
                      Data.State := Changing;
                      Self.Vector.Replace_Element (Index, Data);
@@ -590,11 +605,18 @@ package body DAP.Modules.Breakpoints is
       Cursor := Changed.First;
       while Has_Element (Cursor) loop
          File := Key (Cursor);
-         Changed.Replace_Element
-           (Cursor,
-            (if File = No_File
-             then Self.Get_For_Subprograms (State)
-             else Self.Get_For_File (File, State)));
+         if File = Subprogram_File then
+            Changed.Replace_Element
+              (Cursor, Self.Get_For_Subprograms (State));
+
+         elsif File = Address_File then
+            Changed.Replace_Element
+              (Cursor, Self.Get_For_Address (State));
+
+         else
+            Changed.Replace_Element
+              (Cursor, Self.Get_For_File (File, State));
+         end if;
          Next (Cursor);
       end loop;
    end Set_Enabled;
@@ -622,9 +644,7 @@ package body DAP.Modules.Breakpoints is
          if Is_Same_Location (Data, File, Line) then
             if Data.State = Enabled then
                Changed.Include
-                 ((if Is_Line_Bp (Data)
-                  then Get_Location_File (Data)
-                  else No_File),
+                 (Get_Location_File (Data),
                   Breakpoint_Vectors.Empty_Vector);
             else
                --  not in the debugger, just delete
@@ -640,8 +660,12 @@ package body DAP.Modules.Breakpoints is
       while Has_Element (Cursor) loop
          F := Key (Cursor);
 
-         if F = No_File then
+         if F = Subprogram_File then
             List := Self.Get_For_Subprograms;
+
+         elsif F = Address_File then
+            List := Self.Get_For_Address;
+
          else
             List := Self.Get_For_File (F);
          end if;
@@ -700,8 +724,10 @@ package body DAP.Modules.Breakpoints is
       Cursor := Changed.First;
       while Has_Element (Cursor) loop
          F := Key (Cursor);
-         if F = No_File then
+         if F = Subprogram_File then
             List := Self.Get_For_Subprograms;
+         elsif F = Address_File then
+            List := Self.Get_For_Address;
          else
             List := Self.Get_For_File (F);
          end if;
@@ -1115,5 +1141,120 @@ package body DAP.Modules.Breakpoints is
          Index := Index + 1;
       end loop;
    end Changed;
+
+   ---------------------------
+   -- Break_Unbreak_Address --
+   ---------------------------
+
+   procedure Break_Unbreak_Address
+     (Self       : in out Breakpoint_Holder;
+      Address    : Address_Type;
+      Executable : String;
+      Changed    : out Breakpoint_Vectors.Vector)
+   is
+      Deleted : Boolean := False;
+   begin
+      for D of Self.Vector loop
+         if Is_Address_Bp (D) then
+            if D.Address = Address then
+               Deleted := True;
+            else
+               Changed.Append (D);
+            end if;
+         end if;
+      end loop;
+
+      if not Deleted then
+         Changed.Append
+           (Breakpoint_Data'
+              (Num        => 0,
+               Address    => Address,
+               Executable => To_Unbounded_String (Executable),
+               others     => <>));
+      end if;
+   end Break_Unbreak_Address;
+
+   ---------------------
+   -- Get_For_Address --
+   ---------------------
+
+   function Get_For_Address
+     (Self          : Breakpoint_Holder;
+      With_Changing : Boolean := False)
+      return Breakpoint_Vectors.Vector
+   is
+      Result : Breakpoint_Vectors.Vector;
+   begin
+      for Data of Self.Vector loop
+         if (Data.State = Enabled
+             or else (With_Changing and then Data.State = Changing))
+           and then Is_Address_Bp (Data)
+         then
+            Result.Append (Data);
+         end if;
+      end loop;
+
+      return Result;
+   end Get_For_Address;
+
+   ----------------------
+   -- Address_Response --
+   ----------------------
+
+   procedure Address_Response
+     (Self         : in out Breakpoint_Holder;
+      Last_Element : Breakpoint_Data) is
+   begin
+      for Idx in Self.Vector.First_Index .. Self.Vector.Last_Index loop
+         if Self.Vector.Element (Idx) = Last_Element.Num then
+            --  Update data
+            Self.Vector.Replace_Element (Idx, Last_Element);
+            exit;
+         end if;
+      end loop;
+   end Address_Response;
+
+   ----------------------------
+   -- Address_Status_Changed --
+   ----------------------------
+
+   procedure Address_Status_Changed
+     (Self    : in out Breakpoint_Holder;
+      Actual  : Breakpoint_Vectors.Vector)
+   is
+      Index   : Integer := Self.Vector.First_Index;
+      Idx     : Integer := Actual.First_Index;
+      Data, D : Breakpoint_Data;
+      Nums    : Breakpoint_Identifier_Lists.List;
+   begin
+      while Index <= Self.Vector.Last_Index loop
+         Data := Self.Vector.Element (Index);
+
+         if Is_Address_Bp (Data) then
+            case Data.State is
+               when Enabled =>
+                  if Nums.Contains (Data.Num) then
+                     --  delete fake Bp from notification
+                     Self.Vector.Delete (Index);
+                     Index := Index - 1;
+                  else
+                     Idx := Idx + 1;
+                  end if;
+
+               when Changing =>
+                  D := Actual.Element (Idx);
+                  Nums.Append (D.Num);
+                  Data.Num := D.Num;
+                  Data.Locations := D.Locations;
+                  Self.Vector.Replace_Element (Index, Data);
+                  Idx := Idx + 1;
+
+               when Disabled | Moved =>
+                  null;
+            end case;
+         end if;
+         Index := Index + 1;
+      end loop;
+   end Address_Status_Changed;
 
 end DAP.Modules.Breakpoints;
