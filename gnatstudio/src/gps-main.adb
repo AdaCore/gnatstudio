@@ -602,7 +602,12 @@ procedure GPS.Main is
                  Name (Name'First + Prefix'Length .. Name'Last);
 
             begin
-               Env.Insert (Unprefixed_Name, Value);
+               if Value /= "_ABSENT_VARIABLE_" then
+                  Env.Insert (Unprefixed_Name, Value);
+               elsif Env.Contains (Unprefixed_Name) then
+                  Env.Remove (Unprefixed_Name);
+               end if;
+
                Env.Remove (Name);
             end;
          end if;
