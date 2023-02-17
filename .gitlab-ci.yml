@@ -48,7 +48,10 @@ build_and_test:
     - anod build gps_testsuite_drivers --minimal
     # Set this to deactivate some event-synth tests
     - export GITLAB_CI=1
-    - anod test gps --minimal
+
+    # Pass --latest to the test command to ensure the CI remains
+    # available even if a dependency is not available.
+    - anod test gps --minimal --latest
 
     # Process the report
     - e3-testsuite-report
