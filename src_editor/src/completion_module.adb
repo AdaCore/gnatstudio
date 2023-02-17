@@ -1015,17 +1015,10 @@ package body Completion_Module is
             Prefix_Iter           : Gtk_Text_Iter;
             Previous_Char_Iter    : Gtk_Text_Iter;
             Movement              : Boolean;
+            In_String             : Boolean;
+            In_Comment            : Boolean;
             Context               : Completion.Completion_Context;
          begin
-            Data.The_Text := Get_Text (Buffer);
-
-            Completion_Module.Has_Smart_Completion := True;
-
-            Data.Lock :=
-              new Update_Lock'(Lock_Updates
-                               (Get_Or_Create
-                                  (Get_Construct_Database (Kernel),
-                                       Get_Filename (Buffer))));
 
             --  If a completion manager factory has been specified, try to get
             --  a completion manager with it.
@@ -1052,9 +1045,48 @@ package body Completion_Module is
                  (Completion_Module.Completion_Aliases);
             end if;
 
-            Data.Buffer := Buffer;
+            --  Get the text iter of the prefix to be complete
 
             Get_Iter_At_Mark (Buffer, Cursor_Iter, Get_Insert (Buffer));
+
+            Copy (Cursor_Iter, Prefix_Iter);
+
+            if Prefix'Length /= 0 then
+               Backward_Chars (Prefix_Iter, Gint (Prefix'Length), Movement);
+            end if;
+
+            --  Get the previous char iter, to check if it's within a comment
+            --  or not
+
+            Copy (Prefix_Iter, Previous_Char_Iter);
+            Backward_Chars (Previous_Char_Iter, 1, Movement);
+
+            In_Comment := Is_In_Comment (Buffer, Previous_Char_Iter);
+            In_String := Is_In_String (Buffer, Cursor_Iter);
+
+            --  Return if we are within a string or a comment if the
+            --  manager does not accept completion in those.
+
+            if (In_Comment and then not Data.Manager.Accept_Comments)
+              or else
+                (In_String and then not Data.Manager.Accept_Strings)
+            then
+               Free (Data.Manager);
+               return Commands.Failure;
+            end if;
+
+            --  Fill the data needed to pursue completion
+
+            Data.The_Text := Get_Text (Buffer);
+
+            Completion_Module.Has_Smart_Completion := True;
+
+            Data.Lock :=
+              new Update_Lock'(Lock_Updates
+                               (Get_Or_Create
+                                  (Get_Construct_Database (Kernel),
+                                       Get_Filename (Buffer))));
+            Data.Buffer := Buffer;
 
             Data.Start_Mark := Create_Mark
               (Buffer       => Buffer,
@@ -1065,14 +1097,6 @@ package body Completion_Module is
                Mark_Name    => "",
                Where        => Cursor_Iter,
                Left_Gravity => False);
-
-            --  Get the text iter of the prefix to be complete
-
-            Copy (Cursor_Iter, Prefix_Iter);
-
-            if Prefix'Length /= 0 then
-               Backward_Chars (Prefix_Iter, Gint (Prefix'Length), Movement);
-            end if;
 
             --  The function Query_Completion_List requires the
             --  offset of the cursor *in bytes* from the beginning of
@@ -1097,11 +1121,6 @@ package body Completion_Module is
 
             Start_Completion (View);
 
-            --  Get the previous char iter, to check if it's within a comment
-            --  or not
-            Copy (Prefix_Iter, Previous_Char_Iter);
-            Backward_Chars (Previous_Char_Iter, 1, Movement);
-
             Context := Create_Context
               (Manager      => Data.Manager,
                File         => Get_Filename (Buffer),
@@ -1112,8 +1131,8 @@ package body Completion_Module is
                End_Offset   => String_Index_Type
                  (Get_Byte_Index (Cursor_Iter)),
                Trigger_Kind => Trigger_Kind,
-               In_Comment   => Is_In_Comment (Buffer, Previous_Char_Iter),
-               In_String    => Is_In_String (Buffer, Previous_Char_Iter));
+               In_Comment   => In_Comment,
+               In_String    => In_String);
 
             Start_Completion
               (Window      => Win,
