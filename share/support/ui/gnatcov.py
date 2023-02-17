@@ -660,65 +660,81 @@ class GNATcovPlugin(Module):
     def is_gnatcov_available(self):
         return os_utils.locate_exec_on_path('gnatcov') != ""
 
+    @staticmethod
+    def run_tool_version(exe):
+        """
+        Run the "`exe` --version" command and return its output.
+        """
+        return GPS.Process(exe + " --version").get_result()
+
     # Return the tool version as (major version, minor version)
-    @staticmethod
-    def version(exe):
-        latest_version = (23, 0)
-        version_out = GPS.Process(exe + " --version").get_result()
+    @classmethod
+    def version(cls, exe, product_name):
+        """Return the major version number of the given tool.
 
-        # Support a gnatcov built in dev mode
-        if version_out == "GNATcoverage development-tree":
-            return latest_version
+        Return None if we fail to detect the version.
+        """
+        out = cls.run_tool_version(exe)
+        pattern = (
+            re.escape(product_name)
+            + r" ([0-9]+)\.[0-9]+w? \([0-9]{8}\)"
+        )
+        m = re.search(pattern, out)
+        if m is None:
+            return None
 
-        matches = TOOL_VERSION_REGEXP.findall(version_out.splitlines()[0])
-        return matches[0]
+        return int(m.group(1))
 
-    @staticmethod
-    def is_binary_supported():
+    @classmethod
+    def gnatcov_version(cls):
+        return cls.version("gnatcov", "GNATcoverage")
+
+    @classmethod
+    def gprbuild_version(cls):
+        return cls.version("gprbuild", "GPRBUILD Pro")
+
+    @classmethod
+    def is_binary_supported(cls):
+        """Return whether binary traces are supported."""
         # Starting from GNATcov version 22.0, binary traces are no longer
-        # supported in native.
-
-        try:
-            version_major, _ = GNATcovPlugin.version("gnatcov")
-        except Exception:
-            # Can happen with the GS testuite if we use a fake gnatcov exe
+        # supported in native setups. Assume they are not supported for native
+        # setups if unable to detect the version (i.e. assume recent version).
+        if GPS.get_target() != "":
             return True
 
-        return GPS.get_target() != "" or int(version_major) < 22
+        major = cls.gnatcov_version()
+        return major is not None and major < 22
 
-    @staticmethod
-    def is_instrumentation_supported():
-        # Check if GNATcov and GPRbuild are recent enough (after the 21
-        # release)
-        for exe in 'gnatcov', 'gprbuild':
-            try:
-                version_major, version_minor = GNATcovPlugin.version(exe)
-            except Exception as e:
-                # Can happen with the GS testuite if we use a fake gnatcov exe
-                GPS.Console().write(str(e))
-                return False
+    @classmethod
+    def is_instrumentation_supported(cls):
+        """Return if gnatcov's instrumentation mode is supported."""
+        # Check if GNATcov and GPRbuild are recent enough (21 releases and
+        # after). Assume it is supported if unable to detect the version (i.e.
+        # assume recent version).
+        for exe, major in [
+            ("gnatcov", cls.gnatcov_version()),
+            ("gprbuild", cls.gprbuild_version()),
+        ]:
+            if major is None:
+                continue
 
-            if not (int(version_major) >= 22 or
-                    (int(version_major) == 21 and version_minor[-1] != "w")):
+            if major < 21:
                 GPS.Logger("GNATCOVERAGE").log(
-                    "instrumentation mode not " +
-                    "supported due to an older %s" % exe)
+                    f"instrumentation mode not supported due to an older {exe}"
+                )
                 return False
 
         return True
 
     # TODO: assume this predicate is true in GS 24.0.
-    @staticmethod
-    def is_gnatcov_setup_supported():
+    @classmethod
+    def is_gnatcov_setup_supported(cls):
+        """Return if the "gnatcov setup" command is supported."""
         # Check if GNATcov is recent enough (23 wavefronts and 24 releases or
-        # later).
-        try:
-            version_major, version_minor = GNATcovPlugin.version("gnatcov")
-        except Exception as e:
-            # Can happen with the GS testuite if we use a fake gnatcov exe
-            GPS.Console().write(str(e))
-            return False
-        return int(version_major) >= 23
+        # later). Assume it is supported if unable to detect the version (i.e.
+        # assume recent version).
+        major = cls.gnatcov_version()
+        return major is None or major >= 23
 
     @staticmethod
     def check_for_defined_level(cmds):
