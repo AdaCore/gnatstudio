@@ -310,11 +310,21 @@ package body DAP.Clients is
             DAP.Utils.Unhighlight_Current_Line (Self.Kernel);
          end if;
 
+         if Self.Status = Ready then
+            GPS.Kernel.Hooks.Debuggee_Started_Hook.Run
+              (Self.Kernel, Self.Visual);
+         end if;
+
          GPS.Kernel.Hooks.Debugger_State_Changed_Hook.Run
            (Self.Kernel, Self.Visual,
             (if Self.Status /= Stopped and then Self.Status /= Ready
              then GPS.Debuggers.Debug_Busy
              else GPS.Debuggers.Debug_Available));
+
+         if Self.Status = Stopped then
+            GPS.Kernel.Hooks.Debugger_Process_Stopped_Hook.Run
+              (Self.Kernel, Self.Visual);
+         end if;
       end if;
    end Set_Status;
 
@@ -347,6 +357,17 @@ package body DAP.Clients is
    begin
       return Self.Assembly_View;
    end Get_Assembly_View;
+
+   ---------------------
+   -- Get_Memory_View --
+   ---------------------
+
+   function Get_Memory_View
+     (Self : DAP_Client)
+      return Generic_Views.Abstract_View_Access is
+   begin
+      return Self.Memory_View;
+   end Get_Memory_View;
 
    ---------------------
    -- Get_Breakpoints --
@@ -454,6 +475,16 @@ package body DAP.Clients is
       return GNATCOLL.VFS.Create (GNATCOLL.VFS."+"(To_String (Self.File)));
    end Get_Executable;
 
+   ---------------------
+   -- Get_Endian_Type --
+   ---------------------
+
+   function Get_Endian_Type (Self : in out DAP_Client) return Endian_Type is
+      pragma Unreferenced (Self);
+   begin
+      return Little_Endian;
+   end Get_Endian_Type;
+
    -----------------------
    -- Set_Assembly_View --
    -----------------------
@@ -464,6 +495,17 @@ package body DAP.Clients is
    begin
       Self.Assembly_View := View;
    end Set_Assembly_View;
+
+   ---------------------
+   -- Set_Memory_View --
+   ---------------------
+
+   procedure Set_Memory_View
+     (Self : in out DAP_Client;
+      View : Generic_Views.Abstract_View_Access) is
+   begin
+      Self.Memory_View := View;
+   end Set_Memory_View;
 
    ---------------------------
    -- Set_Breakpoints_State --
@@ -521,6 +563,9 @@ package body DAP.Clients is
       Self.Selected_Line    := Line;
       Self.Selected_Address := Address;
 
+      GPS.Kernel.Hooks.Debugger_Frame_Changed_Hook.Run
+        (Self.Kernel, Self.Visual);
+
       Self.On_Location_Changed;
    end Set_Selected_Frame;
 
@@ -541,6 +586,8 @@ package body DAP.Clients is
    procedure Set_Selected_Thread (Self : in out DAP_Client; Id : Integer) is
    begin
       Self.Selected_Thread := Id;
+      GPS.Kernel.Hooks.Debugger_Frame_Changed_Hook.Run
+        (Self.Kernel, Self.Visual);
    end Set_Selected_Thread;
 
    ----------------------
@@ -1576,5 +1623,18 @@ package body DAP.Clients is
          Self.Breakpoints.Show_Breakpoints;
       end if;
    end Show_Breakpoints;
+
+   --------------------------
+   -- Get_Variable_Address --
+   --------------------------
+
+   function Get_Variable_Address
+     (Self     : DAP_Client;
+      Variable : String)
+      return String is
+   begin
+      --  Not implemented yet.
+      return "";
+   end Get_Variable_Address;
 
 end DAP.Clients;
