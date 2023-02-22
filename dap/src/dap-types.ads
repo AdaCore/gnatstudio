@@ -43,6 +43,8 @@ package DAP.Types is
 
    type Command_Type is (Internal, Hidden, Visible, User);
 
+   type Endian_Type is (Unknown_Endian, Little_Endian, Big_Endian);
+
    ---------------
    -- Addresses --
    ---------------

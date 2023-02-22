@@ -975,24 +975,30 @@ package body DAP.Modules.Breakpoint_Managers is
          return Data;
       end Convert;
 
+      Data : constant Breakpoint_Data := Convert;
    begin
       case Event.reason is
          when changed =>
-            Self.Holder.Changed (Convert);
+            Self.Holder.Changed (Data);
+            GPS.Kernel.Hooks.Debugger_Breakpoint_Changed_Hook.Run
+              (Self.Kernel, Self.Client.Get_Visual, Integer (Data.Num));
 
          when a_new =>
-            Self.Holder.Added (Convert);
+            Self.Holder.Added (Data);
+            GPS.Kernel.Hooks.Debugger_Breakpoint_Added_Hook.Run
+              (Self.Kernel, Self.Client.Get_Visual, Integer (Data.Num));
 
          when removed =>
             if Event.breakpoint.id.Is_Set then
                Self.Holder.Deleted
                  (Breakpoint_Identifier (Event.breakpoint.id.Value));
+               GPS.Kernel.Hooks.Debugger_Breakpoint_Deleted_Hook.Run
+                 (Self.Kernel, Self.Client.Get_Visual,
+                  Event.breakpoint.id.Value);
             end if;
       end case;
 
       Self.Show_Breakpoints;
-      GPS.Kernel.Hooks.Debugger_Breakpoints_Changed_Hook.Run
-      (Self.Kernel, Self.Client.Get_Visual);
    end On_Notification;
 
 end DAP.Modules.Breakpoint_Managers;

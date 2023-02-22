@@ -60,7 +60,7 @@ def fuzz_executable():
             "session",
             "build",
             f"obj-{mode}",
-            "fuzz_test_harness.afl_fuzz",
+            "gnatfuzz-test_harness.afl_fuzz",
         )
         if os.path.exists(candidate):
             return candidate

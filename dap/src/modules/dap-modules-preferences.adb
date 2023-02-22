@@ -127,6 +127,38 @@ package body DAP.Modules.Preferences is
            "Add/Edit/Delete breakpoints for all debuggers. "
            & "Use only current debugger if not.",
          Default   => False);
+
+      Memory_View_Color := Create
+        (Manager  => Prefs,
+         Name     => "Debugger-Memory-View-Color",
+         Path     => "Debugger:Memory",
+         Label    => "Memory color",
+         Doc      => "Default color in memory view.",
+         Default  => "#333399");
+
+      Memory_Highlighted_Color := Create
+        (Manager  => Prefs,
+         Name     => "Debugger-Memory-Highlighted-Color",
+         Path     => "Debugger:Memory",
+         Label    => "Memory highlighting",
+         Doc      => "Color used for highlighted items in the memory view.",
+         Default  => "#DDDDDD");
+
+      Memory_Selected_Color := Create
+        (Manager  => Prefs,
+         Name     => "Debugger-Memory-Selected-Color",
+         Path     => "Debugger:Memory",
+         Label    => "Memory selection",
+         Doc      => "Color used for selected items in the memory view.",
+         Default  => "#FF0000");
+
+      Memory_Auto_Refresh := Create
+        (Manager   => Prefs,
+         Name      => "Debugger-Memory-Auto-Refresh",
+         Label     => "Refresh memory view after each step",
+         Doc       => "Auto-refresh the contents of memory view.",
+         Path      => "Debugger:Memory",
+         Default   => True);
    end Register_Default_Preferences;
 
 end DAP.Modules.Preferences;

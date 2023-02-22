@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                               GNAT Studio                                --
 --                                                                          --
---                        Copyright (C) 2022-2023, AdaCore                  --
+--                     Copyright (C) 2023, AdaCore                          --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -17,10 +17,16 @@
 
 with GPS.Kernel;
 
-package DAP.Views.Assembly is
+package DAP.Views.Memory is
 
    procedure Register_Module
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class);
-   --  Register menus and other functions to support the breakpoint editor
+   --  Register menus and other functions
 
-end DAP.Views.Assembly;
+   procedure Display_Memory
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
+      Address : String);
+   --  Open (if needed) a memory view, and display the memory at the given
+   --  address
+
+end DAP.Views.Memory;

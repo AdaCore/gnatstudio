@@ -201,6 +201,16 @@ package DAP.Clients is
       View : Generic_Views.Abstract_View_Access);
    --  Attach the debugger console to the client
 
+   function Get_Memory_View
+     (Self : DAP_Client)
+      return Generic_Views.Abstract_View_Access;
+   --  Returns the assembly view, if any.
+
+   procedure Set_Memory_View
+     (Self : in out DAP_Client;
+      View : Generic_Views.Abstract_View_Access);
+   --  Attach the assembly view to the client
+
    procedure Set_Selected_Frame
      (Self    : in out DAP_Client;
       Id      : Integer;
@@ -265,6 +275,13 @@ package DAP.Clients is
       Msg  : String);
 
    procedure Show_Breakpoints (Self : DAP_Client);
+
+   function Get_Variable_Address
+     (Self     : DAP_Client;
+      Variable : String)
+      return String;
+
+   function Get_Endian_Type (Self : in out DAP_Client) return Endian_Type;
 
    -- DAP_Visual_Debugger --
 
@@ -334,6 +351,7 @@ private
       Call_Stack_View  : Generic_Views.Abstract_View_Access := null;
       Thread_View      : Generic_Views.Abstract_View_Access := null;
       Assembly_View    : Generic_Views.Abstract_View_Access := null;
+      Memory_View      : Generic_Views.Abstract_View_Access := null;
       Debugger_Console : Generic_Views.Abstract_View_Access := null;
    end record;
 

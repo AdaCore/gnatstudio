@@ -53,4 +53,10 @@ package DAP.Modules.Preferences is
    Asm_Show_Offset               : Boolean_Preference;
    Asm_Show_Opcodes              : Boolean_Preference;
 
+   -- Memory Window --
+   Memory_View_Color             : Color_Preference;
+   Memory_Highlighted_Color      : Color_Preference;
+   Memory_Selected_Color         : Color_Preference;
+   Memory_Auto_Refresh           : Boolean_Preference;
+
 end DAP.Modules.Preferences;
