@@ -107,10 +107,28 @@
           </Notebook>
         </Pane>
         <Pane width=" 7.27987E+01%" Orientation="ORIENTATION_VERTICAL" >
+          <Pane height=" 6.82578E+01%" Orientation="ORIENTATION_HORIZONTAL" >
+            <central width=" 7.09150E+01%"  />
+            <Pane width=" 2.96296E+01%" Orientation="ORIENTATION_VERTICAL" >
+              <Notebook height=" 5.03546E+01%" Tabs="POS_RIGHT" >
+                <Child Raised="True" Group=" 107" State="NORMAL" >
+                  <Debugger_Variables />
+                </Child>
+              </Notebook>
+              <Notebook height=" 5.03546E+01%" Tabs="POS_RIGHT" >
+                <Child Raised="True" Group=" 103" State="NORMAL" >
+                  <Call_Stack />
+                </Child>
+              </Notebook>
+            </Pane>
+          </Pane>
           <Pane height=" 3.22196E+01%" Orientation="ORIENTATION_HORIZONTAL" >
             <Notebook width=" 5.02179E+01%" Tabs="POS_TOP" >
               <Child Group=" 107" State="NORMAL" >
                 <Message_Window />
+              </Child>
+              <Child Raised="True" Group=" 107" State="NORMAL" >
+                <Debugger_Console />
               </Child>
             </Notebook>
             <Notebook width=" 5.02179E+01%" Tabs="POS_TOP" >

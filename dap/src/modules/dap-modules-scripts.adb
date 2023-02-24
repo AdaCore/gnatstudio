@@ -244,6 +244,21 @@ package body DAP.Modules.Scripts is
          Visual := DAP_Visual_Debugger_Access
            (Glib.Object.GObject'(Get_Data (Inst)));
          Visual.Client.Quit;
+
+      elsif Command = "current_file" then
+         Inst   := Nth_Arg (Data, 1, New_Class (Kernel, "Debugger"));
+         Visual := DAP_Visual_Debugger_Access
+           (Glib.Object.GObject'(Get_Data (Inst)));
+         Data.Set_Return_Value
+           (Create_File
+              (Data.Get_Script, Visual.Current_File));
+
+      elsif Command = "current_line" then
+         Inst   := Nth_Arg (Data, 1, New_Class (Kernel, "Debugger"));
+         Visual := DAP_Visual_Debugger_Access
+           (Glib.Object.GObject'(Get_Data (Inst)));
+         Data.Set_Return_Value (Visual.Current_Line);
+
       end if;
    end Shell_Handler;
 
@@ -296,6 +311,14 @@ package body DAP.Modules.Scripts is
         ("close",
          Handler      => Shell_Handler'Access,
          Class        => Class);
+      Kernel.Scripts.Register_Property
+        ("current_file",
+         Class        => Class,
+         Getter       => Shell_Handler'Access);
+      Kernel.Scripts.Register_Property
+        ("current_line",
+         Class        => Class,
+         Getter       => Shell_Handler'Access);
 
       --  Breakpoint --
 

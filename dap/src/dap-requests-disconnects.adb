@@ -81,7 +81,6 @@ package body DAP.Requests.Disconnects is
    is
       pragma Unreferenced (New_Request);
    begin
-      Trace (Me, "Disconnected");
       Self.Client.On_Terminated;
    end On_Result_Message;
 

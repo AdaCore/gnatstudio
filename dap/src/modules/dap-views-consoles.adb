@@ -228,10 +228,17 @@ package body DAP.Views.Consoles is
       Input   : String;
       User    : System.Address) return String
    is
-      DC    : constant Debugger_Console := Convert (User);
-      Req   : Evaluate_Request_Access := new Evaluate_Request (Console.Kernel);
-      Frame : constant Integer := DC.Get_Client.Get_Selected_Frame;
+      DC     : constant Debugger_Console := Convert (User);
+      Req    : Evaluate_Request_Access :=
+        new Evaluate_Request (Console.Kernel);
+      Client : constant DAP.Clients.DAP_Client_Access := DC.Get_Client;
+      Frame  : Integer;
    begin
+      if Client = null then
+         return "";
+      end if;
+
+      Frame := Client.Get_Selected_Frame;
       Req.Console := DC;
       Req.Parameters.arguments.expression :=
         VSS.Strings.Conversions.To_Virtual_String (Input);
