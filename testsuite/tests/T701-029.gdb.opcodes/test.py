@@ -7,13 +7,22 @@ from gs_utils.internal.utils import *
 
 @run_test_driver
 def test_driver():
+    mode = "Mode:" + GPS.Preference("GPS6-Debugger-Debugger-Kind").get()
     GPS.Preference("assembly_view-show-opcodes").set(True)
-    GPS.EditorBuffer.get(GPS.File("main.adb"))
+    b = GPS.EditorBuffer.get(GPS.File("main.adb"))
+    b.current_view().goto(b.at(5, 1))
+    GPS.execute_action("debug set line breakpoint")
+
     GPS.execute_action("Build & Debug Number 1")
     yield hook('debugger_started')
     yield wait_idle()
 
     debug = GPS.Debugger.get()
+
+    if mode == "Mode:Dap":
+        # to have valid address
+        debug.start()
+        yield wait_until_not_busy(debug)
 
     # Open the assembly view
     GPS.execute_action("open assembly view")

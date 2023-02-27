@@ -494,10 +494,6 @@ package body DAP.Views.Assembly is
       Columns : Columns_Array (Values'Range);
       Last    : Gint := 0;
    begin
-      if Self = null then
-         return;
-      end if;
-
       Model.Clear;
 
       for El of Elements loop
@@ -644,6 +640,7 @@ package body DAP.Views.Assembly is
      (Self : not null access Assembly_View_Record) is
    begin
       Clear (-Get_Model (Self.Tree));
+      Free_Cache (Assembly_View (Self));
    end On_Process_Terminated;
 
    -----------------------

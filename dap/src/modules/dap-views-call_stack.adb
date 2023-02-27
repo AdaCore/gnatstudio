@@ -63,17 +63,17 @@ package body DAP.Views.Call_Stack is
 
    Frame_Num_Column     : constant := 0;
    Name_Column          : constant := 1;
-   Sourse_Column        : constant := 2;
-   Location_Column      : constant := 3;
-   Memory_Column        : constant := 4;
+   Location_Column      : constant := 2;
+   Memory_Column        : constant := 3;
+   Sourse_Column        : constant := 4;
    Line_Column          : constant := 5;
 
    Column_Types : constant GType_Array :=
      (Frame_Num_Column     => GType_Int,
       Name_Column          => GType_String,
-      Sourse_Column        => GType_String,
       Location_Column      => GType_String,
       Memory_Column        => GType_String,
+      Sourse_Column        => GType_String,
       Line_Column          => GType_Int);
 
    -----------------------
@@ -82,7 +82,6 @@ package body DAP.Views.Call_Stack is
 
    Show_Frame_Number : Boolean_Preference;
    Show_Name         : Boolean_Preference;
-   Show_Sourse       : Boolean_Preference;
    Show_Location     : Boolean_Preference;
    Show_Address      : Boolean_Preference;
 
@@ -221,7 +220,6 @@ package body DAP.Views.Call_Stack is
    begin
       Append_Menu (Menu, Self.Kernel, Show_Frame_Number);
       Append_Menu (Menu, Self.Kernel, Show_Name);
-      Append_Menu (Menu, Self.Kernel, Show_Sourse);
       Append_Menu (Menu, Self.Kernel, Show_Location);
       Append_Menu (Menu, Self.Kernel, Show_Address);
    end Create_Menu;
@@ -397,7 +395,6 @@ package body DAP.Views.Call_Stack is
       if Pref = null
         or else Pref = Preference (Show_Frame_Number)
         or else Pref = Preference (Show_Name)
-        or else Pref = Preference (Show_Sourse)
         or else Pref = Preference (Show_Location)
         or else Pref = Preference (Show_Address)
       then
@@ -441,9 +438,8 @@ package body DAP.Views.Call_Stack is
    begin
       Set_Visible (Get_Column (Self.Tree, 0), Show_Frame_Number.Get_Pref);
       Set_Visible (Get_Column (Self.Tree, 1), Show_Name.Get_Pref);
-      Set_Visible (Get_Column (Self.Tree, 2), Show_Sourse.Get_Pref);
-      Set_Visible (Get_Column (Self.Tree, 3), Show_Location.Get_Pref);
-      Set_Visible (Get_Column (Self.Tree, 4), Show_Address.Get_Pref);
+      Set_Visible (Get_Column (Self.Tree, 2), Show_Location.Get_Pref);
+      Set_Visible (Get_Column (Self.Tree, 3), Show_Address.Get_Pref);
    end Set_Column_Types;
 
    ----------------
@@ -491,7 +487,6 @@ package body DAP.Views.Call_Stack is
 
       Add_Column ("Num", Frame_Num_Column);
       Add_Column ("Name", Name_Column);
-      Add_Column ("Sourse", Sourse_Column);
       Add_Column ("Location", Location_Column);
       Add_Column ("Address", Memory_Column);
 
@@ -609,22 +604,27 @@ package body DAP.Views.Call_Stack is
                 --  Name
                 Name_Column => As_String
                   (VSS.Strings.Conversions.To_UTF_8_String (Frame.name)),
-                --  Sourse
-                Sourse_Column => As_String
-                  ((if Frame.source.Is_Set
-                   then VSS.Strings.Conversions.To_UTF_8_String
-                     (Frame.source.Value.name)
-                   else "")),
-                --  File location
+                --  Location
                 Location_Column => As_String
                   (Escape_Text
-                     (Image (Frame.line) & ":" & Image (Frame.column))),
+                     ((if Frame.source.Is_Set
+                      then VSS.Strings.Conversions.To_UTF_8_String
+                        (Frame.source.Value.path)
+                      else "") &
+                        ":" & Image (Frame.line))),
                 --  Memory
                 Memory_Column => As_String
                   (Escape_Text
                    ((if Frame.instructionPointerReference.Is_Empty then "<>"
                     else VSS.Strings.Conversions.To_UTF_8_String
                         (Frame.instructionPointerReference)))),
+                --  Sourse
+                Sourse_Column => As_String
+                  ((if Frame.source.Is_Set
+                   then VSS.Strings.Conversions.To_UTF_8_String
+                     (Frame.source.Value.path)
+                   else "")),
+                --  Line
                 Line_Column => As_Int (Gint (Frame.line))));
 
             View.Last := Frame.id;
@@ -764,11 +764,8 @@ package body DAP.Views.Call_Stack is
         ("debug-callstack-show-frame-num", True,
          Label => "Show Frame Number");
       Show_Name := Kernel.Get_Preferences.Create_Invisible_Pref
-        ("debug-callstack-show-name", False,
+        ("debug-callstack-show-name", True,
          Label => "Show Name");
-      Show_Sourse := Kernel.Get_Preferences.Create_Invisible_Pref
-        ("debug-callstack-show-sourse", True,
-         Label => "Show Sourse");
       Show_Location := Kernel.Get_Preferences.Create_Invisible_Pref
         ("debug-callstack-show-location", False,
          Label => "Show Location");

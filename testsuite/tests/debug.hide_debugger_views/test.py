@@ -7,7 +7,9 @@ from gs_utils.internal.utils import *
 
 @run_test_driver
 def test_driver():
+    mode = "Mode:" + GPS.Preference("GPS6-Debugger-Debugger-Kind").get()
     GPS.EditorBuffer.get(GPS.File("main.adb"))
+    yield wait_idle()
     expected = len(GPS.MDI.children())
 
     GPS.execute_action("Build & Debug Number 1")
@@ -27,9 +29,13 @@ def test_driver():
     gps_assert(GPS.MDI.get("Memory") is not None,
                True,
                "The Memory view should be opened")
+    yield wait_idle()
 
     # Closing the debugger
-    debug.send("q")
+    debug.close()
+    if mode == "Mode:Dap":
+        yield wait_DAP_server("disconnect")
+
     gps_assert(len(GPS.MDI.children()),
                expected,
                "The debugger views should be closed/hidden")
