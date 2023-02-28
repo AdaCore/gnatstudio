@@ -483,9 +483,9 @@ package body Xref is
 
            or else
              (Entity.Entity /= No_Entity and then
-                (Is_Fuzzy_Match (Entity.Entity)
+                Is_Fuzzy_Match (Entity.Entity)
                      --  or else not Self.Xref.Is_Up_To_Date (Loc.File)
-                ));
+                );
 
          declare
             ELoc : constant Entity_Reference :=

@@ -1308,8 +1308,8 @@ package body Ada_Analyzer is
                                  and then Token /= Tok_Subtype)))
            or else Token in Tok_Array | Tok_Of
            or else (Token = Tok_Not
-                    and then (Prev_Token in Tok_And | Tok_Or
-                                | Tok_Then | Tok_Else))
+                    and then Prev_Token in Tok_And | Tok_Or
+                                | Tok_Then | Tok_Else)
            or else (Prev_Token = Tok_With
                     and then (Token = Tok_String_Literal
                               or else Token = Tok_Private

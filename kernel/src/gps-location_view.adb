@@ -761,7 +761,7 @@ package body GPS.Location_View is
 
             --  Stop when we reach a limit or when we found a node of the same
             --  weight
-            Reach_Limit := (not Success) or else Iter = Null_Iter;
+            Reach_Limit := not Success or else Iter = Null_Iter;
             Found_Same_Weight :=
               Found_Same_Weight
               or else
@@ -769,7 +769,7 @@ package body GPS.Location_View is
                  and then Weight = Get_Int (Model, Iter, -Weight_Column));
             exit when Reach_Limit or else Found_Same_Weight;
          end loop;
-         return (not Reach_Limit) and then Found_Same_Weight;
+         return not Reach_Limit and then Found_Same_Weight;
       end Next;
 
       ---------------
@@ -791,7 +791,7 @@ package body GPS.Location_View is
                   else
                      Path.Next;
                   end if;
-                  Reach_Limit := (not Success)
+                  Reach_Limit := not Success
                     or else Get_Iter (Model, Path) = Null_Iter;
                   exit when Reach_Limit;
 

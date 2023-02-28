@@ -541,7 +541,7 @@ package body Completion_Window is
       if not Explorer.Completion_Window.Volatile then
          loop
 
-            if (not Idle_Expand (Completion_Explorer_Access (Explorer)))
+            if not Idle_Expand (Completion_Explorer_Access (Explorer))
               or else Explorer.Shown >= Explorer.Number_To_Show
             then
                return;
@@ -956,7 +956,7 @@ package body Completion_Window is
                end if;
             else
                --  Check if current item is accessible while previous is not
-               if (not Explorer.Info (Explorer.Index - 1).Accessible)
+               if not Explorer.Info (Explorer.Index - 1).Accessible
                  and then Proposal.Is_Accessible
                then
                   --  If it is indeed the case, ungray the text (replace it)

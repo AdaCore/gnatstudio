@@ -1706,9 +1706,9 @@ package body GPS.Kernel.Messages is
                if not Self.Removed_Listeners.Contains (Listener)
                  and then ((Listener.Flags = Empty_Message_Flags
                             and Initial_Flags = Empty_Message_Flags)
-                           or else (((Initial_Flags xor Current_Flags)
+                           or else ((Initial_Flags xor Current_Flags)
                                      and Listener.Flags)
-                                    /= Empty_Message_Flags))
+                                    /= Empty_Message_Flags)
                then
                   Listener.Category_Added
                     (Category,
@@ -1750,9 +1750,9 @@ package body GPS.Kernel.Messages is
                if not Self.Removed_Listeners.Contains (Listener)
                  and then ((Listener.Flags = Empty_Message_Flags
                             and Current_Flags = Empty_Message_Flags)
-                           or else (((Initial_Flags xor Current_Flags)
+                           or else ((Initial_Flags xor Current_Flags)
                                      and Listener.Flags)
-                                    /= Empty_Message_Flags))
+                                    /= Empty_Message_Flags)
                then
                   Listener.Category_Removed (Category);
                end if;
@@ -1793,9 +1793,9 @@ package body GPS.Kernel.Messages is
                if not Self.Removed_Listeners.Contains (Listener)
                  and then ((Listener.Flags = Empty_Message_Flags
                             and Initial_Flags = Empty_Message_Flags)
-                           or else (((Initial_Flags xor Current_Flags)
+                           or else ((Initial_Flags xor Current_Flags)
                                      and Listener.Flags)
-                                    /= Empty_Message_Flags))
+                                    /= Empty_Message_Flags)
                then
                   Listener.File_Added (Category, File);
                end if;
@@ -1836,9 +1836,9 @@ package body GPS.Kernel.Messages is
                if not Self.Removed_Listeners.Contains (Listener)
                  and then ((Listener.Flags = Empty_Message_Flags
                             and Current_Flags = Empty_Message_Flags)
-                           or else (((Initial_Flags xor Current_Flags)
+                           or else ((Initial_Flags xor Current_Flags)
                                      and Listener.Flags)
-                                    /= Empty_Message_Flags))
+                                    /= Empty_Message_Flags)
                then
                   Listener.File_Removed (Category, File);
                end if;
