@@ -5,12 +5,18 @@ when running and stopping on a breakpoint.
 import GPS
 from gs_utils.internal.utils import *
 
-NAME_COLUMN = 2
-LOCATION_COLUMN = 4
 
 
 @run_test_driver
 def test_driver():
+    mode = "Mode:" + GPS.Preference("GPS6-Debugger-Debugger-Kind").get()
+    if mode == "Mode:Dap":
+        NAME_COLUMN = 1
+        LOCATION_COLUMN = 2
+    else:
+        NAME_COLUMN = 2
+        LOCATION_COLUMN = 4
+
     buf = GPS.EditorBuffer.get(GPS.File("main.adb"))
     buf.current_view().goto(buf.at(5, 1))
     GPS.execute_action("debug set line breakpoint")
@@ -31,7 +37,10 @@ def test_driver():
                [],
                "Wrong content when opening the callstack")
 
-    debug.send("run")
+    if mode == "Mode:Dap":
+        debug.start()
+    else:
+        debug.send("run")
     yield wait_until_not_busy(debug)
     # Verify the view was correctly updated by the run/break command
     gps_assert(dump_tree_model(model, NAME_COLUMN),

@@ -9,6 +9,7 @@ from gs_utils.internal.utils import *
 
 @run_test_driver
 def test_driver():
+    mode = "Mode:" + GPS.Preference("GPS6-Debugger-Debugger-Kind").get()
     GPS.Preference("Debugger-Pending-Breakpoints").set(True)
 
     # Set a breakpoint in the Ada library
@@ -26,8 +27,11 @@ def test_driver():
 
     # Run the debugger and verify that we reach the breakpoint
     debug = GPS.Debugger.get()
-    debug.send("run")
-    yield timeout(300)
+    if mode == "Mode:Dap":
+        debug.start()
+    else:
+        debug.send("run")
+    yield wait_until_not_busy(debug)
     
     gps_assert(debug.current_file, GPS.File("p.adb"),
                "The pending breakpoint has not been reached")

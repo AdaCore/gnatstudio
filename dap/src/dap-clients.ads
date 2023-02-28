@@ -197,9 +197,9 @@ package DAP.Clients is
    --  Returns the debugger console, if any.
 
    procedure Set_Debugger_Console
-     (Self : in out DAP_Client;
-      View : Generic_Views.Abstract_View_Access);
-   --  Attach the debugger console to the client
+     (Self    : in out DAP_Client;
+      Console : Generic_Views.Abstract_View_Access);
+   --  Set the debugger console
 
    function Get_Memory_View
      (Self : DAP_Client)
@@ -291,6 +291,14 @@ package DAP.Clients is
 
    overriding function Command_In_Process
      (Visual : not null access DAP_Visual_Debugger) return Boolean;
+
+   function Current_File
+     (Visual : not null access DAP_Visual_Debugger)
+      return GNATCOLL.VFS.Virtual_File;
+
+   function Current_Line
+     (Visual : not null access DAP_Visual_Debugger)
+      return Natural;
 
 private
 

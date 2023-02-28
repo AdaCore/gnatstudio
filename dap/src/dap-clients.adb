@@ -427,10 +427,10 @@ package body DAP.Clients is
    --------------------------
 
    procedure Set_Debugger_Console
-     (Self : in out DAP_Client;
-      View : Generic_Views.Abstract_View_Access) is
+     (Self    : in out DAP_Client;
+      Console : Generic_Views.Abstract_View_Access) is
    begin
-      Self.Debugger_Console := View;
+      Self.Debugger_Console := Console;
    end Set_Debugger_Console;
 
    ------------------------
@@ -639,6 +639,28 @@ package body DAP.Clients is
    begin
       return Self.Visual;
    end Get_Visual;
+
+   ------------------
+   -- Current_File --
+   ------------------
+
+   function Current_File
+     (Visual : not null access DAP_Visual_Debugger)
+      return GNATCOLL.VFS.Virtual_File is
+   begin
+      return Visual.Client.Current_File;
+   end Current_File;
+
+   ------------------
+   -- Current_Line --
+   ------------------
+
+   function Current_Line
+     (Visual : not null access DAP_Visual_Debugger)
+      return Natural is
+   begin
+      return Visual.Client.Current_Line;
+   end Current_Line;
 
    -------------------
    -- Error_Message --
@@ -1528,7 +1550,8 @@ package body DAP.Clients is
    -- Quit --
    ----------
 
-   procedure Quit (Self : in out DAP_Client) is
+   procedure Quit (Self : in out DAP_Client)
+   is
       Disconnect : DAP.Requests.Disconnects.
         Disconnect_DAP_Request_Access := new DAP.Requests.Disconnects.
           Disconnect_DAP_Request (Self.Kernel);
