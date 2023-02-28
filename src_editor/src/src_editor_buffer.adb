@@ -1934,7 +1934,7 @@ package body Src_Editor_Buffer is
          C : constant Editor_Command := Get_Current_Command (Buffer);
       begin
          if C /= null
-           and then (not Buffer.Inserting)
+           and then not Buffer.Inserting
            and then Buffer.Cursors_Sync.Mode = Manual_Slave
          then
             C.Set_End_Location (Iter);
@@ -2369,7 +2369,7 @@ package body Src_Editor_Buffer is
       begin
          if C /= null
            and then
-             ((not Buffer.Inserting)
+             (not Buffer.Inserting
               or else Buffer.Cursors_Sync.Mode = Manual_Slave)
          then
             C.Set_End_Location (Start_Iter);
@@ -2737,7 +2737,7 @@ package body Src_Editor_Buffer is
 
       if not Is_Null_Command (Command)
         and then (Get_Mode (Command) /= Deletion
-                  or else (Get_Direction (Command) /= Direction))
+                  or else Get_Direction (Command) /= Direction)
       then
          End_Action (Buffer);
          Command := Get_Current_Command (Buffer);

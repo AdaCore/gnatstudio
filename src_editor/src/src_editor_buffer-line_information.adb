@@ -488,7 +488,7 @@ package body Src_Editor_Buffer.Line_Information is
                if Columns_Config.all (J).Width < Width then
                   Columns_Config.all (J).Width := Width;
 
-                  for K in (J + 1) .. Columns_Config.all'Last loop
+                  for K in J + 1 .. Columns_Config.all'Last loop
                      Columns_Config.all (K).Starting_X :=
                        Columns_Config.all (K - 1).Starting_X
                        + Columns_Config.all (K - 1).Width + 1;

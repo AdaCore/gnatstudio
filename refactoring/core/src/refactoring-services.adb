@@ -649,7 +649,7 @@ package body Refactoring.Services is
       First_Column, Last_Column : Visible_Column_Type;
    begin
       if Self.First.Is_Empty
-        and then (not Self.Entity.Is_Empty)
+        and then not Self.Entity.Is_Empty
         and then Self.Entity.Element /= No_Root_Entity
       then
          To_Line_Column
@@ -1104,8 +1104,8 @@ package body Refactoring.Services is
          --  instance the parameter to a subprogram).
 
          Is_Global := Omit_Library_Level
-           and then ( --  Get_LI (Decl.File) /= Get_LI (Self.Source) or else
-                     not Is_Subprogram (Caller_At_Declaration (Entity.all)));
+           and then  --  Get_LI (Decl.File) /= Get_LI (Self.Source) or else
+             not Is_Subprogram (Caller_At_Declaration (Entity.all));
 
          if not Is_Global then
             declare

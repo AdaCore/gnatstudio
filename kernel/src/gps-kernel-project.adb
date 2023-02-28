@@ -823,7 +823,7 @@ package body GPS.Kernel.Project is
 
          Xref.Project_Changed (Kernel.Databases);
          --  Don't replace by "or else": we must always call Recompute_View
-         Has_Error := Has_Error or (not Recompute_View (Kernel));
+         Has_Error := Has_Error or not Recompute_View (Kernel);
 
          --  Reload the desktop, in case there is a project-specific setup
          --  already. We need to do this before running the hooks, in case some

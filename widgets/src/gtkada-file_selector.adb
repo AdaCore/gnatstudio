@@ -997,7 +997,7 @@ package body Gtkada.File_Selector is
       end if;
 
       while Has_Element (Win.Remaining_Files)
-        and then (Clock - Start <= Max_Idle_Duration)
+        and then Clock - Start <= Max_Idle_Duration
       loop
          F := Element (Win.Remaining_Files);
 
