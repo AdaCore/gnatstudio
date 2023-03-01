@@ -359,7 +359,7 @@ package body Engine_Wrappers is
       Next (Iter.I);
 
       --  We do not want to list declaration in package specs
-      while (not At_End (Iter.I))
+      while not At_End (Iter.I)
         and then Get_First_Occurence
           (Get_Entity (Iter.I)) /= Get_Entity (Iter.I)
       loop

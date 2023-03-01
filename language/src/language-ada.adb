@@ -1344,8 +1344,8 @@ package body Language.Ada is
 
                if (Next_Ind in Buffer'Range
                    and then
-                     (Is_Alphanumeric
-                        (UTF8_Get_Char (Buffer (Offset .. Next_Ind)))))
+                     Is_Alphanumeric
+                        (UTF8_Get_Char (Buffer (Offset .. Next_Ind))))
                  or else
                    (Next_Ind not in Buffer'Range
                     and then Is_Alphanumeric (Buffer (Offset)))

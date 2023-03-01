@@ -997,7 +997,7 @@ package body GPS.LSP_Client.Configurations.Clangd is
                   end if;
 
                else
-                  Me.Trace
+                  Me_Diagnostics.Trace
                     ("Can't create clangd formatting configuration file, " &
                      (+D.Full_Name) & " is not writable.");
                end if;

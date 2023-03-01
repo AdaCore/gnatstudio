@@ -364,7 +364,7 @@ package body Message_Kinds is
          if Offset = 0 then
             --  exact match with power of 2
             return "";
-         elsif (Offset < 0) xor Is_Negated then
+         elsif Offset < 0 xor Is_Negated then
             --  Precede with '-'
             return '-' & Image (abs (Offset));
          else

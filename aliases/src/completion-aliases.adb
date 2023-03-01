@@ -134,7 +134,7 @@ package body Completion.Aliases is
         or else Context.In_String
         or else
         (Offset > 0
-         and then (Context.Buffer (Natural (Offset)) in '.' | ':'))
+         and then Context.Buffer (Natural (Offset)) in '.' | ':')
       then
          return;
       end if;

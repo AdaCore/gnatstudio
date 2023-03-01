@@ -1286,7 +1286,7 @@ package body Codefix.Text_Manager is
       if Is_Blank (Element (Current_Line, Natural (Cursor_Char_Index)))
         or else
           (Is_Separator (Element (Current_Line, Natural (Cursor_Char_Index)))
-           and then (Begin_Word /= Cursor_Char_Index))
+           and then Begin_Word /= Cursor_Char_Index)
       then
          --  If the last character is a blank, or a separator and the current
          --  word is not a separator, then forget about the last cursor.

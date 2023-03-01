@@ -1346,7 +1346,7 @@ package body Project_Explorers_Common is
             Gtk.Dnd.Finish
               (Context,
                Success => Success,
-               Del     => Success and (Action = Action_Move),
+               Del     => Success and Action = Action_Move,
                Time    => Time);
 
             if Refresh then

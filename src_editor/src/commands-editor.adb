@@ -80,7 +80,7 @@ package body Commands.Editor is
    function Is_Null_Command (Command : Editor_Command) return Boolean is
    begin
       return (Command = null
-              or else (Command.Current_Text = Null_Unbounded_String));
+              or else Command.Current_Text = Null_Unbounded_String);
    end Is_Null_Command;
 
    -------------------

@@ -1662,7 +1662,7 @@ package body VCS2.History is
       Iter : Gtk_Tree_Iter;
    begin
       Tree.Has_Show_Older := Data.Current <= Tree.Lines.Last_Index
-        or else (Tree.Lines.Last_Index = Tree.User_Filter.Up_To_Lines);
+        or else Tree.Lines.Last_Index = Tree.User_Filter.Up_To_Lines;
       if Tree.Has_Show_Older then
          Init_Set_Int    (V (Column_Line), -1);
          Init_Set_String (V (Column_Author), "");
