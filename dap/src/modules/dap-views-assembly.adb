@@ -63,6 +63,7 @@ with Debugger_Pixmaps;
 with DAP.Clients;                use DAP.Clients;
 with DAP.Tools;                  use DAP.Tools;
 with DAP.Types;                  use DAP.Types;
+with DAP.Module;
 with DAP.Modules.Preferences;    use DAP.Modules.Preferences;
 with DAP.Modules.Breakpoints;    use DAP.Modules.Breakpoints;
 
@@ -335,6 +336,8 @@ package body DAP.Views.Assembly is
    File_Column          : constant := 7;
    Line_Column          : constant := 8;
 
+   Can_Not_Get : constant String := "Couldn't get assembly code";
+
    --------------
    -- Get_View --
    --------------
@@ -463,6 +466,11 @@ package body DAP.Views.Assembly is
            (Hook_Function with View => Assembly_View (Widget)),
          Watch => Widget);
 
+      Widget.On_Status_Changed
+        ((if DAP.Module.Get_Current_Debugger.Get_Status /= Stopped
+         then GPS.Debuggers.Debug_Busy
+         else GPS.Debuggers.Debug_Available));
+
       return Gtk_Widget (Widget.Tree);
    end Initialize;
 
@@ -519,8 +527,13 @@ package body DAP.Views.Assembly is
          if El.Instr /= Null_Unbounded_String then
             Last           := Last + 1;
             Columns (Last) := Instr_Column;
-            Values  (Last) := As_String
-              (Glib.Convert.Escape_Text (To_String (El.Instr)));
+            if To_String (El.Instr) = Can_Not_Get then
+               Values  (Last) := As_String
+                 ("<b>" & Glib.Convert.Escape_Text (Can_Not_Get) & "</b>");
+            else
+               Values  (Last) := As_String
+                 (Glib.Convert.Escape_Text (To_String (El.Instr)));
+            end if;
 
          end if;
 
@@ -1462,8 +1475,7 @@ package body DAP.Views.Assembly is
       Invalid_Cache_Data.Data.Append
         (Disassemble_Element'
            (Address => Invalid_Address,
-            Instr   => Ada.Strings.Unbounded.To_Unbounded_String
-              ("Couldn't get assembly code"),
+            Instr   => Ada.Strings.Unbounded.To_Unbounded_String (Can_Not_Get),
             others  => <>));
 
       Assembly_Views.Register_Module (Kernel);
