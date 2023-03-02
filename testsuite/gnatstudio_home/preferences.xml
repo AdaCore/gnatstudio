@@ -1,6 +1,7 @@
 <?xml version="1.0"?>
 <GPS>
   <pref name="LSP-Completion-Use-Snippets" >TRUE</pref>
+  <pref name="LSP-Diagnostics-Display" >Editor_Only</pref>
   <pref name="LSP-Ada-Diagnostics" >False</pref>
   <pref name="General-Splash-Screen">False</pref>
   <pref name="Smart-Completion-Mode" > 0</pref>

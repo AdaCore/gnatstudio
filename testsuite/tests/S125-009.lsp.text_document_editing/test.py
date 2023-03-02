@@ -23,7 +23,7 @@ def test_driver():
     location = GPS.EditorLocation(adb_buffer, 3, 16)
     adb_buffer.insert (location, " ")
     yield timeout(diagnosticTimeout)
-    gps_assert(GPS.Locations.list_locations("Diagnostics", adb_file.path),
+    gps_assert(GPS.Locations.list_locations("Diagnostics: libadalang", adb_file.path),
                [GPS.FileLocation(adb_file, 3, 17), "Missing ';'"],
                "Unexpected diagnostics (assertion 1)")
 
