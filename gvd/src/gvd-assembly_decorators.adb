@@ -83,7 +83,9 @@ package body GVD.Assembly_Decorators is
    begin
       Skip_To_Blank (Instruction, Index);
 
-      if Index not in Instruction'Range then
+      if Index not in Instruction'Range
+        or else Instruction (Instruction'First .. Index - 1) = "Couldn't"
+      then
          return "<b>" & Escape_Text (Instruction) & "</b>";
       end if;
 

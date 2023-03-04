@@ -6,7 +6,7 @@ import GPS
 from gs_utils.internal.utils import *
 
 COLUMN = 3
-WARNING = "['<b>Couldn&apos;t</b> get assembly code']"
+WARNING = "['<b>Couldn&apos;t get assembly code</b>']"
 
 
 @run_test_driver
