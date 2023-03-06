@@ -2216,7 +2216,12 @@ package body Src_Editor_View is
          Line := Buffer_Line_Type (Get_Line (Iter) + 1);
 
          Set_Focus_Child (View.Child);
-         On_Click (Buffer, Line, Button_X - View.Speed_Bar_Width);
+         On_Click
+           (Buffer     => Buffer,
+            Line       => Line,
+            Offset     => Button_X - View.Speed_Bar_Width,
+            Click_Type =>
+              (if View.Hyper_Mode then Hyper_Mode_Click else Normal_Click));
       end Handle_Press_On_Side_Info;
 
       -------------------------------

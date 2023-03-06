@@ -112,9 +112,10 @@ package Src_Editor_Buffer.Line_Information is
    --  Layout should be used to draw text.
 
    procedure On_Click
-     (Buffer : access Source_Buffer_Record'Class;
-      Line   : Buffer_Line_Type;
-      Offset : Gint);
+     (Buffer     : access Source_Buffer_Record'Class;
+      Line       : Buffer_Line_Type;
+      Offset     : Gint;
+      Click_Type : GPS.Kernel.Line_Click_Type);
    --  Perform a click in the side column for line Line, offset Offset
 
    procedure On_Click_On_Side_Column

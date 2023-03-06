@@ -3744,11 +3744,13 @@ class EditorBuffer(object):
         """
         pass  # implemented in Ada
 
-    def click_on_line_number(self, line, column, icon_name):
+    def click_on_line_number(self, line, column, icon_name, hyper_mode=False):
         """
         Simulate a click on a line number on the side of the editor.
 
         :param integer line: where to simulate the click
+        :param bool hyper_mode: whether the click should be simulated in hyper mode,
+          to simulate a ctrl-click
         """
         pass  # implemented in Ada
 

@@ -680,16 +680,27 @@ package GPS.Kernel is
      (Kernel  : access Kernel_Handle_Record;
       Factory : GPS.Editors.Editor_Buffer_Factory_Access);
 
+   type Line_Click_Type is (Normal_Click, Hyper_Mode_Click);
+   --  The type of clicking events that could occur on editors.
+   --     * Normal_Click: simple click, without any key modifier
+   --     * Hyper_Mode_Click: click with the ctrl key modifier
+   --       (hyper mode)
+
    procedure Set_Default_Line_Number_Click
-     (Kernel    : not null access Kernel_Handle_Record'Class;
-      Action    : String);
+     (Kernel     : not null access Kernel_Handle_Record'Class;
+      Action     : String;
+      Click_Type : Line_Click_Type);
    --  Register the action to execute when clicking on a line number and there
    --  is no message's action set on that line number.
+   --  Click_Type is used to determine for which clicking type this action
+   --  should be called.
 
    procedure Execute_Default_Line_Number_Click
-     (Kernel    : not null access Kernel_Handle_Record'Class;
-      Context   : Selection_Context);
+     (Kernel     : not null access Kernel_Handle_Record'Class;
+      Context    : Selection_Context;
+      Click_Type : Line_Click_Type);
    --  Execute the default action when clicking on a line number
+   --  Click_Type refers to the clicking event that was trigerred.
 
    function Get_Current_Location
      (Kernel : not null access Kernel_Handle_Record'Class;
@@ -1186,6 +1197,9 @@ private
       Equivalent_Elements => Commands."=",
       "="                 => Commands."=");
 
+   type Line_Click_Action_Type is
+     array (Line_Click_Type) of Unbounded_String;
+
    type Kernel_Handle_Record is new GPS.Core_Kernels.Core_Kernel_Record with
    record
       Tools   : Tools_List.List;
@@ -1315,8 +1329,8 @@ private
 
       Messages : Abstract_Messages_Window_Access;
 
-      Default_Line_Click_Action : GNAT.Strings.String_Access;
-      --  default action to execute when clicking on a line
+      Default_Line_Click_Actions : Line_Click_Action_Type;
+      --  default actions to execute when clicking on a line
 
       Launcher : aliased GPS_Process_Launcher_Record;
       --  External process launcher

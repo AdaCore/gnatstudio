@@ -21,6 +21,7 @@ with Ada.Unchecked_Conversion;
 with Ada.Unchecked_Deallocation;
 
 with Commands;
+with GPS.Kernel;                     use GPS.Kernel;
 with GPS.Kernel.Messages.References;
 with GPS.Kernel.Style_Manager;       use GPS.Kernel.Style_Manager;
 
@@ -172,9 +173,13 @@ package GPS.Editors.Line_Information is
    --  be executed.
 
    procedure Click_On_Line_Number
-     (This : GPS_Editor_Buffer;
-      Line : Integer) is abstract;
-   --  Simulate a click on the a number on the side of the editor
+     (This       : GPS_Editor_Buffer;
+      Line       : Integer;
+      Click_Type : Line_Click_Type) is abstract;
+   --  Simulate a click on the line number on the side of the editor.
+   --  Click_Type is used to determine if it is a simple click or a click
+   --  occurring while the editor is in hyper mode (i.e: when the ctrl key
+   --  is being pressed at the same time).
 
 private
 

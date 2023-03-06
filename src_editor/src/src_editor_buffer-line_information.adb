@@ -152,8 +152,9 @@ package body Src_Editor_Buffer.Line_Information is
    --  associated commands/actions will be returned.
 
    procedure On_Click_On_Line_Number
-     (Buffer : not null access Source_Buffer_Record'Class;
-      Line   : Buffer_Line_Type);
+     (Buffer     : not null access Source_Buffer_Record'Class;
+      Line       : Buffer_Line_Type;
+      Click_Type : Line_Click_Type);
    --  Called when the user clicks on a line number.
    --  Execute the action associated to the given line number, if any.
 
@@ -1475,8 +1476,9 @@ package body Src_Editor_Buffer.Line_Information is
    -----------------------------
 
    procedure On_Click_On_Line_Number
-     (Buffer : not null access Source_Buffer_Record'Class;
-      Line   : Buffer_Line_Type)
+     (Buffer     : not null access Source_Buffer_Record'Class;
+      Line       : Buffer_Line_Type;
+      Click_Type : Line_Click_Type)
    is
       BL         : Columns_Config_Access renames
                      Buffer.Editable_Line_Info_Columns;
@@ -1519,7 +1521,10 @@ package body Src_Editor_Buffer.Line_Information is
       --  numbers, execute the default one.
       Trace (Me, "Execute default action for click on line number");
 
-      Execute_Default_Line_Number_Click (Buffer.Kernel, Context);
+      Execute_Default_Line_Number_Click
+        (Kernel     => Buffer.Kernel,
+         Context    => Context,
+         Click_Type => Click_Type);
 
       --  Refresh the context after clicking
       Buffer.Kernel.Refresh_Context;
@@ -1694,9 +1699,10 @@ package body Src_Editor_Buffer.Line_Information is
    --------------
 
    procedure On_Click
-     (Buffer : access Source_Buffer_Record'Class;
-      Line   : Buffer_Line_Type;
-      Offset : Gint)
+     (Buffer     : access Source_Buffer_Record'Class;
+      Line       : Buffer_Line_Type;
+      Offset     : Gint;
+      Click_Type : Line_Click_Type)
    is
       BL : Columns_Config_Access renames Buffer.Editable_Line_Info_Columns;
    begin
@@ -1707,8 +1713,9 @@ package body Src_Editor_Buffer.Line_Information is
 
       elsif Offset <= Gint (Buffer.Line_Numbers_Width) then
          On_Click_On_Line_Number
-           (Buffer => Buffer,
-            Line   => Line);
+           (Buffer     => Buffer,
+            Line       => Line,
+            Click_Type => Click_Type);
 
       --  Click on other columns
 
