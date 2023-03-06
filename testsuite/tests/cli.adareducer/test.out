@@ -14,6 +14,21 @@ Specify a project with the -P switch
 Specify an oracle with the -s/--oracle_script switch
 
 ## TEST FUNCTIONALITY
+=> Removing any unused files
+=> Removing tabs
+=> Emptying out bodies (brute force)
+  level 1: 1 actioned, 0 not actioned
+=> Emptying out bodies (statement by statement)
+  level 1: 2 actioned, 0 not actioned
+=> Removing aspects
+=> Removing subprograms
+  level 1: 0 actioned, 1 not actioned
+=> Removing packages
+=> Removing imports
+=> Removing blank lines and comments
+=> Attempting to delete
+Total characters removed: 44
+
 procedure Hello is
 begin
    null;

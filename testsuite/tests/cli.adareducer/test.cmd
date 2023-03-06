@@ -11,5 +11,6 @@ gnatstudio_cli adareducer -P p
 echo ""
 
 echo "## TEST FUNCTIONALITY"
-gnatstudio_cli adareducer -P p -s oracle.sh > /dev/null
+gnatstudio_cli adareducer -P p -s oracle.sh | grep -v hello.adb
+echo ""
 cat hello.adb
