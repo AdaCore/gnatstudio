@@ -13,6 +13,8 @@ Specify a project with the -P switch
 ## TEST MISSING ORACLE
 Specify an oracle with the -s/--oracle_script switch
 
+## TESTING THE ORACLE
+
 ## TEST FUNCTIONALITY
 => Removing any unused files
 => Removing tabs
