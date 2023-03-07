@@ -10,6 +10,10 @@ echo "## TEST MISSING ORACLE"
 gnatstudio_cli adareducer -P p
 echo ""
 
+echo "## TESTING THE ORACLE"
+./oracle.sh
+echo ""
+
 echo "## TEST FUNCTIONALITY"
 gnatstudio_cli adareducer -P p -s oracle.sh | grep -v hello.adb
 echo ""
