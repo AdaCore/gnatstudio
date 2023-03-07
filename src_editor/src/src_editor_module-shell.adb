@@ -2141,11 +2141,17 @@ package body Src_Editor_Module.Shell is
 
       elsif Command = "click_on_line_number" then
          declare
-            Buffer    : constant GPS_Editor_Buffer'Class :=
-                          Get_Buffer (Data, 1);
-            Line      : constant Natural := Data.Nth_Arg (2);
+            Buffer     : constant GPS_Editor_Buffer'Class :=
+              Get_Buffer (Data, 1);
+            Line       : constant Natural :=
+              Data.Nth_Arg (2);
+            Hyper_Mode : constant Boolean :=
+              Data.Nth_Arg (3, Default => False);
          begin
-            Buffer.Click_On_Line_Number (Line);
+            Buffer.Click_On_Line_Number
+              (Line,
+               Click_Type =>
+                 (if Hyper_Mode then Hyper_Mode_Click else Normal_Click));
          end;
 
       elsif Command = "find_all_refs" then
@@ -3156,7 +3162,8 @@ package body Src_Editor_Module.Shell is
          "at", 2, 3, Buffer_Cmds'Access, EditorBuffer);
       Kernel.Scripts.Register_Command
         ("click_on_line_number",
-         Params  => (1 => Param ("line")),
+         Params  => (1 => Param ("line"),
+                     2 => Param ("hyper_mode", Optional => True)),
          Class   => EditorBuffer,
          Handler => Buffer_Cmds'Access);
       Kernel.Scripts.Register_Command
