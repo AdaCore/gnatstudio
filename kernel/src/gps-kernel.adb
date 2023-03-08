@@ -2438,11 +2438,12 @@ package body GPS.Kernel is
    -----------------------------------
 
    procedure Set_Default_Line_Number_Click
-     (Kernel    : not null access Kernel_Handle_Record'Class;
-      Action    : String) is
+     (Kernel     : not null access Kernel_Handle_Record'Class;
+      Action     : String;
+      Click_Type : Line_Click_Type) is
    begin
-      Free (Kernel.Default_Line_Click_Action);
-      Kernel.Default_Line_Click_Action := new String'(Action);
+      Kernel.Default_Line_Click_Actions (Click_Type) :=
+        To_Unbounded_String (Action);
    end Set_Default_Line_Number_Click;
 
    ---------------------------------------
@@ -2450,15 +2451,19 @@ package body GPS.Kernel is
    ---------------------------------------
 
    procedure Execute_Default_Line_Number_Click
-     (Kernel    : not null access Kernel_Handle_Record'Class;
-      Context   : Selection_Context)
+     (Kernel     : not null access Kernel_Handle_Record'Class;
+      Context    : Selection_Context;
+      Click_Type : Line_Click_Type)
    is
       Dummy : Boolean;
    begin
-      if Kernel.Default_Line_Click_Action /= null then
+      if Kernel.Default_Line_Click_Actions
+        (Click_Type) /= Null_Unbounded_String
+      then
          Dummy := Execute_Action
            (Kernel,
-            Action  => Kernel.Default_Line_Click_Action.all,
+            Action  => To_String
+              (Kernel.Default_Line_Click_Actions (Click_Type)),
             Context => Context);
       end if;
    end Execute_Default_Line_Number_Click;

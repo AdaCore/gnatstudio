@@ -78,6 +78,7 @@ with GPS.Editors;                    use GPS.Editors;
 with GPS.Editors.Line_Information;   use GPS.Editors.Line_Information;
 with GPS.Kernel;                     use GPS.Kernel;
 with GPS.Kernel.Actions;             use GPS.Kernel.Actions;
+with GPS.Kernel.Contexts;            use GPS.Kernel.Contexts;
 with GPS.Kernel.Hooks;               use GPS.Kernel.Hooks;
 with GPS.Kernel.MDI;                 use GPS.Kernel.MDI;
 with GPS.Kernel.Messages;            use GPS.Kernel.Messages;
@@ -1380,25 +1381,51 @@ package body Bookmark_Views is
          --  will expect most of the time.
 
          Mark := Create_Marker (Kernel);
+
          if Mark.Is_Null then
             Trace
-              (Me, "Current module cannot create bookmark, try last editor");
-            declare
-               --  Side effect is to give focus to the source edtor module to
-               --  create the bookmark
-               Buffer : constant Editor_Buffer'Class :=
-                 Get_Buffer_Factory (Kernel).Get
-                 (Open_Buffer => False, Open_View => False, Focus => False);
-               Cursor : constant Editor_Location'Class :=
-                 Buffer.Current_View.Cursor;
+              (Me, "Current module cannot create bookmark, try last from "
+               & "the current context of the last focused editor");
 
-            begin
-               Mark := Get_Buffer_Factory (Kernel).Create_Marker
-                 (File    => Buffer.File,
-                  Project => No_Project,
-                  Line    => Editable_Line_Type (Cursor.Line),
-                  Column  => Cursor.Column);
-            end;
+            --  Check if we have line/column info in the current context.
+            --  Use the last focused editor otherwise.
+            if Has_Line_Information (Context.Context)
+              and then Has_Column_Information (Context.Context)
+            then
+               declare
+                  File   : constant Virtual_File :=
+                    File_Information (Context.Context);
+                  Line   : constant Natural :=
+                    (if Has_File_Line_Information (Context.Context)
+                     then File_Line_Information (Context.Context)
+                     else Contexts.Line_Information (Context.Context));
+                  Column : constant Visible_Column_Type :=
+                    Column_Information
+                      (Context.Context);
+               begin
+                  Mark := Get_Buffer_Factory (Kernel).Create_Marker
+                    (File    => File,
+                     Project => No_Project,
+                     Line    => Editable_Line_Type (Line),
+                     Column  => Column);
+               end;
+            else
+               declare
+                  --  Side effect is to give focus to the source edtor module
+                  --  to create the bookmark
+                  Buffer : constant Editor_Buffer'Class :=
+                    Get_Buffer_Factory (Kernel).Get
+                    (Open_Buffer => False, Open_View => False, Focus => False);
+                  Cursor : constant Editor_Location'Class :=
+                    Buffer.Current_View.Cursor;
+               begin
+                  Mark := Get_Buffer_Factory (Kernel).Create_Marker
+                    (File    => Buffer.File,
+                     Project => No_Project,
+                     Line    => Editable_Line_Type (Cursor.Line),
+                     Column  => Cursor.Column);
+               end;
+            end if;
          end if;
          return Mark;
       end Get_Current_Mark;
@@ -3376,6 +3403,10 @@ package body Bookmark_Views is
          Icon_Name    => "gps-add-symbolic",
          Category     => -"Bookmarks",
          For_Learning => True);
+
+      Kernel.Set_Default_Line_Number_Click
+        (Action => "bookmark create",
+         Click_Type   => GPS.Kernel.Hyper_Mode_Click);
 
       Register_Action
         (Kernel, "project bookmark create",

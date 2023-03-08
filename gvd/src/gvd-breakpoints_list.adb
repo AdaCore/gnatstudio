@@ -1527,7 +1527,9 @@ package body GVD.Breakpoints_List is
              Kernel.Lookup_Filter ("Debugger breakable source"),
          Category    => -"Debug");
 
-      Kernel.Set_Default_Line_Number_Click ("debug set line breakpoint");
+      Kernel.Set_Default_Line_Number_Click
+        (Action     => "debug set line breakpoint",
+         Click_Type => GPS.Kernel.Normal_Click);
 
       Register_Action
         (Kernel, "continue till line",

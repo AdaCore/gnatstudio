@@ -410,8 +410,9 @@ package body Src_Editor_Module.Editors is
       Icon_Name : String := "") return Boolean;
 
    overriding procedure Click_On_Line_Number
-     (This      : Src_Editor_Buffer;
-      Line      : Integer);
+     (This       : Src_Editor_Buffer;
+      Line       : Integer;
+      Click_Type : Line_Click_Type);
 
    overriding function Create_Overlay
      (This : Src_Editor_Buffer;
@@ -2225,14 +2226,19 @@ package body Src_Editor_Module.Editors is
    --------------------------
 
    overriding procedure Click_On_Line_Number
-     (This      : Src_Editor_Buffer;
-      Line      : Integer) is
+     (This       : Src_Editor_Buffer;
+      Line       : Integer;
+      Click_Type : Line_Click_Type) is
    begin
       if This.Contents.Buffer = null then
          return;
       end if;
 
-      On_Click (This.Contents.Buffer, Buffer_Line_Type (Line), Offset => 0);
+      On_Click
+        (Buffer     => This.Contents.Buffer,
+         Line       => Buffer_Line_Type (Line),
+         Offset     => 0,
+         Click_Type => Click_Type);
    end Click_On_Line_Number;
 
    ------------------
