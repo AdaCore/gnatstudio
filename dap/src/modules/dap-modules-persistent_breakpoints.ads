@@ -82,4 +82,13 @@ package DAP.Modules.Persistent_Breakpoints is
       Temporary     : Boolean := False);
    --  Add breakpoint for the subprogram
 
+   procedure Unbreak_Source
+     (Kernel        : not null access Kernel_Handle_Record'Class;
+      File          : Virtual_File;
+      Line          : Editable_Line_Type);
+   --  Set a breakpoint on the given location.
+   --  If no debugger is currently running, the breakpoint will be applied when
+   --  one is started. If one or more debuggers are running, they all break
+   --  at that location
+
 end DAP.Modules.Persistent_Breakpoints;

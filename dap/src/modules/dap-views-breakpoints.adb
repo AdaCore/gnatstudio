@@ -220,12 +220,6 @@ package body DAP.Views.Breakpoints is
      (Filter  : access No_View_Filter;
       Context : Selection_Context) return Boolean;
 
-   type Dummy_Filter is new Action_Filter_Record with null record;
-
-   overriding function Filter_Matches_Primitive
-     (Filter  : access Dummy_Filter;
-      Context : Selection_Context) return Boolean;
-
    type Breakpoint_Single_Selection is
      new Action_Filter_Record with null record;
    overriding function Filter_Matches_Primitive
@@ -234,6 +228,16 @@ package body DAP.Views.Breakpoints is
    --  True if only one row is selected.
 
    --  Hooks --
+
+   type On_Breakpoint_Id is new Debugger_Breakpoint_Hook_Function
+      with null record;
+   overriding procedure Execute
+      (Self     : On_Breakpoint_Id;
+       Kernel   : not null access GPS.Kernel.Kernel_Handle_Record'Class;
+       Debugger : access Base_Visual_Debugger'Class;
+       Id       : Integer);
+   --  Hook for "debugger_breakpoints_added",
+   --  "debugger_breakpoints_changed", debugger_breakpoints_deleted
 
    type On_Breakpoints_Changed is new Debugger_Hooks_Function
       with null record;
@@ -348,11 +352,11 @@ package body DAP.Views.Breakpoints is
       Context : Interactive_Command_Context) return Command_Return_Type;
    --  Edit the advanced properties of the selected breakpoint
 
-   type Dummy_Command is new Interactive_Command with null record;
+   type View_Breakpoint_Command is new Interactive_Command with null record;
    overriding function Execute
-     (Command : access Dummy_Command;
-      Context : Interactive_Command_Context) return Command_Return_Type
-     is (Success);
+     (Command : access View_Breakpoint_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type;
+   --  Show the source editor that has the breakpoint
 
    -----------
    -- Apply --
@@ -476,6 +480,8 @@ package body DAP.Views.Breakpoints is
    is
       Main_Vbox : Gtk_Box;
       Scroll    : Gtk_Scrolled_Window;
+
+      Hook : Debugger_Breakpoint_Hook_Function_Access;
    begin
       Trace (Me, "Initialize");
       Gtk.Box.Initialize_Hbox (Self);
@@ -524,8 +530,12 @@ package body DAP.Views.Breakpoints is
       Self.Longpress.On_Pressed (On_Longpress'Access, Slot => Self);
       Self.Longpress.Watch (Self);
 
+      Hook := new On_Breakpoint_Id;
+      Debugger_Breakpoint_Added_Hook.Add (Hook, Watch => Self);
       Debugger_Breakpoints_Changed_Hook.Add
-         (new On_Breakpoints_Changed, Watch => Self);
+        (new On_Breakpoints_Changed, Watch => Self);
+      Debugger_Breakpoint_Changed_Hook.Add (Hook, Watch => Self);
+      Debugger_Breakpoint_Deleted_Hook.Add (Hook, Watch => Self);
 
       --  Initial display
       Update (Self);
@@ -964,6 +974,36 @@ package body DAP.Views.Breakpoints is
    -- Execute --
    -------------
 
+   overriding procedure Execute
+      (Self     : On_Breakpoint_Id;
+       Kernel   : not null access GPS.Kernel.Kernel_Handle_Record'Class;
+       Debugger : access Base_Visual_Debugger'Class;
+       Id       : Integer)
+   is
+      pragma Unreferenced (Self);
+      View : Breakpoint_View;
+
+   begin
+      if Debugger /= null
+        and then Positive (Debugger.Get_Num) /=
+        DAP.Module.Get_Current_Debugger.Id
+      then
+         return;
+      end if;
+
+      View := Breakpoint_View
+        (Breakpoints_MDI_Views.Retrieve_View
+           (Kernel, Visible_Only => True));
+
+      if View /= null then
+         Update (View);
+      end if;
+   end Execute;
+
+   -------------
+   -- Execute --
+   -------------
+
    overriding function Execute
      (Command : access Advanced_Command;
       Context : Interactive_Command_Context) return Command_Return_Type
@@ -977,6 +1017,27 @@ package body DAP.Views.Breakpoints is
    begin
       if View /= null then
          Show_Selected_Breakpoint_Details (View);
+      end if;
+      return Success;
+   end Execute;
+
+   -------------
+   -- Execute --
+   -------------
+
+   overriding function Execute
+     (Command : access View_Breakpoint_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type
+   is
+      pragma Unreferenced (Command);
+      View  : constant Breakpoint_View :=
+        Breakpoint_View
+          (Breakpoints_MDI_Views.Retrieve_View
+             (Get_Kernel (Context.Context),
+              Visible_Only => True));
+   begin
+      if View /= null then
+         Show_Selected_Breakpoint_In_Editor (View);
       end if;
       return Success;
    end Execute;
@@ -1149,17 +1210,6 @@ package body DAP.Views.Breakpoints is
          end;
       end if;
       return Res;
-   end Filter_Matches_Primitive;
-
-   ------------------------------
-   -- Filter_Matches_Primitive --
-   ------------------------------
-
-   overriding function Filter_Matches_Primitive
-     (Filter  : access Dummy_Filter;
-      Context : Selection_Context) return Boolean is
-   begin
-      return False;
    end Filter_Matches_Primitive;
 
    ------------------
@@ -1400,18 +1450,14 @@ package body DAP.Views.Breakpoints is
          Category  => "Debug",
          Filter    => No_Or_Ready_Filter and Selection_Filter);
 
-      --  Not implemented yet
-      Dummy := new Dummy_Filter;
-      Register_Filter (Kernel, Dummy, "Dummy");
-
       GPS.Kernel.Actions.Register_Action
         (Kernel,
-         "debug view breakpoint", new Dummy_Command,
+         "debug view breakpoint", new View_Breakpoint_Command,
          "View the source editor containing the selected breakpoint"
            & " (from the Breakpoints view)",
          Icon_Name => "gps-goto-symbolic",
          Category  => "Debug",
-         Filter    => Dummy);
+         Filter    => Selection_Filter);
    end Register_Module;
 
 end DAP.Views.Breakpoints;

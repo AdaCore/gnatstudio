@@ -257,6 +257,15 @@ package body DAP.Clients is
       return Self.Status = Stopped;
    end Is_Stopped;
 
+   --------------
+   -- Is_Ready --
+   --------------
+
+   function Is_Ready (Self : DAP_Client) return Boolean is
+   begin
+      return Self.Status = Ready;
+   end Is_Ready;
+
    --------------------------
    -- Is_Ready_For_Command --
    --------------------------
@@ -301,10 +310,13 @@ package body DAP.Clients is
          Self.Status := Status;
 
          if Self.Status /= Stopped then
+
             Self.Selected_File    := GNATCOLL.VFS.No_File;
             Self.Selected_Line    := 0;
             Self.Selected_Address := Invalid_Address;
             Self.Selected_Frame   := 0;
+            Self.Frames.Clear;
+
             Self.Selected_Thread  := 0;
 
             DAP.Utils.Unhighlight_Current_Line (Self.Kernel);
@@ -1233,6 +1245,7 @@ package body DAP.Clients is
 
       elsif Event = "stopped" then
          declare
+            use type Generic_Views.Abstract_View_Access;
             stop : DAP.Tools.StoppedEvent;
          begin
             Self.Set_Status (Stopped);
@@ -1264,11 +1277,13 @@ package body DAP.Clients is
             end if;
 
             --  Get stopped frameId/file/line/address
-            if Self.Selected_File /= No_File then
-               Self.On_Location_Changed;
-
-            elsif stop.a_body.threadId.Is_Set then
+            if stop.a_body.threadId.Is_Set
+              and then Self.Call_Stack_View = null
+            then
                Self.Get_StackTrace (stop.a_body.threadId.Value);
+
+            elsif Self.Selected_File /= No_File then
+               Self.On_Location_Changed;
             end if;
          end;
 
@@ -1348,29 +1363,120 @@ package body DAP.Clients is
       pragma Unreferenced (New_Request);
 
    begin
-      if Length (Result.a_body.stackFrames) > 0 then
+      for Index in 1 .. Length (Result.a_body.stackFrames) loop
          declare
             Frame : constant StackFrame_Variable_Reference :=
               Get_StackFrame_Variable_Reference
-                (Result.a_body.stackFrames, 1);
+                (Result.a_body.stackFrames, Index);
+            Bt : Backtrace_Record;
          begin
-            Self.Client.Selected_Frame := Frame.id;
-
-            Self.Client.Selected_Address := String_To_Address
-              (VSS.Strings.Conversions.To_UTF_8_String
-                 (Frame.instructionPointerReference));
-
+            Bt.Frame_Id := Frame.id;
+            Bt.Name := To_Unbounded_String
+              (VSS.Strings.Conversions.To_UTF_8_String (Frame.name));
+            if Frame.instructionPointerReference.Is_Empty then
+               Bt.Address := String_To_Address
+                 (VSS.Strings.Conversions.To_UTF_8_String
+                    (Frame.instructionPointerReference));
+            end if;
             if Frame.source.Is_Set then
-               Self.Client.Selected_File := Create
+               Bt.File := Create
                  (+(VSS.Strings.Conversions.To_UTF_8_String
                   (Frame.source.Value.path)));
-               Self.Client.Selected_Line := Frame.line;
-
-               Self.Client.On_Location_Changed;
+               Bt.Line := Frame.line;
             end if;
+
+            if Index = 1 then
+               Self.Client.Selected_Frame   := Bt.Frame_Id;
+               Self.Client.Selected_Address := Bt.Address;
+
+               if Bt.File /= No_File then
+                  Self.Client.Selected_File := Bt.File;
+                  Self.Client.Selected_Line := Bt.Line;
+
+                  Self.Client.On_Location_Changed;
+               end if;
+            end if;
+            Self.Client.Frames.Append (Bt);
          end;
-      end if;
+      end loop;
    end On_Result_Message;
+
+   ---------------
+   -- Backtrace --
+   ---------------
+
+   procedure Backtrace
+     (Self : in out DAP_Client;
+      Bt   : out Backtrace_Vectors.Vector) is
+   begin
+      Bt := Self.Frames;
+   end Backtrace;
+
+   -------------------
+   -- Set_Backtrace --
+   -------------------
+
+   procedure Set_Backtrace
+     (Self : in out DAP_Client;
+      Bt   : Backtrace_Vectors.Vector) is
+   begin
+      Self.Frames := Bt;
+   end Set_Backtrace;
+
+   --------------
+   -- Stack_Up --
+   --------------
+
+   procedure Stack_Up (Self : in out DAP_Client)
+   is
+      Next : Boolean := False;
+   begin
+      for Bt of Self.Frames loop
+         if Next then
+            Self.Set_Selected_Frame
+              (Bt.Frame_Id, Bt.File, Bt.Line, Bt.Address);
+            exit;
+
+         elsif Bt.Frame_Id = Self.Selected_Frame then
+            Next := True;
+         end if;
+      end loop;
+   end Stack_Up;
+
+   ----------------
+   -- Stack_Down --
+   ----------------
+
+   procedure Stack_Down (Self : in out DAP_Client)
+   is
+      Next : Boolean := False;
+   begin
+      for Bt of reverse Self.Frames loop
+         if Next then
+            Self.Set_Selected_Frame
+              (Bt.Frame_Id, Bt.File, Bt.Line, Bt.Address);
+            exit;
+
+         elsif Bt.Frame_Id = Self.Selected_Frame then
+            Next := True;
+         end if;
+      end loop;
+   end Stack_Down;
+
+   -----------------
+   -- Stack_Frame --
+   -----------------
+
+   procedure Stack_Frame (Self : in out DAP_Client; Id : Integer) is
+   begin
+      for Bt of Self.Frames loop
+         if Bt.Frame_Id = Id then
+            Self.Set_Selected_Frame
+              (Bt.Frame_Id, Bt.File, Bt.Line, Bt.Address);
+            exit;
+         end if;
+      end loop;
+   end Stack_Frame;
 
    -------------------------
    -- On_Location_Changed --

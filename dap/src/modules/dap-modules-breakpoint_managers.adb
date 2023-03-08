@@ -721,11 +721,12 @@ package body DAP.Modules.Breakpoint_Managers is
    is
       use DAP.Tools;
 
-      Holder : constant GPS.Editors.Controlled_Editor_Buffer_Holder :=
+      Holder  : constant GPS.Editors.Controlled_Editor_Buffer_Holder :=
         Self.Kernel.Get_Buffer_Factory.Get_Holder (File => Self.File);
-      Data   : Breakpoint_Data;
-      Actual : Breakpoint_Vectors.Vector;
-      Update : Boolean := False;
+      Data    : Breakpoint_Data;
+      Actual  : Breakpoint_Vectors.Vector;
+      Update  : Boolean := False;
+      Warning : Boolean := False;
 
    begin
       New_Request := null;
@@ -740,7 +741,30 @@ package body DAP.Modules.Breakpoint_Managers is
                   Convert (Self.Kernel, Self.File, Holder, Data,
                            Result.a_body.breakpoints (Index));
                   Actual.Append (Data);
+
+                  if not Result.a_body.breakpoints (Index).verified then
+                     Warning := True;
+                  end if;
                end loop;
+
+               if Warning then
+                  Self.Manager.Client.Display_In_Debugger_Console
+                    ("Some breakpoints set graphically are not "
+                     & "recognized by the debugger and, thus, will be lost "
+                     & "when running it. "
+                     & ASCII.LF
+                     & "This can happen when the executable "
+                     & "being debugged has not been compiled with the debug "
+                     & "flags or when the breakpoint's source file is not"
+                     & " found in the symbols table. This also can happen for "
+                     & "catchpoints."
+                     & ASCII.LF
+                     & "You should try to set them after a start command."
+                     & ASCII.LF
+                     & "Breakpoints and/or catchpoints that could not be set: "
+                     & ASCII.LF
+                     & ASCII.LF);
+               end if;
 
                --  Update breakpoints data like numbers and locations
                Self.Manager.Holder.Initialized_For_File
@@ -780,6 +804,7 @@ package body DAP.Modules.Breakpoint_Managers is
          when Enable =>
             declare
                Changed : Breakpoint_Hash_Maps.Map;
+               Id      : Integer;
             begin
                for Index in 1 .. Length (Result.a_body.breakpoints) loop
                   Data := Self.Sent.Element (Index);
@@ -788,11 +813,17 @@ package body DAP.Modules.Breakpoint_Managers is
                   Actual.Append (Data);
                end loop;
 
-               Self.Manager.Holder.Status_Changed (Self.File, Actual, Changed);
+               Self.Manager.Holder.Status_Changed
+                 (Self.File, Actual, Changed, Id);
 
                if not Changed.Is_Empty then
                   New_Request := Self.Manager.Send_Line
                     (Self.File, Changed.Element (Self.File), Synch);
+
+               elsif Id > 0 then
+                  GPS.Kernel.Hooks.Debugger_Breakpoint_Changed_Hook.Run
+                    (Self.Kernel, Self.Manager.Client.Get_Visual, Id);
+
                else
                   Update := True;
                end if;
@@ -975,7 +1006,8 @@ package body DAP.Modules.Breakpoint_Managers is
          return Data;
       end Convert;
 
-      Data : constant Breakpoint_Data := Convert;
+      Data       : constant Breakpoint_Data := Convert;
+      Bp_Changed : Boolean;
    begin
       case Event.reason is
          when changed =>
@@ -991,10 +1023,18 @@ package body DAP.Modules.Breakpoint_Managers is
          when removed =>
             if Event.breakpoint.id.Is_Set then
                Self.Holder.Deleted
-                 (Breakpoint_Identifier (Event.breakpoint.id.Value));
-               GPS.Kernel.Hooks.Debugger_Breakpoint_Deleted_Hook.Run
-                 (Self.Kernel, Self.Client.Get_Visual,
-                  Event.breakpoint.id.Value);
+                 (Breakpoint_Identifier (Event.breakpoint.id.Value),
+                  Bp_Changed);
+
+               if Bp_Changed then
+                  GPS.Kernel.Hooks.Debugger_Breakpoint_Changed_Hook.Run
+                    (Self.Kernel, Self.Client.Get_Visual,
+                     Event.breakpoint.id.Value);
+               else
+                  GPS.Kernel.Hooks.Debugger_Breakpoint_Deleted_Hook.Run
+                    (Self.Kernel, Self.Client.Get_Visual,
+                     Event.breakpoint.id.Value);
+               end if;
             end if;
       end case;
 

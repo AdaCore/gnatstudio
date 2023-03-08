@@ -567,6 +567,8 @@ package body DAP.Views.Call_Stack is
       Model : Gtk.Tree_Model.Gtk_Tree_Model;
       Iter  : Gtk_Tree_Iter;
       Path  : Gtk_Tree_Path;
+
+      Backtrace : Backtrace_Vectors.Vector;
    begin
       if View = null then
          return;
@@ -594,8 +596,25 @@ package body DAP.Views.Call_Stack is
             Frame : constant StackFrame_Variable_Reference :=
               Get_StackFrame_Variable_Reference
                 (Result.a_body.stackFrames, Index);
+            Bt : Backtrace_Record;
          begin
             View.Model.Append (Iter, Null_Iter);
+
+            Bt.Frame_Id := Frame.id;
+            Bt.Name := To_Unbounded_String
+              (VSS.Strings.Conversions.To_UTF_8_String (Frame.name));
+            if Frame.instructionPointerReference.Is_Empty then
+               Bt.Address := String_To_Address
+                 (VSS.Strings.Conversions.To_UTF_8_String
+                    (Frame.instructionPointerReference));
+            end if;
+            if Frame.source.Is_Set then
+               Bt.File := Create
+                 (+(VSS.Strings.Conversions.To_UTF_8_String
+                  (Frame.source.Value.path)));
+               Bt.Line := Frame.line;
+            end if;
+            Backtrace.Append (Bt);
 
             Set_All_And_Clear
               (View.Model, Iter,
@@ -630,6 +649,8 @@ package body DAP.Views.Call_Stack is
             View.Last := Frame.id;
          end;
       end loop;
+
+      Self.Client.Set_Backtrace (Backtrace);
 
       if View.Last < Self.To then
          View.Last := Integer'Last;

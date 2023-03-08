@@ -1014,8 +1014,6 @@ package body DAP.Module is
          return;
       end if;
 
-      Trace (Me, "Set_Current_Debugger");
-
       if DAP.Modules.Preferences.Continue_To_Line_Buttons.Get_Pref then
 
          --  If we are creating a debugger, enable the 'Continue to line' icons
