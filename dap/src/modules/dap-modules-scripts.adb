@@ -15,6 +15,8 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
+with Ada.Strings.Unbounded;    use Ada.Strings.Unbounded;
+
 with GNATCOLL.Scripts;         use GNATCOLL.Scripts;
 with GNATCOLL.Scripts.Gtkada;  use GNATCOLL.Scripts.Gtkada;
 with GNATCOLL.VFS;             use GNATCOLL.VFS;
@@ -22,13 +24,17 @@ with GNATCOLL.VFS;             use GNATCOLL.VFS;
 with Glib;
 with Glib.Object;
 
+with Basic_Types;
+
 with GPS.Editors;              use GPS.Editors;
 with GPS.Kernel.Project;
 with GPS.Kernel.Scripts;       use GPS.Kernel.Scripts;
 
-with DAP.Modules.Breakpoints;
+with DAP.Types;                use DAP.Types;
 with DAP.Clients;              use DAP.Clients;
 with DAP.Module;
+with DAP.Modules.Breakpoints;
+with DAP.Modules.Persistent_Breakpoints;
 
 package body DAP.Modules.Scripts is
 
@@ -237,7 +243,9 @@ package body DAP.Modules.Scripts is
          Inst   := Nth_Arg (Data, 1, New_Class (Kernel, "Debugger"));
          Visual := DAP_Visual_Debugger_Access
            (Glib.Object.GObject'(Get_Data (Inst)));
-         DAP.Module.Start_Program (Kernel, Visual.Client);
+         if Visual.Client.Is_Ready then
+            DAP.Module.Start_Program (Kernel, Visual.Client);
+         end if;
 
       elsif Command = "close" then
          Inst   := Nth_Arg (Data, 1, New_Class (Kernel, "Debugger"));
@@ -258,6 +266,103 @@ package body DAP.Modules.Scripts is
          Visual := DAP_Visual_Debugger_Access
            (Glib.Object.GObject'(Get_Data (Inst)));
          Data.Set_Return_Value (Visual.Current_Line);
+
+      elsif Command = "break_at_location" then
+         Inst := Nth_Arg (Data, 1, New_Class (Kernel, "Debugger"));
+         DAP.Modules.Persistent_Breakpoints.Break_Source
+           (Kernel => Kernel,
+            File   => Nth_Arg (Data, 2),
+            Line   => Basic_Types.Editable_Line_Type
+              (Integer'(Data.Nth_Arg (3))));
+
+      elsif Command = "unbreak_at_location" then
+         Inst := Nth_Arg (Data, 1, New_Class (Kernel, "Debugger"));
+         DAP.Modules.Persistent_Breakpoints.Unbreak_Source
+           (Kernel,
+            File  => Nth_Arg (Data, 2),
+            Line  => Basic_Types.Editable_Line_Type
+              (Integer'(Data.Nth_Arg (3))));
+
+      elsif Command = "get_executable" then
+         Inst := Nth_Arg (Data, 1, New_Class (Kernel, "Debugger"));
+         Visual := DAP_Visual_Debugger_Access
+           (Glib.Object.GObject'(Get_Data (Inst)));
+         Data.Set_Return_Value
+           (Create_File (Data.Get_Script, Visual.Client.Get_Executable));
+
+      elsif Command = "frames" then
+         declare
+            Bt : DAP.Types.Backtrace_Vectors.Vector;
+         begin
+            Inst := Nth_Arg (Data, 1, New_Class (Kernel, "Debugger"));
+            Visual := DAP_Visual_Debugger_Access
+              (Glib.Object.GObject'(Get_Data (Inst)));
+            Visual.Client.Backtrace (Bt);
+
+            Data.Set_Return_Value_As_List;
+            for Frame of Bt loop
+               declare
+                  List   : List_Instance'Class := New_List (Get_Script (Data));
+                  Params : constant List_Instance'Class :=
+                    New_List (Get_Script (Data));
+                  Empty  : constant String := "<>";
+               begin
+                  Set_Nth_Arg (List, 1, Frame.Frame_Id);
+
+                  if Frame.Address /= Invalid_Address then
+                     Set_Nth_Arg
+                       (List, 2, +(Address_To_String (Frame.Address)));
+                  else
+                     Set_Nth_Arg (List, 2, Empty);
+                  end if;
+
+                  if Frame.Name /= Null_Unbounded_String then
+                     Set_Nth_Arg (List, 3, To_String (Frame.Name));
+                  else
+                     Set_Nth_Arg (List, 3, Empty);
+                  end if;
+
+                  if Frame.File /= No_File then
+                     Set_Nth_Arg (List, 4,
+                       (Create_File_Location
+                          (Script => Get_Script (Data),
+                           File   => Frame.File,
+                           Line   => Frame.Line,
+                           Column => 0)));
+                  else
+                     Set_Nth_Arg (List, 4, Empty);
+                  end if;
+
+                  Set_Nth_Arg (List, 5, Params);
+
+                  Data.Set_Return_Value (List);
+               end;
+            end loop;
+         end;
+
+      elsif Command = "current_frame" then
+         Inst := Nth_Arg (Data, 1, New_Class (Kernel, "Debugger"));
+         Visual := DAP_Visual_Debugger_Access
+           (Glib.Object.GObject'(Get_Data (Inst)));
+         Data.Set_Return_Value (Visual.Client.Get_Selected_Frame);
+
+      elsif Command = "frame_up" then
+         Inst := Nth_Arg (Data, 1, New_Class (Kernel, "Debugger"));
+         Visual := DAP_Visual_Debugger_Access
+           (Glib.Object.GObject'(Get_Data (Inst)));
+         Visual.Client.Stack_Up;
+
+      elsif Command = "frame_down" then
+         Inst := Nth_Arg (Data, 1, New_Class (Kernel, "Debugger"));
+         Visual := DAP_Visual_Debugger_Access
+           (Glib.Object.GObject'(Get_Data (Inst)));
+         Visual.Client.Stack_Down;
+
+      elsif Command = "select_frame" then
+         Inst := Nth_Arg (Data, 1, New_Class (Kernel, "Debugger"));
+         Visual := DAP_Visual_Debugger_Access
+           (Glib.Object.GObject'(Get_Data (Inst)));
+         Visual.Client.Stack_Frame (Nth_Arg (Data, 2, 0));
 
       end if;
    end Shell_Handler;
@@ -319,6 +424,43 @@ package body DAP.Modules.Scripts is
         ("current_line",
          Class        => Class,
          Getter       => Shell_Handler'Access);
+      Kernel.Scripts.Register_Command
+        ("break_at_location",
+         Params       => (1 => Param ("file"),
+                          2 => Param ("line")),
+         Handler      => Shell_Handler'Access,
+         Class        => Class);
+      Kernel.Scripts.Register_Command
+        ("unbreak_at_location",
+         Params       => (1 => Param ("file"),
+                          2 => Param ("line")),
+         Handler      => Shell_Handler'Access,
+         Class        => Class);
+      Kernel.Scripts.Register_Command
+        ("get_executable",
+         Handler      => Shell_Handler'Access,
+         Class        => Class);
+      Kernel.Scripts.Register_Command
+        ("frames",
+         Handler      => Shell_Handler'Access,
+         Class        => Class);
+      Kernel.Scripts.Register_Command
+        ("current_frame",
+         Handler      => Shell_Handler'Access,
+         Class        => Class);
+      Kernel.Scripts.Register_Command
+        ("frame_up",
+         Handler      => Shell_Handler'Access,
+         Class        => Class);
+      Kernel.Scripts.Register_Command
+        ("frame_down",
+         Handler      => Shell_Handler'Access,
+         Class        => Class);
+      Kernel.Scripts.Register_Command
+        ("select_frame",
+         Params       => (1 => Param ("num")),
+         Handler      => Shell_Handler'Access,
+         Class        => Class);
 
       --  Breakpoint --
 

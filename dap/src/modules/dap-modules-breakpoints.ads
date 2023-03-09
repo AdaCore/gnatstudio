@@ -139,8 +139,9 @@ package DAP.Modules.Breakpoints is
    --  List of breakpoints have been deleted
 
    procedure Deleted
-     (Self : in out Breakpoint_Holder;
-      Num  : Breakpoint_Identifier);
+     (Self    : in out Breakpoint_Holder;
+      Num     : Breakpoint_Identifier;
+      Changed : out Boolean);
    --  Breakpoint with Num has been deleted
 
    procedure Clear (Self : in out Breakpoint_Holder);
@@ -231,7 +232,8 @@ package DAP.Modules.Breakpoints is
      (Self    : in out Breakpoint_Holder;
       File    : Virtual_File;
       Actual  : Breakpoint_Vectors.Vector;
-      Changed : out Breakpoint_Hash_Maps.Map);
+      Changed : out Breakpoint_Hash_Maps.Map;
+      Id      : out Integer);
    --  Feedback after breakpoints stats are changed to synchronize data
 
    procedure Initialized_For_Subprograms

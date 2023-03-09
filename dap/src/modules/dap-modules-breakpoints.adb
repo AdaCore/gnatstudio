@@ -300,10 +300,12 @@ package body DAP.Modules.Breakpoints is
 
    procedure Deleted
      (Self : in out Breakpoint_Holder;
-      Nums : Breakpoint_Identifier_Lists.List) is
+      Nums : Breakpoint_Identifier_Lists.List)
+   is
+      Dummy : Boolean;
    begin
       for Num of Nums loop
-         Self.Deleted (Num);
+         Self.Deleted (Num, Dummy);
       end loop;
    end Deleted;
 
@@ -312,12 +314,14 @@ package body DAP.Modules.Breakpoints is
    -------------
 
    procedure Deleted
-     (Self : in out Breakpoint_Holder;
-      Num  : Breakpoint_Identifier)
+     (Self    : in out Breakpoint_Holder;
+      Num     : Breakpoint_Identifier;
+      Changed : out Boolean)
    is
       Index : Integer := Self.Vector.First_Index;
       Data  : Breakpoint_Data;
    begin
+      Changed := False;
       while Index <= Self.Vector.Last_Index loop
          Data := Self.Vector.Element (Index);
 
@@ -325,6 +329,7 @@ package body DAP.Modules.Breakpoints is
             if Data.State = Changing then
                Data.State := Disabled;
                Self.Vector.Replace_Element (Index, Data);
+               Changed := True;
             else
                Self.Vector.Delete (Index);
             end if;
@@ -695,7 +700,7 @@ package body DAP.Modules.Breakpoints is
       Changed : out Breakpoint_Hash_Maps.Map;
       Updated : out Boolean)
    is
-      Idx    : Integer := Self.Vector.First_Index;
+      Idx    : Integer;
       Data   : Breakpoint_Data;
       Cursor : Breakpoint_Hash_Maps.Cursor;
       F      : Virtual_File;
@@ -703,7 +708,9 @@ package body DAP.Modules.Breakpoints is
    begin
       Updated := False;
       for Num of Nums loop
-         while Idx <= Self.Vector.Last_Index loop
+         Inner : for Idx in Self.Vector.First_Index ..
+           Self.Vector.Last_Index
+         loop
             Data := Self.Vector.Element (Idx);
             if Data = Num then
                if Data.State = Enabled then
@@ -714,11 +721,10 @@ package body DAP.Modules.Breakpoints is
                   --  not in the debugger, just delete
                   Updated := True;
                   Self.Vector.Delete (Idx);
-                  Idx := Idx - 1;
                end if;
+               exit Inner;
             end if;
-            Idx := Idx + 1;
-         end loop;
+         end loop Inner;
       end loop;
 
       Cursor := Changed.First;
@@ -912,13 +918,15 @@ package body DAP.Modules.Breakpoints is
      (Self    : in out Breakpoint_Holder;
       File    : Virtual_File;
       Actual  : Breakpoint_Vectors.Vector;
-      Changed : out Breakpoint_Hash_Maps.Map)
+      Changed : out Breakpoint_Hash_Maps.Map;
+      Id      : out Integer)
    is
       Index   : Integer := Self.Vector.First_Index;
       Idx     : Integer := Actual.First_Index;
       Data, D : Breakpoint_Data;
       Nums    : Breakpoint_Identifier_Lists.List;
    begin
+      Id := 0;
       while Index <= Self.Vector.Last_Index loop
          Data := Self.Vector.Element (Index);
 
@@ -947,6 +955,11 @@ package body DAP.Modules.Breakpoints is
 
                   Nums.Append (D.Num);
                   Self.Vector.Replace_Element (Index, D);
+                  if Id = 0 then
+                     Id := Integer (D.Num);
+                  else
+                     Id := -1;
+                  end if;
                   Idx := Idx + 1;
 
                when Disabled | Moved =>
