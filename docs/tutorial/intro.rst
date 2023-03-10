@@ -11,10 +11,10 @@ with are available on multiple platforms, using the same user interface and
 capabilities, providing a user-friendly environment with a tight integration
 between the tools.
 
-Start GNAT Studio in the directory containing the tutorial files, or if the
-directory is read-only, copy the :file:`tutorial` directory and its
-subdirectories in a local (writable) area, and start GNAT Studio from the
-:file:`tutorial` directory, so that GNAT Studio will load the right context.
+Start GNAT Studio in the `<prefix>/share/examples/gnatstudio/tutorial`directory,
+or if the directory is read-only, copy this directory and its subdirectories
+in a local (writable) area, and start GNAT Studio from the :file:`tutorial`
+directory, so that GNAT Studio will load the right context.
 
 By default, the tutorial sources can be found under
 `<prefix>/share/examples/gnatstudio/tutorial`, where `<prefix>` is the prefix
