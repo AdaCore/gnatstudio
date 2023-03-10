@@ -89,6 +89,8 @@ package DAP.Clients is
 
    function Is_Stopped (Self : DAP_Client) return Boolean;
    --  Debugging program is stopped and new command can be accepted
+   function Is_Ready (Self : DAP_Client) return Boolean;
+   --  Debugging program is ready for start
    function Is_Ready_For_Command (Self : DAP_Client) return Boolean;
    --  Debugger can accept new command. Debugging can be not started yet.
 
@@ -283,6 +285,21 @@ package DAP.Clients is
 
    function Get_Endian_Type (Self : in out DAP_Client) return Endian_Type;
 
+   procedure Backtrace
+     (Self : in out DAP_Client;
+      Bt   : out Backtrace_Vectors.Vector);
+   --  Returns backtrace
+
+   procedure Stack_Up (Self : in out DAP_Client);
+   procedure Stack_Down (Self : in out DAP_Client);
+   procedure Stack_Frame (Self : in out DAP_Client; Id : Integer);
+   --  Select frame
+
+   procedure Set_Backtrace
+     (Self : in out DAP_Client;
+      Bt   : Backtrace_Vectors.Vector);
+   --  Update backtrace information
+
    -- DAP_Visual_Debugger --
 
    overriding function Get_Num
@@ -343,6 +360,7 @@ private
       Selected_Line       : Integer;
       Selected_Address    : Address_Type := Invalid_Address;
       Selected_Frame      : Integer;
+      Frames              : Backtrace_Vectors.Vector;
 
       --  to monitoring stoped threads
       Stopped_Threads     : Integer_Sets.Set;
