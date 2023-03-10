@@ -101,6 +101,12 @@ package GPS.Kernel.Preferences is
      Default_Preferences.Enums.Generics (Editor_Desktop_Policy);
    --  The list of possible behaviours when saving editors in the desktop
 
+   type LSP_Diagnostics_Display_Policy is
+     (Editor_Only, Editor_And_Locations);
+   package LSP_Diagnostics_Display_Policy_Prefs is new
+     Default_Preferences.Enums.Generics (LSP_Diagnostics_Display_Policy);
+   --  The list of possible display types for LSP diagnostics
+
    package Multi_Language_Builder_Policy_Prefs is new
      Default_Preferences.Enums.Generics (Multi_Language_Builder_Policy);
    --  The List of possible multi-language builders
@@ -354,10 +360,11 @@ package GPS.Kernel.Preferences is
    Use_LAL_In_Highlight : Boolean_Preference;
 
    --  LSP
-   LSP_Use_Snippets     : Boolean_Preference;
-   LSP_Use_Signatures   : Boolean_Preference;
-   LSP_Ada_Diagnostics  : Boolean_Preference;
-   LSP_Limit_Formatting : Boolean_Preference;
+   LSP_Use_Snippets        : Boolean_Preference;
+   LSP_Use_Signatures      : Boolean_Preference;
+   LSP_Ada_Diagnostics     : Boolean_Preference;
+   LSP_Diagnostics_Display : LSP_Diagnostics_Display_Policy_Prefs.Preference;
+   LSP_Limit_Formatting    : Boolean_Preference;
 
    package Indentation_Kind_Preferences is new
      Default_Preferences.Enums.Generics (Language.Indentation_Kind);

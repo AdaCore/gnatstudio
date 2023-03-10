@@ -919,6 +919,11 @@ package body GPS.LSP_Clients is
                          definition     => (Is_Set => True, others => <>),
                          typeDefinition => (Is_Set => True, others => <>),
                          implementation => (Is_Set => True, others => <>),
+                         publishDiagnostics =>
+                           (Is_Set => True,
+                            Value  =>
+                              (relatedInformation => (True, True),
+                               others             => <>)),
                          completion     =>
                            (dynamicRegistration =>
                               (Is_Set => True, Value => True),

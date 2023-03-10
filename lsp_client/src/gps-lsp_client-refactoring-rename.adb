@@ -36,7 +36,6 @@ with GPS.Dialogs;                   use GPS.Dialogs;
 with GPS.Editors;                   use GPS.Editors;
 with GPS.Kernel.Actions;            use GPS.Kernel.Actions;
 with GPS.Kernel.Contexts;           use GPS.Kernel.Contexts;
-with GPS.Kernel.Messages.Tools_Output;
 with GPS.Kernel.Modules.UI;         use GPS.Kernel.Modules.UI;
 with GPS.Main_Window;               use GPS.Main_Window;
 
@@ -391,31 +390,10 @@ package body GPS.LSP_Client.Refactoring.Rename is
      (Self    : in out Rename_Request;
       Code    : LSP.Messages.ErrorCodes;
       Message : String;
-      Data    : GNATCOLL.JSON.JSON_Value) is
+      Data    : GNATCOLL.JSON.JSON_Value)
+   is
+      pragma Unreferenced (Self);
    begin
-      --  Message is separated in 2 part:
-      --  - First: an error description
-      --  - Second: the location via Libadalang.Analysis.Ada_Node'Image
-      --  For example: Blabla with <Id "Foo_Bar" hello.adb:2:14-2:26>
-      --  Use an appropriate regexp:
-      --  (Blabla) with <Id "Foo_Bar" (hello.adb):(2):(14)-2:26>
-      --      1                             2      3    4
-      --  ([^<]+) with <[^""]+""[^""]+"" ([^ :]*):(\d+):(\d+)
-      GPS.Kernel.Messages.Tools_Output.Parse_File_Locations
-        (Kernel                  => Self.Kernel,
-         Text                    => Message,
-         Category                => "Renaming",
-         Highlight               => True,
-         File_Location_Regexp    =>
-           "([^<]+) with <[^""]+""[^""]+"" ([^ :]*):(\d+):(\d+)",
-         File_Index_In_Regexp    => 2,
-         Line_Index_In_Regexp    => 3,
-         Col_Index_In_Regexp     => 4,
-         Msg_Index_In_Regexp     => 1,
-         Style_Index_In_Regexp   => -1,
-         Warning_Index_In_Regexp => -1,
-         Info_Index_In_Regexp    => -1,
-         Show_In_Locations       => True);
       Trace (Me, "Error when renaming: " & Message);
    end On_Error_Message;
 

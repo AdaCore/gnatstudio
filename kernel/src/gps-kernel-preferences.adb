@@ -1674,10 +1674,19 @@ package body GPS.Kernel.Preferences is
       LSP_Ada_Diagnostics := Kernel.Get_Preferences.Create
         (Name    => "LSP-Ada-Diagnostics",
          Default => True,
-         Label   => "Display diagnostics",
-         Doc     => "Display live diagnostics when editing Ada code "
+         Label   => "Enable diagnostics",
+         Doc     => "Enable live diagnostics when editing Ada code "
          & "(e.g: syntax errors).",
          Path    => "Editor/Ada:Diagnostics");
+
+      LSP_Diagnostics_Display := LSP_Diagnostics_Display_Policy_Prefs.Create
+        (Manager  => Kernel.Get_Preferences,
+         Name     => "LSP-Diagnostics-Display",
+         Path     => "LSP:Display diagnostics",
+         Label    => "Display diagnostics",
+         Doc      => "Choose the display policy for diagnostics coming from"
+         & " LSP servers.",
+         Default  => Editor_And_Locations);
 
       Page := Manager.Get_Registered_Page
         (Name             => "Preferences Assistant General",

@@ -73,6 +73,7 @@ with GPS.Kernel.Messages.Simple;        use GPS.Kernel.Messages.Simple;
 with GPS.Kernel.Messages.References;    use GPS.Kernel.Messages.References;
 with GPS.Kernel.Modules;                use GPS.Kernel.Modules;
 with GPS.Kernel.Task_Manager;           use GPS.Kernel.Task_Manager;
+with GPS.Kernel.Preferences;            use GPS.Kernel.Preferences;
 with GPS.Kernel.Project;
 
 with GPS.LSP_Client.Call_Tree;
@@ -260,6 +261,15 @@ package body GPS.LSP_Module is
       File : GNATCOLL.VFS.Virtual_File);
    --  Remove the diagnostics corresponding to File from the interface
 
+   function Get_Diagnostics_Message_Flags return Message_Flags
+   is
+     (case LSP_Diagnostics_Display_Policy'(LSP_Diagnostics_Display.Get_Pref)
+      is
+         when Editor_And_Locations => Side_And_Locations,
+         when Editor_Only          => Sides_Only);
+   --  Return the message flags for diagnostics, depending on the corresponding
+   --  preference.
+
    overriding procedure On_Server_Started
      (Self   : in out Module_Id_Record;
       Server : not null Language_Server_Access);
@@ -400,10 +410,7 @@ package body GPS.LSP_Module is
       File   : Virtual_File) return Language_Server_Access;
    --  Return the running server supporting File if it exists, or null
 
-   Diagnostics_Messages_Category : constant String := "Diagnostics";
-   Diagnostics_Messages_Flags    : constant
-     GPS.Kernel.Messages.Message_Flags :=
-       GPS.Kernel.Messages.Sides_Only;
+   Diagnostics_Messages_Category_Prefix : constant String := "Diagnostics";
 
    -----------------------
    -- Share_Same_Server --
@@ -1073,10 +1080,18 @@ package body GPS.LSP_Module is
       File : GNATCOLL.VFS.Virtual_File)
    is
       Container : constant not null GPS.Kernel.Messages_Container_Access :=
-                    Self.Get_Kernel.Get_Messages_Container;
+        Self.Get_Kernel.Get_Messages_Container;
    begin
-      Container.Remove_File
-        (Diagnostics_Messages_Category, File, Diagnostics_Messages_Flags);
+      for Category of Container.Get_Categories loop
+         if GNATCOLL.Utils.Starts_With
+           (To_String (Category), Diagnostics_Messages_Category_Prefix)
+         then
+            Container.Remove_File
+              (Category => To_String (Category),
+               File     => File,
+               Flags    => Get_Diagnostics_Message_Flags);
+         end if;
+      end loop;
    end Remove_Diagnostics;
 
    ---------------------------
@@ -1263,6 +1278,18 @@ package body GPS.LSP_Module is
       --  Convert LSP's DiagnosticSeverity type to GNAT Studio's
       --  Message_Importance_Type.
 
+      function Get_Editor_Side_Icon
+        (Importance : Message_Importance_Type) return String
+      is
+        (case Importance is
+            when High          => "gps-emblem-build-error",
+            when Medium        => "gps-emblem-build-warning",
+            when Low           => "gps-emblem-build-style",
+            when Informational => "gps-emblem-build-info-symbolic",
+            when others        => "");
+      --  Return the editor side icon displayed for diagnostics, according
+      --  to their importance.
+
       -------------------
       -- To_Importance --
       -------------------
@@ -1299,8 +1326,7 @@ package body GPS.LSP_Module is
         Self.Get_Kernel.Get_Buffer_Factory.Get_Holder (File => File);
 
    begin
-      Container.Remove_File
-        (Diagnostics_Messages_Category, File, Diagnostics_Messages_Flags);
+      Module.Remove_Diagnostics (File);
 
       for Diagnostic of Params.diagnostics loop
          declare
@@ -1309,19 +1335,28 @@ package body GPS.LSP_Module is
             Location : constant GPS.Editors.Editor_Location'Class :=
               GPS.LSP_Client.Utilities.LSP_Position_To_Location
                 (Holder.Editor, Diagnostic.span.first);
-
+            Importance : constant Message_Importance_Type :=
+              To_Importance (Diagnostic.severity);
+            Flags      : constant Message_Flags :=
+              Get_Diagnostics_Message_Flags;
+            Category   : constant String := (if Diagnostic.source.Is_Set then
+               Diagnostics_Messages_Category_Prefix
+                 & ": " & VSS.Strings.Conversions.To_UTF_8_String
+                 (Diagnostic.source.Value)
+            else
+               Diagnostics_Messages_Category_Prefix);
             M : constant Simple_Message_Access :=
               GPS.Kernel.Messages.Simple.Create_Simple_Message
                 (Container    => Container,
-                 Category     => Diagnostics_Messages_Category,
+                 Category     => Category,
                  File         => File,
                  Line         => Location.Line,
                  Column       => Location.Column,
                  Text         =>
                    VSS.Strings.Conversions.To_UTF_8_String
                      (Diagnostic.message),
-                 Importance   => To_Importance (Diagnostic.severity),
-                 Flags        => Diagnostics_Messages_Flags,
+                 Importance   => Importance,
+                 Flags        => Flags,
                  Allow_Auto_Jump_To_First => False);
 
             Action : constant GPS.Editors.Line_Information.
@@ -1334,7 +1369,7 @@ package body GPS.LSP_Module is
                           (VSS.Strings.Conversions.To_UTF_8_String
                                (Diagnostic.message))),
                    Image                    =>
-                     To_Unbounded_String ("gps-emblem-build-warning"),
+                     To_Unbounded_String (Get_Editor_Side_Icon (Importance)),
                    Message                  => Create (Message_Access (M)),
                    Associated_Command       => null));
 
@@ -1349,6 +1384,34 @@ package body GPS.LSP_Module is
                      (1, Highlight_Length (Diagnostic.span.last.character -
                           Diagnostic.span.first.character))
                    else Highlight_Whole_Line));
+
+            --  For each related information, create a secondary message
+            for Info of Diagnostic.relatedInformation loop
+               declare
+                  use GPS.Editors;
+
+                  File      : constant GNATCOLL.VFS.Virtual_File :=
+                    GPS.LSP_Client.Utilities.To_Virtual_File
+                      (Info.location.uri);
+                  Holder    : constant Controlled_Editor_Buffer_Holder
+                    := Self.Get_Kernel.Get_Buffer_Factory.Get_Holder
+                      (File => File);
+                  Start_Loc : constant GPS.Editors.Editor_Location'Class :=
+                    GPS.LSP_Client.Utilities.LSP_Position_To_Location
+                      (Holder.Editor, Info.location.span.first);
+                  Text      : constant String :=
+                    VSS.Strings.Conversions.To_UTF_8_String
+                      (Info.message);
+               begin
+                  GPS.Kernel.Messages.Simple.Create_Simple_Message
+                    (Parent => GPS.Kernel.Messages.Message_Access (M),
+                     File   => File,
+                     Line   => Start_Loc.Line,
+                     Column => Start_Loc.Column,
+                     Text   => Text,
+                     Flags  => Flags);
+               end;
+            end loop;
          end;
       end loop;
    end On_Publish_Diagnostics;
