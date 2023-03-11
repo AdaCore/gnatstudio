@@ -747,9 +747,6 @@ package body CodePeer.Bridge.Inspection_Readers.Base is
             Kind =>
               Ada.Strings.Unbounded.To_Unbounded_String
                 (Attrs.Get_Value ("id_kind")),
-            Tool =>
-              Ada.Strings.Unbounded.To_Unbounded_String
-                (Attrs.Get_Value ("id_tool")),
             Key =>
               Ada.Strings.Unbounded.To_Unbounded_String
                 (Attrs.Get_Value ("id_key")),

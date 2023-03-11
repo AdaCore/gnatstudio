@@ -126,8 +126,6 @@ package body CodePeer.Bridge.Commands is
             XML_Utils.Set_Attribute
               (Message_Node, "kind", To_String (Message.CPL_Id.Kind));
             XML_Utils.Set_Attribute
-              (Message_Node, "tool", To_String (Message.CPL_Id.Tool));
-            XML_Utils.Set_Attribute
               (Message_Node, "key_seq", To_String (Message.CPL_Id.Key_Seq));
 
             --  Add those as data of subnodes so that we correctly deal with
