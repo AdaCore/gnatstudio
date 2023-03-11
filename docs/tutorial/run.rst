@@ -4,10 +4,10 @@ Run
 
 It is now time to run the application: select the menu `Build->Run->sdc`,
 which will open a dialog window.  In the text input field (selected by default),
-press the right arrow key and then insert `../input.txt`: this is the name of a
+press the right arrow key and then insert `input.txt`: this is the name of a
 text file that will be passed as argument to the *sdc* program.
 
-The text input should now read: `%E ../input.txt` and the full command that will
+The text input should now read: `%E input.txt` and the full command that will
 be executed is displayed underneath: `.../gnatstudio/tutorial/obj/sdc input.txt`
 
 Now click on `Execute`: a new window titled `Run: sdc` is created at the bottom

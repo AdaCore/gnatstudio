@@ -52,7 +52,7 @@ def test_driver():
     b.insert (l, " ")
     yield timeout(1000)
 
-    gps_assert(GPS.Locations.list_locations("Diagnostics", f.path),
+    gps_assert(GPS.Locations.list_locations("Diagnostics: libadalang", f.path),
                [GPS.FileLocation(f, 1, 17), "Missing ';'",
                 GPS.FileLocation(f, 1, 17), "Skipped token _Called"],
                "Unexpected diagnostics")

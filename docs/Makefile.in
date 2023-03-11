@@ -22,7 +22,7 @@ gnatdoc:
 
 .PHONY: tutorial
 tutorial:
-	make -C tutorial html
+	make -C tutorial html latexpdf
 
 install:
 	$(MKDIR) $(docdir)

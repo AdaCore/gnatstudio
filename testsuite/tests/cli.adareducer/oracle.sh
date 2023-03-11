@@ -1,1 +1,1 @@
-gcc -c hello.adb
+gcc -S hello.adb
