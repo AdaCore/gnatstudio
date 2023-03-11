@@ -589,10 +589,15 @@ creating/updating the database" />
             <combo-entry label="4" value="4" />
          </combo>
 
-         <check label="Baseline run" switch="--set-baseline" column="2"
+         <check label="Bump baseline" switch="--bump-baseline" column="2"
           tip="make the last run of the selected level the new baseline run."/>
 
-         %python(cpms_combo_box("Set baseline", "--set-baseline", "No tip for you"))
+         <field label="Set baseline"
+                tip="Select a cpm file as the new baseline."
+                switch="--set-baseline"
+                separator=" "
+                as-file="true"
+                file-filter="*.cpm"/>
 
          <field label="Display cpm"
                 tip="Select a cpm file to display instead."
@@ -653,8 +658,6 @@ analysis. See CodePeer documentation for more details." >
             <combo-entry label="Max" value="max" />
          </combo>
 
-         <check label="Baseline run" switch="--set-baseline" column="2"
-                tip="Make the current run the new baseline"/>
          <check label="No race conditions analysis" switch="--no-race-conditions"
                 column="2" tip="Do not perform race conditions analysis" />
          <spin label="Multiprocessing" switch="-j" min="0" max="1000"
