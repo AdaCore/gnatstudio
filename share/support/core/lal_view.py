@@ -345,9 +345,10 @@ class LAL_View(Module):
     def buffer_edited(self, file):
         if self.widget:
             current_loc = GPS.current_context().location()
-            self.widget.refresh()
-            self.widget.show_current_location(
-                current_loc.line(), current_loc.column())
+            if current_loc:
+                self.widget.refresh()
+                self.widget.show_current_location(
+                    current_loc.line(), current_loc.column())
 
     def on_view_destroy(self):
         self.widget = None
