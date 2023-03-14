@@ -58,6 +58,8 @@ XML = r"""<?xml version="1.0" ?>
 
   <toolchain name="aarch64-rtems6"/>
 
+  <toolchain name="aarch64-thales-fastos"/>
+
   <toolchain name="arm-apple-darwin10"/>
 
   <toolchain name="arm-linux-gnueabi"/>
