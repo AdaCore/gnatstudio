@@ -333,7 +333,6 @@ package body DAP.Modules.Breakpoint_Managers is
       if Self.Requests_Count = 0
         and then Action = Init
       then
-         Self.Client.On_Ready;
          Self.Show_Breakpoints;
 
          GPS.Kernel.Hooks.Debugger_Breakpoints_Changed_Hook.Run
@@ -345,6 +344,8 @@ package body DAP.Modules.Breakpoint_Managers is
               (GPS.Debuggers.Debug_Available);
          end if;
          Self.Holder.Initialized;
+
+         Self.Client.On_Breakpoints_Set;
       end if;
    end Dec_Response;
 
@@ -823,6 +824,7 @@ package body DAP.Modules.Breakpoint_Managers is
                elsif Id > 0 then
                   GPS.Kernel.Hooks.Debugger_Breakpoint_Changed_Hook.Run
                     (Self.Kernel, Self.Manager.Client.Get_Visual, Id);
+                  Self.Manager.Show_Breakpoints;
 
                else
                   Update := True;
@@ -840,9 +842,9 @@ package body DAP.Modules.Breakpoint_Managers is
 
       --  Update visual representation
       if Update then
-         Self.Manager.Show_Breakpoints;
          GPS.Kernel.Hooks.Debugger_Breakpoints_Changed_Hook.Run
            (Self.Kernel, Self.Manager.Client.Get_Visual);
+         Self.Manager.Show_Breakpoints;
       end if;
 
       Self.Manager.Dec_Response (Self.Action);

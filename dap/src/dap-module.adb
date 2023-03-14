@@ -121,6 +121,10 @@ package body DAP.Module is
    --  Called when the debugger console is destroyed, which also terminates the
    --  debugger itself
 
+   procedure Start
+     (Kernel : Kernel_Handle;
+      Client : DAP.Clients.DAP_Client_Access);
+
    -- Hooks callbacks --
 
    type On_Project_View_Changed is new Simple_Hooks_Function with null record;
@@ -590,19 +594,31 @@ package body DAP.Module is
       Context : Interactive_Command_Context) return Command_Return_Type
    is
       use type DAP.Clients.DAP_Client_Access;
-      use type DAP.Types.Debugger_Status_Kind;
       pragma Unreferenced (Command);
       Kernel : constant Kernel_Handle := Get_Kernel (Context.Context);
       Client : constant DAP.Clients.DAP_Client_Access :=
         DAP.Module.Get_Current_Debugger;
+   begin
+      if Client = null then
+         return Commands.Failure;
+      else
+         Start (Kernel, Client);
+         return Commands.Success;
+      end if;
+   end Execute;
+
+   -----------
+   -- Start --
+   -----------
+
+   procedure Start
+     (Kernel : Kernel_Handle;
+      Client : DAP.Clients.DAP_Client_Access)
+   is
+      use type DAP.Types.Debugger_Status_Kind;
       Ignore  : Gtkada.Dialogs.Message_Dialog_Buttons;
       pragma Unreferenced (Ignore);
    begin
-
-      if Client = null then
-         return Commands.Failure;
-      end if;
-
       if Client.Get_Status /= DAP.Types.Ready then
          Ignore := GUI_Utils.GPS_Message_Dialog
            ("Cannot rerun while the underlying debugger is busy." &
@@ -611,14 +627,11 @@ package body DAP.Module is
             Dialog_Type => Gtkada.Dialogs.Warning,
             Buttons     => Gtkada.Dialogs.Button_OK,
             Parent      => Kernel.Get_Main_Window);
-         return Commands.Failure;
+      else
+         --  Launch the application
+         Start_Program (Kernel, Client);
       end if;
-
-      --  Launch the application
-
-      Start_Program (Kernel, Client);
-      return Commands.Success;
-   end Execute;
+   end Start;
 
    -------------
    -- Execute --
@@ -629,13 +642,33 @@ package body DAP.Module is
       Context : Interactive_Command_Context)
       return Command_Return_Type
    is
-      Req : DAP.Requests.Continue.Continue_DAP_Request_Access :=
-        new DAP.Requests.Continue.Continue_DAP_Request
-          (GPS.Kernel.Get_Kernel (Context.Context));
+      use type DAP.Clients.DAP_Client_Access;
+      use type DAP.Types.Debugger_Status_Kind;
+
+      Client : constant DAP.Clients.DAP_Client_Access :=
+        DAP.Module.Get_Current_Debugger;
+
    begin
-      Req.Parameters.arguments.threadId :=
-        Get_Current_Debugger.Get_Current_Thread;
-      Get_Current_Debugger.Enqueue (DAP.Requests.DAP_Request_Access (Req));
+      if Client = null then
+         return Commands.Failure;
+      end if;
+
+      if Client.Get_Status = DAP.Types.Ready then
+         Start (GPS.Kernel.Get_Kernel (Context.Context), Client);
+
+      elsif Client.Get_Status = DAP.Types.Stopped then
+         declare
+            Req : DAP.Requests.Continue.Continue_DAP_Request_Access :=
+              new DAP.Requests.Continue.Continue_DAP_Request
+                (GPS.Kernel.Get_Kernel (Context.Context));
+         begin
+            Req.Parameters.arguments.threadId :=
+              Get_Current_Debugger.Get_Current_Thread;
+            Get_Current_Debugger.Enqueue
+              (DAP.Requests.DAP_Request_Access (Req));
+         end;
+      end if;
+
       return Commands.Success;
    end Execute;
 

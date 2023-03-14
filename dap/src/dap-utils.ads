@@ -21,11 +21,9 @@ with GPS.Kernel;
 package DAP.Utils is
 
    procedure Highlight_Current_File_And_Line
-     (Kernel          : access GPS.Kernel.Kernel_Handle_Record'Class;
-      File            : GNATCOLL.VFS.Virtual_File;
-      Line            : Integer;
-      Additional_File : GNATCOLL.VFS.Virtual_File := GNATCOLL.VFS.No_File;
-      Additional_Line : Integer := 0);
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
+      File   : GNATCOLL.VFS.Virtual_File;
+      Line   : Integer);
    --  Mark current debugging line in editors
 
    procedure Unhighlight_Current_Line
