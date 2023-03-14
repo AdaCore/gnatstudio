@@ -1685,7 +1685,9 @@ package body GPS.Kernel.Preferences is
          Path     => "LSP:Display diagnostics",
          Label    => "Display diagnostics",
          Doc      => "Choose the display policy for diagnostics coming from"
-         & " LSP servers.",
+         & " LSP servers. Diagnostics with several locations accross multiple"
+         & " files will still appear in the Locations view for proper"
+         & " navigation.",
          Default  => Editor_And_Locations);
 
       Page := Manager.Get_Registered_Page
