@@ -37,6 +37,7 @@ install:
 
 	${MKDIR} $(docdir)/html/tutorial/
 	-${CP} -r tutorial/_build/html/* $(docdir)/html/tutorial/
+	-${CP} tutorial/_build/latex/Tutorial.pdf $(docdir)/pdf/tutorial.pdf
 
 	${MKDIR} $(sharedir)
 	-$(INSTALL_DATA) gnatstudio-splash.png $(sharedir)/
