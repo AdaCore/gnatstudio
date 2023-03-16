@@ -1338,7 +1338,10 @@ package body GPS.LSP_Module is
             Importance : constant Message_Importance_Type :=
               To_Importance (Diagnostic.severity);
             Flags      : constant Message_Flags :=
-              Get_Diagnostics_Message_Flags;
+              (if not Diagnostic.relatedInformation.Is_Empty then
+                  Side_And_Locations
+               else
+                 Get_Diagnostics_Message_Flags);
             Category   : constant String := (if Diagnostic.source.Is_Set then
                Diagnostics_Messages_Category_Prefix
                  & ": " & VSS.Strings.Conversions.To_UTF_8_String
