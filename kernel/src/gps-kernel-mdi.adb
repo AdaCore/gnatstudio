@@ -157,9 +157,10 @@ package body GPS.Kernel.MDI is
    --  Support for creating a new gtk class, and define a default size for
    --  MDI children.
 
-   type Unfloat_View_Command is new Interactive_Command with null record;
+   type Float_View_Command (Float : Boolean) is new Interactive_Command
+   with null record;
    overriding function Execute
-     (Command : access Unfloat_View_Command;
+     (Command : access Float_View_Command;
       Context : Interactive_Command_Context) return Command_Return_Type;
 
    type Reset_Perspectives is new Interactive_Command with null record;
@@ -2178,15 +2179,14 @@ package body GPS.Kernel.MDI is
    -------------
 
    overriding function Execute
-     (Command : access Unfloat_View_Command;
+     (Command : access Float_View_Command;
       Context : Interactive_Command_Context) return Command_Return_Type
    is
-      pragma Unreferenced (Command);
       Child : MDI_Child;
    begin
       Child := Get_MDI (Get_Kernel (Context.Context)).Get_Focus_Child;
       if Child /= null then
-         Child.Float_Child (Float => False);
+         Child.Float_Child (Float => Command.Float);
          Child.Raise_Child (Give_Focus => True);
       end if;
       return Commands.Success;
@@ -2234,8 +2234,14 @@ package body GPS.Kernel.MDI is
          Priority    => Default_Priority);
 
       Register_Action
+        (Kernel, "float view",
+         Command     => new Float_View_Command (Float => True),
+         Description => "Separate the current window from the main window",
+         Category    => -"MDI");
+
+      Register_Action
         (Kernel, "unfloat view",
-         Command     => new Unfloat_View_Command,
+         Command     => new Float_View_Command (Float => False),
          Description => "Put back the current window in the main window",
          Category    => -"MDI");
 
