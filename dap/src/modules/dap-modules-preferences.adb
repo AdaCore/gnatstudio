@@ -34,6 +34,14 @@ package body DAP.Modules.Preferences is
          (+Base_Dir.Create_From_Dir ("gdb -i=dap").Full_Name),
          Path    => "Debugger:General");
 
+      Open_Main_Unit := Create
+        (Manager    => Prefs,
+         Name       => "Debugger-Open-Main-Unit",
+         Label      => "Always open main unit",
+         Path       => "Debugger:General",
+         Doc        => "Open the main unit when initializing a debugger.",
+         Default    => True);
+
       Preserve_State_On_Exit := Create
         (Manager    => Prefs,
          Name       => "Debugger-Preserve_State-On-Exit",
