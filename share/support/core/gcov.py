@@ -53,7 +53,10 @@ class Gcov_Process (GPS.Console, GPS.Process):
         self.send(input)
 
     def on_destroy(self):
-        self.kill()
+        try:
+            self.kill()
+        except GPS.Exception:
+            pass
 
     def __init__(self, process, args="", directory=""):
         GPS.Console.__init__(self, "Executing gcov",
@@ -175,8 +178,6 @@ on which you have permission to read and write.
                     break
 
     res.close()
-
-    open(input_file).read()
 
     if not gcno_file_found:
         # No gcno file was found: display an appropriate message.
