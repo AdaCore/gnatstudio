@@ -36,21 +36,24 @@ package body DAP.Utils is
    -------------------------------------
 
    procedure Highlight_Current_File_And_Line
-     (Kernel          : access GPS.Kernel.Kernel_Handle_Record'Class;
-      File            : GNATCOLL.VFS.Virtual_File;
-      Line            : Integer;
-      Additional_File : GNATCOLL.VFS.Virtual_File := GNATCOLL.VFS.No_File;
-      Additional_Line : Integer := 0)
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
+      File   : GNATCOLL.VFS.Virtual_File;
+      Line   : Integer)
    is
       Msg    : Simple_Message_Access;
       Action : GPS.Editors.Line_Information.Line_Information_Access;
    begin
       Unhighlight_Current_Line (Kernel);
 
+      if File = No_File
+        or else Line = 0
+      then
+         return;
+      end if;
+
       Msg := Create_Simple_Message
         (GPS.Kernel.Get_Messages_Container (Kernel),
-         Category                 =>
-           Debugger_Messages_Category,
+         Category                 => Debugger_Messages_Category,
          File                     => File,
          Line                     => Line,
          Column                   => 1,
@@ -60,40 +63,16 @@ package body DAP.Utils is
          Allow_Auto_Jump_To_First => False);
 
       Msg.Set_Highlighting
-        (GPS.Default_Styles.Debugger_Current_Line_Style,
-         Highlight_Whole_Line);
+        (GPS.Default_Styles.Debugger_Current_Line_Style, Highlight_Whole_Line);
 
       Action := new Line_Information_Record'
         (Text         => Null_Unbounded_String,
-         Tooltip_Text =>
-           To_Unbounded_String ("Current line in debugger"),
+         Tooltip_Text => To_Unbounded_String ("Current line in debugger"),
          Image        => Current_Line_Pixbuf,
          others       => <>);
       Msg.Set_Action (Action);
 
-      if Additional_File = No_File
-        or else (Additional_File = File and then Line = Additional_Line)
-      then
-         DAP.Utils.Goto_Location (Kernel, File, Line);
-      else
-         Msg := Create_Simple_Message
-           (GPS.Kernel.Get_Messages_Container (Kernel),
-            Category                 =>
-              Debugger_Messages_Category,
-            File                     => Additional_File,
-            Line                     => Additional_Line,
-            Column                   => 1,
-            Text                     => "",
-            Importance               => Unspecified,
-            Flags                    => GPS.Kernel.Messages.Sides_Only,
-            Allow_Auto_Jump_To_First => False);
-
-         Msg.Set_Highlighting
-           (GPS.Default_Styles.Debugger_Current_Line_Style,
-            Highlight_Whole_Line);
-
-         DAP.Utils.Goto_Location (Kernel, Additional_File, Additional_Line);
-      end if;
+      DAP.Utils.Goto_Location (Kernel, File, Line);
    end Highlight_Current_File_And_Line;
 
    -------------------

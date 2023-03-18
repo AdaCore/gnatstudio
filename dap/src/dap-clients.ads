@@ -110,6 +110,7 @@ package DAP.Clients is
    --  Debugger starts executing debugree program
    procedure On_Continue (Self : in out DAP_Client);
    procedure On_Terminated (Self : in out DAP_Client);
+   procedure On_Breakpoints_Set (Self : in out DAP_Client);
 
    function Get_Status (Self : in out DAP_Client) return Debugger_Status_Kind;
 
@@ -367,6 +368,9 @@ private
       All_Threads_Stopped : Boolean := False;
       Selected_Thread     : Integer := 0;
 
+      --  internal data
+      Stored_Lang         : VSS.Strings.Virtual_String;
+
       --  Modules --
       Breakpoints      : DAP.Modules.Breakpoint_Managers.
         DAP_Client_Breakpoint_Manager_Access;
@@ -430,5 +434,12 @@ private
    procedure Get_StackTrace
      (Self      : in out DAP_Client;
       Thread_Id : Integer);
+
+   procedure Found_File_Name
+     (Self : DAP_Client;
+      Str  : VSS.Strings.Virtual_String;
+      Name : out VSS.Strings.Virtual_String;
+      Line : out Natural;
+      Addr : out DAP.Types.Address_Type);
 
 end DAP.Clients;

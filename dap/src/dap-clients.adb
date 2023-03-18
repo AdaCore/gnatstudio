@@ -31,11 +31,13 @@ with Glib.Object;                use Glib.Object;
 with Gtkada.Dialogs;
 
 with VSS.JSON.Pull_Readers.Simple;
+with VSS.JSON.Push_Writers;
+with VSS.Regular_Expressions;
 with VSS.Stream_Element_Vectors.Conversions;
+with VSS.Strings;                use VSS.Strings;
 with VSS.Strings.Conversions;
 with VSS.Text_Streams.Memory_UTF8_Input;
 with VSS.Text_Streams.Memory_UTF8_Output;
-with VSS.JSON.Push_Writers;
 
 with GPS.Editors;                use GPS.Editors;
 with GPS.Kernel;                 use GPS.Kernel;
@@ -87,10 +89,15 @@ package body DAP.Clients is
       New_Request : in out DAP.Requests.DAP_Request_Access);
 
    -- Evaluate_Request --
+   type Evaluate_Kind is
+     (Show_Lang, Set_Lang, Restore_Lang, List_Adainit,
+      Info_Line, Info_First_Line, Hover);
    type Evaluate_Request is
      new DAP.Requests.Evaluate.Evaluate_DAP_Request
    with record
-      Label : Gtk.Label.Gtk_Label;
+      Kind   : Evaluate_Kind := Hover;
+      Client : DAP_Client_Access;
+      Label  : Gtk.Label.Gtk_Label;
    end record;
    type Evaluate_Request_Access is access all Evaluate_Request;
    overriding procedure On_Result_Message
@@ -101,6 +108,22 @@ package body DAP.Clients is
    overriding procedure On_Error_Message
      (Self    : in out Evaluate_Request;
       Message : VSS.Strings.Virtual_String);
+
+   GNAT_Binder_File_Pattern  : constant VSS.Regular_Expressions.
+     Regular_Expression := VSS.Regular_Expressions.To_Regular_Expression
+       ("b[~_]_?([^.]+\.(?:adb|c))");
+
+   File_Name_Pattern         : constant VSS.Regular_Expressions.
+     Regular_Expression := VSS.Regular_Expressions.To_Regular_Expression
+       ("^Line ([0-9]+) of (?:""([^""]+)"")? (?:starts|is)"
+        & " at address (0x[0-9a-f]+)");
+   --  Matches a file name/line indication in gdb's output
+
+   Language_Pattern          : constant VSS.Regular_Expressions.
+     Regular_Expression := VSS.Regular_Expressions.To_Regular_Expression
+       ("^(?:The current source language is|Current language:) +"
+        & """?(?:auto; currently )?([^""\t ]+)(?:""\.)?");
+   --  Pattern used to detect language changes in the debugger
 
    ------------------
    -- Break_Source --
@@ -693,6 +716,26 @@ package body DAP.Clients is
       Self.Set_Status (Running);
    end On_Configured;
 
+   ------------------------
+   -- On_Breakpoints_Set --
+   ------------------------
+
+   procedure On_Breakpoints_Set (Self : in out DAP_Client) is
+      Req   : Evaluate_Request_Access := new Evaluate_Request (Self.Kernel);
+      Frame : constant Integer := Self.Get_Selected_Frame;
+   begin
+      Req.Kind   := Show_Lang;
+      Req.Client := Self.This;
+      Req.Parameters.arguments.expression :=
+        VSS.Strings.Conversions.To_Virtual_String ("show lang");
+      if Frame /= 0 then
+         Req.Parameters.arguments.frameId := (Is_Set => True, Value => Frame);
+      end if;
+      Req.Parameters.arguments.context :=
+        (Is_Set => True, Value => DAP.Tools.Enum.repl);
+      Self.Enqueue (DAP.Requests.DAP_Request_Access (Req));
+   end On_Breakpoints_Set;
+
    --------------
    -- On_Ready --
    --------------
@@ -962,7 +1005,7 @@ package body DAP.Clients is
 
    procedure On_Launched (Self : in out DAP_Client) is
    begin
-      if Self.Source_Files.Is_Empty then
+      if not Self.Source_Files.Is_Empty then
          Self.Load_Project_From_Executable;
       end if;
 
@@ -983,7 +1026,6 @@ package body DAP.Clients is
       Success : in out Boolean)
    is
       pragma Unreferenced (Success);
-      use type VSS.Strings.Virtual_String;
       use type DAP.Requests.DAP_Request_Access;
 
       procedure Look_Ahead
@@ -1701,13 +1743,192 @@ package body DAP.Clients is
       Result      : in out DAP.Tools.EvaluateResponse;
       New_Request : in out DAP.Requests.DAP_Request_Access)
    is
-      pragma Unreferenced (New_Request);
+      procedure Command (Kind : Evaluate_Kind; Cmd : Virtual_String);
+      procedure Show_File
+        (File : Virtual_String;
+         Line : Natural;
+         Addr : Address_Type);
+
+      -------------
+      -- Command --
+      -------------
+
+      procedure Command (Kind : Evaluate_Kind; Cmd : Virtual_String) is
+         Req   : constant Evaluate_Request_Access :=
+           new Evaluate_Request (Self.Kernel);
+         Frame : constant Integer := Self.Client.Get_Selected_Frame;
+      begin
+         Req.Kind   := Kind;
+         Req.Client := Self.Client;
+         Req.Parameters.arguments.expression := Cmd;
+         if Frame /= 0 then
+            Req.Parameters.arguments.frameId :=
+              (Is_Set => True, Value => Frame);
+         end if;
+         Req.Parameters.arguments.context :=
+           (Is_Set => True, Value => DAP.Tools.Enum.repl);
+         New_Request := DAP.Requests.DAP_Request_Access (Req);
+      end Command;
+
+      ---------------
+      -- Show_File --
+      ---------------
+
+      procedure Show_File
+        (File : Virtual_String;
+         Line : Natural;
+         Addr : Address_Type) is
+      begin
+         if not File.Is_Empty
+           and then Line /= 0
+         then
+            DAP.Utils.Highlight_Current_File_And_Line
+              (Self.Client.Kernel,
+               GNATCOLL.VFS.Create_From_UTF8
+                 (VSS.Strings.Conversions.To_UTF_8_String (File)),
+               Line);
+
+         elsif Addr /= Invalid_Address then
+            --  the address without debugging information
+            DAP.Utils.Unhighlight_Current_Line (Self.Client.Kernel);
+         end if;
+      end Show_File;
+
    begin
-      Self.Label.Set_Markup
-        ("<b>Debugger value :</b> " & Glib.Convert.Escape_Text
-           (VSS.Strings.Conversions.To_UTF_8_String (Result.a_body.result)));
-      Unref (GObject (Self.Label));
+      New_Request := null;
+
+      case Self.Kind is
+         when Show_Lang =>
+            declare
+               Match : VSS.Regular_Expressions.Regular_Expression_Match;
+            begin
+               Match := Language_Pattern.Match (Result.a_body.result);
+
+               Self.Client.Stored_Lang := (if Match.Has_Match
+                                             and then Match.Has_Capture (1)
+                                           then Match.Captured (1)
+                                           else "auto");
+            end;
+            Command (Set_Lang, "set lang c");
+
+         when Set_Lang =>
+            Command (List_Adainit, "list adainit");
+
+         when List_Adainit =>
+            Command (Restore_Lang, "set lang " & Self.Client.Stored_Lang);
+
+         when Restore_Lang =>
+            if DAP.Modules.Preferences.Open_Main_Unit.Get_Pref then
+               Command (Info_Line, "info line");
+            else
+               Self.Client.On_Ready;
+            end if;
+
+         when Info_Line =>
+            declare
+               File : Virtual_String;
+               Line : Natural;
+               Addr : Address_Type;
+
+            begin
+               Self.Client.Found_File_Name
+                 (Result.a_body.result, File, Line, Addr);
+
+               if not File.Is_Empty then
+                  declare
+                     Match : VSS.Regular_Expressions.Regular_Expression_Match;
+                  begin
+                     Match := GNAT_Binder_File_Pattern.Match (File);
+
+                     --  If we find a file that looks like a GNAT binder file,
+                     --  load the corresponding main file.
+
+                     if Match.Has_Match
+                       and then Match.Has_Capture (1)
+                     then
+                        Command
+                          (Info_First_Line, "info line "
+                           & Match.Captured (1) & ":1");
+                     else
+                        Show_File (File, Line, Addr);
+                        Self.Client.On_Ready;
+                     end if;
+                  end;
+               else
+                  Self.Client.On_Ready;
+               end if;
+            end;
+
+         when Info_First_Line =>
+            declare
+               File : Virtual_String;
+               Line : Natural;
+               Addr : Address_Type;
+
+            begin
+               Self.Client.Found_File_Name
+                 (Result.a_body.result, File, Line, Addr);
+               Show_File (File, Line, Addr);
+               Self.Client.On_Ready;
+            end;
+
+         when Hover =>
+            Self.Label.Set_Markup
+              ("<b>Debugger value :</b> " & Glib.Convert.Escape_Text
+                 (VSS.Strings.Conversions.To_UTF_8_String
+                      (Result.a_body.result)));
+            Unref (GObject (Self.Label));
+      end case;
    end On_Result_Message;
+
+   ---------------------
+   -- Found_File_Name --
+   ---------------------
+
+   procedure Found_File_Name
+     (Self : DAP_Client;
+      Str  : VSS.Strings.Virtual_String;
+      Name : out VSS.Strings.Virtual_String;
+      Line : out Natural;
+      Addr : out DAP.Types.Address_Type)
+   is
+      pragma Unreferenced (Self);
+
+      Match : VSS.Regular_Expressions.Regular_Expression_Match;
+   begin
+      --  Default values if nothing better is found
+      Name := Empty_Virtual_String;
+      Line := 0;
+      Addr := Invalid_Address;
+
+      Match := File_Name_Pattern.Match (Str);
+
+      if Match.Has_Match then
+         if Match.Has_Capture (2) then
+            Name := Match.Captured (2);
+         end if;
+
+         if Match.Has_Capture (3) then
+            Addr := String_To_Address
+              (VSS.Strings.Conversions.To_UTF_8_String
+                 (Match.Captured (3)));
+         end if;
+
+         if Match.Has_Capture (1) then
+            Line := Natural'Value
+              (VSS.Strings.Conversions.To_UTF_8_String
+                 (Match.Captured (1)));
+         end if;
+      end if;
+
+   exception
+      when E : others =>
+         Me.Trace (E);
+
+         Name := Empty_Virtual_String;
+         Line := 0;
+         Addr := Invalid_Address;
+   end Found_File_Name;
 
    -----------------
    -- On_Rejected --
@@ -1715,7 +1936,11 @@ package body DAP.Clients is
 
    overriding procedure On_Rejected (Self : in out Evaluate_Request) is
    begin
-      Unref (GObject (Self.Label));
+      if Self.Kind = Hover then
+         Unref (GObject (Self.Label));
+      else
+         Self.Client.On_Ready;
+      end if;
    end On_Rejected;
 
    ----------------------
@@ -1726,7 +1951,11 @@ package body DAP.Clients is
      (Self    : in out Evaluate_Request;
       Message : VSS.Strings.Virtual_String) is
    begin
-      Unref (GObject (Self.Label));
+      if Self.Kind = Hover then
+         Unref (GObject (Self.Label));
+      else
+         Self.Client.On_Ready;
+      end if;
    end On_Error_Message;
 
    ------------------------
