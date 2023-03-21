@@ -304,7 +304,7 @@ class CLI(GPS.Process):
             # Check that the python modules are stored in the qgen directory
             CLI.plugins_dir = os.path.join(
                 os.path.dirname(os.path.dirname(CLI.qgenc)),
-                'libexec', 'qgen', 'share', 'gps', 'plug-ins', 'qgen')
+                'share', 'gnatstudio')
             has_qgen_modules = os.path.exists(os.path.join(
                 CLI.plugins_dir, 'mapping.py')) and os.path.exists(
                     os.path.join(CLI.plugins_dir, 'diagram_utils.py'))
