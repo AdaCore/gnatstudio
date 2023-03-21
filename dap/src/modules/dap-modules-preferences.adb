@@ -22,16 +22,14 @@ package body DAP.Modules.Preferences is
    ----------------------------------
 
    procedure Register_Default_Preferences
-     (Prefs    : access Preferences_Manager_Record'Class;
-      Base_Dir : Virtual_File) is
+     (Prefs : access Preferences_Manager_Record'Class) is
    begin
       DAP_Adapter := Create
         (Manager => Prefs,
          Name    => "DAP-Adapter",
          Label   => "DAP Adapter",
          Doc     => "The adapter for the DAP protocol",
-         Default => "/usr/bin/node " &
-         (+Base_Dir.Create_From_Dir ("gdb -i=dap").Full_Name),
+         Default => "",
          Path    => "Debugger:General");
 
       Open_Main_Unit := Create
