@@ -79,14 +79,6 @@ class Project_Support(object):
 
                  <field
                   line="1"
-                  label="Matlab file"
-                  switch="-m"
-                  separator=" "
-                  as-file="true"
-                 tip="Provides variable declarations of the Matlab workspace"/>
-
-                 <field
-                  line="1"
                   label="Arithmetic operations configuration file"
                   switch="--arith-conf"
                   separator=" "
