@@ -2529,7 +2529,7 @@ procedure GPS.Main is
          end if;
 
          if GVD.Preferences.Debugger_Kind.Get_Pref = GVD.Types.DAP then
-            DAP.Module.Register_Module (GPS_Main.Kernel, Prefix_Dir);
+            DAP.Module.Register_Module (GPS_Main.Kernel);
 
             declare
                use VSS.Strings;

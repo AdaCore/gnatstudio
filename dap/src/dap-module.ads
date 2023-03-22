@@ -29,8 +29,7 @@ with Generic_Views;
 package DAP.Module is
 
    procedure Register_Module
-     (Kernel   : access GPS.Kernel.Kernel_Handle_Record'Class;
-      Base_Dir : Virtual_File);
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class);
 
    procedure Terminate_Debuggers;
    --  Terminate all debuggers

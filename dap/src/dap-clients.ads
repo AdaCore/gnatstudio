@@ -15,6 +15,8 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
+with Ada.Exceptions;
+
 with GNAT.OS_Lib;
 
 with GNATCOLL.Projects;
@@ -402,6 +404,18 @@ private
    overriding procedure On_Finished (Self : in out DAP_Client);
    --  Handle termination of the language server process. If this wasn't
    --  expected and we're within the acceptable throttling limits, relaunch.
+
+   overriding procedure On_Error
+     (Self  : in out DAP_Client;
+      Error : String);
+
+   overriding procedure On_Standard_Error_Message
+     (Self : in out DAP_Client;
+      Text : String);
+
+   overriding procedure On_Exception
+     (Self       : in out DAP_Client;
+      Occurrence : Ada.Exceptions.Exception_Occurrence);
 
    procedure Process
      (Self    : in out DAP_Client;
