@@ -242,9 +242,10 @@ package body Expect_Interface is
       then
          declare
             C : Callback_Data'Class := Create
-              (Get_Script (Self.Inst), Arguments_Count => 1);
+              (Get_Script (Self.Inst), Arguments_Count => 2);
          begin
-            Set_Nth_Arg (C, 1, To_String (Self.Unmatched_Output));
+            Set_Nth_Arg (C, 1, Self.Inst);
+            Set_Nth_Arg (C, 2, To_String (Self.Unmatched_Output));
             Dummy := Execute (Self.Before_Kill, C);
             Free (C);
          end;

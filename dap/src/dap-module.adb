@@ -1136,8 +1136,7 @@ package body DAP.Module is
    ---------------------
 
    procedure Register_Module
-     (Kernel   : access GPS.Kernel.Kernel_Handle_Record'Class;
-      Base_Dir : Virtual_File)
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
    is
       Has_Debugger         : Action_Filter;
       No_Debugger_Or_Ready : Action_Filter;
@@ -1148,7 +1147,7 @@ package body DAP.Module is
 
    begin
       DAP.Modules.Preferences.Register_Default_Preferences
-        (Kernel.Get_Preferences, Base_Dir);
+        (Kernel.Get_Preferences);
 
       DAP_Module_ID := new DAP_Module_Record (Kernel);
       if Kernel /= null then

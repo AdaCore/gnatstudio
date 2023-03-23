@@ -125,6 +125,45 @@ package body DAP.Clients is
         & """?(?:auto; currently )?([^""\t ]+)(?:""\.)?");
    --  Pattern used to detect language changes in the debugger
 
+   --------------
+   -- On_Error --
+   --------------
+
+   overriding procedure On_Error
+     (Self  : in out DAP_Client;
+      Error : String)
+   is
+      pragma Unreferenced (Self);
+   begin
+      Trace (Me, "On_Error:" & Error);
+   end On_Error;
+
+   -------------------------------
+   -- On_Standard_Error_Message --
+   -------------------------------
+
+   overriding procedure On_Standard_Error_Message
+     (Self : in out DAP_Client;
+      Text : String)
+   is
+      pragma Unreferenced (Self);
+   begin
+      Trace (Me, "On_Standard_Error_Message:" & Text);
+   end On_Standard_Error_Message;
+
+   ------------------
+   -- On_Exception --
+   ------------------
+
+   overriding procedure On_Exception
+     (Self       : in out DAP_Client;
+      Occurrence : Ada.Exceptions.Exception_Occurrence)
+   is
+      pragma Unreferenced (Self);
+   begin
+      Trace (Me, Occurrence);
+   end On_Exception;
+
    ------------------
    -- Break_Source --
    ------------------
@@ -1671,7 +1710,6 @@ package body DAP.Clients is
       Adapter : constant String := Get_Debugger_Executable;
 
    begin
-      Trace (Me, "Launching the debug adapter: " & Adapter);
 
       Self.Project := Project;
       Self.File    := To_Unbounded_String
@@ -1679,10 +1717,14 @@ package body DAP.Clients is
       Self.Args    := Ada.Strings.Unbounded.To_Unbounded_String (Args);
 
       declare
+         use GNATCOLL.VFS;
          Vals : GNAT.Strings.String_List_Access := GNATCOLL.Utils.Split
            (Adapter, On => ' ');
+         Exec : constant Virtual_File :=
+           Locate_On_Path (+Vals (Vals'First).all);
       begin
-         Self.Set_Program (Vals (Vals'First).all);
+         Trace (Me, "Launching the debug adapter: " & (+Exec.Full_Name));
+         Self.Set_Program (+Exec.Full_Name);
          Node_Args.Append ("-i=dap");
          for Index in Vals'First + 1 .. Vals'Last loop
             Node_Args.Append (Vals (Index).all);
@@ -1704,9 +1746,15 @@ package body DAP.Clients is
         Disconnect_DAP_Request_Access := new DAP.Requests.Disconnects.
           Disconnect_DAP_Request (Self.Kernel);
    begin
-      if Self.Status /= Terminating then
+      if Self.Status = Terminating then
+         return;
+      end if;
+
+      Self.Set_Status (Terminating);
+      if Self.Status /= Initialization then
          Self.Process (DAP.Requests.DAP_Request_Access (Disconnect));
-         Self.Set_Status (Terminating);
+      else
+         Self.On_Terminated;
       end if;
    end Quit;
 

@@ -15,14 +15,12 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with GNATCOLL.VFS;             use GNATCOLL.VFS;
 with Default_Preferences;      use Default_Preferences;
 
 package DAP.Modules.Preferences is
 
    procedure Register_Default_Preferences
-     (Prefs    : access Preferences_Manager_Record'Class;
-      Base_Dir : Virtual_File);
+     (Prefs : access Preferences_Manager_Record'Class);
    --  Register all the preferences relative to GVD, and their default
    --  values. This doesn't override existing values of the preferences.
 

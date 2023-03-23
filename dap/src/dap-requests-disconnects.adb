@@ -92,6 +92,7 @@ package body DAP.Requests.Disconnects is
      (Self : in out Disconnect_DAP_Request) is
    begin
       Trace (Me, "Rejected");
+      Self.Client.On_Terminated;
    end On_Rejected;
 
    ----------------------
@@ -103,6 +104,7 @@ package body DAP.Requests.Disconnects is
       Message : VSS.Strings.Virtual_String) is
    begin
       Trace (Me, VSS.Strings.Conversions.To_UTF_8_String (Message));
+      Self.Client.On_Terminated;
    end On_Error_Message;
 
    -------------

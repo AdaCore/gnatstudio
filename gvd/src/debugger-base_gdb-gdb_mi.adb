@@ -3825,7 +3825,14 @@ package body Debugger.Base_Gdb.Gdb_MI is
 
                elsif Name = "script" then
                   Next (C); -- skip '{'
-                  while Element (C).Code /= R_Brace loop
+
+                  if Element (C).Code = L_Bracket then
+                     --  skip '[' on newer GDB versions, since script
+                     --  instuctions are now provided in a list.
+                     Next (C);
+                  end if;
+
+                  while Element (C).Code not in R_Brace | R_Bracket loop
                      if Length (B.Commands) > 0 then
                         Append (B.Commands, "" & ASCII.LF);
                      end if;
@@ -3836,6 +3843,13 @@ package body Debugger.Base_Gdb.Gdb_MI is
                         Next (C);
                      end if;
                   end loop;
+
+                  if Element (C).Code = R_Bracket then
+                     --  skip ']' on newer GDB versions, since script
+                     --  instuctions are now provided in a list.
+                     Next (C);
+                  end if;
+
                   Next (C); -- skip '}'
                end if;
             end;
