@@ -16,6 +16,10 @@
 ------------------------------------------------------------------------------
 
 with Ada.Containers;
+with Ada.Containers.Indefinite_Hashed_Maps;
+
+with Ada.Strings.Hash;
+
 with GNATCOLL.Projects;  use GNATCOLL.Projects;
 with GNATCOLL.VFS;       use GNATCOLL.VFS;
 
@@ -44,6 +48,12 @@ package Projects is
    --  Create a new project registry (associated with a custom tree).
    --  Env can be passed a specific value if you want to extend
    --  Project_Environment. In all cases, Initialize(Env) is called.
+
+   function Create
+     (Self     : in out Project_Registry;
+      Filename : Filesystem_String) return Virtual_File;
+   --  Wrapper around Registry.Tree.Create, caching the results
+   --  for better performance.
 
    function Environment
      (Self : Project_Registry)
@@ -105,10 +115,26 @@ package Projects is
    --  Cleanup empty subdirs created when opening a project with prj.subdirs.
    --  Also remove other temporary files
 
+   procedure Reset_Cache (Self : in out Project_Registry);
+   --  Reset any caching. This needs to be done whenever the view
+   --  is reloaded.
+
 private
+
+   function Hash (X : Filesystem_String) return Ada.Containers.Hash_Type is
+     (Ada.Strings.Hash (+X));
+
+   package FS_To_File is new Ada.Containers.Indefinite_Hashed_Maps
+     (Key_Type        => Filesystem_String,
+      Element_Type    => Virtual_File,
+      Hash            => Hash,
+      Equivalent_Keys => "=",
+      "="             => "=");
+
    type Project_Registry is tagged record
       Env  : GNATCOLL.Projects.Project_Environment_Access;
       Tree : GNATCOLL.Projects.Project_Tree_Access;
+      Filesystem_To_File_Map  : FS_To_File.Map;
    end record;
 
    type GPS_Project_Data is new GNATCOLL.Projects.Project_Data with record

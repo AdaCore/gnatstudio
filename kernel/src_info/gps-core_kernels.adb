@@ -35,7 +35,7 @@ package body GPS.Core_Kernels is
       Name   : Filesystem_String) return Virtual_File
    is
       File : constant Virtual_File :=
-        Kernel.Registry.Tree.Create (Base_Name (Name));
+        Kernel.Registry.Create (Base_Name (Name));
    begin
       if File = No_File then
          return Create (Full_Filename => Name);
