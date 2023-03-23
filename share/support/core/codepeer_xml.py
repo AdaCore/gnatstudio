@@ -682,12 +682,6 @@ Also force the generation of all SCIL files." />
 """
 
 xmlTrailer = """
-         <field label="Compare with"
-                tip="Compare the current run with an arbitrary cpm file."
-                switch="--compare-with"
-                separator=" "
-                as-file="true"
-                file-filter="*.cpm"/>
          <hidden switch="--dbg-on" separator=" "/>
          <hidden switch="--dbg-off" separator=" "/>
        </switches>
