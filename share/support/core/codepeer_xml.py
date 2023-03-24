@@ -433,11 +433,26 @@ creating/updating the database" />
          <check label="Show informationals" switch="--show-info"
                column="1"
                tip="Show CodePeer informational messages"/>
+         <check label="Hide low messages" switch="--hide-low"
+               column="1"
+               tip="Do not generate messages ranked low"/>
          <field label="Output file"
                 tip="Write csv output to specified file."
-                switch="--out"
+                switch="-o"
                 separator=" "
                 default="codepeer.csv"/>
+         <field label="Display cpm"
+                tip="Select a cpm file to display instead."
+                switch="--current"
+                separator=" "
+                as-file="true"
+                file-filter="*.cpm"/>
+         <field label="Compare with"
+                tip="Compare the current run with an arbitrary cpm file."
+                switch="--compare-with"
+                separator=" "
+                as-file="true"
+                file-filter="*.cpm"/>
        </switches>
     </target-model>
 
@@ -446,28 +461,26 @@ creating/updating the database" />
        <command-help>{help}</command-help>
        <iconname>gps-build-all-symbolic</iconname>
        <switches command="%(tool_name)s" columns="2" lines="5">
-         <check label="Show annotations" switch="--show-annotations"
-               column="1"
-               tip="Show CodePeer annotations in addition to messages"/>
          <check label="Show informationals" switch="--show-info"
                column="1"
                tip="Show CodePeer informational messages"/>
-         <check label="Show removed" switch="--show-removed"
-               column="1"
-               tip="Show messages removed from baseline run"/>
          <check label="Hide low messages" switch="--hide-low"
                column="1"
                tip="Do not generate messages ranked low"/>
-         <check label="CWE" switch="--cwe"
-               column="1"
-               tip="Include CWE ids in message output"/>
 
-         <spin label="Current" switch="-current" min="0" max="100000"
-               default="0" separator=" " column="2"
-               tip="Override current run id"/>
-         <spin label="Cutoff" switch="-cutoff" min="0" max="100000"
-               default="0" separator=" " column="2"
-               tip="Override baseline run id"/>
+         <field label="Display cpm"
+                tip="Select a cpm file to display instead."
+                switch="--current"
+                separator=" "
+                as-file="true"
+                file-filter="*.cpm"/>
+
+         <field label="Compare with"
+                tip="Compare the current run with an arbitrary cpm file."
+                switch="--compare-with"
+                separator=" "
+                as-file="true"
+                file-filter="*.cpm"/>
 
        </switches>
     </target-model>
