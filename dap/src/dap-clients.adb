@@ -443,6 +443,17 @@ package body DAP.Clients is
       return Self.Memory_View;
    end Get_Memory_View;
 
+   ------------------------
+   -- Get_Variables_View --
+   ------------------------
+
+   function Get_Variables_View
+     (Self : DAP_Client)
+      return Generic_Views.Abstract_View_Access is
+   begin
+      return Self.Variables_View;
+   end Get_Variables_View;
+
    ---------------------
    -- Get_Breakpoints --
    ---------------------
@@ -580,6 +591,17 @@ package body DAP.Clients is
    begin
       Self.Memory_View := View;
    end Set_Memory_View;
+
+   ------------------------
+   -- Set_Variables_View --
+   ------------------------
+
+   procedure Set_Variables_View
+     (Self : in out DAP_Client;
+      View : Generic_Views.Abstract_View_Access) is
+   begin
+      Self.Variables_View := View;
+   end Set_Variables_View;
 
    ---------------------------
    -- Set_Breakpoints_State --
@@ -1750,9 +1772,9 @@ package body DAP.Clients is
          return;
       end if;
 
-      Self.Set_Status (Terminating);
       if Self.Status /= Initialization then
          Self.Process (DAP.Requests.DAP_Request_Access (Disconnect));
+         Self.Set_Status (Terminating);
       else
          Self.On_Terminated;
       end if;
