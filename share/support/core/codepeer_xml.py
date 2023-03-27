@@ -327,6 +327,10 @@ tool = """
               default="0" separator="" column="2"
               tip="Use N processes to carry out the processing (0 means use as
 many cores as available on the machine)." />
+        <field label="Run name"
+               tip="Specify the run name."
+               switch="--run-name"
+               separator=" "/>
         <check label="Ignore representation clauses" switch="-gnatI"
                column="1"
                tip="Ignore all representation clauses, useful for generating
@@ -674,6 +678,10 @@ analysis. See CodePeer documentation for more details." >
                default="0" separator="" column="3"
                tip="Use N processes to carry out the analysis (0 means use as
 many cores as available on the machine)." />
+         <field label="Run name"
+                tip="Specify the run name."
+                switch="--run-name"
+                separator=" "/>
          <check label="Root project only" switch="--no-subprojects"
                 column="2" tip="Analyze root project only" />
          <check label="Force analysis" switch="-f" column="2"
