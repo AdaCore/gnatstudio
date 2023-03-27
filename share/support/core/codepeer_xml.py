@@ -732,6 +732,23 @@ xmlTrailer = """
        </command-line>
     </target>
 
+    <target model="codepeer" category="CodePeer"
+            name="Run CodePeer File"
+            messages_category="CodePeer (one file)">
+       <in-toolbar>FALSE</in-toolbar>
+       <in-menu>FALSE</in-menu>
+       <iconname>gps-compile-symbolic</iconname>
+       <launch-mode>MANUALLY_WITH_DIALOG</launch-mode>
+       <read-only>TRUE</read-only>
+       <command-line>
+          <arg>codepeer</arg>
+          <arg>-P%PP</arg>
+          <arg>%X</arg>
+          <arg>--file</arg>
+          <arg>%fp</arg>
+       </command-line>
+    </target>
+
     <target model="codepeer_output_only" category="CodePeer"
             name="Regenerate CodePeer Report" messages_category="CodePeer">
        <in-toolbar>FALSE</in-toolbar>
