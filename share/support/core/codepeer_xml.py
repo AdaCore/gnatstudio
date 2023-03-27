@@ -401,9 +401,6 @@ SCIL for another architecture" />
          <check label="Unconstrained float overflow" switch="-gnateF"
                column="2"
                tip="Check for overflow on unconstrained floating point types"/>
-         <check label="Generate CodePeer messages" switch="-gnateC" column="1"
-                tip="Generate CodePeer messages in compiler format, without
-creating/updating the database" />
        </switches>
     </target-model>
 
