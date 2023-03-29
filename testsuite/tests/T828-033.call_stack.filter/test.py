@@ -22,14 +22,23 @@ def test_driver():
     win = GPS.MDI.get("Call Stack").pywidget()
     tree = get_widgets_by_type(Gtk.TreeView, win)[0]
     selection = tree.get_selection()
+
+    is_red_hat = "Red Hat" in GPS.Process("hostnamectl").get_result()
+
+    # The call stack could different depending on the OS
     if platform.system().lower() == 'windows':
         gps_assert(dump_tree_model(tree.get_model(), 0),
                ['0', '1', '2'],
-               "Incorrect Callstack tree")
+               "Incorrect Callstack tree (Windows)")
     else:
-        gps_assert(dump_tree_model(tree.get_model(), 0),
-                   ['0', '1', '2', '3', '4', '5'],
-                   "Incorrect Callstack tree")
+        if is_red_hat:
+            gps_assert(dump_tree_model(tree.get_model(), 0),
+                       ['0', '1', '2', '3', '4', '5', '6'],
+                       "Incorrect Callstack tree (RHES)")
+        else:
+            gps_assert(dump_tree_model(tree.get_model(), 0),
+                       ['0', '1', '2', '3', '4', '5'],
+                       "Incorrect Callstack tree (Ubuntu)")
 
     # Filter the Call Stack
     get_widget_by_name("Call Stack Filter").set_text("main")
@@ -39,9 +48,14 @@ def test_driver():
                    ['2'],
                    "Incorrect Callstack tree when filtered")
     else:
-        gps_assert(dump_tree_model(tree.get_model(), 0),
+        if is_red_hat:
+            gps_assert(dump_tree_model(tree.get_model(), 0),
+                   ['2', '3', '4', '5'],
+                   "Incorrect Callstack tree when filtered (RHES)")
+        else:
+            gps_assert(dump_tree_model(tree.get_model(), 0),
                    ['2', '3', '4'],
-                   "Incorrect Callstack tree when filtered")
+                   "Incorrect Callstack tree when filtered (Ubuntu)")
 
     # Frame 0 is filtered out => it should select nothing
     d.send("frame 0")
