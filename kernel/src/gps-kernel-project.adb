@@ -353,6 +353,7 @@ package body GPS.Kernel.Project is
    begin
       Cleanup_Subdirs (Self);
 
+      Get_Registry (Self.Handle).Reset_Cache;
       Recompute_View (Project_Tree (Self), Errors);
 
       --  If we are in the process of creating the kernel, no need to do
@@ -395,6 +396,7 @@ package body GPS.Kernel.Project is
       end Report_Error;
 
    begin
+      Get_Registry (Handle).Reset_Cache;
       Get_Registry (Handle).Tree.Recompute_View
         (Errors => Report_Error'Unrestricted_Access);
 
@@ -806,6 +808,9 @@ package body GPS.Kernel.Project is
             --  Successful load of default project
             Get_Registry (Kernel).Tree.Set_Status (Default);
          end if;
+
+         --  Clear the registry caches
+         Get_Registry (Kernel).Reset_Cache;
 
          Trace (Me, "Running the 'project_changed' hook");
          Project_Changed_Hook.Run (Kernel);
