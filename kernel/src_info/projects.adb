@@ -233,6 +233,7 @@ package body Projects is
       Registry.Tree.Unload;
       Free (Registry.Tree);
       Free (Registry.Env);
+      Registry.Filesystem_To_File_Map.Clear;
       Unchecked_Free (Registry);
 
       GNATCOLL.Projects.Finalize;
@@ -370,6 +371,41 @@ package body Projects is
 
          null;
    end Cleanup_Subdirs;
+
+   ------------
+   -- Create --
+   ------------
+
+   function Create
+     (Self     : in out Project_Registry;
+      Filename : Filesystem_String) return Virtual_File
+   is
+      use FS_To_File;
+      C : Cursor;
+      F : Virtual_File;
+   begin
+      --  Look in the cache
+      C := Self.Filesystem_To_File_Map.Find (Filename);
+      if C /= No_Element then
+         --  Found? Return the element.
+         return Element (C);
+      end if;
+
+      --  If we reach this, we haven't found in the cache.
+      --  Do the lookup, then insert the result in the cache.
+      F := Self.Tree.Create (Filename);
+      Self.Filesystem_To_File_Map.Insert (Filename, F);
+      return F;
+   end Create;
+
+   -----------------
+   -- Reset_Cache --
+   -----------------
+
+   procedure Reset_Cache (Self : in out Project_Registry) is
+   begin
+      Self.Filesystem_To_File_Map.Clear;
+   end Reset_Cache;
 
 begin
    --  Use full path name so that the messages are sent to Locations view

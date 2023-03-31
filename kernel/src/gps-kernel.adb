@@ -1231,9 +1231,20 @@ package body GPS.Kernel is
    is
       File : GNATCOLL.VFS.Virtual_File;
    begin
-      File := Get_Registry (Kernel).Tree.Create
-        (Name, Use_Source_Path => Use_Source_Path,
-         Use_Object_Path => Use_Object_Path);
+      if Use_Source_Path
+        and then Use_Object_Path
+      then
+         --  When we're using the default values for Use_Source_Path
+         --  and Use_Object_Path (which is the vast majority of cases),
+         --  use the caching Create function in the Registry, for
+         --  performance.
+         File := Get_Registry (Kernel).Create (Name);
+      else
+         File := Get_Registry (Kernel).Tree.Create
+           (Name,
+            Use_Source_Path => Use_Source_Path,
+            Use_Object_Path => Use_Object_Path);
+      end if;
 
       if File = GNATCOLL.VFS.No_File then
          File := GNATCOLL.VFS.Create_From_Base (Base_Name => Name);

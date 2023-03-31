@@ -84,7 +84,7 @@ package body Codefix.Formal_Errors is
          end if;
 
          Set_File
-           (This, Registry.Tree.Create
+           (This, Registry.Create
               (+Slice
                    (Error_Line,
                     Matches (File_Index).First,
