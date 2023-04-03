@@ -1387,15 +1387,6 @@ Classes
 
    .. automethod:: GPS.LanguageServer.restart
 
-:class:`GPS.Libclang`
-^^^^^^^^^^^^^^^^^^^^^
-
-.. autoclass:: Libclang()
-
-
-
-   .. automethod:: GPS.Libclang.get_translation_unit
-
 :class:`GPS.Locations`
 ^^^^^^^^^^^^^^^^^^^^^^
 
