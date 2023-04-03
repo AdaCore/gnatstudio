@@ -327,6 +327,10 @@ tool = """
               default="0" separator="" column="2"
               tip="Use N processes to carry out the processing (0 means use as
 many cores as available on the machine)." />
+        <field label="Run name"
+               tip="Specify the run name."
+               switch="--run-name"
+               separator=" "/>
         <check label="Ignore representation clauses" switch="-gnatI"
                column="1"
                tip="Ignore all representation clauses, useful for generating
@@ -401,9 +405,6 @@ SCIL for another architecture" />
          <check label="Unconstrained float overflow" switch="-gnateF"
                column="2"
                tip="Check for overflow on unconstrained floating point types"/>
-         <check label="Generate CodePeer messages" switch="-gnateC" column="1"
-                tip="Generate CodePeer messages in compiler format, without
-creating/updating the database" />
        </switches>
     </target-model>
 
@@ -433,11 +434,26 @@ creating/updating the database" />
          <check label="Show informationals" switch="--show-info"
                column="1"
                tip="Show CodePeer informational messages"/>
+         <check label="Hide low messages" switch="--hide-low"
+               column="1"
+               tip="Do not generate messages ranked low"/>
          <field label="Output file"
                 tip="Write csv output to specified file."
-                switch="--out"
+                switch="-o"
                 separator=" "
                 default="codepeer.csv"/>
+         <field label="Display cpm"
+                tip="Select a cpm file to display instead."
+                switch="--current"
+                separator=" "
+                as-file="true"
+                file-filter="*.cpm"/>
+         <field label="Compare with"
+                tip="Compare the current run with an arbitrary cpm file."
+                switch="--compare-with"
+                separator=" "
+                as-file="true"
+                file-filter="*.cpm"/>
        </switches>
     </target-model>
 
@@ -446,28 +462,26 @@ creating/updating the database" />
        <command-help>{help}</command-help>
        <iconname>gps-build-all-symbolic</iconname>
        <switches command="%(tool_name)s" columns="2" lines="5">
-         <check label="Show annotations" switch="--show-annotations"
-               column="1"
-               tip="Show CodePeer annotations in addition to messages"/>
          <check label="Show informationals" switch="--show-info"
                column="1"
                tip="Show CodePeer informational messages"/>
-         <check label="Show removed" switch="--show-removed"
-               column="1"
-               tip="Show messages removed from baseline run"/>
          <check label="Hide low messages" switch="--hide-low"
                column="1"
                tip="Do not generate messages ranked low"/>
-         <check label="CWE" switch="--cwe"
-               column="1"
-               tip="Include CWE ids in message output"/>
 
-         <spin label="Current" switch="-current" min="0" max="100000"
-               default="0" separator=" " column="2"
-               tip="Override current run id"/>
-         <spin label="Cutoff" switch="-cutoff" min="0" max="100000"
-               default="0" separator=" " column="2"
-               tip="Override baseline run id"/>
+         <field label="Display cpm"
+                tip="Select a cpm file to display instead."
+                switch="--current"
+                separator=" "
+                as-file="true"
+                file-filter="*.cpm"/>
+
+         <field label="Compare with"
+                tip="Compare the current run with an arbitrary cpm file."
+                switch="--compare-with"
+                separator=" "
+                as-file="true"
+                file-filter="*.cpm"/>
 
        </switches>
     </target-model>
@@ -477,6 +491,8 @@ creating/updating the database" />
        <iconname>gps-build-all-symbolic</iconname>
        <command-line>
           <arg>cpm-gs-bridge</arg>
+          <arg>--log-to</arg>
+          <arg>%O</arg>
        </command-line>
     </target-model>
 
@@ -559,6 +575,8 @@ creating/updating the database" />
        <read-only>TRUE</read-only>
        <command-line>
           <arg>cpm-gs-bridge</arg>
+          <arg>--log-to</arg>
+          <arg>%O</arg>
        </command-line>
     </target>
 
@@ -585,10 +603,15 @@ creating/updating the database" />
             <combo-entry label="4" value="4" />
          </combo>
 
-         <check label="Baseline run" switch="--set-baseline" column="2"
+         <check label="Bump baseline" switch="--bump-baseline" column="2"
           tip="make the last run of the selected level the new baseline run."/>
 
-         %python(cpms_combo_box("Set baseline", "--set-baseline", "No tip for you"))
+         <field label="Set baseline"
+                tip="Select a cpm file as the new baseline."
+                switch="--set-baseline"
+                separator=" "
+                as-file="true"
+                file-filter="*.cpm"/>
 
          <field label="Display cpm"
                 tip="Select a cpm file to display instead."
@@ -649,14 +672,16 @@ analysis. See CodePeer documentation for more details." >
             <combo-entry label="Max" value="max" />
          </combo>
 
-         <check label="Baseline run" switch="--set-baseline" column="2"
-                tip="Make the current run the new baseline"/>
          <check label="No race conditions analysis" switch="--no-race-conditions"
                 column="2" tip="Do not perform race conditions analysis" />
          <spin label="Multiprocessing" switch="-j" min="0" max="1000"
                default="0" separator="" column="3"
                tip="Use N processes to carry out the analysis (0 means use as
 many cores as available on the machine)." />
+         <field label="Run name"
+                tip="Specify the run name."
+                switch="--run-name"
+                separator=" "/>
          <check label="Root project only" switch="--no-subprojects"
                 column="2" tip="Analyze root project only" />
          <check label="Force analysis" switch="-f" column="2"
@@ -675,12 +700,6 @@ Also force the generation of all SCIL files." />
 """
 
 xmlTrailer = """
-         <field label="Compare with"
-                tip="Compare the current run with an arbitrary cpm file."
-                switch="--compare-with"
-                separator=" "
-                as-file="true"
-                file-filter="*.cpm"/>
          <hidden switch="--dbg-on" separator=" "/>
          <hidden switch="--dbg-off" separator=" "/>
        </switches>
@@ -715,6 +734,23 @@ xmlTrailer = """
           <arg>%X</arg>
           <arg>-d</arg>
           <arg>--gs</arg>
+       </command-line>
+    </target>
+
+    <target model="codepeer" category="CodePeer"
+            name="Run CodePeer File"
+            messages_category="CodePeer (one file)">
+       <in-toolbar>FALSE</in-toolbar>
+       <in-menu>FALSE</in-menu>
+       <iconname>gps-compile-symbolic</iconname>
+       <launch-mode>MANUALLY_WITH_DIALOG</launch-mode>
+       <read-only>TRUE</read-only>
+       <command-line>
+          <arg>codepeer</arg>
+          <arg>-P%PP</arg>
+          <arg>%X</arg>
+          <arg>--file</arg>
+          <arg>%fp</arg>
        </command-line>
     </target>
 
