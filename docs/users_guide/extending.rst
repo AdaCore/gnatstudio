@@ -983,6 +983,16 @@ arguments.  This code is useful when you are writing a full python script.
     Name of a file containing a list of source directories in the current
     project and all imported sub projects, recursively.
 
+* :file:`%rbt`
+
+  Either an empty string or :file:`--relocate-build-tree`, depending on
+  whether the out-of-tree build if active.
+
+* :file:`%rd`
+
+  Either an empty string or :file:`----root-dir`, depending on
+  whether the out-of-tree build if active and the root directory is set.
+
 * :file:`%s`
 
   Text selected by the user, if a single line was selected. If multiple
