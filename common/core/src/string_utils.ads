@@ -35,7 +35,7 @@ package String_Utils is
    --  Return the value for the hexadecimal number Hex. Raises
    --  Constraint_Error is Hex is not an hexadecimal number.
 
-   function Format_Bytes (Bytes : Integer) return String;
+   function Format_Bytes (Bytes : Float) return String;
    --  Return a formatted string for the given Bytes quantity in the following
    --  format:
    --

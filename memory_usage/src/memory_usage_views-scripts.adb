@@ -305,15 +305,15 @@ package body Memory_Usage_Views.Scripts is
                       (Name      => To_Unbounded_String (Name),
                        Origin    => Current.Nth_Arg (2),
                        Length    => Current.Nth_Arg (3),
-                       Used_Size => 0,
+                       Used_Size => 0.0,
                        Sections  => <>);
                begin
                   --  If the memory region's length is equal to -1, it means
                   --  that it's unknown for the linker: set it to Integer'Last
                   --  to keep percentages etc. The view will set the length
                   --  to 'unknown' after.
-                  if Memory_Region.Length = -1 then
-                     Memory_Region.Length := Integer'Last;
+                  if Memory_Region.Length = -1.0 then
+                     Memory_Region.Length := Float'Last;
                   end if;
 
                   Regions.Include
@@ -328,7 +328,7 @@ package body Memory_Usage_Views.Scripts is
                                   Sections_List.Nth_Arg (J);
                   Name        : constant String := Current.Nth_Arg (1);
                   Region_Name : constant String := Current.Nth_Arg (4);
-                  Length      : constant Integer := Current.Nth_Arg (3);
+                  Length      : constant Float := Current.Nth_Arg (3);
                begin
                   Regions (Region_Name).Sections.Include
                     (Key => Name,

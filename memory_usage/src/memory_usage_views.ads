@@ -70,7 +70,7 @@ private
       Obj_File : Virtual_File;
       Lib_File : Virtual_File;
       Origin   : Unbounded_String;
-      Size     : Integer;
+      Size     : Float;
    end record;
 
    package Module_Description_Lists is
@@ -79,7 +79,7 @@ private
    type Memory_Section_Description is record
       Name    : Unbounded_String;
       Origin  : Unbounded_String;
-      Length  : Integer;
+      Length  : Float;
       Modules : Module_Description_Lists.List;
    end record;
 
@@ -94,8 +94,8 @@ private
    type Memory_Region_Description is record
       Name      : Unbounded_String;
       Origin    : Unbounded_String;
-      Length    : Integer;
-      Used_Size : Integer;
+      Length    : Float;
+      Used_Size : Float;
       Sections  : Memory_Section_Description_Maps.Map;
    end record;
 
