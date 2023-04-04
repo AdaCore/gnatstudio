@@ -734,28 +734,36 @@ package body CodePeer.Bridge.Inspection_Readers.Base is
       end if;
 
       if Is_CPL then
-         CPL_Id := new CPL_Id_Type'
-           (Prj =>
-              Ada.Strings.Unbounded.To_Unbounded_String
-                (Attrs.Get_Value ("id_prj")),
-            File =>
-              Ada.Strings.Unbounded.To_Unbounded_String
-                (Attrs.Get_Value ("id_file")),
-            Subp =>
-              Ada.Strings.Unbounded.To_Unbounded_String
-                (Attrs.Get_Value ("id_subp")),
-            Kind =>
-              Ada.Strings.Unbounded.To_Unbounded_String
-                (Attrs.Get_Value ("id_kind")),
-            Tool =>
-              Ada.Strings.Unbounded.To_Unbounded_String
-                (Attrs.Get_Value ("id_tool")),
-            Key =>
-              Ada.Strings.Unbounded.To_Unbounded_String
-                (Attrs.Get_Value ("id_key")),
-            Key_Seq =>
-              Ada.Strings.Unbounded.To_Unbounded_String
-                (Attrs.Get_Value ("id_key_seq")));
+         declare
+            function Get (Attr : String) return Unbounded_String;
+            --  Return the value of the attribute Attr, or "" if not
+            --  set.
+
+            -----------
+            --  Get  --
+            -----------
+
+            function Get (Attr : String) return Unbounded_String is
+               use Ada.Strings.Unbounded;
+               Id : constant Integer :=  Attrs.Get_Index (Attr);
+
+            begin
+               if Id = -1 then
+                  return Null_Unbounded_String;
+
+               else
+                  return To_Unbounded_String (Attrs.Get_Value (Attr));
+               end if;
+            end Get;
+         begin
+            CPL_Id := new CPL_Id_Type'
+              (Prj => Get ("id_prj"),
+               File => Get ("id_file"),
+               Subp => Get ("id_subp"),
+               Kind => Get ("id_kind"),
+               Key => Get ("id_key"),
+               Key_Seq => Get ("id_key_seq"));
+         end;
       end if;
 
       Self.Update_CWE

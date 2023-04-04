@@ -169,7 +169,6 @@ package CodePeer is
       File    : Ada.Strings.Unbounded.Unbounded_String;
       Subp    : Ada.Strings.Unbounded.Unbounded_String;
       Kind    : Ada.Strings.Unbounded.Unbounded_String;
-      Tool    : Ada.Strings.Unbounded.Unbounded_String;
       Key     : Ada.Strings.Unbounded.Unbounded_String;
       Key_Seq : Ada.Strings.Unbounded.Unbounded_String;
    end record;

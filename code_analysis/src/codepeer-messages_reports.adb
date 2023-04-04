@@ -709,7 +709,7 @@ package body CodePeer.Messages_Reports is
         (Text_Renderer,
          "text",
          CodePeer.Messages_Summary_Models.Passed_Checks_Count_Column);
-      Column.Set_Visible (Analysis_Level > 0);
+      Column.Set_Visible (not Is_CPL and then Analysis_Level > 0);
       Dummy := Self.Analysis_View.Append_Column (Column);
 
       Gtk.Tree_View_Column.Gtk_New (Column);
@@ -720,7 +720,7 @@ package body CodePeer.Messages_Reports is
         (Text_Renderer,
          "text",
          CodePeer.Messages_Summary_Models.Total_Checks_Count_Column);
-      Column.Set_Visible (Analysis_Level > 0);
+      Column.Set_Visible (not Is_CPL and then Analysis_Level > 0);
       Dummy := Self.Analysis_View.Append_Column (Column);
 
       Gtk.Tree_View_Column.Gtk_New (Column);

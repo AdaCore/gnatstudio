@@ -61,7 +61,7 @@ save_and_export ()
                 GDK_PIXBUF_MODULE_FILE=$pixbuf_base/loaders.cache
                 ;;
             GTK_IM_MODULE_FILE)
-                GTK_IM_MODULE_FILE=$pixbuf_base/immodules.cache
+                GTK_IM_MODULE_FILE=$immodules_base/immodules.cache
                 ;;
             GDK_PIXBUF_MODULEDIR)
                 GDK_PIXBUF_MODULEDIR=$pixbuf_base/loaders
@@ -110,6 +110,17 @@ save_and_export LD_LIBRARY_PATH DYLD_FALLBACK_LIBRARY_PATH XDG_DATA_DIRS XDG_CON
 save_and_export GSETTINGS_BACKEND
 
 save_and_export DBUS_SESSION_BUS_ADDRESS
+
+if [[ -v APPIMAGE ]] ; then
+   # When run under AppImage, copy cache files to a temporary dir
+   # and regenerate them to match new $root
+   cache="$(mktemp -d)"
+   cp $pixbuf_base/loaders.cache $immodules_base/immodules.cache $cache
+   export GDK_PIXBUF_MODULE_FILE=$cache/loaders.cache
+   export GTK_IM_MODULE_FILE=$immodules_base/immodules.cache
+   $root/bin/gdk-pixbuf-query-loaders --update-cache
+   $root/bin/gdk-pixbuf-query-loaders --update-cache
+fi
 
 if [ "$debug" = debug ]; then
    gdb -args "$root/bin/${prog}_exe" "$@"

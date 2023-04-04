@@ -1,0 +1,11 @@
+[Desktop Entry]
+Name=GNAT Studio
+Exec=usr/bin/gnatstudio
+Icon=gnatstudio
+Type=Application
+Categories=Development
+
+X-AppImage-Name=GNAT Studio
+X-AppImage-Version=23.1
+X-AppImage-Arch=x86_64
+
