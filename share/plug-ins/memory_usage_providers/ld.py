@@ -53,15 +53,19 @@ class LD(core.MemoryUsageProvider):
             comp_command = project.get_attribute_as_string(
                 attribute="ide", package="compiler_command", index=lang)
 
-            if ("gcc" not in comp_driver or
-               (comp_command != '' and "gcc" not in comp_command)):
-                has_gcc_toolchain = False
-                break
+            # If we have a language with a non-GCC toolchain, don't enable
+            # the plugin, except if we are dealing with assembly
+            if lang.lower() != "asm":
+                if ("gcc" not in comp_driver or
+                (comp_command != '' and "gcc" not in comp_command)):
+                    has_gcc_toolchain = False
+                    break
 
         if not has_gcc_toolchain:
             return False
 
         ld_exe = target + '-ld'
+
 
         # Ensure that we don't even try to spawn ld if it's not in the PATH
         # to avoid displaying error messages in the Messages view.

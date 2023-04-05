@@ -167,8 +167,8 @@ package body Memory_Usage_Views is
         (Iter      : Gtk_Tree_Iter;
          Name      : String;
          Origin    : String;
-         Used_Size : Integer;
-         Length    : Integer;
+         Used_Size : Float;
+         Length    : Float;
          Icon_Name : String := "");
       --  Used to set the values of the given Iter
 
@@ -197,11 +197,11 @@ package body Memory_Usage_Views is
         (Iter      : Gtk_Tree_Iter;
          Name      : String;
          Origin    : String;
-         Used_Size : Integer;
-         Length    : Integer;
+         Used_Size : Float;
+         Length    : Float;
          Icon_Name : String := "")
       is
-         Percent : Gint := Gint (Float (Used_Size) / Float (Length) * 100.0);
+         Percent : Gint := Gint (Used_Size / Length * 100.0);
          Bg      : Glib.Values.GValue;
       begin
          if Percent > 100 then
@@ -224,7 +224,7 @@ package body Memory_Usage_Views is
                Percentage_Column      => As_Int (Percent),
                Percentage_Text_Column => As_String
                  (Format_Bytes (Used_Size) & " / "
-                  & (if Length = Integer'Last then
+                  & (if Length = Float'Last then
                        "unknown"
                     else
                        Format_Bytes (Length))),
