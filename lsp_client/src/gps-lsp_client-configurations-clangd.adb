@@ -882,11 +882,16 @@ package body GPS.LSP_Client.Configurations.Clangd is
       end if;
 
       for Option in reverse Formatting_Options loop
-         if not Exists (Option)
-           and then Check_Formatting_Option (Option, "", New_Value)
-         then
-            Current_Formatting_Options.Prepend (New_Value);
-            Changed := True;
+         if not Exists (Option) then
+            if Option = SortIncludes then
+               Current_Formatting_Options.Prepend
+                 (To_Unbounded_String ("SortIncludes: Never"));
+               Changed := True;
+
+            elsif Check_Formatting_Option (Option, "", New_Value) then
+               Current_Formatting_Options.Prepend (New_Value);
+               Changed := True;
+            end if;
          end if;
       end loop;
 
