@@ -80,10 +80,10 @@ package body String_Utils is
    -- Format_Bytes --
    ------------------
 
-   function Format_Bytes (Bytes : Integer) return String is
+   function Format_Bytes (Bytes : Float) return String is
       Aft     : constant Integer := 2;
       Exp     : constant Integer := 0;
-      Bytes_F : constant Float := Float (Bytes);
+      Bytes_F : constant Float := Bytes;
       Bytes_S : String (1 .. 64);
       Unit    : Unbounded_String;
       First   : Integer;

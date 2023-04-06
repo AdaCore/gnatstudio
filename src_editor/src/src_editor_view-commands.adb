@@ -696,6 +696,8 @@ package body Src_Editor_View.Commands is
            (MDI     => Get_MDI (Kernel),
             Widget  => Editor,
             Present => True);
+      else
+         Buffer.Insert (Line => Line, Column => Column, Text => " ");
       end if;
 
       return Success;
