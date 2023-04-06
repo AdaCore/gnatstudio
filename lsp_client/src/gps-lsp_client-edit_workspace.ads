@@ -30,8 +30,9 @@ package GPS.LSP_Client.Edit_Workspace is
       Auto_Save                : Boolean;
       Allow_File_Renaming      : Boolean;
       Locations_Message_Markup : String;
+      Error                    : out Boolean;
       Limit_Span               : LSP.Messages.Span := LSP.Messages.Empty_Span;
-      Error                    : out Boolean);
+      Compute_Minimal_Edits    : Boolean := False);
      --  Apply edit changes.
      --  Title is used for information/error dialogs and for the messages
      --  category when Show_Messages is True.
@@ -43,5 +44,10 @@ package GPS.LSP_Client.Edit_Workspace is
      --  Locations view; if it is not empty, it needs to be valid pango markup.
      --  Limit_Span is used to filter out Workspace_Edit and only allow Edits
      --  within it, do nothing when empty.
+     --  Compute_Minimal_Edits controls whether we'll try to split the given
+     --  Edits into smaller ones, allowing to preserve the current cursor's
+     --  position: thus, this should only be used in particular contexts
+     --  (e.g: formatting). This uses an implementation of the Myers diff
+     --  algorithm.
 
 end GPS.LSP_Client.Edit_Workspace;

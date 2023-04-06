@@ -21,6 +21,9 @@ with Ada.Strings.UTF_Encoding;
 
 with GNAT.Strings;
 
+with GNATCOLL.Traces;                 use GNATCOLL.Traces;
+with GNATCOLL.Scripts;                use GNATCOLL.Scripts;
+with GNATCOLL.Scripts.Python;         use GNATCOLL.Scripts.Python;
 with GNATCOLL.VFS;                    use GNATCOLL.VFS;
 
 with VSS.Strings.Conversions;
@@ -47,7 +50,6 @@ with Refactoring.UI;
 with String_Utils;
 with Src_Editor_Module;
 with VFS_Module;
-with GNATCOLL.Traces;                 use GNATCOLL.Traces;
 
 package body GPS.LSP_Client.Edit_Workspace is
 
@@ -65,6 +67,37 @@ package body GPS.LSP_Client.Edit_Workspace is
       Change : VSS.Strings.Virtual_String);
    --  Add to Map the contents of Change, converted to fit the needs
    --  of editor buffers.
+
+   procedure Debug_Print_Changes
+     (Msg     : String;
+      Changes : Maps.Map);
+   --  Trace the given edit changes.
+
+   function Get_Minimal_Changes
+     (Kernel   : not null access Kernel_Handle_Record'Class;
+      Editor   : GPS.Editors.Editor_Buffer'Class;
+      Changes  : Maps.Map) return Maps.Map;
+   --  Reduce the given changes to more minimal ones, to allow keeping track of
+   --  the cursor when applying TextEdits.
+   --
+   --  For example:
+   --     * Original text: "This is some text"
+   --     * New text: "This is the new text"
+   --
+   --  Instead of removing the whole original text and insert the new one, the
+   --  newly computed changes will be:
+   --
+   --     * Delete "some"
+   --     * Insert "the new"
+
+   procedure Get_Diff_Changes
+     (Kernel        : not null access Kernel_Handle_Record'Class;
+      Original_Span : LSP.Messages.Span;
+      Old_Text      : String;
+      New_Text      : String;
+      Changes       : out Maps.Map);
+   --  Compute the diff between Old_Text and New_Text using a Python
+   --  implementation of the Myers diff algorithm.
 
    type Edit_Workspace_Command is new Interactive_Command with
       record
@@ -90,12 +123,224 @@ package body GPS.LSP_Client.Edit_Workspace is
          Auto_Save                : Boolean;
          Allow_File_Renaming      : Boolean;
          Locations_Message_Markup : Unbounded_String;
+
+         Compute_Minimal_Edits    : Boolean := False;
+         --  Compute_Minimal_Edits controls whether we'll try to split the
+         --  given Edits into smaller ones, allowing to preserve the current
+         --  cursor's position: thus, this should only be used in particular
+         --  contexts (e.g: formatting). The computation is done through
+         --  an implementation of the Myers diff algorithm.
       end record;
    overriding function Execute
      (Command : access Edit_Workspace_Command;
       Context : Interactive_Command_Context) return Command_Return_Type;
    overriding function Undo
      (Command : access Edit_Workspace_Command) return Boolean;
+
+   -------------------------
+   -- Get_Minimal_Changes --
+   -------------------------
+
+   function Get_Minimal_Changes
+     (Kernel  : not null access Kernel_Handle_Record'Class;
+      Editor  : GPS.Editors.Editor_Buffer'Class;
+      Changes : Maps.Map) return Maps.Map
+   is
+      New_Changes : Maps.Map;
+      C           : Maps.Cursor;
+   begin
+      C := Changes.Last;
+
+      Trace (Me, "Nb changes: " & Integer'Image (Integer ((Changes.Length))));
+
+      while Maps.Has_Element (C) loop
+         declare
+            Span        : constant LSP.Messages.Span := Maps.Key (C);
+            From        : constant GPS.Editors.Editor_Location'Class :=
+              GPS.LSP_Client.Utilities.LSP_Position_To_Location
+                (Editor, Span.first);
+            To          : constant GPS.Editors.Editor_Location'Class :=
+              GPS.LSP_Client.Utilities.LSP_Position_To_Location
+                (Editor, Span.last);
+            Span_Text : constant String :=
+              Editor.Get_Chars
+                (From                 => From,
+                 To                   => To,
+                 Include_Hidden_Chars => False);
+            Old_Text    : constant String :=
+              Span_Text (Span_Text'First .. Span_Text'Last - 1);
+            New_Text    : String renames Maps.Element (C);
+         begin
+            Debug_Print_Changes
+              (Msg     => "Original edits:",
+               Changes =>  Changes);
+            Get_Diff_Changes
+              (Kernel        => Kernel,
+               Original_Span => Span,
+               Old_Text      => Old_Text,
+               New_Text      => New_Text,
+               Changes       => New_Changes);
+            Debug_Print_Changes
+              (Msg     => "New edits:",
+               Changes => New_Changes);
+         end;
+         Maps.Previous (C);
+      end loop;
+
+      return New_Changes;
+   end Get_Minimal_Changes;
+
+   ----------------------
+   -- Get_Diff_Changes --
+   ----------------------
+
+   procedure Get_Diff_Changes
+     (Kernel        : not null access Kernel_Handle_Record'Class;
+      Original_Span : LSP.Messages.Span;
+      Old_Text      : String;
+      New_Text      : String;
+      Changes       : out Maps.Map)
+   is
+      use LSP.Types;
+      use type VSS.Unicode.UTF16_Code_Unit_Count;
+
+      Script : constant GNATCOLL.Scripts.Scripting_Language :=
+        Kernel.Scripts.Lookup_Scripting_Language (Python_Name);
+      Data   : Callback_Data'Class := Create (Script, 2);
+
+      Cur_Delete_Cursor  : LSP.Messages.Position := Original_Span.first;
+      Next_Delete_Cursor : LSP.Messages.Position := Original_Span.first;
+      --  The buffer cursors that get updated each time we receive Delete/Keep
+      --  diff operations. This corresponds to characters being consumed in the
+      --  original state of the buffer after each diff operation, but without
+      --  modifying the actual buffer contents.
+
+      Cur_Insert_Cursor  : LSP.Messages.Position := Original_Span.first;
+      Next_Insert_Cursor : LSP.Messages.Position := Original_Span.first;
+      --  The buffer cursors that get updated each time we receive an
+      --  Insert/Keep diff operations. This corresponds to the buffer's cursor
+      --  as if we were applying each diff operation sequentially, with the
+      --  actual modifications to the buffer contents being peformed.
+
+      type Diff_Operation_Type is (Keep, Insert, Delete);
+      --  The type of diff operation.
+
+      function Print_Cursor
+        (Cursor : LSP.Messages.Position;
+         Name   : String) return String
+      is
+        (Name
+         & " ("
+         & Cursor.line'Img
+         & ", "
+         & Cursor.character'Img
+         & ")"
+         & ASCII.LF);
+
+      function Compute_New_Cursor
+        (Cursor : LSP.Messages.Position;
+         Str    : String) return LSP.Messages.Position;
+      --  Compute the the cursor's position according to the current diff
+      --  operation.
+
+      -----------------------
+      -- To_Diff_Operation --
+      -----------------------
+
+      function To_Diff_Operation (Num : Integer) return Diff_Operation_Type
+      is
+        (case Num is
+            when -1 => Delete,
+            when 0  => Keep,
+            when 1  => Insert,
+            when others => raise Constraint_Error);
+
+      ------------------------
+      -- Compute_New_Cursor --
+      ------------------------
+
+      function Compute_New_Cursor
+        (Cursor : LSP.Messages.Position;
+         Str    : String) return LSP.Messages.Position
+      is
+         New_Cursor : LSP.Messages.Position := Cursor;
+      begin
+         --  Iterate over the string that we are deleting/inserting/keeping
+         --  to update the buffer's cursor new position..
+
+         for J in Str'Range loop
+            --  If we are deleting/inserting/keeping a newline, make sure to
+            --  take it into account by going to the next line.
+            --  Otherwise, just forward the character offset.
+            if Str (J) = ASCII.LF then
+               New_Cursor.line := New_Cursor.line + 1;
+               New_Cursor.character := 0;
+            else
+               New_Cursor.character := New_Cursor.character + 1;
+            end if;
+         end loop;
+
+         return New_Cursor;
+      end Compute_New_Cursor;
+
+   begin
+      --  Call the Myers diff Python implementation
+      Set_Nth_Arg (Data, 1, Old_Text);
+      Set_Nth_Arg (Data, 2, New_Text);
+      Execute_Command (Data, "diff_match_patch.compute_diff");
+
+      --  Iterate over the results and create the new edit changes.
+      declare
+         Result : constant List_Instance'Class := Return_Value (Data);
+      begin
+         for J in 1 .. Number_Of_Arguments (Result) loop
+            declare
+               Item      : constant List_Instance'Class :=
+                 Result.Nth_Arg (J);
+               Operation : constant Diff_Operation_Type :=
+                 To_Diff_Operation (Item.Nth_Arg (1));
+               Str       : constant String := Item.Nth_Arg (2);
+            begin
+               case Operation is
+                  when Keep =>
+                     Next_Delete_Cursor :=
+                       Compute_New_Cursor (Cur_Delete_Cursor, Str);
+                     Next_Insert_Cursor :=
+                       Compute_New_Cursor (Cur_Insert_Cursor, Str);
+
+                  when Delete =>
+                     Next_Delete_Cursor :=
+                       Compute_New_Cursor (Cur_Delete_Cursor, Str);
+                     Changes.Insert
+                       (Key      => (first => Cur_Delete_Cursor,
+                                     last  => Next_Delete_Cursor),
+                        New_Item => "");
+
+                  when Insert =>
+                     Next_Insert_Cursor :=
+                       Compute_New_Cursor (Cur_Insert_Cursor, Str);
+                     Changes.Insert
+                       (Key      => (first => Cur_Insert_Cursor,
+                                     last  => Cur_Insert_Cursor),
+                        New_Item => Str);
+               end case;
+
+               Trace
+                 (Me,
+                  "===" & ASCII.LF
+                  & Operation'Img & ": '" & Str & "'" & ASCII.LF
+                  & Print_Cursor (Cur_Insert_Cursor, "Cur_Insert")
+                  & Print_Cursor (Next_Insert_Cursor, "Next_Insert")
+                  & Print_Cursor (Cur_Delete_Cursor, "Cur_Delete")
+                  & Print_Cursor (Next_Delete_Cursor, "Next_Delete")
+                  & "===" & ASCII.LF);
+
+               Cur_Delete_Cursor := Next_Delete_Cursor;
+               Cur_Insert_Cursor := Next_Insert_Cursor;
+            end;
+         end loop;
+      end;
+   end Get_Diff_Changes;
 
    -------------------
    -- Insert_Change --
@@ -131,11 +376,54 @@ package body GPS.LSP_Client.Edit_Workspace is
 
    begin
       if Left.first.line = Right.first.line then
-         return Left.first.character < Right.first.character;
+         if Left.first.character = Right.first.character then
+            if Left.last.line = Right.last.line then
+               return Left.last.character < Right.last.character;
+            else
+               return Left.last.line < Right.last.line;
+            end if;
+         else
+            return Left.first.character < Right.first.character;
+         end if;
       else
          return Left.first.line < Right.first.line;
       end if;
    end "<";
+
+   -------------------------
+   -- Debug_Print_Changes --
+   -------------------------
+
+   procedure Debug_Print_Changes
+     (Msg     : String;
+      Changes : Maps.Map)
+   is
+      C : Maps.Cursor;
+   begin
+      Trace (Me, Msg);
+      C := Changes.Last;
+
+      while Maps.Has_Element (C) loop
+         declare
+            Span : constant LSP.Messages.Span := Maps.Key (C);
+            New_Text : constant String := Maps.Element (C);
+         begin
+            Trace
+              (Me,
+               ((if New_Text = "" then "* Delete " else "* Insert ")
+                & "from ("
+                & Span.first.line'Img
+                & ","
+                & Span.first.character'Img
+                & ") to ("
+                & Span.last.line'Img
+                & ","
+                & Span.last.character'Img
+                & ") new text:" & New_Text));
+            Maps.Previous (C);
+         end;
+      end loop;
+   end Debug_Print_Changes;
 
    -------------
    -- Execute --
@@ -145,8 +433,9 @@ package body GPS.LSP_Client.Edit_Workspace is
      (Command : access Edit_Workspace_Command;
       Context : Interactive_Command_Context) return Command_Return_Type
    is
+      Kernel : Kernel_Handle renames Command.Kernel;
       Buffer_Factory : constant Editor_Buffer_Factory_Access :=
-        Get_Buffer_Factory (Command.Kernel);
+        Get_Buffer_Factory (Kernel);
 
       Error  : Boolean := False;
       Errors : Refactoring.UI.Source_File_Set;
@@ -254,6 +543,10 @@ package body GPS.LSP_Client.Edit_Workspace is
          Ignored  : GPS.Kernel.Messages.Markup.Markup_Message_Access;
          URI      : constant LSP.Messages.DocumentUri :=
            GPS.LSP_Client.Utilities.To_URI (File);
+         Changes  : constant Maps.Map :=
+           (if Command.Compute_Minimal_Edits then
+               Get_Minimal_Changes (Kernel, Editor, Map)
+            else Map);
       begin
          if Command.Make_Writable
            and then Editor.Is_Read_Only
@@ -266,7 +559,7 @@ package body GPS.LSP_Client.Edit_Workspace is
          --  Sort changes for applying them in reverse direction
          --  from the last to the first line
 
-         C := Map.Last;
+         C := Changes.Last;
          while Maps.Has_Element (C) loop
             declare
                use type Visible_Column_Type;
@@ -736,8 +1029,9 @@ package body GPS.LSP_Client.Edit_Workspace is
       Auto_Save                : Boolean;
       Allow_File_Renaming      : Boolean;
       Locations_Message_Markup : String;
+      Error                    : out Boolean;
       Limit_Span               : LSP.Messages.Span := LSP.Messages.Empty_Span;
-      Error                    : out Boolean)
+      Compute_Minimal_Edits    : Boolean := False)
    is
       Command : Command_Access := new Edit_Workspace_Command'
         (Root_Command with
@@ -752,7 +1046,8 @@ package body GPS.LSP_Client.Edit_Workspace is
          Auto_Save                => Auto_Save,
          Allow_File_Renaming      => Allow_File_Renaming,
          Locations_Message_Markup =>
-           To_Unbounded_String (Locations_Message_Markup));
+           To_Unbounded_String (Locations_Message_Markup),
+         Compute_Minimal_Edits    =>  Compute_Minimal_Edits);
 
    begin
       Src_Editor_Module.Set_Global_Command (Command);
