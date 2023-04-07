@@ -44,6 +44,11 @@ package body CodePeer.Module.Actions is
       Context : GPS.Kernel.Selection_Context) return Boolean;
    --  Returns True when show/hide annotations is allowed.
 
+   function Get_Target_Name (Orig_Name : String) return String is
+      ((if Is_CPL then "CPL " else "") & Orig_Name);
+   --  Add the "CPL " prefix to a target name in case we are dealing
+   --  with a cpl CodePeer.
+
    -------------
    -- Execute --
    -------------
@@ -55,7 +60,7 @@ package body CodePeer.Module.Actions is
       pragma Unreferenced (Context);
 
    begin
-      Self.Module.Review (False, "Run CodePeer...");
+      Self.Module.Review (False, Get_Target_Name ("Run CodePeer..."));
 
       return Success;
    end Execute;
@@ -71,7 +76,7 @@ package body CodePeer.Module.Actions is
       pragma Unreferenced (Context);
 
    begin
-      Self.Module.Review (True, "Run CodePeer");
+      Self.Module.Review (True, Get_Target_Name ("Run CodePeer"));
 
       return Success;
    end Execute;
@@ -99,8 +104,9 @@ package body CodePeer.Module.Actions is
 
       CodePeer.Shell_Commands.Build_Target_Execute
         (Kernel      => Kernel,
-         Target_ID   => CodePeer.Shell_Commands.Build_Target (Kernel,
-           "Run CodePeer File"),
+         Target_ID   =>
+           CodePeer.Shell_Commands.Build_Target
+             (Kernel, Get_Target_Name ("Run CodePeer File")),
          Force       => True,
          Synchronous => False);
       return Success;
@@ -116,7 +122,8 @@ package body CodePeer.Module.Actions is
    is
       pragma Unreferenced (Self);
 
-      Build_Target : constant String := "Run CodePeer File By File";
+      Build_Target : constant String :=
+        Get_Target_Name ("Run CodePeer File By File");
 
       Kernel   : constant Kernel_Handle := Get_Kernel (Context.Context);
       Project  : constant Project_Type  := Get_Project (Kernel);
@@ -204,7 +211,8 @@ package body CodePeer.Module.Actions is
      (Self    : access Generate_CSV_Command;
       Context : Interactive_Command_Context) return Command_Return_Type
    is
-      Build_Target : constant String := "Generate CSV Report";
+      Build_Target : constant String :=
+        Get_Target_Name ("Generate CSV Report");
 
       Kernel   : constant Kernel_Handle := Get_Kernel (Context.Context);
       Project  : constant Project_Type  := Get_Project (Kernel);
@@ -249,7 +257,8 @@ package body CodePeer.Module.Actions is
      (Self    : access Generate_HTML_Command;
       Context : Interactive_Command_Context) return Command_Return_Type
    is
-      Build_Target : constant String := "Generate HTML Report";
+      Build_Target : constant String :=
+        Get_Target_Name ("Generate HTML Report");
 
       Kernel   : constant Kernel_Handle := Get_Kernel (Context.Context);
       Project  : constant Project_Type  := Get_Project (Kernel);
@@ -299,7 +308,8 @@ package body CodePeer.Module.Actions is
       CodePeer.Shell_Commands.Build_Target_Execute
         (Kernel      => Kernel,
          Target_ID   =>
-           CodePeer.Shell_Commands.Build_Target (Kernel, "Generate SCIL"),
+           CodePeer.Shell_Commands.Build_Target
+             (Kernel, Get_Target_Name ("Generate SCIL")),
          Force       => False,
          Synchronous => False);
       return Success;
@@ -358,7 +368,7 @@ package body CodePeer.Module.Actions is
 
    begin
       Review
-        (Self.Module, False, "Regenerate CodePeer Report");
+        (Self.Module, False, Get_Target_Name ("Regenerate CodePeer Report"));
 
       return Success;
    end Execute;
@@ -495,7 +505,8 @@ package body CodePeer.Module.Actions is
       CodePeer.Shell_Commands.Build_Target_Execute
         (Kernel      => Kernel,
          Target_ID   =>
-           CodePeer.Shell_Commands.Build_Target (Kernel, "Remove SCIL"),
+           CodePeer.Shell_Commands.Build_Target
+             (Kernel, Get_Target_Name ("Remove SCIL")),
          Force       => True,
          Build_Mode  => "codepeer",
          Synchronous => False);
