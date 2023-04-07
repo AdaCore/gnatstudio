@@ -214,17 +214,6 @@ doc = """<?xml version="1.0"?>
 attributes = """
     <project_attribute
       package="CodePeer"
-      name="Output_Directory"
-      editor_page="CodePeer"
-      editor_section="CodePeer configuration"
-      label="Output directory"
-      hide_in="wizard gnatname_wizard library_wizard"
-      description="CodePeer output directory to use for this project.">
-      <string type="directory"/>
-    </project_attribute>
-
-    <project_attribute
-      package="CodePeer"
       name="CPM_Directory"
       editor_page="CodePeer"
       editor_section="CodePeer configuration"
