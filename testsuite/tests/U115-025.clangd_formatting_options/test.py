@@ -5,8 +5,8 @@ from gs_utils.internal.utils import run_test_driver, gps_assert, \
     wait_tasks, wait_idle, wait_language_server
 
 
-LLVM = """#include "my_class.hh"
-#include <iostream>
+LLVM = """#include <iostream>
+#include "my_class.hh"
 
 using namespace std;
 
@@ -27,7 +27,6 @@ int main() {
 """
 
 Google = """#include <iostream>
-
 #include "my_class.hh"
 
 using namespace std;
@@ -69,8 +68,8 @@ int main() {
 }
 """
 
-Mozilla = """#include "my_class.hh"
-#include <iostream>
+Mozilla = """#include <iostream>
+#include "my_class.hh"
 
 using namespace std;
 
@@ -92,8 +91,8 @@ main()
 }
 """
 
-WebKit = """#include "my_class.hh"
-#include <iostream>
+WebKit = """#include <iostream>
+#include "my_class.hh"
 
 using namespace std;
 
@@ -114,8 +113,8 @@ int main()
 }
 """
 
-Microsoft = """#include "my_class.hh"
-#include <iostream>
+Microsoft = """#include <iostream>
+#include "my_class.hh"
 
 using namespace std;
 
@@ -136,8 +135,8 @@ int main()
 }
 """
 
-GNU = """#include "my_class.hh"
-#include <iostream>
+GNU = """#include <iostream>
+#include "my_class.hh"
 
 using namespace std;
 
@@ -159,8 +158,8 @@ main ()
 }
 """
 
-ContinuationIndentWidth = """#include "my_class.hh"
-#include <iostream>
+ContinuationIndentWidth = """#include <iostream>
+#include "my_class.hh"
 
 using namespace std;
 
@@ -180,8 +179,8 @@ int main() {
 }
 """
 
-ColumnLimit = """#include "my_class.hh"
-#include <iostream>
+ColumnLimit = """#include <iostream>
+#include "my_class.hh"
 
 using namespace std;
 
@@ -203,8 +202,8 @@ int main() {
 }
 """
 
-IndentWidth = """#include "my_class.hh"
-#include <iostream>
+IndentWidth = """#include <iostream>
+#include "my_class.hh"
 
 using namespace std;
 
@@ -224,8 +223,8 @@ int main() {
 }
 """
 
-ReflowComments = """#include "my_class.hh"
-#include <iostream>
+ReflowComments = """#include <iostream>
+#include "my_class.hh"
 
 using namespace std;
 

@@ -13,10 +13,12 @@ from gs_utils.internal.utils import *
 def driver():
     first_line = ""
     with open(os.path.join(GPS.pwd(), 'src', '.clang-format')) as f:
-        first_line = f.readline()
+        lines = f.readlines()
 
-    gps_assert(first_line.strip(), "BasedOnStyle: GNU",
-               "GS should not override .clang-format files at startup")
+    try:
+       Idx = lines.index("BasedOnStyle: GNU\n")
+    except ValueError:
+       simple_error("GS should not override .clang-format files at startup")
 
     # Change the clang formatting style: we should have a confirmation dialog
     # displayed
@@ -31,13 +33,15 @@ def driver():
     #  one) in the .clang-format file
     with open(os.path.join(GPS.pwd(), 'src', '.clang-format')) as f:
         lines = f.readlines()
-        first_line = lines[0]
-        last_line = lines[-1]
 
-    gps_assert(first_line.strip(), "BasedOnStyle: LLVM",
-               "GS should override .clang-format corresponding setting")
-    gps_assert(last_line.strip(), "AllowShortBlocksOnASingleLine: Always",
-               "GS should override .clang-format corresponding setting")
+    try:
+       Idx = lines.index("BasedOnStyle: LLVM\n")
+    except ValueError:
+       simple_error("GS should override .clang-format corresponding setting")
+    try:
+       Idx = lines.index("AllowShortBlocksOnASingleLine: Always\n")
+    except ValueError:
+       simple_error("GS should override .clang-format corresponding setting")
 
     # Revert to the original state
     yield idle_modal_dialog(
