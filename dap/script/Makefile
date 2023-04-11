@@ -7,7 +7,7 @@ all: create pretty
 create: dap.json header.adt
 	${GEN_JSON} --root-package DAP.Tools \
 	  --enum-package Enum --header-file header.adt \
-	  dap.json > dap_tools.txt
+	  debugAdapterProtocol.json > dap_tools.txt
 	gnatchop -w dap_tools.txt ${GPS_DIR}
 
 pretty:
