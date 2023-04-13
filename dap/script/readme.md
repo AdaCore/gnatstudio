@@ -32,7 +32,7 @@ It works with relative path and will put the generated code in the
 
 # How to bump to a new protocol version (or produce code for a specific one)
 
-One must download the desired JSON specification file, name it `dap.json`
+One must download the desired JSON specification file (`debugAdapterProtocol.json`)
 and put it in the `script` directory.
 
 The live version of the specification can be found at this address:
