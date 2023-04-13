@@ -811,6 +811,10 @@ package body Command_Lines is
                                 Separator => (Is_Set => False),
                                 Value     => Arg,
                                 Key       => Null_Unbounded_String)));
+            elsif Count (Switch, "=") /= Count (Item.Switch, "=") then
+               --  Avoid infinite recursion between --foo=a and --foo
+               --  (value defined vs default value)
+               exit;
             elsif Switch /= Item.Switch then  --  Avoid infinite recursion
                Process_Switch ((Switch, Parameter => Null_Argument));
             end if;
