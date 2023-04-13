@@ -341,7 +341,7 @@ package CodePeer is
 
    type File_Data is new Code_Analysis.CodePeer_Data_Root with record
       Lifeage            : Lifeage_Kinds;
-      Total_Checks       : Natural;
+      Total_Checks       : Natural := 0;
 
       Annotations_File   : GNATCOLL.VFS.Virtual_File;
       Annotations_Loaded : Boolean;
