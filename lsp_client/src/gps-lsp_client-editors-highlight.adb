@@ -400,8 +400,15 @@ package body GPS.LSP_Client.Editors.Highlight is
          declare
             Holder   : constant Controlled_Editor_Buffer_Holder :=
               Kernel.Get_Buffer_Factory.Get_Holder (File);
+
+            --  Highlighting the entity under the cursor, so use
+            --  the information from New_Highlighting_Context that contains
+            --  entity's start column as a column
+            --  (get by Entity_Column_Information above).
             Location : constant GPS.Editors.Editor_Location'Class :=
-              Holder.Editor.New_Location (Line, Visible_Column_Type (Column));
+              Holder.Editor.New_Location
+                (New_Highlighting_Context.Line,
+                 New_Highlighting_Context.Column);
          begin
             --  Return immediately if the location is not valid
             if Location = Nil_Editor_Location then
