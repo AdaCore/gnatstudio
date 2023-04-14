@@ -956,9 +956,12 @@ package body GVD.Breakpoints_List is
       --  is started are set when the debugger starts, but not those set while
       --  the debugger is running
 
-      if Visual_Debugger (Debugger).Debugger.Get_Executable = No_File then
-         --  If there was no executable, we did not even try to set
+      if Visual_Debugger (Debugger).Descriptor.Program = No_File then
+         --  If there was no executable (debugger initialized with
+         --  "no main file"), we did not even try to set
          --  breakpoints, so don't save them either
+         --  Do not use Process.Debugger.Get_Executable because it can be
+         --  changed by Attach/Load executable.
 
          --  Remove breakpoint markers from sources
          Get_Messages_Container (Kernel).Remove_Category
@@ -1044,10 +1047,13 @@ package body GVD.Breakpoints_List is
       Id               : Breakpoint_Identifier;
       Warning_Displayed : Boolean := False;
    begin
-      if Process.Debugger.Get_Executable = No_File then
+      if Process.Descriptor.Program = No_File then
          --  Do not try to restore breakpoints, since the debugger has no
          --  source anyway. We do not want to lose the list of persistent
          --  breakpoints.
+         --  Do not use Process.Debugger.Get_Executable because it may
+         --  be changed during Attach/Load executable and in this case we
+         --  will not have proper project
          return;
       end if;
 
