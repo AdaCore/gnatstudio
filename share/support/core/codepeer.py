@@ -21,7 +21,8 @@ from xml.sax.saxutils import escape
 
 codepeer = os_utils.locate_exec_on_path("codepeer")
 
-is_cpl = str(os_utils.locate_exec_on_path("cpm-gs-bridge")).startswith(str(os.path.dirname(codepeer)))
+is_cpl = str(os_utils.locate_exec_on_path("cpm-gs-bridge")).startswith(
+    str(os.path.dirname(codepeer)))
 
 if is_cpl:
     from codepeer_xml import xmlHead, xmlTrailer, xml_codepeer
@@ -30,15 +31,24 @@ else:
 
 prev_xml = ""
 
+
 def get_supported_warnings():
     global prev_xml
     default_on = ""
     # Then retrieve warnings checks from gnatmake
     xml = """
        <popup label="Warnings">
-       <expansion switch="--gnat-warnings="/>
-    """
+       <check label="Activate Default Warnings"
+              switch="--gnat-warnings={default_on}"
+              column="1"
+              tip="Use the default warnings of GNAT front-end" />
+       <expansion switch="--gnat-warnings"
+                  alias="--gnat-warnings={default_on}"/>
+       <expansion switch="--gnat-warnings=" />"""
+
     rules = gs_utils.gnat_rules.get_warnings_list("codepeer-gnatmake", "-h")
+    # Already have "Activate Default Warnings" in column 1
+    cpt_rule = 1
     for rule in rules:
         r = copy.deepcopy(rule)
         default_on += r.switch[6:] if r.default else ""
@@ -49,15 +59,15 @@ def get_supported_warnings():
         r.before = False
         for dep in r.dependencies:
             dep[0] = re.sub("-gnatw", "--gnat-warnings=", dep[0])
-        xml += r.Xml(1, 1)
-
-    xml += "<expansion switch='--gnat-warnings' alias='--gnat-warnings="
-    xml += default_on
-    xml += "'/>"
+        # Split options between column 1 and 2
+        xml += r.Xml(1, cpt_rule % 2 + 1)
+        cpt_rule += 1
     xml += "</popup>"
 
     if prev_xml != xml:
-        GPS.parse_xml(xmlHead + xml + xmlTrailer)
+        GPS.parse_xml(xmlHead
+                      + xml.format(default_on=default_on)
+                      + xmlTrailer)
         prev_xml = xml
 
 

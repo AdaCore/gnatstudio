@@ -693,10 +693,6 @@ Also force the generation of all SCIL files." />
                 column="2" tip="Disable Infer analysis." />
          <check label="GNATcheck" switch="--gnatcheck"
                 column="2" tip="Launch GNATcheck and collect its messages." />
-         <check label="GNAT warnings" switch="--gnat-warnings"
-                column="2"
-                tip="Launch GNAT front-end and collect its warnings" />
-
 """
 
 xmlTrailer = """

@@ -335,8 +335,8 @@ package body CodePeer.Messages_Summary_Models is
             elsif Project_Node /= null then
                declare
                   Total  : constant Natural := Project_Node.Total_Checks;
-                  Passed : constant Natural :=
-                    Total - Project_Node.Checks_Count;
+                  Passed : constant Integer :=
+                    Integer'Max (Total - Project_Node.Checks_Count, 0);
 
                begin
                   Glib.Values.Init (Value, Glib.GType_String);
@@ -351,7 +351,7 @@ package body CodePeer.Messages_Summary_Models is
                   Counts : CodePeer.Utilities.Messages_Counts;
                   Checks : Natural;
                   Totals : Natural;
-                  Passed : Natural;
+                  Passed : Integer;
 
                begin
                   CodePeer.Utilities.Compute_Messages_Count
@@ -365,7 +365,7 @@ package body CodePeer.Messages_Summary_Models is
                      Checks,
                      Totals);
 
-                  Passed := Totals - Checks;
+                  Passed := Integer'Max (Totals - Checks, 0);
                   Glib.Values.Init (Value, Glib.GType_String);
                   Glib.Values.Set_String
                     (Value,
