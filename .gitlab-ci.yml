@@ -51,7 +51,7 @@ build_and_test:
 
     # Pass --latest to the test command to ensure the CI remains
     # available even if a dependency is not available.
-    - anod test gps --minimal --latest
+    - anod test gps -Qcodepeer --minimal --latest
 
     # Process the report
     - e3-testsuite-report
