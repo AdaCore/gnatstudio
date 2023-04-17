@@ -452,7 +452,8 @@
                   optional='true'                            hide='true'/>
             <menu label="_Dependency Browser"                action="open dependency browser"/>
             <menu label="_Elaboration Circularities Browser" action="open elaboration circularities"/>
-            <menu label="E_ntity Browser"                    action="open entity browser"/>
+            <menu label="E_ntity Browser"                    action="open entity browser"
+                  optional='true'/>
             <menu label="Project Browser"                   action="open project browser"/>
          </menu>
          <menu label="Ca_ll Trees"                action="open call trees"/>

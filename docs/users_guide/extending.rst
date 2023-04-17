@@ -4799,11 +4799,6 @@ The name of the language is optional, and defaults to python::
 You can also specify in-line commands directly on the command line through
 :command:`--eval` command line switch.
 
-For example, if you want to analyze an entity in the entity browser from
-the command line, you would pass the following command switches::
-
-  gnatstudio --eval=shell:'Entity entity_name file_name; Entity.show %1'
-
 The language defaults to python, as for :command:`--load`.
 
 See the section :ref:`Customizing_through_XML_and_Python_files` on how to
