@@ -51,13 +51,13 @@ build_and_test:
 
     # Pass --latest to the test command to ensure the CI remains
     # available even if a dependency is not available.
-    - anod test gps --minimal --latest
+    - anod test gps -Qcodepeer --minimal --latest
 
     # Process the report
     - e3-testsuite-report
        --failure-exit-code 1
        --xunit-output $CI_PROJECT_DIR/xunit_output.xml
-       x86_64-linux/gps-test/results/new/ || FAILED=true
+       x86_64-linux/gps-cp-test/results/new/ || FAILED=true
 
     - if [ ! -z ${FAILED+x} ]; then echo "There was at least one testcase failure" && exit 1; fi
 
