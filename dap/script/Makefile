@@ -1,10 +1,10 @@
-GEN_JSON    = gen_json
+GEN_JSON    = ./gen_json
 GPS_DIR     = ../generated
 GNATPP_OPTS = --comments-fill --no-align-modes --no-separate-is --call-threshold=1 --par-threshold=2
 
 all: create pretty
 
-create: dap.json header.adt
+create: debugAdapterProtocol.json header.adt
 	${GEN_JSON} --root-package DAP.Tools \
 	  --enum-package Enum --header-file header.adt \
 	  debugAdapterProtocol.json > dap_tools.txt
