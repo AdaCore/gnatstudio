@@ -50,7 +50,7 @@ package body DAP.Requests.Launch is
       Tmp        : Virtual_File;
 
       A            : Unbounded_String := Args;
-      End_Of_Exec  : Natural;
+      End_Of_Exec  : Natural := 1;
       Exec         : Virtual_File;
       Blank_Pos    : Integer;
 
@@ -61,10 +61,12 @@ package body DAP.Requests.Launch is
       function Get_Args return String;
       function Get_Args return String is
       begin
-         if Length (A) = 0 then
+         if Length (A) = 0
+           or else End_Of_Exec >= Length (A)
+         then
             return "";
          else
-            return " " & To_String (A);
+            return " " & Slice (A, End_Of_Exec, Length (A));
          end if;
       end Get_Args;
 

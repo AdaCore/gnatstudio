@@ -67,20 +67,23 @@ private
         DAP.Tools.InitializeRequest'
           (seq       => 0,
            arguments =>
-             (adapterID                    => "0",
-              clientID                     => "0",
-              clientName                   => "GNATSTUDIO",
-              locale                       => "en-US",
-              pathFormat                   =>
+             (adapterID                           => "0",
+              clientID                            => "0",
+              clientName                          => "GNATSTUDIO",
+              locale                              => "en-US",
+              pathFormat                          =>
                 (Is_Set => True, Value => DAP.Tools.Enum.path),
-              columnsStartAt1              => True,
-              linesStartAt1                => True,
-              supportsInvalidatedEvent     => False,
-              supportsMemoryReferences     => False,
-              supportsProgressReporting    => True,
-              supportsRunInTerminalRequest => False,
-              supportsVariablePaging       => False,
-              supportsVariableType         => True));
+              columnsStartAt1                     => True,
+              linesStartAt1                       => True,
+              supportsInvalidatedEvent            => False,
+              supportsMemoryEvent                 => False,
+              supportsMemoryReferences            => False,
+              supportsProgressReporting           => True,
+              supportsRunInTerminalRequest        => False,
+              supportsVariablePaging              => False,
+              supportsVariableType                => True,
+              supportsArgsCanBeInterpretedByShell => False,
+              supportsStartDebuggingRequest       => True));
 
       Project : GNATCOLL.Projects.Project_Type;
       File    : GNATCOLL.VFS.Virtual_File;
