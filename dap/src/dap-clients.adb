@@ -47,21 +47,23 @@ with GPS.Kernel.Project;
 with LSP.Types;
 with LSP.JSON_Streams;
 
-with DAP.Views.Consoles;
 with DAP.Module;
 with DAP.Modules.Preferences;
 with DAP.Requests.Evaluate;
 with DAP.Requests.Initialize;
 with DAP.Requests.Disconnects;
 with DAP.Requests.StackTraces;
+with DAP.Views.Consoles;
+with DAP.Views.Memory;
 with DAP.Tools.Inputs;
 with DAP.Utils;
 
 with Interactive_Consoles;       use Interactive_Consoles;
 with GUI_Utils;
-with Remote;
 with Language_Handlers;          use Language_Handlers;
+with String_Utils;
 with Toolchains;                 use Toolchains;
+with Remote;
 
 package body DAP.Clients is
 
@@ -91,7 +93,7 @@ package body DAP.Clients is
    -- Evaluate_Request --
    type Evaluate_Kind is
      (Show_Lang, Set_Lang, Restore_Lang, List_Adainit,
-      Info_Line, Info_First_Line, Hover);
+      Info_Line, Info_First_Line, Hover, Variable_Address, Endian);
    type Evaluate_Request is
      new DAP.Requests.Evaluate.Evaluate_DAP_Request
    with record
@@ -124,6 +126,11 @@ package body DAP.Clients is
        ("^(?:The current source language is|Current language:) +"
         & """?(?:auto; currently )?([^""\t ]+)(?:""\.)?");
    --  Pattern used to detect language changes in the debugger
+
+   Endian_Pattern            : constant VSS.Regular_Expressions.
+     Regular_Expression := VSS.Regular_Expressions.To_Regular_Expression
+       ("little endian");
+   --  Pattern used to detect endian
 
    --------------
    -- On_Error --
@@ -560,14 +567,26 @@ package body DAP.Clients is
       return GNATCOLL.VFS.Create (GNATCOLL.VFS."+"(To_String (Self.File)));
    end Get_Executable;
 
+   ------------------
+   -- Get_Language --
+   ------------------
+
+   function Get_Language
+     (Self : in out DAP_Client) return Language_Access is
+   begin
+      --  To-Do: Check if language is detected
+      return Get_Language_By_Name
+        (GPS.Kernel.Get_Language_Handler (Self.Kernel),
+         VSS.Strings.Conversions.To_UTF_8_String (Self.Stored_Lang));
+   end Get_Language;
+
    ---------------------
    -- Get_Endian_Type --
    ---------------------
 
    function Get_Endian_Type (Self : in out DAP_Client) return Endian_Type is
-      pragma Unreferenced (Self);
    begin
-      return Little_Endian;
+      return Self.Endian;
    end Get_Endian_Type;
 
    -----------------------
@@ -670,7 +689,7 @@ package body DAP.Clients is
    ------------------------
 
    function Get_Selected_Frame
-     (Self : in out DAP_Client) return Integer is
+     (Self : DAP_Client) return Integer is
    begin
       return Self.Selected_Frame;
    end Get_Selected_Frame;
@@ -1800,7 +1819,7 @@ package body DAP.Clients is
          Req.Parameters.arguments.frameId := (Is_Set => True, Value => Frame);
       end if;
       Req.Parameters.arguments.context :=
-        (Is_Set => True, Value => DAP.Tools.Enum.hover);
+        (Is_Set => True, Value => DAP.Tools.Enum.repl);
       Self.Enqueue (DAP.Requests.DAP_Request_Access (Req));
    end Value_Of;
 
@@ -1879,6 +1898,19 @@ package body DAP.Clients is
                                            then Match.Captured (1)
                                            else "auto");
             end;
+            Command (Endian, "show endian");
+
+         when Endian =>
+            declare
+               Match : VSS.Regular_Expressions.Regular_Expression_Match;
+            begin
+               Self.Client.Endian := (if Match.Has_Match
+                                      then Little_Endian
+                                      else Big_Endian);
+
+               Match := Endian_Pattern.Match (Result.a_body.result);
+            end;
+
             Command (Set_Lang, "set lang c");
 
          when Set_Lang =>
@@ -1948,6 +1980,19 @@ package body DAP.Clients is
                  (VSS.Strings.Conversions.To_UTF_8_String
                       (Result.a_body.result)));
             Unref (GObject (Self.Label));
+
+         when Variable_Address =>
+            declare
+               S     : constant String := VSS.Strings.Conversions.
+                 To_UTF_8_String (Result.a_body.result);
+               Index : Integer := S'Last;
+            begin
+               String_Utils.Skip_To_Char (S, Index, 'x', Step => -1);
+               if Index >= S'First then
+                  DAP.Views.Memory.Display_Memory
+                    (Self.Kernel, "0" & S (Index .. S'Last));
+               end if;
+            end;
       end case;
    end On_Result_Message;
 
@@ -2007,6 +2052,7 @@ package body DAP.Clients is
    overriding procedure On_Rejected (Self : in out Evaluate_Request) is
    begin
       if Self.Kind = Hover then
+         Self.Label.Set_Markup ("<b>Debugger value :</b> (rejected)");
          Unref (GObject (Self.Label));
       else
          Self.Client.On_Ready;
@@ -2022,6 +2068,7 @@ package body DAP.Clients is
       Message : VSS.Strings.Virtual_String) is
    begin
       if Self.Kind = Hover then
+         Self.Label.Set_Markup ("<b>Debugger value :</b> (error)");
          Unref (GObject (Self.Label));
       else
          Self.Client.On_Ready;
@@ -2056,13 +2103,29 @@ package body DAP.Clients is
    -- Get_Variable_Address --
    --------------------------
 
-   function Get_Variable_Address
-     (Self     : DAP_Client;
-      Variable : String)
-      return String is
+   procedure Get_Variable_Address
+     (Self     : in out DAP_Client;
+      Variable : String) is
    begin
-      --  Not implemented yet.
-      return "";
+      if Variable /= "" then
+         declare
+            Req   : Evaluate_Request_Access :=
+              new Evaluate_Request (Self.Kernel);
+            Frame : constant Integer := Self.Get_Selected_Frame;
+         begin
+            Req.Kind   := Variable_Address;
+            Req.Client := Self.This;
+            Req.Parameters.arguments.expression := VSS.Strings.Conversions.
+              To_Virtual_String ("print &(" & Variable & ")");
+            if Frame /= 0 then
+               Req.Parameters.arguments.frameId :=
+                 (Is_Set => True, Value => Frame);
+            end if;
+            Req.Parameters.arguments.context :=
+              (Is_Set => True, Value => DAP.Tools.Enum.repl);
+            Self.Enqueue (DAP.Requests.DAP_Request_Access (Req));
+         end;
+      end if;
    end Get_Variable_Address;
 
 end DAP.Clients;
