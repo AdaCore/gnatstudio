@@ -37,7 +37,8 @@ package body DAP.Requests.Disconnects is
         (Is_Set => True,
          Value  =>
            (restart           => False,
-            terminateDebuggee => Terminate_Debuggee));
+            terminateDebuggee => Terminate_Debuggee,
+            suspendDebuggee   => False));
    end Initialize;
 
    -----------

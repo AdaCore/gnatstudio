@@ -65,7 +65,8 @@ private
              (Is_Set => True,
               Value  =>
                 (restart           => False,
-                 terminateDebuggee => True)));
+                 terminateDebuggee => True,
+                 suspendDebuggee   => False)));
    end record;
 
    overriding function Method

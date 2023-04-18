@@ -28,9 +28,10 @@ package DAP.Requests.Next is
         DAP.Tools.NextRequest'
           (seq       => 0,
            arguments =>
-             (granularity =>
+             (granularity  =>
                 (Is_Set => True, Value => DAP.Tools.Enum.line),
-              threadId => 0));
+              singleThread => False,
+              threadId     => 0));
    end record;
 
    type Next_DAP_Request_Access is access all Next_DAP_Request;
