@@ -532,6 +532,7 @@ package body DAP.Modules.Persistent_Breakpoints is
          Name => "breakpoints", Found => Found);
       if Found then
          Breakpoints.Initialize (Prop.Breakpoints);
+         Breakpoints.Initialized;
          Debugger_Breakpoints_Changed_Hook.Run (Kernel, null);
          Show_Breakpoints_In_All_Editors (Kernel);
       end if;
