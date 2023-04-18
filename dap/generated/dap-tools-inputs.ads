@@ -47,6 +47,11 @@ package DAP.Tools.Inputs is
       Value   : out Enum.StoppedEvent_reason;
       Success : in out Boolean);
 
+   procedure Input_StartDebuggingRequestArguments_request
+     (Reader  : in out VSS.JSON.Pull_Readers.JSON_Pull_Reader'Class;
+      Value   : out Enum.StartDebuggingRequestArguments_request;
+      Success : in out Boolean);
+
    procedure Input_OutputEvent_category
      (Reader  : in out VSS.JSON.Pull_Readers.JSON_Pull_Reader'Class;
       Value   : out Enum.OutputEvent_category;
@@ -70,6 +75,11 @@ package DAP.Tools.Inputs is
    procedure Input_Scope_presentationHint
      (Reader  : in out VSS.JSON.Pull_Readers.JSON_Pull_Reader'Class;
       Value   : out Enum.Scope_presentationHint;
+      Success : in out Boolean);
+
+   procedure Input_Response_message
+     (Reader  : in out VSS.JSON.Pull_Readers.JSON_Pull_Reader'Class;
+      Value   : out Enum.Response_message;
       Success : in out Boolean);
 
    procedure Input_CompletionItemType
@@ -297,6 +307,11 @@ package DAP.Tools.Inputs is
       Value   : out AttachRequest;
       Success : in out Boolean);
 
+   procedure Input_MemoryEvent
+     (Reader  : in out VSS.JSON.Pull_Readers.JSON_Pull_Reader'Class;
+      Value   : out MemoryEvent;
+      Success : in out Boolean);
+
    procedure Input_ReadMemoryArguments
      (Reader  : in out VSS.JSON.Pull_Readers.JSON_Pull_Reader'Class;
       Value   : out ReadMemoryArguments;
@@ -360,6 +375,11 @@ package DAP.Tools.Inputs is
    procedure Input_CompletionsRequest
      (Reader  : in out VSS.JSON.Pull_Readers.JSON_Pull_Reader'Class;
       Value   : out CompletionsRequest;
+      Success : in out Boolean);
+
+   procedure Input_StartDebuggingRequestArguments
+     (Reader  : in out VSS.JSON.Pull_Readers.JSON_Pull_Reader'Class;
+      Value   : out StartDebuggingRequestArguments;
       Success : in out Boolean);
 
    procedure Input_ProgressUpdateEvent
@@ -522,6 +542,11 @@ package DAP.Tools.Inputs is
       Value   : out CompletionsArguments;
       Success : in out Boolean);
 
+   procedure Input_WriteMemoryResponse
+     (Reader  : in out VSS.JSON.Pull_Readers.JSON_Pull_Reader'Class;
+      Value   : out WriteMemoryResponse;
+      Success : in out Boolean);
+
    procedure Input_ReverseContinueArguments
      (Reader  : in out VSS.JSON.Pull_Readers.JSON_Pull_Reader'Class;
       Value   : out ReverseContinueArguments;
@@ -662,6 +687,11 @@ package DAP.Tools.Inputs is
       Value   : out Source;
       Success : in out Boolean);
 
+   procedure Input_WriteMemoryArguments
+     (Reader  : in out VSS.JSON.Pull_Readers.JSON_Pull_Reader'Class;
+      Value   : out WriteMemoryArguments;
+      Success : in out Boolean);
+
    procedure Input_ConfigurationDoneArguments
      (Reader  : in out VSS.JSON.Pull_Readers.JSON_Pull_Reader'Class;
       Value   : out ConfigurationDoneArguments;
@@ -752,14 +782,14 @@ package DAP.Tools.Inputs is
       Value   : out DisassembledInstruction;
       Success : in out Boolean);
 
-   procedure Input_CancelResponse
-     (Reader  : in out VSS.JSON.Pull_Readers.JSON_Pull_Reader'Class;
-      Value   : out CancelResponse;
-      Success : in out Boolean);
-
    procedure Input_PauseArguments
      (Reader  : in out VSS.JSON.Pull_Readers.JSON_Pull_Reader'Class;
       Value   : out PauseArguments;
+      Success : in out Boolean);
+
+   procedure Input_CancelResponse
+     (Reader  : in out VSS.JSON.Pull_Readers.JSON_Pull_Reader'Class;
+      Value   : out CancelResponse;
       Success : in out Boolean);
 
    procedure Input_InitializeRequestArguments
@@ -800,6 +830,11 @@ package DAP.Tools.Inputs is
    procedure Input_TerminatedEvent
      (Reader  : in out VSS.JSON.Pull_Readers.JSON_Pull_Reader'Class;
       Value   : out TerminatedEvent;
+      Success : in out Boolean);
+
+   procedure Input_StartDebuggingRequest
+     (Reader  : in out VSS.JSON.Pull_Readers.JSON_Pull_Reader'Class;
+      Value   : out StartDebuggingRequest;
       Success : in out Boolean);
 
    procedure Input_ThreadEvent
@@ -890,6 +925,11 @@ package DAP.Tools.Inputs is
    procedure Input_SetExceptionBreakpointsRequest
      (Reader  : in out VSS.JSON.Pull_Readers.JSON_Pull_Reader'Class;
       Value   : out SetExceptionBreakpointsRequest;
+      Success : in out Boolean);
+
+   procedure Input_WriteMemoryRequest
+     (Reader  : in out VSS.JSON.Pull_Readers.JSON_Pull_Reader'Class;
+      Value   : out WriteMemoryRequest;
       Success : in out Boolean);
 
    procedure Input_DataBreakpointInfoArguments
@@ -1020,6 +1060,11 @@ package DAP.Tools.Inputs is
    procedure Input_LoadedSourcesResponse
      (Reader  : in out VSS.JSON.Pull_Readers.JSON_Pull_Reader'Class;
       Value   : out LoadedSourcesResponse;
+      Success : in out Boolean);
+
+   procedure Input_StartDebuggingResponse
+     (Reader  : in out VSS.JSON.Pull_Readers.JSON_Pull_Reader'Class;
+      Value   : out StartDebuggingResponse;
       Success : in out Boolean);
 
 end DAP.Tools.Inputs;

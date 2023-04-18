@@ -42,6 +42,10 @@ package DAP.Tools.Outputs is
      (Handler : in out VSS.JSON.Content_Handlers.JSON_Content_Handler'Class;
       Value   : Enum.StoppedEvent_reason);
 
+   procedure Output_StartDebuggingRequestArguments_request
+     (Handler : in out VSS.JSON.Content_Handlers.JSON_Content_Handler'Class;
+      Value   : Enum.StartDebuggingRequestArguments_request);
+
    procedure Output_OutputEvent_category
      (Handler : in out VSS.JSON.Content_Handlers.JSON_Content_Handler'Class;
       Value   : Enum.OutputEvent_category);
@@ -61,6 +65,10 @@ package DAP.Tools.Outputs is
    procedure Output_Scope_presentationHint
      (Handler : in out VSS.JSON.Content_Handlers.JSON_Content_Handler'Class;
       Value   : Enum.Scope_presentationHint);
+
+   procedure Output_Response_message
+     (Handler : in out VSS.JSON.Content_Handlers.JSON_Content_Handler'Class;
+      Value   : Enum.Response_message);
 
    procedure Output_CompletionItemType
      (Handler : in out VSS.JSON.Content_Handlers.JSON_Content_Handler'Class;
@@ -242,6 +250,10 @@ package DAP.Tools.Outputs is
      (Handler : in out VSS.JSON.Content_Handlers.JSON_Content_Handler'Class;
       Value   : AttachRequest);
 
+   procedure Output_MemoryEvent
+     (Handler : in out VSS.JSON.Content_Handlers.JSON_Content_Handler'Class;
+      Value   : MemoryEvent);
+
    procedure Output_ReadMemoryArguments
      (Handler : in out VSS.JSON.Content_Handlers.JSON_Content_Handler'Class;
       Value   : ReadMemoryArguments);
@@ -293,6 +305,10 @@ package DAP.Tools.Outputs is
    procedure Output_CompletionsRequest
      (Handler : in out VSS.JSON.Content_Handlers.JSON_Content_Handler'Class;
       Value   : CompletionsRequest);
+
+   procedure Output_StartDebuggingRequestArguments
+     (Handler : in out VSS.JSON.Content_Handlers.JSON_Content_Handler'Class;
+      Value   : StartDebuggingRequestArguments);
 
    procedure Output_ProgressUpdateEvent
      (Handler : in out VSS.JSON.Content_Handlers.JSON_Content_Handler'Class;
@@ -422,6 +438,10 @@ package DAP.Tools.Outputs is
      (Handler : in out VSS.JSON.Content_Handlers.JSON_Content_Handler'Class;
       Value   : CompletionsArguments);
 
+   procedure Output_WriteMemoryResponse
+     (Handler : in out VSS.JSON.Content_Handlers.JSON_Content_Handler'Class;
+      Value   : WriteMemoryResponse);
+
    procedure Output_ReverseContinueArguments
      (Handler : in out VSS.JSON.Content_Handlers.JSON_Content_Handler'Class;
       Value   : ReverseContinueArguments);
@@ -534,6 +554,10 @@ package DAP.Tools.Outputs is
      (Handler : in out VSS.JSON.Content_Handlers.JSON_Content_Handler'Class;
       Value   : Source);
 
+   procedure Output_WriteMemoryArguments
+     (Handler : in out VSS.JSON.Content_Handlers.JSON_Content_Handler'Class;
+      Value   : WriteMemoryArguments);
+
    procedure Output_ConfigurationDoneArguments
      (Handler : in out VSS.JSON.Content_Handlers.JSON_Content_Handler'Class;
       Value   : ConfigurationDoneArguments);
@@ -606,13 +630,13 @@ package DAP.Tools.Outputs is
      (Handler : in out VSS.JSON.Content_Handlers.JSON_Content_Handler'Class;
       Value   : DisassembledInstruction);
 
-   procedure Output_CancelResponse
-     (Handler : in out VSS.JSON.Content_Handlers.JSON_Content_Handler'Class;
-      Value   : CancelResponse);
-
    procedure Output_PauseArguments
      (Handler : in out VSS.JSON.Content_Handlers.JSON_Content_Handler'Class;
       Value   : PauseArguments);
+
+   procedure Output_CancelResponse
+     (Handler : in out VSS.JSON.Content_Handlers.JSON_Content_Handler'Class;
+      Value   : CancelResponse);
 
    procedure Output_InitializeRequestArguments
      (Handler : in out VSS.JSON.Content_Handlers.JSON_Content_Handler'Class;
@@ -645,6 +669,10 @@ package DAP.Tools.Outputs is
    procedure Output_TerminatedEvent
      (Handler : in out VSS.JSON.Content_Handlers.JSON_Content_Handler'Class;
       Value   : TerminatedEvent);
+
+   procedure Output_StartDebuggingRequest
+     (Handler : in out VSS.JSON.Content_Handlers.JSON_Content_Handler'Class;
+      Value   : StartDebuggingRequest);
 
    procedure Output_ThreadEvent
      (Handler : in out VSS.JSON.Content_Handlers.JSON_Content_Handler'Class;
@@ -717,6 +745,10 @@ package DAP.Tools.Outputs is
    procedure Output_SetExceptionBreakpointsRequest
      (Handler : in out VSS.JSON.Content_Handlers.JSON_Content_Handler'Class;
       Value   : SetExceptionBreakpointsRequest);
+
+   procedure Output_WriteMemoryRequest
+     (Handler : in out VSS.JSON.Content_Handlers.JSON_Content_Handler'Class;
+      Value   : WriteMemoryRequest);
 
    procedure Output_DataBreakpointInfoArguments
      (Handler : in out VSS.JSON.Content_Handlers.JSON_Content_Handler'Class;
@@ -821,5 +853,9 @@ package DAP.Tools.Outputs is
    procedure Output_LoadedSourcesResponse
      (Handler : in out VSS.JSON.Content_Handlers.JSON_Content_Handler'Class;
       Value   : LoadedSourcesResponse);
+
+   procedure Output_StartDebuggingResponse
+     (Handler : in out VSS.JSON.Content_Handlers.JSON_Content_Handler'Class;
+      Value   : StartDebuggingResponse);
 
 end DAP.Tools.Outputs;

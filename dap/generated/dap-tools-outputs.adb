@@ -137,6 +137,18 @@ package body DAP.Tools.Outputs is
       end case;
    end Output_StoppedEvent_reason;
 
+   procedure Output_StartDebuggingRequestArguments_request
+     (Handler : in out VSS.JSON.Content_Handlers.JSON_Content_Handler'Class;
+      Value   : Enum.StartDebuggingRequestArguments_request) is
+   begin
+      case Value is
+         when Enum.launch =>
+            Handler.String_Value ("launch");
+         when Enum.attach =>
+            Handler.String_Value ("attach");
+      end case;
+   end Output_StartDebuggingRequestArguments_request;
+
    procedure Output_OutputEvent_category
      (Handler : in out VSS.JSON.Content_Handlers.JSON_Content_Handler'Class;
       Value   : Enum.OutputEvent_category) is
@@ -144,6 +156,8 @@ package body DAP.Tools.Outputs is
       case Value is
          when Enum.console =>
             Handler.String_Value ("console");
+         when Enum.important =>
+            Handler.String_Value ("important");
          when Enum.stdout =>
             Handler.String_Value ("stdout");
          when Enum.stderr =>
@@ -210,6 +224,18 @@ package body DAP.Tools.Outputs is
             Handler.String_Value ("registers");
       end case;
    end Output_Scope_presentationHint;
+
+   procedure Output_Response_message
+     (Handler : in out VSS.JSON.Content_Handlers.JSON_Content_Handler'Class;
+      Value   : Enum.Response_message) is
+   begin
+      case Value is
+         when Enum.cancelled =>
+            Handler.String_Value ("cancelled");
+         when Enum.notStopped =>
+            Handler.String_Value ("notStopped");
+      end case;
+   end Output_Response_message;
 
    procedure Output_CompletionItemType
      (Handler : in out VSS.JSON.Content_Handlers.JSON_Content_Handler'Class;
@@ -452,6 +478,8 @@ package body DAP.Tools.Outputs is
             Handler.String_Value ("hover");
          when Enum.clipboard =>
             Handler.String_Value ("clipboard");
+         when Enum.variables =>
+            Handler.String_Value ("variables");
       end case;
    end Output_EvaluateArguments_context;
 
@@ -485,8 +513,10 @@ package body DAP.Tools.Outputs is
       Handler.Boolean_Value (Value.success);
       Handler.Key_Name ("command");
       Handler.String_Value (Value.command);
-      Handler.Key_Name ("message");
-      Handler.String_Value ("cancelled");
+      if Value.message.Is_Set then
+         Handler.Key_Name ("message");
+         Output_Response_message (Handler, Value.message.Value);
+      end if;
       if not Value.a_body.Is_Empty then
          Handler.Key_Name ("body");
          Output_Any_Value (Handler, Value.a_body);
@@ -581,8 +611,10 @@ package body DAP.Tools.Outputs is
       Handler.Boolean_Value (Value.success);
       Handler.Key_Name ("command");
       Handler.String_Value (Value.command);
-      Handler.Key_Name ("message");
-      Handler.String_Value ("cancelled");
+      if Value.message.Is_Set then
+         Handler.Key_Name ("message");
+         Output_Response_message (Handler, Value.message.Value);
+      end if;
       Handler.Key_Name ("body");
       Output_ModulesResponse_body (Handler, Value.a_body);
       Handler.End_Object;
@@ -595,6 +627,10 @@ package body DAP.Tools.Outputs is
       Handler.Start_Object;
       Handler.Key_Name ("threadId");
       Handler.Integer_Value (Interfaces.Integer_64 (Integer'(Value.threadId)));
+      if Value.singleThread then
+         Handler.Key_Name ("singleThread");
+         Handler.Boolean_Value (Value.singleThread);
+      end if;
       if Value.granularity.Is_Set then
          Handler.Key_Name ("granularity");
          Output_SteppingGranularity (Handler, Value.granularity.Value);
@@ -761,7 +797,12 @@ package body DAP.Tools.Outputs is
      (Handler : in out VSS.JSON.Content_Handlers.JSON_Content_Handler'Class;
       Value   : RestartArguments) is
    begin
-      Output_Any_Value (Handler, Value);
+      Handler.Start_Object;
+      if Value.arguments.Is_Set then
+         Handler.Key_Name ("arguments");
+         Output_AttachRequestArguments (Handler, Value.arguments.Value);
+      end if;
+      Handler.End_Object;
    end Output_RestartArguments;
 
    procedure Output_SetVariableArguments
@@ -960,6 +1001,10 @@ package body DAP.Tools.Outputs is
          Handler.Key_Name ("supportTerminateDebuggee");
          Handler.Boolean_Value (Value.supportTerminateDebuggee);
       end if;
+      if Value.supportSuspendDebuggee then
+         Handler.Key_Name ("supportSuspendDebuggee");
+         Handler.Boolean_Value (Value.supportSuspendDebuggee);
+      end if;
       if Value.supportsDelayedStackTraceLoading then
          Handler.Key_Name ("supportsDelayedStackTraceLoading");
          Handler.Boolean_Value (Value.supportsDelayedStackTraceLoading);
@@ -992,6 +1037,10 @@ package body DAP.Tools.Outputs is
          Handler.Key_Name ("supportsReadMemoryRequest");
          Handler.Boolean_Value (Value.supportsReadMemoryRequest);
       end if;
+      if Value.supportsWriteMemoryRequest then
+         Handler.Key_Name ("supportsWriteMemoryRequest");
+         Handler.Boolean_Value (Value.supportsWriteMemoryRequest);
+      end if;
       if Value.supportsDisassembleRequest then
          Handler.Key_Name ("supportsDisassembleRequest");
          Handler.Boolean_Value (Value.supportsDisassembleRequest);
@@ -1019,6 +1068,10 @@ package body DAP.Tools.Outputs is
       if Value.supportsExceptionFilterOptions then
          Handler.Key_Name ("supportsExceptionFilterOptions");
          Handler.Boolean_Value (Value.supportsExceptionFilterOptions);
+      end if;
+      if Value.supportsSingleThreadExecutionRequests then
+         Handler.Key_Name ("supportsSingleThreadExecutionRequests");
+         Handler.Boolean_Value (Value.supportsSingleThreadExecutionRequests);
       end if;
       Handler.End_Object;
    end Output_Capabilities;
@@ -1058,8 +1111,10 @@ package body DAP.Tools.Outputs is
       Handler.Boolean_Value (Value.success);
       Handler.Key_Name ("command");
       Handler.String_Value (Value.command);
-      Handler.Key_Name ("message");
-      Handler.String_Value ("cancelled");
+      if Value.message.Is_Set then
+         Handler.Key_Name ("message");
+         Output_Response_message (Handler, Value.message.Value);
+      end if;
       Handler.Key_Name ("body");
       Output_StackTraceResponse_body (Handler, Value.a_body);
       Handler.End_Object;
@@ -1120,8 +1175,10 @@ package body DAP.Tools.Outputs is
       Handler.Boolean_Value (Value.success);
       Handler.Key_Name ("command");
       Handler.String_Value (Value.command);
-      Handler.Key_Name ("message");
-      Handler.String_Value ("cancelled");
+      if Value.message.Is_Set then
+         Handler.Key_Name ("message");
+         Output_Response_message (Handler, Value.message.Value);
+      end if;
       Handler.Key_Name ("body");
       Output_StepInTargetsResponse_body (Handler, Value.a_body);
       Handler.End_Object;
@@ -1284,6 +1341,37 @@ package body DAP.Tools.Outputs is
       Handler.End_Object;
    end Output_AttachRequest;
 
+   procedure Output_MemoryEvent
+     (Handler : in out VSS.JSON.Content_Handlers.JSON_Content_Handler'Class;
+      Value   : MemoryEvent) is
+      procedure Output_MemoryEvent_body
+        (Handler : in out VSS.JSON.Content_Handlers.JSON_Content_Handler'Class;
+         Value   : MemoryEvent_body) is
+      begin
+         Handler.Start_Object;
+         Handler.Key_Name ("memoryReference");
+         Handler.String_Value (Value.memoryReference);
+         Handler.Key_Name ("offset");
+         Handler.Integer_Value
+           (Interfaces.Integer_64 (Integer'(Value.offset)));
+         Handler.Key_Name ("count");
+         Handler.Integer_Value (Interfaces.Integer_64 (Integer'(Value.count)));
+         Handler.End_Object;
+      end Output_MemoryEvent_body;
+
+   begin
+      Handler.Start_Object;
+      Handler.Key_Name ("seq");
+      Handler.Integer_Value (Interfaces.Integer_64 (Integer'(Value.seq)));
+      Handler.Key_Name ("type");
+      Handler.String_Value ("event");
+      Handler.Key_Name ("event");
+      Handler.String_Value ("memory");
+      Handler.Key_Name ("body");
+      Output_MemoryEvent_body (Handler, Value.a_body);
+      Handler.End_Object;
+   end Output_MemoryEvent;
+
    procedure Output_ReadMemoryArguments
      (Handler : in out VSS.JSON.Content_Handlers.JSON_Content_Handler'Class;
       Value   : ReadMemoryArguments) is
@@ -1398,8 +1486,10 @@ package body DAP.Tools.Outputs is
       Handler.Boolean_Value (Value.success);
       Handler.Key_Name ("command");
       Handler.String_Value (Value.command);
-      Handler.Key_Name ("message");
-      Handler.String_Value ("cancelled");
+      if Value.message.Is_Set then
+         Handler.Key_Name ("message");
+         Output_Response_message (Handler, Value.message.Value);
+      end if;
       if not Value.a_body.Is_Empty then
          Handler.Key_Name ("body");
          Output_Any_Value (Handler, Value.a_body);
@@ -1564,8 +1654,10 @@ package body DAP.Tools.Outputs is
       Handler.Boolean_Value (Value.success);
       Handler.Key_Name ("command");
       Handler.String_Value (Value.command);
-      Handler.Key_Name ("message");
-      Handler.String_Value ("cancelled");
+      if Value.message.Is_Set then
+         Handler.Key_Name ("message");
+         Output_Response_message (Handler, Value.message.Value);
+      end if;
       Handler.Key_Name ("body");
       Output_ScopesResponse_body (Handler, Value.a_body);
       Handler.End_Object;
@@ -1578,6 +1670,10 @@ package body DAP.Tools.Outputs is
       Handler.Start_Object;
       Handler.Key_Name ("threadId");
       Handler.Integer_Value (Interfaces.Integer_64 (Integer'(Value.threadId)));
+      if Value.singleThread then
+         Handler.Key_Name ("singleThread");
+         Handler.Boolean_Value (Value.singleThread);
+      end if;
       if Value.granularity.Is_Set then
          Handler.Key_Name ("granularity");
          Output_SteppingGranularity (Handler, Value.granularity.Value);
@@ -1600,6 +1696,18 @@ package body DAP.Tools.Outputs is
       Output_CompletionsArguments (Handler, Value.arguments);
       Handler.End_Object;
    end Output_CompletionsRequest;
+
+   procedure Output_StartDebuggingRequestArguments
+     (Handler : in out VSS.JSON.Content_Handlers.JSON_Content_Handler'Class;
+      Value   : StartDebuggingRequestArguments) is
+   begin
+      Handler.Start_Object;
+      Handler.Key_Name ("configuration");
+      Output_Any_Value (Handler, Value.configuration);
+      Handler.Key_Name ("request");
+      Output_StartDebuggingRequestArguments_request (Handler, Value.request);
+      Handler.End_Object;
+   end Output_StartDebuggingRequestArguments;
 
    procedure Output_ProgressUpdateEvent
      (Handler : in out VSS.JSON.Content_Handlers.JSON_Content_Handler'Class;
@@ -1672,8 +1780,10 @@ package body DAP.Tools.Outputs is
       Handler.Boolean_Value (Value.success);
       Handler.Key_Name ("command");
       Handler.String_Value (Value.command);
-      Handler.Key_Name ("message");
-      Handler.String_Value ("cancelled");
+      if Value.message.Is_Set then
+         Handler.Key_Name ("message");
+         Output_Response_message (Handler, Value.message.Value);
+      end if;
       Handler.Key_Name ("body");
       Output_ExceptionInfoResponse_body (Handler, Value.a_body);
       Handler.End_Object;
@@ -1748,8 +1858,10 @@ package body DAP.Tools.Outputs is
       Handler.Boolean_Value (Value.success);
       Handler.Key_Name ("command");
       Handler.String_Value (Value.command);
-      Handler.Key_Name ("message");
-      Handler.String_Value ("cancelled");
+      if Value.message.Is_Set then
+         Handler.Key_Name ("message");
+         Output_Response_message (Handler, Value.message.Value);
+      end if;
       Handler.Key_Name ("body");
       Output_SetExpressionResponse_body (Handler, Value.a_body);
       Handler.End_Object;
@@ -1764,6 +1876,26 @@ package body DAP.Tools.Outputs is
       Handler.Integer_Value (Interfaces.Integer_64 (Integer'(Value.id)));
       Handler.Key_Name ("label");
       Handler.String_Value (Value.label);
+      if Value.line.Is_Set then
+         Handler.Key_Name ("line");
+         Handler.Integer_Value
+           (Interfaces.Integer_64 (Integer'(Value.line.Value)));
+      end if;
+      if Value.column.Is_Set then
+         Handler.Key_Name ("column");
+         Handler.Integer_Value
+           (Interfaces.Integer_64 (Integer'(Value.column.Value)));
+      end if;
+      if Value.endLine.Is_Set then
+         Handler.Key_Name ("endLine");
+         Handler.Integer_Value
+           (Interfaces.Integer_64 (Integer'(Value.endLine.Value)));
+      end if;
+      if Value.endColumn.Is_Set then
+         Handler.Key_Name ("endColumn");
+         Handler.Integer_Value
+           (Interfaces.Integer_64 (Integer'(Value.endColumn.Value)));
+      end if;
       Handler.End_Object;
    end Output_StepInTarget;
 
@@ -1783,8 +1915,10 @@ package body DAP.Tools.Outputs is
       Handler.Boolean_Value (Value.success);
       Handler.Key_Name ("command");
       Handler.String_Value (Value.command);
-      Handler.Key_Name ("message");
-      Handler.String_Value ("cancelled");
+      if Value.message.Is_Set then
+         Handler.Key_Name ("message");
+         Output_Response_message (Handler, Value.message.Value);
+      end if;
       if not Value.a_body.Is_Empty then
          Handler.Key_Name ("body");
          Output_Any_Value (Handler, Value.a_body);
@@ -1885,6 +2019,10 @@ package body DAP.Tools.Outputs is
          Handler.Integer_Value
            (Interfaces.Integer_64 (Integer'(Value.levels.Value)));
       end if;
+      if Value.format.Is_Set then
+         Handler.Key_Name ("format");
+         Output_StackFrameFormat (Handler, Value.format.Value);
+      end if;
       Handler.End_Object;
    end Output_StackTraceArguments;
 
@@ -1948,8 +2086,10 @@ package body DAP.Tools.Outputs is
       Handler.Boolean_Value (Value.success);
       Handler.Key_Name ("command");
       Handler.String_Value (Value.command);
-      Handler.Key_Name ("message");
-      Handler.String_Value ("cancelled");
+      if Value.message.Is_Set then
+         Handler.Key_Name ("message");
+         Output_Response_message (Handler, Value.message.Value);
+      end if;
       if not Value.a_body.Is_Empty then
          Handler.Key_Name ("body");
          Output_Any_Value (Handler, Value.a_body);
@@ -2033,8 +2173,10 @@ package body DAP.Tools.Outputs is
       Handler.Boolean_Value (Value.success);
       Handler.Key_Name ("command");
       Handler.String_Value (Value.command);
-      Handler.Key_Name ("message");
-      Handler.String_Value ("cancelled");
+      if Value.message.Is_Set then
+         Handler.Key_Name ("message");
+         Output_Response_message (Handler, Value.message.Value);
+      end if;
       if not Value.a_body.Is_Empty then
          Handler.Key_Name ("body");
          Output_Any_Value (Handler, Value.a_body);
@@ -2058,8 +2200,10 @@ package body DAP.Tools.Outputs is
       Handler.Boolean_Value (Value.success);
       Handler.Key_Name ("command");
       Handler.String_Value (Value.command);
-      Handler.Key_Name ("message");
-      Handler.String_Value ("cancelled");
+      if Value.message.Is_Set then
+         Handler.Key_Name ("message");
+         Output_Response_message (Handler, Value.message.Value);
+      end if;
       if not Value.a_body.Is_Empty then
          Handler.Key_Name ("body");
          Output_Any_Value (Handler, Value.a_body);
@@ -2083,8 +2227,10 @@ package body DAP.Tools.Outputs is
       Handler.Boolean_Value (Value.success);
       Handler.Key_Name ("command");
       Handler.String_Value (Value.command);
-      Handler.Key_Name ("message");
-      Handler.String_Value ("cancelled");
+      if Value.message.Is_Set then
+         Handler.Key_Name ("message");
+         Output_Response_message (Handler, Value.message.Value);
+      end if;
       if not Value.a_body.Is_Empty then
          Handler.Key_Name ("body");
          Output_Any_Value (Handler, Value.a_body);
@@ -2230,8 +2376,10 @@ package body DAP.Tools.Outputs is
       Handler.Boolean_Value (Value.success);
       Handler.Key_Name ("command");
       Handler.String_Value (Value.command);
-      Handler.Key_Name ("message");
-      Handler.String_Value ("cancelled");
+      if Value.message.Is_Set then
+         Handler.Key_Name ("message");
+         Output_Response_message (Handler, Value.message.Value);
+      end if;
       if not Value.a_body.Is_Empty then
          Handler.Key_Name ("body");
          Output_Any_Value (Handler, Value.a_body);
@@ -2280,8 +2428,10 @@ package body DAP.Tools.Outputs is
       Handler.Boolean_Value (Value.success);
       Handler.Key_Name ("command");
       Handler.String_Value (Value.command);
-      Handler.Key_Name ("message");
-      Handler.String_Value ("cancelled");
+      if Value.message.Is_Set then
+         Handler.Key_Name ("message");
+         Output_Response_message (Handler, Value.message.Value);
+      end if;
       Handler.Key_Name ("body");
       Output_DataBreakpointInfoResponse_body (Handler, Value.a_body);
       Handler.End_Object;
@@ -2298,6 +2448,18 @@ package body DAP.Tools.Outputs is
          Handler.Key_Name ("column");
          Handler.Integer_Value
            (Interfaces.Integer_64 (Integer'(Value.column.Value)));
+      end if;
+      if not Value.condition.Is_Null then
+         Handler.Key_Name ("condition");
+         Handler.String_Value (Value.condition);
+      end if;
+      if not Value.hitCondition.Is_Null then
+         Handler.Key_Name ("hitCondition");
+         Handler.String_Value (Value.hitCondition);
+      end if;
+      if not Value.logMessage.Is_Null then
+         Handler.Key_Name ("logMessage");
+         Handler.String_Value (Value.logMessage);
       end if;
       Handler.End_Object;
    end Output_SourceBreakpoint;
@@ -2437,6 +2599,51 @@ package body DAP.Tools.Outputs is
       Handler.End_Object;
    end Output_CompletionsArguments;
 
+   procedure Output_WriteMemoryResponse
+     (Handler : in out VSS.JSON.Content_Handlers.JSON_Content_Handler'Class;
+      Value   : WriteMemoryResponse) is
+      procedure Output_WriteMemoryResponse_body
+        (Handler : in out VSS.JSON.Content_Handlers.JSON_Content_Handler'Class;
+         Value   : WriteMemoryResponse_body) is
+      begin
+         Handler.Start_Object;
+         if Value.offset.Is_Set then
+            Handler.Key_Name ("offset");
+            Handler.Integer_Value
+              (Interfaces.Integer_64 (Integer'(Value.offset.Value)));
+         end if;
+         if Value.bytesWritten.Is_Set then
+            Handler.Key_Name ("bytesWritten");
+            Handler.Integer_Value
+              (Interfaces.Integer_64 (Integer'(Value.bytesWritten.Value)));
+         end if;
+         Handler.End_Object;
+      end Output_WriteMemoryResponse_body;
+
+   begin
+      Handler.Start_Object;
+      Handler.Key_Name ("seq");
+      Handler.Integer_Value (Interfaces.Integer_64 (Integer'(Value.seq)));
+      Handler.Key_Name ("type");
+      Handler.String_Value ("response");
+      Handler.Key_Name ("request_seq");
+      Handler.Integer_Value
+        (Interfaces.Integer_64 (Integer'(Value.request_seq)));
+      Handler.Key_Name ("success");
+      Handler.Boolean_Value (Value.success);
+      Handler.Key_Name ("command");
+      Handler.String_Value (Value.command);
+      if Value.message.Is_Set then
+         Handler.Key_Name ("message");
+         Output_Response_message (Handler, Value.message.Value);
+      end if;
+      if Value.a_body.Is_Set then
+         Handler.Key_Name ("body");
+         Output_WriteMemoryResponse_body (Handler, Value.a_body.Value);
+      end if;
+      Handler.End_Object;
+   end Output_WriteMemoryResponse;
+
    procedure Output_ReverseContinueArguments
      (Handler : in out VSS.JSON.Content_Handlers.JSON_Content_Handler'Class;
       Value   : ReverseContinueArguments) is
@@ -2444,6 +2651,10 @@ package body DAP.Tools.Outputs is
       Handler.Start_Object;
       Handler.Key_Name ("threadId");
       Handler.Integer_Value (Interfaces.Integer_64 (Integer'(Value.threadId)));
+      if Value.singleThread then
+         Handler.Key_Name ("singleThread");
+         Handler.Boolean_Value (Value.singleThread);
+      end if;
       Handler.End_Object;
    end Output_ReverseContinueArguments;
 
@@ -2481,8 +2692,10 @@ package body DAP.Tools.Outputs is
       Handler.Boolean_Value (Value.success);
       Handler.Key_Name ("command");
       Handler.String_Value (Value.command);
-      Handler.Key_Name ("message");
-      Handler.String_Value ("cancelled");
+      if Value.message.Is_Set then
+         Handler.Key_Name ("message");
+         Output_Response_message (Handler, Value.message.Value);
+      end if;
       Handler.Key_Name ("body");
       Output_RunInTerminalResponse_body (Handler, Value.a_body);
       Handler.End_Object;
@@ -2500,6 +2713,10 @@ package body DAP.Tools.Outputs is
       if Value.terminateDebuggee then
          Handler.Key_Name ("terminateDebuggee");
          Handler.Boolean_Value (Value.terminateDebuggee);
+      end if;
+      if Value.suspendDebuggee then
+         Handler.Key_Name ("suspendDebuggee");
+         Handler.Boolean_Value (Value.suspendDebuggee);
       end if;
       Handler.End_Object;
    end Output_DisconnectArguments;
@@ -2599,8 +2816,10 @@ package body DAP.Tools.Outputs is
       Handler.Boolean_Value (Value.success);
       Handler.Key_Name ("command");
       Handler.String_Value (Value.command);
-      Handler.Key_Name ("message");
-      Handler.String_Value ("cancelled");
+      if Value.message.Is_Set then
+         Handler.Key_Name ("message");
+         Output_Response_message (Handler, Value.message.Value);
+      end if;
       Handler.Key_Name ("body");
       Output_ThreadsResponse_body (Handler, Value.a_body);
       Handler.End_Object;
@@ -2636,8 +2855,10 @@ package body DAP.Tools.Outputs is
       Handler.Boolean_Value (Value.success);
       Handler.Key_Name ("command");
       Handler.String_Value (Value.command);
-      Handler.Key_Name ("message");
-      Handler.String_Value ("cancelled");
+      if Value.message.Is_Set then
+         Handler.Key_Name ("message");
+         Output_Response_message (Handler, Value.message.Value);
+      end if;
       Handler.Key_Name ("body");
       Output_SetDataBreakpointsResponse_body (Handler, Value.a_body);
       Handler.End_Object;
@@ -2759,8 +2980,10 @@ package body DAP.Tools.Outputs is
       Handler.Boolean_Value (Value.success);
       Handler.Key_Name ("command");
       Handler.String_Value (Value.command);
-      Handler.Key_Name ("message");
-      Handler.String_Value ("cancelled");
+      if Value.message.Is_Set then
+         Handler.Key_Name ("message");
+         Output_Response_message (Handler, Value.message.Value);
+      end if;
       Handler.Key_Name ("body");
       Output_SourceResponse_body (Handler, Value.a_body);
       Handler.End_Object;
@@ -2794,8 +3017,10 @@ package body DAP.Tools.Outputs is
       Handler.Boolean_Value (Value.success);
       Handler.Key_Name ("command");
       Handler.String_Value (Value.command);
-      Handler.Key_Name ("message");
-      Handler.String_Value ("cancelled");
+      if Value.message.Is_Set then
+         Handler.Key_Name ("message");
+         Output_Response_message (Handler, Value.message.Value);
+      end if;
       Handler.Key_Name ("body");
       Output_ContinueResponse_body (Handler, Value.a_body);
       Handler.End_Object;
@@ -2817,8 +3042,10 @@ package body DAP.Tools.Outputs is
       Handler.Boolean_Value (Value.success);
       Handler.Key_Name ("command");
       Handler.String_Value (Value.command);
-      Handler.Key_Name ("message");
-      Handler.String_Value ("cancelled");
+      if Value.message.Is_Set then
+         Handler.Key_Name ("message");
+         Output_Response_message (Handler, Value.message.Value);
+      end if;
       if not Value.a_body.Is_Empty then
          Handler.Key_Name ("body");
          Output_Any_Value (Handler, Value.a_body);
@@ -2833,6 +3060,10 @@ package body DAP.Tools.Outputs is
       Handler.Start_Object;
       Handler.Key_Name ("threadId");
       Handler.Integer_Value (Interfaces.Integer_64 (Integer'(Value.threadId)));
+      if Value.singleThread then
+         Handler.Key_Name ("singleThread");
+         Handler.Boolean_Value (Value.singleThread);
+      end if;
       if Value.targetId.Is_Set then
          Handler.Key_Name ("targetId");
          Handler.Integer_Value
@@ -2861,8 +3092,10 @@ package body DAP.Tools.Outputs is
       Handler.Boolean_Value (Value.success);
       Handler.Key_Name ("command");
       Handler.String_Value (Value.command);
-      Handler.Key_Name ("message");
-      Handler.String_Value ("cancelled");
+      if Value.message.Is_Set then
+         Handler.Key_Name ("message");
+         Output_Response_message (Handler, Value.message.Value);
+      end if;
       if not Value.a_body.Is_Empty then
          Handler.Key_Name ("body");
          Output_Any_Value (Handler, Value.a_body);
@@ -2886,8 +3119,10 @@ package body DAP.Tools.Outputs is
       Handler.Boolean_Value (Value.success);
       Handler.Key_Name ("command");
       Handler.String_Value (Value.command);
-      Handler.Key_Name ("message");
-      Handler.String_Value ("cancelled");
+      if Value.message.Is_Set then
+         Handler.Key_Name ("message");
+         Output_Response_message (Handler, Value.message.Value);
+      end if;
       if not Value.a_body.Is_Empty then
          Handler.Key_Name ("body");
          Output_Any_Value (Handler, Value.a_body);
@@ -2939,8 +3174,10 @@ package body DAP.Tools.Outputs is
       Handler.Boolean_Value (Value.success);
       Handler.Key_Name ("command");
       Handler.String_Value (Value.command);
-      Handler.Key_Name ("message");
-      Handler.String_Value ("cancelled");
+      if Value.message.Is_Set then
+         Handler.Key_Name ("message");
+         Output_Response_message (Handler, Value.message.Value);
+      end if;
       if not Value.a_body.Is_Empty then
          Handler.Key_Name ("body");
          Output_Any_Value (Handler, Value.a_body);
@@ -2971,6 +3208,10 @@ package body DAP.Tools.Outputs is
       Handler.Start_Object;
       Handler.Key_Name ("threadId");
       Handler.Integer_Value (Interfaces.Integer_64 (Integer'(Value.threadId)));
+      if Value.singleThread then
+         Handler.Key_Name ("singleThread");
+         Handler.Boolean_Value (Value.singleThread);
+      end if;
       Handler.End_Object;
    end Output_ContinueArguments;
 
@@ -2981,6 +3222,10 @@ package body DAP.Tools.Outputs is
       Handler.Start_Object;
       Handler.Key_Name ("threadId");
       Handler.Integer_Value (Interfaces.Integer_64 (Integer'(Value.threadId)));
+      if Value.singleThread then
+         Handler.Key_Name ("singleThread");
+         Handler.Boolean_Value (Value.singleThread);
+      end if;
       if Value.granularity.Is_Set then
          Handler.Key_Name ("granularity");
          Output_SteppingGranularity (Handler, Value.granularity.Value);
@@ -3062,8 +3307,10 @@ package body DAP.Tools.Outputs is
       Handler.Boolean_Value (Value.success);
       Handler.Key_Name ("command");
       Handler.String_Value (Value.command);
-      Handler.Key_Name ("message");
-      Handler.String_Value ("cancelled");
+      if Value.message.Is_Set then
+         Handler.Key_Name ("message");
+         Output_Response_message (Handler, Value.message.Value);
+      end if;
       Handler.Key_Name ("body");
       Output_CompletionsResponse_body (Handler, Value.a_body);
       Handler.End_Object;
@@ -3170,6 +3417,27 @@ package body DAP.Tools.Outputs is
       end if;
       Handler.End_Object;
    end Output_Source;
+
+   procedure Output_WriteMemoryArguments
+     (Handler : in out VSS.JSON.Content_Handlers.JSON_Content_Handler'Class;
+      Value   : WriteMemoryArguments) is
+   begin
+      Handler.Start_Object;
+      Handler.Key_Name ("memoryReference");
+      Handler.String_Value (Value.memoryReference);
+      if Value.offset.Is_Set then
+         Handler.Key_Name ("offset");
+         Handler.Integer_Value
+           (Interfaces.Integer_64 (Integer'(Value.offset.Value)));
+      end if;
+      if Value.allowPartial then
+         Handler.Key_Name ("allowPartial");
+         Handler.Boolean_Value (Value.allowPartial);
+      end if;
+      Handler.Key_Name ("data");
+      Handler.String_Value (Value.data);
+      Handler.End_Object;
+   end Output_WriteMemoryArguments;
 
    procedure Output_ConfigurationDoneArguments
      (Handler : in out VSS.JSON.Content_Handlers.JSON_Content_Handler'Class;
@@ -3331,8 +3599,10 @@ package body DAP.Tools.Outputs is
       Handler.Boolean_Value (Value.success);
       Handler.Key_Name ("command");
       Handler.String_Value (Value.command);
-      Handler.Key_Name ("message");
-      Handler.String_Value ("cancelled");
+      if Value.message.Is_Set then
+         Handler.Key_Name ("message");
+         Output_Response_message (Handler, Value.message.Value);
+      end if;
       if Value.a_body.Is_Set then
          Handler.Key_Name ("body");
          Output_ReadMemoryResponse_body (Handler, Value.a_body.Value);
@@ -3416,8 +3686,10 @@ package body DAP.Tools.Outputs is
       Handler.Boolean_Value (Value.success);
       Handler.Key_Name ("command");
       Handler.String_Value (Value.command);
-      Handler.Key_Name ("message");
-      Handler.String_Value ("cancelled");
+      if Value.message.Is_Set then
+         Handler.Key_Name ("message");
+         Output_Response_message (Handler, Value.message.Value);
+      end if;
       Handler.Key_Name ("body");
       Output_VariablesResponse_body (Handler, Value.a_body);
       Handler.End_Object;
@@ -3447,6 +3719,10 @@ package body DAP.Tools.Outputs is
       if not Value.env.Is_Empty then
          Handler.Key_Name ("env");
          Output_Any_Value (Handler, Value.env);
+      end if;
+      if Value.argsCanBeInterpretedByShell then
+         Handler.Key_Name ("argsCanBeInterpretedByShell");
+         Handler.Boolean_Value (Value.argsCanBeInterpretedByShell);
       end if;
       Handler.End_Object;
    end Output_RunInTerminalRequestArguments;
@@ -3544,8 +3820,10 @@ package body DAP.Tools.Outputs is
       Handler.Boolean_Value (Value.success);
       Handler.Key_Name ("command");
       Handler.String_Value (Value.command);
-      Handler.Key_Name ("message");
-      Handler.String_Value ("cancelled");
+      if Value.message.Is_Set then
+         Handler.Key_Name ("message");
+         Output_Response_message (Handler, Value.message.Value);
+      end if;
       Handler.Key_Name ("body");
       Output_BreakpointLocationsResponse_body (Handler, Value.a_body);
       Handler.End_Object;
@@ -3572,6 +3850,10 @@ package body DAP.Tools.Outputs is
          Handler.Key_Name ("visibility");
          Output_VariablePresentationHint_visibility
            (Handler, Value.visibility.Value);
+      end if;
+      if Value.lazy then
+         Handler.Key_Name ("lazy");
+         Handler.Boolean_Value (Value.lazy);
       end if;
       Handler.End_Object;
    end Output_VariablePresentationHint;
@@ -3620,6 +3902,16 @@ package body DAP.Tools.Outputs is
       Handler.End_Object;
    end Output_DisassembledInstruction;
 
+   procedure Output_PauseArguments
+     (Handler : in out VSS.JSON.Content_Handlers.JSON_Content_Handler'Class;
+      Value   : PauseArguments) is
+   begin
+      Handler.Start_Object;
+      Handler.Key_Name ("threadId");
+      Handler.Integer_Value (Interfaces.Integer_64 (Integer'(Value.threadId)));
+      Handler.End_Object;
+   end Output_PauseArguments;
+
    procedure Output_CancelResponse
      (Handler : in out VSS.JSON.Content_Handlers.JSON_Content_Handler'Class;
       Value   : CancelResponse) is
@@ -3636,24 +3928,16 @@ package body DAP.Tools.Outputs is
       Handler.Boolean_Value (Value.success);
       Handler.Key_Name ("command");
       Handler.String_Value (Value.command);
-      Handler.Key_Name ("message");
-      Handler.String_Value ("cancelled");
+      if Value.message.Is_Set then
+         Handler.Key_Name ("message");
+         Output_Response_message (Handler, Value.message.Value);
+      end if;
       if not Value.a_body.Is_Empty then
          Handler.Key_Name ("body");
          Output_Any_Value (Handler, Value.a_body);
       end if;
       Handler.End_Object;
    end Output_CancelResponse;
-
-   procedure Output_PauseArguments
-     (Handler : in out VSS.JSON.Content_Handlers.JSON_Content_Handler'Class;
-      Value   : PauseArguments) is
-   begin
-      Handler.Start_Object;
-      Handler.Key_Name ("threadId");
-      Handler.Integer_Value (Interfaces.Integer_64 (Integer'(Value.threadId)));
-      Handler.End_Object;
-   end Output_PauseArguments;
 
    procedure Output_InitializeRequestArguments
      (Handler : in out VSS.JSON.Content_Handlers.JSON_Content_Handler'Class;
@@ -3711,6 +3995,18 @@ package body DAP.Tools.Outputs is
          Handler.Key_Name ("supportsInvalidatedEvent");
          Handler.Boolean_Value (Value.supportsInvalidatedEvent);
       end if;
+      if Value.supportsMemoryEvent then
+         Handler.Key_Name ("supportsMemoryEvent");
+         Handler.Boolean_Value (Value.supportsMemoryEvent);
+      end if;
+      if Value.supportsArgsCanBeInterpretedByShell then
+         Handler.Key_Name ("supportsArgsCanBeInterpretedByShell");
+         Handler.Boolean_Value (Value.supportsArgsCanBeInterpretedByShell);
+      end if;
+      if Value.supportsStartDebuggingRequest then
+         Handler.Key_Name ("supportsStartDebuggingRequest");
+         Handler.Boolean_Value (Value.supportsStartDebuggingRequest);
+      end if;
       Handler.End_Object;
    end Output_InitializeRequestArguments;
 
@@ -3744,8 +4040,10 @@ package body DAP.Tools.Outputs is
       Handler.Boolean_Value (Value.success);
       Handler.Key_Name ("command");
       Handler.String_Value (Value.command);
-      Handler.Key_Name ("message");
-      Handler.String_Value ("cancelled");
+      if Value.message.Is_Set then
+         Handler.Key_Name ("message");
+         Output_Response_message (Handler, Value.message.Value);
+      end if;
       Handler.Key_Name ("body");
       Output_SetInstructionBreakpointsResponse_body (Handler, Value.a_body);
       Handler.End_Object;
@@ -3881,6 +4179,22 @@ package body DAP.Tools.Outputs is
       Handler.End_Object;
    end Output_TerminatedEvent;
 
+   procedure Output_StartDebuggingRequest
+     (Handler : in out VSS.JSON.Content_Handlers.JSON_Content_Handler'Class;
+      Value   : StartDebuggingRequest) is
+   begin
+      Handler.Start_Object;
+      Handler.Key_Name ("seq");
+      Handler.Integer_Value (Interfaces.Integer_64 (Integer'(Value.seq)));
+      Handler.Key_Name ("type");
+      Handler.String_Value ("request");
+      Handler.Key_Name ("command");
+      Handler.String_Value ("startDebugging");
+      Handler.Key_Name ("arguments");
+      Output_StartDebuggingRequestArguments (Handler, Value.arguments);
+      Handler.End_Object;
+   end Output_StartDebuggingRequest;
+
    procedure Output_ThreadEvent
      (Handler : in out VSS.JSON.Content_Handlers.JSON_Content_Handler'Class;
       Value   : ThreadEvent) is
@@ -3940,8 +4254,10 @@ package body DAP.Tools.Outputs is
       Handler.Boolean_Value (Value.success);
       Handler.Key_Name ("command");
       Handler.String_Value (Value.command);
-      Handler.Key_Name ("message");
-      Handler.String_Value ("cancelled");
+      if Value.message.Is_Set then
+         Handler.Key_Name ("message");
+         Output_Response_message (Handler, Value.message.Value);
+      end if;
       Handler.Key_Name ("body");
       Output_GotoTargetsResponse_body (Handler, Value.a_body);
       Handler.End_Object;
@@ -3961,6 +4277,10 @@ package body DAP.Tools.Outputs is
       if not Value.sortText.Is_Null then
          Handler.Key_Name ("sortText");
          Handler.String_Value (Value.sortText);
+      end if;
+      if not Value.detail.Is_Null then
+         Handler.Key_Name ("detail");
+         Handler.String_Value (Value.detail);
       end if;
       if Value.a_type.Is_Set then
          Handler.Key_Name ("type");
@@ -4027,8 +4347,10 @@ package body DAP.Tools.Outputs is
       Handler.Boolean_Value (Value.success);
       Handler.Key_Name ("command");
       Handler.String_Value (Value.command);
-      Handler.Key_Name ("message");
-      Handler.String_Value ("cancelled");
+      if Value.message.Is_Set then
+         Handler.Key_Name ("message");
+         Output_Response_message (Handler, Value.message.Value);
+      end if;
       Handler.Key_Name ("body");
       Output_ErrorResponse_body (Handler, Value.a_body);
       Handler.End_Object;
@@ -4263,8 +4585,10 @@ package body DAP.Tools.Outputs is
       Handler.Boolean_Value (Value.success);
       Handler.Key_Name ("command");
       Handler.String_Value (Value.command);
-      Handler.Key_Name ("message");
-      Handler.String_Value ("cancelled");
+      if Value.message.Is_Set then
+         Handler.Key_Name ("message");
+         Output_Response_message (Handler, Value.message.Value);
+      end if;
       Handler.Key_Name ("body");
       Output_SetVariableResponse_body (Handler, Value.a_body);
       Handler.End_Object;
@@ -4321,8 +4645,10 @@ package body DAP.Tools.Outputs is
       Handler.Boolean_Value (Value.success);
       Handler.Key_Name ("command");
       Handler.String_Value (Value.command);
-      Handler.Key_Name ("message");
-      Handler.String_Value ("cancelled");
+      if Value.message.Is_Set then
+         Handler.Key_Name ("message");
+         Output_Response_message (Handler, Value.message.Value);
+      end if;
       if not Value.a_body.Is_Empty then
          Handler.Key_Name ("body");
          Output_Any_Value (Handler, Value.a_body);
@@ -4346,6 +4672,22 @@ package body DAP.Tools.Outputs is
       Handler.End_Object;
    end Output_SetExceptionBreakpointsRequest;
 
+   procedure Output_WriteMemoryRequest
+     (Handler : in out VSS.JSON.Content_Handlers.JSON_Content_Handler'Class;
+      Value   : WriteMemoryRequest) is
+   begin
+      Handler.Start_Object;
+      Handler.Key_Name ("seq");
+      Handler.Integer_Value (Interfaces.Integer_64 (Integer'(Value.seq)));
+      Handler.Key_Name ("type");
+      Handler.String_Value ("request");
+      Handler.Key_Name ("command");
+      Handler.String_Value ("writeMemory");
+      Handler.Key_Name ("arguments");
+      Output_WriteMemoryArguments (Handler, Value.arguments);
+      Handler.End_Object;
+   end Output_WriteMemoryRequest;
+
    procedure Output_DataBreakpointInfoArguments
      (Handler : in out VSS.JSON.Content_Handlers.JSON_Content_Handler'Class;
       Value   : DataBreakpointInfoArguments) is
@@ -4358,6 +4700,11 @@ package body DAP.Tools.Outputs is
       end if;
       Handler.Key_Name ("name");
       Handler.String_Value (Value.name);
+      if Value.frameId.Is_Set then
+         Handler.Key_Name ("frameId");
+         Handler.Integer_Value
+           (Interfaces.Integer_64 (Integer'(Value.frameId.Value)));
+      end if;
       Handler.End_Object;
    end Output_DataBreakpointInfoArguments;
 
@@ -4377,8 +4724,10 @@ package body DAP.Tools.Outputs is
       Handler.Boolean_Value (Value.success);
       Handler.Key_Name ("command");
       Handler.String_Value (Value.command);
-      Handler.Key_Name ("message");
-      Handler.String_Value ("cancelled");
+      if Value.message.Is_Set then
+         Handler.Key_Name ("message");
+         Output_Response_message (Handler, Value.message.Value);
+      end if;
       if Value.a_body.Is_Set then
          Handler.Key_Name ("body");
          Output_Capabilities (Handler, Value.a_body.Value);
@@ -4402,8 +4751,10 @@ package body DAP.Tools.Outputs is
       Handler.Boolean_Value (Value.success);
       Handler.Key_Name ("command");
       Handler.String_Value (Value.command);
-      Handler.Key_Name ("message");
-      Handler.String_Value ("cancelled");
+      if Value.message.Is_Set then
+         Handler.Key_Name ("message");
+         Output_Response_message (Handler, Value.message.Value);
+      end if;
       if not Value.a_body.Is_Empty then
          Handler.Key_Name ("body");
          Output_Any_Value (Handler, Value.a_body);
@@ -4504,8 +4855,10 @@ package body DAP.Tools.Outputs is
       Handler.Boolean_Value (Value.success);
       Handler.Key_Name ("command");
       Handler.String_Value (Value.command);
-      Handler.Key_Name ("message");
-      Handler.String_Value ("cancelled");
+      if Value.message.Is_Set then
+         Handler.Key_Name ("message");
+         Output_Response_message (Handler, Value.message.Value);
+      end if;
       Handler.Key_Name ("body");
       Output_SetFunctionBreakpointsResponse_body (Handler, Value.a_body);
       Handler.End_Object;
@@ -4589,8 +4942,10 @@ package body DAP.Tools.Outputs is
       Handler.Boolean_Value (Value.success);
       Handler.Key_Name ("command");
       Handler.String_Value (Value.command);
-      Handler.Key_Name ("message");
-      Handler.String_Value ("cancelled");
+      if Value.message.Is_Set then
+         Handler.Key_Name ("message");
+         Output_Response_message (Handler, Value.message.Value);
+      end if;
       Handler.Key_Name ("body");
       Output_EvaluateResponse_body (Handler, Value.a_body);
       Handler.End_Object;
@@ -4658,8 +5013,10 @@ package body DAP.Tools.Outputs is
       Handler.Boolean_Value (Value.success);
       Handler.Key_Name ("command");
       Handler.String_Value (Value.command);
-      Handler.Key_Name ("message");
-      Handler.String_Value ("cancelled");
+      if Value.message.Is_Set then
+         Handler.Key_Name ("message");
+         Output_Response_message (Handler, Value.message.Value);
+      end if;
       Handler.Key_Name ("body");
       Output_SetBreakpointsResponse_body (Handler, Value.a_body);
       Handler.End_Object;
@@ -4722,8 +5079,10 @@ package body DAP.Tools.Outputs is
       Handler.Boolean_Value (Value.success);
       Handler.Key_Name ("command");
       Handler.String_Value (Value.command);
-      Handler.Key_Name ("message");
-      Handler.String_Value ("cancelled");
+      if Value.message.Is_Set then
+         Handler.Key_Name ("message");
+         Output_Response_message (Handler, Value.message.Value);
+      end if;
       if not Value.a_body.Is_Empty then
          Handler.Key_Name ("body");
          Output_Any_Value (Handler, Value.a_body);
@@ -4750,6 +5109,22 @@ package body DAP.Tools.Outputs is
    procedure Output_SetExceptionBreakpointsResponse
      (Handler : in out VSS.JSON.Content_Handlers.JSON_Content_Handler'Class;
       Value   : SetExceptionBreakpointsResponse) is
+      procedure Output_SetExceptionBreakpointsResponse_body
+        (Handler : in out VSS.JSON.Content_Handlers.JSON_Content_Handler'Class;
+         Value   : SetExceptionBreakpointsResponse_body) is
+      begin
+         Handler.Start_Object;
+         if Value.breakpoints.Length > 0 then
+            Handler.Key_Name ("breakpoints");
+            Handler.Start_Array;
+            for J in 1 .. Value.breakpoints.Length loop
+               Output_Breakpoint (Handler, Value.breakpoints (J));
+            end loop;
+            Handler.End_Array;
+         end if;
+         Handler.End_Object;
+      end Output_SetExceptionBreakpointsResponse_body;
+
    begin
       Handler.Start_Object;
       Handler.Key_Name ("seq");
@@ -4763,11 +5138,14 @@ package body DAP.Tools.Outputs is
       Handler.Boolean_Value (Value.success);
       Handler.Key_Name ("command");
       Handler.String_Value (Value.command);
-      Handler.Key_Name ("message");
-      Handler.String_Value ("cancelled");
-      if not Value.a_body.Is_Empty then
+      if Value.message.Is_Set then
+         Handler.Key_Name ("message");
+         Output_Response_message (Handler, Value.message.Value);
+      end if;
+      if Value.a_body.Is_Set then
          Handler.Key_Name ("body");
-         Output_Any_Value (Handler, Value.a_body);
+         Output_SetExceptionBreakpointsResponse_body
+           (Handler, Value.a_body.Value);
       end if;
       Handler.End_Object;
    end Output_SetExceptionBreakpointsResponse;
@@ -4788,8 +5166,10 @@ package body DAP.Tools.Outputs is
       Handler.Boolean_Value (Value.success);
       Handler.Key_Name ("command");
       Handler.String_Value (Value.command);
-      Handler.Key_Name ("message");
-      Handler.String_Value ("cancelled");
+      if Value.message.Is_Set then
+         Handler.Key_Name ("message");
+         Output_Response_message (Handler, Value.message.Value);
+      end if;
       if not Value.a_body.Is_Empty then
          Handler.Key_Name ("body");
          Output_Any_Value (Handler, Value.a_body);
@@ -4827,8 +5207,10 @@ package body DAP.Tools.Outputs is
       Handler.Boolean_Value (Value.success);
       Handler.Key_Name ("command");
       Handler.String_Value (Value.command);
-      Handler.Key_Name ("message");
-      Handler.String_Value ("cancelled");
+      if Value.message.Is_Set then
+         Handler.Key_Name ("message");
+         Output_Response_message (Handler, Value.message.Value);
+      end if;
       if Value.a_body.Is_Set then
          Handler.Key_Name ("body");
          Output_DisassembleResponse_body (Handler, Value.a_body.Value);
@@ -4957,11 +5339,40 @@ package body DAP.Tools.Outputs is
       Handler.Boolean_Value (Value.success);
       Handler.Key_Name ("command");
       Handler.String_Value (Value.command);
-      Handler.Key_Name ("message");
-      Handler.String_Value ("cancelled");
+      if Value.message.Is_Set then
+         Handler.Key_Name ("message");
+         Output_Response_message (Handler, Value.message.Value);
+      end if;
       Handler.Key_Name ("body");
       Output_LoadedSourcesResponse_body (Handler, Value.a_body);
       Handler.End_Object;
    end Output_LoadedSourcesResponse;
+
+   procedure Output_StartDebuggingResponse
+     (Handler : in out VSS.JSON.Content_Handlers.JSON_Content_Handler'Class;
+      Value   : StartDebuggingResponse) is
+   begin
+      Handler.Start_Object;
+      Handler.Key_Name ("seq");
+      Handler.Integer_Value (Interfaces.Integer_64 (Integer'(Value.seq)));
+      Handler.Key_Name ("type");
+      Handler.String_Value ("response");
+      Handler.Key_Name ("request_seq");
+      Handler.Integer_Value
+        (Interfaces.Integer_64 (Integer'(Value.request_seq)));
+      Handler.Key_Name ("success");
+      Handler.Boolean_Value (Value.success);
+      Handler.Key_Name ("command");
+      Handler.String_Value (Value.command);
+      if Value.message.Is_Set then
+         Handler.Key_Name ("message");
+         Output_Response_message (Handler, Value.message.Value);
+      end if;
+      if not Value.a_body.Is_Empty then
+         Handler.Key_Name ("body");
+         Output_Any_Value (Handler, Value.a_body);
+      end if;
+      Handler.End_Object;
+   end Output_StartDebuggingResponse;
 
 end DAP.Tools.Outputs;
