@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                              C O D E P E E R                             --
 --                                                                          --
---                     Copyright (C) 2008-2023, AdaCore                     --
+--                     Copyright (C) 2008-2022, AdaCore                     --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -228,11 +228,14 @@ package Message_Kinds is
 
    --  Infer_Subkind
       Infer_Warning,
-      Infer_Check,
+      Function_With_Side_Effects,
+      Function_With_Side_Effects_In_Conditional,
+      Memory_Leak,
+      Stack_Variable_Address_Escape,
+      Use_After_Free,
+      Infer_Check
    --  Infer_Subkind end
-
-      --  Cppcheck
-      Cppcheck);
+      );
 
    --  Mesagge_Subkind ranges
 
@@ -340,9 +343,9 @@ package Message_Kinds is
    type Check_Kinds_Array is array (Check_Subkind) of Boolean;
    pragma Pack (Check_Kinds_Array);
    Check_Kinds_Array_Default  : constant Check_Kinds_Array :=
-     (others => False);
+     [others => False];
    Check_Kinds_Array_No_Check : constant Check_Kinds_Array :=
-     (others => False);
+     [others => False];
    Check_Kinds_String_Default : constant String := "";
 
    type Message_Subkind_Set is array (Message_Subkind) of Boolean;
@@ -350,14 +353,20 @@ package Message_Kinds is
    function Is_Documented_Kind (M : Message_Subkind) return Boolean is
      (case M is
          when Non_Analyzed_Call_Warning ..
-             Incompletely_Analyzed_Procedure_Warning
+             Non_Analyzed_Procedure_Warning
            | Suspicious_First_Precondition_Warning ..
              Infinite_Loop_Warning
            | Plain_Dead_Edge_Warning .. True_Condition_Dead_Edge_Warning
            | Procedure_Does_Not_Return_Error .. Invalid_Or_Null_Check
            | Divide_By_Zero_Check
            | Aliasing_Check .. Numeric_Range_Check
-           | Type_Variant_Check | Tag_Check  => True,
+           | Type_Variant_Check
+           | Tag_Check
+           | Negative_Exponent_Check => True,
+         when Floating_Point_Underflow_Check --  emitted only when
+                                             --  -dbg-on fpt_underflow is
+                                             --  given, not documented
+           => False,
          when others                         => False);
    --  Lists all warning/checks/info messages that should be documented
 
