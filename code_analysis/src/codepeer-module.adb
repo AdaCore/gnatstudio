@@ -859,7 +859,9 @@ package body CodePeer.Module is
         Project_Path (Project).File_Extension;
 
    begin
-      if Project.Has_Attribute (Output_Directory_Attribute) then
+      if not Is_CPL
+        and then Project.Has_Attribute (Output_Directory_Attribute)
+      then
          declare
             Dir : constant GNATCOLL.VFS.Filesystem_String :=
               GNATCOLL.VFS.Filesystem_String

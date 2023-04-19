@@ -136,8 +136,9 @@ package body CodePeer.Module.Bridge is
       pragma Warnings (Off, Success);
 
    begin
-      if not Is_Directory (Output_Directory)
-        and Codepeer_Server_URL (Project) = ""
+      if not Is_CPL
+        and then (not Is_Directory (Output_Directory)
+        and Codepeer_Server_URL (Project) = "")
       then
          Module.Kernel.Insert
            (-"cannot find CodePeer output directory: " &
