@@ -268,6 +268,8 @@ package body CodePeer.Module.Bridge is
         (Module.Kernel.Module (Builder_Context_Record'Tag));
       Extra_Args : Argument_List_Access;
 
+      Target_Name : constant String :=
+         (if Is_CPL then "CPL CodePeer Bridge" else "CodePeer Bridge");
    begin
       Extra_Args := new Argument_List (1 .. 1);
       Extra_Args (1) := new String'(+Command_File.Full_Name.all);
@@ -277,7 +279,7 @@ package body CodePeer.Module.Bridge is
 
       Commands.Builder.Launch_Target
         (Builder         => Builder,
-         Target_Name     => "CodePeer Bridge",
+         Target_Name     => Target_Name,
          Mode_Name       => "codepeer",
          Force_File      => No_File,
          Extra_Args      => Extra_Args,
