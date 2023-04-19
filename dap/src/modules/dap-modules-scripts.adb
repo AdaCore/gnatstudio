@@ -247,6 +247,25 @@ package body DAP.Modules.Scripts is
             DAP.Module.Start_Program (Kernel, Visual.Client);
          end if;
 
+      elsif Command = "send" then
+         Inst   := Nth_Arg (Data, 1, New_Class (Kernel, "Debugger"));
+         Visual := DAP_Visual_Debugger_Access
+           (Glib.Object.GObject'(Get_Data (Inst)));
+
+         Visual.Client.Process_User_Command
+           (Nth_Arg (Data, 2), Nth_Arg (Data, 3, True));
+
+         if not Nth_Arg (Data, 4, False) then
+            Data.Set_Return_Value (String'("Result is not supported in DAP"));
+         end if;
+
+      elsif Command = "non_blocking_send" then
+         Inst   := Nth_Arg (Data, 1, New_Class (Kernel, "Debugger"));
+         Visual := DAP_Visual_Debugger_Access
+           (Glib.Object.GObject'(Get_Data (Inst)));
+         Visual.Client.Process_User_Command
+           (Nth_Arg (Data, 2), Nth_Arg (Data, 3, True));
+
       elsif Command = "close" then
          Inst   := Nth_Arg (Data, 1, New_Class (Kernel, "Debugger"));
          Visual := DAP_Visual_Debugger_Access
@@ -410,6 +429,21 @@ package body DAP.Modules.Scripts is
          Class        => Class);
       Kernel.Scripts.Register_Command
         ("start",
+         Handler      => Shell_Handler'Access,
+         Class        => Class);
+      Kernel.Scripts.Register_Command
+        ("send",
+         Params =>
+           (1 => Param ("cmd"),
+            2 => Param ("output", Optional => True),
+            3 => Param ("show_in_console", Optional => True)),
+         Handler      => Shell_Handler'Access,
+         Class        => Class);
+      Kernel.Scripts.Register_Command
+        ("non_blocking_send",
+         Params =>
+           (1 => Param ("cmd"),
+            2 => Param ("output", Optional => True)),
          Handler      => Shell_Handler'Access,
          Class        => Class);
       Kernel.Scripts.Register_Command
