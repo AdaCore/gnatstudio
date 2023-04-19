@@ -16,14 +16,16 @@
 ------------------------------------------------------------------------------
 
 with Ada.Characters.Handling;  use Ada.Characters.Handling;
+with Ada.Streams;
 with Ada.Strings.Fixed;        use Ada.Strings.Fixed;
 with Ada.Strings.Maps;         use Ada.Strings.Maps;
-with Ada.Strings.Unbounded;
+with Ada.Strings.Unbounded;    use Ada.Strings.Unbounded;
 with Ada.Text_IO;
 with Ada.Unchecked_Deallocation;
 
 with GNAT.Strings;             use GNAT.Strings;
 
+with GNATCOLL.Coders.Base64;
 with GNATCOLL.Utils;           use GNATCOLL.Utils;
 
 with Glib;                     use Glib;
@@ -87,6 +89,7 @@ with DAP.Tools;
 with DAP.Types;                use DAP.Types;
 
 with DAP.Requests.Read_Memory;
+with DAP.Requests.Write_Memory;
 
 package body DAP.Views.Memory is
 
@@ -99,6 +102,9 @@ package body DAP.Views.Memory is
    --  The size of the data to display
    --  Note that any change in this type needs to be coordinated in
    --  Update_Display.
+
+   Dump_Item_Size : constant := 16;
+   --  Expected size of an memory dump line
 
    -- Memory_Dump_Item --
 
@@ -248,6 +254,12 @@ package body DAP.Views.Memory is
    --  Display the contents of the memory into the text area.
    --  Address is a string that represents an address in hexadecimal,
    --  it should be made of the "0x" prefix followed by hexadecimal.
+
+   procedure Fill_Values
+     (View       : access DAP_Memory_View_Record'Class;
+      Address    : Long_Long_Integer := 0;
+      Damp_Total : Integer := 0;
+      Damp_Row   : Integer := 1);
 
    procedure Apply_Changes (View : access DAP_Memory_View_Record'Class);
    --  Write the changes into memory.
@@ -400,6 +412,23 @@ package body DAP.Views.Memory is
       Result      : DAP.Tools.ReadMemoryResponse;
       New_Request : in out DAP_Request_Access);
 
+   overriding procedure On_Error_Message
+     (Self    : in out Read_Request;
+      Message : VSS.Strings.Virtual_String);
+
+   -------------------
+   -- Write_Request --
+   -------------------
+
+   type Write_Request is
+     new DAP.Requests.Write_Memory.Write_Memory_DAP_Request with null record;
+   type Write_Request_Access is access all Write_Request;
+
+   overriding procedure On_Result_Message
+     (Self        : in out Write_Request;
+      Result      : DAP.Tools.WriteMemoryResponse;
+      New_Request : in out DAP_Request_Access) is null;
+
    ---------------------------
    -- On_Process_Terminated --
    ---------------------------
@@ -501,8 +530,44 @@ package body DAP.Views.Memory is
    -------------------
 
    procedure Apply_Changes (View : access DAP_Memory_View_Record'Class) is
+      use Ada.Streams;
+
       Client : constant DAP.Clients.DAP_Client_Access :=
         DAP.Module.Get_Current_Debugger;
+
+      subtype Hex_String is String (1 .. 2);
+      function To_Binary (Hex : Hex_String) return Stream_Element;
+      function To_Binary (Hex : Hex_String) return Stream_Element is
+         function Digit (C : Character) return Stream_Element;
+         function Digit (C : Character) return Stream_Element is
+         begin
+            case C is
+               when '0' .. '9' =>
+                  return Character'Pos (C) - Character'Pos ('0');
+
+               when 'A' .. 'F' =>
+                  return Character'Pos (C) - Character'Pos ('A') + 10;
+
+               when 'a' .. 'f' =>
+                  return Character'Pos (C) - Character'Pos ('a') + 10;
+
+               when others =>
+                  raise Constraint_Error with
+                    "Wrong character '" & C & "' in Apply_Changes";
+            end case;
+         end Digit;
+
+      begin
+         return Digit (Hex (Hex'First)) * 16 + Digit (Hex (Hex'First + 1));
+      end To_Binary;
+
+      Src   : Stream_Element_Array (1 .. 1);
+      Index : Stream_Element_Offset := Src'First;
+      Dest  : Stream_Element_Array (1 .. 4);
+      Last  : Stream_Element_Offset;
+
+      Base64_Encoder : GNATCOLL.Coders.Base64.Encoder_Type;
+      Request        : Write_Request_Access;
    begin
       if Client.Get_Endian_Type = Little_Endian then
          Swap_Blocks (View, View.Data);
@@ -512,15 +577,36 @@ package body DAP.Views.Memory is
          if View.New_Values (J * 2 - 1 .. J * 2) /=
            View.Old_Values (J * 2 - 1 .. J * 2)
          then
-            --  Not implemented yet, WriteMemoryRequest is absent in DAP.Tools
+            Src (1) := To_Binary (View.New_Values (J * 2 - 1 .. J * 2));
+            Base64_Encoder.Initialize;
+            Base64_Encoder.Transcode
+              (In_Data  => Src,
+               In_Last  => Index,
+               Out_Data => Dest,
+               Out_Last => Last,
+               Flush    => GNATCOLL.Coders.Finish);
 
-            --  Put_Memory_Byte
-            --    (Client,
-            --     "0x" &
-            --     To_Standard_Base
-            --       (View.Starting_Address + Long_Long_Integer (J - 1),
-            --        16),
-            --     View.New_Values (J * 2 - 1 .. J * 2));
+            declare
+               D   : constant Stream_Element_Array (1 .. Last) :=
+                 Dest (1 .. Last);
+               Str : constant String
+                 (1 .. Integer (Last * Stream_Element'Size) / Character'Size)
+                   with Import;
+               for Str'Address use D'Address;
+            begin
+               Request := new Write_Request (View.Kernel);
+               Request.Parameters.arguments.memoryReference :=
+                 VSS.Strings.Conversions.To_Virtual_String
+                   ("0x" & To_Standard_Base
+                      (View.Starting_Address + Long_Long_Integer (J - 1),
+                       16));
+               Request.Parameters.arguments.allowPartial := True;
+               Request.Parameters.arguments.data :=
+                 VSS.Strings.Conversions.To_Virtual_String (Str);
+               Client.Enqueue (DAP.Requests.DAP_Request_Access (Request));
+            end;
+
+            Base64_Encoder.Close;
 
             View.Old_Values (J * 2 - 1 .. J * 2) :=
               View.New_Values (J * 2 - 1 .. J * 2);
@@ -644,9 +730,9 @@ package body DAP.Views.Memory is
       Buffer          : constant Gtk_Text_Buffer :=
         Get_Buffer (View.Editor.View);
       Number_Of_Lines : constant Integer :=
-                          Integer (Get_Value_As_Int (View.Editor.Lines_Spin));
-      --  Endianness      : constant Endian_Type :=
-      --                      Get_Endian_Type (Client);
+        Integer (Get_Value_As_Int (View.Editor.Lines_Spin));
+      Endianness      : constant Endian_Type :=
+        Get_Client (View).Get_Endian_Type;
       Old_Size        : constant Data_Size := View.Data;
       Index           : Integer;
       Tag             : Gtk_Text_Tag;
@@ -692,7 +778,9 @@ package body DAP.Views.Memory is
          end if;
       end;
 
-      if Old_Size /= View.Data then
+      if Endianness = Little_Endian
+        and then Old_Size /= View.Data
+      then
          --  Swap back to original.
          Swap_Blocks (View, Old_Size);
 
@@ -862,13 +950,34 @@ package body DAP.Views.Memory is
       Req := new Read_Request (View.Kernel);
       Req.Client  := Client;
       Req.Address := Address;
-      Req.Parameters.arguments.count := View.Number_Of_Bytes;
       Req.Parameters.arguments.memoryReference :=
         VSS.Strings.Conversions.To_Virtual_String
           ("0x" & To_Standard_Base (Address, 16));
+      Req.Parameters.arguments.count := View.Number_Of_Bytes;
 
       Client.Enqueue (DAP.Requests.DAP_Request_Access (Req));
    end Display_Memory;
+
+   ----------------------
+   -- On_Error_Message --
+   ----------------------
+
+   overriding procedure On_Error_Message
+     (Self    : in out Read_Request;
+      Message : VSS.Strings.Virtual_String)
+   is
+      View   : constant DAP_Memory_View := DAP_Memory_View
+        (Self.Client.Get_Memory_View);
+   begin
+      if Self.Address = 0
+        and then View /= null
+      then
+         View.Fill_Values;
+      end if;
+
+      DAP.Requests.Read_Memory.On_Error_Message
+        (DAP.Requests.Read_Memory.Read_Memory_DAP_Request (Self), Message);
+   end On_Error_Message;
 
    -----------------------
    -- On_Result_Message --
@@ -879,55 +988,160 @@ package body DAP.Views.Memory is
       Result      : DAP.Tools.ReadMemoryResponse;
       New_Request : in out DAP_Request_Access)
    is
-      use Ada.Strings.Unbounded;
+      use Ada.Streams;
       View   : constant DAP_Memory_View := DAP_Memory_View
         (Self.Client.Get_Memory_View);
-      Values : String (1 .. 2 * View.Number_Of_Bytes);
+
+      Dump_Index : Integer := 1;
+      Total      : Integer := 0;
+
+      -- Swap --
+      procedure Swap;
+      procedure Swap
+      is
+         L : constant Natural := Length (View.Dump (Dump_Index).Value);
+      begin
+         if Self.Client.Get_Endian_Type = Little_Endian then
+            declare
+               Src : constant String := Slice
+                 (View.Dump (Dump_Index).Value, L - 15, L);
+               Dst : String (1 .. 16);
+            begin
+               for J in 1 .. 8 loop
+                  Dst (J * 2 - 1 .. J * 2) :=
+                    Src (Src'Last - J * 2 + 1 .. Src'Last - J * 2 + 2);
+               end loop;
+
+               Ada.Strings.Unbounded.Replace_Slice
+                 (View.Dump (Dump_Index).Value, L - 15, L, Dst);
+            end;
+         end if;
+      end Swap;
+
    begin
       New_Request := null;
       if View = null then
          return;
       end if;
 
+      View.Dump := new Memory_Dump
+        (1 .. (View.Number_Of_Bytes + Dump_Item_Size - 1) /
+             Dump_Item_Size);
+
       if Result.a_body.Is_Set then
-         View.Dump := new Memory_Dump (1 .. 1);
-
-         View.Dump (1).Label := To_Unbounded_String
-           (VSS.Strings.Conversions.To_UTF_8_String
-              (Result.a_body.Value.address));
-         View.Dump (1).Value := To_Unbounded_String
-           (VSS.Strings.Conversions.To_UTF_8_String
-              (Result.a_body.Value.data));
-
          declare
-            Index : Positive := Values'First;
+            Base64_Decoder : GNATCOLL.Coders.Base64.Decoder_Type;
+            Str     : constant String := VSS.Strings.Conversions.
+              To_UTF_8_String (Result.a_body.Value.data);
+            Src     : Stream_Element_Array (1 .. Str'Length) with Import;
+            for Src'Address use Str'Address;
+            Index   : Stream_Element_Offset := Src'First;
+            Dest    : Stream_Element_Array (1 .. 4096);
+            Last    : Stream_Element_Offset;
+            Count   : Integer := 0;
+
+            function To_Hex_String (Num : Stream_Element) return String;
+            function To_Hex_String (Num : Stream_Element) return String is
+               Hex_Digit : constant array
+                 (Stream_Element range 0 .. 15) of Character :=
+                 "0123456789ABCDEF";
+               Result : String (1 .. 2);
+               Value  : Stream_Element := Num;
+            begin
+               for J in reverse Result'Range loop
+                  Result (J) := Hex_Digit (Value mod 16);
+                  Value := Value / 16;
+               end loop;
+
+               return Result;
+            end To_Hex_String;
+
          begin
-            View.Label_Length := 0;
-            --  Copy all Dump.Value-s to Values
-            for J in View.Dump'Range loop
-               Values (Index .. Index + Length (View.Dump (J).Value) - 1)
-                 := To_String (View.Dump (J).Value);
+            Base64_Decoder.Initialize;
+            Base64_Decoder.Transcode
+              (In_Data  => Src,
+               In_Last  => Index,
+               Out_Data => Dest,
+               Out_Last => Last,
+               Flush    => GNATCOLL.Coders.Finish);
+            Base64_Decoder.Close;
 
-               Index := Index + Length (View.Dump (J).Value);
+            Index := Dest'First;
+            while Index <= Last loop
+               Append
+                 (View.Dump (Dump_Index).Value,
+                  To_Hex_String (Dest (Index)));
+               Index := Index + 1;
+               Count := Count + 1;
+               Total := Total + 1;
 
-               if View.Label_Length < Length (View.Dump (J).Label) then
-                  View.Label_Length := Length (View.Dump (J).Label);
+               if Count = 8 then
+                  Swap;
+               elsif Count = 16 then
+                  Swap;
+                  Dump_Index := Dump_Index + 1;
+                  Count := 0;
                end if;
             end loop;
-
-            --  Make length of all labels equal
-            for J in View.Dump'Range loop
-               Head (View.Dump (J).Label, View.Label_Length);
-            end loop;
          end;
-      else
-         Values := (others => '.');
       end if;
+
+      View.Fill_Values (Self.Address, Total, Dump_Index);
+   end On_Result_Message;
+
+   -----------------
+   -- Fill_Values --
+   -----------------
+
+   procedure Fill_Values
+     (View       : access DAP_Memory_View_Record'Class;
+      Address    : Long_Long_Integer := 0;
+      Damp_Total : Integer := 0;
+      Damp_Row   : Integer := 1)
+   is
+      Values     : String (1 .. 2 * View.Number_Of_Bytes);
+      Index      : Positive := Values'First;
+      Total      : Integer  := Damp_Total;
+      Dump_Index : Integer  := Damp_Row;
+   begin
+      if View.Dump = null then
+         View.Dump := new Memory_Dump
+           (1 .. (View.Number_Of_Bytes + Dump_Item_Size - 1) /
+                Dump_Item_Size);
+      end if;
+
+      --  Fill the values that could not be accessed with "-"
+      while Total < View.Number_Of_Bytes loop
+         if Length (View.Dump (Dump_Index).Value) >= Dump_Item_Size * 2 then
+            Dump_Index := Dump_Index + 1;
+         end if;
+
+         Append (View.Dump (Dump_Index).Value, "--");
+         Total := Total + 1;
+      end loop;
+
+      View.Label_Length := 0;
+      --  Copy all Dump.Value-s to Values
+      for J in View.Dump'Range loop
+         Values (Index .. Index + Length (View.Dump (J).Value) - 1)
+           := To_String (View.Dump (J).Value);
+
+         Index := Index + Length (View.Dump (J).Value);
+
+         if View.Label_Length < Length (View.Dump (J).Label) then
+            View.Label_Length := Length (View.Dump (J).Label);
+         end if;
+      end loop;
+
+      --  Make length of all labels equal
+      for J in View.Dump'Range loop
+         Head (View.Dump (J).Label, View.Label_Length);
+      end loop;
 
       Free (View.New_Values);
       View.New_Values := new String'(Values);
 
-      if View.Starting_Address /= Self.Address or else
+      if View.Starting_Address /= Address or else
         View.Old_Values = null or else
         View.Old_Values'Length /= View.Number_Of_Bytes * 2 or else
         View.Edit_Mode
@@ -938,12 +1152,12 @@ package body DAP.Views.Memory is
          View.Edit_Mode := False;
       end if;
 
-      View.Starting_Address := Self.Address;
+      View.Starting_Address := Address;
       View.Data   := Byte;
       Update_Display (View);
       Set_Text (View.Editor.Address_Entry,
-                "0x" & To_Standard_Base (Self.Address, 16, Address_Length));
-   end On_Result_Message;
+                "0x" & To_Standard_Base (Address, 16, Address_Length));
+   end Fill_Values;
 
    --------------------
    -- Display_Memory --
@@ -980,21 +1194,8 @@ package body DAP.Views.Memory is
                Display_Memory (View, 0);
          end;
 
-      else
-         declare
-            New_Address : constant String :=
-              Client.Get_Variable_Address (Address);
-         begin
-            if New_Address'Length > 2
-              and then New_Address
-                (New_Address'First .. New_Address'First + 1) = "0x"
-            then
-               Display_Memory (View, New_Address);
-               Set_Text (View.Editor.Address_Entry, Address);
-            else
-               Display_Memory (View, 0);
-            end if;
-         end;
+      elsif Address /= "" then
+         Client.Get_Variable_Address (Address);
       end if;
    end Display_Memory;
 
@@ -2162,21 +2363,22 @@ package body DAP.Views.Memory is
 
       GPS.Kernel.Actions.Register_Action
         (Kernel, "examine memory",
-         Command => new View_Memory_Command,
+         Command     => new View_Memory_Command,
          Description =>
            "Examine the contents of the memory at the location of the"
          & " selected variable",
-         Category => "Debug",
+         Category    => "Debug",
          Filter      => Lookup_Filter (Kernel, "Debugger stopped") and
              Kernel.Lookup_Filter ("Debugger not command variable"));
 
       --  the '%S' and 'debug printable variable' prevent this menu from
       --  showing up in the GVD canvas. Instead, the canvas hard-codes it.
       GPS.Kernel.Modules.UI.Register_Contextual_Menu
-        (Kernel, Name => "Debug view memory",
+        (Kernel,
+         Name   => "Debug view memory",
          Label  => "Debug/View memory at address of %S",
-         Filter =>  Lookup_Filter (Kernel, "Debugger active")
-         and Lookup_Filter (Kernel, "Debugger printable variable"),
+         Filter =>  Lookup_Filter (Kernel, "Debugger active") and
+             Lookup_Filter (Kernel, "Debugger printable variable"),
          Action => "examine memory");
    end Register_Module;
 
