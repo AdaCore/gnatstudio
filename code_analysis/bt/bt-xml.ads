@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                              C O D E P E E R                             --
 --                                                                          --
---                     Copyright (C) 2008-2023, AdaCore                     --
+--                     Copyright (C) 2008-2022, AdaCore                     --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -151,7 +151,9 @@ package BT.Xml is
    Line_Attribute       : constant String := "line";
    Col_Attribute        : constant String := "col";
    Check_Attribute      : constant String := "check";
+   Check_Readable_Attribute      : constant String := "check_readable";
    Event_Attribute      : constant String := "event";
+   Event_Readable_Attribute      : constant String := "event_readable";
    Text_Attribute       : constant String := "text";
    Vals_Attribute       : constant String := "vals";
 
