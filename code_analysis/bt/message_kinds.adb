@@ -97,6 +97,8 @@ package body Message_Kinds is
       package CWE_Id_Sets is new
          Ada.Containers.Ordered_Sets (Positive);
       Result : CWE_Id_Sets.Set;
+      procedure Include_Corresponding_CWE
+        (Kind : Message_Kinds.Message_Subkind);
 
       procedure Include_Corresponding_CWE
          (Kind : Message_Kinds.Message_Subkind)
@@ -357,7 +359,7 @@ package body Message_Kinds is
          if Offset = 0 then
             --  exact match with power of 2
             return "";
-         elsif (Offset < 0) xor Is_Negated then
+         elsif Offset < 0 xor Is_Negated then
             --  Precede with '-'
             return '-' & Image (abs (Offset));
          else
@@ -386,6 +388,9 @@ package body Message_Kinds is
                      declare
                         Head : String renames S (I .. J - 3);
                         --  All but last two digits of number
+
+                        function Compute_Offset
+                          (Ref  : Natural) return Integer;
 
                         function Compute_Offset
                           (Ref  : Natural) return Integer
