@@ -12,9 +12,6 @@ build_and_test:
      - mem:16
   stage: build_and_test
   script:
-    - . ~/.aws_container_credentials
-    - export PATH=/it/e3/bin:$PATH
-
     # Setup the 'anod vcs' for this repo
     - cd /it/wave
     - anod vcs --add-repo gnatstudio $CI_PROJECT_DIR
@@ -44,8 +41,8 @@ build_and_test:
 
     # Build & test using anod
     - cd /it/wave
-    - anod build gps --minimal
-    - anod build gps_testsuite_drivers --minimal
+    - anod build gps --minimal --latest
+    - anod build gps_testsuite_drivers --minimal --latest
     # Set this to deactivate some event-synth tests
     - export GITLAB_CI=1
 
