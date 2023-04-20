@@ -305,6 +305,7 @@ package body GPS.LSP_Client.Editors.Formatting is
               (if GPS.Kernel.Preferences.LSP_Limit_Formatting.Get_Pref
                then Self.Span
                else LSP.Messages.Empty_Span),
+            Compute_Minimal_Edits    =>  True,
             Error                    => Dummy);
       end;
 
