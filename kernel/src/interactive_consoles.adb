@@ -677,7 +677,7 @@ package body Interactive_Consoles is
          Get_End_Iter (Console.Buffer, Last_Iter);
          Insert (Console.Buffer, Last_Iter, Console.User_Input.all);
          Free (Console.User_Input);
-      else
+      elsif Console.Automatic_Scroll then
          Scroll_Mark_Onscreen (Console.View, Get_Insert (Console.Buffer));
       end if;
 

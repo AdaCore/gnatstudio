@@ -22,6 +22,7 @@ with Ada.Strings.Fixed;
 
 with Glib;                      use Glib;
 with Glib.Values;
+with Gtk.Menu;
 with Pango.Layout;              use Pango.Layout;
 
 with Gtk.Cell_Renderer_Text;    use Gtk.Cell_Renderer_Text;
@@ -93,6 +94,10 @@ package body Log_File_Views is
       --  Map of preferences which control filtration
    end record;
 
+   overriding procedure Create_Menu
+     (View    : not null access Log_View_Record;
+      Menu    : not null access Gtk.Menu.Gtk_Menu_Record'Class);
+
    function Initialize (View : access Log_View_Record'Class) return Gtk_Widget;
    --  Create a new log view
 
@@ -122,6 +127,7 @@ package body Log_File_Views is
       Formal_View_Record => Log_View_Record,
       Reuse_If_Exist     => True,
       Local_Toolbar      => True,
+      Local_Config       => True,
       Areas              => Gtkada.MDI.Sides_Only,
       Group              => Group_Consoles);
    subtype Log_View_Access is Log_Views.View_Access;
@@ -228,6 +234,8 @@ package body Log_File_Views is
    use Log_View_Kind_Preferences;
 
    Log_View_Preference : Log_View_Kind_Preferences.Preference;
+
+   Auto_Scroll_Preference : Boolean_Preference;
 
    -------------------
    -- After_Message --
@@ -508,6 +516,17 @@ package body Log_File_Views is
       E.Filter.Refilter;
    end On_Filter_Changed;
 
+   -----------------
+   -- Create_Menu --
+   -----------------
+
+   overriding procedure Create_Menu
+     (View    : not null access Log_View_Record;
+      Menu    : not null access Gtk.Menu.Gtk_Menu_Record'Class) is
+   begin
+      Append_Menu (Menu, View.Kernel, Auto_Scroll_Preference);
+   end Create_Menu;
+
    ----------------
    -- Initialize --
    ----------------
@@ -545,6 +564,8 @@ package body Log_File_Views is
       else
          Refresh (View);
       end if;
+
+      View.Set_Automatic_Scroll (Auto_Scroll_Preference.Get_Pref);
 
       return Gtk_Widget (View.Get_View);
    end Initialize;
@@ -881,6 +902,11 @@ package body Log_File_Views is
           (GPS.Kernel.Preferences.Comments_Style)
       then
          View.On_Preferences_Changed;
+         return;
+      end if;
+
+      if Pref = Default_Preferences.Preference (Auto_Scroll_Preference) then
+         View.Set_Automatic_Scroll (Auto_Scroll_Preference.Get_Pref);
       end if;
    end Execute;
 
@@ -961,6 +987,12 @@ package body Log_File_Views is
          Label   => "Log collecting policy",
          Doc     => "When the Log view collects messages",
          Default => Only_When_Opened);
+
+      Auto_Scroll_Preference := Get_Preferences (Kernel).Create_Invisible_Pref
+        (Name    => "Log-View-Auto-Scroll",
+         Default => False,
+         Label   => "Log view auto-scrolling",
+         Doc     => "Automatically scroll to new logs.");
 
       Register_Action
         (Kernel, "log save",
