@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                               GNAT Studio                                --
 --                                                                          --
---                        Copyright (C) 2022-2023, AdaCore                  --
+--                        Copyright (C) 2023, AdaCore                       --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -15,47 +15,43 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
---  "next" request
+--  "writeMemory" request
 
 with DAP.Tools;
 
-package DAP.Requests.Next is
+package DAP.Requests.Write_Memory is
 
-   -- Next_DAP_Request --
+   -- Write_Memory_DAP_Request --
 
-   type Next_DAP_Request is new DAP_Request with record
-      Parameters : aliased DAP.Tools.NextRequest :=
-        DAP.Tools.NextRequest'
+   type Write_Memory_DAP_Request is abstract new DAP_Request with record
+      Parameters : aliased DAP.Tools.WriteMemoryRequest :=
+        DAP.Tools.WriteMemoryRequest'
           (seq       => 0,
-           arguments =>
-             (granularity  =>
-                (Is_Set => True, Value => DAP.Tools.Enum.line),
-              singleThread => False,
-              threadId     => 0));
+           arguments => <>);
    end record;
 
-   type Next_DAP_Request_Access is access all Next_DAP_Request;
+   type Write_Memory_DAP_Request_Access is access all Write_Memory_DAP_Request;
 
    overriding procedure Write
-     (Self   : Next_DAP_Request;
+     (Self   : Write_Memory_DAP_Request;
       Stream : in out VSS.JSON.Content_Handlers.JSON_Content_Handler'Class);
 
    overriding procedure On_Result_Message
-     (Self        : in out Next_DAP_Request;
+     (Self        : in out Write_Memory_DAP_Request;
       Stream      : in out VSS.JSON.Pull_Readers.JSON_Pull_Reader'Class;
       New_Request : in out DAP_Request_Access);
 
    procedure On_Result_Message
-     (Self        : in out Next_DAP_Request;
-      Result      : DAP.Tools.NextResponse;
-      New_Request : in out DAP_Request_Access);
+     (Self        : in out Write_Memory_DAP_Request;
+      Result      : DAP.Tools.WriteMemoryResponse;
+      New_Request : in out DAP_Request_Access) is abstract;
 
    overriding procedure Set_Seq
-     (Self : in out Next_DAP_Request;
+     (Self : in out Write_Memory_DAP_Request;
       Id   : Integer);
 
    overriding function Method
-     (Self : in out Next_DAP_Request)
-      return String is ("next");
+     (Self : in out Write_Memory_DAP_Request)
+      return String is ("writeMemory");
 
-end DAP.Requests.Next;
+end DAP.Requests.Write_Memory;

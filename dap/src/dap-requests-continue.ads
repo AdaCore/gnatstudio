@@ -27,7 +27,9 @@ package DAP.Requests.Continue is
       Parameters : aliased DAP.Tools.ContinueRequest :=
         DAP.Tools.ContinueRequest'
           (seq       => 0,
-           arguments => (threadId => 0));
+           arguments =>
+             (threadId     => 0,
+              singleThread => False));
    end record;
 
    type Continue_DAP_Request_Access is access all Continue_DAP_Request;

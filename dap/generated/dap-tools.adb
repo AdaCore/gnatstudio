@@ -147,7 +147,7 @@ package body DAP.Tools is
    end Clear;
 
    procedure Append (Self : in out Breakpoint_Vector; Value : Breakpoint) is
-      Init_Length : constant Positive :=
+      Init_Length     : constant Positive       :=
         Positive'Max (1, 256 / Breakpoint'Size);
       Self_Data_Saved : Breakpoint_Array_Access := Self.Data;
    begin
@@ -201,7 +201,7 @@ package body DAP.Tools is
 
    procedure Append
      (Self : in out StepInTarget_Vector; Value : StepInTarget) is
-      Init_Length : constant Positive :=
+      Init_Length     : constant Positive         :=
         Positive'Max (1, 256 / StepInTarget'Size);
       Self_Data_Saved : StepInTarget_Array_Access := Self.Data;
    begin
@@ -256,7 +256,7 @@ package body DAP.Tools is
 
    procedure Append
      (Self : in out FunctionBreakpoint_Vector; Value : FunctionBreakpoint) is
-      Init_Length : constant Positive :=
+      Init_Length     : constant Positive               :=
         Positive'Max (1, 256 / FunctionBreakpoint'Size);
       Self_Data_Saved : FunctionBreakpoint_Array_Access := Self.Data;
    begin
@@ -311,7 +311,7 @@ package body DAP.Tools is
 
    procedure Append
      (Self : in out DataBreakpoint_Vector; Value : DataBreakpoint) is
-      Init_Length : constant Positive :=
+      Init_Length     : constant Positive           :=
         Positive'Max (1, 256 / DataBreakpoint'Size);
       Self_Data_Saved : DataBreakpoint_Array_Access := Self.Data;
    begin
@@ -366,7 +366,7 @@ package body DAP.Tools is
 
    procedure Append
      (Self : in out ExceptionOptions_Vector; Value : ExceptionOptions) is
-      Init_Length : constant Positive :=
+      Init_Length     : constant Positive             :=
         Positive'Max (1, 256 / ExceptionOptions'Size);
       Self_Data_Saved : ExceptionOptions_Array_Access := Self.Data;
    begin
@@ -469,7 +469,7 @@ package body DAP.Tools is
    end Clear;
 
    procedure Append (Self : in out GotoTarget_Vector; Value : GotoTarget) is
-      Init_Length : constant Positive :=
+      Init_Length     : constant Positive       :=
         Positive'Max (1, 256 / GotoTarget'Size);
       Self_Data_Saved : GotoTarget_Array_Access := Self.Data;
    begin
@@ -524,7 +524,7 @@ package body DAP.Tools is
 
    procedure Append
      (Self : in out InvalidatedAreas_Vector; Value : Enum.InvalidatedAreas) is
-      Init_Length : constant Positive :=
+      Init_Length     : constant Positive             :=
         Positive'Max (1, 256 / Enum.InvalidatedAreas'Size);
       Self_Data_Saved : InvalidatedAreas_Array_Access := Self.Data;
    begin
@@ -579,7 +579,7 @@ package body DAP.Tools is
 
    procedure Append
      (Self : in out BreakpointLocation_Vector; Value : BreakpointLocation) is
-      Init_Length : constant Positive :=
+      Init_Length     : constant Positive               :=
         Positive'Max (1, 256 / BreakpointLocation'Size);
       Self_Data_Saved : BreakpointLocation_Array_Access := Self.Data;
    begin
@@ -637,7 +637,7 @@ package body DAP.Tools is
    procedure Append
      (Self  : in out InstructionBreakpoint_Vector;
       Value : InstructionBreakpoint) is
-      Init_Length : constant Positive :=
+      Init_Length     : constant Positive                  :=
         Positive'Max (1, 256 / InstructionBreakpoint'Size);
       Self_Data_Saved : InstructionBreakpoint_Array_Access := Self.Data;
    begin
@@ -690,7 +690,7 @@ package body DAP.Tools is
    end Clear;
 
    procedure Append (Self : in out StackFrame_Vector; Value : StackFrame) is
-      Init_Length : constant Positive :=
+      Init_Length     : constant Positive       :=
         Positive'Max (1, 256 / StackFrame'Size);
       Self_Data_Saved : StackFrame_Array_Access := Self.Data;
    begin
@@ -898,7 +898,7 @@ package body DAP.Tools is
 
    procedure Append
      (Self : in out SourceBreakpoint_Vector; Value : SourceBreakpoint) is
-      Init_Length : constant Positive :=
+      Init_Length     : constant Positive             :=
         Positive'Max (1, 256 / SourceBreakpoint'Size);
       Self_Data_Saved : SourceBreakpoint_Array_Access := Self.Data;
    begin
@@ -954,7 +954,7 @@ package body DAP.Tools is
    procedure Append
      (Self  : in out ChecksumAlgorithm_Vector;
       Value : Enum.ChecksumAlgorithm) is
-      Init_Length : constant Positive :=
+      Init_Length     : constant Positive              :=
         Positive'Max (1, 256 / Enum.ChecksumAlgorithm'Size);
       Self_Data_Saved : ChecksumAlgorithm_Array_Access := Self.Data;
    begin
@@ -1014,7 +1014,7 @@ package body DAP.Tools is
    procedure Append
      (Self  : in out ExceptionBreakpointsFilter_Vector;
       Value : ExceptionBreakpointsFilter) is
-      Init_Length : constant Positive :=
+      Init_Length     : constant Positive                       :=
         Positive'Max (1, 256 / ExceptionBreakpointsFilter'Size);
       Self_Data_Saved : ExceptionBreakpointsFilter_Array_Access := Self.Data;
    begin
@@ -1069,7 +1069,7 @@ package body DAP.Tools is
 
    procedure Append
      (Self : in out CompletionItem_Vector; Value : CompletionItem) is
-      Init_Length : constant Positive :=
+      Init_Length     : constant Positive           :=
         Positive'Max (1, 256 / CompletionItem'Size);
       Self_Data_Saved : CompletionItem_Array_Access := Self.Data;
    begin
@@ -1125,7 +1125,7 @@ package body DAP.Tools is
    procedure Append
      (Self  : in out ExceptionPathSegment_Vector;
       Value : ExceptionPathSegment) is
-      Init_Length : constant Positive :=
+      Init_Length     : constant Positive                 :=
         Positive'Max (1, 256 / ExceptionPathSegment'Size);
       Self_Data_Saved : ExceptionPathSegment_Array_Access := Self.Data;
    begin
@@ -1184,7 +1184,7 @@ package body DAP.Tools is
    procedure Append
      (Self  : in out DataBreakpointAccessType_Vector;
       Value : Enum.DataBreakpointAccessType) is
-      Init_Length : constant Positive :=
+      Init_Length     : constant Positive                     :=
         Positive'Max (1, 256 / Enum.DataBreakpointAccessType'Size);
       Self_Data_Saved : DataBreakpointAccessType_Array_Access := Self.Data;
    begin
@@ -1243,7 +1243,7 @@ package body DAP.Tools is
    procedure Append
      (Self  : in out DisassembledInstruction_Vector;
       Value : DisassembledInstruction) is
-      Init_Length : constant Positive :=
+      Init_Length     : constant Positive                    :=
         Positive'Max (1, 256 / DisassembledInstruction'Size);
       Self_Data_Saved : DisassembledInstruction_Array_Access := Self.Data;
    begin
@@ -1352,7 +1352,7 @@ package body DAP.Tools is
    procedure Append
      (Self  : in out ExceptionFilterOptions_Vector;
       Value : ExceptionFilterOptions) is
-      Init_Length : constant Positive :=
+      Init_Length     : constant Positive                   :=
         Positive'Max (1, 256 / ExceptionFilterOptions'Size);
       Self_Data_Saved : ExceptionFilterOptions_Array_Access := Self.Data;
    begin
@@ -1408,7 +1408,7 @@ package body DAP.Tools is
 
    procedure Append
      (Self : in out ColumnDescriptor_Vector; Value : ColumnDescriptor) is
-      Init_Length : constant Positive :=
+      Init_Length     : constant Positive             :=
         Positive'Max (1, 256 / ColumnDescriptor'Size);
       Self_Data_Saved : ColumnDescriptor_Array_Access := Self.Data;
    begin
@@ -1463,7 +1463,7 @@ package body DAP.Tools is
 
    procedure Append
      (Self : in out ExceptionDetails_Vector; Value : ExceptionDetails) is
-      Init_Length : constant Positive :=
+      Init_Length     : constant Positive             :=
         Positive'Max (1, 256 / ExceptionDetails'Size);
       Self_Data_Saved : ExceptionDetails_Array_Access := Self.Data;
    begin

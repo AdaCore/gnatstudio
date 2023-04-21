@@ -176,8 +176,30 @@ package body DAP.Tools.Inputs is
       end if;
    end Input_StoppedEvent_reason;
 
+   package StartDebuggingRequestArguments_request_Minimal_Perfect_Hash is new Minimal_Perfect_Hash
+     (["launch", "attach"]);
+
+   procedure Input_StartDebuggingRequestArguments_request
+     (Reader  : in out VSS.JSON.Pull_Readers.JSON_Pull_Reader'Class;
+      Value   : out Enum.StartDebuggingRequestArguments_request;
+      Success : in out Boolean) is
+      Index : constant Natural :=
+        (if Reader.Is_String_Value then
+           StartDebuggingRequestArguments_request_Minimal_Perfect_Hash
+             .Get_Index
+             (Reader.String_Value)
+         else 0);
+   begin
+      if Index > 0 then
+         Value := Enum.StartDebuggingRequestArguments_request'Val (Index - 1);
+         Reader.Read_Next;
+      else
+         Success := False;
+      end if;
+   end Input_StartDebuggingRequestArguments_request;
+
    package OutputEvent_category_Minimal_Perfect_Hash is new Minimal_Perfect_Hash
-     (["console", "stdout", "stderr", "telemetry"]);
+     (["console", "important", "stdout", "stderr", "telemetry"]);
 
    procedure Input_OutputEvent_category
      (Reader  : in out VSS.JSON.Pull_Readers.JSON_Pull_Reader'Class;
@@ -280,6 +302,27 @@ package body DAP.Tools.Inputs is
          Success := False;
       end if;
    end Input_Scope_presentationHint;
+
+   package Response_message_Minimal_Perfect_Hash is new Minimal_Perfect_Hash
+     (["cancelled", "notStopped"]);
+
+   procedure Input_Response_message
+     (Reader  : in out VSS.JSON.Pull_Readers.JSON_Pull_Reader'Class;
+      Value   : out Enum.Response_message;
+      Success : in out Boolean) is
+      Index : constant Natural :=
+        (if Reader.Is_String_Value then
+           Response_message_Minimal_Perfect_Hash.Get_Index
+             (Reader.String_Value)
+         else 0);
+   begin
+      if Index > 0 then
+         Value := Enum.Response_message'Val (Index - 1);
+         Reader.Read_Next;
+      else
+         Success := False;
+      end if;
+   end Input_Response_message;
 
    package CompletionItemType_Minimal_Perfect_Hash is new Minimal_Perfect_Hash
      (["method", "function", "constructor", "field", "variable", "class",
@@ -559,7 +602,7 @@ package body DAP.Tools.Inputs is
    end Input_BreakpointEvent_reason;
 
    package EvaluateArguments_context_Minimal_Perfect_Hash is new Minimal_Perfect_Hash
-     (["watch", "repl", "hover", "clipboard"]);
+     (["watch", "repl", "hover", "clipboard", "variables"]);
 
    procedure Input_EvaluateArguments_context
      (Reader  : in out VSS.JSON.Pull_Readers.JSON_Pull_Reader'Class;
@@ -668,13 +711,9 @@ package body DAP.Tools.Inputs is
                         Success := False;
                      end if;
                   when 6 =>  --  message
-                     if Reader.Is_String_Value
-                       and then Reader.String_Value = "cancelled"
-                     then
-                        Reader.Read_Next;
-                     else
-                        Success := False;
-                     end if;
+                     Value.message := (Is_Set => True, Value => <>);
+                     Input_Response_message
+                       (Reader, Value.message.Value, Success);
                   when 7 =>  --  body
                      Input_Any_Value (Reader, Value.a_body, Success);
                   when others =>
@@ -986,13 +1025,9 @@ package body DAP.Tools.Inputs is
                         Success := False;
                      end if;
                   when 6 =>  --  message
-                     if Reader.Is_String_Value
-                       and then Reader.String_Value = "cancelled"
-                     then
-                        Reader.Read_Next;
-                     else
-                        Success := False;
-                     end if;
+                     Value.message := (Is_Set => True, Value => <>);
+                     Input_Response_message
+                       (Reader, Value.message.Value, Success);
                   when 7 =>  --  body
                      Input_ModulesResponse_body
                        (Reader, Value.a_body, Success);
@@ -1011,7 +1046,7 @@ package body DAP.Tools.Inputs is
    end Input_ModulesResponse;
 
    package NextArguments_Minimal_Perfect_Hash is new Minimal_Perfect_Hash
-     (["threadId", "granularity"]);
+     (["threadId", "singleThread", "granularity"]);
 
    procedure Input_NextArguments
      (Reader  : in out VSS.JSON.Pull_Readers.JSON_Pull_Reader'Class;
@@ -1045,7 +1080,14 @@ package body DAP.Tools.Inputs is
                      else
                         Success := False;
                      end if;
-                  when 2 =>  --  granularity
+                  when 2 =>  --  singleThread
+                     if Reader.Is_Boolean_Value then
+                        Value.singleThread := Reader.Boolean_Value;
+                        Reader.Read_Next;
+                     else
+                        Success := False;
+                     end if;
+                  when 3 =>  --  granularity
                      Value.granularity := (Is_Set => True, Value => <>);
                      Input_SteppingGranularity
                        (Reader, Value.granularity.Value, Success);
@@ -1653,12 +1695,46 @@ package body DAP.Tools.Inputs is
       end if;
    end Input_ContinuedEvent;
 
+   package RestartArguments_Minimal_Perfect_Hash is new Minimal_Perfect_Hash
+     (["arguments"]);
+
    procedure Input_RestartArguments
      (Reader  : in out VSS.JSON.Pull_Readers.JSON_Pull_Reader'Class;
       Value   : out RestartArguments;
       Success : in out Boolean) is
    begin
-      Input_Any_Value (Reader, Value, Success);
+      if Success and Reader.Is_Start_Object then
+         Reader.Read_Next;
+      else
+         Success := False;
+      end if;
+
+      while Success and not Reader.Is_End_Object loop
+         if Reader.Is_Key_Name then
+            declare
+               Index : constant Natural :=
+                 RestartArguments_Minimal_Perfect_Hash.Get_Index
+                   (Reader.Key_Name);
+            begin
+               Reader.Read_Next;
+
+               case Index is
+                  when 1 =>  --  arguments
+                     Value.arguments := (Is_Set => True, Value => <>);
+                     Input_AttachRequestArguments
+                       (Reader, Value.arguments.Value, Success);
+                  when others =>
+                     Reader.Skip_Current_Value;
+               end case;
+            end;
+         else
+            Success := False;
+         end if;
+      end loop;
+
+      if Success then
+         Reader.Read_Next;  --  skip End_Object
+      end if;
    end Input_RestartArguments;
 
    package SetVariableArguments_Minimal_Perfect_Hash is new Minimal_Perfect_Hash
@@ -1984,14 +2060,16 @@ package body DAP.Tools.Inputs is
        "supportedChecksumAlgorithms", "supportsRestartRequest",
        "supportsExceptionOptions", "supportsValueFormattingOptions",
        "supportsExceptionInfoRequest", "supportTerminateDebuggee",
-       "supportsDelayedStackTraceLoading", "supportsLoadedSourcesRequest",
-       "supportsLogPoints", "supportsTerminateThreadsRequest",
-       "supportsSetExpression", "supportsTerminateRequest",
-       "supportsDataBreakpoints", "supportsReadMemoryRequest",
+       "supportSuspendDebuggee", "supportsDelayedStackTraceLoading",
+       "supportsLoadedSourcesRequest", "supportsLogPoints",
+       "supportsTerminateThreadsRequest", "supportsSetExpression",
+       "supportsTerminateRequest", "supportsDataBreakpoints",
+       "supportsReadMemoryRequest", "supportsWriteMemoryRequest",
        "supportsDisassembleRequest", "supportsCancelRequest",
        "supportsBreakpointLocationsRequest", "supportsClipboardContext",
        "supportsSteppingGranularity", "supportsInstructionBreakpoints",
-       "supportsExceptionFilterOptions"]);
+       "supportsExceptionFilterOptions",
+       "supportsSingleThreadExecutionRequests"]);
 
    procedure Input_Capabilities
      (Reader  : in out VSS.JSON.Pull_Readers.JSON_Pull_Reader'Class;
@@ -2216,7 +2294,14 @@ package body DAP.Tools.Inputs is
                      else
                         Success := False;
                      end if;
-                  when 22 =>  --  supportsDelayedStackTraceLoading
+                  when 22 =>  --  supportSuspendDebuggee
+                     if Reader.Is_Boolean_Value then
+                        Value.supportSuspendDebuggee := Reader.Boolean_Value;
+                        Reader.Read_Next;
+                     else
+                        Success := False;
+                     end if;
+                  when 23 =>  --  supportsDelayedStackTraceLoading
                      if Reader.Is_Boolean_Value then
                         Value.supportsDelayedStackTraceLoading :=
                           Reader.Boolean_Value;
@@ -2224,7 +2309,7 @@ package body DAP.Tools.Inputs is
                      else
                         Success := False;
                      end if;
-                  when 23 =>  --  supportsLoadedSourcesRequest
+                  when 24 =>  --  supportsLoadedSourcesRequest
                      if Reader.Is_Boolean_Value then
                         Value.supportsLoadedSourcesRequest :=
                           Reader.Boolean_Value;
@@ -2232,14 +2317,14 @@ package body DAP.Tools.Inputs is
                      else
                         Success := False;
                      end if;
-                  when 24 =>  --  supportsLogPoints
+                  when 25 =>  --  supportsLogPoints
                      if Reader.Is_Boolean_Value then
                         Value.supportsLogPoints := Reader.Boolean_Value;
                         Reader.Read_Next;
                      else
                         Success := False;
                      end if;
-                  when 25 =>  --  supportsTerminateThreadsRequest
+                  when 26 =>  --  supportsTerminateThreadsRequest
                      if Reader.Is_Boolean_Value then
                         Value.supportsTerminateThreadsRequest :=
                           Reader.Boolean_Value;
@@ -2247,28 +2332,28 @@ package body DAP.Tools.Inputs is
                      else
                         Success := False;
                      end if;
-                  when 26 =>  --  supportsSetExpression
+                  when 27 =>  --  supportsSetExpression
                      if Reader.Is_Boolean_Value then
                         Value.supportsSetExpression := Reader.Boolean_Value;
                         Reader.Read_Next;
                      else
                         Success := False;
                      end if;
-                  when 27 =>  --  supportsTerminateRequest
+                  when 28 =>  --  supportsTerminateRequest
                      if Reader.Is_Boolean_Value then
                         Value.supportsTerminateRequest := Reader.Boolean_Value;
                         Reader.Read_Next;
                      else
                         Success := False;
                      end if;
-                  when 28 =>  --  supportsDataBreakpoints
+                  when 29 =>  --  supportsDataBreakpoints
                      if Reader.Is_Boolean_Value then
                         Value.supportsDataBreakpoints := Reader.Boolean_Value;
                         Reader.Read_Next;
                      else
                         Success := False;
                      end if;
-                  when 29 =>  --  supportsReadMemoryRequest
+                  when 30 =>  --  supportsReadMemoryRequest
                      if Reader.Is_Boolean_Value then
                         Value.supportsReadMemoryRequest :=
                           Reader.Boolean_Value;
@@ -2276,7 +2361,15 @@ package body DAP.Tools.Inputs is
                      else
                         Success := False;
                      end if;
-                  when 30 =>  --  supportsDisassembleRequest
+                  when 31 =>  --  supportsWriteMemoryRequest
+                     if Reader.Is_Boolean_Value then
+                        Value.supportsWriteMemoryRequest :=
+                          Reader.Boolean_Value;
+                        Reader.Read_Next;
+                     else
+                        Success := False;
+                     end if;
+                  when 32 =>  --  supportsDisassembleRequest
                      if Reader.Is_Boolean_Value then
                         Value.supportsDisassembleRequest :=
                           Reader.Boolean_Value;
@@ -2284,14 +2377,14 @@ package body DAP.Tools.Inputs is
                      else
                         Success := False;
                      end if;
-                  when 31 =>  --  supportsCancelRequest
+                  when 33 =>  --  supportsCancelRequest
                      if Reader.Is_Boolean_Value then
                         Value.supportsCancelRequest := Reader.Boolean_Value;
                         Reader.Read_Next;
                      else
                         Success := False;
                      end if;
-                  when 32 =>  --  supportsBreakpointLocationsRequest
+                  when 34 =>  --  supportsBreakpointLocationsRequest
                      if Reader.Is_Boolean_Value then
                         Value.supportsBreakpointLocationsRequest :=
                           Reader.Boolean_Value;
@@ -2299,14 +2392,14 @@ package body DAP.Tools.Inputs is
                      else
                         Success := False;
                      end if;
-                  when 33 =>  --  supportsClipboardContext
+                  when 35 =>  --  supportsClipboardContext
                      if Reader.Is_Boolean_Value then
                         Value.supportsClipboardContext := Reader.Boolean_Value;
                         Reader.Read_Next;
                      else
                         Success := False;
                      end if;
-                  when 34 =>  --  supportsSteppingGranularity
+                  when 36 =>  --  supportsSteppingGranularity
                      if Reader.Is_Boolean_Value then
                         Value.supportsSteppingGranularity :=
                           Reader.Boolean_Value;
@@ -2314,7 +2407,7 @@ package body DAP.Tools.Inputs is
                      else
                         Success := False;
                      end if;
-                  when 35 =>  --  supportsInstructionBreakpoints
+                  when 37 =>  --  supportsInstructionBreakpoints
                      if Reader.Is_Boolean_Value then
                         Value.supportsInstructionBreakpoints :=
                           Reader.Boolean_Value;
@@ -2322,9 +2415,17 @@ package body DAP.Tools.Inputs is
                      else
                         Success := False;
                      end if;
-                  when 36 =>  --  supportsExceptionFilterOptions
+                  when 38 =>  --  supportsExceptionFilterOptions
                      if Reader.Is_Boolean_Value then
                         Value.supportsExceptionFilterOptions :=
+                          Reader.Boolean_Value;
+                        Reader.Read_Next;
+                     else
+                        Success := False;
+                     end if;
+                  when 39 =>  --  supportsSingleThreadExecutionRequests
+                     if Reader.Is_Boolean_Value then
+                        Value.supportsSingleThreadExecutionRequests :=
                           Reader.Boolean_Value;
                         Reader.Read_Next;
                      else
@@ -2480,13 +2581,9 @@ package body DAP.Tools.Inputs is
                         Success := False;
                      end if;
                   when 6 =>  --  message
-                     if Reader.Is_String_Value
-                       and then Reader.String_Value = "cancelled"
-                     then
-                        Reader.Read_Next;
-                     else
-                        Success := False;
-                     end if;
+                     Value.message := (Is_Set => True, Value => <>);
+                     Input_Response_message
+                       (Reader, Value.message.Value, Success);
                   when 7 =>  --  body
                      Input_StackTraceResponse_body
                        (Reader, Value.a_body, Success);
@@ -2705,13 +2802,9 @@ package body DAP.Tools.Inputs is
                         Success := False;
                      end if;
                   when 6 =>  --  message
-                     if Reader.Is_String_Value
-                       and then Reader.String_Value = "cancelled"
-                     then
-                        Reader.Read_Next;
-                     else
-                        Success := False;
-                     end if;
+                     Value.message := (Is_Set => True, Value => <>);
+                     Input_Response_message
+                       (Reader, Value.message.Value, Success);
                   when 7 =>  --  body
                      Input_StepInTargetsResponse_body
                        (Reader, Value.a_body, Success);
@@ -2837,25 +2930,20 @@ package body DAP.Tools.Inputs is
                         Success := False;
                      end if;
                   when 10 =>  --  moduleId
-                     Value.moduleId := (Is_Set => True, Value => <>);
-                     if Value.moduleId.Value.Is_String then
-                        if Reader.Is_String_Value then
-                           Value.moduleId.Value.String := Reader.String_Value;
-                           Reader.Read_Next;
-                        else
-                           Success := False;
-                        end if;
+                     Value.moduleId       := (Is_Set => True, Value => <>);
+                     Value.moduleId.Value := (False, Integer => <>);
+                     if Reader.Is_String_Value then
+                        Value.moduleId.Value := (True, Reader.String_Value);
+                        Reader.Read_Next;
+                     elsif Reader.Is_Number_Value
+                       and then Reader.Number_Value.Kind =
+                         VSS.JSON.JSON_Integer
+                     then
+                        Value.moduleId.Value.Integer :=
+                          Integer (Reader.Number_Value.Integer_Value);
+                        Reader.Read_Next;
                      else
-                        if Reader.Is_Number_Value
-                          and then Reader.Number_Value.Kind =
-                            VSS.JSON.JSON_Integer
-                        then
-                           Value.moduleId.Value.Integer :=
-                             Integer (Reader.Number_Value.Integer_Value);
-                           Reader.Read_Next;
-                        else
-                           Success := False;
-                        end if;
+                        Success := False;
                      end if;
                   when 11 =>  --  presentationHint
                      Value.presentationHint := (Is_Set => True, Value => <>);
@@ -3263,6 +3351,139 @@ package body DAP.Tools.Inputs is
          Reader.Read_Next;  --  skip End_Object
       end if;
    end Input_AttachRequest;
+
+   package MemoryEvent_Minimal_Perfect_Hash is new Minimal_Perfect_Hash
+     (["seq", "type", "event", "body"]);
+
+   package MemoryEvent_body_Minimal_Perfect_Hash is new Minimal_Perfect_Hash
+     (["memoryReference", "offset", "count"]);
+
+   procedure Input_MemoryEvent
+     (Reader  : in out VSS.JSON.Pull_Readers.JSON_Pull_Reader'Class;
+      Value   : out MemoryEvent;
+      Success : in out Boolean) is
+      procedure Input_MemoryEvent_body
+        (Reader  : in out VSS.JSON.Pull_Readers.JSON_Pull_Reader'Class;
+         Value   : out MemoryEvent_body;
+         Success : in out Boolean) is
+      begin
+         if Success and Reader.Is_Start_Object then
+            Reader.Read_Next;
+         else
+            Success := False;
+         end if;
+
+         while Success and not Reader.Is_End_Object loop
+            if Reader.Is_Key_Name then
+               declare
+                  Index : constant Natural :=
+                    MemoryEvent_body_Minimal_Perfect_Hash.Get_Index
+                      (Reader.Key_Name);
+               begin
+                  Reader.Read_Next;
+
+                  case Index is
+                     when 1 =>  --  memoryReference
+                        if Reader.Is_String_Value then
+                           Value.memoryReference := Reader.String_Value;
+                           Reader.Read_Next;
+                        else
+                           Success := False;
+                        end if;
+                     when 2 =>  --  offset
+                        if Reader.Is_Number_Value
+                          and then Reader.Number_Value.Kind =
+                            VSS.JSON.JSON_Integer
+                        then
+                           Value.offset :=
+                             Integer (Reader.Number_Value.Integer_Value);
+                           Reader.Read_Next;
+                        else
+                           Success := False;
+                        end if;
+                     when 3 =>  --  count
+                        if Reader.Is_Number_Value
+                          and then Reader.Number_Value.Kind =
+                            VSS.JSON.JSON_Integer
+                        then
+                           Value.count :=
+                             Integer (Reader.Number_Value.Integer_Value);
+                           Reader.Read_Next;
+                        else
+                           Success := False;
+                        end if;
+                     when others =>
+                        Reader.Skip_Current_Value;
+                  end case;
+               end;
+            else
+               Success := False;
+            end if;
+         end loop;
+
+         if Success then
+            Reader.Read_Next;  --  skip End_Object
+         end if;
+      end Input_MemoryEvent_body;
+
+   begin
+      if Success and Reader.Is_Start_Object then
+         Reader.Read_Next;
+      else
+         Success := False;
+      end if;
+
+      while Success and not Reader.Is_End_Object loop
+         if Reader.Is_Key_Name then
+            declare
+               Index : constant Natural :=
+                 MemoryEvent_Minimal_Perfect_Hash.Get_Index (Reader.Key_Name);
+            begin
+               Reader.Read_Next;
+
+               case Index is
+                  when 1 =>  --  seq
+                     if Reader.Is_Number_Value
+                       and then Reader.Number_Value.Kind =
+                         VSS.JSON.JSON_Integer
+                     then
+                        Value.seq :=
+                          Integer (Reader.Number_Value.Integer_Value);
+                        Reader.Read_Next;
+                     else
+                        Success := False;
+                     end if;
+                  when 2 =>  --  type
+                     if Reader.Is_String_Value
+                       and then Reader.String_Value = "event"
+                     then
+                        Reader.Read_Next;
+                     else
+                        Success := False;
+                     end if;
+                  when 3 =>  --  event
+                     if Reader.Is_String_Value
+                       and then Reader.String_Value = "memory"
+                     then
+                        Reader.Read_Next;
+                     else
+                        Success := False;
+                     end if;
+                  when 4 =>  --  body
+                     Input_MemoryEvent_body (Reader, Value.a_body, Success);
+                  when others =>
+                     Reader.Skip_Current_Value;
+               end case;
+            end;
+         else
+            Success := False;
+         end if;
+      end loop;
+
+      if Success then
+         Reader.Read_Next;  --  skip End_Object
+      end if;
+   end Input_MemoryEvent;
 
    package ReadMemoryArguments_Minimal_Perfect_Hash is new Minimal_Perfect_Hash
      (["memoryReference", "offset", "count"]);
@@ -3707,13 +3928,9 @@ package body DAP.Tools.Inputs is
                         Success := False;
                      end if;
                   when 6 =>  --  message
-                     if Reader.Is_String_Value
-                       and then Reader.String_Value = "cancelled"
-                     then
-                        Reader.Read_Next;
-                     else
-                        Success := False;
-                     end if;
+                     Value.message := (Is_Set => True, Value => <>);
+                     Input_Response_message
+                       (Reader, Value.message.Value, Success);
                   when 7 =>  --  body
                      Input_Any_Value (Reader, Value.a_body, Success);
                   when others =>
@@ -4250,13 +4467,9 @@ package body DAP.Tools.Inputs is
                         Success := False;
                      end if;
                   when 6 =>  --  message
-                     if Reader.Is_String_Value
-                       and then Reader.String_Value = "cancelled"
-                     then
-                        Reader.Read_Next;
-                     else
-                        Success := False;
-                     end if;
+                     Value.message := (Is_Set => True, Value => <>);
+                     Input_Response_message
+                       (Reader, Value.message.Value, Success);
                   when 7 =>  --  body
                      Input_ScopesResponse_body (Reader, Value.a_body, Success);
                   when others =>
@@ -4274,7 +4487,7 @@ package body DAP.Tools.Inputs is
    end Input_ScopesResponse;
 
    package StepOutArguments_Minimal_Perfect_Hash is new Minimal_Perfect_Hash
-     (["threadId", "granularity"]);
+     (["threadId", "singleThread", "granularity"]);
 
    procedure Input_StepOutArguments
      (Reader  : in out VSS.JSON.Pull_Readers.JSON_Pull_Reader'Class;
@@ -4308,7 +4521,14 @@ package body DAP.Tools.Inputs is
                      else
                         Success := False;
                      end if;
-                  when 2 =>  --  granularity
+                  when 2 =>  --  singleThread
+                     if Reader.Is_Boolean_Value then
+                        Value.singleThread := Reader.Boolean_Value;
+                        Reader.Read_Next;
+                     else
+                        Success := False;
+                     end if;
+                  when 3 =>  --  granularity
                      Value.granularity := (Is_Set => True, Value => <>);
                      Input_SteppingGranularity
                        (Reader, Value.granularity.Value, Success);
@@ -4393,6 +4613,49 @@ package body DAP.Tools.Inputs is
          Reader.Read_Next;  --  skip End_Object
       end if;
    end Input_CompletionsRequest;
+
+   package StartDebuggingRequestArguments_Minimal_Perfect_Hash is new Minimal_Perfect_Hash
+     (["configuration", "request"]);
+
+   procedure Input_StartDebuggingRequestArguments
+     (Reader  : in out VSS.JSON.Pull_Readers.JSON_Pull_Reader'Class;
+      Value   : out StartDebuggingRequestArguments;
+      Success : in out Boolean) is
+   begin
+      if Success and Reader.Is_Start_Object then
+         Reader.Read_Next;
+      else
+         Success := False;
+      end if;
+
+      while Success and not Reader.Is_End_Object loop
+         if Reader.Is_Key_Name then
+            declare
+               Index : constant Natural :=
+                 StartDebuggingRequestArguments_Minimal_Perfect_Hash.Get_Index
+                   (Reader.Key_Name);
+            begin
+               Reader.Read_Next;
+
+               case Index is
+                  when 1 =>  --  configuration
+                     Input_Any_Value (Reader, Value.configuration, Success);
+                  when 2 =>  --  request
+                     Input_StartDebuggingRequestArguments_request
+                       (Reader, Value.request, Success);
+                  when others =>
+                     Reader.Skip_Current_Value;
+               end case;
+            end;
+         else
+            Success := False;
+         end if;
+      end loop;
+
+      if Success then
+         Reader.Read_Next;  --  skip End_Object
+      end if;
+   end Input_StartDebuggingRequestArguments;
 
    package ProgressUpdateEvent_Minimal_Perfect_Hash is new Minimal_Perfect_Hash
      (["seq", "type", "event", "body"]);
@@ -4660,13 +4923,9 @@ package body DAP.Tools.Inputs is
                         Success := False;
                      end if;
                   when 6 =>  --  message
-                     if Reader.Is_String_Value
-                       and then Reader.String_Value = "cancelled"
-                     then
-                        Reader.Read_Next;
-                     else
-                        Success := False;
-                     end if;
+                     Value.message := (Is_Set => True, Value => <>);
+                     Input_Response_message
+                       (Reader, Value.message.Value, Success);
                   when 7 =>  --  body
                      Input_ExceptionInfoResponse_body
                        (Reader, Value.a_body, Success);
@@ -4916,13 +5175,9 @@ package body DAP.Tools.Inputs is
                         Success := False;
                      end if;
                   when 6 =>  --  message
-                     if Reader.Is_String_Value
-                       and then Reader.String_Value = "cancelled"
-                     then
-                        Reader.Read_Next;
-                     else
-                        Success := False;
-                     end if;
+                     Value.message := (Is_Set => True, Value => <>);
+                     Input_Response_message
+                       (Reader, Value.message.Value, Success);
                   when 7 =>  --  body
                      Input_SetExpressionResponse_body
                        (Reader, Value.a_body, Success);
@@ -4941,7 +5196,7 @@ package body DAP.Tools.Inputs is
    end Input_SetExpressionResponse;
 
    package StepInTarget_Minimal_Perfect_Hash is new Minimal_Perfect_Hash
-     (["id", "label"]);
+     (["id", "label", "line", "column", "endLine", "endColumn"]);
 
    procedure Input_StepInTarget
      (Reader  : in out VSS.JSON.Pull_Readers.JSON_Pull_Reader'Class;
@@ -4977,6 +5232,54 @@ package body DAP.Tools.Inputs is
                   when 2 =>  --  label
                      if Reader.Is_String_Value then
                         Value.label := Reader.String_Value;
+                        Reader.Read_Next;
+                     else
+                        Success := False;
+                     end if;
+                  when 3 =>  --  line
+                     Value.line := (Is_Set => True, Value => <>);
+                     if Reader.Is_Number_Value
+                       and then Reader.Number_Value.Kind =
+                         VSS.JSON.JSON_Integer
+                     then
+                        Value.line.Value :=
+                          Integer (Reader.Number_Value.Integer_Value);
+                        Reader.Read_Next;
+                     else
+                        Success := False;
+                     end if;
+                  when 4 =>  --  column
+                     Value.column := (Is_Set => True, Value => <>);
+                     if Reader.Is_Number_Value
+                       and then Reader.Number_Value.Kind =
+                         VSS.JSON.JSON_Integer
+                     then
+                        Value.column.Value :=
+                          Integer (Reader.Number_Value.Integer_Value);
+                        Reader.Read_Next;
+                     else
+                        Success := False;
+                     end if;
+                  when 5 =>  --  endLine
+                     Value.endLine := (Is_Set => True, Value => <>);
+                     if Reader.Is_Number_Value
+                       and then Reader.Number_Value.Kind =
+                         VSS.JSON.JSON_Integer
+                     then
+                        Value.endLine.Value :=
+                          Integer (Reader.Number_Value.Integer_Value);
+                        Reader.Read_Next;
+                     else
+                        Success := False;
+                     end if;
+                  when 6 =>  --  endColumn
+                     Value.endColumn := (Is_Set => True, Value => <>);
+                     if Reader.Is_Number_Value
+                       and then Reader.Number_Value.Kind =
+                         VSS.JSON.JSON_Integer
+                     then
+                        Value.endColumn.Value :=
+                          Integer (Reader.Number_Value.Integer_Value);
                         Reader.Read_Next;
                      else
                         Success := False;
@@ -5064,13 +5367,9 @@ package body DAP.Tools.Inputs is
                         Success := False;
                      end if;
                   when 6 =>  --  message
-                     if Reader.Is_String_Value
-                       and then Reader.String_Value = "cancelled"
-                     then
-                        Reader.Read_Next;
-                     else
-                        Success := False;
-                     end if;
+                     Value.message := (Is_Set => True, Value => <>);
+                     Input_Response_message
+                       (Reader, Value.message.Value, Success);
                   when 7 =>  --  body
                      Input_Any_Value (Reader, Value.a_body, Success);
                   when others =>
@@ -5319,7 +5618,7 @@ package body DAP.Tools.Inputs is
    end Input_RestartRequest;
 
    package StackTraceArguments_Minimal_Perfect_Hash is new Minimal_Perfect_Hash
-     (["threadId", "startFrame", "levels"]);
+     (["threadId", "startFrame", "levels", "format"]);
 
    procedure Input_StackTraceArguments
      (Reader  : in out VSS.JSON.Pull_Readers.JSON_Pull_Reader'Class;
@@ -5377,6 +5676,10 @@ package body DAP.Tools.Inputs is
                      else
                         Success := False;
                      end if;
+                  when 4 =>  --  format
+                     Value.format := (Is_Set => True, Value => <>);
+                     Input_StackFrameFormat
+                       (Reader, Value.format.Value, Success);
                   when others =>
                      Reader.Skip_Current_Value;
                end case;
@@ -5650,13 +5953,9 @@ package body DAP.Tools.Inputs is
                         Success := False;
                      end if;
                   when 6 =>  --  message
-                     if Reader.Is_String_Value
-                       and then Reader.String_Value = "cancelled"
-                     then
-                        Reader.Read_Next;
-                     else
-                        Success := False;
-                     end if;
+                     Value.message := (Is_Set => True, Value => <>);
+                     Input_Response_message
+                       (Reader, Value.message.Value, Success);
                   when 7 =>  --  body
                      Input_Any_Value (Reader, Value.a_body, Success);
                   when others =>
@@ -5956,13 +6255,9 @@ package body DAP.Tools.Inputs is
                         Success := False;
                      end if;
                   when 6 =>  --  message
-                     if Reader.Is_String_Value
-                       and then Reader.String_Value = "cancelled"
-                     then
-                        Reader.Read_Next;
-                     else
-                        Success := False;
-                     end if;
+                     Value.message := (Is_Set => True, Value => <>);
+                     Input_Response_message
+                       (Reader, Value.message.Value, Success);
                   when 7 =>  --  body
                      Input_Any_Value (Reader, Value.a_body, Success);
                   when others =>
@@ -6048,13 +6343,9 @@ package body DAP.Tools.Inputs is
                         Success := False;
                      end if;
                   when 6 =>  --  message
-                     if Reader.Is_String_Value
-                       and then Reader.String_Value = "cancelled"
-                     then
-                        Reader.Read_Next;
-                     else
-                        Success := False;
-                     end if;
+                     Value.message := (Is_Set => True, Value => <>);
+                     Input_Response_message
+                       (Reader, Value.message.Value, Success);
                   when 7 =>  --  body
                      Input_Any_Value (Reader, Value.a_body, Success);
                   when others =>
@@ -6140,13 +6431,9 @@ package body DAP.Tools.Inputs is
                         Success := False;
                      end if;
                   when 6 =>  --  message
-                     if Reader.Is_String_Value
-                       and then Reader.String_Value = "cancelled"
-                     then
-                        Reader.Read_Next;
-                     else
-                        Success := False;
-                     end if;
+                     Value.message := (Is_Set => True, Value => <>);
+                     Input_Response_message
+                       (Reader, Value.message.Value, Success);
                   when 7 =>  --  body
                      Input_Any_Value (Reader, Value.a_body, Success);
                   when others =>
@@ -6641,13 +6928,9 @@ package body DAP.Tools.Inputs is
                         Success := False;
                      end if;
                   when 6 =>  --  message
-                     if Reader.Is_String_Value
-                       and then Reader.String_Value = "cancelled"
-                     then
-                        Reader.Read_Next;
-                     else
-                        Success := False;
-                     end if;
+                     Value.message := (Is_Set => True, Value => <>);
+                     Input_Response_message
+                       (Reader, Value.message.Value, Success);
                   when 7 =>  --  body
                      Input_Any_Value (Reader, Value.a_body, Success);
                   when others =>
@@ -6811,13 +7094,9 @@ package body DAP.Tools.Inputs is
                         Success := False;
                      end if;
                   when 6 =>  --  message
-                     if Reader.Is_String_Value
-                       and then Reader.String_Value = "cancelled"
-                     then
-                        Reader.Read_Next;
-                     else
-                        Success := False;
-                     end if;
+                     Value.message := (Is_Set => True, Value => <>);
+                     Input_Response_message
+                       (Reader, Value.message.Value, Success);
                   when 7 =>  --  body
                      Input_DataBreakpointInfoResponse_body
                        (Reader, Value.a_body, Success);
@@ -6836,7 +7115,7 @@ package body DAP.Tools.Inputs is
    end Input_DataBreakpointInfoResponse;
 
    package SourceBreakpoint_Minimal_Perfect_Hash is new Minimal_Perfect_Hash
-     (["line", "column"]);
+     (["line", "column", "condition", "hitCondition", "logMessage"]);
 
    procedure Input_SourceBreakpoint
      (Reader  : in out VSS.JSON.Pull_Readers.JSON_Pull_Reader'Class;
@@ -6878,6 +7157,27 @@ package body DAP.Tools.Inputs is
                      then
                         Value.column.Value :=
                           Integer (Reader.Number_Value.Integer_Value);
+                        Reader.Read_Next;
+                     else
+                        Success := False;
+                     end if;
+                  when 3 =>  --  condition
+                     if Reader.Is_String_Value then
+                        Value.condition := Reader.String_Value;
+                        Reader.Read_Next;
+                     else
+                        Success := False;
+                     end if;
+                  when 4 =>  --  hitCondition
+                     if Reader.Is_String_Value then
+                        Value.hitCondition := Reader.String_Value;
+                        Reader.Read_Next;
+                     else
+                        Success := False;
+                     end if;
+                  when 5 =>  --  logMessage
+                     if Reader.Is_String_Value then
+                        Value.logMessage := Reader.String_Value;
                         Reader.Read_Next;
                      else
                         Success := False;
@@ -7376,8 +7676,160 @@ package body DAP.Tools.Inputs is
       end if;
    end Input_CompletionsArguments;
 
+   package WriteMemoryResponse_Minimal_Perfect_Hash is new Minimal_Perfect_Hash
+     (["seq", "type", "request_seq", "success", "command", "message", "body"]);
+
+   package WriteMemoryResponse_body_Minimal_Perfect_Hash is new Minimal_Perfect_Hash
+     (["offset", "bytesWritten"]);
+
+   procedure Input_WriteMemoryResponse
+     (Reader  : in out VSS.JSON.Pull_Readers.JSON_Pull_Reader'Class;
+      Value   : out WriteMemoryResponse;
+      Success : in out Boolean) is
+      procedure Input_WriteMemoryResponse_body
+        (Reader  : in out VSS.JSON.Pull_Readers.JSON_Pull_Reader'Class;
+         Value   : out WriteMemoryResponse_body;
+         Success : in out Boolean) is
+      begin
+         if Success and Reader.Is_Start_Object then
+            Reader.Read_Next;
+         else
+            Success := False;
+         end if;
+
+         while Success and not Reader.Is_End_Object loop
+            if Reader.Is_Key_Name then
+               declare
+                  Index : constant Natural :=
+                    WriteMemoryResponse_body_Minimal_Perfect_Hash.Get_Index
+                      (Reader.Key_Name);
+               begin
+                  Reader.Read_Next;
+
+                  case Index is
+                     when 1 =>  --  offset
+                        Value.offset := (Is_Set => True, Value => <>);
+                        if Reader.Is_Number_Value
+                          and then Reader.Number_Value.Kind =
+                            VSS.JSON.JSON_Integer
+                        then
+                           Value.offset.Value :=
+                             Integer (Reader.Number_Value.Integer_Value);
+                           Reader.Read_Next;
+                        else
+                           Success := False;
+                        end if;
+                     when 2 =>  --  bytesWritten
+                        Value.bytesWritten := (Is_Set => True, Value => <>);
+                        if Reader.Is_Number_Value
+                          and then Reader.Number_Value.Kind =
+                            VSS.JSON.JSON_Integer
+                        then
+                           Value.bytesWritten.Value :=
+                             Integer (Reader.Number_Value.Integer_Value);
+                           Reader.Read_Next;
+                        else
+                           Success := False;
+                        end if;
+                     when others =>
+                        Reader.Skip_Current_Value;
+                  end case;
+               end;
+            else
+               Success := False;
+            end if;
+         end loop;
+
+         if Success then
+            Reader.Read_Next;  --  skip End_Object
+         end if;
+      end Input_WriteMemoryResponse_body;
+
+   begin
+      if Success and Reader.Is_Start_Object then
+         Reader.Read_Next;
+      else
+         Success := False;
+      end if;
+
+      while Success and not Reader.Is_End_Object loop
+         if Reader.Is_Key_Name then
+            declare
+               Index : constant Natural :=
+                 WriteMemoryResponse_Minimal_Perfect_Hash.Get_Index
+                   (Reader.Key_Name);
+            begin
+               Reader.Read_Next;
+
+               case Index is
+                  when 1 =>  --  seq
+                     if Reader.Is_Number_Value
+                       and then Reader.Number_Value.Kind =
+                         VSS.JSON.JSON_Integer
+                     then
+                        Value.seq :=
+                          Integer (Reader.Number_Value.Integer_Value);
+                        Reader.Read_Next;
+                     else
+                        Success := False;
+                     end if;
+                  when 2 =>  --  type
+                     if Reader.Is_String_Value
+                       and then Reader.String_Value = "response"
+                     then
+                        Reader.Read_Next;
+                     else
+                        Success := False;
+                     end if;
+                  when 3 =>  --  request_seq
+                     if Reader.Is_Number_Value
+                       and then Reader.Number_Value.Kind =
+                         VSS.JSON.JSON_Integer
+                     then
+                        Value.request_seq :=
+                          Integer (Reader.Number_Value.Integer_Value);
+                        Reader.Read_Next;
+                     else
+                        Success := False;
+                     end if;
+                  when 4 =>  --  success
+                     if Reader.Is_Boolean_Value then
+                        Value.success := Reader.Boolean_Value;
+                        Reader.Read_Next;
+                     else
+                        Success := False;
+                     end if;
+                  when 5 =>  --  command
+                     if Reader.Is_String_Value then
+                        Value.command := Reader.String_Value;
+                        Reader.Read_Next;
+                     else
+                        Success := False;
+                     end if;
+                  when 6 =>  --  message
+                     Value.message := (Is_Set => True, Value => <>);
+                     Input_Response_message
+                       (Reader, Value.message.Value, Success);
+                  when 7 =>  --  body
+                     Value.a_body := (Is_Set => True, Value => <>);
+                     Input_WriteMemoryResponse_body
+                       (Reader, Value.a_body.Value, Success);
+                  when others =>
+                     Reader.Skip_Current_Value;
+               end case;
+            end;
+         else
+            Success := False;
+         end if;
+      end loop;
+
+      if Success then
+         Reader.Read_Next;  --  skip End_Object
+      end if;
+   end Input_WriteMemoryResponse;
+
    package ReverseContinueArguments_Minimal_Perfect_Hash is new Minimal_Perfect_Hash
-     (["threadId"]);
+     (["threadId", "singleThread"]);
 
    procedure Input_ReverseContinueArguments
      (Reader  : in out VSS.JSON.Pull_Readers.JSON_Pull_Reader'Class;
@@ -7407,6 +7859,13 @@ package body DAP.Tools.Inputs is
                      then
                         Value.threadId :=
                           Integer (Reader.Number_Value.Integer_Value);
+                        Reader.Read_Next;
+                     else
+                        Success := False;
+                     end if;
+                  when 2 =>  --  singleThread
+                     if Reader.Is_Boolean_Value then
+                        Value.singleThread := Reader.Boolean_Value;
                         Reader.Read_Next;
                      else
                         Success := False;
@@ -7556,13 +8015,9 @@ package body DAP.Tools.Inputs is
                         Success := False;
                      end if;
                   when 6 =>  --  message
-                     if Reader.Is_String_Value
-                       and then Reader.String_Value = "cancelled"
-                     then
-                        Reader.Read_Next;
-                     else
-                        Success := False;
-                     end if;
+                     Value.message := (Is_Set => True, Value => <>);
+                     Input_Response_message
+                       (Reader, Value.message.Value, Success);
                   when 7 =>  --  body
                      Input_RunInTerminalResponse_body
                        (Reader, Value.a_body, Success);
@@ -7581,7 +8036,7 @@ package body DAP.Tools.Inputs is
    end Input_RunInTerminalResponse;
 
    package DisconnectArguments_Minimal_Perfect_Hash is new Minimal_Perfect_Hash
-     (["restart", "terminateDebuggee"]);
+     (["restart", "terminateDebuggee", "suspendDebuggee"]);
 
    procedure Input_DisconnectArguments
      (Reader  : in out VSS.JSON.Pull_Readers.JSON_Pull_Reader'Class;
@@ -7614,6 +8069,13 @@ package body DAP.Tools.Inputs is
                   when 2 =>  --  terminateDebuggee
                      if Reader.Is_Boolean_Value then
                         Value.terminateDebuggee := Reader.Boolean_Value;
+                        Reader.Read_Next;
+                     else
+                        Success := False;
+                     end if;
+                  when 3 =>  --  suspendDebuggee
+                     if Reader.Is_Boolean_Value then
+                        Value.suspendDebuggee := Reader.Boolean_Value;
                         Reader.Read_Next;
                      else
                         Success := False;
@@ -7657,24 +8119,19 @@ package body DAP.Tools.Inputs is
 
                case Index is
                   when 1 =>  --  id
-                     if Value.id.Is_String then
-                        if Reader.Is_String_Value then
-                           Value.id.String := Reader.String_Value;
-                           Reader.Read_Next;
-                        else
-                           Success := False;
-                        end if;
+                     Value.id := (False, Integer => <>);
+                     if Reader.Is_String_Value then
+                        Value.id := (True, Reader.String_Value);
+                        Reader.Read_Next;
+                     elsif Reader.Is_Number_Value
+                       and then Reader.Number_Value.Kind =
+                         VSS.JSON.JSON_Integer
+                     then
+                        Value.id.Integer :=
+                          Integer (Reader.Number_Value.Integer_Value);
+                        Reader.Read_Next;
                      else
-                        if Reader.Is_Number_Value
-                          and then Reader.Number_Value.Kind =
-                            VSS.JSON.JSON_Integer
-                        then
-                           Value.id.Integer :=
-                             Integer (Reader.Number_Value.Integer_Value);
-                           Reader.Read_Next;
-                        else
-                           Success := False;
-                        end if;
+                        Success := False;
                      end if;
                   when 2 =>  --  name
                      if Reader.Is_String_Value then
@@ -7945,13 +8402,9 @@ package body DAP.Tools.Inputs is
                         Success := False;
                      end if;
                   when 6 =>  --  message
-                     if Reader.Is_String_Value
-                       and then Reader.String_Value = "cancelled"
-                     then
-                        Reader.Read_Next;
-                     else
-                        Success := False;
-                     end if;
+                     Value.message := (Is_Set => True, Value => <>);
+                     Input_Response_message
+                       (Reader, Value.message.Value, Success);
                   when 7 =>  --  body
                      Input_ThreadsResponse_body
                        (Reader, Value.a_body, Success);
@@ -8094,13 +8547,9 @@ package body DAP.Tools.Inputs is
                         Success := False;
                      end if;
                   when 6 =>  --  message
-                     if Reader.Is_String_Value
-                       and then Reader.String_Value = "cancelled"
-                     then
-                        Reader.Read_Next;
-                     else
-                        Success := False;
-                     end if;
+                     Value.message := (Is_Set => True, Value => <>);
+                     Input_Response_message
+                       (Reader, Value.message.Value, Success);
                   when 7 =>  --  body
                      Input_SetDataBreakpointsResponse_body
                        (Reader, Value.a_body, Success);
@@ -8510,13 +8959,9 @@ package body DAP.Tools.Inputs is
                         Success := False;
                      end if;
                   when 6 =>  --  message
-                     if Reader.Is_String_Value
-                       and then Reader.String_Value = "cancelled"
-                     then
-                        Reader.Read_Next;
-                     else
-                        Success := False;
-                     end if;
+                     Value.message := (Is_Set => True, Value => <>);
+                     Input_Response_message
+                       (Reader, Value.message.Value, Success);
                   when 7 =>  --  body
                      Input_SourceResponse_body (Reader, Value.a_body, Success);
                   when others =>
@@ -8647,13 +9092,9 @@ package body DAP.Tools.Inputs is
                         Success := False;
                      end if;
                   when 6 =>  --  message
-                     if Reader.Is_String_Value
-                       and then Reader.String_Value = "cancelled"
-                     then
-                        Reader.Read_Next;
-                     else
-                        Success := False;
-                     end if;
+                     Value.message := (Is_Set => True, Value => <>);
+                     Input_Response_message
+                       (Reader, Value.message.Value, Success);
                   when 7 =>  --  body
                      Input_ContinueResponse_body
                        (Reader, Value.a_body, Success);
@@ -8740,13 +9181,9 @@ package body DAP.Tools.Inputs is
                         Success := False;
                      end if;
                   when 6 =>  --  message
-                     if Reader.Is_String_Value
-                       and then Reader.String_Value = "cancelled"
-                     then
-                        Reader.Read_Next;
-                     else
-                        Success := False;
-                     end if;
+                     Value.message := (Is_Set => True, Value => <>);
+                     Input_Response_message
+                       (Reader, Value.message.Value, Success);
                   when 7 =>  --  body
                      Input_Any_Value (Reader, Value.a_body, Success);
                   when others =>
@@ -8764,7 +9201,7 @@ package body DAP.Tools.Inputs is
    end Input_RestartFrameResponse;
 
    package StepInArguments_Minimal_Perfect_Hash is new Minimal_Perfect_Hash
-     (["threadId", "targetId", "granularity"]);
+     (["threadId", "singleThread", "targetId", "granularity"]);
 
    procedure Input_StepInArguments
      (Reader  : in out VSS.JSON.Pull_Readers.JSON_Pull_Reader'Class;
@@ -8798,7 +9235,14 @@ package body DAP.Tools.Inputs is
                      else
                         Success := False;
                      end if;
-                  when 2 =>  --  targetId
+                  when 2 =>  --  singleThread
+                     if Reader.Is_Boolean_Value then
+                        Value.singleThread := Reader.Boolean_Value;
+                        Reader.Read_Next;
+                     else
+                        Success := False;
+                     end if;
+                  when 3 =>  --  targetId
                      Value.targetId := (Is_Set => True, Value => <>);
                      if Reader.Is_Number_Value
                        and then Reader.Number_Value.Kind =
@@ -8810,7 +9254,7 @@ package body DAP.Tools.Inputs is
                      else
                         Success := False;
                      end if;
-                  when 3 =>  --  granularity
+                  when 4 =>  --  granularity
                      Value.granularity := (Is_Set => True, Value => <>);
                      Input_SteppingGranularity
                        (Reader, Value.granularity.Value, Success);
@@ -8897,13 +9341,9 @@ package body DAP.Tools.Inputs is
                         Success := False;
                      end if;
                   when 6 =>  --  message
-                     if Reader.Is_String_Value
-                       and then Reader.String_Value = "cancelled"
-                     then
-                        Reader.Read_Next;
-                     else
-                        Success := False;
-                     end if;
+                     Value.message := (Is_Set => True, Value => <>);
+                     Input_Response_message
+                       (Reader, Value.message.Value, Success);
                   when 7 =>  --  body
                      Input_Any_Value (Reader, Value.a_body, Success);
                   when others =>
@@ -8989,13 +9429,9 @@ package body DAP.Tools.Inputs is
                         Success := False;
                      end if;
                   when 6 =>  --  message
-                     if Reader.Is_String_Value
-                       and then Reader.String_Value = "cancelled"
-                     then
-                        Reader.Read_Next;
-                     else
-                        Success := False;
-                     end if;
+                     Value.message := (Is_Set => True, Value => <>);
+                     Input_Response_message
+                       (Reader, Value.message.Value, Success);
                   when 7 =>  --  body
                      Input_Any_Value (Reader, Value.a_body, Success);
                   when others =>
@@ -9194,13 +9630,9 @@ package body DAP.Tools.Inputs is
                         Success := False;
                      end if;
                   when 6 =>  --  message
-                     if Reader.Is_String_Value
-                       and then Reader.String_Value = "cancelled"
-                     then
-                        Reader.Read_Next;
-                     else
-                        Success := False;
-                     end if;
+                     Value.message := (Is_Set => True, Value => <>);
+                     Input_Response_message
+                       (Reader, Value.message.Value, Success);
                   when 7 =>  --  body
                      Input_Any_Value (Reader, Value.a_body, Success);
                   when others =>
@@ -9286,7 +9718,7 @@ package body DAP.Tools.Inputs is
    end Input_EvaluateRequest;
 
    package ContinueArguments_Minimal_Perfect_Hash is new Minimal_Perfect_Hash
-     (["threadId"]);
+     (["threadId", "singleThread"]);
 
    procedure Input_ContinueArguments
      (Reader  : in out VSS.JSON.Pull_Readers.JSON_Pull_Reader'Class;
@@ -9320,6 +9752,13 @@ package body DAP.Tools.Inputs is
                      else
                         Success := False;
                      end if;
+                  when 2 =>  --  singleThread
+                     if Reader.Is_Boolean_Value then
+                        Value.singleThread := Reader.Boolean_Value;
+                        Reader.Read_Next;
+                     else
+                        Success := False;
+                     end if;
                   when others =>
                      Reader.Skip_Current_Value;
                end case;
@@ -9335,7 +9774,7 @@ package body DAP.Tools.Inputs is
    end Input_ContinueArguments;
 
    package StepBackArguments_Minimal_Perfect_Hash is new Minimal_Perfect_Hash
-     (["threadId", "granularity"]);
+     (["threadId", "singleThread", "granularity"]);
 
    procedure Input_StepBackArguments
      (Reader  : in out VSS.JSON.Pull_Readers.JSON_Pull_Reader'Class;
@@ -9369,7 +9808,14 @@ package body DAP.Tools.Inputs is
                      else
                         Success := False;
                      end if;
-                  when 2 =>  --  granularity
+                  when 2 =>  --  singleThread
+                     if Reader.Is_Boolean_Value then
+                        Value.singleThread := Reader.Boolean_Value;
+                        Reader.Read_Next;
+                     else
+                        Success := False;
+                     end if;
+                  when 3 =>  --  granularity
                      Value.granularity := (Is_Set => True, Value => <>);
                      Input_SteppingGranularity
                        (Reader, Value.granularity.Value, Success);
@@ -9655,13 +10101,9 @@ package body DAP.Tools.Inputs is
                         Success := False;
                      end if;
                   when 6 =>  --  message
-                     if Reader.Is_String_Value
-                       and then Reader.String_Value = "cancelled"
-                     then
-                        Reader.Read_Next;
-                     else
-                        Success := False;
-                     end if;
+                     Value.message := (Is_Set => True, Value => <>);
+                     Input_Response_message
+                       (Reader, Value.message.Value, Success);
                   when 7 =>  --  body
                      Input_CompletionsResponse_body
                        (Reader, Value.a_body, Success);
@@ -9923,6 +10365,77 @@ package body DAP.Tools.Inputs is
          Reader.Read_Next;  --  skip End_Object
       end if;
    end Input_Source;
+
+   package WriteMemoryArguments_Minimal_Perfect_Hash is new Minimal_Perfect_Hash
+     (["memoryReference", "offset", "allowPartial", "data"]);
+
+   procedure Input_WriteMemoryArguments
+     (Reader  : in out VSS.JSON.Pull_Readers.JSON_Pull_Reader'Class;
+      Value   : out WriteMemoryArguments;
+      Success : in out Boolean) is
+   begin
+      if Success and Reader.Is_Start_Object then
+         Reader.Read_Next;
+      else
+         Success := False;
+      end if;
+
+      while Success and not Reader.Is_End_Object loop
+         if Reader.Is_Key_Name then
+            declare
+               Index : constant Natural :=
+                 WriteMemoryArguments_Minimal_Perfect_Hash.Get_Index
+                   (Reader.Key_Name);
+            begin
+               Reader.Read_Next;
+
+               case Index is
+                  when 1 =>  --  memoryReference
+                     if Reader.Is_String_Value then
+                        Value.memoryReference := Reader.String_Value;
+                        Reader.Read_Next;
+                     else
+                        Success := False;
+                     end if;
+                  when 2 =>  --  offset
+                     Value.offset := (Is_Set => True, Value => <>);
+                     if Reader.Is_Number_Value
+                       and then Reader.Number_Value.Kind =
+                         VSS.JSON.JSON_Integer
+                     then
+                        Value.offset.Value :=
+                          Integer (Reader.Number_Value.Integer_Value);
+                        Reader.Read_Next;
+                     else
+                        Success := False;
+                     end if;
+                  when 3 =>  --  allowPartial
+                     if Reader.Is_Boolean_Value then
+                        Value.allowPartial := Reader.Boolean_Value;
+                        Reader.Read_Next;
+                     else
+                        Success := False;
+                     end if;
+                  when 4 =>  --  data
+                     if Reader.Is_String_Value then
+                        Value.data := Reader.String_Value;
+                        Reader.Read_Next;
+                     else
+                        Success := False;
+                     end if;
+                  when others =>
+                     Reader.Skip_Current_Value;
+               end case;
+            end;
+         else
+            Success := False;
+         end if;
+      end loop;
+
+      if Success then
+         Reader.Read_Next;  --  skip End_Object
+      end if;
+   end Input_WriteMemoryArguments;
 
    procedure Input_ConfigurationDoneArguments
      (Reader  : in out VSS.JSON.Pull_Readers.JSON_Pull_Reader'Class;
@@ -10471,13 +10984,9 @@ package body DAP.Tools.Inputs is
                         Success := False;
                      end if;
                   when 6 =>  --  message
-                     if Reader.Is_String_Value
-                       and then Reader.String_Value = "cancelled"
-                     then
-                        Reader.Read_Next;
-                     else
-                        Success := False;
-                     end if;
+                     Value.message := (Is_Set => True, Value => <>);
+                     Input_Response_message
+                       (Reader, Value.message.Value, Success);
                   when 7 =>  --  body
                      Value.a_body := (Is_Set => True, Value => <>);
                      Input_ReadMemoryResponse_body
@@ -10807,13 +11316,9 @@ package body DAP.Tools.Inputs is
                         Success := False;
                      end if;
                   when 6 =>  --  message
-                     if Reader.Is_String_Value
-                       and then Reader.String_Value = "cancelled"
-                     then
-                        Reader.Read_Next;
-                     else
-                        Success := False;
-                     end if;
+                     Value.message := (Is_Set => True, Value => <>);
+                     Input_Response_message
+                       (Reader, Value.message.Value, Success);
                   when 7 =>  --  body
                      Input_VariablesResponse_body
                        (Reader, Value.a_body, Success);
@@ -10832,7 +11337,7 @@ package body DAP.Tools.Inputs is
    end Input_VariablesResponse;
 
    package RunInTerminalRequestArguments_Minimal_Perfect_Hash is new Minimal_Perfect_Hash
-     (["kind", "title", "cwd", "args", "env"]);
+     (["kind", "title", "cwd", "args", "env", "argsCanBeInterpretedByShell"]);
 
    procedure Input_RunInTerminalRequestArguments
      (Reader  : in out VSS.JSON.Pull_Readers.JSON_Pull_Reader'Class;
@@ -10897,6 +11402,14 @@ package body DAP.Tools.Inputs is
                      end if;
                   when 5 =>  --  env
                      Input_Any_Value (Reader, Value.env, Success);
+                  when 6 =>  --  argsCanBeInterpretedByShell
+                     if Reader.Is_Boolean_Value then
+                        Value.argsCanBeInterpretedByShell :=
+                          Reader.Boolean_Value;
+                        Reader.Read_Next;
+                     else
+                        Success := False;
+                     end if;
                   when others =>
                      Reader.Skip_Current_Value;
                end case;
@@ -11254,13 +11767,9 @@ package body DAP.Tools.Inputs is
                         Success := False;
                      end if;
                   when 6 =>  --  message
-                     if Reader.Is_String_Value
-                       and then Reader.String_Value = "cancelled"
-                     then
-                        Reader.Read_Next;
-                     else
-                        Success := False;
-                     end if;
+                     Value.message := (Is_Set => True, Value => <>);
+                     Input_Response_message
+                       (Reader, Value.message.Value, Success);
                   when 7 =>  --  body
                      Input_BreakpointLocationsResponse_body
                        (Reader, Value.a_body, Success);
@@ -11279,7 +11788,7 @@ package body DAP.Tools.Inputs is
    end Input_BreakpointLocationsResponse;
 
    package VariablePresentationHint_Minimal_Perfect_Hash is new Minimal_Perfect_Hash
-     (["kind", "attributes", "visibility"]);
+     (["kind", "attributes", "visibility", "lazy"]);
 
    procedure Input_VariablePresentationHint
      (Reader  : in out VSS.JSON.Pull_Readers.JSON_Pull_Reader'Class;
@@ -11332,6 +11841,13 @@ package body DAP.Tools.Inputs is
                      Value.visibility := (Is_Set => True, Value => <>);
                      Input_VariablePresentationHint_visibility
                        (Reader, Value.visibility.Value, Success);
+                  when 4 =>  --  lazy
+                     if Reader.Is_Boolean_Value then
+                        Value.lazy := Reader.Boolean_Value;
+                        Reader.Read_Next;
+                     else
+                        Success := False;
+                     end if;
                   when others =>
                      Reader.Skip_Current_Value;
                end case;
@@ -11464,6 +11980,55 @@ package body DAP.Tools.Inputs is
       end if;
    end Input_DisassembledInstruction;
 
+   package PauseArguments_Minimal_Perfect_Hash is new Minimal_Perfect_Hash
+     (["threadId"]);
+
+   procedure Input_PauseArguments
+     (Reader  : in out VSS.JSON.Pull_Readers.JSON_Pull_Reader'Class;
+      Value   : out PauseArguments;
+      Success : in out Boolean) is
+   begin
+      if Success and Reader.Is_Start_Object then
+         Reader.Read_Next;
+      else
+         Success := False;
+      end if;
+
+      while Success and not Reader.Is_End_Object loop
+         if Reader.Is_Key_Name then
+            declare
+               Index : constant Natural :=
+                 PauseArguments_Minimal_Perfect_Hash.Get_Index
+                   (Reader.Key_Name);
+            begin
+               Reader.Read_Next;
+
+               case Index is
+                  when 1 =>  --  threadId
+                     if Reader.Is_Number_Value
+                       and then Reader.Number_Value.Kind =
+                         VSS.JSON.JSON_Integer
+                     then
+                        Value.threadId :=
+                          Integer (Reader.Number_Value.Integer_Value);
+                        Reader.Read_Next;
+                     else
+                        Success := False;
+                     end if;
+                  when others =>
+                     Reader.Skip_Current_Value;
+               end case;
+            end;
+         else
+            Success := False;
+         end if;
+      end loop;
+
+      if Success then
+         Reader.Read_Next;  --  skip End_Object
+      end if;
+   end Input_PauseArguments;
+
    package CancelResponse_Minimal_Perfect_Hash is new Minimal_Perfect_Hash
      (["seq", "type", "request_seq", "success", "command", "message", "body"]);
 
@@ -11533,13 +12098,9 @@ package body DAP.Tools.Inputs is
                         Success := False;
                      end if;
                   when 6 =>  --  message
-                     if Reader.Is_String_Value
-                       and then Reader.String_Value = "cancelled"
-                     then
-                        Reader.Read_Next;
-                     else
-                        Success := False;
-                     end if;
+                     Value.message := (Is_Set => True, Value => <>);
+                     Input_Response_message
+                       (Reader, Value.message.Value, Success);
                   when 7 =>  --  body
                      Input_Any_Value (Reader, Value.a_body, Success);
                   when others =>
@@ -11556,61 +12117,14 @@ package body DAP.Tools.Inputs is
       end if;
    end Input_CancelResponse;
 
-   package PauseArguments_Minimal_Perfect_Hash is new Minimal_Perfect_Hash
-     (["threadId"]);
-
-   procedure Input_PauseArguments
-     (Reader  : in out VSS.JSON.Pull_Readers.JSON_Pull_Reader'Class;
-      Value   : out PauseArguments;
-      Success : in out Boolean) is
-   begin
-      if Success and Reader.Is_Start_Object then
-         Reader.Read_Next;
-      else
-         Success := False;
-      end if;
-
-      while Success and not Reader.Is_End_Object loop
-         if Reader.Is_Key_Name then
-            declare
-               Index : constant Natural :=
-                 PauseArguments_Minimal_Perfect_Hash.Get_Index
-                   (Reader.Key_Name);
-            begin
-               Reader.Read_Next;
-
-               case Index is
-                  when 1 =>  --  threadId
-                     if Reader.Is_Number_Value
-                       and then Reader.Number_Value.Kind =
-                         VSS.JSON.JSON_Integer
-                     then
-                        Value.threadId :=
-                          Integer (Reader.Number_Value.Integer_Value);
-                        Reader.Read_Next;
-                     else
-                        Success := False;
-                     end if;
-                  when others =>
-                     Reader.Skip_Current_Value;
-               end case;
-            end;
-         else
-            Success := False;
-         end if;
-      end loop;
-
-      if Success then
-         Reader.Read_Next;  --  skip End_Object
-      end if;
-   end Input_PauseArguments;
-
    package InitializeRequestArguments_Minimal_Perfect_Hash is new Minimal_Perfect_Hash
      (["clientID", "clientName", "adapterID", "locale", "linesStartAt1",
        "columnsStartAt1", "pathFormat", "supportsVariableType",
        "supportsVariablePaging", "supportsRunInTerminalRequest",
        "supportsMemoryReferences", "supportsProgressReporting",
-       "supportsInvalidatedEvent"]);
+       "supportsInvalidatedEvent", "supportsMemoryEvent",
+       "supportsArgsCanBeInterpretedByShell",
+       "supportsStartDebuggingRequest"]);
 
    procedure Input_InitializeRequestArguments
      (Reader  : in out VSS.JSON.Pull_Readers.JSON_Pull_Reader'Class;
@@ -11719,6 +12233,29 @@ package body DAP.Tools.Inputs is
                   when 13 =>  --  supportsInvalidatedEvent
                      if Reader.Is_Boolean_Value then
                         Value.supportsInvalidatedEvent := Reader.Boolean_Value;
+                        Reader.Read_Next;
+                     else
+                        Success := False;
+                     end if;
+                  when 14 =>  --  supportsMemoryEvent
+                     if Reader.Is_Boolean_Value then
+                        Value.supportsMemoryEvent := Reader.Boolean_Value;
+                        Reader.Read_Next;
+                     else
+                        Success := False;
+                     end if;
+                  when 15 =>  --  supportsArgsCanBeInterpretedByShell
+                     if Reader.Is_Boolean_Value then
+                        Value.supportsArgsCanBeInterpretedByShell :=
+                          Reader.Boolean_Value;
+                        Reader.Read_Next;
+                     else
+                        Success := False;
+                     end if;
+                  when 16 =>  --  supportsStartDebuggingRequest
+                     if Reader.Is_Boolean_Value then
+                        Value.supportsStartDebuggingRequest :=
+                          Reader.Boolean_Value;
                         Reader.Read_Next;
                      else
                         Success := False;
@@ -11863,13 +12400,9 @@ package body DAP.Tools.Inputs is
                         Success := False;
                      end if;
                   when 6 =>  --  message
-                     if Reader.Is_String_Value
-                       and then Reader.String_Value = "cancelled"
-                     then
-                        Reader.Read_Next;
-                     else
-                        Success := False;
-                     end if;
+                     Value.message := (Is_Set => True, Value => <>);
+                     Input_Response_message
+                       (Reader, Value.message.Value, Success);
                   when 7 =>  --  body
                      Input_SetInstructionBreakpointsResponse_body
                        (Reader, Value.a_body, Success);
@@ -12377,6 +12910,74 @@ package body DAP.Tools.Inputs is
       end if;
    end Input_TerminatedEvent;
 
+   package StartDebuggingRequest_Minimal_Perfect_Hash is new Minimal_Perfect_Hash
+     (["seq", "type", "command", "arguments"]);
+
+   procedure Input_StartDebuggingRequest
+     (Reader  : in out VSS.JSON.Pull_Readers.JSON_Pull_Reader'Class;
+      Value   : out StartDebuggingRequest;
+      Success : in out Boolean) is
+   begin
+      if Success and Reader.Is_Start_Object then
+         Reader.Read_Next;
+      else
+         Success := False;
+      end if;
+
+      while Success and not Reader.Is_End_Object loop
+         if Reader.Is_Key_Name then
+            declare
+               Index : constant Natural :=
+                 StartDebuggingRequest_Minimal_Perfect_Hash.Get_Index
+                   (Reader.Key_Name);
+            begin
+               Reader.Read_Next;
+
+               case Index is
+                  when 1 =>  --  seq
+                     if Reader.Is_Number_Value
+                       and then Reader.Number_Value.Kind =
+                         VSS.JSON.JSON_Integer
+                     then
+                        Value.seq :=
+                          Integer (Reader.Number_Value.Integer_Value);
+                        Reader.Read_Next;
+                     else
+                        Success := False;
+                     end if;
+                  when 2 =>  --  type
+                     if Reader.Is_String_Value
+                       and then Reader.String_Value = "request"
+                     then
+                        Reader.Read_Next;
+                     else
+                        Success := False;
+                     end if;
+                  when 3 =>  --  command
+                     if Reader.Is_String_Value
+                       and then Reader.String_Value = "startDebugging"
+                     then
+                        Reader.Read_Next;
+                     else
+                        Success := False;
+                     end if;
+                  when 4 =>  --  arguments
+                     Input_StartDebuggingRequestArguments
+                       (Reader, Value.arguments, Success);
+                  when others =>
+                     Reader.Skip_Current_Value;
+               end case;
+            end;
+         else
+            Success := False;
+         end if;
+      end loop;
+
+      if Success then
+         Reader.Read_Next;  --  skip End_Object
+      end if;
+   end Input_StartDebuggingRequest;
+
    package ThreadEvent_Minimal_Perfect_Hash is new Minimal_Perfect_Hash
      (["seq", "type", "event", "body"]);
 
@@ -12619,13 +13220,9 @@ package body DAP.Tools.Inputs is
                         Success := False;
                      end if;
                   when 6 =>  --  message
-                     if Reader.Is_String_Value
-                       and then Reader.String_Value = "cancelled"
-                     then
-                        Reader.Read_Next;
-                     else
-                        Success := False;
-                     end if;
+                     Value.message := (Is_Set => True, Value => <>);
+                     Input_Response_message
+                       (Reader, Value.message.Value, Success);
                   when 7 =>  --  body
                      Input_GotoTargetsResponse_body
                        (Reader, Value.a_body, Success);
@@ -12644,7 +13241,7 @@ package body DAP.Tools.Inputs is
    end Input_GotoTargetsResponse;
 
    package CompletionItem_Minimal_Perfect_Hash is new Minimal_Perfect_Hash
-     (["label", "text", "sortText", "type", "start", "length",
+     (["label", "text", "sortText", "detail", "type", "start", "length",
        "selectionStart", "selectionLength"]);
 
    procedure Input_CompletionItem
@@ -12689,11 +13286,18 @@ package body DAP.Tools.Inputs is
                      else
                         Success := False;
                      end if;
-                  when 4 =>  --  type
+                  when 4 =>  --  detail
+                     if Reader.Is_String_Value then
+                        Value.detail := Reader.String_Value;
+                        Reader.Read_Next;
+                     else
+                        Success := False;
+                     end if;
+                  when 5 =>  --  type
                      Value.a_type := (Is_Set => True, Value => <>);
                      Input_CompletionItemType
                        (Reader, Value.a_type.Value, Success);
-                  when 5 =>  --  start
+                  when 6 =>  --  start
                      Value.start := (Is_Set => True, Value => <>);
                      if Reader.Is_Number_Value
                        and then Reader.Number_Value.Kind =
@@ -12705,7 +13309,7 @@ package body DAP.Tools.Inputs is
                      else
                         Success := False;
                      end if;
-                  when 6 =>  --  length
+                  when 7 =>  --  length
                      Value.length := (Is_Set => True, Value => <>);
                      if Reader.Is_Number_Value
                        and then Reader.Number_Value.Kind =
@@ -12717,7 +13321,7 @@ package body DAP.Tools.Inputs is
                      else
                         Success := False;
                      end if;
-                  when 7 =>  --  selectionStart
+                  when 8 =>  --  selectionStart
                      Value.selectionStart := (Is_Set => True, Value => <>);
                      if Reader.Is_Number_Value
                        and then Reader.Number_Value.Kind =
@@ -12729,7 +13333,7 @@ package body DAP.Tools.Inputs is
                      else
                         Success := False;
                      end if;
-                  when 8 =>  --  selectionLength
+                  when 9 =>  --  selectionLength
                      Value.selectionLength := (Is_Set => True, Value => <>);
                      if Reader.Is_Number_Value
                        and then Reader.Number_Value.Kind =
@@ -12914,13 +13518,9 @@ package body DAP.Tools.Inputs is
                         Success := False;
                      end if;
                   when 6 =>  --  message
-                     if Reader.Is_String_Value
-                       and then Reader.String_Value = "cancelled"
-                     then
-                        Reader.Read_Next;
-                     else
-                        Success := False;
-                     end if;
+                     Value.message := (Is_Set => True, Value => <>);
+                     Input_Response_message
+                       (Reader, Value.message.Value, Success);
                   when 7 =>  --  body
                      Input_ErrorResponse_body (Reader, Value.a_body, Success);
                   when others =>
@@ -13797,13 +14397,9 @@ package body DAP.Tools.Inputs is
                         Success := False;
                      end if;
                   when 6 =>  --  message
-                     if Reader.Is_String_Value
-                       and then Reader.String_Value = "cancelled"
-                     then
-                        Reader.Read_Next;
-                     else
-                        Success := False;
-                     end if;
+                     Value.message := (Is_Set => True, Value => <>);
+                     Input_Response_message
+                       (Reader, Value.message.Value, Success);
                   when 7 =>  --  body
                      Input_SetVariableResponse_body
                        (Reader, Value.a_body, Success);
@@ -14024,13 +14620,9 @@ package body DAP.Tools.Inputs is
                         Success := False;
                      end if;
                   when 6 =>  --  message
-                     if Reader.Is_String_Value
-                       and then Reader.String_Value = "cancelled"
-                     then
-                        Reader.Read_Next;
-                     else
-                        Success := False;
-                     end if;
+                     Value.message := (Is_Set => True, Value => <>);
+                     Input_Response_message
+                       (Reader, Value.message.Value, Success);
                   when 7 =>  --  body
                      Input_Any_Value (Reader, Value.a_body, Success);
                   when others =>
@@ -14115,8 +14707,76 @@ package body DAP.Tools.Inputs is
       end if;
    end Input_SetExceptionBreakpointsRequest;
 
+   package WriteMemoryRequest_Minimal_Perfect_Hash is new Minimal_Perfect_Hash
+     (["seq", "type", "command", "arguments"]);
+
+   procedure Input_WriteMemoryRequest
+     (Reader  : in out VSS.JSON.Pull_Readers.JSON_Pull_Reader'Class;
+      Value   : out WriteMemoryRequest;
+      Success : in out Boolean) is
+   begin
+      if Success and Reader.Is_Start_Object then
+         Reader.Read_Next;
+      else
+         Success := False;
+      end if;
+
+      while Success and not Reader.Is_End_Object loop
+         if Reader.Is_Key_Name then
+            declare
+               Index : constant Natural :=
+                 WriteMemoryRequest_Minimal_Perfect_Hash.Get_Index
+                   (Reader.Key_Name);
+            begin
+               Reader.Read_Next;
+
+               case Index is
+                  when 1 =>  --  seq
+                     if Reader.Is_Number_Value
+                       and then Reader.Number_Value.Kind =
+                         VSS.JSON.JSON_Integer
+                     then
+                        Value.seq :=
+                          Integer (Reader.Number_Value.Integer_Value);
+                        Reader.Read_Next;
+                     else
+                        Success := False;
+                     end if;
+                  when 2 =>  --  type
+                     if Reader.Is_String_Value
+                       and then Reader.String_Value = "request"
+                     then
+                        Reader.Read_Next;
+                     else
+                        Success := False;
+                     end if;
+                  when 3 =>  --  command
+                     if Reader.Is_String_Value
+                       and then Reader.String_Value = "writeMemory"
+                     then
+                        Reader.Read_Next;
+                     else
+                        Success := False;
+                     end if;
+                  when 4 =>  --  arguments
+                     Input_WriteMemoryArguments
+                       (Reader, Value.arguments, Success);
+                  when others =>
+                     Reader.Skip_Current_Value;
+               end case;
+            end;
+         else
+            Success := False;
+         end if;
+      end loop;
+
+      if Success then
+         Reader.Read_Next;  --  skip End_Object
+      end if;
+   end Input_WriteMemoryRequest;
+
    package DataBreakpointInfoArguments_Minimal_Perfect_Hash is new Minimal_Perfect_Hash
-     (["variablesReference", "name"]);
+     (["variablesReference", "name", "frameId"]);
 
    procedure Input_DataBreakpointInfoArguments
      (Reader  : in out VSS.JSON.Pull_Readers.JSON_Pull_Reader'Class;
@@ -14154,6 +14814,18 @@ package body DAP.Tools.Inputs is
                   when 2 =>  --  name
                      if Reader.Is_String_Value then
                         Value.name := Reader.String_Value;
+                        Reader.Read_Next;
+                     else
+                        Success := False;
+                     end if;
+                  when 3 =>  --  frameId
+                     Value.frameId := (Is_Set => True, Value => <>);
+                     if Reader.Is_Number_Value
+                       and then Reader.Number_Value.Kind =
+                         VSS.JSON.JSON_Integer
+                     then
+                        Value.frameId.Value :=
+                          Integer (Reader.Number_Value.Integer_Value);
                         Reader.Read_Next;
                      else
                         Success := False;
@@ -14241,13 +14913,9 @@ package body DAP.Tools.Inputs is
                         Success := False;
                      end if;
                   when 6 =>  --  message
-                     if Reader.Is_String_Value
-                       and then Reader.String_Value = "cancelled"
-                     then
-                        Reader.Read_Next;
-                     else
-                        Success := False;
-                     end if;
+                     Value.message := (Is_Set => True, Value => <>);
+                     Input_Response_message
+                       (Reader, Value.message.Value, Success);
                   when 7 =>  --  body
                      Value.a_body := (Is_Set => True, Value => <>);
                      Input_Capabilities (Reader, Value.a_body.Value, Success);
@@ -14334,13 +15002,9 @@ package body DAP.Tools.Inputs is
                         Success := False;
                      end if;
                   when 6 =>  --  message
-                     if Reader.Is_String_Value
-                       and then Reader.String_Value = "cancelled"
-                     then
-                        Reader.Read_Next;
-                     else
-                        Success := False;
-                     end if;
+                     Value.message := (Is_Set => True, Value => <>);
+                     Input_Response_message
+                       (Reader, Value.message.Value, Success);
                   when 7 =>  --  body
                      Input_Any_Value (Reader, Value.a_body, Success);
                   when others =>
@@ -14716,13 +15380,9 @@ package body DAP.Tools.Inputs is
                         Success := False;
                      end if;
                   when 6 =>  --  message
-                     if Reader.Is_String_Value
-                       and then Reader.String_Value = "cancelled"
-                     then
-                        Reader.Read_Next;
-                     else
-                        Success := False;
-                     end if;
+                     Value.message := (Is_Set => True, Value => <>);
+                     Input_Response_message
+                       (Reader, Value.message.Value, Success);
                   when 7 =>  --  body
                      Input_SetFunctionBreakpointsResponse_body
                        (Reader, Value.a_body, Success);
@@ -15027,13 +15687,9 @@ package body DAP.Tools.Inputs is
                         Success := False;
                      end if;
                   when 6 =>  --  message
-                     if Reader.Is_String_Value
-                       and then Reader.String_Value = "cancelled"
-                     then
-                        Reader.Read_Next;
-                     else
-                        Success := False;
-                     end if;
+                     Value.message := (Is_Set => True, Value => <>);
+                     Input_Response_message
+                       (Reader, Value.message.Value, Success);
                   when 7 =>  --  body
                      Input_EvaluateResponse_body
                        (Reader, Value.a_body, Success);
@@ -15310,13 +15966,9 @@ package body DAP.Tools.Inputs is
                         Success := False;
                      end if;
                   when 6 =>  --  message
-                     if Reader.Is_String_Value
-                       and then Reader.String_Value = "cancelled"
-                     then
-                        Reader.Read_Next;
-                     else
-                        Success := False;
-                     end if;
+                     Value.message := (Is_Set => True, Value => <>);
+                     Input_Response_message
+                       (Reader, Value.message.Value, Success);
                   when 7 =>  --  body
                      Input_SetBreakpointsResponse_body
                        (Reader, Value.a_body, Success);
@@ -15543,13 +16195,9 @@ package body DAP.Tools.Inputs is
                         Success := False;
                      end if;
                   when 6 =>  --  message
-                     if Reader.Is_String_Value
-                       and then Reader.String_Value = "cancelled"
-                     then
-                        Reader.Read_Next;
-                     else
-                        Success := False;
-                     end if;
+                     Value.message := (Is_Set => True, Value => <>);
+                     Input_Response_message
+                       (Reader, Value.message.Value, Success);
                   when 7 =>  --  body
                      Input_Any_Value (Reader, Value.a_body, Success);
                   when others =>
@@ -15636,10 +16284,66 @@ package body DAP.Tools.Inputs is
    package SetExceptionBreakpointsResponse_Minimal_Perfect_Hash is new Minimal_Perfect_Hash
      (["seq", "type", "request_seq", "success", "command", "message", "body"]);
 
+   package SetExceptionBreakpointsResponse_body_Minimal_Perfect_Hash is new Minimal_Perfect_Hash
+     (["breakpoints"]);
+
    procedure Input_SetExceptionBreakpointsResponse
      (Reader  : in out VSS.JSON.Pull_Readers.JSON_Pull_Reader'Class;
       Value   : out SetExceptionBreakpointsResponse;
       Success : in out Boolean) is
+      procedure Input_SetExceptionBreakpointsResponse_body
+        (Reader  : in out VSS.JSON.Pull_Readers.JSON_Pull_Reader'Class;
+         Value   : out SetExceptionBreakpointsResponse_body;
+         Success : in out Boolean) is
+      begin
+         if Success and Reader.Is_Start_Object then
+            Reader.Read_Next;
+         else
+            Success := False;
+         end if;
+
+         while Success and not Reader.Is_End_Object loop
+            if Reader.Is_Key_Name then
+               declare
+                  Index : constant Natural :=
+                    SetExceptionBreakpointsResponse_body_Minimal_Perfect_Hash
+                      .Get_Index
+                      (Reader.Key_Name);
+               begin
+                  Reader.Read_Next;
+
+                  case Index is
+                     when 1 =>  --  breakpoints
+                        if Success and Reader.Is_Start_Array then
+                           Reader.Read_Next;
+                           while Success and not Reader.Is_End_Array loop
+                              declare
+                                 Item : Breakpoint;
+                              begin
+                                 Input_Breakpoint (Reader, Item, Success);
+                                 Value.breakpoints.Append (Item);
+                              end;
+                           end loop;
+                           if Success then
+                              Reader.Read_Next;  --  skip End_Array
+                           end if;
+                        else
+                           Success := False;
+                        end if;
+                     when others =>
+                        Reader.Skip_Current_Value;
+                  end case;
+               end;
+            else
+               Success := False;
+            end if;
+         end loop;
+
+         if Success then
+            Reader.Read_Next;  --  skip End_Object
+         end if;
+      end Input_SetExceptionBreakpointsResponse_body;
+
    begin
       if Success and Reader.Is_Start_Object then
          Reader.Read_Next;
@@ -15702,15 +16406,13 @@ package body DAP.Tools.Inputs is
                         Success := False;
                      end if;
                   when 6 =>  --  message
-                     if Reader.Is_String_Value
-                       and then Reader.String_Value = "cancelled"
-                     then
-                        Reader.Read_Next;
-                     else
-                        Success := False;
-                     end if;
+                     Value.message := (Is_Set => True, Value => <>);
+                     Input_Response_message
+                       (Reader, Value.message.Value, Success);
                   when 7 =>  --  body
-                     Input_Any_Value (Reader, Value.a_body, Success);
+                     Value.a_body := (Is_Set => True, Value => <>);
+                     Input_SetExceptionBreakpointsResponse_body
+                       (Reader, Value.a_body.Value, Success);
                   when others =>
                      Reader.Skip_Current_Value;
                end case;
@@ -15794,13 +16496,9 @@ package body DAP.Tools.Inputs is
                         Success := False;
                      end if;
                   when 6 =>  --  message
-                     if Reader.Is_String_Value
-                       and then Reader.String_Value = "cancelled"
-                     then
-                        Reader.Read_Next;
-                     else
-                        Success := False;
-                     end if;
+                     Value.message := (Is_Set => True, Value => <>);
+                     Input_Response_message
+                       (Reader, Value.message.Value, Success);
                   when 7 =>  --  body
                      Input_Any_Value (Reader, Value.a_body, Success);
                   when others =>
@@ -15942,13 +16640,9 @@ package body DAP.Tools.Inputs is
                         Success := False;
                      end if;
                   when 6 =>  --  message
-                     if Reader.Is_String_Value
-                       and then Reader.String_Value = "cancelled"
-                     then
-                        Reader.Read_Next;
-                     else
-                        Success := False;
-                     end if;
+                     Value.message := (Is_Set => True, Value => <>);
+                     Input_Response_message
+                       (Reader, Value.message.Value, Success);
                   when 7 =>  --  body
                      Value.a_body := (Is_Set => True, Value => <>);
                      Input_DisassembleResponse_body
@@ -16437,13 +17131,9 @@ package body DAP.Tools.Inputs is
                         Success := False;
                      end if;
                   when 6 =>  --  message
-                     if Reader.Is_String_Value
-                       and then Reader.String_Value = "cancelled"
-                     then
-                        Reader.Read_Next;
-                     else
-                        Success := False;
-                     end if;
+                     Value.message := (Is_Set => True, Value => <>);
+                     Input_Response_message
+                       (Reader, Value.message.Value, Success);
                   when 7 =>  --  body
                      Input_LoadedSourcesResponse_body
                        (Reader, Value.a_body, Success);
@@ -16460,5 +17150,93 @@ package body DAP.Tools.Inputs is
          Reader.Read_Next;  --  skip End_Object
       end if;
    end Input_LoadedSourcesResponse;
+
+   package StartDebuggingResponse_Minimal_Perfect_Hash is new Minimal_Perfect_Hash
+     (["seq", "type", "request_seq", "success", "command", "message", "body"]);
+
+   procedure Input_StartDebuggingResponse
+     (Reader  : in out VSS.JSON.Pull_Readers.JSON_Pull_Reader'Class;
+      Value   : out StartDebuggingResponse;
+      Success : in out Boolean) is
+   begin
+      if Success and Reader.Is_Start_Object then
+         Reader.Read_Next;
+      else
+         Success := False;
+      end if;
+
+      while Success and not Reader.Is_End_Object loop
+         if Reader.Is_Key_Name then
+            declare
+               Index : constant Natural :=
+                 StartDebuggingResponse_Minimal_Perfect_Hash.Get_Index
+                   (Reader.Key_Name);
+            begin
+               Reader.Read_Next;
+
+               case Index is
+                  when 1 =>  --  seq
+                     if Reader.Is_Number_Value
+                       and then Reader.Number_Value.Kind =
+                         VSS.JSON.JSON_Integer
+                     then
+                        Value.seq :=
+                          Integer (Reader.Number_Value.Integer_Value);
+                        Reader.Read_Next;
+                     else
+                        Success := False;
+                     end if;
+                  when 2 =>  --  type
+                     if Reader.Is_String_Value
+                       and then Reader.String_Value = "response"
+                     then
+                        Reader.Read_Next;
+                     else
+                        Success := False;
+                     end if;
+                  when 3 =>  --  request_seq
+                     if Reader.Is_Number_Value
+                       and then Reader.Number_Value.Kind =
+                         VSS.JSON.JSON_Integer
+                     then
+                        Value.request_seq :=
+                          Integer (Reader.Number_Value.Integer_Value);
+                        Reader.Read_Next;
+                     else
+                        Success := False;
+                     end if;
+                  when 4 =>  --  success
+                     if Reader.Is_Boolean_Value then
+                        Value.success := Reader.Boolean_Value;
+                        Reader.Read_Next;
+                     else
+                        Success := False;
+                     end if;
+                  when 5 =>  --  command
+                     if Reader.Is_String_Value then
+                        Value.command := Reader.String_Value;
+                        Reader.Read_Next;
+                     else
+                        Success := False;
+                     end if;
+                  when 6 =>  --  message
+                     Value.message := (Is_Set => True, Value => <>);
+                     Input_Response_message
+                       (Reader, Value.message.Value, Success);
+                  when 7 =>  --  body
+                     Input_Any_Value (Reader, Value.a_body, Success);
+                  when others =>
+                     Reader.Skip_Current_Value;
+               end case;
+            end;
+         else
+            Success := False;
+         end if;
+      end loop;
+
+      if Success then
+         Reader.Read_Next;  --  skip End_Object
+      end if;
+   end Input_StartDebuggingResponse;
 
 end DAP.Tools.Inputs;

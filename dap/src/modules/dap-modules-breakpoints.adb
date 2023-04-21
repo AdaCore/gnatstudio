@@ -229,7 +229,7 @@ package body DAP.Modules.Breakpoints is
       Name   : constant String := +Base_Name (Executable);
    begin
       for Data of Self.Vector loop
-         if Is_Line_Bp (Data)
+         if Data.Executable = ""
            or else Data.Executable = Name
          then
             Result.Append (Data);

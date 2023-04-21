@@ -41,6 +41,7 @@ with DAP.Tools;
 
 with Basic_Types;                use Basic_Types;
 with Generic_Views;
+with Language;                   use Language;
 
 private with Ada.Containers.Hashed_Maps;
 private with Ada.Containers.Hashed_Sets;
@@ -234,7 +235,7 @@ package DAP.Clients is
       Address : Address_Type);
 
    function Get_Selected_Frame
-     (Self : in out DAP_Client) return Integer;
+     (Self : DAP_Client) return Integer;
 
    function Current_File
      (Self : in out DAP_Client) return GNATCOLL.VFS.Virtual_File;
@@ -251,6 +252,9 @@ package DAP.Clients is
    function Get_Executable
      (Self : in out DAP_Client) return GNATCOLL.VFS.Virtual_File;
    --  Return the name of the executable currently debugged.
+
+   function Get_Language
+     (Self : in out DAP_Client) return Language_Access;
 
    procedure Set_Source_Files
      (Self         : in out DAP_Client;
@@ -291,10 +295,9 @@ package DAP.Clients is
 
    procedure Show_Breakpoints (Self : DAP_Client);
 
-   function Get_Variable_Address
-     (Self     : DAP_Client;
-      Variable : String)
-      return String;
+   procedure Get_Variable_Address
+     (Self     : in out DAP_Client;
+      Variable : String);
 
    function Get_Endian_Type (Self : in out DAP_Client) return Endian_Type;
 
@@ -363,6 +366,7 @@ private
       Is_Attached    : Boolean := False;
       Capabilities   : DAP.Tools.Optional_Capabilities;
       Status         : Debugger_Status_Kind := Initialization;
+      Endian         : Endian_Type := Little_Endian;
 
       Sent           : Requests_Maps.Map;
 

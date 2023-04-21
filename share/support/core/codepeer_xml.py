@@ -214,17 +214,6 @@ doc = """<?xml version="1.0"?>
 attributes = """
     <project_attribute
       package="CodePeer"
-      name="Output_Directory"
-      editor_page="CodePeer"
-      editor_section="CodePeer configuration"
-      label="Output directory"
-      hide_in="wizard gnatname_wizard library_wizard"
-      description="CodePeer output directory to use for this project.">
-      <string type="directory"/>
-    </project_attribute>
-
-    <project_attribute
-      package="CodePeer"
       name="CPM_Directory"
       editor_page="CodePeer"
       editor_section="CodePeer configuration"
@@ -496,7 +485,7 @@ SCIL for another architecture" />
        </command-line>
     </target-model>
 
-    <target model="generate_scil" category="CodePeer" name="Generate SCIL"
+    <target model="generate_scil" category="CodePeer" name="CPL Generate SCIL"
             messages_category="CodePeer">
        <in-toolbar>FALSE</in-toolbar>
        <in-menu>FALSE</in-menu>
@@ -513,7 +502,7 @@ SCIL for another architecture" />
        </command-line>
     </target>
 
-    <target model="gprclean" category="CodePeer" name="Remove SCIL"
+    <target model="gprclean" category="CodePeer" name="CPL Remove SCIL"
             messages_category="CodePeer">
        <in-toolbar>FALSE</in-toolbar>
        <in-menu>FALSE</in-menu>
@@ -531,7 +520,7 @@ SCIL for another architecture" />
     </target>
 
     <target model="html" category="CodePeer"
-            name="Generate HTML Report" messages_category="CodePeer">
+            name="CPL Generate HTML Report" messages_category="CodePeer">
        <in-toolbar>FALSE</in-toolbar>
        <in-menu>FALSE</in-menu>
        <iconname>gps-compile-symbolic</iconname>
@@ -548,7 +537,7 @@ SCIL for another architecture" />
     </target>
 
     <target model="csv" category="CodePeer"
-            name="Generate CSV Report" messages_category="CodePeer">
+            name="CPL Generate CSV Report" messages_category="CodePeer">
        <in-toolbar>FALSE</in-toolbar>
        <in-menu>FALSE</in-menu>
        <iconname>gps-compile-symbolic</iconname>
@@ -567,7 +556,7 @@ SCIL for another architecture" />
     </target>
 
     <target model="codepeer_bridge" category="CodePeer"
-            name="CodePeer Bridge" messages_category="CodePeer Bridge">
+            name="CPL CodePeer Bridge" messages_category="CodePeer Bridge">
        <in-toolbar>FALSE</in-toolbar>
        <in-menu>FALSE</in-menu>
        <iconname>gps-build-all-symbolic</iconname>
@@ -701,7 +690,7 @@ xmlTrailer = """
        </switches>
     </target-model>
 
-    <target model="codepeer" category="CodePeer" name="Run CodePeer"
+    <target model="codepeer" category="CodePeer" name="CPL Run CodePeer"
             messages_category="CodePeer">
        <in-toolbar>FALSE</in-toolbar>
        <in-menu>FALSE</in-menu>
@@ -717,7 +706,7 @@ xmlTrailer = """
        </command-line>
     </target>
 
-    <target model="codepeer" category="CodePeer" name="Run CodePeer..."
+    <target model="codepeer" category="CodePeer" name="CPL Run CodePeer..."
             messages_category="CodePeer">
        <in-toolbar>FALSE</in-toolbar>
        <in-menu>FALSE</in-menu>
@@ -734,7 +723,7 @@ xmlTrailer = """
     </target>
 
     <target model="codepeer" category="CodePeer"
-            name="Run CodePeer File"
+            name="CPL Run CodePeer File"
             messages_category="CodePeer (one file)">
        <in-toolbar>FALSE</in-toolbar>
        <in-menu>FALSE</in-menu>
@@ -751,7 +740,7 @@ xmlTrailer = """
     </target>
 
     <target model="codepeer_output_only" category="CodePeer"
-            name="Regenerate CodePeer Report" messages_category="CodePeer">
+            name="CPL Regenerate CodePeer Report" messages_category="CodePeer">
        <in-toolbar>FALSE</in-toolbar>
        <in-menu>FALSE</in-menu>
        <iconname>gps-build-all-symbolic</iconname>

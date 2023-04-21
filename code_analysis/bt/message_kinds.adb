@@ -97,12 +97,11 @@ package body Message_Kinds is
       package CWE_Id_Sets is new
          Ada.Containers.Ordered_Sets (Positive);
       Result : CWE_Id_Sets.Set;
-
       procedure Include_Corresponding_CWE
         (Kind : Message_Kinds.Message_Subkind);
 
       procedure Include_Corresponding_CWE
-        (Kind : Message_Kinds.Message_Subkind)
+         (Kind : Message_Kinds.Message_Subkind)
       is
       begin
          case Kind is
@@ -343,10 +342,6 @@ package body Message_Kinds is
       --  TBD: Should we handle various GNAT name encodings such as Uxx
       --       to mean Latin-1 character with hex code "xx"?
 
-      Max_Readable_Set_Length : constant := 64;
-      --  Maximum length of acceptable [ xxx .. yyy ] string before
-      --  truncation.
-
       Exponent : Natural := 0;
       Offset   : Integer := 0;
 
@@ -537,72 +532,6 @@ package body Message_Kinds is
                   end loop;
                   --  Weird => no ending '}'
                   I := I + 7;  --  skip past "[others{"
-               else
-                  --  Check for [ blah .. blah ] or [ blah .. blah )
-                  --  and change it to be [...] or [...)
-                  --  ie replace the complex display of
-                  --  the set to just be an ellipsis
-                  declare
-                     bi            : Positive := I + 1;
-                     Dot_Dot_Index : Natural  := 0;
-                     Found_Dot_Dot : Boolean  := False;
-                     First, Second : Natural;
-                     First_Trunc   : Boolean  := False;
-                     Second_Trunc  : Boolean  := False;
-
-                  begin
-                     while bi <= S'Last
-                       and then S (bi) /= ']'
-                       and then S (bi) /= ')'
-                     loop
-                        --  Is it true that there won't be
-                        --  nested index expressions?
-                        --  No, apparently not!
-                        --  TBD: pragma Assert(S(bi) /= '[');
-
-                        if S (bi) = '.'
-                          and then bi + 1 < S'Last
-                          and then S (bi + 1) = '.'
-                          and then S (bi - 1) /= '.'
-                          and then S (bi + 2) /= '.'
-                        then
-                           Found_Dot_Dot := True;
-                           Dot_Dot_Index := bi;
-                        end if;
-
-                        bi := bi + 1;
-                     end loop;
-
-                     if bi <= S'Last
-                       and then Found_Dot_Dot
-                       and then bi - I > Max_Readable_Set_Length
-                     then
-                        First := I + Max_Readable_Set_Length / 2;
-
-                        if Dot_Dot_Index - 1 < First then
-                           First := Dot_Dot_Index - 1;
-                        else
-                           First_Trunc := True;
-                        end if;
-
-                        Second := Dot_Dot_Index + Max_Readable_Set_Length / 2;
-
-                        if bi - 1 < Second then
-                           Second := bi - 1;
-                        else
-                           Second_Trunc := True;
-                        end if;
-
-                        return S (S'First .. I) &
-                          S (I + 1 .. First) &
-                          (if First_Trunc then "[...].." else "..") &
-                          S (Dot_Dot_Index + 2 .. Second) &
-                          (if Second_Trunc then "[...]" else "") &
-                          S (bi) &
-                          Improve_Number_Readability_In_Messages
-                            (S (bi + 1 .. S'Last), For_HTML_Output);
-                     end if;
-                  end;
                end if;
 
             when others =>
