@@ -1,4 +1,6 @@
-""" Alire integration script """
+"""
+Alire integration script.
+"""
 
 ###########################################################################
 # No user customization below this line
@@ -9,13 +11,16 @@ import os_utils
 import os.path
 import re
 import tool_output
+from gi.repository import Gtk
 
 alr = os_utils.locate_exec_on_path("alr")
 saved_env = {}  # all changed env variables and their values
-
+project_to_reload = None  # The project we should reload after finding an Alire manifest
 
 def find_alire_root(path):
-    """Return parent directory with "alire.toml" or None"""
+    """
+    Return parent directory with "alire.toml" or None
+    """
     parent = os.path.dirname(path)
 
     if path == parent:
@@ -26,8 +31,84 @@ def find_alire_root(path):
     return find_alire_root(parent)
 
 
+def on_project_recomputed(hook):
+    global progress_timeout
+
+    if project_to_reload:
+        file, root = project_to_reload
+        timeout_count = 0
+
+        def display_message(timeout):
+            """
+            Display a message in the Locations view warning the user that
+            Alire is being ran.
+            """
+            # Safety net in order to make sure we remove this timeout function
+            # in any case.
+            if timeout.counter > 20:
+                timeout.remove()
+                return
+            timeout.counter += 1
+
+            # Make sure to give the focus to the Locations view first...
+            if GPS.MDI.current().name() != "Locations":
+                GPS.MDI.get("Locations").raise_window()
+            else:
+                # Once the Locations view has the focus, add a message saying that
+                # we are configuring the project through Alire
+                GPS.Locations.add(
+                    "Alire", GPS.File(file), 1, 1,
+                    "Alire project detected, setting the needed environment to reload it properly...",
+                    importance=GPS.Message.Importance.MEDIUM)
+                GPS.MDI.get("Locations").set_activity_progress_bar_visibility(True)
+                timeout.remove()
+
+        # Run Alire to setup the environment
+        GPS.Logger("ALIRE").log("Running alire...")
+        alire_target = GPS.BuildTarget("Alire")
+        alire_target.execute(directory=root, synchronous=False)
+
+        # Display a message in the Locations view to warn the user that
+        # Alire is being ran
+        timeout = GPS.Timeout(100, display_message)
+        timeout.counter = 0
+
+def on_compilation_finished(hook, category, target_name, mode_name, status, cmd):
+    """
+    Reload the project once Alire has been ran to setup the
+    environment.
+    """
+    global project_to_reload
+    if not target_name.startswith("Alire"):
+        return
+
+    if project_to_reload:
+        file, root = project_to_reload
+        GPS.Logger("ALIRE").log(
+            "Alire configuration finished, reloading %s" % str(file))
+        GPS.MDI.get("Locations").set_activity_progress_bar_visibility(False)
+        GPS.Project.load(file)
+        GPS.Locations.add(
+            "Alire", GPS.File(file), 1, 1,
+            "Alire environment is now setup: project has been reloaded",
+            importance=GPS.Message.Importance.INFORMATIONAL)
+        GPS.MDI.information_popup(
+                'Alire project is now setup', 'vcs-up-to-date')
+        project_to_reload = None
+
+
 def on_project_changing(hook, file):
-    global saved_env
+    """
+    Detect if we are dealing with an Alire project.
+    If yes, save the project we are trying to load so we
+    can launch Alire after failing to load it, in order to
+    reload it once the needed environment is set.
+    """
+    global saved_env, project_to_reload
+
+    if project_to_reload or "ALIRE" in os.environ:
+        project_to_reload = None
+        return
 
     # restore saved environment
     for name in saved_env:
@@ -44,12 +125,15 @@ def on_project_changing(hook, file):
     root = find_alire_root(file.path)
 
     if root:
-        # launch alr printenv and update environment and saved_env
-        alire_target = GPS.BuildTarget("Alire")
-        alire_target.execute(directory=root)
+        GPS.Logger("ALIRE").log("Alire manifest detected!")
+        project_to_reload = (file.path, root)
 
 
 class Alire_Parser(tool_output.OutputParser):
+    """
+    Parse the Alire output in oder to set the needed environment,
+    saving the original environment in order to restor it if needed.
+    """
 
     def __init__(self, child=None):
         tool_output.OutputParser.__init__(self, child)
@@ -64,6 +148,7 @@ class Alire_Parser(tool_output.OutputParser):
             if m:
                 name = m.group(1)
                 value = m.group(2)
+                GPS.Logger("ALIRE").log("%s=%s" % (name, value))
                 saved_env[name] = GPS.getenv(name)
                 GPS.setenv(name, value)
                 os.environ[name] = value
@@ -71,7 +156,11 @@ class Alire_Parser(tool_output.OutputParser):
 
 if alr:
     GPS.Hook("project_changing").add(on_project_changing)
-    GPS.parse_xml("""<?xml version="1.0"?><ALIRE>
+    GPS.Hook("project_view_changed").add(on_project_recomputed)
+    GPS.Hook("compilation_finished").add(on_compilation_finished)
+
+    GPS.parse_xml(
+        """<?xml version="1.0"?><ALIRE>
     <target-model name="Alire" category="">
        <description>Laubch Alire to print environment</description>
        <command-line>
@@ -118,4 +207,5 @@ if alr:
        </output-parsers>
     </target>
 
-    </ALIRE>""")
+    </ALIRE>"""
+    )
