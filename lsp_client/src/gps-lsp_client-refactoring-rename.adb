@@ -309,26 +309,29 @@ package body GPS.LSP_Client.Refactoring.Rename is
                Auto_Save            => Get_Active (Dialog.Auto_Save),
                Allow_File_Renaming  =>
                  Get_Active (Dialog.Allow_File_Renaming));
+
+            if Dialog.In_Comments /= null then
+               Set_Rename_In_Comments_Option
+                 (Lang, Get_Active (Dialog.In_Comments));
+            end if;
+
+            if not GPS.LSP_Client.Requests.Execute
+              (Lang, GPS.LSP_Client.Requests.Request_Access (Request))
+            then
+               --  Call old implementation
+               Standard.Refactoring.Rename.Rename
+                 (Kernel, Context,
+                  Old_Name      => To_Unbounded_String (Entity),
+                  New_Name      => To_Unbounded_String
+                    (Get_Text (Dialog.New_Name)),
+                  Auto_Save     => Get_Active (Dialog.Auto_Save),
+                  Overridden    => True,
+                  Make_Writable => Get_Active (Dialog.Make_Writable));
+            else
+               Holder.Editor.Current_View.Set_Activity_Progress_Bar_Visibility
+                 (True);
+            end if;
          end;
-
-         if Dialog.In_Comments /= null then
-            Set_Rename_In_Comments_Option
-              (Lang, Get_Active (Dialog.In_Comments));
-         end if;
-
-         if not GPS.LSP_Client.Requests.Execute
-           (Lang, GPS.LSP_Client.Requests.Request_Access (Request))
-         then
-            --  Call old implementation
-            Standard.Refactoring.Rename.Rename
-              (Kernel, Context,
-               Old_Name      => To_Unbounded_String (Entity),
-               New_Name      => To_Unbounded_String
-                 (Get_Text (Dialog.New_Name)),
-               Auto_Save     => Get_Active (Dialog.Auto_Save),
-               Overridden    => True,
-               Make_Writable => Get_Active (Dialog.Make_Writable));
-         end if;
 
          Destroy (Dialog);
       else
@@ -355,8 +358,12 @@ package body GPS.LSP_Client.Refactoring.Rename is
       use type VSS.Strings.Virtual_String;
 
       On_Error : Boolean;
-
+      Holder   : constant Controlled_Editor_Buffer_Holder :=
+        Self.Kernel.Get_Buffer_Factory.Get_Holder
+          (Self.File);
    begin
+      Holder.Editor.Current_View.Set_Activity_Progress_Bar_Visibility
+        (False);
       GPS.LSP_Client.Edit_Workspace.Edit
         (Kernel                   => Self.Kernel,
          Workspace_Edit           => Result,
@@ -392,8 +399,12 @@ package body GPS.LSP_Client.Refactoring.Rename is
       Message : String;
       Data    : GNATCOLL.JSON.JSON_Value)
    is
-      pragma Unreferenced (Self);
+      Holder : constant Controlled_Editor_Buffer_Holder :=
+        Self.Kernel.Get_Buffer_Factory.Get_Holder
+          (Self.File);
    begin
+      Holder.Editor.Current_View.Set_Activity_Progress_Bar_Visibility
+        (False);
       Trace (Me, "Error when renaming: " & Message);
    end On_Error_Message;
 
