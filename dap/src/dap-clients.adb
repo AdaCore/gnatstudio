@@ -91,9 +91,7 @@ package body DAP.Clients is
       New_Request : in out DAP.Requests.DAP_Request_Access);
 
    -- Evaluate_Request --
-   type Evaluate_Kind is
-     (Show_Lang, Set_Lang, Restore_Lang, List_Adainit,
-      Info_Line, Info_First_Line, Hover, Variable_Address, Endian);
+
    type Evaluate_Request is
      new DAP.Requests.Evaluate.Evaluate_DAP_Request
    with record
@@ -1454,20 +1452,47 @@ package body DAP.Clients is
          Trace (Me, E);
    end Process_Event;
 
+   --------------------------
+   -- Process_User_Command --
+   --------------------------
+
+   procedure Process_User_Command
+     (Self           : in out DAP_Client;
+      Cmd            : String;
+      Output_Command : Boolean := False)
+   is
+      Request : DAP.Requests.DAP_Request_Access;
+   begin
+      if Output_Command then
+         Self.Display_In_Debugger_Console (Cmd, Is_Command => True);
+      end if;
+
+      Request := Self.Create_Evaluate_Command
+        (Command, VSS.Strings.Conversions.To_Virtual_String (Cmd));
+
+      Self.Enqueue (Request);
+   end Process_User_Command;
+
    ---------------------------------
    -- Display_In_Debugger_Console --
    ---------------------------------
 
    procedure Display_In_Debugger_Console
-     (Self : in out DAP_Client;
-      Msg  : String)
+     (Self       : in out DAP_Client;
+      Msg        : String;
+      Is_Command : Boolean := False)
    is
       Console : constant access Interactive_Console_Record'Class :=
         DAP.Views.Consoles.Get_Debugger_Interactive_Console (Self);
 
    begin
       if Console /= null then
-         Console.Insert (Msg, Add_LF => True);
+         if Is_Command then
+            Console.Insert
+              (Msg, Add_LF => True, Highlight => True, Add_To_History => True);
+         else
+            Console.Insert (Msg, Add_LF => True);
+         end if;
       end if;
    end Display_In_Debugger_Console;
 
@@ -1823,6 +1848,32 @@ package body DAP.Clients is
       Self.Enqueue (DAP.Requests.DAP_Request_Access (Req));
    end Value_Of;
 
+   -----------------------------
+   -- Create_Evaluate_Command --
+   -----------------------------
+
+   function Create_Evaluate_Command
+     (Self : DAP_Client;
+      Kind : Evaluate_Kind;
+      Cmd  : Virtual_String)
+      return DAP.Requests.DAP_Request_Access
+   is
+      Req   : constant Evaluate_Request_Access :=
+        new Evaluate_Request (Self.Kernel);
+      Frame : constant Integer := Self.Get_Selected_Frame;
+   begin
+      Req.Kind   := Kind;
+      Req.Client := Self.This;
+      Req.Parameters.arguments.expression := Cmd;
+      if Frame /= 0 then
+         Req.Parameters.arguments.frameId :=
+           (Is_Set => True, Value => Frame);
+      end if;
+      Req.Parameters.arguments.context :=
+        (Is_Set => True, Value => DAP.Tools.Enum.repl);
+      return DAP.Requests.DAP_Request_Access (Req);
+   end Create_Evaluate_Command;
+
    -----------------------
    -- On_Result_Message --
    -----------------------
@@ -1832,32 +1883,10 @@ package body DAP.Clients is
       Result      : in out DAP.Tools.EvaluateResponse;
       New_Request : in out DAP.Requests.DAP_Request_Access)
    is
-      procedure Command (Kind : Evaluate_Kind; Cmd : Virtual_String);
       procedure Show_File
         (File : Virtual_String;
          Line : Natural;
          Addr : Address_Type);
-
-      -------------
-      -- Command --
-      -------------
-
-      procedure Command (Kind : Evaluate_Kind; Cmd : Virtual_String) is
-         Req   : constant Evaluate_Request_Access :=
-           new Evaluate_Request (Self.Kernel);
-         Frame : constant Integer := Self.Client.Get_Selected_Frame;
-      begin
-         Req.Kind   := Kind;
-         Req.Client := Self.Client;
-         Req.Parameters.arguments.expression := Cmd;
-         if Frame /= 0 then
-            Req.Parameters.arguments.frameId :=
-              (Is_Set => True, Value => Frame);
-         end if;
-         Req.Parameters.arguments.context :=
-           (Is_Set => True, Value => DAP.Tools.Enum.repl);
-         New_Request := DAP.Requests.DAP_Request_Access (Req);
-      end Command;
 
       ---------------
       -- Show_File --
@@ -1898,7 +1927,8 @@ package body DAP.Clients is
                                            then Match.Captured (1)
                                            else "auto");
             end;
-            Command (Endian, "show endian");
+            New_Request := Self.Client.Create_Evaluate_Command
+              (Endian, "show endian");
 
          when Endian =>
             declare
@@ -1911,17 +1941,21 @@ package body DAP.Clients is
                Match := Endian_Pattern.Match (Result.a_body.result);
             end;
 
-            Command (Set_Lang, "set lang c");
+            New_Request := Self.Client.Create_Evaluate_Command
+              (Set_Lang, "set lang c");
 
          when Set_Lang =>
-            Command (List_Adainit, "list adainit");
+            New_Request := Self.Client.Create_Evaluate_Command
+              (List_Adainit, "list adainit");
 
          when List_Adainit =>
-            Command (Restore_Lang, "set lang " & Self.Client.Stored_Lang);
+            New_Request := Self.Client.Create_Evaluate_Command
+              (Restore_Lang, "set lang " & Self.Client.Stored_Lang);
 
          when Restore_Lang =>
             if DAP.Modules.Preferences.Open_Main_Unit.Get_Pref then
-               Command (Info_Line, "info line");
+               New_Request := Self.Client.Create_Evaluate_Command
+                 (Info_Line, "info line");
             else
                Self.Client.On_Ready;
             end if;
@@ -1948,7 +1982,7 @@ package body DAP.Clients is
                      if Match.Has_Match
                        and then Match.Has_Capture (1)
                      then
-                        Command
+                        New_Request := Self.Client.Create_Evaluate_Command
                           (Info_First_Line, "info line "
                            & Match.Captured (1) & ":1");
                      else
@@ -1993,6 +2027,9 @@ package body DAP.Clients is
                     (Self.Kernel, "0" & S (Index .. S'Last));
                end if;
             end;
+
+         when Command =>
+            null;
       end case;
    end On_Result_Message;
 
