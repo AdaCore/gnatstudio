@@ -83,7 +83,7 @@ package body GPS.LSP_Client.Call_Tree is
       Result : LSP.Messages.CallHierarchyItem_Vector);
 
    overriding procedure On_Rejected
-     (Self : in out Prepare_Call_Hierarchy_Request);
+     (Self : in out Prepare_Call_Hierarchy_Request; Reason : Reject_Reason);
 
    overriding procedure On_Error_Message
      (Self    : in out Prepare_Call_Hierarchy_Request;
@@ -109,7 +109,8 @@ package body GPS.LSP_Client.Call_Tree is
      (Self   : in out Called_By_Request;
       Result : LSP.Messages.CallHierarchyIncomingCall_Vector);
 
-   overriding procedure On_Rejected (Self : in out Called_By_Request);
+   overriding procedure On_Rejected
+     (Self : in out Called_By_Request; Reason : Reject_Reason);
 
    overriding function Get_Task_Label (Self : Called_By_Request) return String
    is
@@ -134,7 +135,8 @@ package body GPS.LSP_Client.Call_Tree is
      (Self   : in out Calls_Request;
       Result : LSP.Messages.CallHierarchyOutgoingCall_Vector);
 
-   overriding procedure On_Rejected (Self : in out Calls_Request);
+   overriding procedure On_Rejected
+     (Self : in out Calls_Request; Reason : Reject_Reason);
 
    overriding procedure On_Error_Message
      (Self    : in out Calls_Request;
@@ -198,7 +200,9 @@ package body GPS.LSP_Client.Call_Tree is
    -----------------
 
    overriding procedure On_Rejected
-     (Self : in out Prepare_Call_Hierarchy_Request) is
+     (Self : in out Prepare_Call_Hierarchy_Request; Reason : Reject_Reason)
+   is
+      pragma Unreferenced (Reason);
    begin
       Call_Graph_Views.Finished_Computing (Self.Kernel, To_String (Self.ID));
    end On_Rejected;
@@ -387,7 +391,10 @@ package body GPS.LSP_Client.Call_Tree is
    -- On_Rejected --
    -----------------
 
-   overriding procedure On_Rejected (Self : in out Called_By_Request) is
+   overriding procedure On_Rejected
+     (Self : in out Called_By_Request; Reason : Reject_Reason)
+   is
+      pragma Unreferenced (Reason);
    begin
       Call_Graph_Views.Finished_Computing (Self.Kernel, To_String (Self.ID));
    end On_Rejected;
@@ -396,7 +403,10 @@ package body GPS.LSP_Client.Call_Tree is
    -- On_Rejected --
    -----------------
 
-   overriding procedure On_Rejected (Self : in out Calls_Request) is
+   overriding procedure On_Rejected
+     (Self : in out Calls_Request; Reason : Reject_Reason)
+   is
+      pragma Unreferenced (Reason);
    begin
       Call_Graph_Views.Finished_Computing (Self.Kernel, To_String (Self.ID));
    end On_Rejected;

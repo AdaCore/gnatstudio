@@ -15,9 +15,9 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-package body GPS.LSP_Client.Language_Servers is
+with GPS.LSP_Client.Requests; use GPS.LSP_Client.Requests;
 
-   use type GPS.LSP_Client.Requests.Request_Access;
+package body GPS.LSP_Client.Language_Servers is
 
    ------------
    -- Cancel --
@@ -36,7 +36,7 @@ package body GPS.LSP_Client.Language_Servers is
 
       --  Stub for language server can't execute any requests, thus reject it.
 
-      Request.On_Rejected;
+      Request.On_Rejected (Canceled);
       GPS.LSP_Client.Requests.Destroy (Request);
    end Cancel;
 
@@ -57,7 +57,7 @@ package body GPS.LSP_Client.Language_Servers is
 
       --  Stub for language server can't execute any requests, thus reject it.
 
-      Request.On_Rejected;
+      Request.On_Rejected (Server_Not_Ready);
       GPS.LSP_Client.Requests.Destroy (Request);
    end Execute;
 

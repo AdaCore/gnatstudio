@@ -116,7 +116,11 @@ package body GPS.LSP_Client.Outline is
       Message : String;
       Data    : GNATCOLL.JSON.JSON_Value);
 
-   overriding procedure On_Rejected (Self : in out GPS_LSP_Outline_Request);
+   overriding function Auto_Cancel
+     (Self : in out GPS_LSP_Outline_Request) return Boolean is (True);
+
+   overriding procedure On_Rejected
+     (Self : in out GPS_LSP_Outline_Request; Reason : Reject_Reason);
 
    function Get_Optional_Boolean (B : Optional_Boolean) return Boolean;
 
@@ -248,14 +252,19 @@ package body GPS.LSP_Client.Outline is
    -----------------
 
    overriding procedure On_Rejected
-     (Self : in out GPS_LSP_Outline_Request) is
+     (Self : in out GPS_LSP_Outline_Request; Reason : Reject_Reason) is
    begin
       Trace
         (Me,
          VSS.Strings.Conversions.To_UTF_8_String (Self.Method)
          & " has been rejected");
-      Outline_View.Finished_Computing
-        (Self.Provider.Kernel, Status => Outline_View.Failed);
+      if Reason = Server_Not_Ready then
+         Outline_View.Finished_Computing
+           (Self.Provider.Kernel, Status => Outline_View.Failed);
+      else
+         Outline_View.Finished_Computing
+           (Self.Provider.Kernel, Status => Outline_View.Stopped);
+      end if;
       Trace (Me_Debug, "On_Rejected done");
    end On_Rejected;
 

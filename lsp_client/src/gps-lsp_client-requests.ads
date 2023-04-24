@@ -97,6 +97,10 @@ package GPS.LSP_Client.Requests is
      (Self : LSP_Request) return VSS.Strings.Virtual_String is abstract;
    --  Name of the RPC method to be called.
 
+   function Auto_Cancel (Self : in out LSP_Request) return Boolean is (False);
+   --  When True, creating a new request for the same method will cancel the
+   --  previous one.
+
    function Id (Self : LSP_Request) return LSP.Types.LSP_Number_Or_String;
    --  Return the Id of the request
 
@@ -132,7 +136,11 @@ package GPS.LSP_Client.Requests is
       Data    : GNATCOLL.JSON.JSON_Value) is null;
    --  Called when an "error" response is received from the server.
 
-   procedure On_Rejected (Self : in out LSP_Request) is null;
+   type Reject_Reason is (Server_Not_Ready, Canceled, Server_Died);
+
+   procedure On_Rejected
+     (Self   : in out LSP_Request;
+      Reason : Reject_Reason) is null;
    --  Called when the processing of the request rejected by any reason, for
    --  example server is not ready, or dies before request is sent, it dies
    --  after request was send but before response or error is received, or
@@ -177,8 +185,12 @@ package GPS.LSP_Client.Requests is
    --  Execute request using language server for the given language. Request
    --  parameter is set to null.
 
-   procedure Destroy (Item : in out Request_Access);
+   procedure Destroy
+     (Item         : in out Request_Access;
+      Is_Cancelled : Boolean := False);
    --  Call Finalize and deallocate memory. All references are reset to null.
+   --  Is_Cancelled indicates if the command was canceled by the client,
+   --  it's used for logging and doesn't affect the behaviour
 
 private
 

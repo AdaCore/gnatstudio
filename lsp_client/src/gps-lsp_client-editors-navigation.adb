@@ -121,7 +121,11 @@ package body GPS.LSP_Client.Editors.Navigation is
       Message : String;
       Data    : GNATCOLL.JSON.JSON_Value);
 
-   overriding procedure On_Rejected (Self : in out GPS_LSP_Simple_Request);
+   overriding function Auto_Cancel
+     (Self : in out GPS_LSP_Simple_Request) return Boolean is (True);
+
+   overriding procedure On_Rejected
+     (Self : in out GPS_LSP_Simple_Request; Reason : Reject_Reason);
 
    --------------------------------------------------------------------
    -- Goto Declaration/Body/Type Declaration Commands and Hyper Mode --
@@ -754,7 +758,9 @@ package body GPS.LSP_Client.Editors.Navigation is
    -----------------
 
    overriding procedure On_Rejected
-     (Self : in out GPS_LSP_Simple_Request) is
+     (Self : in out GPS_LSP_Simple_Request; Reason : Reject_Reason)
+   is
+      pragma Unreferenced (Reason);
    begin
       Cancel_Activity_Bar (Self.Kernel, Self.File);
       Trace

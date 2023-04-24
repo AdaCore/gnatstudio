@@ -25,6 +25,7 @@ with GNATCOLL.VFS;
 with Language;
 with GPS.Kernel.Scripts;
 with GPS.LSP_Client.Language_Servers;
+with GPS.LSP_Client.Requests;
 with GPS.LSP_Client.Requests.Shell;
 with GPS.LSP_Module;
 
@@ -153,16 +154,17 @@ package body GPS.LSP_Client.Shell is
          declare
             use type Language.Language_Access;
 
-            Instance  : constant Class_Instance := Nth_Arg (Data, 1);
-            Language  : constant Standard.Language.Language_Access :=
+            Instance    : constant Class_Instance := Nth_Arg (Data, 1);
+            Language    : constant Standard.Language.Language_Access :=
                           Get_Language (Instance);
-            Method    : constant Unbounded_String := Nth_Arg (Data, 2);
-            Params    : constant Unbounded_String := Nth_Arg (Data, 3);
-            On_Result : constant Subprogram_Type := Nth_Arg (Data, 4);
-            On_Error  : Subprogram_Type;
-            On_Reject : Subprogram_Type;
+            Method      : constant Unbounded_String := Nth_Arg (Data, 2);
+            Params      : constant Unbounded_String := Nth_Arg (Data, 3);
+            On_Result   : constant Subprogram_Type := Nth_Arg (Data, 4);
+            Auto_Cancel : constant Boolean := Nth_Arg (Data, 7, False);
+            On_Error    : Subprogram_Type;
+            On_Reject   : Subprogram_Type;
 
-            Aux       : GPS.LSP_Client.Requests.Request_Access;
+            Aux         : GPS.LSP_Client.Requests.Request_Access;
 
          begin
             begin
@@ -190,13 +192,14 @@ package body GPS.LSP_Client.Shell is
                  Params            => GNATCOLL.JSON.Read (Params),
                  On_Result_Message => On_Result,
                  On_Error_Message  => On_Error,
-                 On_Rejected       => On_Reject);
+                 On_Rejected       => On_Reject,
+                 Auto_Canceled     => Auto_Cancel);
 
             if Language /= null then
                GPS.LSP_Client.Requests.Execute (Language, Aux);
 
             else
-               Aux.On_Rejected;
+               Aux.On_Rejected (GPS.LSP_Client.Requests.Server_Not_Ready);
                GPS.LSP_Client.Requests.Destroy (Aux);
             end if;
          end;
@@ -224,6 +227,7 @@ package body GPS.LSP_Client.Shell is
             Language : constant Standard.Language.Language_Access :=
               Get_Language (Instance);
             use type GPS.LSP_Client.Language_Servers.Language_Server_Access;
+            use type GPS.LSP_Client.Requests.Request_Access;
             Server   : constant
               GPS.LSP_Client.Language_Servers.Language_Server_Access :=
                 GPS.LSP_Module.Get_Language_Server (Language);
@@ -233,12 +237,14 @@ package body GPS.LSP_Client.Shell is
             end if;
             Set_Return_Value_As_List (Data);
             for R of Server.Get_Client.Get_Requests loop
-               declare
-                  Name : constant String :=
-                    VSS.Strings.Conversions.To_UTF_8_String (R.Method);
-               begin
-                  Set_Return_Value (Data, Name);
-               end;
+               if R /= null then
+                  declare
+                     Name : constant String :=
+                       VSS.Strings.Conversions.To_UTF_8_String (R.Method);
+                  begin
+                     Set_Return_Value (Data, Name);
+                  end;
+               end if;
             end loop;
          end;
       end if;
@@ -320,7 +326,8 @@ package body GPS.LSP_Client.Shell is
             Param ("params"),
             Param ("on_result_message"),
             Param ("on_error_message", True),
-            Param ("on_rejected", True)),
+            Param ("on_rejected", True),
+            Param ("auto_cancel", True)),
          Handler => Command_Handler'Access,
          Class   => LanguageServer_Class);
 

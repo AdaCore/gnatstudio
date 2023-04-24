@@ -56,6 +56,9 @@ package body GPS.LSP_Client.Editors.Code_Actions is
      (Self   : in out Code_Action_Request;
       Result : LSP.Messages.CodeAction_Vector);
 
+   overriding function Auto_Cancel
+     (Self : in out Code_Action_Request) return Boolean is (True);
+
    -------------------------
    -- Code_Action_Command --
    -------------------------

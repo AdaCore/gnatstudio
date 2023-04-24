@@ -80,7 +80,10 @@ package body GPS.LSP_Client.Requests.Shell is
    -- On_Rejected --
    -----------------
 
-   overriding procedure On_Rejected (Self : in out Shell_Request) is
+   overriding procedure On_Rejected
+     (Self : in out Shell_Request; Reason : Reject_Reason)
+   is
+      pragma Unreferenced (Reason);
    begin
       if Self.On_Rejected /= null then
          declare

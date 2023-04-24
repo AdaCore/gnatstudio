@@ -49,4 +49,7 @@ package GPS.LSP_Client.Requests.Hover is
      (Self   : in out Abstract_Hover_Request;
       Stream : not null access LSP.JSON_Streams.JSON_Stream'Class);
 
+   overriding function Auto_Cancel
+     (Self : in out Abstract_Hover_Request) return Boolean is (True);
+
 end GPS.LSP_Client.Requests.Hover;
