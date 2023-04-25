@@ -15,7 +15,7 @@ def test_driver():
 
     def on_changed(self, progress):
         for t in GPS.Task.list():
-            if t.name().startswith("Run CodePeer"):
+            if t.name().startswith("CPL Run CodePeer"):
                 cur, total = t.progress()
                 if self.prev < cur:
                     self.prev = cur
