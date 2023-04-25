@@ -290,8 +290,11 @@ package DAP.Clients is
       return DAP.Tools.Optional_Capabilities;
 
    procedure Display_In_Debugger_Console
-     (Self : in out DAP_Client;
-      Msg  : String);
+     (Self       : in out DAP_Client;
+      Msg        : String;
+      Is_Command : Boolean := False);
+   --  Displays the message in the console. Highlight it and add to the
+   --  history if Is_Command is True
 
    procedure Show_Breakpoints (Self : DAP_Client);
 
@@ -315,6 +318,13 @@ package DAP.Clients is
      (Self : in out DAP_Client;
       Bt   : Backtrace_Vectors.Vector);
    --  Update backtrace information
+
+   procedure Process_User_Command
+     (Self           : in out DAP_Client;
+      Cmd            : String;
+      Output_Command : Boolean := False);
+   --  Execute the debugger command. Print the command in the console
+   --  if Output_Command is True
 
    -- DAP_Visual_Debugger --
 
@@ -470,5 +480,15 @@ private
       Name : out VSS.Strings.Virtual_String;
       Line : out Natural;
       Addr : out DAP.Types.Address_Type);
+
+   type Evaluate_Kind is
+     (Show_Lang, Set_Lang, Restore_Lang, List_Adainit,
+      Info_Line, Info_First_Line, Hover, Variable_Address, Endian, Command);
+
+   function Create_Evaluate_Command
+     (Self : DAP_Client;
+      Kind : Evaluate_Kind;
+      Cmd  : VSS.Strings.Virtual_String)
+      return DAP.Requests.DAP_Request_Access;
 
 end DAP.Clients;
