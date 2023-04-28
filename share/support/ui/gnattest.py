@@ -594,6 +594,11 @@ XML = r"""<?xml version="1.0" ?>
         <combo-entry label="Fail" value="fail"/>
         <combo-entry label="Pass" value="pass"/>
       </combo>
+      <check label="automatic testcase generation (beta)"
+             line="1"  column="2"
+             switch="--gen-test-vectors"
+             tip="Automatically generate testcases for all subprograms """ \
+                 """ supporting automatic generation (beta). " />
       <check label="use stubbing"
              line="1"  column="2"
              switch="--stub"
