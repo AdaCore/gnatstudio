@@ -68,6 +68,10 @@ def version(exe):
     """
     version_out = GPS.Process(exe + " --version").get_result()
 
+    # Support gnattest built in dev mode
+    if "GNATTEST Pro dev" in version_out:
+        return 'dev'
+
     matches = TOOL_VERSION_REGEXP.findall(version_out.splitlines()[0])
     return matches[0]
 
@@ -81,7 +85,10 @@ def use_rts_and_target_options():
     """
 
     if locate_exec_on_path('gnattest'):
-        major, _ = version('gnattest')
+        v = version('gnattest')
+        if v == 'dev':
+            return True
+        major, _ = v
         return int(major) >= 22
 
     return False
