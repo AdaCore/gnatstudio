@@ -256,7 +256,11 @@ package body CodePeer is
       begin
          for Check of Self.Checks loop
             if Length (Aux) = 0 then
-               Append (Aux, " (");
+               if Is_CPL then
+                  Append (Aux, " <");
+               else
+                  Append (Aux, " (");
+               end if;
 
             else
                Append (Aux, ", ");
@@ -267,7 +271,11 @@ package body CodePeer is
          end loop;
 
          if Length (Aux) /= 0 then
-            Append (Aux, ")");
+            if Is_CPL then
+               Append (Aux, ">");
+            else
+               Append (Aux, ")");
+            end if;
          end if;
 
          return Aux;
