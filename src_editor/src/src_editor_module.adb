@@ -2879,6 +2879,7 @@ package body Src_Editor_Module is
       Line_Highlighting.Add_Category (Messages_Styles (Low));
       Line_Highlighting.Add_Category (Messages_Styles (Informational));
       Line_Highlighting.Add_Category (Debugger_Current_Line_Style);
+      Line_Highlighting.Add_Category (Bookmark_Default_Style);
 
       Regenerate_Recent_Files_Menu (Kernel);
    end Register_Module;
