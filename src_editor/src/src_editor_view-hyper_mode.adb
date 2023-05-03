@@ -53,6 +53,10 @@ package body Src_Editor_View.Hyper_Mode is
      (Widget : access Gtk_Widget_Record'Class;
       Event  : Gdk_Event) return Boolean;
 
+   function Toplevel_Focus_Out_Event_Cb
+     (Widget : access Gtk_Widget_Record'Class;
+      Event  : Gdk_Event) return Boolean;
+
    -----------------------
    -- Local subprograms --
    -----------------------
@@ -102,18 +106,26 @@ package body Src_Editor_View.Hyper_Mode is
       View.Hyper_Mode_Motion_Handler :=
         Return_Callback.Connect
           (View, Signal_Motion_Notify_Event,
-           Marsh => Return_Callback.To_Marshaller
-             (Motion_Notify_Event_Cb'Access),
+           Marsh =>
+             Return_Callback.To_Marshaller (Motion_Notify_Event_Cb'Access),
            After => False);
 
       --  Connect to a button press on the view
-
       View.Hyper_Mode_Button_Handler :=
         Return_Callback.Connect
           (View, Signal_Button_Press_Event,
-           Marsh => Return_Callback.To_Marshaller
-             (Button_Press_Event_Cb'Access),
+           Marsh =>
+             Return_Callback.To_Marshaller (Button_Press_Event_Cb'Access),
            After => False);
+
+      --  Monitor focus event on the toplevel
+      View.Hyper_Mode_Toplevel_Focus_Handler :=
+        Return_Callback.Object_Connect
+          (View.Get_Toplevel,
+           Signal_Focus_Out_Event,
+           Return_Callback.To_Marshaller (Toplevel_Focus_Out_Event_Cb'Access),
+           Slot_Object => View,
+           After       => False);
    end Hyper_Mode_Enter;
 
    ----------------------
@@ -159,6 +171,12 @@ package body Src_Editor_View.Hyper_Mode is
       --  Disconnect the button handler
       Gtk.Handlers.Disconnect (View, View.Hyper_Mode_Button_Handler);
       View.Hyper_Mode_Button_Handler :=
+        (Gtk.Handlers.Null_Handler_Id, null);
+
+      --  Disconnect the focus handler from the toplevel
+      Gtk.Handlers.Disconnect
+        (View.Get_Toplevel, View.Hyper_Mode_Toplevel_Focus_Handler);
+      View.Hyper_Mode_Toplevel_Focus_Handler :=
         (Gtk.Handlers.Null_Handler_Id, null);
    end Hyper_Mode_Leave;
 
@@ -279,5 +297,28 @@ package body Src_Editor_View.Hyper_Mode is
          Trace (Me, E);
          return False;
    end Motion_Notify_Event_Cb;
+
+   ---------------------------------
+   -- Toplevel_Focus_Out_Event_Cb --
+   ---------------------------------
+
+   function Toplevel_Focus_Out_Event_Cb
+     (Widget : access Gtk_Widget_Record'Class;
+      Event  : Gdk_Event) return Boolean
+   is
+      pragma Unreferenced (Event);
+      View : constant Source_View := Source_View (Widget);
+   begin
+      if Active (Me) then
+         Trace (Me, "Focus Out " & Name (View));
+      end if;
+
+      Hyper_Mode_Leave (Widget);
+      return False;
+   exception
+      when E : others =>
+         Trace (Me, E);
+         return False;
+   end Toplevel_Focus_Out_Event_Cb;
 
 end Src_Editor_View.Hyper_Mode;
