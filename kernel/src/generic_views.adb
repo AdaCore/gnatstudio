@@ -52,6 +52,7 @@ with GPS.Kernel.Modules.UI;     use GPS.Kernel.Modules.UI;
 with GPS.Intl;                  use GPS.Intl;
 with Histories;                 use Histories;
 with Config;                    use Config;
+with System;
 
 package body Generic_Views is
    Me : constant Trace_Handle := Create ("GPS.KERNEL.GENERIC_VIEWS");
@@ -74,6 +75,12 @@ package body Generic_Views is
    procedure On_Menu_Deactivate (View : access GObject_Record'Class);
    --  Called when the config menu is popped down, to restore the state of
    --  the config button (unpressed)
+
+   procedure On_Menu_Detached
+     (Attach_Widget : System.Address;
+      Menu          : System.Address);
+   --  Called when the menu is detached
+   pragma Convention (C, On_Menu_Detached);
 
    procedure On_Filter_Changed (View : access Gtk_Widget_Record'Class);
    --  Callback for filter-canged signal
@@ -345,6 +352,10 @@ package body Generic_Views is
    procedure On_Destroy_View (View : access Gtk_Widget_Record'Class) is
       V : constant Abstract_View_Access := Abstract_View_Access (View);
    begin
+      if V.Config_Menu /= null then
+         --  Manually destroy the menu when it's visible
+         V.Config_Menu.Destroy;
+      end if;
       V.On_Destroy;
    end On_Destroy_View;
 
@@ -371,6 +382,24 @@ package body Generic_Views is
          V.Config.Set_Active (False);
       end if;
    end On_Menu_Deactivate;
+
+   ----------------------
+   -- On_Menu_Detached --
+   ----------------------
+
+   procedure On_Menu_Detached
+     (Attach_Widget : System.Address;
+      Menu          : System.Address)
+   is
+      pragma Unreferenced (Menu);
+      V : constant Abstract_View_Access :=
+        Abstract_View_Access (Get_User_Data_Or_Null (Attach_Widget));
+   begin
+      if V /= null then
+         --  The menu has been destroyed => avoid a dangling pointer
+         V.Config_Menu := null;
+      end if;
+   end On_Menu_Detached;
 
    ------------------
    -- Simple_Views --
@@ -538,7 +567,8 @@ package body Generic_Views is
          if V.Config_Menu = null then
             Gtk_New (V.Config_Menu);
             V.Create_Menu (V.Config_Menu);
-            V.Config_Menu.Attach_To_Widget (V.Config, Detacher => null);
+            V.Config_Menu.Attach_To_Widget
+              (V, Detacher => On_Menu_Detached'Access);
 
             V.Unfloat_Menu := Append_Menu (V.Kernel, V.Config_Menu,
                                            Label => "Unfloat",
