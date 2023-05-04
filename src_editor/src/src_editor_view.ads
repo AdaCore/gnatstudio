@@ -375,21 +375,25 @@ private
 
       --  Handling of hyper mode
 
-      Hyper_Mode                   : Boolean := False;
+      Hyper_Mode                        : Boolean := False;
 
-      Hyper_Mode_Motion_Handler    : Gtk.Handlers.Handler_Id :=
-                                       (Gtk.Handlers.Null_Handler_Id, null);
+      Hyper_Mode_Motion_Handler         : Gtk.Handlers.Handler_Id :=
+        (Gtk.Handlers.Null_Handler_Id, null);
       --  The handler id for the callback that reacts to the motion
 
-      Hyper_Mode_Button_Handler    : Gtk.Handlers.Handler_Id :=
-                                       (Gtk.Handlers.Null_Handler_Id, null);
+      Hyper_Mode_Button_Handler         : Gtk.Handlers.Handler_Id :=
+        (Gtk.Handlers.Null_Handler_Id, null);
       --  The handler id for the callback that reacts to mouse button presses
 
-      Cursor_Needs_Change          : Boolean := False;
+      Hyper_Mode_Toplevel_Focus_Handler : Gtk.Handlers.Handler_Id :=
+        (Gtk.Handlers.Null_Handler_Id, null);
+      --  The handler id for the callback that reacts to toplevel focus out
+
+      Cursor_Needs_Change               : Boolean := False;
       --  Whether we just entered hyper mode, and the cursor aspect needs
       --  to be changed.
 
-      Source_Buffer_Handlers       : Handlers_Array (1 .. 5);
+      Source_Buffer_Handlers            : Handlers_Array (1 .. 5);
    end record;
 
 end Src_Editor_View;
