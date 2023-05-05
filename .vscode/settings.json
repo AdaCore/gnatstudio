@@ -14,5 +14,49 @@
         "PRJ_BUILD": "Debug",
         "PROCESSORS": "8",
         "XMLADA_BUILD": "relocatable"
-    }
+    },
+    "terminal.integrated.env.linux": {
+        "LANG": "C",
+        "LD_LIBRARY_PATH": "${workspaceFolder}/subprojects/VSS/.libs/relocatable:${workspaceFolder}/subprojects/spawn/.libs/spawn_glib/relocatable:${workspaceFolder}/../../wave/x86_64-linux/stable-gnatall/install/lib/gcc/x86_64-pc-linux-gnu/12.2.1/rts-native/adalib:${workspaceFolder}/subprojects/VSS/.libs/relocatable:${workspaceFolder}/subprojects/spawn/.libs/spawn_glib/relocatable:${workspaceFolder}/../../wave/x86_64-linux/stable-gnatall/install/lib/gcc/x86_64-pc-linux-gnu/12.2.1/rts-native/adalib:${workspaceFolder}/../../install/gtkada/lib:${workspaceFolder}/../../wave/x86_64-linux/stable-libadalang-tools/install/lib:${workspaceFolder}/../../wave/x86_64-linux/stable-templates_parser/install/lib:${workspaceFolder}/../../wave/x86_64-linux/stable-libgpr2-bare/install/lib:${workspaceFolder}/../../wave/x86_64-linux/stable-libadalang/install/lib:${workspaceFolder}/../../wave/x86_64-linux/stable-langkit_support/install/lib64:${workspaceFolder}/../../wave/x86_64-linux/stable-langkit_support/install/lib:${workspaceFolder}/../../wave/x86_64-linux/stable-gnatcoll-bindings-py3/install/lib:${workspaceFolder}/../../wave/x86_64-linux/stable-gnatcoll-db-sqlite/install/lib:${workspaceFolder}/../../wave/x86_64-linux/stable-gnatcoll-db-sql/install/lib:${workspaceFolder}/../../wave/x86_64-linux/stable-gnatcoll-db-xref/install/lib:${workspaceFolder}/../../wave/x86_64-linux/e3-distrib/install/lib:${workspaceFolder}/../../wave/x86_64-linux/stable-python4gnatstudio/install/lib:${workspaceFolder}/../../wave/x86_64-linux/stable-gtk3/install/lib:${workspaceFolder}/../../wave/x86_64-linux/node16/install/lib:${workspaceFolder}/../../wave/x86_64-linux/doctools-4.3/install/sphinx/lib:${workspaceFolder}/../../wave/x86_64-linux/stable-gnatall/install/lib/gcc/x86_64-pc-linux-gnu/12.2.1/rts-native/adalib:${workspaceFolder}/../../wave/x86_64-linux/stable-gnatall/install/lib64:${workspaceFolder}/../../wave/x86_64-linux/stable-gnatall/install/lib:${workspaceFolder}/../../wave/x86_64-linux/stable-libclang/install/lib:${workspaceFolder}/../../wave/x86_64-linux/stable-gtk3/install/lib:${workspaceFolder}/../../wave/x86_64-linux/stable-gnatall/install/lib/gcc/x86_64-pc-linux-gnu/12.2.1/rts-native/adalib:${workspaceFolder}/../../wave/x86_64-linux/stable-gnatall/install/lib64:${workspaceFolder}/../../wave/x86_64-linux/stable-gnatall/install/lib:${env:LD_LIBRARY_PATH}",
+        "XDG_DATA_DIRS": "${workspaceFolder}/../../wave/x86_64-linux/stable-gtk3/install/share",
+        "PATH": "${workspaceFolder}/subprojects/ada_language_server/.obj/server:${workspaceFolder}/../../install/gnatstudio/bin:${workspaceFolder}/testsuite/bin:${workspaceFolder}/subprojects/ada_language_server/.obj/server:${workspaceFolder}/../../install/gnatstudio/bin:${workspaceFolder}/testsuite/bin:${workspaceFolder}/../../install/gtkada/bin:${workspaceFolder}/../../wave/x86_64-linux/stable-libadalang-tools/install/bin:${workspaceFolder}/../../wave/x86_64-linux/stable-templates_parser/install/bin:${workspaceFolder}/../../wave/x86_64-linux/stable-gnatcoll-db-gnatcoll_db2ada/install/bin:${workspaceFolder}/../../wave/x86_64-linux/stable-gnatcoll-db-gnatinspect/install/bin:${workspaceFolder}/../../wave/x86_64-linux/e3-distrib/install/bin:${workspaceFolder}/../../wave/x86_64-linux/stable-python4gnatstudio/install/bin:${workspaceFolder}/../../wave/x86_64-linux/stable-gtk3/install/bin:${workspaceFolder}/../../wave/x86_64-linux/node16/install/bin:${workspaceFolder}/../../wave/x86_64-linux/doctools-4.3/install/sphinx/bin:${workspaceFolder}/../../wave/x86_64-linux/doctools-4.3/install/texlive/bin/x86_64-linux:${workspaceFolder}/../../wave/x86_64-linux/doctools-4.3/install/texlive/bin:${workspaceFolder}/../../wave/x86_64-linux/stable-gnatall/install/bin:${workspaceFolder}/../../wave/x86_64-linux/stable-libclang/install/bin:${workspaceFolder}/../../wave/x86_64-linux/stable-gtk3/install/bin:${workspaceFolder}/../../wave/x86_64-linux/stable-gnatall/install/bin:${env:PATH}",
+        "PROCESSORS": "256",
+        "PKG_CONFIG_LIBDIR": "",
+        "PKG_CONFIG_PATH": "${workspaceFolder}/../../wave/x86_64-linux/stable-python4gnatstudio/install/lib/pkgconfig:${workspaceFolder}/../../wave/x86_64-linux/stable-gtk3/install/lib/pkgconfig:${workspaceFolder}/../../wave/x86_64-linux/stable-gtk3/install/lib/pkgconfig:${env:PKG_CONFIG_PATH}",
+        "LIBRARY_PATH": "${workspaceFolder}/../../wave/x86_64-linux/stable-libgpr2-bare/install/lib:${workspaceFolder}/../../wave/x86_64-linux/stable-langkit_support/install/lib:${workspaceFolder}/../../wave/x86_64-linux/stable-gtk3/install/lib:${workspaceFolder}/../../wave/x86_64-linux/stable-gtk3/install/lib:${env:LIBRARY_PATH}",
+        "C_INCLUDE_PATH": "${workspaceFolder}/../../wave/x86_64-linux/stable-python4gnatstudio/install/include/python3.9:${workspaceFolder}/../../wave/x86_64-linux/stable-python4gnatstudio/install/include/python3.9:${workspaceFolder}/../../wave/x86_64-linux/stable-python4gnatstudio/install/include/pygobject-3.0:${workspaceFolder}/../../wave/x86_64-linux/stable-gtk3/install/include:${workspaceFolder}/../../wave/x86_64-linux/stable-gtk3/install/include:${env:C_INCLUDE_PATH}",
+        "XDG_CONFIG_DIRS": "${workspaceFolder}/../../wave/x86_64-linux/stable-gtk3/install/etc:${workspaceFolder}/../../wave/x86_64-linux/stable-gtk3/install/etc:${env:XDG_CONFIG_DIRS}",
+        "GDK_PIXBUF_MODULE_FILE": "${workspaceFolder}/../../install/gtkada/loaders.cache",
+        "GDK_PIXBUF_MODULEDIR": "${workspaceFolder}/../../wave/x86_64-linux/stable-gtk3/install/lib/gdk-pixbuf-2.0/2.10.0/loaders",
+        "FONTCONFIG_FILE": "${workspaceFolder}/../../wave/x86_64-linux/stable-gtk3/install/etc/fonts/fonts.conf",
+        "GSETTINGS_BACKEND": "memory",
+        "GLADE_BASE_DIR": "${workspaceFolder}/../../wave/x86_64-linux/stable-gtk3/install",
+        "GI_TYPELIB_PATH": "${workspaceFolder}/../../wave/x86_64-linux/stable-gtk3/install/lib/girepository-1.0:${workspaceFolder}/../../wave/x86_64-linux/stable-gtk3/install/lib/girepository-1.0:${env:GI_TYPELIB_PATH}",
+        "LC_ALL": "C",
+        "GPR_PROJECT_PATH": "${workspaceFolder}/subprojects/gnatdoc/gnat:${workspaceFolder}/subprojects/spawn/gnat:${workspaceFolder}/subprojects/VSS/gnat:${workspaceFolder}/subprojects/ada_language_server/gnat:${workspaceFolder}/subprojects/gnatdoc/gnat:${workspaceFolder}/subprojects/spawn/gnat:${workspaceFolder}/subprojects/VSS/gnat:${workspaceFolder}/subprojects/ada_language_server/gnat:${workspaceFolder}/../../install/gtkada/lib/gnat:${workspaceFolder}/../../wave/x86_64-linux/stable-libadalang-tools/install/share/gpr:${workspaceFolder}/../../wave/x86_64-linux/stable-templates_parser/install/share/gpr:${workspaceFolder}/../../wave/x86_64-linux/stable-libgpr2-bare/install/share/gpr:${workspaceFolder}/../../wave/x86_64-linux/stable-libadalang/install/share/gpr:${workspaceFolder}/../../wave/x86_64-linux/stable-langkit_support/install/share/gpr:${workspaceFolder}/../../wave/x86_64-linux/stable-gnatcoll-bindings-py3/install/share/gpr:${workspaceFolder}/../../wave/x86_64-linux/stable-gnatcoll-db-gnatcoll_db2ada/install/share/gpr:${workspaceFolder}/../../wave/x86_64-linux/stable-gnatcoll-db-gnatinspect/install/share/gpr:${workspaceFolder}/../../wave/x86_64-linux/stable-gnatcoll-db-sqlite/install/share/gpr:${workspaceFolder}/../../wave/x86_64-linux/stable-gnatcoll-db-sql/install/share/gpr:${workspaceFolder}/../../wave/x86_64-linux/stable-gnatcoll-db-xref/install/share/gpr:${workspaceFolder}/../../wave/x86_64-linux/ada_libfswatch/install/share/gpr:${env:GPR_PROJECT_PATH}",
+        "GNATSTUDIO_PYTHONHOME": "${workspaceFolder}/../../wave/x86_64-linux/stable-python4gnatstudio/install",
+        "GNATSTUDIO_PYDLLPATH": "",
+        "PYTHONPATH": "${workspaceFolder}/../../wave/x86_64-linux/stable-libadalang/install/python:${workspaceFolder}/docs/users_guide:${workspaceFolder}/share/support/core:${workspaceFolder}/share/support/ui:${workspaceFolder}/share/support/languages:${env:PYTHONPATH}",
+        "SUPERPROJECT": "gs",
+        "XMLADA_BUILD": "relocatable",
+        "LIBRARY_TYPE": "relocatable",
+        "GPR_BUILD": "relocatable",
+        "BUILD": "Debug",
+        "BUILD_MODE": "dev",
+        "NO_PIE": "true"
+    },
+    "python.autoComplete.extraPaths": [
+        "./../../wave/x86_64-linux/stable-libadalang/install/python",
+        "./docs/users_guide",
+        "./share/support/core",
+        "./share/support/ui",
+        "./share/support/languages"
+    ],
+    "python.analysis.extraPaths": [
+        "./../../wave/x86_64-linux/stable-libadalang/install/python",
+        "./docs/users_guide",
+        "./share/support/core",
+        "./share/support/ui",
+        "./share/support/languages"
+    ]
 }
