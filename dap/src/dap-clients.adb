@@ -169,6 +169,38 @@ package body DAP.Clients is
       Trace (Me, Occurrence);
    end On_Exception;
 
+   ---------------------
+   -- Break_Exception --
+   ---------------------
+
+   procedure Break_Exception
+     (Self      : in out DAP_Client;
+      Name      : String;
+      Unhandled : Boolean := False;
+      Temporary : Boolean := False)
+   is
+      use DAP.Modules.Breakpoint_Managers;
+   begin
+      if Self.Breakpoints /= null then
+         Break_Exception (Self.Breakpoints, Name, Unhandled, Temporary);
+      end if;
+   end Break_Exception;
+
+   -----------
+   -- Break --
+   -----------
+
+   procedure Break
+     (Self : in out DAP_Client;
+      Data : DAP.Modules.Breakpoints.Breakpoint_Data)
+   is
+      use DAP.Modules.Breakpoint_Managers;
+   begin
+      if Self.Breakpoints /= null then
+         Break (Self.Breakpoints, Data);
+      end if;
+   end Break;
+
    ------------------
    -- Break_Source --
    ------------------

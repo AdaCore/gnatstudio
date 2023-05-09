@@ -124,6 +124,10 @@ package DAP.Clients is
       return Boolean;
    --  Return True if some breakpoint is set for the file/line
 
+   procedure Break
+     (Self : in out DAP_Client;
+      Data : DAP.Modules.Breakpoints.Breakpoint_Data);
+
    procedure Break_Source
      (Self      : in out DAP_Client;
       File      : GNATCOLL.VFS.Virtual_File;
@@ -136,6 +140,13 @@ package DAP.Clients is
       Subprogram : String;
       Temporary  : Boolean := False);
    --  Add a breakpoint for the subprogram
+
+   procedure Break_Exception
+     (Self      : in out DAP_Client;
+      Name      : String;
+      Unhandled : Boolean := False;
+      Temporary : Boolean := False);
+   --  Add a breakpoint for the exception
 
    procedure Toggle_Instruction_Breakpoint
      (Self    : in out DAP_Client;

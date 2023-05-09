@@ -16,6 +16,8 @@
 ------------------------------------------------------------------------------
 
 with Ada.Strings.Unbounded;        use Ada.Strings.Unbounded;
+
+with VSS.String_Vectors;
 with VSS.Strings.Conversions;
 
 with DAP.Modules.Persistent_Breakpoints;
@@ -29,18 +31,12 @@ with GPS.Kernel;                   use GPS.Kernel;
 with GPS.Kernel.Hooks;
 with GPS.Debuggers;
 
+with DAP.Modules.Breakpoint_Managers.Sources;
+with DAP.Modules.Breakpoint_Managers.Exceptions;
+with DAP.Modules.Breakpoint_Managers.Functions;
+with DAP.Modules.Breakpoint_Managers.Instructions;
+
 package body DAP.Modules.Breakpoint_Managers is
-
-   procedure Convert
-     (Kernel : GPS.Kernel.Kernel_Handle;
-      File   : Virtual_File;
-      Holder : GPS.Editors.Controlled_Editor_Buffer_Holder;
-      Data   : in out Breakpoint_Data;
-      Item   : DAP.Tools.Breakpoint);
-
-   function Convert
-     (Kernel : GPS.Kernel.Kernel_Handle;
-      DAP_Bp : DAP.Tools.Breakpoint) return Breakpoint_Data;
 
    -------------
    -- Convert --
@@ -118,8 +114,8 @@ package body DAP.Modules.Breakpoint_Managers is
 
    procedure Initialize (Self : DAP_Client_Breakpoint_Manager_Access)
    is
-      Map         : Breakpoint_Hash_Maps.Map;
-      Subprograms : Breakpoint_Vectors.Vector;
+      Map : Breakpoint_Hash_Maps.Map;
+      V   : Breakpoint_Vectors.Vector;
    begin
       if Self.Client.Get_Executable /= No_File then
          Self.Holder.Initialize
@@ -136,9 +132,14 @@ package body DAP.Modules.Breakpoint_Managers is
             end loop;
          end if;
 
-         Subprograms := Self.Holder.Get_For_Subprograms;
-         if not Subprograms.Is_Empty then
-            Self.Send_Subprogram (Subprograms, Init, True);
+         V := Self.Holder.Get_For (On_Subprogram);
+         if not V.Is_Empty then
+            Self.Send_Subprogram (V, Init, True);
+         end if;
+
+         V := Self.Holder.Get_For (On_Exception);
+         if not V.Is_Empty then
+            Self.Send_Exception (V, Init);
          end if;
       end if;
 
@@ -149,6 +150,66 @@ package body DAP.Modules.Breakpoint_Managers is
          Self.Dec_Response (Init);
       end if;
    end Initialize;
+
+   -----------
+   -- Break --
+   -----------
+
+   procedure Break
+     (Self : DAP_Client_Breakpoint_Manager_Access;
+      Data : Breakpoint_Data)
+   is
+      Changed : Breakpoint_Vectors.Vector;
+   begin
+      if Self.Requests_Count /= 0 then
+         Self.Client.Display_In_Debugger_Console
+           ("Can't change breakpoints, another request is in progerss");
+         return;
+      end if;
+
+      Self.Holder.Add (Data, Changed);
+      if not Changed.Is_Empty then
+         case Data.Kind is
+            when On_Line =>
+               Self.Send_Line
+                 (Get_File (Data.Locations.First_Element.Marker),
+                  Changed,
+                  Add);
+
+            when On_Subprogram =>
+               Self.Send_Subprogram (Changed, Add, False);
+
+            when On_Address =>
+               Self.Send_Addresses (Changed, Add);
+
+            when On_Exception =>
+               Self.Send_Exception (Changed, Add);
+         end case;
+      end if;
+   end Break;
+
+   ---------------------
+   -- Break_Exception --
+   ---------------------
+
+   procedure Break_Exception
+     (Self      : DAP_Client_Breakpoint_Manager_Access;
+      Name      : String;
+      Unhandled : Boolean := False;
+      Temporary : Boolean := False)
+   is
+      Data    : constant Breakpoint_Data := Breakpoint_Data'
+        (Kind        => On_Exception,
+         Num         => 0,
+         Except      => To_Unbounded_String (Name),
+         Unhandled   => Unhandled,
+         Disposition => (if Temporary then Delete else Keep),
+         Executable  => To_Unbounded_String
+           (+Base_Name (Self.Client.Get_Executable)),
+         others      => <>);
+   begin
+      Self.Break (Data);
+   end Break_Exception;
 
    -----------------
    -- Break_Sorce --
@@ -161,7 +222,8 @@ package body DAP.Modules.Breakpoint_Managers is
       Temporary : Boolean := False)
    is
       Data    : constant Breakpoint_Data := Breakpoint_Data'
-        (Num       => 0,
+        (Kind      => On_Line,
+         Num       => 0,
          Locations => Location_Vectors.To_Vector
            ((0,
             Self.Kernel.Get_Buffer_Factory.Create_Marker
@@ -173,16 +235,8 @@ package body DAP.Modules.Breakpoint_Managers is
          Executable  => To_Unbounded_String
            (+Base_Name (Self.Client.Get_Executable)),
          others      => <>);
-      Changed : Breakpoint_Vectors.Vector;
    begin
-      if Self.Requests_Count /= 0 then
-         Self.Client.Display_In_Debugger_Console
-           ("Can't change breakpoints, another request is in progerss");
-         return;
-      end if;
-
-      Self.Holder.Add (Data, Changed);
-      Self.Send_Line (File, Changed, Add);
+      Self.Break (Data);
    end Break_Sorce;
 
    ----------------------
@@ -195,24 +249,15 @@ package body DAP.Modules.Breakpoint_Managers is
       Temporary  : Boolean := False)
    is
       Data    : constant Breakpoint_Data := Breakpoint_Data'
-        (Num         => 0,
+        (Kind        => On_Subprogram,
+         Num         => 0,
          Subprogram  => To_Unbounded_String (Subprogram),
          Disposition => (if Temporary then Delete else Keep),
          Executable  => To_Unbounded_String
            (+Base_Name (Self.Client.Get_Executable)),
          others      => <>);
-      Changed : Breakpoint_Vectors.Vector;
    begin
-      if Self.Requests_Count /= 0 then
-         Self.Client.Display_In_Debugger_Console
-           ("Can't change breakpoints, another request is in progerss");
-         return;
-      end if;
-
-      Self.Holder.Add_Subprogram (Data, Changed);
-      if not Changed.Is_Empty then
-         Self.Send_Subprogram (Changed, Add, False);
-      end if;
+      Self.Break (Data);
    end Break_Subprogram;
 
    -----------------------------------
@@ -235,84 +280,6 @@ package body DAP.Modules.Breakpoint_Managers is
         (Address, +Base_Name (Self.Client.Get_Executable), Changed);
       Self.Send_Addresses (Changed, Add);
    end Toggle_Instruction_Breakpoint;
-
-   -----------------
-   -- On_Rejected --
-   -----------------
-
-   overriding procedure On_Rejected (Self : in out Source_Line_Request) is
-   begin
-      Self.Manager.Dec_Response (Self.Action);
-      DAP.Requests.Breakpoints.On_Rejected
-        (DAP.Requests.Breakpoints.Breakpoint_DAP_Request (Self));
-   end On_Rejected;
-
-   -----------------
-   -- On_Rejected --
-   -----------------
-
-   overriding procedure On_Rejected
-     (Self : in out Function_Breakpoint_Request) is
-   begin
-      Self.Manager.Dec_Response (Self.Action);
-      DAP.Requests.Function_Breakpoints.On_Rejected
-        (DAP.Requests.Function_Breakpoints.Function_Breakpoint_DAP_Request
-           (Self));
-   end On_Rejected;
-
-   -----------------
-   -- On_Rejected --
-   -----------------
-
-   overriding procedure On_Rejected
-     (Self : in out Instruction_Breakpoint_Request) is
-   begin
-      Self.Manager.Dec_Response (Self.Action);
-      DAP.Requests.Instruction_Breakpoints.On_Rejected
-        (DAP.Requests.Instruction_Breakpoints.
-           Instruction_Breakpoint_DAP_Request (Self));
-   end On_Rejected;
-
-   ----------------------
-   -- On_Error_Message --
-   ----------------------
-
-   overriding procedure On_Error_Message
-     (Self    : in out Source_Line_Request;
-      Message : VSS.Strings.Virtual_String) is
-   begin
-      Self.Manager.Dec_Response (Self.Action);
-      DAP.Requests.Breakpoints.On_Error_Message
-        (DAP.Requests.Breakpoints.Breakpoint_DAP_Request (Self), Message);
-   end On_Error_Message;
-
-   ----------------------
-   -- On_Error_Message --
-   ----------------------
-
-   overriding procedure On_Error_Message
-     (Self    : in out Function_Breakpoint_Request;
-      Message : VSS.Strings.Virtual_String) is
-   begin
-      Self.Manager.Dec_Response (Self.Action);
-      DAP.Requests.Function_Breakpoints.On_Error_Message
-        (DAP.Requests.Function_Breakpoints.Function_Breakpoint_DAP_Request
-           (Self), Message);
-   end On_Error_Message;
-
-   ----------------------
-   -- On_Error_Message --
-   ----------------------
-
-   overriding procedure On_Error_Message
-     (Self    : in out Instruction_Breakpoint_Request;
-      Message : VSS.Strings.Virtual_String) is
-   begin
-      Self.Manager.Dec_Response (Self.Action);
-      DAP.Requests.Instruction_Breakpoints.On_Error_Message
-        (DAP.Requests.Instruction_Breakpoints.
-           Instruction_Breakpoint_DAP_Request (Self), Message);
-   end On_Error_Message;
 
    ------------------
    -- Dec_Response --
@@ -385,8 +352,8 @@ package body DAP.Modules.Breakpoint_Managers is
       Actual : Breakpoint_Vectors.Vector;
       Action : Action_Kind) return DAP_Request_Access
    is
-      Req : constant Source_Line_Request_Access :=
-        new Source_Line_Request (Self.Kernel);
+      Req : constant Sources.Source_Line_Request_Access :=
+        new Sources.Source_Line_Request (Self.Kernel);
       Sb  : DAP.Tools.SourceBreakpoint;
    begin
       Req.Manager := DAP_Client_Breakpoint_Manager_Access (Self);
@@ -441,8 +408,8 @@ package body DAP.Modules.Breakpoint_Managers is
       Action : Action_Kind)
       return DAP_Request_Access
    is
-      Req : constant Function_Breakpoint_Request_Access :=
-        new Function_Breakpoint_Request (Self.Kernel);
+      Req : constant Functions.Function_Breakpoint_Request_Access :=
+        new Functions.Function_Breakpoint_Request (Self.Kernel);
       Fb  : DAP.Tools.FunctionBreakpoint;
    begin
       Req.Manager := DAP_Client_Breakpoint_Manager_Access (Self);
@@ -479,7 +446,8 @@ package body DAP.Modules.Breakpoint_Managers is
             Self.Requests_Count := Self.Requests_Count + 1;
             Request := Self.Send_Subprogram (Current, Action);
             if Index = Actual.Last_Index then
-               Function_Breakpoint_Request_Access (Request).Last := True;
+               Functions.Function_Breakpoint_Request_Access
+                 (Request).Last := True;
             end if;
             Self.Client.Enqueue (Request);
          end loop;
@@ -491,6 +459,48 @@ package body DAP.Modules.Breakpoint_Managers is
    end Send_Subprogram;
 
    --------------------
+   -- Send_Exception --
+   --------------------
+
+   procedure Send_Exception
+     (Self   : not null access DAP_Client_Breakpoint_Manager;
+      Actual : Breakpoint_Vectors.Vector;
+      Action : Action_Kind)
+   is
+      Req : Exceptions.Exception_Breakpoint_Request_Access :=
+        new Exceptions.Exception_Breakpoint_Request (Self.Kernel);
+   begin
+      Req.Manager := DAP_Client_Breakpoint_Manager_Access (Self);
+      Req.Action  := Action;
+      Req.Sent    := Actual;
+
+      for Data of Actual loop
+         declare
+            N : constant VSS.Strings.Virtual_String :=
+              VSS.Strings.Conversions.To_Virtual_String
+                (Data.Except);
+         begin
+            Req.Parameters.arguments.filters.Append (N);
+            declare
+               Option : DAP.Tools.ExceptionOptions;
+               Names  : VSS.String_Vectors.Virtual_String_Vector;
+            begin
+               Names.Append (N);
+               Option.path.Append ((negate => False, names => Names));
+               if Data.Unhandled then
+                  Option.breakMode := DAP.Tools.Enum.unhandled;
+               else
+                  Option.breakMode := DAP.Tools.Enum.always;
+               end if;
+               Req.Parameters.arguments.exceptionOptions.Append (Option);
+            end;
+         end;
+      end loop;
+
+      Self.Client.Enqueue (DAP_Request_Access (Req));
+   end Send_Exception;
+
+   --------------------
    -- Send_Addresses --
    --------------------
 
@@ -499,8 +509,8 @@ package body DAP.Modules.Breakpoint_Managers is
       Actual : Breakpoint_Vectors.Vector;
       Action : Action_Kind)
    is
-      Req : Instruction_Breakpoint_Request_Access :=
-        new Instruction_Breakpoint_Request (Self.Kernel);
+      Req : Instructions.Instruction_Breakpoint_Request_Access :=
+        new Instructions.Instruction_Breakpoint_Request (Self.Kernel);
       Fb  : DAP.Tools.InstructionBreakpoint;
    begin
       Req.Manager := DAP_Client_Breakpoint_Manager_Access (Self);
@@ -530,11 +540,14 @@ package body DAP.Modules.Breakpoint_Managers is
       Cursor : Breakpoint_Hash_Maps.Cursor := Map.First;
    begin
       while Has_Element (Cursor) loop
-         if Key (Cursor) = Subprogram_File then
+         if Key (Cursor) = Subprograms_File then
             Self.Send_Subprogram (Element (Cursor), Action, Bunch);
 
-         elsif Key (Cursor) = Address_File then
+         elsif Key (Cursor) = Addreses_File then
             Self.Send_Addresses (Element (Cursor), Action);
+
+         elsif Key (Cursor) = Exceptions_File then
+            Self.Send_Exception (Element (Cursor), Action);
 
          else
             Self.Send_Line (Key (Cursor), Element (Cursor), Action);
@@ -659,8 +672,16 @@ package body DAP.Modules.Breakpoint_Managers is
          Next (Cursor);
       end loop;
 
-      if not Self.Holder.Get_For_Subprograms.Is_Empty then
+      if not Self.Holder.Get_For (On_Subprogram).Is_Empty then
          Self.Send_Subprogram (Empty, Delete, False);
+      end if;
+
+      if not Self.Holder.Get_For (On_Exception).Is_Empty then
+         Self.Send_Exception (Empty, Delete);
+      end if;
+
+      if not Self.Holder.Get_For (On_Address).Is_Empty then
+         Self.Send_Addresses (Empty, Delete);
       end if;
 
       Self.Holder.Clear;
@@ -710,261 +731,6 @@ package body DAP.Modules.Breakpoint_Managers is
          end;
       end loop;
    end Stopped;
-
-   -----------------------
-   -- On_Result_Message --
-   -----------------------
-
-   overriding procedure On_Result_Message
-     (Self        : in out Source_Line_Request;
-      Result      : in out DAP.Tools.SetBreakpointsResponse;
-      New_Request : in out DAP_Request_Access)
-   is
-      use DAP.Tools;
-
-      Holder  : constant GPS.Editors.Controlled_Editor_Buffer_Holder :=
-        Self.Kernel.Get_Buffer_Factory.Get_Holder (File => Self.File);
-      Data    : Breakpoint_Data;
-      Actual  : Breakpoint_Vectors.Vector;
-      Update  : Boolean := False;
-      Warning : Boolean := False;
-
-   begin
-      New_Request := null;
-
-      case Self.Action is
-         when Init =>
-            declare
-               Changed : Breakpoint_Hash_Maps.Map;
-            begin
-               for Index in 1 .. Length (Result.a_body.breakpoints) loop
-                  Data := Self.Sent.Element (Index);
-                  Convert (Self.Kernel, Self.File, Holder, Data,
-                           Result.a_body.breakpoints (Index));
-                  Actual.Append (Data);
-
-                  if not Result.a_body.breakpoints (Index).verified then
-                     Warning := True;
-                  end if;
-               end loop;
-
-               if Warning then
-                  Self.Manager.Client.Display_In_Debugger_Console
-                    ("Some breakpoints set graphically are not "
-                     & "recognized by the debugger and, thus, will be lost "
-                     & "when running it. "
-                     & ASCII.LF
-                     & "This can happen when the executable "
-                     & "being debugged has not been compiled with the debug "
-                     & "flags or when the breakpoint's source file is not"
-                     & " found in the symbols table. This also can happen for "
-                     & "catchpoints."
-                     & ASCII.LF
-                     & "You should try to set them after a start command."
-                     & ASCII.LF
-                     & "Breakpoints and/or catchpoints that could not be set: "
-                     & ASCII.LF
-                     & ASCII.LF);
-               end if;
-
-               --  Update breakpoints data like numbers and locations
-               Self.Manager.Holder.Initialized_For_File
-                 (Self.File, Actual, Changed);
-
-               if not Changed.Is_Empty then
-                  New_Request := Self.Manager.Send_Line
-                    (Self.File, Changed.Element (Self.File), Synch);
-               end if;
-            end;
-            Update := True;
-
-         when Add =>
-            declare
-               Changed : Breakpoint_Vectors.Vector;
-            begin
-               Data := Self.Sent.Last_Element;
-               Convert
-                 (Self.Kernel, Self.File, Holder, Data,
-                  Result.a_body.breakpoints
-                    (Length (Result.a_body.breakpoints)));
-
-               --  Update the breakpoint data because in notifications we
-               --  don't have full information like disposition and so on
-               Self.Manager.Holder.Added (Self.File, Data, Changed, Update);
-
-               if not Changed.Is_Empty then
-                  New_Request := Self.Manager.Send_Line
-                    (Self.File, Changed, Synch);
-               end if;
-            end;
-
-         when Delete =>
-            --  Do nothing because we delete breakpoints by notification
-            null;
-
-         when Enable =>
-            declare
-               Changed : Breakpoint_Hash_Maps.Map;
-               Id      : Integer;
-            begin
-               for Index in 1 .. Length (Result.a_body.breakpoints) loop
-                  Data := Self.Sent.Element (Index);
-                  Convert (Self.Kernel, Self.File, Holder, Data,
-                           Result.a_body.breakpoints (Index));
-                  Actual.Append (Data);
-               end loop;
-
-               Self.Manager.Holder.Status_Changed
-                 (Self.File, Actual, Changed, Id);
-
-               if not Changed.Is_Empty then
-                  New_Request := Self.Manager.Send_Line
-                    (Self.File, Changed.Element (Self.File), Synch);
-
-               elsif Id > 0 then
-                  GPS.Kernel.Hooks.Debugger_Breakpoint_Changed_Hook.Run
-                    (Self.Kernel, Self.Manager.Client.Get_Visual, Id);
-                  Self.Manager.Show_Breakpoints;
-
-               else
-                  Update := True;
-               end if;
-            end;
-
-         when Disable =>
-            --  Do nothing because we delete BP by notifications
-            Update := True;
-
-         when Synch =>
-            --  Do nothing because we already have all data
-            null;
-      end case;
-
-      --  Update visual representation
-      if Update then
-         GPS.Kernel.Hooks.Debugger_Breakpoints_Changed_Hook.Run
-           (Self.Kernel, Self.Manager.Client.Get_Visual);
-         Self.Manager.Show_Breakpoints;
-      end if;
-
-      Self.Manager.Dec_Response (Self.Action);
-   end On_Result_Message;
-
-   -----------------------
-   -- On_Result_Message --
-   -----------------------
-
-   overriding procedure On_Result_Message
-     (Self        : in out Function_Breakpoint_Request;
-      Result      : in out DAP.Tools.SetFunctionBreakpointsResponse;
-      New_Request : in out DAP_Request_Access)
-   is
-      use DAP.Tools;
-
-      Update : Boolean := False;
-      Actual : Breakpoint_Vectors.Vector;
-   begin
-      New_Request := null;
-
-      case Self.Action is
-         when Init =>
-            for Index in 1 .. Length (Result.a_body.breakpoints) loop
-               Actual.Append
-                 (Convert (Self.Kernel, Result.a_body.breakpoints (Index)));
-            end loop;
-
-            Self.Manager.Holder.Initialized_For_Subprograms
-              (Actual, Self.Last);
-
-         when Add =>
-            for Index in 1 .. Length (Result.a_body.breakpoints) loop
-               Actual.Append
-                 (Convert (Self.Kernel, Result.a_body.breakpoints (Index)));
-            end loop;
-
-            Self.Manager.Holder.Added_Subprogram
-              (Self.Sent.Last_Element, Actual);
-            Update := True;
-
-         when Delete =>
-            --  Do nothing because we delete breakpoints by notification
-            null;
-
-         when Enable =>
-            for Index in 1 .. Length (Result.a_body.breakpoints) loop
-               Actual.Append
-                 (Convert (Self.Kernel, Result.a_body.breakpoints (Index)));
-            end loop;
-
-            Self.Manager.Holder.Subprogram_Status_Changed (Actual, Self.Last);
-            Update := Self.Last;
-
-         when Disable =>
-            --  Do nothing because we delete BP by notifications
-            Update := True;
-
-         when Synch =>
-            --  Do nothing because we already have all data
-            null;
-      end case;
-
-      if Update then
-         Self.Manager.Show_Breakpoints;
-         GPS.Kernel.Hooks.Debugger_Breakpoints_Changed_Hook.Run
-           (Self.Kernel, Self.Manager.Client.Get_Visual);
-      end if;
-
-      Self.Manager.Dec_Response (Self.Action);
-   end On_Result_Message;
-
-   -----------------------
-   -- On_Result_Message --
-   -----------------------
-
-   overriding procedure On_Result_Message
-     (Self        : in out Instruction_Breakpoint_Request;
-      Result      : in out DAP.Tools.SetInstructionBreakpointsResponse;
-      New_Request : in out DAP_Request_Access)
-   is
-      use DAP.Tools;
-
-      Actual : Breakpoint_Vectors.Vector;
-      Data   : Breakpoint_Data;
-   begin
-      New_Request := null;
-
-      case Self.Action is
-         when Init | Delete | Disable | Synch =>
-            --  Do nothing
-            null;
-
-         when Add =>
-            if not Self.Sent.Is_Empty then
-               Data := Self.Sent.Last_Element;
-               Data.Locations := Convert
-                 (Self.Kernel,
-                  Result.a_body.breakpoints
-                    (Length (Result.a_body.breakpoints))).Locations;
-               Data.Num := Data.Locations.First_Element.Num;
-
-               Self.Manager.Holder.Address_Response (Data);
-            end if;
-
-         when Enable =>
-            for Index in 1 .. Length (Result.a_body.breakpoints) loop
-               Actual.Append
-                 (Convert (Self.Kernel, Result.a_body.breakpoints (Index)));
-            end loop;
-
-            Self.Manager.Holder.Address_Status_Changed (Actual);
-      end case;
-
-      Self.Manager.Show_Breakpoints;
-      GPS.Kernel.Hooks.Debugger_Breakpoints_Changed_Hook.Run
-        (Self.Kernel, Self.Manager.Client.Get_Visual);
-
-      Self.Manager.Dec_Response (Self.Action);
-   end On_Result_Message;
 
    --------------
    -- Finalize --
