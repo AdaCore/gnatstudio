@@ -540,6 +540,10 @@ package body KeyManager_Module is
             Free (Keymanager_Module.Last_User_Command);
          end if;
          Keymanager_Module.Last_Command := null;
+
+      elsif Event_Type = Focus_Change then
+         --  The hyper mode should not be kept after changing the focus
+         Leave_Hyper_Mode (Kernel);
       end if;
 
       --  Dispatch the event in the standard gtk+ main loop
