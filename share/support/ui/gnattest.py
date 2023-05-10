@@ -68,6 +68,10 @@ def version(exe):
     """
     version_out = GPS.Process(exe + " --version").get_result()
 
+    # Support gnattest built in dev mode
+    if "GNATTEST Pro dev" in version_out:
+        return 'dev'
+
     matches = TOOL_VERSION_REGEXP.findall(version_out.splitlines()[0])
     return matches[0]
 
@@ -81,7 +85,10 @@ def use_rts_and_target_options():
     """
 
     if locate_exec_on_path('gnattest'):
-        major, _ = version('gnattest')
+        v = version('gnattest')
+        if v == 'dev':
+            return True
+        major, _ = v
         return int(major) >= 22
 
     return False
@@ -587,6 +594,11 @@ XML = r"""<?xml version="1.0" ?>
         <combo-entry label="Fail" value="fail"/>
         <combo-entry label="Pass" value="pass"/>
       </combo>
+      <check label="automatic testcase generation (beta)"
+             line="1"  column="2"
+             switch="--gen-test-vectors"
+             tip="Automatically generate testcases for all subprograms """ \
+                 """ supporting automatic generation (beta). " />
       <check label="use stubbing"
              line="1"  column="2"
              switch="--stub"
