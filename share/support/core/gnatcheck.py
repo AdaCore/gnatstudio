@@ -128,23 +128,28 @@ class gnatCheckProc:
         if target == "":
             self.gnatCmd = "gnat"
             self.checkCmd = "gnatcheck"
-        elif locate_exec_on_path('{}-gnatcheck'.format(target)):
-            self.gnatCmd = '{}-gnat'.format(target)
-            self.checkCmd = '{}-gnatcheck'.format(target)
         else:
-            runtime = GPS.get_runtime()
-            self.gnatCmd = "gnat"
-            self.checkCmd = "gnatcheck"
-            self.gnatArgs = ["--target=%s" % target]
+            # If a target is specified in the GPR project file, check if we have
+            # a non-prefixed gnatcheck in the PATH, which supports the '--target'
+            # option. Fallback to the old prefixed gnatcheck if not.
+            if locate_exec_on_path('gnatcheck') and \
+                '--target' in GPS.Process('gnatcheck --help').get_result():
+                runtime = GPS.get_runtime()
+                self.gnatCmd = '{}-gnat'.format(target)
+                self.checkCmd = "gnatcheck"
+                self.gnatArgs = ["--target=%s" % target]
 
-            if runtime != "":
-                self.gnatArgs.append("--RTS=%s" % runtime)
+                if runtime != "":
+                    self.gnatArgs.append("--RTS=%s" % runtime)
+            else:
+                self.gnatCmd = '{}-gnat'.format(target)
+                self.checkCmd = '{}-gnatcheck'.format(target)
 
         if not locate_exec_on_path(self.checkCmd):
             self.gnatCmd = ""
             self.checkCmd = ""
             GPS.Console("Messages").write(
-                "Error: 'gnatcheck' is not in the path.\n")
+                "Error: '%s' is not in the path.\n" % self.checkCmd)
             GPS.Console("Messages").write(
                 "Error: Could not initialize the gnatcheck module.\n")
         elif not locate_exec_on_path(self.gnatCmd):
