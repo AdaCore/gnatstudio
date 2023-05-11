@@ -204,7 +204,7 @@ class GNATfuzzPlugin(Module):
     ]
 
     def setup(self):
-        # This plugin makes sense only if GNATcoverage is available:
+        # This plugin makes sense only if GNATfuzz is available:
         # return immediately if not.
         if not os_utils.locate_exec_on_path("gnatfuzz"):
             return
