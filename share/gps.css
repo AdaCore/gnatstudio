@@ -224,15 +224,6 @@ progressbar progress  {
    background-image: none;
 }
 
-/****************
- * Tasks Widgets
- ****************/
-
- .task_view_tree *:selected {
-    color: @editor_fg_color;
- }
-
-
 /****************************
  * Separators and Panew views
  ****************************/
