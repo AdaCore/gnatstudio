@@ -293,7 +293,7 @@
 
     <action name="spark2014_example_gnatprove_by_example" category=""
             show-command="false" output="none">
-      <shell>Project.load "{example}/gnatprove_by_example/gnatprove_by_example.gpr"</shell>
+      <shell lang="python">spark2014.load_example_gnatprove_by_example()</shell>
     </action>
 
     <submenu before="About">
