@@ -1560,3 +1560,13 @@ def load_example_allocators():
     example_root = os.path.join(get_example_root(), 'allocators')
     os.environ["SPARKLIB_OBJECT_DIR"] = '.'
     GPS.Project.load(os.path.join(example_root, 'allocators.gpr'))
+
+
+def load_example_gnatprove_by_example():
+    """ load GNATprove-by-Example example project, which requires specific code
+        to set SPARKLIB_OBJECT_DIR environment variable.
+    """
+    import os
+    example_root = os.path.join(get_example_root(), 'gnatprove_by_example')
+    os.environ["SPARKLIB_OBJECT_DIR"] = '.'
+    GPS.Project.load(os.path.join(example_root, 'gnatprove_by_example.gpr'))
