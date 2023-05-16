@@ -1101,7 +1101,7 @@ class TargetWrapper():
         self.__promise = None
 
     def wait_on_execute(self, main_name="", file=None,
-                        extra_args=None, quiet=False):
+                        extra_args=None, quiet=False, force=False):
         """
         Called by the user. Will execute the target and return a promise.
         Promises made here will be answered with: exit status of the build.
@@ -1113,7 +1113,8 @@ class TargetWrapper():
                               file=file,
                               extra_args=extra_args,
                               quiet=quiet,
-                              on_exit=self.__on_exit)
+                              on_exit=self.__on_exit,
+                              force=force)
         return self.__promise
 
     def __timeout_after_exit(self):
