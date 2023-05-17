@@ -6,17 +6,19 @@ This file provides support for gnattest.
 # No user customization below this line
 #
 
+from functools import reduce
+import json
 import os.path
-import GPS
+import re
+import shutil
+import tempfile
 
 from gnatemulator import GNATemulator
-
-import workflows
-
-from gs_utils import hook, interactive
-from functools import reduce
+import GPS
+from gs_utils import hook, in_ada_file, interactive
 from os_utils import locate_exec_on_path
-import re
+import workflows
+from workflows.promises import ProcessWrapper, TargetWrapper
 
 
 last_gnattest = {
@@ -56,10 +58,12 @@ __targetsDef = [
      run_test_list_in_emulator, "gps-gnattest-run"]]
 
 
-def run(project, target, extra_args=""):
+def run(project, target, extra_args="", synchronous=False, force=False):
     """ Run gnattest and switch to harness if success. """
     last_gnattest['project'] = project
-    GPS.BuildTarget(target).execute(synchronous=False, extra_args=extra_args)
+    GPS.BuildTarget(target).execute(extra_args=extra_args,
+                                    synchronous=synchronous,
+                                    force=force)
 
 
 def version(exe):
@@ -212,6 +216,21 @@ def get_harness_project_file(cur):
     return reduce(compare, list, "")
 
 
+def get_user_project_file():
+    root_project = GPS.Project.root()
+    if last_gnattest['harness'] == root_project.file().path:
+        user_project = last_gnattest['root']
+    else:
+        # Check if we are in the harness project
+        if root_project.original_project():
+            user_project = root_project.original_project().file().path
+
+        # If we aren't, assume that this is the user project
+        else:
+            user_project = root_project.file().path
+    return user_project
+
+
 def open_harness_project(cur):
     """ Open harness project if it hasn't open yet."""
     if GPS.Project.root().is_harness_project():
@@ -232,14 +251,7 @@ def open_harness_project(cur):
 
 def exit_harness_project():
     """ Leave harness project and open user's project. """
-    root_project = GPS.Project.root()
-
-    if last_gnattest['harness'] == root_project.file().path:
-        user_project = last_gnattest['root']
-    else:
-        user_project = root_project.original_project().file().path
-
-    GPS.Project.load(user_project, False, True)
+    GPS.Project.load(get_user_project_file(), False, True)
     GPS.Console("Messages").write("Exit harness project to: " +
                                   GPS.Project.root().file().path + "\n")
 
@@ -360,6 +372,235 @@ def open_harness():
     project = GPS.current_context().project() or GPS.Project.root()
 
     open_harness_project(project)
+
+
+def get_harness_dir():
+    context = GPS.current_context()
+    if not isinstance(context, GPS.FileContext):
+        project = GPS.Project.root()
+    else:
+        project = context.project() or GPS.Project.root()
+    harness_prj = get_harness_project_file(project)
+    return os.path.dirname(harness_prj)
+
+
+def gnattest_config():
+    config = os.path.join(get_harness_dir(), ".gnattest-config.json")
+    if os.path.exists(config):
+        with open(config, "r") as f:
+            return json.loads(f.read())
+    else:
+        return {"dump_test_inputs": False}
+
+
+def is_harness_instr():
+    if gnattest_config()["dump_test_inputs"]:
+        return True
+    return False
+
+
+@workflows.run_as_workflow
+def build_instr_harness_workflow():
+    # Check if the generated harness was built with --dump-test-inputs. If not,
+    # regenerate it.
+    console = GPS.Console()
+    if not is_harness_instr():
+        cmd = [
+            "gnattest",
+            "-P", get_user_project_file(), "--dump-test-inputs"]
+        console.write("Generating an instrumented test harness...")
+        p = ProcessWrapper(cmd, spawn_console="")
+
+        # Show the output in GPS's Messages window (use by default when an
+        # empty string is passed to spawn_console)
+        status, output = yield p.wait_until_terminate()
+
+        # If it failed, exit early
+        if status != 0:
+            console.write(
+                "Failed to generate an instrumented harness\n", mode="error"
+            )
+            yield status
+    # Once done, we need to build the instrumented harness. For now, we will
+    # only support the most basic gnattest usage: a single driver named
+    # test_driver and use the test_driver-build-instr target of the generated
+    # Makefile. TODO: support separate drivers and stub mode on.
+    cmd = [
+        "make", "-C", get_harness_dir(), "test_driver-build-inst"
+    ]
+    p = ProcessWrapper(cmd, spawn_console="")
+    status, output = yield p.wait_until_terminate(show_if_error=True)
+    console.write(output)
+
+    if status != 0:
+        console.write(
+            "Failed to build the instrumented test harness\n", mode="error"
+        )
+    yield status
+
+
+def start_fuzz(task, corpus_dir, fuzz_dir, force=False):
+    """The 'gnatfuzz fuzz' workflow"""
+    # Move away the previous fuzzing session dir
+
+    fuzz_session_dir = os.path.join(fuzz_dir, "fuzz_testing", "session")
+    if os.path.exists(fuzz_session_dir):
+        shutil.rmtree(fuzz_session_dir)
+
+    # TODO! account for scenario variables as done in the gnatfuzz plugin
+
+    # Activate the GNATfuzz mode using tgen. TODO! active concolic execution by
+    # default.
+    os.environ["GNATFUZZ_TGEN"] = "1"
+    args = [
+        "-P",
+        os.path.join(fuzz_dir, "fuzz_testing", "fuzz_test.gpr"),
+        f"--corpus-path={corpus_dir}",
+        f"--stop-criteria={fuzz_dir}"
+        "/fuzz_testing/user_configuration/stop_criteria.xml",
+    ]
+
+    p = TargetWrapper("gnattest fuzz")
+    yield p.wait_on_execute(extra_args=args, force=force)
+    cmd = [
+        "gnattest",
+        "-P",
+        get_user_project_file(),
+    ]
+    p = ProcessWrapper(cmd, spawn_console="")
+    status, output = yield p.wait_until_terminate()
+    if status != 0:
+        GPS.console().write(
+            "Failed to run: " + ' '.join(cmd) + "\n"
+        )
+
+
+def is_fuzz_running():
+    """Return True if "gnatfuzz fuzz" is running"""
+    tasks = [t for t in GPS.Task.list() if t.name() == "gnattest fuzz"]
+    return len(tasks) > 0
+
+
+def stop_fuzz():
+    tasks = [t for t in GPS.Task.list() if t.name() == "gnattest fuzz"]
+    if len(tasks) > 0:
+        tasks[0].interrupt()
+
+
+def has_gnatfuzz():
+    if not locate_exec_on_path("gnatfuzz"):
+        return False
+    return True
+
+
+def fuzz_subp_filter(context):
+    """
+    TODO! add filters to check that the cursor has selected a subprogram
+    specification with associated testcases, and is supported by tgen and
+    gnatfuzz.
+    """
+    return in_ada_file(context) and has_gnatfuzz()
+
+
+@interactive("General", fuzz_subp_filter,
+             contextual="GNATtest/Start\/Stop fuzzing subprogram",
+             name="gnattest fuzz subprogram",
+             description="Fuzz suprogram using test cases as initial seeds",
+             contextual_group=GPS.Contextual.Group.EXTRA_INFORMATION)
+def fuzz_subp_workflow():
+    """
+    Workflow to fuzz a subprogram using gnattest test-cases as a starting
+    corpus.
+    """
+
+    # If the fuzzer is already running, stop it. TODO: make this specific to
+    # the selected subprogram.
+    if is_fuzz_running():
+        stop_fuzz()
+        return
+
+    # We are going to compile: save everything that needs saving
+    GPS.MDI.save_all()
+
+    console = GPS.Console()
+    context = GPS.current_context()
+    local_file_basename = os.path.basename(context.file().path)
+    local_file_fullname = context.file().path
+    line = str(context.location().line())
+    function_repr = local_file_basename + ":" + line
+    function_hash = str(hash(function_repr))
+
+    # Start by building the instrumented harness
+    status = yield build_instr_harness_workflow()
+
+    if status != 0:
+        return
+
+    # Then, execute the test runner with the adequate test filter. Run it in a
+    # temporary directory: this is where the starting corpus will be generated.
+
+    corpus_dir = tempfile.mkdtemp()
+    cwd = os.getcwd()
+    os.chdir(corpus_dir)
+    console.write(
+        "Generating starting corpus in " + corpus_dir + "\n"
+    )
+    cmd = [
+        os.path.join(get_harness_dir(), "test_runner"),
+        "--routines",
+        local_file_basename + ":" + line,
+    ]
+    p = ProcessWrapper(cmd, spawn_console="")
+    status, output = yield p.wait_until_terminate()
+    if status != 0:
+        console.write(
+            "Failed to run: " + ' '.join(cmd) + "\n"
+        )
+        return status
+
+    os.chdir(cwd)
+
+    # We can now start fuzzing: execute the GNATfuzz generate workflow passing
+    # the right subprogram. Ensure that the harness directory was cleaned
+    # beforehand.
+
+    user_project = GPS.Project(get_user_project_file())
+    fuzz_dir = os.path.join(
+        user_project.object_dirs()[0], "fuzz" + function_hash
+    )
+
+    if os.path.exists(fuzz_dir):
+        shutil.rmtree(fuzz_dir)
+
+    # To facilitate testing of the workflow, force the execution of the
+    # BuildTargets if the environment variable GS_TESTSUITE_RUN is set. This
+    # means that the BuildTargets will execute without waiting for a user
+    # action (a click on the Execute button). TODO! there should be a cleaner
+    # way to do that.
+    force = bool(os.environ['GS_TESTSUITE_RUN'])
+    p = TargetWrapper("gnatfuzz generate")
+    yield p.wait_on_execute(
+        extra_args=[
+            "-S",
+            local_file_fullname,
+            "-L",
+            line,
+            "-o",
+            fuzz_dir
+        ],
+        force=force,
+    )
+
+    # Now onto fuzzing: execute the GNATfuzz fuzz workflow. Run it in a
+    # dedicated background task: the user will be able to stop it when clicking
+    # back on it.
+
+    workflows.task_workflow(
+        "fuzz" + function_hash, start_fuzz, False,
+        corpus_dir=corpus_dir, fuzz_dir=fuzz_dir,
+        force=force,
+    )
+    shutil.rmtree(corpus_dir)
 
 
 XML = r"""<?xml version="1.0" ?>
