@@ -23,7 +23,9 @@ def test_driver():
     tree = get_widgets_by_type(Gtk.TreeView, win)[0]
     selection = tree.get_selection()
 
-    is_red_hat = "Red Hat" in GPS.Process("hostnamectl").get_result()
+    host_name = GPS.Process("hostnamectl").get_result()
+    is_red_hat = "Red Hat" in host_name
+    is_ubuntu_22 = "Ubuntu 22" in host_name
 
     # The call stack could different depending on the OS
     if platform.system().lower() == 'windows':
@@ -31,14 +33,14 @@ def test_driver():
                ['0', '1', '2'],
                "Incorrect Callstack tree (Windows)")
     else:
-        if is_red_hat:
+        if is_red_hat or is_ubuntu_22:
             gps_assert(dump_tree_model(tree.get_model(), 0),
                        ['0', '1', '2', '3', '4', '5', '6'],
-                       "Incorrect Callstack tree (RHES)")
+                       "Incorrect Callstack tree (RHES or Ubuntu 22)")
         else:
             gps_assert(dump_tree_model(tree.get_model(), 0),
                        ['0', '1', '2', '3', '4', '5'],
-                       "Incorrect Callstack tree (Ubuntu)")
+                       "Incorrect Callstack tree (Ubuntu 20)")
 
     # Filter the Call Stack
     get_widget_by_name("Call Stack Filter").set_text("main")
