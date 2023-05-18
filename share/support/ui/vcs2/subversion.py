@@ -263,7 +263,7 @@ class SVN(core_staging.Emulate_Staging,
         A generator that returns the list of tags via `visitor.tags`
         """
         tags = []
-        base = parent_url + 'tags'
+        base = parent_url + '/tags'
         p = self._svn(['list', base])
         while True:
             line = yield p.wait_line()
