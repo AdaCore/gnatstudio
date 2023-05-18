@@ -136,7 +136,5 @@ build_and_test:
     - if [ ! -z ${FAILED+x} ]; then echo "There was at least one testcase failure" && exit 1; fi
 
   artifacts:
-     paths:
-        - xunit_output.xml
-     reports:
-       junit: xunit_output.xml
+    reports:
+      junit: xunit_output.xml
