@@ -599,7 +599,9 @@ def fuzz_subp_workflow():
         corpus_dir=corpus_dir, fuzz_dir=fuzz_dir,
         force=force,
     )
-    shutil.rmtree(corpus_dir)
+
+    # TODO! remove the temporary directory, either at the termination of the
+    # workflow, or if the workflow is interrupted by the user.
 
 
 XML = r"""<?xml version="1.0" ?>
