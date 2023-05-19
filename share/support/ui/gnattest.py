@@ -518,14 +518,15 @@ def fuzz_subp_workflow():
     # We are going to compile: save everything that needs saving
     GPS.MDI.save_all()
 
-    context = GPS.current_context()
-    local_file_basename = os.path.basename(context.file().path)
-    local_file_fullname = context.file().path
-    line = str(context.location().line())
     # Print in a dedicated console the GNATtest output, to avoid the aggressive
     # flushing of the Messages console.
     console = GPS.Console("GNATtest")
     console.clear()
+
+    buf = GPS.EditorBuffer.get(open=False)
+    local_file_basename = os.path.basename(buf.file().path)
+    local_file_fullname = buf.file().path
+    line = str(buf.current_view().cursor().line())
     function_repr = local_file_basename + ":" + line
     function_hash = str(hash(function_repr))
 
