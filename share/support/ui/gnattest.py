@@ -576,7 +576,7 @@ def fuzz_subp_workflow():
     # means that the BuildTargets will execute without waiting for a user
     # action (a click on the Execute button). TODO! there should be a cleaner
     # way to do that.
-    force = bool(os.environ['GS_TESTSUITE_RUN'])
+    force = bool(os.environ.get('GS_TESTSUITE_RUN'))
     p = TargetWrapper("gnatfuzz generate")
     yield p.wait_on_execute(
         extra_args=[
