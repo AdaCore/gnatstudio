@@ -403,13 +403,13 @@ def is_harness_instr():
 def build_instr_harness_workflow():
     # Check if the generated harness was built with --dump-test-inputs. If not,
     # regenerate it.
-    console = GPS.Console()
+    console = GPS.Console("GNATtest")
     if not is_harness_instr():
         cmd = [
             "gnattest",
             "-P", get_user_project_file(), "--dump-test-inputs"]
         console.write("Generating an instrumented test harness...")
-        p = ProcessWrapper(cmd, spawn_console="")
+        p = ProcessWrapper(cmd, spawn_console="GNATtest")
 
         # Show the output in GPS's Messages window (use by default when an
         # empty string is passed to spawn_console)
@@ -428,7 +428,7 @@ def build_instr_harness_workflow():
     cmd = [
         "make", "-C", get_harness_dir(), "test_driver-build-inst"
     ]
-    p = ProcessWrapper(cmd, spawn_console="")
+    p = ProcessWrapper(cmd, spawn_console="GNATtest")
     status, output = yield p.wait_until_terminate(show_if_error=True)
     console.write(output)
 
@@ -522,11 +522,14 @@ def fuzz_subp_workflow():
     # We are going to compile: save everything that needs saving
     GPS.MDI.save_all()
 
-    console = GPS.Console()
     context = GPS.current_context()
     local_file_basename = os.path.basename(context.file().path)
     local_file_fullname = context.file().path
     line = str(context.location().line())
+    # Print in a dedicated console the GNATtest output, to avoid the aggressive
+    # flushing of the Messages console.
+    console = GPS.Console("GNATtest")
+    console.clear()
     function_repr = local_file_basename + ":" + line
     function_hash = str(hash(function_repr))
 
@@ -550,7 +553,7 @@ def fuzz_subp_workflow():
         "--routines",
         local_file_basename + ":" + line,
     ]
-    p = ProcessWrapper(cmd, spawn_console="")
+    p = ProcessWrapper(cmd, spawn_console="GNATtest")
     status, output = yield p.wait_until_terminate()
     if status != 0:
         console.write(
