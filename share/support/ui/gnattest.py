@@ -448,10 +448,6 @@ def start_fuzz(task, corpus_dir, fuzz_dir, force=False):
         shutil.rmtree(fuzz_session_dir)
 
     # TODO! account for scenario variables as done in the gnatfuzz plugin
-
-    # Activate the GNATfuzz mode using tgen. TODO! active concolic execution by
-    # default.
-    os.environ["GNATFUZZ_TGEN"] = "1"
     args = [
         "-P",
         os.path.join(fuzz_dir, "fuzz_testing", "fuzz_test.gpr"),
