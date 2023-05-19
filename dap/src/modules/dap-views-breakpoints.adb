@@ -15,8 +15,6 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-pragma Warnings (Off);
-
 with Ada.Characters.Handling;    use Ada.Characters.Handling;
 with Ada.Strings.Unbounded;      use Ada.Strings.Unbounded;
 with GNAT.Strings;               use GNAT.Strings;
@@ -30,7 +28,6 @@ with Glib.Object;                use Glib.Object;
 with Glib.Values;                use Glib.Values;
 with Glib_Values_Utils;          use Glib_Values_Utils;
 
-with Gtk.Adjustment;             use Gtk.Adjustment;
 with Gtk.Box;                    use Gtk.Box;
 with Gtk.Button;                 use Gtk.Button;
 with Gtk.Cell_Renderer;          use Gtk.Cell_Renderer;
@@ -49,18 +46,19 @@ with Gtk.Scrolled_Window;        use Gtk.Scrolled_Window;
 with Gtk.Size_Group;             use Gtk.Size_Group;
 with Gtk.Stock;                  use Gtk.Stock;
 with Gtk.Spin_Button;            use Gtk.Spin_Button;
-with Gtk.Text_Buffer;            use Gtk.Text_Buffer;
-with Gtk.Text_Iter;              use Gtk.Text_Iter;
 with Gtk.Tree_Model;             use Gtk.Tree_Model;
 with Gtk.Tree_Selection;         use Gtk.Tree_Selection;
 with Gtk.Tree_View;              use Gtk.Tree_View;
-with Gtk.Tree_Selection;
 with Gtk.Tree_Store;             use Gtk.Tree_Store;
 with Gtk.Radio_Button;           use Gtk.Radio_Button;
 with Gtk.Widget;                 use Gtk.Widget;
 
 with Gtkada.MDI;                 use Gtkada.MDI;
 with Gtkada.Multiline_Entry;     use Gtkada.Multiline_Entry;
+
+with VSS.Regular_Expressions;
+with VSS.Strings.Conversions;
+with VSS.String_Vectors;
 
 with Basic_Types;                use Basic_Types;
 
@@ -69,7 +67,6 @@ with GPS.Editors;                use GPS.Editors;
 with GPS.Main_Window;
 with GPS.Kernel.MDI;             use GPS.Kernel.MDI;
 with GPS.Kernel.Hooks;           use GPS.Kernel.Hooks;
-with GPS.Markers;                use GPS.Markers;
 with GPS.Kernel.Actions;
 
 with Commands;                   use Commands;
@@ -81,9 +78,12 @@ with DAP.Modules.Persistent_Breakpoints;
 use DAP.Modules.Persistent_Breakpoints;
 with DAP.Clients;                use DAP.Clients;
 with DAP.Module;
+with DAP.Tools;                  use DAP.Tools;
 with DAP.Utils;
 
 with GUI_Utils;                  use GUI_Utils;
+
+with DAP.Requests.Evaluate;
 
 package body DAP.Views.Breakpoints is
 
@@ -118,11 +118,6 @@ package body DAP.Views.Breakpoints is
       new String'("Address"),
       new String'("Activatable"),
       new String'("Executable"));
-
-   type Breakpoint_Type is
-     (Break_On_Source_Loc,
-      Break_On_Subprogram);
-   --  The various types of breakpoints
 
    type Breakpoint_View_Record is new View_Record with
       record
@@ -306,6 +301,9 @@ package body DAP.Views.Breakpoints is
       Kernel : not null access Kernel_Handle_Record'Class);
    --  Create the breakpoint properties editor
 
+   procedure Load_Exceptions
+     (Self : not null access Properties_Editor_Record'Class);
+
    procedure Fill
      (Self : not null access Properties_Editor_Record'Class;
       Br   : Breakpoint_Data);
@@ -316,6 +314,7 @@ package body DAP.Views.Breakpoints is
       Br   : in out Breakpoint_Data);
    --  Apply the settings to the given breakpoint
 
+   procedure On_Load_Exception_List_Clicked (W : access GObject_Record'Class);
    procedure On_Type_Changed (W : access GObject_Record'Class);
    --  Callbacks for the various buttons
 
@@ -358,6 +357,24 @@ package body DAP.Views.Breakpoints is
       Context : Interactive_Command_Context) return Command_Return_Type;
    --  Show the source editor that has the breakpoint
 
+   type Evaluate_Request is
+     new DAP.Requests.Evaluate.Evaluate_DAP_Request
+   with record
+      Client : DAP_Client_Access;
+   end record;
+   type Evaluate_Request_Access is access all Evaluate_Request;
+   overriding procedure On_Result_Message
+     (Self        : in out Evaluate_Request;
+      Result      : in out DAP.Tools.EvaluateResponse;
+      New_Request : in out DAP.Requests.DAP_Request_Access);
+
+   Exception_Name_Pattern : constant VSS.Regular_Expressions.
+     Regular_Expression := VSS.Regular_Expressions.To_Regular_Expression
+       ("^([^:]+):");
+   --  Regexp to find exceptions names
+
+   Props : Properties_Editor;
+
    -----------
    -- Apply --
    -----------
@@ -366,46 +383,64 @@ package body DAP.Views.Breakpoints is
      (Self : not null access Properties_Editor_Record'Class;
       Br   : in out Breakpoint_Data)
    is
-      use type Generic_Views.Abstract_View_Access;
-
-      Modified       : Boolean := False;
-      Start, The_End : Gtk_Text_Iter;
-      C              : Integer;
-      T              : constant Breakpoint_Type :=
-        Breakpoint_Type'Val (Get_Active (Self.Breakpoint_Type));
-      Temporary      : constant Boolean := Self.Temporary.Get_Active;
-      Num            : Breakpoint_Identifier := Br.Num;
+      T         : constant Breakpoint_Kind :=
+        Breakpoint_Kind'Val (Get_Active (Self.Breakpoint_Type));
+      Temporary : constant Boolean := Self.Temporary.Get_Active;
 
    begin
       --  Create a new breakpoint if needed
-
-      if Num = 0 then
+      if Br.Num = 0 then
          case T is
-         when Break_On_Source_Loc =>
-            declare
-               File : constant Filesystem_String := +Get_Text (Self.File_Name);
-            begin
-               Break_Source
+            when On_Line =>
+               declare
+                  File : constant Filesystem_String := +Get_Text
+                    (Self.File_Name);
+               begin
+                  Break_Source
+                    (Self.Kernel,
+                     File      => Create_From_Base (File),
+                     Line      =>
+                       Editable_Line_Type'Value (Self.Line_Spin.Get_Text),
+                     Temporary => Temporary);
+               end;
+
+            when On_Subprogram =>
+               Break_Subprogram
                  (Self.Kernel,
-                  File      => Create_From_Base (File),
-                  Line      =>
-                    Editable_Line_Type'Value (Self.Line_Spin.Get_Text),
-                  Temporary => Temporary);
-            end;
+                  Subprogram => Self.Subprogram_Combo.Get_Active_Text,
+                  Temporary  => Temporary);
 
-         when Break_On_Subprogram =>
-            Break_Subprogram
-              (Self.Kernel,
-               Subprogram => Self.Subprogram_Combo.Get_Active_Text,
-               Temporary  => Temporary);
+            when On_Exception =>
+               declare
+                  Unhandled : constant Boolean :=
+                    Get_Active (Self.Stop_Not_Handled_Exception);
+               begin
+                  if Self.Exception_Name.Get_Active = 0 then
+                     Break_Exception
+                       (Self.Kernel,
+                        Name      => "exception",
+                        Unhandled => Unhandled,
+                        Temporary => Temporary);
 
+                  elsif Self.Exception_Name.Get_Active = 1 then
+                     Break_Exception
+                       (Self.Kernel,
+                        Name      => "assert",
+                        Unhandled => Unhandled,
+                        Temporary => Temporary);
+
+                  else
+                     Break_Exception
+                       (Self.Kernel,
+                        Name      => Self.Exception_Name.Get_Active_Text,
+                        Unhandled => Unhandled,
+                        Temporary => Temporary);
+                  end if;
+               end;
+
+            when On_Address =>
+               null;
          end case;
-      end if;
-
-      if Modified
-        and then DAP.Module.Get_Breakpoints_View /= null
-      then
-         DAP.Views.View_Access (DAP.Module.Get_Breakpoints_View).Update;
       end if;
    end Apply;
 
@@ -466,7 +501,9 @@ package body DAP.Views.Breakpoints is
 
    function Get_View
      (Client : not null access DAP.Clients.DAP_Client'Class)
-      return access Breakpoint_View_Record'Class is
+      return access Breakpoint_View_Record'Class
+   is
+      pragma Unreferenced (Client);
    begin
       return Breakpoint_View (DAP.Module.Get_Breakpoints_View);
    end Get_View;
@@ -554,14 +591,12 @@ package body DAP.Views.Breakpoints is
       Button  : Gtk_Button;
       Frame   : Gtk_Frame;
       Label   : Gtk_Label;
-      Scroll  : Gtk_Scrolled_Window;
       Vbox9   : Gtk_Vbox;
       Details : Gtk_Vbox;
       Hbox    : Gtk_Box;
       Size    : Gtk_Size_Group;
-      Adj     : Gtk_Adjustment;
-      M       : Gtk_List_Store;
       Dummy   : Gtk_Widget;
+
    begin
       Gtk.Dialog.Initialize
         (Self,
@@ -579,19 +614,25 @@ package body DAP.Views.Breakpoints is
       ------------
 
       Gtk_New (Self.Breakpoint_Type);
-      for T in Breakpoint_Type loop
+      for T in Breakpoint_Kind loop
          case T is
-            when Break_On_Source_Loc =>
+            when On_Line =>
                Self.Breakpoint_Type.Append_Text ("break on source location");
-            when Break_On_Subprogram =>
+            when On_Subprogram =>
                Self.Breakpoint_Type.Append_Text ("break on subprogram");
+            when On_Exception =>
+               Self.Breakpoint_Type.Append_Text ("break on exception");
+            when On_Address =>
+               Self.Breakpoint_Type.Append_Text ("break at specific address");
          end case;
       end loop;
 
-      Self.Breakpoint_Type.Set_Active
-        (Breakpoint_Type'Pos (Break_On_Source_Loc));
-
+      Self.Breakpoint_Type.Set_Active (Breakpoint_Kind'Pos (On_Line));
       Self.Breakpoint_Type.On_Changed (On_Type_Changed'Access, Self);
+
+      ------------
+      --  Breakpoint details
+      ------------
 
       Gtk_New (Frame);
       Frame.Set_Label_Widget (Self.Breakpoint_Type);
@@ -647,6 +688,51 @@ package body DAP.Views.Breakpoints is
       Self.Subprogram_Combo.Append_Text ("");
       Self.Subprogram_Box.Pack_Start (Self.Subprogram_Combo, False, False);
 
+      ------------
+      --  Break_On_Address
+      ------------
+
+      Gtk_New_Vbox (Self.Address_Box);
+      Details.Pack_Start (Self.Address_Box, Expand => True, Fill => True);
+
+      Gtk_New_With_Entry (Self.Address_Combo);
+      Self.Address_Combo.Append_Text ("");
+      Self.Address_Box.Pack_Start (Self.Address_Combo, False, False);
+
+      -----------
+      --  Break on exception
+      -----------
+
+      Gtk_New_Vbox (Self.Exception_Box);
+      Details.Pack_Start (Self.Exception_Box, Expand => True, Fill => True);
+
+      Gtk_New_Hbox (Hbox, False, 8);
+      Self.Exception_Box.Pack_Start (Hbox, False, True, 0);
+
+      Gtk_New_With_Entry (Self.Exception_Name);
+      Self.Load_Exceptions;
+      Hbox.Pack_Start (Self.Exception_Name, True, True, 0);
+
+      Gtk_New (Button, "Load List");
+      Hbox.Pack_Start (Button, False, False, 0);
+      Button.On_Clicked (On_Load_Exception_List_Clicked'Access, Self);
+
+      Gtk_New (Frame, "Action");
+      Self.Exception_Box.Pack_Start (Frame, False, False, 7);
+
+      Gtk_New_Vbox (Vbox9, False, 0);
+      Frame.Add (Vbox9);
+
+      Gtk_New (Self.Stop_Always_Exception, Label => "Stop always");
+      Self.Stop_Always_Exception.Set_Active (True);
+      Vbox9.Pack_Start (Self.Stop_Always_Exception, False, False, 0);
+
+      Gtk_New
+        (Self.Stop_Not_Handled_Exception,
+         Group => Self.Stop_Always_Exception,
+         Label => "Stop if not handled");
+      Vbox9.Pack_Start (Self.Stop_Not_Handled_Exception, False, False, 0);
+
       -------------
       --  A temporary breakpoint ?
       -------------
@@ -662,6 +748,8 @@ package body DAP.Views.Breakpoints is
       Self.Show_All;
       Self.Location_Box.Set_No_Show_All (True);
       Self.Subprogram_Box.Set_No_Show_All (True);
+      Self.Exception_Box.Set_No_Show_All (True);
+      Self.Address_Box.Set_No_Show_All (True);
 
       --------------
       --  Fill information
@@ -686,6 +774,39 @@ package body DAP.Views.Breakpoints is
       Dummy := Self.Add_Button (Stock_Cancel, Gtk_Response_Cancel);
       Self.Set_Default_Response (Gtk_Response_Apply);
    end Initialize;
+
+   ---------------------
+   -- Load_Exceptions --
+   ---------------------
+
+   procedure Load_Exceptions
+     (Self : not null access Properties_Editor_Record'Class)
+   is
+      M            : Gtk_List_Store;
+      Client       : constant DAP.Clients.DAP_Client_Access :=
+        DAP.Module.Get_Current_Debugger;
+      Capabilities : DAP.Tools.Optional_Capabilities;
+   begin
+      M := -Self.Exception_Name.Get_Model;
+      M.Clear;
+      Add_Unique_Combo_Entry (Self.Exception_Name, "All Ada exceptions");
+      Add_Unique_Combo_Entry (Self.Exception_Name, "Ada assertions");
+      if Client /= null
+        and then Client.Get_Capabilities.Is_Set
+      then
+         Capabilities := Client.Get_Capabilities;
+         for Index in 3 .. Length
+           (Capabilities.Value.exceptionBreakpointFilters)
+         loop
+            Add_Unique_Combo_Entry
+              (Self.Exception_Name,
+               VSS.Strings.Conversions.To_UTF_8_String
+                 (Capabilities.Value.exceptionBreakpointFilters
+                      (Index).label));
+         end loop;
+         Self.Exception_Name.Set_Active (0);
+      end if;
+   end Load_Exceptions;
 
    ---------------------------------
    -- On_Breakpoint_State_Toggled --
@@ -718,7 +839,7 @@ package body DAP.Views.Breakpoints is
    overriding procedure On_Location_Changed
      (Self : not null access Breakpoint_View_Record)
    is
-      Client : DAP.Clients.DAP_Client_Access :=
+      Client : constant DAP.Clients.DAP_Client_Access :=
         DAP.Module.Get_Current_Debugger;
       Model  : Gtk_Tree_Store;
       Iter   : Gtk_Tree_Iter;
@@ -733,9 +854,9 @@ package body DAP.Views.Breakpoints is
 
       if Client /= null then
          for Data of Client.Get_Breakpoints loop
-            for L of Data.Locations loop
-               if Get_File (L.Marker) = Client.Current_File
-                 and then Natural (Get_Line (L.Marker)) = Client.Current_Line
+            for Loc of Data.Locations loop
+               if Get_File (Loc.Marker) = Client.Current_File
+                 and then Natural (Get_Line (Loc.Marker)) = Client.Current_Line
                then
                   Id := Data.Num;
                   exit;
@@ -777,6 +898,64 @@ package body DAP.Views.Breakpoints is
          Gtk.Tree_Store.Clear (-Gtk.Tree_View.Get_Model (View.List));
       end if;
    end On_Process_Terminated;
+
+   -----------------------
+   -- On_Result_Message --
+   -----------------------
+
+   overriding procedure On_Result_Message
+     (Self        : in out Evaluate_Request;
+      Result      : in out DAP.Tools.EvaluateResponse;
+      New_Request : in out DAP.Requests.DAP_Request_Access)
+   is
+      Capabilities : DAP.Tools.Optional_Capabilities :=
+        Self.Client.Get_Capabilities;
+      Match : VSS.Regular_Expressions.Regular_Expression_Match;
+      Old   : ExceptionBreakpointsFilter_Vector;
+   begin
+      New_Request := null;
+
+      if Capabilities.Is_Set then
+         Old := Capabilities.Value.exceptionBreakpointFilters;
+         Capabilities.Value.exceptionBreakpointFilters.Clear;
+         if Length (Old) >= 1 then
+            Capabilities.Value.exceptionBreakpointFilters.Append (Old (1));
+         end if;
+         if Length (Old) >= 2 then
+            Capabilities.Value.exceptionBreakpointFilters.Append (Old (2));
+         end if;
+
+         declare
+            use VSS.String_Vectors;
+            Lines : constant Virtual_String_Vector :=
+              Result.a_body.result.Split_Lines;
+         begin
+            for Index in 2 .. Length (Lines) loop
+               declare
+                  Line : constant VSS.Strings.Virtual_String :=
+                    Element (Lines, Index);
+               begin
+                  Match := Exception_Name_Pattern.Match (Line);
+
+                  if Match.Has_Match then
+                     Capabilities.Value.exceptionBreakpointFilters.Append
+                       ((filter            => Match.Captured (1),
+                         label             => Match.Captured (1),
+                         default           => False,
+                         supportsCondition => True,
+                         others            => <>));
+                  end if;
+               end;
+            end loop;
+         end;
+      end if;
+
+      Self.Client.Set_Capabilities (Capabilities);
+
+      if Props /= null then
+         Props.Load_Exceptions;
+      end if;
+   end On_Result_Message;
 
    -----------------------
    -- On_Status_Changed --
@@ -824,6 +1003,7 @@ package body DAP.Views.Breakpoints is
      (Client : not null access DAP.Clients.DAP_Client'Class;
       View   : access Breakpoint_View_Record'Class := null)
    is
+      pragma Unreferenced (Client);
       use type Generic_Views.Abstract_View_Access;
    begin
       if DAP.Module.Get_Breakpoints_View /= null then
@@ -841,7 +1021,7 @@ package body DAP.Views.Breakpoints is
 
    overriding procedure Update (View : not null access Breakpoint_View_Record)
    is
-      Client  : DAP.Clients.DAP_Client_Access :=
+      Client  : constant DAP.Clients.DAP_Client_Access :=
         DAP.Module.Get_Current_Debugger;
       Model   : constant Gtk_Tree_Store := -Get_Model (View.List);
       Iter    : Gtk_Tree_Iter;
@@ -901,11 +1081,25 @@ package body DAP.Views.Breakpoints is
             end if;
          end if;
 
-         if Data.Subprogram /= "" then
+         if Data.Kind = On_Exception then
+            Last := Last + 1;
+            Columns (Last) := Col_Exception;
+            Glib.Values.Init_Set_String
+              (Values (Last), Escape_Text (To_String (Data.Except)));
+         end if;
+
+         if Data.Kind = On_Subprogram then
             Last := Last + 1;
             Columns (Last) := Col_Subprogs;
             Glib.Values.Init_Set_String
               (Values (Last), Escape_Text (To_String (Data.Subprogram)));
+         end if;
+
+         if Data.Kind = On_Address then
+            Last := Last + 1;
+            Columns (Last) := Col_Address;
+            Glib.Values.Init_Set_String
+              (Values (Last), Escape_Text (Address_To_String (Data.Address)));
          end if;
 
          if Data.Executable /= Null_Unbounded_String then
@@ -1144,13 +1338,12 @@ package body DAP.Views.Breakpoints is
       Context : Interactive_Command_Context) return Command_Return_Type
    is
       pragma Unreferenced (Command);
-      View  : constant Breakpoint_View :=
+      View : constant Breakpoint_View :=
         Breakpoint_View
           (Breakpoints_MDI_Views.Retrieve_View
              (Get_Kernel (Context.Context),
               Visible_Only => True));
-      Props : Properties_Editor;
-      Br    : Breakpoint_Data := (Num => 0, others => <>);
+      Br   : Breakpoint_Data := (Num => 0, others => <>);
    begin
       if View /= null then
          Props := new Properties_Editor_Record;
@@ -1165,6 +1358,7 @@ package body DAP.Views.Breakpoints is
          --  by Apply as a copy of an internal field in Process.Breakpoints
 
          Props.Destroy;
+         Props := null;
       end if;
 
       return Success;
@@ -1179,7 +1373,6 @@ package body DAP.Views.Breakpoints is
       Context : Selection_Context) return Boolean
    is
       pragma Unreferenced (Filter);
-      use type DAP.Clients.DAP_Client_Access;
    begin
       return DAP.Module.Get_Current_Debugger = null
         or else Get_View (DAP.Module.Get_Current_Debugger) = null;
@@ -1253,7 +1446,6 @@ package body DAP.Views.Breakpoints is
      (View : not null access Breakpoint_View_Record'Class)
    is
       Current : Breakpoint_Data;
-      Props   : Properties_Editor;
    begin
       Current := Get_Selection (View);
       if Current /= Empty_Breakpoint_Data then
@@ -1266,6 +1458,7 @@ package body DAP.Views.Breakpoints is
          end if;
 
          Props.Destroy;
+         Props := null;
       end if;
    end Show_Selected_Breakpoint_Details;
 
@@ -1320,20 +1513,63 @@ package body DAP.Views.Breakpoints is
       return Empty_Breakpoint_Data;
    end Get_Selection;
 
+   ------------------------------------
+   -- On_Load_Exception_List_Clicked --
+   ------------------------------------
+
+   procedure On_Load_Exception_List_Clicked
+     (W : access GObject_Record'Class)
+   is
+      View   : constant Properties_Editor := Properties_Editor (W);
+      Client : constant DAP.Clients.DAP_Client_Access :=
+        DAP.Module.Get_Current_Debugger;
+
+   begin
+      if Client = null then
+         Add_Unique_Combo_Entry
+           (View.Exception_Name, "All Ada exceptions");
+         Add_Unique_Combo_Entry
+           (View.Exception_Name, "Ada assertions");
+
+      else
+         declare
+            Req   : Evaluate_Request_Access :=
+              new Evaluate_Request (View.Kernel);
+            Frame : constant Integer := Client.Get_Selected_Frame;
+         begin
+            Req.Client := Client;
+            Req.Parameters.arguments.expression := "info exceptions";
+            if Frame /= 0 then
+               Req.Parameters.arguments.frameId :=
+                 (Is_Set => True, Value => Frame);
+            end if;
+            Req.Parameters.arguments.context :=
+              (Is_Set => True, Value => DAP.Tools.Enum.repl);
+            Client.Enqueue (DAP.Requests.DAP_Request_Access (Req));
+         end;
+      end if;
+   end On_Load_Exception_List_Clicked;
+
    ---------------------
    -- On_Type_Changed --
    ---------------------
 
    procedure On_Type_Changed (W : access GObject_Record'Class) is
       Self : constant Properties_Editor := Properties_Editor (W);
-      T    : constant Breakpoint_Type :=
-        Breakpoint_Type'Val (Get_Active (Self.Breakpoint_Type));
+      T    : constant Breakpoint_Kind :=
+        Breakpoint_Kind'Val (Get_Active (Self.Breakpoint_Type));
    begin
-      Self.Location_Box.Set_Sensitive (T = Break_On_Source_Loc);
-      Self.Location_Box.Set_Visible (T = Break_On_Source_Loc);
+      Self.Location_Box.Set_Sensitive (T = On_Line);
+      Self.Location_Box.Set_Visible (T = On_Line);
 
-      Self.Subprogram_Box.Set_Sensitive (T = Break_On_Subprogram);
-      Self.Subprogram_Box.Set_Visible (T = Break_On_Subprogram);
+      Self.Subprogram_Box.Set_Sensitive (T = On_Subprogram);
+      Self.Subprogram_Box.Set_Visible (T = On_Subprogram);
+
+      Self.Exception_Box.Set_Sensitive (T = On_Exception);
+      Self.Exception_Box.Set_Visible (T = On_Exception);
+
+      Self.Address_Box.Set_Sensitive (T = On_Address);
+      Self.Address_Box.Set_Visible (T = On_Address);
    end On_Type_Changed;
 
    ----------
@@ -1342,13 +1578,43 @@ package body DAP.Views.Breakpoints is
 
    procedure Fill
      (Self : not null access Properties_Editor_Record'Class;
-      Br   : Breakpoint_Data)
-   is
-      Start, The_End : Gtk_Text_Iter;
-      Buffer         : Gtk_Text_Buffer;
+      Br   : Breakpoint_Data) is
    begin
-      --  When editing an existing breakpoint, we can't change its type
-      if Br.Num /= 0 then
+      if Br.Kind = On_Exception then
+         Self.Breakpoint_Type.Set_Active (Breakpoint_Kind'Pos (On_Exception));
+         Set_Active (Self.Stop_Always_Exception, True);
+
+         if Br.Except = "all" then
+            Set_Active_Text (Self.Exception_Name, "All Ada exceptions");
+         elsif Br.Except = "unhandled" then
+            Set_Active_Text (Self.Exception_Name, "All Ada exceptions");
+            Set_Active (Self.Stop_Not_Handled_Exception, True);
+         else
+            Add_Unique_Combo_Entry
+              (Self.Exception_Name,
+               To_String (Br.Except), Select_Text => True);
+         end if;
+
+         Set_Active (Self.Temporary, Br.Disposition /= Keep);
+
+      elsif Br.Kind = On_Subprogram then
+         Self.Breakpoint_Type.Set_Active (Breakpoint_Kind'Pos (On_Subprogram));
+
+         Add_Unique_Combo_Entry
+           (Self.Subprogram_Combo, To_String (Br.Subprogram), True);
+
+      elsif Br.Kind = On_Address then
+         Self.Breakpoint_Type.Set_Active (Breakpoint_Kind'Pos (On_Address));
+
+         Add_Unique_Combo_Entry
+           (Self.Address_Combo, Address_To_String (Br.Address));
+         Set_Text
+           (Gtk_Entry (Self.Address_Combo.Get_Child),
+            Address_To_String (Br.Address));
+
+      elsif not Br.Locations.Is_Empty
+        or else Br.Num = 0
+      then
          if not Br.Locations.Is_Empty then
             Set_Text
               (Self.File_Name,
@@ -1357,20 +1623,18 @@ package body DAP.Views.Breakpoints is
               (Self.Line_Spin,
                Grange_Float (Get_Line (Br.Locations.First_Element.Marker)));
          end if;
+      end if;
 
-         if Br.Subprogram /= "" then
-            Self.Breakpoint_Type.Set_Active
-              (Breakpoint_Type'Pos (Break_On_Subprogram));
-
-            Add_Unique_Combo_Entry
-              (Self.Subprogram_Combo, To_String (Br.Subprogram), True);
-         end if;
-
+      --  When editing an existing breakpoint, we can't change its type
+      if Br.Num /= 0 then
          Self.Breakpoint_Type.Set_Sensitive (False);
+         Self.Stop_Always_Exception.Set_Sensitive (False);
+         Self.Exception_Name.Set_Sensitive (False);
          Self.Temporary.Set_Sensitive (False);
          Self.File_Name.Set_Sensitive (False);
          Self.Line_Spin.Set_Sensitive (False);
          Self.Subprogram_Combo.Set_Sensitive (False);
+         Self.Address_Combo.Set_Sensitive (False);
       end if;
    end Fill;
 
@@ -1381,7 +1645,7 @@ package body DAP.Views.Breakpoints is
    procedure Register_Module
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
    is
-      No_View            : Action_Filter := new No_View_Filter;
+      No_View            : constant Action_Filter := new No_View_Filter;
       Selection_Filter   : constant Action_Filter :=
         new Breakpoint_Single_Selection;
 

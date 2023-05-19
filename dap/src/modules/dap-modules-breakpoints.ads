@@ -33,6 +33,7 @@ package DAP.Modules.Breakpoints is
 
    type Breakpoint_Disposition is (Keep, Delete, Pending);
    type Breakpoint_State is (Enabled, Changing, Disabled, Moved);
+   type Breakpoint_Kind is (On_Line, On_Subprogram, On_Address, On_Exception);
 
    type Location is record
       Num     : Breakpoint_Identifier := 0;
@@ -42,27 +43,38 @@ package DAP.Modules.Breakpoints is
 
    package Location_Vectors is new Ada.Containers.Vectors (Positive, Location);
 
-   type Breakpoint_Data is record
+   type Breakpoint_Data (Kind : Breakpoint_Kind := On_Line) is record
       Num         : Breakpoint_Identifier := No_Breakpoint;
-
-      Locations   : Location_Vectors.Vector;
+      Locations   : Location_Vectors.Vector := Location_Vectors.Empty_Vector;
       --  The locations of the breakpoint, may have several for subprograms
-
-      Subprogram  : Ada.Strings.Unbounded.Unbounded_String;
-      Address     : Address_Type := Invalid_Address;
 
       Disposition : Breakpoint_Disposition := Keep;
       --  What is done when the breakpoint is reached
 
       State       : Breakpoint_State := Enabled;
 
-      Condition   : Unbounded_String;
+      Condition   : Unbounded_String := Null_Unbounded_String;
       --  Condition on which this breakpoint is activated
 
       Ignore      : Natural := 0;
       --  Number of hits that will be ignored before actually stopping
 
-      Executable  : Unbounded_String;
+      Executable  : Unbounded_String := Null_Unbounded_String;
+
+      case Kind is
+         when On_Line =>
+            null;
+
+         when On_Subprogram =>
+            Subprogram : Ada.Strings.Unbounded.Unbounded_String;
+
+         when On_Address =>
+            Address : Address_Type := Invalid_Address;
+
+         when On_Exception =>
+            Except    : Ada.Strings.Unbounded.Unbounded_String;
+            Unhandled : Boolean := False;
+      end case;
    end record;
 
    Empty_Breakpoint_Data : constant Breakpoint_Data :=
@@ -173,11 +185,11 @@ package DAP.Modules.Breakpoints is
       return Breakpoint_Hash_Maps.Map;
    --  Get breakpoints ordered by files
 
-   function Get_For_Subprograms
+   function Get_For
      (Self          : Breakpoint_Holder;
+      Kind          : Breakpoint_Kind;
       With_Changing : Boolean := False)
       return Breakpoint_Vectors.Vector;
-   --  Get breakpoints for subprograms
 
    procedure Initialized_For_File
      (Self    : in out Breakpoint_Holder;
@@ -190,17 +202,10 @@ package DAP.Modules.Breakpoints is
      (Self    : Breakpoint_Holder;
       Data    : Breakpoint_Data;
       Changed : out Breakpoint_Vectors.Vector);
-   --  Prepare a list to send with the line breakpoint
-
-   procedure Add_Subprogram
-     (Self    : Breakpoint_Holder;
-      Data    : Breakpoint_Data;
-      Changed : out Breakpoint_Vectors.Vector);
-   --  Prepare a list to send with the subprogram breakpoint
+   --  Prepare a list to send with the breakpoints
 
    procedure Added
      (Self    : in out Breakpoint_Holder;
-      File    : Virtual_File;
       Data    : Breakpoint_Data;
       Changed : out Breakpoint_Vectors.Vector;
       Update  : out Boolean);
@@ -267,23 +272,19 @@ package DAP.Modules.Breakpoints is
       Changed    : out Breakpoint_Vectors.Vector);
    --  Add/delete breakpoint for the address
 
-   function Get_For_Address
-     (Self          : Breakpoint_Holder;
-      With_Changing : Boolean := False)
-      return Breakpoint_Vectors.Vector;
-   --  Get breakpoints for addresses
+   procedure Status_Changed
+     (Self   : in out Breakpoint_Holder;
+      Kind   : Breakpoint_Kind;
+      Actual : Breakpoint_Vectors.Vector);
 
-   procedure Address_Response
-     (Self         : in out Breakpoint_Holder;
-      Last_Element : Breakpoint_Data);
+   procedure Add_BP_From_Response
+     (Self : in out Breakpoint_Holder;
+      Data : Breakpoint_Data);
    --  Process response to update last (added) breakpoint data
 
-   procedure Address_Status_Changed
-     (Self    : in out Breakpoint_Holder;
-      Actual  : Breakpoint_Vectors.Vector);
-
-   Subprogram_File : constant Virtual_File := Create ("dap_subprogram");
-   Address_File    : constant Virtual_File := Create ("dap_address");
+   Subprograms_File : constant Virtual_File := Create ("dap_subprogram");
+   Addreses_File    : constant Virtual_File := Create ("dap_address");
+   Exceptions_File  : constant Virtual_File := Create ("dap_exception");
 
 private
 

@@ -17,8 +17,6 @@
 
 with GNATCOLL.VFS;                use GNATCOLL.VFS;
 
-with VSS.Strings;
-
 with Basic_Types;                 use Basic_Types;
 with GPS.Kernel;
 
@@ -29,9 +27,7 @@ with DAP.Requests;                use DAP.Requests;
 
 limited with DAP.Clients;
 
-private with DAP.Requests.Breakpoints;
-private with DAP.Requests.Function_Breakpoints;
-private with DAP.Requests.Instruction_Breakpoints;
+private with GPS.Editors;
 
 package DAP.Modules.Breakpoint_Managers is
 
@@ -55,6 +51,11 @@ package DAP.Modules.Breakpoint_Managers is
       Address      : out Address_Type);
    --  Called when the debugger is stopped
 
+   procedure Break
+     (Self : DAP_Client_Breakpoint_Manager_Access;
+      Data : Breakpoint_Data);
+   --  Add breakpoint
+
    procedure Break_Sorce
      (Self      : DAP_Client_Breakpoint_Manager_Access;
       File      : GNATCOLL.VFS.Virtual_File;
@@ -67,6 +68,13 @@ package DAP.Modules.Breakpoint_Managers is
       Subprogram : String;
       Temporary  : Boolean := False);
    --  Add breakpoint for the subprogram
+
+   procedure Break_Exception
+     (Self      : DAP_Client_Breakpoint_Manager_Access;
+      Name      : String;
+      Unhandled : Boolean := False;
+      Temporary : Boolean := False);
+   --  Add breakpoint for the exception
 
    procedure Toggle_Instruction_Breakpoint
      (Self    : DAP_Client_Breakpoint_Manager_Access;
@@ -155,6 +163,11 @@ private
       Bunch  : Boolean);
    --  Send a request for subprogram breakpoints
 
+   procedure Send_Exception
+     (Self   : not null access DAP_Client_Breakpoint_Manager;
+      Actual : Breakpoint_Vectors.Vector;
+      Action : Action_Kind);
+
    procedure Send_Addresses
      (Self   : not null access DAP_Client_Breakpoint_Manager;
       Actual : Breakpoint_Vectors.Vector;
@@ -165,56 +178,6 @@ private
       Action : Action_Kind);
    --  To calculate responses and make actions when all of them are processed
 
-   -- Source_Line_Request --
-
-   type Source_Line_Request is
-     new DAP.Requests.Breakpoints.Breakpoint_DAP_Request
-   with record
-      Manager : DAP_Client_Breakpoint_Manager_Access;
-      File    : GNATCOLL.VFS.Virtual_File;
-      Action  : Action_Kind;
-      Sent    : Breakpoint_Vectors.Vector;
-   end record;
-
-   type Source_Line_Request_Access is access all Source_Line_Request;
-
-   overriding procedure On_Result_Message
-     (Self        : in out Source_Line_Request;
-      Result      : in out DAP.Tools.SetBreakpointsResponse;
-      New_Request : in out DAP_Request_Access);
-
-   overriding procedure On_Rejected (Self : in out Source_Line_Request);
-
-   overriding procedure On_Error_Message
-     (Self    : in out Source_Line_Request;
-      Message : VSS.Strings.Virtual_String);
-
-   --  Function_Breakpoint_DAP_Request --
-
-   type Function_Breakpoint_Request is
-     new DAP.Requests.Function_Breakpoints.Function_Breakpoint_DAP_Request
-   with record
-      Manager : DAP_Client_Breakpoint_Manager_Access;
-      Action  : Action_Kind;
-      Sent    : Breakpoint_Vectors.Vector;
-      Last    : Boolean := False;
-   end record;
-
-   type Function_Breakpoint_Request_Access is
-     access all Function_Breakpoint_Request;
-
-   overriding procedure On_Result_Message
-     (Self        : in out Function_Breakpoint_Request;
-      Result      : in out DAP.Tools.SetFunctionBreakpointsResponse;
-      New_Request : in out DAP_Request_Access);
-
-   overriding procedure On_Rejected
-     (Self : in out Function_Breakpoint_Request);
-
-   overriding procedure On_Error_Message
-     (Self    : in out Function_Breakpoint_Request;
-      Message : VSS.Strings.Virtual_String);
-
    procedure Send
      (Self   : not null access DAP_Client_Breakpoint_Manager;
       Map    : Breakpoint_Hash_Maps.Map;
@@ -222,30 +185,15 @@ private
       Bunch  : Boolean);
    --  Send breakpoints request (lines & subprograms)
 
-   --  Instruction_Breakpoint_Request --
+   procedure Convert
+     (Kernel : GPS.Kernel.Kernel_Handle;
+      File   : Virtual_File;
+      Holder : GPS.Editors.Controlled_Editor_Buffer_Holder;
+      Data   : in out Breakpoint_Data;
+      Item   : DAP.Tools.Breakpoint);
 
-   type Instruction_Breakpoint_Request is
-     new DAP.Requests.Instruction_Breakpoints.
-       Instruction_Breakpoint_DAP_Request
-   with record
-      Manager : DAP_Client_Breakpoint_Manager_Access;
-      Action  : Action_Kind;
-      Sent    : Breakpoint_Vectors.Vector;
-   end record;
-
-   type Instruction_Breakpoint_Request_Access is
-     access all Instruction_Breakpoint_Request;
-
-   overriding procedure On_Result_Message
-     (Self        : in out Instruction_Breakpoint_Request;
-      Result      : in out DAP.Tools.SetInstructionBreakpointsResponse;
-      New_Request : in out DAP_Request_Access);
-
-   overriding procedure On_Rejected
-     (Self : in out Instruction_Breakpoint_Request);
-
-   overriding procedure On_Error_Message
-     (Self    : in out Instruction_Breakpoint_Request;
-      Message : VSS.Strings.Virtual_String);
+   function Convert
+     (Kernel : GPS.Kernel.Kernel_Handle;
+      DAP_Bp : DAP.Tools.Breakpoint) return Breakpoint_Data;
 
 end DAP.Modules.Breakpoint_Managers;
