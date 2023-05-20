@@ -69,23 +69,34 @@ package DAP.Modules.Persistent_Breakpoints is
      (Executable : Virtual_File;
       List       : Breakpoint_Vectors.Vector);
 
+   procedure Break
+     (Kernel : not null access Kernel_Handle_Record'Class;
+      Data   : in out Breakpoint_Data);
+
    procedure Break_Source
-     (Kernel        : not null access Kernel_Handle_Record'Class;
-      File          : Virtual_File;
-      Line          : Editable_Line_Type;
-      Temporary     : Boolean := False);
+     (Kernel    : not null access Kernel_Handle_Record'Class;
+      File      : Virtual_File;
+      Line      : Editable_Line_Type;
+      Temporary : Boolean := False);
    --  Add breakpoint for the source line
 
    procedure Break_Subprogram
-     (Kernel        : not null access Kernel_Handle_Record'Class;
-      Subprogram    : String;
-      Temporary     : Boolean := False);
+     (Kernel     : not null access Kernel_Handle_Record'Class;
+      Subprogram : String;
+      Temporary  : Boolean := False);
    --  Add breakpoint for the subprogram
 
+   procedure Break_Exception
+     (Kernel    : not null access Kernel_Handle_Record'Class;
+      Name      : String;
+      Unhandled : Boolean := False;
+      Temporary : Boolean := False);
+   --  Add breakpoint for the exception
+
    procedure Unbreak_Source
-     (Kernel        : not null access Kernel_Handle_Record'Class;
-      File          : Virtual_File;
-      Line          : Editable_Line_Type);
+     (Kernel : not null access Kernel_Handle_Record'Class;
+      File   : Virtual_File;
+      Line   : Editable_Line_Type);
    --  Set a breakpoint on the given location.
    --  If no debugger is currently running, the breakpoint will be applied when
    --  one is started. If one or more debuggers are running, they all break

@@ -403,13 +403,13 @@ def is_harness_instr():
 def build_instr_harness_workflow():
     # Check if the generated harness was built with --dump-test-inputs. If not,
     # regenerate it.
-    console = GPS.Console()
+    console = GPS.Console("GNATtest")
     if not is_harness_instr():
         cmd = [
             "gnattest",
             "-P", get_user_project_file(), "--dump-test-inputs"]
         console.write("Generating an instrumented test harness...")
-        p = ProcessWrapper(cmd, spawn_console="")
+        p = ProcessWrapper(cmd, spawn_console="GNATtest")
 
         # Show the output in GPS's Messages window (use by default when an
         # empty string is passed to spawn_console)
@@ -428,7 +428,7 @@ def build_instr_harness_workflow():
     cmd = [
         "make", "-C", get_harness_dir(), "test_driver-build-inst"
     ]
-    p = ProcessWrapper(cmd, spawn_console="")
+    p = ProcessWrapper(cmd, spawn_console="GNATtest")
     status, output = yield p.wait_until_terminate(show_if_error=True)
     console.write(output)
 
@@ -448,10 +448,6 @@ def start_fuzz(task, corpus_dir, fuzz_dir, force=False):
         shutil.rmtree(fuzz_session_dir)
 
     # TODO! account for scenario variables as done in the gnatfuzz plugin
-
-    # Activate the GNATfuzz mode using tgen. TODO! active concolic execution by
-    # default.
-    os.environ["GNATFUZZ_TGEN"] = "1"
     args = [
         "-P",
         os.path.join(fuzz_dir, "fuzz_testing", "fuzz_test.gpr"),
@@ -522,11 +518,15 @@ def fuzz_subp_workflow():
     # We are going to compile: save everything that needs saving
     GPS.MDI.save_all()
 
-    console = GPS.Console()
-    context = GPS.current_context()
-    local_file_basename = os.path.basename(context.file().path)
-    local_file_fullname = context.file().path
-    line = str(context.location().line())
+    # Print in a dedicated console the GNATtest output, to avoid the aggressive
+    # flushing of the Messages console.
+    console = GPS.Console("GNATtest")
+    console.clear()
+
+    buf = GPS.EditorBuffer.get(open=False)
+    local_file_basename = os.path.basename(buf.file().path)
+    local_file_fullname = buf.file().path
+    line = str(buf.current_view().cursor().line())
     function_repr = local_file_basename + ":" + line
     function_hash = str(hash(function_repr))
 
@@ -550,7 +550,7 @@ def fuzz_subp_workflow():
         "--routines",
         local_file_basename + ":" + line,
     ]
-    p = ProcessWrapper(cmd, spawn_console="")
+    p = ProcessWrapper(cmd, spawn_console="GNATtest")
     status, output = yield p.wait_until_terminate()
     if status != 0:
         console.write(
@@ -577,7 +577,7 @@ def fuzz_subp_workflow():
     # means that the BuildTargets will execute without waiting for a user
     # action (a click on the Execute button). TODO! there should be a cleaner
     # way to do that.
-    force = bool(os.environ['GS_TESTSUITE_RUN'])
+    force = bool(os.environ.get('GS_TESTSUITE_RUN'))
     p = TargetWrapper("gnatfuzz generate")
     yield p.wait_on_execute(
         extra_args=[
@@ -600,7 +600,9 @@ def fuzz_subp_workflow():
         corpus_dir=corpus_dir, fuzz_dir=fuzz_dir,
         force=force,
     )
-    shutil.rmtree(corpus_dir)
+
+    # TODO! remove the temporary directory, either at the termination of the
+    # workflow, or if the workflow is interrupted by the user.
 
 
 XML = r"""<?xml version="1.0" ?>
