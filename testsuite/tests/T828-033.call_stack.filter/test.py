@@ -50,14 +50,14 @@ def test_driver():
                    ['2'],
                    "Incorrect Callstack tree when filtered")
     else:
-        if is_red_hat:
+        if is_red_hat or is_ubuntu_22:
             gps_assert(dump_tree_model(tree.get_model(), 0),
                    ['2', '3', '4', '5'],
-                   "Incorrect Callstack tree when filtered (RHES)")
+                   "Incorrect Callstack tree when filtered (RHES or Ubuntu 22)")
         else:
             gps_assert(dump_tree_model(tree.get_model(), 0),
                    ['2', '3', '4'],
-                   "Incorrect Callstack tree when filtered (Ubuntu)")
+                   "Incorrect Callstack tree when filtered (Ubuntu 20)")
 
     # Frame 0 is filtered out => it should select nothing
     d.send("frame 0")
