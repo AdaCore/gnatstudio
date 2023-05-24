@@ -555,6 +555,14 @@ package body GPS.Kernel.Preferences is
          Doc      => -("Enable usage of libadalang to highlight code."),
          Default  => Active (Experimental_LAL));
 
+      Console_LF_As_CRLF := Manager.Create_Invisible_Pref
+        (Name     => "console-lf_as_crlf",
+         Label    => -"LF as CRLF in a console",
+         Doc      =>
+           -("Some bash versions do not send CR/LF, just LF."
+             & " Process LF as CR/LF when enabled."),
+         Default  => False);
+
       -- General --
 
       Gtk_Theme := Manager.Create
