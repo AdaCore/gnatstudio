@@ -561,7 +561,7 @@ package body GPS.Kernel.Preferences is
          Doc      =>
            -("Some bash versions do not send CR/LF, just LF."
              & " Process LF as CR/LF when enabled."),
-         Default  => False);
+         Default  => True);
 
       -- General --
 
