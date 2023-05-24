@@ -74,7 +74,7 @@ package body GS_Text_Streams is
    is
       Code : constant VSS.Unicode.Code_Point :=
         VSS.Characters.Virtual_Character'Pos (Item);
-      L    : VSS.Implementation.UTF8_Encoding.UTF8_Sequence_Length;
+      L    : VSS.Unicode.Scalar_Value_UTF8_Code_Unit_Length;
       U1   : VSS.Unicode.UTF8_Code_Unit;
       U2   : VSS.Unicode.UTF8_Code_Unit;
       U3   : VSS.Unicode.UTF8_Code_Unit;
