@@ -35,13 +35,10 @@ package Gtkada.Terminal is
 
    procedure Gtk_New
      (Self                             : out Gtkada_Terminal;
-      Prevent_Cursor_Motion_With_Mouse : Boolean := False;
-      LF_As_CRLF                       : Boolean);
-
+      Prevent_Cursor_Motion_With_Mouse : Boolean := False);
    procedure Initialize
      (Self                             : access Gtkada_Terminal_Record'Class;
-      Prevent_Cursor_Motion_With_Mouse : Boolean := False;
-      LF_As_CRLF                       : Boolean);
+      Prevent_Cursor_Motion_With_Mouse : Boolean := False);
    --  Creates or initializes a terminal.
    --  Prevent_Cursor_Motion_With_Mouse should be true if the terminal should
    --  manage its own insertion point, possibly different from the gtk+ cursor.
@@ -50,8 +47,6 @@ package Gtkada.Terminal is
    --  suitable for those applications that use curses (like a Unix shell, vi
    --  or other full-screen applications), not if you are using the terminal
    --  just to be able to see colors for instance.
-   --  Some bash versions do not send CR/LF, just LF. Process LF as CR/LF when
-   --  LF_As_CRLF is True.
 
    overriding procedure Place_Cursor
      (Self   : access Gtkada_Terminal_Record;
@@ -148,8 +143,6 @@ private
       --  If True, the terminal memorizes where the external application left
       --  the cursor, and always inserts at that position, even if the cursor
       --  was moved with the mouse to another location
-
-      LF_As_CRLF        : Boolean := False;
 
       Cursor_Mark       : Gtk.Text_Mark.Gtk_Text_Mark;
 
