@@ -1607,9 +1607,7 @@ package body Interactive_Consoles is
       Console.Pack_Start (Console.Scrolled, Expand => True, Fill => True);
 
       if ANSI_Support then
-         Gtk_New (Term,
-                  Prevent_Cursor_Motion_With_Mouse => True,
-                  LF_As_CRLF => Console_LF_As_CRLF.Get_Pref);
+         Gtk_New (Term, Prevent_Cursor_Motion_With_Mouse => True);
          Console.Buffer := Gtk_Text_Buffer (Term);
       else
          Gtk_New (Console.Buffer);
