@@ -358,6 +358,7 @@ package GPS.Kernel.Preferences is
    Use_LAL_In_COV       : Boolean_Preference;
    Use_LAL_In_Indent    : Boolean_Preference;
    Use_LAL_In_Highlight : Boolean_Preference;
+   Console_LF_As_CRLF   : Boolean_Preference;
 
    --  LSP
    LSP_Use_Snippets        : Boolean_Preference;

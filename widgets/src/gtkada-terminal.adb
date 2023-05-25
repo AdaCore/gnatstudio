@@ -131,7 +131,10 @@ package body Gtkada.Terminal is
       Set_Char_Attribute,
       Reset_Char_Attribute,
       Display_In_Status_Line,
-      Cursor_Horizontal_Absolute  -- CHA
+      Cursor_Horizontal_Absolute,  -- CHA
+      Erase_Saved_Lines,
+      Bracketed_Paste_Mode_On,
+      Bracketed_Paste_Mode_Off
      );
 
    type FSM_State is record
@@ -479,6 +482,9 @@ package body Gtkada.Terminal is
       Add_Sequence (FSM, ASCII.ESC & "[l",       Memory_Lock);
       Add_Sequence (FSM, ASCII.ESC & "[G",       Cursor_Horizontal_Absolute);
       Add_Sequence (FSM, ASCII.ESC & "[%dG",     Cursor_Horizontal_Absolute);
+      Add_Sequence (FSM, ASCII.ESC & "[3J",      Erase_Saved_Lines);
+      Add_Sequence (FSM, ASCII.ESC & "[?2004l",  Bracketed_Paste_Mode_On);
+      Add_Sequence (FSM, ASCII.ESC & "[?2004h",  Bracketed_Paste_Mode_Off);
 
       --  No meaning in GUI mode (?)
       --  do=^J            Cursor down one line
@@ -1008,6 +1014,7 @@ package body Gtkada.Terminal is
 
       C                 : size_t := 0;
       Stopper           : char;
+      New_Line          : Boolean := False;
 
       procedure Insert_Substr (Frm, To : size_t);
       --  Write a specific substring to the buffer
@@ -1176,6 +1183,11 @@ package body Gtkada.Terminal is
                End_All_Modes (Term);
 
             when Beginning_Of_Line =>
+               if Term.LF_As_CRLF
+                 and then not New_Line
+               then
+                  On_Newline (Term, Iter.all);
+               end if;
                Set_Line_Offset (Iter.all, 0);
                Place_Cursor (Term, Iter.all);
 
@@ -1221,6 +1233,7 @@ package body Gtkada.Terminal is
 
             when Newline =>
                On_Newline (Term, Iter.all);
+
             when Memory_Unlock | Memory_Lock =>
                null;
 
@@ -1256,6 +1269,12 @@ package body Gtkada.Terminal is
                null;
 
             when Audio_Bell =>
+               null;
+
+            when Erase_Saved_Lines =>
+               null;
+
+            when Bracketed_Paste_Mode_On | Bracketed_Paste_Mode_Off =>
                null;
 
             when Insert_One_Line =>
@@ -1309,6 +1328,15 @@ package body Gtkada.Terminal is
 
             when others =>
                Trace (Me, "Unhandled capability: " & Func'Img);
+         end case;
+
+         case Func is
+            when Newline =>
+               New_Line := True;
+            when Bracketed_Paste_Mode_On | Bracketed_Paste_Mode_Off =>
+               null;
+            when others =>
+               New_Line := False;
          end case;
 
          Term.State.Current := Term.FSM;
@@ -1566,11 +1594,12 @@ package body Gtkada.Terminal is
 
    procedure Gtk_New
      (Self                             : out Gtkada_Terminal;
-      Prevent_Cursor_Motion_With_Mouse : Boolean := False)
-   is
+      Prevent_Cursor_Motion_With_Mouse : Boolean := False;
+      LF_As_CRLF                       : Boolean) is
    begin
       Self := new Gtkada_Terminal_Record;
-      Gtkada.Terminal.Initialize (Self, Prevent_Cursor_Motion_With_Mouse);
+      Gtkada.Terminal.Initialize
+        (Self, Prevent_Cursor_Motion_With_Mouse, LF_As_CRLF);
    end Gtk_New;
 
    ----------------
@@ -1579,7 +1608,8 @@ package body Gtkada.Terminal is
 
    procedure Initialize
      (Self                             : access Gtkada_Terminal_Record'Class;
-      Prevent_Cursor_Motion_With_Mouse : Boolean := False)
+      Prevent_Cursor_Motion_With_Mouse : Boolean := False;
+      LF_As_CRLF                       : Boolean)
    is
       function Replace_Insert_Text
         (Class : GObject_Class; Func : Insert_Callback)
@@ -1599,6 +1629,8 @@ package body Gtkada.Terminal is
       Table := Self.Get_Tag_Table;
 
       Self.Prevent_Cursor_Motion := Prevent_Cursor_Motion_With_Mouse;
+      Self.LF_As_CRLF            := LF_As_CRLF;
+
       if Self.Prevent_Cursor_Motion then
          Get_Start_Iter (Self, Iter);
          Self.Cursor_Mark := Create_Mark (Self, Where => Iter);
