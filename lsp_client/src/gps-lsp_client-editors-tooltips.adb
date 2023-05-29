@@ -61,6 +61,10 @@ package body GPS.LSP_Client.Editors.Tooltips is
    Me : constant Trace_Handle := Create
      ("GPS.LSP.TOOLTIPS", GNATCOLL.Traces.On);
 
+   Max_Highlighting_Chars : constant := 10_000;
+   --  Do not try to use LAL to highlight tooltips that exceed 10_000
+   --  characters, since it can be slow.
+
    Show_Tooltip_After_Query : Boolean := True;
    --  Flag used to know whether we want to display the tooltip immediately
    --  after a tooltip query.
@@ -376,18 +380,22 @@ package body GPS.LSP_Client.Editors.Tooltips is
             --  If language is specified for the tooltip block and it is "ada",
             --  try to highlight this block. Otherwise process tooltip block
             --  as plaintext.
-
             if not Tooltip_Block.Is_String
               and then Tooltip_Block.language = "ada"
+              and then Integer
+                (Tooltip_Block.value.Character_Length) < Max_Highlighting_Chars
             then
                declare
                   use Libadalang.Analysis;
                   use Libadalang.Common;
                   use LAL.Core_Module;
 
-                  LAL_Module : constant LAL.Core_Module.LAL_Module_Id :=
+                  LAL_Module   : constant LAL.Core_Module.LAL_Module_Id :=
                     LAL.Module.Get_LAL_Core_Module;
-                  Unit       : constant Analysis_Unit :=
+                  Tooltip_Text : constant String :=
+                    VSS.Strings.Conversions.To_UTF_8_String
+                      (Tooltip_Block.value);
+                  Unit         : constant Analysis_Unit :=
                     Get_From_Buffer
                       (Context  =>
                          LAL_Module.Get_Current_Analysis_Context,
@@ -396,9 +404,7 @@ package body GPS.LSP_Client.Editors.Tooltips is
                        Buffer   =>
                          To_String
                            (String_Utils.Wrap_At_Words
-                              (S     =>
-                                     VSS.Strings.Conversions.To_UTF_8_String
-                                 (Tooltip_Block.value),
+                              (S     => Tooltip_Text,
                                Limit => Max_Width_Chars)),
                        Rule     => Basic_Decl_Rule);
                   Success    : Boolean;
@@ -417,9 +423,7 @@ package body GPS.LSP_Client.Editors.Tooltips is
                      Tooltip_Block_Label.Set_Text
                        (To_String
                           (String_Utils.Wrap_At_Words
-                               (S     =>
-                                    VSS.Strings.Conversions.To_UTF_8_String
-                                    (Tooltip_Block.value),
+                               (S     => Tooltip_Text,
                                 Limit => Max_Width_Chars)));
                   end if;
                end;
@@ -429,9 +433,8 @@ package body GPS.LSP_Client.Editors.Tooltips is
                Tooltip_Block_Label.Set_Text
                  (To_String
                     (String_Utils.Wrap_At_Words
-                         (S     =>
-                              VSS.Strings.Conversions.To_UTF_8_String
-                            (Tooltip_Block.value),
+                         (S     => VSS.Strings.Conversions.To_UTF_8_String
+                              (Tooltip_Block.value),
                           Limit => Max_Width_Chars)));
             end if;
          end loop;
