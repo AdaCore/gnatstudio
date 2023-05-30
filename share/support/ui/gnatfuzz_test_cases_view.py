@@ -1,4 +1,4 @@
-"""The GNATfuzz control View"""
+"""The GNATfuzz Test Cases View"""
 
 import GPS
 from modules import Module
@@ -13,8 +13,8 @@ import glob
 from gi.repository import Gtk, Gdk
 
 # The columns in the model
-COL_TEST_LABEL = 0
-COL_TEST_MESSAGE = 1
+COL_TEST_CASE_ID = 0
+COL_TEST_CASE_DETAILS = 1
 COL_TEST_FILENAME = 2
 COL_FOREGROUND = 3
 
@@ -29,11 +29,6 @@ PARAM_VALUE = "Parameter_Value"
 DECODED_FUNCTION_RETURN = "Decoded_Function_Return"
 FUNCTION_RETURN_TYPE = "Function_Return_Type"
 FUNCTION_RETURN_VALUE = "Function_Return_Value"
-
-TESTCASE_EXCEPTION = "Testcase_Exception"
-EXC_NAME = "Exception_Name"
-EXC_MESSAGE = "Exception_Message"
-EXC_INFO = "Exception_Information"
 
 
 def coverage_executable():
@@ -67,47 +62,49 @@ def fuzz_executable():
     return None
 
 
-class FuzzCrash(object):
-    """This represents one crash identified by GNATfuzz"""
+class FuzzTestCase(object):
+    """This represents one test case identified by GNATfuzz"""
 
     def __init__(self, file):
         self.file = file
-        self.label = ""
-        self.message = ""
+        self.id = ""
+        self.details = ""
         self.params = []  # A list of tuples of the form ("param N", "value N")
 
 
-class FuzzCrashList(object):
-    """The widget for listing crashes"""
+class FuzzTestCaseList(object):
+    """The widget for listing test cases"""
 
     def __init__(self):
         self.store = Gtk.TreeStore(
-            # Label  # Message  # Filename  # Foregreound
+            # ID  # Details  # Filename  # Foregreound
             str,
             str,
             str,
             Gdk.RGBA,
         )
 
+        self.store.set_sort_column_id(2, 0)
+
         # The tree view
         self.view = Gtk.TreeView(self.store)
-        self.view.set_name("fuzz_crash_list_view")  # For debugging/testing
+        self.view.set_name("fuzz_test_case_view")  # For debugging/testing
 
         # For now, render only the URI of the element
-        self.label_col = Gtk.TreeViewColumn("Test")
+        self.test_case_id_col = Gtk.TreeViewColumn("ID")
         cell = Gtk.CellRendererText()
-        self.label_col.pack_start(cell, False)
-        self.label_col.add_attribute(cell, "text", COL_TEST_LABEL)
+        self.test_case_id_col.pack_start(cell, False)
+        self.test_case_id_col.add_attribute(cell, "text", COL_TEST_CASE_ID)
         # Uncomment this when we want to change the foreground
         # self.label_col.add_attribute(cell, "foreground-rgba", COL_FOREGROUND)
 
-        self.view.append_column(self.label_col)
+        self.view.append_column(self.test_case_id_col)
 
-        self.msg_col = Gtk.TreeViewColumn("Message")
+        self.test_case_details_col = Gtk.TreeViewColumn("Details")
         cell = Gtk.CellRendererText()
-        self.msg_col.pack_start(cell, False)
-        self.msg_col.add_attribute(cell, "text", COL_TEST_MESSAGE)
-        self.view.append_column(self.msg_col)
+        self.test_case_details_col.pack_start(cell, False)
+        self.test_case_details_col.add_attribute(cell, "text", COL_TEST_CASE_DETAILS)
+        self.view.append_column(self.test_case_details_col)
 
         self.default_fg = Gdk.RGBA(0, 0, 0)
         self.highlight_fg = Gdk.RGBA(255, 0, 0)
@@ -140,10 +137,9 @@ class FuzzCrashList(object):
         d = GPS.Debugger.spawn(executable=GPS.File(exec))
         d.send("delete")
         d.send(f"start {self.target_candidate}")
-        d.send("catch exception")
-        d.send("cont")
-        d.send("up")  # Hack, wrong frame for gdb here.
-        d.send("down")
+
+        # It would be nice if we could add a breakpoint at the start of 
+        # the user subprogram under test...
 
         # Hide away the commands we sent...
         d.get_console().clear()
@@ -167,37 +163,37 @@ class FuzzCrashList(object):
             self.target_candidate = filename
             workflows.task_workflow("debug fuzzing crash", self.debug_candidate)
 
-    def add_crash(self, crash):
+    def add_test_case(self, test_case):
         """Add the info for the given crash to the model"""
         it = self.store.append(None)
-        self.store[it] = [crash.label, crash.message, crash.file, self.default_fg]
+        self.store[it] = [test_case.id, test_case.details, test_case.file, self.default_fg]
 
         # Fill the parameters part of the crash
-        for name, val in crash.params:
+        for name, val in test_case.params:
             param_it = self.store.append(it)
             self.store[param_it] = [name, val, "", self.default_fg]
 
 
-class GNATfuzzView(Module):
+class GNATfuzzTestCaseView(Module):
     """We're making use of the Module functionality to provide a native view"""
 
-    view_title = "Fuzz crashes"
+    view_title = "Fuzz test cases"
     mdi_position = GPS.MDI.POSITION_RIGHT
 
     def __init__(self):
-        self.crashes = {}  # The known FuzzCrashes indexed by filename
-        self.fcl = FuzzCrashList()
+        self.test_cases = {}  # The known test cases indexed by filename
+        self.fcl = FuzzTestCaseList()
 
     def setup(self):
-        make_interactive(self.get_view, category="Views", name="open GNATfuzz fuzz crashes view")
-        make_interactive(self.clear_view, category="Views", name="clear GNATfuzz fuzz crashes view")
+        make_interactive(self.get_view, category="Views", name="open GNATfuzz test cases view")
+        make_interactive(self.clear_view, category="Views", name="clear GNATfuzz test cases view")
 
     def clear_view(self):
-        """Clear the Fuzz crashes view"""
+        """Clear the Fuzz test cases view"""
         global counter
         counter = 1
-        self.crashes.clear();
-        t = pygps.get_widget_by_name("fuzz_crash_list_view")
+        t = pygps.get_widget_by_name("fuzz_test_case_view")
+        self.test_cases.clear();
         if t is not None:
             t.get_model().clear()
 
@@ -211,37 +207,38 @@ class GNATfuzzView(Module):
         # Nullify the widget field to avoid a dangling reference
         self.widget = None
 
-    def process_crashes(self, task):
-        """Workflow to read the crashes from the fuzzing session"""
+    def process_test_cases(self, task):
+        """Workflow to read the test cases from the fuzzing session"""
 
         global counter
 
-        while self.candidate_crash_files:
-            candidate = self.candidate_crash_files.pop()
-            if candidate not in self.crashes:
+        while self.candidate_test_case_files:
+            candidate = self.candidate_test_case_files.pop()
+            if candidate not in self.test_cases:
                 executable = coverage_executable()
                 # We're actually launching the executable to get the
-                # parameters that were passed to the crash, along with
-                # the actual crash message.
+                # parameters that were passed to the test case
                 cl = [executable, candidate]
                 p = ProcessWrapper(cl)
                 status, output = yield p.wait_until_terminate()
-                c = FuzzCrash(candidate)
+                c = FuzzTestCase(candidate)
 
-                splits = candidate.split(os.sep)
-                issue_dir = splits[-2]
-
-                if issue_dir == "crashes":
-                    issue_label = "Crash"
-                elif issue_dir == "hangs":
-                    issue_label = "Hang"
-                else:
-                    issue_label = "Issue"
-
-                c.label = f"{str(counter)} ({issue_label})"
-                counter += 1
-                c.params = []
-
+                # Derive and set the test ID and test case details 
+                # from the base filename
+                # Turn: id:000000 time:0, execs:0, orig:GNATfuzz_XX into
+                #       ID: 0 | Details: time:0, execs:0, orig:GNATfuzz_XX into
+                basename = os.path.basename(candidate)
+                test_case_id = basename.split(",")[0]
+                id_len = len(test_case_id) + 1
+                test_case_details = basename[id_len:]
+                c.details = test_case_details
+                test_case_id = test_case_id[3:]
+                #if test_case_id == "000000":
+                #    test_case_id = "0"
+                #else:
+                #    test_case_id = test_case_id.lstrip('0')
+                c.id = test_case_id
+ 
                 # Extract the json section of the output;
                 # it should start after "GNATfuzz : " and end at "^}"
                 json_str = ""
@@ -260,14 +257,6 @@ class GNATfuzzView(Module):
 
                 try:
                     decoded = json.loads(json_str)
-
-                    # Let's see if we have an exception
-                    if TESTCASE_EXCEPTION in decoded:
-                        exc = decoded[TESTCASE_EXCEPTION]
-                        if (EXC_NAME in exc) and (EXC_MESSAGE in exc):
-                            c.message = f"{exc[EXC_NAME]} : {exc[EXC_MESSAGE]}"
-                        else:
-                            c.message = "exception"
 
                     # Let's decode parameters
                     # First In parameters
@@ -328,30 +317,29 @@ class GNATfuzzView(Module):
                 except json.decoder.JSONDecodeError:
                     c.message = f"could not decode:\n{json_str}"
 
-                self.crashes[candidate] = c
-                self.fcl.add_crash(c)
+                self.test_cases[candidate] = c
+                self.fcl.add_test_case(c)
 
     def refresh(self):
         """Refresh the view"""
         self.project_dir = os.path.dirname(GPS.Project.root().file().name())
-        self.candidate_crash_files = []
+        self.candidate_test_case_files = []
 
-        # Get a list of all candidate crash and hang files
-        for issue_type in ("crashes", "hangs"):
-            self.candidate_crash_files.extend(
-                glob.glob(
-                    os.path.join(
-                        self.project_dir,
-                        "session",
-                        "fuzzer_output",
-                        "gnatfuzz_*",
-                        issue_type,
-                        "id*",
-                    )
-                )
+        # Get a list of all candidate testcases
+        self.candidate_test_case_files.extend(
+            sorted(glob.glob(
+                os.path.join(
+                    self.project_dir,
+                    "session",
+                    "fuzzer_output",
+                    "gnatfuzz_1_master",
+                    "queue",
+                    "id*",
+                ))
             )
-        # Process the candidate crash files
-        workflows.task_workflow("processing crashes", self.process_crashes)
+        )
+        # Process the candidate test case files
+        workflows.task_workflow("processing test cases", self.process_test_cases)
 
     def create_view(self):
         self.refresh()
@@ -366,13 +354,13 @@ class GNATfuzzView(Module):
         return self.get_child()
 
 
-def get_gnatfuzz_view():
-    """Utility function, to retrieve the registered gnatfuzz view"""
+def get_gnatfuzz_test_case_view():
+    """Utility function, to retrieve the registered gnatfuzz test case view"""
     try:
         from modules import Module_Metaclass
 
         for inst in Module_Metaclass.modules_instances:
-            if inst.__class__ == GNATfuzzView:
+            if inst.__class__ == GNATfuzzTestCaseView:
                 return inst
     except Exception:
         pass

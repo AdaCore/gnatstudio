@@ -30,6 +30,8 @@ import workflows
 
 from gnatfuzz_view import get_gnatfuzz_view
 
+from gnatfuzz_test_cases_view import get_gnatfuzz_test_case_view
+
 FUZZ_MONITOR_TIMEOUT = 1000
 # milliseconds between filesystem polling while fuzzing
 
@@ -179,26 +181,6 @@ class GNATfuzzPlugin(Module):
         ),
         X(
             "target",
-            model="gnatfuzz-fuzz-model",
-            category="_GNATfuzz_",
-            name="gnattest fuzz",
-            menu="",
-        ).children(
-            X("target-type").children(""),
-            X("in-toolbar").children("FALSE"),
-            X("in-menu").children("FALSE"),
-            X("read-only").children("TRUE"),
-            X("iconname").children("gps-build-all-symbolic"),
-            X("launch-mode").children("MANUALLY_WITH_DIALOG"),
-            X("command-line").children(
-                X("arg").children("gnatfuzz"),
-                X("arg").children("fuzz"),
-                X("arg").children("%subdirsarg"),
-            ),
-        ),
-
-        X(
-            "target",
             model="gnatfuzz-generate-model",
             category="_GNATfuzz_",
             name="gnatfuzz generate",
@@ -224,7 +206,7 @@ class GNATfuzzPlugin(Module):
     ]
 
     def setup(self):
-        # This plugin makes sense only if GNATfuzz is available:
+        # This plugin makes sense only if GNATcoverage is available:
         # return immediately if not.
         if not os_utils.locate_exec_on_path("gnatfuzz"):
             return
@@ -521,6 +503,20 @@ class GNATfuzzPlugin(Module):
 
     def gnatfuzz_fuzz_workflow(self, task):
         """The 'gnatfuzz fuzz' workflow"""
+
+        # *** IMPORTANT ***
+        # Ensure that we clear the GNATfuzz views before we launch them
+        # If the views are closed, clearing is still safe and has no
+        # affect. However, if we open the views before clearing them we 
+        # invoke a race condition where new test cases are loaded into
+        # the view before the clear command is sent. This results in
+        # the initial tests incorrectly getting removed from the 
+        # view.
+
+        # Clear the GNATfuzz views
+        GPS.execute_action("clear GNATfuzz fuzz crashes view")
+        GPS.execute_action("clear GNATfuzz test cases view")
+
         # Move away the previous fuzzing session dir
 
         fuzz_session_dir = os.path.join(self.output_dir, "fuzz_testing", "session")
@@ -553,11 +549,9 @@ class GNATfuzzPlugin(Module):
 
         xcov_files = {}  # Keys: full path, values: timestamp
 
-        # Launch the GNATfuzz view
-        GPS.execute_action("open GNATfuzz view")
-
-        # Clear the GNATfuzz view
-        GPS.execute_action("clear GNATfuzz view")
+        # Launch the GNATfuzz views
+        GPS.execute_action("open GNATfuzz fuzz crashes view")
+        GPS.execute_action("open GNATfuzz test cases view")
 
         # Monitor the disk for the presence of xcov files
 
@@ -593,6 +587,11 @@ class GNATfuzzPlugin(Module):
             view = get_gnatfuzz_view()
             if view is not None:
                 view.refresh()
+
+            # Monitor for new testcases
+            test_case_view = get_gnatfuzz_test_case_view()
+            if test_case_view is not None:
+                test_case_view.refresh()
 
             # The end condition
             tasks = [t for t in GPS.Task.list() if t.name() == "gnatfuzz fuzz"]
