@@ -428,9 +428,9 @@ SCIL for another architecture" />
                tip="Do not generate messages ranked low"/>
          <field label="Output file"
                 tip="Write csv output to specified file."
-                switch="-o"
+                switch="--out"
                 separator=" "
-                default="codepeer.csv"/>
+                default="%O/codepeer.csv"/>
          <field label="Display cpm"
                 tip="Select a cpm file to display instead."
                 switch="--current"
@@ -551,7 +551,7 @@ SCIL for another architecture" />
           <arg>--csv</arg>
           <arg>--no-analysis</arg>
           <arg>--out</arg>
-          <arg>codepeer.csv</arg>
+          <arg>%O/codepeer.csv</arg>
        </command-line>
     </target>
 
