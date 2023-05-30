@@ -36,7 +36,8 @@ with System;               use System;
 with GNATCOLL.Traces;      use GNATCOLL.Traces;
 
 package body Gtkada.Terminal is
-   Me : constant Trace_Handle := Create (Trace_Name, Off);
+   Me           : constant Trace_Handle := Create (Trace_Name, Off);
+   Me_Unhandled : constant Trace_Handle := Create (Unhandled_Trace_Name);
 
    type c_char_array is array (size_t) of char;
    for c_char_array'Component_Size use CHAR_BIT;
@@ -638,7 +639,7 @@ package body Gtkada.Terminal is
          --  Already on the right line
          null;
 
-      elsif Get_Line (Eob) + 1 < Get_Line (Iter) + Gint (Count) + 1 then
+      elsif Get_Line (Eob) < Get_Line (Iter) + Gint (Count) then
          --  Lines missing in the buffer, add them
          Missing := Integer (Get_Line (Iter)) + 1
            + Count - Integer (Get_Line (Eob) + 1);
@@ -971,7 +972,25 @@ package body Gtkada.Terminal is
          end if;
       end if;
 
-      Place_Cursor (Term, Iter);
+      if Get_Line_Offset (Iter) - 1 > Term.Region.Max_Col then
+         --  we are out of the right border, wrap line
+         Copy (Source => Iter, Dest => Iter2);
+         while Get_Line_Offset (Iter) - 1 > Term.Region.Max_Col loop
+            Backward_Chars (Iter, Count => 1, Result => Success);
+         end loop;
+
+         declare
+            Rest : constant String := Get_Slice (Term, Iter, Iter2);
+         begin
+            Delete (Term, Iter, Iter2);
+            Set_Line_Offset (Iter, 0);
+            On_Move_Cursor_Down (Term, Iter, 1, True);
+            Default_Insert (Term, Iter, Rest);
+         end;
+
+      else
+         Place_Cursor (Term, Iter);
+      end if;
    end Default_Insert;
 
    --------------------
@@ -1277,6 +1296,21 @@ package body Gtkada.Terminal is
                   end if;
                end;
 
+            when Insert_Chars =>
+               declare
+                  Count : Integer := 1;
+               begin
+                  if Term.State.Current_Arg = 2 then
+                     Count := Term.State.Arg (Term.State.Arg'First);
+                  end if;
+
+                  Default_Insert
+                    (Term, Iter.all,
+                     (1 .. Count => ' '),
+                     Overwrite_Mode => False);
+                  On_Move_Cursor_Left (Term, Iter.all, Count);
+               end;
+
             --  http://www.sweger.com/ansiplus/EscSeqScroll.html
             when Scroll_Region =>
                if Term.State.Current_Arg = 1 then
@@ -1308,7 +1342,7 @@ package body Gtkada.Terminal is
                end if;
 
             when others =>
-               Trace (Me, "Unhandled capability: " & Func'Img);
+               Trace (Me_Unhandled, "Unhandled capability: " & Func'Img);
          end case;
 
          Term.State.Current := Term.FSM;
@@ -1566,8 +1600,7 @@ package body Gtkada.Terminal is
 
    procedure Gtk_New
      (Self                             : out Gtkada_Terminal;
-      Prevent_Cursor_Motion_With_Mouse : Boolean := False)
-   is
+      Prevent_Cursor_Motion_With_Mouse : Boolean := False) is
    begin
       Self := new Gtkada_Terminal_Record;
       Gtkada.Terminal.Initialize (Self, Prevent_Cursor_Motion_With_Mouse);
