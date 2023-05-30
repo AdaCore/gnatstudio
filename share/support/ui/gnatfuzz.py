@@ -181,6 +181,25 @@ class GNATfuzzPlugin(Module):
         ),
         X(
             "target",
+            model="gnatfuzz-fuzz-model",
+            category="_GNATfuzz_",
+            name="gnattest fuzz",
+            menu="",
+        ).children(
+            X("target-type").children(""),
+            X("in-toolbar").children("FALSE"),
+            X("in-menu").children("FALSE"),
+            X("read-only").children("TRUE"),
+            X("iconname").children("gps-build-all-symbolic"),
+            X("launch-mode").children("MANUALLY_WITH_DIALOG"),
+            X("command-line").children(
+                X("arg").children("gnatfuzz"),
+                X("arg").children("fuzz"),
+                X("arg").children("%subdirsarg"),
+            ),
+        ),        
+        X(
+            "target",
             model="gnatfuzz-generate-model",
             category="_GNATfuzz_",
             name="gnatfuzz generate",
@@ -206,7 +225,7 @@ class GNATfuzzPlugin(Module):
     ]
 
     def setup(self):
-        # This plugin makes sense only if GNATcoverage is available:
+        # This plugin makes sense only if GNATfuzz is available:
         # return immediately if not.
         if not os_utils.locate_exec_on_path("gnatfuzz"):
             return
