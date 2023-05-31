@@ -107,7 +107,6 @@ class FuzzTestCaseList(object):
         self.view.append_column(self.test_case_details_col)
 
         self.default_fg = Gdk.RGBA(0, 0, 0)
-        self.highlight_fg = Gdk.RGBA(255, 0, 0)
 
         # Connect to button click
         self.view.connect("button_press_event", self._on_view_button_press)
