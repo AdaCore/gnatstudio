@@ -40,7 +40,10 @@ class Unix_Shell(ANSI_Console_Process):
         os.environ["GPSSHELL"] = "1"
         ANSI_Console_Process.__init__(self, command)
         if GPS.Preference("External Commands:Shell/stty").get():
-            self.send('stty echo; PS1="\[\e[1G\]$PS1"; clear')
+            self.send('stty echo; PS1="\[\e[1G\]$PS1";'
+                      ' echo -en "\\e[1;"$(stty size | cut -d" " -f1)'
+                      '";1;"$(stty size | cut -d" " -f2)"r";'
+                      ' clear')
         os.environ["TERM"] = oldterm
 
 

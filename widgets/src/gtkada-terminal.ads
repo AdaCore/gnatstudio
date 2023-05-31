@@ -36,6 +36,7 @@ package Gtkada.Terminal is
    procedure Gtk_New
      (Self                             : out Gtkada_Terminal;
       Prevent_Cursor_Motion_With_Mouse : Boolean := False);
+
    procedure Initialize
      (Self                             : access Gtkada_Terminal_Record'Class;
       Prevent_Cursor_Motion_With_Mouse : Boolean := False);
@@ -80,8 +81,9 @@ package Gtkada.Terminal is
    --  Set Color which will be used for background instead of default
    --  Value color when text contains ANSI codes for highlighting
 
-   Trace_Name : constant String := "GPS.WIDGETS.TERMINAL";
-   --  The name for trace
+   Trace_Name           : constant String := "GPS.WIDGETS.TERMINAL";
+   Unhandled_Trace_Name : constant String := "GPS.WIDGETS.TERMINAL_UNHANDLED";
+   --  The name for traces
 
 private
    type FSM_Transition;
