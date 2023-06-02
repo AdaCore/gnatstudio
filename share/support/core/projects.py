@@ -344,17 +344,6 @@ GPS.VCS2.supported_systems() if hasattr(GPS, 'VCS2') else GPS.VCS.supported_syst
         <string type="directory" default="(same as object directory)" allow_empty="False"/>
     </project_attribute>
 
-    <project_attribute
-        name="documentation_dir"
-        package="IDE"
-        editor_page="Build/Directories"
-        editor_section="Documentation Directories"
-        description="Directory in which the documentation will be generated. By default, this is a subdirectory 'doc' in the object directory, and doesn't need to be further specified."
-        label="Doc directory"
-        omit_if_default="true">
-        <string type="directory" default="(subdir doc in build directory)" allow_empty="False" />
-    </project_attribute>
-
     <!--  Main units -->
 
     <project_attribute
