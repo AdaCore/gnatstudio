@@ -30,9 +30,11 @@ with Glib.Object;                       use Glib.Object;
 with Glib.Unicode;                      use Glib.Unicode;
 with Glib.Values;
 
+with Gtk.Label;                         use Gtk.Label;
 with Gtk.Menu;
 with Gtk.Menu_Item;                     use Gtk.Menu_Item;
 with Gtk.Separator_Menu_Item;           use Gtk.Separator_Menu_Item;
+with Gtk.Style_Context;                 use Gtk.Style_Context;
 with Gtk.Window;                        use Gtk.Window;
 
 with Gtkada.File_Selector;              use Gtkada.File_Selector;
@@ -138,6 +140,12 @@ package body Src_Editor_Module is
       is (True) with Inline;
    --  See inherited documentation
 
+   procedure Update_Editor_Tabs_Status
+     (Kernel : not null access Kernel_Handle_Record'Class;
+      Files  : Basic_Types.File_Sets.Set);
+   --  Update the the tab status of the editor views opened for the given
+   --  files.
+
    type On_Open_File is new Open_File_Hooks_Function with null record;
    overriding function Execute
      (Self             : On_Open_File;
@@ -189,6 +197,12 @@ package body Src_Editor_Module is
       Character   : Glib.Gunichar;
       Interactive : Boolean);
    --  Reacts to the character_added Hook
+
+   type On_Project_Changed is new Simple_Hooks_Function with null record;
+   overriding procedure Execute
+     (Self   : On_Project_Changed;
+      Kernel : not null access Kernel_Handle_Record'Class);
+   --  Called when the project has changed
 
    function Load_Desktop
      (MDI  : MDI_Window;
@@ -1891,6 +1905,9 @@ package body Src_Editor_Module is
          end if;
 
          Thaw_Context (Get_Buffer (Editor));
+
+         --  Update the editor tabs' status for the file being opened
+         Update_Editor_Tabs_Status (Kernel, [File]);
       else
          Kernel.Insert
            ((-"Cannot open file ") & "'" & Display_Full_Name (File)
@@ -2040,6 +2057,7 @@ package body Src_Editor_Module is
                   Line    => Convert (Line),
                   Column  => Column));
          end if;
+
          return Source /= null;
       end if;
    end Execute;
@@ -2155,6 +2173,68 @@ package body Src_Editor_Module is
             Get_View (Box).Reset_As_Is_Mode;
          end if;
       end;
+   end Execute;
+
+   -------------------------------------
+   -- Update_Belong_To_Project_Status --
+   -------------------------------------
+
+   procedure Update_Editor_Tabs_Status
+     (Kernel : not null access Kernel_Handle_Record'Class;
+      Files  : Basic_Types.File_Sets.Set)
+   is
+
+      procedure Set_Belongs_To_Project
+        (Child : not null access GPS_MDI_Child_Record'Class);
+      --  Set/unset the CSS class specifying if the editor's file belongs
+      --  to the project or not.
+
+      ----------------------------
+      -- Set_Belongs_To_Project --
+      ----------------------------
+
+      procedure Set_Belongs_To_Project
+        (Child : not null access GPS_MDI_Child_Record'Class)
+      is
+         Src_Box : constant Source_Editor_Box :=
+           Get_Source_Box_From_MDI (MDI_Child (Child));
+         File    : constant Virtual_File := Src_Box.Get_Filename;
+         Project : constant Project_Type := Get_Project_For_File
+           (Kernel.Registry.Tree, File);
+         Tab_Label : constant Gtk_Label := Child.Get_Tab_Label;
+      begin
+         --  Return immediately if there is no tab label (floating editors).
+         if Tab_Label = null then
+            return;
+         end if;
+
+         if Project /= No_Project then
+            Get_Style_Context (Child.Get_Tab_Label).Remove_Class
+              ("not-from-project");
+         else
+            Get_Style_Context (Child.Get_Tab_Label).Add_Class
+              ("not-from-project");
+         end if;
+      end Set_Belongs_To_Project;
+
+   begin
+      for File of Files loop
+         For_All_Views
+           (Kernel   => Kernel,
+            File     => File,
+            Callback => Set_Belongs_To_Project'Unrestricted_Access);
+      end loop;
+   end Update_Editor_Tabs_Status;
+
+   -------------
+   -- Execute --
+   -------------
+
+   overriding procedure Execute
+     (Self   : On_Project_Changed;
+      Kernel : not null access Kernel_Handle_Record'Class) is
+   begin
+      Update_Editor_Tabs_Status (Kernel, Kernel.Opened_Files);
    end Execute;
 
    -------------
@@ -2596,6 +2676,8 @@ package body Src_Editor_Module is
       File_Line_Action_Hook.Add (new On_File_Line_Action);
       Word_Added_Hook.Add (new On_Word_Added);
       Character_Added_Hook.Add (new On_Character_Added);
+      Project_View_Changed_Hook.Add (new On_Project_Changed);
+      Gps_Started_Hook.Add (new On_Project_Changed);
 
       --  Menus
 
