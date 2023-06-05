@@ -15,7 +15,7 @@ def run_test():
     buf = GPS.EditorBuffer.get(GPS.File("main.adb"))
     view = buf.current_view()
     view.goto(buf.at(7, 1).end_of_line())
-    yield wait_idle()
+    yield wait_tasks(other_than=known_tasks)
 
     # Trigger the completion in a fuzzy way, by omitting the '_'
     for ch in "DoSome":
@@ -29,7 +29,6 @@ def run_test():
 
     # Verify that completion items' order: 'Do_Something' (the visible one)
     # should come first.
-
     gps_assert(dump_tree_model(pop_tree.get_model(), 6),
                ['Do_Something', 'Do_Someth1ng (invisible)'],
                "Wrong order for invisible symbols completion")
