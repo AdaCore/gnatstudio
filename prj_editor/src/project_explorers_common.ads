@@ -178,6 +178,11 @@ package Project_Explorers_Common is
       Node  : Gtk_Tree_Iter) return GNATCOLL.VFS.Virtual_File;
    --  Return the name of the file containing Node
 
+   function Get_Icon_From_Node
+     (Self  : not null access Base_Explorer_Tree_Record'Class;
+      Node  : Gtk_Tree_Iter) return String;
+   --  Return the icon of Node
+
    function Get_Project_From_Node
      (Self      : not null access Base_Explorer_Tree_Record'Class;
       Node      : Gtk_Tree_Iter;
