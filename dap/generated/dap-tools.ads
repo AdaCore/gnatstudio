@@ -20,13 +20,13 @@
 
 with Ada.Containers.Doubly_Linked_Lists;
 with Ada.Finalization;
-with VSS.JSON.Events;
+with VSS.JSON.Streams;
 with VSS.Strings;
 with VSS.String_Vectors;
 
 package DAP.Tools is
    package JSON_Event_Lists is new Ada.Containers.Doubly_Linked_Lists
-     (VSS.JSON.Events.JSON_Event, VSS.JSON.Events."=");
+     (VSS.JSON.Streams.JSON_Stream_Element, VSS.JSON.Streams."=");
 
    type Any_Value is new JSON_Event_Lists.List with null record;
    type Any_Object is new Any_Value with null record;
