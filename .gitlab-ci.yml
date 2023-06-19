@@ -74,6 +74,7 @@ build_and_test:
      - image:gtk-deps
      - cpu:8
      - mem:16
+     - run_as_root:false
   stage: build_and_test
   rules:
     - if: $CI_PIPELINE_SOURCE == 'merge_request_event'
