@@ -33,8 +33,6 @@ with Gtk.Widget;                 use Gtk.Widget;
 with Gtkada.Handlers;            use Gtkada.Handlers;
 with Gtkada.MDI;
 
-with VSS.Strings.Conversions;
-
 with GPS.Kernel.Actions;
 with GPS.Kernel.MDI;             use GPS.Kernel.MDI;
 with GPS.Kernel.Modules.UI;      use GPS.Kernel.Modules.UI;
@@ -42,8 +40,6 @@ with GPS.Kernel.Preferences;     use GPS.Kernel.Preferences;
 
 with DAP.Module;
 with DAP.Modules.Preferences;
-with DAP.Tools;
-with DAP.Requests.Evaluate;
 
 with Commands;                   use Commands;
 with Commands.Interactive;       use Commands.Interactive;
@@ -126,22 +122,6 @@ package body DAP.Views.Consoles is
      (Command : access Clear_Command;
       Context : Interactive_Command_Context) return Command_Return_Type;
    --  Clear a console
-
-   -- Evaluate_Request --
-   type Evaluate_Request is
-     new DAP.Requests.Evaluate.Evaluate_DAP_Request
-   with record
-      Console : Debugger_Console;
-   end record;
-   type Evaluate_Request_Access is access all Evaluate_Request;
-   overriding procedure On_Result_Message
-     (Self        : in out Evaluate_Request;
-      Result      : in out DAP.Tools.EvaluateResponse;
-      New_Request : in out DAP.Requests.DAP_Request_Access);
-   overriding procedure On_Rejected (Self : in out Evaluate_Request);
-   overriding procedure On_Error_Message
-     (Self    : in out Evaluate_Request;
-      Message : VSS.Strings.Virtual_String);
 
    --------------------------------
    -- Attach_To_Debugger_Console --
@@ -228,26 +208,16 @@ package body DAP.Views.Consoles is
       Input   : String;
       User    : System.Address) return String
    is
+      pragma Unreferenced (Console);
+
       DC     : constant Debugger_Console := Convert (User);
-      Req    : Evaluate_Request_Access :=
-        new Evaluate_Request (Console.Kernel);
       Client : constant DAP.Clients.DAP_Client_Access := DC.Get_Client;
-      Frame  : Integer;
    begin
-      if Client = null then
+      if Client /= null then
          return "";
       end if;
 
-      Frame := Client.Get_Selected_Frame;
-      Req.Console := DC;
-      Req.Parameters.arguments.expression :=
-        VSS.Strings.Conversions.To_Virtual_String (Input);
-      if Frame /= 0 then
-         Req.Parameters.arguments.frameId := (Is_Set => True, Value => Frame);
-      end if;
-      Req.Parameters.arguments.context :=
-        (Is_Set => True, Value => DAP.Tools.Enum.repl);
-      DC.Get_Client.Enqueue (DAP.Requests.DAP_Request_Access (Req));
+      Client.Process_User_Command (Input, True);
 
       return "";
    end Interpret_Command_Handler;
@@ -306,42 +276,6 @@ package body DAP.Views.Consoles is
             String_History.Forward);
       end if;
    end On_Grab_Focus;
-
-   -----------------------
-   -- On_Result_Message --
-   -----------------------
-
-   overriding procedure On_Result_Message
-     (Self        : in out Evaluate_Request;
-      Result      : in out DAP.Tools.EvaluateResponse;
-      New_Request : in out DAP.Requests.DAP_Request_Access)
-   is
-      pragma Unreferenced (New_Request);
-   begin
-      Self.Console.Console.Insert
-        (VSS.Strings.Conversions.To_UTF_8_String (Result.a_body.result));
-   end On_Result_Message;
-
-   -----------------
-   -- On_Rejected --
-   -----------------
-
-   overriding procedure On_Rejected (Self : in out Evaluate_Request) is
-   begin
-      Self.Console.Console.Insert ("The request is rejected");
-   end On_Rejected;
-
-   ----------------------
-   -- On_Error_Message --
-   ----------------------
-
-   overriding procedure On_Error_Message
-     (Self    : in out Evaluate_Request;
-      Message : VSS.Strings.Virtual_String) is
-   begin
-      Self.Console.Console.Insert
-        ("Error: " & VSS.Strings.Conversions.To_UTF_8_String (Message));
-   end On_Error_Message;
 
    -------------
    -- Execute --

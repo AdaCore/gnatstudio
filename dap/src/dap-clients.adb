@@ -90,6 +90,12 @@ package body DAP.Clients is
       Result      : in out DAP.Tools.StackTraceResponse;
       New_Request : in out DAP.Requests.DAP_Request_Access);
 
+   overriding procedure On_Error_Message
+     (Self    : in out StackTrace_Request;
+      Message : VSS.Strings.Virtual_String);
+
+   overriding procedure On_Rejected (Self : in out StackTrace_Request);
+
    -- Evaluate_Request --
 
    type Evaluate_Request is
@@ -98,6 +104,7 @@ package body DAP.Clients is
       Kind   : Evaluate_Kind := Hover;
       Client : DAP_Client_Access;
       Label  : Gtk.Label.Gtk_Label;
+      Output : Boolean := False;
    end record;
    type Evaluate_Request_Access is access all Evaluate_Request;
    overriding procedure On_Result_Message
@@ -129,6 +136,11 @@ package body DAP.Clients is
      Regular_Expression := VSS.Regular_Expressions.To_Regular_Expression
        ("little endian");
    --  Pattern used to detect endian
+
+   Is_Quit_Pattern : constant VSS.Regular_Expressions.
+     Regular_Expression := VSS.Regular_Expressions.To_Regular_Expression
+       ("^\s*(quit|qui|q|-gdb-exit)\s*$");
+   --  'qu' can be quit or queue-signal
 
    --------------
    -- On_Error --
@@ -374,6 +386,21 @@ package body DAP.Clients is
       return (Self.Status = Stopped or else Self.Status = Ready)
         and then Self.Sent.Is_Empty;
    end Is_Ready_For_Command;
+
+   ---------------------
+   -- Is_Quit_Command --
+   ---------------------
+
+   function Is_Quit_Command
+     (Self : DAP_Client;
+      Cmd  : String)
+      return Boolean
+   is
+      pragma Unreferenced (Self);
+   begin
+      return Is_Quit_Pattern.Match
+        (VSS.Strings.Conversions.To_Virtual_String (Cmd)).Has_Match;
+   end Is_Quit_Command;
 
    ----------------------
    -- Set_Capabilities --
@@ -1332,7 +1359,7 @@ package body DAP.Clients is
    begin
       Req.Client := Self.This;
       Req.Parameters.arguments.threadId := Thread_Id;
-      Self.Enqueue (DAP.Requests.DAP_Request_Access (Req));
+      Self.Process (DAP.Requests.DAP_Request_Access (Req));
    end Get_StackTrace;
 
    -------------------
@@ -1397,12 +1424,11 @@ package body DAP.Clients is
 
       elsif Event = "stopped" then
          declare
-            use type Generic_Views.Abstract_View_Access;
             stop : DAP.Tools.StoppedEvent;
          begin
-            Self.Set_Status (Stopped);
             DAP.Tools.Inputs.Input_StoppedEvent (Stream, stop, Success);
             if not Success then
+               Self.Set_Status (Stopped);
                return;
             end if;
 
@@ -1429,12 +1455,11 @@ package body DAP.Clients is
             end if;
 
             --  Get stopped frameId/file/line/address
-            if stop.a_body.threadId.Is_Set
-              and then Self.Call_Stack_View = null
-            then
+            if stop.a_body.threadId.Is_Set then
                Self.Get_StackTrace (stop.a_body.threadId.Value);
 
             elsif Self.Selected_File /= No_File then
+               Self.Set_Status (Stopped);
                Self.On_Location_Changed;
             end if;
          end;
@@ -1494,13 +1519,27 @@ package body DAP.Clients is
       Output_Command : Boolean := False)
    is
       Request : DAP.Requests.DAP_Request_Access;
+
+      Tmp     : constant String := GPS.Kernel.Hooks.
+        Debugger_Command_Action_Hook.Run
+          (Kernel   => Self.Kernel,
+           Debugger => Self.Get_Visual,
+           Str      => Cmd);
+
    begin
+      if Tmp = "" then
+         --  command already processed
+         return;
+      end if;
+
       if Output_Command then
          Self.Display_In_Debugger_Console (Cmd, Is_Command => True);
       end if;
 
       Request := Self.Create_Evaluate_Command
-        (Command, VSS.Strings.Conversions.To_Virtual_String (Cmd));
+        (Command,
+         VSS.Strings.Conversions.To_Virtual_String (Cmd),
+         Output_Command);
 
       Self.Enqueue (Request);
    end Process_User_Command;
@@ -1539,9 +1578,10 @@ package body DAP.Clients is
    is
       use GNATCOLL.VFS;
       use DAP.Tools;
-      pragma Unreferenced (New_Request);
 
    begin
+      New_Request := null;
+
       for Index in 1 .. Length (Result.a_body.stackFrames) loop
          declare
             Frame : constant StackFrame_Variable_Reference :=
@@ -1571,21 +1611,47 @@ package body DAP.Clients is
                if Bt.File /= No_File then
                   Self.Client.Selected_File := Bt.File;
                   Self.Client.Selected_Line := Bt.Line;
-
-                  Self.Client.On_Location_Changed;
                end if;
             end if;
             Self.Client.Frames.Append (Bt);
          end;
       end loop;
+
+      Self.Client.Set_Status (Stopped);
+      if Self.Client.Selected_File /= No_File then
+         Self.Client.On_Location_Changed;
+      end if;
    end On_Result_Message;
+
+   ----------------------
+   -- On_Error_Message --
+   ----------------------
+
+   overriding procedure On_Error_Message
+     (Self    : in out StackTrace_Request;
+      Message : VSS.Strings.Virtual_String) is
+   begin
+      DAP.Requests.StackTraces.StackTrace_DAP_Request
+        (Self).On_Error_Message (Message);
+
+      Self.Client.Set_Status (Stopped);
+   end On_Error_Message;
+
+   -----------------
+   -- On_Rejected --
+   -----------------
+
+   overriding procedure On_Rejected (Self : in out StackTrace_Request) is
+   begin
+      Self.Client.Set_Status (Stopped);
+   end On_Rejected;
 
    ---------------
    -- Backtrace --
    ---------------
 
    procedure Backtrace
-     (Self : in out DAP_Client;
+     (Self : DAP_Client;
       Bt   : out Backtrace_Vectors.Vector) is
    begin
       Bt := Self.Frames;
@@ -1885,9 +1951,10 @@ package body DAP.Clients is
    -----------------------------
 
    function Create_Evaluate_Command
-     (Self : DAP_Client;
-      Kind : Evaluate_Kind;
-      Cmd  : Virtual_String)
+     (Self   : DAP_Client;
+      Kind   : Evaluate_Kind;
+      Cmd    : Virtual_String;
+      Output : Boolean := False)
       return DAP.Requests.DAP_Request_Access
    is
       Req   : constant Evaluate_Request_Access :=
@@ -1896,6 +1963,7 @@ package body DAP.Clients is
    begin
       Req.Kind   := Kind;
       Req.Client := Self.This;
+      Req.Output := Output;
       Req.Parameters.arguments.expression := Cmd;
       if Frame /= 0 then
          Req.Parameters.arguments.frameId :=
@@ -2061,7 +2129,11 @@ package body DAP.Clients is
             end;
 
          when Command =>
-            null;
+            if Self.Output then
+               Self.Client.Display_In_Debugger_Console
+                 (VSS.Strings.Conversions.To_UTF_8_String
+                    (Result.a_body.result), False);
+            end if;
       end case;
    end On_Result_Message;
 
@@ -2120,12 +2192,23 @@ package body DAP.Clients is
 
    overriding procedure On_Rejected (Self : in out Evaluate_Request) is
    begin
-      if Self.Kind = Hover then
-         Self.Label.Set_Markup ("<b>Debugger value :</b> (rejected)");
-         Unref (GObject (Self.Label));
-      else
-         Self.Client.On_Ready;
-      end if;
+      case Self.Kind is
+         when Hover =>
+            Self.Label.Set_Markup ("<b>Debugger value :</b> (rejected)");
+            Unref (GObject (Self.Label));
+
+         when Variable_Address | Endian =>
+            null;
+
+         when Command =>
+            if Self.Output then
+               Self.Client.Display_In_Debugger_Console ("Rejected", False);
+            end if;
+
+         when Show_Lang | Set_Lang | Restore_Lang | List_Adainit |
+              Info_Line | Info_First_Line =>
+            Self.Client.On_Ready;
+      end case;
    end On_Rejected;
 
    ----------------------
@@ -2136,12 +2219,27 @@ package body DAP.Clients is
      (Self    : in out Evaluate_Request;
       Message : VSS.Strings.Virtual_String) is
    begin
-      if Self.Kind = Hover then
-         Self.Label.Set_Markup ("<b>Debugger value :</b> (error)");
-         Unref (GObject (Self.Label));
-      else
-         Self.Client.On_Ready;
-      end if;
+      DAP.Requests.Evaluate.Evaluate_DAP_Request
+        (Self).On_Error_Message (Message);
+
+      case Self.Kind is
+         when Hover =>
+            Self.Label.Set_Markup ("<b>Debugger value :</b> (error)");
+            Unref (GObject (Self.Label));
+
+         when Variable_Address | Endian =>
+            null;
+
+         when Command =>
+            if Self.Output then
+               Self.Client.Display_In_Debugger_Console
+                 (VSS.Strings.Conversions.To_UTF_8_String (Message), False);
+            end if;
+
+         when Show_Lang | Set_Lang | Restore_Lang | List_Adainit |
+              Info_Line | Info_First_Line =>
+            Self.Client.On_Ready;
+      end case;
    end On_Error_Message;
 
    ------------------------

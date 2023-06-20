@@ -118,6 +118,11 @@ package body DAP.Views.Call_Stack is
       From : Integer;
       To   : Integer);
 
+   procedure On_Updated
+     (View : not null access Call_Stack_Record'Class;
+      From : Integer;
+      To   : Integer);
+
    procedure Goto_Location (Self : not null access Call_Stack_Record'Class);
 
    type Call_Stack_Tree_Record is new Tree_View_Record with record
@@ -264,8 +269,10 @@ package body DAP.Views.Call_Stack is
    is
       use DAP.Clients;
 
-      Client : constant DAP.Clients.DAP_Client_Access := Get_Client (View);
-      Req    : StackTrace_Request_Access;
+      Client     : constant DAP.Clients.DAP_Client_Access := Get_Client (View);
+      Backtraces : Backtrace_Vectors.Vector;
+      Req        : StackTrace_Request_Access;
+
    begin
       --  If the debugger was killed, no need to refresh
 
@@ -274,18 +281,24 @@ package body DAP.Views.Call_Stack is
          return;
       end if;
 
-      Req := new StackTrace_Request (View.Kernel);
+      Client.Backtrace (Backtraces);
+      if Backtraces.Is_Empty then
+         Req := new StackTrace_Request (View.Kernel);
 
-      Req.Client := Client;
-      Req.From   := From;
-      Req.To     := To;
-      Req.Parameters.arguments.threadId :=
-        Get_Client (View).Get_Current_Thread;
-      if From /= -1 then
-         Req.Parameters.arguments.startFrame := (True, From);
-         Req.Parameters.arguments.levels     := (True, To - From + 1);
+         Req.Client := Client;
+         Req.From   := From;
+         Req.To     := To;
+         Req.Parameters.arguments.threadId :=
+           Get_Client (View).Get_Current_Thread;
+         if From /= -1 then
+            Req.Parameters.arguments.startFrame := (True, From);
+            Req.Parameters.arguments.levels     := (True, To - From + 1);
+         end if;
+         Client.Enqueue (DAP.Requests.DAP_Request_Access (Req));
+
+      else
+         View.On_Updated (From, To);
       end if;
-      Client.Enqueue (DAP.Requests.DAP_Request_Access (Req));
    end Send_Request;
 
    --------------------
@@ -564,31 +577,12 @@ package body DAP.Views.Call_Stack is
    is
       pragma Unreferenced (New_Request);
       View  : constant Call_Stack := Get_View (Self.Client);
-      Model : Gtk.Tree_Model.Gtk_Tree_Model;
-      Iter  : Gtk_Tree_Iter;
-      Path  : Gtk_Tree_Path;
 
       Backtrace : Backtrace_Vectors.Vector;
    begin
-      if View = null then
-         return;
-      end if;
-
       if Length (Result.a_body.stackFrames) = 0 then
-         View.Last := Integer'Last;
-
-         if Self.From < 1 then
-            --  we requested frames from the first one but have nothing
-            Clear (View.Model);
-         end if;
-
+         View.On_Updated (Self.From, Self.To);
          return;
-      end if;
-
-      --  Update the contents of the window
-
-      if Self.From < 1 then
-         Clear (View.Model);
       end if;
 
       for Index in 1 .. Length (Result.a_body.stackFrames) loop
@@ -598,8 +592,6 @@ package body DAP.Views.Call_Stack is
                 (Result.a_body.stackFrames, Index);
             Bt : Backtrace_Record;
          begin
-            View.Model.Append (Iter, Null_Iter);
-
             Bt.Frame_Id := Frame.id;
             Bt.Name := To_Unbounded_String
               (VSS.Strings.Conversions.To_UTF_8_String (Frame.name));
@@ -615,44 +607,89 @@ package body DAP.Views.Call_Stack is
                Bt.Line := Frame.line;
             end if;
             Backtrace.Append (Bt);
-
-            Set_All_And_Clear
-              (View.Model, Iter,
-               --  Id
-               (Frame_Num_Column => As_Int (Gint (Frame.id)),
-                --  Name
-                Name_Column => As_String
-                  (VSS.Strings.Conversions.To_UTF_8_String (Frame.name)),
-                --  Location
-                Location_Column => As_String
-                  (Escape_Text
-                     ((if Frame.source.Is_Set
-                      then VSS.Strings.Conversions.To_UTF_8_String
-                        (Frame.source.Value.path)
-                      else "") &
-                        ":" & Image (Frame.line))),
-                --  Memory
-                Memory_Column => As_String
-                  (Escape_Text
-                   ((if Frame.instructionPointerReference.Is_Empty then "<>"
-                    else VSS.Strings.Conversions.To_UTF_8_String
-                        (Frame.instructionPointerReference)))),
-                --  Sourse
-                Sourse_Column => As_String
-                  ((if Frame.source.Is_Set
-                   then VSS.Strings.Conversions.To_UTF_8_String
-                     (Frame.source.Value.path)
-                   else "")),
-                --  Line
-                Line_Column => As_Int (Gint (Frame.line))));
-
-            View.Last := Frame.id;
          end;
       end loop;
 
       Self.Client.Set_Backtrace (Backtrace);
 
-      if View.Last < Self.To then
+      declare
+         Bt : constant Backtrace_Record := Backtrace.First_Element;
+      begin
+         Self.Client.Set_Selected_Frame
+           (Bt.Frame_Id, Bt.File, Bt.Line, Bt.Address);
+      end;
+
+      View.On_Updated (Self.From, Self.To);
+   end On_Result_Message;
+
+   ----------------
+   -- On_Updated --
+   ----------------
+
+   procedure On_Updated
+     (View : not null access Call_Stack_Record'Class;
+      From : Integer;
+      To   : Integer)
+   is
+      Model : Gtk.Tree_Model.Gtk_Tree_Model;
+      Iter  : Gtk_Tree_Iter;
+      Path  : Gtk_Tree_Path;
+
+      Backtraces : Backtrace_Vectors.Vector;
+   begin
+      if View = null then
+         return;
+      end if;
+      Get_Client (View).Backtrace (Backtraces);
+
+      if Backtraces.Is_Empty then
+         View.Last := Integer'Last;
+
+         if From < 1 then
+            --  we requested frames from the first one but have nothing
+            Clear (View.Model);
+         end if;
+
+         return;
+      end if;
+
+      --  Update the contents of the window
+      if From < 1 then
+         Clear (View.Model);
+      end if;
+
+      for Index in Backtraces.First_Index .. Backtraces.Last_Index loop
+         declare
+            Bt : Backtrace_Record;
+         begin
+            View.Model.Append (Iter, Null_Iter);
+            Bt := Backtraces.Element (Index);
+
+            Set_All_And_Clear
+              (View.Model, Iter,
+               --  Id
+               (Frame_Num_Column => As_Int (Gint (Bt.Frame_Id)),
+                --  Name
+                Name_Column => As_String (To_String (Bt.Name)),
+                --  Location
+                Location_Column => As_String
+                  (Escape_Text (+Full_Name (Bt.File) & ":" & Image (Bt.Line))),
+                --  Memory
+                Memory_Column => As_String
+                  (Escape_Text
+                     ((if Bt.Address = Invalid_Address
+                      then "<>"
+                      else Address_To_String (Bt.Address)))),
+                --  Sourse
+                Sourse_Column => As_String (+Full_Name (Bt.File)),
+                --  Line
+                Line_Column => As_Int (Gint (Bt.Line))));
+
+            View.Last := Bt.Frame_Id;
+         end;
+      end loop;
+
+      if View.Last < To then
          View.Last := Integer'Last;
       end if;
 
@@ -670,31 +707,31 @@ package body DAP.Views.Call_Stack is
       end if;
 
       View.Tree.Get_Selection.Get_Selected (Model, Iter);
-      if Iter = Null_Iter then
-         Iter := View.Model.Get_Iter_First;
+      if Iter /= Null_Iter
+        and then Iter /= View.Model.Get_Iter_First
+      then
+         declare
+            File    : GNATCOLL.VFS.Virtual_File;
+            Line    : Integer;
+            Address : Address_Type;
+            S       : constant String :=
+              Model.Get_String (Iter, Memory_Column);
+         begin
+            File    := GNATCOLL.VFS.Create
+              (+Model.Get_String (Iter, Sourse_Column));
+            Line    := Integer (Model.Get_Int (Iter, Line_Column));
+            Address :=
+              (if S /= "<>"
+               then String_To_Address (S)
+               else Invalid_Address);
+
+            Get_Client (View).Set_Selected_Frame
+              (Integer (Model.Get_Int (Iter, Frame_Num_Column)),
+               File, Line, Address);
+         end;
+         View.Kernel.Context_Changed (No_Context);
       end if;
-
-      declare
-         File    : GNATCOLL.VFS.Virtual_File;
-         Line    : Integer;
-         Address : Address_Type;
-         S       : constant String := Model.Get_String (Iter, Memory_Column);
-      begin
-         File    := GNATCOLL.VFS.Create
-           (+Model.Get_String (Iter, Sourse_Column));
-         Line    := Integer (Model.Get_Int (Iter, Line_Column));
-         Address :=
-           (if S /= "<>"
-            then String_To_Address (S)
-            else Invalid_Address);
-
-         Self.Client.Set_Selected_Frame
-           (Integer (Model.Get_Int (Iter, Frame_Num_Column)),
-            File, Line, Address);
-      end;
-
-      View.Kernel.Context_Changed (No_Context);
-   end On_Result_Message;
+   end On_Updated;
 
    -----------------------
    -- On_Status_Changed --
