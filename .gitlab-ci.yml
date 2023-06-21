@@ -6,7 +6,7 @@ stages:
   - build_and_test
 
 .detect-branches:
-  #  Version 1.
+  #  Version 2.
   #  Detects source and target branches. Checkout necessary branch for
   #  repository when run downstream pipeline is detected.
   #    ACI_SOURCE_BRANCH is set to source branch (merge request, pull)
@@ -47,10 +47,18 @@ stages:
 
   #  On downstream pipeline checkout the necessary branch
   - if [[ "$CI_PIPELINE_SOURCE" == 'pipeline' ]]; then
-       if `git -C $CI_PROJECT_DIR show-ref $ACI_SOURCE_BRANCH > /dev/null`; then
-        git -C $CI_PROJECT_DIR checkout $ACI_SOURCE_BRANCH;
-      elif `git -C $CI_PROJECT_DIR show-ref $ACI_TARGET_BRANCH > /dev/null`; then
-        git -C $CI_PROJECT_DIR checkout $ACI_TARGET_BRANCH;
+      if git -C "$CI_PROJECT_DIR" show-ref --quiet -- "$ACI_SOURCE_BRANCH"; then
+        git -C "$CI_PROJECT_DIR" checkout "$ACI_SOURCE_BRANCH";
+      elif git -C "$CI_PROJECT_DIR" ls-remote --exit-code -- origin "$ACI_SOURCE_BRANCH"; then
+        git -C "$CI_PROJECT_DIR" config remote.origin.fetch "+refs/heads/$ACI_SOURCE_BRANCH:refs/remotes/origin/$ACI_SOURCE_BRANCH";
+        git -C "$CI_PROJECT_DIR" remote update;
+        git -C "$CI_PROJECT_DIR" checkout "$ACI_SOURCE_BRANCH";
+      elif git -C "$CI_PROJECT_DIR" show-ref --quiet -- "$ACI_TARGET_BRANCH"; then
+        git -C "$CI_PROJECT_DIR" checkout "$ACI_TARGET_BRANCH";
+      elif git -C "$CI_PROJECT_DIR" ls-remote --exit-code -- origin "$ACI_TARGET_BRANCH"; then
+        git -C "$CI_PROJECT_DIR" config remote.origin.fetch "+refs/heads/$ACI_TARGET_BRANCH:refs/remotes/origin/$ACI_TARGET_BRANCH";
+        git -C "$CI_PROJECT_DIR" remote update;
+        git -C "$CI_PROJECT_DIR" checkout "$ACI_TARGET_BRANCH";
       fi
     fi
 
