@@ -1223,8 +1223,11 @@ package body CodePeer.Module is
       Status : Integer;
       Cmd : GNATCOLL.Arg_Lists.Arg_List)
    is
+      use GNATCOLL.Arg_Lists;
+      use GNATCOLL.VFS;
+
       pragma Unreferenced (Kernel, Self, Category, Target);
-      pragma Unreferenced (Shadow, Background, Cmd);
+      pragma Unreferenced (Shadow, Background);
       Action    : constant CodePeer_Action := Module.Action;
    begin
       Module.Action := None;
@@ -1261,6 +1264,22 @@ package body CodePeer.Module is
                Module.Output_Directory);
 
          when Load_CSV =>
+            --  --out switch specifies the output file,  getting and using
+            --  it for report loading
+            for Index in 1 .. Args_Length (Cmd) - 1 loop
+               if String'(Nth_Arg (Cmd, Index)) = "--out" then
+                  --  The command line can be modified by a user so can be
+                  --  not valid.
+                  begin
+                     Module.Inspection_File :=
+                       Create (+Nth_Arg (Cmd, Index + 1));
+                  exception
+                     when E : others =>
+                        Trace (Me, E);
+                  end;
+               end if;
+            end loop;
+
             Module.Load_CSV (Module.Inspection_File);
 
          when None =>
