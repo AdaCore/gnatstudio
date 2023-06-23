@@ -1,6 +1,7 @@
 # submodules
 /ada_language_server
 /laltools
+/.vscode/settings.json
 *.a
 *.ali
 *.gli
