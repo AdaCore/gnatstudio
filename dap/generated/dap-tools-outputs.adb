@@ -27,26 +27,34 @@ package body DAP.Tools.Outputs is
    begin
       for Item of Value loop
          case Item.Kind is
-            when VSS.JSON.Events.Start_Array =>
+            when VSS.JSON.Streams.Start_Array =>
                Handler.Start_Array;
-            when VSS.JSON.Events.End_Array =>
+            when VSS.JSON.Streams.End_Array =>
                Handler.End_Array;
-            when VSS.JSON.Events.Start_Object =>
+            when VSS.JSON.Streams.Start_Object =>
                Handler.Start_Object;
-            when VSS.JSON.Events.End_Object =>
+            when VSS.JSON.Streams.End_Object =>
                Handler.End_Object;
-            when VSS.JSON.Events.Key_Name =>
-               Handler.Key_Name (Item.Key);
-            when VSS.JSON.Events.String_Value =>
+            when VSS.JSON.Streams.Key_Name =>
+               Handler.Key_Name (Item.Key_Name);
+            when VSS.JSON.Streams.String_Value =>
                Handler.String_Value (Item.String_Value);
-            when VSS.JSON.Events.Number_Value =>
+            when VSS.JSON.Streams.Number_Value =>
                Handler.Number_Value (Item.Number_Value);
-            when VSS.JSON.Events.Boolean_Value =>
+            when VSS.JSON.Streams.Boolean_Value =>
                Handler.Boolean_Value (Item.Boolean_Value);
-            when VSS.JSON.Events.Null_Value =>
+            when VSS.JSON.Streams.Null_Value =>
                Handler.Null_Value;
-            when VSS.JSON.Events.None =>
+            when VSS.JSON.Streams.None =>
                null;
+            when VSS.JSON.Streams.Invalid =>
+               raise Program_Error;
+            when VSS.JSON.Streams.Start_Document =>
+               raise Program_Error;
+            when VSS.JSON.Streams.End_Document =>
+               raise Program_Error;
+            when VSS.JSON.Streams.Comment =>
+               raise Program_Error;
          end case;
       end loop;
    end Output_Any_Value;
