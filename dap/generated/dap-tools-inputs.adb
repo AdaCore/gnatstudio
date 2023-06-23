@@ -36,8 +36,7 @@ package body DAP.Tools.Inputs is
          when VSS.JSON.Streams.Start_Array =>
             Value.Append ((Kind => VSS.JSON.Streams.Start_Array));
             Reader.Read_Next;
-            while Success and
-              Reader.Element_Kind /= VSS.JSON.Streams.End_Array
+            while Success and Reader.Element_Kind /= VSS.JSON.Streams.End_Array
             loop
                Input_Any_Value (Reader, Value, Success);
             end loop;
@@ -45,19 +44,15 @@ package body DAP.Tools.Inputs is
          when VSS.JSON.Streams.Start_Object =>
             Value.Append ((Kind => VSS.JSON.Streams.Start_Object));
             Reader.Read_Next;
-            while Success and
-              Reader.Element_Kind = VSS.JSON.Streams.Key_Name
+            while Success and Reader.Element_Kind = VSS.JSON.Streams.Key_Name
             loop
                Value.Append (Reader.Element);
                Reader.Read_Next;
                Input_Any_Value (Reader, Value, Success);
             end loop;
             Value.Append ((Kind => VSS.JSON.Streams.End_Object));
-         when VSS.JSON.Streams.String_Value
-            | VSS.JSON.Streams.Number_Value
-            | VSS.JSON.Streams.Boolean_Value
-            | VSS.JSON.Streams.Null_Value
-         =>
+         when VSS.JSON.Streams.String_Value | VSS.JSON.Streams.Number_Value
+           | VSS.JSON.Streams.Boolean_Value | VSS.JSON.Streams.Null_Value =>
             Value.Append (Reader.Element);
          when others =>
             Success := False;
