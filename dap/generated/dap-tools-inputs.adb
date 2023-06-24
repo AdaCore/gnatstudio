@@ -30,38 +30,35 @@ package body DAP.Tools.Inputs is
      (Reader  : in out VSS.JSON.Pull_Readers.JSON_Pull_Reader'Class;
       Value   : out Any_Value'Class;
       Success : in out Boolean) is
-      use type VSS.JSON.Pull_Readers.JSON_Event_Kind;
+      use type VSS.JSON.Streams.JSON_Stream_Element_Kind;
    begin
-      case Reader.Event_Kind is
-         when VSS.JSON.Pull_Readers.Start_Array =>
-            Value.Append ((Kind => VSS.JSON.Events.Start_Array));
+      case Reader.Element_Kind is
+         when VSS.JSON.Streams.Start_Array =>
+            Value.Append ((Kind => VSS.JSON.Streams.Start_Array));
             Reader.Read_Next;
             while Success and
-              Reader.Event_Kind /= VSS.JSON.Pull_Readers.End_Array
+              Reader.Element_Kind /= VSS.JSON.Streams.End_Array
             loop
                Input_Any_Value (Reader, Value, Success);
             end loop;
-            Value.Append ((Kind => VSS.JSON.Events.End_Array));
-         when VSS.JSON.Pull_Readers.Start_Object =>
-            Value.Append ((Kind => VSS.JSON.Events.Start_Object));
+            Value.Append ((Kind => VSS.JSON.Streams.End_Array));
+         when VSS.JSON.Streams.Start_Object =>
+            Value.Append ((Kind => VSS.JSON.Streams.Start_Object));
             Reader.Read_Next;
             while Success and
-              Reader.Event_Kind = VSS.JSON.Pull_Readers.Key_Name
+              Reader.Element_Kind = VSS.JSON.Streams.Key_Name
             loop
-               Value.Append ((VSS.JSON.Events.Key_Name, Reader.Key_Name));
+               Value.Append (Reader.Element);
                Reader.Read_Next;
                Input_Any_Value (Reader, Value, Success);
             end loop;
-            Value.Append ((Kind => VSS.JSON.Events.End_Object));
-         when VSS.JSON.Pull_Readers.String_Value =>
-            Value.Append ((VSS.JSON.Events.String_Value, Reader.String_Value));
-         when VSS.JSON.Pull_Readers.Number_Value =>
-            Value.Append ((VSS.JSON.Events.Number_Value, Reader.Number_Value));
-         when VSS.JSON.Pull_Readers.Boolean_Value =>
-            Value.Append
-              ((VSS.JSON.Events.Boolean_Value, Reader.Boolean_Value));
-         when VSS.JSON.Pull_Readers.Null_Value =>
-            Value.Append ((Kind => VSS.JSON.Events.Null_Value));
+            Value.Append ((Kind => VSS.JSON.Streams.End_Object));
+         when VSS.JSON.Streams.String_Value
+            | VSS.JSON.Streams.Number_Value
+            | VSS.JSON.Streams.Boolean_Value
+            | VSS.JSON.Streams.Null_Value
+         =>
+            Value.Append (Reader.Element);
          when others =>
             Success := False;
       end case;

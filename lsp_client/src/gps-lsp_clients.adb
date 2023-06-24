@@ -22,6 +22,7 @@ with Interfaces;
 with GNAT.OS_Lib;
 
 with VSS.JSON.Pull_Readers.Simple;
+with VSS.JSON.Streams;
 with VSS.Stream_Element_Vectors.Conversions;
 with VSS.String_Vectors;
 with VSS.Strings.Conversions; use VSS.Strings.Conversions;
@@ -505,7 +506,7 @@ package body GPS.LSP_Clients is
          error      : out LSP.Messages.Optional_ResponseError;
          Has_Result : out Boolean)
       is
-         use all type VSS.JSON.Pull_Readers.JSON_Event_Kind;
+         use all type VSS.JSON.Streams.JSON_Stream_Element_Kind;
 
          Reader   : aliased
            VSS.JSON.Pull_Readers.Simple.JSON_Simple_Pull_Reader;
@@ -544,7 +545,7 @@ package body GPS.LSP_Clients is
                if Key = "id" then
                   Id_Found := True;
 
-                  case JS.R.Event_Kind is
+                  case JS.R.Element_Kind is
                      when String_Value =>
                         Id :=
                           (Is_Number => False,
