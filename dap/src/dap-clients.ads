@@ -316,7 +316,7 @@ package DAP.Clients is
    function Get_Endian_Type (Self : in out DAP_Client) return Endian_Type;
 
    procedure Backtrace
-     (Self : in out DAP_Client;
+     (Self : DAP_Client;
       Bt   : out Backtrace_Vectors.Vector);
    --  Returns backtrace
 
@@ -336,6 +336,11 @@ package DAP.Clients is
       Output_Command : Boolean := False);
    --  Execute the debugger command. Print the command in the console
    --  if Output_Command is True
+
+   function Is_Quit_Command
+     (Self : DAP_Client;
+      Cmd  : String)
+      return Boolean;
 
    -- DAP_Visual_Debugger --
 
@@ -497,9 +502,10 @@ private
       Info_Line, Info_First_Line, Hover, Variable_Address, Endian, Command);
 
    function Create_Evaluate_Command
-     (Self : DAP_Client;
-      Kind : Evaluate_Kind;
-      Cmd  : VSS.Strings.Virtual_String)
+     (Self   : DAP_Client;
+      Kind   : Evaluate_Kind;
+      Cmd    : VSS.Strings.Virtual_String;
+      Output : Boolean := False)
       return DAP.Requests.DAP_Request_Access;
 
 end DAP.Clients;
