@@ -61,6 +61,7 @@ with DAP.Views.Call_Stack;
 with DAP.Views.Consoles;
 with DAP.Views.Threads;
 with DAP.Views.Memory;
+with DAP.Views.Variables;
 
 package body DAP.Module is
 
@@ -1260,6 +1261,7 @@ package body DAP.Module is
       DAP.Modules.Scripts.Register_Module (Kernel);
       DAP.Views.Consoles.Register_Module (Kernel);
       DAP.Views.Memory.Register_Module (Kernel);
+      DAP.Views.Variables.Register_Module (Kernel);
    end Register_Module;
 
    -------------

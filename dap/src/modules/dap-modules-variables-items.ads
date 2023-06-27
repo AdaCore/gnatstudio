@@ -15,32 +15,54 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
+with Ada.Containers.Vectors;
+with VSS.Strings;                 use VSS.Strings;
 
 with GPS.Kernel;
 
+with DAP.Tools;                   use DAP.Tools;
+
 package DAP.Modules.Variables.Items is
 
-   type Value_Format is (Default_Format, Decimal, Binary, Hexadecimal, Octal);
+   type Item_ID is new Natural;
+   Unknown_Id : constant Item_ID := 0;
+
+   type Value_Format is (Default, Hexadecimal);
+
+   Default_Format : constant DAP.Tools.ValueFormat :=
+     DAP.Tools.ValueFormat'(others => False);
+
+   function Image (Format : DAP.Tools.ValueFormat) return String;
+   function Convert (Format : DAP.Tools.ValueFormat) return Value_Format;
+   function Convert (Format : Value_Format) return DAP.Tools.ValueFormat;
 
    type Item_Info is tagged record
-      Varname      : Unbounded_String;       --  tree display varname
-      Cmd_Name     : Unbounded_String;       --  tree display command name
-      Cmd          : Unbounded_String;       --  tree display `cmd`
---      Entity       : GVD_Type_Holder;        --  parsed type info
-      Split_Lines  : Boolean;                --  for commands
+      Id           : Item_ID;   --  unique id
+      Varname      : Virtual_String; --  tree display varname
+      Cmd_Name     : Virtual_String; --  tree display command name
+      Cmd          : Virtual_String; --  tree display `cmd`
+      Split_Lines  : Boolean;        --  for commands
       Auto_Refresh : Boolean := True;
-      Format       : Value_Format := Default_Format;
+      Format       : DAP.Tools.ValueFormat := Default_Format;
    end record;
 
+   function Get_Name (Self : Item_Info) return Virtual_String;
+   function Get_Name (Self : Item_Info) return String;
+   --  Return the display name for this item
+
+   function Is_Same (Info : Item_Info; Name : Virtual_String) return Boolean;
+
    No_Item_Info : constant Item_Info :=
-     Item_Info'(Varname      => Null_Unbounded_String,
-                Cmd_Name     => Null_Unbounded_String,
-                Cmd          => Null_Unbounded_String,
---                Entity       => <>,
+     Item_Info'(Id           => Unknown_Id,
+                Varname      => Empty_Virtual_String,
+                Cmd_Name     => Empty_Virtual_String,
+                Cmd          => Empty_Virtual_String,
                 Split_Lines  => False,
                 Auto_Refresh => False,
                 Format       => <>);
+
+   package Item_Info_Vectors is
+     new Ada.Containers.Vectors (Positive, Item_Info);
 
    type Context_Item_Info is new GPS.Kernel.Context_Item with record
       Info : Item_Info;
