@@ -63,7 +63,6 @@ with Debugger_Pixmaps;
 with DAP.Clients;                use DAP.Clients;
 with DAP.Tools;                  use DAP.Tools;
 with DAP.Types;                  use DAP.Types;
-with DAP.Module;
 with DAP.Modules.Preferences;    use DAP.Modules.Preferences;
 with DAP.Modules.Breakpoints;    use DAP.Modules.Breakpoints;
 
@@ -465,11 +464,6 @@ package body DAP.Views.Assembly is
             new On_Pref_Changed'
            (Hook_Function with View => Assembly_View (Widget)),
          Watch => Widget);
-
-      Widget.On_Status_Changed
-        ((if DAP.Module.Get_Current_Debugger.Get_Status /= Stopped
-         then GPS.Debuggers.Debug_Busy
-         else GPS.Debuggers.Debug_Available));
 
       return Gtk_Widget (Widget.Tree);
    end Initialize;
