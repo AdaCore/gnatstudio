@@ -2961,7 +2961,8 @@ package body GPS.Kernel.MDI is
            & "  " & (+File.Dir.Relative_Path
               (Get_Project (Kernel).Project_Path.Dir))
            & (if Project = No_Project
-              then "" else ASCII.LF & "<b>In project:</b> " & Project.Name)
+              then ASCII.LF & "<b>Not part of any loaded project</b>"
+              else ASCII.LF & "<b>In project:</b> " & Project.Name)
            & (if V = "" then "" else ASCII.LF & V);
       end;
    end Get_Tooltip_For_File;
