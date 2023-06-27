@@ -27,3 +27,4 @@ def test_driver():
     text = console.get_text()
     gps_assert("[program running]" in text, True,
                "The program should have been run on 'debug continue'")
+    debugger.close()

@@ -10,7 +10,7 @@ def run_test():
     GPS.EditorBuffer.get(GPS.File("a.ads"))
     buf = GPS.EditorBuffer.get(GPS.File("main.adb"))
     buf.current_view().goto(buf.at(4, 14))
-    yield wait_idle()
+    yield wait_tasks()
 
     yield idle_modal_dialog(
         lambda: GPS.execute_action("rename entity"))
@@ -21,4 +21,5 @@ def run_test():
         lambda: get_stock_button(dialog, Gtk.STOCK_OK).clicked())
 
     yield hook("language_server_response_processed")
+    yield timeout(1000)
     # yield wait_language_server("textDocument/rename", "ada")
