@@ -498,6 +498,8 @@ package body DAP.Views.Assembly is
    begin
       Model.Clear;
 
+      --  May happens when we don't have an address to disassemble,
+      --  for example when we did not start the execution yet.
       if Elements.Is_Empty then
          Model.Append (Row, Null_Iter);
          Columns (1) := Instr_Column;
