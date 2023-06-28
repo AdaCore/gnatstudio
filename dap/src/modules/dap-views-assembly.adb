@@ -63,7 +63,6 @@ with Debugger_Pixmaps;
 with DAP.Clients;                use DAP.Clients;
 with DAP.Tools;                  use DAP.Tools;
 with DAP.Types;                  use DAP.Types;
-with DAP.Module;
 with DAP.Modules.Preferences;    use DAP.Modules.Preferences;
 with DAP.Modules.Breakpoints;    use DAP.Modules.Breakpoints;
 
@@ -466,11 +465,6 @@ package body DAP.Views.Assembly is
            (Hook_Function with View => Assembly_View (Widget)),
          Watch => Widget);
 
-      Widget.On_Status_Changed
-        ((if DAP.Module.Get_Current_Debugger.Get_Status /= Stopped
-         then GPS.Debuggers.Debug_Busy
-         else GPS.Debuggers.Debug_Available));
-
       return Gtk_Widget (Widget.Tree);
    end Initialize;
 
@@ -503,6 +497,17 @@ package body DAP.Views.Assembly is
       Last    : Gint := 0;
    begin
       Model.Clear;
+
+      --  May happens when we don't have an address to disassemble,
+      --  for example when we did not start the execution yet.
+      if Elements.Is_Empty then
+         Model.Append (Row, Null_Iter);
+         Columns (1) := Instr_Column;
+         Values  (1) := As_String
+           ("<b>" & Glib.Convert.Escape_Text (Can_Not_Get) & "</b>");
+         Set_And_Clear (Model, Row, Columns (1 .. 1), Values (1 .. 1));
+         return;
+      end if;
 
       for El of Elements loop
          Model.Append (Row, Null_Iter);
@@ -1070,6 +1075,7 @@ package body DAP.Views.Assembly is
       end if;
 
       if Start_Address = Invalid_Address then
+         View.Fill_Model (Invalid_Cache_Data.Data);
          return;
       end if;
 
