@@ -546,6 +546,10 @@ notebook.mdi header .mdi-highlighted-tab {
    color: @theme_selected_bg_color;
 }
 
+notebook.mdi header .not-from-project {
+   font-style: italic;
+}
+
 notebook.mdi header tab:checked {
    border-color: @notebook_background;
    color: @theme_fg_color;

@@ -15,6 +15,8 @@ many other functionalities, including extended source navigation and source
 analysis tools.  You can have as many editor windows as you need.  Each
 editor window receives annotations from other components in GNAT Studio,
 such as a debugger.
+Editors opened for files that do not belong to the currently loaded project
+will have their tab labels in italic.
 
 We use the term "pointer" to refer to the mouse pointer and "cursor" to
 refer to the text cursor.
