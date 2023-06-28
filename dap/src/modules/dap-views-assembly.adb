@@ -498,6 +498,15 @@ package body DAP.Views.Assembly is
    begin
       Model.Clear;
 
+      if Elements.Is_Empty then
+         Model.Append (Row, Null_Iter);
+         Columns (1) := Instr_Column;
+         Values  (1) := As_String
+           ("<b>" & Glib.Convert.Escape_Text (Can_Not_Get) & "</b>");
+         Set_And_Clear (Model, Row, Columns (1 .. 1), Values (1 .. 1));
+         return;
+      end if;
+
       for El of Elements loop
          Model.Append (Row, Null_Iter);
          Last := 0;
@@ -1064,6 +1073,7 @@ package body DAP.Views.Assembly is
       end if;
 
       if Start_Address = Invalid_Address then
+         View.Fill_Model (Invalid_Cache_Data.Data);
          return;
       end if;
 
