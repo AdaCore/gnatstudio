@@ -21,6 +21,8 @@ def run_test():
     tree = get_widgets_by_type(Gtk.TreeView, outline_view.pywidget())[0]
     selection = tree.get_selection()
 
+    yield wait_tasks()
+
     # Click on the variables and look at the selected element in the Outline
     def verify_loc(line, column, name):
         buf.current_view().goto(buf.at(line, column))

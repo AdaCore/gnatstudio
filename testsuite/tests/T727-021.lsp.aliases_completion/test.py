@@ -16,7 +16,7 @@ def run_test():
     buf = GPS.EditorBuffer.get(GPS.File("main.adb"))
     view = buf.current_view()
     view.goto(buf.at(7, 1).end_of_line())
-    yield wait_idle()
+    yield wait_tasks()
 
     for ch in "fo":
         send_key_event(ord(ch))

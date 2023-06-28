@@ -11,6 +11,7 @@ def run_test():
     global COUNT_DELETE
     buf = GPS.EditorBuffer.get(GPS.File("main.adb"))
     safeguard = buf.get_chars()
+    yield wait_tasks()
 
     # The goal here is to monitor the LSP's listener to Buffer_Delete_Range
     # and how often it is called: to do so, delete lines and verify

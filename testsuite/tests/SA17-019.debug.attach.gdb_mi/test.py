@@ -22,3 +22,4 @@ def test_driver():
     gps_assert(t, "",
                "Wrong content of the Messages view '{}'".format(
                    GPS.Console("Messages").get_text()))
+    debugger.close()
