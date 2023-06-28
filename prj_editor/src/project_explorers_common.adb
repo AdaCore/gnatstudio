@@ -809,6 +809,17 @@ package body Project_Explorers_Common is
    end Get_File_From_Node;
 
    ------------------------
+   -- Get_Icon_From_Node --
+   ------------------------
+
+   function Get_Icon_From_Node
+     (Self  : not null access Base_Explorer_Tree_Record'Class;
+      Node  : Gtk_Tree_Iter) return String is
+   begin
+      return Get_String (Self.Model, Node, Icon_Column);
+   end Get_Icon_From_Node;
+
+   ------------------------
    -- Get_File_Node_Type --
    ------------------------
 

@@ -57,6 +57,7 @@ with Gtk.Scrolled_Window;       use Gtk.Scrolled_Window;
 with Gtk.Tree_Sortable;         use Gtk.Tree_Sortable;
 with Gtk.Tree_View_Column;      use Gtk.Tree_View_Column;
 with Gtkada.MDI;                use Gtkada.MDI;
+with Gtkada.Combo_Tool_Button;  use Gtkada.Combo_Tool_Button;
 with Gtkada.Tree_View;          use Gtkada.Tree_View;
 with Gtkada.Handlers;           use Gtkada.Handlers;
 with Pango.Layout;              use Pango.Layout;
@@ -109,6 +110,7 @@ package body Project_Explorers is
    Toggle_Absolute_Path_Tip : constant String :=
      "Toggle the display of absolute paths or just base names in the"
      & " project explorer";
+   No_VCS_Filter_Icon : constant String := "gps-zoom-100-symbolic";
 
    package Boolean_User_Data is new Glib.Object.User_Data (Boolean);
    User_Data_Projects_Before_Directories : constant String :=
@@ -163,6 +165,9 @@ package body Project_Explorers is
 
    type Explorer_Tree_View_Record is new Base_Explorer_Tree_Record with record
       User_Filter : Explorer_Filter;
+
+      Filter_VCS : Gtkada_Combo_Tool_Button := null;
+      --  Will be null if no VCS is active
    end record;
    type Explorer_Tree_View is access all Explorer_Tree_View_Record'Class;
 
@@ -206,6 +211,9 @@ package body Project_Explorers is
 
    procedure On_Explorer_Destroy (Self : access Gtk_Widget_Record'Class);
    --  Called when the Project_Explorer_Record is being destroyed
+
+   procedure On_VCS_Filter_Changed (Self : access Gtk_Widget_Record'Class);
+   --  Update the view to the VCS filter
 
    procedure Store_Expanded_Nodes
      (Self : access Project_Explorer_Record'Class);
@@ -1053,7 +1061,60 @@ package body Project_Explorers is
      (View    : not null access Project_Explorer_Record;
       Toolbar : not null access Gtk.Toolbar.Gtk_Toolbar_Record'Class)
    is
+      VCS    : constant Abstract_VCS_System_Access := View.Kernel.VCS;
+      Engine : Abstract_VCS_Engine_Access;
+
+      procedure Add_VCS_Choice (Status : VCS_File_Status);
+
+      --------------------
+      -- Add_VCS_Choice --
+      --------------------
+
+      procedure Add_VCS_Choice (Status : VCS_File_Status)
+      is
+         Display : constant Status_Display := Engine.Get_Display (Status);
+      begin
+         if Status = Status_No_VCS then
+            Add_Item
+              (View.Tree.Filter_VCS,
+               "Show all files (no vcs filtering)",
+               To_String (Display.Icon_Name));
+         else
+            Add_Item
+              (View.Tree.Filter_VCS,
+               "Show " & To_String (Display.Label) & " files",
+               To_String (Display.Icon_Name));
+         end if;
+      end Add_VCS_Choice;
+
    begin
+
+      if VCS /= null then
+         Engine := VCS.Get_Active_VCS;
+         if Engine /= null then
+            Gtk_New (View.Tree.Filter_VCS, No_VCS_Filter_Icon, True);
+            View.Tree.Filter_VCS.Set_Tooltip_Text
+              ("Filter file not matching the VCS Status");
+            View.Tree.Filter_VCS.Set_Name ("project_view_vcs_filter");
+
+            for Status of Common_VCS_Status loop
+               Add_VCS_Choice (Status);
+            end loop;
+
+            Widget_Callback.Object_Connect
+              (View.Tree.Filter_VCS,
+               Gtkada.Combo_Tool_Button.Signal_Selection_Changed,
+               On_VCS_Filter_Changed'Access,
+               View);
+
+            View.Append_Toolbar
+              (Toolbar     => Toolbar,
+               Item        => View.Tree.Filter_VCS,
+               Right_Align => False,
+               Homogeneous => False);
+         end if;
+      end if;
+
       View.Build_Filter
         (Toolbar     => Toolbar,
          Hist_Prefix => "project_view",
@@ -1085,6 +1146,17 @@ package body Project_Explorers is
    begin
       Store_Expanded_Nodes (Project_Explorer (Self));
    end On_Explorer_Destroy;
+
+   ---------------------------
+   -- On_VCS_Filter_Changed --
+   ---------------------------
+
+   procedure On_VCS_Filter_Changed (Self : access Gtk_Widget_Record'Class)
+   is
+      View : constant Project_Explorer := Project_Explorer (Self);
+   begin
+      View.Tree.Refilter;
+   end On_VCS_Filter_Changed;
 
    ----------------------
    -- On_Focus_Changed --
@@ -1134,9 +1206,32 @@ package body Project_Explorers is
       Iter : Gtk.Tree_Model.Gtk_Tree_Iter) return Boolean
    is
       File : Virtual_File;
+      Icon : constant String :=
+        (if Self.Filter_VCS /= null
+         then Self.Filter_VCS.Get_Icon_Name
+         else No_VCS_Filter_Icon);
    begin
       case Self.Get_Node_Type (Iter) is
-         when Project_Node_Types | File_Node_Types =>
+         when File_Node_Types =>
+            if Icon /= No_VCS_Filter_Icon then
+               declare
+                  S : constant String := Self.Get_Icon_From_Node (Iter);
+               begin
+                  if S /= Icon then
+                     return False;
+                  end if;
+               end;
+            end if;
+
+            if Self.User_Filter.Pattern = null then
+               return True;
+            else
+               File := Self.Get_File_From_Node (Iter);
+               return Self.User_Filter.Visible.Contains (File);
+            end if;
+
+         when Project_Node_Types =>
+
             if Self.User_Filter.Pattern = null then
                return True;
             else
@@ -1266,7 +1361,7 @@ package body Project_Explorers is
       end if;
 
       --  Find_All_Projects_Importing (in Mark_Project_And_Parents_Visible
-      --  above)does not return an aggregate project so we do not make
+      --  above) does not return an aggregate project so we do not make
       --  it visible. Do it now.
       if Get_Project (Kernel).Is_Aggregate_Project then
          Self.Visible.Include (Get_Project (Kernel).Project_Path);

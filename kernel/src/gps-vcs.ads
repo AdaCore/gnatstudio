@@ -177,6 +177,21 @@ package GPS.VCS is
    --  All status that indicate the file is untracked (and thus needs to be
    --  explicitly added or ignored).
 
+   type VCS_Status_Array is array (Integer range <>) of VCS_File_Status;
+   Common_VCS_Status : constant VCS_Status_Array (1 .. 12) :=
+     (Status_No_VCS,
+      Status_Unmodified,
+      Status_Modified,
+      Status_Staged_Modified,
+      Status_Staged_Added,
+      Status_Deleted,
+      Status_Staged_Deleted,
+      Status_Staged_Renamed,
+      Status_Untracked,
+      Status_Ignored,
+      Status_Conflict,
+      Status_Needs_Update);
+
    type VCS_File_Properties is record
       Status       : VCS_File_Status;
       Version      : Unbounded_String;
