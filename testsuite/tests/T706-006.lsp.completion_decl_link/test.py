@@ -13,11 +13,11 @@ def run_test():
     buf = GPS.EditorBuffer.get(GPS.File("main.adb"))
     view = buf.current_view()
     view.goto(buf.at(4, 9))
-    yield wait_idle()
+    yield wait_tasks(other_than=known_tasks)
 
     for ch in "ria":
         send_key_event(ord(ch))
-        yield timeout(100)
+        yield timeout(200)
 
     yield wait_until_true(lambda: get_widget_by_name("completion-view") != None)
     pop_tree = get_widget_by_name("completion-view")
