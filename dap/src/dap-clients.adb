@@ -1592,7 +1592,8 @@ package body DAP.Clients is
             Bt.Frame_Id := Frame.id;
             Bt.Name := To_Unbounded_String
               (VSS.Strings.Conversions.To_UTF_8_String (Frame.name));
-            if Frame.instructionPointerReference.Is_Empty then
+
+            if not Frame.instructionPointerReference.Is_Empty then
                Bt.Address := String_To_Address
                  (VSS.Strings.Conversions.To_UTF_8_String
                     (Frame.instructionPointerReference));
