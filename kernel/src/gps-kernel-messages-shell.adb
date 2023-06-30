@@ -217,6 +217,21 @@ package body GPS.Kernel.Messages.Shell is
       elsif Command = "get_text" then
          Set_Return_Value (Data, To_String (Message.Get_Text));
 
+      elsif Command = "get_children" then
+         declare
+            Nested : constant Message_Array :=
+              Message.Get_Children;
+         begin
+            Set_Return_Value_As_List (Data);
+
+            for J in Nested'Range loop
+               Set_Return_Value
+                 (Data,
+                  Create_Message_Instance
+                    (Get_Script (Data), Nested (J)));
+            end loop;
+         end;
+
       elsif Command = "remove" then
          Message.Remove;
 
@@ -553,6 +568,9 @@ package body GPS.Kernel.Messages.Shell is
 
       Register_Command
         (Kernel, "get_line", 0, 0, Accessors'Access, Message_Class);
+
+      Register_Command
+        (Kernel, "get_children", 0, 0, Accessors'Access, Message_Class);
 
       Register_Command
         (Kernel, "get_text", 0, 0, Accessors'Access, Message_Class);

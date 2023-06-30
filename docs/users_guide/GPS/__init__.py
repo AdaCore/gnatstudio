@@ -7755,6 +7755,14 @@ class Message(object):
         """
         pass  # implemented in Ada
 
+    def get_children(self):
+        """
+        Returns the message's nested messages.
+
+        :return: a list of :class:`GPS.Message`
+        """
+        pass  # implemented in Ada
+
     def get_column(self):
         """
         Returns the message's column.
@@ -7812,9 +7820,10 @@ class Message(object):
         pass  # implemented in Ada
 
     @staticmethod
-    def list(file=None, category=None):
+    def list(category=None, file=None):
         """
-        Returns a list of all messages currently stored in GPS.
+        Returns a list of top (nested are not included) messages currently
+        stored in GPS.
 
         :param file: a :class:`GPS File`.
             Specifying this parameter restricts the output to messages
