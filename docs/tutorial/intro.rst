@@ -11,14 +11,14 @@ with are available on multiple platforms, using the same user interface and
 capabilities, providing a user-friendly environment with a tight integration
 between the tools.
 
-Start GNAT Studio in the `<prefix>/share/examples/gnatstudio/tutorial`directory,
+Start GNAT Studio in the ``<prefix>/share/examples/gnatstudio/tutorial`` directory,
 or if the directory is read-only, copy this directory and its subdirectories
 in a local (writable) area, and start GNAT Studio from the :file:`tutorial`
 directory, so that GNAT Studio will load the right context.
 
 By default, the tutorial sources can be found under
-`<prefix>/share/examples/gnatstudio/tutorial`, where `<prefix>` is the prefix
+``<prefix>/share/examples/gnatstudio/tutorial``, where ``<prefix>`` is the prefix
 directory of the GNAT Studio installation.
 
 Alternatively, if you have already started GNAT Studio in another directory,
-you can load the project `sdc.gpr` by using the menu `File->Open Project...`
+you can load the project :file:`sdc.gpr` by using the menu ``File->Open Project...``
