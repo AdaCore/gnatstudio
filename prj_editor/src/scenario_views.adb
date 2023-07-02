@@ -715,6 +715,7 @@ package body Scenario_Views is
          end loop;
       end if;
 
+      Variable_Changed_Hook.Run (K);
       Recompute_View (K);
 
       V.Apply_Button.Set_Sensitive (False);

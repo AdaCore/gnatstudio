@@ -24,7 +24,6 @@ def test_driver():
                [],
                "wrong list of locations (1/2)")
     GPS.Project.set_scenario_variable('VALUE', 'third')
-    GPS.Project.recompute()
 
     GPS.EditorBuffer.get(sf).close()
     yield wait_tasks()
