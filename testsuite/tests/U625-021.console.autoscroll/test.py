@@ -8,6 +8,7 @@ from GPS import *
 
 @run_test_driver
 def run():
+    yield wait_tasks(other_than=known_tasks)
     console = GPS.Console("Messages")
     console.clear()
     view_widget = console.pywidget()
