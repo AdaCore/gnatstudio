@@ -62,7 +62,7 @@ package body GPS.LSP_Client.Dependency_Browers is
       Result : LSP.Messages.ALS_Unit_Description_Vector);
 
    overriding procedure On_Rejected
-     (Self : in out Show_Dependencies_Request);
+     (Self : in out Show_Dependencies_Request; Reason : Reject_Reason);
 
    overriding procedure On_Error_Message
      (Self    : in out Show_Dependencies_Request;
@@ -116,8 +116,9 @@ package body GPS.LSP_Client.Dependency_Browers is
    -----------------
 
    overriding procedure On_Rejected
-     (Self : in out Show_Dependencies_Request)
+     (Self : in out Show_Dependencies_Request; Reason : Reject_Reason)
    is
+      pragma Unreferenced (Reason);
       Lang   : constant Language_Access :=
         Self.Kernel.Get_Language_Handler.Get_Language_From_File (Self.File);
       Server : constant Language_Server_Access := Get_Language_Server (Lang);

@@ -104,7 +104,8 @@ package body GPS.LSP_Client.Completion is
      (Self   : in out LSP_Completion_Request;
       Result : LSP.Messages.CompletionList);
 
-   overriding procedure On_Rejected (Self : in out LSP_Completion_Request);
+   overriding procedure On_Rejected
+     (Self : in out LSP_Completion_Request; Reason : Reject_Reason);
 
    overriding procedure On_Error_Message
      (Self    : in out LSP_Completion_Request;
@@ -673,8 +674,9 @@ package body GPS.LSP_Client.Completion is
    -- On_Rejected --
    -----------------
 
-   overriding procedure On_Rejected (Self : in out LSP_Completion_Request) is
-      pragma Unreferenced (Self);
+   overriding procedure On_Rejected
+     (Self : in out LSP_Completion_Request; Reason : Reject_Reason) is
+      pragma Unreferenced (Self, Reason);
 
       Window : constant Completion_Display_Interface_Access :=
                   Get_Completion_Display;

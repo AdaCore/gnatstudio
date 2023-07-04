@@ -107,7 +107,8 @@ package body GPS.LSP_Client.Editors.Tooltips is
       Message : String;
       Data    : GNATCOLL.JSON.JSON_Value);
 
-   overriding procedure On_Rejected (Self : in out GPS_LSP_Hover_Request);
+   overriding procedure On_Rejected
+     (Self : in out GPS_LSP_Hover_Request; Reason : Reject_Reason);
 
    overriding function Get_Tooltip_Widget_For_Entity
      (Tooltip : not null access LSP_Client_Editor_Tooltip_Handler;
@@ -475,8 +476,10 @@ package body GPS.LSP_Client.Editors.Tooltips is
    -- On_Rejected --
    -----------------
 
-   overriding procedure On_Rejected (Self : in out GPS_LSP_Hover_Request) is
-      pragma Unreferenced (Self);
+   overriding procedure On_Rejected
+     (Self : in out GPS_LSP_Hover_Request; Reason : Reject_Reason)
+   is
+      pragma Unreferenced (Self, Reason);
    begin
       Trace (Me, "The hover request has been rejected");
    end On_Rejected;

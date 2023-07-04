@@ -51,12 +51,14 @@ package body GPS.LSP_Client.Editors.Folding is
      (Self   : in out Folding_Request;
       Result : LSP.Messages.FoldingRange_Vector);
 
+   overriding function Auto_Cancel
+     (Self : in out Folding_Request) return Boolean is (True);
+
    -- LSP_Editor_Folding_Provider --
 
    type LSP_Editor_Folding_Provider is
      new GPS.Editors.Editor_Folding_Provider with record
-      Kernel  : Kernel_Handle;
-      Request : GPS.LSP_Client.Requests.Reference;
+      Kernel : Kernel_Handle;
    end record;
 
    overriding function Compute_Blocks
@@ -167,17 +169,13 @@ package body GPS.LSP_Client.Editors.Folding is
          return False;
       end if;
 
-      Self.Request.Cancel;
-
       Request := new Folding_Request'
         (GPS.LSP_Client.Requests.LSP_Request
          with Kernel => Self.Kernel,
               File   => File);
 
-      Self.Request := GPS.LSP_Client.Requests.Execute
+      return GPS.LSP_Client.Requests.Execute
         (Lang, GPS.LSP_Client.Requests.Request_Access (Request));
-
-      return Self.Request.Has_Request;
 
    exception
       when E : others =>

@@ -11296,7 +11296,8 @@ class LanguageServer(object):
 
     def request_low_level(self, method, params,
                           on_result_message, on_error_message=None,
-                          on_rejected=None):
+                          on_rejected=None,
+                          auto_cancel=False):
         """
         Launch a request to the server.
 
@@ -11309,6 +11310,8 @@ class LanguageServer(object):
             reported by the language server
         :param on_rejected: Callback to be called when it is impossible to
             send request to the server.
+        :param auto_cancel: Boolean indicating if previous low level requests
+            should be canceled.
         """
         pass  # implemented in Ada
 

@@ -65,6 +65,11 @@ package body GPS.LSP_Clients is
    --  Reject all ongoing (sent to the language server) and queued requests.
    --  Cleanup ongoing requests map and commands queue.
 
+   procedure Auto_Cancel_Requests
+     (Self    : in out LSP_Client'Class;
+      Method  : VSS.Strings.Virtual_String);
+   --  Invalidate all the requests queued for Method
+
    procedure Clear_Change_Requests
      (Self : in out LSP_Client'Class;
       File : Virtual_File);
@@ -102,7 +107,7 @@ package body GPS.LSP_Clients is
                  and then Item.Request = Request
                then
                   Self.Commands.Delete (Position);
-                  Request.On_Rejected;
+                  Request.On_Rejected (GPS.LSP_Client.Requests.Canceled);
 
                   --  Notify about cancelation of the request
 
@@ -114,7 +119,8 @@ package body GPS.LSP_Clients is
                         Trace (Me_Exceptions, E);
                   end;
 
-                  GPS.LSP_Client.Requests.Destroy (Request);
+                  GPS.LSP_Client.Requests.Destroy
+                    (Request, Is_Cancelled => True);
 
                   return;
                end if;
@@ -138,7 +144,7 @@ package body GPS.LSP_Clients is
 
                Self.Canceled_Requests.Insert (Request_Maps.Key (Position));
                Self.Requests.Delete (Position);
-               Request.On_Rejected;
+               Request.On_Rejected (GPS.LSP_Client.Requests.Canceled);
 
                --  Notify about cancelation of the request
 
@@ -150,7 +156,8 @@ package body GPS.LSP_Clients is
                      Trace (Me_Exceptions, E);
                end;
 
-               GPS.LSP_Client.Requests.Destroy (Request);
+               GPS.LSP_Client.Requests.Destroy
+                 (Request, Is_Cancelled => True);
 
                return;
             end if;
@@ -236,6 +243,10 @@ package body GPS.LSP_Clients is
       use GPS.LSP_Client.Requests;
       Item : Command;
    begin
+      if Request.Auto_Cancel then
+         Self.Auto_Cancel_Requests (Request.Method);
+      end if;
+
       Item := (Kind => GPS_Request, Request => Request);
 
       --  Enqueue the request - do this before notifying listeners, since
@@ -275,7 +286,8 @@ package body GPS.LSP_Clients is
 
       else
          if Item.Kind = GPS_Request then
-            Item.Request.On_Rejected;
+            Item.Request.On_Rejected
+              (GPS.LSP_Client.Requests.Server_Not_Ready);
             GPS.LSP_Client.Requests.Destroy (Item.Request);
          end if;
       end if;
@@ -1174,7 +1186,7 @@ package body GPS.LSP_Clients is
       --  ongoing requests map.
 
       for Request of Self.Requests loop
-         Request.On_Rejected;
+         Request.On_Rejected (GPS.LSP_Client.Requests.Server_Died);
 
          begin
             Self.Listener.On_Reject_Request (Request);
@@ -1194,7 +1206,7 @@ package body GPS.LSP_Clients is
 
       for Command of Self.Commands loop
          if Command.Kind = GPS_Request then
-            Command.Request.On_Rejected;
+            Command.Request.On_Rejected (GPS.LSP_Client.Requests.Server_Died);
 
             begin
                Self.Listener.On_Reject_Request (Command.Request);
@@ -1210,6 +1222,38 @@ package body GPS.LSP_Clients is
 
       Self.Commands.Clear;
    end Reject_All_Requests;
+
+   --------------------------
+   -- Auto_Cancel_Requests --
+   --------------------------
+
+   procedure Auto_Cancel_Requests
+     (Self    : in out LSP_Client'Class;
+      Method  : VSS.Strings.Virtual_String)
+   is
+      use type VSS.Strings.Virtual_String;
+      use GPS.LSP_Client.Requests.Requests_Lists;
+      --  Keep a copy of the requests list because we are tampering with the
+      --  real list.
+      Requests : constant GPS.LSP_Client.Requests.Requests_Lists.List :=
+        Self.Get_Requests;
+      Cursor   : GPS.LSP_Client.Requests.Requests_Lists.Cursor :=
+        First (Requests);
+   begin
+      while Has_Element (Cursor) loop
+         if Element (Cursor).Method = Method
+           and then Element (Cursor).Auto_Cancel
+         then
+            declare
+               Request : GPS.LSP_Client.Requests.Request_Access :=
+                 Element (Cursor);
+            begin
+               Self.Cancel (Request);
+            end;
+         end if;
+         Next (Cursor);
+      end loop;
+   end Auto_Cancel_Requests;
 
    -----------------------
    -- Request_Id_Prefix --

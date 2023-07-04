@@ -61,7 +61,8 @@ package body GPS.LSP_Client.Editors.Highlight is
       Data    : GNATCOLL.JSON.JSON_Value);
 
    overriding procedure On_Rejected
-     (Self : in out GPS_LSP_Document_Highlight_Request);
+     (Self   : in out GPS_LSP_Document_Highlight_Request;
+      Reason : Reject_Reason);
 
    type On_Location_Changed is new File_Location_Hooks_Function with
      null record;
@@ -203,7 +204,8 @@ package body GPS.LSP_Client.Editors.Highlight is
    -----------------
 
    overriding procedure On_Rejected
-     (Self : in out GPS_LSP_Document_Highlight_Request) is null;
+     (Self   : in out GPS_LSP_Document_Highlight_Request;
+      Reason : Reject_Reason) is null;
 
    -----------------------------------------
    -- Cleanup_Document_Highlight_Messages --

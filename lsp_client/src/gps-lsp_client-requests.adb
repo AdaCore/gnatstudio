@@ -21,8 +21,12 @@ with GPS.Editors;
 with GPS.LSP_Client.Language_Servers;
 with GPS.LSP_Clients;
 with GPS.LSP_Module;
+with GNATCOLL.Traces; use GNATCOLL.Traces;
 
 package body GPS.LSP_Client.Requests is
+
+   Me_Debug : constant Trace_Handle :=
+     Create ("GPS.LSP_CLIENT.REQUESTS.DEBUG", Off);
 
    ------------
    -- Adjust --
@@ -47,7 +51,7 @@ package body GPS.LSP_Client.Requests is
             Self.Server.Cancel (Self.Request);
 
          else
-            Self.Request.On_Rejected;
+            Self.Request.On_Rejected (Canceled);
             Destroy (Self.Request);
          end if;
       end if;
@@ -77,11 +81,19 @@ package body GPS.LSP_Client.Requests is
    -- Destroy --
    -------------
 
-   procedure Destroy (Item : in out Request_Access) is
+   procedure Destroy
+     (Item         : in out Request_Access;
+      Is_Cancelled : Boolean := False)
+   is
       procedure Free is
         new Ada.Unchecked_Deallocation (LSP_Request'Class, Request_Access);
 
    begin
+      if Is_Cancelled then
+         Trace (Me_Debug, "Canceling: " & Item'Image);
+      else
+         Trace (Me_Debug, "Destroying: " & Item'Image);
+      end if;
       if Item /= null then
          for Reference of Item.References loop
             Reference.Request := null;
@@ -136,6 +148,7 @@ package body GPS.LSP_Client.Requests is
       On_Checks_Passed : Boolean := True;
 
    begin
+      Trace (Me_Debug, "Executing: " & Request'Image);
       return Result : Reference do
          if Request = null then
             return;
@@ -196,7 +209,7 @@ package body GPS.LSP_Client.Requests is
             Server.Execute (Request);
 
          else
-            Request.On_Rejected;
+            Request.On_Rejected (GPS.LSP_Client.Requests.Server_Not_Ready);
             Destroy (Request);
          end if;
       end return;
