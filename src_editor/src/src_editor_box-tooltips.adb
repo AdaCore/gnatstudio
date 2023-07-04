@@ -395,7 +395,8 @@ package body Src_Editor_Box.Tooltips is
                            Mark_Column : constant Gint :=
                              Gint (Message.Get_Editor_Mark.Column);
                         begin
-                           if Highlighting_Length = Highlight_Whole_Line
+                           if (Highlighting_Length = Highlight_Whole_Line
+                               and then Message.Get_Flags /= Sides_Only)
                              or else Col + 1 in Mark_Column .. Mark_Column +
                                Gint (Highlighting_Length)
                            then
