@@ -89,7 +89,7 @@ package body GPS.LSP_Client.Editors.Signature_Help is
       Message :        String; Data : GNATCOLL.JSON.JSON_Value) is null;
 
    overriding procedure On_Rejected
-     (Self : in out Signature_Help_Request) is null;
+     (Self : in out Signature_Help_Request; Reason : Reject_Reason) is null;
 
    type On_Character_Added is new Character_Hooks_Function with null record;
    overriding procedure Execute

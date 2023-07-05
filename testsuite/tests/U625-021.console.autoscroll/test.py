@@ -8,9 +8,9 @@ from GPS import *
 
 @run_test_driver
 def run():
-    yield wait_tasks(other_than=known_tasks)
     console = GPS.Console("Messages")
     console.clear()
+    yield wait_tasks(other_than=known_tasks)
     view_widget = console.pywidget()
     win = get_widgets_by_type(Gtk.ScrolledWindow, view_widget)[0]
     gps_assert(win.get_vadjustment().get_value(),

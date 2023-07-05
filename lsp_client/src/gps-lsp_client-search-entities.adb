@@ -53,7 +53,7 @@ with GPS.LSP_Module;
 with GPS.LSP_Client.Utilities;
 
 with GPS.LSP_Client.Partial_Responses;  use GPS.LSP_Client.Partial_Responses;
-with GPS.LSP_Client.Requests;
+with GPS.LSP_Client.Requests;           use GPS.LSP_Client.Requests;
 with GPS.LSP_Client.Requests.Document_Symbols;
 with GPS.LSP_Client.Requests.Symbols;
 with GPS.LSP_Client.Editors.Tooltips;
@@ -212,7 +212,8 @@ package body GPS.LSP_Client.Search.Entities is
       Code    : LSP.Messages.ErrorCodes;
       Message : String;
       Data    : GNATCOLL.JSON.JSON_Value);
-   overriding procedure On_Rejected (Self : in out Symbol_Request);
+   overriding procedure On_Rejected
+     (Self : in out Symbol_Request; Reason : Reject_Reason);
 
    ---------------------
    -- Partial_Handler --
@@ -251,7 +252,10 @@ package body GPS.LSP_Client.Search.Entities is
       Code    : LSP.Messages.ErrorCodes;
       Message : String;
       Data    : GNATCOLL.JSON.JSON_Value);
-   overriding procedure On_Rejected (Self : in out Document_Request);
+   overriding procedure On_Rejected
+     (Self : in out Document_Request; Reason : Reject_Reason);
+   overriding function Auto_Cancel
+     (Self : in out Document_Request) return Boolean is (True);
 
    Prefix  : constant Wide_Wide_String := "entities_provider-";
    Partial : Partial_Response_Handler_Access;
@@ -634,7 +638,10 @@ package body GPS.LSP_Client.Search.Entities is
    -- On_Rejected --
    -----------------
 
-   overriding procedure On_Rejected (Self : in out Symbol_Request) is
+   overriding procedure On_Rejected
+     (Self : in out Symbol_Request; Reason : Reject_Reason)
+   is
+      pragma Unreferenced (Reason);
    begin
       Self.Provider.On_Response (Self.Num);
    end On_Rejected;
@@ -643,7 +650,10 @@ package body GPS.LSP_Client.Search.Entities is
    -- On_Rejected --
    -----------------
 
-   overriding procedure On_Rejected (Self : in out Document_Request) is
+   overriding procedure On_Rejected
+     (Self : in out Document_Request; Reason : Reject_Reason)
+   is
+      pragma Unreferenced (Reason);
    begin
       Self.Provider.On_Response (Self.Num);
    end On_Rejected;
@@ -806,8 +816,6 @@ package body GPS.LSP_Client.Search.Entities is
       end if;
 
       declare
-         use type GPS.LSP_Client.Requests.Request_Access;
-
          Lang : constant Language.Language_Access :=
            Self.Kernel.Get_Language_Handler.Get_Language_From_File (Self.File);
       begin
@@ -876,8 +884,6 @@ package body GPS.LSP_Client.Search.Entities is
    procedure Send_Request
      (Self : not null access Entities_Search_Provider'Class)
    is
-      use type GPS.LSP_Client.Requests.Request_Access;
-
       Languages : GNAT.Strings.String_List :=
         Root_Project (Self.Kernel.Get_Project_Tree.all).Languages (True);
       Lang      : Language.Language_Access;

@@ -39,7 +39,6 @@ package Src_Editor_Box.Tooltips is
    --
    --  Default editor tooltips contain three parts:
    --    - Module specific information (CodePeer, GVD...). if any
-   --    - The messages associated to the hovered lin, if any
    --    - Information about the hovered entity, if any
    --
    --  In general you won't need to override this function: overriding

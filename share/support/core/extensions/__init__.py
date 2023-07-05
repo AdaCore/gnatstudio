@@ -747,7 +747,7 @@ class LanguageServer(object):
 
     def request(self, method, params,
                 on_result_message, on_error_message=None,
-                on_rejected=None):
+                on_rejected=None, auto_cancel=False):
         """
         Launch a request to the server.
 
@@ -762,9 +762,9 @@ class LanguageServer(object):
             json_params = json.dumps(params)
 
         self.request_low_level(method, json_params, on_result_message,
-                               on_error_message, on_rejected)
+                               on_error_message, on_rejected, auto_cancel)
 
-    def request_promise(self, method, params):
+    def request_promise(self, method, params, auto_cancel=False):
         """Make a language server request as a promise.
 
            method and params are the same arguments as request.
@@ -800,5 +800,6 @@ class LanguageServer(object):
             result.is_reject = True
             p.resolve(result)
 
-        self.request(method, params, on_result, on_error, on_reject)
+        self.request(
+            method, params, on_result, on_error, on_reject, auto_cancel)
         return p

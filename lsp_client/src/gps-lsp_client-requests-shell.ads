@@ -30,6 +30,7 @@ package GPS.LSP_Client.Requests.Shell is
       On_Result_Message : GNATCOLL.Scripts.Subprogram_Type;
       On_Error_Message  : GNATCOLL.Scripts.Subprogram_Type;
       On_Rejected       : GNATCOLL.Scripts.Subprogram_Type;
+      Auto_Canceled     : Boolean := False;
    end record;
 
    overriding procedure Finalize (Self : in out Shell_Request);
@@ -56,6 +57,10 @@ package GPS.LSP_Client.Requests.Shell is
       Message : String;
       Data    : GNATCOLL.JSON.JSON_Value);
 
-   overriding procedure On_Rejected (Self : in out Shell_Request);
+   overriding procedure On_Rejected
+     (Self : in out Shell_Request; Reason : Reject_Reason);
+
+   overriding function Auto_Cancel
+     (Self : in out Shell_Request) return Boolean is (Self.Auto_Canceled);
 
 end GPS.LSP_Client.Requests.Shell;
