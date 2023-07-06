@@ -20,12 +20,12 @@ def run_test():
     buf.add_special_line(7, "This is a special line")
 
     view.goto(buf.at(8, 1).end_of_line())
-    yield wait_idle()
+    yield wait_tasks(other_than=known_tasks)
 
     # Insert a completion snippet received from clangd
     for ch in "Not":
         send_key_event(ord(ch))
-        yield timeout(100)
+        yield timeout(200)
 
     yield wait_until_true(
         lambda: get_widget_by_name("completion-view") != None)
