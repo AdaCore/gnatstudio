@@ -1657,6 +1657,8 @@ Classes
 
    .. automethod:: GPS.Message.get_category
 
+   .. automethod:: GPS.Message.get_children
+
    .. automethod:: GPS.Message.get_column
 
    .. automethod:: GPS.Message.get_file
