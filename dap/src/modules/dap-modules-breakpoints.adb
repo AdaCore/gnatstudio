@@ -15,6 +15,7 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
+with VSS.Strings.Conversions;
 with GPS.Editors;
 
 package body DAP.Modules.Breakpoints is
@@ -163,6 +164,25 @@ package body DAP.Modules.Breakpoints is
    end Get_Location_File;
 
    ----------------
+   -- Get_Ignore --
+   ----------------
+
+   function Get_Ignore (Data : Breakpoint_Data) return Virtual_String is
+   begin
+      if Data.Ignore = 0 then
+         return Empty_Virtual_String;
+      else
+         declare
+            S : constant String := Data.Ignore'Img;
+         begin
+            return VSS.Strings.Conversions.To_Virtual_String
+              (S (S'First + 1 .. S'Last));
+         end;
+      end if;
+
+   end Get_Ignore;
+
+   ----------------
    -- Initialize --
    ----------------
 
@@ -276,6 +296,41 @@ package body DAP.Modules.Breakpoints is
 
       Self.Vector.Append (D);
    end Added;
+
+   -------------
+   -- Replace --
+   -------------
+
+   procedure Replace
+     (Self    : in out Breakpoint_Holder;
+      Data    : Breakpoint_Data;
+      Updated : out Triboolean)
+   is
+      use Breakpoint_Vectors;
+      C   : constant Breakpoint_Vectors.Cursor := Self.Vector.Find (Data);
+      Old : Breakpoint_Data;
+   begin
+      if C /= Breakpoint_Vectors.No_Element then
+
+         Old := Element (C);
+         if Old.Ignore /= Data.Ignore
+           or else Old.Condition /= Data.Condition
+         then
+            Updated := True;
+
+         elsif Old.Commands /= Data.Commands then
+            Updated := Indeterminate;
+
+         else
+            Updated := False;
+         end if;
+
+         Self.Vector.Replace_Element (C, Data);
+      else
+         Updated := True;
+         Self.Vector.Append (Data);
+      end if;
+   end Replace;
 
    -------------
    -- Deleted --
@@ -719,6 +774,7 @@ package body DAP.Modules.Breakpoints is
    is
       Idx_New : Integer := 1;
       Data, D : Breakpoint_Data;
+      Dummy   : Breakpoint_Vectors.Vector;
 
    begin
       for Idx in Self.Vector.First_Index .. Self.Vector.Last_Index loop
@@ -741,7 +797,7 @@ package body DAP.Modules.Breakpoints is
       end loop;
 
       --  Delete duplicates
-      Self.Delete_Duplicates (File, Changed);
+      Self.Delete_Duplicates (File, Changed, Dummy);
    end Initialized_For_File;
 
    ---------------------------------
@@ -785,7 +841,8 @@ package body DAP.Modules.Breakpoints is
    procedure Delete_Duplicates
      (Self    : in out Breakpoint_Holder;
       File    : Virtual_File;
-      Changed : out Breakpoint_Hash_Maps.Map)
+      Changed : out Breakpoint_Hash_Maps.Map;
+      Enabled : out Breakpoint_Vectors.Vector)
    is
       Index   : Integer := Self.Vector.First_Index;
       Data    : Breakpoint_Data;
@@ -816,7 +873,8 @@ package body DAP.Modules.Breakpoints is
             end loop;
 
             if not Deleted then
-               Data.State := Enabled;
+               Data.State := DAP.Modules.Breakpoints.Enabled;
+               Enabled.Append (Data);
                Self.Vector.Replace_Element (Index, Data);
                Index := Index + 1;
             end if;
@@ -827,7 +885,7 @@ package body DAP.Modules.Breakpoints is
       Index := Self.Vector.First_Index;
       while Index <= Self.Vector.Last_Index loop
          Data := Self.Vector.Element (Index);
-         if Data.State = Enabled
+         if Data.State = DAP.Modules.Breakpoints.Enabled
            and then Data.Kind = On_Line
            and then Get_Location_File (Data) = File
          then
@@ -975,6 +1033,7 @@ package body DAP.Modules.Breakpoints is
       File    : Virtual_File;
       Actual  : Breakpoint_Vectors.Vector;
       Changed : out Breakpoint_Hash_Maps.Map;
+      Enabled : out Breakpoint_Vectors.Vector;
       Id      : out Integer)
    is
       Index   : Integer := Self.Vector.First_Index;
@@ -990,7 +1049,7 @@ package body DAP.Modules.Breakpoints is
            and then Get_Location_File (Data) = File
          then
             case Data.State is
-               when Enabled =>
+               when DAP.Modules.Breakpoints.Enabled =>
                   if Nums.Contains (Data.Num) then
                      --  delete fake Bp from notification
                      Self.Vector.Delete (Index);
@@ -1004,7 +1063,8 @@ package body DAP.Modules.Breakpoints is
                   if Is_Same_Location
                     (Data, D.Locations.First_Element.Marker)
                   then
-                     D.State := Enabled;
+                     D.State := DAP.Modules.Breakpoints.Enabled;
+                     Enabled.Append (D);
                   else
                      D.State := Moved;
                   end if;
@@ -1025,7 +1085,7 @@ package body DAP.Modules.Breakpoints is
          Index := Index + 1;
       end loop;
 
-      Self.Delete_Duplicates (File, Changed);
+      Self.Delete_Duplicates (File, Changed, Enabled);
    end Status_Changed;
 
    -------------------------------
@@ -1033,9 +1093,10 @@ package body DAP.Modules.Breakpoints is
    -------------------------------
 
    procedure Subprogram_Status_Changed
-     (Self   : in out Breakpoint_Holder;
-      Actual : Breakpoint_Vectors.Vector;
-      Last   : Boolean)
+     (Self    : in out Breakpoint_Holder;
+      Actual  : Breakpoint_Vectors.Vector;
+      Last    : Boolean;
+      Enabled : out Breakpoint_Vectors.Vector)
    is
       Index : Integer := Self.Vector.First_Index;
       Idx   : Integer := Actual.First_Index;
@@ -1048,7 +1109,7 @@ package body DAP.Modules.Breakpoints is
          Data := Self.Vector.Element (Index);
          if Data.Kind = On_Subprogram then
             case Data.State is
-               when Enabled =>
+               when DAP.Modules.Breakpoints.Enabled =>
                   Idx := Idx + Data.Locations.Last_Index;
 
                when Changing =>
@@ -1059,7 +1120,8 @@ package body DAP.Modules.Breakpoints is
                      Idx := Idx + 1;
                   end loop;
                   Data.Num   := Data.Locations.First_Element.Num;
-                  Data.State := Enabled;
+                  Data.State := DAP.Modules.Breakpoints.Enabled;
+                  Enabled.Append (Data);
                   Self.Vector.Replace_Element (Index, Data);
                   exit;
 
@@ -1080,9 +1142,10 @@ package body DAP.Modules.Breakpoints is
    --------------------
 
    procedure Status_Changed
-     (Self   : in out Breakpoint_Holder;
-      Kind   : Breakpoint_Kind;
-      Actual : Breakpoint_Vectors.Vector)
+     (Self    : in out Breakpoint_Holder;
+      Kind    : Breakpoint_Kind;
+      Actual  : Breakpoint_Vectors.Vector;
+      Enabled : out Breakpoint_Vectors.Vector)
    is
       Index   : Integer := Self.Vector.First_Index;
       Idx     : Integer := Actual.First_Index;
@@ -1094,7 +1157,7 @@ package body DAP.Modules.Breakpoints is
 
          if Data.Kind = Kind then
             case Data.State is
-               when Enabled =>
+               when DAP.Modules.Breakpoints.Enabled =>
                   if Nums.Contains (Data.Num) then
                      --  delete fake Bp from notification
                      Self.Vector.Delete (Index);
@@ -1108,7 +1171,8 @@ package body DAP.Modules.Breakpoints is
                   Nums.Append (D.Num);
                   Data.Num := D.Num;
                   Data.Locations := D.Locations;
-                  Data.State := Enabled;
+                  Data.State := DAP.Modules.Breakpoints.Enabled;
+                  Enabled.Append (Data);
                   Self.Vector.Replace_Element (Index, Data);
                   Idx := Idx + 1;
 

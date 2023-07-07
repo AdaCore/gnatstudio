@@ -115,6 +115,10 @@ package DAP.Modules.Breakpoint_Managers is
       Event : DAP.Tools.BreakpointEvent_body);
    --  Process DAP breakpoints notifications
 
+   procedure Send_Commands
+     (Self : DAP_Client_Breakpoint_Manager_Access;
+      Data : DAP.Modules.Breakpoints.Breakpoint_Data);
+
 private
 
    type DAP_Client_Breakpoint_Manager

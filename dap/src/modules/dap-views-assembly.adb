@@ -858,7 +858,7 @@ package body DAP.Views.Assembly is
                (if Data.State /= Enabled then
                      GPS.Kernel.Style_Manager.Background
                   (GPS.Default_Styles.Debugger_Disabled_Breakpoint_Style)
-                elsif Data.Condition /= "" then
+                elsif not Data.Condition.Is_Empty then
                    GPS.Kernel.Style_Manager.Background
                   (GPS.Default_Styles.Debugger_Conditional_Breakpoint_Style)
                 else

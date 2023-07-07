@@ -28,6 +28,7 @@ with Glib.Object;                use Glib.Object;
 with Glib.Values;                use Glib.Values;
 with Glib_Values_Utils;          use Glib_Values_Utils;
 
+with Gtk.Adjustment;             use Gtk.Adjustment;
 with Gtk.Box;                    use Gtk.Box;
 with Gtk.Button;                 use Gtk.Button;
 with Gtk.Cell_Renderer;          use Gtk.Cell_Renderer;
@@ -46,6 +47,8 @@ with Gtk.Scrolled_Window;        use Gtk.Scrolled_Window;
 with Gtk.Size_Group;             use Gtk.Size_Group;
 with Gtk.Stock;                  use Gtk.Stock;
 with Gtk.Spin_Button;            use Gtk.Spin_Button;
+with Gtk.Text_Buffer;            use Gtk.Text_Buffer;
+with Gtk.Text_Iter;              use Gtk.Text_Iter;
 with Gtk.Tree_Model;             use Gtk.Tree_Model;
 with Gtk.Tree_Selection;         use Gtk.Tree_Selection;
 with Gtk.Tree_View;              use Gtk.Tree_View;
@@ -310,8 +313,9 @@ package body DAP.Views.Breakpoints is
    --  Show the information for the given breakpoint in the editor
 
    procedure Apply
-     (Self : not null access Properties_Editor_Record'Class;
-      Br   : in out Breakpoint_Data);
+     (Self   : not null access Properties_Editor_Record'Class;
+      Client : not null access DAP.Clients.DAP_Client'Class;
+      Br     : Breakpoint_Data);
    --  Apply the settings to the given breakpoint
 
    procedure On_Load_Exception_List_Clicked (W : access GObject_Record'Class);
@@ -380,68 +384,123 @@ package body DAP.Views.Breakpoints is
    -----------
 
    procedure Apply
-     (Self : not null access Properties_Editor_Record'Class;
-      Br   : in out Breakpoint_Data)
+     (Self   : not null access Properties_Editor_Record'Class;
+      Client : not null access DAP.Clients.DAP_Client'Class;
+      Br     : Breakpoint_Data)
    is
       T         : constant Breakpoint_Kind :=
         Breakpoint_Kind'Val (Get_Active (Self.Breakpoint_Type));
       Temporary : constant Boolean := Self.Temporary.Get_Active;
+      Condition : VSS.Strings.Virtual_String;
+      Commands  : VSS.Strings.Virtual_String;
+      Ignore    : Integer := 0;
 
+      Start, The_End : Gtk_Text_Iter;
    begin
-      --  Create a new breakpoint if needed
-      if Br.Num = 0 then
-         case T is
-            when On_Line =>
-               declare
-                  File : constant Filesystem_String := +Get_Text
-                    (Self.File_Name);
-               begin
-                  Break_Source
-                    (Self.Kernel,
-                     File      => Create_From_Base (File),
-                     Line      =>
-                       Editable_Line_Type'Value (Self.Line_Spin.Get_Text),
-                     Temporary => Temporary);
-               end;
-
-            when On_Subprogram =>
-               Break_Subprogram
-                 (Self.Kernel,
-                  Subprogram => Self.Subprogram_Combo.Get_Active_Text,
-                  Temporary  => Temporary);
-
-            when On_Exception =>
-               declare
-                  Unhandled : constant Boolean :=
-                    Get_Active (Self.Stop_Not_Handled_Exception);
-               begin
-                  if Self.Exception_Name.Get_Active = 0 then
-                     Break_Exception
-                       (Self.Kernel,
-                        Name      => "exception",
-                        Unhandled => Unhandled,
-                        Temporary => Temporary);
-
-                  elsif Self.Exception_Name.Get_Active = 1 then
-                     Break_Exception
-                       (Self.Kernel,
-                        Name      => "assert",
-                        Unhandled => Unhandled,
-                        Temporary => Temporary);
-
-                  else
-                     Break_Exception
-                       (Self.Kernel,
-                        Name      => Self.Exception_Name.Get_Active_Text,
-                        Unhandled => Unhandled,
-                        Temporary => Temporary);
-                  end if;
-               end;
-
-            when On_Address =>
-               null;
-         end case;
+      if Self.Condition_Frame.Get_Visible then
+         declare
+            S : constant String := Self.Condition_Combo.Get_Active_Text;
+         begin
+            if S /= "" then
+               Condition := VSS.Strings.Conversions.To_Virtual_String (S);
+            end if;
+         end;
       end if;
+
+      if Self.Ignore_Frame.Get_Visible then
+         Ignore := Integer (Get_Value_As_Int (Self.Ignore_Count_Combo));
+         if Ignore < 0 then
+            Ignore := 0;
+         end if;
+      end if;
+
+      if Self.Command_Frame.Get_Visible then
+         Get_Bounds (Get_Buffer (Self.Command_Descr), Start, The_End);
+         declare
+            T : constant String := Get_Text
+              (Get_Buffer (Self.Command_Descr), Start, The_End);
+         begin
+            if T /= "" then
+               Commands := VSS.Strings.Conversions.To_Virtual_String (T);
+
+            elsif not Br.Commands.Is_Empty then
+               Client.Set_Breakpoint_Command
+                 (Br.Num, VSS.Strings.Empty_Virtual_String);
+            end if;
+         end;
+      end if;
+
+      --  create or update the breakpoint
+      case T is
+         when On_Line =>
+            declare
+               File : constant Filesystem_String := +Get_Text
+                 (Self.File_Name);
+            begin
+               Break_Source
+                 (Self.Kernel,
+                  Num       => Br.Num,
+                  File      => Create (File),
+                  Line      =>
+                    Editable_Line_Type'Value (Self.Line_Spin.Get_Text),
+                  Temporary => Temporary,
+                  Condition => Condition,
+                  Ignore    => Ignore,
+                  Commands  => Commands);
+            end;
+
+         when On_Subprogram =>
+            Break_Subprogram
+              (Self.Kernel,
+               Num        => Br.Num,
+               Subprogram => Self.Subprogram_Combo.Get_Active_Text,
+               Temporary  => Temporary,
+               Condition  => Condition,
+               Ignore     => Ignore,
+               Commands   => Commands);
+
+         when On_Exception =>
+            declare
+               Unhandled : constant Boolean :=
+                 Get_Active (Self.Stop_Not_Handled_Exception);
+            begin
+               if Self.Exception_Name.Get_Active = 0 then
+                  Break_Exception
+                    (Self.Kernel,
+                     Num       => Br.Num,
+                     Name      => "exception",
+                     Unhandled => Unhandled,
+                     Temporary => Temporary);
+
+               elsif Self.Exception_Name.Get_Active = 1 then
+                  Break_Exception
+                    (Self.Kernel,
+                     Num       => Br.Num,
+                     Name      => "assert",
+                     Unhandled => Unhandled,
+                     Temporary => Temporary);
+
+               else
+                  Break_Exception
+                    (Self.Kernel,
+                     Num       => Br.Num,
+                     Name      => Self.Exception_Name.Get_Active_Text,
+                     Unhandled => Unhandled,
+                     Temporary => Temporary);
+               end if;
+            end;
+
+         when On_Address =>
+            Break_Address
+              (Self.Kernel,
+               Num        => Br.Num,
+               Address    => String_To_Address
+                 (Self.Address_Combo.Get_Active_Text),
+               Temporary  => Temporary,
+               Condition  => Condition,
+               Ignore     => Ignore,
+               Commands   => Commands);
+      end case;
    end Apply;
 
    -------------------------------------------
@@ -596,6 +655,8 @@ package body DAP.Views.Breakpoints is
       Hbox    : Gtk_Box;
       Size    : Gtk_Size_Group;
       Dummy   : Gtk_Widget;
+      Scroll  : Gtk_Scrolled_Window;
+      Adj     : Gtk_Adjustment;
 
    begin
       Gtk.Dialog.Initialize
@@ -740,6 +801,68 @@ package body DAP.Views.Breakpoints is
       Gtk_New (Self.Temporary, "Temporary breakpoint");
       Self.Temporary.Set_Active (False);
       Details.Pack_Start (Self.Temporary, False, False, 5);
+
+      --------------
+      --  Advanced: condition
+      --------------
+
+      Gtk_New (Self.Condition_Frame, "Condition");
+      Details.Pack_Start (Self.Condition_Frame, False, True, 0);
+
+      Gtk_New_Vbox (Vbox9, False, 0);
+      Self.Condition_Frame.Add (Vbox9);
+
+      Gtk_New (Label, "Break only when following condition is true:");
+      Label.Set_Alignment (0.0, 0.5);
+      Vbox9.Pack_Start (Label, False);
+
+      Gtk_New_With_Entry (Self.Condition_Combo);
+      Vbox9.Pack_Start (Self.Condition_Combo, False, False, 0);
+
+      --------------
+      --  Advanced: ignore
+      --------------
+
+      Gtk_New (Self.Ignore_Frame, "Ignore");
+      Details.Pack_Start (Self.Ignore_Frame, False, True, 0);
+
+      Gtk_New_Vbox (Vbox9, False, 0);
+      Self.Ignore_Frame.Add (Vbox9);
+
+      Gtk_New (Label, "Enter the number of times to skip before stopping:");
+      Label.Set_Alignment (0.0, 0.5);
+      Vbox9.Pack_Start (Label, False, False, 0);
+
+      Gtk_New (Adj, 0.0, 0.0, 100_000.0, 1.0, 10.0);
+      Gtk_New (Self.Ignore_Count_Combo, Adj, 1.0, 0);
+      Self.Ignore_Count_Combo.Set_Numeric (False);
+      Self.Ignore_Count_Combo.Set_Snap_To_Ticks (True);
+      Self.Ignore_Count_Combo.Set_Update_Policy (Update_Always);
+      Self.Ignore_Count_Combo.Set_Value (0.0);
+      Self.Ignore_Count_Combo.Set_Wrap (False);
+      Vbox9.Pack_Start (Self.Ignore_Count_Combo, False, False, 0);
+
+      --------------
+      --  Advanced: commands
+      --------------
+
+      Gtk_New (Self.Command_Frame, "Commands");
+      Details.Pack_Start (Self.Command_Frame, True, True, 5);
+
+      Gtk_New_Vbox (Vbox9, False, 0);
+      Self.Command_Frame.Add (Vbox9);
+
+      Gtk_New (Label, "Enter commands to execute when program stops:");
+      Label.Set_Alignment (0.0, 0.5);
+      Vbox9.Pack_Start (Label, False, False, 0);
+
+      Gtk_New (Scroll);
+      Scroll.Set_Policy (Policy_Automatic, Policy_Automatic);
+      Vbox9.Pack_Start (Scroll, True, True, 0);
+
+      Gtk_New (Self.Command_Descr);
+      Set_Name (Self.Command_Descr, "Commands");
+      Scroll.Add (Self.Command_Descr);
 
       --------------
       --  Set proper visibility
@@ -1343,7 +1466,7 @@ package body DAP.Views.Breakpoints is
           (Breakpoints_MDI_Views.Retrieve_View
              (Get_Kernel (Context.Context),
               Visible_Only => True));
-      Br   : Breakpoint_Data := (Num => 0, others => <>);
+      Br   : constant Breakpoint_Data := (Num => 0, others => <>);
    begin
       if View /= null then
          Props := new Properties_Editor_Record;
@@ -1351,7 +1474,7 @@ package body DAP.Views.Breakpoints is
          Fill (Props, Br);
 
          if Props.Run = Gtk_Response_Apply then
-            Apply (Props, Br);
+            Apply (Props, View.Client, Br);
          end if;
 
          --  No need to free Br: either it has not been created, or it was set
@@ -1454,7 +1577,7 @@ package body DAP.Views.Breakpoints is
          Fill (Props, Current);
 
          if Props.Run = Gtk_Response_Apply then
-            Apply (Props, Current);
+            Apply (Props, View.Client, Current);
          end if;
 
          Props.Destroy;
@@ -1570,6 +1693,10 @@ package body DAP.Views.Breakpoints is
 
       Self.Address_Box.Set_Sensitive (T = On_Address);
       Self.Address_Box.Set_Visible (T = On_Address);
+
+      Self.Condition_Frame.Set_Visible (T /= On_Exception);
+      Self.Command_Frame.Set_Visible (T /= On_Exception);
+      Self.Ignore_Frame.Set_Visible (T /= On_Exception);
    end On_Type_Changed;
 
    ----------
@@ -1578,7 +1705,10 @@ package body DAP.Views.Breakpoints is
 
    procedure Fill
      (Self : not null access Properties_Editor_Record'Class;
-      Br   : Breakpoint_Data) is
+      Br   : Breakpoint_Data)
+   is
+      Start, The_End : Gtk_Text_Iter;
+      Buffer         : Gtk_Text_Buffer;
    begin
       if Br.Kind = On_Exception then
          Self.Breakpoint_Type.Set_Active (Breakpoint_Kind'Pos (On_Exception));
@@ -1618,7 +1748,7 @@ package body DAP.Views.Breakpoints is
          if not Br.Locations.Is_Empty then
             Set_Text
               (Self.File_Name,
-               +Base_Name (Get_File (Br.Locations.First_Element.Marker)));
+               +Full_Name (Get_File (Br.Locations.First_Element.Marker)));
             Set_Value
               (Self.Line_Spin,
                Grange_Float (Get_Line (Br.Locations.First_Element.Marker)));
@@ -1635,6 +1765,32 @@ package body DAP.Views.Breakpoints is
          Self.Line_Spin.Set_Sensitive (False);
          Self.Subprogram_Combo.Set_Sensitive (False);
          Self.Address_Combo.Set_Sensitive (False);
+      end if;
+
+      --  Advanced: condition
+
+      if not Br.Condition.Is_Empty then
+         Add_Unique_Combo_Entry
+           (Self.Condition_Combo,
+            VSS.Strings.Conversions.To_UTF_8_String (Br.Condition),
+            Select_Text => True);
+      else
+         Self.Condition_Combo.Set_Active (-1);
+      end if;
+
+      --  Advanced: ignore
+
+      Self.Ignore_Count_Combo.Set_Value (Grange_Float (Br.Ignore));
+
+      --  Advanced: commands
+
+      Buffer := Get_Buffer (Self.Command_Descr);
+      Get_Bounds (Buffer, Start, The_End);
+      Delete (Buffer, Start, The_End);
+
+      if not Br.Commands.Is_Empty then
+         Insert_At_Cursor
+           (Buffer, VSS.Strings.Conversions.To_UTF_8_String (Br.Commands));
       end if;
    end Fill;
 

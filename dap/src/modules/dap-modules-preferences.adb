@@ -165,6 +165,16 @@ package body DAP.Modules.Preferences is
          Doc       => "Auto-refresh the contents of memory view.",
          Path      => "Debugger:Memory",
          Default   => True);
+
+      Load_Executable_On_Init := Create_Invisible_Pref
+        (Manager   => Prefs,
+         Name      => "Debugger-Load-On-Init",
+--         Path      => "Debugger:General",
+         Label     => "Load executable on init",
+         Doc       =>
+            "Load the currently debugged executable to the target when " &
+               "initializing a remote debugging session.",
+         Default   => False);
    end Register_Default_Preferences;
 
 end DAP.Modules.Preferences;

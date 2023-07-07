@@ -105,8 +105,16 @@ package body DAP.Modules.Breakpoint_Managers.Sources is
                  (Self.File, Actual, Changed);
 
                if not Changed.Is_Empty then
+                  for Data of Changed.Element (Self.File) loop
+                     Self.Manager.Send_Commands (Data);
+                  end loop;
+
                   New_Request := Self.Manager.Send_Line
                     (Self.File, Changed.Element (Self.File), Synch);
+               else
+                  for Data of Actual loop
+                     Self.Manager.Send_Commands (Data);
+                  end loop;
                end if;
             end;
             Update := True;
@@ -126,8 +134,14 @@ package body DAP.Modules.Breakpoint_Managers.Sources is
                Self.Manager.Holder.Added (Data, Changed, Update);
 
                if not Changed.Is_Empty then
+                  if Changed.Contains (Data) then
+                     Self.Manager.Send_Commands (Data);
+                  end if;
+
                   New_Request := Self.Manager.Send_Line
                     (Self.File, Changed, Synch);
+               else
+                  Self.Manager.Send_Commands (Data);
                end if;
             end;
 
@@ -139,6 +153,7 @@ package body DAP.Modules.Breakpoint_Managers.Sources is
             declare
                Changed : Breakpoint_Hash_Maps.Map;
                Id      : Integer;
+               Enabled : Breakpoint_Vectors.Vector;
             begin
                for Index in 1 .. Length (Result.a_body.breakpoints) loop
                   Data := Self.Sent.Element (Index);
@@ -148,7 +163,11 @@ package body DAP.Modules.Breakpoint_Managers.Sources is
                end loop;
 
                Self.Manager.Holder.Status_Changed
-                 (Self.File, Actual, Changed, Id);
+                 (Self.File, Actual, Changed, Enabled, Id);
+
+               for Data of Enabled loop
+                  Self.Manager.Send_Commands (Data);
+               end loop;
 
                if not Changed.Is_Empty then
                   New_Request := Self.Manager.Send_Line

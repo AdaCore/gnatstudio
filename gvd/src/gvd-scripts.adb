@@ -17,6 +17,8 @@
 
 with Ada.Strings.Unbounded;   use Ada.Strings.Unbounded;
 with GNAT.Strings;            use GNAT.Strings;
+
+with GNATCOLL.Any_Types;
 with GNATCOLL.Scripts;        use GNATCOLL.Scripts;
 with GNATCOLL.Scripts.Gtkada; use GNATCOLL.Scripts.Gtkada;
 with GNATCOLL.VFS;            use GNATCOLL.VFS;
@@ -333,23 +335,80 @@ package body GVD.Scripts is
          Process.Debugger.Start;
 
       elsif Command = "send" then
-         Inst := Nth_Arg (Data, 1, New_Class (Kernel, "Debugger"));
-         Process := Visual_Debugger (GObject'(Get_Data (Inst)));
+         declare
+            On_Result : Subprogram_Type;
+            On_Error  : Subprogram_Type;
+            On_Reject : Subprogram_Type;
+            Result    : Unbounded_String;
+         begin
+            Inst := Nth_Arg (Data, 1, New_Class (Kernel, "Debugger"));
+            Process := Visual_Debugger (GObject'(Get_Data (Inst)));
 
-         if Nth_Arg (Data, 4, False) then
-            Process_User_Command
-              (Debugger       => Process,
-               Command        => Nth_Arg (Data, 2),
-               Output_Command => False,  --  Done by Visible parameter
-               Mode           => GVD.Types.Visible);
-         else
-            Set_Return_Value
-              (Data, Process_User_Command
+            begin
+               On_Result := Nth_Arg (Data, 5);
+
+            exception
+               when No_Such_Parameter =>
+                  On_Result := null;
+            end;
+
+            begin
+               On_Error := Nth_Arg (Data, 6);
+
+            exception
+               when No_Such_Parameter =>
+                  On_Error := null;
+            end;
+
+            begin
+               On_Reject := Nth_Arg (Data, 7);
+
+            exception
+               when No_Such_Parameter =>
+                  On_Reject := null;
+            end;
+
+            if Nth_Arg (Data, 4, False) then
+               Process_User_Command
                  (Debugger       => Process,
                   Command        => Nth_Arg (Data, 2),
-                  Output_Command => Nth_Arg (Data, 3, True),
-                  Mode           => GVD.Types.Hidden));
-         end if;
+                  Output_Command => False,  --  Done by Visible parameter
+                  Mode           => GVD.Types.Visible);
+            else
+               Result := To_Unbounded_String
+                 (Process_User_Command
+                    (Debugger       => Process,
+                     Command        => Nth_Arg (Data, 2),
+                     Output_Command => Nth_Arg (Data, 3, True),
+                     Mode           => GVD.Types.Hidden));
+
+               Set_Return_Value (Data, To_String (Result));
+            end if;
+
+            if On_Result /= null then
+               declare
+                  Arguments : Callback_Data'Class :=
+                    On_Result.Get_Script.Create (1);
+               begin
+                  Set_Nth_Arg (Arguments, 1, To_String (Result));
+
+                  declare
+                     Dummy : GNATCOLL.Any_Types.Any_Type :=
+                       On_Result.Execute (Arguments);
+
+                  begin
+                     null;
+                  end;
+
+                  Free (Arguments);
+               end;
+
+               GNATCOLL.Scripts.Free (On_Result);
+            end if;
+
+            GNATCOLL.Scripts.Free (On_Error);
+            GNATCOLL.Scripts.Free (On_Reject);
+         end;
 
       elsif Command = "non_blocking_send" then
          Inst := Nth_Arg (Data, 1, New_Class (Kernel, "Debugger"));
@@ -686,7 +745,10 @@ package body GVD.Scripts is
          Params =>
            (1 => Param ("cmd"),
             2 => Param ("output", Optional => True),
-            3 => Param ("show_in_console", Optional => True)),
+            3 => Param ("show_in_console", Optional => True),
+            4 => Param ("on_result_message", Optional => True),
+            5 => Param ("on_error_message", Optional => True),
+            6 => Param ("on_rejected", Optional => True)),
          Handler      => Shell_Handler'Access,
          Class        => Class);
       Kernel.Scripts.Register_Command
