@@ -17,6 +17,9 @@ def test_driver():
 
     GPS.execute_action("open assembly view")
     yield wait_for_mdi_child("Assembly")
+    if mode == "Mode:Dap":
+        debug.start()
+
     yield wait_idle()
 
     view = GPS.MDI.get("Assembly")
