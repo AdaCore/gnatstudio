@@ -398,13 +398,8 @@ package body DAP.Views.Breakpoints is
       Start, The_End : Gtk_Text_Iter;
    begin
       if Self.Condition_Frame.Get_Visible then
-         declare
-            S : constant String := Self.Condition_Combo.Get_Active_Text;
-         begin
-            if S /= "" then
-               Condition := VSS.Strings.Conversions.To_Virtual_String (S);
-            end if;
-         end;
+         Condition := VSS.Strings.Conversions.To_Virtual_String
+           (Self.Condition_Combo.Get_Active_Text);
       end if;
 
       if Self.Ignore_Frame.Get_Visible then
@@ -416,18 +411,16 @@ package body DAP.Views.Breakpoints is
 
       if Self.Command_Frame.Get_Visible then
          Get_Bounds (Get_Buffer (Self.Command_Descr), Start, The_End);
-         declare
-            T : constant String := Get_Text
-              (Get_Buffer (Self.Command_Descr), Start, The_End);
-         begin
-            if T /= "" then
-               Commands := VSS.Strings.Conversions.To_Virtual_String (T);
+         Commands := VSS.Strings.Conversions.To_Virtual_String
+           (Get_Text (Get_Buffer (Self.Command_Descr), Start, The_End));
 
-            elsif not Br.Commands.Is_Empty then
-               Client.Set_Breakpoint_Command
-                 (Br.Num, VSS.Strings.Empty_Virtual_String);
-            end if;
-         end;
+         if Commands.Is_Empty
+           and then not Br.Commands.Is_Empty
+         then
+            --  Delete commands on the gdb side
+            Client.Set_Breakpoint_Command
+              (Br.Num, VSS.Strings.Empty_Virtual_String);
+         end if;
       end if;
 
       --  create or update the breakpoint
