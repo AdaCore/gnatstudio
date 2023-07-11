@@ -412,7 +412,8 @@ package body DAP.Views.Breakpoints is
       if Self.Command_Frame.Get_Visible then
          Get_Bounds (Get_Buffer (Self.Command_Descr), Start, The_End);
          Commands := VSS.Strings.Conversions.To_Virtual_String
-           (Get_Text (Get_Buffer (Self.Command_Descr), Start, The_End));
+           (String'
+              (Get_Text (Get_Buffer (Self.Command_Descr), Start, The_End)));
 
          if Commands.Is_Empty
            and then not Br.Commands.Is_Empty
