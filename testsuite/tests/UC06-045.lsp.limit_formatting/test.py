@@ -35,7 +35,7 @@ def run_test():
     init_buf = buf.get_chars(include_hidden_chars=False)
     buf.current_view().goto(buf.at(2, 1))
     send_key_event(GDK_TAB)
-    yield wait_idle()
+    yield wait_tasks(other_than=known_tasks)
     gps_assert(different_lines(buf.get_chars(include_hidden_chars=False),
                                init_buf),
                1,
