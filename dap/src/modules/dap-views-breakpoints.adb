@@ -154,6 +154,9 @@ package body DAP.Views.Breakpoints is
       Is_Set  : Boolean;
       State   : Boolean;
       Id_List : in out Breakpoint_Identifier_Lists.List);
+   --  Procedure used to factorize the code: It will loop through the list
+   --  of selected rows and retrieve the identifier in a list if not Is_Set
+   --  else set the State in the model.
 
    procedure Show_Selected_Breakpoint_Details
      (View : not null access Breakpoint_View_Record'Class);

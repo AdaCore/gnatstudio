@@ -110,7 +110,7 @@ package body DAP.Modules.Breakpoint_Managers.Sources is
                   end loop;
 
                   New_Request := Self.Manager.Send_Line
-                    (Self.File, Changed.Element (Self.File), Synch);
+                    (Self.File, Changed.Element (Self.File), Sync);
                else
                   for Data of Actual loop
                      Self.Manager.Send_Commands (Data);
@@ -139,7 +139,7 @@ package body DAP.Modules.Breakpoint_Managers.Sources is
                   end if;
 
                   New_Request := Self.Manager.Send_Line
-                    (Self.File, Changed, Synch);
+                    (Self.File, Changed, Sync);
                else
                   Self.Manager.Send_Commands (Data);
                end if;
@@ -171,7 +171,7 @@ package body DAP.Modules.Breakpoint_Managers.Sources is
 
                if not Changed.Is_Empty then
                   New_Request := Self.Manager.Send_Line
-                    (Self.File, Changed.Element (Self.File), Synch);
+                    (Self.File, Changed.Element (Self.File), Sync);
 
                elsif Id > 0 then
                   GPS.Kernel.Hooks.Debugger_Breakpoint_Changed_Hook.Run
@@ -187,7 +187,7 @@ package body DAP.Modules.Breakpoint_Managers.Sources is
             --  Do nothing because we delete BP by notifications
             Update := True;
 
-         when Synch =>
+         when Sync =>
             --  Do nothing because we already have all data
             null;
       end case;

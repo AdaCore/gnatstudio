@@ -262,7 +262,7 @@ package DAP.Modules.Breakpoints is
       Changed : out Breakpoint_Hash_Maps.Map;
       Enabled : out Breakpoint_Vectors.Vector;
       Id      : out Integer);
-   --  Feedback after breakpoints stats are changed to synchronize data
+   --  Called when breakpoints' status have changed, to synchronize data
 
    procedure Initialized_For_Subprograms
      (Self   : in out Breakpoint_Holder;
