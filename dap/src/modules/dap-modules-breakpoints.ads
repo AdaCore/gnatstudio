@@ -183,7 +183,7 @@ package DAP.Modules.Breakpoints is
       Data    : Breakpoint_Data;
       Updated : out Triboolean);
    --  Replace the breakpoint. Updated is True when we need to reset
-   --  the breakpoint on the gdb side and Indeterminate when we need to reset
+   --  the breakpoint on the server side and Indeterminate when we need to reset
    --  the breakpoint commands.
 
    procedure Replace

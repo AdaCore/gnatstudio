@@ -421,7 +421,7 @@ package body DAP.Views.Breakpoints is
          if Commands.Is_Empty
            and then not Br.Commands.Is_Empty
          then
-            --  Delete commands on the gdb side
+            --  Delete commands on the server side
             Client.Set_Breakpoint_Command
               (Br.Num, VSS.Strings.Empty_Virtual_String);
          end if;
