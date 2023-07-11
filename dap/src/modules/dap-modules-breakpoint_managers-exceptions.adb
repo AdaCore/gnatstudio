@@ -58,15 +58,21 @@ package body DAP.Modules.Breakpoint_Managers.Exceptions is
    is
       use DAP.Tools;
 
-      Actual : Breakpoint_Vectors.Vector;
-      Data   : Breakpoint_Data;
+      Actual  : Breakpoint_Vectors.Vector;
+      Data    : Breakpoint_Data;
+      Enabled : Breakpoint_Vectors.Vector;
    begin
       New_Request := null;
 
       case Self.Action is
-         when Init | Delete | Disable | Synch =>
+         when Delete | Disable | Synch =>
             --  Do nothing
             null;
+
+         when Init =>
+            for Data of Self.Sent loop
+               Self.Manager.Send_Commands (Data);
+            end loop;
 
          when Add =>
             if not Self.Sent.Is_Empty
@@ -80,6 +86,7 @@ package body DAP.Modules.Breakpoint_Managers.Exceptions is
                Data.Num := Data.Locations.First_Element.Num;
 
                Self.Manager.Holder.Add_BP_From_Response (Data);
+               Self.Manager.Send_Commands (Data);
             end if;
 
          when Enable =>
@@ -90,7 +97,11 @@ package body DAP.Modules.Breakpoint_Managers.Exceptions is
                        (Self.Kernel, Result.a_body.Value.breakpoints (Index)));
                end loop;
 
-               Self.Manager.Holder.Status_Changed (On_Exception, Actual);
+               Self.Manager.Holder.Status_Changed
+                 (On_Exception, Actual, Enabled);
+               for Data of Enabled loop
+                  Self.Manager.Send_Commands (Data);
+               end loop;
             end if;
       end case;
 

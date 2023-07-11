@@ -17,6 +17,8 @@
 
 with GNATCOLL.VFS;            use GNATCOLL.VFS;
 
+with VSS.Strings;
+
 with Basic_Types;             use Basic_Types;
 with GPS.Kernel;              use GPS.Kernel;
 with DAP.Types;               use DAP.Types;
@@ -75,23 +77,49 @@ package DAP.Modules.Persistent_Breakpoints is
 
    procedure Break_Source
      (Kernel    : not null access Kernel_Handle_Record'Class;
+      Num       : Breakpoint_Identifier;
       File      : Virtual_File;
       Line      : Editable_Line_Type;
-      Temporary : Boolean := False);
+      Temporary : Boolean := False;
+      Condition : VSS.Strings.Virtual_String :=
+        VSS.Strings.Empty_Virtual_String;
+      Ignore    : Natural := 0;
+      Commands  : VSS.Strings.Virtual_String :=
+        VSS.Strings.Empty_Virtual_String);
+
    --  Add breakpoint for the source line
 
    procedure Break_Subprogram
      (Kernel     : not null access Kernel_Handle_Record'Class;
+      Num        : Breakpoint_Identifier;
       Subprogram : String;
-      Temporary  : Boolean := False);
+      Temporary  : Boolean := False;
+      Condition : VSS.Strings.Virtual_String :=
+        VSS.Strings.Empty_Virtual_String;
+      Ignore    : Natural := 0;
+      Commands  : VSS.Strings.Virtual_String :=
+        VSS.Strings.Empty_Virtual_String);
    --  Add breakpoint for the subprogram
 
    procedure Break_Exception
      (Kernel    : not null access Kernel_Handle_Record'Class;
+      Num       : Breakpoint_Identifier;
       Name      : String;
       Unhandled : Boolean := False;
       Temporary : Boolean := False);
    --  Add breakpoint for the exception
+
+   procedure Break_Address
+     (Kernel    : not null access Kernel_Handle_Record'Class;
+      Num       : Breakpoint_Identifier;
+      Address   : Address_Type;
+      Temporary : Boolean := False;
+      Condition : VSS.Strings.Virtual_String :=
+        VSS.Strings.Empty_Virtual_String;
+      Ignore    : Natural := 0;
+      Commands  : VSS.Strings.Virtual_String :=
+        VSS.Strings.Empty_Virtual_String);
+   --  Add breakpoint for the address
 
    procedure Unbreak_Source
      (Kernel : not null access Kernel_Handle_Record'Class;

@@ -913,6 +913,35 @@ class ProcessWrapper(object):
         self.__start_time = time.time()
 
 
+class DAPResponse(object):
+    """ Represents a response sent by the gdb over DAP """
+
+    def __init__(self):
+        """ Initialization procedure, meant to be called by request_promise """
+
+        self.is_valid = False
+        # Whether the gdb responded with a response
+
+        self.is_reject = False
+        # Whether the request was rejected
+
+        self.is_error = False
+        # Whether the gdb returned an error
+
+        self.error_message = None
+        # The error message, if any
+
+        self.data = None
+        # The data received, if the response was valid. This is represented
+        # as a Python view of the gdb response.
+
+    def __str__(self):
+        return ("is_valid: {}\nis_reject: {}\n"
+                "is_error: {}\nerror: '{}'\ndata: '{}'\n".format(
+                    self.is_valid, self.is_reject, self.is_error,
+                    self.error_message, self.data))
+
+
 class DebuggerWrapper(object):
     """
        DebuggerWrapper is a debbuger (essentially a process in GPS) manager
@@ -1080,6 +1109,43 @@ class DebuggerWrapper(object):
            Accessible interface for my debugger
         """
         return self.__debugger
+
+    def send_promise(self, command, output=True, show_in_console=False):
+        """Make a gdb command as a promise.
+
+           The way to use this is in a workflow, in the following way:
+
+               # Retrieve the language server
+               gdb = DebuggerWrapper(GPS.File("foo"))
+
+               # call this with a yield
+               result = yield gdb.command_promise(command)
+
+               # result is a DAPResponse object: typically
+               # inspect result.is_valid, result.is_error, result.is_reject,
+               # and process result.data if result.is_valid.
+        """
+        p = Promise()
+        result = DAPResponse()
+
+        def on_error(message):
+            result.is_error = True
+            result.error_message = message
+            p.resolve(result)
+
+        def on_result(message):
+            result.is_valid = True
+            result.data = message
+            p.resolve(result)
+
+        def on_reject():
+            result.is_reject = True
+            p.resolve(result)
+
+        self.__debugger.send(
+            command, output, show_in_console,
+            on_result, on_error, on_reject)
+        return p
 
 
 class TargetWrapper():

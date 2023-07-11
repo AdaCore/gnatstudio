@@ -2487,7 +2487,9 @@ class Debugger(object):
         """
         pass  # implemented in Ada
 
-    def send(self, cmd, output=True, show_in_console=False):
+    def send(self, cmd, output=True, show_in_console=False,
+             on_result_message=None, on_error_message=None,
+             on_rejected=None):
         """
         Executes ``cmd`` in the debugger. GPS is blocked while ``cmd`` is
         executing on the debugger. If output is true, the command is displayed
@@ -2507,7 +2509,14 @@ class Debugger(object):
         :param cmd: A string
         :param output: A boolean
         :param show_in_console: A boolean
-        :return: A string
+        :param on_result_message: Callback to be called on successful execution
+            of the method
+        :param on_error_message: Callback to be called on execution error
+            reported by the gdb DAP server
+        :param on_rejected: Callback to be called when it is impossible to
+            send request to the gdb DAP server
+
+        :return: A string. Return empty string over DAP.
 
         .. seealso:: :func:`GPS.Debugger.non_blocking_send`
         .. seealso:: :func:`GPS.Debugger.value_of`
