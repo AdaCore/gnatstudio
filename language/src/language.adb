@@ -839,6 +839,16 @@ package body Language is
       Lang.Indent_Style  := Indent_Style;
    end Set_Indentation_Parameters;
 
+   ----------------------------
+   --  Get_Indentation_Level --
+   ----------------------------
+
+   function Get_Indentation_Level
+     (Lang : access Language_Root) return Integer is
+   begin
+      return Lang.Indent_Params.Indent_Level;
+   end Get_Indentation_Level;
+
    ----------
    -- Free --
    ----------

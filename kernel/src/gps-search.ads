@@ -53,6 +53,8 @@ package GPS.Search is
    --  Return a suitable label for the given search kind
    --  (e.g : Fuzzy -  > "Fuzzy matching").
 
+   Default_Tab_Width    : constant := 8;
+
    Max_Capturing_Groups : constant := 10;
    --  Maximum number of capturing parenthesis groups for which we want to
    --  store the range in the search_context.
@@ -110,6 +112,9 @@ package GPS.Search is
       --  a regexp.
 
       Color_String  : RGB_String := Blue;
+
+      Tab_Width     : Natural;
+      --  The current size of tabs use in the buffer
    end record;
    No_Match : constant Search_Context;
    --  The current state for a search matcher
@@ -212,7 +217,8 @@ package GPS.Search is
       Buffer      : String;
       Start_Index : Integer := -1;
       End_Index   : Integer := -1;
-      Ref         : Buffer_Position := Unknown_Position)
+      Ref         : Buffer_Position := Unknown_Position;
+      Tab_Width   : Natural := Default_Tab_Width)
       return Search_Context
       is abstract;
    --  Start searching for Self in Buffer (Start_Index .. End_Index).
@@ -223,6 +229,8 @@ package GPS.Search is
    --
    --  Ref provides a reference point for the computation of line/column
    --  information. It is assumed to be located before Start_Index.
+   --
+   --  Tab_Width should match the current size of tabs use in the buffer.
    --
    --  Return value is No_Match if the Buffer did not match.
 
@@ -554,7 +562,8 @@ private
       Buffer_End         => -1,
       Ref                => Unknown_Position,
       Groups             => (others => GNAT.Regpat.No_Match),
-      Color_String       => <>);
+      Color_String       => <>,
+      Tab_Width          => Default_Tab_Width);
 
    type Provider_Info is record
       Provider : Search_Provider_Access;

@@ -325,6 +325,10 @@ package body Src_Editor_Box is
       Iter              : Gtk_Text_Iter;
 
       Char_Column       : Character_Offset_Type;
+      Indent_Level      : constant Integer :=
+        Kernel.Get_Language_Handler.Get_Language_From_File
+          (Filename).Get_Indentation_Level;
+
    begin
       if Dir (Filename) = No_File and then Filename /= No_File then
          Insert (Kernel, -"File not found: "
@@ -408,7 +412,8 @@ package body Src_Editor_Box is
                  (Buffer.all, L, Char_Column, Found,
                   Entity_Name,
                   Case_Sensitive => Get_Language_Context
-                    (Get_Language (Source.Source_Buffer)).Case_Sensitive);
+                    (Get_Language (Source.Source_Buffer)).Case_Sensitive,
+                  Tab_Width      => Indent_Level);
                Free (Buffer);
 
                Col := Expand_Tabs

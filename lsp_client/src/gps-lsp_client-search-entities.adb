@@ -410,7 +410,11 @@ package body GPS.LSP_Client.Search.Entities is
               VSS.Strings.Conversions.To_UTF_8_String (Info.name);
          begin
             if Self.Pattern.Get_Allow_Highlights then
-               Context := Self.Pattern.Start (Short);
+               Context := Self.Pattern.Start
+                 (Short,
+                  Tab_Width =>
+                   Self.Kernel.Get_Language_Handler.Get_Language_From_File
+                     (File).Get_Indentation_Level);
             end if;
 
             if not Self.Pattern.Get_Allow_Highlights
