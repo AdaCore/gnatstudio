@@ -82,8 +82,8 @@ package body DAP.Views.Assembly is
       Next       : Cache_Data_Access;
       Subprogram : Boolean := False;
    end record;
-   --  This implements a cache for the assembly code, for specific ranges.
-   --  Some debuggers (gdb) might take a long time to output the assembly code
+   --  This implements a cache for the assembly code, for specific ranges. Some
+   --  debuggers (e.g: gdb) might take a long time to output the assembly code
    --  for a specific region, so it is better to keep it once we have it.
 
    type Direction_Kind is (Prepend, Append, Full);
@@ -1044,8 +1044,8 @@ package body DAP.Views.Assembly is
          Assembly_View (View).Highlight;
 
       else
-         --  If both are null, this means that gdb couldn't get the assembly
-         --  at all, and there's no point in trying again afterwards.
+         --  If both are null, this means that the server couldn't get the
+         --  assembly at all, and there's no point in trying again afterwards.
          View.Current_Range := Invalid_Cache_Data;
          Assembly_View (View).Free_Cache;
       end if;

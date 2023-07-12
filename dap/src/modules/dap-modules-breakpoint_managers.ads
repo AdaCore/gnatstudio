@@ -56,7 +56,7 @@ package DAP.Modules.Breakpoint_Managers is
       Data : Breakpoint_Data);
    --  Add breakpoint
 
-   procedure Break_Sorce
+   procedure Break_Source
      (Self      : DAP_Client_Breakpoint_Manager_Access;
       File      : GNATCOLL.VFS.Virtual_File;
       Line      : Editable_Line_Type;
@@ -131,13 +131,13 @@ private
    end record;
 
    type Action_Kind is
-     (Init, Add, Delete, Enable, Disable, Synch);
+     (Init, Add, Delete, Enable, Disable, Sync);
    --  Type of a request to DAP adapter:
    --   Init: set breakpoints initially
    --   Add: add one new breakpoint
    --   Delete: delete one or multiple breakpoints
    --   Enable/Disable: Enable/disable one or more breakpoints
-   --   Synch: set actual breakpoints after delete duplicates for example
+   --   Sync: set actual breakpoints after delete duplicates for example
 
    function Send_Line
      (Self   : not null access DAP_Client_Breakpoint_Manager;
