@@ -58,4 +58,7 @@ package DAP.Modules.Preferences is
    Memory_Selected_Color         : Color_Preference;
    Memory_Auto_Refresh           : Boolean_Preference;
 
+   --  Remote Debugging
+   Load_Executable_On_Init       : Boolean_Preference;
+
 end DAP.Modules.Preferences;

@@ -20,6 +20,7 @@ with Ada.Exceptions;
 with GNAT.OS_Lib;
 
 with GNATCOLL.Projects;
+with GNATCOLL.Scripts;
 with GNATCOLL.VFS;
 
 with VSS.Strings;
@@ -292,6 +293,11 @@ package DAP.Clients is
       Entity : String;
       Label  : Gtk.Label.Gtk_Label);
 
+   procedure Set_Breakpoint_Command
+     (Self    : in out DAP_Client;
+      Id      : Breakpoint_Identifier;
+      Command : VSS.Strings.Virtual_String);
+
    procedure Set_Capabilities
      (Self         : in out DAP_Client;
       Capabilities : DAP.Tools.Optional_Capabilities);
@@ -331,11 +337,18 @@ package DAP.Clients is
    --  Update backtrace information
 
    procedure Process_User_Command
-     (Self           : in out DAP_Client;
-      Cmd            : String;
-      Output_Command : Boolean := False);
-   --  Execute the debugger command. Print the command in the console
-   --  if Output_Command is True
+     (Self              : in out DAP_Client;
+      Cmd               : String;
+      Output_Command    : Boolean := False;
+      Result_In_Console : Boolean := False;
+      On_Result_Message : GNATCOLL.Scripts.Subprogram_Type := null;
+      On_Error_Message  : GNATCOLL.Scripts.Subprogram_Type := null;
+      On_Rejected       : GNATCOLL.Scripts.Subprogram_Type := null);
+   --  Execute the debugger command.
+   --  Print the command in the console if Output_Command is True
+   --  Print the result in the console if Result_In_Console is True
+   --  On_Result_Message, On_Error_Message, On_Rejected callbacks used in the
+   --  Python API.
 
    function Is_Quit_Command
      (Self : DAP_Client;
@@ -502,10 +515,13 @@ private
       Info_Line, Info_First_Line, Hover, Variable_Address, Endian, Command);
 
    function Create_Evaluate_Command
-     (Self   : DAP_Client;
-      Kind   : Evaluate_Kind;
-      Cmd    : VSS.Strings.Virtual_String;
-      Output : Boolean := False)
+     (Self              : DAP_Client;
+      Kind              : Evaluate_Kind;
+      Cmd               : VSS.Strings.Virtual_String;
+      Output            : Boolean := False;
+      On_Result_Message : GNATCOLL.Scripts.Subprogram_Type := null;
+      On_Error_Message  : GNATCOLL.Scripts.Subprogram_Type := null;
+      On_Rejected       : GNATCOLL.Scripts.Subprogram_Type := null)
       return DAP.Requests.DAP_Request_Access;
 
 end DAP.Clients;

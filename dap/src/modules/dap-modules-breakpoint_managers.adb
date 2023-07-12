@@ -17,6 +17,8 @@
 
 with Ada.Strings.Unbounded;        use Ada.Strings.Unbounded;
 
+with GNATCOLL.Tribooleans;           use GNATCOLL.Tribooleans;
+
 with VSS.String_Vectors;
 with VSS.Strings.Conversions;
 
@@ -98,7 +100,9 @@ package body DAP.Modules.Breakpoint_Managers is
         (if DAP_Bp.source.Is_Set
          then Create
            (+(VSS.Strings.Conversions.To_UTF_8_String
-            (DAP_Bp.source.Value.path)))
+            (if DAP_Bp.source.Value.path.Is_Empty
+                 then DAP_Bp.source.Value.name
+                 else DAP_Bp.source.Value.path)))
          else No_File);
       Holder : constant GPS.Editors.Controlled_Editor_Buffer_Holder :=
         Kernel.Get_Buffer_Factory.Get_Holder (File => File);
@@ -160,6 +164,7 @@ package body DAP.Modules.Breakpoint_Managers is
       Data : Breakpoint_Data)
    is
       Changed : Breakpoint_Vectors.Vector;
+      Updated : Triboolean;
    begin
       if Self.Requests_Count /= 0 then
          Self.Client.Display_In_Debugger_Console
@@ -167,7 +172,26 @@ package body DAP.Modules.Breakpoint_Managers is
          return;
       end if;
 
-      Self.Holder.Add (Data, Changed);
+      if Data.Num = No_Breakpoint then
+         Self.Holder.Add (Data, Changed);
+      else
+         Self.Holder.Replace (Data, Updated);
+
+         if Updated = GNATCOLL.Tribooleans.True then
+            case Data.Kind is
+               when On_Line =>
+                  Changed := Self.Holder.Get_For_File
+                    (Get_File (Data.Locations.First_Element.Marker));
+
+               when others =>
+                  Changed := Self.Holder.Get_For (Data.Kind);
+            end case;
+
+         elsif Updated = Indeterminate then
+            Self.Send_Commands (Data);
+         end if;
+      end if;
+
       if not Changed.Is_Empty then
          case Data.Kind is
             when On_Line =>
@@ -376,6 +400,9 @@ package body DAP.Modules.Breakpoint_Managers is
          Sb.column :=
            (Is_Set => True,
             Value  => Integer (GPS.Editors.Get_Column (Get_Location (Data))));
+         Sb.condition    := Data.Condition;
+         Sb.hitCondition := Get_Ignore (Data);
+
          Req.Parameters.arguments.breakpoints.Append (Sb);
       end loop;
 
@@ -398,6 +425,19 @@ package body DAP.Modules.Breakpoint_Managers is
       Self.Client.Enqueue (Request);
    end Send_Line;
 
+   -------------------
+   -- Send_Commands --
+   -------------------
+
+   procedure Send_Commands
+     (Self : DAP_Client_Breakpoint_Manager_Access;
+      Data : DAP.Modules.Breakpoints.Breakpoint_Data) is
+   begin
+      if not Data.Commands.Is_Empty then
+         Self.Client.Set_Breakpoint_Command (Data.Num, Data.Commands);
+      end if;
+   end Send_Commands;
+
    ---------------------
    -- Send_Subprogram --
    ---------------------
@@ -419,6 +459,9 @@ package body DAP.Modules.Breakpoint_Managers is
       for Data of Actual loop
          Fb.name := VSS.Strings.Conversions.To_Virtual_String
            (To_String (Data.Subprogram));
+         Fb.condition    := Data.Condition;
+         Fb.hitCondition := Get_Ignore (Data);
+
          Req.Parameters.arguments.breakpoints.Append (Fb);
       end loop;
 
@@ -520,6 +563,9 @@ package body DAP.Modules.Breakpoint_Managers is
       for Data of Actual loop
          Fb.instructionReference := VSS.Strings.Conversions.To_Virtual_String
            (Address_To_String (Data.Address));
+         Fb.condition    := Data.Condition;
+         Fb.hitCondition := Get_Ignore (Data);
+
          Req.Parameters.arguments.breakpoints.Append (Fb);
       end loop;
 

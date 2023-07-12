@@ -5,19 +5,26 @@ console.
 import GPS
 from gs_utils.internal.utils import *
 import re
+import workflows
+from workflows import promises
 
 TAG = '^error,msg="'
 
 
-def prepare_output(msg):
+def prepare_output(result):
     """Retrieve the error message from CLI and MI"""
-    if "^error" in msg:
-        for line in msg.splitlines():
+    if result.data is not None:
+      if "^error" in result.data:
+        for line in result.data.splitlines():
             if line.startswith(TAG):
                 result = line[len(TAG):-1]
                 return result.replace('\\"', '"').replace("\\\\", "\\")
+      else:
+        return result.data
+    elif result.error_message is not None:
+        return result.error_message
     else:
-        return msg
+        return ""
 
 
 @run_test_driver
@@ -30,16 +37,18 @@ def test_driver():
     yield hook('debugger_started')
     yield wait_idle()
 
-    debug = GPS.Debugger.get()
+    p = promises.DebuggerWrapper(GPS.File("main"))
+    debug = p.get()
     debug.send("run")
     yield wait_until_not_busy(debug)
-    result = debug.send("foo \\")
-    yield wait_until_not_busy(debug)
-    gps_assert(prepare_output(result),
-               'No definition of "foo" in current context.',
-               "Bad handling of '\\'")
-    result = debug.send("foo \\ ")
-    yield wait_until_not_busy(debug)
+
+    result = yield p.send_promise("foo \\")
+    gps_assert(prepare_output(result) in
+               ['No definition of "foo" in current context.',
+                "Invalid character '\\' in expression."],
+               True, "Bad handling of '\\'")
+
+    result = yield p.send_promise("foo \\ ")
     gps_assert(prepare_output(result),
                "Invalid character '\\' in expression.",
                "Bad handling of '\\ '")

@@ -156,7 +156,7 @@ package body DAP.Views.Consoles is
    --------------------------------------
 
    function Get_Debugger_Interactive_Console
-     (Client : DAP_Client)
+     (Client : DAP_Client'Class)
       return access Interactive_Console_Record'Class
    is
       C : constant Debugger_Console :=
@@ -213,11 +213,11 @@ package body DAP.Views.Consoles is
       DC     : constant Debugger_Console := Convert (User);
       Client : constant DAP.Clients.DAP_Client_Access := DC.Get_Client;
    begin
-      if Client /= null then
+      if Client = null then
          return "";
       end if;
 
-      Client.Process_User_Command (Input, True);
+      Client.Process_User_Command (Input, True, True);
 
       return "";
    end Interpret_Command_Handler;

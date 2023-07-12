@@ -17,13 +17,13 @@ def run_test():
     buf = GPS.EditorBuffer.get(GPS.File("main.adb"))
     view = buf.current_view()
     view.goto(buf.at(7, 1).end_of_line())
-    yield wait_idle()
+    yield wait_tasks(other_than=known_tasks)
 
     # Try to match the '(invisible)' part of the 'Do_Nothing', in
     # fuzzy mode.
     for ch in "Do_inv":
         send_key_event(ord(ch))
-        yield timeout(100)
+        yield timeout(200)
 
     # Verify that the completion window is there
     pop_tree = get_widget_by_name("completion-view")

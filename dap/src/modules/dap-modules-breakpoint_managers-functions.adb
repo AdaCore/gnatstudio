@@ -58,8 +58,9 @@ package body DAP.Modules.Breakpoint_Managers.Functions is
    is
       use DAP.Tools;
 
-      Update : Boolean := False;
-      Actual : Breakpoint_Vectors.Vector;
+      Update  : Boolean := False;
+      Actual  : Breakpoint_Vectors.Vector;
+      Enabled : Breakpoint_Vectors.Vector;
    begin
       New_Request := null;
 
@@ -73,6 +74,12 @@ package body DAP.Modules.Breakpoint_Managers.Functions is
             Self.Manager.Holder.Initialized_For_Subprograms
               (Actual, Self.Last);
 
+            if Self.Last then
+               for Data of Actual loop
+                  Self.Manager.Send_Commands (Data);
+               end loop;
+            end if;
+
          when Add =>
             for Index in 1 .. Length (Result.a_body.breakpoints) loop
                Actual.Append
@@ -81,6 +88,9 @@ package body DAP.Modules.Breakpoint_Managers.Functions is
 
             Self.Manager.Holder.Added_Subprogram
               (Self.Sent.Last_Element, Actual);
+
+            Self.Manager.Send_Commands (Self.Sent.Last_Element);
+
             Update := True;
 
          when Delete =>
@@ -93,7 +103,13 @@ package body DAP.Modules.Breakpoint_Managers.Functions is
                  (Convert (Self.Kernel, Result.a_body.breakpoints (Index)));
             end loop;
 
-            Self.Manager.Holder.Subprogram_Status_Changed (Actual, Self.Last);
+            Self.Manager.Holder.Subprogram_Status_Changed
+              (Actual, Self.Last, Enabled);
+
+            for Data of Enabled loop
+               Self.Manager.Send_Commands (Data);
+            end loop;
+
             Update := Self.Last;
 
          when Disable =>

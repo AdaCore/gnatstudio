@@ -36,7 +36,7 @@ package DAP.Views.Consoles is
    --  Nothing is done when Debugger is already attached to a console.
 
    function Get_Debugger_Interactive_Console
-     (Client : DAP_Client)
+     (Client : DAP_Client'Class)
       return access Interactive_Console_Record'Class;
    --  Return the interactive console associated with the given debugger.
    --  If no interactive console is associated with this debugger, return null.

@@ -20,6 +20,9 @@ with Ada.Strings.Unbounded;          use Ada.Strings.Unbounded;
 
 with GNATCOLL.JSON;                  use GNATCOLL.JSON;
 with GNATCOLL.Traces;                use GNATCOLL.Traces;
+with GNATCOLL.Tribooleans;           use GNATCOLL.Tribooleans;
+
+with VSS.Strings.Conversions;
 
 with Commands;                       use Commands;
 with Commands.Interactive;           use Commands.Interactive;
@@ -272,6 +275,7 @@ package body DAP.Modules.Persistent_Breakpoints is
       elsif Command.On_Line then
          Break_Source
            (Kernel,
+            Num   => No_Breakpoint,
             File  => File_Information (Context.Context),
             Line  => Editable_Line_Type
               ((if Has_File_Line_Information (Context.Context)
@@ -285,6 +289,7 @@ package body DAP.Modules.Persistent_Breakpoints is
             if Is_Fuzzy (Entity) or else Is_Subprogram (Entity) then
                Break_Subprogram
                  (Kernel,
+                  Num        => No_Breakpoint,
                   Subprogram => Entity_Name_Information (Context.Context));
             end if;
          end;
@@ -307,6 +312,7 @@ package body DAP.Modules.Persistent_Breakpoints is
          when Set =>
             Break_Source
               (Self.Kernel,
+               Num  => No_Breakpoint,
                File => GPS.Kernel.Contexts.File_Information (Context),
                Line => Editable_Line_Type
                  (GPS.Kernel.Contexts.Line_Information (Context)));
@@ -487,10 +493,23 @@ package body DAP.Modules.Persistent_Breakpoints is
       begin
          Value.Set_Field ("kind", Breakpoint_Kind'Image (B.Kind));
          Value.Set_Field ("ignore", B.Ignore);
-         Value.Set_Field ("condition", To_String (B.Condition));
+
+         if not B.Condition.Is_Empty then
+            Value.Set_Field
+              ("condition",
+               VSS.Strings.Conversions.To_UTF_8_String (B.Condition));
+         end if;
+
          if B.Executable /= Null_Unbounded_String then
             Value.Set_Field ("executable", To_String (B.Executable));
          end if;
+
+         if not B.Commands.Is_Empty then
+            Value.Set_Field
+              ("command",
+               VSS.Strings.Conversions.To_UTF_8_String (B.Commands));
+         end if;
+
          Value.Set_Field
            ("disposition",
             Breakpoint_Disposition'Image (B.Disposition));
@@ -562,11 +581,24 @@ package body DAP.Modules.Persistent_Breakpoints is
             Kind : constant Breakpoint_Kind :=
               Breakpoint_Kind'Value (Item.Get ("kind"));
             Loc  : Location_Marker     := No_Marker;
+
             Exec : constant Unbounded_String    :=
               (if Item.Has_Field ("executable")
                then To_Unbounded_String
                  (To_String (Item.Get ("executable")))
                else Null_Unbounded_String);
+
+            Condition : constant VSS.Strings.Virtual_String :=
+              (if Item.Has_Field ("condition")
+               then VSS.Strings.Conversions.To_Virtual_String
+                 (String'(Item.Get ("condition")))
+               else VSS.Strings.Empty_Virtual_String);
+
+            Commands : constant VSS.Strings.Virtual_String :=
+              (if Item.Has_Field ("command")
+               then VSS.Strings.Conversions.To_Virtual_String
+                 (String'(Item.Get ("command")))
+               else VSS.Strings.Empty_Virtual_String);
             B    : Breakpoint_Data (Kind);
          begin
             case Kind is
@@ -588,8 +620,9 @@ package body DAP.Modules.Persistent_Breakpoints is
                         Locations     => Location_Vectors.To_Vector
                           ((Id, Loc, Invalid_Address), 1),
                         Ignore        => Item.Get ("ignore"),
-                        Condition     => Item.Get ("condition"),
-                        Executable    => Exec);
+                        Condition     => Condition,
+                        Executable    => Exec,
+                        Commands      => Commands);
                   end if;
 
                when On_Subprogram =>
@@ -601,8 +634,9 @@ package body DAP.Modules.Persistent_Breakpoints is
                      State         => Enabled,
                      Subprogram    => Item.Get ("subprogram"),
                      Ignore        => Item.Get ("ignore"),
-                     Condition     => Item.Get ("condition"),
+                     Condition     => Condition,
                      Executable    => Exec,
+                     Commands      => Commands,
                      others        => <>);
 
                when On_Address =>
@@ -619,8 +653,9 @@ package body DAP.Modules.Persistent_Breakpoints is
                      Except        => Item.Get ("exception"),
                      Unhandled     => Item.Get ("unhandled"),
                      Ignore        => Item.Get ("ignore"),
-                     Condition     => Item.Get ("condition"),
+                     Condition     => Condition,
                      Executable    => Exec,
+                     Commands      => Commands,
                      others        => <>);
             end case;
 
@@ -698,9 +733,9 @@ package body DAP.Modules.Persistent_Breakpoints is
                Line                     => Natural (Line),
                Column                   => 0,
                Text                     =>
-                 (if B.Condition /= ""
-                  then "A conditional breakpoint has been set on this line"
-                  else "An active breakpoint has been set on this line"),
+                 (if B.Condition.Is_Empty
+                  then "An active breakpoint has been set on this line"
+                  else "A conditional breakpoint has been set on this line"),
                Importance               => Unspecified,
                Flags                    => Breakpoints_Message_Flags,
                Allow_Auto_Jump_To_First => False);
@@ -725,7 +760,7 @@ package body DAP.Modules.Persistent_Breakpoints is
                  (GPS.Default_Styles.Debugger_Disabled_Breakpoint_Style,
                   Length => 1);
 
-            elsif B.Condition /= "" then
+            elsif not B.Condition.Is_Empty then
                Msg.Set_Highlighting
                  (GPS.Default_Styles.Debugger_Conditional_Breakpoint_Style,
                   Length => 1);
@@ -756,10 +791,16 @@ package body DAP.Modules.Persistent_Breakpoints is
          Debugger.Break (Data);
       end On_Debugger;
 
+      Dummy : Triboolean;
    begin
       if DAP.Module.Get_Current_Debugger = null then
-         Data.Num := Breakpoints.Get_Next_Id;
-         Breakpoints.Added (Data);
+         if Data.Num = No_Breakpoint then
+            Data.Num := Breakpoints.Get_Next_Id;
+            Breakpoints.Added (Data);
+         else
+            Breakpoints.Replace (Data, Dummy);
+         end if;
+
          GPS.Kernel.Hooks.Debugger_Breakpoints_Changed_Hook.Run (Kernel, null);
          Show_Breakpoint (Kernel, Data);
 
@@ -777,13 +818,20 @@ package body DAP.Modules.Persistent_Breakpoints is
    ------------------
 
    procedure Break_Source
-     (Kernel        : not null access Kernel_Handle_Record'Class;
-      File          : Virtual_File;
-      Line          : Editable_Line_Type;
-      Temporary     : Boolean := False)
+     (Kernel    : not null access Kernel_Handle_Record'Class;
+      Num       : Breakpoint_Identifier;
+      File      : Virtual_File;
+      Line      : Editable_Line_Type;
+      Temporary : Boolean := False;
+      Condition : VSS.Strings.Virtual_String :=
+        VSS.Strings.Empty_Virtual_String;
+      Ignore    : Natural := 0;
+      Commands  : VSS.Strings.Virtual_String :=
+        VSS.Strings.Empty_Virtual_String)
    is
       B : Breakpoint_Data := Breakpoint_Data'
         (Kind        => On_Line,
+         Num         => Num,
          Locations   => Location_Vectors.To_Vector
            (DAP.Modules.Breakpoints.Location'
                 (Num     => 0,
@@ -794,6 +842,9 @@ package body DAP.Modules.Persistent_Breakpoints is
                  Address => Invalid_Address),
             1),
          Disposition => (if Temporary then Delete else Keep),
+         Condition   => Condition,
+         Ignore      => Ignore,
+         Commands    => Commands,
          others      => <>);
 
    begin
@@ -806,12 +857,14 @@ package body DAP.Modules.Persistent_Breakpoints is
 
    procedure Break_Exception
      (Kernel    : not null access Kernel_Handle_Record'Class;
+      Num       : Breakpoint_Identifier;
       Name      : String;
       Unhandled : Boolean := False;
       Temporary : Boolean := False)
    is
       B : Breakpoint_Data := Breakpoint_Data'
         (Kind        => On_Exception,
+         Num         => Num,
          Except      => To_Unbounded_String (Name),
          Unhandled   => Unhandled,
          Disposition => (if Temporary then Delete else Keep),
@@ -826,18 +879,57 @@ package body DAP.Modules.Persistent_Breakpoints is
 
    procedure Break_Subprogram
      (Kernel        : not null access Kernel_Handle_Record'Class;
+      Num           : Breakpoint_Identifier;
       Subprogram    : String;
-      Temporary     : Boolean := False)
+      Temporary     : Boolean := False;
+      Condition : VSS.Strings.Virtual_String :=
+        VSS.Strings.Empty_Virtual_String;
+      Ignore    : Natural := 0;
+      Commands  : VSS.Strings.Virtual_String :=
+        VSS.Strings.Empty_Virtual_String)
    is
       B : Breakpoint_Data := Breakpoint_Data'
         (Kind        => On_Subprogram,
+         Num         => Num,
          Subprogram  => To_Unbounded_String (Subprogram),
          Disposition => (if Temporary then Delete else Keep),
+         Condition   => Condition,
+         Ignore      => Ignore,
+         Commands    => Commands,
          others      => <>);
 
    begin
       Break (Kernel, B);
    end Break_Subprogram;
+
+   -------------------
+   -- Break_Address --
+   -------------------
+
+   procedure Break_Address
+     (Kernel    : not null access Kernel_Handle_Record'Class;
+      Num       : Breakpoint_Identifier;
+      Address   : Address_Type;
+      Temporary : Boolean := False;
+      Condition : VSS.Strings.Virtual_String :=
+        VSS.Strings.Empty_Virtual_String;
+      Ignore    : Natural := 0;
+      Commands  : VSS.Strings.Virtual_String :=
+        VSS.Strings.Empty_Virtual_String)
+   is
+      B : Breakpoint_Data := Breakpoint_Data'
+        (Kind        => On_Address,
+         Num         => Num,
+         Address     => Address,
+         Disposition => (if Temporary then Delete else Keep),
+         Condition   => Condition,
+         Ignore      => Ignore,
+         Commands    => Commands,
+         others      => <>);
+
+   begin
+      Break (Kernel, B);
+   end Break_Address;
 
    --------------------
    -- Unbreak_Source --

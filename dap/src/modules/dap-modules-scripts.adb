@@ -35,6 +35,9 @@ with DAP.Clients;              use DAP.Clients;
 with DAP.Module;
 with DAP.Modules.Breakpoints;
 with DAP.Modules.Persistent_Breakpoints;
+with DAP.Views.Consoles;
+
+with Interactive_Consoles;    use Interactive_Consoles;
 
 package body DAP.Modules.Scripts is
 
@@ -248,16 +251,47 @@ package body DAP.Modules.Scripts is
          end if;
 
       elsif Command = "send" then
-         Inst   := Nth_Arg (Data, 1, New_Class (Kernel, "Debugger"));
-         Visual := DAP_Visual_Debugger_Access
-           (Glib.Object.GObject'(Get_Data (Inst)));
+         declare
+            On_Result : Subprogram_Type;
+            On_Error  : Subprogram_Type;
+            On_Reject : Subprogram_Type;
+         begin
+            Inst   := Nth_Arg (Data, 1, New_Class (Kernel, "Debugger"));
+            Visual := DAP_Visual_Debugger_Access
+              (Glib.Object.GObject'(Get_Data (Inst)));
 
-         Visual.Client.Process_User_Command
-           (Nth_Arg (Data, 2), Nth_Arg (Data, 3, True));
+            begin
+               On_Result := Nth_Arg (Data, 5);
 
-         if not Nth_Arg (Data, 4, False) then
-            Data.Set_Return_Value (String'("Result is not supported in DAP"));
-         end if;
+            exception
+               when No_Such_Parameter =>
+                  On_Result := null;
+            end;
+
+            begin
+               On_Error := Nth_Arg (Data, 6);
+
+            exception
+               when No_Such_Parameter =>
+                  On_Error := null;
+            end;
+
+            begin
+               On_Reject := Nth_Arg (Data, 7);
+
+            exception
+               when No_Such_Parameter =>
+                  On_Reject := null;
+            end;
+
+            Visual.Client.Process_User_Command
+              (Cmd               => Nth_Arg (Data, 2),
+               Output_Command    => Nth_Arg (Data, 3, True),
+               Result_In_Console => Nth_Arg (Data, 4, False),
+               On_Result_Message => On_Result,
+               On_Error_Message  => On_Error,
+               On_Rejected       => On_Reject);
+         end;
 
       elsif Command = "non_blocking_send" then
          Inst   := Nth_Arg (Data, 1, New_Class (Kernel, "Debugger"));
@@ -290,6 +324,7 @@ package body DAP.Modules.Scripts is
          Inst := Nth_Arg (Data, 1, New_Class (Kernel, "Debugger"));
          DAP.Modules.Persistent_Breakpoints.Break_Source
            (Kernel => Kernel,
+            Num    => No_Breakpoint,
             File   => Nth_Arg (Data, 2),
             Line   => Basic_Types.Editable_Line_Type
               (Integer'(Data.Nth_Arg (3))));
@@ -383,6 +418,27 @@ package body DAP.Modules.Scripts is
            (Glib.Object.GObject'(Get_Data (Inst)));
          Visual.Client.Stack_Frame (Nth_Arg (Data, 2, 0));
 
+      elsif Command = "get_console" then
+         Inst := Nth_Arg (Data, 1, New_Class (Kernel, "Debugger"));
+         Visual := DAP_Visual_Debugger_Access
+           (Glib.Object.GObject'(Get_Data (Inst)));
+
+         declare
+            Console : constant Interactive_Console :=
+              DAP.Views.Consoles.Get_Debugger_Interactive_Console
+                (Visual.Client.all);
+
+         begin
+            if Console /= null then
+               Data.Set_Return_Value
+                 (Get_Or_Create_Instance (Data.Get_Script, Console));
+            end if;
+         end;
+
+      elsif Command = "interrupt" then
+         --  Not implemented
+         null;
+
       end if;
    end Shell_Handler;
 
@@ -436,7 +492,10 @@ package body DAP.Modules.Scripts is
          Params =>
            (1 => Param ("cmd"),
             2 => Param ("output", Optional => True),
-            3 => Param ("show_in_console", Optional => True)),
+            3 => Param ("show_in_console", Optional => True),
+            4 => Param ("on_result_message", Optional => True),
+            5 => Param ("on_error_message", Optional => True),
+            6 => Param ("on_rejected", Optional => True)),
          Handler      => Shell_Handler'Access,
          Class        => Class);
       Kernel.Scripts.Register_Command
@@ -493,6 +552,14 @@ package body DAP.Modules.Scripts is
       Kernel.Scripts.Register_Command
         ("select_frame",
          Params       => (1 => Param ("num")),
+         Handler      => Shell_Handler'Access,
+         Class        => Class);
+      Kernel.Scripts.Register_Command
+        ("get_console",
+         Handler      => Shell_Handler'Access,
+         Class        => Class);
+      Kernel.Scripts.Register_Command
+        ("interrupt",
          Handler      => Shell_Handler'Access,
          Class        => Class);
 

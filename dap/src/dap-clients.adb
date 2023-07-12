@@ -21,6 +21,7 @@ with Ada.Unchecked_Deallocation;
 with GNAT.Directory_Operations;  use GNAT.Directory_Operations;
 with GNAT.Strings;
 
+with GNATCOLL.Any_Types;
 with GNATCOLL.Traces;            use GNATCOLL.Traces;
 with GNATCOLL.Utils;
 with Spawn.String_Vectors;
@@ -30,12 +31,15 @@ with Glib.Object;                use Glib.Object;
 
 with Gtkada.Dialogs;
 
+with VSS.Characters;             use VSS.Characters;
+with VSS.Characters.Latin;
 with VSS.JSON.Pull_Readers.Simple;
 with VSS.JSON.Push_Writers;
 with VSS.Regular_Expressions;
 with VSS.Stream_Element_Vectors.Conversions;
 with VSS.Strings;                use VSS.Strings;
 with VSS.Strings.Conversions;
+with VSS.Strings.Cursors.Iterators.Characters;
 with VSS.Text_Streams.Memory_UTF8_Input;
 with VSS.Text_Streams.Memory_UTF8_Output;
 
@@ -105,8 +109,14 @@ package body DAP.Clients is
       Client : DAP_Client_Access;
       Label  : Gtk.Label.Gtk_Label;
       Output : Boolean := False;
+
+      -- Callbacks --
+      On_Result_Message : GNATCOLL.Scripts.Subprogram_Type := null;
+      On_Error_Message  : GNATCOLL.Scripts.Subprogram_Type := null;
+      On_Rejected       : GNATCOLL.Scripts.Subprogram_Type := null;
    end record;
    type Evaluate_Request_Access is access all Evaluate_Request;
+   overriding procedure Finalize (Self : in out Evaluate_Request);
    overriding procedure On_Result_Message
      (Self        : in out Evaluate_Request;
       Result      : in out DAP.Tools.EvaluateResponse;
@@ -1514,10 +1524,16 @@ package body DAP.Clients is
    --------------------------
 
    procedure Process_User_Command
-     (Self           : in out DAP_Client;
-      Cmd            : String;
-      Output_Command : Boolean := False)
+     (Self              : in out DAP_Client;
+      Cmd               : String;
+      Output_Command    : Boolean := False;
+      Result_In_Console : Boolean := False;
+      On_Result_Message : GNATCOLL.Scripts.Subprogram_Type := null;
+      On_Error_Message  : GNATCOLL.Scripts.Subprogram_Type := null;
+      On_Rejected       : GNATCOLL.Scripts.Subprogram_Type := null)
    is
+      use GNATCOLL.Scripts;
+
       Request : DAP.Requests.DAP_Request_Access;
 
       Tmp     : constant String := GPS.Kernel.Hooks.
@@ -1526,22 +1542,55 @@ package body DAP.Clients is
            Debugger => Self.Get_Visual,
            Str      => Cmd);
 
+      Result_Message : GNATCOLL.Scripts.Subprogram_Type := On_Result_Message;
+      Error_Message  : GNATCOLL.Scripts.Subprogram_Type := On_Error_Message;
+      Rejected       : GNATCOLL.Scripts.Subprogram_Type := On_Rejected;
+
    begin
-      if Tmp = "" then
-         --  command already processed
-         return;
+      if Tmp /= "" then
+         if Self.Is_Quit_Command (Cmd) then
+            Self.Quit;
+
+         else
+            if Output_Command then
+               Self.Display_In_Debugger_Console (Cmd, Is_Command => True);
+            end if;
+
+            Request := Self.Create_Evaluate_Command
+              (Command,
+               VSS.Strings.Conversions.To_Virtual_String (Cmd),
+               Result_In_Console,
+               Result_Message, Error_Message, Rejected);
+
+            Self.Enqueue (Request);
+            return;
+         end if;
       end if;
 
-      if Output_Command then
-         Self.Display_In_Debugger_Console (Cmd, Is_Command => True);
+      if Result_Message /= null then
+         declare
+
+            Arguments : Callback_Data'Class :=
+              Result_Message.Get_Script.Create (1);
+         begin
+            Set_Nth_Arg (Arguments, 1, String'(""));
+
+            declare
+               Dummy : GNATCOLL.Any_Types.Any_Type :=
+                 Result_Message.Execute (Arguments);
+
+            begin
+               null;
+            end;
+
+            Free (Arguments);
+         end;
+
+         GNATCOLL.Scripts.Free (Result_Message);
       end if;
 
-      Request := Self.Create_Evaluate_Command
-        (Command,
-         VSS.Strings.Conversions.To_Virtual_String (Cmd),
-         Output_Command);
-
-      Self.Enqueue (Request);
+      GNATCOLL.Scripts.Free (Error_Message);
+      GNATCOLL.Scripts.Free (Rejected);
    end Process_User_Command;
 
    ---------------------------------
@@ -1947,15 +1996,54 @@ package body DAP.Clients is
       Self.Enqueue (DAP.Requests.DAP_Request_Access (Req));
    end Value_Of;
 
+   ----------------------------
+   -- Set_Breakpoint_Command --
+   ----------------------------
+
+   procedure Set_Breakpoint_Command
+     (Self    : in out DAP_Client;
+      Id      : Breakpoint_Identifier;
+      Command : VSS.Strings.Virtual_String)
+   is
+      Req   : Evaluate_Request_Access := new Evaluate_Request (Self.Kernel);
+      Frame : constant Integer := Self.Get_Selected_Frame;
+   begin
+      Req.Kind := DAP.Clients.Command;
+      Req.Parameters.arguments.expression :=
+        VSS.Strings.Conversions.To_Virtual_String
+          ("command" & Breakpoint_Identifier'Image (Id)
+           & ASCII.LF) & Command;
+
+      if not Command.Is_Empty
+        and then VSS.Strings.Cursors.Iterators.Characters.Element
+          (Command.At_Last_Character) /= VSS.Characters.Latin.Line_Feed
+      then
+         Req.Parameters.arguments.expression.Append
+           (VSS.Characters.Latin.Line_Feed);
+      end if;
+      Req.Parameters.arguments.expression.Append
+        (VSS.Strings.Conversions.To_Virtual_String ("end"));
+
+      if Frame /= 0 then
+         Req.Parameters.arguments.frameId := (Is_Set => True, Value => Frame);
+      end if;
+      Req.Parameters.arguments.context :=
+        (Is_Set => True, Value => DAP.Tools.Enum.repl);
+      Self.Enqueue (DAP.Requests.DAP_Request_Access (Req));
+   end Set_Breakpoint_Command;
+
    -----------------------------
    -- Create_Evaluate_Command --
    -----------------------------
 
    function Create_Evaluate_Command
-     (Self   : DAP_Client;
-      Kind   : Evaluate_Kind;
-      Cmd    : Virtual_String;
-      Output : Boolean := False)
+     (Self              : DAP_Client;
+      Kind              : Evaluate_Kind;
+      Cmd               : Virtual_String;
+      Output            : Boolean := False;
+      On_Result_Message : GNATCOLL.Scripts.Subprogram_Type := null;
+      On_Error_Message  : GNATCOLL.Scripts.Subprogram_Type := null;
+      On_Rejected       : GNATCOLL.Scripts.Subprogram_Type := null)
       return DAP.Requests.DAP_Request_Access
    is
       Req   : constant Evaluate_Request_Access :=
@@ -1965,6 +2053,11 @@ package body DAP.Clients is
       Req.Kind   := Kind;
       Req.Client := Self.This;
       Req.Output := Output;
+
+      Req.On_Result_Message := On_Result_Message;
+      Req.On_Error_Message  := On_Error_Message;
+      Req.On_Rejected       := On_Rejected;
+
       Req.Parameters.arguments.expression := Cmd;
       if Frame /= 0 then
          Req.Parameters.arguments.frameId :=
@@ -1975,6 +2068,19 @@ package body DAP.Clients is
       return DAP.Requests.DAP_Request_Access (Req);
    end Create_Evaluate_Command;
 
+   --------------
+   -- Finalize --
+   --------------
+
+   overriding procedure Finalize (Self : in out Evaluate_Request) is
+   begin
+      GNATCOLL.Scripts.Free (Self.On_Result_Message);
+      GNATCOLL.Scripts.Free (Self.On_Error_Message);
+      GNATCOLL.Scripts.Free (Self.On_Rejected);
+
+      DAP.Requests.Evaluate.Evaluate_DAP_Request (Self).Finalize;
+   end Finalize;
+
    -----------------------
    -- On_Result_Message --
    -----------------------
@@ -1984,6 +2090,8 @@ package body DAP.Clients is
       Result      : in out DAP.Tools.EvaluateResponse;
       New_Request : in out DAP.Requests.DAP_Request_Access)
    is
+      use GNATCOLL.Scripts;
+
       procedure Show_File
         (File : Virtual_String;
          Line : Natural;
@@ -2135,6 +2243,29 @@ package body DAP.Clients is
                  (VSS.Strings.Conversions.To_UTF_8_String
                     (Result.a_body.result), False);
             end if;
+
+            if Self.On_Result_Message /= null then
+               declare
+
+                  Arguments : Callback_Data'Class :=
+                    Self.On_Result_Message.Get_Script.Create (1);
+               begin
+                  Set_Nth_Arg
+                    (Arguments, 1,
+                     VSS.Strings.Conversions.To_UTF_8_String
+                       (Result.a_body.result));
+
+                  declare
+                     Dummy : GNATCOLL.Any_Types.Any_Type :=
+                       Self.On_Result_Message.Execute (Arguments);
+
+                  begin
+                     null;
+                  end;
+
+                  Free (Arguments);
+               end;
+            end if;
       end case;
    end On_Result_Message;
 
@@ -2191,7 +2322,9 @@ package body DAP.Clients is
    -- On_Rejected --
    -----------------
 
-   overriding procedure On_Rejected (Self : in out Evaluate_Request) is
+   overriding procedure On_Rejected (Self : in out Evaluate_Request)
+   is
+      use GNATCOLL.Scripts;
    begin
       case Self.Kind is
          when Hover =>
@@ -2206,6 +2339,18 @@ package body DAP.Clients is
                Self.Client.Display_In_Debugger_Console ("Rejected", False);
             end if;
 
+            if Self.On_Rejected /= null then
+               declare
+                  Arguments : Callback_Data'Class :=
+                    Self.On_Rejected.Get_Script.Create (0);
+                  Dummy     : GNATCOLL.Any_Types.Any_Type :=
+                    Self.On_Rejected.Execute (Arguments);
+
+               begin
+                  Free (Arguments);
+               end;
+            end if;
+
          when Show_Lang | Set_Lang | Restore_Lang | List_Adainit |
               Info_Line | Info_First_Line =>
             Self.Client.On_Ready;
@@ -2218,7 +2363,9 @@ package body DAP.Clients is
 
    overriding procedure On_Error_Message
      (Self    : in out Evaluate_Request;
-      Message : VSS.Strings.Virtual_String) is
+      Message : VSS.Strings.Virtual_String)
+   is
+      use GNATCOLL.Scripts;
    begin
       DAP.Requests.Evaluate.Evaluate_DAP_Request
         (Self).On_Error_Message (Message);
@@ -2235,6 +2382,28 @@ package body DAP.Clients is
             if Self.Output then
                Self.Client.Display_In_Debugger_Console
                  (VSS.Strings.Conversions.To_UTF_8_String (Message), False);
+            end if;
+
+            if Self.On_Error_Message /= null then
+               declare
+                  Arguments : Callback_Data'Class :=
+                    Self.On_Error_Message.Get_Script.Create (1);
+
+               begin
+                  Set_Nth_Arg
+                    (Arguments, 1,
+                     VSS.Strings.Conversions.To_UTF_8_String (Message));
+
+                  declare
+                     Dummy : GNATCOLL.Any_Types.Any_Type :=
+                       Self.On_Error_Message.Execute (Arguments);
+
+                  begin
+                     null;
+                  end;
+
+                  Free (Arguments);
+               end;
             end if;
 
          when Show_Lang | Set_Lang | Restore_Lang | List_Adainit |

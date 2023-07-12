@@ -4,14 +4,17 @@ Verify that GNAT Studio can set commands on breakpoint.
 """
 import GPS
 from gs_utils.internal.utils import *
-
+import workflows
+from workflows import promises
 
 @run_test_driver
 def test_driver():
     mode = "Mode:" + GPS.Preference("GPS6-Debugger-Debugger-Kind").get() + "\n"
     GPS.execute_action("Build & Debug Number 1")
     yield hook('debugger_started')
-    d = GPS.Debugger.get()
+
+    p = promises.DebuggerWrapper(GPS.File("main"))
+    d = p.get()
     d.send("b main.adb:31")
     yield wait_until_not_busy(d)
 
@@ -25,9 +28,9 @@ def test_driver():
     yield ed.ok()
 
     yield wait_idle()
-    info = d.send("info breakpoints")
-    gps_assert(info.find("cont") != -1, True, mode +
-               "Breakpoint command has not been set")
+    info = yield p.send_promise("info breakpoints")
+    gps_assert(info.data.find("cont") != -1, True, mode +
+               "Breakpoint command has not been set ")
 
     d.send('q')
     yield wait_tasks()

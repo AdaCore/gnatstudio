@@ -231,6 +231,18 @@ package body DAP.Module is
       Context : Interactive_Command_Context) return Command_Return_Type;
    --  Debug->Step Instruction menu
 
+   type Interrupt_Command is new Interactive_Command with null record;
+   overriding function Execute
+     (Command : access Interrupt_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type;
+   --  Debug->Interrupt
+
+   type Connect_To_Board_Command is new Interactive_Command with null record;
+   overriding function Execute
+     (Command : access Connect_To_Board_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type;
+   --  Debug->Debug->Connect to Board
+
    -- Utils --
 
    function Debug_Init
@@ -753,6 +765,32 @@ package body DAP.Module is
       return Commands.Success;
    end Execute;
 
+   -------------
+   -- Execute --
+   -------------
+
+   overriding function Execute
+     (Command : access Interrupt_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type
+   is
+      pragma Unreferenced (Command, Context);
+   begin
+      return Commands.Success;
+   end Execute;
+
+   -------------
+   -- Execute --
+   -------------
+
+   overriding function Execute
+     (Command : access Connect_To_Board_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type
+   is
+      pragma Unreferenced (Command, Context);
+   begin
+      return Commands.Success;
+   end Execute;
+
    ------------------------------
    -- Filter_Matches_Primitive --
    ------------------------------
@@ -1180,6 +1218,7 @@ package body DAP.Module is
 
       Debugger_Ready_State := new Debugger_Ready_State_Filter;
       Register_Filter (Kernel, Debugger_Ready_State, "Debugger ready state");
+
       --  Actions --
 
       Project_View_Changed_Hook.Add (new On_Project_View_Changed);
@@ -1253,6 +1292,22 @@ package body DAP.Module is
          Description =>
            "Execute the program for one machine instruction only",
          Category    => "Debug");
+
+      GPS.Kernel.Actions.Register_Action
+        (Kernel, "debug interrupt", new Interrupt_Command,
+         Icon_Name    => "gps-debugger-pause-symbolic",
+         Filter       => Has_Debugger,
+         Description  => "Asynchronously interrupt the debuggee program",
+         Category     => "Debug",
+         For_Learning => True);
+
+      GPS.Kernel.Actions.Register_Action
+        (Kernel, "debug connect to board", new Connect_To_Board_Command,
+         Description =>
+           "Opens a simple dialog to connect to a remote board. This option"
+           & " is only relevant to cross debuggers.",
+         Filter   => No_Debugger_Or_Ready,
+         Category => "Debug");
 
       DAP.Modules.Persistent_Breakpoints.Register_Module (Kernel);
       DAP.Views.Call_Stack.Register_Module (Kernel);
