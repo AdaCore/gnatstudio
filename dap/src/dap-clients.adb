@@ -236,7 +236,7 @@ package body DAP.Clients is
       use DAP.Modules.Breakpoint_Managers;
    begin
       if Self.Breakpoints /= null then
-         Break_Sorce (Self.Breakpoints, File, Line, Temporary);
+         Break_Source (Self.Breakpoints, File, Line, Temporary);
       end if;
    end Break_Source;
 

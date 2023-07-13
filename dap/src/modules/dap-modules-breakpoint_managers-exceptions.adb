@@ -65,7 +65,7 @@ package body DAP.Modules.Breakpoint_Managers.Exceptions is
       New_Request := null;
 
       case Self.Action is
-         when Delete | Disable | Synch =>
+         when Delete | Disable | Sync =>
             --  Do nothing
             null;
 

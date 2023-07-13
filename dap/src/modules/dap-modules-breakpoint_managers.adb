@@ -235,11 +235,11 @@ package body DAP.Modules.Breakpoint_Managers is
       Self.Break (Data);
    end Break_Exception;
 
-   -----------------
-   -- Break_Sorce --
-   -----------------
+   ------------------
+   -- Break_Source --
+   ------------------
 
-   procedure Break_Sorce
+   procedure Break_Source
      (Self      : DAP_Client_Breakpoint_Manager_Access;
       File      : GNATCOLL.VFS.Virtual_File;
       Line      : Editable_Line_Type;
@@ -261,7 +261,7 @@ package body DAP.Modules.Breakpoint_Managers is
          others      => <>);
    begin
       Self.Break (Data);
-   end Break_Sorce;
+   end Break_Source;
 
    ----------------------
    -- Break_Subprogram --

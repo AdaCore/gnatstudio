@@ -116,7 +116,7 @@ package body DAP.Modules.Breakpoint_Managers.Functions is
             --  Do nothing because we delete BP by notifications
             Update := True;
 
-         when Synch =>
+         when Sync =>
             --  Do nothing because we already have all data
             null;
       end case;
