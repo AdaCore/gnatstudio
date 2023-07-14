@@ -9,9 +9,10 @@ from workflows import promises
 
 @run_test_driver
 def test_driver():
-    mode = "Mode:" + GPS.Preference("GPS6-Debugger-Debugger-Kind").get() + "\n"
+    mode = "Mode:" + GPS.Preference("GPS6-Debugger-Debugger-Kind").get()
     GPS.execute_action("Build & Debug Number 1")
     yield hook('debugger_started')
+    yield wait_idle()
 
     p = promises.DebuggerWrapper(GPS.File("main"))
     d = p.get()
@@ -30,7 +31,7 @@ def test_driver():
     yield wait_idle()
     info = yield p.send_promise("info breakpoints")
     gps_assert(info.data.find("cont") != -1, True, mode +
-               "Breakpoint command has not been set ")
+               " Breakpoint command has not been set ")
 
     d.send('q')
     yield wait_tasks()

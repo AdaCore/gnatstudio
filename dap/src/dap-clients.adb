@@ -442,37 +442,41 @@ package body DAP.Clients is
      (Self   : in out DAP_Client;
       Status : Debugger_Status_Kind) is
    begin
-      if Self.Status /= Terminating then
-         Self.Status := Status;
+      if Self.Status = Status
+        or else Self.Status = Terminating
+      then
+         return;
+      end if;
 
-         if Self.Status /= Stopped then
+      Self.Status := Status;
 
-            Self.Selected_File    := GNATCOLL.VFS.No_File;
-            Self.Selected_Line    := 0;
-            Self.Selected_Address := Invalid_Address;
-            Self.Selected_Frame   := 0;
-            Self.Frames.Clear;
+      if Self.Status /= Stopped then
 
-            Self.Selected_Thread  := 0;
+         Self.Selected_File    := GNATCOLL.VFS.No_File;
+         Self.Selected_Line    := 0;
+         Self.Selected_Address := Invalid_Address;
+         Self.Selected_Frame   := 0;
+         Self.Frames.Clear;
 
-            DAP.Utils.Unhighlight_Current_Line (Self.Kernel);
-         end if;
+         Self.Selected_Thread  := 0;
 
-         if Self.Status = Ready then
-            GPS.Kernel.Hooks.Debuggee_Started_Hook.Run
-              (Self.Kernel, Self.Visual);
-         end if;
+         DAP.Utils.Unhighlight_Current_Line (Self.Kernel);
+      end if;
 
-         GPS.Kernel.Hooks.Debugger_State_Changed_Hook.Run
-           (Self.Kernel, Self.Visual,
-            (if Self.Status /= Stopped and then Self.Status /= Ready
-             then GPS.Debuggers.Debug_Busy
-             else GPS.Debuggers.Debug_Available));
+      if Self.Status = Ready then
+         GPS.Kernel.Hooks.Debuggee_Started_Hook.Run
+           (Self.Kernel, Self.Visual);
+      end if;
 
-         if Self.Status = Stopped then
-            GPS.Kernel.Hooks.Debugger_Process_Stopped_Hook.Run
-              (Self.Kernel, Self.Visual);
-         end if;
+      GPS.Kernel.Hooks.Debugger_State_Changed_Hook.Run
+        (Self.Kernel, Self.Visual,
+         (if Self.Status /= Stopped and then Self.Status /= Ready
+          then GPS.Debuggers.Debug_Busy
+          else GPS.Debuggers.Debug_Available));
+
+      if Self.Status = Stopped then
+         GPS.Kernel.Hooks.Debugger_Process_Stopped_Hook.Run
+           (Self.Kernel, Self.Visual);
       end if;
    end Set_Status;
 
@@ -734,21 +738,28 @@ package body DAP.Clients is
    ------------------------
 
    procedure Set_Selected_Frame
-     (Self    : in out DAP_Client;
-      Id      : Integer;
-      File    : GNATCOLL.VFS.Virtual_File;
-      Line    : Integer;
-      Address : Address_Type) is
+     (Self                      : in out DAP_Client;
+      Id                        : Integer;
+      File                      : GNATCOLL.VFS.Virtual_File;
+      Line                      : Integer;
+      Address                   : Address_Type;
+      Run_Location_Changed_Hook : Boolean := True) is
    begin
       Self.Selected_Frame   := Id;
       Self.Selected_File    := File;
       Self.Selected_Line    := Line;
       Self.Selected_Address := Address;
 
-      GPS.Kernel.Hooks.Debugger_Frame_Changed_Hook.Run
-        (Self.Kernel, Self.Visual);
+      --  highlight selected location
+      DAP.Utils.Highlight_Current_File_And_Line
+        (Self.Kernel, Self.Selected_File, Self.Selected_Line);
 
-      Self.On_Location_Changed;
+      if Run_Location_Changed_Hook then
+         --  Triggering the hook to inform views. Not needed when we set
+         --  location for the first time after the debugging stop.
+         GPS.Kernel.Hooks.Debugger_Location_Changed_Hook.Run
+           (Self.Kernel, Self.Visual);
+      end if;
    end Set_Selected_Frame;
 
    ------------------------
@@ -1470,7 +1481,6 @@ package body DAP.Clients is
 
             elsif Self.Selected_File /= No_File then
                Self.Set_Status (Stopped);
-               Self.On_Location_Changed;
             end if;
          end;
 
@@ -1486,14 +1496,21 @@ package body DAP.Clients is
                Integer_Sets.Exclude
                  (Self.Stopped_Threads, Continued.a_body.threadId);
             end if;
+
+            Self.Set_Status (Running);
          end;
 
       elsif Event = "breakpoint" then
          declare
+            use type DAP.Modules.Breakpoint_Managers.
+              DAP_Client_Breakpoint_Manager_Access;
+
             Event : DAP.Tools.BreakpointEvent;
          begin
             DAP.Tools.Inputs.Input_BreakpointEvent (Stream, Event, Success);
-            if Success then
+            if Success
+              and then Self.Breakpoints /= null
+            then
                Self.Breakpoints.On_Notification (Event.a_body);
             end if;
          end;
@@ -1503,6 +1520,10 @@ package body DAP.Clients is
          null;
 
       elsif Event = "exited" then
+         --  Do not handle, at least for now.
+         null;
+
+      elsif Event = "module" then
          --  Do not handle, at least for now.
          null;
 
@@ -1668,9 +1689,6 @@ package body DAP.Clients is
       end loop;
 
       Self.Client.Set_Status (Stopped);
-      if Self.Client.Selected_File /= No_File then
-         Self.Client.On_Location_Changed;
-      end if;
    end On_Result_Message;
 
    ----------------------
@@ -1772,20 +1790,6 @@ package body DAP.Clients is
          end if;
       end loop;
    end Stack_Frame;
-
-   -------------------------
-   -- On_Location_Changed --
-   -------------------------
-
-   procedure On_Location_Changed
-     (Self : in out DAP_Client) is
-   begin
-      DAP.Utils.Highlight_Current_File_And_Line
-        (Self.Kernel, Self.Selected_File, Self.Selected_Line);
-
-      GPS.Kernel.Hooks.Debugger_Location_Changed_Hook.Run
-        (Self.Kernel, Self.Visual);
-   end On_Location_Changed;
 
    ----------------
    -- On_Started --

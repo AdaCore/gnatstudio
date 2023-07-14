@@ -323,7 +323,7 @@ package body DAP.Module is
 
          --  Switch to the "Debug" perspective if available
          GPS.Kernel.MDI.Load_Perspective
-           (DAP_Module_ID.Get_Kernel, "DAP_Debug");
+           (DAP_Module_ID.Get_Kernel, "Debug");
 
          --  hide persistent breakpoints
          DAP.Modules.Persistent_Breakpoints.Hide_Breakpoints (Kernel);

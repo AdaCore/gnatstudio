@@ -35,6 +35,8 @@ def test_driver():
     debug.close()
     if mode == "Mode:Dap":
         yield wait_DAP_server("disconnect")
+        yield hook("debugger_terminated")
+    yield wait_idle()
 
     gps_assert(len(GPS.MDI.children()),
                expected,
