@@ -24,7 +24,7 @@ def driver():
 
     for i in range(0, 10):
         als.request_low_level(method=REQUEST,
-                              params=PARAM_TEMPLATE % f.path,
+                              params=PARAM_TEMPLATE % f.path.replace("\\", "/"),
                               on_result_message=on_result_message,
                               on_error_message=on_error_message,
                               auto_cancel=True)
