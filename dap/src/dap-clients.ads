@@ -511,8 +511,25 @@ private
       Addr : out DAP.Types.Address_Type);
 
    type Evaluate_Kind is
-     (Show_Lang, Set_Lang, Restore_Lang, List_Adainit,
-      Info_Line, Info_First_Line, Hover, Variable_Address, Endian, Command);
+     (  --  Following commands are used to open the main file
+      Show_Lang,
+      Set_Lang,
+      Restore_Lang,
+      List_Adainit,
+      Info_Line,
+      Info_First_Line,
+
+      --  Used to display variable values in tooltips
+      Hover,
+
+      --  Used to get the variable address to open the memory view
+      Variable_Address,
+
+      --  Used to get target's Endian, needed for the memory view
+      Endian,
+
+      --  Used for any other command (e.g: console)
+      Command);
 
    function Create_Evaluate_Command
      (Self              : DAP_Client;
