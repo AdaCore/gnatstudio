@@ -44,7 +44,9 @@ with Gtk.Widget;                 use Gtk.Widget;
 with Pango.Font;                 use Pango.Font;
 with Gtkada.MDI;
 
+with VSS.Characters.Latin;
 with VSS.Strings.Conversions;
+with VSS.Strings.Cursors.Iterators.Characters;
 
 with GPS.Debuggers;              use GPS.Debuggers;
 with GPS.Default_Styles;
@@ -236,6 +238,16 @@ package body DAP.Views.Assembly is
    procedure Meta_Scroll_Up
      (View : access Assembly_View_Record'Class);
    --  The user has asked for the previous or next undisplayed assembly page
+
+   type On_Breakpoint_Added_Or_Deleted is
+     new Debugger_Breakpoint_Hook_Function
+      with null record;
+   overriding procedure Execute
+      (Self     : On_Breakpoint_Added_Or_Deleted;
+       Kernel   : not null access Kernel_Handle_Record'Class;
+       Debugger : access Base_Visual_Debugger'Class;
+       Id       : Integer);
+   --   Called when the breakpoint has been added or deleted
 
    type On_Breakpoints_Changed is new Debugger_Hooks_Function
       with null record;
@@ -458,6 +470,10 @@ package body DAP.Views.Assembly is
 
       Debugger_Breakpoints_Changed_Hook.Add
          (new On_Breakpoints_Changed, Watch => Widget);
+      Debugger_Breakpoint_Added_Hook.Add
+         (new On_Breakpoint_Added_Or_Deleted, Watch => Widget);
+      Debugger_Breakpoint_Deleted_Hook.Add
+         (new On_Breakpoint_Added_Or_Deleted, Watch => Widget);
 
       Preferences_Changed_Hook.Add
         (Obj   =>
@@ -845,32 +861,34 @@ package body DAP.Views.Assembly is
 
       Columns (1) := BG_Color_Column;
       for Data of Client.Get_Breakpoints loop
-         Iter_From_Address
-           (View    => View,
-            Address => Data.Locations.First_Element.Address,
-            Iter    => Iter,
-            Found   => Found);
+         for Loc of Data.Locations loop
+            Iter_From_Address
+              (View    => View,
+               Address => Loc.Address,
+               Iter    => Iter,
+               Found   => Found);
 
-         if Found then
-            Glib.Values.Init (Values (1), Gdk.RGBA.Get_Type);
-            Gdk.RGBA.Set_Value
-              (Values (1),
-               (if Data.State /= Enabled then
-                     GPS.Kernel.Style_Manager.Background
-                  (GPS.Default_Styles.Debugger_Disabled_Breakpoint_Style)
-                elsif not Data.Condition.Is_Empty then
-                   GPS.Kernel.Style_Manager.Background
-                  (GPS.Default_Styles.Debugger_Conditional_Breakpoint_Style)
-                else
-                   GPS.Kernel.Style_Manager.Background
-                  (GPS.Default_Styles.Debugger_Breakpoint_Style)));
+            if Found then
+               Glib.Values.Init (Values (1), Gdk.RGBA.Get_Type);
+               Gdk.RGBA.Set_Value
+                 (Values (1),
+                  (if Data.State /= Enabled then
+                        GPS.Kernel.Style_Manager.Background
+                     (GPS.Default_Styles.Debugger_Disabled_Breakpoint_Style)
+                   elsif not Data.Condition.Is_Empty then
+                      GPS.Kernel.Style_Manager.Background
+                     (GPS.Default_Styles.Debugger_Conditional_Breakpoint_Style)
+                   else
+                      GPS.Kernel.Style_Manager.Background
+                     (GPS.Default_Styles.Debugger_Breakpoint_Style)));
 
-            Set_And_Clear
-              (Model,
-               Iter,
-               Columns (1 .. 1),
-               Values (1 .. 1));
-         end if;
+               Set_And_Clear
+                 (Model,
+                  Iter,
+                  Columns (1 .. 1),
+                  Values (1 .. 1));
+            end if;
+         end loop;
       end loop;
 
       --  Highlight PC line
@@ -973,6 +991,35 @@ package body DAP.Views.Assembly is
       pragma Unreferenced (New_Request);
       View : constant Assembly_MDI := Get_View (Self.Client);
       S    : Disassemble_Elements;
+
+      -- Format_Opcodes --
+      function Format_Opcodes
+        (S : VSS.Strings.Virtual_String)
+         return Ada.Strings.Unbounded.Unbounded_String;
+      function Format_Opcodes
+        (S : VSS.Strings.Virtual_String)
+         return Ada.Strings.Unbounded.Unbounded_String
+      is
+         Result : VSS.Strings.Virtual_String;
+         I      : VSS.Strings.Cursors.Iterators.Characters.
+           Character_Iterator := S.At_First_Character;
+         Count  : Natural := 0;
+         Dummy  : Boolean;
+      begin
+         while I.Has_Element loop
+            Result.Append (I.Element);
+            Count := Count + 1;
+
+            if Count = 2 then
+               Result.Append (VSS.Characters.Latin.Space);
+               Count := 0;
+            end if;
+            Dummy := I.Forward;
+         end loop;
+
+         return VSS.Strings.Conversions.To_Unbounded_UTF_8_String (Result);
+      end Format_Opcodes;
+
    begin
       if View = null then
          return;
@@ -998,8 +1045,7 @@ package body DAP.Views.Assembly is
                        Ada.Strings.Unbounded.To_Unbounded_String
                          (VSS.Strings.Conversions.To_UTF_8_String
                               (Line.instruction)),
-                     Opcodes       =>
-                       Ada.Strings.Unbounded.Null_Unbounded_String,
+                     Opcodes       => Format_Opcodes (Line.instructionBytes),
                      File          =>
                        (if Line.location.Is_Set
                         then GNATCOLL.VFS.Create
@@ -1335,6 +1381,30 @@ package body DAP.Views.Assembly is
 
       if Do_Update then
          Update (Self.View);
+      end if;
+   end Execute;
+
+   -------------
+   -- Execute --
+   -------------
+
+   overriding procedure Execute
+      (Self     : On_Breakpoint_Added_Or_Deleted;
+       Kernel   : not null access Kernel_Handle_Record'Class;
+       Debugger : access Base_Visual_Debugger'Class;
+       Id       : Integer)
+   is
+      pragma Unreferenced (Self, Kernel);
+      View : Assembly_View;
+
+   begin
+      if Debugger /= null then
+         View := Get_View
+           (DAP.Clients.DAP_Visual_Debugger_Access (Debugger).Client);
+      end if;
+
+      if View /= null then
+         View.Highlight (False);
       end if;
    end Execute;
 
