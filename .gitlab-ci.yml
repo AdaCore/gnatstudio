@@ -15,12 +15,6 @@ stages:
     # Use generic_anod_ci here.
     - generic_anod_ci
          --add-dep eng/ide/gnatstudio-internal
-         --add-dep eng/ide/spawn
-         --add-dep eng/ide/vss
-         --add-dep eng/ide/markdown
-         --add-dep eng/ide/gnatdoc
-         --add-dep eng/ide/ada_language_server
-         --add-dep eng/ide/gtkada
 
     - cat /tmp/ci_env.sh
     - . /tmp/ci_env.sh
