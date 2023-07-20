@@ -616,7 +616,11 @@ package body DAP.Views.Call_Stack is
          Bt : constant Backtrace_Record := Backtrace.First_Element;
       begin
          Self.Client.Set_Selected_Frame
-           (Bt.Frame_Id, Bt.File, Bt.Line, Bt.Address);
+           (Id                        => Bt.Frame_Id,
+            File                      => Bt.File,
+            Line                      => Bt.Line,
+            Address                   => Bt.Address,
+            Run_Location_Changed_Hook => False);
       end;
 
       View.On_Updated (Self.From, Self.To);
@@ -726,8 +730,12 @@ package body DAP.Views.Call_Stack is
                else Invalid_Address);
 
             Get_Client (View).Set_Selected_Frame
-              (Integer (Model.Get_Int (Iter, Frame_Num_Column)),
-               File, Line, Address);
+              (Id                        => Integer
+                 (Model.Get_Int (Iter, Frame_Num_Column)),
+               File                      => File,
+               Line                      => Line,
+               Address                   => Address,
+               Run_Location_Changed_Hook => False);
          end;
          View.Kernel.Context_Changed (No_Context);
       end if;
