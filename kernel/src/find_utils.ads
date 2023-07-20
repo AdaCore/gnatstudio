@@ -153,6 +153,7 @@ package Find_Utils is
       Buffer               : String;
       Start_Index          : Natural;
       End_Index            : Natural;
+      Tab_Width            : Natural;
       Callback             : Scan_Callback;
       Ref                  : in out Buffer_Position;
       Was_Partial          : out Boolean;
@@ -179,7 +180,8 @@ package Find_Utils is
       Column         : in out Character_Offset_Type;
       Found          : out Boolean;
       Str            : String;
-      Case_Sensitive : Boolean);
+      Case_Sensitive : Boolean;
+      Tab_Width      : Natural);
    --  Find the occurence of Str in Buffer closest to (Line, Column).
    --  The latter are modified to point to the closest location if Found is
    --  set, otherwise it is unchanged.

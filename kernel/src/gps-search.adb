@@ -109,25 +109,29 @@ package body GPS.Search is
       Buffer      : String;
       Start_Index : Integer := -1;
       End_Index   : Integer := -1;
-      Ref         : Buffer_Position := Unknown_Position) return Search_Context;
+      Ref         : Buffer_Position := Unknown_Position;
+      Tab_Width   : Natural := Default_Tab_Width) return Search_Context;
    overriding function Start
      (Self        : Regexp_Search;
       Buffer      : String;
       Start_Index : Integer := -1;
       End_Index   : Integer := -1;
-      Ref         : Buffer_Position := Unknown_Position) return Search_Context;
+      Ref         : Buffer_Position := Unknown_Position;
+      Tab_Width   : Natural := Default_Tab_Width) return Search_Context;
    overriding function Start
      (Self        : Fuzzy_Search;
       Buffer      : String;
       Start_Index : Integer := -1;
       End_Index   : Integer := -1;
-      Ref         : Buffer_Position := Unknown_Position) return Search_Context;
+      Ref         : Buffer_Position := Unknown_Position;
+      Tab_Width   : Natural := Default_Tab_Width) return Search_Context;
    overriding function Start
      (Self        : Approximate_Search;
       Buffer      : String;
       Start_Index : Integer := -1;
       End_Index   : Integer := -1;
-      Ref         : Buffer_Position := Unknown_Position) return Search_Context;
+      Ref         : Buffer_Position := Unknown_Position;
+      Tab_Width   : Natural := Default_Tab_Width) return Search_Context;
    overriding procedure Next
      (Self    : Full_Text_Search;
       Buffer  : String;
@@ -195,8 +199,8 @@ package body GPS.Search is
      (Context : in out Search_Context;
       Buffer  : String)
    is
-      Tab_Width : constant Visible_Column_Type := 8;
-      --  Visible_Column_Type (Vsearch.Get_Tab_Width);
+      Tab_Width : constant Visible_Column_Type :=
+        Visible_Column_Type (Context.Tab_Width);
 
       type Unicode_Char is mod 2 ** 32;
 
@@ -331,7 +335,8 @@ package body GPS.Search is
       Buffer      : String;
       Start_Index : Integer := -1;
       End_Index   : Integer := -1;
-      Ref         : Buffer_Position := Unknown_Position) return Search_Context
+      Ref         : Buffer_Position := Unknown_Position;
+      Tab_Width   : Natural := Default_Tab_Width) return Search_Context
    is
       Index : Integer;
       S : constant Integer :=
@@ -370,7 +375,8 @@ package body GPS.Search is
                Color_String => Get_Default_Fg,
                Buffer_Start => S,
                Buffer_End   => F,
-               Ref          => R);
+               Ref          => R,
+               Tab_Width    => Tab_Width);
             Update_Location (Context, Buffer);
          else
             Context := No_Match;
@@ -386,7 +392,8 @@ package body GPS.Search is
             Color_String => Get_Default_Fg,
             Buffer_Start => S,
             Buffer_End   => F,
-            Ref          => R);
+            Ref          => R,
+            Tab_Width    => Tab_Width);
          Update_Location (Context, Buffer);
       end if;
 
@@ -402,7 +409,8 @@ package body GPS.Search is
       Buffer      : String;
       Start_Index : Integer := -1;
       End_Index   : Integer := -1;
-      Ref         : Buffer_Position := Unknown_Position) return Search_Context
+      Ref         : Buffer_Position := Unknown_Position;
+      Tab_Width   : Natural := Default_Tab_Width) return Search_Context
    is
       S : constant Integer :=
         (if Start_Index = -1 then Buffer'First else Start_Index);
@@ -418,7 +426,8 @@ package body GPS.Search is
            Color_String       => Get_Default_Fg,
            Buffer_Start       => S,
            Buffer_End         => (if F = 0 then Positive'Last else F),
-           Ref                => R);
+           Ref                => R,
+           Tab_Width          => Tab_Width);
    begin
       Match
         (Self.Pattern.all, Buffer, Context.Groups,
@@ -463,7 +472,8 @@ package body GPS.Search is
       Buffer      : String;
       Start_Index : Integer := -1;
       End_Index   : Integer := -1;
-      Ref         : Buffer_Position := Unknown_Position) return Search_Context
+      Ref         : Buffer_Position := Unknown_Position;
+      Tab_Width   : Natural := Default_Tab_Width) return Search_Context
    is
       S : constant Integer :=
         (if Start_Index = -1 then Buffer'First else Start_Index);
@@ -491,7 +501,8 @@ package body GPS.Search is
             Color_String       => Get_Default_Fg,
             Buffer_Start       => S,
             Buffer_End         => F,
-            Ref                => R);
+            Ref                => R,
+            Tab_Width          => Tab_Width);
          Update_Location (Context, Buffer);
          return Context;
       end if;
@@ -539,7 +550,8 @@ package body GPS.Search is
                      Color_String       => Get_Default_Fg,
                      Buffer_Start       => S,
                      Buffer_End         => F,
-                     Ref                => R);
+                     Ref                => R,
+                     Tab_Width          => Tab_Width);
                   Update_Location (Context, Buffer);
                   return Context;
                end if;
@@ -561,7 +573,8 @@ package body GPS.Search is
             Color_String       => Get_Default_Fg,
             Buffer_Start       => S,
             Buffer_End         => F,
-            Ref                => R);
+            Ref                => R,
+            Tab_Width          => Tab_Width);
          Update_Location (Context, Buffer);
          return Context;
 
@@ -584,7 +597,8 @@ package body GPS.Search is
       Buffer      : String;
       Start_Index : Integer := -1;
       End_Index   : Integer := -1;
-      Ref         : Buffer_Position := Unknown_Position) return Search_Context
+      Ref         : Buffer_Position := Unknown_Position;
+      Tab_Width   : Natural := Default_Tab_Width) return Search_Context
    is
       S : constant Integer :=
         (if Start_Index = -1 then Buffer'First else Start_Index);
@@ -600,7 +614,8 @@ package body GPS.Search is
          Color_String       => Get_Default_Fg,
          Buffer_Start => S,
          Buffer_End   => F,
-         Ref          => R);
+         Ref          => R,
+         Tab_Width    => Tab_Width);
    begin
       --  Initialize the pattern with K ones
       Self.Result.all := (others => 0);
