@@ -384,7 +384,11 @@ package body GPS.Kernel.Search.Sources is
 
       if Self.Restart then
          Self.Restart := False;
-         Self.Context := Self.Pattern.Start (Self.Text.all);
+         Self.Context := Self.Pattern.Start
+           (Self.Text.all,
+            Tab_Width =>
+              Self.Kernel.Get_Language_Handler.Get_Language_From_File
+                (Self.File).Get_Indentation_Level);
       else
          Self.Pattern.Next (Self.Text.all, Self.Context);
       end if;

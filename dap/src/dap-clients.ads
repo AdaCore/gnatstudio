@@ -240,11 +240,13 @@ package DAP.Clients is
    --  Attach the variables view to the client
 
    procedure Set_Selected_Frame
-     (Self    : in out DAP_Client;
-      Id      : Integer;
-      File    : GNATCOLL.VFS.Virtual_File;
-      Line    : Integer;
-      Address : Address_Type);
+     (Self                      : in out DAP_Client;
+      Id                        : Integer;
+      File                      : GNATCOLL.VFS.Virtual_File;
+      Line                      : Integer;
+      Address                   : Address_Type;
+      Run_Location_Changed_Hook : Boolean := True);
+   --  Set the current Frame.
 
    function Get_Selected_Frame
      (Self : DAP_Client) return Integer;
@@ -495,9 +497,6 @@ private
    --  Set the current debugging status
 
    procedure Load_Project_From_Executable (Self : in out DAP_Client);
-
-   procedure On_Location_Changed
-     (Self : in out DAP_Client);
 
    procedure Get_StackTrace
      (Self      : in out DAP_Client;

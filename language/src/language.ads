@@ -396,6 +396,11 @@ package Language is
    --  ??? This wouldn't be necessary if we had access to the preferences from
    --  the language hierarchy.
 
+   function Get_Indentation_Level
+     (Lang : access Language_Root) return Integer;
+   --  Return the indentation level for this language. This often defines
+   --  the size of tabs.
+
    type Language_Category is
      (Cat_Unknown,
 

@@ -95,7 +95,7 @@ package body Src_Contexts is
       Callback             : Scan_Callback;
       Scope                : Search_Scope;
       Lexical_State        : in out Recognized_Lexical_States;
-      Lang                 : Language_Access := null;
+      Lang                 : Language_Access;
       Ref                  : in out Buffer_Position;
       Was_Partial          : out Boolean;
       Display_Matched_Only : Boolean := False);
@@ -347,7 +347,7 @@ package body Src_Contexts is
       Callback             : Scan_Callback;
       Scope                : Search_Scope;
       Lexical_State        : in out Recognized_Lexical_States;
-      Lang                 : Language_Access := null;
+      Lang                 : Language_Access;
       Ref                  : in out Buffer_Position;
       Was_Partial          : out Boolean;
       Display_Matched_Only : Boolean := False)
@@ -536,6 +536,10 @@ package body Src_Contexts is
       Language      : Language_Context_Access;
       Ignored       : Natural := 0;
 
+      Indent_Level  : constant Natural :=
+        (if Lang = null
+         then 8
+         else Lang.Get_Indentation_Level);
    begin  --  Scan_Buffer
       Was_Partial := False;
 
@@ -560,7 +564,8 @@ package body Src_Contexts is
             Callback             => Callback,
             Ref                  => Ref,
             Was_Partial          => Was_Partial,
-            Display_Matched_Only => Display_Matched_Only);
+            Display_Matched_Only => Display_Matched_Only,
+            Tab_Width            => Indent_Level);
          return;
       end if;
 
@@ -580,9 +585,10 @@ package body Src_Contexts is
 
          if Scanning_Allowed (Old_State) then
             Context.Scan_Buffer_No_Scope
-              (Buffer, Integer (Line_Start), Section_End,
+              (Buffer, Integer (Line_Start), Section_End, Indent_Level,
                Callback,
-               Ref => Ref, Was_Partial => Was_Partial,
+               Ref                  => Ref,
+               Was_Partial          => Was_Partial,
                Display_Matched_Only => Display_Matched_Only);
 
             if Was_Partial then

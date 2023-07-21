@@ -218,7 +218,7 @@ package body DAP.Views.Variables is
    -----------------------
 
    overriding procedure On_Status_Changed
-     (Self : not null access DAP_Variables_View_Record;
+     (Self   : not null access DAP_Variables_View_Record;
       Status : GPS.Debuggers.Debugger_State)
    is
       use GPS.Debuggers;
@@ -998,6 +998,7 @@ package body DAP.Views.Variables is
             Client.Get_Executable,
             Name  => "dap_debugger_variables",
             Found => Found);
+
          if Found then
             Self.Tree.Items := Property.Items;
 
@@ -1058,7 +1059,8 @@ package body DAP.Views.Variables is
       Item : in out Item_Info) is
    begin
       Self.Tree.Ids := Self.Tree.Ids + 1;
-      Item.Id  := Self.Tree.Ids;
+      Item.Id       := Self.Tree.Ids;
+
       Self.Tree.Items.Append (Item);
       Self.Update (Item, 0, Null_Gtk_Tree_Path);
    end Display;
@@ -1115,12 +1117,9 @@ package body DAP.Views.Variables is
    begin
       Self.Locals.Clear;
 
-      if Self.Tree.Items.Is_Empty then
-         Self.Tree.Model.Clear;
-         return;
-      end if;
-
-      if Client = null then
+      if Client = null
+        or else not Client.Is_Stopped
+      then
          Self.Tree.Model.Clear;
          for Item of Self.Tree.Items loop
             if Item.Id /= Unknown_Id then
@@ -1129,7 +1128,7 @@ package body DAP.Views.Variables is
             end if;
          end loop;
 
-      else
+      elsif not Self.Tree.Items.Is_Empty then
          Self.Tree.Types_Column.Set_Visible (Show_Types.Get_Pref);
          Expansions.Get_Expansion_Status (Self.Tree, Self.Expansion);
          Self.Tree.Model.Clear;
@@ -1138,6 +1137,9 @@ package body DAP.Views.Variables is
          if Request /= null then
             Get_Client (Self).Enqueue (Request);
          end if;
+
+      else
+         Self.Tree.Model.Clear;
       end if;
    end Update;
 
@@ -1224,26 +1226,33 @@ package body DAP.Views.Variables is
             Path_Free (Path);
          end if;
 
-         Self.Clear;
+         Self.Tree.Model.Clear;
          return null;
       end if;
 
-      if Self.Locals_Id = 0 then
-         Req := new DAP.Views.Variables.Scopes_Requests.
-           Scopes_Request (Self.Kernel);
+      if Client.Is_Stopped then
+         if Self.Locals_Id = 0 then
+            Req := new DAP.Views.Variables.Scopes_Requests.
+              Scopes_Request (Self.Kernel);
 
-         Req.Client   := Client;
-         Req.Item     := Item;
-         Req.Position := Position;
-         Req.Childs   := Childs;
-         if Path /= Null_Gtk_Tree_Path then
-            Req.Path := Copy (Path);
+            Req.Client   := Client;
+            Req.Item     := Item;
+            Req.Position := Position;
+            Req.Childs   := Childs;
+            if Path /= Null_Gtk_Tree_Path then
+               Req.Path := Copy (Path);
+            end if;
+            Req.Parameters.arguments.frameId := Client.Get_Selected_Frame;
+            Result := DAP.Requests.DAP_Request_Access (Req);
+
+         else
+            Self.Publish_Or_Request (Item, Position, Childs, Path, Result);
          end if;
-         Req.Parameters.arguments.frameId := Client.Get_Selected_Frame;
-         Result := DAP.Requests.DAP_Request_Access (Req);
 
       else
-         Self.Publish_Or_Request (Item, Position, Childs, Path, Result);
+         Self.Tree.Add_Row
+           (Item, Variables_References_Trees.No_Element,
+            Self.Tree.Model.Get_Iter (Path));
       end if;
 
       if Path /= Null_Gtk_Tree_Path then
@@ -1289,6 +1298,8 @@ package body DAP.Views.Variables is
       Command : String) return String
    is
       pragma Unreferenced (Self);
+      Cmd   : constant VSS.Strings.Virtual_String :=
+        VSS.Strings.Conversions.To_Virtual_String (Command);
       Match : VSS.Regular_Expressions.Regular_Expression_Match;
       It    : Item_Info;
       View  : DAP_Variables_View;
@@ -1301,8 +1312,7 @@ package body DAP.Views.Variables is
          return Command;
       end if;
 
-      Match := Tree_Cmd_Format.Match
-        (VSS.Strings.Conversions.To_Virtual_String (Command));
+      Match := Tree_Cmd_Format.Match (Cmd);
 
       if not Match.Has_Match then
          return Command;

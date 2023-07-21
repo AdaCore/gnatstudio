@@ -65,6 +65,7 @@ package body Find_Utils is
       Buffer               : String;
       Start_Index          : Natural;
       End_Index            : Natural;
+      Tab_Width            : Natural;
       Callback             : Scan_Callback;
       Ref                  : in out Buffer_Position;
       Was_Partial          : out Boolean;
@@ -91,7 +92,8 @@ package body Find_Utils is
         (Buffer      => Buffer,
          Start_Index => Start_Index,
          End_Index   => End_Index,
-         Ref         => Ref);
+         Ref         => Ref,
+         Tab_Width   => Tab_Width);
 
       while Result /= GPS.Search.No_Match loop
          Ref  := Result.Ref;
@@ -298,7 +300,8 @@ package body Find_Utils is
       Column         : in out Character_Offset_Type;
       Found          : out Boolean;
       Str            : String;
-      Case_Sensitive : Boolean)
+      Case_Sensitive : Boolean;
+      Tab_Width      : Natural)
    is
       Best_Line   : Integer := 0;
       Best_Column : Character_Offset_Type := 0;
@@ -317,7 +320,8 @@ package body Find_Utils is
         (Buffer      => Buffer,
          Start_Index => Buffer'First,
          End_Index   => Buffer'Last,
-         Ref         => Ref);
+         Ref         => Ref,
+         Tab_Width   => Tab_Width);
 
       while Result /= GPS.Search.No_Match loop
 
