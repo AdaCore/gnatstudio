@@ -213,7 +213,7 @@ doc = """<?xml version="1.0"?>
 
 attributes = """
     <project_attribute
-      package="CodePeer"
+      package="Analyzer"
       name="CPM_Directory"
       editor_page="CodePeer"
       editor_section="CodePeer configuration"
@@ -224,7 +224,7 @@ attributes = """
     </project_attribute>
 
     <project_attribute
-      package="CodePeer"
+      package="Analyzer"
       name="CWE"
       editor_page="CodePeer"
       editor_section="CodePeer configuration"
@@ -236,7 +236,7 @@ attributes = """
     </project_attribute>
 
     <project_attribute
-      package="CodePeer"
+      package="Analyzer"
       name="Message_Patterns"
       editor_page="CodePeer"
       editor_section="CodePeer configuration"
@@ -247,7 +247,7 @@ attributes = """
     </project_attribute>
 
     <project_attribute
-      package="CodePeer"
+      package="Analyzer"
       name="Additional_Patterns"
       editor_page="CodePeer"
       editor_section="CodePeer configuration"
@@ -259,7 +259,7 @@ default patterns file.">
     </project_attribute>
 
     <project_attribute
-      package="CodePeer"
+      package="Analyzer"
       name="Excluded_Source_Files"
       editor_page="CodePeer"
       editor_section="CodePeer configuration"
@@ -272,7 +272,7 @@ excluded from CodePeer's analysis."
     </project_attribute>
 
     <project_attribute
-      package="CodePeer"
+      package="Analyzer"
       name="Pending_Status"
       editor_page="CodePeer"
       editor_section="CodePeer configuration"
@@ -284,7 +284,7 @@ excluded from CodePeer's analysis."
     </project_attribute>
 
     <project_attribute
-      package="CodePeer"
+      package="Analyzer"
       name="Not_A_Bug_Status"
       editor_page="CodePeer"
       editor_section="CodePeer configuration"
@@ -296,7 +296,7 @@ excluded from CodePeer's analysis."
     </project_attribute>
 
     <project_attribute
-      package="CodePeer"
+      package="Analyzer"
       name="Bug_Status"
       editor_page="CodePeer"
       editor_section="CodePeer configuration"
@@ -481,7 +481,7 @@ SCIL for another architecture" />
        <command-line>
           <arg>cpm-gs-bridge</arg>
           <arg>--log-to</arg>
-          <arg>%O</arg>
+          <arg>%O/gs_bridge.log</arg>
        </command-line>
     </target-model>
 
@@ -565,7 +565,7 @@ SCIL for another architecture" />
        <command-line>
           <arg>cpm-gs-bridge</arg>
           <arg>--log-to</arg>
-          <arg>%O</arg>
+          <arg>%O/gs_bridge.log</arg>
        </command-line>
     </target>
 
