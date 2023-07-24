@@ -81,6 +81,7 @@ package body CodePeer.Module is
 
    Me : constant Trace_Handle := Create ("GPS.CODEPEER.MODULE");
    CodePeer_Subdir : constant Filesystem_String := "codepeer";
+   GNATSAS_Subdir : constant Filesystem_String := "gnatsas";
 
    type Module_Context is record
       Module  : CodePeer_Module_Id;
@@ -186,7 +187,7 @@ package body CodePeer.Module is
    Output_Directory_Attribute   :
      constant Attribute_Pkg_String := Build ("CodePeer", "Output_Directory");
    CPM_Directory_Attribute : constant Attribute_Pkg_String :=
-     Build ("CodePeer", "CPM_Directory");
+     Build ("Analyzer", "CPM_Directory");
    Database_Directory_Attribute : constant Attribute_Pkg_String :=
      Build ("CodePeer", "Database_Directory");
    Server_URL_Attribute : constant Attribute_Pkg_String :=
@@ -205,6 +206,12 @@ package body CodePeer.Module is
      Build ("CodePeer", "Not_A_Bug_Status");
    Bug_Status_Attribute : constant Attribute_Pkg_List :=
      Build ("CodePeer", "Bug_Status");
+   Analyzer_Pending_Status_Attribute : constant Attribute_Pkg_List :=
+     Build ("Analyzer", "Pending_Status");
+   Analyzer_Not_A_Bug_Status_Attribute : constant Attribute_Pkg_List :=
+     Build ("Analyzer", "Not_A_Bug_Status");
+   Analyzer_Bug_Status_Attribute : constant Attribute_Pkg_List :=
+     Build ("Analyzer", "Bug_Status");
 
    Race_Message_Flags : constant GPS.Kernel.Messages.Message_Flags :=
      (Editor_Side => True, Locations => True, Editor_Line => False);
@@ -629,7 +636,7 @@ package body CodePeer.Module is
 
       Extra_Args : constant String :=
         (if Is_CPL and then Module.Import_Annotations.Get_Pref
-         then "--show-annotations --gs"
+         then "--gs"
          else "");
    begin
       if Project.Has_Attribute (Switches_Attribute) then
@@ -832,10 +839,26 @@ package body CodePeer.Module is
 
    begin
       if Object_Dir /= No_File then
-         return Object_Dir;
+
+         if Is_CPL then
+            --  hack to bypass the subdir induced by the build mode
+            if Object_Dir.Display_Base_Dir_Name = "codepeer" then
+               return Create_From_Dir (Object_Dir.Get_Parent,
+                                       GNATSAS_Subdir);
+            else
+               return Object_Dir;
+            end if;
+
+         else
+            return Object_Dir;
+         end if;
 
       else
-         return Create_From_Dir (Project.Project_Path.Dir, CodePeer_Subdir);
+         return (if Is_CPL
+                 then Create_From_Dir
+                        (Project.Project_Path.Dir, GNATSAS_Subdir)
+                 else Create_From_Dir
+                        (Project.Project_Path.Dir, CodePeer_Subdir));
       end if;
    end CodePeer_Object_Directory;
 
@@ -876,8 +899,11 @@ package body CodePeer.Module is
       else
          return
            GNATCOLL.VFS.Create_From_Dir
-             (CodePeer_Object_Directory (Project),
-              Name (Name'First .. Name'Last - Extension'Length) & ".output");
+             (GNATCOLL.VFS.Create_From_Dir
+               (CodePeer_Object_Directory (Project),
+                Name (Name'First .. Name'Last - Extension'Length)
+                & ".inspector"),
+               "output");
       end if;
    end Codepeer_Output_Directory;
 
@@ -1537,9 +1563,17 @@ package body CodePeer.Module is
 
       --  Then register the project specific ones, if any
 
-      Add_Statuses (Pending_Status_Attribute, Pending);
-      Add_Statuses (Not_A_Bug_Status_Attribute, Not_A_Bug);
-      Add_Statuses (Bug_Status_Attribute, Bug);
+      if Is_CPL then
+         Add_Statuses (Analyzer_Pending_Status_Attribute, Pending);
+         Add_Statuses (Analyzer_Not_A_Bug_Status_Attribute, Not_A_Bug);
+         Add_Statuses (Analyzer_Bug_Status_Attribute, Bug);
+
+      else
+         Add_Statuses (Pending_Status_Attribute, Pending);
+         Add_Statuses (Not_A_Bug_Status_Attribute, Not_A_Bug);
+         Add_Statuses (Bug_Status_Attribute, Bug);
+      end if;
+
    end Execute;
 
    ----------------------
