@@ -662,7 +662,6 @@ package body Language_Handlers.Assistants is
          Editor : constant Editor_Buffer'Class :=
                     Kernel.Get_Buffer_Factory.Get
                       (File,
-                       Open_Buffer => False,
                        Open_View   => False);
       begin
          Editor.Indent;

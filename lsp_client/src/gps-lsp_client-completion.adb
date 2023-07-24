@@ -467,7 +467,7 @@ package body GPS.LSP_Client.Completion is
            Kernel.Get_Current_Context;
          File           : constant Virtual_File :=
            File_Information (Editor_Context);
-         Holder         : constant Controlled_Editor_Buffer_Holder :=
+         Holder         : constant Controlled_Editor_Buffer_Holder'Class :=
            Kernel.Get_Buffer_Factory.Get_Holder (File);
          Start_Loc      : constant Editor_Location'Class :=
            GPS.LSP_Client.Utilities.LSP_Position_To_Location
@@ -871,7 +871,7 @@ package body GPS.LSP_Client.Completion is
       Resolver       : constant LSP_Completion_Resolver_Access :=
         LSP_Completion_Resolver_Access
           (Manager.Get_Resolver (Resolver_ID));
-      Holder         : constant Controlled_Editor_Buffer_Holder :=
+      Holder         : constant Controlled_Editor_Buffer_Holder'Class :=
         Kernel.Get_Buffer_Factory.Get_Holder (File);
       Location       : constant Editor_Location'Class :=
         Holder.Editor.New_Location

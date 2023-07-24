@@ -206,6 +206,16 @@ package body Src_Editor_Module.Editors is
    --  Returns an instance of Editor_Mark encapsulating Mark. Mark must not be
    --  null.
 
+   function Get_Buffer_Internal
+     (This            : Src_Editor_Buffer_Factory;
+      File            : Virtual_File;
+      Force           : Boolean := False;
+      Open_Buffer     : Boolean := False;
+      Open_View       : Boolean := True;
+      Focus           : Boolean := True;
+      Only_If_Focused : Boolean := False;
+      Unlocked_Only   : Boolean := False) return Editor_Buffer'Class;
+
    -------------------------
    -- Src_Editor_Location --
    -------------------------
@@ -904,6 +914,69 @@ package body Src_Editor_Module.Editors is
      (This            : Src_Editor_Buffer_Factory;
       File            : Virtual_File;
       Force           : Boolean := False;
+      Open_View       : Boolean := True;
+      Focus           : Boolean := True;
+      Only_If_Focused : Boolean := False;
+      Unlocked_Only   : Boolean := False) return Editor_Buffer'Class
+   is
+   begin
+      return Get_Buffer_Internal
+        (This            => This,
+         File            => File,
+         Force           => Force,
+         Open_Buffer     => False,
+         Open_View       => Open_View,
+         Focus           => Focus,
+         Only_If_Focused => Only_If_Focused,
+         Unlocked_Only   => Unlocked_Only);
+   end Get;
+
+   ----------------
+   -- Get_Holder --
+   ----------------
+
+   overriding function Get_Holder
+     (This : Src_Editor_Buffer_Factory;
+      File : Virtual_File)
+      return Controlled_Editor_Buffer_Holder'Class
+   is
+      Buffer : constant Editor_Buffer'Class := This.Get_Buffer_Internal
+        (File            => File,
+         Force           => False,
+         Open_Buffer     => False,
+         Open_View       => False,
+         Focus           => False,
+         Only_If_Focused => False);
+
+   begin
+      if Buffer = Nil_Editor_Buffer then
+         return
+           New_Holder
+             (Buffer       => Get_Buffer_Internal
+                (This            => This,
+                 File            => File,
+                 Force           => False,
+                 Open_Buffer     => True,
+                 Open_View       => False,
+                 Focus           => False,
+                 Only_If_Focused => False),
+              Should_Close => True);
+      else
+         return
+           New_Holder
+             (Buffer       => Buffer,
+              Should_Close => False);
+      end if;
+   end Get_Holder;
+
+   -------------------------
+   -- Get_Buffer_Internal --
+   -------------------------
+
+   function Get_Buffer_Internal
+     (This            : Src_Editor_Buffer_Factory;
+      File            : Virtual_File;
+      Force           : Boolean := False;
       Open_Buffer     : Boolean := False;
       Open_View       : Boolean := True;
       Focus           : Boolean := True;
@@ -913,10 +986,10 @@ package body Src_Editor_Module.Editors is
       --  Search the view from any project, we do not have more information
       Project : constant Project_Type := No_Project;
 
-      Child : MDI_Child;
-      Box   : Source_Editor_Box;
-      Buf   : Source_Buffer;
-      Success        : Boolean;
+      Child   : MDI_Child;
+      Box     : Source_Editor_Box;
+      Buf     : Source_Buffer;
+      Success : Boolean;
    begin
       if File = GNATCOLL.VFS.No_File then
          Child := Find_Current_Editor
@@ -978,7 +1051,7 @@ package body Src_Editor_Module.Editors is
       else
          return Get (This, Get_Buffer (Box));
       end if;
-   end Get;
+   end Get_Buffer_Internal;
 
    -------------
    -- Get_New --
@@ -1811,7 +1884,6 @@ package body Src_Editor_Module.Editors is
               Get_Buffer_Factory (This.Kernel).Get
               (Get_File (M),
                Force         => False,
-               Open_Buffer   => False,
                Open_View     => Open,
                Focus         => False,
                Unlocked_Only => False);
