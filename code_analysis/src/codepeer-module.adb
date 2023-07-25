@@ -439,9 +439,10 @@ package body CodePeer.Module is
          CWEs            => CWEs,
          CPL_Id          => CPL_Id,
          Display_CWEs    =>
-           Project.Has_Attribute (CWE_Attribute)
-         and then Ada.Characters.Handling.To_Lower
-           (Project.Attribute_Value (CWE_Attribute)) = "true",
+           Is_CPL or else
+             (Project.Has_Attribute (CWE_Attribute)
+              and then Ada.Characters.Handling.To_Lower
+                (Project.Attribute_Value (CWE_Attribute)) = "true"),
          Removed_Color   => Module.Removed_Message_Color,
          Show_Msg_Id     => Module.Show_Msg_Id.Get_Pref);
       Style   : constant Style_Access := Module.Message_Styles (Ranking);

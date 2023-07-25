@@ -790,9 +790,10 @@ package body CodePeer.Messages_Reports is
 
       --  CWEs categories
 
-      if Project_View.Has_Attribute (CWE_Attribute)
-        and then To_Lower
-          (Project_View.Get_Attribute_Value (CWE_Attribute)) = "true"
+      if Is_CPL
+        or else (Project_View.Has_Attribute (CWE_Attribute)
+          and then To_Lower
+            (Project_View.Get_Attribute_Value (CWE_Attribute)) = "true")
       then
          CodePeer.CWE_Criteria_Editors.Gtk_New
            (Editor         => Self.CWE_Editor,
