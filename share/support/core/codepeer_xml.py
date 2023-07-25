@@ -225,18 +225,6 @@ attributes = """
 
     <project_attribute
       package="Analyzer"
-      name="CWE"
-      editor_page="CodePeer"
-      editor_section="CodePeer configuration"
-      label="Include CWE ids"
-      hide_in="wizard gnatname_wizard library_wizard"
-      description="Include CWE ids in output.">
-      <choice default="true">False</choice>
-      <choice>True</choice>
-    </project_attribute>
-
-    <project_attribute
-      package="Analyzer"
       name="Message_Patterns"
       editor_page="CodePeer"
       editor_section="CodePeer configuration"
