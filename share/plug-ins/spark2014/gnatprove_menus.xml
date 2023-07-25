@@ -291,6 +291,10 @@
       </menu>
     </submenu>
 
+<!-- Example removed from menu until eng/libadalang/libadalang#1026 is fixed,
+     so that sub-project sparklib is shared between the dozen projects from the
+     aggregate project that use it.
+
     <action name="spark2014_example_gnatprove_by_example" category=""
             show-command="false" output="none">
       <shell lang="python">spark2014.load_example_gnatprove_by_example()</shell>
@@ -302,6 +306,7 @@
         <title>gnatprove__by__example</title>
       </menu>
     </submenu>
+-->
 
     <action name="spark2014_example_heatingsystem" category=""
             show-command="false" output="none">
