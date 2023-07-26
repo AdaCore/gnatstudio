@@ -1168,18 +1168,6 @@ The Analyze Menu
 
    Launch GNATdoc on the current project
 
-.. index:: menu; analyze --> documentation --> generate project & subprojects
-
-* :menuselection:`Analyze --> Documentation --> Generate Project & Subprojects`
-
-   Launch GNATdoc on the project, recursively
-
-.. index:: menu; analyze --> documentation --> generate current file
-
-* :menuselection:`Analyze --> Documentation --> Generate Current File`
-
-   Launch GNATdoc on the current project
-
 .. index:: menu; analyze --> automatic code reducer --> collect sources in sandbox project
 
 * :menuselection:`Analyze --> Automatic code reducer --> Collect sources in Sandbox Project`

@@ -1155,8 +1155,6 @@ Classes
 
    .. automethod:: GPS.File.entities
 
-   .. automethod:: GPS.File.generate_doc
-
    .. automethod:: GPS.File.get_property
 
    .. automethod:: GPS.File.imported_by

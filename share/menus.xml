@@ -362,10 +362,6 @@
 
          <menu label="Documentation">
             <menu label="Generate _Project"   action="documentation generate for project"/>
-            <menu label="Generate Project &amp; _Subprojects"
-                  action="documentation generate for project and subprojects"/>
-            <menu label="Generate _Current File"
-                  action="documentation generate for current file"/>
          </menu>
 
          <separator/>
