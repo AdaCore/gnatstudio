@@ -36,7 +36,6 @@ def on_project_recomputed(hook):
 
     if project_to_reload:
         file, root = project_to_reload
-        timeout_count = 0
 
         def display_message(timeout):
             """
@@ -54,8 +53,10 @@ def on_project_recomputed(hook):
             if GPS.MDI.current().name() != "Locations":
                 GPS.MDI.get("Locations").raise_window()
             else:
-                # Once the Locations view has the focus, add a message saying that
-                # we are configuring the project through Alire
+                # Once the Locations view has the focus, clear the possible errors in
+                # the Messages view due to loading failures before 'alr printenv' and
+                # add a message saying that we are configuring the project through Alire
+                GPS.Console().clear()
                 GPS.Locations.add(
                     "Alire", GPS.File(file), 1, 1,
                     "Alire project detected, setting the needed environment to reload it properly...",
@@ -87,7 +88,12 @@ def on_compilation_finished(hook, category, target_name, mode_name, status, cmd)
         GPS.Logger("ALIRE").log(
             "Alire configuration finished, reloading %s" % str(file))
         GPS.MDI.get("Locations").set_activity_progress_bar_visibility(False)
+        # Set ALIRE env variable to True before loading the project in order
+        # to not re-do 'alr printenv' on the ALS side
+        GPS.setenv("ALIRE", "True")
+        # Load the project
         GPS.Project.load(file)
+        # Warn the user that everything is now setup
         GPS.Locations.add(
             "Alire", GPS.File(file), 1, 1,
             "Alire environment is now setup: project has been reloaded",
