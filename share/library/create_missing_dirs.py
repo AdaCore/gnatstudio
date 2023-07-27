@@ -32,19 +32,19 @@ def on_project_changed(self):
         prjs = GPS.Project.root().dependencies(True)
         prjs.append(GPS.Project.root())
         for i in prjs:
-            dirs = [i.get_attribute_as_string("Exec_Dir"),
-                    i.get_attribute_as_string("Library_Dir"),
-                    i.get_attribute_as_string("Object_Dir"),
-                    i.get_attribute_as_string("Library_Src_Dir"),
-                    i.get_attribute_as_string("Library_ALI_Dir"),
-                    i.get_attribute_as_string("Artifacts_Dir", "IDE"),
-                    i.get_attribute_as_string("Documentation_Dir",
-                                              "Documentation")]
+            dirs = [
+                i.get_attribute_as_string("Exec_Dir"),
+                i.get_attribute_as_string("Library_Dir"),
+                i.get_attribute_as_string("Object_Dir"),
+                i.get_attribute_as_string("Library_Src_Dir"),
+                i.get_attribute_as_string("Library_ALI_Dir"),
+                i.get_attribute_as_string("Artifacts_Dir", "IDE"),
+                i.get_attribute_as_string("Output_Dir", "Documentation", "html"),
+            ]
 
             for j in dirs:
                 if j and j not in [".", "", " "]:
-                    dir = os.path.join(
-                        os.path.dirname(i.file().path), j).strip()
+                    dir = os.path.join(os.path.dirname(i.file().path), j).strip()
                     # Only attempt to create each directory once
                     if dir not in attempted:
                         if not os.path.exists(dir):
@@ -60,13 +60,15 @@ def on_project_changed(self):
             GPS.Project.recompute()
 
 
-GPS.parse_xml("""
+GPS.parse_xml(
+    """
 <preference name="Auto-Create-Dirs"
    page="Plugins/create_missing_dirs"
    label="Auto Create Missing Dirs"
    tip="Automatically creates missing directories when a project is loaded."
    default="True"
    type="boolean"/>
-""")
+"""
+)
 
 GPS.Hook("project_view_changed").add(on_project_changed)
