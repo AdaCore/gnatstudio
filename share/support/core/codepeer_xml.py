@@ -214,13 +214,24 @@ doc = """<?xml version="1.0"?>
 attributes = """
     <project_attribute
       package="Analyzer"
-      name="CPM_Directory"
+      name="Output_Dir"
       editor_page="CodePeer"
       editor_section="CodePeer configuration"
-      label="cpm files directory"
+      label="sam files directory"
       hide_in="wizard gnatname_wizard library_wizard"
-      description="CodePeer cpm directory to use for this project.">
+      description="CodePeer sam directory to use for this project.">
       <string type="directory"/>
+    </project_attribute>
+
+    <project_attribute
+      package="Analyzer"
+      name="Review_Filea"
+      editor_page="CodePeer"
+      editor_section="CodePeer configuration"
+      label="review file path"
+      hide_in="wizard gnatname_wizard library_wizard"
+      description="CodePeer review file to use for this project.">
+      <string type="file"/>
     </project_attribute>
 
     <project_attribute

@@ -186,8 +186,8 @@ package body CodePeer.Module is
 
    Output_Directory_Attribute   :
      constant Attribute_Pkg_String := Build ("CodePeer", "Output_Directory");
-   CPM_Directory_Attribute : constant Attribute_Pkg_String :=
-     Build ("Analyzer", "CPM_Directory");
+   Output_Dir_Attribute : constant Attribute_Pkg_String :=
+     Build ("Analyzer", "Output_Dir");
    Database_Directory_Attribute : constant Attribute_Pkg_String :=
      Build ("CodePeer", "Database_Directory");
    Server_URL_Attribute : constant Attribute_Pkg_String :=
@@ -928,11 +928,11 @@ package body CodePeer.Module is
         Project_Path (Project).File_Extension;
 
    begin
-      if Project.Has_Attribute (CPM_Directory_Attribute) then
+      if Project.Has_Attribute (Output_Dir_Attribute) then
          declare
             Dir : constant GNATCOLL.VFS.Filesystem_String :=
               GNATCOLL.VFS.Filesystem_String
-                (Project.Attribute_Value (CPM_Directory_Attribute));
+                (Project.Attribute_Value (Output_Dir_Attribute));
 
          begin
             return
@@ -944,7 +944,7 @@ package body CodePeer.Module is
          return
            GNATCOLL.VFS.Create_From_Dir
              (CodePeer_Object_Directory (Project),
-              Name (Name'First .. Name'Last - Extension'Length) & ".cpms");
+              Name (Name'First .. Name'Last - Extension'Length) & ".outputs");
       end if;
    end Codepeer_CPM_Directory;
 
