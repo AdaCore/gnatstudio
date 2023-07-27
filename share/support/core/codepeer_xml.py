@@ -213,30 +213,29 @@ doc = """<?xml version="1.0"?>
 
 attributes = """
     <project_attribute
-      package="CodePeer"
-      name="CPM_Directory"
+      package="Analyzer"
+      name="Output_Dir"
       editor_page="CodePeer"
       editor_section="CodePeer configuration"
-      label="cpm files directory"
+      label="sam files directory"
       hide_in="wizard gnatname_wizard library_wizard"
-      description="CodePeer cpm directory to use for this project.">
+      description="CodePeer sam directory to use for this project.">
       <string type="directory"/>
     </project_attribute>
 
     <project_attribute
-      package="CodePeer"
-      name="CWE"
+      package="Analyzer"
+      name="Review_Filea"
       editor_page="CodePeer"
       editor_section="CodePeer configuration"
-      label="Include CWE ids"
+      label="review file path"
       hide_in="wizard gnatname_wizard library_wizard"
-      description="Include CWE ids in output.">
-      <choice default="true">False</choice>
-      <choice>True</choice>
+      description="CodePeer review file to use for this project.">
+      <string type="file"/>
     </project_attribute>
 
     <project_attribute
-      package="CodePeer"
+      package="Analyzer"
       name="Message_Patterns"
       editor_page="CodePeer"
       editor_section="CodePeer configuration"
@@ -247,7 +246,7 @@ attributes = """
     </project_attribute>
 
     <project_attribute
-      package="CodePeer"
+      package="Analyzer"
       name="Additional_Patterns"
       editor_page="CodePeer"
       editor_section="CodePeer configuration"
@@ -259,7 +258,7 @@ default patterns file.">
     </project_attribute>
 
     <project_attribute
-      package="CodePeer"
+      package="Analyzer"
       name="Excluded_Source_Files"
       editor_page="CodePeer"
       editor_section="CodePeer configuration"
@@ -272,7 +271,7 @@ excluded from CodePeer's analysis."
     </project_attribute>
 
     <project_attribute
-      package="CodePeer"
+      package="Analyzer"
       name="Pending_Status"
       editor_page="CodePeer"
       editor_section="CodePeer configuration"
@@ -284,7 +283,7 @@ excluded from CodePeer's analysis."
     </project_attribute>
 
     <project_attribute
-      package="CodePeer"
+      package="Analyzer"
       name="Not_A_Bug_Status"
       editor_page="CodePeer"
       editor_section="CodePeer configuration"
@@ -296,7 +295,7 @@ excluded from CodePeer's analysis."
     </project_attribute>
 
     <project_attribute
-      package="CodePeer"
+      package="Analyzer"
       name="Bug_Status"
       editor_page="CodePeer"
       editor_section="CodePeer configuration"
@@ -481,7 +480,7 @@ SCIL for another architecture" />
        <command-line>
           <arg>cpm-gs-bridge</arg>
           <arg>--log-to</arg>
-          <arg>%O</arg>
+          <arg>%O/gs_bridge.log</arg>
        </command-line>
     </target-model>
 
@@ -565,7 +564,7 @@ SCIL for another architecture" />
        <command-line>
           <arg>cpm-gs-bridge</arg>
           <arg>--log-to</arg>
-          <arg>%O</arg>
+          <arg>%O/gs_bridge.log</arg>
        </command-line>
     </target>
 
