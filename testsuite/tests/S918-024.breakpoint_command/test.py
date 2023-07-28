@@ -16,7 +16,8 @@ def test_driver():
 
     p = promises.DebuggerWrapper(GPS.File("main"))
     d = p.get()
-    d.send("b main.adb:31")
+    yield wait_until_not_busy(d)
+    yield p.send_promise("b main.adb:31")
     yield wait_until_not_busy(d)
 
     view = Breakpoints_View()

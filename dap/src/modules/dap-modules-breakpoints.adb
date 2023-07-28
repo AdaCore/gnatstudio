@@ -187,18 +187,20 @@ package body DAP.Modules.Breakpoints is
    ----------------
 
    procedure Initialize
-     (Self   : in out Breakpoint_Holder;
-      Vector : Breakpoint_Vectors.Vector;
-      Clear  : Boolean := False)
+     (Self        : in out Breakpoint_Holder;
+      Vector      : Breakpoint_Vectors.Vector;
+      Clear_Ids   : Boolean := False;
+      Initialized : Boolean := False)
    is
       Id : Breakpoint_Identifier := 0;
    begin
       Self.Vector.Clear;
+
       for Item of Vector loop
          declare
             Data : Breakpoint_Data := Item;
          begin
-            if Clear then
+            if Clear_Ids then
                if Data.State = Enabled then
                   Data.Num := 0;
                else
@@ -218,7 +220,9 @@ package body DAP.Modules.Breakpoints is
          end;
       end loop;
 
-      Self.In_Initialization := True;
+      if not Initialized then
+         Self.In_Initialization := True;
+      end if;
    end Initialize;
 
    -----------------
@@ -251,11 +255,10 @@ package body DAP.Modules.Breakpoints is
       return Breakpoint_Vectors.Vector
    is
       Result : Breakpoint_Vectors.Vector;
-      Name   : constant String := +Base_Name (Executable);
    begin
       for Data of Self.Vector loop
-         if Data.Executable = ""
-           or else Data.Executable = Name
+         if Data.Executable = No_File
+           or else Data.Executable = Executable
          then
             Result.Append (Data);
          end if;
@@ -460,12 +463,11 @@ package body DAP.Modules.Breakpoints is
       Executable : Virtual_File;
       List       : Breakpoint_Vectors.Vector)
    is
-      Idx  : Natural := Self.Vector.First_Index;
-      C    : Breakpoint_Vectors.Cursor;
-      Name : constant String := +Base_Name (Executable);
+      Idx : Natural := Self.Vector.First_Index;
+      C   : Breakpoint_Vectors.Cursor;
    begin
       while Idx <= Self.Vector.Last_Index loop
-         if Self.Vector (Idx).Executable = Name
+         if Self.Vector (Idx).Executable = Executable
            and then not List.Contains (Self.Vector (Idx))
          then
             --  no more exist
@@ -1209,7 +1211,7 @@ package body DAP.Modules.Breakpoints is
    procedure Break_Unbreak_Address
      (Self       : in out Breakpoint_Holder;
       Address    : Address_Type;
-      Executable : String;
+      Executable : Virtual_File;
       Changed    : out Breakpoint_Vectors.Vector)
    is
       Deleted : Boolean := False;
@@ -1230,7 +1232,7 @@ package body DAP.Modules.Breakpoints is
               (Kind       => On_Address,
                Num        => 0,
                Address    => Address,
-               Executable => To_Unbounded_String (Executable),
+               Executable => Executable,
                others     => <>));
       end if;
    end Break_Unbreak_Address;

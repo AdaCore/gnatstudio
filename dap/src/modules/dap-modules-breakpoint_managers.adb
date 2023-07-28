@@ -228,8 +228,7 @@ package body DAP.Modules.Breakpoint_Managers is
          Except      => To_Unbounded_String (Name),
          Unhandled   => Unhandled,
          Disposition => (if Temporary then Delete else Keep),
-         Executable  => To_Unbounded_String
-           (+Base_Name (Self.Client.Get_Executable)),
+         Executable  => Self.Client.Get_Executable,
          others      => <>);
    begin
       Self.Break (Data);
@@ -256,8 +255,7 @@ package body DAP.Modules.Breakpoint_Managers is
                Column => 1),
             Invalid_Address), 1),
          Disposition => (if Temporary then Delete else Keep),
-         Executable  => To_Unbounded_String
-           (+Base_Name (Self.Client.Get_Executable)),
+         Executable  => Self.Client.Get_Executable,
          others      => <>);
    begin
       Self.Break (Data);
@@ -277,8 +275,7 @@ package body DAP.Modules.Breakpoint_Managers is
          Num         => 0,
          Subprogram  => To_Unbounded_String (Subprogram),
          Disposition => (if Temporary then Delete else Keep),
-         Executable  => To_Unbounded_String
-           (+Base_Name (Self.Client.Get_Executable)),
+         Executable  => Self.Client.Get_Executable,
          others      => <>);
    begin
       Self.Break (Data);
@@ -301,7 +298,7 @@ package body DAP.Modules.Breakpoint_Managers is
       end if;
 
       Self.Holder.Break_Unbreak_Address
-        (Address, +Base_Name (Self.Client.Get_Executable), Changed);
+        (Address, Self.Client.Get_Executable, Changed);
       Self.Send_Addresses (Changed, Add);
    end Toggle_Instruction_Breakpoint;
 
@@ -315,7 +312,9 @@ package body DAP.Modules.Breakpoint_Managers is
    is
       use type Generic_Views.Abstract_View_Access;
    begin
-      if Self.Requests_Count = 0 then
+      if Self.Client.Get_Status = Terminating
+        or else Self.Requests_Count = 0
+      then
          return;
       end if;
 
@@ -785,9 +784,12 @@ package body DAP.Modules.Breakpoint_Managers is
    procedure Finalize (Self : DAP_Client_Breakpoint_Manager_Access) is
       use Breakpoint_Vectors;
    begin
-      --  Store breakpoints in the persistent storage
-      DAP.Modules.Persistent_Breakpoints.Store
-        (Self.Client.Get_Executable, Self.Holder.Get_Breakpoints);
+      --  do not store breakpoints when we started debugging with no_executable
+      if Self.Client.Get_Executable /= No_File then
+         --  Store breakpoints in the persistent storage
+         DAP.Modules.Persistent_Breakpoints.Store
+           (Self.Client.Get_Executable, Self.Holder.Get_Breakpoints);
+      end if;
    end Finalize;
 
    ---------------------
@@ -817,6 +819,7 @@ package body DAP.Modules.Breakpoint_Managers is
          Data : Breakpoint_Data;
       begin
          Convert (Self.Kernel, File, Holder, Data, Event.breakpoint);
+         Data.Executable := Self.Client.Get_Executable;
          return Data;
       end Convert;
 

@@ -17,10 +17,6 @@
 
 --  "launch" request
 
-with Ada.Strings.Unbounded;
-with GNATCOLL.Projects;
-with GNATCOLL.VFS;
-
 with DAP.Tools;
 
 package DAP.Requests.Launch is
@@ -30,10 +26,8 @@ package DAP.Requests.Launch is
    type Launch_DAP_Request_Access is access all Launch_DAP_Request;
 
    procedure Initialize
-     (Self    : in out Launch_DAP_Request;
-      Project : GNATCOLL.Projects.Project_Type;
-      File    : GNATCOLL.VFS.Virtual_File;
-      Args    : Ada.Strings.Unbounded.Unbounded_String);
+     (Self   : in out Launch_DAP_Request;
+      Client : DAP.Clients.DAP_Client_Access);
 
    overriding procedure Write
      (Self   : Launch_DAP_Request;

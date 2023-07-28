@@ -47,8 +47,6 @@ with DAP.Module;
 with DAP.Modules.Preferences;        use DAP.Modules.Preferences;
 with DAP.Views.Breakpoints;
 
-with GPS.Debuggers;
-with Generic_Views;
 with Xref;                           use Xref;
 with JSON_Utils;
 
@@ -56,6 +54,9 @@ package body DAP.Modules.Persistent_Breakpoints is
 
    Me : constant Trace_Handle := Create
      ("GPS.DAP.MODULES_PERSISTENT_BREAKPOINTS");
+
+   Persistent_Category : constant String := "dap_breakpoints";
+   Persistent_Field    : constant String := "breakpoints";
 
    Messages_Category_For_Breakpoints : constant String := "breakpoints";
    Breakpoints_Message_Flags         : constant Message_Flags :=
@@ -97,13 +98,6 @@ package body DAP.Modules.Persistent_Breakpoints is
       Context : Interactive_Command_Context) return Command_Return_Type;
    --  Remove a breakpoint from the line given in the context
 
-   type On_Before_Exit is new Return_Boolean_Hooks_Function with null record;
-   overriding function Execute
-     (Self   : On_Before_Exit;
-      Kernel : not null access Kernel_Handle_Record'Class) return Boolean;
-   --  Called before GNAT Studio exist. This is a good time to save the
-   --  persistent breakpoints.
-
    type On_Project_Changed is new Simple_Hooks_Function with null record;
    overriding procedure Execute
      (Self   : On_Project_Changed;
@@ -143,10 +137,6 @@ package body DAP.Modules.Persistent_Breakpoints is
    overriding procedure Load
      (Property : in out Breakpoint_Property_Record;
       Value    : GNATCOLL.JSON.JSON_Value);
-
-   procedure Save_Persistent_Breakpoints
-     (Kernel : not null access Kernel_Handle_Record'Class);
-   --  Save persistent breakpoints to properties.
 
    function "<" (L, R : Location_Marker) return Boolean;
 
@@ -394,27 +384,12 @@ package body DAP.Modules.Persistent_Breakpoints is
       Prop.Kernel := Kernel;
       Get_Property
         (Prop, GPS.Kernel.Project.Get_Project (Kernel),
-         Name => "breakpoints", Found => Found);
+         Name => Persistent_Category, Found => Found);
       if Found then
-         Breakpoints.Initialize (Prop.Breakpoints);
-         Breakpoints.Initialized;
+         Breakpoints.Initialize (Prop.Breakpoints, Initialized => True);
          Debugger_Breakpoints_Changed_Hook.Run (Kernel, null);
          Show_Breakpoints_In_All_Editors (Kernel);
       end if;
-   end Execute;
-
-   -------------
-   -- Execute --
-   -------------
-
-   overriding function Execute
-     (Self   : On_Before_Exit;
-      Kernel : not null access Kernel_Handle_Record'Class) return Boolean
-   is
-      pragma Unreferenced (Self);
-   begin
-      Save_Persistent_Breakpoints (Kernel);
-      return True;  --  allow exit
    end Execute;
 
    --------------------------------
@@ -451,7 +426,8 @@ package body DAP.Modules.Persistent_Breakpoints is
       if Breakpoints.Get_Breakpoints.Is_Empty then
          Trace (Me, "No persistent breakpoint to save");
          GPS.Kernel.Properties.Remove_Property
-           (Kernel, GPS.Kernel.Project.Get_Project (Kernel), "breakpoints");
+           (Kernel, GPS.Kernel.Project.Get_Project (Kernel),
+            Persistent_Category);
          return;
       end if;
 
@@ -460,7 +436,7 @@ package body DAP.Modules.Persistent_Breakpoints is
       GPS.Kernel.Properties.Set_Property
         (Kernel     => Kernel,
          Project    => GPS.Kernel.Project.Get_Project (Kernel),
-         Name       => "breakpoints",
+         Name       => Persistent_Category,
          Property   =>
             new Breakpoint_Property_Record'
            (Kernel      => Kernel,
@@ -468,6 +444,10 @@ package body DAP.Modules.Persistent_Breakpoints is
          --  Filter breakpoints that are created automatically by GNAT Studio
          --  as a result of preferences.
          Persistent => True);
+
+   exception
+      when E : others =>
+         Trace (Me, E);
    end Save_Persistent_Breakpoints;
 
    ----------
@@ -500,8 +480,8 @@ package body DAP.Modules.Persistent_Breakpoints is
                VSS.Strings.Conversions.To_UTF_8_String (B.Condition));
          end if;
 
-         if B.Executable /= Null_Unbounded_String then
-            Value.Set_Field ("executable", To_String (B.Executable));
+         if B.Executable /= No_File then
+            Value.Set_Field ("executable", +Base_Name (B.Executable));
          end if;
 
          if not B.Commands.Is_Empty then
@@ -548,7 +528,7 @@ package body DAP.Modules.Persistent_Breakpoints is
          end if;
       end loop;
 
-      Value.Set_Field ("dap_breakpoints", Values);
+      Value.Set_Field (Persistent_Field, Values);
    end Save;
 
    ----------
@@ -566,12 +546,12 @@ package body DAP.Modules.Persistent_Breakpoints is
       GNATCOLL.Traces.Trace
         (Me, "Restoring breakpoints from previous session");
 
-      if not Value.Has_Field ("dap_breakpoints") then
+      if not Value.Has_Field (Persistent_Field) then
          GNATCOLL.Traces.Trace (Me, "No breakpoints");
          return;
       end if;
 
-      Values := Value.Get ("dap_breakpoints");
+      Values := Value.Get (Persistent_Field);
 
       for Index in 1 .. Length (Values) loop
          declare
@@ -621,7 +601,7 @@ package body DAP.Modules.Persistent_Breakpoints is
                           ((Id, Loc, Invalid_Address), 1),
                         Ignore        => Item.Get ("ignore"),
                         Condition     => Condition,
-                        Executable    => Exec,
+                        Executable    => Create (+To_String (Exec)),
                         Commands      => Commands);
                   end if;
 
@@ -635,7 +615,7 @@ package body DAP.Modules.Persistent_Breakpoints is
                      Subprogram    => Item.Get ("subprogram"),
                      Ignore        => Item.Get ("ignore"),
                      Condition     => Condition,
-                     Executable    => Exec,
+                     Executable    => Create (+To_String (Exec)),
                      Commands      => Commands,
                      others        => <>);
 
@@ -654,7 +634,7 @@ package body DAP.Modules.Persistent_Breakpoints is
                      Unhandled     => Item.Get ("unhandled"),
                      Ignore        => Item.Get ("ignore"),
                      Condition     => Condition,
-                     Executable    => Exec,
+                     Executable    => Create (+To_String (Exec)),
                      Commands      => Commands,
                      others        => <>);
             end case;
@@ -1052,8 +1032,9 @@ package body DAP.Modules.Persistent_Breakpoints is
    begin
       if DAP.Module.Get_Started_Per_Session_Debuggers < 2 then
          --  We had only one debugger, copy breakpoints
-         Breakpoints.Initialize (List);
+         Breakpoints.Initialize (List, Initialized => True);
       else
+
          DAP.Module.For_Each_Debugger (Calculate'Access);
          if Count > 1 then
             --  Store breakpoints only from the last closed session
@@ -1074,20 +1055,22 @@ package body DAP.Modules.Persistent_Breakpoints is
    -----------------------------
 
    procedure On_Debugging_Terminated
-     (Kernel : not null access Kernel_Handle_Record'Class)
-   is
-      use type Generic_Views.Abstract_View_Access;
+     (Kernel : not null access Kernel_Handle_Record'Class) is
    begin
-      GPS.Kernel.Hooks.Debugger_Breakpoints_Changed_Hook.Run (Kernel, null);
-      if DAP.Module.Get_Breakpoints_View /= null then
-         DAP.Views.View_Access
-           (DAP.Module.Get_Breakpoints_View).On_Status_Changed
-           (GPS.Debuggers.Debug_Available);
-      end if;
-
       Show_Breakpoints_In_All_Editors (Kernel);
       Save_Persistent_Breakpoints (Kernel);
+
+      GPS.Kernel.Hooks.Debugger_Breakpoints_Changed_Hook.Run (Kernel, null);
    end On_Debugging_Terminated;
+
+   ----------------
+   -- On_Destroy --
+   ----------------
+
+   procedure On_Destroy is
+   begin
+      Breakpoints.Clear;
+   end On_Destroy;
 
    ---------------------
    -- Register_Module --
@@ -1100,7 +1083,6 @@ package body DAP.Modules.Persistent_Breakpoints is
    begin
       Project_Changing_Hook.Add (new On_Project_Changing);
       Project_Changed_Hook.Add (new On_Project_Changed);
-      Before_Exit_Action_Hook.Add (new On_Before_Exit);
 
       No_Debugger_Or_Ready := Kernel.Lookup_Filter ("No debugger or ready");
 

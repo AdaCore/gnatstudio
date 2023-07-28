@@ -27,10 +27,8 @@ def test_driver():
 
     # Run the debugger and verify that we reach the breakpoint
     debug = GPS.Debugger.get()
-    if mode == "Mode:Dap":
-        debug.start()
-    else:
-        debug.send("run")
+    yield wait_until_not_busy(debug)
+    debug.send("run")
     yield wait_until_not_busy(debug)
     
     gps_assert(debug.current_file, GPS.File("p.adb"),
