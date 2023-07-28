@@ -49,6 +49,8 @@ package body DAP.Views is
 
    package body Simple_Views is
 
+      use DAP.Clients;
+
       type Open_Command is new Interactive_Command with null record;
       overriding function Execute
         (Self    : access Open_Command;
@@ -67,8 +69,6 @@ package body DAP.Views is
          Name                : String := "")
 
       is
-         use DAP.Clients;
-
          MDI   : constant MDI_Window := GPS.Kernel.MDI.Get_MDI (Kernel);
          Child : MDI_Child;
          Iter  : Child_Iterator;
@@ -186,12 +186,14 @@ package body DAP.Views is
          Debugger : access GPS.Debuggers.Base_Visual_Debugger'Class)
       is
          pragma Unreferenced (Self);
-         use type DAP.Clients.DAP_Client_Access;
 
-         Client : constant DAP.Clients.DAP_Client_Access :=
-           DAP.Clients.DAP_Visual_Debugger_Access (Debugger).Client;
+         Client : DAP.Clients.DAP_Client_Access;
 
       begin
+         if Debugger /= null then
+            Client := DAP.Clients.DAP_Visual_Debugger_Access (Debugger).Client;
+         end if;
+
          if Client /= null then
             Attach_To_View (Client, Kernel, Create_If_Necessary => False);
          end if;
@@ -208,12 +210,14 @@ package body DAP.Views is
          New_State : GPS.Debuggers.Debugger_State)
       is
          pragma Unreferenced (Self, Kernel);
-         use type DAP.Clients.DAP_Client_Access;
-         Client : constant DAP.Clients.DAP_Client_Access :=
-           DAP.Clients.DAP_Visual_Debugger_Access (Debugger).Client;
 
-         V : access Formal_View_Record'Class;
+         Client : DAP.Clients.DAP_Client_Access;
+         V      : access Formal_View_Record'Class;
       begin
+         if Debugger /= null then
+            Client := DAP.Clients.DAP_Visual_Debugger_Access (Debugger).Client;
+         end if;
+
          if Client /= null then
             V := Get_View (Client);
          end if;
@@ -233,12 +237,14 @@ package body DAP.Views is
           Debugger : access GPS.Debuggers.Base_Visual_Debugger'Class)
       is
          pragma Unreferenced (Self, Kernel);
-         use type DAP.Clients.DAP_Client_Access;
-         Client : constant DAP.Clients.DAP_Client_Access :=
-           DAP.Clients.DAP_Visual_Debugger_Access (Debugger).Client;
 
-         V : access Formal_View_Record'Class;
+         Client : DAP.Clients.DAP_Client_Access;
+         V      : access Formal_View_Record'Class;
       begin
+         if Debugger /= null then
+            Client := DAP.Clients.DAP_Visual_Debugger_Access (Debugger).Client;
+         end if;
+
          if Client /= null then
             V := Get_View (Client);
          end if;
@@ -253,16 +259,23 @@ package body DAP.Views is
       -------------
 
       overriding procedure Execute
-         (Self     : On_Debugger_Terminate;
+         (Self     : On_Debugger_Terminated;
           Kernel   : not null access GPS.Kernel.Kernel_Handle_Record'Class;
           Debugger : access GPS.Debuggers.Base_Visual_Debugger'Class)
       is
          pragma Unreferenced (Kernel);
-         Client : constant DAP.Clients.DAP_Client_Access :=
-           DAP.Clients.DAP_Visual_Debugger_Access (Debugger).Client;
-         V      : constant access Formal_View_Record'Class :=
-           Get_View (Client);
+
+         Client : DAP.Clients.DAP_Client_Access;
+         V      : access Formal_View_Record'Class;
       begin
+         if Debugger /= null then
+            Client := DAP.Clients.DAP_Visual_Debugger_Access (Debugger).Client;
+         end if;
+
+         if Client /= null then
+            V := Get_View (Client);
+         end if;
+
          if V /= null then
             V.On_Detach (Client);
             Set_View (Client, null);
@@ -280,12 +293,14 @@ package body DAP.Views is
          Debugger : access GPS.Debuggers.Base_Visual_Debugger'Class)
       is
          pragma Unreferenced (Self, Kernel);
-         use type DAP.Clients.DAP_Client_Access;
-         Client : constant DAP.Clients.DAP_Client_Access :=
-           DAP.Clients.DAP_Visual_Debugger_Access (Debugger).Client;
 
-         V : access Formal_View_Record'Class;
+         Client : DAP.Clients.DAP_Client_Access;
+         V      : access Formal_View_Record'Class;
       begin
+         if Debugger /= null then
+            Client := DAP.Clients.DAP_Visual_Debugger_Access (Debugger).Client;
+         end if;
+
          if Client /= null then
             V := Get_View (Client);
          end if;
@@ -333,7 +348,7 @@ package body DAP.Views is
          GPS.Kernel.Hooks.Debugger_Process_Terminated_Hook.Add
            (new On_Debug_Process_Terminated);
          GPS.Kernel.Hooks.Debugger_Terminated_Hook.Add
-           (new On_Debugger_Terminate);
+           (new On_Debugger_Terminated);
       end Register_Module;
 
       -------------------------------

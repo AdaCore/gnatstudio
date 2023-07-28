@@ -65,6 +65,9 @@ package DAP.Modules.Persistent_Breakpoints is
      (Kernel : not null access Kernel_Handle_Record'Class);
    --  Called when the last debugger is finished
 
+   procedure On_Destroy;
+   --  Called when GNAT Studio is terminating
+
    function Get_Next_Id return Breakpoint_Identifier;
 
    procedure Store
@@ -129,5 +132,9 @@ package DAP.Modules.Persistent_Breakpoints is
    --  If no debugger is currently running, the breakpoint will be applied when
    --  one is started. If one or more debuggers are running, they all break
    --  at that location
+
+   procedure Save_Persistent_Breakpoints
+     (Kernel : not null access Kernel_Handle_Record'Class);
+   --  Save persistent breakpoints to properties database
 
 end DAP.Modules.Persistent_Breakpoints;

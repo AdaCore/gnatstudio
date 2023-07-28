@@ -15,9 +15,12 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
+with Ada.Strings.Unbounded;
 with Ada.Strings.UTF_Encoding;
 
+with GNATCOLL.Projects;
 with GNATCOLL.Traces;       use GNATCOLL.Traces;
+with GNATCOLL.VFS;
 with GNATCOLL.VFS_Utils;
 
 with VSS.Strings.Conversions;
@@ -36,22 +39,22 @@ package body DAP.Requests.Launch is
    Me : constant Trace_Handle := Create ("GPS.DAP.Requests_Launch", On);
 
    procedure Initialize
-     (Self    : in out Launch_DAP_Request;
-      Project : GNATCOLL.Projects.Project_Type;
-      File    : GNATCOLL.VFS.Virtual_File;
-      Args    : Ada.Strings.Unbounded.Unbounded_String)
+     (Self   : in out Launch_DAP_Request;
+      Client : DAP.Clients.DAP_Client_Access)
    is
       use Ada.Strings.Unbounded;
       use GNATCOLL.VFS;
+      use DAP.Clients;
 
       type Extension_Array is array (Positive range <>) of
         Filesystem_String (1 .. 4);
       Extensions : constant Extension_Array := (".exe", ".out", ".vxe");
       Tmp        : Virtual_File;
 
-      A            : Unbounded_String := Args;
+      Exec : GNATCOLL.VFS.Virtual_File := Client.Get_Executable;
+      Args : Unbounded_String := Client.Get_Executable_Args;
+
       End_Of_Exec  : Natural := 1;
-      Exec         : Virtual_File;
       Blank_Pos    : Integer;
 
       --------------
@@ -61,36 +64,36 @@ package body DAP.Requests.Launch is
       function Get_Args return String;
       function Get_Args return String is
       begin
-         if Length (A) = 0
-           or else End_Of_Exec >= Length (A)
+         if Length (Args) = 0
+           or else End_Of_Exec >= Length (Args)
          then
             return "";
          else
-            return " " & Slice (A, End_Of_Exec, Length (A));
+            return " " & Slice (Args, End_Of_Exec, Length (Args));
          end if;
       end Get_Args;
 
    begin
-      if File /= GNATCOLL.VFS.No_File then
+      if Exec /= GNATCOLL.VFS.No_File then
          Self.Parameters.arguments.program := VSS.Strings.Conversions.
            To_Virtual_String
              (Ada.Strings.UTF_Encoding.UTF_8_String'
-                (+File.Full_Name & Get_Args));
+                (+Exec.Full_Name & Get_Args));
 
-      elsif A /= "" then
-         Blank_Pos := Index (A, " ");
+      elsif Args /= "" then
+         Blank_Pos := Index (Args, " ");
 
          if Blank_Pos = 0 then
-            End_Of_Exec := Length (A);
+            End_Of_Exec := Length (Args);
          else
             End_Of_Exec := Blank_Pos - 1;
-            A := Unbounded_Slice
-              (A, Blank_Pos + 1, Length (A));
+            Args := Unbounded_Slice
+              (Args, Blank_Pos + 1, Length (Args));
          end if;
 
          declare
             Exec_Name : constant Filesystem_String :=
-              +Slice (A, 1, End_Of_Exec);
+              +Slice (Args, 1, End_Of_Exec);
 
          begin
             --  First check whether Exec_Name is an absolute path
@@ -127,6 +130,7 @@ package body DAP.Requests.Launch is
             null;
 
          elsif Exec.Is_Regular_File then
+            Client.Set_Executable (Exec);
             Self.Parameters.arguments.program := VSS.Strings.Conversions.
               To_Virtual_String
                 (Ada.Strings.UTF_Encoding.UTF_8_String'
@@ -144,6 +148,7 @@ package body DAP.Requests.Launch is
             end loop;
 
             if Exec.Is_Regular_File then
+               Client.Set_Executable (Exec);
                Self.Parameters.arguments.program := VSS.Strings.Conversions.
                  To_Virtual_String
                    (Ada.Strings.UTF_Encoding.UTF_8_String'

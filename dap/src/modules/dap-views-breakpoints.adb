@@ -966,8 +966,8 @@ package body DAP.Views.Breakpoints is
       Id     : Breakpoint_Identifier := 0;
    begin
       if Self.Prevent_Bp_Selection
-        or else (Client /= null
-                 and then Client.Current_File = No_File)
+        or else Client = null
+        or else Client.Current_File = No_File
       then
          return;
       end if;
@@ -1088,7 +1088,9 @@ package body DAP.Views.Breakpoints is
       Model : constant Gtk_Tree_Store := -Get_Model (Self.List);
       Iter  : Gtk.Tree_Model.Gtk_Tree_Iter;
    begin
-      if Status = Debug_Available then
+      if Status = Debug_Available
+        or else Status = Debug_None
+      then
          Self.Activatable := True;
       else
          Self.Activatable := False;
@@ -1222,12 +1224,12 @@ package body DAP.Views.Breakpoints is
               (Values (Last), Escape_Text (Address_To_String (Data.Address)));
          end if;
 
-         if Data.Executable /= Null_Unbounded_String then
+         if Data.Executable /= No_File then
             Last := Last + 1;
             Columns (Last) := Col_Executable;
             Glib.Values.Init_Set_String
               (Values (Last),
-               Escape_Text (To_String (Data.Executable)));
+               Escape_Text (+Base_Name (Data.Executable)));
          end if;
 
          Set_And_Clear (Model, Iter, Columns (1 .. Last), Values (1 .. Last));

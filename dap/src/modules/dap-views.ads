@@ -177,10 +177,10 @@ package DAP.Views is
          Debugger : access GPS.Debuggers.Base_Visual_Debugger'Class);
       --  Called when the process has terminated
 
-      type On_Debugger_Terminate is
+      type On_Debugger_Terminated is
         new GPS.Kernel.Hooks.Debugger_Hooks_Function with null record;
       overriding procedure Execute
-        (Self     : On_Debugger_Terminate;
+        (Self     : On_Debugger_Terminated;
          Kernel   : not null access GPS.Kernel.Kernel_Handle_Record'Class;
          Debugger : access GPS.Debuggers.Base_Visual_Debugger'Class);
 

@@ -17,11 +17,6 @@
 
 --  "initialize" request
 
-with Ada.Strings.Unbounded;
-
-with GNATCOLL.Projects;
-with GNATCOLL.VFS;
-
 with DAP.Tools;
 
 package DAP.Requests.Initialize is
@@ -29,12 +24,6 @@ package DAP.Requests.Initialize is
    type Initialize_DAP_Request is new DAP_Request with private;
 
    type Initialize_DAP_Request_Access is access all Initialize_DAP_Request;
-
-   procedure Initialize
-     (Self    : in out Initialize_DAP_Request;
-      Project : GNATCOLL.Projects.Project_Type;
-      File    : GNATCOLL.VFS.Virtual_File;
-      Args    : String);
 
    overriding procedure Write
      (Self   : Initialize_DAP_Request;
@@ -84,10 +73,6 @@ private
               supportsVariableType                => True,
               supportsArgsCanBeInterpretedByShell => False,
               supportsStartDebuggingRequest       => True));
-
-      Project : GNATCOLL.Projects.Project_Type;
-      File    : GNATCOLL.VFS.Virtual_File;
-      Args    : Ada.Strings.Unbounded.Unbounded_String;
    end record;
 
    overriding function Method

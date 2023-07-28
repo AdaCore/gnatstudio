@@ -30,6 +30,7 @@ with Glib.Convert;
 with Glib.Object;                use Glib.Object;
 
 with Gtkada.Dialogs;
+with Gtkada.MDI;                 use Gtkada.MDI;
 
 with VSS.Characters;             use VSS.Characters;
 with VSS.Characters.Latin;
@@ -45,6 +46,7 @@ with VSS.Text_Streams.Memory_UTF8_Output;
 
 with GPS.Editors;                use GPS.Editors;
 with GPS.Kernel;                 use GPS.Kernel;
+with GPS.Kernel.MDI;             use GPS.Kernel.MDI;
 with GPS.Kernel.Hooks;
 with GPS.Kernel.Project;
 
@@ -152,17 +154,24 @@ package body DAP.Clients is
        ("^\s*(quit|qui|q|-gdb-exit)\s*$");
    --  'qu' can be quit or queue-signal
 
+   Is_Frame_Up_Pattern : constant VSS.Regular_Expressions.
+     Regular_Expression := VSS.Regular_Expressions.To_Regular_Expression
+       ("^\s*(up)\s*$");
+
+   Is_Frame_Down_Pattern : constant VSS.Regular_Expressions.
+     Regular_Expression := VSS.Regular_Expressions.To_Regular_Expression
+       ("^\s*(down)\s*$");
+
    --------------
    -- On_Error --
    --------------
 
    overriding procedure On_Error
      (Self  : in out DAP_Client;
-      Error : String)
-   is
-      pragma Unreferenced (Self);
+      Error : String) is
    begin
       Trace (Me, "On_Error:" & Error);
+      Self.Reject_All_Requests;
    end On_Error;
 
    -------------------------------
@@ -217,9 +226,11 @@ package body DAP.Clients is
       Data : DAP.Modules.Breakpoints.Breakpoint_Data)
    is
       use DAP.Modules.Breakpoint_Managers;
+      D : DAP.Modules.Breakpoints.Breakpoint_Data := Data;
    begin
       if Self.Breakpoints /= null then
-         Break (Self.Breakpoints, Data);
+         D.Executable := Self.Get_Executable;
+         Break (Self.Breakpoints, D);
       end if;
    end Break;
 
@@ -412,6 +423,36 @@ package body DAP.Clients is
         (VSS.Strings.Conversions.To_Virtual_String (Cmd)).Has_Match;
    end Is_Quit_Command;
 
+   -------------------------
+   -- Is_Frame_Up_Command --
+   -------------------------
+
+   function Is_Frame_Up_Command
+     (Self : DAP_Client;
+      Cmd  : String)
+      return Boolean
+   is
+      pragma Unreferenced (Self);
+   begin
+      return Is_Frame_Up_Pattern.Match
+        (VSS.Strings.Conversions.To_Virtual_String (Cmd)).Has_Match;
+   end Is_Frame_Up_Command;
+
+   ---------------------------
+   -- Is_Frame_Down_Command --
+   ---------------------------
+
+   function Is_Frame_Down_Command
+     (Self : DAP_Client;
+      Cmd  : String)
+      return Boolean
+   is
+      pragma Unreferenced (Self);
+   begin
+      return Is_Frame_Down_Pattern.Match
+        (VSS.Strings.Conversions.To_Virtual_String (Cmd)).Has_Match;
+   end Is_Frame_Down_Command;
+
    ----------------------
    -- Set_Capabilities --
    ----------------------
@@ -440,7 +481,10 @@ package body DAP.Clients is
 
    procedure Set_Status
      (Self   : in out DAP_Client;
-      Status : Debugger_Status_Kind) is
+      Status : Debugger_Status_Kind)
+   is
+      use GNATCOLL.VFS;
+      Old : constant Debugger_Status_Kind := Self.Status;
    begin
       if Self.Status = Status
         or else Self.Status = Terminating
@@ -450,34 +494,50 @@ package body DAP.Clients is
 
       Self.Status := Status;
 
-      if Self.Status /= Stopped then
-
-         Self.Selected_File    := GNATCOLL.VFS.No_File;
+      if Self.Status not in Ready .. Stopped then
+         Self.Selected_File    := No_File;
          Self.Selected_Line    := 0;
          Self.Selected_Address := Invalid_Address;
          Self.Selected_Frame   := 0;
-         Self.Frames.Clear;
-
          Self.Selected_Thread  := 0;
+         Self.Frames.Clear;
 
          DAP.Utils.Unhighlight_Current_Line (Self.Kernel);
       end if;
 
-      if Self.Status = Ready then
-         GPS.Kernel.Hooks.Debuggee_Started_Hook.Run
-           (Self.Kernel, Self.Visual);
-      end if;
+      case Self.Status is
+         when Ready =>
+            --  Trigger this hook when we did all preparations
+            --   (for example set breakpoints). In ither case we will
+            --   have the mess with debugging
+            GPS.Kernel.Hooks.Debugger_Started_Hook.Run
+              (Self.Kernel, Self.Visual);
+
+         when Stopped =>
+            GPS.Kernel.Hooks.Debugger_Process_Stopped_Hook.Run
+              (Self.Kernel, Self.Visual);
+
+         when Terminating =>
+            if Debugger_Status_Kind'Pos (Old) >=
+              Debugger_Status_Kind'Pos (Initialized)
+            then
+               GPS.Kernel.Hooks.Debugger_Terminated_Hook.Run
+                 (Self.Kernel, Self.Get_Visual);
+            end if;
+
+         when others =>
+            null;
+      end case;
 
       GPS.Kernel.Hooks.Debugger_State_Changed_Hook.Run
         (Self.Kernel, Self.Visual,
-         (if Self.Status /= Stopped and then Self.Status /= Ready
-          then GPS.Debuggers.Debug_Busy
-          else GPS.Debuggers.Debug_Available));
+         (if Self.Status = Terminating
+          then GPS.Debuggers.Debug_None
+          elsif Self.Status in Ready .. Stopped
+          then GPS.Debuggers.Debug_Available
+          else GPS.Debuggers.Debug_Busy));
 
-      if Self.Status = Stopped then
-         GPS.Kernel.Hooks.Debugger_Process_Stopped_Hook.Run
-           (Self.Kernel, Self.Visual);
-      end if;
+      Self.Kernel.Refresh_Context;
    end Set_Status;
 
    -------------
@@ -635,8 +695,29 @@ package body DAP.Clients is
    function Get_Executable
      (Self : in out DAP_Client) return GNATCOLL.VFS.Virtual_File is
    begin
-      return GNATCOLL.VFS.Create (GNATCOLL.VFS."+"(To_String (Self.File)));
+      return Self.Executable;
    end Get_Executable;
+
+   -----------------
+   -- Get_Project --
+   -----------------
+
+   function Get_Project
+     (Self : in out DAP_Client) return GNATCOLL.Projects.Project_Type is
+   begin
+      return Self.Project;
+   end Get_Project;
+
+   -------------------------
+   -- Get_Executable_Args --
+   -------------------------
+
+   function Get_Executable_Args
+     (Self : in out DAP_Client) return Ada.Strings.Unbounded.Unbounded_String
+   is
+   begin
+      return Self.Args;
+   end Get_Executable_Args;
 
    ------------------
    -- Get_Language --
@@ -670,6 +751,17 @@ package body DAP.Clients is
    begin
       Self.Assembly_View := View;
    end Set_Assembly_View;
+
+   --------------------
+   -- Set_Executable --
+   --------------------
+
+   procedure Set_Executable
+     (Self : in out DAP_Client;
+      File : GNATCOLL.VFS.Virtual_File) is
+   begin
+      Self.Executable := File;
+   end Set_Executable;
 
    ---------------------
    -- Set_Memory_View --
@@ -743,7 +835,9 @@ package body DAP.Clients is
       File                      : GNATCOLL.VFS.Virtual_File;
       Line                      : Integer;
       Address                   : Address_Type;
-      Run_Location_Changed_Hook : Boolean := True) is
+      Run_Location_Changed_Hook : Boolean := True)
+   is
+      use GNATCOLL.VFS;
    begin
       Self.Selected_Frame   := Id;
       Self.Selected_File    := File;
@@ -751,8 +845,10 @@ package body DAP.Clients is
       Self.Selected_Address := Address;
 
       --  highlight selected location
-      DAP.Utils.Highlight_Current_File_And_Line
-        (Self.Kernel, Self.Selected_File, Self.Selected_Line);
+      if Self.Selected_File /= No_File then
+         DAP.Utils.Highlight_Current_File_And_Line
+           (Self.Kernel, Self.Selected_File, Self.Selected_Line);
+      end if;
 
       if Run_Location_Changed_Hook then
          --  Triggering the hook to inform views. Not needed when we set
@@ -894,17 +990,6 @@ package body DAP.Clients is
       Self.Enqueue (DAP.Requests.DAP_Request_Access (Req));
    end On_Breakpoints_Set;
 
-   --------------
-   -- On_Ready --
-   --------------
-
-   procedure On_Ready (Self : in out DAP_Client) is
-   begin
-      Self.Set_Status (Ready);
-      GPS.Kernel.Hooks.Debugger_Started_Hook.Run (Self.Kernel, Self.Visual);
-      Self.Kernel.Refresh_Context;
-   end On_Ready;
-
    -----------------
    -- On_Continue --
    -----------------
@@ -918,19 +1003,28 @@ package body DAP.Clients is
    -- On_Finished --
    -----------------
 
-   overriding procedure On_Finished (Self : in out DAP_Client) is
+   overriding procedure On_Finished (Self : in out DAP_Client)
+   is
+      use type DAP.Modules.Breakpoint_Managers.
+        DAP_Client_Breakpoint_Manager_Access;
+
    begin
-      Self.Reject_All_Requests;
+      if Self.Visual = null then
+         return;
+      end if;
 
-      GPS.Kernel.Hooks.Debugger_Process_Terminated_Hook.Run
-        (Self.Kernel, Self.Visual);
-
-      Self.Breakpoints.Finalize;
-      Free (Self.Breakpoints);
+      if Self.Breakpoints /= null then
+         Self.Breakpoints.Finalize;
+         Free (Self.Breakpoints);
+      end if;
 
       Unref (Self.Visual);
+      Self.Visual := null;
 
       DAP.Module.Finished (Self.Id);
+   exception
+      when E : others =>
+         Trace (Me, E);
    end On_Finished;
 
    ----------------------------------
@@ -954,7 +1048,7 @@ package body DAP.Clients is
          return;
       end if;
 
-      if Self.File /= Null_Unbounded_String
+      if Self.Executable /= No_File
         and then not Is_Regular_File (Self.Get_Executable)
       then
          declare
@@ -978,7 +1072,7 @@ package body DAP.Clients is
       begin
          if List /= null then
             for L in List'Range loop
-               if Equal (+List (L).all, +To_String (Self.File)) then
+               if Equal (+List (L).all, Full_Name (Self.Executable)) then
                   Free (List);
                   return;
                end if;
@@ -994,7 +1088,7 @@ package body DAP.Clients is
 
       --  Create an empty project, and we'll add properties to it
 
-      if Self.File /= Null_Unbounded_String then
+      if Self.Executable /= No_File then
          Get_Registry (Self.Kernel).Tree.Load_Empty_Project
            (Get_Registry (Self.Kernel).Environment,
             Name           => "debugger_" & (+Base_Name (Self.Get_Executable)),
@@ -1132,7 +1226,7 @@ package body DAP.Clients is
 
          --  Object_Dir, Exec_Dir, Main
 
-         if Self.File /= Null_Unbounded_String then
+         if Self.Executable /= No_File then
             Project.Set_Attribute
               (Attribute          => Obj_Dir_Attribute,
                Value              => +Dir_Name (Self.Get_Executable));
@@ -1140,7 +1234,7 @@ package body DAP.Clients is
               (Attribute          => Exec_Dir_Attribute,
                Value              => +Dir_Name (Self.Get_Executable));
 
-            Main (Main'First) := new String'(To_String (Self.File));
+            Main (Main'First) := new String'(+Full_Name (Self.Executable));
             Project.Set_Attribute
               (Attribute          => Main_Attribute,
                Values             => Main);
@@ -1326,32 +1420,37 @@ package body DAP.Clients is
                Request := Requests_Maps.Element (Position);
                Self.Sent.Delete (Position);
 
-               if R_Success.Is_Set
-                 and then not R_Success.Value
+               if Self.Status /= Terminating
+                 or else Request.all in
+                   DAP.Requests.Disconnects.Disconnect_DAP_Request'Class
                then
-                  begin
-                     Request.On_Error_Message (Message);
-                  exception
-                     when E : others =>
-                        Trace (Me, E);
-                  end;
+                  if R_Success.Is_Set
+                    and then not R_Success.Value
+                  then
+                     begin
+                        Request.On_Error_Message (Message);
+                     exception
+                        when E : others =>
+                           Trace (Me, E);
+                     end;
 
-               else
-                  begin
-                     if Request.Kernel = null
-                       or else not Request.Kernel.Is_In_Destruction
-                     then
-                        Request.On_Result_Message (Reader, New_Request);
+                  else
+                     begin
+                        if Request.Kernel = null
+                          or else not Request.Kernel.Is_In_Destruction
+                        then
+                           Request.On_Result_Message (Reader, New_Request);
 
-                        GPS.Kernel.Hooks.Dap_Response_Processed_Hook.Run
-                          (Kernel   => Request.Kernel,
-                           Method   => Request.Method);
-                     end if;
+                           GPS.Kernel.Hooks.Dap_Response_Processed_Hook.Run
+                             (Kernel   => Request.Kernel,
+                              Method   => Request.Method);
+                        end if;
 
-                  exception
-                     when E : others =>
-                        Trace (Me, E);
-                  end;
+                     exception
+                        when E : others =>
+                           Trace (Me, E);
+                     end;
+                  end if;
                end if;
 
                DAP.Requests.Destroy (Request);
@@ -1363,8 +1462,14 @@ package body DAP.Clients is
          end if;
 
       elsif A_Type = "event" then
-         Self.Process_Event (Reader, Event);
+         if Self.Status /= Terminating then
+            Self.Process_Event (Reader, Event);
+         end if;
       end if;
+
+   exception
+      when E : others =>
+         Trace (Me, E);
    end On_Raw_Message;
 
    --------------------
@@ -1375,11 +1480,19 @@ package body DAP.Clients is
      (Self      : in out DAP_Client;
       Thread_Id : Integer)
    is
-      Req : StackTrace_Request_Access :=
+      Limit : constant Integer :=
+        DAP.Modules.Preferences.Frames_Limit.Get_Pref;
+      Req   : StackTrace_Request_Access :=
         new StackTrace_Request (Self.Kernel);
+
    begin
       Req.Client := Self.This;
       Req.Parameters.arguments.threadId := Thread_Id;
+      if Limit /= 0 then
+         Req.Parameters.arguments.startFrame := (True, 0);
+         Req.Parameters.arguments.levels     := (True, Limit);
+      end if;
+
       Self.Process (DAP.Requests.DAP_Request_Access (Req));
    end Get_StackTrace;
 
@@ -1482,6 +1595,14 @@ package body DAP.Clients is
             elsif Self.Selected_File /= No_File then
                Self.Set_Status (Stopped);
             end if;
+
+            --  Trigger Debuggee_Started_Hook if we did not trigger it before
+            if not Self.Is_Debuggee_Started_Called then
+               Self.Is_Debuggee_Started_Called := True;
+               GPS.Kernel.Hooks.Debuggee_Started_Hook.Run
+                 (Self.Kernel, Self.Visual);
+            end if;
+
          end;
 
       elsif Event = "continued" then
@@ -1520,8 +1641,12 @@ package body DAP.Clients is
          null;
 
       elsif Event = "exited" then
-         --  Do not handle, at least for now.
-         null;
+         --  Trigger the hook to inform that debuggee process is finished
+         if not Self.Is_Debuggee_Started_Called then
+            Self.Is_Debuggee_Started_Called := False;
+            GPS.Kernel.Hooks.Debugger_Process_Terminated_Hook.Run
+              (Self.Kernel, Self.Visual);
+         end if;
 
       elsif Event = "module" then
          --  Do not handle, at least for now.
@@ -1577,6 +1702,13 @@ package body DAP.Clients is
                Self.Display_In_Debugger_Console (Cmd, Is_Command => True);
             end if;
 
+            if Self.Is_Frame_Up_Command (Cmd) then
+               Self.Frame_Up;
+
+            elsif Self.Is_Frame_Down_Command (Cmd) then
+               Self.Frame_Down;
+            end if;
+
             Request := Self.Create_Evaluate_Command
               (Command,
                VSS.Strings.Conversions.To_Virtual_String (Cmd),
@@ -1612,6 +1744,10 @@ package body DAP.Clients is
 
       GNATCOLL.Scripts.Free (Error_Message);
       GNATCOLL.Scripts.Free (Rejected);
+
+   exception
+      when E : others =>
+         Trace (Me, E);
    end Process_User_Command;
 
    ---------------------------------
@@ -1625,6 +1761,7 @@ package body DAP.Clients is
    is
       Console : constant access Interactive_Console_Record'Class :=
         DAP.Views.Consoles.Get_Debugger_Interactive_Console (Self);
+      Console_Child : MDI_Child;
 
    begin
       if Console /= null then
@@ -1633,6 +1770,13 @@ package body DAP.Clients is
               (Msg, Add_LF => True, Highlight => True, Add_To_History => True);
          else
             Console.Insert (Msg, Add_LF => True);
+         end if;
+
+         Console_Child := Find_MDI_Child
+           (Get_MDI (Self.Kernel), Self.Debugger_Console);
+
+         if Console_Child /= null then
+            Highlight_Child (Console_Child);
          end if;
       end if;
    end Display_In_Debugger_Console;
@@ -1660,7 +1804,7 @@ package body DAP.Clients is
             Bt : Backtrace_Record;
          begin
             Bt.Frame_Id := Frame.id;
-            Bt.Name := To_Unbounded_String
+            Bt.Name     := To_Unbounded_String
               (VSS.Strings.Conversions.To_UTF_8_String (Frame.name));
 
             if not Frame.instructionPointerReference.Is_Empty then
@@ -1668,6 +1812,7 @@ package body DAP.Clients is
                  (VSS.Strings.Conversions.To_UTF_8_String
                     (Frame.instructionPointerReference));
             end if;
+
             if Frame.source.Is_Set then
                Bt.File := Create
                  (+(VSS.Strings.Conversions.To_UTF_8_String
@@ -1676,14 +1821,14 @@ package body DAP.Clients is
             end if;
 
             if Index = 1 then
-               Self.Client.Selected_Frame   := Bt.Frame_Id;
-               Self.Client.Selected_Address := Bt.Address;
-
-               if Bt.File /= No_File then
-                  Self.Client.Selected_File := Bt.File;
-                  Self.Client.Selected_Line := Bt.Line;
-               end if;
+               Self.Client.Set_Selected_Frame
+                 (Id                        => Bt.Frame_Id,
+                  File                      => Bt.File,
+                  Line                      => Bt.Line,
+                  Address                   => Bt.Address,
+                  Run_Location_Changed_Hook => False);
             end if;
+
             Self.Client.Frames.Append (Bt);
          end;
       end loop;
@@ -1737,10 +1882,10 @@ package body DAP.Clients is
    end Set_Backtrace;
 
    --------------
-   -- Stack_Up --
+   -- Frame_Up --
    --------------
 
-   procedure Stack_Up (Self : in out DAP_Client)
+   procedure Frame_Up (Self : in out DAP_Client)
    is
       Next : Boolean := False;
    begin
@@ -1754,13 +1899,13 @@ package body DAP.Clients is
             Next := True;
          end if;
       end loop;
-   end Stack_Up;
+   end Frame_Up;
 
    ----------------
-   -- Stack_Down --
+   -- Frame_Down --
    ----------------
 
-   procedure Stack_Down (Self : in out DAP_Client)
+   procedure Frame_Down (Self : in out DAP_Client)
    is
       Next : Boolean := False;
    begin
@@ -1774,13 +1919,13 @@ package body DAP.Clients is
             Next := True;
          end if;
       end loop;
-   end Stack_Down;
+   end Frame_Down;
 
-   -----------------
-   -- Stack_Frame --
-   -----------------
+   ------------------
+   -- Select_Frame --
+   ------------------
 
-   procedure Stack_Frame (Self : in out DAP_Client; Id : Integer) is
+   procedure Select_Frame (Self : in out DAP_Client; Id : Integer) is
    begin
       for Bt of Self.Frames loop
          if Bt.Frame_Id = Id then
@@ -1789,7 +1934,7 @@ package body DAP.Clients is
             exit;
          end if;
       end loop;
-   end Stack_Frame;
+   end Select_Frame;
 
    ----------------
    -- On_Started --
@@ -1799,21 +1944,20 @@ package body DAP.Clients is
       Init : DAP.Requests.Initialize.Initialize_DAP_Request_Access :=
         new DAP.Requests.Initialize.Initialize_DAP_Request (Self.Kernel);
    begin
-      Init.Initialize
-        (Self.Project, Self.Get_Executable,
-         Ada.Strings.Unbounded.To_String (Self.Args));
-
       Self.Process (DAP.Requests.DAP_Request_Access (Init));
    end On_Started;
 
-   -------------------
-   -- On_Terminated --
-   -------------------
+   ---------------------
+   -- On_Disconnected --
+   ---------------------
 
-   procedure On_Terminated (Self : in out DAP_Client) is
+   procedure On_Disconnected (Self : in out DAP_Client) is
    begin
       Self.Stop;
-   end On_Terminated;
+   exception
+      when E : others =>
+         Trace (Me, E);
+   end On_Disconnected;
 
    -------------
    -- Process --
@@ -1830,7 +1974,10 @@ package body DAP.Clients is
         Memory_UTF8_Output_Stream;
 
    begin
-      if Self.Status /= Terminating then
+      if Self.Status /= Terminating
+        or else Request.all in
+          DAP.Requests.Disconnects.Disconnect_DAP_Request'Class
+      then
          Request.Set_Seq (Id);
          Request.Set_Client (Self.This);
          Writer.Set_Stream (Stream'Unchecked_Access);
@@ -1929,10 +2076,9 @@ package body DAP.Clients is
 
    begin
 
-      Self.Project := Project;
-      Self.File    := To_Unbounded_String
-        (GNATCOLL.VFS."+" (GNATCOLL.VFS.Full_Name (File)));
-      Self.Args    := Ada.Strings.Unbounded.To_Unbounded_String (Args);
+      Self.Project    := Project;
+      Self.Executable := File;
+      Self.Args       := Ada.Strings.Unbounded.To_Unbounded_String (Args);
 
       declare
          use GNATCOLL.VFS;
@@ -1941,7 +2087,8 @@ package body DAP.Clients is
          Exec : constant Virtual_File :=
            Locate_On_Path (+Vals (Vals'First).all);
       begin
-         Trace (Me, "Launching the debug adapter: " & (+Exec.Full_Name));
+         Trace (Me, "Launching the debug adapter: " & (+Exec.Full_Name)
+                & " for file:" & (+Full_Name (Self.Executable)));
          Self.Set_Program (+Exec.Full_Name);
          Node_Args.Append ("-i=dap");
          for Index in Vals'First + 1 .. Vals'Last loop
@@ -1954,27 +2101,81 @@ package body DAP.Clients is
       Self.Start;
    end Start;
 
+   --------------------
+   -- On_Before_Exit --
+   --------------------
+
+   procedure On_Before_Exit (Self : in out DAP_Client) is
+      use type DAP.Modules.Breakpoint_Managers.
+        DAP_Client_Breakpoint_Manager_Access;
+
+   begin
+      if Self.Status = Initialization
+        or else Self.Status = Terminating
+      then
+         return;
+      end if;
+
+      if Self.Breakpoints /= null then
+         Self.Breakpoints.Finalize;
+         Free (Self.Breakpoints);
+      end if;
+   exception
+      when E : others =>
+         Trace (Me, E);
+   end On_Before_Exit;
+
    ----------
    -- Quit --
    ----------
 
    procedure Quit (Self : in out DAP_Client)
    is
-      Disconnect : DAP.Requests.Disconnects.
-        Disconnect_DAP_Request_Access := new DAP.Requests.Disconnects.
-          Disconnect_DAP_Request (Self.Kernel);
+      use type DAP.Modules.Breakpoint_Managers.
+        DAP_Client_Breakpoint_Manager_Access;
+
+      Disconnect : DAP.Requests.Disconnects.Disconnect_DAP_Request_Access;
+      Old        : constant Debugger_Status_Kind := Self.Status;
    begin
-      if Self.Status = Terminating then
+      if Old = Terminating then
          return;
       end if;
 
-      if Self.Status /= Initialization then
+      Self.Set_Status (Terminating);
+      Self.Reject_All_Requests;
+
+      if Old /= Initialization then
+         Disconnect := new DAP.Requests.Disconnects.
+           Disconnect_DAP_Request (Self.Kernel);
+
          Self.Process (DAP.Requests.DAP_Request_Access (Disconnect));
-         Self.Set_Status (Terminating);
+
+         if Self.Breakpoints /= null then
+            Self.Breakpoints.Finalize;
+            Free (Self.Breakpoints);
+         end if;
+
       else
-         Self.On_Terminated;
+         Self.Stop;
       end if;
+
+   exception
+      when E : others =>
+         Trace (Me, E);
    end Quit;
+
+   ----------------
+   -- On_Destroy --
+   ----------------
+
+   procedure On_Destroy (Self : in out DAP_Client) is
+   begin
+      if Self.Status /= Terminating then
+         Self.Set_Status (Terminating);
+         Self.Reject_All_Requests;
+         Self.Stop;
+      end if;
+   end On_Destroy;
 
    --------------
    -- Value_Of --
@@ -2170,7 +2371,7 @@ package body DAP.Clients is
                New_Request := Self.Client.Create_Evaluate_Command
                  (Info_Line, "info line");
             else
-               Self.Client.On_Ready;
+               Self.Client.Set_Status (Ready);
             end if;
 
          when Info_Line =>
@@ -2200,11 +2401,11 @@ package body DAP.Clients is
                            & Match.Captured (1) & ":1");
                      else
                         Show_File (File, Line, Addr);
-                        Self.Client.On_Ready;
+                        Self.Client.Set_Status (Ready);
                      end if;
                   end;
                else
-                  Self.Client.On_Ready;
+                  Self.Client.Set_Status (Ready);
                end if;
             end;
 
@@ -2218,7 +2419,7 @@ package body DAP.Clients is
                Self.Client.Found_File_Name
                  (Result.a_body.result, File, Line, Addr);
                Show_File (File, Line, Addr);
-               Self.Client.On_Ready;
+               Self.Client.Set_Status (Ready);
             end;
 
          when Hover =>
@@ -2357,7 +2558,7 @@ package body DAP.Clients is
 
          when Show_Lang | Set_Lang | Restore_Lang | List_Adainit |
               Info_Line | Info_First_Line =>
-            Self.Client.On_Ready;
+               Self.Client.Set_Status (Ready);
       end case;
    end On_Rejected;
 
@@ -2412,7 +2613,7 @@ package body DAP.Clients is
 
          when Show_Lang | Set_Lang | Restore_Lang | List_Adainit |
               Info_Line | Info_First_Line =>
-            Self.Client.On_Ready;
+            Self.Client.Set_Status (Ready);
       end case;
    end On_Error_Message;
 

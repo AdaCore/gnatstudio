@@ -14,6 +14,7 @@ def test_driver():
     yield hook('debugger_started')
 
     debug = GPS.Debugger.get()
+    yield wait_until_not_busy(debug)
 
     b = GPS.EditorBuffer.get(GPS.File("main.adb"))
     view = b.current_view()

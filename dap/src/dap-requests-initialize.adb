@@ -28,21 +28,6 @@ package body DAP.Requests.Initialize is
 
    Me : constant Trace_Handle := Create ("GPS.DAP.Requests_Initialize", On);
 
-   ----------------
-   -- Initialize --
-   ----------------
-
-   procedure Initialize
-     (Self    : in out Initialize_DAP_Request;
-      Project : GNATCOLL.Projects.Project_Type;
-      File    : GNATCOLL.VFS.Virtual_File;
-      Args    : String) is
-   begin
-      Self.Project := Project;
-      Self.File    := File;
-      Self.Args    := Ada.Strings.Unbounded.To_Unbounded_String (Args);
-   end Initialize;
-
    -----------
    -- Write --
    -----------
@@ -111,7 +96,7 @@ package body DAP.Requests.Initialize is
         new DAP.Requests.Launch.Launch_DAP_Request (Self.Kernel);
    begin
       Self.Client.Set_Capabilities (Result.a_body);
-      Launch.Initialize (Self.Project, Self.File, Self.Args);
+      Launch.Initialize (Self.Client);
       New_Request := DAP_Request_Access (Launch);
    end On_Result_Message;
 

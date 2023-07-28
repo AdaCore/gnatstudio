@@ -20,7 +20,7 @@ def test_driver():
     
     debug = GPS.Debugger.get()
     if mode == "Mode:Dap":
-        # to have valid address
+        # to have the valid address
         debug.start()
 
     # Open the Breakpoints view
@@ -47,20 +47,14 @@ def test_driver():
 
     # Create a breakpoint in the Assembly view
     GPS.execute_action("assembly_view toggle breakpoint")
-    if mode == "Mode:Dap":
-        yield wait_DAP_server("setInstructionBreakpoints")
-    else:
-        yield wait_until_not_busy(debug)
+    yield wait_until_not_busy(debug)
     gps_assert(dump_tree_model(model, NUMBER_COLUMN),
                [" 2"],
                "The Breakpoints view should have one breakpoint " + mode)
 
     # Delete the breakpoint in the Assembly view
     GPS.execute_action("assembly_view toggle breakpoint")
-    if mode == "Mode:Dap":
-        yield wait_DAP_server("setInstructionBreakpoints")
-    else:
-        yield wait_until_not_busy(debug)
+    yield wait_until_not_busy(debug)
     gps_assert(
         dump_tree_model(model, NUMBER_COLUMN), [],
         "The Breakpoints view should be empty " + mode)

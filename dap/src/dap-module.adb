@@ -21,6 +21,7 @@ with Ada.Unchecked_Deallocation;
 with GNATCOLL.Any_Types;           use GNATCOLL.Any_Types;
 with GNATCOLL.Traces;              use GNATCOLL.Traces;
 
+with Glib.Main;                    use Glib.Main;
 with Glib.Object;                  use Glib.Object;
 
 with Gtk.Handlers;
@@ -28,6 +29,7 @@ with Gtk.Label;                    use Gtk.Label;
 with Gtk.Widget;                   use Gtk.Widget;
 
 with Gtkada.Dialogs;
+with Gtkada.MDI;                   use Gtkada.MDI;
 
 with Commands;                     use Commands;
 with Commands.Interactive;         use Commands.Interactive;
@@ -38,7 +40,7 @@ with GPS.Editors;                  use GPS.Editors;
 with GPS.Kernel.Actions;
 with GPS.Kernel.Contexts;          use GPS.Kernel.Contexts;
 with GPS.Kernel.Hooks;             use GPS.Kernel.Hooks;
-with GPS.Kernel.MDI;
+with GPS.Kernel.MDI;               use GPS.Kernel.MDI;
 with GPS.Kernel.Modules;           use GPS.Kernel.Modules;
 with GPS.Kernel.Modules.UI;
 with GPS.Kernel.Preferences;
@@ -82,13 +84,18 @@ package body DAP.Module is
       --  Actions that have been registered dynamically by this module,
       --  for the dynamic menus
 
-      Clients            : DAP_Client_Vector;
+      Clients               : DAP_Client_Vector;
       --  Clients that handles DAP requests
 
-      Current_Debuger_ID : Integer := 0;
+      Clients_To_Deallocate : DAP_Client_Vector;
+      --  Clients that should be deallocated
+      Deallocate_Id          : G_Source_Id := No_Source_Id;
+      --  Signal to deallocate clients
+
+      Current_Debuger_ID    : Integer := 0;
       --  Client that is used as a current active debugger
 
-      Client_ID          : Positive := 1;
+      Client_ID             : Positive := 1;
       --  Counter to numerate started debuggers
    end record;
 
@@ -105,8 +112,10 @@ package body DAP.Module is
       Num : Integer)
       return DAP.Clients.DAP_Client_Access;
 
-   procedure Set_Current_Debugger
-     (Id : DAP_Module; Current : DAP.Clients.DAP_Client_Access);
+   function Set_Current_Debugger
+     (Id : DAP_Module; Current : DAP.Clients.DAP_Client_Access)
+      return Boolean;
+   --  Returns True when current debugger is changed
 
    overriding function Tooltip_Handler
      (Module  : access DAP_Module_Record;
@@ -126,6 +135,9 @@ package body DAP.Module is
      (Kernel : Kernel_Handle;
       Client : DAP.Clients.DAP_Client_Access);
 
+   function On_Idle return Boolean;
+   --  Called from Gtk on Idle to deallocate clients
+
    -- Hooks callbacks --
 
    type On_Project_View_Changed is new Simple_Hooks_Function with null record;
@@ -134,6 +146,13 @@ package body DAP.Module is
       Kernel : not null access Kernel_Handle_Record'Class);
    --  Called every time the project view changes, to recompute the dynamic
    --  menus.
+
+   type On_Before_Exit is new Return_Boolean_Hooks_Function with null record;
+   overriding function Execute
+     (Self   : On_Before_Exit;
+      Kernel : not null access Kernel_Handle_Record'Class) return Boolean;
+   --  Called before GNAT Studio exist. This is a good time to store
+   --  persistent data.
 
    -- Filters --
 
@@ -304,9 +323,14 @@ package body DAP.Module is
    is
       use type Generic_Views.Abstract_View_Access;
 
-      Client : constant DAP.Clients.DAP_Client_Access :=
-        new DAP.Clients.DAP_Client (Kernel, DAP_Module_ID.Client_ID);
+      Client        : DAP.Clients.DAP_Client_Access;
+      Console_Child : MDI_Child;
    begin
+      if DAP_Module_ID = null then
+         return null;
+      end if;
+
+      Client := new DAP.Clients.DAP_Client (Kernel, DAP_Module_ID.Client_ID);
       DAP.Clients.Initialize (Client);
 
       DAP_Module_ID.Current_Debuger_ID := DAP_Module_ID.Client_ID;
@@ -356,6 +380,14 @@ package body DAP.Module is
       DAP.Modules.Persistent_Breakpoints.Hide_Breakpoints (Kernel);
       Set_Current_Debugger (Client);
 
+      --  Give the focus to the Debugger Console
+      Console_Child := Find_MDI_Child
+        (Get_MDI (Kernel), Client.Get_Debugger_Console);
+
+      if Console_Child /= null then
+         Raise_Child (Console_Child);
+      end if;
+
       return Client;
    end Debug_Init;
 
@@ -364,16 +396,50 @@ package body DAP.Module is
    -------------
 
    overriding procedure Destroy (Id : in out DAP_Module_Record) is
+      Local : constant DAP_Client_Vector := Id.Clients;
    begin
-      for D of Id.Clients loop
+      for Client of Local loop
          begin
-            D.Quit;
+            Client.On_Destroy;
          exception
             when E : others =>
                Trace (Me, E);
          end;
       end loop;
+
+      DAP.Modules.Persistent_Breakpoints.On_Destroy;
+
+      if Id.Deallocate_Id /= No_Source_Id then
+         Remove (Id.Deallocate_Id);
+      end if;
+
+      for Client of Id.Clients_To_Deallocate loop
+         Free (Client);
+      end loop;
+      Id.Clients_To_Deallocate.Clear;
+
+      DAP_Module_ID := null;
    end Destroy;
+
+   -------------
+   -- On_Idle --
+   -------------
+
+   function On_Idle return Boolean is
+   begin
+      DAP_Module_ID.Deallocate_Id := No_Source_Id;
+
+      for Client of DAP_Module_ID.Clients_To_Deallocate loop
+         Free (Client);
+      end loop;
+      DAP_Module_ID.Clients_To_Deallocate.Clear;
+
+      return False;
+   exception
+      when E : others =>
+         Trace (Me, E);
+         return False;
+   end On_Idle;
 
    ---------------------
    -- Tooltip_Handler --
@@ -383,7 +449,6 @@ package body DAP.Module is
      (Module  : access DAP_Module_Record;
       Context : Selection_Context) return Gtk_Widget
    is
-      pragma Unreferenced (Module);
       use type DAP.Clients.DAP_Client_Access;
       Kernel : constant Kernel_Handle := Get_Kernel (Context);
       Client : constant DAP.Clients.DAP_Client_Access :=
@@ -391,7 +456,8 @@ package body DAP.Module is
       W      : Gtk_Widget;
       Label  : Gtk_Label;
    begin
-      if Client = null
+      if Module = null
+        or else Client = null
         or else not Client.Is_Stopped
       then
          return null;
@@ -434,10 +500,40 @@ package body DAP.Module is
    exception
       when Language.Unexpected_Type | Constraint_Error =>
          return null;
+
       when E : others =>
          Trace (Me, E);
          return null;
    end Tooltip_Handler;
+
+   -------------
+   -- Execute --
+   -------------
+
+   overriding function Execute
+     (Self   : On_Before_Exit;
+      Kernel : not null access Kernel_Handle_Record'Class) return Boolean
+   is
+      pragma Unreferenced (Self);
+   begin
+      if DAP_Module_ID /= null
+        and then not DAP_Module_ID.Clients.Is_Empty
+      then
+         for D of DAP_Module_ID.Clients loop
+            begin
+               D.On_Before_Exit;
+            exception
+               when E : others =>
+                  Trace (Me, E);
+            end;
+         end loop;
+
+         DAP.Modules.Persistent_Breakpoints.
+           Save_Persistent_Breakpoints (Kernel);
+      end if;
+
+      return True;  --  allow exit
+   end Execute;
 
    -------------
    -- Execute --
@@ -502,6 +598,10 @@ package body DAP.Module is
       end Create_Action_And_Menu;
 
    begin
+      if DAP_Module_ID = null then
+         return;
+      end if;
+
       for A of DAP_Module_ID.Dynamic_Actions loop
          GPS.Kernel.Actions.Unregister_Action
            (Kernel, A, Remove_Menus_And_Toolbars => True);
@@ -566,7 +666,9 @@ package body DAP.Module is
      (Command : access Terminate_Command;
       Context : Interactive_Command_Context) return Command_Return_Type is
    begin
-      if DAP_Module_ID.Current_Debuger_ID /= 0 then
+      if DAP_Module_ID /= null
+        and then DAP_Module_ID.Current_Debuger_ID /= 0
+      then
          for Client of DAP_Module_ID.Clients loop
             if Client.Id = DAP_Module_ID.Current_Debuger_ID then
                Client.Quit;
@@ -799,7 +901,8 @@ package body DAP.Module is
      (Filter  : access Has_Debuggers_Filter;
       Context : Selection_Context) return Boolean is
    begin
-      return not DAP_Module_ID.Clients.Is_Empty;
+      return DAP_Module_ID /= null
+        and then not DAP_Module_ID.Clients.Is_Empty;
    end Filter_Matches_Primitive;
 
    ------------------------------
@@ -841,7 +944,8 @@ package body DAP.Module is
    is
       pragma Unreferenced (Filter);
    begin
-      return DAP_Module_ID.Clients.Is_Empty
+      return DAP_Module_ID = null
+        or else DAP_Module_ID.Clients.Is_Empty
         or else Get_Current_Debugger.Is_Ready_For_Command;
    end Filter_Matches_Primitive;
 
@@ -855,7 +959,8 @@ package body DAP.Module is
    is
       pragma Unreferenced (Filter);
    begin
-      return not DAP_Module_ID.Clients.Is_Empty
+      return DAP_Module_ID /= null
+        and then not DAP_Module_ID.Clients.Is_Empty
         and then Get_Current_Debugger.Is_Ready_For_Command;
    end Filter_Matches_Primitive;
 
@@ -880,6 +985,10 @@ package body DAP.Module is
      (Callback : access procedure (Debugger : DAP.Clients.DAP_Client_Access))
    is
    begin
+      if DAP_Module_ID = null then
+         return;
+      end if;
+
       for C of DAP_Module_ID.Clients loop
          Callback (C);
       end loop;
@@ -891,7 +1000,11 @@ package body DAP.Module is
 
    function Count_Running_Debuggers return Natural is
    begin
-      return Natural (DAP_Module_ID.Clients.Length);
+      if DAP_Module_ID = null then
+         return 0;
+      else
+         return Natural (DAP_Module_ID.Clients.Length);
+      end if;
    end Count_Running_Debuggers;
 
    --------------------------
@@ -900,7 +1013,11 @@ package body DAP.Module is
 
    function Get_Current_Debugger return DAP.Clients.DAP_Client_Access is
    begin
-      return Get_Current_Debugger (DAP_Module_ID);
+      if DAP_Module_ID = null then
+         return null;
+      else
+         return Get_Current_Debugger (DAP_Module_ID);
+      end if;
    end Get_Current_Debugger;
 
    ------------------
@@ -920,6 +1037,10 @@ package body DAP.Module is
      (Id : DAP_Module)
       return DAP.Clients.DAP_Client_Access is
    begin
+      if Id = null then
+         return null;
+      end if;
+
       for C of Id.Clients loop
          if C.Id = Id.Current_Debuger_ID then
             return C;
@@ -938,6 +1059,10 @@ package body DAP.Module is
       Num : Integer)
       return DAP.Clients.DAP_Client_Access is
    begin
+      if Id = null then
+         return null;
+      end if;
+
       for C of Id.Clients loop
          if C.Id = Num then
             return C;
@@ -1006,9 +1131,16 @@ package body DAP.Module is
       use DAP_Client_Vectors;
       use type DAP.Clients.DAP_Client_Access;
 
-      C      : DAP_Client_Vectors.Cursor     := DAP_Module_ID.Clients.First;
+      C      : DAP_Client_Vectors.Cursor;
       Client : DAP.Clients.DAP_Client_Access := null;
    begin
+      if DAP_Module_ID = null
+        or else DAP_Module_ID.Clients.Is_Empty
+      then
+         return;
+      end if;
+
+      C := DAP_Module_ID.Clients.First;
       while Has_Element (C) loop
          if Element (C).Id = Id then
             Client := Element (C);
@@ -1017,13 +1149,18 @@ package body DAP.Module is
          Next (C);
       end loop;
 
+      --  if debugger is found
       if Client /= null then
-         Debugger_Terminated_Hook.Run
-           (DAP_Module_ID.Get_Kernel, Client.Get_Visual);
-
          DAP_Module_ID.Clients.Delete (C);
-         Free (Client);
+         DAP_Module_ID.Clients_To_Deallocate.Append (Client);
 
+         --  Reregister callback for future dealocation
+         if DAP_Module_ID.Deallocate_Id /= No_Source_Id then
+            Remove (DAP_Module_ID.Deallocate_Id);
+         end if;
+         DAP_Module_ID.Deallocate_Id := Idle_Add (On_Idle'Access);
+
+         --  Set current "active" debugger if any
          if DAP_Module_ID.Current_Debuger_ID = Id then
             if DAP_Module_ID.Clients.Is_Empty then
                DAP_Module_ID.Current_Debuger_ID := 0;
@@ -1033,16 +1170,23 @@ package body DAP.Module is
          end if;
       end if;
 
+      --  if it was the last debugger
       if DAP_Module_ID.Clients.Is_Empty then
          --  The last debugger has been finished
          DAP_Module_ID.Client_ID := 1;
-         GPS.Kernel.MDI.Load_Perspective (DAP_Module_ID.Get_Kernel, "Default");
 
+         --  save persistent breakpoints
          DAP.Modules.Persistent_Breakpoints.On_Debugging_Terminated
            (DAP_Module_ID.Get_Kernel);
 
+         GPS.Kernel.MDI.Load_Perspective (DAP_Module_ID.Get_Kernel, "Default");
+
          DAP_Module_ID.Get_Kernel.Refresh_Context;
       end if;
+
+   exception
+      when E : others =>
+         Trace (Me, E);
    end Finished;
 
    --------------------------
@@ -1054,13 +1198,20 @@ package body DAP.Module is
       use DAP.Types;
       use type DAP.Clients.DAP_Client_Access;
       use type Generic_Views.Abstract_View_Access;
-   begin
-      Set_Current_Debugger (DAP_Module_ID, Current);
 
-      if Current /= null then
+      Set : Boolean;
+
+   begin
+      Set := Set_Current_Debugger (DAP_Module_ID, Current);
+
+      if Set
+        and then Current /= null
+      then
          GPS.Kernel.Hooks.Debugger_Breakpoints_Changed_Hook.Run
            (Current.Kernel, Current.Get_Visual);
+
          Current.Show_Breakpoints;
+
          if Breakpoints_View /= null then
             DAP.Views.View_Access (Breakpoints_View).On_Status_Changed
               (if Current.Get_Status /= Stopped
@@ -1075,15 +1226,17 @@ package body DAP.Module is
    -- Set_Current_Debugger --
    --------------------------
 
-   procedure Set_Current_Debugger
+   function Set_Current_Debugger
      (Id : DAP_Module; Current : DAP.Clients.DAP_Client_Access)
+      return Boolean
    is
       use type DAP.Clients.DAP_Client_Access;
    begin
-      if Current /= null
-        and then Id.Current_Debuger_ID = Current.Id
+      if Id = null
+        or else (Current /= null
+                 and then Id.Current_Debuger_ID = Current.Id)
       then
-         return;
+         return False;
       end if;
 
       if DAP.Modules.Preferences.Continue_To_Line_Buttons.Get_Pref then
@@ -1110,6 +1263,8 @@ package body DAP.Module is
       else
          Id.Current_Debuger_ID := 0;
       end if;
+
+      return True;
    end Set_Current_Debugger;
 
    -------------------
@@ -1134,9 +1289,18 @@ package body DAP.Module is
 
    procedure Terminate_Debuggers is
    begin
-      if DAP_Module_ID /= null then
-         DAP_Module_ID.Destroy;
+      if DAP_Module_ID = null then
+         return;
       end if;
+
+      for D of DAP_Module_ID.Clients loop
+         begin
+            D.Quit;
+         exception
+            when E : others =>
+               Trace (Me, E);
+         end;
+      end loop;
    end Terminate_Debuggers;
 
    ----------------------------
@@ -1185,6 +1349,8 @@ package body DAP.Module is
       Entity_Filter        : Action_Filter;
 
    begin
+      Before_Exit_Action_Hook.Add (new On_Before_Exit);
+
       DAP.Modules.Preferences.Register_Default_Preferences
         (Kernel.Get_Preferences);
 
