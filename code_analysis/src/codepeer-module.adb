@@ -637,7 +637,7 @@ package body CodePeer.Module is
 
       Extra_Args : constant String :=
         (if Is_CPL and then Module.Import_Annotations.Get_Pref
-         then "--gs"
+         then "--gs --show-annotations"
          else "");
    begin
       if Project.Has_Attribute (Switches_Attribute) then
