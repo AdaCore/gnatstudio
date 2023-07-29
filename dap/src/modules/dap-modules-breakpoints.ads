@@ -65,7 +65,7 @@ package DAP.Modules.Breakpoints is
       Commands    : Virtual_String := Empty_Virtual_String;
       --  Commands to execute when the debugger stops at this breakpoint
 
-      Executable  : Unbounded_String := Null_Unbounded_String;
+      Executable  : Virtual_File := No_File;
 
       case Kind is
          when On_Line =>
@@ -117,10 +117,13 @@ package DAP.Modules.Breakpoints is
    --  Used for store breakpoints
 
    procedure Initialize
-     (Self   : in out Breakpoint_Holder;
-      Vector : Breakpoint_Vectors.Vector;
-      Clear  : Boolean := False);
+     (Self        : in out Breakpoint_Holder;
+      Vector      : Breakpoint_Vectors.Vector;
+      Clear_Ids   : Boolean := False;
+      Initialized : Boolean := False);
    --  Initialize holder with the breakpoints in the Vector parameter
+   --  Clear breakpoints' identificators when Clear_Ids is True
+   --  Do not set In_Initialization mode when Initialized is True
 
    procedure Initialized (Self : in out Breakpoint_Holder);
    --  Initializetion is done. Process notifications.
@@ -292,7 +295,7 @@ package DAP.Modules.Breakpoints is
    procedure Break_Unbreak_Address
      (Self       : in out Breakpoint_Holder;
       Address    : Address_Type;
-      Executable : String;
+      Executable : Virtual_File;
       Changed    : out Breakpoint_Vectors.Vector);
    --  Add/delete breakpoint for the address
 

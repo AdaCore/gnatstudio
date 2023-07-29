@@ -16,6 +16,7 @@
 ------------------------------------------------------------------------------
 
 with Ada.Exceptions;
+with Ada.Strings.Unbounded;
 
 with GNAT.OS_Lib;
 
@@ -46,7 +47,6 @@ with Language;                   use Language;
 
 private with Ada.Containers.Hashed_Maps;
 private with Ada.Containers.Hashed_Sets;
-private with Ada.Strings.Unbounded;
 private with VSS.JSON.Pull_Readers;
 private with DAP.Modules.Breakpoint_Managers;
 
@@ -109,12 +109,15 @@ package DAP.Clients is
 
    procedure On_Launched (Self : in out DAP_Client);
    --  Inform that the debugger is ready for debugging
-   procedure On_Ready (Self : in out DAP_Client);
    procedure On_Configured (Self : in out DAP_Client);
    --  Debugger starts executing debugree program
    procedure On_Continue (Self : in out DAP_Client);
-   procedure On_Terminated (Self : in out DAP_Client);
+   procedure On_Disconnected (Self : in out DAP_Client);
    procedure On_Breakpoints_Set (Self : in out DAP_Client);
+   procedure On_Before_Exit (Self : in out DAP_Client);
+   --  Called when GNAT Studio is exiting
+   procedure On_Destroy (Self : in out DAP_Client);
+   --  Called when DAP module is destroing
 
    function Get_Status (Self : in out DAP_Client) return Debugger_Status_Kind;
 
@@ -267,6 +270,14 @@ package DAP.Clients is
      (Self : in out DAP_Client) return GNATCOLL.VFS.Virtual_File;
    --  Return the name of the executable currently debugged.
 
+   function Get_Project
+     (Self : in out DAP_Client) return GNATCOLL.Projects.Project_Type;
+   --  Return the project currently debugged.
+
+   function Get_Executable_Args
+     (Self : in out DAP_Client) return Ada.Strings.Unbounded.Unbounded_String;
+   --  Return the command line arguments for the executable currently debugged.
+
    function Get_Language
      (Self : in out DAP_Client) return Language_Access;
 
@@ -328,9 +339,9 @@ package DAP.Clients is
       Bt   : out Backtrace_Vectors.Vector);
    --  Returns backtrace
 
-   procedure Stack_Up (Self : in out DAP_Client);
-   procedure Stack_Down (Self : in out DAP_Client);
-   procedure Stack_Frame (Self : in out DAP_Client; Id : Integer);
+   procedure Frame_Up (Self : in out DAP_Client);
+   procedure Frame_Down (Self : in out DAP_Client);
+   procedure Select_Frame (Self : in out DAP_Client; Id : Integer);
    --  Select frame
 
    procedure Set_Backtrace
@@ -374,6 +385,11 @@ package DAP.Clients is
      (Visual : not null access DAP_Visual_Debugger)
       return Natural;
 
+   procedure Set_Executable
+     (Self : in out DAP_Client;
+      File : GNATCOLL.VFS.Virtual_File);
+   --  Set the main file
+
 private
 
    function Hash
@@ -400,11 +416,13 @@ private
       This           : DAP_Client_Access := DAP_Client'Unchecked_Access;
       Visual         : DAP_Visual_Debugger_Access;
       Project        : GNATCOLL.Projects.Project_Type;
-      File           : Ada.Strings.Unbounded.Unbounded_String;
+      Executable     : GNATCOLL.VFS.Virtual_File;
       Args           : Ada.Strings.Unbounded.Unbounded_String;
       Source_Files   : VSS.String_Vectors.Virtual_String_Vector;
 
-      Is_Attached    : Boolean := False;
+      Is_Attached                : Boolean := False;
+      Is_Debuggee_Started_Called : Boolean := False;
+
       Capabilities   : DAP.Tools.Optional_Capabilities;
       Status         : Debugger_Status_Kind := Initialization;
       Endian         : Endian_Type := Little_Endian;
@@ -440,6 +458,7 @@ private
       Assembly_View    : Generic_Views.Abstract_View_Access := null;
       Memory_View      : Generic_Views.Abstract_View_Access := null;
       Variables_View   : Generic_Views.Abstract_View_Access := null;
+
       Debugger_Console : Generic_Views.Abstract_View_Access := null;
    end record;
 
@@ -508,6 +527,16 @@ private
       Name : out VSS.Strings.Virtual_String;
       Line : out Natural;
       Addr : out DAP.Types.Address_Type);
+
+   function Is_Frame_Up_Command
+     (Self : DAP_Client;
+      Cmd  : String)
+      return Boolean;
+
+   function Is_Frame_Down_Command
+     (Self : DAP_Client;
+      Cmd  : String)
+      return Boolean;
 
    type Evaluate_Kind is
      (  --  Following commands are used to open the main file

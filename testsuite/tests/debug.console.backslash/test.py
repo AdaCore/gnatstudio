@@ -39,7 +39,7 @@ def test_driver():
 
     p = promises.DebuggerWrapper(GPS.File("main"))
     debug = p.get()
-    debug.send("run")
+    yield p.send_promise("run")
     yield wait_until_not_busy(debug)
 
     result = yield p.send_promise("foo \\")

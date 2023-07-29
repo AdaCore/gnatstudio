@@ -26,6 +26,7 @@ def test_driver():
     yield wait_idle()
 
     debug = GPS.Debugger.get()
+    yield wait_until_not_busy(debug)
 
     GPS.execute_action("open debugger call stack")
     yield wait_for_mdi_child("Call Stack")
@@ -37,10 +38,7 @@ def test_driver():
                [],
                "Wrong content when opening the callstack")
 
-    if mode == "Mode:Dap":
-        debug.start()
-    else:
-        debug.send("run")
+    debug.send("run")
     yield wait_until_not_busy(debug)
     # Verify the view was correctly updated by the run/break command
     gps_assert(dump_tree_model(model, NAME_COLUMN),

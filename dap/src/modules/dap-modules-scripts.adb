@@ -404,19 +404,19 @@ package body DAP.Modules.Scripts is
          Inst := Nth_Arg (Data, 1, New_Class (Kernel, "Debugger"));
          Visual := DAP_Visual_Debugger_Access
            (Glib.Object.GObject'(Get_Data (Inst)));
-         Visual.Client.Stack_Up;
+         Visual.Client.Frame_Up;
 
       elsif Command = "frame_down" then
          Inst := Nth_Arg (Data, 1, New_Class (Kernel, "Debugger"));
          Visual := DAP_Visual_Debugger_Access
            (Glib.Object.GObject'(Get_Data (Inst)));
-         Visual.Client.Stack_Down;
+         Visual.Client.Frame_Down;
 
       elsif Command = "select_frame" then
          Inst := Nth_Arg (Data, 1, New_Class (Kernel, "Debugger"));
          Visual := DAP_Visual_Debugger_Access
            (Glib.Object.GObject'(Get_Data (Inst)));
-         Visual.Client.Stack_Frame (Nth_Arg (Data, 2, 0));
+         Visual.Client.Select_Frame (Nth_Arg (Data, 2, 0));
 
       elsif Command = "get_console" then
          Inst := Nth_Arg (Data, 1, New_Class (Kernel, "Debugger"));

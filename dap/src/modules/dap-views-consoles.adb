@@ -159,12 +159,12 @@ package body DAP.Views.Consoles is
      (Client : DAP_Client'Class)
       return access Interactive_Console_Record'Class
    is
-      C : constant Debugger_Console :=
-        Debugger_Console (Client.Get_Debugger_Console);
+      View : constant Generic_Views.Abstract_View_Access :=
+        Client.Get_Debugger_Console;
 
    begin
-      if C /= null then
-         return C.Console;
+      if View /= null then
+         return Debugger_Console (View).Console;
       else
          return null;
       end if;
@@ -189,14 +189,14 @@ package body DAP.Views.Consoles is
      (Client : not null access DAP.Clients.DAP_Client'Class;
       View   : access Debugger_Console_Record'Class := null)
    is
-      Old : constant Debugger_Console :=
-        Debugger_Console (Client.Get_Debugger_Console);
+      Old : constant Debugger_Console := Get_View (Client);
    begin
       if Old /= null then
          Old.On_Process_Terminated;
       end if;
 
-      Client.Set_Debugger_Console (Generic_Views.Abstract_View_Access (View));
+      Client.Set_Debugger_Console
+        (Generic_Views.Abstract_View_Access (View));
    end Set_View;
 
    -------------------------------

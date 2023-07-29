@@ -61,20 +61,20 @@ package body DAP.Views.Call_Stack is
    -- Local constants --
    ---------------------
 
-   Frame_Num_Column     : constant := 0;
-   Name_Column          : constant := 1;
-   Location_Column      : constant := 2;
-   Memory_Column        : constant := 3;
-   Sourse_Column        : constant := 4;
-   Line_Column          : constant := 5;
+   Frame_Id_Column : constant := 0;
+   Name_Column     : constant := 1;
+   Location_Column : constant := 2;
+   Memory_Column   : constant := 3;
+   Sourse_Column   : constant := 4;
+   Line_Column     : constant := 5;
 
    Column_Types : constant GType_Array :=
-     (Frame_Num_Column     => GType_Int,
-      Name_Column          => GType_String,
-      Location_Column      => GType_String,
-      Memory_Column        => GType_String,
-      Sourse_Column        => GType_String,
-      Line_Column          => GType_Int);
+     (Frame_Id_Column => GType_String,
+      Name_Column     => GType_String,
+      Location_Column => GType_String,
+      Memory_Column   => GType_String,
+      Sourse_Column   => GType_String,
+      Line_Column     => GType_Int);
 
    -----------------------
    -- Local subprograms --
@@ -86,11 +86,10 @@ package body DAP.Views.Call_Stack is
    Show_Address      : Boolean_Preference;
 
    type Call_Stack_Record is new View_Record with record
-      Tree           : Tree_View;
-      Model          : Gtk_Tree_Store;
-      Selected_Frame : Integer;
-      Last           : Integer := -1;
-      Filter         : GPS.Search.Search_Pattern_Access := null;
+      Tree   : Tree_View;
+      Model  : Gtk_Tree_Store;
+      Last   : Integer := -1;
+      Filter : GPS.Search.Search_Pattern_Access := null;
    end record;
    overriding procedure Update (View : not null access Call_Stack_Record);
    overriding procedure On_Process_Terminated
@@ -98,6 +97,8 @@ package body DAP.Views.Call_Stack is
    overriding procedure On_Status_Changed
      (View   : not null access Call_Stack_Record;
       Status : GPS.Debuggers.Debugger_State);
+   overriding procedure On_Location_Changed
+     (Self : not null access Call_Stack_Record);
 
    overriding procedure Create_Menu
      (Self : not null access Call_Stack_Record;
@@ -272,27 +273,34 @@ package body DAP.Views.Call_Stack is
       Client     : constant DAP.Clients.DAP_Client_Access := Get_Client (View);
       Backtraces : Backtrace_Vectors.Vector;
       Req        : StackTrace_Request_Access;
+      F          : Integer := From;
 
    begin
       --  If the debugger was killed, no need to refresh
-
       if Client = null then
          Clear (View.Model);
          return;
       end if;
 
       Client.Backtrace (Backtraces);
-      if Backtraces.Is_Empty then
+
+      if Backtraces.Is_Empty
+        or else To > Backtraces.Last_Element.Frame_Id
+      then
+         if not Backtraces.Is_Empty then
+            F := Backtraces.Last_Element.Frame_Id + 1;
+         end if;
+
          Req := new StackTrace_Request (View.Kernel);
 
          Req.Client := Client;
-         Req.From   := From;
+         Req.From   := F;
          Req.To     := To;
          Req.Parameters.arguments.threadId :=
            Get_Client (View).Get_Current_Thread;
          if From /= -1 then
-            Req.Parameters.arguments.startFrame := (True, From);
-            Req.Parameters.arguments.levels     := (True, To - From + 1);
+            Req.Parameters.arguments.startFrame := (True, F);
+            Req.Parameters.arguments.levels     := (True, To - F + 1);
          end if;
          Client.Enqueue (DAP.Requests.DAP_Request_Access (Req));
 
@@ -382,7 +390,7 @@ package body DAP.Views.Call_Stack is
                   else Invalid_Address);
 
                Self.Client.Set_Selected_Frame
-                 (Integer (Model.Get_Int (Iter, Frame_Num_Column)),
+                 (Integer (Model.Get_Int (Iter, Frame_Id_Column)),
                   File, Line, Address);
 
             exception
@@ -434,10 +442,6 @@ package body DAP.Views.Call_Stack is
       View.Send_Request
         (View.Last + 1,
          View.Last + DAP.Modules.Preferences.Frames_Limit.Get_Pref);
-
-      if View.Last = Integer'Last then
-         Kernel.Context_Changed (No_Context);
-      end if;
 
       return Commands.Success;
    end Execute;
@@ -498,7 +502,7 @@ package body DAP.Views.Call_Stack is
          Capability_Type  => Filtered,
          Set_Visible_Func => True);
 
-      Add_Column ("Num", Frame_Num_Column);
+      Add_Column ("Num", Frame_Id_Column);
       Add_Column ("Name", Name_Column);
       Add_Column ("Location", Location_Column);
       Add_Column ("Address", Memory_Column);
@@ -581,8 +585,14 @@ package body DAP.Views.Call_Stack is
       Backtrace : Backtrace_Vectors.Vector;
    begin
       if Length (Result.a_body.stackFrames) = 0 then
+         View.Last := Integer'Last;
          View.On_Updated (Self.From, Self.To);
+         Self.Kernel.Context_Changed (No_Context);
          return;
+      end if;
+
+      if Self.From > 0 then
+         Self.Client.Backtrace (Backtrace);
       end if;
 
       for Index in 1 .. Length (Result.a_body.stackFrames) loop
@@ -612,18 +622,24 @@ package body DAP.Views.Call_Stack is
 
       Self.Client.Set_Backtrace (Backtrace);
 
-      declare
-         Bt : constant Backtrace_Record := Backtrace.First_Element;
-      begin
-         Self.Client.Set_Selected_Frame
-           (Id                        => Bt.Frame_Id,
-            File                      => Bt.File,
-            Line                      => Bt.Line,
-            Address                   => Bt.Address,
-            Run_Location_Changed_Hook => False);
-      end;
+      if Self.From < 1 then
+         declare
+            Bt : constant Backtrace_Record := Backtrace.First_Element;
+         begin
+            Self.Client.Set_Selected_Frame
+              (Id                        => Bt.Frame_Id,
+               File                      => Bt.File,
+               Line                      => Bt.Line,
+               Address                   => Bt.Address,
+               Run_Location_Changed_Hook => False);
+         end;
+      end if;
 
       View.On_Updated (Self.From, Self.To);
+
+      if View.Last = Integer'Last then
+         Self.Kernel.Context_Changed (No_Context);
+      end if;
    end On_Result_Message;
 
    ----------------
@@ -639,12 +655,14 @@ package body DAP.Views.Call_Stack is
       Iter  : Gtk_Tree_Iter;
       Path  : Gtk_Tree_Path;
 
+      Client     : constant DAP.Clients.DAP_Client_Access := Get_Client (View);
       Backtraces : Backtrace_Vectors.Vector;
    begin
       if View = null then
          return;
       end if;
-      Get_Client (View).Backtrace (Backtraces);
+
+      Client.Backtrace (Backtraces);
 
       if Backtraces.Is_Empty then
          View.Last := Integer'Last;
@@ -662,35 +680,35 @@ package body DAP.Views.Call_Stack is
          Clear (View.Model);
       end if;
 
-      for Index in Backtraces.First_Index .. Backtraces.Last_Index loop
-         declare
-            Bt : Backtrace_Record;
-         begin
+      for Bt of Backtraces loop
+         if From = -1
+           or else Bt.Frame_Id in From .. To
+         then
             View.Model.Append (Iter, Null_Iter);
-            Bt := Backtraces.Element (Index);
 
             Set_All_And_Clear
               (View.Model, Iter,
                --  Id
-               (Frame_Num_Column => As_Int (Gint (Bt.Frame_Id)),
-                --  Name
+               (Frame_Id_Column => As_String (Image (Bt.Frame_Id)),
+                  --  Name
                 Name_Column => As_String (To_String (Bt.Name)),
                 --  Location
                 Location_Column => As_String
-                  (Escape_Text (+Full_Name (Bt.File) & ":" & Image (Bt.Line))),
+                  (Escape_Text (+Full_Name (Bt.File) & ":" &
+                     Image (Bt.Line))),
                 --  Memory
                 Memory_Column => As_String
                   (Escape_Text
                      ((if Bt.Address = Invalid_Address
                       then "<>"
                       else Address_To_String (Bt.Address)))),
-                --  Sourse
+                  --  Sourse
                 Sourse_Column => As_String (+Full_Name (Bt.File)),
                 --  Line
                 Line_Column => As_Int (Gint (Bt.Line))));
 
             View.Last := Bt.Frame_Id;
-         end;
+         end if;
       end loop;
 
       if View.Last < To then
@@ -699,18 +717,21 @@ package body DAP.Views.Call_Stack is
 
       View.Tree.Refilter;
 
-      if View.Selected_Frame /= -1 then
-         Gtk_New (Path, Image (View.Selected_Frame));
+      if Client.Get_Selected_Frame /= -1 then
+         Gtk_New (Path, Image (Client.Get_Selected_Frame));
          View.Tree.Get_Selection.Select_Path (Path);
          Path_Free (Path);
-      else
-         if View.Model.Get_Iter_First /= Null_Iter then
-            View.Tree.Get_Selection.Select_Iter
-              (View.Tree.Convert_To_Filter_Iter (View.Model.Get_Iter_First));
-         end if;
+         View.Kernel.Context_Changed (No_Context);
+         return;
+      end if;
+
+      if View.Model.Get_Iter_First /= Null_Iter then
+         View.Tree.Get_Selection.Select_Iter
+           (View.Tree.Convert_To_Filter_Iter (View.Model.Get_Iter_First));
       end if;
 
       View.Tree.Get_Selection.Get_Selected (Model, Iter);
+
       if Iter /= Null_Iter
         and then Iter /= View.Model.Get_Iter_First
       then
@@ -731,7 +752,7 @@ package body DAP.Views.Call_Stack is
 
             Get_Client (View).Set_Selected_Frame
               (Id                        => Integer
-                 (Model.Get_Int (Iter, Frame_Num_Column)),
+                 (Model.Get_Int (Iter, Frame_Id_Column)),
                File                      => File,
                Line                      => Line,
                Address                   => Address,
@@ -762,13 +783,33 @@ package body DAP.Views.Call_Stack is
          View.Model.Append (Iter, Null_Iter);
 
          Set_And_Clear
-           (View.Model, Iter, (Frame_Num_Column, Name_Column),
-            (1 => As_Int (0),
+           (View.Model, Iter, (Frame_Id_Column, Name_Column),
+            (1 => As_String (""),
              2 => As_String ("Running...")));
       else
          View.Update;
       end if;
    end On_Status_Changed;
+
+   -------------------------
+   -- On_Location_Changed --
+   -------------------------
+
+   overriding procedure On_Location_Changed
+     (Self : not null access Call_Stack_Record)
+   is
+      use type DAP.Clients.DAP_Client_Access;
+      Client : constant DAP.Clients.DAP_Client_Access := Get_Client (Self);
+      Path   : Gtk_Tree_Path;
+   begin
+      if Client = null then
+         return;
+      end if;
+
+      Gtk_New (Path, Image (Client.Get_Selected_Frame));
+      Self.Tree.Get_Selection.Select_Path (Path);
+      Path_Free (Path);
+   end On_Location_Changed;
 
    --------------
    -- Set_View --
@@ -794,18 +835,14 @@ package body DAP.Views.Call_Stack is
    overriding procedure Update (View : not null access Call_Stack_Record) is
       Limit : constant Integer :=
         DAP.Modules.Preferences.Frames_Limit.Get_Pref;
-      From  : Integer;
-      To    : Integer;
+      From  : Integer := -1;
+      To    : Integer := 0;
    begin
-      if Limit = 0 then
-         From := -1;
-         To   := 0;
-      else
+      if Limit /= 0 then
          From := 0;
          To   := Limit - 1;
       end if;
 
-      View.Selected_Frame := -1;
       View.Send_Request (From, To);
    end Update;
 
