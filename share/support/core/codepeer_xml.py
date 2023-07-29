@@ -225,7 +225,7 @@ attributes = """
 
     <project_attribute
       package="Analyzer"
-      name="Review_Filea"
+      name="Review_File"
       editor_page="CodePeer"
       editor_section="CodePeer configuration"
       label="review file path"
