@@ -41,11 +41,15 @@ package CodePeer is
    Unknown_Timestamp : constant Ada.Calendar.Time :=
      Ada.Calendar.Time_Of (Ada.Calendar.Year_Number'First, 1, 1, 0.0);
 
-   Is_CPL : Boolean := False;
-   --  are we with a cpl codepeer?
+   type Analyzer_Exe is (Codepeer_Exe, GNATSAS_Exe);
+   Current_Analyzer : Analyzer_Exe := Codepeer_Exe;
+   CPM_File         : Unbounded_String;
 
-   CPM_File : Unbounded_String;
-   --  current cpm_file displayed, if any.
+   function Is_GNATSAS return Boolean is (Current_Analyzer = GNATSAS_Exe);
+   function Module_Name return String is
+     (if Is_GNATSAS then "GNATSAS" else "CodePeer");
+   function Package_Name return String is
+     (if Is_GNATSAS then "gnatsas" else "codepeer");
 
    package Annot_File_Sets is
      new Ada.Containers.Ordered_Sets (Unbounded_String);
@@ -164,7 +168,7 @@ package CodePeer is
    package Natural_Sets is
      new Ada.Containers.Ordered_Sets (Natural);
 
-   type CPL_Id_Type is record
+   type GNATSAS_Id_Type is record
       Prj     : Ada.Strings.Unbounded.Unbounded_String;
       File    : Ada.Strings.Unbounded.Unbounded_String;
       Subp    : Ada.Strings.Unbounded.Unbounded_String;
@@ -172,10 +176,10 @@ package CodePeer is
       Key     : Ada.Strings.Unbounded.Unbounded_String;
       Key_Seq : Ada.Strings.Unbounded.Unbounded_String;
    end record;
-   --  Structure used to identify a message with cpl CodePeer. GS does not need
+   --  Structure used to identify a message with CodePeer. GS does not need
    --  to understand it, just store it and send it to the bridge when needed.
 
-   type CPL_Id_Access is access all CPL_Id_Type;
+   type GNATSAS_Id_Access is access all GNATSAS_Id_Type;
 
    type Message is new GPS.Kernel.Messages.Primary_Abstract_Message with record
       Id              : Natural;
@@ -201,7 +205,7 @@ package CodePeer is
       --  Reference to preference value of which is used for foreground color
       --  of removed messages.
       Show_Msg_Id     : Boolean;
-      CPL_Id          : CPL_Id_Access;
+      GNATSAS_Id          : GNATSAS_Id_Access;
    end record;
    type Message_Access is access all Message;
 
@@ -310,11 +314,11 @@ package CodePeer is
      new Ada.Containers.Vectors (Positive, Object_Race_Information);
 
    type Inspection_Information is record
-      Inspection   : Ada.Strings.Unbounded.Unbounded_String;
-      Timestamp    : Ada.Calendar.Time;
-      Main         : Ada.Strings.Unbounded.Unbounded_String;
-      Switches     : Ada.Strings.Unbounded.Unbounded_String;
-      Library_File : Ada.Strings.Unbounded.Unbounded_String;
+      Inspection    : Ada.Strings.Unbounded.Unbounded_String;
+      Timestamp     : Ada.Calendar.Time;
+      Main          : Ada.Strings.Unbounded.Unbounded_String;
+      Switches      : Ada.Strings.Unbounded.Unbounded_String;
+      Library_File  : Ada.Strings.Unbounded.Unbounded_String;
    end record;
 
    type Project_Data is new Code_Analysis.CodePeer_Data_Root with record

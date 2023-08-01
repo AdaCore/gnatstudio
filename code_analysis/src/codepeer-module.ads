@@ -119,7 +119,7 @@ package CodePeer.Module is
       From_Column      : Positive;
       Checks           : Message_Category_Sets.Set;
       CWEs             : CWE_Category_Sets.Set;
-      CPL_Id           : CPL_Id_Access)
+      GNATSAS_Id           : GNATSAS_Id_Access)
       return Message_Access;
 
    procedure Set_Review_Action (Message : Message_Access);
@@ -140,9 +140,10 @@ private
        of GPS.Kernel.Style_Manager.Style_Access;
 
    type CodePeer_Action is
-     (None, Load_UI, Audit_Trail, Load_Bridge_Results, Load_CSV);
+     (None, Report, Load_UI, Audit_Trail, Load_Bridge_Results, Load_CSV);
    --  Actions related to codepeer handling:
    --   - None: no action registered
+   --   - Report: generate report (for gnatsas only)
    --   - Load_UI: load CodePeer UI
    --   - Audit_Trail: load audit trail after gps_codepeer_bridge has run
    --   - Load_Bridge_Results: load codepeer messages after gps_codepeer_bridge

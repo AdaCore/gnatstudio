@@ -155,15 +155,15 @@ package body CodePeer is
       procedure Free is
         new Ada.Unchecked_Deallocation (Audit_Record, Audit_Record_Access);
 
-      procedure Free_CPL_Id is
-        new Ada.Unchecked_Deallocation (CPL_Id_Type, CPL_Id_Access);
+      procedure Free_GNATSAS_Id is
+        new Ada.Unchecked_Deallocation (GNATSAS_Id_Type, GNATSAS_Id_Access);
 
    begin
       for J of Self.Audit loop
          Free (J);
       end loop;
 
-      Free_CPL_Id (Self.CPL_Id);
+      Free_GNATSAS_Id (Self.GNATSAS_Id);
 
       Self.Audit.Clear;
 
@@ -256,7 +256,7 @@ package body CodePeer is
       begin
          for Check of Self.Checks loop
             if Length (Aux) = 0 then
-               if Is_CPL then
+               if Is_GNATSAS then
                   Append (Aux, " <");
                else
                   Append (Aux, " (");
@@ -271,7 +271,7 @@ package body CodePeer is
          end loop;
 
          if Length (Aux) /= 0 then
-            if Is_CPL then
+            if Is_GNATSAS then
                Append (Aux, ">");
             else
                Append (Aux, ")");
