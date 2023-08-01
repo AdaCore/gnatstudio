@@ -1,3 +1,4 @@
+with "../code_analysis/code_analysis";
 with "../kernel/kernel";
 with "../shared";
 

@@ -40,6 +40,7 @@ with Gtkada.Dialogs;
 
 with Spawn.Processes;
 
+with CodePeer;
 with Commands, Commands.Interactive; use Commands, Commands.Interactive;
 with GPS.Customizable_Modules;   use GPS.Customizable_Modules;
 with GPS.Kernel;                 use GPS.Kernel;
@@ -873,8 +874,11 @@ package body Help_Module is
                                     "gcc"
                                  else Target & "-gcc"));
       Tools               : constant Virtual_File_Array :=
-                              (1 => Locate_On_Path ("codepeer"),
-                               2 => Locate_On_Path ("gnatprove"));
+        (1 =>
+           (if CodePeer.Is_GNATSAS
+            then Locate_On_Path ("gnatsas")
+            else Locate_On_Path ("codepeer")),
+         2 => Locate_On_Path ("gnatprove"));
       About_File          : constant Virtual_File := Create_From_Dir
         (Get_System_Dir (Kernel), "/share/gnatstudio/about.txt");
       Contents            : GNAT.Strings.String_Access;

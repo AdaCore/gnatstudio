@@ -66,7 +66,7 @@ package body CodePeer.Module.Bridge is
       pragma Warnings (Off, Success);
 
    begin
-      Module.Kernel.Set_Build_Mode ("codepeer");
+      Module.Kernel.Set_Build_Mode (CodePeer.Package_Name);
 
       --  Compute name of object directory and request file
 
@@ -136,7 +136,7 @@ package body CodePeer.Module.Bridge is
       pragma Warnings (Off, Success);
 
    begin
-      if not Is_CPL
+      if not Is_GNATSAS
         and then (not Is_Directory (Output_Directory)
         and Codepeer_Server_URL (Project) = "")
       then
@@ -195,7 +195,7 @@ package body CodePeer.Module.Bridge is
       pragma Warnings (Off, Success);
 
    begin
-      Module.Kernel.Set_Build_Mode ("codepeer");
+      Module.Kernel.Set_Build_Mode (CodePeer.Package_Name);
 
       --  Compute directories' and files' names.
 
@@ -269,7 +269,7 @@ package body CodePeer.Module.Bridge is
       Extra_Args : Argument_List_Access;
 
       Target_Name : constant String :=
-         (if Is_CPL then "CPL CodePeer Bridge" else "CodePeer Bridge");
+         (if Is_GNATSAS then "GNATSAS Bridge" else "CodePeer Bridge");
    begin
       Extra_Args := new Argument_List (1 .. 1);
       Extra_Args (1) := new String'(+Command_File.Full_Name.all);
@@ -280,7 +280,7 @@ package body CodePeer.Module.Bridge is
       Commands.Builder.Launch_Target
         (Builder         => Builder,
          Target_Name     => Target_Name,
-         Mode_Name       => "codepeer",
+         Mode_Name       => CodePeer.Package_Name,
          Force_File      => No_File,
          Extra_Args      => Extra_Args,
          Quiet           => not Preserve_Output,

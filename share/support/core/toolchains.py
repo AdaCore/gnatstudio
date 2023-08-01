@@ -267,6 +267,14 @@ XML = r"""<?xml version="1.0" ?>
     <compiler lang="asm"/>
   </toolchain>
 
+  <toolchain name="gnatsas">
+    <debugger/>
+    <cpp_filt/>
+    <compiler lang="c"/>
+    <compiler lang="c++"/>
+    <compiler lang="asm"/>
+  </toolchain>
+
   <toolchain name="m68020-elf"/>
 
   <toolchain name="riscv64-elf"/>

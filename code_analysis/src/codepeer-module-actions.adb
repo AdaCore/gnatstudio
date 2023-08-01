@@ -44,11 +44,6 @@ package body CodePeer.Module.Actions is
       Context : GPS.Kernel.Selection_Context) return Boolean;
    --  Returns True when show/hide annotations is allowed.
 
-   function Get_Target_Name (Orig_Name : String) return String is
-      ((if Is_CPL then "CPL " else "") & Orig_Name);
-   --  Add the "CPL " prefix to a target name in case we are dealing
-   --  with a cpl CodePeer.
-
    -------------
    -- Execute --
    -------------
@@ -60,7 +55,8 @@ package body CodePeer.Module.Actions is
       pragma Unreferenced (Context);
 
    begin
-      Self.Module.Review (False, Get_Target_Name ("Run CodePeer..."));
+      Self.Module.Review
+        (False, "Run " & CodePeer.Module_Name & "...");
 
       return Success;
    end Execute;
@@ -76,7 +72,7 @@ package body CodePeer.Module.Actions is
       pragma Unreferenced (Context);
 
    begin
-      Self.Module.Review (True, Get_Target_Name ("Run CodePeer"));
+      Self.Module.Review (True, "Run " & CodePeer.Module_Name);
 
       return Success;
    end Execute;
@@ -106,7 +102,7 @@ package body CodePeer.Module.Actions is
         (Kernel      => Kernel,
          Target_ID   =>
            CodePeer.Shell_Commands.Build_Target
-             (Kernel, Get_Target_Name ("Run CodePeer File")),
+             (Kernel, "Run " & CodePeer.Module_Name & " File"),
          Force       => True,
          Synchronous => False);
       return Success;
@@ -123,7 +119,7 @@ package body CodePeer.Module.Actions is
       pragma Unreferenced (Self);
 
       Build_Target : constant String :=
-        Get_Target_Name ("Run CodePeer File By File");
+        "Run " & CodePeer.Module_Name & " File By File";
 
       Kernel   : constant Kernel_Handle := Get_Kernel (Context.Context);
       Project  : constant Project_Type  := Get_Project (Kernel);
@@ -211,8 +207,7 @@ package body CodePeer.Module.Actions is
      (Self    : access Generate_CSV_Command;
       Context : Interactive_Command_Context) return Command_Return_Type
    is
-      Build_Target : constant String :=
-        Get_Target_Name ("Generate CSV Report");
+      Build_Target : constant String := "Generate CSV Report";
 
       Kernel   : constant Kernel_Handle := Get_Kernel (Context.Context);
       Project  : constant Project_Type  := Get_Project (Kernel);
@@ -257,8 +252,7 @@ package body CodePeer.Module.Actions is
      (Self    : access Generate_HTML_Command;
       Context : Interactive_Command_Context) return Command_Return_Type
    is
-      Build_Target : constant String :=
-        Get_Target_Name ("Generate HTML Report");
+      Build_Target : constant String := "Generate HTML Report";
 
       Kernel   : constant Kernel_Handle := Get_Kernel (Context.Context);
       Project  : constant Project_Type  := Get_Project (Kernel);
@@ -309,7 +303,7 @@ package body CodePeer.Module.Actions is
         (Kernel      => Kernel,
          Target_ID   =>
            CodePeer.Shell_Commands.Build_Target
-             (Kernel, Get_Target_Name ("Generate SCIL")),
+             (Kernel, "Generate SCIL"),
          Force       => False,
          Synchronous => False);
       return Success;
@@ -368,7 +362,7 @@ package body CodePeer.Module.Actions is
 
    begin
       Review
-        (Self.Module, False, Get_Target_Name ("Regenerate CodePeer Report"));
+        (Self.Module, False, "Regenerate CodePeer Report");
 
       return Success;
    end Execute;
@@ -505,8 +499,7 @@ package body CodePeer.Module.Actions is
       CodePeer.Shell_Commands.Build_Target_Execute
         (Kernel      => Kernel,
          Target_ID   =>
-           CodePeer.Shell_Commands.Build_Target
-             (Kernel, Get_Target_Name ("Remove SCIL")),
+           CodePeer.Shell_Commands.Build_Target (Kernel, "Remove SCIL"),
          Force       => True,
          Build_Mode  => "codepeer",
          Synchronous => False);
@@ -766,88 +759,89 @@ package body CodePeer.Module.Actions is
    -- Register_Actions --
    ----------------------
 
-   procedure Register_Actions (Module : not null CodePeer_Module_Id) is
+   procedure Register_Actions (Module : not null CodePeer_Module_Id)
+   is
       Is_Local_Mode : constant Action_Filter :=
         new Is_Local_Mode_Filter (Module);
 
    begin
       Register_Action
         (Kernel  => Module.Kernel,
-         Name    => "codepeer analyze...",
+         Name    => CodePeer.Package_Name & " analyze...",
          Command => new Analyze_Command (Module),
          Filter  => Is_Local_Mode);
       Register_Action
         (Kernel  => Module.Kernel,
-         Name    => "codepeer analyze all",
+         Name    => CodePeer.Package_Name & " analyze all",
          Command => new Analyze_All_Command (Module),
          Filter  => Is_Local_Mode);
       Register_Action
         (Kernel  => Module.Kernel,
-         Name    => "codepeer analyze file",
+         Name    => CodePeer.Package_Name & " analyze file",
          Command => new Analyze_File_Command,
          Filter  =>
            Lookup_Filter (Module.Kernel, "File")
              and Create (Language => "ada")
              and Is_Local_Mode);
-      if not Is_CPL then
+      if not Is_GNATSAS then
          Register_Action
            (Kernel  => Module.Kernel,
-            Name    => "codepeer analyze file by file",
+            Name    => CodePeer.Package_Name & " analyze file by file",
             Command => new Analyze_File_By_File_Command,
             Filter  => Is_Local_Mode);
       end if;
       Register_Action
         (Kernel  => Module.Kernel,
-         Name    => "codepeer display code review",
+         Name    => CodePeer.Package_Name & " display code review",
          Command => new Display_Code_Review_Command (Module));
       Register_Action
         (Kernel  => Module.Kernel,
-         Name    => "codepeer display html",
+         Name    => CodePeer.Package_Name & " display html",
          Command => new Display_HTML_Command,
          Filter  => Is_Local_Mode);
       Register_Action
         (Kernel  => Module.Kernel,
-         Name    => "codepeer generate csv",
+         Name    => CodePeer.Package_Name & " generate csv",
          Command => new Generate_CSV_Command (Module),
          Filter => Is_Local_Mode);
       Register_Action
         (Kernel  => Module.Kernel,
-         Name    => "codepeer generate html",
+         Name    => CodePeer.Package_Name & " generate html",
          Command => new Generate_HTML_Command (Module),
          Filter  => Is_Local_Mode);
       Register_Action
         (Kernel  => Module.Kernel,
-         Name    => "codepeer generate scil",
+         Name    => CodePeer.Package_Name & " generate scil",
          Command => new Generate_SCIL_Command,
          Filter  => Is_Local_Mode);
       Register_Action
         (Kernel  => Module.Kernel,
-         Name    => "codepeer log",
+         Name    => CodePeer.Package_Name & " log",
          Command => new Log_Command,
          Filter  => Is_Local_Mode);
       Register_Action
         (Kernel  => Module.Kernel,
-         Name    => "codepeer regenerate report",
+         Name    => CodePeer.Package_Name & " regenerate report",
          Command => new Regenerate_Report_Command (Module),
          Filter  => Is_Local_Mode);
       Register_Action
         (Kernel  => Module.Kernel,
-         Name    => "codepeer remove lock",
+         Name    => CodePeer.Package_Name & " remove lock",
          Command => new Remove_Lock_Command,
          Filter  => Is_Local_Mode);
       Register_Action
         (Kernel  => Module.Kernel,
-         Name    => "codepeer remove scil",
+         Name    => CodePeer.Package_Name & " remove scil",
          Command => new Remove_SCIL_Command,
          Filter  => Is_Local_Mode);
       Register_Action
         (Kernel  => Module.Kernel,
-         Name    => "codepeer remove scil and db",
+         Name    => CodePeer.Package_Name & " remove scil and db",
          Command => new Remove_SCIL_DB_Command,
          Filter  => Is_Local_Mode);
       Register_Action
         (Kernel  => Module.Kernel,
-         Name    => "codepeer remove xml review",
+         Name    => CodePeer.Package_Name & " remove xml review",
          Command => new Remove_XML_Review_Command (Module),
          Filter  => Is_Local_Mode);
 
@@ -857,23 +851,23 @@ package body CodePeer.Module.Actions is
         (Kernel   => Module.Kernel,
          Name     => "show codepeer annotations",
          Command  => new Show_Annotations_Command (Module),
-         Category => "CodePeer",
+         Category => CodePeer.Module_Name,
          Filter   => new Is_Show_Annotations_Filter (Module));
       GPS.Kernel.Modules.UI.Register_Contextual_Menu
         (Kernel => Module.Kernel,
          Action => "show codepeer annotations",
-         Label  => "CodePeer/Show annotations");
+         Label  => CodePeer.Module_Name & "/Show annotations");
 
       Register_Action
         (Kernel   => Module.Kernel,
          Name     => "hide codepeer annotations",
          Command  => new Hide_Annotations_Command (Module),
-         Category => "CodePeer",
+         Category => CodePeer.Module_Name,
          Filter   => new Is_Hide_Annotations_Filter (Module));
       GPS.Kernel.Modules.UI.Register_Contextual_Menu
         (Kernel => Module.Kernel,
          Action => "hide codepeer annotations",
-         Label  => "CodePeer/Hide annotations");
+         Label  => CodePeer.Module_Name & "/Hide annotations");
    end Register_Actions;
 
 end CodePeer.Module.Actions;

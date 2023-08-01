@@ -120,22 +120,23 @@ package body CodePeer.Bridge.Commands is
            (Message_Node,
             "approved", To_String (Message.Audit.First_Element.Approved_By));
 
-         if Is_CPL then
+         if Is_GNATSAS then
             XML_Utils.Set_Attribute
-              (Message_Node, "subp", To_String (Message.CPL_Id.Subp));
+              (Message_Node, "subp", To_String (Message.GNATSAS_Id.Subp));
             XML_Utils.Set_Attribute
-              (Message_Node, "kind", To_String (Message.CPL_Id.Kind));
+              (Message_Node, "kind", To_String (Message.GNATSAS_Id.Kind));
             XML_Utils.Set_Attribute
-              (Message_Node, "key_seq", To_String (Message.CPL_Id.Key_Seq));
+              (Message_Node, "key_seq",
+               To_String (Message.GNATSAS_Id.Key_Seq));
 
             --  Add those as data of subnodes so that we correctly deal with
             --  possible spaces.
             Add_Simple_Child
-              (Message_Node, "prj", To_String (Message.CPL_Id.Prj));
+              (Message_Node, "prj", To_String (Message.GNATSAS_Id.Prj));
             Add_Simple_Child
-              (Message_Node, "file", To_String (Message.CPL_Id.File));
+              (Message_Node, "file", To_String (Message.GNATSAS_Id.File));
             Add_Simple_Child
-              (Message_Node, "key", To_String (Message.CPL_Id.Key));
+              (Message_Node, "key", To_String (Message.GNATSAS_Id.Key));
             Add_Simple_Child
               (Message_Node, "comment",
                To_String (Message.Audit.First_Element.Comment));
@@ -261,7 +262,7 @@ package body CodePeer.Bridge.Commands is
             XML_Utils.Set_Attribute
               (Database_Node, "output_directory", +Output_Directory.Full_Name);
 
-            if Is_CPL then
+            if Is_GNATSAS then
                if CPM_File /= Null_Unbounded_String then
                   XML_Utils.Set_Attribute
                     (Database_Node, "cpm_file", To_String (CPM_File));
@@ -346,7 +347,7 @@ package body CodePeer.Bridge.Commands is
          "maximum_format",
          Format_Version'Image (Maximum_Version));
 
-      if Is_CPL then
+      if Is_GNATSAS then
          --  write annotation files' paths.
          Annot_File_Sets.Iterate (Annot_Files, Do_Annot_File'Access);
       end if;
