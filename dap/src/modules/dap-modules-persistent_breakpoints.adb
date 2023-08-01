@@ -227,12 +227,12 @@ package body DAP.Modules.Persistent_Breakpoints is
          return not Filter.Found;
       end if;
 
-      if DAP.Module.Get_Current_Debugger = null then
-         Loc := Kernel.Get_Buffer_Factory.Create_Marker
-           (File   => File_Information (Context),
-            Line   => Editable_Line_Type (Contexts.Line_Information (Context)),
-            Column => 1);
+      Loc := Kernel.Get_Buffer_Factory.Create_Marker
+        (File   => File_Information (Context),
+         Line   => Editable_Line_Type (Contexts.Line_Information (Context)),
+         Column => 1);
 
+      if DAP.Module.Get_Current_Debugger = null then
          if Breakpoints.Contains (Loc) then
             return Filter.Found;
          else
@@ -240,9 +240,8 @@ package body DAP.Modules.Persistent_Breakpoints is
          end if;
 
       else
-         return Filter.Found = DAP.Module.Get_Current_Debugger.Has_Breakpoint
-           (File_Information (Context),
-            Editable_Line_Type (Contexts.Line_Information (Context)));
+         return Filter.Found =
+           DAP.Module.Get_Current_Debugger.Has_Breakpoint (Loc);
       end if;
    end Filter_Matches_Primitive;
 
