@@ -694,8 +694,6 @@ package body DAP.Views.Assembly is
 
          Self.Current_Range := Invalid_Cache_Data;
          Assembly_View (Self).Fill_Model (Self.Current_Range.Data);
-      else
-         Self.Update;
       end if;
    end On_Status_Changed;
 

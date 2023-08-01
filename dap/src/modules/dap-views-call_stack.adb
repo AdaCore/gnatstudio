@@ -627,11 +627,10 @@ package body DAP.Views.Call_Stack is
             Bt : constant Backtrace_Record := Backtrace.First_Element;
          begin
             Self.Client.Set_Selected_Frame
-              (Id                        => Bt.Frame_Id,
-               File                      => Bt.File,
-               Line                      => Bt.Line,
-               Address                   => Bt.Address,
-               Run_Location_Changed_Hook => False);
+              (Id      => Bt.Frame_Id,
+               File    => Bt.File,
+               Line    => Bt.Line,
+               Address => Bt.Address);
          end;
       end if;
 
@@ -651,7 +650,6 @@ package body DAP.Views.Call_Stack is
       From : Integer;
       To   : Integer)
    is
-      Model : Gtk.Tree_Model.Gtk_Tree_Model;
       Iter  : Gtk_Tree_Iter;
       Path  : Gtk_Tree_Path;
 
@@ -721,44 +719,10 @@ package body DAP.Views.Call_Stack is
          Gtk_New (Path, Image (Client.Get_Selected_Frame));
          View.Tree.Get_Selection.Select_Path (Path);
          Path_Free (Path);
-         View.Kernel.Context_Changed (No_Context);
-         return;
-      end if;
 
-      if View.Model.Get_Iter_First /= Null_Iter then
+      elsif View.Model.Get_Iter_First /= Null_Iter then
          View.Tree.Get_Selection.Select_Iter
            (View.Tree.Convert_To_Filter_Iter (View.Model.Get_Iter_First));
-      end if;
-
-      View.Tree.Get_Selection.Get_Selected (Model, Iter);
-
-      if Iter /= Null_Iter
-        and then Iter /= View.Model.Get_Iter_First
-      then
-         declare
-            File    : GNATCOLL.VFS.Virtual_File;
-            Line    : Integer;
-            Address : Address_Type;
-            S       : constant String :=
-              Model.Get_String (Iter, Memory_Column);
-         begin
-            File    := GNATCOLL.VFS.Create
-              (+Model.Get_String (Iter, Sourse_Column));
-            Line    := Integer (Model.Get_Int (Iter, Line_Column));
-            Address :=
-              (if S /= "<>"
-               then String_To_Address (S)
-               else Invalid_Address);
-
-            Get_Client (View).Set_Selected_Frame
-              (Id                        => Integer
-                 (Model.Get_Int (Iter, Frame_Id_Column)),
-               File                      => File,
-               Line                      => Line,
-               Address                   => Address,
-               Run_Location_Changed_Hook => False);
-         end;
-         View.Kernel.Context_Changed (No_Context);
       end if;
    end On_Updated;
 

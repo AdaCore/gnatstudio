@@ -289,7 +289,7 @@ package body DAP.Clients is
    function Current_File
      (Self : in out DAP_Client) return GNATCOLL.VFS.Virtual_File is
    begin
-      return Self.Selected_File;
+      return Self.Selected.File;
    end Current_File;
 
    ------------------
@@ -299,7 +299,7 @@ package body DAP.Clients is
    function Current_Line
      (Self : in out DAP_Client) return Integer is
    begin
-      return Self.Selected_Line;
+      return Self.Selected.Line;
    end Current_Line;
 
    ---------------------
@@ -309,7 +309,7 @@ package body DAP.Clients is
    function Current_Address
      (Self : in out DAP_Client) return Address_Type is
    begin
-      return Self.Selected_Address;
+      return Self.Selected.Address;
    end Current_Address;
 
    --------------------------
@@ -360,12 +360,17 @@ package body DAP.Clients is
    --------------------
 
    function Has_Breakpoint
-     (Self      : DAP_Client;
-      File      : GNATCOLL.VFS.Virtual_File;
-      Line      : Editable_Line_Type)
-      return Boolean is
+     (Self   : DAP_Client;
+      Marker : GPS.Markers.Location_Marker)
+      return Boolean
+   is
+      use DAP.Modules.Breakpoint_Managers;
    begin
-      return False;
+      if Self.Breakpoints /= null then
+         return Has_Breakpoint (Self.Breakpoints, Marker);
+      else
+         return False;
+      end if;
    end Has_Breakpoint;
 
    ----------------
@@ -404,7 +409,7 @@ package body DAP.Clients is
 
    function Is_Ready_For_Command (Self : DAP_Client) return Boolean is
    begin
-      return (Self.Status = Stopped or else Self.Status = Ready)
+      return Self.Status in Ready .. Stopped
         and then Self.Sent.Is_Empty;
    end Is_Ready_For_Command;
 
@@ -483,7 +488,6 @@ package body DAP.Clients is
      (Self   : in out DAP_Client;
       Status : Debugger_Status_Kind)
    is
-      use GNATCOLL.VFS;
       Old : constant Debugger_Status_Kind := Self.Status;
    begin
       if Self.Status = Status
@@ -495,11 +499,8 @@ package body DAP.Clients is
       Self.Status := Status;
 
       if Self.Status not in Ready .. Stopped then
-         Self.Selected_File    := No_File;
-         Self.Selected_Line    := 0;
-         Self.Selected_Address := Invalid_Address;
-         Self.Selected_Frame   := 0;
-         Self.Selected_Thread  := 0;
+         Self.Selected        := No_Frame;
+         Self.Selected_Thread := 0;
          Self.Frames.Clear;
 
          DAP.Utils.Unhighlight_Current_Line (Self.Kernel);
@@ -515,6 +516,10 @@ package body DAP.Clients is
 
          when Stopped =>
             GPS.Kernel.Hooks.Debugger_Process_Stopped_Hook.Run
+              (Self.Kernel, Self.Visual);
+
+            --  Inform that location has changed
+            GPS.Kernel.Hooks.Debugger_Location_Changed_Hook.Run
               (Self.Kernel, Self.Visual);
 
          when Terminating =>
@@ -830,29 +835,25 @@ package body DAP.Clients is
    ------------------------
 
    procedure Set_Selected_Frame
-     (Self                      : in out DAP_Client;
-      Id                        : Integer;
-      File                      : GNATCOLL.VFS.Virtual_File;
-      Line                      : Integer;
-      Address                   : Address_Type;
-      Run_Location_Changed_Hook : Boolean := True)
+     (Self    : in out DAP_Client;
+      Id      : Integer;
+      File    : GNATCOLL.VFS.Virtual_File;
+      Line    : Integer;
+      Address : Address_Type)
    is
       use GNATCOLL.VFS;
    begin
-      Self.Selected_Frame   := Id;
-      Self.Selected_File    := File;
-      Self.Selected_Line    := Line;
-      Self.Selected_Address := Address;
+      Self.Selected := (Id, File, Line, Address);
 
       --  highlight selected location
-      if Self.Selected_File /= No_File then
+      if Self.Selected.File /= No_File then
          DAP.Utils.Highlight_Current_File_And_Line
-           (Self.Kernel, Self.Selected_File, Self.Selected_Line);
+           (Self.Kernel, Self.Selected.File, Self.Selected.Line);
       end if;
 
-      if Run_Location_Changed_Hook then
-         --  Triggering the hook to inform views. Not needed when we set
-         --  location for the first time after the debugging stop.
+      if Self.Status = Stopped then
+         --  Triggering the hook to inform views only
+         --  when the debugger has stopped.
          GPS.Kernel.Hooks.Debugger_Location_Changed_Hook.Run
            (Self.Kernel, Self.Visual);
       end if;
@@ -865,7 +866,7 @@ package body DAP.Clients is
    function Get_Selected_Frame
      (Self : DAP_Client) return Integer is
    begin
-      return Self.Selected_Frame;
+      return Self.Selected.Id;
    end Get_Selected_Frame;
 
    -------------------------
@@ -1575,8 +1576,8 @@ package body DAP.Clients is
 
             if stop.a_body.reason = breakpoint then
                Self.Breakpoints.Stopped
-                 (stop, Self.Selected_File,
-                  Self.Selected_Line, Self.Selected_Address);
+                 (stop, Self.Selected.File,
+                  Self.Selected.Line, Self.Selected.Address);
 
             elsif stop.a_body.reason = step
               and then stop.a_body.threadId.Is_Set
@@ -1592,7 +1593,7 @@ package body DAP.Clients is
             if stop.a_body.threadId.Is_Set then
                Self.Get_StackTrace (stop.a_body.threadId.Value);
 
-            elsif Self.Selected_File /= No_File then
+            elsif Self.Selected.File /= No_File then
                Self.Set_Status (Stopped);
             end if;
 
@@ -1822,11 +1823,10 @@ package body DAP.Clients is
 
             if Index = 1 then
                Self.Client.Set_Selected_Frame
-                 (Id                        => Bt.Frame_Id,
-                  File                      => Bt.File,
-                  Line                      => Bt.Line,
-                  Address                   => Bt.Address,
-                  Run_Location_Changed_Hook => False);
+                 (Id      => Bt.Frame_Id,
+                  File    => Bt.File,
+                  Line    => Bt.Line,
+                  Address => Bt.Address);
             end if;
 
             Self.Client.Frames.Append (Bt);
@@ -1895,7 +1895,7 @@ package body DAP.Clients is
               (Bt.Frame_Id, Bt.File, Bt.Line, Bt.Address);
             exit;
 
-         elsif Bt.Frame_Id = Self.Selected_Frame then
+         elsif Bt.Frame_Id = Self.Selected.Id then
             Next := True;
          end if;
       end loop;
@@ -1915,7 +1915,7 @@ package body DAP.Clients is
               (Bt.Frame_Id, Bt.File, Bt.Line, Bt.Address);
             exit;
 
-         elsif Bt.Frame_Id = Self.Selected_Frame then
+         elsif Bt.Frame_Id = Self.Selected.Id then
             Next := True;
          end if;
       end loop;
