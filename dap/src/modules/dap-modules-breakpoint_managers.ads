@@ -19,6 +19,7 @@ with GNATCOLL.VFS;                use GNATCOLL.VFS;
 
 with Basic_Types;                 use Basic_Types;
 with GPS.Kernel;
+with GPS.Markers;                 use GPS.Markers;
 
 with DAP.Modules.Breakpoints;     use DAP.Modules.Breakpoints;
 with DAP.Types;                   use DAP.Types;
@@ -118,6 +119,12 @@ package DAP.Modules.Breakpoint_Managers is
    procedure Send_Commands
      (Self : DAP_Client_Breakpoint_Manager_Access;
       Data : DAP.Modules.Breakpoints.Breakpoint_Data);
+
+   function Has_Breakpoint
+     (Self   : DAP_Client_Breakpoint_Manager_Access;
+      Marker : Location_Marker)
+      return Boolean;
+   --  Return True if a breakpoint exists for the given location
 
 private
 

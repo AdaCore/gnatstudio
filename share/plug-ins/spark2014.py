@@ -766,6 +766,7 @@ class GNATprove_Parser(tool_output.OutputParser):
         remainder = output
         list_secondaries = []
         list_sub_message_header = [", cannot prove",
+                                   " [user message:",
                                    " (e.g.",
                                    " [reason for check:",
                                    " [possible explanation:",

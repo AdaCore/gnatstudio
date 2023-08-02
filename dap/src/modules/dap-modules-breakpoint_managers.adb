@@ -350,6 +350,18 @@ package body DAP.Modules.Breakpoint_Managers is
       return Self.Holder.Get_Breakpoints;
    end Get_Breakpoints;
 
+   --------------------
+   -- Has_Breakpoint --
+   --------------------
+
+   function Has_Breakpoint
+     (Self   : DAP_Client_Breakpoint_Manager_Access;
+      Marker : Location_Marker)
+      return Boolean is
+   begin
+      return Self.Holder.Contains (Marker);
+   end Has_Breakpoint;
+
    ----------------------
    -- Show_Breakpoints --
    ----------------------

@@ -32,6 +32,7 @@ with Gtk.Label;
 
 with GPS.Kernel;
 with GPS.Debuggers;
+with GPS.Markers;
 
 with LSP.Raw_Clients;
 
@@ -122,11 +123,10 @@ package DAP.Clients is
    function Get_Status (Self : in out DAP_Client) return Debugger_Status_Kind;
 
    function Has_Breakpoint
-     (Self      : DAP_Client;
-      File      : GNATCOLL.VFS.Virtual_File;
-      Line      : Editable_Line_Type)
+     (Self   : DAP_Client;
+      Marker : GPS.Markers.Location_Marker)
       return Boolean;
-   --  Return True if some breakpoint is set for the file/line
+   --  Return True if some breakpoint is set for the location
 
    procedure Break
      (Self : in out DAP_Client;
@@ -243,12 +243,11 @@ package DAP.Clients is
    --  Attach the variables view to the client
 
    procedure Set_Selected_Frame
-     (Self                      : in out DAP_Client;
-      Id                        : Integer;
-      File                      : GNATCOLL.VFS.Virtual_File;
-      Line                      : Integer;
-      Address                   : Address_Type;
-      Run_Location_Changed_Hook : Boolean := True);
+     (Self    : in out DAP_Client;
+      Id      : Integer;
+      File    : GNATCOLL.VFS.Virtual_File;
+      Line    : Integer;
+      Address : Address_Type);
    --  Set the current Frame.
 
    function Get_Selected_Frame
@@ -409,6 +408,16 @@ private
       Hash                => Hash,
       Equivalent_Elements => "=");
 
+   type Frame is record
+      Id      : Integer := 0;
+      File    : GNATCOLL.VFS.Virtual_File := GNATCOLL.VFS.No_File;
+      Line    : Integer := 0;
+      Address : Address_Type := Invalid_Address;
+   end record;
+
+   No_Frame : constant Frame :=
+     (0, GNATCOLL.VFS.No_File, 0, Invalid_Address);
+
    type DAP_Client
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
       Id     : Positive) is new LSP.Raw_Clients.Raw_Client
@@ -432,11 +441,8 @@ private
       Request_Id     : Integer := 1;
       Error_Msg      : VSS.Strings.Virtual_String;
 
-      Selected_File       : GNATCOLL.VFS.Virtual_File;
-      Selected_Line       : Integer;
-      Selected_Address    : Address_Type := Invalid_Address;
-      Selected_Frame      : Integer;
-      Frames              : Backtrace_Vectors.Vector;
+      Selected        : Frame := No_Frame;
+      Frames          : Backtrace_Vectors.Vector;
 
       --  to monitoring stoped threads
       Stopped_Threads     : Integer_Sets.Set;

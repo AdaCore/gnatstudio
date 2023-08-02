@@ -223,12 +223,12 @@ package body DAP.Views.Variables is
    is
       use GPS.Debuggers;
    begin
-      if Status = Debug_Busy then
+      if Status = Debug_Busy
+        or else Status = Debug_None
+      then
          Self.Locals_Id := 0;
          Self.Old := Self.Locals;
          Self.Locals.Clear;
-      else
-         Self.Update;
       end if;
    end On_Status_Changed;
 
