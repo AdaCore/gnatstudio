@@ -42,12 +42,13 @@ package body DAP.Requests.Read_Memory is
    overriding procedure On_Result_Message
      (Self        : in out Read_Memory_DAP_Request;
       Stream      : in out VSS.JSON.Pull_Readers.JSON_Pull_Reader'Class;
+      Success     : in out Boolean;
       New_Request : in out DAP_Request_Access)
    is
       Response : DAP.Tools.ReadMemoryResponse;
-      Success  : Boolean := True;
    begin
       DAP.Tools.Inputs.Input_ReadMemoryResponse (Stream, Response, Success);
+
       if Success then
          Read_Memory_DAP_Request'Class
            (Self).On_Result_Message (Response, New_Request);

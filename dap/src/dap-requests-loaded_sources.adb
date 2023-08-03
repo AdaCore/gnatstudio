@@ -41,12 +41,13 @@ package body DAP.Requests.Loaded_Sources is
    overriding procedure On_Result_Message
      (Self        : in out Loaded_Sources_DAP_Request;
       Stream      : in out VSS.JSON.Pull_Readers.JSON_Pull_Reader'Class;
+      Success     : in out Boolean;
       New_Request : in out DAP_Request_Access)
    is
       Response : DAP.Tools.LoadedSourcesResponse;
-      Success  : Boolean := True;
    begin
       DAP.Tools.Inputs.Input_LoadedSourcesResponse (Stream, Response, Success);
+
       if Success then
          Loaded_Sources_DAP_Request'Class
            (Self).On_Result_Message (Response, New_Request);

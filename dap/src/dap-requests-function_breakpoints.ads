@@ -35,6 +35,7 @@ package DAP.Requests.Function_Breakpoints is
    overriding procedure On_Result_Message
      (Self        : in out Function_Breakpoint_DAP_Request;
       Stream      : in out VSS.JSON.Pull_Readers.JSON_Pull_Reader'Class;
+      Success     : in out Boolean;
       New_Request : in out DAP_Request_Access);
 
    procedure On_Result_Message
