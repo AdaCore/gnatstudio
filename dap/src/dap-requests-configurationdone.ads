@@ -33,6 +33,7 @@ package DAP.Requests.ConfigurationDone is
    overriding procedure On_Result_Message
      (Self        : in out ConfigurationDone_DAP_Request;
       Stream      : in out VSS.JSON.Pull_Readers.JSON_Pull_Reader'Class;
+      Success     : in out Boolean;
       New_Request : in out DAP_Request_Access);
 
    procedure On_Result_Message

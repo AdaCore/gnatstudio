@@ -1436,15 +1436,23 @@ package body DAP.Clients is
                      end;
 
                   else
+                     declare
+                        Parsed : Boolean := True;
                      begin
                         if Request.Kernel = null
                           or else not Request.Kernel.Is_In_Destruction
                         then
-                           Request.On_Result_Message (Reader, New_Request);
+                           Request.On_Result_Message
+                             (Reader, Parsed, New_Request);
+
+                           if not Parsed then
+                              Request.On_Error_Message
+                                ("Can't parse response");
+                           end if;
 
                            GPS.Kernel.Hooks.Dap_Response_Processed_Hook.Run
-                             (Kernel   => Request.Kernel,
-                              Method   => Request.Method);
+                             (Kernel => Request.Kernel,
+                              Method => Request.Method);
                         end if;
 
                      exception
@@ -1575,9 +1583,14 @@ package body DAP.Clients is
             Self.All_Threads_Stopped := stop.a_body.allThreadsStopped;
 
             if stop.a_body.reason = breakpoint then
-               Self.Breakpoints.Stopped
-                 (stop, Self.Selected.File,
-                  Self.Selected.Line, Self.Selected.Address);
+               declare
+                  File    : GNATCOLL.VFS.Virtual_File;
+                  Line    : Integer := 0;
+                  Address : Address_Type;
+               begin
+                  Self.Breakpoints.Stopped (stop, File, Line, Address);
+                  Self.Set_Selected_Frame (0, File, Line, Address);
+               end;
 
             elsif stop.a_body.reason = step
               and then stop.a_body.threadId.Is_Set
@@ -1834,6 +1847,11 @@ package body DAP.Clients is
       end loop;
 
       Self.Client.Set_Status (Stopped);
+
+   exception
+      when E : others =>
+         Trace (Me, E);
+         Self.Client.Set_Status (Stopped);
    end On_Result_Message;
 
    ----------------------

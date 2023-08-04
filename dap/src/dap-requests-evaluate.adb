@@ -38,12 +38,13 @@ package body DAP.Requests.Evaluate is
    overriding procedure On_Result_Message
      (Self        : in out Evaluate_DAP_Request;
       Stream      : in out VSS.JSON.Pull_Readers.JSON_Pull_Reader'Class;
+      Success     : in out Boolean;
       New_Request : in out DAP_Request_Access)
    is
       Response : DAP.Tools.EvaluateResponse;
-      Success  : Boolean := True;
    begin
       DAP.Tools.Inputs.Input_EvaluateResponse (Stream, Response, Success);
+
       if Success then
          Evaluate_DAP_Request'Class
            (Self).On_Result_Message (Response, New_Request);

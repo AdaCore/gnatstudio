@@ -45,9 +45,11 @@ package DAP.Requests is
    procedure On_Result_Message
      (Self        : in out DAP_Request;
       Stream      : in out VSS.JSON.Pull_Readers.JSON_Pull_Reader'Class;
+      Success     : in out Boolean;
       New_Request : in out DAP_Request_Access) is abstract;
    --  Called when a "result" response is received from the server.
    --  Fill New_Request is new request should be sent after this one.
+   --  Sets Success to False when the response can't be parsed.
 
    procedure On_Rejected (Self : in out DAP_Request);
    --  Called when the processing of the request rejected by any reason, for
