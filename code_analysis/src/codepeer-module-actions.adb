@@ -321,7 +321,8 @@ package body CodePeer.Module.Actions is
 
       Kernel   : constant Kernel_Handle := Get_Kernel (Context.Context);
       Log_File : constant Virtual_File :=
-        Codepeer_Output_Directory (Kernel).Create_From_Dir ("Inspection.log");
+        Codepeer_Log_Directory (Kernel).Create_From_Dir
+        (if Is_GNATSAS then "gnatsas.log" else "Insepection.log");
 
    begin
       if Log_File.Is_Regular_File then
@@ -362,7 +363,7 @@ package body CodePeer.Module.Actions is
 
    begin
       Review
-        (Self.Module, False, "Regenerate CodePeer Report");
+        (Self.Module, False, "Regenerate " & CodePeer.Module_Name & " Report");
 
       return Success;
    end Execute;

@@ -42,7 +42,7 @@ package CodePeer is
      Ada.Calendar.Time_Of (Ada.Calendar.Year_Number'First, 1, 1, 0.0);
 
    type Analyzer_Exe is (Codepeer_Exe, GNATSAS_Exe);
-   Current_Analyzer : Analyzer_Exe := Codepeer_Exe;
+   Current_Analyzer : Analyzer_Exe := GNATSAS_Exe;
    CPM_File         : Unbounded_String;
 
    function Is_GNATSAS return Boolean is (Current_Analyzer = GNATSAS_Exe);
@@ -50,6 +50,8 @@ package CodePeer is
      (if Is_GNATSAS then "GNATSAS" else "CodePeer");
    function Package_Name return String is
      (if Is_GNATSAS then "gnatsas" else "codepeer");
+   function GPR_Name return String is
+     (if Is_GNATSAS then "Analyzer" else "CodePeer");
 
    package Annot_File_Sets is
      new Ada.Containers.Ordered_Sets (Unbounded_String);

@@ -383,7 +383,7 @@ analysis. See GNATSAS documentation for more details." >
           <arg>-d</arg>
           <arg>%eL</arg>
           <arg>-P%PP</arg>
-          <arg>--gnatsas</arg>
+          <arg>--codepeer</arg>
           <arg>%X</arg>
        </command-line>
        <iconname>gps-build-all-symbolic</iconname>
@@ -448,11 +448,9 @@ creating/updating the database" />
        <command-help>{help}</command-help>
        <command-line>
           <arg>gnatsas</arg>
-          <arg>analyze</arg>
-          <arg>-d</arg>
+          <arg>report</arg>
           <arg>-P%PP</arg>
           <arg>%X</arg>
-          <arg>--output-msg-only</arg>
        </command-line>
        <iconname>gps-build-all-symbolic</iconname>
        <switches command="%(tool_name)s" columns="2" lines="5">
@@ -479,10 +477,10 @@ creating/updating the database" />
                default="0" separator=" " column="2"
                tip="Override baseline run id"/>
 
-         <check label="CSV output" switch="--csv"
+         <check label="CSV output" switch="csv"
                column="2"
                tip="generate output in CSV format, suitable for spreadsheets"/>
-         <check label="HTML output" switch="--html-only"
+         <check label="HTML output" switch="html"
                column="2"
                tip="generate output in HTML format"/>
        </switches>
@@ -492,7 +490,7 @@ creating/updating the database" />
        <description>Load GNATSAS messages</description>
        <iconname>gps-build-all-symbolic</iconname>
        <command-line>
-          <arg>cpm_gs_bridge</arg>
+          <arg>cpm-gs-bridge</arg>
        </command-line>
     </target-model>
 
@@ -504,7 +502,7 @@ creating/updating the database" />
        <launch-mode>MANUALLY_WITH_NO_DIALOG</launch-mode>
        <read-only>TRUE</read-only>
        <command-line>
-          <arg>cpm_gs_bridge</arg>
+          <arg>cpm-gs-bridge</arg>
        </command-line>
     </target>
 
@@ -517,11 +515,10 @@ creating/updating the database" />
        <read-only>TRUE</read-only>
        <command-line>
           <arg>gnatsas</arg>
-          <arg>analyze</arg>
-          <arg>-d</arg>
+          <arg>report</arg>
+          <arg>html</arg>
           <arg>-P%PP</arg>
           <arg>%X</arg>
-          <arg>--html-only</arg>
        </command-line>
     </target>
 
@@ -534,11 +531,10 @@ creating/updating the database" />
        <read-only>TRUE</read-only>
        <command-line>
           <arg>gnatsas</arg>
-          <arg>-d</arg>
+          <arg>report</arg>
+          <arg>csv</arg>
           <arg>-P%PP</arg>
           <arg>%X</arg>
-          <arg>--output-msg-only</arg>
-          <arg>--csv</arg>
           <arg>--out</arg>
           <arg>gnatsas.csv</arg>
        </command-line>
@@ -613,7 +609,6 @@ creating/updating the database" />
           <arg>gnat-studio</arg>
           <arg>-P%PP</arg>
           <arg>%X</arg>
-          <arg>--no-analysis</arg>
        </command-line>
     </target>
 
