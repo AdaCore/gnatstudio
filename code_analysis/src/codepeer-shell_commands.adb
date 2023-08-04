@@ -44,15 +44,16 @@ package body CodePeer.Shell_Commands is
    --------------------------
 
    procedure Build_Target_Execute
-     (Kernel      : GPS.Kernel.Kernel_Handle;
-      Target_ID   : String;
-      Main_Name   : String       := "";
-      File        : Virtual_File := GNATCOLL.VFS.No_File;
-      Force       : Boolean      := False;
-      Extra_Args  : String       := "";
-      Build_Mode  : String       := "";
-      Synchronous : Boolean      := True;
-      Dir         : Virtual_File := GNATCOLL.VFS.No_File)
+     (Kernel          : GPS.Kernel.Kernel_Handle;
+      Target_ID       : String;
+      Main_Name       : String       := "";
+      File            : Virtual_File := GNATCOLL.VFS.No_File;
+      Force           : Boolean      := False;
+      Extra_Args      : String       := "";
+      Build_Mode      : String       := "";
+      Synchronous     : Boolean      := True;
+      Preserve_Output : Boolean      := False;
+      Dir             : Virtual_File := GNATCOLL.VFS.No_File)
    is
       CL : Arg_List := Create ("BuildTarget.execute");
 
@@ -65,6 +66,7 @@ package body CodePeer.Shell_Commands is
       Append_Argument (CL, Build_Mode, One_Arg);
       Append_Argument (CL, Boolean'Image (Synchronous), One_Arg);
       Append_Argument (CL, +Full_Name (Dir), One_Arg);
+      Append_Argument (CL, Boolean'Image (Preserve_Output), One_Arg);
       declare
          Result : constant String :=
            GPS.Kernel.Scripts.Execute_GPS_Shell_Command (Kernel, CL);

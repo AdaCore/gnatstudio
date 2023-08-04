@@ -161,19 +161,22 @@ package body Commands.Builder.Scripts is
 
       elsif Command = "execute" then
          declare
-            Inst        : constant Class_Instance :=
-                            Nth_Arg (Data, 1, Target_Class);
-            Main        : constant String  := Nth_Arg (Data, 2, "");
-            Force       : constant Boolean := Nth_Arg (Data, 4, False);
-            Name        : constant String  := Get_Target_Name (Inst);
-            Mode        : Dialog_Mode      := Default;
-            Build_Mode  : constant String  := Nth_Arg (Data, 6, "");
-            Synchronous : constant Boolean := Nth_Arg (Data, 7, True);
-            Directory   : constant Filesystem_String := Nth_Arg (Data, 8, "");
-            Dir         : Virtual_File := No_File;
-            Quiet       : constant Boolean := Nth_Arg (Data, 9, False);
+            Inst            : constant Class_Instance :=
+              Nth_Arg (Data, 1, Target_Class);
+            Main            : constant String  := Nth_Arg (Data, 2, "");
+            Force           : constant Boolean := Nth_Arg (Data, 4, False);
+            Name            : constant String  := Get_Target_Name (Inst);
+            Mode            : Dialog_Mode      := Default;
+            Build_Mode      : constant String  := Nth_Arg (Data, 6, "");
+            Synchronous     : constant Boolean := Nth_Arg (Data, 7, True);
+            Directory       : constant Filesystem_String :=
+              Nth_Arg (Data, 8, "");
+            Dir             : Virtual_File := No_File;
+            Quiet           : constant Boolean := Nth_Arg (Data, 9, False);
 
-            On_Exit     : constant Subprogram_Type := Nth_Arg (Data, 10, null);
+            On_Exit         : constant Subprogram_Type :=
+              Nth_Arg (Data, 10, null);
+            Preserve_Output : constant Boolean := Nth_Arg (Data, 11, False);
          begin
             Info := Get_Data
               (Nth_Arg (Data, 3, Get_File_Class (Kernel), True));
@@ -236,20 +239,21 @@ package body Commands.Builder.Scripts is
                Dir := GNATCOLL.VFS.Create (Directory);
             end if;
 
-            Launch_Target (Builder      => Get_Builder (Inst),
-                           Target_Name  => Name,
-                           Mode_Name    => Build_Mode,
-                           Force_File   => Info,
-                           Extra_Args   => Extra_Args,
-                           Quiet        => Quiet,
-                           Synchronous  => Synchronous,
-                           Dialog       => Mode,
-                           Via_Menu     => False,
-                           Main         => Create (+Main),
-                           Main_Project => No_Project,
-                           Background   => False,
-                           Directory    => Dir,
-                           On_Exit      => On_Exit);
+            Launch_Target (Builder         => Get_Builder (Inst),
+                           Target_Name     => Name,
+                           Mode_Name       => Build_Mode,
+                           Force_File      => Info,
+                           Extra_Args      => Extra_Args,
+                           Quiet           => Quiet,
+                           Synchronous     => Synchronous,
+                           Dialog          => Mode,
+                           Via_Menu        => False,
+                           Main            => Create (+Main),
+                           Main_Project    => No_Project,
+                           Background      => False,
+                           Preserve_Output => Preserve_Output,
+                           Directory       => Dir,
+                           On_Exit         => On_Exit);
             Free (Extra_Args);
          end;
 
@@ -397,15 +401,16 @@ package body Commands.Builder.Scripts is
 
       Register_Command
         (Kernel.Scripts, "execute",
-         Params => (Param ("main_name",   Optional => True),   --  2
-                    Param ("file",        Optional => True),   --  3
-                    Param ("force",       Optional => True),   --  4
-                    Param ("extra_args",  Optional => True),   --  5
-                    Param ("build_mode",  Optional => True),   --  6
-                    Param ("synchronous", Optional => True),   --  7
-                    Param ("directory",   Optional => True),   --  8
-                    Param ("quiet",       Optional => True),   --  9
-                    Param ("on_exit",     Optional => True)),  --  10
+         Params => (Param ("main_name",       Optional => True),   --  2
+                    Param ("file",            Optional => True),   --  3
+                    Param ("force",           Optional => True),   --  4
+                    Param ("extra_args",      Optional => True),   --  5
+                    Param ("build_mode",      Optional => True),   --  6
+                    Param ("synchronous",     Optional => True),   --  7
+                    Param ("directory",       Optional => True),   --  8
+                    Param ("quiet",           Optional => True),   --  9
+                    Param ("on_exit",         Optional => True),   --  10
+                    Param ("preserve_output", Optional => True)),  --  11
          Class        => Target_Class,
          Handler      => Shell_Handler'Access);
 

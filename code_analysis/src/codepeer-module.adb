@@ -1257,10 +1257,11 @@ package body CodePeer.Module is
            (Kernel_Handle (Module.Kernel),
             CodePeer.Shell_Commands.Build_Target
               (Module.Get_Kernel, "Run GNATSAS Report"),
-            Force       => True,
-            Build_Mode  => CodePeer.Package_Name,
-            Synchronous => False,
-            Dir         => Module.Output_Directory);
+            Force           => True,
+            Build_Mode      => CodePeer.Package_Name,
+            Synchronous     => False,
+            Dir             => Module.Output_Directory,
+            Preserve_Output => True);
       else
          --  Load the report
          Post_Run_Hooks
