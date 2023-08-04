@@ -247,6 +247,11 @@ private
    --  Return directory which is used by CodePeer for output inspection
    --  results.
 
+   function Codepeer_Log_Directory
+     (Kernel : not null access Kernel_Handle_Record'Class)
+      return GNATCOLL.VFS.Virtual_File;
+   --  Return directroy which is used by CodePeer to store the last run log
+
    function Codepeer_CPM_Directory
      (Kernel : not null access Kernel_Handle_Record'Class)
       return GNATCOLL.VFS.Virtual_File;

@@ -184,35 +184,28 @@ package body CodePeer.Module is
       Message : GPS.Kernel.Messages.Abstract_Message'Class)
       return GPS.Kernel.Messages.Filter_Result;
 
-   Output_Directory_Attribute   :
-   constant Attribute_Pkg_String :=
-     Build (CodePeer.Module_Name, "Output_Directory");
-   Output_Dir_Attribute : constant Attribute_Pkg_String :=
-     Build ("Analyzer", "Output_Dir");
-   Database_Directory_Attribute : constant Attribute_Pkg_String :=
-     Build (CodePeer.Module_Name, "Database_Directory");
+   Output_Directory_Attribute    : constant Attribute_Pkg_String :=
+     Build (CodePeer.GPR_Name, "Output_Directory");
+   Output_Dir_Attribute          : constant Attribute_Pkg_String :=
+     Build (CodePeer.GPR_Name, "Output_Dir");
+   Database_Directory_Attribute  : constant Attribute_Pkg_String :=
+     Build (CodePeer.GPR_Name, "Database_Directory");
    Server_URL_Attribute : constant Attribute_Pkg_String :=
-     Build (CodePeer.Module_Name, "Server_URL");
-   Message_Patterns_Attribute : constant Attribute_Pkg_String :=
-     Build (CodePeer.Module_Name, "Message_Patterns");
+     Build (CodePeer.GPR_Name, "Server_URL");
+   Message_Patterns_Attribute    : constant Attribute_Pkg_String :=
+     Build (CodePeer.GPR_Name, "Message_Patterns");
    Additional_Patterns_Attribute : constant Attribute_Pkg_String :=
-     Build (CodePeer.Module_Name, "Additional_Patterns");
-   CWE_Attribute : constant Attribute_Pkg_String :=
-     Build (CodePeer.Module_Name, "CWE");
-   Switches_Attribute : constant Attribute_Pkg_List :=
-     Build (CodePeer.Module_Name, "Switches");
-   Pending_Status_Attribute : constant Attribute_Pkg_List :=
-     Build (CodePeer.Module_Name, "Pending_Status");
-   Not_A_Bug_Status_Attribute : constant Attribute_Pkg_List :=
-     Build (CodePeer.Module_Name, "Not_A_Bug_Status");
-   Bug_Status_Attribute : constant Attribute_Pkg_List :=
-     Build (CodePeer.Module_Name, "Bug_Status");
-   Analyzer_Pending_Status_Attribute : constant Attribute_Pkg_List :=
-     Build ("Analyzer", "Pending_Status");
-   Analyzer_Not_A_Bug_Status_Attribute : constant Attribute_Pkg_List :=
-     Build ("Analyzer", "Not_A_Bug_Status");
-   Analyzer_Bug_Status_Attribute : constant Attribute_Pkg_List :=
-     Build ("Analyzer", "Bug_Status");
+     Build (CodePeer.GPR_Name, "Additional_Patterns");
+   CWE_Attribute                 : constant Attribute_Pkg_String :=
+     Build (CodePeer.GPR_Name, "CWE");
+   Switches_Attribute            : constant Attribute_Pkg_List :=
+     Build (CodePeer.GPR_Name, "Switches");
+   Pending_Status_Attribute      : constant Attribute_Pkg_List :=
+     Build (CodePeer.GPR_Name, "Pending_Status");
+   Not_A_Bug_Status_Attribute    : constant Attribute_Pkg_List :=
+     Build (CodePeer.GPR_Name, "Not_A_Bug_Status");
+   Bug_Status_Attribute          : constant Attribute_Pkg_List :=
+     Build (CodePeer.GPR_Name, "Bug_Status");
 
    Race_Message_Flags : constant GPS.Kernel.Messages.Message_Flags :=
      (Editor_Side => True, Locations => True, Editor_Line => False);
@@ -894,6 +887,39 @@ package body CodePeer.Module is
                "output");
       end if;
    end Codepeer_Output_Directory;
+
+   ----------------------------
+   -- Codepeer_Log_Directory --
+   ----------------------------
+
+   function Codepeer_Log_Directory
+     (Kernel : not null access Kernel_Handle_Record'Class)
+      return GNATCOLL.VFS.Virtual_File
+   is
+      Ensure_Build_Mode : CodePeer_Build_Mode (Kernel);
+      pragma Unreferenced (Ensure_Build_Mode);
+
+      Project   : constant Project_Type := Get_Project (Kernel);
+      Name      : constant Filesystem_String :=
+        Filesystem_String
+          (Ada.Characters.Handling.To_Lower
+             (String (Project_Path (Project).Base_Name)));
+      Extension : constant GNATCOLL.VFS.Filesystem_String :=
+        Project_Path (Project).File_Extension;
+   begin
+      if not Is_GNATSAS
+        and then Project.Has_Attribute (Output_Directory_Attribute)
+      then
+         return Codepeer_Output_Directory (Kernel);
+
+      else
+         return
+           GNATCOLL.VFS.Create_From_Dir
+             (CodePeer_Object_Directory (Project),
+              Name (Name'First .. Name'Last - Extension'Length)
+              & ".gnatsas");
+      end if;
+   end Codepeer_Log_Directory;
 
    ------------------------------
    --  Codepeer_CPM_Directory  --
@@ -1582,16 +1608,9 @@ package body CodePeer.Module is
 
       --  Then register the project specific ones, if any
 
-      if Is_GNATSAS then
-         Add_Statuses (Analyzer_Pending_Status_Attribute, Pending);
-         Add_Statuses (Analyzer_Not_A_Bug_Status_Attribute, Not_A_Bug);
-         Add_Statuses (Analyzer_Bug_Status_Attribute, Bug);
-
-      else
-         Add_Statuses (Pending_Status_Attribute, Pending);
-         Add_Statuses (Not_A_Bug_Status_Attribute, Not_A_Bug);
-         Add_Statuses (Bug_Status_Attribute, Bug);
-      end if;
+      Add_Statuses (Pending_Status_Attribute, Pending);
+      Add_Statuses (Not_A_Bug_Status_Attribute, Not_A_Bug);
+      Add_Statuses (Bug_Status_Attribute, Bug);
 
    end Execute;
 
