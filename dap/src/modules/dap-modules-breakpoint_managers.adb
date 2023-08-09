@@ -37,6 +37,7 @@ with DAP.Modules.Breakpoint_Managers.Sources;
 with DAP.Modules.Breakpoint_Managers.Exceptions;
 with DAP.Modules.Breakpoint_Managers.Functions;
 with DAP.Modules.Breakpoint_Managers.Instructions;
+with DAP.Modules.Preferences;
 
 package body DAP.Modules.Breakpoint_Managers is
 
@@ -139,6 +140,22 @@ package body DAP.Modules.Breakpoint_Managers is
          V := Self.Holder.Get_For (On_Subprogram);
          if not V.Is_Empty then
             Self.Send_Subprogram (V, Init, True);
+         end if;
+
+         if DAP.Modules.Preferences.Break_On_Exception.Get_Pref then
+            --  add breakpoint to catch any exception
+            declare
+               Data    : constant Breakpoint_Data := Breakpoint_Data'
+                 (Kind        => On_Exception,
+                  Num         => 0,
+                  Except      => To_Unbounded_String ("exception"),
+                  Unhandled   => False,
+                  Disposition => Keep,
+                  Executable  => Self.Client.Get_Executable,
+                  others      => <>);
+            begin
+               Self.Holder.Append (Data);
+            end;
          end if;
 
          V := Self.Holder.Get_For (On_Exception);
@@ -799,8 +816,25 @@ package body DAP.Modules.Breakpoint_Managers is
       --  do not store breakpoints when we started debugging with no_executable
       if Self.Client.Get_Executable /= No_File then
          --  Store breakpoints in the persistent storage
-         DAP.Modules.Persistent_Breakpoints.Store
-           (Self.Client.Get_Executable, Self.Holder.Get_Breakpoints);
+         if DAP.Modules.Preferences.Break_On_Exception.Get_Pref then
+            declare
+               List : Breakpoint_Vectors.Vector;
+            begin
+               for B of Self.Holder.Get_Breakpoints loop
+                  if B.Kind /= On_Exception
+                    or else B.Except /= "exception"
+                  then
+                     List.Append (B);
+                  end if;
+               end loop;
+
+               DAP.Modules.Persistent_Breakpoints.Store
+                 (Self.Client.Get_Executable, List);
+            end;
+         else
+            DAP.Modules.Persistent_Breakpoints.Store
+              (Self.Client.Get_Executable, Self.Holder.Get_Breakpoints);
+         end if;
       end if;
    end Finalize;
 

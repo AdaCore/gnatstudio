@@ -27,6 +27,7 @@ package DAP.Modules.Preferences is
    DAP_Adapter                   : String_Preference;
 
    -- General --
+   Break_On_Exception            : Boolean_Preference;
    Open_Main_Unit                : Boolean_Preference;
    Preserve_State_On_Exit        : Boolean_Preference;
 
