@@ -364,7 +364,7 @@ package DAP.Clients is
 
    function Is_Quit_Command
      (Self : DAP_Client;
-      Cmd  : String)
+      Cmd  : VSS.Strings.Virtual_String)
       return Boolean;
 
    -- DAP_Visual_Debugger --
@@ -536,12 +536,12 @@ private
 
    function Is_Frame_Up_Command
      (Self : DAP_Client;
-      Cmd  : String)
+      Cmd  : VSS.Strings.Virtual_String)
       return Boolean;
 
    function Is_Frame_Down_Command
      (Self : DAP_Client;
-      Cmd  : String)
+      Cmd  : VSS.Strings.Virtual_String)
       return Boolean;
 
    type Evaluate_Kind is
