@@ -310,6 +310,17 @@ package DAP.Modules.Breakpoints is
       Data : Breakpoint_Data);
    --  Process response to update last (added) breakpoint data
 
+   procedure Append
+     (Self : in out Breakpoint_Holder;
+      Data : Breakpoint_Data);
+   --  Add breakpoint if it does not have duplicate. Used only to prepare
+   --  the list of breakpoints to add "preferences based" breakpoints before
+   --  initial setting of them.
+
+   procedure Initialized_For_Exceptions
+     (Self   : in out Breakpoint_Holder;
+      Actual : Breakpoint_Vectors.Vector);
+
    Subprograms_File : constant Virtual_File := Create ("dap_subprogram");
    Addreses_File    : constant Virtual_File := Create ("dap_address");
    Exceptions_File  : constant Virtual_File := Create ("dap_exception");

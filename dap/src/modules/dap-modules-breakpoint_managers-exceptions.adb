@@ -60,6 +60,7 @@ package body DAP.Modules.Breakpoint_Managers.Exceptions is
 
       Actual  : Breakpoint_Vectors.Vector;
       Data    : Breakpoint_Data;
+      Tmp     : Breakpoint_Data;
       Enabled : Breakpoint_Vectors.Vector;
    begin
       New_Request := null;
@@ -70,6 +71,19 @@ package body DAP.Modules.Breakpoint_Managers.Exceptions is
             null;
 
          when Init =>
+            for Index in 1 .. Length (Result.a_body.Value.breakpoints) loop
+               Data := Self.Sent.Element (Index);
+               Tmp  := Convert
+                 (Self.Kernel, Result.a_body.Value.breakpoints (Index));
+
+               Data.Num       := Tmp.Num;
+               Data.Locations := Tmp.Locations;
+
+               Actual.Append (Data);
+            end loop;
+
+            Self.Manager.Holder.Initialized_For_Exceptions (Actual);
+
             for Data of Self.Sent loop
                Self.Manager.Send_Commands (Data);
             end loop;

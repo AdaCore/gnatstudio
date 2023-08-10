@@ -162,6 +162,10 @@ package body DAP.Clients is
      Regular_Expression := VSS.Regular_Expressions.To_Regular_Expression
        ("^\s*(down)\s*$");
 
+   Is_Catch_Exception_Pattern : constant VSS.Regular_Expressions.
+     Regular_Expression := VSS.Regular_Expressions.To_Regular_Expression
+       ("^\s*(catch|tcatch)\s+(exception)\s*$");
+
    --------------
    -- On_Error --
    --------------
@@ -419,13 +423,12 @@ package body DAP.Clients is
 
    function Is_Quit_Command
      (Self : DAP_Client;
-      Cmd  : String)
+      Cmd  : Virtual_String)
       return Boolean
    is
       pragma Unreferenced (Self);
    begin
-      return Is_Quit_Pattern.Match
-        (VSS.Strings.Conversions.To_Virtual_String (Cmd)).Has_Match;
+      return Is_Quit_Pattern.Match (Cmd).Has_Match;
    end Is_Quit_Command;
 
    -------------------------
@@ -434,13 +437,12 @@ package body DAP.Clients is
 
    function Is_Frame_Up_Command
      (Self : DAP_Client;
-      Cmd  : String)
+      Cmd  : Virtual_String)
       return Boolean
    is
       pragma Unreferenced (Self);
    begin
-      return Is_Frame_Up_Pattern.Match
-        (VSS.Strings.Conversions.To_Virtual_String (Cmd)).Has_Match;
+      return Is_Frame_Up_Pattern.Match (Cmd).Has_Match;
    end Is_Frame_Up_Command;
 
    ---------------------------
@@ -449,13 +451,12 @@ package body DAP.Clients is
 
    function Is_Frame_Down_Command
      (Self : DAP_Client;
-      Cmd  : String)
+      Cmd  : Virtual_String)
       return Boolean
    is
       pragma Unreferenced (Self);
    begin
-      return Is_Frame_Down_Pattern.Match
-        (VSS.Strings.Conversions.To_Virtual_String (Cmd)).Has_Match;
+      return Is_Frame_Down_Pattern.Match (Cmd).Has_Match;
    end Is_Frame_Down_Command;
 
    ----------------------
@@ -1706,31 +1707,46 @@ package body DAP.Clients is
       Error_Message  : GNATCOLL.Scripts.Subprogram_Type := On_Error_Message;
       Rejected       : GNATCOLL.Scripts.Subprogram_Type := On_Rejected;
 
+      Matched : VSS.Regular_Expressions.Regular_Expression_Match;
+      VSS_Cmd : Virtual_String;
    begin
       if Tmp /= "" then
-         if Self.Is_Quit_Command (Cmd) then
+         VSS_Cmd := VSS.Strings.Conversions.To_Virtual_String (Tmp);
+
+         if Self.Is_Quit_Command (VSS_Cmd) then
             Self.Quit;
 
          else
-            if Output_Command then
-               Self.Display_In_Debugger_Console (Cmd, Is_Command => True);
+            Matched := Is_Catch_Exception_Pattern.Match (VSS_Cmd);
+
+            if Matched.Has_Match then
+               Self.Break_Exception
+                 (Name      => VSS.Strings.Conversions.To_UTF_8_String
+                    (Matched.Captured (2)),
+                  Unhandled => False,
+                  Temporary => Matched.Captured (1) = "tcatch");
+
+            else
+               if Output_Command then
+                  Self.Display_In_Debugger_Console (Cmd, Is_Command => True);
+               end if;
+
+               if Self.Is_Frame_Up_Command (VSS_Cmd) then
+                  Self.Frame_Up;
+
+               elsif Self.Is_Frame_Down_Command (VSS_Cmd) then
+                  Self.Frame_Down;
+               end if;
+
+               Request := Self.Create_Evaluate_Command
+                 (Command,
+                  VSS_Cmd,
+                  Result_In_Console,
+                  Result_Message, Error_Message, Rejected);
+
+               Self.Enqueue (Request);
+               return;
             end if;
-
-            if Self.Is_Frame_Up_Command (Cmd) then
-               Self.Frame_Up;
-
-            elsif Self.Is_Frame_Down_Command (Cmd) then
-               Self.Frame_Down;
-            end if;
-
-            Request := Self.Create_Evaluate_Command
-              (Command,
-               VSS.Strings.Conversions.To_Virtual_String (Cmd),
-               Result_In_Console,
-               Result_Message, Error_Message, Rejected);
-
-            Self.Enqueue (Request);
-            return;
          end if;
       end if;
 

@@ -32,6 +32,16 @@ package body DAP.Modules.Preferences is
          Default => "",
          Path    => "Debugger:General");
 
+      Break_On_Exception := Create
+        (Manager   => Prefs,
+         Name      => "Debugger-Break-On-Exception",
+         Path      => "Debugger:General",
+         Label     => "Break on exceptions",
+         Doc       =>
+           "Stop when an exception is raised. Changes to this setting are"
+             & " ignored by debuggers already running.",
+         Default   => False);
+
       Open_Main_Unit := Create
         (Manager    => Prefs,
          Name       => "Debugger-Open-Main-Unit",

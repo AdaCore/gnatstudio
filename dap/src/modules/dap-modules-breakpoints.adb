@@ -600,6 +600,29 @@ package body DAP.Modules.Breakpoints is
       Changed.Append (Data);
    end Add;
 
+   ------------
+   -- Append --
+   ------------
+
+   procedure Append
+     (Self : in out Breakpoint_Holder;
+      Data : Breakpoint_Data)
+   is
+      Local : Breakpoint_Data := Data;
+   begin
+      if Local.Num = 0 then
+         Local.Num := Self.Get_Next_Id;
+      end if;
+
+      for D of Self.Get_For_File (Get_Location_File (Data)) loop
+         if Is_Duplicate (D, Local) then
+            return;
+         end if;
+      end loop;
+
+      Self.Vector.Append (Local);
+   end Append;
+
    -----------------
    -- Set_Enabled --
    -----------------
@@ -835,6 +858,41 @@ package body DAP.Modules.Breakpoints is
          Self.Delete_Fake_Subprogram;
       end if;
    end Initialized_For_Subprograms;
+
+   --------------------------------
+   -- Initialized_For_Exceptions --
+   --------------------------------
+
+   procedure Initialized_For_Exceptions
+     (Self   : in out Breakpoint_Holder;
+      Actual : Breakpoint_Vectors.Vector)
+   is
+      Idx  : Integer := Actual.First_Index;
+      Nums : Breakpoint_Identifier_Lists.List;
+      Data : Breakpoint_Data;
+   begin
+      for Data of Self.Vector loop
+         if Data.State = Enabled
+           and then Data.Kind = On_Exception
+         then
+            Data := Actual (Idx);
+            Nums.Append (Data.Num);
+            Idx  := Idx + 1;
+         end if;
+      end loop;
+
+      Idx := Self.Vector.First_Index;
+      while Idx <= Self.Vector.Last_Index loop
+         Data := Self.Vector.Element (Idx);
+         if Data.Kind = On_Line
+           and then Nums.Contains (Data.Num)
+         then
+            Self.Vector.Delete (Idx);
+         else
+            Idx := Idx + 1;
+         end if;
+      end loop;
+   end Initialized_For_Exceptions;
 
    -----------------------
    -- Delete_Duplicates --

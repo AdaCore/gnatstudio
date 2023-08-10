@@ -1341,8 +1341,7 @@ package body DAP.Views.Variables is
          if Cmd = "display" then
             --  Do not send debugger quit command
             if DAP.Clients.DAP_Visual_Debugger_Access
-              (Process).Client.Is_Quit_Command
-              (VSS.Strings.Conversions.To_UTF_8_String (It.Cmd))
+              (Process).Client.Is_Quit_Command (It.Cmd)
             then
                return "";
             end if;
