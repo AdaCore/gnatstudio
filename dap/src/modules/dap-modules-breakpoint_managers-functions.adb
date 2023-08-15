@@ -61,6 +61,7 @@ package body DAP.Modules.Breakpoint_Managers.Functions is
       Update  : Boolean := False;
       Actual  : Breakpoint_Vectors.Vector;
       Enabled : Breakpoint_Vectors.Vector;
+      Num     : Breakpoint_Identifier;
    begin
       New_Request := null;
 
@@ -87,9 +88,14 @@ package body DAP.Modules.Breakpoint_Managers.Functions is
             end loop;
 
             Self.Manager.Holder.Added_Subprogram
-              (Self.Sent.Last_Element, Actual);
+              (Self.Sent.Last_Element, Actual, Num);
 
             Self.Manager.Send_Commands (Self.Sent.Last_Element);
+
+            GPS.Kernel.Hooks.Debugger_Breakpoint_Added_Hook.Run
+              (Kernel   => Self.Kernel,
+               Debugger => Self.Get_Client.Get_Visual,
+               Id       => Integer (Num));
 
             Update := True;
 

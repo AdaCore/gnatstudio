@@ -46,6 +46,7 @@ with DAP.Clients;                    use DAP.Clients;
 with DAP.Module;
 with DAP.Modules.Preferences;        use DAP.Modules.Preferences;
 with DAP.Views.Breakpoints;
+with DAP.Utils;                      use DAP.Utils;
 
 with Xref;                           use Xref;
 with JSON_Utils;
@@ -474,9 +475,7 @@ package body DAP.Modules.Persistent_Breakpoints is
          Value.Set_Field ("ignore", B.Ignore);
 
          if not B.Condition.Is_Empty then
-            Value.Set_Field
-              ("condition",
-               VSS.Strings.Conversions.To_UTF_8_String (B.Condition));
+            Value.Set_Field ("condition", UTF8 (B.Condition));
          end if;
 
          if B.Executable /= No_File then
@@ -484,9 +483,7 @@ package body DAP.Modules.Persistent_Breakpoints is
          end if;
 
          if not B.Commands.Is_Empty then
-            Value.Set_Field
-              ("command",
-               VSS.Strings.Conversions.To_UTF_8_String (B.Commands));
+            Value.Set_Field ("command", UTF8 (B.Commands));
          end if;
 
          Value.Set_Field

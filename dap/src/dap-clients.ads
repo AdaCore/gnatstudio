@@ -136,13 +136,17 @@ package DAP.Clients is
      (Self      : in out DAP_Client;
       File      : GNATCOLL.VFS.Virtual_File;
       Line      : Editable_Line_Type;
-      Temporary : Boolean := False);
+      Temporary : Boolean := False;
+      Condition : VSS.Strings.Virtual_String :=
+        VSS.Strings.Empty_Virtual_String);
    --  Add a breakpoint for the file/line
 
    procedure Break_Subprogram
      (Self       : in out DAP_Client;
       Subprogram : String;
-      Temporary  : Boolean := False);
+      Temporary  : Boolean := False;
+      Condition  : VSS.Strings.Virtual_String :=
+        VSS.Strings.Empty_Virtual_String);
    --  Add a breakpoint for the subprogram
 
    procedure Break_Exception
@@ -151,6 +155,14 @@ package DAP.Clients is
       Unhandled : Boolean := False;
       Temporary : Boolean := False);
    --  Add a breakpoint for the exception
+
+   procedure Break_Address
+     (Self      : in out DAP_Client;
+      Address   : Address_Type;
+      Temporary : Boolean := False;
+      Condition : VSS.Strings.Virtual_String :=
+        VSS.Strings.Empty_Virtual_String);
+   --  Add a breakpoint for the address
 
    procedure Toggle_Instruction_Breakpoint
      (Self    : in out DAP_Client;

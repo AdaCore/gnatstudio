@@ -50,6 +50,16 @@ package body DAP.Requests is
       Self.Client := Client;
    end Set_Client;
 
+   ----------------
+   -- Get_Client --
+   ----------------
+
+   function Get_Client
+     (Self : in out DAP_Request) return access DAP.Clients.DAP_Client'Class is
+   begin
+      return Self.Client;
+   end Get_Client;
+
    -----------------
    -- On_Rejected --
    -----------------

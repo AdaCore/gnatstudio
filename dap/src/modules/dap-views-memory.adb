@@ -87,6 +87,7 @@ with DAP.Modules.Preferences;  use DAP.Modules.Preferences;
 with DAP.Requests;             use DAP.Requests;
 with DAP.Tools;
 with DAP.Types;                use DAP.Types;
+with DAP.Utils;                use DAP.Utils;
 
 with DAP.Requests.Read_Memory;
 with DAP.Requests.Write_Memory;
@@ -1031,8 +1032,7 @@ package body DAP.Views.Memory is
       if Result.a_body.Is_Set then
          declare
             Base64_Decoder : GNATCOLL.Coders.Base64.Decoder_Type;
-            Str     : constant String := VSS.Strings.Conversions.
-              To_UTF_8_String (Result.a_body.Value.data);
+            Str     : constant String := UTF8 (Result.a_body.Value.data);
             Src     : Stream_Element_Array (1 .. Str'Length) with Import;
             for Src'Address use Str'Address;
             Index   : Stream_Element_Offset := Src'First;

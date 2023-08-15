@@ -1004,14 +1004,13 @@ package body DAP.Modules.Breakpoints is
      (Self    : in out Breakpoint_Holder;
       Data    : Breakpoint_Data;
       Changed : out Breakpoint_Vectors.Vector;
-      Update  : out Boolean)
+      Check   : Boolean)
    is
       D          : Breakpoint_Data;
       Duplicates : Boolean := False;
-      Index      : Integer;
+      Index      : Integer := 0;
    begin
       Changed := Breakpoint_Vectors.Empty_Vector;
-      Update  := False;
 
       --  Update already added by notification
       for Idx in Self.Vector.First_Index .. Self.Vector.Last_Index loop
@@ -1022,6 +1021,16 @@ package body DAP.Modules.Breakpoints is
             exit;
          end if;
       end loop;
+
+      --  Add new BP if not found (not added via notifications)
+      if Index = 0 then
+         Self.Vector.Append (Data);
+         Index := Self.Vector.Last_Index;
+      end if;
+
+      if not Check then
+         return;
+      end if;
 
       --  Check for duplicates
       for D of Self.Vector loop
@@ -1038,8 +1047,6 @@ package body DAP.Modules.Breakpoints is
          --  Just added breakpoint duplicates another, so delete it
          Self.Vector.Delete (Index);
          Changed := Self.Get_For_File (Get_Location_File (Data));
-      else
-         Update := True;
       end if;
    end Added;
 
@@ -1050,7 +1057,8 @@ package body DAP.Modules.Breakpoints is
    procedure Added_Subprogram
      (Self   : in out Breakpoint_Holder;
       Data   : Breakpoint_Data;
-      Actual : Breakpoint_Vectors.Vector)
+      Actual : Breakpoint_Vectors.Vector;
+      Num    : out Breakpoint_Identifier)
    is
       Local : Breakpoint_Data := Data;
       Idx   : Integer := Actual.First_Index;
@@ -1070,6 +1078,7 @@ package body DAP.Modules.Breakpoints is
          Idx := Idx + 1;
       end loop;
       Local.Num := Local.Locations.First_Element.Num;
+      Num := Local.Num;
       Self.Vector.Append (Local);
 
       Idx := Self.Vector.First_Index;
@@ -1294,24 +1303,5 @@ package body DAP.Modules.Breakpoints is
                others     => <>));
       end if;
    end Break_Unbreak_Address;
-
-   --------------------------
-   -- Add_BP_From_Response --
-   --------------------------
-
-   procedure Add_BP_From_Response
-     (Self : in out Breakpoint_Holder;
-      Data : Breakpoint_Data) is
-   begin
-      for Idx in Self.Vector.First_Index .. Self.Vector.Last_Index loop
-         if Self.Vector (Idx) = Data.Num then
-            --  Update data
-            Self.Vector.Replace_Element (Idx, Data);
-            return;
-         end if;
-      end loop;
-
-      Self.Vector.Append (Data);
-   end Add_BP_From_Response;
 
 end DAP.Modules.Breakpoints;

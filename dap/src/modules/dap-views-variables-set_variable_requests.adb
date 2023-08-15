@@ -15,8 +15,8 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with VSS.Strings.Conversions;
 with Glib_Values_Utils;           use Glib_Values_Utils;
+with DAP.Utils;                   use DAP.Utils;
 
 package body DAP.Views.Variables.Set_Variable_Requests is
 
@@ -65,15 +65,12 @@ package body DAP.Views.Variables.Set_Variable_Requests is
               (View.Tree.Model,
                Iter   => Iter,
                Values =>
-                 (Column_Value => As_String
-                      (VSS.Strings.Conversions.To_UTF_8_String
-                           (Result.a_body.value))));
+                 (Column_Value => As_String (UTF8 (Result.a_body.value))));
          end if;
 
       else
          Self.Kernel.Get_Messages_Window.Insert_Error
-           (VSS.Strings.Conversions.To_UTF_8_String (Self.Name) &
-              " is not set.");
+           (UTF8 (Self.Name) & " is not set.");
       end if;
 
       Path_Free (Self.Path);

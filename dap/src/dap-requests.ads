@@ -73,6 +73,10 @@ package DAP.Requests is
       Client : access DAP.Clients.DAP_Client'Class);
    --  Set the client that process the request
 
+   function Get_Client
+     (Self : in out DAP_Request) return access DAP.Clients.DAP_Client'Class;
+   --  Get associated client
+
    function Method (Self : in out DAP_Request) return String is abstract;
 
 private

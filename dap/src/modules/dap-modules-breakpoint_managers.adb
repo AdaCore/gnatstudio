@@ -38,6 +38,7 @@ with DAP.Modules.Breakpoint_Managers.Exceptions;
 with DAP.Modules.Breakpoint_Managers.Functions;
 with DAP.Modules.Breakpoint_Managers.Instructions;
 with DAP.Modules.Preferences;
+with DAP.Utils;                    use DAP.Utils;
 
 package body DAP.Modules.Breakpoint_Managers is
 
@@ -60,9 +61,7 @@ package body DAP.Modules.Breakpoint_Managers is
       end if;
 
       if not Item.instructionReference.Is_Empty then
-         Address := String_To_Address
-           (VSS.Strings.Conversions.To_UTF_8_String
-              (Item.instructionReference));
+         Address := String_To_Address (UTF8 (Item.instructionReference));
 
          if Item.offset.Is_Set then
             Address := Set_Offset (Address, Item.offset.Value);
@@ -99,11 +98,10 @@ package body DAP.Modules.Breakpoint_Managers is
    is
       File   : constant Virtual_File :=
         (if DAP_Bp.source.Is_Set
-         then Create
-           (+(VSS.Strings.Conversions.To_UTF_8_String
-            (if DAP_Bp.source.Value.path.Is_Empty
-                 then DAP_Bp.source.Value.name
-                 else DAP_Bp.source.Value.path)))
+         then To_File
+           (if DAP_Bp.source.Value.path.Is_Empty
+            then DAP_Bp.source.Value.name
+            else DAP_Bp.source.Value.path)
          else No_File);
       Holder : constant GPS.Editors.Controlled_Editor_Buffer_Holder :=
         Kernel.Get_Buffer_Factory.Get_Holder (File => File);
@@ -259,7 +257,9 @@ package body DAP.Modules.Breakpoint_Managers is
      (Self      : DAP_Client_Breakpoint_Manager_Access;
       File      : GNATCOLL.VFS.Virtual_File;
       Line      : Editable_Line_Type;
-      Temporary : Boolean := False)
+      Temporary : Boolean := False;
+      Condition : VSS.Strings.Virtual_String :=
+        VSS.Strings.Empty_Virtual_String)
    is
       Data    : constant Breakpoint_Data := Breakpoint_Data'
         (Kind      => On_Line,
@@ -272,6 +272,7 @@ package body DAP.Modules.Breakpoint_Managers is
                Column => 1),
             Invalid_Address), 1),
          Disposition => (if Temporary then Delete else Keep),
+         Condition   => Condition,
          Executable  => Self.Client.Get_Executable,
          others      => <>);
    begin
@@ -285,18 +286,44 @@ package body DAP.Modules.Breakpoint_Managers is
    procedure Break_Subprogram
      (Self       : DAP_Client_Breakpoint_Manager_Access;
       Subprogram : String;
-      Temporary  : Boolean := False)
+      Temporary  : Boolean := False;
+      Condition  : VSS.Strings.Virtual_String :=
+        VSS.Strings.Empty_Virtual_String)
    is
-      Data    : constant Breakpoint_Data := Breakpoint_Data'
+      Data : constant Breakpoint_Data := Breakpoint_Data'
         (Kind        => On_Subprogram,
          Num         => 0,
          Subprogram  => To_Unbounded_String (Subprogram),
          Disposition => (if Temporary then Delete else Keep),
+         Condition   => Condition,
          Executable  => Self.Client.Get_Executable,
          others      => <>);
    begin
       Self.Break (Data);
    end Break_Subprogram;
+
+   -------------------
+   -- Break_Address --
+   -------------------
+
+   procedure Break_Address
+     (Self      : DAP_Client_Breakpoint_Manager_Access;
+      Address   : Address_Type;
+      Temporary : Boolean := False;
+      Condition : VSS.Strings.Virtual_String :=
+        VSS.Strings.Empty_Virtual_String)
+   is
+      Data    : constant Breakpoint_Data := Breakpoint_Data'
+        (Kind        => On_Address,
+         Num         => 0,
+         Address     => Address,
+         Disposition => (if Temporary then Delete else Keep),
+         Condition   => Condition,
+         Executable  => Self.Client.Get_Executable,
+         others      => <>);
+   begin
+      Self.Break (Data);
+   end Break_Address;
 
    -----------------------------------
    -- Toggle_Instruction_Breakpoint --
@@ -785,25 +812,29 @@ package body DAP.Modules.Breakpoint_Managers is
          begin
             for Data of Self.Holder.Get_Breakpoints loop
                if Data = Breakpoint_Identifier (Num.Element.all) then
-                  for L of Data.Locations loop
-                     if L.Num = Breakpoint_Identifier (Num.Element.all) then
-                        Stopped_File := GPS.Editors.Get_File (L.Marker);
-                        Stopped_Line := Integer
-                          (GPS.Editors.Get_Line (L.Marker));
-                        Address := L.Address;
+                  if Stopped_File = No_File then
+                     for L of Data.Locations loop
+                        if L.Num = Breakpoint_Identifier (Num.Element.all) then
+                           Stopped_File := GPS.Editors.Get_File (L.Marker);
+                           Stopped_Line := Integer
+                             (GPS.Editors.Get_Line (L.Marker));
+                           Address := L.Address;
 
-                        if Data.Disposition = Delete then
-                           Ids.Append (Data.Num);
-                           Self.Remove_Breakpoints (Ids);
                         end if;
+                     end loop;
+                  end if;
 
-                        return;
-                     end if;
-                  end loop;
+                  if Data.Disposition = Delete then
+                     Ids.Append (Data.Num);
+                  end if;
                end if;
             end loop;
          end;
       end loop;
+
+      if not Ids.Is_Empty then
+         Self.Remove_Breakpoints (Ids);
+      end if;
    end Stopped;
 
    --------------
@@ -854,9 +885,7 @@ package body DAP.Modules.Breakpoint_Managers is
       is
          File   : constant Virtual_File :=
            (if Event.breakpoint.source.Is_Set
-            then Create
-              (+(VSS.Strings.Conversions.To_UTF_8_String
-               (Event.breakpoint.source.Value.path)))
+            then To_File (Event.breakpoint.source.Value.path)
             else No_File);
          Holder : constant GPS.Editors.
            Controlled_Editor_Buffer_Holder :=
