@@ -140,6 +140,13 @@ package body DAP.Views.Variables is
      (Command : access Variables_Collapse_Or_Expand_Command;
       Context : Interactive_Command_Context) return Command_Return_Type;
 
+   type Print_Variable_Command is new Interactive_Command with record
+      Dereference : Boolean := False;
+   end record;
+   overriding function Execute
+     (Command : access Print_Variable_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type;
+
    type Access_Variable_Filter is
      new Action_Filter_Record with null record;
    overriding function Filter_Matches_Primitive
@@ -1392,6 +1399,44 @@ package body DAP.Views.Variables is
    -------------
 
    overriding function Execute
+     (Command : access Print_Variable_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type
+   is
+      Client : constant DAP.Clients.DAP_Client_Access :=
+        DAP.Module.Get_Current_Debugger;
+      Name   : constant String :=
+        Get_Variable_Name (Context.Context, Command.Dereference);
+   begin
+      if GPS.Kernel.Contexts.Has_Debugging_Variable (Context.Context) then
+         declare
+            Info : constant Item_Info := Get_Variable (Context.Context);
+         begin
+            if Info.Cmd /= "" then
+               Client.Process_User_Command
+                 (Cmd               => UTF8 (Info.Cmd),
+                  Output_Command    => True,
+                  Result_In_Console => True);
+
+               return Commands.Success;
+            end if;
+         end;
+      end if;
+
+      if Name /= "" then
+         Client.Process_User_Command
+           (Cmd               => "print " & Name,
+            Output_Command    => True,
+            Result_In_Console => True);
+      end if;
+
+      return Commands.Success;
+   end Execute;
+
+   -------------
+   -- Execute --
+   -------------
+
+   overriding function Execute
      (Command : access Tree_Undisplay_Command;
       Context : Interactive_Command_Context) return Command_Return_Type
    is
@@ -2374,9 +2419,34 @@ package body DAP.Views.Variables is
       Show_Types := Kernel.Get_Preferences.Create_Invisible_Pref
         ("debugger-variables-show-types", True, Label => "Show types");
 
+      Command := new Print_Variable_Command;
+      Register_Action
+        (Kernel, "debug print variable",
+         Command     => Command,
+         Description =>
+           "Print the value of the variable in the debugger console",
+         Filter      => Debugger_Stopped_Filter and Printable_Var_Filter,
+         Category    => "Debug");
+      Register_Contextual_Menu
+        (Kernel => Kernel,
+         Label  => "Debug/Print %S",
+         Action => "debug print variable",
+         Group  => DAP_Variables_Contextual_Group);
+
+      Command := new Print_Variable_Command;
+      Print_Variable_Command (Command.all).Dereference := True;
+      Register_Action
+        (Kernel, "debug print dereferenced variable",
+         Command     => Command,
+         Description =>
+           "Print the value pointed to by the variable in the debugger"
+           & " console",
+         Filter    => Debugger_Stopped_Filter and Access_Filter and
+           Printable_Var_Filter,
+         Category  => "Debug");
+
       --    "debug tree display local variables",
       --    "debug tree display arguments",
-      --    "debug print variable",
    end Register_Module;
 
 end DAP.Views.Variables;
