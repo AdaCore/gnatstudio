@@ -15,7 +15,12 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
+with Ada.Strings.UTF_Encoding;
+
 with GNATCOLL.VFS;   use GNATCOLL.VFS;
+
+with VSS.Strings.Conversions;
+
 with GPS.Kernel;
 
 package DAP.Utils is
@@ -35,5 +40,14 @@ package DAP.Utils is
       File   : GNATCOLL.VFS.Virtual_File;
       Line   : Integer);
    --  Open the file and set the cursor on the line.
+
+   function UTF8
+     (Item : VSS.Strings.Virtual_String'Class)
+      return Ada.Strings.UTF_Encoding.UTF_8_String
+      renames VSS.Strings.Conversions.To_UTF_8_String;
+
+   function To_File
+     (Item : VSS.Strings.Virtual_String'Class)
+      return GNATCOLL.VFS.Virtual_File;
 
 end DAP.Utils;

@@ -71,6 +71,7 @@ with GPS.Debuggers;
 with DAP.Module;
 with DAP.Modules.Contexts;        use DAP.Modules.Contexts;
 with DAP.Modules.Preferences;
+with DAP.Utils;                   use DAP.Utils;
 
 with DAP.Views.Variables.Evaluate_Requests;
 with DAP.Views.Variables.Scopes_Requests;
@@ -468,9 +469,7 @@ package body DAP.Views.Variables is
          if Cursor = Variables_References_Trees.No_Element then
             return Wrap (Get_Name (Item));
          else
-            return Wrap
-              (VSS.Strings.Conversions.To_UTF_8_String
-                 (Element (Cursor).name));
+            return Wrap (UTF8 (Element (Cursor).name));
          end if;
       end Display_Name;
 
@@ -479,9 +478,7 @@ package body DAP.Views.Variables is
          if Cursor = Variables_References_Trees.No_Element then
             return "";
          else
-            return XML_Utils.Protect
-              (VSS.Strings.Conversions.To_UTF_8_String
-                 (Element (Cursor).a_type));
+            return XML_Utils.Protect (UTF8 (Element (Cursor).a_type));
          end if;
       end Display_Type_Name;
 
@@ -511,9 +508,7 @@ package body DAP.Views.Variables is
                     (if Cursor = Variables_References_Trees.No_Element
                      then ""
                      else XML_Utils.Protect
-                       (Validate_UTF_8
-                            (VSS.Strings.Conversions.To_UTF_8_String
-                                 (Element (Cursor).value))));
+                       (Validate_UTF_8 (UTF8 (Element (Cursor).value))));
       Type_Name : constant String := Display_Type_Name;
    begin
       if Cursor /= Variables_References_Trees.No_Element then
@@ -521,8 +516,7 @@ package body DAP.Views.Variables is
       end if;
 
       Trace
-        (Me, "Add row:" &
-           VSS.Strings.Conversions.To_UTF_8_String
+        (Me, "Add row:" & UTF8
            ((if Cursor /= Variables_References_Trees.No_Element
             then Var.name
             else Item.Varname)));
@@ -1716,8 +1710,7 @@ package body DAP.Views.Variables is
                if Display_Value_Select_Dialog
                  (Get_Kernel (Context.Context),
                   "Set format",
-                  "Format for " &
-                    VSS.Strings.Conversions.To_UTF_8_String (Name),
+                  "Format for " & UTF8 (Name),
                   Format)
                then
                   Item.Format := Convert (Format);
@@ -2183,16 +2176,12 @@ package body DAP.Views.Variables is
             begin
                if Item.Cmd /= "" then
                   Value.Set_Field ("tag", "cmd");
-                  Value.Set_Field
-                    ("value",
-                     VSS.Strings.Conversions.To_UTF_8_String (Item.Cmd));
+                  Value.Set_Field ("value", UTF8 (Item.Cmd));
                   Value.Set_Field ("split", Item.Split_Lines);
 
                else
                   Value.Set_Field ("tag", "variable");
-                  Value.Set_Field
-                    ("value",
-                     VSS.Strings.Conversions.To_UTF_8_String (Item.Varname));
+                  Value.Set_Field ("value", UTF8 (Item.Varname));
                   Value.Set_Field
                     ("format", Value_Format'Image (Convert (Item.Format)));
                end if;

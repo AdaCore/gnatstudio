@@ -83,8 +83,15 @@ package body DAP.Modules.Breakpoint_Managers.Instructions is
                     (Length (Result.a_body.breakpoints))).Locations;
                Data.Num := Data.Locations.First_Element.Num;
 
-               Self.Manager.Holder.Add_BP_From_Response (Data);
+               Self.Manager.Holder.Added
+                 (Data => Data, Changed => Enabled, Check => False);
+
                Self.Manager.Send_Commands (Data);
+
+               GPS.Kernel.Hooks.Debugger_Breakpoint_Added_Hook.Run
+                 (Kernel   => Self.Kernel,
+                  Debugger => Self.Get_Client.Get_Visual,
+                  Id       => Integer (Data.Num));
             end if;
 
          when Enable =>

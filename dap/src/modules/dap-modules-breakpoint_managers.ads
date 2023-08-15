@@ -17,6 +17,8 @@
 
 with GNATCOLL.VFS;                use GNATCOLL.VFS;
 
+with VSS.Strings;                 use VSS.Strings;
+
 with Basic_Types;                 use Basic_Types;
 with GPS.Kernel;
 with GPS.Markers;                 use GPS.Markers;
@@ -61,13 +63,17 @@ package DAP.Modules.Breakpoint_Managers is
      (Self      : DAP_Client_Breakpoint_Manager_Access;
       File      : GNATCOLL.VFS.Virtual_File;
       Line      : Editable_Line_Type;
-      Temporary : Boolean := False);
+      Temporary : Boolean := False;
+      Condition : VSS.Strings.Virtual_String :=
+        VSS.Strings.Empty_Virtual_String);
    --  Add breakpoint for the file/line
 
    procedure Break_Subprogram
      (Self       : DAP_Client_Breakpoint_Manager_Access;
       Subprogram : String;
-      Temporary  : Boolean := False);
+      Temporary  : Boolean := False;
+      Condition  : VSS.Strings.Virtual_String :=
+        VSS.Strings.Empty_Virtual_String);
    --  Add breakpoint for the subprogram
 
    procedure Break_Exception
@@ -76,6 +82,14 @@ package DAP.Modules.Breakpoint_Managers is
       Unhandled : Boolean := False;
       Temporary : Boolean := False);
    --  Add breakpoint for the exception
+
+   procedure Break_Address
+     (Self      : DAP_Client_Breakpoint_Manager_Access;
+      Address   : Address_Type;
+      Temporary : Boolean := False;
+      Condition : VSS.Strings.Virtual_String :=
+        VSS.Strings.Empty_Virtual_String);
+   --  Add a breakpoint for the address
 
    procedure Toggle_Instruction_Breakpoint
      (Self    : DAP_Client_Breakpoint_Manager_Access;

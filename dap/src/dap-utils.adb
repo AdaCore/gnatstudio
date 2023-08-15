@@ -117,4 +117,17 @@ package body DAP.Utils is
         (Debugger_Messages_Category, GPS.Kernel.Messages.Sides_Only);
    end Unhighlight_Current_Line;
 
+   -------------
+   -- To_File --
+   -------------
+
+   function To_File
+     (Item : VSS.Strings.Virtual_String'Class)
+      return GNATCOLL.VFS.Virtual_File
+   is
+      use GNATCOLL.VFS;
+   begin
+      return Create_From_UTF8 (UTF8 (Item));
+   end To_File;
+
 end DAP.Utils;
