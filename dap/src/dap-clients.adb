@@ -62,7 +62,7 @@ with DAP.Requests.StackTraces;
 with DAP.Views.Consoles;
 with DAP.Views.Memory;
 with DAP.Tools.Inputs;
-with DAP.Utils;
+with DAP.Utils;                  use DAP.Utils;
 
 with Interactive_Consoles;       use Interactive_Consoles;
 with GUI_Utils;
@@ -166,6 +166,31 @@ package body DAP.Clients is
      Regular_Expression := VSS.Regular_Expressions.To_Regular_Expression
        ("^\s*(catch|tcatch)\s+(exception)\s*$");
 
+   Is_Breakpoint_Pattern : constant VSS.Regular_Expressions.
+     Regular_Expression := VSS.Regular_Expressions.To_Regular_Expression
+       ("^\s*(?:(break|b)|(tbreak|tb)|(hbreak|thbreak|rbreak|thb|hb|rb))"
+        & "(?:\s+(.+)?)?$");
+   --  to catch breakpoint command
+
+   --  Bp_Regular_Idx       : constant := 1;
+   Bp_Temporary_Idx     : constant := 2;
+   Bp_Not_Supported_Idx : constant := 3;
+   Bp_Details_Idx       : constant := 4;
+
+   Breakpoint_Details_Pattern : constant VSS.Regular_Expressions.
+     Regular_Expression := VSS.Regular_Expressions.To_Regular_Expression
+       ("^(?:(?:([+-]{1})(\d+))|(?:\*(0x[0-9a-f]+))|(?:(?:((?:\S:)?\S+):)?"
+        & "(?:(\d+)|(\w+))))?(?:\s*if\s+(.+))?$");
+   --  breakpoint command details\
+
+   Bp_Offset_Sig_Idx : constant := 1;
+   Bp_Offset_Idx     : constant := 2;
+   Bp_Address_Idx    : constant := 3;
+   Bp_File_Idx       : constant := 4;
+   Bp_Line_Idx       : constant := 5;
+   Bp_Subprogram_Idx : constant := 6;
+   Bp_Condition_Idx  : constant := 7;
+
    --------------
    -- On_Error --
    --------------
@@ -246,12 +271,14 @@ package body DAP.Clients is
      (Self      : in out DAP_Client;
       File      : GNATCOLL.VFS.Virtual_File;
       Line      : Editable_Line_Type;
-      Temporary : Boolean := False)
+      Temporary : Boolean := False;
+      Condition : VSS.Strings.Virtual_String :=
+        VSS.Strings.Empty_Virtual_String)
    is
       use DAP.Modules.Breakpoint_Managers;
    begin
       if Self.Breakpoints /= null then
-         Break_Source (Self.Breakpoints, File, Line, Temporary);
+         Break_Source (Self.Breakpoints, File, Line, Temporary, Condition);
       end if;
    end Break_Source;
 
@@ -262,14 +289,34 @@ package body DAP.Clients is
    procedure Break_Subprogram
      (Self       : in out DAP_Client;
       Subprogram : String;
-      Temporary  : Boolean := False)
+      Temporary  : Boolean := False;
+      Condition  : VSS.Strings.Virtual_String :=
+        VSS.Strings.Empty_Virtual_String)
    is
       use DAP.Modules.Breakpoint_Managers;
    begin
       if Self.Breakpoints /= null then
-         Break_Subprogram (Self.Breakpoints, Subprogram, Temporary);
+         Break_Subprogram (Self.Breakpoints, Subprogram, Temporary, Condition);
       end if;
    end Break_Subprogram;
+
+   -------------------
+   -- Break_Address --
+   -------------------
+
+   procedure Break_Address
+     (Self      : in out DAP_Client;
+      Address   : Address_Type;
+      Temporary : Boolean := False;
+      Condition : VSS.Strings.Virtual_String :=
+        VSS.Strings.Empty_Virtual_String)
+   is
+      use DAP.Modules.Breakpoint_Managers;
+   begin
+      if Self.Breakpoints /= null then
+         Break_Address (Self.Breakpoints, Address, Temporary, Condition);
+      end if;
+   end Break_Address;
 
    -----------------------------------
    -- Toggle_Instruction_Breakpoint --
@@ -735,7 +782,7 @@ package body DAP.Clients is
       --  To-Do: Check if language is detected
       return Get_Language_By_Name
         (GPS.Kernel.Get_Language_Handler (Self.Kernel),
-         VSS.Strings.Conversions.To_UTF_8_String (Self.Stored_Lang));
+         UTF8 (Self.Stored_Lang));
    end Get_Language;
 
    ---------------------
@@ -1123,8 +1170,7 @@ package body DAP.Clients is
             declare
                Remote_File : constant Virtual_File :=
                  Create_From_Base
-                   (+VSS.Strings.Conversions.To_UTF_8_String
-                      (Self.Source_Files.Element (L)),
+                   (+UTF8 (Self.Source_Files.Element (L)),
                     Dir_Name (Self.Get_Executable),
                     Remote.Get_Nickname (Remote.Debug_Server));
                Local_File  : constant Virtual_File := To_Local (Remote_File);
@@ -1163,9 +1209,7 @@ package body DAP.Clients is
 
                   if not Found then
                      Bases (Bases_Index) := new String'
-                       (Base_Name
-                          (VSS.Strings.Conversions.To_UTF_8_String
-                               (Self.Source_Files.Element (L))));
+                       (Base_Name (UTF8 (Self.Source_Files.Element (L))));
                      Bases_Index := Bases_Index + 1;
                   end if;
 
@@ -1327,8 +1371,7 @@ package body DAP.Clients is
          while not JS.R.Is_End_Object loop
             pragma Assert (JS.R.Is_Key_Name);
             declare
-               Key : constant String :=
-                 VSS.Strings.Conversions.To_UTF_8_String (JS.R.Key_Name);
+               Key : constant String := UTF8 (JS.R.Key_Name);
 
             begin
                JS.R.Read_Next;
@@ -1544,9 +1587,7 @@ package body DAP.Clients is
                declare
                   Console : constant access Interactive_Console_Record'Class :=
                     DAP.Views.Consoles.Get_Debugger_Interactive_Console (Self);
-                  S       : constant String :=
-                    VSS.Strings.Conversions.To_UTF_8_String
-                      (output.a_body.output);
+                  S       : constant String := UTF8 (output.a_body.output);
                begin
                   if Console /= null then
                      Console.Insert
@@ -1648,6 +1689,8 @@ package body DAP.Clients is
               and then Self.Breakpoints /= null
             then
                Self.Breakpoints.On_Notification (Event.a_body);
+            else
+               Trace (Me, "Can't parse breakpoint notification");
             end if;
          end;
 
@@ -1669,10 +1712,9 @@ package body DAP.Clients is
 
       else
          Self.Kernel.Get_Messages_Window.Insert_Error
-           ("Event:" & VSS.Strings.Conversions.To_UTF_8_String (Event));
+           ("Event:" & UTF8 (Event));
 
-         Trace (Me, "Event:" &
-                  VSS.Strings.Conversions.To_UTF_8_String (Event));
+         Trace (Me, "Event:" & UTF8 (Event));
       end if;
 
    exception
@@ -1694,6 +1736,7 @@ package body DAP.Clients is
       On_Rejected       : GNATCOLL.Scripts.Subprogram_Type := null)
    is
       use GNATCOLL.Scripts;
+      use GNATCOLL.VFS;
 
       Request : DAP.Requests.DAP_Request_Access;
 
@@ -1707,8 +1750,40 @@ package body DAP.Clients is
       Error_Message  : GNATCOLL.Scripts.Subprogram_Type := On_Error_Message;
       Rejected       : GNATCOLL.Scripts.Subprogram_Type := On_Rejected;
 
-      Matched : VSS.Regular_Expressions.Regular_Expression_Match;
-      VSS_Cmd : Virtual_String;
+      Matched       : VSS.Regular_Expressions.Regular_Expression_Match;
+      Details_Match : VSS.Regular_Expressions.Regular_Expression_Match;
+      VSS_Cmd       : Virtual_String;
+      Details       : Virtual_String;
+
+      procedure Add_BP_For_Offset;
+
+      -----------------------
+      -- Add_BP_For_Offset --
+      -----------------------
+
+      procedure Add_BP_For_Offset is
+         Line : Editable_Line_Type :=
+           Editable_Line_Type'Value
+             (UTF8 (Details_Match.Captured (Bp_Offset_Idx)));
+      begin
+         if Details_Match.Captured
+           (Bp_Offset_Sig_Idx) = "+"
+         then
+            Line := Editable_Line_Type
+              (Self.Selected.Line) + Line;
+         else
+            Line := Editable_Line_Type'Max
+              (0, Editable_Line_Type
+                 (Self.Selected.Line) - Line);
+         end if;
+
+         Self.Break_Source
+           (File      => Self.Selected.File,
+            Line      => Line,
+            Temporary => Matched.Has_Capture (Bp_Temporary_Idx),
+            Condition => Details_Match.Captured (Bp_Condition_Idx));
+      end Add_BP_For_Offset;
+
    begin
       if Tmp /= "" then
          VSS_Cmd := VSS.Strings.Conversions.To_Virtual_String (Tmp);
@@ -1718,15 +1793,94 @@ package body DAP.Clients is
 
          else
             Matched := Is_Catch_Exception_Pattern.Match (VSS_Cmd);
-
             if Matched.Has_Match then
                Self.Break_Exception
-                 (Name      => VSS.Strings.Conversions.To_UTF_8_String
-                    (Matched.Captured (2)),
+                 (Name      => UTF8 (Matched.Captured (2)),
                   Unhandled => False,
                   Temporary => Matched.Captured (1) = "tcatch");
 
-            else
+               VSS_Cmd.Clear;
+            end if;
+
+            Matched := Is_Breakpoint_Pattern.Match (VSS_Cmd);
+            if Matched.Has_Match then
+               --  if hardware bp
+               if Matched.Has_Capture (Bp_Not_Supported_Idx) then
+                  Self.Display_In_Debugger_Console
+                    ("Hardware breakpoints are not supported");
+
+               elsif not Matched.Has_Capture (Bp_Details_Idx)
+                 and then Self.Selected.Address /= Invalid_Address
+               then
+                  --  no details, bp for the next instruction
+                  Self.Break_Address
+                    (Address   => Add_Address (Self.Selected.Address, 1),
+                     Temporary => Matched.Has_Capture (Bp_Temporary_Idx),
+                     Condition => Details_Match.Captured (Bp_Condition_Idx));
+
+               else
+                  Details       := Matched.Captured (Bp_Details_Idx);
+                  Details_Match :=
+                    Breakpoint_Details_Pattern.Match (Details);
+
+                  if Details_Match.Has_Match then
+                     if Details_Match.Has_Capture (Bp_Offset_Idx)
+                       and then Self.Selected.File /= No_File
+                     then
+                        Add_BP_For_Offset;
+
+                     elsif Details_Match.Has_Capture (Bp_Address_Idx) then
+                        Self.Break_Address
+                          (String_To_Address
+                             (UTF8 (Details_Match.Captured (Bp_Address_Idx))),
+                           Matched.Has_Capture (Bp_Temporary_Idx),
+                           Details_Match.Captured (Bp_Condition_Idx));
+
+                     elsif Details_Match.Has_Capture (Bp_Line_Idx)
+                       and then (Self.Selected.File /= No_File or else
+                                 Details_Match.Has_Capture (Bp_File_Idx))
+                     then
+                        Self.Break_Source
+                          (File     =>
+                             (if Details_Match.Has_Capture (Bp_File_Idx)
+                              then To_File
+                                (Details_Match.Captured (Bp_File_Idx))
+                              else Self.Selected.File),
+                           Line      => Editable_Line_Type'Value
+                             (UTF8 (Details_Match.Captured (Bp_Line_Idx))),
+                           Temporary => Matched.Has_Capture (Bp_Temporary_Idx),
+                           Condition =>
+                             Details_Match.Captured (Bp_Condition_Idx));
+
+                     elsif Details_Match.Has_Capture (Bp_Subprogram_Idx) then
+                        Self.Break_Subprogram
+                          (Subprogram =>
+                             (if Details_Match.Has_Capture (Bp_File_Idx)
+                              then UTF8 (Details_Match.Captured (Bp_File_Idx))
+                              & ":"
+                              & UTF8 (Details_Match.Captured (Bp_Line_Idx))
+                              else
+                                 UTF8 (Details_Match.Captured (Bp_Line_Idx))),
+                           Temporary  =>
+                             Matched.Has_Capture (Bp_Temporary_Idx),
+                           Condition  =>
+                             Details_Match.Captured (Bp_Condition_Idx));
+
+                     else
+                        Self.Display_In_Debugger_Console
+                          ("Can't set breakpoint");
+                     end if;
+
+                  else
+                     Self.Display_In_Debugger_Console
+                       ("Can't parse breakpoint details");
+                  end if;
+               end if;
+
+               VSS_Cmd.Clear;
+            end if;
+
+            if not VSS_Cmd.Is_Empty then
                if Output_Command then
                   Self.Display_In_Debugger_Console (Cmd, Is_Command => True);
                end if;
@@ -1834,19 +1988,16 @@ package body DAP.Clients is
             Bt : Backtrace_Record;
          begin
             Bt.Frame_Id := Frame.id;
-            Bt.Name     := To_Unbounded_String
-              (VSS.Strings.Conversions.To_UTF_8_String (Frame.name));
+            Bt.Name     := VSS.Strings.Conversions.
+              To_Unbounded_UTF_8_String (Frame.name);
 
             if not Frame.instructionPointerReference.Is_Empty then
                Bt.Address := String_To_Address
-                 (VSS.Strings.Conversions.To_UTF_8_String
-                    (Frame.instructionPointerReference));
+                 (UTF8 (Frame.instructionPointerReference));
             end if;
 
             if Frame.source.Is_Set then
-               Bt.File := Create
-                 (+(VSS.Strings.Conversions.To_UTF_8_String
-                  (Frame.source.Value.path)));
+               Bt.File := To_File (Frame.source.Value.path);
                Bt.Line := Frame.line;
             end if;
 
@@ -2350,8 +2501,7 @@ package body DAP.Clients is
          then
             DAP.Utils.Highlight_Current_File_And_Line
               (Self.Client.Kernel,
-               GNATCOLL.VFS.Create_From_UTF8
-                 (VSS.Strings.Conversions.To_UTF_8_String (File)),
+               To_File (File),
                Line);
 
          elsif Addr /= Invalid_Address then
@@ -2459,14 +2609,12 @@ package body DAP.Clients is
          when Hover =>
             Self.Label.Set_Markup
               ("<b>Debugger value :</b> " & Glib.Convert.Escape_Text
-                 (VSS.Strings.Conversions.To_UTF_8_String
-                      (Result.a_body.result)));
+                 (UTF8 (Result.a_body.result)));
             Unref (GObject (Self.Label));
 
          when Variable_Address =>
             declare
-               S     : constant String := VSS.Strings.Conversions.
-                 To_UTF_8_String (Result.a_body.result);
+               S     : constant String := UTF8 (Result.a_body.result);
                Index : Integer := S'Last;
             begin
                String_Utils.Skip_To_Char (S, Index, 'x', Step => -1);
@@ -2479,8 +2627,7 @@ package body DAP.Clients is
          when Command =>
             if Self.Output then
                Self.Client.Display_In_Debugger_Console
-                 (VSS.Strings.Conversions.To_UTF_8_String
-                    (Result.a_body.result), False);
+                 (UTF8 (Result.a_body.result), False);
             end if;
 
             if Self.On_Result_Message /= null then
@@ -2489,10 +2636,7 @@ package body DAP.Clients is
                   Arguments : Callback_Data'Class :=
                     Self.On_Result_Message.Get_Script.Create (1);
                begin
-                  Set_Nth_Arg
-                    (Arguments, 1,
-                     VSS.Strings.Conversions.To_UTF_8_String
-                       (Result.a_body.result));
+                  Set_Nth_Arg (Arguments, 1, UTF8 (Result.a_body.result));
 
                   declare
                      Dummy : GNATCOLL.Any_Types.Any_Type :=
@@ -2536,15 +2680,11 @@ package body DAP.Clients is
          end if;
 
          if Match.Has_Capture (3) then
-            Addr := String_To_Address
-              (VSS.Strings.Conversions.To_UTF_8_String
-                 (Match.Captured (3)));
+            Addr := String_To_Address (UTF8 (Match.Captured (3)));
          end if;
 
          if Match.Has_Capture (1) then
-            Line := Natural'Value
-              (VSS.Strings.Conversions.To_UTF_8_String
-                 (Match.Captured (1)));
+            Line := Natural'Value (UTF8 (Match.Captured (1)));
          end if;
       end if;
 
@@ -2619,8 +2759,7 @@ package body DAP.Clients is
 
          when Command =>
             if Self.Output then
-               Self.Client.Display_In_Debugger_Console
-                 (VSS.Strings.Conversions.To_UTF_8_String (Message), False);
+               Self.Client.Display_In_Debugger_Console (UTF8 (Message), False);
             end if;
 
             if Self.On_Error_Message /= null then
@@ -2629,9 +2768,7 @@ package body DAP.Clients is
                     Self.On_Error_Message.Get_Script.Create (1);
 
                begin
-                  Set_Nth_Arg
-                    (Arguments, 1,
-                     VSS.Strings.Conversions.To_UTF_8_String (Message));
+                  Set_Nth_Arg (Arguments, 1, UTF8 (Message));
 
                   declare
                      Dummy : GNATCOLL.Any_Types.Any_Type :=

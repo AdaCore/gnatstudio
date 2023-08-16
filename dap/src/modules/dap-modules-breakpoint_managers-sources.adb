@@ -131,7 +131,8 @@ package body DAP.Modules.Breakpoint_Managers.Sources is
 
                --  Update the breakpoint data because in notifications we
                --  don't have full information like disposition and so on
-               Self.Manager.Holder.Added (Data, Changed, Update);
+               Self.Manager.Holder.Added
+                 (Data => Data, Changed => Changed, Check => True);
 
                if not Changed.Is_Empty then
                   if Changed.Contains (Data) then
@@ -141,7 +142,13 @@ package body DAP.Modules.Breakpoint_Managers.Sources is
                   New_Request := Self.Manager.Send_Line
                     (Self.File, Changed, Sync);
                else
+                  Update := True;
                   Self.Manager.Send_Commands (Data);
+
+                  GPS.Kernel.Hooks.Debugger_Breakpoint_Added_Hook.Run
+                    (Kernel   => Self.Kernel,
+                     Debugger => Self.Get_Client.Get_Visual,
+                     Id       => Integer (Data.Num));
                end if;
             end;
 

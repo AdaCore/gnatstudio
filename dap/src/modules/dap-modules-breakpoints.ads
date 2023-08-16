@@ -233,8 +233,9 @@ package DAP.Modules.Breakpoints is
      (Self    : in out Breakpoint_Holder;
       Data    : Breakpoint_Data;
       Changed : out Breakpoint_Vectors.Vector;
-      Update  : out Boolean);
-   --  Feedback after breakpoints is added to synchronize data
+      Check   : Boolean);
+   --  Feedback after breakpoints is added to synchronize data. Checks for
+   --  duplicates when Check is True.
 
    procedure Delete
      (Self    : in out Breakpoint_Holder;
@@ -277,7 +278,8 @@ package DAP.Modules.Breakpoints is
    procedure Added_Subprogram
      (Self   : in out Breakpoint_Holder;
       Data   : Breakpoint_Data;
-      Actual : Breakpoint_Vectors.Vector);
+      Actual : Breakpoint_Vectors.Vector;
+      Num    : out Breakpoint_Identifier);
    --  Feedback after breakpoints for subprogram is added to synchronize data
 
    procedure Subprogram_Status_Changed
@@ -304,11 +306,6 @@ package DAP.Modules.Breakpoints is
       Kind    : Breakpoint_Kind;
       Actual  : Breakpoint_Vectors.Vector;
       Enabled : out Breakpoint_Vectors.Vector);
-
-   procedure Add_BP_From_Response
-     (Self : in out Breakpoint_Holder;
-      Data : Breakpoint_Data);
-   --  Process response to update last (added) breakpoint data
 
    procedure Append
      (Self : in out Breakpoint_Holder;

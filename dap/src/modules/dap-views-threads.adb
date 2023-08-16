@@ -17,8 +17,6 @@
 
 with GNAT.Strings;
 
-with VSS.Strings.Conversions;
-
 with Glib;                       use Glib;
 with Glib.Object;
 with Glib_Values_Utils;          use Glib_Values_Utils;
@@ -40,6 +38,8 @@ with DAP.Types;                  use DAP.Types;
 with DAP.Tools;                  use DAP.Tools;
 with DAP.Requests;               use DAP.Requests;
 with DAP.Requests.Threads;       use DAP.Requests.Threads;
+with DAP.Utils;                  use DAP.Utils;
+
 with GUI_Utils;                  use GUI_Utils;
 
 package body DAP.Views.Threads is
@@ -323,9 +323,7 @@ package body DAP.Views.Threads is
                            then "* "
                            else "") & Image (Thread.id)),
                       --  Name
-                      Name_Column => As_String
-                        (VSS.Strings.Conversions.To_UTF_8_String
-                           (Thread.name))));
+                      Name_Column => As_String (UTF8 (Thread.name))));
                   exit Th;
                end if;
             end;

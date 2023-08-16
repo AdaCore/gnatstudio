@@ -67,6 +67,7 @@ with DAP.Tools;                  use DAP.Tools;
 with DAP.Types;                  use DAP.Types;
 with DAP.Modules.Preferences;    use DAP.Modules.Preferences;
 with DAP.Modules.Breakpoints;    use DAP.Modules.Breakpoints;
+with DAP.Utils;                  use DAP.Utils;
 
 with DAP.Requests.Disassemble;
 
@@ -1034,22 +1035,15 @@ package body DAP.Views.Assembly is
             begin
                S.Append
                  (Disassemble_Element'
-                    (Address       => String_To_Address
-                         (VSS.Strings.Conversions.To_UTF_8_String
-                              (Line.address)),
+                    (Address       => String_To_Address (UTF8 (Line.address)),
                      Method_Offset =>
                        Ada.Strings.Unbounded.Null_Unbounded_String,
-                     Instr         =>
-                       Ada.Strings.Unbounded.To_Unbounded_String
-                         (VSS.Strings.Conversions.To_UTF_8_String
-                              (Line.instruction)),
+                     Instr         => VSS.Strings.Conversions.
+                       To_Unbounded_UTF_8_String (Line.instruction),
                      Opcodes       => Format_Opcodes (Line.instructionBytes),
                      File          =>
                        (if Line.location.Is_Set
-                        then GNATCOLL.VFS.Create
-                          (GNATCOLL.VFS."+"
-                               (VSS.Strings.Conversions.To_UTF_8_String
-                                    (Line.location.Value.path)))
+                        then To_File (Line.location.Value.path)
                         else GNATCOLL.VFS.No_File),
                      Line          => (if Line.line.Is_Set
                                        then Line.line.Value

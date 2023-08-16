@@ -15,13 +15,12 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with VSS.Strings.Conversions;
-
 with Glib_Values_Utils;           use Glib_Values_Utils;
 
 with Gdk.RGBA;                    use Gdk.RGBA;
 
 with GPS.Kernel.Preferences;      use GPS.Kernel.Preferences;
+with DAP.Utils;                   use DAP.Utils;
 
 package body DAP.Views.Variables.Set_Expression_Requests is
 
@@ -72,16 +71,13 @@ package body DAP.Views.Variables.Set_Expression_Requests is
                Iter    => Iter,
                Columns => (Column_Value, Column_Value_Fg),
                Values  =>
-                 (1 => As_String
-                      (VSS.Strings.Conversions.To_UTF_8_String
-                           (Result.a_body.value)),
+                 (1 => As_String (UTF8 (Result.a_body.value)),
                   2 => As_String (To_String (Numbers_Style.Get_Pref_Fg))));
          end if;
 
       else
          Self.Kernel.Get_Messages_Window.Insert_Error
-           (VSS.Strings.Conversions.To_UTF_8_String (Self.Name) &
-              " is not set.");
+           (UTF8 (Self.Name) & " is not set.");
       end if;
 
       Path_Free (Self.Path);

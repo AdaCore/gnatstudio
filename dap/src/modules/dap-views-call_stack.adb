@@ -52,6 +52,7 @@ with DAP.Modules.Preferences;
 with DAP.Requests.StackTraces;
 with DAP.Tools;                  use DAP.Tools;
 with DAP.Types;                  use DAP.Types;
+with DAP.Utils;                  use DAP.Utils;
 
 package body DAP.Views.Call_Stack is
 
@@ -603,17 +604,15 @@ package body DAP.Views.Call_Stack is
             Bt : Backtrace_Record;
          begin
             Bt.Frame_Id := Frame.id;
-            Bt.Name := To_Unbounded_String
-              (VSS.Strings.Conversions.To_UTF_8_String (Frame.name));
+            Bt.Name := VSS.Strings.Conversions.
+              To_Unbounded_UTF_8_String (Frame.name);
+
             if Frame.instructionPointerReference.Is_Empty then
                Bt.Address := String_To_Address
-                 (VSS.Strings.Conversions.To_UTF_8_String
-                    (Frame.instructionPointerReference));
+                 (UTF8 (Frame.instructionPointerReference));
             end if;
             if Frame.source.Is_Set then
-               Bt.File := Create
-                 (+(VSS.Strings.Conversions.To_UTF_8_String
-                  (Frame.source.Value.path)));
+               Bt.File := To_File (Frame.source.Value.path);
                Bt.Line := Frame.line;
             end if;
             Backtrace.Append (Bt);
