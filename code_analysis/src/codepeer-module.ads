@@ -93,7 +93,8 @@ package CodePeer.Module is
    function Get_Color
      (Ranking : CodePeer.Message_Ranking_Level) return Gdk.RGBA.Gdk_RGBA;
 
-   CodePeer_Category_Name  : constant String := "CodePeer: messages";
+   function CodePeer_Category_Name return String is
+      (CodePeer.Module_Name & ": messages");
    Race_Condition_Category : constant String := "race condition";
 
    type CodePeer_Build_Mode

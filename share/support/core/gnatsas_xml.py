@@ -443,49 +443,6 @@ creating/updating the database" />
       </extra-args>
     </builder-mode>
 
-    <target-model name="gnatsas_msg_reader" category="">
-       <description>Generate gnatsas messages</description>
-       <command-help>{help}</command-help>
-       <command-line>
-          <arg>gnatsas</arg>
-          <arg>report</arg>
-          <arg>-P%PP</arg>
-          <arg>%X</arg>
-       </command-line>
-       <iconname>gps-build-all-symbolic</iconname>
-       <switches command="%(tool_name)s" columns="2" lines="5">
-         <check label="Show annotations" switch="--show-annotations"
-               column="1"
-               tip="Show GNATSAS annotations in addition to messages"/>
-         <check label="Show informationals" switch="--show-info"
-               column="1"
-               tip="Show GNATSAS informational messages"/>
-         <check label="Show removed" switch="--show-removed"
-               column="1"
-               tip="Show messages removed from baseline run"/>
-         <check label="Hide low messages" switch="--hide-low"
-               column="1"
-               tip="Do not generate messages ranked low"/>
-         <check label="CWE" switch="--cwe"
-               column="1"
-               tip="Include CWE ids in message output"/>
-
-         <spin label="Current" switch="--current" min="0" max="100000"
-               default="0" separator=" " column="2"
-               tip="Override current run id"/>
-         <spin label="Cutoff" switch="--cutoff" min="0" max="100000"
-               default="0" separator=" " column="2"
-               tip="Override baseline run id"/>
-
-         <check label="CSV output" switch="csv"
-               column="2"
-               tip="generate output in CSV format, suitable for spreadsheets"/>
-         <check label="HTML output" switch="html"
-               column="2"
-               tip="generate output in HTML format"/>
-       </switches>
-    </target-model>
-
     <target-model name="gnatsas_bridge" category="">
        <description>Load GNATSAS messages</description>
        <iconname>gps-build-all-symbolic</iconname>
@@ -506,7 +463,20 @@ creating/updating the database" />
        </command-line>
     </target>
 
-    <target model="gnatsas_msg_reader" category="GNATSAS"
+    <target-model name="gnatsas_msg_reader_html" category="">
+       <description>Generate gnatsas htlm report</description>
+       <command-help>{report_help}</command-help>
+       <command-line>
+          <arg>gnatsas</arg>
+          <arg>report</arg>
+          <arg>-P%PP</arg>
+          <arg>%X</arg>
+       </command-line>
+       <iconname>gps-build-all-symbolic</iconname>
+       <switches command="%(tool_name)s" columns="1" lines="1"/>
+    </target-model>
+
+    <target model="gnatsas_msg_reader_html" category="GNATSAS"
             name="Generate HTML Report" messages_category="GNATSAS">
        <in-toolbar>FALSE</in-toolbar>
        <in-menu>FALSE</in-menu>
@@ -522,7 +492,51 @@ creating/updating the database" />
        </command-line>
     </target>
 
-    <target model="gnatsas_msg_reader" category="GNATSAS"
+    <target-model name="gnatsas_msg_reader_csv" category="">
+       <description>Generate gnatsas csv report</description>
+       <command-help>{report_help}</command-help>
+       <command-line>
+          <arg>gnatsas</arg>
+          <arg>report</arg>
+          <arg>-P%PP</arg>
+          <arg>%X</arg>
+       </command-line>
+       <iconname>gps-build-all-symbolic</iconname>
+       <switches command="%(tool_name)s" columns="2" lines="4">
+         <check label="Show annotations" switch="--show=kind+annotation"
+               column="1"
+               tip="Show GNATSAS annotations in addition to messages"/>
+         <check label="Show informationals" switch="--show=kind+info"
+               column="1"
+               tip="Show GNATSAS informational messages"/>
+         <check label="Show removed" switch="--show=age-removed"
+               column="1"
+               tip="Show messages removed from baseline run"/>
+         <check label="Hide low messages" switch="--show=rank-low"
+               column="1"
+               tip="Do not generate messages ranked low"/>
+         <field
+               column="2"
+               label="Current"
+               switch="--out"
+               separator=" "
+               as-file="true"
+               file-filter=".sam"
+               base-dir="%O%(subdir)%P.outputs"
+               tip="Current file"/>
+         <field
+               column="2"
+               label="Compare with"
+               switch="--compare-with"
+               separator=" "
+               as-file="true"
+               file-filter=".sam"
+               base-dir="%O%(subdir)%P.outputs"
+               tip="Compare with another sam file"/>
+       </switches>
+    </target-model>
+
+    <target model="gnatsas_msg_reader_csv" category="GNATSAS"
             name="Generate CSV Report" messages_category="GNATSAS">
        <in-toolbar>FALSE</in-toolbar>
        <in-menu>FALSE</in-menu>
@@ -535,8 +549,6 @@ creating/updating the database" />
           <arg>csv</arg>
           <arg>-P%PP</arg>
           <arg>%X</arg>
-          <arg>--out</arg>
-          <arg>gnatsas.csv</arg>
        </command-line>
     </target>
 
@@ -559,7 +571,7 @@ creating/updating the database" />
 
     <target-model name="gnatsas_output_only" category="">
        <description>regenerate report</description>
-       <command-help>{help}</command-help>
+       <command-help>{general_help}</command-help>
        <command-line>
           <arg>gnatsas</arg>
           <arg>--output-only</arg>
@@ -614,14 +626,14 @@ creating/updating the database" />
 
     <target-model name="gnatsas_analyze" category="">
        <description>Review code with GNATSAS</description>
-       <command-help>{help}</command-help>
+       <command-help>{analyze_help}</command-help>
        <command-line>
           <arg>gnatsas</arg>
           <arg>-P%PP</arg>
           <arg>%X</arg>
        </command-line>
        <iconname>gps-build-all-symbolic</iconname>
-       <switches command="%(tool_name)s" columns="3" lines="6">
+       <switches command="%(tool_name)s" columns="2" lines="6">
          <combo label="Analysis level" switch="--level" noswitch="default"
                separator=" " column="1"
                tip="Set the accuracy and speed of the analysis. Use 0 or 1 for
@@ -635,17 +647,9 @@ analysis. See GNATSAS documentation for more details." >
             <combo-entry label="3" value="3" />
             <combo-entry label="4" value="4" />
          </combo>
-         <combo label="Messages" switch="--messages" noswitch="default"
-               separator=" " column="1"
-               tip="Level of verbosity for messages generated by GNATSAS" >
-            <combo-entry label="Default" value="default" />
-            <combo-entry label="Min" value="min" />
-            <combo-entry label="Normal" value="normal" />
-            <combo-entry label="Max" value="max" />
-         </combo>
 
          <spin label="Multiprocessing" switch="-j" min="0" max="1000"
-               default="0" separator="" column="3"
+               default="0" separator="" column="1"
                tip="Use N processes to carry out the analysis (0 means use as
 many cores as available on the machine)." />
          <field label="Run name"
@@ -658,6 +662,12 @@ many cores as available on the machine)." />
           tip="Force analysis of all files, ignoring previous run.
 Also force the generation of all SCIL files." />
          <check label="Disable Infer" switch="--no-infer" default="off"
+                column="2" tip="Disable Infer analysis." />
+         <check label="Disable GNAT warnings" switch="--no-gnat" default="off"
+                column="2" tip="Disable GNAT warnings." />
+         <check label="Disable Inspector" switch="--no-inspector" default="off"
+                column="2" tip="Disable Inspector." />
+         <check label="Disable GNATcheck" switch="--no-gnatcheck" default="off"
                 column="2" tip="Disable Infer analysis." />
          <hidden switch="--progress-bar=gnatstudio" separator=" "/>
        </switches>
