@@ -43,16 +43,24 @@ def cpms_combo_box(label, switch, tip):
     return head + body + tail
 
 
+def get_help(option):
+    try:
+        p = GPS.Process(["gnatsas", option, "--help=plain"])
+        raw_result = p.get_result()
+        return escape(raw_result)
+    except Exception:
+        return ""
+
+
 if gnatsas:
     root = os.path.dirname(os.path.dirname(gnatsas)).replace('\\', '/')
     example_root = root + '/share/examples/codepeer'
-    try:
-        with open(root + '/share/doc/codepeer/help.txt', 'r') as help_file:
-            help_msg = escape(help_file.read())
-    except Exception:
-        help_msg = ''
 
-    xml_formated = gnatsas_xml.xml_gnatsas.format(example=example_root,
-                                                  root=root,
-                                                  help=help_msg)
+    xml_formated = gnatsas_xml.xml_gnatsas.format(
+        example=example_root,
+        root=root,
+        general_help=get_help(""),
+        analyze_help=get_help("analyze"),
+        report_help=get_help("report"))
+
     GPS.parse_xml(xml_formated)
