@@ -376,59 +376,8 @@ analysis. See GNATSAS documentation for more details." >
       </switches>
     </tool>
 
-    <target-model name="generate_scil" category="">
-       <description>Generate SCIL files for GNATSAS</description>
-       <command-line>
-          <arg>codepeer-gprbuild</arg>
-          <arg>-d</arg>
-          <arg>%eL</arg>
-          <arg>-P%PP</arg>
-          <arg>--codepeer</arg>
-          <arg>%X</arg>
-       </command-line>
-       <iconname>gps-build-all-symbolic</iconname>
-       <switches command="%(tool_name)s" columns="2" lines="3">
-         <check label="Progress bar" switch="-d" column="1"
-                tip="Display a progress bar with information about how many
-files are left to be compiled" />
-         <spin label="Multiprocessing" switch="-j" min="0" max="1000"
-               default="0" separator="" column="2"
-               tip="Use N processes to carry out the processing (0 means use as
-many cores as available on the machine)." />
-         <check label="Ignore representation clauses" switch="-gnatI"
-                column="1"
-                tip="Ignore all representation clauses, useful for generating
-SCIL for another architecture" />
-         <check label="Unconstrained float overflow" switch="-gnateF"
-               column="2"
-               tip="Check for overflow on unconstrained floating point types"/>
-         <check label="Generate GNATSAS messages" switch="-gnateC" column="1"
-                tip="Generate GNATSAS messages in compiler format, without
-creating/updating the database" />
-       </switches>
-    </target-model>
-
-    <target model="generate_scil" category="GNATSAS" name="Generate SCIL"
-            messages_category="GNATSAS">
-       <in-toolbar>FALSE</in-toolbar>
-       <in-menu>FALSE</in-menu>
-       <iconname>gps-build-all-symbolic</iconname>
-       <launch-mode>MANUALLY_WITH_DIALOG</launch-mode>
-       <read-only>TRUE</read-only>
-       <command-line>
-          <arg>codepeer-gprbuild</arg>
-          <arg>-d</arg>
-          <arg>%eL</arg>
-          <arg>-P%PP</arg>
-          <arg>--gnatsas</arg>
-          <arg>%X</arg>
-       </command-line>
-    </target>
-
     <builder-mode name="gnatsas">
-      <description>Build SCIL for code review</description>
       <subdir>gnatsas</subdir>
-      <supported-model>generate_scil</supported-model>
       <supported-model>builder</supported-model>
       <supported-model>gnatmake</supported-model>
       <supported-model>gprbuild</supported-model>
@@ -473,7 +422,11 @@ creating/updating the database" />
           <arg>%X</arg>
        </command-line>
        <iconname>gps-build-all-symbolic</iconname>
-       <switches command="%(tool_name)s" columns="1" lines="1"/>
+       <switches command="%(tool_name)s" columns="1" lines="1">
+         <check label="Show informationals" switch="--show-info"
+               column="1"
+               tip="Show GNATSAS informational messages"/>
+       </switches>
     </target-model>
 
     <target model="gnatsas_msg_reader_html" category="GNATSAS"

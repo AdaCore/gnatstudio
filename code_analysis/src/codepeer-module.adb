@@ -184,29 +184,6 @@ package body CodePeer.Module is
       Message : GPS.Kernel.Messages.Abstract_Message'Class)
       return GPS.Kernel.Messages.Filter_Result;
 
-   Output_Directory_Attribute    : constant Attribute_Pkg_String :=
-     Build (CodePeer.GPR_Name, "Output_Directory");
-   Output_Dir_Attribute          : constant Attribute_Pkg_String :=
-     Build (CodePeer.GPR_Name, "Output_Dir");
-   Database_Directory_Attribute  : constant Attribute_Pkg_String :=
-     Build (CodePeer.GPR_Name, "Database_Directory");
-   Server_URL_Attribute : constant Attribute_Pkg_String :=
-     Build (CodePeer.GPR_Name, "Server_URL");
-   Message_Patterns_Attribute    : constant Attribute_Pkg_String :=
-     Build (CodePeer.GPR_Name, "Message_Patterns");
-   Additional_Patterns_Attribute : constant Attribute_Pkg_String :=
-     Build (CodePeer.GPR_Name, "Additional_Patterns");
-   CWE_Attribute                 : constant Attribute_Pkg_String :=
-     Build (CodePeer.GPR_Name, "CWE");
-   Switches_Attribute            : constant Attribute_Pkg_List :=
-     Build (CodePeer.GPR_Name, "Switches");
-   Pending_Status_Attribute      : constant Attribute_Pkg_List :=
-     Build (CodePeer.GPR_Name, "Pending_Status");
-   Not_A_Bug_Status_Attribute    : constant Attribute_Pkg_List :=
-     Build (CodePeer.GPR_Name, "Not_A_Bug_Status");
-   Bug_Status_Attribute          : constant Attribute_Pkg_List :=
-     Build (CodePeer.GPR_Name, "Bug_Status");
-
    Race_Message_Flags : constant GPS.Kernel.Messages.Message_Flags :=
      (Editor_Side => True, Locations => True, Editor_Line => False);
 
@@ -412,9 +389,11 @@ package body CodePeer.Module is
       GNATSAS_Id           : GNATSAS_Id_Access)
       return Message_Access
    is
-      Project : constant Project_Type :=
+      CWE_Attribute : constant Attribute_Pkg_String :=
+        Build (CodePeer.GPR_Name, "CWE");
+      Project       : constant Project_Type :=
         GPS.Kernel.Project.Get_Project (Module.Kernel);
-      Message : constant Message_Access := new CodePeer.Message'
+      Message       : constant Message_Access := new CodePeer.Message'
         (GPS.Kernel.Messages.Primary_Abstract_Message with
          Id              => Id,
          File            => File,
@@ -621,9 +600,12 @@ package body CodePeer.Module is
       Force        : Boolean;
       Build_Target : String)
    is
-      Project  : constant Project_Type := Get_Project (Module.Kernel);
-      Switches : String_List_Access;
-      Builder  : constant Builder_Context := Builder_Context
+      Project            : constant Project_Type :=
+        Get_Project (Module.Kernel);
+      Switches           : String_List_Access;
+      Switches_Attribute : constant Attribute_Pkg_List :=
+        Build (CodePeer.GPR_Name, "Switches");
+      Builder            : constant Builder_Context := Builder_Context
         (Module.Kernel.Module (Builder_Context_Record'Tag));
 
       Ensure_Build_Mode : CodePeer_Build_Mode (Kernel_Handle (Module.Kernel));
@@ -739,7 +721,8 @@ package body CodePeer.Module is
              (String (Project_Path (Project).Base_Name)));
       Extension : constant GNATCOLL.VFS.Filesystem_String :=
         Project_Path (Project).File_Extension;
-
+      Database_Directory_Attribute  : constant Attribute_Pkg_String :=
+        Build (CodePeer.GPR_Name, "Database_Directory");
    begin
       if Project.Has_Attribute (Database_Directory_Attribute) then
          declare
@@ -766,7 +749,10 @@ package body CodePeer.Module is
    -------------------------------
 
    function Codepeer_Message_Patterns
-     (Project : Project_Type) return GNATCOLL.VFS.Virtual_File is
+     (Project : Project_Type) return GNATCOLL.VFS.Virtual_File
+   is
+      Message_Patterns_Attribute    : constant Attribute_Pkg_String :=
+        Build (CodePeer.GPR_Name, "Message_Patterns");
    begin
       if Project.Has_Attribute (Message_Patterns_Attribute) then
          declare
@@ -790,7 +776,10 @@ package body CodePeer.Module is
    -------------------------
 
    function Codepeer_Server_URL
-     (Project : Project_Type) return String is
+     (Project : Project_Type) return String
+   is
+      Server_URL_Attribute : constant Attribute_Pkg_String :=
+        Build (CodePeer.GPR_Name, "Server_URL");
    begin
       if Project.Has_Attribute (Server_URL_Attribute) then
          return Project.Attribute_Value (Server_URL_Attribute);
@@ -805,7 +794,10 @@ package body CodePeer.Module is
    ----------------------------------
 
    function Codepeer_Additional_Patterns
-     (Project : Project_Type) return GNATCOLL.VFS.Virtual_File is
+     (Project : Project_Type) return GNATCOLL.VFS.Virtual_File
+   is
+      Additional_Patterns_Attribute : constant Attribute_Pkg_String :=
+        Build (CodePeer.GPR_Name, "Additional_Patterns");
    begin
       if Project.Has_Attribute (Additional_Patterns_Attribute) then
          declare
@@ -861,6 +853,8 @@ package body CodePeer.Module is
              (String (Project_Path (Project).Base_Name)));
       Extension : constant GNATCOLL.VFS.Filesystem_String :=
         Project_Path (Project).File_Extension;
+      Output_Directory_Attribute : constant Attribute_Pkg_String :=
+        Build (CodePeer.GPR_Name, "Output_Directory");
 
    begin
       if not Is_GNATSAS
@@ -906,6 +900,8 @@ package body CodePeer.Module is
              (String (Project_Path (Project).Base_Name)));
       Extension : constant GNATCOLL.VFS.Filesystem_String :=
         Project_Path (Project).File_Extension;
+      Output_Directory_Attribute : constant Attribute_Pkg_String :=
+        Build (CodePeer.GPR_Name, "Output_Directory");
    begin
       if not Is_GNATSAS
         and then Project.Has_Attribute (Output_Directory_Attribute)
@@ -939,6 +935,8 @@ package body CodePeer.Module is
              (String (Project_Path (Project).Base_Name)));
       Extension : constant GNATCOLL.VFS.Filesystem_String :=
         Project_Path (Project).File_Extension;
+      Output_Dir_Attribute : constant Attribute_Pkg_String :=
+        Build (CodePeer.GPR_Name, "Output_Dir");
 
    begin
       if Project.Has_Attribute (Output_Dir_Attribute) then
@@ -982,14 +980,13 @@ package body CodePeer.Module is
       procedure Process_Message
         (Position : CodePeer.Message_Vectors.Cursor)
       is
---           Message : constant CodePeer.Message_Access :=
---             CodePeer.Message_Vectors.Element (Position);
-
+         Message : constant CodePeer.Message_Access :=
+           CodePeer.Message_Vectors.Element (Position);
       begin
          null;
---           if Message.Message /= null then
---              Message.Message.Set_Flags ((others => False));
---           end if;
+         if Message /= null then
+            Message.Set_Flags ((others => False));
+         end if;
       end Process_Message;
 
       ------------------------
@@ -1148,6 +1145,7 @@ package body CodePeer.Module is
 
          BT.Xml.Reader.Initialize (String (Output_Directory.Full_Name.all));
 
+         Codepeer_Report_Ready_Hook.Run (Self.Kernel);
       else
          Self.Kernel.Insert
            (Inspection_File.Display_Full_Name &
@@ -1608,9 +1606,9 @@ package body CodePeer.Module is
 
       --  Then register the project specific ones, if any
 
-      Add_Statuses (Pending_Status_Attribute, Pending);
-      Add_Statuses (Not_A_Bug_Status_Attribute, Not_A_Bug);
-      Add_Statuses (Bug_Status_Attribute, Bug);
+      Add_Statuses (Build (CodePeer.GPR_Name, "Pending_Status"), Pending);
+      Add_Statuses (Build (CodePeer.GPR_Name, "Not_A_Bug_Status"), Not_A_Bug);
+      Add_Statuses (Build (CodePeer.GPR_Name, "Bug_Status"), Bug);
 
    end Execute;
 
