@@ -42,7 +42,7 @@ package CodePeer is
      Ada.Calendar.Time_Of (Ada.Calendar.Year_Number'First, 1, 1, 0.0);
 
    type Analyzer_Exe is (Codepeer_Exe, GNATSAS_Exe);
-   Current_Analyzer : Analyzer_Exe := GNATSAS_Exe;
+   Current_Analyzer : Analyzer_Exe := Codepeer_Exe;
    CPM_File         : Unbounded_String;
 
    function Is_GNATSAS return Boolean is (Current_Analyzer = GNATSAS_Exe);
@@ -207,7 +207,7 @@ package CodePeer is
       --  Reference to preference value of which is used for foreground color
       --  of removed messages.
       Show_Msg_Id     : Boolean;
-      GNATSAS_Id          : GNATSAS_Id_Access;
+      GNATSAS_Id      : GNATSAS_Id_Access;
    end record;
    type Message_Access is access all Message;
 

@@ -94,7 +94,7 @@ package body CodePeer.Module.Actions is
       --  one file.
 
       Get_Messages_Container (Kernel).Remove_Category
-        ("CodePeer (one file)", Flags => (others => True));
+        (CodePeer.Module_Name & " (one file)", Flags => (others => True));
 
       --  Run the CodePeer target
 
@@ -156,8 +156,21 @@ package body CodePeer.Module.Actions is
       pragma Unreferenced (Context);
 
    begin
-      CodePeer.Module.Bridge.Inspection (Self.Module, False);
-
+      if CodePeer.Is_GNATSAS then
+         --  Generate the report for gnatsas
+         Module.Action := Load_UI;
+         CodePeer.Shell_Commands.Build_Target_Execute
+           (Kernel_Handle (Module.Kernel),
+            CodePeer.Shell_Commands.Build_Target
+              (Module.Get_Kernel, "Run GNATSAS Report"),
+            Force           => True,
+            Build_Mode      => CodePeer.Package_Name,
+            Synchronous     => False,
+            Dir             => Module.Output_Directory,
+            Preserve_Output => True);
+      else
+         CodePeer.Module.Bridge.Inspection (Self.Module, False);
+      end if;
       return Success;
    end Execute;
 
@@ -237,7 +250,7 @@ package body CodePeer.Module.Actions is
         (Kernel      => Kernel_Handle (Self.Module.Kernel),
          Target_ID   => CodePeer.Shell_Commands.Build_Target
            (Kernel, Build_Target),
-         Build_Mode  => "codepeer",
+         Build_Mode  => CodePeer.Package_Name,
          Synchronous => False,
          Dir         => Object_Dir);
 
@@ -280,7 +293,7 @@ package body CodePeer.Module.Actions is
         (Kernel      => Kernel_Handle (Self.Module.Kernel),
          Target_ID   => CodePeer.Shell_Commands.Build_Target
            (Kernel, Build_Target),
-         Build_Mode  => "codepeer",
+         Build_Mode  => CodePeer.Package_Name,
          Synchronous => False,
          Dir         => Object_Dir);
       return Success;
@@ -502,7 +515,7 @@ package body CodePeer.Module.Actions is
          Target_ID   =>
            CodePeer.Shell_Commands.Build_Target (Kernel, "Remove SCIL"),
          Force       => True,
-         Build_Mode  => "codepeer",
+         Build_Mode  => CodePeer.Package_Name,
          Synchronous => False);
 
       return Success;

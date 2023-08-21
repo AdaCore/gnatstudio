@@ -100,7 +100,9 @@ package body CodePeer.Module.Bridge is
 
       Module.Action := None;
       Run_GPS_Codepeer_Bridge
-        (Module, Command_File_Name, Preserve_Output => False);
+        (Module,
+         Command_File_Name,
+         Preserve_Output => False);
       Module.Kernel.Set_Build_Mode (Mode);
    end Add_Audit_Record;
 

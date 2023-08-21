@@ -316,7 +316,6 @@
          <menu label='Generate CS_V Report...' action='gnatsas generate csv' optional='true'/>
          <menu label='Ad_vanced'>
             <menu label='_Regenerate Report...' action='gnatsas regenerate report' optional='true'/>
-            <menu label='_Generate SCIL...'  action='gnatsas generate scil' optional='true'/>
             <menu label='GNATSAS _Log'  action='gnatsas log'           optional='true'/>
          </menu>
       </menu>
