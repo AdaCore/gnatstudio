@@ -613,6 +613,7 @@ private
       & "%external  the ""execute command"" preference" & LF
       & "[exec_dir] exec dir from the project" & LF
       & "%fp        base name of the file to compile" & LF
+      & "%Fp        absolute path of the file to compile" & LF
       & "%TT        absolute path of main source to compile" & LF
       & "%TP        absolute path of main source's project" & LF
       & "%python(cmd) a python command that returns one string," & LF

@@ -24,25 +24,6 @@ from xml.sax.saxutils import escape
 gnatsas = os_utils.locate_exec_on_path("gnatsas")
 
 
-def cpms_combo_box(label, switch, tip):
-    cpm_dir = GPS.Project.root().get_attribute_as_string(
-        attribute="CPM_Directory", package="GNATSAS")
-    head = ("<combo label='" + label
-            + "' switch='" + switch
-            + "' separator=' ' tip='" + tip
-            + " '>")
-    tail = "</combo>"
-    body = ""
-    for f in os.listdir(cpm_dir):
-        if f.endswith(".cpm"):
-            body += ("<combo-entry label='"
-                     + os.path.basename(f)
-                     + "' value='" + f
-                     + "'/>")
-
-    return head + body + tail
-
-
 def get_help(option):
     try:
         p = GPS.Process(["gnatsas", option, "--help=plain"])

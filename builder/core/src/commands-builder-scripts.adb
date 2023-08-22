@@ -164,6 +164,8 @@ package body Commands.Builder.Scripts is
             Inst            : constant Class_Instance :=
               Nth_Arg (Data, 1, Target_Class);
             Main            : constant String  := Nth_Arg (Data, 2, "");
+            File            : constant Filesystem_String :=
+              Nth_Arg (Data, 3, "");
             Force           : constant Boolean := Nth_Arg (Data, 4, False);
             Name            : constant String  := Get_Target_Name (Inst);
             Mode            : Dialog_Mode      := Default;
@@ -178,13 +180,6 @@ package body Commands.Builder.Scripts is
               Nth_Arg (Data, 10, null);
             Preserve_Output : constant Boolean := Nth_Arg (Data, 11, False);
          begin
-            Info := Get_Data
-              (Nth_Arg (Data, 3, Get_File_Class (Kernel), True));
-
-            if Base_Name (Info)'Length = 0 then
-               Info := No_File;
-            end if;
-
             if Name = "" then
                Set_Error_Msg (Data, -"Invalid target");
                return;
@@ -237,6 +232,12 @@ package body Commands.Builder.Scripts is
 
             if Directory /= "" then
                Dir := GNATCOLL.VFS.Create (Directory);
+            end if;
+
+            if File /= "" then
+               Info := GNATCOLL.VFS.Create_From_Base (File);
+            else
+               Info := GNATCOLL.VFS.No_File;
             end if;
 
             Launch_Target (Builder         => Get_Builder (Inst),
