@@ -299,13 +299,17 @@ package body CodePeer.Module is
       Mode : constant String := Self.Kernel.Get_Build_Mode;
 
    begin
+      if Is_GNATSAS then
+         return;
+      end if;
+
       if Mode = CodePeer.Package_Name then
          Self.Switch_Mode := False;
 
       else
          Self.Switch_Mode := True;
          Self.Mode := To_Unbounded_String (Mode);
-         Module.Kernel.Set_Build_Mode (CodePeer.Package_Name);
+         Module.Kernel.Set_Build_Mode (CodePeer.Build_Mode);
       end if;
    end Initialize;
 
@@ -315,6 +319,10 @@ package body CodePeer.Module is
 
    overriding procedure Finalize (Self : in out CodePeer_Build_Mode) is
    begin
+      if Is_GNATSAS then
+         return;
+      end if;
+
       if Self.Switch_Mode then
          Self.Kernel.Set_Build_Mode (To_String (Self.Mode));
       end if;
@@ -632,7 +640,7 @@ package body CodePeer.Module is
          CodePeer.Shell_Commands.Build_Target
            (Module.Get_Kernel, Build_Target),
          Force       => Force,
-         Build_Mode  => CodePeer.Package_Name,
+         Build_Mode  => CodePeer.Build_Mode,
          Synchronous => False,
          Dir         => CodePeer_Object_Directory (Project));
    end Review;
@@ -827,8 +835,12 @@ package body CodePeer.Module is
 
    begin
       if Object_Dir /= No_File then
-         return Object_Dir;
-
+         if CodePeer.Is_GNATSAS then
+            return Create_From_Dir
+              (Project.Project_Path.Dir, +CodePeer.Package_Name);
+         else
+            return Object_Dir;
+         end if;
       else
          return Create_From_Dir
            (Project.Project_Path.Dir, +CodePeer.Package_Name);
@@ -1269,7 +1281,10 @@ package body CodePeer.Module is
 
       if Status /= 0
         or else Action = None
-        or else Mode /= CodePeer.Package_Name
+        or else (not Is_GNATSAS and then Mode /= CodePeer.Package_Name)
+        or else (Is_GNATSAS
+                and then
+                Index (GNATCOLL.Arg_Lists.Get_Command (Cmd), "gnatsas") = 0)
       then
          return;
       end if;
@@ -1282,7 +1297,7 @@ package body CodePeer.Module is
             CodePeer.Shell_Commands.Build_Target
               (Module.Get_Kernel, "Run GNATSAS Report"),
             Force           => True,
-            Build_Mode      => CodePeer.Package_Name,
+            Build_Mode      => CodePeer.Build_Mode,
             Synchronous     => False,
             Dir             => Module.Output_Directory,
             Preserve_Output => True);

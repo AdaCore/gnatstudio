@@ -23,6 +23,7 @@ with GPS.Kernel.Actions;  use GPS.Kernel.Actions;
 with GPS.Kernel.Contexts; use GPS.Kernel.Contexts;
 with GPS.Kernel.Hooks;    use GPS.Kernel.Hooks;
 with GPS.Kernel.Messages; use GPS.Kernel.Messages;
+with GPS.Kernel.Preferences;
 with GPS.Kernel.Project;  use GPS.Kernel.Project;
 
 with Build_Command_Utils;  use Build_Command_Utils;
@@ -33,6 +34,7 @@ with CodePeer.Module.Bridge;
 with CodePeer.Module.Editors;
 with CodePeer.Shell_Commands;
 with Projects.Views;
+with Gtkada.File_Selector;
 
 package body CodePeer.Module.Actions is
 
@@ -164,12 +166,50 @@ package body CodePeer.Module.Actions is
             CodePeer.Shell_Commands.Build_Target
               (Module.Get_Kernel, "Run GNATSAS Report"),
             Force           => True,
-            Build_Mode      => CodePeer.Package_Name,
+            Build_Mode      => CodePeer.Build_Mode,
             Synchronous     => False,
             Dir             => Module.Output_Directory,
             Preserve_Output => True);
       else
          CodePeer.Module.Bridge.Inspection (Self.Module, False);
+      end if;
+      return Success;
+   end Execute;
+
+   -------------
+   -- Execute --
+   -------------
+
+   overriding function Execute
+     (Self    : access Display_Baseline_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type
+   is
+      Kernel : constant Kernel_Handle := Get_Kernel (Context.Context);
+      Dir    : constant Virtual_File := Module.Output_Directory;
+      File   : constant Virtual_File :=
+        Gtkada.File_Selector.Select_File
+          (Title             => -"Select Baseline File",
+           Base_Directory    => Dir,
+           Parent            => Get_Current_Window (Kernel),
+           Use_Native_Dialog =>
+             GPS.Kernel.Preferences.Use_Native_Dialogs.Get_Pref,
+           Kind              => Gtkada.File_Selector.Open_File,
+           File_Pattern      => "*.sam;*",
+           Pattern_Name      => -"SAM files;All files",
+           History           => Get_History (Kernel));
+   begin
+      if File /= No_File then
+         Module.Action := Load_UI;
+         CodePeer.Shell_Commands.Build_Target_Execute
+           (Kernel_Handle (Module.Kernel),
+            CodePeer.Shell_Commands.Build_Target
+              (Module.Get_Kernel, "Load GNATSAS Report"),
+            Force           => True,
+            File            => File,
+            Build_Mode      => CodePeer.Build_Mode,
+            Synchronous     => False,
+            Dir             => Dir,
+            Preserve_Output => True);
       end if;
       return Success;
    end Execute;
@@ -250,7 +290,7 @@ package body CodePeer.Module.Actions is
         (Kernel      => Kernel_Handle (Self.Module.Kernel),
          Target_ID   => CodePeer.Shell_Commands.Build_Target
            (Kernel, Build_Target),
-         Build_Mode  => CodePeer.Package_Name,
+         Build_Mode  => CodePeer.Build_Mode,
          Synchronous => False,
          Dir         => Object_Dir);
 
@@ -293,7 +333,7 @@ package body CodePeer.Module.Actions is
         (Kernel      => Kernel_Handle (Self.Module.Kernel),
          Target_ID   => CodePeer.Shell_Commands.Build_Target
            (Kernel, Build_Target),
-         Build_Mode  => CodePeer.Package_Name,
+         Build_Mode  => CodePeer.Build_Mode,
          Synchronous => False,
          Dir         => Object_Dir);
       return Success;
@@ -515,7 +555,7 @@ package body CodePeer.Module.Actions is
          Target_ID   =>
            CodePeer.Shell_Commands.Build_Target (Kernel, "Remove SCIL"),
          Force       => True,
-         Build_Mode  => CodePeer.Package_Name,
+         Build_Mode  => CodePeer.Build_Mode,
          Synchronous => False);
 
       return Success;
@@ -797,17 +837,22 @@ package body CodePeer.Module.Actions is
            Lookup_Filter (Module.Kernel, "File")
              and Create (Language => "ada")
              and Is_Local_Mode);
-      if not Is_GNATSAS then
+      Register_Action
+        (Kernel  => Module.Kernel,
+         Name    => CodePeer.Package_Name & " display code review",
+         Command => new Display_Code_Review_Command (Module));
+      if CodePeer.Is_GNATSAS then
+         Register_Action
+           (Kernel  => Module.Kernel,
+            Name    => CodePeer.Package_Name & " display baseline",
+            Command => new Display_Baseline_Command (Module));
+      else
          Register_Action
            (Kernel  => Module.Kernel,
             Name    => CodePeer.Package_Name & " analyze file by file",
             Command => new Analyze_File_By_File_Command,
             Filter  => Is_Local_Mode);
       end if;
-      Register_Action
-        (Kernel  => Module.Kernel,
-         Name    => CodePeer.Package_Name & " display code review",
-         Command => new Display_Code_Review_Command (Module));
       Register_Action
         (Kernel  => Module.Kernel,
          Name    => CodePeer.Package_Name & " display html",

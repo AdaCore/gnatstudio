@@ -500,6 +500,9 @@ package body Build_Command_Utils is
    is
       Result : Expansion_Result;
 
+      function Get_File return Virtual_File;
+      --  Return the current file in the context
+
       function Substitution
         (Param  : String; Quoted : Boolean) return String;
       --  Wrapper around GPS.Kernel.Macros.Substitute
@@ -548,6 +551,81 @@ package body Build_Command_Utils is
          end if;
       end Get_Index;
 
+      --------------
+      -- Get_File --
+      --------------
+
+      function Get_File return Virtual_File is
+      begin
+         if not Simulate
+           and then Force_File /= No_File
+         then
+            return Force_File;
+         end if;
+
+         declare
+            File : constant Virtual_File :=
+              Get_Context_File_Information (Adapter.all);
+            Set  : File_Info_Set;
+         begin
+            if File = No_File then
+               if Simulate then
+                  return No_File;
+               else
+                  Console_Insert
+                    (Adapter.all, -"No file selected", Mode => Error);
+                  raise Invalid_Argument;
+               end if;
+            end if;
+
+            Set := Get_Kernel_Registry (Adapter.all).Tree.Info_Set (File);
+
+            if File_Info'Class (Set.First_Element).Project = No_Project then
+               if Simulate then
+                  return No_File;
+               else
+                  Console_Insert
+                    (Adapter.all,
+                     -"Could not determine the project for file: "
+                     & Display_Full_Name (File),
+                     Mode => Error);
+
+                  --  Do not normalize through VFS so as to preserve the
+                  --  state of the file (since otherwise we would cache
+                  --  the normalized value)
+                  if File.Display_Full_Name /=
+                    Normalize_Pathname
+                      (Get_Python_Full_Name (File), Resolve_Links => True)
+                      and then Get_Trusted_Mode_Preference (Adapter.all)
+                  then
+                     Console_Insert
+                       (Adapter.all, -("You should check the project's"
+                        & " scenario variable's values"
+                        & " or disable the preference Fast Project"
+                        & " Loading (for full support of symbolic links)"));
+                  end if;
+
+                  raise Invalid_Argument;
+               end if;
+
+            else
+               if Background then
+                  return Get_Background_Environment_File (Adapter.all);
+               else
+                  --  We are launching a compile command involving File:
+                  --  remove reference to File from the Locations View.
+                  --  See F830-003.
+                  if not Simulate then
+                     Remove_Error_Builder_Message_From_File
+                       (Adapter.all, File);
+                  end if;
+
+                  return File;
+               end if;
+            end if;
+         end;
+      end Get_File;
+
       ------------------
       -- Substitution --
       ------------------
@@ -574,73 +652,17 @@ package body Build_Command_Utils is
                return "-eL";
             end if;
 
-         elsif Param = "fp" then
-            if not Simulate
-              and then Force_File /= No_File
-            then
-               return +Base_Name (Force_File);
-            end if;
+         elsif Param = "Fp" then
+            return +Full_Name (Get_File);
 
+         elsif Param = "fp" then
             declare
-               File : constant Virtual_File :=
-                 Get_Context_File_Information (Adapter.all);
-               Set  : File_Info_Set;
+               File : constant Virtual_File := Get_File;
             begin
                if File = No_File then
-                  if Simulate then
-                     return "<current-file>";
-                  else
-                     Console_Insert
-                       (Adapter.all, -"No file selected", Mode => Error);
-                     raise Invalid_Argument;
-                  end if;
-               end if;
-
-               Set := Get_Kernel_Registry (Adapter.all).Tree.Info_Set (File);
-
-               if File_Info'Class (Set.First_Element).Project = No_Project then
-                  if Simulate then
-                     return "<current-file>";
-                  else
-                     Console_Insert
-                       (Adapter.all,
-                        -"Could not determine the project for file: "
-                        & Display_Full_Name (File),
-                        Mode => Error);
-
-                     --  Do not normalize through VFS so as to preserve the
-                     --  state of the file (since otherwise we would cache
-                     --  the normalized value)
-                     if File.Display_Full_Name /=
-                       Normalize_Pathname
-                         (Get_Python_Full_Name (File), Resolve_Links => True)
-                         and then Get_Trusted_Mode_Preference (Adapter.all)
-                     then
-                        Console_Insert
-                          (Adapter.all, -("You should check the project's"
-                           & " scenario variable's values"
-                           & " or disable the preference Fast Project"
-                           & " Loading (for full support of symbolic links)"));
-                     end if;
-
-                     raise Invalid_Argument;
-                  end if;
-
+                  return "<current-file>";
                else
-                  if Background then
-                     return +Base_Name
-                       (Get_Background_Environment_File (Adapter.all));
-                  else
-                     --  We are launching a compile command involving File:
-                     --  remove reference to File from the Locations View.
-                     --  See F830-003.
-                     if not Simulate then
-                        Remove_Error_Builder_Message_From_File
-                          (Adapter.all, File);
-                     end if;
-
-                     return +Base_Name (File);
-                  end if;
+                  return +Base_Name (File);
                end if;
             end;
 

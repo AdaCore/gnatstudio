@@ -52,6 +52,8 @@ package CodePeer is
      (if Is_GNATSAS then "gnatsas" else "codepeer");
    function GPR_Name return String is
      (if Is_GNATSAS then "Analyzer" else "CodePeer");
+   function Build_Mode return String is
+     (if Is_GNATSAS then "" else "codepeer");
 
    package Annot_File_Sets is
      new Ada.Containers.Ordered_Sets (Unbounded_String);
