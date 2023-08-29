@@ -621,10 +621,12 @@ package body CodePeer.Module is
    begin
       if Project.Has_Attribute (Switches_Attribute) then
          Switches := Project.Attribute_Value (Switches_Attribute);
-         Set_Project_Switches
-           (Get_Target_From_Name (Builder.Registry, Build_Target),
-            To_String (Switches.all));
-         Free (Switches);
+         if Switches /= null then
+            Set_Project_Switches
+              (Get_Target_From_Name (Builder.Registry, Build_Target),
+               To_String (Switches.all));
+            Free (Switches);
+         end if;
       end if;
 
       if CodePeer.Is_GNATSAS then
@@ -837,7 +839,7 @@ package body CodePeer.Module is
       if Object_Dir /= No_File then
          if CodePeer.Is_GNATSAS then
             return Create_From_Dir
-              (Project.Project_Path.Dir, +CodePeer.Package_Name);
+              (Object_Dir, +CodePeer.Package_Name);
          else
             return Object_Dir;
          end if;
