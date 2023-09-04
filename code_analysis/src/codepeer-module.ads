@@ -234,6 +234,9 @@ private
    --  files.
 
    function CodePeer_Object_Directory
+     (Kernel : not null access Kernel_Handle_Record'Class)
+      return GNATCOLL.VFS.Virtual_File;
+   function CodePeer_Object_Directory
      (Project : Project_Type) return GNATCOLL.VFS.Virtual_File;
    --  Return object directory in 'codepeer' mode.
 

@@ -346,19 +346,6 @@ SCIL for another architecture" />
         <check label="Unconstrained float overflow" switch="-gnateF"
                column="2"
                tip="Check for overflow on unconstrained floating point types"/>
-         <combo label="Analysis level" switch="--level" noswitch="default"
-               separator=" " column="1"
-               tip="Set the accuracy and speed of the analysis. Use 0 or 1 for
-local and quick analysis, 2 for an intermediate analysis, 3 for a relatively
-global analysis (within the memory constraints), and 4 to force a global
-analysis. See CodePeer documentation for more details." >
-            <combo-entry label="default level" value="default" />
-            <combo-entry label="0" value="0" />
-            <combo-entry label="1" value="1" />
-            <combo-entry label="2" value="2" />
-            <combo-entry label="3" value="3" />
-            <combo-entry label="4" value="4" />
-         </combo>
          <hidden switch="-U" separator=" "/>
       </switches>
     </tool>
@@ -390,7 +377,7 @@ analysis. See CodePeer documentation for more details." >
        </command-line>
        <iconname>gps-build-all-symbolic</iconname>
        <switches command="%(tool_name)s" columns="1" lines="1">
-         <check label="Show informationals" switch="--show-info"
+         <check label="Show informationals" switch="--show=info"
                column="1"
                tip="Show GNATSAS informational messages"/>
        </switches>
@@ -437,15 +424,6 @@ analysis. See CodePeer documentation for more details." >
                tip="Do not generate messages ranked low"/>
          <field
                column="2"
-               label="Output file"
-               switch="--out"
-               separator=" "
-               as-file="true"
-               file-filter=".sam"
-               base-dir="%O%(subdir)%P.outputs"
-               tip="Current file"/>
-         <field
-               column="2"
                label="Compare with"
                switch="--compare-with"
                separator=" "
@@ -469,6 +447,7 @@ analysis. See CodePeer documentation for more details." >
           <arg>csv</arg>
           <arg>-P%PP</arg>
           <arg>%X</arg>
+          <arg>--out=gnatsas.csv</arg>
        </command-line>
     </target>
 
@@ -501,17 +480,6 @@ analysis. See CodePeer documentation for more details." >
        </command-line>
        <iconname>gps-build-all-symbolic</iconname>
        <switches command="%(tool_name)s" columns="3" lines="2">
-         <combo label="Analysis level" switch="--level" noswitch="default"
-               separator=" " column="1"
-               tip="Analysis level for which you want to regenerate a report.">
-            <combo-entry label="Last analysis level" value="default"/>
-            <combo-entry label="0" value="0"/>
-            <combo-entry label="1" value="1"/>
-            <combo-entry label="2" value="2"/>
-            <combo-entry label="3" value="3"/>
-            <combo-entry label="4" value="4"/>
-         </combo>
-
          <field label="Compare with"
                 tip="Compare the current run with an arbitrary sam file."
                 switch="--compare-with"
@@ -580,20 +548,6 @@ analysis. See CodePeer documentation for more details." >
        </command-line>
        <iconname>gps-build-all-symbolic</iconname>
        <switches command="%(tool_name)s" columns="2" lines="6">
-         <combo label="Analysis level" switch="--level" noswitch="default"
-               separator=" " column="1"
-               tip="Set the accuracy and speed of the analysis. Use 0 or 1 for
-local and quick analysis, 2 for an intermediate analysis, 3 for a relatively
-global analysis (within the memory constraints), and 4 to force a global
-analysis. See GNATSAS documentation for more details." >
-            <combo-entry label="default level" value="default"/>
-            <combo-entry label="0" value="0"/>
-            <combo-entry label="1" value="1"/>
-            <combo-entry label="2" value="2"/>
-            <combo-entry label="3" value="3"/>
-            <combo-entry label="4" value="4"/>
-         </combo>
-
          <spin label="Multiprocessing" switch="-j" min="0" max="1000"
                default="0" separator="" column="1"
                tip="Use N processes to carry out the analysis (0 means use as

@@ -39,7 +39,7 @@ with Gtkada.File_Selector;
 package body CodePeer.Module.Actions is
 
    Switches_Attribute : constant Attribute_Pkg_List :=
-     Build ("CodePeer", "Switches");
+     Build (CodePeer.GPR_Name, "Switches");
 
    function Is_Show_Hide_Allowed
      (Module  : CodePeer.Module.CodePeer_Module_Id;
@@ -168,7 +168,7 @@ package body CodePeer.Module.Actions is
             Force           => True,
             Build_Mode      => CodePeer.Build_Mode,
             Synchronous     => False,
-            Dir             => Module.Output_Directory,
+            Dir             => CodePeer_Object_Directory (Module.Kernel),
             Preserve_Output => True);
       else
          CodePeer.Module.Bridge.Inspection (Self.Module, False);
@@ -185,7 +185,8 @@ package body CodePeer.Module.Actions is
       Context : Interactive_Command_Context) return Command_Return_Type
    is
       Kernel : constant Kernel_Handle := Get_Kernel (Context.Context);
-      Dir    : constant Virtual_File := Module.Output_Directory;
+      Dir    : constant Virtual_File :=
+        CodePeer.Module.Codepeer_CPM_Directory (Kernel);
       File   : constant Virtual_File :=
         Gtkada.File_Selector.Select_File
           (Title             => -"Select Baseline File",
@@ -284,7 +285,7 @@ package body CodePeer.Module.Actions is
       end if;
 
       Self.Module.Inspection_File :=
-        Object_Dir.Create_From_Dir ("codepeer.csv");
+        Object_Dir.Create_From_Dir (+CodePeer.Package_Name & ".csv");
       Self.Module.Action := Load_CSV;
       CodePeer.Shell_Commands.Build_Target_Execute
         (Kernel      => Kernel_Handle (Self.Module.Kernel),
