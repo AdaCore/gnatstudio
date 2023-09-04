@@ -831,6 +831,17 @@ package body CodePeer.Module is
    -------------------------------
 
    function CodePeer_Object_Directory
+     (Kernel : not null access Kernel_Handle_Record'Class)
+      return GNATCOLL.VFS.Virtual_File is
+   begin
+      return CodePeer_Object_Directory (Get_Project (Kernel));
+   end CodePeer_Object_Directory;
+
+   -------------------------------
+   -- CodePeer_Object_Directory --
+   -------------------------------
+
+   function CodePeer_Object_Directory
      (Project : Project_Type) return GNATCOLL.VFS.Virtual_File
    is
       Object_Dir : constant Virtual_File := Project.Object_Dir;
@@ -1301,7 +1312,7 @@ package body CodePeer.Module is
             Force           => True,
             Build_Mode      => CodePeer.Build_Mode,
             Synchronous     => False,
-            Dir             => Module.Output_Directory,
+            Dir             => CodePeer_Object_Directory (Module.Kernel),
             Preserve_Output => True);
       else
          --  Load the report
