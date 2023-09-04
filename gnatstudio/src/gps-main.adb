@@ -2297,6 +2297,10 @@ procedure GPS.Main is
          Learn.Views.Register_Module (GPS_Main.Kernel);
       end if;
 
+      if Active (CodePeer_Trace) then
+         CodePeer.Module.Register_Module (GPS_Main.Kernel);
+      end if;
+
       --  Register the default filters, so that other modules can create
       --  contextual menus
 
@@ -2603,10 +2607,6 @@ procedure GPS.Main is
       if Active (GNAThub_Trace) then
          GNAThub.Module.Register_Module (GPS_Main.Kernel);
          GNAThub.Module.Shell.Register_Commands (GPS_Main.Kernel);
-      end if;
-
-      if Active (CodePeer_Trace) then
-         CodePeer.Module.Register_Module (GPS_Main.Kernel);
       end if;
 
       --  Register the supported languages and their associated LI handlers

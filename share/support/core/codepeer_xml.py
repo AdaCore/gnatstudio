@@ -1,4 +1,4 @@
-doc = """<?xml version="1.0"?>
+xml_codepeer = """<?xml version="1.0"?>
   <CODEPEER>
     <doc_path>{root}/share/doc/codepeer</doc_path>
 
@@ -209,33 +209,55 @@ doc = """<?xml version="1.0"?>
         <title>Voting</title>
       </menu>
     </submenu>
-"""
 
-attributes = """
     <project_attribute
-      package="Analyzer"
-      name="Output_Dir"
+      package="CodePeer"
+      name="Output_Directory"
       editor_page="CodePeer"
       editor_section="CodePeer configuration"
-      label="sam files directory"
+      label="Output directory"
       hide_in="wizard gnatname_wizard library_wizard"
-      description="CodePeer sam directory to use for this project.">
+      description="CodePeer output directory to use for this project.">
       <string type="directory"/>
     </project_attribute>
 
     <project_attribute
-      package="Analyzer"
-      name="Review_File"
+      package="CodePeer"
+      name="Database_Directory"
       editor_page="CodePeer"
       editor_section="CodePeer configuration"
-      label="review file path"
+      label="Database directory"
       hide_in="wizard gnatname_wizard library_wizard"
-      description="CodePeer review file to use for this project.">
-      <string type="file"/>
+      description="CodePeer database directory to use for this project.">
+      <string type="directory"/>
     </project_attribute>
 
     <project_attribute
-      package="Analyzer"
+      package="CodePeer"
+      name="Server_URL"
+      editor_page="CodePeer"
+      editor_section="CodePeer configuration"
+      label="CodePeer Server URL"
+      hide_in="wizard gnatname_wizard library_wizard"
+      description="URL used to connect to the CodePeer server to access
+the CodePeer database remotely.">
+      <string/>
+    </project_attribute>
+
+    <project_attribute
+      package="CodePeer"
+      name="CWE"
+      editor_page="CodePeer"
+      editor_section="CodePeer configuration"
+      label="Include CWE ids"
+      hide_in="wizard gnatname_wizard library_wizard"
+      description="Include CWE ids in output.">
+      <choice default="true">False</choice>
+      <choice>True</choice>
+    </project_attribute>
+
+    <project_attribute
+      package="CodePeer"
       name="Message_Patterns"
       editor_page="CodePeer"
       editor_section="CodePeer configuration"
@@ -246,7 +268,7 @@ attributes = """
     </project_attribute>
 
     <project_attribute
-      package="Analyzer"
+      package="CodePeer"
       name="Additional_Patterns"
       editor_page="CodePeer"
       editor_section="CodePeer configuration"
@@ -258,7 +280,7 @@ default patterns file.">
     </project_attribute>
 
     <project_attribute
-      package="Analyzer"
+      package="CodePeer"
       name="Excluded_Source_Files"
       editor_page="CodePeer"
       editor_section="CodePeer configuration"
@@ -271,7 +293,7 @@ excluded from CodePeer's analysis."
     </project_attribute>
 
     <project_attribute
-      package="Analyzer"
+      package="CodePeer"
       name="Pending_Status"
       editor_page="CodePeer"
       editor_section="CodePeer configuration"
@@ -283,7 +305,7 @@ excluded from CodePeer's analysis."
     </project_attribute>
 
     <project_attribute
-      package="Analyzer"
+      package="CodePeer"
       name="Not_A_Bug_Status"
       editor_page="CodePeer"
       editor_section="CodePeer configuration"
@@ -295,7 +317,7 @@ excluded from CodePeer's analysis."
     </project_attribute>
 
     <project_attribute
-      package="Analyzer"
+      package="CodePeer"
       name="Bug_Status"
       editor_page="CodePeer"
       editor_section="CodePeer configuration"
@@ -305,20 +327,17 @@ excluded from CodePeer's analysis."
       list="true">
       <string/>
     </project_attribute>
-"""
 
-tool = """
     <tool name="CodePeer" package="CodePeer" index="">
       <language>Ada</language>
       <switches columns="2" lines="3">
+        <check label="Progress bar" switch="-d" column="1"
+               tip="Display a progress bar with information about how many
+files are left to be compiled" />
         <spin label="Multiprocessing" switch="-j" min="0" max="1000"
               default="0" separator="" column="2"
               tip="Use N processes to carry out the processing (0 means use as
 many cores as available on the machine)." />
-        <field label="Run name"
-               tip="Specify the run name."
-               switch="--run-name"
-               separator=" "/>
         <check label="Ignore representation clauses" switch="-gnatI"
                column="1"
                tip="Ignore all representation clauses, useful for generating
@@ -326,7 +345,11 @@ SCIL for another architecture" />
         <check label="Unconstrained float overflow" switch="-gnateF"
                column="2"
                tip="Check for overflow on unconstrained floating point types"/>
-         <combo label="Analysis level" switch="--level" noswitch="default"
+        <check label="Generate CodePeer messages" switch="{s}-compiler-mode"
+               column="2"
+               tip="Generate CodePeer messages in compiler format, without
+creating/updating the database" />
+         <combo label="Analysis level" switch="{s}-level" noswitch="default"
                separator=" " column="1"
                tip="Set the accuracy and speed of the analysis. Use 0 or 1 for
 local and quick analysis, 2 for an intermediate analysis, 3 for a relatively
@@ -339,7 +362,10 @@ analysis. See CodePeer documentation for more details." >
             <combo-entry label="3" value="3" />
             <combo-entry label="4" value="4" />
          </combo>
-         <combo label="Messages" switch="--messages" noswitch="default"
+         <spin label="Cutoff" switch="{s}-cutoff" min="0" max="100000"
+               default="0" separator=" " column="2"
+               tip="This run should use id as the cutoff for the base column"/>
+         <combo label="Messages" switch="{s}-messages" noswitch="default"
                separator=" " column="1"
                tip="Level of verbosity for messages generated by CodePeer" >
             <combo-entry label="Default" value="default" />
@@ -347,26 +373,13 @@ analysis. See CodePeer documentation for more details." >
             <combo-entry label="Normal" value="normal" />
             <combo-entry label="Max" value="max" />
          </combo>
+         <spin label="Baseline review #" switch="{s}-set-baseline-id" min="0"
+               max="100000" default="0" separator=" " column="2"
+               tip="This run should use this id for the base column"/>
          <hidden switch="-U" separator=" "/>
       </switches>
     </tool>
-"""
 
-from os import listdir
-from os.path import basename
-
-def cpms_combo_box(label, switch, tip):
-    cpm_dir= GPS.Project.root().get_attribute_as_string (attribute="CPM_Directory", package="CodePeer")
-    head = "<combo label='" + label + "' switch='" + switch + "' separator=' ' tip='" + tip + " '>"
-    tail = "</combo>"
-    body = ""
-    for f in os.listdir(cpm_dir):
-        if f.endswith(".cpm"):
-            body += "<combo-entry label='" + os.path.basename(f) + "' value='" + f + "'/>"
-
-    return head + body + tail
-
-body = """
     <target-model name="generate_scil" category="">
        <description>Generate SCIL files for CodePeer</description>
        <command-line>
@@ -393,6 +406,9 @@ SCIL for another architecture" />
          <check label="Unconstrained float overflow" switch="-gnateF"
                column="2"
                tip="Check for overflow on unconstrained floating point types"/>
+         <check label="Generate CodePeer messages" switch="-gnateC" column="1"
+                tip="Generate CodePeer messages in compiler format, without
+creating/updating the database" />
        </switches>
     </target-model>
 
@@ -414,63 +430,86 @@ SCIL for another architecture" />
       </extra-args>
     </builder-mode>
 
-    <target-model name="csv" category="">
-       <description>Generate codepeer messages in csv format</description>
+    <target-model name="codepeer-compiler" category="">
+       <description>Review code with codepeer in compiler mode</description>
        <command-help>{help}</command-help>
+       <command-line>
+          <arg>codepeer</arg>
+          <arg>-d</arg>
+          <arg>-P%PP</arg>
+          <arg>%X</arg>
+          <arg>{s}-compiler-mode</arg>
+       </command-line>
        <iconname>gps-build-all-symbolic</iconname>
-       <switches command="%(tool_name)s" columns="2" lines="5">
-         <check label="Show informationals" switch="--show-info"
-               column="1"
-               tip="Show CodePeer informational messages"/>
-         <check label="Hide low messages" switch="--hide-low"
-               column="1"
-               tip="Do not generate messages ranked low"/>
-         <field label="Output file"
-                tip="Write csv output to specified file."
-                switch="--out"
-                separator=" "
-                default="%O/codepeer.csv"/>
-         <field label="Display cpm"
-                tip="Select a cpm file to display instead."
-                switch="--current"
-                separator=" "
-                as-file="true"
-                file-filter="*.cpm"/>
-         <field label="Compare with"
-                tip="Compare the current run with an arbitrary cpm file."
-                switch="--compare-with"
-                separator=" "
-                as-file="true"
-                file-filter="*.cpm"/>
+       <switches command="%(tool_name)s" columns="2" lines="3">
+         <combo label="Messages" switch="{s}-messages" noswitch="default"
+               separator=" " column="1"
+               tip="Level of verbosity for messages generated by CodePeer" >
+            <combo-entry label="Default" value="default" />
+            <combo-entry label="Min" value="min" />
+            <combo-entry label="Normal" value="normal" />
+            <combo-entry label="Max" value="max" />
+         </combo>
+         <spin label="Multiprocessing" switch="-j" min="0" max="1000"
+               default="0" separator="" column="1"
+               tip="Use N processes to carry out the analysis (0 means use as
+many cores as available on the machine)." />
+         <check label="Root project only" switch="--no-subprojects"
+                column="2" tip="Analyze root project only" />
+         <check label="Force analysis" switch="-f" column="2"
+          tip="Force analysis of all files, ignoring previous run.
+Also force the generation of all SCIL files."
+         />
+         <check label="Complete output" switch="--complete-output"
+           column="2"
+           tip="Output messages for all files even the one that have not
+been reanalyzed." />
+         <hidden switch="{s}-dbg-on" separator=" "/>
+         <hidden switch="{s}-dbg-off" separator=" "/>
        </switches>
     </target-model>
 
-    <target-model name="html" category="">
-       <description>Generate codepeer messages in html format</description>
+    <target-model name="codepeer_msg_reader" category="">
+       <description>Generate codepeer messages</description>
        <command-help>{help}</command-help>
+       <command-line>
+          <arg>codepeer</arg>
+          <arg>-d</arg>
+          <arg>-P%PP</arg>
+          <arg>%X</arg>
+          <arg>{s}-output-msg-only</arg>
+       </command-line>
        <iconname>gps-build-all-symbolic</iconname>
        <switches command="%(tool_name)s" columns="2" lines="5">
-         <check label="Show informationals" switch="--show-info"
+         <check label="Show annotations" switch="{s}-show-annotations"
+               column="1"
+               tip="Show CodePeer annotations in addition to messages"/>
+         <check label="Show informationals" switch="{s}-show-info"
                column="1"
                tip="Show CodePeer informational messages"/>
-         <check label="Hide low messages" switch="--hide-low"
+         <check label="Show removed" switch="{s}-show-removed"
+               column="1"
+               tip="Show messages removed from baseline run"/>
+         <check label="Hide low messages" switch="{s}-hide-low"
                column="1"
                tip="Do not generate messages ranked low"/>
+         <check label="CWE" switch="{s}-cwe"
+               column="1"
+               tip="Include CWE ids in message output"/>
 
-         <field label="Display cpm"
-                tip="Select a cpm file to display instead."
-                switch="--current"
-                separator=" "
-                as-file="true"
-                file-filter="*.cpm"/>
+         <spin label="Current" switch="{s}-current" min="0" max="100000"
+               default="0" separator=" " column="2"
+               tip="Override current run id"/>
+         <spin label="Cutoff" switch="{s}-cutoff" min="0" max="100000"
+               default="0" separator=" " column="2"
+               tip="Override baseline run id"/>
 
-         <field label="Compare with"
-                tip="Compare the current run with an arbitrary cpm file."
-                switch="--compare-with"
-                separator=" "
-                as-file="true"
-                file-filter="*.cpm"/>
-
+         <check label="CSV output" switch="{s}-csv"
+               column="2"
+               tip="generate output in CSV format, suitable for spreadsheets"/>
+         <check label="HTML output" switch="{s}-html-only"
+               column="2"
+               tip="generate output in HTML format"/>
        </switches>
     </target-model>
 
@@ -478,13 +517,11 @@ SCIL for another architecture" />
        <description>Load CodePeer messages</description>
        <iconname>gps-build-all-symbolic</iconname>
        <command-line>
-          <arg>cpm-gs-bridge</arg>
-          <arg>--log-to</arg>
-          <arg>%O/gs_bridge.log</arg>
+          <arg>gps_codepeer_bridge</arg>
        </command-line>
     </target-model>
 
-    <target model="generate_scil" category="CodePeer" name="CPL Generate SCIL"
+    <target model="generate_scil" category="CodePeer" name="Generate SCIL"
             messages_category="CodePeer">
        <in-toolbar>FALSE</in-toolbar>
        <in-menu>FALSE</in-menu>
@@ -501,7 +538,7 @@ SCIL for another architecture" />
        </command-line>
     </target>
 
-    <target model="gprclean" category="CodePeer" name="CPL Remove SCIL"
+    <target model="gprclean" category="CodePeer" name="Remove SCIL"
             messages_category="CodePeer">
        <in-toolbar>FALSE</in-toolbar>
        <in-menu>FALSE</in-menu>
@@ -518,8 +555,9 @@ SCIL for another architecture" />
        </command-line>
     </target>
 
-    <target model="html" category="CodePeer"
-            name="CPL Generate HTML Report" messages_category="CodePeer">
+    <target model="codepeer-compiler" category="CodePeer"
+            name="Run CodePeer File"
+            messages_category="CodePeer (one file)">
        <in-toolbar>FALSE</in-toolbar>
        <in-menu>FALSE</in-menu>
        <iconname>gps-compile-symbolic</iconname>
@@ -529,14 +567,30 @@ SCIL for another architecture" />
           <arg>codepeer</arg>
           <arg>-P%PP</arg>
           <arg>%X</arg>
-          <arg>-d</arg>
-          <arg>--no-analysis</arg>
-          <arg>--html</arg>
+          <arg>{s}-compiler-mode</arg>
+          <arg>-file</arg>
+          <arg>%fp</arg>
        </command-line>
     </target>
 
-    <target model="csv" category="CodePeer"
-            name="CPL Generate CSV Report" messages_category="CodePeer">
+    <target model="codepeer-compiler" category="CodePeer"
+            name="Run CodePeer File By File" messages_category="CodePeer">
+       <in-toolbar>FALSE</in-toolbar>
+       <in-menu>FALSE</in-menu>
+       <iconname>gps-build-all-symbolic</iconname>
+       <launch-mode>MANUALLY_WITH_DIALOG</launch-mode>
+       <read-only>TRUE</read-only>
+       <command-line>
+          <arg>codepeer</arg>
+          <arg>-d</arg>
+          <arg>-P%PP</arg>
+          <arg>%X</arg>
+          <arg>{s}-compiler-mode</arg>
+       </command-line>
+    </target>
+
+    <target model="codepeer_msg_reader" category="CodePeer"
+            name="Generate HTML Report" messages_category="CodePeer">
        <in-toolbar>FALSE</in-toolbar>
        <in-menu>FALSE</in-menu>
        <iconname>gps-compile-symbolic</iconname>
@@ -544,27 +598,41 @@ SCIL for another architecture" />
        <read-only>TRUE</read-only>
        <command-line>
           <arg>codepeer</arg>
+          <arg>-d</arg>
           <arg>-P%PP</arg>
           <arg>%X</arg>
+          <arg>{s}-html-only</arg>
+       </command-line>
+    </target>
+
+    <target model="codepeer_msg_reader" category="CodePeer"
+            name="Generate CSV Report" messages_category="CodePeer">
+       <in-toolbar>FALSE</in-toolbar>
+       <in-menu>FALSE</in-menu>
+       <iconname>gps-compile-symbolic</iconname>
+       <launch-mode>MANUALLY_WITH_DIALOG</launch-mode>
+       <read-only>TRUE</read-only>
+       <command-line>
+          <arg>codepeer</arg>
           <arg>-d</arg>
-          <arg>--csv</arg>
-          <arg>--no-analysis</arg>
-          <arg>--out</arg>
-          <arg>%O/codepeer.csv</arg>
+          <arg>-P%PP</arg>
+          <arg>%X</arg>
+          <arg>{s}-output-msg-only</arg>
+          <arg>{s}-csv</arg>
+          <arg>{s}-out</arg>
+          <arg>codepeer.csv</arg>
        </command-line>
     </target>
 
     <target model="codepeer_bridge" category="CodePeer"
-            name="CPL CodePeer Bridge" messages_category="CodePeer Bridge">
+            name="CodePeer Bridge" messages_category="CodePeer Bridge">
        <in-toolbar>FALSE</in-toolbar>
        <in-menu>FALSE</in-menu>
        <iconname>gps-build-all-symbolic</iconname>
        <launch-mode>MANUALLY_WITH_NO_DIALOG</launch-mode>
        <read-only>TRUE</read-only>
        <command-line>
-          <arg>cpm-gs-bridge</arg>
-          <arg>--log-to</arg>
-          <arg>%O/gs_bridge.log</arg>
+          <arg>gps_codepeer_bridge</arg>
        </command-line>
     </target>
 
@@ -573,14 +641,13 @@ SCIL for another architecture" />
        <command-help>{help}</command-help>
        <command-line>
           <arg>codepeer</arg>
+          <arg>{s}-output-only</arg>
           <arg>-P%PP</arg>
           <arg>%X</arg>
-          <arg>--gs</arg>
-          <arg>--no-analysis</arg>
        </command-line>
        <iconname>gps-build-all-symbolic</iconname>
        <switches command="%(tool_name)s" columns="3" lines="2">
-         <combo label="Analysis level" switch="--level" noswitch="default"
+         <combo label="Analysis level" switch="{s}-level" noswitch="default"
                separator=" " column="1"
                tip="Analysis level for which you want to regenerate a report." >
             <combo-entry label="Last analysis level" value="default" />
@@ -591,38 +658,25 @@ SCIL for another architecture" />
             <combo-entry label="4" value="4" />
          </combo>
 
-         <check label="Bump baseline" switch="--bump-baseline" column="2"
-          tip="make the last run of the selected level the new baseline run."/>
+         <check label="Baseline run" switch="{s}-baseline" column="2"
+          tip="this run is a baseline run."/>
+         <spin label="Baseline review #" switch="{s}-set-baseline-id" min="0"
+               max="100000" default="0" separator=" " column="3"
+               tip="This run should use this id for the base column"/>
 
-         <field label="Set baseline"
-                tip="Select a cpm file as the new baseline."
-                switch="--set-baseline"
-                separator=" "
-                as-file="true"
-                file-filter="*.cpm"/>
+         <spin label="Current" switch="{s}-current" min="0" max="100000"
+               default="0" separator=" " column="2"
+               tip="Override current run id"/>
+         <spin label="Cutoff" switch="{s}-cutoff" min="0" max="100000"
+               default="0" separator=" " column="3"
+               tip="This run should use id as the cutoff for the base column"/>
 
-         <field label="Display cpm"
-                tip="Select a cpm file to display instead."
-                switch="--current"
-                separator=" "
-                as-file="true"
-                file-filter="*.cpm"/>
-
-         <field label="Compare with"
-                tip="Compare the current run with an arbitrary cpm file."
-                switch="--compare-with"
-                separator=" "
-                as-file="true"
-                file-filter="*.cpm"/>
-
-         <hidden switch="--dbg-on" separator=" "/>
-         <hidden switch="--dbg-off" separator=" "/>
+         <hidden switch="{s}-dbg-on" separator=" "/>
+         <hidden switch="{s}-dbg-off" separator=" "/>
        </switches>
     </target-model>
   </CODEPEER>
 """
-
-xml_codepeer = doc + attributes + tool + body
 
 xmlHead = """<?xml version="1.0"?>
   <CODEPEER>
@@ -631,14 +685,14 @@ xmlHead = """<?xml version="1.0"?>
        <command-help>{help}</command-help>
        <command-line>
           <arg>codepeer</arg>
+          <arg>-dbg-on</arg>
+          <arg>ide_progress_bar</arg>
           <arg>-P%PP</arg>
           <arg>%X</arg>
-          <arg>-d</arg>
-          <arg>--gs</arg>
        </command-line>
        <iconname>gps-build-all-symbolic</iconname>
        <switches command="%(tool_name)s" columns="3" lines="6">
-         <combo label="Analysis level" switch="--level" noswitch="default"
+         <combo label="Analysis level" switch="{s}-level" noswitch="default"
                separator=" " column="1"
                tip="Set the accuracy and speed of the analysis. Use 0 or 1 for
 local and quick analysis, 2 for an intermediate analysis, 3 for a relatively
@@ -651,7 +705,7 @@ analysis. See CodePeer documentation for more details." >
             <combo-entry label="3" value="3" />
             <combo-entry label="4" value="4" />
          </combo>
-         <combo label="Messages" switch="--messages" noswitch="default"
+         <combo label="Messages" switch="{s}-messages" noswitch="default"
                separator=" " column="1"
                tip="Level of verbosity for messages generated by CodePeer" >
             <combo-entry label="Default" value="default" />
@@ -660,23 +714,20 @@ analysis. See CodePeer documentation for more details." >
             <combo-entry label="Max" value="max" />
          </combo>
 
-         <check label="No race conditions analysis" switch="--no-race-conditions"
+         <check label="Baseline run" switch="{s}-baseline" column="2"
+          tip="this run is a baseline run and prior run becomes default cutoff"
+         />
+         <check label="No race conditions analysis" switch="{s}-no-race-conditions"
                 column="2" tip="Do not perform race conditions analysis" />
          <spin label="Multiprocessing" switch="-j" min="0" max="1000"
                default="0" separator="" column="3"
                tip="Use N processes to carry out the analysis (0 means use as
 many cores as available on the machine)." />
-         <field label="Run name"
-                tip="Specify the run name."
-                switch="--run-name"
-                separator=" "/>
          <check label="Root project only" switch="--no-subprojects"
                 column="2" tip="Analyze root project only" />
          <check label="Force analysis" switch="-f" column="2"
           tip="Force analysis of all files, ignoring previous run.
 Also force the generation of all SCIL files." />
-         <check label="Disable Infer" switch="--no-infer" default="off"
-                column="2" tip="Disable Infer analysis." />
          <check label="User-defined GNATcheck rules" switch="--gnatcheck"
                 column="2" tip="Launch GNATcheck on the list of rules specified in the Check package of the project file, and the default rules (unless overriden by the next option)" />
          <check label="Skip default GNATcheck rules" switch="--no-default-gnatcheck-rules"
@@ -684,15 +735,24 @@ Also force the generation of all SCIL files." />
          <check label="GNAT warnings" switch="--gnat-warnings"
                 column="2"
                 tip="Launch GNAT front-end and collect its warnings" />
+
 """
 
 xmlTrailer = """
-         <hidden switch="--dbg-on" separator=" "/>
-         <hidden switch="--dbg-off" separator=" "/>
+
+         <spin label="Cutoff" switch="{s}-cutoff" min="0" max="100000"
+               default="0" separator=" " column="3"
+               tip="This run should use id as the cutoff for the base column"/>
+         <spin label="Baseline review #" switch="{s}-set-baseline-id" min="0"
+               max="100000" default="0" separator=" " column="3"
+               tip="This run should use this id for the base column"/>
+
+         <hidden switch="{s}-dbg-on" separator=" "/>
+         <hidden switch="{s}-dbg-off" separator=" "/>
        </switches>
     </target-model>
 
-    <target model="codepeer" category="CodePeer" name="CPL Run CodePeer"
+    <target model="codepeer" category="CodePeer" name="Run CodePeer"
             messages_category="CodePeer">
        <in-toolbar>FALSE</in-toolbar>
        <in-menu>FALSE</in-menu>
@@ -701,14 +761,14 @@ xmlTrailer = """
        <read-only>TRUE</read-only>
        <command-line>
           <arg>codepeer</arg>
+          <arg>{s}-dbg-on</arg>
+          <arg>ide_progress_bar</arg>
           <arg>-P%PP</arg>
           <arg>%X</arg>
-          <arg>-d</arg>
-          <arg>--gs</arg>
        </command-line>
     </target>
 
-    <target model="codepeer" category="CodePeer" name="CPL Run CodePeer..."
+    <target model="codepeer" category="CodePeer" name="Run CodePeer..."
             messages_category="CodePeer">
        <in-toolbar>FALSE</in-toolbar>
        <in-menu>FALSE</in-menu>
@@ -717,32 +777,15 @@ xmlTrailer = """
        <read-only>TRUE</read-only>
        <command-line>
           <arg>codepeer</arg>
+          <arg>{s}-dbg-on</arg>
+          <arg>ide_progress_bar</arg>
           <arg>-P%PP</arg>
           <arg>%X</arg>
-          <arg>-d</arg>
-          <arg>--gs</arg>
-       </command-line>
-    </target>
-
-    <target model="codepeer" category="CodePeer"
-            name="CPL Run CodePeer File"
-            messages_category="CodePeer (one file)">
-       <in-toolbar>FALSE</in-toolbar>
-       <in-menu>FALSE</in-menu>
-       <iconname>gps-compile-symbolic</iconname>
-       <launch-mode>MANUALLY_WITH_DIALOG</launch-mode>
-       <read-only>TRUE</read-only>
-       <command-line>
-          <arg>codepeer</arg>
-          <arg>-P%PP</arg>
-          <arg>%X</arg>
-          <arg>--file</arg>
-          <arg>%fp</arg>
        </command-line>
     </target>
 
     <target model="codepeer_output_only" category="CodePeer"
-            name="CPL Regenerate CodePeer Report" messages_category="CodePeer">
+            name="Regenerate CodePeer Report" messages_category="CodePeer">
        <in-toolbar>FALSE</in-toolbar>
        <in-menu>FALSE</in-menu>
        <iconname>gps-build-all-symbolic</iconname>
@@ -750,10 +793,9 @@ xmlTrailer = """
        <read-only>TRUE</read-only>
        <command-line>
           <arg>codepeer</arg>
+          <arg>{s}-output-only</arg>
           <arg>-P%PP</arg>
           <arg>%X</arg>
-          <arg>--gs</arg>
-          <arg>--no-analysis</arg>
        </command-line>
     </target>
 

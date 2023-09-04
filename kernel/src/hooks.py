@@ -612,6 +612,9 @@ Emitted when the contents of the clipboard has changed, either
 because the user added a new entry to it (Copy or Cut) or because
 the index of the last paste operation has changed (Paste Previous)'''),
 
+    Hook('codepeer_report_ready', 'simple_hooks', descr='''
+Emitted when the codepeer report is displayed within GNAT Studio'''),
+
     Hook('compilation_starting', 'compilation_hooks', descr='''
 Emitted when a compilation operation is about to start.\n
 Among the various tasks that GPS connects to this hook are: check

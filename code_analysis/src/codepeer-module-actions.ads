@@ -57,12 +57,19 @@ private
       Context : Interactive_Command_Context) return Command_Return_Type;
    --  Called when "Analyze File By File" menu item is activated
 
-   type Display_Code_Review_Command
-      is new CodePeer_Interactive_Command with null record;
+   type Display_Code_Review_Command is
+     new CodePeer_Interactive_Command with null record;
    overriding function Execute
      (Self    : access Display_Code_Review_Command;
       Context : Interactive_Command_Context) return Command_Return_Type;
    --  Called when "Display code review" menu item is activated
+
+   type Display_Baseline_Command is
+     new CodePeer_Interactive_Command with null record;
+   overriding function Execute
+     (Self    : access Display_Baseline_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type;
+   --  Hidden action used to review a
 
    type Display_HTML_Command is new Interactive_Command with null record;
    overriding function Execute

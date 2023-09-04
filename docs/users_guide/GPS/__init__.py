@@ -908,7 +908,7 @@ class BuildTarget(object):
 
     def execute(self, main_name='', file='', force=False, extra_args='',
                 build_mode='', synchronous=True, directory='', quiet=False,
-                on_exit=None):
+                on_exit=None, preserve_output=False):
         """
         Launch the build target.
 
@@ -945,6 +945,9 @@ class BuildTarget(object):
            GPS.BuildTarget("Custom...").execute(
                synchronous=True,
                on_exit=lambda status: GPS.MDI.dialog("status is %s" % status))
+
+        :param bool preserve_output: A Boolean. When True, keep the previous
+           content in the Console.
         """
         pass  # implemented in Ada
 

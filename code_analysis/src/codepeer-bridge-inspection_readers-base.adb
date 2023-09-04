@@ -699,7 +699,7 @@ package body CodePeer.Bridge.Inspection_Readers.Base is
       From_Line   : Positive := 1;
       From_Column : Positive := 1;
       CWEs        : CWE_Category_Sets.Set;
-      CPL_Id      : CPL_Id_Access;
+      GNATSAS_Id  : GNATSAS_Id_Access;
 
    begin
       --  Only primary checks need to be displayed.
@@ -733,7 +733,7 @@ package body CodePeer.Bridge.Inspection_Readers.Base is
            Positive'Value (Attrs.Get_Value ("from_column"));
       end if;
 
-      if Is_CPL then
+      if Is_GNATSAS then
          declare
             function Get (Attr : String) return Unbounded_String;
             --  Return the value of the attribute Attr, or "" if not
@@ -756,7 +756,7 @@ package body CodePeer.Bridge.Inspection_Readers.Base is
                end if;
             end Get;
          begin
-            CPL_Id := new CPL_Id_Type'
+            GNATSAS_Id := new GNATSAS_Id_Type'
               (Prj => Get ("id_prj"),
                File => Get ("id_file"),
                Subp => Get ("id_subp"),
@@ -793,7 +793,7 @@ package body CodePeer.Bridge.Inspection_Readers.Base is
            From_Column => From_Column,
            Checks      => Checks,
            CWEs        => CWEs,
-           CPL_Id      => CPL_Id);
+           GNATSAS_Id      => GNATSAS_Id);
 
       if Self.Messages.Contains (Self.Current_Message.Id) then
          Self.Kernel.Insert
@@ -822,7 +822,7 @@ package body CodePeer.Bridge.Inspection_Readers.Base is
            (Self.Current_Message.Category);
       end if;
 
-      if Is_CPL and then Attrs.Get_Index ("status") /= -1 then
+      if Is_GNATSAS and then Attrs.Get_Index ("status") /= -1 then
          --  read review statuses directly from inspection_data.xml
 
          declare

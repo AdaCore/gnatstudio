@@ -2,7 +2,7 @@ import GPS
 from gs_utils.internal.utils import *
 
 """
-This test monitors the progress bar of "Run CodePeer" and verify that its
+This test monitors the progress bar of "Run GNATSAS" and verify that its
 properly updated during a run.
 """
 
@@ -15,7 +15,7 @@ def test_driver():
 
     def on_changed(self, progress):
         for t in GPS.Task.list():
-            if t.name().startswith("CPL Run CodePeer"):
+            if t.name().startswith("Run GNATSAS"):
                 cur, total = t.progress()
                 if self.prev < cur:
                     self.prev = cur
@@ -26,6 +26,6 @@ def test_driver():
     task_hud_progress.prev = 0  # Previous progress value
     task_hud_progress.cpt = 0   # The number of time the fraction was updated
     task_hud_progress.connect("notify::fraction", on_changed)
-    GPS.execute_action("/CodePeer/Analyze All")
+    GPS.execute_action("/GNATSAS/Analyze All")
     yield wait_tasks()
     gps_assert(task_hud_progress.cpt > 0, True, "Wrong number of step")

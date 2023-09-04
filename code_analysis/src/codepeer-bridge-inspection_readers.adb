@@ -41,6 +41,7 @@ package body CodePeer.Bridge.Inspection_Readers is
    Previous_Timestamp_Attribute : constant String := "previous_timestamp";
    Timestamp_Attribute          : constant String := "timestamp";
    Library_File_Attribute       : constant String := "library_file";
+   CPM_File_Attribute           : constant String := "cpm_file";
 
    -----------------
    -- End_Element --
@@ -94,7 +95,7 @@ package body CodePeer.Bridge.Inspection_Readers is
           (Abstract_Inspection_Reader'Class, Inspection_Reader_Access);
 
    begin
-      if Is_CPL then
+      if Is_GNATSAS then
          Annot_Files.Clear;
       end if;
 
@@ -212,8 +213,8 @@ package body CodePeer.Bridge.Inspection_Readers is
             Data.Current.Library_File :=
               Get_Value (Attrs, Library_File_Attribute);
 
-            if Is_CPL then
-               CPM_File := Get_Value (Attrs, "cpm_file");
+            if Is_GNATSAS then
+               CPM_File := Get_Value (Attrs, CPM_File_Attribute);
             end if;
 
             Data.Baseline.Inspection :=

@@ -58,7 +58,6 @@ package body CodePeer.Module.Bridge is
    is
       Project           : constant Project_Type :=
                             GPS.Kernel.Project.Get_Project (Module.Kernel);
-      Mode              : constant String := Module.Kernel.Get_Build_Mode;
       Object_Directory  : Virtual_File;
       Command_File_Name : Virtual_File;
       Success           : Boolean;
@@ -66,8 +65,6 @@ package body CodePeer.Module.Bridge is
       pragma Warnings (Off, Success);
 
    begin
-      Module.Kernel.Set_Build_Mode ("codepeer");
-
       --  Compute name of object directory and request file
 
       Object_Directory  := CodePeer_Object_Directory (Project);
@@ -100,8 +97,9 @@ package body CodePeer.Module.Bridge is
 
       Module.Action := None;
       Run_GPS_Codepeer_Bridge
-        (Module, Command_File_Name, Preserve_Output => False);
-      Module.Kernel.Set_Build_Mode (Mode);
+        (Module,
+         Command_File_Name,
+         Preserve_Output => False);
    end Add_Audit_Record;
 
    ----------------
@@ -136,7 +134,7 @@ package body CodePeer.Module.Bridge is
       pragma Warnings (Off, Success);
 
    begin
-      if not Is_CPL
+      if not Is_GNATSAS
         and then (not Is_Directory (Output_Directory)
         and Codepeer_Server_URL (Project) = "")
       then
@@ -190,13 +188,12 @@ package body CodePeer.Module.Bridge is
       Object_Directory   : Virtual_File;
       Command_File_Name  : Virtual_File;
       Reply_File_Name    : Virtual_File;
-      Mode               : constant String := Module.Kernel.Get_Build_Mode;
       Success            : Boolean;
       pragma Warnings (Off, Success);
 
+      Ensure_Build_Mode : CodePeer_Build_Mode (Module.Kernel);
+      pragma Unreferenced (Ensure_Build_Mode);
    begin
-      Module.Kernel.Set_Build_Mode ("codepeer");
-
       --  Compute directories' and files' names.
 
       Object_Directory := CodePeer_Object_Directory (Project);
@@ -225,7 +222,6 @@ package body CodePeer.Module.Bridge is
       Module.Bridge_Messages := Messages;
       Run_GPS_Codepeer_Bridge
         (Module, Command_File_Name, Preserve_Output => False);
-      Module.Kernel.Set_Build_Mode (Mode);
    end Load_Audit_Trail;
 
    ----------------------------------
@@ -269,7 +265,7 @@ package body CodePeer.Module.Bridge is
       Extra_Args : Argument_List_Access;
 
       Target_Name : constant String :=
-         (if Is_CPL then "CPL CodePeer Bridge" else "CodePeer Bridge");
+         (if Is_GNATSAS then "GNATSAS Review" else "CodePeer Bridge");
    begin
       Extra_Args := new Argument_List (1 .. 1);
       Extra_Args (1) := new String'(+Command_File.Full_Name.all);
@@ -280,7 +276,7 @@ package body CodePeer.Module.Bridge is
       Commands.Builder.Launch_Target
         (Builder         => Builder,
          Target_Name     => Target_Name,
-         Mode_Name       => "codepeer",
+         Mode_Name       => CodePeer.Package_Name,
          Force_File      => No_File,
          Extra_Args      => Extra_Args,
          Quiet           => not Preserve_Output,

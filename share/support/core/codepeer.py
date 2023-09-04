@@ -18,16 +18,10 @@ import re
 import copy
 import gs_utils.gnat_rules
 from xml.sax.saxutils import escape
+from codepeer_xml import xmlHead, xmlTrailer, xml_codepeer
 
 codepeer = os_utils.locate_exec_on_path("codepeer")
-
-is_cpl = str(os_utils.locate_exec_on_path("cpm-gs-bridge")).startswith(
-    str(os.path.dirname(codepeer)))
-
-if is_cpl:
-    from codepeer_xml import xmlHead, xmlTrailer, xml_codepeer
-else:
-    from codepeer_xml_old import xmlHead, xmlTrailer, xml_codepeer
+gnatsas = os_utils.locate_exec_on_path("gnatsas")
 
 prev_xml = ""
 
@@ -75,7 +69,8 @@ def on_project_view_changed(hook):
     # Ensure supported warning if target changed
     get_supported_warnings()
 
-if codepeer:
+
+if not gnatsas and codepeer:
     root = os.path.dirname(os.path.dirname(codepeer)).replace('\\', '/')
     example_root = root + '/share/examples/codepeer'
     try:
