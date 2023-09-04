@@ -31,17 +31,20 @@ with GPS.Kernel;   use GPS.Kernel;
 package Refactoring.Code_Actions is
 
    procedure Add_Code_Action
-     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
-      File    : Virtual_File;
-      Line    : Editable_Line_Type;
-      Column  : Visible_Column_Type;
-      Markup  : String;
-      Command : Command_Access);
+     (Kernel   : access GPS.Kernel.Kernel_Handle_Record'Class;
+      File     : Virtual_File;
+      Line     : Editable_Line_Type;
+      Column   : Visible_Column_Type;
+      Markup   : String;
+      Category : String;
+      Command  : Command_Access);
    --  Add a code action at the given location. Markup is an UTF8 pango markup
    --  string, used to display the description of the command being launched.
    --  Command is the command to run if the user activates the code action.
    --  If there are multiple possible actions on the given line, call this
    --  multiple times.
+   --  Category is a label representing the LSP.Messages.CodeActionKind if
+   --  specified. Set it to an empty string if no kind has been specified.
    --  The code actions are automatically cleared when the location changes.
    --  The ownership of Command is transferred to this module: do not free it.
 

@@ -834,6 +834,9 @@ package body GPS.LSP_Clients is
       function Get_Supported_ResourceOperations
         return LSP.Messages.ResourceOperationKindSet;
 
+      function Get_Supported_CodeActionKinds
+        return LSP.Messages.CodeActionKindSet;
+
       function Get_Experimental_Features return LSP.Types.LSP_Any;
       --  Return the selection of experimental features that are supported
 
@@ -896,6 +899,24 @@ package body GPS.LSP_Clients is
          return LSP.Messages.ResourceOperationKindSet (Result);
       end Get_Supported_ResourceOperations;
 
+      -----------------------------------
+      -- Get_Supported_CodeActionKinds --
+      -----------------------------------
+
+      function Get_Supported_CodeActionKinds
+        return LSP.Messages.CodeActionKindSet
+      is
+         Result : LSP.Messages.CodeActionKindSets.Set;
+      begin
+         for Kind in LSP.Messages.CodeActionKind loop
+            LSP.Messages.CodeActionKindSets.Include
+              (Result,
+               Kind);
+         end loop;
+
+         return LSP.Messages.CodeActionKindSet (Result);
+      end Get_Supported_CodeActionKinds;
+
       Root    : constant GNATCOLL.VFS.Virtual_File :=
                   GPS.Kernel.Project.Get_Project
                     (Self.Kernel).Project_Path.Dir;
@@ -937,6 +958,16 @@ package body GPS.LSP_Clients is
                             Value  =>
                               (relatedInformation => (True, True),
                                others             => <>)),
+                         codeAction =>
+                           (Is_Set => True,
+                            Value =>
+                              (codeActionLiteralSupport =>
+                                   (Is_Set => True,
+                                    Value =>
+                                      (codeActionKind =>
+                                         (valueSet =>
+                                              Get_Supported_CodeActionKinds))),
+                               others => <>)),
                          completion     =>
                            (dynamicRegistration =>
                               (Is_Set => True, Value => True),

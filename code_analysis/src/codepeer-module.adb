@@ -346,6 +346,7 @@ package body CodePeer.Module is
               (Grey_Analysis_Cst),
             Message                  =>
               Create (GPS.Kernel.Messages.Message_Access (Message)),
+            Category                 => <>,
             Associated_Command       => Module.Multiple_Command,
             Display_Popup_When_Alone => False);
 
@@ -366,6 +367,7 @@ package body CodePeer.Module is
                   when Not_A_Bug     => Blue_Analysis_Cst),
             Message                  =>
               Create (GPS.Kernel.Messages.Message_Access (Message)),
+            Category                 => <>,
             Associated_Command       => Module.Review_Command,
             Display_Popup_When_Alone => False);
       end if;

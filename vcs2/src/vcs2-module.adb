@@ -144,6 +144,7 @@ package body VCS2.Module is
             Tooltip_Text             => Null_Unbounded_String,
             Image                    => Null_Unbounded_String,
             Message                  => <>,
+            Category                 => <>,
             Associated_Command       => null),
          Every_Line => False);
       Add_Line_Information

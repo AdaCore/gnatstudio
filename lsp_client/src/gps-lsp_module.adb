@@ -1374,6 +1374,7 @@ package body GPS.LSP_Module is
                    Image                    =>
                      To_Unbounded_String (Get_Editor_Side_Icon (Importance)),
                    Message                  => Create (Message_Access (M)),
+                   Category                 => <>,
                    Associated_Command       => null));
 
          begin
