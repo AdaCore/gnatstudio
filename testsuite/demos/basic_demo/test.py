@@ -7,7 +7,7 @@ from gi.repository import Gdk, Gtk
 from gs_utils.internal.demo_infrastructure import DemoWindow
 from pygps import GDK_RETURN
 
-from gs_utils.internal.utils import run_test_driver, get_widgets_by_type, send_key_event
+from gs_utils.internal.utils import run_test_driver, get_widgets_by_type, send_key_event, gps_assert
 
 @run_test_driver
 def driver():
@@ -56,6 +56,7 @@ def driver():
             markup="Launch the debugger on the executable",
             oracle=debugger_is_active,
             action=lambda: GS.execute_action("debug initialize Sdc:sdc"),
+            error_msg="The Debugger should be present",
         )
         # A bit of scripting is needed to get buffer of the execution window
         view = get_widgets_by_type(Gtk.TextView,

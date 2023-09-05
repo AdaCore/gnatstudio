@@ -7,10 +7,11 @@ import sys
 import GS
 from gi.repository import Gtk
 from workflows.promises import Promise
+from gs_utils.internal.utils import simple_error
 
 
 class WaiterPromise(Promise):
-    def __init__(self, oracle, action, timeout, dw):
+    def __init__(self, oracle, action, error_msg, timeout, dw):
         # Init the superclass
         super(WaiterPromise, self).__init__()
         self.oracle = oracle
@@ -18,6 +19,7 @@ class WaiterPromise(Promise):
         self.dw = dw
         self.dw.current_promise = self
         self.timer = timeout
+        self.error_msg = error_msg
         GS.Timeout(100, self.timeout_handler)
 
     def timeout_handler(self, timeout):
@@ -26,8 +28,10 @@ class WaiterPromise(Promise):
             if self.timer <= 0:
                 timeout.remove()
                 self.dw.current_promise = None
-                self.dw.say("delay over")
+                self.dw.say(self.error_msg)
                 self.resolve()
+                if GS.Logger("TESTSUITE").active:
+                    simple_error(self.error_msg)
 
             if self.oracle():
                 timeout.remove()
@@ -115,12 +119,19 @@ class DemoWindow(object):
             if self.current_promise is not None:
                 self.current_promise.action()
 
-    def wait(self, markup="waiting", oracle=lambda: False, action=lambda: None, timeout=60_000):
+    def wait(
+        self,
+        markup="waiting",
+        oracle=lambda: False,
+        action=lambda: None,
+        error_msg="delay over",
+        timeout=60_000,
+    ):
         """
-        Wait until the oracle is true, then execute the action
+        Wait until the oracle is true, then execute the action.
         """
         self.say(markup)
-        self.current_promise = WaiterPromise(oracle, action, timeout, self)
+        self.current_promise = WaiterPromise(oracle, action, error_msg, timeout, self)
         if self.auto_run:
             action()
         return self.current_promise
