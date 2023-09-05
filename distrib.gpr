@@ -10,7 +10,7 @@ project Distrib is
       for Implementation_Suffix ("text") use ".txt";
 
       for Implementation_Exceptions ("text") use
-         ("features", "known-problems", "COPYING", "README", "doinstall");
+         ("README", "doinstall");
    end Naming;
 
    package Compiler is
