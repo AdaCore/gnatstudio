@@ -1,17 +1,7 @@
-variables:
-   # The common part of the URL for cloning from within a CI
-   GIT_CLONE_BASE: https://gitlab-ci-token:${CI_JOB_TOKEN}@${CI_SERVER_HOST}:${CI_SERVER_PORT}
-
 stages:
   - build_and_test
 
 .basic-setup:
-    # Temporary: clone the specific branch of ci-fragments
-    # TODO: remove the next 4 lines when this version of ci-fragments is available in the image
-    - cd /tmp
-    - git clone $GIT_CLONE_BASE/eng/it/ci-fragments -b topic/generic_ci_phase_2 --depth 1
-    - export PATH=/tmp/ci-fragments:$PATH
-    - cd -
     # Use generic_anod_ci here.
     - generic_anod_ci
          --add-dep eng/ide/gnatstudio-internal
