@@ -110,7 +110,8 @@ class GSPublicTestsuite(Testsuite):
     @property
     def test_finders(self):
         base = os.path.dirname(__file__)
-        return [GSTestFinder([os.path.join(base, 'tests'),
+        return [GSTestFinder([os.path.join(base, 'demos'),
+                              os.path.join(base, 'tests'),
                               os.path.join(base, 'internal', 'tests')])]
 
     def test_name(self, test_dir):
