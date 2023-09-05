@@ -365,6 +365,7 @@ package GPS.Kernel.Preferences is
    LSP_Ada_Diagnostics     : Boolean_Preference;
    LSP_Diagnostics_Display : LSP_Diagnostics_Display_Policy_Prefs.Preference;
    LSP_Limit_Formatting    : Boolean_Preference;
+   LSP_Ada_Param_Threshold : Integer_Preference;
 
    package Indentation_Kind_Preferences is new
      Default_Preferences.Enums.Generics (Language.Indentation_Kind);
