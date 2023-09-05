@@ -13,7 +13,7 @@ from gs_utils.internal.utils import run_test_driver, get_widgets_by_type, send_k
 def driver():
     try:
         # Create our demo window
-        dw = DemoWindow("Demo")
+        dw = DemoWindow()
         dw.say("<b>GNAT Studio Demo</b>")
 
         ###############
@@ -46,11 +46,7 @@ def driver():
         #########
 
         def debugger_is_active():
-            try:
-                GS.Debugger.get()
-                return True
-            except Exception:
-                return False
+            return GS.MDI.get("Debugger Execution") is not None
 
         yield dw.wait(
             markup="Launch the debugger on the executable",
