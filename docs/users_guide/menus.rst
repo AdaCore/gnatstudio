@@ -43,6 +43,8 @@ You can access the following entries from the menu bar:
 
   * :menuselection:`CodePeer` (see :ref:`The_CodePeer_Menu`)
 
+  * :menuselection:`GNATSAS` (see :ref:`The_GNATSAS_Menu`)
+
   * :menuselection:`Window` (see :ref:`The_Window_Menu`)
 
   * :menuselection:`Help` (see :ref:`The_Help_Menu`)
@@ -1424,6 +1426,21 @@ The CodePeer Menu
    system and available on your PATH. See your CodePeer documentation for
    more details.
 
+.. index:: gnatsas
+
+.. _The_GNATSAS_Menu:
+
+The GNATSAS Menu
+================
+
+.. index:: menu; gnatsas
+
+* :menuselection:`GNATSAS`
+
+   This menu is available if the GNATSAS toolset is installed on your
+   system and available on your PATH. See your GNATSAS documentation for
+   more details.
+
 .. index:: window
 
 .. _The_Window_Menu:
@@ -1578,12 +1595,12 @@ The Help Menu
 
    Load the documentation for 'PyGTK Reference Manual' into an external web browser
 
-.. index:: menu; help --> codepeer
+.. index:: menu; help --> gnatsas
 
-* :menuselection:`Help --> CodePeer`
+* :menuselection:`Help --> GNATSAS`
 
-   This menu is available if the CodePeer toolset is installed on your
-   system and available on your PATH. See your CodePeer documentation for
+   This menu is available if the GNATSAS toolset is installed on your
+   system and available on your PATH. See your GNATSAS documentation for
    more details.
 
 .. index:: menu; help --> create bug report
