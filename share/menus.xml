@@ -303,7 +303,7 @@
          </menu>
       </menu>
 
-      <menu label='GNATSAS' optional='true'>
+      <menu label='_GNATSAS' optional='true'>
          <menu label='_Analyze All'          action='gnatsas analyze all' optional='true'/>
          <menu label='Analy_ze...'           action='gnatsas analyze...' optional='true'/>
          <separator/>
@@ -528,6 +528,7 @@
          <menu label='AWS'/>
          <menu label='SPARK'/>
          <menu label='CodePeer'/>
+         <menu label='GNATSAS'/>
          <separator />
          <menu label='Create Bug Report'  action='Create bug report'/>
          <separator />
