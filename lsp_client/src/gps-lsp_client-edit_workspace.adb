@@ -497,7 +497,7 @@ package body GPS.LSP_Client.Edit_Workspace is
          if Command.Auto_Save then
             declare
                Holder : constant GPS.Editors.
-                 Controlled_Editor_Buffer_Holder :=
+                 Controlled_Editor_Buffer_Holder'Class :=
                    Buffer_Factory.Get_Holder (File);
                Server : constant Language_Server_Access :=
                  Get_Language_Server
@@ -520,8 +520,7 @@ package body GPS.LSP_Client.Edit_Workspace is
                Editor : constant GPS.Editors.Editor_Buffer'Class :=
                  Buffer_Factory.Get
                    (File,
-                    Open_View   => True,
-                    Open_Buffer => True);
+                    Open_View   => True);
             begin
                Internal_Process_File (File, Editor, Map);
             end;
@@ -859,7 +858,7 @@ package body GPS.LSP_Client.Edit_Workspace is
          if Command.Auto_Save then
             declare
                Holder : constant GPS.Editors.
-                 Controlled_Editor_Buffer_Holder :=
+                 Controlled_Editor_Buffer_Holder'Class :=
                    Buffer_Factory.Get_Holder (File);
             begin
                Internal_Process_File (File, Holder.Editor, Map);
@@ -869,8 +868,7 @@ package body GPS.LSP_Client.Edit_Workspace is
                Editor : constant GPS.Editors.Editor_Buffer'Class :=
                  Buffer_Factory.Get
                    (File,
-                    Open_View   => True,
-                    Open_Buffer => True);
+                    Open_View   => True);
             begin
                Internal_Process_File (File, Editor, Map);
             end;

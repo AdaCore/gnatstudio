@@ -1073,7 +1073,7 @@ package body Call_Graph_Views is
                  & ":" & Integer'Image (Line)
                  & ":" & Integer'Image (Column);
                Holder   : constant GPS.Editors.
-                 Controlled_Editor_Buffer_Holder :=
+                 Controlled_Editor_Buffer_Holder'Class :=
                    V.Kernel.Get_Buffer_Factory.Get_Holder (File);
                Location : constant GPS.Editors.Editor_Location'Class :=
                  Holder.Editor.New_Location
@@ -2253,7 +2253,7 @@ package body Call_Graph_Views is
       if Decl /= No_Decl then
          declare
             Holder   : constant GPS.Editors.
-              Controlled_Editor_Buffer_Holder :=
+              Controlled_Editor_Buffer_Holder'Class :=
                 Kernel.Get_Buffer_Factory.Get_Holder (Decl.File);
             Location : constant GPS.Editors.Editor_Location'Class :=
               Holder.Editor.New_Location

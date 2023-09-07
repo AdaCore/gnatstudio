@@ -748,6 +748,22 @@ package body GPS.Editors is
    procedure Free is new Ada.Unchecked_Deallocation
      (Editor_Buffer'Class, Editor_Buffer_Access);
 
+   ----------------
+   -- New_Holder --
+   ----------------
+
+   function New_Holder
+     (Buffer       : Editor_Buffer'Class;
+      Should_Close : Boolean)
+      return Controlled_Editor_Buffer_Holder is
+   begin
+      return Controlled_Editor_Buffer_Holder'
+        (Ada.Finalization.Limited_Controlled
+         with
+           Close  => Should_Close,
+           Buffer => new Editor_Buffer'Class'(Buffer));
+   end New_Holder;
+
    --------------
    -- Finalize --
    --------------
@@ -764,43 +780,5 @@ package body GPS.Editors is
          Free (Self.Buffer);
       end if;
    end Finalize;
-
-   ----------------
-   -- Get_Holder --
-   ----------------
-
-   function Get_Holder
-     (This : Editor_Buffer_Factory'Class;
-      File : Virtual_File)
-      return Controlled_Editor_Buffer_Holder
-   is
-      Buffer : constant Editor_Buffer'Class := This.Get
-        (File            => File,
-         Force           => False,
-         Open_Buffer     => False,
-         Open_View       => False,
-         Focus           => False,
-         Only_If_Focused => False);
-
-   begin
-      if Buffer = Nil_Editor_Buffer then
-         return Controlled_Editor_Buffer_Holder'
-           (Standard.Ada.Finalization.Limited_Controlled with
-            Close  => True,
-            Buffer => new Editor_Buffer'Class'
-              (This.Get
-                   (File            => File,
-                    Force           => False,
-                    Open_Buffer     => True,
-                    Open_View       => False,
-                    Focus           => False,
-                    Only_If_Focused => False)));
-      else
-         return Controlled_Editor_Buffer_Holder'
-           (Standard.Ada.Finalization.Limited_Controlled with
-            Close  => False,
-            Buffer => new Editor_Buffer'Class'(Buffer));
-      end if;
-   end Get_Holder;
 
 end GPS.Editors;

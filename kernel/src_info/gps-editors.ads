@@ -897,7 +897,6 @@ package GPS.Editors is
      (This            : Editor_Buffer_Factory;
       File            : Virtual_File := No_File;
       Force           : Boolean := False;
-      Open_Buffer     : Boolean := False;
       Open_View       : Boolean := True;
       Focus           : Boolean := True;
       Only_If_Focused : Boolean := False;
@@ -929,12 +928,20 @@ package GPS.Editors is
    --  actions (e.g: Go to declaration), clicks on the Locations view etc.
 
    function Get_Holder
-     (This : Editor_Buffer_Factory'Class;
+     (This : Editor_Buffer_Factory;
       File : Virtual_File)
-      return Controlled_Editor_Buffer_Holder;
+      return Controlled_Editor_Buffer_Holder'Class is abstract;
    --  Open a buffer for the given file, without opening a view, and
    --  encapsulates it in an holder. The buffer will be automatically
    --  unref once the holder is destroyed.
+
+   function New_Holder
+     (Buffer       : Editor_Buffer'Class;
+      Should_Close : Boolean)
+      return Controlled_Editor_Buffer_Holder;
+   --  Create a new holder for a buffer.
+   --  When Should_Close, it will try to close the buffer if nobody is also
+   --  using it.
 
    function Get_New
      (This : Editor_Buffer_Factory)

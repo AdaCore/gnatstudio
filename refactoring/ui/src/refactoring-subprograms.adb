@@ -1075,7 +1075,7 @@ package body Refactoring.Subprograms is
                    Part            => GNATCOLL.Projects.Unit_Body,
                    File_Must_Exist => False,
                    Language        => "ada")),
-               Force => True, Open_Buffer => True, Open_View => True);
+               Force => True, Open_View => True);
          begin
             New_Editor.Insert
               (New_Editor.End_Of_Buffer,

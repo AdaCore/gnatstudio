@@ -213,7 +213,7 @@ private
    procedure Convert
      (Kernel : GPS.Kernel.Kernel_Handle;
       File   : Virtual_File;
-      Holder : GPS.Editors.Controlled_Editor_Buffer_Holder;
+      Holder : GPS.Editors.Controlled_Editor_Buffer_Holder'Class;
       Data   : in out Breakpoint_Data;
       Item   : DAP.Tools.Breakpoint);
 

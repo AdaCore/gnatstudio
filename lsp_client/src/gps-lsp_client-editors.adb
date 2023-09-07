@@ -55,7 +55,6 @@ package body GPS.LSP_Client.Editors is
    begin
       return Self.Kernel.Get_Buffer_Factory.Get
         (File        => Self.File,
-         Open_Buffer => False,
          Open_View   => False);
    end Get_Buffer;
 
