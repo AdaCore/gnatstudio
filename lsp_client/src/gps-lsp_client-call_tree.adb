@@ -168,8 +168,9 @@ package body GPS.LSP_Client.Call_Tree is
       for Item of Result loop
          declare
             File     : constant Virtual_File := To_Virtual_File (Item.uri);
-            Holder   : constant GPS.Editors.Controlled_Editor_Buffer_Holder :=
-              Self.Kernel.Get_Buffer_Factory.Get_Holder (File => File);
+            Holder   : constant
+              GPS.Editors.Controlled_Editor_Buffer_Holder'Class :=
+                Self.Kernel.Get_Buffer_Factory.Get_Holder (File => File);
             Location : constant Editor_Location'Class :=
               LSP_Position_To_Location
                 (Editor   => Holder.Editor,
@@ -309,8 +310,9 @@ package body GPS.LSP_Client.Call_Tree is
            VSS.Strings.Conversions.To_Unbounded_UTF_8_String (X.name);
 
          declare
-            Holder   : constant GPS.Editors.Controlled_Editor_Buffer_Holder :=
-              Kernel.Get_Buffer_Factory.Get_Holder (File => Decl_File);
+            Holder   :
+              constant GPS.Editors.Controlled_Editor_Buffer_Holder'Class :=
+                Kernel.Get_Buffer_Factory.Get_Holder (File => Decl_File);
             Location : constant GPS.Editors.Editor_Location'Class :=
               GPS.LSP_Client.Utilities.LSP_Position_To_Location
                 (Holder.Editor, X.span.first);

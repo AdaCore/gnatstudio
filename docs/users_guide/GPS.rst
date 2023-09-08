@@ -1808,6 +1808,10 @@ Classes
 
    .. automethod:: GPS.Project.get_attribute_as_string
 
+   .. automethod:: GPS.Project.get_autoconfig
+
+   .. automethod:: GPS.Project.get_config
+
    .. automethod:: GPS.Project.get_executable_name
 
    .. automethod:: GPS.Project.get_extended_project

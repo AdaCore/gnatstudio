@@ -1,0 +1,3 @@
+project Config is
+
+end Config;

@@ -191,7 +191,6 @@ package body GPS.LSP_Client.Requests is
                Buffer : constant GPS.Editors.Editor_Buffer'Class :=
                  Request.Kernel.Get_Buffer_Factory.Get
                    (File        => Request.Text_Document,
-                    Open_Buffer => False,
                     Open_View   => False);
 
             begin

@@ -228,7 +228,7 @@ package body GPS.LSP_Client.Editors.Tooltips is
         Get_Language_From_File
           (Kernel.Get_Language_Handler,
            File);
-      Holder   : constant GPS.Editors.Controlled_Editor_Buffer_Holder :=
+      Holder   : constant GPS.Editors.Controlled_Editor_Buffer_Holder'Class :=
         Kernel.Get_Buffer_Factory.Get_Holder (File => File);
       Location : constant GPS.Editors.Editor_Location'Class :=
         Holder.Editor.New_Location (Line, Column);
@@ -514,7 +514,6 @@ package body GPS.LSP_Client.Editors.Tooltips is
       Buffer : constant GPS.Editors.Editor_Buffer'Class :=
         Kernel.Get_Buffer_Factory.Get
           (File        => File,
-           Open_Buffer => False,
            Open_View   => False,
            Force       => False);
       Lang   : constant Language_Access := Buffer.Get_Language;
@@ -606,7 +605,6 @@ package body GPS.LSP_Client.Editors.Tooltips is
       Buffer : constant GPS.Editors.Editor_Buffer'Class :=
         Kernel.Get_Buffer_Factory.Get
           (File        => File,
-           Open_Buffer => False,
            Open_View   => False,
            Force       => False);
       Lang   : constant Language_Access := Buffer.Get_Language;

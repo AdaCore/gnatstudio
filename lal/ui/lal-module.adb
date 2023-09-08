@@ -187,7 +187,7 @@ package body LAL.Module is
       pragma Unreferenced (Self);
       Buffer : constant GPS.Editors.Editor_Buffer'Class :=
         Kernel.Get_Buffer_Factory.Get
-          (File, Open_Buffer => False, Open_View => False);
+          (File, Open_View => False);
    begin
       Highlight_Buffer (Buffer, From_Line, To_Line);
    end Execute;
@@ -204,7 +204,7 @@ package body LAL.Module is
       pragma Unreferenced (Self);
       Buffer : constant GPS.Editors.Editor_Buffer'Class :=
         Kernel.Get_Buffer_Factory.Get
-          (File, Open_Buffer => False, Open_View => False);
+          (File, Open_View => False);
    begin
       Highlight_Buffer
         (Buffer,

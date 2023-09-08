@@ -677,16 +677,14 @@ package body Src_Editor_Module.Markers is
       -------------------------
 
       function Get_Subprogram_Name return String is
-         Buf : constant Editor_Buffer'Class :=
-           Marker.Kernel.Get_Buffer_Factory.Get
-             (Marker.File,
-              Open_Buffer => True,
-              Open_View => False);
+         Holder : constant Controlled_Editor_Buffer_Holder'Class :=
+           Marker.Kernel.Get_Buffer_Factory.Get_Holder (Marker.File);
 
       begin
-         if Buf /= Nil_Editor_Buffer then
-            return Buf.Get_Subprogram_Name
-              (Buf.New_Location_At_Line (Integer (Get_Line (Marker))));
+         if Holder.Editor /= Nil_Editor_Buffer then
+            return Holder.Editor.Get_Subprogram_Name
+              (Holder.Editor.New_Location_At_Line
+                 (Integer (Get_Line (Marker))));
 
          else
             return "";

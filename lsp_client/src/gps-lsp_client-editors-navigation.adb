@@ -276,7 +276,7 @@ package body GPS.LSP_Client.Editors.Navigation is
         (Kernel.Get_Project_Tree, File => File);
       Buffer        : constant Editor_Buffer'Class :=
         Kernel.Get_Buffer_Factory.Get
-          (File, Open_View => False, Open_Buffer => False);
+          (File, Open_View => False);
       Editor        : constant Source_Editor_Box :=
         Get_Source_Box_From_MDI
           (Find_Editor
@@ -650,8 +650,9 @@ package body GPS.LSP_Client.Editors.Navigation is
               File_Info'Class (Infos.First_Element).Project (True);
             --  Don't forget to add 1 to both line and column numbers since
             --  LSP lines/columns are zero-based.
-            Holder : constant GPS.Editors.Controlled_Editor_Buffer_Holder :=
-              Self.Kernel.Get_Buffer_Factory.Get_Holder (File => File);
+            Holder :
+              constant GPS.Editors.Controlled_Editor_Buffer_Holder'Class :=
+                Self.Kernel.Get_Buffer_Factory.Get_Holder (File => File);
             Location : constant GPS.Editors.Editor_Location'Class :=
               GPS.LSP_Client.Utilities.LSP_Position_To_Location
                 (Holder.Editor, Loc.span.first);
@@ -704,7 +705,7 @@ package body GPS.LSP_Client.Editors.Navigation is
                     File_Info'Class (Infos.First_Element).Project
                     (True);
                   Holder  : constant GPS.Editors.
-                    Controlled_Editor_Buffer_Holder :=
+                    Controlled_Editor_Buffer_Holder'Class :=
                       Self.Kernel.Get_Buffer_Factory.Get_Holder (File => File);
                   From    : constant GPS.Editors.Editor_Location'Class :=
                     GPS.LSP_Client.Utilities.LSP_Position_To_Location

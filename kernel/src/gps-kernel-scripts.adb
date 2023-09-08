@@ -26,6 +26,7 @@ with GNAT.Regpat;             use GNAT.Regpat;
 with GNATCOLL.Memory;
 with GNATCOLL.Projects;       use GNATCOLL.Projects;
 with GNATCOLL.Python;         use GNATCOLL.Python;
+with GNATCOLL.Scripts.Files;
 with GNATCOLL.Scripts.Gtkada; use GNATCOLL.Scripts.Gtkada;
 with GNATCOLL.Scripts.Python; use GNATCOLL.Scripts.Python;
 with GNATCOLL.Traces;         use GNATCOLL.Traces;
@@ -391,7 +392,6 @@ package body GPS.Kernel.Scripts is
             Get_Registry (Kernel).Tree.Change_Environment ((1 => Var));
             Variable_Changed_Hook.Run (Kernel);
          end;
-
       elsif Command = "freeze_prefs" then
          Kernel.Preferences.Freeze;
       elsif Command = "thaw_prefs" then
@@ -444,6 +444,32 @@ package body GPS.Kernel.Scripts is
                end if;
                Next (Iter);
             end loop;
+         end;
+
+      elsif Command = "get_config" then
+         declare
+            Environment : constant Project_Environment_Access :=
+              Get_Registry (Kernel).Environment;
+         begin
+            if not Environment.Get_Automatic_Config_File then
+               Set_Return_Value
+                 (Data,
+                  GNATCOLL.Scripts.Files.Create_File
+                    (Get_Script (Data), Environment.Get_Config_File));
+            end if;
+         end;
+
+      elsif Command = "get_autoconfig" then
+         declare
+            Environment : constant Project_Environment_Access :=
+              Get_Registry (Kernel).Environment;
+         begin
+            if Environment.Get_Automatic_Config_File then
+               Set_Return_Value
+                 (Data,
+                  GNATCOLL.Scripts.Files.Create_File
+                    (Get_Script (Data), Environment.Get_Config_File));
+            end if;
          end;
       end if;
    end Create_Project_Command_Handler;
@@ -1539,6 +1565,16 @@ package body GPS.Kernel.Scripts is
          Handler       => Create_Project_Command_Handler'Access);
       Kernel.Scripts.Register_Command
         ("get_main_units",
+         Class         => Get_Project_Class (Kernel),
+         Static_Method => True,
+         Handler       => Create_Project_Command_Handler'Access);
+      Kernel.Scripts.Register_Command
+        ("get_config",
+         Class         => Get_Project_Class (Kernel),
+         Static_Method => True,
+         Handler       => Create_Project_Command_Handler'Access);
+      Kernel.Scripts.Register_Command
+        ("get_autoconfig",
          Class         => Get_Project_Class (Kernel),
          Static_Method => True,
          Handler       => Create_Project_Command_Handler'Access);

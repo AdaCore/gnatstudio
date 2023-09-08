@@ -33,11 +33,14 @@ package Src_Editor_Module.Editors is
      (This            : Src_Editor_Buffer_Factory;
       File            : Virtual_File;
       Force           : Boolean := False;
-      Open_Buffer     : Boolean := False;
       Open_View       : Boolean := True;
       Focus           : Boolean := True;
       Only_If_Focused : Boolean := False;
       Unlocked_Only   : Boolean := False) return Editor_Buffer'Class;
+   overriding function Get_Holder
+     (This : Src_Editor_Buffer_Factory;
+      File : Virtual_File)
+      return Controlled_Editor_Buffer_Holder'Class;
    overriding function Get_New
      (This : Src_Editor_Buffer_Factory) return Editor_Buffer'Class;
    overriding function New_Mark

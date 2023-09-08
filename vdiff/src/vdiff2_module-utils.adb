@@ -823,11 +823,9 @@ package body Vdiff2_Module.Utils is
       Curr_Chunk : Diff_Chunk_Access;
       Buf        : constant GPS_Editor_Buffer'Class :=
         GPS_Editor_Buffer'Class
-          (Get (Get_Buffer_Factory (Kernel).all, File,
-           Open_Buffer => True, Open_View => True));
-      Refbuf     : constant Editor_Buffer'Class := Get
-        (Get_Buffer_Factory (Kernel).all, Item.Files (Ref),
-         Open_Buffer => True, Open_View => False);
+          (Get (Get_Buffer_Factory (Kernel).all, File, Open_View => True));
+      Ref_Holder : constant Controlled_Editor_Buffer_Holder'Class :=
+        Get_Holder (Get_Buffer_Factory (Kernel).all, Item.Files (Ref));
 
       function Get_Line
         (Buf : Editor_Buffer'Class; Line : Integer) return String;
@@ -873,7 +871,7 @@ package body Vdiff2_Module.Utils is
 
          for L in Deleted_Start_Line ..  Deleted_End_Line loop
             Arr (L).Text := Minus_Sign_String;
-            Append (Original, Get_Line (Refbuf, Integer (L)));
+            Append (Original, Get_Line (Ref_Holder.Editor, Integer (L)));
          end loop;
 
          declare
