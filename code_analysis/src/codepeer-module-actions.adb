@@ -239,7 +239,7 @@ package body CodePeer.Module.Actions is
         Execute_Internal_With_Baseline
           (Context   => Context,
            Target_ID => "Load GNATSAS Report",
-           Title     => "Select Baseline File",
+           Title     => "Select Report File",
            Action    => Load_UI);
    end Execute;
 
