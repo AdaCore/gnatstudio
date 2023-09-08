@@ -38,11 +38,10 @@ package body Refactoring.Buffer_Helpers is
       Location  : access Universal_Location)
       return GPS.Editors.Editor_Location'Class
    is
-      Holder : constant Controlled_Editor_Buffer_Holder'Class :=
-        Context.Buffer_Factory.Get_Holder
-          (Get_File_Path (Get_File (Location)));
+      Editor : constant Editor_Buffer'Class :=
+        Context.Buffer_Factory.Get (Get_File_Path (Get_File (Location)));
    begin
-      return Holder.Editor.New_Location
+      return Editor.New_Location
         (Get_Line (Location), Get_Column (Location));
    end To_Location;
 
@@ -66,14 +65,13 @@ package body Refactoring.Buffer_Helpers is
       Location  : access Universal_Location;
       Start_Col : Visible_Column_Type := 0) return String
    is
-      Holder : constant Controlled_Editor_Buffer_Holder'Class :=
-        Context.Buffer_Factory.Get_Holder
-          (Get_File_Path (Get_File (Location)));
+      Editor : constant Editor_Buffer'Class :=
+        Context.Buffer_Factory.Get (Get_File_Path (Get_File (Location)));
       Loc_Start : constant Editor_Location'Class :=
-        Holder.Editor.New_Location_At_Line (Get_Line (Location));
+        Editor.New_Location_At_Line (Get_Line (Location));
       Loc_End   : constant Editor_Location'Class := Loc_Start.End_Of_Line;
 
-      Line : constant String := Holder.Editor.Get_Chars (Loc_Start, Loc_End);
+      Line : constant String := Editor.Get_Chars (Loc_Start, Loc_End);
 
       Char_Ind : String_Index_Type;
       Last_Ind : Integer := Line'Last;
@@ -100,14 +98,14 @@ package body Refactoring.Buffer_Helpers is
      (Context     : not null access Factory_Context_Record'Class;
       Start, Stop : access Universal_Location) return String
    is
-      Holder : constant Controlled_Editor_Buffer_Holder'Class :=
-        Context.Buffer_Factory.Get_Holder (Get_File_Path (Get_File (Start)));
+      Editor : constant Editor_Buffer'Class :=
+        Context.Buffer_Factory.Get (Get_File_Path (Get_File (Start)));
       Loc_Start : constant Editor_Location'CLass :=
-        Holder.Editor.New_Location (Get_Line (Start), Get_Column (Start));
+        Editor.New_Location (Get_Line (Start), Get_Column (Start));
       Loc_End   : constant Editor_Location'CLass :=
-        Holder.Editor.New_Location (Get_Line (Stop), Get_Column (Stop));
+        Editor.New_Location (Get_Line (Stop), Get_Column (Stop));
    begin
-      return Holder.Editor.Get_Chars (Loc_Start, Loc_End);
+      return Editor.Get_Chars (Loc_Start, Loc_End);
    end Get;
 
    -----------------
@@ -313,13 +311,12 @@ package body Refactoring.Buffer_Helpers is
    is
       Lock : Update_Lock := Lock_Updates (Get_File (Location));
 
-      Holder : constant Controlled_Editor_Buffer_Holder'Class :=
-        Context.Buffer_Factory.Get_Holder
-          (Get_File_Path (Get_File (Location)));
+      Editor : constant Editor_Buffer'Class :=
+        Context.Buffer_Factory.Get (Get_File_Path (Get_File (Location)));
       Loc : constant Editor_Location'Class :=
-        Holder.Editor.New_Location_At_Line (Get_Line (Location));
+        Editor.New_Location_At_Line (Get_Line (Location));
    begin
-      Holder.Editor.Indent (Loc, Loc);
+      Editor.Indent (Loc, Loc);
 
       Update_Contents (Get_File (Location));
       Unlock (Lock);
@@ -335,14 +332,13 @@ package body Refactoring.Buffer_Helpers is
    is
       Lock : Update_Lock := Lock_Updates (Get_File (Location));
 
-      Holder : constant Controlled_Editor_Buffer_Holder'Class :=
-        Context.Buffer_Factory.Get_Holder
-          (Get_File_Path (Get_File (Location)));
+      Editor : constant Editor_Buffer'Class :=
+        Context.Buffer_Factory.Get (Get_File_Path (Get_File (Location)));
       Loc_Start : constant Editor_Location'Class :=
-        Holder.Editor.New_Location_At_Line (Get_Line (Location));
+        Editor.New_Location_At_Line (Get_Line (Location));
       Loc_End : constant Editor_Location'Class := Loc_Start.End_Of_Line;
    begin
-      Holder.Editor.Delete (Loc_Start, Loc_End);
+      Editor.Delete (Loc_Start, Loc_End);
 
       Update_Contents (Get_File (Location));
       Unlock (Lock);
@@ -359,13 +355,13 @@ package body Refactoring.Buffer_Helpers is
    is
       Lock : Update_Lock := Lock_Updates (Get_File (Start));
 
-      Holder : constant Controlled_Editor_Buffer_Holder'Class :=
-        Context.Buffer_Factory.Get_Holder (Get_File_Path (Get_File (Start)));
+      Editor : constant Editor_Buffer'Class :=
+        Context.Buffer_Factory.Get (Get_File_Path (Get_File (Start)));
       Loc_Start : constant Editor_Location'Class :=
-        Holder.Editor.New_Location
+        Editor.New_Location
           (Get_Line (Start), Get_Column (Start));
       Loc_End : constant Editor_Location'Class :=
-        Holder.Editor.New_Location
+        Editor.New_Location
           (Get_Line (Stop), Get_Column (Stop));
    begin
       pragma Assert (Get_File (Start) = Get_File (Stop));
@@ -378,10 +374,10 @@ package body Refactoring.Buffer_Helpers is
       then
          --  Loc start must be after Loc end, we don't delete null ranges.
 
-         Holder.Editor.Delete (Loc_Start, Loc_End);
+         Editor.Delete (Loc_Start, Loc_End);
       end if;
 
-      Holder.Editor.Insert (Loc_Start, New_Value);
+      Editor.Insert (Loc_Start, New_Value);
 
       Update_Contents (Get_File (Start));
       Unlock (Lock);
@@ -399,13 +395,12 @@ package body Refactoring.Buffer_Helpers is
    is
       Lock : Update_Lock := Lock_Updates (Get_File (Location));
 
-      Holder : constant Controlled_Editor_Buffer_Holder'Class :=
-        Context.Buffer_Factory.Get_Holder
-          (Get_File_Path (Get_File (Location)));
+      Editor : constant Editor_Buffer'Class :=
+        Context.Buffer_Factory.Get (Get_File_Path (Get_File (Location)));
    begin
       declare
          Loc_Start : constant Editor_Location'Class :=
-           Holder.Editor.New_Location
+           Editor.New_Location
              (Get_Line (Location), Get_Column (Location));
       begin
          if Len /= 0 then
@@ -413,11 +408,11 @@ package body Refactoring.Buffer_Helpers is
                Loc_End : constant Editor_Location'Class :=
                  Loc_Start.Forward_Char (Len - 1);
             begin
-               Holder.Editor.Delete (Loc_Start, Loc_End);
+               Editor.Delete (Loc_Start, Loc_End);
             end;
          end if;
 
-         Holder.Editor.Insert (Loc_Start, New_Value);
+         Editor.Insert (Loc_Start, New_Value);
       end;
 
       Update_Contents (Get_File (Location));

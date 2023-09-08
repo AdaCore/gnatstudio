@@ -1692,22 +1692,25 @@ package body CodePeer.Module is
    is
       use GPS.Editors;
 
-      Holder   : constant Controlled_Editor_Buffer_Holder'Class :=
-        Self.Kernel.Get_Buffer_Factory.Get_Holder (Message.Get_File);
+      Editor   : constant Editor_Buffer'Class :=
+        Self.Kernel.Get_Buffer_Factory.Get
+          (Message.Get_File,
+           Open_View   => False,
+           Open_Buffer => True);
       Location : constant Editor_Location'Class :=
         Message.Get_Editor_Mark.Location.End_Of_Line;
 
    begin
       declare
-         G : Group_Block := Holder.Editor.New_Undo_Group;
+         G : Group_Block := Editor.New_Undo_Group;
       begin
-         Holder.Editor.Insert
+         Editor.Insert
            (Location.End_Of_Line, ASCII.LF &
               "pragma Annotate" & ASCII.LF &
               "(CodePeer, False_Positive, """ &
               To_String (Message.Category.Name) &
               """, ""<insert review>"");");
-         Holder.Editor.Indent (Location, Location.Forward_Line (2));
+         Editor.Indent (Location, Location.Forward_Line (2));
       end;
    end Annotate_Message;
 
@@ -1990,6 +1993,7 @@ package body CodePeer.Module is
            Module.Kernel.Get_Buffer_Factory.Get
              (File        => File,
               Force       => False,
+              Open_Buffer => False,
               Open_View   => False);
          Location : constant GPS.Editors.Editor_Location'Class :=
            Buffer.New_Location

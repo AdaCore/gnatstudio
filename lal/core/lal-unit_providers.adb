@@ -97,6 +97,7 @@ package body LAL.Unit_Providers is
       Buffer : constant Editor_Buffer'Class :=
         Self.Kernel.Get_Buffer_Factory.Get
           (File        => GNATCOLL.VFS.Create (File),
+           Open_Buffer => False,
            Open_View   => False);
 
       Result : Libadalang.Analysis.Analysis_Unit;

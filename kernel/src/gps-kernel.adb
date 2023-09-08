@@ -2495,6 +2495,7 @@ package body GPS.Kernel is
                    (This        => Kernel.Get_Buffer_Factory.all,
                     File        => File,
                     Force       => False,
+                    Open_Buffer => False,
                     Open_View   => False);
    begin
       if Editor = Nil_Editor_Buffer

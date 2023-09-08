@@ -87,6 +87,7 @@ package body DAP.Utils is
       Buffer : constant Editor_Buffer'Class :=
         Kernel.Get_Buffer_Factory.Get
           (File,
+           Open_Buffer   => True,
            Focus         => True,
            Unlocked_Only => True);
    begin

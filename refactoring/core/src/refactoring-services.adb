@@ -1484,7 +1484,7 @@ package body Refactoring.Services is
       To_Column   : Visible_Column_Type;
       Text        : String) return Boolean
    is
-      Holder : constant GPS.Editors.Controlled_Editor_Buffer_Holder'Class :=
+      Holder : constant GPS.Editors.Controlled_Editor_Buffer_Holder :=
         Context.Buffer_Factory.Get_Holder (In_File);
       Loc_Start : constant Editor_Location'Class :=
         Holder.Editor.New_Location (From_Line, From_Column);
@@ -1549,8 +1549,8 @@ package body Refactoring.Services is
       Rev_To_Column : out Basic_Types.Visible_Column_Type;
       Rev_Text      : out Unbounded_String) return Boolean
    is
-      Holder     : constant GPS.Editors.Controlled_Editor_Buffer_Holder'Class
-        := Context.Buffer_Factory.Get_Holder (In_File);
+      Holder     : constant GPS.Editors.Controlled_Editor_Buffer_Holder :=
+        Context.Buffer_Factory.Get_Holder (In_File);
       Loc_Start  : constant Editor_Location'Class :=
         Holder.Editor.New_Location (From_Line, From_Column);
       Loc_End    : Editor_Location'Class :=

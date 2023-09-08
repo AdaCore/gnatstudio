@@ -109,6 +109,7 @@ package body GPS.LSP_Client.Editors.Code_Actions is
         Self.Kernel.Get_Buffer_Factory.Get
           (File            => Self.Text_Document,
            Force           => False,
+           Open_Buffer     => False,
            Open_View       => False,
            Focus           => False);
       Command : Command_Access;
@@ -161,6 +162,7 @@ package body GPS.LSP_Client.Editors.Code_Actions is
         Kernel.Get_Buffer_Factory.Get
           (File            => File,
            Force           => False,
+           Open_Buffer     => False,
            Open_View       => False,
            Focus           => False,
            Only_If_Focused => True);

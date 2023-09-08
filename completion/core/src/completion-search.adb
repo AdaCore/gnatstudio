@@ -324,7 +324,8 @@ package body Completion.Search is
          Limit   => Limit);
 
       Self.File := Self.Kernel.Get_Buffer_Factory.Get
-        (Open_View   => False).File;
+        (Open_Buffer => False,
+         Open_View   => False).File;
    end Set_Pattern;
 
    -------------------------------

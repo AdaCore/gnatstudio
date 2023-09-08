@@ -1786,6 +1786,7 @@ package body Src_Editor_Module.Shell is
                Get_Buffer_Factory (Kernel).Get
                (File            => File,
                 Force           => Nth_Arg (Data, 2, Default => False),
+                Open_Buffer     => Nth_Arg (Data, 5, Default => False),
                 Open_View       => Nth_Arg (Data, 3, Default => True),
                 Only_If_Focused => Nth_Arg (Data, 4, Default => False))));
 

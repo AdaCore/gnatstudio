@@ -240,9 +240,8 @@ package body GPS.LSP_Client.Editors.Highlight is
          Kind    : constant LSP.Messages.DocumentHighlightKind :=
            (if Loc.kind.Is_Set then Loc.kind.Value else LSP.Messages.Read);
 
-         Holder  :
-           constant GPS.Editors.Controlled_Editor_Buffer_Holder'Class :=
-             Params.Kernel.Get_Buffer_Factory.Get_Holder (File => Params.File);
+         Holder  : constant GPS.Editors.Controlled_Editor_Buffer_Holder :=
+           Params.Kernel.Get_Buffer_Factory.Get_Holder (File => Params.File);
          From    : constant GPS.Editors.Editor_Location'Class :=
            GPS.LSP_Client.Utilities.LSP_Position_To_Location
              (Holder.Editor, Loc.span.first);
@@ -286,7 +285,7 @@ package body GPS.LSP_Client.Editors.Highlight is
    is
       Buffer               : constant Editor_Buffer'Class :=
         Params.Kernel.Get_Buffer_Factory.Get
-          (File => Params.File, Open_View => False);
+          (File => Params.File, Open_View => False, Open_Buffer => False);
       Search_Start_Loc     : constant Editor_Location'Class :=
         Buffer.New_Location
           (Line   => Module.Textual_Search_Start_Line,
@@ -401,7 +400,7 @@ package body GPS.LSP_Client.Editors.Highlight is
          Module.Highlighting_Context := New_Highlighting_Context;
 
          declare
-            Holder   : constant Controlled_Editor_Buffer_Holder'Class :=
+            Holder   : constant Controlled_Editor_Buffer_Holder :=
               Kernel.Get_Buffer_Factory.Get_Holder (File);
 
             --  Highlighting the entity under the cursor, so use
