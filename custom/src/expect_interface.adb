@@ -44,6 +44,7 @@ with GPS.Kernel.Timeout;      use GPS.Kernel.Timeout;
 with GPS.Scripts.Commands;    use GPS.Scripts.Commands;
 with Remote;                  use Remote;
 with Commands;                use Commands;
+with UTF8_Utils;              use UTF8_Utils;
 
 package body Expect_Interface is
 
@@ -119,6 +120,34 @@ package body Expect_Interface is
    procedure Custom_Spawn_Handler
      (Data : in out Callback_Data'Class; Command : String);
    --  Interactive command handler for the expect interface
+
+   function To_UTF8_And_Warn
+      (Kernel : Kernel_Handle;
+       Str    : String) return String;
+   --  Convert Str to UTF8 and return the result. The conversion is done
+   --  with Unknown_To_UTF8, meaning that it will first UTF8-validate,
+   --  and convert from the locale if this is not valid.
+   --  If the conversion fails, an error message is printed in the console.
+
+   ----------------------
+   -- To_UTF8_And_Warn --
+   ----------------------
+
+   function To_UTF8_And_Warn
+      (Kernel : Kernel_Handle;
+       Str    : String) return String
+   is
+      Success : aliased Boolean;
+      Result  : constant String := Unknown_To_UTF8 (Str, Success'Access);
+   begin
+      if not Success then
+         Insert_UTF8
+           (Kernel,
+            "Could not convert process output to UTF8",
+            Mode => Error);
+      end if;
+      return Result;
+   end To_UTF8_And_Warn;
 
    ---------------
    -- Deep_Copy --
@@ -216,9 +245,15 @@ package body Expect_Interface is
             if Self.Exit_Status > 0 then
                --  Error detected: Append the Exit_Output
                Set_Nth_Arg
-                 (C, 3, To_String (Self.Unmatched_Output & Self.Exit_Output));
+                 (C, 3,
+                  To_UTF8_And_Warn
+                    (Self.Kernel,
+                     To_String (Self.Unmatched_Output & Self.Exit_Output)));
             else
-               Set_Nth_Arg (C, 3, To_String (Self.Unmatched_Output));
+               Set_Nth_Arg
+                 (C, 3,
+                  To_UTF8_And_Warn
+                    (Self.Kernel, To_String (Self.Unmatched_Output)));
             end if;
             Dummy := Execute (Self.On_Exit, C);
             Free (C);
@@ -245,7 +280,11 @@ package body Expect_Interface is
               (Get_Script (Self.Inst), Arguments_Count => 2);
          begin
             Set_Nth_Arg (C, 1, Self.Inst);
-            Set_Nth_Arg (C, 2, To_String (Self.Unmatched_Output));
+            Set_Nth_Arg
+              (C, 2,
+               To_UTF8_And_Warn
+                 (Self.Kernel,
+                  To_String (Self.Unmatched_Output)));
             Dummy := Execute (Self.Before_Kill, C);
             Free (C);
          end;
@@ -297,8 +336,16 @@ package body Expect_Interface is
                Dummy  : Boolean;
             begin
                Set_Nth_Arg (C, 1, Self.Inst);
-               Set_Nth_Arg (C, 2, S (Matches (0).First .. Matches (0).Last));
-               Set_Nth_Arg (C, 3, S (Index .. Matches (0).First - 1));
+               Set_Nth_Arg
+                 (C, 2,
+                  To_UTF8_And_Warn
+                    (Self.Kernel,
+                     S (Matches (0).First .. Matches (0).Last)));
+               Set_Nth_Arg
+                 (C, 3,
+                  To_UTF8_And_Warn
+                    (Self.Kernel,
+                     S (Index .. Matches (0).First - 1)));
                Dummy := Execute (Self.On_Match, C);
                Free (C);
             end;
