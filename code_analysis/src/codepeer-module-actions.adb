@@ -46,6 +46,15 @@ package body CodePeer.Module.Actions is
       Context : GPS.Kernel.Selection_Context) return Boolean;
    --  Returns True when show/hide annotations is allowed.
 
+   function Execute_Internal_With_Baseline
+     (Context   : Interactive_Command_Context;
+      Target_ID : String;
+      Title     : String;
+      Action    : CodePeer_Action)
+      return Command_Return_Type;
+   --  Open a dialog to select a baseline and execute a BuiltTarget with
+   --  the selected file.
+
    -------------
    -- Execute --
    -------------
@@ -176,20 +185,23 @@ package body CodePeer.Module.Actions is
       return Success;
    end Execute;
 
-   -------------
-   -- Execute --
-   -------------
+   ------------------------------------
+   -- Execute_Internal_With_Baseline --
+   ------------------------------------
 
-   overriding function Execute
-     (Self    : access Display_Baseline_Command;
-      Context : Interactive_Command_Context) return Command_Return_Type
+   function Execute_Internal_With_Baseline
+     (Context   : Interactive_Command_Context;
+      Target_ID : String;
+      Title     : String;
+      Action    : CodePeer_Action)
+      return Command_Return_Type
    is
       Kernel : constant Kernel_Handle := Get_Kernel (Context.Context);
       Dir    : constant Virtual_File :=
         CodePeer.Module.Codepeer_CPM_Directory (Kernel);
       File   : constant Virtual_File :=
         Gtkada.File_Selector.Select_File
-          (Title             => -"Select Baseline File",
+          (Title             => -Title,
            Base_Directory    => Dir,
            Parent            => Get_Current_Window (Kernel),
            Use_Native_Dialog =>
@@ -200,11 +212,11 @@ package body CodePeer.Module.Actions is
            History           => Get_History (Kernel));
    begin
       if File /= No_File then
-         Module.Action := Load_UI;
+         Module.Action := Action;
          CodePeer.Shell_Commands.Build_Target_Execute
            (Kernel_Handle (Module.Kernel),
             CodePeer.Shell_Commands.Build_Target
-              (Module.Get_Kernel, "Load GNATSAS Report"),
+              (Module.Get_Kernel, Target_ID),
             Force           => True,
             File            => File,
             Build_Mode      => CodePeer.Build_Mode,
@@ -213,6 +225,74 @@ package body CodePeer.Module.Actions is
             Preserve_Output => True);
       end if;
       return Success;
+   end Execute_Internal_With_Baseline;
+
+   -------------
+   -- Execute --
+   -------------
+
+   overriding function Execute
+     (Self    : access Display_Baseline_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type is
+   begin
+      return
+        Execute_Internal_With_Baseline
+          (Context   => Context,
+           Target_ID => "Load GNATSAS Report",
+           Title     => "Select Baseline File",
+           Action    => Load_UI);
+   end Execute;
+
+   -------------
+   -- Execute --
+   -------------
+
+   overriding function Execute
+     (Self    : access Baseline_Bump_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type is
+   begin
+      CodePeer.Shell_Commands.Build_Target_Execute
+        (Kernel_Handle (Module.Kernel),
+         CodePeer.Shell_Commands.Build_Target
+           (Module.Get_Kernel, "GNATSAS Baseline Bump"),
+         Force           => True,
+         Build_Mode      => CodePeer.Build_Mode,
+         Synchronous     => False,
+         Dir             => CodePeer_Object_Directory (Module.Kernel),
+         Preserve_Output => True);
+      return Success;
+   end Execute;
+
+   -------------
+   -- Execute --
+   -------------
+
+   overriding function Execute
+     (Self    : access Baseline_Set_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type is
+   begin
+      return
+        Execute_Internal_With_Baseline
+          (Context   => Context,
+           Target_ID => "GNATSAS Baseline Set Current",
+           Title     => "Select New Current Run",
+           Action    => None);
+   end Execute;
+
+   -------------
+   -- Execute --
+   -------------
+
+   overriding function Execute
+     (Self    : access Baseline_Replace_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type is
+   begin
+      return
+        Execute_Internal_With_Baseline
+          (Context   => Context,
+           Target_ID => "GNATSAS Baseline Set Baseline",
+           Title     => "Select Baseline File",
+           Action    => None);
    end Execute;
 
    -------------
@@ -847,6 +927,18 @@ package body CodePeer.Module.Actions is
            (Kernel  => Module.Kernel,
             Name    => CodePeer.Package_Name & " display baseline",
             Command => new Display_Baseline_Command (Module));
+         Register_Action
+           (Kernel  => Module.Kernel,
+            Name    => CodePeer.Package_Name & " bump",
+            Command => new Baseline_Bump_Command (Module));
+         Register_Action
+           (Kernel  => Module.Kernel,
+            Name    => CodePeer.Package_Name & " baseline set",
+            Command => new Baseline_Set_Command (Module));
+         Register_Action
+           (Kernel  => Module.Kernel,
+            Name    => CodePeer.Package_Name & " baseline replace",
+            Command => new Baseline_Replace_Command (Module));
       else
          Register_Action
            (Kernel  => Module.Kernel,

@@ -314,6 +314,11 @@
                optional='true'/>
          <menu label='Generate _HTML Report...' action='gnatsas generate html' optional='true'/>
          <menu label='Generate CS_V Report...' action='gnatsas generate csv' optional='true'/>
+         <menu label='_Baseline'>
+            <menu label='Bump Baseline to Current Run' action='gnatsas bump' optional='true'/>
+            <menu label='Set Baseline to Run...' action='gnatsas baseline set' optional='true'/>
+            <menu label='Replace Current Run with Run... ' action='gnatsas baseline replace' optional='true'/>
+         </menu>
          <menu label='Ad_vanced'>
             <menu label='_Regenerate Report...' action='gnatsas regenerate report' optional='true'/>
             <menu label='Display Result File...' action='gnatsas display baseline' optional='true'/>
