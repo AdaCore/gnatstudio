@@ -678,5 +678,64 @@ Also force the generation of all SCIL files."/>
           <arg>--gs-request</arg>
        </command-line>
     </target>
+
+    <target-model name="gnatsas_baseline" category="GNATSAS">
+       <description>Modify GNATSAS baselines</description>
+       <command-line>
+          <arg>gnatsas</arg>
+          <arg>baseline</arg>
+          <arg>-P%PP</arg>
+          <arg>%X</arg>
+       </command-line>
+       <iconname>gps-build-all-symbolic</iconname>
+    </target-model>
+
+    <target model="gnatsas_baseline" category="GNATSAS"
+            name="GNATSAS Baseline Bump" messages_category="GNATSAS">
+       <in-toolbar>FALSE</in-toolbar>
+       <in-menu>FALSE</in-menu>
+       <iconname>gps-build-all-symbolic</iconname>
+       <launch-mode>MANUALLY_WITH_DIALOG</launch-mode>
+       <read-only>TRUE</read-only>
+       <command-line>
+          <arg>gnatsas</arg>
+          <arg>baseline</arg>
+          <arg>-P%PP</arg>
+          <arg>%X</arg>
+          <arg>--bump-baseline</arg>
+       </command-line>
+    </target>
+
+    <target model="gnatsas_baseline" category="GNATSAS"
+            name="GNATSAS Baseline Set Baseline" messages_category="GNATSAS">
+       <in-toolbar>FALSE</in-toolbar>
+       <in-menu>FALSE</in-menu>
+       <iconname>gps-build-all-symbolic</iconname>
+       <launch-mode>MANUALLY_WITH_DIALOG</launch-mode>
+       <read-only>TRUE</read-only>
+       <command-line>
+          <arg>gnatsas</arg>
+          <arg>baseline</arg>
+          <arg>-P%PP</arg>
+          <arg>%X</arg>
+          <arg>--set-baseline=%Fp</arg>
+       </command-line>
+    </target>
+
+    <target model="gnatsas_baseline" category="GNATSAS"
+            name="GNATSAS Baseline Set Current" messages_category="GNATSAS">
+       <in-toolbar>FALSE</in-toolbar>
+       <in-menu>FALSE</in-menu>
+       <iconname>gps-build-all-symbolic</iconname>
+       <launch-mode>MANUALLY_WITH_DIALOG</launch-mode>
+       <read-only>TRUE</read-only>
+       <command-line>
+          <arg>gnatsas</arg>
+          <arg>baseline</arg>
+          <arg>-P%PP</arg>
+          <arg>%X</arg>
+          <arg>--set-current=%Fp</arg>
+       </command-line>
+    </target>
   </GNATSAS>
 """

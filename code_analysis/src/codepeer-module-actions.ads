@@ -69,7 +69,28 @@ private
    overriding function Execute
      (Self    : access Display_Baseline_Command;
       Context : Interactive_Command_Context) return Command_Return_Type;
-   --  Hidden action used to review a
+   --  Called when "Display Result File" menu item is activated
+
+   type Baseline_Bump_Command is
+     new CodePeer_Interactive_Command with null record;
+   overriding function Execute
+     (Self    : access Baseline_Bump_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type;
+   --  Called when "Bump Baseline to Current Run" menu item is activated
+
+   type Baseline_Set_Command is
+     new CodePeer_Interactive_Command with null record;
+   overriding function Execute
+     (Self    : access Baseline_Set_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type;
+   --  Called when "Set Baseline to Run" menu item is activated
+
+   type Baseline_Replace_Command is
+     new CodePeer_Interactive_Command with null record;
+   overriding function Execute
+     (Self    : access Baseline_Replace_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type;
+   --  Called when "Replace Current Run with Run" menu item is activated
 
    type Display_HTML_Command is new Interactive_Command with null record;
    overriding function Execute
