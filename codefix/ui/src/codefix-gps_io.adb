@@ -124,13 +124,16 @@ package body Codefix.GPS_Io is
       Cursor    : Text_Cursor'Class;
       Start_Col : Visible_Column_Type := 0) return String
    is
-      Holder : constant Controlled_Editor_Buffer_Holder'Class :=
-        This.Kernel.Get_Buffer_Factory.Get_Holder (Get_File_Name (This));
+      Editor : constant Editor_Buffer'Class :=
+        This.Kernel.Get_Buffer_Factory.Get
+          (This.Get_File_Name,
+           Open_View   => False,
+           Open_Buffer => True);
       Loc_Start : constant Editor_Location'CLass :=
-        Holder.Editor.New_Location_At_Line (Cursor.Get_Line);
+        Editor.New_Location_At_Line (Cursor.Get_Line);
       Loc_End   : constant Editor_Location'CLass := Loc_Start.End_Of_Line;
 
-      Line : constant String := Holder.Editor.Get_Chars (Loc_Start, Loc_End);
+      Line : constant String := Editor.Get_Chars (Loc_Start, Loc_End);
       Char_Ind : String_Index_Type;
 
       Last_Ind : Integer := Line'Last;
@@ -174,8 +177,8 @@ package body Codefix.GPS_Io is
       Len       : Natural;
       New_Value : String)
    is
-      Holder : constant Controlled_Editor_Buffer_Holder'Class :=
-        This.Kernel.Get_Buffer_Factory.Get_Holder (Get_File_Name (This));
+      Editor : constant Editor_Buffer'Class :=
+        This.Kernel.Get_Buffer_Factory.Get (Get_File_Name (This));
 
       Actual_Start_Line : Integer;
       Actual_Start_Column : Visible_Column_Type;
@@ -192,7 +195,7 @@ package body Codefix.GPS_Io is
 
       declare
          Loc_Start : constant Editor_Location'Class :=
-           Holder.Editor.New_Location
+           Editor.New_Location
              (Actual_Start_Line, Actual_Start_Column);
       begin
          if Len /= 0 then
@@ -200,11 +203,11 @@ package body Codefix.GPS_Io is
                Loc_End : constant Editor_Location'Class :=
                  Loc_Start.Forward_Char (Len - 1);
             begin
-               Holder.Editor.Delete (Loc_Start, Loc_End);
+               Editor.Delete (Loc_Start, Loc_End);
             end;
          end if;
 
-         Holder.Editor.Insert (Loc_Start, New_Value);
+         Editor.Insert (Loc_Start, New_Value);
       end;
    end Replace;
 
@@ -218,13 +221,13 @@ package body Codefix.GPS_Io is
       End_Cursor   : Text_Cursor'Class;
       New_Value    : String)
    is
-      Holder : constant Controlled_Editor_Buffer_Holder'Class :=
-        This.Kernel.Get_Buffer_Factory.Get_Holder (Get_File_Name (This));
+      Editor : constant Editor_Buffer'Class :=
+        This.Kernel.Get_Buffer_Factory.Get (Get_File_Name (This));
       Loc_Start : constant Editor_Location'Class :=
-        Holder.Editor.New_Location
+        Editor.New_Location
           (Start_Cursor.Get_Line, Start_Cursor.Get_Column);
       Loc_End : constant Editor_Location'Class :=
-        Holder.Editor.New_Location
+        Editor.New_Location
           (End_Cursor.Get_Line, End_Cursor.Get_Column);
    begin
       if not
@@ -235,10 +238,10 @@ package body Codefix.GPS_Io is
       then
          --  Loc start must be after Loc end, we don't delete null ranges.
 
-         Holder.Editor.Delete (Loc_Start, Loc_End);
+         Editor.Delete (Loc_Start, Loc_End);
       end if;
 
-      Holder.Editor.Insert (Loc_Start, New_Value);
+      Editor.Insert (Loc_Start, New_Value);
       Text_Has_Changed (This);
    end Replace;
 
@@ -295,13 +298,13 @@ package body Codefix.GPS_Io is
      (This   : in out Console_Interface;
       Cursor : Text_Cursor'Class)
    is
-      Holder : constant Controlled_Editor_Buffer_Holder'Class :=
-        This.Kernel.Get_Buffer_Factory.Get_Holder (Get_File_Name (This));
+      Editor : constant Editor_Buffer'Class :=
+        This.Kernel.Get_Buffer_Factory.Get (Get_File_Name (This));
       Loc_Start : constant Editor_Location'Class :=
-        Holder.Editor.New_Location_At_Line (Cursor.Get_Line);
+        Editor.New_Location_At_Line (Cursor.Get_Line);
       Loc_End : constant Editor_Location'Class := Loc_Start.End_Of_Line;
    begin
-      Holder.Editor.Delete (Loc_Start, Loc_End);
+      Editor.Delete (Loc_Start, Loc_End);
       Text_Has_Changed (This);
    end Delete_Line;
 
@@ -313,12 +316,12 @@ package body Codefix.GPS_Io is
      (This : in out Console_Interface;
       Cursor : Text_Cursor'Class)
    is
-      Holder : constant Controlled_Editor_Buffer_Holder'Class :=
-        This.Kernel.Get_Buffer_Factory.Get_Holder (Get_File_Name (This));
+      Editor : constant Editor_Buffer'Class :=
+        This.Kernel.Get_Buffer_Factory.Get (Get_File_Name (This));
       Loc : constant Editor_Location'Class :=
-        Holder.Editor.New_Location_At_Line (Cursor.Get_Line);
+        Editor.New_Location_At_Line (Cursor.Get_Line);
    begin
-      Holder.Editor.Indent (Loc, Loc);
+      Editor.Indent (Loc, Loc);
       Text_Has_Changed (This);
    end Indent_Line;
 
@@ -341,10 +344,14 @@ package body Codefix.GPS_Io is
    overriding function Read_File
      (This : Console_Interface) return Unbounded_String
    is
-      Holder : constant Controlled_Editor_Buffer_Holder'Class :=
-        This.Kernel.Get_Buffer_Factory.Get_Holder (Get_File_Name (This));
+      Editor : constant Editor_Buffer'Class :=
+        This.Kernel.Get_Buffer_Factory.Get
+          (Get_File_Name (This),
+           Open_View   => False,
+           Open_Buffer => True);
+
    begin
-      return Holder.Editor.Get_Chars_U;
+      return Editor.Get_Chars_U;
    end Read_File;
 
    --------------
@@ -352,10 +359,13 @@ package body Codefix.GPS_Io is
    --------------
 
    overriding function Line_Max (This : Console_Interface) return Natural is
-      Holder : constant Controlled_Editor_Buffer_Holder'Class :=
-        This.Kernel.Get_Buffer_Factory.Get_Holder (Get_File_Name (This));
+      Editor : constant Editor_Buffer'Class :=
+        This.Kernel.Get_Buffer_Factory.Get
+          (Get_File_Name (This),
+           Open_View   => False,
+           Open_Buffer => True);
    begin
-      return Holder.Editor.Lines_Count;
+      return Editor.Lines_Count;
    end Line_Max;
 
    ---------------
@@ -364,14 +374,17 @@ package body Codefix.GPS_Io is
 
    overriding
    function Tab_Width (This : Console_Interface) return Natural is
-      Holder : constant Controlled_Editor_Buffer_Holder'Class :=
-        This.Kernel.Get_Buffer_Factory.Get_Holder (Get_File_Name (This));
+      Editor : constant Editor_Buffer'Class :=
+        This.Kernel.Get_Buffer_Factory.Get
+          (Get_File_Name (This),
+           Open_View   => False,
+           Open_Buffer => True);
       Indent_Params : Indent_Parameters;
       Indent_Style  : Indentation_Kind;
    begin
-      if Holder.Editor.Get_Language /= null then
+      if Editor.Get_Language /= null then
          Get_Indentation_Parameters
-           (Lang         => Holder.Editor.Get_Language,
+           (Lang         => Editor.Get_Language,
             Params       => Indent_Params,
             Indent_Style => Indent_Style);
          return Indent_Params.Indent_Level;

@@ -1045,6 +1045,7 @@ package body GPS.LSP_Clients is
          Buffer  : constant GPS.Editors.Editor_Buffer'Class :=
            Self.Kernel.Get_Buffer_Factory.Get
              (File        => Item.File,
+              Open_Buffer => False,
               Open_View   => False);
       begin
          if Buffer /= Nil_Editor_Buffer then
@@ -1060,10 +1061,12 @@ package body GPS.LSP_Clients is
       procedure Process_Open_File is
          Factory : constant GPS.Editors.Editor_Buffer_Factory_Access :=
                      Self.Kernel.Get_Buffer_Factory;
-         Holder  : constant GPS.Editors.Controlled_Editor_Buffer_Holder'Class
-           := Factory.Get_Holder (File => Item.File);
+         Buffer  : constant GPS.Editors.Editor_Buffer'Class := Factory.Get
+           (File        => Item.File,
+            Open_Buffer => True,
+            Open_View   => False);
          Lang    : constant not null Language.Language_Access :=
-                     Holder.Editor.Get_Language;
+                     Buffer.Get_Language;
          Value   : constant LSP.Messages.DidOpenTextDocumentParams :=
                      (textDocument =>
                         (uri        =>
@@ -1075,11 +1078,11 @@ package body GPS.LSP_Clients is
                          version    => 0,
                          text       =>
                            VSS.Strings.Conversions.To_Virtual_String
-                             (Holder.Editor.Get_Chars_U)));
+                             (Buffer.Get_Chars_U)));
 
       begin
          Self.On_DidOpenTextDocument_Notification (Value);
-         Holder.Editor.Set_Opened_On_LSP_Server (True);
+         Buffer.Set_Opened_On_LSP_Server (True);
       end Process_Open_File;
 
       ---------------------

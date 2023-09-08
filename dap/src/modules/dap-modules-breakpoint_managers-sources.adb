@@ -55,7 +55,7 @@ package body DAP.Modules.Breakpoint_Managers.Sources is
    is
       use DAP.Tools;
 
-      Holder  : constant GPS.Editors.Controlled_Editor_Buffer_Holder'Class :=
+      Holder  : constant GPS.Editors.Controlled_Editor_Buffer_Holder :=
         Self.Kernel.Get_Buffer_Factory.Get_Holder (File => Self.File);
       Data    : Breakpoint_Data;
       Actual  : Breakpoint_Vectors.Vector;

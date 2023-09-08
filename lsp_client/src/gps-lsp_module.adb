@@ -1322,7 +1322,7 @@ package body GPS.LSP_Module is
                     Self.Get_Kernel.Get_Messages_Container;
       File      : constant GNATCOLL.VFS.Virtual_File :=
         GPS.LSP_Client.Utilities.To_Virtual_File (Params.uri);
-      Holder : constant GPS.Editors.Controlled_Editor_Buffer_Holder'Class :=
+      Holder : constant GPS.Editors.Controlled_Editor_Buffer_Holder :=
         Self.Get_Kernel.Get_Buffer_Factory.Get_Holder (File => File);
 
    begin
@@ -1396,7 +1396,7 @@ package body GPS.LSP_Module is
                   File      : constant GNATCOLL.VFS.Virtual_File :=
                     GPS.LSP_Client.Utilities.To_Virtual_File
                       (Info.location.uri);
-                  Holder    : constant Controlled_Editor_Buffer_Holder'Class
+                  Holder    : constant Controlled_Editor_Buffer_Holder
                     := Self.Get_Kernel.Get_Buffer_Factory.Get_Holder
                       (File => File);
                   Start_Loc : constant GPS.Editors.Editor_Location'Class :=

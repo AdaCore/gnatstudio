@@ -436,6 +436,7 @@ package body GPS.Kernel.MDI is
       Buf : constant Editor_Buffer'Class := Get_Buffer_Factory (Handle).Get
         (File        => File,
          Force       => False,
+         Open_Buffer => False,
          Open_View   => False);
    begin
       if Buf = Nil_Editor_Buffer then

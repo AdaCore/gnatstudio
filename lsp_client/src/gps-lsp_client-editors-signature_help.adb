@@ -873,7 +873,7 @@ package body GPS.LSP_Client.Editors.Signature_Help is
    is
       Editor_Context : constant Selection_Context :=
         Kernel.Get_Current_Context;
-      Holder   : constant Controlled_Editor_Buffer_Holder'Class :=
+      Holder   : constant Controlled_Editor_Buffer_Holder :=
         Kernel.Get_Buffer_Factory.Get_Holder (File);
       Location : constant GPS.Editors.Editor_Location'Class :=
         Holder.Editor.New_Location
