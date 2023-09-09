@@ -520,7 +520,7 @@ package body GPS.LSP_Client.References is
 
                      declare
                         Holder   : constant GPS.Editors.
-                          Controlled_Editor_Buffer_Holder'Class :=
+                          Controlled_Editor_Buffer_Holder :=
                             Kernel.Get_Buffer_Factory.Get_Holder (File);
                         Location : constant
                           GPS.Editors.Editor_Location'Class :=
@@ -580,7 +580,7 @@ package body GPS.LSP_Client.References is
 
             declare
                Holder   : constant GPS.Editors.
-                 Controlled_Editor_Buffer_Holder'Class :=
+                 Controlled_Editor_Buffer_Holder :=
                    Kernel.Get_Buffer_Factory.Get_Holder (File);
                Location : constant GPS.Editors.Editor_Location'Class :=
                  Holder.Editor.New_Location (Line, Column);
@@ -807,7 +807,7 @@ package body GPS.LSP_Client.References is
                else new References_Command);
 
             Holder   : constant GPS.Editors.
-              Controlled_Editor_Buffer_Holder'Class :=
+              Controlled_Editor_Buffer_Holder :=
                 Kernel.Get_Buffer_Factory.Get_Holder (File);
             Location : constant GPS.Editors.Editor_Location'Class :=
               Holder.Editor.New_Location (Line, Column);
@@ -870,9 +870,8 @@ package body GPS.LSP_Client.References is
          declare
             File : constant GNATCOLL.VFS.Virtual_File :=
               GPS.LSP_Client.Utilities.To_Virtual_File (Loc.uri);
-            Holder :
-              constant GPS.Editors.Controlled_Editor_Buffer_Holder'Class :=
-                Get_Kernel (Data).Get_Buffer_Factory.Get_Holder (File => File);
+            Holder : constant GPS.Editors.Controlled_Editor_Buffer_Holder :=
+              Get_Kernel (Data).Get_Buffer_Factory.Get_Holder (File => File);
             Location : constant GPS.Editors.Editor_Location'Class :=
               GPS.LSP_Client.Utilities.LSP_Position_To_Location
                 (Holder.Editor, Loc.span.first);
@@ -975,7 +974,7 @@ package body GPS.LSP_Client.References is
       while Max_Nb_To_Parse > Cur_Nb_Parsed loop
          File := Data.File_Vector (Data.File_Vector'First);
          declare
-            Buffer : constant Controlled_Editor_Buffer_Holder'Class :=
+            Buffer : constant Controlled_Editor_Buffer_Holder :=
               Data.Kernel.Get_Buffer_Factory.Get_Holder (File => File);
          begin
             for Loc of Data.File_To_Locations.Element (File) loop

@@ -1342,7 +1342,7 @@ package body LAL.Semantic_Trees is
 
          Buffer : constant GPS.Editors.Editor_Buffer'Class :=
            Self.Kernel.Get_Buffer_Factory.Get
-             (Self.File, False, False, False);
+             (Self.File, False, False, False, False);
       begin
          if Buffer = GPS.Editors.Nil_Editor_Buffer then
             Self.Unit :=

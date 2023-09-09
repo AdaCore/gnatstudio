@@ -49,7 +49,7 @@ package body DAP.Modules.Breakpoint_Managers is
    procedure Convert
      (Kernel : GPS.Kernel.Kernel_Handle;
       File   : Virtual_File;
-      Holder : GPS.Editors.Controlled_Editor_Buffer_Holder'Class;
+      Holder : GPS.Editors.Controlled_Editor_Buffer_Holder;
       Data   : in out Breakpoint_Data;
       Item   : DAP.Tools.Breakpoint)
    is
@@ -103,7 +103,7 @@ package body DAP.Modules.Breakpoint_Managers is
             then DAP_Bp.source.Value.name
             else DAP_Bp.source.Value.path)
          else No_File);
-      Holder : constant GPS.Editors.Controlled_Editor_Buffer_Holder'Class :=
+      Holder : constant GPS.Editors.Controlled_Editor_Buffer_Holder :=
         Kernel.Get_Buffer_Factory.Get_Holder (File => File);
       Data : Breakpoint_Data;
    begin
@@ -888,7 +888,7 @@ package body DAP.Modules.Breakpoint_Managers is
             then To_File (Event.breakpoint.source.Value.path)
             else No_File);
          Holder : constant GPS.Editors.
-           Controlled_Editor_Buffer_Holder'Class :=
+           Controlled_Editor_Buffer_Holder :=
              Self.Kernel.Get_Buffer_Factory.Get_Holder
                (File => File);
          Data : Breakpoint_Data;

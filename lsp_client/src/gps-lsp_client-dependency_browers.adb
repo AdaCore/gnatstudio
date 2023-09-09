@@ -189,6 +189,7 @@ package body GPS.LSP_Client.Dependency_Browers is
         Kernel.Get_Buffer_Factory.Get
           (File        => File,
            Force       => False,
+           Open_Buffer => False,
            Open_View   => False);
       Lang                     : constant Language_Access :=
         Kernel.Get_Language_Handler.Get_Language_From_File (File);
@@ -202,13 +203,18 @@ package body GPS.LSP_Client.Dependency_Browers is
 
       if Buffer = Nil_Editor_Buffer and then Server /= null then
          declare
-            Holder : constant Controlled_Editor_Buffer_Holder'Class :=
-              Kernel.Get_Buffer_Factory.Get_Holder (File => File);
+            Buffer : constant Editor_Buffer'Class :=
+              Kernel.Get_Buffer_Factory.Get
+                (File        => File,
+                 Open_Buffer => True,
+                 Open_View   => False);
          begin
-            if Holder.Editor.Get_Language /= null then
+            if Buffer.Get_Language /= null then
                Server.Get_Client.Send_Text_Document_Did_Open (File);
                Close_Document_On_Finish := True;
             end if;
+
+            Buffer.Close;
          end;
       end if;
 

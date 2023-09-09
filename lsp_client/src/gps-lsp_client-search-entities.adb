@@ -299,7 +299,7 @@ package body GPS.LSP_Client.Search.Entities is
 
       declare
          Holder  : constant GPS.Editors.
-           Controlled_Editor_Buffer_Holder'Class :=
+           Controlled_Editor_Buffer_Holder :=
              Self.Kernel.Get_Buffer_Factory.Get_Holder
                (File => Self.File);
          Location : constant GPS.Editors.Editor_Location'Class :=
@@ -776,7 +776,8 @@ package body GPS.LSP_Client.Search.Entities is
       Limit   : Natural := Natural'Last) is
    begin
       Self.File := Self.Kernel.Get_Buffer_Factory.Get
-        (Open_View   => False).File;
+        (Open_Buffer => False,
+         Open_View   => False).File;
 
       if Self.Request_Num < Integer'Last then
          Self.Request_Num := Self.Request_Num + 1;

@@ -241,8 +241,7 @@ package body GPS.LSP_Client.Outline is
       Trace
         (Me,
          "Error received after sending "
-         & VSS.Strings.Conversions.To_UTF_8_String (Self.Method)
-         & ": " & Message);
+         & VSS.Strings.Conversions.To_UTF_8_String (Self.Method));
       Outline_View.Finished_Computing
         (Self.Provider.Kernel, Status => Outline_View.Failed);
       Trace (Me_Debug, "On_Error_Message done");
@@ -281,6 +280,7 @@ package body GPS.LSP_Client.Outline is
         Self.Kernel.Get_Buffer_Factory.Get
           (File        => File,
            Force       => False,
+           Open_Buffer => False,
            Open_View   => False);
       Lang                     : constant Language_Access :=
         Self.Kernel.Get_Language_Handler.Get_Language_From_File (File);
@@ -296,13 +296,18 @@ package body GPS.LSP_Client.Outline is
 
       if Buffer = Nil_Editor_Buffer and then Server /= null then
          declare
-            Holder : constant Controlled_Editor_Buffer_Holder'Class :=
-              Self.Kernel.Get_Buffer_Factory.Get_Holder (File);
+            Buffer : constant Editor_Buffer'Class :=
+              Self.Kernel.Get_Buffer_Factory.Get
+                (File        => File,
+                 Open_Buffer => True,
+                 Open_View   => False);
          begin
-            if Holder.Editor.Get_Language /= null then
+            if Buffer.Get_Language /= null then
                Server.Get_Client.Send_Text_Document_Did_Open (File);
                Close_Document_On_Finish := True;
             end if;
+
+            Buffer.Close;
          end;
       end if;
 
@@ -387,7 +392,7 @@ package body GPS.LSP_Client.Outline is
       Prev_Depth    : Integer;
       Tree_Iter     : Tree_Iterator_Interfaces.Forward_Iterator'Class :=
         Iterate (Self.Result.Tree);
-      Holder : constant GPS.Editors.Controlled_Editor_Buffer_Holder'Class :=
+      Holder : constant GPS.Editors.Controlled_Editor_Buffer_Holder :=
         Self.Kernel.Get_Buffer_Factory.Get_Holder (File => Self.File);
    begin
       Trace (Me_Debug, "On_Idle_Load_Tree");
@@ -481,7 +486,7 @@ package body GPS.LSP_Client.Outline is
       use type Basic_Types.Visible_Column_Type;
       Dummy         : Boolean;
       Nb_Added_Rows : Integer := 0;
-      Holder : constant GPS.Editors.Controlled_Editor_Buffer_Holder'Class :=
+      Holder : constant GPS.Editors.Controlled_Editor_Buffer_Holder :=
         Self.Kernel.Get_Buffer_Factory.Get_Holder (File => Self.File);
 
    begin

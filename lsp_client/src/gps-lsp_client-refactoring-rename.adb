@@ -282,7 +282,7 @@ package body GPS.LSP_Client.Refactoring.Rename is
 
       if Run (Dialog) = Gtk_Response_OK then
          declare
-            Holder   : constant Controlled_Editor_Buffer_Holder'Class :=
+            Holder   : constant Controlled_Editor_Buffer_Holder :=
               Kernel.Get_Buffer_Factory.Get_Holder
                 (File_Information (Context.Context));
             Location : constant GPS.Editors.Editor_Location'Class :=
@@ -358,7 +358,7 @@ package body GPS.LSP_Client.Refactoring.Rename is
       use type VSS.Strings.Virtual_String;
 
       On_Error : Boolean;
-      Holder   : constant Controlled_Editor_Buffer_Holder'Class :=
+      Holder   : constant Controlled_Editor_Buffer_Holder :=
         Self.Kernel.Get_Buffer_Factory.Get_Holder
           (Self.File);
    begin
@@ -399,7 +399,7 @@ package body GPS.LSP_Client.Refactoring.Rename is
       Message : String;
       Data    : GNATCOLL.JSON.JSON_Value)
    is
-      Holder : constant Controlled_Editor_Buffer_Holder'Class :=
+      Holder : constant Controlled_Editor_Buffer_Holder :=
         Self.Kernel.Get_Buffer_Factory.Get_Holder
           (Self.File);
    begin
