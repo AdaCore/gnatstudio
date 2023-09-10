@@ -13,28 +13,27 @@ build_and_test:
   services:
      - image:gtk-deps
      - cpu:8
-     - mem:16
-     - run_as_root:false
   stage: build_and_test
   rules:
     - if: $CI_PIPELINE_SOURCE == 'merge_request_event'
     - if: $CI_PIPELINE_SOURCE == 'pipeline'
+  interruptible: true
   script:
     - !reference [.basic-setup]
 
     # Build & test using anod
-    - anod build gps $ACI_TRACK_QUALIFIER --minimal --latest
-    - anod build gps_testsuite_drivers $ACI_TRACK_QUALIFIER --minimal --latest
+    - anod build gps $ACI_TRACK_QUALIFIER --latest
+    - anod build gps_testsuite_drivers $ACI_TRACK_QUALIFIER --latest
 
     # Set this to deactivate some event-synth tests
     - export GITLAB_CI=1
 
     # Pass --latest to the test command to ensure the CI remains
     # available even if a dependency is not available.
-    - anod test gps $ACI_TRACK_QUALIFIER -Qcodepeer --minimal --latest
+    - anod test gps $ACI_TRACK_QUALIFIER -Qcodepeer --latest
 
     # Process the report
-    - BUILD_SPACE_NAME=`anod eval gps build_space_name --primitive test $ACI_TRACK_QUALIFIER -Qcodepeer | tr -d "'"`
+    - BUILD_SPACE_NAME=`anod eval gps build_space_name --primitive test $ACI_TRACK_QUALIFIER -Qcodepeer`
     - SB_BASE=$ANOD_DEFAULT_SANDBOX_DIR/x86_64-linux/$BUILD_SPACE_NAME
     - e3-testsuite-report
        --failure-exit-code 1
