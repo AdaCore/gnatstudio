@@ -78,17 +78,17 @@ private
       Context : Interactive_Command_Context) return Command_Return_Type;
    --  Called when "Bump Baseline to Current Run" menu item is activated
 
-   type Baseline_Set_Command is
+   type Baseline_Set_Baseline_Command is
      new CodePeer_Interactive_Command with null record;
    overriding function Execute
-     (Self    : access Baseline_Set_Command;
+     (Self    : access Baseline_Set_Baseline_Command;
       Context : Interactive_Command_Context) return Command_Return_Type;
    --  Called when "Set Baseline to Run" menu item is activated
 
-   type Baseline_Replace_Command is
+   type Baseline_Set_Current_Command is
      new CodePeer_Interactive_Command with null record;
    overriding function Execute
-     (Self    : access Baseline_Replace_Command;
+     (Self    : access Baseline_Set_Current_Command;
       Context : Interactive_Command_Context) return Command_Return_Type;
    --  Called when "Replace Current Run with Run" menu item is activated
 
