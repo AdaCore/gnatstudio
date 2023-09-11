@@ -42,6 +42,10 @@ package body String_Utils is
    --  Return the beginning index of the first word in P.
    --  In this context, word begins with any non-whitespace ASCII character.
 
+   function Hex_Value (Hex : String) return Natural;
+   --  Return the value for the hexadecimal number Hex. Raises
+   --  Constraint_Error is Hex is not an hexadecimal number.
+
    -----------------
    -- Lines_Count --
    -----------------
@@ -467,24 +471,6 @@ package body String_Utils is
       while Index <= Type_Str'Last
         and then Index >= Type_Str'First
         and then Type_Str (Index) /= Char
-      loop
-         Index := Index + Step;
-      end loop;
-   end Skip_To_Char;
-
-   ------------------
-   -- Skip_To_Char --
-   ------------------
-
-   procedure Skip_To_Char
-     (Type_Str : Unbounded_String;
-      Index    : in out Natural;
-      Char     : Character;
-      Step     : Integer := 1) is
-   begin
-      while Index <= Length (Type_Str)
-        and then Index >= 1
-        and then Element (Type_Str, Index) /= Char
       loop
          Index := Index + Step;
       end loop;
