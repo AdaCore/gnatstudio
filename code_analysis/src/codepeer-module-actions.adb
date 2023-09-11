@@ -268,13 +268,13 @@ package body CodePeer.Module.Actions is
    -------------
 
    overriding function Execute
-     (Self    : access Baseline_Set_Command;
+     (Self    : access Baseline_Set_Baseline_Command;
       Context : Interactive_Command_Context) return Command_Return_Type is
    begin
       return
         Execute_Internal_With_Baseline
           (Context   => Context,
-           Target_ID => "GNATSAS Baseline Set Current",
+           Target_ID => "GNATSAS Baseline Set Baseline",
            Title     => "Select New Current Run",
            Action    => None);
    end Execute;
@@ -284,13 +284,13 @@ package body CodePeer.Module.Actions is
    -------------
 
    overriding function Execute
-     (Self    : access Baseline_Replace_Command;
+     (Self    : access Baseline_Set_Current_Command;
       Context : Interactive_Command_Context) return Command_Return_Type is
    begin
       return
         Execute_Internal_With_Baseline
           (Context   => Context,
-           Target_ID => "GNATSAS Baseline Set Baseline",
+           Target_ID => "GNATSAS Baseline Set Current",
            Title     => "Select Baseline File",
            Action    => None);
    end Execute;
@@ -934,11 +934,11 @@ package body CodePeer.Module.Actions is
          Register_Action
            (Kernel  => Module.Kernel,
             Name    => CodePeer.Package_Name & " baseline set",
-            Command => new Baseline_Set_Command (Module));
+            Command => new Baseline_Set_Baseline_Command (Module));
          Register_Action
            (Kernel  => Module.Kernel,
             Name    => CodePeer.Package_Name & " baseline replace",
-            Command => new Baseline_Replace_Command (Module));
+            Command => new Baseline_Set_Current_Command (Module));
       else
          Register_Action
            (Kernel  => Module.Kernel,
