@@ -2312,27 +2312,24 @@ package body Bookmark_Views is
         (Marker : in out Location_Marker;
          Text   : String)
       is
-         Buf     : constant Editor_Buffer'Class :=
-           Kernel.Get_Buffer_Factory.Get
-             (Get_File (Marker),
-              Open_Buffer => True,
-              Open_View => False);
+         Holder  : constant Controlled_Editor_Buffer_Holder :=
+           Kernel.Get_Buffer_Factory.Get_Holder (Get_File (Marker));
          Current : Integer := Integer (Get_Line (Marker));
          Min     : Integer := Current;
          Max     : Integer := Current;
          Forward : Boolean := True;
       begin
          if Text = "no-line-text"
-           or else Buf = Nil_Editor_Buffer
+           or else Holder.Editor = Nil_Editor_Buffer
          then
             return;
          end if;
 
          declare
             Line : constant Editor_Location'Class :=
-              Buf.New_Location_At_Line (Current);
+              Holder.Editor.New_Location_At_Line (Current);
          begin
-            if Buf.Get_Chars (Line, Line.End_Of_Line) = Text then
+            if Holder.Editor.Get_Chars (Line, Line.End_Of_Line) = Text then
                --  The line has not been moved
                return;
             end if;
@@ -2341,7 +2338,7 @@ package body Bookmark_Views is
          --  From the current line, check if the line Current + X
          --  or else Current - X matches the Bookmark text
          loop
-            if Min > 1 and then Max < Buf.Lines_Count then
+            if Min > 1 and then Max < Holder.Editor.Lines_Count then
                --  Moving either to the begin or to the end of the buffer
                if Forward then
                   Max     := Max + 1;
@@ -2359,7 +2356,7 @@ package body Bookmark_Views is
                Min := Min - 1;
                Current := Min;
 
-            elsif Max < Buf.Lines_Count then
+            elsif Max < Holder.Editor.Lines_Count then
                --  Moving to the end of the buffer
                Max := Max + 1;
                Current := Max;
@@ -2370,9 +2367,9 @@ package body Bookmark_Views is
 
             declare
                Line : constant Editor_Location'Class :=
-                 Buf.New_Location_At_Line (Current);
+                 Holder.Editor.New_Location_At_Line (Current);
             begin
-               if Buf.Get_Chars (Line, Line.End_Of_Line) = Text then
+               if Holder.Editor.Get_Chars (Line, Line.End_Of_Line) = Text then
                   --  The line is found
                   Marker := Kernel.Get_Buffer_Factory.Create_Marker
                     (File   => Get_File (Marker),
