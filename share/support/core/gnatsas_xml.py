@@ -477,6 +477,7 @@ SCIL for another architecture" />
           <arg>gnat-studio</arg>
           <arg>-P%PP</arg>
           <arg>%X</arg>
+          <arg>--show-annotations</arg>
        </command-line>
        <iconname>gps-build-all-symbolic</iconname>
        <switches command="%(tool_name)s" columns="3" lines="2">
@@ -504,6 +505,7 @@ SCIL for another architecture" />
           <arg>gnat-studio</arg>
           <arg>-P%PP</arg>
           <arg>%X</arg>
+          <arg>--show-annotations</arg>
        </command-line>
     </target>
 
@@ -517,6 +519,7 @@ SCIL for another architecture" />
           <arg>-P%PP</arg>
           <arg>%X</arg>
           <arg>%Fp</arg>
+          <arg>--show-annotations</arg>
        </command-line>
        <iconname>gps-build-all-symbolic</iconname>
     </target-model>
@@ -534,6 +537,7 @@ SCIL for another architecture" />
           <arg>-P%PP</arg>
           <arg>%X</arg>
           <arg>%Fp</arg>
+          <arg>--show-annotations</arg>
        </command-line>
     </target>
 
@@ -648,6 +652,7 @@ Also force the generation of all SCIL files."/>
           <arg>gnat-studio</arg>
           <arg>-P%PP</arg>
           <arg>%X</arg>
+          <arg>--show-annotations</arg>
        </command-line>
     </target>
 
