@@ -212,7 +212,7 @@ xml_gnatsas = """<?xml version="1.0"?>
 
     <project_attribute
       package="Analyzer"
-      name="Output_Directory"
+      name="Output_Dir"
       editor_page="GNATSAS"
       editor_section="GNATSAS configuration"
       label="Output directory"
@@ -223,37 +223,13 @@ xml_gnatsas = """<?xml version="1.0"?>
 
     <project_attribute
       package="Analyzer"
-      name="Database_Directory"
+      name="Review_File"
       editor_page="GNATSAS"
       editor_section="GNATSAS configuration"
-      label="Database directory"
+      label="Review file"
       hide_in="wizard gnatname_wizard library_wizard"
-      description="GNATSAS database directory to use for this project.">
-      <string type="directory"/>
-    </project_attribute>
-
-    <project_attribute
-      package="Analyzer"
-      name="Server_URL"
-      editor_page="GNATSAS"
-      editor_section="GNATSAS configuration"
-      label="GNATSAS Server URL"
-      hide_in="wizard gnatname_wizard library_wizard"
-      description="URL used to connect to the GNATSAS server to access
-the GNATSAS database remotely.">
-      <string/>
-    </project_attribute>
-
-    <project_attribute
-      package="Analyzer"
-      name="CWE"
-      editor_page="GNATSAS"
-      editor_section="GNATSAS configuration"
-      label="Include CWE ids"
-      hide_in="wizard gnatname_wizard library_wizard"
-      description="Include CWE ids in output.">
-      <choice default="true">False</choice>
-      <choice>True</choice>
+      description="GNATSAS review file to use for this project.">
+      <string type="file"/>
     </project_attribute>
 
     <project_attribute
@@ -328,17 +304,29 @@ excluded from GNATSAS's analysis."
       <string/>
     </project_attribute>
 
-    <tool name="GNATSAS" package="Analyzer" index="">
+    <tool name="GNATSAS analyze" package="Analyzer" index="analyze">
       <language>Ada</language>
       <switches columns="2" lines="3">
         <spin label="Multiprocessing" switch="-j" min="0" max="1000"
               default="0" separator="" column="2"
               tip="Use N processes to carry out the processing (0 means use as
 many cores as available on the machine)." />
-        <field label="Run name"
-               tip="Specify the run name."
-               switch="--run-name"
-               separator=" "/>
+         <check label="Enable GNAT warnings" switch="--gnat"
+                switch-off="--no-gnat" default="off"
+                column="2" tip="Disable GNAT warnings."/>
+         <check label="Enable Infer" switch="--infer" switch-off="--no-infer" default="on"
+                column="2" tip="Disable Infer analysis."/>
+         <check label="Enable Inspector" switch="--inspector" switch-off="--no-inspector" default="on"
+                column="2" tip="Disable Inspector."/>
+         <check label="Enable GNATcheck" switch="--gnatcheck" switch-off="--no-gnatcheck" default="on"
+                column="2" tip="Disable Infer analysis."/>
+         <hidden switch="-U" separator=" "/>
+      </switches>
+    </tool>
+
+    <tool name="GNATSAS inspector" package="Analyzer" index="inspector">
+      <language>Ada</language>
+      <switches columns="2" lines="3">
         <check label="Ignore representation clauses" switch="-gnatI"
                column="1"
                tip="Ignore all representation clauses, useful for generating
@@ -346,7 +334,6 @@ SCIL for another architecture" />
         <check label="Unconstrained float overflow" switch="-gnateF"
                column="2"
                tip="Check for overflow on unconstrained floating point types"/>
-         <hidden switch="-U" separator=" "/>
       </switches>
     </tool>
 
