@@ -474,7 +474,13 @@ SCIL for another architecture" />
                 separator=" "
                 as-file="true"
                 file-filter="*.sam"/>
-
+         <combo label="Analysis mode" switch="--mode" noswitch="default"
+               separator="=" column="1"
+              tip="Analysis mode for which you want to regenerate a report." >
+            <combo-entry label="Last analysis mode" value="default" />
+            <combo-entry label="fast" value="fast" />
+            <combo-entry label="deep" value="deep" />
+         </combo>
          <hidden switch="--progress-bar=gnat-studio" separator=" "/>
        </switches>
     </target-model>
@@ -543,24 +549,27 @@ SCIL for another architecture" />
                default="0" separator="" column="1"
                tip="Use N processes to carry out the analysis (0 means use as
 many cores as available on the machine)."/>
-         <field label="Run name"
-                tip="Specify the run name."
-                switch="--run-name"
-                separator=" "/>
+         <combo label="Analysis mode" switch="--mode" noswitch="default"
+               separator="=" column="1"
+               tip="Analysis mode." >
+            <combo-entry label="default mode" value="default" />
+            <combo-entry label="fast" value="fast" />
+            <combo-entry label="deep" value="deep" />
+         </combo>
          <check label="Root project only" switch="--no-subprojects"
                 column="2" tip="Analyze root project only"/>
          <check label="Force analysis" switch="-f" column="2"
           tip="Force analysis of all files, ignoring previous run.
 Also force the generation of all SCIL files."/>
-         <check label="Disable Infer" switch="--no-infer" default="off"
-                column="2" tip="Disable Infer analysis."/>
-         <check label="Disable GNAT warnings" switch="--no-gnat" default="off"
-                column="2" tip="Disable GNAT warnings."/>
-         <check label="Disable Inspector" switch="--no-inspector" default="off"
-                column="2" tip="Disable Inspector."/>
-         <check label="Disable GNATcheck" switch="--no-gnatcheck" default="off"
-                column="2" tip="Disable Infer analysis."/>
-         <hidden switch="--progress-bar=gnat-studio" separator=" "/>
+         <check label="Enable GNAT warnings" switch="--gnat"
+                default="off"
+                column="2" tip="Enable GNAT warnings."/>
+         <check label="Enable Infer" switch="--infer" switch-off="--no-infer" default="on"
+                column="2" tip="Enable Infer analysis."/>
+         <check label="Enable Inspector" switch="--inspector" switch-off="--no-inspector" default="on"
+                column="2" tip="Enable Inspector."/>
+         <check label="Enable GNATcheck" switch="--gnatcheck" switch-off="--no-gnatcheck" default="on"
+                column="2" tip="Enable Infer analysis."/>
        </switches>
     </target-model>
 
