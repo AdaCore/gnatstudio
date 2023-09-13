@@ -78,7 +78,7 @@ targets = """
   <target-model name="gnatdoc" category="">
     <description>Run GNATdoc</description>
     <command-line>
-      <arg>gnatdoc4</arg>
+      <arg>gnatdoc</arg>
       <arg>-P%PP</arg>
       <arg>%X</arg>
     </command-line>
@@ -114,7 +114,7 @@ targets = """
     <read-only>TRUE</read-only>
     <launch-mode>MANUALLY_WITH_NO_DIALOG</launch-mode>
     <command-line>
-      <arg>gnatdoc4</arg>
+      <arg>gnatdoc</arg>
       <arg>%X</arg>
     </command-line>
   </target>
@@ -128,7 +128,7 @@ targets = """
     <read-only>TRUE</read-only>
     <launch-mode>MANUALLY_WITH_DIALOG</launch-mode>
     <command-line>
-      <arg>gnatdoc4</arg>
+      <arg>gnatdoc</arg>
       <arg>-P%PP</arg>
       <arg>%X</arg>
     </command-line>
