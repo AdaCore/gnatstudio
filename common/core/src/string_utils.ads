@@ -31,10 +31,6 @@ package String_Utils is
      (S : Unbounded_String) return String renames To_String;
    --  Utility conversion operators from String to Unbounded_String
 
-   function Hex_Value (Hex : String) return Natural;
-   --  Return the value for the hexadecimal number Hex. Raises
-   --  Constraint_Error is Hex is not an hexadecimal number.
-
    function Format_Bytes (Bytes : Float) return String;
    --  Return a formatted string for the given Bytes quantity in the following
    --  format:
@@ -91,11 +87,6 @@ package String_Utils is
 
    procedure Skip_To_Char
      (Type_Str : String;
-      Index    : in out Natural;
-      Char     : Character;
-      Step     : Integer := 1);
-   procedure Skip_To_Char
-     (Type_Str : Unbounded_String;
       Index    : in out Natural;
       Char     : Character;
       Step     : Integer := 1);
