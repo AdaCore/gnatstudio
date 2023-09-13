@@ -127,7 +127,7 @@ package body DAP.Utils is
    is
       use GNATCOLL.VFS;
    begin
-      return Create_From_UTF8 (UTF8 (Item));
+      return Create_From_Base (+(UTF8 (Item)));
    end To_File;
 
 end DAP.Utils;
