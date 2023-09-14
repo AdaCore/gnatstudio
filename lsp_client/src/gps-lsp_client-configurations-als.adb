@@ -162,6 +162,10 @@ package body GPS.LSP_Client.Configurations.ALS is
           then "leading" else "gnat"));
 
       Ada_Settings.Set_Field
+        ("namedNotationThreshold",
+         Integer'(GPS.Kernel.Preferences.LSP_Ada_Param_Threshold.Get_Pref));
+
+      Ada_Settings.Set_Field
         (To_String (Settings_Names (Fold_Comments)),
          Boolean'(GPS.Kernel.Preferences.Fold_Comments.Get_Pref));
 

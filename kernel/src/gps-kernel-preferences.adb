@@ -1679,6 +1679,17 @@ package body GPS.Kernel.Preferences is
          & "(e.g: syntax errors).",
          Path    => "Editor/Ada:Diagnostics");
 
+      LSP_Ada_Param_Threshold := Kernel.Get_Preferences.Create
+        (Name    => "LSP-Ada-Param-Naming-Threshold",
+         Label   => -"Ada named parameters threshold",
+         Doc     => -"Threshold before using the named parameters notation."
+         & " Use 0 to never use the named parameters notation."
+         & "(Server must be restarted for this preference to apply)",
+         Minimum => 0,
+         Maximum => Integer'Last,
+         Default => 3,
+         Path    => "Editor/Ada:Diagnostics");
+
       LSP_Diagnostics_Display := LSP_Diagnostics_Display_Policy_Prefs.Create
         (Manager  => Kernel.Get_Preferences,
          Name     => "LSP-Diagnostics-Display",

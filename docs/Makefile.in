@@ -8,7 +8,7 @@ INSTALL_DATA = @INSTALL_DATA@
 CONVERT = convert
 CP = cp -p
 
-all: ug tutorial pg gnatdoc
+all: ug tutorial pg
 static:
 
 pg:
@@ -16,9 +16,6 @@ pg:
 
 ug:
 	make -C users_guide html latexpdf
-
-gnatdoc:
-	make -C ../gnatdoc/docs/users_guide html latexpdf
 
 .PHONY: tutorial
 tutorial:
@@ -43,10 +40,6 @@ install:
 	-$(INSTALL_DATA) gnatstudio-splash.png $(sharedir)/
 	-${INSTALL_DATA} gnatstudio_index.xml ${docdir}/html
 	-${INSTALL_DATA} help_index.html ${docdir}/html
-
-	${MKDIR} $(docdir)/html/gnatdoc/
-	-${CP} -r ../gnatdoc/docs/users_guide/_build/html/* $(docdir)/html/gnatdoc/
-	-${CP} ../gnatdoc/docs/users_guide/_build/latex/gnatdoc.pdf $(docdir)/pdf/
 
 clean:
 	-${RM} -rf */_build/

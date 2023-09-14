@@ -1,0 +1,5 @@
+<?xml version="1.0"?>
+<Prefs>
+  <pref name="LSP-Ada-Param-Naming-Threshold">1</pref>
+  <pref name="LSP-Completion-Use-Snippets">True</pref>
+</Prefs>

@@ -21,6 +21,7 @@
 
 package BT.Xml is
 
+   --
    --  The backtrace xml files reside for now in a directory under the
    --  output directory and hold the results of the last inspection.
 
@@ -131,45 +132,24 @@ package BT.Xml is
    --             for the same source location, and I am not sure how this
    --             can be represented in the GUI.
 
-   Events_Tag    : constant String := "events";
-   Event_Tag     : constant String := "event";
-   Checks_Tag    : constant String := "checks";
-   Check_Tag     : constant String := "check";
+   --  NOTE: The following names of XML entities and their attributes are
+   --  defined in a corresponding file located both in CodePeer and in
+   --  GNAT Studio repositories. If you change some of these names, you should
+   --  update the corresponding definition in the other repository.
    File_Tag      : constant String := "file";
    Proc_Tag      : constant String := "proc";
    Vn_Tag        : constant String := "vn";
-   Bt_Tag        : constant String := "bt";
-   Callee_Tag    : constant String := "callee";
-   All_Infos_Tag : constant String := "all_infos";
    Srcpos_Tag    : constant String := "srcpos";
 
    Name_Attribute       : constant String := "name";
-   File_Name_Attribute  : constant String := "file_name";
-   Id_Attribute         : constant String := "id";
-   Vn_Attribute         : constant String := "vn";
-   Pre_Index_Attribute  : constant String := "precond_index";
-   Line_Attribute       : constant String := "line";
-   Col_Attribute        : constant String := "col";
-   Check_Attribute      : constant String := "check";
-   Check_Readable_Attribute      : constant String := "check_readable";
-   Event_Attribute      : constant String := "event";
-   Event_Readable_Attribute      : constant String := "event_readable";
-   Text_Attribute       : constant String := "text";
-   Vals_Attribute       : constant String := "vals";
-
-   function Xml_Directory
-     (Output_Dir     : String) return String;
-   --  Return the path to the directory where the backtrace and value_set
-   --  xml files are stored.
-
-   function Xml_BT_File_Name
-     (Output_Dir     : String;
-      File_Name      : String) return String;
-   --  Return the path to the xml file holding the backtraces.
 
    function Xml_Vals_File_Name
      (Output_Dir     : String;
       File_Name      : String) return String;
    --  Return the path to the xml file holding the value sets.
+   --
+   --  NOTE: This function is located both in CodePeer and in GNAT Studio
+   --  repositories. If you update it, consider updating also the copy in the
+   --  other repository.
 
 end BT.Xml;

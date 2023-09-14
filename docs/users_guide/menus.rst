@@ -1533,12 +1533,6 @@ The Help Menu
 
    Load the documentation for 'GNAT Studio User's Guide' into an external web browser
 
-.. index:: menu; help --> gnat studio --> gnatdoc user's guide
-
-* :menuselection:`Help --> GNAT Studio --> GNATdoc User's Guide`
-
-   Load the documentation for 'GNATdoc User's Guide' into an external web browser
-
 .. index:: menu; help --> gnat studio --> python extensions
 
 * :menuselection:`Help --> GNAT Studio --> Python extensions`
