@@ -2,7 +2,7 @@
 # Demo writers are not meant to edit this.
 
 import sys
-import GS
+import GPS
 from gi.repository import Gtk
 from modules import Module
 from workflows.promises import Promise
@@ -20,7 +20,7 @@ class WaiterPromise(Promise):
         self.dw.current_promise = self
         self.error_msg = error_msg
         self.timer = timeout
-        GS.Timeout(100, self.timeout_handler)
+        GPS.Timeout(100, self.timeout_handler)
 
     def timeout_handler(self, timeout):
         try:
@@ -30,7 +30,7 @@ class WaiterPromise(Promise):
                 self.dw.current_promise = None
                 self.dw.say(self.error_msg)
                 self.resolve()
-                if GS.Logger("TESTSUITE").active:
+                if GPS.Logger("TESTSUITE").active:
                     simple_error(self.error_msg)
 
             if self.oracle():
@@ -44,24 +44,24 @@ class WaiterPromise(Promise):
             # If something went wrong, we print the exception
             exception_text = sys.exc_info()[1]
             if self.dw.auto_run:
-                GS.Logger("TESTSUITE").log("Error: %s" % exception_text)
-                GS.exit(1, 1)
+                GPS.Logger("TESTSUITE").log("Error: %s" % exception_text)
+                GPS.exit(1, 1)
             else:
-                GS.MDI.dialog("Error: %s" % exception_text)
+                GPS.MDI.dialog("Error: %s" % exception_text)
 
 
 class DemoWindow(Module):
     view_title = "Demo"
-    mdi_position = GS.MDI.POSITION_LEFT
+    mdi_position = GPS.MDI.POSITION_LEFT
     mdi_group = 106
 
     def __init__(self):
         self.setup()
-        GS.execute_action("open Demo")
+        GPS.execute_action("open Demo")
 
     def setup(self):
         # Create an "open Demo" action
-        if not GS.Action("open Demo").exists():
+        if not GPS.Action("open Demo").exists():
             make_interactive(
                 self.get_view,
                 category="Views",
@@ -74,7 +74,7 @@ class DemoWindow(Module):
         self.done = False
 
         # Whether the demo should auto-run
-        self.auto_run = GS.Logger("TESTSUITE").active
+        self.auto_run = GPS.Logger("TESTSUITE").active
 
         # We create a label and a button
         self.label = Gtk.Label("")
@@ -107,7 +107,7 @@ class DemoWindow(Module):
         return self.vbox
 
     def on_view_destroy(self):
-        GS.exit(force=True)
+        GPS.exit(force=True)
 
     def say(self, markup):
         self.label.set_markup(markup)
@@ -144,7 +144,7 @@ class DemoWindow(Module):
 
     def fin(self):
         """As a promise, wait until the user clicks on the "Done" button"""
-        if GS.Logger("TESTSUITE").active:
+        if GPS.Logger("TESTSUITE").active:
             return
         else:
             self.done_button.set_no_show_all(False)
