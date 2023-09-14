@@ -108,6 +108,11 @@ package body BT.Xml.Reader is
       Local_Name    : Unicode.CES.Byte_Sequence;
       Qname         : Unicode.CES.Byte_Sequence);
 
+   procedure Read_File_Vals_Xml
+     (Output_Dir  : String;
+      File_Name   : String;
+      File_Exists : out Boolean);
+
    -----------
    -- Clear --
    -----------
