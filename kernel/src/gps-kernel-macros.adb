@@ -172,48 +172,62 @@ package body GPS.Kernel.Macros is
       Done.all := True;
 
       if Param = "d" then
-         return String_Utils.Protect
-           (+To_Remote
-              (Directory_Information (Context),
-               Get_Nickname (Server)).Full_Name,
-            Protect_Quotes      => Quoted,
-            Protect_Backslashes => For_Shell);
-
-      elsif Param = "dk" then
-         return String_Utils.Protect
-           (Krunch
+         if Has_Directory_Information (Context) then
+            return String_Utils.Protect
               (+To_Remote
                  (Directory_Information (Context),
-                  Get_Nickname (Server)).Full_Name),
-            Protect_Quotes      => Quoted,
-            Protect_Backslashes => For_Shell);
+                  Get_Nickname (Server)).Full_Name,
+               Protect_Quotes      => Quoted,
+               Protect_Backslashes => For_Shell);
+         end if;
+
+      elsif Param = "dk" then
+         if Has_Directory_Information (Context) then
+            return String_Utils.Protect
+              (Krunch
+                 (+To_Remote
+                      (Directory_Information (Context),
+                       Get_Nickname (Server)).Full_Name),
+               Protect_Quotes      => Quoted,
+               Protect_Backslashes => For_Shell);
+         end if;
 
       elsif Param = "e" then
          --  Get the name from the context, to have the proper casing
-         return Entity_Name_Information (Context);
+         if Has_Entity_Name_Information (Context) then
+            return Entity_Name_Information (Context);
+         end if;
 
       elsif Param = "ef" then
-         if Get_Entity (Context) /= No_Root_Entity then
-            --  Get the name from the context, to have the proper casing
-            if Is_Fuzzy (Get_Entity (Context)) then
-               return Entity_Name_Information (Context)
-                 & " (best guess)";
-            else
-               return Entity_Name_Information (Context);
+         if Has_Entity_Name_Information (Context) then
+            if Get_Entity (Context) /= No_Root_Entity then
+               --  Get the name from the context, to have the proper casing
+               if Is_Fuzzy (Get_Entity (Context)) then
+                  return Entity_Name_Information (Context)
+                    & " (best guess)";
+               else
+                  return Entity_Name_Information (Context);
+               end if;
             end if;
          end if;
 
       elsif Param = "ek" then
-         if Get_Entity (Context) /= No_Root_Entity then
-            --  Get the name from the context, to have the proper casing
-            return Krunch (Entity_Name_Information (Context));
+         if Has_Entity_Name_Information (Context) then
+            if Get_Entity (Context) /= No_Root_Entity then
+               --  Get the name from the context, to have the proper casing
+               return Krunch (Entity_Name_Information (Context));
+            end if;
          end if;
 
       elsif Param = "l" then
-         return Image (Line_Information (Context));
+         if Has_Line_Information (Context) then
+            return Image (Line_Information (Context));
+         end if;
 
       elsif Param = "c" then
-         return Image (Integer (Column_Information (Context)));
+         if Has_Column_Information (Context) then
+            return Image (Integer (Column_Information (Context)));
+         end if;
 
       elsif Param = "a" then
          if Has_Message_Information (Context) then

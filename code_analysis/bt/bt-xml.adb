@@ -21,6 +21,8 @@ with Ada.Directories; use Ada.Directories;
 
 package body BT.Xml is
 
+   function Xml_Directory (Output_Dir : String) return String;
+
    -------------------
    -- Xml_Directory --
    -------------------
