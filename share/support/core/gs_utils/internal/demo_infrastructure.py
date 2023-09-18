@@ -6,12 +6,12 @@ import GPS
 from gi.repository import Gtk
 from modules import Module
 from workflows.promises import Promise
-from gs_utils.internal.utils import simple_error
+from gs_utils.internal.utils import simple_error, get_widgets_by_type
 from gs_utils import make_interactive
 
 
 class WaiterPromise(Promise):
-    def __init__(self, oracle, action, timeout, error_msg, dw):
+    def __init__(self, oracle, action, timeout, error_msg, dw, highlight_func):
         # Init the superclass
         super(WaiterPromise, self).__init__()
         self.oracle = oracle
@@ -20,13 +20,22 @@ class WaiterPromise(Promise):
         self.dw.current_promise = self
         self.error_msg = error_msg
         self.timer = timeout
+        self.highlight_func = highlight_func
+        self.highlight_timeout = None
+        if self.highlight_func:
+            self.highlight_timeout = GPS.Timeout(1000, self.highlight_func_handler)
         GPS.Timeout(100, self.timeout_handler)
+
+    def highlight_func_handler(self, timeout):
+        self.highlight_func()
 
     def timeout_handler(self, timeout):
         try:
             self.timer -= 100
             if self.timer <= 0:
                 timeout.remove()
+                if self.highlight_timeout:
+                    self.highlight_timeout.remove()
                 self.dw.current_promise = None
                 self.dw.say(self.error_msg)
                 self.resolve()
@@ -35,12 +44,17 @@ class WaiterPromise(Promise):
 
             if self.oracle():
                 timeout.remove()
+                if self.highlight_timeout:
+                    self.highlight_timeout.remove()
                 self.dw.current_promise = None
                 self.dw.say("Well done!")
                 self.resolve()
 
         except Exception:
             timeout.remove()
+            if self.highlight_timeout:
+                self.highlight_timeout.remove()
+
             # If something went wrong, we print the exception
             exception_text = sys.exc_info()[1]
             if self.dw.auto_run:
@@ -130,6 +144,7 @@ class DemoWindow(Module):
         markup="waiting",
         oracle=lambda: False,
         action=lambda: None,
+        highlight_func=None,
         error_msg="delay over",
         timeout=60_000,
     ):
@@ -137,7 +152,9 @@ class DemoWindow(Module):
         Wait until the oracle is true, then execute the action
         """
         self.say(markup)
-        self.current_promise = WaiterPromise(oracle, action, timeout, error_msg, self)
+        self.current_promise = WaiterPromise(
+            oracle, action, timeout, error_msg, self, highlight_func
+        )
         if self.auto_run:
             action()
         return self.current_promise
@@ -150,3 +167,14 @@ class DemoWindow(Module):
             self.done_button.set_no_show_all(False)
             self.done_button.show_all()
             return self.wait("Press Done to exit", lambda: self.done, lambda: None)
+
+    @staticmethod
+    def highlight_menu(menu_label):
+        """Used to highlight a GNAT Studio toplevel menu (e.g: "Edit")."""
+        menus = get_widgets_by_type(Gtk.MenuItem)
+
+        menu = [x for x in menus if x.get_label() == menu_label][0]
+        if not menu.get_style_context().has_class("gps-demo-menu-highlighted"):
+            menu.get_style_context().add_class("gps-demo-menu-highlighted")
+        else:
+            menu.get_style_context().remove_class("gps-demo-menu-highlighted")
