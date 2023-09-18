@@ -12,12 +12,14 @@ EXPECTED_2 = 'Bar (S => String)'
 
 
 def test_completion(buf, s, expected):
-    for c in s:
-        send_key_event(ord(c))
-        yield timeout(100)
-    yield wait_until_true(lambda: get_widget_by_name("completion-view"))
+    buf.insert(s[:-1])
+    send_key_event(ord(s[-1]))
+    yield wait_language_server("textDocument/completion")
+    yield wait_idle()
+
     pop_tree = get_widget_by_name("completion-view")
     click_in_tree(pop_tree, path="0", events=double_click_events)
+    yield wait_idle()
     gps_assert(buf.get_chars().splitlines()[4],
                expected,
                "Wrong completion for " + s)
@@ -29,15 +31,15 @@ def run_test():
     buf = GPS.EditorBuffer.get(GPS.File("main.adb"))
     view = buf.current_view()
     view.goto(buf.at(5, 1).end_of_line())
-    yield wait_idle()
+    yield wait_tasks(other_than=known_tasks)
 
     yield test_completion(buf, "Foo", EXPECTED_1)
 
     # Undo the completion
     buf.undo()
-    # Undo Foo
+    # Undo "Fo"
     buf.undo()
-    buf.undo()
+    # Undo "o"
     buf.undo()
 
     yield test_completion(buf, "Bar", EXPECTED_2)
