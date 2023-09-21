@@ -56,6 +56,7 @@ import json
 import re
 import shutil
 import tempfile
+import xml.sax.saxutils
 
 import GPS
 from extensions.private.xml import X
@@ -564,8 +565,11 @@ class GNATcovPlugin(Module):
         # showing/hiding them appropriately. Also fill the custom targets.
         process = GPS.Process(["gnatcov", "--help"])
         help_msg = process.get_result()
-        GPS.parse_xml(list_to_xml(
-            self.BUILD_TARGET_MODELS).format(help=help_msg))
+        GPS.parse_xml(
+            list_to_xml(self.BUILD_TARGET_MODELS).format(
+                help=xml.sax.saxutils.escape(help_msg)
+            )
+        )
         self.update_worflow_build_targets()
 
         # Try to retrieve a prebuilt GNATcov runtime from the history
