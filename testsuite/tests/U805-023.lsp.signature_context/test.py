@@ -34,12 +34,12 @@ def run_test():
                "2/2",
                "Issue after down")
     for c in "1 + 2":
-        send_key_event(ord(c))
+        send_key_event(ord(c), window=main_window)
         yield wait_language_server("textDocument/signatureHelp", "Ada")
     gps_assert(labels[0].get_text(),
                "2/2",
                "Issue after adding characters")
-    send_key_event(ord(","))
+    send_key_event(ord(","), window=main_window)
     yield wait_language_server("textDocument/signatureHelp", "Ada")
     gps_assert(labels[0].get_text(),
                "1/1",
