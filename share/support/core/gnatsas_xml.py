@@ -30,17 +30,17 @@ xml_gnatsas = """<?xml version="1.0"?>
       <menu before="About">/Help/GNATSAS/GNATSAS Tutorial</menu>
     </documentation_file>
 
-    <action name="gnatsas_example_gnatsas_by_example" category=""
+    <action name="gnatsas_example_inspector_by_example" category=""
             show-command="false" output="none">
       <shell>Project.load""" \
-        """ "{example}/gnatsas_by_example/gnatsas_by_example.gpr"</shell>
+        """ "{example}/inspector_by_example/inspector_by_example.gpr"</shell>
       <shell>Editor.edit "README.txt"</shell>
     </action>
 
     <submenu before="About">
       <title>/Help/GNATSAS/Examples</title>
-      <menu action="gnatsas_example_gnatsas_by_example">
-        <title>GNATSAS by Example</title>
+      <menu action="gnatsas_example_inspector_by_example">
+        <title>Inspector by Example</title>
       </menu>
     </submenu>
 
