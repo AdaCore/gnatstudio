@@ -454,6 +454,7 @@ def start_fuzz(task, corpus_dir, fuzz_dir, force=False):
         f"--corpus-path={corpus_dir}",
         f"--stop-criteria={fuzz_dir}"
         "/fuzz_testing/user_configuration/stop_criteria.xml",
+        "--tgen-gnattest-test-generator",
     ]
 
     p = TargetWrapper("gnattest fuzz")

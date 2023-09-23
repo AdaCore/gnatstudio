@@ -547,7 +547,11 @@ executed command line as list of arguments''')]),
 
     'DAP_message_hooks': Hook_Type(
         [Param('name', '__hookname__'),
-         Param('method', 'String')])
+         Param('method', 'String')]),
+
+    'DAP_id_hooks': Hook_Type(
+        [Param('name', '__hookname__'),
+         Param('id', 'Integer')])
 
 }
 
@@ -1111,7 +1115,12 @@ Emitted when the filter of a view has changed.'''),
     Hook('DAP_response_processed',
          'DAP_message_hooks',
          descr='''
-Emitted when a response from the DAP server has been processed.''')
+Emitted when a response from the DAP server has been processed.'''),
+
+    Hook('DAP_debugger_unloaded',
+         'DAP_id_hooks',
+         descr='''
+Emitted when a debugger has been unloaded.''')
 
 ]
 

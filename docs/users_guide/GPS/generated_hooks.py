@@ -12,6 +12,16 @@ class Predefined_Hooks:
 
     """
 
+    # DAP_debugger_unloaded = 'DAP_debugger_unloaded'
+    def DAP_debugger_unloaded(name,id):
+        """
+      Emitted when a debugger has been unloaded.
+
+      :param str name:
+      :param int id:
+
+        """
+
     # DAP_response_processed = 'DAP_response_processed'
     def DAP_response_processed(name,method):
         """

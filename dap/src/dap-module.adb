@@ -426,11 +426,14 @@ package body DAP.Module is
    -------------
 
    function On_Idle return Boolean is
+      Id : Integer;
    begin
       DAP_Module_ID.Deallocate_Id := No_Source_Id;
 
       for Client of DAP_Module_ID.Clients_To_Deallocate loop
+         Id := Client.Id;
          Free (Client);
+         Dap_Debugger_Unloaded_Hook.Run (DAP_Module_ID.Kernel, Id);
       end loop;
       DAP_Module_ID.Clients_To_Deallocate.Clear;
 
