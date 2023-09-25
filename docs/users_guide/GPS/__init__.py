@@ -8900,6 +8900,22 @@ class Project(object):
         if ``recursive`` is True) and displays it in the default browser.
         """
 
+    @staticmethod
+    def get_autoconfig():
+        """
+        Return the autoconfig file.
+
+        :return: An instance of :class:`GPS.File`
+        """
+
+    @staticmethod
+    def get_config():
+        """
+        Return the config file.
+
+        :return: An instance of :class:`GPS.File`
+        """
+
     def get_attribute_as_list(self, attribute, package='', index=''):
         """
         Fetches the value of the attribute in the project.
