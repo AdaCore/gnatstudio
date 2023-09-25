@@ -1143,7 +1143,7 @@ package body Src_Editor_View is
             Height := Dummy + Height - Block_Begin_Y;
 
             X := (Gint (Offset - 1) * View.Width_Of_256_Chars) / 256 -
-              Bracket_Offset - Visible_Rect.X + Margin;
+              Bracket_Offset + Margin;
 
             Block_End_Y := Block_Begin_Y + Height;
 
