@@ -242,16 +242,18 @@ class GNATfuzzPlugin(Module):
         # Create the actions
         make_interactive(
             self.gnatfuzz_analyze_project,
+            filter=self.not_harness_project,
             category="GNATfuzz",
             name="gnatfuzz analyze project workflow",
-            menu="/GNATfuzz/Analyze project",
+            menu="/GNATfuzz/Analyze Project",
             before=ref_menu,
         )
         make_interactive(
             self.gnatfuzz_analyze_file,
+            filter=self.not_harness_project,
             category="GNATfuzz",
             name="gnatfuzz analyze file workflow",
-            menu="/GNATfuzz/Analyze file",
+            menu="/GNATfuzz/Analyze File",
             before=ref_menu,
         )
         make_interactive(
@@ -291,6 +293,9 @@ class GNATfuzzPlugin(Module):
 
     def is_harness_project(self, context):
         return self.user_project is not None
+
+    def not_harness_project(self, context):
+        return not is_harness_project(self, context)
 
     def project_view_changed(self):
         """React to a project view change"""
