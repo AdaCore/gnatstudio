@@ -217,6 +217,7 @@ toplevel_menus = [
     "Debug",
     "SPARK",
     "CodePeer",
+    "GNATSAS",
     "Window",
     "Help",
 ]
@@ -232,6 +233,14 @@ more details.
 """,
     "/Help/CodePeer": """This menu is available if the CodePeer toolset is installed on your
 system and available on your PATH. See your CodePeer documentation for
+more details.
+""",
+    "/GNATSAS": """This menu is available if the GNATSAS toolset is installed on your
+system and available on your PATH. See your GNATSAS documentation for
+more details.
+""",
+    "/Help/GNATSAS": """This menu is available if the GNATSAS toolset is installed on your
+system and available on your PATH. See your GNATSAS documentation for
 more details.
 """,
     "/Help/GNAT Runtime": """This menu is generated automatically, and provides

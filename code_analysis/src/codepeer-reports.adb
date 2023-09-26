@@ -79,7 +79,7 @@ package body CodePeer.Reports is
       Gtk.Label.Gtk_New (Baseline_Inspection, "baseline");
       Baseline_Inspection.Set_Alignment (0.1, 0.0);
       Baseline_Inspection.Set_Label
-        ((if Is_CPL then
+        ((if Is_GNATSAS then
             "Base run: "
          else
             "Base run #")
@@ -103,7 +103,7 @@ package body CodePeer.Reports is
       Gtk.Label.Gtk_New (Current_Inspection, "current");
       Current_Inspection.Set_Alignment (0.9, 0.0);
       Current_Inspection.Set_Label
-        ((if Is_CPL then
+        ((if Is_GNATSAS then
             "Current run: "
          else
             "Current run #")

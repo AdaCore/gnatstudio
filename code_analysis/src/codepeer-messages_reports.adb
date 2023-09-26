@@ -180,7 +180,7 @@ package body CodePeer.Messages_Reports is
 
    CWE_Attribute :
      constant GNATCOLL.Projects.Attribute_Pkg_String :=
-     GNATCOLL.Projects.Build ("CodePeer", "CWE");
+     GNATCOLL.Projects.Build (CodePeer.Module_Name, "CWE");
 
    --------------
    -- Tooltips --
@@ -709,7 +709,7 @@ package body CodePeer.Messages_Reports is
         (Text_Renderer,
          "text",
          CodePeer.Messages_Summary_Models.Passed_Checks_Count_Column);
-      Column.Set_Visible (not Is_CPL and then Analysis_Level > 0);
+      Column.Set_Visible (not Is_GNATSAS and then Analysis_Level > 0);
       Dummy := Self.Analysis_View.Append_Column (Column);
 
       Gtk.Tree_View_Column.Gtk_New (Column);
@@ -720,7 +720,7 @@ package body CodePeer.Messages_Reports is
         (Text_Renderer,
          "text",
          CodePeer.Messages_Summary_Models.Total_Checks_Count_Column);
-      Column.Set_Visible (not Is_CPL and then Analysis_Level > 0);
+      Column.Set_Visible (not Is_GNATSAS and then Analysis_Level > 0);
       Dummy := Self.Analysis_View.Append_Column (Column);
 
       Gtk.Tree_View_Column.Gtk_New (Column);
@@ -790,7 +790,7 @@ package body CodePeer.Messages_Reports is
 
       --  CWEs categories
 
-      if Is_CPL
+      if Is_GNATSAS
         or else (Project_View.Has_Attribute (CWE_Attribute)
           and then To_Lower
             (Project_View.Get_Attribute_Value (CWE_Attribute)) = "true")

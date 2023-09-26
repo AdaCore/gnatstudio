@@ -27,15 +27,16 @@ package CodePeer.Shell_Commands is
    --  Creates BuildTarget and returns it.
 
    procedure Build_Target_Execute
-     (Kernel      : GPS.Kernel.Kernel_Handle;
-      Target_ID   : String;
-      Main_Name   : String                    := "";
-      File        : GNATCOLL.VFS.Virtual_File := GNATCOLL.VFS.No_File;
-      Force       : Boolean                   := False;
-      Extra_Args  : String                    := "";
-      Build_Mode  : String                    := "";
-      Synchronous : Boolean                   := True;
-      Dir         : GNATCOLL.VFS.Virtual_File := GNATCOLL.VFS.No_File);
+     (Kernel          : GPS.Kernel.Kernel_Handle;
+      Target_ID       : String;
+      Main_Name       : String                     := "";
+      File            : GNATCOLL.VFS.Virtual_File  := GNATCOLL.VFS.No_File;
+      Force           : Boolean                    := False;
+      Extra_Args      : String                     := "";
+      Build_Mode      : String                     := "";
+      Synchronous     : Boolean                    := True;
+      Preserve_Output : Boolean                    := False;
+      Dir             : GNATCOLL.VFS. Virtual_File := GNATCOLL.VFS.No_File);
    --  Executes BuildTarget.execute function.
 
 end CodePeer.Shell_Commands;

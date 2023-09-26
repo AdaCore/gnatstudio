@@ -57,12 +57,40 @@ private
       Context : Interactive_Command_Context) return Command_Return_Type;
    --  Called when "Analyze File By File" menu item is activated
 
-   type Display_Code_Review_Command
-      is new CodePeer_Interactive_Command with null record;
+   type Display_Code_Review_Command is
+     new CodePeer_Interactive_Command with null record;
    overriding function Execute
      (Self    : access Display_Code_Review_Command;
       Context : Interactive_Command_Context) return Command_Return_Type;
    --  Called when "Display code review" menu item is activated
+
+   type Display_Baseline_Command is
+     new CodePeer_Interactive_Command with null record;
+   overriding function Execute
+     (Self    : access Display_Baseline_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type;
+   --  Called when "Display Result File" menu item is activated
+
+   type Baseline_Bump_Command is
+     new CodePeer_Interactive_Command with null record;
+   overriding function Execute
+     (Self    : access Baseline_Bump_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type;
+   --  Called when "Bump Baseline to Current Run" menu item is activated
+
+   type Baseline_Set_Baseline_Command is
+     new CodePeer_Interactive_Command with null record;
+   overriding function Execute
+     (Self    : access Baseline_Set_Baseline_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type;
+   --  Called when "Set Baseline to Run" menu item is activated
+
+   type Baseline_Set_Current_Command is
+     new CodePeer_Interactive_Command with null record;
+   overriding function Execute
+     (Self    : access Baseline_Set_Current_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type;
+   --  Called when "Replace Current Run with Run" menu item is activated
 
    type Display_HTML_Command is new Interactive_Command with null record;
    overriding function Execute

@@ -303,6 +303,29 @@
          </menu>
       </menu>
 
+      <menu label='_GNATSAS' optional='true'>
+         <menu label='_Analyze All'          action='gnatsas analyze all' optional='true'/>
+         <menu label='Analy_ze...'           action='gnatsas analyze...' optional='true'/>
+         <separator/>
+         <menu label='Analyze _File'         action='gnatsas analyze file' optional='true'/>
+         <menu label='Analyze File B_y File...' action='gnatsas analyze file by file' optional='true'/>
+         <separator/>
+         <menu label='_Display Code Review'  action='gnatsas display code review'
+               optional='true'/>
+         <menu label='Generate _HTML Report...' action='gnatsas generate html' optional='true'/>
+         <menu label='Generate CS_V Report...' action='gnatsas generate csv' optional='true'/>
+         <menu label='_Baseline'>
+            <menu label='Bump Baseline to Current Run' action='gnatsas bump' optional='true'/>
+            <menu label='Set Baseline to Run...' action='gnatsas baseline set' optional='true'/>
+            <menu label='Replace Current Run with Run... ' action='gnatsas baseline replace' optional='true'/>
+         </menu>
+         <menu label='Ad_vanced'>
+            <menu label='_Regenerate Report...' action='gnatsas regenerate report' optional='true'/>
+            <menu label='Display Result File...' action='gnatsas display baseline' optional='true'/>
+            <menu label='GNATSAS _Log'  action='gnatsas log'           optional='true'/>
+         </menu>
+      </menu>
+
       <menu label='_Analyze'>
 
          <menu label="GNAThub">
@@ -510,6 +533,7 @@
          <menu label='AWS'/>
          <menu label='SPARK'/>
          <menu label='CodePeer'/>
+         <menu label='GNATSAS'/>
          <separator />
          <menu label='Create Bug Report'  action='Create bug report'/>
          <separator />
