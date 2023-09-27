@@ -1,4 +1,5 @@
 with "../gnatstudio/gps";
+with "../gnatdoc/gnatdoc";
 with "../shared";
 
 project Testsuite_Drivers is
@@ -38,6 +39,9 @@ project Testsuite_Drivers is
 
                  --  completion
                  "completion-test_driver.adb",
+
+                 --  gnatdoc
+                 "gnatdoc-backend-parser_test.adb",
 
                  --  syntax
                  "syntax_gnatdiff.adb",
