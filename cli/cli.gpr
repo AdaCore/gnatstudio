@@ -21,7 +21,7 @@ project CLI is
 
    package Builder is
       for Executable ("gps-cli.adb") use "gnatstudio_cli";
-      for Executable ("gnatdoc_main.adb") use "gnatdoc";
+      for Executable ("gnatdoc_main.adb") use "gnatdoc3";
 
       case Shared.Build is
          when "Debug" | "AddressSanitizer" =>
