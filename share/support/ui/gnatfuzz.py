@@ -197,7 +197,7 @@ class GNATfuzzPlugin(Module):
                 X("arg").children("fuzz"),
                 X("arg").children("%subdirsarg"),
             ),
-        ),        
+        ),
         X(
             "target",
             model="gnatfuzz-generate-model",
@@ -218,6 +218,29 @@ class GNATfuzzPlugin(Module):
                 X("arg").children("gnatfuzz"),
                 X("arg").children("generate"),
                 X("arg").children("-P%PP"),
+                X("arg").children("%subdirsarg"),
+                X("arg").children("%X"),
+            ),
+        ),
+        X(
+            "target",
+            model="gnatfuzz-generate-model",
+            category="_GNATfuzz_",
+            name="gnattest gnatfuzz generate",
+            menu="",
+        ).children(
+            X("target-type").children(""),
+            X("in-toolbar").children("FALSE"),
+            X("in-menu").children("FALSE"),
+            X("read-only").children("TRUE"),
+            X("output-parsers").children(
+                "output_chopper utf_converter console_writer end_of_build"
+            ),
+            X("iconname").children("gps-build-all-symbolic"),
+            X("launch-mode").children("MANUALLY_WITH_DIALOG"),
+            X("command-line").children(
+                X("arg").children("gnatfuzz"),
+                X("arg").children("generate"),
                 X("arg").children("%subdirsarg"),
                 X("arg").children("%X"),
             ),
