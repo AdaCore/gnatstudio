@@ -380,7 +380,10 @@ def get_harness_dir():
         project = GPS.Project.root()
     else:
         project = context.project() or GPS.Project.root()
-    harness_prj = get_harness_project_file(project)
+    if not GPS.Project.root().is_harness_project():
+        harness_prj = get_harness_project_file(project)
+    else:
+        harness_prj = GPS.Project.root().file().path
     return os.path.dirname(harness_prj)
 
 
@@ -494,7 +497,8 @@ def fuzz_subp_filter(context):
     """
     TODO! add filters to check that the cursor has selected a subprogram
     specification with associated testcases, and is supported by tgen and
-    gnatfuzz.
+    gnatfuzz. Also check that this is a subprogram of the user project, and not
+    of the gnattest harness.
     """
     return in_ada_file(context) and has_gnatfuzz()
 
@@ -579,9 +583,11 @@ def fuzz_subp_workflow():
     # action (a click on the Execute button). TODO! there should be a cleaner
     # way to do that.
     force = bool(os.environ.get('GS_TESTSUITE_RUN'))
-    p = TargetWrapper("gnatfuzz generate")
+    p = TargetWrapper("gnattest gnatfuzz generate")
     yield p.wait_on_execute(
         extra_args=[
+            "-P",
+            get_user_project_file(),
             "-S",
             local_file_fullname,
             "-L",

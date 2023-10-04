@@ -9,14 +9,14 @@ from gs_utils.internal.utils import *
 EXPECT_FIRST =[
     'Diagnostics: Ada (1 item in 1 file)',
     ['foo.adb (1 item)',
-     ['<b>2:4</b>       Can&apos;t rename identifier &apos;Bar&apos;',
+     ['<b>5:11</b>      Can&apos;t rename identifier &apos;Bar&apos;',
       ['          Renaming Bar to Foo_Bar creates a name collision with &lt;Id &quot;Foo_Bar&quot; foo.adb:3:13-3:20&gt;']]]]
 
     
 EXPECT_SECOND =  [
     'Diagnostics: Ada (1 item in 1 file)',
     ['foo.adb (1 item)',
-     ['<b>3:13</b>      Can&apos;t rename identifier &apos;Foo_Bar&apos;',
+     ['<b>5:17</b>      Can&apos;t rename identifier &apos;Foo_Bar&apos;',
       ['          Renaming Foo_Bar to Bar creates a name collision with &lt;Id &quot;Bar&quot; foo.adb:2:4-2:7&gt;']]]]
 
 @run_test_driver
