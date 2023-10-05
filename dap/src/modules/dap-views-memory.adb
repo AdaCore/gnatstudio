@@ -257,10 +257,8 @@ package body DAP.Views.Memory is
    --  it should be made of the "0x" prefix followed by hexadecimal.
 
    procedure Fill_Values
-     (View       : access DAP_Memory_View_Record'Class;
-      Address    : Long_Long_Integer := 0;
-      Damp_Total : Integer := 0;
-      Damp_Row   : Integer := 1);
+     (View    : access DAP_Memory_View_Record'Class;
+      Address : Long_Long_Integer := 0);
 
    procedure Apply_Changes (View : access DAP_Memory_View_Record'Class);
    --  Write the changes into memory.
@@ -1086,7 +1084,7 @@ package body DAP.Views.Memory is
          end;
       end if;
 
-      View.Fill_Values (Self.Address, Total, Dump_Index);
+      View.Fill_Values (Self.Address);
    end On_Result_Message;
 
    -----------------
@@ -1094,15 +1092,11 @@ package body DAP.Views.Memory is
    -----------------
 
    procedure Fill_Values
-     (View       : access DAP_Memory_View_Record'Class;
-      Address    : Long_Long_Integer := 0;
-      Damp_Total : Integer := 0;
-      Damp_Row   : Integer := 1)
+     (View    : access DAP_Memory_View_Record'Class;
+      Address : Long_Long_Integer := 0)
    is
-      Values     : String (1 .. 2 * View.Number_Of_Bytes);
-      Index      : Positive := Values'First;
-      Total      : Integer  := Damp_Total;
-      Dump_Index : Integer  := Damp_Row;
+      Values : String (1 .. 2 * View.Number_Of_Bytes);
+      Index  : Positive := Values'First;
    begin
       if View.Dump = null then
          View.Dump := new Memory_Dump
@@ -1111,13 +1105,10 @@ package body DAP.Views.Memory is
       end if;
 
       --  Fill the values that could not be accessed with "-"
-      while Total < View.Number_Of_Bytes loop
-         if Length (View.Dump (Dump_Index).Value) >= Dump_Item_Size * 2 then
-            Dump_Index := Dump_Index + 1;
-         end if;
-
-         Append (View.Dump (Dump_Index).Value, "--");
-         Total := Total + 1;
+      for J in View.Dump'Range loop
+         while Length (View.Dump (J).Value) < Dump_Item_Size * 2 loop
+            Append (View.Dump (J).Value, "--");
+         end loop;
       end loop;
 
       View.Label_Length := 0;
@@ -1196,6 +1187,9 @@ package body DAP.Views.Memory is
 
       elsif Address /= "" then
          Client.Get_Variable_Address (Address);
+
+      else
+         Display_Memory (View, 0);
       end if;
    end Display_Memory;
 
@@ -2357,9 +2351,13 @@ package body DAP.Views.Memory is
    ---------------------
 
    procedure Register_Module
-     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class) is
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
+   is
+      Debugger_Ready : Action_Filter;
    begin
       Simple_Views.Register_Module (Kernel);
+
+      Debugger_Ready := Kernel.Lookup_Filter ("Debugger ready");
 
       GPS.Kernel.Actions.Register_Action
         (Kernel, "examine memory",
@@ -2368,7 +2366,7 @@ package body DAP.Views.Memory is
            "Examine the contents of the memory at the location of the"
          & " selected variable",
          Category    => "Debug",
-         Filter      => Lookup_Filter (Kernel, "Debugger stopped") and
+         Filter      => Debugger_Ready and
              Kernel.Lookup_Filter ("Debugger not command variable"));
 
       --  the '%S' and 'debug printable variable' prevent this menu from
@@ -2377,7 +2375,7 @@ package body DAP.Views.Memory is
         (Kernel,
          Name   => "Debug view memory",
          Label  => "Debug/View memory at address of %S",
-         Filter =>  Lookup_Filter (Kernel, "Debugger active") and
+         Filter =>  Debugger_Ready and
              Lookup_Filter (Kernel, "Debugger printable variable"),
          Action => "examine memory");
    end Register_Module;

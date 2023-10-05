@@ -46,6 +46,8 @@ package DAP.Views.Variables is
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class);
    --  Register menus and other functions
 
+   procedure Update (Client : not null access DAP.Clients.DAP_Client'Class);
+
 private
 
    use DAP.Modules.Variables.Items.Item_Info_Vectors;

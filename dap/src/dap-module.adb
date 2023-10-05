@@ -50,6 +50,7 @@ with GUI_Utils;
 with Remote;
 
 with DAP.Contexts;
+with DAP.Modules.Contexts;
 with DAP.Modules.Persistent_Breakpoints;
 with DAP.Modules.Preferences;
 with DAP.Modules.Scripts;
@@ -63,6 +64,7 @@ with DAP.Views.Call_Stack;
 with DAP.Views.Consoles;
 with DAP.Views.Threads;
 with DAP.Views.Memory;
+with DAP.Views.Registers;
 with DAP.Views.Variables;
 
 package body DAP.Module is
@@ -173,6 +175,12 @@ package body DAP.Module is
      (Filter  : access Debugger_Ready_Filter;
       Context : Selection_Context) return Boolean;
 
+   type Debugger_Stopped_Filter is
+     new Action_Filter_Record with null record;
+   overriding function Filter_Matches_Primitive
+     (Filter  : access Debugger_Stopped_Filter;
+      Context : Selection_Context) return Boolean;
+
    type No_Debugger_Or_Ready_Filter is
      new Action_Filter_Record with null record;
    overriding function Filter_Matches_Primitive
@@ -188,6 +196,12 @@ package body DAP.Module is
      new Action_Filter_Record with null record;
    overriding function Filter_Matches_Primitive
      (Filter  : access Entity_Name_Filter;
+      Context : Selection_Context) return Boolean;
+
+   type Not_Command_Filter is
+     new Action_Filter_Record with null record;
+   overriding function Filter_Matches_Primitive
+     (Filter  : access Not_Command_Filter;
       Context : Selection_Context) return Boolean;
 
    -- Commands --
@@ -972,12 +986,47 @@ package body DAP.Module is
    ------------------------------
 
    overriding function Filter_Matches_Primitive
+     (Filter  : access Debugger_Stopped_Filter;
+      Context : Selection_Context) return Boolean
+   is
+      pragma Unreferenced (Filter);
+   begin
+      return DAP_Module_ID /= null
+        and then not DAP_Module_ID.Clients.Is_Empty
+        and then Get_Current_Debugger.Is_Stopped;
+   end Filter_Matches_Primitive;
+
+   ------------------------------
+   -- Filter_Matches_Primitive --
+   ------------------------------
+
+   overriding function Filter_Matches_Primitive
      (Filter  : access Entity_Name_Filter;
       Context : Selection_Context) return Boolean
    is
       pragma Unreferenced (Filter);
    begin
       return Has_Entity_Name_Information (Context);
+   end Filter_Matches_Primitive;
+
+   ------------------------------
+   -- Filter_Matches_Primitive --
+   ------------------------------
+
+   overriding function Filter_Matches_Primitive
+     (Filter  : access Not_Command_Filter;
+      Context : Selection_Context) return Boolean
+   is
+      pragma Unreferenced (Filter);
+
+   begin
+      if GPS.Kernel.Contexts.Has_Debugging_Variable (Context)
+        and then not DAP.Modules.Contexts.Get_Variable (Context).Cmd.Is_Empty
+      then
+         return False;
+      else
+         return True;
+      end if;
    end Filter_Matches_Primitive;
 
    -----------------------
@@ -1344,12 +1393,14 @@ package body DAP.Module is
    procedure Register_Module
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
    is
-      Has_Debugger         : Action_Filter;
-      No_Debugger_Or_Ready : Action_Filter;
-      Debugger_Ready       : Action_Filter;
-      Debugger_Ready_State : Action_Filter;
-      Breakable_Filter     : Action_Filter;
-      Entity_Filter        : Action_Filter;
+      Has_Debugger          : Action_Filter;
+      No_Debugger_Or_Ready  : Action_Filter;
+      Debugger_Ready        : Action_Filter;
+      Debugger_Ready_State  : Action_Filter;
+      Debugger_Stopped      : Action_Filter;
+      Breakable_Filter      : Action_Filter;
+      Entity_Filter         : Action_Filter;
+      Is_Not_Command_Filter : Action_Filter;
 
    begin
       Before_Exit_Action_Hook.Add (new On_Before_Exit);
@@ -1378,6 +1429,9 @@ package body DAP.Module is
       Debugger_Ready := new Debugger_Ready_Filter;
       Register_Filter (Kernel, Debugger_Ready, "Debugger ready");
 
+      Debugger_Stopped := new Debugger_Stopped_Filter;
+      Register_Filter (Kernel, Debugger_Stopped, "Debugger stopped");
+
       Breakable_Filter := new Breakable_Source_Filter;
       Register_Filter
         (Kernel, Breakable_Filter, "Debugger breakable source");
@@ -1387,6 +1441,10 @@ package body DAP.Module is
 
       Debugger_Ready_State := new Debugger_Ready_State_Filter;
       Register_Filter (Kernel, Debugger_Ready_State, "Debugger ready state");
+
+      Is_Not_Command_Filter := new Not_Command_Filter;
+      Register_Filter
+        (Kernel, Is_Not_Command_Filter, "Debugger not command variable");
 
       --  Actions --
 
@@ -1486,6 +1544,7 @@ package body DAP.Module is
       DAP.Views.Consoles.Register_Module (Kernel);
       DAP.Views.Memory.Register_Module (Kernel);
       DAP.Views.Variables.Register_Module (Kernel);
+      DAP.Views.Registers.Register_Module (Kernel);
    end Register_Module;
 
    -------------

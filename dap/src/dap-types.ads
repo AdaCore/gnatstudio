@@ -17,9 +17,12 @@
 
 --  Common types that are used for DAP integration
 
+with Ada.Containers.Indefinite_Vectors;
+with Ada.Containers.Indefinite_Hashed_Maps;
 with Ada.Containers.Vectors;
 with Ada.Containers.Doubly_Linked_Lists;
 with Ada.Containers.Ordered_Sets;
+with Ada.Strings.Hash;
 with Ada.Strings.Unbounded;
 
 with GNATCOLL.VFS;
@@ -44,6 +47,12 @@ package DAP.Types is
    type Command_Type is (Internal, Hidden, Visible, User);
 
    type Endian_Type is (Unknown_Endian, Little_Endian, Big_Endian);
+
+   package Strings_Vectors is
+     new Ada.Containers.Indefinite_Vectors (Positive, String);
+
+   package String_To_String_Maps is new Ada.Containers.Indefinite_Hashed_Maps
+       (String, String, Ada.Strings.Hash, "=");
 
    ---------------
    -- Addresses --
