@@ -318,7 +318,7 @@ class GNATfuzzPlugin(Module):
         return self.user_project is not None
 
     def not_harness_project(self, context):
-        return not is_harness_project(self, context)
+        return not self.is_harness_project(context)
 
     def project_view_changed(self):
         """React to a project view change"""
