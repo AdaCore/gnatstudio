@@ -755,7 +755,7 @@ package body DAP.Views.Variables is
 
       else
          Self.Kernel.Get_Messages_Window.Insert_Text
-           ("Editing not supported");
+           ("Editing is not supported");
       end if;
 
       Path_Free (Path);
@@ -1183,6 +1183,18 @@ package body DAP.Views.Variables is
          Trace (Me, "Update:" & Get_Name (Self.Tree.Items (Num)));
       end if;
    end Continue_Update;
+
+   ------------
+   -- Update --
+   ------------
+
+   procedure Update (Client : not null access DAP.Clients.DAP_Client'Class) is
+      View : constant DAP_Variables_View := Get_View (Client);
+   begin
+      if View /= null then
+         View.Update;
+      end if;
+   end Update;
 
    ------------
    -- Update --

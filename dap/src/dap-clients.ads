@@ -254,6 +254,16 @@ package DAP.Clients is
       View : Generic_Views.Abstract_View_Access);
    --  Attach the variables view to the client
 
+   function Get_Registers_View
+     (Self : DAP_Client)
+      return Generic_Views.Abstract_View_Access;
+   --  Returns the variables view, if any.
+
+   procedure Set_Registers_View
+     (Self : in out DAP_Client;
+      View : Generic_Views.Abstract_View_Access);
+   --  Attach the registers view to the client
+
    procedure Set_Selected_Frame
      (Self    : in out DAP_Client;
       Id      : Integer;
@@ -476,6 +486,7 @@ private
       Assembly_View    : Generic_Views.Abstract_View_Access := null;
       Memory_View      : Generic_Views.Abstract_View_Access := null;
       Variables_View   : Generic_Views.Abstract_View_Access := null;
+      Registers_View   : Generic_Views.Abstract_View_Access := null;
 
       Debugger_Console : Generic_Views.Abstract_View_Access := null;
    end record;

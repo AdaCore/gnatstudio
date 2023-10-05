@@ -21,11 +21,13 @@ def test_driver():
     # Open the assembly and memory view
     GPS.execute_action("open assembly view")
     yield wait_for_mdi_child("Assembly")
+    yield wait_idle()
     gps_assert(GPS.MDI.get("Assembly") is not None,
                True,
                "The Assembly view should be opened")
     GPS.execute_action("examine memory")
     yield wait_for_mdi_child("Memory")
+    yield wait_idle()
     gps_assert(GPS.MDI.get("Memory") is not None,
                True,
                "The Memory view should be opened")

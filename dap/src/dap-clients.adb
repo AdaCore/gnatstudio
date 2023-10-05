@@ -61,6 +61,8 @@ with DAP.Requests.Disconnects;
 with DAP.Requests.StackTraces;
 with DAP.Views.Consoles;
 with DAP.Views.Memory;
+with DAP.Views.Registers;
+with DAP.Views.Variables;
 with DAP.Tools.Inputs;
 with DAP.Utils;                  use DAP.Utils;
 
@@ -645,6 +647,17 @@ package body DAP.Clients is
       return Self.Variables_View;
    end Get_Variables_View;
 
+   ------------------------
+   -- Get_Registers_View --
+   ------------------------
+
+   function Get_Registers_View
+     (Self : DAP_Client)
+      return Generic_Views.Abstract_View_Access is
+   begin
+      return Self.Registers_View;
+   end Get_Registers_View;
+
    ---------------------
    -- Get_Breakpoints --
    ---------------------
@@ -837,6 +850,17 @@ package body DAP.Clients is
    begin
       Self.Variables_View := View;
    end Set_Variables_View;
+
+   ------------------------
+   -- Set_Registers_View --
+   ------------------------
+
+   procedure Set_Registers_View
+     (Self : in out DAP_Client;
+      View : Generic_Views.Abstract_View_Access) is
+   begin
+      Self.Registers_View := View;
+   end Set_Registers_View;
 
    ---------------------------
    -- Set_Breakpoints_State --
@@ -2621,11 +2645,15 @@ package body DAP.Clients is
                if Index >= S'First then
                   DAP.Views.Memory.Display_Memory
                     (Self.Kernel, "0" & S (Index .. S'Last));
+               else
+                  DAP.Views.Memory.Display_Memory (Self.Kernel, "0");
                end if;
             end;
 
          when Command =>
-            if Self.Output then
+            if Self.Output
+              and then Self.Client /= null
+            then
                Self.Client.Display_In_Debugger_Console
                  (UTF8 (Result.a_body.result), False);
             end if;
@@ -2648,6 +2676,12 @@ package body DAP.Clients is
 
                   Free (Arguments);
                end;
+            end if;
+
+            --  Update views because the command may change them
+            if Self.Client /= null then
+               DAP.Views.Variables.Update (Self.Client);
+               DAP.Views.Registers.Update (Self.Client);
             end if;
       end case;
    end On_Result_Message;

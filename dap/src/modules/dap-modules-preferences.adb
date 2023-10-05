@@ -185,6 +185,13 @@ package body DAP.Modules.Preferences is
             "Load the currently debugged executable to the target when " &
                "initializing a remote debugging session.",
          Default   => False);
+
+      Registers_Type := Create_Invisible_Pref
+        (Manager  => Prefs,
+         Name     => "registers_view-type",
+         Label    => "Type",
+         Default  => False);
+
    end Register_Default_Preferences;
 
 end DAP.Modules.Preferences;
