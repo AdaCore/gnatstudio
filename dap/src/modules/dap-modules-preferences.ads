@@ -62,4 +62,7 @@ package DAP.Modules.Preferences is
    --  Remote Debugging
    Load_Executable_On_Init       : Boolean_Preference;
 
+   -- Registers view --
+   Registers_Type                : Boolean_Preference;
+
 end DAP.Modules.Preferences;
