@@ -139,6 +139,10 @@ package body GPS.LSP_Module is
      VSS.Regular_Expressions.To_Regular_Expression
        ("([0-9][0-9]*)/([0-9][0-9]*)");  --  &1 - processed, &2 - total files
 
+   Log_Dir_Pattern : constant VSS.Regular_Expressions.Regular_Expression :=
+     VSS.Regular_Expressions.To_Regular_Expression
+       ("^Log directory is ([^\n]*)");  --  &1 - path
+
    type Listener_Factory is
      new GPS.Core_Kernels.Editor_Listener_Factory with null record;
 
@@ -299,7 +303,7 @@ package body GPS.LSP_Module is
 
    overriding procedure On_Log_Message
      (Self  : access Module_Id_Record;
-      Value : LSP.Messages.LogMessageParams) is null;
+      Value : LSP.Messages.LogMessageParams);
 
    overriding function Get_Progress_Type
      (Self  : access Module_Id_Record;
@@ -1452,6 +1456,40 @@ package body GPS.LSP_Module is
             Mode => Mode);
       end if;
    end On_Show_Message;
+
+   --------------------
+   -- On_Log_Message --
+   --------------------
+
+   overriding procedure On_Log_Message
+     (Self  : access Module_Id_Record;
+      Value : LSP.Messages.LogMessageParams) is
+   begin
+      case Value.a_type is
+         when LSP.Messages.Log =>
+            declare
+               File  : GNATCOLL.VFS.Virtual_File;
+
+               Match : constant
+                 VSS.Regular_Expressions.Regular_Expression_Match :=
+                   Log_Dir_Pattern.Match (Value.message);
+            begin
+               if Match.Has_Match then
+                  File := GNATCOLL.VFS.Create_From_UTF8
+                    (VSS.Strings.Conversions.To_UTF_8_String
+                       (Match.Captured (1)));
+
+                  for Server of Module.Language_Servers
+                    when Server.Get_Client.Language.Get_Name = "Ada"
+                  loop
+                     Server.Get_Client.Set_Standard_Errors_File (File);
+                  end loop;
+               end if;
+            end;
+         when others =>
+            null;
+      end case;
+   end On_Log_Message;
 
    -----------------------
    -- Get_Progress_Type --

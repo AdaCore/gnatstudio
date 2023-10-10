@@ -1,5 +1,1 @@
 title: 'UB29-023.help.bug_reports'
-
-# https://gitlab.adacore-it.com/eng/ide/ada_language_server/-/issues/1183
-skip:
-    - ['XFAIL', 'True']
