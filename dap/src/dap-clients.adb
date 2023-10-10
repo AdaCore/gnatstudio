@@ -193,6 +193,24 @@ package body DAP.Clients is
    Bp_Subprogram_Idx : constant := 6;
    Bp_Condition_Idx  : constant := 7;
 
+   ------------------
+   -- Allocate_TTY --
+   ------------------
+
+   procedure Allocate_TTY (Self : in out DAP_Client) is
+   begin
+      GNAT.TTY.Allocate_TTY (Self.Debuggee_TTY);
+   end Allocate_TTY;
+
+   ---------------
+   -- Close_TTY --
+   ---------------
+
+   procedure Close_TTY (Self : in out DAP_Client) is
+   begin
+      GNAT.TTY.Close_TTY (Self.Debuggee_TTY);
+   end Close_TTY;
+
    --------------
    -- On_Error --
    --------------
@@ -558,6 +576,8 @@ package body DAP.Clients is
 
       case Self.Status is
          when Ready =>
+            DAP.Views.Consoles.Create_Execution_Console (Self.This);
+
             --  Trigger this hook when we did all preparations
             --   (for example set breakpoints). In ither case we will
             --   have the mess with debugging
@@ -657,6 +677,28 @@ package body DAP.Clients is
    begin
       return Self.Registers_View;
    end Get_Registers_View;
+
+   --------------------------
+   -- Get_Debuggee_Console --
+   --------------------------
+
+   function Get_Debuggee_Console
+     (Self : DAP_Client)
+      return Generic_Views.Abstract_View_Access is
+   begin
+      return Self.Debuggee_Console;
+   end Get_Debuggee_Console;
+
+   ----------------------
+   -- Get_Debuggee_TTY --
+   ----------------------
+
+   function Get_Debuggee_TTY
+     (Self : DAP_Client)
+      return GNAT.TTY.TTY_Handle is
+   begin
+      return Self.Debuggee_TTY;
+   end Get_Debuggee_TTY;
 
    ---------------------
    -- Get_Breakpoints --
@@ -862,6 +904,17 @@ package body DAP.Clients is
       Self.Registers_View := View;
    end Set_Registers_View;
 
+   --------------------------
+   -- Set_Debuggee_Console --
+   --------------------------
+
+   procedure Set_Debuggee_Console
+     (Self : in out DAP_Client;
+      View : Generic_Views.Abstract_View_Access) is
+   begin
+      Self.Debuggee_Console := View;
+   end Set_Debuggee_Console;
+
    ---------------------------
    -- Set_Breakpoints_State --
    ---------------------------
@@ -901,6 +954,33 @@ package body DAP.Clients is
    begin
       Self.Thread_View := View;
    end Set_Thread_View;
+
+   -------------
+   -- Set_TTY --
+   -------------
+
+   procedure Set_TTY
+     (Self : in out DAP_Client;
+      TTY  : String)
+   is
+      Req   : Evaluate_Request_Access;
+      Frame : constant Integer := Self.Get_Selected_Frame;
+   begin
+      if TTY /= "" then
+         Req := new Evaluate_Request (Self.Kernel);
+         Req.Kind   := Set_TTY;
+         Req.Client := Self.This;
+         Req.Parameters.arguments.expression :=
+           VSS.Strings.Conversions.To_Virtual_String ("tty " & TTY);
+         if Frame /= 0 then
+            Req.Parameters.arguments.frameId :=
+              (Is_Set => True, Value => Frame);
+         end if;
+         Req.Parameters.arguments.context :=
+           (Is_Set => True, Value => DAP.Tools.Enum.repl);
+         Self.Enqueue (DAP.Requests.DAP_Request_Access (Req));
+      end if;
+   end Set_TTY;
 
    ------------------------
    -- Set_Selected_Frame --
@@ -2683,6 +2763,9 @@ package body DAP.Clients is
                DAP.Views.Variables.Update (Self.Client);
                DAP.Views.Registers.Update (Self.Client);
             end if;
+
+         when Set_TTY =>
+            null;
       end case;
    end On_Result_Message;
 
@@ -2744,7 +2827,7 @@ package body DAP.Clients is
             Self.Label.Set_Markup ("<b>Debugger value :</b> (rejected)");
             Unref (GObject (Self.Label));
 
-         when Variable_Address | Endian =>
+         when Variable_Address | Endian | Set_TTY =>
             null;
 
          when Command =>
@@ -2788,7 +2871,7 @@ package body DAP.Clients is
             Self.Label.Set_Markup ("<b>Debugger value :</b> (error)");
             Unref (GObject (Self.Label));
 
-         when Variable_Address | Endian =>
+         when Variable_Address | Endian | Set_TTY =>
             null;
 
          when Command =>

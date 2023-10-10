@@ -30,6 +30,7 @@ package DAP.Modules.Preferences is
    Break_On_Exception            : Boolean_Preference;
    Open_Main_Unit                : Boolean_Preference;
    Preserve_State_On_Exit        : Boolean_Preference;
+   Execution_Window              : Boolean_Preference;
 
    -- Source Window --
    Continue_To_Line_Buttons      : Boolean_Preference;

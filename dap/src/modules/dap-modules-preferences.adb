@@ -15,6 +15,8 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
+with Config;           use Config;
+
 package body DAP.Modules.Preferences is
 
    ----------------------------------
@@ -59,6 +61,15 @@ package body DAP.Modules.Preferences is
             "Save breakpoints and data window on exit, and restore them"
               & " when debugging the same executable.",
          Default    => True);
+
+      Execution_Window := Create
+        (Manager   => Prefs,
+         Name      => "Debugger-Execution-Window",
+         Label     => "Execution window",
+         Path      => (if Support_Execution_Window
+                       then "Debugger:General" else ":Debugger"),
+         Doc       => "Open a separate window to show output of debuggee.",
+         Default   => Support_Execution_Window);
 
       Frames_Limit := Create
         (Manager  => Prefs,
