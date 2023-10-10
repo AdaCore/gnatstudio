@@ -12,7 +12,6 @@ import os.path
 import tool_output
 import json
 import re
-import sys
 from lal_utils import get_enclosing_subprogram
 from functools import reduce
 
@@ -26,17 +25,13 @@ import libadalang as lal
 # line of code (see OB05-033).
 
 # This plugin now depends on gnatprove_menus.xml and gnatprove_file.xml which
-# are located in spark2014/. itp_lib which implements interactive theorem
-# proving is also in this directory.
+# are located in spark2014/.
 
 # Path to this executable
 cur_exec_path = os.path.dirname(os.path.abspath(__file__))
 
 # The xml information are under spark2014
 spark2014_dir = os.path.join(cur_exec_path, "spark2014")
-sys.path.append(spark2014_dir)
-import itp_lib  # noqa
-
 gnatprove_menus_file = os.path.join(spark2014_dir, "gnatprove_menus.xml")
 gnatprove_file = os.path.join(spark2014_dir, "gnatprove.xml")
 
@@ -63,9 +58,6 @@ obj_subdir_name = toolname
 report_file_name = toolname + '.out'
 prefix = 'SPARK'
 menu_prefix = '/' + prefix
-# hook on exit when ITP has been launched
-hook_itp = False
-
 
 examine_all = 'Examine All'
 examine_root_project = 'Examine All Sources'
@@ -1399,148 +1391,6 @@ if gnatprove:
         xml_gnatprove_menus.format(root=get_root(), example=get_example_root())
 
     gnatprove_plug = GNATProve_Plugin()
-
-
-def compute_gnatserver_path():
-    """ Compute the position of the gnat_server tool from the one of gnatprove.
-        We do this because gnat_server is not in the PATH (and should not be).
-    """
-
-    bin_dir = os.path.dirname(gnatprove)
-    gs_rel = os.path.join("..", "libexec", "spark", "bin", "gnat_server")
-    return (os.path.abspath(os.path.join(bin_dir, gs_rel)))
-
-
-gnat_server = compute_gnatserver_path()
-itp_lib.print_debug("[gnat_server path]:" + gnat_server)
-
-
-# Checking for existence of gnat_server (compatibility with spark version < 18)
-is_itp = False
-if os.path.exists(gnat_server) or os.path.exists(gnat_server + ".exe"):
-    is_itp = True
-
-
-def has_proof_dir():
-    """ This does a (too) simple analysis of the .gpr to find the attribute
-        Proof_Dir which gives the location of the session file.
-    """
-    # ??? This function is only used to return the proof_dir if any. It
-    # should use GPS's get_attribute but it does not work.
-
-    root_project_file = str(GPS.Project.root().file())
-    proof_dir = ""
-    with open(root_project_file, 'r') as project_file:
-        data = project_file.read()
-        # We matched the string for: "for Proof_Dir use "match";". This has to
-        # be used to be able to use manual proof. So this allows us to retrieve
-        # the directory where proofs are located.
-        match = re.search('for\\s+Proof_Dir\\s+use\\s+\"(.*?)\";',
-                          data,
-                          flags=re.UNICODE)
-        if match is not None:
-            proof_dir = match.group(1)
-            root_project_dir = os.path.dirname(root_project_file)
-            proof_dir = os.path.join(root_project_dir, proof_dir)
-    return(proof_dir)
-
-
-def manual_proof_started():
-    """ This is used to grey the "Exit Manual Proof" when Manual Proof has not
-        been started.
-    """
-    return itp_lib.itp_started
-
-
-def start_ITP(tree, session_dir, abs_fn_path, limit_line):
-    """ Function used to start interactive theorem proving. It actually build
-        the command line, find appropriate files and then use the start method
-        of tree.
-    """
-
-    itp_lib.print_debug("[ITP] Launched")
-
-    # TODO ??? start_ITP and prove_check to be merged.
-    artifact_dir = GPS.Project.root().artifacts_dir()
-    obj_subdir_name = "gnatprove"
-    # gnat_server must be launched from gnatprove dir to find why3.conf
-    dir_gnat_server = os.path.join(artifact_dir, obj_subdir_name)
-    session_dir_quoted = '"' + session_dir + '"'
-    proof_dir = has_proof_dir()
-    command = gnat_server
-    if itp_lib.debug_file != "":
-        command += " --debug-stack-trace"
-    if proof_dir != "":
-        command += " " + "--proof-dir " + proof_dir
-    command += " " + session_dir_quoted
-    if itp_lib.debug_file != "":
-        command += " 2> " + itp_lib.debug_file
-    if limit_line != "":
-        # The arguments passed are of the following form (remove '='):
-        # --limit-line=a.adb:42:42:VC_POSTCONDITION
-        command += " " + limit_line.replace('=', ' ')
-    itp_lib.print_debug(session_dir)
-    itp_lib.print_debug("Command:\n")
-    itp_lib.print_debug(command)
-    tree.start(command, abs_fn_path, dir_gnat_server, artifact_dir,
-               gnat_server)
-
-
-def on_prove_itp(context, with_proof_context):
-    """ Parses the context location provided by GPS and use it to call start_ITP
-        which is used to start interactive theorem proving
-        with_proof_context=True  - start ITP on the entire session of the check
-        with_proof_context=False - start ITP on just the relevant check.
-    """
-
-    global tree
-    global hook_itp
-
-    if not is_itp:
-        # If itp is not detected do not run the tool
-        print_error("manual proof requires more recent version of SPARK")
-        return
-
-    # ITP part
-    tree = itp_lib.Tree_with_process()
-    msg = context._loc_msg
-    text_msg = get_comp_text(msg)
-    try:
-        session_dir = map_msg[text_msg, 'session_dir']
-    except KeyError:
-        print_error("could not determine session to run")
-        return
-    limit_line = ""
-    if not with_proof_context:
-        vc_kind = get_vc_kind(msg)
-        msg_line = map_msg[text_msg, 'check_line']
-        msg_col = map_msg[text_msg, 'check_col']
-        limit_line = limit_line_option(msg, msg_line, msg_col, vc_kind)
-    abs_fn_path = get_compunit_for_message(msg.get_text(), msg.get_file())
-    start_ITP(tree, session_dir, abs_fn_path, limit_line)
-    # Add a hook to exit ITP before exiting GPS. Add the hook after ITP
-    # launched last = False so that it is the first hook to be run
-    if hook_itp is False:
-        GPS.Hook("before_exit_action_hook").add(exit_ITP, last=False)
-        hook_itp = True
-
-
-def exit_ITP(dummy_arg):
-    """ This function is used to exit ITP when exiting GPS (it is added as a
-        hook. We don't use tree.exit directly because we want to make sure that
-        this function always succeeds otherwise we cannot exit GPS.
-    """
-    global tree, hook_itp
-    if is_itp:
-        try:
-            tree.exit()
-            GPS.Hook("before_exit_action_hook").remove(exit_ITP)
-            hook_itp = False
-            return True
-        except Exception:
-            return True
-    else:
-        print_error("Interactive theorem proving requires version 18 of SPARK")
 
 
 def load_example_adacore_u():
