@@ -80,33 +80,6 @@
          lang="python">spark2014.on_prove_check(GPS.current_context())
        </shell>
     </action>
-    <action name="Start Manual Proof" category="GNATprove" output="none">
-      <filter_and>
-        <filter id="Not Source Editor" />
-        <filter language="Ada" shell_lang="python"
-          shell_cmd="spark2014.prove_check_context(GPS.current_context())" />
-      </filter_and>
-      <shell
-          lang="python">spark2014.on_prove_itp(GPS.current_context(), True)
-      </shell>
-    </action>
-    <action name="Start Manual Proof on Check" category="GNATprove" output="none">
-      <filter_and>
-        <filter id="Not Source Editor" />
-        <filter language="Ada" shell_lang="python"
-          shell_cmd="spark2014.prove_check_context(GPS.current_context())" />
-      </filter_and>
-      <shell
-          lang="python">spark2014.on_prove_itp(GPS.current_context(), False)
-      </shell>
-    </action>
-    <action name="Exit Manual Proof" category="GNATprove" output="none">
-      <filter shell_lang="python"
-       shell_cmd="spark2014.manual_proof_started()" />
-      <shell
-          lang="python">spark2014.exit_ITP("")
-      </shell>
-    </action>
     <action name="Show Report Action" category="GNATprove" output="none">
       <filter shell_lang="python"
               shell_cmd="spark2014.can_show_report()" />
@@ -159,9 +132,6 @@
         <menu action="Prove Line Action">
           <Title>Prove Line</Title>
         </menu>
-        <menu action="Exit Manual Proof">
-          <Title>Exit Manual Proof</Title>
-        </menu>
         <menu><title/></menu>
         <menu action="Show Report Action">
           <Title>Show Report</Title>
@@ -194,15 +164,6 @@
     </contextual>
     <contextual action="Prove Check Action">
       <Title>%(prefix)s/Prove Check</Title>
-    </contextual>
-    <contextual action="Start Manual Proof">
-      <Title>%(prefix)s/Start Manual Proof</Title>
-    </contextual>
-    <contextual action="Start Manual Proof on Check">
-      <Title>%(prefix)s/Start Manual Proof on Check</Title>
-    </contextual>
-    <contextual action="Exit Manual Proof">
-      <Title>%(prefix)s/Exit Manual Proof</Title>
     </contextual>
 
     <doc_path>{root}/share/doc/spark</doc_path>
