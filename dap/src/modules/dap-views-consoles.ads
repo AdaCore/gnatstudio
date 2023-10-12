@@ -25,6 +25,10 @@ package DAP.Views.Consoles is
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class);
    --  Register menus and other functions to support the consoles
 
+   --------------
+   -- Debugger --
+   --------------
+
    procedure Attach_To_Debugger_Console
      (Client              : access DAP_Client'Class;
       Kernel              : not null access Kernel_Handle_Record'Class;
@@ -35,10 +39,37 @@ package DAP.Views.Consoles is
    --  If none exists, one is created if Create_If_Necessary is true.
    --  Nothing is done when Debugger is already attached to a console.
 
+   procedure Display_In_Debugger_Console
+     (Client         : access DAP_Client'Class;
+      Text           : String;
+      Highlight      : Boolean := False;
+      Add_To_History : Boolean := False);
+   --  Display the given text in the debugger console.
+   --  See Interactive_Consoles.Interactive for the meaning of the other
+   --  Parameters.
+
    function Get_Debugger_Interactive_Console
      (Client : DAP_Client'Class)
       return access Interactive_Console_Record'Class;
    --  Return the interactive console associated with the given debugger.
    --  If no interactive console is associated with this debugger, return null.
+
+   --------------
+   -- Debuggee --
+   --------------
+
+   procedure Create_Execution_Console
+     (Client : access DAP.Clients.DAP_Client'Class);
+   --  Creates the debuggee console.
+
+   procedure Display_In_Debuggee_Console
+     (Client    : access DAP_Client'Class;
+      Text      : String;
+      Highlight : Boolean := False);
+   --  Display the given text in the debuggee console.
+   --  The text will be displayed in the debugger console instead if there is
+   --  no debuggee console attached to this process .
+   --  See Interactive_Consoles.Interactive for the meaning of the other
+   --  Parameters.
 
 end DAP.Views.Consoles;
