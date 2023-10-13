@@ -19,6 +19,7 @@ with Ada.Exceptions;
 with Ada.Strings.Unbounded;
 
 with GNAT.OS_Lib;
+with GNAT.TTY;
 
 with GNATCOLL.Projects;
 with GNATCOLL.Scripts;
@@ -264,6 +265,16 @@ package DAP.Clients is
       View : Generic_Views.Abstract_View_Access);
    --  Attach the registers view to the client
 
+   function Get_Debuggee_Console
+     (Self : DAP_Client)
+      return Generic_Views.Abstract_View_Access;
+   --  Returns the debuggee view, if any.
+
+   procedure Set_Debuggee_Console
+     (Self : in out DAP_Client;
+      View : Generic_Views.Abstract_View_Access);
+   --  Attach the debuggee view
+
    procedure Set_Selected_Frame
      (Self    : in out DAP_Client;
       Id      : Integer;
@@ -411,6 +422,17 @@ package DAP.Clients is
       File : GNATCOLL.VFS.Virtual_File);
    --  Set the main file
 
+   function Get_Debuggee_TTY
+     (Self : DAP_Client)
+      return GNAT.TTY.TTY_Handle;
+
+   procedure Allocate_TTY (Self : in out DAP_Client);
+   procedure Close_TTY (Self : in out DAP_Client);
+
+   procedure Set_TTY
+     (Self : in out DAP_Client;
+      TTY  : String);
+
 private
 
    function Hash
@@ -489,6 +511,8 @@ private
       Registers_View   : Generic_Views.Abstract_View_Access := null;
 
       Debugger_Console : Generic_Views.Abstract_View_Access := null;
+      Debuggee_Console : Generic_Views.Abstract_View_Access := null;
+      Debuggee_TTY     : GNAT.TTY.TTY_Handle;
    end record;
 
    overriding function Error_Message
@@ -586,7 +610,8 @@ private
       Endian,
 
       --  Used for any other command (e.g: console)
-      Command);
+      Command,
+      Set_TTY);
 
    function Create_Evaluate_Command
      (Self              : DAP_Client;
