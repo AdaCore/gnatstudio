@@ -35,7 +35,7 @@ def get_help(option):
 
 if gnatsas:
     root = os.path.dirname(os.path.dirname(gnatsas)).replace('\\', '/')
-    example_root = root + '/share/examples/codepeer'
+    example_root = root + '/share/examples/gnatsas'
 
     xml_formated = gnatsas_xml.xml_gnatsas.format(
         example=example_root,
