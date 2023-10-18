@@ -309,17 +309,17 @@ excluded from GNATSAS's analysis."
       <switches columns="2" lines="3">
         <spin label="Multiprocessing" switch="-j" min="0" max="1000"
               default="0" separator="" column="2"
-              tip="Use N processes to carry out the processing (0 means use as
+              tip="Specify the number of processes to generate SCIL files and analyze files (0 means use as
 many cores as available on the machine)." />
          <check label="Enable GNAT warnings" switch="--gnat"
                 switch-off="--no-gnat" default="off"
-                column="2" tip="Disable GNAT warnings."/>
+                column="2" tip="Enable/disable launching GNAT front-end and collecting its warnings."/>
          <check label="Enable Infer" switch="--infer" switch-off="--no-infer" default="on"
-                column="2" tip="Disable Infer analysis."/>
+                column="2" tip="Enable/disable Infer analysis (enabled by default)."/>
          <check label="Enable Inspector" switch="--inspector" switch-off="--no-inspector" default="on"
-                column="2" tip="Disable Inspector."/>
+                column="2" tip="Enable/disable Inspector analysis (enabled by default)."/>
          <check label="Enable GNATcheck" switch="--gnatcheck" switch-off="--no-gnatcheck" default="on"
-                column="2" tip="Disable Infer analysis."/>
+                column="2" tip="Enable/disable GNATcheck analysis (enabled by default)."/>
          <hidden switch="-U" separator=" "/>
       </switches>
     </tool>
@@ -329,11 +329,10 @@ many cores as available on the machine)." />
       <switches columns="2" lines="3">
         <check label="Ignore representation clauses" switch="-gnatI"
                column="1"
-               tip="Ignore all representation clauses, useful for generating
-SCIL for another architecture" />
+               tip="Perform analysis as if representation clauses had been stripped from the source code." />
         <check label="Unconstrained float overflow" switch="-gnateF"
                column="2"
-               tip="Check for overflow on unconstrained floating point types"/>
+               tip="Check for overflow on unconstrained floating point types."/>
       </switches>
     </tool>
 
@@ -354,7 +353,7 @@ SCIL for another architecture" />
     </builder-mode>
 
     <target-model name="gnatsas_msg_reader_html" category="">
-       <description>Generate gnatsas htlm report</description>
+       <description>Generate GNAT SAS HTML report</description>
        <command-help>{report_help}</command-help>
        <command-line>
           <arg>gnatsas</arg>
@@ -363,11 +362,6 @@ SCIL for another architecture" />
           <arg>%X</arg>
        </command-line>
        <iconname>gps-build-all-symbolic</iconname>
-       <switches command="%(tool_name)s" columns="1" lines="1">
-         <check label="Show informationals" switch="--show=info"
-               column="1"
-               tip="Show GNATSAS informational messages"/>
-       </switches>
     </target-model>
 
     <target model="gnatsas_msg_reader_html" category="GNATSAS"
@@ -375,7 +369,7 @@ SCIL for another architecture" />
        <in-toolbar>FALSE</in-toolbar>
        <in-menu>FALSE</in-menu>
        <iconname>gps-compile-symbolic</iconname>
-       <launch-mode>MANUALLY_WITH_DIALOG</launch-mode>
+       <launch-mode>MANUALLY_WITH_NO_DIALOG</launch-mode>
        <read-only>TRUE</read-only>
        <command-line>
           <arg>gnatsas</arg>
@@ -387,7 +381,7 @@ SCIL for another architecture" />
     </target>
 
     <target-model name="gnatsas_msg_reader_csv" category="">
-       <description>Generate gnatsas csv report</description>
+       <description>Generate GNAT SAS CSV report</description>
        <command-help>{report_help}</command-help>
        <command-line>
           <arg>gnatsas</arg>
@@ -399,16 +393,16 @@ SCIL for another architecture" />
        <switches command="%(tool_name)s" columns="2" lines="4">
          <check label="Show annotations" switch="--show=kind+annotation"
                column="1"
-               tip="Show GNATSAS annotations in addition to messages"/>
-         <check label="Show informationals" switch="--show=kind+info"
+               tip="Show GNAT SAS annotations in addition to messages (hidden by default)."/>
+         <check label="Show info messages" switch="--show=kind+info"
                column="1"
-               tip="Show GNATSAS informational messages"/>
+               tip="Show messages of kind info (hidden by default)."/>
          <check label="Show removed" switch="--show=age-removed"
                column="1"
-               tip="Show messages removed from baseline run"/>
+               tip="Show messages removed from the baseline run (hidden by default)."/>
          <check label="Hide low messages" switch="--show=rank-low"
                column="1"
-               tip="Do not generate messages ranked low"/>
+               tip="Hide messages that have a low ranking (shown by default)."/>
          <field
                column="2"
                label="Compare with"
@@ -417,7 +411,7 @@ SCIL for another architecture" />
                as-file="true"
                file-filter=".sam"
                base-dir="%O%(subdir)%P.outputs"
-               tip="Compare with another sam file"/>
+               tip="Specify a SAM file with which to compare the current analysis run."/>
        </switches>
     </target-model>
 
@@ -469,14 +463,14 @@ SCIL for another architecture" />
        <iconname>gps-build-all-symbolic</iconname>
        <switches command="%(tool_name)s" columns="3" lines="2">
          <field label="Compare with"
-                tip="Compare the current run with an arbitrary sam file."
+                tip="Specify a SAM file with which to compare the current analysis run."
                 switch="--compare-with"
                 separator=" "
                 as-file="true"
                 file-filter="*.sam"/>
          <combo label="Analysis mode" switch="--mode" noswitch="default"
                separator="=" column="1"
-              tip="Analysis mode for which you want to regenerate a report." >
+              tip="Analysis mode for which to regenerate a report." >
             <combo-entry label="Last analysis mode" value="default" />
             <combo-entry label="fast" value="fast" />
             <combo-entry label="deep" value="deep" />
@@ -547,29 +541,28 @@ SCIL for another architecture" />
        <switches command="%(tool_name)s" columns="2" lines="6">
          <spin label="Multiprocessing" switch="-j" min="0" max="1000"
                default="0" separator="" column="1"
-               tip="Use N processes to carry out the analysis (0 means use as
+               tip="Specify the number of processes to generate SCIL files and analyze files (0 means use as
 many cores as available on the machine)."/>
          <combo label="Analysis mode" switch="--mode" noswitch="default"
                separator="=" column="1"
-               tip="Analysis mode." >
+               tip="Set the analysis mode to either fast (the default) or deep." >
             <combo-entry label="default mode" value="default" />
             <combo-entry label="fast" value="fast" />
             <combo-entry label="deep" value="deep" />
          </combo>
          <check label="Root project only" switch="--no-subprojects"
-                column="2" tip="Analyze root project only"/>
+                column="2" tip="GNAT SAS will only analyze the source files associated with the root project file (presuming your application uses a tree of project files to represent all of its constituents)."/>
          <check label="Force analysis" switch="-f" column="2"
-          tip="Force analysis of all files, ignoring previous run.
-Also force the generation of all SCIL files."/>
+          tip="Force analysis of all files (disable incrementality)."/>
          <check label="Enable GNAT warnings" switch="--gnat"
                 default="off"
-                column="2" tip="Enable GNAT warnings."/>
+                column="2" tip="Enable/disable launching GNAT front-end and collecting its warnings."/>
          <check label="Enable Infer" switch="--infer" switch-off="--no-infer" default="on"
-                column="2" tip="Enable Infer analysis."/>
+                column="2" tip="Enable/disable Infer analysis (enabled by default)."/>
          <check label="Enable Inspector" switch="--inspector" switch-off="--no-inspector" default="on"
-                column="2" tip="Enable Inspector."/>
+                column="2" tip="Enable/disable Inspector analysis (enabled by default)."/>
          <check label="Enable GNATcheck" switch="--gnatcheck" switch-off="--no-gnatcheck" default="on"
-                column="2" tip="Enable Infer analysis."/>
+                column="2" tip="Enable/disable GNATcheck analysis (enabled by default)."/>
        </switches>
     </target-model>
 
