@@ -64,7 +64,7 @@ Here is a summary of the features of GNAT Studio:
 
   GNAT Studio integrates tightly with various command-line tools such as
   :program:`gcov` and GNATcoverage (for the coverage of your code) and
-  CodePeer and Spark (to analyze your code). In most cases, it provides
+  GNAT SAS and Spark (to analyze your code). In most cases, it provides
   graphical rendering of their output, often integrated with the editor
   itself so the information is available where and when you need it.
 
