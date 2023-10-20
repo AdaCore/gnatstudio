@@ -199,9 +199,8 @@ through the mode selection, located in the :guilabel:`Scenario` view (see
 When the mode is set to "default", GNAT Studio performs the build using the
 switches defined in the project. When the mode is set to another value,
 specialized parameters are passed to the builder. For example, the
-:program:`gcov` mode adds all the compilation parameters needed to
-instrument the generated objects and executables to work with the
-:program:`gcov` tool.
+:program:`debug` mode adds all the compilation parameters needed to
+debug the built executable.
 
 In addition to changing the build parameters, changing the mode changes the
 output directory for objects and executables. For example, objects produced
