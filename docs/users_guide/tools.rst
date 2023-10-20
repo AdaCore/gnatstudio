@@ -433,6 +433,8 @@ subprogram is moved to the bottom table.
 
 GNAT Studio saves all changes when the stack usage editor window is closed.
 
+.. _code-reducer:
+
 The automatic code reducer
 ==========================
 
