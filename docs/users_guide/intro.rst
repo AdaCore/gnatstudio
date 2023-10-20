@@ -68,6 +68,12 @@ Here is a summary of the features of GNAT Studio:
   of their output, often integrated with the editor itself so the information
   is available where and when you need it.
 
+* Automatic code reducer
+
+  GNAT Studio ships an automatic code reducer that can either be executed
+  from GNAT Studio itself or outside if it, through scripts using a command-line
+  tool. You can find more information in the :ref:`code-reducer` section.
+
 * Fully customizable (:ref:`Customizing_and_Extending_GNAT_Studio`)
 
   GNAT Studio provides an extensive Python API, allowing you to customize
