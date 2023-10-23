@@ -133,6 +133,7 @@ package body CodePeer.Module.Bridge is
       Success               : Boolean;
       pragma Warnings (Off, Success);
 
+      use type Default_Preferences.Boolean_Preference;
    begin
       if not Is_GNATSAS
         and then (not Is_Directory (Output_Directory)
