@@ -55,11 +55,23 @@ package GPS.Editors.Line_Information is
    ----------------------
 
    type Line_Information_Record is record
-      Text               : Ada.Strings.Unbounded.Unbounded_String;
-      Tooltip_Text       : Ada.Strings.Unbounded.Unbounded_String;
+      Text               : Ada.Strings.Unbounded.Unbounded_String :=
+        Null_Unbounded_String;
+      Tooltip_Text       : Ada.Strings.Unbounded.Unbounded_String :=
+        Null_Unbounded_String;
       --  A text to be displayed in a tooltip
 
-      Image              : Ada.Strings.Unbounded.Unbounded_String;
+      Image              : Ada.Strings.Unbounded.Unbounded_String :=
+        Null_Unbounded_String;
+
+      Category           : Ada.Strings.Unbounded.Unbounded_String :=
+        Null_Unbounded_String;
+      --  When set, the multiactions popup will gather all the clickable
+      --  actions belonging to same category, with the specified label above
+      --  the whole group.
+      --  This has no effect for line infos that don't have associated comands
+      --  or that are not clickable from the left-side of the editor.
+
       Message            : GPS.Kernel.Messages.References.Message_Reference;
       --  Reference to the message that will be put into context of execution
       --  of associated command.
@@ -98,8 +110,16 @@ package GPS.Editors.Line_Information is
    type Line_Information_Array is array (Editable_Line_Type range <>)
      of Line_Information_Record;
 
+   function Sort_By_Category (A, B : Line_Information_Record) return Boolean
+   is
+     (if A.Category = Null_Unbounded_String then False
+      else A.Category < B.Category);
+   --  Used to sort line information by category
+
    package Line_Information_Vectors is
      new Ada.Containers.Vectors (Positive, Line_Information_Record);
+   package Line_Information_Vectors_Sorting is
+     new Line_Information_Vectors.Generic_Sorting (Sort_By_Category);
 
    type Line_Information_Data is access Line_Information_Array;
    for Line_Information_Data'Size use Standard'Address_Size;
@@ -188,6 +208,7 @@ private
       Tooltip_Text             => Ada.Strings.Unbounded.Null_Unbounded_String,
       Image                    => Ada.Strings.Unbounded.Null_Unbounded_String,
       Message                  => <>,
+      Category                 => <>,
       Associated_Command       => null,
       Display_Popup_When_Alone => False);
 

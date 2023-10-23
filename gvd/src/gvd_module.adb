@@ -1925,6 +1925,7 @@ package body GVD_Module is
                Image                    => To_Unbounded_String
                  ("gps-debugger-continue-until"),
                Message                  => <>,
+               Category                 => <>,
                Associated_Command       => new Continue_Until_Line_Command'
                  (Root_Command with
                   File => File,

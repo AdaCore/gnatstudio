@@ -30,10 +30,10 @@ package body Refactoring.Code_Actions is
 
    Me : constant Trace_Handle := Create ("Refactoring.Code_Actions");
 
+   Msg_Category : constant String := "_internal_code_actions";
    --  By design, there should be only one "Code Action" message, at the
    --  place of the cursor. We guarantee in this module that there is only
-   --  one such message. This message always belongs to Category below.
-   Category : constant String := "_internal_code_actions";
+   --  one such message. This message always belongs to the category below.
 
    type On_Location_Changed is new File_Location_Hooks_Function with
      null record;
@@ -68,17 +68,18 @@ package body Refactoring.Code_Actions is
    ---------------------
 
    procedure Add_Code_Action
-     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
-      File    : Virtual_File;
-      Line    : Editable_Line_Type;
-      Column  : Visible_Column_Type;
-      Markup  : String;
-      Command : Command_Access)
+     (Kernel   : access GPS.Kernel.Kernel_Handle_Record'Class;
+      File     : Virtual_File;
+      Line     : Editable_Line_Type;
+      Column   : Visible_Column_Type;
+      Markup   : String;
+      Category : String;
+      Command  : Command_Access)
    is
       Message : constant Markup_Message_Access
         := Create_Markup_Message
           (Container  => Kernel.Get_Messages_Container,
-           Category   => Category,
+           Category   => Msg_Category,
            File       => File,
            Line       => Natural (Line),
            Column     => Column,
@@ -99,6 +100,7 @@ package body Refactoring.Code_Actions is
          Tooltip_Text             => To_Unbounded_String (Markup),
          Image                    => To_Unbounded_String ("gps-light-bulb"),
          Message                  => <>,
+         Category                 => To_Unbounded_String (Category),
          Associated_Command       => Command,
          Display_Popup_When_Alone => True);
 
@@ -113,7 +115,7 @@ package body Refactoring.Code_Actions is
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class) is
    begin
       Kernel.Get_Messages_Container.Remove_Category
-        (Category, Empty_Message_Flags);
+        (Msg_Category, Empty_Message_Flags);
    end Invalidate_Code_Actions;
 
    ----------------------

@@ -15,6 +15,7 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
+with Ada.Containers.Ordered_Sets;
 with Ada.Strings.Unbounded;    use Ada.Strings.Unbounded;
 with Ada.Tags;
 with GNAT.OS_Lib;              use GNAT.OS_Lib;
@@ -57,6 +58,9 @@ package body Src_Editor_Buffer.Line_Information is
    use type Basic_Types.Visible_Column_Type;
 
    Me : constant Trace_Handle := Create ("GPS.SOURCE_EDITOR.LINE_INFORMATION");
+
+   package Unbounded_String_Sets is new Ada.Containers.Ordered_Sets
+     (Element_Type => Unbounded_String);
 
    type Line_Info_Note_Record is new Abstract_Note with record
       Style : Style_Access := null;
@@ -175,11 +179,9 @@ package body Src_Editor_Buffer.Line_Information is
    function Image (Data : Commands.Command_Access) return String;
 
    type Action_Menu_Item_Record is new Gtk_Menu_Item_Record with record
-      Buffer : Source_Buffer;
-      Line   : Buffer_Line_Type;
-      Col    : Natural;
-      Pos    : Positive;
-      Count  : Natural;
+      Buffer    : Source_Buffer;
+      Line      : Buffer_Line_Type;
+      Line_Info : Line_Information_Record;
    end record;
    type Action_Menu_Item is access all Action_Menu_Item_Record'Class;
    --  Is used for showing multiple actions
@@ -187,8 +189,7 @@ package body Src_Editor_Buffer.Line_Information is
    procedure Show_Multiactions
      (Buffer : not null access Source_Buffer_Record'Class;
       Line   : Buffer_Line_Type;
-      Col    : Natural;
-      Infos  : Line_Information_Vectors.Vector);
+      Infos  : in out Line_Information_Vectors.Vector);
    --  Show a menu for several actions to select one of them.
 
    procedure On_Menu_Item_Activated
@@ -1568,14 +1569,13 @@ package body Src_Editor_Buffer.Line_Information is
             Line_Infos : constant Line_Information_Array          :=
               Get_Line_Infos (Info (1));
 
-            Infos      : constant Line_Information_Vectors.Vector :=
+            Infos      : Line_Information_Vectors.Vector :=
               Find_Line_Infos_With_Type (Line_Infos, On_Side_Area);
          begin
             if not Infos.Is_Empty then
                Show_Multiactions
                  (Buffer => Buffer,
                   Line   => BL,
-                  Col    => 1,
                   Infos  => Infos);
             end if;
          end;
@@ -1597,7 +1597,7 @@ package body Src_Editor_Buffer.Line_Information is
       Line_Infos : constant Line_Information_Array          :=
         Get_Line_Infos (Info (Col));
 
-      Infos      : constant Line_Information_Vectors.Vector :=
+      Infos      : Line_Information_Vectors.Vector :=
         Find_Line_Infos_With_Type (Line_Infos, On_Side_Area);
 
    begin
@@ -1612,7 +1612,7 @@ package body Src_Editor_Buffer.Line_Information is
 
       elsif not Infos.Is_Empty then
          Trace (Me, "Show multiactions for line" & Line'Img);
-         Show_Multiactions (Buffer, Line, Col, Infos);
+         Show_Multiactions (Buffer, Line, Infos);
       end if;
    end On_Click_On_Side_Column;
 
@@ -1623,29 +1623,44 @@ package body Src_Editor_Buffer.Line_Information is
    procedure Show_Multiactions
      (Buffer : not null access Source_Buffer_Record'Class;
       Line   : Buffer_Line_Type;
-      Col    : Natural;
-      Infos  : Line_Information_Vectors.Vector)
+      Infos  : in out Line_Information_Vectors.Vector)
    is
-      Menu  : Gtk_Menu;
-      Item  : Action_Menu_Item;
-      Box   : Gtk_Hbox;
-      Icon  : Gtk_Image;
-      Label : Gtk_Label;
-      Pos   : Integer := 1;
-
+      Menu             : Gtk_Menu;
+      Item             : Action_Menu_Item;
+      Box              : Gtk_Hbox;
+      Icon             : Gtk_Image;
+      Label            : Gtk_Label;
+      Added_Categories : Unbounded_String_Sets.Set;
    begin
       Gtk_New (Menu);
       Menu.Set_Name ("gnatstudio_multiple_actions_menu");
 
+      Line_Information_Vectors_Sorting.Sort (Infos);
+
       for Info of Infos loop
+         if not Added_Categories.Contains (Info.Category) then
+            Added_Categories.Insert (Info.Category);
+
+            Item := new Action_Menu_Item_Record;
+            Gtk.Menu_Item.Initialize (Item);
+            Item.Set_Sensitive (False);
+            Gtk_New (Label);
+            Label.Set_Markup
+              ("<b>"
+               & (if Info.Category = Null_Unbounded_String
+                 then "Others" else To_String (Info.Category))
+               & "</b>");
+            Label.Set_Alignment (0.0, 0.5);
+            Item.Add (Label);
+            Menu.Append (Item);
+         end if;
+
          Item := new Action_Menu_Item_Record;
          Gtk.Menu_Item.Initialize (Item);
 
          Item.Buffer := Source_Buffer (Buffer);
          Item.Line   := Line;
-         Item.Col    := Col;
-         Item.Pos    := Pos;
-         Item.Count  := Infos.Last_Index;
+         Item.Line_Info := Info;
          Item.On_Activate (On_Menu_Item_Activated'Access);
 
          Gtk_New_Hbox (Box);
@@ -1664,7 +1679,6 @@ package body Src_Editor_Buffer.Line_Information is
 
          Item.Add (Box);
          Menu.Append (Item);
-         Pos := Pos + 1;
       end loop;
 
       Show_All (Menu);
@@ -1680,18 +1694,11 @@ package body Src_Editor_Buffer.Line_Information is
      (Self : access Gtk_Menu_Item_Record'Class)
    is
       Item  : constant Action_Menu_Item := Action_Menu_Item (Self);
-      Infos : constant Line_Information_Vectors.Vector :=
-        Find_Line_Infos_With_Type
-          (Get_Line_Infos
-             (Item.Buffer.Line_Data (Item.Line).Side_Info_Data (Item.Col)),
-           On_Side_Area);
    begin
-      if Infos.Last_Index = Item.Count then
-         Execute_Line_Info
-           (Buffer    => Item.Buffer,
-            Line_Info => Infos.Element (Item.Pos),
-            At_Line   => Item.Line);
-      end if;
+      Execute_Line_Info
+        (Buffer    => Item.Buffer,
+         Line_Info => Item.Line_Info,
+         At_Line   => Item.Line);
    end On_Menu_Item_Activated;
 
    --------------
@@ -2258,6 +2265,7 @@ package body Src_Editor_Buffer.Line_Information is
                  Image                    =>
                    To_Unbounded_String (Icon_Name),
                  Message                  => <>,
+                 Category                 => To_Unbounded_String ("Folding"),
                  Associated_Command       => Command)));
    end Add_Block_Command;
 

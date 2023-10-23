@@ -723,6 +723,7 @@ package body DAP.Modules.Persistent_Breakpoints is
                Message                  =>
                  GPS.Kernel.Messages.References.Create
                    (Message_Access (Msg)),
+               Category                 => <>,
                Display_Popup_When_Alone => False,
                Associated_Command       => Create_Set_Breakpoint_Command
                  (Kernel,

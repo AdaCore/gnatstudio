@@ -49,8 +49,8 @@ def driver():
 
     # Click on the action menu item and verify that it executed the action
     items = get_widgets_by_type(Gtk.MenuItem, multi_actions_menu)
-    items[0].activate()
-    items[0].destroy()
+    items[1].activate()
+    items[1].destroy()
     yield wait_tasks()
 
     check(3, after_codeaction, "after executing the codeaction")
