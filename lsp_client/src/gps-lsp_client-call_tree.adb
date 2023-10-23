@@ -149,7 +149,7 @@ package body GPS.LSP_Client.Call_Tree is
       ID       : Unbounded_String;
       Item     : LSP.Messages.CallHierarchyItem;
       Spans    : LSP.Messages.Span_Vector;
-      Kinds    : LSP.Messages.AlsReferenceKind_Vector;
+      Kinds    : LSP.Messages.Boolean_Vector;
       Ref_File : Virtual_File);
    --  Common function to process the results from "Calls" and "Called By"
    --  requests.
@@ -237,7 +237,7 @@ package body GPS.LSP_Client.Call_Tree is
             ID       => Self.ID,
             Item     => Item.from,
             Spans    => Item.fromRanges,
-            Kinds    => Item.kinds,
+            Kinds    => Item.dispatching_calls,
             Ref_File => No_File);
       end loop;
 
@@ -263,7 +263,7 @@ package body GPS.LSP_Client.Call_Tree is
             ID       => Self.ID,
             Item     => Item.to,
             Spans    => Item.fromRanges,
-            Kinds    => Item.kinds,
+            Kinds    => Item.dispatching_calls,
             Ref_File => Ref_File);
       end loop;
 
@@ -279,7 +279,7 @@ package body GPS.LSP_Client.Call_Tree is
       ID       : Unbounded_String;
       Item     : LSP.Messages.CallHierarchyItem;
       Spans    : LSP.Messages.Span_Vector;
-      Kinds    : LSP.Messages.AlsReferenceKind_Vector;
+      Kinds    : LSP.Messages.Boolean_Vector;
       Ref_File : Virtual_File)
    is
       Decl_Name      : Unbounded_String;
@@ -332,8 +332,8 @@ package body GPS.LSP_Client.Call_Tree is
 
       begin
          if Kind_Index <= Kinds.Last_Index then
-            Is_Dispatching :=
-              Kinds (Kind_Index) = LSP.Messages.Dispatching_Call;
+            Is_Dispatching := Kinds (Kind_Index).Is_Set and then
+              Kinds (Kind_Index).Value;
             Kind_Index := Kind_Index + 1;
          end if;
          Ref_Line := Integer (X.first.line + 1);
