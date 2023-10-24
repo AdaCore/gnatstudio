@@ -13,6 +13,8 @@ import re
 import shutil
 import tempfile
 
+import libadalang as lal
+
 from gnatemulator import GNATemulator
 import GPS
 from gs_utils import hook, in_ada_file, interactive
@@ -493,14 +495,127 @@ def has_gnatfuzz():
     return True
 
 
+def current_node(context):
+    # Return the LAL node corresponding to the subprogram enclosing the
+    # current context, or None
+    curloc = context.location()
+    buf = GPS.EditorBuffer.get(curloc.file(), open=False)
+    if not buf:
+        return None
+    unit = buf.get_analysis_unit()
+    return unit.root.lookup(lal.Sloc(curloc.line(), curloc.column()))
+
+
 def fuzz_subp_filter(context):
-    """
-    TODO! add filters to check that the cursor has selected a subprogram
-    specification with associated testcases, and is supported by tgen and
-    gnatfuzz. Also check that this is a subprogram of the user project, and not
-    of the gnattest harness.
-    """
-    return in_ada_file(context) and has_gnatfuzz()
+    # Check that we have gnatfuzz on the PATH
+    if not has_gnatfuzz():
+        return False
+
+    # Check that there is a gnattest harness
+    project = context.project() or GPS.Project.root()
+    if not os.path.exists(get_harness_project_file(project)):
+        return False
+
+    # Check that we are in the package specification
+    node = current_node(context)
+    root = node.unit.root
+    if isinstance(root, lal.CompilationUnit):
+        if root.p_unit_kind != "unit_specification":
+            return False
+    else:
+        return False
+
+    # Check that the cursor points to an identifier that we can attach to a
+    # subprogram specification.
+    node = current_node(context)
+    if not isinstance(node, lal.Identifier):
+        return False
+    defining_name = node.p_enclosing_defining_name
+    if not defining_name:
+        return False
+    basic_decl = defining_name.p_basic_decl
+    if not basic_decl:
+        return False
+    subp_spec = basic_decl.p_subp_spec_or_null()
+    if subp_spec:
+        return True
+    else:
+        return False
+
+    # And that's it. We check that this is a subprogram profile supported by
+    # TGen when running the workflow, as we want to keep it simple here.
+
+
+def is_type_supported(type_decl):
+    # The list of non supported types is as follows:
+    #    * Any type that has a tagged component or that is a tagged type itself
+    #    * Any type that has an access component or that is an access type
+    #      itself.
+    #    * Any limited type.
+
+    if type_decl.p_is_access_type():
+        return False
+    elif type_decl.p_is_tagged_type():
+        return False
+
+    elif type_decl.p_is_record_type():
+        discrs = type_decl.f_discriminants
+
+        # Check that we do not have an access type discriminant
+        if isinstance(discrs, lal.DiscriminantSpecList):
+            for disc in discrs.f_discr_specs:
+                if not (
+                    is_type_supported(disc.f_type_expr.p_designated_type_decl)
+                ):
+                    return False
+
+        # Check whether this is a limited type
+        if isinstance(type_decl.f_type_def.f_has_limited, lal.LimitedPresent):
+            return False
+
+        # Check that the component types are supported
+        record_type = type_decl.f_type_def.f_record_def
+
+        def visit_variant(variant):
+            nested_variant_part = variant.f_components.f_variant_part
+            for comp in variant.f_components.f_components:
+                if isinstance(comp, lal.ComponentDecl):
+                    if not (
+                            is_type_supported
+                            (comp.f_component_def.f_type_expr.p_designated_type_decl)
+                    ):
+                        return False
+
+            if nested_variant_part:
+                for variant in nested_variant_part.f_variant:
+                    if not visit_variant(variant):
+                        return False
+            return True
+
+        return visit_variant (record_type)
+
+    elif type_decl.p_is_array_type():
+        # Check that the component type is supported
+        array_type = type_decl.f_type_def
+        return (
+            is_type_supported(array_type.f_component_type.f_type_expr.p_designated_type_decl)
+        )
+
+    else:
+        # Check against the System.Address type
+        if type_decl.f_name.p_fully_qualified_name.lower() == "system.address":
+            return False
+
+        # All other cases should be supported
+        return True
+
+
+def is_supported_by_tgen(subp_spec):
+
+    for param_type in subp_spec.p_param_types():
+        if not is_type_supported(param_type):
+            return False
+    return True
 
 
 @interactive("General", fuzz_subp_filter,
@@ -513,6 +628,20 @@ def fuzz_subp_workflow():
     Workflow to fuzz a subprogram using gnattest test-cases as a starting
     corpus.
     """
+
+    # Check whether this is a subprogram profile supported by TGen
+    node = current_node(GPS.current_context())
+    # We already checked for nullness in the filter, avoid redoing it
+    subp_spec = node.p_enclosing_defining_name.p_basic_decl.p_subp_spec_or_null()
+
+    if not is_supported_by_tgen(subp_spec):
+        GPS.Console().write(
+            "This subprogram profile is not supported. See "
+            "https://docs.adacore.com/gnatcoverage-docs/html/gnattest/gnattest_part.html#generating-test-inputs"
+            " for an exhaustive list of supported subprogram profiles.\n",
+            mode="error"
+        )
+        return
 
     # If the fuzzer is already running, stop it. TODO: make this specific to
     # the selected subprogram.
