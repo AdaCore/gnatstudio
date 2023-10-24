@@ -113,6 +113,20 @@ package body GPS.LSP_Client.Editors.Code_Actions is
            Open_View       => False,
            Focus           => False);
       Command : Command_Access;
+
+      function To_Category (Kind : LSP.Messages.CodeActionKind) return String
+      is
+        (case Kind is
+            when LSP.Messages.Empty  =>
+               "",
+            when LSP.Messages.QuickFix =>
+               "Codefix",
+            when LSP.Messages.Refactor | LSP.Messages.RefactorExtract |
+                 LSP.Messages.RefactorInline | LSP.Messages.RefactorRewrite =>
+               "Refactoring",
+            when LSP.Messages.Source | LSP.Messages.SourceOrganizeImports =>
+               "Sources");
+
    begin
       Refactoring.Code_Actions.Invalidate_Code_Actions (Self.Kernel);
 
@@ -143,7 +157,11 @@ package body GPS.LSP_Client.Editors.Code_Actions is
                      if Code_Action.command.Value.title.Is_Empty
                      then Code_Action.title
                      else Code_Action.command.Value.title)),
-                  Command => Command);
+                  Category => (if Code_Action.kind.Is_Set then
+                                    Escape_Text
+                                 (To_Category (Code_Action.kind.Value))
+                               else ""),
+                  Command  => Command);
             end;
          end if;
       end loop;
