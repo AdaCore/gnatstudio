@@ -300,31 +300,8 @@ package body CodePeer.Module.Actions is
       Context : Interactive_Command_Context) return Command_Return_Type
    is
       pragma Unreferenced (Self);
-
-      Kernel    : constant Kernel_Handle := Get_Kernel (Context.Context);
-      HTML_File : constant Virtual_File :=
-        Get_Project (Kernel).Object_Dir.Create_From_Dir
-          ("gnathub/html-report/index.html");
-
    begin
-      if not HTML_File.Is_Regular_File then
-         Kernel.Insert
-           (Text => HTML_File.Display_Full_Name
-            & (-" does not exist. Please perform a full analysis first"),
-            Mode => GPS.Kernel.Error);
-
-      else
-         --  ??? In the future, would be nice to provide a menu to launch
-         --  the codepeer/gnathub web server and then a browser. This is
-         --  more general than CodePeer since part of the gnathub integration
-         --  so leave this aside for now.
-         --  Html_Action_Hook.Run
-         --    (Kernel, String (Full_Name (HTML_File).all));
-
-         Kernel.Insert
-           (Text => -("Please launch the codepeer web server and connect to it"
-                      & " with your browser."));
-      end if;
+      Open_HTML_Report (Get_Kernel (Context.Context));
 
       return Success;
    end Execute;
@@ -405,7 +382,7 @@ package body CodePeer.Module.Actions is
          Free (Switches);
       end if;
 
-      Self.Module.Action := None;
+      Self.Module.Action := Open_HTML;
       CodePeer.Shell_Commands.Build_Target_Execute
         (Kernel      => Kernel_Handle (Self.Module.Kernel),
          Target_ID   => CodePeer.Shell_Commands.Build_Target

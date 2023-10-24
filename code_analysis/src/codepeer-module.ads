@@ -78,6 +78,9 @@ package CodePeer.Module is
       Message : CodePeer.Message_Access);
    --  Add 'pragma Annotate' for a message
 
+   procedure Open_HTML_Report (Kernel : GPS.Kernel.Kernel_Handle);
+   --  Open analyzer html report in the browser if it exist
+
    type Submenu_Factory_Record
      (Module : access Module_Id_Record'Class) is
      new GPS.Kernel.Modules.UI.Submenu_Factory_Record with null record;
@@ -141,7 +144,8 @@ private
        of GPS.Kernel.Style_Manager.Style_Access;
 
    type CodePeer_Action is
-     (None, Report, Load_UI, Audit_Trail, Load_Bridge_Results, Load_CSV);
+     (None, Report, Load_UI, Audit_Trail,
+      Load_Bridge_Results, Load_CSV, Open_HTML);
    --  Actions related to codepeer handling:
    --   - None: no action registered
    --   - Report: generate report (for gnatsas only)
@@ -149,6 +153,7 @@ private
    --   - Audit_Trail: load audit trail after gps_codepeer_bridge has run
    --   - Load_Bridge_Results: load codepeer messages after gps_codepeer_bridge
    --   - Load_CSV: load CSV file after codepeer run
+   --   - Open_HTML: open index.html in the browser
 
    package String_Sets is
      new Ada.Containers.Indefinite_Hashed_Sets (String, Ada.Strings.Hash, "=");
