@@ -191,11 +191,11 @@ package body CodePeer.Multiple_Message_Review_Dialogs is
 
       GPS.Dialogs.Initialize
         (Self,
-         Title  => -"CodePeer message review",
+         Title  => -(CodePeer.Module_Name & " message review"),
          Kernel => Kernel,
          Typ    => Class_Record.The_Type);
       GPS.Main_Window.Set_Default_Size_From_History
-        (Self, "CodePeer message review", Kernel, 400, 400);
+        (Self, CodePeer.Module_Name & " message review", Kernel, 400, 400);
 
       Gtk.Paned.Gtk_New_Vpaned (Paned_1);
       Self.Get_Content_Area.Pack_Start (Paned_1);
