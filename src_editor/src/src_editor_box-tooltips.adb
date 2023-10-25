@@ -397,8 +397,12 @@ package body Src_Editor_Box.Tooltips is
                         begin
                            if (Highlighting_Length = Highlight_Whole_Line
                                and then Message.Get_Flags /= Sides_Only)
-                             or else Col + 1 in Mark_Column .. Mark_Column +
-                               Gint (Highlighting_Length)
+                             or else Col + 1 in Mark_Column ..
+                                --  Highlight_Whole_Line is max int so adding
+                                --  to it will do an overflow
+                               (if Highlighting_Length = Highlight_Whole_Line
+                                then Gint (Highlight_Whole_Line)
+                                else Mark_Column + Gint (Highlighting_Length))
                            then
                               if Text /= Null_Unbounded_String then
                                  Text := Text & ASCII.LF;
