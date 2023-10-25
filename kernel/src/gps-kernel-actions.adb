@@ -843,8 +843,9 @@ package body GPS.Kernel.Actions is
       end if;
 
       return
-        Escape (Action.Description.all)
-        & ASCII.LF & ASCII.LF
+        (if Action.Description = null or else Action.Description.all = ""
+         then ""
+         else Escape (Action.Description.all) & ASCII.LF & ASCII.LF)
         & (if Include_Name then Tag ("Action: ")
            & Escape (Action.Name.all) & ASCII.LF else "")
         & (if Include_Category then Tag ("Category: ")
