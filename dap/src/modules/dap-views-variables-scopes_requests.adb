@@ -18,6 +18,9 @@
 with DAP.Views.Variables.Variables_Requests;
 use DAP.Views.Variables.Variables_Requests;
 
+with DAP.Views.Variables.Evaluate_Requests;
+use DAP.Views.Variables.Evaluate_Requests;
+
 package body DAP.Views.Variables.Scopes_Requests is
 
    -----------------------
@@ -39,21 +42,49 @@ package body DAP.Views.Variables.Scopes_Requests is
          if Result.a_body.scopes (Index).name = "Locals" then
             View.Locals_Id := Result.a_body.scopes (Index).variablesReference;
 
-            declare
-               Req : constant Variables_Request_Access :=
-                 new Variables_Request (Self.Kernel);
-            begin
-               Req.Client   := Self.Client;
-               Req.Item     := Self.Item;
-               Req.Position := Self.Position;
-               Req.Childs   := Self.Childs;
-               if Self.Path /= Null_Gtk_Tree_Path then
-                  Req.Path := Copy (Self.Path);
-               end if;
-               Req.Ref := View.Locals_Id;
-               Req.Parameters.arguments.variablesReference := Req.Ref;
-               New_Request := DAP.Requests.DAP_Request_Access (Req);
-            end;
+            if Self.Item.Cmd.Is_Empty then
+               --  it is not a command, use variable request
+               declare
+                  Req : constant Variables_Request_Access :=
+                    new Variables_Request (Self.Kernel);
+               begin
+                  Req.Client   := Self.Client;
+                  Req.Item     := Self.Item;
+                  Req.Position := Self.Position;
+                  Req.Childs   := Self.Childs;
+                  if Self.Path /= Null_Gtk_Tree_Path then
+                     Req.Path := Copy (Self.Path);
+                  end if;
+                  Req.Ref := View.Locals_Id;
+                  Req.Parameters.arguments.variablesReference := Req.Ref;
+                  New_Request := DAP.Requests.DAP_Request_Access (Req);
+               end;
+
+            else
+               --  it is command, use evaluate request
+               declare
+                  Req : constant DAP.Views.Variables.Evaluate_Requests.
+                    Evaluate_Request_Access :=
+                      new DAP.Views.Variables.Evaluate_Requests.
+                        Evaluate_Request (Self.Kernel);
+               begin
+                  Req.Client   := Self.Client;
+                  Req.Item     := Self.Item;
+                  Req.Position := Self.Position;
+                  if Self.Path /= Null_Gtk_Tree_Path then
+                     Req.Path := Copy (Self.Path);
+                  end if;
+
+                  Req.Parameters.arguments.expression := Self.Item.Cmd;
+                  Req.Parameters.arguments.frameId :=
+                    (Is_Set => True, Value => Self.Client.Get_Selected_Frame);
+                  Req.Parameters.arguments.context :=
+                    (Is_Set => True, Value => DAP.Tools.Enum.repl);
+
+                  New_Request := DAP.Requests.DAP_Request_Access (Req);
+               end;
+            end if;
+
             exit;
          end if;
       end loop;

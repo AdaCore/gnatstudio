@@ -39,7 +39,7 @@ with Gtk.Enums;                   use Gtk.Enums;
 with Gtk.Cell_Renderer_Pixbuf;    use Gtk.Cell_Renderer_Pixbuf;
 with Gtk.Dnd;                     use Gtk.Dnd;
 with Gtk.Tree_Store;              use Gtk.Tree_Store;
-
+with Gtk.Tree_Selection;
 with Gtk.Scrolled_Window;         use Gtk.Scrolled_Window;
 
 with Gtkada.File_Selector;
@@ -164,6 +164,13 @@ package body DAP.Views.Variables is
    overriding function Filter_Matches_Primitive
      (Filter  : access Is_Variable_Editable_Filter;
       Context : Selection_Context) return Boolean;
+
+   type Variable_Single_Selection is
+     new Action_Filter_Record with null record;
+   overriding function Filter_Matches_Primitive
+     (Filter  : access Variable_Single_Selection;
+      Context : Selection_Context) return Boolean;
+   --  True if only one row is selected.
 
    procedure On_Drag_Data_Received
      (Object : access Glib.Object.GObject_Record'Class;
@@ -299,6 +306,34 @@ package body DAP.Views.Variables is
    ------------------------------
 
    overriding function Filter_Matches_Primitive
+     (Filter  : access Variable_Single_Selection;
+      Context : Selection_Context) return Boolean
+   is
+      pragma Unreferenced (Filter);
+      View : constant DAP_Variables_View :=
+        Variables_MDI_Views.Retrieve_View
+          (Get_Kernel (Context),
+           Visible_Only => True);
+
+      Res  : Boolean := False;
+   begin
+      if View /= null then
+         declare
+            Selection : constant Gtk.Tree_Selection.Gtk_Tree_Selection :=
+              Get_Selection (View.Tree);
+         begin
+            Res := Selection.Count_Selected_Rows = 1;
+         end;
+      end if;
+
+      return Res;
+   end Filter_Matches_Primitive;
+
+   ------------------------------
+   -- Filter_Matches_Primitive --
+   ------------------------------
+
+   overriding function Filter_Matches_Primitive
      (Filter  : access Is_Variables_View_Focused_Filter;
       Context : Selection_Context) return Boolean
    is
@@ -337,7 +372,7 @@ package body DAP.Views.Variables is
       View : constant DAP_Variables_View :=
         Variables_MDI_Views.Retrieve_View
           (Get_Kernel (Context),
-           Visible_Only => False);
+           Visible_Only => True);
    begin
       if View /= null
         and then GPS.Kernel.Contexts.Has_Debugging_Variable (Context)
@@ -399,13 +434,9 @@ package body DAP.Views.Variables is
      (Self       : not null access Variables_Tree_View_Record;
       Store_Iter : Gtk_Tree_Iter)
    is
-      Full_Name : constant String :=
-        Get_String (Self.Model, Store_Iter, Column_Full_Name);
-      Lang      : constant Language_Access :=
-        Get_Client (DAP_Variables_View (Self.View)).Get_Language;
-      Deref     : constant Virtual_String := VSS.Strings.Conversions.
-        To_Virtual_String (Lang.Dereference_Name (Full_Name));
-      L_Deref   : constant Virtual_String := Deref.To_Lowercase;
+      Full_Name : constant VSS.Strings.Virtual_String :=
+        VSS.Strings.Conversions.To_Virtual_String
+          (Get_String (Self.Model, Store_Iter, Column_Full_Name));
       It        : Item_Info;
       Path      : Gtk.Tree_Model.Gtk_Tree_Path;
       C         : Item_Info_Vectors.Cursor;
@@ -417,17 +448,17 @@ package body DAP.Views.Variables is
 
       Path := Self.Model.Get_Path (Store_Iter);
       for It2 of Self.Items loop
-         if It2.Varname.To_Lowercase = L_Deref then
+         if It2.Varname.To_Lowercase = Full_Name then
             DAP_Variables_View (Self.View).Update (It2, 0, Path, True);
             return;
          end if;
       end loop;
 
-      Self.Find_Best_Info (Deref, C, Found);
+      Self.Find_Best_Info (Full_Name, C, Found);
 
       It :=
         (Id      => Unknown_Id,
-         Varname => Deref,
+         Varname => Full_Name,
          Format  =>
            (if C /= Item_Info_Vectors.No_Element
             then Element (C).Format
@@ -1116,6 +1147,7 @@ package body DAP.Views.Variables is
       Client  : constant DAP.Clients.DAP_Client_Access := Get_Client (Self);
       Request : DAP.Requests.DAP_Request_Access;
    begin
+      Self.Locals_Id := 0;
       Self.Locals.Clear;
 
       if Client = null
@@ -1244,7 +1276,10 @@ package body DAP.Views.Variables is
       end if;
 
       if Client.Is_Stopped then
-         if Self.Locals_Id = 0 then
+         if Self.Locals_Id = 0
+           and then Item.Cmd.Is_Empty
+         --  don't have local's id and not a command, get it
+         then
             Req := new DAP.Views.Variables.Scopes_Requests.
               Scopes_Request (Self.Kernel);
 
@@ -1492,6 +1527,7 @@ package body DAP.Views.Variables is
 
          Free_Path_List (List);
       end if;
+      View.Tree.Get_Selection.Unselect_All;
 
       return Commands.Success;
    end Execute;
@@ -1974,7 +2010,6 @@ package body DAP.Views.Variables is
          end if;
 
          Request := DAP.Requests.DAP_Request_Access (Req);
-         Found := True;
       end Create_Request;
 
       -- Create_Ev_Request --
@@ -1999,7 +2034,6 @@ package body DAP.Views.Variables is
            (Is_Set => True, Value => DAP.Tools.Enum.repl);
 
          Request := DAP.Requests.DAP_Request_Access (Req);
-         Found := True;
       end Create_Ev_Request;
 
    begin
@@ -2014,6 +2048,11 @@ package body DAP.Views.Variables is
 
       if Found then
          --  we found the variable
+
+         if Path /= Null_Gtk_Tree_Path then
+            Parent := Self.Tree.Model.Get_Iter (Path);
+         end if;
+
          if not Childs then
             --  we need the variable itself, add it to the table
 
@@ -2023,10 +2062,6 @@ package body DAP.Views.Variables is
                        and then Item.Id = Unknown_Id)
             --  do not add child items when we in the view update
             then
-               if Path /= Null_Gtk_Tree_Path then
-                  Parent := Self.Tree.Model.Get_Iter (Path);
-               end if;
-
                Self.Tree.Add_Row (Item, C, Parent);
             end if;
 
@@ -2036,17 +2071,17 @@ package body DAP.Views.Variables is
             if Child_Count (C) /= 0 then
                --  we already have childs, add them to the table
 
-               if (Path = Null_Gtk_Tree_Path
-                   and then Item.Id /= Unknown_Id)
-                 or else (Path /= Null_Gtk_Tree_Path
-                          and then Item.Id = Unknown_Id)
-               --  do not add child items when we in the view update
+               if Item.Id /= Unknown_Id
+                 --  add the item when it is root item
+                 or else Parent /= Null_Iter
+                 --  or we are adding as a nested element
                then
                   C := First_Child (C);
                   while C /= Variables_References_Trees.No_Element loop
                      Self.Tree.Add_Row (Item, C, Parent);
                      Next_Sibling (C);
                   end loop;
+                  Found := Self.Tree.Expand_Row (Path, False);
                end if;
 
             else
@@ -2304,6 +2339,7 @@ package body DAP.Views.Variables is
       Access_Filter           : Action_Filter;
       View_Focused_Filter     : Action_Filter;
       Is_Editable_Filter      : Action_Filter;
+      Selection_Filter        : Action_Filter;
       Command                 : Interactive_Command_Access;
 
    begin
@@ -2390,6 +2426,17 @@ package body DAP.Views.Variables is
          Description => "Expand the selected nodes in the variables tree",
          Icon_Name   => "gps-expand-all-symbolic",
          Category    => "Debug");
+
+      Selection_Filter := new Variable_Single_Selection;
+      Register_Action
+        (Kernel, "variables view expand next layer",
+         Command     => new Variables_Collapse_Or_Expand_Command
+           (Expand_All_Rows),
+         Description =>
+           "Expand all the children of the selected node",
+         Icon_Name   => "gps-expand-all-symbolic",
+         Category    => "Debug",
+         Filter      => Selection_Filter);
 
       Register_Action
         (Kernel, "debug export variables",
