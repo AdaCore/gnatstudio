@@ -28,11 +28,12 @@ package DAP.Requests.Step_In_Request is
         DAP.Tools.StepInRequest'
           (seq       => 0,
            arguments =>
-             (granularity =>
+             (granularity  =>
                 (Is_Set => True,
                  Value  => DAP.Tools.Enum.line),
-              threadId    => 0,
-              others      => <>));
+              threadId     => 0,
+              singleThread => False,
+              targetId     => (Is_Set => False)));
    end record;
 
    type Step_In_DAP_Request_Access is access all Step_In_DAP_Request;
