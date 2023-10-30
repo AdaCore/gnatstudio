@@ -372,6 +372,7 @@ package body DAP.Views.Call_Stack is
       Client  : constant DAP.Clients.DAP_Client_Access := Get_Client (Self);
       Model   : Gtk_Tree_Model;
       Iter    : Gtk_Tree_Iter;
+      Id      : Integer;
       File    : GNATCOLL.VFS.Virtual_File;
       Line    : Integer;
       Address : Address_Type;
@@ -382,6 +383,8 @@ package body DAP.Views.Call_Stack is
             declare
                S : constant String := Model.Get_String (Iter, Memory_Column);
             begin
+               Id      := Integer'Value
+                 (Model.Get_String (Iter, Frame_Id_Column));
                File    := GNATCOLL.VFS.Create
                  (+Model.Get_String (Iter, Sourse_Column));
                Line    := Integer (Model.Get_Int (Iter, Line_Column));
@@ -390,9 +393,7 @@ package body DAP.Views.Call_Stack is
                   then String_To_Address (S)
                   else Invalid_Address);
 
-               Self.Client.Set_Selected_Frame
-                 (Integer (Model.Get_Int (Iter, Frame_Id_Column)),
-                  File, Line, Address);
+               Self.Client.Set_Selected_Frame (Id, File, Line, Address);
 
             exception
                when E : others =>
@@ -748,8 +749,11 @@ package body DAP.Views.Call_Stack is
          Set_And_Clear
            (View.Model, Iter, (Frame_Id_Column, Name_Column),
             (1 => As_String (""),
-             2 => As_String ("Running...")));
-      else
+             2 => As_String (if View.Get_Client.Get_Status = Running
+               then "Running..."
+               else "No data")));
+
+      elsif View.Get_Client.Get_Status = Stopped then
          View.Update;
       end if;
    end On_Status_Changed;
@@ -796,17 +800,25 @@ package body DAP.Views.Call_Stack is
    ------------
 
    overriding procedure Update (View : not null access Call_Stack_Record) is
+      use type DAP.Clients.DAP_Client_Access;
+
       Limit : constant Integer :=
         DAP.Modules.Preferences.Frames_Limit.Get_Pref;
       From  : Integer := -1;
       To    : Integer := 0;
    begin
-      if Limit /= 0 then
-         From := 0;
-         To   := Limit - 1;
-      end if;
+      if View.Get_Client /= null
+        and then View.Get_Client.Get_Status = Stopped
+      --  do not try to update the view when it is not attached to the
+      --  client or when the debuggee is not stopped
+      then
+         if Limit /= 0 then
+            From := 0;
+            To   := Limit - 1;
+         end if;
 
-      View.Send_Request (From, To);
+         View.Send_Request (From, To);
+      end if;
    end Update;
 
    ---------------------
