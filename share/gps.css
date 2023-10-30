@@ -652,3 +652,13 @@ textview.view.readonly text {
 .entry.multiline {
    border: 1pt solid @popup_border_color;
 }
+
+
+/**********************************
+ * Demos
+ **********************************/
+
+ .gps-demo-menu-highlighted {
+   background-color: @theme_selected_bg_color;
+   color: @theme_selected_fg_color;
+ }
