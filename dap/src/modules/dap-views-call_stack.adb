@@ -810,7 +810,7 @@ package body DAP.Views.Call_Stack is
       if View.Get_Client /= null
         and then View.Get_Client.Get_Status = Stopped
       --  do not try to update the view when it is not attached to the
-      --  client or when execution of debuggee is not stoped
+      --  client or when the debuggee is not stopped
       then
          if Limit /= 0 then
             From := 0;
