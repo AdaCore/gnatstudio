@@ -884,28 +884,33 @@ package body CodePeer.Module is
         Build (CodePeer.GPR_Name, "Output_Directory");
 
    begin
-      if not Is_GNATSAS
-        and then Project.Has_Attribute (Output_Directory_Attribute)
-      then
-         declare
-            Dir : constant GNATCOLL.VFS.Filesystem_String :=
-              GNATCOLL.VFS.Filesystem_String
-                (Project.Attribute_Value (Output_Directory_Attribute));
+      if not Is_GNATSAS then
+         if Project.Has_Attribute (Output_Directory_Attribute) then
+            declare
+               Dir : constant GNATCOLL.VFS.Filesystem_String :=
+                 GNATCOLL.VFS.Filesystem_String
+                   (Project.Attribute_Value (Output_Directory_Attribute));
 
-         begin
+            begin
+               return
+                 GNATCOLL.VFS.Create_From_Base
+                   (Dir, Project.Project_Path.Dir.Full_Name.all);
+            end;
+         else
             return
-              GNATCOLL.VFS.Create_From_Base
-                (Dir, Project.Project_Path.Dir.Full_Name.all);
-         end;
-
+              GNATCOLL.VFS.Create_From_Dir
+                (CodePeer_Object_Directory (Project),
+                 Name (Name'First .. Name'Last - Extension'Length)
+                 & ".output");
+         end if;
       else
          return
            GNATCOLL.VFS.Create_From_Dir
              (GNATCOLL.VFS.Create_From_Dir
-               (CodePeer_Object_Directory (Project),
-                Name (Name'First .. Name'Last - Extension'Length)
-                & ".inspector"),
-               "output");
+                (CodePeer_Object_Directory (Project),
+                 Name (Name'First .. Name'Last - Extension'Length)
+                 & ".inspector"),
+              "output");
       end if;
    end Codepeer_Output_Directory;
 
