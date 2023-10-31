@@ -181,9 +181,9 @@ package body DAP.Clients is
 
    Breakpoint_Details_Pattern : constant VSS.Regular_Expressions.
      Regular_Expression := VSS.Regular_Expressions.To_Regular_Expression
-       ("^(?:(?:([+-]{1})(\d+))|(?:\*(0x[0-9a-f]+))|(?:(?:((?:\S:)?\S+):)?"
+       ("^(?:(?:([+-])(\d+))|(?:\*(0x[0-9a-f]+))|(?:(?:((?:\S:)?\S+):)?"
         & "(?:(\d+)|(\w+))))?(?:\s*if\s+(.+))?$");
-   --  breakpoint command details\
+   --  breakpoint command details like file/line, address and so on
 
    Bp_Offset_Sig_Idx : constant := 1;
    Bp_Offset_Idx     : constant := 2;
@@ -1961,10 +1961,11 @@ package body DAP.Clients is
                           (Subprogram =>
                              (if Details_Match.Has_Capture (Bp_File_Idx)
                               then UTF8 (Details_Match.Captured (Bp_File_Idx))
-                              & ":"
-                              & UTF8 (Details_Match.Captured (Bp_Line_Idx))
+                              & ":" & UTF8
+                                (Details_Match.Captured (Bp_Subprogram_Idx))
                               else
-                                 UTF8 (Details_Match.Captured (Bp_Line_Idx))),
+                                 UTF8 (Details_Match.Captured
+                                   (Bp_Subprogram_Idx))),
                            Temporary  =>
                              Matched.Has_Capture (Bp_Temporary_Idx),
                            Condition  =>
