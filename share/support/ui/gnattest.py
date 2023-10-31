@@ -12,6 +12,7 @@ import os.path
 import re
 import shutil
 import tempfile
+import traceback
 
 import libadalang as lal
 
@@ -553,13 +554,20 @@ def is_type_supported(type_decl):
     #      itself.
     #    * Any limited type.
 
-    if type_decl.p_is_access_type():
+    current_type = type_decl
+
+    # Skip all subtype declarations and instead go to the base type. We support
+    # all subtypes of supported base types.
+    if isinstance (type_decl, lal.SubtypeDecl):
+        current_type = current_type.p_base_type
+
+    if current_type.p_is_access_type():
         return False
-    elif type_decl.p_is_tagged_type():
+    elif current_type.p_is_tagged_type():
         return False
 
-    elif type_decl.p_is_record_type():
-        discrs = type_decl.f_discriminants
+    elif current_type.p_is_record_type():
+        discrs = current_type.f_discriminants
 
         # Check that we do not have an access type discriminant
         if isinstance(discrs, lal.DiscriminantSpecList):
@@ -570,11 +578,11 @@ def is_type_supported(type_decl):
                     return False
 
         # Check whether this is a limited type
-        if isinstance(type_decl.f_type_def.f_has_limited, lal.LimitedPresent):
+        if isinstance(current_type.f_type_def.f_has_limited, lal.LimitedPresent):
             return False
 
         # Check that the component types are supported
-        record_type = type_decl.f_type_def.f_record_def
+        record_type = current_type.f_type_def.f_record_def
 
         def visit_variant(variant):
             nested_variant_part = variant.f_components.f_variant_part
@@ -594,16 +602,16 @@ def is_type_supported(type_decl):
 
         return visit_variant (record_type)
 
-    elif type_decl.p_is_array_type():
+    elif current_type.p_is_array_type():
         # Check that the component type is supported
-        array_type = type_decl.f_type_def
+        array_type = current_type.f_type_def
         return (
             is_type_supported(array_type.f_component_type.f_type_expr.p_designated_type_decl)
         )
 
     else:
         # Check against the System.Address type
-        if type_decl.f_name.p_fully_qualified_name.lower() == "system.address":
+        if current_type.f_name.p_fully_qualified_name.lower() == "system.address":
             return False
 
         # All other cases should be supported
@@ -613,8 +621,22 @@ def is_type_supported(type_decl):
 def is_supported_by_tgen(subp_spec):
 
     for param_type in subp_spec.p_param_types():
-        if not is_type_supported(param_type):
-            return False
+        try:
+            if not is_type_supported(param_type):
+                return False
+
+        # If anything goes wrong in the filter, due to poor matching of the LAL
+        # AST, or if a property error occurs, still proceed to launch the
+        # workflow. At worse, this results in a gnattest / gnatfuzz crash, at
+        # best the type was correctly supported. Still display the exception to
+        # allow investigation.
+        except:
+            GPS.Console().write(
+                "Warning: unexpected exception while checking subprogram"
+                " compatibility with TGen:\n"
+                + traceback.format_exc(),
+                mode="error"
+            )
     return True
 
 
