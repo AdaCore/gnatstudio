@@ -1780,7 +1780,8 @@ package body CodePeer.Module is
          Editor.Insert
            (Location.End_Of_Line, ASCII.LF &
               "pragma Annotate" & ASCII.LF &
-              "(CodePeer, False_Positive, """ &
+              "(" & CodePeer.Module_Name &
+              ", False_Positive, """ &
               To_String (Message.Category.Name) &
               """, ""<insert review>"");");
          Editor.Indent (Location, Location.Forward_Line (2));
