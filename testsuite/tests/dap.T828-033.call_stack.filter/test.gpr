@@ -1,0 +1,7 @@
+project Test is
+   package Compiler is
+      for Switches ("Ada") use ("-g", "-O2");
+   end Compiler;
+
+   for Main use ("main.adb");
+end Test;

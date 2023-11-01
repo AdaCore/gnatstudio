@@ -1,0 +1,12 @@
+with "dll/dll.gpr";
+
+project Main is
+
+   for Languages use ("C");
+   for Main use ("main.c");
+
+   package Compiler is
+      for Switches ("C") use ("-g");
+   end Compiler;
+
+end Main;
