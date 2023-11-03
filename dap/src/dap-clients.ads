@@ -45,7 +45,6 @@ with DAP.Tools;
 
 with Basic_Types;                use Basic_Types;
 with Generic_Views;
-with Language;                   use Language;
 
 private with Ada.Containers.Hashed_Maps;
 private with Ada.Containers.Hashed_Sets;
@@ -310,9 +309,6 @@ package DAP.Clients is
      (Self : in out DAP_Client) return Ada.Strings.Unbounded.Unbounded_String;
    --  Return the command line arguments for the executable currently debugged.
 
-   function Get_Language
-     (Self : in out DAP_Client) return Language_Access;
-
    procedure Set_Source_Files
      (Self         : in out DAP_Client;
       Source_Files : VSS.String_Vectors.Virtual_String_Vector);
@@ -485,16 +481,13 @@ private
       Request_Id     : Integer := 1;
       Error_Msg      : VSS.Strings.Virtual_String;
 
-      Selected        : Frame := No_Frame;
-      Frames          : Backtrace_Vectors.Vector;
+      Selected       : Frame := No_Frame;
+      Frames         : Backtrace_Vectors.Vector;
 
       --  to monitoring stoped threads
       Stopped_Threads     : Integer_Sets.Set;
       All_Threads_Stopped : Boolean := False;
       Selected_Thread     : Integer := 0;
-
-      --  internal data
-      Stored_Lang         : VSS.Strings.Virtual_String;
 
       --  Modules --
       Breakpoints      : DAP.Modules.Breakpoint_Managers.
@@ -574,13 +567,6 @@ private
      (Self      : in out DAP_Client;
       Thread_Id : Integer);
 
-   procedure Found_File_Name
-     (Self : DAP_Client;
-      Str  : VSS.Strings.Virtual_String;
-      Name : out VSS.Strings.Virtual_String;
-      Line : out Natural;
-      Addr : out DAP.Types.Address_Type);
-
    function Is_Frame_Up_Command
      (Self : DAP_Client;
       Cmd  : VSS.Strings.Virtual_String)
@@ -592,26 +578,21 @@ private
       return Boolean;
 
    type Evaluate_Kind is
-     (  --  Following commands are used to open the main file
-      Show_Lang,
-      Set_Lang,
-      Restore_Lang,
-      List_Adainit,
-      Info_Line,
-      Info_First_Line,
-
+     (Hover,
       --  Used to display variable values in tooltips
-      Hover,
 
-      --  Used to get the variable address to open the memory view
       Variable_Address,
+      --  Used to get the variable address to open the memory view
 
-      --  Used to get target's Endian, needed for the memory view
       Endian,
+      --  Used to get target's Endian, needed for the memory view
 
-      --  Used for any other command (e.g: console)
       Command,
-      Set_TTY);
+      --  Used for any other command (e.g: console)
+
+      Set_TTY
+      --  Used to set tty to have debuggee console
+     );
 
    function Create_Evaluate_Command
      (Self              : DAP_Client;

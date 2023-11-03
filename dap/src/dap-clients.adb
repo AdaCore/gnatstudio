@@ -130,22 +130,6 @@ package body DAP.Clients is
      (Self    : in out Evaluate_Request;
       Message : VSS.Strings.Virtual_String);
 
-   GNAT_Binder_File_Pattern  : constant VSS.Regular_Expressions.
-     Regular_Expression := VSS.Regular_Expressions.To_Regular_Expression
-       ("b[~_]_?([^.]+\.(?:adb|c))");
-
-   File_Name_Pattern         : constant VSS.Regular_Expressions.
-     Regular_Expression := VSS.Regular_Expressions.To_Regular_Expression
-       ("^Line ([0-9]+) of (?:""([^""]+)"")? (?:starts|is)"
-        & " at address (0x[0-9a-f]+)");
-   --  Matches a file name/line indication in gdb's output
-
-   Language_Pattern          : constant VSS.Regular_Expressions.
-     Regular_Expression := VSS.Regular_Expressions.To_Regular_Expression
-       ("^(?:The current source language is|Current language:) +"
-        & """?(?:auto; currently )?([^""\t ]+)(?:""\.)?");
-   --  Pattern used to detect language changes in the debugger
-
    Endian_Pattern            : constant VSS.Regular_Expressions.
      Regular_Expression := VSS.Regular_Expressions.To_Regular_Expression
        ("little endian");
@@ -827,19 +811,6 @@ package body DAP.Clients is
       return Self.Args;
    end Get_Executable_Args;
 
-   ------------------
-   -- Get_Language --
-   ------------------
-
-   function Get_Language
-     (Self : in out DAP_Client) return Language_Access is
-   begin
-      --  To-Do: Check if language is detected
-      return Get_Language_By_Name
-        (GPS.Kernel.Get_Language_Handler (Self.Kernel),
-         UTF8 (Self.Stored_Lang));
-   end Get_Language;
-
    ---------------------
    -- Get_Endian_Type --
    ---------------------
@@ -963,22 +934,12 @@ package body DAP.Clients is
      (Self : in out DAP_Client;
       TTY  : String)
    is
-      Req   : Evaluate_Request_Access;
-      Frame : constant Integer := Self.Get_Selected_Frame;
+      Req : DAP.Requests.DAP_Request_Access;
    begin
       if TTY /= "" then
-         Req := new Evaluate_Request (Self.Kernel);
-         Req.Kind   := Set_TTY;
-         Req.Client := Self.This;
-         Req.Parameters.arguments.expression :=
-           VSS.Strings.Conversions.To_Virtual_String ("tty " & TTY);
-         if Frame /= 0 then
-            Req.Parameters.arguments.frameId :=
-              (Is_Set => True, Value => Frame);
-         end if;
-         Req.Parameters.arguments.context :=
-           (Is_Set => True, Value => DAP.Tools.Enum.repl);
-         Self.Enqueue (DAP.Requests.DAP_Request_Access (Req));
+         Req := Self.Create_Evaluate_Command
+           (Set_TTY, VSS.Strings.Conversions.To_Virtual_String ("tty " & TTY));
+         Self.Enqueue (Req);
       end if;
    end Set_TTY;
 
@@ -1128,19 +1089,10 @@ package body DAP.Clients is
    ------------------------
 
    procedure On_Breakpoints_Set (Self : in out DAP_Client) is
-      Req   : Evaluate_Request_Access := new Evaluate_Request (Self.Kernel);
-      Frame : constant Integer := Self.Get_Selected_Frame;
+      Req : DAP.Requests.DAP_Request_Access := Self.Create_Evaluate_Command
+        (Endian, "show endian");
    begin
-      Req.Kind   := Show_Lang;
-      Req.Client := Self.This;
-      Req.Parameters.arguments.expression :=
-        VSS.Strings.Conversions.To_Virtual_String ("show lang");
-      if Frame /= 0 then
-         Req.Parameters.arguments.frameId := (Is_Set => True, Value => Frame);
-      end if;
-      Req.Parameters.arguments.context :=
-        (Is_Set => True, Value => DAP.Tools.Enum.repl);
-      Self.Enqueue (DAP.Requests.DAP_Request_Access (Req));
+      Self.Enqueue (Req);
    end On_Breakpoints_Set;
 
    -----------------
@@ -2586,130 +2538,23 @@ package body DAP.Clients is
       New_Request : in out DAP.Requests.DAP_Request_Access)
    is
       use GNATCOLL.Scripts;
-
-      procedure Show_File
-        (File : Virtual_String;
-         Line : Natural;
-         Addr : Address_Type);
-
-      ---------------
-      -- Show_File --
-      ---------------
-
-      procedure Show_File
-        (File : Virtual_String;
-         Line : Natural;
-         Addr : Address_Type) is
-      begin
-         if not File.Is_Empty
-           and then Line /= 0
-         then
-            DAP.Utils.Highlight_Current_File_And_Line
-              (Self.Client.Kernel,
-               To_File (File),
-               Line);
-
-         elsif Addr /= Invalid_Address then
-            --  the address without debugging information
-            DAP.Utils.Unhighlight_Current_Line (Self.Client.Kernel);
-         end if;
-      end Show_File;
-
    begin
       New_Request := null;
 
       case Self.Kind is
-         when Show_Lang =>
-            declare
-               Match : VSS.Regular_Expressions.Regular_Expression_Match;
-            begin
-               Match := Language_Pattern.Match (Result.a_body.result);
-
-               Self.Client.Stored_Lang := (if Match.Has_Match
-                                             and then Match.Has_Capture (1)
-                                           then Match.Captured (1)
-                                           else "auto");
-            end;
-            New_Request := Self.Client.Create_Evaluate_Command
-              (Endian, "show endian");
-
          when Endian =>
             declare
-               Match : VSS.Regular_Expressions.Regular_Expression_Match;
+               Match : constant VSS.Regular_Expressions.
+                 Regular_Expression_Match :=
+                   Endian_Pattern.Match (Result.a_body.result);
             begin
-               Self.Client.Endian := (if Match.Has_Match
-                                      then Little_Endian
-                                      else Big_Endian);
-
-               Match := Endian_Pattern.Match (Result.a_body.result);
-            end;
-
-            New_Request := Self.Client.Create_Evaluate_Command
-              (Set_Lang, "set lang c");
-
-         when Set_Lang =>
-            New_Request := Self.Client.Create_Evaluate_Command
-              (List_Adainit, "list adainit");
-
-         when List_Adainit =>
-            New_Request := Self.Client.Create_Evaluate_Command
-              (Restore_Lang, "set lang " & Self.Client.Stored_Lang);
-
-         when Restore_Lang =>
-            if DAP.Modules.Preferences.Open_Main_Unit.Get_Pref then
-               New_Request := Self.Client.Create_Evaluate_Command
-                 (Info_Line, "info line");
-            else
-               Self.Client.Set_Status (Ready);
-            end if;
-
-         when Info_Line =>
-            declare
-               File : Virtual_String;
-               Line : Natural;
-               Addr : Address_Type;
-
-            begin
-               Self.Client.Found_File_Name
-                 (Result.a_body.result, File, Line, Addr);
-
-               if not File.Is_Empty then
-                  declare
-                     Match : VSS.Regular_Expressions.Regular_Expression_Match;
-                  begin
-                     Match := GNAT_Binder_File_Pattern.Match (File);
-
-                     --  If we find a file that looks like a GNAT binder file,
-                     --  load the corresponding main file.
-
-                     if Match.Has_Match
-                       and then Match.Has_Capture (1)
-                     then
-                        New_Request := Self.Client.Create_Evaluate_Command
-                          (Info_First_Line, "info line "
-                           & Match.Captured (1) & ":1");
-                     else
-                        Show_File (File, Line, Addr);
-                        Self.Client.Set_Status (Ready);
-                     end if;
-                  end;
+               if Match.Has_Match then
+                  Self.Client.Endian := Little_Endian;
                else
-                  Self.Client.Set_Status (Ready);
+                  Self.Client.Endian := Big_Endian;
                end if;
             end;
-
-         when Info_First_Line =>
-            declare
-               File : Virtual_String;
-               Line : Natural;
-               Addr : Address_Type;
-
-            begin
-               Self.Client.Found_File_Name
-                 (Result.a_body.result, File, Line, Addr);
-               Show_File (File, Line, Addr);
-               Self.Client.Set_Status (Ready);
-            end;
+            Self.Client.Set_Status (Ready);
 
          when Hover =>
             Self.Label.Set_Markup
@@ -2770,51 +2615,6 @@ package body DAP.Clients is
       end case;
    end On_Result_Message;
 
-   ---------------------
-   -- Found_File_Name --
-   ---------------------
-
-   procedure Found_File_Name
-     (Self : DAP_Client;
-      Str  : VSS.Strings.Virtual_String;
-      Name : out VSS.Strings.Virtual_String;
-      Line : out Natural;
-      Addr : out DAP.Types.Address_Type)
-   is
-      pragma Unreferenced (Self);
-
-      Match : VSS.Regular_Expressions.Regular_Expression_Match;
-   begin
-      --  Default values if nothing better is found
-      Name := Empty_Virtual_String;
-      Line := 0;
-      Addr := Invalid_Address;
-
-      Match := File_Name_Pattern.Match (Str);
-
-      if Match.Has_Match then
-         if Match.Has_Capture (2) then
-            Name := Match.Captured (2);
-         end if;
-
-         if Match.Has_Capture (3) then
-            Addr := String_To_Address (UTF8 (Match.Captured (3)));
-         end if;
-
-         if Match.Has_Capture (1) then
-            Line := Natural'Value (UTF8 (Match.Captured (1)));
-         end if;
-      end if;
-
-   exception
-      when E : others =>
-         Me.Trace (E);
-
-         Name := Empty_Virtual_String;
-         Line := 0;
-         Addr := Invalid_Address;
-   end Found_File_Name;
-
    -----------------
    -- On_Rejected --
    -----------------
@@ -2827,9 +2627,6 @@ package body DAP.Clients is
          when Hover =>
             Self.Label.Set_Markup ("<b>Debugger value :</b> (rejected)");
             Unref (GObject (Self.Label));
-
-         when Variable_Address | Endian | Set_TTY =>
-            null;
 
          when Command =>
             if Self.Output then
@@ -2848,9 +2645,11 @@ package body DAP.Clients is
                end;
             end if;
 
-         when Show_Lang | Set_Lang | Restore_Lang | List_Adainit |
-              Info_Line | Info_First_Line =>
-               Self.Client.Set_Status (Ready);
+         when Endian =>
+            Self.Client.Set_Status (Ready);
+
+         when Variable_Address | Set_TTY =>
+            null;
       end case;
    end On_Rejected;
 
@@ -2871,9 +2670,6 @@ package body DAP.Clients is
          when Hover =>
             Self.Label.Set_Markup ("<b>Debugger value :</b> (error)");
             Unref (GObject (Self.Label));
-
-         when Variable_Address | Endian | Set_TTY =>
-            null;
 
          when Command =>
             if Self.Output then
@@ -2900,9 +2696,11 @@ package body DAP.Clients is
                end;
             end if;
 
-         when Show_Lang | Set_Lang | Restore_Lang | List_Adainit |
-              Info_Line | Info_First_Line =>
+         when Endian =>
             Self.Client.Set_Status (Ready);
+
+         when Variable_Address | Set_TTY =>
+            null;
       end case;
    end On_Error_Message;
 
