@@ -1,6 +1,8 @@
 # submodules
 /ada_language_server
 /laltools
+/subprojects/lal-refactor
+/subprojects/integration-testsuite
 /.vscode/settings.json
 *.a
 *.ali
