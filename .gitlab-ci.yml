@@ -45,3 +45,15 @@ build_and_test:
   artifacts:
     reports:
       junit: xunit_output.xml
+
+issue-check:
+  services:
+    - image:e3
+  stage: build_and_test
+  interruptible: true  # Cancel job if the branch is pushed
+  variables: # do not checkout the git repository, not needed
+    GIT_STRATEGY: none
+  rules: # Launch only on merge requests
+    - if: $CI_PIPELINE_SOURCE == 'merge_request_event'
+  script:
+    - require_issue # launch the verification

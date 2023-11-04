@@ -28,7 +28,6 @@ package DAP.Modules.Preferences is
 
    -- General --
    Break_On_Exception            : Boolean_Preference;
-   Open_Main_Unit                : Boolean_Preference;
    Preserve_State_On_Exit        : Boolean_Preference;
    Execution_Window              : Boolean_Preference;
 
@@ -40,8 +39,8 @@ package DAP.Modules.Preferences is
    Pending_Breakpoints           : Boolean_Preference;
 
    -- Console --
-   Debugger_Console_Console : Boolean_Preference;
-   Debugger_Console_Stdout  : Boolean_Preference;
+   Debugger_Console_Console      : Boolean_Preference;
+   Debugger_Console_Stdout       : Boolean_Preference;
    --  Whether display layers in the debugger console
 
    --  Call stack
@@ -59,9 +58,6 @@ package DAP.Modules.Preferences is
    Memory_Highlighted_Color      : Color_Preference;
    Memory_Selected_Color         : Color_Preference;
    Memory_Auto_Refresh           : Boolean_Preference;
-
-   --  Remote Debugging
-   Load_Executable_On_Init       : Boolean_Preference;
 
    -- Registers view --
    Registers_Type                : Boolean_Preference;

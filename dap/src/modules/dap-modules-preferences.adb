@@ -44,14 +44,6 @@ package body DAP.Modules.Preferences is
              & " ignored by debuggers already running.",
          Default   => False);
 
-      Open_Main_Unit := Create
-        (Manager    => Prefs,
-         Name       => "Debugger-Open-Main-Unit",
-         Label      => "Always open main unit",
-         Path       => "Debugger:General",
-         Doc        => "Open the main unit when initializing a debugger.",
-         Default    => True);
-
       Preserve_State_On_Exit := Create
         (Manager    => Prefs,
          Name       => "Debugger-Preserve_State-On-Exit",
@@ -186,16 +178,6 @@ package body DAP.Modules.Preferences is
          Doc       => "Auto-refresh the contents of memory view.",
          Path      => "Debugger:Memory",
          Default   => True);
-
-      Load_Executable_On_Init := Create_Invisible_Pref
-        (Manager   => Prefs,
-         Name      => "Debugger-Load-On-Init",
---         Path      => "Debugger:General",
-         Label     => "Load executable on init",
-         Doc       =>
-            "Load the currently debugged executable to the target when " &
-               "initializing a remote debugging session.",
-         Default   => False);
 
       Registers_Type := Create_Invisible_Pref
         (Manager  => Prefs,
