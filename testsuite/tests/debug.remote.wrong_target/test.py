@@ -7,7 +7,7 @@ Also verify that the load command is not triggered after failing to connect.
 import GPS
 from gs_utils.internal.utils import *
 
-error = "foobar: No such file or directory."
+error = "No such file or directory."
 load = "load"
 
 
