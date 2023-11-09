@@ -265,35 +265,25 @@ The Edit Menu
 
 * :menuselection:`Edit --> Cursors --> Add cursor and go down`
 
-
-
    Shortcut: Shift+Alt+Down
 .. index:: menu; edit --> cursors --> add cursor and go up
 
 * :menuselection:`Edit --> Cursors --> Add cursor and go up`
-
-
 
    Shortcut: Shift+Alt+Up
 .. index:: menu; edit --> cursors --> cursor select next occurence of selection
 
 * :menuselection:`Edit --> Cursors --> Cursor select next occurence of selection`
 
-
-
    Shortcut: Shift+Ctrl+N
 .. index:: menu; edit --> cursors --> cursor skip next occurence of selection
 
 * :menuselection:`Edit --> Cursors --> Cursor skip next occurence of selection`
 
-
-
    Shortcut: Ctrl+Alt+N
 .. index:: menu; edit --> cursors --> add cursors to all references of entity
 
 * :menuselection:`Edit --> Cursors --> Add cursors to all references of entity`
-
-
 
    Shortcut: Shift+Ctrl+E
 .. index:: menu; edit --> insert file...
@@ -838,8 +828,6 @@ The Code Menu
 
 * :menuselection:`Code --> Selection --> Move Left`
 
-
-
    Shortcut: Ctrl+Alt+<
 .. index:: menu; code --> selection --> untabify
 
@@ -1060,8 +1048,6 @@ The Analyze Menu
 
 * :menuselection:`Analyze --> GNAThub --> Run...`
 
-
-
 .. index:: menu; analyze --> coverage --> gnatcoverage source traces --> select prebuilt runtime
 
 * :menuselection:`Analyze --> Coverage --> GNATcoverage Source Traces --> Select prebuilt runtime`
@@ -1102,25 +1088,17 @@ The Analyze Menu
 
 * :menuselection:`Analyze --> Metrics --> Compute Metrics on Current File`
 
-
-
 .. index:: menu; analyze --> metrics --> compute metrics on current project
 
 * :menuselection:`Analyze --> Metrics --> Compute Metrics on Current Project`
-
-
 
 .. index:: menu; analyze --> metrics --> compute metrics on current project & subprojects
 
 * :menuselection:`Analyze --> Metrics --> Compute Metrics on Current Project & Subprojects`
 
-
-
 .. index:: menu; analyze --> stack analysis --> analyze stack usage
 
 * :menuselection:`Analyze --> Stack Analysis --> Analyze Stack Usage`
-
-
 
 .. index:: menu; analyze --> coding standard --> edit rules file
 
@@ -1149,8 +1127,6 @@ The Analyze Menu
 .. index:: menu; analyze --> gnattest --> show not implemented tests
 
 * :menuselection:`Analyze --> GNATtest --> Show not Implemented Tests`
-
-
 
 .. index:: menu; analyze --> gnattest --> open harness project
 
@@ -1185,8 +1161,6 @@ The Analyze Menu
 .. index:: menu; analyze --> automatic code reducer --> launch automatic reducer
 
 * :menuselection:`Analyze --> Automatic code reducer --> Launch Automatic Reducer`
-
-
 
 .. index:: debug
 
