@@ -24,6 +24,7 @@ with GNAT.Strings;
 with GNATCOLL.Any_Types;
 with GNATCOLL.Traces;            use GNATCOLL.Traces;
 with GNATCOLL.Utils;
+
 with Spawn.String_Vectors;
 
 with Glib.Convert;
@@ -1148,8 +1149,7 @@ package body DAP.Clients is
       --  Do nothing unless the current project was already generated from an
       --  executable.
 
-      if Get_Registry (Self.Kernel).Tree.Status /= From_Executable
-      then
+      if Get_Registry (Self.Kernel).Tree.Status /= From_Executable then
          return;
       end if;
 
@@ -1896,17 +1896,34 @@ package body DAP.Clients is
                        and then (Self.Selected.File /= No_File or else
                                  Details_Match.Has_Capture (Bp_File_Idx))
                      then
-                        Self.Break_Source
-                          (File     =>
-                             (if Details_Match.Has_Capture (Bp_File_Idx)
-                              then To_File
-                                (Details_Match.Captured (Bp_File_Idx))
-                              else Self.Selected.File),
-                           Line      => Editable_Line_Type'Value
-                             (UTF8 (Details_Match.Captured (Bp_Line_Idx))),
-                           Temporary => Matched.Has_Capture (Bp_Temporary_Idx),
-                           Condition =>
-                             Details_Match.Captured (Bp_Condition_Idx));
+                        if Details_Match.Has_Capture (Bp_File_Idx) then
+                           --  have file:line pattern
+                           Self.Break_Source
+                             (File      => GPS.Kernel.Create
+                                (+VSS.Strings.Conversions.To_UTF_8_String
+                                     (Details_Match.Captured (Bp_File_Idx)),
+                                 Self.Kernel),
+                              Line      =>
+                                Editable_Line_Type'Value (UTF8
+                                  (Details_Match.Captured (Bp_Line_Idx))),
+                              Temporary =>
+                                Matched.Has_Capture (Bp_Temporary_Idx),
+                              Condition =>
+                                Details_Match.Captured (Bp_Condition_Idx));
+                        else
+                           --  have only line, set bp for the current
+                           --  selected file
+                           Self.Break_Source
+                             (File      =>
+                                Self.Selected.File,
+                              Line      =>
+                                Editable_Line_Type'Value (UTF8
+                                  (Details_Match.Captured (Bp_Line_Idx))),
+                              Temporary =>
+                                Matched.Has_Capture (Bp_Temporary_Idx),
+                              Condition =>
+                                Details_Match.Captured (Bp_Condition_Idx));
+                        end if;
 
                      elsif Details_Match.Has_Capture (Bp_Subprogram_Idx) then
                         Self.Break_Subprogram

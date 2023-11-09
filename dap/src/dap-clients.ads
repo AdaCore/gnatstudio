@@ -421,13 +421,18 @@ package DAP.Clients is
    function Get_Debuggee_TTY
      (Self : DAP_Client)
       return GNAT.TTY.TTY_Handle;
+   --  Returns TTY allocated for debuggee
 
    procedure Allocate_TTY (Self : in out DAP_Client);
+   --  Open TTY that will be used for debuggee
+
    procedure Close_TTY (Self : in out DAP_Client);
+   --  Close TTY that is used for debuggee
 
    procedure Set_TTY
      (Self : in out DAP_Client;
       TTY  : String);
+   --  Set the terminal of the program debugged to TTY (e.g "/dev/pts/2").
 
 private
 
