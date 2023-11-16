@@ -1413,14 +1413,13 @@ package body Bookmark_Views is
                declare
                   --  Side effect is to give focus to the source edtor module
                   --  to create the bookmark
-                  Buffer : constant Editor_Buffer'Class :=
-                    Get_Buffer_Factory (Kernel).Get
-                    (Open_Buffer => False, Open_View => False, Focus => False);
+                  Holder  : constant Controlled_Editor_Buffer_Holder :=
+                    Kernel.Get_Buffer_Factory.Get_Holder (No_File);
                   Cursor : constant Editor_Location'Class :=
-                    Buffer.Current_View.Cursor;
+                    Holder.Editor.Current_View.Cursor;
                begin
                   Mark := Get_Buffer_Factory (Kernel).Create_Marker
-                    (File    => Buffer.File,
+                    (File    => Holder.Editor.File,
                      Project => No_Project,
                      Line    => Editable_Line_Type (Cursor.Line),
                      Column  => Cursor.Column);
@@ -2771,22 +2770,21 @@ package body Bookmark_Views is
 
                      if Dynamically_Moving.Get_Pref then
                         declare
-                           Buf : constant Editor_Buffer'Class :=
-                             Kernel.Get_Buffer_Factory.Get
-                               (Get_File (Tmp.Marker),
-                                Open_Buffer => True,
-                                Open_View => False);
+                           Holder : constant
+                             Controlled_Editor_Buffer_Holder :=
+                               Kernel.Get_Buffer_Factory.Get_Holder
+                                 (Get_File (Tmp.Marker));
                         begin
-                           if Buf /= Nil_Editor_Buffer then
+                           if Holder.Editor /= Nil_Editor_Buffer then
                               declare
                                  Line : constant Editor_Location'Class :=
-                                   Buf.New_Location_At_Line
+                                   Holder.Editor.New_Location_At_Line
                                      (Integer (Get_Line (Tmp.Marker)));
                               begin
                                  Set_Attribute
                                    (Child, Line_Text_Attribute,
                                     String_To_Encoded_ASCII
-                                      (Buf.Get_Chars
+                                      (Holder.Editor.Get_Chars
                                            (Line, Line.End_Of_Line)));
                               end;
                            end if;
@@ -2898,22 +2896,21 @@ package body Bookmark_Views is
 
                         if Dynamically_Moving.Get_Pref then
                            declare
-                              Buf : constant Editor_Buffer'Class :=
-                                Kernel.Get_Buffer_Factory.Get
-                                  (Get_File (Tmp.Marker),
-                                   Open_Buffer => True,
-                                   Open_View => False);
+                              Holder : constant
+                                Controlled_Editor_Buffer_Holder :=
+                                  Kernel.Get_Buffer_Factory.Get_Holder
+                                    (Get_File (Tmp.Marker));
                            begin
-                              if Buf /= Nil_Editor_Buffer then
+                              if Holder.Editor /= Nil_Editor_Buffer then
                                  declare
                                     Line : constant Editor_Location'Class :=
-                                      Buf.New_Location_At_Line
+                                      Holder.Editor.New_Location_At_Line
                                         (Integer (Get_Line (Tmp.Marker)));
                                  begin
                                     B.Line_Text :=
                                       (False,
                                        To_Unbounded_String
-                                         (Buf.Get_Chars
+                                         (Holder.Editor.Get_Chars
                                               (Line, Line.End_Of_Line)));
                                  end;
                               end if;
