@@ -1052,6 +1052,9 @@ package body Debugger.Base_Gdb.Gdb_MI is
       Debugger.Send ("-gdb-set width 0",  Mode => Internal);
       Debugger.Send ("-gdb-set height 0", Mode => Internal);
 
+      --  To get full path to the main file when loading executable
+      Debugger.Send ("set annotate 1", Mode => Internal);
+
       --  Make sure to disable the styling for terminals so that GNAT Studio
       --  can properly parse variable values.
 
@@ -3169,6 +3172,10 @@ package body Debugger.Base_Gdb.Gdb_MI is
    -- Found_File_Name --
    ---------------------
 
+   File_Name_Pattern         : constant Pattern_Matcher := Compile
+     ("\\032\\032(.+):(\d+):\d+:[^:]+:(0x[0-9a-f]+)\\n", Multiple_Lines);
+   --  Matches a file name/line indication in the annotated gdb's output
+
    Frame_Pattern     : constant Pattern_Matcher := Compile
      ("^(\*stopped.*|\^done,)frame={(.*)}", Multiple_Lines);
 
@@ -3195,7 +3202,9 @@ package body Debugger.Base_Gdb.Gdb_MI is
       Line        : out Natural;
       Addr        : out GVD.Types.Address_Type)
    is
-      Matched : Match_Array (0 .. 6);
+      Matched  : Match_Array (0 .. 6);
+      Matched2 : Match_Array (0 .. 6);
+      Start    : Natural := Str'First;
 
       procedure Get_File_And_Line (Str : String);
       procedure Get_File_And_Line (Str : String) is
@@ -3219,6 +3228,39 @@ package body Debugger.Base_Gdb.Gdb_MI is
       Addr := Invalid_Address;
       Name := Null_Unbounded_String;
       Line := 0;
+
+      Matched (0) := No_Match;
+
+      loop
+         Match (File_Name_Pattern, Str (Start .. Str'Last), Matched2);
+         exit when Matched2 (0) = No_Match;
+         Matched := Matched2;
+         Start := Matched (0).Last + 1;
+      end loop;
+
+      if Matched (0) /= No_Match then
+         if Matched (1) /= No_Match then
+            Set_Unbounded_String
+              (Name, Str (Matched (1).First .. Matched (1).Last));
+         end if;
+
+         if Matched (2) /= No_Match then
+            if Str (Matched (2).First) = ':' then
+               Line := Natural'Value
+                 (Str (Matched (2).First + 1 .. Matched (2).Last));
+
+            else
+               Line := Natural'Value
+                 (Str (Matched (2).First .. Matched (2).Last));
+            end if;
+         end if;
+
+         if Matched (3) /= No_Match then
+            Addr := String_To_Address
+              (Str (Matched (3).First .. Matched (3).Last));
+         end if;
+         return;
+      end if;
 
       Match (Frame_Pattern, Str, Matched);
       if Matched (0) /= No_Match then
