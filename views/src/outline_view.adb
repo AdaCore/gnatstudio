@@ -73,6 +73,10 @@ with GPS.Kernel.Preferences;     use GPS.Kernel.Preferences;
 with GPS.Kernel.Scripts;         use GPS.Kernel.Scripts;
 with GPS.Search;                 use GPS.Search;
 
+------------------
+-- Outline_View --
+------------------
+
 package body Outline_View is
 
    Me : constant Trace_Handle := Create ("OUTLINE_VIEW_DEBUG", Off);
@@ -1115,6 +1119,10 @@ package body Outline_View is
               Integer (Get_Int (Model, Iter, Start_Line_Column));
             Start_Column : constant Visible_Column :=
               Visible_Column (Get_Int (Model, Iter, Start_Col_Column));
+            End_Line     : constant Integer :=
+              Integer (Get_Int (Model, Iter, Def_End_Line_Column));
+            End_Column   : constant Visible_Column :=
+              Visible_Column (Get_Int (Model, Iter, Def_End_Col_Column));
             Name         : constant String :=
               Decode_Name (Get_String (Model, Iter, Name_Column));
             Unique_ID    : constant String :=
@@ -1147,7 +1155,10 @@ package body Outline_View is
                Start_Loc    : constant Editor_Location'Class :=
                  New_Location (Buffer, Start_Line, Start_Column);
                End_Loc      : constant Editor_Location'Class :=
-                 New_Location (Buffer, Start_Line, Start_Column + Name'Length);
+                 (if End_Line > -1 and then End_Column > -1
+                  then New_Location (Buffer, End_Line, End_Column)
+                  else New_Location
+                    (Buffer, Start_Line, Start_Column + Name'Length));
             begin
                Editor.Cursor_Goto (Start_Loc, Raise_View => True);
                Select_Text (Buffer, Start_Loc, End_Loc);
