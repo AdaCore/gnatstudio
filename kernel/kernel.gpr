@@ -8,6 +8,7 @@ with "../refactoring/core/refactoring_core";
 with "../toolchains_editor/core/toolchains_core";
 with "xmlada";
 with "spawn_glib";
+with "lsp";
 
 project Kernel is
 

@@ -93,6 +93,7 @@ with DOM.Core.Nodes;            use DOM.Core, DOM.Core.Nodes;
 with DOM.Core.Documents;        use DOM.Core.Documents;
 with DOM.Core.Elements;         use DOM.Core.Elements;
 
+with URIs;
 with UTF8_Utils;                use UTF8_Utils;
 
 package body GPS.Kernel.Modules.UI is
@@ -2432,7 +2433,8 @@ package body GPS.Kernel.Modules.UI is
             for Url of Uris loop
                declare
                   File : constant Virtual_File :=
-                    Create (+Filename_From_URI (Url.all, null));
+                    Create
+                      (+Standard.URIs.Conversions.To_File (Url.all, True));
                begin
                   if File_Extension (File) = Project_File_Extension then
                      Load_Project (Kernel, File);
