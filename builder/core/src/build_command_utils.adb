@@ -697,7 +697,8 @@ package body Build_Command_Utils is
             end if;
 
          elsif Param = "TP" then
-            return Get_Python_Full_Name (Main_Project.Project_Path);
+            return Get_Python_Full_Name
+              (Main_Project.Project_Path.To_Remote (Get_Nickname (Server)));
 
          elsif Param = "T" then
             if Main /= No_File then
