@@ -200,7 +200,7 @@ class PythonSupport(object):
         </filter_and>
 
         <documentation_file>
-           <name>http://docs.python.org/2/tutorial/</name>
+           <name>http://docs.python.org/3/tutorial/</name>
            <descr>Python tutorial</descr>
            <menu>/Help/Python/Python Tutorial</menu>
            <category>Scripts</category>

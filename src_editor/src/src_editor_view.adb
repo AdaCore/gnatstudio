@@ -57,6 +57,7 @@ with Gtkada.Style;               use Gtkada.Style;
 with Pango.Layout;               use Pango.Layout;
 with Pango.Attributes;           use Pango.Attributes;
 with Pango.Tabs;                 use Pango.Tabs;
+with URIs;
 
 with VSS.Characters.Latin;
 
@@ -92,7 +93,6 @@ with Gtk.Dnd;                    use Gtk.Dnd;
 with Gdk.Dnd;
 with Gtk.Target_List;            use Gtk.Target_List;
 with Gdk.Property;               use Gdk.Property;
-with Glib.Convert;               use Glib.Convert;
 with Gtkada.Types;               use Gtkada.Types;
 
 with GUI_Utils;                  use GUI_Utils;
@@ -1330,30 +1330,35 @@ package body Src_Editor_View is
             Ignore : Src_Editor_Box.Source_Editor_Box;
          begin
             for Url of Uris loop
-               File := Create (+Filename_From_URI (Url.all, null));
-               --  Reset the data
-               Is_Opened := False;
-               In_Notebook := False;
-               Found_Child := null;
-               For_All_Views (View.Kernel, File, Is_In_Notebook'Access);
-               if Is_Opened and then not In_Notebook then
-                  --  We don't have File in the current notebook thus create
-                  --  a new file view for notebook.
-                  Ignore := New_View
-                    (View.Kernel,
-                     Get_Source_Box_From_MDI (Found_Child),
-                     No_Project);
-               else
-                  --  Only the last DnD file should steal the focus when DnD
-                  --  on Source_View "A". Otherwise, if one of the DnD file
-                  --  is already opened in Source_View "B" then all the
-                  --  files opened after it will also be opened in "B".
-                  Open_File_Action_Hook.Run
-                    (View.Kernel,
-                     File,
-                     Project  => No_Project,  --  will choose one at random
-                     New_File => False,
-                     Focus    => Uris (Uris'Last) = Url);
+               if Url /= null then
+                  --  Filename_From_URI is crashing on windows so avoid it
+                  File :=
+                    Create
+                      (+Standard.URIs.Conversions.To_File (Url.all, True));
+                  --  Reset the data
+                  Is_Opened := False;
+                  In_Notebook := False;
+                  Found_Child := null;
+                  For_All_Views (View.Kernel, File, Is_In_Notebook'Access);
+                  if Is_Opened and then not In_Notebook then
+                     --  We don't have File in the current notebook thus create
+                     --  a new file view for notebook.
+                     Ignore := New_View
+                       (View.Kernel,
+                        Get_Source_Box_From_MDI (Found_Child),
+                        No_Project);
+                  else
+                     --  Only the last DnD file should steal the focus when DnD
+                     --  on Source_View "A". Otherwise, if one of the DnD file
+                     --  is already opened in Source_View "B" then all the
+                     --  files opened after it will also be opened in "B".
+                     Open_File_Action_Hook.Run
+                       (View.Kernel,
+                        File,
+                        Project  => No_Project,  --  will choose one at random
+                        New_File => False,
+                        Focus    => Uris (Uris'Last) = Url);
+                  end if;
                end if;
             end loop;
             Gtk.Dnd.Finish
