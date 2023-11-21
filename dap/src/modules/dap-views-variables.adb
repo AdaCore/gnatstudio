@@ -2503,9 +2503,6 @@ package body DAP.Views.Variables is
          Filter    => Debugger_Stopped_Filter and Access_Filter and
            Printable_Var_Filter,
          Category  => "Debug");
-
-      --    "debug tree display local variables",
-      --    "debug tree display arguments",
    end Register_Module;
 
 end DAP.Views.Variables;
