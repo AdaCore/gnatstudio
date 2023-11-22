@@ -1654,16 +1654,12 @@ package body DAP.Views.Breakpoints is
 
       else
          declare
-            Req   : Evaluate_Request_Access :=
+            Req : Evaluate_Request_Access :=
               new Evaluate_Request (View.Kernel);
-            Frame : constant Integer := Client.Get_Selected_Frame;
          begin
             Req.Client := Client;
             Req.Parameters.arguments.expression := "info exceptions";
-            if Frame /= 0 then
-               Req.Parameters.arguments.frameId :=
-                 (Is_Set => True, Value => Frame);
-            end if;
+            Req.Parameters.arguments.frameId := Client.Get_Selected_Frame_Id;
             Req.Parameters.arguments.context :=
               (Is_Set => True, Value => DAP.Tools.Enum.repl);
             Client.Enqueue (DAP.Requests.DAP_Request_Access (Req));

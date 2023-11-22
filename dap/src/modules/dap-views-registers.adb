@@ -283,8 +283,7 @@ package body DAP.Views.Registers is
                     Name_Column));
             Req.Parameters.arguments.value :=
               VSS.Strings.Conversions.To_Virtual_String (New_Text);
-            Req.Parameters.arguments.frameId :=
-              (Is_Set => True, Value => Client.Get_Selected_Frame);
+            Req.Parameters.arguments.frameId := Client.Get_Selected_Frame_Id;
 
             Client.Enqueue (DAP.Requests.DAP_Request_Access (Req));
          end;
@@ -569,7 +568,7 @@ package body DAP.Views.Registers is
 
             Req.Client := Client;
             Req.Kind   := Kind;
-            Req.Parameters.arguments.frameId := Client.Get_Selected_Frame;
+            Req.Parameters.arguments.frameId := Client.Get_Selected_Frame_Id;
             Get_Client (Self).Enqueue (DAP.Requests.DAP_Request_Access (Req));
          end;
 

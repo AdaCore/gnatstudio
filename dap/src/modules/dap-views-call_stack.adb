@@ -47,6 +47,7 @@ with GPS.Search;                 use GPS.Search;
 with Default_Preferences;        use Default_Preferences;
 with Commands.Interactive;       use Commands.Interactive;
 with Filter_Panels;              use Filter_Panels;
+with GUI_Utils;
 
 with DAP.Modules.Preferences;
 with DAP.Requests.StackTraces;
@@ -323,6 +324,7 @@ package body DAP.Views.Call_Stack is
       GPS.Search.Free (View.Filter);
       View.Filter := Pattern;
       Self.Tree.Refilter;
+      Self.On_Location_Changed;
    end Filter_Changed;
 
    ------------------------------
@@ -715,8 +717,8 @@ package body DAP.Views.Call_Stack is
 
       View.Tree.Refilter;
 
-      if Client.Get_Selected_Frame /= -1 then
-         Gtk_New (Path, Image (Client.Get_Selected_Frame));
+      if Client.Get_Selected_Frame_Id /= -1 then
+         Gtk_New (Path, Image (Client.Get_Selected_Frame_Id));
          View.Tree.Get_Selection.Select_Path (Path);
          Path_Free (Path);
 
@@ -767,15 +769,25 @@ package body DAP.Views.Call_Stack is
    is
       use type DAP.Clients.DAP_Client_Access;
       Client : constant DAP.Clients.DAP_Client_Access := Get_Client (Self);
-      Path   : Gtk_Tree_Path;
+      Iter   : Gtk_Tree_Iter;
    begin
+      Self.Tree.Get_Selection.Unselect_All;
       if Client = null then
          return;
       end if;
 
-      Gtk_New (Path, Image (Client.Get_Selected_Frame));
-      Self.Tree.Get_Selection.Select_Path (Path);
-      Path_Free (Path);
+      if Client.Get_Selected_Frame_Id >= 0 then
+         Iter := GUI_Utils.Find_Node
+           (Model     => Self.Tree.Model,
+            Name      => Image (Client.Get_Selected_Frame_Id),
+            Column    => Frame_Id_Column,
+            Recursive => False);
+
+         if Iter /= Null_Iter then
+            Self.Tree.Get_Selection.Select_Iter
+              (Self.Tree.Convert_To_Filter_Iter (Iter));
+         end if;
+      end if;
    end On_Location_Changed;
 
    --------------
