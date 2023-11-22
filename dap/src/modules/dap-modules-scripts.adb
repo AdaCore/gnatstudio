@@ -398,7 +398,7 @@ package body DAP.Modules.Scripts is
          Inst := Nth_Arg (Data, 1, New_Class (Kernel, "Debugger"));
          Visual := DAP_Visual_Debugger_Access
            (Glib.Object.GObject'(Get_Data (Inst)));
-         Data.Set_Return_Value (Visual.Client.Get_Selected_Frame);
+         Data.Set_Return_Value (Visual.Client.Get_Selected_Frame_Id);
 
       elsif Command = "frame_up" then
          Inst := Nth_Arg (Data, 1, New_Class (Kernel, "Debugger"));

@@ -149,6 +149,10 @@ package body DAP.Clients is
      Regular_Expression := VSS.Regular_Expressions.To_Regular_Expression
        ("^\s*(down)\s*$");
 
+   Is_Frame_Pattern : constant VSS.Regular_Expressions.
+     Regular_Expression := VSS.Regular_Expressions.To_Regular_Expression
+       ("^\s*(?:frame)\s*(\d+)\s*$");
+
    Is_Catch_Exception_Pattern : constant VSS.Regular_Expressions.
      Regular_Expression := VSS.Regular_Expressions.To_Regular_Expression
        ("^\s*(catch|tcatch)\s+(exception)\s*$");
@@ -510,6 +514,29 @@ package body DAP.Clients is
    begin
       return Is_Frame_Down_Pattern.Match (Cmd).Has_Match;
    end Is_Frame_Down_Command;
+
+   ----------------------
+   -- Is_Frame_Command --
+   ----------------------
+
+   function Is_Frame_Command
+     (Self  : DAP_Client;
+      Cmd   : VSS.Strings.Virtual_String;
+      Level : out Integer)
+      return Boolean
+   is
+      pragma Unreferenced (Self);
+      Matched : VSS.Regular_Expressions.Regular_Expression_Match;
+   begin
+      Matched := Is_Frame_Pattern.Match (Cmd);
+      if Matched.Has_Capture (1) then
+         Level := Integer'Value
+           (VSS.Strings.Conversions.To_UTF_8_String (Matched.Captured (1)));
+         return True;
+      else
+         return False;
+      end if;
+   end Is_Frame_Command;
 
    ----------------------
    -- Set_Capabilities --
@@ -973,15 +1000,31 @@ package body DAP.Clients is
       end if;
    end Set_Selected_Frame;
 
-   ------------------------
-   -- Get_Selected_Frame --
-   ------------------------
+   ---------------------------
+   -- Get_Selected_Frame_Id --
+   ---------------------------
 
-   function Get_Selected_Frame
-     (Self : DAP_Client) return Integer is
+   function Get_Selected_Frame_Id
+     (Self : DAP_Client)
+      return DAP.Tools.Optional_Integer is
+   begin
+      if Self.Selected.Id >= 0 then
+         return (Is_Set => True, Value => Self.Selected.Id);
+      else
+         return (Is_Set => False);
+      end if;
+   end Get_Selected_Frame_Id;
+
+   ---------------------------
+   -- Get_Selected_Frame_Id --
+   ---------------------------
+
+   function Get_Selected_Frame_Id
+     (Self : DAP_Client)
+      return Integer is
    begin
       return Self.Selected.Id;
-   end Get_Selected_Frame;
+   end Get_Selected_Frame_Id;
 
    -------------------------
    -- Set_Selected_Thread --
@@ -1810,6 +1853,7 @@ package body DAP.Clients is
       Details_Match : VSS.Regular_Expressions.Regular_Expression_Match;
       VSS_Cmd       : Virtual_String;
       Details       : Virtual_String;
+      Level         : Integer;
 
       procedure Add_BP_For_Offset;
 
@@ -1964,6 +2008,9 @@ package body DAP.Clients is
 
                elsif Self.Is_Frame_Down_Command (VSS_Cmd) then
                   Self.Frame_Down;
+
+               elsif Self.Is_Frame_Command (VSS_Cmd, Level) then
+                  Self.Select_Frame (Level);
                end if;
 
                Request := Self.Create_Evaluate_Command
@@ -2445,16 +2492,13 @@ package body DAP.Clients is
       Entity : String;
       Label  : Gtk.Label.Gtk_Label)
    is
-      Req   : Evaluate_Request_Access := new Evaluate_Request (Self.Kernel);
-      Frame : constant Integer := Self.Get_Selected_Frame;
+      Req : Evaluate_Request_Access := new Evaluate_Request (Self.Kernel);
    begin
       Req.Label := Label;
       Ref (GObject (Label));
       Req.Parameters.arguments.expression :=
         VSS.Strings.Conversions.To_Virtual_String (Entity);
-      if Frame /= 0 then
-         Req.Parameters.arguments.frameId := (Is_Set => True, Value => Frame);
-      end if;
+      Req.Parameters.arguments.frameId := Self.Get_Selected_Frame_Id;
       Req.Parameters.arguments.context :=
         (Is_Set => True, Value => DAP.Tools.Enum.repl);
       Self.Enqueue (DAP.Requests.DAP_Request_Access (Req));
@@ -2469,8 +2513,7 @@ package body DAP.Clients is
       Id      : Breakpoint_Identifier;
       Command : VSS.Strings.Virtual_String)
    is
-      Req   : Evaluate_Request_Access := new Evaluate_Request (Self.Kernel);
-      Frame : constant Integer := Self.Get_Selected_Frame;
+      Req : Evaluate_Request_Access := new Evaluate_Request (Self.Kernel);
    begin
       Req.Kind := DAP.Clients.Command;
       Req.Parameters.arguments.expression :=
@@ -2487,10 +2530,7 @@ package body DAP.Clients is
       end if;
       Req.Parameters.arguments.expression.Append
         (VSS.Strings.Conversions.To_Virtual_String ("end"));
-
-      if Frame /= 0 then
-         Req.Parameters.arguments.frameId := (Is_Set => True, Value => Frame);
-      end if;
+      Req.Parameters.arguments.frameId := Self.Get_Selected_Frame_Id;
       Req.Parameters.arguments.context :=
         (Is_Set => True, Value => DAP.Tools.Enum.repl);
       Self.Enqueue (DAP.Requests.DAP_Request_Access (Req));
@@ -2510,9 +2550,8 @@ package body DAP.Clients is
       On_Rejected       : GNATCOLL.Scripts.Subprogram_Type := null)
       return DAP.Requests.DAP_Request_Access
    is
-      Req   : constant Evaluate_Request_Access :=
+      Req : constant Evaluate_Request_Access :=
         new Evaluate_Request (Self.Kernel);
-      Frame : constant Integer := Self.Get_Selected_Frame;
    begin
       Req.Kind   := Kind;
       Req.Client := Self.This;
@@ -2523,10 +2562,7 @@ package body DAP.Clients is
       Req.On_Rejected       := On_Rejected;
 
       Req.Parameters.arguments.expression := Cmd;
-      if Frame /= 0 then
-         Req.Parameters.arguments.frameId :=
-           (Is_Set => True, Value => Frame);
-      end if;
+      Req.Parameters.arguments.frameId := Self.Get_Selected_Frame_Id;
       Req.Parameters.arguments.context :=
         (Is_Set => True, Value => DAP.Tools.Enum.repl);
       return DAP.Requests.DAP_Request_Access (Req);
@@ -2755,18 +2791,14 @@ package body DAP.Clients is
    begin
       if Variable /= "" then
          declare
-            Req   : Evaluate_Request_Access :=
+            Req : Evaluate_Request_Access :=
               new Evaluate_Request (Self.Kernel);
-            Frame : constant Integer := Self.Get_Selected_Frame;
          begin
             Req.Kind   := Variable_Address;
             Req.Client := Self.This;
             Req.Parameters.arguments.expression := VSS.Strings.Conversions.
               To_Virtual_String ("print &(" & Variable & ")");
-            if Frame /= 0 then
-               Req.Parameters.arguments.frameId :=
-                 (Is_Set => True, Value => Frame);
-            end if;
+            Req.Parameters.arguments.frameId := Self.Get_Selected_Frame_Id;
             Req.Parameters.arguments.context :=
               (Is_Set => True, Value => DAP.Tools.Enum.repl);
             Self.Enqueue (DAP.Requests.DAP_Request_Access (Req));
