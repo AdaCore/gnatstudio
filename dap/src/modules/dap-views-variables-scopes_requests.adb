@@ -77,7 +77,7 @@ package body DAP.Views.Variables.Scopes_Requests is
 
                   Req.Parameters.arguments.expression := Self.Item.Cmd;
                   Req.Parameters.arguments.frameId :=
-                    (Is_Set => True, Value => Self.Client.Get_Selected_Frame);
+                    Self.Client.Get_Selected_Frame_Id;
                   Req.Parameters.arguments.context :=
                     (Is_Set => True, Value => DAP.Tools.Enum.repl);
 

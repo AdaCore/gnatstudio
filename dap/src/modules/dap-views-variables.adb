@@ -741,8 +741,7 @@ package body DAP.Views.Variables is
             Req.Parameters.arguments.expression := N;
             Req.Parameters.arguments.value :=
               VSS.Strings.Conversions.To_Virtual_String (Value);
-            Req.Parameters.arguments.frameId :=
-              (Is_Set => True, Value => Client.Get_Selected_Frame);
+            Req.Parameters.arguments.frameId := Client.Get_Selected_Frame_Id;
             if Inf
               and then Element (Cursor).Format /= Default_Format
             then
@@ -1290,7 +1289,7 @@ package body DAP.Views.Variables is
             if Path /= Null_Gtk_Tree_Path then
                Req.Path := Copy (Path);
             end if;
-            Req.Parameters.arguments.frameId := Client.Get_Selected_Frame;
+            Req.Parameters.arguments.frameId := Client.Get_Selected_Frame_Id;
             Result := DAP.Requests.DAP_Request_Access (Req);
 
          else
@@ -2028,8 +2027,7 @@ package body DAP.Views.Variables is
          end if;
 
          Req.Parameters.arguments.expression := Item.Cmd;
-         Req.Parameters.arguments.frameId :=
-           (Is_Set => True, Value => Req.Client.Get_Selected_Frame);
+         Req.Parameters.arguments.frameId := Req.Client.Get_Selected_Frame_Id;
          Req.Parameters.arguments.context :=
            (Is_Set => True, Value => DAP.Tools.Enum.repl);
 

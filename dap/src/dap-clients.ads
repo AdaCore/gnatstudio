@@ -282,8 +282,15 @@ package DAP.Clients is
       Address : Address_Type);
    --  Set the current Frame.
 
-   function Get_Selected_Frame
-     (Self : DAP_Client) return Integer;
+   function Get_Selected_Frame_Id
+     (Self : DAP_Client)
+      return DAP.Tools.Optional_Integer;
+   --  Returns the currently selected frame ID
+
+   function Get_Selected_Frame_Id
+     (Self : DAP_Client)
+      return Integer;
+   --  Returns the currently selected frame ID
 
    function Current_File
      (Self : in out DAP_Client) return GNATCOLL.VFS.Virtual_File;
@@ -454,14 +461,15 @@ private
       Equivalent_Elements => "=");
 
    type Frame is record
-      Id      : Integer := 0;
+      Id      : Integer := -1;
       File    : GNATCOLL.VFS.Virtual_File := GNATCOLL.VFS.No_File;
       Line    : Integer := 0;
       Address : Address_Type := Invalid_Address;
    end record;
 
    No_Frame : constant Frame :=
-     (0, GNATCOLL.VFS.No_File, 0, Invalid_Address);
+     (-1, GNATCOLL.VFS.No_File, 0, Invalid_Address);
+   --  The first frame has id=0, so no_frame has id -1
 
    type DAP_Client
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
@@ -567,20 +575,32 @@ private
    --  Set the current debugging status
 
    procedure Load_Project_From_Executable (Self : in out DAP_Client);
+   --  Creates a project based on the debugger's response about sources. Used
+   --  when the debugger is started via the --debug switch.
 
    procedure Get_StackTrace
      (Self      : in out DAP_Client;
       Thread_Id : Integer);
+   --  Sends a request to the debugger to get the current call stack.
 
    function Is_Frame_Up_Command
      (Self : DAP_Client;
       Cmd  : VSS.Strings.Virtual_String)
       return Boolean;
+   --  Is `up` command. Used to intercept console input.
 
    function Is_Frame_Down_Command
      (Self : DAP_Client;
       Cmd  : VSS.Strings.Virtual_String)
       return Boolean;
+   --  Is `down` command. Used to intercept console input.
+
+   function Is_Frame_Command
+     (Self  : DAP_Client;
+      Cmd   : VSS.Strings.Virtual_String;
+      Level : out Integer)
+      return Boolean;
+   --  Is `frame` command. Used to intercept console input.
 
    type Evaluate_Kind is
      (Hover,
