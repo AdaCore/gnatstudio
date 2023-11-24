@@ -76,7 +76,7 @@ class GNATfuzzPlugin(Module):
                 X(
                     "spin",
                     line="1",
-                    column="1",
+                    column="2",
                     label="Fuzzing cores",
                     separator="=",
                     switch="--cores",
@@ -105,6 +105,15 @@ class GNATfuzzPlugin(Module):
                     #        label="DEFER_AND_PERSIST",
                     #        value="afl_defer_and_persist",
                     #    ),
+                ),
+                X(
+                    "check",
+                    line="1",
+                    column="1",
+                    label="Disable CMPLOG (aka RedQueen)",
+                    switch="--no-cmplog",
+                    default="off",
+                    tip="Use this to deactivate the CMPLOG feature",
                 ),
             ),
         ),
@@ -554,10 +563,10 @@ class GNATfuzzPlugin(Module):
         # *** IMPORTANT ***
         # Ensure that we clear the GNATfuzz views before we launch them
         # If the views are closed, clearing is still safe and has no
-        # affect. However, if we open the views before clearing them we 
+        # effect. However, if we open the views before clearing them we
         # invoke a race condition where new test cases are loaded into
         # the view before the clear command is sent. This results in
-        # the initial tests incorrectly getting removed from the 
+        # the initial tests incorrectly getting removed from the
         # view.
 
         # Clear the GNATfuzz views
