@@ -491,7 +491,8 @@ package body DAP.Views.Consoles is
          return "";
       end if;
 
-      Client.Process_User_Command (Input, True, True);
+      Client.Process_User_Command
+        (Cmd => Input, Output_Command => False, Result_In_Console => True);
 
       return "";
    end Interpret_Command_Handler;
