@@ -56,6 +56,7 @@ with LSP.JSON_Streams;
 
 with DAP.Module;
 with DAP.Modules.Preferences;
+with DAP.Requests.Continue;
 with DAP.Requests.Evaluate;
 with DAP.Requests.Initialize;
 with DAP.Requests.Disconnects;
@@ -162,6 +163,11 @@ package body DAP.Clients is
        ("^\s*(?:(break|b)|(tbreak|tb)|(hbreak|thbreak|rbreak|thb|hb|rb))"
         & "(?:\s+(.+)?)?$");
    --  to catch breakpoint command
+
+   Is_Continue_Pattern : constant VSS.Regular_Expressions.
+     Regular_Expression := VSS.Regular_Expressions.To_Regular_Expression
+       ("^\s*(?:continue|c|fg)\s*$");
+   --  to catch the `continue` command in the console
 
    --  Bp_Regular_Idx       : constant := 1;
    Bp_Temporary_Idx     : constant := 2;
@@ -1885,6 +1891,10 @@ package body DAP.Clients is
       end Add_BP_For_Offset;
 
    begin
+      if Output_Command then
+         Self.Display_In_Debugger_Console (Cmd, Is_Command => True);
+      end if;
+
       if Tmp /= "" then
          VSS_Cmd := VSS.Strings.Conversions.To_Virtual_String (Tmp);
 
@@ -1998,11 +2008,15 @@ package body DAP.Clients is
                VSS_Cmd.Clear;
             end if;
 
-            if not VSS_Cmd.Is_Empty then
-               if Output_Command then
-                  Self.Display_In_Debugger_Console (Cmd, Is_Command => True);
-               end if;
+            --  Is the `continue` command
+            Matched := Is_Continue_Pattern.Match (VSS_Cmd);
+            if Matched.Has_Match then
+               --  Send the corresponding request
+               Self.Continue;
+               VSS_Cmd.Clear;
+            end if;
 
+            if not VSS_Cmd.Is_Empty then
                if Self.Is_Frame_Up_Command (VSS_Cmd) then
                   Self.Frame_Up;
 
@@ -2053,6 +2067,31 @@ package body DAP.Clients is
    exception
       when E : others =>
          Trace (Me, E);
+
+         if Error_Message /= null then
+            declare
+
+               Arguments : Callback_Data'Class :=
+                 Result_Message.Get_Script.Create (1);
+            begin
+               Set_Nth_Arg
+                 (Arguments, 1, Ada.Exceptions.Exception_Information (E));
+
+               declare
+                  Dummy : GNATCOLL.Any_Types.Any_Type :=
+                    Error_Message.Execute (Arguments);
+
+               begin
+                  null;
+               end;
+
+               Free (Arguments);
+            end;
+         end if;
+
+         GNATCOLL.Scripts.Free (Result_Message);
+         GNATCOLL.Scripts.Free (Error_Message);
+         GNATCOLL.Scripts.Free (Rejected);
    end Process_User_Command;
 
    ---------------------------------
@@ -2767,6 +2806,22 @@ package body DAP.Clients is
       return Visual.Client /= null
         and then not Visual.Client.Is_Ready_For_Command;
    end Command_In_Process;
+
+   --------------
+   -- Continue --
+   --------------
+
+   procedure Continue
+     (Self : in out DAP_Client)
+   is
+      Req : DAP.Requests.Continue.Continue_DAP_Request_Access;
+   begin
+      if Self.Get_Status = DAP.Types.Stopped then
+         Req := new DAP.Requests.Continue.Continue_DAP_Request (Self.Kernel);
+         Req.Parameters.arguments.threadId := Self.Get_Current_Thread;
+         Self.Enqueue (DAP.Requests.DAP_Request_Access (Req));
+      end if;
+   end Continue;
 
    ----------------------
    -- Show_Breakpoints --

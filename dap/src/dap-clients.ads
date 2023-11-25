@@ -441,6 +441,9 @@ package DAP.Clients is
       TTY  : String);
    --  Set the terminal of the program debugged to TTY (e.g "/dev/pts/2").
 
+   procedure Continue (Self : in out DAP_Client);
+   --  Sends request to continue debuggee execution
+
 private
 
    function Hash

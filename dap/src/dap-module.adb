@@ -55,7 +55,6 @@ with DAP.Modules.Persistent_Breakpoints;
 with DAP.Modules.Preferences;
 with DAP.Modules.Scripts;
 with DAP.Requests.ConfigurationDone;
-with DAP.Requests.Continue;
 with DAP.Requests.Next;
 with DAP.Requests.Step_In_Request;
 with DAP.Tools;                    use DAP.Tools;
@@ -788,17 +787,8 @@ package body DAP.Module is
       if Client.Get_Status = DAP.Types.Ready then
          Start (GPS.Kernel.Get_Kernel (Context.Context), Client);
 
-      elsif Client.Get_Status = DAP.Types.Stopped then
-         declare
-            Req : DAP.Requests.Continue.Continue_DAP_Request_Access :=
-              new DAP.Requests.Continue.Continue_DAP_Request
-                (GPS.Kernel.Get_Kernel (Context.Context));
-         begin
-            Req.Parameters.arguments.threadId :=
-              Get_Current_Debugger.Get_Current_Thread;
-            Get_Current_Debugger.Enqueue
-              (DAP.Requests.DAP_Request_Access (Req));
-         end;
+      else
+         Client.Continue;
       end if;
 
       return Commands.Success;
