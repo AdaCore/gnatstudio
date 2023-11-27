@@ -1,5 +1,6 @@
 stages:
   - build_and_test
+  - integration_tests
 
 .basic-setup:
     # Use generic_anod_ci here.
@@ -57,3 +58,18 @@ issue-check:
     - if: $CI_PIPELINE_SOURCE == 'merge_request_event'
   script:
     - require_issue # launch the verification
+
+# Manual CI for integration-testsuite
+trigger_integration_testsuite_ci:
+  stage: integration_tests
+  rules:
+    - if: $CI_PIPELINE_SOURCE == 'merge_request_event'
+      when: manual
+  trigger:
+    project: eng/shared/integration-testsuite
+    strategy: depend
+  inherit:
+    variables: false
+  variables:
+    ACI_UPSTREAM_PROJECT_ID: $CI_PROJECT_ID
+    ACI_UPSTREAM_MERGE_REQUEST_IID: $CI_MERGE_REQUEST_IID
