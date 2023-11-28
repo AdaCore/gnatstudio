@@ -1553,6 +1553,8 @@ package body CodePeer.Module is
      (Item    : access Glib.Object.GObject_Record'Class;
       Context : Module_Context)
    is
+      Ensure_Build_Mode : CodePeer_Build_Mode (Context.Module.Kernel);
+      pragma Unreferenced (Ensure_Build_Mode);
       Messages : constant CodePeer.Message_Vectors.Vector :=
         CodePeer.Message_Review_Dialogs.Message_Review_Dialog_Record'Class
           (Item.all).Get_Messages;
@@ -1721,9 +1723,10 @@ package body CodePeer.Module is
       Messages    : CodePeer.Message_Vectors.Vector;
       Need_Reload : Boolean)
    is
+      Ensure_Build_Mode : CodePeer_Build_Mode (Self.Kernel);
+      pragma Unreferenced (Ensure_Build_Mode);
       Review : CodePeer.Multiple_Message_Review_Dialogs.Message_Review_Dialog;
       Loaded : Boolean := not Need_Reload or else CodePeer.Is_GNATSAS;
-
    begin
       --  Check that all messages have loaded audit trail.
       --  In client/server mode, always reload since another user might have
