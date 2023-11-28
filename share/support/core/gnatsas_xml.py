@@ -378,6 +378,9 @@ many cores as available on the machine)." />
           <arg>-P%PP</arg>
           <arg>%X</arg>
        </command-line>
+       <output-parsers>
+         {output_parsers}
+       </output-parsers>
     </target>
 
     <target-model name="gnatsas_msg_reader_csv" category="">
@@ -430,6 +433,9 @@ many cores as available on the machine)." />
           <arg>%X</arg>
           <arg>--out=gnatsas.csv</arg>
        </command-line>
+       <output-parsers>
+        {output_parsers}
+       </output-parsers>
     </target>
 
     <target model="gprclean" category="GNATSAS" name="Clean GNATSAS Messages"
@@ -494,6 +500,9 @@ many cores as available on the machine)." />
           <arg>%X</arg>
           <arg>--show-annotations</arg>
        </command-line>
+       <output-parsers>
+        {output_parsers}
+       </output-parsers>
     </target>
 
     <target-model name="gnatsas_load_report" category="">
@@ -526,6 +535,9 @@ many cores as available on the machine)." />
           <arg>%Fp</arg>
           <arg>--show-annotations</arg>
        </command-line>
+       <output-parsers>
+        {output_parsers}
+       </output-parsers>
     </target>
 
     <target-model name="gnatsas_analyze" category="">
@@ -580,6 +592,9 @@ many cores as available on the machine)."/>
           <arg>%X</arg>
           <arg>--progress-bar=gnat-studio</arg>
        </command-line>
+       <output-parsers>
+        {output_parsers}
+       </output-parsers>
     </target>
 
     <target model="gnatsas_analyze" category="GNATSAS" name="Run GNATSAS..."
@@ -596,6 +611,9 @@ many cores as available on the machine)."/>
           <arg>%X</arg>
           <arg>--progress-bar=gnat-studio</arg>
        </command-line>
+       <output-parsers>
+        {output_parsers}
+       </output-parsers>
     </target>
 
     <target model="gnatsas_analyze" category="GNATSAS"
@@ -615,6 +633,9 @@ many cores as available on the machine)."/>
           <arg>%fp</arg>
           <arg>--progress-bar=gnat-studio</arg>
        </command-line>
+       <output-parsers>
+        {output_parsers}
+       </output-parsers>
     </target>
 
     <target-model name="gnatsas_report" category="GNATSAS">
@@ -643,6 +664,9 @@ many cores as available on the machine)."/>
           <arg>%X</arg>
           <arg>--show-annotations</arg>
        </command-line>
+       <output-parsers>
+        {output_parsers}
+       </output-parsers>
     </target>
 
     <target-model name="gnatsas_review" category="GNATSAS">
@@ -671,6 +695,9 @@ many cores as available on the machine)."/>
           <arg>%X</arg>
           <arg>--gs-request</arg>
        </command-line>
+       <output-parsers>
+        {output_parsers}
+       </output-parsers>
     </target>
 
     <target-model name="gnatsas_baseline" category="GNATSAS">
@@ -698,6 +725,9 @@ many cores as available on the machine)."/>
           <arg>%X</arg>
           <arg>--bump-baseline</arg>
        </command-line>
+       <output-parsers>
+        {output_parsers}
+       </output-parsers>
     </target>
 
     <target model="gnatsas_baseline" category="GNATSAS"
@@ -714,6 +744,9 @@ many cores as available on the machine)."/>
           <arg>%X</arg>
           <arg>--set-baseline=%Fp</arg>
        </command-line>
+       <output-parsers>
+        {output_parsers}
+       </output-parsers>
     </target>
 
     <target model="gnatsas_baseline" category="GNATSAS"
@@ -730,6 +763,9 @@ many cores as available on the machine)."/>
           <arg>%X</arg>
           <arg>--set-current=%Fp</arg>
        </command-line>
+       <output-parsers>
+        {output_parsers}
+       </output-parsers>
     </target>
   </GNATSAS>
 """
