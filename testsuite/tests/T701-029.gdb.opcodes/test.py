@@ -19,16 +19,9 @@ def test_driver():
 
     debug = GPS.Debugger.get()
 
-    if mode == "Mode:Dap":
-        # to have valid address
-        debug.start()
-        yield wait_until_not_busy(debug)
-
     # Open the assembly view
     GPS.execute_action("open assembly view")
     yield wait_for_mdi_child("Assembly")
-    if mode == "Mode:Dap":
-        yield wait_DAP_server("disassemble")
 
     assembly = GPS.MDI.get("Assembly").pywidget()
     model = get_widgets_by_type(Gtk.TreeView, assembly)[0].get_model()
