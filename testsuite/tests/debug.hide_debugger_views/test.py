@@ -35,11 +35,6 @@ def test_driver():
 
     # Closing the debugger
     debug.close()
-    if mode == "Mode:Dap":
-        yield wait_DAP_server("disconnect")
-        #  we need some time after disconnect
-        #  to load default perspective
-        yield timeout(100)
     yield wait_idle()
 
     gps_assert(len(GPS.MDI.children()),

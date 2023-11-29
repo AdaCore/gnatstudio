@@ -22,12 +22,8 @@ def test_driver():
     debug = GPS.Debugger.get()
     yield wait_until_not_busy(debug)
     
-    if mode == "Mode:Dap":
-        debug.start()
-        NAME_COLUMN = 1
-    else:
-        debug.send("run")
-        NAME_COLUMN = 2
+    debug.send("run")
+    NAME_COLUMN = 2
 
     GPS.execute_action("open threads debugger window")
     yield wait_for_mdi_child("Threads")

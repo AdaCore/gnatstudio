@@ -1,0 +1,11 @@
+project Default is
+
+   for Source_Dirs use (".");
+   for Main use ("demo1");
+
+   package Builder is
+      for Switches ("demo1.adb") use ("-g");
+   end Builder;
+
+end Default;
+

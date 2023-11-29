@@ -1,0 +1,3 @@
+title: 'dap.SA28-021.unknown_variable'
+skip:
+    - [SKIP, 'env.valgrind_cmd != []']

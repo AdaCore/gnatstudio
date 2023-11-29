@@ -19,10 +19,6 @@ def test_driver():
     yield wait_idle()
     
     debug = GPS.Debugger.get()
-    if mode == "Mode:Dap":
-        # to have the valid address
-        debug.start()
-
     # Open the Breakpoints view
     GPS.execute_action("open breakpoints editor")
     yield wait_for_mdi_child('Breakpoints')
