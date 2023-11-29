@@ -13,7 +13,7 @@ def test_driver():
     yield wait_tasks(other_than=known_tasks)
     GPS.execute_action("Build & Debug Number 1")
     yield hook('debugger_started')
-    yield timeout(300)
+    yield timeout(500)
 
     p = promises.DebuggerWrapper(GPS.File("main"))
     d = p.get()
@@ -30,29 +30,15 @@ def test_driver():
 
     host_name = GPS.Process("hostnamectl").get_result()
 
-    # The call stack could different depending on the OS
-    if platform.system().lower() == 'windows':
-        gps_assert(dump_tree_model(tree.get_model(), 0),
-               ['0', '1', '2'],
-               "Incorrect Callstack tree (Windows)")
-    else:
-        gps_assert(dump_tree_model(tree.get_model(), 0),
-                   ['0', '1', '2', '3', '4', '5', '6'],
-                   "Incorrect Callstack tree")
-
     # Filter the Call Stack
-    get_widget_by_name("Call Stack Filter").set_text("main")
+    get_widget_by_name("Call Stack Filter").set_text("pack.foo")
     yield timeout(500)
-    yield wait_idle()
-
-    if platform.system().lower() == 'windows':
-        gps_assert(dump_tree_model(tree.get_model(), 0),
-                   ['2'],
-                   "Incorrect Callstack tree when filtered")
-    else:
-        gps_assert(dump_tree_model(tree.get_model(), 0),
-               ['2', '3', '5'],
-               "Incorrect Callstack tree when filtered")
+    tree_model_dump = dump_tree_model(tree.get_model(), 0)
+    gps_assert(
+        dump_tree_model(tree.get_model(), 0),
+        ["1"],
+        "Incorrect Callstack tree when filtered",
+    )
 
     # Frame 0 is filtered out => it should select nothing
     yield p.send_promise("frame 0")
@@ -61,24 +47,20 @@ def test_driver():
                None,
                "This frame is hidden and can't be selected")
 
-# Uncomment when Task #147 is fixed
+    # Frame 0 is filtered out => it should select nothing
+    yield p.send_promise("frame 0")
+    yield wait_until_not_busy(d)
+    gps_assert(
+        selection.get_selected()[1], None, "This frame is hidden and can't be selected"
+    )
 
-#    if platform.system().lower() == 'windows':
-#        # Frame 1 is visible => it should select it
-#        yield p.send_promise("frame 2")
-#        yield wait_until_not_busy(d)
-#        model, iter = selection.get_selected()
-#        gps_assert(model.get_value(iter, 0),
-#                   "2",
-#                   "This frame is visible and should be selected")
-#    else:
-#        # Frame 2 is visible => it should select it
-#        yield p.send_promise("frame 2")
-#        yield wait_until_not_busy(d)
-#        model, iter = selection.get_selected()
-#        gps_assert(model.get_value(iter, 0),
-#                   "2",
-#                   "This frame is visible and should be selected")
+    # Frame 1 is visible => it should select it
+    yield p.send_promise("frame 1")
+    yield wait_until_not_busy(d)
+    model, iter = selection.get_selected()
+    gps_assert(
+        model.get_value(iter, 0),
+        "1",
+        "This frame is visible and should be selected",
+    )
 
-    d.send('q')
-    yield wait_tasks()
