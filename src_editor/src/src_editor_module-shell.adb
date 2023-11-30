@@ -3198,11 +3198,11 @@ package body Src_Editor_Module.Shell is
          Params  => (1 => Param ("location"),
                      2 => Param ("name"),
                      3 => Param ("new_name"),
-                     4 => Param ("make_writable"),
-                     5 => Param ("auto_save"),
-                     6 => Param ("include_overriding"),
-                     7 => Param ("in_comments"),
-                     8 => Param ("allow_file_renaming")),
+                     4 => Param ("make_writable", Optional => True),
+                     5 => Param ("auto_save", Optional => True),
+                     6 => Param ("include_overriding", Optional => True),
+                     7 => Param ("in_comments", Optional => True),
+                     8 => Param ("allow_file_renaming", Optional => True)),
          Class   => EditorBuffer,
          Handler => Buffer_Cmds'Access);
       Register_Command
