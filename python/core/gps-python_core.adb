@@ -49,6 +49,7 @@ package body GPS.Python_Core is
                Register_Python_Scripting
                  (Kernel.Scripts,
                   Module       => "GPS",
+                  Program_Name => "gnatstudio",
                   Python_Home  => Packaged_Python_Location.Display_Full_Name);
             end;
 
@@ -56,6 +57,7 @@ package body GPS.Python_Core is
             Register_Python_Scripting
               (Kernel.Scripts,
                Module       => "GPS",
+               Program_Name => "gnatstudio",
                Python_Home  =>
                  VSS.Strings.Conversions.To_UTF_8_String (Python_Home));
          end if;
