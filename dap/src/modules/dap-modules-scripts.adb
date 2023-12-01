@@ -217,10 +217,10 @@ package body DAP.Modules.Scripts is
             --  Load_Executable : constant Boolean := Nth_Arg (Data, 5, False);
          begin
             Visual := DAP.Module.Initialize_Debugger
-              (Kernel  => Kernel,
-               Project => GPS.Kernel.Project.Get_Project (Kernel),
-               File    => File,
-               Args    => Nth_Arg (Data, 2, "")).Get_Visual;
+              (Kernel          => Kernel,
+               Project         => GPS.Kernel.Project.Get_Project (Kernel),
+               File            => File,
+               Executable_Args => Nth_Arg (Data, 2, "")).Get_Visual;
 
             Set_Return_Value
               (Data, Get_Or_Create_Instance (Get_Script (Data), Visual));

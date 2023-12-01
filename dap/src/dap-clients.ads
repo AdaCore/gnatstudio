@@ -86,10 +86,10 @@ package DAP.Clients is
    procedure Initialize (Self : not null access DAP_Client);
 
    procedure Start
-     (Self    : in out DAP_Client;
-      Project : GNATCOLL.Projects.Project_Type;
-      File    : GNATCOLL.VFS.Virtual_File;
-      Args    : String);
+     (Self               : in out DAP_Client;
+      Project            : GNATCOLL.Projects.Project_Type;
+      File               : GNATCOLL.VFS.Virtual_File;
+      Executable_Args    : String);
    --  Start DAP adapter
 
    function Is_Stopped (Self : DAP_Client) return Boolean;
@@ -478,12 +478,12 @@ private
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
       Id     : Positive) is new LSP.Raw_Clients.Raw_Client
    with record
-      This           : DAP_Client_Access := DAP_Client'Unchecked_Access;
-      Visual         : DAP_Visual_Debugger_Access;
-      Project        : GNATCOLL.Projects.Project_Type;
-      Executable     : GNATCOLL.VFS.Virtual_File;
-      Args           : Ada.Strings.Unbounded.Unbounded_String;
-      Source_Files   : VSS.String_Vectors.Virtual_String_Vector;
+      This            : DAP_Client_Access := DAP_Client'Unchecked_Access;
+      Visual          : DAP_Visual_Debugger_Access;
+      Project         : GNATCOLL.Projects.Project_Type;
+      Executable      : GNATCOLL.VFS.Virtual_File;
+      Executable_Args : Ada.Strings.Unbounded.Unbounded_String;
+      Source_Files    : VSS.String_Vectors.Virtual_String_Vector;
 
       Is_Attached                : Boolean := False;
       Is_Debuggee_Started_Called : Boolean := False;

@@ -35,16 +35,23 @@ package DAP.Module is
    --  Terminate all debuggers
 
    procedure Initialize_Debugger
-     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
-      Args   : String);
+     (Kernel          : access GPS.Kernel.Kernel_Handle_Record'Class;
+      File            : GNATCOLL.VFS.Virtual_File := No_File;
+      Project         : Project_Type := No_Project;
+      Executable_Args : String := "");
    function Initialize_Debugger
-     (Kernel  : access GPS.Kernel.Kernel_Handle_Record'Class;
-      File    : GNATCOLL.VFS.Virtual_File;
-      Project : Project_Type;
-      Args    : String)
+     (Kernel          : access GPS.Kernel.Kernel_Handle_Record'Class;
+      File            : GNATCOLL.VFS.Virtual_File := No_File;
+      Project         : Project_Type := No_Project;
+      Executable_Args : String := "")
       return DAP.Clients.DAP_Client_Access;
-   --  Initialize the debugger. Uses when debugging is demanded
-   --  by the command line switch.
+   --  Initialize a DAP debugging session.
+   --  File and Project are used to refer to the executable we want to debug.
+   --  When not specified, the debugger will start without any executable to
+   --  debug: this is the case when the user wants to attach to an already
+   --  running executable for instance.
+   --  Executable_Args contain the extra arguments that will be passed
+   --  to the debugged executable.
 
    procedure Finished (Id : Positive);
    --  Called when some debugger is finished
