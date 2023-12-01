@@ -1029,7 +1029,22 @@
 				},
 				"program": {
                                         "type": "string"
-                                }
+                                },
+                "args": {
+					"type": "array",
+					"items": {
+						"type": "string"
+					},
+                    "description": "Extension. If provided, this should be an array of strings.\nThese strings are provided as command-line\narguments to the inferior, as if by set args."
+                },
+                "cwd": {
+                    "type": "string",
+                    "description": "Extension. If provided, this should be a string. gdb will change its working directory to this directory, as if by\nthe cd command (see Working Directory). The launched program will inherit this as its working\ndirectory. Note that change of directory happens before the program parameter is processed. This\nwill affect the result if program is a relative filename."
+                },
+                "stopAtBeginningOfMainSubprogram": {
+                    "type": "boolean",
+                    "description": "Extension. If provided, this must be a boolean. When ‘True’, gdb will set a temporary breakpoint at the\nprogram's main procedure, using the same approach as the start command. See Starting."
+                }
 			}
 		},
 		"LaunchResponse": {
@@ -1062,7 +1077,15 @@
 				"__restart": {
 					"type": [ "array", "boolean", "integer", "null", "number", "object", "string" ],
 					"description": "Arbitrary data from the previous, restarted session.\nThe data is sent as the `restart` attribute of the `terminated` event.\nThe client should leave the data intact."
-				}
+				},
+                "pid": {
+                    "type": "integer",
+                    "description": "Extension. The process ID to which gdb should attach. See Attach."
+                },
+                "target": {
+                    "type": "string",
+                    "description": "Extension. The target to which gdb should connect. This is a string and is passed to the target remote\ncommand. See Connecting."
+                }
 			}
 		},
 		"AttachResponse": {

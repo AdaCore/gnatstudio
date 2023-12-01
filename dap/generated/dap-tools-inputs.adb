@@ -3615,7 +3615,8 @@ package body DAP.Tools.Inputs is
    end Input_LoadedSourcesRequest;
 
    package LaunchRequestArguments_Minimal_Perfect_Hash is new Minimal_Perfect_Hash
-     (["noDebug", "__restart", "program"]);
+     (["noDebug", "__restart", "program", "args", "cwd",
+       "stopAtBeginningOfMainSubprogram"]);
 
    procedure Input_LaunchRequestArguments
      (Reader  : in out VSS.JSON.Pull_Readers.JSON_Pull_Reader'Class;
@@ -3650,6 +3651,43 @@ package body DAP.Tools.Inputs is
                   when 3 =>  --  program
                      if Reader.Is_String_Value then
                         Value.program := Reader.String_Value;
+                        Reader.Read_Next;
+                     else
+                        Success := False;
+                     end if;
+                  when 4 =>  --  args
+                     if Success and Reader.Is_Start_Array then
+                        Reader.Read_Next;
+                        while Success and not Reader.Is_End_Array loop
+                           declare
+                              Item : VSS.Strings.Virtual_String;
+                           begin
+                              if Reader.Is_String_Value then
+                                 Item := Reader.String_Value;
+                                 Reader.Read_Next;
+                              else
+                                 Success := False;
+                              end if;
+                              Value.args.Append (Item);
+                           end;
+                        end loop;
+                        if Success then
+                           Reader.Read_Next;  --  skip End_Array
+                        end if;
+                     else
+                        Success := False;
+                     end if;
+                  when 5 =>  --  cwd
+                     if Reader.Is_String_Value then
+                        Value.cwd := Reader.String_Value;
+                        Reader.Read_Next;
+                     else
+                        Success := False;
+                     end if;
+                  when 6 =>  --  stopAtBeginningOfMainSubprogram
+                     if Reader.Is_Boolean_Value then
+                        Value.stopAtBeginningOfMainSubprogram :=
+                          Reader.Boolean_Value;
                         Reader.Read_Next;
                      else
                         Success := False;
@@ -4296,7 +4334,7 @@ package body DAP.Tools.Inputs is
    end Input_RestartFrameRequest;
 
    package AttachRequestArguments_Minimal_Perfect_Hash is new Minimal_Perfect_Hash
-     (["__restart"]);
+     (["__restart", "pid", "target"]);
 
    procedure Input_AttachRequestArguments
      (Reader  : in out VSS.JSON.Pull_Readers.JSON_Pull_Reader'Class;
@@ -4321,6 +4359,25 @@ package body DAP.Tools.Inputs is
                case Index is
                   when 1 =>  --  __restart
                      Input_Any_Value (Reader, Value.restart, Success);
+                  when 2 =>  --  pid
+                     Value.pid := (Is_Set => True, Value => <>);
+                     if Reader.Is_Number_Value
+                       and then Reader.Number_Value.Kind =
+                         VSS.JSON.JSON_Integer
+                     then
+                        Value.pid.Value :=
+                          Integer (Reader.Number_Value.Integer_Value);
+                        Reader.Read_Next;
+                     else
+                        Success := False;
+                     end if;
+                  when 3 =>  --  target
+                     if Reader.Is_String_Value then
+                        Value.target := Reader.String_Value;
+                        Reader.Read_Next;
+                     else
+                        Success := False;
+                     end if;
                   when others =>
                      Reader.Skip_Current_Value;
                end case;
