@@ -662,11 +662,9 @@ package body DAP.Module is
 
    overriding function Execute
      (Command : access Initialize_Debugger_Command;
-      Context : Interactive_Command_Context) return Command_Return_Type
-   is
-      Dummy : DAP.Clients.DAP_Client_Access;
+      Context : Interactive_Command_Context) return Command_Return_Type is
    begin
-      Dummy := Debug_Init
+      Initialize_Debugger
         (Kernel          => Get_Kernel (Context.Context),
          Project         => Command.Project,
          File            => Command.Exec,
