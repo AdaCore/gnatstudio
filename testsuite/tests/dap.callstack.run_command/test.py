@@ -28,9 +28,10 @@ def test_driver():
     view = GPS.MDI.get("Call Stack")
     tree = get_widgets_by_type(Gtk.TreeView, view.pywidget())[0]
     model = tree.get_model()
-    # The view should be empty by default
+    # The view should contains "No data" by default or when the call
+    # stack is not accessible
     gps_assert(dump_tree_model(model, NAME_COLUMN),
-               [],
+               ["No data"],
                "Wrong content when opening the callstack")
 
     debug.send("run")
