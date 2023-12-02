@@ -62,6 +62,7 @@ private
           (seq       => 0,
            arguments =>
              (noDebug => False,
+              stopAtBeginningOfMainSubprogram => False,
               others  => <>));
    end record;
 

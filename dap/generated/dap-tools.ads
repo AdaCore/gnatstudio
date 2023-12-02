@@ -585,7 +585,7 @@ package DAP.Tools is
       threadId     : Integer;
       --  Specifies the thread for which to resume execution for one step (of
       --  the given granularity).
-      singleThread : Boolean;
+      singleThread : Boolean := Boolean'First;
       --  If this flag is true, all other suspended threads are not resumed.
       granularity  : Enum.Optional_SteppingGranularity;
       --  Stepping granularity. If no granularity is specified, a granularity
@@ -705,7 +705,7 @@ package DAP.Tools is
       --  The code locations of the breakpoints.
       lines          : Integer_Vector;
       --  Deprecated: The code locations of the breakpoints.
-      sourceModified : Boolean;
+      sourceModified : Boolean := Boolean'First;
       --  A value of true indicates that the underlying source has been
       --  modified which results in new breakpoint locations.
    end record;
@@ -734,9 +734,9 @@ package DAP.Tools is
       --  Logical full path to the module. The exact definition is
       --  implementation defined, but usually this would be a full path to
       --  the on-disk file for the module.
-      isOptimized    : Boolean;
+      isOptimized    : Boolean := Boolean'First;
       --  True if the module is optimized.
-      isUserCode     : Boolean;
+      isUserCode     : Boolean := Boolean'First;
       --  True if the module is considered 'user code' by a debugger that
       --  supports 'Just My Code'.
       version        : VSS.Strings.Virtual_String;
@@ -785,7 +785,7 @@ package DAP.Tools is
    type ContinuedEvent_body is record
       threadId            : Integer;
       --  The thread which was continued.
-      allThreadsContinued : Boolean;
+      allThreadsContinued : Boolean := Boolean'First;
       --  If `allThreadsContinued` is true, a debug adapter can announce that
       --  all threads have continued.
    end record;
@@ -816,6 +816,11 @@ package DAP.Tools is
       --  Arbitrary data from the previous, restarted session. The data is
       --  sent as the `restart` attribute of the `terminated` event. The
       --  client should leave the data intact.
+      pid     : Optional_Integer;
+      --  Extension. The process ID to which gdb should attach. See Attach.
+      target  : VSS.Strings.Virtual_String;
+      --  Extension. The target to which gdb should connect. This is a string
+      --  and is passed to the target remote command. See Connecting.
    end record;
 
    type Optional_AttachRequestArguments (Is_Set : Boolean := False) is record
@@ -842,7 +847,7 @@ package DAP.Tools is
    end record;
 
    type ValueFormat is record
-      hex : Boolean;
+      hex : Boolean := Boolean'First;
       --  Display the value in hex.
    end record;
 
@@ -940,102 +945,102 @@ package DAP.Tools is
    end record;
 
    type Capabilities is record
-      supportsConfigurationDoneRequest      : Boolean;
+      supportsConfigurationDoneRequest      : Boolean := Boolean'First;
       --  The debug adapter supports the `configurationDone` request.
-      supportsFunctionBreakpoints           : Boolean;
+      supportsFunctionBreakpoints           : Boolean := Boolean'First;
       --  The debug adapter supports function breakpoints.
-      supportsConditionalBreakpoints        : Boolean;
+      supportsConditionalBreakpoints        : Boolean := Boolean'First;
       --  The debug adapter supports conditional breakpoints.
-      supportsHitConditionalBreakpoints     : Boolean;
+      supportsHitConditionalBreakpoints     : Boolean := Boolean'First;
       --  The debug adapter supports breakpoints that break execution after a
       --  specified number of hits.
-      supportsEvaluateForHovers             : Boolean;
+      supportsEvaluateForHovers             : Boolean := Boolean'First;
       --  The debug adapter supports a (side effect free) `evaluate` request
       --  for data hovers.
       exceptionBreakpointFilters : ExceptionBreakpointsFilter_Vector;
       --  Available exception filter options for the `setExceptionBreakpoints`
       --  request.
-      supportsStepBack                      : Boolean;
+      supportsStepBack                      : Boolean := Boolean'First;
       --  The debug adapter supports stepping back via the `stepBack` and
       --  `reverseContinue` requests.
-      supportsSetVariable                   : Boolean;
+      supportsSetVariable                   : Boolean := Boolean'First;
       --  The debug adapter supports setting a variable to a value.
-      supportsRestartFrame                  : Boolean;
+      supportsRestartFrame                  : Boolean := Boolean'First;
       --  The debug adapter supports restarting a frame.
-      supportsGotoTargetsRequest            : Boolean;
+      supportsGotoTargetsRequest            : Boolean := Boolean'First;
       --  The debug adapter supports the `gotoTargets` request.
-      supportsStepInTargetsRequest          : Boolean;
+      supportsStepInTargetsRequest          : Boolean := Boolean'First;
       --  The debug adapter supports the `stepInTargets` request.
-      supportsCompletionsRequest            : Boolean;
+      supportsCompletionsRequest            : Boolean := Boolean'First;
       --  The debug adapter supports the `completions` request.
       completionTriggerCharacters : VSS.String_Vectors.Virtual_String_Vector;
       --  The set of characters that should trigger completion in a REPL. If
       --  not specified, the UI should assume the `.` character.
-      supportsModulesRequest                : Boolean;
+      supportsModulesRequest                : Boolean := Boolean'First;
       --  The debug adapter supports the `modules` request.
       additionalModuleColumns               : ColumnDescriptor_Vector;
       --  The set of additional module information exposed by the debug
       --  adapter.
       supportedChecksumAlgorithms           : ChecksumAlgorithm_Vector;
       --  Checksum algorithms supported by the debug adapter.
-      supportsRestartRequest                : Boolean;
+      supportsRestartRequest                : Boolean := Boolean'First;
       --  The debug adapter supports the `restart` request. In this case a
       --  client should not implement `restart` by terminating and relaunching
       --  the adapter but by calling the `restart` request.
-      supportsExceptionOptions              : Boolean;
+      supportsExceptionOptions              : Boolean := Boolean'First;
       --  The debug adapter supports `exceptionOptions` on the
       --  `setExceptionBreakpoints` request.
-      supportsValueFormattingOptions        : Boolean;
+      supportsValueFormattingOptions        : Boolean := Boolean'First;
       --  The debug adapter supports a `format` attribute on the `stackTrace`,
       --  `variables`, and `evaluate` requests.
-      supportsExceptionInfoRequest          : Boolean;
+      supportsExceptionInfoRequest          : Boolean := Boolean'First;
       --  The debug adapter supports the `exceptionInfo` request.
-      supportTerminateDebuggee              : Boolean;
+      supportTerminateDebuggee              : Boolean := Boolean'First;
       --  The debug adapter supports the `terminateDebuggee` attribute on the
       --  `disconnect` request.
-      supportSuspendDebuggee                : Boolean;
+      supportSuspendDebuggee                : Boolean := Boolean'First;
       --  The debug adapter supports the `suspendDebuggee` attribute on the
       --  `disconnect` request.
-      supportsDelayedStackTraceLoading      : Boolean;
+      supportsDelayedStackTraceLoading      : Boolean := Boolean'First;
       --  The debug adapter supports the delayed loading of parts of the stack,
       --  which requires that both the `startFrame` and `levels` arguments and
       --  the `totalFrames` result of the `stackTrace` request are supported.
-      supportsLoadedSourcesRequest          : Boolean;
+      supportsLoadedSourcesRequest          : Boolean := Boolean'First;
       --  The debug adapter supports the `loadedSources` request.
-      supportsLogPoints                     : Boolean;
+      supportsLogPoints                     : Boolean := Boolean'First;
       --  The debug adapter supports log points by interpreting the
       --  `logMessage` attribute of the `SourceBreakpoint`.
-      supportsTerminateThreadsRequest       : Boolean;
+      supportsTerminateThreadsRequest       : Boolean := Boolean'First;
       --  The debug adapter supports the `terminateThreads` request.
-      supportsSetExpression                 : Boolean;
+      supportsSetExpression                 : Boolean := Boolean'First;
       --  The debug adapter supports the `setExpression` request.
-      supportsTerminateRequest              : Boolean;
+      supportsTerminateRequest              : Boolean := Boolean'First;
       --  The debug adapter supports the `terminate` request.
-      supportsDataBreakpoints               : Boolean;
+      supportsDataBreakpoints               : Boolean := Boolean'First;
       --  The debug adapter supports data breakpoints.
-      supportsReadMemoryRequest             : Boolean;
+      supportsReadMemoryRequest             : Boolean := Boolean'First;
       --  The debug adapter supports the `readMemory` request.
-      supportsWriteMemoryRequest            : Boolean;
+      supportsWriteMemoryRequest            : Boolean := Boolean'First;
       --  The debug adapter supports the `writeMemory` request.
-      supportsDisassembleRequest            : Boolean;
+      supportsDisassembleRequest            : Boolean := Boolean'First;
       --  The debug adapter supports the `disassemble` request.
-      supportsCancelRequest                 : Boolean;
+      supportsCancelRequest                 : Boolean := Boolean'First;
       --  The debug adapter supports the `cancel` request.
-      supportsBreakpointLocationsRequest    : Boolean;
+      supportsBreakpointLocationsRequest    : Boolean := Boolean'First;
       --  The debug adapter supports the `breakpointLocations` request.
-      supportsClipboardContext              : Boolean;
+      supportsClipboardContext              : Boolean := Boolean'First;
       --  The debug adapter supports the `clipboard` context value in the
       --  `evaluate` request.
-      supportsSteppingGranularity           : Boolean;
+      supportsSteppingGranularity           : Boolean := Boolean'First;
       --  The debug adapter supports stepping granularities (argument
       --  `granularity`) for the stepping requests.
-      supportsInstructionBreakpoints        : Boolean;
+      supportsInstructionBreakpoints        : Boolean := Boolean'First;
       --  The debug adapter supports adding breakpoints based on instruction
       --  references.
-      supportsExceptionFilterOptions        : Boolean;
+      supportsExceptionFilterOptions        : Boolean := Boolean'First;
       --  The debug adapter supports `filterOptions` as an argument on the
       --  `setExceptionBreakpoints` request.
-      supportsSingleThreadExecutionRequests : Boolean;
+      supportsSingleThreadExecutionRequests : Boolean := Boolean'First;
       --  The debug adapter supports the `singleThread` property on the
       --  execution requests (`continue`, `next`, `stepIn`, `stepOut`,
       --  `reverseContinue`, `stepBack`).
@@ -1198,7 +1203,7 @@ package DAP.Tools is
       --  End position of the range covered by the stack frame. It is measured
       --  in UTF-16 code units and the client capability `columnsStartAt1`
       --  determines whether it is 0- or 1-based.
-      canRestart                  : Boolean;
+      canRestart                  : Boolean := Boolean'First;
       --  Indicates whether this frame can be restarted with the `restart`
       --  request. Clients should only use this if the debug adapter
       --  supports the `restart` request and the corresponding capability
@@ -1269,10 +1274,10 @@ package DAP.Tools is
       --  A help text providing additional information about the exception
       --  filter. This string is typically shown as a hover and can be
       --  translated.
-      default              : Boolean;
+      default              : Boolean := Boolean'First;
       --  Initial value of the filter option. If not specified a value false is
       --  assumed.
-      supportsCondition    : Boolean;
+      supportsCondition    : Boolean := Boolean'First;
       --  Controls whether a condition can be specified for this filter option.
       --  If false or missing, a condition can not be set.
       conditionDescription : VSS.Strings.Virtual_String;
@@ -1358,14 +1363,29 @@ package DAP.Tools is
    end record;
 
    type LaunchRequestArguments is record
-      noDebug : Boolean;
+      noDebug                         : Boolean := Boolean'First;
       --  If true, the launch request should launch the program without
       --  enabling debugging.
-      restart : Any_Value;
+      restart                         : Any_Value;
       --  Arbitrary data from the previous, restarted session. The data is
       --  sent as the `restart` attribute of the `terminated` event. The
       --  client should leave the data intact.
-      program : VSS.Strings.Virtual_String;
+      program                         : VSS.Strings.Virtual_String;
+      args : VSS.String_Vectors.Virtual_String_Vector;
+      --  Extension. If provided, this should be an array of strings. These
+      --  strings are provided as command-line arguments to the inferior, as
+      --  if by set args.
+      cwd                             : VSS.Strings.Virtual_String;
+      --  Extension. If provided, this should be a string. gdb will change its
+      --  working directory to this directory, as if by the cd command (see
+      --  Working Directory). The launched program will inherit this as its
+      --  working directory. Note that change of directory happens before
+      --  the program parameter is processed. This will affect the result
+      --  if program is a relative filename.
+      stopAtBeginningOfMainSubprogram : Boolean := Boolean'First;
+      --  Extension. If provided, this must be a boolean. When ‘True’,
+      --  gdb will set a temporary breakpoint at the program's main procedure,
+      --  using the same approach as the start command. See Starting.
    end record;
 
    type ExitedEvent_body is record
@@ -1444,7 +1464,7 @@ package DAP.Tools is
       visibility : Enum.Optional_VariablePresentationHint_visibility;
       --  Visibility of variable. Before introducing additional values, try to
       --  use the listed values.
-      lazy       : Boolean;
+      lazy       : Boolean := Boolean'First;
       --  If true, clients can present the variable with a UI that supports
       --  a specific gesture to trigger its evaluation. This mechanism can be
       --  used for properties that require executing code when retrieving their
@@ -1516,13 +1536,13 @@ package DAP.Tools is
       --  string is shown in the UI as is and can be translated.
       threadId          : Optional_Integer;
       --  The thread which was stopped.
-      preserveFocusHint : Boolean;
+      preserveFocusHint : Boolean := Boolean'First;
       --  A value of true hints to the client that this event should not change
       --  the focus.
       text              : VSS.Strings.Virtual_String;
       --  Additional information. E.g. if reason is `exception`, text contains
       --  the exception name. This string is shown in the UI.
-      allThreadsStopped : Boolean;
+      allThreadsStopped : Boolean := Boolean'First;
       --  If `allThreadsStopped` is true, a debug adapter can announce that
       --  all threads have stopped. - The client should use this information to
       --  enable that all threads can be expanded to access their stacktraces.
@@ -1622,7 +1642,7 @@ package DAP.Tools is
       threadId     : Integer;
       --  Specifies the thread for which to resume execution for one step-out
       --  (of the given granularity).
-      singleThread : Boolean;
+      singleThread : Boolean := Boolean'First;
       --  If this flag is true, all other suspended threads are not resumed.
       granularity  : Enum.Optional_SteppingGranularity;
       --  Stepping granularity. If no granularity is specified, a granularity
@@ -1934,21 +1954,21 @@ package DAP.Tools is
    end record;
 
    type StackFrameFormat is record
-      hex             : Boolean;
+      hex             : Boolean := Boolean'First;
       --  Display the value in hex.
-      parameters      : Boolean;
+      parameters      : Boolean := Boolean'First;
       --  Displays parameters for the stack frame.
-      parameterTypes  : Boolean;
+      parameterTypes  : Boolean := Boolean'First;
       --  Displays the types of parameters for the stack frame.
-      parameterNames  : Boolean;
+      parameterNames  : Boolean := Boolean'First;
       --  Displays the names of parameters for the stack frame.
-      parameterValues : Boolean;
+      parameterValues : Boolean := Boolean'First;
       --  Displays the values of parameters for the stack frame.
-      line            : Boolean;
+      line            : Boolean := Boolean'First;
       --  Displays the line number of the stack frame.
-      module          : Boolean;
+      module          : Boolean := Boolean'First;
       --  Displays the module of the stack frame.
-      includeAll      : Boolean;
+      includeAll      : Boolean := Boolean'First;
       --  Includes all stack frames, including those the debug adapter might
       --  otherwise hide.
    end record;
@@ -2065,7 +2085,7 @@ package DAP.Tools is
       systemProcessId : Optional_Integer;
       --  The system process id of the debugged process. This property is
       --  missing for non-system processes.
-      isLocalProcess  : Boolean;
+      isLocalProcess  : Boolean := Boolean'First;
       --  If true, the process is running on the same computer as the debug
       --  adapter.
       startMethod     : Enum.Optional_ProcessEvent_startMethod;
@@ -2260,7 +2280,7 @@ package DAP.Tools is
       --  location and offset. An adapter must return exactly this number of
       --  instructions - any unavailable instructions should be replaced with
       --  an implementation-defined 'invalid instruction' value.
-      resolveSymbols    : Boolean;
+      resolveSymbols    : Boolean := Boolean'First;
       --  If true, the adapter should attempt to resolve memory addresses and
       --  other values to symbolic names.
    end record;
@@ -2293,7 +2313,7 @@ package DAP.Tools is
       accessTypes : DataBreakpointAccessType_Vector;
       --  Attribute lists the available access types for a potential data
       --  breakpoint. A UI client could surface this information.
-      canPersist  : Boolean;
+      canPersist  : Boolean := Boolean'First;
       --  Attribute indicates that a potential data breakpoint could be
       --  persisted across sessions.
    end record;
@@ -2425,7 +2445,7 @@ package DAP.Tools is
       env                         : Any_Object;
       --  Environment key-value pairs that are added to or removed from the
       --  default environment.
-      argsCanBeInterpretedByShell : Boolean;
+      argsCanBeInterpretedByShell : Boolean := Boolean'First;
       --  This property should only be set if the corresponding capability
       --  `supportsArgsCanBeInterpretedByShell` is true. If the client uses an
       --  intermediary shell to launch the application, then the client must
@@ -2498,7 +2518,7 @@ package DAP.Tools is
       --  thread execution (see `supportsSingleThreadExecutionRequests`) and
       --  the `singleThread` argument is true, only the thread with this ID
       --  is resumed.
-      singleThread : Boolean;
+      singleThread : Boolean := Boolean'First;
       --  If this flag is true, backward execution is resumed only for the
       --  thread with given `threadId`.
    end record;
@@ -2549,16 +2569,16 @@ package DAP.Tools is
    end record;
 
    type DisconnectArguments is record
-      restart           : Boolean;
+      restart           : Boolean := Boolean'First;
       --  A value of true indicates that this `disconnect` request is part of a
       --  restart sequence.
-      terminateDebuggee : Boolean;
+      terminateDebuggee : Boolean := Boolean'First;
       --  Indicates whether the debuggee should be terminated when the debugger
       --  is disconnected. If unspecified, the debug adapter is free to do
       --  whatever it thinks is best. The attribute is only honored by a debug
       --  adapter if the corresponding capability `supportTerminateDebuggee` is
       --  true.
-      suspendDebuggee   : Boolean;
+      suspendDebuggee   : Boolean := Boolean'First;
       --  Indicates whether the debuggee should stay suspended when the
       --  debugger is disconnected. If unspecified, the debuggee should resume
       --  execution. The attribute is only honored by a debug adapter if the
@@ -2694,7 +2714,7 @@ package DAP.Tools is
    end record;
 
    type ExceptionPathSegment is record
-      negate : Boolean;
+      negate : Boolean := Boolean'First;
       --  If false or missing this segment matches the names provided,
       --  otherwise it matches anything except the names provided.
       names  : VSS.String_Vectors.Virtual_String_Vector;
@@ -2717,9 +2737,9 @@ package DAP.Tools is
       variables     : Any_Object;
       --  An object used as a dictionary for looking up the variables in the
       --  format string.
-      sendTelemetry : Boolean;
+      sendTelemetry : Boolean := Boolean'First;
       --  If true send to telemetry.
-      showUser      : Boolean;
+      showUser      : Boolean := Boolean'First;
       --  If true show user.
       url           : VSS.Strings.Virtual_String;
       --  A url where additional information about this message can be found.
@@ -2779,7 +2799,7 @@ package DAP.Tools is
    end record;
 
    type ContinueResponse_body is record
-      allThreadsContinued : Boolean;
+      allThreadsContinued : Boolean := Boolean'First;
       --  The value true (or a missing property) signals to the client that
       --  all threads have been resumed. The value false indicates that not
       --  all threads were resumed.
@@ -2852,7 +2872,7 @@ package DAP.Tools is
       threadId     : Integer;
       --  Specifies the thread for which to resume execution for one step-into
       --  (of the given granularity).
-      singleThread : Boolean;
+      singleThread : Boolean := Boolean'First;
       --  If this flag is true, all other suspended threads are not resumed.
       targetId     : Optional_Integer;
       --  Id of the target to step into.
@@ -2918,7 +2938,7 @@ package DAP.Tools is
    end record;
 
    type TerminateArguments is record
-      restart : Boolean;
+      restart : Boolean := Boolean'First;
       --  A value of true indicates that this `terminate` request is part of a
       --  restart sequence.
    end record;
@@ -3004,7 +3024,7 @@ package DAP.Tools is
       --  thread execution (see `supportsSingleThreadExecutionRequests`) and
       --  the argument `singleThread` is true, only the thread with this ID
       --  is resumed.
-      singleThread : Boolean;
+      singleThread : Boolean := Boolean'First;
       --  If this flag is true, execution is resumed only for the thread with
       --  given `threadId`.
    end record;
@@ -3013,7 +3033,7 @@ package DAP.Tools is
       threadId     : Integer;
       --  Specifies the thread for which to resume execution for one step
       --  backwards (of the given granularity).
-      singleThread : Boolean;
+      singleThread : Boolean := Boolean'First;
       --  If this flag is true, all other suspended threads are not resumed.
       granularity  : Enum.Optional_SteppingGranularity;
       --  Stepping granularity to step. If no granularity is specified, a
@@ -3120,7 +3140,7 @@ package DAP.Tools is
       offset          : Optional_Integer;
       --  Offset (in bytes) to be applied to the reference location before
       --  writing data. Can be negative.
-      allowPartial    : Boolean;
+      allowPartial    : Boolean := Boolean'First;
       --  Property to control partial writes. If true, the debug adapter should
       --  attempt to write memory even if the entire memory region is not
       --  writable. In such a case the debug adapter should stop after hitting
@@ -3344,31 +3364,31 @@ package DAP.Tools is
       locale                              : VSS.Strings.Virtual_String;
       --  The ISO-639 locale of the client using this adapter, e.g. en-US or
       --  de-CH.
-      linesStartAt1                       : Boolean;
+      linesStartAt1                       : Boolean := Boolean'First;
       --  If true all line numbers are 1-based (default).
-      columnsStartAt1                     : Boolean;
+      columnsStartAt1                     : Boolean := Boolean'First;
       --  If true all column numbers are 1-based (default).
       pathFormat : Enum.Optional_InitializeRequestArguments_pathFormat;
       --  Determines in what format paths are specified. The default is `path`,
       --  which is the native format.
-      supportsVariableType                : Boolean;
+      supportsVariableType                : Boolean := Boolean'First;
       --  Client supports the `type` attribute for variables.
-      supportsVariablePaging              : Boolean;
+      supportsVariablePaging              : Boolean := Boolean'First;
       --  Client supports the paging of variables.
-      supportsRunInTerminalRequest        : Boolean;
+      supportsRunInTerminalRequest        : Boolean := Boolean'First;
       --  Client supports the `runInTerminal` request.
-      supportsMemoryReferences            : Boolean;
+      supportsMemoryReferences            : Boolean := Boolean'First;
       --  Client supports memory references.
-      supportsProgressReporting           : Boolean;
+      supportsProgressReporting           : Boolean := Boolean'First;
       --  Client supports progress reporting.
-      supportsInvalidatedEvent            : Boolean;
+      supportsInvalidatedEvent            : Boolean := Boolean'First;
       --  Client supports the `invalidated` event.
-      supportsMemoryEvent                 : Boolean;
+      supportsMemoryEvent                 : Boolean := Boolean'First;
       --  Client supports the `memory` event.
-      supportsArgsCanBeInterpretedByShell : Boolean;
+      supportsArgsCanBeInterpretedByShell : Boolean := Boolean'First;
       --  Client supports the `argsCanBeInterpretedByShell` attribute on the
       --  `runInTerminal` request.
-      supportsStartDebuggingRequest       : Boolean;
+      supportsStartDebuggingRequest       : Boolean := Boolean'First;
       --  Client supports the `startDebugging` request.
    end record;
 
@@ -3891,7 +3911,7 @@ package DAP.Tools is
       --  running request until the request has been either completed or
       --  cancelled. If the request ID is omitted, the progress report is
       --  assumed to be related to some general activity of the debug adapter.
-      cancellable : Boolean;
+      cancellable : Boolean := Boolean'First;
       --  If true, the request that reports progress may be cancelled with a
       --  `cancel` request. So this property basically controls whether the
       --  client should use UX that supports cancellation. Clients that don't

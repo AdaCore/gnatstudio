@@ -1020,7 +1020,7 @@ class GNATcovPlugin(Module):
         if hist_path:
             base_dir = os.path.dirname(hist_path)
 
-        file = GPS.MDI.file_selector(base_dir=base_dir)
+        file = GPS.MDI.file_selector(filter="*.gpr", base_dir=base_dir)
         prebuilt_runtime_path = file.path
         GPS.History.add(RUNTIME_PATH_HIST_KEY, file.path)
 

@@ -1432,6 +1432,22 @@ package body DAP.Tools.Outputs is
          Handler.Key_Name ("program");
          Handler.String_Value (Value.program);
       end if;
+      if not Value.args.Is_Empty then
+         Handler.Key_Name ("args");
+         Handler.Start_Array;
+         for J in 1 .. Value.args.Length loop
+            Handler.String_Value (Value.args (J));
+         end loop;
+         Handler.End_Array;
+      end if;
+      if not Value.cwd.Is_Null then
+         Handler.Key_Name ("cwd");
+         Handler.String_Value (Value.cwd);
+      end if;
+      if Value.stopAtBeginningOfMainSubprogram then
+         Handler.Key_Name ("stopAtBeginningOfMainSubprogram");
+         Handler.Boolean_Value (Value.stopAtBeginningOfMainSubprogram);
+      end if;
       Handler.End_Object;
    end Output_LaunchRequestArguments;
 
@@ -1628,6 +1644,15 @@ package body DAP.Tools.Outputs is
       if not Value.restart.Is_Empty then
          Handler.Key_Name ("__restart");
          Output_Any_Value (Handler, Value.restart);
+      end if;
+      if Value.pid.Is_Set then
+         Handler.Key_Name ("pid");
+         Handler.Integer_Value
+           (Interfaces.Integer_64 (Integer'(Value.pid.Value)));
+      end if;
+      if not Value.target.Is_Null then
+         Handler.Key_Name ("target");
+         Handler.String_Value (Value.target);
       end if;
       Handler.End_Object;
    end Output_AttachRequestArguments;
