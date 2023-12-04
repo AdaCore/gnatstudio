@@ -7,7 +7,7 @@ Also verify that the load command is not triggered after failing to connect.
 import GPS
 from gs_utils.internal.utils import *
 
-error = "No such file or directory."
+error = "No such file or directory." if not system_is_windows else "could not open file"
 load = "load"
 
 
@@ -15,14 +15,10 @@ load = "load"
 def test_driver():
     GPS.Preference("Debugger-Load-On-Init").set(True)
     GPS.execute_action("Build & Debug Number 1")
-    yield hook('debugger_started')
+    yield hook("debugger_started")
     yield wait_idle()
 
     debug = GPS.Debugger.get()
     output = debug.get_console().get_text()
-    gps_assert(error in output,
-               True,
-               "Missing error in the output")
-    gps_assert(load in output,
-               False,
-               "Don't try to load after failing to connect")
+    gps_assert(error in output, True, "Missing error in the output")
+    gps_assert(load in output, False, "Don't try to load after failing to connect")
