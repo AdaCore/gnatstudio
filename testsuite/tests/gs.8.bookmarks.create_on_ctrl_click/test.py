@@ -18,7 +18,9 @@ def test_driver():
     # Give a name to the newly created bookmark
     for c in "My_Bookmark":
         yield send_key_event(ord(c))
+        yield timeout(100)
     yield send_key_event(GDK_RETURN)
+    yield wait_idle()
 
     # Verify that it's correctly added to the Bookmarks view
     view = Bookmarks()
