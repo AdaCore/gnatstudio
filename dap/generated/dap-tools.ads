@@ -1371,6 +1371,8 @@ package DAP.Tools is
       --  sent as the `restart` attribute of the `terminated` event. The
       --  client should leave the data intact.
       program                         : VSS.Strings.Virtual_String;
+      --  Extension. If provided, this is a string that specifies the program
+      --  to use. This corresponds to the file command. See Files.
       args : VSS.String_Vectors.Virtual_String_Vector;
       --  Extension. If provided, this should be an array of strings. These
       --  strings are provided as command-line arguments to the inferior, as
