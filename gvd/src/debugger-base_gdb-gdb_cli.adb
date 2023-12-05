@@ -102,8 +102,11 @@ package body Debugger.Base_Gdb.Gdb_CLI is
    --  gdb does not seem to take into account this variable at all.
 
    Remote_Error_Pattern      : constant Pattern_Matcher :=
-     Compile ("(.+): No such file or directory.",
+     Compile ("(.+): (No such file or directory."
+              & "|The system cannot find the file specified.)",
               Multiple_Lines);
+   --  Matches errors when trying to connect to a remote target
+   --  (e.g: 'target remote :1234').
 
    Language_Pattern          : constant Pattern_Matcher := Compile
      ("^(The current source language is|Current language:) +" &
