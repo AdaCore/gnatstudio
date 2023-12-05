@@ -1,4 +1,4 @@
-GEN_JSON    = ./gen_json
+GEN_JSON    = gen_json
 GPS_DIR     = ../generated
 GNATPP_OPTS = --comments-fill --no-align-modes --no-separate-is --call-threshold=1 --par-threshold=2
 
@@ -13,4 +13,4 @@ create: debugAdapterProtocol.json header.adt
 pretty:
 	sed -i -e 's/\["/("/' -e 's/"\])/"))/' ${GPS_DIR}/dap-tools-inputs.adb
 	gnatpp ${GNATPP_OPTS} ${GPS_DIR}/dap-tools*.ad[sb]
-	sed -i -e 's/("/["/' -e 's/"))/"])/' ${GPS_DIR}/dap-tools-inputs.adb	
+	sed -i -e 's/("/["/' -e 's/"))/"])/' ${GPS_DIR}/dap-tools-inputs.adb
