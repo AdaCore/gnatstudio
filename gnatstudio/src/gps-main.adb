@@ -2959,9 +2959,14 @@ procedure GPS.Main is
          --  window already has a proper size, otherwise we might end up with
          --  windows with height=0 or width=0
          if GVD.Preferences.Debugger_Kind.Get_Pref = GVD.Types.DAP then
-            DAP.Module.Initialize_Debugger (GPS_Main.Kernel, Program_Args.all);
+            DAP.Module.Initialize_Debugger
+              (Kernel          => GPS_Main.Kernel,
+               Project         => Get_Project (GPS_Main.Kernel),
+               Executable_Args => Program_Args.all);
          else
-            GVD_Module.Initialize_Debugger (GPS_Main.Kernel, Program_Args.all);
+            GVD_Module.Initialize_Debugger
+              (Kernel => GPS_Main.Kernel,
+               Args   => Program_Args.all);
          end if;
       end if;
 
