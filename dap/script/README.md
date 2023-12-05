@@ -8,22 +8,28 @@ specification file that can be found on the github repository of the DAP
 protocol in the `gh-pages` branch:
 https://github.com/Microsoft/debug-adapter-protocol/blob/gh-pages/debugAdapterProtocol.json
 
-It produces `dap-tools*.ads` and `dap-tools*.adb`.
+GNAT Studio uses a customized version of this `debugAdapterProtocol.json` file to allow some extensions
+to the DAP protocol.
 
 # Requirements
 
-Have a working Ada environment (with `gnatchop`, `gnatpp` binaries) and
-install the program with `alire`:
+Have a working Ada environment, with `gnatchop` and `gnatpp` binaries (present
+by default in GNAT toolchains) and `alr` available in your `PATH` (you can download Alire [here](https://alire.ada.dev/)).
+
+Then you will need to build the `gen_json` tool from the `VSS` repository, and make it
+available in your `PATH` environment varaible.
+Here are the instructions to achieve that:
 
 ```shell
 git clone https://github.com/AdaCore/VSS.git
 cd VSS/tools/json_schema
 alr build
+export PATH=`pwd`:$PATH
 ```
 
 # How to use
 
-One have to be in the `script` directory and and have `gnatpp`, `gnatchop`, `gen_json` in the `PATH`.
+One have to be in the `script` directory and and have `gnatpp`, `gnatchop`, `gen_json` available in the `PATH`.
 
 From there one can generate the code with a single `make` command.
 
@@ -38,8 +44,7 @@ and put it in the `script` directory.
 The live version of the specification can be found at this address:
 https://raw.githubusercontent.com/microsoft/debug-adapter-protocol/gh-pages/debugAdapterProtocol.json
 
-From there one only need to `make` and the code for the up to date version
-(or specific chosen one) will be generated.
+From there one only need to `make` and the code for the up to date version (or specific chosen one) will be generated.
 
 # TODO
 
