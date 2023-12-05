@@ -850,6 +850,25 @@ package body DAP.Modules.Persistent_Breakpoints is
       Break (Kernel, B);
    end Break_Exception;
 
+   ------------------------
+   -- Break_At_Exception --
+   ------------------------
+
+   procedure Break_At_Exception
+     (Kernel    : not null access Kernel_Handle_Record'Class;
+      Unhandled : Boolean := False)
+   is
+      B : Breakpoint_Data := Breakpoint_Data'
+        (Kind        => On_Exception,
+         Num         => No_Breakpoint,
+         Except      => To_Unbounded_String (All_Exceptions_Filter),
+         Unhandled   => Unhandled,
+         Disposition => Keep,
+         others      => <>);
+   begin
+      Break (Kernel, B);
+   end Break_At_Exception;
+
    ----------------------
    -- Break_Subprogram --
    ----------------------
