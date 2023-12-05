@@ -22,7 +22,7 @@ hl_strings = region_template(
 )
 
 register_highlighter(
-    language="fortran 90",
+    language="fortran",
     spec=(
         # Match comments lines
         region(r"!", "\n", tag=tag_comment, highlighter=(hl_comment_notes,)),
