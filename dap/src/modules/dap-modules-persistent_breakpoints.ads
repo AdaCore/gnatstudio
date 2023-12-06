@@ -112,6 +112,13 @@ package DAP.Modules.Persistent_Breakpoints is
       Temporary : Boolean := False);
    --  Add breakpoint for the exception
 
+   procedure Break_At_Exception
+     (Kernel    : not null access Kernel_Handle_Record'Class;
+      Unhandled : Boolean := False);
+   --  Break on any exception. When Unhandled is True, it will only break
+   --  on unhandled exceptions. When False, it will also break on handled
+   --  ones.
+
    procedure Break_Address
      (Kernel    : not null access Kernel_Handle_Record'Class;
       Num       : Breakpoint_Identifier;
@@ -136,5 +143,8 @@ package DAP.Modules.Persistent_Breakpoints is
    procedure Save_Persistent_Breakpoints
      (Kernel : not null access Kernel_Handle_Record'Class);
    --  Save persistent breakpoints to properties database
+
+   All_Exceptions_Filter : constant String := "exception";
+   --  Filter that contains the name that means "all exceptions"
 
 end DAP.Modules.Persistent_Breakpoints;

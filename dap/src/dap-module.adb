@@ -278,12 +278,14 @@ package body DAP.Module is
    -- Utils --
 
    function Debug_Init
-     (Kernel  : GPS.Kernel.Kernel_Handle;
-      Project : Project_Type;
-      File    : GNATCOLL.VFS.Virtual_File;
-      Args    : String)
+     (Kernel          : GPS.Kernel.Kernel_Handle;
+      Project         : Project_Type;
+      File            : GNATCOLL.VFS.Virtual_File;
+      Executable_Args : String)
       return DAP.Clients.DAP_Client_Access;
-   --  Initialize the debugger
+   --  Initialize the debugger with the executable refered by File/Project.
+   --  Executable_Args contain the extra arguments that will be passed to the
+   --  debugged executable.
 
    function To_File
      (Kernel  : not null access Kernel_Handle_Record'Class;
@@ -328,10 +330,10 @@ package body DAP.Module is
    ----------------
 
    function Debug_Init
-     (Kernel  : GPS.Kernel.Kernel_Handle;
-      Project : Project_Type;
-      File    : GNATCOLL.VFS.Virtual_File;
-      Args    : String)
+     (Kernel          : GPS.Kernel.Kernel_Handle;
+      Project         : Project_Type;
+      File            : GNATCOLL.VFS.Virtual_File;
+      Executable_Args : String)
       return DAP.Clients.DAP_Client_Access
    is
       use type Generic_Views.Abstract_View_Access;
@@ -388,7 +390,7 @@ package body DAP.Module is
            (DAP.Clients.DAP_Client (Client.all)).Display_Prompt;
       end if;
 
-      Client.Start (Project, File, Args);
+      Client.Start (Project, File, Executable_Args);
 
       DAP.Modules.Persistent_Breakpoints.Hide_Breakpoints (Kernel);
       Set_Current_Debugger (Client);
@@ -660,12 +662,13 @@ package body DAP.Module is
 
    overriding function Execute
      (Command : access Initialize_Debugger_Command;
-      Context : Interactive_Command_Context) return Command_Return_Type
-   is
-      Dummy : DAP.Clients.DAP_Client_Access;
+      Context : Interactive_Command_Context) return Command_Return_Type is
    begin
-      Dummy := Debug_Init
-        (Get_Kernel (Context.Context), Command.Project, Command.Exec, "");
+      Initialize_Debugger
+        (Kernel          => Get_Kernel (Context.Context),
+         Project         => Command.Project,
+         File            => Command.Exec,
+         Executable_Args => "");
 
       return Success;
    exception
@@ -1119,16 +1122,18 @@ package body DAP.Module is
    -------------------------
 
    procedure Initialize_Debugger
-     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
-      Args   : String)
+     (Kernel          : access GPS.Kernel.Kernel_Handle_Record'Class;
+      File            : GNATCOLL.VFS.Virtual_File := No_File;
+      Project         : Project_Type := No_Project;
+      Executable_Args : String := "")
    is
       Dummy : DAP.Clients.DAP_Client_Access;
    begin
-      Dummy := Debug_Init
-        (GPS.Kernel.Kernel_Handle (Kernel),
-         GPS.Kernel.Project.Get_Project (Kernel),
-         No_File,
-         Args);
+      Dummy := Initialize_Debugger
+        (Kernel          => GPS.Kernel.Kernel_Handle (Kernel),
+         File            => File,
+         Project         => Project,
+         Executable_Args => Executable_Args);
    end Initialize_Debugger;
 
    -------------------------
@@ -1136,14 +1141,17 @@ package body DAP.Module is
    -------------------------
 
    function Initialize_Debugger
-     (Kernel  : access GPS.Kernel.Kernel_Handle_Record'Class;
-      File    : GNATCOLL.VFS.Virtual_File;
-      Project : Project_Type;
-      Args    : String)
+     (Kernel          : access GPS.Kernel.Kernel_Handle_Record'Class;
+      File            : GNATCOLL.VFS.Virtual_File := No_File;
+      Project         : Project_Type := No_Project;
+      Executable_Args : String := "")
       return DAP.Clients.DAP_Client_Access is
    begin
       return Debug_Init
-        (GPS.Kernel.Kernel_Handle (Kernel), Project, File, Args);
+        (Kernel          => GPS.Kernel.Kernel_Handle (Kernel),
+         Project         => Project,
+         File            => File,
+         Executable_Args => Executable_Args);
    end Initialize_Debugger;
 
    ------------------------

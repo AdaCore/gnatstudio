@@ -465,7 +465,7 @@ package body DAP.Views.Breakpoints is
                   Break_Exception
                     (Self.Kernel,
                      Num       => Br.Num,
-                     Name      => "exception",
+                     Name      => All_Exceptions_Filter,
                      Unhandled => Unhandled,
                      Temporary => Temporary);
 

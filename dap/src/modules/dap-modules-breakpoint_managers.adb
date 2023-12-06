@@ -146,7 +146,8 @@ package body DAP.Modules.Breakpoint_Managers is
                Data    : constant Breakpoint_Data := Breakpoint_Data'
                  (Kind        => On_Exception,
                   Num         => 0,
-                  Except      => To_Unbounded_String ("exception"),
+                  Except      => To_Unbounded_String
+                    (DAP.Modules.Persistent_Breakpoints.All_Exceptions_Filter),
                   Unhandled   => False,
                   Disposition => Keep,
                   Executable  => Self.Client.Get_Executable,
@@ -851,9 +852,11 @@ package body DAP.Modules.Breakpoint_Managers is
             declare
                List : Breakpoint_Vectors.Vector;
             begin
+               --  filtering out automatically set breakpoint for any exception
                for B of Self.Holder.Get_Breakpoints loop
                   if B.Kind /= On_Exception
-                    or else B.Except /= "exception"
+                    or else B.Except /=
+                      DAP.Modules.Persistent_Breakpoints.All_Exceptions_Filter
                   then
                      List.Append (B);
                   end if;

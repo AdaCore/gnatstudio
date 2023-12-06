@@ -842,7 +842,7 @@ package body DAP.Clients is
      (Self : in out DAP_Client) return Ada.Strings.Unbounded.Unbounded_String
    is
    begin
-      return Self.Args;
+      return Self.Executable_Args;
    end Get_Executable_Args;
 
    ---------------------
@@ -2372,21 +2372,21 @@ package body DAP.Clients is
    -----------
 
    procedure Start
-     (Self    : in out DAP_Client;
-      Project : GNATCOLL.Projects.Project_Type;
-      File    : GNATCOLL.VFS.Virtual_File;
-      Args    : String)
+     (Self            : in out DAP_Client;
+      Project         : GNATCOLL.Projects.Project_Type;
+      File            : GNATCOLL.VFS.Virtual_File;
+      Executable_Args : String)
    is
       Node_Args : Spawn.String_Vectors.UTF_8_String_Vector;
 
-      function Get_Debugger_Executable return String;
+      function Get_Debug_Adapter_Command return String;
       --  Returns name of debugger and parameters for it
 
-      -----------------------------
-      -- Get_Debugger_Executable --
-      -----------------------------
+      ---------------------------------
+      -- Get_Debug_Adapter_Executabe --
+      ---------------------------------
 
-      function Get_Debugger_Executable return String is
+      function Get_Debug_Adapter_Command return String is
       begin
          if DAP.Modules.Preferences.DAP_Adapter.Get_Pref /= "" then
             return DAP.Modules.Preferences.DAP_Adapter.Get_Pref;
@@ -2395,51 +2395,54 @@ package body DAP.Clients is
          if Project.Has_Attribute
            (GNATCOLL.Projects.Debugger_Command_Attribute)
          then
-            --  return debuger from project
+            --  Return the debugger command set in the project file if any
             declare
-               Name : constant String := Project.Attribute_Value
+               Debugger_Cmd : constant String := Project.Attribute_Value
                  (GNATCOLL.Projects.Debugger_Command_Attribute);
             begin
-
-               return Name;
+               return Debugger_Cmd;
             end;
          end if;
 
+         --  Return the debugger command set from the toolchain
          declare
-            Tc      : constant Toolchain :=
+            Tc           : constant Toolchain :=
               Self.Kernel.Get_Toolchains_Manager.Get_Toolchain (Project);
-            Command : constant String := Get_Command
+            Debugger_Cmd : constant String := Get_Command
               (Tc, Toolchains.Debugger);
          begin
-            --  return debugger from toolchain
-
-            return Command;
+            return Debugger_Cmd;
          end;
-      end Get_Debugger_Executable;
+      end Get_Debug_Adapter_Command;
 
-      Adapter : constant String := Get_Debugger_Executable;
+      Debug_Adapter_Cmd : constant String := Get_Debug_Adapter_Command;
 
    begin
 
-      Self.Project    := Project;
+      Self.Project := Project;
       Self.Executable := File;
-      Self.Args       := Ada.Strings.Unbounded.To_Unbounded_String (Args);
+      Self.Executable_Args := Ada.Strings.Unbounded.To_Unbounded_String
+        (Executable_Args);
 
       declare
          use GNATCOLL.VFS;
-         Vals : GNAT.Strings.String_List_Access := GNATCOLL.Utils.Split
-           (Adapter, On => ' ');
+         Debug_Adapter_Args : GNAT.Strings.String_List_Access :=
+           GNATCOLL.Utils.Split (Debug_Adapter_Cmd, On => ' ');
          Exec : constant Virtual_File :=
-           Locate_On_Path (+Vals (Vals'First).all);
+           Locate_On_Path (+Debug_Adapter_Args (Debug_Adapter_Args'First).all);
       begin
+         --  TODO: eveything here is GDB specific, we need to find a better
+         --  solution at some point.
          Trace (Me, "Launching the debug adapter: " & (+Exec.Full_Name)
                 & " for file:" & (+Full_Name (Self.Executable)));
          Self.Set_Program (+Exec.Full_Name);
          Node_Args.Append ("-i=dap");
-         for Index in Vals'First + 1 .. Vals'Last loop
-            Node_Args.Append (Vals (Index).all);
+
+         for J in Debug_Adapter_Args'First + 1 .. Debug_Adapter_Args'Last loop
+            Node_Args.Append (Debug_Adapter_Args (J).all);
          end loop;
-         GNAT.Strings.Free (Vals);
+
+         GNAT.Strings.Free (Debug_Adapter_Args);
       end;
 
       Self.Set_Arguments (Node_Args);

@@ -120,7 +120,7 @@ XML = r"""<?xml version="1.0" ?>
   </Language>
 
   <Language>
-    <Name>Fortran 90</Name>
+    <Name>Fortran</Name>
     <Body_Suffix>.f</Body_Suffix>
 
     <Categories>
@@ -142,7 +142,7 @@ XML = r"""<?xml version="1.0" ?>
     </Categories>
     <Project_Field
      name="compiler_command"
-     index="fortran 90">Fortran Compiler</Project_Field>
+     index="fortran">Fortran Compiler</Project_Field>
   </Language>
 
   <Language>
