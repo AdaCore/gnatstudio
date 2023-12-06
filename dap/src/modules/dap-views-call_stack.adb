@@ -736,27 +736,29 @@ package body DAP.Views.Call_Stack is
      (View   : not null access Call_Stack_Record;
       Status : GPS.Debuggers.Debugger_State)
    is
-      use GPS.Debuggers;
+      pragma Unreferenced (Status);
+      --  We are using the extended status from the DAP client. This one
+      --  is present because for backward compatibility with the old hooks
+      --  and the Python API.
+
       Iter : Gtk_Tree_Iter;
    begin
-      if Status = Debug_Busy then
-         --  The debugger is now executing a command that will likely change
-         --  the current stack trace. While it is executing, we do not want to
-         --  keep a visible call stack displayed.
+      if View.Get_Client.Get_Status = Stopped then
+         View.Update;
+      else
+         --  The debugger is not ready yet or the debuggee is running: make
+         --  sure to clear the view in this case and display 'Running...' or
+         --  'No data' label to warn the user that we can't compute the
+         --  call stack for now.
 
          Clear (View.Model);
-
          View.Model.Append (Iter, Null_Iter);
-
          Set_And_Clear
            (View.Model, Iter, (Frame_Id_Column, Name_Column),
             (1 => As_String (""),
              2 => As_String (if View.Get_Client.Get_Status = Running
                then "Running..."
                else "No data")));
-
-      elsif View.Get_Client.Get_Status = Stopped then
-         View.Update;
       end if;
    end On_Status_Changed;
 
