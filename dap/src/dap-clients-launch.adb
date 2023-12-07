@@ -23,7 +23,6 @@ with VSS.Strings.Conversions;
 
 with GPS.Kernel;               use GPS.Kernel;
 
-with DAP.Types;
 with DAP.Requests;             use DAP.Requests;
 with DAP.Requests.Launch;
 
@@ -82,19 +81,12 @@ package body DAP.Clients.Launch is
      (Self        : in out Launch_Request;
       Client      : not null access DAP.Clients.DAP_Client'Class;
       Result      : DAP.Tools.LaunchResponse;
-      New_Request : in out DAP_Request_Access)
-   is
-      use GNATCOLL.Projects;
+      New_Request : in out DAP_Request_Access) is
    begin
       New_Request := null;
 
-      --  Notify the client that the debugee was launched only if we have
-      --  an associated project.
-      --  Otherwise, we notify it in the 'loadedSources' DAP request's response
-      --  instead, after retrieving the executable's sources.
-      if Client.Get_Project /= No_Project then
-         Client.On_Launched (Start_Method => DAP.Types.Launched);
-      end if;
+      --  Notify the client that the debugee was launched.
+      Client.On_Launched (Start_Method => DAP.Types.Launched);
    end On_Result_Message;
 
    ----------------------
@@ -122,7 +114,7 @@ package body DAP.Clients.Launch is
    procedure Send_Launch_Request
      (Client            : in out DAP.Clients.DAP_Client'Class;
       Executable        : GNATCOLL.VFS.Virtual_File;
-      Executable_Args   : Virtual_String_Vector := Empty_Virtual_String_Vector;
+      Executable_Args   : VSS.String_Vectors.Virtual_String_Vector;
       Stop_At_Beginning : Boolean := False)
    is
       Launch_Req : Launch_Request_Access := DAP.Clients.Launch.Create
