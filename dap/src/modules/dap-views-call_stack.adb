@@ -16,6 +16,7 @@
 ------------------------------------------------------------------------------
 
 with Ada.Strings.Unbounded;      use Ada.Strings.Unbounded;
+with GNATCOLL.Utils;
 
 with Glib;                       use Glib;
 with Glib.Convert;               use Glib.Convert;
@@ -177,8 +178,6 @@ package body DAP.Views.Call_Stack is
       Column : not null
       access Gtk.Tree_View_Column.Gtk_Tree_View_Column_Record'Class);
 
-   function Image (Value : Natural) return String;
-
    -----------------
    -- Create_Menu --
    -----------------
@@ -210,16 +209,6 @@ package body DAP.Views.Call_Stack is
            Has_Regexp or Has_Negate or Has_Whole_Word or Has_Fuzzy,
          Name        => "Call Stack Filter");
    end Create_Toolbar;
-
-   -----------
-   -- Image --
-   -----------
-
-   function Image (Value : Natural) return String is
-      S : constant String := Value'Img;
-   begin
-      return S (S'First + 1 .. S'Last);
-   end Image;
 
    --------------------
    -- Filter_Changed --
@@ -492,7 +481,8 @@ package body DAP.Views.Call_Stack is
       if Client.Get_Stack_Trace.Get_Current_Frame_Id >= 0 then
          Iter := GUI_Utils.Find_Node
            (Model     => Self.Tree.Model,
-            Name      => Image (Client.Get_Stack_Trace.Get_Current_Frame_Id),
+            Name      => GNATCOLL.Utils.Image
+              (Client.Get_Stack_Trace.Get_Current_Frame_Id, 1),
             Column    => Frame_Id_Column,
             Recursive => False);
 
@@ -547,11 +537,13 @@ package body DAP.Views.Call_Stack is
 
                Set_All_And_Clear
                  (View.Model, Iter,
-                  (Frame_Id_Column  => As_String (Image (Frame.Id)),
-                   Name_Column      => As_String (To_String (Frame.Name)),
+                  (Frame_Id_Column  => As_String
+                       (GNATCOLL.Utils.Image (Frame.Id, 1)),
+                   Name_Column      => As_String
+                     (Escape_Text (To_String (Frame.Name))),
                    Location_Column  => As_String
                      (Escape_Text (+Full_Name (Frame.File) & ":" &
-                        Image (Frame.Line))),
+                        GNATCOLL.Utils.Image (Frame.Line, 1))),
                    Memory_Column    => As_String
                      (Escape_Text
                         ((if Frame.Address = Invalid_Address
@@ -565,7 +557,9 @@ package body DAP.Views.Call_Stack is
 
             if Client.Get_Stack_Trace.Get_Current_Frame_Id /= -1 then
                Gtk_New
-                 (Path, Image (Client.Get_Stack_Trace.Get_Current_Frame_Id));
+                 (Path,
+                  GNATCOLL.Utils.Image
+                    (Client.Get_Stack_Trace.Get_Current_Frame_Id, 1));
                View.Tree.Get_Selection.Select_Path (Path);
                Path_Free (Path);
 

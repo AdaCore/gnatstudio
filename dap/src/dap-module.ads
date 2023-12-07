@@ -38,12 +38,14 @@ package DAP.Module is
      (Kernel          : access GPS.Kernel.Kernel_Handle_Record'Class;
       File            : GNATCOLL.VFS.Virtual_File := No_File;
       Project         : Project_Type := No_Project;
-      Executable_Args : String := "");
+      Executable_Args : String := "";
+      Remote_Target   : String := "");
    function Initialize_Debugger
      (Kernel          : access GPS.Kernel.Kernel_Handle_Record'Class;
       File            : GNATCOLL.VFS.Virtual_File := No_File;
       Project         : Project_Type := No_Project;
-      Executable_Args : String := "")
+      Executable_Args : String := "";
+      Remote_Target   : String := "")
       return DAP.Clients.DAP_Client_Access;
    --  Initialize a DAP debugging session.
    --  File and Project are used to refer to the executable we want to debug.
@@ -52,6 +54,11 @@ package DAP.Module is
    --  running executable for instance.
    --  Executable_Args contain the extra arguments that will be passed
    --  to the debugged executable.
+
+   procedure Start_Executable
+     (Kernel : not null Kernel_Handle;
+      Client : not null DAP.Clients.DAP_Client_Access);
+   --  Start the executable attached with the given DAP debugger.
 
    procedure Finished (Id : Positive);
    --  Called when some debugger is finished
@@ -70,8 +77,6 @@ package DAP.Module is
    procedure For_Each_Debugger
      (Callback : access procedure (Debugger : DAP.Clients.DAP_Client_Access));
    --  Calls Callback for each debugger
-
-   procedure Start_Program (Client : DAP.Clients.DAP_Client_Access);
 
    function Get_Started_Per_Session_Debuggers return Integer;
    --  Returns count of debuggers that have been started in parallel

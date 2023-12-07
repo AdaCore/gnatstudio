@@ -263,7 +263,7 @@ package body DAP.Views.Registers is
       Client : constant DAP.Clients.DAP_Client_Access := Get_Client (Widget);
    begin
       if Client = null
-        or else not Client.Is_Ready_For_Command
+        or else not Client.Is_Available
       then
          return;
       end if;

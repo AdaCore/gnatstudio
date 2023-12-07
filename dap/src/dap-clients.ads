@@ -95,15 +95,18 @@ package DAP.Clients is
    procedure Start
      (Self               : in out DAP_Client;
       Project            : GNATCOLL.Projects.Project_Type;
-      File               : GNATCOLL.VFS.Virtual_File;
-      Executable_Args    : String);
-   --  Start DAP adapter
+      Executable               : GNATCOLL.VFS.Virtual_File;
+      Executable_Args    : String;
+      Remote_Target      : String);
+   --  Start the debugger.
 
    function Is_Stopped (Self : DAP_Client) return Boolean;
    --  Debugging program is stopped and new command can be accepted
+
    function Is_Ready (Self : DAP_Client) return Boolean;
-   --  Debugging program is ready for start
-   function Is_Ready_For_Command (Self : DAP_Client) return Boolean;
+   --  Debugging program is ready to start
+
+   function Is_Available (Self : DAP_Client) return Boolean;
    --  Debugger can accept new command. Debugging can be not started yet.
 
    procedure Enqueue
@@ -114,11 +117,15 @@ package DAP.Clients is
    --  Does not check whether the debugger is stopped when Force is True
 
    procedure Quit (Self : in out DAP_Client);
+   --  Quit the current debugging session, sending the DAP 'disconnect' request
+   --  if a debuggee has been launched by the debugger.
 
-   --  Notification about debugging process' status changing --
-
-   procedure On_Launched (Self : in out DAP_Client);
-   --  Inform that the debugger is ready for debugging
+   procedure On_Launched
+     (Self         : in out DAP_Client;
+      Start_Method : Debuggee_Start_Method_Kind);
+   --  Inform the debugger that the debuggee has been started, we are now ready
+   --  for debugging.
+   --  Start_Method should specify which method was used to start the debuggee.
 
    procedure On_Configured (Self : in out DAP_Client);
    --  Debugger starts executing debugree program
@@ -250,8 +257,14 @@ package DAP.Clients is
    --  Return the project currently debugged.
 
    function Get_Executable_Args
-     (Self : in out DAP_Client) return Ada.Strings.Unbounded.Unbounded_String;
+     (Self : in out DAP_Client)
+      return VSS.String_Vectors.Virtual_String_Vector;
    --  Return the command line arguments for the executable currently debugged.
+
+   function Get_Remote_Target
+     (Self : in out DAP_Client) return VSS.Strings.Virtual_String;
+   --  Return the remote target used by the debug adapter (e.g; 'target remote
+   --  <target>' with GDB).
 
    procedure Set_Source_Files
      (Self         : in out DAP_Client;
@@ -422,9 +435,12 @@ private
    with record
       This            : DAP_Client_Access := DAP_Client'Unchecked_Access;
       Visual          : DAP_Visual_Debugger_Access;
+
       Project         : GNATCOLL.Projects.Project_Type;
       Executable      : GNATCOLL.VFS.Virtual_File;
-      Executable_Args : Ada.Strings.Unbounded.Unbounded_String;
+      Executable_Args : VSS.String_Vectors.Virtual_String_Vector;
+      Remote_Target   : VSS.Strings.Virtual_String;
+
       Source_Files    : VSS.String_Vectors.Virtual_String_Vector;
 
       Is_Attached                : Boolean := False;
@@ -470,8 +486,8 @@ private
    --  Called to parse RAW response from the DAP adapter
 
    overriding procedure On_Started (Self : in out DAP_Client);
-   --  Send initialization request on successful startup of the language
-   --  server process.
+   --  Send 'initialize' request on successful startup of the DAP server
+   --  process.
 
    overriding procedure On_Finished (Self : in out DAP_Client);
    --  Handle termination of the language server process. If this wasn't
