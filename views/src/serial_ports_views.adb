@@ -188,7 +188,6 @@ package body Serial_Ports_Views is
       Histories.Allow_Duplicates
         (Get_History (View.Kernel).all, "serial_port_console", True, True);
 
-      View.Console.Set_Highlight_Color (Preference (Comments_Style));
       View.Console.Set_Sensitive (False);
 
       return Gtk_Widget (View);
