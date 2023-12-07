@@ -574,6 +574,7 @@ package body DAP.Clients is
      (Self   : in out DAP_Client;
       Status : Debugger_Status_Kind)
    is
+      use type Generic_Views.Abstract_View_Access;
       Old : constant Debugger_Status_Kind := Self.Status;
    begin
       if Self.Status = Status
@@ -594,7 +595,9 @@ package body DAP.Clients is
 
       case Self.Status is
          when Ready =>
-            DAP.Views.Consoles.Create_Execution_Console (Self.This);
+            if Self.Debuggee_Console = null then
+               DAP.Views.Consoles.Create_Execution_Console (Self.This);
+            end if;
 
             --  Trigger this hook when we did all preparations
             --   (for example set breakpoints). In ither case we will
@@ -1805,7 +1808,7 @@ package body DAP.Clients is
 
       elsif Event = "exited" then
          --  Trigger the hook to inform that debuggee process is finished
-         if not Self.Is_Debuggee_Started_Called then
+         if Self.Is_Debuggee_Started_Called then
             Self.Is_Debuggee_Started_Called := False;
             GPS.Kernel.Hooks.Debugger_Process_Terminated_Hook.Run
               (Self.Kernel, Self.Visual);
@@ -1814,6 +1817,15 @@ package body DAP.Clients is
       elsif Event = "module" then
          --  Do not handle, at least for now.
          null;
+
+      elsif Event = "terminated" then
+         if Self.Is_Debuggee_Started_Called then
+            Self.Is_Debuggee_Started_Called := False;
+            GPS.Kernel.Hooks.Debugger_Process_Terminated_Hook.Run
+              (Self.Kernel, Self.Visual);
+         end if;
+         Self.Set_Status (Ready);
+         Display_In_Debugger_Console (Self, "Terminated");
 
       else
          Self.Kernel.Get_Messages_Window.Insert_Error
