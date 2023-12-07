@@ -54,6 +54,7 @@ with DAP.Modules.Contexts;
 with DAP.Modules.Persistent_Breakpoints;
 with DAP.Modules.Preferences;
 with DAP.Modules.Scripts;
+with DAP.Clients.Attach;
 with DAP.Requests.ConfigurationDone;
 with DAP.Requests.Next;
 with DAP.Requests.Step_In_Request;
@@ -274,6 +275,12 @@ package body DAP.Module is
      (Command : access Connect_To_Board_Command;
       Context : Interactive_Command_Context) return Command_Return_Type;
    --  Debug->Debug->Connect to Board
+
+   type Attach_Command is new Interactive_Command with null record;
+   overriding function Execute
+     (Command : access Attach_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type;
+   --  Debug->Debug->Attach
 
    -- Utils --
 
@@ -900,6 +907,35 @@ package body DAP.Module is
    is
       pragma Unreferenced (Command, Context);
    begin
+      return Commands.Success;
+   end Execute;
+
+   -------------
+   -- Execute --
+   -------------
+
+   overriding function Execute
+     (Command : access Attach_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type
+   is
+      Kernel : constant Kernel_Handle :=
+        GPS.Kernel.Get_Kernel (Context.Context);
+      PID    : constant String :=
+        GUI_Utils.Query_User
+          (Parent        => Kernel.Get_Main_Window,
+           Prompt        => "Enter the PID of the process to attach to",
+           Password_Mode => False);
+      Client : constant DAP.Clients.DAP_Client_Access :=
+        Get_Current_Debugger;
+      Attach_Req : DAP.Clients.Attach.Attach_Request_Access :=
+        DAP.Clients.Attach.Create
+          (Kernel => Kernel,
+           Client => Client,
+           PID    => Integer'Value (PID));
+   begin
+      Client.Enqueue
+        (DAP.Requests.DAP_Request_Access (Attach_Req));
+
       return Commands.Success;
    end Execute;
 
@@ -1533,6 +1569,12 @@ package body DAP.Module is
            & " is only relevant to cross debuggers.",
          Filter   => No_Debugger_Or_Ready,
          Category => "Debug");
+
+      GPS.Kernel.Actions.Register_Action
+        (Kernel, "debug attach", new Attach_Command,
+         Description => "Attach to a running process",
+         Filter      => Has_Debugger,
+         Category    => "Debug");
 
       DAP.Modules.Persistent_Breakpoints.Register_Module (Kernel);
       DAP.Views.Call_Stack.Register_Module (Kernel);
