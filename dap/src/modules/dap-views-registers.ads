@@ -130,20 +130,10 @@ private
       Local_Toolbar                   => True);
    subtype DAP_Registers_View is Registers_MDI_Views.View_Access;
 
-   function Get_View
-     (Client : not null access DAP.Clients.DAP_Client'Class)
-      return access Registers_View_Record'Class;
-
-   procedure Set_View
-     (Client : not null access DAP.Clients.DAP_Client'Class;
-      View   : access Registers_View_Record'Class := null);
-
    package Simple_Views is new DAP.Views.Simple_Views
      (Formal_Views       => Registers_MDI_Views,
       Formal_View_Record => Registers_View_Record,
-      Formal_MDI_Child   => GPS_MDI_Child_Record,
-      Get_View           => Get_View,
-      Set_View           => Set_View);
+      Formal_MDI_Child   => GPS_MDI_Child_Record);
 
    Name_Column           : constant := 0;
    Raw_Column            : constant := 1;

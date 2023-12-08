@@ -282,20 +282,10 @@ private
       Position                        => Gtkada.MDI.Position_Right,
       Initialize                      => Initialize);
 
-   function Get_View
-     (Client : not null access DAP.Clients.DAP_Client'Class)
-      return access DAP_Variables_View_Record'Class;
-
-   procedure Set_View
-     (Client : not null access DAP.Clients.DAP_Client'Class;
-      View   : access DAP_Variables_View_Record'Class := null);
-
    package Variables_Views is new DAP.Views.Simple_Views
      (Formal_View_Record => DAP_Variables_View_Record,
       Formal_MDI_Child   => Variables_MDI_Child_Record,
-      Formal_Views       => Variables_MDI_Views,
-      Get_View           => Get_View,
-      Set_View           => Set_View);
+      Formal_Views       => Variables_MDI_Views);
    use type Variables_MDI_Views.View_Access;
    subtype DAP_Variables_View is Variables_MDI_Views.View_Access;
 

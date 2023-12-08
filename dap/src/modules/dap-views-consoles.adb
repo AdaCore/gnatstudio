@@ -77,6 +77,13 @@ package body DAP.Views.Consoles is
      (Self : access Debugger_Console_Record'Class) return Gtk_Widget;
    --  Internal initialization function
 
+   overriding procedure On_Attach
+     (Self   : not null access Debugger_Console_Record;
+      Client : not null access DAP.Clients.DAP_Client'Class);
+   --  Called when a new DAP client is spawned and attached to the debugger
+   --  console.
+   --  Used to reciprocally attach the debugger console to the DAP client.
+
    overriding procedure Create_Menu
      (View    : not null access Debugger_Console_Record;
       Menu    : not null access Gtk.Menu.Gtk_Menu_Record'Class);
@@ -99,20 +106,10 @@ package body DAP.Views.Consoles is
    subtype Console_MDI is Console_MDI_Views.View_Access;
    use type Console_MDI;
 
-   function Get_View
-     (Client : not null access DAP.Clients.DAP_Client'Class)
-      return access Debugger_Console_Record'Class;
-
-   procedure Set_View
-     (Client : not null access DAP.Clients.DAP_Client'Class;
-      View   : access Debugger_Console_Record'Class := null);
-
    package Console_Views is new DAP.Views.Simple_Views
      (Formal_Views       => Console_MDI_Views,
       Formal_View_Record => Debugger_Console_Record,
-      Formal_MDI_Child   => GPS_MDI_Child_Record,
-      Get_View           => Get_View,
-      Set_View           => Set_View);
+      Formal_MDI_Child   => GPS_MDI_Child_Record);
 
    function Key_Handler
      (Console  : access Interactive_Console_Record'Class;
@@ -171,15 +168,6 @@ package body DAP.Views.Consoles is
       Client  : not null access DAP_Client'Class);
    --  Requires initialized when attaching the console to a process
 
-   function Get_Debuggee_Console
-     (Client : not null access DAP_Client'Class)
-      return access Debuggee_Console_Record'Class;
-
-   procedure Set_Debuggee_Console
-     (Client  : not null access DAP_Client'Class;
-      Console : access Debuggee_Console_Record'Class := null);
-   --  Get or set the consoles from the process
-
    function Debuggee_Console_Handler
      (Console    : access Interactive_Console_Record'Class;
       Input      : String;
@@ -207,9 +195,7 @@ package body DAP.Views.Consoles is
    package Debuggee_Views is new DAP.Views.Simple_Views
      (Formal_Views       => Debuggee_MDI_Views,
       Formal_View_Record => Debuggee_Console_Record,
-      Formal_MDI_Child   => GPS_MDI_Child_Record,
-      Get_View           => Get_Debuggee_Console,
-      Set_View           => Set_Debuggee_Console);
+      Formal_MDI_Child   => GPS_MDI_Child_Record);
 
    procedure Attach_To_Debuggee_Console
      (Client              : access DAP.Clients.DAP_Client'Class;
@@ -299,7 +285,11 @@ package body DAP.Views.Consoles is
       Name                : String) is
    begin
       Console_Views.Attach_To_View
-        (Client, Kernel, Create_If_Necessary, False, Name);
+        (Client              => Client,
+         Kernel              => Kernel,
+         Create_If_Necessary => Create_If_Necessary,
+         Update_On_Attach    => False,
+         Name                => Name);
    end Attach_To_Debugger_Console;
 
    ---------------
@@ -319,6 +309,18 @@ package body DAP.Views.Consoles is
       end if;
    end Close_TTY;
 
+   ---------------
+   -- On_Attach --
+   ---------------
+
+   overriding procedure On_Attach
+     (Self   : not null access Debugger_Console_Record;
+      Client : not null access DAP.Clients.DAP_Client'Class) is
+   begin
+      Client.Set_Debugger_Console
+        (Console => Generic_Views.Abstract_View_Access (Self));
+   end On_Attach;
+
    -----------------
    -- Create_Menu --
    -----------------
@@ -332,17 +334,6 @@ package body DAP.Views.Consoles is
       Append_Menu
         (Menu, View.Kernel, DAP.Modules.Preferences.Debugger_Console_Stdout);
    end Create_Menu;
-
-   --------------------------
-   -- Get_Debuggee_Console --
-   --------------------------
-
-   function Get_Debuggee_Console
-     (Client : not null access DAP_Client'Class)
-      return access Debuggee_Console_Record'Class is
-   begin
-      return Debuggee_Console (Client.Get_Debuggee_Console);
-   end Get_Debuggee_Console;
 
    --------------------------------------
    -- Get_Debugger_Interactive_Console --
@@ -362,17 +353,6 @@ package body DAP.Views.Consoles is
          return null;
       end if;
    end Get_Debugger_Interactive_Console;
-
-   --------------
-   -- Get_View --
-   --------------
-
-   function Get_View
-     (Client : not null access DAP.Clients.DAP_Client'Class)
-      return access Debugger_Console_Record'Class is
-   begin
-      return Debugger_Console (Client.Get_Debugger_Console);
-   end Get_View;
 
    ----------------
    -- Initialize --
@@ -400,42 +380,6 @@ package body DAP.Views.Consoles is
 
       return Gtk_Widget (Self);
    end Initialize;
-
-   --------------------------
-   -- Set_Debuggee_Console --
-   --------------------------
-
-   procedure Set_Debuggee_Console
-     (Client  : not null access DAP_Client'Class;
-      Console : access Debuggee_Console_Record'Class := null)
-   is
-      View : constant Debuggee_Console := Get_Debuggee_Console (Client);
-   begin
-      if View /= null then
-         Close_TTY (View);
-         View.Console.Clear;
-      end if;
-
-      Client.Set_Debuggee_Console (Abstract_View_Access (Console));
-   end Set_Debuggee_Console;
-
-   --------------
-   -- Set_View --
-   --------------
-
-   procedure Set_View
-     (Client : not null access DAP.Clients.DAP_Client'Class;
-      View   : access Debugger_Console_Record'Class := null)
-   is
-      Old : constant Debugger_Console := Get_View (Client);
-   begin
-      if Old /= null then
-         Old.On_Process_Terminated;
-      end if;
-
-      Client.Set_Debugger_Console
-        (Generic_Views.Abstract_View_Access (View));
-   end Set_View;
 
    ------------
    -- TTY_Cb --

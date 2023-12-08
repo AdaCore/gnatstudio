@@ -15,6 +15,7 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
+with Ada.Tags;
 with Gtkada.MDI;           use Gtkada.MDI;
 with Gtkada.Handlers;      use Gtkada.Handlers;
 
@@ -26,7 +27,6 @@ with Commands;             use Commands;
 with Commands.Interactive; use Commands.Interactive;
 
 with DAP.Module;
-with DAP.Types;            use DAP.Types;
 
 package body DAP.Views is
 
@@ -69,88 +69,44 @@ package body DAP.Views is
          Name                : String := "")
 
       is
-         MDI   : constant MDI_Window := GPS.Kernel.MDI.Get_MDI (Kernel);
          Child : MDI_Child;
-         Iter  : Child_Iterator;
          View  : access Formal_View_Record'Class;
       begin
-         if Client = null then
-            null;
-         else
-            View := Get_View (Client);
+         --  Try to retrieve any existing view
+         View := Formal_Views.Retrieve_View (Kernel);
+
+         --  If there is no available view: create a new one if asked,
+         --  appending Name to the MDI child's title.
+         --  Otherwise, just retrieve the already existing MDI child.
+         if View = null and then Create_If_Necessary then
+            View  := Formal_Views.Get_Or_Create_View (Kernel);
+            Widget_Callback.Connect
+              (View, Gtk.Widget.Signal_Destroy, Destroy_Access);
+            Child := Formal_Views.Child_From_View (View);
+            Set_Title (Child, Formal_Views.View_Name & Name);
+         elsif View /= null then
+            Child := Formal_Views.Child_From_View (View);
          end if;
 
-         if View = null then
-            --  Do we have an existing unattached view ?
-            Iter := First_Child (MDI);
+         --  We have a view, either an already existing one or a newly created
+         --  one: attach it to the given DAP client
+         if Child /= null then
+            Trace
+              (Me,
+               "Attaching client to view: "
+               & Ada.Tags.Expanded_Name (View'Tag));
 
-            loop
-               Child := Get (Iter);
-               exit when Child = null;
+            View.Set_Client (Client);
+            On_Attach (View, Client);
 
-               if Child.all in Formal_Views.Local_Formal_MDI_Child'Class then
-                  View := Formal_Views.View_From_Child (Child);
-                  exit when Get_Client (View) = null;
-               end if;
-
-               Next (Iter);
-            end loop;
-
-            --  If no existing view was found, create one
-
-            if Child = null and then Create_If_Necessary then
-               View  := Formal_Views.Get_Or_Create_View (Kernel);
-               Child := Formal_Views.Child_From_View (View);
+            --  Update the view if asked
+            if Update_On_Attach then
+               Update (View);
             end if;
 
-            if Child /= null then
-               --  In case it was hidden because of the preference
-               Show (View);
-
-               --  Make it visible again
-               Raise_Child (Child);
-
-               if Client /= null then
-                  View.Set_Client (Client);
-                  Set_View (Client, View);
-
-                  Set_Title (Child, Formal_Views.View_Name & Name);
-                  On_Attach (View, Client);
-
-                  if Update_On_Attach then
-                     if Client.Get_Status in Initialized .. Stopped then
-                        Update (View);
-                     else
-                        declare
-                           Info_Msg : constant String :=
-                             "Cannot update " & Formal_Views.View_Name
-                             & " while the debugger is busy";
-                        begin
-                           Trace (Me, Info_Msg);
-                           View.Kernel.Insert (Info_Msg, Mode => Info);
-                        end;
-                     end if;
-                  end if;
-
-                  Widget_Callback.Connect
-                    (View, Gtk.Widget.Signal_Destroy, Destroy_Access);
-               end if;
-            end if;
-
-         else
-            Child := Formal_Views.Child_From_View (View);
-
-            if Child /= null then
-               Raise_Child (Child);
-            else
-               --  Something really bad happened: the stack window is not
-               --  part of the MDI, reset it.
-               Destroy (View);
-
-               if Client /= null then
-                  Set_View (Client, null);
-               end if;
-            end if;
+            --  Make sure to make the view visible
+            Show (View);
+            Raise_Child (Child);
          end if;
       end Attach_To_View;
 
@@ -209,18 +165,11 @@ package body DAP.Views is
          Debugger  : access GPS.Debuggers.Base_Visual_Debugger'Class;
          New_State : GPS.Debuggers.Debugger_State)
       is
-         pragma Unreferenced (Self, Kernel);
+         pragma Unreferenced (Self);
 
-         Client : DAP.Clients.DAP_Client_Access;
-         V      : access Formal_View_Record'Class;
+         V      : constant access Formal_View_Record'Class :=
+           Formal_Views.Retrieve_View (Kernel);
       begin
-         if Debugger /= null then
-            Client := DAP.Clients.DAP_Visual_Debugger_Access (Debugger).Client;
-         end if;
-
-         if Client /= null then
-            V := Get_View (Client);
-         end if;
 
          if V /= null then
             V.On_Status_Changed (New_State);
@@ -236,19 +185,11 @@ package body DAP.Views is
           Kernel   : not null access GPS.Kernel.Kernel_Handle_Record'Class;
           Debugger : access GPS.Debuggers.Base_Visual_Debugger'Class)
       is
-         pragma Unreferenced (Self, Kernel);
+         pragma Unreferenced (Self);
 
-         Client : DAP.Clients.DAP_Client_Access;
-         V      : access Formal_View_Record'Class;
+         V : constant access Formal_View_Record'Class :=
+           Formal_Views.Retrieve_View (Kernel);
       begin
-         if Debugger /= null then
-            Client := DAP.Clients.DAP_Visual_Debugger_Access (Debugger).Client;
-         end if;
-
-         if Client /= null then
-            V := Get_View (Client);
-         end if;
-
          if V /= null then
             V.On_Process_Terminated;
          end if;
@@ -263,22 +204,12 @@ package body DAP.Views is
           Kernel   : not null access GPS.Kernel.Kernel_Handle_Record'Class;
           Debugger : access GPS.Debuggers.Base_Visual_Debugger'Class)
       is
-         pragma Unreferenced (Kernel);
-
-         Client : DAP.Clients.DAP_Client_Access;
-         V      : access Formal_View_Record'Class;
+         V : constant access Formal_View_Record'Class :=
+           Formal_Views.Retrieve_View (Kernel);
       begin
-         if Debugger /= null then
-            Client := DAP.Clients.DAP_Visual_Debugger_Access (Debugger).Client;
-         end if;
 
-         if Client /= null then
-            V := Get_View (Client);
-         end if;
-
-         if V /= null then
-            V.On_Detach (Client);
-            Set_View (Client, null);
+         if V /= null and then V.Get_Client /= null then
+            V.On_Detach (V.Get_Client);
             V.Set_Client (null);
          end if;
       end Execute;
@@ -292,19 +223,11 @@ package body DAP.Views is
          Kernel   : not null access GPS.Kernel.Kernel_Handle_Record'Class;
          Debugger : access GPS.Debuggers.Base_Visual_Debugger'Class)
       is
-         pragma Unreferenced (Self, Kernel);
+         pragma Unreferenced (Self);
 
-         Client : DAP.Clients.DAP_Client_Access;
-         V      : access Formal_View_Record'Class;
+         V      : constant access Formal_View_Record'Class :=
+           Formal_Views.Retrieve_View (Kernel);
       begin
-         if Debugger /= null then
-            Client := DAP.Clients.DAP_Visual_Debugger_Access (Debugger).Client;
-         end if;
-
-         if Client /= null then
-            V := Get_View (Client);
-         end if;
-
          if V /= null then
             V.On_Location_Changed;
          end if;
@@ -324,7 +247,6 @@ package body DAP.Views is
       begin
          if Get_Client (V) /= null then
             V.On_Detach (Get_Client (V));
-            Set_View (Get_Client (V), null);
             V.Set_Client (null);
          end if;
       end On_Destroy;
