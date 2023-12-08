@@ -43,7 +43,7 @@ package body DAP.Views.Variables.Set_Variable_Requests is
 
       if Result.success then
          if View /= null then
-            Cursor := View.Locals.Root;
+            Cursor := View.Scopes.Root;
             Find_Best_Ref (Self.Name, Cursor, Found);
             if Found then
                Var := Element (Cursor);
@@ -57,7 +57,7 @@ package body DAP.Views.Variables.Set_Variable_Requests is
                   then Result.a_body.variablesReference.Value
                   else 0);
 
-               View.Locals.Replace_Element (Cursor, Var);
+               View.Scopes.Replace_Element (Cursor, Var);
             end if;
 
             Iter := View.Tree.Model.Get_Iter (Self.Path);
