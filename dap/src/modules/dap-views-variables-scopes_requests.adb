@@ -37,57 +37,71 @@ package body DAP.Views.Variables.Scopes_Requests is
           (Self.Kernel,
            Visible_Only => False);
 
+      Id : Integer;
    begin
       for Index in 1 .. Length (Result.a_body.scopes) loop
          if Result.a_body.scopes (Index).name = "Locals" then
-            View.Locals_Id := Result.a_body.scopes (Index).variablesReference;
+            View.Locals_Scope_Id :=
+              Result.a_body.scopes (Index).variablesReference;
 
-            if Self.Item.Cmd.Is_Empty then
-               --  it is not a command, use variable request
-               declare
-                  Req : constant Variables_Request_Access :=
-                    new Variables_Request (Self.Kernel);
-               begin
-                  Req.Client   := Self.Client;
-                  Req.Item     := Self.Item;
-                  Req.Position := Self.Position;
-                  Req.Childs   := Self.Childs;
-                  if Self.Path /= Null_Gtk_Tree_Path then
-                     Req.Path := Copy (Self.Path);
-                  end if;
-                  Req.Ref := View.Locals_Id;
-                  Req.Parameters.arguments.variablesReference := Req.Ref;
-                  New_Request := DAP.Requests.DAP_Request_Access (Req);
-               end;
-
-            else
-               --  it is command, use evaluate request
-               declare
-                  Req : constant DAP.Views.Variables.Evaluate_Requests.
-                    Evaluate_Request_Access :=
-                      new DAP.Views.Variables.Evaluate_Requests.
-                        Evaluate_Request (Self.Kernel);
-               begin
-                  Req.Client   := Self.Client;
-                  Req.Item     := Self.Item;
-                  Req.Position := Self.Position;
-                  if Self.Path /= Null_Gtk_Tree_Path then
-                     Req.Path := Copy (Self.Path);
-                  end if;
-
-                  Req.Parameters.arguments.expression := Self.Item.Cmd;
-                  Req.Parameters.arguments.frameId :=
-                    Self.Client.Get_Selected_Frame_Id;
-                  Req.Parameters.arguments.context :=
-                    (Is_Set => True, Value => DAP.Tools.Enum.repl);
-
-                  New_Request := DAP.Requests.DAP_Request_Access (Req);
-               end;
-            end if;
-
-            exit;
+         elsif Result.a_body.scopes (Index).name = "Arguments" then
+            View.Arguments_Scope_Id :=
+              Result.a_body.scopes (Index).variablesReference;
          end if;
       end loop;
+
+      if Self.Item.Cmd.Is_Empty then
+         --  It is not a command, use variable request. Request contents of
+         --  Locals or Arguments if any.
+
+         if View.Locals_Scope_Id /= 0 then
+            Id := View.Locals_Scope_Id;
+         else
+            Id := View.Arguments_Scope_Id;
+         end if;
+
+         if Id /= 0 then
+            declare
+               Req : constant Variables_Request_Access :=
+                 new Variables_Request (Self.Kernel);
+            begin
+               Req.Client   := Self.Client;
+               Req.Item     := Self.Item;
+               Req.Position := Self.Position;
+               Req.Childs   := Self.Childs;
+               if Self.Path /= Null_Gtk_Tree_Path then
+                  Req.Path := Copy (Self.Path);
+               end if;
+               Req.Ref := Id;
+               Req.Parameters.arguments.variablesReference := Id;
+               New_Request := DAP.Requests.DAP_Request_Access (Req);
+            end;
+         end if;
+
+      else
+         --  it is command, use evaluate request
+         declare
+            Req : constant DAP.Views.Variables.Evaluate_Requests.
+              Evaluate_Request_Access :=
+                new DAP.Views.Variables.Evaluate_Requests.
+                  Evaluate_Request (Self.Kernel);
+         begin
+            Req.Client   := Self.Client;
+            Req.Item     := Self.Item;
+            Req.Position := Self.Position;
+            if Self.Path /= Null_Gtk_Tree_Path then
+               Req.Path := Copy (Self.Path);
+            end if;
+
+            Req.Parameters.arguments.expression := Self.Item.Cmd;
+            Req.Parameters.arguments.frameId :=
+              Self.Client.Get_Selected_Frame_Id;
+            Req.Parameters.arguments.context :=
+              (Is_Set => True, Value => DAP.Tools.Enum.repl);
+
+            New_Request := DAP.Requests.DAP_Request_Access (Req);
+         end;
+      end if;
 
       if Self.Path /= Null_Gtk_Tree_Path then
          Path_Free (Self.Path);

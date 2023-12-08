@@ -30,7 +30,10 @@ private package DAP.Views.Variables.Variables_Requests is
    with record
       Client   : DAP.Clients.DAP_Client_Access;
       Item     : Item_Info;
+
       Position : Natural;
+      --  The variable's position to update
+
       Ref      : Integer;
       Path     : Gtk.Tree_Model.Gtk_Tree_Path := Null_Gtk_Tree_Path;
       Childs   : Boolean := False;

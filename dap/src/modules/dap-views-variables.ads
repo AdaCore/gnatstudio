@@ -141,11 +141,25 @@ private
    --  DAP_Variables_View_Record --
 
    type DAP_Variables_View_Record is new View_Record with record
-      Tree      : Variables_Tree_View;
-      Expansion : Expansions.Expansion_Status;
-      Locals_Id : Integer := 0;
-      Locals    : Variables_References_Trees.Tree := Empty_Tree;
-      Old       : Variables_References_Trees.Tree := Empty_Tree;
+      Tree               : Variables_Tree_View;
+      --  Represents variables in GUI
+
+      Expansion          : Expansions.Expansion_Status;
+      --  Used to restore expansion and selection
+
+      Locals_Scope_Id    : Integer := 0;
+      --  Current 'Locals' scope Id on debugger side.
+
+      Arguments_Scope_Id : Integer := 0;
+      --  Current 'Arguments' scope Id on debugger side.
+
+      Scopes             : Variables_References_Trees.Tree := Empty_Tree;
+      --  Contains the different scopes that are returned by the DAP
+      --  ScopesRequest (e.g: "Locals", "Arguments")
+
+      Old_Scopes         : Variables_References_Trees.Tree := Empty_Tree;
+      --  Contains old scopes' values. Used to detect changes in values
+      --  in order to highlight them in the view
    end record;
 
    function Initialize
@@ -286,14 +300,14 @@ private
    subtype DAP_Variables_View is Variables_MDI_Views.View_Access;
 
    --  Tree columns
-   Column_Name           : constant := 0;
-   Column_Value          : constant := 1;
-   Column_Type           : constant := 2;
-   Column_Icon           : constant := 3;
-   Column_Id             : constant := 4;   --  integer id for the variable
-   Column_Name_Fg        : constant := 5;
-   Column_Value_Fg       : constant := 6;
-   Column_Type_Fg        : constant := 7;
-   Column_Full_Name      : constant := 8;
+   Column_Name      : constant := 0;
+   Column_Value     : constant := 1;
+   Column_Type      : constant := 2;
+   Column_Icon      : constant := 3;
+   Column_Id        : constant := 4;   --  integer id for the variable
+   Column_Name_Fg   : constant := 5;
+   Column_Value_Fg  : constant := 6;
+   Column_Type_Fg   : constant := 7;
+   Column_Full_Name : constant := 8;
 
 end DAP.Views.Variables;
