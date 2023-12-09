@@ -42,7 +42,7 @@ package body DAP.Views.Variables.Evaluate_Requests is
          return;
       end if;
 
-      C := View.Locals.Root;
+      C := View.Scopes.Root;
       Var.a_type             := Result.a_body.a_type;
       Var.name               := Self.Item.Cmd;
       Var.indexedVariables   := Result.a_body.indexedVariables;
@@ -51,9 +51,9 @@ package body DAP.Views.Variables.Evaluate_Requests is
       Var.presentationHint   := Result.a_body.presentationHint;
       Var.value              := Result.a_body.result;
       --  Do not allow to expand the 'command' variable
-      Var.variablesReference := 0; -- Result.a_body.variablesReference;
+      Var.variablesReference := 0;
 
-      View.Locals.Append_Child (C, Var);
+      View.Scopes.Append_Child (C, Var);
 
       View.Publish_Or_Request
         (Self.Item, Self.Position, False, Self.Path, New_Request);

@@ -222,10 +222,10 @@ package body DAP.Views.Variables is
    overriding procedure On_Process_Terminated
      (Self : not null access DAP_Variables_View_Record) is
    begin
-      Self.Locals_Id := 0;
+      Self.Locals_Scope_Id := 0;
       Self.Clear;
-      Self.Locals.Clear;
-      Self.Old.Clear;
+      Self.Scopes.Clear;
+      Self.Old_Scopes.Clear;
    end On_Process_Terminated;
 
    -----------------------
@@ -241,9 +241,9 @@ package body DAP.Views.Variables is
       if Status = Debug_Busy
         or else Status = Debug_None
       then
-         Self.Locals_Id := 0;
-         Self.Old := Self.Locals;
-         Self.Locals.Clear;
+         Self.Locals_Scope_Id := 0;
+         Self.Old_Scopes := Self.Scopes;
+         Self.Scopes.Clear;
       end if;
    end On_Status_Changed;
 
@@ -399,7 +399,7 @@ package body DAP.Views.Variables is
       Cursor : Variables_References_Trees.Cursor)
       return Boolean
    is
-      C     : Variables_References_Trees.Cursor := Self.Old.Root;
+      C     : Variables_References_Trees.Cursor := Self.Old_Scopes.Root;
       Found : Boolean;
    begin
       Find_Best_Ref (Full_Name (Cursor), C, Found);
@@ -718,7 +718,7 @@ package body DAP.Views.Variables is
         VSS.Strings.Conversions.To_Virtual_String (Name);
       Inf    : Boolean;
       Ref    : Boolean;
-      C      : Variables_References_Trees.Cursor := Self.Locals.Root;
+      C      : Variables_References_Trees.Cursor := Self.Scopes.Root;
       Cursor : Item_Info_Vectors.Cursor;
    begin
       if Client = null then
@@ -1146,8 +1146,8 @@ package body DAP.Views.Variables is
       Client  : constant DAP.Clients.DAP_Client_Access := Get_Client (Self);
       Request : DAP.Requests.DAP_Request_Access;
    begin
-      Self.Locals_Id := 0;
-      Self.Locals.Clear;
+      Self.Locals_Scope_Id := 0;
+      Self.Scopes.Clear;
 
       if Client = null
         or else not Client.Is_Stopped
@@ -1275,7 +1275,7 @@ package body DAP.Views.Variables is
       end if;
 
       if Client.Is_Stopped then
-         if Self.Locals_Id = 0
+         if Self.Locals_Scope_Id = 0
            and then Item.Cmd.Is_Empty
          --  don't have local's id and not a command, get it
          then
@@ -2036,7 +2036,7 @@ package body DAP.Views.Variables is
 
    begin
       Request := null;
-      C := Self.Locals.Root;
+      C := Self.Scopes.Root;
       if Item.Varname.Is_Empty then
          Find_Cmd_Ref (Item.Cmd, C, Found);
 
@@ -2154,10 +2154,12 @@ package body DAP.Views.Variables is
       end Find;
 
    begin
-      if Id = Self.Locals_Id then
-         return Self.Locals.Root;
+      if Id = Self.Locals_Scope_Id
+        or else Id = Self.Arguments_Scope_Id
+      then
+         return Self.Scopes.Root;
       else
-         return Find (First_Child (Self.Locals.Root));
+         return Find (First_Child (Self.Scopes.Root));
       end if;
    end Find_Ref;
 
