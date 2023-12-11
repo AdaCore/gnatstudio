@@ -15,9 +15,6 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with VSS.String_Vectors;
-
-with DAP.Clients;
 with DAP.Tools.Inputs;
 with DAP.Tools.Outputs;
 
@@ -54,58 +51,6 @@ package body DAP.Requests.Loaded_Sources is
            (Self).On_Result_Message (Client, Response, New_Request);
       end if;
    end On_Result_Message;
-
-   -----------------------
-   -- On_Result_Message --
-   -----------------------
-
-   procedure On_Result_Message
-     (Self        : in out Loaded_Sources_DAP_Request;
-      Client      : not null access DAP.Clients.DAP_Client'Class;
-      Result      : DAP.Tools.LoadedSourcesResponse;
-      New_Request : in out DAP_Request_Access)
-   is
-      use DAP.Tools;
-      Source_Files : VSS.String_Vectors.Virtual_String_Vector;
-   begin
-      New_Request := null;
-
-      for Index in 1 .. Length (Result.a_body.sources) loop
-         declare
-            Src : constant Source := Result.a_body.sources (Index);
-         begin
-            Source_Files.Append (Src.path);
-         end;
-      end loop;
-
-      Client.Set_Source_Files (Source_Files);
-      Client.On_Launched;
-   end On_Result_Message;
-
-   -----------------
-   -- On_Rejected --
-   -----------------
-
-   overriding procedure On_Rejected
-     (Self   : in out Loaded_Sources_DAP_Request;
-      Client : not null access DAP.Clients.DAP_Client'Class) is
-   begin
-      DAP_Request (Self).On_Rejected (Client);
-      Client.On_Launched;
-   end On_Rejected;
-
-   ----------------------
-   -- On_Error_Message --
-   ----------------------
-
-   overriding procedure On_Error_Message
-     (Self    : in out Loaded_Sources_DAP_Request;
-      Client  : not null access DAP.Clients.DAP_Client'Class;
-      Message : VSS.Strings.Virtual_String) is
-   begin
-      DAP_Request (Self).On_Error_Message (Client, Message);
-      Client.On_Launched;
-   end On_Error_Message;
 
    -------------
    -- Set_Seq --

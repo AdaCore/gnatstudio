@@ -21,14 +21,20 @@ with DAP.Tools;
 
 package DAP.Requests.Disconnects is
 
-   type Disconnect_DAP_Request is new DAP_Request with private;
+   type Disconnect_DAP_Request is abstract new DAP_Request with record
+      Parameters : aliased DAP.Tools.DisconnectRequest :=
+        DAP.Tools.DisconnectRequest'
+          (seq       => 0,
+           arguments =>
+             (Is_Set => True,
+              Value  =>
+                (restart           => False,
+                 terminateDebuggee => True,
+                 suspendDebuggee   => False)));
+   end record;
 
    type Disconnect_DAP_Request_Access is
      access all Disconnect_DAP_Request;
-
-   procedure Initialize
-     (Self               : in out Disconnect_DAP_Request;
-      Terminate_Debuggee : Boolean);
 
    overriding procedure Write
      (Self   : Disconnect_DAP_Request;
@@ -45,16 +51,7 @@ package DAP.Requests.Disconnects is
      (Self        : in out Disconnect_DAP_Request;
       Client      : not null access DAP.Clients.DAP_Client'Class;
       Result      : DAP.Tools.DisconnectResponse;
-      New_Request : in out DAP_Request_Access);
-
-   overriding procedure On_Rejected
-     (Self   : in out Disconnect_DAP_Request;
-      Client : not null access DAP.Clients.DAP_Client'Class);
-
-   overriding procedure On_Error_Message
-     (Self    : in out Disconnect_DAP_Request;
-      Client  : not null access DAP.Clients.DAP_Client'Class;
-      Message : VSS.Strings.Virtual_String);
+      New_Request : in out DAP_Request_Access) is abstract;
 
    overriding procedure Set_Seq
      (Self : in out Disconnect_DAP_Request;
@@ -63,19 +60,5 @@ package DAP.Requests.Disconnects is
    overriding function Method
      (Self : in out Disconnect_DAP_Request)
       return String is ("disconnect");
-
-private
-
-   type Disconnect_DAP_Request is new DAP_Request with record
-      Parameters : aliased DAP.Tools.DisconnectRequest :=
-        DAP.Tools.DisconnectRequest'
-          (seq       => 0,
-           arguments =>
-             (Is_Set => True,
-              Value  =>
-                (restart           => False,
-                 terminateDebuggee => True,
-                 suspendDebuggee   => False)));
-   end record;
 
 end DAP.Requests.Disconnects;

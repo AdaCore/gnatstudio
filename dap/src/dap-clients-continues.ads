@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                               GNAT Studio                                --
 --                                                                          --
---                        Copyright (C) 2022-2023, AdaCore                  --
+--                        Copyright (C) 2023, AdaCore                       --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -15,52 +15,37 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with DAP.Tools.Inputs;
-with DAP.Tools.Outputs;
+--  Concrete implementation of the DAP 'continue' request
 
-package body DAP.Requests.Disconnects is
+with DAP.Requests;        use DAP.Requests;
+with DAP.Requests.Continue;
+with GPS.Kernel;          use GPS.Kernel;
 
-   -----------
-   -- Write --
-   -----------
+package DAP.Clients.Continues is
 
-   overriding procedure Write
-     (Self   : Disconnect_DAP_Request;
-      Stream : in out VSS.JSON.Content_Handlers.JSON_Content_Handler'Class) is
-   begin
-      DAP.Tools.Outputs.Output_DisconnectRequest (Stream, Self.Parameters);
-   end Write;
+   type Continue_Request (<>) is
+     new DAP.Requests.Continue.Continue_DAP_Request
+   with private;
+   type Continue_Request_Access is access all Continue_Request'Class;
 
-   -----------------------
-   -- On_Result_Message --
-   -----------------------
+   function Create
+     (Kernel    : not null Kernel_Handle;
+      Thread_Id : Integer)
+      return Continue_Request_Access;
+   --  Create a new DAP 'continue' request.
+   --  Thread_Id specifies the active thread. Only the thread with this ID is
+   --  resumed if the debug adapter supports single thread execution.
 
    overriding procedure On_Result_Message
-     (Self        : in out Disconnect_DAP_Request;
+     (Self        : in out Continue_Request;
       Client      : not null access DAP.Clients.DAP_Client'Class;
-      Stream      : in out VSS.JSON.Pull_Readers.JSON_Pull_Reader'Class;
-      Success     : in out Boolean;
-      New_Request : in out DAP_Request_Access)
-   is
-      Response : DAP.Tools.DisconnectResponse;
-   begin
-      DAP.Tools.Inputs.Input_DisconnectResponse (Stream, Response, Success);
+      Result      : DAP.Tools.ContinueResponse;
+      New_Request : in out DAP_Request_Access);
 
-      if Success then
-         Disconnect_DAP_Request'Class
-           (Self).On_Result_Message (Client, Response, New_Request);
-      end if;
-   end On_Result_Message;
+private
 
-   -------------
-   -- Set_Seq --
-   -------------
+   type Continue_Request is
+     new DAP.Requests.Continue.Continue_DAP_Request with
+       null record;
 
-   overriding procedure Set_Seq
-     (Self : in out Disconnect_DAP_Request;
-      Id   : Integer) is
-   begin
-      Self.Parameters.seq := Id;
-   end Set_Seq;
-
-end DAP.Requests.Disconnects;
+end DAP.Clients.Continues;

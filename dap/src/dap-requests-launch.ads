@@ -21,13 +21,17 @@ with DAP.Tools;
 
 package DAP.Requests.Launch is
 
-   type Launch_DAP_Request is new DAP_Request with private;
+   type Launch_DAP_Request is abstract new DAP_Request with record
+      Parameters : aliased DAP.Tools.LaunchRequest :=
+        DAP.Tools.LaunchRequest'
+          (seq       => 0,
+           arguments =>
+             (noDebug => False,
+              stopAtBeginningOfMainSubprogram => False,
+              others  => <>));
+   end record;
 
    type Launch_DAP_Request_Access is access all Launch_DAP_Request;
-
-   procedure Initialize
-     (Self   : in out Launch_DAP_Request;
-      Client : DAP.Clients.DAP_Client_Access);
 
    overriding procedure Write
      (Self   : Launch_DAP_Request;
@@ -44,16 +48,7 @@ package DAP.Requests.Launch is
      (Self        : in out Launch_DAP_Request;
       Client      : not null access DAP.Clients.DAP_Client'Class;
       Result      : DAP.Tools.LaunchResponse;
-      New_Request : in out DAP_Request_Access);
-
-   overriding procedure On_Rejected
-     (Self   : in out Launch_DAP_Request;
-      Client : not null access DAP.Clients.DAP_Client'Class);
-
-   overriding procedure On_Error_Message
-     (Self    : in out Launch_DAP_Request;
-      Client  : not null access DAP.Clients.DAP_Client'Class;
-      Message : VSS.Strings.Virtual_String);
+      New_Request : in out DAP_Request_Access) is abstract;
 
    overriding procedure Set_Seq
      (Self : in out Launch_DAP_Request;
@@ -62,17 +57,5 @@ package DAP.Requests.Launch is
    overriding function Method
      (Self : in out Launch_DAP_Request)
       return String is ("launch");
-
-private
-
-   type Launch_DAP_Request is new DAP_Request with record
-      Parameters : aliased DAP.Tools.LaunchRequest :=
-        DAP.Tools.LaunchRequest'
-          (seq       => 0,
-           arguments =>
-             (noDebug => False,
-              stopAtBeginningOfMainSubprogram => False,
-              others  => <>));
-   end record;
 
 end DAP.Requests.Launch;

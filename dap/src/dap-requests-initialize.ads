@@ -21,47 +21,7 @@ with DAP.Tools;
 
 package DAP.Requests.Initialize is
 
-   type Initialize_DAP_Request is new DAP_Request with private;
-
-   type Initialize_DAP_Request_Access is access all Initialize_DAP_Request;
-
-   overriding procedure Write
-     (Self   : Initialize_DAP_Request;
-      Stream : in out VSS.JSON.Content_Handlers.JSON_Content_Handler'Class);
-
-   overriding procedure On_Result_Message
-     (Self        : in out Initialize_DAP_Request;
-      Client      : not null access DAP.Clients.DAP_Client'Class;
-      Stream      : in out VSS.JSON.Pull_Readers.JSON_Pull_Reader'Class;
-      Success     : in out Boolean;
-      New_Request : in out DAP_Request_Access);
-
-   procedure On_Result_Message
-     (Self        : in out Initialize_DAP_Request;
-      Client      : not null access DAP.Clients.DAP_Client'Class;
-      Result      : DAP.Tools.InitializeResponse;
-      New_Request : in out DAP_Request_Access);
-
-   overriding procedure On_Rejected
-     (Self   : in out Initialize_DAP_Request;
-      Client : not null access DAP.Clients.DAP_Client'Class);
-
-   overriding procedure On_Error_Message
-     (Self    : in out Initialize_DAP_Request;
-      Client  : not null access DAP.Clients.DAP_Client'Class;
-      Message : VSS.Strings.Virtual_String);
-
-   overriding procedure Set_Seq
-     (Self : in out Initialize_DAP_Request;
-      Id   : Integer);
-
-   overriding function Method
-     (Self : in out Initialize_DAP_Request)
-      return String is ("initialize");
-
-private
-
-   type Initialize_DAP_Request is new DAP_Request with record
+   type Initialize_DAP_Request is abstract new DAP_Request with record
       Parameters : aliased DAP.Tools.InitializeRequest :=
         DAP.Tools.InitializeRequest'
           (seq       => 0,
@@ -84,5 +44,32 @@ private
               supportsArgsCanBeInterpretedByShell => False,
               supportsStartDebuggingRequest       => True));
    end record;
+
+   type Initialize_DAP_Request_Access is access all Initialize_DAP_Request;
+
+   overriding procedure Write
+     (Self   : Initialize_DAP_Request;
+      Stream : in out VSS.JSON.Content_Handlers.JSON_Content_Handler'Class);
+
+   overriding procedure On_Result_Message
+     (Self        : in out Initialize_DAP_Request;
+      Client      : not null access DAP.Clients.DAP_Client'Class;
+      Stream      : in out VSS.JSON.Pull_Readers.JSON_Pull_Reader'Class;
+      Success     : in out Boolean;
+      New_Request : in out DAP_Request_Access);
+
+   procedure On_Result_Message
+     (Self        : in out Initialize_DAP_Request;
+      Client      : not null access DAP.Clients.DAP_Client'Class;
+      Result      : DAP.Tools.InitializeResponse;
+      New_Request : in out DAP_Request_Access) is abstract;
+
+   overriding procedure Set_Seq
+     (Self : in out Initialize_DAP_Request;
+      Id   : Integer);
+
+   overriding function Method
+     (Self : in out Initialize_DAP_Request)
+      return String is ("initialize");
 
 end DAP.Requests.Initialize;

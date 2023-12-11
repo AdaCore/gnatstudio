@@ -441,8 +441,24 @@ package DAP.Clients is
       TTY  : String);
    --  Set the terminal of the program debugged to TTY (e.g "/dev/pts/2").
 
-   procedure Continue (Self : in out DAP_Client);
-   --  Sends request to continue debuggee execution
+   procedure Continue_Execution (Self : in out DAP_Client);
+   --  Sends the corresponding request to continue debuggee execution.
+
+   procedure Configuration_Done (Self : in out DAP_Client);
+   --  Send the corresponding request to the DAP server.
+
+   procedure Next (Self : in out DAP_Client);
+   --  Sends the corresponding request to step debuggee execution.
+
+   procedure Next_Instruction (Self : in out DAP_Client);
+   --  Sends the corresponding request to step debuggee execution
+   --  for one instruction.
+
+   procedure Step_In (Self : in out DAP_Client);
+   --  Sends the corresponding request to step into.
+
+   procedure Step_In_Instruction (Self : in out DAP_Client);
+   --  Sends the corresponding request to step into for one instruction.
 
 private
 

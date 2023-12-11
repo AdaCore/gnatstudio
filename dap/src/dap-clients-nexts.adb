@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                               GNAT Studio                                --
 --                                                                          --
---                        Copyright (C) 2022-2023, AdaCore                  --
+--                        Copyright (C) 2023, AdaCore                       --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -15,52 +15,44 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with DAP.Tools.Inputs;
-with DAP.Tools.Outputs;
+with DAP.Tools;
 
-package body DAP.Requests.Disconnects is
+package body DAP.Clients.Nexts is
 
-   -----------
-   -- Write --
-   -----------
+   ------------
+   -- Create --
+   ------------
 
-   overriding procedure Write
-     (Self   : Disconnect_DAP_Request;
-      Stream : in out VSS.JSON.Content_Handlers.JSON_Content_Handler'Class) is
+   function Create
+     (Kernel      : not null Kernel_Handle;
+      Thread_Id   : Integer;
+      Instruction : Boolean)
+      return Next_Request_Access
+   is
+      Self : constant Next_Request_Access := new Next_Request (Kernel);
    begin
-      DAP.Tools.Outputs.Output_DisconnectRequest (Stream, Self.Parameters);
-   end Write;
+      Self.Parameters.arguments.threadId := Thread_Id;
+      if Instruction then
+         Self.Parameters.arguments.granularity :=
+           (Is_Set => True, Value => DAP.Tools.Enum.instruction);
+      end if;
+
+      return Self;
+   end Create;
 
    -----------------------
    -- On_Result_Message --
    -----------------------
 
    overriding procedure On_Result_Message
-     (Self        : in out Disconnect_DAP_Request;
+     (Self        : in out Next_Request;
       Client      : not null access DAP.Clients.DAP_Client'Class;
-      Stream      : in out VSS.JSON.Pull_Readers.JSON_Pull_Reader'Class;
-      Success     : in out Boolean;
+      Result      : DAP.Tools.NextResponse;
       New_Request : in out DAP_Request_Access)
    is
-      Response : DAP.Tools.DisconnectResponse;
+      pragma Unreferenced (New_Request);
    begin
-      DAP.Tools.Inputs.Input_DisconnectResponse (Stream, Response, Success);
-
-      if Success then
-         Disconnect_DAP_Request'Class
-           (Self).On_Result_Message (Client, Response, New_Request);
-      end if;
+      Client.On_Continue;
    end On_Result_Message;
 
-   -------------
-   -- Set_Seq --
-   -------------
-
-   overriding procedure Set_Seq
-     (Self : in out Disconnect_DAP_Request;
-      Id   : Integer) is
-   begin
-      Self.Parameters.seq := Id;
-   end Set_Seq;
-
-end DAP.Requests.Disconnects;
+end DAP.Clients.Nexts;

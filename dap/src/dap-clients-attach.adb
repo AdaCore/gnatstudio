@@ -21,7 +21,7 @@ with VSS.Strings.Conversions;
 
 with GPS.Kernel.Project;
 
-with DAP.Requests.Loaded_Sources;
+with DAP.Clients.Loaded_Sources;
 
 package body DAP.Clients.Attach is
 
@@ -69,14 +69,8 @@ package body DAP.Clients.Attach is
       then
          --  Debugging is started for executable, so prepare the
          --  source files list to prepare a project file for such debugging
-         declare
-            Sources : constant DAP.Requests.Loaded_Sources.
-              Loaded_Sources_DAP_Request_Access :=
-                new DAP.Requests.Loaded_Sources.
-                  Loaded_Sources_DAP_Request (Self.Kernel);
-         begin
-            New_Request := DAP_Request_Access (Sources);
-         end;
+         New_Request := DAP_Request_Access
+           (DAP.Clients.Loaded_Sources.Create (Self.Kernel));
 
       else
          Client.On_Launched;

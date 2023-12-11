@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                               GNAT Studio                                --
 --                                                                          --
---                        Copyright (C) 2022-2023, AdaCore                  --
+--                        Copyright (C) 2023, AdaCore                       --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -15,52 +15,57 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with DAP.Tools.Inputs;
-with DAP.Tools.Outputs;
+with VSS.Strings.Conversions;
+with DAP.Clients.Launchs;
 
-package body DAP.Requests.Disconnects is
+package body DAP.Clients.Initializes is
 
-   -----------
-   -- Write --
-   -----------
+   ------------
+   -- Create --
+   ------------
 
-   overriding procedure Write
-     (Self   : Disconnect_DAP_Request;
-      Stream : in out VSS.JSON.Content_Handlers.JSON_Content_Handler'Class) is
+   function Create
+     (Kernel : not null Kernel_Handle)
+      return Initialize_Request_Access
+   is
+      Self : constant Initialize_Request_Access :=
+        new Initialize_Request (Kernel);
    begin
-      DAP.Tools.Outputs.Output_DisconnectRequest (Stream, Self.Parameters);
-   end Write;
+      return Self;
+   end Create;
 
    -----------------------
    -- On_Result_Message --
    -----------------------
 
    overriding procedure On_Result_Message
-     (Self        : in out Disconnect_DAP_Request;
+     (Self        : in out Initialize_Request;
       Client      : not null access DAP.Clients.DAP_Client'Class;
-      Stream      : in out VSS.JSON.Pull_Readers.JSON_Pull_Reader'Class;
-      Success     : in out Boolean;
-      New_Request : in out DAP_Request_Access)
-   is
-      Response : DAP.Tools.DisconnectResponse;
+      Result      : DAP.Tools.InitializeResponse;
+      New_Request : in out DAP_Request_Access) is
    begin
-      DAP.Tools.Inputs.Input_DisconnectResponse (Stream, Response, Success);
-
-      if Success then
-         Disconnect_DAP_Request'Class
-           (Self).On_Result_Message (Client, Response, New_Request);
-      end if;
+      Client.Set_Capabilities (Result.a_body);
+      New_Request := DAP_Request_Access
+        (DAP.Clients.Launchs.Create
+           (Self.Kernel, DAP.Clients.DAP_Client_Access (Client)));
    end On_Result_Message;
 
-   -------------
-   -- Set_Seq --
-   -------------
+   ----------------------
+   -- On_Error_Message --
+   ----------------------
 
-   overriding procedure Set_Seq
-     (Self : in out Disconnect_DAP_Request;
-      Id   : Integer) is
+   overriding procedure On_Error_Message
+     (Self    : in out Initialize_Request;
+      Client  : not null access DAP.Clients.DAP_Client'Class;
+      Message : VSS.Strings.Virtual_String) is
    begin
-      Self.Parameters.seq := Id;
-   end Set_Seq;
+      Self.Kernel.Get_Messages_Window.Insert_Error
+        ("[Debug]:" &
+           VSS.Strings.Conversions.To_UTF_8_String (Message));
 
-end DAP.Requests.Disconnects;
+      DAP.Requests.Initialize.On_Error_Message
+        (DAP.Requests.Initialize.Initialize_DAP_Request (Self),
+         Client, Message);
+   end On_Error_Message;
+
+end DAP.Clients.Initializes;
