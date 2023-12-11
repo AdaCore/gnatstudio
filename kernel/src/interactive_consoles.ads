@@ -271,11 +271,6 @@ package Interactive_Consoles is
    --  Returns False if not interrupt handler was set or the handler did not
    --  perform anything.
 
-   procedure Set_Highlight_Color
-     (Console : access Interactive_Console_Record'Class;
-      Pref    : Preference := null);
-   --  Set the color used for highlighting tags
-
    function Get_Chars
      (Console : access Interactive_Console_Record) return String;
    --  Return the contents of the console window
