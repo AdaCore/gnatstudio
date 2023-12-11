@@ -102,7 +102,7 @@ package DAP.Clients is
    procedure Enqueue
      (Self    : in out DAP_Client;
       Request : in out DAP.Requests.DAP_Request_Access);
-   --  Add the commant to a queue to send it to the adapter
+   --  Queue the given request to send it to the DAP adapter
 
    procedure Quit (Self : in out DAP_Client);
 
