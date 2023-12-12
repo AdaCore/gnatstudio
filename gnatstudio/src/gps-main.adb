@@ -2945,7 +2945,18 @@ procedure GPS.Main is
       Preferences_Changed_Hook.Run (GPS_Main.Kernel, null);
 
       if not Hide_GPS then
-         GPS_Main.Present;
+         declare
+            Ignored : Boolean;
+         begin
+            --  Ensure the main window is raised above any existing window
+            GPS_Main.Set_Keep_Above (Setting => True);
+            GPS_Main.Present;
+            GPS_Main.Show_Now;
+            while Gtk.Main.Events_Pending loop
+               Ignored := Gtk.Main.Main_Iteration;
+            end loop;
+            GPS_Main.Set_Keep_Above (Setting => False);
+         end;
       end if;
 
       --  Check if we have some autosaved files in the opened editors
