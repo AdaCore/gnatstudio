@@ -301,13 +301,13 @@ package body DAP.Views.Assembly is
 
    type Request is
      new DAP.Requests.Disassemble.Disassemble_DAP_Request with record
-      Client    : DAP.Clients.DAP_Client_Access;
       Direction : Direction_Kind;
    end record;
    type Request_Access is access all Request;
 
    overriding procedure On_Result_Message
      (Self        : in out Request;
+      Client      : not null access DAP.Clients.DAP_Client'Class;
       Result      : in out DAP.Tools.DisassembleResponse;
       New_Request : in out DAP.Requests.DAP_Request_Access);
 
@@ -967,7 +967,6 @@ package body DAP.Views.Assembly is
 
       Req := new Request (Self.Kernel);
 
-      Req.Client    := Client;
       Req.Direction := Direction;
       Req.Parameters.arguments.memoryReference :=
         VSS.Strings.Conversions.To_Virtual_String (Address_To_String (Start));
@@ -984,11 +983,12 @@ package body DAP.Views.Assembly is
 
    overriding procedure On_Result_Message
      (Self        : in out Request;
+      Client      : not null access DAP.Clients.DAP_Client'Class;
       Result      : in out DAP.Tools.DisassembleResponse;
       New_Request : in out DAP.Requests.DAP_Request_Access)
    is
       pragma Unreferenced (New_Request);
-      View : constant Assembly_MDI := Get_View (Self.Client);
+      View : constant Assembly_MDI := Get_View (Client);
       S    : Disassemble_Elements;
 
       -- Format_Opcodes --

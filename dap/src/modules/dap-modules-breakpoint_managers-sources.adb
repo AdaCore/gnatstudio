@@ -26,22 +26,26 @@ package body DAP.Modules.Breakpoint_Managers.Sources is
 
    overriding procedure On_Error_Message
      (Self    : in out Source_Line_Request;
+      Client  : not null access DAP.Clients.DAP_Client'Class;
       Message : VSS.Strings.Virtual_String) is
    begin
       Self.Manager.Dec_Response (Self.Action);
       DAP.Requests.Breakpoints.On_Error_Message
-        (DAP.Requests.Breakpoints.Breakpoint_DAP_Request (Self), Message);
+        (DAP.Requests.Breakpoints.Breakpoint_DAP_Request (Self),
+         Client, Message);
    end On_Error_Message;
 
    -----------------
    -- On_Rejected --
    -----------------
 
-   overriding procedure On_Rejected (Self : in out Source_Line_Request) is
+   overriding procedure On_Rejected
+     (Self   : in out Source_Line_Request;
+      Client : not null access DAP.Clients.DAP_Client'Class) is
    begin
       Self.Manager.Dec_Response (Self.Action);
       DAP.Requests.Breakpoints.On_Rejected
-        (DAP.Requests.Breakpoints.Breakpoint_DAP_Request (Self));
+        (DAP.Requests.Breakpoints.Breakpoint_DAP_Request (Self), Client);
    end On_Rejected;
 
    -----------------------
@@ -50,6 +54,7 @@ package body DAP.Modules.Breakpoint_Managers.Sources is
 
    overriding procedure On_Result_Message
      (Self        : in out Source_Line_Request;
+      Client      : not null access DAP.Clients.DAP_Client'Class;
       Result      : in out DAP.Tools.SetBreakpointsResponse;
       New_Request : in out DAP_Request_Access)
    is
@@ -147,7 +152,7 @@ package body DAP.Modules.Breakpoint_Managers.Sources is
 
                   GPS.Kernel.Hooks.Debugger_Breakpoint_Added_Hook.Run
                     (Kernel   => Self.Kernel,
-                     Debugger => Self.Get_Client.Get_Visual,
+                     Debugger => Client.Get_Visual,
                      Id       => Integer (Data.Num));
                end if;
             end;

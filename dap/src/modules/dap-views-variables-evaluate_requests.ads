@@ -28,7 +28,6 @@ private package DAP.Views.Variables.Evaluate_Requests is
    type Evaluate_Request is
      new DAP.Requests.Evaluate.Evaluate_DAP_Request
    with record
-      Client   : DAP.Clients.DAP_Client_Access;
       Item     : Item_Info;
       Position : Natural;
       Ref      : Integer;
@@ -39,11 +38,13 @@ private package DAP.Views.Variables.Evaluate_Requests is
 
    overriding procedure On_Result_Message
      (Self        : in out Evaluate_Request;
+      Client      : not null access DAP.Clients.DAP_Client'Class;
       Result      : in out DAP.Tools.EvaluateResponse;
       New_Request : in out DAP.Requests.DAP_Request_Access);
 
    overriding procedure On_Error_Message
      (Self    : in out Evaluate_Request;
+      Client  : not null access DAP.Clients.DAP_Client'Class;
       Message : VSS.Strings.Virtual_String);
 
 end DAP.Views.Variables.Evaluate_Requests;

@@ -930,7 +930,6 @@ package body DAP.Module is
       Attach_Req : DAP.Clients.Attach.Attach_Request_Access :=
         DAP.Clients.Attach.Create
           (Kernel => Kernel,
-           Client => Client,
            PID    => Integer'Value (PID));
    begin
       Client.Enqueue

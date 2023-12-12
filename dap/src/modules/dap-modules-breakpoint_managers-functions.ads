@@ -34,14 +34,17 @@ private package DAP.Modules.Breakpoint_Managers.Functions is
 
    overriding procedure On_Result_Message
      (Self        : in out Function_Breakpoint_Request;
+      Client      : not null access DAP.Clients.DAP_Client'Class;
       Result      : in out DAP.Tools.SetFunctionBreakpointsResponse;
       New_Request : in out DAP_Request_Access);
 
    overriding procedure On_Rejected
-     (Self : in out Function_Breakpoint_Request);
+     (Self   : in out Function_Breakpoint_Request;
+      Client : not null access DAP.Clients.DAP_Client'Class);
 
    overriding procedure On_Error_Message
      (Self    : in out Function_Breakpoint_Request;
+      Client  : not null access DAP.Clients.DAP_Client'Class;
       Message : VSS.Strings.Virtual_String);
 
 end DAP.Modules.Breakpoint_Managers.Functions;

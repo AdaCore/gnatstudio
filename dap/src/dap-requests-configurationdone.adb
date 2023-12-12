@@ -45,6 +45,7 @@ package body DAP.Requests.ConfigurationDone is
 
    overriding procedure On_Result_Message
      (Self        : in out ConfigurationDone_DAP_Request;
+      Client      : not null access DAP.Clients.DAP_Client'Class;
       Stream      : in out VSS.JSON.Pull_Readers.JSON_Pull_Reader'Class;
       Success     : in out Boolean;
       New_Request : in out DAP_Request_Access)
@@ -56,7 +57,7 @@ package body DAP.Requests.ConfigurationDone is
 
       if Success then
          ConfigurationDone_DAP_Request'Class
-           (Self).On_Result_Message (Response, New_Request);
+           (Self).On_Result_Message (Client, Response, New_Request);
       end if;
    end On_Result_Message;
 
@@ -66,12 +67,13 @@ package body DAP.Requests.ConfigurationDone is
 
    procedure On_Result_Message
      (Self        : in out ConfigurationDone_DAP_Request;
+      Client      : not null access DAP.Clients.DAP_Client'Class;
       Result      : DAP.Tools.ConfigurationDoneResponse;
       New_Request : in out DAP_Request_Access)
    is
       pragma Unreferenced (New_Request);
    begin
-      Self.Client.On_Configured;
+      Client.On_Configured;
    end On_Result_Message;
 
    -----------------
@@ -79,7 +81,8 @@ package body DAP.Requests.ConfigurationDone is
    -----------------
 
    overriding procedure On_Rejected
-     (Self : in out ConfigurationDone_DAP_Request) is
+     (Self   : in out ConfigurationDone_DAP_Request;
+      Client : not null access DAP.Clients.DAP_Client'Class) is
    begin
       Trace (Me, "Rejected");
    end On_Rejected;
@@ -90,6 +93,7 @@ package body DAP.Requests.ConfigurationDone is
 
    overriding procedure On_Error_Message
      (Self    : in out ConfigurationDone_DAP_Request;
+      Client  : not null access DAP.Clients.DAP_Client'Class;
       Message : VSS.Strings.Virtual_String) is
    begin
       Trace (Me, VSS.Strings.Conversions.To_UTF_8_String (Message));

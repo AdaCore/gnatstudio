@@ -28,7 +28,6 @@ private package DAP.Views.Variables.Variables_Requests is
    type Variables_Request is
      new DAP.Requests.Variables.Variables_DAP_Request
    with record
-      Client   : DAP.Clients.DAP_Client_Access;
       Item     : Item_Info;
 
       Position : Natural;
@@ -43,11 +42,13 @@ private package DAP.Views.Variables.Variables_Requests is
 
    overriding procedure On_Result_Message
      (Self        : in out Variables_Request;
+      Client      : not null access DAP.Clients.DAP_Client'Class;
       Result      : in out DAP.Tools.VariablesResponse;
       New_Request : in out DAP.Requests.DAP_Request_Access);
 
    overriding procedure On_Error_Message
      (Self    : in out Variables_Request;
+      Client  : not null access DAP.Clients.DAP_Client'Class;
       Message : VSS.Strings.Virtual_String);
 
 end DAP.Views.Variables.Variables_Requests;

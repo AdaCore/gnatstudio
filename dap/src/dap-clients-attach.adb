@@ -31,14 +31,11 @@ package body DAP.Clients.Attach is
 
    function Create
      (Kernel : not null Kernel_Handle;
-      Client : not null DAP_Client_Access;
       PID    : Integer := -1;
       Target : String := "") return Attach_Request_Access
    is
       Self : constant Attach_Request_Access := new Attach_Request (Kernel);
    begin
-      Self.Client := Client;
-
       Self.Parameters.arguments.target :=
         VSS.Strings.Conversions.To_Virtual_String (Target);
 
@@ -55,6 +52,7 @@ package body DAP.Clients.Attach is
 
    overriding procedure On_Result_Message
      (Self        : in out Attach_Request;
+      Client      : not null access DAP.Clients.DAP_Client'Class;
       Result      : DAP.Tools.AttachResponse;
       New_Request : in out DAP_Request_Access)
    is
@@ -65,8 +63,8 @@ package body DAP.Clients.Attach is
       if GPS.Kernel.Project.Get_Registry
         (Self.Kernel).Tree.Status = From_Executable
         and then
-          (not Self.Client.Get_Capabilities.Is_Set
-           or else Self.Client.Get_Capabilities.
+          (not Client.Get_Capabilities.Is_Set
+           or else Client.Get_Capabilities.
              Value.supportsLoadedSourcesRequest)
       then
          --  Debugging is started for executable, so prepare the
@@ -81,7 +79,7 @@ package body DAP.Clients.Attach is
          end;
 
       else
-         Self.Client.On_Launched;
+         Client.On_Launched;
       end if;
    end On_Result_Message;
 

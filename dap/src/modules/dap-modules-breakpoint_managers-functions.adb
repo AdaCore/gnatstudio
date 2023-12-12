@@ -26,12 +26,13 @@ package body DAP.Modules.Breakpoint_Managers.Functions is
 
    overriding procedure On_Error_Message
      (Self    : in out Function_Breakpoint_Request;
+      Client  : not null access DAP.Clients.DAP_Client'Class;
       Message : VSS.Strings.Virtual_String) is
    begin
       Self.Manager.Dec_Response (Self.Action);
       DAP.Requests.Function_Breakpoints.On_Error_Message
-        (DAP.Requests.Function_Breakpoints.Function_Breakpoint_DAP_Request
-           (Self), Message);
+        (DAP.Requests.Function_Breakpoints.
+           Function_Breakpoint_DAP_Request (Self), Client, Message);
    end On_Error_Message;
 
    -----------------
@@ -39,12 +40,13 @@ package body DAP.Modules.Breakpoint_Managers.Functions is
    -----------------
 
    overriding procedure On_Rejected
-     (Self : in out Function_Breakpoint_Request) is
+     (Self   : in out Function_Breakpoint_Request;
+      Client : not null access DAP.Clients.DAP_Client'Class) is
    begin
       Self.Manager.Dec_Response (Self.Action);
       DAP.Requests.Function_Breakpoints.On_Rejected
-        (DAP.Requests.Function_Breakpoints.Function_Breakpoint_DAP_Request
-           (Self));
+        (DAP.Requests.Function_Breakpoints.
+           Function_Breakpoint_DAP_Request (Self), Client);
    end On_Rejected;
 
    -----------------------
@@ -53,6 +55,7 @@ package body DAP.Modules.Breakpoint_Managers.Functions is
 
    overriding procedure On_Result_Message
      (Self        : in out Function_Breakpoint_Request;
+      Client      : not null access DAP.Clients.DAP_Client'Class;
       Result      : in out DAP.Tools.SetFunctionBreakpointsResponse;
       New_Request : in out DAP_Request_Access)
    is
@@ -94,7 +97,7 @@ package body DAP.Modules.Breakpoint_Managers.Functions is
 
             GPS.Kernel.Hooks.Debugger_Breakpoint_Added_Hook.Run
               (Kernel   => Self.Kernel,
-               Debugger => Self.Get_Client.Get_Visual,
+               Debugger => Client.Get_Visual,
                Id       => Integer (Num));
 
             Update := True;

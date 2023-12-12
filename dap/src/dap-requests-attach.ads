@@ -37,6 +37,7 @@ package DAP.Requests.Attach is
 
    overriding procedure On_Result_Message
      (Self        : in out Attach_DAP_Request;
+      Client      : not null access DAP.Clients.DAP_Client'Class;
       Stream      : in out VSS.JSON.Pull_Readers.JSON_Pull_Reader'Class;
       Success     : in out Boolean;
       New_Request : in out DAP_Request_Access);
@@ -47,6 +48,7 @@ package DAP.Requests.Attach is
 
    procedure On_Result_Message
      (Self        : in out Attach_DAP_Request;
+      Client      : not null access DAP.Clients.DAP_Client'Class;
       Result      : DAP.Tools.AttachResponse;
       New_Request : in out DAP_Request_Access) is abstract;
 

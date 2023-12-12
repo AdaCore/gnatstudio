@@ -29,6 +29,7 @@ package body DAP.Views.Variables.Scopes_Requests is
 
    overriding procedure On_Result_Message
      (Self        : in out Scopes_Request;
+      Client      : not null access DAP.Clients.DAP_Client'Class;
       Result      : in out DAP.Tools.ScopesResponse;
       New_Request : in out DAP.Requests.DAP_Request_Access)
    is
@@ -65,7 +66,6 @@ package body DAP.Views.Variables.Scopes_Requests is
                Req : constant Variables_Request_Access :=
                  new Variables_Request (Self.Kernel);
             begin
-               Req.Client   := Self.Client;
                Req.Item     := Self.Item;
                Req.Position := Self.Position;
                Req.Childs   := Self.Childs;
@@ -86,7 +86,6 @@ package body DAP.Views.Variables.Scopes_Requests is
                 new DAP.Views.Variables.Evaluate_Requests.
                   Evaluate_Request (Self.Kernel);
          begin
-            Req.Client   := Self.Client;
             Req.Item     := Self.Item;
             Req.Position := Self.Position;
             if Self.Path /= Null_Gtk_Tree_Path then
@@ -94,8 +93,7 @@ package body DAP.Views.Variables.Scopes_Requests is
             end if;
 
             Req.Parameters.arguments.expression := Self.Item.Cmd;
-            Req.Parameters.arguments.frameId :=
-              Self.Client.Get_Selected_Frame_Id;
+            Req.Parameters.arguments.frameId := Client.Get_Selected_Frame_Id;
             Req.Parameters.arguments.context :=
               (Is_Set => True, Value => DAP.Tools.Enum.repl);
 
@@ -114,6 +112,7 @@ package body DAP.Views.Variables.Scopes_Requests is
 
    overriding procedure On_Error_Message
      (Self    : in out Scopes_Request;
+      Client  : not null access DAP.Clients.DAP_Client'Class;
       Message : VSS.Strings.Virtual_String)
    is
       View : constant DAP_Variables_View :=
@@ -123,7 +122,7 @@ package body DAP.Views.Variables.Scopes_Requests is
 
    begin
       DAP.Requests.Scopes.Scopes_DAP_Request
-        (Self).On_Error_Message (Message);
+        (Self).On_Error_Message (Client, Message);
 
       if View /= null
         and then Self.Item.Id /= Unknown_Id

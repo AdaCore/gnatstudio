@@ -43,7 +43,10 @@ package body DAP.Requests.Initialize is
    -- On_Rejected --
    -----------------
 
-   overriding procedure On_Rejected (Self : in out Initialize_DAP_Request) is
+   overriding procedure On_Rejected
+     (Self   : in out Initialize_DAP_Request;
+      Client : not null access DAP.Clients.DAP_Client'Class)
+   is
    begin
       Trace (Me, "Rejected");
    end On_Rejected;
@@ -54,6 +57,7 @@ package body DAP.Requests.Initialize is
 
    overriding procedure On_Error_Message
      (Self    : in out Initialize_DAP_Request;
+      Client  : not null access DAP.Clients.DAP_Client'Class;
       Message : VSS.Strings.Virtual_String) is
    begin
       Self.Kernel.Get_Messages_Window.Insert_Error
@@ -69,6 +73,7 @@ package body DAP.Requests.Initialize is
 
    overriding procedure On_Result_Message
      (Self        : in out Initialize_DAP_Request;
+      Client      : not null access DAP.Clients.DAP_Client'Class;
       Stream      : in out VSS.JSON.Pull_Readers.JSON_Pull_Reader'Class;
       Success     : in out Boolean;
       New_Request : in out DAP_Request_Access)
@@ -79,7 +84,7 @@ package body DAP.Requests.Initialize is
 
       if Success then
          Initialize_DAP_Request'Class
-           (Self).On_Result_Message (Response, New_Request);
+           (Self).On_Result_Message (Client, Response, New_Request);
       end if;
    end On_Result_Message;
 
@@ -89,6 +94,7 @@ package body DAP.Requests.Initialize is
 
    procedure On_Result_Message
      (Self        : in out Initialize_DAP_Request;
+      Client      : not null access DAP.Clients.DAP_Client'Class;
       Result      : DAP.Tools.InitializeResponse;
       New_Request : in out DAP_Request_Access)
    is
@@ -96,8 +102,8 @@ package body DAP.Requests.Initialize is
       Launch : constant DAP.Requests.Launch.Launch_DAP_Request_Access :=
         new DAP.Requests.Launch.Launch_DAP_Request (Self.Kernel);
    begin
-      Self.Client.Set_Capabilities (Result.a_body);
-      Launch.Initialize (Self.Client);
+      Client.Set_Capabilities (Result.a_body);
+      Launch.Initialize (Client);
       New_Request := DAP_Request_Access (Launch);
    end On_Result_Message;
 

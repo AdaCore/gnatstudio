@@ -40,12 +40,14 @@ package DAP.Requests.Continue is
 
    overriding procedure On_Result_Message
      (Self        : in out Continue_DAP_Request;
+      Client      : not null access DAP.Clients.DAP_Client'Class;
       Stream      : in out VSS.JSON.Pull_Readers.JSON_Pull_Reader'Class;
       Success     : in out Boolean;
       New_Request : in out DAP_Request_Access);
 
    procedure On_Result_Message
      (Self        : in out Continue_DAP_Request;
+      Client      : not null access DAP.Clients.DAP_Client'Class;
       Result      : DAP.Tools.ContinueResponse;
       New_Request : in out DAP_Request_Access);
 
