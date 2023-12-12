@@ -38,20 +38,25 @@ package DAP.Requests.Loaded_Sources is
      (Self   : Loaded_Sources_DAP_Request;
       Stream : in out VSS.JSON.Content_Handlers.JSON_Content_Handler'Class);
 
-   overriding procedure On_Rejected (Self : in out Loaded_Sources_DAP_Request);
+   overriding procedure On_Rejected
+     (Self   : in out Loaded_Sources_DAP_Request;
+      Client : not null access DAP.Clients.DAP_Client'Class);
 
    overriding procedure On_Error_Message
      (Self    : in out Loaded_Sources_DAP_Request;
+      Client  : not null access DAP.Clients.DAP_Client'Class;
       Message : VSS.Strings.Virtual_String);
 
    overriding procedure On_Result_Message
      (Self        : in out Loaded_Sources_DAP_Request;
+      Client      : not null access DAP.Clients.DAP_Client'Class;
       Stream      : in out VSS.JSON.Pull_Readers.JSON_Pull_Reader'Class;
       Success     : in out Boolean;
       New_Request : in out DAP_Request_Access);
 
    procedure On_Result_Message
      (Self        : in out Loaded_Sources_DAP_Request;
+      Client      : not null access DAP.Clients.DAP_Client'Class;
       Result      : DAP.Tools.LoadedSourcesResponse;
       New_Request : in out DAP_Request_Access);
 

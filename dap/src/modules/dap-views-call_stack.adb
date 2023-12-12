@@ -204,15 +204,15 @@ package body DAP.Views.Call_Stack is
    type StackTrace_Request is
      new DAP.Requests.StackTraces.StackTrace_DAP_Request
    with record
-      Client : DAP.Clients.DAP_Client_Access;
-      From   : Integer;
-      To     : Integer;
+      From : Integer;
+      To   : Integer;
    end record;
 
    type StackTrace_Request_Access is access all StackTrace_Request;
 
    overriding procedure On_Result_Message
      (Self        : in out StackTrace_Request;
+      Client      : not null access DAP.Clients.DAP_Client'Class;
       Result      : in out DAP.Tools.StackTraceResponse;
       New_Request : in out DAP.Requests.DAP_Request_Access);
 
@@ -295,7 +295,6 @@ package body DAP.Views.Call_Stack is
 
          Req := new StackTrace_Request (View.Kernel);
 
-         Req.Client := Client;
          Req.From   := F;
          Req.To     := To;
          Req.Parameters.arguments.threadId :=
@@ -580,11 +579,12 @@ package body DAP.Views.Call_Stack is
 
    overriding procedure On_Result_Message
      (Self        : in out StackTrace_Request;
+      Client      : not null access DAP.Clients.DAP_Client'Class;
       Result      : in out DAP.Tools.StackTraceResponse;
       New_Request : in out DAP.Requests.DAP_Request_Access)
    is
       pragma Unreferenced (New_Request);
-      View  : constant Call_Stack := Get_View (Self.Client);
+      View  : constant Call_Stack := Get_View (Client);
 
       Backtrace : Backtrace_Vectors.Vector;
    begin
@@ -596,7 +596,7 @@ package body DAP.Views.Call_Stack is
       end if;
 
       if Self.From > 0 then
-         Self.Client.Backtrace (Backtrace);
+         Client.Backtrace (Backtrace);
       end if;
 
       for Index in 1 .. Length (Result.a_body.stackFrames) loop
@@ -622,13 +622,13 @@ package body DAP.Views.Call_Stack is
          end;
       end loop;
 
-      Self.Client.Set_Backtrace (Backtrace);
+      Client.Set_Backtrace (Backtrace);
 
       if Self.From < 1 then
          declare
             Bt : constant Backtrace_Record := Backtrace.First_Element;
          begin
-            Self.Client.Set_Selected_Frame
+            Client.Set_Selected_Frame
               (Id      => Bt.Frame_Id,
                File    => Bt.File,
                Line    => Bt.Line,

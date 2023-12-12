@@ -35,24 +35,33 @@ package DAP.Requests.Launch is
 
    overriding procedure On_Result_Message
      (Self        : in out Launch_DAP_Request;
+      Client      : not null access DAP.Clients.DAP_Client'Class;
       Stream      : in out VSS.JSON.Pull_Readers.JSON_Pull_Reader'Class;
       Success     : in out Boolean;
       New_Request : in out DAP_Request_Access);
 
    procedure On_Result_Message
      (Self        : in out Launch_DAP_Request;
+      Client      : not null access DAP.Clients.DAP_Client'Class;
       Result      : DAP.Tools.LaunchResponse;
       New_Request : in out DAP_Request_Access);
 
-   overriding procedure On_Rejected (Self : in out Launch_DAP_Request);
+   overriding procedure On_Rejected
+     (Self   : in out Launch_DAP_Request;
+      Client : not null access DAP.Clients.DAP_Client'Class);
 
    overriding procedure On_Error_Message
      (Self    : in out Launch_DAP_Request;
+      Client  : not null access DAP.Clients.DAP_Client'Class;
       Message : VSS.Strings.Virtual_String);
 
    overriding procedure Set_Seq
      (Self : in out Launch_DAP_Request;
       Id   : Integer);
+
+   overriding function Method
+     (Self : in out Launch_DAP_Request)
+      return String is ("launch");
 
 private
 
@@ -65,9 +74,5 @@ private
               stopAtBeginningOfMainSubprogram => False,
               others  => <>));
    end record;
-
-   overriding function Method
-     (Self : in out Launch_DAP_Request)
-      return String is ("launch");
 
 end DAP.Requests.Launch;

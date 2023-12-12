@@ -44,6 +44,7 @@ package DAP.Requests is
 
    procedure On_Result_Message
      (Self        : in out DAP_Request;
+      Client      : not null access DAP.Clients.DAP_Client'Class;
       Stream      : in out VSS.JSON.Pull_Readers.JSON_Pull_Reader'Class;
       Success     : in out Boolean;
       New_Request : in out DAP_Request_Access) is abstract;
@@ -51,13 +52,17 @@ package DAP.Requests is
    --  Fill New_Request is new request should be sent after this one.
    --  Sets Success to False when the response can't be parsed.
 
-   procedure On_Rejected (Self : in out DAP_Request);
+   procedure On_Rejected
+     (Self   : in out DAP_Request;
+      Client : not null access DAP.Clients.DAP_Client'Class);
+
    --  Called when the processing of the request rejected by any reason, for
    --  example server is not ready, or dies before request is sent, it dies
    --  after request was send but before response or error is received.
 
    procedure On_Error_Message
      (Self    : in out DAP_Request;
+      Client  : not null access DAP.Clients.DAP_Client'Class;
       Message : VSS.Strings.Virtual_String);
 
    procedure Destroy (Item : in out DAP_Request_Access);
@@ -65,26 +70,15 @@ package DAP.Requests is
 
    procedure Set_Seq
      (Self : in out DAP_Request;
-      Id   : Integer) is abstract;
+      Seq  : Integer) is abstract;
    --  Set unique ID for the request
-
-   procedure Set_Client
-     (Self   : in out DAP_Request;
-      Client : access DAP.Clients.DAP_Client'Class);
-   --  Set the client that process the request
-
-   function Get_Client
-     (Self : in out DAP_Request) return access DAP.Clients.DAP_Client'Class;
-   --  Get associated client
 
    function Method (Self : in out DAP_Request) return String is abstract;
 
 private
 
    type DAP_Request
-     (Kernel : GPS.Kernel.Kernel_Handle) is
-     abstract tagged limited record
-      Client : access DAP.Clients.DAP_Client'Class := null;
-   end record;
+     (Kernel : GPS.Kernel.Kernel_Handle) is abstract
+     tagged limited null record;
 
 end DAP.Requests;

@@ -89,22 +89,24 @@ package body DAP.Clients is
 
    type StackTrace_Request is
      new DAP.Requests.StackTraces.StackTrace_DAP_Request
-   with record
-      Client : DAP_Client_Access;
-   end record;
+   with null record;
 
    type StackTrace_Request_Access is access all StackTrace_Request;
 
    overriding procedure On_Result_Message
      (Self        : in out StackTrace_Request;
+      Client      : not null access DAP.Clients.DAP_Client'Class;
       Result      : in out DAP.Tools.StackTraceResponse;
       New_Request : in out DAP.Requests.DAP_Request_Access);
 
    overriding procedure On_Error_Message
      (Self    : in out StackTrace_Request;
+      Client  : not null access DAP.Clients.DAP_Client'Class;
       Message : VSS.Strings.Virtual_String);
 
-   overriding procedure On_Rejected (Self : in out StackTrace_Request);
+   overriding procedure On_Rejected
+     (Self   : in out StackTrace_Request;
+      Client : not null access DAP.Clients.DAP_Client'Class);
 
    -- Evaluate_Request --
 
@@ -112,7 +114,6 @@ package body DAP.Clients is
      new DAP.Requests.Evaluate.Evaluate_DAP_Request
    with record
       Kind   : Evaluate_Kind := Hover;
-      Client : DAP_Client_Access;
       Label  : Gtk.Label.Gtk_Label;
       Output : Boolean := False;
 
@@ -125,11 +126,15 @@ package body DAP.Clients is
    overriding procedure Finalize (Self : in out Evaluate_Request);
    overriding procedure On_Result_Message
      (Self        : in out Evaluate_Request;
+      Client      : not null access DAP.Clients.DAP_Client'Class;
       Result      : in out DAP.Tools.EvaluateResponse;
       New_Request : in out DAP.Requests.DAP_Request_Access);
-   overriding procedure On_Rejected (Self : in out Evaluate_Request);
+   overriding procedure On_Rejected
+     (Self   : in out Evaluate_Request;
+      Client : not null access DAP.Clients.DAP_Client'Class);
    overriding procedure On_Error_Message
      (Self    : in out Evaluate_Request;
+      Client  : not null access DAP.Clients.DAP_Client'Class;
       Message : VSS.Strings.Virtual_String);
 
    Endian_Pattern            : constant VSS.Regular_Expressions.
@@ -648,7 +653,7 @@ package body DAP.Clients is
          Self.Process (Request);
 
       else
-         Request.On_Rejected;
+         Request.On_Rejected (Self'Access);
          DAP.Requests.Destroy (Request);
       end if;
 
@@ -1581,7 +1586,7 @@ package body DAP.Clients is
                     and then not R_Success.Value
                   then
                      begin
-                        Request.On_Error_Message (Message);
+                        Request.On_Error_Message (Self'Access, Message);
                      exception
                         when E : others =>
                            Trace (Me, E);
@@ -1595,11 +1600,11 @@ package body DAP.Clients is
                           or else not Request.Kernel.Is_In_Destruction
                         then
                            Request.On_Result_Message
-                             (Reader, Parsed, New_Request);
+                             (Self'Access, Reader, Parsed, New_Request);
 
                            if not Parsed then
                               Request.On_Error_Message
-                                ("Can't parse response");
+                                (Self'Access, "Can't parse response");
                            end if;
 
                            GPS.Kernel.Hooks.Dap_Response_Processed_Hook.Run
@@ -1647,7 +1652,6 @@ package body DAP.Clients is
         new StackTrace_Request (Self.Kernel);
 
    begin
-      Req.Client := Self.This;
       Req.Parameters.arguments.threadId := Thread_Id;
       if Limit /= 0 then
          Req.Parameters.arguments.startFrame := (True, 0);
@@ -2143,6 +2147,7 @@ package body DAP.Clients is
 
    overriding procedure On_Result_Message
      (Self        : in out StackTrace_Request;
+      Client      : not null access DAP.Clients.DAP_Client'Class;
       Result      : in out DAP.Tools.StackTraceResponse;
       New_Request : in out DAP.Requests.DAP_Request_Access)
    is
@@ -2174,23 +2179,23 @@ package body DAP.Clients is
             end if;
 
             if Index = 1 then
-               Self.Client.Set_Selected_Frame
+               Client.Set_Selected_Frame
                  (Id      => Bt.Frame_Id,
                   File    => Bt.File,
                   Line    => Bt.Line,
                   Address => Bt.Address);
             end if;
 
-            Self.Client.Frames.Append (Bt);
+            Client.Frames.Append (Bt);
          end;
       end loop;
 
-      Self.Client.Set_Status (Stopped);
+      Client.Set_Status (Stopped);
 
    exception
       when E : others =>
          Trace (Me, E);
-         Self.Client.Set_Status (Stopped);
+         Client.Set_Status (Stopped);
    end On_Result_Message;
 
    ----------------------
@@ -2199,21 +2204,24 @@ package body DAP.Clients is
 
    overriding procedure On_Error_Message
      (Self    : in out StackTrace_Request;
+      Client  : not null access DAP.Clients.DAP_Client'Class;
       Message : VSS.Strings.Virtual_String) is
    begin
       DAP.Requests.StackTraces.StackTrace_DAP_Request
-        (Self).On_Error_Message (Message);
+        (Self).On_Error_Message (Client, Message);
 
-      Self.Client.Set_Status (Stopped);
+      Client.Set_Status (Stopped);
    end On_Error_Message;
 
    -----------------
    -- On_Rejected --
    -----------------
 
-   overriding procedure On_Rejected (Self : in out StackTrace_Request) is
+   overriding procedure On_Rejected
+     (Self   : in out StackTrace_Request;
+      Client : not null access DAP.Clients.DAP_Client'Class) is
    begin
-      Self.Client.Set_Status (Stopped);
+      Client.Set_Status (Stopped);
    end On_Rejected;
 
    ---------------
@@ -2336,7 +2344,6 @@ package body DAP.Clients is
           DAP.Requests.Disconnects.Disconnect_DAP_Request'Class
       then
          Request.Set_Seq (Id);
-         Request.Set_Client (Self.This);
          Writer.Set_Stream (Stream'Unchecked_Access);
          Writer.Start_Document;
          Request.Write (Writer);
@@ -2358,7 +2365,7 @@ package body DAP.Clients is
          Self.Sent.Insert (Id, Request);
 
       else
-         Request.On_Rejected;
+         Request.On_Rejected (Self'Access);
          DAP.Requests.Destroy (Request);
       end if;
    end Process;
@@ -2372,7 +2379,7 @@ package body DAP.Clients is
       --  Reject all queued requests. Clean commands queue.
 
       for Request of Self.Sent loop
-         Request.On_Rejected;
+         Request.On_Rejected (Self'Access);
          DAP.Requests.Destroy (Request);
       end loop;
 
@@ -2608,7 +2615,6 @@ package body DAP.Clients is
         new Evaluate_Request (Self.Kernel);
    begin
       Req.Kind   := Kind;
-      Req.Client := Self.This;
       Req.Output := Output;
 
       Req.On_Result_Message := On_Result_Message;
@@ -2641,6 +2647,7 @@ package body DAP.Clients is
 
    overriding procedure On_Result_Message
      (Self        : in out Evaluate_Request;
+      Client      : not null access DAP.Clients.DAP_Client'Class;
       Result      : in out DAP.Tools.EvaluateResponse;
       New_Request : in out DAP.Requests.DAP_Request_Access)
    is
@@ -2656,12 +2663,12 @@ package body DAP.Clients is
                    Endian_Pattern.Match (Result.a_body.result);
             begin
                if Match.Has_Match then
-                  Self.Client.Endian := Little_Endian;
+                  Client.Endian := Little_Endian;
                else
-                  Self.Client.Endian := Big_Endian;
+                  Client.Endian := Big_Endian;
                end if;
             end;
-            Self.Client.Set_Status (Ready);
+            Client.Set_Status (Ready);
 
          when Hover =>
             Self.Label.Set_Markup
@@ -2685,9 +2692,9 @@ package body DAP.Clients is
 
          when Command =>
             if Self.Output
-              and then Self.Client /= null
+              and then Client /= null
             then
-               Self.Client.Display_In_Debugger_Console
+               Client.Display_In_Debugger_Console
                  (UTF8 (Result.a_body.result), False);
             end if;
 
@@ -2712,9 +2719,9 @@ package body DAP.Clients is
             end if;
 
             --  Update views because the command may change them
-            if Self.Client /= null then
-               DAP.Views.Variables.Update (Self.Client);
-               DAP.Views.Registers.Update (Self.Client);
+            if Client /= null then
+               DAP.Views.Variables.Update (Client);
+               DAP.Views.Registers.Update (Client);
             end if;
 
          when Set_TTY =>
@@ -2726,7 +2733,9 @@ package body DAP.Clients is
    -- On_Rejected --
    -----------------
 
-   overriding procedure On_Rejected (Self : in out Evaluate_Request)
+   overriding procedure On_Rejected
+     (Self   : in out Evaluate_Request;
+      Client : not null access DAP.Clients.DAP_Client'Class)
    is
       use GNATCOLL.Scripts;
    begin
@@ -2737,7 +2746,7 @@ package body DAP.Clients is
 
          when Command =>
             if Self.Output then
-               Self.Client.Display_In_Debugger_Console ("Rejected", False);
+               Client.Display_In_Debugger_Console ("Rejected", False);
             end if;
 
             if Self.On_Rejected /= null then
@@ -2753,7 +2762,7 @@ package body DAP.Clients is
             end if;
 
          when Endian =>
-            Self.Client.Set_Status (Ready);
+            Client.Set_Status (Ready);
 
          when Variable_Address | Set_TTY =>
             null;
@@ -2766,12 +2775,13 @@ package body DAP.Clients is
 
    overriding procedure On_Error_Message
      (Self    : in out Evaluate_Request;
+      Client  : not null access DAP.Clients.DAP_Client'Class;
       Message : VSS.Strings.Virtual_String)
    is
       use GNATCOLL.Scripts;
    begin
       DAP.Requests.Evaluate.Evaluate_DAP_Request
-        (Self).On_Error_Message (Message);
+        (Self).On_Error_Message (Client, Message);
 
       case Self.Kind is
          when Hover =>
@@ -2780,7 +2790,7 @@ package body DAP.Clients is
 
          when Command =>
             if Self.Output then
-               Self.Client.Display_In_Debugger_Console (UTF8 (Message), False);
+               Client.Display_In_Debugger_Console (UTF8 (Message), False);
             end if;
 
             if Self.On_Error_Message /= null then
@@ -2804,7 +2814,7 @@ package body DAP.Clients is
             end if;
 
          when Endian =>
-            Self.Client.Set_Status (Ready);
+            Client.Set_Status (Ready);
 
          when Variable_Address | Set_TTY =>
             null;
@@ -2864,8 +2874,7 @@ package body DAP.Clients is
             Req : Evaluate_Request_Access :=
               new Evaluate_Request (Self.Kernel);
          begin
-            Req.Kind   := Variable_Address;
-            Req.Client := Self.This;
+            Req.Kind := Variable_Address;
             Req.Parameters.arguments.expression := VSS.Strings.Conversions.
               To_Virtual_String ("print &(" & Variable & ")");
             Req.Parameters.arguments.frameId := Self.Get_Selected_Frame_Id;

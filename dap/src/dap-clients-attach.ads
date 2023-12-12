@@ -29,7 +29,6 @@ package DAP.Clients.Attach is
 
    function Create
      (Kernel : not null Kernel_Handle;
-      Client : not null DAP_Client_Access;
       PID    : Integer := -1;
       Target : String := "") return Attach_Request_Access;
    --  Create a new DAP 'attach' request.
@@ -40,14 +39,13 @@ package DAP.Clients.Attach is
 
    overriding procedure On_Result_Message
      (Self        : in out Attach_Request;
+      Client      : not null access DAP.Clients.DAP_Client'Class;
       Result      : DAP.Tools.AttachResponse;
       New_Request : in out DAP_Request_Access);
 
 private
 
-   type Attach_Request is new DAP.Requests.Attach.Attach_DAP_Request
-   with record
-      Client : DAP_Client_Access;
-   end record;
+   type Attach_Request is new DAP.Requests.Attach.Attach_DAP_Request with
+     null record;
 
 end DAP.Clients.Attach;

@@ -566,8 +566,7 @@ package body DAP.Views.Registers is
             Req := new DAP.Views.Registers.Scopes_Requests.
               Scopes_Request (Self.Kernel);
 
-            Req.Client := Client;
-            Req.Kind   := Kind;
+            Req.Kind := Kind;
             Req.Parameters.arguments.frameId := Client.Get_Selected_Frame_Id;
             Get_Client (Self).Enqueue (DAP.Requests.DAP_Request_Access (Req));
          end;
@@ -577,8 +576,7 @@ package body DAP.Views.Registers is
             Req : Variables_Request_Access :=
               new Variables_Request (Self.Kernel);
          begin
-            Req.Client := Self.Client;
-            Req.Kind   := Kind;
+            Req.Kind := Kind;
             Req.Parameters.arguments.variablesReference :=
               Self.Registers_Id;
             Get_Client (Self).Enqueue (DAP.Requests.DAP_Request_Access (Req));

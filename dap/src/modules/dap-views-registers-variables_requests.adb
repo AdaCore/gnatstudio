@@ -49,6 +49,7 @@ package body DAP.Views.Registers.Variables_Requests is
 
    overriding procedure On_Result_Message
      (Self        : in out Variables_Request;
+      Client      : not null access DAP.Clients.DAP_Client'Class;
       Result      : in out DAP.Tools.VariablesResponse;
       New_Request : in out DAP.Requests.DAP_Request_Access)
    is

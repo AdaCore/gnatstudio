@@ -36,25 +36,33 @@ package DAP.Requests.Disconnects is
 
    overriding procedure On_Result_Message
      (Self        : in out Disconnect_DAP_Request;
+      Client      : not null access DAP.Clients.DAP_Client'Class;
       Stream      : in out VSS.JSON.Pull_Readers.JSON_Pull_Reader'Class;
       Success     : in out Boolean;
       New_Request : in out DAP_Request_Access);
 
    procedure On_Result_Message
      (Self        : in out Disconnect_DAP_Request;
+      Client      : not null access DAP.Clients.DAP_Client'Class;
       Result      : DAP.Tools.DisconnectResponse;
       New_Request : in out DAP_Request_Access);
 
    overriding procedure On_Rejected
-     (Self : in out Disconnect_DAP_Request);
+     (Self   : in out Disconnect_DAP_Request;
+      Client : not null access DAP.Clients.DAP_Client'Class);
 
    overriding procedure On_Error_Message
      (Self    : in out Disconnect_DAP_Request;
+      Client  : not null access DAP.Clients.DAP_Client'Class;
       Message : VSS.Strings.Virtual_String);
 
    overriding procedure Set_Seq
      (Self : in out Disconnect_DAP_Request;
       Id   : Integer);
+
+   overriding function Method
+     (Self : in out Disconnect_DAP_Request)
+      return String is ("disconnect");
 
 private
 
@@ -69,9 +77,5 @@ private
                  terminateDebuggee => True,
                  suspendDebuggee   => False)));
    end record;
-
-   overriding function Method
-     (Self : in out Disconnect_DAP_Request)
-      return String is ("disconnect");
 
 end DAP.Requests.Disconnects;

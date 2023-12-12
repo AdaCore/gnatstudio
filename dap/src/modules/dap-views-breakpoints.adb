@@ -366,12 +366,13 @@ package body DAP.Views.Breakpoints is
 
    type Evaluate_Request is
      new DAP.Requests.Evaluate.Evaluate_DAP_Request
-   with record
-      Client : DAP_Client_Access;
-   end record;
+   with null record;
+
    type Evaluate_Request_Access is access all Evaluate_Request;
+
    overriding procedure On_Result_Message
      (Self        : in out Evaluate_Request;
+      Client      : not null access DAP.Clients.DAP_Client'Class;
       Result      : in out DAP.Tools.EvaluateResponse;
       New_Request : in out DAP.Requests.DAP_Request_Access);
 
@@ -1024,11 +1025,12 @@ package body DAP.Views.Breakpoints is
 
    overriding procedure On_Result_Message
      (Self        : in out Evaluate_Request;
+      Client      : not null access DAP.Clients.DAP_Client'Class;
       Result      : in out DAP.Tools.EvaluateResponse;
       New_Request : in out DAP.Requests.DAP_Request_Access)
    is
       Capabilities : DAP.Tools.Optional_Capabilities :=
-        Self.Client.Get_Capabilities;
+        Client.Get_Capabilities;
       Match : VSS.Regular_Expressions.Regular_Expression_Match;
       Old   : ExceptionBreakpointsFilter_Vector;
    begin
@@ -1069,7 +1071,7 @@ package body DAP.Views.Breakpoints is
          end;
       end if;
 
-      Self.Client.Set_Capabilities (Capabilities);
+      Client.Set_Capabilities (Capabilities);
 
       if Props /= null then
          Props.Load_Exceptions;
@@ -1657,7 +1659,6 @@ package body DAP.Views.Breakpoints is
             Req : Evaluate_Request_Access :=
               new Evaluate_Request (View.Kernel);
          begin
-            Req.Client := Client;
             Req.Parameters.arguments.expression := "info exceptions";
             Req.Parameters.arguments.frameId := Client.Get_Selected_Frame_Id;
             Req.Parameters.arguments.context :=

@@ -39,32 +39,13 @@ package body DAP.Requests is
       end if;
    end Destroy;
 
-   ----------------
-   -- Set_Client --
-   ----------------
-
-   procedure Set_Client
-     (Self   : in out DAP_Request;
-      Client : access DAP.Clients.DAP_Client'Class) is
-   begin
-      Self.Client := Client;
-   end Set_Client;
-
-   ----------------
-   -- Get_Client --
-   ----------------
-
-   function Get_Client
-     (Self : in out DAP_Request) return access DAP.Clients.DAP_Client'Class is
-   begin
-      return Self.Client;
-   end Get_Client;
-
    -----------------
    -- On_Rejected --
    -----------------
 
-   procedure On_Rejected (Self : in out DAP_Request) is
+   procedure On_Rejected
+     (Self   : in out DAP_Request;
+      Client : not null access DAP.Clients.DAP_Client'Class) is
    begin
       Trace (Me, "Rejected:" & DAP_Request'Class (Self).Method);
    end On_Rejected;
@@ -75,6 +56,7 @@ package body DAP.Requests is
 
    procedure On_Error_Message
      (Self    : in out DAP_Request;
+      Client  : not null access DAP.Clients.DAP_Client'Class;
       Message : VSS.Strings.Virtual_String) is
    begin
       Trace (Me, "Error:" & DAP_Request'Class (Self).Method & ". "

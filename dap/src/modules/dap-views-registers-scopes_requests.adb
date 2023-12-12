@@ -29,6 +29,7 @@ package body DAP.Views.Registers.Scopes_Requests is
 
    overriding procedure On_Result_Message
      (Self        : in out Scopes_Request;
+      Client      : not null access DAP.Clients.DAP_Client'Class;
       Result      : in out DAP.Tools.ScopesResponse;
       New_Request : in out DAP.Requests.DAP_Request_Access)
    is
@@ -53,8 +54,7 @@ package body DAP.Views.Registers.Scopes_Requests is
                Req : constant Variables_Request_Access :=
                  new Variables_Request (Self.Kernel);
             begin
-               Req.Client := Self.Client;
-               Req.Kind   := Self.Kind;
+               Req.Kind := Self.Kind;
                Req.Parameters.arguments.variablesReference :=
                  View.Registers_Id;
                New_Request := DAP.Requests.DAP_Request_Access (Req);

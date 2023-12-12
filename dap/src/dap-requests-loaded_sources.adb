@@ -40,6 +40,7 @@ package body DAP.Requests.Loaded_Sources is
 
    overriding procedure On_Result_Message
      (Self        : in out Loaded_Sources_DAP_Request;
+      Client      : not null access DAP.Clients.DAP_Client'Class;
       Stream      : in out VSS.JSON.Pull_Readers.JSON_Pull_Reader'Class;
       Success     : in out Boolean;
       New_Request : in out DAP_Request_Access)
@@ -50,20 +51,9 @@ package body DAP.Requests.Loaded_Sources is
 
       if Success then
          Loaded_Sources_DAP_Request'Class
-           (Self).On_Result_Message (Response, New_Request);
+           (Self).On_Result_Message (Client, Response, New_Request);
       end if;
    end On_Result_Message;
-
-   -------------
-   -- Set_Seq --
-   -------------
-
-   overriding procedure Set_Seq
-     (Self : in out Loaded_Sources_DAP_Request;
-      Id   : Integer) is
-   begin
-      Self.Parameters.seq := Id;
-   end Set_Seq;
 
    -----------------------
    -- On_Result_Message --
@@ -71,6 +61,7 @@ package body DAP.Requests.Loaded_Sources is
 
    procedure On_Result_Message
      (Self        : in out Loaded_Sources_DAP_Request;
+      Client      : not null access DAP.Clients.DAP_Client'Class;
       Result      : DAP.Tools.LoadedSourcesResponse;
       New_Request : in out DAP_Request_Access)
    is
@@ -87,8 +78,8 @@ package body DAP.Requests.Loaded_Sources is
          end;
       end loop;
 
-      Self.Client.Set_Source_Files (Source_Files);
-      Self.Client.On_Launched;
+      Client.Set_Source_Files (Source_Files);
+      Client.On_Launched;
    end On_Result_Message;
 
    -----------------
@@ -96,10 +87,11 @@ package body DAP.Requests.Loaded_Sources is
    -----------------
 
    overriding procedure On_Rejected
-     (Self : in out Loaded_Sources_DAP_Request) is
+     (Self   : in out Loaded_Sources_DAP_Request;
+      Client : not null access DAP.Clients.DAP_Client'Class) is
    begin
-      DAP_Request (Self).On_Rejected;
-      Self.Client.On_Launched;
+      DAP_Request (Self).On_Rejected (Client);
+      Client.On_Launched;
    end On_Rejected;
 
    ----------------------
@@ -108,10 +100,22 @@ package body DAP.Requests.Loaded_Sources is
 
    overriding procedure On_Error_Message
      (Self    : in out Loaded_Sources_DAP_Request;
+      Client  : not null access DAP.Clients.DAP_Client'Class;
       Message : VSS.Strings.Virtual_String) is
    begin
-      DAP_Request (Self).On_Error_Message (Message);
-      Self.Client.On_Launched;
+      DAP_Request (Self).On_Error_Message (Client, Message);
+      Client.On_Launched;
    end On_Error_Message;
+
+   -------------
+   -- Set_Seq --
+   -------------
+
+   overriding procedure Set_Seq
+     (Self : in out Loaded_Sources_DAP_Request;
+      Id   : Integer) is
+   begin
+      Self.Parameters.seq := Id;
+   end Set_Seq;
 
 end DAP.Requests.Loaded_Sources;

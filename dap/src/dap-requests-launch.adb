@@ -175,6 +175,7 @@ package body DAP.Requests.Launch is
 
    overriding procedure On_Result_Message
      (Self        : in out Launch_DAP_Request;
+      Client      : not null access DAP.Clients.DAP_Client'Class;
       Stream      : in out VSS.JSON.Pull_Readers.JSON_Pull_Reader'Class;
       Success     : in out Boolean;
       New_Request : in out DAP_Request_Access)
@@ -185,7 +186,7 @@ package body DAP.Requests.Launch is
 
       if Success then
          Launch_DAP_Request'Class
-           (Self).On_Result_Message (Response, New_Request);
+           (Self).On_Result_Message (Client, Response, New_Request);
       end if;
    end On_Result_Message;
 
@@ -195,6 +196,7 @@ package body DAP.Requests.Launch is
 
    procedure On_Result_Message
      (Self        : in out Launch_DAP_Request;
+      Client      : not null access DAP.Clients.DAP_Client'Class;
       Result      : DAP.Tools.LaunchResponse;
       New_Request : in out DAP_Request_Access)
    is
@@ -205,8 +207,8 @@ package body DAP.Requests.Launch is
       if GPS.Kernel.Project.Get_Registry
         (Self.Kernel).Tree.Status = From_Executable
         and then
-          (not Self.Client.Get_Capabilities.Is_Set
-           or else Self.Client.Get_Capabilities.
+          (not Client.Get_Capabilities.Is_Set
+           or else Client.Get_Capabilities.
              Value.supportsLoadedSourcesRequest)
       then
          --  Debugging is started for executable, so prepare the
@@ -221,7 +223,7 @@ package body DAP.Requests.Launch is
          end;
 
       else
-         Self.Client.On_Launched;
+         Client.On_Launched;
       end if;
    end On_Result_Message;
 
@@ -229,7 +231,9 @@ package body DAP.Requests.Launch is
    -- On_Rejected --
    -----------------
 
-   overriding procedure On_Rejected (Self : in out Launch_DAP_Request) is
+   overriding procedure On_Rejected
+     (Self   : in out Launch_DAP_Request;
+      Client : not null access DAP.Clients.DAP_Client'Class) is
    begin
       Trace (Me, "Rejected");
    end On_Rejected;
@@ -240,6 +244,7 @@ package body DAP.Requests.Launch is
 
    overriding procedure On_Error_Message
      (Self    : in out Launch_DAP_Request;
+      Client  : not null access DAP.Clients.DAP_Client'Class;
       Message : VSS.Strings.Virtual_String) is
    begin
       Self.Kernel.Get_Messages_Window.Insert_Error
