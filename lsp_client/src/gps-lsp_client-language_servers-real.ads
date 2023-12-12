@@ -85,15 +85,22 @@ package GPS.LSP_Client.Language_Servers.Real is
 
    procedure Shutdown
      (Self               : in out Real_Language_Server'Class;
-      Reject_Immediately : Boolean);
+      Reject_Immediately : Boolean;
+      Force              : Boolean := False);
    --  Initiate shutdown sequence for the language server. This procedure
    --  executes the shutdown request, send the exit notification and wait
    --  until the process ends.
    --  If Reject_Immediately is True then all ongoing and queued requests are
    --  rejected immediately.
+   --  When Force is True, the server's process will be killed immediately
+   --  without sending any 'shutdown' request.
 
-   procedure Restart (Self : in out Real_Language_Server'Class);
-   --  Restart the language server executable
+   procedure Restart
+     (Self  : in out Real_Language_Server'Class;
+      Force : Boolean := False);
+   --  Restart the language server executable.
+   --  When Force is True, the server's process will be killed immediately
+   --  without sending any 'shutdown' request.
 
    function Get_Running_Request
      (Self : Real_Language_Server'Class;
