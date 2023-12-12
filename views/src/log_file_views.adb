@@ -542,7 +542,6 @@ package body Log_File_Views is
          "",
          null,
          View.Kernel.all'Address,
-         Highlight     => null,
          History_List  => null,
          ANSI_Support  => True,
          Key           => "",

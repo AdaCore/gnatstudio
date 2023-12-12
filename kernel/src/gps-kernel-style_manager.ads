@@ -222,7 +222,7 @@ package GPS.Kernel.Style_Manager is
    ------------------------------
 
    function Get_Tag (Style : Style_Access) return Gtk_Text_Tag;
-   --  Return a text tag which follows the value of the key.
+   --  Return a new text tag which follows the value of the key.
 
    ---------------
    -- Utilities --

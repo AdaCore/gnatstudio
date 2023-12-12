@@ -72,6 +72,13 @@ package GPS.Default_Styles is
    Search_Results_Style : Style_Access;
    --  Style used to highlight search results
 
+   --------------------
+   -- Error Messages --
+   --------------------
+
+   Error_Msg_Style : Style_Access;
+   --  Style used for error messages
+
    --------------
    -- Messages --
    --------------

@@ -733,7 +733,7 @@ package body GVD.Consoles is
       Get_Debugger_Console (Process).Console.Insert
         (Text,
          Add_LF         => False,
-         Highlight      => Highlight,
+         Mode           => (if Highlight then Error else Info),
          Add_To_History => Add_To_History);
    end Display_In_Debugger_Console;
 
@@ -753,7 +753,7 @@ package body GVD.Consoles is
          Debuggee_Console.Console.Insert
            (Text,
             Add_LF         => False,
-            Highlight      => Highlight,
+            Mode           => (if Highlight then Error else Info),
             Add_To_History => False);
       else
          Display_In_Debugger_Console

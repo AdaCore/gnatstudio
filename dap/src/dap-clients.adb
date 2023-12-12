@@ -2129,7 +2129,10 @@ package body DAP.Clients is
       if Console /= null then
          if Is_Command then
             Console.Insert
-              (Msg, Add_LF => True, Highlight => True, Add_To_History => True);
+              (Msg,
+               Add_LF         => True,
+               Mode      => GPS.Kernel.Verbose,
+               Add_To_History => True);
          else
             Console.Insert (Msg, Add_LF => True);
          end if;

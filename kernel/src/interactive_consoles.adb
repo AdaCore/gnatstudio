@@ -215,6 +215,73 @@ package body Interactive_Consoles is
    --  Display Txt as if it was a prompt. Txt might be the empty string, which
    --  only results in moving the prompt mark
 
+   procedure Initialize_Reserved_Tags
+     (Console : not null access Interactive_Console_Record'Class);
+   --  Initialize the console's reserved tags, creating them from default
+   --  styles if possible, to make sure color preferences' changes are applied
+   --  to this console too.
+
+   ------------------------------
+   -- Initialize_Reserved_Tags --
+   ------------------------------
+
+   procedure Initialize_Reserved_Tags
+     (Console : not null access Interactive_Console_Record'Class)
+   is
+      Reserved_Tags : constant array (Reserved_Tag_Kinds) of Gtk_Text_Tag :=
+        (Uneditable_Tag        =>
+            Gtk_Text_Tag_New,
+         Prompt_Tag            =>
+           Get_Tag (Language_Styles (Language.Comment_Text)),
+         External_Messages_Tag =>
+           Get_Tag (Language_Styles (Language.Aspect_Comment_Text)),
+         Error_Messages_Tag    =>
+           Get_Tag (Error_Msg_Style),
+         Hyper_Links_Tag       =>
+           Get_Tag (Hyper_Links_Default_Style),
+         Search_Tag            =>
+           Get_Tag (Search_Results_Style));
+      --  Use existing default styles that are linked to the user's color
+      --  preferences. This ensures that changes made regarding color
+      --  preferences will be applied to the console too.
+   begin
+
+      --  Add all the reserved tags to the console's tag table
+      for Tag_Kind in Reserved_Tags'Range loop
+         Console.Tags (Tag_Kind) := Reserved_Tags (Tag_Kind);
+         Add
+           (Table => Get_Tag_Table (Console.Buffer),
+            Tag   => Reserved_Tags (Tag_Kind));
+      end loop;
+
+      --  Unset the editable property for uneditable text's tag
+      Set_Property
+        (Object => Console.Tags (Uneditable_Tag),
+         Name   => Gtk.Text_Tag.Editable_Property,
+         Value  => False);
+
+      --  Set the underline property for hyper links' tag
+      Set_Property
+        (Object => Console.Tags (Hyper_Links_Tag),
+         Name   => Gtk.Text_Tag.Underline_Property,
+         Value  => Pango_Underline_Single);
+   end Initialize_Reserved_Tags;
+
+   --------------------------
+   -- Get_Highlighting_Tag --
+   --------------------------
+
+   function Get_Highlighting_Tag
+     (Console : not null access Interactive_Console_Record'Class;
+      Mode    : GPS.Kernel.Message_Type)
+      return Gtk_Text_Tag
+   is
+     (case Mode is
+         when GPS.Kernel.Error   => Console.Tags (Error_Messages_Tag),
+         when GPS.Kernel.Verbose => Console.Tags (External_Messages_Tag),
+         when others             => null);
+   --  Return the tag corresponding to the given message type
+
    procedure Insert_UTF8_With_Tag
      (Console        : not null access Interactive_Console_Record;
       UTF8           : Glib.UTF8_String;
@@ -361,7 +428,7 @@ package body Interactive_Consoles is
    begin
       Insert (Console.Console, Txt,
               Add_LF      => False,
-              Highlight   => True,
+              Mode   => GPS.Kernel.Error,
               Show_Prompt => False);
 
       if Console.Child = null then
@@ -522,11 +589,12 @@ package body Interactive_Consoles is
      (Console        : not null access Interactive_Console_Record;
       Text           : String;
       Add_LF         : Boolean := True;
-      Highlight      : Boolean := False;
+      Mode           : GPS.Kernel.Message_Type := GPS.Kernel.Info;
       Add_To_History : Boolean := False;
       Show_Prompt    : Boolean := True;
       Text_Is_Input  : Boolean := False)
    is
+      use type GPS.Kernel.Message_Type;
 
       UTF8 : String := Iconv
         (Input           => Text,
@@ -544,8 +612,8 @@ package body Interactive_Consoles is
       Insert_UTF8_With_Tag
         (Console, UTF8,
          Add_LF         => Add_LF,
-         Highlight      => Highlight,
-         Highlight_Tag  => Console.Tags (Highlight_Tag),
+         Highlight      => Mode /= GPS.Kernel.Info,
+         Highlight_Tag  => Get_Highlighting_Tag (Console, Mode),
          Add_To_History => Add_To_History,
          Show_Prompt    => Show_Prompt,
          Text_Is_Input  => Text_Is_Input);
@@ -559,18 +627,19 @@ package body Interactive_Consoles is
      (Console        : not null access Interactive_Console_Record;
       UTF8           : Glib.UTF8_String;
       Add_LF         : Boolean := True;
-      Highlight      : Boolean := False;
+      Mode           : GPS.Kernel.Message_Type := GPS.Kernel.Info;
       Add_To_History : Boolean := False;
       Show_Prompt    : Boolean := True;
       Text_Is_Input  : Boolean := False)
    is
+      use type GPS.Kernel.Message_Type;
    begin
       Insert_UTF8_With_Tag
         (Console        => Console,
          UTF8           => UTF8,
          Add_LF         => Add_LF,
-         Highlight      => Highlight,
-         Highlight_Tag  => Console.Tags (Highlight_Tag),
+         Highlight      => Mode /= GPS.Kernel.Info,
+         Highlight_Tag  => Get_Highlighting_Tag (Console, Mode),
          Add_To_History => Add_To_History,
          Show_Prompt    => Show_Prompt,
          Text_Is_Input  => Text_Is_Input);
@@ -1512,7 +1581,6 @@ package body Interactive_Consoles is
       User_Data           : System.Address;
       History_List        : Histories.History;
       Key                 : Histories.History_Key;
-      Highlight           : Preference := null;
       Wrap_Mode           : Gtk.Enums.Gtk_Wrap_Mode := Gtk.Enums.Wrap_None;
       Empty_Equals_Repeat : Boolean := False;
       ANSI_Support        : Boolean := False;
@@ -1521,7 +1589,7 @@ package body Interactive_Consoles is
    begin
       Console := new Interactive_Console_Record;
       Initialize (Console, Kernel, Prompt, Handler, User_Data,
-                  History_List, Key, Highlight, Wrap_Mode,
+                  History_List, Key, Wrap_Mode,
                   Empty_Equals_Repeat, ANSI_Support, Manage_Prompt,
                   Toolbar_Name => Toolbar_Name);
    end Gtk_New;
@@ -1538,7 +1606,6 @@ package body Interactive_Consoles is
       User_Data           : System.Address;
       History_List        : Histories.History;
       Key                 : Histories.History_Key;
-      Highlight           : Preference := null;
       Wrap_Mode           : Gtk.Enums.Gtk_Wrap_Mode;
       Empty_Equals_Repeat : Boolean := False;
       ANSI_Support        : Boolean := False;
@@ -1559,7 +1626,6 @@ package body Interactive_Consoles is
       Set_Command_Handler (Console, Handler, User_Data);
       Console.Key := new String'(String (Key));
       Console.History := History_List;
-      Console.Highlight := Highlight;
 
       Initialize_Vbox (Console, Homogeneous => False);
 
@@ -1614,46 +1680,8 @@ package body Interactive_Consoles is
       --  console without losing its contents.
       Unref (Console.Buffer);
 
-      --  Create a new Gtk_Tag for each Console specific tag (i.e: not linker
-      --  with a general style defined in GPS.Default_Styles).
-      for J in Uneditable_Tag .. Highlight_Tag loop
-         Gtk_New (Console.Tags (J));
-         Add (Get_Tag_Table (Console.Buffer), Console.Tags (J));
-      end loop;
-
-      Set_Property
-        (Console.Tags (Uneditable_Tag), Gtk.Text_Tag.Editable_Property, False);
-
-      Set_Property
-        (Console.Tags (External_Messages_Tag),
-         Gtk.Text_Tag.Style_Property,
-         Pango_Style_Normal);
-
-      --  Retrieve the tag used for hyperlinks from GPS.Default_Styles, add it
-      --  to the buffer's tag table and tell to underline all the hyperlinks.
-      Console.Tags (Hyper_Links_Tag) := Get_Tag (Hyper_Links_Default_Style);
-      Add (Get_Tag_Table (Console.Buffer), Console.Tags (Hyper_Links_Tag));
-      Set_Property
-        (Console.Tags (Hyper_Links_Tag),
-         Gtk.Text_Tag.Underline_Property,
-         Pango_Underline_Single);
-
-      --  Retrieve the tag used for comments from GPS.Default_Styles, add it
-      --  to the buffer's tag table.
-      Console.Tags (Prompt_Tag) :=
-        Get_Tag (Language_Styles (Language.Aspect_Comment_Text));
-      Add (Get_Tag_Table (Console.Buffer), Console.Tags (Prompt_Tag));
-
-      --  Retrieve the tag used for comments from GPS.Default_Styles, add it
-      --  to the buffer's tag table.
-      Console.Tags (Highlight_Tag) :=
-        Get_Tag (Language_Styles (Language.Comment_Text));
-      Add (Get_Tag_Table (Console.Buffer), Console.Tags (Highlight_Tag));
-
-      --  Retrieve the tag used for search from GPS.Default_Styles, add it
-      --  to the buffer's tag table.
-      Console.Tags (Search_Tag) := Get_Tag (Search_Results_Style);
-      Add (Get_Tag_Table (Console.Buffer), Console.Tags (Search_Tag));
+      --  Initialize the console's reserved tags
+      Initialize_Reserved_Tags (Console);
 
       Console.Scrolled.Add (Console.View);
 
@@ -2344,8 +2372,7 @@ package body Interactive_Consoles is
    procedure Insert_With_Links
      (Console   : access Interactive_Console_Record;
       Text      : String;
-      Add_LF    : Boolean := True;
-      Highlight : Boolean := False)
+      Add_LF    : Boolean := True)
    is
       type Link_And_Location is record
          Link  : Hyper_Links := null;
@@ -2432,20 +2459,11 @@ package body Interactive_Consoles is
             --  Found a regexp. Insert the leading text first, no hyper link
             if Min - 1 >= Index then
                Get_End_Iter (Console.Buffer, Start_Iter);
-               if Highlight then
-                  Insert_With_Tags
-                    (Buffer => Console.Buffer,
-                     Iter   => Start_Iter,
-                     Text   => Glib.Convert.Locale_To_UTF8
-                       (Fixed (Index .. Min - 1)),
-                     Tag    => Console.Tags (Highlight_Tag));
-               else
                   Insert
                     (Buffer => Console.Buffer,
                      Iter   => Start_Iter,
                      Text   => Glib.Convert.Locale_To_UTF8
                        (Fixed (Index .. Min - 1)));
-               end if;
             end if;
 
             --  Then insert the hyper link
@@ -2472,18 +2490,10 @@ package body Interactive_Consoles is
          else
             --  Insert the remaining of the text
             Get_End_Iter (Console.Buffer, Start_Iter);
-            if Highlight then
-               Insert_With_Tags
-                 (Buffer => Console.Buffer,
-                  Iter   => Start_Iter,
-                  Text   => Fixed (Index .. Fixed'Last),
-                  Tag    => Console.Tags (Highlight_Tag));
-            else
-               Insert
-                 (Buffer => Console.Buffer,
-                  Iter   => Start_Iter,
-                  Text   => Fixed (Index .. Fixed'Last));
-            end if;
+            Insert
+              (Buffer => Console.Buffer,
+               Iter   => Start_Iter,
+               Text   => Fixed (Index .. Fixed'Last));
             Index := Fixed'Last + 1;
          end if;
       end loop;
@@ -2680,11 +2690,9 @@ package body Interactive_Consoles is
      (Self   : not null access Console_Messages_Window;
       Text   : String;
       Add_LF : Boolean := True;
-      Mode   : GPS.Kernel.Message_Type)
-   is
-      use type GPS.Kernel.Message_Type;
+      Mode   : GPS.Kernel.Message_Type) is
    begin
-      Self.Console.Insert (Text, Add_LF, Mode = GPS.Kernel.Error);
+      Self.Console.Insert (Text, Add_LF, Mode);
    end Insert;
 
    -----------------
@@ -2695,11 +2703,9 @@ package body Interactive_Consoles is
      (Self   : not null access Console_Messages_Window;
       UTF8   : String;
       Add_LF : Boolean := True;
-      Mode   : GPS.Kernel.Message_Type)
-   is
-      use type GPS.Kernel.Message_Type;
+      Mode   : GPS.Kernel.Message_Type) is
    begin
-      Self.Console.Insert_UTF8 (UTF8, Add_LF, Mode = GPS.Kernel.Error);
+      Self.Console.Insert_UTF8 (UTF8, Add_LF, Mode);
    end Insert_UTF8;
 
    -----------
