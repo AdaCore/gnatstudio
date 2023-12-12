@@ -74,12 +74,12 @@ with GUI_Utils;                use GUI_Utils;
 
 with GPS.Kernel.Clipboard;     use GPS.Kernel.Clipboard;
 with GPS.Default_Styles;       use GPS.Default_Styles;
-with GPS.Kernel.Hooks;         use GPS.Kernel.Hooks;
 with GPS.Kernel.Preferences;   use GPS.Kernel.Preferences;
 with GPS.Kernel.MDI;           use GPS.Kernel.MDI;
 with GPS.Kernel.Modules.UI;    use GPS.Kernel.Modules.UI;
 with GPS.Kernel.Scripts;       use GPS.Kernel.Scripts;
 with GPS.Kernel.Style_Manager; use GPS.Kernel.Style_Manager;
+with Language;
 
 package body Interactive_Consoles is
 
@@ -263,14 +263,6 @@ package body Interactive_Consoles is
    --  Assume that we are about to add New_Lines new lines to B, and remove
    --  the first lines in B to make sure we don't exceed the maximum line
    --  count.
-
-   type On_Pref_Changed is new Preferences_Hooks_Function with record
-      Console : access Interactive_Console_Record'Class;
-   end record;
-   overriding procedure Execute
-     (Self   : On_Pref_Changed;
-      Kernel : not null access Kernel_Handle_Record'Class;
-      Pref   : Preference);
 
    ---------
    -- Ref --
@@ -658,9 +650,6 @@ package body Interactive_Consoles is
          Apply_Tag
            (Console.Buffer,
             Console.Tags (Uneditable_Tag), Prompt_Iter, Last_Iter);
-         Apply_Tag
-           (Console.Buffer,
-            Console.Tags (External_Messages_Tag), Prompt_Iter, Last_Iter);
 
          --  Move the prompt mark at the end of the output, so that user input
          --  is only read from that point on.
@@ -1649,12 +1638,22 @@ package body Interactive_Consoles is
          Gtk.Text_Tag.Underline_Property,
          Pango_Underline_Single);
 
+      --  Retrieve the tag used for comments from GPS.Default_Styles, add it
+      --  to the buffer's tag table.
+      Console.Tags (Prompt_Tag) :=
+        Get_Tag (Language_Styles (Language.Aspect_Comment_Text));
+      Add (Get_Tag_Table (Console.Buffer), Console.Tags (Prompt_Tag));
+
+      --  Retrieve the tag used for comments from GPS.Default_Styles, add it
+      --  to the buffer's tag table.
+      Console.Tags (Highlight_Tag) :=
+        Get_Tag (Language_Styles (Language.Comment_Text));
+      Add (Get_Tag_Table (Console.Buffer), Console.Tags (Highlight_Tag));
+
       --  Retrieve the tag used for search from GPS.Default_Styles, add it
       --  to the buffer's tag table.
       Console.Tags (Search_Tag) := Get_Tag (Search_Results_Style);
       Add (Get_Tag_Table (Console.Buffer), Console.Tags (Search_Tag));
-
-      Set_Highlight_Color (Console, Highlight);
 
       Console.Scrolled.Add (Console.View);
 
@@ -1712,11 +1711,6 @@ package body Interactive_Consoles is
       Console.Internal_Insert := False;
 
       Console.Empty_Equals_Repeat := Empty_Equals_Repeat;
-
-      Preferences_Changed_Hook.Add
-         (new On_Pref_Changed'
-             (Preferences_Hooks_Function with Console => Console),
-          Watch => Console.View);
    end Initialize;
 
    -----------------------
@@ -1924,47 +1918,6 @@ package body Interactive_Consoles is
       Console.Interrupt := Handler;
       Console.Interrupt_User_Data := User_Data;
    end Set_Interrupt_Handler;
-
-   -------------------------
-   -- Set_Highlight_Color --
-   -------------------------
-
-   procedure Set_Highlight_Color
-     (Console : access Interactive_Console_Record'Class;
-      Pref    : Preference := null)
-   is
-      Foreground : Gdk_RGBA;
-      Background : Gdk_RGBA;
-   begin
-      Console.Highlight := Pref;
-
-      if Pref = null then
-         return;
-      end if;
-
-      if Pref.all in Variant_Preference_Record'Class then
-         Foreground := Variant_Preference (Pref).Get_Pref_Fg_Color;
-         Background := Variant_Preference (Pref).Get_Pref_Bg_Color;
-      elsif Pref.all in Style_Preference_Record'Class then
-         Foreground := Style_Preference (Pref).Get_Pref_Fg;
-         Background := Style_Preference (Pref).Get_Pref_Bg;
-      elsif Pref.all in Color_Preference_Record'Class then
-         Foreground := Color_Preference (Pref).Get_Pref;
-         Background := Null_RGBA;
-      end if;
-
-      if Foreground /= Null_RGBA then
-         Set_Property
-           (Console.Tags (Highlight_Tag),
-            Foreground_Rgba_Property, Foreground);
-      end if;
-
-      if Background /= Null_RGBA then
-         Set_Property
-           (Console.Tags (Highlight_Tag),
-            Background_Rgba_Property, Background);
-      end if;
-   end Set_Highlight_Color;
 
    ---------------
    -- Get_Chars --
@@ -2780,22 +2733,6 @@ package body Interactive_Consoles is
    begin
       return Self.Console.Get_Or_Create_Virtual_Console;
    end Get_Virtual_Console;
-
-   -------------
-   -- Execute --
-   -------------
-
-   overriding procedure Execute
-     (Self   : On_Pref_Changed;
-      Kernel : not null access Kernel_Handle_Record'Class;
-      Pref   : Preference)
-   is
-      pragma Unreferenced (Kernel, Pref);
-   begin
-      if Self.Console.Highlight /= null then
-         Set_Highlight_Color (Self.Console, Self.Console.Highlight);
-      end if;
-   end Execute;
 
    ------------
    -- Export --

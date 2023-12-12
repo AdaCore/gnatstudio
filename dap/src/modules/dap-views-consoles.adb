@@ -661,11 +661,6 @@ package body DAP.Views.Consoles is
       Allow_Duplicates
         (Get_History (Self.Kernel).all, "dap_console", True, True);
 
-      Self.Console.Set_Highlight_Color (Preference (Comments_Style));
-
-      --  Self.Console.Set_Completion_Handler
-      --    (Complete_Command'Access, Self.all'Address);
-
       Widget_Callback.Object_Connect
         (Self.Console.Get_View, Signal_Grab_Focus, On_Grab_Focus'Access,
          Self);
