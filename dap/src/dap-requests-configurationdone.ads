@@ -21,7 +21,12 @@ with DAP.Tools;
 
 package DAP.Requests.ConfigurationDone is
 
-   type ConfigurationDone_DAP_Request is new DAP_Request with private;
+   type ConfigurationDone_DAP_Request is abstract new DAP_Request with record
+      Parameters : aliased DAP.Tools.ConfigurationDoneRequest :=
+        DAP.Tools.ConfigurationDoneRequest'
+          (seq       => 0,
+           arguments => <>);
+   end record;
 
    type ConfigurationDone_DAP_Request_Access is
      access all ConfigurationDone_DAP_Request;
@@ -41,16 +46,7 @@ package DAP.Requests.ConfigurationDone is
      (Self        : in out ConfigurationDone_DAP_Request;
       Client      : not null access DAP.Clients.DAP_Client'Class;
       Result      : DAP.Tools.ConfigurationDoneResponse;
-      New_Request : in out DAP_Request_Access);
-
-   overriding procedure On_Rejected
-     (Self   : in out ConfigurationDone_DAP_Request;
-      Client : not null access DAP.Clients.DAP_Client'Class);
-
-   overriding procedure On_Error_Message
-     (Self    : in out ConfigurationDone_DAP_Request;
-      Client  : not null access DAP.Clients.DAP_Client'Class;
-      Message : VSS.Strings.Virtual_String);
+      New_Request : in out DAP_Request_Access) is abstract;
 
    overriding procedure Set_Seq
      (Self : in out ConfigurationDone_DAP_Request;
@@ -59,14 +55,5 @@ package DAP.Requests.ConfigurationDone is
    overriding function Method
      (Self : in out ConfigurationDone_DAP_Request)
       return String is ("configurationDone");
-
-private
-
-   type ConfigurationDone_DAP_Request is new DAP_Request with record
-      Parameters : aliased DAP.Tools.ConfigurationDoneRequest :=
-        DAP.Tools.ConfigurationDoneRequest'
-          (seq       => 0,
-           arguments => <>);
-   end record;
 
 end DAP.Requests.ConfigurationDone;

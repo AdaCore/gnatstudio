@@ -247,7 +247,7 @@ package body DAP.Modules.Scripts is
          Visual := DAP_Visual_Debugger_Access
            (Glib.Object.GObject'(Get_Data (Inst)));
          if Visual.Client.Is_Ready then
-            DAP.Module.Start_Program (Kernel, Visual.Client);
+            DAP.Module.Start_Program (Visual.Client);
          end if;
 
       elsif Command = "send" then
