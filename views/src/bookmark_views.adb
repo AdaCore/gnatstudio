@@ -360,10 +360,34 @@ package body Bookmark_Views is
       Data : not null Bookmark_Data_Access);
    --  Edit the note for a bookmark
 
+   procedure Create_Bookmark
+     (Kernel           : access Kernel_Handle_Record'Class;
+      Context          : GPS.Kernel.Selection_Context;
+      Mode             : Bookmark_Type := Standard;
+      Ignore_Selection : Boolean       := False;
+      On_Project       : Boolean       := False);
+   --  Create a bookmark for the current context.
+   --  Mode and On_Project defined the type of bookmark.
+   --  Ignore_Selection will create a bookmark unrelated to the selected
+   --  state of the Bookmarks view.
+
    procedure Delete_Bookmark
      (Kernel   : access Kernel_Handle_Record'Class;
       Bookmark : in out Bookmark_Data_Access);
    --  Delete an existing bookmark
+
+   function Create_Mark_For_Context
+     (Kernel  : access Kernel_Handle_Record'Class;
+      Context : GPS.Kernel.Selection_Context)
+      return Location_Marker;
+   --  Create a new marker for the current context
+
+   function Bookmark_From_Mark
+     (Mark     : Location_Marker;
+      Multiple : out Boolean)
+      return Bookmark_Data_Access;
+   --  Return the first bookmark at mark. Multiple will be true if multiple
+   --  bookmarks matched mark.
 
    function Bookmark_From_Name (Name : String) return Bookmark_Data_Access;
    --  Return the location marker for the first bookmark named Name.
@@ -487,6 +511,12 @@ package body Bookmark_Views is
      (Command : access Create_Bookmark_Command;
       Context : Interactive_Command_Context) return Command_Return_Type;
    --  Create a new bookmark
+
+   type Toggle_Bookmark_Command is new Interactive_Command with null record;
+   overriding function Execute
+     (Command : access Toggle_Bookmark_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type;
+   --  Create or delete bookmark in the current context
 
    type Rename_Bookmark_Command is new Interactive_Command with null record;
    overriding function Execute
@@ -1342,92 +1372,95 @@ package body Bookmark_Views is
       end if;
    end Insert;
 
-   -------------
-   -- Execute --
-   -------------
+   -----------------------------
+   -- Create_Mark_For_Context --
+   -----------------------------
 
-   overriding function Execute
-     (Command : access Create_Bookmark_Command;
-      Context : Interactive_Command_Context) return Command_Return_Type
+   function Create_Mark_For_Context
+     (Kernel  : access Kernel_Handle_Record'Class;
+      Context : GPS.Kernel.Selection_Context)
+      return Location_Marker
    is
-      Kernel : constant Kernel_Handle := Get_Kernel (Context.Context);
-      View   : Bookmark_View_Access;
+      Mark   : Location_Marker;
+   begin
+      --  If the current module doesn't support creating bookmarks, we fall
+      --  back to the last editor that had focus, since that's what users
+      --  will expect most of the time.
+
+      Mark := Create_Marker (Kernel);
+
+      if Mark.Is_Null then
+         Trace
+           (Me, "Current module cannot create bookmark, try last from "
+            & "the current context of the last focused editor");
+
+         --  Check if we have line/column info in the current context.
+         --  Use the last focused editor otherwise.
+         if Has_Line_Information (Context)
+           and then Has_Column_Information (Context)
+         then
+            declare
+               File   : constant Virtual_File :=
+                 File_Information (Context);
+               Line   : constant Natural :=
+                 (if Has_File_Line_Information (Context)
+                  then File_Line_Information (Context)
+                  else Contexts.Line_Information (Context));
+               Column : constant Visible_Column_Type :=
+                 Column_Information (Context);
+            begin
+               Mark := Get_Buffer_Factory (Kernel).Create_Marker
+                 (File    => File,
+                  Project => No_Project,
+                  Line    => Editable_Line_Type (Line),
+                  Column  => Column);
+            end;
+         else
+            declare
+               --  Side effect is to give focus to the source edtor module
+               --  to create the bookmark
+               Buffer : constant Editor_Buffer'Class :=
+                 Get_Buffer_Factory (Kernel).Get
+                 (Open_Buffer => False, Open_View => False, Focus => False);
+               Cursor : constant Editor_Location'Class :=
+                 Buffer.Current_View.Cursor;
+            begin
+               Mark := Get_Buffer_Factory (Kernel).Create_Marker
+                 (File    => Buffer.File,
+                  Project => No_Project,
+                  Line    => Editable_Line_Type (Cursor.Line),
+                  Column  => Cursor.Column);
+            end;
+         end if;
+      end if;
+      return Mark;
+   end Create_Mark_For_Context;
+
+   ---------------------
+   -- Create_Bookmark --
+   ---------------------
+
+   procedure Create_Bookmark
+     (Kernel           : access Kernel_Handle_Record'Class;
+      Context          : GPS.Kernel.Selection_Context;
+      Mode             : Bookmark_Type := Standard;
+      Ignore_Selection : Boolean       := False;
+      On_Project       : Boolean       := False)
+   is
+      View         : Bookmark_View_Access;
       Gr, Bookmark : Bookmark_Data_Access;
-      Filter_Iter : Gtk_Tree_Iter;
-      Model       : Gtk_Tree_Model;
+      Filter_Iter  : Gtk_Tree_Iter;
+      Model        : Gtk_Tree_Model;
 
       function On_Row
         (Model : Gtk_Tree_Model; Path : Gtk_Tree_Path; Iter : Gtk_Tree_Iter)
          return Boolean;
       --  Start editing the newly inserted row
 
-      function Get_Current_Mark return Location_Marker;
-      --  Create a new marker for the current location
-
       function Get_Last
         (Group : Bookmark_Data_Access) return Bookmark_Data_Access
         with Pre => Group = null or else Group.Typ = Bookmark_Views.Group;
       --  Return last item in the group if any.
-
-      ----------------------
-      -- Get_Current_Mark --
-      ----------------------
-
-      function Get_Current_Mark return Location_Marker is
-         Mark   : Location_Marker;
-      begin
-         --  If the current module doesn't support creating bookmarks, we fall
-         --  back to the last editor that had focus, since that's what users
-         --  will expect most of the time.
-
-         Mark := Create_Marker (Kernel);
-
-         if Mark.Is_Null then
-            Trace
-              (Me, "Current module cannot create bookmark, try last from "
-               & "the current context of the last focused editor");
-
-            --  Check if we have line/column info in the current context.
-            --  Use the last focused editor otherwise.
-            if Has_Line_Information (Context.Context)
-              and then Has_Column_Information (Context.Context)
-            then
-               declare
-                  File   : constant Virtual_File :=
-                    File_Information (Context.Context);
-                  Line   : constant Natural :=
-                    (if Has_File_Line_Information (Context.Context)
-                     then File_Line_Information (Context.Context)
-                     else Contexts.Line_Information (Context.Context));
-                  Column : constant Visible_Column_Type :=
-                    Column_Information
-                      (Context.Context);
-               begin
-                  Mark := Get_Buffer_Factory (Kernel).Create_Marker
-                    (File    => File,
-                     Project => No_Project,
-                     Line    => Editable_Line_Type (Line),
-                     Column  => Column);
-               end;
-            else
-               declare
-                  --  Side effect is to give focus to the source edtor module
-                  --  to create the bookmark
-                  Holder  : constant Controlled_Editor_Buffer_Holder :=
-                    Kernel.Get_Buffer_Factory.Get_Holder (No_File);
-                  Cursor : constant Editor_Location'Class :=
-                    Holder.Editor.Current_View.Cursor;
-               begin
-                  Mark := Get_Buffer_Factory (Kernel).Create_Marker
-                    (File    => Holder.Editor.File,
-                     Project => No_Project,
-                     Line    => Editable_Line_Type (Cursor.Line),
-                     Column  => Cursor.Column);
-               end;
-            end if;
-         end if;
-         return Mark;
-      end Get_Current_Mark;
 
       --------------
       -- Get_Last --
@@ -1483,7 +1516,7 @@ package body Bookmark_Views is
 
       --  If we have a selection, insert in the same group
 
-      if Command.Ignore_Selection then
+      if Ignore_Selection then
          Filter_Iter := Null_Iter;
       else
          View.Tree.Get_First_Selected (Model, Filter_Iter);
@@ -1498,21 +1531,22 @@ package body Bookmark_Views is
 
       --  Create the bookmark
 
-      case Command.Mode is
+      case Mode is
          when Group =>
             Bookmark := New_Group ("group");
 
          when Standard =>
             declare
-               Mark : constant Location_Marker := Get_Current_Mark;
+               Mark : constant Location_Marker :=
+                 Create_Mark_For_Context (Kernel, Context);
             begin
                if Mark.Is_Null then
-                  return Failure;
+                  return;  --  Return Failures???
                else
                   Bookmark := New_Bookmark
                     (Kernel,
                      Mark,
-                     On_Project => Command.On_Project);
+                     On_Project => On_Project);
                end if;
             end;
 
@@ -1521,7 +1555,7 @@ package body Bookmark_Views is
               (Kernel,
                No_Marker,
                Name       => "unnamed",
-               On_Project => Command.On_Project);
+               On_Project => On_Project);
       end case;
 
       if Append_At_Bottom.Get_Pref then
@@ -1535,6 +1569,63 @@ package body Bookmark_Views is
 
       --  Start editing the name of the bookmark
       View.Tree.Model.Foreach (On_Row'Unrestricted_Access);
+   end Create_Bookmark;
+
+   -------------
+   -- Execute --
+   -------------
+
+   overriding function Execute
+     (Command : access Create_Bookmark_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type
+   is
+      Kernel : constant Kernel_Handle := Get_Kernel (Context.Context);
+   begin
+      Create_Bookmark
+        (Kernel           => Kernel,
+         Context          => Context.Context,
+         Mode             => Command.Mode,
+         Ignore_Selection => Command.Ignore_Selection,
+         On_Project       => Command.On_Project);
+      return Success;
+   end Execute;
+
+   -------------
+   -- Execute --
+   -------------
+
+   overriding function Execute
+     (Command : access Toggle_Bookmark_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type
+   is
+      Kernel : constant Kernel_Handle := Get_Kernel (Context.Context);
+      Mark   : constant Location_Marker :=
+        Create_Mark_For_Context (Kernel, Context.Context);
+   begin
+      if Mark.Is_Null then
+         return Failure;
+      end if;
+
+      declare
+         Multiple : Boolean;
+         Bookmark : Bookmark_Data_Access :=
+           Bookmark_From_Mark (Mark, Multiple);
+      begin
+         if Multiple then
+            --  Multiple bookmarks at the current location, do nothing
+            null;
+         elsif Bookmark = null then
+            --  No bookmark, create one
+            Create_Bookmark
+              (Kernel  => Kernel,
+               Context => Context.Context);
+         else
+            --  Only one bookmark, delete it
+            Delete_Bookmark
+              (Kernel   => Kernel,
+               Bookmark => Bookmark);
+         end if;
+      end;
       return Success;
    end Execute;
 
@@ -2948,6 +3039,35 @@ package body Bookmark_Views is
    end Save_Project_Bookmarks;
 
    ------------------------
+   -- Bookmark_From_Mark --
+   ------------------------
+
+   function Bookmark_From_Mark
+     (Mark     : Location_Marker;
+      Multiple : out Boolean)
+      return Bookmark_Data_Access
+   is
+      B   : Bookmark_Data_Access := Bookmark_Iter_First;
+      Res : Bookmark_Data_Access := null;
+   begin
+      Multiple := False;
+
+      while B /= null loop
+         if B.Typ = Standard
+           and then Similar (B.Marker, Mark)
+         then
+            if Res = null then
+               Res := B;
+            else
+               Multiple := True;
+            end if;
+         end if;
+         B := Next_Recursive (B);
+      end loop;
+      return Res;
+   end Bookmark_From_Mark;
+
+   ------------------------
    -- Bookmark_From_Name --
    ------------------------
 
@@ -3398,8 +3518,16 @@ package body Bookmark_Views is
          Category     => -"Bookmarks",
          For_Learning => True);
 
+      Register_Action
+        (Kernel, "bookmark toggle", new Toggle_Bookmark_Command,
+         -("Create or delete a bookmark at the current location in"
+           & " the editor"),
+         Icon_Name    => "gps-add-symbolic",
+         Category     => -"Bookmarks",
+         For_Learning => False);
+
       Kernel.Set_Default_Line_Number_Click
-        (Action => "bookmark create",
+        (Action => "bookmark toggle",
          Click_Type   => GPS.Kernel.Hyper_Mode_Click);
 
       Register_Action

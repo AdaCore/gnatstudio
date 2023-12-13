@@ -1,0 +1,11 @@
+<?xml version="1.0"?>
+<Bookmarks>
+  <file_marker bookmark_name="b1" column=" 1" line=" 2" >
+    <vfs_project>test.gpr</vfs_project>
+    <vfs_file>main.adb</vfs_file>
+  </file_marker>
+  <file_marker bookmark_name="b2" column=" 1" line=" 2" >
+    <vfs_project>test.gpr</vfs_project>
+    <vfs_file>main.adb</vfs_file>
+  </file_marker>
+</Bookmarks>
