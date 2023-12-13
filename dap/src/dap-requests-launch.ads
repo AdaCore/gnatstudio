@@ -21,42 +21,7 @@ with DAP.Tools;
 
 package DAP.Requests.Launch is
 
-   type Launch_DAP_Request is new DAP_Request with private;
-
-   type Launch_DAP_Request_Access is access all Launch_DAP_Request;
-
-   procedure Initialize
-     (Self   : in out Launch_DAP_Request;
-      Client : DAP.Clients.DAP_Client_Access);
-
-   overriding procedure Write
-     (Self   : Launch_DAP_Request;
-      Stream : in out VSS.JSON.Content_Handlers.JSON_Content_Handler'Class);
-
-   overriding procedure On_Result_Message
-     (Self        : in out Launch_DAP_Request;
-      Stream      : in out VSS.JSON.Pull_Readers.JSON_Pull_Reader'Class;
-      Success     : in out Boolean;
-      New_Request : in out DAP_Request_Access);
-
-   procedure On_Result_Message
-     (Self        : in out Launch_DAP_Request;
-      Result      : DAP.Tools.LaunchResponse;
-      New_Request : in out DAP_Request_Access);
-
-   overriding procedure On_Rejected (Self : in out Launch_DAP_Request);
-
-   overriding procedure On_Error_Message
-     (Self    : in out Launch_DAP_Request;
-      Message : VSS.Strings.Virtual_String);
-
-   overriding procedure Set_Seq
-     (Self : in out Launch_DAP_Request;
-      Id   : Integer);
-
-private
-
-   type Launch_DAP_Request is new DAP_Request with record
+   type Launch_DAP_Request is abstract new DAP_Request with record
       Parameters : aliased DAP.Tools.LaunchRequest :=
         DAP.Tools.LaunchRequest'
           (seq       => 0,
@@ -65,6 +30,29 @@ private
               stopAtBeginningOfMainSubprogram => False,
               others  => <>));
    end record;
+
+   type Launch_DAP_Request_Access is access all Launch_DAP_Request;
+
+   overriding procedure Write
+     (Self   : Launch_DAP_Request;
+      Stream : in out VSS.JSON.Content_Handlers.JSON_Content_Handler'Class);
+
+   overriding procedure On_Result_Message
+     (Self        : in out Launch_DAP_Request;
+      Client      : not null access DAP.Clients.DAP_Client'Class;
+      Stream      : in out VSS.JSON.Pull_Readers.JSON_Pull_Reader'Class;
+      Success     : in out Boolean;
+      New_Request : in out DAP_Request_Access);
+
+   procedure On_Result_Message
+     (Self        : in out Launch_DAP_Request;
+      Client      : not null access DAP.Clients.DAP_Client'Class;
+      Result      : DAP.Tools.LaunchResponse;
+      New_Request : in out DAP_Request_Access) is abstract;
+
+   overriding procedure Set_Seq
+     (Self : in out Launch_DAP_Request;
+      Id   : Integer);
 
    overriding function Method
      (Self : in out Launch_DAP_Request)

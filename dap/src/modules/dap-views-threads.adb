@@ -102,13 +102,12 @@ package body DAP.Views.Threads is
       Get_View           => Get_View,
       Set_View           => Set_View);
 
-   type Request is new Threads_DAP_Request with record
-      Client : DAP.Clients.DAP_Client_Access;
-   end record;
+   type Request is new Threads_DAP_Request with null record;
    type Request_Access is access all Request;
 
    overriding procedure On_Result_Message
      (Self        : in out Request;
+      Client      : not null access DAP.Clients.DAP_Client'Class;
       Result      : in out DAP.Tools.ThreadsResponse;
       New_Request : in out DAP_Request_Access);
 
@@ -275,7 +274,6 @@ package body DAP.Views.Threads is
       end if;
 
       Req := new Request (View.Kernel);
-      Req.Client := Client;
       Client.Enqueue (DAP.Requests.DAP_Request_Access (Req));
    end Update;
 
@@ -285,11 +283,12 @@ package body DAP.Views.Threads is
 
    overriding procedure On_Result_Message
      (Self        : in out Request;
+      Client      : not null access DAP.Clients.DAP_Client'Class;
       Result      : in out DAP.Tools.ThreadsResponse;
       New_Request : in out DAP_Request_Access)
    is
       pragma Unreferenced (New_Request);
-      View : constant Thread_MDI := Get_View (Self.Client);
+      View : constant Thread_MDI := Get_View (Client);
       Iter : Gtk_Tree_Iter;
       Set  : Integer_Ordered_Set.Set;
    begin
@@ -319,7 +318,7 @@ package body DAP.Views.Threads is
                     (-Get_Model (View.Tree), Iter,
                      --  Num
                      (Num_Column  => As_String
-                          ((if Self.Client.Get_Current_Thread = Thread.id
+                          ((if Client.Get_Current_Thread = Thread.id
                            then "* "
                            else "") & Image (Thread.id)),
                       --  Name

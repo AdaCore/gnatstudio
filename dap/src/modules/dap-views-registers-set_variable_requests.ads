@@ -28,6 +28,7 @@ private package DAP.Views.Registers.Set_Variable_Requests is
 
    overriding procedure On_Result_Message
      (Self        : in out Set_Variable_Request;
+      Client      : not null access DAP.Clients.DAP_Client'Class;
       Result      : in out DAP.Tools.SetVariableResponse;
       New_Request : in out DAP.Requests.DAP_Request_Access);
 

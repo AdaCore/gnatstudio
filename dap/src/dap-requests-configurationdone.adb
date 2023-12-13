@@ -15,17 +15,10 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with GNATCOLL.Traces;       use GNATCOLL.Traces;
-with VSS.Strings.Conversions;
-with DAP.Clients;
-
 with DAP.Tools.Inputs;
 with DAP.Tools.Outputs;
 
 package body DAP.Requests.ConfigurationDone is
-
-   Me : constant Trace_Handle := Create
-     ("GPS.DAP.Requests_ConfigurationDone", On);
 
    -----------
    -- Write --
@@ -45,6 +38,7 @@ package body DAP.Requests.ConfigurationDone is
 
    overriding procedure On_Result_Message
      (Self        : in out ConfigurationDone_DAP_Request;
+      Client      : not null access DAP.Clients.DAP_Client'Class;
       Stream      : in out VSS.JSON.Pull_Readers.JSON_Pull_Reader'Class;
       Success     : in out Boolean;
       New_Request : in out DAP_Request_Access)
@@ -56,44 +50,9 @@ package body DAP.Requests.ConfigurationDone is
 
       if Success then
          ConfigurationDone_DAP_Request'Class
-           (Self).On_Result_Message (Response, New_Request);
+           (Self).On_Result_Message (Client, Response, New_Request);
       end if;
    end On_Result_Message;
-
-   -----------------------
-   -- On_Result_Message --
-   -----------------------
-
-   procedure On_Result_Message
-     (Self        : in out ConfigurationDone_DAP_Request;
-      Result      : DAP.Tools.ConfigurationDoneResponse;
-      New_Request : in out DAP_Request_Access)
-   is
-      pragma Unreferenced (New_Request);
-   begin
-      Self.Client.On_Configured;
-   end On_Result_Message;
-
-   -----------------
-   -- On_Rejected --
-   -----------------
-
-   overriding procedure On_Rejected
-     (Self : in out ConfigurationDone_DAP_Request) is
-   begin
-      Trace (Me, "Rejected");
-   end On_Rejected;
-
-   ----------------------
-   -- On_Error_Message --
-   ----------------------
-
-   overriding procedure On_Error_Message
-     (Self    : in out ConfigurationDone_DAP_Request;
-      Message : VSS.Strings.Virtual_String) is
-   begin
-      Trace (Me, VSS.Strings.Conversions.To_UTF_8_String (Message));
-   end On_Error_Message;
 
    -------------
    -- Set_Seq --

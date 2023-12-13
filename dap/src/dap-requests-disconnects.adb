@@ -15,31 +15,10 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with GNATCOLL.Traces;       use GNATCOLL.Traces;
-with VSS.Strings.Conversions;
-with DAP.Clients;
 with DAP.Tools.Inputs;
 with DAP.Tools.Outputs;
 
 package body DAP.Requests.Disconnects is
-
-   Me : constant Trace_Handle := Create ("GPS.DAP.Requests_Disconnects", On);
-
-   ----------------
-   -- Initialize --
-   ----------------
-
-   procedure Initialize
-     (Self               : in out Disconnect_DAP_Request;
-      Terminate_Debuggee : Boolean) is
-   begin
-      Self.Parameters.arguments :=
-        (Is_Set => True,
-         Value  =>
-           (restart           => False,
-            terminateDebuggee => Terminate_Debuggee,
-            suspendDebuggee   => False));
-   end Initialize;
 
    -----------
    -- Write --
@@ -58,6 +37,7 @@ package body DAP.Requests.Disconnects is
 
    overriding procedure On_Result_Message
      (Self        : in out Disconnect_DAP_Request;
+      Client      : not null access DAP.Clients.DAP_Client'Class;
       Stream      : in out VSS.JSON.Pull_Readers.JSON_Pull_Reader'Class;
       Success     : in out Boolean;
       New_Request : in out DAP_Request_Access)
@@ -68,46 +48,9 @@ package body DAP.Requests.Disconnects is
 
       if Success then
          Disconnect_DAP_Request'Class
-           (Self).On_Result_Message (Response, New_Request);
+           (Self).On_Result_Message (Client, Response, New_Request);
       end if;
    end On_Result_Message;
-
-   -----------------------
-   -- On_Result_Message --
-   -----------------------
-
-   procedure On_Result_Message
-     (Self        : in out Disconnect_DAP_Request;
-      Result      : DAP.Tools.DisconnectResponse;
-      New_Request : in out DAP_Request_Access)
-   is
-      pragma Unreferenced (New_Request);
-   begin
-      Self.Client.On_Disconnected;
-   end On_Result_Message;
-
-   -----------------
-   -- On_Rejected --
-   -----------------
-
-   overriding procedure On_Rejected
-     (Self : in out Disconnect_DAP_Request) is
-   begin
-      Trace (Me, "Rejected");
-      Self.Client.On_Disconnected;
-   end On_Rejected;
-
-   ----------------------
-   -- On_Error_Message --
-   ----------------------
-
-   overriding procedure On_Error_Message
-     (Self    : in out Disconnect_DAP_Request;
-      Message : VSS.Strings.Virtual_String) is
-   begin
-      Trace (Me, VSS.Strings.Conversions.To_UTF_8_String (Message));
-      Self.Client.On_Disconnected;
-   end On_Error_Message;
 
    -------------
    -- Set_Seq --

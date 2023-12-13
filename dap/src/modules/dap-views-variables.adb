@@ -1282,7 +1282,6 @@ package body DAP.Views.Variables is
             Req := new DAP.Views.Variables.Scopes_Requests.
               Scopes_Request (Self.Kernel);
 
-            Req.Client   := Client;
             Req.Item     := Item;
             Req.Position := Position;
             Req.Childs   := Childs;
@@ -1994,7 +1993,6 @@ package body DAP.Views.Variables is
              new DAP.Views.Variables.Variables_Requests.
                Variables_Request (Self.Kernel);
       begin
-         Req.Client   := Get_Client (Self);
          Req.Item     := Item;
          Req.Position := Position;
          Req.Childs   := Childs;
@@ -2019,7 +2017,6 @@ package body DAP.Views.Variables is
              new DAP.Views.Variables.Evaluate_Requests.
                Evaluate_Request (Self.Kernel);
       begin
-         Req.Client   := Get_Client (Self);
          Req.Item     := Item;
          Req.Position := Position;
          if Path /= Null_Gtk_Tree_Path then
@@ -2027,7 +2024,8 @@ package body DAP.Views.Variables is
          end if;
 
          Req.Parameters.arguments.expression := Item.Cmd;
-         Req.Parameters.arguments.frameId := Req.Client.Get_Selected_Frame_Id;
+         Req.Parameters.arguments.frameId :=
+           Self.Get_Client.Get_Selected_Frame_Id;
          Req.Parameters.arguments.context :=
            (Is_Set => True, Value => DAP.Tools.Enum.repl);
 

@@ -38,12 +38,14 @@ package DAP.Requests.Scopes is
 
    overriding procedure On_Result_Message
      (Self        : in out Scopes_DAP_Request;
+      Client      : not null access DAP.Clients.DAP_Client'Class;
       Stream      : in out VSS.JSON.Pull_Readers.JSON_Pull_Reader'Class;
       Success     : in out Boolean;
       New_Request : in out DAP_Request_Access);
 
    procedure On_Result_Message
      (Self        : in out Scopes_DAP_Request;
+      Client      : not null access DAP.Clients.DAP_Client'Class;
       Result      : in out DAP.Tools.ScopesResponse;
       New_Request : in out DAP_Request_Access) is abstract;
 

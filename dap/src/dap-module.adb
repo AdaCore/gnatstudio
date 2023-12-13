@@ -55,10 +55,6 @@ with DAP.Modules.Persistent_Breakpoints;
 with DAP.Modules.Preferences;
 with DAP.Modules.Scripts;
 with DAP.Clients.Attach;
-with DAP.Requests.ConfigurationDone;
-with DAP.Requests.Next;
-with DAP.Requests.Step_In_Request;
-with DAP.Tools;                    use DAP.Tools;
 with DAP.Views.Assembly;
 with DAP.Views.Call_Stack;
 with DAP.Views.Consoles;
@@ -66,6 +62,7 @@ with DAP.Views.Threads;
 with DAP.Views.Memory;
 with DAP.Views.Registers;
 with DAP.Views.Variables;
+with DAP.Requests;
 
 package body DAP.Module is
 
@@ -770,7 +767,7 @@ package body DAP.Module is
             Parent      => Kernel.Get_Main_Window);
       else
          --  Launch the application
-         Start_Program (Kernel, Client);
+         Start_Program (Client);
       end if;
    end Start;
 
@@ -798,7 +795,7 @@ package body DAP.Module is
          Start (GPS.Kernel.Get_Kernel (Context.Context), Client);
 
       else
-         Client.Continue;
+         Client.Continue_Execution;
       end if;
 
       return Commands.Success;
@@ -811,15 +808,9 @@ package body DAP.Module is
    overriding function Execute
      (Command : access Next_Command;
       Context : Interactive_Command_Context)
-      return Command_Return_Type
-   is
-      Req : DAP.Requests.Next.Next_DAP_Request_Access :=
-        new DAP.Requests.Next.Next_DAP_Request
-          (GPS.Kernel.Get_Kernel (Context.Context));
+      return Command_Return_Type is
    begin
-      Req.Parameters.arguments.threadId :=
-        Get_Current_Debugger.Get_Current_Thread;
-      Get_Current_Debugger.Enqueue (DAP.Requests.DAP_Request_Access (Req));
+      Get_Current_Debugger.Next;
       return Commands.Success;
    end Execute;
 
@@ -830,17 +821,9 @@ package body DAP.Module is
    overriding function Execute
      (Command : access Nexti_Command;
       Context : Interactive_Command_Context)
-      return Command_Return_Type
-   is
-      Req : DAP.Requests.Next.Next_DAP_Request_Access :=
-        new DAP.Requests.Next.Next_DAP_Request
-          (GPS.Kernel.Get_Kernel (Context.Context));
+      return Command_Return_Type is
    begin
-      Req.Parameters.arguments.threadId :=
-        Get_Current_Debugger.Get_Current_Thread;
-      Req.Parameters.arguments.granularity :=
-        (Is_Set => True, Value => Enum.instruction);
-      Get_Current_Debugger.Enqueue (DAP.Requests.DAP_Request_Access (Req));
+      Get_Current_Debugger.Next_Instruction;
       return Commands.Success;
    end Execute;
 
@@ -851,15 +834,9 @@ package body DAP.Module is
    overriding function Execute
      (Command : access Step_Command;
       Context : Interactive_Command_Context)
-      return Command_Return_Type
-   is
-      Req : DAP.Requests.Step_In_Request.Step_In_DAP_Request_Access :=
-        new DAP.Requests.Step_In_Request.Step_In_DAP_Request
-          (GPS.Kernel.Get_Kernel (Context.Context));
+      return Command_Return_Type is
    begin
-      Req.Parameters.arguments.threadId :=
-        Get_Current_Debugger.Get_Current_Thread;
-      Get_Current_Debugger.Enqueue (DAP.Requests.DAP_Request_Access (Req));
+      Get_Current_Debugger.Step_In;
       return Commands.Success;
    end Execute;
 
@@ -870,17 +847,9 @@ package body DAP.Module is
    overriding function Execute
      (Command : access Stepi_Command;
       Context : Interactive_Command_Context)
-      return Command_Return_Type
-   is
-      Req : DAP.Requests.Step_In_Request.Step_In_DAP_Request_Access :=
-        new DAP.Requests.Step_In_Request.Step_In_DAP_Request
-          (GPS.Kernel.Get_Kernel (Context.Context));
+      return Command_Return_Type is
    begin
-      Req.Parameters.arguments.threadId :=
-        Get_Current_Debugger.Get_Current_Thread;
-      Req.Parameters.arguments.granularity :=
-        (Is_Set => True, Value => Enum.instruction);
-      Get_Current_Debugger.Enqueue (DAP.Requests.DAP_Request_Access (Req));
+      Get_Current_Debugger.Step_In_Instruction;
       return Commands.Success;
    end Execute;
 
@@ -930,7 +899,6 @@ package body DAP.Module is
       Attach_Req : DAP.Clients.Attach.Attach_Request_Access :=
         DAP.Clients.Attach.Create
           (Kernel => Kernel,
-           Client => Client,
            PID    => Integer'Value (PID));
    begin
       Client.Enqueue
@@ -1358,15 +1326,9 @@ package body DAP.Module is
    -------------------
 
    procedure Start_Program
-     (Kernel : Kernel_Handle;
-      Client : DAP.Clients.DAP_Client_Access)
-   is
-      Done : DAP.Requests.ConfigurationDone.
-        ConfigurationDone_DAP_Request_Access :=
-          new DAP.Requests.ConfigurationDone.
-            ConfigurationDone_DAP_Request (Kernel);
+     (Client : DAP.Clients.DAP_Client_Access) is
    begin
-      Client.Enqueue (DAP.Requests.DAP_Request_Access (Done));
+      Client.Configuration_Done;
    end Start_Program;
 
    -------------------------

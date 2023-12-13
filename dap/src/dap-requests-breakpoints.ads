@@ -34,19 +34,24 @@ package DAP.Requests.Breakpoints is
 
    overriding procedure On_Result_Message
      (Self        : in out Breakpoint_DAP_Request;
+      Client      : not null access DAP.Clients.DAP_Client'Class;
       Stream      : in out VSS.JSON.Pull_Readers.JSON_Pull_Reader'Class;
       Success     : in out Boolean;
       New_Request : in out DAP_Request_Access);
 
    procedure On_Result_Message
      (Self        : in out Breakpoint_DAP_Request;
+      Client      : not null access DAP.Clients.DAP_Client'Class;
       Result      : in out DAP.Tools.SetBreakpointsResponse;
       New_Request : in out DAP_Request_Access) is abstract;
 
-   overriding procedure On_Rejected (Self : in out Breakpoint_DAP_Request);
+   overriding procedure On_Rejected
+     (Self   : in out Breakpoint_DAP_Request;
+      Client : not null access DAP.Clients.DAP_Client'Class);
 
    overriding procedure On_Error_Message
      (Self    : in out Breakpoint_DAP_Request;
+      Client  : not null access DAP.Clients.DAP_Client'Class;
       Message : VSS.Strings.Virtual_String);
 
    overriding procedure Set_Seq

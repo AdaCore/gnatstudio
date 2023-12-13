@@ -15,7 +15,6 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with DAP.Module;
 with DAP.Tools.Inputs;
 with DAP.Tools.Outputs;
 
@@ -38,6 +37,7 @@ package body DAP.Requests.Next is
 
    overriding procedure On_Result_Message
      (Self        : in out Next_DAP_Request;
+      Client      : not null access DAP.Clients.DAP_Client'Class;
       Stream      : in out VSS.JSON.Pull_Readers.JSON_Pull_Reader'Class;
       Success     : in out Boolean;
       New_Request : in out DAP_Request_Access)
@@ -48,7 +48,7 @@ package body DAP.Requests.Next is
 
       if Success then
          Next_DAP_Request'Class
-           (Self).On_Result_Message (Response, New_Request);
+           (Self).On_Result_Message (Client, Response, New_Request);
       end if;
    end On_Result_Message;
 
@@ -62,18 +62,5 @@ package body DAP.Requests.Next is
    begin
       Self.Parameters.seq := Id;
    end Set_Seq;
-
-   -----------------------
-   -- On_Result_Message --
-   -----------------------
-
-   procedure On_Result_Message
-     (Self        : in out Next_DAP_Request;
-      Result      : DAP.Tools.NextResponse;
-      New_Request : in out DAP_Request_Access) is
-   begin
-      New_Request := null;
-      DAP.Module.Get_Current_Debugger.On_Continue;
-   end On_Result_Message;
 
 end DAP.Requests.Next;

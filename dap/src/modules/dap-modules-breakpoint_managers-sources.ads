@@ -33,13 +33,17 @@ private package DAP.Modules.Breakpoint_Managers.Sources is
 
    overriding procedure On_Result_Message
      (Self        : in out Source_Line_Request;
+      Client      : not null access DAP.Clients.DAP_Client'Class;
       Result      : in out DAP.Tools.SetBreakpointsResponse;
       New_Request : in out DAP_Request_Access);
 
-   overriding procedure On_Rejected (Self : in out Source_Line_Request);
+   overriding procedure On_Rejected
+     (Self   : in out Source_Line_Request;
+      Client : not null access DAP.Clients.DAP_Client'Class);
 
    overriding procedure On_Error_Message
      (Self    : in out Source_Line_Request;
+      Client  : not null access DAP.Clients.DAP_Client'Class;
       Message : VSS.Strings.Virtual_String);
 
 end DAP.Modules.Breakpoint_Managers.Sources;

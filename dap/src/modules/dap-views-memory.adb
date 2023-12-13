@@ -401,18 +401,19 @@ package body DAP.Views.Memory is
 
    type Read_Request is
      new DAP.Requests.Read_Memory.Read_Memory_DAP_Request with record
-      Client  : DAP.Clients.DAP_Client_Access;
       Address : Long_Long_Integer;
    end record;
    type Read_Request_Access is access all Read_Request;
 
    overriding procedure On_Result_Message
      (Self        : in out Read_Request;
+      Client      : not null access DAP.Clients.DAP_Client'Class;
       Result      : DAP.Tools.ReadMemoryResponse;
       New_Request : in out DAP_Request_Access);
 
    overriding procedure On_Error_Message
      (Self    : in out Read_Request;
+      Client      : not null access DAP.Clients.DAP_Client'Class;
       Message : VSS.Strings.Virtual_String);
 
    -------------------
@@ -425,6 +426,7 @@ package body DAP.Views.Memory is
 
    overriding procedure On_Result_Message
      (Self        : in out Write_Request;
+      Client      : not null access DAP.Clients.DAP_Client'Class;
       Result      : DAP.Tools.WriteMemoryResponse;
       New_Request : in out DAP_Request_Access) is null;
 
@@ -947,7 +949,6 @@ package body DAP.Views.Memory is
       Free (View.Dump);
 
       Req := new Read_Request (View.Kernel);
-      Req.Client  := Client;
       Req.Address := Address;
       Req.Parameters.arguments.memoryReference :=
         VSS.Strings.Conversions.To_Virtual_String
@@ -963,10 +964,11 @@ package body DAP.Views.Memory is
 
    overriding procedure On_Error_Message
      (Self    : in out Read_Request;
+      Client  : not null access DAP.Clients.DAP_Client'Class;
       Message : VSS.Strings.Virtual_String)
    is
       View   : constant DAP_Memory_View := DAP_Memory_View
-        (Self.Client.Get_Memory_View);
+        (Client.Get_Memory_View);
    begin
       if Self.Address = 0
         and then View /= null
@@ -975,7 +977,8 @@ package body DAP.Views.Memory is
       end if;
 
       DAP.Requests.Read_Memory.On_Error_Message
-        (DAP.Requests.Read_Memory.Read_Memory_DAP_Request (Self), Message);
+        (DAP.Requests.Read_Memory.Read_Memory_DAP_Request (Self),
+         Client, Message);
    end On_Error_Message;
 
    -----------------------
@@ -984,12 +987,13 @@ package body DAP.Views.Memory is
 
    overriding procedure On_Result_Message
      (Self        : in out Read_Request;
+      Client      : not null access DAP.Clients.DAP_Client'Class;
       Result      : DAP.Tools.ReadMemoryResponse;
       New_Request : in out DAP_Request_Access)
    is
       use Ada.Streams;
       View   : constant DAP_Memory_View := DAP_Memory_View
-        (Self.Client.Get_Memory_View);
+        (Client.Get_Memory_View);
 
       Dump_Index : Integer := 1;
       Total      : Integer := 0;
@@ -1000,7 +1004,7 @@ package body DAP.Views.Memory is
       is
          L : constant Natural := Length (View.Dump (Dump_Index).Value);
       begin
-         if Self.Client.Get_Endian_Type = Little_Endian then
+         if Client.Get_Endian_Type = Little_Endian then
             declare
                Src : constant String := Slice
                  (View.Dump (Dump_Index).Value, L - 15, L);

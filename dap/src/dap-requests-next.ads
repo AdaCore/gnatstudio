@@ -23,7 +23,7 @@ package DAP.Requests.Next is
 
    -- Next_DAP_Request --
 
-   type Next_DAP_Request is new DAP_Request with record
+   type Next_DAP_Request is abstract new DAP_Request with record
       Parameters : aliased DAP.Tools.NextRequest :=
         DAP.Tools.NextRequest'
           (seq       => 0,
@@ -42,14 +42,16 @@ package DAP.Requests.Next is
 
    overriding procedure On_Result_Message
      (Self        : in out Next_DAP_Request;
+      Client      : not null access DAP.Clients.DAP_Client'Class;
       Stream      : in out VSS.JSON.Pull_Readers.JSON_Pull_Reader'Class;
       Success     : in out Boolean;
       New_Request : in out DAP_Request_Access);
 
    procedure On_Result_Message
      (Self        : in out Next_DAP_Request;
+      Client      : not null access DAP.Clients.DAP_Client'Class;
       Result      : DAP.Tools.NextResponse;
-      New_Request : in out DAP_Request_Access);
+      New_Request : in out DAP_Request_Access) is abstract;
 
    overriding procedure Set_Seq
      (Self : in out Next_DAP_Request;

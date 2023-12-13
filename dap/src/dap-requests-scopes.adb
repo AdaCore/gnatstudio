@@ -37,6 +37,7 @@ package body DAP.Requests.Scopes is
 
    overriding procedure On_Result_Message
      (Self        : in out Scopes_DAP_Request;
+      Client      : not null access DAP.Clients.DAP_Client'Class;
       Stream      : in out VSS.JSON.Pull_Readers.JSON_Pull_Reader'Class;
       Success     : in out Boolean;
       New_Request : in out DAP_Request_Access)
@@ -47,7 +48,7 @@ package body DAP.Requests.Scopes is
 
       if Success then
          Scopes_DAP_Request'Class
-           (Self).On_Result_Message (Response, New_Request);
+           (Self).On_Result_Message (Client, Response, New_Request);
       end if;
    end On_Result_Message;
 

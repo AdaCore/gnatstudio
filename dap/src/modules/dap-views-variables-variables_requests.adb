@@ -23,6 +23,7 @@ package body DAP.Views.Variables.Variables_Requests is
 
    overriding procedure On_Result_Message
      (Self        : in out Variables_Request;
+      Client      : not null access DAP.Clients.DAP_Client'Class;
       Result      : in out DAP.Tools.VariablesResponse;
       New_Request : in out DAP.Requests.DAP_Request_Access)
    is
@@ -65,7 +66,6 @@ package body DAP.Views.Variables.Variables_Requests is
             Req : constant Variables_Request_Access :=
               new Variables_Request (Self.Kernel);
          begin
-            Req.Client   := Self.Client;
             Req.Item     := Self.Item;
             Req.Position := Self.Position;
             Req.Childs   := Self.Childs;
@@ -112,6 +112,7 @@ package body DAP.Views.Variables.Variables_Requests is
 
    overriding procedure On_Error_Message
      (Self    : in out Variables_Request;
+      Client  : not null access DAP.Clients.DAP_Client'Class;
       Message : VSS.Strings.Virtual_String)
    is
       View : constant DAP_Variables_View :=
@@ -121,7 +122,7 @@ package body DAP.Views.Variables.Variables_Requests is
 
    begin
       DAP.Requests.Variables.Variables_DAP_Request
-        (Self).On_Error_Message (Message);
+        (Self).On_Error_Message (Client, Message);
 
       if View /= null then
          if Self.Position /= 0 then
@@ -135,7 +136,7 @@ package body DAP.Views.Variables.Variables_Requests is
                   View.Continue_Update (Self.Position, New_Request);
 
                   if New_Request /= null then
-                     Self.Client.Enqueue (New_Request);
+                     Client.Enqueue (New_Request);
                   end if;
                end if;
             end;

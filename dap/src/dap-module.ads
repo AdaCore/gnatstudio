@@ -70,9 +70,7 @@ package DAP.Module is
      (Callback : access procedure (Debugger : DAP.Clients.DAP_Client_Access));
    --  Calls Callback for each debugger
 
-   procedure Start_Program
-     (Kernel : Kernel_Handle;
-      Client : DAP.Clients.DAP_Client_Access);
+   procedure Start_Program (Client : DAP.Clients.DAP_Client_Access);
 
    function Get_Started_Per_Session_Debuggers return Integer;
    --  Returns count of debuggers that have been started in parallel

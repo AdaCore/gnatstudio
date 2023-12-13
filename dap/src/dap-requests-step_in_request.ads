@@ -23,7 +23,7 @@ package DAP.Requests.Step_In_Request is
 
    -- Step_In_DAP_Request --
 
-   type Step_In_DAP_Request is new DAP_Request with record
+   type Step_In_DAP_Request is abstract new DAP_Request with record
       Parameters : aliased DAP.Tools.StepInRequest :=
         DAP.Tools.StepInRequest'
           (seq       => 0,
@@ -44,14 +44,16 @@ package DAP.Requests.Step_In_Request is
 
    overriding procedure On_Result_Message
      (Self        : in out Step_In_DAP_Request;
+      Client      : not null access DAP.Clients.DAP_Client'Class;
       Stream      : in out VSS.JSON.Pull_Readers.JSON_Pull_Reader'Class;
       Success     : in out Boolean;
       New_Request : in out DAP_Request_Access);
 
    procedure On_Result_Message
      (Self        : in out Step_In_DAP_Request;
+      Client      : not null access DAP.Clients.DAP_Client'Class;
       Result      : DAP.Tools.StepInResponse;
-      New_Request : in out DAP_Request_Access);
+      New_Request : in out DAP_Request_Access) is abstract;
 
    overriding procedure Set_Seq
      (Self : in out Step_In_DAP_Request;

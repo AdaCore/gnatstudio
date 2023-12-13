@@ -15,18 +15,10 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with GNATCOLL.Traces;       use GNATCOLL.Traces;
-
-with VSS.Strings.Conversions;
-
-with DAP.Clients;
 with DAP.Tools.Inputs;
 with DAP.Tools.Outputs;
-with DAP.Requests.Launch;
 
 package body DAP.Requests.Initialize is
-
-   Me : constant Trace_Handle := Create ("GPS.DAP.Requests_Initialize", On);
 
    -----------
    -- Write --
@@ -39,36 +31,13 @@ package body DAP.Requests.Initialize is
       DAP.Tools.Outputs.Output_InitializeRequest (Stream, Self.Parameters);
    end Write;
 
-   -----------------
-   -- On_Rejected --
-   -----------------
-
-   overriding procedure On_Rejected (Self : in out Initialize_DAP_Request) is
-   begin
-      Trace (Me, "Rejected");
-   end On_Rejected;
-
-   ----------------------
-   -- On_Error_Message --
-   ----------------------
-
-   overriding procedure On_Error_Message
-     (Self    : in out Initialize_DAP_Request;
-      Message : VSS.Strings.Virtual_String) is
-   begin
-      Self.Kernel.Get_Messages_Window.Insert_Error
-        ("[Debug]:" &
-           VSS.Strings.Conversions.To_UTF_8_String (Message));
-
-      Trace (Me, VSS.Strings.Conversions.To_UTF_8_String (Message));
-   end On_Error_Message;
-
    -----------------------
    -- On_Result_Message --
    -----------------------
 
    overriding procedure On_Result_Message
      (Self        : in out Initialize_DAP_Request;
+      Client      : not null access DAP.Clients.DAP_Client'Class;
       Stream      : in out VSS.JSON.Pull_Readers.JSON_Pull_Reader'Class;
       Success     : in out Boolean;
       New_Request : in out DAP_Request_Access)
@@ -79,26 +48,8 @@ package body DAP.Requests.Initialize is
 
       if Success then
          Initialize_DAP_Request'Class
-           (Self).On_Result_Message (Response, New_Request);
+           (Self).On_Result_Message (Client, Response, New_Request);
       end if;
-   end On_Result_Message;
-
-   -----------------------
-   -- On_Result_Message --
-   -----------------------
-
-   procedure On_Result_Message
-     (Self        : in out Initialize_DAP_Request;
-      Result      : DAP.Tools.InitializeResponse;
-      New_Request : in out DAP_Request_Access)
-   is
-
-      Launch : constant DAP.Requests.Launch.Launch_DAP_Request_Access :=
-        new DAP.Requests.Launch.Launch_DAP_Request (Self.Kernel);
-   begin
-      Self.Client.Set_Capabilities (Result.a_body);
-      Launch.Initialize (Self.Client);
-      New_Request := DAP_Request_Access (Launch);
    end On_Result_Message;
 
    -------------
