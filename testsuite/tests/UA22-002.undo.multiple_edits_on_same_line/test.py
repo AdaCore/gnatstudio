@@ -11,7 +11,7 @@ def run_test():
     buf = GPS.EditorBuffer.get(GPS.File("main.cpp"))
     expected = buf.get_chars()
     GPS.execute_action("format file")
-    yield wait_idle()
+    yield wait_language_server("textDocument/formatting", "C++")
     gps_assert(buf.get_chars() != expected,
                True,
                "The buffer should have been properly formatted")

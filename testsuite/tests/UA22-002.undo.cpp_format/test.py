@@ -9,10 +9,9 @@ from gs_utils.internal.utils import *
 @run_test_driver
 def run_test():
     buf = GPS.EditorBuffer.get(GPS.File("main.cpp"))
-    # Sending Tab will trigger the rangeFormatting request which will modify
-    # the buffer via a workspaceEdit
-    send_key_event(GDK_TAB)
-    yield wait_idle()
+    GPS.execute_action("format selection")
+    yield wait_language_server("textDocument/rangeFormatting", "C++")
+
     GPS.execute_action("undo")
     GPS.execute_action("redo")
     try:

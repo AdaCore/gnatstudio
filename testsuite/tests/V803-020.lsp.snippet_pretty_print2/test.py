@@ -25,6 +25,7 @@ def run_test():
 
     # Trigger the parameter completion and select the first result
     send_key_event(ord(','))
+    yield wait_language_server("textDocument/completion")
     yield wait_until_true(
         lambda: get_widget_by_name("completion-view") is not None)
     pop_tree = get_widget_by_name("completion-view")
@@ -47,6 +48,7 @@ def run_test():
     # It should still work even with a new line
     buf.insert(buf.at(7, 1).end_of_line(), "\n")
     send_key_event(ord(','))
+    yield wait_language_server("textDocument/completion")
     yield wait_until_true(
         lambda: get_widget_by_name("completion-view") is not None)
     pop_tree = get_widget_by_name("completion-view")
