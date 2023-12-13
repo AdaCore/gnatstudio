@@ -110,11 +110,11 @@ package body DAP.Modules.Contexts is
       return "";
    end Get_Variable_Name;
 
-   ------------------
-   -- Set_Variable --
-   ------------------
+   --------------------
+   -- Store_Variable --
+   --------------------
 
-   procedure Set_Variable
+   procedure Store_Variable
      (Context   : in out GPS.Kernel.Selection_Context;
       Full_Name : String;
       Info      : Item_Info)
@@ -123,6 +123,6 @@ package body DAP.Modules.Contexts is
         (To_Unbounded_String (Full_Name), Info);
    begin
       Set_Debugging_Variable (Context, Context_Item_Access (Item));
-   end Set_Variable;
+   end Store_Variable;
 
 end DAP.Modules.Contexts;

@@ -222,7 +222,7 @@ private
    procedure Clear (Self : not null access DAP_Variables_View_Record'Class);
    --  Clear the contents of Self
 
-   procedure Set_Variable
+   procedure Set_Variable_Value
      (Self  : access DAP_Variables_View_Record'Class;
       Name  : String;
       Value : String;

@@ -15,66 +15,52 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with GNATCOLL.Projects;
+with DAP.Tools.Inputs;
+with DAP.Tools.Outputs;
 
-with VSS.Strings.Conversions;
+package body DAP.Requests.LoadedSources is
 
-with GPS.Kernel.Project;
+   -----------
+   -- Write --
+   -----------
 
-with DAP.Clients.LoadedSources;
-
-package body DAP.Clients.Attach is
-
-   ----------------
-   -- Initialize --
-   ----------------
-
-   function Create
-     (Kernel : not null Kernel_Handle;
-      PID    : Integer := -1;
-      Target : String := "") return Attach_Request_Access
-   is
-      Self : constant Attach_Request_Access := new Attach_Request (Kernel);
+   overriding procedure Write
+     (Self   : Loaded_Sources_DAP_Request;
+      Stream : in out VSS.JSON.Content_Handlers.JSON_Content_Handler'Class) is
    begin
-      Self.Parameters.arguments.target :=
-        VSS.Strings.Conversions.To_Virtual_String (Target);
-
-      if PID /= -1 then
-         Self.Parameters.arguments.pid := (Is_Set => True, Value => PID);
-      end if;
-
-      return Self;
-   end Create;
+      DAP.Tools.Outputs.Output_LoadedSourcesRequest (Stream, Self.Parameters);
+   end Write;
 
    -----------------------
    -- On_Result_Message --
    -----------------------
 
    overriding procedure On_Result_Message
-     (Self        : in out Attach_Request;
+     (Self        : in out Loaded_Sources_DAP_Request;
       Client      : not null access DAP.Clients.DAP_Client'Class;
-      Result      : DAP.Tools.AttachResponse;
+      Stream      : in out VSS.JSON.Pull_Readers.JSON_Pull_Reader'Class;
+      Success     : in out Boolean;
       New_Request : in out DAP_Request_Access)
    is
-      use GNATCOLL.Projects;
+      Response : DAP.Tools.LoadedSourcesResponse;
    begin
-      New_Request := null;
+      DAP.Tools.Inputs.Input_LoadedSourcesResponse (Stream, Response, Success);
 
-      if GPS.Kernel.Project.Get_Registry
-        (Self.Kernel).Tree.Status = From_Executable
-        and then
-          (not Client.Get_Capabilities.Is_Set
-           or else Client.Get_Capabilities.
-             Value.supportsLoadedSourcesRequest)
-      then
-         --  Debugging is started for executable, so prepare the
-         --  source files list to prepare a project file for such debugging
-         New_Request := DAP_Request_Access
-           (DAP.Clients.LoadedSources.Create (Self.Kernel));
-
-      else
-         Client.On_Launched;
+      if Success then
+         Loaded_Sources_DAP_Request'Class
+           (Self).On_Result_Message (Client, Response, New_Request);
       end if;
    end On_Result_Message;
 
-end DAP.Clients.Attach;
+   -------------
+   -- Set_Seq --
+   -------------
+
+   overriding procedure Set_Seq
+     (Self : in out Loaded_Sources_DAP_Request;
+      Id   : Integer) is
+   begin
+      Self.Parameters.seq := Id;
+   end Set_Seq;
+
+end DAP.Requests.LoadedSources;

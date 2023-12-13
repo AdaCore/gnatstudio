@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                               GNAT Studio                                --
 --                                                                          --
---                        Copyright (C) 2022-2023, AdaCore                  --
+--                        Copyright (C) 2023, AdaCore                       --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -15,34 +15,19 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with GNATCOLL.Projects;
+package body DAP.Clients.ConfigurationDone is
 
-with VSS.Strings.Conversions;
-
-with GPS.Kernel.Project;
-
-with DAP.Clients.LoadedSources;
-
-package body DAP.Clients.Attach is
-
-   ----------------
-   -- Initialize --
-   ----------------
+   ------------
+   -- Create --
+   ------------
 
    function Create
-     (Kernel : not null Kernel_Handle;
-      PID    : Integer := -1;
-      Target : String := "") return Attach_Request_Access
+     (Kernel : not null Kernel_Handle)
+      return ConfigurationDone_Request_Access
    is
-      Self : constant Attach_Request_Access := new Attach_Request (Kernel);
+      Self : constant ConfigurationDone_Request_Access :=
+        new ConfigurationDone_Request (Kernel);
    begin
-      Self.Parameters.arguments.target :=
-        VSS.Strings.Conversions.To_Virtual_String (Target);
-
-      if PID /= -1 then
-         Self.Parameters.arguments.pid := (Is_Set => True, Value => PID);
-      end if;
-
       return Self;
    end Create;
 
@@ -51,30 +36,28 @@ package body DAP.Clients.Attach is
    -----------------------
 
    overriding procedure On_Result_Message
-     (Self        : in out Attach_Request;
+     (Self        : in out ConfigurationDone_Request;
       Client      : not null access DAP.Clients.DAP_Client'Class;
-      Result      : DAP.Tools.AttachResponse;
+      Result      : DAP.Tools.ConfigurationDoneResponse;
       New_Request : in out DAP_Request_Access)
    is
-      use GNATCOLL.Projects;
+      pragma Unreferenced (New_Request);
    begin
-      New_Request := null;
-
-      if GPS.Kernel.Project.Get_Registry
-        (Self.Kernel).Tree.Status = From_Executable
-        and then
-          (not Client.Get_Capabilities.Is_Set
-           or else Client.Get_Capabilities.
-             Value.supportsLoadedSourcesRequest)
-      then
-         --  Debugging is started for executable, so prepare the
-         --  source files list to prepare a project file for such debugging
-         New_Request := DAP_Request_Access
-           (DAP.Clients.LoadedSources.Create (Self.Kernel));
-
-      else
-         Client.On_Launched;
-      end if;
+      Client.On_Configured;
    end On_Result_Message;
 
-end DAP.Clients.Attach;
+   -----------------------------
+   -- Send_Configuration_Done --
+   -----------------------------
+
+   procedure Send_Configuration_Done
+     (Client : not null access DAP.Clients.DAP_Client'Class)
+   is
+      Request : DAP.Requests.DAP_Request_Access :=
+        DAP.Requests.DAP_Request_Access
+          (Create (Kernel_Handle (Client.Kernel)));
+   begin
+      Client.Enqueue (Request);
+   end Send_Configuration_Done;
+
+end DAP.Clients.ConfigurationDone;

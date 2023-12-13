@@ -1,5 +1,5 @@
 ------------------------------------------------------------------------------
---                      GVD - The GNU Visual Debugger                       --
+--                               GNAT Studio                                --
 --                                                                          --
 --                     Copyright (C) 2023, AdaCore                          --
 --                                                                          --
@@ -15,29 +15,21 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
---  Utilities to support selection contexts in the contxt of the debugger
+with DAP.Requests.SetExpression;
+with DAP.Tools;
 
-with GPS.Kernel;                   use GPS.Kernel;
-with DAP.Modules.Variables.Items;  use DAP.Modules.Variables.Items;
+private package DAP.Views.Registers.SetExpression is
 
-package DAP.Modules.Contexts is
+   type Set_Expression_Request is
+     new DAP.Requests.SetExpression.Set_Expression_DAP_Request
+   with null record;
 
-   function Get_Variable_Name
-     (Context     : GPS.Kernel.Selection_Context;
-      Dereference : Boolean) return String;
-   --  If Context contains an entity, get the entity name.
-   --  Dereference the entity if Dereference is True.
-   --  Return "" if entity name could not be found in Context.
+   type Set_Expression_Request_Access is access all Set_Expression_Request;
 
-   procedure Store_Variable
-     (Context   : in out GPS.Kernel.Selection_Context;
-      Full_Name : String;
-      Info      : Item_Info);
-   --  Set the debugging variable into the Context.
+   overriding procedure On_Result_Message
+     (Self        : in out Set_Expression_Request;
+      Client      : not null access DAP.Clients.DAP_Client'Class;
+      Result      : in out DAP.Tools.SetExpressionResponse;
+      New_Request : in out DAP.Requests.DAP_Request_Access);
 
-   function Get_Variable
-     (Context : GPS.Kernel.Selection_Context)
-      return Item_Info;
-   --  Retrieve the debugging variable from the Context.
-
-end DAP.Modules.Contexts;
+end DAP.Views.Registers.SetExpression;

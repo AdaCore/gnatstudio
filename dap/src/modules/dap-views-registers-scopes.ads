@@ -1,5 +1,5 @@
 ------------------------------------------------------------------------------
---                      GVD - The GNU Visual Debugger                       --
+--                               GNAT Studio                                --
 --                                                                          --
 --                     Copyright (C) 2023, AdaCore                          --
 --                                                                          --
@@ -15,29 +15,23 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
---  Utilities to support selection contexts in the contxt of the debugger
+with DAP.Requests.Scopes;
+with DAP.Tools;
 
-with GPS.Kernel;                   use GPS.Kernel;
-with DAP.Modules.Variables.Items;  use DAP.Modules.Variables.Items;
+private package DAP.Views.Registers.Scopes is
 
-package DAP.Modules.Contexts is
+   type Scopes_Request is
+     new DAP.Requests.Scopes.Scopes_DAP_Request
+   with record
+      Kind : Command_Kind := Update_Registers;
+   end record;
 
-   function Get_Variable_Name
-     (Context     : GPS.Kernel.Selection_Context;
-      Dereference : Boolean) return String;
-   --  If Context contains an entity, get the entity name.
-   --  Dereference the entity if Dereference is True.
-   --  Return "" if entity name could not be found in Context.
+   type Scopes_Request_Access is access all Scopes_Request;
 
-   procedure Store_Variable
-     (Context   : in out GPS.Kernel.Selection_Context;
-      Full_Name : String;
-      Info      : Item_Info);
-   --  Set the debugging variable into the Context.
+   overriding procedure On_Result_Message
+     (Self        : in out Scopes_Request;
+      Client      : not null access DAP.Clients.DAP_Client'Class;
+      Result      : in out DAP.Tools.ScopesResponse;
+      New_Request : in out DAP.Requests.DAP_Request_Access);
 
-   function Get_Variable
-     (Context : GPS.Kernel.Selection_Context)
-      return Item_Info;
-   --  Retrieve the debugging variable from the Context.
-
-end DAP.Modules.Contexts;
+end DAP.Views.Registers.Scopes;
