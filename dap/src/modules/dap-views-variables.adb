@@ -73,11 +73,11 @@ with DAP.Modules.Contexts;        use DAP.Modules.Contexts;
 with DAP.Modules.Preferences;
 with DAP.Utils;                   use DAP.Utils;
 
-with DAP.Views.Variables.Evaluate_Requests;
-with DAP.Views.Variables.Scopes_Requests;
-with DAP.Views.Variables.Variables_Requests;
-with DAP.Views.Variables.Set_Expression_Requests;
-with DAP.Views.Variables.Set_Variable_Requests;
+with DAP.Views.Variables.Evaluate;
+with DAP.Views.Variables.Scopes;
+with DAP.Views.Variables.Variables;
+with DAP.Views.Variables.SetExpression;
+with DAP.Views.Variables.SetVariable;
 
 package body DAP.Views.Variables is
 
@@ -685,13 +685,13 @@ package body DAP.Views.Variables is
            and then It /= No_Item_Info
          then
             if It.Cmd /= Empty_Virtual_String then
-               DAP_Variables_View (Self.View).Set_Variable
+               DAP_Variables_View (Self.View).Set_Variable_Value
                  (Name  => Get_Name (It),
                   Value => Text,
                   Path  => Self.Model.Get_Path (Store_Iter));
 
             elsif It.Varname /= Empty_Virtual_String then
-               DAP_Variables_View (Self.View).Set_Variable
+               DAP_Variables_View (Self.View).Set_Variable_Value
                  (Name  => Self.Model.Get_String
                     (Store_Iter, Column_Full_Name),
                   Value => Text,
@@ -701,11 +701,11 @@ package body DAP.Views.Variables is
       end if;
    end On_Edited;
 
-   ------------------
-   -- Set_Variable --
-   ------------------
+   ------------------------
+   -- Set_Variable_Value --
+   ------------------------
 
-   procedure Set_Variable
+   procedure Set_Variable_Value
      (Self  : access DAP_Variables_View_Record'Class;
       Name  : String;
       Value : String;
@@ -731,9 +731,9 @@ package body DAP.Views.Variables is
         and then Client.Get_Capabilities.Value.supportsSetExpression
       then
          declare
-            Req : DAP.Views.Variables.Set_Expression_Requests.
+            Req : DAP.Views.Variables.SetExpression.
               Set_Expression_Request_Access :=
-                new DAP.Views.Variables.Set_Expression_Requests.
+                new DAP.Views.Variables.SetExpression.
                   Set_Expression_Request (Self.Kernel);
          begin
             Req.Name := N;
@@ -759,9 +759,9 @@ package body DAP.Views.Variables is
 
          if Ref then
             declare
-               Req    : DAP.Views.Variables.Set_Variable_Requests.
+               Req    : DAP.Views.Variables.SetVariable.
                  Set_Variable_Request_Access :=
-                   new DAP.Views.Variables.Set_Variable_Requests.
+                   new DAP.Views.Variables.SetVariable.
                      Set_Variable_Request (Self.Kernel);
                Parent : constant Variables_References_Trees.Cursor :=
                  Variables_References_Trees.Parent (C);
@@ -789,7 +789,7 @@ package body DAP.Views.Variables is
       end if;
 
       Path_Free (Path);
-   end Set_Variable;
+   end Set_Variable_Value;
 
    ----------------
    -- Initialize --
@@ -936,10 +936,10 @@ package body DAP.Views.Variables is
 
       if It /= No_Item_Info then
          if not It.Cmd.Is_Empty then
-            Set_Variable (Context, Get_Name (It), It);
+            Store_Variable (Context, Get_Name (It), It);
 
          elsif not It.Varname.Is_Empty then
-            Set_Variable
+            Store_Variable
               (Context,
                View.Tree.Filter.Get_String (Filter_Iter, Column_Full_Name),
                It);
@@ -1262,7 +1262,7 @@ package body DAP.Views.Variables is
       use type DAP.Clients.DAP_Client_Access;
 
       Client : constant DAP.Clients.DAP_Client_Access := Get_Client (Self);
-      Req    : DAP.Views.Variables.Scopes_Requests.Scopes_Request_Access;
+      Req    : DAP.Views.Variables.Scopes.Scopes_Request_Access;
       Result : DAP.Requests.DAP_Request_Access;
    begin
       if Client = null then
@@ -1279,8 +1279,7 @@ package body DAP.Views.Variables is
            and then Item.Cmd.Is_Empty
          --  don't have local's id and not a command, get it
          then
-            Req := new DAP.Views.Variables.Scopes_Requests.
-              Scopes_Request (Self.Kernel);
+            Req := new DAP.Views.Variables.Scopes.Scopes_Request (Self.Kernel);
 
             Req.Item     := Item;
             Req.Position := Position;
@@ -1988,9 +1987,9 @@ package body DAP.Views.Variables is
       -- Create_Request --
       procedure Create_Request
       is
-         Req : constant DAP.Views.Variables.Variables_Requests.
+         Req : constant DAP.Views.Variables.Variables.
            Variables_Request_Access :=
-             new DAP.Views.Variables.Variables_Requests.
+             new DAP.Views.Variables.Variables.
                Variables_Request (Self.Kernel);
       begin
          Req.Item     := Item;
@@ -2012,10 +2011,8 @@ package body DAP.Views.Variables is
       -- Create_Ev_Request --
       procedure Create_Ev_Request
       is
-         Req : constant DAP.Views.Variables.Evaluate_Requests.
-           Evaluate_Request_Access :=
-             new DAP.Views.Variables.Evaluate_Requests.
-               Evaluate_Request (Self.Kernel);
+         Req : constant DAP.Views.Variables.Evaluate.Evaluate_Request_Access :=
+           new DAP.Views.Variables.Evaluate.Evaluate_Request (Self.Kernel);
       begin
          Req.Item     := Item;
          Req.Position := Position;

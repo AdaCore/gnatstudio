@@ -89,8 +89,8 @@ with DAP.Tools;
 with DAP.Types;                use DAP.Types;
 with DAP.Utils;                use DAP.Utils;
 
-with DAP.Requests.Read_Memory;
-with DAP.Requests.Write_Memory;
+with DAP.Requests.ReadMemory;
+with DAP.Requests.WriteMemory;
 
 package body DAP.Views.Memory is
 
@@ -400,7 +400,7 @@ package body DAP.Views.Memory is
    ------------------
 
    type Read_Request is
-     new DAP.Requests.Read_Memory.Read_Memory_DAP_Request with record
+     new DAP.Requests.ReadMemory.Read_Memory_DAP_Request with record
       Address : Long_Long_Integer;
    end record;
    type Read_Request_Access is access all Read_Request;
@@ -421,7 +421,7 @@ package body DAP.Views.Memory is
    -------------------
 
    type Write_Request is
-     new DAP.Requests.Write_Memory.Write_Memory_DAP_Request with null record;
+     new DAP.Requests.WriteMemory.Write_Memory_DAP_Request with null record;
    type Write_Request_Access is access all Write_Request;
 
    overriding procedure On_Result_Message
@@ -976,8 +976,8 @@ package body DAP.Views.Memory is
          View.Fill_Values;
       end if;
 
-      DAP.Requests.Read_Memory.On_Error_Message
-        (DAP.Requests.Read_Memory.Read_Memory_DAP_Request (Self),
+      DAP.Requests.ReadMemory.On_Error_Message
+        (DAP.Requests.ReadMemory.Read_Memory_DAP_Request (Self),
          Client, Message);
    end On_Error_Message;
 

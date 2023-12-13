@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
---                      GVD - The GNU Visual Debugger                       --
+--                               GNAT Studio                                --
 --                                                                          --
---                     Copyright (C) 2023, AdaCore                          --
+--                        Copyright (C) 2023, AdaCore                       --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -15,29 +15,36 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
---  Utilities to support selection contexts in the contxt of the debugger
+package body DAP.Clients.Continue is
 
-with GPS.Kernel;                   use GPS.Kernel;
-with DAP.Modules.Variables.Items;  use DAP.Modules.Variables.Items;
+   ------------
+   -- Create --
+   ------------
 
-package DAP.Modules.Contexts is
+   function Create
+     (Kernel    : not null Kernel_Handle;
+      Thread_Id : Integer)
+      return Continue_Request_Access
+   is
+      Self : constant Continue_Request_Access := new Continue_Request (Kernel);
+   begin
+      Self.Parameters.arguments.threadId := Thread_Id;
+      return Self;
+   end Create;
 
-   function Get_Variable_Name
-     (Context     : GPS.Kernel.Selection_Context;
-      Dereference : Boolean) return String;
-   --  If Context contains an entity, get the entity name.
-   --  Dereference the entity if Dereference is True.
-   --  Return "" if entity name could not be found in Context.
+   -----------------------
+   -- On_Result_Message --
+   -----------------------
 
-   procedure Store_Variable
-     (Context   : in out GPS.Kernel.Selection_Context;
-      Full_Name : String;
-      Info      : Item_Info);
-   --  Set the debugging variable into the Context.
+   overriding procedure On_Result_Message
+     (Self        : in out Continue_Request;
+      Client      : not null access DAP.Clients.DAP_Client'Class;
+      Result      : DAP.Tools.ContinueResponse;
+      New_Request : in out DAP_Request_Access)
+   is
+      pragma Unreferenced (New_Request);
+   begin
+      Client.On_Continue;
+   end On_Result_Message;
 
-   function Get_Variable
-     (Context : GPS.Kernel.Selection_Context)
-      return Item_Info;
-   --  Retrieve the debugging variable from the Context.
-
-end DAP.Modules.Contexts;
+end DAP.Clients.Continue;

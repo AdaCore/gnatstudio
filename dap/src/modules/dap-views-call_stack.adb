@@ -50,7 +50,7 @@ with Filter_Panels;              use Filter_Panels;
 with GUI_Utils;
 
 with DAP.Modules.Preferences;
-with DAP.Requests.StackTraces;
+with DAP.Requests.StackTrace;
 with DAP.Tools;                  use DAP.Tools;
 with DAP.Types;                  use DAP.Types;
 with DAP.Utils;                  use DAP.Utils;
@@ -202,7 +202,7 @@ package body DAP.Views.Call_Stack is
    -- StackTrace_Request --
 
    type StackTrace_Request is
-     new DAP.Requests.StackTraces.StackTrace_DAP_Request
+     new DAP.Requests.StackTrace.StackTrace_DAP_Request
    with record
       From : Integer;
       To   : Integer;

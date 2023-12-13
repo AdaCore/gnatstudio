@@ -56,16 +56,13 @@ with LSP.JSON_Streams;
 
 with DAP.Module;
 with DAP.Modules.Preferences;
-with DAP.Clients.Configuration_Dones;
-with DAP.Clients.Continues;
-with DAP.Clients.Disconnects;
-with DAP.Clients.Initializes;
-with DAP.Clients.Nexts;
-with DAP.Clients.Step_Ins;
-with DAP.Requests.Disconnects;
+with DAP.Clients.Continue;
+with DAP.Clients.Disconnect;
+with DAP.Clients.Initialize;
+with DAP.Requests.Disconnect;
 
 with DAP.Requests.Evaluate;
-with DAP.Requests.StackTraces;
+with DAP.Requests.StackTrace;
 with DAP.Views.Consoles;
 with DAP.Views.Memory;
 with DAP.Views.Registers;
@@ -93,7 +90,7 @@ package body DAP.Clients is
    -- StackTrace_Request --
 
    type StackTrace_Request is
-     new DAP.Requests.StackTraces.StackTrace_DAP_Request
+     new DAP.Requests.StackTrace.StackTrace_DAP_Request
    with null record;
 
    type StackTrace_Request_Access is access all StackTrace_Request;
@@ -449,17 +446,17 @@ package body DAP.Clients is
       end if;
    end Has_Breakpoint;
 
-   ----------------
-   -- Initialize --
-   ----------------
+   -----------------------
+   -- Initialize_Client --
+   -----------------------
 
-   procedure Initialize (Self : not null access DAP_Client) is
+   procedure Initialize_Client (Self : not null access DAP_Client) is
    begin
       Self.Visual := new DAP_Visual_Debugger'
         (Glib.Object.GObject_Record with Client => Self.This);
       Glib.Object.Initialize (Self.Visual);
       Ref (Self.Visual);
-   end Initialize;
+   end Initialize_Client;
 
    ----------------
    -- Is_Stopped --
@@ -1585,7 +1582,7 @@ package body DAP.Clients is
 
                if Self.Status /= Terminating
                  or else Request.all in
-                   DAP.Requests.Disconnects.Disconnect_DAP_Request'Class
+                   DAP.Requests.Disconnect.Disconnect_DAP_Request'Class
                then
                   if R_Success.Is_Set
                     and then not R_Success.Value
@@ -2212,7 +2209,7 @@ package body DAP.Clients is
       Client  : not null access DAP.Clients.DAP_Client'Class;
       Message : VSS.Strings.Virtual_String) is
    begin
-      DAP.Requests.StackTraces.StackTrace_DAP_Request
+      DAP.Requests.StackTrace.StackTrace_DAP_Request
         (Self).On_Error_Message (Client, Message);
 
       Client.Set_Status (Stopped);
@@ -2313,7 +2310,7 @@ package body DAP.Clients is
    overriding procedure On_Started (Self : in out DAP_Client) is
       Request : DAP.Requests.DAP_Request_Access :=
         DAP.Requests.DAP_Request_Access
-          (DAP.Clients.Initializes.Create (Self.Kernel));
+          (DAP.Clients.Initialize.Create (Self.Kernel));
    begin
       Self.Process (Request);
    end On_Started;
@@ -2347,7 +2344,7 @@ package body DAP.Clients is
    begin
       if Self.Status /= Terminating
         or else Request.all in
-          DAP.Requests.Disconnects.Disconnect_DAP_Request'Class
+          DAP.Requests.Disconnect.Disconnect_DAP_Request'Class
       then
          Request.Set_Seq (Id);
          Writer.Set_Stream (Stream'Unchecked_Access);
@@ -2507,7 +2504,7 @@ package body DAP.Clients is
       use type DAP.Modules.Breakpoint_Managers.
         DAP_Client_Breakpoint_Manager_Access;
 
-      Disconnect : DAP.Clients.Disconnects.Disconnect_Request_Access;
+      Disconnect : DAP.Clients.Disconnect.Disconnect_Request_Access;
       Old        : constant Debugger_Status_Kind := Self.Status;
    begin
       if Old = Terminating then
@@ -2518,7 +2515,7 @@ package body DAP.Clients is
       Self.Reject_All_Requests;
 
       if Old /= Initialization then
-         Disconnect := DAP.Clients.Disconnects.Create
+         Disconnect := DAP.Clients.Disconnect.Create
            (Kernel => Self.Kernel, Terminate_Debuggee => True);
 
          Self.Process (DAP.Requests.DAP_Request_Access (Disconnect));
@@ -2839,18 +2836,6 @@ package body DAP.Clients is
    end Command_In_Process;
 
    ------------------------
-   -- Configuration_Done --
-   ------------------------
-
-   procedure Configuration_Done (Self : in out DAP_Client) is
-      Request : DAP.Requests.DAP_Request_Access :=
-        DAP.Requests.DAP_Request_Access
-          (DAP.Clients.Configuration_Dones.Create (Self.Kernel));
-   begin
-      Self.Enqueue (Request);
-   end Configuration_Done;
-
-   ------------------------
    -- Continue_Execution --
    ------------------------
 
@@ -2860,75 +2845,11 @@ package body DAP.Clients is
    begin
       if Self.Get_Status = DAP.Types.Stopped then
          Request := DAP.Requests.DAP_Request_Access
-           (DAP.Clients.Continues.Create
+           (DAP.Clients.Continue.Create
               (Self.Kernel, Self.Get_Current_Thread));
          Self.Enqueue (Request);
       end if;
    end Continue_Execution;
-
-   ----------
-   -- Next --
-   ----------
-
-   procedure Next (Self : in out DAP_Client)
-   is
-      Request : DAP.Requests.DAP_Request_Access :=
-        DAP.Requests.DAP_Request_Access
-          (DAP.Clients.Nexts.Create
-             (Kernel      => Self.Kernel,
-              Thread_Id   => Self.Get_Current_Thread,
-              Instruction => False));
-   begin
-      Self.Enqueue (Request);
-   end Next;
-
-   ----------------------
-   -- Next_Instruction --
-   ----------------------
-
-   procedure Next_Instruction (Self : in out DAP_Client)
-   is
-      Request : DAP.Requests.DAP_Request_Access :=
-        DAP.Requests.DAP_Request_Access
-          (DAP.Clients.Nexts.Create
-             (Kernel      => Self.Kernel,
-              Thread_Id   => Self.Get_Current_Thread,
-              Instruction => True));
-   begin
-      Self.Enqueue (Request);
-   end Next_Instruction;
-
-   -------------
-   -- Step_In --
-   -------------
-
-   procedure Step_In (Self : in out DAP_Client)
-   is
-      Request : DAP.Requests.DAP_Request_Access :=
-        DAP.Requests.DAP_Request_Access
-          (DAP.Clients.Step_Ins.Create
-             (Kernel      => Self.Kernel,
-              Thread_Id   => Self.Get_Current_Thread,
-              Instruction => False));
-   begin
-      Self.Enqueue (Request);
-   end Step_In;
-
-   -------------------------
-   -- Step_In_Instruction --
-   -------------------------
-
-   procedure Step_In_Instruction (Self : in out DAP_Client)
-   is
-      Request : DAP.Requests.DAP_Request_Access :=
-        DAP.Requests.DAP_Request_Access
-          (DAP.Clients.Step_Ins.Create
-             (Kernel      => Self.Kernel,
-              Thread_Id   => Self.Get_Current_Thread,
-              Instruction => True));
-   begin
-      Self.Enqueue (Request);
-   end Step_In_Instruction;
 
    ----------------------
    -- Show_Breakpoints --

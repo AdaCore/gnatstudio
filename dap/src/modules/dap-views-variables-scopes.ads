@@ -1,5 +1,5 @@
 ------------------------------------------------------------------------------
---                      GVD - The GNU Visual Debugger                       --
+--                               GNAT Studio                                --
 --                                                                          --
 --                     Copyright (C) 2023, AdaCore                          --
 --                                                                          --
@@ -15,29 +15,36 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
---  Utilities to support selection contexts in the contxt of the debugger
+with Gtk.Tree_Model;              use Gtk.Tree_Model;
 
-with GPS.Kernel;                   use GPS.Kernel;
-with DAP.Modules.Variables.Items;  use DAP.Modules.Variables.Items;
+with VSS.Strings;                 use VSS.Strings;
 
-package DAP.Modules.Contexts is
+with DAP.Modules.Variables.Items; use DAP.Modules.Variables.Items;
+with DAP.Requests.Scopes;
+with DAP.Tools;
 
-   function Get_Variable_Name
-     (Context     : GPS.Kernel.Selection_Context;
-      Dereference : Boolean) return String;
-   --  If Context contains an entity, get the entity name.
-   --  Dereference the entity if Dereference is True.
-   --  Return "" if entity name could not be found in Context.
+private package DAP.Views.Variables.Scopes is
 
-   procedure Store_Variable
-     (Context   : in out GPS.Kernel.Selection_Context;
-      Full_Name : String;
-      Info      : Item_Info);
-   --  Set the debugging variable into the Context.
+   type Scopes_Request is
+     new DAP.Requests.Scopes.Scopes_DAP_Request
+   with record
+      Item     : Item_Info;
+      Position : Natural;
+      Path     : Gtk.Tree_Model.Gtk_Tree_Path := Null_Gtk_Tree_Path;
+      Childs   : Boolean := False;
+   end record;
 
-   function Get_Variable
-     (Context : GPS.Kernel.Selection_Context)
-      return Item_Info;
-   --  Retrieve the debugging variable from the Context.
+   type Scopes_Request_Access is access all Scopes_Request;
 
-end DAP.Modules.Contexts;
+   overriding procedure On_Result_Message
+     (Self        : in out Scopes_Request;
+      Client      : not null access DAP.Clients.DAP_Client'Class;
+      Result      : in out DAP.Tools.ScopesResponse;
+      New_Request : in out DAP.Requests.DAP_Request_Access);
+
+   overriding procedure On_Error_Message
+     (Self    : in out Scopes_Request;
+      Client  : not null access DAP.Clients.DAP_Client'Class;
+      Message : VSS.Strings.Virtual_String);
+
+end DAP.Views.Variables.Scopes;
