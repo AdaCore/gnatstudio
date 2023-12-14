@@ -83,7 +83,7 @@ package DAP.Clients is
 
    --  DAP_Client --
 
-   procedure Initialize (Self : not null access DAP_Client);
+   procedure Initialize_Client (Self : not null access DAP_Client);
 
    procedure Start
      (Self               : in out DAP_Client;
@@ -443,22 +443,6 @@ package DAP.Clients is
 
    procedure Continue_Execution (Self : in out DAP_Client);
    --  Sends the corresponding request to continue debuggee execution.
-
-   procedure Configuration_Done (Self : in out DAP_Client);
-   --  Send the corresponding request to the DAP server.
-
-   procedure Next (Self : in out DAP_Client);
-   --  Sends the corresponding request to step debuggee execution.
-
-   procedure Next_Instruction (Self : in out DAP_Client);
-   --  Sends the corresponding request to step debuggee execution
-   --  for one instruction.
-
-   procedure Step_In (Self : in out DAP_Client);
-   --  Sends the corresponding request to step into.
-
-   procedure Step_In_Instruction (Self : in out DAP_Client);
-   --  Sends the corresponding request to step into for one instruction.
 
 private
 

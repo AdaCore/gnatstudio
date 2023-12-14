@@ -29,7 +29,7 @@ package DAP.Modules.Contexts is
    --  Dereference the entity if Dereference is True.
    --  Return "" if entity name could not be found in Context.
 
-   procedure Set_Variable
+   procedure Store_Variable
      (Context   : in out GPS.Kernel.Selection_Context;
       Full_Name : String;
       Info      : Item_Info);

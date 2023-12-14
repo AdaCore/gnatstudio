@@ -41,18 +41,18 @@ with GPS.Kernel.Properties;
 
 with DAP.Modules.Preferences;
 with DAP.Requests;
-with DAP.Views.Registers.Scopes_Requests;
+with DAP.Views.Registers.Scopes;
 
 with Default_Preferences;         use Default_Preferences;
 with String_Utils;                use String_Utils;
 with GUI_Utils;                   use GUI_Utils;
 
-with DAP.Views.Registers.Variables_Requests;
-use DAP.Views.Registers.Variables_Requests;
-with DAP.Views.Registers.Set_Expression_Requests;
-use DAP.Views.Registers.Set_Expression_Requests;
-with DAP.Views.Registers.Set_Variable_Requests;
-use DAP.Views.Registers.Set_Variable_Requests;
+with DAP.Views.Registers.Variables;
+use DAP.Views.Registers.Variables;
+with DAP.Views.Registers.SetExpression;
+use DAP.Views.Registers.SetExpression;
+with DAP.Views.Registers.SetVariable;
+use DAP.Views.Registers.SetVariable;
 
 package body DAP.Views.Registers is
 
@@ -271,9 +271,9 @@ package body DAP.Views.Registers is
         and then Client.Get_Capabilities.Value.supportsSetExpression
       then
          declare
-            Req : DAP.Views.Registers.Set_Expression_Requests.
+            Req : DAP.Views.Registers.SetExpression.
               Set_Expression_Request_Access :=
-                new DAP.Views.Registers.Set_Expression_Requests.
+                new DAP.Views.Registers.SetExpression.
                   Set_Expression_Request (Widget.Kernel);
          begin
             Req.Parameters.arguments.expression :=
@@ -292,9 +292,9 @@ package body DAP.Views.Registers is
         and then Client.Get_Capabilities.Value.supportsSetVariable
       then
          declare
-            Req : DAP.Views.Registers.Set_Variable_Requests.
+            Req : DAP.Views.Registers.SetVariable.
               Set_Variable_Request_Access :=
-                new DAP.Views.Registers.Set_Variable_Requests.
+                new DAP.Views.Registers.SetVariable.
                   Set_Variable_Request (Widget.Kernel);
          begin
             Req.Parameters.arguments.variablesReference :=
@@ -561,10 +561,9 @@ package body DAP.Views.Registers is
 
       if Self.Registers_Id = 0 then
          declare
-            Req : DAP.Views.Registers.Scopes_Requests.Scopes_Request_Access;
+            Req : DAP.Views.Registers.Scopes.Scopes_Request_Access;
          begin
-            Req := new DAP.Views.Registers.Scopes_Requests.
-              Scopes_Request (Self.Kernel);
+            Req := new DAP.Views.Registers.Scopes.Scopes_Request (Self.Kernel);
 
             Req.Kind := Kind;
             Req.Parameters.arguments.frameId := Client.Get_Selected_Frame_Id;

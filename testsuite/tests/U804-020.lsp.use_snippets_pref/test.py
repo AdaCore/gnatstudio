@@ -48,8 +48,9 @@ def run_test():
     # Retrigger completion...
     for ch in "Do_Some":
         send_key_event(ord(ch))
-        yield timeout(100)
+        yield timeout(200)
 
+    yield wait_until_true(lambda: get_widget_by_name("completion-view") is not None)
     pop_tree = get_widget_by_name("completion-view")
     model = pop_tree.get_model()
     yield wait_until_true(

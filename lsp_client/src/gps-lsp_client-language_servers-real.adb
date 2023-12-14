@@ -280,19 +280,24 @@ package body GPS.LSP_Client.Language_Servers.Real is
 
    procedure Shutdown
      (Self               : in out Real_Language_Server'Class;
-      Reject_Immediately : Boolean) is
+      Reject_Immediately : Boolean;
+      Force              : Boolean := False) is
    begin
       Self.Destroyed := Reject_Immediately;
-      Self.Client.Stop (Reject_Immediately);
+      Self.Client.Stop
+        (Reject_Immediately => Reject_Immediately,
+         Force              => Force);
    end Shutdown;
 
    -------------
    -- Restart --
    -------------
 
-   procedure Restart (Self : in out Real_Language_Server'Class) is
+   procedure Restart
+     (Self  : in out Real_Language_Server'Class;
+      Force : Boolean := False) is
    begin
-      Self.Client.Restart;
+      Self.Client.Restart (Force => Force);
    end Restart;
 
    -------------------------

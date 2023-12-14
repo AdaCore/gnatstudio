@@ -33,10 +33,10 @@ with GPS.Kernel;                   use GPS.Kernel;
 with GPS.Kernel.Hooks;
 with GPS.Debuggers;
 
-with DAP.Modules.Breakpoint_Managers.Sources;
-with DAP.Modules.Breakpoint_Managers.Exceptions;
-with DAP.Modules.Breakpoint_Managers.Functions;
-with DAP.Modules.Breakpoint_Managers.Instructions;
+with DAP.Modules.Breakpoint_Managers.SetBreakpoints;
+with DAP.Modules.Breakpoint_Managers.SetExceptionBreakpoints;
+with DAP.Modules.Breakpoint_Managers.SetFunctionBreakpoints;
+with DAP.Modules.Breakpoint_Managers.SetInstructionBreakpoints;
 with DAP.Modules.Preferences;
 with DAP.Utils;                    use DAP.Utils;
 
@@ -432,8 +432,8 @@ package body DAP.Modules.Breakpoint_Managers is
       Actual : Breakpoint_Vectors.Vector;
       Action : Action_Kind) return DAP_Request_Access
    is
-      Req : constant Sources.Source_Line_Request_Access :=
-        new Sources.Source_Line_Request (Self.Kernel);
+      Req : constant SetBreakpoints.Source_Line_Request_Access :=
+        new SetBreakpoints.Source_Line_Request (Self.Kernel);
       Sb  : DAP.Tools.SourceBreakpoint;
    begin
       Req.Manager := DAP_Client_Breakpoint_Manager_Access (Self);
@@ -504,8 +504,9 @@ package body DAP.Modules.Breakpoint_Managers is
       Action : Action_Kind)
       return DAP_Request_Access
    is
-      Req : constant Functions.Function_Breakpoint_Request_Access :=
-        new Functions.Function_Breakpoint_Request (Self.Kernel);
+      Req : constant SetFunctionBreakpoints.
+        Function_Breakpoint_Request_Access :=
+        new SetFunctionBreakpoints.Function_Breakpoint_Request (Self.Kernel);
       Fb  : DAP.Tools.FunctionBreakpoint;
    begin
       Req.Manager := DAP_Client_Breakpoint_Manager_Access (Self);
@@ -545,7 +546,7 @@ package body DAP.Modules.Breakpoint_Managers is
             Self.Requests_Count := Self.Requests_Count + 1;
             Request := Self.Send_Subprogram (Current, Action);
             if Index = Actual.Last_Index then
-               Functions.Function_Breakpoint_Request_Access
+               SetFunctionBreakpoints.Function_Breakpoint_Request_Access
                  (Request).Last := True;
             end if;
             Self.Client.Enqueue (Request);
@@ -566,8 +567,9 @@ package body DAP.Modules.Breakpoint_Managers is
       Actual : Breakpoint_Vectors.Vector;
       Action : Action_Kind)
    is
-      Req : Exceptions.Exception_Breakpoint_Request_Access :=
-        new Exceptions.Exception_Breakpoint_Request (Self.Kernel);
+      Req : SetExceptionBreakpoints.Exception_Breakpoint_Request_Access :=
+        new SetExceptionBreakpoints.Exception_Breakpoint_Request
+          (Self.Kernel);
    begin
       Req.Manager := DAP_Client_Breakpoint_Manager_Access (Self);
       Req.Action  := Action;
@@ -608,8 +610,10 @@ package body DAP.Modules.Breakpoint_Managers is
       Actual : Breakpoint_Vectors.Vector;
       Action : Action_Kind)
    is
-      Req : Instructions.Instruction_Breakpoint_Request_Access :=
-        new Instructions.Instruction_Breakpoint_Request (Self.Kernel);
+      Req : SetInstructionBreakpoints.
+        Instruction_Breakpoint_Request_Access :=
+          new SetInstructionBreakpoints.Instruction_Breakpoint_Request
+            (Self.Kernel);
       Fb  : DAP.Tools.InstructionBreakpoint;
    begin
       Req.Manager := DAP_Client_Breakpoint_Manager_Access (Self);

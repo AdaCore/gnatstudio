@@ -1485,10 +1485,12 @@ package body GPS.Search.GUI is
       Pattern : not null access GPS.Search.Search_Pattern'Class;
       Limit   : Natural := Natural'Last)
    is
-      Curs : Inst_Cursor := First (Self.Inst);
-      Inst : Class_Instance;
-      Result : Class_Instance;
       pragma Unreferenced (Limit);
+
+      Curs   : Inst_Cursor := First (Self.Inst);
+      Inst   : Class_Instance;
+      Result : Class_Instance with Unreferenced;
+
    begin
       while Has_Element (Curs) loop
          Inst := Element (Self.Inst, Curs);

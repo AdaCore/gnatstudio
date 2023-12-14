@@ -63,7 +63,8 @@ package GPS.LSP_Module is
 
    procedure Restart_Server
      (Server : not null
-        GPS.LSP_Client.Language_Servers.Language_Server_Access);
+        GPS.LSP_Client.Language_Servers.Language_Server_Access;
+      Force  : Boolean := False);
    --  Restart the server
 
    procedure Register_Partial_Handler

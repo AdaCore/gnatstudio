@@ -615,8 +615,6 @@ class GNATprove_Parser(tool_output.OutputParser):
             if 'msg_id' in entry:
                 full_id = unit, entry['msg_id']
                 ent = entry
-                if session_map is not None and 'session_dir' in ent:
-                    ent['session_dir'] = session_map[ent['session_dir']]
                 self.extra_info[full_id] = ent
 
     def parsejson(self, unit, fn):
@@ -681,8 +679,6 @@ class GNATprove_Parser(tool_output.OutputParser):
         if 'check_col' in extra:
             map_msg[text_msg, 'check_col'] = extra['check_col']
 
-        if 'session_dir' in extra:
-            map_msg[text_msg, 'session_dir'] = extra['session_dir']
         counterexample = {}
         if 'cntexmp' in extra:
             counterexample = extra['cntexmp']

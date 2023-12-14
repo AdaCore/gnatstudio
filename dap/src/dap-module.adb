@@ -55,6 +55,9 @@ with DAP.Modules.Persistent_Breakpoints;
 with DAP.Modules.Preferences;
 with DAP.Modules.Scripts;
 with DAP.Clients.Attach;
+with DAP.Clients.ConfigurationDone;
+with DAP.Clients.Next;
+with DAP.Clients.StepIn;
 with DAP.Views.Assembly;
 with DAP.Views.Call_Stack;
 with DAP.Views.Consoles;
@@ -350,7 +353,7 @@ package body DAP.Module is
       end if;
 
       Client := new DAP.Clients.DAP_Client (Kernel, DAP_Module_ID.Client_ID);
-      DAP.Clients.Initialize (Client);
+      DAP.Clients.Initialize_Client (Client);
 
       DAP_Module_ID.Current_Debuger_ID := DAP_Module_ID.Client_ID;
 
@@ -810,7 +813,7 @@ package body DAP.Module is
       Context : Interactive_Command_Context)
       return Command_Return_Type is
    begin
-      Get_Current_Debugger.Next;
+      DAP.Clients.Next.Send_Next (Get_Current_Debugger);
       return Commands.Success;
    end Execute;
 
@@ -823,7 +826,7 @@ package body DAP.Module is
       Context : Interactive_Command_Context)
       return Command_Return_Type is
    begin
-      Get_Current_Debugger.Next_Instruction;
+      DAP.Clients.Next.Send_Next_Instruction (Get_Current_Debugger);
       return Commands.Success;
    end Execute;
 
@@ -836,7 +839,7 @@ package body DAP.Module is
       Context : Interactive_Command_Context)
       return Command_Return_Type is
    begin
-      Get_Current_Debugger.Step_In;
+      DAP.Clients.StepIn.Send_Step_In (Get_Current_Debugger);
       return Commands.Success;
    end Execute;
 
@@ -849,7 +852,7 @@ package body DAP.Module is
       Context : Interactive_Command_Context)
       return Command_Return_Type is
    begin
-      Get_Current_Debugger.Step_In_Instruction;
+      DAP.Clients.StepIn.Send_Step_In_Instruction (Get_Current_Debugger);
       return Commands.Success;
    end Execute;
 
@@ -1328,7 +1331,7 @@ package body DAP.Module is
    procedure Start_Program
      (Client : DAP.Clients.DAP_Client_Access) is
    begin
-      Client.Configuration_Done;
+      DAP.Clients.ConfigurationDone.Send_Configuration_Done (Client);
    end Start_Program;
 
    -------------------------
