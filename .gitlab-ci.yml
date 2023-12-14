@@ -1,6 +1,6 @@
 stages:
   - build_and_test
-  - integration_tests
+  - integration-tests
 
 .basic-setup:
     # Use generic_anod_ci here.
@@ -60,11 +60,12 @@ issue-check:
     - require_issue # launch the verification
 
 # Manual CI for integration-testsuite
-trigger_integration_testsuite_ci:
-  stage: integration_tests
+test-integration:
+  stage: integration-tests
   rules:
     - if: $CI_PIPELINE_SOURCE == 'merge_request_event'
       when: manual
+      allow_failure: true
   trigger:
     project: eng/shared/integration-testsuite
     strategy: depend
