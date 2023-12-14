@@ -558,8 +558,13 @@ def is_type_supported(type_decl):
 
     # Skip all subtype declarations and instead go to the base type. We support
     # all subtypes of supported base types.
-    if isinstance (type_decl, lal.SubtypeDecl):
-        current_type = current_type.p_base_type
+    current_type = current_type.p_base_subtype()
+
+    # Likewise, skip all derived type declarations, as we support any type
+    # derived from a supported type.
+    assert (isinstance (current_type, lal.BaseTypeDecl))
+    if current_type.p_is_derived_type and current_type.p_root_type():
+        current_type = current_type.p_root_type()
 
     if current_type.p_is_access_type():
         return False
