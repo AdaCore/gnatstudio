@@ -65,13 +65,12 @@ package body GPS.Kernel.Interactive is
          Gtk_New
            (Console, Kernel, "", null,
             System.Null_Address,
-            History_List => Get_History (Kernel),
-            Key          => History,
-            Wrap_Mode    => Wrap_Char,
+            History_List  => Get_History (Kernel),
+            Key           => History,
+            Wrap_Mode     => Wrap_Char,
             Manage_Prompt => Manage_Prompt,
-            ANSI_Support => ANSI_Support,
-            Highlight    => Preference (Message_Highlight),
-            Toolbar_Name => Toolbar_Name);
+            ANSI_Support  => ANSI_Support,
+            Toolbar_Name  => Toolbar_Name);
          Set_Font_And_Colors (Get_View (Console), Fixed_Font => True);
          Set_Max_Length   (Get_History (Kernel).all, 100, History);
          Allow_Duplicates (Get_History (Kernel).all, History, True, True);

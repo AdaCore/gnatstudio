@@ -1902,9 +1902,9 @@ package body Remote.Db is
 
       case Mode is
          when Input =>
-            Insert (Console, Str, Add_LF => True, Highlight => True);
+            Insert (Console, Str, Add_LF => True, Mode => Error);
          when Output =>
-            Insert (Console, Str, Add_LF => False, Highlight => False);
+            Insert (Console, Str, Add_LF => False, Mode => Info);
       end case;
    end Dbg;
 

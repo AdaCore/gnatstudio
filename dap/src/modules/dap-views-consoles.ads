@@ -42,11 +42,9 @@ package DAP.Views.Consoles is
    procedure Display_In_Debugger_Console
      (Client         : access DAP_Client'Class;
       Text           : String;
-      Highlight      : Boolean := False;
+      Mode           : GPS.Kernel.Message_Type := Info;
       Add_To_History : Boolean := False);
    --  Display the given text in the debugger console.
-   --  See Interactive_Consoles.Interactive for the meaning of the other
-   --  Parameters.
 
    function Get_Debugger_Interactive_Console
      (Client : DAP_Client'Class)
@@ -63,13 +61,11 @@ package DAP.Views.Consoles is
    --  Creates the debuggee console.
 
    procedure Display_In_Debuggee_Console
-     (Client    : access DAP_Client'Class;
-      Text      : String;
-      Highlight : Boolean := False);
+     (Client : access DAP_Client'Class;
+      Text   : String;
+      Mode   : GPS.Kernel.Message_Type := Info);
    --  Display the given text in the debuggee console.
    --  The text will be displayed in the debugger console instead if there is
-   --  no debuggee console attached to this process .
-   --  See Interactive_Consoles.Interactive for the meaning of the other
-   --  Parameters.
+   --  no debuggee console attached to this process.
 
 end DAP.Views.Consoles;
