@@ -20,6 +20,7 @@ from gs_utils import interactive, hook
 from gs_utils.gnatcheck_rules_editor import rulesEditor, get_supported_rules
 
 gnatcheck = None
+gnatsas = os_utils.locate_exec_on_path("gnatsas")
 
 
 class rulesSelector(Gtk.Dialog):
@@ -463,6 +464,28 @@ def on_activate():
         gnatcheckproc.check_files(data.files)
 
 
+def __open_gnatsas_gnatcheck_help(*args):
+    link_url = ('https://docs.adacore.com/live/wave/codepeer/html/' +
+                'codepeer_ug/project_setup.html#' +
+                'differences-with-standalone-gnatcheck-tool')
+    GPS.HTML.browse(link_url)
+
+
+def gnatsas_warning():
+    if gnatsas:
+        header = ('Running GNATcheck as standalone tool.\n' +
+                  'The results will not be available in GNAT SAS report' +
+                  ' and settings from "Analyzer" package will be ignored.\n' +
+                  'See section: ')
+        link_name = 'Differences with standalone GNATcheck tool'
+        tail = ' from the GNAT SAS User Guide for more details.\n\n'
+
+        GPS.Console("Messages").write(header, mode="error")
+        GPS.Console("Messages").insert_link(link_name,
+                                            __open_gnatsas_gnatcheck_help)
+        GPS.Console("Messages").write(tail, mode="error")
+
+
 # create the menus instances.
 gnatcheckproc = gnatCheckProc()
 
@@ -472,6 +495,7 @@ gnatcheckproc = gnatCheckProc()
 def check_root_project():
     "Check coding standard of the root project"
     gnatcheckproc.check_project(GPS.Project.root())
+    gnatsas_warning()
 
 
 @interactive(name='gnatcheck root project recursive',
@@ -479,6 +503,7 @@ def check_root_project():
 def check_root_project_recursive():
     "Check coding standard for the root project and its subprojects"
     gnatcheckproc.check_project(GPS.Project.root(), True)
+    gnatsas_warning()
 
 
 @interactive(name='gnatcheck file',
@@ -487,6 +512,7 @@ def check_root_project_recursive():
 def check_file():
     "Check coding standard of the selected file"
     gnatcheckproc.check_file(GPS.EditorBuffer.get().file())
+    gnatsas_warning()
 
 
 @interactive(name='edit gnatcheck rules',
