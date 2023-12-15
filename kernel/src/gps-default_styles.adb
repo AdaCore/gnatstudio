@@ -168,6 +168,16 @@ package body GPS.Default_Styles is
             "",
             Bg => Search_Src_Highlight, Speedbar => True);
 
+      --------------------
+      -- Error Messages --
+      --------------------
+
+      Init (Error_Msg_Style,
+            -"Error messages",
+            "",
+            Fg       => Message_Highlight,
+            Speedbar => True);
+
       --------------
       -- Debugger --
       --------------

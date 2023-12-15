@@ -698,7 +698,9 @@ package body Gtkada.File_Selector is
                Fo := 0;
             end if;
 
-            if Pattern_Name (Nl) = ';' then
+            if Nl in Pattern_Name'Range
+              and then Pattern_Name (Nl) = ';'
+            then
                No := 1;
             else
                No := 0;

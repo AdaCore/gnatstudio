@@ -228,20 +228,20 @@ package body GPS.Kernel.Console is
             if UTF8 then
                Insert_UTF8
                  (Console, "[" & Image (T, ISO_Date & " %T") & "] " & Text,
-                  Add_LF, Mode = Error);
+                  Add_LF, Mode);
             else
                Insert
                  (Console, "[" & Image (T, ISO_Date & " %T") & "] " & Text,
-                  Add_LF, Mode = Error);
+                  Add_LF, Mode);
             end if;
 
             Self.Raise_Console (Give_Focus => False);
 
          else
             if UTF8 then
-               Insert_UTF8 (Console, Text, Add_LF, Mode = Error);
+               Insert_UTF8 (Console, Text, Add_LF, Mode);
             else
-               Insert (Console, Text, Add_LF, Mode = Error);
+               Insert (Console, Text, Add_LF, Mode);
             end if;
 
             Messages_Views.Child_From_View
@@ -454,7 +454,6 @@ package body GPS.Kernel.Console is
          "",
          null,
          Console.Kernel.all'Address,
-         Highlight    => Preference (Message_Highlight),
          History_List => null,
          ANSI_Support => Host /= Windows, --  ANSI_Support does not work
                                           --  well under Windows ???
