@@ -63,19 +63,19 @@ package GVD.Consoles is
    procedure Display_In_Debugger_Console
      (Process       : not null access Visual_Debugger_Record'Class;
       Text           : String;
-      Highlight      : Boolean := False;
+      Mode           : GPS.Kernel.Message_Type := Info;
       Add_To_History : Boolean := False);
    --  Display some text in the debugger console
-   --  See Interactive_Consoles.Interactive for the meaning of parameters.
+   --  See Interactive_Consoles.Insert for the meaning of parameters.
 
    procedure Display_In_Debuggee_Console
      (Process   : not null access Visual_Debugger_Record'Class;
       Text      : String;
-      Highlight : Boolean := False);
+      Mode      : GPS.Kernel.Message_Type := Info);
    --  Display the given text in the debuggee console.
    --  The text will be displayed in the debugger console instead if there is
    --  no debuggee console attached to this process .
-   --  See Interactive_Consoles.Interactive for the meaning of the other
+   --  See Interactive_Consoles.Insert for the meaning of the other
    --  Parameters.
 
 end GVD.Consoles;

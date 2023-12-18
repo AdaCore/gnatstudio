@@ -727,13 +727,13 @@ package body GVD.Consoles is
    procedure Display_In_Debugger_Console
      (Process       : not null access GVD.Process.Visual_Debugger_Record'Class;
       Text           : String;
-      Highlight      : Boolean := False;
+      Mode           : GPS.Kernel.Message_Type := Info;
       Add_To_History : Boolean := False) is
    begin
       Get_Debugger_Console (Process).Console.Insert
         (Text,
          Add_LF         => False,
-         Mode           => (if Highlight then Error else Info),
+         Mode           => Mode,
          Add_To_History => Add_To_History);
    end Display_In_Debugger_Console;
 
@@ -744,7 +744,7 @@ package body GVD.Consoles is
    procedure Display_In_Debuggee_Console
      (Process   : not null access Visual_Debugger_Record'Class;
       Text      : String;
-      Highlight : Boolean := False)
+      Mode      : GPS.Kernel.Message_Type := Info)
    is
       Debuggee_Console : constant access Debuggee_Console_Record'Class :=
         Get_Debuggee_Console (Process);
@@ -753,13 +753,13 @@ package body GVD.Consoles is
          Debuggee_Console.Console.Insert
            (Text,
             Add_LF         => False,
-            Mode           => (if Highlight then Error else Info),
+            Mode           => Mode,
             Add_To_History => False);
       else
          Display_In_Debugger_Console
            (Process        => Process,
             Text           => Text,
-            Highlight      => Highlight,
+            Mode           => Mode,
             Add_To_History => False);
       end if;
    end Display_In_Debuggee_Console;
