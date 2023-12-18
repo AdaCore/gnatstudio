@@ -220,9 +220,6 @@ package body DAP.Views.Memory is
    function Get_View
      (Client : not null access DAP.Clients.DAP_Client'Class)
       return access DAP_Memory_View_Record'Class;
-   procedure Set_View
-     (Client : not null access DAP.Clients.DAP_Client'Class;
-      View   : access DAP_Memory_View_Record'Class := null);
    --  Store or retrieve the view from the client
 
    package Memory_MDI_Views is new Generic_Views.Simple_Views
@@ -240,9 +237,7 @@ package body DAP.Views.Memory is
    package Simple_Views is new DAP.Views.Simple_Views
      (Formal_Views       => Memory_MDI_Views,
       Formal_View_Record => DAP_Memory_View_Record,
-      Formal_MDI_Child   => GPS_MDI_Child_Record,
-      Get_View           => Get_View,
-      Set_View           => Set_View);
+      Formal_MDI_Child   => GPS_MDI_Child_Record);
 
    procedure Display_Memory
      (View    : access DAP_Memory_View_Record'Class;
@@ -448,25 +443,8 @@ package body DAP.Views.Memory is
      (Client : not null access DAP.Clients.DAP_Client'Class)
       return access DAP_Memory_View_Record'Class is
    begin
-      return DAP_Memory_View (Client.Get_Memory_View);
+      return Memory_MDI_Views.Retrieve_View (Client.Kernel);
    end Get_View;
-
-   --------------
-   -- Set_View --
-   --------------
-
-   procedure Set_View
-     (Client : not null access DAP.Clients.DAP_Client'Class;
-      View   : access DAP_Memory_View_Record'Class := null)
-   is
-      use type Generic_Views.Abstract_View_Access;
-   begin
-      if Client.Get_Memory_View /= null then
-         DAP_Memory_View (Client.Get_Memory_View).On_Process_Terminated;
-      end if;
-
-      Client.Set_Memory_View (Generic_Views.Abstract_View_Access (View));
-   end Set_View;
 
    ----------------
    -- Initialize --
@@ -967,8 +945,8 @@ package body DAP.Views.Memory is
       Client  : not null access DAP.Clients.DAP_Client'Class;
       Message : VSS.Strings.Virtual_String)
    is
-      View   : constant DAP_Memory_View := DAP_Memory_View
-        (Client.Get_Memory_View);
+      View : constant DAP_Memory_View := DAP_Memory_View
+        (Memory_MDI_Views.Retrieve_View (Self.Kernel));
    begin
       if Self.Address = 0
         and then View /= null
@@ -992,8 +970,8 @@ package body DAP.Views.Memory is
       New_Request : in out DAP_Request_Access)
    is
       use Ada.Streams;
-      View   : constant DAP_Memory_View := DAP_Memory_View
-        (Client.Get_Memory_View);
+      View : constant DAP_Memory_View := DAP_Memory_View
+        (Memory_MDI_Views.Retrieve_View (Self.Kernel));
 
       Dump_Index : Integer := 1;
       Total      : Integer := 0;

@@ -1220,7 +1220,8 @@ package body DAP.Views.Variables is
    ------------
 
    procedure Update (Client : not null access DAP.Clients.DAP_Client'Class) is
-      View : constant DAP_Variables_View := Get_View (Client);
+      View : constant DAP_Variables_View := DAP_Variables_View
+        (Variables_MDI_Views.Retrieve_View (Client.Kernel));
    begin
       if View /= null then
          View.Update;
@@ -1367,8 +1368,7 @@ package body DAP.Views.Variables is
         (DAP.Clients.DAP_Visual_Debugger_Access (Process).Client,
          Kernel, Create_If_Necessary => True);
       View := DAP_Variables_View
-        (DAP.Clients.DAP_Visual_Debugger_Access
-           (Process).Client.Get_Variables_View);
+        (Variables_MDI_Views.Retrieve_View (Kernel));
 
       if Match.Has_Capture (Tree_Cmd_Command) then
          It.Cmd := Match.Captured (Tree_Cmd_Command);
@@ -1422,12 +1422,13 @@ package body DAP.Views.Variables is
         DAP.Module.Get_Current_Debugger;
       Name   : constant String := Get_Variable_Name
         (Context.Context, Dereference => False);
-
+      Kernel : constant Kernel_Handle := Get_Kernel (Context.Context);
       View : DAP_Variables_View;
    begin
       Variables_Views.Attach_To_View
         (Client, Get_Kernel (Context.Context), Create_If_Necessary => True);
-      View := Get_View (Client);
+      View := DAP_Variables_View
+        (Variables_MDI_Views.Retrieve_View (Kernel));
 
       if View /= null
         and then Name /= ""
@@ -2212,34 +2213,6 @@ package body DAP.Views.Variables is
       Unset (Val);
       return Variable;
    end Get_Id;
-
-   --------------
-   -- Get_View --
-   --------------
-
-   function Get_View
-     (Client : not null access DAP.Clients.DAP_Client'Class)
-      return access DAP_Variables_View_Record'Class is
-   begin
-      return DAP_Variables_View (Client.Get_Variables_View);
-   end Get_View;
-
-   --------------
-   -- Set_View --
-   --------------
-
-   procedure Set_View
-     (Client : not null access DAP.Clients.DAP_Client'Class;
-      View   : access DAP_Variables_View_Record'Class := null)
-   is
-      use type Generic_Views.Abstract_View_Access;
-   begin
-      if Client.Get_Variables_View /= null then
-         DAP_Variables_View (Client.Get_Variables_View).On_Process_Terminated;
-      end if;
-
-      Client.Set_Variables_View (Generic_Views.Abstract_View_Access (View));
-   end Set_View;
 
    ----------
    -- Save --

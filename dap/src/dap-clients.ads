@@ -189,40 +189,10 @@ package DAP.Clients is
       State : Boolean);
    --  Enable/disable breakpoints
 
-   function Get_Assembly_View
-     (Self : DAP_Client)
-      return Generic_Views.Abstract_View_Access;
-   --  Returns the assembly view, if any.
-
-   procedure Set_Assembly_View
-     (Self : in out DAP_Client;
-      View : Generic_Views.Abstract_View_Access);
-   --  Attach the assembly view to the client
-
    function Get_Breakpoints
      (Self : DAP_Client)
       return DAP.Modules.Breakpoints.Breakpoint_Vectors.Vector;
    --  Returns the list of breakpoints
-
-   function Get_Call_Stack_View
-     (Self : DAP_Client)
-      return Generic_Views.Abstract_View_Access;
-   --  Returns the callstack view, if any.
-
-   procedure Set_Call_Stack_View
-     (Self : in out DAP_Client;
-      View : Generic_Views.Abstract_View_Access);
-   --  Attach the callstack view to the client
-
-   function Get_Thread_View
-     (Self : DAP_Client)
-      return Generic_Views.Abstract_View_Access;
-   --  Returns the thread view, if any.
-
-   procedure Set_Thread_View
-     (Self : in out DAP_Client;
-      View : Generic_Views.Abstract_View_Access);
-   --  Attach the thread view to the client
 
    function Get_Debugger_Console
      (Self : DAP_Client)
@@ -233,36 +203,6 @@ package DAP.Clients is
      (Self    : in out DAP_Client;
       Console : Generic_Views.Abstract_View_Access);
    --  Set the debugger console
-
-   function Get_Memory_View
-     (Self : DAP_Client)
-      return Generic_Views.Abstract_View_Access;
-   --  Returns the assembly view, if any.
-
-   procedure Set_Memory_View
-     (Self : in out DAP_Client;
-      View : Generic_Views.Abstract_View_Access);
-   --  Attach the assembly view to the client
-
-   function Get_Variables_View
-     (Self : DAP_Client)
-      return Generic_Views.Abstract_View_Access;
-   --  Returns the variables view, if any.
-
-   procedure Set_Variables_View
-     (Self : in out DAP_Client;
-      View : Generic_Views.Abstract_View_Access);
-   --  Attach the variables view to the client
-
-   function Get_Registers_View
-     (Self : DAP_Client)
-      return Generic_Views.Abstract_View_Access;
-   --  Returns the variables view, if any.
-
-   procedure Set_Registers_View
-     (Self : in out DAP_Client;
-      View : Generic_Views.Abstract_View_Access);
-   --  Attach the registers view to the client
 
    function Get_Debuggee_Console
      (Self : DAP_Client)
@@ -510,14 +450,6 @@ private
         DAP_Client_Breakpoint_Manager_Access;
 
       Command_History  : aliased String_History.History_List;
-
-      --  Views --
-      Call_Stack_View  : Generic_Views.Abstract_View_Access := null;
-      Thread_View      : Generic_Views.Abstract_View_Access := null;
-      Assembly_View    : Generic_Views.Abstract_View_Access := null;
-      Memory_View      : Generic_Views.Abstract_View_Access := null;
-      Variables_View   : Generic_Views.Abstract_View_Access := null;
-      Registers_View   : Generic_Views.Abstract_View_Access := null;
 
       Debugger_Console : Generic_Views.Abstract_View_Access := null;
       Debuggee_Console : Generic_Views.Abstract_View_Access := null;

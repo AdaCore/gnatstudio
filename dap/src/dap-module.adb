@@ -381,7 +381,8 @@ package body DAP.Module is
 
       --  Create console
       DAP.Views.Consoles.Attach_To_Debugger_Console
-        (Client, Kernel,
+        (Client              => Client,
+         Kernel              => Kernel,
          Create_If_Necessary => True,
          Name                => " " & (+Base_Name (File)));
 

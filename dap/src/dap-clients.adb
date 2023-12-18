@@ -607,8 +607,8 @@ package body DAP.Clients is
             end if;
 
             --  Trigger this hook when we did all preparations
-            --   (for example set breakpoints). In ither case we will
-            --   have the mess with debugging
+            --  (for example set breakpoints). In either case we will
+            --  have the mess with debugging
             GPS.Kernel.Hooks.Debugger_Started_Hook.Run
               (Self.Kernel, Self.Visual);
 
@@ -634,11 +634,13 @@ package body DAP.Clients is
 
       GPS.Kernel.Hooks.Debugger_State_Changed_Hook.Run
         (Self.Kernel, Self.Visual,
-         (if Self.Status = Terminating
-          then GPS.Debuggers.Debug_None
-          elsif Self.Status in Ready .. Stopped
-          then GPS.Debuggers.Debug_Available
-          else GPS.Debuggers.Debug_Busy));
+         (case Self.Status is
+             when Terminating | Initialization =>
+               GPS.Debuggers.Debug_None,
+             when  Initialized .. Stopped      =>
+               GPS.Debuggers.Debug_Available,
+             when others                       =>
+               GPS.Debuggers.Debug_Busy));
 
       Self.Kernel.Refresh_Context;
    end Set_Status;
@@ -661,50 +663,6 @@ package body DAP.Clients is
 
       Request := null;
    end Enqueue;
-
-   -----------------------
-   -- Get_Assembly_View --
-   -----------------------
-
-   function Get_Assembly_View
-     (Self : DAP_Client)
-      return Generic_Views.Abstract_View_Access is
-   begin
-      return Self.Assembly_View;
-   end Get_Assembly_View;
-
-   ---------------------
-   -- Get_Memory_View --
-   ---------------------
-
-   function Get_Memory_View
-     (Self : DAP_Client)
-      return Generic_Views.Abstract_View_Access is
-   begin
-      return Self.Memory_View;
-   end Get_Memory_View;
-
-   ------------------------
-   -- Get_Variables_View --
-   ------------------------
-
-   function Get_Variables_View
-     (Self : DAP_Client)
-      return Generic_Views.Abstract_View_Access is
-   begin
-      return Self.Variables_View;
-   end Get_Variables_View;
-
-   ------------------------
-   -- Get_Registers_View --
-   ------------------------
-
-   function Get_Registers_View
-     (Self : DAP_Client)
-      return Generic_Views.Abstract_View_Access is
-   begin
-      return Self.Registers_View;
-   end Get_Registers_View;
 
    --------------------------
    -- Get_Debuggee_Console --
@@ -749,17 +707,6 @@ package body DAP.Clients is
    end Get_Breakpoints;
 
    -------------------------
-   -- Get_Call_Stack_View --
-   -------------------------
-
-   function Get_Call_Stack_View
-     (Self : DAP_Client)
-      return Generic_Views.Abstract_View_Access is
-   begin
-      return Self.Call_Stack_View;
-   end Get_Call_Stack_View;
-
-   -------------------------
    -- Get_Command_History --
    -------------------------
 
@@ -796,33 +743,19 @@ package body DAP.Clients is
    -- Get_Current_Thread --
    ------------------------
 
-   function Get_Current_Thread (Self  : in out DAP_Client) return Integer
-   is
-      use type Generic_Views.Abstract_View_Access;
+   function Get_Current_Thread (Self  : in out DAP_Client) return Integer is
    begin
       if Self.Stopped_Threads.Is_Empty then
          return 0;
       end if;
 
-      if Self.Thread_View /= null
-        and then Self.Selected_Thread /= 0
-      then
+      --  TODO: doc
+      if Self.Selected_Thread /= 0 then
          return Self.Selected_Thread;
       else
          return Self.Stopped_Threads.Element (Self.Stopped_Threads.First);
       end if;
    end Get_Current_Thread;
-
-   ---------------------
-   -- Get_Thread_View --
-   ---------------------
-
-   function Get_Thread_View
-     (Self : DAP_Client)
-      return Generic_Views.Abstract_View_Access is
-   begin
-      return Self.Thread_View;
-   end Get_Thread_View;
 
    --------------------
    -- Get_Executable --
@@ -864,17 +797,6 @@ package body DAP.Clients is
       return Self.Endian;
    end Get_Endian_Type;
 
-   -----------------------
-   -- Set_Assembly_View --
-   -----------------------
-
-   procedure Set_Assembly_View
-     (Self : in out DAP_Client;
-      View : Generic_Views.Abstract_View_Access) is
-   begin
-      Self.Assembly_View := View;
-   end Set_Assembly_View;
-
    --------------------
    -- Set_Executable --
    --------------------
@@ -885,39 +807,6 @@ package body DAP.Clients is
    begin
       Self.Executable := File;
    end Set_Executable;
-
-   ---------------------
-   -- Set_Memory_View --
-   ---------------------
-
-   procedure Set_Memory_View
-     (Self : in out DAP_Client;
-      View : Generic_Views.Abstract_View_Access) is
-   begin
-      Self.Memory_View := View;
-   end Set_Memory_View;
-
-   ------------------------
-   -- Set_Variables_View --
-   ------------------------
-
-   procedure Set_Variables_View
-     (Self : in out DAP_Client;
-      View : Generic_Views.Abstract_View_Access) is
-   begin
-      Self.Variables_View := View;
-   end Set_Variables_View;
-
-   ------------------------
-   -- Set_Registers_View --
-   ------------------------
-
-   procedure Set_Registers_View
-     (Self : in out DAP_Client;
-      View : Generic_Views.Abstract_View_Access) is
-   begin
-      Self.Registers_View := View;
-   end Set_Registers_View;
 
    --------------------------
    -- Set_Debuggee_Console --
@@ -947,28 +836,6 @@ package body DAP.Clients is
            (Self.Breakpoints, List, State);
       end if;
    end Set_Breakpoints_State;
-
-   -------------------------
-   -- Set_Call_Stack_View --
-   -------------------------
-
-   procedure Set_Call_Stack_View
-     (Self : in out DAP_Client;
-      View : Generic_Views.Abstract_View_Access) is
-   begin
-      Self.Call_Stack_View := View;
-   end Set_Call_Stack_View;
-
-   ---------------------
-   -- Set_Thread_View --
-   ---------------------
-
-   procedure Set_Thread_View
-     (Self : in out DAP_Client;
-      View : Generic_Views.Abstract_View_Access) is
-   begin
-      Self.Thread_View := View;
-   end Set_Thread_View;
 
    -------------
    -- Set_TTY --

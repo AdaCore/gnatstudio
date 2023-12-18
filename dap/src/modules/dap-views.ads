@@ -107,13 +107,6 @@ package DAP.Views is
       --  ??? Can this be done via a primitive operation, rather than have to
       --  rewrite our own command.
 
-      with function Get_View
-        (Client : not null access DAP.Clients.DAP_Client'Class)
-         return access Formal_View_Record'Class is <>;
-      with procedure Set_View
-        (Client : not null access DAP.Clients.DAP_Client'Class;
-         View   : access Formal_View_Record'Class := null) is <>;
-
    package Simple_Views is
 
       procedure Attach_To_View
