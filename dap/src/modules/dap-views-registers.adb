@@ -528,17 +528,6 @@ package body DAP.Views.Registers is
       end if;
    end Execute;
 
-   --------------
-   -- Get_View --
-   --------------
-
-   function Get_View
-     (Client : not null access DAP.Clients.DAP_Client'Class)
-      return access Registers_View_Record'Class is
-   begin
-      return Registers_View (Client.Get_Registers_View);
-   end Get_View;
-
    ------------------
    -- Send_Request --
    ------------------
@@ -582,23 +571,6 @@ package body DAP.Views.Registers is
          end;
       end if;
    end Send_Request;
-
-   --------------
-   -- Set_View --
-   --------------
-
-   procedure Set_View
-     (Client : not null access DAP.Clients.DAP_Client'Class;
-      View   : access Registers_View_Record'Class := null)
-   is
-      use type Generic_Views.Abstract_View_Access;
-   begin
-      if Client.Get_Registers_View /= null then
-         Registers_View (Client.Get_Registers_View).On_Process_Terminated;
-      end if;
-
-      Client.Set_Registers_View (Generic_Views.Abstract_View_Access (View));
-   end Set_View;
 
    ----------
    -- Save --
@@ -650,7 +622,8 @@ package body DAP.Views.Registers is
    ------------
 
    procedure Update (Client : not null access DAP.Clients.DAP_Client'Class) is
-      View : constant Registers_View := Get_View (Client);
+      View : constant Registers_View := Registers_View
+        (Registers_MDI_Views.Retrieve_View (Client.Kernel));
    begin
       if View /= null then
          View.Update;

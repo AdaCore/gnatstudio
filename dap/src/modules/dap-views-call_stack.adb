@@ -158,16 +158,10 @@ package body DAP.Views.Call_Stack is
      (Client : not null access DAP.Clients.DAP_Client'Class)
       return access Call_Stack_Record'Class;
 
-   procedure Set_View
-     (Client : not null access DAP.Clients.DAP_Client'Class;
-      View   : access Call_Stack_Record'Class := null);
-
    package Simple_Views is new DAP.Views.Simple_Views
      (Formal_Views           => CS_MDI_Views,
       Formal_View_Record     => Call_Stack_Record,
-      Formal_MDI_Child       => GPS_MDI_Child_Record,
-      Get_View               => Get_View,
-      Set_View               => Set_View);
+      Formal_MDI_Child       => GPS_MDI_Child_Record);
 
    procedure Set_Column_Types (Self : not null access Call_Stack_Record'Class);
 
@@ -360,7 +354,7 @@ package body DAP.Views.Call_Stack is
      (Client : not null access DAP.Clients.DAP_Client'Class)
       return access Call_Stack_Record'Class is
    begin
-      return Call_Stack (Client.Get_Call_Stack_View);
+      return CS_MDI_Views.Retrieve_View (Client.Kernel);
    end Get_View;
 
    --------------------
@@ -734,32 +728,9 @@ package body DAP.Views.Call_Stack is
 
    overriding procedure On_Status_Changed
      (View   : not null access Call_Stack_Record;
-      Status : GPS.Debuggers.Debugger_State)
-   is
-      pragma Unreferenced (Status);
-      --  We are using the extended status from the DAP client. This one
-      --  is present because for backward compatibility with the old hooks
-      --  and the Python API.
-
-      Iter : Gtk_Tree_Iter;
+      Status : GPS.Debuggers.Debugger_State) is
    begin
-      if View.Get_Client.Get_Status = Stopped then
-         View.Update;
-      else
-         --  The debugger is not ready yet or the debuggee is running: make
-         --  sure to clear the view in this case and display 'Running...' or
-         --  'No data' label to warn the user that we can't compute the
-         --  call stack for now.
-
-         Clear (View.Model);
-         View.Model.Append (Iter, Null_Iter);
-         Set_And_Clear
-           (View.Model, Iter, (Frame_Id_Column, Name_Column),
-            (1 => As_String (""),
-             2 => As_String (if View.Get_Client.Get_Status = Running
-               then "Running..."
-               else "No data")));
-      end if;
+      View.Update;
    end On_Status_Changed;
 
    -------------------------
@@ -792,23 +763,6 @@ package body DAP.Views.Call_Stack is
       end if;
    end On_Location_Changed;
 
-   --------------
-   -- Set_View --
-   --------------
-
-   procedure Set_View
-     (Client : not null access DAP.Clients.DAP_Client'Class;
-      View   : access Call_Stack_Record'Class := null)
-   is
-      use type Generic_Views.Abstract_View_Access;
-   begin
-      if Client.Get_Call_Stack_View /= null then
-         Call_Stack (Client.Get_Call_Stack_View).On_Process_Terminated;
-      end if;
-
-      Client.Set_Call_Stack_View (Generic_Views.Abstract_View_Access (View));
-   end Set_View;
-
    ------------
    -- Update --
    ------------
@@ -821,17 +775,39 @@ package body DAP.Views.Call_Stack is
       From  : Integer := -1;
       To    : Integer := 0;
    begin
-      if View.Get_Client /= null
-        and then View.Get_Client.Get_Status = Stopped
-      --  do not try to update the view when it is not attached to the
-      --  client or when the debuggee is not stopped
-      then
-         if Limit /= 0 then
-            From := 0;
-            To   := Limit - 1;
-         end if;
+      if View.Get_Client /= null then
+         declare
+            Status : constant Debugger_Status_Kind :=
+              View.Get_Client.Get_Status;
+         begin
+            --  The debugger is stopped: send a request to update the call
+            --  stack.
 
-         View.Send_Request (From, To);
+            if View.Get_Client.Get_Status = Stopped then
+               if Limit /= 0 then
+                  From := 0;
+                  To   := Limit - 1;
+               end if;
+
+               View.Send_Request (From, To);
+            else
+               declare
+                  Iter : Gtk_Tree_Iter;
+               begin
+                  --  The debugger is not stopped: clear the view and display
+                  --  a label according to the debugger's current status.
+
+                  Clear (View.Model);
+                  View.Model.Append (Iter, Null_Iter);
+                  Set_And_Clear
+                    (View.Model, Iter, (Frame_Id_Column, Name_Column),
+                     (1 => As_String (""),
+                      2 => As_String (if Status = Running
+                        then "Running..."
+                        else "No data")));
+               end;
+            end if;
+         end;
       end if;
    end Update;
 

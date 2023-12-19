@@ -170,20 +170,10 @@ package body DAP.Views.Assembly is
    subtype Assembly_MDI is Assembly_MDI_Views.View_Access;
    use type Assembly_MDI;
 
-   function Get_View
-     (Client : not null access DAP.Clients.DAP_Client'Class)
-      return access Assembly_View_Record'Class;
-
-   procedure Set_View
-     (Client : not null access DAP.Clients.DAP_Client'Class;
-      View   : access Assembly_View_Record'Class := null);
-
    package Assembly_Views is new DAP.Views.Simple_Views
      (Formal_Views       => Assembly_MDI_Views,
       Formal_View_Record => Assembly_View_Record,
-      Formal_MDI_Child   => GPS_MDI_Child_Record,
-      Get_View           => Get_View,
-      Set_View           => Set_View);
+      Formal_MDI_Child   => GPS_MDI_Child_Record);
 
    package Assembly_View_Event_Cb is
      new Gtk.Handlers.Return_Callback (Assembly_View_Record, Boolean);
@@ -349,17 +339,6 @@ package body DAP.Views.Assembly is
    Line_Column          : constant := 8;
 
    Can_Not_Get : constant String := "Couldn't get assembly code";
-
-   --------------
-   -- Get_View --
-   --------------
-
-   function Get_View
-     (Client : not null access DAP.Clients.DAP_Client'Class)
-      return access Assembly_View_Record'Class is
-   begin
-      return Assembly_View (Client.Get_Assembly_View);
-   end Get_View;
 
    ----------------
    -- Initialize --
@@ -699,23 +678,6 @@ package body DAP.Views.Assembly is
    end On_Status_Changed;
 
    --------------
-   -- Set_View --
-   --------------
-
-   procedure Set_View
-     (Client : not null access DAP.Clients.DAP_Client'Class;
-      View   : access Assembly_View_Record'Class := null)
-   is
-      use type Generic_Views.Abstract_View_Access;
-   begin
-      if Client.Get_Assembly_View /= null then
-         Assembly_View (Client.Get_Assembly_View).On_Process_Terminated;
-      end if;
-
-      Client.Set_Assembly_View (Generic_Views.Abstract_View_Access (View));
-   end Set_View;
-
-   --------------
    -- Set_Font --
    --------------
 
@@ -988,7 +950,9 @@ package body DAP.Views.Assembly is
       New_Request : in out DAP.Requests.DAP_Request_Access)
    is
       pragma Unreferenced (New_Request);
-      View : constant Assembly_MDI := Get_View (Client);
+
+      View : constant Assembly_MDI := Assembly_MDI_Views.Retrieve_View
+        (Self.Kernel);
       S    : Disassemble_Elements;
 
       -- Format_Opcodes --
@@ -1386,15 +1350,10 @@ package body DAP.Views.Assembly is
        Debugger : access Base_Visual_Debugger'Class;
        Id       : Integer)
    is
-      pragma Unreferenced (Self, Kernel);
-      View : Assembly_View;
-
+      pragma Unreferenced (Self);
+      View : constant Assembly_View :=
+        Assembly_View (Assembly_MDI_Views.Retrieve_View (Kernel));
    begin
-      if Debugger /= null then
-         View := Get_View
-           (DAP.Clients.DAP_Visual_Debugger_Access (Debugger).Client);
-      end if;
-
       if View /= null then
          View.Highlight (False);
       end if;
@@ -1409,15 +1368,10 @@ package body DAP.Views.Assembly is
        Kernel   : not null access Kernel_Handle_Record'Class;
        Debugger : access Base_Visual_Debugger'Class)
    is
-      pragma Unreferenced (Self, Kernel);
-      View : Assembly_View;
-
+      pragma Unreferenced (Self);
+      View : constant Assembly_View := Assembly_View
+        (Assembly_MDI_Views.Retrieve_View (Kernel));
    begin
-      if Debugger /= null then
-         View := Get_View
-           (DAP.Clients.DAP_Visual_Debugger_Access (Debugger).Client);
-      end if;
-
       if View /= null then
          View.Highlight (False);
       end if;

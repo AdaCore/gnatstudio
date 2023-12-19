@@ -180,10 +180,6 @@ package body DAP.Views.Breakpoints is
    function Get_View
      (Client : not null access DAP.Clients.DAP_Client'Class)
       return access Breakpoint_View_Record'Class;
-   procedure Set_View
-     (Client : not null access DAP.Clients.DAP_Client'Class;
-      View   : access Breakpoint_View_Record'Class := null);
-   --  Store or retrieve the view from the process
 
    procedure Recompute_Filters
      (Self : access Glib.Object.GObject_Record'Class);
@@ -209,9 +205,7 @@ package body DAP.Views.Breakpoints is
      (Works_Without_Debugger => True,
       Formal_Views           => Breakpoints_MDI_Views,
       Formal_View_Record     => Breakpoint_View_Record,
-      Formal_MDI_Child       => GPS_MDI_Child_Record,
-      Get_View               => Get_View,
-      Set_View               => Set_View);
+      Formal_MDI_Child       => GPS_MDI_Child_Record);
 
    --  Filters --
 
@@ -1117,26 +1111,6 @@ package body DAP.Views.Breakpoints is
       --  Must refresh the context to update the value of the Selection Filter
       Kernel.Refresh_Context;
    end Recompute_Filters;
-
-   --------------
-   -- Set_View --
-   --------------
-
-   procedure Set_View
-     (Client : not null access DAP.Clients.DAP_Client'Class;
-      View   : access Breakpoint_View_Record'Class := null)
-   is
-      pragma Unreferenced (Client);
-      use type Generic_Views.Abstract_View_Access;
-   begin
-      if DAP.Module.Get_Breakpoints_View /= null then
-         Breakpoint_View
-           (DAP.Module.Get_Breakpoints_View).On_Process_Terminated;
-      end if;
-
-      DAP.Module.Set_Breakpoints_View
-        (Generic_Views.Abstract_View_Access (View));
-   end Set_View;
 
    ------------
    -- Update --

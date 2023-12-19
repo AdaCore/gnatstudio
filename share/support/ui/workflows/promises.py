@@ -987,7 +987,8 @@ class DebuggerWrapper(object):
                 GPS.execute_action("debug interrupt")
 
                 # Try to reconnect to the previous remote connection, if any
-                GPS.execute_action("debug connect to board")
+                if GPS.Action("debug connect to board").can_execute():
+                    GPS.execute_action("debug connect to board")
             except Exception:
                 self.__debugger = GPS.Debugger.spawn(
                     executable=f,

@@ -91,16 +91,10 @@ package body DAP.Views.Threads is
      (Client : not null access DAP.Clients.DAP_Client'Class)
       return access Thread_View_Record'Class;
 
-   procedure Set_View
-     (Client : not null access DAP.Clients.DAP_Client'Class;
-      View   : access Thread_View_Record'Class := null);
-
    package Thread_Views is new DAP.Views.Simple_Views
      (Formal_Views       => Thread_MDI_Views,
       Formal_View_Record => Thread_View_Record,
-      Formal_MDI_Child   => GPS_MDI_Child_Record,
-      Get_View           => Get_View,
-      Set_View           => Set_View);
+      Formal_MDI_Child   => GPS_MDI_Child_Record);
 
    type Request is new Threads_DAP_Request with null record;
    type Request_Access is access all Request;
@@ -150,7 +144,7 @@ package body DAP.Views.Threads is
      (Client : not null access DAP.Clients.DAP_Client'Class)
       return access Thread_View_Record'Class is
    begin
-      return Thread_View (Client.Get_Thread_View);
+      return Thread_MDI_Views.Retrieve_View (Client.Kernel);
    end Get_View;
 
    ----------------
@@ -239,23 +233,6 @@ package body DAP.Views.Threads is
          View.Update;
       end if;
    end On_Status_Changed;
-
-   --------------
-   -- Set_View --
-   --------------
-
-   procedure Set_View
-     (Client : not null access DAP.Clients.DAP_Client'Class;
-      View   : access Thread_View_Record'Class := null)
-   is
-      use type Generic_Views.Abstract_View_Access;
-   begin
-      if Client.Get_Thread_View /= null then
-         Thread_View (Client.Get_Thread_View).On_Process_Terminated;
-      end if;
-
-      Client.Set_Thread_View (Generic_Views.Abstract_View_Access (View));
-   end Set_View;
 
    ------------
    -- Update --
