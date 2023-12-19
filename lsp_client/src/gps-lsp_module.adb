@@ -664,17 +664,8 @@ package body GPS.LSP_Module is
           (Language => Get_Language_Handler (Self.Kernel).Get_Language_By_Name
            (To_String (Self.Language_Name)));
    begin
-      --  If there is a running server for the requested language, restart it
-      --  by force: the server can be unresponsive and might not handle
-      --  'shutdown' requests properly.
-      --  If there is no server running, just run the
-      --  Project_View_Changed_Hook: this will restart all the needed
-      --  language servers for the project.
-
       if Server /= null then
-         Restart_Server (Server, Force => True);
-      else
-         Project_View_Changed_Hook.Run (Self.Kernel);
+         Restart_Server (Server);
       end if;
 
       return Commands.Success;
@@ -983,14 +974,13 @@ package body GPS.LSP_Module is
 
    procedure Restart_Server
      (Server : not null
-        GPS.LSP_Client.Language_Servers.Language_Server_Access;
-      Force  : Boolean := False)
+        GPS.LSP_Client.Language_Servers.Language_Server_Access)
    is
       S :  GPS.LSP_Client.Language_Servers.Real.Real_Language_Server'Class
         renames GPS.LSP_Client.Language_Servers.Real.Real_Language_Server'Class
           (Server.all);
    begin
-      S.Restart (Force => Force);
+      S.Restart;
    end Restart_Server;
 
    ------------------------------

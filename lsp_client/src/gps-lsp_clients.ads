@@ -107,21 +107,14 @@ package GPS.LSP_Clients is
 
    procedure Stop
      (Self               : in out LSP_Client'Class;
-      Reject_Immediately : Boolean;
-      Force              : Boolean := False);
+      Reject_Immediately : Boolean);
    --  Shutdown the language server. When Reject_Immediately is True all
    --  ongoing and queued requests will be rejected immediately. It is
    --  necessary to avoid possible crashes due to dangling cursors at
    --  GNAT Studio exit.
-   --  When Force is True, the server's process will be killed immediately
-   --  without sending any 'shutdown' request.
 
-   procedure Restart
-     (Self  : in out LSP_Client'Class;
-      Force : Boolean := False);
-   --  Restart the language server executable.
-   --  When Force is True, the server's process will be killed immediately
-   --  without sending any 'shutdown' request.
+   procedure Restart (Self : in out LSP_Client'Class);
+   --  Restart the language server executable
 
    function Is_Ready (Self : LSP_Client'Class) return Boolean;
    --  Return True when language server is running.

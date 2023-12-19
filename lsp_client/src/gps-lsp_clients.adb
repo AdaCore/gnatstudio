@@ -1440,10 +1440,14 @@ package body GPS.LSP_Clients is
 
    procedure Stop
      (Self               : in out LSP_Client'Class;
-      Reject_Immediately : Boolean;
-      Force              : Boolean := False)
+      Reject_Immediately : Boolean)
    is
       use type Glib.Main.G_Source_Id;
+
+      Request : GPS.LSP_Client.Requests.Request_Access :=
+                  new GPS.LSP_Clients.Shutdowns.Shutdown_Request
+                    (Client => Self'Unchecked_Access);
+
    begin
       if Self.Restart_Timer /= Glib.Main.No_Source_Id then
          Glib.Main.Remove (Self.Restart_Timer);
@@ -1451,22 +1455,7 @@ package body GPS.LSP_Clients is
       end if;
 
       Self.Shutdown_Intentionally_Requested := True;
-
-      --  When Force is True, don't send the 'shutdown' request to the LSP
-      --  server: just kill the process and notify that we are exiting.
-      if Force then
-         Self.Kill_Process;
-         Self.On_Exit_Notification;
-         Self.On_Finished;
-      else
-         declare
-            Request : GPS.LSP_Client.Requests.Request_Access :=
-              new GPS.LSP_Clients.Shutdowns.Shutdown_Request
-                (Client => Self'Unchecked_Access);
-         begin
-            Self.Enqueue (Request);
-         end;
-      end if;
+      Self.Enqueue (Request);
 
       --  Disable acceptance of new requests
       Self.Is_Ready := False;
@@ -1483,12 +1472,10 @@ package body GPS.LSP_Clients is
    -- Restart --
    -------------
 
-   procedure Restart
-     (Self : in out LSP_Client'Class;
-      Force : Boolean := False) is
+   procedure Restart (Self : in out LSP_Client'Class) is
    begin
-      --  Stop the server
-      Self.Stop (Reject_Immediately => False, Force => Force);
+      --  Initiate normal server shutdown sequence
+      Self.Stop (Reject_Immediately => False);
 
       --  The relaunch is being requested by the user: clear the list
       --  of automatic relaunches so that the restart does not get
