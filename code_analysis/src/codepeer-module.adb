@@ -658,8 +658,7 @@ package body CodePeer.Module is
       Context : GPS.Kernel.Selection_Context;
       Menu    : access Gtk.Menu.Gtk_Menu_Record'Class)
    is
-      Item       : Gtk.Menu_Item.Gtk_Menu_Item;
-      Check_Item : Gtk.Check_Menu_Item.Gtk_Check_Menu_Item;
+      Item : Gtk.Menu_Item.Gtk_Menu_Item;
    begin
       if Factory.Module.Tree = null then
          return;
@@ -709,15 +708,21 @@ package body CodePeer.Module is
          end;
       end if;
 
-      Gtk.Check_Menu_Item.Gtk_New (Check_Item, -"Display values");
-      Check_Item.Set_Active (Module.Display_Values);
-      Menu.Append (Check_Item);
-      Context_CB.Connect
-        (Check_Item,
-         Gtk.Check_Menu_Item.Signal_Toggled,
-         Context_CB.To_Marshaller (On_Display_Values_Toggled'Access),
-         Module_Context'
-           (CodePeer_Module_Id (Factory.Module), null, null));
+      if not CodePeer.Is_GNATSAS then
+         declare
+            Check_Item : Gtk.Check_Menu_Item.Gtk_Check_Menu_Item;
+         begin
+            Gtk.Check_Menu_Item.Gtk_New (Check_Item, -"Display values");
+            Check_Item.Set_Active (Module.Display_Values);
+            Menu.Append (Check_Item);
+            Context_CB.Connect
+              (Check_Item,
+               Gtk.Check_Menu_Item.Signal_Toggled,
+               Context_CB.To_Marshaller (On_Display_Values_Toggled'Access),
+               Module_Context'
+                 (CodePeer_Module_Id (Factory.Module), null, null));
+         end;
+      end if;
    end Append_To_Menu;
 
    ---------------------------------
@@ -2060,6 +2065,11 @@ package body CodePeer.Module is
       Text   : Unbounded_String;
 
    begin
+      if CodePeer.Is_GNATSAS then
+         --  No special tooltips for gnatsas
+         return null;
+      end if;
+
       if not (Has_File_Information (Context)
               and then Has_Line_Information (Context)
               and then Has_Column_Information (Context)
@@ -2067,6 +2077,7 @@ package body CodePeer.Module is
               and then Module.Tree /= null
               and then Module.Has_Backtraces)
       then
+         --  In CodePeer mode and there is no value backtrace
          return null;
       end if;
 
