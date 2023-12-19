@@ -324,7 +324,10 @@ package body GVD.Process is
       if Process.Debugger_Text /= null then
          if Is_Command then
             Display_In_Debugger_Console
-              (Process, Str, Highlight => True, Add_To_History => True);
+              (Process        => Process,
+               Text           => Str,
+               Mode           => GPS.Kernel.Verbose,
+               Add_To_History => True);
          else
             while Start <= Str'Last loop
                Match (Highlighting_Pattern (Process.Debugger),
@@ -338,8 +341,9 @@ package body GVD.Process is
                   end if;
 
                   Display_In_Debugger_Console
-                    (Process, Str (Matched (0).First .. Matched (0).Last),
-                     Highlight => True);
+                    (Process => Process,
+                     Text    => Str (Matched (0).First .. Matched (0).Last),
+                     Mode    => GPS.Kernel.Verbose);
                   Start := Matched (0).Last + 1;
 
                else
@@ -630,9 +634,8 @@ package body GVD.Process is
 
          if Length (Debuggee_Output) > 0 then
             Display_In_Debuggee_Console
-              (Process        => Process,
-               Text           => To_String (Debuggee_Output),
-               Highlight      => False);
+              (Process => Process,
+               Text    => To_String (Debuggee_Output));
          end if;
       end if;
    end Text_Output_Filter;
