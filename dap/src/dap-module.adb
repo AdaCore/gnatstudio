@@ -66,6 +66,7 @@ with DAP.Views.Memory;
 with DAP.Views.Registers;
 with DAP.Views.Variables;
 with DAP.Requests;
+with DAP.Utils;
 
 package body DAP.Module is
 
@@ -1230,16 +1231,23 @@ package body DAP.Module is
 
       --  if it was the last debugger
       if DAP_Module_ID.Clients.Is_Empty then
-         --  The last debugger has been finished
-         DAP_Module_ID.Client_ID := 1;
+         declare
+            Kernel : constant Kernel_Handle := DAP_Module_ID.Get_Kernel;
+         begin
+            --  The last debugger has been finished
+            DAP_Module_ID.Client_ID := 1;
 
-         --  save persistent breakpoints
-         DAP.Modules.Persistent_Breakpoints.On_Debugging_Terminated
-           (DAP_Module_ID.Get_Kernel);
+            --  Save persistent breakpoints
+            DAP.Modules.Persistent_Breakpoints.On_Debugging_Terminated
+              (Kernel);
 
-         GPS.Kernel.MDI.Load_Perspective (DAP_Module_ID.Get_Kernel, "Default");
+            --  Unhighlight the current debugger line
+            DAP.Utils.Unhighlight_Current_Line (Kernel);
 
-         DAP_Module_ID.Get_Kernel.Refresh_Context;
+            GPS.Kernel.MDI.Load_Perspective (Kernel, "Default");
+
+            Kernel.Refresh_Context;
+         end;
       end if;
 
    exception
