@@ -117,15 +117,8 @@ package body DAP.Modules.Preferences is
         (Manager  => Prefs,
          Name     => "debugger-console-console",
          Default  =>  True,
-         Label    => "Display console layer",
-         Doc      => "Display console layer in the console.");
-
-      Debugger_Console_Stdout := Create_Invisible_Pref
-        (Manager  => Prefs,
-         Name     => "debugger-console-stdout",
-         Default  =>  False,
-         Label    => "Display stdout layer",
-         Doc      => "Display stdout layer in the console.");
+         Label    => "Display console output category",
+         Doc      => "Display the DAP 'console' output category.");
 
       Pending_Breakpoints := Create
         (Manager   => Prefs,

@@ -47,8 +47,7 @@ package DAP.Views.Consoles is
    --  Display the given text in the debugger console.
 
    function Get_Debugger_Interactive_Console
-     (Client : DAP_Client'Class)
-      return access Interactive_Console_Record'Class;
+     (Client : DAP_Client'Class) return Interactive_Console;
    --  Return the interactive console associated with the given debugger.
    --  If no interactive console is associated with this debugger, return null.
 
@@ -67,5 +66,11 @@ package DAP.Views.Consoles is
    --  Display the given text in the debuggee console.
    --  The text will be displayed in the debugger console instead if there is
    --  no debuggee console attached to this process.
+
+   function Get_Debuggee_Interactive_Console
+     (Client : DAP_Client'Class) return Interactive_Console;
+   --  Return the debuggee's interactive console associated with the given
+   --  debugger. If no interactive console is associated with the debuggee,
+   --  return null.
 
 end DAP.Views.Consoles;

@@ -1557,42 +1557,57 @@ package body DAP.Clients is
    begin
       if Event = "output" then
          declare
-            output : DAP.Tools.OutputEvent;
+            output          : DAP.Tools.OutputEvent;
+            Output_Category : constant DAP.Tools.Enum.OutputEvent_category :=
+              (if output.a_body.category.Is_Set then
+                  output.a_body.category.Value
+               else
+                  console);
+            --  According to the DAP documentation, 'console' is assumed
+            --  when the output category is not specified.
          begin
             DAP.Tools.Inputs.Input_OutputEvent (Stream, output, Success);
+
             if not Success then
                return;
             end if;
 
-            if output.a_body.category.Is_Set
-              and then
-                ((output.a_body.category.Value = console
-                  and then DAP.Modules.Preferences.
-                    Debugger_Console_Console.Get_Pref)
-                 or else
-                   (output.a_body.category.Value = stdout
-                    and then DAP.Modules.Preferences.
-                      Debugger_Console_Stdout.Get_Pref)
-                 or else output.a_body.category.Value = stderr)
-            then
-               declare
-                  Console : constant access Interactive_Console_Record'Class :=
-                    DAP.Views.Consoles.Get_Debugger_Interactive_Console (Self);
-                  S       : constant String := UTF8 (output.a_body.output);
-               begin
-                  if Console /= null then
-                     Console.Insert
-                       ((if output.a_body.category.Value = stderr
-                        then "[ERROR] "
-                        else "") & S,
-                        Add_LF => False);
-                  end if;
+            --  Display the received output in the debugger or the debugger
+            --  console depending on the output category.
+            --  When it exists, the debugger console should output the 'stdout'
+            --  and 'stderr' output channels, which correspond to the
+            --  debuggee's output according to DAP documentation.
 
-                  if output.a_body.category.Value = stderr then
-                     Trace (Me, "Debugger" & Self.Id'Img & " [stderr]:" & S);
-                  end if;
-               end;
-            end if;
+            declare
+               Debuggee_Console : constant Interactive_Console :=
+                 DAP.Views.Consoles.Get_Debuggee_Interactive_Console (Self);
+               Debugger_Console : constant Interactive_Console :=
+                 DAP.Views.Consoles.Get_Debugger_Interactive_Console (Self);
+               Output_Console   : constant Interactive_Console :=
+                 (if Output_Category not in stdout | stderr then
+                     Debugger_Console
+                  elsif Debugger_Console /= null then
+                     Debuggee_Console
+                  else
+                     Debugger_Console);
+               Mode             : constant GPS.Kernel.Message_Type :=
+                 (case Output_Category is
+                     when stderr =>
+                       GPS.Kernel.Error,
+                     when console =>
+                       GPS.Kernel.Verbose,
+                     when others  =>
+                       GPS.Kernel.Info);
+               Text             : constant String :=
+                 UTF8 (output.a_body.output);
+            begin
+               if Output_Console /= null then
+                  Output_Console.Insert
+                    (Text    => Text,
+                     Mode    => Mode,
+                     Add_LF  => False);
+               end if;
+            end;
          end;
 
       elsif Event = "initialized" then

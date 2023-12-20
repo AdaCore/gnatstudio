@@ -331,8 +331,6 @@ package body DAP.Views.Consoles is
    begin
       Append_Menu
         (Menu, View.Kernel, DAP.Modules.Preferences.Debugger_Console_Console);
-      Append_Menu
-        (Menu, View.Kernel, DAP.Modules.Preferences.Debugger_Console_Stdout);
    end Create_Menu;
 
    --------------------------------------
@@ -340,8 +338,7 @@ package body DAP.Views.Consoles is
    --------------------------------------
 
    function Get_Debugger_Interactive_Console
-     (Client : DAP_Client'Class)
-      return access Interactive_Console_Record'Class
+     (Client : DAP_Client'Class) return Interactive_Console
    is
       View : constant Generic_Views.Abstract_View_Access :=
         Client.Get_Debugger_Console;
@@ -353,6 +350,23 @@ package body DAP.Views.Consoles is
          return null;
       end if;
    end Get_Debugger_Interactive_Console;
+
+   --------------------------------------
+   -- Get_Debuggee_Interactive_Console --
+   --------------------------------------
+
+   function Get_Debuggee_Interactive_Console
+     (Client : DAP_Client'Class) return Interactive_Console
+   is
+      View : constant Generic_Views.Abstract_View_Access :=
+        Client.Get_Debuggee_Console;
+   begin
+      if View /= null then
+         return Debuggee_Console (View).Console;
+      else
+         return null;
+      end if;
+   end Get_Debuggee_Interactive_Console;
 
    ----------------
    -- Initialize --
