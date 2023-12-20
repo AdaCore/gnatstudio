@@ -15,8 +15,11 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 with GPS.Kernel;
+
 package DAP.Views.Threads is
+
    procedure Register_Module
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class);
-   --  Register menus and other functions to support the breakpoint editor
+   --  Register menus and other functions to support the Threads editor
+
 end DAP.Views.Threads;

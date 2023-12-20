@@ -25,6 +25,8 @@ with GNATCOLL.Projects;
 with GNATCOLL.Scripts;
 with GNATCOLL.VFS;
 
+with VSS.JSON;
+with VSS.JSON.Pull_Readers;
 with VSS.Strings;
 with VSS.String_Vectors;
 
@@ -48,7 +50,6 @@ with Generic_Views;
 
 private with Ada.Containers.Hashed_Maps;
 private with Ada.Containers.Hashed_Sets;
-private with VSS.JSON.Pull_Readers;
 private with DAP.Modules.Breakpoint_Managers;
 
 package DAP.Clients is
@@ -64,7 +65,9 @@ package DAP.Clients is
    use String_History;
    --  Used for holding commands history in the debugging console
 
+   ----------------
    -- DAP_Client --
+   ----------------
 
    type DAP_Client
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
@@ -73,7 +76,9 @@ package DAP.Clients is
 
    type DAP_Client_Access is access all DAP_Client'Class;
 
+   -------------------------
    -- DAP_Visual_Debugger --
+   -------------------------
 
    type DAP_Visual_Debugger is
      new GPS.Debuggers.Base_Visual_Debugger with record
@@ -81,7 +86,9 @@ package DAP.Clients is
    end record;
    type DAP_Visual_Debugger_Access is access all DAP_Visual_Debugger'Class;
 
+   -----------------
    --  DAP_Client --
+   -----------------
 
    procedure Initialize_Client (Self : not null access DAP_Client);
 
@@ -172,10 +179,10 @@ package DAP.Clients is
    procedure Remove_Breakpoints
      (Self : in out DAP_Client;
       List : DAP.Types.Breakpoint_Identifier_Lists.List);
-   --  Remove breakpoints included in the list
+   --  Remove breakpoints included in the given list
 
    procedure Remove_All_Breakpoints (Self : in out DAP_Client);
-   --  Remove all breakpoints
+   --  Remove all breakpoints set for this DAP client
 
    procedure Remove_Breakpoint_At
      (Self : in out DAP_Client;
@@ -275,31 +282,38 @@ package DAP.Clients is
    function Get_Visual
      (Self : in out DAP_Client)
       return DAP_Visual_Debugger_Access;
+   --  Return the visual debugger associated with the given DAP client
 
    procedure Value_Of
      (Self   : in out DAP_Client;
       Entity : String;
       Label  : Gtk.Label.Gtk_Label);
+   --  Return a label displaying the value of the given entity. Used for
+   --  tooltips.
 
    procedure Set_Breakpoint_Command
      (Self    : in out DAP_Client;
       Id      : Breakpoint_Identifier;
       Command : VSS.Strings.Virtual_String);
+   --  Set a command that will be executed when reaching the breakpoint
+   --  designated by Id.
 
    procedure Set_Capabilities
      (Self         : in out DAP_Client;
       Capabilities : DAP.Tools.Optional_Capabilities);
+   --  Set the DAP client's capabilities.
 
    function Get_Capabilities
      (Self : in out DAP_Client)
       return DAP.Tools.Optional_Capabilities;
+   --  Return the DAP client's capabilities.
 
    procedure Display_In_Debugger_Console
      (Self       : in out DAP_Client;
       Msg        : String;
       Is_Command : Boolean := False);
    --  Displays the message in the console. Highlight it and add to the
-   --  history if Is_Command is True
+   --  history if Is_Command is True.
 
    procedure Show_Breakpoints (Self : DAP_Client);
 
@@ -342,8 +356,36 @@ package DAP.Clients is
      (Self : DAP_Client;
       Cmd  : VSS.Strings.Virtual_String)
       return Boolean;
+   --  Is `quit` command. Used to intercept console input.
 
+   function Is_Frame_Up_Command
+     (Self : DAP_Client;
+      Cmd  : VSS.Strings.Virtual_String)
+      return Boolean;
+   --  Is `up` command. Used to intercept console input.
+
+   function Is_Frame_Down_Command
+     (Self : DAP_Client;
+      Cmd  : VSS.Strings.Virtual_String)
+      return Boolean;
+   --  Is `down` command. Used to intercept console input.
+
+   function Is_Frame_Command
+     (Self  : DAP_Client;
+      Cmd   : VSS.Strings.Virtual_String;
+      Level : out Integer)
+      return Boolean;
+   --  Is `frame` command. Used to intercept console input.
+
+   procedure Process_Event
+     (Self   : in out DAP_Client;
+      Stream : in out VSS.JSON.Pull_Readers.JSON_Pull_Reader'Class;
+      Event  : VSS.Strings.Virtual_String);
+   --  Process the event from the DAP adapter
+
+   -------------------------
    -- DAP_Visual_Debugger --
+   -------------------------
 
    overriding function Get_Num
      (Self : not null access DAP_Visual_Debugger) return Glib.Gint
@@ -498,17 +540,6 @@ private
    procedure Reject_All_Requests (Self : in out DAP_Client);
    --  Discard all requests included in the internal queue
 
-   procedure Process_Event
-     (Self   : in out DAP_Client;
-      Stream : in out VSS.JSON.Pull_Readers.JSON_Pull_Reader'Class;
-      Event  : VSS.Strings.Virtual_String);
-   --  Process the event from the DAP adapter
-
-   procedure Set_Status
-     (Self   : in out DAP_Client;
-      Status : Debugger_Status_Kind);
-   --  Set the current debugging status
-
    procedure Load_Project_From_Executable (Self : in out DAP_Client);
    --  Creates a project based on the debugger's response about sources. Used
    --  when the debugger is started via the --debug switch.
@@ -517,25 +548,6 @@ private
      (Self      : in out DAP_Client;
       Thread_Id : Integer);
    --  Sends a request to the debugger to get the current call stack.
-
-   function Is_Frame_Up_Command
-     (Self : DAP_Client;
-      Cmd  : VSS.Strings.Virtual_String)
-      return Boolean;
-   --  Is `up` command. Used to intercept console input.
-
-   function Is_Frame_Down_Command
-     (Self : DAP_Client;
-      Cmd  : VSS.Strings.Virtual_String)
-      return Boolean;
-   --  Is `down` command. Used to intercept console input.
-
-   function Is_Frame_Command
-     (Self  : DAP_Client;
-      Cmd   : VSS.Strings.Virtual_String;
-      Level : out Integer)
-      return Boolean;
-   --  Is `frame` command. Used to intercept console input.
 
    type Evaluate_Kind is
      (Hover,
