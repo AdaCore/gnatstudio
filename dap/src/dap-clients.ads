@@ -130,10 +130,6 @@ package DAP.Clients is
    procedure On_Continue (Self : in out DAP_Client);
    --  Called on continue requests. Will set the debugger's status to Running.
 
-   procedure On_Disconnected (Self : in out DAP_Client);
-   --  Called when the debugger has been disconnected from the debuggee. Will
-   --  stop the debugging session.
-
    procedure On_Before_Exit (Self : in out DAP_Client);
    --  Called when GNAT Studio is exiting.
 
@@ -143,6 +139,10 @@ package DAP.Clients is
 
    function Get_Status (Self : in out DAP_Client) return Debugger_Status_Kind;
    --  Return the debugger's status.
+
+   function Get_Debuggee_Start_Method
+     (Self : DAP_Client) return Debuggee_Start_Method_Kind;
+   --  Return the method used to start the debuggee by the given DAP client.
 
    function Has_Breakpoint
      (Self   : DAP_Client;
@@ -439,6 +439,9 @@ private
       Stopped_Threads     : Integer_Sets.Set;
       All_Threads_Stopped : Boolean := False;
       Selected_Thread     : Integer := 0;
+
+      Start_Method        : Debuggee_Start_Method_Kind := None;
+      --  The method that was used to start the current debugging session
 
       --  Modules --
       Breakpoints      : DAP.Modules.Breakpoint_Managers.

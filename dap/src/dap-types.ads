@@ -32,6 +32,14 @@ package DAP.Types is
    type Debugger_Status_Kind is
      (Initialization, Initialized, Ready, Stopped, Running, Terminating);
 
+   type Debuggee_Start_Method_Kind is
+     (None, Launched, Attached);
+   --  The debuggee start method
+     --  * None: The debuggee has not been started yet
+     --  * Launched: The debuggee has been started by the DAP client
+     --    (e.g: via the 'launch' request).
+     --  * Attached: the DAP client has been attached to a running process
+
    type Breakpoint_Identifier is new Integer;
    No_Breakpoint : constant Breakpoint_Identifier := 0;
    --  How breakpoints are identified. Currently, the debuggers supported

@@ -534,17 +534,16 @@ package body DAP.Clients is
             DAP.Views.Consoles.Raise_Debugger_Console (Self'Access);
 
          when Stopped =>
+            --  Inform that the debugger has stopped
             GPS.Kernel.Hooks.Debugger_Process_Stopped_Hook.Run
               (Self.Kernel, Self.Visual);
 
-            --  Inform that location has changed
+            --  Inform that the debugger's location has changed
             GPS.Kernel.Hooks.Debugger_Location_Changed_Hook.Run
               (Self.Kernel, Self.Visual);
 
          when Terminating =>
-            if Debugger_Status_Kind'Pos (Old) >=
-              Debugger_Status_Kind'Pos (Initialized)
-            then
+            if Old in Initialized .. Running then
                GPS.Kernel.Hooks.Debugger_Terminated_Hook.Run
                  (Self.Kernel, Self.Get_Visual);
             end if;
@@ -821,6 +820,16 @@ package body DAP.Clients is
    begin
       return Self.Status;
    end Get_Status;
+
+   -------------------------------
+   -- Get_Debuggee_Start_Method --
+   -------------------------------
+
+   function Get_Debuggee_Start_Method
+     (Self : DAP_Client) return Debuggee_Start_Method_Kind is
+   begin
+      return Self.Start_Method;
+   end Get_Debuggee_Start_Method;
 
    ----------------
    -- Get_Visual --
@@ -1452,6 +1461,7 @@ package body DAP.Clients is
             stop : DAP.Tools.StoppedEvent;
          begin
             DAP.Tools.Inputs.Input_StoppedEvent (Stream, stop, Success);
+
             if not Success then
                Self.Set_Status (Stopped);
                return;
@@ -1902,18 +1912,6 @@ package body DAP.Clients is
       Self.Process (Request);
    end On_Started;
 
-   ---------------------
-   -- On_Disconnected --
-   ---------------------
-
-   procedure On_Disconnected (Self : in out DAP_Client) is
-   begin
-      Self.Stop;
-   exception
-      when E : others =>
-         Trace (Me, E);
-   end On_Disconnected;
-
    -------------
    -- Process --
    -------------
@@ -2093,27 +2091,21 @@ package body DAP.Clients is
       use type DAP.Modules.Breakpoint_Managers.
         DAP_Client_Breakpoint_Manager_Access;
 
-      Disconnect : DAP.Clients.Disconnect.Disconnect_Request_Access;
       Old        : constant Debugger_Status_Kind := Self.Status;
    begin
       if Old = Terminating then
          return;
       end if;
 
-      Self.Set_Status (Terminating);
-      Self.Reject_All_Requests;
-
       if Old /= Initialization then
-         Disconnect := DAP.Clients.Disconnect.Create
-           (Kernel => Self.Kernel, Terminate_Debuggee => True);
-
-         Self.Process (DAP.Requests.DAP_Request_Access (Disconnect));
+         DAP.Clients.Disconnect.Send_Disconnect_Request
+           (Client             => Self,
+            Terminate_Debuggee => True);
 
          if Self.Breakpoints /= null then
             Self.Breakpoints.Finalize;
             Free (Self.Breakpoints);
          end if;
-
       else
          Self.Stop;
       end if;

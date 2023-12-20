@@ -14,20 +14,38 @@
 -- COPYING3.  If not, go to http://www.gnu.org/licenses for a complete copy --
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
-
-with GNATCOLL.Projects;
-
 with VSS.Strings.Conversions;
-
-with GPS.Kernel.Project;
-
-with DAP.Clients.LoadedSources;
+with GPS.Kernel;          use GPS.Kernel;
+with DAP.Requests;        use DAP.Requests;
+with DAP.Requests.Attach;
+with DAP.Types;
 
 package body DAP.Clients.Attach is
 
-   ----------------
-   -- Initialize --
-   ----------------
+   type Attach_Request is new DAP.Requests.Attach.Attach_DAP_Request
+   with null record;
+   type Attach_Request_Access is access all Attach_Request'Class;
+
+   function Create
+     (Kernel : not null Kernel_Handle;
+      PID    : Integer := -1;
+      Target : String := "") return Attach_Request_Access;
+   --  Create a new DAP 'attach' request.
+   --  PID refers to the process we want to attach to.
+   --  Target refers to the remote target we want to connect.
+   --  Note that PID and Target are mutually exclusive: specifying one
+   --  parameter will make the underlying DAP adapter ignore the other.
+
+   overriding procedure On_Result_Message
+     (Self        : in out Attach_Request;
+      Client      : not null access DAP.Clients.DAP_Client'Class;
+      Result      : DAP.Tools.AttachResponse;
+      New_Request : in out DAP_Request_Access);
+   --  Called when the 'attach' request has succeed.
+
+   ------------
+   -- Create --
+   ------------
 
    function Create
      (Kernel : not null Kernel_Handle;
@@ -54,27 +72,30 @@ package body DAP.Clients.Attach is
      (Self        : in out Attach_Request;
       Client      : not null access DAP.Clients.DAP_Client'Class;
       Result      : DAP.Tools.AttachResponse;
-      New_Request : in out DAP_Request_Access)
-   is
-      use GNATCOLL.Projects;
+      New_Request : in out DAP_Request_Access) is
    begin
       New_Request := null;
-
-      if GPS.Kernel.Project.Get_Registry
-        (Self.Kernel).Tree.Status = From_Executable
-        and then
-          (not Client.Get_Capabilities.Is_Set
-           or else Client.Get_Capabilities.
-             Value.supportsLoadedSourcesRequest)
-      then
-         --  Debugging is started for executable, so prepare the
-         --  source files list to prepare a project file for such debugging
-         New_Request := DAP_Request_Access
-           (DAP.Clients.LoadedSources.Create (Self.Kernel));
-
-      else
-         Client.On_Launched;
-      end if;
+      Client.Start_Method := DAP.Types.Attached;
+      Client.On_Launched;
    end On_Result_Message;
+
+   -------------------------
+   -- Send_Attach_Request --
+   -------------------------
+
+   procedure Send_Attach_Request
+     (Client : in out DAP.Clients.DAP_Client'Class;
+      PID    : Integer := -1;
+      Target : String := "")
+   is
+      Attach_Req : DAP.Clients.Attach.Attach_Request_Access :=
+        DAP.Clients.Attach.Create
+          (Kernel => Client.Kernel,
+           PID    => PID,
+           Target => Target);
+   begin
+      Client.Enqueue
+        (DAP.Requests.DAP_Request_Access (Attach_Req));
+   end Send_Attach_Request;
 
 end DAP.Clients.Attach;
