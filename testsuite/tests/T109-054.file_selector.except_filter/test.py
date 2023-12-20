@@ -15,3 +15,8 @@ def run_test():
     gps_assert(tm, ['noext'])
     button = get_widget_by_name("file_selector_window.ok_button")
     button.clicked()
+
+    yield idle_modal_dialog(lambda:
+                            GPS.MDI.file_selector('*.xml', except_filter=''))
+    dialog = get_window_by_title("Select a file", Gtk.Window.list_toplevels())
+    get_button_from_label("gtk-cancel", dialog).clicked()
