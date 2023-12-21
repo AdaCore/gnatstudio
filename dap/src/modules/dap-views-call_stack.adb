@@ -388,7 +388,7 @@ package body DAP.Views.Call_Stack is
                   then String_To_Address (S)
                   else Invalid_Address);
 
-               Self.Client.Set_Selected_Frame (Id, File, Line, Address);
+               Client.Set_Selected_Frame (Id, File, Line, Address);
 
             exception
                when E : others =>

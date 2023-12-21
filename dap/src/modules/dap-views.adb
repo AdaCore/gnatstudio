@@ -37,10 +37,10 @@ package body DAP.Views is
    ----------------
 
    overriding procedure Set_Client
-     (Self   : not null access View_Record;
-      Client : access DAP.Clients.DAP_Client'Class) is
+     (Self : not null access View_Record;
+      Id   : Integer) is
    begin
-      Self.Client := Client;
+      Self.Client_Id := Id;
    end Set_Client;
 
    ------------------
@@ -96,7 +96,7 @@ package body DAP.Views is
                "Attaching client to view: "
                & Ada.Tags.Expanded_Name (View'Tag));
 
-            View.Set_Client (Client);
+            View.Set_Client (Client.Id);
             On_Attach (View, Client);
 
             --  Update the view if asked
@@ -210,7 +210,7 @@ package body DAP.Views is
 
          if V /= null and then V.Get_Client /= null then
             V.On_Detach (V.Get_Client);
-            V.Set_Client (null);
+            V.Set_Client (-1);
          end if;
       end Execute;
 
@@ -247,7 +247,7 @@ package body DAP.Views is
       begin
          if Get_Client (V) /= null then
             V.On_Detach (Get_Client (V));
-            V.Set_Client (null);
+            V.Set_Client (-1);
          end if;
       end On_Destroy;
 
@@ -298,5 +298,14 @@ package body DAP.Views is
       end Register_Open_View_Action;
 
    end Simple_Views;
+
+   ----------------
+   -- Get_Client --
+   ----------------
+
+   overriding function Get_Client
+     (Self : not null access View_Record)
+      return DAP.Clients.DAP_Client_Access
+     is (DAP.Module.Get_Debugger (Self.Client_Id));
 
 end DAP.Views;
