@@ -40,8 +40,6 @@ package DAP.Modules.Preferences is
 
    -- Console --
    Debugger_Console_Console      : Boolean_Preference;
-   Debugger_Console_Stdout       : Boolean_Preference;
-   --  Whether display layers in the debugger console
 
    --  Call stack
    Frames_Limit                  : Integer_Preference;
