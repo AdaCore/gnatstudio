@@ -195,6 +195,16 @@ package body DAP.Clients is
    Bp_Subprogram_Idx : constant := 6;
    Bp_Condition_Idx  : constant := 7;
 
+   ---------------------
+   -- Status Handling --
+   ---------------------
+
+   procedure Set_Status
+     (Self   : in out DAP_Client'Class;
+      Status : Debugger_Status_Kind);
+   --  Set the current debugging status.
+   --  Will run the debugger hook appropriate to the new status.
+
    ------------------
    -- Allocate_TTY --
    ------------------
@@ -578,7 +588,7 @@ package body DAP.Clients is
    ----------------
 
    procedure Set_Status
-     (Self   : in out DAP_Client;
+     (Self   : in out DAP_Client'Class;
       Status : Debugger_Status_Kind)
    is
       use type Generic_Views.Abstract_View_Access;
