@@ -1572,7 +1572,7 @@ package body DAP.Clients is
                return;
             end if;
 
-            --  Display the received output in the debugger or the debugger
+            --  Display the received output in the debugger or the debuggee
             --  console depending on the output category.
             --  When it exists, the debugger console should output the 'stdout'
             --  and 'stderr' output channels, which correspond to the
