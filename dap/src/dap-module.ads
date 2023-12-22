@@ -62,6 +62,7 @@ package DAP.Module is
    procedure Set_Current_Debugger (Current : DAP.Clients.DAP_Client_Access);
 
    function Get_Debugger (Id : Integer) return DAP.Clients.DAP_Client_Access;
+   --  Return the debugger associated with the given Id.
 
    function Count_Running_Debuggers return Natural;
    --  Returns the count for the running debuggers

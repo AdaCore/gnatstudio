@@ -1448,7 +1448,7 @@ package body DAP.Views.Breakpoints is
          Fill (Props, Br);
 
          if Props.Run = Gtk_Response_Apply then
-            Apply (Props, View.Client, Br);
+            Apply (Props, View.Get_Client, Br);
          end if;
 
          --  No need to free Br: either it has not been created, or it was set
@@ -1551,7 +1551,7 @@ package body DAP.Views.Breakpoints is
          Fill (Props, Current);
 
          if Props.Run = Gtk_Response_Apply then
-            Apply (Props, View.Client, Current);
+            Apply (Props, View.Get_Client, Current);
          end if;
 
          Props.Destroy;

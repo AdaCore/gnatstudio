@@ -37,8 +37,8 @@ package DAP.Views is
    type View_Interface is interface;
 
    procedure Set_Client
-     (Self    : not null access View_Interface;
-      Process : access DAP.Clients.DAP_Client'Class) is abstract;
+     (Self : not null access View_Interface;
+      Id   : Integer) is abstract;
    function Get_Client
      (Self : not null access View_Interface)
       return DAP.Clients.DAP_Client_Access is abstract;
@@ -74,8 +74,8 @@ package DAP.Views is
    type View_Access is access all View_Record'Class;
 
    overriding procedure Set_Client
-     (Self   : not null access View_Record;
-      Client : access DAP.Clients.DAP_Client'Class);
+     (Self : not null access View_Record;
+      Id   : Integer);
    overriding function Get_Client
      (Self : not null access View_Record)
       return DAP.Clients.DAP_Client_Access;
@@ -180,16 +180,12 @@ package DAP.Views is
    end Simple_Views;
 
 private
+
    type View_Record is abstract
       new Generic_Views.View_Record and View_Interface with
    record
-      Client : access DAP.Clients.DAP_Client'Class;
-      --  The process associated with the view
+      Client_Id : Integer := -1;
+      --  The DAP client's ID associated with the view
    end record;
-
-   overriding function Get_Client
-     (Self : not null access View_Record)
-      return DAP.Clients.DAP_Client_Access
-     is (Self.Client);
 
 end DAP.Views;
