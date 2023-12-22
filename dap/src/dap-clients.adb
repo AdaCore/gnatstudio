@@ -59,10 +59,10 @@ with DAP.Modules.Preferences;
 with DAP.Clients.Continue;
 with DAP.Clients.Disconnect;
 with DAP.Clients.Initialize;
+with DAP.Clients.Stack_Trace;
 with DAP.Requests.Disconnect;
 
 with DAP.Requests.Evaluate;
-with DAP.Requests.StackTrace;
 with DAP.Views.Consoles;
 with DAP.Views.Memory;
 with DAP.Views.Registers;
@@ -87,28 +87,9 @@ package body DAP.Clients is
      (DAP.Modules.Breakpoint_Managers.DAP_Client_Breakpoint_Manager'Class,
       DAP.Modules.Breakpoint_Managers.DAP_Client_Breakpoint_Manager_Access);
 
-   -- StackTrace_Request --
-
-   type StackTrace_Request is
-     new DAP.Requests.StackTrace.StackTrace_DAP_Request
-   with null record;
-
-   type StackTrace_Request_Access is access all StackTrace_Request;
-
-   overriding procedure On_Result_Message
-     (Self        : in out StackTrace_Request;
-      Client      : not null access DAP.Clients.DAP_Client'Class;
-      Result      : in out DAP.Tools.StackTraceResponse;
-      New_Request : in out DAP.Requests.DAP_Request_Access);
-
-   overriding procedure On_Error_Message
-     (Self    : in out StackTrace_Request;
-      Client  : not null access DAP.Clients.DAP_Client'Class;
-      Message : VSS.Strings.Virtual_String);
-
-   overriding procedure On_Rejected
-     (Self   : in out StackTrace_Request;
-      Client : not null access DAP.Clients.DAP_Client'Class);
+   procedure Free is new Ada.Unchecked_Deallocation
+     (DAP.Clients.Stack_Trace.Stack_Trace'Class,
+      DAP.Clients.Stack_Trace.Stack_Trace_Access);
 
    -- Evaluate_Request --
 
@@ -194,16 +175,6 @@ package body DAP.Clients is
    Bp_Line_Idx       : constant := 5;
    Bp_Subprogram_Idx : constant := 6;
    Bp_Condition_Idx  : constant := 7;
-
-   ---------------------
-   -- Status Handling --
-   ---------------------
-
-   procedure Set_Status
-     (Self   : in out DAP_Client'Class;
-      Status : Debugger_Status_Kind);
-   --  Set the current debugging status.
-   --  Will run the debugger hook appropriate to the new status.
 
    ------------------
    -- Allocate_TTY --
@@ -365,36 +336,6 @@ package body DAP.Clients is
       end if;
    end Toggle_Instruction_Breakpoint;
 
-   ------------------
-   -- Current_File --
-   ------------------
-
-   function Current_File
-     (Self : in out DAP_Client) return GNATCOLL.VFS.Virtual_File is
-   begin
-      return Self.Selected.File;
-   end Current_File;
-
-   ------------------
-   -- Current_Line --
-   ------------------
-
-   function Current_Line
-     (Self : in out DAP_Client) return Integer is
-   begin
-      return Self.Selected.Line;
-   end Current_Line;
-
-   ---------------------
-   -- Current_Address --
-   ---------------------
-
-   function Current_Address
-     (Self : in out DAP_Client) return Address_Type is
-   begin
-      return Self.Selected.Address;
-   end Current_Address;
-
    --------------------------
    -- Remove_Breakpoint_At --
    --------------------------
@@ -466,6 +407,8 @@ package body DAP.Clients is
         (Glib.Object.GObject_Record with Client => Self.This);
       Glib.Object.Initialize (Self.Visual);
       Ref (Self.Visual);
+      Self.Stack_Trace := DAP.Clients.Stack_Trace.Stack_Trace_Access'
+        (new DAP.Clients.Stack_Trace.Stack_Trace);
    end Initialize_Client;
 
    ----------------
@@ -592,6 +535,7 @@ package body DAP.Clients is
       Status : Debugger_Status_Kind)
    is
       use type Generic_Views.Abstract_View_Access;
+
       Old : constant Debugger_Status_Kind := Self.Status;
    begin
       if Self.Status = Status
@@ -603,9 +547,10 @@ package body DAP.Clients is
       Self.Status := Status;
 
       if Self.Status not in Ready .. Stopped then
-         Self.Selected        := No_Frame;
+         if Self.Stack_Trace /= null then
+            Self.Get_Stack_Trace.Clear;
+         end if;
          Self.Selected_Thread := 0;
-         Self.Frames.Clear;
 
          DAP.Utils.Unhighlight_Current_Line (Self.Kernel);
       end if;
@@ -661,9 +606,12 @@ package body DAP.Clients is
 
    procedure Enqueue
      (Self    : in out DAP_Client;
-      Request : in out DAP.Requests.DAP_Request_Access) is
+      Request : in out DAP.Requests.DAP_Request_Access;
+      Force   : Boolean := False) is
    begin
-      if Self.Status in Initialization .. Stopped then
+      if Force
+        or else Self.Status in Initialization .. Stopped
+      then
          Self.Process (Request);
 
       else
@@ -869,55 +817,11 @@ package body DAP.Clients is
    ------------------------
 
    procedure Set_Selected_Frame
-     (Self    : in out DAP_Client;
-      Id      : Integer;
-      File    : GNATCOLL.VFS.Virtual_File;
-      Line    : Integer;
-      Address : Address_Type)
-   is
-      use GNATCOLL.VFS;
+     (Self : in out DAP_Client;
+      Id   : Integer) is
    begin
-      Self.Selected := (Id, File, Line, Address);
-
-      --  highlight selected location
-      if Self.Selected.File /= No_File then
-         DAP.Utils.Highlight_Current_File_And_Line
-           (Self.Kernel, Self.Selected.File, Self.Selected.Line);
-      end if;
-
-      if Self.Status = Stopped then
-         --  Triggering the hook to inform views only
-         --  when the debugger has stopped.
-         GPS.Kernel.Hooks.Debugger_Location_Changed_Hook.Run
-           (Self.Kernel, Self.Visual);
-      end if;
+      Self.Get_Stack_Trace.Select_Frame (Id, Self'Access);
    end Set_Selected_Frame;
-
-   ---------------------------
-   -- Get_Selected_Frame_Id --
-   ---------------------------
-
-   function Get_Selected_Frame_Id
-     (Self : DAP_Client)
-      return DAP.Tools.Optional_Integer is
-   begin
-      if Self.Selected.Id >= 0 then
-         return (Is_Set => True, Value => Self.Selected.Id);
-      else
-         return (Is_Set => False);
-      end if;
-   end Get_Selected_Frame_Id;
-
-   ---------------------------
-   -- Get_Selected_Frame_Id --
-   ---------------------------
-
-   function Get_Selected_Frame_Id
-     (Self : DAP_Client)
-      return Integer is
-   begin
-      return Self.Selected.Id;
-   end Get_Selected_Frame_Id;
 
    -------------------------
    -- Set_Selected_Thread --
@@ -988,7 +892,7 @@ package body DAP.Clients is
      (Visual : not null access DAP_Visual_Debugger)
       return GNATCOLL.VFS.Virtual_File is
    begin
-      return Visual.Client.Current_File;
+      return Visual.Client.Get_Stack_Trace.Get_Current_File;
    end Current_File;
 
    ------------------
@@ -999,7 +903,7 @@ package body DAP.Clients is
      (Visual : not null access DAP_Visual_Debugger)
       return Natural is
    begin
-      return Visual.Client.Current_Line;
+      return Visual.Client.Get_Stack_Trace.Get_Current_Line;
    end Current_Line;
 
    -------------------
@@ -1517,29 +1421,6 @@ package body DAP.Clients is
          Trace (Me, E);
    end On_Raw_Message;
 
-   --------------------
-   -- Get_StackTrace --
-   --------------------
-
-   procedure Get_StackTrace
-     (Self      : in out DAP_Client;
-      Thread_Id : Integer)
-   is
-      Limit : constant Integer :=
-        DAP.Modules.Preferences.Frames_Limit.Get_Pref;
-      Req   : StackTrace_Request_Access :=
-        new StackTrace_Request (Self.Kernel);
-
-   begin
-      Req.Parameters.arguments.threadId := Thread_Id;
-      if Limit /= 0 then
-         Req.Parameters.arguments.startFrame := (True, 0);
-         Req.Parameters.arguments.levels     := (True, Limit);
-      end if;
-
-      Self.Process (DAP.Requests.DAP_Request_Access (Req));
-   end Get_StackTrace;
-
    -------------------
    -- Process_Event --
    -------------------
@@ -1637,7 +1518,7 @@ package body DAP.Clients is
                   Address : Address_Type;
                begin
                   Self.Breakpoints.Stopped (stop, File, Line, Address);
-                  Self.Set_Selected_Frame (0, File, Line, Address);
+                  Self.Get_Stack_Trace.Set_Frame (0, File, Line, Address);
                end;
 
             elsif stop.a_body.reason = step
@@ -1651,10 +1532,10 @@ package body DAP.Clients is
             end if;
 
             --  Get stopped frameId/file/line/address
-            if stop.a_body.threadId.Is_Set then
-               Self.Get_StackTrace (stop.a_body.threadId.Value);
+            if Self.Selected_Thread /= 0 then
+               Self.Get_Stack_Trace.Send_Request (Self'Access);
 
-            elsif Self.Selected.File /= No_File then
+            elsif Self.Get_Stack_Trace.Get_Current_File /= No_File then
                Self.Set_Status (Stopped);
             end if;
 
@@ -1712,10 +1593,6 @@ package body DAP.Clients is
               (Self.Kernel, Self.Visual);
          end if;
 
-      elsif Event = "module" then
-         --  Do not handle, at least for now.
-         null;
-
       elsif Event = "terminated" then
          if Self.Is_Debuggee_Started_Called then
             Self.Is_Debuggee_Started_Called := False;
@@ -1724,6 +1601,14 @@ package body DAP.Clients is
          end if;
          Self.Set_Status (Ready);
          Display_In_Debugger_Console (Self, "Terminated");
+
+      elsif Event = "module" then
+         --  Do not handle, at least for now.
+         null;
+
+      elsif Event = "process" then
+         --  Do not handle, at least for now.
+         null;
 
       else
          Self.Kernel.Get_Messages_Window.Insert_Error
@@ -1786,15 +1671,15 @@ package body DAP.Clients is
            (Bp_Offset_Sig_Idx) = "+"
          then
             Line := Editable_Line_Type
-              (Self.Selected.Line) + Line;
+              (Self.Get_Stack_Trace.Get_Current_Line) + Line;
          else
             Line := Editable_Line_Type'Max
               (0, Editable_Line_Type
-                 (Self.Selected.Line) - Line);
+                 (Self.Get_Stack_Trace.Get_Current_Line) - Line);
          end if;
 
          Self.Break_Source
-           (File      => Self.Selected.File,
+           (File      => Self.Get_Stack_Trace.Get_Current_File,
             Line      => Line,
             Temporary => Matched.Has_Capture (Bp_Temporary_Idx),
             Condition => Details_Match.Captured (Bp_Condition_Idx));
@@ -1830,11 +1715,13 @@ package body DAP.Clients is
                     ("Hardware breakpoints are not supported");
 
                elsif not Matched.Has_Capture (Bp_Details_Idx)
-                 and then Self.Selected.Address /= Invalid_Address
+                 and then Self.Get_Stack_Trace.Get_Current_Address /=
+                   Invalid_Address
                then
                   --  no details, bp for the next instruction
                   Self.Break_Address
-                    (Address   => Add_Address (Self.Selected.Address, 1),
+                    (Address   => Add_Address
+                       (Self.Get_Stack_Trace.Get_Current_Address, 1),
                      Temporary => Matched.Has_Capture (Bp_Temporary_Idx),
                      Condition => Details_Match.Captured (Bp_Condition_Idx));
 
@@ -1845,7 +1732,8 @@ package body DAP.Clients is
 
                   if Details_Match.Has_Match then
                      if Details_Match.Has_Capture (Bp_Offset_Idx)
-                       and then Self.Selected.File /= No_File
+                       and then Self.Get_Stack_Trace.Get_Current_File /=
+                         No_File
                      then
                         Add_BP_For_Offset;
 
@@ -1857,8 +1745,9 @@ package body DAP.Clients is
                            Details_Match.Captured (Bp_Condition_Idx));
 
                      elsif Details_Match.Has_Capture (Bp_Line_Idx)
-                       and then (Self.Selected.File /= No_File or else
-                                 Details_Match.Has_Capture (Bp_File_Idx))
+                       and then
+                         (Self.Get_Stack_Trace.Get_Current_File /= No_File
+                          or else Details_Match.Has_Capture (Bp_File_Idx))
                      then
                         if Details_Match.Has_Capture (Bp_File_Idx) then
                            --  have file:line pattern
@@ -1879,7 +1768,7 @@ package body DAP.Clients is
                            --  selected file
                            Self.Break_Source
                              (File      =>
-                                Self.Selected.File,
+                                Self.Get_Stack_Trace.Get_Current_File,
                               Line      =>
                                 Editable_Line_Type'Value (UTF8
                                   (Details_Match.Captured (Bp_Line_Idx))),
@@ -1928,13 +1817,13 @@ package body DAP.Clients is
 
             if not VSS_Cmd.Is_Empty then
                if Self.Is_Frame_Up_Command (VSS_Cmd) then
-                  Self.Frame_Up;
+                  Self.Get_Stack_Trace.Frame_Up (Self'Access);
 
                elsif Self.Is_Frame_Down_Command (VSS_Cmd) then
-                  Self.Frame_Down;
+                  Self.Get_Stack_Trace.Frame_Down (Self'Access);
 
                elsif Self.Is_Frame_Command (VSS_Cmd, Level) then
-                  Self.Select_Frame (Level);
+                  Self.Get_Stack_Trace.Select_Frame (Level, Self'Access);
                end if;
 
                Request := Self.Create_Evaluate_Command
@@ -2038,165 +1927,16 @@ package body DAP.Clients is
       end if;
    end Display_In_Debugger_Console;
 
-   -----------------------
-   -- On_Result_Message --
-   -----------------------
+   ---------------------
+   -- Get_Stack_Trace --
+   ---------------------
 
-   overriding procedure On_Result_Message
-     (Self        : in out StackTrace_Request;
-      Client      : not null access DAP.Clients.DAP_Client'Class;
-      Result      : in out DAP.Tools.StackTraceResponse;
-      New_Request : in out DAP.Requests.DAP_Request_Access)
-   is
-      use GNATCOLL.VFS;
-      use DAP.Tools;
-
+   function Get_Stack_Trace
+     (Self : DAP_Client)
+      return DAP.Clients.Stack_Trace.Stack_Trace_Access is
    begin
-      New_Request := null;
-
-      for Index in 1 .. Length (Result.a_body.stackFrames) loop
-         declare
-            Frame : constant StackFrame_Variable_Reference :=
-              Get_StackFrame_Variable_Reference
-                (Result.a_body.stackFrames, Index);
-            Bt : Backtrace_Record;
-         begin
-            Bt.Frame_Id := Frame.id;
-            Bt.Name     := VSS.Strings.Conversions.
-              To_Unbounded_UTF_8_String (Frame.name);
-
-            if not Frame.instructionPointerReference.Is_Empty then
-               Bt.Address := String_To_Address
-                 (UTF8 (Frame.instructionPointerReference));
-            end if;
-
-            if Frame.source.Is_Set then
-               Bt.File := To_File (Frame.source.Value.path);
-               Bt.Line := Frame.line;
-            end if;
-
-            if Index = 1 then
-               Client.Set_Selected_Frame
-                 (Id      => Bt.Frame_Id,
-                  File    => Bt.File,
-                  Line    => Bt.Line,
-                  Address => Bt.Address);
-            end if;
-
-            Client.Frames.Append (Bt);
-         end;
-      end loop;
-
-      Client.Set_Status (Stopped);
-
-   exception
-      when E : others =>
-         Trace (Me, E);
-         Client.Set_Status (Stopped);
-   end On_Result_Message;
-
-   ----------------------
-   -- On_Error_Message --
-   ----------------------
-
-   overriding procedure On_Error_Message
-     (Self    : in out StackTrace_Request;
-      Client  : not null access DAP.Clients.DAP_Client'Class;
-      Message : VSS.Strings.Virtual_String) is
-   begin
-      DAP.Requests.StackTrace.StackTrace_DAP_Request
-        (Self).On_Error_Message (Client, Message);
-
-      Client.Set_Status (Stopped);
-   end On_Error_Message;
-
-   -----------------
-   -- On_Rejected --
-   -----------------
-
-   overriding procedure On_Rejected
-     (Self   : in out StackTrace_Request;
-      Client : not null access DAP.Clients.DAP_Client'Class) is
-   begin
-      Client.Set_Status (Stopped);
-   end On_Rejected;
-
-   ---------------
-   -- Backtrace --
-   ---------------
-
-   procedure Backtrace
-     (Self : DAP_Client;
-      Bt   : out Backtrace_Vectors.Vector) is
-   begin
-      Bt := Self.Frames;
-   end Backtrace;
-
-   -------------------
-   -- Set_Backtrace --
-   -------------------
-
-   procedure Set_Backtrace
-     (Self : in out DAP_Client;
-      Bt   : Backtrace_Vectors.Vector) is
-   begin
-      Self.Frames := Bt;
-   end Set_Backtrace;
-
-   --------------
-   -- Frame_Up --
-   --------------
-
-   procedure Frame_Up (Self : in out DAP_Client)
-   is
-      Next : Boolean := False;
-   begin
-      for Bt of Self.Frames loop
-         if Next then
-            Self.Set_Selected_Frame
-              (Bt.Frame_Id, Bt.File, Bt.Line, Bt.Address);
-            exit;
-
-         elsif Bt.Frame_Id = Self.Selected.Id then
-            Next := True;
-         end if;
-      end loop;
-   end Frame_Up;
-
-   ----------------
-   -- Frame_Down --
-   ----------------
-
-   procedure Frame_Down (Self : in out DAP_Client)
-   is
-      Next : Boolean := False;
-   begin
-      for Bt of reverse Self.Frames loop
-         if Next then
-            Self.Set_Selected_Frame
-              (Bt.Frame_Id, Bt.File, Bt.Line, Bt.Address);
-            exit;
-
-         elsif Bt.Frame_Id = Self.Selected.Id then
-            Next := True;
-         end if;
-      end loop;
-   end Frame_Down;
-
-   ------------------
-   -- Select_Frame --
-   ------------------
-
-   procedure Select_Frame (Self : in out DAP_Client; Id : Integer) is
-   begin
-      for Bt of Self.Frames loop
-         if Bt.Frame_Id = Id then
-            Self.Set_Selected_Frame
-              (Bt.Frame_Id, Bt.File, Bt.Line, Bt.Address);
-            exit;
-         end if;
-      end loop;
-   end Select_Frame;
+      return DAP.Clients.Stack_Trace.Stack_Trace_Access (Self.Stack_Trace);
+   end Get_Stack_Trace;
 
    ----------------
    -- On_Started --
@@ -2385,6 +2125,8 @@ package body DAP.Clients is
          Self.Breakpoints.Finalize;
          Free (Self.Breakpoints);
       end if;
+
+      Free (Self.Stack_Trace);
    exception
       when E : others =>
          Trace (Me, E);
@@ -2457,7 +2199,8 @@ package body DAP.Clients is
       Ref (GObject (Label));
       Req.Parameters.arguments.expression :=
         VSS.Strings.Conversions.To_Virtual_String (Entity);
-      Req.Parameters.arguments.frameId := Self.Get_Selected_Frame_Id;
+      Req.Parameters.arguments.frameId :=
+        Self.Get_Stack_Trace.Get_Current_Frame_Id;
       Req.Parameters.arguments.context :=
         (Is_Set => True, Value => DAP.Tools.Enum.repl);
       Self.Enqueue (DAP.Requests.DAP_Request_Access (Req));
@@ -2489,7 +2232,8 @@ package body DAP.Clients is
       end if;
       Req.Parameters.arguments.expression.Append
         (VSS.Strings.Conversions.To_Virtual_String ("end"));
-      Req.Parameters.arguments.frameId := Self.Get_Selected_Frame_Id;
+      Req.Parameters.arguments.frameId :=
+        Self.Get_Stack_Trace.Get_Current_Frame_Id;
       Req.Parameters.arguments.context :=
         (Is_Set => True, Value => DAP.Tools.Enum.repl);
       Self.Enqueue (DAP.Requests.DAP_Request_Access (Req));
@@ -2520,7 +2264,8 @@ package body DAP.Clients is
       Req.On_Rejected       := On_Rejected;
 
       Req.Parameters.arguments.expression := Cmd;
-      Req.Parameters.arguments.frameId := Self.Get_Selected_Frame_Id;
+      Req.Parameters.arguments.frameId :=
+        Self.Get_Stack_Trace.Get_Current_Frame_Id;
       Req.Parameters.arguments.context :=
         (Is_Set => True, Value => DAP.Tools.Enum.repl);
       return DAP.Requests.DAP_Request_Access (Req);
@@ -2775,7 +2520,8 @@ package body DAP.Clients is
             Req.Kind := Variable_Address;
             Req.Parameters.arguments.expression := VSS.Strings.Conversions.
               To_Virtual_String ("print &(" & Variable & ")");
-            Req.Parameters.arguments.frameId := Self.Get_Selected_Frame_Id;
+            Req.Parameters.arguments.frameId :=
+              Self.Get_Stack_Trace.Get_Current_Frame_Id;
             Req.Parameters.arguments.context :=
               (Is_Set => True, Value => DAP.Tools.Enum.repl);
             Self.Enqueue (DAP.Requests.DAP_Request_Access (Req));
