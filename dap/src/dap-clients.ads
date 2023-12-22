@@ -44,6 +44,7 @@ with DAP.Modules.Histories;
 with DAP.Requests;
 with DAP.Types;                  use DAP.Types;
 with DAP.Tools;
+limited with DAP.Clients.Stack_Trace;
 
 with Basic_Types;                use Basic_Types;
 with Generic_Views;
@@ -108,8 +109,10 @@ package DAP.Clients is
 
    procedure Enqueue
      (Self    : in out DAP_Client;
-      Request : in out DAP.Requests.DAP_Request_Access);
+      Request : in out DAP.Requests.DAP_Request_Access;
+      Force   : Boolean := False);
    --  Queue the given request to send it to the DAP adapter
+   --  Does not check whether the debugger is stopped when Force is True
 
    procedure Quit (Self : in out DAP_Client);
 
@@ -222,34 +225,9 @@ package DAP.Clients is
    --  Attach the debuggee view
 
    procedure Set_Selected_Frame
-     (Self    : in out DAP_Client;
-      Id      : Integer;
-      File    : GNATCOLL.VFS.Virtual_File;
-      Line    : Integer;
-      Address : Address_Type);
+     (Self : in out DAP_Client;
+      Id   : Integer);
    --  Set the current Frame.
-
-   function Get_Selected_Frame_Id
-     (Self : DAP_Client)
-      return DAP.Tools.Optional_Integer;
-   --  Returns the currently selected frame ID
-
-   function Get_Selected_Frame_Id
-     (Self : DAP_Client)
-      return Integer;
-   --  Returns the currently selected frame ID
-
-   function Current_File
-     (Self : in out DAP_Client) return GNATCOLL.VFS.Virtual_File;
-   --  Returns the file where the debugging is stopped
-
-   function Current_Line
-     (Self : in out DAP_Client) return Integer;
-   --  Returns the line where the debugging is stopped
-
-   function Current_Address
-     (Self : in out DAP_Client) return Address_Type;
-   --  Returns the address where the debugging is stopped
 
    function Get_Executable
      (Self : in out DAP_Client) return GNATCOLL.VFS.Virtual_File;
@@ -323,20 +301,10 @@ package DAP.Clients is
 
    function Get_Endian_Type (Self : in out DAP_Client) return Endian_Type;
 
-   procedure Backtrace
-     (Self : DAP_Client;
-      Bt   : out Backtrace_Vectors.Vector);
-   --  Returns backtrace
-
-   procedure Frame_Up (Self : in out DAP_Client);
-   procedure Frame_Down (Self : in out DAP_Client);
-   procedure Select_Frame (Self : in out DAP_Client; Id : Integer);
-   --  Select frame
-
-   procedure Set_Backtrace
-     (Self : in out DAP_Client;
-      Bt   : Backtrace_Vectors.Vector);
-   --  Update backtrace information
+   function Get_Stack_Trace
+     (Self : DAP_Client)
+      return DAP.Clients.Stack_Trace.Stack_Trace_Access;
+   --  Returns the Stack_Trace module
 
    procedure Process_User_Command
      (Self              : in out DAP_Client;
@@ -445,17 +413,6 @@ private
       Hash                => Hash,
       Equivalent_Elements => "=");
 
-   type Frame is record
-      Id      : Integer := -1;
-      File    : GNATCOLL.VFS.Virtual_File := GNATCOLL.VFS.No_File;
-      Line    : Integer := 0;
-      Address : Address_Type := Invalid_Address;
-   end record;
-
-   No_Frame : constant Frame :=
-     (-1, GNATCOLL.VFS.No_File, 0, Invalid_Address);
-   --  The first frame has id=0, so no_frame has id -1
-
    type DAP_Client
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
       Id     : Positive) is new LSP.Raw_Clients.Raw_Client
@@ -479,9 +436,6 @@ private
       Request_Id     : Integer := 1;
       Error_Msg      : VSS.Strings.Virtual_String;
 
-      Selected       : Frame := No_Frame;
-      Frames         : Backtrace_Vectors.Vector;
-
       --  to monitoring stoped threads
       Stopped_Threads     : Integer_Sets.Set;
       All_Threads_Stopped : Boolean := False;
@@ -490,6 +444,7 @@ private
       --  Modules --
       Breakpoints      : DAP.Modules.Breakpoint_Managers.
         DAP_Client_Breakpoint_Manager_Access;
+      Stack_Trace      : access DAP.Clients.Stack_Trace.Stack_Trace'Class;
 
       Command_History  : aliased String_History.History_List;
 
@@ -528,6 +483,12 @@ private
      (Self       : in out DAP_Client;
       Occurrence : Ada.Exceptions.Exception_Occurrence);
 
+   procedure Set_Status
+     (Self   : in out DAP_Client'Class;
+      Status : Debugger_Status_Kind);
+   --  Set the current debugging status.
+   --  Will run the debugger hook appropriate to the new status.
+
    procedure Process
      (Self    : in out DAP_Client;
       Request : in out DAP.Requests.DAP_Request_Access);
@@ -543,11 +504,6 @@ private
    procedure Load_Project_From_Executable (Self : in out DAP_Client);
    --  Creates a project based on the debugger's response about sources. Used
    --  when the debugger is started via the --debug switch.
-
-   procedure Get_StackTrace
-     (Self      : in out DAP_Client;
-      Thread_Id : Integer);
-   --  Sends a request to the debugger to get the current call stack.
 
    type Evaluate_Kind is
      (Hover,

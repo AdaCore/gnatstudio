@@ -136,15 +136,22 @@ package DAP.Types is
 
    package Integer_Ordered_Set is new Ada.Containers.Ordered_Sets (Integer);
 
-   type Backtrace_Record is record
-      Frame_Id : Natural := 0;
-      Name     : Ada.Strings.Unbounded.Unbounded_String;
-      File     : GNATCOLL.VFS.Virtual_File := GNATCOLL.VFS.No_File;
-      Line     : Natural := 0;
-      Address  : Address_Type := Invalid_Address;
+   -- Frames --
+
+   type Frame_Record is record
+      Id      : Integer := 0;
+      Name    : Ada.Strings.Unbounded.Unbounded_String;
+      File    : GNATCOLL.VFS.Virtual_File := GNATCOLL.VFS.No_File;
+      Line    : Natural := 0;
+      Address : Address_Type := Invalid_Address;
    end record;
 
-   package Backtrace_Vectors is new Ada.Containers.Vectors
-     (Positive, Backtrace_Record);
+   No_Frame : constant Frame_Record :=
+     (-1, Ada.Strings.Unbounded.Null_Unbounded_String,
+      GNATCOLL.VFS.No_File, 0, Invalid_Address);
+   --  The first frame has id=0, so no_frame has id -1
+
+   package Frames_Vectors is new Ada.Containers.Vectors
+     (Positive, Frame_Record);
 
 end DAP.Types;

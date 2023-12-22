@@ -32,6 +32,7 @@ with GPS.Kernel.Scripts;       use GPS.Kernel.Scripts;
 
 with DAP.Types;                use DAP.Types;
 with DAP.Clients;              use DAP.Clients;
+with DAP.Clients.Stack_Trace;  use DAP.Clients.Stack_Trace;
 with DAP.Module;
 with DAP.Modules.Breakpoints;
 with DAP.Modules.Persistent_Breakpoints;
@@ -352,12 +353,12 @@ package body DAP.Modules.Scripts is
 
       elsif Command = "frames" then
          declare
-            Bt : DAP.Types.Backtrace_Vectors.Vector;
+            Bt : DAP.Types.Frames_Vectors.Vector;
          begin
             Inst := Nth_Arg (Data, 1, New_Class (Kernel, "Debugger"));
             Visual := DAP_Visual_Debugger_Access
               (Glib.Object.GObject'(Get_Data (Inst)));
-            Visual.Client.Backtrace (Bt);
+            Bt := Visual.Client.Get_Stack_Trace.Get_Trace;
 
             Data.Set_Return_Value_As_List;
             for Frame of Bt loop
@@ -367,7 +368,7 @@ package body DAP.Modules.Scripts is
                     New_List (Get_Script (Data));
                   Empty  : constant String := "<>";
                begin
-                  Set_Nth_Arg (List, 1, Frame.Frame_Id);
+                  Set_Nth_Arg (List, 1, Frame.Id);
 
                   if Frame.Address /= Invalid_Address then
                      Set_Nth_Arg
@@ -404,25 +405,27 @@ package body DAP.Modules.Scripts is
          Inst := Nth_Arg (Data, 1, New_Class (Kernel, "Debugger"));
          Visual := DAP_Visual_Debugger_Access
            (Glib.Object.GObject'(Get_Data (Inst)));
-         Data.Set_Return_Value (Visual.Client.Get_Selected_Frame_Id);
+         Data.Set_Return_Value
+           (Visual.Client.Get_Stack_Trace.Get_Current_Frame_Id);
 
       elsif Command = "frame_up" then
          Inst := Nth_Arg (Data, 1, New_Class (Kernel, "Debugger"));
          Visual := DAP_Visual_Debugger_Access
            (Glib.Object.GObject'(Get_Data (Inst)));
-         Visual.Client.Frame_Up;
+         Visual.Client.Get_Stack_Trace.Frame_Up (Visual.Client);
 
       elsif Command = "frame_down" then
          Inst := Nth_Arg (Data, 1, New_Class (Kernel, "Debugger"));
          Visual := DAP_Visual_Debugger_Access
            (Glib.Object.GObject'(Get_Data (Inst)));
-         Visual.Client.Frame_Down;
+         Visual.Client.Get_Stack_Trace.Frame_Down (Visual.Client);
 
       elsif Command = "select_frame" then
          Inst := Nth_Arg (Data, 1, New_Class (Kernel, "Debugger"));
          Visual := DAP_Visual_Debugger_Access
            (Glib.Object.GObject'(Get_Data (Inst)));
-         Visual.Client.Select_Frame (Nth_Arg (Data, 2, 0));
+         Visual.Client.Get_Stack_Trace.Select_Frame
+           (Nth_Arg (Data, 2, 0), Visual.Client);
 
       elsif Command = "get_console" then
          Inst := Nth_Arg (Data, 1, New_Class (Kernel, "Debugger"));
