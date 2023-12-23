@@ -63,6 +63,7 @@ with Commands.Interactive;       use Commands.Interactive;
 with Debugger_Pixmaps;
 
 with DAP.Clients;                use DAP.Clients;
+with DAP.Clients.Stack_Trace;    use DAP.Clients.Stack_Trace;
 with DAP.Tools;                  use DAP.Tools;
 with DAP.Types;                  use DAP.Types;
 with DAP.Modules.Preferences;    use DAP.Modules.Preferences;
@@ -853,17 +854,20 @@ package body DAP.Views.Assembly is
       end loop;
 
       --  Highlight PC line
+      Iter_From_Address
+        (View, Client.Get_Stack_Trace.Get_Current_Address, Iter, Found);
 
-      Iter_From_Address (View, Client.Current_Address, Iter, Found);
       if Found then
          Model.Set
            (Iter, PC_Pixmap_Column,
             To_String (Debugger_Pixmaps.Current_Line_Pixbuf));
 
-      elsif In_Range (Client.Current_Address, View.Current_Range) then
+      elsif In_Range
+        (Client.Get_Stack_Trace.Get_Current_Address, View.Current_Range)
+      then
          for Index in 1 .. Natural (View.Current_Range.Data.Length) loop
             exit when View.Current_Range.Data.Element
-              (Index).Address > Client.Current_Address;
+              (Index).Address > Client.Get_Stack_Trace.Get_Current_Address;
 
             Last := View.Current_Range.Data.Element (Index).Address;
          end loop;
@@ -1195,17 +1199,19 @@ package body DAP.Views.Assembly is
    procedure Meta_Scroll_PC
      (View : Assembly_View)
    is
-      Client  : constant DAP.Clients.DAP_Client_Access := Get_Client (View);
-      Iter    : Gtk_Tree_Iter;
-      Path    : Gtk_Tree_Path;
-      Found   : Boolean;
+      Client : constant DAP.Clients.DAP_Client_Access := Get_Client (View);
+      Iter   : Gtk_Tree_Iter;
+      Path   : Gtk_Tree_Path;
+      Found  : Boolean;
    begin
       if View /= null
         and then Client /= null
       then
-         On_Frame_Changed (View, Client.Current_Address);
+         On_Frame_Changed (View, Client.Get_Stack_Trace.Get_Current_Address);
 
-         Iter_From_Address (View, Client.Current_Address, Iter, Found);
+         Iter_From_Address
+           (View, Client.Get_Stack_Trace.Get_Current_Address, Iter, Found);
+
          if Found then
             Path := View.Model.Get_Path (Iter);
             View.Tree.Scroll_To_Cell (Path, null, True, 0.5, 0.0);
@@ -1269,7 +1275,8 @@ package body DAP.Views.Assembly is
       Client : constant DAP.Clients.DAP_Client_Access := Get_Client (Self);
    begin
       if Client /= null then
-         Assembly_View (Self).On_Frame_Changed (Client.Current_Address);
+         Assembly_View (Self).On_Frame_Changed
+           (Client.Get_Stack_Trace.Get_Current_Address);
       end if;
    end On_Location_Changed;
 
@@ -1426,7 +1433,8 @@ package body DAP.Views.Assembly is
          Assembly_View (Self).Free_Cache;
 
       else
-         Assembly_View (Self).On_Frame_Changed (Client.Current_Address);
+         Assembly_View (Self).On_Frame_Changed
+           (Client.Get_Stack_Trace.Get_Current_Address);
       end if;
    end Update;
 

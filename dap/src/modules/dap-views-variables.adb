@@ -71,6 +71,7 @@ with GPS.Debuggers;
 with DAP.Module;
 with DAP.Modules.Contexts;        use DAP.Modules.Contexts;
 with DAP.Modules.Preferences;
+with DAP.Clients.Stack_Trace;     use DAP.Clients.Stack_Trace;
 with DAP.Utils;                   use DAP.Utils;
 
 with DAP.Views.Variables.Evaluate;
@@ -741,7 +742,8 @@ package body DAP.Views.Variables is
             Req.Parameters.arguments.expression := N;
             Req.Parameters.arguments.value :=
               VSS.Strings.Conversions.To_Virtual_String (Value);
-            Req.Parameters.arguments.frameId := Client.Get_Selected_Frame_Id;
+            Req.Parameters.arguments.frameId :=
+              Client.Get_Stack_Trace.Get_Current_Frame_Id;
             if Inf
               and then Element (Cursor).Format /= Default_Format
             then
@@ -1288,7 +1290,8 @@ package body DAP.Views.Variables is
             if Path /= Null_Gtk_Tree_Path then
                Req.Path := Copy (Path);
             end if;
-            Req.Parameters.arguments.frameId := Client.Get_Selected_Frame_Id;
+            Req.Parameters.arguments.frameId :=
+              Client.Get_Stack_Trace.Get_Current_Frame_Id;
             Result := DAP.Requests.DAP_Request_Access (Req);
 
          else
@@ -2023,7 +2026,7 @@ package body DAP.Views.Variables is
 
          Req.Parameters.arguments.expression := Item.Cmd;
          Req.Parameters.arguments.frameId :=
-           Self.Get_Client.Get_Selected_Frame_Id;
+           Self.Get_Client.Get_Stack_Trace.Get_Current_Frame_Id;
          Req.Parameters.arguments.context :=
            (Is_Set => True, Value => DAP.Tools.Enum.repl);
 

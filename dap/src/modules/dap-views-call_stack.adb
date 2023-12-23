@@ -16,9 +16,6 @@
 ------------------------------------------------------------------------------
 
 with Ada.Strings.Unbounded;      use Ada.Strings.Unbounded;
-with GNATCOLL.Traces;            use GNATCOLL.Traces;
-
-with VSS.Strings.Conversions;
 
 with Glib;                       use Glib;
 with Glib.Convert;               use Glib.Convert;
@@ -49,15 +46,10 @@ with Commands.Interactive;       use Commands.Interactive;
 with Filter_Panels;              use Filter_Panels;
 with GUI_Utils;
 
-with DAP.Modules.Preferences;
-with DAP.Requests.StackTrace;
-with DAP.Tools;                  use DAP.Tools;
 with DAP.Types;                  use DAP.Types;
-with DAP.Utils;                  use DAP.Utils;
+with DAP.Clients.Stack_Trace;    use DAP.Clients.Stack_Trace;
 
 package body DAP.Views.Call_Stack is
-
-   Me : constant Trace_Handle := Create ("GPS.DAP.Call_Stack", On);
 
    ---------------------
    -- Local constants --
@@ -116,16 +108,6 @@ package body DAP.Views.Call_Stack is
      (Widget : access Call_Stack_Record'Class) return Gtk_Widget;
    --  Internal initialization function
 
-   procedure Send_Request
-     (View : not null access Call_Stack_Record'Class;
-      From : Integer;
-      To   : Integer);
-
-   procedure On_Updated
-     (View : not null access Call_Stack_Record'Class;
-      From : Integer;
-      To   : Integer);
-
    procedure Goto_Location (Self : not null access Call_Stack_Record'Class);
 
    type Call_Stack_Tree_Record is new Tree_View_Record with record
@@ -153,10 +135,6 @@ package body DAP.Views.Call_Stack is
       Initialize                      => Initialize);
    subtype Call_Stack is CS_MDI_Views.View_Access;
    use type Call_Stack;
-
-   function Get_View
-     (Client : not null access DAP.Clients.DAP_Client'Class)
-      return access Call_Stack_Record'Class;
 
    package Simple_Views is new DAP.Views.Simple_Views
      (Formal_Views           => CS_MDI_Views,
@@ -193,23 +171,6 @@ package body DAP.Views.Call_Stack is
       Column : not null
       access Gtk.Tree_View_Column.Gtk_Tree_View_Column_Record'Class);
 
-   -- StackTrace_Request --
-
-   type StackTrace_Request is
-     new DAP.Requests.StackTrace.StackTrace_DAP_Request
-   with record
-      From : Integer;
-      To   : Integer;
-   end record;
-
-   type StackTrace_Request_Access is access all StackTrace_Request;
-
-   overriding procedure On_Result_Message
-     (Self        : in out StackTrace_Request;
-      Client      : not null access DAP.Clients.DAP_Client'Class;
-      Result      : in out DAP.Tools.StackTraceResponse;
-      New_Request : in out DAP.Requests.DAP_Request_Access);
-
    function Image (Value : Natural) return String;
 
    -----------------
@@ -232,8 +193,7 @@ package body DAP.Views.Call_Stack is
 
    overriding procedure Create_Toolbar
      (View    : not null access Call_Stack_Record;
-      Toolbar : not null access Gtk.Toolbar.Gtk_Toolbar_Record'Class)
-   is
+      Toolbar : not null access Gtk.Toolbar.Gtk_Toolbar_Record'Class) is
    begin
       View.Build_Filter
         (Toolbar     => Toolbar,
@@ -254,55 +214,6 @@ package body DAP.Views.Call_Stack is
    begin
       return S (S'First + 1 .. S'Last);
    end Image;
-
-   ------------------
-   -- Send_Request --
-   ------------------
-
-   procedure Send_Request
-     (View : not null access Call_Stack_Record'Class;
-      From : Integer;
-      To   : Integer)
-   is
-      use DAP.Clients;
-
-      Client     : constant DAP.Clients.DAP_Client_Access := Get_Client (View);
-      Backtraces : Backtrace_Vectors.Vector;
-      Req        : StackTrace_Request_Access;
-      F          : Integer := From;
-
-   begin
-      --  If the debugger was killed, no need to refresh
-      if Client = null then
-         Clear (View.Model);
-         return;
-      end if;
-
-      Client.Backtrace (Backtraces);
-
-      if Backtraces.Is_Empty
-        or else To > Backtraces.Last_Element.Frame_Id
-      then
-         if not Backtraces.Is_Empty then
-            F := Backtraces.Last_Element.Frame_Id + 1;
-         end if;
-
-         Req := new StackTrace_Request (View.Kernel);
-
-         Req.From   := F;
-         Req.To     := To;
-         Req.Parameters.arguments.threadId :=
-           Get_Client (View).Get_Current_Thread;
-         if From /= -1 then
-            Req.Parameters.arguments.startFrame := (True, F);
-            Req.Parameters.arguments.levels     := (True, To - F + 1);
-         end if;
-         Client.Enqueue (DAP.Requests.DAP_Request_Access (Req));
-
-      else
-         View.On_Updated (From, To);
-      end if;
-   end Send_Request;
 
    --------------------
    -- Filter_Changed --
@@ -329,33 +240,25 @@ package body DAP.Views.Call_Stack is
       Context : Selection_Context) return Boolean
    is
       pragma Unreferenced (Filter);
+      use type DAP.Clients.DAP_Client_Access;
+
+      View : constant Call_Stack :=
+        CS_MDI_Views.Retrieve_View (Get_Kernel (Context));
    begin
-      if DAP.Modules.Preferences.Frames_Limit.Get_Pref = 0 then
+      if View = null then
          return False;
       end if;
 
       declare
-         View : constant Call_Stack :=
-           Call_Stack (CS_MDI_Views.Retrieve_View (Get_Kernel (Context)));
+         Client : constant DAP.Clients.DAP_Client_Access := Get_Client (View);
       begin
-         if View = null then
+         if Client = null then
             return False;
+         else
+            return Client.Get_Stack_Trace.Can_Upload (Client);
          end if;
-
-         return View.Last < Integer'Last;
       end;
    end Filter_Matches_Primitive;
-
-   --------------
-   -- Get_View --
-   --------------
-
-   function Get_View
-     (Client : not null access DAP.Clients.DAP_Client'Class)
-      return access Call_Stack_Record'Class is
-   begin
-      return CS_MDI_Views.Retrieve_View (Client.Kernel);
-   end Get_View;
 
    --------------------
    -- Goto_Selection --
@@ -364,36 +267,16 @@ package body DAP.Views.Call_Stack is
    procedure Goto_Location (Self : not null access Call_Stack_Record'Class) is
       use DAP.Clients;
 
-      Client  : constant DAP.Clients.DAP_Client_Access := Get_Client (Self);
-      Model   : Gtk_Tree_Model;
-      Iter    : Gtk_Tree_Iter;
-      Id      : Integer;
-      File    : GNATCOLL.VFS.Virtual_File;
-      Line    : Integer;
-      Address : Address_Type;
+      Client : constant DAP.Clients.DAP_Client_Access := Get_Client (Self);
+      Model  : Gtk_Tree_Model;
+      Iter   : Gtk_Tree_Iter;
+      Id     : Integer;
    begin
       if Client /= null then
          Self.Tree.Get_Selection.Get_Selected (Model, Iter);
          if Iter /= Null_Iter then
-            declare
-               S : constant String := Model.Get_String (Iter, Memory_Column);
-            begin
-               Id      := Integer'Value
-                 (Model.Get_String (Iter, Frame_Id_Column));
-               File    := GNATCOLL.VFS.Create
-                 (+Model.Get_String (Iter, Sourse_Column));
-               Line    := Integer (Model.Get_Int (Iter, Line_Column));
-               Address :=
-                 (if S /= "<>"
-                  then String_To_Address (S)
-                  else Invalid_Address);
-
-               Self.Client.Set_Selected_Frame (Id, File, Line, Address);
-
-            exception
-               when E : others =>
-                  Trace (Me, E);
-            end;
+            Id := Integer'Value (Model.Get_String (Iter, Frame_Id_Column));
+            Client.Get_Stack_Trace.Select_Frame (Id, Client);
          end if;
       end if;
    end Goto_Location;
@@ -432,13 +315,19 @@ package body DAP.Views.Call_Stack is
       return Commands.Command_Return_Type
    is
       pragma Unreferenced (Command);
-      Kernel  : constant Kernel_Handle := Get_Kernel (Context.Context);
-      View    : constant Call_Stack    :=
+      use type DAP.Clients.DAP_Client_Access;
+
+      Kernel : constant Kernel_Handle := Get_Kernel (Context.Context);
+      View   : constant Call_Stack    :=
         Call_Stack (CS_MDI_Views.Retrieve_View (Kernel));
+      Client : DAP.Clients.DAP_Client_Access;
    begin
-      View.Send_Request
-        (View.Last + 1,
-         View.Last + DAP.Modules.Preferences.Frames_Limit.Get_Pref);
+      if View /= null then
+         Client := Get_Client (View);
+         if Client /= null then
+            Client.Get_Stack_Trace.Send_Request (Client);
+         end if;
+      end if;
 
       return Commands.Success;
    end Execute;
@@ -568,161 +457,6 @@ package body DAP.Views.Call_Stack is
    end On_Process_Terminated;
 
    -----------------------
-   -- On_Result_Message --
-   -----------------------
-
-   overriding procedure On_Result_Message
-     (Self        : in out StackTrace_Request;
-      Client      : not null access DAP.Clients.DAP_Client'Class;
-      Result      : in out DAP.Tools.StackTraceResponse;
-      New_Request : in out DAP.Requests.DAP_Request_Access)
-   is
-      pragma Unreferenced (New_Request);
-      View  : constant Call_Stack := Get_View (Client);
-
-      Backtrace : Backtrace_Vectors.Vector;
-   begin
-      if Length (Result.a_body.stackFrames) = 0 then
-         View.Last := Integer'Last;
-         View.On_Updated (Self.From, Self.To);
-         Self.Kernel.Context_Changed (No_Context);
-         return;
-      end if;
-
-      if Self.From > 0 then
-         Client.Backtrace (Backtrace);
-      end if;
-
-      for Index in 1 .. Length (Result.a_body.stackFrames) loop
-         declare
-            Frame : constant StackFrame_Variable_Reference :=
-              Get_StackFrame_Variable_Reference
-                (Result.a_body.stackFrames, Index);
-            Bt : Backtrace_Record;
-         begin
-            Bt.Frame_Id := Frame.id;
-            Bt.Name := VSS.Strings.Conversions.
-              To_Unbounded_UTF_8_String (Frame.name);
-
-            if Frame.instructionPointerReference.Is_Empty then
-               Bt.Address := String_To_Address
-                 (UTF8 (Frame.instructionPointerReference));
-            end if;
-            if Frame.source.Is_Set then
-               Bt.File := To_File (Frame.source.Value.path);
-               Bt.Line := Frame.line;
-            end if;
-            Backtrace.Append (Bt);
-         end;
-      end loop;
-
-      Client.Set_Backtrace (Backtrace);
-
-      if Self.From < 1 then
-         declare
-            Bt : constant Backtrace_Record := Backtrace.First_Element;
-         begin
-            Client.Set_Selected_Frame
-              (Id      => Bt.Frame_Id,
-               File    => Bt.File,
-               Line    => Bt.Line,
-               Address => Bt.Address);
-         end;
-      end if;
-
-      View.On_Updated (Self.From, Self.To);
-
-      if View.Last = Integer'Last then
-         Self.Kernel.Context_Changed (No_Context);
-      end if;
-   end On_Result_Message;
-
-   ----------------
-   -- On_Updated --
-   ----------------
-
-   procedure On_Updated
-     (View : not null access Call_Stack_Record'Class;
-      From : Integer;
-      To   : Integer)
-   is
-      Iter  : Gtk_Tree_Iter;
-      Path  : Gtk_Tree_Path;
-
-      Client     : constant DAP.Clients.DAP_Client_Access := Get_Client (View);
-      Backtraces : Backtrace_Vectors.Vector;
-   begin
-      if View = null then
-         return;
-      end if;
-
-      Client.Backtrace (Backtraces);
-
-      if Backtraces.Is_Empty then
-         View.Last := Integer'Last;
-
-         if From < 1 then
-            --  we requested frames from the first one but have nothing
-            Clear (View.Model);
-         end if;
-
-         return;
-      end if;
-
-      --  Update the contents of the window
-      if From < 1 then
-         Clear (View.Model);
-      end if;
-
-      for Bt of Backtraces loop
-         if From = -1
-           or else Bt.Frame_Id in From .. To
-         then
-            View.Model.Append (Iter, Null_Iter);
-
-            Set_All_And_Clear
-              (View.Model, Iter,
-               --  Id
-               (Frame_Id_Column => As_String (Image (Bt.Frame_Id)),
-                  --  Name
-                Name_Column => As_String (To_String (Bt.Name)),
-                --  Location
-                Location_Column => As_String
-                  (Escape_Text (+Full_Name (Bt.File) & ":" &
-                     Image (Bt.Line))),
-                --  Memory
-                Memory_Column => As_String
-                  (Escape_Text
-                     ((if Bt.Address = Invalid_Address
-                      then "<>"
-                      else Address_To_String (Bt.Address)))),
-                  --  Sourse
-                Sourse_Column => As_String (+Full_Name (Bt.File)),
-                --  Line
-                Line_Column => As_Int (Gint (Bt.Line))));
-
-            View.Last := Bt.Frame_Id;
-         end if;
-      end loop;
-
-      if View.Last < To then
-         View.Last := Integer'Last;
-      end if;
-
-      View.Tree.Refilter;
-
-      if Client.Get_Selected_Frame_Id /= -1 then
-         Gtk_New (Path, Image (Client.Get_Selected_Frame_Id));
-         View.Tree.Get_Selection.Select_Path (Path);
-         Path_Free (Path);
-
-      elsif View.Model.Get_Iter_First /= Null_Iter then
-         View.Tree.Get_Selection.Select_Iter
-           (View.Tree.Convert_To_Filter_Iter (View.Model.Get_Iter_First));
-      end if;
-   end On_Updated;
-
-   -----------------------
    -- On_Status_Changed --
    -----------------------
 
@@ -749,10 +483,10 @@ package body DAP.Views.Call_Stack is
          return;
       end if;
 
-      if Client.Get_Selected_Frame_Id >= 0 then
+      if Client.Get_Stack_Trace.Get_Current_Frame_Id >= 0 then
          Iter := GUI_Utils.Find_Node
            (Model     => Self.Tree.Model,
-            Name      => Image (Client.Get_Selected_Frame_Id),
+            Name      => Image (Client.Get_Stack_Trace.Get_Current_Frame_Id),
             Column    => Frame_Id_Column,
             Recursive => False);
 
@@ -767,47 +501,85 @@ package body DAP.Views.Call_Stack is
    -- Update --
    ------------
 
+   procedure Update (Kernel : GPS.Kernel.Kernel_Handle) is
+      View : constant Call_Stack    :=
+        Call_Stack (CS_MDI_Views.Retrieve_View (Kernel));
+   begin
+      if View /= null then
+         View.Update;
+      end if;
+   end Update;
+
+   ------------
+   -- Update --
+   ------------
+
    overriding procedure Update (View : not null access Call_Stack_Record) is
       use type DAP.Clients.DAP_Client_Access;
 
-      Limit : constant Integer :=
-        DAP.Modules.Preferences.Frames_Limit.Get_Pref;
-      From  : Integer := -1;
-      To    : Integer := 0;
+      Client : constant DAP.Clients.DAP_Client_Access := Get_Client (View);
+      Status : Debugger_Status_Kind;
+      Iter   : Gtk_Tree_Iter;
+      Path   : Gtk_Tree_Path;
+
    begin
-      if View.Get_Client /= null then
-         declare
-            Status : constant Debugger_Status_Kind :=
-              View.Get_Client.Get_Status;
-         begin
-            --  The debugger is stopped: send a request to update the call
-            --  stack.
+      Clear (View.Model);
 
-            if View.Get_Client.Get_Status = Stopped then
-               if Limit /= 0 then
-                  From := 0;
-                  To   := Limit - 1;
-               end if;
+      if Client /= null then
+         Status := View.Get_Client.Get_Status;
 
-               View.Send_Request (From, To);
-            else
-               declare
-                  Iter : Gtk_Tree_Iter;
-               begin
-                  --  The debugger is not stopped: clear the view and display
-                  --  a label according to the debugger's current status.
+         if Status = Stopped then
+            for Frame of Client.Get_Stack_Trace.Get_Trace loop
+               View.Model.Append (Iter, Null_Iter);
 
-                  Clear (View.Model);
-                  View.Model.Append (Iter, Null_Iter);
-                  Set_And_Clear
-                    (View.Model, Iter, (Frame_Id_Column, Name_Column),
-                     (1 => As_String (""),
-                      2 => As_String (if Status = Running
-                        then "Running..."
-                        else "No data")));
-               end;
+               Set_All_And_Clear
+                 (View.Model, Iter,
+                  --  Id
+                  (Frame_Id_Column => As_String (Image (Frame.Id)),
+                     --  Name
+                   Name_Column => As_String (To_String (Frame.Name)),
+                   --  Location
+                   Location_Column => As_String
+                     (Escape_Text (+Full_Name (Frame.File) & ":" &
+                        Image (Frame.Line))),
+                   --  Memory
+                   Memory_Column => As_String
+                     (Escape_Text
+                        ((if Frame.Address = Invalid_Address
+                         then "<>"
+                         else Address_To_String (Frame.Address)))),
+                     --  Sourse
+                   Sourse_Column => As_String (+Full_Name (Frame.File)),
+                   --  Line
+                   Line_Column => As_Int (Gint (Frame.Line))));
+            end loop;
+
+            View.Tree.Refilter;
+
+            if Client.Get_Stack_Trace.Get_Current_Frame_Id /= -1 then
+               Gtk_New
+                 (Path, Image (Client.Get_Stack_Trace.Get_Current_Frame_Id));
+               View.Tree.Get_Selection.Select_Path (Path);
+               Path_Free (Path);
+
+            elsif View.Model.Get_Iter_First /= Null_Iter then
+               View.Tree.Get_Selection.Select_Iter
+                 (View.Tree.Convert_To_Filter_Iter
+                    (View.Model.Get_Iter_First));
             end if;
-         end;
+
+         else
+            --  The debugger is not stopped: clear the view and display
+            --  a label according to the debugger's current status.
+
+            View.Model.Append (Iter, Null_Iter);
+            Set_And_Clear
+              (View.Model, Iter, (Frame_Id_Column, Name_Column),
+               (1 => As_String (""),
+                2 => As_String (if Status = Running
+                  then "Running..."
+                  else "No data")));
+         end if;
       end if;
    end Update;
 

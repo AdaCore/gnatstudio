@@ -41,6 +41,7 @@ with GPS.Kernel.Properties;
 
 with DAP.Modules.Preferences;
 with DAP.Requests;
+with DAP.Clients.Stack_Trace;     use DAP.Clients.Stack_Trace;
 with DAP.Views.Registers.Scopes;
 
 with Default_Preferences;         use Default_Preferences;
@@ -283,7 +284,8 @@ package body DAP.Views.Registers is
                     Name_Column));
             Req.Parameters.arguments.value :=
               VSS.Strings.Conversions.To_Virtual_String (New_Text);
-            Req.Parameters.arguments.frameId := Client.Get_Selected_Frame_Id;
+            Req.Parameters.arguments.frameId :=
+              Client.Get_Stack_Trace.Get_Current_Frame_Id;
 
             Client.Enqueue (DAP.Requests.DAP_Request_Access (Req));
          end;
@@ -555,7 +557,8 @@ package body DAP.Views.Registers is
             Req := new DAP.Views.Registers.Scopes.Scopes_Request (Self.Kernel);
 
             Req.Kind := Kind;
-            Req.Parameters.arguments.frameId := Client.Get_Selected_Frame_Id;
+            Req.Parameters.arguments.frameId :=
+              Client.Get_Stack_Trace.Get_Current_Frame_Id;
             Get_Client (Self).Enqueue (DAP.Requests.DAP_Request_Access (Req));
          end;
 

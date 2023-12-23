@@ -115,11 +115,6 @@ package body DAP.Module is
       Num : Integer)
       return DAP.Clients.DAP_Client_Access;
 
-   function Set_Current_Debugger
-     (Id : DAP_Module; Current : DAP.Clients.DAP_Client_Access)
-      return Boolean;
-   --  Returns True when current debugger is changed
-
    overriding function Tooltip_Handler
      (Module  : access DAP_Module_Record;
       Context : Selection_Context) return Gtk_Widget;
@@ -1222,7 +1217,7 @@ package body DAP.Module is
          --  Set current "active" debugger if any
          if DAP_Module_ID.Current_Debuger_ID = Id then
             if DAP_Module_ID.Clients.Is_Empty then
-               DAP_Module_ID.Current_Debuger_ID := 0;
+               Set_Current_Debugger (null);
             else
                Set_Current_Debugger (DAP_Module_ID.Clients.First_Element);
             end if;
@@ -1265,6 +1260,34 @@ package body DAP.Module is
       use type DAP.Clients.DAP_Client_Access;
       use type Generic_Views.Abstract_View_Access;
 
+      function Set_Current_Debugger
+        (Id : DAP_Module; Current : DAP.Clients.DAP_Client_Access)
+      return Boolean;
+
+      --------------------------
+      -- Set_Current_Debugger --
+      --------------------------
+
+      function Set_Current_Debugger
+        (Id : DAP_Module; Current : DAP.Clients.DAP_Client_Access)
+      return Boolean is
+      begin
+         if Id = null
+           or else (Current /= null
+                    and then Id.Current_Debuger_ID = Current.Id)
+         then
+            return False;
+         end if;
+
+         if Current /= null then
+            Id.Current_Debuger_ID := Current.Id;
+         else
+            Id.Current_Debuger_ID := 0;
+         end if;
+
+         return True;
+      end Set_Current_Debugger;
+
       Set : Boolean;
 
    begin
@@ -1286,51 +1309,6 @@ package body DAP.Module is
                else GPS.Debuggers.Debug_Available);
          end if;
       end if;
-   end Set_Current_Debugger;
-
-   --------------------------
-   -- Set_Current_Debugger --
-   --------------------------
-
-   function Set_Current_Debugger
-     (Id : DAP_Module; Current : DAP.Clients.DAP_Client_Access)
-      return Boolean
-   is
-      use type DAP.Clients.DAP_Client_Access;
-   begin
-      if Id = null
-        or else (Current /= null
-                 and then Id.Current_Debuger_ID = Current.Id)
-      then
-         return False;
-      end if;
-
-      if DAP.Modules.Preferences.Continue_To_Line_Buttons.Get_Pref then
-
-         --  If we are creating a debugger, enable the 'Continue to line' icons
-         --  on editors.
-         --  If we are setting the current debugger to null (i.e: when all the
-         --  debuggers are closed), make sure to disable them
-
-         --  To_Do: Implement Continue_To_Line
-         null;
-
-         --  if Id.Current_Debuger_ID = 0
-         --    and then Current /= null
-         --  then
-         --     Enable_Continue_To_Line_On_Editors (Id.Kernel);
-         --  elsif Current = null then
-         --     Disable_Continue_To_Line_On_Editors (Id.Kernel);
-         --  end if;
-      end if;
-
-      if Current /= null then
-         Id.Current_Debuger_ID := Current.Id;
-      else
-         Id.Current_Debuger_ID := 0;
-      end if;
-
-      return True;
    end Set_Current_Debugger;
 
    -------------------

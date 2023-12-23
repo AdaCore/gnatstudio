@@ -80,6 +80,7 @@ with DAP.Modules.Breakpoints;    use DAP.Modules.Breakpoints;
 with DAP.Modules.Persistent_Breakpoints;
 use DAP.Modules.Persistent_Breakpoints;
 with DAP.Clients;                use DAP.Clients;
+with DAP.Clients.Stack_Trace;    use DAP.Clients.Stack_Trace;
 with DAP.Module;
 with DAP.Tools;                  use DAP.Tools;
 with DAP.Utils;                  use DAP.Utils;
@@ -311,7 +312,7 @@ package body DAP.Views.Breakpoints is
 
    procedure Apply
      (Self   : not null access Properties_Editor_Record'Class;
-      Client : not null access DAP.Clients.DAP_Client'Class;
+      Client : access DAP.Clients.DAP_Client'Class;
       Br     : Breakpoint_Data);
    --  Apply the settings to the given breakpoint
 
@@ -383,7 +384,7 @@ package body DAP.Views.Breakpoints is
 
    procedure Apply
      (Self   : not null access Properties_Editor_Record'Class;
-      Client : not null access DAP.Clients.DAP_Client'Class;
+      Client : access DAP.Clients.DAP_Client'Class;
       Br     : Breakpoint_Data)
    is
       T         : constant Breakpoint_Kind :=
@@ -415,6 +416,7 @@ package body DAP.Views.Breakpoints is
 
          if Commands.Is_Empty
            and then not Br.Commands.Is_Empty
+           and then Client /= null
          then
             --  Delete commands on the server side
             Client.Set_Breakpoint_Command
@@ -875,7 +877,9 @@ package body DAP.Views.Breakpoints is
          Set_Text
            (Self.File_Name,
             +Relative_Path
-              (DAP.Module.Get_Current_Debugger.Current_File, Get_Current_Dir));
+              (DAP.Module.Get_Current_Debugger.Get_Stack_Trace.
+                   Get_Current_File,
+               Get_Current_Dir));
       end if;
 
       On_Type_Changed (Self);
@@ -961,7 +965,7 @@ package body DAP.Views.Breakpoints is
    begin
       if Self.Prevent_Bp_Selection
         or else Client = null
-        or else Client.Current_File = No_File
+        or else Client.Get_Stack_Trace.Get_Current_File = No_File
       then
          return;
       end if;
@@ -969,8 +973,10 @@ package body DAP.Views.Breakpoints is
       if Client /= null then
          for Data of Client.Get_Breakpoints loop
             for Loc of Data.Locations loop
-               if Get_File (Loc.Marker) = Client.Current_File
-                 and then Natural (Get_Line (Loc.Marker)) = Client.Current_Line
+               if Get_File (Loc.Marker) =
+                 Client.Get_Stack_Trace.Get_Current_File
+                 and then Natural (Get_Line (Loc.Marker)) =
+                   Client.Get_Stack_Trace.Get_Current_Line
                then
                   Id := Data.Num;
                   exit;
@@ -1448,7 +1454,7 @@ package body DAP.Views.Breakpoints is
          Fill (Props, Br);
 
          if Props.Run = Gtk_Response_Apply then
-            Apply (Props, View.Client, Br);
+            Apply (Props, View.Get_Client, Br);
          end if;
 
          --  No need to free Br: either it has not been created, or it was set
@@ -1551,7 +1557,7 @@ package body DAP.Views.Breakpoints is
          Fill (Props, Current);
 
          if Props.Run = Gtk_Response_Apply then
-            Apply (Props, View.Client, Current);
+            Apply (Props, View.Get_Client, Current);
          end if;
 
          Props.Destroy;
@@ -1634,7 +1640,8 @@ package body DAP.Views.Breakpoints is
               new Evaluate_Request (View.Kernel);
          begin
             Req.Parameters.arguments.expression := "info exceptions";
-            Req.Parameters.arguments.frameId := Client.Get_Selected_Frame_Id;
+            Req.Parameters.arguments.frameId :=
+              Client.Get_Stack_Trace.Get_Current_Frame_Id;
             Req.Parameters.arguments.context :=
               (Is_Set => True, Value => DAP.Tools.Enum.repl);
             Client.Enqueue (DAP.Requests.DAP_Request_Access (Req));

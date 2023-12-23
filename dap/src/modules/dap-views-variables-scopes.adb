@@ -15,6 +15,8 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
+with DAP.Clients.Stack_Trace;    use DAP.Clients.Stack_Trace;
+
 with DAP.Views.Variables.Variables;
 use DAP.Views.Variables.Variables;
 
@@ -93,7 +95,8 @@ package body DAP.Views.Variables.Scopes is
             end if;
 
             Req.Parameters.arguments.expression := Self.Item.Cmd;
-            Req.Parameters.arguments.frameId := Client.Get_Selected_Frame_Id;
+            Req.Parameters.arguments.frameId :=
+              Client.Get_Stack_Trace.Get_Current_Frame_Id;
             Req.Parameters.arguments.context :=
               (Is_Set => True, Value => DAP.Tools.Enum.repl);
 
