@@ -27,7 +27,6 @@ with GNATCOLL.Utils;
 
 with Spawn.String_Vectors;
 
-with Glib.Convert;
 with Glib.Object;                use Glib.Object;
 
 with Gtkada.Dialogs;
@@ -58,22 +57,18 @@ with DAP.Module;
 with DAP.Modules.Preferences;
 with DAP.Clients.Continue;
 with DAP.Clients.Disconnect;
+with DAP.Clients.Evaluate;
 with DAP.Clients.Initialize;
 with DAP.Clients.Stack_Trace;
 with DAP.Requests.Disconnect;
 
-with DAP.Requests.Evaluate;
 with DAP.Views.Consoles;
-with DAP.Views.Memory;
-with DAP.Views.Registers;
-with DAP.Views.Variables;
 with DAP.Tools.Inputs;
 with DAP.Utils;                  use DAP.Utils;
 
 with Interactive_Consoles;       use Interactive_Consoles;
 with GUI_Utils;
 with Language_Handlers;          use Language_Handlers;
-with String_Utils;
 with Toolchains;                 use Toolchains;
 with Remote;
 
@@ -90,40 +85,6 @@ package body DAP.Clients is
    procedure Free is new Ada.Unchecked_Deallocation
      (DAP.Clients.Stack_Trace.Stack_Trace'Class,
       DAP.Clients.Stack_Trace.Stack_Trace_Access);
-
-   -- Evaluate_Request --
-
-   type Evaluate_Request is
-     new DAP.Requests.Evaluate.Evaluate_DAP_Request
-   with record
-      Kind   : Evaluate_Kind := Hover;
-      Label  : Gtk.Label.Gtk_Label;
-      Output : Boolean := False;
-
-      -- Callbacks --
-      On_Result_Message : GNATCOLL.Scripts.Subprogram_Type := null;
-      On_Error_Message  : GNATCOLL.Scripts.Subprogram_Type := null;
-      On_Rejected       : GNATCOLL.Scripts.Subprogram_Type := null;
-   end record;
-   type Evaluate_Request_Access is access all Evaluate_Request;
-   overriding procedure Finalize (Self : in out Evaluate_Request);
-   overriding procedure On_Result_Message
-     (Self        : in out Evaluate_Request;
-      Client      : not null access DAP.Clients.DAP_Client'Class;
-      Result      : in out DAP.Tools.EvaluateResponse;
-      New_Request : in out DAP.Requests.DAP_Request_Access);
-   overriding procedure On_Rejected
-     (Self   : in out Evaluate_Request;
-      Client : not null access DAP.Clients.DAP_Client'Class);
-   overriding procedure On_Error_Message
-     (Self    : in out Evaluate_Request;
-      Client  : not null access DAP.Clients.DAP_Client'Class;
-      Message : VSS.Strings.Virtual_String);
-
-   Endian_Pattern            : constant VSS.Regular_Expressions.
-     Regular_Expression := VSS.Regular_Expressions.To_Regular_Expression
-       ("little endian");
-   --  Pattern used to detect endian
 
    Is_Quit_Pattern : constant VSS.Regular_Expressions.
      Regular_Expression := VSS.Regular_Expressions.To_Regular_Expression
@@ -806,8 +767,8 @@ package body DAP.Clients is
       Req : DAP.Requests.DAP_Request_Access;
    begin
       if TTY /= "" then
-         Req := Self.Create_Evaluate_Command
-           (Set_TTY, VSS.Strings.Conversions.To_Virtual_String ("tty " & TTY));
+         Req := DAP.Requests.DAP_Request_Access
+           (DAP.Clients.Evaluate.Create_Set_TTY (Self, TTY));
          Self.Enqueue (Req);
       end if;
    end Set_TTY;
@@ -930,8 +891,8 @@ package body DAP.Clients is
    ------------------------
 
    procedure On_Breakpoints_Set (Self : in out DAP_Client) is
-      Req : DAP.Requests.DAP_Request_Access := Self.Create_Evaluate_Command
-        (Endian, "show endian");
+      Req : DAP.Requests.DAP_Request_Access := DAP.Requests.DAP_Request_Access
+        (DAP.Clients.Evaluate.Create_Show_Endian (Self));
    begin
       Self.Enqueue (Req);
    end On_Breakpoints_Set;
@@ -1826,11 +1787,12 @@ package body DAP.Clients is
                   Self.Get_Stack_Trace.Select_Frame (Level, Self'Access);
                end if;
 
-               Request := Self.Create_Evaluate_Command
-                 (Command,
-                  VSS_Cmd,
-                  Result_In_Console,
-                  Result_Message, Error_Message, Rejected);
+               Request := DAP.Requests.DAP_Request_Access
+                 (DAP.Clients.Evaluate.Create_Command
+                    (Self,
+                     VSS_Cmd,
+                     Result_In_Console,
+                     Result_Message, Error_Message, Rejected));
 
                Self.Enqueue (Request);
                return;
@@ -2193,17 +2155,11 @@ package body DAP.Clients is
       Entity : String;
       Label  : Gtk.Label.Gtk_Label)
    is
-      Req : Evaluate_Request_Access := new Evaluate_Request (Self.Kernel);
+      Req : DAP.Requests.DAP_Request_Access := DAP.Requests.DAP_Request_Access
+        (DAP.Clients.Evaluate.Create_Value_Of
+           (Self, Label, VSS.Strings.Conversions.To_Virtual_String (Entity)));
    begin
-      Req.Label := Label;
-      Ref (GObject (Label));
-      Req.Parameters.arguments.expression :=
-        VSS.Strings.Conversions.To_Virtual_String (Entity);
-      Req.Parameters.arguments.frameId :=
-        Self.Get_Stack_Trace.Get_Current_Frame_Id;
-      Req.Parameters.arguments.context :=
-        (Is_Set => True, Value => DAP.Tools.Enum.repl);
-      Self.Enqueue (DAP.Requests.DAP_Request_Access (Req));
+      Self.Enqueue (Req);
    end Value_Of;
 
    ----------------------------
@@ -2215,254 +2171,26 @@ package body DAP.Clients is
       Id      : Breakpoint_Identifier;
       Command : VSS.Strings.Virtual_String)
    is
-      Req : Evaluate_Request_Access := new Evaluate_Request (Self.Kernel);
+      Req : DAP.Requests.DAP_Request_Access;
+      Cmd : VSS.Strings.Virtual_String;
    begin
-      Req.Kind := DAP.Clients.Command;
-      Req.Parameters.arguments.expression :=
-        VSS.Strings.Conversions.To_Virtual_String
-          ("command" & Breakpoint_Identifier'Image (Id)
-           & ASCII.LF) & Command;
+      Cmd := VSS.Strings.Conversions.To_Virtual_String
+        ("command" & Breakpoint_Identifier'Image (Id)
+         & ASCII.LF) & Command;
 
       if not Command.Is_Empty
         and then VSS.Strings.Cursors.Iterators.Characters.Element
           (Command.At_Last_Character) /= VSS.Characters.Latin.Line_Feed
       then
-         Req.Parameters.arguments.expression.Append
-           (VSS.Characters.Latin.Line_Feed);
+         Cmd.Append (VSS.Characters.Latin.Line_Feed);
       end if;
-      Req.Parameters.arguments.expression.Append
-        (VSS.Strings.Conversions.To_Virtual_String ("end"));
-      Req.Parameters.arguments.frameId :=
-        Self.Get_Stack_Trace.Get_Current_Frame_Id;
-      Req.Parameters.arguments.context :=
-        (Is_Set => True, Value => DAP.Tools.Enum.repl);
-      Self.Enqueue (DAP.Requests.DAP_Request_Access (Req));
+      Cmd.Append (VSS.Strings.Conversions.To_Virtual_String ("end"));
+
+      Req := DAP.Requests.DAP_Request_Access
+        (DAP.Clients.Evaluate.Create_Command (Self, Cmd));
+
+      Self.Enqueue (Req);
    end Set_Breakpoint_Command;
-
-   -----------------------------
-   -- Create_Evaluate_Command --
-   -----------------------------
-
-   function Create_Evaluate_Command
-     (Self              : DAP_Client;
-      Kind              : Evaluate_Kind;
-      Cmd               : Virtual_String;
-      Output            : Boolean := False;
-      On_Result_Message : GNATCOLL.Scripts.Subprogram_Type := null;
-      On_Error_Message  : GNATCOLL.Scripts.Subprogram_Type := null;
-      On_Rejected       : GNATCOLL.Scripts.Subprogram_Type := null)
-      return DAP.Requests.DAP_Request_Access
-   is
-      Req : constant Evaluate_Request_Access :=
-        new Evaluate_Request (Self.Kernel);
-   begin
-      Req.Kind   := Kind;
-      Req.Output := Output;
-
-      Req.On_Result_Message := On_Result_Message;
-      Req.On_Error_Message  := On_Error_Message;
-      Req.On_Rejected       := On_Rejected;
-
-      Req.Parameters.arguments.expression := Cmd;
-      Req.Parameters.arguments.frameId :=
-        Self.Get_Stack_Trace.Get_Current_Frame_Id;
-      Req.Parameters.arguments.context :=
-        (Is_Set => True, Value => DAP.Tools.Enum.repl);
-      return DAP.Requests.DAP_Request_Access (Req);
-   end Create_Evaluate_Command;
-
-   --------------
-   -- Finalize --
-   --------------
-
-   overriding procedure Finalize (Self : in out Evaluate_Request) is
-   begin
-      GNATCOLL.Scripts.Free (Self.On_Result_Message);
-      GNATCOLL.Scripts.Free (Self.On_Error_Message);
-      GNATCOLL.Scripts.Free (Self.On_Rejected);
-
-      DAP.Requests.Evaluate.Evaluate_DAP_Request (Self).Finalize;
-   end Finalize;
-
-   -----------------------
-   -- On_Result_Message --
-   -----------------------
-
-   overriding procedure On_Result_Message
-     (Self        : in out Evaluate_Request;
-      Client      : not null access DAP.Clients.DAP_Client'Class;
-      Result      : in out DAP.Tools.EvaluateResponse;
-      New_Request : in out DAP.Requests.DAP_Request_Access)
-   is
-      use GNATCOLL.Scripts;
-   begin
-      New_Request := null;
-
-      case Self.Kind is
-         when Endian =>
-            declare
-               Match : constant VSS.Regular_Expressions.
-                 Regular_Expression_Match :=
-                   Endian_Pattern.Match (Result.a_body.result);
-            begin
-               if Match.Has_Match then
-                  Client.Endian := Little_Endian;
-               else
-                  Client.Endian := Big_Endian;
-               end if;
-            end;
-            Client.Set_Status (Ready);
-
-         when Hover =>
-            Self.Label.Set_Markup
-              ("<b>Debugger value :</b> " & Glib.Convert.Escape_Text
-                 (UTF8 (Result.a_body.result)));
-            Unref (GObject (Self.Label));
-
-         when Variable_Address =>
-            declare
-               S     : constant String := UTF8 (Result.a_body.result);
-               Index : Integer := S'Last;
-            begin
-               String_Utils.Skip_To_Char (S, Index, 'x', Step => -1);
-               if Index >= S'First then
-                  DAP.Views.Memory.Display_Memory
-                    (Self.Kernel, "0" & S (Index .. S'Last));
-               else
-                  DAP.Views.Memory.Display_Memory (Self.Kernel, "0");
-               end if;
-            end;
-
-         when Command =>
-            if Self.Output
-              and then Client /= null
-            then
-               Client.Display_In_Debugger_Console
-                 (UTF8 (Result.a_body.result), False);
-            end if;
-
-            if Self.On_Result_Message /= null then
-               declare
-
-                  Arguments : Callback_Data'Class :=
-                    Self.On_Result_Message.Get_Script.Create (1);
-               begin
-                  Set_Nth_Arg (Arguments, 1, UTF8 (Result.a_body.result));
-
-                  declare
-                     Dummy : GNATCOLL.Any_Types.Any_Type :=
-                       Self.On_Result_Message.Execute (Arguments);
-
-                  begin
-                     null;
-                  end;
-
-                  Free (Arguments);
-               end;
-            end if;
-
-            --  Update views because the command may change them
-            if Client /= null then
-               DAP.Views.Variables.Update (Client);
-               DAP.Views.Registers.Update (Client);
-            end if;
-
-         when Set_TTY =>
-            null;
-      end case;
-   end On_Result_Message;
-
-   -----------------
-   -- On_Rejected --
-   -----------------
-
-   overriding procedure On_Rejected
-     (Self   : in out Evaluate_Request;
-      Client : not null access DAP.Clients.DAP_Client'Class)
-   is
-      use GNATCOLL.Scripts;
-   begin
-      case Self.Kind is
-         when Hover =>
-            Self.Label.Set_Markup ("<b>Debugger value :</b> (rejected)");
-            Unref (GObject (Self.Label));
-
-         when Command =>
-            if Self.Output then
-               Client.Display_In_Debugger_Console ("Rejected", False);
-            end if;
-
-            if Self.On_Rejected /= null then
-               declare
-                  Arguments : Callback_Data'Class :=
-                    Self.On_Rejected.Get_Script.Create (0);
-                  Dummy     : GNATCOLL.Any_Types.Any_Type :=
-                    Self.On_Rejected.Execute (Arguments);
-
-               begin
-                  Free (Arguments);
-               end;
-            end if;
-
-         when Endian =>
-            Client.Set_Status (Ready);
-
-         when Variable_Address | Set_TTY =>
-            null;
-      end case;
-   end On_Rejected;
-
-   ----------------------
-   -- On_Error_Message --
-   ----------------------
-
-   overriding procedure On_Error_Message
-     (Self    : in out Evaluate_Request;
-      Client  : not null access DAP.Clients.DAP_Client'Class;
-      Message : VSS.Strings.Virtual_String)
-   is
-      use GNATCOLL.Scripts;
-   begin
-      DAP.Requests.Evaluate.Evaluate_DAP_Request
-        (Self).On_Error_Message (Client, Message);
-
-      case Self.Kind is
-         when Hover =>
-            Self.Label.Set_Markup ("<b>Debugger value :</b> (error)");
-            Unref (GObject (Self.Label));
-
-         when Command =>
-            if Self.Output then
-               Client.Display_In_Debugger_Console (UTF8 (Message), False);
-            end if;
-
-            if Self.On_Error_Message /= null then
-               declare
-                  Arguments : Callback_Data'Class :=
-                    Self.On_Error_Message.Get_Script.Create (1);
-
-               begin
-                  Set_Nth_Arg (Arguments, 1, UTF8 (Message));
-
-                  declare
-                     Dummy : GNATCOLL.Any_Types.Any_Type :=
-                       Self.On_Error_Message.Execute (Arguments);
-
-                  begin
-                     null;
-                  end;
-
-                  Free (Arguments);
-               end;
-            end if;
-
-         when Endian =>
-            Client.Set_Status (Ready);
-
-         when Variable_Address | Set_TTY =>
-            null;
-      end case;
-   end On_Error_Message;
 
    ------------------------
    -- Command_In_Process --
@@ -2514,17 +2242,12 @@ package body DAP.Clients is
    begin
       if Variable /= "" then
          declare
-            Req : Evaluate_Request_Access :=
-              new Evaluate_Request (Self.Kernel);
+            Req : DAP.Requests.DAP_Request_Access :=
+              DAP.Requests.DAP_Request_Access
+                (DAP.Clients.Evaluate.Create_Variable_Address
+                   (Self, Variable));
          begin
-            Req.Kind := Variable_Address;
-            Req.Parameters.arguments.expression := VSS.Strings.Conversions.
-              To_Virtual_String ("print &(" & Variable & ")");
-            Req.Parameters.arguments.frameId :=
-              Self.Get_Stack_Trace.Get_Current_Frame_Id;
-            Req.Parameters.arguments.context :=
-              (Is_Set => True, Value => DAP.Tools.Enum.repl);
-            Self.Enqueue (DAP.Requests.DAP_Request_Access (Req));
+            Self.Enqueue (Req);
          end;
       end if;
    end Get_Variable_Address;
