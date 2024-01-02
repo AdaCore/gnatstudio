@@ -110,7 +110,7 @@ package DAP.Views is
    package Simple_Views is
 
       procedure Attach_To_View
-        (Client              : access DAP.Clients.DAP_Client'Class;
+        (Client              : not null access DAP.Clients.DAP_Client'Class;
          Kernel              : not null access Kernel_Handle_Record'Class;
          Create_If_Necessary : Boolean;
          Update_On_Attach    : Boolean := True;

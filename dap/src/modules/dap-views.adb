@@ -62,7 +62,7 @@ package body DAP.Views is
       --------------------
 
       procedure Attach_To_View
-        (Client              : access DAP.Clients.DAP_Client'Class;
+        (Client              : not null access DAP.Clients.DAP_Client'Class;
          Kernel              : not null access Kernel_Handle_Record'Class;
          Create_If_Necessary : Boolean;
          Update_On_Attach    : Boolean := True;
@@ -124,11 +124,15 @@ package body DAP.Views is
          Kernel : constant Kernel_Handle := Get_Kernel (Context.Context);
          Client : constant DAP.Clients.DAP_Client_Access :=
            DAP.Module.Get_Current_Debugger;
-
+         Dummy  : Formal_Views.View_Access;
       begin
-         if Works_Without_Debugger or else Client /= null then
+         if Client /= null then
             Attach_To_View (Client, Kernel, Create_If_Necessary => True);
+
+         elsif Works_Without_Debugger then
+            Dummy := Formal_Views.Get_Or_Create_View (Kernel);
          end if;
+
          return Commands.Success;
       end Execute;
 
