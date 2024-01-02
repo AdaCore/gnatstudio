@@ -1,5 +1,6 @@
 GPRBUILD=gprbuild
 GPRCLEAN=gprclean
+BUILD?=Debug
 
 SYS := $(shell gcc -dumpmachine)
 ifeq ($(OS),Windows_NT)

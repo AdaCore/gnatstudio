@@ -4387,7 +4387,14 @@ fi
   { $as_echo "$as_me:${as_lineno-$LINENO}: checking for GtkAda - version >= $min_gtk_version" >&5
 $as_echo_n "checking for GtkAda - version >= $min_gtk_version... " >&6; }
 
-  if test "$GNATDRV" = "no" -o ! `$GNATDRV ls -Pgtkada` ; then
+test ! "$GNATDRV" = "no"
+retval=$?
+if test $retval -eq 0 ; then
+    $GNATDRV ls -Pgtkada > /dev/null
+    retval=$?
+fi
+
+  if test $retval -ne 0 ; then
     no_gtk=yes
   else
     # Full version number
@@ -4579,7 +4586,7 @@ $as_echo_n "checking for $am_display_PYTHON version... " >&6; }
 if ${am_cv_python_version+:} false; then :
   $as_echo_n "(cached) " >&6
 else
-  am_cv_python_version=`$PYTHON -c "import sys; sys.stdout.write(sys.version[:3])"`
+  am_cv_python_version=`$PYTHON -c "import sys,re; sys.stdout.write(re.findall(r'(\d+\.\d+)\.', sys.version)[0])"`
 fi
 { $as_echo "$as_me:${as_lineno-$LINENO}: result: $am_cv_python_version" >&5
 $as_echo "$am_cv_python_version" >&6; }
@@ -5101,7 +5108,7 @@ See \`config.log' for more details" "$LINENO" 5; }
 
 
 
-   value=$PYTHON_LIBS $PYTHON_EXTRA_LIBS $PYTHON_EXTRA_LDFLAGS
+   value="$PYTHON_LIBS $PYTHON_EXTRA_LIBS $PYTHON_EXTRA_LDFLAGS"
 
    # Special handling on darwin for gcc 4.5 and 4.7
    case "$build_os" in
