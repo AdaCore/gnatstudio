@@ -198,7 +198,7 @@ package body DAP.Views.Consoles is
       Formal_MDI_Child   => GPS_MDI_Child_Record);
 
    procedure Attach_To_Debuggee_Console
-     (Client              : access DAP.Clients.DAP_Client'Class;
+     (Client              : not null access DAP.Clients.DAP_Client'Class;
       Kernel              : not null access Kernel_Handle_Record'Class;
       Create_If_Necessary : Boolean;
       Update_On_Attach    : Boolean;
@@ -267,7 +267,7 @@ package body DAP.Views.Consoles is
    end Allocate_TTY;
 
    procedure Attach_To_Debuggee_Console
-     (Client              : access DAP.Clients.DAP_Client'Class;
+     (Client              : not null access DAP.Clients.DAP_Client'Class;
       Kernel              : not null access Kernel_Handle_Record'Class;
       Create_If_Necessary : Boolean;
       Update_On_Attach    : Boolean;
