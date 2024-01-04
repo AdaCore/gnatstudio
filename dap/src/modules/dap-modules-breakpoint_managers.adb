@@ -378,8 +378,8 @@ package body DAP.Modules.Breakpoint_Managers is
               (DAP.Module.Get_Breakpoints_View).On_Status_Changed
               (GPS.Debuggers.Debug_Available);
          end if;
-         Self.Holder.Initialized;
 
+         Self.Holder.Initialized;
          Self.Client.On_Breakpoints_Set;
       end if;
    end Dec_Response;
