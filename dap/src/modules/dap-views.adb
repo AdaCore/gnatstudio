@@ -110,6 +110,24 @@ package body DAP.Views is
          end if;
       end Attach_To_View;
 
+      ----------------
+      -- Raise_View --
+      ----------------
+
+      procedure Raise_View (View : access Formal_View_Record'Class)
+      is
+         Child : MDI_Child;
+      begin
+         if View /= null then
+            Child := Formal_Views.Child_From_View (View);
+         end if;
+
+         if Child /= null then
+            Show (View);
+            Raise_Child (Child);
+         end if;
+      end Raise_View;
+
       -------------
       -- Execute --
       -------------

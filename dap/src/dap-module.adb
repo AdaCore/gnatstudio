@@ -30,7 +30,6 @@ with Gtk.Label;                    use Gtk.Label;
 with Gtk.Widget;                   use Gtk.Widget;
 
 with Gtkada.Dialogs;
-with Gtkada.MDI;                   use Gtkada.MDI;
 
 with Commands;                     use Commands;
 with Commands.Interactive;         use Commands.Interactive;
@@ -343,8 +342,7 @@ package body DAP.Module is
    is
       use type Generic_Views.Abstract_View_Access;
 
-      Client        : DAP.Clients.DAP_Client_Access;
-      Console_Child : MDI_Child;
+      Client : DAP.Clients.DAP_Client_Access;
    begin
       if DAP_Module_ID = null then
          return null;
@@ -400,14 +398,6 @@ package body DAP.Module is
 
       DAP.Modules.Persistent_Breakpoints.Hide_Breakpoints (Kernel);
       Set_Current_Debugger (Client);
-
-      --  Give the focus to the Debugger Console
-      Console_Child := Find_MDI_Child
-        (Get_MDI (Kernel), Client.Get_Debugger_Console);
-
-      if Console_Child /= null then
-         Raise_Child (Console_Child);
-      end if;
 
       return Client;
    end Debug_Init;
