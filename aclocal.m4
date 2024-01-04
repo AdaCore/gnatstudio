@@ -47,8 +47,8 @@ AC_DEFUN([AM_PATH_PYTHON],
   dnl supported. (2.0 was released on October 16, 2000).
   m4_define_default([_AM_PYTHON_INTERPRETER_LIST],
 [python python2 python3 dnl
- python3.9 python3.8 python3.7 python3.6 python3.5 python3.4 python3.3 dnl
- python3.2 python3.1 python3.0 dnl
+ python3.11 python3.10 python3.9 python3.8 python3.7 python3.6 python3.5 dnl
+ python3.4 python3.3 python3.2 python3.1 python3.0 dnl
  python2.7 python2.6 python2.5 python2.4 python2.3 python2.2 python2.1 dnl
  python2.0])
 
@@ -100,7 +100,7 @@ AC_DEFUN([AM_PATH_PYTHON],
   dnl library.
 
   AC_CACHE_CHECK([for $am_display_PYTHON version], [am_cv_python_version],
-    [am_cv_python_version=`$PYTHON -c "import sys; sys.stdout.write(sys.version[[:3]])"`])
+    [am_cv_python_version=`$PYTHON -c "import sys; sys.stdout.write(sys.version.split(' ')[0])"`])
   AC_SUBST([PYTHON_VERSION], [$am_cv_python_version])
 
   dnl Use the values of $prefix and $exec_prefix for the corresponding

@@ -4519,7 +4519,7 @@ $as_echo "no" >&6; }
 
         # Find any Python interpreter.
     if test -z "$PYTHON"; then
-      for ac_prog in python python2 python3  python3.9 python3.8 python3.7 python3.6 python3.5 python3.4 python3.3  python3.2 python3.1 python3.0  python2.7 python2.6 python2.5 python2.4 python2.3 python2.2 python2.1  python2.0
+      for ac_prog in python python2 python3 python3.11 python3.10 python3.9 python3.8 python3.7 python3.6 python3.5 python3.4 python3.3  python3.2 python3.0  python2.7 python2.6 python2.5 python2.4 python2.3 python2.2 python2.1  python2.0
 do
   # Extract the first word of "$ac_prog", so it can be a program name with args.
 set dummy $ac_prog; ac_word=$2
@@ -4579,7 +4579,7 @@ $as_echo_n "checking for $am_display_PYTHON version... " >&6; }
 if ${am_cv_python_version+:} false; then :
   $as_echo_n "(cached) " >&6
 else
-  am_cv_python_version=`$PYTHON -c "import sys; sys.stdout.write(sys.version[:3])"`
+  am_cv_python_version=`$PYTHON -c "import sys; sys.stdout.write(sys.version.split(' ')[0])"`
 fi
 { $as_echo "$as_me:${as_lineno-$LINENO}: result: $am_cv_python_version" >&5
 $as_echo "$am_cv_python_version" >&6; }
