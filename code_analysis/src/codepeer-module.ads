@@ -17,6 +17,7 @@
 
 --  ??? missing description of this package
 
+with Ada.Finalization;
 private with Ada.Containers.Indefinite_Hashed_Sets;
 private with Ada.Strings.Hash;
 
