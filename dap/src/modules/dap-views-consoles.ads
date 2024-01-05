@@ -51,6 +51,9 @@ package DAP.Views.Consoles is
    --  Return the interactive console associated with the given debugger.
    --  If no interactive console is associated with this debugger, return null.
 
+   procedure Raise_Debugger_Console (Client : access DAP_Client'Class);
+   --  Raises the debugger console and set focus on it
+
    --------------
    -- Debuggee --
    --------------

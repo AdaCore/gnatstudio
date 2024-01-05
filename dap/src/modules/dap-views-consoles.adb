@@ -291,6 +291,16 @@ package body DAP.Views.Consoles is
          Name                => Name);
    end Attach_To_Debugger_Console;
 
+   ----------------------------
+   -- Raise_Debugger_Console --
+   ----------------------------
+
+   procedure Raise_Debugger_Console (Client : access DAP_Client'Class) is
+   begin
+      Console_Views.Raise_View
+        (Debugger_Console (Client.Get_Debugger_Console));
+   end Raise_Debugger_Console;
+
    ---------------
    -- Close_TTY --
    ---------------

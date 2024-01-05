@@ -129,6 +129,9 @@ package DAP.Views is
          Filter      : GPS.Kernel.Action_Filter := null);
       --  Create a new action that will open the view.
 
+      procedure Raise_View (View : access Formal_View_Record'Class);
+      --  Raises the view and give the focus to it
+
    private
       procedure On_Destroy
         (View : access Gtk.Widget.Gtk_Widget_Record'Class);

@@ -530,6 +530,9 @@ package body DAP.Clients is
             GPS.Kernel.Hooks.Debugger_Started_Hook.Run
               (Self.Kernel, Self.Visual);
 
+            --  Give the focus to the Debugger Console
+            DAP.Views.Consoles.Raise_Debugger_Console (Self'Access);
+
          when Stopped =>
             GPS.Kernel.Hooks.Debugger_Process_Stopped_Hook.Run
               (Self.Kernel, Self.Visual);
