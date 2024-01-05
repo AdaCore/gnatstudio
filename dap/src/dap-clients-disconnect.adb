@@ -72,7 +72,13 @@ package body DAP.Clients.Disconnect is
    is
       pragma Unreferenced (New_Request);
    begin
-      Client.Set_Status (Initialized);
+      --  Stop the debugging session only if we launched the debuggee through
+      --  the debugger itself, not if we just attached to it.
+      if Client.Start_Method = DAP.Types.Attached then
+         Client.Set_Status (Initialized);
+      else
+         Client.Stop;
+      end if;
    end On_Result_Message;
 
    -----------------------------

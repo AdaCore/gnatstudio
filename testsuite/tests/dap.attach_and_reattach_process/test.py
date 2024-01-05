@@ -23,6 +23,7 @@ def test_driver():
     entry.set_text(os.environ["TESTPID"])
     ok_button.clicked()
     yield wait_DAP_server("stackTrace")
+    yield wait_idle()
 
     # Check that the debugger has been stopped when attaching to
     # the running process

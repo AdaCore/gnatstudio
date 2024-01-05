@@ -137,6 +137,10 @@ package body DAP.Clients is
    Bp_Subprogram_Idx : constant := 6;
    Bp_Condition_Idx  : constant := 7;
 
+   procedure Clear (Self : in out DAP_Client'Class);
+   --  Clear the given DAP client, freeing the managers for breakpoints and
+   --  stack traces.
+
    ------------------
    -- Allocate_TTY --
    ------------------
@@ -672,7 +676,6 @@ package body DAP.Clients is
          return 0;
       end if;
 
-      --  TODO: doc
       if Self.Selected_Thread /= 0 then
          return Self.Selected_Thread;
       else
@@ -897,20 +900,13 @@ package body DAP.Clients is
    -- On_Finished --
    -----------------
 
-   overriding procedure On_Finished (Self : in out DAP_Client)
-   is
-      use type DAP.Modules.Breakpoint_Managers.
-        DAP_Client_Breakpoint_Manager_Access;
-
+   overriding procedure On_Finished (Self : in out DAP_Client) is
    begin
       if Self.Visual = null then
          return;
       end if;
 
-      if Self.Breakpoints /= null then
-         Self.Breakpoints.Finalize;
-         Free (Self.Breakpoints);
-      end if;
+      Self.Clear;
 
       Unref (Self.Visual);
       Self.Visual := null;
@@ -2056,14 +2052,28 @@ package body DAP.Clients is
       Self.Start;
    end Start;
 
+   -----------
+   -- Clear --
+   -----------
+
+   procedure Clear (Self : in out DAP_Client'Class) is
+      use DAP.Modules.Breakpoint_Managers;
+   begin
+      if Self.Breakpoints /= null then
+         Self.Breakpoints.Finalize;
+         Free (Self.Breakpoints);
+      end if;
+
+      if Self.Stack_Trace /= null then
+         Free (Self.Stack_Trace);
+      end if;
+   end Clear;
+
    --------------------
    -- On_Before_Exit --
    --------------------
 
    procedure On_Before_Exit (Self : in out DAP_Client) is
-      use type DAP.Modules.Breakpoint_Managers.
-        DAP_Client_Breakpoint_Manager_Access;
-
    begin
       if Self.Status = Initialization
         or else Self.Status = Terminating
@@ -2071,12 +2081,7 @@ package body DAP.Clients is
          return;
       end if;
 
-      if Self.Breakpoints /= null then
-         Self.Breakpoints.Finalize;
-         Free (Self.Breakpoints);
-      end if;
-
-      Free (Self.Stack_Trace);
+      Self.Clear;
    exception
       when E : others =>
          Trace (Me, E);
@@ -2088,10 +2093,7 @@ package body DAP.Clients is
 
    procedure Quit (Self : in out DAP_Client)
    is
-      use type DAP.Modules.Breakpoint_Managers.
-        DAP_Client_Breakpoint_Manager_Access;
-
-      Old        : constant Debugger_Status_Kind := Self.Status;
+      Old : constant Debugger_Status_Kind := Self.Status;
    begin
       if Old = Terminating then
          return;
@@ -2102,10 +2104,7 @@ package body DAP.Clients is
            (Client             => Self,
             Terminate_Debuggee => True);
 
-         if Self.Breakpoints /= null then
-            Self.Breakpoints.Finalize;
-            Free (Self.Breakpoints);
-         end if;
+         Self.Clear;
       else
          Self.Stop;
       end if;
