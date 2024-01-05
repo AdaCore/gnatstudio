@@ -130,7 +130,7 @@ package DAP.Views is
       --  Create a new action that will open the view.
 
       procedure Raise_View (View : access Formal_View_Record'Class);
-      --  Raises the view and set focus
+      --  Raises the view and give the focus to it
 
    private
       procedure On_Destroy
