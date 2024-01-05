@@ -50,6 +50,7 @@ with GPS.Kernel.MDI;             use GPS.Kernel.MDI;
 with GPS.Kernel.Modules.UI;      use GPS.Kernel.Modules.UI;
 with GPS.Kernel.Preferences;     use GPS.Kernel.Preferences;
 
+with DAP.Clients.Evaluate;
 with DAP.Module;
 with DAP.Modules.Preferences;
 
@@ -231,10 +232,9 @@ package body DAP.Views.Consoles is
 
    procedure Allocate_TTY (Console : access Debuggee_Console_Record'Class) is
       Created : Boolean := False;
+      Client  : constant DAP_Client_Access := Console.Get_Client;
    begin
-      if not Console.TTY_Initialized
-        and then Console.Get_Client /= null
-      then
+      if not Console.TTY_Initialized and then Client /= null then
          if Console.Get_Client.Get_Debuggee_TTY = Null_TTY then
             Console.Get_Client.Allocate_TTY;
             Created := True;
@@ -253,11 +253,10 @@ package body DAP.Views.Consoles is
            TTY_Timeout.Timeout_Add
              (Timeout, TTY_Cb'Access, Console.all'Access);
 
-         if Created
-           and then Console.Get_Client /= null
-         then
-            Console.Get_Client.Set_TTY
-              (TTY_Name (Console.Get_Client.Get_Debuggee_TTY));
+         if Created and then Client /= null then
+            DAP.Clients.Evaluate.Send_Set_TTY_Request
+              (Client => Client.all,
+               TTY    => TTY_Name (Console.Get_Client.Get_Debuggee_TTY));
          end if;
       end if;
 

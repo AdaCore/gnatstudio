@@ -31,7 +31,6 @@ with VSS.Strings;
 with VSS.String_Vectors;
 
 with Glib;
-with Gtk.Label;
 
 with GPS.Kernel;
 with GPS.Debuggers;
@@ -120,17 +119,30 @@ package DAP.Clients is
 
    procedure On_Launched (Self : in out DAP_Client);
    --  Inform that the debugger is ready for debugging
+
    procedure On_Configured (Self : in out DAP_Client);
    --  Debugger starts executing debugree program
-   procedure On_Continue (Self : in out DAP_Client);
-   procedure On_Disconnected (Self : in out DAP_Client);
+
    procedure On_Breakpoints_Set (Self : in out DAP_Client);
+   --  Called when all the initial breakpoints have been set on the server
+   --  side. Will set the debugger's status to Ready.
+
+   procedure On_Continue (Self : in out DAP_Client);
+   --  Called on continue requests. Will set the debugger's status to Running.
+
+   procedure On_Disconnected (Self : in out DAP_Client);
+   --  Called when the debugger has been disconnected from the debuggee. Will
+   --  stop the debugging session.
+
    procedure On_Before_Exit (Self : in out DAP_Client);
-   --  Called when GNAT Studio is exiting
+   --  Called when GNAT Studio is exiting.
+
    procedure On_Destroy (Self : in out DAP_Client);
-   --  Called when DAP module is destroing
+   --  Called when DAP module is being destroyed, to terminate the current
+   --  debugging session.
 
    function Get_Status (Self : in out DAP_Client) return Debugger_Status_Kind;
+   --  Return the debugger's status.
 
    function Has_Breakpoint
      (Self   : DAP_Client;
@@ -262,13 +274,6 @@ package DAP.Clients is
       return DAP_Visual_Debugger_Access;
    --  Return the visual debugger associated with the given DAP client
 
-   procedure Value_Of
-     (Self   : in out DAP_Client;
-      Entity : String;
-      Label  : Gtk.Label.Gtk_Label);
-   --  Return a label displaying the value of the given entity. Used for
-   --  tooltips.
-
    procedure Set_Breakpoint_Command
      (Self    : in out DAP_Client;
       Id      : Breakpoint_Identifier;
@@ -295,11 +300,10 @@ package DAP.Clients is
 
    procedure Show_Breakpoints (Self : DAP_Client);
 
-   procedure Get_Variable_Address
-     (Self     : in out DAP_Client;
-      Variable : String);
-
    function Get_Endian_Type (Self : in out DAP_Client) return Endian_Type;
+   --  Reurn the debugee's endianness, if a debuggee has been
+   --  launched/attached.
+   --  Little endian is returned by default if not.
 
    function Get_Stack_Trace
      (Self : DAP_Client)
@@ -386,11 +390,6 @@ package DAP.Clients is
    procedure Close_TTY (Self : in out DAP_Client);
    --  Close TTY that is used for debuggee
 
-   procedure Set_TTY
-     (Self : in out DAP_Client;
-      TTY  : String);
-   --  Set the terminal of the program debugged to TTY (e.g "/dev/pts/2").
-
    procedure Continue_Execution (Self : in out DAP_Client);
    --  Sends the corresponding request to continue debuggee execution.
 
@@ -429,7 +428,7 @@ private
 
       Capabilities   : DAP.Tools.Optional_Capabilities;
       Status         : Debugger_Status_Kind := Initialization;
-      Endian         : Endian_Type := Little_Endian;
+      Endian         : Endian_Type := Unknown_Endian;
 
       Sent           : Requests_Maps.Map;
 

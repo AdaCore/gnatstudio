@@ -81,6 +81,8 @@ with GPS.Kernel.Preferences;   use GPS.Kernel.Preferences;
 
 with Commands.Interactive;     use Commands, Commands.Interactive;
 
+with DAP.Clients;              use DAP.Clients;
+with DAP.Clients.Evaluate;
 with DAP.Module;
 with DAP.Modules.Contexts;     use DAP.Modules.Contexts;
 with DAP.Modules.Preferences;  use DAP.Modules.Preferences;
@@ -209,7 +211,13 @@ package body DAP.Views.Memory is
 
    overriding procedure On_Process_Terminated
      (View : not null access DAP_Memory_View_Record);
+   overriding procedure On_Status_Changed
+     (View : not null access DAP_Memory_View_Record;
+      Status : GPS.Debuggers.Debugger_State);
    overriding procedure Update (View : not null access DAP_Memory_View_Record);
+   overriding procedure On_Attach
+     (Self   : not null access DAP_Memory_View_Record;
+      Client : not null access DAP.Clients.DAP_Client'Class);
    --  See inherited documentation
 
    function Initialize
@@ -435,6 +443,24 @@ package body DAP.Views.Memory is
       Clear_View (View);
    end On_Process_Terminated;
 
+   -----------------------
+   -- On_Status_Changed --
+   -----------------------
+
+   overriding procedure On_Status_Changed
+     (View : not null access DAP_Memory_View_Record;
+      Status : GPS.Debuggers.Debugger_State)
+   is
+      Client : constant DAP_Client_Access := View.Get_Client;
+   begin
+      if Client /= null then
+         --  The DAP client has a launched debuggee: ask for its endianness
+         if Client.Get_Status = Ready then
+            DAP.Clients.Evaluate.Send_Show_Endian_Request (Client.all);
+         end if;
+      end if;
+   end On_Status_Changed;
+
    --------------
    -- Get_View --
    --------------
@@ -658,10 +684,9 @@ package body DAP.Views.Memory is
    --------------------
 
    procedure Display_Memory
-     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
+     (Kernel  : access GPS.Kernel.Kernel_Handle_Record'Class;
       Address : String)
    is
-      use type DAP.Clients.DAP_Client_Access;
       Client : constant DAP.Clients.DAP_Client_Access :=
         DAP.Module.Get_Current_Debugger;
       View   : DAP_Memory_View;
@@ -1168,7 +1193,8 @@ package body DAP.Views.Memory is
          end;
 
       elsif Address /= "" then
-         Client.Get_Variable_Address (Address);
+         DAP.Clients.Evaluate.Send_Get_Variable_Address_Request
+           (Client.all, Address);
 
       else
          Display_Memory (View, 0);
@@ -1524,6 +1550,21 @@ package body DAP.Views.Memory is
          Display_Memory (View, Get_Text (View.Editor.Address_Entry));
       end if;
    end Update;
+
+   ---------------
+   -- On_Attach --
+   ---------------
+
+   overriding procedure On_Attach
+     (Self   : not null access DAP_Memory_View_Record;
+      Client : not null access DAP.Clients.DAP_Client'Class) is
+   begin
+      --  A DAP client has been attached to the newly opened view: ask for the
+      --  debuggee's endianness.
+      if Client.Get_Status in Ready | Stopped then
+         DAP.Clients.Evaluate.Send_Show_Endian_Request (Client.all);
+      end if;
+   end On_Attach;
 
    ---------------------------
    -- Watch_Cursor_Location --

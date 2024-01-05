@@ -30,6 +30,7 @@ with DAP.Views.Memory;
 with DAP.Views.Registers;
 with DAP.Views.Variables;
 with DAP.Utils;                  use DAP.Utils;
+with DAP.Requests;
 
 package body DAP.Clients.Evaluate is
 
@@ -43,7 +44,7 @@ package body DAP.Clients.Evaluate is
    ------------
 
    function Create
-     (Client            : DAP_Client;
+     (Client            : DAP_Client'Class;
       Kind              : Evaluate_Kind;
       Cmd               : VSS.Strings.Virtual_String;
       Output            : Boolean := False;
@@ -70,90 +71,102 @@ package body DAP.Clients.Evaluate is
       return Req;
    end Create;
 
-   --------------------
-   -- Create_Command --
-   --------------------
+   -----------------------------------
+   -- Send_Evaluate_Command_Request --
+   -----------------------------------
 
-   function Create_Command
-     (Client            : DAP_Client;
+   procedure Send_Evaluate_Command_Request
+     (Client            : in out DAP_Client'Class;
       Command           : VSS.Strings.Virtual_String;
       Output            : Boolean := False;
       On_Result_Message : GNATCOLL.Scripts.Subprogram_Type := null;
       On_Error_Message  : GNATCOLL.Scripts.Subprogram_Type := null;
       On_Rejected       : GNATCOLL.Scripts.Subprogram_Type := null)
-      return Evaluate_Request_Access is
-   begin
-      return DAP.Clients.Evaluate.Create
-        (Client,
-         DAP.Clients.Evaluate.Command,
-         Command,
-         Output,
-         On_Result_Message, On_Error_Message, On_Rejected);
-   end Create_Command;
-
-   ---------------------
-   -- Create_Value_Of --
-   ---------------------
-
-   function Create_Value_Of
-     (Client : DAP_Client;
-      Label  : Gtk.Label.Gtk_Label;
-      Cmd    : VSS.Strings.Virtual_String)
-      return Evaluate_Request_Access
    is
-      Req : constant Evaluate_Request_Access :=
-        new Evaluate_Request (Client.Kernel);
+      Req : DAP.Requests.DAP_Request_Access := DAP.Requests.DAP_Request_Access
+        (DAP.Clients.Evaluate.Create
+           (Client            => Client,
+            Kind              => DAP.Clients.Evaluate.Command,
+            Cmd               => Command,
+            Output            => Output,
+            On_Result_Message => On_Result_Message,
+            On_Error_Message  => On_Error_Message,
+            On_Rejected       => On_Rejected));
+   begin
+      Client.Enqueue (Req);
+   end Send_Evaluate_Command_Request;
+
+   -------------------------------
+   -- Send_Get_Value_Of_Request --
+   -------------------------------
+
+   procedure Send_Get_Value_Of_Request
+     (Client : in out DAP_Client'Class;
+      Label  : Gtk.Label.Gtk_Label;
+      Entity : String)
+   is
+      Req : Evaluate_Request_Access := new Evaluate_Request (Client.Kernel);
    begin
       Req.Label := Label;
       Ref (GObject (Label));
-      Req.Parameters.arguments.expression := Cmd;
+      Req.Parameters.arguments.expression :=
+        VSS.Strings.Conversions.To_Virtual_String (Entity);
       Req.Parameters.arguments.frameId :=
         Client.Get_Stack_Trace.Get_Current_Frame_Id;
       Req.Parameters.arguments.context :=
         (Is_Set => True, Value => DAP.Tools.Enum.repl);
-      return Req;
-   end Create_Value_Of;
 
-   -----------------------------
-   -- Create_Variable_Address --
-   -----------------------------
+      Client.Enqueue (DAP.Requests.DAP_Request_Access (Req));
+   end Send_Get_Value_Of_Request;
 
-   function Create_Variable_Address
-     (Client   : DAP_Client;
+   ---------------------------------------
+   -- Send_Get_Variable_Address_Request --
+   ---------------------------------------
+
+   procedure Send_Get_Variable_Address_Request
+     (Client   : in out DAP_Client'Class;
       Variable : String)
-      return Evaluate_Request_Access is
+   is
+      Req : DAP.Requests.DAP_Request_Access := DAP.Requests.DAP_Request_Access
+        (DAP.Clients.Evaluate.Create
+           (Client => Client,
+            Kind   => Variable_Address,
+            Cmd    => VSS.Strings.Conversions.To_Virtual_String
+              ("print &(" & Variable & ")")));
    begin
-      return DAP.Clients.Evaluate.Create
-        (Client, Variable_Address,
-         VSS.Strings.Conversions.
-           To_Virtual_String ("print &(" & Variable & ")"));
-   end Create_Variable_Address;
+      Client.Enqueue (Req);
+   end Send_Get_Variable_Address_Request;
 
-   --------------------
-   -- Create_Set_TTY --
-   --------------------
+   --------------------------
+   -- Send_Set_TTY_Request --
+   --------------------------
 
-   function Create_Set_TTY
-     (Client : DAP_Client;
+   procedure Send_Set_TTY_Request
+     (Client : in out DAP_Client'Class;
       TTY    : String)
-      return Evaluate_Request_Access is
+   is
+      Req : DAP.Requests.DAP_Request_Access := DAP.Requests.DAP_Request_Access
+        (Create
+           (Client, Set_TTY,
+            VSS.Strings.Conversions.To_Virtual_String ("tty " & TTY)));
    begin
-      return Create
-        (Client, Set_TTY,
-         VSS.Strings.Conversions.To_Virtual_String ("tty " & TTY));
-   end Create_Set_TTY;
+      Client.Enqueue (Req);
+   end Send_Set_TTY_Request;
 
-   ------------------------
-   -- Create_Show_Endian --
-   ------------------------
+   ------------------------------
+   -- Send_Show_Endian_Request --
+   ------------------------------
 
-   function Create_Show_Endian
-     (Client : DAP_Client)
-      return Evaluate_Request_Access is
+   procedure Send_Show_Endian_Request
+     (Client : in out DAP_Client'Class)
+   is
+      Req : DAP.Requests.DAP_Request_Access :=
+        DAP.Requests.DAP_Request_Access
+          (Create
+             (Client, DAP.Clients.Evaluate.Endian, "show endian"));
    begin
-      return DAP.Clients.Evaluate.Create
-        (Client, DAP.Clients.Evaluate.Endian, "show endian");
-   end Create_Show_Endian;
+      Client.Enqueue (Req);
+   end Send_Show_Endian_Request;
 
    --------------
    -- Finalize --
@@ -195,7 +208,6 @@ package body DAP.Clients.Evaluate is
                   Client.Endian := Big_Endian;
                end if;
             end;
-            Client.Set_Status (Ready);
 
          when Hover =>
             Self.Label.Set_Markup
@@ -288,10 +300,7 @@ package body DAP.Clients.Evaluate is
                end;
             end if;
 
-         when Endian =>
-            Client.Set_Status (Ready);
-
-         when Variable_Address | Set_TTY =>
+         when Endian | Variable_Address | Set_TTY =>
             null;
       end case;
    end On_Rejected;
@@ -340,10 +349,7 @@ package body DAP.Clients.Evaluate is
                end;
             end if;
 
-         when Endian =>
-            Client.Set_Status (Ready);
-
-         when Variable_Address | Set_TTY =>
+         when Endian | Variable_Address | Set_TTY =>
             null;
       end case;
    end On_Error_Message;

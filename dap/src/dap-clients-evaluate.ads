@@ -15,7 +15,11 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
+--  Implements the DAP 'evaluate' request, with a few helper functions
+--  that allow to send GDB-specific commands through this request.
+
 with DAP.Requests.Evaluate;
+with Gtk.Label;
 
 package DAP.Clients.Evaluate is
 
@@ -24,41 +28,36 @@ package DAP.Clients.Evaluate is
    with private;
    type Evaluate_Request_Access is access all Evaluate_Request'Class;
 
-   function Create_Command
-     (Client            : DAP_Client;
+   procedure Send_Evaluate_Command_Request
+     (Client            : in out DAP_Client'Class;
       Command           : VSS.Strings.Virtual_String;
       Output            : Boolean := False;
       On_Result_Message : GNATCOLL.Scripts.Subprogram_Type := null;
       On_Error_Message  : GNATCOLL.Scripts.Subprogram_Type := null;
-      On_Rejected       : GNATCOLL.Scripts.Subprogram_Type := null)
-      return Evaluate_Request_Access;
-   --  Creates the request that executes the Command. Show the result in the
+      On_Rejected       : GNATCOLL.Scripts.Subprogram_Type := null);
+   --  Send the request that executes the Command. Show the result in the
    --  debugger console if Output is true. On_* callbacks are used for the
    --  Python API.
 
-   function Create_Value_Of
-     (Client : DAP_Client;
+   procedure Send_Get_Value_Of_Request
+     (Client : in out DAP_Client'Class;
       Label  : Gtk.Label.Gtk_Label;
-      Cmd    : VSS.Strings.Virtual_String)
-      return Evaluate_Request_Access;
-   --  Creates the request to get the value of the Cmd
+      Entity : String);
+   --  Send the request to get the value of the given entity.
 
-   function Create_Variable_Address
-     (Client   : DAP_Client;
-      Variable : String)
-      return Evaluate_Request_Access;
-   --  Creates the request to get the variable's address
+   procedure Send_Get_Variable_Address_Request
+     (Client   : in out DAP_Client'Class;
+      Variable : String);
+   --  Send the request to get the variable's address.
 
-   function Create_Set_TTY
-     (Client : DAP_Client;
-      TTY    : String)
-      return Evaluate_Request_Access;
-   --  Creates the request to set TTY
+   procedure Send_Set_TTY_Request
+     (Client : in out DAP_Client'Class;
+      TTY    : String);
+   --  Send the request to set TTY.
 
-   function Create_Show_Endian
-     (Client : DAP_Client)
-      return Evaluate_Request_Access;
-   --  Creates the request to get endian
+   procedure Send_Show_Endian_Request
+     (Client : in out DAP_Client'Class);
+   --  Send the request to get the debuggee's endianness.
 
 private
 
@@ -110,7 +109,7 @@ private
       Message : VSS.Strings.Virtual_String);
 
    function Create
-     (Client            : DAP_Client;
+     (Client            : DAP_Client'Class;
       Kind              : Evaluate_Kind;
       Cmd               : VSS.Strings.Virtual_String;
       Output            : Boolean := False;
