@@ -31,6 +31,7 @@
 
 private with Ada.Containers.Hashed_Maps;
 private with Ada.Containers.Vectors;
+with Ada.Finalization;
 with Ada.Strings.Unbounded;
 private with Ada.Strings.Unbounded.Hash;
 with Ada.Tags;
