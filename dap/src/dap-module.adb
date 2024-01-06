@@ -21,6 +21,7 @@ with Ada.Unchecked_Deallocation;
 with GNATCOLL.Any_Types;           use GNATCOLL.Any_Types;
 with GNATCOLL.Traces;              use GNATCOLL.Traces;
 
+with Glib;                         use Glib;
 with Glib.Main;                    use Glib.Main;
 with Glib.Object;                  use Glib.Object;
 
@@ -29,7 +30,6 @@ with Gtk.Label;                    use Gtk.Label;
 with Gtk.Widget;                   use Gtk.Widget;
 
 with Gtkada.Dialogs;
-with Gtkada.MDI;                   use Gtkada.MDI;
 
 with Commands;                     use Commands;
 with Commands.Interactive;         use Commands.Interactive;
@@ -56,6 +56,7 @@ with DAP.Modules.Preferences;
 with DAP.Modules.Scripts;
 with DAP.Clients.Attach;
 with DAP.Clients.ConfigurationDone;
+with DAP.Clients.Evaluate;
 with DAP.Clients.Next;
 with DAP.Clients.StepIn;
 with DAP.Views.Assembly;
@@ -341,8 +342,7 @@ package body DAP.Module is
    is
       use type Generic_Views.Abstract_View_Access;
 
-      Client        : DAP.Clients.DAP_Client_Access;
-      Console_Child : MDI_Child;
+      Client : DAP.Clients.DAP_Client_Access;
    begin
       if DAP_Module_ID = null then
          return null;
@@ -398,14 +398,6 @@ package body DAP.Module is
 
       DAP.Modules.Persistent_Breakpoints.Hide_Breakpoints (Kernel);
       Set_Current_Debugger (Client);
-
-      --  Give the focus to the Debugger Console
-      Console_Child := Find_MDI_Child
-        (Get_MDI (Kernel), Client.Get_Debugger_Console);
-
-      if Console_Child /= null then
-         Raise_Child (Console_Child);
-      end if;
 
       return Client;
    end Debug_Init;
@@ -504,18 +496,26 @@ package body DAP.Module is
             return null;
          end if;
          Gtk_New (Label, "<b>Debugger value :</b> ...");
-         --  Retrieve the debugger output
-         Client.Value_Of
-           (Entity => Variable_Name,
-            Label  => Label);
-         --  If the tooltips is too long wrap it
+
+         --  Retrieve the variable's value via the appropriate DAP evaluate
+         --  request.
+         DAP.Clients.Evaluate.Send_Get_Value_Of_Request
+           (Client => Client.all,
+            Label  => Label,
+            Entity => Variable_Name);
+
+         --  Wrap the tooltip's text according to the the user's right margin
+         --  preference.
          Label.Set_Line_Wrap (True);
-         Label.Set_Max_Width_Chars (80);
+         Label.Set_Max_Width_Chars
+           (Gint
+              (Integer'(GPS.Kernel.Preferences.Gutter_Right_Margin.Get_Pref)));
          Label.Set_Use_Markup (True);
          Label.Modify_Font
            (GPS.Kernel.Preferences.View_Fixed_Font.Get_Pref);
          Label.Set_Alignment (0.0, 0.5);
          W := Gtk_Widget (Label);
+
          return W;
       end;
 

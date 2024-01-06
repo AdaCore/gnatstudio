@@ -507,6 +507,8 @@ package body DAP.Clients is
 
       Self.Status := Status;
 
+      Me.Trace ("Setting debugger's status to: " & Status'Img);
+
       if Self.Status not in Ready .. Stopped then
          if Self.Stack_Trace /= null then
             Self.Get_Stack_Trace.Clear;
@@ -527,6 +529,9 @@ package body DAP.Clients is
             --  have the mess with debugging
             GPS.Kernel.Hooks.Debugger_Started_Hook.Run
               (Self.Kernel, Self.Visual);
+
+            --  Give the focus to the Debugger Console
+            DAP.Views.Consoles.Raise_Debugger_Console (Self'Access);
 
          when Stopped =>
             GPS.Kernel.Hooks.Debugger_Process_Stopped_Hook.Run
@@ -756,23 +761,6 @@ package body DAP.Clients is
       end if;
    end Set_Breakpoints_State;
 
-   -------------
-   -- Set_TTY --
-   -------------
-
-   procedure Set_TTY
-     (Self : in out DAP_Client;
-      TTY  : String)
-   is
-      Req : DAP.Requests.DAP_Request_Access;
-   begin
-      if TTY /= "" then
-         Req := DAP.Requests.DAP_Request_Access
-           (DAP.Clients.Evaluate.Create_Set_TTY (Self, TTY));
-         Self.Enqueue (Req);
-      end if;
-   end Set_TTY;
-
    ------------------------
    -- Set_Selected_Frame --
    ------------------------
@@ -883,19 +871,9 @@ package body DAP.Clients is
 
    procedure On_Configured (Self : in out DAP_Client) is
    begin
+      --  TODO: this should be sent right after 'initialized'
       Self.Set_Status (Running);
    end On_Configured;
-
-   ------------------------
-   -- On_Breakpoints_Set --
-   ------------------------
-
-   procedure On_Breakpoints_Set (Self : in out DAP_Client) is
-      Req : DAP.Requests.DAP_Request_Access := DAP.Requests.DAP_Request_Access
-        (DAP.Clients.Evaluate.Create_Show_Endian (Self));
-   begin
-      Self.Enqueue (Req);
-   end On_Breakpoints_Set;
 
    -----------------
    -- On_Continue --
@@ -1160,16 +1138,30 @@ package body DAP.Clients is
 
    procedure On_Launched (Self : in out DAP_Client) is
    begin
+      --  The debuggee is now laucnhed: ask for its source files if we do not
+      --  have any loaded project.
       if not Self.Source_Files.Is_Empty then
          Self.Load_Project_From_Executable;
       end if;
 
-      --  Show Main file when 'info line' command is in the protocol
-
+      --  Initialize the Breakpoints' manager: it will send the needed requests
+      --  to set all the initial breakpoints on the server's side and set the
+      --  debugger's status to Ready when done.
       Self.Breakpoints := new DAP.Modules.Breakpoint_Managers.
         DAP_Client_Breakpoint_Manager (Self.Kernel, Self.This);
       DAP.Modules.Breakpoint_Managers.Initialize (Self.Breakpoints);
    end On_Launched;
+
+   ------------------------
+   -- On_Breakpoints_Set --
+   ------------------------
+
+   procedure On_Breakpoints_Set (Self : in out DAP_Client) is
+   begin
+      --  Set the status to ready now that all the initial breakpoints have
+      --  been properly set.
+      Self.Set_Status (Ready);
+   end On_Breakpoints_Set;
 
    --------------------
    -- On_Raw_Message --
@@ -1599,8 +1591,6 @@ package body DAP.Clients is
       use GNATCOLL.Scripts;
       use GNATCOLL.VFS;
 
-      Request : DAP.Requests.DAP_Request_Access;
-
       Tmp     : constant String := GPS.Kernel.Hooks.
         Debugger_Command_Action_Hook.Run
           (Kernel   => Self.Kernel,
@@ -1787,14 +1777,14 @@ package body DAP.Clients is
                   Self.Get_Stack_Trace.Select_Frame (Level, Self'Access);
                end if;
 
-               Request := DAP.Requests.DAP_Request_Access
-                 (DAP.Clients.Evaluate.Create_Command
-                    (Self,
-                     VSS_Cmd,
-                     Result_In_Console,
-                     Result_Message, Error_Message, Rejected));
+               DAP.Clients.Evaluate.Send_Evaluate_Command_Request
+                 (Client            => Self,
+                  Command           => VSS_Cmd,
+                  Output            => Result_In_Console,
+                  On_Result_Message => Result_Message,
+                  On_Error_Message  => Error_Message,
+                  On_Rejected       => Rejected);
 
-               Self.Enqueue (Request);
                return;
             end if;
          end if;
@@ -2146,22 +2136,6 @@ package body DAP.Clients is
       end if;
    end On_Destroy;
 
-   --------------
-   -- Value_Of --
-   --------------
-
-   procedure Value_Of
-     (Self   : in out DAP_Client;
-      Entity : String;
-      Label  : Gtk.Label.Gtk_Label)
-   is
-      Req : DAP.Requests.DAP_Request_Access := DAP.Requests.DAP_Request_Access
-        (DAP.Clients.Evaluate.Create_Value_Of
-           (Self, Label, VSS.Strings.Conversions.To_Virtual_String (Entity)));
-   begin
-      Self.Enqueue (Req);
-   end Value_Of;
-
    ----------------------------
    -- Set_Breakpoint_Command --
    ----------------------------
@@ -2171,7 +2145,6 @@ package body DAP.Clients is
       Id      : Breakpoint_Identifier;
       Command : VSS.Strings.Virtual_String)
    is
-      Req : DAP.Requests.DAP_Request_Access;
       Cmd : VSS.Strings.Virtual_String;
    begin
       Cmd := VSS.Strings.Conversions.To_Virtual_String
@@ -2186,10 +2159,7 @@ package body DAP.Clients is
       end if;
       Cmd.Append (VSS.Strings.Conversions.To_Virtual_String ("end"));
 
-      Req := DAP.Requests.DAP_Request_Access
-        (DAP.Clients.Evaluate.Create_Command (Self, Cmd));
-
-      Self.Enqueue (Req);
+      DAP.Clients.Evaluate.Send_Evaluate_Command_Request (Self, Cmd);
    end Set_Breakpoint_Command;
 
    ------------------------
@@ -2231,25 +2201,5 @@ package body DAP.Clients is
          Self.Breakpoints.Show_Breakpoints;
       end if;
    end Show_Breakpoints;
-
-   --------------------------
-   -- Get_Variable_Address --
-   --------------------------
-
-   procedure Get_Variable_Address
-     (Self     : in out DAP_Client;
-      Variable : String) is
-   begin
-      if Variable /= "" then
-         declare
-            Req : DAP.Requests.DAP_Request_Access :=
-              DAP.Requests.DAP_Request_Access
-                (DAP.Clients.Evaluate.Create_Variable_Address
-                   (Self, Variable));
-         begin
-            Self.Enqueue (Req);
-         end;
-      end if;
-   end Get_Variable_Address;
 
 end DAP.Clients;
