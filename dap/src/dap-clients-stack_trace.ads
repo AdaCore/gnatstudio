@@ -61,13 +61,16 @@ package DAP.Clients.Stack_Trace is
 
    procedure Select_Frame
      (Self   : Stack_Trace_Access;
-      Id     : Integer;
+      Id     : Natural;
       Client : access DAP.Clients.DAP_Client'Class);
-   --  Select the frame with the ID
+   --  Select the frame with the ID.
+   --  If the frame's location exists, the editor's cursor will be set to it,
+   --  opening a new editor if needed.
+   --  Do nothing if there is no frame associated with the given ID.
 
    procedure Set_Frame
      (Self    : Stack_Trace_Access;
-      Id      : Integer;
+      Id      : Natural;
       File    : GNATCOLL.VFS.Virtual_File;
       Line    : Integer := 0;
       Address : Address_Type);
@@ -92,7 +95,7 @@ private
    type Stack_Trace is tagged record
       Selected_Frame : Frame_Record := No_Frame;
       Frames         : Frames_Vectors.Vector;
-      Total_Count    : Integer := 0;
+      Total_Count    : Natural := 0;
    end record;
 
    procedure Select_Frame

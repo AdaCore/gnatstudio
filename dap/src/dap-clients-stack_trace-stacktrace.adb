@@ -62,49 +62,56 @@ package body DAP.Clients.Stack_Trace.StackTrace is
       use GNATCOLL.VFS;
       use DAP.Tools;
 
+      Stack_Trace : constant Stack_Trace_Access := Client.Get_Stack_Trace;
+      Frames      : Frames_Vectors.Vector renames Stack_Trace.Frames;
    begin
       New_Request := null;
 
       if Result.a_body.totalFrames.Is_Set then
-         Client.Get_Stack_Trace.Total_Count :=
+         Stack_Trace.Total_Count :=
            Result.a_body.totalFrames.Value;
 
       elsif Length (Result.a_body.stackFrames) = 0 then
          --  We do not have more frames, set Total_Count > 0 to
          --  disable sending more requests.
-         Client.Get_Stack_Trace.Total_Count := 1;
+         Stack_Trace.Total_Count := 1;
       end if;
 
       for Index in 1 .. Length (Result.a_body.stackFrames) loop
          declare
-            Frame : constant StackFrame_Variable_Reference :=
+            Frame_Ref : constant StackFrame_Variable_Reference :=
               Get_StackFrame_Variable_Reference
                 (Result.a_body.stackFrames, Index);
-            Bt : Frame_Record;
+            Frame     : Frame_Record;
          begin
-            Bt.Id := Frame.id;
-            Bt.Name     := VSS.Strings.Conversions.
-              To_Unbounded_UTF_8_String (Frame.name);
+            Frame.Id := Frame_Ref.id;
+            Frame.Name     := VSS.Strings.Conversions.
+              To_Unbounded_UTF_8_String (Frame_Ref.name);
 
-            if not Frame.instructionPointerReference.Is_Empty then
-               Bt.Address := String_To_Address
-                 (UTF8 (Frame.instructionPointerReference));
+            if not Frame_Ref.instructionPointerReference.Is_Empty then
+               Frame.Address := String_To_Address
+                 (UTF8 (Frame_Ref.instructionPointerReference));
             end if;
 
-            if Frame.source.Is_Set then
-               Bt.File := To_File (Frame.source.Value.path);
-               Bt.Line := Frame.line;
+            if Frame_Ref.source.Is_Set then
+               Frame.File := To_File (Frame_Ref.source.Value.path);
+               Frame.Line := Frame_Ref.line;
+               Frame.Location_Exists := Frame.File.Is_Regular_File;
             end if;
 
-            if Client.Get_Stack_Trace.Frames.Is_Empty then
-               Client.Get_Stack_Trace.Selected_Frame := Bt;
-
-               DAP.Utils.Highlight_Current_File_And_Line
-                 (Client.Kernel, Bt.File, Bt.Line);
-            end if;
-
-            Client.Get_Stack_Trace.Frames.Append (Bt);
+            Frames.Append (Frame);
          end;
+      end loop;
+
+      --  Select the first Frame_Ref that has an existing location, showing it
+      --  to the user.
+      for Id in Integer (Frames.First_Index) .. Integer (Frames.Length) loop
+         if Frames (Id).Location_Exists then
+            Stack_Trace.Select_Frame
+              (Frame  => Frames (Id),
+               Client => Client);
+            exit;
+         end if;
       end loop;
 
       Self.On_Response (Client, True);

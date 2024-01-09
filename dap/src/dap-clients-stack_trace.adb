@@ -120,15 +120,16 @@ package body DAP.Clients.Stack_Trace is
 
    procedure Select_Frame
      (Self   : Stack_Trace_Access;
-      Id     : Integer;
-      Client : access DAP.Clients.DAP_Client'Class) is
+      Id     : Natural;
+      Client : access DAP.Clients.DAP_Client'Class)
+   is
+      Frames : Frames_Vectors.Vector renames Self.Frames;
    begin
-      for D of Self.Frames loop
-         if D.Id = Id then
-            Self.Select_Frame (D, Client);
-            exit;
-         end if;
-      end loop;
+      if Id in Integer (Frames.First_Index) .. Integer (Frames.Length) then
+         Self.Select_Frame
+           (Frame  => Frames (Id),
+            Client => Client);
+      end if;
    end Select_Frame;
 
    --------------
@@ -179,14 +180,14 @@ package body DAP.Clients.Stack_Trace is
 
    procedure Set_Frame
      (Self    : Stack_Trace_Access;
-      Id      : Integer;
+      Id      : Natural;
       File    : GNATCOLL.VFS.Virtual_File;
       Line    : Integer := 0;
       Address : Address_Type) is
    begin
       Self.Selected_Frame :=
         (Id, Ada.Strings.Unbounded.Null_Unbounded_String,
-         File, Line, Address);
+         File, Line, Address, File.Is_Regular_File);
    end Set_Frame;
 
    -----------

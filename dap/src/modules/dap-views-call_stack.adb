@@ -22,6 +22,7 @@ with Glib.Convert;               use Glib.Convert;
 with Glib.Object;                use Glib.Object;
 with Glib_Values_Utils;          use Glib_Values_Utils;
 
+with Gdk.RGBA;
 with Gtk.Box;                    use Gtk.Box;
 with Gtk.Cell_Renderer_Text;     use Gtk.Cell_Renderer_Text;
 with Gtk.Enums;                  use Gtk.Enums;
@@ -36,9 +37,11 @@ with Gtk.Widget;                 use Gtk.Widget;
 with Gtkada.MDI;                 use Gtkada.MDI;
 with Gtkada.Tree_View;           use Gtkada.Tree_View;
 
+with GPS.Default_Styles;
 with GPS.Kernel.Actions;
 with GPS.Kernel.MDI;             use GPS.Kernel.MDI;
 with GPS.Kernel.Preferences;     use GPS.Kernel.Preferences;
+with GPS.Kernel.Style_Manager;   use GPS.Kernel.Style_Manager;
 with GPS.Search;                 use GPS.Search;
 
 with Default_Preferences;        use Default_Preferences;
@@ -60,7 +63,7 @@ package body DAP.Views.Call_Stack is
    Location_Column : constant := 2;
    Memory_Column   : constant := 3;
    Sourse_Column   : constant := 4;
-   Line_Column     : constant := 5;
+   Fg_Color_Column : constant := 5;
 
    Column_Types : constant GType_Array :=
      (Frame_Id_Column => GType_String,
@@ -68,7 +71,7 @@ package body DAP.Views.Call_Stack is
       Location_Column => GType_String,
       Memory_Column   => GType_String,
       Sourse_Column   => GType_String,
-      Line_Column     => GType_Int);
+      Fg_Color_Column => Gdk.RGBA.Get_Type);
 
    -----------------------
    -- Local subprograms --
@@ -141,7 +144,10 @@ package body DAP.Views.Call_Stack is
       Formal_View_Record     => Call_Stack_Record,
       Formal_MDI_Child       => GPS_MDI_Child_Record);
 
-   procedure Set_Column_Types (Self : not null access Call_Stack_Record'Class);
+   procedure Update_Columns_Visibility
+     (Self : not null access Call_Stack_Record'Class);
+   --  Update the view's columuns' visibility according to the user's
+   --  preferences.
 
    type On_Pref_Changed is
      new GPS.Kernel.Hooks.Preferences_Hooks_Function with null record;
@@ -291,7 +297,7 @@ package body DAP.Views.Call_Stack is
       Pref   : Preference)
    is
       pragma Unreferenced (Self);
-      Stack : Call_Stack;
+      View : Call_Stack;
    begin
       if Pref = null
         or else Pref = Preference (Show_Frame_Number)
@@ -299,9 +305,9 @@ package body DAP.Views.Call_Stack is
         or else Pref = Preference (Show_Location)
         or else Pref = Preference (Show_Address)
       then
-         Stack := CS_MDI_Views.Retrieve_View (Kernel);
-         Set_Column_Types (Stack);
-         Update (Stack);
+         View := CS_MDI_Views.Retrieve_View (Kernel);
+         Update_Columns_Visibility (View);
+         Update (View);
       end if;
    end Execute;
 
@@ -332,18 +338,18 @@ package body DAP.Views.Call_Stack is
       return Commands.Success;
    end Execute;
 
-   ----------------------
-   -- Set_Column_Types --
-   ----------------------
+   -------------------------------
+   -- Update_Columns_Visibility --
+   -------------------------------
 
-   procedure Set_Column_Types
+   procedure Update_Columns_Visibility
      (Self : not null access Call_Stack_Record'Class) is
    begin
       Set_Visible (Get_Column (Self.Tree, 0), Show_Frame_Number.Get_Pref);
       Set_Visible (Get_Column (Self.Tree, 1), Show_Name.Get_Pref);
       Set_Visible (Get_Column (Self.Tree, 2), Show_Location.Get_Pref);
       Set_Visible (Get_Column (Self.Tree, 3), Show_Address.Get_Pref);
-   end Set_Column_Types;
+   end Update_Columns_Visibility;
 
    ----------------
    -- Initialize --
@@ -370,7 +376,10 @@ package body DAP.Views.Call_Stack is
          Column.Set_Resizable (True);
          Column.Set_Title (Name);
          Column.Pack_Start (Text_Renderer, Expand => False);
-         Column.Add_Attribute (Text_Renderer, "markup", Index);
+         Column.Add_Attribute
+           (Text_Renderer, "markup", Index);
+         Column.Add_Attribute
+           (Text_Renderer, "foreground-rgba", Fg_Color_Column);
          Dummy := Widget.Tree.Append_Column (Column);
       end Add_Column;
 
@@ -393,16 +402,13 @@ package body DAP.Views.Call_Stack is
       Add_Column ("Location", Location_Column);
       Add_Column ("Address", Memory_Column);
 
-      --  Add_Column ("Line", Line_Column);
-      --  Set_Visible (Get_Column (Widget.Tree, Line_Column), False);
-
       Set_Name (Widget.Tree, "Callstack tree");
       Widget.Tree.Get_Selection.Set_Mode (Selection_Single);
       Widget.Model := Widget.Tree.Model;
 
       Scrolled.Add (Widget.Tree);
 
-      Set_Column_Types (Widget);
+      Update_Columns_Visibility (Widget);
 
       Widget.Tree.Set_Activate_On_Single_Click (True);
       Widget.Tree.On_Row_Activated (On_Clicked'Access, Widget);
@@ -518,10 +524,10 @@ package body DAP.Views.Call_Stack is
       use type DAP.Clients.DAP_Client_Access;
 
       Client : constant DAP.Clients.DAP_Client_Access := Get_Client (View);
-      Status : Debugger_Status_Kind;
-      Iter   : Gtk_Tree_Iter;
-      Path   : Gtk_Tree_Path;
-
+      Status   : Debugger_Status_Kind;
+      Iter     : Gtk_Tree_Iter;
+      Path     : Gtk_Tree_Path;
+      Fg_Color : Gdk.RGBA.Gdk_RGBA;
    begin
       Clear (View.Model);
 
@@ -530,28 +536,29 @@ package body DAP.Views.Call_Stack is
 
          if Status = Stopped then
             for Frame of Client.Get_Stack_Trace.Get_Trace loop
+               Fg_Color :=
+                 (if Frame.Location_Exists then
+                     GPS.Kernel.Preferences.Default_Style.Get_Pref_Fg
+                  else
+                     Background
+                       (GPS.Default_Styles.Editor_Code_Annotations_Style));
+
                View.Model.Append (Iter, Null_Iter);
 
                Set_All_And_Clear
                  (View.Model, Iter,
-                  --  Id
-                  (Frame_Id_Column => As_String (Image (Frame.Id)),
-                     --  Name
-                   Name_Column => As_String (To_String (Frame.Name)),
-                   --  Location
-                   Location_Column => As_String
+                  (Frame_Id_Column  => As_String (Image (Frame.Id)),
+                   Name_Column      => As_String (To_String (Frame.Name)),
+                   Location_Column  => As_String
                      (Escape_Text (+Full_Name (Frame.File) & ":" &
                         Image (Frame.Line))),
-                   --  Memory
-                   Memory_Column => As_String
+                   Memory_Column    => As_String
                      (Escape_Text
                         ((if Frame.Address = Invalid_Address
                          then "<>"
                          else Address_To_String (Frame.Address)))),
-                     --  Sourse
-                   Sourse_Column => As_String (+Full_Name (Frame.File)),
-                   --  Line
-                   Line_Column => As_Int (Gint (Frame.Line))));
+                   Sourse_Column    => As_String (+Full_Name (Frame.File)),
+                   Fg_Color_Column  => As_RGBA (Fg_Color)));
             end loop;
 
             View.Tree.Refilter;
