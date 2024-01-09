@@ -14,7 +14,9 @@
 -- COPYING3.  If not, go to http://www.gnu.org/licenses for a complete copy --
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
+
 with Ada.Exceptions;                   use Ada.Exceptions;
+with Ada.Unchecked_Deallocation;
 with GNATCOLL.Utils;                   use GNATCOLL.Utils;
 
 with Glib;                             use Glib;
@@ -85,6 +87,22 @@ package body Project_Templates.GUI is
 
    package Variable_Widgets is new Ada.Containers.Doubly_Linked_Lists
      (Variable_Widget_Record);
+
+   type Next_Page_Data_Record is record
+      Next_Page_Number : Gint := 0;
+      Errors           : Unbounded_String := Null_Unbounded_String;
+   end record;
+   type Next_Page_Data_Access is access Next_Page_Data_Record;
+
+   procedure Unchecked_Free is new Ada.Unchecked_Deallocation
+     (Next_Page_Data_Record, Next_Page_Data_Access);
+
+   package Forwarder is new Set_Forward_Page_Func_User_Data
+     (Next_Page_Data_Access);
+
+   function Next_Page
+     (Current_Page : Gint; User_Data : Next_Page_Data_Access) return Gint;
+   --  Next page function
 
    -------------------
    -- Template page --
@@ -351,6 +369,29 @@ package body Project_Templates.GUI is
       end if;
    end On_Browse_Clicked;
 
+   ---------------
+   -- Next_Page --
+   ---------------
+
+   function Next_Page
+     (Current_Page : Gint;
+      User_Data    : Next_Page_Data_Access) return Gint is
+   begin
+      if Current_Page = 0 and then User_Data.Next_Page_Number > 0 then
+         --  We are on the initial page containing the tree view.
+         return User_Data.Next_Page_Number;
+      else
+         --  We are in the page flow of the project template.
+         return Current_Page - 1;
+      end if;
+
+   exception
+      when E : others =>
+         User_Data.Errors :=
+           User_Data.Errors & ASCII.LF & Exception_Information (E);
+         return 0;
+   end Next_Page;
+
    ----------------------
    -- Install_Template --
    ----------------------
@@ -389,16 +430,10 @@ package body Project_Templates.GUI is
       Main_Label   : Gtk_Label;
       Bottom_Label : Gtk_Label;
 
-      Next_Page_Number : Gint;
+      Next_Page_Data : Next_Page_Data_Access := new Next_Page_Data_Record;
 
       use Templates_Script_Objects_List;
       C : Cursor;
-
-      package Forwarder is new Set_Forward_Page_Func_User_Data (Boolean);
-
-      function Next_Page
-        (Current_Page : Gint; User_Data : Boolean) return Gint;
-      --  Next page function
 
       procedure Add_Template
         (Template : Template_Script_Object);
@@ -424,28 +459,6 @@ package body Project_Templates.GUI is
 
       procedure Check_Completeness (Object : access GObject_Record'Class);
       --  Callback on a 'changed' on an entry in a template page
-
-      ---------------
-      -- Next_Page --
-      ---------------
-
-      function Next_Page
-        (Current_Page : Gint; User_Data : Boolean) return Gint is
-         pragma Unreferenced (User_Data);
-      begin
-         if Current_Page = 0 and then Next_Page_Number > 0 then
-            --  We are on the initial page containing the tree view.
-            return Next_Page_Number;
-         else
-            --  We are in the page flow of the project template.
-            return Current_Page - 1;
-         end if;
-
-      exception
-         when E : others =>
-            Errors := Errors & ASCII.LF & Exception_Information (E);
-            return 0;
-      end Next_Page;
 
       ----------------------------
       -- Get_Or_Create_Category --
@@ -632,13 +645,13 @@ package body Project_Templates.GUI is
          Get_Selected (Get_Selection (Tree), Dummy, Iter);
 
          if Iter = Null_Iter then
-            Next_Page_Number := 0;
+            Next_Page_Data.Next_Page_Number := 0;
          else
             Main_Label.Set_Text (Model.Get_String (Iter, Desc_Col));
-            Next_Page_Number := Model.Get_Int (Iter, Num_Col);
+            Next_Page_Data.Next_Page_Number := Model.Get_Int (Iter, Num_Col);
          end if;
 
-         if Next_Page_Number <= 0 then
+         if Next_Page_Data.Next_Page_Number <= 0 then
             Main_Label.Set_Text ("No template selected.");
             Assistant.Set_Page_Complete (Page_Box, False);
          else
@@ -689,7 +702,7 @@ package body Project_Templates.GUI is
                then
                   if Current_Page <= 0 then
                      Assistant.Set_Current_Page
-                       (Next_Page (Current_Page, False));
+                       (Next_Page (Current_Page, Next_Page_Data));
                   else
                      On_Apply_Assistant (Widget);
                   end if;
@@ -832,7 +845,7 @@ package body Project_Templates.GUI is
         (Assistant, "apply", On_Apply_Assistant'Unrestricted_Access);
 
       Forwarder.Set_Forward_Page_Func
-        (Assistant, Next_Page'Access, True);
+        (Assistant, Next_Page'Access, Next_Page_Data);
 
       --  Launch the assistant
 
@@ -866,6 +879,7 @@ package body Project_Templates.GUI is
       Gtk.Main.Main;
 
       Assistant.Destroy;
+      Unchecked_Free (Next_Page_Data);
    end Install_Template;
 
 end Project_Templates.GUI;

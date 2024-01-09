@@ -576,6 +576,8 @@ private
       Search_Context : GPS.Search.Search_Context := GPS.Search.No_Match;
       --  Used for the search entry. Set to the current context if a search
       --  is being done.
+
+      Destroyed : Boolean := False;
    end record;
 
    overriding procedure Insert

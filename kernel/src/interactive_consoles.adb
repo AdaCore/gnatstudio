@@ -18,6 +18,7 @@
 with Ada.Calendar;             use Ada.Calendar;
 with Ada.Strings.Fixed;        use Ada.Strings.Fixed;
 with Ada.Strings.Unbounded;    use Ada.Strings.Unbounded;
+with Ada.Unchecked_Conversion;
 with Ada.Unchecked_Deallocation;
 with GNATCOLL.Xref;
 with System;                   use System;
@@ -96,6 +97,12 @@ package body Interactive_Consoles is
 
    function Process_Lines (Self : Interactive_Console) return Boolean;
    --  Process the lines that are left to process, if any
+
+   procedure On_Console_Destroy (Console, Data : System.Address);
+   pragma Convention (C, On_Console_Destroy);
+
+   function Convert is new Ada.Unchecked_Conversion
+     (System.Address, Interactive_Console);
 
    ---------------------------------
    -- Interactive_Virtual_Console --
@@ -2062,6 +2069,17 @@ package body Interactive_Consoles is
       when E : others => Trace (Me, E);
    end Insert_And_Execute;
 
+   ------------------------
+   -- On_Console_Destroy --
+   ------------------------
+
+   procedure On_Console_Destroy (Console, Data : System.Address) is
+      pragma Unreferenced (Data);
+      C : constant Interactive_Console := Convert (Console);
+   begin
+      C.Destroyed := True;
+   end On_Console_Destroy;
+
    ---------------------
    -- Execute_Command --
    ---------------------
@@ -2073,17 +2091,6 @@ package body Interactive_Consoles is
       Output      : GNAT.Strings.String_Access;
       Prompt_Iter : Gtk_Text_Iter;
       Last_Iter   : Gtk_Text_Iter;
-      Destroyed   : Boolean := False;
-
-      procedure On_Console_Destroy (Console, Data : System.Address);
-      pragma Convention (C, On_Console_Destroy);
-
-      procedure On_Console_Destroy (Console, Data : System.Address) is
-         pragma Unreferenced (Console, Data);
-      begin
-         Destroyed := True;
-      end On_Console_Destroy;
-
    begin
       --  Processing the command could close the console (for instance
       --  executing "q" in the debugger). So we need to monitor its
@@ -2095,7 +2102,7 @@ package body Interactive_Consoles is
       Output := new String'
         (Console.Handler (Console, Command, Console.User_Data));
 
-      if Destroyed then
+      if Console.Destroyed then
          return;
       end if;
 
