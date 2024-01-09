@@ -557,6 +557,7 @@
       <button action="debug continue" hide='true'/>
       <button action="debug interrupt" hide='true'/>
       <button action="terminate debugger" hide='true'/>
+      <button action="debug detach" hide='true'/>
       <separator/>
       <button action="debug next" hide='true'/>
       <button action="debug finish" hide='true'/>

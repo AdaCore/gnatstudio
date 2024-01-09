@@ -17,43 +17,14 @@
 
 --  Concrete implementation of the DAP 'disconnect' request
 
-with DAP.Requests;        use DAP.Requests;
-with DAP.Requests.Disconnect;
-with GPS.Kernel;          use GPS.Kernel;
-
 package DAP.Clients.Disconnect is
 
-   type Disconnect_Request (<>) is
-     new DAP.Requests.Disconnect.Disconnect_DAP_Request with private;
-   type Disconnect_Request_Access is access all Disconnect_Request'Class;
-
-   function Create
-     (Kernel             : not null Kernel_Handle;
-      Terminate_Debuggee : Boolean)
-      return Disconnect_Request_Access;
-   --  Create a new DAP 'disconnect' request.
+   procedure Send_Disconnect_Request
+     (Client             : in out DAP.Clients.DAP_Client'Class;
+      Terminate_Debuggee : Boolean);
+   --  Send a DAP 'disconnect' request.
    --  Terminate_Debuggee indicates whether the debuggee should be terminated
-   --   when the debugger is disconnected if supported. If unspecified, the
-   --   debug adapter is free to do whatever it thinks is best.
-
-   overriding procedure On_Result_Message
-     (Self        : in out Disconnect_Request;
-      Client      : not null access DAP.Clients.DAP_Client'Class;
-      Result      : DAP.Tools.DisconnectResponse;
-      New_Request : in out DAP_Request_Access);
-
-   overriding procedure On_Rejected
-     (Self   : in out Disconnect_Request;
-      Client : not null access DAP.Clients.DAP_Client'Class);
-
-   overriding procedure On_Error_Message
-     (Self    : in out Disconnect_Request;
-      Client  : not null access DAP.Clients.DAP_Client'Class;
-      Message : VSS.Strings.Virtual_String);
-
-private
-
-   type Disconnect_Request is
-     new DAP.Requests.Disconnect.Disconnect_DAP_Request with null record;
+   --  when the debugger is disconnected if supported. If unspecified, the
+   --  debug adapter is free to do whatever it thinks is best.
 
 end DAP.Clients.Disconnect;

@@ -57,6 +57,8 @@ with DAP.Modules.Scripts;
 with DAP.Clients.Attach;
 with DAP.Clients.ConfigurationDone;
 with DAP.Clients.Evaluate;
+with DAP.Clients.Disconnect
+;
 with DAP.Clients.Next;
 with DAP.Clients.StepIn;
 with DAP.Views.Assembly;
@@ -66,7 +68,6 @@ with DAP.Views.Threads;
 with DAP.Views.Memory;
 with DAP.Views.Registers;
 with DAP.Views.Variables;
-with DAP.Requests;
 with DAP.Utils;
 
 package body DAP.Module is
@@ -201,6 +202,13 @@ package body DAP.Module is
      (Filter  : access Not_Command_Filter;
       Context : Selection_Context) return Boolean;
 
+   type Attached_Debuggee_Filter  is
+     new Action_Filter_Record with null record;
+   overriding function Filter_Matches_Primitive
+     (Filter  : access Attached_Debuggee_Filter;
+      Context : Selection_Context) return Boolean;
+   --  Return True when the debugger is attached to a debuggee process.
+
    -- Commands --
 
    type Initialize_Debugger_Command is new Interactive_Command with record
@@ -279,7 +287,15 @@ package body DAP.Module is
       Context : Interactive_Command_Context) return Command_Return_Type;
    --  Debug->Debug->Attach
 
+   type Detach_Command is new Interactive_Command with null record;
+   overriding function Execute
+     (Command : access Detach_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type;
+   --  Detach command
+
+   -----------
    -- Utils --
+   -----------
 
    function Debug_Init
      (Kernel          : GPS.Kernel.Kernel_Handle;
@@ -887,6 +903,8 @@ package body DAP.Module is
      (Command : access Attach_Command;
       Context : Interactive_Command_Context) return Command_Return_Type
    is
+      use DAP.Clients;
+
       Kernel : constant Kernel_Handle :=
         GPS.Kernel.Get_Kernel (Context.Context);
       PID    : constant String :=
@@ -896,15 +914,43 @@ package body DAP.Module is
            Password_Mode => False);
       Client : constant DAP.Clients.DAP_Client_Access :=
         Get_Current_Debugger;
-      Attach_Req : DAP.Clients.Attach.Attach_Request_Access :=
-        DAP.Clients.Attach.Create
-          (Kernel => Kernel,
-           PID    => Integer'Value (PID));
    begin
-      Client.Enqueue
-        (DAP.Requests.DAP_Request_Access (Attach_Req));
+      if Client /= null then
+         DAP.Clients.Attach.Send_Attach_Request
+           (Client => Client.all,
+            PID    => Integer'Value (PID));
 
-      return Commands.Success;
+         return Commands.Success;
+      else
+         return Commands.Failure;
+      end if;
+   end Execute;
+
+   -------------
+   -- Execute --
+   -------------
+
+   overriding function Execute
+     (Command : access Detach_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type
+   is
+      use DAP.Clients;
+
+      Client : constant DAP.Clients.DAP_Client_Access :=
+        Get_Current_Debugger;
+   begin
+      if Client /= null then
+         --  Send a DAP 'disconnect' request to detach the debugger from
+         --  the debuggee, specifying that it should not terminate the
+         --  debuggee since the user might want to re-attach to it later.
+         DAP.Clients.Disconnect.Send_Disconnect_Request
+           (Client             => Client.all,
+            Terminate_Debuggee => False);
+
+         return Commands.Success;
+      else
+         return Commands.Failure;
+      end if;
    end Execute;
 
    ------------------------------
@@ -1024,6 +1070,24 @@ package body DAP.Module is
       else
          return True;
       end if;
+   end Filter_Matches_Primitive;
+
+   ------------------------------
+   -- Filter_Matches_Primitive --
+   ------------------------------
+
+   overriding function Filter_Matches_Primitive
+     (Filter  : access Attached_Debuggee_Filter;
+      Context : Selection_Context) return Boolean
+   is
+      use DAP.Clients;
+      use DAP.Types;
+
+      Client : constant DAP.Clients.DAP_Client_Access :=
+        Get_Current_Debugger;
+   begin
+      return Client /= null
+        and then Client.Get_Debuggee_Start_Method = Attached;
    end Filter_Matches_Primitive;
 
    -----------------------
@@ -1387,7 +1451,7 @@ package body DAP.Module is
       Breakable_Filter      : Action_Filter;
       Entity_Filter         : Action_Filter;
       Is_Not_Command_Filter : Action_Filter;
-
+      Attached_Debuggee     : Action_Filter;
    begin
       Before_Exit_Action_Hook.Add (new On_Before_Exit);
 
@@ -1432,6 +1496,10 @@ package body DAP.Module is
       Register_Filter
         (Kernel, Is_Not_Command_Filter, "Debugger not command variable");
 
+      Attached_Debuggee := new Attached_Debuggee_Filter;
+      Register_Filter
+        (Kernel, Attached_Debuggee, "Debuggee attached");
+
       --  Actions --
 
       Project_View_Changed_Hook.Add (new On_Project_View_Changed);
@@ -1444,12 +1512,12 @@ package body DAP.Module is
         (Kernel, "terminate debugger", new Terminate_Command,
          Icon_Name   => "gps-debugger-terminate-symbolic",
          Description => "Terminate the current debugger",
-         Filter      => Has_Debugger);
+         Filter      => Has_Debugger and not Attached_Debuggee);
 
       GPS.Kernel.Actions.Register_Action
         (Kernel, "terminate all debuggers", new Terminate_All_Command,
          Description => "Terminate all running debugger",
-         Filter      => Has_Debugger);
+         Filter      => Has_Debugger and not Attached_Debuggee);
 
       GPS.Kernel.Modules.UI.Register_Contextual_Submenu
         (Kernel, "Debug",
@@ -1526,6 +1594,13 @@ package body DAP.Module is
         (Kernel, "debug attach", new Attach_Command,
          Description => "Attach to a running process",
          Filter      => Has_Debugger,
+         Category    => "Debug");
+
+      GPS.Kernel.Actions.Register_Action
+        (Kernel, "debug detach", new Detach_Command,
+         Icon_Name   => "gps-debugger-detach-symbolic",
+         Description => "Detach the running process from the debugger",
+         Filter      => Has_Debugger and Attached_Debuggee,
          Category    => "Debug");
 
       DAP.Modules.Persistent_Breakpoints.Register_Module (Kernel);

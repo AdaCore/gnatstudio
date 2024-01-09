@@ -44,7 +44,12 @@ package DAP.Modules.Breakpoint_Managers is
      all DAP_Client_Breakpoint_Manager'Class;
 
    procedure Initialize (Self : DAP_Client_Breakpoint_Manager_Access);
+   --  Initialize the breakpoints' manager and set the initial breakpoints
+   --  on the server's side.
+
    procedure Finalize (Self : DAP_Client_Breakpoint_Manager_Access);
+   --  Finalize the breakpoints' manager, saving the persistant breakpoints
+   --  if needed.
 
    procedure Stopped
      (Self         : DAP_Client_Breakpoint_Manager_Access;
@@ -57,7 +62,7 @@ package DAP.Modules.Breakpoint_Managers is
    procedure Break
      (Self : DAP_Client_Breakpoint_Manager_Access;
       Data : Breakpoint_Data);
-   --  Add breakpoint
+   --  Add the given breakpoint
 
    procedure Break_Source
      (Self      : DAP_Client_Breakpoint_Manager_Access;

@@ -17,35 +17,16 @@
 
 --  Concrete implementation of the DAP 'attach' request
 
-with DAP.Requests;        use DAP.Requests;
-with DAP.Requests.Attach;
-with GPS.Kernel;          use GPS.Kernel;
-
 package DAP.Clients.Attach is
 
-   type Attach_Request (<>) is new DAP.Requests.Attach.Attach_DAP_Request
-   with private;
-   type Attach_Request_Access is access all Attach_Request'Class;
-
-   function Create
-     (Kernel : not null Kernel_Handle;
+   procedure Send_Attach_Request
+     (Client : in out DAP.Clients.DAP_Client'Class;
       PID    : Integer := -1;
-      Target : String := "") return Attach_Request_Access;
-   --  Create a new DAP 'attach' request.
+      Target : String := "");
+   --  Send a DAP 'attach' request.
    --  PID refers to the process we want to attach to.
    --  Target refers to the remote target we want to connect.
    --  Note that PID and Target are mutually exclusive: specifying one
    --  parameter will make the underlying DAP adapter ignore the other.
-
-   overriding procedure On_Result_Message
-     (Self        : in out Attach_Request;
-      Client      : not null access DAP.Clients.DAP_Client'Class;
-      Result      : DAP.Tools.AttachResponse;
-      New_Request : in out DAP_Request_Access);
-
-private
-
-   type Attach_Request is new DAP.Requests.Attach.Attach_DAP_Request with
-     null record;
 
 end DAP.Clients.Attach;
