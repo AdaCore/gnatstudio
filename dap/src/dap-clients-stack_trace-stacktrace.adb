@@ -153,7 +153,7 @@ package body DAP.Clients.Stack_Trace.StackTrace is
       Client     : not null access DAP.Clients.DAP_Client'Class;
       Has_Result : Boolean) is
    begin
-      if Client.Get_Status = Running then
+      if Client.Get_Status /= Stopped then
          --  We uploaded the frames so can set the status to stopped to
          --  start updating the views.
          Client.Set_Status (Stopped);

@@ -156,7 +156,7 @@ package DAP.Views is
          Kernel    : not null access GPS.Kernel.Kernel_Handle_Record'Class;
          Debugger  : access GPS.Debuggers.Base_Visual_Debugger'Class;
          New_State : GPS.Debuggers.Debugger_State);
-      --  Hook called when the state of the debugger changes
+      --  Called when the state of the debugger changes
 
       type On_Debug_Location_Changed is
         new GPS.Kernel.Hooks.Debugger_Hooks_Function with null record;
@@ -164,6 +164,7 @@ package DAP.Views is
         (Self     : On_Debug_Location_Changed;
          Kernel   : not null access GPS.Kernel.Kernel_Handle_Record'Class;
          Debugger : access GPS.Debuggers.Base_Visual_Debugger'Class);
+      --  Called when the state of debugger's current location changes
 
       type On_Debug_Process_Terminated is
         new GPS.Kernel.Hooks.Debugger_Hooks_Function with null record;
@@ -179,6 +180,7 @@ package DAP.Views is
         (Self     : On_Debugger_Terminated;
          Kernel   : not null access GPS.Kernel.Kernel_Handle_Record'Class;
          Debugger : access GPS.Debuggers.Base_Visual_Debugger'Class);
+      --  Called when the the debugging session terminates
 
    end Simple_Views;
 

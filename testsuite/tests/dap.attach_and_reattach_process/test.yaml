@@ -1,0 +1,3 @@
+title: 'dap.attach_and_reattach_process'
+skip:
+    - ['SKIP', 'env.build.os.name == "windows"']

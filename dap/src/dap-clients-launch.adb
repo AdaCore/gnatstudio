@@ -27,6 +27,7 @@ with GPS.Kernel.Project;
 with Toolchains_Old;
 
 with DAP.Clients.LoadedSources;
+with DAP.Types;
 
 package body DAP.Clients.Launch is
 
@@ -178,6 +179,7 @@ package body DAP.Clients.Launch is
            (DAP.Clients.LoadedSources.Create (Self.Kernel));
 
       else
+         Client.Start_Method := DAP.Types.Launched;
          Client.On_Launched;
       end if;
    end On_Result_Message;
