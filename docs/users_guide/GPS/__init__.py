@@ -8594,6 +8594,14 @@ class Process(Command):
         """
         pass  # implemented in Ada
 
+    def get_pid(self):
+        """
+        Returns the process number if the process is running, or -1 if not.
+
+        :return: An integer
+        """
+        pass  # implemented in Ada
+
     def get_exit_status(self):
         """
         Returns the exit status of the command, if any or 0. Usually is used
