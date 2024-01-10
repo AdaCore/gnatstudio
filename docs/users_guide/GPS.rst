@@ -1753,6 +1753,8 @@ Classes
 
    .. automethod:: GPS.Process.get_exit_status
 
+   .. automethod:: GPS.Process.get_pid
+
    .. automethod:: GPS.Process.get_result
 
    .. automethod:: GPS.Process.interrupt
