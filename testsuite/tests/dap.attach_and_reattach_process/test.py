@@ -11,6 +11,14 @@ ATTACH_DIALOG_NAME = "Enter the PID of the process to attach to"
 
 @run_test_driver
 def test_driver():
+    # Build the project
+    GPS.execute_action("Build All")
+    yield wait_tasks()
+
+    # Run the process
+    proc = GPS.Process("./obj/main_t819_019")
+    pid = proc.get_pid()
+
     # Initialize a debug sessions without any main
     GPS.execute_action("/Debug/Initialize/no main file")
     yield wait_idle()
@@ -20,7 +28,7 @@ def test_driver():
     dialog = get_window_by_title(ATTACH_DIALOG_NAME)
     entry = get_widgets_by_type(Gtk.Entry, dialog)[0]
     ok_button = get_button_from_label("OK", dialog)
-    entry.set_text(os.environ["TESTPID"])
+    entry.set_text(str(pid))
     ok_button.clicked()
     yield wait_DAP_server("stackTrace")
     yield wait_idle()
@@ -60,9 +68,11 @@ def test_driver():
         "Default",
         "We should have exited the 'Debug' perspective after detaching",
     )
-    pid = GPS.Process("pidof main_t819_019").get_result()
     gps_assert(
-        pid,
-        os.environ["TESTPID"],
-        "The process should be running after detaching the debugger",
+        len(proc.list()),
+        1,
+        "The process should still be running after detaching the debugger",
     )
+
+    # Kill the process manually
+    proc.kill()
