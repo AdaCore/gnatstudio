@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                               GNAT Studio                                --
 --                                                                          --
---                     Copyright (C) 2023, AdaCore                          --
+--                   Copyright (C) 2023-2024, AdaCore                       --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -48,6 +48,7 @@ with VSS.Characters;
 with VSS.Regular_Expressions;     use VSS.Regular_Expressions;
 with VSS.Strings.Conversions;
 with VSS.Strings.Cursors.Iterators.Characters;
+with VSS.Transformers.Casing;     use VSS.Transformers.Casing;
 
 with GPS.Dialogs;                 use GPS.Dialogs;
 with GPS.Kernel.Actions;          use GPS.Kernel.Actions;
@@ -449,7 +450,7 @@ package body DAP.Views.Variables is
 
       Path := Self.Model.Get_Path (Store_Iter);
       for It2 of Self.Items loop
-         if It2.Varname.To_Lowercase = Full_Name then
+         if To_Lowercase.Transform (It2.Varname) = Full_Name then
             DAP_Variables_View (Self.View).Update (It2, 0, Path, True);
             return;
          end if;
@@ -1852,7 +1853,7 @@ package body DAP.Views.Variables is
          Cursor := First_Child (Cursor);
          Dummy  := False;
          while Cursor /= Variables_References_Trees.No_Element loop
-            if Element (Cursor).name.To_Lowercase = Part then
+            if To_Lowercase.Transform (Element (Cursor).name) = Part then
                exit;
             end if;
             Next_Sibling (Cursor);
@@ -1878,7 +1879,7 @@ package body DAP.Views.Variables is
          return;
       end if;
 
-      Find (Name.To_Lowercase);
+      Find (To_Lowercase.Transform (Name));
    end Find_Best_Ref;
 
    ------------------
@@ -1891,7 +1892,7 @@ package body DAP.Views.Variables is
       Found  : out Boolean)
    is
       use type Ada.Containers.Count_Type;
-      N : constant Virtual_String := Name.To_Lowercase;
+      N : constant Virtual_String := To_Lowercase.Transform (Name);
 
    begin
       Found := False;
@@ -1902,7 +1903,7 @@ package body DAP.Views.Variables is
 
       Cursor := First_Child (Cursor);
       while Cursor /= Variables_References_Trees.No_Element loop
-         if Element (Cursor).name.To_Lowercase = N then
+         if To_Lowercase.Transform (Element (Cursor).name) = N then
             Found := True;
             return;
          end if;
