@@ -471,6 +471,10 @@ private
      array (Reserved_Tag_Kinds) of Gtk.Text_Tag.Gtk_Text_Tag;
    --  Array of tags reserved in console
 
+   type Tag_Array is
+     array (Glib.Gint range <>) of Gtk.Text_Tag.Gtk_Text_Tag;
+   type Tag_Array_Access is access Tag_Array;
+
    package Lines_List is new Ada.Containers.Doubly_Linked_Lists
      (Ada.Strings.Unbounded.Unbounded_String, Ada.Strings.Unbounded."=");
 
@@ -578,6 +582,11 @@ private
       --  is being done.
 
       Destroyed : Boolean := False;
+
+      To_Delete_Tags : Tag_Array_Access := null;
+      --  Array of tags which will be deleted
+      Tag_Index      : Glib.Gint := 0;
+      --  Index in the array above
    end record;
 
    overriding procedure Insert
