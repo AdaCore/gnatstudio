@@ -147,19 +147,33 @@ package DAP.Types is
    -- Frames --
 
    type Frame_Record is record
-      Id      : Integer := 0;
-      Name    : Ada.Strings.Unbounded.Unbounded_String;
-      File    : GNATCOLL.VFS.Virtual_File := GNATCOLL.VFS.No_File;
-      Line    : Natural := 0;
-      Address : Address_Type := Invalid_Address;
+      Id             : Integer := -1;
+      --  The frame's unique ID. The first existing frame starts at 0.
+
+      Name           : Ada.Strings.Unbounded.Unbounded_String;
+      --  The frame's name. Usually refers to the subprogram name.
+
+      File           : GNATCOLL.VFS.Virtual_File := GNATCOLL.VFS.No_File;
+      --  The frame's file.
+
+      Line           : Natural := 0;
+      --  The frame's line number.
+
+      Address        : Address_Type := Invalid_Address;
+      --  The frame's address.
+
+      Location_Exists : Boolean := False;
+      --  True when the frame's SLOC can be reached (i.e: the file exists
+      --  on disk). Computed when receiving the 'stackTrace' DAP request's
+      --  results.
    end record;
 
    No_Frame : constant Frame_Record :=
      (-1, Ada.Strings.Unbounded.Null_Unbounded_String,
-      GNATCOLL.VFS.No_File, 0, Invalid_Address);
+      GNATCOLL.VFS.No_File, 0, Invalid_Address, False);
    --  The first frame has id=0, so no_frame has id -1
 
    package Frames_Vectors is new Ada.Containers.Vectors
-     (Positive, Frame_Record);
+     (Natural, Frame_Record);
 
 end DAP.Types;
