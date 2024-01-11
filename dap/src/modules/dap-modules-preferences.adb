@@ -120,6 +120,14 @@ package body DAP.Modules.Preferences is
          Label    => "Display console output category",
          Doc      => "Display the DAP 'console' output category.");
 
+      Debugger_Console_In_Out := Create_Invisible_Pref
+        (Manager  => Prefs,
+         Name     => "debugger-console-in-out",
+         Default  =>  False,
+         Label    => "Display DAP in/out JSON communication",
+         Doc      => "Display the IN/OUT JSON communication with the "
+         & "DAP server.");
+
       Pending_Breakpoints := Create
         (Manager   => Prefs,
          Name      => "Debugger-Pending-Breakpoints",

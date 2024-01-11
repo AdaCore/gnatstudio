@@ -141,6 +141,15 @@ package body DAP.Clients is
    --  Clear the given DAP client, freeing the managers for breakpoints and
    --  stack traces.
 
+   procedure Log
+     (Self                    : in out DAP_Client'Class;
+      Handle                  : GNATCOLL.Traces.Trace_Handle;
+      Msg                     : String;
+      Display_In_Console : Boolean := False);
+   --  Log a message using the given trace handle, if active.
+   --  If Display_In_Console is True, the message will also be printed
+   --  in the debugger console.
+
    ------------------
    -- Allocate_TTY --
    ------------------
@@ -1297,7 +1306,12 @@ package body DAP.Clients is
 
    begin
       if DAP_Log.Is_Active then
-         Trace (DAP_Log, "[" & Self.Id'Img & "<-]" & To_String (Data));
+         Self.Log
+           (Handle                  => DAP_Log,
+            Msg                     =>
+              "[" & Self.Id'Img & "<-]" & To_String (Data),
+            Display_In_Console =>
+              DAP.Modules.Preferences.Debugger_Console_In_Out.Get_Pref);
       end if;
 
       Memory.Set_Data
@@ -1937,12 +1951,13 @@ package body DAP.Clients is
 
          Self.Send_Buffer (Stream.Buffer);
 
-         if DAP_Log.Is_Active then
-            Trace (DAP_Log,
-                   "[" & Self.Id'Img & "->]"
-                   & VSS.Stream_Element_Vectors.Conversions.Unchecked_To_String
-                     (Stream.Buffer));
-         end if;
+         Self.Log
+           (Handle                  => DAP_Log,
+            Msg                     => "[" & Self.Id'Img & "->]"
+            & VSS.Stream_Element_Vectors.Conversions.Unchecked_To_String
+              (Stream.Buffer),
+            Display_In_Console =>
+              DAP.Modules.Preferences.Debugger_Console_In_Out.Get_Pref);
 
          --  Add request to the map
 
@@ -2068,6 +2083,29 @@ package body DAP.Clients is
          Free (Self.Stack_Trace);
       end if;
    end Clear;
+
+   ---------
+   -- Log --
+   ---------
+
+   procedure Log
+     (Self                    : in out DAP_Client'Class;
+      Handle                  : Trace_Handle;
+      Msg                     : String;
+      Display_In_Console : Boolean := False)
+   is
+   begin
+      if Handle.Is_Active then
+         Handle.Trace (Msg);
+      end if;
+
+      if Display_In_Console then
+         Display_In_Debugger_Console
+           (Self       => Self,
+            Msg        => Msg,
+            Is_Command => True);
+      end if;
+   end Log;
 
    --------------------
    -- On_Before_Exit --
