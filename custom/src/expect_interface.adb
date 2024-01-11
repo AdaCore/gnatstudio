@@ -654,6 +654,14 @@ package body Expect_Interface is
                Exit_Why => E);
             Data.Set_Return_Value (To_String (Str));
          end if;
+      elsif Command = "get_pid" then
+         D := Get_Data (Data, 1);
+
+         if D /= null and then D.Descriptor /= null then
+            Data.Set_Return_Value (Integer (D.Descriptor.Get_Pid));
+         else
+            Data.Set_Return_Value (Integer (Invalid_Pid));
+         end if;
 
       elsif Command = "get_exit_status" then
          D := Get_Data (Data, 1);
@@ -724,6 +732,10 @@ package body Expect_Interface is
          Handler      => Custom_Spawn_Handler'Access);
       Kernel.Scripts.Register_Command
         ("get_result",
+         Class        => Process_Class,
+         Handler      => Custom_Spawn_Handler'Access);
+      Kernel.Scripts.Register_Command
+        ("get_pid",
          Class        => Process_Class,
          Handler      => Custom_Spawn_Handler'Access);
       Kernel.Scripts.Register_Command
