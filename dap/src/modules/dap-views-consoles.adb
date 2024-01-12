@@ -340,6 +340,8 @@ package body DAP.Views.Consoles is
    begin
       Append_Menu
         (Menu, View.Kernel, DAP.Modules.Preferences.Debugger_Console_Console);
+         Append_Menu
+        (Menu, View.Kernel, DAP.Modules.Preferences.Debugger_Console_In_Out);
    end Create_Menu;
 
    --------------------------------------

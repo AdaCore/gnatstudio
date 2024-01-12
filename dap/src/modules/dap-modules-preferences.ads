@@ -40,6 +40,7 @@ package DAP.Modules.Preferences is
 
    -- Console --
    Debugger_Console_Console      : Boolean_Preference;
+   Debugger_Console_In_Out       : Boolean_Preference;
 
    --  Call stack
    Frames_Limit                  : Integer_Preference;
