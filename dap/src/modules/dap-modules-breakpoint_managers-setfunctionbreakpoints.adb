@@ -75,13 +75,11 @@ package body DAP.Modules.Breakpoint_Managers.SetFunctionBreakpoints is
                  (Convert (Self.Kernel, Result.a_body.breakpoints (Index)));
             end loop;
 
-            Self.Manager.Holder.Initialized_For_Subprograms
-              (Actual, Self.Last);
+            Self.Manager.Holder.Initialized_For_Subprograms (Actual);
 
             if Self.Last then
-               for Data of Actual loop
-                  Self.Manager.Send_Commands (Data);
-               end loop;
+               --  Post set actions like deleting pending
+               Self.Manager.Done_For_Subprograms (Set_Commands => True);
             end if;
 
          when Add =>
@@ -90,17 +88,19 @@ package body DAP.Modules.Breakpoint_Managers.SetFunctionBreakpoints is
                  (Convert (Self.Kernel, Result.a_body.breakpoints (Index)));
             end loop;
 
-            Self.Manager.Holder.Added_Subprogram
+            Self.Manager.Added_Subprogram
               (Self.Sent.Last_Element, Actual, Num);
 
-            Self.Manager.Send_Commands (Self.Sent.Last_Element);
+            if Num /= 0 then
+               Self.Manager.Send_Commands (Self.Sent.Last_Element);
 
-            GPS.Kernel.Hooks.Debugger_Breakpoint_Added_Hook.Run
-              (Kernel   => Self.Kernel,
-               Debugger => Client.Get_Visual,
-               Id       => Integer (Num));
+               GPS.Kernel.Hooks.Debugger_Breakpoint_Added_Hook.Run
+                 (Kernel   => Self.Kernel,
+                  Debugger => Client.Get_Visual,
+                  Id       => Integer (Num));
 
-            Update := True;
+               Update := True;
+            end if;
 
          when Delete =>
             --  Do nothing because we delete breakpoints by notification
@@ -112,22 +112,27 @@ package body DAP.Modules.Breakpoint_Managers.SetFunctionBreakpoints is
                  (Convert (Self.Kernel, Result.a_body.breakpoints (Index)));
             end loop;
 
-            Self.Manager.Holder.Subprogram_Status_Changed
-              (Actual, Self.Last, Enabled);
+            Self.Manager.Holder.Subprogram_Status_Changed (Actual, Enabled);
+            Self.Manager.Send_Commands (Enabled);
 
-            for Data of Enabled loop
-               Self.Manager.Send_Commands (Data);
-            end loop;
-
-            Update := Self.Last;
+            if Self.Last then
+               Self.Manager.Done_For_Subprograms (Set_Commands => False);
+               Update := True;
+            end if;
 
          when Disable =>
             --  Do nothing because we delete BP by notifications
             Update := True;
 
          when Sync =>
-            --  Do nothing because we already have all data
-            null;
+            --  Set commands for the breakpoints or do nothing in another
+            --  case because we already have all data
+
+            if Self.Last then
+               --  After initialization we had to remove pending breakpoints
+               --  so set commands now
+               Self.Manager.Done_For_Subprograms (Set_Commands => True);
+            end if;
       end case;
 
       if Update then

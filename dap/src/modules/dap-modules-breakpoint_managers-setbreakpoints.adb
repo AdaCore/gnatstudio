@@ -66,6 +66,7 @@ package body DAP.Modules.Breakpoint_Managers.SetBreakpoints is
       Actual  : Breakpoint_Vectors.Vector;
       Update  : Boolean := False;
       Warning : Boolean := False;
+      Updated : Boolean;
 
    begin
       New_Request := null;
@@ -82,44 +83,42 @@ package body DAP.Modules.Breakpoint_Managers.SetBreakpoints is
                   Actual.Append (Data);
 
                   if not Result.a_body.breakpoints (Index).verified then
-                     Warning := True;
+                     if not Warning then
+                        Self.Manager.Client.Display_In_Debugger_Console
+                          ("Some breakpoints set graphically are not "
+                           & "recognized by the debugger and, thus, will "
+                           & "be lost when running it. "
+                           & ASCII.LF
+                           & "This can happen when the executable "
+                           & "being debugged has not been compiled with the "
+                           & "debug flags or when the breakpoint's source "
+                           & "file is not found in the symbols table. This "
+                           & "also can happen for catchpoints."
+                           & ASCII.LF
+                           & "You should try to set them after a start "
+                           & "command."
+                           & ASCII.LF
+                           & ASCII.LF);
+                        Warning := True;
+                     end if;
+
+                     Self.Manager.Client.Display_In_Debugger_Console
+                       (To_String (Data) & ASCII.LF);
                   end if;
                end loop;
-
-               if Warning then
-                  Self.Manager.Client.Display_In_Debugger_Console
-                    ("Some breakpoints set graphically are not "
-                     & "recognized by the debugger and, thus, will be lost "
-                     & "when running it. "
-                     & ASCII.LF
-                     & "This can happen when the executable "
-                     & "being debugged has not been compiled with the debug "
-                     & "flags or when the breakpoint's source file is not"
-                     & " found in the symbols table. This also can happen for "
-                     & "catchpoints."
-                     & ASCII.LF
-                     & "You should try to set them after a start command."
-                     & ASCII.LF
-                     & "Breakpoints and/or catchpoints that could not be set: "
-                     & ASCII.LF
-                     & ASCII.LF);
-               end if;
 
                --  Update breakpoints data like numbers and locations
                Self.Manager.Holder.Initialized_For_File
                  (Self.File, Actual, Changed);
 
                if not Changed.Is_Empty then
-                  for Data of Changed.Element (Self.File) loop
-                     Self.Manager.Send_Commands (Data);
-                  end loop;
-
                   New_Request := Self.Manager.Send_Line
                     (Self.File, Changed.Element (Self.File), Sync);
+
+                  Self.Manager.Send_Commands (Changed.Element (Self.File));
+
                else
-                  for Data of Actual loop
-                     Self.Manager.Send_Commands (Data);
-                  end loop;
+                  Self.Manager.Send_Commands (Actual);
                end if;
             end;
             Update := True;
@@ -137,16 +136,21 @@ package body DAP.Modules.Breakpoint_Managers.SetBreakpoints is
                --  Update the breakpoint data because in notifications we
                --  don't have full information like disposition and so on
                Self.Manager.Holder.Added
-                 (Data => Data, Changed => Changed, Check => True);
+                 (Data    => Data,
+                  Changed => Changed,
+                  Check   => True,
+                  Update  => Updated);
 
-               if not Changed.Is_Empty then
+               if Updated then
+                  --  Update breakpoints after changes
+                  New_Request := Self.Manager.Send_Line
+                    (Self.File, Changed, Sync);
+
                   if Changed.Contains (Data) then
                      Self.Manager.Send_Commands (Data);
                   end if;
-
-                  New_Request := Self.Manager.Send_Line
-                    (Self.File, Changed, Sync);
                else
+                  --  Set commands for the added breakpoint
                   Update := True;
                   Self.Manager.Send_Commands (Data);
 
@@ -174,12 +178,10 @@ package body DAP.Modules.Breakpoint_Managers.SetBreakpoints is
                   Actual.Append (Data);
                end loop;
 
-               Self.Manager.Holder.Status_Changed
+               Self.Manager.Holder.Lines_Status_Changed
                  (Self.File, Actual, Changed, Enabled, Id);
 
-               for Data of Enabled loop
-                  Self.Manager.Send_Commands (Data);
-               end loop;
+               Self.Manager.Send_Commands (Enabled);
 
                if not Changed.Is_Empty then
                   New_Request := Self.Manager.Send_Line

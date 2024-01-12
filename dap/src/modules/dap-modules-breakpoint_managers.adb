@@ -68,7 +68,10 @@ package body DAP.Modules.Breakpoint_Managers is
          end if;
       end if;
 
-      if File /= No_File
+      Data.Verified := Item.verified and then Item.line.Is_Set;
+
+      if Data.Verified
+        and then File /= No_File
         and then Item.line.Is_Set
       then
          Line := Basic_Types.Editable_Line_Type (Item.line.Value);
@@ -96,19 +99,32 @@ package body DAP.Modules.Breakpoint_Managers is
      (Kernel : GPS.Kernel.Kernel_Handle;
       DAP_Bp : DAP.Tools.Breakpoint) return Breakpoint_Data
    is
+      Data : Breakpoint_Data;
+   begin
+      Convert (Kernel, Data, DAP_Bp);
+      return Data;
+   end Convert;
+
+   -------------
+   -- Convert --
+   -------------
+
+   procedure Convert
+     (Kernel : GPS.Kernel.Kernel_Handle;
+      Data   : in out Breakpoint_Data;
+      DAP_Bp : DAP.Tools.Breakpoint)
+   is
       File   : constant Virtual_File :=
         (if DAP_Bp.source.Is_Set
          then To_File
-           (if DAP_Bp.source.Value.path.Is_Empty
-            then DAP_Bp.source.Value.name
-            else DAP_Bp.source.Value.path)
+           (if not DAP_Bp.source.Value.path.Is_Empty
+            then DAP_Bp.source.Value.path
+            else DAP_Bp.source.Value.name)
          else No_File);
       Holder : constant GPS.Editors.Controlled_Editor_Buffer_Holder :=
         Kernel.Get_Buffer_Factory.Get_Holder (File => File);
-      Data : Breakpoint_Data;
    begin
       Convert (Kernel, File, Holder, Data, DAP_Bp);
-      return Data;
    end Convert;
 
    ----------------
@@ -137,7 +153,7 @@ package body DAP.Modules.Breakpoint_Managers is
 
          V := Self.Holder.Get_For (On_Subprogram);
          if not V.Is_Empty then
-            Self.Send_Subprogram (V, Init, True);
+            Self.Send_Multiple_Subprograms (V, Init);
          end if;
 
          if DAP.Modules.Preferences.Break_On_Exception.Get_Pref then
@@ -217,7 +233,7 @@ package body DAP.Modules.Breakpoint_Managers is
                   Add);
 
             when On_Subprogram =>
-               Self.Send_Subprogram (Changed, Add, False);
+               Self.Send_Subprogram (Changed, Add);
 
             when On_Address =>
                Self.Send_Addresses (Changed, Add);
@@ -303,6 +319,26 @@ package body DAP.Modules.Breakpoint_Managers is
       Self.Break (Data);
    end Break_Subprogram;
 
+   ----------------------
+   -- Added_Subprogram --
+   ----------------------
+
+   procedure Added_Subprogram
+     (Self   : DAP_Client_Breakpoint_Manager_Access;
+      Data   : Breakpoint_Data;
+      Actual : Breakpoint_Vectors.Vector;
+      Num    : out Breakpoint_Identifier) is
+   begin
+      Self.Holder.Added_Subprogram (Data, Actual, Num);
+
+      if Num = 0 then
+         --  Breakpoint has been deleted (was pending for example),
+         --  update on the gdb side
+         Self.Send_Subprogram
+           (Self.Holder.Get_For (On_Subprogram), Sync);
+      end if;
+   end Added_Subprogram;
+
    -------------------
    -- Break_Address --
    -------------------
@@ -384,6 +420,56 @@ package body DAP.Modules.Breakpoint_Managers is
       end if;
    end Dec_Response;
 
+   --------------------------
+   -- Done_For_Subprograms --
+   --------------------------
+
+   procedure Done_For_Subprograms
+     (Self         : DAP_Client_Breakpoint_Manager_Access;
+      Set_Commands : Boolean)
+   is
+      Actual  : Breakpoint_Vectors.Vector;
+      Changed : Boolean := False;
+   begin
+      Self.Holder.Delete_Unused_Subprograms_Breakpoints (Changed);
+
+      if Changed then
+         Self.Send_Subprogram
+           (Self.Holder.Get_For (On_Subprogram), Sync, True);
+
+      elsif Set_Commands then
+         Actual := Self.Holder.Get_For (On_Subprogram);
+         for Data of Actual loop
+            Self.Send_Commands (Data);
+         end loop;
+      end if;
+   end Done_For_Subprograms;
+
+   -------------------------
+   -- Done_For_Exceptions --
+   -------------------------
+
+   procedure Done_For_Exceptions
+     (Self   : DAP_Client_Breakpoint_Manager_Access;
+      Actual : Breakpoint_Vectors.Vector)
+   is
+      Vector  : Breakpoint_Vectors.Vector;
+      Deleted : Boolean;
+   begin
+      Self.Holder.Done_For_Exceptions (Actual, Deleted);
+      Vector := Self.Holder.Get_For (On_Exception);
+
+      if Deleted then
+         --  Refresh exception breakpoints after changes
+         Self.Send_Exception (Vector, Init);
+      else
+         --  Set commands
+         for Data of Vector loop
+            Self.Send_Commands (Data);
+         end loop;
+      end if;
+   end Done_For_Exceptions;
+
    ---------------------
    -- Get_Breakpoints --
    ---------------------
@@ -421,6 +507,32 @@ package body DAP.Modules.Breakpoint_Managers is
            (Self.Kernel, Data);
       end loop;
    end Show_Breakpoints;
+
+   -------------------
+   -- Send_Commands --
+   -------------------
+
+   procedure Send_Commands
+     (Self : DAP_Client_Breakpoint_Manager_Access;
+      Data : DAP.Modules.Breakpoints.Breakpoint_Data) is
+   begin
+      if not Data.Commands.Is_Empty then
+         Self.Client.Set_Breakpoint_Command (Data.Num, Data.Commands);
+      end if;
+   end Send_Commands;
+
+   -------------------
+   -- Send_Commands --
+   -------------------
+
+   procedure Send_Commands
+     (Self : DAP_Client_Breakpoint_Manager_Access;
+      Data : Breakpoint_Vectors.Vector) is
+   begin
+      for Bp of Data loop
+         Self.Send_Commands (Bp);
+      end loop;
+   end Send_Commands;
 
    ---------------
    -- Send_Line --
@@ -481,27 +593,15 @@ package body DAP.Modules.Breakpoint_Managers is
       Self.Client.Enqueue (Request);
    end Send_Line;
 
-   -------------------
-   -- Send_Commands --
-   -------------------
-
-   procedure Send_Commands
-     (Self : DAP_Client_Breakpoint_Manager_Access;
-      Data : DAP.Modules.Breakpoints.Breakpoint_Data) is
-   begin
-      if not Data.Commands.Is_Empty then
-         Self.Client.Set_Breakpoint_Command (Data.Num, Data.Commands);
-      end if;
-   end Send_Commands;
-
    ---------------------
    -- Send_Subprogram --
    ---------------------
 
    function Send_Subprogram
-     (Self   : not null access DAP_Client_Breakpoint_Manager;
-      Actual : Breakpoint_Vectors.Vector;
-      Action : Action_Kind)
+     (Self         : not null access DAP_Client_Breakpoint_Manager;
+      Actual       : Breakpoint_Vectors.Vector;
+      Action       : Action_Kind;
+      Set_Commands : Boolean := False)
       return DAP_Request_Access
    is
       Req : constant SetFunctionBreakpoints.
@@ -512,6 +612,11 @@ package body DAP.Modules.Breakpoint_Managers is
       Req.Manager := DAP_Client_Breakpoint_Manager_Access (Self);
       Req.Action  := Action;
       Req.Sent    := Actual;
+
+      --  We set commands for breakpoints in the last phase, when all
+      --  breakpoints are set (breakpoints' Ids needed to set commands).
+      --  So hold this information to use when we got the response.
+      Req.Last := Set_Commands;
 
       for Data of Actual loop
          Fb.name := VSS.Strings.Conversions.To_Virtual_String
@@ -530,25 +635,35 @@ package body DAP.Modules.Breakpoint_Managers is
    ---------------------
 
    procedure Send_Subprogram
+     (Self         : not null access DAP_Client_Breakpoint_Manager;
+      Actual       : Breakpoint_Vectors.Vector;
+      Action       : Action_Kind;
+      Set_Commands : Boolean := False)
+   is
+      Request : DAP_Request_Access;
+   begin
+      Request := Self.Send_Subprogram (Actual, Action, Set_Commands);
+      Self.Client.Enqueue (Request);
+   end Send_Subprogram;
+
+   -------------------------------
+   -- Send_Multiple_Subprograms --
+   -------------------------------
+
+   procedure Send_Multiple_Subprograms
      (Self   : not null access DAP_Client_Breakpoint_Manager;
       Actual : Breakpoint_Vectors.Vector;
-      Action : Action_Kind;
-      Bunch  : Boolean)
+      Action : Action_Kind)
    is
       Current : Breakpoint_Vectors.Vector;
       Request : DAP_Request_Access;
    begin
-      if Bunch
-        and then not Actual.Is_Empty
-      then
+      if not Actual.Is_Empty then
          for Index in Actual.First_Index .. Actual.Last_Index loop
             Current.Append (Actual.Element (Index));
             Self.Requests_Count := Self.Requests_Count + 1;
-            Request := Self.Send_Subprogram (Current, Action);
-            if Index = Actual.Last_Index then
-               SetFunctionBreakpoints.Function_Breakpoint_Request_Access
-                 (Request).Last := True;
-            end if;
+            Request := Self.Send_Subprogram
+              (Current, Action, Index = Actual.Last_Index);
             Self.Client.Enqueue (Request);
          end loop;
 
@@ -556,7 +671,7 @@ package body DAP.Modules.Breakpoint_Managers is
          Request := Self.Send_Subprogram (Actual, Action);
          Self.Client.Enqueue (Request);
       end if;
-   end Send_Subprogram;
+   end Send_Multiple_Subprograms;
 
    --------------------
    -- Send_Exception --
@@ -567,9 +682,24 @@ package body DAP.Modules.Breakpoint_Managers is
       Actual : Breakpoint_Vectors.Vector;
       Action : Action_Kind)
    is
-      Req : SetExceptionBreakpoints.Exception_Breakpoint_Request_Access :=
-        new SetExceptionBreakpoints.Exception_Breakpoint_Request
-          (Self.Kernel);
+      Req : DAP_Request_Access := Self.Send_Exception (Actual, Action);
+   begin
+      Self.Client.Enqueue (Req);
+   end Send_Exception;
+
+   --------------------
+   -- Send_Exception --
+   --------------------
+
+   function Send_Exception
+     (Self   : not null access DAP_Client_Breakpoint_Manager;
+      Actual : Breakpoint_Vectors.Vector;
+      Action : Action_Kind)
+      return DAP_Request_Access
+   is
+      Req : constant SetExceptionBreakpoints.
+        Exception_Breakpoint_Request_Access :=
+        new SetExceptionBreakpoints.Exception_Breakpoint_Request (Self.Kernel);
    begin
       Req.Manager := DAP_Client_Breakpoint_Manager_Access (Self);
       Req.Action  := Action;
@@ -598,7 +728,7 @@ package body DAP.Modules.Breakpoint_Managers is
          end;
       end loop;
 
-      Self.Client.Enqueue (DAP_Request_Access (Req));
+      return DAP_Request_Access (Req);
    end Send_Exception;
 
    --------------------
@@ -610,7 +740,22 @@ package body DAP.Modules.Breakpoint_Managers is
       Actual : Breakpoint_Vectors.Vector;
       Action : Action_Kind)
    is
-      Req : SetInstructionBreakpoints.
+      Req : DAP_Request_Access := Self.Send_Addresses (Actual, Action);
+   begin
+      Self.Client.Enqueue (Req);
+   end Send_Addresses;
+
+   --------------------
+   -- Send_Addresses --
+   --------------------
+
+   function Send_Addresses
+     (Self   : not null access DAP_Client_Breakpoint_Manager;
+      Actual : Breakpoint_Vectors.Vector;
+      Action : Action_Kind)
+      return DAP_Request_Access
+   is
+      Req : constant SetInstructionBreakpoints.
         Instruction_Breakpoint_Request_Access :=
           new SetInstructionBreakpoints.Instruction_Breakpoint_Request
             (Self.Kernel);
@@ -629,7 +774,7 @@ package body DAP.Modules.Breakpoint_Managers is
          Req.Parameters.arguments.breakpoints.Append (Fb);
       end loop;
 
-      Self.Client.Enqueue (DAP_Request_Access (Req));
+      return DAP_Request_Access (Req);
    end Send_Addresses;
 
    ----------
@@ -647,7 +792,11 @@ package body DAP.Modules.Breakpoint_Managers is
    begin
       while Has_Element (Cursor) loop
          if Key (Cursor) = Subprograms_File then
-            Self.Send_Subprogram (Element (Cursor), Action, Bunch);
+            if Bunch then
+               Self.Send_Multiple_Subprograms (Element (Cursor), Action);
+            else
+               Self.Send_Subprogram (Element (Cursor), Action);
+            end if;
 
          elsif Key (Cursor) = Addreses_File then
             Self.Send_Addresses (Element (Cursor), Action);
@@ -779,7 +928,7 @@ package body DAP.Modules.Breakpoint_Managers is
       end loop;
 
       if not Self.Holder.Get_For (On_Subprogram).Is_Empty then
-         Self.Send_Subprogram (Empty, Delete, False);
+         Self.Send_Subprogram (Empty, Delete);
       end if;
 
       if not Self.Holder.Get_For (On_Exception).Is_Empty then

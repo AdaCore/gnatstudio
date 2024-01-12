@@ -588,17 +588,18 @@ package body DAP.Modules.Persistent_Breakpoints is
                         Column => 1);
 
                      B :=
-                       (Kind          => On_Line,
-                        Num           => Id,
-                        Disposition   => Breakpoint_Disposition'Value
+                       (Kind        => On_Line,
+                        Num         => Id,
+                        Disposition => Breakpoint_Disposition'Value
                           (Item.Get ("disposition")),
-                        State         => Enabled,
-                        Locations     => Location_Vectors.To_Vector
+                        State       => Enabled,
+                        Locations   => Location_Vectors.To_Vector
                           ((Id, Loc, Invalid_Address), 1),
-                        Ignore        => Item.Get ("ignore"),
-                        Condition     => Condition,
-                        Executable    => Create (+To_String (Exec)),
-                        Commands      => Commands);
+                        Ignore      => Item.Get ("ignore"),
+                        Condition   => Condition,
+                        Executable  => Create (+To_String (Exec)),
+                        Commands    => Commands,
+                        Verified    => True);
                   end if;
 
                when On_Subprogram =>
@@ -732,6 +733,7 @@ package body DAP.Modules.Persistent_Breakpoints is
 
             if B.State /= Enabled
               or else B.Num = 0
+              or else not B.Verified
             then
                Msg.Set_Highlighting
                  (GPS.Default_Styles.Debugger_Disabled_Breakpoint_Style,
