@@ -1,3 +1,5 @@
+with "vss_text";
+
 with "../lsp_client/gps_lsp_client";
 with "../kernel/kernel";
 with "../lal/lal";
@@ -7,7 +9,6 @@ with "../refactoring/ui/refactoring_ui";
 with "../views/views";
 with "../browsers/browsers";
 with "../gvd/gvd";
-with "../subprojects/VSS/gnat/vss_text";
 
 project DAP is
 
