@@ -12,25 +12,34 @@ ATTACH_DIALOG_NAME = "Enter the PID of the process to attach to"
 
 @run_test_driver
 def test_driver():
-    # Initialize a debug sessions without any main
+    # Build the project
+    GPS.execute_action("Build All")
+    yield wait_tasks()
+
+    # Run the process
+    proc = GPS.Process("./obj/main_t819_019")
+    pid = proc.get_pid()
+
+    # Initialize a debug session without any main
     GPS.execute_action("/Debug/Initialize/no main file")
-    yield wait_tasks(other_than=known_tasks)
+    yield wait_idle()
 
     # Attach to the running 'main' process
     yield idle_modal_dialog(lambda: GPS.execute_action("debug attach"))
     dialog = get_window_by_title(ATTACH_DIALOG_NAME)
     entry = get_widgets_by_type(Gtk.Entry, dialog)[0]
     ok_button = get_button_from_label("OK", dialog)
-    entry.set_text(os.environ["TESTPID"])
+    entry.set_text(str(pid))
     ok_button.clicked()
+    yield wait_DAP_server("stackTrace")
+    yield wait_idle()
 
     # Check that the debugger has been stopped when attaching to
     # the running process
     debugger = GPS.Debugger.get()
-    yield timeout(1000)
     frames = debugger.frames()
     gps_assert(
-        len(frames) != 0,
+        len(frames) != 1,
         True,
         "The debugger should be stopped, and thus we should have frames",
     )
@@ -43,3 +52,7 @@ def test_driver():
         True,
         "The debugger should be running after 'debug continue'",
     )
+
+    # Kill the process manually
+    proc.kill()
+
