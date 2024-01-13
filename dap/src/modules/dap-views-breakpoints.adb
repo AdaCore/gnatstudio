@@ -179,7 +179,7 @@ package body DAP.Views.Breakpoints is
    --  Return information on the currently selected breakpoint.
 
    function Get_View
-     (Client : not null access DAP.Clients.DAP_Client'Class)
+     (Client : DAP.Clients.DAP_Client_Access)
       return access Breakpoint_View_Record'Class;
 
    procedure Recompute_Filters
@@ -312,7 +312,7 @@ package body DAP.Views.Breakpoints is
 
    procedure Apply
      (Self   : not null access Properties_Editor_Record'Class;
-      Client : access DAP.Clients.DAP_Client'Class;
+      Client : DAP_Client_Access;
       Br     : Breakpoint_Data);
    --  Apply the settings to the given breakpoint
 
@@ -384,7 +384,7 @@ package body DAP.Views.Breakpoints is
 
    procedure Apply
      (Self   : not null access Properties_Editor_Record'Class;
-      Client : access DAP.Clients.DAP_Client'Class;
+      Client : DAP_Client_Access;
       Br     : Breakpoint_Data)
    is
       T         : constant Breakpoint_Kind :=
@@ -414,7 +414,8 @@ package body DAP.Views.Breakpoints is
            (String'
               (Get_Text (Get_Buffer (Self.Command_Descr), Start, The_End)));
 
-         if Commands.Is_Empty
+         if Client /= null
+           and then Commands.Is_Empty
            and then not Br.Commands.Is_Empty
            and then Client /= null
          then
@@ -553,7 +554,7 @@ package body DAP.Views.Breakpoints is
    --------------
 
    function Get_View
-     (Client : not null access DAP.Clients.DAP_Client'Class)
+     (Client : DAP.Clients.DAP_Client_Access)
       return access Breakpoint_View_Record'Class
    is
       pragma Unreferenced (Client);
@@ -669,6 +670,7 @@ package body DAP.Views.Breakpoints is
       ------------
 
       Gtk_New (Self.Breakpoint_Type);
+      Set_Name (Self.Breakpoint_Type, "Breakpoint_Type");
       for T in Breakpoint_Kind loop
          case T is
             when On_Line =>
@@ -740,6 +742,7 @@ package body DAP.Views.Breakpoints is
       Details.Pack_Start (Self.Subprogram_Box, Expand => True, Fill => True);
 
       Gtk_New_With_Entry (Self.Subprogram_Combo);
+      Set_Name (Self.Subprogram_Combo, "Subprogram_Name");
       Self.Subprogram_Combo.Append_Text ("");
       Self.Subprogram_Box.Pack_Start (Self.Subprogram_Combo, False, False);
 
@@ -765,6 +768,7 @@ package body DAP.Views.Breakpoints is
       Self.Exception_Box.Pack_Start (Hbox, False, True, 0);
 
       Gtk_New_With_Entry (Self.Exception_Name);
+      Set_Name (Self.Exception_Name, "Exception_Name");
       Self.Load_Exceptions;
       Hbox.Pack_Start (Self.Exception_Name, True, True, 0);
 

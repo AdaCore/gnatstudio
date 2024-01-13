@@ -81,6 +81,13 @@ package DAP.Modules.Breakpoint_Managers is
         VSS.Strings.Empty_Virtual_String);
    --  Add breakpoint for the subprogram
 
+   procedure Added_Subprogram
+     (Self   : DAP_Client_Breakpoint_Manager_Access;
+      Data   : Breakpoint_Data;
+      Actual : Breakpoint_Vectors.Vector;
+      Num    : out Breakpoint_Identifier);
+   --  Callback for the response
+
    procedure Break_Exception
      (Self      : DAP_Client_Breakpoint_Manager_Access;
       Name      : String;
@@ -138,12 +145,30 @@ package DAP.Modules.Breakpoint_Managers is
    procedure Send_Commands
      (Self : DAP_Client_Breakpoint_Manager_Access;
       Data : DAP.Modules.Breakpoints.Breakpoint_Data);
+   --  Set commands for the breakpoint if any
+
+   procedure Send_Commands
+     (Self : DAP_Client_Breakpoint_Manager_Access;
+      Data : Breakpoint_Vectors.Vector);
+   --  Set commands for the breakpoints
 
    function Has_Breakpoint
      (Self   : DAP_Client_Breakpoint_Manager_Access;
       Marker : Location_Marker)
       return Boolean;
    --  Return True if a breakpoint exists for the given location
+
+   procedure Done_For_Subprograms
+     (Self         : DAP_Client_Breakpoint_Manager_Access;
+      Set_Commands : Boolean);
+   --  All changes are made for the subprograms, delete unused or set
+   --  commands for all breakpoints if Set_Commands = True
+
+   procedure Done_For_Exceptions
+     (Self   : DAP_Client_Breakpoint_Manager_Access;
+      Actual : Breakpoint_Vectors.Vector);
+   --  All changes are made for the exceptions, delete unused or set
+   --  commands for all breakpoints
 
 private
 
@@ -180,28 +205,50 @@ private
    --  Send a request for line breakpoints
 
    function Send_Subprogram
-     (Self   : not null access DAP_Client_Breakpoint_Manager;
-      Actual : Breakpoint_Vectors.Vector;
-      Action : Action_Kind)
+     (Self         : not null access DAP_Client_Breakpoint_Manager;
+      Actual       : Breakpoint_Vectors.Vector;
+      Action       : Action_Kind;
+      Set_Commands : Boolean := False)
       return DAP_Request_Access;
-   --  Send a request for subprograms breakpoints
+   --  Send a request for a subprogram breakpoint where the last one in
+   --  the Actual is new and all others are already known. Set also Commands
+   --  for the last breakpoint if Set_Commands is True.
 
    procedure Send_Subprogram
+     (Self         : not null access DAP_Client_Breakpoint_Manager;
+      Actual       : Breakpoint_Vectors.Vector;
+      Action       : Action_Kind;
+      Set_Commands : Boolean := False);
+   --  The same as above.
+
+   procedure Send_Multiple_Subprograms
      (Self   : not null access DAP_Client_Breakpoint_Manager;
       Actual : Breakpoint_Vectors.Vector;
-      Action : Action_Kind;
-      Bunch  : Boolean);
-   --  Send a request for subprogram breakpoints
+      Action : Action_Kind);
+   --  Send a request for subprograms listed in the Actual. Several or all
+   --  of them may be new.
 
    procedure Send_Exception
      (Self   : not null access DAP_Client_Breakpoint_Manager;
       Actual : Breakpoint_Vectors.Vector;
       Action : Action_Kind);
 
+   function Send_Exception
+     (Self   : not null access DAP_Client_Breakpoint_Manager;
+      Actual : Breakpoint_Vectors.Vector;
+      Action : Action_Kind)
+      return DAP_Request_Access;
+
    procedure Send_Addresses
      (Self   : not null access DAP_Client_Breakpoint_Manager;
       Actual : Breakpoint_Vectors.Vector;
       Action : Action_Kind);
+
+   function Send_Addresses
+     (Self   : not null access DAP_Client_Breakpoint_Manager;
+      Actual : Breakpoint_Vectors.Vector;
+      Action : Action_Kind)
+      return DAP_Request_Access;
 
    procedure Dec_Response
      (Self   : in out DAP_Client_Breakpoint_Manager;
@@ -225,5 +272,10 @@ private
    function Convert
      (Kernel : GPS.Kernel.Kernel_Handle;
       DAP_Bp : DAP.Tools.Breakpoint) return Breakpoint_Data;
+
+   procedure Convert
+     (Kernel : GPS.Kernel.Kernel_Handle;
+      Data   : in out Breakpoint_Data;
+      DAP_Bp : DAP.Tools.Breakpoint);
 
 end DAP.Modules.Breakpoint_Managers;

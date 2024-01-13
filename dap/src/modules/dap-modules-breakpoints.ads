@@ -67,6 +67,9 @@ package DAP.Modules.Breakpoints is
 
       Executable  : Virtual_File := No_File;
 
+      Verified    : Boolean := True;
+      --  Is bp verified on the gdb side
+
       case Kind is
          when On_Line =>
             null;
@@ -96,6 +99,10 @@ package DAP.Modules.Breakpoints is
 
    function Get_Location (Data : Breakpoint_Data) return Location_Marker;
    function Get_Ignore (Data : Breakpoint_Data) return Virtual_String;
+
+   function To_String (Data : Breakpoint_Data) return String;
+   --  Return a location string representation to display for the given
+   --  breakpoint.
 
    package Breakpoint_Vectors is new Ada.Containers.Vectors
      (Index_Type   => Positive,
@@ -233,9 +240,10 @@ package DAP.Modules.Breakpoints is
      (Self    : in out Breakpoint_Holder;
       Data    : Breakpoint_Data;
       Changed : out Breakpoint_Vectors.Vector;
-      Check   : Boolean);
+      Check   : Boolean;
+      Update  : out Boolean);
    --  Feedback after breakpoints is added to synchronize data. Checks for
-   --  duplicates when Check is True.
+   --  duplicates when Check is True. Update inform that bp are changed.
 
    procedure Delete
      (Self    : in out Breakpoint_Holder;
@@ -259,7 +267,7 @@ package DAP.Modules.Breakpoints is
       Changed : out Breakpoint_Hash_Maps.Map);
    --  Prepare a list to send with breakpoints are enabled/disabled
 
-   procedure Status_Changed
+   procedure Lines_Status_Changed
      (Self    : in out Breakpoint_Holder;
       File    : Virtual_File;
       Actual  : Breakpoint_Vectors.Vector;
@@ -270,10 +278,14 @@ package DAP.Modules.Breakpoints is
 
    procedure Initialized_For_Subprograms
      (Self   : in out Breakpoint_Holder;
-      Actual : Breakpoint_Vectors.Vector;
-      Last   : Boolean);
+      Actual : Breakpoint_Vectors.Vector);
    --  Feedback after breakpoints are set for the subprograms
    --  to synchronize data
+
+   procedure Delete_Unused_Subprograms_Breakpoints
+     (Self    : in out Breakpoint_Holder;
+      Changed : out Boolean);
+   --  Removes fake and pending breakpoints
 
    procedure Added_Subprogram
      (Self   : in out Breakpoint_Holder;
@@ -285,7 +297,6 @@ package DAP.Modules.Breakpoints is
    procedure Subprogram_Status_Changed
      (Self    : in out Breakpoint_Holder;
       Actual  : Breakpoint_Vectors.Vector;
-      Last    : Boolean;
       Enabled : out Breakpoint_Vectors.Vector);
    --  Feedback after breakpoints stats are changed to synchronize data
 
@@ -301,11 +312,15 @@ package DAP.Modules.Breakpoints is
       Changed    : out Breakpoint_Vectors.Vector);
    --  Add/delete breakpoint for the address
 
-   procedure Status_Changed
+   procedure Address_Exception_Status_Changed
      (Self    : in out Breakpoint_Holder;
       Kind    : Breakpoint_Kind;
       Actual  : Breakpoint_Vectors.Vector;
-      Enabled : out Breakpoint_Vectors.Vector);
+      Enabled : out Breakpoint_Vectors.Vector;
+      Deleted : out Boolean);
+   --  Address or Exception breakpoints status changed. The Enabled vector
+   --  is filled with breakpoints that are enabled. The Deleted informs
+   --  that some of the breakpoints have been deleted.
 
    procedure Append
      (Self : in out Breakpoint_Holder;
@@ -314,9 +329,11 @@ package DAP.Modules.Breakpoints is
    --  the list of breakpoints to add "preferences based" breakpoints before
    --  initial setting of them.
 
-   procedure Initialized_For_Exceptions
-     (Self   : in out Breakpoint_Holder;
-      Actual : Breakpoint_Vectors.Vector);
+   procedure Done_For_Exceptions
+     (Self    : in out Breakpoint_Holder;
+      Actual  : Breakpoint_Vectors.Vector;
+      Deleted : out Boolean);
+   --  Deletes pending and fake bp from notifications
 
    Subprograms_File : constant Virtual_File := Create ("dap_subprogram");
    Addreses_File    : constant Virtual_File := Create ("dap_address");
@@ -335,11 +352,11 @@ private
       In_Initialization : Boolean := False;
    end record;
 
-   procedure Delete_Duplicates
+   procedure Delete_On_Line_Duplicates
      (Self    : in out Breakpoint_Holder;
       File    : Virtual_File;
       Changed : out Breakpoint_Hash_Maps.Map;
-      Enabled : out Breakpoint_Vectors.Vector);
+      Enabled : in out Breakpoint_Vectors.Vector);
 
    procedure Delete_Fake_Subprogram (Self : in out Breakpoint_Holder);
 
