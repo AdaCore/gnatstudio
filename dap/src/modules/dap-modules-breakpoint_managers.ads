@@ -129,6 +129,13 @@ package DAP.Modules.Breakpoint_Managers is
       State : Boolean);
    --  Enable/disable breakpoints
 
+   procedure Set_Ignore_Count
+     (Self  : DAP_Client_Breakpoint_Manager_Access;
+      Id    : Breakpoint_Identifier;
+      Count : Natural);
+   --  Sets ignore count for the breakpoint (i.e: the number of times
+   --  the breakpoint should be ignored before stopping on it).
+
    function Get_Breakpoints
      (Self : DAP_Client_Breakpoint_Manager_Access)
       return DAP.Modules.Breakpoints.Breakpoint_Vectors.Vector;
