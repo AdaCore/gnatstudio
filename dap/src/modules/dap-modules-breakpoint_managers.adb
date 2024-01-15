@@ -835,6 +835,31 @@ package body DAP.Modules.Breakpoint_Managers is
       Self.Send (Changed, (if State then Enable else Disable), True);
    end Set_Breakpoints_State;
 
+   ----------------------
+   -- Set_Ignore_Count --
+   ----------------------
+
+   procedure Set_Ignore_Count
+     (Self  : DAP_Client_Breakpoint_Manager_Access;
+      Id    : Breakpoint_Identifier;
+      Count : Natural)
+   is
+      use Breakpoint_Hash_Maps;
+      Changed : Breakpoint_Hash_Maps.Map;
+
+   begin
+      if Self.Requests_Count /= 0 then
+         Self.Client.Display_In_Debugger_Console
+           ("Can't change breakpoints, another request is in progress");
+         return;
+      end if;
+
+      Self.Holder.Set_Ignore_Count (Id, Count, Changed);
+      if not Changed.Is_Empty then
+         Self.Send (Changed, Sync, False);
+      end if;
+   end Set_Ignore_Count;
+
    --------------------------
    -- Remove_Breakpoint_At --
    --------------------------

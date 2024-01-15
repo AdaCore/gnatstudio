@@ -267,6 +267,14 @@ package DAP.Modules.Breakpoints is
       Changed : out Breakpoint_Hash_Maps.Map);
    --  Prepare a list to send with breakpoints are enabled/disabled
 
+   procedure Set_Ignore_Count
+     (Self    : in out Breakpoint_Holder;
+      Id      : Breakpoint_Identifier;
+      Count   : Natural;
+      Changed : out Breakpoint_Hash_Maps.Map);
+   --  Sets ignore count for the breakpoint, returning the changed
+   --  breakpoints in Changed.
+
    procedure Lines_Status_Changed
      (Self    : in out Breakpoint_Holder;
       File    : Virtual_File;

@@ -702,6 +702,32 @@ package body DAP.Modules.Breakpoints is
       end loop;
    end Set_Enabled;
 
+   ----------------------
+   -- Set_Ignore_Count --
+   ----------------------
+
+   procedure Set_Ignore_Count
+     (Self    : in out Breakpoint_Holder;
+      Id      : Breakpoint_Identifier;
+      Count   : Natural;
+      Changed : out Breakpoint_Hash_Maps.Map)
+   is
+      File : Virtual_File := No_File;
+
+   begin
+      for Data of Self.Vector loop
+         if Data = Id then
+            Data.Ignore := Count;
+            File := Get_Location_File (Data);
+            exit;
+         end if;
+      end loop;
+
+      if File /= No_File then
+         Changed.Insert (File, Self.Get_For_File (File, False));
+      end if;
+   end Set_Ignore_Count;
+
    ------------
    -- Delete --
    ------------
