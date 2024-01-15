@@ -395,6 +395,7 @@ package body DAP.Views.Consoles is
          User_Data   => Self.all'Address,
          History_List => null,
          Key          => "dap_tty_console",
+         Toolbar_Name => "dap-tty-console",
          ANSI_Support => True,
          Wrap_Mode    => Wrap_Char);
       Self.Pack_Start (Self.Console, Expand => True, Fill => True);
@@ -618,6 +619,7 @@ package body DAP.Views.Consoles is
          Prompt              => ">",
          History_List        => Get_History (Self.Kernel),
          Key                 => "dap_console",
+         Toolbar_Name        => "dap-debugger-console",
          Wrap_Mode           => Gtk.Enums.Wrap_Char,
          ANSI_Support        => False,
          Empty_Equals_Repeat => True);
