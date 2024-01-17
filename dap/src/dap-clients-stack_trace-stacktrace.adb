@@ -160,13 +160,16 @@ package body DAP.Clients.Stack_Trace.StackTrace is
       Client     : not null access DAP.Clients.DAP_Client'Class;
       Has_Result : Boolean) is
    begin
-      if Client.Get_Status /= Stopped then
-         --  We uploaded the frames so can set the status to stopped to
-         --  start updating the views.
+      if not Self.Parameters.arguments.startFrame.Is_Set
+        or else Self.Parameters.arguments.startFrame.Value = 0
+      then
+         --  We uploaded the frames after the debugee has been stopped so set
+         --  the corresponding status to initiate views updating.
          Client.Set_Status (Stopped);
 
-      elsif Has_Result and then Client.Get_Status = Stopped then
-         --  We uploaded the next part of the frames, update the view.
+      elsif Has_Result then
+         --  We uploaded the next part of the frames, and the debuggee is
+         --  still stopped, update the view.
          DAP.Views.Call_Stack.Update (Self.Kernel);
 
          --  Update context to refresh actions' availability,
