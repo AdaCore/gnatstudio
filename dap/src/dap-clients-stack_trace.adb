@@ -125,7 +125,7 @@ package body DAP.Clients.Stack_Trace is
    is
       Frames : Frames_Vectors.Vector renames Self.Frames;
    begin
-      if Id in Integer (Frames.First_Index) .. Integer (Frames.Length) then
+      if Id in Integer (Frames.First_Index) .. Integer (Frames.Last_Index) then
          Self.Select_Frame
            (Frame  => Frames (Id),
             Client => Client);

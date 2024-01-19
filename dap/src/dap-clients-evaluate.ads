@@ -109,7 +109,7 @@ private
       Message : VSS.Strings.Virtual_String);
 
    function Create
-     (Client            : DAP_Client'Class;
+     (Client            : in out DAP_Client'Class;
       Kind              : Evaluate_Kind;
       Cmd               : VSS.Strings.Virtual_String;
       Output            : Boolean := False;

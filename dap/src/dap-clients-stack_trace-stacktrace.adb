@@ -105,7 +105,9 @@ package body DAP.Clients.Stack_Trace.StackTrace is
 
       --  Select the first Frame_Ref that has an existing location, showing it
       --  to the user.
-      for Id in Integer (Frames.First_Index) .. Integer (Frames.Length) loop
+      for Id in Integer (Frames.First_Index) ..
+        Integer (Frames.Last_Index)
+      loop
          if Frames (Id).Location_Exists then
             Stack_Trace.Select_Frame
               (Frame  => Frames (Id),

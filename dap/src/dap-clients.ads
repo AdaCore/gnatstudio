@@ -355,6 +355,10 @@ package DAP.Clients is
       Event  : VSS.Strings.Virtual_String);
    --  Process the event from the DAP adapter
 
+   procedure Interrupt (Self : in out DAP_Client);
+   --  Interrupt the debugger by sending the 'pause' request,
+   --  canceling non-treated requests if any.
+
    -------------------------
    -- DAP_Visual_Debugger --
    -------------------------
