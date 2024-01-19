@@ -60,6 +60,8 @@ with DAP.Clients.Disconnect;
 with DAP.Clients.Evaluate;
 with DAP.Clients.Initialize;
 with DAP.Clients.Stack_Trace;
+with DAP.Clients.Pause;
+with DAP.Clients.Cancel;
 with DAP.Requests.Disconnect;
 
 with DAP.Views.Consoles;
@@ -400,6 +402,21 @@ package body DAP.Clients is
       Self.Stack_Trace := DAP.Clients.Stack_Trace.Stack_Trace_Access'
         (new DAP.Clients.Stack_Trace.Stack_Trace);
    end Initialize_Client;
+
+   ---------------
+   -- Interrupt --
+   ---------------
+
+   procedure Interrupt (Self : in out DAP_Client) is
+   begin
+      if Self.Sent.Is_Empty then
+         DAP.Clients.Pause.Send_Pause_Request
+           (Client    => Self,
+            Thread_Id => Self.Get_Current_Thread);
+      else
+         DAP.Clients.Cancel.Send_Cancel_Request (Self);
+      end if;
+   end Interrupt;
 
    ----------------
    -- Is_Stopped --

@@ -445,8 +445,10 @@ package body DAP.Modules.Scripts is
          end;
 
       elsif Command = "interrupt" then
-         --  Not implemented
-         null;
+         Inst := Nth_Arg (Data, 1, New_Class (Kernel, "Debugger"));
+         Visual := DAP_Visual_Debugger_Access
+           (Glib.Object.GObject'(Get_Data (Inst)));
+         Visual.Client.Interrupt;
 
       end if;
    end Shell_Handler;
