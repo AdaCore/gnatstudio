@@ -879,6 +879,7 @@ package body DAP.Module is
    is
       pragma Unreferenced (Command, Context);
    begin
+      Get_Current_Debugger.Interrupt;
       return Commands.Success;
    end Execute;
 

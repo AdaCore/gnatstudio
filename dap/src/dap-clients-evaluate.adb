@@ -44,7 +44,7 @@ package body DAP.Clients.Evaluate is
    ------------
 
    function Create
-     (Client            : DAP_Client'Class;
+     (Client            : in out DAP_Client'Class;
       Kind              : Evaluate_Kind;
       Cmd               : VSS.Strings.Virtual_String;
       Output            : Boolean := False;
@@ -68,6 +68,7 @@ package body DAP.Clients.Evaluate is
         Client.Get_Stack_Trace.Get_Current_Frame_Id;
       Req.Parameters.arguments.context :=
         (Is_Set => True, Value => DAP.Tools.Enum.repl);
+
       return Req;
    end Create;
 
@@ -84,7 +85,7 @@ package body DAP.Clients.Evaluate is
       On_Rejected       : GNATCOLL.Scripts.Subprogram_Type := null)
    is
       Req : DAP.Requests.DAP_Request_Access := DAP.Requests.DAP_Request_Access
-        (DAP.Clients.Evaluate.Create
+        (Create
            (Client            => Client,
             Kind              => DAP.Clients.Evaluate.Command,
             Cmd               => Command,
@@ -128,7 +129,7 @@ package body DAP.Clients.Evaluate is
       Variable : String)
    is
       Req : DAP.Requests.DAP_Request_Access := DAP.Requests.DAP_Request_Access
-        (DAP.Clients.Evaluate.Create
+        (Create
            (Client => Client,
             Kind   => Variable_Address,
             Cmd    => VSS.Strings.Conversions.To_Virtual_String
