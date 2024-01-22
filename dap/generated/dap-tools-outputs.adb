@@ -123,7 +123,10 @@ package body DAP.Tools.Outputs is
      (Handler : in out VSS.JSON.Content_Handlers.JSON_Content_Handler'Class;
       Value   : Enum.StoppedEvent_reason) is
    begin
-      case Value is
+      case Value.Kind is
+         when Enum.Custom_Value =>
+            Handler.String_Value (Value.Custom_Value);
+
          when Enum.step =>
             Handler.String_Value ("step");
          when Enum.breakpoint =>
@@ -161,7 +164,10 @@ package body DAP.Tools.Outputs is
      (Handler : in out VSS.JSON.Content_Handlers.JSON_Content_Handler'Class;
       Value   : Enum.OutputEvent_category) is
    begin
-      case Value is
+      case Value.Kind is
+         when Enum.Custom_Value =>
+            Handler.String_Value (Value.Custom_Value);
+
          when Enum.console =>
             Handler.String_Value ("console");
          when Enum.important =>
@@ -223,7 +229,10 @@ package body DAP.Tools.Outputs is
      (Handler : in out VSS.JSON.Content_Handlers.JSON_Content_Handler'Class;
       Value   : Enum.Scope_presentationHint) is
    begin
-      case Value is
+      case Value.Kind is
+         when Enum.Custom_Value =>
+            Handler.String_Value (Value.Custom_Value);
+
          when Enum.arguments =>
             Handler.String_Value ("arguments");
          when Enum.locals =>
@@ -237,7 +246,10 @@ package body DAP.Tools.Outputs is
      (Handler : in out VSS.JSON.Content_Handlers.JSON_Content_Handler'Class;
       Value   : Enum.Response_message) is
    begin
-      case Value is
+      case Value.Kind is
+         when Enum.Custom_Value =>
+            Handler.String_Value (Value.Custom_Value);
+
          when Enum.cancelled =>
             Handler.String_Value ("cancelled");
          when Enum.notStopped =>
@@ -295,7 +307,10 @@ package body DAP.Tools.Outputs is
      (Handler : in out VSS.JSON.Content_Handlers.JSON_Content_Handler'Class;
       Value   : Enum.InvalidatedAreas) is
    begin
-      case Value is
+      case Value.Kind is
+         when Enum.Custom_Value =>
+            Handler.String_Value (Value.Custom_Value);
+
          when Enum.an_all =>
             Handler.String_Value ("all");
          when Enum.stacks =>
@@ -339,7 +354,10 @@ package body DAP.Tools.Outputs is
      (Handler : in out VSS.JSON.Content_Handlers.JSON_Content_Handler'Class;
       Value   : Enum.ProtocolMessage_type) is
    begin
-      case Value is
+      case Value.Kind is
+         when Enum.Custom_Value =>
+            Handler.String_Value (Value.Custom_Value);
+
          when Enum.request =>
             Handler.String_Value ("request");
          when Enum.response =>
@@ -377,7 +395,10 @@ package body DAP.Tools.Outputs is
      (Handler : in out VSS.JSON.Content_Handlers.JSON_Content_Handler'Class;
       Value   : Enum.VariablePresentationHint_kind) is
    begin
-      case Value is
+      case Value.Kind is
+         when Enum.Custom_Value =>
+            Handler.String_Value (Value.Custom_Value);
+
          when Enum.property =>
             Handler.String_Value ("property");
          when Enum.method =>
@@ -407,7 +428,10 @@ package body DAP.Tools.Outputs is
      (Handler : in out VSS.JSON.Content_Handlers.JSON_Content_Handler'Class;
       Value   : Enum.VariablePresentationHint_visibility) is
    begin
-      case Value is
+      case Value.Kind is
+         when Enum.Custom_Value =>
+            Handler.String_Value (Value.Custom_Value);
+
          when Enum.public =>
             Handler.String_Value ("public");
          when Enum.a_private =>
@@ -425,7 +449,10 @@ package body DAP.Tools.Outputs is
      (Handler : in out VSS.JSON.Content_Handlers.JSON_Content_Handler'Class;
       Value   : Enum.InitializeRequestArguments_pathFormat) is
    begin
-      case Value is
+      case Value.Kind is
+         when Enum.Custom_Value =>
+            Handler.String_Value (Value.Custom_Value);
+
          when Enum.path =>
             Handler.String_Value ("path");
          when Enum.uri =>
@@ -437,7 +464,10 @@ package body DAP.Tools.Outputs is
      (Handler : in out VSS.JSON.Content_Handlers.JSON_Content_Handler'Class;
       Value   : Enum.ThreadEvent_reason) is
    begin
-      case Value is
+      case Value.Kind is
+         when Enum.Custom_Value =>
+            Handler.String_Value (Value.Custom_Value);
+
          when Enum.started =>
             Handler.String_Value ("started");
          when Enum.exited =>
@@ -463,7 +493,10 @@ package body DAP.Tools.Outputs is
      (Handler : in out VSS.JSON.Content_Handlers.JSON_Content_Handler'Class;
       Value   : Enum.BreakpointEvent_reason) is
    begin
-      case Value is
+      case Value.Kind is
+         when Enum.Custom_Value =>
+            Handler.String_Value (Value.Custom_Value);
+
          when Enum.changed =>
             Handler.String_Value ("changed");
          when Enum.a_new =>
@@ -477,7 +510,10 @@ package body DAP.Tools.Outputs is
      (Handler : in out VSS.JSON.Content_Handlers.JSON_Content_Handler'Class;
       Value   : Enum.EvaluateArguments_context) is
    begin
-      case Value is
+      case Value.Kind is
+         when Enum.Custom_Value =>
+            Handler.String_Value (Value.Custom_Value);
+
          when Enum.watch =>
             Handler.String_Value ("watch");
          when Enum.repl =>
