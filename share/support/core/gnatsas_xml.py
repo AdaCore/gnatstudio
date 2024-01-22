@@ -415,9 +415,9 @@ SCIL for another architecture" />
                switch="--compare-with"
                separator=" "
                as-file="true"
-               file-filter=".sam"
-               base-dir="%O%(subdir)%P.outputs"
-               tip="Compare with another sam file"/>
+               file-filter="*.sam"
+               tip="Specify a SAM file with which to compare the current analysis run.
+ These files are located under the 'obj_dir/gnatsas/P.outputs' directory."/>
        </switches>
     </target-model>
 
@@ -469,7 +469,8 @@ SCIL for another architecture" />
        <iconname>gps-build-all-symbolic</iconname>
        <switches command="%(tool_name)s" columns="3" lines="2">
          <field label="Compare with"
-                tip="Compare the current run with an arbitrary sam file."
+                tip="Specify a SAM file with which to compare the current analysis run.
+ These files are located under the 'obj_dir/gnatsas/P.outputs' directory."
                 switch="--compare-with"
                 separator=" "
                 as-file="true"
