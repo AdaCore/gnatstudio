@@ -107,15 +107,11 @@ package body CodePeer.Module.Actions is
       Get_Messages_Container (Kernel).Remove_Category
         (CodePeer.Module_Name & " (one file)", Flags => (others => True));
 
-      --  Run the CodePeer target
+      --  Run the Build Target
+      Module.Review
+        (Force        => True,
+         Build_Target => "Run " & CodePeer.Module_Name & " File");
 
-      CodePeer.Shell_Commands.Build_Target_Execute
-        (Kernel      => Kernel,
-         Target_ID   =>
-           CodePeer.Shell_Commands.Build_Target
-             (Kernel, "Run " & CodePeer.Module_Name & " File"),
-         Force       => True,
-         Synchronous => False);
       return Success;
    end Execute;
 
