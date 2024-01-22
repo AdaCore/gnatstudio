@@ -1477,7 +1477,7 @@ package body DAP.Clients is
                   else
                      Debugger_Console);
                Mode             : constant GPS.Kernel.Message_Type :=
-                 (case Output_Category is
+                 (case Output_Category.Kind is
                      when stderr =>
                        GPS.Kernel.Error,
                      when console =>
