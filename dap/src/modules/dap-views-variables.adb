@@ -22,7 +22,6 @@ with Ada.Strings.Unbounded;       use Ada.Strings.Unbounded;
 with GNAT.Decode_UTF8_String;
 
 with GNATCOLL.JSON;               use GNATCOLL.JSON;
-with GNATCOLL.Traces;             use GNATCOLL.Traces;
 with GNATCOLL.Utils;              use GNATCOLL.Utils;
 with GNATCOLL.VFS;
 
@@ -82,8 +81,6 @@ with DAP.Views.Variables.SetExpression;
 with DAP.Views.Variables.SetVariable;
 
 package body DAP.Views.Variables is
-
-   Me : constant Trace_Handle := Create ("GPS.DAP.Variables", On);
 
    type On_Pref_Changed is new Preferences_Hooks_Function with null record;
    overriding procedure Execute
@@ -197,6 +194,12 @@ package body DAP.Views.Variables is
       Value : GNATCOLL.JSON.JSON_Value);
    --  Saving and loading which variables are displayed for a given executable
 
+   function Get_Or_Create_View
+     (Kernel : not null access Kernel_Handle_Record'Class;
+      Client : not null DAP.Clients.DAP_Client_Access)
+      return DAP_Variables_View;
+   --  Get or create the variables view
+
    Show_Types : Boolean_Preference;
 
    DAP_Variables_Contextual_Group : constant Integer := 1;
@@ -217,6 +220,11 @@ package body DAP.Views.Variables is
    Tree_Cmd_Split   : constant := 4;
    Tree_Cmd_Varname : constant := 5;
 
+   Set_Command : constant Regular_Expression :=
+     To_Regular_Expression
+       ("set\s+variable\s+(\S+)\s+:=\s+(\S+)",
+        (Case_Insensitive => True, others => False));
+
    ---------------------------
    -- On_Process_Terminated --
    ---------------------------
@@ -224,7 +232,9 @@ package body DAP.Views.Variables is
    overriding procedure On_Process_Terminated
      (Self : not null access DAP_Variables_View_Record) is
    begin
-      Self.Locals_Scope_Id := 0;
+      Self.Locals_Scope_Id    := 0;
+      Self.Arguments_Scope_Id := 0;
+
       Self.Clear;
       Self.Scopes.Clear;
       Self.Old_Scopes.Clear;
@@ -243,7 +253,9 @@ package body DAP.Views.Variables is
       if Status = Debug_Busy
         or else Status = Debug_None
       then
-         Self.Locals_Scope_Id := 0;
+         Self.Locals_Scope_Id    := 0;
+         Self.Arguments_Scope_Id := 0;
+
          Self.Old_Scopes := Self.Scopes;
          Self.Scopes.Clear;
       end if;
@@ -1040,8 +1052,6 @@ package body DAP.Views.Variables is
                Self.Tree.Ids := Self.Tree.Ids + 1;
                It.Id := Self.Tree.Ids;
             end loop;
-
-            Self.Update;
          end if;
       end if;
    end On_Attach;
@@ -1080,6 +1090,7 @@ package body DAP.Views.Variables is
    is
       Item : Item_Info;
    begin
+      Trace (Me, "Display:" & Name);
       Item.Varname := VSS.Strings.Conversions.To_Virtual_String (Name);
       Self.Display (Item);
    end Display;
@@ -1149,7 +1160,10 @@ package body DAP.Views.Variables is
       Client  : constant DAP.Clients.DAP_Client_Access := Get_Client (Self);
       Request : DAP.Requests.DAP_Request_Access;
    begin
-      Self.Locals_Scope_Id := 0;
+      Trace (Me, "Update view");
+      Self.Locals_Scope_Id    := 0;
+      Self.Arguments_Scope_Id := 0;
+
       Self.Scopes.Clear;
 
       if Client = null
@@ -1280,9 +1294,11 @@ package body DAP.Views.Variables is
 
       if Client.Is_Stopped then
          if Self.Locals_Scope_Id = 0
+           and then Self.Arguments_Scope_Id = 0
            and then Item.Cmd.Is_Empty
          --  don't have local's id and not a command, get it
          then
+            Trace (Me, "Create scopes request");
             Req := new DAP.Views.Variables.Scopes.Scopes_Request (Self.Kernel);
 
             Req.Item     := Item;
@@ -1311,6 +1327,31 @@ package body DAP.Views.Variables is
 
       return Result;
    end Update;
+
+   ------------------------
+   -- Get_Or_Create_View --
+   ------------------------
+
+   function Get_Or_Create_View
+     (Kernel : not null access Kernel_Handle_Record'Class;
+      Client : not null DAP.Clients.DAP_Client_Access)
+      return DAP_Variables_View
+   is
+      View : DAP_Variables_View;
+   begin
+      View := DAP_Variables_View
+        (Variables_MDI_Views.Retrieve_View (Kernel));
+
+      if View = null then
+         Variables_Views.Attach_To_View
+           (Client, Kernel, Create_If_Necessary => True);
+
+         View := DAP_Variables_View
+           (Variables_MDI_Views.Retrieve_View (Kernel));
+      end if;
+
+      return View;
+   end Get_Or_Create_View;
 
    -------------
    -- Execute --
@@ -1357,55 +1398,78 @@ package body DAP.Views.Variables is
    begin
       if Process = null or else
         (not Starts_With (Command, "tree ")
-         and then not Starts_With (Command, "graph "))
+         and then not Starts_With (Command, "graph ")
+         and then not Starts_With (Command, "set "))
       then
          return Command;
       end if;
 
       Match := Tree_Cmd_Format.Match (Cmd);
 
-      if not Match.Has_Match then
-         return Command;
-      end if;
+      if Match.Has_Match then
+         View := Get_Or_Create_View
+           (Kernel, DAP.Clients.DAP_Visual_Debugger_Access (Process).Client);
+         if View = null then
+            return "";
+         end if;
 
-      Variables_Views.Attach_To_View
-        (DAP.Clients.DAP_Visual_Debugger_Access (Process).Client,
-         Kernel, Create_If_Necessary => True);
-      View := DAP_Variables_View
-        (Variables_MDI_Views.Retrieve_View (Kernel));
+         if Match.Has_Capture (Tree_Cmd_Command) then
+            It.Cmd := Match.Captured (Tree_Cmd_Command);
+            It.Split_Lines := Match.Has_Capture (Tree_Cmd_Split);
 
-      if Match.Has_Capture (Tree_Cmd_Command) then
-         It.Cmd := Match.Captured (Tree_Cmd_Command);
-         It.Split_Lines := Match.Has_Capture (Tree_Cmd_Split);
+         elsif Match.Has_Capture (Tree_Cmd_Varname) then
+            It.Varname := Match.Captured (Tree_Cmd_Varname);
+         else
+            return Command;  --  Should not happen
+         end if;
 
-      elsif Match.Has_Capture (Tree_Cmd_Varname) then
-         It.Varname := Match.Captured (Tree_Cmd_Varname);
+         declare
+            Cmd : constant Virtual_String := Match.Captured (Tree_Cmd_Display);
+         begin
+            if Cmd = "display" then
+               --  Do not send debugger quit command
+               if DAP.Clients.DAP_Visual_Debugger_Access
+                 (Process).Client.Is_Quit_Command (It.Cmd)
+               then
+                  return "";
+               end if;
+
+               View.Display (It);
+
+            elsif Cmd = "undisplay" then
+               View.Undisplay (It);
+
+            else
+               Trace (Me, "Unsupported command:" & Command);
+            end if;
+         end;
+
+         return "";  --  command was processed
+
       else
-         return Command;  --  Should not happen
-      end if;
+         --  Is set command?
+         Match := Set_Command.Match (Cmd);
 
-      declare
-         Cmd : constant Virtual_String := Match.Captured (Tree_Cmd_Display);
-      begin
-         if Cmd = "display" then
-            --  Do not send debugger quit command
-            if DAP.Clients.DAP_Visual_Debugger_Access
-              (Process).Client.Is_Quit_Command (It.Cmd)
-            then
+         if Match.Has_Match then
+            View := Get_Or_Create_View
+              (Kernel,
+               DAP.Clients.DAP_Visual_Debugger_Access (Process).Client);
+
+            if View = null then
                return "";
             end if;
 
-            View.Display (It);
-
-         elsif Cmd = "undisplay" then
-            View.Undisplay (It);
-
+            View.Set_Variable_Value
+              (Name  => VSS.Strings.Conversions.To_UTF_8_String
+                 (Match.Captured (1)),
+               Value => VSS.Strings.Conversions.To_UTF_8_String
+                 (Match.Captured (2)),
+               Path  => Null_Gtk_Tree_Path);
+            return "";
          else
-            Trace (Me, "Unsupported command:" & Command);
+            return Command;
          end if;
-      end;
-
-      return "";  --  command was processed
+      end if;
 
    exception
       when E : others =>
@@ -1427,13 +1491,9 @@ package body DAP.Views.Variables is
       Name   : constant String := Get_Variable_Name
         (Context.Context, Dereference => False);
       Kernel : constant Kernel_Handle := Get_Kernel (Context.Context);
-      View : DAP_Variables_View;
+      View   : constant DAP_Variables_View :=
+        Get_Or_Create_View (Kernel, Client);
    begin
-      Variables_Views.Attach_To_View
-        (Client, Get_Kernel (Context.Context), Create_If_Necessary => True);
-      View := DAP_Variables_View
-        (Variables_MDI_Views.Retrieve_View (Kernel));
-
       if View /= null
         and then Name /= ""
       then
@@ -1997,6 +2057,7 @@ package body DAP.Views.Variables is
              new DAP.Views.Variables.Variables.
                Variables_Request (Self.Kernel);
       begin
+         Trace (Me, "Create Variables request");
          Req.Item     := Item;
          Req.Position := Position;
          Req.Childs   := Childs;
@@ -2019,6 +2080,7 @@ package body DAP.Views.Variables is
          Req : constant DAP.Views.Variables.Evaluate.Evaluate_Request_Access :=
            new DAP.Views.Variables.Evaluate.Evaluate_Request (Self.Kernel);
       begin
+         Trace (Me, "Create Evaluate request");
          Req.Item     := Item;
          Req.Position := Position;
          if Path /= Null_Gtk_Tree_Path then
@@ -2158,6 +2220,7 @@ package body DAP.Views.Variables is
         or else Id = Self.Arguments_Scope_Id
       then
          return Self.Scopes.Root;
+
       else
          return Find (First_Child (Self.Scopes.Root));
       end if;

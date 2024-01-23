@@ -16,6 +16,7 @@
 ------------------------------------------------------------------------------
 
 with Ada.Containers.Multiway_Trees;
+with GNATCOLL.Traces;             use GNATCOLL.Traces;
 
 with Gdk.Event;                   use Gdk.Event;
 
@@ -299,5 +300,7 @@ private
    Column_Value_Fg  : constant := 6;
    Column_Type_Fg   : constant := 7;
    Column_Full_Name : constant := 8;
+
+   Me : constant Trace_Handle := Create ("GPS.DAP.Variables", On);
 
 end DAP.Views.Variables;

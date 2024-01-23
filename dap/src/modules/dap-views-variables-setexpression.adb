@@ -15,12 +15,14 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
+with Ada.Characters.Handling;
 with Glib_Values_Utils;           use Glib_Values_Utils;
-
+with VSS.Strings.Conversions;
 with Gdk.RGBA;                    use Gdk.RGBA;
 
 with GPS.Kernel.Preferences;      use GPS.Kernel.Preferences;
 with DAP.Utils;                   use DAP.Utils;
+with GUI_Utils;
 
 package body DAP.Views.Variables.SetExpression is
 
@@ -66,14 +68,32 @@ package body DAP.Views.Variables.SetExpression is
                View.Scopes.Replace_Element (Cursor, Var);
             end if;
 
-            Iter := View.Tree.Model.Get_Iter (Self.Path);
-            Set_And_Clear
-              (View.Tree.Model,
-               Iter    => Iter,
-               Columns => (Column_Value, Column_Value_Fg),
-               Values  =>
-                 (1 => As_String (UTF8 (Result.a_body.value)),
-                  2 => As_String (To_String (Numbers_Style.Get_Pref_Fg))));
+            if Self.Path = Null_Gtk_Tree_Path then
+               Iter := GUI_Utils.Find_Node
+                 (Model     => View.Tree.Model,
+                  Name      => Ada.Characters.Handling.To_Lower
+                    (VSS.Strings.Conversions.To_UTF_8_String
+                         (Self.Name)),
+                  Column    => Column_Full_Name,
+                  Recursive => False);
+
+            else
+               --  The user has edited the row with the given path: use
+               --  directly the path instead of searching for the
+               --  variable's row
+
+               Iter := View.Tree.Model.Get_Iter (Self.Path);
+            end if;
+
+            if Iter /= Null_Iter then
+               Set_And_Clear
+                 (View.Tree.Model,
+                  Iter    => Iter,
+                  Columns => (Column_Value, Column_Value_Fg),
+                  Values  =>
+                    (1 => As_String (UTF8 (Result.a_body.value)),
+                     2 => As_String (To_String (Numbers_Style.Get_Pref_Fg))));
+            end if;
          end if;
 
       else

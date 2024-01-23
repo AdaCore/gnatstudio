@@ -36,6 +36,7 @@ package body DAP.Views.Variables.Variables is
 
       C : Variables_References_Trees.Cursor;
    begin
+      Trace (Me, "Variables_Request.On_Result_Message");
       New_Request := null;
 
       if View = null then
@@ -62,6 +63,7 @@ package body DAP.Views.Variables.Variables is
         and then View.Arguments_Scope_Id /= 0
       then
          --  We loaded Locals and Arguments also exist, so load them too
+         Trace (Me, "Variables_Request load Arguments");
          declare
             Req : constant Variables_Request_Access :=
               new Variables_Request (Self.Kernel);
@@ -101,6 +103,7 @@ package body DAP.Views.Variables.Variables is
             --  (Position /= 0). Informing the view so it can continue
             --  updating the next variable.
 
+            Trace (Me, "Continue_Update");
             View.Continue_Update (Self.Position, New_Request);
          end if;
       end if;
