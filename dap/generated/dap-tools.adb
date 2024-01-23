@@ -872,6 +872,72 @@ package body DAP.Tools is
      (Element => Self.Data (Index)'Access);
 
    procedure Free is new Ada.Unchecked_Deallocation
+     (VariablePresentationHint_attributes_Array,
+      VariablePresentationHint_attributes_Array_Access);
+
+   overriding procedure Adjust
+     (Self : in out VariablePresentationHint_attributes_Vector) is
+   begin
+      if Self.Length > 0 then
+         Self.Data :=
+           new VariablePresentationHint_attributes_Array'
+             (Self.Data (1 .. Self.Length));
+      end if;
+   end Adjust;
+
+   overriding procedure Finalize
+     (Self : in out VariablePresentationHint_attributes_Vector) is
+   begin
+      Free (Self.Data);
+      Self.Length := 0;
+   end Finalize;
+
+   function Length
+     (Self : VariablePresentationHint_attributes_Vector) return Natural is
+     (Self.Length);
+
+   procedure Clear
+     (Self : in out VariablePresentationHint_attributes_Vector) is
+   begin
+      Self.Length := 0;
+   end Clear;
+
+   procedure Append
+     (Self  : in out VariablePresentationHint_attributes_Vector;
+      Value : Enum.VariablePresentationHint_attributes) is
+      Init_Length     : constant Positive                                :=
+        Positive'Max (1, 256 / Enum.VariablePresentationHint_attributes'Size);
+      Self_Data_Saved : VariablePresentationHint_attributes_Array_Access :=
+        Self.Data;
+   begin
+      if Self.Length = 0 then
+         Self.Data :=
+           new VariablePresentationHint_attributes_Array (1 .. Init_Length);
+      elsif Self.Length = Self.Data'Last then
+         Self.Data :=
+           new VariablePresentationHint_attributes_Array'
+             (Self.Data.all &
+              VariablePresentationHint_attributes_Array'
+                (1 .. Self.Length => <>));
+         Free (Self_Data_Saved);
+      end if;
+      Self.Length             := Self.Length + 1;
+      Self.Data (Self.Length) := Value;
+   end Append;
+
+   not overriding function Get_VariablePresentationHint_attributes_Variable_Reference
+     (Self  : aliased in out VariablePresentationHint_attributes_Vector;
+      Index : Positive)
+      return VariablePresentationHint_attributes_Variable_Reference is
+     (Element => Self.Data (Index)'Access);
+
+   not overriding function Get_VariablePresentationHint_attributes_Constant_Reference
+     (Self  : aliased VariablePresentationHint_attributes_Vector;
+      Index : Positive)
+      return VariablePresentationHint_attributes_Constant_Reference is
+     (Element => Self.Data (Index)'Access);
+
+   procedure Free is new Ada.Unchecked_Deallocation
      (SourceBreakpoint_Array, SourceBreakpoint_Array_Access);
 
    overriding procedure Adjust (Self : in out SourceBreakpoint_Vector) is

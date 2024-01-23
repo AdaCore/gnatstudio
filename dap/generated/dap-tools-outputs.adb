@@ -424,6 +424,33 @@ package body DAP.Tools.Outputs is
       end case;
    end Output_VariablePresentationHint_kind;
 
+   procedure Output_VariablePresentationHint_attributes
+     (Handler : in out VSS.JSON.Content_Handlers.JSON_Content_Handler'Class;
+      Value   : Enum.VariablePresentationHint_attributes) is
+   begin
+      case Value.Kind is
+         when Enum.Custom_Value =>
+            Handler.String_Value (Value.Custom_Value);
+
+         when Enum.static =>
+            Handler.String_Value ("static");
+         when Enum.a_constant =>
+            Handler.String_Value ("constant");
+         when Enum.readOnly =>
+            Handler.String_Value ("readOnly");
+         when Enum.rawString =>
+            Handler.String_Value ("rawString");
+         when Enum.hasObjectId =>
+            Handler.String_Value ("hasObjectId");
+         when Enum.canHaveObjectId =>
+            Handler.String_Value ("canHaveObjectId");
+         when Enum.hasSideEffects =>
+            Handler.String_Value ("hasSideEffects");
+         when Enum.hasDataBreakpoint =>
+            Handler.String_Value ("hasDataBreakpoint");
+      end case;
+   end Output_VariablePresentationHint_attributes;
+
    procedure Output_VariablePresentationHint_visibility
      (Handler : in out VSS.JSON.Content_Handlers.JSON_Content_Handler'Class;
       Value   : Enum.VariablePresentationHint_visibility) is
@@ -3907,11 +3934,12 @@ package body DAP.Tools.Outputs is
          Handler.Key_Name ("kind");
          Output_VariablePresentationHint_kind (Handler, Value.kind.Value);
       end if;
-      if not Value.attributes.Is_Empty then
+      if Value.attributes.Length > 0 then
          Handler.Key_Name ("attributes");
          Handler.Start_Array;
          for J in 1 .. Value.attributes.Length loop
-            Handler.String_Value (Value.attributes (J));
+            Output_VariablePresentationHint_attributes
+              (Handler, Value.attributes (J));
          end loop;
          Handler.End_Array;
       end if;
