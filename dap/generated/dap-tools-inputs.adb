@@ -69,11 +69,11 @@ package body DAP.Tools.Inputs is
      (Reader  : in out VSS.JSON.Pull_Readers.JSON_Pull_Reader'Class;
       Value   : out Enum.ModuleEvent_reason;
       Success : in out Boolean) is
-      Index : constant Natural :=
+      Index : constant Integer :=
         (if Reader.Is_String_Value then
            ModuleEvent_reason_Minimal_Perfect_Hash.Get_Index
              (Reader.String_Value)
-         else 0);
+         else -1);
    begin
       if Index > 0 then
          Value := Enum.ModuleEvent_reason'Val (Index - 1);
@@ -90,11 +90,11 @@ package body DAP.Tools.Inputs is
      (Reader  : in out VSS.JSON.Pull_Readers.JSON_Pull_Reader'Class;
       Value   : out Enum.ColumnDescriptor_type;
       Success : in out Boolean) is
-      Index : constant Natural :=
+      Index : constant Integer :=
         (if Reader.Is_String_Value then
            ColumnDescriptor_type_Minimal_Perfect_Hash.Get_Index
              (Reader.String_Value)
-         else 0);
+         else -1);
    begin
       if Index > 0 then
          Value := Enum.ColumnDescriptor_type'Val (Index - 1);
@@ -111,11 +111,11 @@ package body DAP.Tools.Inputs is
      (Reader  : in out VSS.JSON.Pull_Readers.JSON_Pull_Reader'Class;
       Value   : out Enum.StackFrame_presentationHint;
       Success : in out Boolean) is
-      Index : constant Natural :=
+      Index : constant Integer :=
         (if Reader.Is_String_Value then
            StackFrame_presentationHint_Minimal_Perfect_Hash.Get_Index
              (Reader.String_Value)
-         else 0);
+         else -1);
    begin
       if Index > 0 then
          Value := Enum.StackFrame_presentationHint'Val (Index - 1);
@@ -132,11 +132,11 @@ package body DAP.Tools.Inputs is
      (Reader  : in out VSS.JSON.Pull_Readers.JSON_Pull_Reader'Class;
       Value   : out Enum.ExceptionBreakMode;
       Success : in out Boolean) is
-      Index : constant Natural :=
+      Index : constant Integer :=
         (if Reader.Is_String_Value then
            ExceptionBreakMode_Minimal_Perfect_Hash.Get_Index
              (Reader.String_Value)
-         else 0);
+         else -1);
    begin
       if Index > 0 then
          Value := Enum.ExceptionBreakMode'Val (Index - 1);
@@ -148,20 +148,28 @@ package body DAP.Tools.Inputs is
 
    package StoppedEvent_reason_Minimal_Perfect_Hash is new Minimal_Perfect_Hash
      (["step", "breakpoint", "exception", "pause", "entry", "goto",
-       "function breakpoint", "data breakpoint", "instruction breakpoint"]);
+      "function breakpoint", "data breakpoint", "instruction breakpoint"]);
 
    procedure Input_StoppedEvent_reason
      (Reader  : in out VSS.JSON.Pull_Readers.JSON_Pull_Reader'Class;
       Value   : out Enum.StoppedEvent_reason;
       Success : in out Boolean) is
-      Index : constant Natural :=
+      Index : constant Integer :=
         (if Reader.Is_String_Value then
            StoppedEvent_reason_Minimal_Perfect_Hash.Get_Index
              (Reader.String_Value)
-         else 0);
+         else -1);
    begin
       if Index > 0 then
-         Value := Enum.StoppedEvent_reason'Val (Index - 1);
+         pragma Warnings (Off, "redundant conversion");
+         Value :=
+           (Kind =>
+              Enum.StoppedEvent_reason_Predefined
+                (Enum.StoppedEvent_reason_Value'Val (Index - 1)));
+         pragma Warnings (On, "redundant conversion");
+         Reader.Read_Next;
+      elsif Index = 0 then
+         Value := (Enum.Custom_Value, Reader.String_Value);
          Reader.Read_Next;
       else
          Success := False;
@@ -175,12 +183,12 @@ package body DAP.Tools.Inputs is
      (Reader  : in out VSS.JSON.Pull_Readers.JSON_Pull_Reader'Class;
       Value   : out Enum.StartDebuggingRequestArguments_request;
       Success : in out Boolean) is
-      Index : constant Natural :=
+      Index : constant Integer :=
         (if Reader.Is_String_Value then
            StartDebuggingRequestArguments_request_Minimal_Perfect_Hash
              .Get_Index
              (Reader.String_Value)
-         else 0);
+         else -1);
    begin
       if Index > 0 then
          Value := Enum.StartDebuggingRequestArguments_request'Val (Index - 1);
@@ -197,14 +205,22 @@ package body DAP.Tools.Inputs is
      (Reader  : in out VSS.JSON.Pull_Readers.JSON_Pull_Reader'Class;
       Value   : out Enum.OutputEvent_category;
       Success : in out Boolean) is
-      Index : constant Natural :=
+      Index : constant Integer :=
         (if Reader.Is_String_Value then
            OutputEvent_category_Minimal_Perfect_Hash.Get_Index
              (Reader.String_Value)
-         else 0);
+         else -1);
    begin
       if Index > 0 then
-         Value := Enum.OutputEvent_category'Val (Index - 1);
+         pragma Warnings (Off, "redundant conversion");
+         Value :=
+           (Kind =>
+              Enum.OutputEvent_category_Predefined
+                (Enum.OutputEvent_category_Value'Val (Index - 1)));
+         pragma Warnings (On, "redundant conversion");
+         Reader.Read_Next;
+      elsif Index = 0 then
+         Value := (Enum.Custom_Value, Reader.String_Value);
          Reader.Read_Next;
       else
          Success := False;
@@ -218,11 +234,11 @@ package body DAP.Tools.Inputs is
      (Reader  : in out VSS.JSON.Pull_Readers.JSON_Pull_Reader'Class;
       Value   : out Enum.OutputEvent_group;
       Success : in out Boolean) is
-      Index : constant Natural :=
+      Index : constant Integer :=
         (if Reader.Is_String_Value then
            OutputEvent_group_Minimal_Perfect_Hash.Get_Index
              (Reader.String_Value)
-         else 0);
+         else -1);
    begin
       if Index > 0 then
          Value := Enum.OutputEvent_group'Val (Index - 1);
@@ -239,11 +255,11 @@ package body DAP.Tools.Inputs is
      (Reader  : in out VSS.JSON.Pull_Readers.JSON_Pull_Reader'Class;
       Value   : out Enum.ChecksumAlgorithm;
       Success : in out Boolean) is
-      Index : constant Natural :=
+      Index : constant Integer :=
         (if Reader.Is_String_Value then
            ChecksumAlgorithm_Minimal_Perfect_Hash.Get_Index
              (Reader.String_Value)
-         else 0);
+         else -1);
    begin
       if Index > 0 then
          Value := Enum.ChecksumAlgorithm'Val (Index - 1);
@@ -260,11 +276,11 @@ package body DAP.Tools.Inputs is
      (Reader  : in out VSS.JSON.Pull_Readers.JSON_Pull_Reader'Class;
       Value   : out Enum.ProcessEvent_startMethod;
       Success : in out Boolean) is
-      Index : constant Natural :=
+      Index : constant Integer :=
         (if Reader.Is_String_Value then
            ProcessEvent_startMethod_Minimal_Perfect_Hash.Get_Index
              (Reader.String_Value)
-         else 0);
+         else -1);
    begin
       if Index > 0 then
          Value := Enum.ProcessEvent_startMethod'Val (Index - 1);
@@ -281,14 +297,22 @@ package body DAP.Tools.Inputs is
      (Reader  : in out VSS.JSON.Pull_Readers.JSON_Pull_Reader'Class;
       Value   : out Enum.Scope_presentationHint;
       Success : in out Boolean) is
-      Index : constant Natural :=
+      Index : constant Integer :=
         (if Reader.Is_String_Value then
            Scope_presentationHint_Minimal_Perfect_Hash.Get_Index
              (Reader.String_Value)
-         else 0);
+         else -1);
    begin
       if Index > 0 then
-         Value := Enum.Scope_presentationHint'Val (Index - 1);
+         pragma Warnings (Off, "redundant conversion");
+         Value :=
+           (Kind =>
+              Enum.Scope_presentationHint_Predefined
+                (Enum.Scope_presentationHint_Value'Val (Index - 1)));
+         pragma Warnings (On, "redundant conversion");
+         Reader.Read_Next;
+      elsif Index = 0 then
+         Value := (Enum.Custom_Value, Reader.String_Value);
          Reader.Read_Next;
       else
          Success := False;
@@ -302,14 +326,22 @@ package body DAP.Tools.Inputs is
      (Reader  : in out VSS.JSON.Pull_Readers.JSON_Pull_Reader'Class;
       Value   : out Enum.Response_message;
       Success : in out Boolean) is
-      Index : constant Natural :=
+      Index : constant Integer :=
         (if Reader.Is_String_Value then
            Response_message_Minimal_Perfect_Hash.Get_Index
              (Reader.String_Value)
-         else 0);
+         else -1);
    begin
       if Index > 0 then
-         Value := Enum.Response_message'Val (Index - 1);
+         pragma Warnings (Off, "redundant conversion");
+         Value :=
+           (Kind =>
+              Enum.Response_message_Predefined
+                (Enum.Response_message_Value'Val (Index - 1)));
+         pragma Warnings (On, "redundant conversion");
+         Reader.Read_Next;
+      elsif Index = 0 then
+         Value := (Enum.Custom_Value, Reader.String_Value);
          Reader.Read_Next;
       else
          Success := False;
@@ -318,18 +350,18 @@ package body DAP.Tools.Inputs is
 
    package CompletionItemType_Minimal_Perfect_Hash is new Minimal_Perfect_Hash
      (["method", "function", "constructor", "field", "variable", "class",
-       "interface", "module", "property", "unit", "value", "enum", "keyword",
-       "snippet", "text", "color", "file", "reference", "customcolor"]);
+      "interface", "module", "property", "unit", "value", "enum", "keyword",
+      "snippet", "text", "color", "file", "reference", "customcolor"]);
 
    procedure Input_CompletionItemType
      (Reader  : in out VSS.JSON.Pull_Readers.JSON_Pull_Reader'Class;
       Value   : out Enum.CompletionItemType;
       Success : in out Boolean) is
-      Index : constant Natural :=
+      Index : constant Integer :=
         (if Reader.Is_String_Value then
            CompletionItemType_Minimal_Perfect_Hash.Get_Index
              (Reader.String_Value)
-         else 0);
+         else -1);
    begin
       if Index > 0 then
          Value := Enum.CompletionItemType'Val (Index - 1);
@@ -346,14 +378,22 @@ package body DAP.Tools.Inputs is
      (Reader  : in out VSS.JSON.Pull_Readers.JSON_Pull_Reader'Class;
       Value   : out Enum.InvalidatedAreas;
       Success : in out Boolean) is
-      Index : constant Natural :=
+      Index : constant Integer :=
         (if Reader.Is_String_Value then
            InvalidatedAreas_Minimal_Perfect_Hash.Get_Index
              (Reader.String_Value)
-         else 0);
+         else -1);
    begin
       if Index > 0 then
-         Value := Enum.InvalidatedAreas'Val (Index - 1);
+         pragma Warnings (Off, "redundant conversion");
+         Value :=
+           (Kind =>
+              Enum.InvalidatedAreas_Predefined
+                (Enum.InvalidatedAreas_Value'Val (Index - 1)));
+         pragma Warnings (On, "redundant conversion");
+         Reader.Read_Next;
+      elsif Index = 0 then
+         Value := (Enum.Custom_Value, Reader.String_Value);
          Reader.Read_Next;
       else
          Success := False;
@@ -367,11 +407,11 @@ package body DAP.Tools.Inputs is
      (Reader  : in out VSS.JSON.Pull_Readers.JSON_Pull_Reader'Class;
       Value   : out Enum.Source_presentationHint;
       Success : in out Boolean) is
-      Index : constant Natural :=
+      Index : constant Integer :=
         (if Reader.Is_String_Value then
            Source_presentationHint_Minimal_Perfect_Hash.Get_Index
              (Reader.String_Value)
-         else 0);
+         else -1);
    begin
       if Index > 0 then
          Value := Enum.Source_presentationHint'Val (Index - 1);
@@ -388,11 +428,11 @@ package body DAP.Tools.Inputs is
      (Reader  : in out VSS.JSON.Pull_Readers.JSON_Pull_Reader'Class;
       Value   : out Enum.LoadedSourceEvent_reason;
       Success : in out Boolean) is
-      Index : constant Natural :=
+      Index : constant Integer :=
         (if Reader.Is_String_Value then
            LoadedSourceEvent_reason_Minimal_Perfect_Hash.Get_Index
              (Reader.String_Value)
-         else 0);
+         else -1);
    begin
       if Index > 0 then
          Value := Enum.LoadedSourceEvent_reason'Val (Index - 1);
@@ -409,14 +449,22 @@ package body DAP.Tools.Inputs is
      (Reader  : in out VSS.JSON.Pull_Readers.JSON_Pull_Reader'Class;
       Value   : out Enum.ProtocolMessage_type;
       Success : in out Boolean) is
-      Index : constant Natural :=
+      Index : constant Integer :=
         (if Reader.Is_String_Value then
            ProtocolMessage_type_Minimal_Perfect_Hash.Get_Index
              (Reader.String_Value)
-         else 0);
+         else -1);
    begin
       if Index > 0 then
-         Value := Enum.ProtocolMessage_type'Val (Index - 1);
+         pragma Warnings (Off, "redundant conversion");
+         Value :=
+           (Kind =>
+              Enum.ProtocolMessage_type_Predefined
+                (Enum.ProtocolMessage_type_Value'Val (Index - 1)));
+         pragma Warnings (On, "redundant conversion");
+         Reader.Read_Next;
+      elsif Index = 0 then
+         Value := (Enum.Custom_Value, Reader.String_Value);
          Reader.Read_Next;
       else
          Success := False;
@@ -430,11 +478,11 @@ package body DAP.Tools.Inputs is
      (Reader  : in out VSS.JSON.Pull_Readers.JSON_Pull_Reader'Class;
       Value   : out Enum.RunInTerminalRequestArguments_kind;
       Success : in out Boolean) is
-      Index : constant Natural :=
+      Index : constant Integer :=
         (if Reader.Is_String_Value then
            RunInTerminalRequestArguments_kind_Minimal_Perfect_Hash.Get_Index
              (Reader.String_Value)
-         else 0);
+         else -1);
    begin
       if Index > 0 then
          Value := Enum.RunInTerminalRequestArguments_kind'Val (Index - 1);
@@ -451,11 +499,11 @@ package body DAP.Tools.Inputs is
      (Reader  : in out VSS.JSON.Pull_Readers.JSON_Pull_Reader'Class;
       Value   : out Enum.VariablesArguments_filter;
       Success : in out Boolean) is
-      Index : constant Natural :=
+      Index : constant Integer :=
         (if Reader.Is_String_Value then
            VariablesArguments_filter_Minimal_Perfect_Hash.Get_Index
              (Reader.String_Value)
-         else 0);
+         else -1);
    begin
       if Index > 0 then
          Value := Enum.VariablesArguments_filter'Val (Index - 1);
@@ -467,21 +515,29 @@ package body DAP.Tools.Inputs is
 
    package VariablePresentationHint_kind_Minimal_Perfect_Hash is new Minimal_Perfect_Hash
      (["property", "method", "class", "data", "event", "baseClass",
-       "innerClass", "interface", "mostDerivedClass", "virtual",
-       "dataBreakpoint"]);
+      "innerClass", "interface", "mostDerivedClass", "virtual",
+      "dataBreakpoint"]);
 
    procedure Input_VariablePresentationHint_kind
      (Reader  : in out VSS.JSON.Pull_Readers.JSON_Pull_Reader'Class;
       Value   : out Enum.VariablePresentationHint_kind;
       Success : in out Boolean) is
-      Index : constant Natural :=
+      Index : constant Integer :=
         (if Reader.Is_String_Value then
            VariablePresentationHint_kind_Minimal_Perfect_Hash.Get_Index
              (Reader.String_Value)
-         else 0);
+         else -1);
    begin
       if Index > 0 then
-         Value := Enum.VariablePresentationHint_kind'Val (Index - 1);
+         pragma Warnings (Off, "redundant conversion");
+         Value :=
+           (Kind =>
+              Enum.VariablePresentationHint_kind_Predefined
+                (Enum.VariablePresentationHint_kind_Value'Val (Index - 1)));
+         pragma Warnings (On, "redundant conversion");
+         Reader.Read_Next;
+      elsif Index = 0 then
+         Value := (Enum.Custom_Value, Reader.String_Value);
          Reader.Read_Next;
       else
          Success := False;
@@ -495,14 +551,23 @@ package body DAP.Tools.Inputs is
      (Reader  : in out VSS.JSON.Pull_Readers.JSON_Pull_Reader'Class;
       Value   : out Enum.VariablePresentationHint_visibility;
       Success : in out Boolean) is
-      Index : constant Natural :=
+      Index : constant Integer :=
         (if Reader.Is_String_Value then
            VariablePresentationHint_visibility_Minimal_Perfect_Hash.Get_Index
              (Reader.String_Value)
-         else 0);
+         else -1);
    begin
       if Index > 0 then
-         Value := Enum.VariablePresentationHint_visibility'Val (Index - 1);
+         pragma Warnings (Off, "redundant conversion");
+         Value :=
+           (Kind =>
+              Enum.VariablePresentationHint_visibility_Predefined
+                (Enum.VariablePresentationHint_visibility_Value'Val
+                   (Index - 1)));
+         pragma Warnings (On, "redundant conversion");
+         Reader.Read_Next;
+      elsif Index = 0 then
+         Value := (Enum.Custom_Value, Reader.String_Value);
          Reader.Read_Next;
       else
          Success := False;
@@ -516,14 +581,23 @@ package body DAP.Tools.Inputs is
      (Reader  : in out VSS.JSON.Pull_Readers.JSON_Pull_Reader'Class;
       Value   : out Enum.InitializeRequestArguments_pathFormat;
       Success : in out Boolean) is
-      Index : constant Natural :=
+      Index : constant Integer :=
         (if Reader.Is_String_Value then
            InitializeRequestArguments_pathFormat_Minimal_Perfect_Hash.Get_Index
              (Reader.String_Value)
-         else 0);
+         else -1);
    begin
       if Index > 0 then
-         Value := Enum.InitializeRequestArguments_pathFormat'Val (Index - 1);
+         pragma Warnings (Off, "redundant conversion");
+         Value :=
+           (Kind =>
+              Enum.InitializeRequestArguments_pathFormat_Predefined
+                (Enum.InitializeRequestArguments_pathFormat_Value'Val
+                   (Index - 1)));
+         pragma Warnings (On, "redundant conversion");
+         Reader.Read_Next;
+      elsif Index = 0 then
+         Value := (Enum.Custom_Value, Reader.String_Value);
          Reader.Read_Next;
       else
          Success := False;
@@ -537,14 +611,22 @@ package body DAP.Tools.Inputs is
      (Reader  : in out VSS.JSON.Pull_Readers.JSON_Pull_Reader'Class;
       Value   : out Enum.ThreadEvent_reason;
       Success : in out Boolean) is
-      Index : constant Natural :=
+      Index : constant Integer :=
         (if Reader.Is_String_Value then
            ThreadEvent_reason_Minimal_Perfect_Hash.Get_Index
              (Reader.String_Value)
-         else 0);
+         else -1);
    begin
       if Index > 0 then
-         Value := Enum.ThreadEvent_reason'Val (Index - 1);
+         pragma Warnings (Off, "redundant conversion");
+         Value :=
+           (Kind =>
+              Enum.ThreadEvent_reason_Predefined
+                (Enum.ThreadEvent_reason_Value'Val (Index - 1)));
+         pragma Warnings (On, "redundant conversion");
+         Reader.Read_Next;
+      elsif Index = 0 then
+         Value := (Enum.Custom_Value, Reader.String_Value);
          Reader.Read_Next;
       else
          Success := False;
@@ -558,11 +640,11 @@ package body DAP.Tools.Inputs is
      (Reader  : in out VSS.JSON.Pull_Readers.JSON_Pull_Reader'Class;
       Value   : out Enum.DataBreakpointAccessType;
       Success : in out Boolean) is
-      Index : constant Natural :=
+      Index : constant Integer :=
         (if Reader.Is_String_Value then
            DataBreakpointAccessType_Minimal_Perfect_Hash.Get_Index
              (Reader.String_Value)
-         else 0);
+         else -1);
    begin
       if Index > 0 then
          Value := Enum.DataBreakpointAccessType'Val (Index - 1);
@@ -579,14 +661,22 @@ package body DAP.Tools.Inputs is
      (Reader  : in out VSS.JSON.Pull_Readers.JSON_Pull_Reader'Class;
       Value   : out Enum.BreakpointEvent_reason;
       Success : in out Boolean) is
-      Index : constant Natural :=
+      Index : constant Integer :=
         (if Reader.Is_String_Value then
            BreakpointEvent_reason_Minimal_Perfect_Hash.Get_Index
              (Reader.String_Value)
-         else 0);
+         else -1);
    begin
       if Index > 0 then
-         Value := Enum.BreakpointEvent_reason'Val (Index - 1);
+         pragma Warnings (Off, "redundant conversion");
+         Value :=
+           (Kind =>
+              Enum.BreakpointEvent_reason_Predefined
+                (Enum.BreakpointEvent_reason_Value'Val (Index - 1)));
+         pragma Warnings (On, "redundant conversion");
+         Reader.Read_Next;
+      elsif Index = 0 then
+         Value := (Enum.Custom_Value, Reader.String_Value);
          Reader.Read_Next;
       else
          Success := False;
@@ -600,14 +690,22 @@ package body DAP.Tools.Inputs is
      (Reader  : in out VSS.JSON.Pull_Readers.JSON_Pull_Reader'Class;
       Value   : out Enum.EvaluateArguments_context;
       Success : in out Boolean) is
-      Index : constant Natural :=
+      Index : constant Integer :=
         (if Reader.Is_String_Value then
            EvaluateArguments_context_Minimal_Perfect_Hash.Get_Index
              (Reader.String_Value)
-         else 0);
+         else -1);
    begin
       if Index > 0 then
-         Value := Enum.EvaluateArguments_context'Val (Index - 1);
+         pragma Warnings (Off, "redundant conversion");
+         Value :=
+           (Kind =>
+              Enum.EvaluateArguments_context_Predefined
+                (Enum.EvaluateArguments_context_Value'Val (Index - 1)));
+         pragma Warnings (On, "redundant conversion");
+         Reader.Read_Next;
+      elsif Index = 0 then
+         Value := (Enum.Custom_Value, Reader.String_Value);
          Reader.Read_Next;
       else
          Success := False;
@@ -621,11 +719,11 @@ package body DAP.Tools.Inputs is
      (Reader  : in out VSS.JSON.Pull_Readers.JSON_Pull_Reader'Class;
       Value   : out Enum.SteppingGranularity;
       Success : in out Boolean) is
-      Index : constant Natural :=
+      Index : constant Integer :=
         (if Reader.Is_String_Value then
            SteppingGranularity_Minimal_Perfect_Hash.Get_Index
              (Reader.String_Value)
-         else 0);
+         else -1);
    begin
       if Index > 0 then
          Value := Enum.SteppingGranularity'Val (Index - 1);
@@ -724,7 +822,7 @@ package body DAP.Tools.Inputs is
 
    package ExceptionDetails_Minimal_Perfect_Hash is new Minimal_Perfect_Hash
      (["message", "typeName", "fullTypeName", "evaluateName", "stackTrace",
-       "innerException"]);
+      "innerException"]);
 
    procedure Input_ExceptionDetails
      (Reader  : in out VSS.JSON.Pull_Readers.JSON_Pull_Reader'Class;
@@ -2043,25 +2141,25 @@ package body DAP.Tools.Inputs is
 
    package Capabilities_Minimal_Perfect_Hash is new Minimal_Perfect_Hash
      (["supportsConfigurationDoneRequest", "supportsFunctionBreakpoints",
-       "supportsConditionalBreakpoints", "supportsHitConditionalBreakpoints",
-       "supportsEvaluateForHovers", "exceptionBreakpointFilters",
-       "supportsStepBack", "supportsSetVariable", "supportsRestartFrame",
-       "supportsGotoTargetsRequest", "supportsStepInTargetsRequest",
-       "supportsCompletionsRequest", "completionTriggerCharacters",
-       "supportsModulesRequest", "additionalModuleColumns",
-       "supportedChecksumAlgorithms", "supportsRestartRequest",
-       "supportsExceptionOptions", "supportsValueFormattingOptions",
-       "supportsExceptionInfoRequest", "supportTerminateDebuggee",
-       "supportSuspendDebuggee", "supportsDelayedStackTraceLoading",
-       "supportsLoadedSourcesRequest", "supportsLogPoints",
-       "supportsTerminateThreadsRequest", "supportsSetExpression",
-       "supportsTerminateRequest", "supportsDataBreakpoints",
-       "supportsReadMemoryRequest", "supportsWriteMemoryRequest",
-       "supportsDisassembleRequest", "supportsCancelRequest",
-       "supportsBreakpointLocationsRequest", "supportsClipboardContext",
-       "supportsSteppingGranularity", "supportsInstructionBreakpoints",
-       "supportsExceptionFilterOptions",
-       "supportsSingleThreadExecutionRequests"]);
+      "supportsConditionalBreakpoints", "supportsHitConditionalBreakpoints",
+      "supportsEvaluateForHovers", "exceptionBreakpointFilters",
+      "supportsStepBack", "supportsSetVariable", "supportsRestartFrame",
+      "supportsGotoTargetsRequest", "supportsStepInTargetsRequest",
+      "supportsCompletionsRequest", "completionTriggerCharacters",
+      "supportsModulesRequest", "additionalModuleColumns",
+      "supportedChecksumAlgorithms", "supportsRestartRequest",
+      "supportsExceptionOptions", "supportsValueFormattingOptions",
+      "supportsExceptionInfoRequest", "supportTerminateDebuggee",
+      "supportSuspendDebuggee", "supportsDelayedStackTraceLoading",
+      "supportsLoadedSourcesRequest", "supportsLogPoints",
+      "supportsTerminateThreadsRequest", "supportsSetExpression",
+      "supportsTerminateRequest", "supportsDataBreakpoints",
+      "supportsReadMemoryRequest", "supportsWriteMemoryRequest",
+      "supportsDisassembleRequest", "supportsCancelRequest",
+      "supportsBreakpointLocationsRequest", "supportsClipboardContext",
+      "supportsSteppingGranularity", "supportsInstructionBreakpoints",
+      "supportsExceptionFilterOptions",
+      "supportsSingleThreadExecutionRequests"]);
 
    procedure Input_Capabilities
      (Reader  : in out VSS.JSON.Pull_Readers.JSON_Pull_Reader'Class;
@@ -2816,8 +2914,8 @@ package body DAP.Tools.Inputs is
 
    package StackFrame_Minimal_Perfect_Hash is new Minimal_Perfect_Hash
      (["id", "name", "source", "line", "column", "endLine", "endColumn",
-       "canRestart", "instructionPointerReference", "moduleId",
-       "presentationHint"]);
+      "canRestart", "instructionPointerReference", "moduleId",
+      "presentationHint"]);
 
    procedure Input_StackFrame
      (Reader  : in out VSS.JSON.Pull_Readers.JSON_Pull_Reader'Class;
@@ -3129,7 +3227,7 @@ package body DAP.Tools.Inputs is
 
    package ExceptionBreakpointsFilter_Minimal_Perfect_Hash is new Minimal_Perfect_Hash
      (["filter", "label", "description", "default", "supportsCondition",
-       "conditionDescription"]);
+      "conditionDescription"]);
 
    procedure Input_ExceptionBreakpointsFilter
      (Reader  : in out VSS.JSON.Pull_Readers.JSON_Pull_Reader'Class;
@@ -3616,7 +3714,7 @@ package body DAP.Tools.Inputs is
 
    package LaunchRequestArguments_Minimal_Perfect_Hash is new Minimal_Perfect_Hash
      (["noDebug", "__restart", "program", "args", "cwd",
-       "stopAtBeginningOfMainSubprogram"]);
+      "stopAtBeginningOfMainSubprogram"]);
 
    procedure Input_LaunchRequestArguments
      (Reader  : in out VSS.JSON.Pull_Readers.JSON_Pull_Reader'Class;
@@ -3979,8 +4077,8 @@ package body DAP.Tools.Inputs is
 
    package Variable_Minimal_Perfect_Hash is new Minimal_Perfect_Hash
      (["name", "value", "type", "presentationHint", "evaluateName",
-       "variablesReference", "namedVariables", "indexedVariables",
-       "memoryReference"]);
+      "variablesReference", "namedVariables", "indexedVariables",
+      "memoryReference"]);
 
    procedure Input_Variable
      (Reader  : in out VSS.JSON.Pull_Readers.JSON_Pull_Reader'Class;
@@ -4095,7 +4193,7 @@ package body DAP.Tools.Inputs is
 
    package StoppedEvent_body_Minimal_Perfect_Hash is new Minimal_Perfect_Hash
      (["reason", "description", "threadId", "preserveFocusHint", "text",
-       "allThreadsStopped", "hitBreakpointIds"]);
+      "allThreadsStopped", "hitBreakpointIds"]);
 
    procedure Input_StoppedEvent
      (Reader  : in out VSS.JSON.Pull_Readers.JSON_Pull_Reader'Class;
@@ -5064,7 +5162,7 @@ package body DAP.Tools.Inputs is
 
    package SetExpressionResponse_body_Minimal_Perfect_Hash is new Minimal_Perfect_Hash
      (["value", "type", "presentationHint", "variablesReference",
-       "namedVariables", "indexedVariables"]);
+      "namedVariables", "indexedVariables"]);
 
    procedure Input_SetExpressionResponse
      (Reader  : in out VSS.JSON.Pull_Readers.JSON_Pull_Reader'Class;
@@ -5440,7 +5538,7 @@ package body DAP.Tools.Inputs is
 
    package OutputEvent_body_Minimal_Perfect_Hash is new Minimal_Perfect_Hash
      (["category", "output", "group", "variablesReference", "source", "line",
-       "column", "data"]);
+      "column", "data"]);
 
    procedure Input_OutputEvent
      (Reader  : in out VSS.JSON.Pull_Readers.JSON_Pull_Reader'Class;
@@ -6094,7 +6192,7 @@ package body DAP.Tools.Inputs is
 
    package ProcessEvent_body_Minimal_Perfect_Hash is new Minimal_Perfect_Hash
      (["name", "systemProcessId", "isLocalProcess", "startMethod",
-       "pointerSize"]);
+      "pointerSize"]);
 
    procedure Input_ProcessEvent
      (Reader  : in out VSS.JSON.Pull_Readers.JSON_Pull_Reader'Class;
@@ -6610,8 +6708,8 @@ package body DAP.Tools.Inputs is
 
    package Scope_Minimal_Perfect_Hash is new Minimal_Perfect_Hash
      (["name", "presentationHint", "variablesReference", "namedVariables",
-       "indexedVariables", "expensive", "source", "line", "column", "endLine",
-       "endColumn"]);
+      "indexedVariables", "expensive", "source", "line", "column", "endLine",
+      "endColumn"]);
 
    procedure Input_Scope
      (Reader  : in out VSS.JSON.Pull_Readers.JSON_Pull_Reader'Class;
@@ -6753,7 +6851,7 @@ package body DAP.Tools.Inputs is
 
    package DisassembleArguments_Minimal_Perfect_Hash is new Minimal_Perfect_Hash
      (["memoryReference", "offset", "instructionOffset", "instructionCount",
-       "resolveSymbols"]);
+      "resolveSymbols"]);
 
    procedure Input_DisassembleArguments
      (Reader  : in out VSS.JSON.Pull_Readers.JSON_Pull_Reader'Class;
@@ -8145,7 +8243,7 @@ package body DAP.Tools.Inputs is
 
    package Module_Minimal_Perfect_Hash is new Minimal_Perfect_Hash
      (["id", "name", "path", "isOptimized", "isUserCode", "version",
-       "symbolStatus", "symbolFilePath", "dateTimeStamp", "addressRange"]);
+      "symbolStatus", "symbolFilePath", "dateTimeStamp", "addressRange"]);
 
    procedure Input_Module
      (Reader  : in out VSS.JSON.Pull_Readers.JSON_Pull_Reader'Class;
@@ -8803,7 +8901,7 @@ package body DAP.Tools.Inputs is
 
    package Message_Minimal_Perfect_Hash is new Minimal_Perfect_Hash
      (["id", "format", "variables", "sendTelemetry", "showUser", "url",
-       "urlLabel"]);
+      "urlLabel"]);
 
    procedure Input_Message
      (Reader  : in out VSS.JSON.Pull_Readers.JSON_Pull_Reader'Class;
@@ -10172,7 +10270,7 @@ package body DAP.Tools.Inputs is
 
    package Breakpoint_Minimal_Perfect_Hash is new Minimal_Perfect_Hash
      (["id", "verified", "message", "source", "line", "column", "endLine",
-       "endColumn", "instructionReference", "offset"]);
+      "endColumn", "instructionReference", "offset"]);
 
    procedure Input_Breakpoint
      (Reader  : in out VSS.JSON.Pull_Readers.JSON_Pull_Reader'Class;
@@ -10306,7 +10404,7 @@ package body DAP.Tools.Inputs is
 
    package Source_Minimal_Perfect_Hash is new Minimal_Perfect_Hash
      (["name", "path", "sourceReference", "presentationHint", "origin",
-       "sources", "adapterData", "checksums"]);
+      "sources", "adapterData", "checksums"]);
 
    procedure Input_Source
      (Reader  : in out VSS.JSON.Pull_Readers.JSON_Pull_Reader'Class;
@@ -10739,7 +10837,7 @@ package body DAP.Tools.Inputs is
 
    package StackFrameFormat_Minimal_Perfect_Hash is new Minimal_Perfect_Hash
      (["hex", "parameters", "parameterTypes", "parameterNames",
-       "parameterValues", "line", "module", "includeAll"]);
+      "parameterValues", "line", "module", "includeAll"]);
 
    procedure Input_StackFrameFormat
      (Reader  : in out VSS.JSON.Pull_Readers.JSON_Pull_Reader'Class;
@@ -11913,7 +12011,7 @@ package body DAP.Tools.Inputs is
 
    package DisassembledInstruction_Minimal_Perfect_Hash is new Minimal_Perfect_Hash
      (["address", "instructionBytes", "instruction", "symbol", "location",
-       "line", "column", "endLine", "endColumn"]);
+      "line", "column", "endLine", "endColumn"]);
 
    procedure Input_DisassembledInstruction
      (Reader  : in out VSS.JSON.Pull_Readers.JSON_Pull_Reader'Class;
@@ -12168,12 +12266,11 @@ package body DAP.Tools.Inputs is
 
    package InitializeRequestArguments_Minimal_Perfect_Hash is new Minimal_Perfect_Hash
      (["clientID", "clientName", "adapterID", "locale", "linesStartAt1",
-       "columnsStartAt1", "pathFormat", "supportsVariableType",
-       "supportsVariablePaging", "supportsRunInTerminalRequest",
-       "supportsMemoryReferences", "supportsProgressReporting",
-       "supportsInvalidatedEvent", "supportsMemoryEvent",
-       "supportsArgsCanBeInterpretedByShell",
-       "supportsStartDebuggingRequest"]);
+      "columnsStartAt1", "pathFormat", "supportsVariableType",
+      "supportsVariablePaging", "supportsRunInTerminalRequest",
+      "supportsMemoryReferences", "supportsProgressReporting",
+      "supportsInvalidatedEvent", "supportsMemoryEvent",
+      "supportsArgsCanBeInterpretedByShell", "supportsStartDebuggingRequest"]);
 
    procedure Input_InitializeRequestArguments
      (Reader  : in out VSS.JSON.Pull_Readers.JSON_Pull_Reader'Class;
@@ -13291,7 +13388,7 @@ package body DAP.Tools.Inputs is
 
    package CompletionItem_Minimal_Perfect_Hash is new Minimal_Perfect_Hash
      (["label", "text", "sortText", "detail", "type", "start", "length",
-       "selectionStart", "selectionLength"]);
+      "selectionStart", "selectionLength"]);
 
    procedure Input_CompletionItem
      (Reader  : in out VSS.JSON.Pull_Readers.JSON_Pull_Reader'Class;
@@ -13816,7 +13913,7 @@ package body DAP.Tools.Inputs is
 
    package GotoTarget_Minimal_Perfect_Hash is new Minimal_Perfect_Hash
      (["id", "label", "line", "column", "endLine", "endColumn",
-       "instructionPointerReference"]);
+      "instructionPointerReference"]);
 
    procedure Input_GotoTarget
      (Reader  : in out VSS.JSON.Pull_Readers.JSON_Pull_Reader'Class;
@@ -14126,7 +14223,7 @@ package body DAP.Tools.Inputs is
 
    package ProgressStartEvent_body_Minimal_Perfect_Hash is new Minimal_Perfect_Hash
      (["progressId", "title", "requestId", "cancellable", "message",
-       "percentage"]);
+      "percentage"]);
 
    procedure Input_ProgressStartEvent
      (Reader  : in out VSS.JSON.Pull_Readers.JSON_Pull_Reader'Class;
@@ -14291,7 +14388,7 @@ package body DAP.Tools.Inputs is
 
    package SetVariableResponse_body_Minimal_Perfect_Hash is new Minimal_Perfect_Hash
      (["value", "type", "variablesReference", "namedVariables",
-       "indexedVariables"]);
+      "indexedVariables"]);
 
    procedure Input_SetVariableResponse
      (Reader  : in out VSS.JSON.Pull_Readers.JSON_Pull_Reader'Class;
@@ -15571,7 +15668,7 @@ package body DAP.Tools.Inputs is
 
    package EvaluateResponse_body_Minimal_Perfect_Hash is new Minimal_Perfect_Hash
      (["result", "type", "presentationHint", "variablesReference",
-       "namedVariables", "indexedVariables", "memoryReference"]);
+      "namedVariables", "indexedVariables", "memoryReference"]);
 
    procedure Input_EvaluateResponse
      (Reader  : in out VSS.JSON.Pull_Readers.JSON_Pull_Reader'Class;
