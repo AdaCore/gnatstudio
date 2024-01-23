@@ -61,12 +61,14 @@ package body DAP.Views.Variables.SetVariable is
                View.Scopes.Replace_Element (Cursor, Var);
             end if;
 
-            Iter := View.Tree.Model.Get_Iter (Self.Path);
-            Set_And_Clear
-              (View.Tree.Model,
-               Iter   => Iter,
-               Values =>
-                 (Column_Value => As_String (UTF8 (Result.a_body.value))));
+            if Self.Path /= Null_Gtk_Tree_Path then
+               Iter := View.Tree.Model.Get_Iter (Self.Path);
+               Set_And_Clear
+                 (View.Tree.Model,
+                  Iter   => Iter,
+                  Values =>
+                    (Column_Value => As_String (UTF8 (Result.a_body.value))));
+            end if;
          end if;
 
       else
