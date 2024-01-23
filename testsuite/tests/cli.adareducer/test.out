@@ -9,6 +9,7 @@ Usage: gnatstudio_cli [switches] [arguments]
 
 ## TEST MISSING PROJECT
 Specify a project with the -P switch
+project C:\Users\doesnotexist.gpr not found
 
 ## TEST MISSING ORACLE
 Specify an oracle with the -s/--oracle_script switch
