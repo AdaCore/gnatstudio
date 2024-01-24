@@ -40,7 +40,7 @@ def test_driver():
     p = promises.DebuggerWrapper(GPS.File("main"))
     debug = p.get()
     yield p.send_promise("run")
-    yield wait_until_not_busy(debug)
+    yield hook('debugger_location_changed')
 
     result = yield p.send_promise("foo \\")
     gps_assert(prepare_output(result) in

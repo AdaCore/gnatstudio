@@ -26,13 +26,13 @@ def driver():
     yield hook('debugger_started')
 
     b = GPS.EditorBuffer.get(GPS.File("main.adb"))
-    
+
     p = promises.DebuggerWrapper(GPS.File("foo"))
     debug = p.get()
 
     yield p.send_promise("break main.adb:17")
     yield p.send_promise("run")
-    yield wait_until_not_busy(debug)
+    yield hook('debugger_location_changed')
 
 
     yield display(debug, b, 6, 5, "Foo")

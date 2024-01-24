@@ -875,15 +875,18 @@ procedure GPS.Main is
       use type GVD.Types.Debugger_Type;
 
       Auto_Load_Project : Boolean := True;
+      Empty_Project     : Boolean := False;
       File_Opened       : Boolean := False;
       Idle_Id           : Glib.Main.G_Source_Id;
       Project           : Project_Type;
       Icon              : Gdk_Pixbuf;
       pragma Unreferenced (Idle_Id);
 
-      procedure Setup_Debug;
+      procedure Setup_Debug (Empty_Project : out Boolean);
       --  Load appropriate debugger project and set up debugger-related
       --  properties.
+      --  Empty_Project is set to True if an empty project has been loaded
+      --  for that purpose (i.e: when no -P option has been given).
 
       function Setup_Project return Boolean;
       --  When no project has been specified explicitely by the user,
@@ -898,9 +901,9 @@ procedure GPS.Main is
       -- Setup_Debug --
       -----------------
 
-      procedure Setup_Debug is
-         Empty_Project : Boolean := False;
+      procedure Setup_Debug (Empty_Project : out Boolean) is
       begin
+         Empty_Project := False;
          File_Opened := True;
          Auto_Load_Project := False;
 
@@ -1687,7 +1690,7 @@ procedure GPS.Main is
          --  --debug has been specified
          --  Load project, and set debugger-related project properties
 
-         Setup_Debug;
+         Setup_Debug (Empty_Project => Empty_Project);
 
       else
          if Project_Name /= No_File
@@ -1799,7 +1802,8 @@ procedure GPS.Main is
                GNATCOLL.VFS.Normalize_Path (File);
                DAP.Module.Initialize_Debugger
                  (Kernel  => GPS_Main.Kernel,
-                  Project => Get_Project (GPS_Main.Kernel),
+                  Project => (if Empty_Project then No_Project
+                              else Get_Project (GPS_Main.Kernel)),
                   File    => File);
             end;
          else

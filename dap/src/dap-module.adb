@@ -55,7 +55,6 @@ with DAP.Modules.Persistent_Breakpoints;
 with DAP.Modules.Preferences;
 with DAP.Modules.Scripts;
 with DAP.Clients.Attach;
-with DAP.Clients.ConfigurationDone;
 with DAP.Clients.Evaluate;
 with DAP.Clients.Disconnect;
 with DAP.Clients.Next;
@@ -686,10 +685,9 @@ package body DAP.Module is
       Context : Interactive_Command_Context) return Command_Return_Type is
    begin
       Initialize_Debugger
-        (Kernel          => Get_Kernel (Context.Context),
-         Project         => Command.Project,
-         File            => Command.Exec,
-         Executable_Args => "");
+        (Kernel  => Get_Kernel (Context.Context),
+         Project => Command.Project,
+         File    => Command.Exec);
 
       return Success;
    exception
@@ -783,7 +781,9 @@ package body DAP.Module is
             Buttons     => Gtkada.Dialogs.Button_OK,
             Parent      => Kernel.Get_Main_Window);
       else
-         DAP.Clients.ConfigurationDone.Send_Configuration_Done (Client.all);
+         Client.Launch_Executable
+           (Executable      => Client.Get_Executable,
+            Executable_Args => Client.Get_Executable_Args);
       end if;
    end Start_Executable;
 

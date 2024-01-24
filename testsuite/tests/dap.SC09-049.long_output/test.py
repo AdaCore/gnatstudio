@@ -22,7 +22,8 @@ def test_driver():
     yield p.send_promise("b foo.adb:109")
     yield wait_until_not_busy(debug)
     yield p.send_promise("run")
-    yield wait_until_not_busy(debug)
+    yield hook('debugger_location_changed')
+
     result = yield p.send_promise("ptype Var", show_in_console=True)
     yield wait_idle()
 

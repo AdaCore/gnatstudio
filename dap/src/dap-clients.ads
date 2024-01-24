@@ -28,7 +28,7 @@ with GNATCOLL.VFS;
 with VSS.JSON;
 with VSS.JSON.Pull_Readers;
 with VSS.Strings;
-with VSS.String_Vectors;
+with VSS.String_Vectors; use VSS.String_Vectors;
 
 with Glib;
 
@@ -95,7 +95,7 @@ package DAP.Clients is
    procedure Start
      (Self               : in out DAP_Client;
       Project            : GNATCOLL.Projects.Project_Type;
-      Executable               : GNATCOLL.VFS.Virtual_File;
+      Executable         : GNATCOLL.VFS.Virtual_File;
       Executable_Args    : String;
       Remote_Target      : String);
    --  Start the debugger.
@@ -116,6 +116,18 @@ package DAP.Clients is
    --  Queue the given request to send it to the DAP adapter
    --  Does not check whether the debugger is stopped when Force is True
 
+   procedure Launch_Executable
+     (Self              : in out DAP_Client;
+      Executable        : GNATCOLL.VFS.Virtual_File;
+      Executable_Args   : Virtual_String_Vector := Empty_Virtual_String_Vector;
+      Stop_At_Beginning : Boolean := False);
+   --  Launch the given executable, by sending the DAP 'launch' request.
+   --  Executable refers to the debuggee that should be launched by the
+   --  debugger.
+   --  Executable_Args are the arguments passed to the launched debuggee.
+   --  When Stop_At_Beginning is True, the program will be stopped at the
+   --  beginning of the main.
+
    procedure Quit (Self : in out DAP_Client);
    --  Quit the current debugging session, sending the DAP 'disconnect' request
    --  if a debuggee has been launched by the debugger.
@@ -128,7 +140,7 @@ package DAP.Clients is
    --  Start_Method should specify which method was used to start the debuggee.
 
    procedure On_Configured (Self : in out DAP_Client);
-   --  Debugger starts executing debugree program
+   --  Set the status to Ready once the confuguration has been done.
 
    procedure On_Breakpoints_Set (Self : in out DAP_Client);
    --  Called when all the initial breakpoints have been set on the server

@@ -8,4 +8,5 @@
   <pref name="Default-VCS"></pref>
   <pref name="General/Display-Tip-Of-The-Day">FALSE</pref>
   <pref name="Documentation:GNATdoc/Doc-Spawn-Browser" >FALSE</pref>
+  <pref name="debugger-console-in-out" > FALSE</pref>
 </GPS>

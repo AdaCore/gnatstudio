@@ -23,7 +23,7 @@ def test_driver():
     debug = GPS.Debugger.get()
     yield wait_until_not_busy(debug)
     GPS.execute_action("debug continue")
-    yield wait_until_not_busy(debug)
+    yield hook('debugger_location_changed')
 
     # Check that the debugger's current line is highlighted
     current_line_msgs = GPS.Message.list(

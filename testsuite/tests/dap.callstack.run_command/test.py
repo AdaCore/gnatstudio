@@ -35,7 +35,8 @@ def test_driver():
                "Wrong content when opening the callstack")
 
     debug.send("run")
-    yield wait_until_not_busy(debug)
+    yield wait_DAP_server('stackTrace')
+
     # Verify the view was correctly updated by the run/break command
     gps_assert(dump_tree_model(model, NAME_COLUMN),
                ["main"],
