@@ -5508,7 +5508,8 @@ package DAP.Tools is
    null record with
      Implicit_Dereference => Element;
 
-   not overriding function Get_VariablePresentationHint_attributes_Variable_Reference
+   not overriding
+   function Get_VariablePresentationHint_attributes_Variable_Reference
      (Self  : aliased in out VariablePresentationHint_attributes_Vector;
       Index : Positive)
       return VariablePresentationHint_attributes_Variable_Reference with
@@ -5521,7 +5522,8 @@ package DAP.Tools is
    null record with
      Implicit_Dereference => Element;
 
-   not overriding function Get_VariablePresentationHint_attributes_Constant_Reference
+   not overriding
+   function Get_VariablePresentationHint_attributes_Constant_Reference
      (Self  : aliased VariablePresentationHint_attributes_Vector;
       Index : Positive)
       return VariablePresentationHint_attributes_Constant_Reference with

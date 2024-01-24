@@ -925,13 +925,15 @@ package body DAP.Tools is
       Self.Data (Self.Length) := Value;
    end Append;
 
-   not overriding function Get_VariablePresentationHint_attributes_Variable_Reference
+   not overriding
+   function Get_VariablePresentationHint_attributes_Variable_Reference
      (Self  : aliased in out VariablePresentationHint_attributes_Vector;
       Index : Positive)
       return VariablePresentationHint_attributes_Variable_Reference is
      (Element => Self.Data (Index)'Access);
 
-   not overriding function Get_VariablePresentationHint_attributes_Constant_Reference
+   not overriding
+   function Get_VariablePresentationHint_attributes_Constant_Reference
      (Self  : aliased VariablePresentationHint_attributes_Vector;
       Index : Positive)
       return VariablePresentationHint_attributes_Constant_Reference is
