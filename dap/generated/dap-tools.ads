@@ -205,14 +205,86 @@ package DAP.Tools is
 
       type ExceptionBreakMode is (never, always, unhandled, userUnhandled);
 
-      type StoppedEvent_reason is
+      type StoppedEvent_reason_Value is
         (step, breakpoint, a_exception, pause, a_entry, a_goto,
-         function_breakpoint, data_breakpoint, instruction_breakpoint);
+         function_breakpoint, data_breakpoint, instruction_breakpoint,
+         Custom_Value);
+
+      subtype StoppedEvent_reason_Predefined is
+        StoppedEvent_reason_Value range step .. instruction_breakpoint;
+
+      type StoppedEvent_reason
+        (Kind : StoppedEvent_reason_Value := Custom_Value) is
+      record
+         case Kind is
+            when Custom_Value =>
+               Custom_Value : VSS.Strings.Virtual_String;
+            when StoppedEvent_reason_Predefined =>
+               null;
+         end case;
+      end record;
+
+      function step return StoppedEvent_reason is (Kind => step);
+
+      function breakpoint return StoppedEvent_reason is (Kind => breakpoint);
+
+      function a_exception return StoppedEvent_reason is (Kind => a_exception);
+
+      function pause return StoppedEvent_reason is (Kind => pause);
+
+      function a_entry return StoppedEvent_reason is (Kind => a_entry);
+
+      function a_goto return StoppedEvent_reason is (Kind => a_goto);
+
+      function function_breakpoint return StoppedEvent_reason is
+        (Kind => function_breakpoint);
+
+      function data_breakpoint return StoppedEvent_reason is
+        (Kind => data_breakpoint);
+
+      function instruction_breakpoint return StoppedEvent_reason is
+        (Kind => instruction_breakpoint);
 
       type StartDebuggingRequestArguments_request is (launch, attach);
 
-      type OutputEvent_category is
-        (console, important, stdout, stderr, telemetry);
+      type OutputEvent_category_Value is
+        (console, important, stdout, stderr, telemetry, Custom_Value);
+
+      subtype OutputEvent_category_Predefined is
+        OutputEvent_category_Value range console .. telemetry;
+
+      type OutputEvent_category
+        (Kind : OutputEvent_category_Value := Custom_Value) is
+      record
+         case Kind is
+            when Custom_Value =>
+               Custom_Value : VSS.Strings.Virtual_String;
+            when OutputEvent_category_Predefined =>
+               null;
+         end case;
+      end record;
+
+      function console return OutputEvent_category is (Kind => console);
+      --  Show the output in the client's default message UI, e.g. a 'debug
+      --  console'. This category should only be used for informational output
+      --  from the debugger (as opposed to the debuggee).
+
+      function important return OutputEvent_category is (Kind => important);
+      --  A hint for the client to show the output in the client's UI
+      --  for important and highly visible information, e.g. as a popup
+      --  notification. This category should only be used for important
+      --  messages from the debugger (as opposed to the debuggee). Since this
+      --  category value is a hint, clients might ignore the hint and assume
+      --  the `console` category.
+
+      function stdout return OutputEvent_category is (Kind => stdout);
+      --  Show the output as normal program output from the debuggee.
+
+      function stderr return OutputEvent_category is (Kind => stderr);
+      --  Show the output as error program output from the debuggee.
+
+      function telemetry return OutputEvent_category is (Kind => telemetry);
+      --  Send the output to telemetry instead of showing it to the user.
 
       type Optional_OutputEvent_category (Is_Set : Boolean := False) is record
          case Is_Set is
@@ -249,7 +321,32 @@ package DAP.Tools is
          end case;
       end record;
 
-      type Scope_presentationHint is (arguments, locals, registers);
+      type Scope_presentationHint_Value is
+        (arguments, locals, registers, Custom_Value);
+
+      subtype Scope_presentationHint_Predefined is
+        Scope_presentationHint_Value range arguments .. registers;
+
+      type Scope_presentationHint
+        (Kind : Scope_presentationHint_Value := Custom_Value) is
+      record
+         case Kind is
+            when Custom_Value =>
+               Custom_Value : VSS.Strings.Virtual_String;
+            when Scope_presentationHint_Predefined =>
+               null;
+         end case;
+      end record;
+
+      function arguments return Scope_presentationHint is (Kind => arguments);
+      --  Scope contains method arguments.
+
+      function locals return Scope_presentationHint is (Kind => locals);
+      --  Scope contains local variables.
+
+      function registers return Scope_presentationHint is (Kind => registers);
+      --  Scope contains registers. Only a single `registers` scope should be
+      --  returned from a `scopes` request.
 
       type Optional_Scope_presentationHint (Is_Set : Boolean := False) is
       record
@@ -261,7 +358,26 @@ package DAP.Tools is
          end case;
       end record;
 
-      type Response_message is (cancelled, notStopped);
+      type Response_message_Value is (cancelled, notStopped, Custom_Value);
+
+      subtype Response_message_Predefined is
+        Response_message_Value range cancelled .. notStopped;
+
+      type Response_message (Kind : Response_message_Value := Custom_Value) is
+      record
+         case Kind is
+            when Custom_Value =>
+               Custom_Value : VSS.Strings.Virtual_String;
+            when Response_message_Predefined =>
+               null;
+         end case;
+      end record;
+
+      function cancelled return Response_message is (Kind => cancelled);
+      --  the request was cancelled.
+
+      function notStopped return Response_message is (Kind => notStopped);
+      --  the request may be retried once the adapter is in a 'stopped' state.
 
       type Optional_Response_message (Is_Set : Boolean := False) is record
          case Is_Set is
@@ -286,7 +402,37 @@ package DAP.Tools is
          end case;
       end record;
 
-      type InvalidatedAreas is (an_all, stacks, threads, variables);
+      type InvalidatedAreas_Value is
+        (an_all, stacks, threads, variables, Custom_Value);
+
+      subtype InvalidatedAreas_Predefined is
+        InvalidatedAreas_Value range an_all .. variables;
+
+      type InvalidatedAreas (Kind : InvalidatedAreas_Value := Custom_Value) is
+      record
+         case Kind is
+            when Custom_Value =>
+               Custom_Value : VSS.Strings.Virtual_String;
+            when InvalidatedAreas_Predefined =>
+               null;
+         end case;
+      end record;
+
+      function an_all return InvalidatedAreas is (Kind => an_all);
+      --  All previously fetched data has become invalid and needs to be
+      --  refetched.
+
+      function stacks return InvalidatedAreas is (Kind => stacks);
+      --  Previously fetched stack related data has become invalid and needs to
+      --  be refetched.
+
+      function threads return InvalidatedAreas is (Kind => threads);
+      --  Previously fetched thread related data has become invalid and needs
+      --  to be refetched.
+
+      function variables return InvalidatedAreas is (Kind => variables);
+      --  Previously fetched variable data has become invalid and needs to be
+      --  refetched.
 
       type Source_presentationHint is (normal, emphasize, deemphasize);
 
@@ -302,7 +448,28 @@ package DAP.Tools is
 
       type LoadedSourceEvent_reason is (a_new, changed, removed);
 
-      type ProtocolMessage_type is (request, response, event);
+      type ProtocolMessage_type_Value is
+        (request, response, event, Custom_Value);
+
+      subtype ProtocolMessage_type_Predefined is
+        ProtocolMessage_type_Value range request .. event;
+
+      type ProtocolMessage_type
+        (Kind : ProtocolMessage_type_Value := Custom_Value) is
+      record
+         case Kind is
+            when Custom_Value =>
+               Custom_Value : VSS.Strings.Virtual_String;
+            when ProtocolMessage_type_Predefined =>
+               null;
+         end case;
+      end record;
+
+      function request return ProtocolMessage_type is (Kind => request);
+
+      function response return ProtocolMessage_type is (Kind => response);
+
+      function event return ProtocolMessage_type is (Kind => event);
 
       type RunInTerminalRequestArguments_kind is (integrated, external);
 
@@ -329,9 +496,68 @@ package DAP.Tools is
          end case;
       end record;
 
-      type VariablePresentationHint_kind is
+      type VariablePresentationHint_kind_Value is
         (property, method, class, data, event, baseClass, innerClass,
-         an_interface, mostDerivedClass, virtual, dataBreakpoint);
+         an_interface, mostDerivedClass, virtual, dataBreakpoint,
+         Custom_Value);
+
+      subtype VariablePresentationHint_kind_Predefined is
+        VariablePresentationHint_kind_Value range property .. dataBreakpoint;
+
+      type VariablePresentationHint_kind
+        (Kind : VariablePresentationHint_kind_Value := Custom_Value) is
+      record
+         case Kind is
+            when Custom_Value =>
+               Custom_Value : VSS.Strings.Virtual_String;
+            when VariablePresentationHint_kind_Predefined =>
+               null;
+         end case;
+      end record;
+
+      function property return VariablePresentationHint_kind is
+        (Kind => property);
+      --  Indicates that the object is a property.
+
+      function method return VariablePresentationHint_kind is (Kind => method);
+      --  Indicates that the object is a method.
+
+      function class return VariablePresentationHint_kind is (Kind => class);
+      --  Indicates that the object is a class.
+
+      function data return VariablePresentationHint_kind is (Kind => data);
+      --  Indicates that the object is data.
+
+      function event return VariablePresentationHint_kind is (Kind => event);
+      --  Indicates that the object is an event.
+
+      function baseClass return VariablePresentationHint_kind is
+        (Kind => baseClass);
+      --  Indicates that the object is a base class.
+
+      function innerClass return VariablePresentationHint_kind is
+        (Kind => innerClass);
+      --  Indicates that the object is an inner class.
+
+      function an_interface return VariablePresentationHint_kind is
+        (Kind => an_interface);
+      --  Indicates that the object is an interface.
+
+      function mostDerivedClass return VariablePresentationHint_kind is
+        (Kind => mostDerivedClass);
+      --  Indicates that the object is the most derived class.
+
+      function virtual return VariablePresentationHint_kind is
+        (Kind => virtual);
+      --  Indicates that the object is virtual, that means it is a synthetic
+      --  object introduced by the adapter for rendering purposes, e.g. an
+      --  index range for large arrays.
+
+      function dataBreakpoint return VariablePresentationHint_kind is
+        (Kind => dataBreakpoint);
+      --  Deprecated: Indicates that a data breakpoint is registered for the
+      --  object. The `hasDataBreakpoint` attribute should generally be used
+      --  instead.
 
       type Optional_VariablePresentationHint_kind (Is_Set : Boolean := False)
       is
@@ -344,8 +570,37 @@ package DAP.Tools is
          end case;
       end record;
 
-      type VariablePresentationHint_visibility is
-        (public, a_private, a_protected, internal, final);
+      type VariablePresentationHint_visibility_Value is
+        (public, a_private, a_protected, internal, final, Custom_Value);
+
+      subtype VariablePresentationHint_visibility_Predefined is
+        VariablePresentationHint_visibility_Value range public .. final;
+
+      type VariablePresentationHint_visibility
+        (Kind : VariablePresentationHint_visibility_Value := Custom_Value) is
+      record
+         case Kind is
+            when Custom_Value =>
+               Custom_Value : VSS.Strings.Virtual_String;
+            when VariablePresentationHint_visibility_Predefined =>
+               null;
+         end case;
+      end record;
+
+      function public return VariablePresentationHint_visibility is
+        (Kind => public);
+
+      function a_private return VariablePresentationHint_visibility is
+        (Kind => a_private);
+
+      function a_protected return VariablePresentationHint_visibility is
+        (Kind => a_protected);
+
+      function internal return VariablePresentationHint_visibility is
+        (Kind => internal);
+
+      function final return VariablePresentationHint_visibility is
+        (Kind => final);
 
       type Optional_VariablePresentationHint_visibility
         (Is_Set : Boolean := False) is
@@ -358,7 +613,28 @@ package DAP.Tools is
          end case;
       end record;
 
-      type InitializeRequestArguments_pathFormat is (path, uri);
+      type InitializeRequestArguments_pathFormat_Value is
+        (path, uri, Custom_Value);
+
+      subtype InitializeRequestArguments_pathFormat_Predefined is
+        InitializeRequestArguments_pathFormat_Value range path .. uri;
+
+      type InitializeRequestArguments_pathFormat
+        (Kind : InitializeRequestArguments_pathFormat_Value := Custom_Value) is
+      record
+         case Kind is
+            when Custom_Value =>
+               Custom_Value : VSS.Strings.Virtual_String;
+            when InitializeRequestArguments_pathFormat_Predefined =>
+               null;
+         end case;
+      end record;
+
+      function path return InitializeRequestArguments_pathFormat is
+        (Kind => path);
+
+      function uri return InitializeRequestArguments_pathFormat is
+        (Kind => uri);
 
       type Optional_InitializeRequestArguments_pathFormat
         (Is_Set : Boolean := False) is
@@ -371,7 +647,25 @@ package DAP.Tools is
          end case;
       end record;
 
-      type ThreadEvent_reason is (started, exited);
+      type ThreadEvent_reason_Value is (started, exited, Custom_Value);
+
+      subtype ThreadEvent_reason_Predefined is
+        ThreadEvent_reason_Value range started .. exited;
+
+      type ThreadEvent_reason (Kind : ThreadEvent_reason_Value := Custom_Value)
+      is
+      record
+         case Kind is
+            when Custom_Value =>
+               Custom_Value : VSS.Strings.Virtual_String;
+            when ThreadEvent_reason_Predefined =>
+               null;
+         end case;
+      end record;
+
+      function started return ThreadEvent_reason is (Kind => started);
+
+      function exited return ThreadEvent_reason is (Kind => exited);
 
       type DataBreakpointAccessType is (read, write, readWrite);
 
@@ -385,10 +679,66 @@ package DAP.Tools is
          end case;
       end record;
 
-      type BreakpointEvent_reason is (changed, a_new, removed);
+      type BreakpointEvent_reason_Value is
+        (changed, a_new, removed, Custom_Value);
 
-      type EvaluateArguments_context is
-        (watch, repl, hover, clipboard, variables);
+      subtype BreakpointEvent_reason_Predefined is
+        BreakpointEvent_reason_Value range changed .. removed;
+
+      type BreakpointEvent_reason
+        (Kind : BreakpointEvent_reason_Value := Custom_Value) is
+      record
+         case Kind is
+            when Custom_Value =>
+               Custom_Value : VSS.Strings.Virtual_String;
+            when BreakpointEvent_reason_Predefined =>
+               null;
+         end case;
+      end record;
+
+      function changed return BreakpointEvent_reason is (Kind => changed);
+
+      function a_new return BreakpointEvent_reason is (Kind => a_new);
+
+      function removed return BreakpointEvent_reason is (Kind => removed);
+
+      type EvaluateArguments_context_Value is
+        (watch, repl, hover, clipboard, variables, Custom_Value);
+
+      subtype EvaluateArguments_context_Predefined is
+        EvaluateArguments_context_Value range watch .. variables;
+
+      type EvaluateArguments_context
+        (Kind : EvaluateArguments_context_Value := Custom_Value) is
+      record
+         case Kind is
+            when Custom_Value =>
+               Custom_Value : VSS.Strings.Virtual_String;
+            when EvaluateArguments_context_Predefined =>
+               null;
+         end case;
+      end record;
+
+      function watch return EvaluateArguments_context is (Kind => watch);
+      --  evaluate is called from a watch view context.
+
+      function repl return EvaluateArguments_context is (Kind => repl);
+      --  evaluate is called from a REPL context.
+
+      function hover return EvaluateArguments_context is (Kind => hover);
+      --  evaluate is called to generate the debug hover contents. This
+      --  value should only be used if the corresponding capability
+      --  `supportsEvaluateForHovers` is true.
+
+      function clipboard return EvaluateArguments_context is
+        (Kind => clipboard);
+      --  evaluate is called to generate clipboard contents. This
+      --  value should only be used if the corresponding capability
+      --  `supportsClipboardContext` is true.
+
+      function variables return EvaluateArguments_context is
+        (Kind => variables);
+      --  evaluate is called from a variables view context.
 
       type Optional_EvaluateArguments_context (Is_Set : Boolean := False) is
       record

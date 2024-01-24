@@ -18,6 +18,7 @@
 with Ada.Calendar;             use Ada.Calendar;
 with Ada.Strings.Fixed;        use Ada.Strings.Fixed;
 with Ada.Strings.Unbounded;    use Ada.Strings.Unbounded;
+with Ada.Unchecked_Conversion;
 with Ada.Unchecked_Deallocation;
 with GNATCOLL.Xref;
 with System;                   use System;
@@ -96,6 +97,19 @@ package body Interactive_Consoles is
 
    function Process_Lines (Self : Interactive_Console) return Boolean;
    --  Process the lines that are left to process, if any
+
+   procedure On_Console_Destroy (Console, Data : System.Address);
+   pragma Convention (C, On_Console_Destroy);
+
+   function Convert is new Ada.Unchecked_Conversion
+     (System.Address, Interactive_Console);
+
+   package Foreach_Tag is new Foreach_User_Data (Interactive_Console);
+
+   procedure Get_Tag
+     (Tag     : not null access Gtk_Text_Tag_Record'Class;
+      Console : Interactive_Console);
+   --  Save given Tag into local tag array
 
    ---------------------------------
    -- Interactive_Virtual_Console --
@@ -2062,6 +2076,17 @@ package body Interactive_Consoles is
       when E : others => Trace (Me, E);
    end Insert_And_Execute;
 
+   ------------------------
+   -- On_Console_Destroy --
+   ------------------------
+
+   procedure On_Console_Destroy (Console, Data : System.Address) is
+      pragma Unreferenced (Data);
+      C : constant Interactive_Console := Convert (Console);
+   begin
+      C.Destroyed := True;
+   end On_Console_Destroy;
+
    ---------------------
    -- Execute_Command --
    ---------------------
@@ -2073,17 +2098,6 @@ package body Interactive_Consoles is
       Output      : GNAT.Strings.String_Access;
       Prompt_Iter : Gtk_Text_Iter;
       Last_Iter   : Gtk_Text_Iter;
-      Destroyed   : Boolean := False;
-
-      procedure On_Console_Destroy (Console, Data : System.Address);
-      pragma Convention (C, On_Console_Destroy);
-
-      procedure On_Console_Destroy (Console, Data : System.Address) is
-         pragma Unreferenced (Console, Data);
-      begin
-         Destroyed := True;
-      end On_Console_Destroy;
-
    begin
       --  Processing the command could close the console (for instance
       --  executing "q" in the debugger). So we need to monitor its
@@ -2095,7 +2109,7 @@ package body Interactive_Consoles is
       Output := new String'
         (Console.Handler (Console, Command, Console.User_Data));
 
-      if Destroyed then
+      if Console.Destroyed then
          return;
       end if;
 
@@ -2299,6 +2313,21 @@ package body Interactive_Consoles is
       Console.Links_Count := Console.Links_Count + 1;
    end Create_Hyper_Link;
 
+   -------------
+   -- Get_Tag --
+   -------------
+
+   procedure Get_Tag
+     (Tag     : not null access Gtk_Text_Tag_Record'Class;
+      Console : Interactive_Console)
+   is
+   begin
+      if Tag.all in Hyper_Link_Tag_Record'Class then
+         Console.Tag_Index := Console.Tag_Index + 1;
+         Console.To_Delete_Tags (Console.Tag_Index) := Gtk_Text_Tag (Tag);
+      end if;
+   end Get_Tag;
+
    ------------------------
    -- Delete_Hyper_Links --
    ------------------------
@@ -2312,44 +2341,26 @@ package body Interactive_Consoles is
         (Hyper_Link_Callback_Record'Class, Hyper_Link_Callback);
       procedure Unchecked_Free is new Ada.Unchecked_Deallocation
         (Hyper_Link_Record, Hyper_Links);
-
-      procedure Get_Tag
-        (Tag   : not null access Gtk_Text_Tag_Record'Class;
-         Dummy : Boolean);
-      --  Save given Tag into local tag array
+      procedure Unchecked_Free is new Ada.Unchecked_Deallocation
+        (Tag_Array, Tag_Array_Access);
 
       L, L2 : Hyper_Links;
 
       Table : constant Gtk_Text_Tag_Table := Get_Tag_Table (Console.Buffer);
-
-      Tags  : array (1 .. Table.Get_Size) of Gtk_Text_Tag;
-      Index : Gint := 0;
-
-      -------------
-      -- Get_Tag --
-      -------------
-
-      procedure Get_Tag
-        (Tag   : not null access Gtk_Text_Tag_Record'Class;
-         Dummy : Boolean)
-      is
-         pragma Unreferenced (Dummy);
-      begin
-         if Tag.all in Hyper_Link_Tag_Record'Class then
-            Index := Index + 1;
-            Tags (Index) := Gtk_Text_Tag (Tag);
-         end if;
-      end Get_Tag;
-
-      package Foreach_Tag is new Foreach_User_Data (Boolean);
    begin
+      Console.Tag_Index := 0;
+      Console.To_Delete_Tags := new Tag_Array (1 .. Table.Get_Size);
+
       --  Extract all tags from the table
-      Foreach_Tag.Foreach (Table, Get_Tag'Access, False);
+      Foreach_Tag.Foreach
+        (Table, Get_Tag'Access, Interactive_Console (Console));
 
       --  Destroy all tags in the table
-      for J in 1 .. Index loop
-         Table.Remove (Tags (J));
+      for J in 1 .. Console.Tag_Index loop
+         Table.Remove (Console.To_Delete_Tags (J));
       end loop;
+
+      Unchecked_Free (Console.To_Delete_Tags);
 
       L := Console.Links;
       while L /= null loop

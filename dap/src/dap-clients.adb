@@ -1394,10 +1394,6 @@ package body DAP.Clients is
                               Request.On_Error_Message
                                 (Self'Access, "Can't parse response");
                            end if;
-
-                           GPS.Kernel.Hooks.Dap_Response_Processed_Hook.Run
-                             (Kernel => Request.Kernel,
-                              Method => Request.Method);
                         end if;
 
                      exception
@@ -1405,6 +1401,10 @@ package body DAP.Clients is
                            Trace (Me, E);
                      end;
                   end if;
+
+                  GPS.Kernel.Hooks.Dap_Response_Processed_Hook.Run
+                    (Kernel => Request.Kernel,
+                     Method => Request.Method);
                end if;
 
                DAP.Requests.Destroy (Request);
@@ -1477,7 +1477,7 @@ package body DAP.Clients is
                   else
                      Debugger_Console);
                Mode             : constant GPS.Kernel.Message_Type :=
-                 (case Output_Category is
+                 (case Output_Category.Kind is
                      when stderr =>
                        GPS.Kernel.Error,
                      when console =>

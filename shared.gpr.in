@@ -49,7 +49,7 @@ project Shared is
          when "Debug" =>
             for Switches ("Ada") use Common &
               ("-O0", "-gnata", "-gnatVa", "-gnatQ", "-gnatygO",
-               "-gnatwaCJe", "-gnateE");
+               "-gnatwaCJe", "-gnateE", "-Wtrampolines");
             for Switches ("C") use ("-g", "-O1");
 
          when "Production" =>
@@ -58,7 +58,8 @@ project Shared is
                "-gnatT3", --  Temporary, L403-023.
                "-gnatws",
                "-gnatwaCJ",
-               "-gnatygO"
+               "-gnatygO",
+               "-Wtrampolines"
                );
             for Switches ("C") use Optimize & ("-g", "-O2");
 	 when "AddressSanitizer" =>

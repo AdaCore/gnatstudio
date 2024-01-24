@@ -1082,7 +1082,7 @@ package body DAP.Modules.Breakpoint_Managers is
       Data       : constant Breakpoint_Data := Convert;
       Bp_Changed : Boolean;
    begin
-      case Event.reason is
+      case Event.reason.Kind is
          when changed =>
             Self.Holder.Changed (Data);
             GPS.Kernel.Hooks.Debugger_Breakpoint_Changed_Hook.Run
@@ -1109,6 +1109,9 @@ package body DAP.Modules.Breakpoint_Managers is
                      Event.breakpoint.id.Value);
                end if;
             end if;
+
+         when Custom_Value =>
+            null;
       end case;
 
       Self.Show_Breakpoints;
