@@ -122,6 +122,11 @@ package DAP.Tools.Inputs is
       Value   : out Enum.VariablePresentationHint_kind;
       Success : in out Boolean);
 
+   procedure Input_VariablePresentationHint_attributes
+     (Reader  : in out VSS.JSON.Pull_Readers.JSON_Pull_Reader'Class;
+      Value   : out Enum.VariablePresentationHint_attributes;
+      Success : in out Boolean);
+
    procedure Input_VariablePresentationHint_visibility
      (Reader  : in out VSS.JSON.Pull_Readers.JSON_Pull_Reader'Class;
       Value   : out Enum.VariablePresentationHint_visibility;

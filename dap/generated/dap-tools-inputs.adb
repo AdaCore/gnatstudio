@@ -544,6 +544,37 @@ package body DAP.Tools.Inputs is
       end if;
    end Input_VariablePresentationHint_kind;
 
+   package VariablePresentationHint_attributes_Minimal_Perfect_Hash is new Minimal_Perfect_Hash
+     (["static", "constant", "readOnly", "rawString", "hasObjectId",
+      "canHaveObjectId", "hasSideEffects", "hasDataBreakpoint"]);
+
+   procedure Input_VariablePresentationHint_attributes
+     (Reader  : in out VSS.JSON.Pull_Readers.JSON_Pull_Reader'Class;
+      Value   : out Enum.VariablePresentationHint_attributes;
+      Success : in out Boolean) is
+      Index : constant Integer :=
+        (if Reader.Is_String_Value then
+           VariablePresentationHint_attributes_Minimal_Perfect_Hash.Get_Index
+             (Reader.String_Value)
+         else -1);
+   begin
+      if Index > 0 then
+         pragma Warnings (Off, "redundant conversion");
+         Value :=
+           (Kind =>
+              Enum.VariablePresentationHint_attributes_Predefined
+                (Enum.VariablePresentationHint_attributes_Value'Val
+                   (Index - 1)));
+         pragma Warnings (On, "redundant conversion");
+         Reader.Read_Next;
+      elsif Index = 0 then
+         Value := (Enum.Custom_Value, Reader.String_Value);
+         Reader.Read_Next;
+      else
+         Success := False;
+      end if;
+   end Input_VariablePresentationHint_attributes;
+
    package VariablePresentationHint_visibility_Minimal_Perfect_Hash is new Minimal_Perfect_Hash
      (["public", "private", "protected", "internal", "final"]);
 
@@ -11967,14 +11998,10 @@ package body DAP.Tools.Inputs is
                         Reader.Read_Next;
                         while Success and not Reader.Is_End_Array loop
                            declare
-                              Item : VSS.Strings.Virtual_String;
+                              Item : Enum.VariablePresentationHint_attributes;
                            begin
-                              if Reader.Is_String_Value then
-                                 Item := Reader.String_Value;
-                                 Reader.Read_Next;
-                              else
-                                 Success := False;
-                              end if;
+                              Input_VariablePresentationHint_attributes
+                                (Reader, Item, Success);
                               Value.attributes.Append (Item);
                            end;
                         end loop;

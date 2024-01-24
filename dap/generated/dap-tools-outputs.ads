@@ -102,6 +102,10 @@ package DAP.Tools.Outputs is
      (Handler : in out VSS.JSON.Content_Handlers.JSON_Content_Handler'Class;
       Value   : Enum.VariablePresentationHint_kind);
 
+   procedure Output_VariablePresentationHint_attributes
+     (Handler : in out VSS.JSON.Content_Handlers.JSON_Content_Handler'Class;
+      Value   : Enum.VariablePresentationHint_attributes);
+
    procedure Output_VariablePresentationHint_visibility
      (Handler : in out VSS.JSON.Content_Handlers.JSON_Content_Handler'Class;
       Value   : Enum.VariablePresentationHint_visibility);
