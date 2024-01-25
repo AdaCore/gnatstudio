@@ -1384,6 +1384,9 @@ package body CodePeer.Module is
 
             Module.Load_CSV (Module.Inspection_File);
 
+         when Open_HTML =>
+            Open_HTML_Report (Module.Kernel);
+
          when None =>
             --  Should never get there
             pragma Assert (False);
@@ -1782,6 +1785,27 @@ package body CodePeer.Module is
          Editor.Indent (Location, Location.Forward_Line (2));
       end;
    end Annotate_Message;
+
+   ----------------------
+   -- Open_HTML_Report --
+   ----------------------
+
+   procedure Open_HTML_Report (Kernel : GPS.Kernel.Kernel_Handle)
+   is
+      HTML_File : constant Virtual_File :=
+        Get_Project (Kernel).Object_Dir.Create_From_Dir
+          ("gnathub/html-report/index.html");
+   begin
+      if not HTML_File.Is_Regular_File then
+         Kernel.Insert
+           (Text => HTML_File.Display_Full_Name
+            & (-" does not exist. Please perform a full analysis first"),
+            Mode => GPS.Kernel.Error);
+      else
+         Html_Action_Hook.Run
+           (Kernel, String (Full_Name (HTML_File).all));
+      end if;
+   end Open_HTML_Report;
 
    --------------------------
    -- Update_Location_View --
