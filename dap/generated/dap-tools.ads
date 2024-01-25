@@ -131,6 +131,12 @@ package DAP.Tools is
      Variable_Indexing => Get_Source_Variable_Reference,
      Constant_Indexing => Get_Source_Constant_Reference;
 
+   type VariablePresentationHint_attributes_Vector is tagged private with
+     Variable_Indexing =>
+      Get_VariablePresentationHint_attributes_Variable_Reference,
+     Constant_Indexing =>
+      Get_VariablePresentationHint_attributes_Constant_Reference;
+
    type SourceBreakpoint_Vector is tagged private with
      Variable_Indexing => Get_SourceBreakpoint_Variable_Reference,
      Constant_Indexing => Get_SourceBreakpoint_Constant_Reference;
@@ -569,6 +575,57 @@ package DAP.Tools is
                null;
          end case;
       end record;
+
+      type VariablePresentationHint_attributes_Value is
+        (static, a_constant, readOnly, rawString, hasObjectId, canHaveObjectId,
+         hasSideEffects, hasDataBreakpoint, Custom_Value);
+
+      subtype VariablePresentationHint_attributes_Predefined is
+        VariablePresentationHint_attributes_Value range static ..
+            hasDataBreakpoint;
+
+      type VariablePresentationHint_attributes
+        (Kind : VariablePresentationHint_attributes_Value := Custom_Value) is
+      record
+         case Kind is
+            when Custom_Value =>
+               Custom_Value : VSS.Strings.Virtual_String;
+            when VariablePresentationHint_attributes_Predefined =>
+               null;
+         end case;
+      end record;
+
+      function static return VariablePresentationHint_attributes is
+        (Kind => static);
+      --  Indicates that the object is static.
+
+      function a_constant return VariablePresentationHint_attributes is
+        (Kind => a_constant);
+      --  Indicates that the object is a constant.
+
+      function readOnly return VariablePresentationHint_attributes is
+        (Kind => readOnly);
+      --  Indicates that the object is read only.
+
+      function rawString return VariablePresentationHint_attributes is
+        (Kind => rawString);
+      --  Indicates that the object is a raw string.
+
+      function hasObjectId return VariablePresentationHint_attributes is
+        (Kind => hasObjectId);
+      --  Indicates that the object can have an Object ID created for it.
+
+      function canHaveObjectId return VariablePresentationHint_attributes is
+        (Kind => canHaveObjectId);
+      --  Indicates that the object has an Object ID associated with it.
+
+      function hasSideEffects return VariablePresentationHint_attributes is
+        (Kind => hasSideEffects);
+      --  Indicates that the evaluation had side effects.
+
+      function hasDataBreakpoint return VariablePresentationHint_attributes is
+        (Kind => hasDataBreakpoint);
+      --  Indicates that the object has its value tracked by a data breakpoint.
 
       type VariablePresentationHint_visibility_Value is
         (public, a_private, a_protected, internal, final, Custom_Value);
@@ -1810,7 +1867,7 @@ package DAP.Tools is
       kind       : Enum.Optional_VariablePresentationHint_kind;
       --  The kind of variable. Before introducing additional values, try to
       --  use the listed values.
-      attributes : VSS.String_Vectors.Virtual_String_Vector;
+      attributes : VariablePresentationHint_attributes_Vector;
       --  Set of attributes represented as an array of strings. Before
       --  introducing additional values, try to use the listed values.
       visibility : Enum.Optional_VariablePresentationHint_visibility;
@@ -5437,6 +5494,41 @@ package DAP.Tools is
       return Source_Constant_Reference with
      Inline;
 
+   function Length
+     (Self : VariablePresentationHint_attributes_Vector) return Natural;
+
+   procedure Clear (Self : in out VariablePresentationHint_attributes_Vector);
+
+   procedure Append
+     (Self  : in out VariablePresentationHint_attributes_Vector;
+      Value : Enum.VariablePresentationHint_attributes);
+
+   type VariablePresentationHint_attributes_Variable_Reference
+     (Element : not null access Enum.VariablePresentationHint_attributes) is
+   null record with
+     Implicit_Dereference => Element;
+
+   not overriding
+   function Get_VariablePresentationHint_attributes_Variable_Reference
+     (Self  : aliased in out VariablePresentationHint_attributes_Vector;
+      Index : Positive)
+      return VariablePresentationHint_attributes_Variable_Reference with
+     Inline;
+
+   type VariablePresentationHint_attributes_Constant_Reference
+     (Element : not null access constant Enum
+        .VariablePresentationHint_attributes)
+   is
+   null record with
+     Implicit_Dereference => Element;
+
+   not overriding
+   function Get_VariablePresentationHint_attributes_Constant_Reference
+     (Self  : aliased VariablePresentationHint_attributes_Vector;
+      Index : Positive)
+      return VariablePresentationHint_attributes_Constant_Reference with
+     Inline;
+
    function Length (Self : SourceBreakpoint_Vector) return Natural;
 
    procedure Clear (Self : in out SourceBreakpoint_Vector);
@@ -5945,6 +6037,23 @@ private
    overriding procedure Adjust (Self : in out Source_Vector);
 
    overriding procedure Finalize (Self : in out Source_Vector);
+
+   type VariablePresentationHint_attributes_Array is
+     array
+       (Positive range <>) of aliased Enum.VariablePresentationHint_attributes;
+   type VariablePresentationHint_attributes_Array_Access is
+     access VariablePresentationHint_attributes_Array;
+   type VariablePresentationHint_attributes_Vector is
+   new Ada.Finalization.Controlled with record
+      Data   : VariablePresentationHint_attributes_Array_Access;
+      Length : Natural := 0;
+   end record;
+
+   overriding procedure Adjust
+     (Self : in out VariablePresentationHint_attributes_Vector);
+
+   overriding procedure Finalize
+     (Self : in out VariablePresentationHint_attributes_Vector);
 
    type SourceBreakpoint_Array is
      array (Positive range <>) of aliased SourceBreakpoint;
