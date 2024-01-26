@@ -17,7 +17,10 @@
 --  LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
 --  FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 --  DEALINGS IN THE SOFTWARE.
+--
+--  DON'T EDIT THIS FILE! It was generated from JSON Schema.
 
+pragma Style_Checks ("M99");  --  suppress style warning unitl gnatpp is fixed
 with Ada.Containers.Doubly_Linked_Lists;
 with Ada.Finalization;
 with VSS.JSON.Streams;
@@ -5508,8 +5511,7 @@ package DAP.Tools is
    null record with
      Implicit_Dereference => Element;
 
-   not overriding
-   function Get_VariablePresentationHint_attributes_Variable_Reference
+   not overriding function Get_VariablePresentationHint_attributes_Variable_Reference
      (Self  : aliased in out VariablePresentationHint_attributes_Vector;
       Index : Positive)
       return VariablePresentationHint_attributes_Variable_Reference with
@@ -5522,8 +5524,7 @@ package DAP.Tools is
    null record with
      Implicit_Dereference => Element;
 
-   not overriding
-   function Get_VariablePresentationHint_attributes_Constant_Reference
+   not overriding function Get_VariablePresentationHint_attributes_Constant_Reference
      (Self  : aliased VariablePresentationHint_attributes_Vector;
       Index : Positive)
       return VariablePresentationHint_attributes_Constant_Reference with

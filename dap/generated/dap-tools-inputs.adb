@@ -17,6 +17,8 @@
 --  LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
 --  FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 --  DEALINGS IN THE SOFTWARE.
+--
+--  DON'T EDIT THIS FILE! It was generated from JSON Schema.
 
 pragma Ada_2022;
 with Minimal_Perfect_Hash;
@@ -148,7 +150,7 @@ package body DAP.Tools.Inputs is
 
    package StoppedEvent_reason_Minimal_Perfect_Hash is new Minimal_Perfect_Hash
      (["step", "breakpoint", "exception", "pause", "entry", "goto",
-      "function breakpoint", "data breakpoint", "instruction breakpoint"]);
+       "function breakpoint", "data breakpoint", "instruction breakpoint"]);
 
    procedure Input_StoppedEvent_reason
      (Reader  : in out VSS.JSON.Pull_Readers.JSON_Pull_Reader'Class;
@@ -350,8 +352,8 @@ package body DAP.Tools.Inputs is
 
    package CompletionItemType_Minimal_Perfect_Hash is new Minimal_Perfect_Hash
      (["method", "function", "constructor", "field", "variable", "class",
-      "interface", "module", "property", "unit", "value", "enum", "keyword",
-      "snippet", "text", "color", "file", "reference", "customcolor"]);
+       "interface", "module", "property", "unit", "value", "enum", "keyword",
+       "snippet", "text", "color", "file", "reference", "customcolor"]);
 
    procedure Input_CompletionItemType
      (Reader  : in out VSS.JSON.Pull_Readers.JSON_Pull_Reader'Class;
@@ -515,8 +517,8 @@ package body DAP.Tools.Inputs is
 
    package VariablePresentationHint_kind_Minimal_Perfect_Hash is new Minimal_Perfect_Hash
      (["property", "method", "class", "data", "event", "baseClass",
-      "innerClass", "interface", "mostDerivedClass", "virtual",
-      "dataBreakpoint"]);
+       "innerClass", "interface", "mostDerivedClass", "virtual",
+       "dataBreakpoint"]);
 
    procedure Input_VariablePresentationHint_kind
      (Reader  : in out VSS.JSON.Pull_Readers.JSON_Pull_Reader'Class;
@@ -546,7 +548,7 @@ package body DAP.Tools.Inputs is
 
    package VariablePresentationHint_attributes_Minimal_Perfect_Hash is new Minimal_Perfect_Hash
      (["static", "constant", "readOnly", "rawString", "hasObjectId",
-      "canHaveObjectId", "hasSideEffects", "hasDataBreakpoint"]);
+       "canHaveObjectId", "hasSideEffects", "hasDataBreakpoint"]);
 
    procedure Input_VariablePresentationHint_attributes
      (Reader  : in out VSS.JSON.Pull_Readers.JSON_Pull_Reader'Class;
@@ -853,7 +855,7 @@ package body DAP.Tools.Inputs is
 
    package ExceptionDetails_Minimal_Perfect_Hash is new Minimal_Perfect_Hash
      (["message", "typeName", "fullTypeName", "evaluateName", "stackTrace",
-      "innerException"]);
+       "innerException"]);
 
    procedure Input_ExceptionDetails
      (Reader  : in out VSS.JSON.Pull_Readers.JSON_Pull_Reader'Class;
@@ -2172,25 +2174,25 @@ package body DAP.Tools.Inputs is
 
    package Capabilities_Minimal_Perfect_Hash is new Minimal_Perfect_Hash
      (["supportsConfigurationDoneRequest", "supportsFunctionBreakpoints",
-      "supportsConditionalBreakpoints", "supportsHitConditionalBreakpoints",
-      "supportsEvaluateForHovers", "exceptionBreakpointFilters",
-      "supportsStepBack", "supportsSetVariable", "supportsRestartFrame",
-      "supportsGotoTargetsRequest", "supportsStepInTargetsRequest",
-      "supportsCompletionsRequest", "completionTriggerCharacters",
-      "supportsModulesRequest", "additionalModuleColumns",
-      "supportedChecksumAlgorithms", "supportsRestartRequest",
-      "supportsExceptionOptions", "supportsValueFormattingOptions",
-      "supportsExceptionInfoRequest", "supportTerminateDebuggee",
-      "supportSuspendDebuggee", "supportsDelayedStackTraceLoading",
-      "supportsLoadedSourcesRequest", "supportsLogPoints",
-      "supportsTerminateThreadsRequest", "supportsSetExpression",
-      "supportsTerminateRequest", "supportsDataBreakpoints",
-      "supportsReadMemoryRequest", "supportsWriteMemoryRequest",
-      "supportsDisassembleRequest", "supportsCancelRequest",
-      "supportsBreakpointLocationsRequest", "supportsClipboardContext",
-      "supportsSteppingGranularity", "supportsInstructionBreakpoints",
-      "supportsExceptionFilterOptions",
-      "supportsSingleThreadExecutionRequests"]);
+       "supportsConditionalBreakpoints", "supportsHitConditionalBreakpoints",
+       "supportsEvaluateForHovers", "exceptionBreakpointFilters",
+       "supportsStepBack", "supportsSetVariable", "supportsRestartFrame",
+       "supportsGotoTargetsRequest", "supportsStepInTargetsRequest",
+       "supportsCompletionsRequest", "completionTriggerCharacters",
+       "supportsModulesRequest", "additionalModuleColumns",
+       "supportedChecksumAlgorithms", "supportsRestartRequest",
+       "supportsExceptionOptions", "supportsValueFormattingOptions",
+       "supportsExceptionInfoRequest", "supportTerminateDebuggee",
+       "supportSuspendDebuggee", "supportsDelayedStackTraceLoading",
+       "supportsLoadedSourcesRequest", "supportsLogPoints",
+       "supportsTerminateThreadsRequest", "supportsSetExpression",
+       "supportsTerminateRequest", "supportsDataBreakpoints",
+       "supportsReadMemoryRequest", "supportsWriteMemoryRequest",
+       "supportsDisassembleRequest", "supportsCancelRequest",
+       "supportsBreakpointLocationsRequest", "supportsClipboardContext",
+       "supportsSteppingGranularity", "supportsInstructionBreakpoints",
+       "supportsExceptionFilterOptions",
+       "supportsSingleThreadExecutionRequests"]);
 
    procedure Input_Capabilities
      (Reader  : in out VSS.JSON.Pull_Readers.JSON_Pull_Reader'Class;
@@ -2945,8 +2947,8 @@ package body DAP.Tools.Inputs is
 
    package StackFrame_Minimal_Perfect_Hash is new Minimal_Perfect_Hash
      (["id", "name", "source", "line", "column", "endLine", "endColumn",
-      "canRestart", "instructionPointerReference", "moduleId",
-      "presentationHint"]);
+       "canRestart", "instructionPointerReference", "moduleId",
+       "presentationHint"]);
 
    procedure Input_StackFrame
      (Reader  : in out VSS.JSON.Pull_Readers.JSON_Pull_Reader'Class;
@@ -3258,7 +3260,7 @@ package body DAP.Tools.Inputs is
 
    package ExceptionBreakpointsFilter_Minimal_Perfect_Hash is new Minimal_Perfect_Hash
      (["filter", "label", "description", "default", "supportsCondition",
-      "conditionDescription"]);
+       "conditionDescription"]);
 
    procedure Input_ExceptionBreakpointsFilter
      (Reader  : in out VSS.JSON.Pull_Readers.JSON_Pull_Reader'Class;
@@ -3745,7 +3747,7 @@ package body DAP.Tools.Inputs is
 
    package LaunchRequestArguments_Minimal_Perfect_Hash is new Minimal_Perfect_Hash
      (["noDebug", "__restart", "program", "args", "cwd",
-      "stopAtBeginningOfMainSubprogram"]);
+       "stopAtBeginningOfMainSubprogram"]);
 
    procedure Input_LaunchRequestArguments
      (Reader  : in out VSS.JSON.Pull_Readers.JSON_Pull_Reader'Class;
@@ -4108,8 +4110,8 @@ package body DAP.Tools.Inputs is
 
    package Variable_Minimal_Perfect_Hash is new Minimal_Perfect_Hash
      (["name", "value", "type", "presentationHint", "evaluateName",
-      "variablesReference", "namedVariables", "indexedVariables",
-      "memoryReference"]);
+       "variablesReference", "namedVariables", "indexedVariables",
+       "memoryReference"]);
 
    procedure Input_Variable
      (Reader  : in out VSS.JSON.Pull_Readers.JSON_Pull_Reader'Class;
@@ -4224,7 +4226,7 @@ package body DAP.Tools.Inputs is
 
    package StoppedEvent_body_Minimal_Perfect_Hash is new Minimal_Perfect_Hash
      (["reason", "description", "threadId", "preserveFocusHint", "text",
-      "allThreadsStopped", "hitBreakpointIds"]);
+       "allThreadsStopped", "hitBreakpointIds"]);
 
    procedure Input_StoppedEvent
      (Reader  : in out VSS.JSON.Pull_Readers.JSON_Pull_Reader'Class;
@@ -5193,7 +5195,7 @@ package body DAP.Tools.Inputs is
 
    package SetExpressionResponse_body_Minimal_Perfect_Hash is new Minimal_Perfect_Hash
      (["value", "type", "presentationHint", "variablesReference",
-      "namedVariables", "indexedVariables"]);
+       "namedVariables", "indexedVariables"]);
 
    procedure Input_SetExpressionResponse
      (Reader  : in out VSS.JSON.Pull_Readers.JSON_Pull_Reader'Class;
@@ -5569,7 +5571,7 @@ package body DAP.Tools.Inputs is
 
    package OutputEvent_body_Minimal_Perfect_Hash is new Minimal_Perfect_Hash
      (["category", "output", "group", "variablesReference", "source", "line",
-      "column", "data"]);
+       "column", "data"]);
 
    procedure Input_OutputEvent
      (Reader  : in out VSS.JSON.Pull_Readers.JSON_Pull_Reader'Class;
@@ -6223,7 +6225,7 @@ package body DAP.Tools.Inputs is
 
    package ProcessEvent_body_Minimal_Perfect_Hash is new Minimal_Perfect_Hash
      (["name", "systemProcessId", "isLocalProcess", "startMethod",
-      "pointerSize"]);
+       "pointerSize"]);
 
    procedure Input_ProcessEvent
      (Reader  : in out VSS.JSON.Pull_Readers.JSON_Pull_Reader'Class;
@@ -6739,8 +6741,8 @@ package body DAP.Tools.Inputs is
 
    package Scope_Minimal_Perfect_Hash is new Minimal_Perfect_Hash
      (["name", "presentationHint", "variablesReference", "namedVariables",
-      "indexedVariables", "expensive", "source", "line", "column", "endLine",
-      "endColumn"]);
+       "indexedVariables", "expensive", "source", "line", "column", "endLine",
+       "endColumn"]);
 
    procedure Input_Scope
      (Reader  : in out VSS.JSON.Pull_Readers.JSON_Pull_Reader'Class;
@@ -6882,7 +6884,7 @@ package body DAP.Tools.Inputs is
 
    package DisassembleArguments_Minimal_Perfect_Hash is new Minimal_Perfect_Hash
      (["memoryReference", "offset", "instructionOffset", "instructionCount",
-      "resolveSymbols"]);
+       "resolveSymbols"]);
 
    procedure Input_DisassembleArguments
      (Reader  : in out VSS.JSON.Pull_Readers.JSON_Pull_Reader'Class;
@@ -8274,7 +8276,7 @@ package body DAP.Tools.Inputs is
 
    package Module_Minimal_Perfect_Hash is new Minimal_Perfect_Hash
      (["id", "name", "path", "isOptimized", "isUserCode", "version",
-      "symbolStatus", "symbolFilePath", "dateTimeStamp", "addressRange"]);
+       "symbolStatus", "symbolFilePath", "dateTimeStamp", "addressRange"]);
 
    procedure Input_Module
      (Reader  : in out VSS.JSON.Pull_Readers.JSON_Pull_Reader'Class;
@@ -8932,7 +8934,7 @@ package body DAP.Tools.Inputs is
 
    package Message_Minimal_Perfect_Hash is new Minimal_Perfect_Hash
      (["id", "format", "variables", "sendTelemetry", "showUser", "url",
-      "urlLabel"]);
+       "urlLabel"]);
 
    procedure Input_Message
      (Reader  : in out VSS.JSON.Pull_Readers.JSON_Pull_Reader'Class;
@@ -10301,7 +10303,7 @@ package body DAP.Tools.Inputs is
 
    package Breakpoint_Minimal_Perfect_Hash is new Minimal_Perfect_Hash
      (["id", "verified", "message", "source", "line", "column", "endLine",
-      "endColumn", "instructionReference", "offset"]);
+       "endColumn", "instructionReference", "offset"]);
 
    procedure Input_Breakpoint
      (Reader  : in out VSS.JSON.Pull_Readers.JSON_Pull_Reader'Class;
@@ -10435,7 +10437,7 @@ package body DAP.Tools.Inputs is
 
    package Source_Minimal_Perfect_Hash is new Minimal_Perfect_Hash
      (["name", "path", "sourceReference", "presentationHint", "origin",
-      "sources", "adapterData", "checksums"]);
+       "sources", "adapterData", "checksums"]);
 
    procedure Input_Source
      (Reader  : in out VSS.JSON.Pull_Readers.JSON_Pull_Reader'Class;
@@ -10868,7 +10870,7 @@ package body DAP.Tools.Inputs is
 
    package StackFrameFormat_Minimal_Perfect_Hash is new Minimal_Perfect_Hash
      (["hex", "parameters", "parameterTypes", "parameterNames",
-      "parameterValues", "line", "module", "includeAll"]);
+       "parameterValues", "line", "module", "includeAll"]);
 
    procedure Input_StackFrameFormat
      (Reader  : in out VSS.JSON.Pull_Readers.JSON_Pull_Reader'Class;
@@ -12038,7 +12040,7 @@ package body DAP.Tools.Inputs is
 
    package DisassembledInstruction_Minimal_Perfect_Hash is new Minimal_Perfect_Hash
      (["address", "instructionBytes", "instruction", "symbol", "location",
-      "line", "column", "endLine", "endColumn"]);
+       "line", "column", "endLine", "endColumn"]);
 
    procedure Input_DisassembledInstruction
      (Reader  : in out VSS.JSON.Pull_Readers.JSON_Pull_Reader'Class;
@@ -12293,11 +12295,12 @@ package body DAP.Tools.Inputs is
 
    package InitializeRequestArguments_Minimal_Perfect_Hash is new Minimal_Perfect_Hash
      (["clientID", "clientName", "adapterID", "locale", "linesStartAt1",
-      "columnsStartAt1", "pathFormat", "supportsVariableType",
-      "supportsVariablePaging", "supportsRunInTerminalRequest",
-      "supportsMemoryReferences", "supportsProgressReporting",
-      "supportsInvalidatedEvent", "supportsMemoryEvent",
-      "supportsArgsCanBeInterpretedByShell", "supportsStartDebuggingRequest"]);
+       "columnsStartAt1", "pathFormat", "supportsVariableType",
+       "supportsVariablePaging", "supportsRunInTerminalRequest",
+       "supportsMemoryReferences", "supportsProgressReporting",
+       "supportsInvalidatedEvent", "supportsMemoryEvent",
+       "supportsArgsCanBeInterpretedByShell",
+       "supportsStartDebuggingRequest"]);
 
    procedure Input_InitializeRequestArguments
      (Reader  : in out VSS.JSON.Pull_Readers.JSON_Pull_Reader'Class;
@@ -13415,7 +13418,7 @@ package body DAP.Tools.Inputs is
 
    package CompletionItem_Minimal_Perfect_Hash is new Minimal_Perfect_Hash
      (["label", "text", "sortText", "detail", "type", "start", "length",
-      "selectionStart", "selectionLength"]);
+       "selectionStart", "selectionLength"]);
 
    procedure Input_CompletionItem
      (Reader  : in out VSS.JSON.Pull_Readers.JSON_Pull_Reader'Class;
@@ -13940,7 +13943,7 @@ package body DAP.Tools.Inputs is
 
    package GotoTarget_Minimal_Perfect_Hash is new Minimal_Perfect_Hash
      (["id", "label", "line", "column", "endLine", "endColumn",
-      "instructionPointerReference"]);
+       "instructionPointerReference"]);
 
    procedure Input_GotoTarget
      (Reader  : in out VSS.JSON.Pull_Readers.JSON_Pull_Reader'Class;
@@ -14250,7 +14253,7 @@ package body DAP.Tools.Inputs is
 
    package ProgressStartEvent_body_Minimal_Perfect_Hash is new Minimal_Perfect_Hash
      (["progressId", "title", "requestId", "cancellable", "message",
-      "percentage"]);
+       "percentage"]);
 
    procedure Input_ProgressStartEvent
      (Reader  : in out VSS.JSON.Pull_Readers.JSON_Pull_Reader'Class;
@@ -14415,7 +14418,7 @@ package body DAP.Tools.Inputs is
 
    package SetVariableResponse_body_Minimal_Perfect_Hash is new Minimal_Perfect_Hash
      (["value", "type", "variablesReference", "namedVariables",
-      "indexedVariables"]);
+       "indexedVariables"]);
 
    procedure Input_SetVariableResponse
      (Reader  : in out VSS.JSON.Pull_Readers.JSON_Pull_Reader'Class;
@@ -15695,7 +15698,7 @@ package body DAP.Tools.Inputs is
 
    package EvaluateResponse_body_Minimal_Perfect_Hash is new Minimal_Perfect_Hash
      (["result", "type", "presentationHint", "variablesReference",
-      "namedVariables", "indexedVariables", "memoryReference"]);
+       "namedVariables", "indexedVariables", "memoryReference"]);
 
    procedure Input_EvaluateResponse
      (Reader  : in out VSS.JSON.Pull_Readers.JSON_Pull_Reader'Class;
