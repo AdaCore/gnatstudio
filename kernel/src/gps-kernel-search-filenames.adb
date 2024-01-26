@@ -94,6 +94,7 @@ package body GPS.Kernel.Search.Filenames is
    is
       pragma Unreferenced (Kernel);
    begin
+      Self.Provider.Other_Files.Clear;
       Free (Self.Provider.Files);
       Unchecked_Free (Self.Provider.Runtime);
       Unchecked_Free (Self.Provider.Source_Dirs);
@@ -182,6 +183,11 @@ package body GPS.Kernel.Search.Filenames is
             Self.Data :=
               (Step => Project_Files,
                Iter => Get_Project (Self.Kernel).Start (Recursive => True));
+         when Check_Other_Files_Cache =>
+            Trace (Me, "Will parse name of cached files from source_dirs");
+            Self.Data :=
+              (Step   => Check_Other_Files_Cache,
+               Cursor => Self.Other_Files.First);
          when Other_Files =>
             Trace (Me, "Will parse name of files in source_dirs");
 
@@ -311,19 +317,25 @@ package body GPS.Kernel.Search.Filenames is
          --  aggregate projects and this is a duplication in the project itself
 
          if F.File_Extension /= ".o"
-
-           --  We don't want to show directories as entries in the results
-           and then not F.Is_Directory
-
            and then
              (Self.Data.Step = Project_Sources
               or else not Self.Seen.Contains (F))
+           and then
+         --  Other_Files is relying on Read_Dir without filtering the dir.
+         --  Remove them at this point. The sources files should already be
+         --  in seen thus this check will impact only a minimal amount of file
+         --  put them in a buffer afterwards.
+             (Self.Data.Step /= Other_Files
+              or else not F.Is_Directory)
          then
             C := Self.Pattern.Start (Text);
             if C /= GPS.Search.No_Match then
                Continue := Callback (Text, C, F, Project);
-               Self.Seen.Include (F);
             end if;
+            if Self.Data.Step = Other_Files then
+               Self.Other_Files.Include (F);
+            end if;
+            Self.Seen.Include (F);
          end if;
       end Check;
 
@@ -385,6 +397,23 @@ package body GPS.Kernel.Search.Filenames is
                exit For_Each_Step when not Continue;
             end loop;
             Set_Step (Self, Search_Step'Succ (Self.Data.Step));
+
+         when Check_Other_Files_Cache =>
+            if Self.Other_Files.Is_Empty then
+               Set_Step (Self, Search_Step'Succ (Self.Data.Step));
+            else
+               while Self.Other_Files.Has_Element (Self.Data.Cursor) loop
+                  exit For_Each_Step when Clock - Start >
+                    Gtkada.Entry_Completion.Max_Idle_Duration;
+                  Check (Self.Other_Files.Element (Self.Data.Cursor),
+                         No_Project);
+                  Self.Data.Cursor.Next;
+               end loop;
+
+               --  Finished to check the cache, give up now
+               Has_Next := False;
+               exit For_Each_Step;
+            end if;
 
          when Other_Files =>
             --  Test all files in the current directory
