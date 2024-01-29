@@ -98,6 +98,9 @@ package body GPS.Kernel.MDI is
      GNATCOLL.Traces.Create ("TESTSUITE_TIMESTAMP_CHECKS",
                              Default => GNATCOLL.Traces.Off);
 
+   Me_Filesystem_Checks : constant Trace_Handle :=
+     Create ("GPS.KERNEL.FILESYSTEM_CHECKS", On);
+
    Me_Perspectives : constant Trace_Handle :=
      Create ("GPS.INTERNAL.KERNEL_MDI_PERSPECTIVES");
    --  for testing purposes, do not copy predifined perspectives if inactive
@@ -2532,6 +2535,11 @@ package body GPS.Kernel.MDI is
    procedure Check_Monitored_Files_In_Background
      (Kernel : not null access Kernel_Handle_Record'Class) is
    begin
+      if not Me_Filesystem_Checks.Active then
+         --  Ignore change in the filesystem, useful for nfs or frozen sources
+         return;
+      end if;
+
       --  We will check in an idle whether any of the files has changed on
       --  disk. We can't do so immediately because the dialog that would be
       --  popped up on the screen, and since it is modal, the button release
