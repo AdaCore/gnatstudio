@@ -88,12 +88,12 @@ package body DAP.Utils is
         Kernel.Get_Buffer_Factory.Get
           (File,
            Open_Buffer   => True,
-           Focus         => True,
+           Focus         => False,
            Unlocked_Only => True);
    begin
       Buffer.Current_View.Cursor_Goto
         (Location   => Buffer.New_Location_At_Line (Line),
-         Raise_View => True);
+         Raise_View => False);
 
       --  raise the source editor without giving a focus
       declare

@@ -634,10 +634,10 @@ package body Src_Editor_Module.Editors is
    overriding procedure Scroll_To_Cursor_Location (This : Src_Editor_View);
 
    overriding procedure Cursor_Goto
-     (This       : Src_Editor_View;
-      Location   : Editor_Location'Class;
-      Raise_View : Boolean := False;
-      Centering  : Centering_Type := With_Margin;
+     (This             : Src_Editor_View;
+      Location         : Editor_Location'Class;
+      Raise_View       : Boolean := False;
+      Centering        : Centering_Type := With_Margin;
       Extend_Selection : Boolean := False);
 
    overriding function Cursor
