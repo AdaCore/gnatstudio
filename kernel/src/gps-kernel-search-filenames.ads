@@ -64,6 +64,7 @@ private
       Project_Sources,
       Runtime_Sources,
       Project_Files,
+      Check_Other_Files_Cache,
       Other_Files);
 
    type Search_Data (Step : Search_Step := Project_Sources) is record
@@ -76,6 +77,8 @@ private
             Runtime_Index : Integer; --  Last runtime file tested
          when Project_Files =>
             Iter  : GNATCOLL.Projects.Project_Iterator;
+         when Check_Other_Files_Cache =>
+            Cursor : Basic_Types.File_Sets.Cursor;
          when Other_Files =>
             Files_In_Dir : GNATCOLL.VFS.File_Array_Access;
             Dirs_Index : Integer;  --  Current dir being tested
@@ -102,6 +105,12 @@ private
       Seen : Basic_Types.File_Sets.Set;
       --  Files already returned, to avoid duplicates (in particular the
       --  list of runtime files could include duplicates)
+
+      Other_Files : Basic_Types.File_Sets.Set;
+      --  Files in the project directories which are not part of the project.
+      --  Cache them and only refresh on Project_Changed.
+      --  This will create a few missed when files are created or deleted in
+      --  the project directories.
    end record;
 
    type Filenames_Search_Result is new Kernel_Search_Result with record
