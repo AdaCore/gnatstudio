@@ -355,6 +355,13 @@ package body Language_Handlers.Assistants is
               ("You should specify the unit name, not the filename (e.g: "
                & " for an Ada main, enter ""Main"" and not ""main.adb"".");
             return False;
+
+         elsif Unbounded_String_Array'
+           (GNATCOLL.Utils.Split (Text, On => ' '))'Length > 1
+         then
+            Error_Msg := To_Unbounded_String
+              ("Unit names can't contain blankspaces.");
+            return False;
          end if;
 
          return True;
@@ -570,11 +577,11 @@ package body Language_Handlers.Assistants is
             declare
                Impl_Cursor        : Integer;
                Impl_Expanded_Text : constant String :=
-                                      Expand_Alias_With_Values
-                 (Alias                => Command.File_Template.Impl_Alias,
-                  Kernel               => Kernel,
-                  Params_Substitutions => Params_Substitutions,
-                  Cursor               => Impl_Cursor);
+                 Expand_Alias_With_Values
+                   (Alias                => Command.File_Template.Impl_Alias,
+                    Kernel               => Kernel,
+                    Params_Substitutions => Params_Substitutions,
+                    Cursor               => Impl_Cursor);
             begin
                Impl_File := Create_File_From_Expanded_Template
                  (Part   => Unit_Body,
