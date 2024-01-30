@@ -56,6 +56,7 @@ with GNATCOLL.Traces;
 with GNATCOLL.Utils;
 with GNATCOLL.VFS;                      use GNATCOLL.VFS;
 
+with VSS.Application;
 with VSS.Regular_Expressions;
 with VSS.Strings.Conversions;
 with VSS.Unicode;
@@ -119,7 +120,12 @@ package body GPS.LSP_Module is
    Me_Ada_Support : constant GNATCOLL.Traces.Trace_Handle :=
      GNATCOLL.Traces.Create
        ("GPS.LSP.ADA_SUPPORT", GNATCOLL.Traces.On);
-   --  General ALS support
+   --  General ALS support for Ada
+
+   Me_GPR_Support : constant GNATCOLL.Traces.Trace_Handle :=
+     GNATCOLL.Traces.Create
+       ("GPS.LSP.GPR_SUPPORT", GNATCOLL.Traces.Off);
+   --  General ALS support for GPR
 
    Me_Cpp_Support : constant GNATCOLL.Traces.Trace_Handle :=
      GNATCOLL.Traces.Create
@@ -152,6 +158,11 @@ package body GPS.LSP_Module is
       Factory : GPS.Editors.Editor_Buffer_Factory'Class;
       Kernel  : GPS.Core_Kernels.Core_Kernel)
       return GPS.Editors.Editor_Listener_Access;
+
+   procedure Spawn_LSP_Server
+     (Language : Standard.Language.Language_Access;
+      Kernel   : not null access Kernel_Handle_Record'Class);
+   --  Setup new language server for given language.
 
    function Share_Same_Server
      (A : Language.Language_Access; B : Language.Language_Access)
@@ -640,15 +651,19 @@ package body GPS.LSP_Module is
          return;
       end if;
 
-      --  TODO: check that the language server supports CodeAction
-
       --  After each location change, request whether there are CodeActions
       --  available for this location.
-
-      if Me_Code_Actions.Active then
-         GPS.LSP_Client.Editors.Code_Actions.Request_Code_Action
-           (Kernel, File);
-      end if;
+      declare
+         Capabilities : constant LSP.Messages.ServerCapabilities :=
+           Server.Get_Client.Capabilities;
+      begin
+         if Me_Code_Actions.Active
+           and then Capabilities.codeActionProvider.Is_Set
+         then
+            GPS.LSP_Client.Editors.Code_Actions.Request_Code_Action
+              (Kernel, File);
+         end if;
+      end;
    end Execute;
 
    -------------
@@ -671,6 +686,216 @@ package body GPS.LSP_Module is
       return Commands.Success;
    end Execute;
 
+   ----------------------
+   -- Spawn_LSP_Server --
+   ----------------------
+
+   procedure Spawn_LSP_Server
+     (Language : Standard.Language.Language_Access;
+      Kernel   : not null access Kernel_Handle_Record'Class)
+   is
+      Cmd_Line_Args_Pref : String_Preference;
+      --  The prerence used to add custom arguments to the server's command
+      --  line.
+
+      procedure Create_Preferences
+        (Server_Program : Virtual_File);
+      --  Create the preferences for the given server.
+
+      ------------------------
+      -- Create_Preferences --
+      ------------------------
+
+      procedure Create_Preferences
+        (Server_Program : Virtual_File)
+      is
+         Server_Base_Name   : constant String :=
+           Server_Program.Display_Base_Name;
+         Preferences        : constant Preferences_Manager :=
+           Kernel.Get_Preferences;
+      begin
+         Cmd_Line_Args_Pref := Create
+           (Manager    => Preferences,
+            Path       =>
+              "LSP:" & Server_Base_Name,
+            Name       => "lsp-cmd_line-" & Server_Base_Name,
+            Label      => "Command line arguments",
+            Doc        => "Arguments for " & Server_Base_Name & " server. "
+            & "You will need to restart GNAT Studio to take changes into "
+            & "account.",
+            Default    => "",
+            Multi_Line => False);
+      end Create_Preferences;
+
+      Language_Name : constant String :=
+                        Ada.Characters.Handling.To_Lower
+                          (Language.Get_Name);
+      Configuration :
+        GPS.LSP_Client.Configurations.Server_Configuration_Access;
+      Server        :
+        GPS.LSP_Client.Language_Servers.Language_Server_Access;
+
+      Libexec_GPS : constant Virtual_File :=
+        Kernel.Get_System_Dir / "libexec" / "gnatstudio";
+
+      On_Server_Capabilities : GPS.LSP_Clients.On_Server_Capabilities_Proc;
+
+      procedure Setup_ALS (For_GPR : Boolean);
+      --  Setup the configuration for the Ada Language Server.
+      --  If For_GPR is set to True, the ALS will be configured for the GPR
+      --  language instead of Ada.
+
+      ---------------
+      -- Setup_ALS --
+      ---------------
+
+      procedure Setup_ALS (For_GPR : Boolean) is
+         --  Allow the environment variable "GPS_ALS" to override the
+         --  location of the ada_language_server.
+         --  Otherwise, check if the ada_language_server exe is available
+         --  in GNAT Studio's install libexec directory.
+         --  If not, fallback on the PATH.
+
+         From_Env       : constant String :=
+           VSS.Strings.Conversions.To_UTF_8_String
+             (VSS.Application.System_Environment.Value ("GPS_ALS"));
+         Libexec_ALS    : constant Virtual_File := Libexec_GPS
+           / "als"
+           / ("ada_language_server"
+              & (if Host = Windows then ".exe" else ""));
+         Tracefile      : constant Virtual_File :=
+           Kernel.Get_Home_Dir / "ada_ls_traces.cfg";
+      begin
+         if From_Env /= "" then
+            Configuration.Server_Program := Create (+From_Env);
+         elsif Libexec_ALS.Is_Regular_File then
+            Configuration.Server_Program := Libexec_ALS;
+         else
+            Configuration.Server_Program :=
+              Locate_On_Path ("ada_language_server");
+         end if;
+
+         if For_GPR then
+            Configuration.Server_Arguments.Append ("--language-gpr");
+         end if;
+
+         if Tracefile.Is_Regular_File then
+            Configuration.Server_Arguments.Append
+              ("--tracefile=" & (+Tracefile.Full_Name.all));
+         else
+            Me_Ada_Support.Trace
+              ("The tracefile for the Ada Language Server"
+               & " could not be found");
+         end if;
+      end Setup_ALS;
+
+   begin
+      if Language_Name = "ada"
+        and then Me_Ada_Support.Is_Active
+      then
+         Configuration :=
+           new GPS.LSP_Client.Configurations.ALS.ALS_Configuration (Kernel);
+
+         Setup_ALS (For_GPR => False);
+
+      elsif Language_Name = "project file"
+        and then Me_GPR_Support.Is_Active
+      then
+         Configuration :=
+           new GPS.LSP_Client.Configurations.ALS.ALS_Configuration (Kernel);
+
+         Setup_ALS (For_GPR => True);
+
+      elsif Language_Name in "c" | "cpp" | "c++"
+        and then Me_Cpp_Support.Is_Active
+      then
+         Configuration := new GPS.LSP_Client.Configurations.Clangd.
+           Clangd_Configuration (Kernel);
+
+         On_Server_Capabilities := GPS.LSP_Client.Configurations.Clangd.
+           On_Server_Capabilities'Access;
+
+         declare
+            --  Allow the environment variable "GPS_CLANGD" to override
+            --  the location of the clangd and add a fallback on the
+            --  clangd found in the PATH env variable. For development.
+
+            From_Env       : constant String :=
+              VSS.Strings.Conversions.To_UTF_8_String
+                (VSS.Application.System_Environment.Value ("GPS_CLANGD"));
+            Libexec_Clangd : constant Virtual_File := Libexec_GPS
+              / "clang" / "bin"
+              / ("clangd" & (if Host = Windows then ".exe" else ""));
+         begin
+            if From_Env /= "" then
+               Configuration.Server_Program := Create (+From_Env);
+            elsif Libexec_Clangd.Is_Regular_File then
+               Configuration.Server_Program := Libexec_Clangd;
+            else
+               Configuration.Server_Program :=
+                 Locate_On_Path ("clangd");
+            end if;
+         end;
+
+      else
+         return;
+      end if;
+
+      if not Configuration.Is_Available then
+         --  Server is not available, return.
+
+         return;
+      end if;
+
+      Create_Preferences (Configuration.Server_Program);
+
+      declare
+         User_Cmd_Line_Args : constant String_List_Access :=
+           GNATCOLL.Utils.Split
+             (Cmd_Line_Args_Pref.Get_Pref, ' ');
+      begin
+         if User_Cmd_Line_Args /= null then
+            for Arg of User_Cmd_Line_Args.all loop
+               Configuration.Server_Arguments.Append (Arg.all);
+            end loop;
+         end if;
+      end;
+
+      Src_Editor_Module.Set_Editor_Tooltip_Handler_Factory
+        (Tooltip_Factory =>
+           Create_LSP_Client_Editor_Tooltip_Handler'Access);
+
+      Configuration.Prepare_Configuration_Settings;
+
+      Server :=
+        GPS.LSP_Client.Language_Servers.Real.Create
+          (Kernel              => Kernel,
+           Configuration       => Configuration,
+           Server_Interceptor  => Module,
+           Request_Interceptor =>
+             GPS.LSP_Client.Tasks.New_Task_Manager_Integration
+             (Kernel, Language_Name),
+           Language            => Language);
+
+      declare
+         S : GPS.LSP_Client.Language_Servers.Real.Real_Language_Server'Class
+           renames
+             GPS.LSP_Client.Language_Servers.Real.Real_Language_Server'Class
+               (Server.all);
+      begin
+         if Language_Name in "c" | "cpp" | "c++" then
+            --  clangd uses stderr for outputing log, redirect it to a file
+            GPS.LSP_Client.Configurations.Clangd.Set_Standard_Errors_File
+              (Kernel, S.Client);
+         end if;
+
+         S.Client.Set_On_Server_Capabilities (On_Server_Capabilities);
+         S.Client.Set_Notification_Handler (Module);
+         Module.Language_Servers.Insert (Language, Server);
+         S.Start;
+      end;
+   end Spawn_LSP_Server;
+
    -------------
    -- Execute --
    -------------
@@ -681,206 +906,15 @@ package body GPS.LSP_Module is
    is
       pragma Unreferenced (Self);
 
-      Cmd_Line_Args_Pref : String_Preference;
-
-      procedure Setup_Server (Language : Standard.Language.Language_Access);
-      --  Setup new language server for given language.
-
-      ------------------
-      -- Setup_Server --
-      ------------------
-
-      procedure Setup_Server (Language : Standard.Language.Language_Access) is
-         function Getenv (Var : String) return String;
-         --  Utility wrapper around Getenv
-
-         procedure Create_Preferences
-           (Server_Program : Virtual_File);
-         --  Create the preferences for the given server.
-
-         ------------
-         -- Getenv --
-         ------------
-
-         function Getenv (Var : String) return String is
-            Str : GNAT.OS_Lib.String_Access := GNAT.OS_Lib.Getenv (Var);
-         begin
-            return S : constant String := Str.all do
-               GNAT.OS_Lib.Free (Str);
-            end return;
-         end Getenv;
-
-         ------------------------
-         -- Create_Preferences --
-         ------------------------
-
-         procedure Create_Preferences
-           (Server_Program : Virtual_File)
-         is
-            Server_Base_Name : constant String :=
-              Server_Program.Display_Base_Name;
-            Preferences      : constant Preferences_Manager :=
-              Kernel.Get_Preferences;
-         begin
-            Cmd_Line_Args_Pref := Create
-              (Manager    => Preferences,
-               Path       =>
-                 "LSP:" & Server_Base_Name,
-               Name       => "lsp-cmd_line-" & Server_Base_Name,
-               Label      => "Command line arguments",
-               Doc        => "Arguments for " & Server_Base_Name & " server. "
-               & "You will need to restart GNAT Studio to take changes into "
-               & "account.",
-               Default    => "",
-               Multi_Line => False);
-         end Create_Preferences;
-
-         Language_Name : constant String :=
-                           Ada.Characters.Handling.To_Lower
-                             (Language.Get_Name);
-         Configuration :
-           GPS.LSP_Client.Configurations.Server_Configuration_Access;
-         Server        :
-           GPS.LSP_Client.Language_Servers.Language_Server_Access;
-
-         Libexec_GPS : constant Virtual_File :=
-           Kernel.Get_System_Dir / "libexec" / "gnatstudio";
-
-         On_Server_Capabilities : GPS.LSP_Clients.On_Server_Capabilities_Proc;
-      begin
-         if Language_Name = "ada"
-           and then Me_Ada_Support.Is_Active
-         then
-            Configuration :=
-              new GPS.LSP_Client.Configurations.ALS.ALS_Configuration (Kernel);
-
-            declare
-               --  Allow the environment variable "GPS_ALS" to override the
-               --  location of the ada_language_server. For development.
-               --  Otherwise, check if the ada_language_server is available
-               --  in the GNAT Studio's install libexec directory.
-               --  If not, fallback on the PATH.
-
-               From_Env       : constant String := Getenv ("GPS_ALS");
-               Libexec_ALS    : constant Virtual_File := Libexec_GPS
-                 / "als"
-                 / ("ada_language_server"
-                    & (if Host = Windows then ".exe" else ""));
-               Tracefile      : constant Virtual_File :=
-                 Kernel.Get_Home_Dir / "ada_ls_traces.cfg";
-            begin
-               if From_Env /= "" then
-                  Configuration.Server_Program := Create (+From_Env);
-               elsif Libexec_ALS.Is_Regular_File then
-                  Configuration.Server_Program := Libexec_ALS;
-               else
-                  Configuration.Server_Program :=
-                    Locate_On_Path ("ada_language_server");
-               end if;
-
-               if Tracefile.Is_Regular_File then
-                  Configuration.Server_Arguments.Append
-                    ("--tracefile=" & (+Tracefile.Full_Name.all));
-               else
-                  Me_Ada_Support.Trace
-                    ("The tracefile for the Ada Language Server"
-                     & " could not be found");
-               end if;
-            end;
-
-         elsif Language_Name in "c" | "cpp" | "c++"
-           and then Me_Cpp_Support.Is_Active
-         then
-            Configuration := new GPS.LSP_Client.Configurations.Clangd.
-              Clangd_Configuration (Kernel);
-
-            On_Server_Capabilities := GPS.LSP_Client.Configurations.Clangd.
-              On_Server_Capabilities'Access;
-
-            declare
-               --  Allow the environment variable "GPS_CLANGD" to override
-               --  the location of the clangd and add a fallback on the
-               --  clangd found in the PATH env variable. For development.
-
-               From_Env       : constant String := Getenv ("GPS_CLANGD");
-               Libexec_Clangd : constant Virtual_File := Libexec_GPS
-                 / "clang" / "bin"
-                 / ("clangd" & (if Host = Windows then ".exe" else ""));
-            begin
-               if From_Env /= "" then
-                  Configuration.Server_Program := Create (+From_Env);
-               elsif Libexec_Clangd.Is_Regular_File then
-                  Configuration.Server_Program := Libexec_Clangd;
-               else
-                  Configuration.Server_Program :=
-                    Locate_On_Path ("clangd");
-               end if;
-            end;
-
-         else
-            return;
-         end if;
-
-         if not Configuration.Is_Available then
-            --  Server is not available, return.
-
-            return;
-         end if;
-
-         Create_Preferences (Configuration.Server_Program);
-
-         declare
-            User_Cmd_Line_Args : constant String_List_Access :=
-              GNATCOLL.Utils.Split
-                (Cmd_Line_Args_Pref.Get_Pref, ' ');
-         begin
-            if User_Cmd_Line_Args /= null then
-               for Arg of User_Cmd_Line_Args.all loop
-                  Configuration.Server_Arguments.Append (Arg.all);
-               end loop;
-            end if;
-         end;
-
-         Src_Editor_Module.Set_Editor_Tooltip_Handler_Factory
-           (Tooltip_Factory =>
-              Create_LSP_Client_Editor_Tooltip_Handler'Access);
-
-         Configuration.Prepare_Configuration_Settings;
-
-         Server :=
-           GPS.LSP_Client.Language_Servers.Real.Create
-             (Kernel              => Kernel,
-              Configuration       => Configuration,
-              Server_Interceptor  => Module,
-              Request_Interceptor =>
-                GPS.LSP_Client.Tasks.New_Task_Manager_Integration
-                (Kernel, Language_Name),
-              Language            => Language);
-
-         declare
-            S : GPS.LSP_Client.Language_Servers.Real.Real_Language_Server'Class
-              renames
-                GPS.LSP_Client.Language_Servers.Real.Real_Language_Server'Class
-                  (Server.all);
-         begin
-            if Language_Name in "c" | "cpp" | "c++" then
-               --  clangd uses stderr for outputing log, redirect it to a file
-               GPS.LSP_Client.Configurations.Clangd.Set_Standard_Errors_File
-                 (Kernel, S.Client);
-            end if;
-
-            S.Client.Set_On_Server_Capabilities (On_Server_Capabilities);
-            S.Client.Set_Notification_Handler (Module);
-            Module.Language_Servers.Insert (Language, Server);
-            S.Start;
-         end;
-      end Setup_Server;
-
       Languages       : GNAT.Strings.String_List :=
-                          GPS.Kernel.Project.Get_Root_Project_View
-                            (Kernel).Get_Project_Type.Languages (True);
-      Running_Servers : Language_Server_Maps.Map := Module.Language_Servers;
+        GPS.Kernel.Project.Get_Root_Project_View
+          (Kernel).Get_Project_Type.Languages (True)
+        & new String'("project file");
+      --  Append the 'project file' language (i.e: GPR files) to the project's
+      --  own languages: we want to spawn the Ada Language Server for GPR files
+      --  in any case.
 
+      Running_Servers : Language_Server_Maps.Map := Module.Language_Servers;
    begin
       Module.Language_Servers.Clear;
 
@@ -918,9 +952,11 @@ package body GPS.LSP_Module is
                   Server.Execute (Reload_Project);
                end;
             elsif not Module.Language_Servers.Contains (Lang) then
-               --  Start new language server if configured
 
-               Setup_Server (Lang);
+               --  Spawn a new language server for the given language
+               Spawn_LSP_Server
+                 (Language => Lang,
+                  Kernel   => Kernel);
             end if;
 
             GNAT.Strings.Free (Language_Name);

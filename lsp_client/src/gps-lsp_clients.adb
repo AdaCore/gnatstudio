@@ -1417,7 +1417,29 @@ package body GPS.LSP_Clients is
    procedure Start
      (Self       : aliased in out LSP_Client;
       Executable : String;
-      Arguments  : Spawn.String_Vectors.UTF_8_String_Vector) is
+      Arguments  : Spawn.String_Vectors.UTF_8_String_Vector)
+   is
+
+      function Get_Arguments_As_String
+        (Arguments : Spawn.String_Vectors.UTF_8_String_Vector) return String;
+      --  Return the list of arguments as a string.
+
+      -----------------------------
+      -- Get_Arguments_As_String --
+      -----------------------------
+
+      function Get_Arguments_As_String
+        (Arguments : Spawn.String_Vectors.UTF_8_String_Vector) return String
+      is
+         Args : Unbounded_String;
+      begin
+         for Arg of Arguments loop
+            Args := Args & To_Unbounded_String (Arg & " ");
+         end loop;
+
+         return To_String (Args);
+      end Get_Arguments_As_String;
+
    begin
       Self.Set_Response_Handler (Self.Response_Handler'Unchecked_Access);
       Self.Set_Request_Handler  (Self.Request_Handler'Unchecked_Access);
@@ -1427,7 +1449,11 @@ package body GPS.LSP_Clients is
       Self.Set_Environment (Self.Kernel.Get_Original_Environment);
 
       --  TODO: Self.Set_Working_Directory
-      Me.Trace ("Starting '" & Executable & ''');
+      Me.Trace
+        ("Starting '"
+         & Executable
+         & Get_Arguments_As_String (Arguments)
+         & "'");
       Self.Exiting := False;
       Self.Launches.Prepend (Clock);
       Self.Start;
