@@ -33,9 +33,15 @@ project Sdc is
       for Switches ("ada") use ("-static");
    end Binder;
 
-   package CodePeer is
-      for Switches use ("-level", "3");
-   end CodePeer;
+   --  When using CodePeer 23.2 or earlier, uncomment the CodePeer package and
+   --  remove the Analyzer package:
+   --  package CodePeer is
+   --     for Switches use ("-level", "3");
+   --  end CodePeer;
+
+   package Analyzer is
+      for Switches use ("--mode", "deep");
+   end Analyzer;
 
 end Sdc;
 
