@@ -1251,7 +1251,7 @@ package body GPS.Kernel.Preferences is
          Path    => -"Messages:GPS & Editors",
          Doc     => -("Color for high priority messages "
            & "(e.g: compiler errors). This preference is also used by "
-           & " external tools integrated in GNAT Studio (e.g: CodePeer)."),
+           & " external tools integrated in GNAT Studio (e.g: GNAT SAS)."),
          Default => "#FFB7B7");
 
       Medium_Messages_Highlight := Manager.Create
@@ -1260,7 +1260,7 @@ package body GPS.Kernel.Preferences is
          Path    => -"Messages:GPS & Editors",
          Doc     => -("Color for medium priority messages (e.g: compiler "
            & "warnings). This preference is also used by external tools "
-           & "integrated in GNAT Studio (e.g: CodePeer)."),
+           & "integrated in GNAT Studio (e.g: GNAT SAS)."),
          Default => "#FFCC9C");
 
       Low_Messages_Highlight := Manager.Create
@@ -1269,7 +1269,7 @@ package body GPS.Kernel.Preferences is
          Path    => -"Messages:GPS & Editors",
          Doc     => -("Color for low priority messages (e.g: style errors). "
            & "This preference is also used by external tools integrated in "
-           & "GNAT Studio (e.g: CodePeer)."),
+           & "GNAT Studio (e.g: GNAT SAS)."),
          Default => "#FFFFF0");
 
       Info_Messages_Highlight := Manager.Create
@@ -1278,7 +1278,7 @@ package body GPS.Kernel.Preferences is
          Path    => -"Messages:GPS & Editors",
          Doc     => -("Color for informational messages (e.g: compiler "
            & "infos). This preference is also used by external tools "
-           & "integrated in GNAT Studio (e.g: CodePeer)."),
+           & "integrated in GNAT Studio (e.g: GNAT SAS)."),
          Default => "#BDE5F8");
 
       Annotation_Messages_Highlight := Manager.Create
@@ -1287,7 +1287,7 @@ package body GPS.Kernel.Preferences is
            Path    => -"Messages:GPS & Editors",
          Doc     => -("Color for annotation messages. This preference is "
            & "also used by external tools integrated in GNAT Studio "
-           & "(e.g: CodePeer)."),
+           & "(e.g: GNAT SAS)."),
          Default => "#E0E0E0");
 
       File_Pattern := Manager.Create
