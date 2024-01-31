@@ -492,8 +492,22 @@ package body CodePeer is
      (Left  : Annotation_Category_Access;
       Right : Annotation_Category_Access) return Boolean
    is
+      function Weight (Text : String) return Positive is
+        (if Text in "Pre" then 1
+         elsif Text in "Presumption" then 2
+         elsif Text in "Post" then 3
+         else 4);
+
+      Text_L : constant String := To_String (Left.Text);
+      Text_R : constant String := To_String (Right.Text);
    begin
-      return Left.Order < Right.Order;
+      if Text_L in "Pre" | "Presumption" | "Post" and then
+        Text_R in "Pre" | "Presumption" | "Post"
+      then
+         return Weight (Text_L) < Weight (Text_R);
+      else
+         return Left.Order < Right.Order;
+      end if;
    end Less;
 
    ----------
