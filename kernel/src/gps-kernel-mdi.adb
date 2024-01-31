@@ -2536,7 +2536,7 @@ package body GPS.Kernel.MDI is
      (Kernel : not null access Kernel_Handle_Record'Class) is
    begin
       if not Me_Filesystem_Checks.Active then
-         --  Ignore change in the filesystem, useful for nfs or frozen sources
+         --  Ignore changes made on disk, useful for NFS or frozen sources
          return;
       end if;
 
