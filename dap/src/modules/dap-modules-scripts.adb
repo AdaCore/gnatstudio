@@ -213,7 +213,7 @@ package body DAP.Modules.Scripts is
             File_Inst       : constant Class_Instance := Nth_Arg
               (Data, 1, Get_File_Class (Kernel));
             File            : constant Virtual_File := Get_Data (File_Inst);
-            --  Remote_Target   : constant String := Nth_Arg (Data, 3, "");
+            Remote_Target   : constant String := Nth_Arg (Data, 3, "");
             --  Remote_Protocol : constant String := Nth_Arg (Data, 4, "");
             --  Load_Executable : constant Boolean := Nth_Arg (Data, 5, False);
          begin
@@ -221,7 +221,8 @@ package body DAP.Modules.Scripts is
               (Kernel          => Kernel,
                Project         => GPS.Kernel.Project.Get_Project (Kernel),
                File            => File,
-               Executable_Args => Nth_Arg (Data, 2, "")).Get_Visual;
+               Executable_Args => Nth_Arg (Data, 2, ""),
+               Remote_Target   => Remote_Target).Get_Visual;
 
             Set_Return_Value
               (Data, Get_Or_Create_Instance (Get_Script (Data), Visual));
@@ -247,8 +248,14 @@ package body DAP.Modules.Scripts is
          Inst   := Nth_Arg (Data, 1, New_Class (Kernel, "Debugger"));
          Visual := DAP_Visual_Debugger_Access
            (Glib.Object.GObject'(Get_Data (Inst)));
+
          if Visual.Client.Is_Ready then
-            DAP.Module.Start_Program (Visual.Client);
+            DAP.Module.Start_Executable (Kernel, Visual.Client);
+         else
+            Data.Set_Error_Msg
+              ("Can't start the executable: the debugger is"
+               & " not in 'ready' state (current state: "
+               & Visual.Client.Get_Status'Img);
          end if;
 
       elsif Command = "send" then

@@ -57,8 +57,7 @@ with DAP.Modules.Scripts;
 with DAP.Clients.Attach;
 with DAP.Clients.ConfigurationDone;
 with DAP.Clients.Evaluate;
-with DAP.Clients.Disconnect
-;
+with DAP.Clients.Disconnect;
 with DAP.Clients.Next;
 with DAP.Clients.StepIn;
 with DAP.Views.Assembly;
@@ -131,10 +130,6 @@ package body DAP.Module is
    --  Called when the debugger console is destroyed, which also terminates the
    --  debugger itself
 
-   procedure Start
-     (Kernel : Kernel_Handle;
-      Client : DAP.Clients.DAP_Client_Access);
-
    function On_Idle return Boolean;
    --  Called from Gtk on Idle to deallocate clients
 
@@ -167,10 +162,10 @@ package body DAP.Module is
      (Filter  : access Debugger_Ready_State_Filter;
       Context : Selection_Context) return Boolean;
 
-   type Debugger_Ready_Filter is
+   type Debugger_Available_Filter is
      new Action_Filter_Record with null record;
    overriding function Filter_Matches_Primitive
-     (Filter  : access Debugger_Ready_Filter;
+     (Filter  : access Debugger_Available_Filter;
       Context : Selection_Context) return Boolean;
 
    type Debugger_Stopped_Filter is
@@ -301,7 +296,8 @@ package body DAP.Module is
      (Kernel          : GPS.Kernel.Kernel_Handle;
       Project         : Project_Type;
       File            : GNATCOLL.VFS.Virtual_File;
-      Executable_Args : String)
+      Executable_Args : String;
+      Remote_Target   : String)
       return DAP.Clients.DAP_Client_Access;
    --  Initialize the debugger with the executable refered by File/Project.
    --  Executable_Args contain the extra arguments that will be passed to the
@@ -353,7 +349,8 @@ package body DAP.Module is
      (Kernel          : GPS.Kernel.Kernel_Handle;
       Project         : Project_Type;
       File            : GNATCOLL.VFS.Virtual_File;
-      Executable_Args : String)
+      Executable_Args : String;
+      Remote_Target   : String)
       return DAP.Clients.DAP_Client_Access
    is
       use type Generic_Views.Abstract_View_Access;
@@ -410,7 +407,11 @@ package body DAP.Module is
            (DAP.Clients.DAP_Client (Client.all)).Display_Prompt;
       end if;
 
-      Client.Start (Project, File, Executable_Args);
+      Client.Start
+        (Project         => Project,
+         Executable      => File,
+         Executable_Args => Executable_Args,
+         Remote_Target   => Remote_Target);
 
       DAP.Modules.Persistent_Breakpoints.Hide_Breakpoints (Kernel);
       Set_Current_Debugger (Client);
@@ -756,18 +757,18 @@ package body DAP.Module is
       if Client = null then
          return Commands.Failure;
       else
-         Start (Kernel, Client);
+         Start_Executable (Kernel, Client);
          return Commands.Success;
       end if;
    end Execute;
 
-   -----------
-   -- Start --
-   -----------
+   ----------------------
+   -- Start_Executable --
+   ----------------------
 
-   procedure Start
-     (Kernel : Kernel_Handle;
-      Client : DAP.Clients.DAP_Client_Access)
+   procedure Start_Executable
+     (Kernel : not null Kernel_Handle;
+      Client : not null DAP.Clients.DAP_Client_Access)
    is
       use type DAP.Types.Debugger_Status_Kind;
       Ignore  : Gtkada.Dialogs.Message_Dialog_Buttons;
@@ -782,10 +783,9 @@ package body DAP.Module is
             Buttons     => Gtkada.Dialogs.Button_OK,
             Parent      => Kernel.Get_Main_Window);
       else
-         --  Launch the application
-         Start_Program (Client);
+         DAP.Clients.ConfigurationDone.Send_Configuration_Done (Client.all);
       end if;
-   end Start;
+   end Start_Executable;
 
    -------------
    -- Execute --
@@ -808,7 +808,7 @@ package body DAP.Module is
       end if;
 
       if Client.Get_Status = DAP.Types.Ready then
-         Start (GPS.Kernel.Get_Kernel (Context.Context), Client);
+         Start_Executable (GPS.Kernel.Get_Kernel (Context.Context), Client);
 
       else
          Client.Continue_Execution;
@@ -1007,7 +1007,7 @@ package body DAP.Module is
    begin
       return DAP_Module_ID = null
         or else DAP_Module_ID.Clients.Is_Empty
-        or else Get_Current_Debugger.Is_Ready_For_Command;
+        or else Get_Current_Debugger.Is_Available;
    end Filter_Matches_Primitive;
 
    ------------------------------
@@ -1015,14 +1015,14 @@ package body DAP.Module is
    ------------------------------
 
    overriding function Filter_Matches_Primitive
-     (Filter  : access Debugger_Ready_Filter;
+     (Filter  : access Debugger_Available_Filter;
       Context : Selection_Context) return Boolean
    is
       pragma Unreferenced (Filter);
    begin
       return DAP_Module_ID /= null
         and then not DAP_Module_ID.Clients.Is_Empty
-        and then Get_Current_Debugger.Is_Ready_For_Command;
+        and then Get_Current_Debugger.Is_Available;
    end Filter_Matches_Primitive;
 
    ------------------------------
@@ -1194,7 +1194,8 @@ package body DAP.Module is
      (Kernel          : access GPS.Kernel.Kernel_Handle_Record'Class;
       File            : GNATCOLL.VFS.Virtual_File := No_File;
       Project         : Project_Type := No_Project;
-      Executable_Args : String := "")
+      Executable_Args : String := "";
+      Remote_Target   : String := "")
    is
       Dummy : DAP.Clients.DAP_Client_Access;
    begin
@@ -1202,7 +1203,8 @@ package body DAP.Module is
         (Kernel          => GPS.Kernel.Kernel_Handle (Kernel),
          File            => File,
          Project         => Project,
-         Executable_Args => Executable_Args);
+         Executable_Args => Executable_Args,
+         Remote_Target   => Remote_Target);
    end Initialize_Debugger;
 
    -------------------------
@@ -1213,14 +1215,16 @@ package body DAP.Module is
      (Kernel          : access GPS.Kernel.Kernel_Handle_Record'Class;
       File            : GNATCOLL.VFS.Virtual_File := No_File;
       Project         : Project_Type := No_Project;
-      Executable_Args : String := "")
+      Executable_Args : String := "";
+      Remote_Target   : String := "")
       return DAP.Clients.DAP_Client_Access is
    begin
       return Debug_Init
         (Kernel          => GPS.Kernel.Kernel_Handle (Kernel),
          Project         => Project,
          File            => File,
-         Executable_Args => Executable_Args);
+         Executable_Args => Executable_Args,
+         Remote_Target   => Remote_Target);
    end Initialize_Debugger;
 
    ------------------------
@@ -1376,16 +1380,6 @@ package body DAP.Module is
       end if;
    end Set_Current_Debugger;
 
-   -------------------
-   -- Start_Program --
-   -------------------
-
-   procedure Start_Program
-     (Client : DAP.Clients.DAP_Client_Access) is
-   begin
-      DAP.Clients.ConfigurationDone.Send_Configuration_Done (Client);
-   end Start_Program;
-
    -------------------------
    -- Terminate_Debuggers --
    -------------------------
@@ -1446,7 +1440,7 @@ package body DAP.Module is
    is
       Has_Debugger          : Action_Filter;
       No_Debugger_Or_Ready  : Action_Filter;
-      Debugger_Ready        : Action_Filter;
+      Debugger_Available    : Action_Filter;
       Debugger_Ready_State  : Action_Filter;
       Debugger_Stopped      : Action_Filter;
       Breakable_Filter      : Action_Filter;
@@ -1477,8 +1471,8 @@ package body DAP.Module is
       Register_Filter
         (Kernel, No_Debugger_Or_Ready, "No debugger or ready");
 
-      Debugger_Ready := new Debugger_Ready_Filter;
-      Register_Filter (Kernel, Debugger_Ready, "Debugger ready");
+      Debugger_Available := new Debugger_Available_Filter;
+      Register_Filter (Kernel, Debugger_Available, "Debugger available");
 
       Debugger_Stopped := new Debugger_Stopped_Filter;
       Register_Filter (Kernel, Debugger_Stopped, "Debugger stopped");
@@ -1534,7 +1528,7 @@ package body DAP.Module is
       GPS.Kernel.Actions.Register_Action
         (Kernel, "debug continue", new Continue_Command,
          Icon_Name    => "gps-debugger-run-symbolic",
-         Filter       => Debugger_Ready,
+         Filter       => Debugger_Available,
          Description  =>
            "Continue execution until next breakpoint." & ASCII.LF
          & "Start the debugger if not started yet",
@@ -1544,7 +1538,7 @@ package body DAP.Module is
       GPS.Kernel.Actions.Register_Action
         (Kernel, "debug next", new Next_Command,
          Icon_Name    => "gps-debugger-next-symbolic",
-         Filter       => Debugger_Ready,
+         Filter       => Debugger_Available,
          Description  =>
            "Execute the program until the next source line, stepping over"
          & " subprogram calls",
@@ -1553,7 +1547,7 @@ package body DAP.Module is
 
       GPS.Kernel.Actions.Register_Action
         (Kernel, "debug nexti", new Nexti_Command,
-         Filter      => Debugger_Ready,
+         Filter      => Debugger_Available,
          Description =>
            "Execute the program until the next machine instruction, stepping"
          & " over subprogram calls",
@@ -1562,7 +1556,7 @@ package body DAP.Module is
       GPS.Kernel.Actions.Register_Action
         (Kernel, "debug step", new Step_Command,
          Icon_Name    => "gps-debugger-step-symbolic",
-         Filter       => Debugger_Ready,
+         Filter       => Debugger_Available,
          Description  =>
            "Execute until program reaches a new line of source code",
          Category     => "Debug",
@@ -1570,7 +1564,7 @@ package body DAP.Module is
 
       GPS.Kernel.Actions.Register_Action
         (Kernel, "debug stepi", new Stepi_Command,
-         Filter      => Debugger_Ready,
+         Filter      => Debugger_Available,
          Description =>
            "Execute the program for one machine instruction only",
          Category    => "Debug");

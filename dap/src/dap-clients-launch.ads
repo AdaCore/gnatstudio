@@ -17,37 +17,17 @@
 
 --  Concrete implementation of the DAP 'launch' request
 
-with DAP.Requests;        use DAP.Requests;
-with DAP.Requests.Launch;
-with GPS.Kernel;          use GPS.Kernel;
+with GNATCOLL.VFS;
 
 package DAP.Clients.Launch is
 
-   type Launch_Request (<>) is
-     new DAP.Requests.Launch.Launch_DAP_Request
-   with private;
-   type Launch_Request_Access is access all Launch_Request'Class;
-
-   function Create
-     (Kernel : not null Kernel_Handle;
-      Client : DAP.Clients.DAP_Client_Access)
-      return Launch_Request_Access;
-   --  Create a new DAP 'launch' request.
-
-   overriding procedure On_Result_Message
-     (Self        : in out Launch_Request;
-      Client      : not null access DAP.Clients.DAP_Client'Class;
-      Result      : DAP.Tools.LaunchResponse;
-      New_Request : in out DAP_Request_Access);
-
-   overriding procedure On_Error_Message
-     (Self    : in out Launch_Request;
-      Client  : not null access DAP.Clients.DAP_Client'Class;
-      Message : VSS.Strings.Virtual_String);
-
-private
-
-   type Launch_Request is
-     new DAP.Requests.Launch.Launch_DAP_Request with null record;
+   procedure Send_Launch_Request
+     (Client          : in out DAP.Clients.DAP_Client'Class;
+      Executable      : GNATCOLL.VFS.Virtual_File;
+      Executable_Args : VSS.String_Vectors.Virtual_String_Vector);
+   --  Send the DAP 'launch' request.
+   --  Executable refers to the debuggee that should be launched by the
+   --  debugger.
+   --  Executable_Args are the arguments passed to the launched debuggee.
 
 end DAP.Clients.Launch;

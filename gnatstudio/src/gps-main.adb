@@ -1792,10 +1792,16 @@ procedure GPS.Main is
          --  window already has a proper size, otherwise we might end up with
          --  windows with height=0 or width=0
          if GVD.Preferences.Debugger_Kind.Get_Pref = GVD.Types.DAP then
-            DAP.Module.Initialize_Debugger
-              (Kernel          => GPS_Main.Kernel,
-               Project         => Get_Project (GPS_Main.Kernel),
-               Executable_Args => Program_Args.all);
+            declare
+               File : constant Virtual_File :=
+                 Create_From_Base (+Program_Args.all);
+            begin
+               GNATCOLL.VFS.Normalize_Path (File);
+               DAP.Module.Initialize_Debugger
+                 (Kernel  => GPS_Main.Kernel,
+                  Project => Get_Project (GPS_Main.Kernel),
+                  File    => File);
+            end;
          else
             GVD_Module.Initialize_Debugger
               (Kernel => GPS_Main.Kernel,

@@ -57,7 +57,7 @@ package body DAP.Clients.LoadedSources is
       end loop;
 
       Client.Set_Source_Files (Source_Files);
-      Client.On_Launched;
+      Client.On_Launched (Start_Method => DAP.Types.Launched);
    end On_Result_Message;
 
    -----------------
@@ -71,8 +71,6 @@ package body DAP.Clients.LoadedSources is
       DAP.Requests.LoadedSources.On_Rejected
         (DAP.Requests.LoadedSources.Loaded_Sources_DAP_Request (Self),
          Client);
-
-      Client.On_Launched;
    end On_Rejected;
 
    ----------------------
@@ -87,8 +85,6 @@ package body DAP.Clients.LoadedSources is
       DAP.Requests.LoadedSources.On_Error_Message
         (DAP.Requests.LoadedSources.Loaded_Sources_DAP_Request (Self),
          Client, Message);
-
-      Client.On_Launched;
    end On_Error_Message;
 
 end DAP.Clients.LoadedSources;

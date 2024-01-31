@@ -2376,11 +2376,11 @@ package body DAP.Views.Memory is
    procedure Register_Module
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
    is
-      Debugger_Ready : Action_Filter;
+      Debugger_Available : Action_Filter;
    begin
       Simple_Views.Register_Module (Kernel);
 
-      Debugger_Ready := Kernel.Lookup_Filter ("Debugger ready");
+      Debugger_Available := Kernel.Lookup_Filter ("Debugger available");
 
       GPS.Kernel.Actions.Register_Action
         (Kernel, "examine memory",
@@ -2389,7 +2389,7 @@ package body DAP.Views.Memory is
            "Examine the contents of the memory at the location of the"
          & " selected variable",
          Category    => "Debug",
-         Filter      => Debugger_Ready and
+         Filter      => Debugger_Available and
              Kernel.Lookup_Filter ("Debugger not command variable"));
 
       --  the '%S' and 'debug printable variable' prevent this menu from
@@ -2398,7 +2398,7 @@ package body DAP.Views.Memory is
         (Kernel,
          Name   => "Debug view memory",
          Label  => "Debug/View memory at address of %S",
-         Filter =>  Debugger_Ready and
+         Filter =>  Debugger_Available and
              Lookup_Filter (Kernel, "Debugger printable variable"),
          Action => "examine memory");
    end Register_Module;

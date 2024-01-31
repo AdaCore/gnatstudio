@@ -14,19 +14,41 @@
 -- COPYING3.  If not, go to http://www.gnu.org/licenses for a complete copy --
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
+with GPS.Kernel;              use GPS.Kernel;
 
-with VSS.Strings.Conversions;
+with DAP.Clients.Attach;
 with DAP.Clients.Launch;
+with DAP.Requests;            use DAP.Requests;
+with DAP.Requests.Initialize;
+with VSS.Strings.Conversions;
 
 package body DAP.Clients.Initialize is
+
+   type Initialize_Request is
+     new DAP.Requests.Initialize.Initialize_DAP_Request with null record;
+   type Initialize_Request_Access is access all Initialize_Request'Class;
+
+   function Create
+     (Kernel : not null Kernel_Handle) return Initialize_Request_Access;
+   --  Create a new DAP 'initialize' request.
+
+   overriding procedure On_Result_Message
+     (Self        : in out Initialize_Request;
+      Client      : not null access DAP.Clients.DAP_Client'Class;
+      Result      : DAP.Tools.InitializeResponse;
+      New_Request : in out DAP_Request_Access);
+
+   overriding procedure On_Error_Message
+     (Self    : in out Initialize_Request;
+      Client  : not null access DAP.Clients.DAP_Client'Class;
+      Message : VSS.Strings.Virtual_String);
 
    ------------
    -- Create --
    ------------
 
    function Create
-     (Kernel : not null Kernel_Handle)
-      return Initialize_Request_Access
+     (Kernel : not null Kernel_Handle) return Initialize_Request_Access
    is
       Self : constant Initialize_Request_Access :=
         new Initialize_Request (Kernel);
@@ -42,12 +64,27 @@ package body DAP.Clients.Initialize is
      (Self        : in out Initialize_Request;
       Client      : not null access DAP.Clients.DAP_Client'Class;
       Result      : DAP.Tools.InitializeResponse;
-      New_Request : in out DAP_Request_Access) is
+      New_Request : in out DAP_Request_Access)
+   is
+      pragma Unreferenced (New_Request);
+      use GNATCOLL.VFS;
    begin
       Client.Set_Capabilities (Result.a_body);
-      New_Request := DAP_Request_Access
-        (DAP.Clients.Launch.Create
-           (Self.Kernel, DAP.Clients.DAP_Client_Access (Client)));
+
+      --  If an executable has been given while spawning the debugger, send
+      --  the DAP 'launch' request for it.
+      if Client.Get_Executable /= GNATCOLL.VFS.No_File then
+         if Client.Get_Remote_Target.Is_Empty then
+            DAP.Clients.Launch.Send_Launch_Request
+              (Client          => Client.all,
+               Executable      => Client.Get_Executable,
+               Executable_Args => Client.Get_Executable_Args);
+         else
+            DAP.Clients.Attach.Send_Attach_Request
+              (Client => Client.all,
+               Target => Client.Get_Remote_Target);
+         end if;
+      end if;
    end On_Result_Message;
 
    ----------------------
@@ -67,5 +104,19 @@ package body DAP.Clients.Initialize is
         (DAP.Requests.Initialize.Initialize_DAP_Request (Self),
          Client, Message);
    end On_Error_Message;
+
+   -----------------------------
+   -- Send_Initialize_Request --
+   -----------------------------
+
+   procedure Send_Initialize_Request
+     (Client : in out DAP.Clients.DAP_Client'Class)
+   is
+      Initialize_Req : Initialize_Request_Access :=
+        DAP.Clients.Initialize.Create
+          (Client.Kernel);
+   begin
+      Client.Process (DAP.Requests.DAP_Request_Access (Initialize_Req));
+   end Send_Initialize_Request;
 
 end DAP.Clients.Initialize;
