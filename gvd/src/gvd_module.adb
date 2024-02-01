@@ -379,6 +379,13 @@ package body GVD_Module is
       Context : Selection_Context) return Boolean;
    --  True if the debuggee has been started
 
+   type Attached_Debuggee_Filter  is
+     new Action_Filter_Record with null record;
+   overriding function Filter_Matches_Primitive
+     (Filter  : access Attached_Debuggee_Filter;
+      Context : Selection_Context) return Boolean;
+   --  Return True when the debugger is attached to a debuggee process.
+
    type Debugger_Active_Filter is new Action_Filter_Record with null record;
    overriding function Filter_Matches_Primitive
      (Filter  : access Debugger_Active_Filter;
@@ -1302,6 +1309,23 @@ package body GVD_Module is
    ------------------------------
 
    overriding function Filter_Matches_Primitive
+     (Filter  : access Attached_Debuggee_Filter;
+      Context : Selection_Context) return Boolean
+   is
+      pragma Unreferenced (Filter);
+      Process : constant Visual_Debugger :=
+        Visual_Debugger (Get_Current_Debugger (Get_Kernel (Context)));
+   begin
+      return Process /= null
+        and then Process.Debugger /= null
+        and then Process.Debugger.Get_Start_Method = Attached;
+   end Filter_Matches_Primitive;
+
+   ------------------------------
+   -- Filter_Matches_Primitive --
+   ------------------------------
+
+   overriding function Filter_Matches_Primitive
      (Filter  : access Debugger_Active_Filter;
       Context : Selection_Context) return Boolean
    is
@@ -2116,6 +2140,7 @@ package body GVD_Module is
    is
       Debugger_Filter           : Action_Filter;
       Debuggee_Started          : Action_Filter;
+      Attached_Debuggee         : Action_Filter;
       Debugger_Active           : Action_Filter;
       Printable_Filter          : Action_Filter;
       Breakable_Filter          : Action_Filter;
@@ -2137,6 +2162,10 @@ package body GVD_Module is
 
       Debuggee_Started := new Debuggee_Started_Filter;
       Register_Filter (Kernel, Debuggee_Started, "Debuggee started");
+
+      Attached_Debuggee := new Attached_Debuggee_Filter;
+      Register_Filter
+        (Kernel, Attached_Debuggee, "Debuggee attached");
 
       Debugger_Active := new Debugger_Active_Filter;
       Register_Filter (Kernel, Debugger_Active, "Debugger active");
@@ -2249,13 +2278,14 @@ package body GVD_Module is
       Register_Action
         (Kernel, "debug attach", new Attach_Command,
          Description => -"Attach to a running process",
-         Filter   => Debugger_Filter,
-         Category => -"Debug");
+         Filter      => Debugger_Filter,
+         Category    => -"Debug");
 
       Register_Action
         (Kernel, "debug detach", new Detach_Command,
+         Icon_Name   => "gps-debugger-detach-symbolic",
          Description => -"Detach the application from the debugger",
-         Filter   => Debugger_Filter,
+         Filter      => Debugger_Filter and Attached_Debuggee,
          Category    => -"Debug");
 
       Register_Action
