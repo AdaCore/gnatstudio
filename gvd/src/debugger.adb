@@ -299,7 +299,7 @@ package body Debugger is
       end if;
 
       Debugger.Process.Set_Descriptor (Descriptor);
-      Debugger.Set_Is_Started (False);
+      Debugger.Set_Is_Started (None);
    end General_Spawn;
 
    ---------------------
@@ -551,7 +551,7 @@ package body Debugger is
       if not Debugger.Is_Started
         and then Kind = Execution_Command
       then
-         Debugger.Set_Is_Started (True);
+         Debugger.Set_Is_Started (Launched);
       end if;
    end Send_Internal_Pre;
 
@@ -994,29 +994,39 @@ package body Debugger is
       return File_Name;
    end Find_File;
 
-   ----------------
-   -- Is_Started --
-   ----------------
+   --------------------
+   -- Started_Method --
+   --------------------
 
    function Is_Started (Debugger : access Debugger_Root) return Boolean is
    begin
-      return Debugger.Is_Started;
+      return Debugger.Start_Method in Launched .. Attached;
    end Is_Started;
+
+   ----------------------
+   -- Get_Start_Method --
+   ----------------------
+
+   function Get_Start_Method
+     (Debugger : not null access Debugger_Root)
+      return Debuggee_Start_Method_Kind
+   is
+     (Debugger.Start_Method);
 
    --------------------
    -- Set_Is_Started --
    --------------------
 
    procedure Set_Is_Started
-     (Debugger   : access Debugger_Root;
-      Is_Started : Boolean)
+     (Debugger     : access Debugger_Root;
+      Start_Method : Debuggee_Start_Method_Kind)
    is
       Process : constant Visual_Debugger := GVD.Process.Convert (Debugger);
    begin
-      Debugger.Is_Started := Is_Started;
+      Debugger.Start_Method := Start_Method;
 
       if Process /= null then   --  null in testsuite
-         if Is_Started then
+         if Debugger.Is_Started then
             Debuggee_Started_Hook.Run (Process.Kernel, Process);
          else
             Debugger_Process_Terminated_Hook.Run (Process.Kernel, Process);

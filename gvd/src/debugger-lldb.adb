@@ -961,7 +961,7 @@ package body Debugger.LLDB is
       --  Connect to the remote target if needed
 
       Connect_To_Target_If_Needed (Debugger);
-      Debugger.Set_Is_Started (False);
+      Debugger.Set_Is_Started (None);
 
       --  Report a change in the executable. This has to be done before we
       --  look for the current file and line, so that the explorer can be
@@ -1168,7 +1168,7 @@ package body Debugger.LLDB is
       Mode     : GVD.Types.Command_Type := GVD.Types.Hidden) is
    begin
       Debugger.Send ("process detach", Mode => Mode);
-      Debugger.Set_Is_Started (False);
+      Debugger.Set_Is_Started (None);
    end Detach_Process;
 
    ------------------
@@ -1180,7 +1180,7 @@ package body Debugger.LLDB is
       Mode     : GVD.Types.Command_Type := GVD.Types.Hidden) is
    begin
       Debugger.Send ("process kill", Mode => Mode);
-      Debugger.Set_Is_Started (False);
+      Debugger.Set_Is_Started (None);
    end Kill_Process;
 
    ---------------
