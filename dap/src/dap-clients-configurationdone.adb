@@ -15,7 +15,28 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
+with DAP.Requests;                   use DAP.Requests;
+with DAP.Requests.ConfigurationDone;
+with GPS.Kernel;                     use GPS.Kernel;
+
 package body DAP.Clients.ConfigurationDone is
+
+   type ConfigurationDone_Request is
+     new DAP.Requests.ConfigurationDone.ConfigurationDone_DAP_Request
+   with null record;
+   type ConfigurationDone_Request_Access is
+     access all ConfigurationDone_Request'Class;
+
+   function Create
+     (Kernel : not null Kernel_Handle)
+      return ConfigurationDone_Request_Access;
+   --  Create a new DAP 'configurationDone' request.
+
+   overriding procedure On_Result_Message
+     (Self        : in out ConfigurationDone_Request;
+      Client      : not null access DAP.Clients.DAP_Client'Class;
+      Result      : DAP.Tools.ConfigurationDoneResponse;
+      New_Request : in out DAP_Request_Access);
 
    ------------
    -- Create --
@@ -51,13 +72,11 @@ package body DAP.Clients.ConfigurationDone is
    -----------------------------
 
    procedure Send_Configuration_Done
-     (Client : not null access DAP.Clients.DAP_Client'Class)
+     (Client : in out DAP.Clients.DAP_Client'Class)
    is
-      Request : DAP.Requests.DAP_Request_Access :=
-        DAP.Requests.DAP_Request_Access
-          (Create (Kernel_Handle (Client.Kernel)));
+      Request : ConfigurationDone_Request_Access := Create (Client.Kernel);
    begin
-      Client.Enqueue (Request);
+      Client.Enqueue (DAP.Requests.DAP_Request_Access (Request));
    end Send_Configuration_Done;
 
 end DAP.Clients.ConfigurationDone;

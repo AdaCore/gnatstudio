@@ -1500,7 +1500,7 @@ package body DAP.Views.Assembly is
    procedure Register_Module
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
    is
-      Debugger_Ready : Action_Filter;
+      Debugger_Available : Action_Filter;
    begin
       Invalid_Cache_Data.Data.Append
         (Disassemble_Element'
@@ -1514,7 +1514,7 @@ package body DAP.Views.Assembly is
          Action_Name => "open assembly view",
          Description => "Open the Assembly view for the debugger");
 
-      Debugger_Ready := Kernel.Lookup_Filter ("Debugger ready");
+      Debugger_Available := Kernel.Lookup_Filter ("Debugger available");
 
       GPS.Kernel.Actions.Register_Action
         (Kernel, "assembly_view disassemble next",
@@ -1523,7 +1523,7 @@ package body DAP.Views.Assembly is
          Description => "Disassemble next code block",
          Icon_Name   => "gps-debugger-down-symbolic",
          Category    => "Debug",
-         Filter      => Debugger_Ready);
+         Filter      => Debugger_Available);
 
       GPS.Kernel.Actions.Register_Action
         (Kernel, "assembly_view disassemble previous",
@@ -1532,7 +1532,7 @@ package body DAP.Views.Assembly is
          Description => "Disassemble previous code block",
          Icon_Name   => "gps-debugger-up-symbolic",
          Category    => "Debug",
-         Filter      => Debugger_Ready);
+         Filter      => Debugger_Available);
 
       GPS.Kernel.Actions.Register_Action
         (Kernel, "assembly_view disassemble pc",
@@ -1540,7 +1540,7 @@ package body DAP.Views.Assembly is
          Description => "Disassemble $pc code block",
          Icon_Name   => "gps-debugger-step-symbolic",
          Category    => "Debug",
-         Filter      => Debugger_Ready);
+         Filter      => Debugger_Available);
 
       GPS.Kernel.Actions.Register_Action
         (Kernel, "assembly_view toggle breakpoint",
@@ -1548,7 +1548,7 @@ package body DAP.Views.Assembly is
          Description => "Create/delete a breakpoint on address",
          Icon_Name   => "gps-emblem-debugger-current",
          Category    => "Debug",
-         Filter      => Debugger_Ready);
+         Filter      => Debugger_Available);
    end Register_Module;
 
 end DAP.Views.Assembly;

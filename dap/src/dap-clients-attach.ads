@@ -17,12 +17,14 @@
 
 --  Concrete implementation of the DAP 'attach' request
 
+with VSS.Strings;
+
 package DAP.Clients.Attach is
 
    procedure Send_Attach_Request
      (Client : in out DAP.Clients.DAP_Client'Class;
       PID    : Integer := -1;
-      Target : String := "");
+      Target : VSS.Strings.Virtual_String := VSS.Strings.Empty_Virtual_String);
    --  Send a DAP 'attach' request.
    --  PID refers to the process we want to attach to.
    --  Target refers to the remote target we want to connect.

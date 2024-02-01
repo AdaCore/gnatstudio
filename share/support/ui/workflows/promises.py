@@ -993,9 +993,7 @@ class DebuggerWrapper(object):
                 self.__debugger = GPS.Debugger.spawn(
                     executable=f,
                     remote_target=remote_target,
-                    remote_protocol=remote_protocol,
-                    load_executable=GPS.Preference(
-                        "Debugger-Load-On-Init").get())
+                    remote_protocol=remote_protocol)
                 if self.__debugger:
                     pass
                 else:
@@ -1004,9 +1002,7 @@ class DebuggerWrapper(object):
             self.__debugger = GPS.Debugger.spawn(
                 executable=f,
                 remote_target=remote_target,
-                remote_protocol=remote_protocol,
-                load_executable=GPS.Preference(
-                    "Debugger-Load-On-Init").get())
+                remote_protocol=remote_protocol)
             if not self.__debugger:
                 raise Exception("Could not launch the debugger")
 

@@ -14,7 +14,6 @@
 -- COPYING3.  If not, go to http://www.gnu.org/licenses for a complete copy --
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
-with VSS.Strings.Conversions;
 with GPS.Kernel;          use GPS.Kernel;
 with DAP.Requests;        use DAP.Requests;
 with DAP.Requests.Attach;
@@ -29,7 +28,8 @@ package body DAP.Clients.Attach is
    function Create
      (Kernel : not null Kernel_Handle;
       PID    : Integer := -1;
-      Target : String := "") return Attach_Request_Access;
+      Target : VSS.Strings.Virtual_String := VSS.Strings.Empty_Virtual_String)
+      return Attach_Request_Access;
    --  Create a new DAP 'attach' request.
    --  PID refers to the process we want to attach to.
    --  Target refers to the remote target we want to connect.
@@ -50,12 +50,12 @@ package body DAP.Clients.Attach is
    function Create
      (Kernel : not null Kernel_Handle;
       PID    : Integer := -1;
-      Target : String := "") return Attach_Request_Access
+      Target : VSS.Strings.Virtual_String := VSS.Strings.Empty_Virtual_String)
+      return Attach_Request_Access
    is
       Self : constant Attach_Request_Access := new Attach_Request (Kernel);
    begin
-      Self.Parameters.arguments.target :=
-        VSS.Strings.Conversions.To_Virtual_String (Target);
+      Self.Parameters.arguments.target := Target;
 
       if PID /= -1 then
          Self.Parameters.arguments.pid := (Is_Set => True, Value => PID);
@@ -75,8 +75,7 @@ package body DAP.Clients.Attach is
       New_Request : in out DAP_Request_Access) is
    begin
       New_Request := null;
-      Client.Start_Method := DAP.Types.Attached;
-      Client.On_Launched;
+      Client.On_Launched (Start_Method => DAP.Types.Attached);
    end On_Result_Message;
 
    -------------------------
@@ -86,7 +85,7 @@ package body DAP.Clients.Attach is
    procedure Send_Attach_Request
      (Client : in out DAP.Clients.DAP_Client'Class;
       PID    : Integer := -1;
-      Target : String := "")
+      Target : VSS.Strings.Virtual_String := VSS.Strings.Empty_Virtual_String)
    is
       Attach_Req : DAP.Clients.Attach.Attach_Request_Access :=
         DAP.Clients.Attach.Create
@@ -94,8 +93,7 @@ package body DAP.Clients.Attach is
            PID    => PID,
            Target => Target);
    begin
-      Client.Enqueue
-        (DAP.Requests.DAP_Request_Access (Attach_Req));
+      Client.Enqueue (DAP.Requests.DAP_Request_Access (Attach_Req));
    end Send_Attach_Request;
 
 end DAP.Clients.Attach;

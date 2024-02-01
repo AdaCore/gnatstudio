@@ -17,37 +17,10 @@
 
 --  Concrete implementation of the DAP 'configurationDone' request
 
-with DAP.Requests;        use DAP.Requests;
-with DAP.Requests.ConfigurationDone;
-with GPS.Kernel;          use GPS.Kernel;
-
 package DAP.Clients.ConfigurationDone is
 
-   type ConfigurationDone_Request (<>) is
-     new DAP.Requests.ConfigurationDone.ConfigurationDone_DAP_Request
-   with private;
-   type ConfigurationDone_Request_Access is
-     access all ConfigurationDone_Request'Class;
-
-   function Create
-     (Kernel : not null Kernel_Handle)
-      return ConfigurationDone_Request_Access;
-   --  Create a new DAP 'configurationDone' request.
-
-   overriding procedure On_Result_Message
-     (Self        : in out ConfigurationDone_Request;
-      Client      : not null access DAP.Clients.DAP_Client'Class;
-      Result      : DAP.Tools.ConfigurationDoneResponse;
-      New_Request : in out DAP_Request_Access);
-
    procedure Send_Configuration_Done
-     (Client : not null access DAP.Clients.DAP_Client'Class);
-   --  Send corresponding request
-
-private
-
-   type ConfigurationDone_Request is
-     new DAP.Requests.ConfigurationDone.ConfigurationDone_DAP_Request with
-       null record;
+     (Client : in out DAP.Clients.DAP_Client'Class);
+   --  Send DAP 'configurationDone' request
 
 end DAP.Clients.ConfigurationDone;

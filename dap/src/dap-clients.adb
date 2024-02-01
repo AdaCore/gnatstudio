@@ -436,15 +436,15 @@ package body DAP.Clients is
       return Self.Status = Ready;
    end Is_Ready;
 
-   --------------------------
-   -- Is_Ready_For_Command --
-   --------------------------
+   ------------------
+   -- Is_Available --
+   ------------------
 
-   function Is_Ready_For_Command (Self : DAP_Client) return Boolean is
+   function Is_Available (Self : DAP_Client) return Boolean is
    begin
       return Self.Status in Ready .. Stopped
         and then Self.Sent.Is_Empty;
-   end Is_Ready_For_Command;
+   end Is_Available;
 
    ---------------------
    -- Is_Quit_Command --
@@ -750,11 +750,23 @@ package body DAP.Clients is
    -------------------------
 
    function Get_Executable_Args
-     (Self : in out DAP_Client) return Ada.Strings.Unbounded.Unbounded_String
+     (Self : in out DAP_Client)
+      return VSS.String_Vectors.Virtual_String_Vector
    is
    begin
       return Self.Executable_Args;
    end Get_Executable_Args;
+
+   -----------------------
+   -- Get_Remote_Target --
+   -----------------------
+
+   function Get_Remote_Target
+     (Self : in out DAP_Client) return VSS.Strings.Virtual_String
+   is
+   begin
+      return Self.Remote_Target;
+   end Get_Remote_Target;
 
    ---------------------
    -- Get_Endian_Type --
@@ -1183,8 +1195,12 @@ package body DAP.Clients is
    -- On_Launched --
    -----------------
 
-   procedure On_Launched (Self : in out DAP_Client) is
+   procedure On_Launched
+     (Self         : in out DAP_Client;
+      Start_Method : Debuggee_Start_Method_Kind) is
    begin
+      Self.Start_Method := Start_Method;
+
       --  The debuggee is now laucnhed: ask for its source files if we do not
       --  have any loaded project.
       if not Self.Source_Files.Is_Empty then
@@ -2065,11 +2081,8 @@ package body DAP.Clients is
    ----------------
 
    overriding procedure On_Started (Self : in out DAP_Client) is
-      Request : DAP.Requests.DAP_Request_Access :=
-        DAP.Requests.DAP_Request_Access
-          (DAP.Clients.Initialize.Create (Self.Kernel));
    begin
-      Self.Process (Request);
+      DAP.Clients.Initialize.Send_Initialize_Request (Self);
    end On_Started;
 
    -------------
@@ -2142,8 +2155,9 @@ package body DAP.Clients is
    procedure Start
      (Self            : in out DAP_Client;
       Project         : GNATCOLL.Projects.Project_Type;
-      File            : GNATCOLL.VFS.Virtual_File;
-      Executable_Args : String)
+      Executable      : GNATCOLL.VFS.Virtual_File;
+      Executable_Args : String;
+      Remote_Target   : String)
    is
       Node_Args : Spawn.String_Vectors.UTF_8_String_Vector;
 
@@ -2188,9 +2202,16 @@ package body DAP.Clients is
    begin
 
       Self.Project := Project;
-      Self.Executable := File;
-      Self.Executable_Args := Ada.Strings.Unbounded.To_Unbounded_String
-        (Executable_Args);
+      Self.Executable := Executable;
+      Self.Executable_Args.Clear;
+      Self.Remote_Target := VSS.Strings.Conversions.To_Virtual_String
+        (Remote_Target);
+
+      --  Split the command line arguments on blankspaces
+      for Arg of GNATCOLL.Utils.Split (Executable_Args, On => ' ') loop
+         Self.Executable_Args.Append
+           (VSS.Strings.Conversions.To_Virtual_String (Arg));
+      end loop;
 
       declare
          use GNATCOLL.VFS;
@@ -2349,7 +2370,7 @@ package body DAP.Clients is
      (Visual : not null access DAP_Visual_Debugger) return Boolean is
    begin
       return Visual.Client /= null
-        and then not Visual.Client.Is_Ready_For_Command;
+        and then not Visual.Client.Is_Available;
    end Command_In_Process;
 
    ------------------------

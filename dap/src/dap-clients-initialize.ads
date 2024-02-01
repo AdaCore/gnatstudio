@@ -17,36 +17,10 @@
 
 --  Concrete implementation of the DAP 'initialize' request
 
-with DAP.Requests;        use DAP.Requests;
-with DAP.Requests.Initialize;
-with GPS.Kernel;          use GPS.Kernel;
-
 package DAP.Clients.Initialize is
 
-   type Initialize_Request (<>) is
-     new DAP.Requests.Initialize.Initialize_DAP_Request
-   with private;
-   type Initialize_Request_Access is access all Initialize_Request'Class;
-
-   function Create
-     (Kernel : not null Kernel_Handle)
-      return Initialize_Request_Access;
-   --  Create a new DAP 'initialize' request.
-
-   overriding procedure On_Result_Message
-     (Self        : in out Initialize_Request;
-      Client      : not null access DAP.Clients.DAP_Client'Class;
-      Result      : DAP.Tools.InitializeResponse;
-      New_Request : in out DAP_Request_Access);
-
-   overriding procedure On_Error_Message
-     (Self    : in out Initialize_Request;
-      Client  : not null access DAP.Clients.DAP_Client'Class;
-      Message : VSS.Strings.Virtual_String);
-
-private
-
-   type Initialize_Request is
-     new DAP.Requests.Initialize.Initialize_DAP_Request with null record;
+   procedure Send_Initialize_Request
+     (Client : in out DAP.Clients.DAP_Client'Class);
+   --  Send the DAP 'initialize' request.
 
 end DAP.Clients.Initialize;
