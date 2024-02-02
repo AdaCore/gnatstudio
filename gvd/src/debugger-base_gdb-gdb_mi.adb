@@ -377,7 +377,7 @@ package body Debugger.Base_Gdb.Gdb_MI is
    is
       pragma Unreferenced (Str, Matched);
    begin
-      Process.Debugger.Set_Is_Started (False);
+      Process.Debugger.Set_Is_Started (None);
    end Terminate_Filter;
 
    -----------------
@@ -1226,7 +1226,7 @@ package body Debugger.Base_Gdb.Gdb_MI is
 
          if Success then
             if Protocol = "remote" then
-               Set_Is_Started (Debugger, True);
+               Debugger.Set_Is_Started (Attached);
             end if;
 
             Debugger.Set_VxWorks_Version;
@@ -1365,9 +1365,9 @@ package body Debugger.Base_Gdb.Gdb_MI is
       --  In all other cases the executable is not started at this stage.
 
       if Debugger.Remote_Mode = Cross then
-         Debugger.Set_Is_Started (True);
+         Debugger.Set_Is_Started (Launched);
       else
-         Debugger.Set_Is_Started (False);
+         Debugger.Set_Is_Started (None);
       end if;
 
       --  Report a change in the executable. This has to be done before we
@@ -1460,7 +1460,7 @@ package body Debugger.Base_Gdb.Gdb_MI is
    is
       Core_File : constant Filesystem_String := Core.Unix_Style_Full_Name;
    begin
-      Debugger.Set_Is_Started (False);
+      Debugger.Set_Is_Started (None);
       Debugger.Send ("core " & (+Core_File), Mode => Mode);
    end Load_Core_File;
 
@@ -1568,7 +1568,7 @@ package body Debugger.Base_Gdb.Gdb_MI is
                exit when
                  Index (Str (Matched (0).Last + 2 .. Str'Last - 1), EMsg) /= 0;
 
-               Debugger.Set_Is_Started (False);
+               Debugger.Set_Is_Started (None);
                Debugger.Kernel.Messages_Window.Insert
                  (Str (Matched (0).Last + 2 .. Str'Last - 1), Mode => Error);
 
@@ -1582,7 +1582,7 @@ package body Debugger.Base_Gdb.Gdb_MI is
       end loop;
 
       --  Attach succeed: consider the debugger as started
-      Debugger.Set_Is_Started (True);
+      Debugger.Set_Is_Started (Attached);
 
       Debugger.Send ("-stack-info-frame", Mode => Internal);
 
@@ -1601,7 +1601,7 @@ package body Debugger.Base_Gdb.Gdb_MI is
       Mode     : Command_Type := Hidden) is
    begin
       Debugger.Send ("-target-detach", Mode => Mode);
-      Debugger.Set_Is_Started (False);
+      Debugger.Set_Is_Started (None);
    end Detach_Process;
 
    ------------------
@@ -1613,7 +1613,7 @@ package body Debugger.Base_Gdb.Gdb_MI is
       Mode     : GVD.Types.Command_Type := GVD.Types.Hidden) is
    begin
       Debugger.Send ("kill", Mode => Mode);
-      Debugger.Set_Is_Started (False);
+      Debugger.Set_Is_Started (None);
    end Kill_Process;
 
    -----------------
@@ -3452,7 +3452,7 @@ package body Debugger.Base_Gdb.Gdb_MI is
       --  happen when attaching a debugger to an existing process.
 
       if not Debugger.Is_Started then
-         Debugger.Set_Is_Started (True);
+         Debugger.Set_Is_Started (Attached);
       end if;
 
       Idx := Index (Str, "frame={");

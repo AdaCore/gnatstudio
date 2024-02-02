@@ -352,7 +352,7 @@ package body Debugger.Base_Gdb.Gdb_CLI is
    is
       pragma Unreferenced (Str, Matched);
    begin
-      Set_Is_Started (Process.Debugger, False);
+      Set_Is_Started (Process.Debugger, None);
       --  ??? Should generate a callback/hook informing other units
       --  that debugging has ended (so that e.g. the call stack can be cleared)
    end Not_Running_Filter;
@@ -883,7 +883,7 @@ package body Debugger.Base_Gdb.Gdb_CLI is
 
          if Success then
             if Protocol = "remote" then
-               Set_Is_Started (Debugger, True);
+               Set_Is_Started (Debugger, Attached);
             end if;
 
             Debugger.Set_VxWorks_Version;
@@ -1020,9 +1020,9 @@ package body Debugger.Base_Gdb.Gdb_CLI is
       --  In all other cases the executable is not started at this stage.
 
       if Debugger.Remote_Mode = Cross then
-         Set_Is_Started (Debugger, True);
+         Set_Is_Started (Debugger, Launched);
       else
-         Set_Is_Started (Debugger, False);
+         Set_Is_Started (Debugger, None);
       end if;
 
       --  Report a change in the executable. This has to be done before we
@@ -1133,7 +1133,7 @@ package body Debugger.Base_Gdb.Gdb_CLI is
    is
       Core_File : constant Filesystem_String := Core.Unix_Style_Full_Name;
    begin
-      Set_Is_Started (Debugger, False);
+      Set_Is_Started (Debugger, None);
       Send (Debugger, "core " & (+Core_File), Mode => Mode);
 
       --  Detect the current language, and get the name and line of the
@@ -1220,7 +1220,7 @@ package body Debugger.Base_Gdb.Gdb_CLI is
             --  If attach failed, "up" will return an error message
 
             if Str = "No stack." then
-               Set_Is_Started (Debugger, False);
+               Set_Is_Started (Debugger, None);
                return;
             end if;
 
@@ -1233,7 +1233,7 @@ package body Debugger.Base_Gdb.Gdb_CLI is
       end loop;
 
       --  Attach succeed: consider the debugger as started
-      Debugger.Set_Is_Started (True);
+      Debugger.Set_Is_Started (Attached);
 
       Send (Debugger, "frame", Mode => Internal);
 
@@ -1252,7 +1252,7 @@ package body Debugger.Base_Gdb.Gdb_CLI is
       Mode     : Command_Type := Hidden) is
    begin
       Send (Debugger, "detach", Mode => Mode);
-      Set_Is_Started (Debugger, False);
+      Set_Is_Started (Debugger, None);
    end Detach_Process;
 
    ------------------
@@ -1264,7 +1264,7 @@ package body Debugger.Base_Gdb.Gdb_CLI is
       Mode     : GVD.Types.Command_Type := GVD.Types.Hidden) is
    begin
       Send (Debugger, "kill", Mode => Mode);
-      Set_Is_Started (Debugger, False);
+      Set_Is_Started (Debugger, None);
    end Kill_Process;
 
    -----------------

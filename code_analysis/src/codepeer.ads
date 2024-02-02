@@ -244,6 +244,12 @@ package CodePeer is
    function Less
      (Left  : Annotation_Category_Access;
       Right : Annotation_Category_Access) return Boolean;
+   --  Compare annotation categories to sort them in the following order:
+   --  * (Pre)
+   --  * (Presumption)
+   --  * (Post)
+   --  * Other categories are sorted according to the Order field. Their
+   --    ordering does not matter because they are not displayed in the editor.
 
    type Annotation is record
       Lifeage : Lifeage_Kinds;

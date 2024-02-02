@@ -35,6 +35,13 @@ with GPS.Kernel;               use GPS.Kernel;
 
 package Debugger is
 
+   type Debuggee_Start_Method_Kind is
+     (None, Launched, Attached);
+   --  The debuggee start method
+   --  * None: The debuggee has not been started yet
+   --  * Launched: The debuggee has been started by the debugger
+   --  * Attached: the debugger has been attached to a running process
+
    type Debugger_Root is abstract tagged private;
    --  The general base class for all debuggers.
    --  Each debugger should extend this base class.
@@ -551,10 +558,15 @@ package Debugger is
      return Boolean;
    --  Return True if the debuggee executable has been started.
 
+   function Get_Start_Method
+     (Debugger : not null access Debugger_Root)
+      return Debuggee_Start_Method_Kind;
+   --  Return the method used to start the debuggee.
+
    procedure Set_Is_Started
-     (Debugger   : access Debugger_Root;
-      Is_Started : Boolean);
-   --  Set the Is_Started state for the debuggee executable
+     (Debugger     : access Debugger_Root;
+      Start_Method : Debuggee_Start_Method_Kind);
+   --  Set the Started_Method state for the debuggee executable
 
    ----------------------
    -- Stack Management --
@@ -1181,15 +1193,13 @@ private
       The_Language : Language_Lists.Cursor := Language_Lists.No_Element;
       --  The current language
 
-      Is_Started : Boolean := False;
-      --  True when the debugger session has been started (ie the execution
-      --  of the debuggee has started, and the user can now use commands like
-      --  Next, Step, ...)
+      Start_Method : Debuggee_Start_Method_Kind := None;
+      --  The method used to start the debuggee.
 
       State : Debugger_State := Idle;
       --  State of the debugger and its debuggee.
       --  See Debugger_State for more details.
-      --  ??? Consider merging Is_Started and State
+      --  ??? Consider merging Started_Method and State
 
       Command_Queue : Command_Access := null;
       --  The list of commands to be processed after the next call to wait.
