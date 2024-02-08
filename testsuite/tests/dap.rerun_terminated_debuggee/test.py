@@ -15,7 +15,7 @@ def test_driver():
 
     debug = GPS.Debugger.get()
     yield wait_until_not_busy(debug)
-    
+
     GPS.execute_action("debug continue")
     yield wait_until_not_busy(debug)
 
@@ -30,7 +30,7 @@ def test_driver():
     yield wait_until_not_busy(debug)
 
     GPS.execute_action("debug continue")
-    yield wait_until_not_busy(debug)
+    yield hook('debugger_location_changed')
 
     # check that we set the cursor on the breakpoint line
     # which means that we stopped on the breakpoint

@@ -16,8 +16,6 @@
 ------------------------------------------------------------------------------
 with GPS.Kernel;              use GPS.Kernel;
 
-with DAP.Clients.Attach;
-with DAP.Clients.Launch;
 with DAP.Requests;            use DAP.Requests;
 with DAP.Requests.Initialize;
 with VSS.Strings.Conversions;
@@ -67,24 +65,17 @@ package body DAP.Clients.Initialize is
       New_Request : in out DAP_Request_Access)
    is
       pragma Unreferenced (New_Request);
-      use GNATCOLL.VFS;
    begin
       Client.Set_Capabilities (Result.a_body);
 
-      --  If an executable has been given while spawning the debugger, send
-      --  the DAP 'launch' request for it.
-      if Client.Get_Executable /= GNATCOLL.VFS.No_File then
-         if Client.Get_Remote_Target.Is_Empty then
-            DAP.Clients.Launch.Send_Launch_Request
-              (Client          => Client.all,
-               Executable      => Client.Get_Executable,
-               Executable_Args => Client.Get_Executable_Args);
-         else
-            DAP.Clients.Attach.Send_Attach_Request
-              (Client => Client.all,
-               Target => Client.Get_Remote_Target);
-         end if;
-      end if;
+      --  Initialize the Breakpoints' manager: it will send the needed requests
+      --  to set all the initial breakpoints on the server's side and set the
+      --  debugger's status to Ready when done.
+      Client.Breakpoints := new DAP.Modules.Breakpoint_Managers.
+        DAP_Client_Breakpoint_Manager
+          (Kernel_Handle (Client.Kernel),
+           Client.This);
+      DAP.Modules.Breakpoint_Managers.Initialize (Client.Breakpoints);
    end On_Result_Message;
 
    ----------------------

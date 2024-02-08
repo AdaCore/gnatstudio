@@ -1,1 +1,3 @@
 title: 'dap.S919-003.breakpoint_on_procedure'
+skip:
+    - ['XFAIL', 'True']

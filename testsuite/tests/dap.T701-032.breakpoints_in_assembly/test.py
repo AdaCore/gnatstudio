@@ -17,10 +17,12 @@ def test_driver():
     GPS.execute_action("Build & Debug Number 1")
     yield hook('debugger_started')
     yield wait_idle()
-    
+
     debug = GPS.Debugger.get()
+
     # start to have the valid address
     debug.start()
+    yield hook('debugger_location_changed')
 
     # Open the Breakpoints view
     GPS.execute_action("open breakpoints editor")

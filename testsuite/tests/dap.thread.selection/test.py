@@ -20,10 +20,16 @@ def test_driver():
 
     debug = GPS.Debugger.get()
     yield wait_until_not_busy(debug)
-    
+
+    # Start the debugger and wait until it reaches
+    # the breakpoint
     debug.start()
+    yield hook('debugger_location_changed')
+
     NAME_COLUMN = 1
 
+    # Open the Threads view and check that we have selected
+    # the right thread
     GPS.execute_action("open threads debugger window")
     yield wait_for_mdi_child("Threads")
     yield wait_until_not_busy(debug)

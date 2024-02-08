@@ -22,9 +22,7 @@ with GNATCOLL.VFS;             use GNATCOLL.VFS;
 with VSS.Strings.Conversions;
 
 with GPS.Kernel;               use GPS.Kernel;
-with GPS.Kernel.Project;
 
-with DAP.Clients.LoadedSources;
 with DAP.Types;
 with DAP.Requests;             use DAP.Requests;
 with DAP.Requests.Launch;
@@ -36,9 +34,10 @@ package body DAP.Clients.Launch is
    type Launch_Request_Access is access all Launch_Request'Class;
 
    function Create
-     (Kernel          : not null Kernel_Handle;
-      Executable      : GNATCOLL.VFS.Virtual_File;
-      Executable_Args : VSS.String_Vectors.Virtual_String_Vector)
+     (Kernel            : not null Kernel_Handle;
+      Executable        : GNATCOLL.VFS.Virtual_File;
+      Executable_Args   : VSS.String_Vectors.Virtual_String_Vector;
+      Stop_At_Beginning : Boolean := False)
       return Launch_Request_Access;
    --  Create a new DAP 'launch' request.
 
@@ -58,9 +57,10 @@ package body DAP.Clients.Launch is
    ------------
 
    function Create
-     (Kernel          : not null Kernel_Handle;
-      Executable      : GNATCOLL.VFS.Virtual_File;
-      Executable_Args : VSS.String_Vectors.Virtual_String_Vector)
+     (Kernel            : not null Kernel_Handle;
+      Executable        : GNATCOLL.VFS.Virtual_File;
+      Executable_Args   : VSS.String_Vectors.Virtual_String_Vector;
+      Stop_At_Beginning : Boolean := False)
       return Launch_Request_Access
    is
       Self : constant Launch_Request_Access := new Launch_Request (Kernel);
@@ -68,6 +68,8 @@ package body DAP.Clients.Launch is
       Self.Parameters.arguments.program := VSS.Strings.Conversions.
         To_Virtual_String (Executable.Display_Full_Name);
       Self.Parameters.arguments.args := Executable_Args;
+      Self.Parameters.arguments.stopAtBeginningOfMainSubprogram :=
+        Stop_At_Beginning;
 
       return Self;
    end Create;
@@ -86,19 +88,11 @@ package body DAP.Clients.Launch is
    begin
       New_Request := null;
 
-      if GPS.Kernel.Project.Get_Registry
-        (Self.Kernel).Tree.Status = From_Executable
-        and then
-          (not Client.Get_Capabilities.Is_Set
-           or else Client.Get_Capabilities.
-             Value.supportsLoadedSourcesRequest)
-      then
-         --  Debugging has been started directly on a pre-built executable,
-         --  not from a project: send the DAP 'loadedSources' request to
-         --  retrieve its source files.
-         New_Request := DAP_Request_Access
-           (DAP.Clients.LoadedSources.Create (Self.Kernel));
-      else
+      --  Notify the client that the debugee was launched only if we have
+      --  an associated project.
+      --  Otherwise, we notify it in the 'loadedSources' DAP request's response
+      --  instead, after retrieving the executable's sources.
+      if Client.Get_Project /= No_Project then
          Client.On_Launched (Start_Method => DAP.Types.Launched);
       end if;
    end On_Result_Message;
@@ -126,16 +120,18 @@ package body DAP.Clients.Launch is
    -------------------------
 
    procedure Send_Launch_Request
-     (Client          : in out DAP.Clients.DAP_Client'Class;
-      Executable      : GNATCOLL.VFS.Virtual_File;
-      Executable_Args : VSS.String_Vectors.Virtual_String_Vector)
+     (Client            : in out DAP.Clients.DAP_Client'Class;
+      Executable        : GNATCOLL.VFS.Virtual_File;
+      Executable_Args   : Virtual_String_Vector := Empty_Virtual_String_Vector;
+      Stop_At_Beginning : Boolean := False)
    is
       Launch_Req : Launch_Request_Access := DAP.Clients.Launch.Create
-        (Kernel          => Client.Kernel,
-         Executable      => Executable,
-         Executable_Args => Executable_Args);
+        (Kernel            => Client.Kernel,
+         Executable        => Executable,
+         Executable_Args   => Executable_Args,
+         Stop_At_Beginning => Stop_At_Beginning);
    begin
-      Client.Process (DAP.Requests.DAP_Request_Access (Launch_Req));
+      Client.Enqueue (DAP.Requests.DAP_Request_Access (Launch_Req));
    end Send_Launch_Request;
 
 end DAP.Clients.Launch;

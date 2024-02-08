@@ -45,6 +45,7 @@ package DAP.Modules.Persistent_Breakpoints is
 
    procedure Hide_Breakpoints
      (Kernel : not null access Kernel_Handle_Record'Class);
+   --  Hide all the breakpoints in all editors
 
    procedure Delete_Multiple_Breakpoints
      (Kernel : not null access Kernel_Handle_Record'Class;
@@ -89,7 +90,6 @@ package DAP.Modules.Persistent_Breakpoints is
       Ignore    : Natural := 0;
       Commands  : VSS.Strings.Virtual_String :=
         VSS.Strings.Empty_Virtual_String);
-
    --  Add breakpoint for the source line
 
    procedure Break_Subprogram
@@ -97,10 +97,10 @@ package DAP.Modules.Persistent_Breakpoints is
       Num        : Breakpoint_Identifier;
       Subprogram : String;
       Temporary  : Boolean := False;
-      Condition : VSS.Strings.Virtual_String :=
+      Condition  : VSS.Strings.Virtual_String :=
         VSS.Strings.Empty_Virtual_String;
-      Ignore    : Natural := 0;
-      Commands  : VSS.Strings.Virtual_String :=
+      Ignore     : Natural := 0;
+      Commands   : VSS.Strings.Virtual_String :=
         VSS.Strings.Empty_Virtual_String);
    --  Add breakpoint for the subprogram
 
