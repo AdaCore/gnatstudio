@@ -1446,6 +1446,7 @@ package body DAP.Modules.Breakpoints is
          for Loc of Old_Data.Locations loop
             if Loc.Num = Data.Num then
                Loc := Data.Locations.First_Element;
+               Old_Data.Verified := Data.Verified;
                return;
             end if;
          end loop;

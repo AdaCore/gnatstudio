@@ -31,10 +31,10 @@ build_and_test:
 
     # Pass --latest to the test command to ensure the CI remains
     # available even if a dependency is not available.
-    - anod test gps $ACI_TRACK_QUALIFIER -Qcodepeer --latest
+    - anod test gps $ACI_TRACK_QUALIFIER -Qcodepeer -Qgdb-head --latest
 
     # Process the report
-    - BUILD_SPACE_NAME=`anod eval gps build_space_name --primitive test $ACI_TRACK_QUALIFIER -Qcodepeer`
+    - BUILD_SPACE_NAME=`anod eval gps build_space_name --primitive test $ACI_TRACK_QUALIFIER -Qcodepeer -Qgdb-head`
     - SB_BASE=$ANOD_DEFAULT_SANDBOX_DIR/x86_64-linux/$BUILD_SPACE_NAME
     - e3-testsuite-report
        --failure-exit-code 1

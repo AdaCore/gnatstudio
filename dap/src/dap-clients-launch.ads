@@ -22,12 +22,15 @@ with GNATCOLL.VFS;
 package DAP.Clients.Launch is
 
    procedure Send_Launch_Request
-     (Client          : in out DAP.Clients.DAP_Client'Class;
-      Executable      : GNATCOLL.VFS.Virtual_File;
-      Executable_Args : VSS.String_Vectors.Virtual_String_Vector);
+     (Client            : in out DAP.Clients.DAP_Client'Class;
+      Executable        : GNATCOLL.VFS.Virtual_File;
+      Executable_Args   : Virtual_String_Vector := Empty_Virtual_String_Vector;
+      Stop_At_Beginning : Boolean := False);
    --  Send the DAP 'launch' request.
    --  Executable refers to the debuggee that should be launched by the
    --  debugger.
    --  Executable_Args are the arguments passed to the launched debuggee.
+   --  When Stop_At_Beginning is True, the program will be stopped at the
+   --  beginning of the main.
 
 end DAP.Clients.Launch;

@@ -31,20 +31,22 @@ def test_driver():
     ok_button = get_button_from_label("OK", dialog)
     entry.set_text(str(pid))
     ok_button.clicked()
-    yield wait_DAP_server("stackTrace")
-    yield wait_idle()
+    yield hook('debugger_location_changed')
 
     # Check that the debugger has been stopped when attaching to
     # the running process
     debugger = GPS.Debugger.get()
     frames = debugger.frames()
+    first_frame_func = frames[0][2]
+
     gps_assert(
-        len(frames) != 1,
-        True,
+        first_frame_func,
+        "main_t819_019",
         "The debugger should be stopped, and thus we should have frames",
     )
 
     # Check that 'debug continue' works fine
+    yield wait_until_not_busy(debugger)
     GPS.execute_action("debug continue")
     yield timeout(1000)
     gps_assert(

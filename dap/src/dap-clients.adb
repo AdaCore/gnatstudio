@@ -55,10 +55,13 @@ with LSP.JSON_Streams;
 
 with DAP.Module;
 with DAP.Modules.Preferences;
+with DAP.Clients.ConfigurationDone;
 with DAP.Clients.Continue;
 with DAP.Clients.Disconnect;
 with DAP.Clients.Evaluate;
 with DAP.Clients.Initialize;
+with DAP.Clients.Launch;
+with DAP.Clients.LoadedSources;
 with DAP.Clients.Stack_Trace;
 with DAP.Clients.Pause;
 with DAP.Clients.Cancel;
@@ -92,6 +95,10 @@ package body DAP.Clients is
      Regular_Expression := VSS.Regular_Expressions.To_Regular_Expression
        ("^\s*(quit|qui|q|-gdb-exit)\s*$");
    --  'qu' can be quit or queue-signal
+
+   Is_Run_Or_Start_Pattern : constant VSS.Regular_Expressions.
+     Regular_Expression := VSS.Regular_Expressions.To_Regular_Expression
+       ("^\s*(run|r|start)\s*(.+)?\s*$");
 
    Is_Frame_Up_Pattern : constant VSS.Regular_Expressions.
      Regular_Expression := VSS.Regular_Expressions.To_Regular_Expression
@@ -937,8 +944,7 @@ package body DAP.Clients is
 
    procedure On_Configured (Self : in out DAP_Client) is
    begin
-      --  TODO: this should be sent right after 'initialized'
-      Self.Set_Status (Running);
+      Self.Set_Status (Ready);
    end On_Configured;
 
    -----------------
@@ -984,10 +990,8 @@ package body DAP.Clients is
 
       Project : GNATCOLL.Projects.Project_Type := Get_Project (Self.Kernel);
    begin
-      --  Do nothing unless the current project was already generated from an
-      --  executable.
-
-      if Get_Registry (Self.Kernel).Tree.Status /= From_Executable then
+      --  Do nothing if we already have an associated project.
+      if Self.Project /= No_Project then
          return;
       end if;
 
@@ -1189,6 +1193,9 @@ package body DAP.Clients is
       Get_Registry (Self.Kernel).Tree.Set_Status (From_Executable);
       GPS.Kernel.Hooks.Project_Changed_Hook.Run (Self.Kernel);
       Recompute_View (Self.Kernel);
+
+      --  Associate the newly generated project to this running debugger
+      Self.Project := Project;
    end Load_Project_From_Executable;
 
    -----------------
@@ -1206,24 +1213,34 @@ package body DAP.Clients is
       if not Self.Source_Files.Is_Empty then
          Self.Load_Project_From_Executable;
       end if;
-
-      --  Initialize the Breakpoints' manager: it will send the needed requests
-      --  to set all the initial breakpoints on the server's side and set the
-      --  debugger's status to Ready when done.
-      Self.Breakpoints := new DAP.Modules.Breakpoint_Managers.
-        DAP_Client_Breakpoint_Manager (Self.Kernel, Self.This);
-      DAP.Modules.Breakpoint_Managers.Initialize (Self.Breakpoints);
    end On_Launched;
 
    ------------------------
    -- On_Breakpoints_Set --
    ------------------------
 
-   procedure On_Breakpoints_Set (Self : in out DAP_Client) is
+   procedure On_Breakpoints_Set (Self : in out DAP_Client)
+   is
+      use GNATCOLL.Projects;
    begin
-      --  Set the status to ready now that all the initial breakpoints have
-      --  been properly set.
-      Self.Set_Status (Ready);
+      --  Initial breakpoints have been set: we can now send the
+      --  'configurationDone' request to notify the DAP server that everything
+      --  has been properly configured.
+      DAP.Clients.ConfigurationDone.Send_Configuration_Done (Self);
+
+      --  No project has been set for this debugger: this means that the
+      --  debugger was launched through GNAT Studio's --debug option, directly
+      --  on an executable.
+      --  In that case, we send the 'launch' DAP request to the DAP server,
+      --  stopping at the beginning of the main, in order to retrieve the
+      --  executables's sources via the 'loadedSources' DAP request to
+      --  create a temporary project with the response.
+      if Self.Project = GNATCOLL.Projects.No_Project then
+         Self.Launch_Executable
+           (Executable        => Self.Get_Executable,
+            Executable_Args   => Self.Get_Executable_Args,
+            Stop_At_Beginning => True);
+      end if;
    end On_Breakpoints_Set;
 
    --------------------
@@ -1454,6 +1471,7 @@ package body DAP.Clients is
       use VSS.Strings;
       use DAP.Tools.Enum;
       use GNATCOLL.VFS;
+      use GNATCOLL.Projects;
 
       Success : Boolean := True;
    begin
@@ -1517,7 +1535,8 @@ package body DAP.Clients is
 
       elsif Event = "stopped" then
          declare
-            stop : DAP.Tools.StoppedEvent;
+            stop        : DAP.Tools.StoppedEvent;
+            New_Request : DAP.Requests.DAP_Request_Access;
          begin
             DAP.Tools.Inputs.Input_StoppedEvent (Stream, stop, Success);
 
@@ -1566,8 +1585,25 @@ package body DAP.Clients is
                Self.Is_Debuggee_Started_Called := True;
                GPS.Kernel.Hooks.Debuggee_Started_Hook.Run
                  (Self.Kernel, Self.Visual);
-            end if;
 
+               --  The debuggee has been stopped for the first time and we
+               --  still have no project associated to the running debugger:
+               --  send the 'loadedSources' DAP request to create one from
+               --  the debuggee's loaded sources.
+               if Self.Get_Project = No_Project
+                 and then
+                   (not Self.Get_Capabilities.Is_Set
+                    or else Self.Get_Capabilities.
+                      Value.supportsLoadedSourcesRequest)
+               then
+                  --  Debugging has been started directly on a pre-built
+                  --  executable, not from a project: send the DAP
+                  --  'loadedSources' request to retrieve its source files.
+                  New_Request := DAP.Requests.DAP_Request_Access
+                    (DAP.Clients.LoadedSources.Create (Self.Kernel));
+                  Self.Enqueue (New_Request);
+               end if;
+            end if;
          end;
 
       elsif Event = "continued" then
@@ -1824,6 +1860,29 @@ package body DAP.Clients is
             Self.Quit;
 
          else
+            Matched := Is_Run_Or_Start_Pattern.Match (VSS_Cmd);
+
+            if Matched.Has_Match then
+               declare
+                  use VSS.String_Vectors;
+
+                  Is_Start_Cmd : constant Boolean :=
+                    VSS.Strings.Conversions.To_UTF_8_String
+                      (Matched.Captured (1)) = "start";
+                  Executable_Args : constant Virtual_String_Vector :=
+                    Matched.Captured (2).Split (VSS.Characters.Latin.Space);
+               begin
+                  --  Stop at the beginning of the main if the command was
+                  --  'start'. Do not stop if it was a 'run' command.
+                  Self.Launch_Executable
+                    (Executable        => Self.Get_Executable,
+                     Executable_Args   => Executable_Args,
+                     Stop_At_Beginning => Is_Start_Cmd);
+
+                  VSS_Cmd.Clear;
+               end;
+            end if;
+
             Matched := Is_Catch_Exception_Pattern.Match (VSS_Cmd);
             if Matched.Has_Match then
                Self.Break_Exception
@@ -2295,6 +2354,23 @@ package body DAP.Clients is
       when E : others =>
          Trace (Me, E);
    end On_Before_Exit;
+
+   -----------------------
+   -- Launch_Executable --
+   -----------------------
+
+   procedure Launch_Executable
+     (Self              : in out DAP_Client;
+      Executable        : GNATCOLL.VFS.Virtual_File;
+      Executable_Args   : Virtual_String_Vector := Empty_Virtual_String_Vector;
+      Stop_At_Beginning : Boolean := False) is
+   begin
+      DAP.Clients.Launch.Send_Launch_Request
+        (Client            => Self,
+         Executable        => Executable,
+         Executable_Args   => Executable_Args,
+         Stop_At_Beginning => Stop_At_Beginning);
+   end Launch_Executable;
 
    ----------
    -- Quit --

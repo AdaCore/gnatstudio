@@ -28,10 +28,10 @@ def test_driver():
     debug = GPS.Debugger.get()
     yield wait_until_not_busy(debug)
     debug.send("run")
-    yield wait_until_not_busy(debug)
-    
+    yield hook('debugger_location_changed')
+
     gps_assert(debug.current_file, GPS.File("p.adb"),
                "The pending breakpoint has not been reached")
     gps_assert(debug.current_line, 8,
                "The pending breakpoint has not been reached")
-               
+

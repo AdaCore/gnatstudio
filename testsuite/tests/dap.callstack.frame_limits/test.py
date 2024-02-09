@@ -32,7 +32,7 @@ def test_driver():
     yield wait_idle()
 
     yield p.send_promise("run")
-    yield wait_until_not_busy(d)
+    yield wait_DAP_server('stackTrace')
 
     # Verify the view was correctly updated by the run/break command
     gps_assert(dump_tree_model(model, NAME_COLUMN),
