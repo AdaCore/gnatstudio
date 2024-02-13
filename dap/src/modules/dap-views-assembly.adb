@@ -823,10 +823,10 @@ package body DAP.Views.Assembly is
 
       Columns (1) := BG_Color_Column;
       for Data of Client.Get_Breakpoints loop
-         for Loc of Data.Locations loop
+         if Data.Kind = On_Line then
             Iter_From_Address
               (View    => View,
-               Address => Loc.Address,
+               Address => Data.Location.Address,
                Iter    => Iter,
                Found   => Found);
 
@@ -850,7 +850,7 @@ package body DAP.Views.Assembly is
                   Columns (1 .. 1),
                   Values (1 .. 1));
             end if;
-         end loop;
+         end if;
       end loop;
 
       --  Highlight PC line

@@ -20,11 +20,7 @@ with GNATCOLL.VFS;      use GNATCOLL.VFS;
 
 with GPS.Kernel;        use GPS.Kernel;
 
-with DAP.Modules.Breakpoints;
 with DAP.Clients;
-with DAP.Types;
-
-with Generic_Views;
 
 package DAP.Module is
 
@@ -81,12 +77,5 @@ package DAP.Module is
    function Get_Started_Per_Session_Debuggers return Integer;
    --  Returns count of debuggers that have been started in parallel
    --  in current session.
-
-   function Get_Breakpoints_View return Generic_Views.Abstract_View_Access;
-   procedure Set_Breakpoints_View (View : Generic_Views.Abstract_View_Access);
-
-   function Get_Breakpoint_From_Id
-     (Id : DAP.Types.Breakpoint_Identifier)
-      return DAP.Modules.Breakpoints.Breakpoint_Data;
 
 end DAP.Module;

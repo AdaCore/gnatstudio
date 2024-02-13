@@ -357,12 +357,31 @@ package body DAP.Clients is
 
    procedure Remove_Breakpoints
      (Self : in out DAP_Client;
-      List : DAP.Types.Breakpoint_Identifier_Lists.List)
+      Ids  : DAP.Types.Breakpoint_Identifier_Lists.List)
    is
       use DAP.Modules.Breakpoint_Managers;
    begin
       if Self.Breakpoints /= null then
-         Remove_Breakpoints (Self.Breakpoints, List);
+         Remove_Breakpoints
+           (Self => Self.Breakpoints,
+            Ids  => Ids);
+      end if;
+   end Remove_Breakpoints;
+
+   ------------------------
+   -- Remove_Breakpoints --
+   ------------------------
+
+   procedure Remove_Breakpoints
+     (Self : in out DAP_Client;
+      Indexes  : DAP.Types.Breakpoint_Index_Lists.List)
+   is
+      use DAP.Modules.Breakpoint_Managers;
+   begin
+      if Self.Breakpoints /= null then
+         Remove_Breakpoints
+           (Self     => Self.Breakpoints,
+            Indexes  => Indexes);
       end if;
    end Remove_Breakpoints;
 
@@ -811,16 +830,18 @@ package body DAP.Clients is
    ---------------------------
 
    procedure Set_Breakpoints_State
-     (Self  : in out DAP_Client;
-      List  : Breakpoint_Identifier_Lists.List;
-      State : Boolean)
+     (Self    : in out DAP_Client;
+      Indexes : Breakpoint_Index_Lists.List;
+      State   : Boolean)
    is
       use type DAP.Modules.Breakpoint_Managers.
         DAP_Client_Breakpoint_Manager_Access;
    begin
       if Self.Breakpoints /= null then
          DAP.Modules.Breakpoint_Managers.Set_Breakpoints_State
-           (Self.Breakpoints, List, State);
+           (Self  => Self.Breakpoints,
+            Indexes  => Indexes,
+            State => State);
       end if;
    end Set_Breakpoints_State;
 
@@ -1718,7 +1739,7 @@ package body DAP.Clients is
       procedure Check_Delete_Command;
       procedure Check_Ignore_Command;
       function Value
-        (S : VSS.Strings.Virtual_String) return Breakpoint_Identifier;
+        (S : VSS.Strings.Virtual_String) return Integer;
 
       -----------------------
       -- Add_BP_For_Offset --
@@ -1782,14 +1803,16 @@ package body DAP.Clients is
                           Value (Details_Match.Captured (1)) ..
                             Value (Details_Match.Captured (2))
                         loop
-                           Ids.Append (Index);
+                           Ids.Append (Breakpoint_Identifier (Index));
                         end loop;
 
                      else
                         --  Id match found:
                         --    1: 1 .. 1 => '4'
 
-                        Ids.Append (Value (Details_Match.Captured (1)));
+                        Ids.Append
+                          (Breakpoint_Identifier
+                             (Value (Details_Match.Captured (1))));
                      end if;
 
                      From.Set_At (Details_Match.Last_Marker (1));
@@ -1826,7 +1849,8 @@ package body DAP.Clients is
 
             else
                Self.Breakpoints.Set_Ignore_Count
-                 (Id    => Value (Matched.Captured (1)),
+                 (Id    => Breakpoint_Identifier
+                    (Value (Matched.Captured (1))),
                   Count => Natural'Value
                     (VSS.Strings.Conversions.To_UTF_8_String
                          (Matched.Captured (2))));
@@ -1842,9 +1866,9 @@ package body DAP.Clients is
       -----------
 
       function Value
-        (S : VSS.Strings.Virtual_String) return Breakpoint_Identifier is
+        (S : VSS.Strings.Virtual_String) return Integer is
       begin
-         return Breakpoint_Identifier'Value
+         return Integer'Value
            (VSS.Strings.Conversions.To_UTF_8_String (S));
       end Value;
 

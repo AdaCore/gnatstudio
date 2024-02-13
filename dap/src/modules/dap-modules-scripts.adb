@@ -35,7 +35,7 @@ with DAP.Clients;              use DAP.Clients;
 with DAP.Clients.Stack_Trace;  use DAP.Clients.Stack_Trace;
 with DAP.Module;
 with DAP.Modules.Breakpoints;
-with DAP.Modules.Persistent_Breakpoints;
+with DAP.Module.Breakpoints;
 with DAP.Views.Consoles;
 
 with Interactive_Consoles;    use Interactive_Consoles;
@@ -330,7 +330,7 @@ package body DAP.Modules.Scripts is
 
       elsif Command = "break_at_location" then
          Inst := Nth_Arg (Data, 1, New_Class (Kernel, "Debugger"));
-         DAP.Modules.Persistent_Breakpoints.Break_Source
+         DAP.Module.Breakpoints.Break_Source
            (Kernel => Kernel,
             Num    => No_Breakpoint,
             File   => Nth_Arg (Data, 2),
@@ -339,13 +339,13 @@ package body DAP.Modules.Scripts is
 
       elsif Command = "break_at_exception" then
          Inst := Nth_Arg (Data, 1, New_Class (Kernel, "Debugger"));
-         DAP.Modules.Persistent_Breakpoints.Break_At_Exception
+         DAP.Module.Breakpoints.Break_At_Exception
            (Kernel    => Kernel,
             Unhandled => Nth_Arg (Data, 2));
 
       elsif Command = "unbreak_at_location" then
          Inst := Nth_Arg (Data, 1, New_Class (Kernel, "Debugger"));
-         DAP.Modules.Persistent_Breakpoints.Unbreak_Source
+         DAP.Module.Breakpoints.Unbreak_Source
            (Kernel,
             File  => Nth_Arg (Data, 2),
             Line  => Basic_Types.Editable_Line_Type

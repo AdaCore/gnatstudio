@@ -18,11 +18,9 @@
 --  Defines breakpoint type and holder for them.
 
 with Ada.Containers.Hashed_Maps;
-with Ada.Containers.Ordered_Sets;
 with Ada.Containers.Vectors;
 with Ada.Strings.Unbounded;  use Ada.Strings.Unbounded;
 
-with GNATCOLL.Tribooleans;   use GNATCOLL.Tribooleans;
 with GNATCOLL.VFS;           use GNATCOLL.VFS;
 
 with VSS.Strings;            use VSS.Strings;
@@ -38,18 +36,18 @@ package DAP.Modules.Breakpoints is
    type Breakpoint_State is (Enabled, Changing, Disabled, Moved);
    type Breakpoint_Kind is (On_Line, On_Subprogram, On_Address, On_Exception);
 
-   type Location is record
+   type Location_Type is record
       Num     : Breakpoint_Identifier := 0;
       Marker  : Location_Marker       := No_Marker;
       Address : Address_Type          := Invalid_Address;
    end record;
 
-   package Location_Vectors is new Ada.Containers.Vectors (Positive, Location);
+   package Location_Vectors is
+     new Ada.Containers.Vectors (Positive, Location_Type);
 
    type Breakpoint_Data (Kind : Breakpoint_Kind := On_Line) is record
       Num         : Breakpoint_Identifier := No_Breakpoint;
-      Locations   : Location_Vectors.Vector := Location_Vectors.Empty_Vector;
-      --  The locations of the breakpoint, may have several for subprograms
+      --  The breakpoint identifier set on DAP server's side.
 
       Disposition : Breakpoint_Disposition := Keep;
       --  What is done when the breakpoint is reached
@@ -72,7 +70,7 @@ package DAP.Modules.Breakpoints is
 
       case Kind is
          when On_Line =>
-            null;
+            Location : Location_Type;
 
          when On_Subprogram =>
             Subprogram : Ada.Strings.Unbounded.Unbounded_String;
@@ -98,7 +96,10 @@ package DAP.Modules.Breakpoints is
      (L, R : Breakpoint_Data) return Boolean is (L.Num = R.Num);
 
    function Get_Location (Data : Breakpoint_Data) return Location_Marker;
+   --  TODO: doc
+
    function Get_Ignore (Data : Breakpoint_Data) return Virtual_String;
+   --  TODO: doc
 
    function To_String (Data : Breakpoint_Data) return String;
    --  Return a location string representation to display for the given
@@ -111,10 +112,10 @@ package DAP.Modules.Breakpoints is
 
    package Breakpoint_Hash_Maps is new Ada.Containers.Hashed_Maps
      (Key_Type        => Virtual_File,
-      Element_Type    => Breakpoint_Vectors.Vector,
+      Element_Type    => Breakpoint_Index_Lists.List,
       Hash            => Full_Name_Hash,
       Equivalent_Keys => "=",
-      "="             => Breakpoint_Vectors."=");
+      "="             => Breakpoint_Index_Lists."=");
 
    use Breakpoint_Hash_Maps;
 
@@ -124,21 +125,16 @@ package DAP.Modules.Breakpoints is
    --  Used for store breakpoints
 
    procedure Initialize
-     (Self        : in out Breakpoint_Holder;
-      Vector      : Breakpoint_Vectors.Vector;
-      Clear_Ids   : Boolean := False;
-      Initialized : Boolean := False);
-   --  Initialize holder with the breakpoints in the Vector parameter
-   --  Clear breakpoints' identificators when Clear_Ids is True
-   --  Do not set In_Initialization mode when Initialized is True
-
-   procedure Initialized (Self : in out Breakpoint_Holder);
-   --  Initializetion is done. Process notifications.
+     (Self    : in out Breakpoint_Holder;
+      Vector  : Breakpoint_Vectors.Vector);
+   --  Initialize holder with the breakpoints in the Vector parameter.
 
    function Get_Breakpoints
-     (Self : Breakpoint_Holder)
-      return Breakpoint_Vectors.Vector;
-   --  Return all breakpoints
+     (Self    : Breakpoint_Holder;
+      Indexes : Breakpoint_Index_Lists.List :=
+        Breakpoint_Index_Lists.Empty_List) return Breakpoint_Vectors.Vector;
+   --  Return all the breakpoints at the given indexes, or all the holder's
+   --  breakpoints if no indexes are specified.
 
    function Get_Breakpoints
      (Self       : Breakpoint_Holder;
@@ -146,32 +142,10 @@ package DAP.Modules.Breakpoints is
       return Breakpoint_Vectors.Vector;
    --  Return breakpoints for executable and unassigned
 
-   function Get_Next_Id
-     (Self : in out Breakpoint_Holder)
-      return Breakpoint_Identifier;
-   --  Get Id for new breakpoint
-
-   procedure Added
-     (Self : in out Breakpoint_Holder;
-      Data : Breakpoint_Data);
-   --  New breakpoint has been added
-
-   procedure Deleted
-     (Self : in out Breakpoint_Holder;
-      File : Virtual_File;
-      Line : Editable_Line_Type);
-   --  Breakpoint on file/line has been deleted
-
-   procedure Deleted
-     (Self : in out Breakpoint_Holder;
-      Nums : Breakpoint_Identifier_Lists.List);
-   --  List of breakpoints have been deleted
-
-   procedure Deleted
-     (Self    : in out Breakpoint_Holder;
-      Num     : Breakpoint_Identifier;
-      Changed : out Boolean);
-   --  Breakpoint with Num has been deleted
+   function Get_Breakpoint_By_Id
+     (Self : Breakpoint_Holder;
+      Id   : Breakpoint_Identifier) return Breakpoint_Data;
+   --  TODO: doc
 
    procedure Clear (Self : in out Breakpoint_Holder);
    --  Remove all breakpoints
@@ -182,28 +156,46 @@ package DAP.Modules.Breakpoints is
       return Boolean;
    --  Do we already have a breakpoint for location?
 
-   procedure Set_Enabled
-     (Self  : in out Breakpoint_Holder;
-      Ids   : Breakpoint_Identifier_Lists.List;
-      State : Boolean);
-   --  Enable/disable breakpoints
+   procedure Append
+     (Self : in out Breakpoint_Holder;
+      Data : Breakpoint_Data);
+   --  Append the given breakpoint
+   --  TODO: should we handle duplicates?
+
+   procedure Replace_From_Id
+     (Self : in out Breakpoint_Holder;
+      Data : Breakpoint_Data);
+   --  Replace the breakpoint.
+   --  TODO: doc
 
    procedure Replace
+     (Self : in out Breakpoint_Holder;
+      Data : Breakpoint_Data;
+      Idx  : Positive);
+   --  TODO: doc
+
+   procedure Replace
+     (Self        : in out Breakpoint_Holder;
+      Executable  : Virtual_File;
+      Breakpoints : Breakpoint_Vectors.Vector);
+   --  Replace all the breakpoints designed by the given Breakpoints for the
+   --  given executable.
+
+   procedure Delete
+     (Self : in out Breakpoint_Holder;
+      Num  : Breakpoint_Identifier);
+   --  TODO: doc
+
+   procedure Delete
      (Self    : in out Breakpoint_Holder;
-      Data    : Breakpoint_Data;
-      Updated : out Triboolean);
-   --  Replace the breakpoint. Updated is True when we need to reset
-   --  the breakpoint on the server side and Indeterminate when we need to
-   --  reset the breakpoint commands.
+      Indexes : Breakpoint_Index_Lists.List);
+   --  TODO: doc
 
-   procedure Replace
-     (Self       : in out Breakpoint_Holder;
-      Executable : Virtual_File;
-      List       : Breakpoint_Vectors.Vector);
-   --  Replace all breakpoints for executable from the list
-
-   procedure Set_Numbers (Self : in out Breakpoint_Holder);
-   --  Set breakpoints numbers
+   procedure Delete
+     (Self    : in out Breakpoint_Holder;
+      File    : Virtual_File;
+      Line    : Editable_Line_Type);
+   --  TODO: doc
 
    function Get_For_Files
      (Self : Breakpoint_Holder)
@@ -215,137 +207,34 @@ package DAP.Modules.Breakpoints is
       File          : Virtual_File;
       With_Changing : Boolean := False)
       return Breakpoint_Vectors.Vector;
-   --  Get breakpoints for the file
+   --  Get breakpoints for the given file
 
-   function Get_For
+   function Get_For_File
+     (Self          : Breakpoint_Holder;
+      File          : Virtual_File;
+      With_Changing : Boolean := False)
+      return Breakpoint_Index_Lists.List;
+   --  Get breakpoints' indexes for the given file
+
+   function Get_For_Kind
      (Self          : Breakpoint_Holder;
       Kind          : Breakpoint_Kind;
       With_Changing : Boolean := False)
-      return Breakpoint_Vectors.Vector;
-
-   procedure Initialized_For_File
-     (Self    : in out Breakpoint_Holder;
-      File    : Virtual_File;
-      Actual  : Breakpoint_Vectors.Vector;
-      Changed : out Breakpoint_Hash_Maps.Map);
-   --  Feedback after breakpoints are set for the file to synchronize data
-
-   procedure Add
-     (Self    : Breakpoint_Holder;
-      Data    : Breakpoint_Data;
-      Changed : out Breakpoint_Vectors.Vector);
-   --  Prepare a list to send with the breakpoints
-
-   procedure Added
-     (Self    : in out Breakpoint_Holder;
-      Data    : Breakpoint_Data;
-      Changed : out Breakpoint_Vectors.Vector;
-      Check   : Boolean;
-      Update  : out Boolean);
-   --  Feedback after breakpoints is added to synchronize data. Checks for
-   --  duplicates when Check is True. Update inform that bp are changed.
-
-   procedure Delete
-     (Self    : in out Breakpoint_Holder;
-      File    : Virtual_File;
-      Line    : Editable_Line_Type;
-      Changed : out Breakpoint_Hash_Maps.Map;
-      Updated : out Boolean);
-   --  Prepare a list to send with line breakpoint is removed
-
-   procedure Delete
-     (Self    : in out Breakpoint_Holder;
-      Nums    : DAP.Types.Breakpoint_Identifier_Lists.List;
-      Changed : out Breakpoint_Hash_Maps.Map;
-      Updated : out Boolean);
-   --  Prepare a list to send with breakpoints are removed by numbers
+      return Breakpoint_Index_Lists.List;
+   --  TODO: doc
 
    procedure Set_Enabled
      (Self    : in out Breakpoint_Holder;
-      Nums    : Breakpoint_Identifier_Lists.List;
-      State   : Boolean;
-      Changed : out Breakpoint_Hash_Maps.Map);
-   --  Prepare a list to send with breakpoints are enabled/disabled
+      Indexes : Breakpoint_Index_Lists.List;
+      State   : Boolean);
+   --  TODO: doc
 
    procedure Set_Ignore_Count
      (Self    : in out Breakpoint_Holder;
       Id      : Breakpoint_Identifier;
-      Count   : Natural;
-      Changed : out Breakpoint_Hash_Maps.Map);
+      Count   : Natural);
    --  Sets ignore count for the breakpoint, returning the changed
    --  breakpoints in Changed.
-
-   procedure Lines_Status_Changed
-     (Self    : in out Breakpoint_Holder;
-      File    : Virtual_File;
-      Actual  : Breakpoint_Vectors.Vector;
-      Changed : out Breakpoint_Hash_Maps.Map;
-      Enabled : out Breakpoint_Vectors.Vector;
-      Id      : out Integer);
-   --  Called when breakpoints' status have changed, to synchronize data
-
-   procedure Initialized_For_Subprograms
-     (Self   : in out Breakpoint_Holder;
-      Actual : Breakpoint_Vectors.Vector);
-   --  Feedback after breakpoints are set for the subprograms
-   --  to synchronize data
-
-   procedure Delete_Unused_Subprograms_Breakpoints
-     (Self    : in out Breakpoint_Holder;
-      Changed : out Boolean);
-   --  Removes fake and pending breakpoints
-
-   procedure Added_Subprogram
-     (Self   : in out Breakpoint_Holder;
-      Data   : Breakpoint_Data;
-      Actual : Breakpoint_Vectors.Vector;
-      Num    : out Breakpoint_Identifier);
-   --  Feedback after breakpoints for subprogram is added to synchronize data
-
-   procedure Subprogram_Status_Changed
-     (Self    : in out Breakpoint_Holder;
-      Actual  : Breakpoint_Vectors.Vector;
-      Enabled : out Breakpoint_Vectors.Vector);
-   --  Feedback after breakpoints stats are changed to synchronize data
-
-   procedure Changed
-     (Self : in out Breakpoint_Holder;
-      Data : Breakpoint_Data);
-   --  The breakpoint data is changed.
-
-   procedure Break_Unbreak_Address
-     (Self       : in out Breakpoint_Holder;
-      Address    : Address_Type;
-      Executable : Virtual_File;
-      Changed    : out Breakpoint_Vectors.Vector);
-   --  Add/delete breakpoint for the address
-
-   procedure Address_Exception_Status_Changed
-     (Self    : in out Breakpoint_Holder;
-      Kind    : Breakpoint_Kind;
-      Actual  : Breakpoint_Vectors.Vector;
-      Enabled : out Breakpoint_Vectors.Vector;
-      Deleted : out Boolean);
-   --  Address or Exception breakpoints status changed. The Enabled vector
-   --  is filled with breakpoints that are enabled. The Deleted informs
-   --  that some of the breakpoints have been deleted.
-
-   procedure Append
-     (Self : in out Breakpoint_Holder;
-      Data : Breakpoint_Data);
-   --  Add breakpoint if it does not have duplicate. Used only to prepare
-   --  the list of breakpoints to add "preferences based" breakpoints before
-   --  initial setting of them.
-
-   procedure Done_For_Exceptions
-     (Self    : in out Breakpoint_Holder;
-      Actual  : Breakpoint_Vectors.Vector;
-      Deleted : out Boolean);
-   --  Deletes pending and fake bp from notifications
-
-   Subprograms_File : constant Virtual_File := Create ("dap_subprogram");
-   Addreses_File    : constant Virtual_File := Create ("dap_address");
-   Exceptions_File  : constant Virtual_File := Create ("dap_exception");
 
 private
 
@@ -354,21 +243,7 @@ private
    -----------------------
 
    type Breakpoint_Holder is tagged limited record
-      Id     : Breakpoint_Identifier := 0;
       Vector : Breakpoint_Vectors.Vector;
-
-      In_Initialization : Boolean := False;
    end record;
-
-   procedure Delete_On_Line_Duplicates
-     (Self    : in out Breakpoint_Holder;
-      File    : Virtual_File;
-      Changed : out Breakpoint_Hash_Maps.Map;
-      Enabled : in out Breakpoint_Vectors.Vector);
-
-   procedure Delete_Fake_Subprogram (Self : in out Breakpoint_Holder);
-
-   package Line_Sets is
-     new Ada.Containers.Ordered_Sets (Editable_Line_Type);
 
 end DAP.Modules.Breakpoints;

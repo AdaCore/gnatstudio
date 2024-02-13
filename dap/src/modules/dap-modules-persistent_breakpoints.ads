@@ -24,7 +24,7 @@ with GPS.Kernel;              use GPS.Kernel;
 with DAP.Types;               use DAP.Types;
 with DAP.Modules.Breakpoints; use DAP.Modules.Breakpoints;
 
-package DAP.Modules.Persistent_Breakpoints is
+package DAP.Module.Breakpoints is
 
    procedure Register_Module
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class);
@@ -48,8 +48,8 @@ package DAP.Modules.Persistent_Breakpoints is
    --  Hide all the breakpoints in all editors
 
    procedure Delete_Multiple_Breakpoints
-     (Kernel : not null access Kernel_Handle_Record'Class;
-      List   : Breakpoint_Identifier_Lists.List);
+     (Kernel  : not null access Kernel_Handle_Record'Class;
+      Indexes : Breakpoint_Index_Lists.List);
    --  Go through the list and delete the breakpoints. The list is not freed
    --  by this procedure.
 
@@ -58,9 +58,10 @@ package DAP.Modules.Persistent_Breakpoints is
    --  Delete all breakpoints
 
    procedure Set_Breakpoints_State
-     (Kernel : not null access Kernel_Handle_Record'Class;
-      List   : Breakpoint_Identifier_Lists.List;
-      State  : Boolean);
+     (Kernel  : not null access Kernel_Handle_Record'Class;
+      Indexes : Breakpoint_Index_Lists.List;
+      State   : Boolean);
+   --  TODO: doc
 
    procedure On_Debugging_Terminated
      (Kernel : not null access Kernel_Handle_Record'Class);
@@ -68,8 +69,6 @@ package DAP.Modules.Persistent_Breakpoints is
 
    procedure On_Destroy;
    --  Called when GNAT Studio is terminating
-
-   function Get_Next_Id return Breakpoint_Identifier;
 
    procedure Store
      (Executable : Virtual_File;
@@ -135,10 +134,7 @@ package DAP.Modules.Persistent_Breakpoints is
      (Kernel : not null access Kernel_Handle_Record'Class;
       File   : Virtual_File;
       Line   : Editable_Line_Type);
-   --  Set a breakpoint on the given location.
-   --  If no debugger is currently running, the breakpoint will be applied when
-   --  one is started. If one or more debuggers are running, they all break
-   --  at that location
+   --  TODO: doc
 
    procedure Save_Persistent_Breakpoints
      (Kernel : not null access Kernel_Handle_Record'Class);
@@ -147,4 +143,4 @@ package DAP.Modules.Persistent_Breakpoints is
    All_Exceptions_Filter : constant String := "exception";
    --  Filter that contains the name that means "all exceptions"
 
-end DAP.Modules.Persistent_Breakpoints;
+end DAP.Module.Breakpoints;

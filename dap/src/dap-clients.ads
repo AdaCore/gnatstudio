@@ -212,8 +212,13 @@ package DAP.Clients is
 
    procedure Remove_Breakpoints
      (Self : in out DAP_Client;
-      List : DAP.Types.Breakpoint_Identifier_Lists.List);
-   --  Remove breakpoints included in the given list
+      Ids  : DAP.Types.Breakpoint_Identifier_Lists.List);
+   --  TODO: doc
+
+   procedure Remove_Breakpoints
+     (Self     : in out DAP_Client;
+      Indexes  : DAP.Types.Breakpoint_Index_Lists.List);
+   --  TODO: doc
 
    procedure Remove_All_Breakpoints (Self : in out DAP_Client);
    --  Remove all breakpoints set for this DAP client
@@ -225,9 +230,9 @@ package DAP.Clients is
    --  Remove breakpoint from the file/line
 
    procedure Set_Breakpoints_State
-     (Self  : in out DAP_Client;
-      List  : Breakpoint_Identifier_Lists.List;
-      State : Boolean);
+     (Self    : in out DAP_Client;
+      Indexes : Breakpoint_Index_Lists.List;
+      State   : Boolean);
    --  Enable/disable breakpoints
 
    function Get_Breakpoints

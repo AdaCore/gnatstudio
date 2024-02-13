@@ -16,6 +16,7 @@
 ------------------------------------------------------------------------------
 
 with VSS.Strings;
+with DAP.Requests;                           use DAP.Requests;
 with DAP.Requests.SetInstructionBreakpoints;
 
 private package DAP.Modules.Breakpoint_Managers.SetInstructionBreakpoints is
@@ -24,9 +25,13 @@ private package DAP.Modules.Breakpoint_Managers.SetInstructionBreakpoints is
      new DAP.Requests.SetInstructionBreakpoints.
        Instruction_Breakpoint_DAP_Request
    with record
-      Manager : DAP_Client_Breakpoint_Manager_Access;
-      Action  : Action_Kind;
-      Sent    : Breakpoint_Vectors.Vector;
+      Manager     : DAP_Client_Breakpoint_Manager_Access;
+      --  The breakpoints' manager that created the request.
+
+      Breakpoints : Breakpoint_Index_Lists.List;
+      --  The indexes of the breakpoints we want to send in the manager's
+      --  holder. Used to replace breakpoints once we receive the request's
+      --  response.
    end record;
 
    type Instruction_Breakpoint_Request_Access is

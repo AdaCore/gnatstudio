@@ -15,7 +15,6 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with GPS.Kernel.Hooks;
 with DAP.Clients;
 
 package body DAP.Modules.Breakpoint_Managers.SetBreakpoints is
@@ -29,7 +28,6 @@ package body DAP.Modules.Breakpoint_Managers.SetBreakpoints is
       Client  : not null access DAP.Clients.DAP_Client'Class;
       Message : VSS.Strings.Virtual_String) is
    begin
-      Self.Manager.Dec_Response (Self.Action);
       DAP.Requests.SetBreakpoints.On_Error_Message
         (DAP.Requests.SetBreakpoints.Breakpoint_DAP_Request (Self),
          Client, Message);
@@ -43,7 +41,6 @@ package body DAP.Modules.Breakpoint_Managers.SetBreakpoints is
      (Self   : in out Source_Line_Request;
       Client : not null access DAP.Clients.DAP_Client'Class) is
    begin
-      Self.Manager.Dec_Response (Self.Action);
       DAP.Requests.SetBreakpoints.On_Rejected
         (DAP.Requests.SetBreakpoints.Breakpoint_DAP_Request (Self), Client);
    end On_Rejected;
@@ -58,162 +55,13 @@ package body DAP.Modules.Breakpoint_Managers.SetBreakpoints is
       Result      : in out DAP.Tools.SetBreakpointsResponse;
       New_Request : in out DAP_Request_Access)
    is
-      use DAP.Tools;
-
-      Holder  : constant GPS.Editors.Controlled_Editor_Buffer_Holder :=
-        Self.Kernel.Get_Buffer_Factory.Get_Holder (File => Self.File);
-      Data    : Breakpoint_Data;
-      Actual  : Breakpoint_Vectors.Vector;
-      Update  : Boolean := False;
-      Warning : Boolean := False;
-      Updated : Boolean;
-
+      pragma Unreferenced (New_Request);
    begin
-      New_Request := null;
-
-      case Self.Action is
-         when Init =>
-            declare
-               Changed : Breakpoint_Hash_Maps.Map;
-            begin
-               for Index in 1 .. Length (Result.a_body.breakpoints) loop
-                  Data := Self.Sent.Element (Index);
-                  Convert (Self.Kernel, Self.File, Holder, Data,
-                           Result.a_body.breakpoints (Index));
-                  Actual.Append (Data);
-
-                  if not Result.a_body.breakpoints (Index).verified then
-                     if not Warning then
-                        Self.Manager.Client.Display_In_Debugger_Console
-                          ("Some breakpoints set graphically are not "
-                           & "recognized by the debugger and, thus, will "
-                           & "be lost when running it. "
-                           & ASCII.LF
-                           & "This can happen when the executable "
-                           & "being debugged has not been compiled with the "
-                           & "debug flags or when the breakpoint's source "
-                           & "file is not found in the symbols table. This "
-                           & "also can happen for catchpoints."
-                           & ASCII.LF
-                           & "You should try to set them after a start "
-                           & "command."
-                           & ASCII.LF
-                           & ASCII.LF);
-                        Warning := True;
-                     end if;
-
-                     Self.Manager.Client.Display_In_Debugger_Console
-                       (To_String (Data) & ASCII.LF);
-                  end if;
-               end loop;
-
-               --  Update breakpoints data like numbers and locations
-               Self.Manager.Holder.Initialized_For_File
-                 (Self.File, Actual, Changed);
-
-               if not Changed.Is_Empty then
-                  New_Request := Self.Manager.Send_Line
-                    (Self.File, Changed.Element (Self.File), Sync);
-
-                  Self.Manager.Send_Commands (Changed.Element (Self.File));
-
-               else
-                  Self.Manager.Send_Commands (Actual);
-               end if;
-            end;
-            Update := True;
-
-         when Add =>
-            declare
-               Changed : Breakpoint_Vectors.Vector;
-            begin
-               Data := Self.Sent.Last_Element;
-               Convert
-                 (Self.Kernel, Self.File, Holder, Data,
-                  Result.a_body.breakpoints
-                    (Length (Result.a_body.breakpoints)));
-
-               --  Update the breakpoint data because in notifications we
-               --  don't have full information like disposition and so on
-               Self.Manager.Holder.Added
-                 (Data    => Data,
-                  Changed => Changed,
-                  Check   => True,
-                  Update  => Updated);
-
-               if Updated then
-                  --  Update breakpoints after changes
-                  New_Request := Self.Manager.Send_Line
-                    (Self.File, Changed, Sync);
-
-                  if Changed.Contains (Data) then
-                     Self.Manager.Send_Commands (Data);
-                  end if;
-               else
-                  --  Set commands for the added breakpoint
-                  Update := True;
-                  Self.Manager.Send_Commands (Data);
-
-                  GPS.Kernel.Hooks.Debugger_Breakpoint_Added_Hook.Run
-                    (Kernel   => Self.Kernel,
-                     Debugger => Client.Get_Visual,
-                     Id       => Integer (Data.Num));
-               end if;
-            end;
-
-         when Delete =>
-            --  Do nothing because we delete breakpoints by notification
-            null;
-
-         when Enable =>
-            declare
-               Changed : Breakpoint_Hash_Maps.Map;
-               Id      : Integer;
-               Enabled : Breakpoint_Vectors.Vector;
-            begin
-               for Index in 1 .. Length (Result.a_body.breakpoints) loop
-                  Data := Self.Sent.Element (Index);
-                  Convert (Self.Kernel, Self.File, Holder, Data,
-                           Result.a_body.breakpoints (Index));
-                  Actual.Append (Data);
-               end loop;
-
-               Self.Manager.Holder.Lines_Status_Changed
-                 (Self.File, Actual, Changed, Enabled, Id);
-
-               Self.Manager.Send_Commands (Enabled);
-
-               if not Changed.Is_Empty then
-                  New_Request := Self.Manager.Send_Line
-                    (Self.File, Changed.Element (Self.File), Sync);
-
-               elsif Id > 0 then
-                  GPS.Kernel.Hooks.Debugger_Breakpoint_Changed_Hook.Run
-                    (Self.Kernel, Self.Manager.Client.Get_Visual, Id);
-                  Self.Manager.Show_Breakpoints;
-
-               else
-                  Update := True;
-               end if;
-            end;
-
-         when Disable =>
-            --  Do nothing because we delete BP by notifications
-            Update := True;
-
-         when Sync =>
-            --  Do nothing because we already have all data
-            null;
-      end case;
-
-      --  Update visual representation
-      if Update then
-         GPS.Kernel.Hooks.Debugger_Breakpoints_Changed_Hook.Run
-           (Self.Kernel, Self.Manager.Client.Get_Visual);
-         Self.Manager.Show_Breakpoints;
-      end if;
-
-      Self.Manager.Dec_Response (Self.Action);
+      Self.Manager.On_Breakpoint_Request_Response
+        (Client          => Client,
+         New_Breakpoints => Result.a_body.breakpoints,
+         Old_Breakpoints => Self.Breakpoints,
+         File            => Self.File);
    end On_Result_Message;
 
 end DAP.Modules.Breakpoint_Managers.SetBreakpoints;

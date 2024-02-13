@@ -35,7 +35,7 @@ with Commands;                     use Commands;
 with Commands.Interactive;         use Commands.Interactive;
 with Language;                     use Language;
 
-with GPS.Debuggers;
+with Generic_Views;
 with GPS.Editors;                  use GPS.Editors;
 with GPS.Kernel.Actions;
 with GPS.Kernel.Contexts;          use GPS.Kernel.Contexts;
@@ -50,8 +50,8 @@ with GUI_Utils;
 with Remote;
 
 with DAP.Contexts;
+with DAP.Module.Breakpoints;
 with DAP.Modules.Contexts;
-with DAP.Modules.Persistent_Breakpoints;
 with DAP.Modules.Preferences;
 with DAP.Modules.Scripts;
 with DAP.Clients.Attach;
@@ -66,6 +66,7 @@ with DAP.Views.Threads;
 with DAP.Views.Memory;
 with DAP.Views.Registers;
 with DAP.Views.Variables;
+with DAP.Types;
 with DAP.Utils;
 
 package body DAP.Module is
@@ -310,26 +311,6 @@ package body DAP.Module is
    DAP_Module_Name  : constant String := "DAP";
    DAP_Module_ID    : DAP_Module;
    Client_Started   : Integer := 0;
-   Breakpoints_View : Generic_Views.Abstract_View_Access := null;
-
-   --------------------------
-   -- Get_Breakpoints_View --
-   --------------------------
-
-   function Get_Breakpoints_View return Generic_Views.Abstract_View_Access is
-   begin
-      return Breakpoints_View;
-   end Get_Breakpoints_View;
-
-   --------------------------
-   -- Set_Breakpoints_View --
-   --------------------------
-
-   procedure Set_Breakpoints_View
-     (View : Generic_Views.Abstract_View_Access) is
-   begin
-      Breakpoints_View := View;
-   end Set_Breakpoints_View;
 
    ---------------------------------------
    -- Get_Started_Per_Session_Debuggers --
@@ -380,7 +361,7 @@ package body DAP.Module is
            (DAP_Module_ID.Get_Kernel, "Debug");
 
          --  hide persistent breakpoints
-         DAP.Modules.Persistent_Breakpoints.Hide_Breakpoints (Kernel);
+         DAP.Module.Breakpoints.Hide_Breakpoints (Kernel);
       else
          Client_Started := Client_Started + 1;
       end if;
@@ -412,7 +393,7 @@ package body DAP.Module is
          Executable_Args => Executable_Args,
          Remote_Target   => Remote_Target);
 
-      DAP.Modules.Persistent_Breakpoints.Hide_Breakpoints (Kernel);
+      DAP.Module.Breakpoints.Hide_Breakpoints (Kernel);
       Set_Current_Debugger (Client);
 
       return Client;
@@ -434,7 +415,7 @@ package body DAP.Module is
          end;
       end loop;
 
-      DAP.Modules.Persistent_Breakpoints.On_Destroy;
+      DAP.Module.Breakpoints.On_Destroy;
 
       if Id.Deallocate_Id /= No_Source_Id then
          Remove (Id.Deallocate_Id);
@@ -554,6 +535,7 @@ package body DAP.Module is
    is
       pragma Unreferenced (Self);
    begin
+      --  Notify any running DAP server that we are exiting.
       if DAP_Module_ID /= null
         and then not DAP_Module_ID.Clients.Is_Empty
       then
@@ -565,12 +547,13 @@ package body DAP.Module is
                   Trace (Me, E);
             end;
          end loop;
-
-         DAP.Modules.Persistent_Breakpoints.
-           Save_Persistent_Breakpoints (Kernel);
       end if;
 
-      return True;  --  allow exit
+      --  Save persistent breakpoints before exiting.
+      DAP.Module.Breakpoints.
+         Save_Persistent_Breakpoints (Kernel);
+
+      return True;
    end Execute;
 
    -------------
@@ -1302,7 +1285,7 @@ package body DAP.Module is
             DAP_Module_ID.Client_ID := 1;
 
             --  Save persistent breakpoints
-            DAP.Modules.Persistent_Breakpoints.On_Debugging_Terminated
+            DAP.Module.Breakpoints.On_Debugging_Terminated
               (Kernel);
 
             --  Unhighlight the current debugger line
@@ -1325,9 +1308,7 @@ package body DAP.Module is
 
    procedure Set_Current_Debugger (Current : DAP.Clients.DAP_Client_Access)
    is
-      use DAP.Types;
       use type DAP.Clients.DAP_Client_Access;
-      use type Generic_Views.Abstract_View_Access;
 
       function Set_Current_Debugger
         (Id : DAP_Module; Current : DAP.Clients.DAP_Client_Access)
@@ -1362,21 +1343,11 @@ package body DAP.Module is
    begin
       Set := Set_Current_Debugger (DAP_Module_ID, Current);
 
-      if Set
-        and then Current /= null
-      then
+      if Set and then Current /= null then
          GPS.Kernel.Hooks.Debugger_Breakpoints_Changed_Hook.Run
            (Current.Kernel, Current.Get_Visual);
 
          Current.Show_Breakpoints;
-
-         if Breakpoints_View /= null then
-            DAP.Views.View_Access (Breakpoints_View).On_Status_Changed
-              (if Current.Get_Status /= Stopped
-               and then Current.Get_Status /= Ready
-               then GPS.Debuggers.Debug_Busy
-               else GPS.Debuggers.Debug_Available);
-         end if;
       end if;
    end Set_Current_Debugger;
 
@@ -1399,37 +1370,6 @@ package body DAP.Module is
          end;
       end loop;
    end Terminate_Debuggers;
-
-   ----------------------------
-   -- Get_Breakpoint_From_Id --
-   ----------------------------
-
-   function Get_Breakpoint_From_Id
-     (Id : DAP.Types.Breakpoint_Identifier)
-      return DAP.Modules.Breakpoints.Breakpoint_Data
-   is
-      use type DAP.Clients.DAP_Client_Access;
-      use DAP.Modules.Breakpoints;
-   begin
-      if Get_Current_Debugger = null then
-         for Data of DAP.Modules.Persistent_Breakpoints.
-           Get_Persistent_Breakpoints
-         loop
-            if Data = Id then
-               return Data;
-            end if;
-         end loop;
-
-      else
-         for Data of Get_Current_Debugger.Get_Breakpoints loop
-            if Data = Id then
-               return Data;
-            end if;
-         end loop;
-      end if;
-
-      return DAP.Modules.Breakpoints.Empty_Breakpoint_Data;
-   end Get_Breakpoint_From_Id;
 
    ---------------------
    -- Register_Module --
@@ -1598,7 +1538,6 @@ package body DAP.Module is
          Filter      => Has_Debugger and Attached_Debuggee,
          Category    => "Debug");
 
-      DAP.Modules.Persistent_Breakpoints.Register_Module (Kernel);
       DAP.Views.Call_Stack.Register_Module (Kernel);
       DAP.Views.Threads.Register_Module (Kernel);
       DAP.Views.Assembly.Register_Module (Kernel);
@@ -1607,6 +1546,7 @@ package body DAP.Module is
       DAP.Views.Memory.Register_Module (Kernel);
       DAP.Views.Variables.Register_Module (Kernel);
       DAP.Views.Registers.Register_Module (Kernel);
+      DAP.Module.Breakpoints.Register_Module (Kernel);
    end Register_Module;
 
    -------------

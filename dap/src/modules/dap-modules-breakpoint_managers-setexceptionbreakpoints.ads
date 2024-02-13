@@ -16,6 +16,7 @@
 ------------------------------------------------------------------------------
 
 with VSS.Strings;
+with DAP.Requests;                         use DAP.Requests;
 with DAP.Requests.SetExceptionBreakpoints;
 
 private package DAP.Modules.Breakpoint_Managers.SetExceptionBreakpoints is
@@ -24,9 +25,13 @@ private package DAP.Modules.Breakpoint_Managers.SetExceptionBreakpoints is
      new DAP.Requests.SetExceptionBreakpoints.
        Exception_Breakpoints_DAP_Request
    with record
-      Manager : DAP_Client_Breakpoint_Manager_Access;
-      Action  : Action_Kind;
-      Sent    : Breakpoint_Vectors.Vector;
+      Manager     : DAP_Client_Breakpoint_Manager_Access;
+      --  The breakpoints' manager that created the request.
+
+      Breakpoints : Breakpoint_Index_Lists.List;
+      --  The indexes of the breakpoints we want to send in the manager's
+      --  holder. Used to replace breakpoints once we receive the request's
+      --  response.
    end record;
 
    type Exception_Breakpoint_Request_Access is

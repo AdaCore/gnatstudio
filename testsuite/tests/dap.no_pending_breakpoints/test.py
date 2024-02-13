@@ -29,6 +29,7 @@ def test_driver():
     name.append_text("tmp");
     name.set_active(1)
     yield ed.ok()
+    yield timeout(10000)
 
     # create fake breakpoint for exception
     ed = view.create()
@@ -45,7 +46,9 @@ def test_driver():
     yield wait_idle()
 
     debug = GPS.Debugger.get()
-    yield wait_until_not_busy(debug)
+    debug.start()
+    yield wait_DAP_server('stackTrace')
+    yield timeout(10000)
 
     view = Breakpoints_View()
     yield wait_idle()

@@ -16,6 +16,7 @@
 ------------------------------------------------------------------------------
 
 with VSS.Strings;
+with DAP.Requests;                use DAP.Requests;
 with DAP.Requests.SetBreakpoints;
 
 private package DAP.Modules.Breakpoint_Managers.SetBreakpoints is
@@ -23,10 +24,16 @@ private package DAP.Modules.Breakpoint_Managers.SetBreakpoints is
    type Source_Line_Request is
      new DAP.Requests.SetBreakpoints.Breakpoint_DAP_Request
    with record
-      Manager : DAP_Client_Breakpoint_Manager_Access;
-      File    : GNATCOLL.VFS.Virtual_File;
-      Action  : Action_Kind;
-      Sent    : Breakpoint_Vectors.Vector;
+      Manager     : DAP_Client_Breakpoint_Manager_Access;
+      --  The breakpoints' manager that created the request.
+
+      File        : GNATCOLL.VFS.Virtual_File;
+      --  The file for which we are setting breakpoints.
+
+      Breakpoints : Breakpoint_Index_Lists.List;
+      --  The indexes of the breakpoints we want to send in the manager's
+      --  holder. Used to replace breakpoints once we receive the request's
+      --  response.
    end record;
 
    type Source_Line_Request_Access is access all Source_Line_Request;

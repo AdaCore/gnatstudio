@@ -15,7 +15,6 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with GPS.Kernel.Hooks;
 with DAP.Clients;
 
 package body DAP.Modules.Breakpoint_Managers.SetInstructionBreakpoints is
@@ -29,7 +28,6 @@ package body DAP.Modules.Breakpoint_Managers.SetInstructionBreakpoints is
       Client  : not null access DAP.Clients.DAP_Client'Class;
       Message : VSS.Strings.Virtual_String) is
    begin
-      Self.Manager.Dec_Response (Self.Action);
       DAP.Requests.SetInstructionBreakpoints.On_Error_Message
         (DAP.Requests.SetInstructionBreakpoints.
            Instruction_Breakpoint_DAP_Request (Self), Client, Message);
@@ -43,7 +41,6 @@ package body DAP.Modules.Breakpoint_Managers.SetInstructionBreakpoints is
      (Self   : in out Instruction_Breakpoint_Request;
       Client : not null access DAP.Clients.DAP_Client'Class) is
    begin
-      Self.Manager.Dec_Response (Self.Action);
       DAP.Requests.SetInstructionBreakpoints.On_Rejected
         (DAP.Requests.SetInstructionBreakpoints.
            Instruction_Breakpoint_DAP_Request (Self), Client);
@@ -59,79 +56,12 @@ package body DAP.Modules.Breakpoint_Managers.SetInstructionBreakpoints is
       Result      : in out DAP.Tools.SetInstructionBreakpointsResponse;
       New_Request : in out DAP_Request_Access)
    is
-      use DAP.Tools;
-
-      Actual  : Breakpoint_Vectors.Vector;
-      Data    : Breakpoint_Data;
-      Enabled : Breakpoint_Vectors.Vector;
-      Updated : Boolean;
+      pragma Unreferenced (New_Request);
    begin
-      New_Request := null;
-
-      case Self.Action is
-         when Delete | Disable | Sync =>
-            --  Do nothing
-            null;
-
-         when Init =>
-            for Data of Self.Sent loop
-               Self.Manager.Send_Commands (Data);
-            end loop;
-
-         when Add =>
-            if not Self.Sent.Is_Empty then
-               Data := Self.Sent.Last_Element;
-               Data.Locations := Convert
-                 (Self.Kernel,
-                  Result.a_body.breakpoints
-                    (Length (Result.a_body.breakpoints))).Locations;
-               Data.Num := Data.Locations.First_Element.Num;
-
-               Self.Manager.Holder.Added
-                 (Data    => Data,
-                  Changed => Enabled,
-                  Check   => False,
-                  Update  => Updated);
-
-               if Updated then
-                  New_Request := Self.Manager.Send_Addresses (Enabled, Sync);
-               else
-                  Self.Manager.Send_Commands (Data);
-               end if;
-
-               GPS.Kernel.Hooks.Debugger_Breakpoint_Added_Hook.Run
-                 (Kernel   => Self.Kernel,
-                  Debugger => Client.Get_Visual,
-                  Id       => Integer (Data.Num));
-            end if;
-
-         when Enable =>
-            for Index in 1 .. Length (Result.a_body.breakpoints) loop
-               Actual.Append
-                 (Convert (Self.Kernel, Result.a_body.breakpoints (Index)));
-            end loop;
-
-            Self.Manager.Holder.Address_Exception_Status_Changed
-              (Kind    => On_Address,
-               Actual  => Actual,
-               Enabled => Enabled,
-               Deleted => Updated);
-
-            if Updated then
-               --  Update breakpoints after deleting (pending) bps
-               New_Request := Self.Manager.Send_Addresses
-                 (Self.Manager.Holder.Get_For (On_Address), Sync);
-            end if;
-
-            --  Set commands for the enabled bps
-            Self.Manager.Send_Commands (Enabled);
-      end case;
-
-      Self.Manager.Show_Breakpoints;
-      GPS.Kernel.Hooks.Debugger_Breakpoints_Changed_Hook.Run
-        (Self.Kernel, Self.Manager.Client.Get_Visual);
-
-      Self.Manager.Dec_Response (Self.Action);
+      Self.Manager.On_Breakpoint_Request_Response
+        (Client          => Client,
+         New_Breakpoints => Result.a_body.breakpoints,
+         Old_Breakpoints => Self.Breakpoints);
    end On_Result_Message;
 
 end DAP.Modules.Breakpoint_Managers.SetInstructionBreakpoints;

@@ -16,6 +16,7 @@
 ------------------------------------------------------------------------------
 
 with VSS.Strings;
+with DAP.Requests;                        use DAP.Requests;
 with DAP.Requests.SetFunctionBreakpoints;
 
 private package DAP.Modules.Breakpoint_Managers.SetFunctionBreakpoints is
@@ -23,12 +24,14 @@ private package DAP.Modules.Breakpoint_Managers.SetFunctionBreakpoints is
    type Function_Breakpoint_Request is
      new DAP.Requests.SetFunctionBreakpoints.Function_Breakpoint_DAP_Request
    with record
-      Manager : DAP_Client_Breakpoint_Manager_Access;
-      Action  : Action_Kind;
-      Sent    : Breakpoint_Vectors.Vector;
-      Last    : Boolean := False;
-   end record;
+      Manager     : DAP_Client_Breakpoint_Manager_Access;
+      --  The breakpoints' manager that created the request.
 
+      Breakpoints : Breakpoint_Index_Lists.List;
+      --  The indexes of the breakpoints we want to send in the manager's
+      --  holder. Used to replace breakpoints once we receive the request's
+      --  response.
+   end record;
    type Function_Breakpoint_Request_Access is
      access all Function_Breakpoint_Request;
 
