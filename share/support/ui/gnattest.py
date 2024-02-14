@@ -445,7 +445,7 @@ def build_instr_harness_workflow():
     yield status
 
 
-def start_fuzz(task, corpus_dir, fuzz_dir, force=False):
+def start_fuzz(task, corpus_dir, fuzz_dir, subp_sloc, force=False):
     """The 'gnatfuzz fuzz' workflow"""
     # Move away the previous fuzzing session dir
 
@@ -464,18 +464,24 @@ def start_fuzz(task, corpus_dir, fuzz_dir, force=False):
     ]
 
     p = TargetWrapper("gnattest fuzz")
+
+    # Do not check for errors on the gnatfuzz fuzz execution, it could have
+    # been manually interrupted.
     yield p.wait_on_execute(extra_args=args, force=force)
-    cmd = [
-        "gnattest",
-        "-P",
-        get_user_project_file(),
-    ]
-    p = ProcessWrapper(cmd, spawn_console="")
-    status, output = yield p.wait_until_terminate()
-    if status != 0:
-        GPS.console().write(
-            "Failed to run: " + ' '.join(cmd) + "\n"
-        )
+
+    p = TargetWrapper("GNATtest minimization")
+    r = yield p.wait_on_execute(
+        extra_args=[f"--minimization-filter={subp_sloc}",
+                    f"-P{get_user_project_file()}"],
+        force=force
+    )
+    if r != 0:
+        GPS.Console().write("Failed to re-generate harness")
+    else:
+
+        # The test mapping may have changed after minimization, so recompute
+        # the project view.
+        GPS.Project.recompute()
 
 
 def is_fuzz_running():
@@ -740,7 +746,7 @@ def fuzz_subp_workflow():
     # way to do that.
     force = bool(os.environ.get('GS_TESTSUITE_RUN'))
     p = TargetWrapper("gnattest gnatfuzz generate")
-    yield p.wait_on_execute(
+    r = yield p.wait_on_execute(
         extra_args=[
             "-P",
             get_user_project_file(),
@@ -753,6 +759,12 @@ def fuzz_subp_workflow():
         ],
         force=force,
     )
+    if r != 0:
+        GPS.Console("Messages").write(
+            '"fuzz generate" execution failed',
+            mode="error"
+        )
+        return
 
     # Now onto fuzzing: execute the GNATfuzz fuzz workflow. Run it in a
     # dedicated background task: the user will be able to stop it when clicking
@@ -761,6 +773,7 @@ def fuzz_subp_workflow():
     workflows.task_workflow(
         "fuzz" + function_hash, start_fuzz, False,
         corpus_dir=corpus_dir, fuzz_dir=fuzz_dir,
+        subp_sloc=f"{local_file_basename}:{line}",
         force=force,
     )
 
@@ -1032,6 +1045,22 @@ XML = r"""<?xml version="1.0" ?>
              switch="--validate-type-extensions"
              tip="Enables substitution check: run all tests from all """ \
     """parents in order to check substitutability." />
+      <check label="generated tests minimization (beta)."
+             line="1"  column="2"
+             switch="--minimize"
+             tip="Enable testsuite minimization for generated tests (beta)" />
+      <field label="minimization filter (beta)"
+             line="1" column="1"
+             switch="--minimization-filter"
+             separator="="
+             tip="Restrict minimization to the specified subprogram, """ \
+    """designated by [simple filename]:[line]. (beta)" />
+      <field label="Coverage level for minimization (beta)"
+             line="1" column="1"
+             switch="--cov-level"
+             separator="="
+             tip="Coverage level to be used as guide for test """ \
+    """minimization (beta)" />
     </switches>
   </target-model>
 
@@ -1088,6 +1117,41 @@ XML = r"""<?xml version="1.0" ?>
         default="on"
         tip="hide passed tests from test river output"/>
 
+    </switches>
+  </target-model>
+
+  <!-- This is a model to re-generate a simple harness, with testsuite
+       minimization.
+       It is meant as an internal target, not exposed to the user, and should
+       only be called by the start/stop fuzzing subprogram workflow defined
+       above.
+  -->
+  <target-model name="gnattest_min" category="">
+    <description> "Re-generate a test harness, with minimization (beta)"</description>
+    <is-run>FALSE</is-run>
+    <command-line>
+      <arg>%python(gnattest.get_gnattest_exe())</arg>
+      <arg>%python(gnattest.get_target_arg())</arg>
+      <arg>%python(gnattest.get_runtime_arg())</arg>
+      <arg>-dd</arg>
+      <arg>%X</arg>
+      <arg>--minimize</arg>
+    </command-line>
+    <iconname>gps-build-all-symbolic</iconname>
+    <switches command="gnattest" columns="2" lines="1">
+      <title column="1" line="1">String switches</title>
+      <title column="2" line="1">Other switches</title>
+        <field label="Coverage Level (optional)"
+             line="1"  column="1"
+             switch="--cov-level"
+             separator="="
+             as-directory="false"
+             tip="Specify the coverage level to be used for minimization" />
+        <check label="disable testsuite minimization for generated testcases"
+            line="1"  column="2"
+            switch="--no-minimize"
+            tip="Do not minimize the testsuite according to the coverage """ \
+        """level specified in --cov-level, or in the project file." />
     </switches>
   </target-model>
 
@@ -1172,6 +1236,23 @@ XML = r"""<?xml version="1.0" ?>
       <arg>--passed-tests=hide</arg>
     </command-line>
     <iconname>gps-gnattest-run</iconname>
+  </target>
+
+  <!-- Internal target, see comment for the gnattest_min target model -->
+  <target model="gnattest_min" category="_Project_"
+          name="GNATtest minimization">
+    <read-only>TRUE</read-only>
+    <visible>FALSE</visible>
+    <in-menu>FALSE</in-menu>
+    <launch-mode>MANUALLY_WITH_DIALOG</launch-mode>
+    <command-line>
+      <arg>%python(gnattest.get_gnattest_exe())</arg>
+      <arg>%python(gnattest.get_target_arg())</arg>
+      <arg>%python(gnattest.get_runtime_arg())</arg>
+      <arg>-dd</arg>
+      <arg>%X</arg>
+      <arg>--minimize</arg>
+    </command-line>
   </target>
 
 </gnattest>
