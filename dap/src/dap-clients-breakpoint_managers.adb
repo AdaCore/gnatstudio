@@ -436,9 +436,40 @@ package body DAP.Clients.Breakpoint_Managers is
      (Self    : not null access Breakpoint_Manager_Type;
       Address : Address_Type)
    is
-   null;
-   --  TODO: implement
+      Indexes_To_Remove : Breakpoint_Index_Lists.List;
+      Address_Breakpoints : constant Breakpoint_Index_Lists.List :=
+        Self.Holder.Get_For_Kind (On_Address);
+      Data                : Breakpoint_Data;
+      Sync_Data           : constant Synchonization_Data :=
+        Synchonization_Data'
+          (Files_To_Sync     => <>,
+           Sync_Functions    => False,
+           Sync_Exceptions   => False,
+           Sync_Instructions => True);
+   begin
+      --  TODO: doc
+      for Idx of Address_Breakpoints loop
+         Data := Self.Holder.Get_Breakpoint_From_Index (Idx);
 
+         if Data.Address = Address then
+            Indexes_To_Remove.Append (Idx);
+         end if;
+      end loop;
+
+      Self.Holder.Delete (Indexes => Indexes_To_Remove);
+
+      if Indexes_To_Remove.Is_Empty then
+         Self.Holder.Append
+           (Breakpoint_Data'
+              (Kind       => On_Address,
+               Num        => 0,
+               Address    => Address,
+               Executable => Self.Client.Get_Executable,
+               others     => <>));
+      end if;
+
+      Self.Synchronize_Breakpoints (Sync_Data);
+   end Toggle_Instruction_Breakpoint;
    ---------------------
    -- Get_Breakpoints --
    ---------------------

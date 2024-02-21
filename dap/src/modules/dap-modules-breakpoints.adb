@@ -235,6 +235,21 @@ package body DAP.Modules.Breakpoints is
       end if;
    end Get_Breakpoints;
 
+   -------------------------------
+   -- Get_Breakpoint_From_Index --
+   -------------------------------
+
+   function Get_Breakpoint_From_Index
+     (Self : Breakpoint_Holder;
+      Idx  : Positive) return Breakpoint_Data is
+   begin
+      if Idx in Self.Vector.First_Index .. Self.Vector.Last_Index then
+         return Self.Vector (Idx);
+      else
+         return Empty_Breakpoint_Data;
+      end if;
+   end Get_Breakpoint_From_Index;
+
    ---------------------
    -- Get_Breakpoints --
    ---------------------

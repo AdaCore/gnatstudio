@@ -136,6 +136,11 @@ package DAP.Modules.Breakpoints is
    --  Return all the breakpoints at the given indexes, or all the holder's
    --  breakpoints if no indexes are specified.
 
+   function Get_Breakpoint_From_Index
+     (Self : Breakpoint_Holder;
+      Idx  : Positive) return Breakpoint_Data;
+   --  TODO: doc
+
    function Get_Breakpoints
      (Self       : Breakpoint_Holder;
       Executable : Virtual_File)
