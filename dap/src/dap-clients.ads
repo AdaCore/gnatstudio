@@ -34,23 +34,20 @@ with Glib;
 
 with GPS.Kernel;
 with GPS.Debuggers;
-with GPS.Markers;
 
 with LSP.Raw_Clients;
 
-with DAP.Modules.Breakpoints;
 with DAP.Modules.Histories;
 with DAP.Requests;
 with DAP.Types;                  use DAP.Types;
 with DAP.Tools;
 limited with DAP.Clients.Stack_Trace;
+limited with DAP.Clients.Breakpoint_Managers;
 
-with Basic_Types;                use Basic_Types;
 with Generic_Views;
 
 private with Ada.Containers.Hashed_Maps;
 private with Ada.Containers.Hashed_Sets;
-private with DAP.Modules.Breakpoint_Managers;
 
 package DAP.Clients is
 
@@ -163,82 +160,10 @@ package DAP.Clients is
      (Self : DAP_Client) return Debuggee_Start_Method_Kind;
    --  Return the method used to start the debuggee by the given DAP client.
 
-   function Has_Breakpoint
-     (Self   : DAP_Client;
-      Marker : GPS.Markers.Location_Marker)
-      return Boolean;
-   --  Return True if some breakpoint is set for the location
-
-   procedure Break
-     (Self : in out DAP_Client;
-      Data : DAP.Modules.Breakpoints.Breakpoint_Data);
-
-   procedure Break_Source
-     (Self      : in out DAP_Client;
-      File      : GNATCOLL.VFS.Virtual_File;
-      Line      : Editable_Line_Type;
-      Temporary : Boolean := False;
-      Condition : VSS.Strings.Virtual_String :=
-        VSS.Strings.Empty_Virtual_String);
-   --  Add a breakpoint for the file/line
-
-   procedure Break_Subprogram
-     (Self       : in out DAP_Client;
-      Subprogram : String;
-      Temporary  : Boolean := False;
-      Condition  : VSS.Strings.Virtual_String :=
-        VSS.Strings.Empty_Virtual_String);
-   --  Add a breakpoint for the subprogram
-
-   procedure Break_Exception
-     (Self      : in out DAP_Client;
-      Name      : String;
-      Unhandled : Boolean := False;
-      Temporary : Boolean := False);
-   --  Add a breakpoint for the exception
-
-   procedure Break_Address
-     (Self      : in out DAP_Client;
-      Address   : Address_Type;
-      Temporary : Boolean := False;
-      Condition : VSS.Strings.Virtual_String :=
-        VSS.Strings.Empty_Virtual_String);
-   --  Add a breakpoint for the address
-
-   procedure Toggle_Instruction_Breakpoint
-     (Self    : in out DAP_Client;
-      Address : Address_Type);
-   --  Add/delete a breakpoint for the address
-
-   procedure Remove_Breakpoints
-     (Self : in out DAP_Client;
-      Ids  : DAP.Types.Breakpoint_Identifier_Lists.List);
-   --  TODO: doc
-
-   procedure Remove_Breakpoints
-     (Self     : in out DAP_Client;
-      Indexes  : DAP.Types.Breakpoint_Index_Lists.List);
-   --  TODO: doc
-
-   procedure Remove_All_Breakpoints (Self : in out DAP_Client);
-   --  Remove all breakpoints set for this DAP client
-
-   procedure Remove_Breakpoint_At
-     (Self : in out DAP_Client;
-      File : GNATCOLL.VFS.Virtual_File;
-      Line : Editable_Line_Type);
-   --  Remove breakpoint from the file/line
-
-   procedure Set_Breakpoints_State
-     (Self    : in out DAP_Client;
-      Indexes : Breakpoint_Index_Lists.List;
-      State   : Boolean);
-   --  Enable/disable breakpoints
-
-   function Get_Breakpoints
-     (Self : DAP_Client)
-      return DAP.Modules.Breakpoints.Breakpoint_Vectors.Vector;
-   --  Returns the list of breakpoints
+   function Get_Breakpoints_Manager
+     (Self : DAP_Client) return
+     DAP.Clients.Breakpoint_Managers.Breakpoint_Manager_Access;
+   --  Return the debugger's breakpoints' manager.
 
    function Get_Debugger_Console
      (Self : DAP_Client)
@@ -304,13 +229,6 @@ package DAP.Clients is
       return DAP_Visual_Debugger_Access;
    --  Return the visual debugger associated with the given DAP client
 
-   procedure Set_Breakpoint_Command
-     (Self    : in out DAP_Client;
-      Id      : Breakpoint_Identifier;
-      Command : VSS.Strings.Virtual_String);
-   --  Set a command that will be executed when reaching the breakpoint
-   --  designated by Id.
-
    procedure Set_Capabilities
      (Self         : in out DAP_Client;
       Capabilities : DAP.Tools.Optional_Capabilities);
@@ -327,8 +245,6 @@ package DAP.Clients is
       Is_Command : Boolean := False);
    --  Displays the message in the console. Highlight it and add to the
    --  history if Is_Command is True.
-
-   procedure Show_Breakpoints (Self : DAP_Client);
 
    function Get_Endian_Type (Self : in out DAP_Client) return Endian_Type;
    --  Reurn the debugee's endianness, if a debuggee has been
@@ -481,8 +397,8 @@ private
       --  The method that was used to start the current debugging session
 
       --  Modules --
-      Breakpoints      : DAP.Modules.Breakpoint_Managers.
-        DAP_Client_Breakpoint_Manager_Access;
+      Breakpoints      : access DAP.Clients.Breakpoint_Managers.
+        Breakpoint_Manager_Type'Class;
       Stack_Trace      : access DAP.Clients.Stack_Trace.Stack_Trace'Class;
 
       Command_History  : aliased String_History.History_List;

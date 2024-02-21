@@ -63,6 +63,7 @@ with Commands.Interactive;       use Commands.Interactive;
 with Debugger_Pixmaps;
 
 with DAP.Clients;                use DAP.Clients;
+with DAP.Clients.Breakpoint_Managers;
 with DAP.Clients.Stack_Trace;    use DAP.Clients.Stack_Trace;
 with DAP.Tools;                  use DAP.Tools;
 with DAP.Types;                  use DAP.Types;
@@ -822,7 +823,7 @@ package body DAP.Views.Assembly is
          --  Highlight breakpoint lines
 
       Columns (1) := BG_Color_Column;
-      for Data of Client.Get_Breakpoints loop
+      for Data of Client.Get_Breakpoints_Manager.Get_Breakpoints loop
          if Data.Kind = On_Line then
             Iter_From_Address
               (View    => View,
@@ -1487,7 +1488,8 @@ package body DAP.Views.Assembly is
             return Commands.Success;
          end if;
 
-         Client.Toggle_Instruction_Breakpoint (String_To_Address (Str));
+         Client.Get_Breakpoints_Manager.Toggle_Instruction_Breakpoint
+           (String_To_Address (Str));
       end;
 
       return Commands.Success;

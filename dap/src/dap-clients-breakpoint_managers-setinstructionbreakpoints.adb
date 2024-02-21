@@ -15,9 +15,7 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with DAP.Clients;
-
-package body DAP.Modules.Breakpoint_Managers.SetInstructionBreakpoints is
+package body DAP.Clients.Breakpoint_Managers.SetInstructionBreakpoints is
 
    ----------------------
    -- On_Error_Message --
@@ -64,4 +62,4 @@ package body DAP.Modules.Breakpoint_Managers.SetInstructionBreakpoints is
          Old_Breakpoints => Self.Breakpoints);
    end On_Result_Message;
 
-end DAP.Modules.Breakpoint_Managers.SetInstructionBreakpoints;
+end DAP.Clients.Breakpoint_Managers.SetInstructionBreakpoints;

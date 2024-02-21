@@ -15,22 +15,20 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with DAP.Clients;
-
-package body DAP.Modules.Breakpoint_Managers.SetBreakpoints is
+package body DAP.Clients.Breakpoint_Managers.SetFunctionBreakpoints is
 
    ----------------------
    -- On_Error_Message --
    ----------------------
 
    overriding procedure On_Error_Message
-     (Self    : in out Source_Line_Request;
+     (Self    : in out Function_Breakpoint_Request;
       Client  : not null access DAP.Clients.DAP_Client'Class;
       Message : VSS.Strings.Virtual_String) is
    begin
-      DAP.Requests.SetBreakpoints.On_Error_Message
-        (DAP.Requests.SetBreakpoints.Breakpoint_DAP_Request (Self),
-         Client, Message);
+      DAP.Requests.SetFunctionBreakpoints.On_Error_Message
+        (DAP.Requests.SetFunctionBreakpoints.
+           Function_Breakpoint_DAP_Request (Self), Client, Message);
    end On_Error_Message;
 
    -----------------
@@ -38,11 +36,12 @@ package body DAP.Modules.Breakpoint_Managers.SetBreakpoints is
    -----------------
 
    overriding procedure On_Rejected
-     (Self   : in out Source_Line_Request;
+     (Self   : in out Function_Breakpoint_Request;
       Client : not null access DAP.Clients.DAP_Client'Class) is
    begin
-      DAP.Requests.SetBreakpoints.On_Rejected
-        (DAP.Requests.SetBreakpoints.Breakpoint_DAP_Request (Self), Client);
+      DAP.Requests.SetFunctionBreakpoints.On_Rejected
+        (DAP.Requests.SetFunctionBreakpoints.
+           Function_Breakpoint_DAP_Request (Self), Client);
    end On_Rejected;
 
    -----------------------
@@ -50,9 +49,9 @@ package body DAP.Modules.Breakpoint_Managers.SetBreakpoints is
    -----------------------
 
    overriding procedure On_Result_Message
-     (Self        : in out Source_Line_Request;
+     (Self        : in out Function_Breakpoint_Request;
       Client      : not null access DAP.Clients.DAP_Client'Class;
-      Result      : in out DAP.Tools.SetBreakpointsResponse;
+      Result      : in out DAP.Tools.SetFunctionBreakpointsResponse;
       New_Request : in out DAP_Request_Access)
    is
       pragma Unreferenced (New_Request);
@@ -60,8 +59,7 @@ package body DAP.Modules.Breakpoint_Managers.SetBreakpoints is
       Self.Manager.On_Breakpoint_Request_Response
         (Client          => Client,
          New_Breakpoints => Result.a_body.breakpoints,
-         Old_Breakpoints => Self.Breakpoints,
-         File            => Self.File);
+         Old_Breakpoints => Self.Breakpoints);
    end On_Result_Message;
 
-end DAP.Modules.Breakpoint_Managers.SetBreakpoints;
+end DAP.Clients.Breakpoint_Managers.SetFunctionBreakpoints;

@@ -32,6 +32,7 @@ with GPS.Kernel.Scripts;       use GPS.Kernel.Scripts;
 
 with DAP.Types;                use DAP.Types;
 with DAP.Clients;              use DAP.Clients;
+with DAP.Clients.Breakpoint_Managers;
 with DAP.Clients.Stack_Trace;  use DAP.Clients.Stack_Trace;
 with DAP.Module;
 with DAP.Modules.Breakpoints;
@@ -239,7 +240,7 @@ package body DAP.Modules.Scripts is
          Visual := DAP_Visual_Debugger_Access
            (Glib.Object.GObject'(Get_Data (Inst)));
          Data.Set_Return_Value_As_List;
-         for B of Visual.Client.Get_Breakpoints loop
+         for B of Visual.Client.Get_Breakpoints_Manager.Get_Breakpoints loop
             Data.Set_Return_Value
               (Create_Debugger_Breakpoint (Data.Get_Script, B));
          end loop;

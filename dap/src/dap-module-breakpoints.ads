@@ -28,15 +28,23 @@ package DAP.Module.Breakpoints is
 
    procedure Register_Module
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class);
+   --  TODO: doc
 
    function Get_Persistent_Breakpoints return Breakpoint_Vectors.Vector;
+   --  TODO: doc
 
    function Get_Persistent_For_Executable
      (Executable : Virtual_File) return Breakpoint_Vectors.Vector;
+      --  TODO: doc
+
+   function Get_Breakpoint_From_Id
+     (Id : Breakpoint_Identifier) return Breakpoint_Data;
+   --  TODO: doc
 
    procedure Show_Breakpoint
      (Kernel  : not null access Kernel_Handle_Record'Class;
       B       : Breakpoint_Data);
+   --  TODO: doc
 
    procedure Show_Breakpoints_In_All_Editors
      (Kernel : not null access Kernel_Handle_Record'Class);

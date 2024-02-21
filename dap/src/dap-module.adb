@@ -55,6 +55,7 @@ with DAP.Modules.Contexts;
 with DAP.Modules.Preferences;
 with DAP.Modules.Scripts;
 with DAP.Clients.Attach;
+with DAP.Clients.Breakpoint_Managers;
 with DAP.Clients.Evaluate;
 with DAP.Clients.Disconnect;
 with DAP.Clients.Next;
@@ -1347,7 +1348,7 @@ package body DAP.Module is
          GPS.Kernel.Hooks.Debugger_Breakpoints_Changed_Hook.Run
            (Current.Kernel, Current.Get_Visual);
 
-         Current.Show_Breakpoints;
+         Current.Get_Breakpoints_Manager.Show_Breakpoints;
       end if;
    end Set_Current_Debugger;
 

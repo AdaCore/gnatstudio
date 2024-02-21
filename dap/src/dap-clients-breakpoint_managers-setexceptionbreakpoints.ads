@@ -16,19 +16,17 @@
 ------------------------------------------------------------------------------
 
 with VSS.Strings;
-with DAP.Requests;                use DAP.Requests;
-with DAP.Requests.SetBreakpoints;
+with DAP.Requests;                         use DAP.Requests;
+with DAP.Requests.SetExceptionBreakpoints;
 
-private package DAP.Modules.Breakpoint_Managers.SetBreakpoints is
+private package DAP.Clients.Breakpoint_Managers.SetExceptionBreakpoints is
 
-   type Source_Line_Request is
-     new DAP.Requests.SetBreakpoints.Breakpoint_DAP_Request
+   type Exception_Breakpoint_Request is
+     new DAP.Requests.SetExceptionBreakpoints.
+       Exception_Breakpoints_DAP_Request
    with record
-      Manager     : DAP_Client_Breakpoint_Manager_Access;
+      Manager     : Breakpoint_Manager_Access;
       --  The breakpoints' manager that created the request.
-
-      File        : GNATCOLL.VFS.Virtual_File;
-      --  The file for which we are setting breakpoints.
 
       Breakpoints : Breakpoint_Index_Lists.List;
       --  The indexes of the breakpoints we want to send in the manager's
@@ -36,21 +34,22 @@ private package DAP.Modules.Breakpoint_Managers.SetBreakpoints is
       --  response.
    end record;
 
-   type Source_Line_Request_Access is access all Source_Line_Request;
+   type Exception_Breakpoint_Request_Access is
+     access all Exception_Breakpoint_Request;
 
    overriding procedure On_Result_Message
-     (Self        : in out Source_Line_Request;
+     (Self        : in out Exception_Breakpoint_Request;
       Client      : not null access DAP.Clients.DAP_Client'Class;
-      Result      : in out DAP.Tools.SetBreakpointsResponse;
+      Result      : in out DAP.Tools.SetExceptionBreakpointsResponse;
       New_Request : in out DAP_Request_Access);
 
    overriding procedure On_Rejected
-     (Self   : in out Source_Line_Request;
+     (Self   : in out Exception_Breakpoint_Request;
       Client : not null access DAP.Clients.DAP_Client'Class);
 
    overriding procedure On_Error_Message
-     (Self    : in out Source_Line_Request;
+     (Self    : in out Exception_Breakpoint_Request;
       Client  : not null access DAP.Clients.DAP_Client'Class;
       Message : VSS.Strings.Virtual_String);
 
-end DAP.Modules.Breakpoint_Managers.SetBreakpoints;
+end DAP.Clients.Breakpoint_Managers.SetExceptionBreakpoints;

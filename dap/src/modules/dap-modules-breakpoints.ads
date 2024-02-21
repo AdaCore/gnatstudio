@@ -142,7 +142,7 @@ package DAP.Modules.Breakpoints is
       return Breakpoint_Vectors.Vector;
    --  Return breakpoints for executable and unassigned
 
-   function Get_Breakpoint_By_Id
+   function Get_Breakpoint_From_Id
      (Self : Breakpoint_Holder;
       Id   : Breakpoint_Identifier) return Breakpoint_Data;
    --  TODO: doc

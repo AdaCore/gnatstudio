@@ -16,30 +16,33 @@
 ------------------------------------------------------------------------------
 
 with Ada.Strings.Unbounded;        use Ada.Strings.Unbounded;
-
+with VSS.Characters;
+with VSS.Characters.Latin;
 with VSS.String_Vectors;
 with VSS.Strings.Conversions;
+with VSS.Strings.Cursors;
+with VSS.Strings.Cursors.Iterators.Characters;
 
 with DAP.Module;
 with DAP.Module.Breakpoints;
-with DAP.Clients;
 with GPS.Editors;                  use GPS.Editors;
 with GPS.Kernel;                   use GPS.Kernel;
 with GPS.Kernel.Hooks;
 
-with DAP.Modules.Breakpoint_Managers.SetBreakpoints;
-with DAP.Modules.Breakpoint_Managers.SetExceptionBreakpoints;
-with DAP.Modules.Breakpoint_Managers.SetFunctionBreakpoints;
-with DAP.Modules.Breakpoint_Managers.SetInstructionBreakpoints;
+with DAP.Clients.Breakpoint_Managers.SetBreakpoints;
+with DAP.Clients.Breakpoint_Managers.SetExceptionBreakpoints;
+with DAP.Clients.Breakpoint_Managers.SetFunctionBreakpoints;
+with DAP.Clients.Breakpoint_Managers.SetInstructionBreakpoints;
+with DAP.Clients.Evaluate;
 with DAP.Modules.Preferences;
 with DAP.Requests;                 use DAP.Requests;
 with DAP.Utils;                    use DAP.Utils;
 
-package body DAP.Modules.Breakpoint_Managers is
+package body DAP.Clients.Breakpoint_Managers is
 
    type On_DAP_Request_Processed
    is new GPS.Kernel.Hooks.Dap_Message_Hooks_Function with record
-      Manager : DAP_Client_Breakpoint_Manager_Access;
+      Manager : Breakpoint_Manager_Access;
    end record;
 
    overriding procedure Execute
@@ -49,31 +52,31 @@ package body DAP.Modules.Breakpoint_Managers is
    --  TODO: doc
 
    function Create_Line_Breakpoints_Request
-     (Self    : not null access DAP_Client_Breakpoint_Manager'Class;
+     (Self    : not null access Breakpoint_Manager_Type'Class;
       File    : GNATCOLL.VFS.Virtual_File;
       Indexes : Breakpoint_Index_Lists.List) return DAP_Request_Access;
    --  Send a request for line breakpoints
 
    function Create_Subprogram_Breakpoints_Request
-     (Self         : not null access DAP_Client_Breakpoint_Manager'Class;
+     (Self         : not null access Breakpoint_Manager_Type'Class;
       Indexes      : Breakpoint_Index_Lists.List)
       return DAP_Request_Access;
    --  TODO: doc
 
    function Create_Address_Breakpoints_Request
-     (Self    : not null access DAP_Client_Breakpoint_Manager'Class;
+     (Self    : not null access Breakpoint_Manager_Type'Class;
       Indexes : Breakpoint_Index_Lists.List)
       return DAP_Request_Access;
    --  TODO: doc
 
    function Create_Exception_Breakpoints_Request
-     (Self    : not null access DAP_Client_Breakpoint_Manager'Class;
+     (Self    : not null access Breakpoint_Manager_Type'Class;
       Indexes : Breakpoint_Index_Lists.List)
       return DAP_Request_Access;
    --  TODO: doc
 
    procedure On_Initialized
-     (Self : not null access DAP_Client_Breakpoint_Manager'Class);
+     (Self : not null access Breakpoint_Manager_Type'Class);
    --  TODO: doc
 
    procedure Update_Sychronization_Data
@@ -162,7 +165,7 @@ package body DAP.Modules.Breakpoint_Managers is
    ------------------------------------
 
    procedure On_Breakpoint_Request_Response
-     (Self            : not null access DAP_Client_Breakpoint_Manager;
+     (Self            : not null access Breakpoint_Manager_Type;
       Client          : not null access DAP.Clients.DAP_Client'Class;
       New_Breakpoints : DAP.Tools.Breakpoint_Vector;
       Old_Breakpoints : Breakpoint_Index_Lists.List;
@@ -190,7 +193,7 @@ package body DAP.Modules.Breakpoint_Managers is
          Self.Holder.Replace
            (Data => Data,
             Idx  => Cursor.Element);
-         Send_Commands (DAP_Client_Breakpoint_Manager_Access (Self), Data);
+         Send_Commands (Breakpoint_Manager_Access (Self), Data);
          Cursor.Next;
       end loop;
 
@@ -238,7 +241,8 @@ package body DAP.Modules.Breakpoint_Managers is
    -- Initialize --
    ----------------
 
-   procedure Initialize (Self : DAP_Client_Breakpoint_Manager_Access)
+   procedure Initialize
+     (Self : not null access Breakpoint_Manager_Type)
    is
       Map     : Breakpoint_Hash_Maps.Map;
       Indexes : Breakpoint_Index_Lists.List;
@@ -272,7 +276,8 @@ package body DAP.Modules.Breakpoint_Managers is
          --  TODO: doc
          GPS.Kernel.Hooks.Dap_Response_Processed_Hook.Add
            (new On_DAP_Request_Processed'
-              (Hook_Function with Manager => Self));
+              (Hook_Function with
+               Manager => Breakpoint_Manager_Access (Self)));
 
          Map := Self.Holder.Get_For_Files;
 
@@ -311,7 +316,7 @@ package body DAP.Modules.Breakpoint_Managers is
    -----------
 
    procedure Break
-     (Self : DAP_Client_Breakpoint_Manager_Access;
+     (Self : not null access Breakpoint_Manager_Type;
       Data : Breakpoint_Data)
    is
       Sync_Data : Synchonization_Data;
@@ -330,7 +335,7 @@ package body DAP.Modules.Breakpoint_Managers is
    ---------------------
 
    procedure Break_Exception
-     (Self      : DAP_Client_Breakpoint_Manager_Access;
+     (Self      : not null access Breakpoint_Manager_Type;
       Name      : String;
       Unhandled : Boolean := False;
       Temporary : Boolean := False)
@@ -352,7 +357,7 @@ package body DAP.Modules.Breakpoint_Managers is
    ------------------
 
    procedure Break_Source
-     (Self      : DAP_Client_Breakpoint_Manager_Access;
+     (Self      : not null access Breakpoint_Manager_Type;
       File      : GNATCOLL.VFS.Virtual_File;
       Line      : Editable_Line_Type;
       Temporary : Boolean := False;
@@ -382,7 +387,7 @@ package body DAP.Modules.Breakpoint_Managers is
    ----------------------
 
    procedure Break_Subprogram
-     (Self       : DAP_Client_Breakpoint_Manager_Access;
+     (Self       : not null access Breakpoint_Manager_Type;
       Subprogram : String;
       Temporary  : Boolean := False;
       Condition  : VSS.Strings.Virtual_String :=
@@ -405,7 +410,7 @@ package body DAP.Modules.Breakpoint_Managers is
    -------------------
 
    procedure Break_Address
-     (Self      : DAP_Client_Breakpoint_Manager_Access;
+     (Self      : not null access Breakpoint_Manager_Type;
       Address   : Address_Type;
       Temporary : Boolean := False;
       Condition : VSS.Strings.Virtual_String :=
@@ -428,7 +433,7 @@ package body DAP.Modules.Breakpoint_Managers is
    -----------------------------------
 
    procedure Toggle_Instruction_Breakpoint
-     (Self    : DAP_Client_Breakpoint_Manager_Access;
+     (Self    : not null access Breakpoint_Manager_Type;
       Address : Address_Type)
    is
    null;
@@ -439,18 +444,29 @@ package body DAP.Modules.Breakpoint_Managers is
    ---------------------
 
    function Get_Breakpoints
-     (Self : DAP_Client_Breakpoint_Manager_Access)
+     (Self : Breakpoint_Manager_Access)
       return DAP.Modules.Breakpoints.Breakpoint_Vectors.Vector is
    begin
       return Self.Holder.Get_Breakpoints;
    end Get_Breakpoints;
+
+   ----------------------------
+   -- Get_Breakpoint_From_Id --
+   ----------------------------
+
+   function Get_Breakpoint_From_Id
+     (Self : not null access Breakpoint_Manager_Type;
+      Id   : Breakpoint_Identifier) return Breakpoint_Data is
+   begin
+      return Self.Holder.Get_Breakpoint_From_Id (Id);
+   end Get_Breakpoint_From_Id;
 
    --------------------
    -- Has_Breakpoint --
    --------------------
 
    function Has_Breakpoint
-     (Self   : DAP_Client_Breakpoint_Manager_Access;
+     (Self   : not null access Breakpoint_Manager_Type;
       Marker : Location_Marker)
       return Boolean is
    begin
@@ -462,7 +478,7 @@ package body DAP.Modules.Breakpoint_Managers is
    ----------------------
 
    procedure Show_Breakpoints
-     (Self : in out DAP_Client_Breakpoint_Manager) is
+     (Self : in out Breakpoint_Manager_Type) is
    begin
       DAP.Module.Breakpoints.Hide_Breakpoints (Self.Kernel);
 
@@ -472,16 +488,45 @@ package body DAP.Modules.Breakpoint_Managers is
       end loop;
    end Show_Breakpoints;
 
+   ----------------------------
+   -- Set_Breakpoint_Command --
+   ----------------------------
+
+   procedure Set_Breakpoint_Command
+     (Self    : not null access Breakpoint_Manager_Type;
+      Id      : Breakpoint_Identifier;
+      Command : VSS.Strings.Virtual_String)
+   is
+      use VSS.Characters;
+
+      Cmd : VSS.Strings.Virtual_String;
+   begin
+      Cmd := VSS.Strings.Conversions.To_Virtual_String
+        ("command" & Breakpoint_Identifier'Image (Id)
+         & ASCII.LF) & Command;
+
+      if not Command.Is_Empty
+        and then VSS.Strings.Cursors.Iterators.Characters.Element
+          (Command.At_Last_Character) /= VSS.Characters.Latin.Line_Feed
+      then
+         Cmd.Append (VSS.Characters.Latin.Line_Feed);
+      end if;
+      Cmd.Append (VSS.Strings.Conversions.To_Virtual_String ("end"));
+
+      DAP.Clients.Evaluate.Send_Evaluate_Command_Request
+        (Self.Client.all, Cmd);
+   end Set_Breakpoint_Command;
+
    -------------------
    -- Send_Commands --
    -------------------
 
    procedure Send_Commands
-     (Self : DAP_Client_Breakpoint_Manager_Access;
+     (Self : not null access Breakpoint_Manager_Type;
       Data : DAP.Modules.Breakpoints.Breakpoint_Data) is
    begin
       if not Data.Commands.Is_Empty then
-         Self.Client.Set_Breakpoint_Command (Data.Num, Data.Commands);
+         Self.Set_Breakpoint_Command (Data.Num, Data.Commands);
       end if;
    end Send_Commands;
 
@@ -490,7 +535,7 @@ package body DAP.Modules.Breakpoint_Managers is
    -------------------
 
    procedure Send_Commands
-     (Self : DAP_Client_Breakpoint_Manager_Access;
+     (Self : not null access Breakpoint_Manager_Type;
       Data : Breakpoint_Vectors.Vector) is
    begin
       for Bp of Data loop
@@ -503,7 +548,7 @@ package body DAP.Modules.Breakpoint_Managers is
    -------------------------------------
 
    function Create_Line_Breakpoints_Request
-     (Self    : not null access DAP_Client_Breakpoint_Manager'Class;
+     (Self    : not null access Breakpoint_Manager_Type'Class;
       File    : GNATCOLL.VFS.Virtual_File;
       Indexes : Breakpoint_Index_Lists.List) return DAP_Request_Access
    is
@@ -511,7 +556,7 @@ package body DAP.Modules.Breakpoint_Managers is
         new SetBreakpoints.Source_Line_Request (Self.Kernel);
       Sb  : DAP.Tools.SourceBreakpoint;
    begin
-      Req.Manager     := DAP_Client_Breakpoint_Manager_Access (Self);
+      Req.Manager     := Breakpoint_Manager_Access (Self);
       Req.File        := File;
       Req.Breakpoints := Indexes;
 
@@ -544,7 +589,7 @@ package body DAP.Modules.Breakpoint_Managers is
    ---------------
 
    procedure Send_Line
-     (Self    : not null access DAP_Client_Breakpoint_Manager;
+     (Self    : not null access Breakpoint_Manager_Type;
       Indexes : Breakpoint_Index_Lists.List;
       Kind    : Breakpoint_Kind;
       File    : GNATCOLL.VFS.Virtual_File := No_File)
@@ -570,7 +615,7 @@ package body DAP.Modules.Breakpoint_Managers is
    -------------------------------------------
 
    function Create_Subprogram_Breakpoints_Request
-     (Self    : not null access DAP_Client_Breakpoint_Manager'Class;
+     (Self    : not null access Breakpoint_Manager_Type'Class;
       Indexes : Breakpoint_Index_Lists.List)
       return DAP_Request_Access
    is
@@ -579,7 +624,7 @@ package body DAP.Modules.Breakpoint_Managers is
         new SetFunctionBreakpoints.Function_Breakpoint_Request (Self.Kernel);
       Fb   : DAP.Tools.FunctionBreakpoint;
    begin
-      Req.Manager     := DAP_Client_Breakpoint_Manager_Access (Self);
+      Req.Manager     := Breakpoint_Manager_Access (Self);
       Req.Breakpoints := Indexes;
 
       for Data of Self.Holder.Get_Breakpoints (Indexes => Indexes) loop
@@ -599,7 +644,7 @@ package body DAP.Modules.Breakpoint_Managers is
    ------------------------------------------
 
    function Create_Exception_Breakpoints_Request
-     (Self    : not null access DAP_Client_Breakpoint_Manager'Class;
+     (Self    : not null access Breakpoint_Manager_Type'Class;
       Indexes : Breakpoint_Index_Lists.List)
       return DAP_Request_Access
    is
@@ -607,7 +652,7 @@ package body DAP.Modules.Breakpoint_Managers is
         Exception_Breakpoint_Request_Access :=
         new SetExceptionBreakpoints.Exception_Breakpoint_Request (Self.Kernel);
    begin
-      Req.Manager     := DAP_Client_Breakpoint_Manager_Access (Self);
+      Req.Manager     := Breakpoint_Manager_Access (Self);
       Req.Breakpoints := Indexes;
 
       for Data of Self.Holder.Get_Breakpoints (Indexes => Indexes) loop
@@ -641,7 +686,7 @@ package body DAP.Modules.Breakpoint_Managers is
    --------------------
 
    procedure On_Initialized
-     (Self : not null access DAP_Client_Breakpoint_Manager'Class) is
+     (Self : not null access Breakpoint_Manager_Type'Class) is
    begin
       Self.Show_Breakpoints;
 
@@ -656,7 +701,7 @@ package body DAP.Modules.Breakpoint_Managers is
    ----------------------------------------
 
    function Create_Address_Breakpoints_Request
-     (Self    : not null access DAP_Client_Breakpoint_Manager'Class;
+     (Self    : not null access Breakpoint_Manager_Type'Class;
       Indexes : Breakpoint_Index_Lists.List)
       return DAP_Request_Access
    is
@@ -666,7 +711,7 @@ package body DAP.Modules.Breakpoint_Managers is
             (Self.Kernel);
       Fb  : DAP.Tools.InstructionBreakpoint;
    begin
-      Req.Manager     := DAP_Client_Breakpoint_Manager_Access (Self);
+      Req.Manager     := Breakpoint_Manager_Access (Self);
       Req.Breakpoints := Indexes;
 
       for Data of Self.Holder.Get_Breakpoints (Indexes => Indexes) loop
@@ -686,7 +731,7 @@ package body DAP.Modules.Breakpoint_Managers is
    ----------
 
    procedure Synchronize_Breakpoints
-     (Self      : not null access DAP_Client_Breakpoint_Manager;
+     (Self      : not null access Breakpoint_Manager_Type;
       Sync_Data : Synchonization_Data) is
    begin
       for File of Sync_Data.Files_To_Sync loop
@@ -720,7 +765,7 @@ package body DAP.Modules.Breakpoint_Managers is
    ---------------------------
 
    procedure Set_Breakpoints_State
-     (Self    : DAP_Client_Breakpoint_Manager_Access;
+     (Self    : not null access Breakpoint_Manager_Type;
       Indexes : Breakpoint_Index_Lists.List;
       State   : Boolean)
    is
@@ -742,7 +787,7 @@ package body DAP.Modules.Breakpoint_Managers is
    ----------------------
 
    procedure Set_Ignore_Count
-     (Self  : DAP_Client_Breakpoint_Manager_Access;
+     (Self  : not null access Breakpoint_Manager_Type;
       Id    : Breakpoint_Identifier;
       Count : Natural)
    is
@@ -750,7 +795,7 @@ package body DAP.Modules.Breakpoint_Managers is
    begin
       Update_Sychronization_Data
         (Data       => Sync_Data,
-         Breakpoint => Self.Holder.Get_Breakpoint_By_Id (Id));
+         Breakpoint => Self.Holder.Get_Breakpoint_From_Id (Id));
       Self.Holder.Set_Ignore_Count (Id, Count);
       Self.Synchronize_Breakpoints (Sync_Data);
    end Set_Ignore_Count;
@@ -760,7 +805,7 @@ package body DAP.Modules.Breakpoint_Managers is
    --------------------------
 
    procedure Remove_Breakpoint_At
-     (Self : DAP_Client_Breakpoint_Manager_Access;
+     (Self : not null access Breakpoint_Manager_Type;
       File : GNATCOLL.VFS.Virtual_File;
       Line : Editable_Line_Type)
    is
@@ -781,7 +826,7 @@ package body DAP.Modules.Breakpoint_Managers is
    ------------------------
 
    procedure Remove_Breakpoints
-     (Self    : DAP_Client_Breakpoint_Manager_Access;
+     (Self    : not null access Breakpoint_Manager_Type;
       Indexes : DAP.Types.Breakpoint_Index_Lists.List)
    is
       Removed_Breakpoints : constant Breakpoint_Vectors.Vector :=
@@ -807,7 +852,7 @@ package body DAP.Modules.Breakpoint_Managers is
    ------------------------
 
    procedure Remove_Breakpoints
-     (Self : DAP_Client_Breakpoint_Manager_Access;
+     (Self : not null access Breakpoint_Manager_Type;
       Ids  : DAP.Types.Breakpoint_Identifier_Lists.List)
    is
       Sync_Data : Synchonization_Data;
@@ -816,7 +861,7 @@ package body DAP.Modules.Breakpoint_Managers is
       for Id of Ids loop
          Update_Sychronization_Data
            (Data       => Sync_Data,
-            Breakpoint => Self.Holder.Get_Breakpoint_By_Id (Id));
+            Breakpoint => Self.Holder.Get_Breakpoint_From_Id (Id));
          Self.Holder.Delete (Id);
       end loop;
 
@@ -832,7 +877,7 @@ package body DAP.Modules.Breakpoint_Managers is
    ----------------------------
 
    procedure Remove_All_Breakpoints
-     (Self : DAP_Client_Breakpoint_Manager_Access)
+     (Self : not null access Breakpoint_Manager_Type)
    is
       use Breakpoint_Hash_Maps;
 
@@ -866,7 +911,7 @@ package body DAP.Modules.Breakpoint_Managers is
    -------------
 
    procedure Stopped
-     (Self         : DAP_Client_Breakpoint_Manager_Access;
+     (Self         : not null access Breakpoint_Manager_Type;
       Event        : in out DAP.Tools.StoppedEvent;
       Stopped_File : out GNATCOLL.VFS.Virtual_File;
       Stopped_Line : out Integer;
@@ -920,7 +965,7 @@ package body DAP.Modules.Breakpoint_Managers is
    -- Finalize --
    --------------
 
-   procedure Finalize (Self : DAP_Client_Breakpoint_Manager_Access) is
+   procedure Finalize (Self : not null access Breakpoint_Manager_Type) is
       use Breakpoint_Vectors;
    begin
       --  do not store breakpoints when we started debugging with no_executable
@@ -955,7 +1000,7 @@ package body DAP.Modules.Breakpoint_Managers is
    ---------------------
 
    procedure On_Notification
-     (Self  : DAP_Client_Breakpoint_Manager_Access;
+     (Self  : not null access Breakpoint_Manager_Type;
       Event : DAP.Tools.BreakpointEvent_body)
    is
       use DAP.Tools;
@@ -1009,4 +1054,4 @@ package body DAP.Modules.Breakpoint_Managers is
       Self.Show_Breakpoints;
    end On_Notification;
 
-end DAP.Modules.Breakpoint_Managers;
+end DAP.Clients.Breakpoint_Managers;

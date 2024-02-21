@@ -257,11 +257,11 @@ package body DAP.Modules.Breakpoints is
       return Result;
    end Get_Breakpoints;
 
-   --------------------------
-   -- Get_Breakpoint_By_Id --
-   --------------------------
+   ----------------------------
+   -- Get_Breakpoint_From_Id --
+   ----------------------------
 
-   function Get_Breakpoint_By_Id
+   function Get_Breakpoint_From_Id
      (Self : Breakpoint_Holder;
       Id   : Breakpoint_Identifier) return Breakpoint_Data
    is
@@ -273,7 +273,7 @@ package body DAP.Modules.Breakpoints is
       else
          return Empty_Breakpoint_Data;
       end if;
-   end Get_Breakpoint_By_Id;
+   end Get_Breakpoint_From_Id;
 
    -------------
    -- Replace --

@@ -80,6 +80,7 @@ with DAP.Types;                  use DAP.Types;
 with DAP.Module.Breakpoints;     use DAP.Module.Breakpoints;
 with DAP.Modules.Breakpoints;    use DAP.Modules.Breakpoints;
 with DAP.Clients;                use DAP.Clients;
+with DAP.Clients.Breakpoint_Managers;
 with DAP.Clients.Stack_Trace;    use DAP.Clients.Stack_Trace;
 with DAP.Module;
 with DAP.Tools;                  use DAP.Tools;
@@ -435,7 +436,7 @@ package body DAP.Views.Breakpoints is
            and then not Br.Commands.Is_Empty
          then
             --  Delete commands on the server side
-            Client.Set_Breakpoint_Command
+            Client.Get_Breakpoints_Manager.Set_Breakpoint_Command
               (Br.Num, VSS.Strings.Empty_Virtual_String);
          end if;
       end if;
@@ -1003,7 +1004,7 @@ package body DAP.Views.Breakpoints is
       end if;
 
       if Client /= null then
-         for Data of Client.Get_Breakpoints loop
+         for Data of Client.Get_Breakpoints_Manager.Get_Breakpoints loop
             if Data.Kind = On_Line
               and then Get_File (Data.Location.Marker) =
               Client.Get_Stack_Trace.Get_Current_File
@@ -1331,7 +1332,7 @@ package body DAP.Views.Breakpoints is
             View.Update_Breakpoint (Data);
          end loop;
       else
-         for Data of Client.Get_Breakpoints loop
+         for Data of Client.Get_Breakpoints_Manager.Get_Breakpoints loop
             View.Update_Breakpoint (Data);
          end loop;
 

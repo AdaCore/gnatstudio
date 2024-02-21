@@ -19,13 +19,13 @@ with VSS.Strings;
 with DAP.Requests;                           use DAP.Requests;
 with DAP.Requests.SetInstructionBreakpoints;
 
-private package DAP.Modules.Breakpoint_Managers.SetInstructionBreakpoints is
+private package DAP.Clients.Breakpoint_Managers.SetInstructionBreakpoints is
 
    type Instruction_Breakpoint_Request is
      new DAP.Requests.SetInstructionBreakpoints.
        Instruction_Breakpoint_DAP_Request
    with record
-      Manager     : DAP_Client_Breakpoint_Manager_Access;
+      Manager     : Breakpoint_Manager_Access;
       --  The breakpoints' manager that created the request.
 
       Breakpoints : Breakpoint_Index_Lists.List;
@@ -52,4 +52,4 @@ private package DAP.Modules.Breakpoint_Managers.SetInstructionBreakpoints is
       Client  : not null access DAP.Clients.DAP_Client'Class;
       Message : VSS.Strings.Virtual_String);
 
-end DAP.Modules.Breakpoint_Managers.SetInstructionBreakpoints;
+end DAP.Clients.Breakpoint_Managers.SetInstructionBreakpoints;

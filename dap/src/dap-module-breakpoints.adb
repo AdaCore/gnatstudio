@@ -42,7 +42,7 @@ with GPS.Markers;                    use GPS.Markers;
 with GPS.Properties;                 use GPS.Properties;
 
 with DAP.Clients;                    use DAP.Clients;
-with DAP.Module;
+with DAP.Clients.Breakpoint_Managers;
 with DAP.Modules.Preferences;        use DAP.Modules.Preferences;
 with DAP.Views.Breakpoints;
 with DAP.Utils;                      use DAP.Utils;
@@ -177,7 +177,7 @@ package body DAP.Module.Breakpoints is
       procedure On_Debugger
         (Debugger : DAP.Clients.DAP_Client_Access) is
       begin
-         Debugger.Remove_All_Breakpoints;
+         Debugger.Get_Breakpoints_Manager.Remove_All_Breakpoints;
       end On_Debugger;
 
    begin
@@ -190,10 +190,28 @@ package body DAP.Module.Breakpoints is
          if Breakpoints_For_All_Debuggers.Get_Pref then
             DAP.Module.For_Each_Debugger (On_Debugger'Access);
          else
-            DAP.Module.Get_Current_Debugger.Remove_All_Breakpoints;
+            DAP.Module.Get_Current_Debugger.Get_Breakpoints_Manager.
+              Remove_All_Breakpoints;
          end if;
       end if;
    end Clear_All_Breakpoints;
+
+   ----------------------------
+   -- Get_Breakpoint_From_Id --
+   ----------------------------
+
+   function Get_Breakpoint_From_Id
+     (Id : Breakpoint_Identifier) return Breakpoint_Data
+   is
+      Debugger : constant DAP_Client_Access :=
+        DAP.Module.Get_Current_Debugger;
+   begin
+      if Debugger = null then
+         return Breakpoints.Get_Breakpoint_From_Id (Id);
+      else
+         return Debugger.Get_Breakpoints_Manager.Get_Breakpoint_From_Id (Id);
+      end if;
+   end Get_Breakpoint_From_Id;
 
    -----------------------------------
    -- Create_Set_Breakpoint_Command --
@@ -241,7 +259,8 @@ package body DAP.Module.Breakpoints is
 
       else
          return Filter.Found =
-           DAP.Module.Get_Current_Debugger.Has_Breakpoint (Loc);
+           DAP.Module.Get_Current_Debugger.Get_Breakpoints_Manager.
+             Has_Breakpoint (Loc);
       end if;
    end Filter_Matches_Primitive;
 
@@ -755,7 +774,7 @@ package body DAP.Module.Breakpoints is
       procedure On_Debugger
         (Debugger : DAP.Clients.DAP_Client_Access) is
       begin
-         Debugger.Break (Data);
+         Debugger.Get_Breakpoints_Manager.Break (Data);
       end On_Debugger;
 
    begin
@@ -773,7 +792,8 @@ package body DAP.Module.Breakpoints is
          if Breakpoints_For_All_Debuggers.Get_Pref then
             DAP.Module.For_Each_Debugger (On_Debugger'Access);
          else
-            DAP.Module.Get_Current_Debugger.Break (Data);
+            DAP.Module.Get_Current_Debugger.Get_Breakpoints_Manager.Break
+              (Data);
          end if;
       end if;
    end Break;
@@ -929,7 +949,7 @@ package body DAP.Module.Breakpoints is
       procedure On_Debugger
         (Debugger : DAP.Clients.DAP_Client_Access) is
       begin
-         Debugger.Remove_Breakpoint_At (File, Line);
+         Debugger.Get_Breakpoints_Manager.Remove_Breakpoint_At (File, Line);
       end On_Debugger;
 
    begin
@@ -942,7 +962,8 @@ package body DAP.Module.Breakpoints is
          if Breakpoints_For_All_Debuggers.Get_Pref then
             DAP.Module.For_Each_Debugger (On_Debugger'Access);
          else
-            DAP.Module.Get_Current_Debugger.Remove_Breakpoint_At (File, Line);
+            DAP.Module.Get_Current_Debugger.Get_Breakpoints_Manager.
+              Remove_Breakpoint_At (File, Line);
          end if;
       end if;
    end Unbreak_Source;
@@ -962,7 +983,7 @@ package body DAP.Module.Breakpoints is
       procedure On_Debugger
         (Debugger : DAP.Clients.DAP_Client_Access) is
       begin
-         Debugger.Remove_Breakpoints (Indexes);
+         Debugger.Get_Breakpoints_Manager.Remove_Breakpoints (Indexes);
       end On_Debugger;
 
    begin
@@ -980,7 +1001,8 @@ package body DAP.Module.Breakpoints is
          if Breakpoints_For_All_Debuggers.Get_Pref then
             DAP.Module.For_Each_Debugger (On_Debugger'Access);
          else
-            DAP.Module.Get_Current_Debugger.Remove_Breakpoints (Indexes);
+            DAP.Module.Get_Current_Debugger.Get_Breakpoints_Manager.
+              Remove_Breakpoints (Indexes);
          end if;
       end if;
    end Delete_Multiple_Breakpoints;
@@ -1008,8 +1030,8 @@ package body DAP.Module.Breakpoints is
          Show_Breakpoints_In_All_Editors (Kernel);
 
       else
-         DAP.Module.Get_Current_Debugger.Set_Breakpoints_State
-           (Indexes, State);
+         DAP.Module.Get_Current_Debugger.Get_Breakpoints_Manager.
+           Set_Breakpoints_State (Indexes, State);
       end if;
    end Set_Breakpoints_State;
 

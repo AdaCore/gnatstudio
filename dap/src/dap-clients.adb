@@ -18,6 +18,7 @@
 with Ada.Strings.Unbounded;      use Ada.Strings.Unbounded;
 with Ada.Unchecked_Deallocation;
 
+with Basic_Types;                use Basic_Types;
 with GNAT.Directory_Operations;  use GNAT.Directory_Operations;
 with GNAT.Strings;
 
@@ -55,6 +56,7 @@ with LSP.JSON_Streams;
 
 with DAP.Module;
 with DAP.Modules.Preferences;
+with DAP.Clients.Breakpoint_Managers;
 with DAP.Clients.ConfigurationDone;
 with DAP.Clients.Continue;
 with DAP.Clients.Disconnect;
@@ -84,8 +86,8 @@ package body DAP.Clients is
      Create ("GPS.DAP.IN_OUT", Off);
 
    procedure Free is new Ada.Unchecked_Deallocation
-     (DAP.Modules.Breakpoint_Managers.DAP_Client_Breakpoint_Manager'Class,
-      DAP.Modules.Breakpoint_Managers.DAP_Client_Breakpoint_Manager_Access);
+     (DAP.Clients.Breakpoint_Managers.Breakpoint_Manager_Type'Class,
+      DAP.Clients.Breakpoint_Managers.Breakpoint_Manager_Access);
 
    procedure Free is new Ada.Unchecked_Deallocation
      (DAP.Clients.Stack_Trace.Stack_Trace'Class,
@@ -230,190 +232,6 @@ package body DAP.Clients is
    begin
       Trace (Me, Occurrence);
    end On_Exception;
-
-   ---------------------
-   -- Break_Exception --
-   ---------------------
-
-   procedure Break_Exception
-     (Self      : in out DAP_Client;
-      Name      : String;
-      Unhandled : Boolean := False;
-      Temporary : Boolean := False)
-   is
-      use DAP.Modules.Breakpoint_Managers;
-   begin
-      if Self.Breakpoints /= null then
-         Break_Exception (Self.Breakpoints, Name, Unhandled, Temporary);
-      end if;
-   end Break_Exception;
-
-   -----------
-   -- Break --
-   -----------
-
-   procedure Break
-     (Self : in out DAP_Client;
-      Data : DAP.Modules.Breakpoints.Breakpoint_Data)
-   is
-      use DAP.Modules.Breakpoint_Managers;
-      D : DAP.Modules.Breakpoints.Breakpoint_Data := Data;
-   begin
-      if Self.Breakpoints /= null then
-         D.Executable := Self.Get_Executable;
-         Break (Self.Breakpoints, D);
-      end if;
-   end Break;
-
-   ------------------
-   -- Break_Source --
-   ------------------
-
-   procedure Break_Source
-     (Self      : in out DAP_Client;
-      File      : GNATCOLL.VFS.Virtual_File;
-      Line      : Editable_Line_Type;
-      Temporary : Boolean := False;
-      Condition : VSS.Strings.Virtual_String :=
-        VSS.Strings.Empty_Virtual_String)
-   is
-      use DAP.Modules.Breakpoint_Managers;
-   begin
-      if Self.Breakpoints /= null then
-         Break_Source (Self.Breakpoints, File, Line, Temporary, Condition);
-      end if;
-   end Break_Source;
-
-   ----------------------
-   -- Break_Subprogram --
-   ----------------------
-
-   procedure Break_Subprogram
-     (Self       : in out DAP_Client;
-      Subprogram : String;
-      Temporary  : Boolean := False;
-      Condition  : VSS.Strings.Virtual_String :=
-        VSS.Strings.Empty_Virtual_String)
-   is
-      use DAP.Modules.Breakpoint_Managers;
-   begin
-      if Self.Breakpoints /= null then
-         Break_Subprogram (Self.Breakpoints, Subprogram, Temporary, Condition);
-      end if;
-   end Break_Subprogram;
-
-   -------------------
-   -- Break_Address --
-   -------------------
-
-   procedure Break_Address
-     (Self      : in out DAP_Client;
-      Address   : Address_Type;
-      Temporary : Boolean := False;
-      Condition : VSS.Strings.Virtual_String :=
-        VSS.Strings.Empty_Virtual_String)
-   is
-      use DAP.Modules.Breakpoint_Managers;
-   begin
-      if Self.Breakpoints /= null then
-         Break_Address (Self.Breakpoints, Address, Temporary, Condition);
-      end if;
-   end Break_Address;
-
-   -----------------------------------
-   -- Toggle_Instruction_Breakpoint --
-   -----------------------------------
-
-   procedure Toggle_Instruction_Breakpoint
-     (Self    : in out DAP_Client;
-      Address : Address_Type)
-   is
-      use DAP.Modules.Breakpoint_Managers;
-   begin
-      if Self.Breakpoints /= null then
-         Toggle_Instruction_Breakpoint (Self.Breakpoints, Address);
-      end if;
-   end Toggle_Instruction_Breakpoint;
-
-   --------------------------
-   -- Remove_Breakpoint_At --
-   --------------------------
-
-   procedure Remove_Breakpoint_At
-     (Self      : in out DAP_Client;
-      File      : GNATCOLL.VFS.Virtual_File;
-      Line      : Editable_Line_Type)
-   is
-      use DAP.Modules.Breakpoint_Managers;
-   begin
-      if Self.Breakpoints /= null then
-         Remove_Breakpoint_At (Self.Breakpoints, File, Line);
-      end if;
-   end Remove_Breakpoint_At;
-
-   ------------------------
-   -- Remove_Breakpoints --
-   ------------------------
-
-   procedure Remove_Breakpoints
-     (Self : in out DAP_Client;
-      Ids  : DAP.Types.Breakpoint_Identifier_Lists.List)
-   is
-      use DAP.Modules.Breakpoint_Managers;
-   begin
-      if Self.Breakpoints /= null then
-         Remove_Breakpoints
-           (Self => Self.Breakpoints,
-            Ids  => Ids);
-      end if;
-   end Remove_Breakpoints;
-
-   ------------------------
-   -- Remove_Breakpoints --
-   ------------------------
-
-   procedure Remove_Breakpoints
-     (Self : in out DAP_Client;
-      Indexes  : DAP.Types.Breakpoint_Index_Lists.List)
-   is
-      use DAP.Modules.Breakpoint_Managers;
-   begin
-      if Self.Breakpoints /= null then
-         Remove_Breakpoints
-           (Self     => Self.Breakpoints,
-            Indexes  => Indexes);
-      end if;
-   end Remove_Breakpoints;
-
-   ----------------------------
-   -- Remove_All_Breakpoints --
-   ----------------------------
-
-   procedure Remove_All_Breakpoints (Self : in out DAP_Client) is
-      use DAP.Modules.Breakpoint_Managers;
-   begin
-      if Self.Breakpoints /= null then
-         Remove_All_Breakpoints (Self.Breakpoints);
-      end if;
-   end Remove_All_Breakpoints;
-
-   --------------------
-   -- Has_Breakpoint --
-   --------------------
-
-   function Has_Breakpoint
-     (Self   : DAP_Client;
-      Marker : GPS.Markers.Location_Marker)
-      return Boolean
-   is
-      use DAP.Modules.Breakpoint_Managers;
-   begin
-      if Self.Breakpoints /= null then
-         return Has_Breakpoint (Self.Breakpoints, Marker);
-      else
-         return False;
-      end if;
-   end Has_Breakpoint;
 
    -----------------------
    -- Initialize_Client --
@@ -681,26 +499,6 @@ package body DAP.Clients is
       return Self.Debuggee_TTY;
    end Get_Debuggee_TTY;
 
-   ---------------------
-   -- Get_Breakpoints --
-   ---------------------
-
-   function Get_Breakpoints
-     (Self : DAP_Client)
-      return DAP.Modules.Breakpoints.Breakpoint_Vectors.Vector
-   is
-      use type DAP.Modules.Breakpoint_Managers.
-        DAP_Client_Breakpoint_Manager_Access;
-
-      Empty : DAP.Modules.Breakpoints.Breakpoint_Vectors.Vector;
-   begin
-      if Self.Breakpoints /= null then
-         return Self.Breakpoints.Get_Breakpoints;
-      else
-         return Empty;
-      end if;
-   end Get_Breakpoints;
-
    -------------------------
    -- Get_Command_History --
    -------------------------
@@ -722,6 +520,17 @@ package body DAP.Clients is
    begin
       return Self.Debugger_Console;
    end Get_Debugger_Console;
+
+   -----------------------------
+   -- Get_Breakpoints_Manager --
+   -----------------------------
+
+   function Get_Breakpoints_Manager
+     (Self : DAP_Client) return
+     DAP.Clients.Breakpoint_Managers.Breakpoint_Manager_Access is
+   begin
+      return Self.Breakpoints;
+   end Get_Breakpoints_Manager;
 
    --------------------------
    -- Set_Debugger_Console --
@@ -824,26 +633,6 @@ package body DAP.Clients is
    begin
       Self.Debuggee_Console := View;
    end Set_Debuggee_Console;
-
-   ---------------------------
-   -- Set_Breakpoints_State --
-   ---------------------------
-
-   procedure Set_Breakpoints_State
-     (Self    : in out DAP_Client;
-      Indexes : Breakpoint_Index_Lists.List;
-      State   : Boolean)
-   is
-      use type DAP.Modules.Breakpoint_Managers.
-        DAP_Client_Breakpoint_Manager_Access;
-   begin
-      if Self.Breakpoints /= null then
-         DAP.Modules.Breakpoint_Managers.Set_Breakpoints_State
-           (Self  => Self.Breakpoints,
-            Indexes  => Indexes,
-            State => State);
-      end if;
-   end Set_Breakpoints_State;
 
    ------------------------
    -- Set_Selected_Frame --
@@ -1645,9 +1434,6 @@ package body DAP.Clients is
 
       elsif Event = "breakpoint" then
          declare
-            use type DAP.Modules.Breakpoint_Managers.
-              DAP_Client_Breakpoint_Manager_Access;
-
             Event : DAP.Tools.BreakpointEvent;
          begin
             DAP.Tools.Inputs.Input_BreakpointEvent (Stream, Event, Success);
@@ -1716,7 +1502,7 @@ package body DAP.Clients is
    is
       use GNATCOLL.Scripts;
       use GNATCOLL.VFS;
-      use DAP.Modules.Breakpoint_Managers;
+      use DAP.Clients.Breakpoint_Managers;
 
       Tmp     : constant String := GPS.Kernel.Hooks.
         Debugger_Command_Action_Hook.Run
@@ -1761,7 +1547,7 @@ package body DAP.Clients is
                  (Self.Get_Stack_Trace.Get_Current_Line) - Line);
          end if;
 
-         Self.Break_Source
+         Self.Breakpoints.Break_Source
            (File      => Self.Get_Stack_Trace.Get_Current_File,
             Line      => Line,
             Temporary => Matched.Has_Capture (Bp_Temporary_Idx),
@@ -1819,7 +1605,7 @@ package body DAP.Clients is
                   end loop;
 
                   if not Ids.Is_Empty then
-                     Self.Remove_Breakpoints (Ids);
+                     Self.Breakpoints.Remove_Breakpoints (Ids);
                   end if;
                end;
 
@@ -1909,7 +1695,7 @@ package body DAP.Clients is
 
             Matched := Is_Catch_Exception_Pattern.Match (VSS_Cmd);
             if Matched.Has_Match then
-               Self.Break_Exception
+               Self.Breakpoints.Break_Exception
                  (Name      => UTF8 (Matched.Captured (2)),
                   Unhandled => False,
                   Temporary => Matched.Captured (1) = "tcatch");
@@ -1929,7 +1715,7 @@ package body DAP.Clients is
                    Invalid_Address
                then
                   --  no details, bp for the next instruction
-                  Self.Break_Address
+                  Self.Breakpoints.Break_Address
                     (Address   => Add_Address
                        (Self.Get_Stack_Trace.Get_Current_Address, 1),
                      Temporary => Matched.Has_Capture (Bp_Temporary_Idx),
@@ -1948,7 +1734,7 @@ package body DAP.Clients is
                         Add_BP_For_Offset;
 
                      elsif Details_Match.Has_Capture (Bp_Address_Idx) then
-                        Self.Break_Address
+                        Self.Breakpoints.Break_Address
                           (String_To_Address
                              (UTF8 (Details_Match.Captured (Bp_Address_Idx))),
                            Matched.Has_Capture (Bp_Temporary_Idx),
@@ -1961,7 +1747,7 @@ package body DAP.Clients is
                      then
                         if Details_Match.Has_Capture (Bp_File_Idx) then
                            --  have file:line pattern
-                           Self.Break_Source
+                           Self.Breakpoints.Break_Source
                              (File      => GPS.Kernel.Create
                                 (+VSS.Strings.Conversions.To_UTF_8_String
                                      (Details_Match.Captured (Bp_File_Idx)),
@@ -1976,7 +1762,7 @@ package body DAP.Clients is
                         else
                            --  have only line, set bp for the current
                            --  selected file
-                           Self.Break_Source
+                           Self.Breakpoints.Break_Source
                              (File      =>
                                 Self.Get_Stack_Trace.Get_Current_File,
                               Line      =>
@@ -1989,7 +1775,7 @@ package body DAP.Clients is
                         end if;
 
                      elsif Details_Match.Has_Capture (Bp_Subprogram_Idx) then
-                        Self.Break_Subprogram
+                        Self.Breakpoints.Break_Subprogram
                           (Subprogram =>
                              (if Details_Match.Has_Capture (Bp_File_Idx)
                               then UTF8 (Details_Match.Captured (Bp_File_Idx))
@@ -2326,7 +2112,7 @@ package body DAP.Clients is
    -----------
 
    procedure Clear (Self : in out DAP_Client'Class) is
-      use DAP.Modules.Breakpoint_Managers;
+      use DAP.Clients.Breakpoint_Managers;
    begin
       if Self.Breakpoints /= null then
          Self.Breakpoints.Finalize;
@@ -2436,32 +2222,6 @@ package body DAP.Clients is
       end if;
    end On_Destroy;
 
-   ----------------------------
-   -- Set_Breakpoint_Command --
-   ----------------------------
-
-   procedure Set_Breakpoint_Command
-     (Self    : in out DAP_Client;
-      Id      : Breakpoint_Identifier;
-      Command : VSS.Strings.Virtual_String)
-   is
-      Cmd : VSS.Strings.Virtual_String;
-   begin
-      Cmd := VSS.Strings.Conversions.To_Virtual_String
-        ("command" & Breakpoint_Identifier'Image (Id)
-         & ASCII.LF) & Command;
-
-      if not Command.Is_Empty
-        and then VSS.Strings.Cursors.Iterators.Characters.Element
-          (Command.At_Last_Character) /= VSS.Characters.Latin.Line_Feed
-      then
-         Cmd.Append (VSS.Characters.Latin.Line_Feed);
-      end if;
-      Cmd.Append (VSS.Strings.Conversions.To_Virtual_String ("end"));
-
-      DAP.Clients.Evaluate.Send_Evaluate_Command_Request (Self, Cmd);
-   end Set_Breakpoint_Command;
-
    ------------------------
    -- Command_In_Process --
    ------------------------
@@ -2488,18 +2248,5 @@ package body DAP.Clients is
          Self.Enqueue (Request);
       end if;
    end Continue_Execution;
-
-   ----------------------
-   -- Show_Breakpoints --
-   ----------------------
-
-   procedure Show_Breakpoints (Self : DAP_Client) is
-      use type DAP.Modules.Breakpoint_Managers.
-        DAP_Client_Breakpoint_Manager_Access;
-   begin
-      if Self.Breakpoints /= null then
-         Self.Breakpoints.Show_Breakpoints;
-      end if;
-   end Show_Breakpoints;
 
 end DAP.Clients;

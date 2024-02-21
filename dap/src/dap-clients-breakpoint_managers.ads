@@ -27,29 +27,28 @@ with DAP.Modules.Breakpoints;     use DAP.Modules.Breakpoints;
 with DAP.Types;                   use DAP.Types;
 with DAP.Tools;
 
-limited with DAP.Clients;
+package DAP.Clients.Breakpoint_Managers is
 
-package DAP.Modules.Breakpoint_Managers is
-
-   type DAP_Client_Breakpoint_Manager
+   type Breakpoint_Manager_Type
      (Kernel : GPS.Kernel.Kernel_Handle;
       Client : not null access DAP.Clients.DAP_Client'Class) is
      tagged limited private;
    --  Breakpoints manager when debugging is in progress
 
-   type DAP_Client_Breakpoint_Manager_Access is access
-     all DAP_Client_Breakpoint_Manager'Class;
+   type Breakpoint_Manager_Access is access
+     all Breakpoint_Manager_Type'Class;
 
-   procedure Initialize (Self : DAP_Client_Breakpoint_Manager_Access);
+   procedure Initialize
+     (Self : not null access Breakpoint_Manager_Type);
    --  Initialize the breakpoints' manager and set the initial breakpoints
    --  on the server's side.
 
-   procedure Finalize (Self : DAP_Client_Breakpoint_Manager_Access);
+   procedure Finalize (Self : not null access Breakpoint_Manager_Type);
    --  Finalize the breakpoints' manager, saving the persistant breakpoints
    --  if needed.
 
    procedure Stopped
-     (Self         : DAP_Client_Breakpoint_Manager_Access;
+     (Self         : not null access Breakpoint_Manager_Type;
       Event        : in out DAP.Tools.StoppedEvent;
       Stopped_File : out GNATCOLL.VFS.Virtual_File;
       Stopped_Line : out Integer;
@@ -57,12 +56,12 @@ package DAP.Modules.Breakpoint_Managers is
    --  Called when the debugger is stopped
 
    procedure Break
-     (Self : DAP_Client_Breakpoint_Manager_Access;
+     (Self : not null access Breakpoint_Manager_Type;
       Data : Breakpoint_Data);
    --  Add the given breakpoint
 
    procedure Break_Source
-     (Self      : DAP_Client_Breakpoint_Manager_Access;
+     (Self      : not null access Breakpoint_Manager_Type;
       File      : GNATCOLL.VFS.Virtual_File;
       Line      : Editable_Line_Type;
       Temporary : Boolean := False;
@@ -71,7 +70,7 @@ package DAP.Modules.Breakpoint_Managers is
    --  Add breakpoint for the file/line
 
    procedure Break_Subprogram
-     (Self       : DAP_Client_Breakpoint_Manager_Access;
+     (Self       : not null access Breakpoint_Manager_Type;
       Subprogram : String;
       Temporary  : Boolean := False;
       Condition  : VSS.Strings.Virtual_String :=
@@ -79,14 +78,14 @@ package DAP.Modules.Breakpoint_Managers is
    --  Add breakpoint for the subprogram
 
    procedure Break_Exception
-     (Self      : DAP_Client_Breakpoint_Manager_Access;
+     (Self      : not null access Breakpoint_Manager_Type;
       Name      : String;
       Unhandled : Boolean := False;
       Temporary : Boolean := False);
    --  Add breakpoint for the exception
 
    procedure Break_Address
-     (Self      : DAP_Client_Breakpoint_Manager_Access;
+     (Self      : not null access Breakpoint_Manager_Type;
       Address   : Address_Type;
       Temporary : Boolean := False;
       Condition : VSS.Strings.Virtual_String :=
@@ -94,76 +93,87 @@ package DAP.Modules.Breakpoint_Managers is
    --  Add a breakpoint for the address
 
    procedure Toggle_Instruction_Breakpoint
-     (Self    : DAP_Client_Breakpoint_Manager_Access;
+     (Self    : not null access Breakpoint_Manager_Type;
       Address : Address_Type);
    --  Add/delete a breakpoint for the address
 
    procedure Remove_Breakpoint_At
-     (Self      : DAP_Client_Breakpoint_Manager_Access;
+     (Self      : not null access Breakpoint_Manager_Type;
       File      : GNATCOLL.VFS.Virtual_File;
       Line      : Editable_Line_Type);
    --  Remove breakpoint for the file/line
 
    procedure Remove_Breakpoints
-     (Self    : DAP_Client_Breakpoint_Manager_Access;
+     (Self    : not null access Breakpoint_Manager_Type;
       Indexes : DAP.Types.Breakpoint_Index_Lists.List);
    --  Remove breakpoints designed by the given indexes
 
    procedure Remove_Breakpoints
-     (Self : DAP_Client_Breakpoint_Manager_Access;
+     (Self : not null access Breakpoint_Manager_Type;
       Ids  : DAP.Types.Breakpoint_Identifier_Lists.List);
    --  Remove breakpoints designed by the given IDs, which are set and
    --  recognized by the DAP server.
 
    procedure Remove_All_Breakpoints
-     (Self : DAP_Client_Breakpoint_Manager_Access);
+     (Self : not null access Breakpoint_Manager_Type);
    --  Remove all breakpoints
 
    procedure Set_Breakpoints_State
-     (Self    : DAP_Client_Breakpoint_Manager_Access;
+     (Self    : not null access Breakpoint_Manager_Type;
       Indexes : Breakpoint_Index_Lists.List;
       State   : Boolean);
    --  Enable/disable breakpoints
 
+   procedure Set_Breakpoint_Command
+     (Self    : not null access Breakpoint_Manager_Type;
+      Id      : Breakpoint_Identifier;
+      Command : VSS.Strings.Virtual_String);
+   --  TODO: doc
+
    procedure Set_Ignore_Count
-     (Self  : DAP_Client_Breakpoint_Manager_Access;
+     (Self  : not null access Breakpoint_Manager_Type;
       Id    : Breakpoint_Identifier;
       Count : Natural);
    --  Sets ignore count for the breakpoint (i.e: the number of times
    --  the breakpoint should be ignored before stopping on it).
 
    function Get_Breakpoints
-     (Self : DAP_Client_Breakpoint_Manager_Access)
+     (Self : Breakpoint_Manager_Access)
       return DAP.Modules.Breakpoints.Breakpoint_Vectors.Vector;
    --  Returns the list of the breakpoints
 
-   procedure Show_Breakpoints (Self : in out DAP_Client_Breakpoint_Manager);
+   function Get_Breakpoint_From_Id
+     (Self : not null access Breakpoint_Manager_Type;
+      Id   : Breakpoint_Identifier) return Breakpoint_Data;
+   --  TODO: doc
+
+   procedure Show_Breakpoints (Self : in out Breakpoint_Manager_Type);
    --  Show breakpoints on the side column of the editors
 
    procedure On_Notification
-     (Self  : DAP_Client_Breakpoint_Manager_Access;
+     (Self  : not null access Breakpoint_Manager_Type;
       Event : DAP.Tools.BreakpointEvent_body);
    --  Process DAP breakpoints notifications
 
    procedure Send_Commands
-     (Self : DAP_Client_Breakpoint_Manager_Access;
+     (Self : not null access Breakpoint_Manager_Type;
       Data : DAP.Modules.Breakpoints.Breakpoint_Data);
    --  Set commands for the breakpoint if any
 
    procedure Send_Commands
-     (Self : DAP_Client_Breakpoint_Manager_Access;
+     (Self : not null access Breakpoint_Manager_Type;
       Data : Breakpoint_Vectors.Vector);
    --  Set commands for the breakpoints
 
    function Has_Breakpoint
-     (Self   : DAP_Client_Breakpoint_Manager_Access;
+     (Self   : not null access Breakpoint_Manager_Type;
       Marker : Location_Marker)
       return Boolean;
    --  Return True if a breakpoint exists for the given location
 
 private
 
-   type DAP_Client_Breakpoint_Manager
+   type Breakpoint_Manager_Type
      (Kernel : GPS.Kernel.Kernel_Handle;
       Client : not null access DAP.Clients.DAP_Client'Class) is
      tagged limited record
@@ -183,14 +193,14 @@ private
    --  TODO: doc
 
    procedure Send_Line
-     (Self    : not null access DAP_Client_Breakpoint_Manager;
+     (Self    : not null access Breakpoint_Manager_Type;
       Indexes : Breakpoint_Index_Lists.List;
       Kind    : Breakpoint_Kind;
       File    : GNATCOLL.VFS.Virtual_File := No_File);
    --  TODO: doc
 
    procedure Synchronize_Breakpoints
-     (Self      : not null access DAP_Client_Breakpoint_Manager;
+     (Self      : not null access Breakpoint_Manager_Type;
       Sync_Data : Synchonization_Data);
    --  TODO: doc
 
@@ -202,11 +212,11 @@ private
    --  TODO: doc
 
    procedure On_Breakpoint_Request_Response
-     (Self            : not null access DAP_Client_Breakpoint_Manager;
+     (Self            : not null access Breakpoint_Manager_Type;
       Client          : not null access DAP.Clients.DAP_Client'Class;
       New_Breakpoints : DAP.Tools.Breakpoint_Vector;
       Old_Breakpoints : Breakpoint_Index_Lists.List;
       File            : Virtual_File := No_File);
    --  TODO: doc
 
-end DAP.Modules.Breakpoint_Managers;
+end DAP.Clients.Breakpoint_Managers;
