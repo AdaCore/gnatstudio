@@ -42,6 +42,15 @@ package body DAP.Modules.Breakpoints is
    function Get_Location_File (Data : Breakpoint_Data) return Virtual_File;
    --  TODO: doc
 
+   function Copy
+     (Data      : Breakpoint_Data;
+      Full_Copy : Boolean := False) return Breakpoint_Data;
+   --  Copy the given breakpoint. If Full_Copy is True, the fields set by the
+   --  running debugger once the debuggee is known will also be copied (e.g:
+   --  breakpoint's number, address of the breakpoint's SLOC...). Otherwise,
+   --  only the information that needs to be persistent will be copied (e.g:
+   --  breakpoint's type, SLOC...).
+
    -------
    -- = --
    -------
@@ -113,6 +122,32 @@ package body DAP.Modules.Breakpoints is
             return L.Except = R.Except;
       end case;
    end Is_Duplicate;
+
+   ----------
+   -- Copy --
+   ----------
+
+   function Copy
+     (Data      : Breakpoint_Data;
+      Full_Copy : Boolean := False) return Breakpoint_Data
+   is
+      Result : Breakpoint_Data := Data;
+   begin
+      --  If we are not doing a full copy, reset the fields that are set by
+      --  the debugger itself once the debuggee has started (e.g: address of
+      --  a source breakpoint).
+
+      if not Full_Copy then
+         Result.Num := No_Breakpoint;
+         Result.Verified := True;
+
+         if Result.Kind = On_Line then
+            Result.Location.Address := Invalid_Address;
+         end if;
+      end if;
+
+      return Result;
+   end Copy;
 
    ------------------
    -- Get_Location --
@@ -202,12 +237,20 @@ package body DAP.Modules.Breakpoints is
    ----------------
 
    procedure Initialize
-     (Self    : in out Breakpoint_Holder;
-      Vector : Breakpoint_Vectors.Vector)
+     (Self      : out Breakpoint_Holder;
+      Vector    : Breakpoint_Vectors.Vector;
+      Full_Copy : Boolean := False)
    is
+      Data : Breakpoint_Data;
    begin
+      --  Clear any breakpoints stored in this holder first.
       Self.Vector.Clear;
-      Self.Vector := Vector.Copy;
+
+      --  Copy the breakpoints into the holder
+      for Idx in Vector.First_Index .. Vector.Last_Index loop
+         Data := Copy (Vector (Idx), Full_Copy => Full_Copy);
+         Self.Vector.Append (Data);
+      end loop;
    end Initialize;
 
    ---------------------
@@ -368,23 +411,23 @@ package body DAP.Modules.Breakpoints is
    procedure Replace
      (Self        : in out Breakpoint_Holder;
       Executable  : Virtual_File;
-      Breakpoints : Breakpoint_Vectors.Vector)
+      Breakpoints : Breakpoint_Vectors.Vector;
+      Full_Copy   : Boolean := False)
    is
-      Idx : Natural := Self.Vector.First_Index;
-      C   : Breakpoint_Vectors.Cursor;
+      C    : Breakpoint_Vectors.Cursor;
+      Data : Breakpoint_Data;
    begin
-      while Idx <= Self.Vector.Last_Index loop
+      for Idx in Self.Vector.First_Index .. Self.Vector.Last_Index loop
          if Self.Vector (Idx).Executable = Executable
            and then not Breakpoints.Contains (Self.Vector (Idx))
          then
             --  no more exist
             Self.Vector.Delete (Idx);
-         else
-            Idx := Idx + 1;
          end if;
       end loop;
 
-      for Data of Breakpoints loop
+      for Idx in Breakpoints.First_Index .. Breakpoints.Last_Index loop
+         Data := Copy (Breakpoints (Idx), Full_Copy => Full_Copy);
          C := Self.Vector.Find (Data);
 
          if Breakpoint_Vectors.Has_Element (C) then

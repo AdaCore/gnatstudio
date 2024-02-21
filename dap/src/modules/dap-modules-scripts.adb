@@ -333,7 +333,6 @@ package body DAP.Modules.Scripts is
          Inst := Nth_Arg (Data, 1, New_Class (Kernel, "Debugger"));
          DAP.Module.Breakpoints.Break_Source
            (Kernel => Kernel,
-            Num    => No_Breakpoint,
             File   => Nth_Arg (Data, 2),
             Line   => Basic_Types.Editable_Line_Type
               (Integer'(Data.Nth_Arg (3))));

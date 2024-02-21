@@ -283,7 +283,6 @@ package body DAP.Module.Breakpoints is
       elsif Command.On_Line then
          Break_Source
            (Kernel,
-            Num   => No_Breakpoint,
             File  => File_Information (Context.Context),
             Line  => Editable_Line_Type
               ((if Has_File_Line_Information (Context.Context)
@@ -297,7 +296,6 @@ package body DAP.Module.Breakpoints is
             if Is_Fuzzy (Entity) or else Is_Subprogram (Entity) then
                Break_Subprogram
                  (Kernel,
-                  Num        => No_Breakpoint,
                   Subprogram => Entity_Name_Information (Context.Context));
             end if;
          end;
@@ -320,7 +318,6 @@ package body DAP.Module.Breakpoints is
          when Set =>
             Break_Source
               (Self.Kernel,
-               Num  => No_Breakpoint,
                File => GPS.Kernel.Contexts.File_Information (Context),
                Line => Editable_Line_Type
                  (GPS.Kernel.Contexts.Line_Information (Context)));
@@ -779,12 +776,7 @@ package body DAP.Module.Breakpoints is
 
    begin
       if DAP.Module.Get_Current_Debugger = null then
-         if Data.Num = No_Breakpoint then
-            Breakpoints.Append (Data);
-         else
-            Breakpoints.Replace_From_Id (Data);
-         end if;
-
+         Breakpoints.Append (Data);
          GPS.Kernel.Hooks.Debugger_Breakpoints_Changed_Hook.Run (Kernel, null);
          Show_Breakpoint (Kernel, Data);
 
@@ -804,7 +796,6 @@ package body DAP.Module.Breakpoints is
 
    procedure Break_Source
      (Kernel    : not null access Kernel_Handle_Record'Class;
-      Num       : Breakpoint_Identifier;
       File      : Virtual_File;
       Line      : Editable_Line_Type;
       Temporary : Boolean := False;
@@ -816,7 +807,7 @@ package body DAP.Module.Breakpoints is
    is
       B : Breakpoint_Data := Breakpoint_Data'
         (Kind        => On_Line,
-         Num         => Num,
+         Num         => No_Breakpoint,
          Location    => DAP.Modules.Breakpoints.Location_Type'
            (Num     => 0,
             Marker  => Kernel.Get_Buffer_Factory.Create_Marker
@@ -840,14 +831,13 @@ package body DAP.Module.Breakpoints is
 
    procedure Break_Exception
      (Kernel    : not null access Kernel_Handle_Record'Class;
-      Num       : Breakpoint_Identifier;
       Name      : String;
       Unhandled : Boolean := False;
       Temporary : Boolean := False)
    is
       B : Breakpoint_Data := Breakpoint_Data'
         (Kind        => On_Exception,
-         Num         => Num,
+         Num         => No_Breakpoint,
          Except      => To_Unbounded_String (Name),
          Unhandled   => Unhandled,
          Disposition => (if Temporary then Delete else Keep),
@@ -881,7 +871,6 @@ package body DAP.Module.Breakpoints is
 
    procedure Break_Subprogram
      (Kernel        : not null access Kernel_Handle_Record'Class;
-      Num           : Breakpoint_Identifier;
       Subprogram    : String;
       Temporary     : Boolean := False;
       Condition : VSS.Strings.Virtual_String :=
@@ -892,7 +881,7 @@ package body DAP.Module.Breakpoints is
    is
       B : Breakpoint_Data := Breakpoint_Data'
         (Kind        => On_Subprogram,
-         Num         => Num,
+         Num         => No_Breakpoint,
          Subprogram  => To_Unbounded_String (Subprogram),
          Disposition => (if Temporary then Delete else Keep),
          Condition   => Condition,
@@ -910,7 +899,6 @@ package body DAP.Module.Breakpoints is
 
    procedure Break_Address
      (Kernel    : not null access Kernel_Handle_Record'Class;
-      Num       : Breakpoint_Identifier;
       Address   : Address_Type;
       Temporary : Boolean := False;
       Condition : VSS.Strings.Virtual_String :=
@@ -921,7 +909,7 @@ package body DAP.Module.Breakpoints is
    is
       B : Breakpoint_Data := Breakpoint_Data'
         (Kind        => On_Address,
-         Num         => Num,
+         Num         => No_Breakpoint,
          Address     => Address,
          Disposition => (if Temporary then Delete else Keep),
          Condition   => Condition,
@@ -1054,8 +1042,9 @@ package body DAP.Module.Breakpoints is
 
    begin
       if DAP.Module.Get_Started_Per_Session_Debuggers < 2 then
-         --  We had only one debugger, copy breakpoints
-         Breakpoints.Initialize (List);
+         --  We had only one debugger, copy the debugger's breakpoints,
+         --  reseting their IDs since there is no running DAP server anymore.
+         Breakpoints.Initialize (List, Full_Copy => False);
       else
 
          DAP.Module.For_Each_Debugger (Calculate'Access);
@@ -1065,7 +1054,10 @@ package body DAP.Module.Breakpoints is
             return;
          end if;
 
-         Breakpoints.Replace (Executable, List);
+         Breakpoints.Replace
+           (Executable  => Executable,
+            Breakpoints => List,
+            Full_Copy   => False);
       end if;
    end Store;
 

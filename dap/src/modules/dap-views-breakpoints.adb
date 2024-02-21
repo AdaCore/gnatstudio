@@ -94,10 +94,10 @@ package body DAP.Views.Breakpoints is
 
    Me : constant Trace_Handle := Create ("GPS.DAP.BREAKPOINTS_VIEW");
 
-   Col_Num         : constant Gint := 0;
-   Col_Enb         : constant Gint := 1;
-   Col_Type        : constant Gint := 2;
-   Col_Disp        : constant Gint := 3;
+   Col_Enb         : constant Gint := 0;
+   Col_Type        : constant Gint := 1;
+   Col_Disp        : constant Gint := 2;
+   Col_Num         : constant Gint := 3;
    Col_File        : constant Gint := 4;
    Col_Line        : constant Gint := 5;
    Col_Exception   : constant Gint := 6;
@@ -112,10 +112,10 @@ package body DAP.Views.Breakpoints is
       others                  => GType_String);
 
    Column_Names : constant GNAT.Strings.String_List (1 .. 11) :=
-     (new String'("Num"),
-      new String'("Enb"),
+     (new String'("Enb"),
       new String'("Type"),
       new String'("Disp"),
+      new String'("Num"),
       new String'("File/Variable"),
       new String'("Line"),
       new String'("Exception"),
@@ -148,7 +148,7 @@ package body DAP.Views.Breakpoints is
      (Self : not null access Breakpoint_View_Record'Class;
       Id   : Breakpoint_Identifier) return Gtk_Tree_Iter;
    --  Return the row for the given breakpoint ID, or Null_Iter if not present
-   --  in the view.
+   --  in the view or if a null ID was given.
 
    procedure Update_Breakpoint
      (Self             : not null access Breakpoint_View_Record'Class;
@@ -450,7 +450,6 @@ package body DAP.Views.Breakpoints is
             begin
                Break_Source
                  (Self.Kernel,
-                  Num       => Br.Num,
                   File      => Create (File),
                   Line      =>
                     Editable_Line_Type'Value (Self.Line_Spin.Get_Text),
@@ -463,7 +462,6 @@ package body DAP.Views.Breakpoints is
          when On_Subprogram =>
             Break_Subprogram
               (Self.Kernel,
-               Num        => Br.Num,
                Subprogram => Self.Subprogram_Combo.Get_Active_Text,
                Temporary  => Temporary,
                Condition  => Condition,
@@ -478,7 +476,6 @@ package body DAP.Views.Breakpoints is
                if Self.Exception_Name.Get_Active = 0 then
                   Break_Exception
                     (Self.Kernel,
-                     Num       => Br.Num,
                      Name      => All_Exceptions_Filter,
                      Unhandled => Unhandled,
                      Temporary => Temporary);
@@ -486,7 +483,6 @@ package body DAP.Views.Breakpoints is
                elsif Self.Exception_Name.Get_Active = 1 then
                   Break_Exception
                     (Self.Kernel,
-                     Num       => Br.Num,
                      Name      => "assert",
                      Unhandled => Unhandled,
                      Temporary => Temporary);
@@ -494,7 +490,6 @@ package body DAP.Views.Breakpoints is
                else
                   Break_Exception
                     (Self.Kernel,
-                     Num       => Br.Num,
                      Name      => Self.Exception_Name.Get_Active_Text,
                      Unhandled => Unhandled,
                      Temporary => Temporary);
@@ -504,7 +499,6 @@ package body DAP.Views.Breakpoints is
          when On_Address =>
             Break_Address
               (Self.Kernel,
-               Num        => Br.Num,
                Address    => String_To_Address
                  (Self.Address_Combo.Get_Active_Text),
                Temporary  => Temporary,
@@ -1192,6 +1186,15 @@ package body DAP.Views.Breakpoints is
       end On_Row;
 
    begin
+      --  Breakpoints have a number assigned to them only when they have
+      --  been recognized by the DAP server. If not, they have no ID: this is
+      --  the case for disabled breakpoints.
+      --  Thus we can have several breakpoints without any ID, so return
+      --  immediately in this case, since there is no unique row for null ids.
+      if Id = No_Breakpoint then
+         return Null_Iter;
+      end if;
+
       Model.Foreach (On_Row'Unrestricted_Access);
 
       return Result;
@@ -1223,16 +1226,15 @@ package body DAP.Views.Breakpoints is
       end if;
 
       Columns (1 .. 5) :=
-        (Col_Num, Col_Enb, Col_Activatable, Col_Type, Col_Disp);
-      Values  (1 .. 3) :=
-        (1 => As_String (Breakpoint_Identifier'Image (Data.Num)),
-         2 => As_Boolean (Data.State = Enabled),
-         3 => As_Boolean (Self.Activatable));
+        (Col_Enb, Col_Activatable, Col_Type, Col_Disp, Col_Num);
+      Values  (1 .. 5) :=
+        (1 => As_Boolean (Data.State = Enabled),
+         2 => As_Boolean (Self.Activatable),
+         3 => As_String ("break"),
+         4 => As_String (To_Lower (Data.Disposition'Img)),
+         5 => As_String (if Data.Num = No_Breakpoint then ""
+           else Breakpoint_Identifier'Image (Data.Num)));
       Last := 5;
-
-      Glib.Values.Init_Set_String (Values (4), "break");
-      Glib.Values.Init_Set_String
-        (Values (5), To_Lower (Data.Disposition'Img));
 
       if Data.Kind = On_Line
         and then Data.Location.Marker /= No_Marker
@@ -1353,13 +1355,6 @@ package body DAP.Views.Breakpoints is
       View : Breakpoint_View;
 
    begin
-      if Debugger /= null
-        and then Positive (Debugger.Get_Num) /=
-        DAP.Module.Get_Current_Debugger.Id
-      then
-         return;
-      end if;
-
       View := Breakpoint_View
         (Breakpoints_MDI_Views.Retrieve_View
            (Kernel, Visible_Only => True));

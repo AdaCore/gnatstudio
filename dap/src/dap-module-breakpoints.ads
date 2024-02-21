@@ -88,7 +88,6 @@ package DAP.Module.Breakpoints is
 
    procedure Break_Source
      (Kernel    : not null access Kernel_Handle_Record'Class;
-      Num       : Breakpoint_Identifier;
       File      : Virtual_File;
       Line      : Editable_Line_Type;
       Temporary : Boolean := False;
@@ -101,7 +100,6 @@ package DAP.Module.Breakpoints is
 
    procedure Break_Subprogram
      (Kernel     : not null access Kernel_Handle_Record'Class;
-      Num        : Breakpoint_Identifier;
       Subprogram : String;
       Temporary  : Boolean := False;
       Condition  : VSS.Strings.Virtual_String :=
@@ -113,7 +111,6 @@ package DAP.Module.Breakpoints is
 
    procedure Break_Exception
      (Kernel    : not null access Kernel_Handle_Record'Class;
-      Num       : Breakpoint_Identifier;
       Name      : String;
       Unhandled : Boolean := False;
       Temporary : Boolean := False);
@@ -128,7 +125,6 @@ package DAP.Module.Breakpoints is
 
    procedure Break_Address
      (Kernel    : not null access Kernel_Handle_Record'Class;
-      Num       : Breakpoint_Identifier;
       Address   : Address_Type;
       Temporary : Boolean := False;
       Condition : VSS.Strings.Virtual_String :=

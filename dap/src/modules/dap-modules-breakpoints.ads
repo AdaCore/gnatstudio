@@ -125,9 +125,15 @@ package DAP.Modules.Breakpoints is
    --  Used for store breakpoints
 
    procedure Initialize
-     (Self    : in out Breakpoint_Holder;
-      Vector  : Breakpoint_Vectors.Vector);
-   --  Initialize holder with the breakpoints in the Vector parameter.
+     (Self      : out Breakpoint_Holder;
+      Vector    : Breakpoint_Vectors.Vector;
+      Full_Copy : Boolean := False);
+   --  Initialize then holder by copying the given breakpoints.
+   --  If Full_Copy is True, the breakpoints' fields set by the running
+   --  debugger once the debuggee is known will also be copied (e.g:
+   --  breakpoint's ID, address of the breakpoint's SLOC...). Otherwise,
+   --  only the information that needs to be persistent will be copied (e.g:
+   --  breakpoint's type, SLOC...).
 
    function Get_Breakpoints
      (Self    : Breakpoint_Holder;
@@ -139,7 +145,7 @@ package DAP.Modules.Breakpoints is
    function Get_Breakpoint_From_Index
      (Self : Breakpoint_Holder;
       Idx  : Positive) return Breakpoint_Data;
-   --  TODO: doc
+   --  Return the breakpoint located at the given index in the holder
 
    function Get_Breakpoints
      (Self       : Breakpoint_Holder;
@@ -182,9 +188,14 @@ package DAP.Modules.Breakpoints is
    procedure Replace
      (Self        : in out Breakpoint_Holder;
       Executable  : Virtual_File;
-      Breakpoints : Breakpoint_Vectors.Vector);
+      Breakpoints : Breakpoint_Vectors.Vector;
+      Full_Copy   : Boolean := False);
    --  Replace all the breakpoints designed by the given Breakpoints for the
    --  given executable.
+   --  If Full_Copy is True, the fields set by the running debugger once the
+   --  debuggee is known will also be copied (e.g: breakpoint's number, address
+   --  of the breakpoint's SLOC...). Otherwise, only the information that needs
+   --  to be persistent will be copied (e.g: breakpoint's type, SLOC...).
 
    procedure Delete
      (Self : in out Breakpoint_Holder;

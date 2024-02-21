@@ -184,11 +184,12 @@ package body DAP.Clients.Breakpoint_Managers is
 
       Cursor := Old_Breakpoints.First;
 
-      for Index in 1 .. New_Breakpoints.Length loop
+      for Idx in 1 .. New_Breakpoints.Length loop
+         Data := Self.Holder.Get_Breakpoint_From_Index (Cursor.Element);
          Convert
            (Kernel => Self.Kernel,
             Data   => Data,
-            Item   => New_Breakpoints (Index),
+            Item   => New_Breakpoints (Idx),
             File   => File);
          Self.Holder.Replace
            (Data => Data,
