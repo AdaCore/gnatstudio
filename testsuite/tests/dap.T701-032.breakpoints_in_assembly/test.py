@@ -4,7 +4,7 @@ Test whether breakpoints can be set/deleted in the assembly view.
 import GPS
 from gs_utils.internal.utils import *
 
-NUMBER_COLUMN = 0
+NUMBER_COLUMN = 3
 
 
 @run_test_driver
