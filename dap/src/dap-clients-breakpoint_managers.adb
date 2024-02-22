@@ -1051,12 +1051,33 @@ package body DAP.Clients.Breakpoint_Managers is
 
          when removed =>
             if Event.breakpoint.id.Is_Set then
-               Self.Holder.Delete
-                 (Breakpoint_Identifier (Event.breakpoint.id.Value));
+               declare
+                  Id   : constant Breakpoint_Identifier :=
+                    Breakpoint_Identifier (Event.breakpoint.id.Value);
+                  Data : constant Breakpoint_Data :=
+                    Self.Holder.Get_Breakpoint_From_Id (Id);
+               begin
+                  --  The debugger notifies us that a breakpoint has been
+                  --  removed: in some cases, it can be a breakpoint that
+                  --  has simply been disabled by the user.
+                  --  In this case, do not remove it from the holder, since
+                  --  the user might want to re-enable it later.
+                  if not
+                    (Data /= Empty_Breakpoint_Data
+                     and then Data.State = Disabled)
+                  then
+                     Self.Holder.Delete
+                       (Breakpoint_Identifier (Event.breakpoint.id.Value));
 
-               GPS.Kernel.Hooks.Debugger_Breakpoint_Deleted_Hook.Run
-                 (Self.Kernel, Self.Client.Get_Visual,
-                  Event.breakpoint.id.Value);
+                     GPS.Kernel.Hooks.Debugger_Breakpoint_Deleted_Hook.Run
+                       (Self.Kernel, Self.Client.Get_Visual,
+                        Event.breakpoint.id.Value);
+                  else
+                     GPS.Kernel.Hooks.Debugger_Breakpoint_Changed_Hook.Run
+                       (Self.Kernel, Self.Client.Get_Visual,
+                        Event.breakpoint.id.Value);
+                  end if;
+               end;
             end if;
 
          when Custom_Value =>

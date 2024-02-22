@@ -1472,10 +1472,8 @@ package body DAP.Views.Breakpoints is
          State   => False,
          Indexes => Indexes);
 
-      --  Put them in numerical order
-      Breakpoint_Index_Lists.Reverse_Elements (Indexes);
+      --  Delete them
       Delete_Multiple_Breakpoints (Kernel, Indexes);
-      Breakpoint_Index_Lists.Clear (Indexes);
       return Commands.Success;
    end Execute;
 
@@ -1529,11 +1527,8 @@ package body DAP.Views.Breakpoints is
          State   => Command.Is_Enabled,
          Indexes => Indexes);
 
-      --  Put them in numerical order
-      Breakpoint_Index_Lists.Reverse_Elements (Indexes);
+      --  Enable/disable the selected breakpoints
       Set_Breakpoints_State (View.Kernel, Indexes, Command.Is_Enabled);
-
-      Breakpoint_Index_Lists.Clear (Indexes);
 
       --  Need to modify the toggle buttons in the model
       Get_Selected_Breakpoints_Or_Set_State
