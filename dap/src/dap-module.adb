@@ -1310,6 +1310,7 @@ package body DAP.Module is
    procedure Set_Current_Debugger (Current : DAP.Clients.DAP_Client_Access)
    is
       use type DAP.Clients.DAP_Client_Access;
+      use type DAP.Clients.Breakpoint_Managers.Breakpoint_Manager_Access;
 
       function Set_Current_Debugger
         (Id : DAP_Module; Current : DAP.Clients.DAP_Client_Access)
@@ -1348,7 +1349,9 @@ package body DAP.Module is
          GPS.Kernel.Hooks.Debugger_Breakpoints_Changed_Hook.Run
            (Current.Kernel, Current.Get_Visual);
 
-         Current.Get_Breakpoints_Manager.Show_Breakpoints;
+         if Current.Get_Breakpoints_Manager /= null then
+            Current.Get_Breakpoints_Manager.Show_Breakpoints;
+         end if;
       end if;
    end Set_Current_Debugger;
 
