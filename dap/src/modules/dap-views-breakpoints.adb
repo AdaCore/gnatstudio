@@ -240,8 +240,7 @@ package body DAP.Views.Breakpoints is
 
    --  Hooks --
 
-   type Breakpoint_Event_Type is (Added, Deleted, Changed);
-   type On_Breakpoint_Event (Event : Breakpoint_Event_Type)
+   type On_Breakpoint_Event (Event : Breakpoint_Event)
    is new Debugger_Breakpoint_Hook_Function with null record;
    overriding procedure Execute
       (Self     : On_Breakpoint_Event;

@@ -35,6 +35,8 @@ package DAP.Modules.Breakpoints is
    type Breakpoint_Disposition is (Keep, Delete, Pending);
    type Breakpoint_State is (Enabled, Changing, Disabled, Moved);
    type Breakpoint_Kind is (On_Line, On_Subprogram, On_Address, On_Exception);
+   type Breakpoint_Event is (Added, Deleted, Changed);
+   --  TODO: doc
 
    type Location_Type is record
       Num     : Breakpoint_Identifier := 0;

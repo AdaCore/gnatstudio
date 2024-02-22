@@ -147,9 +147,6 @@ package DAP.Clients.Breakpoint_Managers is
       Id   : Breakpoint_Identifier) return Breakpoint_Data;
    --  TODO: doc
 
-   procedure Show_Breakpoints (Self : in out Breakpoint_Manager_Type);
-   --  Show breakpoints on the side column of the editors
-
    procedure On_Notification
      (Self  : not null access Breakpoint_Manager_Type;
       Event : DAP.Tools.BreakpointEvent_body);

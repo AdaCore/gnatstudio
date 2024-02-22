@@ -41,20 +41,6 @@ package DAP.Module.Breakpoints is
      (Id : Breakpoint_Identifier) return Breakpoint_Data;
    --  TODO: doc
 
-   procedure Show_Breakpoint
-     (Kernel  : not null access Kernel_Handle_Record'Class;
-      B       : Breakpoint_Data);
-   --  TODO: doc
-
-   procedure Show_Breakpoints_In_All_Editors
-     (Kernel : not null access Kernel_Handle_Record'Class);
-   --  Update the side column for all editors, and show the persistent
-   --  breakpoints info
-
-   procedure Hide_Breakpoints
-     (Kernel : not null access Kernel_Handle_Record'Class);
-   --  Hide all the breakpoints in all editors
-
    procedure Delete_Multiple_Breakpoints
      (Kernel  : not null access Kernel_Handle_Record'Class;
       Indexes : Breakpoint_Index_Lists.List);

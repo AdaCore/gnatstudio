@@ -55,7 +55,6 @@ with DAP.Modules.Contexts;
 with DAP.Modules.Preferences;
 with DAP.Modules.Scripts;
 with DAP.Clients.Attach;
-with DAP.Clients.Breakpoint_Managers;
 with DAP.Clients.Evaluate;
 with DAP.Clients.Disconnect;
 with DAP.Clients.Next;
@@ -360,9 +359,6 @@ package body DAP.Module is
          --  Switch to the "Debug" perspective if available
          GPS.Kernel.MDI.Load_Perspective
            (DAP_Module_ID.Get_Kernel, "Debug");
-
-         --  hide persistent breakpoints
-         DAP.Module.Breakpoints.Hide_Breakpoints (Kernel);
       else
          Client_Started := Client_Started + 1;
       end if;
@@ -394,7 +390,6 @@ package body DAP.Module is
          Executable_Args => Executable_Args,
          Remote_Target   => Remote_Target);
 
-      DAP.Module.Breakpoints.Hide_Breakpoints (Kernel);
       Set_Current_Debugger (Client);
 
       return Client;
@@ -1310,7 +1305,6 @@ package body DAP.Module is
    procedure Set_Current_Debugger (Current : DAP.Clients.DAP_Client_Access)
    is
       use type DAP.Clients.DAP_Client_Access;
-      use type DAP.Clients.Breakpoint_Managers.Breakpoint_Manager_Access;
 
       function Set_Current_Debugger
         (Id : DAP_Module; Current : DAP.Clients.DAP_Client_Access)
@@ -1348,10 +1342,6 @@ package body DAP.Module is
       if Set and then Current /= null then
          GPS.Kernel.Hooks.Debugger_Breakpoints_Changed_Hook.Run
            (Current.Kernel, Current.Get_Visual);
-
-         if Current.Get_Breakpoints_Manager /= null then
-            Current.Get_Breakpoints_Manager.Show_Breakpoints;
-         end if;
       end if;
    end Set_Current_Debugger;
 

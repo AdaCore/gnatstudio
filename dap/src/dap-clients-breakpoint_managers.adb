@@ -505,21 +505,6 @@ package body DAP.Clients.Breakpoint_Managers is
       return Self.Holder.Contains (Marker);
    end Has_Breakpoint;
 
-   ----------------------
-   -- Show_Breakpoints --
-   ----------------------
-
-   procedure Show_Breakpoints
-     (Self : in out Breakpoint_Manager_Type) is
-   begin
-      DAP.Module.Breakpoints.Hide_Breakpoints (Self.Kernel);
-
-      for Data of Self.Holder.Get_Breakpoints loop
-         DAP.Module.Breakpoints.Show_Breakpoint
-           (Self.Kernel, Data);
-      end loop;
-   end Show_Breakpoints;
-
    ----------------------------
    -- Set_Breakpoint_Command --
    ----------------------------
@@ -720,8 +705,6 @@ package body DAP.Clients.Breakpoint_Managers is
    procedure On_Initialized
      (Self : not null access Breakpoint_Manager_Type'Class) is
    begin
-      Self.Show_Breakpoints;
-
       GPS.Kernel.Hooks.Debugger_Breakpoints_Changed_Hook.Run
         (Self.Kernel, Self.Client.Get_Visual);
 
@@ -846,7 +829,6 @@ package body DAP.Clients.Breakpoint_Managers is
       Self.Holder.Delete (File, Line);
       Sync_Data.Files_To_Sync.Include (File);
 
-      Self.Show_Breakpoints;
       GPS.Kernel.Hooks.Debugger_Breakpoints_Changed_Hook.Run
            (Self.Kernel, Self.Client.Get_Visual);
 
@@ -872,7 +854,6 @@ package body DAP.Clients.Breakpoint_Managers is
 
       Self.Holder.Delete (Indexes);
 
-      Self.Show_Breakpoints;
       GPS.Kernel.Hooks.Debugger_Breakpoints_Changed_Hook.Run
         (Self.Kernel, Self.Client.Get_Visual);
 
@@ -897,7 +878,6 @@ package body DAP.Clients.Breakpoint_Managers is
          Self.Holder.Delete (Id);
       end loop;
 
-      Self.Show_Breakpoints;
       GPS.Kernel.Hooks.Debugger_Breakpoints_Changed_Hook.Run
         (Self.Kernel, Self.Client.Get_Visual);
 
@@ -1082,8 +1062,6 @@ package body DAP.Clients.Breakpoint_Managers is
          when Custom_Value =>
             null;
       end case;
-
-      Self.Show_Breakpoints;
    end On_Notification;
 
 end DAP.Clients.Breakpoint_Managers;
