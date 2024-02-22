@@ -33,7 +33,7 @@ with DAP.Types;              use DAP.Types;
 package DAP.Modules.Breakpoints is
 
    type Breakpoint_Disposition is (Keep, Delete, Pending);
-   type Breakpoint_State is (Enabled, Changing, Disabled, Moved);
+   type Breakpoint_State is (Enabled, Disabled);
    type Breakpoint_Kind is (On_Line, On_Subprogram, On_Address, On_Exception);
    type Breakpoint_Event is (Added, Deleted, Changed);
    --  TODO: doc
@@ -221,25 +221,28 @@ package DAP.Modules.Breakpoints is
    --  Get breakpoints ordered by files
 
    function Get_For_File
-     (Self          : Breakpoint_Holder;
-      File          : Virtual_File;
-      With_Changing : Boolean := False)
+     (Self         : Breakpoint_Holder;
+      File         : Virtual_File;
+      Enabled_Only : Boolean := True)
       return Breakpoint_Vectors.Vector;
-   --  Get breakpoints for the given file
+   --  Get the breakpoints for the given file.
+   --  When Enabled_Only is True, only the enabled ones are returned.
 
    function Get_For_File
-     (Self          : Breakpoint_Holder;
-      File          : Virtual_File;
-      With_Changing : Boolean := False)
+     (Self         : Breakpoint_Holder;
+      File         : Virtual_File;
+      Enabled_Only : Boolean := True)
       return Breakpoint_Index_Lists.List;
-   --  Get breakpoints' indexes for the given file
+   --  Get breakpoints' indexes for the given file.
+   --  When Enabled_Only is True, only the enabled ones are returned.
 
    function Get_For_Kind
-     (Self          : Breakpoint_Holder;
-      Kind          : Breakpoint_Kind;
-      With_Changing : Boolean := False)
+     (Self         : Breakpoint_Holder;
+      Kind         : Breakpoint_Kind;
+      Enabled_Only : Boolean := True)
       return Breakpoint_Index_Lists.List;
-   --  TODO: doc
+   --  Get the brekpoints of the given kind.
+   --  When Enabled_Only is True, only the enabled ones are returned.
 
    procedure Set_Enabled
      (Self    : in out Breakpoint_Holder;

@@ -28,6 +28,7 @@ with Glib.Object;                use Glib.Object;
 with Glib.Values;                use Glib.Values;
 with Glib_Values_Utils;          use Glib_Values_Utils;
 
+with Gdk.RGBA;                   use Gdk.RGBA;
 with Gtk.Adjustment;             use Gtk.Adjustment;
 with Gtk.Box;                    use Gtk.Box;
 with Gtk.Button;                 use Gtk.Button;
@@ -52,6 +53,7 @@ with Gtk.Text_Iter;              use Gtk.Text_Iter;
 with Gtk.Tree_Model;             use Gtk.Tree_Model;
 with Gtk.Tree_Selection;         use Gtk.Tree_Selection;
 with Gtk.Tree_View;              use Gtk.Tree_View;
+with Gtk.Tree_View_Column;       use Gtk.Tree_View_Column;
 with Gtk.Tree_Store;             use Gtk.Tree_Store;
 with Gtk.Radio_Button;           use Gtk.Radio_Button;
 with Gtk.Widget;                 use Gtk.Widget;
@@ -66,12 +68,15 @@ with VSS.String_Vectors;
 with Basic_Types;                use Basic_Types;
 
 with GPS.Debuggers;              use GPS.Debuggers;
+with GPS.Default_Styles;
 with GPS.Editors;                use GPS.Editors;
 with GPS.Main_Window;
 with GPS.Markers;                use GPS.Markers;
 with GPS.Kernel.MDI;             use GPS.Kernel.MDI;
 with GPS.Kernel.Hooks;           use GPS.Kernel.Hooks;
 with GPS.Kernel.Actions;
+with GPS.Kernel.Preferences;
+with GPS.Kernel.Style_Manager;   use GPS.Kernel.Style_Manager;
 
 with Commands;                   use Commands;
 with Commands.Interactive;       use Commands.Interactive;
@@ -89,6 +94,7 @@ with DAP.Utils;                  use DAP.Utils;
 with GUI_Utils;                  use GUI_Utils;
 
 with DAP.Requests.Evaluate;
+with Gtk.Cell_Renderer_Text; use Gtk.Cell_Renderer_Text;
 
 package body DAP.Views.Breakpoints is
 
@@ -105,10 +111,12 @@ package body DAP.Views.Breakpoints is
    Col_Address     : constant Gint := 8;
    Col_Activatable : constant Gint := 9;
    Col_Executable  : constant Gint := 10;
+   Col_Fg_Color    : constant Gint := 11;
 
-   Column_Types : constant Glib.GType_Array (0 .. 10) :=
+   Column_Types : constant Glib.GType_Array (0 .. 11) :=
      (Guint (Col_Enb)         => GType_Boolean,
       Guint (Col_Activatable) => GType_Boolean,
+      Guint (Col_Fg_Color)    => Gdk.RGBA.Get_Type,
       others                  => GType_String);
 
    Column_Names : constant GNAT.Strings.String_List (1 .. 11) :=
@@ -599,9 +607,18 @@ package body DAP.Views.Breakpoints is
 
       Self.List.Get_Column (Col_Activatable).Set_Visible (False);
 
+      --  Customize the columns' capabilities, in particular by making
+      --  the rows clickable and by allowing to set a custom foreground
+      --  color.
       declare
-         List : Cell_Renderer_List.Glist;
+         use Column_List;
+         use Cell_Renderer_List;
+
+         List     : Cell_Renderer_List.Glist;
+         Renderer : Gtk_Cell_Renderer;
+         Columns  : Column_List.Glist;
       begin
+         --  Make the
          List := Self.List.Get_Column (Col_Enb).Get_Cells;
          Self.List.Get_Column (Col_Enb).Add_Attribute
            (Cell_Renderer_List.Get_Data (List),
@@ -612,6 +629,32 @@ package body DAP.Views.Breakpoints is
              (Call  => On_Breakpoint_State_Toggled'Access,
               Slot  => Self);
          Cell_Renderer_List.Free (List);
+
+         Columns := Self.List.Get_Columns;
+
+         --  Allow customizing the rows' foreground color, depending on whether
+         --  breakpoints have been verified by the DAP server or not.
+         while Columns /= Column_List.Null_List loop
+            List := Columns.Get_Data.Get_Cells;
+
+            while List /= Cell_Renderer_List.Null_List loop
+               Renderer := List.Get_Data;
+
+               if Renderer.all in Gtk_Cell_Renderer_Text_Record'Class then
+                  Columns.Get_Data.Add_Attribute
+                    (Cell_Renderer_List.Get_Data (List),
+                     "foreground-rgba",
+                     Col_Fg_Color);
+               end if;
+
+               List := List.Next;
+            end loop;
+
+            Cell_Renderer_List.Free (List);
+            Columns := Column_List.Next (Columns);
+         end loop;
+
+         Column_List.Free (Columns);
       end;
 
       Gtk_New (Self.Multipress, Widget => Self.List);
@@ -1210,9 +1253,10 @@ package body DAP.Views.Breakpoints is
    is
       Model   : constant Gtk_Tree_Store := -Get_Model (Self.List);
       Iter    : Gtk_Tree_Iter := Self.Get_Row_For_Breakpoint_ID (Data.Num);
-      Values  : Glib.Values.GValue_Array (1 .. 11);
+      Values  : Glib.Values.GValue_Array (1 .. 12);
       Columns : Columns_Array (Values'Range);
       Last    : Gint;
+      Fg_Color : Gdk_RGBA;
    begin
       --  We did not find any row with the given breakpoint's ID: create a new
       --  row for it if asked, or return immediately.
@@ -1295,6 +1339,17 @@ package body DAP.Views.Breakpoints is
       end if;
 
       Set_And_Clear (Model, Iter, Columns (1 .. Last), Values (1 .. Last));
+
+      --  Gray out breakpoint's row if the breakpoint is not verified by the
+      --  server (e.g: pending breakpoints).
+      Fg_Color :=
+        (if Data.Verified then
+            GPS.Kernel.Preferences.Default_Style.Get_Pref_Fg
+         else
+            Background
+           (GPS.Default_Styles.Editor_Code_Annotations_Style));
+
+      Model.Set_Value (Iter, Col_Fg_Color, As_RGBA (Fg_Color));
    end Update_Breakpoint;
 
    -----------------------

@@ -828,9 +828,7 @@ package body DAP.Module.Breakpoints is
                Mode => Unset));
          Msg.Set_Action (Action);
 
-         if B.State /= Enabled
-           or else not B.Verified
-         then
+         if B.State /= Enabled then
             Msg.Set_Highlighting
               (GPS.Default_Styles.Debugger_Disabled_Breakpoint_Style,
                Length => 1);

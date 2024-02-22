@@ -479,16 +479,15 @@ package body DAP.Modules.Breakpoints is
    ------------------
 
    function Get_For_File
-     (Self          : Breakpoint_Holder;
-      File          : Virtual_File;
-      With_Changing : Boolean := False)
+     (Self         : Breakpoint_Holder;
+      File         : Virtual_File;
+      Enabled_Only : Boolean := True)
       return Breakpoint_Vectors.Vector
    is
       Result : Breakpoint_Vectors.Vector;
    begin
       for Data of Self.Vector loop
-         if (Data.State = Enabled
-             or else (With_Changing and then Data.State = Changing))
+         if (Data.State = Enabled or else not Enabled_Only)
            and then Get_Location_File (Data) = File
          then
             Result.Append (Data);
@@ -503,9 +502,9 @@ package body DAP.Modules.Breakpoints is
    ------------------
 
    function Get_For_File
-     (Self          : Breakpoint_Holder;
-      File          : Virtual_File;
-      With_Changing : Boolean := False)
+     (Self         : Breakpoint_Holder;
+      File         : Virtual_File;
+      Enabled_Only : Boolean := True)
       return Breakpoint_Index_Lists.List
    is
       Indexes : Breakpoint_Index_Lists.List;
@@ -514,8 +513,7 @@ package body DAP.Modules.Breakpoints is
       for Idx in Self.Vector.First_Index .. Self.Vector.Last_Index loop
          Data := Self.Vector (Idx);
 
-         if (Data.State = Enabled
-             or else (With_Changing and then Data.State = Changing))
+         if (Data.State = Enabled or else not Enabled_Only)
            and then Get_Location_File (Data) = File
          then
             Indexes.Append (Idx);
@@ -530,9 +528,9 @@ package body DAP.Modules.Breakpoints is
    ------------------
 
    function Get_For_Kind
-     (Self          : Breakpoint_Holder;
-      Kind          : Breakpoint_Kind;
-      With_Changing : Boolean := False)
+     (Self         : Breakpoint_Holder;
+      Kind         : Breakpoint_Kind;
+      Enabled_Only : Boolean := True)
       return Breakpoint_Index_Lists.List
    is
       Indexes : Breakpoint_Index_Lists.List;
@@ -541,8 +539,7 @@ package body DAP.Modules.Breakpoints is
       for Idx in Self.Vector.First_Index .. Self.Vector.Last_Index loop
          Data := Self.Vector (Idx);
 
-         if (Data.State = Enabled
-             or else (With_Changing and then Data.State = Changing))
+         if (Data.State = Enabled or else not Enabled_Only)
            and then Data.Kind = Kind
          then
             Indexes.Append (Idx);
