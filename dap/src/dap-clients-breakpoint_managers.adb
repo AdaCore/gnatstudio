@@ -132,7 +132,10 @@ package body DAP.Clients.Breakpoint_Managers is
 
       Data.Verified := Item.verified and then Item.line.Is_Set;
 
-      if Data.Verified
+      --  If we are dealing with a SLOC breakpoint, set/update the breakpoint's
+      --  location according to the debugger's response.
+      if Data.Kind = On_Line
+        and then Data.Verified
         and then File /= No_File
         and then Item.line.Is_Set
       then
@@ -1025,8 +1028,15 @@ package body DAP.Clients.Breakpoint_Managers is
            (if Event.breakpoint.source.Is_Set
             then To_File (Event.breakpoint.source.Value.path)
             else No_File);
-         Data : Breakpoint_Data;
+         Data   : Breakpoint_Data;
       begin
+         --  If the debugger notifies us that an existing breakpoint has
+         --  changed retrieve it and update it using the new breakpoint data.
+         if Event.reason = changed and then Event.breakpoint.id.Is_Set then
+            Data := Self.Holder.Get_Breakpoint_From_Id
+              (Breakpoint_Identifier (Event.breakpoint.id.Value));
+         end if;
+
          Convert
            (Kernel => Self.Kernel,
             Item   => Event.breakpoint,
