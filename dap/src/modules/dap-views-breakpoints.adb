@@ -327,7 +327,7 @@ package body DAP.Views.Breakpoints is
 
    procedure Load_Exceptions
      (Self : not null access Properties_Editor_Record'Class);
-   --  TODO: doc
+   --  Load the debugger-specific exception filters and the predefined ones.
 
    procedure Fill
      (Self : not null access Properties_Editor_Record'Class;
@@ -503,7 +503,7 @@ package body DAP.Views.Breakpoints is
                end if;
             end;
 
-         when On_Address =>
+         when On_Instruction =>
             Break_Address
               (Self.Kernel,
                Address    => String_To_Address
@@ -538,6 +538,7 @@ package body DAP.Views.Breakpoints is
       Selection := View.List.Get_Selection;
       Selection.Get_Selected_Rows (Model, Path_List);
 
+      --  Iterate over the selected rows
       if not (Model = Null_Gtk_Tree_Model
               or else Path_List = Gtk_Tree_Path_List.Null_List)
       then
@@ -555,7 +556,7 @@ package body DAP.Views.Breakpoints is
                if Is_Set then
                   Store_Model.Set (Iter, Col_Enb, State);
                else
-                  --  TODO: doc
+                  --  Get the selected breakpoints' indexes.
                   declare
                      Indices : constant Glib.Gint_Array :=
                        Gtk.Tree_Model.Get_Indices (Path);
@@ -744,7 +745,7 @@ package body DAP.Views.Breakpoints is
                Self.Breakpoint_Type.Append_Text ("break on subprogram");
             when On_Exception =>
                Self.Breakpoint_Type.Append_Text ("break on exception");
-            when On_Address =>
+            when On_Instruction =>
                Self.Breakpoint_Type.Append_Text ("break at specific address");
          end case;
       end loop;
@@ -979,6 +980,7 @@ package body DAP.Views.Breakpoints is
       M.Clear;
       Add_Unique_Combo_Entry (Self.Exception_Name, "All Ada exceptions");
       Add_Unique_Combo_Entry (Self.Exception_Name, "Ada assertions");
+
       if Client /= null
         and then Client.Get_Capabilities.Is_Set
       then
@@ -1313,7 +1315,7 @@ package body DAP.Views.Breakpoints is
          Last := Last + 1;
          Columns (Last) := Col_Exception;
          Glib.Values.Init_Set_String
-           (Values (Last), Escape_Text (To_String (Data.Except)));
+           (Values (Last), Escape_Text (To_String (Data.Exception_Name)));
       end if;
 
       if Data.Kind = On_Subprogram then
@@ -1323,7 +1325,7 @@ package body DAP.Views.Breakpoints is
            (Values (Last), Escape_Text (To_String (Data.Subprogram)));
       end if;
 
-      if Data.Kind = On_Address then
+      if Data.Kind = On_Instruction then
          Last := Last + 1;
          Columns (Last) := Col_Address;
          Glib.Values.Init_Set_String
@@ -1824,8 +1826,8 @@ package body DAP.Views.Breakpoints is
       Self.Exception_Box.Set_Sensitive (T = On_Exception);
       Self.Exception_Box.Set_Visible (T = On_Exception);
 
-      Self.Address_Box.Set_Sensitive (T = On_Address);
-      Self.Address_Box.Set_Visible (T = On_Address);
+      Self.Address_Box.Set_Sensitive (T = On_Instruction);
+      Self.Address_Box.Set_Visible (T = On_Instruction);
 
       Self.Condition_Frame.Set_Visible (T /= On_Exception);
       Self.Command_Frame.Set_Visible (T /= On_Exception);
@@ -1847,15 +1849,15 @@ package body DAP.Views.Breakpoints is
          Self.Breakpoint_Type.Set_Active (Breakpoint_Kind'Pos (On_Exception));
          Set_Active (Self.Stop_Always_Exception, True);
 
-         if Br.Except = "all" then
+         if Br.Exception_Name = "all" then
             Set_Active_Text (Self.Exception_Name, "All Ada exceptions");
-         elsif Br.Except = "unhandled" then
+         elsif Br.Exception_Name = "unhandled" then
             Set_Active_Text (Self.Exception_Name, "All Ada exceptions");
             Set_Active (Self.Stop_Not_Handled_Exception, True);
          else
             Add_Unique_Combo_Entry
               (Self.Exception_Name,
-               To_String (Br.Except), Select_Text => True);
+               To_String (Br.Exception_Name), Select_Text => True);
          end if;
 
          Set_Active (Self.Temporary, Br.Disposition /= Keep);
@@ -1866,8 +1868,8 @@ package body DAP.Views.Breakpoints is
          Add_Unique_Combo_Entry
            (Self.Subprogram_Combo, To_String (Br.Subprogram), True);
 
-      elsif Br.Kind = On_Address then
-         Self.Breakpoint_Type.Set_Active (Breakpoint_Kind'Pos (On_Address));
+      elsif Br.Kind = On_Instruction then
+         Self.Breakpoint_Type.Set_Active (Breakpoint_Kind'Pos (On_Instruction));
 
          Add_Unique_Combo_Entry
            (Self.Address_Combo, Address_To_String (Br.Address));

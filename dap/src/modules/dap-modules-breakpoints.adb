@@ -27,20 +27,20 @@ package body DAP.Modules.Breakpoints is
       File : Virtual_File;
       Line : Editable_Line_Type)
       return Boolean;
-   --  TODO: doc
-
    function Is_Same_Location
      (Data   : Breakpoint_Data;
       Marker : Location_Marker)
       return Boolean;
-   --  TODO: doc
+   --  Return true if the breakpoint's location matches the given one.
 
    function Is_Duplicate (L, R : Breakpoint_Data) return Boolean;
    pragma Unreferenced (Is_Duplicate);
-   --  TODO: doc
+   --  Used to detect breakpoint duplicates.
 
    function Get_Location_File (Data : Breakpoint_Data) return Virtual_File;
-   --  TODO: doc
+   --  Return the breakpoint's location file, if any.
+   --  This is valid only for SLOC breakpoints: No_File will be returned
+   --  otherwise.
 
    function Copy
      (Data      : Breakpoint_Data;
@@ -73,7 +73,6 @@ package body DAP.Modules.Breakpoints is
       Line : Editable_Line_Type)
       return Boolean is
    begin
-      --  TODO: doc
       if Data.Kind = On_Line then
          return GPS.Editors.Get_Line (Data.Location.Marker) = Line
            and then GPS.Editors.Get_File (Data.Location.Marker) = File;
@@ -115,11 +114,11 @@ package body DAP.Modules.Breakpoints is
          when On_Subprogram =>
             return L.Subprogram = R.Subprogram;
 
-         when On_Address =>
+         when On_Instruction =>
             return L.Address = R.Address;
 
          when On_Exception =>
-            return L.Except = R.Except;
+            return L.Exception_Name = R.Exception_Name;
       end case;
    end Is_Duplicate;
 
@@ -224,11 +223,11 @@ package body DAP.Modules.Breakpoints is
          when On_Subprogram =>
             return To_String (Data.Subprogram);
 
-         when On_Address =>
+         when On_Instruction =>
             return Address_To_String (Data.Address);
 
          when On_Exception =>
-            return "exception " & To_String (Data.Except);
+            return "exception " & To_String (Data.Exception_Name);
       end case;
    end To_String;
 
@@ -390,11 +389,11 @@ package body DAP.Modules.Breakpoints is
       return False;
    end Contains;
 
-   -----------------
-   -- Set_Enabled --
-   -----------------
+   ---------------------------
+   -- Set_Breakpoints_State --
+   ---------------------------
 
-   procedure Set_Enabled
+   procedure Set_Breakpoints_State
      (Self    : in out Breakpoint_Holder;
       Indexes : Breakpoint_Index_Lists.List;
       State   : Boolean) is
@@ -402,7 +401,7 @@ package body DAP.Modules.Breakpoints is
       for Idx of Indexes loop
          Self.Vector (Idx).State := (if State then Enabled else Disabled);
       end loop;
-   end Set_Enabled;
+   end Set_Breakpoints_State;
 
    -------------
    -- Replace --
@@ -566,17 +565,11 @@ package body DAP.Modules.Breakpoints is
 
    procedure Delete
      (Self : in out Breakpoint_Holder;
-      Num  : Breakpoint_Identifier)
+      Id   : Breakpoint_Identifier)
    is
-      Cursor : Breakpoint_Vectors.Cursor := Self.Vector.First;
+      Cursor : Breakpoint_Vectors.Cursor :=
+        Self.Vector.Find (Breakpoint_Data'(Num => Id, others => <>));
    begin
-      --  TODO: doc. Maybe we can use Find?
-      while Breakpoint_Vectors.Has_Element (Cursor)
-        and then Breakpoint_Vectors.Element (Cursor).Num /= Num
-      loop
-         Breakpoint_Vectors.Next (Cursor);
-      end loop;
-
       if Breakpoint_Vectors.Has_Element (Cursor) then
          Self.Vector.Delete (Cursor);
       end if;

@@ -339,7 +339,7 @@ package body DAP.Modules.Scripts is
 
       elsif Command = "break_at_exception" then
          Inst := Nth_Arg (Data, 1, New_Class (Kernel, "Debugger"));
-         DAP.Module.Breakpoints.Break_At_Exception
+         DAP.Module.Breakpoints.Break_On_All_Exceptions
            (Kernel    => Kernel,
             Unhandled => Nth_Arg (Data, 2));
 

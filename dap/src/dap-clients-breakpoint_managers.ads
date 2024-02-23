@@ -47,13 +47,14 @@ package DAP.Clients.Breakpoint_Managers is
    --  Finalize the breakpoints' manager, saving the persistant breakpoints
    --  if needed.
 
-   procedure Stopped
+   procedure Get_Stopped_Event_Location
      (Self         : not null access Breakpoint_Manager_Type;
       Event        : in out DAP.Tools.StoppedEvent;
       Stopped_File : out GNATCOLL.VFS.Virtual_File;
       Stopped_Line : out Integer;
       Address      : out Address_Type);
-   --  Called when the debugger is stopped
+   --  Return the location where the debugger has stopped, using the hit
+   --  breakpoint's location.
 
    procedure Break
      (Self : not null access Breakpoint_Manager_Type;
@@ -128,7 +129,8 @@ package DAP.Clients.Breakpoint_Managers is
      (Self    : not null access Breakpoint_Manager_Type;
       Id      : Breakpoint_Identifier;
       Command : VSS.Strings.Virtual_String);
-   --  TODO: doc
+   --  Set a command for the given breakpoint.
+   --  The command will then be executed each time the breakpoint is hit.
 
    procedure Set_Ignore_Count
      (Self  : not null access Breakpoint_Manager_Type;
@@ -145,7 +147,7 @@ package DAP.Clients.Breakpoint_Managers is
    function Get_Breakpoint_From_Id
      (Self : not null access Breakpoint_Manager_Type;
       Id   : Breakpoint_Identifier) return Breakpoint_Data;
-   --  TODO: doc
+   --  Return the debugger's breakpoint with the given ID.
 
    procedure On_Notification
      (Self  : not null access Breakpoint_Manager_Type;
@@ -175,38 +177,56 @@ private
       Client : not null access DAP.Clients.DAP_Client'Class) is
      tagged limited record
       Holder : Breakpoint_Holder;
-      --  actual breakpoints
+      --  Actual breakpoints set for the debugger.
 
-      Requests_Count : Natural := 0;
-      --  TODO: doc
+      Initial_Requests_Count : Natural := 0;
+      --  The number of initial requests that still need to be processed. This
+      --  is used to know when to send the 'configurationDone' DAP request,
+      --  after having processed all the initial breakpoints' requests when
+      --  starting the debugger.
    end record;
 
-   type Synchonization_Data is record
-      Files_To_Sync     : File_Sets.Set;
-      Sync_Functions    : Boolean := False;
-      Sync_Exceptions   : Boolean := False;
-      Sync_Instructions : Boolean := False;
-   end record;
-   --  TODO: doc
-
-   procedure Send_Line
+   procedure Send_Breakpoint_Request
      (Self    : not null access Breakpoint_Manager_Type;
       Indexes : Breakpoint_Index_Lists.List;
       Kind    : Breakpoint_Kind;
       File    : GNATCOLL.VFS.Virtual_File := No_File);
-   --  TODO: doc
+   --  Send the correspoding DAP request with the breakpoints located at the
+   --  given indexes.
+   --  Kind is used to know which DAP request should be sent for these
+   --  breakpoints.
+   --  File needs to be set only when sending SLOC breakpoints.
 
-   procedure Synchronize_Breakpoints
+   type Synchonization_Data is record
+      Files_To_Sync     : File_Sets.Set;
+      --  The files that need to be synchonized.
+
+      Sync_Functions    : Boolean := False;
+      --  True if function breakpoints should be synchonized.
+
+      Sync_Exceptions   : Boolean := False;
+      --  True if exception breakpoints should be synchonized.
+
+      Sync_Instructions : Boolean := False;
+      --  True if instruction breakpoints should be synchonized.
+   end record;
+   --  Data representing which kind of breakpoints need to be synchonized.
+
+   procedure Synchonize_Breakpoints
      (Self      : not null access Breakpoint_Manager_Type;
       Sync_Data : Synchonization_Data);
-   --  TODO: doc
+   --  Synchonize the manager's breakpoints with the underlying DAP server,
+   --  sending the needed requests according to Sync_Data.
 
-   procedure Convert
+   procedure Update
      (Kernel : GPS.Kernel.Kernel_Handle;
       Item   : DAP.Tools.Breakpoint;
       Data   : in out Breakpoint_Data;
       File   : Virtual_File := No_File);
-   --  TODO: doc
+   --  Update the given breakpoint according to the specified DAP breakpoint
+   --  response, updating the fields that are relevant to the breakpoint's
+   --  kind (i.e: it will update the breakpoint's location if it's a SLOC
+   --  breakpoint).
 
    procedure On_Breakpoint_Request_Response
      (Self            : not null access Breakpoint_Manager_Type;
@@ -214,6 +234,10 @@ private
       New_Breakpoints : DAP.Tools.Breakpoint_Vector;
       Old_Breakpoints : Breakpoint_Index_Lists.List;
       File            : Virtual_File := No_File);
-   --  TODO: doc
+   --  Called in response of all the breakpoint-related DAP requests, updating
+   --  the breakpoints stored in Old_Breakpoints indexes according to the ones
+   --  received from the DAP server in New_Breakpoints.
+   --  File should be set when receiving a response for SLOC breakpoints
+   --  (i.e: DAP's 'setBreakpoints' request).
 
 end DAP.Clients.Breakpoint_Managers;

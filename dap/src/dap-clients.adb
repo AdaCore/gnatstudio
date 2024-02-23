@@ -1368,8 +1368,16 @@ package body DAP.Clients is
                   Line    : Integer := 0;
                   Address : Address_Type;
                begin
-                  Self.Breakpoints.Stopped (stop, File, Line, Address);
-                  Self.Get_Stack_Trace.Set_Frame (0, File, Line, Address);
+                  Self.Breakpoints.Get_Stopped_Event_Location
+                    (Event        => stop,
+                     Stopped_File => File,
+                     Stopped_Line => Line,
+                     Address      => Address);
+                  Self.Get_Stack_Trace.Set_Frame
+                    (Id      => 0,
+                     File    => File,
+                     Line    => Line,
+                     Address => Address);
                end;
 
             elsif stop.a_body.reason = step

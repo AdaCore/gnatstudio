@@ -32,57 +32,94 @@ with DAP.Types;              use DAP.Types;
 
 package DAP.Modules.Breakpoints is
 
-   type Breakpoint_Disposition is (Keep, Delete, Pending);
-   type Breakpoint_State is (Enabled, Disabled);
-   type Breakpoint_Kind is (On_Line, On_Subprogram, On_Address, On_Exception);
-   type Breakpoint_Event is (Added, Deleted, Changed);
-   --  TODO: doc
+   type Breakpoint_Disposition is (Keep, Delete);
+   --  The breakpoint's disposition.
+   --
+   --  * Keep: the breakpoint should always be kept.
+   --  * Delete: the breakpoint should be deleted the first time it gets hit.
 
-   type Location_Type is record
-      Num     : Breakpoint_Identifier := 0;
-      Marker  : Location_Marker       := No_Marker;
-      Address : Address_Type          := Invalid_Address;
+   type Breakpoint_State is (Enabled, Disabled);
+   --  The state of the breakpoint. Disabled breakpoints do not exist
+   --  on server-side.
+
+   type Breakpoint_Kind is
+     (On_Line, On_Subprogram, On_Instruction, On_Exception);
+   --  The breakpoint's kind.
+   --
+   --  * On_Line: breakpoint on a source location. Corresponding to the
+   --    'setBreakpoints' DAP request.
+   --  * On_Subprogram: breakpoint on a subprogram. Corresponding to the
+   --    'setFunctionBreakpoints' DAP request.
+   --  * On_Instruction: breakpoint on an instruction. Corresponding to the
+   --    'setInstructionBreakpoints' DAP request.
+   --  * On_Exception: breakpoint for exceptions. Corresponding to the
+   --    'setExceptionBreakpoints' DAP request.
+
+   type Breakpoint_Event is (Added, Deleted, Changed);
+   --  Type for breakpoint events.
+   --
+   --  * Added: a new breakpoint has been added.
+   --  * Deleted: a breakpoint has been deleded.
+   --  * Changed: an existing breakpoint has changed.
+
+   type Breakpoint_Location_Type is record
+      Marker  : Location_Marker := No_Marker;
+      --  The editor's location.
+
+      Address : Address_Type := Invalid_Address;
+      --  The intruction's address.
    end record;
 
-   package Location_Vectors is
-     new Ada.Containers.Vectors (Positive, Location_Type);
+   package Breakpoint_Location_Vectors is
+     new Ada.Containers.Vectors (Positive, Breakpoint_Location_Type);
 
    type Breakpoint_Data (Kind : Breakpoint_Kind := On_Line) is record
       Num         : Breakpoint_Identifier := No_Breakpoint;
-      --  The breakpoint identifier set on DAP server's side.
+      --  The breakpoint's identifier set on DAP server's side.
 
       Disposition : Breakpoint_Disposition := Keep;
       --  What is done when the breakpoint is reached
 
       State       : Breakpoint_State := Enabled;
+      --  The breakpoint's state.
 
       Condition   : Virtual_String := Empty_Virtual_String;
       --  Condition on which this breakpoint is activated
 
       Ignore      : Natural := 0;
-      --  Number of hits that will be ignored before actually stopping
+      --  Number of breakpoint hits that will be ignored before actually
+      --  stopping.
 
       Commands    : Virtual_String := Empty_Virtual_String;
       --  Commands to execute when the debugger stops at this breakpoint
 
       Executable  : Virtual_File := No_File;
+      --  The executable for which the breakpoint has been set. Used to
+      --  save/restore them accross sessions.
 
       Verified    : Boolean := True;
-      --  Is bp verified on the gdb side
+      --  True if the breakpoint has been verified on server-side (e.g: if the
+      --  specified SLOC actually maps the executable's source files).
 
       case Kind is
          when On_Line =>
-            Location : Location_Type;
+            Location : Breakpoint_Location_Type;
+            --  The line breakpoint's location.
 
          when On_Subprogram =>
             Subprogram : Ada.Strings.Unbounded.Unbounded_String;
+            --  The name of the subprogram, for subprogram breakpoints.
 
-         when On_Address =>
-            Address : Address_Type := Invalid_Address;
+         when On_Instruction =>
+            Address  : Address_Type := Invalid_Address;
+            --  The instruction's address, for instruction breakpoints.
 
          when On_Exception =>
-            Except    : Ada.Strings.Unbounded.Unbounded_String;
+            Exception_Name : Ada.Strings.Unbounded.Unbounded_String;
+            --  The exception's name.
+
             Unhandled : Boolean := False;
+            --  Whether we should break on unhandled ones.
       end case;
    end record;
 
@@ -98,10 +135,11 @@ package DAP.Modules.Breakpoints is
      (L, R : Breakpoint_Data) return Boolean is (L.Num = R.Num);
 
    function Get_Location (Data : Breakpoint_Data) return Location_Marker;
-   --  TODO: doc
+   --  Get the breakpoint's location. This works only for line breakpoints:
+   --  an empty location is returned for other breakpoint kinds.
 
    function Get_Ignore (Data : Breakpoint_Data) return Virtual_String;
-   --  TODO: doc
+   --  Get the ignore count for the given breakpoint.
 
    function To_String (Data : Breakpoint_Data) return String;
    --  Return a location string representation to display for the given
@@ -158,7 +196,8 @@ package DAP.Modules.Breakpoints is
    function Get_Breakpoint_From_Id
      (Self : Breakpoint_Holder;
       Id   : Breakpoint_Identifier) return Breakpoint_Data;
-   --  TODO: doc
+   --  Get the breakpoint stored with the given Id.
+   --  An empty breakpoint is returned if it does not exist.
 
    procedure Clear (Self : in out Breakpoint_Holder);
    --  Remove all breakpoints
@@ -172,20 +211,18 @@ package DAP.Modules.Breakpoints is
    procedure Append
      (Self : in out Breakpoint_Holder;
       Data : Breakpoint_Data);
-   --  Append the given breakpoint
-   --  TODO: should we handle duplicates?
+   --  Append the given breakpoint.
 
    procedure Replace_From_Id
      (Self : in out Breakpoint_Holder;
       Data : Breakpoint_Data);
-   --  Replace the breakpoint.
-   --  TODO: doc
+   --  Replace the breakpoint with the given Id with the specified data.
 
    procedure Replace
      (Self : in out Breakpoint_Holder;
       Data : Breakpoint_Data;
       Idx  : Positive);
-   --  TODO: doc
+   --  Replace the breakpoint located at the given index, if any.
 
    procedure Replace
      (Self        : in out Breakpoint_Holder;
@@ -201,19 +238,19 @@ package DAP.Modules.Breakpoints is
 
    procedure Delete
      (Self : in out Breakpoint_Holder;
-      Num  : Breakpoint_Identifier);
-   --  TODO: doc
+      Id   : Breakpoint_Identifier);
+   --  Delete the breakpoint at the given index, if any.
 
    procedure Delete
      (Self    : in out Breakpoint_Holder;
       Indexes : Breakpoint_Index_Lists.List);
-   --  TODO: doc
+   --  Delete the breakpoints at the given indexes, if any.
 
    procedure Delete
      (Self    : in out Breakpoint_Holder;
       File    : Virtual_File;
       Line    : Editable_Line_Type);
-   --  TODO: doc
+   --  Delete the breakpoints sharing the given location, if any.
 
    function Get_For_Files
      (Self : Breakpoint_Holder)
@@ -244,18 +281,17 @@ package DAP.Modules.Breakpoints is
    --  Get the brekpoints of the given kind.
    --  When Enabled_Only is True, only the enabled ones are returned.
 
-   procedure Set_Enabled
+   procedure Set_Breakpoints_State
      (Self    : in out Breakpoint_Holder;
       Indexes : Breakpoint_Index_Lists.List;
       State   : Boolean);
-   --  TODO: doc
+   --  Set the state of the breakpoints located at the given indexes.
 
    procedure Set_Ignore_Count
      (Self    : in out Breakpoint_Holder;
       Id      : Breakpoint_Identifier;
       Count   : Natural);
-   --  Sets ignore count for the breakpoint, returning the changed
-   --  breakpoints in Changed.
+   --  Set the 'ignore' count for the breakpoint refered by Id.
 
 private
 

@@ -43,11 +43,12 @@ package DAP.Types is
    type Breakpoint_Identifier is new Integer;
    No_Breakpoint : constant Breakpoint_Identifier := 0;
    --  Breakpoint identifiers on DAP server's side.
-   --  TODO: doc explain how it works when we disable a breakpoint.
+   --  These identifiers are set by the DAP server, in response of the
+   --  breakpoint-related DAP requests.
 
    package Breakpoint_Identifier_Lists is
      new Ada.Containers.Doubly_Linked_Lists (Breakpoint_Identifier);
-   --  TODO: doc
+   --  Lists of breakpoint identifiers.
 
    package Breakpoint_Index_Lists is
      new Ada.Containers.Doubly_Linked_Lists (Positive);

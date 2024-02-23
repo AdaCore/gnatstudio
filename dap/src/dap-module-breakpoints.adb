@@ -611,12 +611,12 @@ package body DAP.Module.Breakpoints is
             when On_Subprogram =>
                Value.Set_Field ("subprogram", To_String (B.Subprogram));
 
-            when On_Address =>
+            when On_Instruction =>
                --  we do not store breakpoints for addresses
                null;
 
             when On_Exception =>
-               Value.Set_Field ("exception", To_String (B.Except));
+               Value.Set_Field ("exception", To_String (B.Exception_Name));
                Value.Set_Field ("unhandled", B.Unhandled);
          end case;
 
@@ -627,7 +627,7 @@ package body DAP.Module.Breakpoints is
       GNATCOLL.Traces.Trace (Me, "Saving breakpoints for future sessions");
 
       for Data of Property.Breakpoints loop
-         if Data.Kind /= On_Address then
+         if Data.Kind /= On_Instruction then
             Save (Data);
          end if;
       end loop;
@@ -702,7 +702,7 @@ package body DAP.Module.Breakpoints is
                         Disposition => Breakpoint_Disposition'Value
                           (Item.Get ("disposition")),
                         State       => Enabled,
-                        Location    => (Id, Loc, Invalid_Address),
+                        Location    => (Loc, Invalid_Address),
                         Ignore      => Item.Get ("ignore"),
                         Condition   => Condition,
                         Executable  => Create (+To_String (Exec)),
@@ -724,7 +724,7 @@ package body DAP.Module.Breakpoints is
                      Commands      => Commands,
                      others        => <>);
 
-               when On_Address =>
+               when On_Instruction =>
                   --  we do not store breakpoints for addresses
                   null;
 
@@ -735,7 +735,7 @@ package body DAP.Module.Breakpoints is
                      Disposition   => Breakpoint_Disposition'Value
                        (Item.Get ("disposition")),
                      State         => Enabled,
-                     Except        => Item.Get ("exception"),
+                     Exception_Name        => Item.Get ("exception"),
                      Unhandled     => Item.Get ("unhandled"),
                      Ignore        => Item.Get ("ignore"),
                      Condition     => Condition,
@@ -897,9 +897,8 @@ package body DAP.Module.Breakpoints is
       B : Breakpoint_Data := Breakpoint_Data'
         (Kind        => On_Line,
          Num         => No_Breakpoint,
-         Location    => DAP.Modules.Breakpoints.Location_Type'
-           (Num     => 0,
-            Marker  => Kernel.Get_Buffer_Factory.Create_Marker
+         Location    => DAP.Modules.Breakpoints.Breakpoint_Location_Type'
+           (Marker  => Kernel.Get_Buffer_Factory.Create_Marker
               (File   => File,
                Line   => Line,
                Column => 1),
@@ -927,7 +926,7 @@ package body DAP.Module.Breakpoints is
       B : Breakpoint_Data := Breakpoint_Data'
         (Kind        => On_Exception,
          Num         => No_Breakpoint,
-         Except      => To_Unbounded_String (Name),
+         Exception_Name      => To_Unbounded_String (Name),
          Unhandled   => Unhandled,
          Disposition => (if Temporary then Delete else Keep),
          others      => <>);
@@ -935,24 +934,24 @@ package body DAP.Module.Breakpoints is
       Break (Kernel, B);
    end Break_Exception;
 
-   ------------------------
-   -- Break_At_Exception --
-   ------------------------
+   -----------------------------
+   -- Break_On_All_Exceptions --
+   -----------------------------
 
-   procedure Break_At_Exception
+   procedure Break_On_All_Exceptions
      (Kernel    : not null access Kernel_Handle_Record'Class;
       Unhandled : Boolean := False)
    is
       B : Breakpoint_Data := Breakpoint_Data'
         (Kind        => On_Exception,
          Num         => No_Breakpoint,
-         Except      => To_Unbounded_String (All_Exceptions_Filter),
+         Exception_Name      => To_Unbounded_String (All_Exceptions_Filter),
          Unhandled   => Unhandled,
          Disposition => Keep,
          others      => <>);
    begin
       Break (Kernel, B);
-   end Break_At_Exception;
+   end Break_On_All_Exceptions;
 
    ----------------------
    -- Break_Subprogram --
@@ -997,7 +996,7 @@ package body DAP.Module.Breakpoints is
         VSS.Strings.Empty_Virtual_String)
    is
       B : Breakpoint_Data := Breakpoint_Data'
-        (Kind        => On_Address,
+        (Kind        => On_Instruction,
          Num         => No_Breakpoint,
          Address     => Address,
          Disposition => (if Temporary then Delete else Keep),
@@ -1101,7 +1100,7 @@ package body DAP.Module.Breakpoints is
       --  persistant list.
 
       if DAP.Module.Get_Current_Debugger = null then
-         Persistent_Breakpoints.Set_Enabled (Indexes, State);
+         Persistent_Breakpoints.Set_Breakpoints_State (Indexes, State);
          GPS.Kernel.Hooks.Debugger_Breakpoints_Changed_Hook.Run
            (Kernel, null);
       else
@@ -1110,31 +1109,40 @@ package body DAP.Module.Breakpoints is
       end if;
    end Set_Breakpoints_State;
 
-   -----------
-   -- Store --
-   -----------
+   -------------------------
+   -- Store_As_Persistent --
+   -------------------------
 
-   procedure Store
-     (Executable : Virtual_File;
-      List       : Breakpoint_Vectors.Vector)
+   procedure Store_As_Persistent
+     (Executable  : Virtual_File;
+      Breakpoints : Breakpoint_Vectors.Vector)
    is
       Count : Natural := 0;
-      procedure Calculate (Debugger : DAP.Clients.DAP_Client_Access);
-      procedure Calculate (Debugger : DAP.Clients.DAP_Client_Access) is
+
+      procedure Count_Running_Debuggers
+        (Debugger : DAP.Clients.DAP_Client_Access);
+
+      -----------------------------
+      -- Count_Running_Debuggers --
+      -----------------------------
+
+      procedure Count_Running_Debuggers
+        (Debugger : DAP.Clients.DAP_Client_Access) is
       begin
          if Debugger.Get_Executable = Executable then
             Count := Count + 1;
          end if;
-      end Calculate;
+      end Count_Running_Debuggers;
 
    begin
       if DAP.Module.Get_Started_Per_Session_Debuggers < 2 then
          --  We had only one debugger, copy the debugger's breakpoints,
          --  reseting their IDs since there is no running DAP server anymore.
-         Persistent_Breakpoints.Initialize (List, Full_Copy => False);
+         Persistent_Breakpoints.Initialize (Breakpoints, Full_Copy => False);
       else
 
-         DAP.Module.For_Each_Debugger (Calculate'Access);
+         DAP.Module.For_Each_Debugger (Count_Running_Debuggers'Access);
+
          if Count > 1 then
             --  Store breakpoints only from the last closed session
             --  for the executable
@@ -1143,10 +1151,10 @@ package body DAP.Module.Breakpoints is
 
          Persistent_Breakpoints.Replace
            (Executable  => Executable,
-            Breakpoints => List,
+            Breakpoints => Breakpoints,
             Full_Copy   => False);
       end if;
-   end Store;
+   end Store_As_Persistent;
 
    -----------------------------
    -- On_Debugging_Terminated --
