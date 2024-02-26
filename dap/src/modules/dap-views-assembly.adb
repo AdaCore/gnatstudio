@@ -835,7 +835,7 @@ package body DAP.Views.Assembly is
                Glib.Values.Init (Values (1), Gdk.RGBA.Get_Type);
                Gdk.RGBA.Set_Value
                  (Values (1),
-                  (if Data.State /= Enabled then
+                  (if not Data.Enabled then
                         GPS.Kernel.Style_Manager.Background
                      (GPS.Default_Styles.Debugger_Disabled_Breakpoint_Style)
                    elsif not Data.Condition.Is_Empty then

@@ -16,6 +16,7 @@
 ------------------------------------------------------------------------------
 
 with Ada.Strings.Unbounded;        use Ada.Strings.Unbounded;
+with GNATCOLL.Traces;
 with VSS.Characters;
 with VSS.Characters.Latin;
 with VSS.String_Vectors;
@@ -39,6 +40,9 @@ with DAP.Requests;                 use DAP.Requests;
 with DAP.Utils;                    use DAP.Utils;
 
 package body DAP.Clients.Breakpoint_Managers is
+
+   Me : constant GNATCOLL.Traces.Trace_Handle := GNATCOLL.Traces.Create
+     ("DAP.CLIENTS.BREAKPOINT_MANAGER");
 
    type On_DAP_Request_Processed
    is new GPS.Kernel.Hooks.Dap_Message_Hooks_Function with record
@@ -184,6 +188,13 @@ package body DAP.Clients.Breakpoint_Managers is
       if Integer (New_Breakpoints.Length)
         /= Integer (Old_Breakpoints.Length)
       then
+         Me.Trace
+           ("Wrong DAP response for breakpoints: "
+            & "lengths of sent breakpoints ("
+            & Old_Breakpoints.Length'Img
+            & ") and the reponse's ones ("
+            & New_Breakpoints.Length'Img
+            & ") do not match");
          return;
       end if;
 
@@ -228,11 +239,7 @@ package body DAP.Clients.Breakpoint_Managers is
    begin
       --  A DAP request has been processed: check if it's breakpoint-related
       --  one to update our initial requests' counter.
-      if Method = "setBreakpoints"
-        or else Method = "setFunctionBreakpoints"
-        or else Method = "setExceptionBreakpoints"
-        or else Method = "setInstructionBreakpoints"
-      then
+      if "Breakpoints" in Method then
          Self.Manager.Initial_Requests_Count :=
            Self.Manager.Initial_Requests_Count - 1;
       end if;
@@ -717,6 +724,10 @@ package body DAP.Clients.Breakpoint_Managers is
    procedure On_Initialized
      (Self : not null access Breakpoint_Manager_Type'Class) is
    begin
+      Me.Trace
+        ("Breakpoint manager for DAP client number"
+         & Self.Client.Id'Img
+         & " is now initialized");
       GPS.Kernel.Hooks.Debugger_Breakpoints_Changed_Hook.Run
         (Self.Kernel, Self.Client.Get_Visual);
 
@@ -1069,7 +1080,7 @@ package body DAP.Clients.Breakpoint_Managers is
    begin
       case Event.reason.Kind is
          when changed =>
-            Self.Holder.Replace_From_Id (Data);
+            Self.Holder.Replace (Data);
             GPS.Kernel.Hooks.Debugger_Breakpoint_Changed_Hook.Run
               (Self.Kernel, Self.Client.Get_Visual, Integer (Data.Num));
 
@@ -1093,7 +1104,7 @@ package body DAP.Clients.Breakpoint_Managers is
                   --  the user might want to re-enable it later.
                   if not
                     (Data /= Empty_Breakpoint_Data
-                     and then Data.State = Disabled)
+                     and then not Data.Enabled)
                   then
                      Self.Holder.Delete
                        (Breakpoint_Identifier (Event.breakpoint.id.Value));

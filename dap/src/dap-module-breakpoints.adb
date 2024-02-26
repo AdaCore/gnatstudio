@@ -701,7 +701,7 @@ package body DAP.Module.Breakpoints is
                         Num         => Id,
                         Disposition => Breakpoint_Disposition'Value
                           (Item.Get ("disposition")),
-                        State       => Enabled,
+                        Enabled     => True,
                         Location    => (Loc, Invalid_Address),
                         Ignore      => Item.Get ("ignore"),
                         Condition   => Condition,
@@ -716,7 +716,7 @@ package body DAP.Module.Breakpoints is
                      Num           => Id,
                      Disposition   => Breakpoint_Disposition'Value
                        (Item.Get ("disposition")),
-                     State         => Enabled,
+                     Enabled       => True,
                      Subprogram    => Item.Get ("subprogram"),
                      Ignore        => Item.Get ("ignore"),
                      Condition     => Condition,
@@ -730,18 +730,18 @@ package body DAP.Module.Breakpoints is
 
                when On_Exception =>
                   B :=
-                    (Kind          => On_Exception,
-                     Num           => Id,
-                     Disposition   => Breakpoint_Disposition'Value
+                    (Kind            => On_Exception,
+                     Num             => Id,
+                     Disposition     => Breakpoint_Disposition'Value
                        (Item.Get ("disposition")),
-                     State         => Enabled,
-                     Exception_Name        => Item.Get ("exception"),
-                     Unhandled     => Item.Get ("unhandled"),
-                     Ignore        => Item.Get ("ignore"),
-                     Condition     => Condition,
-                     Executable    => Create (+To_String (Exec)),
-                     Commands      => Commands,
-                     others        => <>);
+                     Enabled         => True,
+                     Exception_Name  => Item.Get ("exception"),
+                     Unhandled       => Item.Get ("unhandled"),
+                     Ignore          => Item.Get ("ignore"),
+                     Condition       => Condition,
+                     Executable      => Create (+To_String (Exec)),
+                     Commands        => Commands,
+                     others          => <>);
             end case;
 
             Property.Breakpoints.Append (B);
@@ -828,7 +828,7 @@ package body DAP.Module.Breakpoints is
                Mode => Unset));
          Msg.Set_Action (Action);
 
-         if B.State /= Enabled then
+         if not B.Enabled then
             Msg.Set_Highlighting
               (GPS.Default_Styles.Debugger_Disabled_Breakpoint_Style,
                Length => 1);

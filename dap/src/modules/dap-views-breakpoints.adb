@@ -560,8 +560,11 @@ package body DAP.Views.Breakpoints is
                   declare
                      Indices : constant Glib.Gint_Array :=
                        Gtk.Tree_Model.Get_Indices (Path);
+
                      Index   : constant Integer := Integer
                        (Indices (Indices'First)) + 1;
+                     --  Gtk+ indexes start from 0, while breakpoint ones start
+                     --  from 1, so add +1 to the Gtk+ index.
                   begin
                      Indexes.Append (Index);
                   end;
@@ -619,7 +622,8 @@ package body DAP.Views.Breakpoints is
          Renderer : Gtk_Cell_Renderer;
          Columns  : Column_List.Glist;
       begin
-         --  Make the
+         --  Make the 'Enabled' column activatable, to allow the user
+         --  enabling/disabling breakpoints.
          List := Self.List.Get_Column (Col_Enb).Get_Cells;
          Self.List.Get_Column (Col_Enb).Add_Attribute
            (Cell_Renderer_List.Get_Data (List),
@@ -1253,12 +1257,13 @@ package body DAP.Views.Breakpoints is
       Data             : Breakpoint_Data;
       Create_If_Needed : Boolean := True)
    is
-      Model   : constant Gtk_Tree_Store := -Get_Model (Self.List);
-      Iter    : Gtk_Tree_Iter := Self.Get_Row_For_Breakpoint_ID (Data.Num);
-      Values  : Glib.Values.GValue_Array (1 .. 12);
-      Columns : Columns_Array (Values'Range);
-      Last    : Gint;
-      Fg_Color : Gdk_RGBA;
+      Model           : constant Gtk_Tree_Store := -Get_Model (Self.List);
+      Iter            : Gtk_Tree_Iter := Self.Get_Row_For_Breakpoint_ID
+        (Data.Num);
+      Values          : Glib.Values.GValue_Array (1 .. 12);
+      Columns         : Columns_Array (Values'Range);
+      Last_Column_Idx : Gint;
+      Fg_Color        : Gdk_RGBA;
    begin
       --  We did not find any row with the given breakpoint's ID: create a new
       --  row for it if asked, or return immediately.
@@ -1273,38 +1278,36 @@ package body DAP.Views.Breakpoints is
       Columns (1 .. 5) :=
         (Col_Enb, Col_Activatable, Col_Type, Col_Disp, Col_Num);
       Values  (1 .. 5) :=
-        (1 => As_Boolean (Data.State = Enabled),
+        (1 => As_Boolean (Data.Enabled),
          2 => As_Boolean (Self.Activatable),
          3 => As_String ("break"),
          4 => As_String (To_Lower (Data.Disposition'Img)),
          5 => As_String (if Data.Num = No_Breakpoint then ""
            else Breakpoint_Identifier'Image (Data.Num)));
-      Last := 5;
+      Last_Column_Idx := 5;
 
       if Data.Kind = On_Line
         and then Data.Location.Marker /= No_Marker
       then
-         if Last < 6 then
-            Last := Last + 1;
-            Columns (Last) := Col_File;
-            Glib.Values.Init
-              (Values (Last), Column_Types (Guint (Col_File)));
-         end if;
+         Last_Column_Idx := Last_Column_Idx + 1;
+         Columns (Last_Column_Idx) := Col_File;
+         Glib.Values.Init
+           (Values (Last_Column_Idx), Column_Types (Guint (Col_File)));
 
          Glib.Values.Set_String
-           (Values (Last), Escape_Text
+           (Values (Last_Column_Idx), Escape_Text
             (+Base_Name (Get_File (Get_Location (Data)))));
 
-         Last := Last + 1;
-         Columns (Last) := Col_Line;
+         Last_Column_Idx := Last_Column_Idx + 1;
+         Columns (Last_Column_Idx) := Col_Line;
          Glib.Values.Init_Set_String
-           (Values (Last), Get_Line (Get_Location (Data))'Img);
+           (Values (Last_Column_Idx), Get_Line (Get_Location (Data))'Img);
 
          if Data.Location.Address /= Invalid_Address then
-            Last := Last + 1;
-            Columns (Last) := Col_Address;
+            Last_Column_Idx := Last_Column_Idx + 1;
+            Columns (Last_Column_Idx) := Col_Address;
             Glib.Values.Init_Set_String
-              (Values (Last),
+              (Values (Last_Column_Idx),
                Escape_Text
                  (Address_To_String
                       (Data.Location.Address)));
@@ -1312,35 +1315,42 @@ package body DAP.Views.Breakpoints is
       end if;
 
       if Data.Kind = On_Exception then
-         Last := Last + 1;
-         Columns (Last) := Col_Exception;
+         Last_Column_Idx := Last_Column_Idx + 1;
+         Columns (Last_Column_Idx) := Col_Exception;
          Glib.Values.Init_Set_String
-           (Values (Last), Escape_Text (To_String (Data.Exception_Name)));
+           (Values (Last_Column_Idx),
+            Escape_Text (To_String (Data.Exception_Name)));
       end if;
 
       if Data.Kind = On_Subprogram then
-         Last := Last + 1;
-         Columns (Last) := Col_Subprogs;
+         Last_Column_Idx := Last_Column_Idx + 1;
+         Columns (Last_Column_Idx) := Col_Subprogs;
          Glib.Values.Init_Set_String
-           (Values (Last), Escape_Text (To_String (Data.Subprogram)));
+           (Values (Last_Column_Idx),
+            Escape_Text (To_String (Data.Subprogram)));
       end if;
 
       if Data.Kind = On_Instruction then
-         Last := Last + 1;
-         Columns (Last) := Col_Address;
+         Last_Column_Idx := Last_Column_Idx + 1;
+         Columns (Last_Column_Idx) := Col_Address;
          Glib.Values.Init_Set_String
-           (Values (Last), Escape_Text (Address_To_String (Data.Address)));
+           (Values (Last_Column_Idx),
+            Escape_Text (Address_To_String (Data.Address)));
       end if;
 
       if Data.Executable /= No_File then
-         Last := Last + 1;
-         Columns (Last) := Col_Executable;
+         Last_Column_Idx := Last_Column_Idx + 1;
+         Columns (Last_Column_Idx) := Col_Executable;
          Glib.Values.Init_Set_String
-           (Values (Last),
+           (Values (Last_Column_Idx),
             Escape_Text (+Base_Name (Data.Executable)));
       end if;
 
-      Set_And_Clear (Model, Iter, Columns (1 .. Last), Values (1 .. Last));
+      Set_And_Clear
+        (Model   => Model,
+         Iter    => Iter,
+         Columns => Columns (1 .. Last_Column_Idx),
+         Values  => Values (1 .. Last_Column_Idx));
 
       --  Gray out breakpoint's row if the breakpoint is not verified by the
       --  server (e.g: pending breakpoints).
@@ -1611,9 +1621,7 @@ package body DAP.Views.Breakpoints is
           (Breakpoints_MDI_Views.Retrieve_View
              (Get_Kernel (Context.Context),
               Visible_Only => True));
-      Br   : Breakpoint_Data :=
-        (Num    => No_Breakpoint,
-         others => <>);
+      Br   : Breakpoint_Data := Empty_Breakpoint_Data;
    begin
       if View /= null then
          Props := new Properties_Editor_Record;
@@ -1869,7 +1877,8 @@ package body DAP.Views.Breakpoints is
            (Self.Subprogram_Combo, To_String (Br.Subprogram), True);
 
       elsif Br.Kind = On_Instruction then
-         Self.Breakpoint_Type.Set_Active (Breakpoint_Kind'Pos (On_Instruction));
+         Self.Breakpoint_Type.Set_Active
+           (Breakpoint_Kind'Pos (On_Instruction));
 
          Add_Unique_Combo_Entry
            (Self.Address_Combo, Address_To_String (Br.Address));

@@ -38,10 +38,6 @@ package DAP.Modules.Breakpoints is
    --  * Keep: the breakpoint should always be kept.
    --  * Delete: the breakpoint should be deleted the first time it gets hit.
 
-   type Breakpoint_State is (Enabled, Disabled);
-   --  The state of the breakpoint. Disabled breakpoints do not exist
-   --  on server-side.
-
    type Breakpoint_Kind is
      (On_Line, On_Subprogram, On_Instruction, On_Exception);
    --  The breakpoint's kind.
@@ -80,8 +76,9 @@ package DAP.Modules.Breakpoints is
       Disposition : Breakpoint_Disposition := Keep;
       --  What is done when the breakpoint is reached
 
-      State       : Breakpoint_State := Enabled;
-      --  The breakpoint's state.
+      Enabled     : Boolean := True;
+      --  The breakpoint's state. Disabled breakpoints are not known for the
+      --  underlying DAP server
 
       Condition   : Virtual_String := Empty_Virtual_String;
       --  Condition on which this breakpoint is activated
@@ -168,7 +165,7 @@ package DAP.Modules.Breakpoints is
      (Self      : out Breakpoint_Holder;
       Vector    : Breakpoint_Vectors.Vector;
       Full_Copy : Boolean := False);
-   --  Initialize then holder by copying the given breakpoints.
+   --  Initialize the holder by copying the given breakpoints.
    --  If Full_Copy is True, the breakpoints' fields set by the running
    --  debugger once the debuggee is known will also be copied (e.g:
    --  breakpoint's ID, address of the breakpoint's SLOC...). Otherwise,
@@ -213,10 +210,10 @@ package DAP.Modules.Breakpoints is
       Data : Breakpoint_Data);
    --  Append the given breakpoint.
 
-   procedure Replace_From_Id
+   procedure Replace
      (Self : in out Breakpoint_Holder;
       Data : Breakpoint_Data);
-   --  Replace the breakpoint with the given Id with the specified data.
+   --  Replace the breakpoint using it's ID, if any.
 
    procedure Replace
      (Self : in out Breakpoint_Holder;
@@ -253,9 +250,11 @@ package DAP.Modules.Breakpoints is
    --  Delete the breakpoints sharing the given location, if any.
 
    function Get_For_Files
-     (Self : Breakpoint_Holder)
+     (Self         : Breakpoint_Holder;
+      Enabled_Only : Boolean := True)
       return Breakpoint_Hash_Maps.Map;
    --  Get breakpoints ordered by files
+   --  When Enabled_Only is True, only the enabled ones are returned.
 
    function Get_For_File
      (Self         : Breakpoint_Holder;

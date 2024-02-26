@@ -336,7 +336,7 @@ package body DAP.Modules.Breakpoints is
    -- Replace --
    -------------
 
-   procedure Replace_From_Id
+   procedure Replace
      (Self : in out Breakpoint_Holder;
       Data : Breakpoint_Data)
    is
@@ -346,7 +346,7 @@ package body DAP.Modules.Breakpoints is
       if C /= Breakpoint_Vectors.No_Element then
          Self.Vector.Replace_Element (C, Data);
       end if;
-   end Replace_From_Id;
+   end Replace;
 
    -------------
    -- Replace --
@@ -399,7 +399,7 @@ package body DAP.Modules.Breakpoints is
       State   : Boolean) is
    begin
       for Idx of Indexes loop
-         Self.Vector (Idx).State := (if State then Enabled else Disabled);
+         Self.Vector (Idx).Enabled := State;
       end loop;
    end Set_Breakpoints_State;
 
@@ -442,7 +442,8 @@ package body DAP.Modules.Breakpoints is
    -------------------
 
    function Get_For_Files
-     (Self : Breakpoint_Holder)
+     (Self         : Breakpoint_Holder;
+      Enabled_Only : Boolean := True)
       return Breakpoint_Hash_Maps.Map
    is
       Result  : Breakpoint_Hash_Maps.Map;
@@ -453,7 +454,7 @@ package body DAP.Modules.Breakpoints is
       for Idx in Self.Vector.First_Index .. Self.Vector.Last_Index loop
          Data := Self.Vector (Idx);
 
-         if Data.State = Enabled
+         if (Data.Enabled or else not Enabled_Only)
            and then Data.Kind = On_Line
          then
             File := Get_Location_File (Data);
@@ -486,7 +487,7 @@ package body DAP.Modules.Breakpoints is
       Result : Breakpoint_Vectors.Vector;
    begin
       for Data of Self.Vector loop
-         if (Data.State = Enabled or else not Enabled_Only)
+         if (Data.Enabled or else not Enabled_Only)
            and then Get_Location_File (Data) = File
          then
             Result.Append (Data);
@@ -512,7 +513,7 @@ package body DAP.Modules.Breakpoints is
       for Idx in Self.Vector.First_Index .. Self.Vector.Last_Index loop
          Data := Self.Vector (Idx);
 
-         if (Data.State = Enabled or else not Enabled_Only)
+         if (Data.Enabled or else not Enabled_Only)
            and then Get_Location_File (Data) = File
          then
             Indexes.Append (Idx);
@@ -538,7 +539,7 @@ package body DAP.Modules.Breakpoints is
       for Idx in Self.Vector.First_Index .. Self.Vector.Last_Index loop
          Data := Self.Vector (Idx);
 
-         if (Data.State = Enabled or else not Enabled_Only)
+         if (Data.Enabled or else not Enabled_Only)
            and then Data.Kind = Kind
          then
             Indexes.Append (Idx);
