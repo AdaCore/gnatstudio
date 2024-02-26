@@ -15,36 +15,51 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with VSS.Strings;
-with DAP.Requests.SetFunctionBreakpoints;
+package body DAP.Clients.Breakpoint_Managers.SetFunctionBreakpoints is
 
-private package DAP.Modules.Breakpoint_Managers.SetFunctionBreakpoints is
+   ----------------------
+   -- On_Error_Message --
+   ----------------------
 
-   type Function_Breakpoint_Request is
-     new DAP.Requests.SetFunctionBreakpoints.Function_Breakpoint_DAP_Request
-   with record
-      Manager : DAP_Client_Breakpoint_Manager_Access;
-      Action  : Action_Kind;
-      Sent    : Breakpoint_Vectors.Vector;
-      Last    : Boolean := False;
-   end record;
+   overriding procedure On_Error_Message
+     (Self    : in out Function_Breakpoint_Request;
+      Client  : not null access DAP.Clients.DAP_Client'Class;
+      Message : VSS.Strings.Virtual_String) is
+   begin
+      DAP.Requests.SetFunctionBreakpoints.On_Error_Message
+        (DAP.Requests.SetFunctionBreakpoints.
+           Function_Breakpoint_DAP_Request (Self), Client, Message);
+   end On_Error_Message;
 
-   type Function_Breakpoint_Request_Access is
-     access all Function_Breakpoint_Request;
+   -----------------
+   -- On_Rejected --
+   -----------------
+
+   overriding procedure On_Rejected
+     (Self   : in out Function_Breakpoint_Request;
+      Client : not null access DAP.Clients.DAP_Client'Class) is
+   begin
+      DAP.Requests.SetFunctionBreakpoints.On_Rejected
+        (DAP.Requests.SetFunctionBreakpoints.
+           Function_Breakpoint_DAP_Request (Self), Client);
+   end On_Rejected;
+
+   -----------------------
+   -- On_Result_Message --
+   -----------------------
 
    overriding procedure On_Result_Message
      (Self        : in out Function_Breakpoint_Request;
       Client      : not null access DAP.Clients.DAP_Client'Class;
       Result      : in out DAP.Tools.SetFunctionBreakpointsResponse;
-      New_Request : in out DAP_Request_Access);
+      New_Request : in out DAP_Request_Access)
+   is
+      pragma Unreferenced (New_Request);
+   begin
+      Self.Manager.On_Breakpoint_Request_Response
+        (Client          => Client,
+         New_Breakpoints => Result.a_body.breakpoints,
+         Old_Breakpoints => Self.Breakpoints);
+   end On_Result_Message;
 
-   overriding procedure On_Rejected
-     (Self   : in out Function_Breakpoint_Request;
-      Client : not null access DAP.Clients.DAP_Client'Class);
-
-   overriding procedure On_Error_Message
-     (Self    : in out Function_Breakpoint_Request;
-      Client  : not null access DAP.Clients.DAP_Client'Class;
-      Message : VSS.Strings.Virtual_String);
-
-end DAP.Modules.Breakpoint_Managers.SetFunctionBreakpoints;
+end DAP.Clients.Breakpoint_Managers.SetFunctionBreakpoints;

@@ -32,10 +32,11 @@ with GPS.Kernel.Scripts;       use GPS.Kernel.Scripts;
 
 with DAP.Types;                use DAP.Types;
 with DAP.Clients;              use DAP.Clients;
+with DAP.Clients.Breakpoint_Managers;
 with DAP.Clients.Stack_Trace;  use DAP.Clients.Stack_Trace;
 with DAP.Module;
 with DAP.Modules.Breakpoints;
-with DAP.Modules.Persistent_Breakpoints;
+with DAP.Module.Breakpoints;
 with DAP.Views.Consoles;
 
 with Interactive_Consoles;    use Interactive_Consoles;
@@ -239,7 +240,7 @@ package body DAP.Modules.Scripts is
          Visual := DAP_Visual_Debugger_Access
            (Glib.Object.GObject'(Get_Data (Inst)));
          Data.Set_Return_Value_As_List;
-         for B of Visual.Client.Get_Breakpoints loop
+         for B of Visual.Client.Get_Breakpoints_Manager.Get_Breakpoints loop
             Data.Set_Return_Value
               (Create_Debugger_Breakpoint (Data.Get_Script, B));
          end loop;
@@ -330,22 +331,21 @@ package body DAP.Modules.Scripts is
 
       elsif Command = "break_at_location" then
          Inst := Nth_Arg (Data, 1, New_Class (Kernel, "Debugger"));
-         DAP.Modules.Persistent_Breakpoints.Break_Source
+         DAP.Module.Breakpoints.Break_Source
            (Kernel => Kernel,
-            Num    => No_Breakpoint,
             File   => Nth_Arg (Data, 2),
             Line   => Basic_Types.Editable_Line_Type
               (Integer'(Data.Nth_Arg (3))));
 
       elsif Command = "break_at_exception" then
          Inst := Nth_Arg (Data, 1, New_Class (Kernel, "Debugger"));
-         DAP.Modules.Persistent_Breakpoints.Break_At_Exception
+         DAP.Module.Breakpoints.Break_On_All_Exceptions
            (Kernel    => Kernel,
             Unhandled => Nth_Arg (Data, 2));
 
       elsif Command = "unbreak_at_location" then
          Inst := Nth_Arg (Data, 1, New_Class (Kernel, "Debugger"));
-         DAP.Modules.Persistent_Breakpoints.Unbreak_Source
+         DAP.Module.Breakpoints.Unbreak_Source
            (Kernel,
             File  => Nth_Arg (Data, 2),
             Line  => Basic_Types.Editable_Line_Type

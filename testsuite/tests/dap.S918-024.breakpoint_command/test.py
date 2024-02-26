@@ -1,6 +1,5 @@
 """
 Verify that GNAT Studio can set commands on breakpoint.
-
 """
 import GPS
 from gs_utils.internal.utils import *

@@ -15,6 +15,8 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
+--  Used to manage DAP breakpoints.
+
 with GNATCOLL.VFS;            use GNATCOLL.VFS;
 
 with VSS.Strings;
@@ -24,64 +26,65 @@ with GPS.Kernel;              use GPS.Kernel;
 with DAP.Types;               use DAP.Types;
 with DAP.Modules.Breakpoints; use DAP.Modules.Breakpoints;
 
-package DAP.Modules.Persistent_Breakpoints is
+--  Used to manage DAP breakpoints as a whole, dealing with persistant
+--  breakpoints and debugger-specific ones.
+--  This will look in look in persistent breakpoints if there is no running,
+--  debugger or in the current debugger's breakpoints if there is one.
+
+package DAP.Module.Breakpoints is
 
    procedure Register_Module
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class);
+   --  Register the module that manages DAP breakpoints.
 
    function Get_Persistent_Breakpoints return Breakpoint_Vectors.Vector;
+   --  Return the list of persistent breakpoints.
 
    function Get_Persistent_For_Executable
      (Executable : Virtual_File) return Breakpoint_Vectors.Vector;
+   --  Return the list of persistent breakpoints for the given executable.
 
-   procedure Show_Breakpoint
-     (Kernel  : not null access Kernel_Handle_Record'Class;
-      B       : Breakpoint_Data);
-
-   procedure Show_Breakpoints_In_All_Editors
-     (Kernel : not null access Kernel_Handle_Record'Class);
-   --  Update the side column for all editors, and show the persistent
-   --  breakpoints info
-
-   procedure Hide_Breakpoints
-     (Kernel : not null access Kernel_Handle_Record'Class);
-   --  Hide all the breakpoints in all editors
+   function Get_Breakpoint_From_Id
+     (Id : Breakpoint_Identifier) return Breakpoint_Data;
+   --  Return the breakpoint with the given ID.
+   --  An empty breakpoint is returned if there is no breakpoint for this ID.
 
    procedure Delete_Multiple_Breakpoints
-     (Kernel : not null access Kernel_Handle_Record'Class;
-      List   : Breakpoint_Identifier_Lists.List);
-   --  Go through the list and delete the breakpoints. The list is not freed
-   --  by this procedure.
+     (Kernel  : not null access Kernel_Handle_Record'Class;
+      Indexes : Breakpoint_Index_Lists.List);
+   --  Go through the list and delete the breakpoints, using the given indexes.
 
    procedure Clear_All_Breakpoints
      (Kernel : not null access Kernel_Handle_Record'Class);
-   --  Delete all breakpoints
+   --  Delete all breakpoints.
 
    procedure Set_Breakpoints_State
-     (Kernel : not null access Kernel_Handle_Record'Class;
-      List   : Breakpoint_Identifier_Lists.List;
-      State  : Boolean);
+     (Kernel  : not null access Kernel_Handle_Record'Class;
+      Indexes : Breakpoint_Index_Lists.List;
+      State   : Boolean);
+   --  Enable or disable the breakpoints at the given indexes.
 
    procedure On_Debugging_Terminated
      (Kernel : not null access Kernel_Handle_Record'Class);
-   --  Called when the last debugger is finished
+   --  Called when the last running debugger has terminated.
 
    procedure On_Destroy;
-   --  Called when GNAT Studio is terminating
+   --  Called when GNAT Studio is terminating.
 
-   function Get_Next_Id return Breakpoint_Identifier;
-
-   procedure Store
-     (Executable : Virtual_File;
-      List       : Breakpoint_Vectors.Vector);
+   procedure Store_As_Persistent
+     (Executable  : Virtual_File;
+      Breakpoints : Breakpoint_Vectors.Vector);
+   --  Store the given list of breakpoints in the persistent ones.
+   --  Persistent breakpoints will be restored in newer sessions on the same
+   --  project.
 
    procedure Break
      (Kernel : not null access Kernel_Handle_Record'Class;
       Data   : in out Breakpoint_Data);
+   --  Add the given breakpoint.
 
    procedure Break_Source
      (Kernel    : not null access Kernel_Handle_Record'Class;
-      Num       : Breakpoint_Identifier;
       File      : Virtual_File;
       Line      : Editable_Line_Type;
       Temporary : Boolean := False;
@@ -90,11 +93,10 @@ package DAP.Modules.Persistent_Breakpoints is
       Ignore    : Natural := 0;
       Commands  : VSS.Strings.Virtual_String :=
         VSS.Strings.Empty_Virtual_String);
-   --  Add breakpoint for the source line
+   --  Add a breakpoint for the given SLOC.
 
    procedure Break_Subprogram
      (Kernel     : not null access Kernel_Handle_Record'Class;
-      Num        : Breakpoint_Identifier;
       Subprogram : String;
       Temporary  : Boolean := False;
       Condition  : VSS.Strings.Virtual_String :=
@@ -102,26 +104,24 @@ package DAP.Modules.Persistent_Breakpoints is
       Ignore     : Natural := 0;
       Commands   : VSS.Strings.Virtual_String :=
         VSS.Strings.Empty_Virtual_String);
-   --  Add breakpoint for the subprogram
+   --  Add a breakpoint for the given subprogram.
 
    procedure Break_Exception
      (Kernel    : not null access Kernel_Handle_Record'Class;
-      Num       : Breakpoint_Identifier;
       Name      : String;
       Unhandled : Boolean := False;
       Temporary : Boolean := False);
-   --  Add breakpoint for the exception
+   --  Add a breakpoint for the given exception name.
 
-   procedure Break_At_Exception
+   procedure Break_On_All_Exceptions
      (Kernel    : not null access Kernel_Handle_Record'Class;
       Unhandled : Boolean := False);
-   --  Break on any exception. When Unhandled is True, it will only break
-   --  on unhandled exceptions. When False, it will also break on handled
-   --  ones.
+   --  Break on all exception kinds.
+   --  When Unhandled is True, it will only break on unhandled exceptions. When
+   --  False, it will also break on handled ones.
 
    procedure Break_Address
      (Kernel    : not null access Kernel_Handle_Record'Class;
-      Num       : Breakpoint_Identifier;
       Address   : Address_Type;
       Temporary : Boolean := False;
       Condition : VSS.Strings.Virtual_String :=
@@ -129,16 +129,13 @@ package DAP.Modules.Persistent_Breakpoints is
       Ignore    : Natural := 0;
       Commands  : VSS.Strings.Virtual_String :=
         VSS.Strings.Empty_Virtual_String);
-   --  Add breakpoint for the address
+   --  Add a breakpoint for the given address.
 
    procedure Unbreak_Source
      (Kernel : not null access Kernel_Handle_Record'Class;
       File   : Virtual_File;
       Line   : Editable_Line_Type);
-   --  Set a breakpoint on the given location.
-   --  If no debugger is currently running, the breakpoint will be applied when
-   --  one is started. If one or more debuggers are running, they all break
-   --  at that location
+   --  Remove all the breakpoints set for the given SLOC.
 
    procedure Save_Persistent_Breakpoints
      (Kernel : not null access Kernel_Handle_Record'Class);
@@ -147,4 +144,4 @@ package DAP.Modules.Persistent_Breakpoints is
    All_Exceptions_Filter : constant String := "exception";
    --  Filter that contains the name that means "all exceptions"
 
-end DAP.Modules.Persistent_Breakpoints;
+end DAP.Module.Breakpoints;
