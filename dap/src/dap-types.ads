@@ -20,7 +20,6 @@
 with Ada.Containers.Indefinite_Vectors;
 with Ada.Containers.Indefinite_Hashed_Maps;
 with Ada.Containers.Vectors;
-with Ada.Containers.Doubly_Linked_Lists;
 with Ada.Containers.Ordered_Sets;
 with Ada.Strings.Hash;
 with Ada.Strings.Unbounded;
@@ -39,25 +38,6 @@ package DAP.Types is
      --  * Launched: The debuggee has been started by the DAP client
      --    (e.g: via the 'launch' request).
      --  * Attached: the DAP client has been attached to a running process
-
-   type Breakpoint_Identifier is new Integer;
-   No_Breakpoint : constant Breakpoint_Identifier := 0;
-   --  Breakpoint identifiers on DAP server's side.
-   --  These identifiers are set by the DAP server, in response of the
-   --  breakpoint-related DAP requests.
-
-   package Breakpoint_Identifier_Lists is
-     new Ada.Containers.Doubly_Linked_Lists (Breakpoint_Identifier);
-   --  Lists of breakpoint identifiers.
-
-   package Breakpoint_Index_Lists is
-     new Ada.Containers.Doubly_Linked_Lists (Positive);
-   --  This type is used when doing the same debugger action on a list
-   --  of breakpoints (delete/enable/disable).
-   --  Indexes are different from breakpoint identifiers: breakpoint
-   --  identifiers are set by the DAP server once the breakpoint has been
-   --  properly recognized, while indexes refer to the position of the
-   --  breakpoint in the holders' vectors used to store them.
 
    type Command_Type is (Internal, Hidden, Visible, User);
 

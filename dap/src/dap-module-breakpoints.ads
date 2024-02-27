@@ -24,7 +24,7 @@ with VSS.Strings;
 with Basic_Types;             use Basic_Types;
 with GPS.Kernel;              use GPS.Kernel;
 with DAP.Types;               use DAP.Types;
-with DAP.Modules.Breakpoints; use DAP.Modules.Breakpoints;
+with DAP.Types.Breakpoints; use DAP.Types.Breakpoints;
 
 --  Used to manage DAP breakpoints as a whole, dealing with persistant
 --  breakpoints and debugger-specific ones.

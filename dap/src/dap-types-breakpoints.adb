@@ -20,7 +20,7 @@ with GNATCOLL.Utils;
 
 with GPS.Editors;
 
-package body DAP.Modules.Breakpoints is
+package body DAP.Types.Breakpoints is
 
    function Is_Same_Location
      (Data : Breakpoint_Data;
@@ -626,4 +626,4 @@ package body DAP.Modules.Breakpoints is
       end loop;
    end Set_Ignore_Count;
 
-end DAP.Modules.Breakpoints;
+end DAP.Types.Breakpoints;

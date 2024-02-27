@@ -897,7 +897,7 @@ package body DAP.Module.Breakpoints is
       B : Breakpoint_Data := Breakpoint_Data'
         (Kind        => On_Line,
          Num         => No_Breakpoint,
-         Location    => DAP.Modules.Breakpoints.Breakpoint_Location_Type'
+         Location    => DAP.Types.Breakpoints.Breakpoint_Location_Type'
            (Marker  => Kernel.Get_Buffer_Factory.Create_Marker
               (File   => File,
                Line   => Line,

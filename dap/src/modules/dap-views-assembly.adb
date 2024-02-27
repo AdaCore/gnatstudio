@@ -68,7 +68,7 @@ with DAP.Clients.Stack_Trace;    use DAP.Clients.Stack_Trace;
 with DAP.Tools;                  use DAP.Tools;
 with DAP.Types;                  use DAP.Types;
 with DAP.Modules.Preferences;    use DAP.Modules.Preferences;
-with DAP.Modules.Breakpoints;    use DAP.Modules.Breakpoints;
+with DAP.Types.Breakpoints;    use DAP.Types.Breakpoints;
 with DAP.Utils;                  use DAP.Utils;
 
 with DAP.Requests.Disassemble;
@@ -730,7 +730,7 @@ package body DAP.Views.Assembly is
       Scroll_To_Pc : Boolean := True)
    is
       use Ada.Strings.Unbounded;
-      use DAP.Modules.Breakpoints;
+      use DAP.Types.Breakpoints;
 
       Client   : constant DAP.Clients.DAP_Client_Access := Get_Client (View);
       Model    : Gtk.Tree_Store.Gtk_Tree_Store renames View.Model;

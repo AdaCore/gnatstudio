@@ -70,6 +70,7 @@ with DAP.Clients.Cancel;
 with DAP.Clients.Variables;
 
 with DAP.Requests.Disconnect;
+with DAP.Types.Breakpoints;      use DAP.Types.Breakpoints;
 
 with DAP.Views.Consoles;
 with DAP.Tools.Inputs;
@@ -1533,7 +1534,7 @@ package body DAP.Clients is
       VSS_Cmd       : Virtual_String;
       Details       : Virtual_String;
       Level         : Integer;
-      Ids           : DAP.Types.Breakpoint_Identifier_Lists.List;
+      Ids           : Breakpoint_Identifier_Lists.List;
 
       procedure Add_BP_For_Offset;
       procedure Check_Delete_Command;
