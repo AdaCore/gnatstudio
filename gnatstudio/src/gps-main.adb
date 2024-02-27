@@ -693,7 +693,6 @@ procedure GPS.Main is
       Free (Tools_Host);
       Free (GPS.Globals.Target);
       Free (Protocol);
-      Free (Debugger_Name);
       Free (Passed_Project_Name);
       Free (Program_Args);
 
@@ -923,13 +922,6 @@ procedure GPS.Main is
 
          --  Project will be overridden when the executable is loaded
          Load_Sources;
-
-         if Debugger_Name /= null then
-            Project.Set_Attribute
-              (Scenario  => All_Scenarios,
-               Attribute => Debugger_Command_Attribute,
-               Value     => Debugger_Name.all);
-         end if;
 
          --  ??? re-enable this...
 --           if Tools_Host /= null then

@@ -21,7 +21,6 @@ The command line options are::
      --version                      Show the GNAT Studio version and exit
      --debug[=program]              Start a debug session and optionally load
                                     the program with the given arguments
-     --debugger debugger            Specify the debugger's command line
      --hide                         Hide GNAT Studio main window
      --host=tools_host              Use tools_host to launch tools (e.g. gdb)
      --target=TARG:PRO              Load program on machine TARG using protocol
