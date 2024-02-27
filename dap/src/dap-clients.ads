@@ -41,10 +41,12 @@ with DAP.Modules.Histories;
 with DAP.Requests;
 with DAP.Types;                  use DAP.Types;
 with DAP.Tools;
-limited with DAP.Clients.Stack_Trace;
-limited with DAP.Clients.Breakpoint_Managers;
 
 with Generic_Views;
+
+limited with DAP.Clients.Stack_Trace;
+limited with DAP.Clients.Breakpoint_Managers;
+limited with DAP.Clients.Variables;
 
 private with Ada.Containers.Hashed_Maps;
 private with Ada.Containers.Hashed_Sets;
@@ -256,6 +258,11 @@ package DAP.Clients is
       return DAP.Clients.Stack_Trace.Stack_Trace_Access;
    --  Returns the Stack_Trace module
 
+   function Get_Variables
+     (Self : DAP_Client)
+      return DAP.Clients.Variables.Variables_Holder_Access;
+   --  Returns the Variables module
+
    procedure Process_User_Command
      (Self              : in out DAP_Client;
       Cmd               : String;
@@ -400,6 +407,7 @@ private
       Breakpoints      : access DAP.Clients.Breakpoint_Managers.
         Breakpoint_Manager_Type'Class;
       Stack_Trace      : access DAP.Clients.Stack_Trace.Stack_Trace'Class;
+      Variables        : access DAP.Clients.Variables.Variables_Holder'Class;
 
       Command_History  : aliased String_History.History_List;
 

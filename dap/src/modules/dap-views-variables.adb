@@ -15,6 +15,7 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
+with Ada.Characters.Handling;
 with Ada.Containers.Vectors;
 with Ada.Strings.Fixed;           use Ada.Strings.Fixed;
 with Ada.Strings.Unbounded;       use Ada.Strings.Unbounded;
@@ -22,6 +23,7 @@ with Ada.Strings.Unbounded;       use Ada.Strings.Unbounded;
 with GNAT.Decode_UTF8_String;
 
 with GNATCOLL.JSON;               use GNATCOLL.JSON;
+with GNATCOLL.Traces;             use GNATCOLL.Traces;
 with GNATCOLL.Utils;              use GNATCOLL.Utils;
 with GNATCOLL.VFS;
 
@@ -43,10 +45,8 @@ with Gtk.Scrolled_Window;         use Gtk.Scrolled_Window;
 
 with Gtkada.File_Selector;
 
-with VSS.Characters;
 with VSS.Regular_Expressions;     use VSS.Regular_Expressions;
 with VSS.Strings.Conversions;
-with VSS.Strings.Cursors.Iterators.Characters;
 with VSS.Transformers.Casing;     use VSS.Transformers.Casing;
 
 with GPS.Dialogs;                 use GPS.Dialogs;
@@ -71,16 +71,12 @@ with GPS.Debuggers;
 with DAP.Module;
 with DAP.Modules.Contexts;        use DAP.Modules.Contexts;
 with DAP.Modules.Preferences;
-with DAP.Clients.Stack_Trace;     use DAP.Clients.Stack_Trace;
+with DAP.Tools;                   use DAP.Tools;
 with DAP.Utils;                   use DAP.Utils;
 
-with DAP.Views.Variables.Evaluate;
-with DAP.Views.Variables.Scopes;
-with DAP.Views.Variables.Variables;
-with DAP.Views.Variables.SetExpression;
-with DAP.Views.Variables.SetVariable;
-
 package body DAP.Views.Variables is
+
+   Me : constant Trace_Handle := Create ("GPS.DAP.Variables", On);
 
    type On_Pref_Changed is new Preferences_Hooks_Function with null record;
    overriding procedure Execute
@@ -225,6 +221,191 @@ package body DAP.Views.Variables is
        ("set\s+variable\s+(\S+)\s+:=\s+(\S+)",
         (Case_Insensitive => True, others => False));
 
+   ------------
+   -- Update --
+   ------------
+
+   procedure Update (Client : not null access DAP.Clients.DAP_Client'Class)
+   is
+      View : constant DAP_Variables_View := DAP_Variables_View
+        (Variables_MDI_Views.Retrieve_View (Client.Kernel));
+   begin
+      if View /= null
+        and then Get_Client (View) = Client
+      then
+         View.Update;
+      end if;
+   end Update;
+
+   ---------------------------
+   -- On_Variable_Not_Found --
+   ---------------------------
+
+   procedure On_Variable_Not_Found
+     (Client : not null access DAP.Clients.DAP_Client'Class;
+      Params : Request_Parameters)
+   is
+      View : constant DAP_Variables_View := DAP_Variables_View
+        (Variables_MDI_Views.Retrieve_View (Client.Kernel));
+   begin
+      if View /= null
+        and then Get_Client (View) = Client
+      then
+         if Params.Path = Null_Gtk_Tree_Path
+           and then Params.Item.Id /= Unknown_Id
+         then
+            --  we did not found the root variable, just add a row that it
+            --  can be deleted from GUI
+            View.Tree.Add_Row
+              (Params.Item, Variables_References_Trees.No_Element, Null_Iter);
+         end if;
+      end if;
+   end On_Variable_Not_Found;
+
+   ------------------------
+   -- On_Variable_Loaded --
+   ------------------------
+
+   procedure On_Variable_Loaded
+     (Client : not null access DAP.Clients.DAP_Client'Class;
+      Params : Request_Parameters;
+      C      : Variables_References_Trees.Cursor)
+   is
+      View   : constant DAP_Variables_View := DAP_Variables_View
+        (Variables_MDI_Views.Retrieve_View (Client.Kernel));
+      Parent : Gtk_Tree_Iter := Null_Iter;
+   begin
+      if View /= null
+        and then Get_Client (View) = Client
+      then
+         if (Params.Path = Null_Gtk_Tree_Path
+             and then Params.Item.Id /= Unknown_Id)
+           or else (Params.Path /= Null_Gtk_Tree_Path
+                    and then Params.Item.Id = Unknown_Id)
+         --  do not add child items when we are updating the view
+         then
+            if Params.Path /= Null_Gtk_Tree_Path then
+               Parent := View.Tree.Model.Get_Iter (Params.Path);
+            end if;
+
+            --  add it to the table
+            View.Tree.Add_Row (Params.Item, C, Parent);
+         end if;
+
+         if Params.Position /= 0 then
+            --  Position /= 0 when we updating the whole view,
+            --  continue updating.
+            View.Update (Params.Position);
+
+         else
+            View.Restore_Expansion;
+         end if;
+      end if;
+   end On_Variable_Loaded;
+
+   ------------------------
+   -- On_Children_Loaded --
+   ------------------------
+
+   procedure On_Children_Loaded
+     (Client : not null access DAP.Clients.DAP_Client'Class;
+      Params : Request_Parameters;
+      C      : Variables_References_Trees.Cursor)
+   is
+      View    : constant DAP_Variables_View := DAP_Variables_View
+        (Variables_MDI_Views.Retrieve_View (Client.Kernel));
+      Current : Variables_References_Trees.Cursor := C;
+      Parent  : Gtk_Tree_Iter := Null_Iter;
+      Dummy   : Boolean;
+   begin
+      if View /= null
+        and then Get_Client (View) = Client
+      then
+         if Params.Path /= Null_Gtk_Tree_Path then
+            Parent := View.Tree.Model.Get_Iter (Params.Path);
+         end if;
+
+         if Params.Item.Id /= Unknown_Id
+         --  add the item when it is root item
+           or else Parent /= Null_Iter
+         --  or we are adding as a nested element
+         then
+            Current := First_Child (Current);
+            while Current /= Variables_References_Trees.No_Element loop
+               View.Tree.Add_Row (Params.Item, Current, Parent);
+               Next_Sibling (Current);
+            end loop;
+            Dummy := View.Tree.Expand_Row (Params.Path, False);
+         end if;
+
+         if Params.Position /= 0 then
+            --  Position /= 0 when we updating the whole view,
+            --  continue updating.
+            View.Update (Params.Position);
+
+         else
+            View.Restore_Expansion;
+         end if;
+      end if;
+   end On_Children_Loaded;
+
+   -----------------------
+   -- Restore_Expansion --
+   -----------------------
+
+   procedure Restore_Expansion
+     (Self : access DAP_Variables_View_Record'Class) is
+   begin
+      Expansions.Set_Expansion_Status
+        (Self.Tree, Self.Expansion);
+   end Restore_Expansion;
+
+   ---------------------
+   -- On_Variable_Set --
+   ---------------------
+
+   procedure On_Variable_Set
+     (Client   : not null access DAP.Clients.DAP_Client'Class;
+      Params   : Request_Parameters;
+      Variable : DAP.Tools.Variable)
+   is
+      View    : constant DAP_Variables_View := DAP_Variables_View
+        (Variables_MDI_Views.Retrieve_View (Client.Kernel));
+      Iter    : Gtk_Tree_Iter;
+
+   begin
+      if View /= null
+        and then Get_Client (View) = Client
+      then
+         if Params.Set_Path = Null_Gtk_Tree_Path then
+            Iter := GUI_Utils.Find_Node
+              (Model     => View.Tree.Model,
+               Name      => Ada.Characters.Handling.To_Lower
+                 (VSS.Strings.Conversions.To_UTF_8_String
+                      (Params.Name)),
+               Column    => Column_Full_Name,
+               Recursive => False);
+
+         else
+            --  The user has edited the row with the given path: use
+            --  directly the path instead of searching for the
+            --  variable's row
+
+            Iter := View.Tree.Model.Get_Iter (Params.Set_Path);
+         end if;
+
+         if Iter /= Null_Iter then
+            Set_And_Clear
+              (View.Tree.Model,
+               Iter    => Iter,
+               Columns => (Column_Value, Column_Value_Fg),
+               Values  =>
+                 (1 => As_String (UTF8 (Variable.value)),
+                  2 => As_String (To_String (Numbers_Style.Get_Pref_Fg))));
+         end if;
+      end if;
+   end On_Variable_Set;
+
    ---------------------------
    -- On_Process_Terminated --
    ---------------------------
@@ -232,11 +413,7 @@ package body DAP.Views.Variables is
    overriding procedure On_Process_Terminated
      (Self : not null access DAP_Variables_View_Record) is
    begin
-      Self.Locals_Scope_Id    := 0;
-      Self.Arguments_Scope_Id := 0;
-
       Self.Clear;
-      Self.Scopes.Clear;
       Self.Old_Scopes.Clear;
    end On_Process_Terminated;
 
@@ -250,14 +427,11 @@ package body DAP.Views.Variables is
    is
       use GPS.Debuggers;
    begin
-      if Status = Debug_Busy
-        or else Status = Debug_None
-      then
-         Self.Locals_Scope_Id    := 0;
-         Self.Arguments_Scope_Id := 0;
+      if Status = Debug_Busy then
+         Self.Old_Scopes := Get_Client (Self).Get_Variables.Get_Scopes;
 
-         Self.Old_Scopes := Self.Scopes;
-         Self.Scopes.Clear;
+      elsif Status = Debug_None then
+         Self.Old_Scopes.Clear;
       end if;
    end On_Status_Changed;
 
@@ -362,9 +536,10 @@ package body DAP.Views.Variables is
       if View /= null then
          declare
             Focus_Child : constant MDI_Child :=
-                            Get_Focus_Child (Get_MDI (View.Kernel));
+              Get_Focus_Child (Get_MDI (View.Kernel));
+
             View_Child  : constant MDI_Child :=
-                            Variables_MDI_Views.Child_From_View (View);
+              Variables_MDI_Views.Child_From_View (View);
          begin
             return Focus_Child = View_Child;
          end;
@@ -416,8 +591,10 @@ package body DAP.Views.Variables is
       C     : Variables_References_Trees.Cursor := Self.Old_Scopes.Root;
       Found : Boolean;
    begin
-      Find_Best_Ref (Full_Name (Cursor), C, Found);
-      return Found and then Element (C).value /= Element (Cursor).value;
+      Find_Name_Or_Parent (Full_Name (Cursor), C, Found);
+
+      return Found
+        and then Element (C).Data.value /= Element (Cursor).Data.value;
    end Is_Changed;
 
    ----------------
@@ -521,7 +698,7 @@ package body DAP.Views.Variables is
          if Cursor = Variables_References_Trees.No_Element then
             return Wrap (Get_Name (Item));
          else
-            return Wrap (UTF8 (Element (Cursor).name));
+            return Wrap (UTF8 (Element (Cursor).Data.name));
          end if;
       end Display_Name;
 
@@ -530,7 +707,7 @@ package body DAP.Views.Variables is
          if Cursor = Variables_References_Trees.No_Element then
             return "";
          else
-            return XML_Utils.Protect (UTF8 (Element (Cursor).a_type));
+            return XML_Utils.Protect (UTF8 (Element (Cursor).Data.a_type));
          end if;
       end Display_Type_Name;
 
@@ -560,11 +737,11 @@ package body DAP.Views.Variables is
                     (if Cursor = Variables_References_Trees.No_Element
                      then ""
                      else XML_Utils.Protect
-                       (Validate_UTF_8 (UTF8 (Element (Cursor).value))));
+                       (Validate_UTF_8 (UTF8 (Element (Cursor).Data.value))));
       Type_Name : constant String := Display_Type_Name;
    begin
       if Cursor /= Variables_References_Trees.No_Element then
-         Var := Element (Cursor);
+         Var := Element (Cursor).Data;
       end if;
 
       Trace
@@ -596,7 +773,8 @@ package body DAP.Views.Variables is
                else Fg),
             Column_Type_Fg      => As_String
               (To_String (Types_Style.Get_Pref_Fg)),
-            Column_Full_Name    => As_String (Full_Name (Cursor))));
+            Column_Full_Name    => As_String
+              (VSS.Strings.Conversions.To_UTF_8_String (Full_Name (Cursor)))));
 
       if Cursor /= Variables_References_Trees.No_Element then
          if Var.variablesReference > 0 then
@@ -700,16 +878,16 @@ package body DAP.Views.Variables is
          then
             if It.Cmd /= Empty_Virtual_String then
                DAP_Variables_View (Self.View).Set_Variable_Value
-                 (Name  => Get_Name (It),
-                  Value => Text,
-                  Path  => Self.Model.Get_Path (Store_Iter));
+                 (Full_Name => Get_Name (It),
+                  Value     => Text,
+                  Path      => Self.Model.Get_Path (Store_Iter));
 
             elsif It.Varname /= Empty_Virtual_String then
                DAP_Variables_View (Self.View).Set_Variable_Value
-                 (Name  => Self.Model.Get_String
+                 (Full_Name => Self.Model.Get_String
                     (Store_Iter, Column_Full_Name),
-                  Value => Text,
-                  Path  => Self.Model.Get_Path (Store_Iter));
+                  Value     => Text,
+                  Path      => Self.Model.Get_Path (Store_Iter));
             end if;
          end if;
       end if;
@@ -720,87 +898,34 @@ package body DAP.Views.Variables is
    ------------------------
 
    procedure Set_Variable_Value
-     (Self  : access DAP_Variables_View_Record'Class;
-      Name  : String;
-      Value : String;
-      Path  : Gtk.Tree_Model.Gtk_Tree_Path)
+     (Self      : access DAP_Variables_View_Record'Class;
+      Full_Name : String;
+      Value     : String;
+      Path      : Gtk.Tree_Model.Gtk_Tree_Path)
    is
       use type DAP.Clients.DAP_Client_Access;
 
       Client : constant DAP.Clients.DAP_Client_Access := Get_Client (Self);
-      N      : constant Virtual_String :=
-        VSS.Strings.Conversions.To_Virtual_String (Name);
-      Inf    : Boolean;
-      Ref    : Boolean;
-      C      : Variables_References_Trees.Cursor := Self.Scopes.Root;
+      N      : constant VSS.Strings.Virtual_String :=
+        VSS.Strings.Conversions.To_Virtual_String (Full_Name);
       Cursor : Item_Info_Vectors.Cursor;
+      Found  : Boolean;
    begin
       if Client = null then
+         Path_Free (Path);
          return;
       end if;
 
-      Self.Tree.Find_Best_Info (N, Cursor, Inf);
+      Self.Tree.Find_Best_Info (N, Cursor, Found);
 
-      if Client.Get_Capabilities.Is_Set
-        and then Client.Get_Capabilities.Value.supportsSetExpression
-      then
-         declare
-            Req : DAP.Views.Variables.SetExpression.
-              Set_Expression_Request_Access :=
-                new DAP.Views.Variables.SetExpression.
-                  Set_Expression_Request (Self.Kernel);
-         begin
-            Req.Name := N;
-            Req.Path := Copy (Path);
-            Req.Parameters.arguments.expression := N;
-            Req.Parameters.arguments.value :=
-              VSS.Strings.Conversions.To_Virtual_String (Value);
-            Req.Parameters.arguments.frameId :=
-              Client.Get_Stack_Trace.Get_Current_Frame_Id;
-            if Inf
-              and then Element (Cursor).Format /= Default_Format
-            then
-               Req.Parameters.arguments.format :=
-                 (Is_Set => True, Value => Element (Cursor).Format);
-            end if;
-
-            Client.Enqueue (DAP.Requests.DAP_Request_Access (Req));
-         end;
-
-      elsif Client.Get_Capabilities.Is_Set
-        and then Client.Get_Capabilities.Value.supportsSetVariable
-      then
-         Find_Best_Ref (N, C, Ref);
-
-         if Ref then
-            declare
-               Req    : DAP.Views.Variables.SetVariable.
-                 Set_Variable_Request_Access :=
-                   new DAP.Views.Variables.SetVariable.
-                     Set_Variable_Request (Self.Kernel);
-               Parent : constant Variables_References_Trees.Cursor :=
-                 Variables_References_Trees.Parent (C);
-            begin
-               Req.Name := N;
-               Req.Path := Copy (Path);
-               Req.Parameters.arguments.variablesReference :=
-                 Element (Parent).variablesReference;
-               Req.Parameters.arguments.name  := Element (C).name;
-               Req.Parameters.arguments.value :=
-                 VSS.Strings.Conversions.To_Virtual_String (Value);
-               if Inf
-                 and then Element (Cursor).Format /= Default_Format
-               then
-                  Req.Parameters.arguments.format :=
-                    (Is_Set => True, Value => Element (Cursor).Format);
-               end if;
-               Client.Enqueue (DAP.Requests.DAP_Request_Access (Req));
-            end;
-         end if;
-
-      else
-         Self.Kernel.Get_Messages_Window.Insert_Text
-           ("Editing is not supported");
+      if Found then
+         Client.Get_Variables.Set_Variable
+           ((Kind     => Set_Variable,
+             Item     => Element (Cursor),
+             Children => False,
+             Name     => N,
+             Value    => VSS.Strings.Conversions.To_Virtual_String (Value),
+             Set_Path => Path));
       end if;
 
       Path_Free (Path);
@@ -1120,6 +1245,7 @@ package body DAP.Views.Variables is
    begin
       if not Item.Varname.Is_Empty then
          Self.Undisplay (Item.Varname);
+
       elsif not Item.Cmd.Is_Empty then
          Self.Undisplay (Item.Cmd);
       end if;
@@ -1155,16 +1281,11 @@ package body DAP.Views.Variables is
      (Self : not null access DAP_Variables_View_Record)
    is
       use type DAP.Clients.DAP_Client_Access;
-      use type DAP.Requests.DAP_Request_Access;
 
       Client  : constant DAP.Clients.DAP_Client_Access := Get_Client (Self);
-      Request : DAP.Requests.DAP_Request_Access;
    begin
       Trace (Me, "Update view");
-      Self.Locals_Scope_Id    := 0;
-      Self.Arguments_Scope_Id := 0;
-
-      Self.Scopes.Clear;
+      Get_Client (Self).Get_Variables.Clear;
 
       if Client = null
         or else not Client.Is_Stopped
@@ -1182,67 +1303,36 @@ package body DAP.Views.Variables is
          Expansions.Get_Expansion_Status (Self.Tree, Self.Expansion);
          Self.Tree.Model.Clear;
 
-         Self.Continue_Update (0, Request);
-         if Request /= null then
-            Get_Client (Self).Enqueue (Request);
-         end if;
+         Self.Update (0);
 
       else
          Self.Tree.Model.Clear;
       end if;
    end Update;
 
-   ---------------------
-   -- Continue_Update --
-   ---------------------
-
-   procedure Continue_Update
-     (Self     : not null access DAP_Variables_View_Record'Class;
-      Position : Natural;
-      Request  : out DAP.Requests.DAP_Request_Access)
-   is
-      use type DAP.Requests.DAP_Request_Access;
-      Num : Natural;
-   begin
-      --  we done with the current variable but we updateing the view,
-      --  so start with the next one
-
-      Request := null;
-      for Pos in Position + 1 .. Self.Tree.Items.Last_Index loop
-         if Self.Tree.Items (Pos).Auto_Refresh then
-            Request := Self.Update
-              (Self.Tree.Items (Pos),
-               Pos,
-               Null_Gtk_Tree_Path,
-               Self.Tree.Items (Pos).Id = Unknown_Id);
-
-            if Request /= null then
-               Num := Pos;
-               exit;
-            end if;
-         end if;
-      end loop;
-
-      if Request = null then
-         --  we processed all variables, restore expansions
-         Expansions.Set_Expansion_Status (Self.Tree, Self.Expansion);
-
-      else
-         Trace (Me, "Update:" & Get_Name (Self.Tree.Items (Num)));
-      end if;
-   end Continue_Update;
-
    ------------
    -- Update --
    ------------
 
-   procedure Update (Client : not null access DAP.Clients.DAP_Client'Class) is
-      View : constant DAP_Variables_View := DAP_Variables_View
-        (Variables_MDI_Views.Retrieve_View (Client.Kernel));
+   procedure Update
+     (Self     : access DAP_Variables_View_Record'Class;
+      Position : Natural) is
    begin
-      if View /= null then
-         View.Update;
-      end if;
+      --  we done with the current variable but we updateing the view,
+      --  so start with the next one
+
+      for Pos in Position + 1 .. Self.Tree.Items.Last_Index loop
+         if Self.Tree.Items (Pos).Auto_Refresh then
+            Self.Update
+              (Self.Tree.Items (Pos),
+               Pos,
+               Null_Gtk_Tree_Path,
+               Self.Tree.Items (Pos).Id = Unknown_Id);
+            return;
+         end if;
+      end loop;
+
+      Self.Restore_Expansion;
    end Update;
 
    ------------
@@ -1254,34 +1344,11 @@ package body DAP.Views.Variables is
       Item     : Item_Info;
       Position : Natural;
       Path     : Gtk.Tree_Model.Gtk_Tree_Path;
-      Childs   : Boolean := False)
-   is
-      use type DAP.Requests.DAP_Request_Access;
-      Request : DAP.Requests.DAP_Request_Access;
-   begin
-      Request := Self.Update (Item, Position, Path, Childs);
-      if Request /= null then
-         Get_Client (Self).Enqueue (Request);
-      end if;
-   end Update;
-
-   ------------
-   -- Update --
-   ------------
-
-   function Update
-     (Self     : access DAP_Variables_View_Record'Class;
-      Item     : Item_Info;
-      Position : Natural;
-      Path     : Gtk.Tree_Model.Gtk_Tree_Path;
-      Childs   : Boolean := False)
-      return DAP.Requests.DAP_Request_Access
+      Children : Boolean := False)
    is
       use type DAP.Clients.DAP_Client_Access;
 
       Client : constant DAP.Clients.DAP_Client_Access := Get_Client (Self);
-      Req    : DAP.Views.Variables.Scopes.Scopes_Request_Access;
-      Result : DAP.Requests.DAP_Request_Access;
    begin
       if Client = null then
          if Path /= Null_Gtk_Tree_Path then
@@ -1289,43 +1356,32 @@ package body DAP.Views.Variables is
          end if;
 
          Self.Tree.Model.Clear;
-         return null;
+         return;
       end if;
 
       if Client.Is_Stopped then
-         if Self.Locals_Scope_Id = 0
-           and then Self.Arguments_Scope_Id = 0
-           and then Item.Cmd.Is_Empty
-         --  don't have local's id and not a command, get it
-         then
-            Trace (Me, "Create scopes request");
-            Req := new DAP.Views.Variables.Scopes.Scopes_Request (Self.Kernel);
-
-            Req.Item     := Item;
-            Req.Position := Position;
-            Req.Childs   := Childs;
-            if Path /= Null_Gtk_Tree_Path then
-               Req.Path := Copy (Path);
-            end if;
-            Req.Parameters.arguments.frameId :=
-              Client.Get_Stack_Trace.Get_Current_Frame_Id;
-            Result := DAP.Requests.DAP_Request_Access (Req);
-
-         else
-            Self.Publish_Or_Request (Item, Position, Childs, Path, Result);
-         end if;
+         declare
+            Params : Request_Parameters :=
+              (Kind     => View,
+               Item     => Item,
+               Children => Children,
+               Position => Position,
+               Path     => Path);
+         begin
+            Get_Client (Self).Get_Variables.Get_Variable (Params);
+            --  Callback (Variable_Loaded, Children_Loaded) will be called when
+            --  the variable is loaded.
+         end;
 
       else
          Self.Tree.Add_Row
            (Item, Variables_References_Trees.No_Element,
             Self.Tree.Model.Get_Iter (Path));
-      end if;
 
-      if Path /= Null_Gtk_Tree_Path then
-         Path_Free (Path);
+         if Path /= Null_Gtk_Tree_Path then
+            Path_Free (Path);
+         end if;
       end if;
-
-      return Result;
    end Update;
 
    ------------------------
@@ -1460,11 +1516,11 @@ package body DAP.Views.Variables is
             end if;
 
             View.Set_Variable_Value
-              (Name  => VSS.Strings.Conversions.To_UTF_8_String
+              (Full_Name => VSS.Strings.Conversions.To_UTF_8_String
                  (Match.Captured (1)),
-               Value => VSS.Strings.Conversions.To_UTF_8_String
+               Value     => VSS.Strings.Conversions.To_UTF_8_String
                  (Match.Captured (2)),
-               Path  => Null_Gtk_Tree_Path);
+               Path      => Null_Gtk_Tree_Path);
             return "";
          else
             return Command;
@@ -1879,98 +1935,6 @@ package body DAP.Views.Variables is
       return Commands.Success;
    end Execute;
 
-   -------------------
-   -- Find_Best_Ref --
-   -------------------
-
-   procedure Find_Best_Ref
-     (Name   : Virtual_String;
-      Cursor : in out Variables_References_Trees.Cursor;
-      Found  : out Boolean)
-   is
-      use type Ada.Containers.Count_Type;
-      use VSS.Strings.Cursors.Iterators.Characters;
-      use VSS.Characters;
-
-      procedure Find (N : Virtual_String);
-      procedure Find (N : Virtual_String) is
-         Pos   : VSS.Strings.Cursors.Iterators.Characters.Character_Iterator :=
-           N.At_First_Character;
-         Part  : Virtual_String;
-         Dummy : Boolean;
-      begin
-         if Child_Count (Cursor) = 0 then
-            return;
-         end if;
-
-         while Has_Element (Pos)
-           and then Element (Pos) /= '.'
-         loop
-            Part.Append (Element (Pos));
-            Dummy := Forward (Pos);
-         end loop;
-
-         Cursor := First_Child (Cursor);
-         Dummy  := False;
-         while Cursor /= Variables_References_Trees.No_Element loop
-            if To_Lowercase.Transform (Element (Cursor).name) = Part then
-               exit;
-            end if;
-            Next_Sibling (Cursor);
-         end loop;
-
-         if Cursor /= Variables_References_Trees.No_Element then
-            if Has_Element (Pos) then
-               --  the part of the name is found
-               Dummy := Forward (Pos); --  skip '.'
-               Find (N.Slice (Pos, N.At_Last_Character));
-            else
-               --  the last name part is found
-               Found := True;
-            end if;
-         end if;
-      end Find;
-
-   begin
-      Found := False;
-
-      if Child_Count (Cursor) = 0 then
-         Cursor := Variables_References_Trees.No_Element;
-         return;
-      end if;
-
-      Find (To_Lowercase.Transform (Name));
-   end Find_Best_Ref;
-
-   ------------------
-   -- Find_Cmd_Ref --
-   ------------------
-
-   procedure Find_Cmd_Ref
-     (Name   : Virtual_String;
-      Cursor : in out Variables_References_Trees.Cursor;
-      Found  : out Boolean)
-   is
-      use type Ada.Containers.Count_Type;
-      N : constant Virtual_String := To_Lowercase.Transform (Name);
-
-   begin
-      Found := False;
-
-      if Child_Count (Cursor) = 0 then
-         return;
-      end if;
-
-      Cursor := First_Child (Cursor);
-      while Cursor /= Variables_References_Trees.No_Element loop
-         if To_Lowercase.Transform (Element (Cursor).name) = N then
-            Found := True;
-            return;
-         end if;
-         Next_Sibling (Cursor);
-      end loop;
-   end Find_Cmd_Ref;
-
    --------------------
    -- Find_Best_Info --
    --------------------
@@ -2005,6 +1969,7 @@ package body DAP.Views.Variables is
 
          Next (Cursor);
       end loop;
+
       Cursor := Result;
    end Find_Best_Info;
 
@@ -2028,241 +1993,6 @@ package body DAP.Views.Variables is
 
       return No_Item_Info;
    end Get_Item_Info;
-
-   ------------------------
-   -- Publish_Or_Request --
-   ------------------------
-
-   procedure Publish_Or_Request
-     (Self     : access DAP_Variables_View_Record'Class;
-      Item     : Item_Info;
-      Position : Natural;
-      Childs   : Boolean;
-      Path     : Gtk.Tree_Model.Gtk_Tree_Path;
-      Request  : out DAP.Requests.DAP_Request_Access)
-   is
-      use type Ada.Containers.Count_Type;
-      Found  : Boolean;
-      C      : Variables_References_Trees.Cursor;
-      Parent : Gtk_Tree_Iter := Null_Iter;
-
-      procedure Create_Request;
-      procedure Create_Ev_Request;
-
-      -- Create_Request --
-      procedure Create_Request
-      is
-         Req : constant DAP.Views.Variables.Variables.
-           Variables_Request_Access :=
-             new DAP.Views.Variables.Variables.
-               Variables_Request (Self.Kernel);
-      begin
-         Trace (Me, "Create Variables request");
-         Req.Item     := Item;
-         Req.Position := Position;
-         Req.Childs   := Childs;
-         if Path /= Null_Gtk_Tree_Path then
-            Req.Path := Copy (Path);
-         end if;
-         Req.Ref := Element (C).variablesReference;
-         Req.Parameters.arguments.variablesReference := Req.Ref;
-         if Item.Format /= Default_Format then
-            Req.Parameters.arguments.format :=
-              (Is_Set => True, Value => Item.Format);
-         end if;
-
-         Request := DAP.Requests.DAP_Request_Access (Req);
-      end Create_Request;
-
-      -- Create_Ev_Request --
-      procedure Create_Ev_Request
-      is
-         Req : constant DAP.Views.Variables.Evaluate.Evaluate_Request_Access :=
-           new DAP.Views.Variables.Evaluate.Evaluate_Request (Self.Kernel);
-      begin
-         Trace (Me, "Create Evaluate request");
-         Req.Item     := Item;
-         Req.Position := Position;
-         if Path /= Null_Gtk_Tree_Path then
-            Req.Path := Copy (Path);
-         end if;
-
-         Req.Parameters.arguments.expression := Item.Cmd;
-         Req.Parameters.arguments.frameId :=
-           Self.Get_Client.Get_Stack_Trace.Get_Current_Frame_Id;
-         Req.Parameters.arguments.context :=
-           (Is_Set => True, Value => DAP.Tools.Enum.repl);
-
-         Request := DAP.Requests.DAP_Request_Access (Req);
-      end Create_Ev_Request;
-
-   begin
-      Request := null;
-      C := Self.Scopes.Root;
-      if Item.Varname.Is_Empty then
-         Find_Cmd_Ref (Item.Cmd, C, Found);
-
-      else
-         Find_Best_Ref (Item.Varname, C, Found);
-      end if;
-
-      if Found then
-         --  we found the variable
-
-         if Path /= Null_Gtk_Tree_Path then
-            Parent := Self.Tree.Model.Get_Iter (Path);
-         end if;
-
-         if not Childs then
-            --  we need the variable itself, add it to the table
-
-            if (Path = Null_Gtk_Tree_Path
-                and then Item.Id /= Unknown_Id)
-              or else (Path /= Null_Gtk_Tree_Path
-                       and then Item.Id = Unknown_Id)
-            --  do not add child items when we in the view update
-            then
-               Self.Tree.Add_Row (Item, C, Parent);
-            end if;
-
-         elsif Element (C).variablesReference > 0 then
-            --  we need the variable's childs and they can be fetched
-
-            if Child_Count (C) /= 0 then
-               --  we already have childs, add them to the table
-
-               if Item.Id /= Unknown_Id
-                 --  add the item when it is root item
-                 or else Parent /= Null_Iter
-                 --  or we are adding as a nested element
-               then
-                  C := First_Child (C);
-                  while C /= Variables_References_Trees.No_Element loop
-                     Self.Tree.Add_Row (Item, C, Parent);
-                     Next_Sibling (C);
-                  end loop;
-                  Found := Self.Tree.Expand_Row (Path, False);
-               end if;
-
-            else
-               --  we need to get them, prepare a request
-               Create_Request;
-            end if;
-         end if;
-
-      elsif C /= Variables_References_Trees.No_Element then
-         --  we found a variable that contains one we are looking for.
-         --  Send new request to "expand" it and get childs
-         if not Item.Cmd.Is_Empty then
-            Create_Ev_Request;
-         else
-            Create_Request;
-         end if;
-
-      else
-         if not Item.Cmd.Is_Empty then
-            Create_Ev_Request;
-
-         elsif Path = Null_Gtk_Tree_Path
-           and then Item.Id /= Unknown_Id
-         then
-            --  we did not found the root variable, just add a row that it
-            --  can be deleted from GUI
-            Self.Tree.Add_Row
-              (Item, Variables_References_Trees.No_Element, Null_Iter);
-         end if;
-      end if;
-   end Publish_Or_Request;
-
-   --------------
-   -- Find_Ref --
-   --------------
-
-   function Find_Ref
-     (Self : access DAP_Variables_View_Record'Class;
-      Id   : Integer)
-      return Variables_References_Trees.Cursor
-   is
-      function Find
-        (C : Variables_References_Trees.Cursor)
-         return Variables_References_Trees.Cursor;
-      function Find
-        (C : Variables_References_Trees.Cursor)
-         return Variables_References_Trees.Cursor
-      is
-         use type Ada.Containers.Count_Type;
-         Current : Variables_References_Trees.Cursor := C;
-         R       : Variables_References_Trees.Cursor;
-      begin
-         while Current /= Variables_References_Trees.No_Element loop
-            if Element (Current).variablesReference = Id then
-               return Current;
-            end if;
-            Next_Sibling (Current);
-         end loop;
-
-         Current := C;
-         while Current /= Variables_References_Trees.No_Element loop
-            if Child_Count (Current) /= 0 then
-               R := Find (First_Child (Current));
-               if R /= Variables_References_Trees.No_Element then
-                  return R;
-               end if;
-            end if;
-            Next_Sibling (Current);
-         end loop;
-
-         return Variables_References_Trees.No_Element;
-      end Find;
-
-   begin
-      if Id = Self.Locals_Scope_Id
-        or else Id = Self.Arguments_Scope_Id
-      then
-         return Self.Scopes.Root;
-
-      else
-         return Find (First_Child (Self.Scopes.Root));
-      end if;
-   end Find_Ref;
-
-   -------------
-   -- Full_Name --
-   ---------------
-
-   function Full_Name
-     (Cursor : Variables_References_Trees.Cursor)
-      return String
-   is
-      Result : Ada.Strings.Unbounded.Unbounded_String;
-      C      : Variables_References_Trees.Cursor := Cursor;
-   begin
-      while C /= Variables_References_Trees.No_Element
-        and then not Is_Root (C)
-      loop
-         if Result /= "" then
-            Result := VSS.Strings.Conversions.To_Unbounded_UTF_8_String
-                 (Element (C).name) & "." & Result;
-         else
-            Append (Result,
-                    VSS.Strings.Conversions.To_Unbounded_UTF_8_String
-                      (Element (C).name));
-         end if;
-         C := Parent (C);
-      end loop;
-      return To_String (Result);
-   end Full_Name;
-
-   ---------------
-   -- Full_Name --
-   ---------------
-
-   function Full_Name
-     (Cursor : Variables_References_Trees.Cursor)
-      return Virtual_String is
-   begin
-      return VSS.Strings.Conversions.To_Virtual_String (Full_Name (Cursor));
-   end Full_Name;
 
    ------------
    -- Get_Id --

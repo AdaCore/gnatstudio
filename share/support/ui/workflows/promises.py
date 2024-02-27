@@ -1144,6 +1144,87 @@ class DebuggerWrapper(object):
             on_result, on_error, on_reject)
         return p
 
+    def get_variable_by_name(self, name):
+        """Get variable value as a promise.
+
+           The way to use this is in a workflow, in the following way:
+
+               # Retrieve the language server
+               gdb = DebuggerWrapper(GPS.File("foo"))
+
+               # call this with a yield
+               result = yield gdb.get_variable_by_name("variable")
+
+               # result is a DAPResponse object: typically DebuggerVariable
+               # inspect result.is_valid, result.is_error, result.is_reject,
+               # and process result.data if result.is_valid.
+        """
+        p = Promise()
+        result = DAPResponse()
+
+        def on_error(message):
+            result.is_error = True
+            result.error_message = message
+            p.resolve(result)
+
+        def on_result(variable):
+            result.is_valid = True
+            result.data = variable
+            p.resolve(result)
+
+        def on_reject():
+            result.is_reject = True
+            p.resolve(result)
+
+        self.__debugger.get_variable_by_name(
+            name, on_result, on_error, on_reject)
+        return p
+
+
+class DebuggerVariableWrapper(object):
+    """
+       DebuggerVariableWrapper is a debbuger variable manager
+       It makes a promise (yield object of the promise class) when user:
+           want to get variable's children
+    """
+
+    def __init__(self, var):
+        """
+           Initialize a wrapper manager for given var.
+        """
+        # store variable
+        self.__var = var
+
+    def get(self):
+        """
+           Accessible interface for my variable
+        """
+        return self.__var
+
+    def children(self):
+        """
+           Get variable's children as a promise.
+        """
+        p = Promise()
+        result = DAPResponse()
+
+        def on_error(message):
+            result.is_error = True
+            result.error_message = message
+            p.resolve(result)
+
+        def on_result(data):
+            result.is_valid = True
+            result.data = data
+            p.resolve(result)
+
+        def on_reject():
+            result.is_reject = True
+            p.resolve(result)
+
+        self.__var.children(on_result, on_error, on_reject)
+        return p
+
 
 class TargetWrapper():
     """

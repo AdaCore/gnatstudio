@@ -15,29 +15,48 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with Gtk.Tree_Model;              use Gtk.Tree_Model;
-
 with VSS.Strings;                 use VSS.Strings;
 
 with DAP.Modules.Variables.Items; use DAP.Modules.Variables.Items;
-with DAP.Requests.SetExpression;
+with DAP.Requests.SetVariable;
 with DAP.Tools;
 
-private package DAP.Views.Variables.SetExpression is
+private package DAP.Clients.Variables.SetVariable is
 
-   type Set_Expression_Request is
-     new DAP.Requests.SetExpression.Set_Expression_DAP_Request
+   type Set_Variable_Request (<>) is
+     new DAP.Requests.SetVariable.Set_Variable_DAP_Request
+   with private;
+   type Set_Variable_Request_Access is access all Set_Variable_Request;
+
+   procedure Send_Set_Variable_Request
+     (Client : not null access DAP.Clients.DAP_Client'Class;
+      Id     : Integer;
+      Params : Request_Parameters);
+   --  Sends the set variable's value request
+
+private
+
+   type Set_Variable_Request
+     (Kernel : GPS.Kernel.Kernel_Handle;
+      Kind   : Request_Params_Kind) is
+     new DAP.Requests.SetVariable.Set_Variable_DAP_Request (Kernel)
    with record
-      Name : Virtual_String;
-      Path : Gtk.Tree_Model.Gtk_Tree_Path := Null_Gtk_Tree_Path;
+      Params : Request_Parameters (Kind);
    end record;
 
-   type Set_Expression_Request_Access is access all Set_Expression_Request;
-
    overriding procedure On_Result_Message
-     (Self        : in out Set_Expression_Request;
+     (Self        : in out Set_Variable_Request;
       Client      : not null access DAP.Clients.DAP_Client'Class;
-      Result      : in out DAP.Tools.SetExpressionResponse;
+      Result      : in out DAP.Tools.SetVariableResponse;
       New_Request : in out DAP.Requests.DAP_Request_Access);
 
-end DAP.Views.Variables.SetExpression;
+   overriding procedure On_Error_Message
+     (Self    : in out Set_Variable_Request;
+      Client  : not null access DAP.Clients.DAP_Client'Class;
+      Message : VSS.Strings.Virtual_String);
+
+   overriding procedure On_Rejected
+     (Self   : in out Set_Variable_Request;
+      Client : not null access DAP.Clients.DAP_Client'Class);
+
+end DAP.Clients.Variables.SetVariable;

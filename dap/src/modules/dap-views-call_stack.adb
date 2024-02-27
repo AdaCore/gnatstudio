@@ -497,11 +497,16 @@ package body DAP.Views.Call_Stack is
    -- Update --
    ------------
 
-   procedure Update (Kernel : GPS.Kernel.Kernel_Handle) is
+   procedure Update
+     (Kernel : GPS.Kernel.Kernel_Handle;
+      Client : not null access DAP.Clients.DAP_Client'Class)
+   is
       View : constant Call_Stack    :=
         Call_Stack (CS_MDI_Views.Retrieve_View (Kernel));
    begin
-      if View /= null then
+      if View /= null
+        and then Get_Client (View) = Client
+      then
          View.Update;
       end if;
    end Update;
