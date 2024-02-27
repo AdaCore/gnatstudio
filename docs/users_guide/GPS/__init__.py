@@ -2690,12 +2690,18 @@ class Debugger(object):
         """Interrupt execution."""
         pass  # implemented in Ada
 
-    def get_variable_by_name(self, name):
+    def get_variable_by_name(self, name, on_result=None,
+                             on_error=None, on_rejected=None):
         """Returns a variable.
 
         :param name: Name of the variable as a string.
+        :param on_result: For DAP. Callback to be called on success.
+        :param on_error: For DAP. Callback to be called on error.
+        :param on_rejected: For DAP. Callback to be called when it is
+            impossible to send request to the DAP server.
 
-        :return: variable represented as a :class:`GPS.DebuggerVariable`
+        :return: variable represented as a :class:`GPS.DebuggerVariable`.
+           Return empty object over DAP.
         """
         pass  # implemented in Ada
 
@@ -2757,11 +2763,19 @@ class DebuggerVariable(object):
     type_name = ""
     """Return the type of the variable"""
 
-    def children(self):
-        """Returns all the children of the variable if the variable has
+    def children(self, on_result_message=None, on_error_message=None,
+                 on_rejected=None):
+        """
+        Returns all the children of the variable if the variable has
         a complex type like a record.
 
-        :return: a list of a :class:`GPS.DebuggerVariable`
+        :param on_result: For DAP. Callback to be called on success.
+        :param on_error: For DAP. Callback to be called on error.
+        :param on_rejected: For DAP. Callback to be called when it is
+           impossible to send request to the gdb DAP server.
+
+        :return: a list of a :class:`GPS.DebuggerVariable`. Empty for DAP,
+           children is passed to on_result_message callback instead.
         """
         pass  # implemented in Ada
 

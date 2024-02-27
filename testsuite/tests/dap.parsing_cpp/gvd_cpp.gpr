@@ -1,0 +1,17 @@
+project GVD_CPP is
+
+   for Source_Dirs use (".");
+   for Object_Dir use "obj";
+
+   for Languages use ("C++");
+   for Main use ("parse_cpp.cc");
+
+   package Compiler is
+      for Switches ("C++") use ("-g", "-O0", "-Wno-write-strings");
+   end Compiler;
+
+   package Naming is
+      for Implementation_Suffix ("C++") use ".cc";
+   end Naming;
+
+end GVD_CPP;

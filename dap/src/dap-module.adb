@@ -59,6 +59,8 @@ with DAP.Clients.Evaluate;
 with DAP.Clients.Disconnect;
 with DAP.Clients.Next;
 with DAP.Clients.StepIn;
+with DAP.Clients.Stack_Trace;
+with DAP.Clients.Variables;
 with DAP.Views.Assembly;
 with DAP.Views.Call_Stack;
 with DAP.Views.Consoles;
@@ -1532,15 +1534,19 @@ package body DAP.Module is
          Filter      => Has_Debugger and Attached_Debuggee,
          Category    => "Debug");
 
+      DAP.Module.Breakpoints.Register_Module (Kernel);
+      DAP.Modules.Scripts.Register_Module (Kernel);
+
+      DAP.Clients.Stack_Trace.Register_Module;
+      DAP.Clients.Variables.Register_Module;
+
       DAP.Views.Call_Stack.Register_Module (Kernel);
       DAP.Views.Threads.Register_Module (Kernel);
       DAP.Views.Assembly.Register_Module (Kernel);
-      DAP.Modules.Scripts.Register_Module (Kernel);
       DAP.Views.Consoles.Register_Module (Kernel);
       DAP.Views.Memory.Register_Module (Kernel);
       DAP.Views.Variables.Register_Module (Kernel);
       DAP.Views.Registers.Register_Module (Kernel);
-      DAP.Module.Breakpoints.Register_Module (Kernel);
    end Register_Module;
 
    -------------

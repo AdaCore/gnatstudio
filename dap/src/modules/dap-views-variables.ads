@@ -15,9 +15,6 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with Ada.Containers.Multiway_Trees;
-with GNATCOLL.Traces;             use GNATCOLL.Traces;
-
 with Gdk.Event;                   use Gdk.Event;
 
 with Gtk.Cell_Renderer_Text;      use Gtk.Cell_Renderer_Text;
@@ -37,9 +34,9 @@ with GPS.Kernel;
 with GPS.Kernel.MDI;              use GPS.Kernel.MDI;
 with GPS.Search;                  use GPS.Search;
 
-with DAP.Tools;                   use DAP.Tools;
+with DAP.Clients.Variables;       use DAP.Clients.Variables;
 with DAP.Modules.Variables.Items; use DAP.Modules.Variables.Items;
-with DAP.Requests;
+with DAP.Tools;
 
 package DAP.Views.Variables is
 
@@ -49,31 +46,33 @@ package DAP.Views.Variables is
 
    procedure Update (Client : not null access DAP.Clients.DAP_Client'Class);
 
+   procedure On_Variable_Not_Found
+     (Client : not null access DAP.Clients.DAP_Client'Class;
+      Params : Request_Parameters);
+   --  Calback called when the variable is not found
+
+   procedure On_Variable_Loaded
+     (Client : not null access DAP.Clients.DAP_Client'Class;
+      Params : Request_Parameters;
+      C      : Variables_References_Trees.Cursor);
+   --  Calback called when the variable is loaded
+
+   procedure On_Children_Loaded
+     (Client : not null access DAP.Clients.DAP_Client'Class;
+      Params : Request_Parameters;
+      C      : Variables_References_Trees.Cursor);
+   --  Calback called when the variable's children is loaded
+
+   procedure On_Variable_Set
+     (Client   : not null access DAP.Clients.DAP_Client'Class;
+      Params   : Request_Parameters;
+      Variable : DAP.Tools.Variable);
+   --  Calback called when the variable's value is set
+
 private
 
    use DAP.Modules.Variables.Items.Item_Info_Vectors;
-
-   package Variables_References_Trees is
-     new Ada.Containers.Multiway_Trees (DAP.Tools.Variable);
-   use Variables_References_Trees;
-
-   function Full_Name
-     (Cursor : Variables_References_Trees.Cursor)
-      return Virtual_String;
-
-   function Full_Name
-     (Cursor : Variables_References_Trees.Cursor)
-      return String;
-
-   procedure Find_Best_Ref
-     (Name   : Virtual_String;
-      Cursor : in out Variables_References_Trees.Cursor;
-      Found  : out Boolean);
-
-   procedure Find_Cmd_Ref
-     (Name   : Virtual_String;
-      Cursor : in out Variables_References_Trees.Cursor;
-      Found  : out Boolean);
+   use DAP.Clients.Variables.Variables_References_Trees;
 
    type Variables_Tree_View_Record is
      new Gtkada.Tree_View.Tree_View_Record with
@@ -142,23 +141,14 @@ private
    --  DAP_Variables_View_Record --
 
    type DAP_Variables_View_Record is new View_Record with record
-      Tree               : Variables_Tree_View;
+      Tree       : Variables_Tree_View;
       --  Represents variables in GUI
 
-      Expansion          : Expansions.Expansion_Status;
+      Expansion  : Expansions.Expansion_Status := Expansions.No_Expansion;
       --  Used to restore expansion and selection
 
-      Locals_Scope_Id    : Integer := 0;
-      --  Current 'Locals' scope Id on debugger side.
-
-      Arguments_Scope_Id : Integer := 0;
-      --  Current 'Arguments' scope Id on debugger side.
-
-      Scopes             : Variables_References_Trees.Tree := Empty_Tree;
-      --  Contains the different scopes that are returned by the DAP
-      --  ScopesRequest (e.g: "Locals", "Arguments")
-
-      Old_Scopes         : Variables_References_Trees.Tree := Empty_Tree;
+      Old_Scopes : Variables_References_Trees.Tree :=
+        Variables_References_Trees.Empty_Tree;
       --  Contains old scopes' values. Used to detect changes in values
       --  in order to highlight them in the view
    end record;
@@ -169,65 +159,56 @@ private
    procedure Display
      (Self : access DAP_Variables_View_Record'Class;
       Name : String);
+   --  Displays the variable by Name
 
    procedure Display
      (Self : access DAP_Variables_View_Record'Class;
       Item : in out Item_Info);
+   --  Displays the variable by Item
 
    procedure Undisplay
      (Self : access DAP_Variables_View_Record'Class;
       Name : Virtual_String);
+   --  Removes the variable from the view by Name
 
    procedure Undisplay
      (Self : access DAP_Variables_View_Record'Class;
       Item : Item_Info);
+   --  Removes the variable from the view by Item
 
-   procedure Publish_Or_Request
+   overriding procedure Update
+     (Self : not null access DAP_Variables_View_Record);
+   --  Update all displayed variables
+
+   procedure Update
      (Self     : access DAP_Variables_View_Record'Class;
-      Item     : Item_Info;
-      Position : Natural;
-      Childs   : Boolean;
-      Path     : Gtk.Tree_Model.Gtk_Tree_Path;
-      Request  : out DAP.Requests.DAP_Request_Access);
-
-   function Find_Ref
-     (Self : access DAP_Variables_View_Record'Class;
-      Id   : Integer)
-      return Variables_References_Trees.Cursor;
-
-   procedure Continue_Update
-     (Self     : not null access DAP_Variables_View_Record'Class;
-      Position : Natural;
-      Request  : out DAP.Requests.DAP_Request_Access);
+      Position : Natural);
+   --  Update the next after Position variable.
 
    procedure Update
      (Self     : access DAP_Variables_View_Record'Class;
       Item     : Item_Info;
       Position : Natural;
       Path     : Gtk.Tree_Model.Gtk_Tree_Path;
-      Childs   : Boolean := False);
-
-   function Update
-     (Self     : access DAP_Variables_View_Record'Class;
-      Item     : Item_Info;
-      Position : Natural;
-      Path     : Gtk.Tree_Model.Gtk_Tree_Path;
-      Childs   : Boolean := False)
-      return DAP.Requests.DAP_Request_Access;
+      Children : Boolean := False);
+   --  Update the variable by Item. Position points the Item in the internal
+   --  list. Path points to the view location. Children controls whether
+   --  children should be loaded or not.
 
    function Is_Changed
      (Self   : access DAP_Variables_View_Record'Class;
       Cursor : Variables_References_Trees.Cursor)
       return Boolean;
+   --  Returns true if the new value of the item has been changed
 
    procedure Clear (Self : not null access DAP_Variables_View_Record'Class);
    --  Clear the contents of Self
 
    procedure Set_Variable_Value
-     (Self  : access DAP_Variables_View_Record'Class;
-      Name  : String;
-      Value : String;
-      Path  : Gtk.Tree_Model.Gtk_Tree_Path);
+     (Self      : access DAP_Variables_View_Record'Class;
+      Full_Name : String;
+      Value     : String;
+      Path      : Gtk.Tree_Model.Gtk_Tree_Path);
 
    overriding procedure Create_Menu
      (View    : not null access DAP_Variables_View_Record;
@@ -244,9 +225,6 @@ private
      (Self : not null access DAP_Variables_View_Record;
       Status : GPS.Debuggers.Debugger_State);
 
-   overriding procedure Update
-     (Self : not null access DAP_Variables_View_Record);
-
    overriding procedure Filter_Changed
      (Self    : not null access DAP_Variables_View_Record;
       Pattern : in out Search_Pattern_Access);
@@ -261,6 +239,10 @@ private
    overriding procedure On_Detach
      (Self   : not null access DAP_Variables_View_Record;
       Client : not null access DAP.Clients.DAP_Client'Class);
+
+   procedure Restore_Expansion
+     (Self : access DAP_Variables_View_Record'Class);
+   --  Restores expansion if any is stored
 
    type Variables_MDI_Child_Record is
      new GPS_MDI_Child_Record with null record;
@@ -300,7 +282,5 @@ private
    Column_Value_Fg  : constant := 6;
    Column_Type_Fg   : constant := 7;
    Column_Full_Name : constant := 8;
-
-   Me : constant Trace_Handle := Create ("GPS.DAP.Variables", On);
 
 end DAP.Views.Variables;
