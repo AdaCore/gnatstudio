@@ -63,6 +63,7 @@ with Commands.Interactive;       use Commands.Interactive;
 with Debugger_Pixmaps;
 
 with DAP.Clients;                use DAP.Clients;
+with DAP.Clients.Breakpoint_Managers;
 with DAP.Clients.Stack_Trace;    use DAP.Clients.Stack_Trace;
 with DAP.Tools;                  use DAP.Tools;
 with DAP.Types;                  use DAP.Types;
@@ -822,11 +823,11 @@ package body DAP.Views.Assembly is
          --  Highlight breakpoint lines
 
       Columns (1) := BG_Color_Column;
-      for Data of Client.Get_Breakpoints loop
-         for Loc of Data.Locations loop
+      for Data of Client.Get_Breakpoints_Manager.Get_Breakpoints loop
+         if Data.Kind = On_Line then
             Iter_From_Address
               (View    => View,
-               Address => Loc.Address,
+               Address => Data.Location.Address,
                Iter    => Iter,
                Found   => Found);
 
@@ -834,7 +835,7 @@ package body DAP.Views.Assembly is
                Glib.Values.Init (Values (1), Gdk.RGBA.Get_Type);
                Gdk.RGBA.Set_Value
                  (Values (1),
-                  (if Data.State /= Enabled then
+                  (if not Data.Enabled then
                         GPS.Kernel.Style_Manager.Background
                      (GPS.Default_Styles.Debugger_Disabled_Breakpoint_Style)
                    elsif not Data.Condition.Is_Empty then
@@ -850,7 +851,7 @@ package body DAP.Views.Assembly is
                   Columns (1 .. 1),
                   Values (1 .. 1));
             end if;
-         end loop;
+         end if;
       end loop;
 
       --  Highlight PC line
@@ -1487,7 +1488,8 @@ package body DAP.Views.Assembly is
             return Commands.Success;
          end if;
 
-         Client.Toggle_Instruction_Breakpoint (String_To_Address (Str));
+         Client.Get_Breakpoints_Manager.Toggle_Instruction_Breakpoint
+           (String_To_Address (Str));
       end;
 
       return Commands.Success;

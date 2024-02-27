@@ -19,6 +19,7 @@ with GPS.Kernel;              use GPS.Kernel;
 with DAP.Requests;            use DAP.Requests;
 with DAP.Requests.Initialize;
 with VSS.Strings.Conversions;
+with DAP.Clients.Breakpoint_Managers;
 
 package body DAP.Clients.Initialize is
 
@@ -71,11 +72,12 @@ package body DAP.Clients.Initialize is
       --  Initialize the Breakpoints' manager: it will send the needed requests
       --  to set all the initial breakpoints on the server's side and set the
       --  debugger's status to Ready when done.
-      Client.Breakpoints := new DAP.Modules.Breakpoint_Managers.
-        DAP_Client_Breakpoint_Manager
-          (Kernel_Handle (Client.Kernel),
-           Client.This);
-      DAP.Modules.Breakpoint_Managers.Initialize (Client.Breakpoints);
+      Client.Breakpoints :=
+        DAP.Clients.Breakpoint_Managers.Breakpoint_Manager_Access'
+          (new DAP.Clients.Breakpoint_Managers.Breakpoint_Manager_Type
+             (Kernel_Handle (Client.Kernel),
+              Client.This));
+      Client.Breakpoints.Initialize;
    end On_Result_Message;
 
    ----------------------

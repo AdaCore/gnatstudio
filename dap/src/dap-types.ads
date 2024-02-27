@@ -42,15 +42,22 @@ package DAP.Types is
 
    type Breakpoint_Identifier is new Integer;
    No_Breakpoint : constant Breakpoint_Identifier := 0;
-   --  How breakpoints are identified. Currently, the debuggers supported
-   --  by gvd all associate numbers with breakpoints.
+   --  Breakpoint identifiers on DAP server's side.
+   --  These identifiers are set by the DAP server, in response of the
+   --  breakpoint-related DAP requests.
 
    package Breakpoint_Identifier_Lists is
      new Ada.Containers.Doubly_Linked_Lists (Breakpoint_Identifier);
-   --  This type is used when doing the same debugger action on a list of
-   --  breakpoints (delete/enable/disable).
+   --  Lists of breakpoint identifiers.
 
-   package Numbers is new Ada.Containers.Vectors (Positive, Positive);
+   package Breakpoint_Index_Lists is
+     new Ada.Containers.Doubly_Linked_Lists (Positive);
+   --  This type is used when doing the same debugger action on a list
+   --  of breakpoints (delete/enable/disable).
+   --  Indexes are different from breakpoint identifiers: breakpoint
+   --  identifiers are set by the DAP server once the breakpoint has been
+   --  properly recognized, while indexes refer to the position of the
+   --  breakpoint in the holders' vectors used to store them.
 
    type Command_Type is (Internal, Hidden, Visible, User);
 
