@@ -83,7 +83,7 @@ with Commands.Interactive;       use Commands.Interactive;
 
 with DAP.Types;                  use DAP.Types;
 with DAP.Module.Breakpoints;     use DAP.Module.Breakpoints;
-with DAP.Modules.Breakpoints;    use DAP.Modules.Breakpoints;
+with DAP.Types.Breakpoints;    use DAP.Types.Breakpoints;
 with DAP.Clients;                use DAP.Clients;
 with DAP.Clients.Breakpoint_Managers;
 with DAP.Clients.Stack_Trace;    use DAP.Clients.Stack_Trace;

@@ -23,7 +23,7 @@ with Basic_Types;                 use Basic_Types;
 with GPS.Kernel;
 with GPS.Markers;                 use GPS.Markers;
 
-with DAP.Modules.Breakpoints;     use DAP.Modules.Breakpoints;
+with DAP.Types.Breakpoints;       use DAP.Types.Breakpoints;
 with DAP.Types;                   use DAP.Types;
 with DAP.Tools;
 
@@ -106,12 +106,12 @@ package DAP.Clients.Breakpoint_Managers is
 
    procedure Remove_Breakpoints
      (Self    : not null access Breakpoint_Manager_Type;
-      Indexes : DAP.Types.Breakpoint_Index_Lists.List);
+      Indexes : Breakpoint_Index_Lists.List);
    --  Remove breakpoints designed by the given indexes
 
    procedure Remove_Breakpoints
      (Self : not null access Breakpoint_Manager_Type;
-      Ids  : DAP.Types.Breakpoint_Identifier_Lists.List);
+      Ids  : Breakpoint_Identifier_Lists.List);
    --  Remove breakpoints designed by the given IDs, which are set and
    --  recognized by the DAP server.
 
@@ -141,7 +141,7 @@ package DAP.Clients.Breakpoint_Managers is
 
    function Get_Breakpoints
      (Self : Breakpoint_Manager_Access)
-      return DAP.Modules.Breakpoints.Breakpoint_Vectors.Vector;
+      return DAP.Types.Breakpoints.Breakpoint_Vectors.Vector;
    --  Returns the list of the breakpoints
 
    function Get_Breakpoint_From_Id
@@ -156,7 +156,7 @@ package DAP.Clients.Breakpoint_Managers is
 
    procedure Send_Commands
      (Self : not null access Breakpoint_Manager_Type;
-      Data : DAP.Modules.Breakpoints.Breakpoint_Data);
+      Data : DAP.Types.Breakpoints.Breakpoint_Data);
    --  Set commands for the breakpoint if any
 
    procedure Send_Commands

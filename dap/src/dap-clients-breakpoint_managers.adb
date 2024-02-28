@@ -496,7 +496,7 @@ package body DAP.Clients.Breakpoint_Managers is
 
    function Get_Breakpoints
      (Self : Breakpoint_Manager_Access)
-      return DAP.Modules.Breakpoints.Breakpoint_Vectors.Vector is
+      return DAP.Types.Breakpoints.Breakpoint_Vectors.Vector is
    begin
       return Self.Holder.Get_Breakpoints;
    end Get_Breakpoints;
@@ -559,7 +559,7 @@ package body DAP.Clients.Breakpoint_Managers is
 
    procedure Send_Commands
      (Self : not null access Breakpoint_Manager_Type;
-      Data : DAP.Modules.Breakpoints.Breakpoint_Data) is
+      Data : DAP.Types.Breakpoints.Breakpoint_Data) is
    begin
       if not Data.Commands.Is_Empty then
          Self.Set_Breakpoint_Command (Data.Num, Data.Commands);
@@ -867,7 +867,7 @@ package body DAP.Clients.Breakpoint_Managers is
 
    procedure Remove_Breakpoints
      (Self    : not null access Breakpoint_Manager_Type;
-      Indexes : DAP.Types.Breakpoint_Index_Lists.List)
+      Indexes : Breakpoint_Index_Lists.List)
    is
       Removed_Breakpoints : constant Breakpoint_Vectors.Vector :=
         Self.Holder.Get_Breakpoints (Indexes);
@@ -895,7 +895,7 @@ package body DAP.Clients.Breakpoint_Managers is
 
    procedure Remove_Breakpoints
      (Self : not null access Breakpoint_Manager_Type;
-      Ids  : DAP.Types.Breakpoint_Identifier_Lists.List)
+      Ids  : Breakpoint_Identifier_Lists.List)
    is
       Sync_Data : Synchonization_Data;
    begin
@@ -966,7 +966,7 @@ package body DAP.Clients.Breakpoint_Managers is
 
       Breakpoints : constant Breakpoint_Vectors.Vector :=
         Self.Holder.Get_Breakpoints;
-      Indexes : DAP.Types.Breakpoint_Index_Lists.List;
+      Indexes : Breakpoint_Index_Lists.List;
       Data    : Breakpoint_Data;
    begin
       Stopped_File := No_File;
