@@ -15,11 +15,47 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with GPS.Kernel;  use GPS.Kernel;
+with Ada.Containers.Vectors;
+with GNATCOLL.Scripts; use GNATCOLL.Scripts;
+with VSS.Strings;      use VSS.Strings;
+
+with GPS.Kernel;       use GPS.Kernel;
+with DAP.Clients;      use DAP.Clients;
+with DAP.Tools;        use DAP.Tools;
+
+with DAP.Clients.Variables;
 
 package DAP.Modules.Scripts is
 
    procedure Register_Module
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class);
+
+   type Variable_Data is record
+      Full_Name : VSS.Strings.Virtual_String;
+      Data      : DAP.Tools.Variable;
+   end record;
+
+   package Variable_Data_Vector is
+     new Ada.Containers.Vectors (Positive, Variable_Data);
+
+   procedure Create_Debugger_Variable_For_Callback
+     (Callback : GNATCOLL.Scripts.Subprogram_Type;
+      Client   : not null access DAP.Clients.DAP_Client'Class;
+      Data     : Variable_Data);
+   --  Creates an instance of the DebuggerVariable python class,
+   --  fills it with Data and pass it to the callback.
+
+   procedure Create_Debugger_Variables_For_Callback
+     (Callback : GNATCOLL.Scripts.Subprogram_Type;
+      Client   : not null access DAP.Clients.DAP_Client'Class;
+      Data     : Variable_Data_Vector.Vector);
+   --  Creates an array of instances of the DebuggerVariable python class,
+   --  fills it with Data and pass it to the callback. Used to pass children
+   --  to python callback.
+
+   procedure Create_No_Debugger_Variable_For_Callback
+     (Params : DAP.Clients.Variables.Request_Parameters);
+   --  Calls callback with No_Class_Instance parameter when variable
+   --  is not found.
 
 end DAP.Modules.Scripts;

@@ -15,36 +15,47 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with Gtk.Tree_Model;              use Gtk.Tree_Model;
-
-with VSS.Strings;                 use VSS.Strings;
+--  Concrete implementation of the DAP 'evaluate' request
 
 with DAP.Modules.Variables.Items; use DAP.Modules.Variables.Items;
-with DAP.Requests.Scopes;
+with DAP.Requests.Evaluate;
 with DAP.Tools;
 
-private package DAP.Views.Variables.Scopes is
+private package DAP.Clients.Variables.Evaluate is
 
-   type Scopes_Request is
-     new DAP.Requests.Scopes.Scopes_DAP_Request
+   type Evaluate_Request (<>) is
+     new DAP.Requests.Evaluate.Evaluate_DAP_Request
+   with private;
+   type Evaluate_Request_Access is access all Evaluate_Request;
+
+   procedure Send_Evaluate_Request
+     (Client : not null access DAP.Clients.DAP_Client'Class;
+      Params : Request_Parameters);
+   --  Send the variables request for the Id
+
+private
+
+   type Evaluate_Request
+     (Kernel : GPS.Kernel.Kernel_Handle;
+      Kind   : Request_Params_Kind) is
+     new DAP.Requests.Evaluate.Evaluate_DAP_Request (Kernel)
    with record
-      Item     : Item_Info;
-      Position : Natural;
-      Path     : Gtk.Tree_Model.Gtk_Tree_Path := Null_Gtk_Tree_Path;
-      Childs   : Boolean := False;
+      Params : Request_Parameters (Kind);
    end record;
 
-   type Scopes_Request_Access is access all Scopes_Request;
-
    overriding procedure On_Result_Message
-     (Self        : in out Scopes_Request;
+     (Self        : in out Evaluate_Request;
       Client      : not null access DAP.Clients.DAP_Client'Class;
-      Result      : in out DAP.Tools.ScopesResponse;
+      Result      : in out DAP.Tools.EvaluateResponse;
       New_Request : in out DAP.Requests.DAP_Request_Access);
 
    overriding procedure On_Error_Message
-     (Self    : in out Scopes_Request;
+     (Self    : in out Evaluate_Request;
       Client  : not null access DAP.Clients.DAP_Client'Class;
       Message : VSS.Strings.Virtual_String);
 
-end DAP.Views.Variables.Scopes;
+   overriding procedure On_Rejected
+     (Self   : in out Evaluate_Request;
+      Client : not null access DAP.Clients.DAP_Client'Class);
+
+end DAP.Clients.Variables.Evaluate;

@@ -17,12 +17,14 @@
 
 with Ada.Strings.Unbounded;    use Ada.Strings.Unbounded;
 
-with GNATCOLL.Scripts;         use GNATCOLL.Scripts;
+with GNATCOLL.Traces;          use GNATCOLL.Traces;
 with GNATCOLL.Scripts.Gtkada;  use GNATCOLL.Scripts.Gtkada;
 with GNATCOLL.VFS;             use GNATCOLL.VFS;
 
 with Glib;
 with Glib.Object;
+
+with VSS.Strings.Conversions;
 
 with Basic_Types;
 
@@ -31,17 +33,21 @@ with GPS.Kernel.Project;
 with GPS.Kernel.Scripts;       use GPS.Kernel.Scripts;
 
 with DAP.Types;                use DAP.Types;
-with DAP.Clients;              use DAP.Clients;
-with DAP.Clients.Breakpoint_Managers;
-with DAP.Clients.Stack_Trace;  use DAP.Clients.Stack_Trace;
 with DAP.Module;
 with DAP.Modules.Breakpoints;
 with DAP.Module.Breakpoints;
+
+with DAP.Clients.Breakpoint_Managers;
+with DAP.Clients.Stack_Trace;  use DAP.Clients.Stack_Trace;
+with DAP.Clients.Variables;    use DAP.Clients.Variables;
+
 with DAP.Views.Consoles;
 
 with Interactive_Consoles;    use Interactive_Consoles;
 
 package body DAP.Modules.Scripts is
+
+   Me : constant Trace_Handle := Create ("DAP.Modules.Scripts", On);
 
    procedure Shell_Handler
      (Data    : in out Callback_Data'Class;
@@ -50,7 +56,10 @@ package body DAP.Modules.Scripts is
 
    -- Breakpoint_Info_Property --
 
-   Debugger_Breakpoint_Class_Name : constant String := "DebuggerBreakpoint";
+   Debugger_Breakpoint_Class_Name    : constant String := "DebuggerBreakpoint";
+   Debugger_Variable_Type_Class_Name : constant String := "DebuggerVariable";
+
+   -- Breakpoint_Info_Property --
 
    type Breakpoint_Info_Property is new Instance_Property_Record with record
       Data : DAP.Modules.Breakpoints.Breakpoint_Data;
@@ -59,14 +68,38 @@ package body DAP.Modules.Scripts is
      (Script : not null access Scripting_Language_Record'Class;
       Data   : DAP.Modules.Breakpoints.Breakpoint_Data) return Class_Instance;
 
+   procedure Breakpoint_Handler
+     (Data    : in out Callback_Data'Class;
+      Command : String);
+   --  Handler for Debugger_Breakpoint class
+
    function Get_Breakpoint
      (Inst : Class_Instance)
       return DAP.Modules.Breakpoints.Breakpoint_Data;
 
-   procedure Breakpoint_Handler
+   -- Debugger_Variable_Property --
+
+   type Debugger_Variable_Property is new Instance_Property_Record with record
+      Visual : DAP_Visual_Debugger_Access;
+      Data   : Variable_Data;
+   end record;
+
+   function Create_Debugger_Variable
+     (Script : not null access Scripting_Language_Record'Class;
+      Visual : DAP_Visual_Debugger_Access;
+      Data   : Variable_Data) return Class_Instance;
+
+   procedure Variable_Handler
      (Data    : in out Callback_Data'Class;
       Command : String);
-   --  Hander for Debugger_Breakpoint class
+   --  Handler for Debugger_Variable class
+
+   function Get_Subprogram
+     (Data     : in out Callback_Data'Class;
+      Position : Integer)
+      return Subprogram_Type;
+   --  Return the subprogram parameter from the data/position if any or null.
+   --  The caller side is responsible for freeing returned Subprogram.
 
    --------------------------------
    -- Create_Debugger_Breakpoint --
@@ -85,6 +118,130 @@ package body DAP.Modules.Scripts is
       return Inst;
    end Create_Debugger_Breakpoint;
 
+   ------------------------------
+   -- Create_Debugger_Variable --
+   ------------------------------
+
+   function Create_Debugger_Variable
+     (Script : not null access Scripting_Language_Record'Class;
+      Visual : DAP_Visual_Debugger_Access;
+      Data   : Variable_Data) return Class_Instance
+   is
+      Inst : constant Class_Instance := Script.New_Instance
+        (Script.Get_Repository.New_Class (Debugger_Variable_Type_Class_Name));
+   begin
+      Set_Data
+        (Inst, Debugger_Variable_Type_Class_Name,
+         Debugger_Variable_Property'
+           (Visual => Visual, Data => Data));
+
+      return Inst;
+   end Create_Debugger_Variable;
+
+   -------------------------------------------
+   -- Create_Debugger_Variable_For_Callback --
+   -------------------------------------------
+
+   procedure Create_Debugger_Variable_For_Callback
+     (Callback : GNATCOLL.Scripts.Subprogram_Type;
+      Client   : not null access DAP.Clients.DAP_Client'Class;
+      Data     : Variable_Data) is
+   begin
+      if Callback = null then
+         return;
+      end if;
+
+      declare
+         Script    : constant Scripting_Language := Callback.Get_Script;
+         Inst      : constant Class_Instance := Create_Debugger_Variable
+           (Script, Client.Get_Visual, Data);
+         Arguments : Callback_Data'Class := Script.Create (1);
+         Dummy     : Boolean;
+      begin
+         Set_Nth_Arg (Arguments, 1, Inst);
+         Dummy := Callback.Execute (Arguments);
+         Free (Arguments);
+
+      exception
+         when E : others =>
+            Free (Arguments);
+            Trace (Me, E);
+      end;
+   end Create_Debugger_Variable_For_Callback;
+
+   --------------------------------------------
+   -- Create_Debugger_Variables_For_Callback --
+   --------------------------------------------
+
+   procedure Create_Debugger_Variables_For_Callback
+     (Callback : GNATCOLL.Scripts.Subprogram_Type;
+      Client   : not null access DAP.Clients.DAP_Client'Class;
+      Data     : Variable_Data_Vector.Vector) is
+   begin
+      if Callback = null then
+         return;
+      end if;
+
+      declare
+         Script : constant Scripting_Language := Callback.Get_Script;
+         List   : List_Instance'Class := New_List (Script);
+         Pos    : Integer := 1;
+      begin
+         for D of Data loop
+            declare
+               Inst : constant Class_Instance :=
+                 Create_Debugger_Variable (Script, Client.Get_Visual, D);
+            begin
+               List.Set_Nth_Arg (Pos, Inst);
+               Pos := Pos + 1;
+            end;
+         end loop;
+
+         declare
+            Arguments : Callback_Data'Class := Script.Create (1);
+            Dummy     : Boolean;
+         begin
+            Set_Nth_Arg (Arguments, 1, List);
+            Dummy := Callback.Execute (Arguments);
+            Free (Arguments);
+            Free (List);
+
+         exception
+            when E : others =>
+               Free (Arguments);
+               Free (List);
+               Trace (Me, E);
+         end;
+      end;
+   end Create_Debugger_Variables_For_Callback;
+
+   ----------------------------------------------
+   -- Create_No_Debugger_Variable_For_Callback --
+   ----------------------------------------------
+
+   procedure Create_No_Debugger_Variable_For_Callback
+     (Params : DAP.Clients.Variables.Request_Parameters) is
+   begin
+      if Params.On_Result = null then
+         return;
+      end if;
+
+      declare
+         Arguments : Callback_Data'Class :=
+           Params.On_Result.Get_Script.Create (1);
+         Dummy     : Boolean;
+      begin
+         Set_Nth_Arg (Arguments, 1, No_Class_Instance);
+         Dummy := Params.On_Result.Execute (Arguments);
+         Free (Arguments);
+
+      exception
+         when E : others =>
+            Free (Arguments);
+            Trace (Me, E);
+      end;
+   end Create_No_Debugger_Variable_For_Callback;
+
    --------------------
    -- Get_Breakpoint --
    --------------------
@@ -98,6 +255,22 @@ package body DAP.Modules.Scripts is
    begin
       return Breakpoint_Info_Property (Data.all).Data;
    end Get_Breakpoint;
+
+   --------------------
+   -- Get_Subprogram --
+   --------------------
+
+   function Get_Subprogram
+     (Data     : in out Callback_Data'Class;
+      Position : Integer)
+      return Subprogram_Type is
+   begin
+      return Nth_Arg (Data, Position);
+
+   exception
+      when No_Such_Parameter =>
+         return null;
+   end Get_Subprogram;
 
    ------------------------
    -- Breakpoint_Handler --
@@ -132,6 +305,71 @@ package body DAP.Modules.Scripts is
       end if;
    end Breakpoint_Handler;
 
+   ----------------------
+   -- Variable_Handler --
+   ----------------------
+
+   procedure Variable_Handler
+     (Data    : in out Callback_Data'Class;
+      Command : String)
+   is
+      function Get (Inst : Class_Instance) return Variable_Data;
+      function Visual
+        (Inst : Class_Instance) return DAP_Visual_Debugger_Access;
+
+      function Get (Inst : Class_Instance) return Variable_Data
+      is
+         Data : constant Instance_Property :=
+           Get_Data (Inst, Debugger_Variable_Type_Class_Name);
+      begin
+         return Debugger_Variable_Property (Data.all).Data;
+      end Get;
+
+      function Visual
+        (Inst : Class_Instance) return DAP_Visual_Debugger_Access
+      is
+         Data : constant Instance_Property :=
+           Get_Data (Inst, Debugger_Variable_Type_Class_Name);
+      begin
+         return Debugger_Variable_Property (Data.all).Visual;
+      end Visual;
+
+   begin
+      if Command = Constructor_Method then
+         Data.Set_Error_Msg
+           ("Cannot construct instances of DebuggerVariable");
+
+      elsif Command = "simple_value" then
+         Data.Set_Return_Value
+           (VSS.Strings.Conversions.To_UTF_8_String
+              (Get (Data.Nth_Arg (1)).Data.value));
+
+      elsif Command = "type_description" then
+         Data.Set_Return_Value (String'(""));
+
+      elsif Command = "type_name" then
+         Data.Set_Return_Value
+           (VSS.Strings.Conversions.To_UTF_8_String
+              (Get (Data.Nth_Arg (1)).Data.a_type));
+
+      elsif Command = "children" then
+         declare
+            Params : Request_Parameters :=
+              (Kind        => Python_API,
+               Item        =>
+                 (Varname => Get (Data.Nth_Arg (1)).Full_Name,
+                  others  => <>),
+               Children    => True,
+               On_Result   => Get_Subprogram (Data, 2),
+               On_Error    => Get_Subprogram (Data, 3),
+               On_Rejected => Get_Subprogram (Data, 4));
+         begin
+            Visual (Data.Nth_Arg (1)).Client.
+              Get_Variables.Get_Variable (Params);
+         end;
+      end if;
+   end Variable_Handler;
+
    -------------------
    -- Shell_Handler --
    -------------------
@@ -144,6 +382,7 @@ package body DAP.Modules.Scripts is
       Visual : aliased DAP_Visual_Debugger_Access;
       Client : DAP.Clients.DAP_Client_Access;
       Inst   : Class_Instance;
+
    begin
       if Command = Constructor_Method then
          Set_Error_Msg
@@ -260,47 +499,17 @@ package body DAP.Modules.Scripts is
          end if;
 
       elsif Command = "send" then
-         declare
-            On_Result : Subprogram_Type;
-            On_Error  : Subprogram_Type;
-            On_Reject : Subprogram_Type;
-         begin
-            Inst   := Nth_Arg (Data, 1, New_Class (Kernel, "Debugger"));
-            Visual := DAP_Visual_Debugger_Access
-              (Glib.Object.GObject'(Get_Data (Inst)));
+         Inst   := Nth_Arg (Data, 1, New_Class (Kernel, "Debugger"));
+         Visual := DAP_Visual_Debugger_Access
+           (Glib.Object.GObject'(Get_Data (Inst)));
 
-            begin
-               On_Result := Nth_Arg (Data, 5);
-
-            exception
-               when No_Such_Parameter =>
-                  On_Result := null;
-            end;
-
-            begin
-               On_Error := Nth_Arg (Data, 6);
-
-            exception
-               when No_Such_Parameter =>
-                  On_Error := null;
-            end;
-
-            begin
-               On_Reject := Nth_Arg (Data, 7);
-
-            exception
-               when No_Such_Parameter =>
-                  On_Reject := null;
-            end;
-
-            Visual.Client.Process_User_Command
-              (Cmd               => Nth_Arg (Data, 2),
-               Output_Command    => Nth_Arg (Data, 3, True),
-               Result_In_Console => Nth_Arg (Data, 4, False),
-               On_Result_Message => On_Result,
-               On_Error_Message  => On_Error,
-               On_Rejected       => On_Reject);
-         end;
+         Visual.Client.Process_User_Command
+           (Cmd               => Nth_Arg (Data, 2),
+            Output_Command    => Nth_Arg (Data, 3, True),
+            Result_In_Console => Nth_Arg (Data, 4, False),
+            On_Result_Message => Get_Subprogram (Data, 5),
+            On_Error_Message  => Get_Subprogram (Data, 6),
+            On_Rejected       => Get_Subprogram (Data, 7));
 
       elsif Command = "non_blocking_send" then
          Inst   := Nth_Arg (Data, 1, New_Class (Kernel, "Debugger"));
@@ -457,6 +666,25 @@ package body DAP.Modules.Scripts is
            (Glib.Object.GObject'(Get_Data (Inst)));
          Visual.Client.Interrupt;
 
+      elsif Command = "get_variable_by_name" then
+         Inst   := Nth_Arg (Data, 1, New_Class (Kernel, "Debugger"));
+         Visual := DAP_Visual_Debugger_Access
+           (Glib.Object.GObject'(Get_Data (Inst)));
+
+         declare
+            Params : Request_Parameters :=
+              (Kind        => Python_API,
+               Item        =>
+                 (Varname => VSS.Strings.Conversions.To_Virtual_String
+                      (String'(Nth_Arg (Data, 2))),
+                  others  => <>),
+               Children    => False,
+               On_Result   => Get_Subprogram (Data, 3),
+               On_Error    => Get_Subprogram (Data, 4),
+               On_Rejected => Get_Subprogram (Data, 5));
+         begin
+            Visual.Client.Get_Variables.Get_Variable (Params);
+         end;
       end if;
    end Shell_Handler;
 
@@ -467,9 +695,11 @@ package body DAP.Modules.Scripts is
    procedure Register_Module
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
    is
-      Class : constant Class_Type := New_Class (Kernel, "Debugger");
-      Bp    : constant Class_Type := New_Class
+      Class    : constant Class_Type := New_Class (Kernel, "Debugger");
+      Bp       : constant Class_Type := New_Class
         (Kernel, Debugger_Breakpoint_Class_Name);
+      Variable : constant Class_Type := New_Class
+        (Kernel, Debugger_Variable_Type_Class_Name);
 
    begin
       Kernel.Scripts.Register_Command
@@ -585,6 +815,15 @@ package body DAP.Modules.Scripts is
         ("interrupt",
          Handler      => Shell_Handler'Access,
          Class        => Class);
+      Kernel.Scripts.Register_Command
+        ("get_variable_by_name",
+         Handler      => Shell_Handler'Access,
+         Params       =>
+           (1 => Param ("name"),
+            2 => Param ("on_result", Optional => True),
+            3 => Param ("on_error", Optional => True),
+            4 => Param ("on_rejected", Optional => True)),
+         Class        => Class);
 
       --  Breakpoint --
 
@@ -605,6 +844,30 @@ package body DAP.Modules.Scripts is
          Getter => Breakpoint_Handler'Access,
          Class  => Bp);
 
+      -- DebuggerVariable --
+
+      Kernel.Scripts.Register_Command
+        (Constructor_Method,
+         Handler      => Variable_Handler'Access,
+         Class        => Variable);
+
+      Kernel.Scripts.Register_Property
+        ("simple_value",
+         Getter => Variable_Handler'Access, Class => Variable);
+      Kernel.Scripts.Register_Property
+        ("type_description",
+         Getter => Variable_Handler'Access, Class => Variable);
+      Kernel.Scripts.Register_Property
+        ("type_name",
+         Getter => Variable_Handler'Access, Class => Variable);
+      Kernel.Scripts.Register_Command
+        ("children",
+         Handler => Variable_Handler'Access,
+         Params       =>
+           (1 => Param ("on_result", Optional => True),
+            2 => Param ("on_error", Optional => True),
+            3 => Param ("on_rejected", Optional => True)),
+         Class   => Variable);
    end Register_Module;
 
 end DAP.Modules.Scripts;

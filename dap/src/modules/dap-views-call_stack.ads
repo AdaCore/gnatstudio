@@ -23,7 +23,9 @@ package DAP.Views.Call_Stack is
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class);
    --  Register menus and other functions to support the breakpoint editor
 
-   procedure Update (Kernel : GPS.Kernel.Kernel_Handle);
-   --  Called to update the view if it is opened
+   procedure Update
+     (Kernel : GPS.Kernel.Kernel_Handle;
+      Client : not null access DAP.Clients.DAP_Client'Class);
+   --  Called to update the view if it is opened and attached to the client
 
 end DAP.Views.Call_Stack;

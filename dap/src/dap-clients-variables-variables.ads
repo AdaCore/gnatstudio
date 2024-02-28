@@ -15,30 +15,34 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with Gtk.Tree_Model;              use Gtk.Tree_Model;
-
-with VSS.Strings;                 use VSS.Strings;
+--  Concrete implementation of the DAP 'variables' request
 
 with DAP.Modules.Variables.Items; use DAP.Modules.Variables.Items;
 with DAP.Requests.Variables;
 with DAP.Tools;
 
-private package DAP.Views.Variables.Variables is
+private package DAP.Clients.Variables.Variables is
 
-   type Variables_Request is
+   type Variables_Request (<>) is
      new DAP.Requests.Variables.Variables_DAP_Request
-   with record
-      Item     : Item_Info;
-
-      Position : Natural;
-      --  The variable's position to update
-
-      Ref      : Integer;
-      Path     : Gtk.Tree_Model.Gtk_Tree_Path := Null_Gtk_Tree_Path;
-      Childs   : Boolean := False;
-   end record;
-
+   with private;
    type Variables_Request_Access is access all Variables_Request;
+
+   procedure Send_Variables_Request
+     (Client : not null access DAP.Clients.DAP_Client'Class;
+      Id     : Integer;
+      Params : Request_Parameters);
+   --  Send the variables request for the Id
+
+private
+
+   type Variables_Request
+     (Kernel : GPS.Kernel.Kernel_Handle;
+      Kind   : Request_Params_Kind) is
+     new DAP.Requests.Variables.Variables_DAP_Request (Kernel)
+   with record
+      Params : Request_Parameters (Kind);
+   end record;
 
    overriding procedure On_Result_Message
      (Self        : in out Variables_Request;
@@ -51,4 +55,8 @@ private package DAP.Views.Variables.Variables is
       Client  : not null access DAP.Clients.DAP_Client'Class;
       Message : VSS.Strings.Virtual_String);
 
-end DAP.Views.Variables.Variables;
+   overriding procedure On_Rejected
+     (Self   : in out Variables_Request;
+      Client : not null access DAP.Clients.DAP_Client'Class);
+
+end DAP.Clients.Variables.Variables;

@@ -172,7 +172,7 @@ package body DAP.Clients.Stack_Trace.StackTrace is
       elsif Has_Result then
          --  We uploaded the next part of the frames, and the debuggee is
          --  still stopped, update the view.
-         DAP.Views.Call_Stack.Update (Self.Kernel);
+         DAP.Views.Call_Stack.Update (Self.Kernel, Client);
 
          --  Update context to refresh actions' availability,
          --  mostly for "debug callstack fetch"

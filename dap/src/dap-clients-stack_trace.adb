@@ -18,6 +18,7 @@
 with Ada.Strings.Unbounded;
 
 with GPS.Kernel.Hooks;
+with GPS.Debuggers;     use GPS.Debuggers;
 
 with DAP.Requests;
 with DAP.Utils;
@@ -26,6 +27,77 @@ with DAP.Modules.Preferences;
 with DAP.Clients.Stack_Trace.StackTrace;
 
 package body DAP.Clients.Stack_Trace is
+
+   type On_Debug_Process_Terminated is
+     new GPS.Kernel.Hooks.Debugger_Hooks_Function with null record;
+   overriding procedure Execute
+     (Self     : On_Debug_Process_Terminated;
+      Kernel   : not null access GPS.Kernel.Kernel_Handle_Record'Class;
+      Debugger : access GPS.Debuggers.Base_Visual_Debugger'Class);
+   --  Called when the process has terminated
+
+   type On_Debugger_State_Changed is
+     new GPS.Kernel.Hooks.Debugger_States_Hooks_Function with null record;
+   overriding procedure Execute
+     (Self      : On_Debugger_State_Changed;
+      Kernel    : not null access GPS.Kernel.Kernel_Handle_Record'Class;
+      Debugger  : access GPS.Debuggers.Base_Visual_Debugger'Class;
+      New_State : GPS.Debuggers.Debugger_State);
+   --  Called when the state of the debugger changes
+
+   ---------------------
+   -- Register_Module --
+   ---------------------
+
+   procedure Register_Module is
+   begin
+      GPS.Kernel.Hooks.Debugger_Process_Terminated_Hook.Add
+        (new On_Debug_Process_Terminated);
+      GPS.Kernel.Hooks.Debugger_State_Changed_Hook.Add
+        (new On_Debugger_State_Changed);
+   end Register_Module;
+
+   -------------
+   -- Execute --
+   -------------
+
+   overriding procedure Execute
+     (Self     : On_Debug_Process_Terminated;
+      Kernel   : not null access GPS.Kernel.Kernel_Handle_Record'Class;
+      Debugger : access GPS.Debuggers.Base_Visual_Debugger'Class)
+   is
+      pragma Unreferenced (Self);
+      Client : constant DAP_Client_Access :=
+        DAP_Visual_Debugger_Access (Debugger).Client;
+   begin
+      if Client /= null
+        and then Client.Get_Stack_Trace /= null
+      then
+         Client.Get_Stack_Trace.Clear;
+      end if;
+   end Execute;
+
+   -------------
+   -- Execute --
+   -------------
+
+   overriding procedure Execute
+     (Self      : On_Debugger_State_Changed;
+      Kernel    : not null access GPS.Kernel.Kernel_Handle_Record'Class;
+      Debugger  : access GPS.Debuggers.Base_Visual_Debugger'Class;
+      New_State : GPS.Debuggers.Debugger_State)
+   is
+      pragma Unreferenced (Self);
+      Client : constant DAP_Client_Access :=
+        DAP_Visual_Debugger_Access (Debugger).Client;
+   begin
+      if New_State = Debug_Busy
+        and then Client /= null
+        and then Client.Get_Stack_Trace /= null
+      then
+         Client.Get_Stack_Trace.Clear;
+      end if;
+   end Execute;
 
    --------------------------
    -- Get_Current_Frame_Id --

@@ -67,6 +67,8 @@ with DAP.Clients.LoadedSources;
 with DAP.Clients.Stack_Trace;
 with DAP.Clients.Pause;
 with DAP.Clients.Cancel;
+with DAP.Clients.Variables;
+
 with DAP.Requests.Disconnect;
 
 with DAP.Views.Consoles;
@@ -92,6 +94,10 @@ package body DAP.Clients is
    procedure Free is new Ada.Unchecked_Deallocation
      (DAP.Clients.Stack_Trace.Stack_Trace'Class,
       DAP.Clients.Stack_Trace.Stack_Trace_Access);
+
+   procedure Free is new Ada.Unchecked_Deallocation
+     (DAP.Clients.Variables.Variables_Holder'Class,
+      DAP.Clients.Variables.Variables_Holder_Access);
 
    Is_Quit_Pattern : constant VSS.Regular_Expressions.
      Regular_Expression := VSS.Regular_Expressions.To_Regular_Expression
@@ -243,8 +249,11 @@ package body DAP.Clients is
         (Glib.Object.GObject_Record with Client => Self.This);
       Glib.Object.Initialize (Self.Visual);
       Ref (Self.Visual);
+
       Self.Stack_Trace := DAP.Clients.Stack_Trace.Stack_Trace_Access'
         (new DAP.Clients.Stack_Trace.Stack_Trace);
+      Self.Variables   := DAP.Clients.Variables.Variables_Holder_Access'
+        (new DAP.Clients.Variables.Variables_Holder (Self.This));
    end Initialize_Client;
 
    ---------------
@@ -400,9 +409,6 @@ package body DAP.Clients is
       Me.Trace ("Setting debugger's status to: " & Status'Img);
 
       if Self.Status not in Ready .. Stopped then
-         if Self.Stack_Trace /= null then
-            Self.Get_Stack_Trace.Clear;
-         end if;
          Self.Selected_Thread := 0;
 
          DAP.Utils.Unhighlight_Current_Line (Self.Kernel);
@@ -1953,6 +1959,17 @@ package body DAP.Clients is
       return DAP.Clients.Stack_Trace.Stack_Trace_Access (Self.Stack_Trace);
    end Get_Stack_Trace;
 
+   -------------------
+   -- Get_Variables --
+   -------------------
+
+   function Get_Variables
+     (Self : DAP_Client)
+      return DAP.Clients.Variables.Variables_Holder_Access is
+   begin
+      return DAP.Clients.Variables.Variables_Holder_Access (Self.Variables);
+   end Get_Variables;
+
    ----------------
    -- On_Started --
    ----------------
@@ -2129,6 +2146,10 @@ package body DAP.Clients is
 
       if Self.Stack_Trace /= null then
          Free (Self.Stack_Trace);
+      end if;
+
+      if Self.Variables /= null then
+         Free (Self.Variables);
       end if;
    end Clear;
 

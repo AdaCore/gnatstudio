@@ -90,6 +90,9 @@ package DAP.Clients.Stack_Trace is
    procedure Clear (Self : Stack_Trace_Access);
    --  Clear the information about backtraces
 
+   procedure Register_Module;
+   --  Register the functions needed to work properly
+
 private
 
    type Stack_Trace is tagged record
