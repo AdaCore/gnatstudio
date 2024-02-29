@@ -56,6 +56,7 @@ with LSP.JSON_Streams;
 
 with DAP.Module;
 with DAP.Modules.Preferences;
+with DAP.Clients.Attach;
 with DAP.Clients.Breakpoint_Managers;
 with DAP.Clients.ConfigurationDone;
 with DAP.Clients.Continue;
@@ -2205,11 +2206,17 @@ package body DAP.Clients is
       Executable_Args   : Virtual_String_Vector := Empty_Virtual_String_Vector;
       Stop_At_Beginning : Boolean := False) is
    begin
-      DAP.Clients.Launch.Send_Launch_Request
-        (Client            => Self,
-         Executable        => Executable,
-         Executable_Args   => Executable_Args,
-         Stop_At_Beginning => Stop_At_Beginning);
+      if Self.Get_Remote_Target.Is_Empty then
+         DAP.Clients.Launch.Send_Launch_Request
+           (Client            => Self,
+            Executable        => Executable,
+            Executable_Args   => Executable_Args,
+            Stop_At_Beginning => Stop_At_Beginning);
+      else
+         DAP.Clients.Attach.Send_Attach_Request
+           (Client => Self,
+            Target => Self.Get_Remote_Target);
+      end if;
    end Launch_Executable;
 
    ----------
