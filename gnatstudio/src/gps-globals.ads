@@ -85,7 +85,6 @@ package GPS.Globals is
    Batch_File                 : String_Access;
    Batch_Script               : String_Access;
    DAP_GDB_Adapter            : VSS.Strings.Virtual_String;
-   Debugger_Name              : String_Access;
    Passed_Project_Name        : String_Access;
    Program_Args               : String_Access;
    Protocol                   : String_Access;
