@@ -5,7 +5,7 @@ Building Python for GNAT Studio
 Dependencies
 ============
 
-GNAT Studio and its default plugins requires the following python packages:
+GNAT Studio and its default plugins require the following python packages:
 
 * :file:`cmsis_pack_manager` (0.2.10)
 
