@@ -15,8 +15,9 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
---  Defines breakpoint type and holder for them.
+--  Define breakpoint types and holders for them.
 
+with Ada.Containers.Doubly_Linked_Lists;
 with Ada.Containers.Hashed_Maps;
 with Ada.Containers.Vectors;
 with Ada.Strings.Unbounded;  use Ada.Strings.Unbounded;
@@ -28,9 +29,8 @@ with VSS.Strings;            use VSS.Strings;
 with Basic_Types;            use Basic_Types;
 
 with GPS.Markers;            use GPS.Markers;
-with DAP.Types;              use DAP.Types;
 
-package DAP.Modules.Breakpoints is
+package DAP.Types.Breakpoints is
 
    type Breakpoint_Disposition is (Keep, Delete);
    --  The breakpoint's disposition.
@@ -57,6 +57,25 @@ package DAP.Modules.Breakpoints is
    --  * Added: a new breakpoint has been added.
    --  * Deleted: a breakpoint has been deleded.
    --  * Changed: an existing breakpoint has changed.
+
+   type Breakpoint_Identifier is new Integer;
+   No_Breakpoint : constant Breakpoint_Identifier := 0;
+   --  Breakpoint identifiers on DAP server's side.
+   --  These identifiers are set by the DAP server, in response of the
+   --  breakpoint-related DAP requests.
+
+   package Breakpoint_Identifier_Lists is
+     new Ada.Containers.Doubly_Linked_Lists (Breakpoint_Identifier);
+   --  Lists of breakpoint identifiers.
+
+   package Breakpoint_Index_Lists is
+     new Ada.Containers.Doubly_Linked_Lists (Positive);
+   --  This type is used when doing the same debugger action on a list
+   --  of breakpoints (delete/enable/disable).
+   --  Indexes are different from breakpoint identifiers: breakpoint
+   --  identifiers are set by the DAP server once the breakpoint has been
+   --  properly recognized, while indexes refer to the position of the
+   --  breakpoint in the holders' vectors used to store them.
 
    type Breakpoint_Location_Type is record
       Marker  : Location_Marker := No_Marker;
@@ -302,4 +321,4 @@ private
       Vector : Breakpoint_Vectors.Vector;
    end record;
 
-end DAP.Modules.Breakpoints;
+end DAP.Types.Breakpoints;

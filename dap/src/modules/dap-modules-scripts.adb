@@ -34,7 +34,7 @@ with GPS.Kernel.Scripts;       use GPS.Kernel.Scripts;
 
 with DAP.Types;                use DAP.Types;
 with DAP.Module;
-with DAP.Modules.Breakpoints;
+with DAP.Types.Breakpoints;
 with DAP.Module.Breakpoints;
 
 with DAP.Clients.Breakpoint_Managers;
@@ -62,11 +62,11 @@ package body DAP.Modules.Scripts is
    -- Breakpoint_Info_Property --
 
    type Breakpoint_Info_Property is new Instance_Property_Record with record
-      Data : DAP.Modules.Breakpoints.Breakpoint_Data;
+      Data : DAP.Types.Breakpoints.Breakpoint_Data;
    end record;
    function Create_Debugger_Breakpoint
      (Script : not null access Scripting_Language_Record'Class;
-      Data   : DAP.Modules.Breakpoints.Breakpoint_Data) return Class_Instance;
+      Data   : DAP.Types.Breakpoints.Breakpoint_Data) return Class_Instance;
 
    procedure Breakpoint_Handler
      (Data    : in out Callback_Data'Class;
@@ -75,7 +75,7 @@ package body DAP.Modules.Scripts is
 
    function Get_Breakpoint
      (Inst : Class_Instance)
-      return DAP.Modules.Breakpoints.Breakpoint_Data;
+      return DAP.Types.Breakpoints.Breakpoint_Data;
 
    -- Debugger_Variable_Property --
 
@@ -107,7 +107,7 @@ package body DAP.Modules.Scripts is
 
    function Create_Debugger_Breakpoint
      (Script : not null access Scripting_Language_Record'Class;
-      Data   : DAP.Modules.Breakpoints.Breakpoint_Data) return Class_Instance
+      Data   : DAP.Types.Breakpoints.Breakpoint_Data) return Class_Instance
    is
       Inst : constant Class_Instance := Script.New_Instance
         (Script.Get_Repository.New_Class (Debugger_Breakpoint_Class_Name));
@@ -248,7 +248,7 @@ package body DAP.Modules.Scripts is
 
    function Get_Breakpoint
      (Inst : Class_Instance)
-      return DAP.Modules.Breakpoints.Breakpoint_Data
+      return DAP.Types.Breakpoints.Breakpoint_Data
    is
       Data : constant Instance_Property :=
         Get_Data (Inst, Debugger_Breakpoint_Class_Name);
@@ -293,14 +293,14 @@ package body DAP.Modules.Scripts is
            (Create_File
               (Data.Get_Script,
                Get_File
-                 (DAP.Modules.Breakpoints.Get_Location
+                 (DAP.Types.Breakpoints.Get_Location
                       (Get_Breakpoint (Data.Nth_Arg (1))))));
 
       elsif Command = "line" then
          Data.Set_Return_Value
            (Natural
               (Get_Line
-                   (DAP.Modules.Breakpoints.Get_Location
+                   (DAP.Types.Breakpoints.Get_Location
                         (Get_Breakpoint (Data.Nth_Arg (1))))));
       end if;
    end Breakpoint_Handler;
