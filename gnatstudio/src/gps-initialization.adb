@@ -948,15 +948,6 @@ package body GPS.Initialization is
             Program_Args := new String'("");
          end if;
 
-      elsif Switch = "--debugger" then
-         Free (Debugger_Name);
-         Debugger_Name := new String'(ICS.Value (Value));
-
-         if Program_Args = null then
-            --  --debugger implies --debug
-            Program_Args := new String'("");
-         end if;
-
       elsif Switch = "--hide" then
          Hide_GPS := True;
 

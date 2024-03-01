@@ -35,7 +35,7 @@ def check(promise, name, type, value, pattern=False, type_pattern=False):
 
     if var.is_valid:
         check_variable(var.data, name, type, value, pattern, type_pattern)
-        
+
     elif var.is_error:
         simple_error(name + " error:" + var.error_message)
 
@@ -56,11 +56,10 @@ def test_driver():
 
     p = promises.DebuggerWrapper(GPS.File("parse"))
     debug = GPS.Debugger.get()
-
     debug.break_at_exception(False)
-
-    GPS.execute_action("debug continue")
-    yield wait_until_not_busy(debug)
+    yield wait_DAP_server('setExceptionBreakpoints')
+    debug.send("run")
+    yield wait_DAP_server('stackTrace')
 
     debug.send("frame 7")
     yield wait_until_not_busy(debug)
@@ -113,7 +112,7 @@ def test_driver():
     gps_assert(len(children.data), 3, "Invalid count of Fiia children")
     yield check_variable(children.data[0], "Fiia.24", "integer", "3")
     yield check_variable(children.data[1], "Fiia.25", "integer", "4")
-    yield check_variable(children.data[2], "Fiia.26", "integer", "5")    
+    yield check_variable(children.data[2], "Fiia.26", "integer", "5")
 
     yield check(p, "Iaa", "parse.integer_array_access", r"0x[0-9a-f]+", "Access")
 
@@ -517,7 +516,7 @@ def test_driver():
     yield check_variable(children1.data[0], "Args2(1,1)", "parse.tn_9305_014.string_access", r"0x[0-9a-f]+", True)
     yield check_variable(children1.data[1], "Args2(1,2)", "parse.tn_9305_014.string_access", r"0x[0-9a-f]+", True)
     yield check_variable(children1.data[2], "Args2(1,3)", "parse.tn_9305_014.string_access", r"0x[0-9a-f]+", True)
-    
+
     yield p.send_promise("cont")
     yield p.send_promise("frame 6")
     yield wait_until_not_busy(debug)
@@ -620,7 +619,7 @@ def test_driver():
     var = yield check(p, "AP", "parse.access_procedure", r'0x[0-9a-f]+', True)
 
     var = yield check(p, "AF", "parse.access_function", r'0x[0-9a-f]+', True)
-    
+
     info = yield p.get_variable_by_name("AF.all")
     gps_assert(info.data is None, True, "AF.all exists")
 

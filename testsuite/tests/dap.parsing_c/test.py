@@ -37,7 +37,7 @@ def check(promise, name, type, value, pattern=False):
             simple_error(name + " is None")
         else:
             check_variable(var.data, name, type, value, pattern)
-        
+
     elif var.is_error:
         simple_error(name + " error:" + var.error_message)
 
@@ -57,10 +57,11 @@ def test_driver():
 
     p = promises.DebuggerWrapper(GPS.File("parse_c"))
     debug = GPS.Debugger.get()
-    
+
     debug.break_at_location(GPS.File("parse_c.c"), 3)
+    yield wait_DAP_server('setBreakpoints')
     debug.send("run")
-    yield wait_until_not_busy(debug)
+    yield wait_DAP_server('stackTrace')
 
     debug.frame_up()
 

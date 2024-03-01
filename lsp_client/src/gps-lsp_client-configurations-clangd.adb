@@ -202,28 +202,32 @@ package body GPS.LSP_Client.Configurations.Clangd is
       UseTab,
       WhitespaceSensitiveMacros);
 
-   procedure Set_Formatting
+   procedure Setup_Clangd_Formatting_Options
      (Root_Project : Project_Type;
       Kernel       : not null access Kernel_Handle_Record'Class);
-   --  Set formatting options in the .clang-format file.
+   --  Setup clangd formatting options in the .clang-format files if needed,
+   --  creating the files if not already present, based on the user's
+   --  indentation preferences for C/C++.
 
    procedure Check_Formatting_Option
-     (S          : in out Unbounded_String;
-      Check_Only : Formatting_Options := None;
-      Option     : out Formatting_Options;
-      Changed    : out Boolean);
-   --  Checks whether S is an option and it's value is up-to-date.
+     (S            : in out Unbounded_String;
+      Check_Only   : Formatting_Options := None;
+      Found_Option : out Formatting_Options;
+      Changed      : out Boolean);
+   --  Checks whether S is an option and if its value is up-to-date.
    --  Changed is true when an option value has been changed and S
-   --  will contain new string for the option.
-   --  If Check_Only is set, process only that option.
+   --  will contain the new value for this option.
+   --  If Check_Only is set, it will check only if this option is specified in
+   --  the given string, otherwise compare the string to all available clangd
+   --  formatting options.
 
    function Check_Formatting_Option
      (Option    : Formatting_Options;
       Value     : String;
       New_Value : out Unbounded_String)
       return Boolean;
-   --  Checks whether the Option's Value is changed.
-   --  Returns True and new option string in the New_Value if changed.
+   --  Checks whether the given Option's Value has changed.
+   --  Returns True and the new option's in New_Value if it's the case.
 
    function Is_Header_File
      (File            : Virtual_File;
@@ -284,28 +288,28 @@ package body GPS.LSP_Client.Configurations.Clangd is
    procedure Check_Formatting_Option
      (S          : in out Unbounded_String;
       Check_Only : Formatting_Options := None;
-      Option     : out Formatting_Options;
+      Found_Option     : out Formatting_Options;
       Changed    : out Boolean)
    is
       Matched : Match_Array (0 .. 2);
       Value   : Unbounded_String;
    begin
       Changed := False;
-      Option  := None;
+      Found_Option  := None;
       Match (Option_Regexp, To_String (S), Matched);
 
       if Matched (0) /= No_Match then
          begin
-            Option := Formatting_Options'Value
+            Found_Option := Formatting_Options'Value
               (Slice (S, Matched (1).First, Matched (1).Last));
 
             if Check_Only = None
-              or else Option = Check_Only
+              or else Found_Option = Check_Only
             then
                if Check_Formatting_Option
-                 (Option,
-                  Slice (S, Matched (2).First, Matched (2).Last),
-                  Value)
+                 (Option    => Found_Option,
+                  Value     => Slice (S, Matched (2).First, Matched (2).Last),
+                  New_Value => Value)
                then
                   S       := Value;
                   Changed := True;
@@ -332,6 +336,11 @@ package body GPS.LSP_Client.Configurations.Clangd is
       Result : Boolean := False;
 
       procedure Compare (Name, Current : String);
+
+      -------------
+      -- Compare --
+      -------------
+
       procedure Compare (Name, Current : String) is
       begin
          if Value /= Current then
@@ -409,7 +418,11 @@ package body GPS.LSP_Client.Configurations.Clangd is
          Modified : Boolean;
       begin
          for S of Current_Formatting_Options loop
-            Check_Formatting_Option (S, Which, Option, Modified);
+            Check_Formatting_Option
+              (S          => S,
+               Check_Only => Which,
+               Found_Option     => Option,
+               Changed    => Modified);
             exit when Option = Language;
             Changed := Changed or else Modified;
          end loop;
@@ -427,7 +440,11 @@ package body GPS.LSP_Client.Configurations.Clangd is
             Modified : Boolean;
          begin
             for S of Current_Formatting_Options loop
-               Check_Formatting_Option (S, None, Option, Modified);
+               Check_Formatting_Option
+                 (S          => S,
+                  Check_Only => None,
+                  Found_Option     => Option,
+                  Changed    => Modified);
                exit when Option = Language;
                Changed := Changed or else Modified;
             end loop;
@@ -747,7 +764,7 @@ package body GPS.LSP_Client.Configurations.Clangd is
       Writer.End_Document;
       Stream.Close;
 
-      Set_Formatting (Tree.Root_Project, Self.Kernel);
+      Setup_Clangd_Formatting_Options (Tree.Root_Project, Self.Kernel);
 
       Self.Server_Arguments.Append
         ("--compile-commands-dir=" & Display_Dir_Name (Dir));
@@ -766,11 +783,11 @@ package body GPS.LSP_Client.Configurations.Clangd is
          Me.Trace (E);
    end Prepare_Configuration_Settings;
 
-   --------------------
-   -- Set_Formatting --
-   --------------------
+   -------------------------------------
+   -- Setup_Clangd_Formatting_Options --
+   -------------------------------------
 
-   procedure Set_Formatting
+   procedure Setup_Clangd_Formatting_Options
      (Root_Project : Project_Type;
       Kernel       : not null access Kernel_Handle_Record'Class)
    is
@@ -859,10 +876,10 @@ package body GPS.LSP_Client.Configurations.Clangd is
             Free (S);
 
             declare
-               S        : Unbounded_String;
-               Option   : Formatting_Options;
-               Modified : Boolean;
-               Stop     : Boolean := False;
+               S            : Unbounded_String;
+               Found_Option : Formatting_Options;
+               Modified     : Boolean;
+               Stop         : Boolean := False;
             begin
                for Index in 1 .. Items.Length loop
                   S :=
@@ -870,9 +887,13 @@ package body GPS.LSP_Client.Configurations.Clangd is
                       (Items.Element (Index));
 
                   if not Stop then
-                     Check_Formatting_Option (S, None, Option, Modified);
-                     Stop := Option = Language;
-                     Exists (Option) := True;
+                     Check_Formatting_Option
+                       (S            => S,
+                        Check_Only   => None,
+                        Found_Option => Found_Option,
+                        Changed      => Modified);
+                     Stop := Found_Option = Language;
+                     Exists (Found_Option) := True;
                      Changed := Changed or else Modified;
                   end if;
                   Current_Formatting_Options.Append (S);
@@ -884,11 +905,17 @@ package body GPS.LSP_Client.Configurations.Clangd is
       for Option in reverse Formatting_Options loop
          if not Exists (Option) then
             if Option = SortIncludes then
+               --  Disable sorting for include directives by default if the
+               --  setting has not been overridden by the user.
                Current_Formatting_Options.Prepend
                  (To_Unbounded_String ("SortIncludes: Never"));
                Changed := True;
 
-            elsif Check_Formatting_Option (Option, "", New_Value) then
+            elsif Check_Formatting_Option
+              (Option => Option,
+               Value     => "",
+               New_Value => New_Value)
+            then
                Current_Formatting_Options.Prepend (New_Value);
                Changed := True;
             end if;
@@ -902,7 +929,7 @@ package body GPS.LSP_Client.Configurations.Clangd is
 
          Write_Clang_Format_Files (Kernel, Override_Existing => False);
       end if;
-   end Set_Formatting;
+   end Setup_Clangd_Formatting_Options;
 
    ------------------------------
    -- Set_Standard_Errors_File --
