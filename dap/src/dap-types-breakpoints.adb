@@ -115,7 +115,7 @@ package body DAP.Types.Breakpoints is
             return L.Subprogram = R.Subprogram;
 
          when On_Instruction =>
-            return L.Address = R.Address;
+            return L.Location.Address = R.Location.Address;
 
          when On_Exception =>
             return L.Exception_Name = R.Exception_Name;
@@ -224,7 +224,7 @@ package body DAP.Types.Breakpoints is
             return To_String (Data.Subprogram);
 
          when On_Instruction =>
-            return Address_To_String (Data.Address);
+            return Address_To_String (Data.Location.Address);
 
          when On_Exception =>
             return "exception " & To_String (Data.Exception_Name);

@@ -118,17 +118,13 @@ package DAP.Types.Breakpoints is
       --  specified SLOC actually maps the executable's source files).
 
       case Kind is
-         when On_Line =>
+         when On_Line | On_Instruction =>
             Location : Breakpoint_Location_Type;
             --  The line breakpoint's location.
 
          when On_Subprogram =>
             Subprogram : Ada.Strings.Unbounded.Unbounded_String;
             --  The name of the subprogram, for subprogram breakpoints.
-
-         when On_Instruction =>
-            Address  : Address_Type := Invalid_Address;
-            --  The instruction's address, for instruction breakpoints.
 
          when On_Exception =>
             Exception_Name : Ada.Strings.Unbounded.Unbounded_String;

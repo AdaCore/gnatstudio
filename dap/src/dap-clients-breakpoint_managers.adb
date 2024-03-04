@@ -139,9 +139,10 @@ package body DAP.Clients.Breakpoint_Managers is
 
       Data.Verified := Item.verified and then Item.line.Is_Set;
 
-      --  If we are dealing with a SLOC breakpoint, set/update the breakpoint's
-      --  location according to the debugger's response.
-      if Data.Kind = On_Line
+      --  If we are dealing with a source breakpoint or an instruction
+      --  breakpoint, set/update the breakpoint's location according to
+      --  the debugger's response.
+      if Data.Kind in On_Line | On_Instruction
         and then Data.Verified
         and then File /= No_File
         and then Item.line.Is_Set
@@ -436,7 +437,8 @@ package body DAP.Clients.Breakpoint_Managers is
       Data : constant Breakpoint_Data := Breakpoint_Data'
         (Kind        => On_Instruction,
          Num         => 0,
-         Address     => Address,
+         Location    => Breakpoint_Location_Type'
+           (Address => Address, others => <>),
          Disposition => (if Temporary then Delete else Keep),
          Condition   => Condition,
          Executable  => Self.Client.Get_Executable,
@@ -469,7 +471,7 @@ package body DAP.Clients.Breakpoint_Managers is
       for Idx of Address_Breakpoints loop
          Data := Self.Holder.Get_Breakpoint_From_Index (Idx);
 
-         if Data.Address = Address then
+         if Data.Location.Address = Address then
             Indexes_To_Remove.Append (Idx);
          end if;
       end loop;
@@ -483,7 +485,8 @@ package body DAP.Clients.Breakpoint_Managers is
            (Breakpoint_Data'
               (Kind       => On_Instruction,
                Num        => 0,
-               Address    => Address,
+               Location   => Breakpoint_Location_Type'
+                 (Address => Address, others => <>),
                Executable => Self.Client.Get_Executable,
                others     => <>));
       end if;
@@ -754,7 +757,7 @@ package body DAP.Clients.Breakpoint_Managers is
 
       for Data of Self.Holder.Get_Breakpoints (Indexes => Indexes) loop
          Fb.instructionReference := VSS.Strings.Conversions.To_Virtual_String
-           (Address_To_String (Data.Address));
+           (Address_To_String (Data.Location.Address));
          Fb.condition    := Data.Condition;
          Fb.hitCondition := Get_Ignore (Data);
 

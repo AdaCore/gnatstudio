@@ -820,11 +820,11 @@ package body DAP.Views.Assembly is
          end if;
       end if;
 
-         --  Highlight breakpoint lines
+      --  Highlight breakpoint lines
 
       Columns (1) := BG_Color_Column;
       for Data of Client.Get_Breakpoints_Manager.Get_Breakpoints loop
-         if Data.Kind = On_Line then
+         if Data.Kind in On_Line | On_Instruction then
             Iter_From_Address
               (View    => View,
                Address => Data.Location.Address,
