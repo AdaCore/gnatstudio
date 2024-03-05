@@ -1715,6 +1715,10 @@ package body DAP.Tools.Outputs is
          Handler.Integer_Value
            (Interfaces.Integer_64 (Integer'(Value.pid.Value)));
       end if;
+      if not Value.program.Is_Null then
+         Handler.Key_Name ("program");
+         Handler.String_Value (Value.program);
+      end if;
       if not Value.target.Is_Null then
          Handler.Key_Name ("target");
          Handler.String_Value (Value.target);

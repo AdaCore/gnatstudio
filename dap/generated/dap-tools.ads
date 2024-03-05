@@ -1228,6 +1228,11 @@ package DAP.Tools is
       --  client should leave the data intact.
       pid     : Optional_Integer;
       --  Extension. The process ID to which gdb should attach. See Attach.
+      program : VSS.Strings.Virtual_String;
+      --  Extension. If provided, this is a string that specifies the program
+      --  to use. This corresponds to the file command. In some cases, gdb can
+      --  automatically determine which program is running. However, for many
+      --  remote targets, this is not the case, and so this should be supplied.
       target  : VSS.Strings.Virtual_String;
       --  Extension. The target to which gdb should connect. This is a string
       --  and is passed to the target remote command. See Connecting.
