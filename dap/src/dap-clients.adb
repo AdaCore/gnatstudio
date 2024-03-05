@@ -2214,8 +2214,9 @@ package body DAP.Clients is
             Stop_At_Beginning => Stop_At_Beginning);
       else
          DAP.Clients.Attach.Send_Attach_Request
-           (Client => Self,
-            Target => Self.Get_Remote_Target);
+           (Client     => Self,
+            Executable => Self.Get_Executable,
+            Target     => Self.Get_Remote_Target);
       end if;
    end Launch_Executable;
 

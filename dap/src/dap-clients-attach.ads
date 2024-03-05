@@ -18,15 +18,21 @@
 --  Concrete implementation of the DAP 'attach' request
 
 with VSS.Strings;
+with GNATCOLL.VFS;
 
 package DAP.Clients.Attach is
 
    procedure Send_Attach_Request
-     (Client : in out DAP.Clients.DAP_Client'Class;
-      PID    : Integer := -1;
-      Target : VSS.Strings.Virtual_String := VSS.Strings.Empty_Virtual_String);
+     (Client     : in out DAP.Clients.DAP_Client'Class;
+      PID        : Integer := -1;
+      Executable : GNATCOLL.VFS.Virtual_File := GNATCOLL.VFS.No_File;
+      Target     : VSS.Strings.Virtual_String :=
+        VSS.Strings.Empty_Virtual_String);
    --  Send a DAP 'attach' request.
    --  PID refers to the process we want to attach to.
+   --  Executable refers to the debuggee that should be loaded by the
+   --  debugger, when it can't guess which program is being debugged after
+   --  attaching. This should be specified for remote debugging for instance.
    --  Target refers to the remote target we want to connect.
    --  Note that PID and Target are mutually exclusive: specifying one
    --  parameter will make the underlying DAP adapter ignore the other.

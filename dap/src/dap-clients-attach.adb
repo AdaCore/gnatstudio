@@ -18,6 +18,7 @@ with GPS.Kernel;          use GPS.Kernel;
 with DAP.Requests;        use DAP.Requests;
 with DAP.Requests.Attach;
 with DAP.Types;
+with VSS.Strings.Conversions;
 
 package body DAP.Clients.Attach is
 
@@ -26,12 +27,17 @@ package body DAP.Clients.Attach is
    type Attach_Request_Access is access all Attach_Request'Class;
 
    function Create
-     (Kernel : not null Kernel_Handle;
-      PID    : Integer := -1;
-      Target : VSS.Strings.Virtual_String := VSS.Strings.Empty_Virtual_String)
+     (Kernel     : not null Kernel_Handle;
+      PID        : Integer := -1;
+      Executable : GNATCOLL.VFS.Virtual_File := GNATCOLL.VFS.No_File;
+      Target     : VSS.Strings.Virtual_String :=
+        VSS.Strings.Empty_Virtual_String)
       return Attach_Request_Access;
    --  Create a new DAP 'attach' request.
    --  PID refers to the process we want to attach to.
+   --  Executable refers to the debuggee that should be loaded by the
+   --  debugger, when it can't guess which program is being debugged after
+   --  attaching. This should be specified for remote debugging for instance.
    --  Target refers to the remote target we want to connect.
    --  Note that PID and Target are mutually exclusive: specifying one
    --  parameter will make the underlying DAP adapter ignore the other.
@@ -48,17 +54,26 @@ package body DAP.Clients.Attach is
    ------------
 
    function Create
-     (Kernel : not null Kernel_Handle;
-      PID    : Integer := -1;
-      Target : VSS.Strings.Virtual_String := VSS.Strings.Empty_Virtual_String)
+     (Kernel     : not null Kernel_Handle;
+      PID        : Integer := -1;
+      Executable : GNATCOLL.VFS.Virtual_File := GNATCOLL.VFS.No_File;
+      Target     : VSS.Strings.Virtual_String :=
+        VSS.Strings.Empty_Virtual_String)
       return Attach_Request_Access
    is
+      use GNATCOLL.VFS;
+
       Self : constant Attach_Request_Access := new Attach_Request (Kernel);
    begin
       Self.Parameters.arguments.target := Target;
 
       if PID /= -1 then
          Self.Parameters.arguments.pid := (Is_Set => True, Value => PID);
+      end if;
+
+      if Executable /= No_File then
+         Self.Parameters.arguments.program := VSS.Strings.Conversions.
+           To_Virtual_String (Executable.Display_Full_Name);
       end if;
 
       return Self;
@@ -83,15 +98,18 @@ package body DAP.Clients.Attach is
    -------------------------
 
    procedure Send_Attach_Request
-     (Client : in out DAP.Clients.DAP_Client'Class;
-      PID    : Integer := -1;
-      Target : VSS.Strings.Virtual_String := VSS.Strings.Empty_Virtual_String)
+     (Client     : in out DAP.Clients.DAP_Client'Class;
+      PID        : Integer := -1;
+      Executable : GNATCOLL.VFS.Virtual_File := GNATCOLL.VFS.No_File;
+      Target     : VSS.Strings.Virtual_String :=
+        VSS.Strings.Empty_Virtual_String)
    is
       Attach_Req : DAP.Clients.Attach.Attach_Request_Access :=
         DAP.Clients.Attach.Create
-          (Kernel => Client.Kernel,
-           PID    => PID,
-           Target => Target);
+          (Kernel     => Client.Kernel,
+           PID        => PID,
+           Executable => Executable,
+           Target     => Target);
    begin
       Client.Enqueue (DAP.Requests.DAP_Request_Access (Attach_Req));
    end Send_Attach_Request;
