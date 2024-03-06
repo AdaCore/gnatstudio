@@ -16,10 +16,10 @@
 ------------------------------------------------------------------------------
 with GPS.Kernel;              use GPS.Kernel;
 
+with DAP.Clients.Breakpoint_Managers;
 with DAP.Requests;            use DAP.Requests;
 with DAP.Requests.Initialize;
 with VSS.Strings.Conversions;
-with DAP.Clients.Breakpoint_Managers;
 
 package body DAP.Clients.Initialize is
 

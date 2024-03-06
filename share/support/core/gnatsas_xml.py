@@ -665,9 +665,6 @@ many cores as available on the machine)."/>
           <arg>%X</arg>
           <arg>--show-annotations</arg>
        </command-line>
-       <output-parsers>
-        {output_parsers}
-       </output-parsers>
     </target>
 
     <target-model name="gnatsas_review" category="GNATSAS">

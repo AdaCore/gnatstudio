@@ -92,11 +92,11 @@ package DAP.Clients is
    procedure Initialize_Client (Self : not null access DAP_Client);
 
    procedure Start
-     (Self               : in out DAP_Client;
-      Project            : GNATCOLL.Projects.Project_Type;
-      Executable         : GNATCOLL.VFS.Virtual_File;
-      Executable_Args    : String;
-      Remote_Target      : String);
+     (Self            : in out DAP_Client;
+      Project         : GNATCOLL.Projects.Project_Type;
+      Executable      : GNATCOLL.VFS.Virtual_File;
+      Executable_Args : String;
+      Remote_Target   : String);
    --  Start the debugger.
 
    function Is_Stopped (Self : DAP_Client) return Boolean;
