@@ -1,7 +1,7 @@
-AC_INIT(GNAT Studio,[0.0],[report@adacore.com])
+AC_INIT([GNAT Studio],[0.0],[report@adacore.com])
 AC_CONFIG_SRCDIR(gnatstudio/src/gps-main.adb)
 AC_CONFIG_MACRO_DIRS([m4])
-AC_CANONICAL_SYSTEM
+AC_CANONICAL_TARGET
 
 if test -f VERSION.txt; then
     GPS_VERSION=`cat VERSION.txt`
@@ -75,8 +75,16 @@ fi
 
 ######## checking for local tools ###
 AC_PROG_CC
-AC_ISC_POSIX
-AC_HEADER_STDC
+AC_SEARCH_LIBS([strerror],[cposix])
+m4_warn([obsolete],
+[The preprocessor macro `STDC_HEADERS' is obsolete.
+  Except in unusual embedded environments, you can safely include all
+  ISO C90 headers unconditionally.])dnl
+# Autoupdate added the next two lines to ensure that your configure
+# script's behavior did not change.  They are probably safe to remove.
+AC_CHECK_INCLUDES_DEFAULT
+AC_PROG_EGREP
+
 AM_PATH_GNAT
 AC_PROG_MAKE_SET
 AC_PROG_INSTALL
@@ -217,4 +225,5 @@ AC_MSG_NOTICE([ Xml/Ada: $XMLADA_GPR])
 AC_MSG_NOTICE([    use ADA_PROJECT_PATH to find xmlada.gpr])
 AC_MSG_NOTICE([--------------------------------------------------])
 
-AC_OUTPUT(shared.gpr Makefile docs/Makefile common/core/src/config.ads common/common.gpr osx_bundle/Makefile osx_bundle/scripts/install.py docs/gnatstudio-welcome.html docs/gnatstudio-welcome-public.html)
+AC_CONFIG_FILES([shared.gpr Makefile docs/Makefile common/core/src/config.ads common/common.gpr osx_bundle/Makefile osx_bundle/scripts/install.py docs/gnatstudio-welcome.html docs/gnatstudio-welcome-public.html])
+AC_OUTPUT
