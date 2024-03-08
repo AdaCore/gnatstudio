@@ -15,8 +15,6 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with GNATCOLL.Python.State;
-
 package body GPS.Scripts.Commands is
 
    procedure Free_When_Python_Owns_Ada (S : in out Scheduled_Command_Access);
@@ -145,9 +143,7 @@ package body GPS.Scripts.Commands is
    -------------
 
    overriding function Execute
-     (Command : access Scheduled_Command) return Command_Return_Type
-   is
-      Lock : GNATCOLL.Python.State.Ada_GIL_Lock with Unreferenced;
+     (Command : access Scheduled_Command) return Command_Return_Type is
    begin
       return Execute (Command.Command);
    end Execute;
