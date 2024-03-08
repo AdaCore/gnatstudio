@@ -790,6 +790,8 @@ package body DAP.Module.Breakpoints is
       Line   : Editable_Line_Type;
       Action : GPS.Editors.Line_Information.Line_Information_Access;
    begin
+      --  We should only show breakpoints that have a unique location, so
+      --  source breakpoints.
       if B.Kind /= On_Line then
          return;
       end if;
@@ -998,7 +1000,8 @@ package body DAP.Module.Breakpoints is
       B : Breakpoint_Data := Breakpoint_Data'
         (Kind        => On_Instruction,
          Num         => No_Breakpoint,
-         Address     => Address,
+         Location    => Breakpoint_Location_Type'
+           (Address => Address, others => <>),
          Disposition => (if Temporary then Delete else Keep),
          Condition   => Condition,
          Ignore      => Ignore,
