@@ -2,7 +2,7 @@
 # exported by GPS to make it easier to write plugins
 
 from GPS import pwd, cd, Action, EditorBuffer, MDI
-from collections.abc import MutableMapping as DictMixin
+from collections import MutableMapping as DictMixin
 import types
 import GPS
 import GPS.Browsers
