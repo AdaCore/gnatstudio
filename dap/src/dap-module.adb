@@ -25,6 +25,8 @@ with Glib;                         use Glib;
 with Glib.Main;                    use Glib.Main;
 with Glib.Object;                  use Glib.Object;
 
+with Gtk.Check_Button;             use Gtk.Check_Button;
+with Gtk.Dialog;                   use Gtk.Dialog;
 with Gtk.Handlers;
 with Gtk.Label;                    use Gtk.Label;
 with Gtk.Widget;                   use Gtk.Widget;
@@ -33,9 +35,11 @@ with Gtkada.Dialogs;
 
 with Commands;                     use Commands;
 with Commands.Interactive;         use Commands.Interactive;
+with Histories;
 with Language;                     use Language;
 
 with Generic_Views;
+with GPS.Dialogs;                  use GPS.Dialogs;
 with GPS.Editors;                  use GPS.Editors;
 with GPS.Kernel.Actions;
 with GPS.Kernel.Contexts;          use GPS.Kernel.Contexts;
@@ -70,11 +74,18 @@ with DAP.Views.Registers;
 with DAP.Views.Variables;
 with DAP.Types;
 with DAP.Utils;
+with String_Utils;
+with VSS.Characters.Latin;
+with VSS.Strings.Conversions;
 
 package body DAP.Module is
 
    Me : constant Trace_Handle := Create ("GPS.DEBUGGING.DAP_MODULE", Off);
    --  Enable/disable DAP support
+
+   Run_Arguments_History_Key : constant Histories.History_Key :=
+      "dap_run_arguments";
+   --  The key in the history for the arguments to the run command.
 
    package DAP_Client_Vectors is new Ada.Containers.Vectors
      (Positive, DAP.Clients.DAP_Client_Access, "=" => DAP.Clients."=");
@@ -742,7 +753,10 @@ package body DAP.Module is
       if Client = null then
          return Commands.Failure;
       else
-         Start_Executable (Kernel, Client);
+         Start_Executable
+           (Kernel               => Kernel,
+            Client               => Client,
+            Display_Start_Dialog => True);
          return Commands.Success;
       end if;
    end Execute;
@@ -752,12 +766,73 @@ package body DAP.Module is
    ----------------------
 
    procedure Start_Executable
-     (Kernel : not null Kernel_Handle;
-      Client : not null DAP.Clients.DAP_Client_Access)
+     (Kernel               : not null Kernel_Handle;
+      Client               : not null DAP.Clients.DAP_Client_Access;
+      Display_Start_Dialog : Boolean := False)
    is
       use type DAP.Types.Debugger_Status_Kind;
       Ignore  : Gtkada.Dialogs.Message_Dialog_Buttons;
       pragma Unreferenced (Ignore);
+
+      procedure Display_Dialog;
+      --  Display a modal dialog asking for arguments to be passed to
+      --  the launched executable, and other options (e.g: stop at the beginning of
+      --  the program).
+
+      --------------------
+      -- Display_Dialog --
+      --------------------
+
+      procedure Display_Dialog is
+         Dialog                   : GPS_Dialog;
+         Args_Combo               : Combo_Box;
+         Stop_At_Beginning_Button : Gtk_Check_Button;
+         Response                 : Gtk_Response_Type;
+      begin
+         Gtk_New
+         (Dialog,
+            Title  => "Run/Start",
+            Flags  => Destroy_With_Parent or Modal,
+            Kernel => Kernel);
+         Dialog.Add_OK_Cancel;
+
+         --  Add a combo box for the arguments that should be passed to the
+         --  debuggee.
+
+         Args_Combo := Dialog.Add_Combo
+            (Message => "Run arguments:",
+             Key     => Run_Arguments_History_Key);
+
+         --  Add a checkbox so that the user can select whether he/she wants to
+         --  stop at the beginning of the main program.
+
+         Stop_At_Beginning_Button :=
+           Dialog.Add_Check_Button
+             (Message => "Stop at beginning of main subprogram",
+              Key     => "stop_beginning_debugger");
+
+         Dialog.Show_All;
+         Response := Dialog.Run;
+
+         declare
+            Stop_At_Beginning : constant Boolean :=
+               Stop_At_Beginning_Button.Get_Active;
+            Args              : constant String :=
+               String_Utils.Strip_Ending_Linebreaks
+                 (Args_Combo.Get_Text);
+         begin
+            Dialog.Destroy;
+            if Response = Gtk_Response_OK then
+               Client.Launch_Executable
+                  (Executable        => Client.Get_Executable,
+                   Executable_Args   =>
+                     VSS.Strings.Conversions.To_Virtual_String
+                       (Args).Split (VSS.Characters.Latin.Space),
+                   Stop_At_Beginning => Stop_At_Beginning);
+            end if;
+         end;
+      end Display_Dialog;
+
    begin
       if Client.Get_Status /= DAP.Types.Ready then
          Ignore := GUI_Utils.GPS_Message_Dialog
@@ -767,6 +842,8 @@ package body DAP.Module is
             Dialog_Type => Gtkada.Dialogs.Warning,
             Buttons     => Gtkada.Dialogs.Button_OK,
             Parent      => Kernel.Get_Main_Window);
+      elsif Display_Start_Dialog then
+         Display_Dialog;
       else
          Client.Launch_Executable
            (Executable      => Client.Get_Executable,
@@ -795,7 +872,10 @@ package body DAP.Module is
       end if;
 
       if Client.Get_Status = DAP.Types.Ready then
-         Start_Executable (GPS.Kernel.Get_Kernel (Context.Context), Client);
+         Start_Executable
+           (Kernel               => GPS.Kernel.Get_Kernel (Context.Context),
+            Client               => Client,
+            Display_Start_Dialog => True);
 
       else
          Client.Continue_Execution;
