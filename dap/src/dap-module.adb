@@ -176,6 +176,12 @@ package body DAP.Module is
      (Filter  : access Debugger_Stopped_Filter;
       Context : Selection_Context) return Boolean;
 
+   type Debuggee_Running_Filter is
+     new Action_Filter_Record with null record;
+   overriding function Filter_Matches_Primitive
+     (Filter  : access Debuggee_Running_Filter;
+      Context : Selection_Context) return Boolean;
+
    type No_Debugger_Or_Ready_Filter is
      new Action_Filter_Record with null record;
    overriding function Filter_Matches_Primitive
@@ -1026,6 +1032,22 @@ package body DAP.Module is
    ------------------------------
 
    overriding function Filter_Matches_Primitive
+     (Filter  : access Debuggee_Running_Filter;
+      Context : Selection_Context) return Boolean
+   is
+      pragma Unreferenced (Filter);
+      use DAP.Types;
+   begin
+      return DAP_Module_ID /= null
+        and then not DAP_Module_ID.Clients.Is_Empty
+        and then Get_Current_Debugger.Get_Status = DAP.Types.Running;
+   end Filter_Matches_Primitive;
+
+   ------------------------------
+   -- Filter_Matches_Primitive --
+   ------------------------------
+
+   overriding function Filter_Matches_Primitive
      (Filter  : access Entity_Name_Filter;
       Context : Selection_Context) return Boolean
    is
@@ -1379,6 +1401,7 @@ package body DAP.Module is
       Debugger_Available    : Action_Filter;
       Debugger_Ready_State  : Action_Filter;
       Debugger_Stopped      : Action_Filter;
+      Debuggee_Running      : Action_Filter;
       Breakable_Filter      : Action_Filter;
       Entity_Filter         : Action_Filter;
       Is_Not_Command_Filter : Action_Filter;
@@ -1412,6 +1435,9 @@ package body DAP.Module is
 
       Debugger_Stopped := new Debugger_Stopped_Filter;
       Register_Filter (Kernel, Debugger_Stopped, "Debugger stopped");
+
+      Debuggee_Running := new Debuggee_Running_Filter;
+      Register_Filter (Kernel, Debuggee_Running, "Debuggee running");
 
       Breakable_Filter := new Breakable_Source_Filter;
       Register_Filter
@@ -1508,7 +1534,7 @@ package body DAP.Module is
       GPS.Kernel.Actions.Register_Action
         (Kernel, "debug interrupt", new Interrupt_Command,
          Icon_Name    => "gps-debugger-pause-symbolic",
-         Filter       => Has_Debugger,
+         Filter       => Has_Debugger and Debuggee_Running,
          Description  => "Asynchronously interrupt the debuggee program",
          Category     => "Debug",
          For_Learning => True);

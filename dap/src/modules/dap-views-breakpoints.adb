@@ -1335,7 +1335,7 @@ package body DAP.Views.Breakpoints is
          Columns (Last_Column_Idx) := Col_Address;
          Glib.Values.Init_Set_String
            (Values (Last_Column_Idx),
-            Escape_Text (Address_To_String (Data.Address)));
+            Escape_Text (Address_To_String (Data.Location.Address)));
       end if;
 
       if Data.Executable /= No_File then
@@ -1881,10 +1881,10 @@ package body DAP.Views.Breakpoints is
            (Breakpoint_Kind'Pos (On_Instruction));
 
          Add_Unique_Combo_Entry
-           (Self.Address_Combo, Address_To_String (Br.Address));
+           (Self.Address_Combo, Address_To_String (Br.Location.Address));
          Set_Text
            (Gtk_Entry (Self.Address_Combo.Get_Child),
-            Address_To_String (Br.Address));
+            Address_To_String (Br.Location.Address));
 
       elsif Br.Kind = On_Line
         and then Br.Location.Marker /= No_Marker
