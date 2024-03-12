@@ -29,7 +29,6 @@ with Glib;                    use Glib;
 with Glib.Object;             use Glib.Object;
 with Gtkada.Handlers;         use Gtkada.Handlers;
 with Gtkada.MDI;              use Gtkada.MDI;
-with Gtk.Accel_Group;         use Gtk.Accel_Group;
 with Gtk.Box;                 use Gtk.Box;
 with Gtk.Enums;               use Gtk.Enums;
 with Gtk.Label;               use Gtk.Label;
@@ -48,6 +47,8 @@ with GPS.Kernel.Scripts;      use GPS.Kernel.Scripts;
 with GPS.Kernel;              use GPS.Kernel;
 with GUI_Utils;               use GUI_Utils;
 with KeyManager_Module;       use KeyManager_Module;
+
+with Darwin_Extras;
 
 package body Command_Window is
    Me : constant Trace_Handle := Create ("GPS.KEY_MANAGER.COMMAND");
@@ -189,7 +190,7 @@ package body Command_Window is
       Key    : constant Gdk_Key_Type := Get_Key_Val (Event);
       Button : constant Guint := Get_Button (Event);
       Modif  : constant Gdk_Modifier_Type :=
-                Get_State (Event) and Get_Default_Mod_Mask;
+                Get_State (Event) and Darwin_Extras.Get_Default_Mod_Mask;
    begin
       --  Ignore when the key is just one of the modifier. No binding can
       --  be associated to them anyway, so this is slightly more efficient,

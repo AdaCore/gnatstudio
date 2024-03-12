@@ -91,6 +91,8 @@ with Histories;                 use Histories;
 with Projects;                  use Projects;
 with XML_Utils;                 use XML_Utils;
 
+with Darwin_Extras;
+
 package body Vsearch is
    Me : constant Trace_Handle := Create ("GPS.OTHERS.VSEARCH_MODULE");
 
@@ -1738,7 +1740,8 @@ package body Vsearch is
                                    (Vsearch_Module_Id.Context));
       In_Incremental_Mode : constant Boolean := Is_In_Incremental_Mode;
       Key                 : constant Gdk_Key_Type := Get_Key_Val (Event);
-      Mods                : constant Gdk_Modifier_Type := Get_State (Event);
+      Mods                : constant Gdk_Modifier_Type := Get_State (Event) and
+        Darwin_Extras.Get_Default_Mod_Mask;
    begin
       if Key = GDK_Return or else Key = GDK_KP_Enter then
 

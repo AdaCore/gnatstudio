@@ -97,6 +97,8 @@ with Histories;                use Histories;
 with GPS.Dialogs;              use GPS.Dialogs;
 with Filter_Panels;            use Filter_Panels;
 
+with Darwin_Extras;
+
 package body KeyManager_Module.GUI is
 
    Me : constant Trace_Handle := Create ("GPS.KEY_MANAGER.KEYMGR_GUI");
@@ -949,7 +951,8 @@ package body KeyManager_Module.GUI is
       if Text /= Special_Key_Binding then
          Output.Key    := Get_Key_Val (Event);
          Output.Button := 0;
-         Output.State  := Get_State (Event) and Get_Default_Mod_Mask;
+         Output.State  := Get_State (Event) and
+           Darwin_Extras.Get_Default_Mod_Mask;
          Main_Quit;
       end if;
       return True;
@@ -976,7 +979,8 @@ package body KeyManager_Module.GUI is
       if Text /= Special_Key_Binding then
          Output.Key    := 0;
          Output.Button := Get_Button (Event);
-         Output.State  := Get_State (Event) and Get_Default_Mod_Mask;
+         Output.State  := Get_State (Event) and
+           Darwin_Extras.Get_Default_Mod_Mask;
          Main_Quit;
       end if;
       return True;
