@@ -13,10 +13,9 @@ def test_driver():
     yield hook('debugger_started')
     yield wait_idle()
 
+    # Run the debugger
     debug = GPS.Debugger.get()
-    yield wait_until_not_busy(debug)
-
-    GPS.execute_action("debug continue")
+    debug.send("run")
     yield wait_until_not_busy(debug)
 
     # At this stage, the debuggee process has been terminated
@@ -29,8 +28,8 @@ def test_driver():
     yield ed.ok()
     yield wait_until_not_busy(debug)
 
-    GPS.execute_action("debug continue")
-    yield hook('debugger_location_changed')
+    debug.send("run")
+    yield wait_DAP_server('stackTrace')
 
     # check that we set the cursor on the breakpoint line
     # which means that we stopped on the breakpoint

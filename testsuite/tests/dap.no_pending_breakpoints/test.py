@@ -56,7 +56,7 @@ def test_driver():
     yield wait_idle()
 
     debug = GPS.Debugger.get()
-    debug.start()
+    debug.send("run")
     yield wait_DAP_server("stackTrace")
 
     view = Breakpoints_View()

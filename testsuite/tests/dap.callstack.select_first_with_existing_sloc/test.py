@@ -30,7 +30,7 @@ def test_driver():
     yield timeout(1000)
 
     # Continue the execution until we reach the breakpoint
-    GPS.execute_action("debug continue")
+    debug.send("run")
     yield wait_DAP_server('stackTrace')
 
     # We have reached the breakpoint, but it does not refer to an existing

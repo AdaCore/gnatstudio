@@ -776,8 +776,8 @@ package body DAP.Module is
 
       procedure Display_Dialog;
       --  Display a modal dialog asking for arguments to be passed to
-      --  the launched executable, and other options (e.g: stop at the beginning of
-      --  the program).
+      --  the launched executable, and other options (e.g: stop at the
+      --  beginning of the program).
 
       --------------------
       -- Display_Dialog --
@@ -846,8 +846,9 @@ package body DAP.Module is
          Display_Dialog;
       else
          Client.Launch_Executable
-           (Executable      => Client.Get_Executable,
-            Executable_Args => Client.Get_Executable_Args);
+           (Executable        => Client.Get_Executable,
+            Executable_Args   => Client.Get_Executable_Args,
+            Stop_At_Beginning => True);
       end if;
    end Start_Executable;
 

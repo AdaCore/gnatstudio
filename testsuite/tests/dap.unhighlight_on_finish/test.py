@@ -21,8 +21,7 @@ def test_driver():
 
     # Continue until we reach the breakpoint
     debug = GPS.Debugger.get()
-    yield wait_until_not_busy(debug)
-    GPS.execute_action("debug continue")
+    debug.send("run")
     yield hook('debugger_location_changed')
 
     # Check that the debugger's current line is highlighted
