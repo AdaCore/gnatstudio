@@ -21,9 +21,9 @@ def test_driver():
     debug = GPS.Debugger.get()
     yield wait_until_not_busy(debug)
 
-    # Start the debugger and wait until it reaches
+    # Run the debugger and wait until it reaches
     # the breakpoint
-    debug.start()
+    debug.send("run")
     yield hook('debugger_location_changed')
 
     NAME_COLUMN = 1

@@ -1,0 +1,13 @@
+project Default is
+
+   package Compiler is
+      for Switches ("Ada") use ("-g");
+   end Compiler;
+
+   for Main use ("main.adb");
+   for Object_Dir use "obj";
+
+   for Create_Missing_Dirs use "true";
+
+end Default;
+

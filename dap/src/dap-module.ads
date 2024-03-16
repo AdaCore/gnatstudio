@@ -52,9 +52,12 @@ package DAP.Module is
    --  to the debugged executable.
 
    procedure Start_Executable
-     (Kernel : not null Kernel_Handle;
-      Client : not null DAP.Clients.DAP_Client_Access);
+     (Kernel               : not null Kernel_Handle;
+      Client               : not null DAP.Clients.DAP_Client_Access;
+      Display_Start_Dialog : Boolean := False);
    --  Start the executable attached with the given DAP debugger.
+   --  If Display_Start_Dialog is True, a modal dialog asking for arguments
+   --  to be passed to the executable will be displayed.
 
    procedure Finished (Id : Positive);
    --  Called when some debugger is finished

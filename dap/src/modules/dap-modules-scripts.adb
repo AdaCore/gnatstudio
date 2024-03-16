@@ -490,7 +490,10 @@ package body DAP.Modules.Scripts is
            (Glib.Object.GObject'(Get_Data (Inst)));
 
          if Visual.Client.Is_Ready then
-            DAP.Module.Start_Executable (Kernel, Visual.Client);
+            DAP.Module.Start_Executable
+              (Kernel               => Kernel,
+               Client               => Visual.Client,
+               Display_Start_Dialog => False);
          else
             Data.Set_Error_Msg
               ("Can't start the executable: the debugger is"

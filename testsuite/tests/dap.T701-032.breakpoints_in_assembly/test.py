@@ -21,7 +21,7 @@ def test_driver():
     debug = GPS.Debugger.get()
 
     # start to have the valid address
-    debug.start()
+    debug.send("run")
     yield hook('debugger_location_changed')
 
     # Open the Breakpoints view
