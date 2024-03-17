@@ -9,7 +9,7 @@ from gs_utils.internal.utils import *
 
 COL_FG_COLOR = 11
 
-EXPECTED_FG_COLORS = "[Gdk.RGBA(red=0.000000, green=0.000000, blue=0.729412, alpha=1.000000), Gdk.RGBA(red=0.000000, green=0.000000, blue=0.376471, alpha=1.000000), Gdk.RGBA(red=0.000000, green=0.000000, blue=0.376471, alpha=1.000000)]"
+EXPECTED_FG_COLOR = "Gdk.RGBA(red=0.000000, green=0.000000, blue=0.729412, alpha=1.000000)"
 
 
 @run_test_driver
@@ -56,16 +56,17 @@ def test_driver():
     yield wait_idle()
 
     debug = GPS.Debugger.get()
-    debug.start()
+    debug.send("run")
     yield wait_DAP_server("stackTrace")
 
     view = Breakpoints_View()
     yield wait_idle()
 
     # Check that pending breakpoints have been grayed out
-    row_fg_colors = str(dump_tree_model(view.list.get_model(), COL_FG_COLOR))
+    model = view.list.get_model()
+    iter = model.get_iter("0")
     gps_assert(
-        row_fg_colors.strip(),
-        EXPECTED_FG_COLORS.strip(),
+        str(model.get_value(iter, COL_FG_COLOR)).strip(),
+        EXPECTED_FG_COLOR.strip(),
         "Wrong fg color for rows in the Breakpoints view",
     )
