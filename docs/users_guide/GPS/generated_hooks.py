@@ -378,9 +378,11 @@ class Predefined_Hooks:
     # debugger_breakpoint_added = 'debugger_breakpoint_added'
     def debugger_breakpoint_added(name,debugger,id):
         """
-      The breakpoint with ID as parameter is added. The Debugger given in argument
-      might actually be set to None when the list of breakpoints is changed
-      before the debugger starts.
+      Called when the a new breakpoint has been added. When several
+      breakpoints get added at the same time, the "debugger_breakpoints_changed" hook
+      might be ran instead of this one. The Debugger given in argument
+      might actually be set to None when the given breakpoint gets added before
+      the debugger starts.
 
       :param str name:
       :param GPS.Debugger debugger:
@@ -391,8 +393,9 @@ class Predefined_Hooks:
     # debugger_breakpoint_changed = 'debugger_breakpoint_changed'
     def debugger_breakpoint_changed(name,debugger,id):
         """
-      The breakpoint with ID as parameter is changed. The Debugger given in argument
-      might actually be set to None when the list of breakpoints is changed
+      Called when the list of breakpoints changes. This includes new or deleted breakpoints
+      or changes in the existing breakpoints' properties. The Debugger given in argument
+      might actually be set to None when the list of breakpoints changes
       before the debugger starts.
 
       :param str name:
@@ -404,8 +407,10 @@ class Predefined_Hooks:
     # debugger_breakpoint_deleted = 'debugger_breakpoint_deleted'
     def debugger_breakpoint_deleted(name,debugger,id):
         """
-      The breakpoint with ID as parameter is deleted. The Debugger given in argument
-      might actually be set to None when the list of breakpoints is changed
+      Called when the breakpoint with the given ID gets deleted. When several
+      breakpoints get deleted at the same time, the "debugger_breakpoints_changed" hook
+      might be ran instead of this one. The Debugger given in argument
+      might actually be set to None when the the given breakpoint gets deleted
       before the debugger starts.
 
       :param str name:
