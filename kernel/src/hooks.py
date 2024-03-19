@@ -704,24 +704,30 @@ and store precomputed data in it.\n
 .. seealso:: :func:`GPS.Predefined_Hooks.contextual_menu_close`'''),
 
     Hook('debugger_breakpoints_changed', 'debugger_hooks', descr='''
-The list of breakpoints set in the debugger was reloaded. It might
-not have changed since the last time. The Debugger given in argument
-might actually be set to None when the list of breakpoints is changed
+Called when the list of breakpoints changes. This includes new or deleted breakpoints
+or changes in the existing breakpoints' properties. The Debugger given in argument
+might actually be set to None when the list of breakpoints changes
 before the debugger starts.'''),
 
     Hook('debugger_breakpoint_added', 'debugger_breakpoint_hook', descr='''
-The breakpoint with ID as parameter is added. The Debugger given in argument
-might actually be set to None when the list of breakpoints is changed
-before the debugger starts.'''),
+Called when the a new breakpoint has been added. When several
+breakpoints get added at the same time, the "debugger_breakpoints_changed" hook
+might be ran instead of this one. The Debugger given in argument
+might actually be set to None when the given breakpoint gets added before
+the debugger starts.'''),
 
     Hook('debugger_breakpoint_changed', 'debugger_breakpoint_hook', descr='''
-The breakpoint with ID as parameter is changed. The Debugger given in argument
-might actually be set to None when the list of breakpoints is changed
-before the debugger starts.'''),
+Called when the breakpoint with the given ID changes (e.g: when a breakpoint
+gets disabled by the user). When several breakpoints change at the same time,
+the "debugger_breakpoints_changed" hook might be ran instead of this one.
+The Debugger given in argument might actually be set to None when the given
+breakpoint changes before the debugger starts.'''),
 
     Hook('debugger_breakpoint_deleted', 'debugger_breakpoint_hook', descr='''
-The breakpoint with ID as parameter is deleted. The Debugger given in argument
-might actually be set to None when the list of breakpoints is changed
+Called when the breakpoint with the given ID gets deleted. When several
+breakpoints get deleted at the same time, the "debugger_breakpoints_changed" hook
+might be ran instead of this one. The Debugger given in argument
+might actually be set to None when the the given breakpoint gets deleted
 before the debugger starts.'''),
 
     Hook('debugger_command_action_hook', 'debugger_string_hooks',
