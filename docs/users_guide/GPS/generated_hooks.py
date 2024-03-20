@@ -393,10 +393,11 @@ class Predefined_Hooks:
     # debugger_breakpoint_changed = 'debugger_breakpoint_changed'
     def debugger_breakpoint_changed(name,debugger,id):
         """
-      Called when the list of breakpoints changes. This includes new or deleted breakpoints
-      or changes in the existing breakpoints' properties. The Debugger given in argument
-      might actually be set to None when the list of breakpoints changes
-      before the debugger starts.
+      Called when the breakpoint with the given ID changes (e.g: when a breakpoint
+      gets disabled by the user). When several breakpoints change at the same time,
+      the "debugger_breakpoints_changed" hook might be ran instead of this one.
+      The Debugger given in argument might actually be set to None when the given
+      breakpoint changes before the debugger starts.
 
       :param str name:
       :param GPS.Debugger debugger:
@@ -422,9 +423,9 @@ class Predefined_Hooks:
     # debugger_breakpoints_changed = 'debugger_breakpoints_changed'
     def debugger_breakpoints_changed(name,debugger):
         """
-      The list of breakpoints set in the debugger was reloaded. It might
-      not have changed since the last time. The Debugger given in argument
-      might actually be set to None when the list of breakpoints is changed
+      Called when the list of breakpoints changes. This includes new or deleted breakpoints
+      or changes in the existing breakpoints' properties. The Debugger given in argument
+      might actually be set to None when the list of breakpoints changes
       before the debugger starts.
 
       :param str name:
