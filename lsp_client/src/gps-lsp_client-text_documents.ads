@@ -78,4 +78,12 @@ package GPS.LSP_Client.Text_Documents is
    --  Get_Did_Change_Message on Document if necessary during execution of
    --  this subprogram.
 
+   procedure Send_Did_Rename_File
+     (Self    : in out Text_Document_Server_Proxy;
+      Old_URI : GNATCOLL.VFS.Virtual_File;
+      New_URI : GNATCOLL.VFS.Virtual_File) is abstract;
+   --  Send DidRenameFIle notification. It's recommended to be done after
+   --  DidCloseTextDocument and DidOpenTextDocument notification if Old_URI
+   --  was opened in the buffer.
+
 end GPS.LSP_Client.Text_Documents;

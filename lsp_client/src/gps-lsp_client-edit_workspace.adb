@@ -437,8 +437,9 @@ package body GPS.LSP_Client.Edit_Workspace is
       Buffer_Factory : constant Editor_Buffer_Factory_Access :=
         Get_Buffer_Factory (Kernel);
 
-      Error  : Boolean := False;
-      Errors : Refactoring.UI.Source_File_Set;
+      Error                : Boolean := False;
+      Need_Project_Refresh : Boolean := False;
+      Errors               : Refactoring.UI.Source_File_Set;
 
       function Edit_Affect_Span
         (From : LSP.Messages.Position;
@@ -728,11 +729,11 @@ package body GPS.LSP_Client.Edit_Workspace is
                      Error := True;
                      exit;
 
-                  when  LSP.Messages.Delete_File =>
+                  when LSP.Messages.Delete_File =>
                      Error := True;
                      exit;
 
-                  when  LSP.Messages.Rename_File =>
+                  when LSP.Messages.Rename_File =>
 
                      --  Return immediately if the user did not allow file
                      --  renaming.
@@ -761,10 +762,8 @@ package body GPS.LSP_Client.Edit_Workspace is
                            Prj_Changed             => Prj_Changed,
                            Display_Confirm_Dialogs => False);
 
-                        --  Reload the project if needed
-                        if Prj_Changed then
-                           GPS.Kernel.Project.Recompute_View (Command.Kernel);
-                        end if;
+                        Need_Project_Refresh :=
+                          Need_Project_Refresh or else Prj_Changed;
 
                         --  Now send a 'didClose' notification for the old file
                         --  and a 'didOpen' one for the new file
@@ -775,10 +774,22 @@ package body GPS.LSP_Client.Edit_Workspace is
                                   Get_Language_From_File (File));
                         begin
                            if Server /= null then
+                              --  See LSP documentation:
+                              --  Document renames should be signaled to a
+                              --  server sending a document close notification
+                              --  with the document's old name followed by an
+                              --  open notification using the document's new
+                              --  name. Major reason is that besides the name
+                              --  other attributes can change as well like the
+                              --  language that is associated with the
+                              --  document. In addition the new document could
+                              --  not be of interest for the server anymore.
                               Server.Get_Client.Send_Text_Document_Did_Close
                                 (File);
                               Server.Get_Client.Send_Text_Document_Did_Open
                                 (New_File);
+                              Server.Get_Client.Send_Did_Rename_File
+                                (File, New_File);
                            end if;
                         end;
 
@@ -796,6 +807,11 @@ package body GPS.LSP_Client.Edit_Workspace is
             Next (C);
          end loop;
       end;
+
+      --  Reload the project if needed
+      if Need_Project_Refresh then
+         GPS.Kernel.Project.Recompute_View (Command.Kernel);
+      end if;
 
       --  The calls to Process_File above might have generated entries
       --  in the Errors list. Process this now.
@@ -835,8 +851,9 @@ package body GPS.LSP_Client.Edit_Workspace is
    overriding function Undo
      (Command : access Edit_Workspace_Command) return Boolean
    is
-      Buffer_Factory : constant Editor_Buffer_Factory_Access :=
+      Buffer_Factory       : constant Editor_Buffer_Factory_Access :=
         Get_Buffer_Factory (Command.Kernel);
+      Need_Project_Refresh : Boolean := False;
 
       procedure Process_File
         (File : Virtual_File;
@@ -958,9 +975,8 @@ package body GPS.LSP_Client.Edit_Workspace is
                            Prj_Changed             => Prj_Changed,
                            Display_Confirm_Dialogs => False);
 
-                        if Prj_Changed then
-                           GPS.Kernel.Project.Recompute_View (Command.Kernel);
-                        end if;
+                        Need_Project_Refresh :=
+                          Need_Project_Refresh or else Prj_Changed;
 
                         --  Now send a 'didClose' notification for the old file
                         --  and a 'didOpen' one for the new file
@@ -971,10 +987,22 @@ package body GPS.LSP_Client.Edit_Workspace is
                                   Get_Language_From_File (File));
                         begin
                            if Server /= null then
+                              --  See LSP documentation:
+                              --  Document renames should be signaled to a
+                              --  server sending a document close notification
+                              --  with the document's old name followed by an
+                              --  open notification using the document's new
+                              --  name. Major reason is that besides the name
+                              --  other attributes can change as well like the
+                              --  language that is associated with the
+                              --  document. In addition the new document could
+                              --  not be of interest for the server anymore.
                               Server.Get_Client.Send_Text_Document_Did_Close
                                 (File);
                               Server.Get_Client.Send_Text_Document_Did_Open
                                 (New_File);
+                              Server.Get_Client.Send_Did_Rename_File
+                                (File, New_File);
                            end if;
                         end;
                      end;
@@ -988,6 +1016,11 @@ package body GPS.LSP_Client.Edit_Workspace is
             Next (C);
          end loop;
       end;
+
+      if Need_Project_Refresh then
+         --  Some project files were affected: update the views
+         GPS.Kernel.Project.Recompute_View (Command.Kernel);
+      end if;
 
       --  Remove the messages related to the worskspaceEdit being undone
       Get_Messages_Container (Command.Kernel).Remove_Category
