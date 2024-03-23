@@ -945,6 +945,10 @@ package body GPS.LSP_Clients is
                                 (True,
                                  Value => Get_Supported_ResourceOperations),
                               others             => <>),
+                           fileOperations =>
+                             (Is_Set    => True,
+                              Value     => (didRename => (True, True),
+                                            others   => <>)),
                            others    => <>),
                       textDocument =>
                         (hover          => (Is_Set => True, others => <>),
@@ -1038,6 +1042,7 @@ package body GPS.LSP_Clients is
       procedure Process_Open_File;
       procedure Process_Changed_File;
       procedure Process_Close_File;
+      procedure Process_Rename_File;
       procedure Process_Request;
       procedure Process_Cancel_Request;
 
@@ -1116,6 +1121,24 @@ package body GPS.LSP_Clients is
          Buffer.Set_Opened_On_LSP_Server (True);
       end Process_Open_File;
 
+      -------------------------
+      -- Process_Rename_File --
+      -------------------------
+
+      procedure Process_Rename_File is
+         Value : LSP.Messages.RenameFilesParams;
+      begin
+         Value.files.Append
+           (LSP.Messages.FileRename'(
+            oldUri =>
+              LSP.Types.To_Virtual_String
+                (GPS.LSP_Client.Utilities.To_URI (Item.Old_URI)),
+            newUri =>
+              LSP.Types.To_Virtual_String
+                (GPS.LSP_Client.Utilities.To_URI (Item.New_URI))));
+         Self.On_DidRenameFiles_Notification (Value);
+      end Process_Rename_File;
+
       ---------------------
       -- Process_Request --
       ---------------------
@@ -1182,6 +1205,9 @@ package body GPS.LSP_Clients is
 
          when Close_File =>
             Process_Close_File;
+
+         when Rename_File =>
+            Process_Rename_File;
 
          when GPS_Request =>
             Process_Request;
@@ -1355,6 +1381,20 @@ package body GPS.LSP_Clients is
    begin
       Self.Enqueue (Item);
    end Send_Text_Document_Did_Open;
+
+   --------------------------
+   -- Send_Did_Rename_File --
+   --------------------------
+
+   overriding procedure Send_Did_Rename_File
+     (Self    : in out LSP_Client;
+      Old_URI : GNATCOLL.VFS.Virtual_File;
+      New_URI : GNATCOLL.VFS.Virtual_File)
+   is
+      Item : Command := (Rename_File, Old_URI, New_URI);
+   begin
+      Self.Enqueue (Item);
+   end Send_Did_Rename_File;
 
    --------------------------------
    -- Set_On_Server_Capabilities --

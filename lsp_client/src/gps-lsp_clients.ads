@@ -206,6 +206,7 @@ private
      (Open_File,
       Changed_File,
       Close_File,
+      Rename_File,
       GPS_Request,
       Cancel_GPS_Request);
 
@@ -217,6 +218,10 @@ private
 
          when Close_File | Open_File =>
             File : GNATCOLL.VFS.Virtual_File;
+
+         when Rename_File =>
+            Old_URI : GNATCOLL.VFS.Virtual_File;
+            New_URI : GNATCOLL.VFS.Virtual_File;
 
          when GPS_Request =>
             Request : GPS.LSP_Client.Requests.Request_Access;
@@ -354,5 +359,12 @@ private
    --  send DidChangeTextDocument notification is in queue for given document
    --  content of DidChangeTextDocument notification message has been
    --  requested, stored and sent before DidCloseTextDocument notification.
+
+   overriding procedure Send_Did_Rename_File
+     (Self    : in out LSP_Client;
+      Old_URI : GNATCOLL.VFS.Virtual_File;
+      New_URI : GNATCOLL.VFS.Virtual_File);
+   --  Request to send a DidRenameFile notification. DidCloseTextDocument must
+   --  be sent before if the file was opened in the editor.
 
 end GPS.LSP_Clients;
