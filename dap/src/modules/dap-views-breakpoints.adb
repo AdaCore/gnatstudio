@@ -33,19 +33,18 @@ with Gtk.Adjustment;             use Gtk.Adjustment;
 with Gtk.Box;                    use Gtk.Box;
 with Gtk.Button;                 use Gtk.Button;
 with Gtk.Cell_Renderer;          use Gtk.Cell_Renderer;
+with Gtk.Cell_Renderer_Text;     use Gtk.Cell_Renderer_Text;
 with Gtk.Cell_Renderer_Toggle;   use Gtk.Cell_Renderer_Toggle;
 with Gtk.Check_Button;           use Gtk.Check_Button;
 with Gtk.Combo_Box_Text;         use Gtk.Combo_Box_Text;
 with Gtk.Dialog;                 use Gtk.Dialog;
 with Gtk.Enums;                  use Gtk.Enums;
-with Gtk.Frame;                  use Gtk.Frame;
 with Gtk.GEntry;                 use Gtk.GEntry;
 with Gtk.Gesture_Long_Press;     use Gtk.Gesture_Long_Press;
 with Gtk.Gesture_Multi_Press;    use Gtk.Gesture_Multi_Press;
 with Gtk.Label;                  use Gtk.Label;
 with Gtk.List_Store;             use Gtk.List_Store;
 with Gtk.Scrolled_Window;        use Gtk.Scrolled_Window;
-with Gtk.Size_Group;             use Gtk.Size_Group;
 with Gtk.Stock;                  use Gtk.Stock;
 with Gtk.Spin_Button;            use Gtk.Spin_Button;
 with Gtk.Text_Buffer;            use Gtk.Text_Buffer;
@@ -67,6 +66,7 @@ with VSS.String_Vectors;
 
 with Basic_Types;                use Basic_Types;
 
+with Dialog_Utils;               use Dialog_Utils;
 with GPS.Debuggers;              use GPS.Debuggers;
 with GPS.Default_Styles;
 with GPS.Editors;                use GPS.Editors;
@@ -83,7 +83,7 @@ with Commands.Interactive;       use Commands.Interactive;
 
 with DAP.Types;                  use DAP.Types;
 with DAP.Module.Breakpoints;     use DAP.Module.Breakpoints;
-with DAP.Types.Breakpoints;    use DAP.Types.Breakpoints;
+with DAP.Types.Breakpoints;      use DAP.Types.Breakpoints;
 with DAP.Clients;                use DAP.Clients;
 with DAP.Clients.Breakpoint_Managers;
 with DAP.Clients.Stack_Trace;    use DAP.Clients.Stack_Trace;
@@ -94,7 +94,6 @@ with DAP.Utils;                  use DAP.Utils;
 with GUI_Utils;                  use GUI_Utils;
 
 with DAP.Requests.Evaluate;
-with Gtk.Cell_Renderer_Text; use Gtk.Cell_Renderer_Text;
 
 package body DAP.Views.Breakpoints is
 
@@ -271,14 +270,12 @@ package body DAP.Views.Breakpoints is
    type Properties_Editor_Record is new Gtk_Dialog_Record with record
       Kernel               : access Kernel_Handle_Record'Class;
 
-      Temporary            : Gtk_Check_Button;
-
-      Location_Box         : Gtk_Box;
-      Subprogram_Box       : Gtk_Box;
-      Address_Box          : Gtk_Box;
-      Regexp_Box           : Gtk_Box;
-      Variable_Box         : Gtk_Box;
-      Exception_Box        : Gtk_Box;
+      Location_Box         : Dialog_Group_Widget;
+      Subprogram_Box       : Dialog_Group_Widget;
+      Address_Box          : Dialog_Group_Widget;
+      Exception_Box        : Dialog_Group_Widget;
+      Conditions_Box       : Dialog_Group_Widget;
+      Commands_Box         : Dialog_Group_Widget;
 
       Stop_Always_Exception      : Gtk_Radio_Button;
       Stop_Not_Handled_Exception : Gtk_Radio_Button;
@@ -287,36 +284,15 @@ package body DAP.Views.Breakpoints is
 
       Exception_Name       : Gtk_Combo_Box_Text;
 
-      Watchpoint_Name      : Gtk_Entry;
-      Watchpoint_Type      : Gtk_Combo_Box_Text;
-      Watchpoint_Cond      : Gtk_Entry;
-
       File_Name            : Gtk_Entry;
       Line_Spin            : Gtk_Spin_Button;
       Address_Combo        : Gtk_Combo_Box_Text;
       Subprogram_Combo     : Gtk_Combo_Box_Text;
-      Regexp_Combo         : Gtk_Combo_Box_Text;
 
-      Condition_Frame      : Gtk_Frame;
+      Temporary            : Gtk_Check_Button;
       Condition_Combo      : Gtk_Combo_Box_Text;
-
-      Ignore_Frame         : Gtk_Frame;
       Ignore_Count_Combo   : Gtk_Spin_Button;
-
-      Command_Frame        : Gtk_Frame;
       Command_Descr        : Gtkada_Multiline_Entry;
-
-      Scope_Frame          : Gtk_Frame;
-      Scope_Task           : Gtk_Radio_Button;
-      Scope_Pd             : Gtk_Radio_Button;
-      Scope_Any            : Gtk_Radio_Button;
-
-      Task_Frame           : Gtk_Frame;
-      Action_Task          : Gtk_Radio_Button;
-      Action_Pd            : Gtk_Radio_Button;
-      Action_All           : Gtk_Radio_Button;
-
-      Set_Default          : Gtk_Check_Button;
    end record;
    type Properties_Editor is access all Properties_Editor_Record'Class;
 
@@ -420,19 +396,19 @@ package body DAP.Views.Breakpoints is
 
       Start, The_End : Gtk_Text_Iter;
    begin
-      if Self.Condition_Frame.Get_Visible then
+      if Self.Conditions_Box.Get_Visible then
          Condition := VSS.Strings.Conversions.To_Virtual_String
            (Self.Condition_Combo.Get_Active_Text);
       end if;
 
-      if Self.Ignore_Frame.Get_Visible then
+      if Self.Ignore_Count_Combo.Get_Visible then
          Ignore := Integer (Get_Value_As_Int (Self.Ignore_Count_Combo));
          if Ignore < 0 then
             Ignore := 0;
          end if;
       end if;
 
-      if Self.Command_Frame.Get_Visible then
+      if Self.Command_Descr.Get_Visible then
          Get_Bounds (Get_Buffer (Self.Command_Descr), Start, The_End);
          Commands := VSS.Strings.Conversions.To_Virtual_String
            (String'
@@ -712,17 +688,13 @@ package body DAP.Views.Breakpoints is
      (Self   : not null access Properties_Editor_Record'Class;
       Kernel : not null access Kernel_Handle_Record'Class)
    is
-      Button  : Gtk_Button;
-      Frame   : Gtk_Frame;
-      Label   : Gtk_Label;
-      Vbox9   : Gtk_Vbox;
-      Details : Gtk_Vbox;
-      Hbox    : Gtk_Box;
-      Size    : Gtk_Size_Group;
-      Dummy   : Gtk_Widget;
-      Scroll  : Gtk_Scrolled_Window;
-      Adj     : Gtk_Adjustment;
-
+      Adj       : Gtk_Adjustment;
+      Button    : Gtk_Button;
+      Main_View : Dialog_View;
+      Frame     : Dialog_Group_Widget;
+      Hbox      : Gtk_Hbox;
+      Dummy     : Gtk_Widget;
+      Doc_Label : Gtk_Label;
    begin
       Gtk.Dialog.Initialize
         (Self,
@@ -734,6 +706,10 @@ package body DAP.Views.Breakpoints is
         (Self, "breakpoints", Kernel, 600, 500);
 
       Self.Kernel := Kernel;
+
+      Main_View := new Dialog_View_Record;
+      Dialog_Utils.Initialize (Main_View);
+      Self.Get_Content_Area.Pack_Start (Main_View);
 
       ------------
       --  Choosing the type of the breakpoint
@@ -757,149 +733,157 @@ package body DAP.Views.Breakpoints is
       Self.Breakpoint_Type.Set_Active (Breakpoint_Kind'Pos (On_Line));
       Self.Breakpoint_Type.On_Changed (On_Type_Changed'Access, Self);
 
-      ------------
-      --  Breakpoint details
-      ------------
+      Frame := new Dialog_Group_Widget_Record;
+      Initialize
+        (Frame,
+         Parent_View         => Main_View,
+         Group_Name          => "Breakpoint Type",
+         Allow_Multi_Columns => True);
+      Frame.Create_Child
+        (Widget    => Self.Breakpoint_Type,
+         Doc       => "The type of breakpoint",
+         Child_Key => "breakpoint-type-combo");
 
-      Gtk_New (Frame);
-      Frame.Set_Label_Widget (Self.Breakpoint_Type);
-      Self.Get_Content_Area.Pack_Start (Frame, Expand => True, Fill => True);
-
-      Gtk_New_Vbox (Details);
-      Frame.Add (Details);
+      Gtk_New (Self.Temporary);
+      Self.Temporary.Set_Active (False);
+      Frame.Create_Child
+        (Widget    => Self.Temporary,
+         Label     => "Temporary breakpoint",
+         Doc       => "Automatically delete the breakpoint the first time "
+         & "it's hit.",
+         Child_Key => "breakpoint-temporary-checkbox");
 
       ------------
       --  Break on source location
       ------------
 
-      Gtk_New_Vbox (Self.Location_Box);
-      Details.Pack_Start (Self.Location_Box, Expand => False, Fill => True);
-
-      Gtk_New (Size);
-
-      Gtk_New_Hbox (Hbox, Spacing => 15);
-      Self.Location_Box.Pack_Start (Hbox, False, False);
-
-      Gtk_New (Label, "File:");
-      Label.Set_Alignment (1.0, 0.5);
-      Hbox.Pack_Start (Label, False, False, 0);
-      Size.Add_Widget (Label);
+      Self.Location_Box := new Dialog_Group_Widget_Record;
+      Initialize
+        (Self.Location_Box,
+         Parent_View         => Main_View,
+         Group_Name          => "Breakpoint Location",
+         Allow_Multi_Columns => True);
 
       Gtk_New (Self.File_Name);
       Self.File_Name.Set_Editable (True);
       Self.File_Name.Set_Activates_Default (True);
-      Hbox.Pack_Start (Self.File_Name, True, True, 0);
-
-      Gtk_New_Hbox (Hbox, Spacing => 15);
-      Self.Location_Box.Pack_Start (Hbox, False, False);
-
-      Gtk_New (Label, "Line:");
-      Label.Set_Alignment (1.0, 0.5);
-      Hbox.Pack_Start (Label, False, False, 0);
-      Size.Add_Widget (Label);
+      Self.Location_Box.Create_Child
+        (Widget    => Self.File_Name,
+         Label     => "File",
+         Child_Key => "breakpoint-location-file");
 
       Gtk_New (Self.Line_Spin, Min => 1.0, Max => 1.0e+08, Step => 1.0);
       Self.Line_Spin.Set_Numeric (True);
       Self.Line_Spin.Set_Value (1.0);
       Self.Line_Spin.Set_Activates_Default (True);
-      Hbox.Pack_Start (Self.Line_Spin, True, True, 0);
+      Self.Location_Box.Create_Child
+        (Widget    => Self.Line_Spin,
+         Label     => "Line",
+         Child_Key => "breakpoint-location-line");
 
       ------------
       --   Break on subprogram
       ------------
 
-      Gtk_New_Vbox (Self.Subprogram_Box);
-      Details.Pack_Start (Self.Subprogram_Box, Expand => True, Fill => True);
+      Self.Subprogram_Box := new Dialog_Group_Widget_Record;
+      Initialize
+        (Self.Subprogram_Box,
+         Parent_View         => Main_View,
+         Group_Name          => "Subprogram Breakpoint",
+         Allow_Multi_Columns => True);
 
       Gtk_New_With_Entry (Self.Subprogram_Combo);
       Set_Name (Self.Subprogram_Combo, "Subprogram_Name");
       Self.Subprogram_Combo.Append_Text ("");
-      Self.Subprogram_Box.Pack_Start (Self.Subprogram_Combo, False, False);
+
+      Self.Subprogram_Box.Create_Child
+        (Widget    => Self.Subprogram_Combo,
+         Doc       => "Break on the given subpogram.",
+         Child_Key => "breakpoint-subprogram-name");
 
       ------------
       --  Break_On_Address
       ------------
-
-      Gtk_New_Vbox (Self.Address_Box);
-      Details.Pack_Start (Self.Address_Box, Expand => True, Fill => True);
+      Self.Address_Box := new Dialog_Group_Widget_Record;
+      Initialize
+        (Self.Address_Box,
+         Parent_View         => Main_View,
+         Group_Name          => "Address Breakpoint",
+         Allow_Multi_Columns => True);
 
       Gtk_New_With_Entry (Self.Address_Combo);
       Self.Address_Combo.Append_Text ("");
-      Self.Address_Box.Pack_Start (Self.Address_Combo, False, False);
+
+      Self.Address_Box.Create_Child
+        (Widget    => Self.Address_Combo,
+         Doc       => "Break on the instruction located at this address.",
+         Child_Key => "breakpoint-address");
 
       -----------
       --  Break on exception
       -----------
 
-      Gtk_New_Vbox (Self.Exception_Box);
-      Details.Pack_Start (Self.Exception_Box, Expand => True, Fill => True);
-
-      Gtk_New_Hbox (Hbox, False, 8);
-      Self.Exception_Box.Pack_Start (Hbox, False, True, 0);
+      Self.Exception_Box := new Dialog_Group_Widget_Record;
+      Initialize
+        (Self.Exception_Box,
+         Parent_View         => Main_View,
+         Group_Name          => "Breakpoint Exception",
+         Allow_Multi_Columns => True);
 
       Gtk_New_With_Entry (Self.Exception_Name);
       Set_Name (Self.Exception_Name, "Exception_Name");
       Self.Load_Exceptions;
-      Hbox.Pack_Start (Self.Exception_Name, True, True, 0);
 
       Gtk_New (Button, "Load List");
-      Hbox.Pack_Start (Button, False, False, 0);
       Button.On_Clicked (On_Load_Exception_List_Clicked'Access, Self);
 
-      Gtk_New (Frame, "Action");
-      Self.Exception_Box.Pack_Start (Frame, False, False, 7);
+      Self.Exception_Box.Create_Child
+        (Widget    => Self.Exception_Name,
+         Doc       => "Break when this exception is raised.",
+         Button    => Button,
+         Child_Key => "breakpoint-exception-name");
 
-      Gtk_New_Vbox (Vbox9, False, 0);
-      Frame.Add (Vbox9);
+      Gtk_New_Hbox (Hbox, Homogeneous => False);
 
-      Gtk_New (Self.Stop_Always_Exception, Label => "Stop always");
+      Gtk_New (Self.Stop_Always_Exception, Label => "Always stop");
       Self.Stop_Always_Exception.Set_Active (True);
-      Vbox9.Pack_Start (Self.Stop_Always_Exception, False, False, 0);
+      Hbox.Pack_Start (Self.Stop_Always_Exception, False);
 
       Gtk_New
         (Self.Stop_Not_Handled_Exception,
          Group => Self.Stop_Always_Exception,
          Label => "Stop if not handled");
-      Vbox9.Pack_Start (Self.Stop_Not_Handled_Exception, False, False, 0);
+      Hbox.Pack_Start (Self.Stop_Not_Handled_Exception, False);
 
-      -------------
-      --  A temporary breakpoint ?
-      -------------
+      Self.Exception_Box.Create_Child
+        (Widget       => Hbox,
+         Label        => "Exception break mode",
+         Doc          => "Whether the debugger should always stop on "
+         & "exceptions or just the undhanled ones.",
+         Child_Key    => "breakpoint-exception-action",
+         Expand       => False);
 
-      Gtk_New (Self.Temporary, "Temporary breakpoint");
-      Self.Temporary.Set_Active (False);
-      Details.Pack_Start (Self.Temporary, False, False, 5);
+      Self.Conditions_Box := new Dialog_Group_Widget_Record;
+      Initialize
+        (Self.Conditions_Box,
+         Parent_View         => Main_View,
+         Group_Name          => "Conditions",
+         Allow_Multi_Columns => True);
 
       --------------
       --  Advanced: condition
       --------------
 
-      Gtk_New (Self.Condition_Frame, "Condition");
-      Details.Pack_Start (Self.Condition_Frame, False, True, 0);
-
-      Gtk_New_Vbox (Vbox9, False, 0);
-      Self.Condition_Frame.Add (Vbox9);
-
-      Gtk_New (Label, "Break only when following condition is true:");
-      Label.Set_Alignment (0.0, 0.5);
-      Vbox9.Pack_Start (Label, False);
-
       Gtk_New_With_Entry (Self.Condition_Combo);
-      Vbox9.Pack_Start (Self.Condition_Combo, False, False, 0);
+      Self.Conditions_Box.Create_Child
+        (Widget    => Self.Condition_Combo,
+         Label     => "Condition",
+         Doc       => "Break only when the specified condition is true.",
+         Child_Key => "breakpoint-condition-combo");
 
       --------------
       --  Advanced: ignore
       --------------
-
-      Gtk_New (Self.Ignore_Frame, "Ignore");
-      Details.Pack_Start (Self.Ignore_Frame, False, True, 0);
-
-      Gtk_New_Vbox (Vbox9, False, 0);
-      Self.Ignore_Frame.Add (Vbox9);
-
-      Gtk_New (Label, "Enter the number of times to skip before stopping:");
-      Label.Set_Alignment (0.0, 0.5);
-      Vbox9.Pack_Start (Label, False, False, 0);
 
       Gtk_New (Adj, 0.0, 0.0, 100_000.0, 1.0, 10.0);
       Gtk_New (Self.Ignore_Count_Combo, Adj, 1.0, 0);
@@ -908,29 +892,41 @@ package body DAP.Views.Breakpoints is
       Self.Ignore_Count_Combo.Set_Update_Policy (Update_Always);
       Self.Ignore_Count_Combo.Set_Value (0.0);
       Self.Ignore_Count_Combo.Set_Wrap (False);
-      Vbox9.Pack_Start (Self.Ignore_Count_Combo, False, False, 0);
+      Self.Conditions_Box.Create_Child
+        (Widget    => Self.Ignore_Count_Combo,
+         Label     => "Ignore",
+         Doc       => "Enter the number of times to skip before stopping.",
+         Child_Key => "breakpoint-ignore-combo");
 
       --------------
       --  Advanced: commands
       --------------
 
-      Gtk_New (Self.Command_Frame, "Commands");
-      Details.Pack_Start (Self.Command_Frame, True, True, 5);
+      Self.Commands_Box := new Dialog_Group_Widget_Record;
+      Initialize
+        (Self.Commands_Box,
+         Parent_View         => Main_View,
+         Group_Name          => "Commands",
+         Allow_Multi_Columns => False);
 
-      Gtk_New_Vbox (Vbox9, False, 0);
-      Self.Command_Frame.Add (Vbox9);
+      Gtk_New (Doc_Label, "The commands executed when the breakpoint is hit.");
+      Apply_Doc_Style (Doc_Label);
+      Self.Commands_Box.Append_Child
+        (Doc_Label,
+         Expand => False,
+         Fill   => False);
 
-      Gtk_New (Label, "Enter commands to execute when program stops:");
-      Label.Set_Alignment (0.0, 0.5);
-      Vbox9.Pack_Start (Label, False, False, 0);
-
-      Gtk_New (Scroll);
-      Scroll.Set_Policy (Policy_Automatic, Policy_Automatic);
-      Vbox9.Pack_Start (Scroll, True, True, 0);
-
+      Frame := new Dialog_Group_Widget_Record;
+      Initialize
+        (Frame,
+         Parent_View         => Main_View,
+         Allow_Multi_Columns => False);
       Gtk_New (Self.Command_Descr);
       Set_Name (Self.Command_Descr, "Commands");
-      Scroll.Add (Self.Command_Descr);
+      Frame.Append_Child
+        (Widget    => Self.Command_Descr,
+         Child_Key => "breakpoint-commands",
+         Expand    => True);
 
       --------------
       --  Set proper visibility
@@ -1837,9 +1833,9 @@ package body DAP.Views.Breakpoints is
       Self.Address_Box.Set_Sensitive (T = On_Instruction);
       Self.Address_Box.Set_Visible (T = On_Instruction);
 
-      Self.Condition_Frame.Set_Visible (T /= On_Exception);
-      Self.Command_Frame.Set_Visible (T /= On_Exception);
-      Self.Ignore_Frame.Set_Visible (T /= On_Exception);
+      Self.Conditions_Box.Set_Visible (T /= On_Exception);
+      Self.Commands_Box.Set_Visible (T /= On_Exception);
+      Self.Command_Descr.Set_Visible (T /= On_Exception);
    end On_Type_Changed;
 
    ----------
