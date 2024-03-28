@@ -21,7 +21,7 @@ class LD(core.MemoryUsageProvider):
     _cache = {}
 
     # The list of supported targets
-    _supported_targets = ["arm-eabi", "leon3-elf", "m68020-elf",
+    _supported_targets = ["arm-eabi", "leon3-elf", "loongarch64-elf", "m68020-elf",
                           "powerpc-elf", "powerpc-eabispe", "riscv32-elf",
                           "riscv64-elf", "aarch64-elf", "x86_64-elf"]
 

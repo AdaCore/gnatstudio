@@ -101,7 +101,7 @@ class BoardLoader(Module):
     __is_busy = False
 
     # The list of supported targets
-    __supported_targets = ["arm-eabi", "leon3-elf", "m68020-elf",
+    __supported_targets = ["arm-eabi", "leon3-elf", "loongarch64-elf", "m68020-elf",
                            "powerpc-elf", "powerpc-eabispe", "riscv32-elf",
                            "riscv64-elf", "aarch64-elf", "x86_64-elf"]
 
