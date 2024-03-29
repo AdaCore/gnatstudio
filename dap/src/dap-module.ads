@@ -66,6 +66,7 @@ package DAP.Module is
    --  Returns the debugger that is "selected" now if several are started
 
    procedure Set_Current_Debugger (Current : DAP.Clients.DAP_Client_Access);
+   --  Set the current debugger.
 
    function Get_Debugger (Id : Integer) return DAP.Clients.DAP_Client_Access;
    --  Return the debugger associated with the given Id.
@@ -80,5 +81,9 @@ package DAP.Module is
    function Get_Started_Per_Session_Debuggers return Integer;
    --  Returns count of debuggers that have been started in parallel
    --  in current session.
+
+   procedure Remove_Continue_To_Line_Messages
+     (Kernel : not null access Kernel_Handle_Record'Class);
+   --  Remove the message associated with the "Continue to line" action
 
 end DAP.Module;

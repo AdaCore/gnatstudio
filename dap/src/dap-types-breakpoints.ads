@@ -117,6 +117,9 @@ package DAP.Types.Breakpoints is
       --  True if the breakpoint has been verified on server-side (e.g: if the
       --  specified SLOC actually maps the executable's source files).
 
+      Continue_Until : Boolean := False;
+      --  This breakpoint is set for the "continue until" action
+
       case Kind is
          when On_Line | On_Instruction =>
             Location : Breakpoint_Location_Type;
