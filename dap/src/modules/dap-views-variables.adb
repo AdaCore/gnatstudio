@@ -1282,10 +1282,15 @@ package body DAP.Views.Variables is
    is
       use type DAP.Clients.DAP_Client_Access;
 
-      Client  : constant DAP.Clients.DAP_Client_Access := Get_Client (Self);
+      Client : constant DAP.Clients.DAP_Client_Access := Get_Client (Self);
    begin
       Trace (Me, "Update view");
-      Get_Client (Self).Get_Variables.Clear;
+
+      if Client /= null
+        and then Client.Get_Variables /= null
+      then
+         Client.Get_Variables.Clear;
+      end if;
 
       if Client = null
         or else not Client.Is_Stopped
@@ -1422,7 +1427,7 @@ package body DAP.Views.Variables is
       View : constant DAP_Variables_View :=
         Variables_MDI_Views.Retrieve_View
           (Kernel,
-           Visible_Only => False);
+           Visible_Only => True);
    begin
       if View /= null then
          Set_Font_And_Colors (View.Tree, Fixed_Font => True, Pref => Pref);
