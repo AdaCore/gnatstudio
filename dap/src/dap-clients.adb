@@ -46,8 +46,11 @@ with VSS.Text_Streams.Memory_UTF8_Input;
 with VSS.Text_Streams.Memory_UTF8_Output;
 
 with GPS.Editors;                use GPS.Editors;
+with GPS.Editors.Line_Information;
 with GPS.Kernel;                 use GPS.Kernel;
+with GPS.Kernel.Contexts;
 with GPS.Kernel.MDI;             use GPS.Kernel.MDI;
+with GPS.Kernel.Messages.Simple;
 with GPS.Kernel.Hooks;
 with GPS.Kernel.Project;
 
@@ -77,6 +80,7 @@ with DAP.Views.Consoles;
 with DAP.Tools.Inputs;
 with DAP.Utils;                  use DAP.Utils;
 
+with Commands.Interactive;
 with Interactive_Consoles;       use Interactive_Consoles;
 with GUI_Utils;
 with Language_Handlers;          use Language_Handlers;
@@ -185,6 +189,18 @@ package body DAP.Clients is
    --  If Display_In_Console is True, the message will also be printed
    --  in the debugger console.
 
+   type Continue_Until_Line_Command is
+     new Commands.Interactive.Interactive_Command
+   with record
+      File : GNATCOLL.VFS.Virtual_File := GNATCOLL.VFS.No_File;
+      Line : Integer := -1;
+   end record;
+   overriding function Execute
+     (Command : access Continue_Until_Line_Command;
+      Context : Commands.Interactive.Interactive_Command_Context)
+      return Commands.Command_Return_Type;
+   --  Debug->Continue until current line
+
    ------------------
    -- Allocate_TTY --
    ------------------
@@ -193,6 +209,49 @@ package body DAP.Clients is
    begin
       GNAT.TTY.Allocate_TTY (Self.Debuggee_TTY);
    end Allocate_TTY;
+
+   -------------
+   -- Execute --
+   -------------
+
+   overriding function Execute
+     (Command : access Continue_Until_Line_Command;
+      Context : Commands.Interactive.Interactive_Command_Context)
+      return Commands.Command_Return_Type
+   is
+      use GNATCOLL.VFS;
+
+      Client : constant DAP.Clients.DAP_Client_Access :=
+        DAP.Module.Get_Current_Debugger;
+
+   begin
+      if Client /= null then
+         declare
+            Location : constant Breakpoint_Location_Type :=
+              (Marker =>
+                 Client.Kernel.Get_Buffer_Factory.Create_Marker
+                   (File   => (if Command.File /= GNATCOLL.VFS.No_File
+                               then Command.File
+                               else GPS.Kernel.Contexts.File_Information
+                                 (Context.Context)),
+                    Line   => Editable_Line_Type
+                      ((if Command.Line > 0
+                       then Command.Line
+                       elsif GPS.Kernel.Contexts.Has_File_Line_Information
+                         (Context.Context)
+                       then GPS.Kernel.Contexts.File_Line_Information
+                         (Context.Context)
+                       else GPS.Kernel.Contexts.Line_Information
+                         (Context.Context))),
+                    Column => 1),
+               Address => Invalid_Address);
+         begin
+            Client.Get_Breakpoints_Manager.Continue_Until_Location (Location);
+         end;
+      end if;
+
+      return Commands.Success;
+   end Execute;
 
    ---------------
    -- Close_TTY --
@@ -745,6 +804,67 @@ package body DAP.Clients is
    begin
       return Visual.Client.Get_Stack_Trace.Get_Current_Line;
    end Current_Line;
+
+   ------------------------------------
+   -- Display_Continue_To_Line_Icons --
+   ------------------------------------
+
+   procedure Display_Continue_To_Line_Icons
+     (Self    : not null DAP_Client_Access;
+      Context : Selection_Context) is
+   begin
+      --  Remove the previous message
+      DAP.Module.Remove_Continue_To_Line_Messages (Self.Kernel);
+
+      --  Add a "Continue to line" clickable icon if the context allows it
+      declare
+         use Ada.Strings.Unbounded;
+
+         File                    : constant GNATCOLL.VFS.Virtual_File :=
+           GPS.Kernel.Contexts.File_Information (Context);
+         Line                    : constant Natural := Natural
+           (GPS.Kernel.Contexts.Entity_Line_Information (Context));
+         Msg                     : GPS.Kernel.Messages.Simple.
+           Simple_Message_Access;
+         Continue_To_Line_Filter : constant Action_Filter :=
+                                     Lookup_Filter
+                                       (Self.Kernel,
+                                        Name => "Can continue until");
+         Help_Text               : constant String :=
+                                     "Continue to line "
+                                     & Natural'Image (Line);
+         Action                  : GPS.Editors.Line_Information.
+           Line_Information_Access;
+      begin
+         if Filter_Matches_Primitive (Continue_To_Line_Filter, Context) then
+            Msg := GPS.Kernel.Messages.Simple.Create_Simple_Message
+              (Get_Messages_Container (Self.Kernel),
+               Category                 =>
+                 DAP.Types.Messages_Category_Continue_To_Line,
+               File                     => File,
+               Line                     => Line,
+               Column                   => 1,
+               Text                     => "",
+               Importance               => GPS.Kernel.Messages.Unspecified,
+               Flags                    => Continue_To_Line_Messages_Flags,
+               Allow_Auto_Jump_To_First => False);
+
+            Action := new GPS.Editors.Line_Information.Line_Information_Record'
+              (Text                     => Null_Unbounded_String,
+               Display_Popup_When_Alone => False,
+               Tooltip_Text             => To_Unbounded_String (Help_Text),
+               Image                    => To_Unbounded_String
+                 ("gps-debugger-continue-until"),
+               Message                  => <>,
+               Category                 => <>,
+               Associated_Command       => new Continue_Until_Line_Command'
+                 (Commands.Root_Command with
+                  File => File,
+                  Line => Line));
+            Msg.Set_Action (Action);
+         end if;
+      end;
+   end Display_Continue_To_Line_Icons;
 
    -------------------
    -- Error_Message --

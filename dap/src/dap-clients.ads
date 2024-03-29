@@ -312,6 +312,12 @@ package DAP.Clients is
    --  Interrupt the debugger by sending the 'pause' request,
    --  canceling non-treated requests if any.
 
+   procedure Display_Continue_To_Line_Icons
+     (Self    : not null DAP_Client_Access;
+      Context : GPS.Kernel.Selection_Context);
+   --  Display the "Continue to line" clickable icons on the left-editor side
+   --  of the current editor, if the context allows it.
+
    -------------------------
    -- DAP_Visual_Debugger --
    -------------------------
