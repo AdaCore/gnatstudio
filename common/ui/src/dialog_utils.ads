@@ -265,7 +265,8 @@ package Dialog_Utils is
    --  associating it with an optional Child_Key.
    --
    --  If a Child_Key is specified, it will allow you to interact with this
-   --  child (see the 'Set_Child_Highlighted' subprogram).
+   --  child (see the 'Set_Child_Highlighted' subprogram). It will also be set
+   --  as the widget name.
    --
    --  The final child's layout depends on the optional parameters:
    --
