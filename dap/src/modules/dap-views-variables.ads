@@ -256,7 +256,7 @@ private
       View_Name                       => "Variables",
       Formal_View_Record              => DAP_Variables_View_Record,
       Formal_MDI_Child                => Variables_MDI_Child_Record,
-      Reuse_If_Exist                  => False,
+      Reuse_If_Exist                  => True,
       Save_Duplicates_In_Perspectives => False,
       Commands_Category               => "",
       Local_Toolbar                   => True,

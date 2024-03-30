@@ -33,6 +33,7 @@ with Gtk.Widget;                   use Gtk.Widget;
 
 with Gtkada.Dialogs;
 
+with Default_Preferences;
 with Commands;                     use Commands;
 with Commands.Interactive;         use Commands.Interactive;
 with Histories;
@@ -51,6 +52,7 @@ with GPS.Kernel.Preferences;
 with GPS.Kernel.Project;
 with GUI_Utils;
 
+with Basic_Types;
 with Remote;
 
 with DAP.Contexts;
@@ -146,6 +148,25 @@ package body DAP.Module is
    function On_Idle return Boolean;
    --  Called from Gtk on Idle to deallocate clients
 
+   procedure Enable_Continue_To_Line_On_Editors
+     (Kernel : not null access Kernel_Handle_Record'Class);
+   --  Enable the "Continue to line" clickable icons on editors, adding the
+   --  necessary hooks to monitor when we should add an additional column
+   --  for them and when they should be displayed.
+
+   procedure Disable_Continue_To_Line_On_Editors
+     (Kernel : not null access Kernel_Handle_Record'Class);
+   --  Disable the "Continue to line" clickable icons on editors, removing the
+   --  associated messages and the extra column if necessary.
+
+   procedure Create_Continue_To_Line_Columns
+     (Kernel : not null access Kernel_Handle_Record'Class;
+      Buffer : Editor_Buffer'Class);
+   --  Create the column where the "Continue to line" clcikable icons will
+   --  be displayed.
+   --  Do nothing if the buffer is null or if there is already a column for
+   --  these icons.
+
    -- Hooks callbacks --
 
    type On_Project_View_Changed is new Simple_Hooks_Function with null record;
@@ -161,6 +182,12 @@ package body DAP.Module is
       Kernel : not null access Kernel_Handle_Record'Class) return Boolean;
    --  Called before GNAT Studio exist. This is a good time to store
    --  persistent data.
+
+   type On_Pref_Changed is new Preferences_Hooks_Function with null record;
+   overriding procedure Execute
+     (Self   : On_Pref_Changed;
+      Kernel : not null access Kernel_Handle_Record'Class;
+      Pref   : Default_Preferences.Preference);
 
    -- Filters --
 
@@ -222,6 +249,11 @@ package body DAP.Module is
      (Filter  : access Attached_Debuggee_Filter;
       Context : Selection_Context) return Boolean;
    --  Return True when the debugger is attached to a debuggee process.
+
+   type In_Debugger_Frame_Filter is new Action_Filter_Record with null record;
+   overriding function Filter_Matches_Primitive
+     (Filter  : access In_Debugger_Frame_Filter;
+      Context : Selection_Context) return Boolean;
 
    -- Commands --
 
@@ -307,6 +339,29 @@ package body DAP.Module is
       Context : Interactive_Command_Context) return Command_Return_Type;
    --  Detach command
 
+   -- Hooks --
+
+   type On_Location_Changed is new File_Location_Hooks_Function with
+     null record;
+   overriding procedure Execute
+     (Self         : On_Location_Changed;
+      Kernel       : not null access Kernel_Handle_Record'Class;
+      File         : Virtual_File;
+      Line, Column : Integer;
+      Project      : GNATCOLL.Projects.Project_Type);
+   --  Called when the current editor's location changes.
+   --  Used to display a clickable icon on the gutter to continue the
+   --  execution until we reach the given location.
+
+   type On_File_Edited is new File_Hooks_Function with null record;
+   overriding procedure Execute
+     (Self   : On_File_Edited;
+      Kernel : not null access Kernel_Handle_Record'Class;
+      File   : Virtual_File);
+   --  Called when an editor is opened.
+   --  Used to create a column in the editor's left-side bar for the
+   --  "Continue to line" clickable icons.
+
    -----------
    -- Utils --
    -----------
@@ -378,6 +433,11 @@ package body DAP.Module is
          --  Switch to the "Debug" perspective if available
          GPS.Kernel.MDI.Load_Perspective
            (DAP_Module_ID.Get_Kernel, "Debug");
+
+         if DAP.Modules.Preferences.Continue_To_Line_Buttons.Get_Pref then
+            Enable_Continue_To_Line_On_Editors (DAP_Module_ID.Kernel);
+         end if;
+
       else
          Client_Started := Client_Started + 1;
       end if;
@@ -487,6 +547,13 @@ package body DAP.Module is
         or else not Client.Is_Stopped
       then
          return null;
+      end if;
+
+      --  Display the "Continue to line" clickable icons if the dedicated
+      --  preference is enabled.
+
+      if DAP.Modules.Preferences.Continue_To_Line_Buttons.Get_Pref then
+         Client.Display_Continue_To_Line_Icons (Context);
       end if;
 
       --  Return immediately if we are not hovering on an entity
@@ -672,6 +739,44 @@ package body DAP.Module is
       when E : others =>
          Trace (Me, E);
          --  Debug_Terminate (Kernel_Handle (Kernel));
+   end Execute;
+
+   -------------
+   -- Execute --
+   -------------
+
+   overriding procedure Execute
+     (Self   : On_Pref_Changed;
+      Kernel : not null access Kernel_Handle_Record'Class;
+      Pref   : Default_Preferences.Preference)
+   is
+      use Default_Preferences;
+      use DAP.Clients;
+
+      pragma Unreferenced (Self);
+   begin
+      if DAP_Module_ID = null then
+         return;
+      end if;
+
+      if Pref = Preference
+        (DAP.Modules.Preferences.Continue_To_Line_Buttons)
+      then
+         declare
+            Client : constant DAP.Clients.DAP_Client_Access :=
+              DAP.Module.Get_Current_Debugger;
+         begin
+            if Client /= null then
+               if DAP.Modules.Preferences.
+                 Continue_To_Line_Buttons.Get_Pref
+               then
+                  Enable_Continue_To_Line_On_Editors (DAP_Module_ID.Kernel);
+               else
+                  Disable_Continue_To_Line_On_Editors (DAP_Module_ID.Kernel);
+               end if;
+            end if;
+         end;
+      end if;
    end Execute;
 
    -------------
@@ -1022,6 +1127,140 @@ package body DAP.Module is
       end if;
    end Execute;
 
+   -------------
+   -- Execute --
+   -------------
+
+   overriding procedure Execute
+     (Self         : On_Location_Changed;
+      Kernel       : not null access Kernel_Handle_Record'Class;
+      File         : Virtual_File;
+      Line, Column : Integer;
+      Project      : GNATCOLL.Projects.Project_Type)
+   is
+      use DAP.Clients;
+
+      Client : constant DAP.Clients.DAP_Client_Access :=
+        Get_Current_Debugger;
+      Context : Selection_Context := New_Context (Kernel);
+   begin
+      if Client = null then
+         Remove_Continue_To_Line_Messages (Kernel);
+         return;
+      end if;
+
+      Set_File_Information
+        (Context,
+         Files   => (1 => File),
+         Project => Project);
+      Set_Entity_Information
+        (Context         => Context,
+         Entity_Name     => "",
+         Entity_Line     => Basic_Types.Editable_Line_Type (Line),
+         Entity_Column   => Basic_Types.Visible_Column_Type (Column),
+         From_Expression => "");
+      Display_Continue_To_Line_Icons (Client, Context);
+   end Execute;
+
+   -------------
+   -- Execute --
+   -------------
+
+   overriding procedure Execute
+     (Self   : On_File_Edited;
+      Kernel : not null access Kernel_Handle_Record'Class;
+      File   : Virtual_File)
+   is
+      Buffer : constant Editor_Buffer'Class :=
+                 Kernel.Get_Buffer_Factory.Get
+                   (File        => File,
+                    Open_View   => False);
+   begin
+      Create_Continue_To_Line_Columns
+        (Kernel => Kernel,
+         Buffer => Buffer);
+   end Execute;
+
+   ----------------------------------------
+   -- Enable_Continue_To_Line_On_Editors --
+   ----------------------------------------
+
+   procedure Enable_Continue_To_Line_On_Editors
+     (Kernel : not null access Kernel_Handle_Record'Class)
+   is
+      Buffers : constant Buffer_Lists.List :=
+                  Kernel.Get_Buffer_Factory.Buffers;
+   begin
+      Location_Changed_Hook.Add (new On_Location_Changed);
+      File_Edited_Hook.Add (new On_File_Edited);
+
+      --  Add the extra column do display the clickable icons
+      for Buffer of Buffers loop
+         Create_Continue_To_Line_Columns
+           (Kernel,
+            Buffer => Buffer);
+      end loop;
+   end Enable_Continue_To_Line_On_Editors;
+
+   -----------------------------------------
+   -- Disable_Continue_To_Line_On_Editors --
+   -----------------------------------------
+
+   procedure Disable_Continue_To_Line_On_Editors
+     (Kernel : not null access Kernel_Handle_Record'Class)
+   is
+      Buffers : constant Buffer_Lists.List :=
+                  Kernel.Get_Buffer_Factory.Buffers;
+
+      function Is_Location_Changed_Function
+        (F : not null access Hook_Function'Class) return Boolean
+      is (F.all in On_Location_Changed'Class);
+
+      function Is_File_Edited_Function
+        (F : not null access Hook_Function'Class) return Boolean
+      is (F.all in On_File_Edited'Class);
+
+   begin
+      --  We don't need to monitor the debugging context anymore so remove
+      --  the Location_Changed and File_Edited hook function.
+      Location_Changed_Hook.Remove
+        (Is_Location_Changed_Function'Access);
+      File_Edited_Hook.Remove
+        (Is_File_Edited_Function'Access);
+
+      --  Remove the extra column we may have added on editors
+      for Buffer of Buffers loop
+         if Buffer /= Nil_Editor_Buffer
+           and Buffer.Has_Information_Column
+             (DAP.Types.Messages_Category_Continue_To_Line)
+         then
+            Remove_Line_Information_Column
+              (Kernel     => Kernel,
+               File       => Buffer.File,
+               Identifier => DAP.Types.Messages_Category_Continue_To_Line);
+         end if;
+      end loop;
+   end Disable_Continue_To_Line_On_Editors;
+
+   -------------------------------------
+   -- Create_Continue_To_Line_Columns --
+   -------------------------------------
+
+   procedure Create_Continue_To_Line_Columns
+     (Kernel : not null access Kernel_Handle_Record'Class;
+      Buffer : Editor_Buffer'Class) is
+   begin
+      if Buffer /= Nil_Editor_Buffer
+        and then not Buffer.Has_Information_Column
+          (DAP.Types.Messages_Category_Continue_To_Line)
+      then
+         Create_Line_Information_Column
+           (Kernel     => Kernel,
+            File       => Buffer.File,
+            Identifier => DAP.Types.Messages_Category_Continue_To_Line);
+      end if;
+   end Create_Continue_To_Line_Columns;
+
    ------------------------------
    -- Filter_Matches_Primitive --
    ------------------------------
@@ -1173,6 +1412,78 @@ package body DAP.Module is
    begin
       return Client /= null
         and then Client.Get_Debuggee_Start_Method = Attached;
+   end Filter_Matches_Primitive;
+
+   ------------------------------
+   -- Filter_Matches_Primitive --
+   ------------------------------
+
+   overriding function Filter_Matches_Primitive
+     (Filter  : access In_Debugger_Frame_Filter;
+      Context : Selection_Context) return Boolean
+   is
+      use DAP.Clients;
+      pragma Unreferenced (Filter);
+
+      Kernel : constant Kernel_Handle := Get_Kernel (Context);
+      Client : constant DAP.Clients.DAP_Client_Access :=
+        Get_Current_Debugger;
+
+      function In_Debugger_Frame
+        (Buffer : Editor_Buffer'Class;
+         Line   : Natural)
+         return Boolean;
+      --  Return True if the specified location is in the same frame as
+      --  the debugger's current location.
+
+      -----------------------
+      -- In_Debugger_Frame --
+      -----------------------
+
+      function In_Debugger_Frame
+        (Buffer : Editor_Buffer'Class;
+         Line   : Natural)
+         return Boolean
+      is
+         Debugger_Subprogram : constant String := Block_Name
+           (This        => Buffer.New_Location
+              (Client.Get_Stack_Trace.Get_Current_Line, 0),
+            Subprogram  => True);
+         New_Loc_Subprogram : constant String := Block_Name
+           (This        => Buffer.New_Location (Line, 0),
+            Subprogram  => True);
+      begin
+         return Debugger_Subprogram = New_Loc_Subprogram;
+      end In_Debugger_Frame;
+
+   begin
+      if Client = null then
+         return False;
+      end if;
+
+      if Has_File_Information (Context)
+        and then Has_Entity_Line_Information (Context)
+      then
+         declare
+            File   : constant GNATCOLL.VFS.Virtual_File :=
+                       File_Information (Context);
+            Line   : constant Natural := Natural
+              (GPS.Kernel.Contexts.Entity_Line_Information (Context));
+            Buffer : constant Editor_Buffer'Class :=
+                       Kernel.Get_Buffer_Factory.Get
+                       (File        => File,
+                        Open_View   => False);
+         begin
+            if Client.Get_Stack_Trace.Get_Current_File = File
+              and then Client.Get_Stack_Trace.Get_Current_Line /= Line
+              and then Buffer /= Nil_Editor_Buffer
+            then
+               return In_Debugger_Frame (Buffer, Line);
+            end if;
+         end;
+      end if;
+
+      return False;
    end Filter_Matches_Primitive;
 
    -----------------------
@@ -1407,7 +1718,8 @@ package body DAP.Module is
    -- Set_Current_Debugger --
    --------------------------
 
-   procedure Set_Current_Debugger (Current : DAP.Clients.DAP_Client_Access)
+   procedure Set_Current_Debugger
+     (Current : DAP.Clients.DAP_Client_Access)
    is
       use type DAP.Clients.DAP_Client_Access;
 
@@ -1440,6 +1752,7 @@ package body DAP.Module is
       end Set_Current_Debugger;
 
       Set : Boolean;
+      Old : constant Integer := DAP_Module_ID.Current_Debuger_ID;
 
    begin
       Set := Set_Current_Debugger (DAP_Module_ID, Current);
@@ -1447,6 +1760,15 @@ package body DAP.Module is
       if Set and then Current /= null then
          GPS.Kernel.Hooks.Debugger_Breakpoints_Changed_Hook.Run
            (Current.Kernel, Current.Get_Visual);
+      end if;
+
+      if DAP.Modules.Preferences.Continue_To_Line_Buttons.Get_Pref then
+         if Old = 0 and then DAP_Module_ID.Current_Debuger_ID /= 0 then
+            Enable_Continue_To_Line_On_Editors (DAP_Module_ID.Kernel);
+
+         elsif Old /= 0 and then DAP_Module_ID.Current_Debuger_ID = 0 then
+            Disable_Continue_To_Line_On_Editors (DAP_Module_ID.Kernel);
+         end if;
       end if;
    end Set_Current_Debugger;
 
@@ -1470,6 +1792,18 @@ package body DAP.Module is
       end loop;
    end Terminate_Debuggers;
 
+   --------------------------------------
+   -- Remove_Continue_To_Line_Messages --
+   --------------------------------------
+
+   procedure Remove_Continue_To_Line_Messages
+     (Kernel : not null access Kernel_Handle_Record'Class) is
+   begin
+      Get_Messages_Container (Kernel).Remove_Category
+        (DAP.Types.Messages_Category_Continue_To_Line,
+         DAP.Types.Continue_To_Line_Messages_Flags);
+   end Remove_Continue_To_Line_Messages;
+
    ---------------------
    -- Register_Module --
    ---------------------
@@ -1487,9 +1821,8 @@ package body DAP.Module is
       Entity_Filter         : Action_Filter;
       Is_Not_Command_Filter : Action_Filter;
       Attached_Debuggee     : Action_Filter;
+      Continue_Until_Filter : Action_Filter;
    begin
-      Before_Exit_Action_Hook.Add (new On_Before_Exit);
-
       DAP.Modules.Preferences.Register_Default_Preferences
         (Kernel.Get_Preferences);
 
@@ -1538,10 +1871,17 @@ package body DAP.Module is
       Register_Filter
         (Kernel, Attached_Debuggee, "Debuggee attached");
 
-      --  Actions --
+      Continue_Until_Filter :=
+        Debugger_Available and new In_Debugger_Frame_Filter;
+      Register_Filter
+        (Kernel, Continue_Until_Filter, "Can continue until");
 
+      -- Hooks --
+      Before_Exit_Action_Hook.Add (new On_Before_Exit);
+      Preferences_Changed_Hook.Add (new On_Pref_Changed);
       Project_View_Changed_Hook.Add (new On_Project_View_Changed);
 
+      --  Actions --
       GPS.Kernel.Modules.UI.Register_Contextual_Submenu
         (Kernel, "Debug",
          Group => GPS.Kernel.Modules.UI.Debug_Contextual_Group);

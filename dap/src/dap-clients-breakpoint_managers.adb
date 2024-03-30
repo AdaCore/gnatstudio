@@ -91,6 +91,24 @@ package body DAP.Clients.Breakpoint_Managers is
       Breakpoint : Breakpoint_Data);
    --  Update the synchonization data according to the given breakpoint.
 
+   -----------------------------
+   -- Continue_Until_Location --
+   -----------------------------
+
+   procedure Continue_Until_Location
+     (Self     : not null access Breakpoint_Manager_Type;
+      Location : Breakpoint_Location_Type)
+   is
+      Data : constant Breakpoint_Data := Breakpoint_Data'
+        (Kind           => On_Line,
+         Location       => Location,
+         Disposition    => Delete,
+         Continue_Until => True,
+         others         => <>);
+   begin
+      Self.Break (Data);
+   end Continue_Until_Location;
+
    --------------------------------
    -- Update_Sychronization_Data --
    --------------------------------
@@ -183,6 +201,7 @@ package body DAP.Clients.Breakpoint_Managers is
    is
       Data   : Breakpoint_Data;
       Cursor : Breakpoint_Index_Lists.Cursor;
+      Continue_Until : Boolean := False;
    begin
       --  We should have the same number of breakpoints in the reponse than
       --  the ones we have sent.
@@ -203,6 +222,12 @@ package body DAP.Clients.Breakpoint_Managers is
 
       for Idx in 1 .. New_Breakpoints.Length loop
          Data := Self.Holder.Get_Breakpoint_From_Index (Cursor.Element);
+
+         if Data.Continue_Until then
+            Continue_Until      := True;
+            Data.Continue_Until := False;
+         end if;
+
          Update
            (Kernel => Self.Kernel,
             Data   => Data,
@@ -218,6 +243,10 @@ package body DAP.Clients.Breakpoint_Managers is
       GPS.Kernel.Hooks.Debugger_Breakpoints_Changed_Hook.Run
         (Kernel   => Self.Kernel,
          Debugger => Client.Get_Visual);
+
+      if Continue_Until then
+         Self.Client.Continue_Execution;
+      end if;
    end On_Breakpoint_Request_Response;
 
    -------------

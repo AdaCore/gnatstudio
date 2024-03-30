@@ -25,6 +25,7 @@ with Ada.Strings.Hash;
 with Ada.Strings.Unbounded;
 
 with GNATCOLL.VFS;
+with GPS.Kernel.Messages;
 
 package DAP.Types is
 
@@ -162,5 +163,14 @@ package DAP.Types is
 
    package Frames_Vectors is new Ada.Containers.Vectors
      (Natural, Frame_Record);
+
+   Messages_Category_Continue_To_Line : constant String :=
+     "debugger-run-to-line";
+
+   Continue_To_Line_Messages_Flags    : constant GPS.Kernel.Messages.
+     Message_Flags :=
+       (GPS.Kernel.Messages.Editor_Line => True,
+        GPS.Kernel.Messages.Locations   => False,
+        GPS.Kernel.Messages.Editor_Side => False);
 
 end DAP.Types;

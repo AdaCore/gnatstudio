@@ -59,7 +59,7 @@ package DAP.Clients.Breakpoint_Managers is
    procedure Break
      (Self : not null access Breakpoint_Manager_Type;
       Data : Breakpoint_Data);
-   --  Add the given breakpoint
+   --  Add the given breakpoint.
 
    procedure Break_Source
      (Self      : not null access Breakpoint_Manager_Type;
@@ -169,6 +169,11 @@ package DAP.Clients.Breakpoint_Managers is
       Marker : Location_Marker)
       return Boolean;
    --  Return True if a breakpoint exists for the given location
+
+   procedure Continue_Until_Location
+     (Self     : not null access Breakpoint_Manager_Type;
+      Location : Breakpoint_Location_Type);
+   --  Continue the program until the given location.
 
 private
 

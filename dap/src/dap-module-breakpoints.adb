@@ -322,7 +322,26 @@ package body DAP.Module.Breakpoints is
 
    begin
       if Command.Continue_Till then
-         null;
+         if DAP.Module.Get_Current_Debugger /= null
+           and then DAP.Module.Get_Current_Debugger.Is_Stopped
+         then
+            declare
+               Location : constant Breakpoint_Location_Type :=
+                 (Marker =>
+                    Kernel.Get_Buffer_Factory.Create_Marker
+                      (File   => File_Information (Context.Context),
+                       Line   => Editable_Line_Type
+                         ((if Has_File_Line_Information (Context.Context)
+                          then File_Line_Information (Context.Context)
+                          else Contexts.Line_Information
+                            (Context.Context))),
+                       Column => 1),
+                  Address => Invalid_Address);
+            begin
+               DAP.Module.Get_Current_Debugger.
+                 Get_Breakpoints_Manager.Continue_Until_Location (Location);
+            end;
+         end if;
 
       elsif Command.On_Line then
          Break_Source
@@ -335,7 +354,7 @@ package body DAP.Module.Breakpoints is
       else
          declare
             Entity : constant Root_Entity'Class :=
-                       Get_Entity (Context.Context);
+              Get_Entity (Context.Context);
          begin
             if Is_Fuzzy (Entity) or else Is_Subprogram (Entity) then
                Break_Subprogram
@@ -697,17 +716,18 @@ package body DAP.Module.Breakpoints is
                         Column => 1);
 
                      B :=
-                       (Kind        => On_Line,
-                        Num         => Id,
-                        Disposition => Breakpoint_Disposition'Value
+                       (Kind           => On_Line,
+                        Num            => Id,
+                        Disposition    => Breakpoint_Disposition'Value
                           (Item.Get ("disposition")),
-                        Enabled     => True,
-                        Location    => (Loc, Invalid_Address),
-                        Ignore      => Item.Get ("ignore"),
-                        Condition   => Condition,
-                        Executable  => Create (+To_String (Exec)),
-                        Commands    => Commands,
-                        Verified    => True);
+                        Enabled        => True,
+                        Location       => (Loc, Invalid_Address),
+                        Ignore         => Item.Get ("ignore"),
+                        Condition      => Condition,
+                        Executable     => Create (+To_String (Exec)),
+                        Commands       => Commands,
+                        Continue_Until => False,
+                        Verified       => True);
                   end if;
 
                when On_Subprogram =>
@@ -1249,6 +1269,19 @@ package body DAP.Module.Breakpoints is
          Action => "debug remove breakpoint",
          Filter => new Find_Breakpoint_Filter'
            (Action_Filter_Record with Found => True));
+
+      GPS.Kernel.Actions.Register_Action
+        (Kernel, "continue till line",
+         Command     => new Set_Breakpoint_Command_Context'
+           (Interactive_Command with On_Line => True, Continue_Till => True),
+         Description => "Continue executing until the given line",
+         Filter      => Kernel.Lookup_Filter ("Debugger stopped") and
+           Kernel.Lookup_Filter ("Source editor"),
+         Category    => "Debug");
+      GPS.Kernel.Modules.UI.Register_Contextual_Menu
+        (Kernel => Kernel,
+         Label  => "Debug/Continue until line %l",
+         Action => "continue till line");
 
       DAP.Views.Breakpoints.Register_Module (Kernel);
    end Register_Module;
