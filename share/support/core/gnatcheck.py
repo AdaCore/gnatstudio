@@ -465,9 +465,10 @@ def on_activate():
 
 
 def __open_gnatsas_gnatcheck_help(*args):
-    link_url = ('https://docs.adacore.com/live/wave/codepeer/html/' +
-                'codepeer_ug/project_setup.html#' +
-                'differences-with-standalone-gnatcheck-tool')
+    link_url = (
+        "https://docs.adacore.com/live/wave/gnatsas/html/user_guide/"
+        + "project_setup.html#differences-with-standalone-gnatcheck-tool",
+    )
     GPS.HTML.browse(link_url)
 
 
