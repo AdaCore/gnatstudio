@@ -1816,7 +1816,9 @@ package body DAP.Clients is
                     VSS.Strings.Conversions.To_UTF_8_String
                       (Matched.Captured (1)) = "start";
                   Executable_Args : constant Virtual_String_Vector :=
-                    Matched.Captured (2).Split (VSS.Characters.Latin.Space);
+                    Matched.Captured (2).Split
+                    (Separator           => VSS.Characters.Latin.Space,
+                     Keep_Empty_Segments => False);
                begin
                   --  Stop at the beginning of the main if the command was
                   --  'start'. Do not stop if it was a 'run' command.
