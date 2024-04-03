@@ -1075,7 +1075,10 @@ package body GPS.Initialization is
       Item  : File_To_Open;
 
    begin
-      if FName (FName'First) = '-' then
+      if FName = "" then
+         --  Ignore empty switch and succeed
+         return 1;
+      elsif FName (FName'First) = '-' then
          --  Ignore switches
          return 0;
 
