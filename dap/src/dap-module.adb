@@ -932,7 +932,9 @@ package body DAP.Module is
                   (Executable        => Client.Get_Executable,
                    Executable_Args   =>
                      VSS.Strings.Conversions.To_Virtual_String
-                       (Args).Split (VSS.Characters.Latin.Space),
+                       (Args).Split
+                       (Separator           => VSS.Characters.Latin.Space,
+                        Keep_Empty_Segments => False),
                    Stop_At_Beginning => Stop_At_Beginning);
             end if;
          end;
