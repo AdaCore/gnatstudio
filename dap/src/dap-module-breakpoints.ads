@@ -40,10 +40,6 @@ package DAP.Module.Breakpoints is
    function Get_Persistent_Breakpoints return Breakpoint_Vectors.Vector;
    --  Return the list of persistent breakpoints.
 
-   function Get_Persistent_For_Executable
-     (Executable : Virtual_File) return Breakpoint_Vectors.Vector;
-   --  Return the list of persistent breakpoints for the given executable.
-
    function Get_Breakpoint_From_Id
      (Id : Breakpoint_Identifier) return Breakpoint_Data;
    --  Return the breakpoint with the given ID.

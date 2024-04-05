@@ -109,10 +109,6 @@ package DAP.Types.Breakpoints is
       Commands    : Virtual_String := Empty_Virtual_String;
       --  Commands to execute when the debugger stops at this breakpoint
 
-      Executable  : Virtual_File := No_File;
-      --  The executable for which the breakpoint has been set. Used to
-      --  save/restore them accross sessions.
-
       Verified    : Boolean := True;
       --  True if the breakpoint has been verified on server-side (e.g: if the
       --  specified SLOC actually maps the executable's source files).
@@ -202,12 +198,6 @@ package DAP.Types.Breakpoints is
       Idx  : Positive) return Breakpoint_Data;
    --  Return the breakpoint located at the given index in the holder
 
-   function Get_Breakpoints
-     (Self       : Breakpoint_Holder;
-      Executable : Virtual_File)
-      return Breakpoint_Vectors.Vector;
-   --  Return breakpoints for executable and unassigned
-
    function Get_Breakpoint_From_Id
      (Self : Breakpoint_Holder;
       Id   : Breakpoint_Identifier) return Breakpoint_Data;
@@ -241,11 +231,10 @@ package DAP.Types.Breakpoints is
 
    procedure Replace
      (Self        : in out Breakpoint_Holder;
-      Executable  : Virtual_File;
       Breakpoints : Breakpoint_Vectors.Vector;
       Full_Copy   : Boolean := False);
-   --  Replace all the breakpoints designed by the given Breakpoints for the
-   --  given executable.
+   --  Replace all the breakpoints designated by the given Breakpoints for the
+   --  current project.
    --  If Full_Copy is True, the fields set by the running debugger once the
    --  debuggee is known will also be copied (e.g: breakpoint's number, address
    --  of the breakpoint's SLOC...). Otherwise, only the information that needs
