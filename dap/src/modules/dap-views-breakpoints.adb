@@ -109,16 +109,15 @@ package body DAP.Views.Breakpoints is
    Col_Subprogs    : constant Gint := 7;
    Col_Address     : constant Gint := 8;
    Col_Activatable : constant Gint := 9;
-   Col_Executable  : constant Gint := 10;
-   Col_Fg_Color    : constant Gint := 11;
+   Col_Fg_Color    : constant Gint := 10;
 
-   Column_Types : constant Glib.GType_Array (0 .. 11) :=
+   Column_Types : constant Glib.GType_Array (0 .. 10) :=
      (Guint (Col_Enb)         => GType_Boolean,
       Guint (Col_Activatable) => GType_Boolean,
       Guint (Col_Fg_Color)    => Gdk.RGBA.Get_Type,
       others                  => GType_String);
 
-   Column_Names : constant GNAT.Strings.String_List (1 .. 11) :=
+   Column_Names : constant GNAT.Strings.String_List (1 .. 10) :=
      (new String'("Enb"),
       new String'("Type"),
       new String'("Disp"),
@@ -128,8 +127,7 @@ package body DAP.Views.Breakpoints is
       new String'("Exception"),
       new String'("Subprograms"),
       new String'("Address"),
-      new String'("Activatable"),
-      new String'("Executable"));
+      new String'("Activatable"));
 
    type Breakpoint_View_Record is new View_Record with
       record
@@ -1332,14 +1330,6 @@ package body DAP.Views.Breakpoints is
          Glib.Values.Init_Set_String
            (Values (Last_Column_Idx),
             Escape_Text (Address_To_String (Data.Location.Address)));
-      end if;
-
-      if Data.Executable /= No_File then
-         Last_Column_Idx := Last_Column_Idx + 1;
-         Columns (Last_Column_Idx) := Col_Executable;
-         Glib.Values.Init_Set_String
-           (Values (Last_Column_Idx),
-            Escape_Text (+Base_Name (Data.Executable)));
       end if;
 
       Set_And_Clear

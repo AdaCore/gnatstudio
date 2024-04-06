@@ -528,16 +528,6 @@ package body DAP.Module.Breakpoints is
       return Persistent_Breakpoints.Get_Breakpoints;
    end Get_Persistent_Breakpoints;
 
-   -----------------------------------
-   -- Get_Persistent_For_Executable --
-   -----------------------------------
-
-   function Get_Persistent_For_Executable
-     (Executable : Virtual_File) return Breakpoint_Vectors.Vector is
-   begin
-      return Persistent_Breakpoints.Get_Breakpoints (Executable);
-   end Get_Persistent_For_Executable;
-
    ---------------------------------
    -- Save_Persistent_Breakpoints --
    ---------------------------------
@@ -603,10 +593,6 @@ package body DAP.Module.Breakpoints is
 
          if not B.Condition.Is_Empty then
             Value.Set_Field ("condition", UTF8 (B.Condition));
-         end if;
-
-         if B.Executable /= No_File then
-            Value.Set_Field ("executable", +Base_Name (B.Executable));
          end if;
 
          if not B.Commands.Is_Empty then
@@ -686,12 +672,6 @@ package body DAP.Module.Breakpoints is
               Breakpoint_Kind'Value (Item.Get ("kind"));
             Loc  : Location_Marker     := No_Marker;
 
-            Exec : constant Unbounded_String    :=
-              (if Item.Has_Field ("executable")
-               then To_Unbounded_String
-                 (To_String (Item.Get ("executable")))
-               else Null_Unbounded_String);
-
             Condition : constant VSS.Strings.Virtual_String :=
               (if Item.Has_Field ("condition")
                then VSS.Strings.Conversions.To_Virtual_String
@@ -724,7 +704,6 @@ package body DAP.Module.Breakpoints is
                         Location       => (Loc, Invalid_Address),
                         Ignore         => Item.Get ("ignore"),
                         Condition      => Condition,
-                        Executable     => Create (+To_String (Exec)),
                         Commands       => Commands,
                         Continue_Until => False,
                         Verified       => True);
@@ -740,7 +719,6 @@ package body DAP.Module.Breakpoints is
                      Subprogram    => Item.Get ("subprogram"),
                      Ignore        => Item.Get ("ignore"),
                      Condition     => Condition,
-                     Executable    => Create (+To_String (Exec)),
                      Commands      => Commands,
                      others        => <>);
 
@@ -759,7 +737,6 @@ package body DAP.Module.Breakpoints is
                      Unhandled       => Item.Get ("unhandled"),
                      Ignore          => Item.Get ("ignore"),
                      Condition       => Condition,
-                     Executable      => Create (+To_String (Exec)),
                      Commands        => Commands,
                      others          => <>);
             end case;
@@ -1173,8 +1150,7 @@ package body DAP.Module.Breakpoints is
          end if;
 
          Persistent_Breakpoints.Replace
-           (Executable  => Executable,
-            Breakpoints => Breakpoints,
+           (Breakpoints => Breakpoints,
             Full_Copy   => False);
       end if;
    end Store_As_Persistent;

@@ -297,9 +297,7 @@ package body DAP.Clients.Breakpoint_Managers is
          --  Initialize the debugger's breakpoints with the persistent ones set
          --  for this executable outside the debugging session, if any.
          Self.Holder.Initialize
-           (Vector    =>
-              DAP.Module.Breakpoints.Get_Persistent_For_Executable
-                (Self.Client.Get_Executable));
+           (Vector => DAP.Module.Breakpoints.Get_Persistent_Breakpoints);
 
          --  Add an exception breakpoint to catch any exception if the
          --  corresponding preference is set.
@@ -312,7 +310,6 @@ package body DAP.Clients.Breakpoint_Managers is
                     (DAP.Module.Breakpoints.All_Exceptions_Filter),
                   Unhandled   => False,
                   Disposition => Keep,
-                  Executable  => Self.Client.Get_Executable,
                   others      => <>);
             begin
                Self.Holder.Append (Data);
@@ -394,7 +391,6 @@ package body DAP.Clients.Breakpoint_Managers is
          Exception_Name      => To_Unbounded_String (Name),
          Unhandled   => Unhandled,
          Disposition => (if Temporary then Delete else Keep),
-         Executable  => Self.Client.Get_Executable,
          others      => <>);
    begin
       Self.Break (Data);
@@ -423,7 +419,6 @@ package body DAP.Clients.Breakpoint_Managers is
             Invalid_Address),
          Disposition => (if Temporary then Delete else Keep),
          Condition   => Condition,
-         Executable  => Self.Client.Get_Executable,
          others      => <>);
    begin
       Self.Break (Data);
@@ -446,7 +441,6 @@ package body DAP.Clients.Breakpoint_Managers is
          Subprogram  => To_Unbounded_String (Subprogram),
          Disposition => (if Temporary then Delete else Keep),
          Condition   => Condition,
-         Executable  => Self.Client.Get_Executable,
          others      => <>);
    begin
       Self.Break (Data);
@@ -470,7 +464,6 @@ package body DAP.Clients.Breakpoint_Managers is
            (Address => Address, others => <>),
          Disposition => (if Temporary then Delete else Keep),
          Condition   => Condition,
-         Executable  => Self.Client.Get_Executable,
          others      => <>);
    begin
       Self.Break (Data);
@@ -516,7 +509,6 @@ package body DAP.Clients.Breakpoint_Managers is
                Num        => 0,
                Location   => Breakpoint_Location_Type'
                  (Address => Address, others => <>),
-               Executable => Self.Client.Get_Executable,
                others     => <>));
       end if;
 
@@ -1104,7 +1096,7 @@ package body DAP.Clients.Breakpoint_Managers is
             Item   => Event.breakpoint,
             Data   => Data,
             File   => File);
-         Data.Executable := Self.Client.Get_Executable;
+
          return Data;
       end Convert;
 

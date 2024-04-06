@@ -292,28 +292,6 @@ package body DAP.Types.Breakpoints is
       end if;
    end Get_Breakpoint_From_Index;
 
-   ---------------------
-   -- Get_Breakpoints --
-   ---------------------
-
-   function Get_Breakpoints
-     (Self       : Breakpoint_Holder;
-      Executable : Virtual_File)
-      return Breakpoint_Vectors.Vector
-   is
-      Result : Breakpoint_Vectors.Vector;
-   begin
-      for Data of Self.Vector loop
-         if Data.Executable = No_File
-           or else Data.Executable = Executable
-         then
-            Result.Append (Data);
-         end if;
-      end loop;
-
-      return Result;
-   end Get_Breakpoints;
-
    ----------------------------
    -- Get_Breakpoint_From_Id --
    ----------------------------
@@ -409,7 +387,6 @@ package body DAP.Types.Breakpoints is
 
    procedure Replace
      (Self        : in out Breakpoint_Holder;
-      Executable  : Virtual_File;
       Breakpoints : Breakpoint_Vectors.Vector;
       Full_Copy   : Boolean := False)
    is
@@ -417,9 +394,7 @@ package body DAP.Types.Breakpoints is
       Data : Breakpoint_Data;
    begin
       for Idx in Self.Vector.First_Index .. Self.Vector.Last_Index loop
-         if Self.Vector (Idx).Executable = Executable
-           and then not Breakpoints.Contains (Self.Vector (Idx))
-         then
+         if not Breakpoints.Contains (Self.Vector (Idx)) then
             --  no more exist
             Self.Vector.Delete (Idx);
          end if;
