@@ -472,15 +472,14 @@ package body DAP.Module.Breakpoints is
    is
       Client     : constant DAP_Client_Access :=
         DAP_Visual_Debugger_Access (Debugger).Client;
-      Breakpoint : constant Breakpoint_Data :=
-        (if Client /= null then
-            Client.Get_Breakpoints_Manager.Get_Breakpoint_From_Id
-              (Breakpoint_Identifier (Id))
-         else
-            Persistent_Breakpoints.Get_Breakpoint_From_Id
-              (Breakpoint_Identifier (Id)));
    begin
-      Show_Breakpoint (Kernel, Breakpoint);
+      Show_Breakpoints_In_All_Editors
+        (Kernel      => Kernel,
+         Breakpoints =>
+           (if Client /= null then
+                 Client.Get_Breakpoints_Manager.Get_Breakpoints
+            else
+               Persistent_Breakpoints.Get_Breakpoints));
    end Execute;
 
    -------------
