@@ -53,7 +53,11 @@ _DOC_ENTRIES = {
 
    # GNATcheck
    'gnatcheck': {"GNATcheck Reference Manual":
-                 ('gnat/html/gnatcheck_rm/gnatcheck_rm.html', 'GNAT/')},
+                 ('gnatcheck/html/gnatcheck_rm/gnatcheck_rm.html', 'GNATSAS/')},
+
+   # GNATmetric
+   'gnatmetric': {"GNATmetrics User's Guide":
+                  ('gnatsas/gnatmetrics/html/index.html', 'GNATSAS/')},
 
    # GNATstack
    'gnatstack': {"GNATstack Reference Manual":
