@@ -36,31 +36,20 @@ EXC_MESSAGE = "Exception_Message"
 EXC_INFO = "Exception_Information"
 
 
-def coverage_executable():
-    """Utility function, returns the executable instrumented for coverage"""
-    return os.path.join(
-        os.path.dirname(GPS.Project.root().file().name()),
-        "session",
-        "build",
-        "obj-COVERAGE",
-        "gnatfuzz-fuzz_test_harness.coverage",
-    )
-
-
-def fuzz_executable():
+def fuzz_executable(is_verbose):
     """Utility function, returns the executable instrumented for fuzzing"""
     # We don't know if the AFL_PLAIN or the AFL_PERSIST object was generated.
 
     # They should be the same for the purposes of the GNAT Studio integration:
     # try one, then the other.
 
-    for mode in ("AFL_PLAIN", "AFL_PERSIST"):
+    for mode in ("AFL_PLAIN", "AFL_PERSIST", "AFL_DEFER", "AFL_DEFER_AND_PERSIST"):
         candidate = os.path.join(
             os.path.dirname(GPS.Project.root().file().name()),
             "session",
             "build",
             f"obj-{mode}",
-            "gnatfuzz-test_harness.afl_fuzz",
+            "gnatfuzz-test_harness." + ("verbose" if is_verbose else "afl_fuzz"),
         )
         if os.path.exists(candidate):
             return candidate
@@ -136,7 +125,7 @@ class FuzzCrashList(object):
         """Workflow to launch a debugger session on the given crash"""
         t = TargetWrapper("Build Main")
         yield t.wait_on_execute(main_name="gnatfuzz-fuzz_test_harness.adb")
-        exec = fuzz_executable()
+        exec = fuzz_executable(False)
         d = GPS.Debugger.spawn(executable=GPS.File(exec))
         d.send("delete")
         d.send(f"start {self.target_candidate}")
@@ -189,14 +178,18 @@ class GNATfuzzView(Module):
         self.fcl = FuzzCrashList()
 
     def setup(self):
-        make_interactive(self.get_view, category="Views", name="open GNATfuzz fuzz crashes view")
-        make_interactive(self.clear_view, category="Views", name="clear GNATfuzz fuzz crashes view")
+        make_interactive(
+            self.get_view, category="Views", name="open GNATfuzz fuzz crashes view"
+        )
+        make_interactive(
+            self.clear_view, category="Views", name="clear GNATfuzz fuzz crashes view"
+        )
 
     def clear_view(self):
         """Clear the Fuzz crashes view"""
         global counter
         counter = 1
-        self.crashes.clear();
+        self.crashes.clear()
         t = pygps.get_widget_by_name("fuzz_crash_list_view")
         if t is not None:
             t.get_model().clear()
@@ -219,7 +212,7 @@ class GNATfuzzView(Module):
         while self.candidate_crash_files:
             candidate = self.candidate_crash_files.pop()
             if candidate not in self.crashes:
-                executable = coverage_executable()
+                executable = fuzz_executable(True)
                 # We're actually launching the executable to get the
                 # parameters that were passed to the crash, along with
                 # the actual crash message.
@@ -335,21 +328,26 @@ class GNATfuzzView(Module):
         """Refresh the view"""
         self.project_dir = os.path.dirname(GPS.Project.root().file().name())
         self.candidate_crash_files = []
+        self.fuzzer_ouput_path = os.path.join(
+            self.project_dir,
+            "session",
+            "fuzzer_output",
+        )
 
-        # Get a list of all candidate crash and hang files
+        # Captures all crashes and hangs found under "cmplog_results",
+        # "symcc_results", and any "gnatfuzz_[#]_[master/slave]" directories
         for issue_type in ("crashes", "hangs"):
             self.candidate_crash_files.extend(
                 glob.glob(
                     os.path.join(
-                        self.project_dir,
-                        "session",
-                        "fuzzer_output",
-                        "gnatfuzz_*",
+                        self.fuzzer_ouput_path,
+                        "*",
                         issue_type,
                         "id*",
                     )
                 )
             )
+
         # Process the candidate crash files
         workflows.task_workflow("processing crashes", self.process_crashes)
 
