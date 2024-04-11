@@ -238,7 +238,8 @@ package body DAP.Views.Call_Stack is
       use type DAP.Clients.DAP_Client_Access;
 
       View : constant Call_Stack :=
-        CS_MDI_Views.Retrieve_View (Get_Kernel (Context));
+        CS_MDI_Views.Retrieve_View
+          (Get_Kernel (Context), Visible_Only => True);
    begin
       if View = null then
          return False;
@@ -294,9 +295,11 @@ package body DAP.Views.Call_Stack is
         or else Pref = Preference (Show_Location)
         or else Pref = Preference (Show_Address)
       then
-         View := CS_MDI_Views.Retrieve_View (Kernel);
-         Update_Columns_Visibility (View);
-         Update (View);
+         View := CS_MDI_Views.Retrieve_View (Kernel, Visible_Only => True);
+         if View /= null then
+            Update_Columns_Visibility (View);
+            Update (View);
+         end if;
       end if;
    end Execute;
 
@@ -314,7 +317,7 @@ package body DAP.Views.Call_Stack is
 
       Kernel : constant Kernel_Handle := Get_Kernel (Context.Context);
       View   : constant Call_Stack    :=
-        Call_Stack (CS_MDI_Views.Retrieve_View (Kernel));
+        Call_Stack (CS_MDI_Views.Retrieve_View (Kernel, Visible_Only => True));
       Client : DAP.Clients.DAP_Client_Access;
    begin
       if View /= null then
@@ -502,7 +505,7 @@ package body DAP.Views.Call_Stack is
       Client : not null access DAP.Clients.DAP_Client'Class)
    is
       View : constant Call_Stack    :=
-        Call_Stack (CS_MDI_Views.Retrieve_View (Kernel));
+        Call_Stack (CS_MDI_Views.Retrieve_View (Kernel, Visible_Only => True));
    begin
       if View /= null
         and then Get_Client (View) = Client
