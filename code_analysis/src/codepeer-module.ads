@@ -297,8 +297,11 @@ private
    procedure Review
      (Module       : not null access Module_Id_Record'Class;
       Force        : Boolean;
-      Build_Target : String);
+      Build_Target : String;
+      Need_Reload  : Boolean := True);
    --  Launch CodePeer review using the specified build target.
    --  If Force is True, no dialog is displayed to change codepeer switches.
+   --  If Need_Reload is True, a call to gnatsas report will automatically
+   --  be called afterward.
 
 end CodePeer.Module;

@@ -465,12 +465,15 @@ package body CodePeer.Module.Actions is
 
       Ensure_Build_Mode : CodePeer_Build_Mode (Kernel);
       pragma Unreferenced (Ensure_Build_Mode);
-      --  Inspection_Info_File and Review switches builder mode then necessary,
+      --  Inspection_Info_File and Review will change the builder mode
       --  so switch it here for both subprograms.
 
    begin
       Review
-        (Self.Module, False, "Regenerate " & CodePeer.Module_Name & " Report");
+        (Self.Module,
+         False,
+         "Regenerate " & CodePeer.Module_Name & " Report",
+         Need_Reload => False);
 
       return Success;
    end Execute;
