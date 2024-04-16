@@ -986,6 +986,26 @@ class BuildTarget(object):
         """
         pass  # implemented in Ada
 
+    def set_as_alias(aliased_target_name=""):
+        """
+        Set the given target as an alias for target designated by `alias_target_name`.
+        Aliases are used to temporarily replace a build target
+        (e.g: "Build All") by another one (e.g: "My Custom Build All").
+
+        This can be used by plugins to execute their own custom build targets
+        while the user interacts with the default GNAT Studio build targets,
+        either via the UI or through the GPS.BuildTarget Python API.
+        In the example given above, clicking on the "Build All" toolbar button
+        will actually execute "My Custom Build All" instead.
+
+        To unset an just give an empty string for the `aliased_target_name`
+        parameter
+
+        :param str aliased_target_name: The name of the aliased target, or an
+           empty string to unset the alias.
+        """
+        pass  # implemented in Ada
+
     @staticmethod
     def expand_macros(cmd_line):
         """

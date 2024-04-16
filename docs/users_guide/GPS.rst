@@ -186,6 +186,8 @@ Classes
 
    .. automethod:: GPS.BuildTarget.remove
 
+   .. automethod:: GPS.BuildTarget.set_as_alias
+
    .. automethod:: GPS.BuildTarget.show
 
 :class:`GPS.Button`
