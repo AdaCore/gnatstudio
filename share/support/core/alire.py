@@ -113,7 +113,7 @@ def on_project_changing(hook, file):
     """
     global saved_env, project_to_reload
 
-    if project_to_reload or "ALIRE" in os.environ:
+    if project_to_reload:
         project_to_reload = None
         return
 
