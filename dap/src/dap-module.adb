@@ -57,7 +57,6 @@ with Remote;
 
 with DAP.Contexts;
 with DAP.Module.Breakpoints;
-with DAP.Modules.Contexts;
 with DAP.Modules.Preferences;
 with DAP.Modules.Scripts;
 with DAP.Clients.Attach;
@@ -565,7 +564,7 @@ package body DAP.Module is
       --  current value if possible.
       declare
          Variable_Name : constant String := DAP.Contexts.Get_Variable_Name
-           (Context, Dereference => False);
+           (Context, Dereference => True);
       begin
          if Variable_Name = ""
            or else not Can_Tooltip_On_Entity
@@ -1390,7 +1389,7 @@ package body DAP.Module is
 
    begin
       if GPS.Kernel.Contexts.Has_Debugging_Variable (Context)
-        and then not DAP.Modules.Contexts.Get_Variable (Context).Cmd.Is_Empty
+        and then not DAP.Contexts.Get_Variable (Context).Is_Command
       then
          return False;
       else

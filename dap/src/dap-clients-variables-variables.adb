@@ -31,17 +31,21 @@ package body DAP.Clients.Variables.Variables is
       Id     : Integer;
       Params : Request_Parameters)
    is
+      use DAP.Modules.Variables.Items;
+
       Req : Variables_Request_Access := new Variables_Request
         (GPS.Kernel.Kernel_Handle (Client.Kernel), Params.Kind);
    begin
-      Req.Params := Params;
-      Req.Parameters.arguments.variablesReference := Id;
-      if Params.Item.Format /= Default_Format then
-         Req.Parameters.arguments.format :=
-           (Is_Set => True, Value => Params.Item.Format);
-      end if;
+      if Id > 0 then
+         Req.Params := Params;
+         Req.Parameters.arguments.variablesReference := Id;
+         if Params.Item.Info.Format /= Default_Format then
+            Req.Parameters.arguments.format :=
+              (Is_Set => True, Value => Params.Item.Info.Format);
+         end if;
 
-      Client.Enqueue (DAP.Requests.DAP_Request_Access (Req));
+         Client.Enqueue (DAP.Requests.DAP_Request_Access (Req));
+      end if;
    end Send_Variables_Request;
 
    -----------------------

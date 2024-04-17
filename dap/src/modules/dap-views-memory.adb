@@ -84,7 +84,7 @@ with Commands.Interactive;     use Commands, Commands.Interactive;
 with DAP.Clients;              use DAP.Clients;
 with DAP.Clients.Evaluate;
 with DAP.Module;
-with DAP.Modules.Contexts;     use DAP.Modules.Contexts;
+with DAP.Contexts;             use DAP.Contexts;
 with DAP.Modules.Preferences;  use DAP.Modules.Preferences;
 with DAP.Requests;             use DAP.Requests;
 with DAP.Tools;

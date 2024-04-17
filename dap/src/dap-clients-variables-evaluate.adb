@@ -32,7 +32,7 @@ package body DAP.Clients.Variables.Evaluate is
         (GPS.Kernel.Kernel_Handle (Client.Kernel), Params.Kind);
    begin
       Req.Params := Params;
-      Req.Parameters.arguments.expression := Params.Item.Cmd;
+      Req.Parameters.arguments.expression := Params.Item.Info.Get_Name;
       Req.Parameters.arguments.frameId :=
         Client.Get_Stack_Trace.Get_Current_Frame_Id;
       Req.Parameters.arguments.context :=
@@ -58,7 +58,7 @@ package body DAP.Clients.Variables.Evaluate is
 
       if Result.success then
          Variable.Data.a_type           := Result.a_body.a_type;
-         Variable.Data.name             := Self.Params.Item.Cmd;
+         Variable.Data.name             := Self.Params.Item.Info.Get_Name;
          Variable.Data.indexedVariables := Result.a_body.indexedVariables;
          Variable.Data.memoryReference  := Result.a_body.memoryReference;
          Variable.Data.namedVariables   := Result.a_body.namedVariables;
@@ -70,7 +70,7 @@ package body DAP.Clients.Variables.Evaluate is
 
       else
          Self.Kernel.Get_Messages_Window.Insert_Error
-           (Get_Name (Self.Params.Item) & " is not found.");
+           (Self.Params.Item.Info.Get_Name & " is not found.");
          Free (Self.Params);
       end if;
    end On_Result_Message;

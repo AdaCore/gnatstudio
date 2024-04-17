@@ -52,13 +52,16 @@ def get_children(var):
 
 @run_test_driver
 def test_driver():
-    yield wait_tasks(other_than=known_tasks)
+    yield wait_tasks()
 
     p = promises.DebuggerWrapper(GPS.File("parse"))
     debug = GPS.Debugger.get()
+    yield wait_until_not_busy(debug)
+
     debug.break_at_exception(False)
     yield wait_DAP_server('setExceptionBreakpoints')
-    debug.send("run")
+
+    debug.send("cont")
     yield wait_DAP_server('stackTrace')
 
     debug.send("frame 7")
@@ -482,6 +485,7 @@ def test_driver():
     yield check_variable(children1.data[1], "More_Fruits(0).abc", "integer", "20")
     yield check_variable(children.data[1], "More_Fruits(1)", "parse.fruit", "")
 
+    yield wait_until_not_busy(debug)
     debug.send("frame 6")
     yield wait_until_not_busy(debug)
 
@@ -517,8 +521,10 @@ def test_driver():
     yield check_variable(children1.data[1], "Args2(1,2)", "parse.tn_9305_014.string_access", r"0x[0-9a-f]+", True)
     yield check_variable(children1.data[2], "Args2(1,3)", "parse.tn_9305_014.string_access", r"0x[0-9a-f]+", True)
 
-    yield p.send_promise("cont")
-    yield p.send_promise("frame 6")
+    yield wait_until_not_busy(debug)
+    debug.send("cont")
+    yield wait_until_not_busy(debug)
+    debug.send("frame 6")
     yield wait_until_not_busy(debug)
 
     var = yield check(p, "Ut", "parse.union_type", "")
@@ -579,26 +585,6 @@ def test_driver():
     gps_assert(len(children2.data), 1, "Invalid count of Asu_Test2.map(2) children")
     yield check_variable(children2.data[0], "Asu_Test2.map(2,1)", "ada.strings.unbounded.unbounded_string", '"not_set"')
 
-# exception in not in the variables/arguments
-#    var = yield check(p, "My_Exception", "exception", "")
-#    children_list = var.children()
-#    gps_assert(len(children_list), 7, mode +
-#               " Invalid count of My_Exception children")
-#    yield check(debug, ".not_handled_by_others", "character", """0 '["00"]'""",
-#                       "Simple", False, children_list[0])
-#    yield check(debug, ".lang", "character", "65 'A'",
-#                       "Simple", False, children_list[1])
-#    yield check(debug, ".name_length", "natural", "30",
-#                       "Simple", False, children_list[2])
-#    yield check(debug, ".full_name", "<8-byte integer>",
-#                       r'[0-9]+', "Simple", True, children_list[3])
-#    yield check(debug, ".htable_ptr", "access character",
-#                       r'0x[0-9a-f]+ \<.+', "Access", True, children_list[4])
-#    yield check(debug, ".foreign_data", "<8-byte integer>",
-#                       r'0', "Simple", False, children_list[5])
-#    yield check(debug, ".raise_hook", "access character",
-#                       r'0x[0-9a-f]+', "Access", True, children_list[6])
-
     var = yield check(p, "NBI_N", "parse.value_type", "")
     children = yield get_children(var.data)
     gps_assert(len(children.data), 1, "Invalid count of NBI_N children")
@@ -630,8 +616,9 @@ def test_driver():
     yield check_variable(children.data[1], "RAF.af", "parse.access_function", r'0x[0-9a-f]+', True)
     yield check_variable(children.data[2], "RAF.i2", "integer", "0")
 
-    yield p.send_promise("b swap")
-    yield p.send_promise("cont")
+    debug.send("b swap")
+    yield wait_until_not_busy(debug)
+    debug.send("cont")
     yield wait_until_not_busy(debug)
 
     var = yield check(p, "Word", "string", '"qeaLfjb"')
