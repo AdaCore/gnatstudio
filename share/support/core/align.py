@@ -487,7 +487,8 @@ def align_record_rep_clause():
 def align_end_of_line_comments():
     """Align end of line comments"""
     buffer = GPS.EditorBuffer.get()
-    if buffer.file().language() == "ada":
+    lang = buffer.file().language().lower()
+    if lang in ('ada', 'project file'):
         buffer_align_on(sep="\s*[^\s]+\s*( --\s*)",
                         replace_with=" --  ", sep_group=1)
     else:
