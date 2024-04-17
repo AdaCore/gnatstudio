@@ -9,9 +9,7 @@ from gs_utils import hook
 
 @hook('gps_started')
 def on_gps_started():
-    register_highlighter(
-        language="asm",
-        spec=(
+    spec = (
             # Match comments lines
             region(r"#", "\n", tag=tag_comment,
                    highlighter=(hl_comment_notes,)),
@@ -32,6 +30,13 @@ def on_gps_started():
             region(
                 r'"', r'"|[^\\]$',  tag=tag_string,
                 highlighter=(hl_inside_strings,)
+                )
             )
-        )
+    register_highlighter(
+        language="asm",
+        spec=spec
+    )
+    register_highlighter(
+        language="asm2",
+        spec=spec
     )
