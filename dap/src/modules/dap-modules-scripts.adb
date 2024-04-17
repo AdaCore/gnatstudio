@@ -36,6 +36,7 @@ with DAP.Types;                use DAP.Types;
 with DAP.Module;
 with DAP.Types.Breakpoints;
 with DAP.Module.Breakpoints;
+with DAP.Modules.Variables.Items;
 
 with DAP.Clients.Breakpoint_Managers;
 with DAP.Clients.Stack_Trace;  use DAP.Clients.Stack_Trace;
@@ -354,18 +355,24 @@ package body DAP.Modules.Scripts is
 
       elsif Command = "children" then
          declare
-            Params : Request_Parameters :=
-              (Kind        => Python_API,
-               Item        =>
-                 (Varname => Get (Data.Nth_Arg (1)).Full_Name,
-                  others  => <>),
-               Children    => True,
-               On_Result   => Get_Subprogram (Data, 2),
-               On_Error    => Get_Subprogram (Data, 3),
-               On_Rejected => Get_Subprogram (Data, 4));
+            Holder : DAP.Modules.Variables.Items.Item_Holder;
          begin
-            Visual (Data.Nth_Arg (1)).Client.
-              Get_Variables.Get_Variable (Params);
+            DAP.Modules.Variables.Items.Set
+              (Holder, DAP.Modules.Variables.Items.Create
+                 (Variable => Get (Data.Nth_Arg (1)).Full_Name));
+
+            declare
+               Params : Request_Parameters :=
+                 (Kind        => Python_API,
+                  Item        => Holder,
+                  Children    => True,
+                  On_Result   => Get_Subprogram (Data, 2),
+                  On_Error    => Get_Subprogram (Data, 3),
+                  On_Rejected => Get_Subprogram (Data, 4));
+            begin
+               Visual (Data.Nth_Arg (1)).Client.
+                 Get_Variables.Get_Variable (Params);
+            end;
          end;
       end if;
    end Variable_Handler;
@@ -675,18 +682,27 @@ package body DAP.Modules.Scripts is
            (Glib.Object.GObject'(Get_Data (Inst)));
 
          declare
-            Params : Request_Parameters :=
-              (Kind        => Python_API,
-               Item        =>
-                 (Varname => VSS.Strings.Conversions.To_Virtual_String
-                      (String'(Nth_Arg (Data, 2))),
-                  others  => <>),
-               Children    => False,
-               On_Result   => Get_Subprogram (Data, 3),
-               On_Error    => Get_Subprogram (Data, 4),
-               On_Rejected => Get_Subprogram (Data, 5));
+            Name   : constant VSS.Strings.Virtual_String :=
+              VSS.Strings.Conversions.To_Virtual_String
+                (String'(Nth_Arg (Data, 2)));
+            Holder : DAP.Modules.Variables.Items.Item_Holder;
+
          begin
-            Visual.Client.Get_Variables.Get_Variable (Params);
+            DAP.Modules.Variables.Items.Set
+              (Holder, DAP.Modules.Variables.Items.Create
+                 (Variable => Name));
+            declare
+               Params : Request_Parameters :=
+                 (Kind        => Python_API,
+                  Item        => Holder,
+                  Children    => False,
+                  On_Result   => Get_Subprogram (Data, 3),
+                  On_Error    => Get_Subprogram (Data, 4),
+                  On_Rejected => Get_Subprogram (Data, 5));
+
+            begin
+               Visual.Client.Get_Variables.Get_Variable (Params);
+            end;
          end;
       end if;
    end Shell_Handler;

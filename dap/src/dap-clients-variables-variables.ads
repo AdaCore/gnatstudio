@@ -17,7 +17,6 @@
 
 --  Concrete implementation of the DAP 'variables' request
 
-with DAP.Modules.Variables.Items; use DAP.Modules.Variables.Items;
 with DAP.Requests.Variables;
 with DAP.Tools;
 

@@ -15,13 +15,19 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
-with Language;              use Language;
-with Language_Handlers;     use Language_Handlers;
-with Xref;                  use Xref;
-with GPS.Kernel.Contexts;   use GPS.Kernel.Contexts;
+with Ada.Strings.Unbounded;      use Ada.Strings.Unbounded;
+
+with Language;                   use Language;
+with Language_Handlers;          use Language_Handlers;
+with Xref;                       use Xref;
+with GPS.Kernel.Contexts;        use GPS.Kernel.Contexts;
 
 package body DAP.Contexts is
+
+   type Context_Item_Info is new GPS.Kernel.Context_Item with record
+      Holder : Item_Holder;
+   end record;
+   type Context_Item_Info_Access is access all Context_Item_Info'Class;
 
    -----------------------
    -- Get_Variable_Name --
@@ -43,10 +49,23 @@ package body DAP.Contexts is
             File_Information (Context));
       end if;
 
+      if Has_Debugging_Variable (Context) then
+         if Dereference and then Lang /= null then
+            return Dereference_Name
+              (Lang, To_String
+                 (Context_Item_Info_Access
+                      (Debugging_Variable (Context)).Text));
+         end if;
+
+         return To_String
+           (Context_Item_Info_Access (Debugging_Variable (Context)).Text);
+      end if;
+
       if Has_Area_Information (Context) then
          if Dereference and then Lang /= null then
             return Dereference_Name (Lang, Text_Information (Context));
          end if;
+
          return Text_Information (Context);
       end if;
 
@@ -54,6 +73,7 @@ package body DAP.Contexts is
          if Dereference and then Lang /= null then
             return Dereference_Name (Lang, Expression_Information (Context));
          end if;
+
          return Expression_Information (Context);
       end if;
 
@@ -69,6 +89,7 @@ package body DAP.Contexts is
             then
                return Dereference_Name
                  (Lang, Entity_Name_Information (Context));
+
             elsif Is_Fuzzy (Entity)
               or else Is_Printable_In_Debugger (Entity)
             then
@@ -76,7 +97,41 @@ package body DAP.Contexts is
             end if;
          end;
       end if;
+
       return "";
    end Get_Variable_Name;
+
+   ------------------
+   -- Get_Variable --
+   ------------------
+
+   function Get_Variable
+     (Context : GPS.Kernel.Selection_Context)
+      return Item_Info'Class is
+   begin
+      if Has_Debugging_Variable (Context) then
+         return Context_Item_Info_Access
+           (Debugging_Variable (Context)).Holder.Info.all;
+      else
+         return DAP.Modules.Variables.Items.No_Item;
+      end if;
+   end Get_Variable;
+
+   --------------------
+   -- Store_Variable --
+   --------------------
+
+   procedure Store_Variable
+     (Context   : in out GPS.Kernel.Selection_Context;
+      Full_Name : String;
+      Info      : Item_Info'Class)
+   is
+      Holder : Item_Holder;
+      Item   : Context_Item_Info_Access;
+   begin
+      Set (Holder, Info);
+      Item := new Context_Item_Info'(To_Unbounded_String (Full_Name), Holder);
+      Set_Debugging_Variable (Context, Context_Item_Access (Item));
+   end Store_Variable;
 
 end DAP.Contexts;

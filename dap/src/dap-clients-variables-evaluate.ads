@@ -17,7 +17,6 @@
 
 --  Concrete implementation of the DAP 'evaluate' request
 
-with DAP.Modules.Variables.Items; use DAP.Modules.Variables.Items;
 with DAP.Requests.Evaluate;
 with DAP.Tools;
 

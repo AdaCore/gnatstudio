@@ -28,6 +28,8 @@ package body DAP.Clients.Variables.SetExpression is
      (Client : not null access DAP.Clients.DAP_Client'Class;
       Params : Request_Parameters)
    is
+      use DAP.Modules.Variables.Items;
+
       Req : Set_Expression_Request_Access := new Set_Expression_Request
         (GPS.Kernel.Kernel_Handle (Client.Kernel), Params.Kind);
    begin
@@ -36,9 +38,9 @@ package body DAP.Clients.Variables.SetExpression is
       Req.Parameters.arguments.value      := Params.Value;
       Req.Parameters.arguments.frameId    :=
         Client.Get_Stack_Trace.Get_Current_Frame_Id;
-      if Params.Item.Format /= Default_Format then
+      if Params.Item.Info.Format /= Default_Format then
          Req.Parameters.arguments.format :=
-           (Is_Set => True, Value => Params.Item.Format);
+           (Is_Set => True, Value => Params.Item.Info.Format);
       end if;
 
       Client.Enqueue (DAP.Requests.DAP_Request_Access (Req));

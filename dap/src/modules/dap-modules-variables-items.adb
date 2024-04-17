@@ -15,9 +15,47 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
+with Ada.Unchecked_Deallocation;
+
 with VSS.Strings.Conversions;
 
+with DAP.Modules.Variables.Items.Variables;
+with DAP.Modules.Variables.Items.Commands;
+with DAP.Modules.Variables.Items.Arguments;
+
 package body DAP.Modules.Variables.Items is
+
+   ------------
+   -- Adjust --
+   ------------
+
+   overriding procedure Adjust (Object : in out Item_Holder) is
+      I : constant Item_Info_Access := new Item_Info'Class'(Object.Info.all);
+   begin
+      Object.Info := I;
+   end Adjust;
+
+   --------------
+   -- Finalize --
+   --------------
+
+   procedure Free is new Ada.Unchecked_Deallocation
+     (Item_Info'Class, Item_Info_Access);
+
+   overriding procedure Finalize (Object : in out Item_Holder) is
+   begin
+      Free (Object.Info);
+   end Finalize;
+
+   ---------
+   -- Set --
+   ---------
+
+   procedure Set (Self : in out Item_Holder; Item : Item_Info'Class) is
+   begin
+      Finalize (Self);
+      Self.Info := new Item_Info'Class'(Item);
+   end Set;
 
    --------------
    --  Convert --
@@ -45,42 +83,88 @@ package body DAP.Modules.Variables.Items is
       end if;
    end Convert;
 
-   --------------
-   -- Get_Name --
-   --------------
+   ------------
+   -- Create --
+   ------------
 
-   function Get_Name (Self : Item_Info) return Virtual_String is
+   function Create
+     (Variable    : VSS.Strings.Virtual_String := "";
+      Command     : VSS.Strings.Virtual_String := "";
+      Split_Lines : Boolean := False;
+      Arguments   : Boolean := False;
+      Format      : DAP.Tools.ValueFormat := Default_Format)
+      return Item_Info'Class is
    begin
-      if Self.Varname /= "" then
-         return Self.Varname;
+      if not Variable.Is_Empty then
+         return DAP.Modules.Variables.Items.Variables.Create
+           (Variable, Format);
 
-      elsif Self.Cmd_Name /= ""
-        and then Self.Cmd_Name /= "<>"
-      then
-         return Self.Cmd_Name;
+      elsif not Command.Is_Empty then
+         return DAP.Modules.Variables.Items.Commands.Create
+           (Command, Split_Lines, Format);
+
+      elsif Arguments then
+         return DAP.Modules.Variables.Items.Arguments.Create (Format);
 
       else
-         return Self.Cmd;
+         return No_Item;
       end if;
-   end Get_Name;
+   end Create;
+
+   ------------------
+   -- Is_Arguments --
+   ------------------
+
+   function Is_Arguments (Info : Item_Info) return Boolean is
+   begin
+      return False;
+   end Is_Arguments;
+
+   ----------------
+   -- Is_Command --
+   ----------------
+
+   function Is_Command (Info : Item_Info) return Boolean is
+   begin
+      return False;
+   end Is_Command;
+
+   ----------------
+   -- Is_No_Item --
+   ----------------
+
+   function Is_No_Item (Info : Item_Info) return Boolean is
+   begin
+      return False;
+   end Is_No_Item;
 
    --------------
    -- Get_Name --
    --------------
 
-   function Get_Name (Self : Item_Info) return String is
+   function Get_Name (Self : Item_Info'Class) return String is
    begin
       return VSS.Strings.Conversions.To_UTF_8_String (Get_Name (Self));
    end Get_Name;
 
-   -------------
-   -- Is_Same --
-   -------------
+   ----------------
+   -- Get_Format --
+   ----------------
 
-   function Is_Same (Info : Item_Info; Name : Virtual_String) return Boolean is
+   function Get_Format (Self : Item_Info) return String is
    begin
-      return Info.Cmd = Name or else Info.Varname = Name;
-   end Is_Same;
+      return Image (Self.Format);
+   end Get_Format;
+
+   ------------------
+   -- Is_Same_Name --
+   ------------------
+
+   function Is_Same_Name
+     (Info : Item_Info'Class; Name : Virtual_String) return Boolean is
+   begin
+      return Info.Get_Name = Name;
+   end Is_Same_Name;
 
    -----------
    -- Image --
@@ -94,5 +178,57 @@ package body DAP.Modules.Variables.Items is
          return " (Hexadecimal)";
       end if;
    end Image;
+
+   -------------------
+   -- Find_DAP_Item --
+   -------------------
+
+   overriding procedure Find_DAP_Item
+     (Info  : No_Item_Info;
+      C     : in out DAP.Types.Variables_References_Trees.Cursor;
+      Found : out Boolean) is
+   begin
+      C     := DAP.Types.Variables_References_Trees.No_Element;
+      Found := False;
+   end Find_DAP_Item;
+
+   ----------------
+   -- Get_Format --
+   ----------------
+
+   overriding function Get_Format (Self : No_Item_Info) return String is
+   begin
+      return "";
+   end Get_Format;
+
+   ----------------
+   -- Is_No_Item --
+   ----------------
+
+   overriding function Is_No_Item (Info : No_Item_Info) return Boolean is
+   begin
+      return True;
+   end Is_No_Item;
+
+   -------------
+   -- Restore --
+   -------------
+
+   function Restore
+     (Value : GNATCOLL.JSON.JSON_Value) return Item_Info'Class is
+   begin
+      if String'(Value.Get ("tag")) = "cmd" then
+         return DAP.Modules.Variables.Items.Commands.Load (Value);
+
+      elsif String'(Value.Get ("tag")) = "variable" then
+         return DAP.Modules.Variables.Items.Variables.Load (Value);
+
+      elsif String'(Value.Get ("tag")) = "arguments" then
+         return DAP.Modules.Variables.Items.Arguments.Load (Value);
+
+      else
+         return No_Item;
+      end if;
+   end Restore;
 
 end DAP.Modules.Variables.Items;

@@ -36,6 +36,7 @@ with GPS.Search;                  use GPS.Search;
 
 with DAP.Clients.Variables;       use DAP.Clients.Variables;
 with DAP.Modules.Variables.Items; use DAP.Modules.Variables.Items;
+with DAP.Types;                   use DAP.Types;
 with DAP.Tools;
 
 package DAP.Views.Variables is
@@ -72,7 +73,7 @@ package DAP.Views.Variables is
 private
 
    use DAP.Modules.Variables.Items.Item_Info_Vectors;
-   use DAP.Clients.Variables.Variables_References_Trees;
+   use DAP.Types.Variables_References_Trees;
 
    type Variables_Tree_View_Record is
      new Gtkada.Tree_View.Tree_View_Record with
@@ -107,25 +108,25 @@ private
 
    procedure Add_Row
      (Self   : not null access Variables_Tree_View_Record'Class;
-      Item   : Item_Info;
+      Item   : Item_Info'Class;
       Cursor : Variables_References_Trees.Cursor;
       Parent : Gtk_Tree_Iter);
 
-   function Item_From_Iter
+   function Item_From_Store_Iter
      (Self       : not null access Variables_Tree_View_Record'Class;
       Store_Iter : Gtk_Tree_Iter)
-      return Item_Info;
+      return Item_Info'Class;
    --  Return a row in the variables view converted into an item
 
-   procedure Item_From_Iter
+   function Item_From_Filter_Iter
      (Self        : not null access Variables_Tree_View_Record'Class;
-      Filter_Iter : in out Gtk_Tree_Iter;
-      It          : out Item_Info);
+      Filter_Iter : in out Gtk_Tree_Iter)
+      return Item_Info'Class;
 
    function Find_Info
      (Self : not null access Variables_Tree_View_Record'Class;
       Id   : Item_ID)
-      return Item_Info;
+      return Item_Info'Class;
 
    procedure Find_Best_Info
      (Self   : access Variables_Tree_View_Record'Class;
@@ -136,7 +137,7 @@ private
    function Get_Item_Info
      (Self : not null access Variables_Tree_View_Record'Class;
       Name : String)
-      return Item_Info;
+      return Item_Info'Class;
 
    --  DAP_Variables_View_Record --
 
@@ -163,7 +164,7 @@ private
 
    procedure Display
      (Self : access DAP_Variables_View_Record'Class;
-      Item : in out Item_Info);
+      Item : in out Item_Info'Class);
    --  Displays the variable by Item
 
    procedure Undisplay
@@ -173,7 +174,7 @@ private
 
    procedure Undisplay
      (Self : access DAP_Variables_View_Record'Class;
-      Item : Item_Info);
+      Item : Item_Info'Class);
    --  Removes the variable from the view by Item
 
    overriding procedure Update
@@ -187,7 +188,7 @@ private
 
    procedure Update
      (Self     : access DAP_Variables_View_Record'Class;
-      Item     : Item_Info;
+      Item     : Item_Info'Class;
       Position : Natural;
       Path     : Gtk.Tree_Model.Gtk_Tree_Path;
       Children : Boolean := False);
