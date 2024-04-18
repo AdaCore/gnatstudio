@@ -25,7 +25,7 @@ def run_test():
     yield wait_tasks(other_than=known_tasks)
 
     debug.send("run")
-    yield wait_until_not_busy(debug)
+    yield wait_DAP_server('stackTrace')
 
     GPS.execute_action("debug tree display arguments")
     yield wait_DAP_server("variables")
