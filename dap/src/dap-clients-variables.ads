@@ -17,8 +17,6 @@
 
 --  Module that incapsulate Variables information
 
-with Ada.Containers.Multiway_Trees;
-
 with Gtk.Tree_Model;               use Gtk.Tree_Model;
 
 with VSS.Strings;                  use VSS.Strings;
@@ -28,17 +26,6 @@ with DAP.Tools;                    use DAP.Tools;
 
 package DAP.Clients.Variables is
 
-   type Variable_Kind is (Locals, Arguments, Non_Specified);
-   --  Kind is used to determine from where we get the variable
-
-   type Variable_Data (Kind : Variable_Kind := Non_Specified) is record
-      Data : DAP.Tools.Variable;
-   end record;
-   --  Holds DAP variable data
-
-   package Variables_References_Trees is
-     new Ada.Containers.Multiway_Trees (Variable_Data);
-
    type Request_Params_Kind is (View, Python_API, Set_Variable);
    --  To determine where the variable needed:
    --   - View : when the request is initiated from the view
@@ -46,7 +33,7 @@ package DAP.Clients.Variables is
    --   - Set_Variable: when the request for setting the variable value
 
    type Request_Parameters (Kind : Request_Params_Kind) is record
-      Item     : DAP.Modules.Variables.Items.Item_Info;
+      Item     : DAP.Modules.Variables.Items.Item_Holder;
       Children : Boolean := False;
 
       case Kind is
@@ -105,6 +92,18 @@ package DAP.Clients.Variables is
 
    -- Utils --
 
+   function Full_Name
+     (Cursor : Variables_References_Trees.Cursor)
+      return VSS.Strings.Virtual_String;
+   --  Returns the variable full name
+
+   procedure Find_By_Name
+     (Name   : Virtual_String;
+      Cursor : in out Variables_References_Trees.Cursor);
+   --  Find the variable with the given Name and return cursor to it.
+   --  Returns No_Element if not found. The search starts from the given
+   --  Cursor's position's childs.
+
    procedure Find_Name_Or_Parent
      (Name   : Virtual_String;
       Cursor : in out Variables_References_Trees.Cursor;
@@ -115,11 +114,6 @@ package DAP.Clients.Variables is
    --  the returned cursor will be set on the parent's element.
    --  Returns No_Element only when both the variable and its parent are
    --  not found.
-
-   function Full_Name
-     (Cursor : Variables_References_Trees.Cursor)
-      return VSS.Strings.Virtual_String;
-   --  Returns the variable full name
 
    procedure Register_Module;
    --  Register the functions needed to work properly
@@ -166,12 +160,6 @@ private
       Params   : Request_Parameters;
       Variable : DAP.Tools.Variable);
    --  Callback when the variable's value is set
-
-   procedure Find_By_Name
-     (Name   : Virtual_String;
-      Cursor : in out Variables_References_Trees.Cursor);
-   --  Find the variable with the given Name and return cursor to it.
-   --  Returns No_Element if not found.
 
    procedure On_Variable_Not_Found
      (Self   : in out Variables_Holder;

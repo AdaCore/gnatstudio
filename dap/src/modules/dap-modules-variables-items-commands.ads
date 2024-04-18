@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                               GNAT Studio                                --
 --                                                                          --
---                        Copyright (C) 2022-2023, AdaCore                  --
+--                     Copyright (C) 2023, AdaCore                          --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -15,29 +15,33 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
---  Utilities to support selection contexts in the contxt of the debugger
+package DAP.Modules.Variables.Items.Commands is
 
-with GPS.Kernel;                   use GPS.Kernel;
-with DAP.Modules.Variables.Items;  use DAP.Modules.Variables.Items;
+   type Command_Item_Info is new Item_Info with record
+      Cmd         : Virtual_String; --  tree display `cmd`
+      Split_Lines : Boolean;
+   end record;
 
-package DAP.Contexts is
+   overriding function Get_Name
+     (Self : Command_Item_Info) return Virtual_String;
 
-   function Get_Variable_Name
-     (Context     : GPS.Kernel.Selection_Context;
-      Dereference : Boolean) return String;
-   --  If Context contains an entity, get the entity name.
-   --  Dereference the entity if Dereference is True.
-   --  Return "" if entity name could not be found in Context.
+   overriding function Is_Command (Info : Command_Item_Info) return Boolean;
 
-   procedure Store_Variable
-     (Context   : in out GPS.Kernel.Selection_Context;
-      Full_Name : String;
-      Info      : Item_Info'Class);
-   --  Set the debugging variable into the Context.
+   overriding procedure Find_DAP_Item
+     (Info  : Command_Item_Info;
+      C     : in out DAP.Types.Variables_References_Trees.Cursor;
+      Found : out Boolean);
 
-   function Get_Variable
-     (Context : GPS.Kernel.Selection_Context)
+   overriding procedure Store
+     (Info  : Command_Item_Info;
+      Value : in out GNATCOLL.JSON.JSON_Value);
+
+   function Load (Value : GNATCOLL.JSON.JSON_Value) return Item_Info'Class;
+
+   function Create
+     (Command     : VSS.Strings.Virtual_String;
+      Split_Lines : Boolean;
+      Format      : DAP.Tools.ValueFormat)
       return Item_Info'Class;
-   --  Retrieve the debugging variable from the Context.
 
-end DAP.Contexts;
+end DAP.Modules.Variables.Items.Commands;

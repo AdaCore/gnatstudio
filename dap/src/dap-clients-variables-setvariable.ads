@@ -17,7 +17,6 @@
 
 with VSS.Strings;                 use VSS.Strings;
 
-with DAP.Modules.Variables.Items; use DAP.Modules.Variables.Items;
 with DAP.Requests.SetVariable;
 with DAP.Tools;
 

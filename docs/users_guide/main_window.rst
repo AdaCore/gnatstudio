@@ -1692,3 +1692,19 @@ the file selector provides the following contents:
 * A button bar with the :guilabel:`OK` and :guilabel:`Cancel` buttons.
   When you have selected the desired file, click :guilabel:`OK` to confirm or
   click :guilabel:`Cancel` at any time to cancel the file selection.
+
+The Libadalang view
+============================
+
+.. image:: lal_view.png
+
+The :guilabel:`Libadalang` view shows the abstract syntax tree (AST) for the currently focused Ada file.
+This AST is produced by the `Libadalang <http://docs.adacore.com/live/wave/libadalang/html/libadalang_ug/>`_
+library.
+
+This view can be used to develop libadalang-based Python plugins, allowing to identify quickly
+the nodes of a given Ada file. It also provides a convenient way to play with the Libadalang API
+in the Python interpreter.
+
+By default it will show the node located under cursor position, and all its parents.
+You can enable the :guilabel:`full tree` local preference in the view's toolbar to show the full tree instead.

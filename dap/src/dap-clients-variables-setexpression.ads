@@ -15,7 +15,6 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with DAP.Modules.Variables.Items; use DAP.Modules.Variables.Items;
 with DAP.Requests.SetExpression;
 with DAP.Tools;
 

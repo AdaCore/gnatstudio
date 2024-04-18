@@ -19,6 +19,7 @@
 
 with Ada.Containers.Indefinite_Vectors;
 with Ada.Containers.Indefinite_Hashed_Maps;
+with Ada.Containers.Multiway_Trees;
 with Ada.Containers.Vectors;
 with Ada.Containers.Ordered_Sets;
 with Ada.Strings.Hash;
@@ -26,6 +27,8 @@ with Ada.Strings.Unbounded;
 
 with GNATCOLL.VFS;
 with GPS.Kernel.Messages;
+
+with DAP.Tools;
 
 package DAP.Types is
 
@@ -172,5 +175,20 @@ package DAP.Types is
        (GPS.Kernel.Messages.Editor_Line => True,
         GPS.Kernel.Messages.Locations   => False,
         GPS.Kernel.Messages.Editor_Side => False);
+
+   -------------------
+   -- Variable_Data --
+   -------------------
+
+   type Variable_Kind is (Locals, Arguments, Non_Specified);
+   --  Kind is used to determine from where we get the variable
+
+   type Variable_Data (Kind : Variable_Kind := Non_Specified) is record
+      Data : DAP.Tools.Variable;
+   end record;
+   --  Holds DAP variable data
+
+   package Variables_References_Trees is
+     new Ada.Containers.Multiway_Trees (Variable_Data);
 
 end DAP.Types;

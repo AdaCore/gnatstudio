@@ -1,5 +1,5 @@
 ------------------------------------------------------------------------------
---                      GVD - The GNU Visual Debugger                       --
+--                               GNAT Studio                                --
 --                                                                          --
 --                     Copyright (C) 2023, AdaCore                          --
 --                                                                          --
@@ -15,29 +15,29 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
---  Utilities to support selection contexts in the contxt of the debugger
+package DAP.Modules.Variables.Items.Variables is
 
-with GPS.Kernel;                   use GPS.Kernel;
-with DAP.Modules.Variables.Items;  use DAP.Modules.Variables.Items;
+   type Variable_Item_Info is new Item_Info with record
+      Varname : Virtual_String;
+   end record;
 
-package DAP.Modules.Contexts is
+   overriding function Get_Name
+     (Self : Variable_Item_Info) return Virtual_String;
 
-   function Get_Variable_Name
-     (Context     : GPS.Kernel.Selection_Context;
-      Dereference : Boolean) return String;
-   --  If Context contains an entity, get the entity name.
-   --  Dereference the entity if Dereference is True.
-   --  Return "" if entity name could not be found in Context.
+   overriding procedure Find_DAP_Item
+     (Info  : Variable_Item_Info;
+      C     : in out DAP.Types.Variables_References_Trees.Cursor;
+      Found : out Boolean);
 
-   procedure Store_Variable
-     (Context   : in out GPS.Kernel.Selection_Context;
-      Full_Name : String;
-      Info      : Item_Info);
-   --  Set the debugging variable into the Context.
+   overriding procedure Store
+     (Info  : Variable_Item_Info;
+      Value : in out GNATCOLL.JSON.JSON_Value);
 
-   function Get_Variable
-     (Context : GPS.Kernel.Selection_Context)
-      return Item_Info;
-   --  Retrieve the debugging variable from the Context.
+   function Load (Value : GNATCOLL.JSON.JSON_Value) return Item_Info'Class;
 
-end DAP.Modules.Contexts;
+   function Create
+     (Variable : VSS.Strings.Virtual_String;
+      Format   : DAP.Tools.ValueFormat)
+      return Item_Info'Class;
+
+end DAP.Modules.Variables.Items.Variables;

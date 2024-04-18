@@ -15,7 +15,7 @@ GNAT Studio is a lightweight, extensible IDE, intended to develop high-integrity
 
 GNAT Studio requires:
 
-- A recent version of [Gtk+](http://www.gtk.org/) (currently using version 3.14)
+- A recent version of [Gtk+](http://www.gtk.org/) (currently using version 3.24)
 - An install of Python which includes [PyGObject](https://wiki.gnome.org/action/show/Projects/PyGObject) and [Pycairo](https://cairographics.org/pycairo/)
 - An install of [GtkAda](https://github.com/AdaCore/gtkada)
 - An install of [GNATcoll](https://github.com/AdaCore/gnatcoll), configured with support for projects and Python scripting (`--enable-project`, `--with-python=...`)

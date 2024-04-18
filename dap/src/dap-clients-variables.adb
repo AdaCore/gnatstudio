@@ -281,7 +281,12 @@ package body DAP.Clients.Variables is
    is
       Id : Integer;
    begin
-      if Params.Item.Cmd.Is_Empty then
+      if Params.Item.Info.Is_Command then
+         --  it is command, use evaluate request
+         DAP.Clients.Variables.Evaluate.Send_Evaluate_Request
+           (Self.Client, Params);
+
+      else
          --  It is not a command, use variable request. Request contents of
          --  Locals or Arguments if any.
 
@@ -297,11 +302,6 @@ package body DAP.Clients.Variables is
          else
             Free (Params);
          end if;
-
-      else
-         --  it is command, use evaluate request
-         DAP.Clients.Variables.Evaluate.Send_Evaluate_Request
-           (Self.Client, Params);
       end if;
    end On_Scopes_Result;
 
@@ -461,22 +461,9 @@ package body DAP.Clients.Variables is
       Found : Boolean;
 
    begin
-      Trace (Me, "On_Variables_Response:" &
-               VSS.Strings.Conversions.To_UTF_8_String
-               (Params.Item.Varname));
+      Trace (Me, "On_Variables_Response:" & Params.Item.Info.Get_Name);
 
-      if Params.Item.Varname.Is_Empty then
-         --  We have a command here
-         Find_By_Name (Params.Item.Cmd, C);
-         Found := C /= No_Element;
-
-      else
-         --  We have a variable here
-         Trace (Me, "Find_Name_Or_Parent:" &
-                  VSS.Strings.Conversions.To_UTF_8_String
-                  (Params.Item.Varname));
-         Find_Name_Or_Parent (Params.Item.Varname, C, Found);
-      end if;
+      Params.Item.Info.Find_DAP_Item (C, Found);
 
       if Found then
          --  we found the variable
@@ -573,15 +560,21 @@ package body DAP.Clients.Variables is
          --  we found the parent of the variable we are looking for.
          --  Send new request to "expand" it and get children
 
-         if not Params.Item.Cmd.Is_Empty then
+         if Params.Item.Info.Is_Command then
             --  Create request for command
             DAP.Clients.Variables.Evaluate.Send_Evaluate_Request
               (Self.Client, Params);
 
          else
-            --  Create request for variable
-            DAP.Clients.Variables.Variables.Send_Variables_Request
-              (Self.Client, Element (C).Data.variablesReference, Params);
+            if Element (C).Data.variablesReference > 0 then
+               --  Create request for variable
+               DAP.Clients.Variables.Variables.Send_Variables_Request
+                 (Self.Client, Element (C).Data.variablesReference, Params);
+
+            else
+               --  wariable does not have nested elements
+               Self.On_Variable_Not_Found (Params);
+            end if;
          end if;
 
       else

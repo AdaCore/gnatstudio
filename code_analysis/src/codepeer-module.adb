@@ -608,7 +608,8 @@ package body CodePeer.Module is
    procedure Review
      (Module       : not null access Module_Id_Record'Class;
       Force        : Boolean;
-      Build_Target : String)
+      Build_Target : String;
+      Need_Reload  : Boolean := True)
    is
       Project            : constant Project_Type :=
         Get_Project (Module.Kernel);
@@ -631,7 +632,7 @@ package body CodePeer.Module is
          end if;
       end if;
 
-      if CodePeer.Is_GNATSAS then
+      if CodePeer.Is_GNATSAS and then Need_Reload then
          --  The report is only available after a run of "gnatsas report"
          Module.Action := Report;
       else

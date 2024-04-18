@@ -4,10 +4,10 @@ Building/Installing from sources
 To build GNAT Studio from sources, you need to have GNU make available as a
 prerequisite.
 
-You need to use a recent version of the GNAT compiler (e.g. GNAT 7.4.2
-or GNAT GPL 2016).
+You need to use a recent version of the GNAT compiler (e.g. GNAT 24
+or GNAT FSF).
 
-You then need to install the Gtk+ 3.x suite (e.g 3.14).
+You then need to install the Gtk+ 3.x suite (e.g 3.24).
 To download and build Gtk+, follow the instructions given at www.gtk.org.
 On most linux systems, gtk+ is installed by default and you do not need to
 reinstall it yourself.

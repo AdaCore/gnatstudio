@@ -69,7 +69,7 @@ with XML_Utils;                   use XML_Utils;
 with GPS.Debuggers;
 
 with DAP.Module;
-with DAP.Modules.Contexts;        use DAP.Modules.Contexts;
+with DAP.Contexts;                use DAP.Contexts;
 with DAP.Modules.Preferences;
 with DAP.Tools;                   use DAP.Tools;
 with DAP.Utils;                   use DAP.Utils;
@@ -140,6 +140,11 @@ package body DAP.Views.Variables is
    end record;
    overriding function Execute
      (Command : access Print_Variable_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type;
+
+   type Display_Arguments_Command is new Interactive_Command with null record;
+   overriding function Execute
+     (Command : access Display_Arguments_Command;
       Context : Interactive_Command_Context) return Command_Return_Type;
 
    type Access_Variable_Filter is
@@ -252,12 +257,14 @@ package body DAP.Views.Variables is
         and then Get_Client (View) = Client
       then
          if Params.Path = Null_Gtk_Tree_Path
-           and then Params.Item.Id /= Unknown_Id
+           and then Params.Item.Info.Id /= Unknown_Id
          then
             --  we did not found the root variable, just add a row that it
             --  can be deleted from GUI
             View.Tree.Add_Row
-              (Params.Item, Variables_References_Trees.No_Element, Null_Iter);
+              (Item   => Params.Item.Info.all,
+               Cursor => Variables_References_Trees.No_Element,
+               Parent => Null_Iter);
          end if;
       end if;
    end On_Variable_Not_Found;
@@ -279,9 +286,9 @@ package body DAP.Views.Variables is
         and then Get_Client (View) = Client
       then
          if (Params.Path = Null_Gtk_Tree_Path
-             and then Params.Item.Id /= Unknown_Id)
+             and then Params.Item.Info.Id /= Unknown_Id)
            or else (Params.Path /= Null_Gtk_Tree_Path
-                    and then Params.Item.Id = Unknown_Id)
+                    and then Params.Item.Info.Id = Unknown_Id)
          --  do not add child items when we are updating the view
          then
             if Params.Path /= Null_Gtk_Tree_Path then
@@ -289,7 +296,7 @@ package body DAP.Views.Variables is
             end if;
 
             --  add it to the table
-            View.Tree.Add_Row (Params.Item, C, Parent);
+            View.Tree.Add_Row (Params.Item.Info.all, C, Parent);
          end if;
 
          if Params.Position /= 0 then
@@ -325,14 +332,14 @@ package body DAP.Views.Variables is
             Parent := View.Tree.Model.Get_Iter (Params.Path);
          end if;
 
-         if Params.Item.Id /= Unknown_Id
+         if Params.Item.Info.Id /= Unknown_Id
          --  add the item when it is root item
            or else Parent /= Null_Iter
          --  or we are adding as a nested element
          then
             Current := First_Child (Current);
             while Current /= Variables_References_Trees.No_Element loop
-               View.Tree.Add_Row (Params.Item, Current, Parent);
+               View.Tree.Add_Row (Params.Item.Info.all, Current, Parent);
                Next_Sibling (Current);
             end loop;
             Dummy := View.Tree.Expand_Row (Params.Path, False);
@@ -354,10 +361,14 @@ package body DAP.Views.Variables is
    -----------------------
 
    procedure Restore_Expansion
-     (Self : access DAP_Variables_View_Record'Class) is
+     (Self : access DAP_Variables_View_Record'Class)
+   is
+      use type Expansions.Expansion_Status;
    begin
-      Expansions.Set_Expansion_Status
-        (Self.Tree, Self.Expansion);
+      if Self.Expansion /= Expansions.No_Expansion then
+         Expansions.Set_Expansion_Status
+           (Self.Tree, Self.Expansion);
+      end if;
    end Restore_Expansion;
 
    ---------------------
@@ -565,14 +576,14 @@ package body DAP.Views.Variables is
    begin
       if View /= null
         and then GPS.Kernel.Contexts.Has_Debugging_Variable (Context)
-        and then Get_Variable (Context).Cmd = ""
+        and then not Get_Variable (Context).Is_Command
       then
          declare
             Name : constant String :=
               Get_Variable_Name (Context, Dereference => False);
          begin
             if Name /= "" then
-               return Get_Item_Info (View.Tree, Name) /= No_Item_Info;
+               return not Get_Item_Info (View.Tree, Name).Is_No_Item;
             end if;
          end;
       end if;
@@ -628,7 +639,6 @@ package body DAP.Views.Variables is
       Full_Name : constant VSS.Strings.Virtual_String :=
         VSS.Strings.Conversions.To_Virtual_String
           (Get_String (Self.Model, Store_Iter, Column_Full_Name));
-      It        : Item_Info;
       Path      : Gtk.Tree_Model.Gtk_Tree_Path;
       C         : Item_Info_Vectors.Cursor;
       Found     : Boolean;
@@ -639,7 +649,7 @@ package body DAP.Views.Variables is
 
       Path := Self.Model.Get_Path (Store_Iter);
       for It2 of Self.Items loop
-         if To_Lowercase.Transform (It2.Varname) = Full_Name then
+         if To_Lowercase.Transform (It2.Get_Name) = Full_Name then
             DAP_Variables_View (Self.View).Update (It2, 0, Path, True);
             return;
          end if;
@@ -647,16 +657,18 @@ package body DAP.Views.Variables is
 
       Self.Find_Best_Info (Full_Name, C, Found);
 
-      It :=
-        (Id      => Unknown_Id,
-         Varname => Full_Name,
-         Format  =>
-           (if C /= Item_Info_Vectors.No_Element
-            then Element (C).Format
-            else Default_Format),
-         others  => <>);
-      Self.Items.Append (It);
-      DAP_Variables_View (Self.View).Update (It, 0, Path, True);
+      declare
+         It : constant DAP.Modules.Variables.Items.Item_Info'Class :=
+           DAP.Modules.Variables.Items.Create
+             (Variable => Full_Name,
+              Format   =>
+                (if C /= Item_Info_Vectors.No_Element
+                 then Element (C).Format
+                 else Default_Format));
+      begin
+         Self.Items.Append (It);
+         DAP_Variables_View (Self.View).Update (It, 0, Path, True);
+      end;
    end Add_Children;
 
    -------------
@@ -665,22 +677,31 @@ package body DAP.Views.Variables is
 
    procedure Add_Row
      (Self   : not null access Variables_Tree_View_Record'Class;
-      Item   : Item_Info;
+      Item   : Item_Info'Class;
       Cursor : Variables_References_Trees.Cursor;
       Parent : Gtk_Tree_Iter)
    is
-      Var : Variable;
-      Row : Gtk_Tree_Iter;
-      Fg  : constant String := To_String (Default_Style.Get_Pref_Fg);
+      Var   : Variable;
+      Row   : Gtk_Tree_Iter;
+      Path  : Gtk.Tree_Model.Gtk_Tree_Path;
+      C     : Variables_References_Trees.Cursor;
+      Dummy : Boolean;
+      Fg    : constant String := To_String (Default_Style.Get_Pref_Fg);
 
       function Display_Type_Name return String with Inline;
       function Display_Name return String with Inline;
-      --  Return the display name or type name
+      function Display_Value return String with Inline;
+      --  Return the display name or type name or value
 
       function Validate_UTF_8 (S : String) return String;
       --  This function cuts S up to it's last valid UTF8 symbol
 
-      function Display_Name return String is
+      ------------------
+      -- Display_Name --
+      ------------------
+
+      function Display_Name return String
+      is
          function Wrap (Name : String) return String;
          function Wrap (Name : String) return String is
          begin
@@ -688,23 +709,30 @@ package body DAP.Views.Variables is
                return "";
             else
                return "<b>" & XML_Utils.Protect (Name) & "</b>"
-                 & (if Item = No_Item_Info
-                    then ""
-                    else Image (Item.Format));
+                 & Item.Get_Format;
             end if;
          end Wrap;
 
       begin
-         if Cursor = Variables_References_Trees.No_Element then
+         if Cursor = Variables_References_Trees.No_Element
+           or else Cursor.Is_Root
+         then
             return Wrap (Get_Name (Item));
+
          else
             return Wrap (UTF8 (Element (Cursor).Data.name));
          end if;
       end Display_Name;
 
+      -----------------------
+      -- Display_Type_Name --
+      -----------------------
+
       function Display_Type_Name return String is
       begin
-         if Cursor = Variables_References_Trees.No_Element then
+         if Cursor = Variables_References_Trees.No_Element
+           or else Cursor.Is_Root
+         then
             return "";
          else
             return XML_Utils.Protect (UTF8 (Element (Cursor).Data.a_type));
@@ -732,32 +760,44 @@ package body DAP.Views.Variables is
          return S (S'First .. Ptr - 1);
       end Validate_UTF_8;
 
-      Var_Name  : constant String := Display_Name;
-      Value     : constant String :=
-                    (if Cursor = Variables_References_Trees.No_Element
-                     then ""
-                     else XML_Utils.Protect
-                       (Validate_UTF_8 (UTF8 (Element (Cursor).Data.value))));
-      Type_Name : constant String := Display_Type_Name;
+      -------------------
+      -- Display_Value --
+      -------------------
+
+      function Display_Value return String is
+      begin
+         if Cursor = Variables_References_Trees.No_Element
+           or else Cursor.Is_Root
+         then
+            return "";
+
+         else
+            return XML_Utils.Protect
+              (Validate_UTF_8 (UTF8 (Element (Cursor).Data.value)));
+         end if;
+      end Display_Value;
+
    begin
-      if Cursor /= Variables_References_Trees.No_Element then
+      if Cursor /= Variables_References_Trees.No_Element
+        and then not Is_Root (Cursor)
+      then
          Var := Element (Cursor).Data;
       end if;
 
       Trace
         (Me, "Add row:" & UTF8
-           ((if Cursor /= Variables_References_Trees.No_Element
-            then Var.name
-            else Item.Varname)));
+           ((if Var.name.Is_Empty
+            then Item.Get_Name
+            else Var.name)));
 
       Self.Model.Append (Iter => Row, Parent => Parent);
       Set_And_Clear
         (Self.Model,
          Iter   => Row,
          Values =>
-           (Column_Name         => As_String (Var_Name),
-            Column_Value        => As_String (Value),
-            Column_Type         => As_String (Type_Name),
+           (Column_Name         => As_String (Display_Name),
+            Column_Value        => As_String (Display_Value),
+            Column_Type         => As_String (Display_Type_Name),
             Column_Icon         => As_String
               (if Parent = Null_Iter
                then Stock_From_Category
@@ -774,10 +814,29 @@ package body DAP.Views.Variables is
             Column_Type_Fg      => As_String
               (To_String (Types_Style.Get_Pref_Fg)),
             Column_Full_Name    => As_String
-              (VSS.Strings.Conversions.To_UTF_8_String (Full_Name (Cursor)))));
+              (VSS.Strings.Conversions.To_UTF_8_String
+                   (Full_Name (Cursor)))));
 
       if Cursor /= Variables_References_Trees.No_Element then
-         if Var.variablesReference > 0 then
+         if Item.Is_Arguments then
+            pragma Assert (Cursor.Is_Root);
+
+            --  Fill `arguments` node
+            C := Cursor.First_Child;
+            while C.Has_Element loop
+               if Element (C).Kind = DAP.Types.Arguments then
+                  Self.Add_Row
+                    (Item => No_Item, Cursor => C, Parent => Row);
+               end if;
+               C.Next_Sibling;
+            end loop;
+
+            --  Expand `arguments` node
+            Path  := Self.Get_Sortable_Path_For_Store_Iter (Row);
+            Dummy := Self.Expand_Row (Path, False);
+            Path_Free (Path);
+
+         elsif Var.variablesReference > 0 then
             Self.Set_Might_Have_Children (Row);
          end if;
 
@@ -786,14 +845,14 @@ package body DAP.Views.Variables is
       end if;
    end Add_Row;
 
-   --------------------
-   -- Item_From_Iter --
-   --------------------
+   --------------------------
+   -- Item_From_Store_Iter --
+   --------------------------
 
-   function Item_From_Iter
+   function Item_From_Store_Iter
      (Self       : not null access Variables_Tree_View_Record'Class;
       Store_Iter : Gtk_Tree_Iter)
-      return Item_Info
+      return Item_Info'Class
    is
       Id       : Item_ID;
       Parent   : Gtk_Tree_Iter;
@@ -810,17 +869,17 @@ package body DAP.Views.Variables is
          Cur_Iter := Parent;
       end loop;
 
-      return No_Item_Info;
-   end Item_From_Iter;
+      return No_Item;
+   end Item_From_Store_Iter;
 
-   --------------------
-   -- Item_From_Iter --
-   --------------------
+   ---------------------------
+   -- Item_From_Filter_Iter --
+   ---------------------------
 
-   procedure Item_From_Iter
+   function Item_From_Filter_Iter
      (Self        : not null access Variables_Tree_View_Record'Class;
-      Filter_Iter : in out Gtk_Tree_Iter;
-      It          : out Item_Info)
+      Filter_Iter : in out Gtk_Tree_Iter)
+      return Item_Info'Class
    is
       Store_Iter : Gtk_Tree_Iter;
       M          : Gtk_Tree_Model;
@@ -832,8 +891,8 @@ package body DAP.Views.Variables is
          Store_Iter := Self.Convert_To_Store_Iter (Filter_Iter);
       end if;
 
-      It := Item_From_Iter (Self, Store_Iter);
-   end Item_From_Iter;
+      return Item_From_Store_Iter (Self, Store_Iter);
+   end Item_From_Filter_Iter;
 
    ---------------
    -- Find_Info --
@@ -842,7 +901,7 @@ package body DAP.Views.Variables is
    function Find_Info
      (Self : not null access Variables_Tree_View_Record'Class;
       Id   : Item_ID)
-      return Item_Info is
+      return Item_Info'Class is
    begin
       for Item of Self.Items loop
          if Item.Id = Id then
@@ -850,7 +909,7 @@ package body DAP.Views.Variables is
          end if;
       end loop;
 
-      return No_Item_Info;
+      return No_Item;
    end Find_Info;
 
    ---------------
@@ -864,32 +923,33 @@ package body DAP.Views.Variables is
       Text        : String)
    is
       use type DAP.Clients.DAP_Client_Access;
-
-      It : Item_Info;
    begin
       if Store_Iter /= Null_Iter
         and then View_Column = Column_Value
       then
-         It := Item_From_Iter (Self, Store_Iter);
+         declare
+            It : constant Item_Info'Class :=
+              Item_From_Store_Iter (Self, Store_Iter);
+         begin
+            if Self.View /= null
+              and then Get_Client (Self.View) /= null
+              and then not It.Is_No_Item
+            then
+               if It.Is_Command then
+                  DAP_Variables_View (Self.View).Set_Variable_Value
+                    (Full_Name => Get_Name (It),
+                     Value     => Text,
+                     Path      => Self.Model.Get_Path (Store_Iter));
 
-         if Self.View /= null
-           and then Get_Client (Self.View) /= null
-           and then It /= No_Item_Info
-         then
-            if It.Cmd /= Empty_Virtual_String then
-               DAP_Variables_View (Self.View).Set_Variable_Value
-                 (Full_Name => Get_Name (It),
-                  Value     => Text,
-                  Path      => Self.Model.Get_Path (Store_Iter));
-
-            elsif It.Varname /= Empty_Virtual_String then
-               DAP_Variables_View (Self.View).Set_Variable_Value
-                 (Full_Name => Self.Model.Get_String
-                    (Store_Iter, Column_Full_Name),
-                  Value     => Text,
-                  Path      => Self.Model.Get_Path (Store_Iter));
+               elsif It.Get_Name /= Empty_Virtual_String then
+                  DAP_Variables_View (Self.View).Set_Variable_Value
+                    (Full_Name => Self.Model.Get_String
+                       (Store_Iter, Column_Full_Name),
+                     Value     => Text,
+                     Path      => Self.Model.Get_Path (Store_Iter));
+               end if;
             end if;
-         end if;
+         end;
       end if;
    end On_Edited;
 
@@ -919,16 +979,22 @@ package body DAP.Views.Variables is
       Self.Tree.Find_Best_Info (N, Cursor, Found);
 
       if Found then
-         Client.Get_Variables.Set_Variable
-           ((Kind     => Set_Variable,
-             Item     => Element (Cursor),
-             Children => False,
-             Name     => N,
-             Value    => VSS.Strings.Conversions.To_Virtual_String (Value),
-             Set_Path => Path));
-      end if;
+         declare
+            Holder : DAP.Modules.Variables.Items.Item_Holder;
+         begin
+            Set (Holder, Element (Cursor));
 
-      Path_Free (Path);
+            Client.Get_Variables.Set_Variable
+              ((Kind     => Set_Variable,
+                Item     => Holder,
+                Children => False,
+                Name     => N,
+                Value    => VSS.Strings.Conversions.To_Virtual_String (Value),
+                Set_Path => Path));
+         end;
+      else
+         Path_Free (Path);
+      end if;
    end Set_Variable_Value;
 
    ----------------
@@ -1059,32 +1125,41 @@ package body DAP.Views.Variables is
         Variables_MDI_Views.View_From_Child (Self);
 
       Context     : Selection_Context;
-      It          : Item_Info;
       Filter_Iter : Gtk_Tree_Iter;
    begin
       Context := GPS_MDI_Child_Record (Self.all).Build_Context (Event);
 
       if Event /= null then
          Filter_Iter := Find_Iter_For_Event (View.Tree, Event);
-         Item_From_Iter (View.Tree, Filter_Iter => Filter_Iter, It => It);
-         View.Tree.Get_Selection.Unselect_All;
-         View.Tree.Get_Selection.Select_Iter (Filter_Iter);
       else
          Filter_Iter := Null_Iter;
-         Item_From_Iter (View.Tree, Filter_Iter => Filter_Iter, It => It);
       end if;
 
-      if It /= No_Item_Info then
-         if not It.Cmd.Is_Empty then
-            Store_Variable (Context, Get_Name (It), It);
-
-         elsif not It.Varname.Is_Empty then
-            Store_Variable
-              (Context,
-               View.Tree.Filter.Get_String (Filter_Iter, Column_Full_Name),
-               It);
+      declare
+         It : constant Item_Info'Class := Item_From_Filter_Iter
+           (View.Tree, Filter_Iter => Filter_Iter);
+      begin
+         if Event /= null then
+            View.Tree.Get_Selection.Unselect_All;
+            View.Tree.Get_Selection.Select_Iter (Filter_Iter);
          end if;
-      end if;
+
+         if not It.Is_No_Item then
+            if It.Is_Command then
+               Store_Variable (Context, It.Get_Name, It);
+
+            elsif It.Get_Name /= "" then
+               --  We use the full display name to store the variable's value
+               --  in Column_Full_Name field, to have a unique ID
+               --  (e.g: "variable.field1" instead of "field1")
+
+               Store_Variable
+                 (Context,
+                  View.Tree.Filter.Get_String (Filter_Iter, Column_Full_Name),
+                  It);
+            end if;
+         end if;
+      end;
 
       return Context;
    end Build_Context;
@@ -1213,10 +1288,11 @@ package body DAP.Views.Variables is
      (Self : access DAP_Variables_View_Record'Class;
       Name : String)
    is
-      Item : Item_Info;
+      Item : DAP.Modules.Variables.Items.Item_Info'Class :=
+        DAP.Modules.Variables.Items.Create
+          (Variable => VSS.Strings.Conversions.To_Virtual_String (Name));
    begin
       Trace (Me, "Display:" & Name);
-      Item.Varname := VSS.Strings.Conversions.To_Virtual_String (Name);
       Self.Display (Item);
    end Display;
 
@@ -1226,7 +1302,7 @@ package body DAP.Views.Variables is
 
    procedure Display
      (Self : access DAP_Variables_View_Record'Class;
-      Item : in out Item_Info) is
+      Item : in out Item_Info'Class) is
    begin
       Self.Tree.Ids := Self.Tree.Ids + 1;
       Item.Id       := Self.Tree.Ids;
@@ -1241,13 +1317,25 @@ package body DAP.Views.Variables is
 
    procedure Undisplay
      (Self : access DAP_Variables_View_Record'Class;
-      Item : Item_Info) is
+      Item : Item_Info'Class) is
    begin
-      if not Item.Varname.Is_Empty then
-         Self.Undisplay (Item.Varname);
+      if Item.Is_Arguments then
+         declare
+            Curs : Item_Info_Vectors.Cursor;
+         begin
+            Curs := Self.Tree.Items.First;
+            while Item_Info_Vectors.Has_Element (Curs) loop
+               if Item_Info_Vectors.Element (Curs).Is_Arguments then
+                  Self.Tree.Items.Delete (Curs);
+                  exit;
+               end if;
+               Item_Info_Vectors.Next (Curs);
+            end loop;
 
-      elsif not Item.Cmd.Is_Empty then
-         Self.Undisplay (Item.Cmd);
+            Self.Update;
+         end;
+      else
+         Self.Undisplay (Get_Name (Item));
       end if;
    end Undisplay;
 
@@ -1261,9 +1349,13 @@ package body DAP.Views.Variables is
    is
       Curs : Item_Info_Vectors.Cursor;
    begin
+      if Name.Is_Empty then
+         return;
+      end if;
+
       Curs := Self.Tree.Items.First;
       while Item_Info_Vectors.Has_Element (Curs) loop
-         if Is_Same (Item_Info_Vectors.Element (Curs), Name) then
+         if Is_Same_Name (Item_Info_Vectors.Element (Curs), Name) then
             Self.Tree.Items.Delete (Curs);
             exit;
          end if;
@@ -1346,7 +1438,7 @@ package body DAP.Views.Variables is
 
    procedure Update
      (Self     : access DAP_Variables_View_Record'Class;
-      Item     : Item_Info;
+      Item     : Item_Info'Class;
       Position : Natural;
       Path     : Gtk.Tree_Model.Gtk_Tree_Path;
       Children : Boolean := False)
@@ -1366,16 +1458,21 @@ package body DAP.Views.Variables is
 
       if Client.Is_Stopped then
          declare
-            Params : Request_Parameters :=
-              (Kind     => View,
-               Item     => Item,
-               Children => Children,
-               Position => Position,
-               Path     => Path);
+            Holder : DAP.Modules.Variables.Items.Item_Holder;
          begin
-            Get_Client (Self).Get_Variables.Get_Variable (Params);
-            --  Callback (Variable_Loaded, Children_Loaded) will be called when
-            --  the variable is loaded.
+            Set (Holder, Item);
+            declare
+               Params : Request_Parameters :=
+                 (Kind     => View,
+                  Item     => Holder,
+                  Children => Children,
+                  Position => Position,
+                  Path     => Path);
+            begin
+               Get_Client (Self).Get_Variables.Get_Variable (Params);
+               --  Callback (Variable_Loaded, Children_Loaded) will be called
+               --  when the variable is loaded.
+            end;
          end;
 
       else
@@ -1453,8 +1550,12 @@ package body DAP.Views.Variables is
       Cmd   : constant VSS.Strings.Virtual_String :=
         VSS.Strings.Conversions.To_Virtual_String (Command);
       Match : VSS.Regular_Expressions.Regular_Expression_Match;
-      It    : Item_Info;
       View  : DAP_Variables_View;
+
+      Arguments   : Boolean := False;
+      Varname     : VSS.Strings.Virtual_String;
+      Comname     : VSS.Strings.Virtual_String;
+      Split_Lines : Boolean := False;
 
    begin
       if Process = null or else
@@ -1475,11 +1576,17 @@ package body DAP.Views.Variables is
          end if;
 
          if Match.Has_Capture (Tree_Cmd_Command) then
-            It.Cmd := Match.Captured (Tree_Cmd_Command);
-            It.Split_Lines := Match.Has_Capture (Tree_Cmd_Split);
+            if Match.Captured (Tree_Cmd_Command) = "arguments" then
+               --  for backward compatibility to show arguments for
+               --  "tree display `arguments`" command
+               Arguments := True;
+            else
+               Comname     := Match.Captured (Tree_Cmd_Command);
+               Split_Lines := Match.Has_Capture (Tree_Cmd_Split);
+            end if;
 
          elsif Match.Has_Capture (Tree_Cmd_Varname) then
-            It.Varname := Match.Captured (Tree_Cmd_Varname);
+            Varname := Match.Captured (Tree_Cmd_Varname);
          else
             return Command;  --  Should not happen
          end if;
@@ -1490,15 +1597,22 @@ package body DAP.Views.Variables is
             if Cmd = "display" then
                --  Do not send debugger quit command
                if DAP.Clients.DAP_Visual_Debugger_Access
-                 (Process).Client.Is_Quit_Command (It.Cmd)
+                 (Process).Client.Is_Quit_Command (Comname)
                then
                   return "";
                end if;
 
-               View.Display (It);
+               declare
+                  Item : Item_Info'Class := DAP.Modules.Variables.Items.Create
+                    (Varname, Comname, Split_Lines, Arguments);
+               begin
+                  View.Display (Item);
+               end;
 
             elsif Cmd = "undisplay" then
-               View.Undisplay (It);
+               View.Undisplay
+                 (DAP.Modules.Variables.Items.Create
+                    (Varname, Comname, Split_Lines, Arguments));
 
             else
                Trace (Me, "Unsupported command:" & Command);
@@ -1579,11 +1693,11 @@ package body DAP.Views.Variables is
    begin
       if GPS.Kernel.Contexts.Has_Debugging_Variable (Context.Context) then
          declare
-            Info : constant Item_Info := Get_Variable (Context.Context);
+            Info : constant Item_Info'Class := Get_Variable (Context.Context);
          begin
-            if Info.Cmd /= "" then
+            if Info.Is_Command then
                Client.Process_User_Command
-                 (Cmd               => UTF8 (Info.Cmd),
+                 (Cmd               => UTF8 (Info.Get_Name),
                   Output_Command    => True,
                   Result_In_Console => True);
 
@@ -1607,13 +1721,42 @@ package body DAP.Views.Variables is
    -------------
 
    overriding function Execute
+     (Command : access Display_Arguments_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type
+   is
+      pragma Unreferenced (Command);
+      use type DAP.Clients.DAP_Client_Access;
+
+      Client : constant DAP.Clients.DAP_Client_Access :=
+        DAP.Module.Get_Current_Debugger;
+      View   : DAP_Variables_View;
+   begin
+      if Client /= null then
+         View := Get_Or_Create_View (Client.Kernel, Client);
+         if View /= null then
+            declare
+               It : Item_Info'Class := DAP.Modules.Variables.Items.Create
+                 (Arguments => True);
+            begin
+               View.Display (It);
+            end;
+         end if;
+      end if;
+
+      return Commands.Success;
+   end Execute;
+
+   -------------
+   -- Execute --
+   -------------
+
+   overriding function Execute
      (Command : access Tree_Undisplay_Command;
       Context : Interactive_Command_Context) return Command_Return_Type
    is
       pragma Unreferenced (Command);
       View       : constant DAP_Variables_View :=
         Variables_MDI_Views.Retrieve_View (Get_Kernel (Context.Context));
-      It         : Item_Info;
       List       : Gtk_Tree_Path_List.Glist;
       G_Iter     : Gtk_Tree_Path_List.Glist;
       Path       : Gtk_Tree_Path;
@@ -1635,13 +1778,9 @@ package body DAP.Views.Variables is
                if Path /= Null_Gtk_Tree_Path then
                   Store_Iter :=
                     View.Tree.Convert_To_Store_Iter (Get_Iter (Model, Path));
-                  It := Item_From_Iter (View.Tree, Store_Iter);
 
-                  if It.Cmd /= Empty_Virtual_String then
-                     View.Undisplay (It.Cmd);
-                  elsif It.Varname /= Empty_Virtual_String then
-                     View.Undisplay (It.Varname);
-                  end if;
+                  View.Undisplay
+                    (Item_From_Store_Iter (View.Tree, Store_Iter));
                end if;
 
                G_Iter := Gtk_Tree_Path_List.Prev (G_Iter);
@@ -1721,10 +1860,10 @@ package body DAP.Views.Variables is
             View.Display (Expression);
          else
             declare
-               Item : Item_Info;
+               Item : Item_Info'Class := DAP.Modules.Variables.Items.Create
+                 (Command =>
+                    VSS.Strings.Conversions.To_Virtual_String (Expression));
             begin
-               Item.Cmd :=
-                 VSS.Strings.Conversions.To_Virtual_String (Expression);
                View.Display (Item);
             end;
          end if;
@@ -1909,7 +2048,7 @@ package body DAP.Views.Variables is
       pragma Unreferenced (Command);
       View : constant DAP_Variables_View :=
         Variables_MDI_Views.Retrieve_View (Get_Kernel (Context.Context));
-      Info : constant Item_Info := Get_Variable (Context.Context);
+      Info : constant Item_Info'Class := Get_Variable (Context.Context);
       Name : constant Virtual_String :=
         VSS.Strings.Conversions.To_Virtual_String
           (Get_Variable_Name (Context.Context, Dereference => False));
@@ -1917,11 +2056,11 @@ package body DAP.Views.Variables is
       Format : Value_Format;
    begin
       if View /= null
-        and then Info.Cmd = ""
+        and then not Info.Is_Command
         and then Name /= ""
       then
          for Item of View.Tree.Items loop
-            if Item.Varname = Name then
+            if Item.Get_Name = Name then
                Format := Convert (Item.Format);
                if Display_Value_Select_Dialog
                  (Get_Kernel (Context.Context),
@@ -1950,21 +2089,23 @@ package body DAP.Views.Variables is
       Cursor : out Item_Info_Vectors.Cursor;
       Found  : out Boolean)
    is
-      Result : Item_Info_Vectors.Cursor := Item_Info_Vectors.No_Element;
-      Count  : Character_Count := 0;
+      Result     : Item_Info_Vectors.Cursor := Item_Info_Vectors.No_Element;
+      Count      : Character_Count := 0;
+      Lower_Name : constant Virtual_String := To_Lowercase.Transform (Name);
    begin
       Found  := False;
       Cursor := Self.Items.First;
 
       while Has_Element (Cursor) loop
          declare
-            N : constant Virtual_String := Get_Name (Element (Cursor));
+            N : constant Virtual_String :=
+              To_Lowercase.Transform (Get_Name (Element (Cursor)));
          begin
-            if Name = N then
+            if Lower_Name = N then
                Found := True;
                return;
 
-            elsif Name.Starts_With (N)
+            elsif Lower_Name.Starts_With (N)
               and then N.Character_Length > Count
             then
                Result := Cursor;
@@ -1985,18 +2126,18 @@ package body DAP.Views.Variables is
    function Get_Item_Info
      (Self : not null access Variables_Tree_View_Record'Class;
       Name : String)
-      return Item_Info
+      return Item_Info'Class
    is
-      N : constant Virtual_String :=
-        VSS.Strings.Conversions.To_Virtual_String (Name);
+      N : constant Virtual_String := To_Lowercase.Transform
+        (VSS.Strings.Conversions.To_Virtual_String (Name));
    begin
       for It of Self.Items loop
-         if It.Varname = N then
+         if To_Lowercase.Transform (It.Get_Name) = N then
             return It;
          end if;
       end loop;
 
-      return No_Item_Info;
+      return No_Item;
    end Get_Item_Info;
 
    ------------
@@ -2034,19 +2175,9 @@ package body DAP.Views.Variables is
       for Item of Self.Items loop
          if Item.Id /= Unknown_Id then
             declare
-               Value : constant JSON_Value := Create_Object;
+               Value : JSON_Value := Create_Object;
             begin
-               if Item.Cmd /= "" then
-                  Value.Set_Field ("tag", "cmd");
-                  Value.Set_Field ("value", UTF8 (Item.Cmd));
-                  Value.Set_Field ("split", Item.Split_Lines);
-
-               else
-                  Value.Set_Field ("tag", "variable");
-                  Value.Set_Field ("value", UTF8 (Item.Varname));
-                  Value.Set_Field
-                    ("format", Value_Format'Image (Convert (Item.Format)));
-               end if;
+               Item.Store (Value);
                Append (Values, Value);
             end;
          end if;
@@ -2064,35 +2195,13 @@ package body DAP.Views.Variables is
    is
       use GNATCOLL.JSON;
 
-      It     : Item_Info;
       Values : constant JSON_Array := Value.Get ("value");
    begin
       Trace (Me, "Loading variable view from JSON, has items ?"
              &  Boolean'Image (Length (Values) > 0));
 
       for Index in 1 .. Length (Values) loop
-         declare
-            V : constant JSON_Value := Get (Values, Index);
-         begin
-            if String'(V.Get ("tag")) = "cmd" then
-               It :=
-                 (Cmd         => VSS.Strings.Conversions.To_Virtual_String
-                    (String'(V.Get ("value"))),
-                  Split_Lines => V.Get ("split"),
-                  Id          => Unknown_Id,
-                  others      => <>);
-               Self.Items.Append (It);
-
-            elsif String'(V.Get ("tag")) = "variable" then
-               It :=
-                 (Varname => VSS.Strings.Conversions.To_Virtual_String
-                    (String'(V.Get ("value"))),
-                  Format  => Convert (Value_Format'Value (V.Get ("format"))),
-                  Id      => Unknown_Id,
-                  others  => <>);
-               Self.Items.Append (It);
-            end if;
-         end;
+         Self.Items.Append (Restore (Get (Values, Index)));
       end loop;
    end Load;
 
@@ -2273,6 +2382,16 @@ package body DAP.Views.Variables is
          Filter    => Debugger_Stopped_Filter and Access_Filter and
            Printable_Var_Filter,
          Category  => "Debug");
+
+      Register_Action
+        (Kernel, "debug tree display arguments",
+         Command     => new Display_Arguments_Command,
+         Description =>
+           "Display the arguments of the current subprogram in the" &
+           "  Variables view",
+         Filter      => Debugger_Stopped_Filter,
+         Icon_Name   => "gps-debugger-arguments-symbolic",
+         Category    => "Debug");
    end Register_Module;
 
 end DAP.Views.Variables;
