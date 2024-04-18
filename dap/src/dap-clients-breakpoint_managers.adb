@@ -45,7 +45,7 @@ package body DAP.Clients.Breakpoint_Managers is
      ("DAP.CLIENTS.BREAKPOINT_MANAGER");
 
    type On_DAP_Request_Processed
-   is new GPS.Kernel.Hooks.Dap_Message_Hooks_Function with record
+   is new GPS.Kernel.Hooks.Dap_Method_Hooks_Function with record
       Manager : Breakpoint_Manager_Access;
    end record;
    overriding procedure Execute

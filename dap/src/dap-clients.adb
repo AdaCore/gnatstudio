@@ -1390,6 +1390,10 @@ package body DAP.Clients is
          if Self.Status /= Terminating then
             Self.Process_Event (Reader, Event);
          end if;
+
+         GPS.Kernel.Hooks.Dap_Event_Processed_Hook.Run
+            (Kernel => Self.Kernel,
+             Event  => VSS.Strings.Conversions.To_UTF_8_String (Event));
       end if;
 
    exception

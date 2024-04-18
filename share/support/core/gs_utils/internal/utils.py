@@ -251,6 +251,17 @@ def wait_DAP_server(method=""):
         if m == method:
             break
 
+@workflows.run_as_workflow
+def wait_DAP_event(event=""):
+    """
+    Wait until the given DAP event has been processed by GNAT Studio.
+    """
+    while True:
+        (e) = yield hook("DAP_event_processed")
+
+        if e == event:
+            break
+
 
 @workflows.run_as_workflow
 def wait_until_not_busy(debugger, t=100):
