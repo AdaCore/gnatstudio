@@ -32,9 +32,9 @@ def test_driver():
     # Should be pending after starting the debugger.
     ed = view.create()
     yield ed.open_and_yield()
-    combo = get_widget_by_name("Breakpoint_Type")
+    combo = get_widget_by_name("breakpoint-type-combo", ed.dialogs)
     combo.set_active(1)
-    name = get_widget_by_name("Subprogram_Name")
+    name = get_widget_by_name("breakpoint-subprogram-name", ed.dialogs)
     name.append_text("tmp")
     name.set_active(1)
     yield ed.ok()
@@ -43,9 +43,9 @@ def test_driver():
     # Should be pending after starting the debugger.
     ed = view.create()
     yield ed.open_and_yield()
-    combo = get_widget_by_name("Breakpoint_Type")
+    combo = get_widget_by_name("breakpoint-type-combo", ed.dialogs)
     combo.set_active(3)
-    name = get_widget_by_name("Exception_Name")
+    name = get_widget_by_name("breakpoint-exception-name", ed.dialogs)
     name.append_text("tmp")
     name.set_active(3)
     yield ed.ok()

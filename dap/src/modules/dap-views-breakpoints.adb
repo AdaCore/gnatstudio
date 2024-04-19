@@ -144,16 +144,20 @@ package body DAP.Views.Breakpoints is
    --  Internal initialization function
    --  Returns the focus child
 
-   function Get_Breakpoints_Count
-     (Self : not null access Breakpoint_View_Record'Class) return Integer;
-   --  Return the number of breakpoints currently listed in the
-   --  Breakpoints' view.
+   function Get_Iter_For_Index
+     (Self  : not null access Breakpoint_View_Record'Class;
+      Index : Positive) return Gtk_Tree_Iter;
+   --  Return the Iter for the given breakpoint index
 
-   function Get_Row_For_Breakpoint_ID
+   function Get_Breakpoint_For_Iter
      (Self : not null access Breakpoint_View_Record'Class;
-      Id   : Breakpoint_Identifier) return Gtk_Tree_Iter;
-   --  Return the row for the given breakpoint ID, or Null_Iter if not present
-   --  in the view or if a null ID was given.
+      Iter : Gtk_Tree_Iter) return Breakpoint_Data;
+   --  Retrieve the breakpoint data associated with Iter.
+
+   function Get_Index_For_Iter
+     (Self : not null access Breakpoint_View_Record'Class;
+      Iter : Gtk_Tree_Iter) return Positive;
+   --  Return the index of Iter in the view.
 
    procedure Update_Breakpoint
      (Self             : not null access Breakpoint_View_Record'Class;
@@ -207,6 +211,10 @@ package body DAP.Views.Breakpoints is
    function Get_Selection
      (View : access Breakpoint_View_Record'Class) return Breakpoint_Data;
    --  Return information on the currently selected breakpoint.
+
+   function Get_Selection_Index
+     (View : access Breakpoint_View_Record'Class) return Integer;
+   --  Return the index of the selected breakpoint or 0 when failing.
 
    procedure Recompute_Filters
      (Self : access Glib.Object.GObject_Record'Class);
@@ -309,9 +317,8 @@ package body DAP.Views.Breakpoints is
    --  Show the information for the given breakpoint in the editor
 
    procedure Apply
-     (Self   : not null access Properties_Editor_Record'Class;
-      Client : DAP_Client_Access;
-      Br     : Breakpoint_Data);
+     (Self : not null access Properties_Editor_Record'Class;
+      Br   : in out Breakpoint_Data);
    --  Apply the settings to the given breakpoint.
 
    procedure On_Load_Exception_List_Clicked (W : access GObject_Record'Class);
@@ -381,18 +388,16 @@ package body DAP.Views.Breakpoints is
    -----------
 
    procedure Apply
-     (Self   : not null access Properties_Editor_Record'Class;
-      Client : DAP_Client_Access;
-      Br     : Breakpoint_Data)
+     (Self : not null access Properties_Editor_Record'Class;
+      Br   : in out Breakpoint_Data)
    is
-      T         : constant Breakpoint_Kind :=
+      T           : constant Breakpoint_Kind :=
         Breakpoint_Kind'Val (Get_Active (Self.Breakpoint_Type));
-      Temporary : constant Boolean := Self.Temporary.Get_Active;
-      Condition : VSS.Strings.Virtual_String;
-      Commands  : VSS.Strings.Virtual_String;
-      Ignore    : Integer := 0;
-
-      Start, The_End : Gtk_Text_Iter;
+      Temporary   : constant Boolean := Self.Temporary.Get_Active;
+      Condition   : VSS.Strings.Virtual_String;
+      Commands    : VSS.Strings.Virtual_String;
+      Ignore      : Integer := 0;
+      Disposition : Breakpoint_Disposition;
    begin
       if Self.Conditions_Box.Get_Visible then
          Condition := VSS.Strings.Conversions.To_Virtual_String
@@ -400,92 +405,103 @@ package body DAP.Views.Breakpoints is
       end if;
 
       if Self.Ignore_Count_Combo.Get_Visible then
-         Ignore := Integer (Get_Value_As_Int (Self.Ignore_Count_Combo));
-         if Ignore < 0 then
-            Ignore := 0;
-         end if;
+         Ignore :=
+           Integer'Max (0,
+                        Integer (Get_Value_As_Int (Self.Ignore_Count_Combo)));
       end if;
 
       if Self.Command_Descr.Get_Visible then
-         Get_Bounds (Get_Buffer (Self.Command_Descr), Start, The_End);
-         Commands := VSS.Strings.Conversions.To_Virtual_String
-           (String'
-              (Get_Text (Get_Buffer (Self.Command_Descr), Start, The_End)));
-
-         if Client /= null
-           and then Commands.Is_Empty
-           and then not Br.Commands.Is_Empty
-         then
-            --  Delete commands on the server side
-            Client.Get_Breakpoints_Manager.Set_Breakpoint_Command
-              (Br.Num, VSS.Strings.Empty_Virtual_String);
-         end if;
+         declare
+            Start, The_End : Gtk_Text_Iter;
+         begin
+            Get_Bounds (Get_Buffer (Self.Command_Descr), Start, The_End);
+            Commands := VSS.Strings.Conversions.To_Virtual_String
+              (String'
+                 (Get_Text (Get_Buffer (Self.Command_Descr), Start, The_End)));
+         end;
       end if;
 
-      --  create or update the breakpoint
+      Disposition := (if Self.Temporary.Get_Active then Delete else Keep);
+
       case T is
          when On_Line =>
-            declare
-               File : constant Filesystem_String := +Get_Text
-                 (Self.File_Name);
-            begin
-               Break_Source
-                 (Self.Kernel,
-                  File      => Create (File),
-                  Line      =>
-                    Editable_Line_Type'Value (Self.Line_Spin.Get_Text),
-                  Temporary => Temporary,
-                  Condition => Condition,
-                  Ignore    => Ignore,
-                  Commands  => Commands);
-            end;
+            Br := (Kind           => On_Line,
+                   Num            => Br.Num,
+                   Continue_Until => Br.Continue_Until,
+                   Enabled        => Br.Enabled,
+                   Disposition    => Disposition,
+                   Condition      => Condition,
+                   Ignore         => Ignore,
+                   Commands       => Commands,
+                   Verified       => False,
+                   Location       =>
+                      DAP.Types.Breakpoints.Breakpoint_Location_Type'
+                     (Marker  => Self.Kernel.Get_Buffer_Factory.Create_Marker
+                        (File   => Create (+Get_Text (Self.File_Name)),
+                         Line   => Editable_Line_Type'Value
+                           (Self.Line_Spin.Get_Text),
+                         Column => 1),
+                      Address => Invalid_Address));
 
          when On_Subprogram =>
-            Break_Subprogram
-              (Self.Kernel,
-               Subprogram => Self.Subprogram_Combo.Get_Active_Text,
-               Temporary  => Temporary,
-               Condition  => Condition,
-               Ignore     => Ignore,
-               Commands   => Commands);
+            Br := (Kind           => On_Subprogram,
+                   Num            => Br.Num,
+                   Continue_Until => Br.Continue_Until,
+                   Enabled        => Br.Enabled,
+                   Disposition    => Disposition,
+                   Condition      => Condition,
+                   Ignore         => Ignore,
+                   Commands       => Commands,
+                   Verified       => False,
+                   Subprogram     =>
+                      To_Unbounded_String
+                     (Self.Subprogram_Combo.Get_Active_Text));
 
          when On_Exception =>
             declare
-               Unhandled : constant Boolean :=
-                 Get_Active (Self.Stop_Not_Handled_Exception);
+               Exception_Name : Unbounded_String;
             begin
                if Self.Exception_Name.Get_Active = 0 then
-                  Break_Exception
-                    (Self.Kernel,
-                     Name      => All_Exceptions_Filter,
-                     Unhandled => Unhandled,
-                     Temporary => Temporary);
+                  Exception_Name :=
+                    To_Unbounded_String (All_Exceptions_Filter);
 
                elsif Self.Exception_Name.Get_Active = 1 then
-                  Break_Exception
-                    (Self.Kernel,
-                     Name      => "assert",
-                     Unhandled => Unhandled,
-                     Temporary => Temporary);
+                  Exception_Name := To_Unbounded_String ("assert");
 
                else
-                  Break_Exception
-                    (Self.Kernel,
-                     Name      => Self.Exception_Name.Get_Active_Text,
-                     Unhandled => Unhandled,
-                     Temporary => Temporary);
+                  Exception_Name :=
+                    To_Unbounded_String (Self.Exception_Name.Get_Active_Text);
                end if;
+
+               Br := (Kind           => On_Exception,
+                      Num            => Br.Num,
+                      Continue_Until => Br.Continue_Until,
+                      Enabled        => Br.Enabled,
+                      Disposition    => Disposition,
+                      Condition      => Condition,
+                      Ignore         => Ignore,
+                      Commands       => Commands,
+                      Verified       => False,
+                      Exception_Name => Exception_Name,
+                      Unhandled      =>
+                        Get_Active (Self.Stop_Not_Handled_Exception));
             end;
 
          when On_Instruction =>
-            Break_Address
-              (Self.Kernel,
-               Address    => String_To_Address
-                 (Self.Address_Combo.Get_Active_Text),
-               Temporary  => Temporary,
-               Condition  => Condition,
-               Ignore     => Ignore,
-               Commands   => Commands);
+            Br := (Kind           => On_Instruction,
+                   Num            => Br.Num,
+                   Continue_Until => Br.Continue_Until,
+                   Enabled        => Br.Enabled,
+                   Disposition    => Disposition,
+                   Condition      => Condition,
+                   Ignore         => Ignore,
+                   Commands       => Commands,
+                   Verified       => False,
+                   Location       =>
+                      Breakpoint_Location_Type'
+                     (Address => String_To_Address
+                        (Self.Address_Combo.Get_Active_Text),
+                      others  => <>));
       end case;
    end Apply;
 
@@ -660,24 +676,6 @@ package body DAP.Views.Breakpoints is
       return Gtk_Widget (Self.List);
    end Initialize;
 
-   ---------------------------
-   -- Get_Breakpoints_Count --
-   ---------------------------
-
-   function Get_Breakpoints_Count
-     (Self : not null access Breakpoint_View_Record'Class) return Integer is
-   begin
-      if Self.List /= null then
-         declare
-            Model : constant Gtk_Tree_Store  := -Get_Model (Self.List);
-         begin
-            return Integer (Model.N_Children);
-         end;
-      else
-         return 0;
-      end if;
-   end Get_Breakpoints_Count;
-
    ----------------
    -- Initialize --
    ----------------
@@ -714,7 +712,6 @@ package body DAP.Views.Breakpoints is
       ------------
 
       Gtk_New (Self.Breakpoint_Type);
-      Set_Name (Self.Breakpoint_Type, "Breakpoint_Type");
       for T in Breakpoint_Kind loop
          case T is
             when On_Line =>
@@ -791,7 +788,6 @@ package body DAP.Views.Breakpoints is
          Allow_Multi_Columns => True);
 
       Gtk_New_With_Entry (Self.Subprogram_Combo);
-      Set_Name (Self.Subprogram_Combo, "Subprogram_Name");
       Self.Subprogram_Combo.Append_Text ("");
 
       Self.Subprogram_Box.Create_Child
@@ -829,7 +825,6 @@ package body DAP.Views.Breakpoints is
          Allow_Multi_Columns => True);
 
       Gtk_New_With_Entry (Self.Exception_Name);
-      Set_Name (Self.Exception_Name, "Exception_Name");
       Self.Load_Exceptions;
 
       Gtk_New (Button, "Load List");
@@ -920,7 +915,6 @@ package body DAP.Views.Breakpoints is
          Parent_View         => Main_View,
          Allow_Multi_Columns => False);
       Gtk_New (Self.Command_Descr);
-      Set_Name (Self.Command_Descr, "Commands");
       Frame.Append_Child
         (Widget    => Self.Command_Descr,
          Child_Key => "breakpoint-commands",
@@ -1010,8 +1004,7 @@ package body DAP.Views.Breakpoints is
    begin
       if Iter /= Null_Iter then
          Indexes.Append
-           (Integer'Value
-              (Get_String (Model, Iter, Col_Num)));
+           (Integer (View.Get_Index_For_Iter (Iter)));
          Set_Breakpoints_State
            (View.Kernel,
             Indexes => Indexes,
@@ -1028,9 +1021,6 @@ package body DAP.Views.Breakpoints is
    is
       Client : constant DAP.Clients.DAP_Client_Access :=
         DAP.Module.Get_Current_Debugger;
-      Model  : Gtk_Tree_Store;
-      Iter   : Gtk_Tree_Iter;
-      Id     : Breakpoint_Identifier := No_Breakpoint;
    begin
       if Self.Prevent_Bp_Selection
         or else Client = null
@@ -1039,36 +1029,29 @@ package body DAP.Views.Breakpoints is
          return;
       end if;
 
-      if Client /= null then
-         for Data of Client.Get_Breakpoints_Manager.Get_Breakpoints loop
-            if Data.Kind = On_Line
-              and then Get_File (Data.Location.Marker) =
-              Client.Get_Stack_Trace.Get_Current_File
-              and then Natural (Get_Line (Data.Location.Marker)) =
-                Client.Get_Stack_Trace.Get_Current_Line
-            then
-               Id := Data.Num;
-               exit;
-            end if;
+      --  If the new location has a breakpoint then select it
+      declare
+         Breakpoints : constant Breakpoint_Vectors.Vector :=
+           Client.Get_Breakpoints_Manager.Get_Breakpoints;
+      begin
+         for Index in Breakpoints.First_Index .. Breakpoints.Last_Index loop
+            declare
+               Data : constant Breakpoint_Data := Breakpoints (Index);
+            begin
+               if Data.Kind = On_Line
+                 and then Get_File (Data.Location.Marker) =
+                 Client.Get_Stack_Trace.Get_Current_File
+                 and then Natural (Get_Line (Data.Location.Marker)) =
+                   Client.Get_Stack_Trace.Get_Current_Line
+               then
+                  Self.List.Get_Selection.Unselect_All;
+                  Self.List.Get_Selection.Select_Iter
+                    (Get_Iter_For_Index (Self, Index));
+                  exit;
+               end if;
+            end;
          end loop;
-      end if;
-
-      if Id /= 0 then
-         Model := -Get_Model (Self.List);
-         Iter  := Model.Get_Iter_First;
-
-         while Iter /= Null_Iter loop
-            if Breakpoint_Identifier'Value
-              (Model.Get_String (Iter, Col_Num)) = Id
-            then
-               Self.List.Get_Selection.Unselect_All;
-               Self.List.Get_Selection.Select_Iter (Iter);
-               return;
-            end if;
-
-            Model.Next (Iter);
-         end loop;
-      end if;
+      end;
    end On_Location_Changed;
 
    ---------------------------
@@ -1186,64 +1169,57 @@ package body DAP.Views.Breakpoints is
       Kernel.Refresh_Context;
    end Recompute_Filters;
 
-   -------------------------------
-   -- Get_Row_For_Breakpoint_ID --
-   -------------------------------
+   ------------------------
+   -- Get_Iter_For_Index --
+   ------------------------
 
-   function Get_Row_For_Breakpoint_ID
-     (Self : not null access Breakpoint_View_Record'Class;
-      Id   : Breakpoint_Identifier) return Gtk_Tree_Iter
+   function Get_Iter_For_Index
+     (Self  : not null access Breakpoint_View_Record'Class;
+      Index : Positive) return Gtk_Tree_Iter
    is
-      Model  : constant Gtk_Tree_Store := -Get_Model (Self.List);
-      Result : Gtk_Tree_Iter := Null_Iter;
-
-      function On_Row
-        (Model : Gtk_Tree_Model;
-         Path  : Gtk_Tree_Path;
-         Iter  : Gtk_Tree_Iter)
-         return Boolean;
-      --  Iterate on the model's rows to search for the breakpoint row with
-      --  the given Id.
-
-      ------------
-      -- On_Row --
-      ------------
-
-      function On_Row
-        (Model : Gtk_Tree_Model;
-         Path  : Gtk_Tree_Path;
-         Iter  : Gtk_Tree_Iter)
-         return Boolean
-      is
-         pragma Unreferenced (Path);
-         Row_Id : constant Breakpoint_Identifier := Breakpoint_Identifier'Value
-           (Model.Get_String (Iter, Col_Num));
-      begin
-         if Id = Row_Id then
-            Result := Iter;
-            return True;
-         else
-            return False;
-         end if;
-      end On_Row;
-
+      Model        : constant Gtk_Tree_Store := -Get_Model (Self.List);
+      Iter_Indices : constant Gint_Array := (0 => Gint (Index - 1));
+      --  Indexes start at 1 and Indices at 0
    begin
-      --  Breakpoints have a number assigned to them only when they have
-      --  been recognized by the DAP server. If not, they have no ID: this is
-      --  the case for disabled breakpoints.
-      --  Thus we can have several breakpoints without any ID, so return
-      --  immediately in this case, since there is no unique row for null ids.
-      if Id = No_Breakpoint then
-         return Null_Iter;
-      end if;
+      return Model.Get_Iter
+        (Gtk_Tree_Path_New_From_Indicesv (Iter_Indices, 1));
+   end Get_Iter_For_Index;
 
-      Model.Foreach (On_Row'Unrestricted_Access);
+   -----------------------------
+   -- Get_Breakpoint_For_Iter --
+   -----------------------------
 
-      return Result;
-   end Get_Row_For_Breakpoint_ID;
+   function Get_Breakpoint_For_Iter
+     (Self : not null access Breakpoint_View_Record'Class;
+      Iter : Gtk_Tree_Iter) return Breakpoint_Data
+   is
+      Model        : constant Gtk_Tree_Store := -Get_Model (Self.List);
+      Iter_Indices : constant Gint_Array :=
+        Get_Indices (Get_Path (Model, Iter));
+   begin
+      --  Indexes start at 1 and Indices at 0
+      return DAP.Module.Breakpoints.Get_Breakpoint_From_Index
+        (Integer (Iter_Indices (Iter_Indices'First)) + 1);
+   end Get_Breakpoint_For_Iter;
+
+   ---------------------
+   -- Get_Id_For_Iter --
+   ---------------------
+
+   function Get_Index_For_Iter
+     (Self : not null access Breakpoint_View_Record'Class;
+      Iter : Gtk_Tree_Iter) return Positive
+   is
+      Model        : constant Gtk_Tree_Store := -Get_Model (Self.List);
+      Iter_Indices : constant Glib.Gint_Array :=
+        Get_Indices (Get_Path (Model, Iter));
+   begin
+      --  Indexes start at 1 and Indices at 0
+      return Positive (Iter_Indices (Iter_Indices'First) + 1);
+   end Get_Index_For_Iter;
 
    -----------------------
-   -- Append_Breakpoint --
+   -- Update_Breakpoint --
    -----------------------
 
    procedure Update_Breakpoint
@@ -1252,8 +1228,10 @@ package body DAP.Views.Breakpoints is
       Create_If_Needed : Boolean := True)
    is
       Model           : constant Gtk_Tree_Store := -Get_Model (Self.List);
-      Iter            : Gtk_Tree_Iter := Self.Get_Row_For_Breakpoint_ID
-        (Data.Num);
+      Iter            : Gtk_Tree_Iter :=
+        (if Data.Num = 0
+         then Null_Iter
+         else Self.Get_Iter_For_Index (Positive (Data.Num)));
       Values          : Glib.Values.GValue_Array (1 .. 12);
       Columns         : Columns_Array (Values'Range);
       Last_Column_Idx : Gint;
@@ -1359,7 +1337,8 @@ package body DAP.Views.Breakpoints is
       Id   : Breakpoint_Identifier)
    is
       Model          : constant Gtk_Tree_Store := -Get_Model (Self.List);
-      Iter_To_Remove : Gtk_Tree_Iter := Self.Get_Row_For_Breakpoint_ID (Id);
+      Iter_To_Remove : Gtk_Tree_Iter :=
+        Self.Get_Iter_For_Index (Positive (Id));
    begin
       if Iter_To_Remove /= Null_Iter then
          Model.Remove (Iter_To_Remove);
@@ -1376,16 +1355,21 @@ package body DAP.Views.Breakpoints is
         DAP.Module.Get_Current_Debugger;
       Model   : constant Gtk_Tree_Store := -Get_Model (View.List);
    begin
-      Trace (Me, "Update" & DAP.Module.Breakpoints.
-           Get_Persistent_Breakpoints.Length'Img);
-
       Clear (Model);
 
       if Client = null then
+         Trace
+           (Me, "Add"
+            & DAP.Module.Breakpoints.Get_Persistent_Breakpoints.Length'Img
+            & " persistent breakpoints");
          for Data of DAP.Module.Breakpoints.Get_Persistent_Breakpoints loop
             View.Update_Breakpoint (Data);
          end loop;
       else
+         Trace
+           (Me, "Add"
+            & Client.Get_Breakpoints_Manager.Get_Breakpoints.Length'Img
+            & " debugger breakpoints");
          for Data of Client.Get_Breakpoints_Manager.Get_Breakpoints loop
             View.Update_Breakpoint (Data);
          end loop;
@@ -1617,11 +1601,8 @@ package body DAP.Views.Breakpoints is
          --  The user pressed on 'Apply': create the actual breakpoint,
          --  assigning it a new ID.
          if Props.Run = Gtk_Response_Apply then
-            Br.Num := Breakpoint_Identifier (View.Get_Breakpoints_Count + 1);
-            Apply
-              (Self   => Props,
-               Client => View.Get_Client,
-               Br     => Br);
+            Apply (Props, Br);
+            Break (View.Kernel, Br);
          end if;
 
          Props.Destroy;
@@ -1707,7 +1688,9 @@ package body DAP.Views.Breakpoints is
          Fill (Props, Current);
 
          if Props.Run = Gtk_Response_Apply then
-            Apply (Props, View.Get_Client, Current);
+            Apply (Props, Current);
+            Set_Breakpoint_At_Index
+              (View.Kernel, Current, Get_Selection_Index (View));
          end if;
 
          Props.Destroy;
@@ -1760,14 +1743,40 @@ package body DAP.Views.Breakpoints is
          Free_Path_List (List);
 
          if Iter /= Null_Iter then
-            return DAP.Module.Breakpoints.Get_Breakpoint_From_Id
-              (Breakpoint_Identifier'Value
-                 (Get_String (The_Model, Iter, Col_Num)));
+            return View.Get_Breakpoint_For_Iter (Iter);
          end if;
       end if;
 
       return Empty_Breakpoint_Data;
    end Get_Selection;
+
+   -------------------------
+   -- Get_Selection_Index --
+   -------------------------
+
+   function Get_Selection_Index
+     (View : access Breakpoint_View_Record'Class) return Integer
+   is
+      Iter      : Gtk_Tree_Iter;
+      The_Model : Gtk_Tree_Model;
+      List      : Gtk_Tree_Path_List.Glist;
+      Path      : Gtk_Tree_Path;
+      Selection : constant Gtk_Tree_Selection := Get_Selection (View.List);
+   begin
+      if Selection.Count_Selected_Rows = 1 then
+         Get_Selected_Rows (Selection, The_Model, List);
+         Path := Gtk_Tree_Path
+           (Gtk_Tree_Path_List.Get_Data (Gtk_Tree_Path_List.First (List)));
+         Iter := Get_Iter (The_Model, Path);
+         Free_Path_List (List);
+
+         if Iter /= Null_Iter then
+            return Integer (View.Get_Index_For_Iter (Iter));
+         end if;
+      end if;
+
+      return 0;
+   end Get_Selection_Index;
 
    ------------------------------------
    -- On_Load_Exception_List_Clicked --

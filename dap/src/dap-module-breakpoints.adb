@@ -1108,6 +1108,40 @@ package body DAP.Module.Breakpoints is
       end if;
    end Set_Breakpoints_State;
 
+   -------------------------------
+   -- Get_Breakpoint_From_Index --
+   -------------------------------
+
+   function Get_Breakpoint_From_Index
+     (Index  : Positive) return Breakpoint_Data is
+   begin
+      if DAP.Module.Get_Current_Debugger = null then
+         return Persistent_Breakpoints.Get_Breakpoint_From_Index (Index);
+      else
+         return DAP.Module.Get_Current_Debugger.Get_Breakpoints_Manager.
+           Get_Breakpoint_From_Index (Index);
+      end if;
+   end Get_Breakpoint_From_Index;
+
+   -----------------------------
+   -- Set_Breakpoint_At_Index --
+   -----------------------------
+
+   procedure Set_Breakpoint_At_Index
+     (Kernel : not null access Kernel_Handle_Record'Class;
+      Data   : Breakpoint_Data;
+      Index  : Positive) is
+   begin
+      if DAP.Module.Get_Current_Debugger = null then
+         Persistent_Breakpoints.Replace (Data, Index);
+         GPS.Kernel.Hooks.Debugger_Breakpoints_Changed_Hook.Run
+           (Kernel, null);
+      else
+         DAP.Module.Get_Current_Debugger.Get_Breakpoints_Manager.
+           Replace_Breakpoint_At_Index (Data, Index);
+      end if;
+   end Set_Breakpoint_At_Index;
+
    -------------------------
    -- Store_As_Persistent --
    -------------------------

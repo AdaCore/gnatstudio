@@ -46,7 +46,7 @@ class Tree(object):
         for row in model:
             if column == -1:
                 value.append([r for r in row])
-            elif row[column]:
+            elif row[column] is not None:
                 value.append(row[column])
 
             iter = row.iterchildren()

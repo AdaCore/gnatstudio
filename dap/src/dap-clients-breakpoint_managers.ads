@@ -125,6 +125,18 @@ package DAP.Clients.Breakpoint_Managers is
       State   : Boolean);
    --  Enable/disable breakpoints
 
+   function Get_Breakpoint_From_Index
+     (Self   : not null access Breakpoint_Manager_Type;
+      Index  : Positive)
+      return DAP.Types.Breakpoints.Breakpoint_Data;
+   --  Retrieve data for breakpoint at Index
+
+   procedure Replace_Breakpoint_At_Index
+     (Self   : not null access Breakpoint_Manager_Type;
+      Data   : DAP.Types.Breakpoints.Breakpoint_Data;
+      Index  : Positive);
+   --  Replace data for breakpoint at Index
+
    procedure Set_Breakpoint_Command
      (Self    : not null access Breakpoint_Manager_Type;
       Id      : Breakpoint_Identifier;

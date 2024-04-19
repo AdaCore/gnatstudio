@@ -847,6 +847,34 @@ package body DAP.Clients.Breakpoint_Managers is
       Self.Synchonize_Breakpoints (Sync_Data);
    end Set_Breakpoints_State;
 
+   -------------------------------
+   -- Get_Breakpoint_From_Index --
+   -------------------------------
+
+   function Get_Breakpoint_From_Index
+     (Self   : not null access Breakpoint_Manager_Type;
+      Index  : Positive)
+      return DAP.Types.Breakpoints.Breakpoint_Data is
+   begin
+      return Self.Holder.Get_Breakpoint_From_Index (Index);
+   end Get_Breakpoint_From_Index;
+
+   ------------------------------
+   -- Set_Breakpoints_At_Index --
+   ------------------------------
+
+   procedure Replace_Breakpoint_At_Index
+     (Self   : not null access Breakpoint_Manager_Type;
+      Data   : DAP.Types.Breakpoints.Breakpoint_Data;
+      Index  : Positive)
+   is
+      Sync_Data : Synchonization_Data;
+   begin
+      Self.Holder.Replace (Data, Index);
+      Update_Sychronization_Data (Sync_Data, Data);
+      Self.Synchonize_Breakpoints (Sync_Data);
+   end Replace_Breakpoint_At_Index;
+
    ----------------------
    -- Set_Ignore_Count --
    ----------------------
