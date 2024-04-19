@@ -53,7 +53,9 @@ def check_simple(debug, name, type, value, description,
 
 @run_test_driver
 def test_driver():
-    yield wait_tasks(other_than=known_tasks)
+    # Wait for the DAP server to give us the sources of
+    # the debugged executable.
+    yield wait_DAP_server('loadedSources')
 
     p = promises.DebuggerWrapper(GPS.File("parse_c"))
     debug = GPS.Debugger.get()

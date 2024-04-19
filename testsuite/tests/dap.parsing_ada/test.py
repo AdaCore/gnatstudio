@@ -52,7 +52,9 @@ def get_children(var):
 
 @run_test_driver
 def test_driver():
-    yield wait_tasks()
+    # Wait for the DAP server to give us the sources of
+    # the debugged executable.
+    yield wait_DAP_server('loadedSources')
 
     p = promises.DebuggerWrapper(GPS.File("parse"))
     debug = GPS.Debugger.get()
