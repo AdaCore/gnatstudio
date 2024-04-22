@@ -383,4 +383,5 @@ def register_highlighter(language, spec, igncase=False):
     :param tuple spec: The spec of the highlighter.
     """
     from highlighter.engine import Highlighter, HighlighterModule
-    HighlighterModule.highlighters[language] = Highlighter(spec, igncase)
+    HighlighterModule.highlighters[language.lower()] = Highlighter(spec,
+                                                                   igncase)

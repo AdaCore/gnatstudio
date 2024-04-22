@@ -18,7 +18,7 @@ class HighlighterModule(Module):
     preferences = {}
 
     def init_highlighting(self, f):
-        highlighter = self.highlighters.get(f.language(), None)
+        highlighter = self.highlighters.get(f.language().lower(), None)
         if isinstance(highlighter, Highlighter):
             ed = GPS.EditorBuffer.get(f, open=False)
             if ed:
