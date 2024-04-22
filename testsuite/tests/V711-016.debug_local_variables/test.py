@@ -3,9 +3,9 @@ from GPS import *
 from gs_utils.internal.utils import *
 
 expected_locals = (
-    [['i = 0', 'b = false']])
+    ['', ['i = 0', 'b = false']])
 expected_args = (
-    [['level - 0', 'i = 0', 'b = false']])
+    ['', ['level - 0', 'i = 0', 'b = false']])
 
 
 @run_test_driver

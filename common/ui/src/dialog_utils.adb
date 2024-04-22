@@ -692,6 +692,7 @@ package body Dialog_Utils is
 
       --  Insert it in the dialog view children map if a key has been specified
       if Child_Key /= "" then
+         Widget.Set_Name (Child_Key);
          Self.Parent_View.Children_Map.Insert
            (Child_Key, Gtk_Flow_Box_Child (Child_Box.Get_Parent));
       end if;

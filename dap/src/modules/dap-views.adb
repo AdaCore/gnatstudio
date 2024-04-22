@@ -189,8 +189,8 @@ package body DAP.Views is
       is
          pragma Unreferenced (Self);
 
-         V      : constant access Formal_View_Record'Class :=
-           Formal_Views.Retrieve_View (Kernel);
+         V : constant access Formal_View_Record'Class :=
+           Formal_Views.Retrieve_View (Kernel, True);
       begin
 
          if V /= null then
@@ -210,7 +210,7 @@ package body DAP.Views is
          pragma Unreferenced (Self);
 
          V : constant access Formal_View_Record'Class :=
-           Formal_Views.Retrieve_View (Kernel);
+           Formal_Views.Retrieve_View (Kernel, True);
       begin
          if V /= null then
             V.On_Process_Terminated;
@@ -227,7 +227,7 @@ package body DAP.Views is
           Debugger : access GPS.Debuggers.Base_Visual_Debugger'Class)
       is
          V : constant access Formal_View_Record'Class :=
-           Formal_Views.Retrieve_View (Kernel);
+           Formal_Views.Retrieve_View (Kernel, True);
       begin
 
          if V /= null and then V.Get_Client /= null then
@@ -247,8 +247,8 @@ package body DAP.Views is
       is
          pragma Unreferenced (Self);
 
-         V      : constant access Formal_View_Record'Class :=
-           Formal_Views.Retrieve_View (Kernel);
+         V : constant access Formal_View_Record'Class :=
+           Formal_Views.Retrieve_View (Kernel, True);
       begin
          if V /= null then
             V.On_Location_Changed;

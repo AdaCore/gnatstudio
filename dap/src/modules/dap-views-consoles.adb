@@ -554,7 +554,7 @@ package body DAP.Views.Consoles is
    is
       pragma Unreferenced (Command);
       View : constant Console_MDI :=
-        Console_MDI_Views.Retrieve_View (Get_Kernel (Context.Context));
+        Console_MDI_Views.Retrieve_View (Get_Kernel (Context.Context), True);
    begin
       if View /= null then
          View.Console.Clear;

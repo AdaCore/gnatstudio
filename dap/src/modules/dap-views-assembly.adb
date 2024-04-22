@@ -957,7 +957,7 @@ package body DAP.Views.Assembly is
       pragma Unreferenced (New_Request);
 
       View : constant Assembly_MDI := Assembly_MDI_Views.Retrieve_View
-        (Self.Kernel);
+        (Self.Kernel, True);
       S    : Disassemble_Elements;
 
       -- Format_Opcodes --
@@ -1360,7 +1360,7 @@ package body DAP.Views.Assembly is
    is
       pragma Unreferenced (Self);
       View : constant Assembly_View :=
-        Assembly_View (Assembly_MDI_Views.Retrieve_View (Kernel));
+        Assembly_View (Assembly_MDI_Views.Retrieve_View (Kernel, True));
    begin
       if View /= null then
          View.Highlight (False);
@@ -1378,7 +1378,7 @@ package body DAP.Views.Assembly is
    is
       pragma Unreferenced (Self);
       View : constant Assembly_View := Assembly_View
-        (Assembly_MDI_Views.Retrieve_View (Kernel));
+        (Assembly_MDI_Views.Retrieve_View (Kernel, True));
    begin
       if View /= null then
          View.Highlight (False);

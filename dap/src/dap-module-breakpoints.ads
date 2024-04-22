@@ -45,6 +45,16 @@ package DAP.Module.Breakpoints is
    --  Return the breakpoint with the given ID.
    --  An empty breakpoint is returned if there is no breakpoint for this ID.
 
+   function Get_Breakpoint_From_Index
+     (Index  : Positive) return Breakpoint_Data;
+   --  Retrieve breakpoint at the given index.
+
+   procedure Set_Breakpoint_At_Index
+     (Kernel : not null access Kernel_Handle_Record'Class;
+      Data   : Breakpoint_Data;
+      Index  : Positive);
+   --  Update breakpoint at the given index.
+
    procedure Delete_Multiple_Breakpoints
      (Kernel  : not null access Kernel_Handle_Record'Class;
       Indexes : Breakpoint_Index_Lists.List);

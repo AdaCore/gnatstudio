@@ -11,6 +11,7 @@ import os_utils
 import os.path
 import re
 import tool_output
+import shlex
 from gi.repository import Gtk
 
 alr = os_utils.locate_exec_on_path("alr")
@@ -112,7 +113,7 @@ def on_project_changing(hook, file):
     """
     global saved_env, project_to_reload
 
-    if project_to_reload or "ALIRE" in os.environ:
+    if project_to_reload:
         project_to_reload = None
         return
 
@@ -138,7 +139,7 @@ def on_project_changing(hook, file):
 class Alire_Parser(tool_output.OutputParser):
     """
     Parse the Alire output in oder to set the needed environment,
-    saving the original environment in order to restor it if needed.
+    saving the original environment in order to restore it if needed.
     """
 
     def __init__(self, child=None):
@@ -152,8 +153,11 @@ class Alire_Parser(tool_output.OutputParser):
             m = self.exp.fullmatch(line)
 
             if m:
+                # Parse the output of 'alr printenv'.
+                # The paths might be quoted (e.g: export PATH="/home/something"): we use
+                # shlex.split to make sure we unquote them if needed.
                 name = m.group(1)
-                value = m.group(2)
+                value = shlex.split(m.group(2))[0]
                 GPS.Logger("ALIRE").log("%s=%s" % (name, value))
                 saved_env[name] = GPS.getenv(name)
                 GPS.setenv(name, value)
@@ -168,7 +172,7 @@ if alr:
     GPS.parse_xml(
         """<?xml version="1.0"?><ALIRE>
     <target-model name="Alire" category="">
-       <description>Laubch Alire to print environment</description>
+       <description>Launch Alire to print environment</description>
        <command-line>
           <arg>alr</arg>
           <arg>--non-interactive</arg>
