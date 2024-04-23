@@ -2,10 +2,10 @@
 from GPS import *
 from gs_utils.internal.utils import *
 
-expected_values = ([['0', 'false']])
+expected_values = (['', ['0', 'false']])
 expected_names = (['<b>Arguments</b>', ['<b>i</b>', '<b>b</b>']])
 
-expected_values_1 = ([['0', 'false'],'5'])
+expected_values_1 = (['', ['0', 'false'], '5'])
 expected_names_1 = (['<b>Arguments</b>', ['<b>i</b>', '<b>b</b>'], '<b>arguments</b>'])
 
 @run_test_driver
@@ -31,7 +31,6 @@ def run_test():
     yield wait_DAP_server("variables")
     yield wait_until_not_busy(debug)
     yield wait_idle()
-
     tree = get_widget_by_name("Variables Tree")
     dump = dump_tree_model(tree.get_model(), 1)
     gps_assert(dump, expected_values)
