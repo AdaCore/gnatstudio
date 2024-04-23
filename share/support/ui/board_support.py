@@ -497,7 +497,7 @@ class BoardLoader(Module):
             return
 
         # Get the executable path
-        exe = GPS.File(main_name).executable_path.path
+        exe = GPS.Project.root().get_executable_file(GPS.File(main_name)).path
 
         # Retrieve the load address of the executable with objdump
         self.__display_message("Retrieving the load address.")
