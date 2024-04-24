@@ -41,7 +41,6 @@ with VSS.Regular_Expressions;
 with VSS.Stream_Element_Vectors.Conversions;
 with VSS.Strings;                use VSS.Strings;
 with VSS.Strings.Conversions;
-with VSS.Strings.Cursors.Iterators.Characters;
 with VSS.Text_Streams.Memory_UTF8_Input;
 with VSS.Text_Streams.Memory_UTF8_Output;
 
@@ -135,18 +134,6 @@ package body DAP.Clients is
        ("^\s*(?:(break|b)|(tbreak|tb)|(hbreak|thbreak|rbreak|thb|hb|rb))"
         & "(?:\s+(.+)?)?$");
    --  to catch breakpoint command
-
-   Is_Delete_Pattern : constant VSS.Regular_Expressions.
-     Regular_Expression := VSS.Regular_Expressions.To_Regular_Expression
-       ("^\s*(delete|del|d)(?:\s+(.+)?)?$");
-   --  to catch delete breakpoint(s) command
-
-   Bp_Delete_Details_Idx : constant := 2;
-
-   Ids_Pattern : constant VSS.Regular_Expressions.
-     Regular_Expression := VSS.Regular_Expressions.To_Regular_Expression
-       ("((\d+)\s*-\s*(\d+)|\d+)");
-   --  to get all (breakpoints) ids or range
 
    Is_Ignore_Pattern : constant VSS.Regular_Expressions.
      Regular_Expression := VSS.Regular_Expressions.To_Regular_Expression
@@ -1390,6 +1377,10 @@ package body DAP.Clients is
          if Self.Status /= Terminating then
             Self.Process_Event (Reader, Event);
          end if;
+
+         GPS.Kernel.Hooks.Dap_Event_Processed_Hook.Run
+            (Kernel => Self.Kernel,
+             Event  => VSS.Strings.Conversions.To_UTF_8_String (Event));
       end if;
 
    exception
@@ -1655,10 +1646,8 @@ package body DAP.Clients is
       VSS_Cmd       : Virtual_String;
       Details       : Virtual_String;
       Level         : Integer;
-      Ids           : Breakpoint_Identifier_Lists.List;
 
       procedure Add_BP_For_Offset;
-      procedure Check_Delete_Command;
       procedure Check_Ignore_Command;
       function Value
         (S : VSS.Strings.Virtual_String) return Integer;
@@ -1689,72 +1678,6 @@ package body DAP.Clients is
             Temporary => Matched.Has_Capture (Bp_Temporary_Idx),
             Condition => Details_Match.Captured (Bp_Condition_Idx));
       end Add_BP_For_Offset;
-
-      --------------------------
-      -- Check_Delete_Command --
-      --------------------------
-
-      procedure Check_Delete_Command is
-      begin
-         --  Is the `delete` command
-         Matched := Is_Delete_Pattern.Match (VSS_Cmd);
-
-         if Matched.Has_Match then
-            if Self.Breakpoints = null then
-               null;
-
-            elsif Matched.Has_Capture (Bp_Delete_Details_Idx) then
-               --  Get breakpoint ids or ranges
-               Details := Matched.Captured (Bp_Delete_Details_Idx);
-
-               declare
-                  From : VSS.Strings.Cursors.Iterators.Characters.
-                    Character_Iterator := Details.Before_First_Character;
-               begin
-                  while From.Forward loop
-                     Details_Match := Ids_Pattern.Match (Details, From);
-                     exit when not Details_Match.Has_Match;
-
-                     if Details_Match.Has_Capture (2) then
-                        --  Range match found:
-                        --    1: 1 .. 3 => '2-3'
-                        --    2: 1 .. 1 => '2'
-                        --    3: 3 .. 3 => '3'
-
-                        for Index in
-                          Value (Details_Match.Captured (1)) ..
-                            Value (Details_Match.Captured (2))
-                        loop
-                           Ids.Append (Breakpoint_Identifier (Index));
-                        end loop;
-
-                     else
-                        --  Id match found:
-                        --    1: 1 .. 1 => '4'
-
-                        Ids.Append
-                          (Breakpoint_Identifier
-                             (Value (Details_Match.Captured (1))));
-                     end if;
-
-                     From.Set_At (Details_Match.Last_Marker (1));
-                  end loop;
-
-                  if not Ids.Is_Empty then
-                     Self.Breakpoints.Remove_Breakpoints (Ids);
-                  end if;
-               end;
-
-            else
-               --  `delete` command does not have ids,
-               --  remove all breakpoints.
-               Self.Breakpoints.Remove_All_Breakpoints;
-            end if;
-
-            --  Clear the command to signal that the command is processed
-            VSS_Cmd.Clear;
-         end if;
-      end Check_Delete_Command;
 
       --------------------------
       -- Check_Ignore_Command --
@@ -1939,10 +1862,6 @@ package body DAP.Clients is
                end if;
 
                VSS_Cmd.Clear;
-            end if;
-
-            if not VSS_Cmd.Is_Empty then -- Command is not processed yet
-               Check_Delete_Command;
             end if;
 
             if not VSS_Cmd.Is_Empty then -- Command is not processed yet
