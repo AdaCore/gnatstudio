@@ -1814,6 +1814,8 @@ Classes
 
    .. automethod:: GPS.Project.get_config
 
+   .. automethod:: GPS.Project.get_executable_file
+
    .. automethod:: GPS.Project.get_executable_name
 
    .. automethod:: GPS.Project.get_extended_project
