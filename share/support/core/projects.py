@@ -11,6 +11,8 @@ window when a project is loaded
 
 
 import GPS
+import extensions
+import os.path
 
 XML = r"""<?xml version="1.0" ?>
 <GNAT_Studio>
@@ -513,3 +515,25 @@ available, apart of course for the spec files and the bodies of generic packages
 """
 
 GPS.parse_xml(XML)
+
+
+"""
+Extension of the GPS.Project class.
+
+Used to provide small helpers on top of existing functions
+implemented in Ada.
+"""
+@extensions.extend_module(GPS)
+class Project:
+    def get_executable_file(self, main):
+        """
+        Returns the executable file computed from `main`.
+        This handles extended projects as well.
+
+        :param GPS.File main: the main source file
+        :return: An instance of :class:`GPS.Project`
+        """
+        exe_name = self.get_executable_name(main)
+        exec_dir = self.exec_dir()
+        exec_file = GPS.File(os.path.join(exec_dir, exe_name))
+        return exec_file

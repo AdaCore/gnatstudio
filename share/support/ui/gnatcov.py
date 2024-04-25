@@ -797,7 +797,7 @@ class GNATcovPlugin(Module):
             return
 
         # Get the executable to analyze
-        exe = str(GPS.File(main_name).executable_path)
+        exe = GPS.Project.root().get_executable_file(GPS.File(main_name)).path
 
         # Run GNATcov on it
         p = promises.TargetWrapper("Run under GNATcov")
@@ -910,7 +910,7 @@ class GNATcovPlugin(Module):
         GNATcovPlugin.check_for_defined_level(cmds=["instrument", "coverage"])
 
         # Get the executable to analyze
-        exe = str(GPS.File(main_name).executable_path)
+        exe = GPS.Project.root().get_executable_file(GPS.File(main_name)).path
 
         # Don't build/install the GNATcov runtime if a prebuilt one has been
         # specified.

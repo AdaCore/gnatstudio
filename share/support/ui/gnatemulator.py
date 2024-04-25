@@ -11,6 +11,7 @@ import GPS
 from modules import Module
 import workflows.promises as promises
 import workflows
+import os.path
 from os_utils import locate_exec_on_path
 from gs_utils.console_process import Console_Process
 
@@ -224,11 +225,11 @@ class GNATemulator(Module):
         except RuntimeError:
             return
 
-        # Get the name of the generated binary
-        bin_name = GPS.File(main_name).executable_path.path
+        # Get the path of the generated binary, computing it from the root project.
+        exec_file = GPS.Project.root().get_executable_file(GPS.File(main_name))
 
         # STEP 2 launch with Emulator
-        yield GNATemulator.run_gnatemu([bin_name], in_console)
+        yield GNATemulator.run_gnatemu([exec_file.path], in_console)
 
     @staticmethod
     def build_and_debug(main_name):
@@ -249,7 +250,9 @@ class GNATemulator(Module):
             # Build error, we stop there
             return
 
-        binary = GPS.File(main_name).executable_path.path
+        # Get the executable path
+        exe = GPS.Project.root().get_executable_file(GPS.File(main_name)).path
+
         # STEP 2 Switch to the "Debug" perspective To have GNATemu console in
         # the debugger perspective.
 
@@ -266,14 +269,14 @@ class GNATemulator(Module):
 
         yield GNATemulator.run_gnatemu(["--freeze-on-startup",
                                         "--gdb=%s" % debug_port,
-                                        binary])
+                                        exe])
 
         log("... done.")
 
         # STEP 3 launch the debugger
         try:
             debugger_promise = promises.DebuggerWrapper(
-                GPS.File(binary),
+                GPS.File(exe),
                 remote_target="localhost:" + debug_port,
                 remote_protocol="remote")
         except Exception:

@@ -5982,6 +5982,12 @@ class File(object):
 
     executable_path = None
     """
+    OBSOLESCENT.
+
+    This property is deprecated since it does not handle extended projects
+    properly. Please use the :func:`GPS.Project.get_executable_file`
+    function instead.
+
     Return a :class:`File` instance of the executable associated with this
     file.
 
@@ -9054,6 +9060,16 @@ class Project(object):
 
         """
         pass  # implemented in Ada
+
+    def get_executable_file(self, main):
+        """
+        Returns the executable file computed from `main`.
+        This handles extended projects as well.
+
+        :param GPS.File main: the main source file
+        :return: An instance of :class:`GPS.Project`
+        """
+        pass  # implemented via a Python extension
 
     def get_extended_project(self):
         """
