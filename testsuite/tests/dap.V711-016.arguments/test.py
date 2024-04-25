@@ -51,3 +51,19 @@ def run_test():
     dump = dump_tree_model(tree.get_model(), 0)
     gps_assert(dump, expected_names_1)
 
+    # test that we restore the variable view selection
+    debug.send("graph display R")
+    yield wait_until_not_busy(debug)
+    tree = get_widget_by_name("Variables Tree")
+    tree.expand_row(Gtk.TreePath((0)), True)
+    tree.expand_row(Gtk.TreePath((2)), True)
+    tree.get_selection().select_path(Gtk.TreePath("1"))
+
+    debug.send("step")
+    yield wait_DAP_server("variables")
+    yield wait_until_not_busy(debug)
+
+    gps_assert(tree.get_selection().iter_is_selected(tree.get_model().get_iter("1")),
+               True,
+               "Wrong variable is selected")
+    gps_assert(tree.row_expanded(Gtk.TreePath((2))), True, "Expansion not restored")
