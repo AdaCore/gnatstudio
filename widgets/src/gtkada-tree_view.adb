@@ -1280,6 +1280,90 @@ package body Gtkada.Tree_View is
          end if;
       end Set_Expansion_Status;
 
+      ----------------------------------------
+      -- Set_Expansion_Status_Stop_On_Dummy --
+      ----------------------------------------
+
+      procedure Set_Expansion_Status_Stop_On_Dummy
+        (Self   : not null access Tree_Record'Class;
+         Status : in out Expansion_Status)
+      is
+         Stopped : Boolean := False;
+         --  Flag to stop expanding when we found a dummy node that means that
+         --  not all data is loaded
+
+         function Expand_Node
+           (Model : Gtk_Tree_Model;
+            Path  : Gtk_Tree_Path;
+            Iter  : Gtk_Tree_Iter) return Boolean;
+
+         -----------------
+         -- Expand_Node --
+         -----------------
+
+         function Expand_Node
+           (Model : Gtk_Tree_Model;
+            Path  : Gtk_Tree_Path;
+            Iter  : Gtk_Tree_Iter) return Boolean
+         is
+            pragma Unreferenced (Path);
+
+            Dummy         : Boolean;
+            The_Id        : constant Id := Get_Id (Self, Iter);
+            Sortable_Path : Gtk_Tree_Path;
+
+         begin
+            if Status.Expanded.Contains (The_Id) then
+
+               --  check whether the node contains the dummy node
+               if Model.Has_Child (Iter) then
+                  Stopped := Get_Flag
+                    (Self, Model.Children (Iter), Flag_Is_Dummy);
+               end if;
+
+               Sortable_Path := Self.Get_Sortable_Path_For_Store_Iter (Iter);
+               Dummy := Self.Expand_Row (Sortable_Path, Open_All => False);
+               Path_Free (Sortable_Path);
+            end if;
+
+            if not Stopped then
+               if Status.Selection.Contains (The_Id) then
+                  Self.Get_Selection.Select_Iter
+                    (Self.Convert_To_Sortable_Model_Iter (Iter));
+               end if;
+            end if;
+
+            --  Return True to stop iterating or False to continue
+            return Stopped;
+         end Expand_Node;
+
+      begin
+         if Status = No_Expansion then
+            return;
+         end if;
+
+         Self.Collapse_All;
+         Self.Model.Foreach (Expand_Node'Unrestricted_Access);
+
+         if Stopped then
+            --  we found the dummy node, stop for now
+            return;
+         end if;
+
+         --  here we have all nodes created
+         if Status.Has_Scroll_Info then
+            Gtk_Tree_View_Record (Self.all).Scroll_To_Cell
+              (Path      => Status.Scroll_Y,
+               Column    => null,
+               Use_Align => False,
+               Row_Align => 0.0,
+               Col_Align => 0.0);
+            Path_Free (Status.Scroll_Y);
+         end if;
+
+         Status := No_Expansion;
+      end Set_Expansion_Status_Stop_On_Dummy;
+
       -----------------------
       -- On_Tree_Destroyed --
       -----------------------

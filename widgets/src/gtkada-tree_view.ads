@@ -191,6 +191,14 @@ package Gtkada.Tree_View is
       --  across refresh of the model.
       --  This also preserves the current scrolling position
 
+      procedure Set_Expansion_Status_Stop_On_Dummy
+        (Self   : not null access Tree_Record'Class;
+         Status : in out Expansion_Status);
+      --  Same as above but stop on the first expanding node that contains
+      --  the "dummy" child. Clears Status when not stopped and expansion,
+      --  scrolling, and selection are restored. Is used when getting/filling
+      --  data asynchronous.
+
       type Detached_Model is new Ada.Finalization.Limited_Controlled
          with private;
       type Detached_Model_Access is access all Detached_Model'Class;
