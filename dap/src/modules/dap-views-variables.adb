@@ -366,7 +366,7 @@ package body DAP.Views.Variables is
       use type Expansions.Expansion_Status;
    begin
       if Self.Expansion /= Expansions.No_Expansion then
-         Expansions.Set_Expansion_Status
+         Expansions.Set_Expansion_Status_Stop_On_Dummy
            (Self.Tree, Self.Expansion);
       end if;
    end Restore_Expansion;
@@ -1373,10 +1373,18 @@ package body DAP.Views.Variables is
      (Self : not null access DAP_Variables_View_Record)
    is
       use type DAP.Clients.DAP_Client_Access;
+      use type Expansions.Expansion_Status;
 
       Client : constant DAP.Clients.DAP_Client_Access := Get_Client (Self);
    begin
       Trace (Me, "Update view");
+
+      if not Self.Tree.Items.Is_Empty
+        and then Self.Expansion = Expansions.No_Expansion
+      then
+         --  Store expansion if not done yet
+         Expansions.Get_Expansion_Status (Self.Tree, Self.Expansion);
+      end if;
 
       if Client /= null
         and then Client.Get_Variables /= null
@@ -1397,7 +1405,6 @@ package body DAP.Views.Variables is
 
       elsif not Self.Tree.Items.Is_Empty then
          Self.Tree.Types_Column.Set_Visible (Show_Types.Get_Pref);
-         Expansions.Get_Expansion_Status (Self.Tree, Self.Expansion);
          Self.Tree.Model.Clear;
 
          Self.Update (0);
