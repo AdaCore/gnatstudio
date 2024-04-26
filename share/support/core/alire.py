@@ -18,6 +18,203 @@ alr = os_utils.locate_exec_on_path("alr")
 saved_env = {}  # all changed env variables and their values
 project_to_reload = None  # The project we should reload after finding an Alire manifest
 
+ALIRE_MODELS_XML = """
+    <target-model name="Alire" category="">
+       <description>Launch Alire to print environment</description>
+       <command-line>
+          <arg>alr</arg>
+          <arg>--non-interactive</arg>
+          <arg>--no-color</arg>
+          <arg>--no-tty</arg>
+          <arg>-q</arg>
+       </command-line>
+       <iconname>gps-build-all-symbolic</iconname>
+       <output-parsers>
+         output_chopper
+         utf8_converter
+         progress_parser
+         alire_parser
+         console_writer
+         end_of_build
+       </output-parsers>
+    </target-model>
+
+    <target-model name="Alire Builder" category="">
+       <description>Generic Alire builder</description>
+       <command-line>
+          <arg>alr</arg>
+          <arg>--non-interactive</arg>
+          <arg>--no-color</arg>
+          <arg>--no-tty</arg>
+          <arg>-q</arg>
+       </command-line>
+       <iconname>gps-build-all-symbolic</iconname>
+       <switches command="%(tool_name)s" columns="1" lines="1">
+         <title column="1" line="1" >Profiles</title>
+            <radio
+            line="1"
+            label="Build Profiles"
+            tip="A build profile can be selected with the appropriate switch. The profile is
+applied to the root release only, whereas dependencies are built in release
+mode.">
+            <radio-entry label="Development"
+            switch = ""/>
+            <radio-entry label="Release"
+            switch="--release"/>
+            <radio-entry label="Validation"
+            switch="--validation"/>
+            </radio>
+       </switches>
+       <output-parsers>
+         output_chopper
+         utf8_converter
+         progress_parser
+         alire_parser
+         console_writer
+         end_of_build
+       </output-parsers>
+    </target-model>
+
+    <target-model name="Alire Clean" category="">
+       <description>Clean compilation artifacts with Alire</description>
+       <command-line>
+          <arg>alr</arg>
+          <arg>--non-interactive</arg>
+          <arg>--no-color</arg>
+          <arg>--no-tty</arg>
+          <arg>-q</arg>
+       </command-line>
+       <iconname>gps-clean-symbolic</iconname>
+       <switches command="%(tool_name)s" columns="2" lines="1">
+         <title column="1" line="1" >Options</title>
+            <check label="Delete cache of releases" switch="--cache"
+            tip="All downloaded dependencies will be deleted." />
+            <check label="Delete dangling temporary files" switch="--temp"
+            tip="All alr-???.tmp files in the subtree will be deleted. These files may
+remain when alr is interrupted via Ctrl-C or other forceful means.s" />
+       </switches>
+       <output-parsers>
+         output_chopper
+         utf8_converter
+         progress_parser
+         alire_parser
+         console_writer
+         end_of_build
+       </output-parsers>
+    </target-model>
+
+    <target-model name="Alire Run" category="">
+       <description>Launch an executable built by the crate</description>
+       <command-line>
+          <arg>alr</arg>
+          <arg>--non-interactive</arg>
+          <arg>--no-color</arg>
+          <arg>--no-tty</arg>
+          <arg>-q</arg>
+       </command-line>
+       <iconname>gps-run-symbolic</iconname>
+       <switches command="%(tool_name)s" columns="1" lines="1">
+         <title column="1" line="1" >Options</title>
+            <check label="Skip building step" switch="--skip-build"
+            tip="Skip the building step before running the executable(s)." />
+       </switches>
+       <output-parsers>
+         output_chopper
+         utf8_converter
+         progress_parser
+         alire_parser
+         console_writer
+         end_of_build
+       </output-parsers>
+    </target-model>
+
+    <target model="Alire" category="Alire" name="Alire"
+            messages_category="Alire">
+       <in-toolbar>FALSE</in-toolbar>
+       <in-menu>FALSE</in-menu>
+       <iconname>gps-build-all-symbolic</iconname>
+       <launch-mode>MANUALLY_WITH_NO_DIALOG</launch-mode>
+       <read-only>TRUE</read-only>
+       <command-line>
+          <arg>alr</arg>
+          <arg>--non-interactive</arg>
+          <arg>--no-color</arg>
+          <arg>--no-tty</arg>
+          <arg>-q</arg>
+          <arg>printenv</arg>
+       </command-line>
+       <output-parsers>
+         output_chopper
+         utf8_converter
+         progress_parser
+         alire_parser
+         console_writer
+         end_of_build
+       </output-parsers>
+    </target>
+"""
+
+ALIRE_TARGETS_XML = """
+    <target model="Alire Builder" category="Alire" name="Alire Build All"
+            messages_category="Alire">
+       <in-toolbar>FALSE</in-toolbar>
+       <in-menu>FALSE</in-menu>
+       <iconname>gps-build-all-symbolic</iconname>
+       <launch-mode>MANUALLY</launch-mode>
+       <read-only>TRUE</read-only>
+       <command-line>
+          <arg>alr</arg>
+          <arg>--non-interactive</arg>
+          <arg>--no-color</arg>
+          <arg>--no-tty</arg>
+          <arg>-q</arg>
+          <arg>build</arg>
+       </command-line>
+    </target>
+
+    <target model="Alire Builder" category="Alire" name="Alire Build Main"
+            messages_category="Alire">
+       <in-toolbar>FALSE</in-toolbar>
+       <in-menu>FALSE</in-menu>
+       <iconname>gps-build-main-symbolic</iconname>
+       <launch-mode>MANUALLY</launch-mode>
+       <read-only>TRUE</read-only>
+       <target-type>main</target-type>
+       <command-line>
+          <arg>alr</arg>
+          <arg>--non-interactive</arg>
+          <arg>--no-color</arg>
+          <arg>--no-tty</arg>
+          <arg>-q</arg>
+          <arg>build</arg>
+       </command-line>
+    </target>
+
+    <target model="Alire Clean" category="Alire" name="Alire Clean All"
+            messages_category="Alire">
+       <in-toolbar>FALSE</in-toolbar>
+       <in-menu>FALSE</in-menu>
+       <iconname>gps-clean-symbolic</iconname>
+       <launch-mode>MANUALLY_WITH_DIALOG</launch-mode>
+       <read-only>TRUE</read-only>
+       <command-line>
+          <arg>alr</arg>
+          <arg>--non-interactive</arg>
+          <arg>--no-color</arg>
+          <arg>--no-tty</arg>
+          <arg>-q</arg>
+          <arg>clean</arg>
+       </command-line>
+    </target>
+"""
+
+ALIRE_TARGET_ALIASES = {
+    "Build All": "Alire Build All",
+    "Build Main": "Alire Build Main",
+    "Clean All": "Alire Clean All",
+}
+
+
 def find_alire_root(path):
     """
     Return parent directory with "alire.toml" or None
@@ -30,6 +227,15 @@ def find_alire_root(path):
         return parent
 
     return find_alire_root(parent)
+
+
+def update_aliases_for_alire_targets(is_alire_project):
+    """
+    Set or unset depending on `is_alire_project` the aliases on the
+    Alire build targets for the default ones (e.g: 'Build All').
+    """
+    for target, alias in ALIRE_TARGET_ALIASES.items():
+        GPS.BuildTarget(target).set_as_alias(alias if is_alire_project else "")
 
 
 def on_project_recomputed(hook):
@@ -59,9 +265,13 @@ def on_project_recomputed(hook):
                 # add a message saying that we are configuring the project through Alire
                 GPS.Console().clear()
                 GPS.Locations.add(
-                    "Alire", GPS.File(file), 1, 1,
+                    "Alire",
+                    GPS.File(file),
+                    1,
+                    1,
                     "Alire project detected, setting the needed environment to reload it properly...",
-                    importance=GPS.Message.Importance.MEDIUM)
+                    importance=GPS.Message.Importance.MEDIUM,
+                )
                 GPS.MDI.get("Locations").set_activity_progress_bar_visibility(True)
                 timeout.remove()
 
@@ -74,6 +284,11 @@ def on_project_recomputed(hook):
         # Alire is being ran
         timeout = GPS.Timeout(100, display_message)
         timeout.counter = 0
+    else:
+        # We are not loading an Alire project: unset the aliases
+        # on Alire build targets.
+        update_aliases_for_alire_targets(is_alire_project=False)
+
 
 def on_compilation_finished(hook, category, target_name, mode_name, status, cmd):
     """
@@ -87,7 +302,8 @@ def on_compilation_finished(hook, category, target_name, mode_name, status, cmd)
     if project_to_reload:
         file, root = project_to_reload
         GPS.Logger("ALIRE").log(
-            "Alire configuration finished, reloading %s" % str(file))
+            "Alire configuration finished, reloading %s" % str(file)
+        )
         GPS.MDI.get("Locations").set_activity_progress_bar_visibility(False)
         # Set ALIRE env variable to True before loading the project in order
         # to not re-do 'alr printenv' on the ALS side
@@ -96,11 +312,15 @@ def on_compilation_finished(hook, category, target_name, mode_name, status, cmd)
         GPS.Project.load(file)
         # Warn the user that everything is now setup
         GPS.Locations.add(
-            "Alire", GPS.File(file), 1, 1,
+            "Alire",
+            GPS.File(file),
+            1,
+            1,
             "Alire environment is now setup: project has been reloaded",
-            importance=GPS.Message.Importance.INFORMATIONAL)
-        GPS.MDI.information_popup(
-                'Alire project is now setup', 'vcs-up-to-date')
+            importance=GPS.Message.Importance.INFORMATIONAL,
+        )
+        update_aliases_for_alire_targets(is_alire_project=True)
+        GPS.MDI.information_popup("Alire project is now setup", "vcs-up-to-date")
         project_to_reload = None
 
 
@@ -169,53 +389,4 @@ if alr:
     GPS.Hook("project_view_changed").add(on_project_recomputed)
     GPS.Hook("compilation_finished").add(on_compilation_finished)
 
-    GPS.parse_xml(
-        """<?xml version="1.0"?><ALIRE>
-    <target-model name="Alire" category="">
-       <description>Launch Alire to print environment</description>
-       <command-line>
-          <arg>alr</arg>
-          <arg>--non-interactive</arg>
-          <arg>--no-color</arg>
-          <arg>--no-tty</arg>
-          <arg>-q</arg>
-          <arg>printenv</arg>
-       </command-line>
-       <iconname>gps-build-all-symbolic</iconname>
-       <output-parsers>
-         output_chopper
-         utf8_converter
-         progress_parser
-         alire_parser
-         console_writer
-         end_of_build
-       </output-parsers>
-    </target-model>
-
-    <target model="Alire" category="Alire" name="Alire"
-            messages_category="Alire">
-       <in-toolbar>FALSE</in-toolbar>
-       <in-menu>FALSE</in-menu>
-       <iconname>gps-build-all-symbolic</iconname>
-       <launch-mode>MANUALLY_WITH_NO_DIALOG</launch-mode>
-       <read-only>TRUE</read-only>
-       <command-line>
-          <arg>alr</arg>
-          <arg>--non-interactive</arg>
-          <arg>--no-color</arg>
-          <arg>--no-tty</arg>
-          <arg>-q</arg>
-          <arg>printenv</arg>
-       </command-line>
-       <output-parsers>
-         output_chopper
-         utf8_converter
-         progress_parser
-         alire_parser
-         console_writer
-         end_of_build
-       </output-parsers>
-    </target>
-
-    </ALIRE>"""
-    )
+GPS.parse_xml(ALIRE_MODELS_XML + ALIRE_TARGETS_XML)

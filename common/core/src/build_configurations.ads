@@ -143,10 +143,13 @@ package Build_Configurations is
    --  Remove target named Target_Name from registry
 
    function Get_Target_From_Name
-     (Registry : Build_Config_Registry_Access;
-      Name     : String) return Target_Access;
+     (Registry      : Build_Config_Registry_Access;
+      Name          : String;
+      Resolve_Alias : Boolean := True) return Target_Access;
    --  Get the target corresponding to Name in the Registry; return null if
    --  no such target was found.
+   --  If the target refered by Name is an alias on another target, the
+   --  aliased target is returned instead if Resolve_Alias is set to True.
 
    procedure Duplicate_Target
      (Registry     : Build_Config_Registry_Access;
@@ -327,6 +330,9 @@ package Build_Configurations is
 
       Project_Switches  : Unbounded_String;
       --  Project switches relevant for this target, if any.
+
+      Aliased_Target_Name : Unbounded_String;
+      --  The name of the target being aliased, if any.
    end record;
 
    function Get_Properties (Target : Target_Access) return Target_Properties;
@@ -446,6 +452,21 @@ package Build_Configurations is
    procedure Set_Launch_Mode
    (Target : Target_Access; Launch_Mode : Launch_Mode_Type);
    --  Change Launch_Mode value
+
+   procedure Set_As_Alias
+     (Target         : not null Target_Access;
+      Aliased_Target : Target_Access := null);
+   --  Set the given target as an alias for Aliased_Target.
+   --  Aliases are used to temporarily replace a build target
+   --  (e.g: "Build All") by another one (e.g: "My Custom Build All").
+   --
+   --  This can be used by plugins to execute their own custom build targets
+   --  while the user interacts with the default GNAT Studio build targets,
+   --  either via the UI or through the GPS.BuildTarget Python API.
+   --  In the example given above, clicking on the "Build All" toolbar button
+   --  will actually execute "My Custom Build All" instead.
+   --
+   --  Giving a null aliased target will unset any existing alias.
 
    function Apply_Mode_Args
      (Target   : access Target_Type;
