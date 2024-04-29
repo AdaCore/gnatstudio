@@ -827,16 +827,34 @@ package body Build_Configurations is
    --------------------------
 
    function Get_Target_From_Name
-     (Registry : Build_Config_Registry_Access;
-      Name     : String) return Target_Access
+     (Registry      : Build_Config_Registry_Access;
+      Name          : String;
+      Resolve_Alias : Boolean := True) return Target_Access
    is
       C : Cursor;
+      Target : Target_Access;
    begin
       C := Registry.Targets.First;
 
       while Has_Element (C) loop
-         if To_String (Element (C).Name) = Name then
-            return Element (C);
+         Target := Element (C);
+
+         if To_String (Target.Name) = Name then
+
+            --  Check if we are dealing with an alias.
+            --  If it's the case, return the aliased target when asked.
+            if not Resolve_Alias
+              or else
+                Target.Properties.Aliased_Target_Name = Null_Unbounded_String
+            then
+               return Target;
+            else
+               return Get_Target_From_Name
+                 (Registry      => Registry,
+                  Name          =>
+                    To_String (Target.Properties.Aliased_Target_Name),
+                  Resolve_Alias => False);
+            end if;
          end if;
 
          Next (C);
@@ -1968,6 +1986,22 @@ package body Build_Configurations is
    begin
       Target.Properties.Launch_Mode := Launch_Mode;
    end Set_Launch_Mode;
+
+   ------------------
+   -- Set_As_Alias --
+   ------------------
+
+   procedure Set_As_Alias
+     (Target         : not null Target_Access;
+      Aliased_Target : Target_Access := null) is
+   begin
+      if Aliased_Target /= null then
+         Target.Properties.Aliased_Target_Name := Aliased_Target.Name;
+      else
+         Target.Properties.Aliased_Target_Name :=
+           Ada.Strings.Unbounded.Null_Unbounded_String;
+      end if;
+   end Set_As_Alias;
 
    ----------
    -- Free --

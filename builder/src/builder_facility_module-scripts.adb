@@ -132,6 +132,35 @@ package body Builder_Facility_Module.Scripts is
                Data.Set_Return_Value (Arg.all);
             end loop;
          end;
+      elsif Command = "set_as_alias" then
+         declare
+            Inst                : constant Class_Instance :=
+              Nth_Arg (Data, 1, Target_Class);
+            Target_Name         : constant String := Get_Target_Name (Inst);
+            Target              : constant Target_Access :=
+              Get_Target_From_Name
+                (Registry      => Registry,
+                 Name          => Target_Name,
+                 Resolve_Alias => False);
+            Aliased_Target_Name : constant String :=  Nth_Arg (Data, 2, "");
+            Aliased_Target      : constant Target_Access :=
+              Get_Target_From_Name (Registry, Aliased_Target_Name);
+         begin
+            --  The given alias target does not exist: return an error message
+            if Aliased_Target = null and then Aliased_Target_Name /= "" then
+               Set_Error_Msg
+                 (Data,
+                  -"Invalid alias: no target has been registered "
+                  & "with this name: '"
+                  & Aliased_Target_Name
+                  & "'");
+               return;
+            end if;
+
+            Set_As_Alias
+              (Target         => Target,
+               Aliased_Target => Aliased_Target);
+         end;
 
       elsif Command = "get_expanded_command_line" then
          declare
@@ -265,6 +294,14 @@ package body Builder_Facility_Module.Scripts is
         (Kernel, "clone",
          Minimum_Args => 1,
          Maximum_Args => 2,
+         Class        => Target_Class,
+         Handler      => Shell_Handler'Access);
+
+      Register_Command
+        (Repo         => Kernel.Scripts,
+         Command      => "set_as_alias",
+         Params       =>
+           (1 => Param ("aliased_target_name",  Optional => True)),
          Class        => Target_Class,
          Handler      => Shell_Handler'Access);
 
