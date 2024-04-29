@@ -47,9 +47,11 @@ ALIRE_MODELS_XML = """
           <arg>--no-color</arg>
           <arg>--no-tty</arg>
           <arg>-q</arg>
+          <arg>--</arg>
+          <arg>%X</arg>
        </command-line>
        <iconname>gps-build-all-symbolic</iconname>
-       <switches command="%(tool_name)s" columns="1" lines="1">
+       <switches command="%(tool_name)s" columns="1" lines="1" sections="--">
          <title column="1" line="1" >Profiles</title>
             <radio
             line="1"
@@ -83,40 +85,17 @@ mode.">
           <arg>--no-color</arg>
           <arg>--no-tty</arg>
           <arg>-q</arg>
+          <arg>--</arg>
+          <arg>%X</arg>
        </command-line>
        <iconname>gps-clean-symbolic</iconname>
-       <switches command="%(tool_name)s" columns="2" lines="1">
+       <switches command="%(tool_name)s" columns="2" lines="1" sections="--">
          <title column="1" line="1" >Options</title>
             <check label="Delete cache of releases" switch="--cache"
             tip="All downloaded dependencies will be deleted." />
             <check label="Delete dangling temporary files" switch="--temp"
             tip="All alr-???.tmp files in the subtree will be deleted. These files may
 remain when alr is interrupted via Ctrl-C or other forceful means.s" />
-       </switches>
-       <output-parsers>
-         output_chopper
-         utf8_converter
-         progress_parser
-         alire_parser
-         console_writer
-         end_of_build
-       </output-parsers>
-    </target-model>
-
-    <target-model name="Alire Run" category="">
-       <description>Launch an executable built by the crate</description>
-       <command-line>
-          <arg>alr</arg>
-          <arg>--non-interactive</arg>
-          <arg>--no-color</arg>
-          <arg>--no-tty</arg>
-          <arg>-q</arg>
-       </command-line>
-       <iconname>gps-run-symbolic</iconname>
-       <switches command="%(tool_name)s" columns="1" lines="1">
-         <title column="1" line="1" >Options</title>
-            <check label="Skip building step" switch="--skip-build"
-            tip="Skip the building step before running the executable(s)." />
        </switches>
        <output-parsers>
          output_chopper
@@ -169,6 +148,8 @@ ALIRE_TARGETS_XML = """
           <arg>--no-tty</arg>
           <arg>-q</arg>
           <arg>build</arg>
+          <arg>--</arg>
+          <arg>%X</arg>
        </command-line>
     </target>
 
@@ -187,6 +168,8 @@ ALIRE_TARGETS_XML = """
           <arg>--no-tty</arg>
           <arg>-q</arg>
           <arg>build</arg>
+          <arg>--</arg>
+          <arg>%X</arg>
        </command-line>
     </target>
 
@@ -204,6 +187,8 @@ ALIRE_TARGETS_XML = """
           <arg>--no-tty</arg>
           <arg>-q</arg>
           <arg>clean</arg>
+          <arg>--</arg>
+          <arg>%X</arg>
        </command-line>
     </target>
 """
@@ -320,8 +305,15 @@ def on_compilation_finished(hook, category, target_name, mode_name, status, cmd)
             "Alire environment is now setup: project has been reloaded",
             importance=GPS.Message.Importance.INFORMATIONAL,
         )
+
         update_aliases_for_alire_targets(is_alire_project=True)
         GPS.MDI.information_popup("Alire project is now setup", "vcs-up-to-date")
+
+        # Change GS's current directory to Alire project's root directory.
+        GPS.Logger("ALIRE").log("Changing current directory to: %s" % root)
+        GPS.cd(root)
+        GPS.Logger("ALIRE").log("Current directory is now: %s" % GPS.pwd())
+
         project_to_reload = None
 
 
