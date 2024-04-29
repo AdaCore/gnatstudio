@@ -284,7 +284,8 @@ def on_project_recomputed(hook):
         # Alire is being ran
         timeout = GPS.Timeout(100, display_message)
         timeout.counter = 0
-    else:
+
+    elif not GPS.getenv("ALIRE"):
         # We are not loading an Alire project: unset the aliases
         # on Alire build targets.
         update_aliases_for_alire_targets(is_alire_project=False)
