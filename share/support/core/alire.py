@@ -352,7 +352,7 @@ def on_project_changing(hook, file):
     root = find_alire_root(file.path)
 
     if root:
-        GPS.Logger("ALIRE").log("Alire manifest detected!")
+        GPS.Logger("ALIRE").log("Alire manifest detected at: %s" % file.path)
         project_to_reload = (file.path, root)
 
 
