@@ -235,8 +235,7 @@ package body Build_Command_Manager.End_Of_Build is
          if Directory /= No_File then
             Build.Full.Dir := Directory;
          else
-            Build.Full.Dir :=
-              Builder.Kernel.Registry.Tree.Root_Project.Project_Path.Dir;
+            Build.Full.Dir := GNATCOLL.VFS.Get_Current_Dir;
          end if;
       end if;
    end Local_Expand_Command_Line;
