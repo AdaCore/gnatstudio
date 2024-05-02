@@ -824,7 +824,9 @@ package body GPS.Kernel.Remote is
          end if;
 
          if Active (Me) then
-            Trace (Me, "Spawning");
+            Trace
+              (Me,
+               "Spawning in directory: " & Get_Current_Dir.Display_Full_Name);
 
             if Args /= null then
                for J in Args'Range loop
