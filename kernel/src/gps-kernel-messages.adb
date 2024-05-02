@@ -885,6 +885,17 @@ package body GPS.Kernel.Messages is
       return Root_Project.Artifacts_Dir / (Project_Name & "-msg.xml");
    end Get_Message_File;
 
+   -------------------------
+   -- Get_Filter_Launched --
+   -------------------------
+
+   function Get_Filter_Launched
+     (Self : not null access Messages_Container)
+      return Boolean is
+   begin
+      return Self.Filter_Launched;
+   end Get_Filter_Launched;
+
    --------------
    -- Get_Note --
    --------------
@@ -2137,10 +2148,10 @@ package body GPS.Kernel.Messages is
          Command := new Filter_Runner_Command'
            (Commands.Root_Command with Container => Self);
          GPS.Kernel.Task_Manager.Launch_Background_Command
-           (Kernel          => Self.Kernel,
-            Command         => Command,
-            Active          => True,
-            Show_Bar        => False);
+           (Kernel   => Self.Kernel,
+            Command  => Command,
+            Active   => True,
+            Show_Bar => False);
       end if;
    end Refilter;
 
