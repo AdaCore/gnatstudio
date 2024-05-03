@@ -885,17 +885,6 @@ package body GPS.Kernel.Messages is
       return Root_Project.Artifacts_Dir / (Project_Name & "-msg.xml");
    end Get_Message_File;
 
-   -------------------------
-   -- Get_Filter_Launched --
-   -------------------------
-
-   function Get_Filter_Launched
-     (Self : not null access Messages_Container)
-      return Boolean is
-   begin
-      return Self.Filter_Launched;
-   end Get_Filter_Launched;
-
    --------------
    -- Get_Note --
    --------------

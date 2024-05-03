@@ -149,6 +149,11 @@ private
       Idle_Handler   : Glib.Main.G_Source_Id := Glib.Main.No_Source_Id;
       --  Idle handle to enable sorting
 
+      Category_Messages_Count  : Glib.Gint := 0;
+      --  Count of messages in the last updated category
+      Previouse_Messages_Count : Glib.Gint := 0;
+      --  Count of messages on previouse Idle hook
+
       Sort_Column    : Glib.Gint;
       --  Column returned by freeze function to thaw sorting
 
