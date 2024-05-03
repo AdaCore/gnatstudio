@@ -486,11 +486,6 @@ package GPS.Kernel.Messages is
    procedure Refilter (Self : not null access Messages_Container);
    --  Reapply filters for all messages.
 
-   function Get_Filter_Launched
-     (Self : not null access Messages_Container)
-      return Boolean with Inline;
-   --  Returns true if fitering is in progress
-
    ----------------------
    -- Message Listener --
    ----------------------
