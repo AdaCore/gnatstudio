@@ -55,9 +55,13 @@ package body GPS.Location_View.Listener is
      new Glib.Main.Generic_Sources (Classic_Tree_Model);
 
    procedure Update_Background_Color
-     (Self    : not null access Locations_Listener'Class;
-      Message : not null access Abstract_Message'Class);
-   --  Modify the background color of the file and category related to message
+     (Self          : not null access Locations_Listener'Class;
+      Message       : not null access Abstract_Message'Class;
+      Iter_Category : Gtk.Tree_Model.Gtk_Tree_Iter := Null_Iter;
+      Iter_File     : Gtk.Tree_Model.Gtk_Tree_Iter := Null_Iter;
+      Iter_Message  : Gtk.Tree_Model.Gtk_Tree_Iter := Null_Iter);
+   --  Modify the background color of the file and category related to message.
+   --  Uses iterators if set or find them by Message in another case.
 
    procedure Refresh_Background_Color (Self : Classic_Tree_Model);
    --  Refresh the background color after the deletions are finished
@@ -466,7 +470,9 @@ package body GPS.Location_View.Listener is
    begin
       --  Disable sorting till complete construction of the model
 
-      if Self.Idle_Handler = Glib.Main.No_Source_Id then
+      if Self.Idle_Handler = Glib.Main.No_Source_Id
+        and then not Self.Kernel.Is_In_Destruction
+      then
          Self.Idle_Handler :=
            Classic_Tree_Model_Sources.Idle_Add
              (On_Idle'Access, Classic_Tree_Model (Self));
@@ -620,21 +626,29 @@ package body GPS.Location_View.Listener is
    -----------------------------
 
    procedure Update_Background_Color
-     (Self    : not null access Locations_Listener'Class;
-      Message : not null access Abstract_Message'Class)
+     (Self          : not null access Locations_Listener'Class;
+      Message       : not null access Abstract_Message'Class;
+      Iter_Category : Gtk.Tree_Model.Gtk_Tree_Iter := Null_Iter;
+      Iter_File     : Gtk.Tree_Model.Gtk_Tree_Iter := Null_Iter;
+      Iter_Message  : Gtk.Tree_Model.Gtk_Tree_Iter := Null_Iter)
    is
 
-      Category_Iter : Gtk.Tree_Model.Gtk_Tree_Iter;
-      File_Iter     : Gtk.Tree_Model.Gtk_Tree_Iter;
-      Message_Iter  : Gtk.Tree_Model.Gtk_Tree_Iter;
+      Category_Iter : Gtk.Tree_Model.Gtk_Tree_Iter := Iter_Category;
+      File_Iter     : Gtk.Tree_Model.Gtk_Tree_Iter := Iter_File;
+      Message_Iter  : Gtk.Tree_Model.Gtk_Tree_Iter := Iter_Message;
       Heaviest_Iter : Gtk.Tree_Model.Gtk_Tree_Iter;
 
    begin
-      Find_Message (Self          => Self,
-                    Message       => Message,
-                    Category_Iter => Category_Iter,
-                    File_Iter     => File_Iter,
-                    Iter          => Message_Iter);
+      if Message_Iter = Null_Iter
+        or else File_Iter = Null_Iter
+        or else Category_Iter = Null_Iter
+      then
+         Find_Message (Self          => Self,
+                       Message       => Message,
+                       Category_Iter => Category_Iter,
+                       File_Iter     => File_Iter,
+                       Iter          => Message_Iter);
+      end if;
 
       Heaviest_Iter := Find_Heaviest_In_Children_Of (Self.Model, File_Iter);
       if Heaviest_Iter /= Null_Iter then
@@ -874,19 +888,24 @@ package body GPS.Location_View.Listener is
    -- Gtk_New --
    -------------
 
-   procedure Gtk_New (Object : out Classic_Tree_Model) is
+   procedure Gtk_New
+     (Object : out Classic_Tree_Model;
+      Kernel : Kernel_Handle) is
    begin
       Object := new Classic_Tree_Model_Record;
-      Initialize (Object);
+      Initialize (Object, Kernel);
    end Gtk_New;
 
    ----------------
    -- Initialize --
    ----------------
 
-   procedure Initialize (Self : access Classic_Tree_Model_Record'Class) is
+   procedure Initialize
+     (Self   : access Classic_Tree_Model_Record'Class;
+      Kernel : Kernel_Handle) is
    begin
       Gtk.Tree_Store.Initialize (Self, Column_Types);
+      Self.Kernel := Kernel;
       Self.Set_Default_Sort_Func (Compare_Nodes'Access);
       Self.Set_Sort_Column_Id
         (Gtk.Tree_Sortable.Default_Sort_Column_Id, Sort_Ascending);
@@ -1135,7 +1154,7 @@ package body GPS.Location_View.Listener is
             File_Columns (1 .. File_Last), File_Values (1 .. File_Last));
       end if;
 
-      Update_Background_Color (Self, Message);
+      Update_Background_Color (Self, Message, Category_Iter, File_Iter, Iter);
    end Message_Added;
 
    ------------------------------
@@ -1181,7 +1200,9 @@ package body GPS.Location_View.Listener is
            (Gtk_Tree_Store
               (Self.Model), Iter, -Background_Color_Column, Bg);
          Glib.Values.Unset (Bg);
-         Update_Background_Color (Self, Message);
+
+         Update_Background_Color
+           (Self, Message, Category_Iter, File_Iter, Iter);
 
       elsif Property = Markup_Property then
          Self.Find_Message (Message, Category_Iter, File_Iter, Iter);
@@ -1243,6 +1264,11 @@ package body GPS.Location_View.Listener is
       Iter         : Gtk_Tree_Iter;
       Need_Refresh : constant Boolean := not Self.Removed_Rows.Is_Empty;
    begin
+      if Self.Kernel.Get_Messages_Container.Get_Filter_Launched then
+         --  Do nothing if we still filtering messages
+         return True;
+      end if;
+
       Self.Idle_Handler := Glib.Main.No_Source_Id;
 
       --  Remove idividual messages when it was not removed by removing of
@@ -1338,7 +1364,7 @@ package body GPS.Location_View.Listener is
 
       --  Create GtkTreeModel
 
-      Gtk_New (Self.Model);
+      Gtk_New (Self.Model, Kernel);
 
       --  Register listener
 

@@ -138,6 +138,8 @@ private
 
    type Classic_Tree_Model_Record is
      new Gtk.Tree_Store.Gtk_Tree_Store_Record with record
+      Kernel         : Kernel_Handle;
+
       Messages_Order : Messages_Sort_Order := By_Location;
       --  Sort order for locations within a file.
 
@@ -159,8 +161,10 @@ private
       --  Does the tree need to refresh its background colors
    end record;
 
-   procedure Initialize (Self : access Classic_Tree_Model_Record'Class);
-   procedure Gtk_New (Object : out Classic_Tree_Model);
+   procedure Initialize (Self   : access Classic_Tree_Model_Record'Class;
+                         Kernel : Kernel_Handle);
+   procedure Gtk_New (Object : out Classic_Tree_Model;
+                      Kernel : Kernel_Handle);
 
    type Locations_Listener is
      new GPS.Kernel.Messages.Abstract_Listener with record
