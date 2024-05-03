@@ -565,11 +565,29 @@ class GNATcovPlugin(Module):
         # showing/hiding them appropriately. Also fill the custom targets.
         process = GPS.Process(["gnatcov", "--help"])
         help_msg = process.get_result()
-        GPS.parse_xml(
-            list_to_xml(self.BUILD_TARGET_MODELS).format(
-                help=xml.sax.saxutils.escape(help_msg)
+
+        # Load the gnatcov's build targets, with the retrieved help message.
+        # If an exception happens while loading the XML, try to load the build
+        # targets again without the help message this time: the help message
+        # should contain XML-escapable characters normally but we don't want
+        # to avoid loading the plugin if it's not the case.
+        try:
+            GPS.parse_xml(
+                list_to_xml(self.BUILD_TARGET_MODELS).format(
+                    help=xml.sax.saxutils.escape(help_msg)
+                )
             )
-        )
+        except Exception as e:
+            GPS.Logger("GNATCOVERAGE").log("Exception while loading XML: %s" % str(e))
+            GPS.Logger("GNATCOVERAGE").log("GNATcov's help message: %s" % help_msg)
+            GPS.Logger("GNATCOVERAGE").log(
+                "Trying to reload the XML without gnatcov's help message..."
+            )
+            GPS.parse_xml(list_to_xml(self.BUILD_TARGET_MODELS))
+            GPS.Logger("GNATCOVERAGE").log(
+                "XML has been successfully loaded"
+            )
+
         self.update_worflow_build_targets()
 
         # Try to retrieve a prebuilt GNATcov runtime from the history
