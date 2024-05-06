@@ -169,6 +169,9 @@ package body GPS.Location_View.Listener is
       Values     : Glib.Values.GValue_Array);
    --  ??? Must be moved to GtkAda
 
+   Stop_Sorting_On_Count : constant Glib.Gint := 1000;
+   --  The count of messages when we stop sorting "on the fly".
+
    --------------------
    -- Category_Added --
    --------------------
@@ -983,6 +986,7 @@ package body GPS.Location_View.Listener is
       File_Last    : Glib.Gint := 0;
       Message_Last : Glib.Gint := 16;
       Color        : Gdk.RGBA.Gdk_RGBA;
+
    begin
       Self.Model.Disable_Sorting;
 
@@ -1135,11 +1139,14 @@ package body GPS.Location_View.Listener is
       --  primary.
 
       if Message.Level = Primary then
+
+         Self.Model.Category_Messages_Count := Self.Model.Get_Int
+           (Category_Iter, -Number_Of_Children_Column) + 1;
+
          Self.Model.Set
            (Category_Iter,
             -Number_Of_Children_Column,
-            Self.Model.Get_Int
-              (Category_Iter, -Number_Of_Children_Column) + 1);
+            Self.Model.Category_Messages_Count);
 
          File_Last := File_Last + 1;
          File_Columns (File_Last) := -Number_Of_Children_Column;
@@ -1244,11 +1251,14 @@ package body GPS.Location_View.Listener is
       if Message.Level = Primary then
          --  Update message counters
 
+         Self.Model.Category_Messages_Count := Self.Model.Get_Int
+           (Category_Iter, -Number_Of_Children_Column) - 1;
+
          Self.Model.Set
            (Category_Iter,
             -Number_Of_Children_Column,
-            Self.Model.Get_Int
-              (Category_Iter, -Number_Of_Children_Column) - 1);
+            Self.Model.Category_Messages_Count);
+
          Self.Model.Set
            (File_Iter,
             -Number_Of_Children_Column,
@@ -1264,8 +1274,14 @@ package body GPS.Location_View.Listener is
       Iter         : Gtk_Tree_Iter;
       Need_Refresh : constant Boolean := not Self.Removed_Rows.Is_Empty;
    begin
-      if Self.Kernel.Get_Messages_Container.Get_Filter_Launched then
-         --  Do nothing if we still filtering messages
+      if Self.Previouse_Messages_Count /= Self.Category_Messages_Count
+        and then
+          (Self.Category_Messages_Count >= Stop_Sorting_On_Count -- many
+           or else Self.Previouse_Messages_Count >
+             Self.Category_Messages_Count) -- when deleting
+      then
+         Self.Previouse_Messages_Count := Self.Category_Messages_Count;
+
          return True;
       end if;
 
@@ -1293,6 +1309,8 @@ package body GPS.Location_View.Listener is
       --  Enable sorting
 
       Self.Thaw_Sort (Self.Sort_Column);
+
+      Self.Previouse_Messages_Count := Self.Category_Messages_Count;
 
       return False;
    end On_Idle;
