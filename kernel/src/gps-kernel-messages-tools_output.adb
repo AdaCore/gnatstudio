@@ -218,6 +218,12 @@ package body GPS.Kernel.Messages.Tools_Output is
            GPS.Kernel.Messages.Legacy.Get_Message_At
              (Container, Category, File, Line, Column);
 
+         if Primary /= null and then Primary.Get_Importance < Importance then
+            --  The previous message in the same line is of lower Importance:
+            --  Create a new Primary message for higher visibility.
+            Primary := null;
+         end if;
+
          if Primary = null then
             Primary :=
               Message_Access
