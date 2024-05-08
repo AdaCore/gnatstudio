@@ -18,8 +18,9 @@ def run_test():
     asm_file = GPS.File("foo.s")
     buf = GPS.EditorBuffer.get(asm_file)
     yield wait_idle()
-    gps_assert(asm_file.language().lower(),
-               "asm",
+    # On windows the language will be either asm or asm_cpp (file insensitive)
+    gps_assert(asm_file.language().lower().startswith("asm"),
+               True,
                "Wrong language for ASM file")
     gps_assert(get_all_tags(buf),
                EXPECTED,
