@@ -148,6 +148,12 @@ private
       Expansion  : Expansions.Expansion_Status := Expansions.No_Expansion;
       --  Used to restore expansion and selection
 
+      Collapse_All_First : Boolean := False;
+      --  To collaps nodes only once after update
+
+      Expansion_Restoring_Count : Natural := 0;
+      --  Counting how many times Restore_Expansion is called
+
       Old_Scopes : Variables_References_Trees.Tree :=
         Variables_References_Trees.Empty_Tree;
       --  Contains old scopes' values. Used to detect changes in values
