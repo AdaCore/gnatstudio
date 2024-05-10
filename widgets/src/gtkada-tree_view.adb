@@ -1285,8 +1285,9 @@ package body Gtkada.Tree_View is
       ----------------------------------------
 
       procedure Set_Expansion_Status_Stop_On_Dummy
-        (Self   : not null access Tree_Record'Class;
-         Status : in out Expansion_Status)
+        (Self               : not null access Tree_Record'Class;
+         Status             : in out Expansion_Status;
+         Collapse_All_First : Boolean := True)
       is
          Stopped : Boolean := False;
          --  Flag to stop expanding when we found a dummy node that means that
@@ -1313,6 +1314,7 @@ package body Gtkada.Tree_View is
             Sortable_Path : Gtk_Tree_Path;
 
          begin
+            Stopped := False;
             if Status.Expanded.Contains (The_Id) then
 
                --  check whether the node contains the dummy node
@@ -1342,7 +1344,10 @@ package body Gtkada.Tree_View is
             return;
          end if;
 
-         Self.Collapse_All;
+         if Collapse_All_First then
+            Self.Collapse_All;
+         end if;
+
          Self.Model.Foreach (Expand_Node'Unrestricted_Access);
 
          if Stopped then
