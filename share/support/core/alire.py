@@ -46,8 +46,8 @@ ALIRE_MODELS_XML = """
           <arg>--non-interactive</arg>
           <arg>--no-color</arg>
           <arg>--no-tty</arg>
-          <arg>-q</arg>
           <arg>--</arg>
+          <arg>-d</arg>
           <arg>%X</arg>
        </command-line>
        <iconname>gps-build-all-symbolic</iconname>
@@ -84,7 +84,6 @@ mode.">
           <arg>--non-interactive</arg>
           <arg>--no-color</arg>
           <arg>--no-tty</arg>
-          <arg>-q</arg>
           <arg>--</arg>
           <arg>%X</arg>
        </command-line>
@@ -146,9 +145,9 @@ ALIRE_TARGETS_XML = """
           <arg>--non-interactive</arg>
           <arg>--no-color</arg>
           <arg>--no-tty</arg>
-          <arg>-q</arg>
           <arg>build</arg>
           <arg>--</arg>
+          <arg>-d</arg>
           <arg>%X</arg>
        </command-line>
     </target>
@@ -166,9 +165,9 @@ ALIRE_TARGETS_XML = """
           <arg>--non-interactive</arg>
           <arg>--no-color</arg>
           <arg>--no-tty</arg>
-          <arg>-q</arg>
           <arg>build</arg>
           <arg>--</arg>
+          <arg>-d</arg>
           <arg>%X</arg>
        </command-line>
     </target>
@@ -185,7 +184,6 @@ ALIRE_TARGETS_XML = """
           <arg>--non-interactive</arg>
           <arg>--no-color</arg>
           <arg>--no-tty</arg>
-          <arg>-q</arg>
           <arg>clean</arg>
           <arg>--</arg>
           <arg>%X</arg>
