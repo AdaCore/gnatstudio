@@ -67,3 +67,27 @@ def run_test():
                True,
                "Wrong variable is selected")
     gps_assert(tree.row_expanded(Gtk.TreePath((2))), True, "Expansion not restored")
+
+    # check that expansion restoring works with a variable
+    # that already loaded before expanding
+    debug.send("graph display NR")
+    yield wait_until_not_busy(debug)
+    tree.expand_row(Gtk.TreePath((3)), False)
+    yield wait_until_not_busy(debug)
+    tree.expand_row(Gtk.TreePath((3,0)), False)
+    yield wait_until_not_busy(debug)
+    debug.send("graph display NR.r1")
+    yield wait_until_not_busy(debug)
+    tree.expand_row(Gtk.TreePath((4)), False)
+    yield wait_until_not_busy(debug)
+    tree.get_selection().unselect_all()
+    tree.get_selection().select_path(Gtk.TreePath((4,0)))
+    yield wait_idle()
+    debug.send("step")
+    yield wait_DAP_server("variables")
+    yield wait_until_not_busy(debug)
+
+    gps_assert(tree.get_selection().iter_is_selected(tree.get_model().get_iter((4,0))),
+               True,
+               "Wrong variable is selected")
+    gps_assert(tree.row_expanded(Gtk.TreePath((4))), True, "Expansion not restored")

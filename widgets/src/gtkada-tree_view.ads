@@ -192,8 +192,9 @@ package Gtkada.Tree_View is
       --  This also preserves the current scrolling position
 
       procedure Set_Expansion_Status_Stop_On_Dummy
-        (Self   : not null access Tree_Record'Class;
-         Status : in out Expansion_Status);
+        (Self               : not null access Tree_Record'Class;
+         Status             : in out Expansion_Status;
+         Collapse_All_First : Boolean := True);
       --  Same as above but stop on the first expanding node that contains
       --  the "dummy" child. Clears Status when not stopped and expansion,
       --  scrolling, and selection are restored. Is used when getting/filling

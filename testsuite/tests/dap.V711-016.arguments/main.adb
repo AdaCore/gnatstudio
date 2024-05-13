@@ -5,6 +5,7 @@ procedure Main is
    begin
       Ada.Text_IO.Put_Line ("Hello" & B'Img & I'Img);
       Ada.Text_IO.Put_Line ("Hello" & B'Img & I'Img);
+      Ada.Text_IO.Put_Line ("Hello" & B'Img & I'Img);
    end;
 
    I : constant Integer := 0;
@@ -17,6 +18,13 @@ procedure Main is
    end record;
 
    R : Rec;
+
+   type New_Rec is record
+     R1 : Rec;
+     R2 : Rec;
+   end record;
+
+   NR : New_Rec;
 
 begin
    Print (I, B);

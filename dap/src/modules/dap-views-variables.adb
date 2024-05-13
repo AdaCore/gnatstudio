@@ -337,6 +337,10 @@ package body DAP.Views.Variables is
            or else Parent /= Null_Iter
          --  or we are adding as a nested element
          then
+            if Parent /= Null_Iter then
+               View.Tree.Remove_Dummy_Child (Parent);
+            end if;
+
             Current := First_Child (Current);
             while Current /= Variables_References_Trees.No_Element loop
                View.Tree.Add_Row (Params.Item.Info.all, Current, Parent);
@@ -364,10 +368,41 @@ package body DAP.Views.Variables is
      (Self : access DAP_Variables_View_Record'Class)
    is
       use type Expansions.Expansion_Status;
+      Collapse : Boolean := Self.Collapse_All_First;
    begin
-      if Self.Expansion /= Expansions.No_Expansion then
-         Expansions.Set_Expansion_Status_Stop_On_Dummy
-           (Self.Tree, Self.Expansion);
+      if Self.Expansion = Expansions.No_Expansion then
+         --  Nothing to restore
+         return;
+      end if;
+
+      --  Set ot false to prevent collapsing when calling next time
+      Self.Collapse_All_First := False;
+
+      --  Inc calling counter that will be 1 for the first call or when we get
+      --  a DAP response and more than 1 for recursion when a variable
+      --  is already loaded and we do not need a DAP request to get it.
+      Self.Expansion_Restoring_Count := Self.Expansion_Restoring_Count + 1;
+
+      if Self.Expansion_Restoring_Count = 1 then
+         --  Enter only when called at first, to prevent recursion that may
+         --  occur when a variable that we expand is already loaded.
+
+         while Self.Expansion /= Expansions.No_Expansion
+           and then Self.Expansion_Restoring_Count > 0
+         loop
+            Trace (Me, "Restore_Expansion");
+            --  Call expansion restoring until we have status to restore
+            --  and so many times as recursion counted.
+            Expansions.Set_Expansion_Status_Stop_On_Dummy
+              (Self.Tree, Self.Expansion, Collapse);
+
+            Collapse := False;
+            Self.Expansion_Restoring_Count :=
+              Self.Expansion_Restoring_Count - 1;
+         end loop;
+
+         --  if we stop loop by Self.Expansion = Expansions.No_Expansion
+         Self.Expansion_Restoring_Count := 0;
       end if;
    end Restore_Expansion;
 
@@ -437,11 +472,22 @@ package body DAP.Views.Variables is
       Status : GPS.Debuggers.Debugger_State)
    is
       use GPS.Debuggers;
+      use type Expansions.Expansion_Status;
    begin
       if Status = Debug_Busy then
          Self.Old_Scopes := Get_Client (Self).Get_Variables.Get_Scopes;
 
+         if not Self.Tree.Items.Is_Empty
+           and then Self.Expansion = Expansions.No_Expansion
+         then
+            --  Store expansion if not done yet
+            Trace (Me, "Store expansion");
+            Expansions.Get_Expansion_Status (Self.Tree, Self.Expansion);
+            Self.Collapse_All_First := True;
+         end if;
+
       elsif Status = Debug_None then
+         Self.Expansion := Expansions.No_Expansion;
          Self.Old_Scopes.Clear;
       end if;
    end On_Status_Changed;
@@ -788,8 +834,11 @@ package body DAP.Views.Variables is
         (Me, "Add row:" & UTF8
            ((if Var.name.Is_Empty
             then Item.Get_Name
-            else Var.name)));
+            else Var.name)) &
+           Var.variablesReference'Img &
+           " " & Item.Is_Arguments'Img);
 
+      Self.Remove_Dummy_Child (Parent);
       Self.Model.Append (Iter => Row, Parent => Parent);
       Set_And_Clear
         (Self.Model,
@@ -1376,19 +1425,22 @@ package body DAP.Views.Variables is
       use type Expansions.Expansion_Status;
 
       Client : constant DAP.Clients.DAP_Client_Access := Get_Client (Self);
+
    begin
       Trace (Me, "Update view");
-
-      if not Self.Tree.Items.Is_Empty
-        and then Self.Expansion = Expansions.No_Expansion
-      then
-         --  Store expansion if not done yet
-         Expansions.Get_Expansion_Status (Self.Tree, Self.Expansion);
-      end if;
 
       if Client /= null
         and then Client.Get_Variables /= null
       then
+         if not Self.Tree.Items.Is_Empty
+           and then Self.Expansion = Expansions.No_Expansion
+         then
+            --  Store expansion if not done yet
+            Trace (Me, "Store expansion");
+            Expansions.Get_Expansion_Status (Self.Tree, Self.Expansion);
+            Self.Collapse_All_First := True;
+         end if;
+
          Client.Get_Variables.Clear;
       end if;
 
