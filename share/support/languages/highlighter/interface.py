@@ -379,9 +379,10 @@ def register_highlighter(language, spec, igncase=False):
     more information
 
     :param string language: The language to be used as a filter for the
-       highlighter.
+       highlighter or a list of languages separated by ',' like "asm,asm2"
     :param tuple spec: The spec of the highlighter.
     """
     from highlighter.engine import Highlighter, HighlighterModule
-    HighlighterModule.highlighters[language.lower()] = Highlighter(spec,
-                                                                   igncase)
+    for lang in language.split(","):
+        HighlighterModule.highlighters[lang.lower()] = Highlighter(
+            spec, igncase)
