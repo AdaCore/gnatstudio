@@ -33,10 +33,6 @@ def on_gps_started():
                 )
             )
     register_highlighter(
-        language="asm",
-        spec=spec
-    )
-    register_highlighter(
-        language="asm2",
+        language="asm,asm2,asm_cpp",
         spec=spec
     )
