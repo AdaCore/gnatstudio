@@ -727,12 +727,13 @@ package body DAP.Views.Variables is
       Cursor : Variables_References_Trees.Cursor;
       Parent : Gtk_Tree_Iter)
    is
-      Var   : Variable;
-      Row   : Gtk_Tree_Iter;
-      Path  : Gtk.Tree_Model.Gtk_Tree_Path;
-      C     : Variables_References_Trees.Cursor;
-      Dummy : Boolean;
-      Fg    : constant String := To_String (Default_Style.Get_Pref_Fg);
+      Var    : Variable;
+      Row    : Gtk_Tree_Iter;
+      Path   : Gtk.Tree_Model.Gtk_Tree_Path;
+      C      : Variables_References_Trees.Cursor;
+      Dummy  : Boolean;
+      Fg     : constant String := To_String (Default_Style.Get_Pref_Fg);
+      Var_Id : Integer := -1;
 
       function Display_Type_Name return String with Inline;
       function Display_Name return String with Inline;
@@ -827,7 +828,8 @@ package body DAP.Views.Variables is
       if Cursor /= Variables_References_Trees.No_Element
         and then not Is_Root (Cursor)
       then
-         Var := Element (Cursor).Data;
+         Var    := Element (Cursor).Data;
+         Var_Id := Var.variablesReference;
       end if;
 
       Trace
@@ -835,10 +837,13 @@ package body DAP.Views.Variables is
            ((if Var.name.Is_Empty
             then Item.Get_Name
             else Var.name)) &
-           Var.variablesReference'Img &
+           Var_Id'Img &
            " " & Item.Is_Arguments'Img);
 
-      Self.Remove_Dummy_Child (Parent);
+      if Parent /= Null_Iter then
+         Self.Remove_Dummy_Child (Parent);
+      end if;
+
       Self.Model.Append (Iter => Row, Parent => Parent);
       Set_And_Clear
         (Self.Model,
