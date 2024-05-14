@@ -111,6 +111,7 @@ package body DAP.Clients.Attach is
            Executable => Executable,
            Target     => Target);
    begin
+      Client.Endian := Unknown_Endian;
       Client.Enqueue (DAP.Requests.DAP_Request_Access (Attach_Req));
    end Send_Attach_Request;
 
