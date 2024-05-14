@@ -2019,6 +2019,7 @@ package body DAP.Clients is
 
    overriding procedure On_Started (Self : in out DAP_Client) is
    begin
+      Self.Endian := Unknown_Endian;
       DAP.Clients.Initialize.Send_Initialize_Request (Self);
    end On_Started;
 

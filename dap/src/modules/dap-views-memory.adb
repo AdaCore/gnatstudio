@@ -211,14 +211,7 @@ package body DAP.Views.Memory is
 
    overriding procedure On_Process_Terminated
      (View : not null access DAP_Memory_View_Record);
-   overriding procedure On_Status_Changed
-     (View : not null access DAP_Memory_View_Record;
-      Status : GPS.Debuggers.Debugger_State);
    overriding procedure Update (View : not null access DAP_Memory_View_Record);
-   overriding procedure On_Attach
-     (Self   : not null access DAP_Memory_View_Record;
-      Client : not null access DAP.Clients.DAP_Client'Class);
-   --  See inherited documentation
 
    function Initialize
      (Widget : access DAP_Memory_View_Record'Class) return Gtk_Widget;
@@ -443,23 +436,19 @@ package body DAP.Views.Memory is
       Clear_View (View);
    end On_Process_Terminated;
 
-   -----------------------
-   -- On_Status_Changed --
-   -----------------------
+   -----------------
+   -- Update_View --
+   -----------------
 
-   overriding procedure On_Status_Changed
-     (View : not null access DAP_Memory_View_Record;
-      Status : GPS.Debuggers.Debugger_State)
+   procedure Update_View
+     (Client : not null access DAP.Clients.DAP_Client'Class)
    is
-      Client : constant DAP_Client_Access := View.Get_Client;
+      View : constant DAP_Memory_View := Get_View (Client);
    begin
-      if Client /= null then
-         --  The DAP client has a launched debuggee: ask for its endianness
-         if Client.Get_Status = Ready then
-            DAP.Clients.Evaluate.Send_Show_Endian_Request (Client.all);
-         end if;
+      if View /= null then
+         View.Update;
       end if;
-   end On_Status_Changed;
+   end Update_View;
 
    --------------
    -- Get_View --
@@ -1538,9 +1527,19 @@ package body DAP.Views.Memory is
    ------------
 
    overriding procedure Update
-     (View   : not null access DAP_Memory_View_Record) is
+     (View : not null access DAP_Memory_View_Record)
+   is
+      Client : constant DAP_Client_Access := View.Get_Client;
    begin
-      if Memory_Auto_Refresh.Get_Pref then
+      if Client = null then
+         return;
+      end if;
+
+      if Client.Get_Endian_Type = Unknown_Endian then
+         --  We do not have endian, get it
+         DAP.Clients.Evaluate.Send_Show_Endian_Request (Client);
+
+      elsif Memory_Auto_Refresh.Get_Pref then
          if View.Edit_Mode then
             Stop_Editing (View);  --  no editing survive auto-refresh
          elsif View.Old_Values /= null and View.New_Values /= null then
@@ -1550,21 +1549,6 @@ package body DAP.Views.Memory is
          Display_Memory (View, Get_Text (View.Editor.Address_Entry));
       end if;
    end Update;
-
-   ---------------
-   -- On_Attach --
-   ---------------
-
-   overriding procedure On_Attach
-     (Self   : not null access DAP_Memory_View_Record;
-      Client : not null access DAP.Clients.DAP_Client'Class) is
-   begin
-      --  A DAP client has been attached to the newly opened view: ask for the
-      --  debuggee's endianness.
-      if Client.Get_Status in Ready | Stopped then
-         DAP.Clients.Evaluate.Send_Show_Endian_Request (Client.all);
-      end if;
-   end On_Attach;
 
    ---------------------------
    -- Watch_Cursor_Location --
