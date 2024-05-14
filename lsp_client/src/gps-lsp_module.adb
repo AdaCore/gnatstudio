@@ -124,7 +124,7 @@ package body GPS.LSP_Module is
 
    Me_GPR_Support : constant GNATCOLL.Traces.Trace_Handle :=
      GNATCOLL.Traces.Create
-       ("GPS.LSP.GPR_SUPPORT", GNATCOLL.Traces.Off);
+       ("GPS.LSP.GPR_SUPPORT", GNATCOLL.Traces.On);
    --  General ALS support for GPR
 
    Me_Cpp_Support : constant GNATCOLL.Traces.Trace_Handle :=
