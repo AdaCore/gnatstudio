@@ -15,11 +15,18 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
+with VSS.Strings.Conversions;
+
+with GPS.Intl;                         use GPS.Intl;
 with GPS.Kernel.Timeout;               use GPS.Kernel.Timeout;
+with GPS.Kernel.Spawns;
 with GPS.Scripts.Commands;             use GPS.Scripts.Commands;
 with GPS.Messages_Windows;             use GPS.Messages_Windows;
 with Interactive_Consoles;             use Interactive_Consoles;
 with GPS.Kernel;                       use GPS.Kernel;
+with GPS.Kernel.Task_Manager;
+with GPS.Kernel.Remote;
+with UTF8_Utils;                       use UTF8_Utils;
 
 package body GPS.Process_Launchers.Implementation is
 
@@ -37,6 +44,8 @@ package body GPS.Process_Launchers.Implementation is
    overriding procedure On_Exit
      (Self    : not null access Build_Callback_Data;
       Command : not null access Root_Command'Class);
+
+   Queue_Id : Natural := 0;
 
    ---------------
    -- On_Output --
@@ -133,35 +142,83 @@ package body GPS.Process_Launchers.Implementation is
       Block_Exit           : Boolean := True;
       Created_Command      : out Command_Access)
    is
-      Console : Interactive_Consoles.Interactive_Console;
-      Result : Scheduled_Command_Access;
-      Data   : constant Build_Callback_Data_Access := new Build_Callback_Data'
-        (External_Process_Data with Output_Parser => Output_Parser);
+      Console : constant Interactive_Consoles.Interactive_Console :=
+        (if Show_Command_To = null then null
+         else Console_Messages_Window (Show_Command_To.all)
+                .Get_Interactive_Console);
+
+      Exec : constant String := GPS.Kernel.Remote.Check_Exec
+        (Server, Get_Command (CL));
+
+      Kernel  : constant Kernel_Handle := Kernel_Handle (Launcher.Kernel);
+      Result  : Scheduled_Command_Access;
+      Data    : Build_Callback_Data_Access;
    begin
-      if Show_Command_To /= null then
-         Console := Console_Messages_Window (Show_Command_To.all)
-           .Get_Interactive_Console;
+      if Is_Local (Server) then
+         if Exec = "" then
+            Success := False;
+
+            Insert
+              (Kernel,
+               -"Could not locate executable on path: " &
+                 Unknown_To_UTF8 (Get_Command (CL)),
+               Mode => GPS.Kernel.Error);
+
+            return;
+
+         elsif Show_Command_To /= null then
+            Console.Insert_With_Links (To_Display_String (CL), Add_LF => True);
+         end if;
+
+         GPS.Kernel.Spawns.Launch_Process
+           (Command_Name  =>
+              VSS.Strings.Conversions.To_Virtual_String
+                (if Name_In_Task_Manager = "" then Get_Command (CL)
+                 else Name_In_Task_Manager),
+            Exec          => Exec,
+            Arg_List      => CL,
+            Env           => Kernel.Get_Original_Environment,
+            Directory     => Directory.Display_Full_Name,
+            Use_Pipes     => True,
+            Output_Parser => Output_Parser,
+            Command       => Created_Command);
+
+         Queue_Id := Queue_Id + 1;
+
+         GPS.Kernel.Task_Manager.Launch_Background_Command
+           (Kernel,
+            Created_Command,
+            Active            => True,
+            Show_Bar          => Show_In_Task_Manager,
+            Queue_Id          => "gps-kernel-spawn" & Queue_Id'Image,
+            Block_Exit        => Block_Exit,
+            Start_Immediately => False);
+
+         Success := True;
+      else
+         Data := new Build_Callback_Data'
+           (External_Process_Data with Output_Parser => Output_Parser);
+
+         GPS.Kernel.Timeout.Launch_Process
+           (Kernel               => Kernel,
+            CL                   => CL,
+            Server               => Server,
+            Success              => Success,
+            Use_Ext_Terminal     => False,
+            Console              => Console,
+            Show_Command         => Show_Command_To /= null,
+            Show_Output          => False,
+            Data                 => Data,
+            Line_By_Line         => False,
+            Directory            => Directory,
+            Show_Exit_Status     => False,
+            Scheduled            => Result,
+            Show_In_Task_Manager => Show_In_Task_Manager,
+            Name_In_Task_Manager => Name_In_Task_Manager,
+            Block_Exit           => Block_Exit);
+
+         Created_Command := Command_Access (Result);
       end if;
-
-      GPS.Kernel.Timeout.Launch_Process
-        (Kernel               => Kernel_Handle (Launcher.Kernel),
-         CL                   => CL,
-         Server               => Server,
-         Success              => Success,
-         Use_Ext_Terminal     => False,
-         Console              => Console,
-         Show_Command         => Show_Command_To /= null,
-         Show_Output          => False,
-         Data                 => Data,
-         Line_By_Line         => False,
-         Directory            => Directory,
-         Show_Exit_Status     => False,
-         Scheduled            => Result,
-         Show_In_Task_Manager => Show_In_Task_Manager,
-         Name_In_Task_Manager => Name_In_Task_Manager,
-         Block_Exit           => Block_Exit);
-
-      Created_Command := Command_Access (Result);
    end Launch_Process_In_Background;
 
 end GPS.Process_Launchers.Implementation;

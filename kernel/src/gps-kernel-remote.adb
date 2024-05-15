@@ -688,6 +688,32 @@ package body GPS.Kernel.Remote is
          File          => File);
    end Synchronize;
 
+   ----------------
+   -- Check_Exec --
+   ----------------
+
+   function Check_Exec
+     (Server : Server_Type;
+      Exec   : String) return String
+   is
+      Full_Exec : Virtual_File;
+   begin
+      if Server = Build_Server then
+         Full_Exec := Locate_Compiler_Executable (+Exec);
+      else
+         Full_Exec := Locate_Tool_Executable (+Exec);
+      end if;
+
+      if Full_Exec = No_File then
+         return "";
+      end if;
+
+      --  use Normalize_Pathname to prevent relative paths like
+      --  ./my_prog. See F322-010 concerning problem with gnatls in this
+      --  particular case.
+      return Full_Exec.Display_Full_Name (True);
+   end Check_Exec;
+
    -----------
    -- Spawn --
    -----------
@@ -708,43 +734,8 @@ package body GPS.Kernel.Remote is
       Old_Dir : Virtual_File;
       Args    : Argument_List_Access;
 
-      function Check_Exec
-        (Exec : Filesystem_String) return Filesystem_String;
-      --  Check that executable is on the path, and return the full path if
-      --  found, return null otherwise.
-
       procedure On_New_Connection (Server_Name : String);
       --  Executed when a new connection is performed
-
-      ----------------
-      -- Check_Exec --
-      ----------------
-
-      function Check_Exec
-        (Exec : Filesystem_String) return Filesystem_String
-      is
-         Full_Exec : Virtual_File;
-      begin
-         if Server = Build_Server then
-            Full_Exec := Locate_Compiler_Executable (Exec);
-         else
-            Full_Exec := Locate_Tool_Executable (Exec);
-         end if;
-
-         if Full_Exec = No_File then
-            Insert
-              (Kernel,
-               -"Could not locate executable on path: " &
-               Unknown_To_UTF8 (+Exec),
-               Mode => Error);
-            return +"";
-         end if;
-
-         --  use Normalize_Pathname to prevent relative paths like
-         --  ./my_prog. See F322-010 concerning problem with gnatls in this
-         --  particular case.
-         return Full_Exec.Full_Name (True);
-      end Check_Exec;
 
       -----------------------
       -- On_New_Connection --
@@ -764,14 +755,19 @@ package body GPS.Kernel.Remote is
 
       if Is_Local (Server) then
          declare
-            E : constant Filesystem_String :=
-                  Check_Exec (+Get_Command (Arguments));
+            Command : constant String := Get_Command (Arguments);
+            E       : constant String := Check_Exec (Server, Command);
          begin
             if E'Length = 0 then
+               Insert
+                 (Kernel,
+                  -"Could not locate executable on path: " &
+                    Unknown_To_UTF8 (Command),
+                  Mode => Error);
                return;
             end if;
 
-            Exec := new String'(+E);
+            Exec := new String'(E);
          end;
 
          Args := new Argument_List'
