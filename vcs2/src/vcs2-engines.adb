@@ -22,6 +22,7 @@ with Ada.Strings.Hash;
 with Ada.Unchecked_Deallocation;
 
 with Basic_Types;
+with GNATCOLL.Python.State;
 with GNATCOLL.Traces;             use GNATCOLL.Traces;
 with GPS.Kernel.Hooks;            use GPS.Kernel.Hooks;
 with GPS.Kernel.Project;          use GPS.Kernel.Project;
@@ -1263,7 +1264,9 @@ package body VCS2.Engines is
    -- Start_Queue --
    -----------------
 
-   procedure Start_Queue (Self : not null access VCS_Engine'Class) is
+   procedure Start_Queue (Self : not null access VCS_Engine'Class)
+   is
+      Lock : GNATCOLL.Python.State.Ada_GIL_Lock with Unreferenced;
    begin
       if Self.Run_In_Background = 0
         and then not Self.Queue.Is_Empty
