@@ -56,7 +56,7 @@ package DAP.Clients.Evaluate is
    --  Send the request to set TTY.
 
    procedure Send_Show_Endian_Request
-     (Client : in out DAP_Client'Class);
+     (Client : not null access DAP.Clients.DAP_Client'Class);
    --  Send the request to get the debuggee's endianness.
 
 private

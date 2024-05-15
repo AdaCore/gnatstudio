@@ -32,10 +32,12 @@ the GNAT User's Guide and GNAT Reference Manual.  Read these sections if
 you want to use the more advanced capabilities of project files that are not
 supported by GNAT Studio's graphical interface.
 
-You usually will not need to edit project files manually, since GNAT Studio
-provides several graphical tools such as the project wizard (see
-:ref:`The_Project_Wizard`) and the properties editor (see
-:ref:`The_Project_Properties_Editor`).
+You can edit project files manually: GNAT Studio provides completion, tooltips, outline
+and other common IDE features for project files through LSP and the
+`Ada Language Server <https://github.com/AdaCore/ada_language_server>`_, helping you
+to customize your project more easily. You can also
+edit it through a dedicated UI using the properties editor (see
+-:ref:`The_Project_Properties_Editor`).
 
 .. index:: project; normalization
 

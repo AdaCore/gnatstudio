@@ -159,12 +159,12 @@ package body DAP.Clients.Evaluate is
    ------------------------------
 
    procedure Send_Show_Endian_Request
-     (Client : in out DAP_Client'Class)
+     (Client : not null access DAP.Clients.DAP_Client'Class)
    is
       Req : DAP.Requests.DAP_Request_Access :=
         DAP.Requests.DAP_Request_Access
           (Create
-             (Client, DAP.Clients.Evaluate.Endian, "show endian"));
+             (Client.all, DAP.Clients.Evaluate.Endian, "show endian"));
    begin
       Client.Enqueue (Req);
    end Send_Show_Endian_Request;
@@ -209,6 +209,7 @@ package body DAP.Clients.Evaluate is
                   Client.Endian := Big_Endian;
                end if;
             end;
+            DAP.Views.Memory.Update_View (Client);
 
          when Hover =>
             Self.Label.Set_Markup
@@ -301,7 +302,11 @@ package body DAP.Clients.Evaluate is
                end;
             end if;
 
-         when Endian | Variable_Address | Set_TTY =>
+         when Endian =>
+            Client.Endian := Little_Endian;
+            DAP.Views.Memory.Update_View (Client);
+
+         when Variable_Address | Set_TTY =>
             null;
       end case;
    end On_Rejected;
@@ -350,7 +355,11 @@ package body DAP.Clients.Evaluate is
                end;
             end if;
 
-         when Endian | Variable_Address | Set_TTY =>
+         when Endian =>
+            Client.Endian := Little_Endian;
+            DAP.Views.Memory.Update_View (Client);
+
+         when Variable_Address | Set_TTY =>
             null;
       end case;
    end On_Error_Message;

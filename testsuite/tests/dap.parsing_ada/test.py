@@ -62,9 +62,11 @@ def test_driver():
 
     debug.break_at_exception(False)
     yield wait_DAP_server('setExceptionBreakpoints')
+    yield wait_until_not_busy(debug)
 
     debug.send("cont")
     yield wait_DAP_server('stackTrace')
+    yield wait_until_not_busy(debug)
 
     debug.send("frame 7")
     yield wait_until_not_busy(debug)
@@ -525,6 +527,7 @@ def test_driver():
 
     yield wait_until_not_busy(debug)
     debug.send("cont")
+    yield wait_DAP_server('stackTrace')
     yield wait_until_not_busy(debug)
     debug.send("frame 6")
     yield wait_until_not_busy(debug)
@@ -621,6 +624,7 @@ def test_driver():
     debug.send("b swap")
     yield wait_until_not_busy(debug)
     debug.send("cont")
+    yield wait_DAP_server('stackTrace')
     yield wait_until_not_busy(debug)
 
     var = yield check(p, "Word", "string", '"qeaLfjb"')

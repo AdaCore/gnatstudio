@@ -29,4 +29,8 @@ package DAP.Views.Memory is
    --  Open (if needed) a memory view, and display the memory at the given
    --  address
 
+   procedure Update_View
+     (Client : not null access DAP.Clients.DAP_Client'Class);
+   --  Update the view if opened
+
 end DAP.Views.Memory;

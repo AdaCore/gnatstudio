@@ -1,0 +1,8 @@
+with "config";
+
+project Default is
+    for Main use ("main.adb");
+
+    package Builder is
+    end Builder;
+end Default;
