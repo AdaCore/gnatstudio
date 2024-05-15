@@ -463,6 +463,11 @@ def start_fuzz(task, corpus_dir, fuzz_dir, subp_sloc, force=False):
         "--tgen-gnattest-test-generator",
     ]
 
+    # Limit parallelism in testsuite mode, so as not to hang and timeout other
+    # tests.
+    if GPS.getenv("GS_TESTSUITE_RUN"):
+        args.append("--cores=2")
+
     p = TargetWrapper("gnattest fuzz")
 
     # Do not check for errors on the gnatfuzz fuzz execution, it could have
