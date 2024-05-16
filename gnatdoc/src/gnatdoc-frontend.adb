@@ -2411,7 +2411,7 @@ package body GNATdoc.Frontend is
                   then
                      Update_Scope (Get_Full_View (E));
 
-                  elsif not (Get_Entities (Scope).Contains (E)) then
+                  elsif not Get_Entities (Scope).Contains (E) then
                      Update_Scope;
                   end if;
                end Decorate_Scope;
