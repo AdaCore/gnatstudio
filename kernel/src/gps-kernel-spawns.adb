@@ -42,6 +42,8 @@ package body GPS.Kernel.Spawns is
          Process       : Spawn.Processes.Process;
          Output_Parser : GPS.Tools_Output.Tools_Output_Parser_Access;
          Failed        : Boolean := False;
+         Read_Output   : Boolean := False;
+         Read_Error    : Boolean := False;
       end record;
 
    type Monitor_Command_Access is access all Monitor_Command'Class;
@@ -84,13 +86,19 @@ package body GPS.Kernel.Spawns is
       Error : Ada.Exceptions.Exception_Occurrence);
 
    overriding procedure Interrupt (Self : in out Monitor_Command) is
+      use all type Spawn.Process_Status;
    begin
-      Self.Process.Terminate_Process;
+      if Self.Process.Status = Running then
+         Self.Process.Terminate_Process;
+      end if;
    end Interrupt;
 
    overriding procedure Primitive_Free (Self : in out Monitor_Command) is
+      use all type Spawn.Process_Status;
    begin
-      Self.Process.Kill_Process;
+      if Self.Process.Status = Running then
+         Self.Process.Kill_Process;
+      end if;
    end Primitive_Free;
 
    -------------
@@ -100,6 +108,16 @@ package body GPS.Kernel.Spawns is
    overriding function Execute
      (Self : access Monitor_Command) return Commands.Command_Return_Type is
    begin
+      if Self.Read_Output then
+         Self.Standard_Output_Available;  --  process more stdout data
+
+         return Commands.Execute_Again;
+      elsif Self.Read_Error then
+         Self.Standard_Error_Available;  --  process more stdout data
+
+         return Commands.Execute_Again;
+      end if;
+
       case Self.Process.Status is
          when Spawn.Not_Running =>
             return (if Self.Failed then Commands.Failure
@@ -125,26 +143,24 @@ package body GPS.Kernel.Spawns is
      (Self : in out Monitor_Command)
    is
       use type Ada.Streams.Stream_Element_Count;
+      Data    : Ada.Streams.Stream_Element_Array (1 .. 512);
+      Text    : String (1 .. 512) with Import, Address => Data'Address;
+      Last    : Ada.Streams.Stream_Element_Count;
+      Success : Boolean := True;
+
    begin
-      loop
-         declare
-            Data    : Ada.Streams.Stream_Element_Array (1 .. 512);
-            Text    : String (1 .. 512) with Import, Address => Data'Address;
-            Last    : Ada.Streams.Stream_Element_Count;
-            Success : Boolean := True;
+      Self.Process.Read_Standard_Error (Data, Last, Success);
 
-         begin
-            Self.Process.Read_Standard_Error (Data, Last, Success);
+      Self.Read_Error := Success and Last >= Data'First;
+      --  Read stderr again if any data
 
-            exit when Last < Data'First;
-
-            Me_IO.Trace (Text (1 .. Positive (Last)));
-            Self.Output_Parser.Parse_Standard_Output
-              (Text (1 .. Positive (Last)), Self'Unchecked_Access);
-            --  FIXME: use stderr! But now parsers expect whole text on
-            --  stdout, so send it there for now.
-         end;
-      end loop;
+      if Self.Read_Error then
+         Me_IO.Trace (Text (1 .. Positive (Last)));
+         Self.Output_Parser.Parse_Standard_Output
+           (Text (1 .. Positive (Last)), Self'Unchecked_Access);
+         --  FIXME: use stderr! But now parsers expect whole text on
+         --  stdout, so send it there for now.
+      end if;
    end Standard_Error_Available;
 
    -------------------------------
@@ -155,24 +171,22 @@ package body GPS.Kernel.Spawns is
      (Self : in out Monitor_Command)
    is
       use type Ada.Streams.Stream_Element_Count;
+      Data    : Ada.Streams.Stream_Element_Array (1 .. 512);
+      Text    : String (1 .. 512) with Import, Address => Data'Address;
+      Last    : Ada.Streams.Stream_Element_Count;
+      Success : Boolean := True;
+
    begin
-      loop
-         declare
-            Data    : Ada.Streams.Stream_Element_Array (1 .. 512);
-            Text    : String (1 .. 512) with Import, Address => Data'Address;
-            Last    : Ada.Streams.Stream_Element_Count;
-            Success : Boolean := True;
+      Self.Process.Read_Standard_Output (Data, Last, Success);
 
-         begin
-            Self.Process.Read_Standard_Output (Data, Last, Success);
+      Self.Read_Output := Success and Last >= Data'First;
+      --  Read stdout again if any data
 
-            exit when Last < Data'First;
-
-            Me_IO.Trace (Text (1 .. Positive (Last)));
-            Self.Output_Parser.Parse_Standard_Output
-              (Text (1 .. Positive (Last)), Self'Unchecked_Access);
-         end;
-      end loop;
+      if Self.Read_Output then
+         Me_IO.Trace (Text (1 .. Positive (Last)));
+         Self.Output_Parser.Parse_Standard_Output
+           (Text (1 .. Positive (Last)), Self'Unchecked_Access);
+      end if;
    end Standard_Output_Available;
 
    --------------------
