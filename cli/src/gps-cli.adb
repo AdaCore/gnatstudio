@@ -120,7 +120,7 @@ procedure GPS.CLI is
       if Single_File = null then
          Append (Command, "None, ");
       else
-         Append (Command, """" & Single_File.all & """, ");
+         Append (Command, "r""" & Single_File.all & """, ");
       end if;
 
       if Follow_Closure then
@@ -129,7 +129,7 @@ procedure GPS.CLI is
          Append (Command, "False, ");
       end if;
 
-      Append (Command, """" & Project_Name.all);
+      Append (Command, "r""" & Project_Name.all);
 
       --  Add a ".gpr" if needed
       if not (Project_Name'Length > 3
@@ -139,7 +139,7 @@ procedure GPS.CLI is
          Append (Command, ".gpr");
       end if;
       Append (Command, """, ");
-      Append (Command, """" & Oracle_File.all & """)");
+      Append (Command, "r""" & Oracle_File.all & """)");
 
       --  Launch the Python command
       Script.Execute_Command
