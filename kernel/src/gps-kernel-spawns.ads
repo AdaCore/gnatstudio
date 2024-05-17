@@ -25,6 +25,9 @@ with GPS.Tools_Output;
 
 package GPS.Kernel.Spawns is
 
+   function Is_Enabled return Boolean;
+   --  Return True is GPS.KERNEL.Spawn trace is ON.
+
    procedure Launch_Process
      (Command_Name  : VSS.Strings.Virtual_String;
       Exec          : String;

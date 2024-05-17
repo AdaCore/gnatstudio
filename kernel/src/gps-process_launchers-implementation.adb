@@ -154,7 +154,7 @@ package body GPS.Process_Launchers.Implementation is
       Result  : Scheduled_Command_Access;
       Data    : Build_Callback_Data_Access;
    begin
-      if Is_Local (Server) then
+      if Is_Local (Server) and then GPS.Kernel.Spawns.Is_Enabled then
          if Exec = "" then
             Success := False;
 

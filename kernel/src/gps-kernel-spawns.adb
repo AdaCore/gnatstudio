@@ -281,4 +281,11 @@ package body GPS.Kernel.Spawns is
       Command := Commands.Command_Access (Obj);
    end Launch_Process;
 
+   ----------------
+   -- Is_Enabled --
+   ----------------
+
+   function Is_Enabled return Boolean is
+     (Me.Is_Active);
+
 end GPS.Kernel.Spawns;
