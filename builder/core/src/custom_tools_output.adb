@@ -16,6 +16,7 @@
 ------------------------------------------------------------------------------
 
 with GNATCOLL.Any_Types;         use GNATCOLL.Any_Types;
+with GNATCOLL.Python.State;
 with GNATCOLL.Scripts;           use GNATCOLL.Scripts;
 with Commands;                   use Commands;
 with GPS.Scripts;                use GPS.Scripts;
@@ -90,6 +91,7 @@ package body Custom_Tools_Output is
       Found       : out Boolean)
    is
       use String_List_Utils.String_List;
+      Lock : GNATCOLL.Python.State.Ada_GIL_Lock with Unreferenced;
 
       Create_Parser : constant String := "tool_output.create_parser";
 
