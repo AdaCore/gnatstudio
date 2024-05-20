@@ -1922,7 +1922,7 @@ package body DAP.Module is
       GPS.Kernel.Actions.Register_Action
         (Kernel, "debug next", new Next_Command,
          Icon_Name    => "gps-debugger-next-symbolic",
-         Filter       => Debugger_Available,
+         Filter       => Debugger_Stopped,
          Description  =>
            "Execute the program until the next source line, stepping over"
          & " subprogram calls",
@@ -1931,7 +1931,7 @@ package body DAP.Module is
 
       GPS.Kernel.Actions.Register_Action
         (Kernel, "debug nexti", new Nexti_Command,
-         Filter      => Debugger_Available,
+         Filter      => Debugger_Stopped,
          Description =>
            "Execute the program until the next machine instruction, stepping"
          & " over subprogram calls",
@@ -1940,7 +1940,7 @@ package body DAP.Module is
       GPS.Kernel.Actions.Register_Action
         (Kernel, "debug step", new Step_Command,
          Icon_Name    => "gps-debugger-step-symbolic",
-         Filter       => Debugger_Available,
+         Filter       => Debugger_Stopped,
          Description  =>
            "Execute until program reaches a new line of source code",
          Category     => "Debug",
@@ -1948,7 +1948,7 @@ package body DAP.Module is
 
       GPS.Kernel.Actions.Register_Action
         (Kernel, "debug stepi", new Stepi_Command,
-         Filter      => Debugger_Available,
+         Filter      => Debugger_Stopped,
          Description =>
            "Execute the program for one machine instruction only",
          Category    => "Debug");
