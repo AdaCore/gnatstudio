@@ -1959,6 +1959,7 @@ package body Ada_Analyzer is
         (P, Line : Natural; Done : out Boolean)
       is
          Prec_Saved : constant Natural := Prec;
+         Prec_Line  : Natural := Line;
       begin
          Aspect_Clause := False;
          Done := False;
@@ -1969,12 +1970,16 @@ package body Ada_Analyzer is
          Pop (Tokens);
 
          if Callback /= null then
+            if Buffer (Prec) = ASCII.LF then
+               Prec_Line := Line - 1;
+            end if;
+
             Start_Of_Line := Line_Start (Buffer, Prec);
 
             Done := Callback
               (Aspect_Text,
                Aspect_Clause_Sloc,
-               (Line, Prec - Start_Of_Line + 1, Prec),
+               (Prec_Line, Prec - Start_Of_Line + 1, Prec),
                False);
          end if;
 
