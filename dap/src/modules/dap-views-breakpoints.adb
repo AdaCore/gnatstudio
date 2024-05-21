@@ -149,6 +149,13 @@ package body DAP.Views.Breakpoints is
       Index : Positive) return Gtk_Tree_Iter;
    --  Return the Iter for the given breakpoint index
 
+   function Get_Index_For_Breakpoint_Id
+     (Self  : not null access Breakpoint_View_Record'Class;
+      Num   : Breakpoint_Identifier) return Integer;
+   --  Return the index corresponding to the given breakpoint's ID, if present
+   --  in the Breakpoints view.
+   --  Return -1 if there is no row for the given ID or if a null ID is passed.
+
    function Get_Breakpoint_For_Iter
      (Self : not null access Breakpoint_View_Record'Class;
       Iter : Gtk_Tree_Iter) return Breakpoint_Data;
@@ -1185,6 +1192,45 @@ package body DAP.Views.Breakpoints is
         (Gtk_Tree_Path_New_From_Indicesv (Iter_Indices, 1));
    end Get_Iter_For_Index;
 
+   ---------------------------------
+   -- Get_Index_For_Breakpoint_Id --
+   ---------------------------------
+
+   function Get_Index_For_Breakpoint_Id
+     (Self  : not null access Breakpoint_View_Record'Class;
+      Num    : Breakpoint_Identifier) return Integer
+   is
+      Model : constant Gtk_Tree_Store := -Get_Model (Self.List);
+
+      -------------
+      -- Convert --
+      -------------
+
+      function Convert (Value : String) return Breakpoint_Identifier
+      is
+        (if Value /= "" then Breakpoint_Identifier'Value (Value)
+         else No_Breakpoint);
+
+      Iter  : Gtk.Tree_Model.Gtk_Tree_Iter;
+      Idx   : Positive := 1;
+   begin
+      if Num = No_Breakpoint then
+         return -1;
+      end if;
+
+      Iter := Model.Get_Iter_First;
+      while Iter /= Null_Iter loop
+         if Convert (Model.Get_String (Iter, Col_Num)) = Num then
+            return Idx;
+         end if;
+
+         Model.Next (Iter);
+         Idx := Idx + 1;
+      end loop;
+
+      return -1;
+   end Get_Index_For_Breakpoint_Id;
+
    -----------------------------
    -- Get_Breakpoint_For_Iter --
    -----------------------------
@@ -1228,10 +1274,10 @@ package body DAP.Views.Breakpoints is
       Create_If_Needed : Boolean := True)
    is
       Model           : constant Gtk_Tree_Store := -Get_Model (Self.List);
+      Idx             : constant Integer :=
+        Self.Get_Index_For_Breakpoint_Id (Data.Num);
       Iter            : Gtk_Tree_Iter :=
-        (if Data.Num = 0
-         then Null_Iter
-         else Self.Get_Iter_For_Index (Positive (Data.Num)));
+        (if Idx = -1 then Null_Iter else Self.Get_Iter_For_Index (Idx));
       Values          : Glib.Values.GValue_Array (1 .. 12);
       Columns         : Columns_Array (Values'Range);
       Last_Column_Idx : Gint;
@@ -1337,8 +1383,10 @@ package body DAP.Views.Breakpoints is
       Id   : Breakpoint_Identifier)
    is
       Model          : constant Gtk_Tree_Store := -Get_Model (Self.List);
+      Idx            : constant Integer :=
+        Self.Get_Index_For_Breakpoint_Id (Id);
       Iter_To_Remove : Gtk_Tree_Iter :=
-        Self.Get_Iter_For_Index (Positive (Id));
+        (if Idx = -1 then Null_Iter else Self.Get_Iter_For_Index (Idx));
    begin
       if Iter_To_Remove /= Null_Iter then
          Model.Remove (Iter_To_Remove);
@@ -1362,6 +1410,7 @@ package body DAP.Views.Breakpoints is
            (Me, "Add"
             & DAP.Module.Breakpoints.Get_Persistent_Breakpoints.Length'Img
             & " persistent breakpoints");
+
          for Data of DAP.Module.Breakpoints.Get_Persistent_Breakpoints loop
             View.Update_Breakpoint (Data);
          end loop;
@@ -1370,6 +1419,7 @@ package body DAP.Views.Breakpoints is
            (Me, "Add"
             & Client.Get_Breakpoints_Manager.Get_Breakpoints.Length'Img
             & " debugger breakpoints");
+
          for Data of Client.Get_Breakpoints_Manager.Get_Breakpoints loop
             View.Update_Breakpoint (Data);
          end loop;
