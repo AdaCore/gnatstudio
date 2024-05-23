@@ -6,6 +6,7 @@ from gs_utils import make_interactive
 import pygps
 import workflows
 from workflows.promises import ProcessWrapper, TargetWrapper
+from gnatfuzz_view import fuzz_executable
 
 import os
 import json
@@ -29,37 +30,6 @@ PARAM_VALUE = "Parameter_Value"
 DECODED_FUNCTION_RETURN = "Decoded_Function_Return"
 FUNCTION_RETURN_TYPE = "Function_Return_Type"
 FUNCTION_RETURN_VALUE = "Function_Return_Value"
-
-
-def coverage_executable():
-    """Utility function, returns the executable instrumented for coverage"""
-    return os.path.join(
-        os.path.dirname(GPS.Project.root().file().name()),
-        "session",
-        "build",
-        "obj-COVERAGE",
-        "gnatfuzz-fuzz_test_harness.coverage",
-    )
-
-
-def fuzz_executable():
-    """Utility function, returns the executable instrumented for fuzzing"""
-    # We don't know if the AFL_PLAIN or the AFL_PERSIST object was generated.
-
-    # They should be the same for the purposes of the GNAT Studio integration:
-    # try one, then the other.
-
-    for mode in ("AFL_PLAIN", "AFL_PERSIST"):
-        candidate = os.path.join(
-            os.path.dirname(GPS.Project.root().file().name()),
-            "session",
-            "build",
-            f"obj-{mode}",
-            "gnatfuzz-test_harness.afl_fuzz",
-        )
-        if os.path.exists(candidate):
-            return candidate
-    return None
 
 
 class FuzzTestCase(object):
@@ -132,12 +102,12 @@ class FuzzTestCaseList(object):
         """Workflow to launch a debugger session on the given crash"""
         t = TargetWrapper("Build Main")
         yield t.wait_on_execute(main_name="gnatfuzz-fuzz_test_harness.adb")
-        exec = fuzz_executable()
+        exec = fuzz_executable(False)
         d = GPS.Debugger.spawn(executable=GPS.File(exec))
         d.send("delete")
         d.send(f"start {self.target_candidate}")
 
-        # It would be nice if we could add a breakpoint at the start of 
+        # It would be nice if we could add a breakpoint at the start of
         # the user subprogram under test...
 
         # Hide away the commands we sent...
@@ -165,7 +135,12 @@ class FuzzTestCaseList(object):
     def add_test_case(self, test_case):
         """Add the info for the given crash to the model"""
         it = self.store.append(None)
-        self.store[it] = [test_case.id, test_case.details, test_case.file, self.default_fg]
+        self.store[it] = [
+            test_case.id,
+            test_case.details,
+            test_case.file,
+            self.default_fg,
+        ]
 
         # Fill the parameters part of the crash
         for name, val in test_case.params:
@@ -184,15 +159,19 @@ class GNATfuzzTestCaseView(Module):
         self.fcl = FuzzTestCaseList()
 
     def setup(self):
-        make_interactive(self.get_view, category="Views", name="open GNATfuzz test cases view")
-        make_interactive(self.clear_view, category="Views", name="clear GNATfuzz test cases view")
+        make_interactive(
+            self.get_view, category="Views", name="open GNATfuzz test cases view"
+        )
+        make_interactive(
+            self.clear_view, category="Views", name="clear GNATfuzz test cases view"
+        )
 
     def clear_view(self):
         """Clear the Fuzz test cases view"""
         global counter
         counter = 1
         t = pygps.get_widget_by_name("fuzz_test_case_view")
-        self.test_cases.clear();
+        self.test_cases.clear()
         if t is not None:
             t.get_model().clear()
 
@@ -214,7 +193,7 @@ class GNATfuzzTestCaseView(Module):
         while self.candidate_test_case_files:
             candidate = self.candidate_test_case_files.pop()
             if candidate not in self.test_cases:
-                executable = coverage_executable()
+                executable = fuzz_executable(True)
                 # We're actually launching the executable to get the
                 # parameters that were passed to the test case
                 cl = [executable, candidate]
@@ -222,7 +201,7 @@ class GNATfuzzTestCaseView(Module):
                 status, output = yield p.wait_until_terminate()
                 c = FuzzTestCase(candidate)
 
-                # Derive and set the test ID and test case details 
+                # Derive and set the test ID and test case details
                 # from the base filename
                 # Turn: id:000000 time:0, execs:0, orig:GNATfuzz_XX into
                 #       ID: 0 | Details: time:0, execs:0, orig:GNATfuzz_XX into
@@ -232,12 +211,12 @@ class GNATfuzzTestCaseView(Module):
                 test_case_details = basename[id_len:]
                 c.details = test_case_details
                 test_case_id = test_case_id[3:]
-                #if test_case_id == "000000":
+                # if test_case_id == "000000":
                 #    test_case_id = "0"
-                #else:
+                # else:
                 #    test_case_id = test_case_id.lstrip('0')
                 c.id = test_case_id
- 
+
                 # Extract the json section of the output;
                 # it should start after "GNATfuzz : " and end at "^}"
                 json_str = ""
@@ -326,15 +305,17 @@ class GNATfuzzTestCaseView(Module):
 
         # Get a list of all candidate testcases
         self.candidate_test_case_files.extend(
-            sorted(glob.glob(
-                os.path.join(
-                    self.project_dir,
-                    "session",
-                    "fuzzer_output",
-                    "gnatfuzz_1_master",
-                    "queue",
-                    "id*",
-                ))
+            sorted(
+                glob.glob(
+                    os.path.join(
+                        self.project_dir,
+                        "session",
+                        "fuzzer_output",
+                        "gnatfuzz_1_master",
+                        "queue",
+                        "id*",
+                    )
+                )
             )
         )
         # Process the candidate test case files
