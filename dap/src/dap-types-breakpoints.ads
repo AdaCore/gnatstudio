@@ -187,11 +187,13 @@ package DAP.Types.Breakpoints is
    --  breakpoint's type, SLOC...).
 
    function Get_Breakpoints
+     (Self : Breakpoint_Holder) return Breakpoint_Vectors.Vector;
+   --  Return all the breakpoints stored in this holder.
+
+   function Get_Breakpoints
      (Self    : Breakpoint_Holder;
-      Indexes : Breakpoint_Index_Lists.List :=
-        Breakpoint_Index_Lists.Empty_List) return Breakpoint_Vectors.Vector;
-   --  Return all the breakpoints at the given indexes, or all the holder's
-   --  breakpoints if no indexes are specified.
+      Indexes : Breakpoint_Index_Lists.List) return Breakpoint_Vectors.Vector;
+   --  Return all the breakpoints at the given indexes.
 
    function Get_Breakpoint_From_Index
      (Self : Breakpoint_Holder;
