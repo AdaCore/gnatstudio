@@ -167,6 +167,7 @@ package body GPS.Process_Launchers.Implementation is
             return;
 
          elsif Show_Command_To /= null then
+            Console.Set_Kernel (Kernel);
             Console.Insert_With_Links (To_Display_String (CL), Add_LF => True);
          end if;
 
@@ -175,6 +176,7 @@ package body GPS.Process_Launchers.Implementation is
               VSS.Strings.Conversions.To_Virtual_String
                 (if Name_In_Task_Manager = "" then Get_Command (CL)
                  else Name_In_Task_Manager),
+            Console       => Console,
             Exec          => Exec,
             Arg_List      => CL,
             Env           => Kernel.Get_Original_Environment,

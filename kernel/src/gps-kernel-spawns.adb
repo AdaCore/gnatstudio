@@ -85,6 +85,11 @@ package body GPS.Kernel.Spawns is
      (Self  : in out Monitor_Command;
       Error : Ada.Exceptions.Exception_Occurrence);
 
+   function Input_Handler
+     (Console   : access Interactive_Consoles.Interactive_Console_Record'Class;
+      Input     : String;
+      User_Data : System.Address) return String;
+
    overriding procedure Interrupt (Self : in out Monitor_Command) is
       use all type Spawn.Process_Status;
    begin
@@ -233,12 +238,40 @@ package body GPS.Kernel.Spawns is
       Self.Output_Parser.End_Of_Stream (Int_Code, Self'Unchecked_Access);
    end Finished;
 
+   -------------------
+   -- Input_Handler --
+   -------------------
+
+   function Input_Handler
+     (Console   : access Interactive_Consoles.Interactive_Console_Record'Class;
+      Input     : String;
+      User_Data : System.Address) return String
+   is
+      pragma Unreferenced (Console);
+      use all type Spawn.Process_Status;
+
+      Last : Ada.Streams.Stream_Element_Offset := Input'Length;
+      Data : Ada.Streams.Stream_Element_Array (1 .. Last)
+        with Import, Address => Input'Address;
+      Ok   : Boolean := True;
+
+      Command : Monitor_Command
+        with Import, Address => User_Data;
+   begin
+      if Command.Process.Status = Running then
+         Command.Process.Write_Standard_Input (Data, Last, Ok);
+      end if;
+
+      return "";
+   end Input_Handler;
+
    --------------------
    -- Launch_Process --
    --------------------
 
    procedure Launch_Process
      (Command_Name  : VSS.Strings.Virtual_String;
+      Console       : Interactive_Consoles.Interactive_Console;
       Exec          : String;
       Arg_List      : GNATCOLL.Arg_Lists.Arg_List;
       Env           : Spawn.Environments.Process_Environment;
@@ -247,6 +280,8 @@ package body GPS.Kernel.Spawns is
       Output_Parser : GPS.Tools_Output.Tools_Output_Parser_Access;
       Command       : out Commands.Command_Access)
    is
+      use type Interactive_Consoles.Interactive_Console;
+
       Obj : constant Monitor_Command_Access := new Monitor_Command'
         (Commands.Root_Command with
          Name          => Command_Name,
@@ -261,6 +296,18 @@ package body GPS.Kernel.Spawns is
          Obj.Process.Set_Standard_Input_PTY;
          Obj.Process.Set_Standard_Output_PTY;
          Obj.Process.Set_Standard_Error_PTY;
+      end if;
+
+      if Console /= null then
+         Trace (Me, "Connect the command_handler to the console");
+         Console.Set_Command_Handler
+           (Input_Handler'Access,
+            Obj.all'Address);
+
+         --  Monitor.Delete_Id := System_Callbacks.Connect
+         --    (Console, Gtk.Widget.Signal_Delete_Event,
+         --     System_Callbacks.To_Marshaller (Delete_Handler'Access),
+         --     Monitor.D.all'Address);
       end if;
 
       for J in 1 .. GNATCOLL.Arg_Lists.Args_Length (Arg_List) loop

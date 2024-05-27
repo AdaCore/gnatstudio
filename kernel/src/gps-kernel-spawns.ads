@@ -22,6 +22,7 @@ with Spawn.Environments;
 with VSS.Strings;
 
 with GPS.Tools_Output;
+with Interactive_Consoles;
 
 package GPS.Kernel.Spawns is
 
@@ -30,6 +31,7 @@ package GPS.Kernel.Spawns is
 
    procedure Launch_Process
      (Command_Name  : VSS.Strings.Virtual_String;
+      Console       : Interactive_Consoles.Interactive_Console;
       Exec          : String;
       Arg_List      : GNATCOLL.Arg_Lists.Arg_List;
       Env           : Spawn.Environments.Process_Environment;
