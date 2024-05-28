@@ -20,6 +20,12 @@ with Ada.Streams;
 
 with GNATCOLL.Traces;            use GNATCOLL.Traces;
 
+with Gtkada.Dialogs;
+with Gtk.Handlers;
+
+with GPS.Intl;                   use GPS.Intl;
+with GUI_Utils;
+
 with Spawn.Process_Listeners;
 with Spawn.Processes;
 with Spawn.String_Vectors;
@@ -40,7 +46,11 @@ package body GPS.Kernel.Spawns is
          Name          : VSS.Strings.Virtual_String;
          Label         : VSS.Strings.Virtual_String;
          Process       : Spawn.Processes.Process;
+         Console       : Interactive_Consoles.Interactive_Console;
+         Delete_Id     : Gtk.Handlers.Handler_Id;
+         --  Signals connecting the gtk widget to the underlying process
          Output_Parser : GPS.Tools_Output.Tools_Output_Parser_Access;
+         Finished      : Boolean := False;  --  Process field value is invalid
          Failed        : Boolean := False;
          Read_Output   : Boolean := False;
          Read_Error    : Boolean := False;
@@ -85,23 +95,40 @@ package body GPS.Kernel.Spawns is
      (Self  : in out Monitor_Command;
       Error : Ada.Exceptions.Exception_Occurrence);
 
+   package Monitor_Callbacks is new Gtk.Handlers.User_Return_Callback
+     (Interactive_Consoles.Interactive_Console_Record,
+      Boolean,
+      Monitor_Command_Access);
+
    function Input_Handler
      (Console   : access Interactive_Consoles.Interactive_Console_Record'Class;
       Input     : String;
       User_Data : System.Address) return String;
 
+   function Delete_Handler
+     (Console : access Interactive_Consoles.Interactive_Console_Record'Class;
+      Command : Monitor_Command_Access) return Boolean;
+
+   ---------------
+   -- Interrupt --
+   ---------------
+
    overriding procedure Interrupt (Self : in out Monitor_Command) is
       use all type Spawn.Process_Status;
    begin
-      if Self.Process.Status = Running then
+      if not Self.Finished and then Self.Process.Status = Running then
          Self.Process.Terminate_Process;
       end if;
    end Interrupt;
 
+   --------------------
+   -- Primitive_Free --
+   --------------------
+
    overriding procedure Primitive_Free (Self : in out Monitor_Command) is
       use all type Spawn.Process_Status;
    begin
-      if Self.Process.Status = Running then
+      if not Self.Finished and then Self.Process.Status = Running then
          Self.Process.Kill_Process;
       end if;
    end Primitive_Free;
@@ -121,6 +148,10 @@ package body GPS.Kernel.Spawns is
          Self.Standard_Error_Available;  --  process more stdout data
 
          return Commands.Execute_Again;
+      elsif Self.Finished then
+
+         return (if Self.Failed then Commands.Failure
+                 else Commands.Success);
       end if;
 
       case Self.Process.Status is
@@ -212,6 +243,7 @@ package body GPS.Kernel.Spawns is
    begin
       Me.Trace (Error);
       Self.Failed := True;
+      Self.Finished := True;
    end Exception_Occurred;
 
    --------------
@@ -225,6 +257,7 @@ package body GPS.Kernel.Spawns is
    is
       use all type Spawn.Process_Exit_Status;
       use type Spawn.Process_Exit_Code;
+      use type Interactive_Consoles.Interactive_Console;
 
       Integer_Last : constant Spawn.Process_Exit_Code :=
         Spawn.Process_Exit_Code (Integer'Last);
@@ -234,9 +267,56 @@ package body GPS.Kernel.Spawns is
          else -Integer (Spawn.Process_Exit_Code'Last - Exit_Code) - 1);
    begin
       Self.Failed := Exit_Status = Crash;
+      Self.Finished := True;
       Me_IO.Trace ("Finished: " & Exit_Status'Image & Exit_Code'Image);
       Self.Output_Parser.End_Of_Stream (Int_Code, Self'Unchecked_Access);
+
+      if Self.Console /= null then
+         Gtk.Handlers.Disconnect (Self.Console, Self.Delete_Id);
+         Self.Console.Set_Command_Handler (null, System.Null_Address);
+      end if;
    end Finished;
+
+   --------------------
+   -- Delete_Handler --
+   --------------------
+
+   function Delete_Handler
+     (Console : access Interactive_Consoles.Interactive_Console_Record'Class;
+      Command : Monitor_Command_Access) return Boolean
+   is
+      use Gtkada.Dialogs;
+      use all type Spawn.Process_Status;
+
+      Button  : Message_Dialog_Buttons;
+   begin
+      if not Command.Finished and then Command.Process.Status = Running then
+
+         Button := GUI_Utils.GPS_Message_Dialog
+           (-"The process attached to this window" & ASCII.LF
+            & (-"is still active, do you want to kill it ?"),
+            Confirmation,
+            Button_Yes or Button_No,
+            Button_Yes,
+            Parent => Console.Kernel.Get_Main_Window);
+
+         if Button = Button_Yes then
+
+            Command.Interrupt;
+
+            return False;
+         end if;
+
+         return True;
+      else
+         return False;
+      end if;
+
+   exception
+      when E : others =>
+         Trace (Me, E);
+         return False;
+   end Delete_Handler;
 
    -------------------
    -- Input_Handler --
@@ -258,7 +338,7 @@ package body GPS.Kernel.Spawns is
       Command : Monitor_Command
         with Import, Address => User_Data;
    begin
-      if Command.Process.Status = Running then
+      if not Command.Finished and then Command.Process.Status = Running then
          Command.Process.Write_Standard_Input (Data, Last, Ok);
       end if;
 
@@ -300,14 +380,14 @@ package body GPS.Kernel.Spawns is
 
       if Console /= null then
          Trace (Me, "Connect the command_handler to the console");
-         Console.Set_Command_Handler
-           (Input_Handler'Access,
-            Obj.all'Address);
+         Console.Set_Command_Handler (Input_Handler'Access, Obj.all'Address);
 
-         --  Monitor.Delete_Id := System_Callbacks.Connect
-         --    (Console, Gtk.Widget.Signal_Delete_Event,
-         --     System_Callbacks.To_Marshaller (Delete_Handler'Access),
-         --     Monitor.D.all'Address);
+         Obj.Console := Console;
+         Obj.Delete_Id := Monitor_Callbacks.Connect
+           (Console,
+            Gtk.Widget.Signal_Delete_Event,
+            Monitor_Callbacks.To_Marshaller (Delete_Handler'Access),
+            Obj);
       end if;
 
       for J in 1 .. GNATCOLL.Arg_Lists.Args_Length (Arg_List) loop
