@@ -130,6 +130,11 @@ package body GPS.LSP_Client.Edit_Workspace is
          --  cursor's position: thus, this should only be used in particular
          --  contexts (e.g: formatting). The computation is done through
          --  an implementation of the Myers diff algorithm.
+
+         Avoid_Cursor_Move        : Boolean := False;
+         --  If Avoid_Curson_Move is True, the cursor won't be moved to the
+         --  location of the last change being applied: it will be kept at the
+         --  current location.
       end record;
    overriding function Execute
      (Command : access Edit_Workspace_Command;
@@ -557,6 +562,9 @@ package body GPS.LSP_Client.Edit_Workspace is
 
          Writable := File.Is_Writable;
 
+         --  Avoid moving the cursor when applying edit changes if asked.
+         Editor.Set_Avoid_Cursor_Move_On_Changes (Command.Avoid_Cursor_Move);
+
          --  Sort changes for applying them in reverse direction
          --  from the last to the first line
 
@@ -670,6 +678,7 @@ package body GPS.LSP_Client.Edit_Workspace is
             Editor.Save (Interactive => False);
          end if;
 
+         Editor.Set_Avoid_Cursor_Move_On_Changes (False);
       end Internal_Process_File;
 
    begin
@@ -1064,7 +1073,8 @@ package body GPS.LSP_Client.Edit_Workspace is
       Locations_Message_Markup : String;
       Error                    : out Boolean;
       Limit_Span               : LSP.Messages.Span := LSP.Messages.Empty_Span;
-      Compute_Minimal_Edits    : Boolean := False)
+      Compute_Minimal_Edits    : Boolean := False;
+      Avoid_Cursor_Move        : Boolean := False)
    is
       Command : Command_Access := new Edit_Workspace_Command'
         (Root_Command with
@@ -1080,7 +1090,8 @@ package body GPS.LSP_Client.Edit_Workspace is
          Allow_File_Renaming      => Allow_File_Renaming,
          Locations_Message_Markup =>
            To_Unbounded_String (Locations_Message_Markup),
-         Compute_Minimal_Edits    =>  Compute_Minimal_Edits);
+         Compute_Minimal_Edits    => Compute_Minimal_Edits,
+         Avoid_Cursor_Move        => Avoid_Cursor_Move);
 
    begin
       Src_Editor_Module.Set_Global_Command (Command);

@@ -1,7 +1,7 @@
 # Check the behavior of the UI for code actions.
 
 from gs_utils.internal.utils import run_test_driver, wait_language_server, \
-    gps_assert, get_widget_by_name, timeout
+    gps_assert, wait_idle
 
 
 @run_test_driver
@@ -30,6 +30,9 @@ def driver():
                'Put_Line (Item => "hello");',
                "edits not received")
 
+    # Check that we only have the 'Introduce Parameter' code action now
+    v.goto(b.at(5, 22))
+    yield wait_idle()
     yield wait_language_server("textDocument/codeAction")
     m = GPS.Message.list(category="_internal_code_actions")[0].get_text()
     gps_assert(m, "Introduce Parameter",

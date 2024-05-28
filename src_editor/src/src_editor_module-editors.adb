@@ -610,6 +610,9 @@ package body Src_Editor_Module.Editors is
       Line   : Editable_Line_Type;
       Column : Character_Offset_Type) return Visible_Column_Type;
 
+   overriding procedure Set_Avoid_Cursor_Move_On_Changes
+     (This   : Src_Editor_Buffer; Value : Boolean);
+
    function Convert is new Ada.Unchecked_Conversion
      (Buffer_Reference_Access, System.Address);
 
@@ -2363,6 +2366,18 @@ package body Src_Editor_Module.Editors is
          return 0;
       end if;
    end Expand_Tabs;
+
+   --------------------------------------
+   -- Set_Avoid_Cursor_Move_On_Changes --
+   --------------------------------------
+
+   overriding procedure Set_Avoid_Cursor_Move_On_Changes
+     (This   : Src_Editor_Buffer; Value : Boolean) is
+   begin
+      if This.Contents.Buffer /= null then
+         This.Contents.Buffer.Set_Avoid_Cursor_Move_On_Changes (Value);
+      end if;
+   end Set_Avoid_Cursor_Move_On_Changes;
 
    ---------------------
    -- Selection_Start --

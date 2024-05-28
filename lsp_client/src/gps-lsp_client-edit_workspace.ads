@@ -32,7 +32,8 @@ package GPS.LSP_Client.Edit_Workspace is
       Locations_Message_Markup : String;
       Error                    : out Boolean;
       Limit_Span               : LSP.Messages.Span := LSP.Messages.Empty_Span;
-      Compute_Minimal_Edits    : Boolean := False);
+      Compute_Minimal_Edits    : Boolean := False;
+      Avoid_Cursor_Move        : Boolean := False);
      --  Apply edit changes.
      --  Title is used for information/error dialogs and for the messages
      --  category when Show_Messages is True.
@@ -49,5 +50,8 @@ package GPS.LSP_Client.Edit_Workspace is
      --  position: thus, this should only be used in particular contexts
      --  (e.g: formatting). This uses an implementation of the Myers diff
      --  algorithm.
+     --  If Avoid_Curson_Move is True, the cursor won't be moved to the
+     --  location of the last change being applied: it will be kept at the
+     --  current location.
 
 end GPS.LSP_Client.Edit_Workspace;
