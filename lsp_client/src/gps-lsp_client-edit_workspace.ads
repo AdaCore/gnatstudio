@@ -33,7 +33,7 @@ package GPS.LSP_Client.Edit_Workspace is
       Error                    : out Boolean;
       Limit_Span               : LSP.Messages.Span := LSP.Messages.Empty_Span;
       Compute_Minimal_Edits    : Boolean := False;
-      Avoid_Cursor_Move        : Boolean := False);
+      Avoid_Cursor_Move        : Boolean := True);
      --  Apply edit changes.
      --  Title is used for information/error dialogs and for the messages
      --  category when Show_Messages is True.

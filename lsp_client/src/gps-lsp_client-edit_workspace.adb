@@ -131,7 +131,7 @@ package body GPS.LSP_Client.Edit_Workspace is
          --  contexts (e.g: formatting). The computation is done through
          --  an implementation of the Myers diff algorithm.
 
-         Avoid_Cursor_Move        : Boolean := False;
+         Avoid_Cursor_Move        : Boolean := True;
          --  If Avoid_Curson_Move is True, the cursor won't be moved to the
          --  location of the last change being applied: it will be kept at the
          --  current location.
@@ -1074,7 +1074,7 @@ package body GPS.LSP_Client.Edit_Workspace is
       Error                    : out Boolean;
       Limit_Span               : LSP.Messages.Span := LSP.Messages.Empty_Span;
       Compute_Minimal_Edits    : Boolean := False;
-      Avoid_Cursor_Move        : Boolean := False)
+      Avoid_Cursor_Move        : Boolean := True)
    is
       Command : Command_Access := new Edit_Workspace_Command'
         (Root_Command with

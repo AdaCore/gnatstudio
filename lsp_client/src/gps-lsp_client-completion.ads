@@ -222,6 +222,10 @@ private
 
       ID                       : Integer := 0;
       --  The LSP completion proposal ID.
+
+      Command                  : LSP.Messages.Optional_Command;
+      --  An optional command that is executed *after* inserting this
+      --  completion.
    end record;
 
    No_Proposal : constant LSP_Completion_Proposal :=
@@ -237,7 +241,8 @@ private
         Documentation        => <>,
         Category             => Cat_Unknown,
         Is_Snippet           => False,
-        ID                   => 0);
+        ID                   => 0,
+        Command              => <>);
 
    function LSP_Completion_Manager_Factory
      (Kernel : not null GPS.Kernel.Kernel_Handle;
