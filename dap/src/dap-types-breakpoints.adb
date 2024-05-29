@@ -252,29 +252,32 @@ package body DAP.Types.Breakpoints is
       end loop;
    end Initialize;
 
+   -------------------------
+   -- Get_All_Breakpoints --
+   -------------------------
+
+   function Get_Breakpoints
+     (Self : Breakpoint_Holder) return Breakpoint_Vectors.Vector is
+   begin
+      return Self.Vector;
+   end Get_Breakpoints;
+
    ---------------------
    -- Get_Breakpoints --
    ---------------------
 
    function Get_Breakpoints
      (Self    : Breakpoint_Holder;
-      Indexes : Breakpoint_Index_Lists.List :=
-        Breakpoint_Index_Lists.Empty_List)
-      return Breakpoint_Vectors.Vector is
+      Indexes : Breakpoint_Index_Lists.List)
+      return Breakpoint_Vectors.Vector
+   is
+      Result : Breakpoint_Vectors.Vector;
    begin
-      if Indexes.Is_Empty then
-         return Self.Vector;
-      else
-         declare
-            Result : Breakpoint_Vectors.Vector;
-         begin
-            for Idx of Indexes loop
-               Result.Append (Self.Vector (Idx));
-            end loop;
+      for Idx of Indexes loop
+         Result.Append (Self.Vector (Idx));
+      end loop;
 
-            return Result;
-         end;
-      end if;
+      return Result;
    end Get_Breakpoints;
 
    -------------------------------
