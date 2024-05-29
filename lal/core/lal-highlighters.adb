@@ -394,7 +394,10 @@ package body LAL.Highlighters is
            Ada_Tick |
            Ada_Target =>
             return Aspect_Prefix (None, In_Aspect);
-         when Ada_String | Ada_Char =>
+         when Ada_String | Ada_Char |
+              Ada_Format_String_Start |
+              Ada_Format_String_Mid |
+              Ada_Format_String_End =>
             return Aspect_Prefix (String_Style, In_Aspect);
          when Ada_Decimal |
               Ada_Integer =>
