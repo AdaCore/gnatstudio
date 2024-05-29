@@ -4387,7 +4387,7 @@ fi
   { $as_echo "$as_me:${as_lineno-$LINENO}: checking for GtkAda - version >= $min_gtk_version" >&5
 $as_echo_n "checking for GtkAda - version >= $min_gtk_version... " >&6; }
 
-  if test "$GNATDRV" = "no" -o ! `$GNATDRV ls -Pgtkada` ; then
+  if test "$GNATDRV" = "no" || ! $GNATDRV ls -Pgtkada > /dev/null ; then
     no_gtk=yes
   else
     # Full version number
