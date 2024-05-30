@@ -592,10 +592,14 @@ package body GPS.LSP_Module is
       pragma Unreferenced (Self, Kernel);
 
    begin
+      --  Send the 'didChangeConfiguration' notitification to the running LSP
+      --  servers when the changed preference can affect them.
       if Pref /= null
         and then (Pref.Get_Name = "General-Charset"
                   or Pref.Get_Name = "Doc-Search-Before-First"
-                  or Pref.Get_Name = "Src-Editor-Fold-Comments")
+                  or Pref.Get_Name = "Src-Editor-Fold-Comments"
+                  or GNATCOLL.Utils.Starts_With
+                    (Pref.Get_Name, "LSP-"))
       then
          for Server of Module.Language_Servers loop
             Server.Configuration_Changed;
