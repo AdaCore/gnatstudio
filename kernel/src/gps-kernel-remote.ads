@@ -107,4 +107,10 @@ package GPS.Kernel.Remote is
    procedure Set_Default_Remote_Settings;
    --  Set the current remote settings as default for the current project
 
+   function Check_Exec
+     (Server : Server_Type;
+      Exec   : String) return String;
+   --  Check that executable is on the path, and return the full path if
+   --  found, return null otherwise.
+
 end GPS.Kernel.Remote;
