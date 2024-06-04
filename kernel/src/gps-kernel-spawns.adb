@@ -266,6 +266,16 @@ package body GPS.Kernel.Spawns is
         (if Exit_Code in 0 .. Integer_Last then Integer (Exit_Code)
          else -Integer (Spawn.Process_Exit_Code'Last - Exit_Code) - 1);
    begin
+      --  Complete reading from stdout
+      while Self.Read_Output loop
+         Self.Standard_Output_Available;
+      end loop;
+
+      --  Complete reading from stderr
+      while Self.Read_Error loop
+         Self.Standard_Error_Available;
+      end loop;
+
       Self.Failed := Exit_Status = Crash;
       Self.Finished := True;
       Me_IO.Trace ("Finished: " & Exit_Status'Image & Exit_Code'Image);
