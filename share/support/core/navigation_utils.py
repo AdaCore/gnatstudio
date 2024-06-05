@@ -21,12 +21,13 @@ from gs_utils import interactive
 # the GPS engine to get that sort of functionality with any language.
 
 subprograms_re = re.compile(
-    "^([ \t]*)(procedure|function) ([a-zA-Z0-9_]+)", re.IGNORECASE)
+    "^([ \t]*)(procedure|function) ([a-zA-Z0-9_]+)", re.IGNORECASE
+)
 
 
 def __find_subprogram_decl():
-    """ Return the subprogram declaration closest to the cursor. This returns
-        a (MatchObject, line) tuple for the regexp subprograms_re """
+    """Return the subprogram declaration closest to the cursor. This returns
+    a (MatchObject, line) tuple for the regexp subprograms_re"""
     f = GPS.current_context().file().path
     line = GPS.current_context().location().line()
     while line > 0:
@@ -57,10 +58,15 @@ def cycle_in_entity():
     # Search for the enclosing block
     if node:
         for parent in node.parents():
-            if isinstance(parent, (libadalang.BaseSubpBody,
-                                   libadalang.TaskBody,
-                                   libadalang.EntryBody,
-                                   libadalang.DeclBlock)):
+            if isinstance(
+                parent,
+                (
+                    libadalang.BaseSubpBody,
+                    libadalang.TaskBody,
+                    libadalang.EntryBody,
+                    libadalang.DeclBlock,
+                ),
+            ):
                 start_line = parent.sloc_range.start.line
                 # We only need the start_column => everything should be
                 # aligned

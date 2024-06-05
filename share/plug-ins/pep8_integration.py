@@ -14,7 +14,6 @@ from modules import Module
 
 
 class Catch_Stdout(list):
-
     def __enter__(self):
         self._stdout = sys.stdout
         sys.stdout = self._stringio = StringIO()
@@ -26,10 +25,9 @@ class Catch_Stdout(list):
 
 
 class Pep8_Module(Module):
-
     def __format_check(self, file):
         """
-           Check format using pycodestyle for python source codes
+        Check format using pycodestyle for python source codes
         """
         # only check python file
         if file.language() == "python":
@@ -45,7 +43,7 @@ class Pep8_Module(Module):
             # parse text in buffer and catches stdout
             s = buf.get_chars()
             pref = GPS.Preference("Src-Editor-Strip-Trailing-Blanks")
-            if (pref.get() != "Never"):
+            if pref.get() != "Never":
                 source = [i.rstrip(" ") + "\n" for i in s.splitlines()]
             else:
                 source = [i + "\n" for i in s.splitlines()]
@@ -56,13 +54,14 @@ class Pep8_Module(Module):
 
             for i in output:
                 a = i.split(":")
-                m = GPS.Message(category="Pep8",
-                                file=GPS.EditorBuffer.get(file=file,
-                                                          open=False).file(),
-                                line=int(a[1]),
-                                column=int(a[2]),
-                                text=a[3],
-                                show_in_locations=False)
+                m = GPS.Message(
+                    category="Pep8",
+                    file=GPS.EditorBuffer.get(file=file, open=False).file(),
+                    line=int(a[1]),
+                    column=int(a[2]),
+                    text=a[3],
+                    show_in_locations=False,
+                )
 
                 m.set_action("", "gps-emblem-build-warning", m.get_text())
                 m.set_style(colorschemes.STYLE_WARNING, 1)
@@ -70,8 +69,8 @@ class Pep8_Module(Module):
     # The followings are hooks:
     def setup(self):
         """
-           When GPS start, if imported success:
-           register hook for format checker
+        When GPS start, if imported success:
+        register hook for format checker
         """
         for e in GPS.EditorBuffer.list():
             self.__format_check(e.file())

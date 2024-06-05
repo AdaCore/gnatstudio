@@ -21,12 +21,12 @@ def gnatpp(file):
     Run gnatpp on a specific file.
     Nothing is done if the file is not an Ada file.
     """
-    if file.language().lower() != 'ada':
+    if file.language().lower() != "ada":
         GPS.Logger("GNATPP").log("Not an Ada file: %s" % file.path)
         return
 
     sv = GPS.Project.scenario_variables()
-    x_args = ['-X%s=%s' % (k, v) for k, v in list(sv.items())] if sv else []
+    x_args = ["-X%s=%s" % (k, v) for k, v in list(sv.items())] if sv else []
 
     gnat_driver = gs_utils.get_gnat_driver_cmd()
 
@@ -35,39 +35,43 @@ def gnatpp(file):
     if not locate_exec_on_path(gnat_driver):
         gnat_driver = "gnat"
 
-    cmd = [gnat_driver,
-           'pretty',
-           '-rnb',
-           '-P%s' % GPS.Project.root().file().path] + x_args + [file.path]
+    cmd = (
+        [gnat_driver, "pretty", "-rnb", "-P%s" % GPS.Project.root().file().path]
+        + x_args
+        + [file.path]
+    )
 
-    p = ProcessWrapper(cmd, spawn_console='')
+    p = ProcessWrapper(cmd, spawn_console="")
     status, output = yield p.wait_until_terminate()
 
     if status != 0:
-        GPS.Locations.parse(output, category='gnat pretty')
+        GPS.Locations.parse(output, category="gnat pretty")
     else:
         GPS.EditorBuffer.get(file, force=True, open=True)
 
 
-@gs_utils.interactive(name="run gnatpp on project", filter='Project only',
-                      category="Project")
+@gs_utils.interactive(
+    name="run gnatpp on project", filter="Project only", category="Project"
+)
 def run_gnatpp_on_project_only():
     """
     Run gnatpp on the root project, without pretty printing the subprojects.
     """
-    GPS.BuildTarget('Pretty Print current project').execute(
-        synchronous=False)
+    GPS.BuildTarget("Pretty Print current project").execute(synchronous=False)
 
 
-@gs_utils.interactive(name="run gnatpp on project and subprojects",
-                      filter='Project only',
-                      category="Project")
+@gs_utils.interactive(
+    name="run gnatpp on project and subprojects",
+    filter="Project only",
+    category="Project",
+)
 def run_gnatpp_on_project_and_subprojects():
     """
     Run gnatpp on the root project and the subprojects.
     """
-    GPS.BuildTarget('Pretty Print current project and subprojects').execute(
-        synchronous=False)
+    GPS.BuildTarget("Pretty Print current project and subprojects").execute(
+        synchronous=False
+    )
 
 
 SWITCHES_XML = """
@@ -392,6 +396,8 @@ no extra indentation for statement itself" />
         <title>Pretty Print/Pretty Print %p and subprojects</title>
     </contextual>
 </GNAT_Studio>
-""".format(switches=SWITCHES_XML)
+""".format(
+    switches=SWITCHES_XML
+)
 
 GPS.parse_xml(XML)

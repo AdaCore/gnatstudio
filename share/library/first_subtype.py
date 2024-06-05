@@ -40,13 +40,13 @@ def has_first_subtype(context):
 
 
 @gs_utils.interactive(
-    name='goto first subtype',
-    contextual='Goto first subtype of %e',
+    name="goto first subtype",
+    contextual="Goto first subtype of %e",
     filter=has_first_subtype,
-    contextual_ref='goto other file')
+    contextual_ref="goto other file",
+)
 def __goto_first_subtype():
     context = GPS.current_context()
     decl = context.first_subtype.declaration()
     buffer = GPS.EditorBuffer.get(decl.file())
-    buffer.current_view().goto(
-        buffer.at(decl.line(), decl.column()))
+    buffer.current_view().goto(buffer.at(decl.line(), decl.column()))

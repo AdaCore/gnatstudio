@@ -17,13 +17,20 @@ GPS.current_context())" />
 
 @core.register_memory_usage_provider("LD")
 class LD(core.MemoryUsageProvider):
-
     _cache = {}
 
     # The list of supported targets
-    _supported_targets = ["arm-eabi", "leon3-elf", "m68020-elf",
-                          "powerpc-elf", "powerpc-eabispe", "riscv32-elf",
-                          "riscv64-elf", "aarch64-elf", "x86_64-elf"]
+    _supported_targets = [
+        "arm-eabi",
+        "leon3-elf",
+        "m68020-elf",
+        "powerpc-elf",
+        "powerpc-eabispe",
+        "riscv32-elf",
+        "riscv64-elf",
+        "aarch64-elf",
+        "x86_64-elf",
+    ]
 
     @staticmethod
     def map_file_is_supported(context):
@@ -49,23 +56,25 @@ class LD(core.MemoryUsageProvider):
 
         for lang in languages:
             comp_driver = project.get_attribute_as_string(
-                attribute="driver", package="compiler", index=lang)
+                attribute="driver", package="compiler", index=lang
+            )
             comp_command = project.get_attribute_as_string(
-                attribute="ide", package="compiler_command", index=lang)
+                attribute="ide", package="compiler_command", index=lang
+            )
 
             # If we have a language with a non-GCC toolchain, don't enable
             # the plugin, except if we are dealing with assembly
             if lang.lower() != "asm":
-                if ("gcc" not in comp_driver or
-                (comp_command != '' and "gcc" not in comp_command)):
+                if "gcc" not in comp_driver or (
+                    comp_command != "" and "gcc" not in comp_command
+                ):
                     has_gcc_toolchain = False
                     break
 
         if not has_gcc_toolchain:
             return False
 
-        ld_exe = target + '-ld'
-
+        ld_exe = target + "-ld"
 
         # Ensure that we don't even try to spawn ld if it's not in the PATH
         # to avoid displaying error messages in the Messages view.
@@ -73,9 +82,9 @@ class LD(core.MemoryUsageProvider):
             v = False
         else:
             try:
-                process = GPS.Process([ld_exe, '--help'])
+                process = GPS.Process([ld_exe, "--help"])
                 output = process.get_result()
-                v = '-map' in output
+                v = "-map" in output
             except Exception:
                 v = False
 
@@ -98,8 +107,7 @@ class LD(core.MemoryUsageProvider):
         # been invoked (e.g: when building a library). Return imediately in
         # that case.
         if not os.path.isfile(map_file_name):
-            GPS.Logger("MEMORY_USAGE_VIEWS.LD").log(
-                "map file not found. Skipping.")
+            GPS.Logger("MEMORY_USAGE_VIEWS.LD").log("map file not found. Skipping.")
             visitor.on_memory_usage_data_fetched([], [], [])
             return
 
@@ -113,12 +121,17 @@ class LD(core.MemoryUsageProvider):
 
         # The regexps used to match the information we want to fetch
         region_r = re.compile(
-            r'^(?P<name>\*?\w+\*?)\s+(?P<origin>0x[0-9a-f]+)' +
-            r'\s+(?P<length>0x[0-9a-f]+)\s+x?r?w?')
-        section_r = re.compile(r'^(?P<name>[\w.]+)\s+(?P<origin>0x[0-9a-f]+)' +
-                               r'\s+(?P<length>0x[0-9a-f]+)')
-        module_r = re.compile(r'^\s+[\w.]*\s+(?P<origin>0x[0-9a-f]+)\s+' +
-                              r'(?P<size>0x[0-9a-f]+) (?P<files>.+\.o\)?)')
+            r"^(?P<name>\*?\w+\*?)\s+(?P<origin>0x[0-9a-f]+)"
+            + r"\s+(?P<length>0x[0-9a-f]+)\s+x?r?w?"
+        )
+        section_r = re.compile(
+            r"^(?P<name>[\w.]+)\s+(?P<origin>0x[0-9a-f]+)"
+            + r"\s+(?P<length>0x[0-9a-f]+)"
+        )
+        module_r = re.compile(
+            r"^\s+[\w.]*\s+(?P<origin>0x[0-9a-f]+)\s+"
+            + r"(?P<size>0x[0-9a-f]+) (?P<files>.+\.o\)?)"
+        )
 
         def region_name_from_address(addr):
             """
@@ -146,7 +159,7 @@ class LD(core.MemoryUsageProvider):
             and should be ignored.
             """
 
-            not_alloc_sections_prefixes = ['.debug', '.comment']
+            not_alloc_sections_prefixes = [".debug", ".comment"]
 
             for prefix in not_alloc_sections_prefixes:
                 if section[0].startswith(prefix):
@@ -167,8 +180,7 @@ class LD(core.MemoryUsageProvider):
 
             m = region_r.search(line)
             if m:
-                return (m.group('name'), m.group('origin'),
-                        int(m.group('length'), 16))
+                return (m.group("name"), m.group("origin"), int(m.group("length"), 16))
             else:
                 return None
 
@@ -183,10 +195,14 @@ class LD(core.MemoryUsageProvider):
             m = section_r.search(line)
 
             if m:
-                section_addr = m.group('origin')
+                section_addr = m.group("origin")
                 region_name = region_name_from_address(int(section_addr, 16))
-                section = (m.group('name'), section_addr,
-                           int(m.group('length'), 16), region_name)
+                section = (
+                    m.group("name"),
+                    section_addr,
+                    int(m.group("length"), 16),
+                    region_name,
+                )
 
                 return section
             else:
@@ -206,7 +222,7 @@ class LD(core.MemoryUsageProvider):
 
             m = module_r.search(line)
             if m:
-                files_info = m.group('files')
+                files_info = m.group("files")
                 files = re.split(r"\(|\)", files_info)
 
                 # Get the object file name and, if any, information about
@@ -214,7 +230,7 @@ class LD(core.MemoryUsageProvider):
 
                 obj_file = files[0] if len(files) == 1 else files[1]
                 lib_file = files[0] if len(files) > 1 else ""
-                module_size = int(m.group('size'), 16)
+                module_size = int(m.group("size"), 16)
                 section = sections[-1]
 
                 # Do nothing if the module belongs to a section that will not
@@ -238,19 +254,24 @@ class LD(core.MemoryUsageProvider):
                 # one.
 
                 if module:
-                    module[3] += int(m.group('size'), 16)
+                    module[3] += int(m.group("size"), 16)
                 else:
                     region_name = section[3]
-                    module = [obj_file, lib_file, m.group('origin'),
-                              int(m.group('size'), 16),
-                              region_name, section_name]
+                    module = [
+                        obj_file,
+                        lib_file,
+                        m.group("origin"),
+                        int(m.group("size"), 16),
+                        region_name,
+                        section_name,
+                    ]
                     modules_dict[(files_info, section_name)] = module
 
         # Parse the memory map file to retrieve the memory regions and
         # the path of the linked executable.
 
         try:
-            with open(map_file_name, 'r') as f:
+            with open(map_file_name, "r") as f:
                 for line in f:
                     region = try_match_region(line)
                     if not region:

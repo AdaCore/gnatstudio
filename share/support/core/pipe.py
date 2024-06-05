@@ -31,7 +31,7 @@ from gs_utils import interactive
 
 def sel_pipe(command, buffer=None):
     """Process the current selection in BUFFER through COMMAND,
-       and replace that selection with the output of the command"""
+    and replace that selection with the output of the command"""
     if not buffer:
         buffer = EditorBuffer.get()
     start = buffer.selection_start()
@@ -40,7 +40,7 @@ def sel_pipe(command, buffer=None):
     # Ignore white spaces and newlines at end, to preserve the rest
     # of the text
     if start != end:
-        while end.get_char() == ' ' or end.get_char() == '\n':
+        while end.get_char() == " " or end.get_char() == "\n":
             end = end - 1
 
         text = buffer.get_chars(start, end)
@@ -60,7 +60,7 @@ def sel_pipe(command, buffer=None):
 @interactive(name="Fmt selection")
 def fmt_selection():
     """Process the current selection
-       through the "fmt" command to reformat paragraphs
+    through the "fmt" command to reformat paragraphs
     """
     width = Preference("Src-Editor-Highlight-Column").get()
     buffer = EditorBuffer.get()
@@ -70,22 +70,25 @@ def fmt_selection():
         prefix = "--"
 
     loc = buffer.selection_start().beginning_of_line()
-    while loc.get_char() == ' ':
+    while loc.get_char() == " ":
         loc = loc + 1
 
-    prefix = '-p """' + (' ' * (loc.column() - 1)) + prefix + '"""'
+    prefix = '-p """' + (" " * (loc.column() - 1)) + prefix + '"""'
     sel_pipe("fmt " + prefix + " -w " + repr(width), buffer)
 
 
-class ShellProcess (CommandWindow):
+class ShellProcess(CommandWindow):
 
     """Send the current selection to an external process,
-       and replace it with the output of that process"""
+    and replace it with the output of that process"""
 
     def __init__(self):
-        CommandWindow.__init__(self, global_window=True,
-                               prompt="Shell command:",
-                               on_activate=self.on_activate)
+        CommandWindow.__init__(
+            self,
+            global_window=True,
+            prompt="Shell command:",
+            on_activate=self.on_activate,
+        )
 
     def on_activate(self, shell_command):
         sel_pipe(shell_command)
@@ -94,7 +97,7 @@ class ShellProcess (CommandWindow):
 @interactive(filter="Source editor")
 def pipe():
     """
- Process the current selection through a shell command,
- and replace it with the output of that command.
+    Process the current selection through a shell command,
+    and replace it with the output of that command.
     """
     ShellProcess()

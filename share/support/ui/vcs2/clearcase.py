@@ -26,33 +26,37 @@ CHECKOUT_AUTOMATIC_PREF = "Automatic checkout"
 
 GPS.Preference(CC_PATH + UNCHECKOUT_PREF).create(
     UNCHECKOUT_PREF,
-    'enum',
-    'Keep will create a copy with the changes when uncheckout,' +
-    ' Discard will suppress the changes',
+    "enum",
+    "Keep will create a copy with the changes when uncheckout,"
+    + " Discard will suppress the changes",
     0,  # Default value corresponding to keep
-    'Keep',
-    'Discard')
+    "Keep",
+    "Discard",
+)
 
 GPS.Preference(CC_PATH + CHECKOUT_CREATE_PREF).create(
     CHECKOUT_CREATE_PREF,
-    'boolean',
-    'Add the element in the vob if no activity set. ' +
-    'If enabled, checkout will fail on hijacked files.',
-    False)
+    "boolean",
+    "Add the element in the vob if no activity set. "
+    + "If enabled, checkout will fail on hijacked files.",
+    False,
+)
 
 GPS.Preference(CC_PATH + CHECKOUT_HIJACK_PREF).create(
     CHECKOUT_HIJACK_PREF,
-    'boolean',
-    'True to use the hijacked file as the checked-out version. Do nothing' +
-    ' if the file being checked out does not have a hijacked counterpart',
-    False)
+    "boolean",
+    "True to use the hijacked file as the checked-out version. Do nothing"
+    + " if the file being checked out does not have a hijacked counterpart",
+    False,
+)
 
 GPS.Preference(CC_PATH + CHECKOUT_AUTOMATIC_PREF).create(
     CHECKOUT_AUTOMATIC_PREF,
-    'boolean',
-    'True to allow automatic checkout when changing a file permissions.' +
-    ' This is particularly useful during refactoring actions.',
-    True)
+    "boolean",
+    "True to allow automatic checkout when changing a file permissions."
+    + " This is particularly useful during refactoring actions.",
+    True,
+)
 
 
 class Activity(Enum):
@@ -61,11 +65,8 @@ class Activity(Enum):
     LOCKED = 2
 
 
-@core.register_vcs(name='ClearCase Native',
-                   default_status=GPS.VCS2.Status.UNMODIFIED)
-class Clearcase(core_staging.Emulate_Staging,
-                core.VCS):
-
+@core.register_vcs(name="ClearCase Native", default_status=GPS.VCS2.Status.UNMODIFIED)
+class Clearcase(core_staging.Emulate_Staging, core.VCS):
     # to prevent overriding files attributes by "old" command
     set_status_index = 1
     file_indexes = {}
@@ -74,19 +75,17 @@ class Clearcase(core_staging.Emulate_Staging,
     def discover_working_dir(file):
         if os_utils.locate_exec_on_path("cleartool"):
             # Get the working view tag for the project file directory
-            p = GPS.Process(['cleartool', 'pwd', '-wdv', '-short'],
-                            block_exit=False)
+            p = GPS.Process(["cleartool", "pwd", "-wdv", "-short"], block_exit=False)
             output = p.get_result()
             status = p.wait()
             has_output = output and "** NONE **" not in output
 
             if not status and has_output:
                 # The output format is: "{tag}@@"
-                tag = output.split('@@')[0]
+                tag = output.split("@@")[0]
 
                 # Use the tag to retrieve the Clearcase view path
-                p = GPS.Process(['cleartool', 'lsview', '-long', tag],
-                                block_exit=False)
+                p = GPS.Process(["cleartool", "lsview", "-long", tag], block_exit=False)
                 output = p.get_result()
                 status = p.wait()
 
@@ -98,12 +97,10 @@ class Clearcase(core_staging.Emulate_Staging,
                     # path to .vws files
                     for line in output.splitlines():
                         if "Global path:" in line:
-                            global_dir = os.path.dirname(
-                                line.split(": ")[1].rstrip())
+                            global_dir = os.path.dirname(line.split(": ")[1].rstrip())
                             global_path = os.path.join(global_dir, tag)
                         if "View server access path:" in line:
-                            server_dir = os.path.dirname(
-                                line.split(": ")[1].rstrip())
+                            server_dir = os.path.dirname(line.split(": ")[1].rstrip())
                             server_path = os.path.join(server_dir, tag)
 
                     has_server = server_path and os.path.exists(server_path)
@@ -124,9 +121,8 @@ class Clearcase(core_staging.Emulate_Staging,
 
     def _cleartool(self, args, block_exit=False):
         p = ProcessWrapper(
-            ['cleartool'] + args,
-            block_exit=block_exit,
-            directory=self.working_dir.path)
+            ["cleartool"] + args, block_exit=block_exit, directory=self.working_dir.path
+        )
         return p
 
     def _file_or_dir_filter(self, context):
@@ -143,15 +139,16 @@ class Clearcase(core_staging.Emulate_Staging,
         self._checkedout_files = []
 
         if not ALREADY_LOADED:
+
             def _register_clearcase_action(name, action):
                 gs_utils.make_interactive(
                     callback=action,
-                    name='clearcase ' + name + ' current element',
+                    name="clearcase " + name + " current element",
                     category=CATEGORY,
                     filter=self._file_or_dir_filter,
-                    menu=(VCS_PATH + 'Clearcase ' + name + ' current element'),
-                    contextual=(VCS_CONTEXT_PATH + "Clearcase " +
-                                name + " element"))
+                    menu=(VCS_PATH + "Clearcase " + name + " current element"),
+                    contextual=(VCS_CONTEXT_PATH + "Clearcase " + name + " element"),
+                )
 
             ALREADY_LOADED = True
             GPS.Logger(LOG_ID).log("Registering the clearcase actions...")
@@ -163,7 +160,6 @@ class Clearcase(core_staging.Emulate_Staging,
             GPS.Logger(LOG_ID).log("Finishing registering the actions")
 
     def _set_clearcase_status(self, cmd_line, index):
-
         def __set_buffer_writable(buf, writable):
             if buf:
                 buf.set_read_only(not writable)
@@ -175,7 +171,7 @@ class Clearcase(core_staging.Emulate_Staging,
                 line = yield p.wait_line()
                 if not line:
                     break
-                splitted = line.split('@@')
+                splitted = line.split("@@")
                 file = GPS.File(splitted[0])
 
                 # checking whether we do not execute an "old" command
@@ -186,14 +182,14 @@ class Clearcase(core_staging.Emulate_Staging,
                     buf = GPS.EditorBuffer.get(file, open=False)
                     if len(splitted) == 1:
                         status = GPS.VCS2.Status.UNTRACKED
-                    elif line.endswith('CHECKEDOUT'):
+                    elif line.endswith("CHECKEDOUT"):
                         status = GPS.VCS2.Status.MODIFIED
                         self._checkedout_files.append(file.path)
                         __set_buffer_writable(buf, True)
                     else:
                         status = GPS.VCS2.Status.UNMODIFIED
                         __set_buffer_writable(buf, False)
-                    s.set_status(file, status, '', '')
+                    s.set_status(file, status, "", "")
 
     def make_file_writable(self, file, writable):
         """
@@ -207,17 +203,19 @@ class Clearcase(core_staging.Emulate_Staging,
             if writable:
                 activity = self._has_defined_activity(file.path, False)
                 # Check if the file can be checkout => activity + non default
-                if (activity == Activity.YES and
-                        not (file.path in self._checkedout_files)):
-                    self._checkout_current(file=file,
-                                           comment="Automatic checkout",
-                                           automatic=True)
+                if activity == Activity.YES and not (
+                    file.path in self._checkedout_files
+                ):
+                    self._checkout_current(
+                        file=file, comment="Automatic checkout", automatic=True
+                    )
                     return True
             return False
         except Exception as e:
-            self.__log("Fail to automatically checkout " +
-                       file.path + " with: " + str(e),
-                       False)
+            self.__log(
+                "Fail to automatically checkout " + file.path + " with: " + str(e),
+                False,
+            )
             return False
 
     @core.run_in_background
@@ -225,7 +223,7 @@ class Clearcase(core_staging.Emulate_Staging,
         index = self.set_status_index
         self.set_status_index += 1
 
-        cmd_line = ['ls', '-short'] + [file.path for file in files]
+        cmd_line = ["ls", "-short"] + [file.path for file in files]
         yield self._set_clearcase_status(cmd_line, index)
 
     @core.run_in_background
@@ -233,8 +231,7 @@ class Clearcase(core_staging.Emulate_Staging,
         index = self.set_status_index
         self.set_status_index += 1
 
-        cmd_line = ['ls', '-recurse', '-short',
-                    os.path.normpath(self.working_dir.path)]
+        cmd_line = ["ls", "-recurse", "-short", os.path.normpath(self.working_dir.path)]
         yield self._set_clearcase_status(cmd_line, index)
 
     def _has_defined_activity(self, path, verbose):
@@ -244,7 +241,7 @@ class Clearcase(core_staging.Emulate_Staging,
 
         :returntype: an integer to indicate whether there is a defined activity
         """
-        p = GPS.Process(['cleartool', 'lslock', path])
+        p = GPS.Process(["cleartool", "lslock", path])
         output = p.get_result()
         status = p.wait()
         if status:
@@ -284,14 +281,13 @@ class Clearcase(core_staging.Emulate_Staging,
 
     def __user_input(self, title, text=""):
         # Ask a comment to the user
-        comment = GPS.MDI.input_dialog(
-            title + " comment", "multiline:Comment=" + text)
+        comment = GPS.MDI.input_dialog(title + " comment", "multiline:Comment=" + text)
         if not comment:
             comment_option = None
         elif comment[0]:
-            comment_option = ['-c', comment[0]]
+            comment_option = ["-c", comment[0]]
         else:
-            comment_option = ['-nc']
+            comment_option = ["-nc"]
         return comment_option
 
     def _checkout_current(self, file=None, comment=None, automatic=False):
@@ -309,11 +305,11 @@ class Clearcase(core_staging.Emulate_Staging,
             return
 
         if GPS.Preference(CC_PATH + CHECKOUT_HIJACK_PREF).get():
-            cmd_line = ['cleartool', 'co', '-use']
+            cmd_line = ["cleartool", "co", "-use"]
         else:
-            cmd_line = ['cleartool', 'co', '-nq']
+            cmd_line = ["cleartool", "co", "-nq"]
         if comment:
-            cmd_line += ['-c', comment]
+            cmd_line += ["-c", comment]
         else:
             comment_option = self.__user_input("Checkout")
             if not comment_option:
@@ -321,15 +317,17 @@ class Clearcase(core_staging.Emulate_Staging,
             cmd_line += comment_option
         cmd_line.append(path)
 
-        if (activity == Activity.NO and
-                GPS.Preference(CC_PATH + CHECKOUT_CREATE_PREF).get() and
-                (not automatic)):
+        if (
+            activity == Activity.NO
+            and GPS.Preference(CC_PATH + CHECKOUT_CREATE_PREF).get()
+            and (not automatic)
+        ):
             # Create activity for file
-            GPS.Process(['cleartool', 'co'] + comment_option + ['.']).wait()
-            p = GPS.Process(['cleartool', 'mkelem'] + comment_option + [path])
+            GPS.Process(["cleartool", "co"] + comment_option + ["."]).wait()
+            p = GPS.Process(["cleartool", "mkelem"] + comment_option + [path])
             output = p.get_result()
             status = p.wait()
-            GPS.Process(['cleartool', 'ci'] + comment_option + ['.']).wait()
+            GPS.Process(["cleartool", "ci"] + comment_option + ["."]).wait()
         else:
             p = GPS.Process(cmd_line)
             output = p.get_result()
@@ -349,19 +347,20 @@ class Clearcase(core_staging.Emulate_Staging,
 
         b = GPS.EditorBuffer.get(file, open=False)
         if b and b.is_modified():
-            GPS.MDI.dialog("You have unsaved modifications:\n"
-                           "please save before checkin.")
+            GPS.MDI.dialog(
+                "You have unsaved modifications:\n" "please save before checkin."
+            )
             return
 
         if not (self._has_defined_activity(path, True) == Activity.YES):
             return
 
         # Retrieve the checkout message
-        p = GPS.Process(['cleartool', 'lsco', '-fmt', '%c', path])
+        p = GPS.Process(["cleartool", "lsco", "-fmt", "%c", path])
         output = p.get_result()
         status = p.wait()
 
-        cmd_line = ['cleartool', 'ci']
+        cmd_line = ["cleartool", "ci"]
         comment_option = self.__user_input("Checkin", output)
         if not comment_option:
             return
@@ -387,18 +386,20 @@ class Clearcase(core_staging.Emulate_Staging,
 
         b = GPS.EditorBuffer.get(file, open=False)
         if b and b.is_modified():
-            GPS.MDI.dialog("You have unsaved modifications:\n"
-                           "please save or discard before uncheckout.")
+            GPS.MDI.dialog(
+                "You have unsaved modifications:\n"
+                "please save or discard before uncheckout."
+            )
             return
 
         if not (self._has_defined_activity(path, True) == Activity.YES):
             return
 
-        cmd_line = ['cleartool', 'unco']
-        if GPS.Preference(CC_PATH + UNCHECKOUT_PREF).get() == 'Keep':
-            cmd_line.append('-keep')
+        cmd_line = ["cleartool", "unco"]
+        if GPS.Preference(CC_PATH + UNCHECKOUT_PREF).get() == "Keep":
+            cmd_line.append("-keep")
         else:
-            cmd_line.append('-rm')
+            cmd_line.append("-rm")
         cmd_line.append(path)
 
         p = GPS.Process(cmd_line)
@@ -413,7 +414,7 @@ class Clearcase(core_staging.Emulate_Staging,
         """
         file, path = self.__data_from_context()
 
-        cmd_line = ['cleartool', 'mkelem']
+        cmd_line = ["cleartool", "mkelem"]
         comment_option = self.__user_input("Mkelem")
         if not comment_option:
             return
@@ -432,7 +433,7 @@ class Clearcase(core_staging.Emulate_Staging,
         """
         file, path = self.__data_from_context()
 
-        cmd_line = ['cleartool', 'rmelem', '-force']
+        cmd_line = ["cleartool", "rmelem", "-force"]
         comment_option = self.__user_input("Remove")
         if not comment_option:
             return
@@ -454,41 +455,46 @@ class Clearcase(core_staging.Emulate_Staging,
             status, version, rversion = self.get_file_status(f)
             if status & GPS.VCS2.Status.STAGED_ADDED:
                 yield self._cleartool(
-                    ['co', '-comment', message, '.'],
-                    block_exit=True).wait_until_terminate()
+                    ["co", "-comment", message, "."], block_exit=True
+                ).wait_until_terminate()
                 yield self._cleartool(
-                    ['mkelem', '-comment', message, f.path],
-                    block_exit=True).wait_until_terminate()
+                    ["mkelem", "-comment", message, f.path], block_exit=True
+                ).wait_until_terminate()
                 yield self._cleartool(
-                    ['ci', '-comment', message, '.'],
-                    block_exit=True).wait_until_terminate()
+                    ["ci", "-comment", message, "."], block_exit=True
+                ).wait_until_terminate()
 
             elif status & GPS.VCS2.Status.STAGED_DELETED:
                 yield self._cleartool(
-                    ['co', '-comment', message, '.'],
-                    block_exit=True).wait_until_terminate()
+                    ["co", "-comment", message, "."], block_exit=True
+                ).wait_until_terminate()
                 yield self._cleartool(
-                    ['rm', '-comment', message, f.path],
-                    block_exit=True).wait_until_terminate()
+                    ["rm", "-comment", message, f.path], block_exit=True
+                ).wait_until_terminate()
                 yield self._cleartool(
-                    ['ci', '-comment', message, '.'],
-                    block_exit=True).wait_until_terminate()
+                    ["ci", "-comment", message, "."], block_exit=True
+                ).wait_until_terminate()
 
             elif status & GPS.VCS2.Status.STAGED_MODIFIED:
                 status, output = yield self._cleartool(
-                    ['ci', '-comment', message, f.path],
-                    block_exit=True).wait_until_terminate()
+                    ["ci", "-comment", message, f.path], block_exit=True
+                ).wait_until_terminate()
                 self.__log_result("checkin", status, output, True)
 
-        visitor.success('Finish staging')
+        visitor.success("Finish staging")
 
     @core.run_in_background
     def async_fetch_history(self, visitor, filter):
         max_lines = filter[0]
         for_file = filter[1]
         pattern = filter[2]
-        cmd_line = ['lshistory', '-minor', '-eventid',
-                    '-fmt', '%%GPS%On||%d||%Fu||%e||%n||%Na\n%Nc\n']
+        cmd_line = [
+            "lshistory",
+            "-minor",
+            "-eventid",
+            "-fmt",
+            "%%GPS%On||%d||%Fu||%e||%n||%Na\n%Nc\n",
+        ]
 
         if for_file:
             cmd_line.append(for_file.path)
@@ -515,22 +521,23 @@ class Clearcase(core_staging.Emulate_Staging,
 
         def _add_event():
             if current_id and not is_ignored:
-                visitor.history_line(GPS.VCS2.Commit(
-                        current_id, author, date, subject, [parent_id]))
+                visitor.history_line(
+                    GPS.VCS2.Commit(current_id, author, date, subject, [parent_id])
+                )
                 self.details[current_id] = (
-                    'Subject: {}\n'
-                    'Path:    {}\n'
-                    'OID:     {}\n'
-                    'Event:   {}\n'
-                    'Author:  {}\n'
-                    'Date:    {}\n').format(
-                        subject, entity, oid, current_id, author, date)
+                    "Subject: {}\n"
+                    "Path:    {}\n"
+                    "OID:     {}\n"
+                    "Event:   {}\n"
+                    "Author:  {}\n"
+                    "Date:    {}\n"
+                ).format(subject, entity, oid, current_id, author, date)
                 if attrs:
-                    self.details[current_id] += (
-                        "\nAttributes:\n{}".format(attrs))
+                    self.details[current_id] += "\nAttributes:\n{}".format(attrs)
                 if len(message_lines):
-                    self.details[current_id] += (
-                        "\nMessage:\n" + "\n".join(message_lines))
+                    self.details[current_id] += "\nMessage:\n" + "\n".join(
+                        message_lines
+                    )
 
         p = self._cleartool(cmd_line)
         while True:
@@ -541,19 +548,22 @@ class Clearcase(core_staging.Emulate_Staging,
                 break
             elif line.startswith("event "):
                 current_id = parent_id
-                parent_id = ID_HEADER + line[len("event "):-1]
+                parent_id = ID_HEADER + line[len("event ") : -1]
                 _add_event()
 
                 nb_added_lines += 1
             elif line.startswith("%GPS"):
                 message_lines = []
                 try:
-                    oid, date, author, event, entity, attrs = (
-                        line[len("%GPS"):].split("||"))
-                    subject = (event +
-                               " " +
-                               os.path.basename(entity.split("@@")[0]) +
-                               "@@".join(entity.split("@@")[1:]))
+                    oid, date, author, event, entity, attrs = line[len("%GPS") :].split(
+                        "||"
+                    )
+                    subject = (
+                        event
+                        + " "
+                        + os.path.basename(entity.split("@@")[0])
+                        + "@@".join(entity.split("@@")[1:])
+                    )
 
                     if pattern and pattern not in line:
                         is_ignored = True
@@ -566,8 +576,9 @@ class Clearcase(core_staging.Emulate_Staging,
             # Keep an empty line only if its part of a message
             elif line or message_lines:
                 message_lines.append(line)
-        self.__log("Finishing lshistory added lines:{}".format(
-            str(nb_added_lines)), False)
+        self.__log(
+            "Finishing lshistory added lines:{}".format(str(nb_added_lines)), False
+        )
 
     def _to_git_format(self, text):
         """Make the diff output parsable by the diff language"""
@@ -583,34 +594,33 @@ class Clearcase(core_staging.Emulate_Staging,
 
         output = []
         for line in text.splitlines():
-            if line.startswith('<<<'):
-                pred = line.split(':')[1].lstrip()
-            elif line.startswith('>>>'):
-                cur = line.split(':')[1].lstrip()
+            if line.startswith("<<<"):
+                pred = line.split(":")[1].lstrip()
+            elif line.startswith(">>>"):
+                cur = line.split(":")[1].lstrip()
                 output.append(diff_title.format(pred, cur))
-            elif line.startswith('>'):
-                output.append('+' + line[1:])
-            elif line.startswith('<'):
-                output.append('-' + line[1:])
-            elif line.startswith('*'):
+            elif line.startswith(">"):
+                output.append("+" + line[1:])
+            elif line.startswith("<"):
+                output.append("-" + line[1:])
+            elif line.startswith("*"):
                 pass
             else:
-                formatted = line.replace('-', '')
+                formatted = line.replace("-", "")
                 if formatted:
                     output.append("\n@@ " + formatted + " @@")
         return "\n".join(output)
 
     @core.run_in_background
     def async_diff(self, visitor, ref, file):
-
         def _execute_diff(path, verbose):
-            cmd_line = ['diff', '-serial_format', '-pred', path]
+            cmd_line = ["diff", "-serial_format", "-pred", path]
             p = self._cleartool(cmd_line)
             status, output = yield p.wait_until_terminate()
             if status == 1:
                 yield self._to_git_format(output)
             else:
-                self.__log('Diff failed with: ' + output, verbose)
+                self.__log("Diff failed with: " + output, verbose)
                 yield None
 
         if file:
@@ -618,11 +628,11 @@ class Clearcase(core_staging.Emulate_Staging,
             if text:
                 visitor.diff_computed(text)
             else:
-                self.__log('No diff with the predecessor', True)
+                self.__log("No diff with the predecessor", True)
         else:
             # Retrieve the list of checkout files/directories
             # and then run diff on each of them
-            cmd_line = ['lsco', '-recurse', '-cview', '-fmt', '%n\n']
+            cmd_line = ["lsco", "-recurse", "-cview", "-fmt", "%n\n"]
             p = self._cleartool(cmd_line)
             status, output = yield p.wait_until_terminate()
             if status == 0 and output:
@@ -633,17 +643,16 @@ class Clearcase(core_staging.Emulate_Staging,
                         diff.append(text)
                 visitor.diff_computed("\n\n".join(diff))
             else:
-                self.__log('No diff found', True)
+                self.__log("No diff found", True)
 
     @core.run_in_background
     def async_fetch_commit_details(self, ids, visitor):
-
         def _get_entity(text):
             """Retrieve the entity path stored in the header"""
             path_header = "Path:"
             for line in text.splitlines():
                 if line.startswith(path_header):
-                    return line[len(path_header):].lstrip()
+                    return line[len(path_header) :].lstrip()
             return ""
 
         header = []
@@ -652,14 +661,14 @@ class Clearcase(core_staging.Emulate_Staging,
                 header.append(self.details[id])
 
         if len(ids) == 1:
-            cmd_line = ['diff', '-serial_format', '-pred']
+            cmd_line = ["diff", "-serial_format", "-pred"]
             entity = _get_entity(header[0])
             cmd_line.append(entity)
             p = self._cleartool(cmd_line)
             status, output = yield p.wait_until_terminate()
             if status == 1:
                 header.append(self._to_git_format(output))
-        visitor.set_details(id, '', '\n\n'.join(header))
+        visitor.set_details(id, "", "\n\n".join(header))
 
     @core.run_in_background
     def async_annotations(self, visitor, file):
@@ -668,35 +677,32 @@ class Clearcase(core_staging.Emulate_Staging,
         event_to_id = {}
         id = ""
         event = ""
-        fmt = '%Sd %u %Vn|%e'
+        fmt = "%Sd %u %Vn|%e"
 
         # We can't directly retrieve the event id via the annotate command
         # Thus we use lshistory to create a map between the event and their
         # description which is also unique.
-        cmd_line = ['lshistory', '-minor', '-eventid', '-fmt', fmt + '\n',
-                    file.path]
+        cmd_line = ["lshistory", "-minor", "-eventid", "-fmt", fmt + "\n", file.path]
         p = self._cleartool(cmd_line)
         status, output = yield p.wait_until_terminate()
         if status == 0:
             for line in output.splitlines():
                 if line.startswith("event "):
-                    id = ID_HEADER + line[len("event "):-1]
+                    id = ID_HEADER + line[len("event ") : -1]
                 else:
-                    event_to_id[line.split('|')[0]] = id
+                    event_to_id[line.split("|")[0]] = id
         else:
-            self.__log("Can't retrieve the events via lshistory" + output,
-                       False)
+            self.__log("Can't retrieve the events via lshistory" + output, False)
 
-        cmd_line = ['annotate', '-out', '-', '-nheader',
-                    '-fmt', fmt, file.path]
+        cmd_line = ["annotate", "-out", "-", "-nheader", "-fmt", fmt, file.path]
         p = self._cleartool(cmd_line)
         while True:
             line = yield p.wait_line()
             if line is None:
                 break
 
-            if not line.startswith(' '):
-                event = line.split('|')[0]
+            if not line.startswith(" "):
+                event = line.split("|")[0]
                 lines.append(event)
                 ids.append(event_to_id[event])
             else:
@@ -707,11 +713,11 @@ class Clearcase(core_staging.Emulate_Staging,
 
     @core.run_in_background
     def async_discard_local_changes(self, files):
-        cmd_line = ['unco']
-        if GPS.Preference(CC_PATH + UNCHECKOUT_PREF).get() == 'Keep':
-            cmd_line.append('-keep')
+        cmd_line = ["unco"]
+        if GPS.Preference(CC_PATH + UNCHECKOUT_PREF).get() == "Keep":
+            cmd_line.append("-keep")
         else:
-            cmd_line.append('-rm')
+            cmd_line.append("-rm")
         cmd_line += [file.path for file in files]
         status, output = yield self._cleartool(cmd_line).wait_until_terminate()
         self.__log_result("uncheckout", status, output, True)

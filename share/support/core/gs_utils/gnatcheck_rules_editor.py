@@ -19,7 +19,6 @@ def getText(nodelist):
 
 
 class Category:
-
     def __init__(self, defaultName):
         self.name = defaultName
         self.parent = None
@@ -61,36 +60,41 @@ class Category:
                     self.AddCategory(newcat)
                 elif child.localName == "check":
                     self.AddRule(
-                        Check(str(child.getAttribute("switch")),
-                              re.sub(
-                                  "^[+]", "-",
-                                  str(child.getAttribute("switch"))),
-                              str(child.getAttribute("label")),
-                              tip,
-                              False,
-                              False))
+                        Check(
+                            str(child.getAttribute("switch")),
+                            re.sub("^[+]", "-", str(child.getAttribute("switch"))),
+                            str(child.getAttribute("label")),
+                            tip,
+                            False,
+                            False,
+                        )
+                    )
                 elif child.localName == "spin":
                     self.AddRule(
-                        Spin(str(child.getAttribute("switch")),
-                             re.sub(
-                                 "^[+]", "-",
-                                 str(child.getAttribute("switch"))),
-                             str(child.getAttribute("label")),
-                             tip,
-                             separator,
-                             defaultval,
-                             minval,
-                             maxval,
-                             False))
+                        Spin(
+                            str(child.getAttribute("switch")),
+                            re.sub("^[+]", "-", str(child.getAttribute("switch"))),
+                            str(child.getAttribute("label")),
+                            tip,
+                            separator,
+                            defaultval,
+                            minval,
+                            maxval,
+                            False,
+                        )
+                    )
                 elif child.localName == "field":
                     self.AddRule(
-                        Field(str(child.getAttribute("switch")),
-                              str(child.getAttribute("switch-off")),
-                              str(child.getAttribute("label")),
-                              tip,
-                              separator,
-                              defaultval,
-                              False))
+                        Field(
+                            str(child.getAttribute("switch")),
+                            str(child.getAttribute("switch-off")),
+                            str(child.getAttribute("label")),
+                            tip,
+                            separator,
+                            defaultval,
+                            False,
+                        )
+                    )
                 elif child.localName == "combo":
                     combo_ent = child.firstChild
                     combo_entries = []
@@ -99,19 +103,24 @@ class Category:
                         if combo_ent.nodeType == Node.ELEMENT_NODE:
                             combo_entries.append(
                                 ComboEntry(
-                                   value=str(combo_ent.getAttribute("value")),
-                                   tip=str(combo_ent.getAttribute("tip")),
-                                   label=str(combo_ent.getAttribute("label"))))
+                                    value=str(combo_ent.getAttribute("value")),
+                                    tip=str(combo_ent.getAttribute("tip")),
+                                    label=str(combo_ent.getAttribute("label")),
+                                )
+                            )
 
                         combo_ent = combo_ent.nextSibling
 
                     self.AddRule(
-                        Combo(switch=str(child.getAttribute("switch")),
-                              label=str(child.getAttribute("label")),
-                              tip=str(child.getAttribute("tip")),
-                              separator=separator,
-                              noswitch=str(child.getAttribute("noswitch")),
-                              values=combo_entries))
+                        Combo(
+                            switch=str(child.getAttribute("switch")),
+                            label=str(child.getAttribute("label")),
+                            tip=str(child.getAttribute("tip")),
+                            separator=separator,
+                            noswitch=str(child.getAttribute("noswitch")),
+                            values=combo_entries,
+                        )
+                    )
 
             child = child.nextSibling
 
@@ -154,6 +163,7 @@ class Category:
             xml += "</popup>"
         return xml
 
+
 # workaround on visibility issues with Python and nested methods.
 
 
@@ -188,13 +198,15 @@ def get_supported_rules(checkCmd, gnatCmd):
     # First get gnatcheck rules
     process = GPS.Process([checkCmd, "-hx"], remote_server="Tools_Server")
     xmlstring = re.sub(
-        "gnatcheck: No existing file to process.*", "", process.get_result())
+        "gnatcheck: No existing file to process.*", "", process.get_result()
+    )
     try:
         dom = minidom.parseString(xmlstring)
     except Exception:
         GPS.Console("Messages").write(
-            "Warning: the gnatcheck module could not retrieve the gnatcheck" +
-            " rules. Using the default ones.\n")
+            "Warning: the gnatcheck module could not retrieve the gnatcheck"
+            + " rules. Using the default ones.\n"
+        )
         dom = minidom.parseString(gnatcheck_default)
     roots = dom.getElementsByTagName("gnatcheck")
 
@@ -205,19 +217,30 @@ def get_supported_rules(checkCmd, gnatCmd):
     # verify the we had a correct execution of gnat check
     if cat.IsEmpty():
         GPS.Console("Messages").write(
-            "Error: Gnatcheck not found, the gnatcheck module is disabled\n")
+            "Error: Gnatcheck not found, the gnatcheck module is disabled\n"
+        )
         return []
 
     if gnatCmd:
         # Then retrieve warnings/style/restriction checks from gnatmake
-        cat.AddCategory(_convert_rules(
-                            gnatCmd, "GNAT Warnings",
-                            gs_utils.gnat_rules.get_warnings_list,
-                            "-gnatw", "+RWarnings:"))
-        cat.AddCategory(_convert_rules(
-                            gnatCmd, "GNAT Style Checks",
-                            gs_utils.gnat_rules.get_style_checks_list,
-                            "-gnaty", "+RStyle_Checks:"))
+        cat.AddCategory(
+            _convert_rules(
+                gnatCmd,
+                "GNAT Warnings",
+                gs_utils.gnat_rules.get_warnings_list,
+                "-gnatw",
+                "+RWarnings:",
+            )
+        )
+        cat.AddCategory(
+            _convert_rules(
+                gnatCmd,
+                "GNAT Style Checks",
+                gs_utils.gnat_rules.get_style_checks_list,
+                "-gnaty",
+                "+RStyle_Checks:",
+            )
+        )
     return cat
 
 
@@ -239,10 +262,12 @@ class rulesEditor(Gtk.Dialog):
 
     def __init__(self, maincat, defaultfile):
         # call parent __init__
-        Gtk.Dialog.__init__(self,
-                            title="Coding Standard editor",
-                            parent=GPS.MDI.current().pywidget().get_toplevel(),
-                            flags=Gtk.DialogFlags.MODAL)
+        Gtk.Dialog.__init__(
+            self,
+            title="Coding Standard editor",
+            parent=GPS.MDI.current().pywidget().get_toplevel(),
+            flags=Gtk.DialogFlags.MODAL,
+        )
         self.set_default_size(600, 400)
         self.set_name("CodingStandardEditor")
 
@@ -273,11 +298,11 @@ class rulesEditor(Gtk.Dialog):
         self.fileEntry.show()
         if defaultfile is not None:
             self.fileEntry.set_text(defaultfile.path)
-        self.fileEntry.connect('changed', self.on_file_entry_changed)
+        self.fileEntry.connect("changed", self.on_file_entry_changed)
         hbox.pack_start(self.fileEntry, True, True, 0)
 
-        button = Gtk.Button('Browse')
-        button.connect('clicked', self.on_coding_standard_file_browse)
+        button = Gtk.Button("Browse")
+        button.connect("clicked", self.on_coding_standard_file_browse)
         button.show()
         hbox.pack_start(button, False, False, 0)
 
@@ -293,34 +318,34 @@ class rulesEditor(Gtk.Dialog):
         label.hide()
         hbox.pack_start(label, True, True, 0)
         self.vbox.pack_start(hbox, False, False, 0)
-        self.open_file_after_exit_check = Gtk.CheckButton(
-            "Open rules file after exit")
+        self.open_file_after_exit_check = Gtk.CheckButton("Open rules file after exit")
         self.open_file_after_exit_check.show()
         hbox.pack_end(self.open_file_after_exit_check, False, False, 0)
 
         label = Gtk.Label()
         label.set_markup(
-            "<span weight='bold' size='large'>Coding standard rules</span>")
+            "<span weight='bold' size='large'>Coding standard rules</span>"
+        )
         label.show()
         self.switchvbox.pack_start(label, False, False, 0)
 
         xml = self.main_cat.Xml("")
         xml = str(
-            '<?xml version="1.0"?><tool name="Coding_Standard" lines="1"' +
-            'columns="1">%s</tool>' % (xml))
+            '<?xml version="1.0"?><tool name="Coding_Standard" lines="1"'
+            + 'columns="1">%s</tool>' % (xml)
+        )
         self.SwitchesChooser = GPS.SwitchesChooser("Gnatcheck", xml)
-        self.switchvbox.pack_start(
-            self.SwitchesChooser.pywidget(), True, True, 0)
+        self.switchvbox.pack_start(self.SwitchesChooser.pywidget(), True, True, 0)
         self.show_all()
 
         # Save - Cancel buttons
-        self.saveButton = Gtk.Button('Save')
-        self.saveButton.connect('clicked', self.on_save)
+        self.saveButton = Gtk.Button("Save")
+        self.saveButton.connect("clicked", self.on_save)
         self.saveButton.show()
         self.action_area.pack_start(self.saveButton, True, True, 0)
 
-        self.cancelButton = Gtk.Button('Cancel')
-        self.cancelButton.connect('clicked', self.on_cancel)
+        self.cancelButton = Gtk.Button("Cancel")
+        self.cancelButton.connect("clicked", self.on_cancel)
         self.cancelButton.show()
         self.action_area.pack_start(self.cancelButton, True, True, 0)
 
@@ -347,13 +372,15 @@ class rulesEditor(Gtk.Dialog):
     def parse(self, content):
         """Parse the content of a coding standard file, and apply the values
         to the editor"""
-        content2 = re.sub(rb'\-\-.*\n', b'', content)
+        content2 = re.sub(rb"\-\-.*\n", b"", content)
         if content2 != content:
-            msg = "Warning: the selected file contains comments.\n" \
-                + "These will be removed if the coding standard file is" \
+            msg = (
+                "Warning: the selected file contains comments.\n"
+                + "These will be removed if the coding standard file is"
                 + " saved from the graphical editor\n"
+            )
             GPS.MDI.warning_dialog(msg, title="Comments lost on file save")
-        content = re.sub(b'\n', b' ', content2)
+        content = re.sub(b"\n", b" ", content2)
         self.SwitchesChooser.set_cmd_line(content.decode())
 
     def check_all(self, value):

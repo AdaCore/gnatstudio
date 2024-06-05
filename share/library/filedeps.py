@@ -34,8 +34,7 @@ def internal_dependency_path(from_file, to_file, include_implicit):
 
     while len(to_analyze) != 0:
         (file, because_of) = to_analyze.pop()
-        imports = file.imports(include_implicit=include_implicit,
-                               include_system=False)
+        imports = file.imports(include_implicit=include_implicit, include_system=False)
 
         # imports does not list the dependency from body to spec, so we add it
         # explicitly if from_file is a body.
@@ -68,13 +67,13 @@ def internal_dependency_path(from_file, to_file, include_implicit):
 
 def dependency_path(from_file, to_file, fill_location=False, title=""):
     """Shows why modifying to_file implies that from_file needs to be
-       recompiled. This information is computed from the cross-references
-       database, and requires your application to have been compiled
-       properly. This function does not attempt to compute the shortest
-       dependency path, and just returns the first one it finds.
-       FROM_FILE and TO_FILE must be instances of GPS.File.
-       If FILL_LOCATION is True, then the locations view will also be
-       filled."""
+    recompiled. This information is computed from the cross-references
+    database, and requires your application to have been compiled
+    properly. This function does not attempt to compute the shortest
+    dependency path, and just returns the first one it finds.
+    FROM_FILE and TO_FILE must be instances of GPS.File.
+    If FILL_LOCATION is True, then the locations view will also be
+    filled."""
 
     if not isinstance(from_file, GPS.File):
         from_file = GPS.File(from_file)
@@ -87,12 +86,14 @@ def dependency_path(from_file, to_file, fill_location=False, title=""):
     # First, try without implicit dependencies, this gives better results
     # in general, and then fallback to implicit deps if needed.
 
-    (result, targets) = internal_dependency_path(from_file, to_file,
-                                                 include_implicit=False)
+    (result, targets) = internal_dependency_path(
+        from_file, to_file, include_implicit=False
+    )
 
     if result == "No dependency between these two files":
-        (result, targets) = internal_dependency_path(from_file, to_file,
-                                                     include_implicit=True)
+        (result, targets) = internal_dependency_path(
+            from_file, to_file, include_implicit=True
+        )
 
     if fill_location and result != "No dependency between these two files":
         target = targets.pop()
@@ -109,27 +110,31 @@ def dependency_path(from_file, to_file, fill_location=False, title=""):
             unit = os.path.splitext(os.path.basename(target.path))[0]
 
             if len(unit) > 2 and (unit[-2:] == ".1" or unit[-2:] == ".2"):
-                unit = unit[0:len(unit) - 2]
+                unit = unit[0 : len(unit) - 2]
 
-            unit = unit.split('-')[-1].split('.')[-1]
+            unit = unit.split("-")[-1].split(".")[-1]
 
             # Find the 'with <unit>' clause in prev_target and fill the
             # location view
             for e in prev_target.entities(local=False):
-                if e.category() == "package/namespace" \
-                        and e.name().lower() == unit \
-                        and e.declaration().file() == target:
+                if (
+                    e.category() == "package/namespace"
+                    and e.name().lower() == unit
+                    and e.declaration().file() == target
+                ):
                     refs = e.references(in_file=prev_target)
 
                     if len(refs) > 1:
                         r = refs[1]
-                        GPS.Locations.add(category=title,
-                                          file=prev_target,
-                                          line=r.line(),
-                                          column=r.column(),
-                                          message="with " + unit,
-                                          highlight="",
-                                          length=0)
+                        GPS.Locations.add(
+                            category=title,
+                            file=prev_target,
+                            line=r.line(),
+                            column=r.column(),
+                            message="with " + unit,
+                            highlight="",
+                            length=0,
+                        )
                         added = True
                         break
         if added:
@@ -138,14 +143,19 @@ def dependency_path(from_file, to_file, fill_location=False, title=""):
 
 
 def print_dependency_path(from_file, to_file):
-    title = "Dependencies from " + os.path.basename(from_file.path) + \
-        " to " + os.path.basename(to_file.path)
+    title = (
+        "Dependencies from "
+        + os.path.basename(from_file.path)
+        + " to "
+        + os.path.basename(to_file.path)
+    )
     result = dependency_path(from_file, to_file, True, title)
     GPS.Console().write(title + "\n" + result + "\n")
 
 
-@interactive(name='explain file dependency',
-             menu='/Navigate/Show File Dependency Path...')
+@interactive(
+    name="explain file dependency", menu="/Navigate/Show File Dependency Path..."
+)
 def interactive_dependency_path():
     """
     Explains one of the reasons why a file depends on another one (through
@@ -153,8 +163,9 @@ def interactive_dependency_path():
     """
 
     try:
-        (file1, file2) = GPS.MDI.input_dialog("Show file dependency path",
-                                              "From File", "To File")
+        (file1, file2) = GPS.MDI.input_dialog(
+            "Show file dependency path", "From File", "To File"
+        )
     except:
         return
 

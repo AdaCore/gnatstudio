@@ -9,7 +9,7 @@ import inspect
 SUCCESS = 0
 FAILURE = 1
 NOT_RUN = 99
-XFAIL = 100   # expected failure
+XFAIL = 100  # expected failure
 exit_status = SUCCESS
 
 
@@ -30,18 +30,18 @@ def pretty_print(str, maxwidth=100):
     """
     Pretty print a string to fit in maxwidth columns,
     """
-    result = ''
+    result = ""
     col = 1
     for s in range(len(str)):
         result += str[s]
-        if str[s] == ',':
+        if str[s] == ",":
             col = 1
-            result += '\n'
+            result += "\n"
         else:
             col = col + 1
             if col == maxwidth:
                 col = 1
-                result += '\n'
+                result += "\n"
     return result
 
 
@@ -54,12 +54,12 @@ def __show_error(msg, quiet=False):
     exit_status = FAILURE
 
     if not quiet:
-        msg += '\n'
+        msg += "\n"
         for s in inspect.stack():
-            msg += '\n  at %s:%s:%s' % (s[1], s[2], s[3])
-        msg += '\n in directory ' + GS.pwd()
+            msg += "\n  at %s:%s:%s" % (s[1], s[2], s[3])
+        msg += "\n in directory " + GS.pwd()
 
-    GS.Logger('TESTSUITE').log(msg)
+    GS.Logger("TESTSUITE").log(msg)
 
 
 def display_error(left=None, right=None, comp=None, msg="", quiet=False):
@@ -78,15 +78,16 @@ def display_error(left=None, right=None, comp=None, msg="", quiet=False):
             if len(left_lns) > 10:
                 msg += diff(left_lns, right_lns)
             else:
-                msg += '\n%s\n%s\n%s' % (
-                    pretty_print("%s" % (left, )),
+                msg += "\n%s\n%s\n%s" % (
+                    pretty_print("%s" % (left,)),
                     comp,
-                    pretty_print('%s' % (right, )))
+                    pretty_print("%s" % (right,)),
+                )
 
     __show_error(msg, quiet=quiet)
 
 
-def gps_assert(left, right, msg='Error in test script', quiet=False):
+def gps_assert(left, right, msg="Error in test script", quiet=False):
     """
     Ensure that left==right, or display an error
     dialog in GPS.
@@ -94,18 +95,17 @@ def gps_assert(left, right, msg='Error in test script', quiet=False):
     :return bool: whether the test passes
     """
     if left != right:
-        display_error(left, right, '!=', msg, quiet)
+        display_error(left, right, "!=", msg, quiet)
         return False
     return True
 
 
-def gps_assert_is_instance(inst, klass, msg='', quiet=False):
+def gps_assert_is_instance(inst, klass, msg="", quiet=False):
     """
     Ensure inst is of the given type
     """
     if not isinstance(inst, klass):
-        display_error("%s" % inst, "%s" % klass,
-                      "is not an instance of", msg, quiet)
+        display_error("%s" % inst, "%s" % klass, "is not an instance of", msg, quiet)
         return False
     return True
 
@@ -140,7 +140,10 @@ def compare_menus(refmenu, menu):
         if men < len(menu):
             if menu[men] != refmenu[ref]:
                 result += "First diff at index %s\nref=%s\ngot=%s\n" % (
-                    ref, refmenu[ref], menu[men])
+                    ref,
+                    refmenu[ref],
+                    menu[men],
+                )
                 break
         men = men + 1
         ref = ref + 1
@@ -151,28 +154,28 @@ def compare_menus(refmenu, menu):
         ustr = menu[i]
         idx = ustr.find(dots)
         if idx != -1:
-            ustr = ustr[:idx] + "..." + ustr[idx + 1:]
+            ustr = ustr[:idx] + "..." + ustr[idx + 1 :]
         item = ustr.encode("utf-8")
         if v != item:
-            result += "FAILED item [%s] differs from expected value [%s]\n" % (
-                item, v)
+            result += "FAILED item [%s] differs from expected value [%s]\n" % (item, v)
         else:
-            result += "OK item [%s]\n" % (v, )
+            result += "OK item [%s]\n" % (v,)
 
     if len(menu) != len(refmenu):
-        result += ("length of menu differs from expected\n" +
-                   "expected: %s\nmenu:     %s\n") % (refmenu, menu)
+        result += (
+            "length of menu differs from expected\n" + "expected: %s\nmenu:     %s\n"
+        ) % (refmenu, menu)
 
     return result
 
 
-def gps_assert_flat_menu(expected, actual, msg='Incorrect menu'):
+def gps_assert_flat_menu(expected, actual, msg="Incorrect menu"):
     """Compare a menu (in general contextual), but shows a smaller
-       diff when there are differences.
-       :param expected: a list of all the items, starting with their depth
-          as in:
-             [' 1 - item1', ' 2 - subitem1', ...]
-       :return bool: whether the test passes
+    diff when there are differences.
+    :param expected: a list of all the items, starting with their depth
+       as in:
+          [' 1 - item1', ' 2 - subitem1', ...]
+    :return bool: whether the test passes
     """
 
     diff = compare_menus(refmenu=expected, menu=actual)
@@ -182,37 +185,37 @@ def gps_assert_flat_menu(expected, actual, msg='Incorrect menu'):
     return True
 
 
-def gps_assert_menu(expected, actual, msg='Incorrect menu'):
+def gps_assert_menu(expected, actual, msg="Incorrect menu"):
     """Compare a menu (in general contextual), but shows a smaller
-       diff when there are differences.
-       :param expected: a list of list for the items, as in:
-           ['item1', ['subitem1'], 'item2', ...]
-       :return bool: whether the test passes
+    diff when there are differences.
+    :param expected: a list of list for the items, as in:
+        ['item1', ['subitem1'], 'item2', ...]
+    :return bool: whether the test passes
     """
 
     def diff_list(a, b):
-        result = ''
+        result = ""
         while a and b:
             e1 = a.pop(0)
             e2 = b.pop(0)
             if isinstance(e1, list):
                 if isinstance(e2, list):
-                    result += '[' + diff_list(e1, e2) + ']'
+                    result += "[" + diff_list(e1, e2) + "]"
                 else:
-                    result += '\n- ' + str(e1)
-                    result += '\n+ ' + str(e2)
+                    result += "\n- " + str(e1)
+                    result += "\n+ " + str(e2)
             elif isinstance(e2, list):
-                result += '\n- ' + str(e1)
-                result += '\n+ ' + str(e2)
+                result += "\n- " + str(e1)
+                result += "\n+ " + str(e2)
             elif e1 == e2:
-                result += '.'
+                result += "."
             else:
-                result += '\n- ' + str(e1) + '\n+ ' + str(e2) + '\n'
+                result += "\n- " + str(e1) + "\n+ " + str(e2) + "\n"
 
         if a:
-            result += '\n- '.join([str(e) for e in a])
+            result += "\n- ".join([str(e) for e in a])
         if b:
-            result += '\n+ '.join([str(e) for e in b])
+            result += "\n+ ".join([str(e) for e in b])
 
         return result
 
@@ -222,21 +225,21 @@ def gps_assert_menu(expected, actual, msg='Incorrect menu'):
     return True
 
 
-def gps_not_null(left, msg='Error in test script', quiet=False):
+def gps_not_null(left, msg="Error in test script", quiet=False):
     """
     Error if left compares to False/None/empty string/empty list
     :return bool: whether the test passes
     """
     if not left:
-        display_error(left, '', 'should compare to false', msg, quiet)
+        display_error(left, "", "should compare to false", msg, quiet)
         return False
     return True
 
 
-def gps_not_assert(left, right, msg='Error in test script', quiet=False):
+def gps_not_assert(left, right, msg="Error in test script", quiet=False):
     """Ensure that left != right"""
     if left == right:
-        display_error(left, right, '==', msg, quiet)
+        display_error(left, right, "==", msg, quiet)
         return False
     return True
 

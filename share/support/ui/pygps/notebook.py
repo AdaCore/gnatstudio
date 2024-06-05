@@ -9,8 +9,8 @@ try:
 
     def switch_notebook_page(notebook, label):
         """Switch to the page with the given label in the notebook.
-           Returns the page number that was selected.
-           -1 is returned if no such page exists."""
+        Returns the page number that was selected.
+        -1 is returned if no such page exists."""
 
         page = 0
         while notebook.get_nth_page(page):
@@ -25,10 +25,9 @@ try:
 
     def get_notebook_page_label(notebook, page):
         """Return the label of a page in a notebook.
-           Page is an integer, the index of the page in the notebook"""
+        Page is an integer, the index of the page in the notebook"""
 
-        return pygps.get_widgets_by_type \
-            (Gtk.Label, notebook.get_tab_label(page))[0]
+        return pygps.get_widgets_by_type(Gtk.Label, notebook.get_tab_label(page))[0]
 
     def get_notebook_pages(notebook):
         """Return the list of all visible pages for the notebook"""
@@ -42,10 +41,12 @@ try:
 
     def get_notebook_page_labels_text(notebook):
         """Return a list containing the labels of all visible pages for the
-           notebook"""
+        notebook"""
 
-        return [get_notebook_page_label(notebook, p).get_label()
-                for p in get_notebook_pages(notebook)]
+        return [
+            get_notebook_page_label(notebook, p).get_label()
+            for p in get_notebook_pages(notebook)
+        ]
 
 except ImportError:
     pass

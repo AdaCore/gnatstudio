@@ -14,7 +14,7 @@ import gs_utils.gnat_rules
 from gs_utils import hook
 
 
-@hook('project_editor')
+@hook("project_editor")
 def __on_switch_editor():
     gs_utils.gnat_rules.EnsureInitialized()
 
@@ -214,8 +214,10 @@ def __add_to_main_units(project, file):
     """
 
     unit = file.unit()
-    dialog_msg = ("Do you want to add '%s' to the main units of "
-                  "project '%s'?" % (unit, project.name()))
+    dialog_msg = "Do you want to add '%s' to the main units of " "project '%s'?" % (
+        unit,
+        project.name(),
+    )
 
     if GPS.MDI.yes_no_dialog(dialog_msg):
         project.add_main_unit(file.base_name())
@@ -225,7 +227,7 @@ def __add_to_main_units(project, file):
     return True
 
 
-@hook('gps_started')
+@hook("gps_started")
 def __on_gps_started():
     GPS.FileTemplate.register(
         alias_name="package",
@@ -233,7 +235,8 @@ def __on_gps_started():
         unit_param="name",
         language="ada",
         is_impl=False,
-        impl_alias_name="package_body")
+        impl_alias_name="package_body",
+    )
 
     GPS.FileTemplate.register(
         alias_name="main_unit",
@@ -241,4 +244,5 @@ def __on_gps_started():
         unit_param="name",
         language="ada",
         is_impl=True,
-        post_action=__add_to_main_units)
+        post_action=__add_to_main_units,
+    )

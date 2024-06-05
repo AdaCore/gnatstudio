@@ -7,11 +7,24 @@ import GPS
 from gi.repository import Gtk
 from .asserts import gps_assert, gps_not_null
 from .tree import Tree
-from workflows.promises import timeout, wait_idle, modal_dialog, \
-    idle_modal_dialog, wait_tasks, hook
-from pygps import get_stock_button, get_widget_by_name, WidgetTree, \
-    get_button_from_label, get_widgets_by_type, select_combo, \
-    get_window_by_prefix, get_window_by_title
+from workflows.promises import (
+    timeout,
+    wait_idle,
+    modal_dialog,
+    idle_modal_dialog,
+    wait_tasks,
+    hook,
+)
+from pygps import (
+    get_stock_button,
+    get_widget_by_name,
+    WidgetTree,
+    get_button_from_label,
+    get_widgets_by_type,
+    select_combo,
+    get_window_by_prefix,
+    get_window_by_title,
+)
 import pygps.tree
 from pygps.tree import select_in_tree
 import gs_utils
@@ -23,6 +36,7 @@ import re
 ##########
 # Dialog #
 ##########
+
 
 class Dialog(object):
     """
@@ -46,8 +60,10 @@ class Dialog(object):
         attempt = 0
         while True:
             self.dialogs = [
-                w for w in Gtk.Window.list_toplevels()
-                if w not in windows and w.get_mapped()]
+                w
+                for w in Gtk.Window.list_toplevels()
+                if w not in windows and w.get_mapped()
+            ]
 
             if self.dialogs:
                 # Wait little bit more to allow dialog to be dispayed and
@@ -81,6 +97,7 @@ class Dialog(object):
 # Project properties #
 ######################
 
+
 class Project_Properties_Editor(Dialog):
     """
     A class that interfaces with the project properties editor in GPS.
@@ -112,7 +129,7 @@ class Project_Properties_Editor(Dialog):
         if :param wait_scan: is True, this will wait for GPRconfig to complete
         its scanning before returning.
         """
-        yield self._open_and_yield('open project properties')
+        yield self._open_and_yield("open project properties")
 
         # Wait for the GPRconfig scan to complete before editing
         # and/or saving the Project Properties editor
@@ -121,13 +138,14 @@ class Project_Properties_Editor(Dialog):
             # deadlock when executing a test
             yield wait_tasks(["git"])
 
-        self.treeview = get_widget_by_name(
-            'Project Properties Tree', self.dialogs)
+        self.treeview = get_widget_by_name("Project Properties Tree", self.dialogs)
 
         scenario_selector = get_widget_by_name(
-            'Project Properties Scenario Selector', self.dialogs)
+            "Project Properties Scenario Selector", self.dialogs
+        )
         self.scenario_selector_tree = get_widgets_by_type(
-            Gtk.TreeView, scenario_selector)[0]
+            Gtk.TreeView, scenario_selector
+        )[0]
 
     def select(self, path):
         """
@@ -137,7 +155,8 @@ class Project_Properties_Editor(Dialog):
         :return: a GtkTreePath for the page
         """
         return pygps.tree.select_in_tree(
-            self.treeview, Project_Properties_Editor.COLUMN_PATH, path)
+            self.treeview, Project_Properties_Editor.COLUMN_PATH, path
+        )
 
     def get_page(self, path):
         """
@@ -156,10 +175,12 @@ class Project_Properties_Editor(Dialog):
     APEX_NAMING_SCHEME = 1
 
     def set_ada_naming_scheme(self, scheme=GNAT_NAMING_SCHEME):
-        page = self.get_page('Sources/Naming/Ada')
-        ent = [w for w in WidgetTree(page)
-               if isinstance(w, Gtk.ComboBox) and
-               w.get_active_text() == "GNAT default"]
+        page = self.get_page("Sources/Naming/Ada")
+        ent = [
+            w
+            for w in WidgetTree(page)
+            if isinstance(w, Gtk.ComboBox) and w.get_active_text() == "GNAT default"
+        ]
         gps_not_null(ent, "Entry field for GNAT default not found")
         ent[0].set_active(scheme)
 
@@ -167,7 +188,7 @@ class Project_Properties_Editor(Dialog):
         if not isinstance(lang, list):
             lang = [lang]
 
-        page = self.get_page('Sources/Languages')
+        page = self.get_page("Sources/Languages")
         tree = pygps.get_widgets_by_type(Gtk.TreeView, page)[0]
         found = 0
         for m in tree.get_model():
@@ -212,25 +233,19 @@ class Project_Properties_Editor(Dialog):
         for m in self.scenario_selector_tree.get_model():
             if m[1] == var:
                 # Unselect all the variable's values first
-                pygps.tree.click_in_tree(
-                    self.scenario_selector_tree,
-                    m.path)
+                pygps.tree.click_in_tree(self.scenario_selector_tree, m.path)
                 if m[0]:
-                    pygps.tree.click_in_tree(
-                        self.scenario_selector_tree,
-                        m.path)
+                    pygps.tree.click_in_tree(self.scenario_selector_tree, m.path)
 
                 if values:
                     children = m.iterchildren()
                     for child in children:
                         if child[1] in values:
                             pygps.tree.click_in_tree(
-                                self.scenario_selector_tree,
-                                child.path)
+                                self.scenario_selector_tree, child.path
+                            )
                 else:
-                    pygps.tree.click_in_tree(
-                        self.scenario_selector_tree,
-                        m.path)
+                    pygps.tree.click_in_tree(self.scenario_selector_tree, m.path)
                     return
 
     def get_switch(self, label, gtk_type):
@@ -255,10 +270,12 @@ class Project_Properties_Editor(Dialog):
         page_widget = model[iter][Project_Properties_Editor.COLUMN_WIDGET]
         switches = get_widgets_by_type(gtk_type, page_widget)
 
-        result = [switch for switch in switches
-                  if BuildTargetsEditor.get_switch_label(
-                      switch, gtk_type) == label and
-                  switch.get_mapped()]
+        result = [
+            switch
+            for switch in switches
+            if BuildTargetsEditor.get_switch_label(switch, gtk_type) == label
+            and switch.get_mapped()
+        ]
 
         if result:
             return result[0]
@@ -300,7 +317,7 @@ class ProjectTemplatesAssistant(Dialog):
         :param action: the name of the action that will open window
         """
 
-        yield self._open_and_yield('create project from template')
+        yield self._open_and_yield("create project from template")
         self.__assistant = get_widget_by_name("Project Templates Assistant")
 
     def select_template(self, template):
@@ -322,8 +339,7 @@ class ProjectTemplatesAssistant(Dialog):
         Return the currently displayed page in the assistant.
         """
 
-        return self.__assistant.get_nth_page(
-            self.__assistant.get_current_page())
+        return self.__assistant.get_nth_page(self.__assistant.get_current_page())
 
     def cancel(self):
         """
@@ -347,20 +363,21 @@ class ProjectTemplatesAssistant(Dialog):
 # Project view #
 ################
 
+
 class Project_View(Dialog, Tree):
     """
     Interface to the project view
     """
 
     def __init__(self):
-        Tree.__init__(self, get_widget_by_name('Project Explorer Tree'))
+        Tree.__init__(self, get_widget_by_name("Project Explorer Tree"))
 
-    def compare_contents(self, expected, msg='', column=1):
+    def compare_contents(self, expected, msg="", column=1):
         Tree.compare_contents(self, expected, msg=msg, column=column)
 
     def open_and_yield(self):
         yield self._open_and_yield("open project")
-        self.dialog = get_widget_by_name('Project Explorer Tree')
+        self.dialog = get_widget_by_name("Project Explorer Tree")
 
     def get_selected_name(self):
         """
@@ -382,52 +399,40 @@ class Project_View(Dialog, Tree):
 # Bookmarks #
 #############
 
-class Bookmarks(Dialog):
 
+class Bookmarks(Dialog):
     def open_and_yield(self):
-        yield self._open_and_yield('open Bookmarks')
-        self.treeview = get_widget_by_name('Bookmark TreeView')
+        yield self._open_and_yield("open Bookmarks")
+        self.treeview = get_widget_by_name("Bookmark TreeView")
 
 
 ##################
 # AnalysisReport #
 ##################
 
-class AnalysisReport(Dialog):
 
-    FilterKind = gs_utils.enum(
-        TOOL=0,
-        SEVERITY=1,
-        RULE=2,
-        METRIC=3)
+class AnalysisReport(Dialog):
+    FilterKind = gs_utils.enum(TOOL=0, SEVERITY=1, RULE=2, METRIC=3)
 
     MessagesReportColumn = gs_utils.enum(
-        ICON_NAME=0,
-        ENTITY_ID=1,
-        ENTITY_NAME=2,
-        TOTAL=3)
+        ICON_NAME=0, ENTITY_ID=1, ENTITY_NAME=2, TOTAL=3
+    )
 
     def open_and_yield(self, force=False):
         self.report_mdi = GPS.MDI.get("Analysis Report")
 
         if (self.report_mdi is None) or force:
-            yield self._open_and_yield('gnathub display analysis')
+            yield self._open_and_yield("gnathub display analysis")
             self.report_mdi = GPS.MDI.get("Analysis Report")
 
         self.report = self.report_mdi.pywidget()
         self.filters = GPS.MDI.get("Filters").pywidget()
-        self.tools = get_widget_by_name(
-            'gnathub tools editor', self.filters)
-        self.severities = get_widget_by_name(
-            'gnathub severities editor', self.filters)
-        self.rules = get_widget_by_name(
-            'gnathub rules editor', self.filters)
-        self.metrics = get_widget_by_name(
-            'gnathub metrics editor', self.filters)
-        self.messages_report = get_widget_by_name(
-            'gnathub-report-tree', self.report)
-        self.entities_tree = get_widget_by_name(
-            'gnathub-entities-tree', self.report)
+        self.tools = get_widget_by_name("gnathub tools editor", self.filters)
+        self.severities = get_widget_by_name("gnathub severities editor", self.filters)
+        self.rules = get_widget_by_name("gnathub rules editor", self.filters)
+        self.metrics = get_widget_by_name("gnathub metrics editor", self.filters)
+        self.messages_report = get_widget_by_name("gnathub-report-tree", self.report)
+        self.entities_tree = get_widget_by_name("gnathub-entities-tree", self.report)
 
     def yield_close(self):
         self.report_mdi.close()
@@ -479,8 +484,7 @@ class AnalysisReport(Dialog):
         filters = []
 
         for row in model:
-            filters.append(
-                {"name": row[0], "number": row[1], "state": row[2]})
+            filters.append({"name": row[0], "number": row[1], "state": row[2]})
 
         return filters
 
@@ -494,9 +498,8 @@ class AnalysisReport(Dialog):
         yield wait_idle()
 
         select_in_tree(
-            self.entities_tree,
-            AnalysisReport.MessagesReportColumn.ENTITY_NAME,
-            entity)
+            self.entities_tree, AnalysisReport.MessagesReportColumn.ENTITY_NAME, entity
+        )
         yield wait_idle()
 
     def dump_filters(self, filter_kind):
@@ -535,21 +538,20 @@ class AnalysisReport(Dialog):
 # Key Shortcuts #
 #################
 
-class KeyShortcuts(Dialog):
 
+class KeyShortcuts(Dialog):
     def open_and_yield(self):
         preferences_dialog = Preferences()
         yield preferences_dialog.open_and_yield()
         preferences_dialog.select_page("Key Shortcuts")
 
-        self.editor = get_widget_by_name('Key shortcuts')
+        self.editor = get_widget_by_name("Key shortcuts")
 
         if self.editor:
-            self.modify_button = get_button_from_label('Add', self.editor)
-            self.remove_button = get_button_from_label('Remove', self.editor)
-            self.close_button = get_button_from_label('Close')
-            self.key_theme_combo = get_widgets_by_type(
-                Gtk.ComboBoxText, self.editor)[0]
+            self.modify_button = get_button_from_label("Add", self.editor)
+            self.remove_button = get_button_from_label("Remove", self.editor)
+            self.close_button = get_button_from_label("Close")
+            self.key_theme_combo = get_widgets_by_type(Gtk.ComboBoxText, self.editor)[0]
 
     def yield_modify(self):
         yield idle_modal_dialog(self.modify_button.clicked)
@@ -566,7 +568,7 @@ class KeyShortcuts(Dialog):
         return self.key_theme_combo.get_active_text()
 
     def select_action(self, action):
-        tree = get_widget_by_name('Key shortcuts tree', [self.editor])
+        tree = get_widget_by_name("Key shortcuts tree", [self.editor])
         GPS.Preference("shortcuts-categories").set(False)
         # ??? Used to manipulate config menu, but this seems to fail now
         # toggle_local_config(self.editor, 'Show categories', False)
@@ -576,12 +578,13 @@ class KeyShortcuts(Dialog):
                 tree.get_selection().select_path(m.path)
                 return
 
-        gps_assert(False, True, action + ' not found in key shortcuts editor')
+        gps_assert(False, True, action + " not found in key shortcuts editor")
 
 
 #########
 # Learn #
 #########
+
 
 class Learn(Dialog):
     """
@@ -590,17 +593,17 @@ class Learn(Dialog):
 
     def open_and_yield(self):
         GPS.execute_action("open Learn")
-        self.dialog = GPS.MDI.get('Learn').pywidget()
+        self.dialog = GPS.MDI.get("Learn").pywidget()
         self.paned_view = get_widgets_by_type(Gtk.Paned, self.dialog)[0]
-        self.doc_label = get_widgets_by_type(
-            Gtk.Label, self.paned_view.get_child2())[0]
+        self.doc_label = get_widgets_by_type(Gtk.Label, self.paned_view.get_child2())[0]
 
         # wait for the Learn view to be fully realized before returning
         while self.dialog.get_allocation().width == -1:
             yield timeout(200)
 
-    def yield_click_on_item(self, label_text, button=1,
-                            events=pygps.single_click_events):
+    def yield_click_on_item(
+        self, label_text, button=1, events=pygps.single_click_events
+    ):
         """
         Clicks on the Learn view's item identified with the given
         ``label_text``.
@@ -614,8 +617,7 @@ class Learn(Dialog):
             if label.get_label() == label_text:
                 if isinstance(child.get_parent(), Gtk.FlowBox):
                     alloc = label.get_allocation()
-                    click_in_widget(
-                        child.get_window(), alloc.x, alloc.y, events=events)
+                    click_in_widget(child.get_window(), alloc.x, alloc.y, events=events)
                     yield wait_idle()
                     return
 
@@ -632,13 +634,12 @@ class Learn(Dialog):
 # Preferences #
 ###############
 
-class Preferences(Dialog):
 
+class Preferences(Dialog):
     def open_and_yield(self):
-        yield self._open_and_yield('/Edit/Preferences...')
-        self.dialog = get_window_by_prefix('GNAT Studio - Preferences -')
-        self.tree = get_widgets_by_type(Gtk.TreeView,
-                                        self.dialog)[0]
+        yield self._open_and_yield("/Edit/Preferences...")
+        self.dialog = get_window_by_prefix("GNAT Studio - Preferences -")
+        self.tree = get_widgets_by_type(Gtk.TreeView, self.dialog)[0]
 
     def select_page(self, page_name):
         select_in_tree(self.tree, 0, page_name)
@@ -652,15 +653,15 @@ class Preferences(Dialog):
 # Outline
 ###########
 
-class Outline_View(Dialog):
 
+class Outline_View(Dialog):
     def open_and_yield(self):
         """
         Compatible with run_test_driver, to be used in a yield statement
             view = Outline_View()
             yield view.open_and_yield()
         """
-        yield self._open_and_yield('open Outline')
+        yield self._open_and_yield("open Outline")
         self.tree = get_widget_by_name("Outline View Tree")
 
     def model(self):
@@ -669,30 +670,33 @@ class Outline_View(Dialog):
         """
         return dump_tree_model(self.tree.get_model(), 1)
 
-    def set_options(self,
-                    show_profiles=None,
-                    show_with=None,
-                    group_by_category=None,
-                    alphabetical=None,
-                    category_sort=None):
+    def set_options(
+        self,
+        show_profiles=None,
+        show_with=None,
+        group_by_category=None,
+        alphabetical=None,
+        category_sort=None,
+    ):
         """
         Overrides some of the configuration parameters
         """
         if show_profiles is not None:
-            GPS.Preference('outline-show-profile').set(show_profiles)
+            GPS.Preference("outline-show-profile").set(show_profiles)
         if show_with is not None:
-            GPS.Preference('outline-show-with').set(show_with)
+            GPS.Preference("outline-show-with").set(show_with)
         if group_by_category is not None:
-            GPS.Preference('outline-group-by-category').set(group_by_category)
+            GPS.Preference("outline-group-by-category").set(group_by_category)
         if alphabetical is not None:
-            GPS.Preference('outline-alphabetical-sort').set(alphabetical)
+            GPS.Preference("outline-alphabetical-sort").set(alphabetical)
         if category_sort is not None:
-            GPS.Preference('outline-category-sort').set(category_sort)
+            GPS.Preference("outline-category-sort").set(category_sort)
 
 
 ########################
 # Build targets editor #
 ########################
+
 
 class BuildTargetsEditor(Dialog):
     """
@@ -703,9 +707,11 @@ class BuildTargetsEditor(Dialog):
 
     @staticmethod
     def get_switch_label(switch, gtk_type):
-        if (gtk_type == Gtk.ToggleButton or
-                gtk_type == Gtk.Button or
-                gtk_type == Gtk.RadioButton):
+        if (
+            gtk_type == Gtk.ToggleButton
+            or gtk_type == Gtk.Button
+            or gtk_type == Gtk.RadioButton
+        ):
             return switch.get_label()
         else:
             labels = get_widgets_by_type(Gtk.Label, switch.get_parent())
@@ -728,12 +734,9 @@ class BuildTargetsEditor(Dialog):
 
         self.editor = get_widget_by_name("Build Targets Editor")
         self.notebook = pygps.get_widgets_by_type(Gtk.Notebook, self.editor)[0]
-        self.close_button = get_button_from_label(
-            "Close", preferences_dialog.dialog)
-        self.apply_button = get_button_from_label(
-            "Apply", preferences_dialog.dialog)
-        self.tree = get_widgets_by_type(Gtk.TreeView,
-                                        self.editor)[0]
+        self.close_button = get_button_from_label("Close", preferences_dialog.dialog)
+        self.apply_button = get_button_from_label("Apply", preferences_dialog.dialog)
+        self.tree = get_widgets_by_type(Gtk.TreeView, self.editor)[0]
 
     def yield_close(self):
         """
@@ -792,13 +795,14 @@ class BuildTargetsEditor(Dialog):
             switch_widget = editor.get_switch("Compile only", Gtk.ToggleButton)
         """
 
-        switches = get_widgets_by_type(
-            gtk_type, self.get_current_page_widget())
+        switches = get_widgets_by_type(gtk_type, self.get_current_page_widget())
 
-        result = [switch for switch in switches
-                  if BuildTargetsEditor.get_switch_label(
-                      switch, gtk_type) == label and
-                  switch.get_mapped()]
+        result = [
+            switch
+            for switch in switches
+            if BuildTargetsEditor.get_switch_label(switch, gtk_type) == label
+            and switch.get_mapped()
+        ]
 
         if result:
             return result[0]
@@ -809,6 +813,7 @@ class BuildTargetsEditor(Dialog):
 ##########
 # Search #
 ##########
+
 
 class Search(Dialog):
     """
@@ -822,7 +827,8 @@ class Search(Dialog):
         OPEN_FILES="Open Files",
         FILES="Files...",
         FILES_FROM_RUNTIME="Files From Runtime",
-        FILES_FROM_PROJECT="Files From Projects")
+        FILES_FROM_PROJECT="Files From Projects",
+    )
 
     def open_and_yield(self, docked=False):
         """
@@ -836,24 +842,20 @@ class Search(Dialog):
         if docked:
             self.dialog = GPS.MDI.get("Search").pywidget()
         else:
-            self.dialog = get_window_by_prefix('GNAT Studio - Search -')
+            self.dialog = get_window_by_prefix("GNAT Studio - Search -")
 
         if self.dialog:
             combos = get_widgets_by_type(Gtk.ComboBox, self.dialog)
 
             self.find = get_button_from_label("Find", self.dialog)
             self.find_all = get_button_from_label("Find All", self.dialog)
-            self.next = self.find   # This is in fact the same button
+            self.next = self.find  # This is in fact the same button
 
             self.replace = get_button_from_label("Replace", self.dialog)
-            self.replace_all = get_button_from_label(
-                "Replace All",
-                self.dialog)
+            self.replace_all = get_button_from_label("Replace All", self.dialog)
             self.close = get_button_from_label("Close", self.dialog)
-            self.replace_and_find = get_button_from_label(
-                "Replace & Find", self.dialog)
-            self.scope = get_widget_by_name(
-                "search scope combo", self.dialog)
+            self.replace_and_find = get_button_from_label("Replace & Find", self.dialog)
+            self.scope = get_widget_by_name("search scope combo", self.dialog)
             self.pattern = combos[0].get_child()
             self.replace_text = combos[1].get_child()
             self.look_in = combos[3] if len(combos) >= 4 else combos[2]
@@ -909,8 +911,8 @@ class Search(Dialog):
 # Breakpoints view
 ##########
 
-class _Breakpoints_Editor(Dialog):
 
+class _Breakpoints_Editor(Dialog):
     def __init__(self, action_name):
         self.action_name = action_name
 
@@ -919,17 +921,15 @@ class _Breakpoints_Editor(Dialog):
         fields = get_widgets_by_type(Gtk.Entry, self.dialogs)
         self.filename = fields[0]
         self.line = fields[1]
-        self.command_text_view = get_widgets_by_type(
-            Gtk.TextView, self.dialogs)[0]
+        self.command_text_view = get_widgets_by_type(Gtk.TextView, self.dialogs)[0]
 
 
-class Breakpoints_View():
-
+class Breakpoints_View:
     def __init__(self):
         GPS.execute_action("open breakpoints editor")
         self.view = GPS.MDI.get("Breakpoints")
         self.list = get_widgets_by_type(Gtk.TreeView, self.view.pywidget())
-        gps_not_null(self.list, 'List of breakpoints not found')
+        gps_not_null(self.list, "List of breakpoints not found")
         self.list = self.list[0]
 
     def select(self, num):
@@ -949,21 +949,21 @@ class Breakpoints_View():
         ed = b.edit()
         yield ed.open_and_yield()
         """
-        return _Breakpoints_Editor('debug edit breakpoint')
+        return _Breakpoints_Editor("debug edit breakpoint")
 
     def create(self):
         """
         Open the dialog to create a new breakpoint
         """
-        return _Breakpoints_Editor('debug create breakpoint')
+        return _Breakpoints_Editor("debug create breakpoint")
 
 
 ###################
 # Debug_Run_Dialog
 ###################
 
-class Debug_Run_Dialog(Dialog):
 
+class Debug_Run_Dialog(Dialog):
     def open_and_yield(self):
         """
         Compatible with run_test_driver, to be used in a yield statement
@@ -979,21 +979,24 @@ class Debug_Run_Dialog(Dialog):
 
         :param value: True or False
         """
-        check = [w for w in get_widgets_by_type(Gtk.CheckButton, self.dialogs)
-                 if w.get_label().startswith("Use exec dir")][0]
+        check = [
+            w
+            for w in get_widgets_by_type(Gtk.CheckButton, self.dialogs)
+            if w.get_label().startswith("Use exec dir")
+        ][0]
         check.set_active(value)
 
     def ok(self):
         get_stock_button(self.dialogs, Gtk.STOCK_OK).clicked()
-        yield hook('debuggee_started')
+        yield hook("debuggee_started")
 
 
 ##########################
 # Gtk_File_Chooser_Dialog
 ##########################
 
-class Gtk_File_Chooser_Dialog(Dialog):
 
+class Gtk_File_Chooser_Dialog(Dialog):
     def open_and_yield(self, action):
         """
         Compatible with run_test_driver, to be used in a yield statement
@@ -1009,8 +1012,7 @@ class Gtk_File_Chooser_Dialog(Dialog):
         """
         Select given file in dialog
         """
-        self.dialog.select_uri(
-            self.dialog.get_current_folder_uri() + "/" + name)
+        self.dialog.select_uri(self.dialog.get_current_folder_uri() + "/" + name)
 
     def cancel(self):
         """
@@ -1033,8 +1035,8 @@ class Gtk_File_Chooser_Dialog(Dialog):
 # Variables view
 ###########
 
-class Variables_View(Dialog):
 
+class Variables_View(Dialog):
     def open_and_yield(self):
         """
         Compatible with run_test_driver, to be used in a yield statement
@@ -1068,10 +1070,10 @@ class Variables_View(Dialog):
                 var_type = str(m[iter][2])
                 val = r.sub("0xfff", val)
 
-                if name == 'None':
+                if name == "None":
                     result.append(name)
                 else:
-                    result.append(name + ' = ' + var_type + ' ' + val)
+                    result.append(name + " = " + var_type + " " + val)
 
                 if m.iter_has_child(iter):
                     result.append(internal(m.iter_children(iter)))
@@ -1086,8 +1088,8 @@ class Variables_View(Dialog):
 # Custom Build
 ##############
 
-class Custom_Build_Dialog(Dialog):
 
+class Custom_Build_Dialog(Dialog):
     def open_and_yield(self):
         yield self._open_and_yield("/Build/Project/Custom Build...")
         self.dialog = get_window_by_title("Custom Build...")
@@ -1099,6 +1101,7 @@ class Custom_Build_Dialog(Dialog):
 ##############
 # CustomRun #
 ##############
+
 
 class CustomRunDialog(Dialog):
     def open_and_yield(self):
@@ -1113,6 +1116,7 @@ class CustomRunDialog(Dialog):
 # CloseWithConfirmation #
 #########################
 
+
 class CloseWithConfirmationDialog(Dialog):
     def open_and_yield(self):
         yield self._open_and_yield("/File/Close")
@@ -1124,15 +1128,18 @@ class CloseWithConfirmationDialog(Dialog):
 # Editor_Properties
 ###################
 
-class Editor_Properties_Dialog(Dialog):
 
+class Editor_Properties_Dialog(Dialog):
     def open_and_yield(self, file):
         yield self._open_and_yield("edit file properties")
         self.dialog = get_window_by_title("Properties for %s" % file)
 
     def get_combobox_by_label(self, text):
-        label = [label for label in get_widgets_by_type(Gtk.Label, self.dialog)
-                 if label.get_label() == text][0]
+        label = [
+            label
+            for label in get_widgets_by_type(Gtk.Label, self.dialog)
+            if label.get_label() == text
+        ][0]
 
         return label.get_parent().get_children()[1]
 
@@ -1147,24 +1154,25 @@ class Editor_Properties_Dialog(Dialog):
 # Refactoring #
 ###############
 
+
 class Refactoring_Rename(Dialog):
     """The simple "rename" refactoring dialog.
 
-       To use, do something like this:
+    To use, do something like this:
 
-          # Get a buffer
-          b = GPS.EditorBuffer.get()
+       # Get a buffer
+       b = GPS.EditorBuffer.get()
 
-          # Position the cursor
-          b.current_view().goto(b.at(7, 12))
+       # Position the cursor
+       b.current_view().goto(b.at(7, 12))
 
-          # Launch the dialog
-          d = Refactoring_Rename()
-          yield d.open_and_yield()
+       # Launch the dialog
+       d = Refactoring_Rename()
+       yield d.open_and_yield()
 
-          # Rename something and exit
-          d.set_new_name("XYZ")
-          yield d.ok()
+       # Rename something and exit
+       d.set_new_name("XYZ")
+       yield d.ok()
     """
 
     def __init__(self):
@@ -1181,12 +1189,12 @@ class Refactoring_Rename(Dialog):
 # Save As #
 ###########
 
-class Save_As(Dialog):
 
+class Save_As(Dialog):
     def open_and_yield(self):
-        yield self._open_and_yield('save as')
+        yield self._open_and_yield("save as")
         labels = get_widgets_by_type(Gtk.Label, self.dialogs[0])
-        label = [x for x in labels if x.get_label() == '_Name:'][0]
+        label = [x for x in labels if x.get_label() == "_Name:"][0]
         self.entry = label.get_parent().get_children()[0]
 
     def set_new_name(self, text):
@@ -1197,8 +1205,8 @@ class Save_As(Dialog):
 # Saving_Files #
 ################
 
-class Saving_Files(Dialog):
 
+class Saving_Files(Dialog):
     def open_and_yield(self):
         yield self._open_and_yield("save files and projects")
 
@@ -1210,21 +1218,25 @@ class Saving_Files(Dialog):
 # GNATtest #
 ############
 
+
 class GNATtest(Dialog):
     """
     Interface to the gnattest in generation mode.
     """
 
     def open_and_yield(self):
-        yield self._open_and_yield('run gnattest on root')
+        yield self._open_and_yield("run gnattest on root")
 
     def ok(self):
         get_button_from_label("Execute", self.dialogs).clicked()
         yield wait_idle()
 
     def get_checkbox(self, name):
-        return [w for w in get_widgets_by_type(Gtk.CheckButton, self.dialogs)
-                if w.get_label().startswith(name)][0]
+        return [
+            w
+            for w in get_widgets_by_type(Gtk.CheckButton, self.dialogs)
+            if w.get_label().startswith(name)
+        ][0]
 
 
 class GNATtest_Run(Dialog):
@@ -1233,7 +1245,7 @@ class GNATtest_Run(Dialog):
     """
 
     def open_and_yield(self):
-        yield self._open_and_yield('Run a test drivers list Number 1')
+        yield self._open_and_yield("Run a test drivers list Number 1")
 
     def ok(self):
         get_button_from_label("Execute", self.dialogs).clicked()

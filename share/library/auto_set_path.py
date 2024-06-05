@@ -19,7 +19,7 @@ def compute_paths():
     paths = []
 
     # system_dir is the directory that contains the GPS install
-    parent = os.path.abspath(os.path.join(GPS.get_system_dir(), '..'))
+    parent = os.path.abspath(os.path.join(GPS.get_system_dir(), ".."))
 
     # As a first approximation, we are going to go up one level, and add
     # the PATH all that share a parent dir with the GPS install.
@@ -31,8 +31,8 @@ def compute_paths():
     #    /opt/gnat-community/2018/bin
     #    /opt/gnat-community/2018-cross-arm-elf/bin
 
-    for tentative in glob.glob(os.path.join(parent, '*')):
-        tentative_bin = os.path.join(tentative, 'bin')
+    for tentative in glob.glob(os.path.join(parent, "*")):
+        tentative_bin = os.path.join(tentative, "bin")
         if os.path.isdir(tentative_bin):
             paths.append(tentative_bin)
 
@@ -43,7 +43,7 @@ def compute_paths():
 def add_to_paths(paths):
     """Add the given list of paths to the PATH"""
 
-    path = GPS.getenv('PATH')
+    path = GPS.getenv("PATH")
     existing_paths = path.split(os.pathsep)
 
     for j in paths:
@@ -56,10 +56,10 @@ def add_to_paths(paths):
         if j not in existing_paths:
             path += os.pathsep + j
 
-    GPS.setenv('PATH', path)
+    GPS.setenv("PATH", path)
     # Set the PATH in the Python environment as well, so that plugins can
     # see the same path.
-    os.environ['PATH'] = path
+    os.environ["PATH"] = path
 
 
 # Note: as a special exception, we do not run this plugin in reaction to

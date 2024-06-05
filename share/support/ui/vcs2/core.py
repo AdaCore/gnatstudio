@@ -14,37 +14,36 @@ import platform
 
 
 GPS.VCS2.Status = gs_utils.enum(
-        NO_VCS=0,
-        UNMODIFIED=2**0,
-        MODIFIED=2**1,
-        STAGED_MODIFIED=2**2,
-        STAGED_ADDED=2**3,
-        DELETED=2**4,
-        STAGED_DELETED=2**5,
-        STAGED_RENAMED=2**6,
-        STAGED_COPIED=2**7,
-        UNTRACKED=2**8,
-        IGNORED=2**9,
-        CONFLICT=2**10,
-        LOCAL_LOCKED=2**11,
-        LOCKED_BY_OTHER=2**12,
-        NEEDS_UPDATE=2**13)
+    NO_VCS=0,
+    UNMODIFIED=2**0,
+    MODIFIED=2**1,
+    STAGED_MODIFIED=2**2,
+    STAGED_ADDED=2**3,
+    DELETED=2**4,
+    STAGED_DELETED=2**5,
+    STAGED_RENAMED=2**6,
+    STAGED_COPIED=2**7,
+    UNTRACKED=2**8,
+    IGNORED=2**9,
+    CONFLICT=2**10,
+    LOCAL_LOCKED=2**11,
+    LOCKED_BY_OTHER=2**12,
+    NEEDS_UPDATE=2**13,
+)
 # Valid statuses for files (they can be combined)
 
-GPS.VCS2.Actions = gs_utils.enum(
-        DOUBLE_CLICK=0,
-        TOOLTIP=1,
-        ADD=2,
-        REMOVE=3,
-        RENAME=4)
+GPS.VCS2.Actions = gs_utils.enum(DOUBLE_CLICK=0, TOOLTIP=1, ADD=2, REMOVE=3, RENAME=4)
 
 
 Traverse_Limit_Pref = GPS.Preference(":VCS/Traverse-Limit")
 Traverse_Limit_Pref.create(
     "Max project depth",
     "integer",
-    "How much directories should GPS traverse when looking for " +
-    "VCS root counting from project file directory.", 99, 0)
+    "How much directories should GPS traverse when looking for "
+    + "VCS root counting from project file directory.",
+    99,
+    0,
+)
 
 
 class _Branch(list):
@@ -77,17 +76,17 @@ class _Commit(list):
     """
 
     Kind = gs_utils.enum(
-        HEAD=0,     # current working dir
-        LOCAL=1,    # a local branch name exists for this commit
-        REMOTE=2,   # a remote branch name exists for this commit
-        TAG=3)      # a tag exists for this commit
+        HEAD=0,  # current working dir
+        LOCAL=1,  # a local branch name exists for this commit
+        REMOTE=2,  # a remote branch name exists for this commit
+        TAG=3,
+    )  # a tag exists for this commit
 
     Flags = gs_utils.enum(
-        UNPUSHED=2**1,     # an unpushed local commit
-        UNCOMMITTED=2**2)  # uncommitted local changes
+        UNPUSHED=2**1, UNCOMMITTED=2**2  # an unpushed local commit
+    )  # uncommitted local changes
 
-    def __init__(self, id, author, date, subject, parents, names=None,
-                 flags=0):
+    def __init__(self, id, author, date, subject, parents, names=None, flags=0):
         """
         :param str id: the unique id for the commit
         :param str author: the author of the commit
@@ -150,12 +149,15 @@ def run_in_background(func):
                 vcs = self
             vcs.set_run_in_background(True)
             promise = workflows.driver(r)
-            promise.then(lambda x: vcs.set_run_in_background(False),
-                         lambda x: vcs.set_run_in_background(False))
+            promise.then(
+                lambda x: vcs.set_run_in_background(False),
+                lambda x: vcs.set_run_in_background(False),
+            )
         else:
             promise = Promise()
             promise.resolve(r)
         return promise
+
     return __func
 
 
@@ -171,6 +173,7 @@ class Profile:
            execute, not the whole profile
         """
         import cProfile
+
         self.time_only = time_only
         if time_only:
             self.start = time.time()
@@ -185,13 +188,15 @@ class Profile:
     def __exit__(self, exc_type=None, exc_val=None, exc_tb=None):
         if self.time_only:
             GPS.Logger("GPS.VCS.ENGINES").log(
-                "Total time: %ss" % (time.time() - self.start, ))
+                "Total time: %ss" % (time.time() - self.start,)
+            )
         else:
             import pstats
             import StringIO
+
             self.c.disable()
             s = StringIO.StringIO()
-            ps = pstats.Stats(self.c, stream=s).sort_stats('cumulative')
+            ps = pstats.Stats(self.c, stream=s).sort_stats("cumulative")
             ps.print_stats()
             GPS.Logger("GPS.VCS.ENGINES").log(s.getvalue())
 
@@ -247,21 +252,20 @@ class VCS(GPS.VCS2):
         """
         self.working_dir = working_dir
         self.default_status = default_status
-        self._extensions = []   # the decorators that apply to self
+        self._extensions = []  # the decorators that apply to self
 
         # Check which decorators apply
         for d in self._class_extensions:
             inst = d(base_vcs=self)
             if inst.applies():
                 GPS.Logger("GPS.VCS.ENGINES").log(
-                    "Extension %s applied to %s (%s)" % (
-                        inst, self, working_dir))
+                    "Extension %s applied to %s (%s)" % (inst, self, working_dir)
+                )
                 self._extensions.append(inst)
 
     def warn_action_not_supported(self, action):
         """Emit an "action not supported" console message"""
-        GPS.Console().write("Action '%s' not supported for %s\n" %
-                            (action, self.name))
+        GPS.Console().write("Action '%s' not supported for %s\n" % (action, self.name))
 
     def setup(self):
         """
@@ -283,7 +287,7 @@ class VCS(GPS.VCS2):
         :param GPS.File file:
         :return: a string
         """
-        return ''
+        return ""
 
     def async_fetch_status_for_files(self, files):
         """
@@ -452,7 +456,7 @@ class VCS(GPS.VCS2):
         """
         self.warn_action_not_supported("list branches")
 
-    def async_action_on_branch(self, visitor, action, category, id, text=''):
+    def async_action_on_branch(self, visitor, action, category, id, text=""):
         """
         React to a double-click action in the Branches view.
 
@@ -505,7 +509,7 @@ class VCS(GPS.VCS2):
         class _CM(object):
             def __init__(self):
                 self._seen = set()
-                self._cache = {}    # (status,version,repo_version) -> [File]
+                self._cache = {}  # (status,version,repo_version) -> [File]
                 self.__iterator = None
                 self.__status = None
                 self.__index = 0
@@ -520,11 +524,7 @@ class VCS(GPS.VCS2):
                 """
                 return self._seen
 
-            def set_status(
-                    self, file,
-                    status,
-                    version="",
-                    repo_version=""):
+            def set_status(self, file, status, version="", repo_version=""):
                 """
                 Set the status for one file
                 :param GPS.File file:
@@ -534,8 +534,7 @@ class VCS(GPS.VCS2):
                 :param str repo_version:
                 """
                 self._seen.add(file)
-                self._cache.setdefault(
-                    (status, version, repo_version), []).append(file)
+                self._cache.setdefault((status, version, repo_version), []).append(file)
 
             def set_status_for_remaining_files(self, files=set()):
                 """
@@ -553,24 +552,25 @@ class VCS(GPS.VCS2):
                         to_set.append(f)
                 vcs._set_file_status(to_set, vcs.default_status)
 
-            def async_set_status_for_remaining_files(self,
-                                                     files=set(),
-                                                     msecs=100,
-                                                     step=5000):
+            def async_set_status_for_remaining_files(
+                self, files=set(), msecs=100, step=5000
+            ):
                 """
                 asynchronous version of set_status_remaining_files.
                 This prevent a GUI freeze when setting the state of thousand
                 of files at once.
                 """
+
                 def handler():
                     if self.__status:
                         s_files = self._cache[self.__status]
                         if self.__index + step > len(s_files):
                             vcs._set_file_status(
-                                s_files[self.__index:],
+                                s_files[self.__index :],
                                 self.__status[0],
                                 self.__status[1],
-                                self.__status[2])
+                                self.__status[2],
+                            )
                             self.__index = 0
                             try:
                                 self.__status = next(self.__iter)
@@ -579,10 +579,11 @@ class VCS(GPS.VCS2):
                                 return False
                         else:
                             vcs._set_file_status(
-                                s_files[self.__index:self.__index + step],
+                                s_files[self.__index : self.__index + step],
                                 self.__status[0],
                                 self.__status[1],
-                                self.__status[2])
+                                self.__status[2],
+                            )
                             self.__index = self.__index + step
                     return True
 
@@ -597,7 +598,7 @@ class VCS(GPS.VCS2):
             def __exit__(self, exc_type=None, exc_val=None, exc_tb=None):
                 self.set_status_for_remaining_files(files)
                 GPS.Hook("vcs_file_status_finished").run()
-                return False   # do not suppress exceptions
+                return False  # do not suppress exceptions
 
         return _CM()
 
@@ -614,9 +615,9 @@ class VCS(GPS.VCS2):
         except Exception:
             relpath = path
 
-        if platform.system() == 'Windows':
+        if platform.system() == "Windows":
             #  Use posix path for cygwin tools arguments
-            return relpath.replace('\\', '/')
+            return relpath.replace("\\", "/")
         else:
             return relpath
 
@@ -665,14 +666,13 @@ class File_Based_VCS(VCS):
         """
 
     def async_fetch_status_for_files(self, files):
-        self._compute_status(
-            all_files=files,
-            args=[f.path for f in files])
+        self._compute_status(all_files=files, args=[f.path for f in files])
 
     def async_fetch_status_for_project(self, project):
         self._compute_status(
             all_files=project.sources(recursive=False),
-            args=[d for d in project.source_dirs(recursive=False)])
+            args=[d for d in project.source_dirs(recursive=False)],
+        )
 
     def async_fetch_status_for_all_files(self, from_user):
         self._compute_status([])  # all files
@@ -701,9 +701,11 @@ class register_vcs:
         GPS.VCS2._register(
             self.name or klass.__name__,
             construct=lambda working_dir: klass(
-                working_dir, self.default_status, *self.args, **self.kwargs),
+                working_dir, self.default_status, *self.args, **self.kwargs
+            ),
             default_status=self.default_status,
-            discover_working_dir=klass.discover_working_dir)
+            discover_working_dir=klass.discover_working_dir,
+        )
         return klass
 
 
@@ -752,8 +754,9 @@ class vcs_action:
 
     _actions = set()  # all registered actions
 
-    def __init__(self, name, icon='', toolbar='', toolbar_section='',
-                 menu='', after=''):
+    def __init__(
+        self, name, icon="", toolbar="", toolbar_section="", menu="", after=""
+    ):
         self.name = name
         self.icon = icon
         self.menu = menu
@@ -796,8 +799,7 @@ class vcs_action:
                 self.method = run_in_background(method)
 
             def filter(self, context):
-                return (GPS.VCS2.active_vcs() and
-                        GPS.VCS2.active_vcs().name == vcs_name)
+                return GPS.VCS2.active_vcs() and GPS.VCS2.active_vcs().name == vcs_name
 
             def __call__(self):
                 v = GPS.VCS2.active_vcs()
@@ -811,15 +813,21 @@ class vcs_action:
 
         p = __Proxy(method)
         gs_utils.make_interactive(
-            p, description=method.__doc__,
-            name=action.name, category='VCS2', menu=action.menu,
-            after=action.after, icon=action.icon, filter=p.filter)
+            p,
+            description=method.__doc__,
+            name=action.name,
+            category="VCS2",
+            menu=action.menu,
+            after=action.after,
+            icon=action.icon,
+            filter=p.filter,
+        )
 
         if action.toolbar:
             act = GPS.Action(action.name)
-            act.button(toolbar=action.toolbar,
-                       section=action.toolbar_section,
-                       hide=True)
+            act.button(
+                toolbar=action.toolbar, section=action.toolbar_section, hide=True
+            )
 
     @staticmethod
     def register_all_vcs_actions(vcs):

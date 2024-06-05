@@ -20,7 +20,8 @@ def set_pref(f, name, val):
 
 def project_recomputed(hook_name):
     s = GPS.Project.root().get_attribute_as_list(
-        "default_switches", package="pretty_printer", index="ada")
+        "default_switches", package="pretty_printer", index="ada"
+    )
 
     if s == []:
         GPS.Logger("gnatpp").log("no gnatpp switches, exit")
@@ -69,5 +70,6 @@ def project_recomputed(hook_name):
 
     if not compact_layout:
         set_pref("-l3", "Ada-Record-Level", indent_level)
+
 
 GPS.Hook("project_view_changed").add(project_recomputed)

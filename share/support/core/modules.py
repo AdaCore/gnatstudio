@@ -77,7 +77,7 @@ class Module_Metaclass(type):
     def __new__(cls, name, bases, attrs):
         new_class = type.__new__(cls, name, bases, attrs)
 
-        if not attrs.get('abstract', False):
+        if not attrs.get("abstract", False):
             Module_Metaclass.modules.append(new_class)
 
             # If gps has already started, we should immediately setup the
@@ -137,15 +137,15 @@ class Module(object, metaclass=Module_Metaclass):
         # which adds the local gps_started function to the callbacks. This
         # callback is then called as part of running the same hook, but the
         # automatic tests might have already called exit() by then.
-
         "project_view_changed",
         "preferences_changed",
         "semantic_tree_updated",
         "file_edited",
         "location_changed",
-        "project_changed",   # not called for the initial project
+        "project_changed",  # not called for the initial project
         "compilation_finished",
-        "task_started")
+        "task_started",
+    )
     # As a special case, if you class has a subprogram with a name of any
     # of the hooks below, that function will automatically be connected to
     # the hook (and disconnected when the module is teared down.
@@ -231,7 +231,7 @@ class Module(object, metaclass=Module_Metaclass):
         """
         Implement the singleton pattern.
         """
-        if '_singleton' not in vars(cls):
+        if "_singleton" not in vars(cls):
             cls._singleton = super(Module, cls).__new__(cls, *args, **kwargs)
             if cls.__init__ != Module.__tmpinit:
                 cls.__oldinit = cls.__init__
@@ -257,6 +257,7 @@ class Module(object, metaclass=Module_Metaclass):
         """
         pref = getattr(self, hook_name, None)  # a bound method
         if pref:
+
             def internal(*args, **kwargs):
                 if args:
                     hook = args[0]
@@ -267,6 +268,7 @@ class Module(object, metaclass=Module_Metaclass):
                         return pref(hook, *args, **kwargs)
                 else:
                     return pref(*args, **kwargs)
+
             setattr(self, "__%s" % hook_name, internal)
             p = getattr(self, "__%s" % hook_name)
             if hook_name == "context_changed":
@@ -320,21 +322,25 @@ class Module(object, metaclass=Module_Metaclass):
 
         except Exception as e:
             exc_type, exc_value, exc_traceback = sys.exc_info()
-            GPS.Logger('MODULES').log('While loading module: %s' % (e, ))
+            GPS.Logger("MODULES").log("While loading module: %s" % (e,))
             GPS.Console("Messages").write(
-                "warning: could not load module %s\n" % self.name())
+                "warning: could not load module %s\n" % self.name()
+            )
             GPS.Console("Messages").write(
-                "%s\n" % '\n'.join(
-                    traceback.format_exception(exc_type, exc_value,
-                                               exc_traceback)))
+                "%s\n"
+                % "\n".join(
+                    traceback.format_exception(exc_type, exc_value, exc_traceback)
+                )
+            )
 
         # Catch "gps_started" implementation in legacy or user-defined plugins
         if hasattr(self, "gps_started"):
             GPS.Console("Messages").write(
                 "warning: Python module '%s' defines class '%s' with a"
                 " method 'gps_started': this is no longer supported: instead,"
-                " you should override 'setup'\n." % (
-                    self.__module__, self.__class__.__name__))
+                " you should override 'setup'\n."
+                % (self.__module__, self.__class__.__name__)
+            )
 
     def _teardown(self):
         for h in self.auto_connect_hooks:
@@ -359,7 +365,7 @@ class Module(object, metaclass=Module_Metaclass):
                     c = self.get_child(allow_create=True)
                 return c
             except Exception as e:
-                GPS.Logger('MODULES').log('While loading desktop: %s' % (e, ))
+                GPS.Logger("MODULES").log("While loading desktop: %s" % (e,))
 
     def _on_view_destroy(self, data):
         self.on_view_destroy()
@@ -390,7 +396,8 @@ class Module(object, metaclass=Module_Metaclass):
                         group=self.mdi_group,
                         title=self.view_title,
                         save_desktop=self._save_desktop,
-                        flags=self.mdi_flags)
+                        flags=self.mdi_flags,
+                    )
                     child.pywidget().connect("destroy", self._on_view_destroy)
                     return child
         return None

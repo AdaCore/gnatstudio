@@ -11,7 +11,6 @@ from workflows.promises import ProcessWrapper
 
 
 class Emulate_Staging(object):
-
     def __init__(self, *args, **kwargs):
         super(Emulate_Staging, self).__init__(*args, **kwargs)
         self.__load_staged_files()
@@ -26,13 +25,14 @@ class Emulate_Staging(object):
         files = list(self._staged)
         p = ProcessWrapper(
             args + [self._relpath(f.path) for f in files],
-            directory=self.working_dir.path)
+            directory=self.working_dir.path,
+        )
         (status, output) = yield p.wait_until_terminate()
         if status:
             GPS.Console().write("%s %s" % (" ".join(args), output))
         else:
             self.stage_or_unstage_files(files, stage=False)
-            visitor.success('Commit successful')
+            visitor.success("Commit successful")
 
     def _set_file_status(self, files, status, version="", repo_version=""):
         """Override Ada behavior"""
@@ -49,11 +49,13 @@ class Emulate_Staging(object):
                 list(s),
                 self._override_status_for_file(f, status),
                 version,
-                repo_version)
+                repo_version,
+            )
 
         files.difference_update(s)
         super(Emulate_Staging, self)._set_file_status(
-            list(files), status, version, repo_version)
+            list(files), status, version, repo_version
+        )
 
     def __load_staged_files(self):
         """
@@ -61,10 +63,10 @@ class Emulate_Staging(object):
         saved in previous sessions, with the list of staged files.
         """
         try:
-            staged = self.working_dir.get_property('staged_vcs')
+            staged = self.working_dir.get_property("staged_vcs")
             self._staged = set(GPS.File(f) for f in json.loads(staged))
         except:
-            self._staged = set()   # set of staged files
+            self._staged = set()  # set of staged files
 
     def __save_staged_files(self):
         """
@@ -72,8 +74,8 @@ class Emulate_Staging(object):
         can be retrieved in later GPS sessions.
         """
         self.working_dir.set_property(
-            'staged_vcs', json.dumps([f.path for f in self._staged]),
-            persistent=True)
+            "staged_vcs", json.dumps([f.path for f in self._staged]), persistent=True
+        )
 
     def stage_or_unstage_files(self, files, stage):
         for f in files:

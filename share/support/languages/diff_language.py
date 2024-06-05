@@ -2,8 +2,7 @@
 
 import GPS
 import collections
-from constructs import CAT_PACKAGE, CAT_PROCEDURE, INDENTATION_NONE, \
-    VISIBILITY_PUBLIC
+from constructs import CAT_PACKAGE, CAT_PROCEDURE, INDENTATION_NONE, VISIBILITY_PUBLIC
 
 FILE_SECTION = ["diff ", "Index:"]
 LOC_SECTION = "@@"
@@ -11,7 +10,6 @@ DIFF_CATEGORY = "Diff category"
 
 
 class DiffLanguage(GPS.Language):
-
     def __init__(self):
         self.offsets = []
 
@@ -22,8 +20,7 @@ class DiffLanguage(GPS.Language):
         """The format is @@ loc_descr @@ code"""
         return string.split(LOC_SECTION)[1]
 
-    def create_construct(self, clist, is_file, text, start_line,
-                         end_line, col_end):
+    def create_construct(self, clist, is_file, text, start_line, end_line, col_end):
         """
         :parameter is_file: |Boolean| indicate if we are adding a file or a
         diff section in the construct tree.
@@ -38,31 +35,32 @@ class DiffLanguage(GPS.Language):
             name = self.get_loc_descr(text).strip()
             entity_col = len(LOC_SECTION) + 2
 
-        clist.add_construct(type,
-                            False,
-                            VISIBILITY_PUBLIC,
-                            name,
-                            "",
-                            self.make_tuple(start_line + 1, 1),
-                            self.make_tuple(end_line, col_end),
-                            self.make_tuple(start_line + 1, entity_col))
+        clist.add_construct(
+            type,
+            False,
+            VISIBILITY_PUBLIC,
+            name,
+            "",
+            self.make_tuple(start_line + 1, 1),
+            self.make_tuple(end_line, col_end),
+            self.make_tuple(start_line + 1, entity_col),
+        )
 
     def pairwise(self, lst):
-        """ yield item i and item i+1 in lst. e.g.
+        """yield item i and item i+1 in lst. e.g.
         (lst[0], lst[1]), (lst[1], lst[2]), ..., (lst[-1], None)
         """
         if not lst:
             return
-        for i in range(len(lst)-1):
-            yield lst[i], lst[i+1]
+        for i in range(len(lst) - 1):
+            yield lst[i], lst[i + 1]
         yield lst[-1], None
 
     def parse_constructs(self, constructs_list, gps_file, string):
         lines = string.splitlines()
         self.offsets = [0 for _ in lines]
         for i in range(1, len(lines)):
-            self.offsets[i] = (self.offsets[i - 1] +
-                               len(lines[i - 1]) + 1)
+            self.offsets[i] = self.offsets[i - 1] + len(lines[i - 1]) + 1
 
         # Key: |int| start line of file section
         # Elem: list of |int| start lines of code sections
@@ -80,25 +78,32 @@ class DiffLanguage(GPS.Language):
         def _internal_parse(start_file, end_file):
             for start_code, end_code in self.pairwise(blocks[start_file]):
                 if end_code:
-                    self.create_construct(constructs_list,
-                                          False,
-                                          lines[start_code],
-                                          start_code,
-                                          end_code,
-                                          len(lines[end_code]))
+                    self.create_construct(
+                        constructs_list,
+                        False,
+                        lines[start_code],
+                        start_code,
+                        end_code,
+                        len(lines[end_code]),
+                    )
                 else:
-                    self.create_construct(constructs_list,
-                                          False,
-                                          lines[start_code],
-                                          start_code,
-                                          end_file,
-                                          len(lines[end_file - 1]))
-            self.create_construct(constructs_list,
-                                  True,
-                                  lines[start_file],
-                                  start_file,
-                                  end_file,
-                                  len(lines[end_file - 1]))
+                    self.create_construct(
+                        constructs_list,
+                        False,
+                        lines[start_code],
+                        start_code,
+                        end_file,
+                        len(lines[end_file - 1]),
+                    )
+            self.create_construct(
+                constructs_list,
+                True,
+                lines[start_file],
+                start_file,
+                end_file,
+                len(lines[end_file - 1]),
+            )
+
         # Fill the construct_list
         for start_file, end_file in self.pairwise(list(blocks.keys())):
             if end_file:
@@ -107,5 +112,4 @@ class DiffLanguage(GPS.Language):
                 _internal_parse(start_file, len(lines) - 1)
 
 
-GPS.Language.register(DiffLanguage(), "Diff",
-                      ".diff", "", "", INDENTATION_NONE)
+GPS.Language.register(DiffLanguage(), "Diff", ".diff", "", "", INDENTATION_NONE)

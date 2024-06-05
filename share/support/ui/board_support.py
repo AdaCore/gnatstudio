@@ -58,7 +58,6 @@ import workflows.promises as promises
 
 
 class BoardLoader(Module):
-
     # The list of debug build targets created by this plugin
     __debug_build_targets = []
 
@@ -101,9 +100,17 @@ class BoardLoader(Module):
     __is_busy = False
 
     # The list of supported targets
-    __supported_targets = ["arm-eabi", "leon3-elf", "m68020-elf",
-                           "powerpc-elf", "powerpc-eabispe", "riscv32-elf",
-                           "riscv64-elf", "aarch64-elf", "x86_64-elf"]
+    __supported_targets = [
+        "arm-eabi",
+        "leon3-elf",
+        "m68020-elf",
+        "powerpc-elf",
+        "powerpc-eabispe",
+        "riscv32-elf",
+        "riscv64-elf",
+        "aarch64-elf",
+        "x86_64-elf",
+    ]
 
     def __is_target_supported(self, prj):
         """
@@ -112,8 +119,7 @@ class BoardLoader(Module):
         if GPS.Logger("GNATSTUDIO.MENU_GENERATION").active:
             return True
 
-        return self.__target != "" and \
-            self.__target in self.__supported_targets
+        return self.__target != "" and self.__target in self.__supported_targets
 
     @staticmethod
     def __display_message(msg, mode="text"):
@@ -184,39 +190,45 @@ class BoardLoader(Module):
         """
 
         console = GPS.Console("Messages")
-        message_header = ("Can't debug on board:" if for_debug
-                          else "Can't flash the board:")
+        message_header = (
+            "Can't debug on board:" if for_debug else "Can't flash the board:"
+        )
         result = True
 
         if self.__connection_tool == "openocd" and not self.__config_file:
-            console.write(("%s no configuration file specified. "
-                           "Please set the "
-                           % (message_header)),
-                          mode="error")
-            console.insert_link("IDE'Connection_Config_File",
-                                self.__open_remote_project_properties)
-            console.write(" project attribute\n",
-                          mode="error")
+            console.write(
+                (
+                    "%s no configuration file specified. "
+                    "Please set the " % (message_header)
+                ),
+                mode="error",
+            )
+            console.insert_link(
+                "IDE'Connection_Config_File", self.__open_remote_project_properties
+            )
+            console.write(" project attribute\n", mode="error")
             result = False
 
         if for_debug and not self.__remote_target:
-            console.write(("%s no remote target specified. Please set the "
-                           % (message_header)),
-                          mode="error")
-            console.insert_link("IDE'Protocol_Host",
-                                self.__open_remote_project_properties)
-            console.write(" project attribute\n",
-                          mode="error")
+            console.write(
+                ("%s no remote target specified. Please set the " % (message_header)),
+                mode="error",
+            )
+            console.insert_link(
+                "IDE'Protocol_Host", self.__open_remote_project_properties
+            )
+            console.write(" project attribute\n", mode="error")
             result = False
 
         if for_debug and not self.__remote_protocol:
-            console.write(("%s no remote protocol specified. Please set the "
-                           % (message_header)),
-                          mode="error")
-            console.insert_link("IDE'Communication_Protocol",
-                                self.__open_remote_project_properties)
-            console.write(" project attribute\n",
-                          mode="error")
+            console.write(
+                ("%s no remote protocol specified. Please set the " % (message_header)),
+                mode="error",
+            )
+            console.insert_link(
+                "IDE'Communication_Protocol", self.__open_remote_project_properties
+            )
+            console.write(" project attribute\n", mode="error")
             result = False
 
         return result
@@ -234,10 +246,13 @@ class BoardLoader(Module):
         if self.__flashing_tool == "openocd":
             # Replace backslashes by forward slashes.
             # This is used to support OpenOCD on Windows.
-            binary = binary.replace('\\', '/')
-            args = ["-f", self.__config_file, "-c",
-                    "program %s verify reset exit %s"
-                    % (binary, self.__load_address)]
+            binary = binary.replace("\\", "/")
+            args = [
+                "-f",
+                self.__config_file,
+                "-c",
+                "program %s verify reset exit %s" % (binary, self.__load_address),
+            ]
 
         elif self.__flashing_tool == "st-flash":
             args = ["--reset", "write", binary, self.__load_address]
@@ -259,9 +274,11 @@ class BoardLoader(Module):
         elif self.__flashing_tool == "openocd":
             return "Verified OK"
         elif self.__flashing_tool == "pyocd":
-            return r"INFO:loader:Erased \d+ bytes \(\d+ sectors\), " \
-              r"programmed \d+ bytes \(\d+ pages\), skipped \d+ bytes " \
-              r"\(\d+ pages\) at [\d\.]+ kB\/s|^No operation performed"
+            return (
+                r"INFO:loader:Erased \d+ bytes \(\d+ sectors\), "
+                r"programmed \d+ bytes \(\d+ pages\), skipped \d+ bytes "
+                r"\(\d+ pages\) at [\d\.]+ kB\/s|^No operation performed"
+            )
         else:
             return ""
 
@@ -274,24 +291,24 @@ class BoardLoader(Module):
         self.__target = project.target
 
         self.__remote_target = project.get_attribute_as_string(
-            package="IDE",
-            attribute="Program_Host")
+            package="IDE", attribute="Program_Host"
+        )
 
         self.__remote_protocol = project.get_attribute_as_string(
-            package="IDE",
-            attribute="Communication_Protocol")
+            package="IDE", attribute="Communication_Protocol"
+        )
 
         self.__connection_tool = project.get_attribute_as_string(
-            package="IDE",
-            attribute="Connection_Tool").lower()
+            package="IDE", attribute="Connection_Tool"
+        ).lower()
 
         # Retrieve the configuration file only if we are using OpenOCD and
         # set the flashing tool according to the connection tool.
         if self.__connection_tool == "openocd":
             self.__flashing_tool = "openocd"
             self.__config_file = project.get_attribute_as_string(
-                package="IDE",
-                attribute="Connection_Config_File")
+                package="IDE", attribute="Connection_Config_File"
+            )
         elif self.__connection_tool == "st-util":
             self.__flashing_tool = "st-flash"
             self.__config_file = ""
@@ -314,12 +331,18 @@ class BoardLoader(Module):
 
         cmd = [self.__connection_tool]
 
-        gdb_port = self.__remote_target.split(':')[-1]
+        gdb_port = self.__remote_target.split(":")[-1]
 
         if self.__connection_tool == "openocd":
             # Semihosting command can only be used after the `init` command.
-            args = ["-f", self.__config_file, "-c", "gdb_port %s" % (gdb_port),
-                    "-c init", "-c arm semihosting enable"]
+            args = [
+                "-f",
+                self.__config_file,
+                "-c",
+                "gdb_port %s" % (gdb_port),
+                "-c init",
+                "-c arm semihosting enable",
+            ]
         elif self.__connection_tool == "st-util":
             has_semihosting = False
             semihosting_switch = "--semihosting"
@@ -328,7 +351,7 @@ class BoardLoader(Module):
 
             # Add semihosting support if it's supported by the used st-util
             try:
-                process = GPS.Process(["st-util", '--help'])
+                process = GPS.Process(["st-util", "--help"])
                 output = process.get_result()
                 has_semihosting = semihosting_switch in output
             except Exception:
@@ -363,7 +386,7 @@ class BoardLoader(Module):
             return ""
 
     def __reset_all(self, manager_delete=True, connection_delete=True):
-        """ Reset the workflows """
+        """Reset the workflows"""
 
         if self.__connection is not None and connection_delete:
             self.__display_message("Resetting the connection")
@@ -409,53 +432,55 @@ class BoardLoader(Module):
         # has been specified in the project.
         if active and self.__connection_tool:
             cmd = self.__get_connection_command_line()
-            self.__connector = TargetConnector(
-                tool_name=cmd[0],
-                default_args=cmd[1:])
+            self.__connector = TargetConnector(tool_name=cmd[0], default_args=cmd[1:])
 
         # Create the build targets needed in order to flash/debug the board
         # if not created yet.
         if not self.__debug_build_targets:
             workflows.create_target_from_workflow(
-                parent_menu='/Build/Bareboard/Debug on Board/',
+                parent_menu="/Build/Bareboard/Debug on Board/",
                 target_name="Debug on Board",
                 workflow_name="debug-on-board",
                 workflow=self.__debug_wf,
-                icon_name="gps-boardloading-debug-symbolic")
-            self.__debug_build_targets.append(
-                GPS.BuildTarget("Debug on Board"))
+                icon_name="gps-boardloading-debug-symbolic",
+            )
+            self.__debug_build_targets.append(GPS.BuildTarget("Debug on Board"))
 
             workflows.create_target_from_workflow(
-                parent_menu='/Build/Bareboard/',
+                parent_menu="/Build/Bareboard/",
                 target_name="Debug <current file> on Board",
                 workflow_name="debug-current-on-board",
                 workflow=self.__debug_wf,
                 icon_name="gps-boardloading-debug-symbolic",
                 in_toolbar=False,
-                main_arg="%fp")
+                main_arg="%fp",
+            )
             self.__debug_build_targets.append(
-                GPS.BuildTarget("Debug <current file> on Board"))
+                GPS.BuildTarget("Debug <current file> on Board")
+            )
 
         if not self.__flash_build_targets:
             workflows.create_target_from_workflow(
-                parent_menu='/Build/Bareboard/Flash to Board/',
+                parent_menu="/Build/Bareboard/Flash to Board/",
                 target_name="Flash to Board",
                 workflow_name="flash-to-board",
                 workflow=self.__flash_wf,
-                icon_name="gps-boardloading-flash-symbolic")
-            self.__flash_build_targets.append(
-                GPS.BuildTarget("Flash to Board"))
+                icon_name="gps-boardloading-flash-symbolic",
+            )
+            self.__flash_build_targets.append(GPS.BuildTarget("Flash to Board"))
 
             workflows.create_target_from_workflow(
-                parent_menu='/Build/Bareboard/',
+                parent_menu="/Build/Bareboard/",
                 target_name="Flash <current file> to Board",
                 workflow_name="flash-current-to-board",
                 workflow=self.__flash_wf,
                 icon_name="gps-boardloading-flash-symbolic",
                 in_toolbar=False,
-                main_arg="%fp")
+                main_arg="%fp",
+            )
             self.__flash_build_targets.append(
-                GPS.BuildTarget("Flash <current file> to Board"))
+                GPS.BuildTarget("Flash <current file> to Board")
+            )
 
         # Show/Hide the build targets accordingly
         self.__update_build_targets_visibility(active)
@@ -465,15 +490,14 @@ class BoardLoader(Module):
     ###############################
 
     def __flash_wf(self, main_name):
-        """Workflow to build and flash the program on the board.
-        """
+        """Workflow to build and flash the program on the board."""
 
         # Return with a warning message if we are still processing a previously
         # launched workflow.
         if self.__is_busy:
             self.__display_message(
-                msg="Warning: 'Flash to Board' already being executed",
-                mode="error")
+                msg="Warning: 'Flash to Board' already being executed", mode="error"
+            )
             return
 
         self.__is_busy = True
@@ -502,7 +526,7 @@ class BoardLoader(Module):
         # Retrieve the load address of the executable with objdump
         self.__display_message("Retrieving the load address.")
         cmd = ["%s-objdump" % (self.__target), exe, "-h"]
-        self.__display_message(' '.join(cmd))
+        self.__display_message(" ".join(cmd))
 
         try:
             con = promises.ProcessWrapper(cmd)
@@ -525,7 +549,7 @@ class BoardLoader(Module):
         self.__display_message("Creating the binary (flashable) image.")
         binary = exe + ".bin"
         cmd = ["%s-objcopy" % (self.__target), "-O", "binary", exe, binary]
-        self.__display_message(' '.join(cmd))
+        self.__display_message(" ".join(cmd))
 
         try:
             con = promises.ProcessWrapper(cmd)
@@ -543,14 +567,14 @@ class BoardLoader(Module):
         # Flash the binary and wait until it completes
         cmd = self.__get_flashing_command_line(binary)
         self.__display_message("Flashing image to board...")
-        self.__display_message(' '.join(cmd))
+        self.__display_message(" ".join(cmd))
 
         try:
             con = promises.ProcessWrapper(cmd)
             con.lines.subscribe(self.__display_message)
             output = yield con.wait_until_match(
-                self.__get_flashing_complete_regexp(),
-                120000)
+                self.__get_flashing_complete_regexp(), 120000
+            )
             if output is None:
                 self.__error_exit(msg="Could not flash the executable.")
                 con.terminate()
@@ -559,8 +583,9 @@ class BoardLoader(Module):
             self.__error_exit("Could not connect to the board.")
             return
 
-        self.__display_message(("Flashing complete. "
-                                "You may need to reset (or cycle power)."))
+        self.__display_message(
+            ("Flashing complete. " "You may need to reset (or cycle power).")
+        )
 
         # Not busy anymore
         self.__is_busy = False
@@ -573,9 +598,9 @@ class BoardLoader(Module):
         # Return with a warning message if we are still processing a previously
         # launched workflow.
         if self.__is_busy:
-            self.__display_message(("Warning: 'Debug on Board' "
-                                    "already being executed"),
-                                   mode="error")
+            self.__display_message(
+                ("Warning: 'Debug on Board' " "already being executed"), mode="error"
+            )
             return
 
         # Reset the connection if still alive
@@ -611,13 +636,13 @@ class BoardLoader(Module):
         if self.__connector:
             # Launch the connection tool with its associated console
             cmd = self.__connector.get_command_line()
-            self.__display_message("Launching: %s" % (' '.join(cmd)))
+            self.__display_message("Launching: %s" % (" ".join(cmd)))
             try:
                 self.__connection = promises.ProcessWrapper(cmd)
                 self.__connection.lines.subscribe(self.__display_message)
                 output = yield self.__connection.wait_until_match(
-                    self.__get_connection_detection_regexp(),
-                    120000)
+                    self.__get_connection_detection_regexp(), 120000
+                )
                 if output is None:
                     self.__error_exit(msg="Could not connect to the board.")
                     return
@@ -631,17 +656,14 @@ class BoardLoader(Module):
         debugger_promise = promises.DebuggerWrapper(
             exe,
             remote_target=self.__remote_target,
-            remote_protocol=self.__remote_protocol)
+            remote_protocol=self.__remote_protocol,
+        )
 
         # Load the executable
-        yield debugger_promise.wait_and_send(
-            cmd='load "%s"' % (exe),
-            block=True)
+        yield debugger_promise.wait_and_send(cmd='load "%s"' % (exe), block=True)
 
         # Reset the board
-        yield debugger_promise.wait_and_send(
-            cmd="monitor reset halt",
-            block=True)
+        yield debugger_promise.wait_and_send(cmd="monitor reset halt", block=True)
 
         # Not busy anymore
         self.__is_busy = False

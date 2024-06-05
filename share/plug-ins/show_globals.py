@@ -19,9 +19,11 @@ GLOBAL_MARKS = {}
 # This is used to show/hide the generated global contracts GNATstudio.
 
 
-COMMAND = "gnatprove {project} -u {unit} --mode=flow " + \
-          "--flow-show-gg -j 0 --quiet --warnings=off " + \
-          "--output=brief --ide-progress-bar"
+COMMAND = (
+    "gnatprove {project} -u {unit} --mode=flow "
+    + "--flow-show-gg -j 0 --quiet --warnings=off "
+    + "--output=brief --ide-progress-bar"
+)
 # The command used to produce a JSON file containing the generated global
 # contracts.
 
@@ -31,7 +33,7 @@ HIGHLIGHTING = "Editor code annotations"
 
 
 def _log(msg, mode="error"):
-    """ Facility logger. """
+    """Facility logger."""
     GPS.Console("Messages").write(msg + "\n", mode=mode)
 
 
@@ -51,46 +53,62 @@ def find_object_directory(project):
 
 
 def reset_state(buffer, file):
-    """ Clear global information for file from GNATstudio. """
+    """Clear global information for file from GNATstudio."""
     global GLOBAL_MARKS
 
-    for (mark, nlines) in GLOBAL_MARKS.pop(file.name(), []):
+    for mark, nlines in GLOBAL_MARKS.pop(file.name(), []):
         buffer.remove_special_lines(mark, nlines)
         mark.delete()
 
 
 def get_subp_decl(buf, line, column):
-    """ Return the subprogram declaration node at line, column.
+    """Return the subprogram declaration node at line, column.
     Return None if none is found.
     """
     unit = buf.get_analysis_unit()
-    decl = unit.root.find(lambda x: x.sloc_range.start.line == line and
-                          x.sloc_range.start.column == column and
-                          isinstance(x, (lal.SubpDecl, lal.ExprFunction,
-                                         lal.SingleTaskDecl,
-                                         lal.TaskTypeDecl, lal.EntryDecl,
-                                         lal.SubpBody)))
+    decl = unit.root.find(
+        lambda x: x.sloc_range.start.line == line
+        and x.sloc_range.start.column == column
+        and isinstance(
+            x,
+            (
+                lal.SubpDecl,
+                lal.ExprFunction,
+                lal.SingleTaskDecl,
+                lal.TaskTypeDecl,
+                lal.EntryDecl,
+                lal.SubpBody,
+            ),
+        )
+    )
 
     return decl
 
 
 def has_aspects(subp_decl_node):
-    """ Return True if the subprogram declaration node has an aspect. """
+    """Return True if the subprogram declaration node has an aspect."""
 
     return bool(subp_decl_node.f_aspects)
 
 
 def get_aspect_line(line, subp_decl_node):
-    """ Get the line number at which the final aspect is, or should go. """
+    """Get the line number at which the final aspect is, or should go."""
 
     # If there are already aspects, return the line where the aspect list ends
     if has_aspects(subp_decl_node):
         return int(subp_decl_node.f_aspects.sloc_range.end.line)
 
     # If it's an expression function, task, entry, or decl return where it ends
-    elif isinstance(subp_decl_node, (lal.ExprFunction, lal.SingleTaskDecl,
-                                     lal.TaskTypeDecl, lal.EntryDecl,
-                                     lal.SubpDecl)):
+    elif isinstance(
+        subp_decl_node,
+        (
+            lal.ExprFunction,
+            lal.SingleTaskDecl,
+            lal.TaskTypeDecl,
+            lal.EntryDecl,
+            lal.SubpDecl,
+        ),
+    ):
         return int(subp_decl_node.sloc_range.end.line)
 
     # If it's a subprogram body, return where the body's spec part ends
@@ -103,7 +121,7 @@ def get_aspect_line(line, subp_decl_node):
 
 
 def edit_file(file, json_name):
-    """ Parse the json output and add the global information into the currently
+    """Parse the json output and add the global information into the currently
     edited file.
     """
     global GLOBAL_MARKS
@@ -112,7 +130,7 @@ def edit_file(file, json_name):
 
     def pretty_printed_contracts(contracts):
         for contract in contracts:
-            subp_file = contract['file']
+            subp_file = contract["file"]
             # File where the subprogram declaration occurs
 
             # If the file in which the subprogram declaration occurs is
@@ -121,7 +139,7 @@ def edit_file(file, json_name):
             if subp_file != file.base_name():
                 continue
 
-            globals = contract['globals']
+            globals = contract["globals"]
             # Subprogram globals
 
             sloc_line = contract["line"]
@@ -129,7 +147,7 @@ def edit_file(file, json_name):
 
             for aspect in globals:
                 # ??? skip Refined_Globals until a later version of this plugin
-                if aspect == u'Refined_Global':
+                if aspect == "Refined_Global":
                     continue
 
                 subp_node = get_subp_decl(buffer, sloc_line, sloc_column)
@@ -138,13 +156,12 @@ def edit_file(file, json_name):
 
                 if has_aspects(subp_node):
                     # Use the start column from the last aspect
-                    insert_column = \
-                        subp_node.f_aspects.\
-                        f_aspect_assocs.children[-1].sloc_range.start.column
+                    insert_column = subp_node.f_aspects.f_aspect_assocs.children[
+                        -1
+                    ].sloc_range.start.column
                 else:
                     # Use the start column from the subprogram node
-                    insert_column = \
-                        subp_node.sloc_range.start.column
+                    insert_column = subp_node.sloc_range.start.column
 
                 # Adjust from Libadalang column which is indexed from 1
                 indent = " " * (insert_column - 1)
@@ -181,8 +198,9 @@ def edit_file(file, json_name):
                             pp_contract += "(\n%s" % var_indent
 
                         # Comma separate each variable, and place on new lines
-                        pp_contract += \
-                            (",\n%s" % var_indent).join(globals[aspect][mode])
+                        pp_contract += (",\n%s" % var_indent).join(
+                            globals[aspect][mode]
+                        )
 
                         # Close parentheses for variables
                         if paren_vars:
@@ -205,18 +223,22 @@ def edit_file(file, json_name):
     # Start of processing for edit_file
 
     try:
-        with open(json_name, 'r') as fp:
+        with open(json_name, "r") as fp:
             gg_json = json.load(fp)
     except ValueError:
         if os.stat(json_name).st_size:
-            _log("Failed to parse global information file %s: "
-                 "the JSON is invalid." % json_name)
+            _log(
+                "Failed to parse global information file %s: "
+                "the JSON is invalid." % json_name
+            )
         else:
             _log("No global information found: %s is empty." % json_name)
         return
     except IOError:
-        _log("No global contracts need to be generated for file %s" %
-             file.base_name(), mode="text")
+        _log(
+            "No global contracts need to be generated for file %s" % file.base_name(),
+            mode="text",
+        )
         return
 
     # Clean the previous special lines if needed
@@ -224,7 +246,7 @@ def edit_file(file, json_name):
 
     # Go through the pretty-printed contracts and insert the special lines into
     # the GNATstudio editor window.
-    for line, pp_contract in pretty_printed_contracts(gg_json['contracts']):
+    for line, pp_contract in pretty_printed_contracts(gg_json["contracts"]):
         mark = buffer.add_special_line(line, pp_contract, HIGHLIGHTING)
         mark_num = (mark, len(pp_contract))
         # We store these so they can be hidden when the user clicks
@@ -233,8 +255,7 @@ def edit_file(file, json_name):
 
 
 def on_exit(process, status, full_output):
-    """ Triggered when GNATprove process has exited
-    """
+    """Triggered when GNATprove process has exited"""
     if status:
         _log(process.get_result())
     else:
@@ -242,7 +263,7 @@ def on_exit(process, status, full_output):
 
 
 def show_generated_global_contracts():
-    """ Display the currently edited file's generated global contracts in
+    """Display the currently edited file's generated global contracts in
     GNATstudio.
     """
 
@@ -253,16 +274,18 @@ def show_generated_global_contracts():
     objdir = find_object_directory(project)
     if not objdir:
         objdir = GPS.get_tmp_dir()
-        _log("Could not find an object directory for %s, reverting to %s" %
-             (file, objdir))
+        _log(
+            "Could not find an object directory for %s, reverting to %s"
+            % (file, objdir)
+        )
     gg_json = os.path.join(objdir, "gnatprove", unitname + ".gg")
 
     if distutils.dep_util.newer(file.name(), gg_json):
-        prj = (' -P """%s"""' % project.file().name("Build_Server"))
+        prj = ' -P """%s"""' % project.file().name("Build_Server")
         scenario = project.scenario_variables_cmd_line("-X")
         cmd = COMMAND.format(project=prj, unit=file.base_name())
         if scenario:
-            cmd += ' ' + scenario
+            cmd += " " + scenario
         proc = GPS.Process(cmd, on_exit=on_exit, remote_server="Build_Server")
         proc.file = file
         proc.gg_json = gg_json
@@ -279,18 +302,25 @@ def show_generated_global_contracts():
 
 # Only register if gnatprove is on the path
 if os_utils.locate_exec_on_path("gnatprove"):
-    @interactive("Ada", in_ada_file,
-                 contextual="SPARK/Globals/Show generated Global contracts",
-                 name="Show generated Global contracts",
-                 contextual_group=GPS.Contextual.Group.EXTRA_INFORMATION)
+
+    @interactive(
+        "Ada",
+        in_ada_file,
+        contextual="SPARK/Globals/Show generated Global contracts",
+        name="Show generated Global contracts",
+        contextual_group=GPS.Contextual.Group.EXTRA_INFORMATION,
+    )
     def show_global_contracts():
-        """ Add special lines showing the global contracts. """
+        """Add special lines showing the global contracts."""
         show_generated_global_contracts()
 
-    @interactive("Ada", in_ada_file,
-                 contextual="SPARK/Globals/Hide generated Global contracts",
-                 name="Hide generated Global contracts",
-                 contextual_group=GPS.Contextual.Group.EXTRA_INFORMATION)
+    @interactive(
+        "Ada",
+        in_ada_file,
+        contextual="SPARK/Globals/Hide generated Global contracts",
+        name="Hide generated Global contracts",
+        contextual_group=GPS.Contextual.Group.EXTRA_INFORMATION,
+    )
     def hide_global_contracts():
-        """ Clear the added special lines. """
+        """Clear the added special lines."""
         reset_state(GPS.EditorBuffer.get(), GPS.current_context().file())

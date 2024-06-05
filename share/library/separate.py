@@ -22,17 +22,17 @@ import os.path
 def __filter(context):
     try:
         body_2 = context.entity().body(2)
-        return (context.entity().body() != body_2 or
-                context.entity().body(1) != body_2)
+        return context.entity().body() != body_2 or context.entity().body(1) != body_2
     except:
         return False
 
 
 @gs_utils.interactive(
-    name='jump to separate body',
+    name="jump to separate body",
     filter=__filter,
     contextual="Goto separate body of %e",
-    contextual_ref='goto body')
+    contextual_ref="goto body",
+)
 def on_goto_separate():
     """
     Jump to the actual implementation for an Ada entity that is declared as
@@ -63,8 +63,9 @@ def on_goto_separate():
 
     # To figure out which one is the most likely separate, go to the longest
     # file name. This won't work with unconventional naming schemes.
-    if len(os.path.basename(loc_1.file().name())
-           ) > len(os.path.basename(loc_2.file().name())):
+    if len(os.path.basename(loc_1.file().name())) > len(
+        os.path.basename(loc_2.file().name())
+    ):
         loc = loc_1
     else:
         loc = loc_2

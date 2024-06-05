@@ -51,8 +51,10 @@ def on_copy_base_name_label(ctxt):
         return "Copy base name to clipboard"
 
 
-@gs_utils.interactive(contextual=on_copy_file_name_label,
-                      contextual_group=GPS.Contextual.Group.EXTRA_INFORMATION)
+@gs_utils.interactive(
+    contextual=on_copy_file_name_label,
+    contextual_group=GPS.Contextual.Group.EXTRA_INFORMATION,
+)
 def copy_file_name():
     """
     Copy the full name of the current file in the clipboard, so that it can be
@@ -68,8 +70,10 @@ def copy_file_name():
         GPS.Clipboard.copy(filename)
 
 
-@gs_utils.interactive(contextual=on_copy_base_name_label,
-                      contextual_group=GPS.Contextual.Group.EXTRA_INFORMATION)
+@gs_utils.interactive(
+    contextual=on_copy_base_name_label,
+    contextual_group=GPS.Contextual.Group.EXTRA_INFORMATION,
+)
 def copy_base_file_name():
     """
     Copy the base name of the current file in the clipboard, so that it can be

@@ -16,7 +16,8 @@ from os_utils import locate_exec_on_path
 from gs_utils.console_process import Console_Process
 
 
-project_attributes = """
+project_attributes = (
+    """
   <project_attribute
    package="emulator"
    name="Debug_Port"
@@ -33,10 +34,11 @@ project_attributes = """
    label="Board"
    editor_page="GNATemulator"
    hide_in="wizard library_wizard"
-   """ + \
-    "description='If GNATemulator provides multiple emulations for the" + \
-    " target platform, use this option to select a specific board. Use" + \
-    " `gnatemu --help` to get the list of boards.'" + """
+   """
+    + "description='If GNATemulator provides multiple emulations for the"
+    + " target platform, use this option to select a specific board. Use"
+    + " `gnatemu --help` to get the list of boards.'"
+    + """
   >
     <string/>
   </project_attribute>
@@ -83,6 +85,7 @@ project_attributes = """
     <iconname>gps-gnattest-run</iconname>
   </target>
 """
+)
 
 # This has to be done at GPS start, before the project is actually loaded.
 GPS.parse_xml(project_attributes)
@@ -93,7 +96,6 @@ def log(msg):
 
 
 class GNATemulator(Module):
-
     # List of targets
     # These are created lazily the first time we find the necessary tools on
     # the command line. This is done so that we do not have to toggle the
@@ -107,18 +109,28 @@ class GNATemulator(Module):
 
         if not self.__buildTargets and active:
             targets_def = [
-                ["Run with Emulator", "run-with-emulator",
-                 GNATemulator.build_and_run,
-                 "gps-emulatorloading-run-symbolic"],
-                ["Debug with Emulator", "debug-with-emulator",
-                 GNATemulator.build_and_debug,
-                 "gps-emulatorloading-debug-symbolic"]]
+                [
+                    "Run with Emulator",
+                    "run-with-emulator",
+                    GNATemulator.build_and_run,
+                    "gps-emulatorloading-run-symbolic",
+                ],
+                [
+                    "Debug with Emulator",
+                    "debug-with-emulator",
+                    GNATemulator.build_and_debug,
+                    "gps-emulatorloading-debug-symbolic",
+                ],
+            ]
 
             for target in targets_def:
                 workflows.create_target_from_workflow(
-                        target_name=target[0], workflow_name=target[1],
-                        workflow=target[2], icon_name=target[3],
-                        parent_menu='/Build/Emulator/%s/' % target[0])
+                    target_name=target[0],
+                    workflow_name=target[1],
+                    workflow=target[2],
+                    icon_name=target[3],
+                    parent_menu="/Build/Emulator/%s/" % target[0],
+                )
                 self.__buildTargets.append(GPS.BuildTarget(target[0]))
 
         if active:
@@ -132,7 +144,7 @@ class GNATemulator(Module):
     def get_gnatemu_name():
         target = GPS.get_target()
         if target:
-            prefix = target + '-'
+            prefix = target + "-"
         else:
             prefix = ""
 
@@ -143,11 +155,11 @@ class GNATemulator(Module):
         bin = GNATemulator.get_gnatemu_name()
 
         gnatemu = locate_exec_on_path(bin)
-        return gnatemu != ''
+        return gnatemu != ""
 
     @staticmethod
     def generate_gnatemu_command(gnatemu, args):
-        """ Returns a list containing a command line calling gnatemu. """
+        """Returns a list containing a command line calling gnatemu."""
         sv = GPS.Project.scenario_variables()
         var_args = ["-X%s=%s" % (k, v) for k, v in list(sv.items())] if sv else []
         command = [gnatemu]
@@ -160,28 +172,30 @@ class GNATemulator(Module):
     @staticmethod
     def run_gnatemu(args, in_console=True):
         command = GNATemulator.generate_gnatemu_command(
-            GNATemulator.get_gnatemu_name(), args)
-        GPS.Console("Messages").write("Running in emulator: %s\n" %
-                                      (' '.join(command)))
+            GNATemulator.get_gnatemu_name(), args
+        )
+        GPS.Console("Messages").write("Running in emulator: %s\n" % (" ".join(command)))
         #  - We open GNATemu in a console by default.
         #  - If specified, we use the BuildTarget for running GNATemu instead.
         #  - Don't close the console when GNAtemu exits so we have time to see
         #    the results
         #  - GNATemu should be in the task manager
         if in_console:
-            yield Console_Process(command=command, force=False,
-                                  close_on_exit=False, task_manager=True,
-                                  manage_prompt=True)
+            yield Console_Process(
+                command=command,
+                force=False,
+                close_on_exit=False,
+                task_manager=True,
+                manage_prompt=True,
+            )
         else:
             builder = promises.TargetWrapper("Run GNATemulator")
             yield builder.wait_on_execute(extra_args=args, quiet=False)
 
     @staticmethod
     def __error_exit(msg=""):
-        """ Emit an error and reset the workflows """
-        GPS.Console("Messages").write(
-            msg + " [workflow stopped]",
-            mode="error")
+        """Emit an error and reset the workflows"""
+        GPS.Console("Messages").write(msg + " [workflow stopped]", mode="error")
 
     # Launch the BuildTarget for building with
     # the given adb file as the main file
@@ -260,16 +274,17 @@ class GNATemulator(Module):
 
         # STEP 2 load with Emulator
         debug_port = GPS.Project.root().get_attribute_as_string(
-            package="Emulator", attribute="Debug_Port")
+            package="Emulator", attribute="Debug_Port"
+        )
 
         # TODO: remove this fall-back once GNATemulator supports the
         # new 'Debug_Port' attribute (Fabien's task)
         if debug_port == "":
             debug_port = "1234"
 
-        yield GNATemulator.run_gnatemu(["--freeze-on-startup",
-                                        "--gdb=%s" % debug_port,
-                                        exe])
+        yield GNATemulator.run_gnatemu(
+            ["--freeze-on-startup", "--gdb=%s" % debug_port, exe]
+        )
 
         log("... done.")
 
@@ -278,7 +293,8 @@ class GNATemulator(Module):
             debugger_promise = promises.DebuggerWrapper(
                 GPS.File(exe),
                 remote_target="localhost:" + debug_port,
-                remote_protocol="remote")
+                remote_protocol="remote",
+            )
         except Exception:
             GNATemulator.__error_exit("Could not initialize the debugger.")
             return

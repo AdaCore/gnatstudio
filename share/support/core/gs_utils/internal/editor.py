@@ -7,7 +7,8 @@ from gi.repository import Gdk
 def text_view_from_location(loc):
     """Creates a Gtk.TextView from an EditorLocation"""
     return pygps.get_widgets_by_type(
-        Gtk.TextView, loc.buffer().current_view().pywidget())[0]
+        Gtk.TextView, loc.buffer().current_view().pywidget()
+    )[0]
 
 
 def iter_from_location(loc):
@@ -25,14 +26,12 @@ def iter_from_location(loc):
 
 
 def click_in_widget(
-        window, x=0, y=0, button=1, events=pygps.single_click_events,
-        through_gps=True):
+    window, x=0, y=0, button=1, events=pygps.single_click_events, through_gps=True
+):
     """Simulate a click in a widget. There are various other functions
-     adapted for specific widget types"""
+    adapted for specific widget types"""
 
-    if os.name == 'nt' and button == 3 \
-       and events == pygps.single_click_events:
-
+    if os.name == "nt" and button == 3 and events == pygps.single_click_events:
         # ??? work around
         # On Windows sending a BUTTON_PRESS followed by a
         # BUTTON_RELEASE event when opening a contextual menu does
@@ -43,11 +42,8 @@ def click_in_widget(
     for event_type in events:
         if through_gps:
             GPS.send_button_event(
-                button=button,
-                x=int(x),
-                y=int(y),
-                window=window,
-                type=event_type)
+                button=button, x=int(x), y=int(y), window=window, type=event_type
+            )
         else:
             event = Gdk.EventButton()
             event.type = event_type
@@ -62,26 +58,32 @@ def click_in_widget(
 
 
 def click_in_text(
-        loc, button=1, xoffset=0, events=pygps.single_click_events,
-        through_gps=True):
+    loc, button=1, xoffset=0, events=pygps.single_click_events, through_gps=True
+):
     """Simulate a mouse click at the given EditorLocation.
-     If you use the third button to display a contextual menu, see also
-     activate_contextual().
-     If xoffset is not null, the mouse is clicked that many pixels to
-     the right of the actual location. This can be used to simulate clicks
-     outside the bounds of a line."""
+    If you use the third button to display a contextual menu, see also
+    activate_contextual().
+    If xoffset is not null, the mouse is clicked that many pixels to
+    the right of the actual location. This can be used to simulate clicks
+    outside the bounds of a line."""
 
     view = text_view_from_location(loc)
     rect = view.get_iter_location(iter_from_location(loc))
-    (x, y) = view.buffer_to_window_coords(Gtk.TextWindowType.TEXT, rect.x
-                                          + 1 + xoffset, rect.y + 1)
+    (x, y) = view.buffer_to_window_coords(
+        Gtk.TextWindowType.TEXT, rect.x + 1 + xoffset, rect.y + 1
+    )
 
-    click_in_widget(view.get_window(Gtk.TextWindowType.TEXT), x=x, y=y,
-                    button=button, events=events, through_gps=through_gps)
+    click_in_widget(
+        view.get_window(Gtk.TextWindowType.TEXT),
+        x=x,
+        y=y,
+        button=button,
+        events=events,
+        through_gps=through_gps,
+    )
 
 
 class SourceEditor(object):
-
     def __init__(self, buffer):
         """
         This class is a proxy for the GPS.EditorBuffer class

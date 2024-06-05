@@ -26,8 +26,7 @@ from GPS import MDI, Project, Process, CodeAnalysis
 # A class to display the output of gcov in a separate console.
 
 
-class Gcov_Process (GPS.Console, GPS.Process):
-
+class Gcov_Process(GPS.Console, GPS.Process):
     def on_output(self, unmatched, matched):
         self.write(unmatched + matched)
 
@@ -59,27 +58,35 @@ class Gcov_Process (GPS.Console, GPS.Process):
             pass
 
     def __init__(self, process, args="", directory=""):
-        GPS.Console.__init__(self, "Executing gcov",
-                             on_input=Gcov_Process.on_input,
-                             on_destroy=Gcov_Process.on_destroy,
-                             force=True)
+        GPS.Console.__init__(
+            self,
+            "Executing gcov",
+            on_input=Gcov_Process.on_input,
+            on_destroy=Gcov_Process.on_destroy,
+            force=True,
+        )
 
-        GPS.Process.__init__(self, process + ' ' + args, ".+",
-                             remote_server="Build_Server",
-                             directory=directory,
-                             on_exit=Gcov_Process.on_exit,
-                             on_match=Gcov_Process.on_output)
+        GPS.Process.__init__(
+            self,
+            process + " " + args,
+            ".+",
+            remote_server="Build_Server",
+            directory=directory,
+            on_exit=Gcov_Process.on_exit,
+            on_match=Gcov_Process.on_output,
+        )
 
 
 def using_gcov(context):
-    pref_name = ('Coverage-Toolchain'
-                 if "ENABLE_GCOV" in os.environ
-                 else 'Coverage-Toolchain-Internal')
-    return GPS.Preference(pref_name).get() == 'Gcov'
+    pref_name = (
+        "Coverage-Toolchain"
+        if "ENABLE_GCOV" in os.environ
+        else "Coverage-Toolchain-Internal"
+    )
+    return GPS.Preference(pref_name).get() == "Gcov"
 
 
-@interactive(name='gcov compute coverage files',
-             filter=using_gcov)
+@interactive(name="gcov compute coverage files", filter=using_gcov)
 def run_gcov():
     "Run gcov to generate the coverage files"
     # Verify that the version of gcov is recent enough to support response
@@ -95,14 +102,19 @@ def run_gcov():
         else:
             date = found[0]
             if int(date) < 20071005:
-                MDI.dialog("Your version of gcov is dated " + str(date) +
-                           ".\nThis plugin requires gcov for GNAT dated " +
-                           "20071005 or later.")
+                MDI.dialog(
+                    "Your version of gcov is dated "
+                    + str(date)
+                    + ".\nThis plugin requires gcov for GNAT dated "
+                    + "20071005 or later."
+                )
                 return
     except Exception:
-        MDI.dialog("""Could not read gcov version number.
+        MDI.dialog(
+            """Could not read gcov version number.
 
-Make sure you are using gcov for GNAT dated 20071005 or later.""")
+Make sure you are using gcov for GNAT dated 20071005 or later."""
+        )
 
     # Determine the root project
     root_project = Project.root()
@@ -113,10 +125,12 @@ Make sure you are using gcov for GNAT dated 20071005 or later.""")
     if not GCOV_ROOT:
         root_object_dirs = root_project.object_dirs(False)
         if not root_object_dirs:
-            MDI.dialog("""The root project does not have an object directory.
+            MDI.dialog(
+                """The root project does not have an object directory.
  Please add one, or set the enviroment variable GCOV_ROOT to
  the directory where you would like the gcov files to be
- generated.""")
+ generated."""
+            )
             return
         else:
             gcov_dir = root_object_dirs[0]
@@ -125,13 +139,17 @@ Make sure you are using gcov for GNAT dated 20071005 or later.""")
         gcov_dir = GCOV_ROOT
 
     if not os.access(gcov_dir, os.R_OK and os.W_OK):
-        MDI.dialog(""" Could not access the directory:
+        MDI.dialog(
+            """ Could not access the directory:
 
-   """ + gcov_dir + """
+   """
+            + gcov_dir
+            + """
 
 Please point the environment variable GCOV_ROOT to a directory
 on which you have permission to read and write.
-         """)
+         """
+        )
 
     input_file = os.path.abspath(os.path.join(gcov_dir, "gcov_input.txt"))
 
@@ -141,7 +159,7 @@ on which you have permission to read and write.
     object_dirs = root_project.object_dirs(True)
 
     # Write the response file
-    res = open(input_file, 'w')
+    res = open(input_file, "w")
 
     gcda_file_found = False
     gcno_file_found = False
@@ -151,8 +169,8 @@ on which you have permission to read and write.
 
         for s in sources:
             n = s.path
-            basename = n[max(n.rfind('\\'), n.rfind('/')) + 1:len(n)]
-            unit = basename[0:basename.rfind('.')]
+            basename = n[max(n.rfind("\\"), n.rfind("/")) + 1 : len(n)]
+            unit = basename[0 : basename.rfind(".")]
 
             for object_dir in object_dirs:
                 gcda = object_dir + os.sep + unit + ".gcda"
@@ -172,7 +190,7 @@ on which you have permission to read and write.
                     # Write one entry in response file
 
                     # Escape all backslashes.
-                    gcda = gcda.replace('\\', '\\\\')
+                    gcda = gcda.replace("\\", "\\\\")
 
                     res.write('"' + gcda + '"' + "\n")
                     break
@@ -181,31 +199,35 @@ on which you have permission to read and write.
 
     if not gcno_file_found:
         # No gcno file was found: display an appropriate message.
-        MDI.dialog(""" No ".gcno" file was found in any of the object directories.
+        MDI.dialog(
+            """ No ".gcno" file was found in any of the object directories.
 
 Make sure you have compiled the sources of interest with
-the "Code coverage" flags.""")
+the "Code coverage" flags."""
+        )
 
     else:
         if not gcda_file_found:
             # Some gcno files were found, but no gcna files.
-            MDI.dialog(""" No ".gcda" file was found in any of the object directories.
+            MDI.dialog(
+                """ No ".gcda" file was found in any of the object directories.
 
 Make sure you have run the executable(s) at least once.
-""")
+"""
+            )
 
         else:
             # Run gcov
             Gcov_Process("gcov", "@%s" % input_file, directory=gcov_dir)
 
 
-@interactive(name='gcov remove coverage files',
-             filter=using_gcov)
+@interactive(name="gcov remove coverage files", filter=using_gcov)
 def remove_gcov():
     "Cleanup the gcov coverage files"
 
     if not MDI.yes_no_dialog(
-       "This will remove all .gcov and .gcda files, are you sure ?"):
+        "This will remove all .gcov and .gcda files, are you sure ?"
+    ):
         return
 
     # Look in all the projects

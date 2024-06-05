@@ -10,7 +10,6 @@ import workflows.promises as promises
 
 
 class BuildAndRunAll(Module):
-
     __buildTarget = None
 
     def __create_target_lazily(self):
@@ -20,17 +19,18 @@ class BuildAndRunAll(Module):
 
         if not self.__buildTarget:
             workflows.create_target_from_workflow(
-                parent_menu='/Build/Project/',
+                parent_menu="/Build/Project/",
                 target_name="Build & Run All",
                 workflow_name="build-and-run-all",
                 workflow=self.__build_and_run_all_wf,
                 icon_name="gps-run-symbolic",
-                main_arg="")
+                main_arg="",
+            )
             self.__buildTarget = GPS.BuildTarget("Build & Run All")
 
     def __show_or_hide_target(self):
         project = GPS.Project.root()
-        mains = project.get_attribute_as_list(attribute='Main')
+        mains = project.get_attribute_as_list(attribute="Main")
 
         if len(mains) > 0:
             self.__buildTarget.show()

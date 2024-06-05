@@ -66,10 +66,7 @@ def to_tuple(gtk_iter):
     :type gtk_iter: Gtk.TextIter
     :rtype (int, int)
     """
-    return (
-        gtk_iter.get_line(),
-        gtk_iter.get_line_offset()
-    )
+    return (gtk_iter.get_line(), gtk_iter.get_line_offset())
 
 
 def iter_from_tuple(gtk_ed, tuple_instance):
@@ -129,6 +126,7 @@ def to_line_end(textiter):
 try:
     # Might fail while building the doc
     import re as r
+
     for name in dir(Gtk.TextIter):
         if r.match("(forward|set|backward).*$", name):
             setattr(Gtk.TextIter, name + "_n", make_wrapper(name))
@@ -168,11 +166,11 @@ def propagate_change(pref):
         pref.tag.set_property("style", Pango.Style.NORMAL)
         pref.tag.set_property("weight", Pango.Weight.NORMAL)
 
+
 # Data classes for highlighters
 
 
 class Style(object):
-
     def __init__(self, style_id, prio, pref):
         """
         :type style_id: string
@@ -188,7 +186,6 @@ class Style(object):
 
 
 class BaseMatcher(object):
-
     def resolve(self):
         """
         :rtype: Matcher
@@ -197,7 +194,6 @@ class BaseMatcher(object):
 
 
 class Matcher(BaseMatcher):
-
     def resolve(self):
         return self
 
@@ -207,8 +203,8 @@ class Matcher(BaseMatcher):
 
     def __init__(self, tag, name=""):
         """
-            :type tag: Style
-            :type name: string
+        :type tag: Style
+        :type name: string
         """
         self.name = name
         self.tag = tag
@@ -227,11 +223,10 @@ class Matcher(BaseMatcher):
 
 
 class SimpleMatcher(Matcher):
-
     def __init__(self, tag, pattern, name=""):
         """
-            :type tag: Style
-            :type pattern: string
+        :type tag: Style
+        :type pattern: string
         """
         super(SimpleMatcher, self).__init__(tag, name)
         self._pattern = pattern
@@ -242,12 +237,12 @@ class SimpleMatcher(Matcher):
 
 
 class RegionMatcher(Matcher):
-
     ":type: dict[string, RegionMatcher]"
     region_matchers = {}
 
-    def __init__(self, tag, start_pattern, end_pattern, hl_spec, matchall,
-                 name="", igncase=False):
+    def __init__(
+        self, tag, start_pattern, end_pattern, hl_spec, matchall, name="", igncase=False
+    ):
         """
         :type tag: Style
         :type start_pattern: string
@@ -265,8 +260,9 @@ class RegionMatcher(Matcher):
         if self.name:
             RegionMatcher.region_matchers[self.name] = self
 
-        self.subhighlighter = SubHighlighter(hl_spec, end_pattern,
-                                             matchall, igncase=igncase)
+        self.subhighlighter = SubHighlighter(
+            hl_spec, end_pattern, matchall, igncase=igncase
+        )
         self.subhighlighter.parent_cat = self
 
     @property
@@ -280,7 +276,6 @@ class RegionMatcher(Matcher):
 
 
 class RegionRef(BaseMatcher):
-
     def __init__(self, region_name):
         self.region_name = region_name
 
@@ -294,7 +289,6 @@ class RegionRef(BaseMatcher):
 
 
 class HighlighterStacks(object):
-
     def __init__(self):
         # The stack of highlighter at (0, 0) is necessarily the empty stack,
         # so the stack list comes prepopulated with one empty stack
@@ -343,19 +337,23 @@ class HighlighterStacks(object):
         :param nb_deleted_lines: int
         :param at_line: int
         """
-        del self.stacks_list[at_line + 1:at_line + nb_deleted_lines + 1]
+        del self.stacks_list[at_line + 1 : at_line + nb_deleted_lines + 1]
 
     def __str__(self):
         return "{0}".format(
-            "\n".join(["{0}\t{1}".format(num, [c for c in stack])
-                       for num, stack in enumerate(self.stacks_list)])
+            "\n".join(
+                [
+                    "{0}\t{1}".format(num, [c for c in stack])
+                    for num, stack in enumerate(self.stacks_list)
+                ]
+            )
         )
 
 
 class SubHighlighter(object):
-
-    def __init__(self, highlighter_spec, stop_pattern=None,
-                 matchall=True, igncase=False):
+    def __init__(
+        self, highlighter_spec, stop_pattern=None, matchall=True, igncase=False
+    ):
         """
         :type highlighter_spec: Iterable[BaseMatcher]
         """
@@ -369,8 +367,7 @@ class SubHighlighter(object):
 
         self.pattern = re.compile(
             "|".join("({0})".format(pat) for pat in patterns),
-            flags=re.M + (re.S if matchall else 0) +
-            (re.I if igncase else 0)
+            flags=re.M + (re.S if matchall else 0) + (re.I if igncase else 0),
         )
         self.gtk_tag = None
         self.region_start = None
@@ -383,15 +380,17 @@ class SubHighlighter(object):
         return [m.init_tag(gtk_ed) if m else None for m in self.matchers]
 
     def __str__(self):
-        return "<{0}>".format((self.parent_cat.name if self.parent_cat.name
-                               else "") if self.parent_cat else "Root")
+        return "<{0}>".format(
+            (self.parent_cat.name if self.parent_cat.name else "")
+            if self.parent_cat
+            else "Root"
+        )
 
     def __repr__(self):
         return self.__str__()
 
 
 class Highlighter(object):
-
     def __init__(self, spec=(), igncase=False, nb_lines=100):
         """
         :type spec: Iterable[BaseMatcher]
@@ -415,9 +414,11 @@ class Highlighter(object):
         start = gtk_ed.get_iter_at_line(start_line)
         ":type: Gtk.TextIter"
 
-        end = (gtk_ed.get_end_iter()
-               if (end_line == 0 or end_line > gtk_ed.get_line_count())
-               else gtk_ed.get_iter_at_line(end_line))
+        end = (
+            gtk_ed.get_end_iter()
+            if (end_line == 0 or end_line > gtk_ed.get_line_count())
+            else gtk_ed.get_iter_at_line(end_line)
+        )
         ":type: Gtk.TextIter"
 
         if start.compare(end) < 0:
@@ -460,14 +461,13 @@ class Highlighter(object):
             met_stop_pattern = False
 
             for m in matches:
-
                 # Get the index of the first matching category
-                i = [j for j in range(1, len(hl.matchers) + 1)
-                     if m.span(j) != null_span][0]
+                i = [
+                    j for j in range(1, len(hl.matchers) + 1) if m.span(j) != null_span
+                ][0]
 
                 matcher, tag = hl.matchers[i - 1], tags[i - 1]
-                start_line += strn.count("\n",
-                                         last_start_offset, m.start(i))
+                start_line += strn.count("\n", last_start_offset, m.start(i))
                 last_start_offset = m.start(i)
                 tk_start_offset = start_offset + m.start(i)
                 tk_end_offset = start_offset + m.end(i)
@@ -484,8 +484,7 @@ class Highlighter(object):
                         endi.backward_char()
                         endo = endi.get_offset()
                         rstart = rstarts.pop() if rstarts else start_offset
-                        results.append((subhl_stack[-1].gtk_tag, rstart,
-                                        endo))
+                        results.append((subhl_stack[-1].gtk_tag, rstart, endo))
                         self.sync_stop = True
                         return results
 
@@ -560,10 +559,9 @@ class Highlighter(object):
                     gtk_ed.apply_tag(tag, start_it, end_it)
         else:
             st_iter = gtk_ed.get_iter_at_line(start_line)
-            actions_list = self.highlight_info_gen(gtk_ed, start_line,
-                                                   start_line +
-                                                   max(nb_lines, self.nb_lines)
-                                                   )
+            actions_list = self.highlight_info_gen(
+                gtk_ed, start_line, start_line + max(nb_lines, self.nb_lines)
+            )
 
             # if not self.sync_stop:
             #     actions_list = self.highlight_info_gen(gtk_ed, start_line)
@@ -614,9 +612,7 @@ class Highlighter(object):
             action_handler(itr, nb_new_lines + 1)
 
         def highlighting_delete_range_before(buf, loc, end):
-            buf.nb_deleted_lines = len(
-                buf.get_text(loc, end, True).split("\n")
-            ) - 1
+            buf.nb_deleted_lines = len(buf.get_text(loc, end, True).split("\n")) - 1
 
         # noinspection PyUnusedLocal
         def highlighting_delete_range(buf, loc, end):

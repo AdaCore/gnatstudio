@@ -66,5 +66,6 @@ class register_memory_usage_provider:
     def __call__(self, klass):
         GPS.MemoryUsageProvider._register(
             self.name or klass.__name__,
-            construct=lambda: klass(*self.args, **self.kwargs))
+            construct=lambda: klass(*self.args, **self.kwargs),
+        )
         return klass

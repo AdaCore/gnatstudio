@@ -23,7 +23,10 @@ GPS.Preference(PREF_NAME).create(
     "Representation level",
     "integer",
     "Current representation level (range 0 .. 3).",
-    3, 0, 3)
+    3,
+    0,
+    3,
+)
 
 
 def _log(msg, mode="error"):
@@ -45,8 +48,10 @@ def get_json_file():
         objdir = list_dir[0]
     else:
         objdir = GPS.get_tmp_dir()
-        _log("Could not find an object directory for %s, reverting to %s" %
-             (file, objdir))
+        _log(
+            "Could not find an object directory for %s, reverting to %s"
+            % (file, objdir)
+        )
     json_file = os.path.join(objdir, os.path.basename(file)) + ".json"
     return file, json_file
 
@@ -56,11 +61,10 @@ def reset_state(file_name):
     global REPRESENTATION_MARKS
 
     if file_name in REPRESENTATION_MARKS:
-
         # Remove special lines
         srcbuf = GPS.EditorBuffer.get(GPS.File(file_name))
 
-        for (mark, lines) in REPRESENTATION_MARKS[file_name]:
+        for mark, lines in REPRESENTATION_MARKS[file_name]:
             srcbuf.remove_special_lines(mark, lines)
 
         # Empty entry in the dictionary
@@ -69,6 +73,7 @@ def reset_state(file_name):
 
 def parse_value(component, name):
     """Check if this is a value else display the formula"""
+
     def compute_formula(elem):
         """Recursively build the formula"""
         if isinstance(elem, int):
@@ -79,11 +84,15 @@ def parse_value(component, name):
             return ""
 
         if code == "?<>":
-            return \
-               "(if " + compute_formula(operands[0]) + \
-               " then " + compute_formula(operands[1]) + \
-               " else " + compute_formula(operands[2]) + \
-               " end)"
+            return (
+                "(if "
+                + compute_formula(operands[0])
+                + " then "
+                + compute_formula(operands[1])
+                + " else "
+                + compute_formula(operands[2])
+                + " end)"
+            )
 
         eval_list = [compute_formula(op) for op in elem["operands"]]
 
@@ -117,8 +126,13 @@ def parse_record(object, indent):
         if first_bit and first_bit != "0":
             size = size + " + " + first_bit
         size = size + " - 1"
-        res += ("%s   %s at %s range %s .. %s;\n" %
-                (indent, name, position, first_bit, size))
+        res += "%s   %s at %s range %s .. %s;\n" % (
+            indent,
+            name,
+            position,
+            first_bit,
+            size,
+        )
     res += "%send record;\n" % indent
     return res
 
@@ -144,7 +158,7 @@ def parse_location(object):
     or 'fileA:lineA:columnA [fileB:lineB:columnB]' => return lineB
     """
     location = object["location"]
-    if '[' in location:
+    if "[" in location:
         # Get the last locations we can have multiple '[file:line:column]'
         location = location.split()[-1][1:-1]
     return location.split(":")[1]
@@ -173,14 +187,15 @@ def edit_file(file_name, json_name):
         return
 
     try:
-        with open(json_name, 'r') as fp:
+        with open(json_name, "r") as fp:
             content = json.load(fp)
     except ValueError:
         if os.stat(json_name).st_size:
             _log("Fail to parse %s: the json is invalid." % json_name)
         else:
-            _log("No representation clauses found: %s is empty." % json_name,
-                 mode="text")
+            _log(
+                "No representation clauses found: %s is empty." % json_name, mode="text"
+            )
         return
 
     buf = GPS.EditorBuffer.get(GPS.File(file_name))
@@ -226,22 +241,21 @@ def show_representation_clauses(file_name, json_name):
     context = GPS.current_context()
     try:
         if context.project():
-            prj = (' -P """%s"""' %
-                   GPS.Project.root().file().name("Build_Server"))
+            prj = ' -P """%s"""' % GPS.Project.root().file().name("Build_Server")
         else:
             prj = " -a"
     except Exception:
         GPS.Console("Messages").write(
-            "Could not obtain project information for this file")
+            "Could not obtain project information for this file"
+        )
         return
 
     unit_name = os.path.splitext(os.path.basename(file_name))[0]
     scenario = GPS.Project.root().scenario_variables_cmd_line("-X")
     level = str(GPS.Preference(PREF_NAME).get())
-    cmd = ('gprbuild -q %s -f -gnatR%sjs -u """%s"""' %
-           (prj, level, unit_name))
+    cmd = 'gprbuild -q %s -f -gnatR%sjs -u """%s"""' % (prj, level, unit_name)
     if scenario:
-        cmd += ' ' + scenario
+        cmd += " " + scenario
     _log("Generating %s ..." % json_name, mode="text")
     proc = GPS.Process(cmd, on_exit=on_exit, remote_server="Build_Server")
     proc.file_name = file_name
@@ -252,20 +266,27 @@ def show_representation_clauses(file_name, json_name):
 # Register the contextual menus #
 #################################
 
-@interactive("Ada", in_ada_file,
-             contextual="Representation/Show representation clauses",
-             name="Show representation clauses",
-             contextual_group=GPS.Contextual.Group.EXTRA_INFORMATION)
+
+@interactive(
+    "Ada",
+    in_ada_file,
+    contextual="Representation/Show representation clauses",
+    name="Show representation clauses",
+    contextual_group=GPS.Contextual.Group.EXTRA_INFORMATION,
+)
 def show_inactive_file():
     """Add special lines showing the representation clauses"""
     file_name, json_name = get_json_file()
     show_representation_clauses(file_name, json_name)
 
 
-@interactive("Ada", in_ada_file,
-             contextual="Representation/Hide representation clauses",
-             name="Hide representation clauses",
-             contextual_group=GPS.Contextual.Group.EXTRA_INFORMATION)
+@interactive(
+    "Ada",
+    in_ada_file,
+    contextual="Representation/Hide representation clauses",
+    name="Hide representation clauses",
+    contextual_group=GPS.Contextual.Group.EXTRA_INFORMATION,
+)
 def clear_display():
     """Clear the added special lines"""
     file_name, _ = get_json_file()

@@ -7,19 +7,19 @@ class Signal(object):
         self.id = id
         self.watched = False
         self.logged = False
-        self.style = ''
+        self.style = ""
 
     def compute_style(self):
         """
         Creates the name of the style to apply to the signal. The corresponding
         style will be described in mdl2json.tmplt
         """
-        self.style = ''
+        self.style = ""
 
         if self.watched:
-            self.style = '_watchpoint'
+            self.style = "_watchpoint"
         if self.logged:
-            self.style += '_logpoint'
+            self.style += "_logpoint"
 
     def reset(self):
         self.logged = False

@@ -23,9 +23,9 @@ def context_has_file(context):
     return context.file() is not None
 
 
-@interactive(name="go to current begin",
-             filter=context_has_file,
-             menu="/Find/Goto Begin")
+@interactive(
+    name="go to current begin", filter=context_has_file, menu="/Find/Goto Begin"
+)
 def goto_begin():
     """Find the begin keyword of the current block"""
     # Get the buffer
@@ -46,8 +46,9 @@ def goto_begin():
             # its children to find its begin keyword.
             for child in node.children:
                 if isinstance(child, libadalang.DeclarativePart):
-                    loc = buf.at(int(child.sloc_range.end.line),
-                                 int(node.sloc_range.end.column))
+                    loc = buf.at(
+                        int(child.sloc_range.end.line), int(node.sloc_range.end.column)
+                    )
                     buf.current_view().goto(loc)
                     break
     return

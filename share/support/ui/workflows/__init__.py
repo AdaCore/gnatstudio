@@ -136,13 +136,13 @@ exit_handlers_table = {}
 
 
 def run_registered_workflows(workflow_name, target_name, main_name):
-    """ Find workflow and run it with the driver.
-    """
+    """Find workflow and run it with the driver."""
     # The BuildTarget wrapper may have registered an on exit handler for us to
     # call at the end of the workflow execution. Check if there is one in the
     # exit_handlers_table
-    GPS.Logger("BUILDTARGET").log("Registering workflow (%s, %s, %s)"
-                                  % (workflow_name, target_name, main_name))
+    GPS.Logger("BUILDTARGET").log(
+        "Registering workflow (%s, %s, %s)" % (workflow_name, target_name, main_name)
+    )
     on_exit_handler = exit_handlers_table.get((target_name, main_name), None)
 
     try:
@@ -168,12 +168,12 @@ def run_registered_workflows(workflow_name, target_name, main_name):
                 exit_handlers_table[(target_name, main_name)] = None
                 GPS.Logger("BUILDTARGET").log(
                     "Freeing workflow (%s, %s, %s)"
-                    % (workflow_name, target_name, main_name))
+                    % (workflow_name, target_name, main_name)
+                )
 
         driver(wrapper())
     except KeyError:
-        GPS.Console("Messages").write(
-            "\nError: Workflow name not registered.\n")
+        GPS.Console("Messages").write("\nError: Workflow name not registered.\n")
 
 
 def peel_traceback_to(tb, frame):
@@ -269,8 +269,9 @@ def driver(gen_inst):
                 # generators.
                 exc_type, exc_value, exc_tb = sys.exc_info()
                 GPS.Logger("WORKFLOW").log(
-                    "Unexpected exception in workflow: %s %s" %
-                    (e, " ".join(traceback.format_tb(exc_tb))))
+                    "Unexpected exception in workflow: %s %s"
+                    % (e, " ".join(traceback.format_tb(exc_tb)))
+                )
 
                 # Strip the traceback to only keep the user part. Be careful
                 # about currentframe: on some implementations it can return
@@ -304,16 +305,15 @@ def driver(gen_inst):
         # If we reach this point, there's nothing to execute anymore: just log
         # any uncaught exception.
         if exc_info is not None:
-            message = (
-                'Uncaught exception in workflows:\n'
-                '{}\n'.format(''.join(traceback.format_exception(*exc_info)))
+            message = "Uncaught exception in workflows:\n" "{}\n".format(
+                "".join(traceback.format_exception(*exc_info))
             )
             # This one is for debugging/testing convenience.
-            GPS.Console('Messages').write(message)
+            GPS.Console("Messages").write(message)
             # This one is for automatic issue detection in testsuites. This
             # should also ring a bell while analysis post-mortem GNAT Studio
             # logs.
-            GPS.Logger('TESTSUITE.EXCEPTIONS').log(message)
+            GPS.Logger("TESTSUITE.EXCEPTIONS").log(message)
             promise.reject(message)
         else:
             promise.resolve(return_val)
@@ -357,6 +357,7 @@ def run_as_workflow(workflow):
     :return: either the result of workflow, or a promise that will resolve
        to that result eventually.
     """
+
     def internal_run_as_wf(*args, **kwargs):
         r = workflow(*args, **kwargs)
         if isinstance(r, types.GeneratorType):
@@ -411,12 +412,12 @@ def task_workflow(task_name, workflow, active=False, **kwargs):
     """
 
     def _execute(t):
-        """ The execute function for our task """
+        """The execute function for our task"""
 
         # The task manager might try to run "execute" right after the creation
         # of the task, ie before it has been given the necessary attributes
         # to manage the workflow. In this case, simply wait.
-        if not hasattr(t, 'gen_stack'):
+        if not hasattr(t, "gen_stack"):
             return GPS.Task.EXECUTE_AGAIN
 
         # If there are no generators left, nothing to do, leave the task.
@@ -474,18 +475,18 @@ def task_workflow(task_name, workflow, active=False, **kwargs):
     def execute(t):
         """A wrapper around execute(), with a global exception handler
 
-           This is used to make sure exception raised in user-defined tasks
-              - are properly printed to the console
-              - do not propagate to the task manager
+        This is used to make sure exception raised in user-defined tasks
+           - are properly printed to the console
+           - do not propagate to the task manager
         """
         try:
             return _execute(t)
         except Exception:
             exc_type, exc_value, exc_tb = sys.exc_info()
             GPS.Console().write(
-                "Unexpected exception in workflow:\n%s\n%s\n" %
-                (exc_value,
-                 " ".join(traceback.format_tb(exc_tb))))
+                "Unexpected exception in workflow:\n%s\n%s\n"
+                % (exc_value, " ".join(traceback.format_tb(exc_tb)))
+            )
             return GPS.Task.FAILURE
 
     # Create a task with our execute function
@@ -494,17 +495,21 @@ def task_workflow(task_name, workflow, active=False, **kwargs):
     # We have created a task object: here are the fields that are going
     # to be used for handling the workflow for it.
     t.gen_stack = [workflow(t, **kwargs)]  # The stack of generators
-    t.return_val = None    # the value returned by the last generator call
-    t.wait = False         # A promise is running and the task should wait
+    t.return_val = None  # the value returned by the last generator call
+    t.wait = False  # A promise is running and the task should wait
     return t
 
 
-def create_target_from_workflow(target_name, workflow_name, workflow,
-                                icon_name="gps-print-symbolic",
-                                in_toolbar=True,
-                                main_arg="%TT",
-                                category='_Workflow_',
-                                parent_menu='/Build/Workflow/'):
+def create_target_from_workflow(
+    target_name,
+    workflow_name,
+    workflow,
+    icon_name="gps-print-symbolic",
+    in_toolbar=True,
+    main_arg="%TT",
+    category="_Workflow_",
+    parent_menu="/Build/Workflow/",
+):
     """
     Create a Target under the category Workflow from a given workflow.
     Executing this target runs the workflow.
@@ -524,8 +529,7 @@ def create_target_from_workflow(target_name, workflow_name, workflow,
 
     def xml_quote(str):
         """return an XML safe version of str"""
-        return str.replace('&', '&amp;').replace(
-            '<', '&lt;').replace('>', '&gt;')
+        return str.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
 
     # going to store the feeded workflow in a global variable
     global registered_workflows
@@ -544,20 +548,24 @@ def create_target_from_workflow(target_name, workflow_name, workflow,
 <do-not-save>FALSE</do-not-save>
 <command-line>
     <arg>workflows.run_registered_workflows("%s", "%s", "</arg>
-    """ % (xml_quote(category),
-           xml_quote(target_name),
-           xml_quote(parent_menu),
-           "TRUE" if in_toolbar else "FALSE",
-           icon_name,
-           "main" if main_arg == "%TT" else "",
-           xml_quote(workflow_name),
-           xml_quote(target_name))
+    """ % (
+        xml_quote(category),
+        xml_quote(target_name),
+        xml_quote(parent_menu),
+        "TRUE" if in_toolbar else "FALSE",
+        icon_name,
+        "main" if main_arg == "%TT" else "",
+        xml_quote(workflow_name),
+        xml_quote(target_name),
+    )
 
     xml2 = """
     <arg>%s</arg>
     <arg>")</arg>
 </command-line>
-</target>""" % (main_arg)
+</target>""" % (
+        main_arg
+    )
 
     XML = xml1 + xml2
     GPS.parse_xml(XML)

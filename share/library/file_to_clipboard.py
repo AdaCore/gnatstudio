@@ -29,12 +29,14 @@ def name_to_clipboard():
 
 
 def custom_make_interactive(name, action):
-    make_interactive(callback=action,
-                     name=name,
-                     category="Clipboard",
-                     filter="File",
-                     menu=MENU_PATH + name,
-                     contextual=CONTEXTUAL_PATH + name)
+    make_interactive(
+        callback=action,
+        name=name,
+        category="Clipboard",
+        filter="File",
+        menu=MENU_PATH + name,
+        contextual=CONTEXTUAL_PATH + name,
+    )
 
 
 custom_make_interactive("Copy file path", file_path_to_clipboard)

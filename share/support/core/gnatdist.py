@@ -21,7 +21,8 @@ if gnatdist_tool == "":
 #  If gnatdist/po_gnatdist tool was found, enable its support in GPS
 
 if gnatdist_tool != "":
-    GPS.parse_xml ("""
+    GPS.parse_xml(
+        """
   <Language>
     <Name>gnatdist</Name>
     <Parent>Ada</Parent>
@@ -75,7 +76,9 @@ if gnatdist_tool != "":
     <description>PolyORB distributed application builder</description>
     <iconname>gps-custom-build-symbolic</iconname>
     <command-line>
-      <arg>""" + gnatdist_tool + """</arg>
+      <arg>"""
+        + gnatdist_tool
+        + """</arg>
       <arg>-d</arg>
       <arg>-P%PP</arg>
       <arg>%attr(dsa'configuration_file)</arg>
@@ -102,9 +105,12 @@ if gnatdist_tool != "":
     <in-toolbar>TRUE</in-toolbar>
     <read-only>TRUE</read-only>
     <command-line>
-      <arg>""" + gnatdist_tool + """</arg>
+      <arg>"""
+        + gnatdist_tool
+        + """</arg>
       <arg>-d</arg>
       <arg>-P%PP</arg>
       <arg>%attr(dsa'configuration_file)</arg>
     </command-line>
-  </target>""")
+  </target>"""
+    )

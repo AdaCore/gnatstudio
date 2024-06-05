@@ -38,7 +38,7 @@ To add custom parser to a target insert next line to target description:
 
 
 class OutputParserMetaClass(type):
-    registered = dict()   # list of registered parsers
+    registered = dict()  # list of registered parsers
 
     def __new__(cls, name, bases, attrs):
         new_class = type.__new__(cls, name, bases, attrs)
@@ -47,9 +47,9 @@ class OutputParserMetaClass(type):
 
     def get_name(self):
         """Return the name of the parser, either from a "name" class
-            attribute, or from the class name
+        attribute, or from the class name
         """
-        return getattr(self, 'name', self.__name__).lower()
+        return getattr(self, "name", self.__name__).lower()
 
 
 class OutputParser(object, metaclass=OutputParserMetaClass):

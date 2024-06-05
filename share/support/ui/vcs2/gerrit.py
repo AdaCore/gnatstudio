@@ -5,7 +5,7 @@ import GPS
 from . import core
 from . import git
 
-CAT_REVIEWS = 'REVIEWS'
+CAT_REVIEWS = "REVIEWS"
 
 CAN_RENAME = True
 
@@ -16,20 +16,20 @@ class Gerrit(core.Extension):
         self.gerrit_accessible = True
 
     def applies(self):
-        gitreview = os.path.join(self.base.working_dir.path, '.gitreview')
+        gitreview = os.path.join(self.base.working_dir.path, ".gitreview")
 
         if os.path.isfile(gitreview):
-            self.port = ''
-            self.host = ''
-            self.project = ''
+            self.port = ""
+            self.host = ""
+            self.project = ""
             for line in open(gitreview).read().splitlines():
-                if '=' in line:
-                    prefix, value = line.split('=')
-                    if prefix.strip().lower() == 'host':
+                if "=" in line:
+                    prefix, value = line.split("=")
+                    if prefix.strip().lower() == "host":
                         self.host = value.strip()
-                    elif prefix.strip().lower() == 'port':
-                        self.port = '%s' % value.strip()
-                    elif prefix.strip().lower() == 'project':
+                    elif prefix.strip().lower() == "port":
+                        self.port = "%s" % value.strip()
+                    elif prefix.strip().lower() == "project":
                         self.project = value.strip()
 
             return self.project and self.host
@@ -46,17 +46,22 @@ class Gerrit(core.Extension):
             return
 
         p = ProcessWrapper(
-            ['ssh',
-             '-x',
-             '-q',  # Hide warnings
-             '-p' if self.port else '', self.port,
-             self.host,
-             'gerrit',
-             'query',
-             '--format=json',
-             '--current-patch-set',
-             'project:%s' % self.project,
-             'status:open'], block_exit=False)
+            [
+                "ssh",
+                "-x",
+                "-q",  # Hide warnings
+                "-p" if self.port else "",
+                self.port,
+                self.host,
+                "gerrit",
+                "query",
+                "--format=json",
+                "--current-patch-set",
+                "project:%s" % self.project,
+                "status:open",
+            ],
+            block_exit=False,
+        )
 
         reviews = []
         while True:
@@ -64,40 +69,42 @@ class Gerrit(core.Extension):
             if line is None:
                 if reviews:
                     visitor.branches(
-                        CAT_REVIEWS, 'vcs-gerrit-symbolic',
-                        not CAN_RENAME, reviews)
+                        CAT_REVIEWS, "vcs-gerrit-symbolic", not CAN_RENAME, reviews
+                    )
                 break
 
-            if line.startswith('Bad port'):
+            if line.startswith("Bad port"):
                 # Seems like Gerrit can't be accessed
-                GPS.Console().write('Can\'t access Gerrit %s:%s\n' % (
-                    self.host, self.port))
+                GPS.Console().write(
+                    "Can't access Gerrit %s:%s\n" % (self.host, self.port)
+                )
                 self.gerrit_accessible = False
                 break
 
             patch = json.loads(line)
-            if patch and patch.get('subject', None) is not None:
-                review = '0'
-                workflow = ''
-                patchset = patch['currentPatchSet']
-                if patchset.get('approvals', None) is not None:
-                    for a in patchset['approvals']:
-                        if a['type'] == 'Workflow':
-                            workflow = '|%s' % a['value']
-                        elif a['type'] == 'Code-Review':
-                            review = a['value']
+            if patch and patch.get("subject", None) is not None:
+                review = "0"
+                workflow = ""
+                patchset = patch["currentPatchSet"]
+                if patchset.get("approvals", None) is not None:
+                    for a in patchset["approvals"]:
+                        if a["type"] == "Workflow":
+                            workflow = "|%s" % a["value"]
+                        elif a["type"] == "Code-Review":
+                            review = a["value"]
 
-                id = {'url': patch.get('url', ''),
-                      'number': patch.get('number', '')}
+                id = {"url": patch.get("url", ""), "number": patch.get("number", "")}
 
                 reviews.append(
-                    ('%s: %s' % (patchset['author']['username'],
-                                 patch['subject']),
-                     False,   # not active
-                     '%s%s' % (review, workflow),
-                     json.dumps(id)))
+                    (
+                        "%s: %s" % (patchset["author"]["username"], patch["subject"]),
+                        False,  # not active
+                        "%s%s" % (review, workflow),
+                        json.dumps(id),
+                    )
+                )
 
-    def async_action_on_branch(self, visitor, action, category, id, text=''):
+    def async_action_on_branch(self, visitor, action, category, id, text=""):
         if not self.gerrit_accessible:
             return
 
@@ -106,24 +113,29 @@ class Gerrit(core.Extension):
                 id = json.loads(id)
             if action == GPS.VCS2.Actions.DOUBLE_CLICK and id:
                 import webbrowser
-                webbrowser.open(id['url'])
+
+                webbrowser.open(id["url"])
 
             elif action == GPS.VCS2.Actions.TOOLTIP:
                 visitor.tooltip(
-                    '\nDouble-click to open Gerrit on this change' +
-                    ('\nClick [+] to cherry-pick this review' if id else ''))
+                    "\nDouble-click to open Gerrit on this change"
+                    + ("\nClick [+] to cherry-pick this review" if id else "")
+                )
 
             elif action == GPS.VCS2.Actions.ADD and id:
-                p = self.base._git(['review', '--cherrypick', id['number']])
+                p = self.base._git(["review", "--cherrypick", id["number"]])
                 status, _ = yield p.wait_until_terminate(show_if_error=True)
                 if status == 0:
                     GPS.Console().write(
-                        "Applied to working directory: %s\n" % id['number'])
+                        "Applied to working directory: %s\n" % id["number"]
+                    )
 
-    @core.vcs_action(icon='vcs-cloud-symbolic',
-                     name='git review',
-                     menu='VCS/Review',
-                     after='server section')
+    @core.vcs_action(
+        icon="vcs-cloud-symbolic",
+        name="git review",
+        menu="VCS/Review",
+        after="server section",
+    )
     def _review(self):
         """
         Push all local changes to Gerrit, so that they can be reviewed by
@@ -132,13 +144,10 @@ class Gerrit(core.Extension):
         if not self.gerrit_accessible:
             return
 
-        p = self.base._git(
-            ['review', '--yes', '--no-rebase'],
-            spawn_console='')
+        p = self.base._git(["review", "--yes", "--no-rebase"], spawn_console="")
         status, _ = yield p.wait_until_terminate()
         if status == 0:
-            GPS.MDI.information_popup(
-                'Pushed to review', 'vcs-cloud-symbolic')
+            GPS.MDI.information_popup("Pushed to review", "vcs-cloud-symbolic")
 
 
 git.Git.register_extension(Gerrit)

@@ -12,9 +12,7 @@ def on_file_saved(hook, file):
     # Rely on the context and not the current buffer: Format Selection will
     # raise an exception if the context is not properly set.
     context = GPS.current_context()
-    if (not context or
-            not context.file() or
-            context.file().language() == "python"):
+    if not context or not context.file() or context.file().language() == "python":
         # Deactivate on Python files: the formatting action
         # indents the entire selection - this is intended for user
         # selection, but it is not suitable to do this automatically.
@@ -40,6 +38,7 @@ def on_file_saved(hook, file):
         view.goto(mark.location())
         view.center(view.cursor())
         mark.delete()
+
 
 # Register the callback on the "before_file_saved" hook
 GPS.Hook("file_saved").add(on_file_saved)

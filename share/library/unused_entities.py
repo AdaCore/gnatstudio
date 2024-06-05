@@ -33,35 +33,52 @@ through the GPS.Locations.dump() method in the python console.
 # No user customization below this line
 #############################################################################
 
-from GPS import Preference, Project, Console, Editor, File, Locations, \
-    EditorBuffer, MDI
+from GPS import Preference, Project, Console, Editor, File, Locations, EditorBuffer, MDI
 from gs_utils import interactive
 
 xmlada_projects = [
-    "xmlada_sax", "xmlada_dom", "xmlada_schema", "xmlada_unicode",
-    "xmlada_input", "xmlada_shared", "xmlada"]
-aws_projects = ["aws_config", "aws_libz", "aws_shared", "aws_ssl_support",
-                "aws_components", "aws_xmlada", "aws"]
+    "xmlada_sax",
+    "xmlada_dom",
+    "xmlada_schema",
+    "xmlada_unicode",
+    "xmlada_input",
+    "xmlada_shared",
+    "xmlada",
+]
+aws_projects = [
+    "aws_config",
+    "aws_libz",
+    "aws_shared",
+    "aws_ssl_support",
+    "aws_components",
+    "aws_xmlada",
+    "aws",
+]
 
 Preference("Plugins/unused_entities/ignoreprj").create(
-    "Ignored projects", "string",
+    "Ignored projects",
+    "string",
     """Comma-separated list of projects for which we never want to look for
     unused entities. # This should in general include those projects from
     third-party libraries. You can still search for unusued entities if you
     select that project specifically.""",
-    ",".join(xmlada_projects + aws_projects))
+    ",".join(xmlada_projects + aws_projects),
+)
 
 
 def EntityIterator(where):
     """Return all entities from WHERE"""
     if not where:
-        ignore_projects = [s.strip().lower() for s in Preference(
-            "Plugins/unused_entities/ignoreprj").get().split(",")]
+        ignore_projects = [
+            s.strip().lower()
+            for s in Preference("Plugins/unused_entities/ignoreprj").get().split(",")
+        ]
 
         for p in Project.root().dependencies(recursive=True):
             if p.name().lower() not in ignore_projects:
                 Console().write(
-                    "Searching unused entities in project " + p.name() + "\n")
+                    "Searching unused entities in project " + p.name() + "\n"
+                )
                 for s in p.sources():
                     for e in s.entities(local=True):
                         yield e
@@ -82,12 +99,9 @@ def GlobalIterator(where):
 
 
 def is_unused(entity):
-    refs = entity.references(
-        include_implicit=True, synchronous=True, show_kind=True)
+    refs = entity.references(include_implicit=True, synchronous=True, show_kind=True)
     for loc, kind in refs.items():
-        if kind != 'declaration' \
-                and kind != 'body' \
-                and kind != 'label':
+        if kind != "declaration" and kind != "body" and kind != "label":
             return False
 
     # If we have a primitive operation, do not report it for now, since it
@@ -102,7 +116,7 @@ def is_unused(entity):
 
 def UnusedIterator(where, globals_only):
     """Return all unused entities from WHERE, and only global entities if
-       GLOBALS_ONLY is true"""
+    GLOBALS_ONLY is true"""
     if globals_only:
         iter = GlobalIterator
     else:
@@ -120,20 +134,24 @@ def show_unused_entities(where, globals_only):
     MDI.get("Messages").raise_window()
 
     for e in UnusedIterator(where, globals_only=globals_only):
-        Locations.add(category="Unused entity",
-                      file=e.declaration().file(),
-                      line=e.declaration().line(),
-                      column=e.declaration().column(),
-                      message="unused entity " + e.name(),
-                      highlight="Unused_Entities",
-                      length=len(e.name()))
+        Locations.add(
+            category="Unused entity",
+            file=e.declaration().file(),
+            line=e.declaration().line(),
+            column=e.declaration().column(),
+            message="unused entity " + e.name(),
+            highlight="Unused_Entities",
+            length=len(e.name()),
+        )
 
     Console().write("Done searching for unused entities\n")
 
 
-@interactive(name='show unused entities from file',
-             menu='/Navigate/List unused entities/From file',
-             after='Goto Body')
+@interactive(
+    name="show unused entities from file",
+    menu="/Navigate/List unused entities/From file",
+    after="Goto Body",
+)
 def show_unused_entities_in_file():
     """
     Show all entities from the current file that are unused anywhere in your
@@ -142,9 +160,11 @@ def show_unused_entities_in_file():
     show_unused_entities(EditorBuffer.get().file(), True)
 
 
-@interactive(name='show unused entities from project',
-             menu='/Navigate/List unused entities/From project',
-             after='Goto Body')
+@interactive(
+    name="show unused entities from project",
+    menu="/Navigate/List unused entities/From project",
+    after="Goto Body",
+)
 def show_unused_entities_in_project():
     """
     Show all entities from the current project that are unused anywhere in
@@ -153,9 +173,11 @@ def show_unused_entities_in_project():
     show_unused_entities(EditorBuffer.get().file().project(), True)
 
 
-@interactive(name='show unused entities from all projects',
-             menu='/Navigate/List unused entities/From all projects',
-             after='Goto Body')
+@interactive(
+    name="show unused entities from all projects",
+    menu="/Navigate/List unused entities/From all projects",
+    after="Goto Body",
+)
 def show_unused_entities_in_projects():
     """
     Show all entities from any loaded project that are unused anywhere in

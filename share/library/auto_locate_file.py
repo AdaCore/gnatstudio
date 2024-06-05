@@ -14,6 +14,6 @@ def __on_child_selected(hook, child):
         GPS.Logger("AUTO_LOCATE_FILE").log("Could not automatically locate")
 
 
-@hook('gps_started')
+@hook("gps_started")
 def __on_gps_started():
-    GPS.Hook('mdi_child_selected').add_debounce(__on_child_selected)
+    GPS.Hook("mdi_child_selected").add_debounce(__on_child_selected)

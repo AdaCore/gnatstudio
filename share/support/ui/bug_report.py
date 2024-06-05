@@ -26,17 +26,18 @@ class BugReportDialog(Gtk.Dialog):
         Gtk.Dialog.__init__(
             self,
             title="Create bug report",
-            transient_for=GPS.MDI.current().pywidget().get_toplevel())
-        self.set_name('gps-bug-report-dialog')
+            transient_for=GPS.MDI.current().pywidget().get_toplevel(),
+        )
+        self.set_name("gps-bug-report-dialog")
         self.set_default_size(400, 400)
         self.add_button("_OK", Gtk.ResponseType.OK)
         self.add_button("_Cancel", Gtk.ResponseType.CANCEL)
-        self.connect('response', self.on_response)
+        self.connect("response", self.on_response)
         self.set_default_response(Gtk.ResponseType.OK)
 
         label = Gtk.Label(label="Included information")
         label.set_xalign(0.0)
-        label.get_style_context().add_class('gps-bug-report-section-desc')
+        label.get_style_context().add_class("gps-bug-report-section-desc")
         self.vbox.pack_start(label, False, False, 0)
 
         self.include_log_check = None
@@ -59,7 +60,8 @@ class BugReportDialog(Gtk.Dialog):
                 "The GNAT Studio log file. WARNING: it might contain "
                 + "information on your sources (filenames, variable names "
                 + "etc.).",
-                gs_log_file)
+                gs_log_file,
+            )
 
         if als_log_file:
             self.include_als_log_check = self.create_checkbox(
@@ -67,33 +69,35 @@ class BugReportDialog(Gtk.Dialog):
                 INCLUDE_LOG_HIST_KEY,
                 "The Ada Language Server log file. "
                 + "WARNING: it might contain source code.",
-                als_log_file)
+                als_log_file,
+            )
 
         if preferences_file:
             self.include_prefs_check = self.create_checkbox(
                 "Preferences file",
                 INCLUDE_PREFS_HIST_KEY,
-                "Contains all the explicitly enabled/disabled "
-                + "user preferences.",
-                preferences_file)
+                "Contains all the explicitly enabled/disabled " + "user preferences.",
+                preferences_file,
+            )
 
         if plugins_file:
             self.include_plugins_check = self.create_checkbox(
                 "Active plugins file",
                 INCLUDE_PLUGINS_HIST_KEY,
                 "Contains all the active plugins' names.",
-                plugins_file)
+                plugins_file,
+            )
 
         # Create the bug report archive root folder entry
 
-        label = Gtk.Label(
-            label="Bug reports root directory")
+        label = Gtk.Label(label="Bug reports root directory")
         label.set_xalign(0.0)
-        label.get_style_context().add_class('gps-bug-report-section-desc')
+        label.get_style_context().add_class("gps-bug-report-section-desc")
         self.vbox.pack_start(label, False, False, 0)
 
         doc_label = Gtk.Label(
-            "The directory where the bug report archives are created.")
+            "The directory where the bug report archives are created."
+        )
         doc_label.set_xalign(0.0)
         doc_label.get_style_context().add_class("dialog-views-doc-labels")
         self.vbox.pack_start(doc_label, False, False, 0)
@@ -105,17 +109,18 @@ class BugReportDialog(Gtk.Dialog):
         self.fileEntry = Gtk.Entry()
         self.fileEntry.set_editable(True)
         self.fileEntry.connect(
-            "focus-in-event",
-            lambda x, y: GPS.MDI.set_focus_widget(self.fileEntry))
+            "focus-in-event", lambda x, y: GPS.MDI.set_focus_widget(self.fileEntry)
+        )
         self.fileEntry.set_text(os.path.join(GPS.get_home_dir(), "log"))
         hbox.pack_start(self.fileEntry, True, True, 0)
-        default_val = GPS.History.get(
-            BUG_REPORT_FOLDER_HIST_KEY, most_recent=True)
+        default_val = GPS.History.get(BUG_REPORT_FOLDER_HIST_KEY, most_recent=True)
         self.fileEntry.set_text(
-                default_val if default_val is not None
-                else os.path.join(GPS.get_home_dir(), 'log'))
-        button = Gtk.Button('Browse')
-        button.connect('clicked', self.on_bug_report_location_browse)
+            default_val
+            if default_val is not None
+            else os.path.join(GPS.get_home_dir(), "log")
+        )
+        button = Gtk.Button("Browse")
+        button.connect("clicked", self.on_bug_report_location_browse)
         hbox.pack_start(button, False, False, 0)
 
     def on_bug_report_location_browse(self, *args):
@@ -138,13 +143,16 @@ class BugReportDialog(Gtk.Dialog):
         Return a boolean tuple for the files that should be included, in the
         following order: (<gs_log>, <als_log>, <prefs_file>, <plugins_file>).
         """
-        def get_include_val(check):
-            return (check.get_active() if check else False)
 
-        return get_include_val(self.include_log_check), \
-            get_include_val(self.include_als_log_check), \
-            get_include_val(self.include_prefs_check), \
-            get_include_val(self.include_plugins_check)
+        def get_include_val(check):
+            return check.get_active() if check else False
+
+        return (
+            get_include_val(self.include_log_check),
+            get_include_val(self.include_als_log_check),
+            get_include_val(self.include_prefs_check),
+            get_include_val(self.include_plugins_check),
+        )
 
     def create_checkbox(self, label, hist_key, doc, file):
         """
@@ -168,18 +176,18 @@ class BugReportDialog(Gtk.Dialog):
 
         def on_show_button_clicked(*args):
             extension = os.path.splitext(file)[1]
-            file_copy = file.replace(extension, '_copy' + extension)
+            file_copy = file.replace(extension, "_copy" + extension)
             copyfile(file, file_copy)
             GPS.EditorBuffer.get(GPS.File(file_copy))
 
         linkbutton = Gtk.LinkButton.new_with_label(
-            uri="Show file contents.",
-            label="show")
-        linkbutton.connect('clicked', on_show_button_clicked)
+            uri="Show file contents.", label="show"
+        )
+        linkbutton.connect("clicked", on_show_button_clicked)
 
         # Connect to the 'activate-link' signal to handle it by doing nothing
         # to avoid an unnecessary warning on Windows due to Gtk+
-        linkbutton.connect('activate-link', lambda x: True)
+        linkbutton.connect("activate-link", lambda x: True)
 
         hbox.pack_start(linkbutton, False, False, 0)
 
@@ -202,27 +210,25 @@ class BugReportDialog(Gtk.Dialog):
         if response == Gtk.ResponseType.OK:
             if self.include_log_check:
                 GPS.History.add(
-                    INCLUDE_LOG_HIST_KEY,
-                    self.include_log_check.get_active())
+                    INCLUDE_LOG_HIST_KEY, self.include_log_check.get_active()
+                )
 
             if self.include_als_log_check:
                 GPS.History.add(
-                    INCLUDE_ALS_LOG_HIST_KEY,
-                    self.include_als_log_check.get_active())
+                    INCLUDE_ALS_LOG_HIST_KEY, self.include_als_log_check.get_active()
+                )
 
             if self.include_prefs_check:
                 GPS.History.add(
-                    INCLUDE_PREFS_HIST_KEY,
-                    self.include_prefs_check.get_active())
+                    INCLUDE_PREFS_HIST_KEY, self.include_prefs_check.get_active()
+                )
 
             if self.include_plugins_check:
                 GPS.History.add(
-                    INCLUDE_PLUGINS_HIST_KEY,
-                    self.include_plugins_check.get_active())
+                    INCLUDE_PLUGINS_HIST_KEY, self.include_plugins_check.get_active()
+                )
 
-            GPS.History.add(
-                BUG_REPORT_FOLDER_HIST_KEY,
-                self.fileEntry.get_text())
+            GPS.History.add(BUG_REPORT_FOLDER_HIST_KEY, self.fileEntry.get_text())
 
 
 @workflows.run_as_workflow
@@ -241,8 +247,7 @@ def get_als_log_file():
     """
     Return the ALS log file if any, or None when there is no log.
     """
-    server = GPS.LanguageServer.get_by_language_name(
-            "Ada")
+    server = GPS.LanguageServer.get_by_language_name("Ada")
     if server:
         return server.get_log_file().path
     else:
@@ -278,29 +283,36 @@ def include_file(file, bug_report_dir):
     'show' buttons).
     """
     extension = os.path.splitext(file)[1]
-    file_copy = file.replace(extension, '_copy' + extension)
+    file_copy = file.replace(extension, "_copy" + extension)
     if os.path.exists(file_copy):
         move(file_copy, bug_report_dir)
     else:
         copy(file, bug_report_dir)
 
 
-@interactive("General", name="Create bug report",
-             description='Create an archive containing information '
-             + '(logs, plugins file etc.) that can be used for bug reports.')
+@interactive(
+    "General",
+    name="Create bug report",
+    description="Create an archive containing information "
+    + "(logs, plugins file etc.) that can be used for bug reports.",
+)
 def create_bug_report():
     # Create the bug report dialog and wait for the user's response
     dialog = BugReportDialog()
     dialog.show_all()
 
-    response = yield wait_signal(dialog, 'response')
+    response = yield wait_signal(dialog, "response")
 
     if response != Gtk.ResponseType.OK:
         dialog.destroy()
         return
 
-    include_log, include_als_log, \
-        include_prefs, include_plugins = dialog.get_included_info_options()
+    (
+        include_log,
+        include_als_log,
+        include_prefs,
+        include_plugins,
+    ) = dialog.get_included_info_options()
 
     bug_report_location = dialog.get_bug_report_location()
     dialog.destroy()
@@ -313,8 +325,8 @@ def create_bug_report():
     log_file = GPS.get_log_file()
     date = datetime.now()
     bug_report_dir = os.path.join(
-            bug_report_location,
-            "bug_report.%s" % date.strftime("%Y-%m-%dT%H%M%S"))
+        bug_report_location, "bug_report.%s" % date.strftime("%Y-%m-%dT%H%M%S")
+    )
     os.mkdir(bug_report_dir)
 
     # Copy the GNAT Studio log file
@@ -338,23 +350,21 @@ def create_bug_report():
 
     # Create a tar.bz2 archive if tar is available
     if locate_exec_on_path("tar"):
-        archive_file = bug_report_dir + '.tar.bz2'
+        archive_file = bug_report_dir + ".tar.bz2"
         GPS.cd(bug_report_location)
         GPS.Process(
-            ['tar', '-cjf',
-             os.path.basename(bug_report_dir) + '.tar.bz2',
-             os.path.basename(bug_report_dir)]).get_result()
+            [
+                "tar",
+                "-cjf",
+                os.path.basename(bug_report_dir) + ".tar.bz2",
+                os.path.basename(bug_report_dir),
+            ]
+        ).get_result()
         rmtree(bug_report_dir)
-        GPS.Console().write(
-            "Bug report archive created at: ")
-        GPS.Console().insert_link(
-            archive_file,
-            open_bug_report_in_folder)
-        GPS.Console().write('\n')
+        GPS.Console().write("Bug report archive created at: ")
+        GPS.Console().insert_link(archive_file, open_bug_report_in_folder)
+        GPS.Console().write("\n")
     else:
-        GPS.Console().write(
-            "Bug report folder created at: ")
-        GPS.Console().insert_link(
-            bug_report_dir,
-            open_bug_report_in_folder)
-        GPS.Console().write('\n')
+        GPS.Console().write("Bug report folder created at: ")
+        GPS.Console().insert_link(bug_report_dir, open_bug_report_in_folder)
+        GPS.Console().write("\n")
