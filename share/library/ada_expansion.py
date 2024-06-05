@@ -63,6 +63,13 @@ where the vertical bar '|' indicates the cursor location after expansion
 
 # ################## No user customization below this point ##########
 
+import sys
+import GPS
+import re
+import block_completion
+import libadalang as lal
+from collections import namedtuple
+
 
 def on_gps_started(hook_name):
     "Initializes this module."
@@ -78,13 +85,6 @@ This module provides Ada construct expansion for selected reserved words.
     }
     GPS.parse_xml(init)
 
-
-import sys
-import GPS
-import re
-import block_completion
-import libadalang as lal
-from collections import namedtuple
 
 Record_Components = namedtuple("Record_Components", "names longest_name_length")
 
