@@ -154,6 +154,19 @@ package body GPS.Process_Launchers.Implementation is
       Result  : Scheduled_Command_Access;
       Data    : Build_Callback_Data_Access;
    begin
+      if Is_Local (Server) and then not Directory.Is_Directory then
+         begin
+            Directory.Make_Dir;
+         exception
+            when others =>
+               Insert
+                 (Kernel,
+                  -"Could not create directory: " &
+                    Directory.Display_Full_Name,
+                  Mode => GPS.Kernel.Error);
+         end;
+      end if;
+
       if Is_Local (Server) and then GPS.Kernel.Spawns.Is_Enabled then
          if Exec = "" then
             Success := False;
