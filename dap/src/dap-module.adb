@@ -564,7 +564,7 @@ package body DAP.Module is
       --  current value if possible.
       declare
          Variable_Name : constant String := DAP.Contexts.Get_Variable_Name
-           (Context, Dereference => True);
+           (Context, Dereference => False);
       begin
          if Variable_Name = ""
            or else not Can_Tooltip_On_Entity
