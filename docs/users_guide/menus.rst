@@ -308,16 +308,14 @@ The Edit Menu
 
 * :menuselection:`Edit --> Increase Text Size`
 
-   Increase the size of fonts in the source editors.
-   This impacts the corresponding preferences.
+   Increase the size of fonts in the source editors. This impacts the corresponding preferences.
 
    Shortcut: Ctrl++
 .. index:: menu; edit --> decrease text size
 
 * :menuselection:`Edit --> Decrease Text Size`
 
-   Decrease the size of fonts in the source editors.
-   This impacts the corresponding preferences.
+   Decrease the size of fonts in the source editors. This impacts the corresponding preferences.
 
    Shortcut: Ctrl+-
 .. index:: menu; edit --> project properties...
