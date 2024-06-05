@@ -157,13 +157,13 @@ class __enum_proxy(object):
 
 def enum(name, **enums):
     """Replaces an enumeration so that the values are not displayed as
-       ints in the doc, but as a string representing the name.
+    ints in the doc, but as a string representing the name.
 
-       This function is used whenever a value from the enum is accessed
-       (for instance for the default value of parameters).
-       However, for the class definition themselves, they use the enum()
-       defined in gs_utils, because of the order in which sphinx loads
-       things.
+    This function is used whenever a value from the enum is accessed
+    (for instance for the default value of parameters).
+    However, for the class definition themselves, they use the enum()
+    defined in gs_utils, because of the order in which sphinx loads
+    things.
     """
     return __enum_proxy("GPS.%s" % name, **enums)
 
@@ -171,6 +171,7 @@ def enum(name, **enums):
 ###########################################################
 # GUI
 ###########################################################
+
 
 class GUI(object):
 
@@ -267,6 +268,7 @@ class GUI(object):
 # Filter
 ###########################################################
 
+
 class Filter(object):
     """
     This class gives access to various aspects of the filters that
@@ -296,6 +298,7 @@ class Filter(object):
 # Action
 ###########################################################
 
+
 class Action(object):
     """
     This class gives access to the interactive commands in GPS. These are the
@@ -323,9 +326,7 @@ class Action(object):
         """
         pass  # implemented in Ada
 
-    def contextual(self, path, ref='', add_before=True,
-                   group=0,
-                   static_path=''):
+    def contextual(self, path, ref="", add_before=True, group=0, static_path=""):
         """
         Create a new contextual menu associated with the action.
 
@@ -346,8 +347,15 @@ class Action(object):
         """
         pass  # implemented in Ada
 
-    def create(self, on_activate, filter='', category='General',
-               description='', icon='', for_learning=False):
+    def create(
+        self,
+        on_activate,
+        filter="",
+        category="General",
+        description="",
+        icon="",
+        for_learning=False,
+    ):
         """
         Export the function :func:`on_activate` and make it interactive so
         that users can bind keys and menus to it. The function should not
@@ -446,7 +454,7 @@ class Action(object):
         """
         pass  # implemented in Ada
 
-    def menu(self, path, ref='', add_before=True):
+    def menu(self, path, ref="", add_before=True):
         """
         Create a new menu associated with the action.
 
@@ -470,8 +478,9 @@ class Action(object):
         """
         pass  # implemented in Ada
 
-    def button(self, toolbar='main', section='', group='', label='', icon='',
-               hide=False):
+    def button(
+        self, toolbar="main", section="", group="", label="", icon="", hide=False
+    ):
         """
         Add a new button in some toolbars.
         When this button is clicked, it executes the action from self.
@@ -511,6 +520,7 @@ class Action(object):
            GPS.Action("Copy to Clipboard").button(
                toolbar='Messages', label='Copy')
         """
+
 
 ###########################################################
 # Analysis
@@ -577,8 +587,7 @@ class AnalysisTool(object):
         """
         pass  # implemented in Ada
 
-    def create_message(self, category, file, line, column, text, importance,
-                       rule_id):
+    def create_message(self, category, file, line, column, text, importance, rule_id):
         """
         Create a new message and add it to the list of messages that will be
         displayed in the GPS Analysis Report. The message will be associated to
@@ -594,6 +603,7 @@ class AnalysisTool(object):
 ###########################################################
 # Context
 ###########################################################
+
 
 class Context(object):
 
@@ -727,6 +737,7 @@ class Context(object):
 ###########################################################
 # Bookmark
 ###########################################################
+
 
 class Bookmark(object):
     """
@@ -873,6 +884,7 @@ class Bookmark(object):
 # BuildTarget
 ###########################################################
 
+
 class BuildTarget(object):
 
     """
@@ -906,9 +918,19 @@ class BuildTarget(object):
         """
         pass  # implemented in Ada
 
-    def execute(self, main_name='', file='', force=False, extra_args='',
-                build_mode='', synchronous=True, directory='', quiet=False,
-                on_exit=None, preserve_output=False):
+    def execute(
+        self,
+        main_name="",
+        file="",
+        force=False,
+        extra_args="",
+        build_mode="",
+        synchronous=True,
+        directory="",
+        quiet=False,
+        on_exit=None,
+        preserve_output=False,
+    ):
         """
         Launch the build target.
 
@@ -1020,6 +1042,7 @@ class BuildTarget(object):
 # Clipboard
 ###########################################################
 
+
 class Clipboard(object):
 
     """
@@ -1086,6 +1109,7 @@ class Clipboard(object):
 ###########################################################
 # CodeAnalysis
 ###########################################################
+
 
 class CodeAnalysis(object):
 
@@ -1289,6 +1313,7 @@ class CodeAnalysis(object):
 # Codefix
 ###########################################################
 
+
 class Codefix(object):
 
     """
@@ -1310,7 +1335,7 @@ class Codefix(object):
         """
         pass  # implemented in Ada
 
-    def error_at(self, file, line, column, message=''):
+    def error_at(self, file, line, column, message=""):
         """
         Returns a specific error at a given location. If message is null, then
         the first matching error will be taken. None is returned if no such
@@ -1334,8 +1359,16 @@ class Codefix(object):
         pass  # implemented in Ada
 
     @staticmethod
-    def parse(category, output, regexp='', file_index=-1, line_index=-1,
-              column_index=-1, style_index=-1, warning_index=-1):
+    def parse(
+        category,
+        output,
+        regexp="",
+        file_index=-1,
+        line_index=-1,
+        column_index=-1,
+        style_index=-1,
+        warning_index=-1,
+    ):
         """
         Parses the output of a tool and suggests auto-fix possibilities
         whenever possible. This adds small icons in the location window, so
@@ -1387,6 +1420,7 @@ class Codefix(object):
 # CodefixError
 ###########################################################
 
+
 class CodefixError(object):
 
     """
@@ -1399,7 +1433,7 @@ class CodefixError(object):
        :func:`GPS.CodefixError.__init__()`
     """
 
-    def __init__(self, codefix, file, message=''):
+    def __init__(self, codefix, file, message=""):
         """
         Describes a new fixable error. If the message is not specified, the
         first error at that location is returned.
@@ -1468,6 +1502,7 @@ class CodefixError(object):
 # Command
 ###########################################################
 
+
 class Command(object):
 
     """
@@ -1533,6 +1568,7 @@ class Command(object):
 # CommandWindow
 ###########################################################
 
+
 class CommandWindow(GUI):
 
     """
@@ -1568,9 +1604,16 @@ class CommandWindow(GUI):
               ....
     """
 
-    def __init__(self, prompt='', global_window=False, on_changed=None,
-                 on_activate=None, on_cancel=None, on_key=None,
-                 close_on_activate=True):
+    def __init__(
+        self,
+        prompt="",
+        global_window=False,
+        on_changed=None,
+        on_activate=None,
+        on_cancel=None,
+        on_key=None,
+        close_on_activate=True,
+    ):
         """
         Initializes an instance of a command window. An exception is raised
         if such a window is already active in GPS. Otherwise, the new window
@@ -1629,7 +1672,7 @@ class CommandWindow(GUI):
         """
         pass  # implemented in Ada
 
-    def set_background(self, color=''):
+    def set_background(self, color=""):
         """
         Changes the background color of the command window.  This can be used
         to make the command window more obvious or to highlight errors by
@@ -1669,6 +1712,7 @@ class CommandWindow(GUI):
 ###########################################################
 # Console
 ###########################################################
+
 
 class Console(GUI):
 
@@ -1740,11 +1784,23 @@ class Console(GUI):
         bash = Console_Process(["/bin/sh", "-i"])
     """
 
-    def __init__(self, name, force=False, on_input=None, on_destroy=None,
-                 accept_input=True, on_resize=None, on_interrupt=None,
-                 on_completion=None, on_key='', manage_prompt=True,
-                 ansi=False, toolbar_name='', give_focus_on_create=True,
-                 save_desktop=None):
+    def __init__(
+        self,
+        name,
+        force=False,
+        on_input=None,
+        on_destroy=None,
+        accept_input=True,
+        on_resize=None,
+        on_interrupt=None,
+        on_completion=None,
+        on_key="",
+        manage_prompt=True,
+        ansi=False,
+        toolbar_name="",
+        give_focus_on_create=True,
+        save_desktop=None,
+    ):
         """
         Creates a new instance of :class:`GPS.Console`. GPS tries to reuse
         any existing console with the same name. If none exists yet, or the
@@ -1941,8 +1997,15 @@ class Console(GUI):
         """
         pass  # implemented in Ada
 
-    def create_link(self, regexp, on_click, foreground="blue", background="",
-                    underline=True, font_variant="default"):
+    def create_link(
+        self,
+        regexp,
+        on_click,
+        foreground="blue",
+        background="",
+        underline=True,
+        font_variant="default",
+    ):
         """
         Registers a regular expression that should be highlighted in this
         console to provide hyperlinks, which are searched for when calling
@@ -2119,6 +2182,7 @@ class Console(GUI):
 # Contextual
 ###########################################################
 
+
 class Contextual(object):
 
     """
@@ -2129,18 +2193,20 @@ class Contextual(object):
     .. seealso:: :func:`GPS.Contextual.__init__`
     """
 
-    name = ''
+    name = ""
     """The name of the contextual menu (see __init__)"""
 
-    Group = enum('Contextual.Group',
-                 PROJECT=0,
-                 CUT_COPY_PASTE=10,
-                 NAVIGATION=20,
-                 EDITING=50,
-                 DEBUG=80,
-                 VCS=100,
-                 EXTRA_INFORMATION=1000,
-                 DEFAULT=10000)
+    Group = enum(
+        "Contextual.Group",
+        PROJECT=0,
+        CUT_COPY_PASTE=10,
+        NAVIGATION=20,
+        EDITING=50,
+        DEBUG=80,
+        VCS=100,
+        EXTRA_INFORMATION=1000,
+        DEFAULT=10000,
+    )
 
     def __init__(self, name):
         """
@@ -2166,8 +2232,16 @@ class Contextual(object):
         """
         pass  # implemented in Ada
 
-    def create_dynamic(self, factory, on_activate, label='', filter=None,
-                       ref='', add_before=True, group=Group.DEFAULT):
+    def create_dynamic(
+        self,
+        factory,
+        on_activate,
+        label="",
+        filter=None,
+        ref="",
+        add_before=True,
+        group=Group.DEFAULT,
+    ):
         """
         Creates a new dynamic contextual menu.
 
@@ -2304,6 +2378,7 @@ class Contextual(object):
 ###########################################################
 # Debugger
 ###########################################################
+
 
 class Debugger(object):
 
@@ -2510,9 +2585,15 @@ class Debugger(object):
         """
         pass  # implemented in Ada
 
-    def send(self, cmd, output=True, show_in_console=False,
-             on_result_message=None, on_error_message=None,
-             on_rejected=None):
+    def send(
+        self,
+        cmd,
+        output=True,
+        show_in_console=False,
+        on_result_message=None,
+        on_error_message=None,
+        on_rejected=None,
+    ):
         """
         Executes ``cmd`` in the debugger. GPS is blocked while ``cmd`` is
         executing on the debugger. If output is true, the command is displayed
@@ -2548,13 +2629,11 @@ class Debugger(object):
         .. seealso:: :func:`GPS.Debugger.unbreak_at_location`
         """
 
-
     def start(self):
         """
         Start the execution of the executable and stop at the first user line.
         """
         pass  # implemented in Ada
-
 
     def value_of(self, expression):
         """
@@ -2637,11 +2716,9 @@ class Debugger(object):
         pass  # implemented in Ada
 
     @staticmethod
-    def spawn(executable,
-              args='',
-              remote_target='',
-              remote_protocol='',
-              load_executable=False):
+    def spawn(
+        executable, args="", remote_target="", remote_protocol="", load_executable=False
+    ):
         """
         Starts a new debugger. It will debug ``executable``. When the program
         is executed, the extra arguments args are passed.
@@ -2710,8 +2787,9 @@ class Debugger(object):
         """Interrupt execution."""
         pass  # implemented in Ada
 
-    def get_variable_by_name(self, name, on_result=None,
-                             on_error=None, on_rejected=None):
+    def get_variable_by_name(
+        self, name, on_result=None, on_error=None, on_rejected=None
+    ):
         """Returns a variable.
 
         :param name: Name of the variable as a string.
@@ -2729,6 +2807,7 @@ class Debugger(object):
 ###########################################################
 # DebuggerBreakpoint
 ###########################################################
+
 
 class DebuggerBreakpoint(object):
     """
@@ -2765,6 +2844,7 @@ class DebuggerBreakpoint(object):
 # DebuggerVariable
 ###########################################################
 
+
 class DebuggerVariable(object):
     """
     Instances of this class represent a debugger variable.
@@ -2783,8 +2863,7 @@ class DebuggerVariable(object):
     type_name = ""
     """Return the type of the variable"""
 
-    def children(self, on_result_message=None, on_error_message=None,
-                 on_rejected=None):
+    def children(self, on_result_message=None, on_error_message=None, on_rejected=None):
         """
         Returns all the children of the variable if the variable has
         a complex type like a record.
@@ -2803,6 +2882,7 @@ class DebuggerVariable(object):
 ###########################################################
 # Docgen
 ###########################################################
+
 
 class Docgen(object):
 
@@ -2886,6 +2966,7 @@ class Docgen(object):
            GPS.Docgen.register_tag_handler(GPS.DocgenTagHandler("description"))
         """
         pass  # implemented in Ada
+
 
 ###########################################################
 # DocgenTagHandler
@@ -2997,6 +3078,7 @@ class DocgenTagHandler(object):
 # Editor
 ###########################################################
 
+
 class Editor(object):
 
     """
@@ -3004,7 +3086,7 @@ class Editor(object):
     """
 
     @staticmethod
-    def add_blank_lines(file, start_line, number_of_lines, category=''):
+    def add_blank_lines(file, start_line, number_of_lines, category=""):
         """
         OBSOLESCENT.
 
@@ -3327,8 +3409,7 @@ class Editor(object):
         pass  # implemented in Ada
 
     @staticmethod
-    def highlight_range(file, category, line=0, start_column=0,
-                        end_column=-1):
+    def highlight_range(file, category, line=0, start_column=0, end_column=-1):
         """
         OBSOLESCENT>
 
@@ -3554,7 +3635,7 @@ class Editor(object):
         pass  # implemented in Ada
 
     @staticmethod
-    def set_synchronized_scrolling(file1, file2, file3=''):
+    def set_synchronized_scrolling(file1, file2, file3=""):
         """
         OBSOLESCENT.
 
@@ -3632,8 +3713,7 @@ class Editor(object):
         pass  # implemented in Ada
 
     @staticmethod
-    def unhighlight_range(file, category, line=0, start_column=0,
-                          end_column=-1):
+    def unhighlight_range(file, category, line=0, start_column=0, end_column=-1):
         """
         OBSOLESCENT.
 
@@ -3651,6 +3731,7 @@ class Editor(object):
 ###########################################################
 # EditorBuffer
 ###########################################################
+
 
 class EditorBuffer(object):
 
@@ -3681,7 +3762,7 @@ class EditorBuffer(object):
         """
         pass  # implemented in Ada
 
-    def add_special_line(self, start_line, text, category='', name=''):
+    def add_special_line(self, start_line, text, category="", name=""):
         """
         Adds one non-editable line to the buffer, starting at line
         ``start_line`` and containing the string ``text``. If ``category`` is
@@ -3702,8 +3783,7 @@ class EditorBuffer(object):
         """
         pass  # implemented in Ada
 
-    def apply_overlay(self, overlay, frm='begining of buffer',
-                      to='end of buffer'):
+    def apply_overlay(self, overlay, frm="begining of buffer", to="end of buffer"):
         """
         Applies the overlay to the given range of text. This immediately
         changes the rendering of the text based on the properties of the
@@ -3811,8 +3891,7 @@ class EditorBuffer(object):
         """
         pass  # implemented in Ada
 
-    def copy(self, frm='beginning of buffer', to='end of buffer',
-             append=False):
+    def copy(self, frm="beginning of buffer", to="end of buffer", append=False):
         """
         Copies the given range of text into the clipboard, so that it can be
         further pasted into other applications or other parts of GPS. If
@@ -3827,7 +3906,7 @@ class EditorBuffer(object):
         """
         pass  # implemented in Ada
 
-    def create_overlay(self, name=''):
+    def create_overlay(self, name=""):
         """
         Creates a new overlay. Properties can be set on this overlay, which
         can then be applied to one or more ranges of text to changes its
@@ -3858,8 +3937,7 @@ class EditorBuffer(object):
         """
         pass  # implemented in Ada
 
-    def cut(self, frm='beginning of buffer', to='end of buffer',
-            append=False):
+    def cut(self, frm="beginning of buffer", to="end of buffer", append=False):
         """
         Copies the given range of text into the clipboard so that it can be
         further pasted into other applications or other parts of GPS. The
@@ -3873,7 +3951,7 @@ class EditorBuffer(object):
         """
         pass  # implemented in Ada
 
-    def delete(self, frm='beginning of buffer', to='end of buffer'):
+    def delete(self, frm="beginning of buffer", to="end of buffer"):
         """
         Deletes the given range of text from the buffer.
 
@@ -3905,8 +3983,13 @@ class EditorBuffer(object):
         pass  # implemented in Ada
 
     @staticmethod
-    def get(file='current editor', force=False, open=True,
-            only_if_focused=False, open_buffer=False):
+    def get(
+        file="current editor",
+        force=False,
+        open=True,
+        only_if_focused=False,
+        open_buffer=False,
+    ):
         """
         If ``file`` is already opened in an editor, get a handle on its
         buffer. This instance is then shared with all other buffers
@@ -3962,8 +4045,9 @@ class EditorBuffer(object):
         """
         pass  # implemented in Ada
 
-    def get_chars(self, frm='beginning of buffer', to='end of buffer',
-                  include_hidden_chars=True):
+    def get_chars(
+        self, frm="beginning of buffer", to="end of buffer", include_hidden_chars=True
+    ):
         """
         Returns the contents of the buffer between the two locations given in
         parameter. Modifying the returned value has no effect on the buffer.
@@ -4011,7 +4095,7 @@ class EditorBuffer(object):
         """
         pass  # implemented in Ada
 
-    def indent(self, frm='beginning of buffer', to='end of buffer'):
+    def indent(self, frm="beginning of buffer", to="end of buffer"):
         """
         Recomputes the indentation of the given range of text. This feature
         is language-dependent.
@@ -4089,7 +4173,7 @@ class EditorBuffer(object):
         """
         pass  # implemented in Ada
 
-    def refill(self, frm='beginning of buffer', to='end of buffer'):
+    def refill(self, frm="beginning of buffer", to="end of buffer"):
         """
         Refills the given range of text, i.e., cuts long lines if necessary
         so that they fit in the limit specified in the GPS preferences.
@@ -4100,8 +4184,7 @@ class EditorBuffer(object):
         """
         pass  # implemented in Ada
 
-    def remove_overlay(self, overlay, frm='begining of buffer',
-                       to='end of buffer'):
+    def remove_overlay(self, overlay, frm="begining of buffer", to="end of buffer"):
         """
         Removes all instances of the overlay in the given range of text. It is
         not an error if the overlay is not applied to any of the character in
@@ -4138,7 +4221,7 @@ class EditorBuffer(object):
         """
         pass  # implemented in Ada
 
-    def save(self, interactive=True, file='Same file as edited by the buffer'):
+    def save(self, interactive=True, file="Same file as edited by the buffer"):
         """
         Saves the buffer to the given file. If ``interactive`` is true, a
         dialog is open to ask for confirmation from the user first, which
@@ -4150,7 +4233,7 @@ class EditorBuffer(object):
         """
         pass  # implemented in Ada
 
-    def select(self, frm='beginning of buffer', to='end of buffer'):
+    def select(self, frm="beginning of buffer", to="end of buffer"):
         """
         Selects an area in the buffer. The boundaries are included in the
         selection. The order of the boundaries is irrelevant, but the cursor
@@ -4354,9 +4437,16 @@ class EditorBuffer(object):
         """
         pass  # implemented in Ada
 
-    def refactoring_rename(self, location, name, new_name,
-                           make_writable=False, auto_save=False,
-                           in_comments=False, allow_file_renaming=False):
+    def refactoring_rename(
+        self,
+        location,
+        name,
+        new_name,
+        make_writable=False,
+        auto_save=False,
+        in_comments=False,
+        allow_file_renaming=False,
+    ):
         """
         Renames an entity in the location and with the name everywhere in the
         application. The source files should have been compiled first.
@@ -4434,6 +4524,7 @@ class EditorBuffer(object):
 # EditorHighlighter
 ###########################################################
 
+
 class EditorHighlighter(object):
 
     """
@@ -4479,7 +4570,8 @@ class EditorHighlighter(object):
            # Remove the highlighter
            h.remove()
 
-    """
+        """
+
     pass  # implemented in Ada
 
     def remove(self):
@@ -4493,6 +4585,7 @@ class EditorHighlighter(object):
 ###########################################################
 # EditorLocation
 ###########################################################
+
 
 class EditorLocation(object):
 
@@ -4702,7 +4795,7 @@ class EditorLocation(object):
         """
         pass  # implemented in Ada
 
-    def create_mark(self, name='', left_gravity=True):
+    def create_mark(self, name="", left_gravity=True):
         """
         Creates a mark at that location in the buffer. The mark will stay
         permanently at that location, and follows it if the buffer is
@@ -4770,7 +4863,7 @@ class EditorLocation(object):
         """
         pass  # implemented in Ada
 
-    def forward_overlay(self, overlay=''):
+    def forward_overlay(self, overlay=""):
         """
         Moves to the next change in the list of overlays applying to the
         character. If ``overlay`` is specified, go to the next change for
@@ -4860,9 +4953,16 @@ class EditorLocation(object):
         """
         pass  # implemented in Ada
 
-    def search(self, pattern, backward=False, case_sensitive=False,
-               regexp=False, whole_word=False, scope='Whole',
-               dialog_on_failure=True):
+    def search(
+        self,
+        pattern,
+        backward=False,
+        case_sensitive=False,
+        regexp=False,
+        whole_word=False,
+        scope="Whole",
+        dialog_on_failure=True,
+    ):
         """
         Searches for the next occurrence of ``pattern`` in the editor,
         starting at the given location. If there is such a match, this
@@ -4909,6 +5009,7 @@ class EditorLocation(object):
 ###########################################################
 # EditorMark
 ###########################################################
+
 
 class EditorMark(object):
 
@@ -5019,6 +5120,7 @@ class EditorMark(object):
 ###########################################################
 # EditorOverlay
 ###########################################################
+
 
 class EditorOverlay(object):
 
@@ -5167,6 +5269,7 @@ class EditorOverlay(object):
 # EditorView
 ###########################################################
 
+
 class EditorView(GUI):
 
     """
@@ -5200,7 +5303,7 @@ class EditorView(GUI):
         """
         pass  # implemented in Ada
 
-    def center(self, location='location of cursor', center=True):
+    def center(self, location="location of cursor", center=True):
         """
         Scrolls the view so that the location is visible.
 
@@ -5290,6 +5393,7 @@ class EditorView(GUI):
 # Entity
 ###########################################################
 
+
 class Entity(object):
 
     """
@@ -5346,8 +5450,9 @@ class Entity(object):
         """
         pass  # implemented in Ada
 
-    def __init__(self, name, file=None, line=-1, column=-1,
-                 approximate_search_fallback=True):
+    def __init__(
+        self, name, file=None, line=-1, column=-1, approximate_search_fallback=True
+    ):
         """
         OBSOLESCENT.
 
@@ -5412,7 +5517,7 @@ class Entity(object):
         """
         pass  # implemented in Ada
 
-    def body(self, nth='1'):
+    def body(self, nth="1"):
         """
         OBSOLESCENT.
 
@@ -5511,7 +5616,7 @@ class Entity(object):
         :return: a list of :class:`GPS.Entity`
         """
 
-    def has_body(self, nth='1'):
+    def has_body(self, nth="1"):
         """
         OBSOLESCENT.
 
@@ -5860,8 +5965,14 @@ class Entity(object):
         """
         pass  # implemented in Ada
 
-    def references(self, include_implicit=False, synchronous=True,
-                   show_kind=False, in_file=None, kind_in=''):
+    def references(
+        self,
+        include_implicit=False,
+        synchronous=True,
+        show_kind=False,
+        in_file=None,
+        kind_in="",
+    ):
         """
         OBSOLESCENT. Use GPS.EditorBuffer.references instead.
 
@@ -5899,8 +6010,9 @@ class Entity(object):
         """
         pass  # implemented in Ada
 
-    def rename(self, name, include_overriding=True, make_writable=False,
-               auto_save=False):
+    def rename(
+        self, name, include_overriding=True, make_writable=False, auto_save=False
+    ):
         """
         OBSOLESCENT. Use GPS.EditorBuffer.refactoring_rename instead.
 
@@ -5979,18 +6091,21 @@ class Entity(object):
 # Exception
 ###########################################################
 
+
 class Exception(builtins.Exception):
 
     """
     One of the exceptions that can be raised by GPS. It is a general error
     message, and its semantic depends on what subprogram raised the exception.
     """
+
     pass  # implemented in Ada
 
 
 ###########################################################
 # File
 ###########################################################
+
 
 class File(object):
 
@@ -6120,7 +6235,7 @@ class File(object):
         """
         pass  # implemented in Ada
 
-    def compile(self, extra_args=''):
+    def compile(self, extra_args=""):
         """
         Compiles the current file. This call returns only after the
         compilation is completed. Additional arguments can be added to the
@@ -6223,7 +6338,7 @@ class File(object):
         """
         pass  # implemented in Ada
 
-    def make(self, extra_args=''):
+    def make(self, extra_args=""):
         """
         Compiles and links the file and all its dependencies. This call
         returns only after the compilation is completed. Additional arguments
@@ -6235,7 +6350,7 @@ class File(object):
         """
         pass  # implemented in Ada
 
-    def name(self, remote_server='GPS_Server'):
+    def name(self, remote_server="GPS_Server"):
         """
         Returns the name of the file associated with self. This is an absolute
         file name, including directories from the root of the filesystem.
@@ -6324,8 +6439,7 @@ class File(object):
         """
         pass  # implemented in Ada
 
-    def search(self, pattern, case_sensitive=False,
-               regexp=False, scope='whole'):
+    def search(self, pattern, case_sensitive=False, regexp=False, scope="whole"):
         """
         Returns the list of matches for pattern in the file. Default values are
         False for case_sensitive and regexp. Scope is a string, and should be
@@ -6456,6 +6570,7 @@ class File(object):
 # FileLocation
 ###########################################################
 
+
 class FileLocation(object):
 
     """
@@ -6561,6 +6676,7 @@ class FileLocation(object):
 # FileTemplate
 ###########################################################
 
+
 class FileTemplate(object):
 
     """
@@ -6569,8 +6685,15 @@ class FileTemplate(object):
     """
 
     @staticmethod
-    def register(alias_name, label, unit_param, language,
-                 is_impl, impl_alias_name=None, post_action=None):
+    def register(
+        alias_name,
+        label,
+        unit_param,
+        language,
+        is_impl,
+        impl_alias_name=None,
+        post_action=None,
+    ):
         """
         Register a new file template and create a 'New/create ``label``
         contextual menu allowing users to create a new file from it for a given
@@ -6647,6 +6770,7 @@ class FileTemplate(object):
 # HTML
 ###########################################################
 
+
 class HTML(object):
 
     """
@@ -6669,7 +6793,7 @@ class HTML(object):
         pass  # implemented in Ada
 
     @staticmethod
-    def browse(URL, anchor='', navigation=True):
+    def browse(URL, anchor="", navigation=True):
         """
         Opens the GPS HTML viewer, and loads the given URL. If anchor matches
         a <a> tag in this file, GPS jumps to it. If URL is not an absolute file
@@ -6706,6 +6830,7 @@ class HTML(object):
 ###########################################################
 # Help
 ###########################################################
+
 
 class Help(object):
 
@@ -6798,6 +6923,7 @@ class Help(object):
 # Hook
 ###########################################################
 
+
 class Hook(object):
 
     """
@@ -6838,14 +6964,14 @@ class Hook(object):
               print "File edited hook=" + hook_name + " file=" + file.name()
               GPS.Hook("file_edited").add(file_edited)
 
-              """
+        """
         pass  # implemented in Ada
 
     def add_debounce(self, function_name, last=True):
         """
         The same as above but for calling callback asynchronously. Only for
         hooks which has :asynchronouse parameter.
-              """
+        """
         pass  # implemented in Ada
 
     def describe_functions(self):
@@ -6883,7 +7009,7 @@ class Hook(object):
         pass  # implemented in Ada
 
     @staticmethod
-    def register(name, type=''):
+    def register(name, type=""):
         """
         Definess a new hook. This hook can take any number of parameters: the
         default is none. The type and number of parameters is called the type
@@ -6972,6 +7098,7 @@ class Hook(object):
 # Invalid_Argument
 ###########################################################
 
+
 class Invalid_Argument(Exception):
 
     """
@@ -6979,12 +7106,14 @@ class Invalid_Argument(Exception):
     module with an invalid argument type (passing an integer when a string is
     expected, for example).
     """
+
     pass  # implemented in Ada
 
 
 ###########################################################
 # Logger
 ###########################################################
+
 
 class Logger(object):
 
@@ -7015,7 +7144,7 @@ class Logger(object):
         """
         pass  # implemented in Ada
 
-    def check(self, condition, error_message, success_message=''):
+    def check(self, condition, error_message, success_message=""):
         """
         If ``condition`` is False, ``error_message`` is logged in the log
         file. If True, ``success_message`` is logged if present.
@@ -7030,6 +7159,7 @@ class Logger(object):
            log.check(1 == 2, "Invalid operation")
 
         """
+
     count = None
 
     active = True
@@ -7060,6 +7190,7 @@ class Logger(object):
 ###########################################################
 # MDI
 ###########################################################
+
 
 class MDI(object):
 
@@ -7124,8 +7255,7 @@ class MDI(object):
         """
 
     @staticmethod
-    def add(widget, title="", short="", group=0,
-            position=0, save_desktop=None):
+    def add(widget, title="", short="", group=0, position=0, save_desktop=None):
         """
         This function is only available if pygobject could be loaded in the
         python shell. You must install this library first, see the
@@ -7238,7 +7368,7 @@ class MDI(object):
         pass  # implemented in Ada
 
     @staticmethod
-    def file_selector(file_filter='empty', base_dir="", except_filter=''):
+    def file_selector(file_filter="empty", base_dir="", except_filter=""):
         """
         Displays a modal file selector. The user selected file is returned,
         or a file with an empty name if :guilabel:`Cancel` is pressed.
@@ -7376,7 +7506,6 @@ class MDI(object):
         """
         pass  # implemented in Ada
 
-
     @staticmethod
     def set_focus_widget(widget):
         """
@@ -7385,7 +7514,6 @@ class MDI(object):
         specific widget contained in that dialog, and not in the main window.
         """
         pass  # implemented in Ada
-
 
     @staticmethod
     def yes_no_dialog(msg):
@@ -7406,7 +7534,7 @@ class MDI(object):
         """
 
     @staticmethod
-    def information_popup(self, text='', icon=''):
+    def information_popup(self, text="", icon=""):
         """
         Display a temporary information popup on the screen. This popup
         automatically disappears after a short while, so should only be
@@ -7452,6 +7580,7 @@ class MDI(object):
 ###########################################################
 # MDIWindow
 ###########################################################
+
 
 class MDIWindow(GUI):
 
@@ -7547,7 +7676,7 @@ class MDIWindow(GUI):
         """
         pass  # implemented in Ada
 
-    def rename(self, name, short=''):
+    def rename(self, name, short=""):
         """
         Changes the title used for a window.  ``name`` is the long title, as
         it appears in the title bar, and ``short``, if specified, is the name
@@ -7599,6 +7728,7 @@ class MDIWindow(GUI):
 # Menu
 ###########################################################
 
+
 class Menu(object):
 
     """
@@ -7649,6 +7779,7 @@ class Menu(object):
 # MemoryUsageProvider
 ###########################################################
 
+
 class MemoryUsageProvider(object):
 
     """
@@ -7675,6 +7806,7 @@ class MemoryUsageProvider(object):
 ###########################################################
 # MemoryUsageProviderVisitor
 ###########################################################
+
 
 class MemoryUsageProviderVisitor(object):
 
@@ -7716,6 +7848,7 @@ class MemoryUsageProviderVisitor(object):
 # Message
 ###########################################################
 
+
 class Message(object):
 
     """
@@ -7723,11 +7856,23 @@ class Message(object):
     annotations, etc.
     """
 
-    Flags = enum('Message.Flags', INVISIBLE=0, IN_SIDEBAR=1,
-                 IN_LOCATIONS=2, IN_SIDEBAR_AND_LOCATIONS=3)
+    Flags = enum(
+        "Message.Flags",
+        INVISIBLE=0,
+        IN_SIDEBAR=1,
+        IN_LOCATIONS=2,
+        IN_SIDEBAR_AND_LOCATIONS=3,
+    )
 
-    Importance = enum('Message.Importance', ANNOTATION=0, UNSPECIFIED=1,
-                      INFORMATIONAL=2, LOW=3, MEDIUM=4, HIGH=5)
+    Importance = enum(
+        "Message.Importance",
+        ANNOTATION=0,
+        UNSPECIFIED=1,
+        INFORMATIONAL=2,
+        LOW=3,
+        MEDIUM=4,
+        HIGH=5,
+    )
 
     @staticmethod
     def __del__():
@@ -7736,11 +7881,18 @@ class Message(object):
         """
         pass  # implemented in Ada
 
-    def __init__(self, category, file, line, column, text,
-                 show_on_editor_side=True,
-                 show_in_locations=True,
-                 allow_auto_jump_to_first=True,
-                 importance=Importance.UNSPECIFIED):
+    def __init__(
+        self,
+        category,
+        file,
+        line,
+        column,
+        text,
+        show_on_editor_side=True,
+        show_in_locations=True,
+        allow_auto_jump_to_first=True,
+        importance=Importance.UNSPECIFIED,
+    ):
         """
         Adds a Message in GPS.
 
@@ -7955,15 +8107,24 @@ class Message(object):
 # Locations
 ###########################################################
 
+
 class Locations(object):
     """
     General interface to the :guilabel:`Locations` view.
     """
 
     @staticmethod
-    def add(category, file, line, column, message,
-            highlight='', length='0', look_for_secondary=False,
-            importance=Message.Importance.UNSPECIFIED):
+    def add(
+        category,
+        file,
+        line,
+        column,
+        message,
+        highlight="",
+        length="0",
+        look_for_secondary=False,
+        importance=Message.Importance.UNSPECIFIED,
+    ):
         """
         Adds a new entry to the :guilabel:`Locations` view. Nodes are created
         as needed for ``category`` or ``file``. If ``highlight`` is specified
@@ -7995,10 +8156,18 @@ class Locations(object):
         pass  # implemented in Ada
 
     @staticmethod
-    def add_multilines(category, file, line, column,
-                       end_line, end_column, message,
-                       highlight='', show_in_location=False,
-                       importance=Message.Importance.UNSPECIFIED):
+    def add_multilines(
+        category,
+        file,
+        line,
+        column,
+        end_line,
+        end_column,
+        message,
+        highlight="",
+        show_in_location=False,
+        importance=Message.Importance.UNSPECIFIED,
+    ):
         """
         Similar to "add": create a Message between (line, column) and
         (end_line, end_column).
@@ -8065,12 +8234,20 @@ class Locations(object):
         pass  # implemented in Ada
 
     @staticmethod
-    def parse(output, category, regexp='', file_index=-1,
-              line_index=-1, column_index=-1, msg_index=-1,
-              style_index=-1, warning_index=-1,
-              highlight_category='Builder results',
-              style_category='Style errors',
-              warning_category='Builder warnings'):
+    def parse(
+        output,
+        category,
+        regexp="",
+        file_index=-1,
+        line_index=-1,
+        column_index=-1,
+        msg_index=-1,
+        style_index=-1,
+        warning_index=-1,
+        highlight_category="Builder results",
+        style_category="Style errors",
+        warning_category="Builder warnings",
+    ):
         """
         Parses the contents of the string, which is supposedly the output of
         some tool, and adds the errors and warnings to the
@@ -8140,18 +8317,21 @@ class Locations(object):
 # Missing_Arguments
 ###########################################################
 
+
 class Missing_Arguments(Exception):
 
     """
     An exception raised by GPS. Raised when calling a subprogram from the GPS
     module with missing arguments.
     """
+
     pass  # implemented in Ada
 
 
 ###########################################################
 # Cursor
 ###########################################################
+
 
 class Cursor(object):
 
@@ -8252,9 +8432,14 @@ class Preference(object):
         """
         pass  # implemented in Ada
 
-    def create_style(self, label, doc='', default_fg="",
-                     default_bg="transparent",
-                     default_font_style="default"):
+    def create_style(
+        self,
+        label,
+        doc="",
+        default_fg="",
+        default_bg="transparent",
+        default_font_style="default",
+    ):
         """
         Creates a new text style preference, which enables the user to choose
         between different text style characteristics, namely foreground
@@ -8271,7 +8456,7 @@ class Preference(object):
           "normal", "bold", "italic" or "bold_italic"
         """
 
-    def create(self, label, type, doc='', default='', *args):
+    def create(self, label, type, doc="", default="", *args):
         """
         Creates a new preference and makes it visible in the preferences
         dialog. In the dialog, the preference appears in the page given by
@@ -8317,8 +8502,7 @@ class Preference(object):
         """
         pass  # implemented in Ada
 
-    def create_with_priority(self, label, type, priority, doc='',
-                             default='', *args):
+    def create_with_priority(self, label, type, priority, doc="", default="", *args):
         """
         Same as :func:`GPS.Preferences.create` but with an additional parameter
         allowing to specify the priority of the preference.
@@ -8359,6 +8543,7 @@ class Preference(object):
 # PreferencesPage
 ###########################################################
 
+
 class PreferencesPage:
     """
     Interface to the GPS preferences pages, as set in the
@@ -8366,6 +8551,7 @@ class PreferencesPage:
 
     This interface can be used to create custom preferences pages.
     """
+
     @staticmethod
     def create(self, name, get_widget, priority=-1, is_integrated=False):
         """
@@ -8400,7 +8586,8 @@ class PreferencesPage:
         :param priority: integer defining the page's priority
         :param is_integrated: A boolean
         """
-        pass   # implemented in Ada
+        pass  # implemented in Ada
+
 
 ###########################################################
 # Process
@@ -8472,12 +8659,27 @@ class Process(Command):
        My_Gdb()
     """
 
-    def __init__(self, command, regexp='', on_match=None, on_exit=None,
-                 task_manager=True, progress_regexp='', progress_current=1,
-                 progress_total=1, before_kill=None, remote_server='',
-                 show_command=False, single_line_regexp=False,
-                 case_sensitive_regexp=True, strip_cr=True, active=False,
-                 directory="", block_exit=True, task_manager_name=''):
+    def __init__(
+        self,
+        command,
+        regexp="",
+        on_match=None,
+        on_exit=None,
+        task_manager=True,
+        progress_regexp="",
+        progress_current=1,
+        progress_total=1,
+        before_kill=None,
+        remote_server="",
+        show_command=False,
+        single_line_regexp=False,
+        case_sensitive_regexp=True,
+        strip_cr=True,
+        active=False,
+        directory="",
+        block_exit=True,
+        task_manager_name="",
+    ):
         """
         Spawns ``command``, which can include triple-quoted strings, similar
         to Python, which are always preserved as one argument.
@@ -8703,30 +8905,31 @@ class Process(Command):
 # Project
 ###########################################################
 
+
 class Project(object):
 
     """
-    Represents a project file. Also see the GPS documentation on how to
-    create new project attributes.
+     Represents a project file. Also see the GPS documentation on how to
+     create new project attributes.
 
-    .. seealso:: :func:`GPS.Project.__init__`
+     .. seealso:: :func:`GPS.Project.__init__`
 
-    Related hooks:
+     Related hooks:
 
-    - project_view_changed
+     - project_view_changed
 
-      Called whenever the project is recomputed, such as when one of its
-      attributes was changed by the user or the environment variables are
-      changed.
+       Called whenever the project is recomputed, such as when one of its
+       attributes was changed by the user or the environment variables are
+       changed.
 
-      This is a good time to test the list of languages
-      (:func:`GPS.Project.languages`) that the project supports and do
-      language-specific customizations
+       This is a good time to test the list of languages
+       (:func:`GPS.Project.languages`) that the project supports and do
+       language-specific customizations
 
-   - project_changed
+    - project_changed
 
-      Called when a new project was loaded. The hook above is called after
-      this one.
+       Called when a new project was loaded. The hook above is called after
+       this one.
     """
 
     target = None
@@ -8840,7 +9043,7 @@ class Project(object):
         pass  # implemented in Ada
 
     @staticmethod
-    def add_predefined_paths(sources='', objects=''):
+    def add_predefined_paths(sources="", objects=""):
         """
         Adds some predefined directories to the source path or the objects
         path. These are searched when GPS needs to open a file by its base
@@ -8967,7 +9170,7 @@ class Project(object):
         :return: An instance of :class:`GPS.File`
         """
 
-    def get_attribute_as_list(self, attribute, package='', index=''):
+    def get_attribute_as_list(self, attribute, package="", index=""):
         """
         Fetches the value of the attribute in the project.
 
@@ -9016,7 +9219,7 @@ class Project(object):
         """
         pass  # implemented in Ada
 
-    def get_attribute_as_string(self, attribute, package='', index=''):
+    def get_attribute_as_string(self, attribute, package="", index=""):
         """
         Fetches the value of the attribute in the project.
 
@@ -9391,7 +9594,7 @@ class Project(object):
         """
         pass  # implemented in Ada
 
-    def rename(self, name, path='<current path>'):
+    def rename(self, name, path="<current path>"):
         """
         Renames and moves a project file (the project is only put in the new
         directory when it is saved, but is not removed from its original
@@ -9442,7 +9645,7 @@ class Project(object):
         pass  # implemented in Ada
 
     @staticmethod
-    def scenario_variables_cmd_line(prefix=''):
+    def scenario_variables_cmd_line(prefix=""):
         """
         Returns a concatenation of VARIABLE=VALUE, each preceded by
         ``prefix``. This string is generally used when calling external
@@ -9475,8 +9678,9 @@ class Project(object):
         """
         pass  # implemented in Ada
 
-    def search(self, pattern, case_sensitive=False, regexp=False,
-               scope='whole', recursive=True):
+    def search(
+        self, pattern, case_sensitive=False, regexp=False, scope="whole", recursive=True
+    ):
         """
         Returns the list of matches for pattern in all the files belonging to
         the project (and its imported projects if recursive is true,
@@ -9609,6 +9813,7 @@ class Project(object):
 # ProjectTemplate
 ###########################################################
 
+
 class ProjectTemplate(object):
 
     """
@@ -9631,6 +9836,7 @@ class ProjectTemplate(object):
 ###########################################################
 # ReferencesCommand
 ###########################################################
+
 
 class ReferencesCommand(Command):
 
@@ -9658,6 +9864,7 @@ class ReferencesCommand(Command):
 ###########################################################
 # Revision
 ###########################################################
+
 
 class Revision(object):
 
@@ -9715,6 +9922,7 @@ class Revision(object):
 ###########################################################
 # Search
 ###########################################################
+
 
 class Search(object):
 
@@ -9903,6 +10111,7 @@ class Search(object):
         Makes :class:`GPS.Search` compatible with python iterators.
         """
 
+
 ###########################################################
 # Search
 ###########################################################
@@ -9935,6 +10144,7 @@ class Search_Result(object):
 # SemanticTree
 ###########################################################
 
+
 class SemanticTree(object):
     """
     This class represents the semantic information known to GPS for
@@ -9966,6 +10176,7 @@ class SemanticTree(object):
 ###########################################################
 # Style
 ###########################################################
+
 
 class Style(object):
 
@@ -10092,6 +10303,7 @@ class Style(object):
 # SwitchesChooser
 ###########################################################
 
+
 class SwitchesChooser(GUI):
 
     """
@@ -10129,6 +10341,7 @@ class SwitchesChooser(GUI):
 ###########################################################
 # Task
 ###########################################################
+
 
 class Task(object):
 
@@ -10266,6 +10479,7 @@ class Task(object):
 # Timeout
 ###########################################################
 
+
 class Timeout(object):
 
     """
@@ -10315,6 +10529,7 @@ class Timeout(object):
 # Unexpected_Exception
 ###########################################################
 
+
 class Unexpected_Exception(Exception):
 
     """
@@ -10323,12 +10538,14 @@ class Unexpected_Exception(Exception):
     in GPS itself, not in the Python script, although it might be possible to
     modify the latter to work around the issue.
     """
+
     pass  # implemented in Ada
 
 
 ###########################################################
 # Valgrind
 ###########################################################
+
 
 class Valgrind(object):
     """
@@ -10374,6 +10591,7 @@ class Valgrind(object):
 # VCS2
 ###########################################################
 
+
 class VCS2(object):
     """
     An interface to a version control engine.
@@ -10413,17 +10631,15 @@ class VCS2(object):
               Git   CVS    Subversion
     """
 
-    Actions = enum('VCS2.Actions', DOUBLE_CLICK=0, TOOLTIP=1, ADD=2,
-                   REMOVE=3, RENAME=4)
-    Status = enum('VCS2.Status', UNMODIFIED=2**0, MODIFIED=2**1)
+    Actions = enum("VCS2.Actions", DOUBLE_CLICK=0, TOOLTIP=1, ADD=2, REMOVE=3, RENAME=4)
+    Status = enum("VCS2.Status", UNMODIFIED=2**0, MODIFIED=2**1)
 
     class Branch:
         def __init__(self, name, active, annotation, id):
             pass
 
     class Commit:
-        def __init__(self, id, author, date, subject, parents, names=None,
-                     flags=0):
+        def __init__(self, id, author, date, subject, parents, names=None, flags=0):
             pass
 
     @staticmethod
@@ -10577,13 +10793,14 @@ class VCS2(object):
 # VCS2_Task_Visitor
 ###########################################################
 
+
 class VCS2_Task_Visitor(object):
     """
     A class used in `GPS.VCS2.async_fetch_history`.
     This is only used when writing your own support for VCS engines.
     """
 
-    def success(self, msg=''):
+    def success(self, msg=""):
         """
         This should be called whenever an action succeed.
         It is used to perform various cleanups on the Ada side (for instance
@@ -10655,7 +10872,7 @@ class VCS2_Task_Visitor(object):
         :param str iconname: icon to use for this category.
         :param bool can_rename: true if the branches can be renamed.
         :param List branches: a list of branches (see `GPS.VCS2.Branch`).
-         """
+        """
 
     def tooltip(self, text):
         """
@@ -10670,6 +10887,7 @@ class VCS2_Task_Visitor(object):
 ###########################################################
 # Vdiff
 ###########################################################
+
 
 class Vdiff(object):
 
@@ -10702,7 +10920,7 @@ class Vdiff(object):
         pass  # implemented in Ada
 
     @staticmethod
-    def create(file1, file2, file3=''):
+    def create(file1, file2, file3=""):
         """
         If none of the files given as parameter is already used in a visual
         diff, creates a new visual diff and returns it. Otherwise, None is
@@ -10725,7 +10943,7 @@ class Vdiff(object):
         pass  # implemented in Ada
 
     @staticmethod
-    def get(file1, file2='', file3=''):
+    def get(file1, file2="", file3=""):
         """
         Returns an instance of an already exisiting visual diff. If an
         instance already exists for this visual diff, it is returned. All
@@ -10791,6 +11009,7 @@ class Vdiff(object):
 # XMLViewer
 ###########################################################
 
+
 class XMLViewer(object):
 
     """
@@ -10798,8 +11017,9 @@ class XMLViewer(object):
 
     """
 
-    def __init__(self, name, columns=3, parser=None, on_click=None,
-                 on_select=None, sorted=False):
+    def __init__(
+        self, name, columns=3, parser=None, on_click=None, on_select=None, sorted=False
+    ):
         """
         Creates a new XMLViewer, named ``name``.
 
@@ -10906,6 +11126,7 @@ class XMLViewer(object):
         """
         pass  # implemented in Ada
 
+
 ###########################################################
 # Alias
 ###########################################################
@@ -10943,6 +11164,7 @@ class Alias(object):
         """
         pass  # implemented in Ada
 
+
 ###########################################################
 # Completion
 ###########################################################
@@ -10961,6 +11183,7 @@ class Completion(object):
         Registers a resolver, which inherits from :class:`CompletionResolver`.
         language is a string indicating which language this resolver supports.
         """
+
 
 ###########################################################
 # OutputParserWrapper
@@ -11030,10 +11253,19 @@ class OutputParserWrapper(object):
 
 
 class Icon(object):
-
-    def __init__(self, id, label, path, alt_menu=None, alt_small_toolbar=None,
-                 alt_large_toolbar=None, alt_local_toolbar=None,
-                 alt_button=None, alt_dnd=None, alt_dialog=None):
+    def __init__(
+        self,
+        id,
+        label,
+        path,
+        alt_menu=None,
+        alt_small_toolbar=None,
+        alt_large_toolbar=None,
+        alt_local_toolbar=None,
+        alt_button=None,
+        alt_dnd=None,
+        alt_dialog=None,
+    ):
         """
         This will create a new icon with specified parameters, and add it to
         GPS stock icons. The returned instance is a placeholder that has no
@@ -11110,17 +11342,17 @@ class Construct(object):
     def __init__(self):
         """Instances are only created by GPS itself"""
 
-    name = ''
+    name = ""
     """The name of the construct"""
 
-    file = ''
+    file = ""
     """The GPS.File in which the construct occurs"""
 
     start = (0, 0, 0)
     """The source location for the beginning of this construct,
        (line, column, offset)"""
 
-    id = ''
+    id = ""
     """Unique id for the entity"""
 
 
@@ -11137,8 +11369,18 @@ class ConstructsList(object):
     def __init__(self):
         """Instances are only created by GPS itself"""
 
-    def add_construct(self, category, is_declaration, visiblity, name,
-                      profile, sloc_start, sloc_end, sloc_entity, id=""):
+    def add_construct(
+        self,
+        category,
+        is_declaration,
+        visiblity,
+        name,
+        profile,
+        sloc_start,
+        sloc_end,
+        sloc_entity,
+        id="",
+    ):
         """
         Register a new semantic construct from the file.
 
@@ -11175,80 +11417,86 @@ class ConstructsList(object):
 
 class Language(object):
     """
-        A few methods can be overridden when you create your own child class
-        of :class:`GPS.Language`, to provide support for the Outline view.
-        They are not defined by default, and thus the documentation is given
-        below:
+    A few methods can be overridden when you create your own child class
+    of :class:`GPS.Language`, to provide support for the Outline view.
+    They are not defined by default, and thus the documentation is given
+    below:
 
-        .. code-block:: python
+    .. code-block:: python
 
-            def parse_constructs(self, constructs_list, gps_file,
-                                 content_string):
-                '''
-                Abstract method that has to be implemented by the subclasses.
+        def parse_constructs(self, constructs_list, gps_file,
+                             content_string):
+            '''
+            Abstract method that has to be implemented by the subclasses.
 
-                Given an empty list of constructs, a file instance and a string
-                containing the contents of the file, this needs to populate the
-                list of language constructs. In turn this will give support for
-                a number of features in GPS including:
+            Given an empty list of constructs, a file instance and a string
+            containing the contents of the file, this needs to populate the
+            list of language constructs. In turn this will give support for
+            a number of features in GPS including:
 
-                - Outline support
-                - Block highlighting/folding support
-                - Entity search support
+            - Outline support
+            - Block highlighting/folding support
+            - Entity search support
 
-                ..  seealso: :class:`GPS.ConstructsList`
-                ..  seealso: :func:`GPS.Language.should_refresh_constructs`
+            ..  seealso: :class:`GPS.ConstructsList`
+            ..  seealso: :func:`GPS.Language.should_refresh_constructs`
 
-                :param GPS.ConstructList constructs_list: The list of
-                    constructs to populate. The enclosing constructs must be
-                    added in the constructs_list after nested constructs.
-                :param GPS.File gps_file: the name of the file to parse.
-                :param str content_string: The content of the file
+            :param GPS.ConstructList constructs_list: The list of
+                constructs to populate. The enclosing constructs must be
+                added in the constructs_list after nested constructs.
+            :param GPS.File gps_file: the name of the file to parse.
+            :param str content_string: The content of the file
 
-                '''
+            '''
 
-            def should_refresh_constructs(self, file):
-                '''
-                Whether GPS should call parse_constructs to refresh the list.
-                This is called when the file has not changed on the disk, but
-                GPS thinks there might be a need to refresh because various
-                hooks have been run.
-                By default, this returns False, so that parse_constructs is
-                only called when the file changes on the disk.
+        def should_refresh_constructs(self, file):
+            '''
+            Whether GPS should call parse_constructs to refresh the list.
+            This is called when the file has not changed on the disk, but
+            GPS thinks there might be a need to refresh because various
+            hooks have been run.
+            By default, this returns False, so that parse_constructs is
+            only called when the file changes on the disk.
 
-                :param GPS.File file: the file to test
-                :return: a bool
+            :param GPS.File file: the file to test
+            :return: a bool
 
-                '''
+            '''
 
-            def clicked_on_construct(self, construct):
-                '''
-                Called when the user wants to jump to a specific construct.
-                The default is to open an editor for the file/line/column.
+        def clicked_on_construct(self, construct):
+            '''
+            Called when the user wants to jump to a specific construct.
+            The default is to open an editor for the file/line/column.
 
-                :param GPS.Construct construct: the construct as build in
-                    :func:`GPS.Language.parse_constructs`.
+            :param GPS.Construct construct: the construct as build in
+                :func:`GPS.Language.parse_constructs`.
 
-                '''
+            '''
 
-            def get_last_selected_construct_id(self, file):
-                '''
-                Called when the Outline view needs to reselect in its tree view
-                the construct that was selected just before leaving the view
-                associated with the given file.
+        def get_last_selected_construct_id(self, file):
+            '''
+            Called when the Outline view needs to reselect in its tree view
+            the construct that was selected just before leaving the view
+            associated with the given file.
 
-                This function should return the string ID of the last selected
-                construct for the given file.
+            This function should return the string ID of the last selected
+            construct for the given file.
 
-                :param GPS.File file: the file that is associated with the
-                    Outline
-                :return: a string
-                '''
+            :param GPS.File file: the file that is associated with the
+                Outline
+            :return: a string
+            '''
     """
 
     @staticmethod
-    def register(instance, name, body_suffix, spec_suffix="", obj_suffix="",
-                 indentation_kind=INDENTATION_SIMPLE):
+    def register(
+        instance,
+        name,
+        body_suffix,
+        spec_suffix="",
+        obj_suffix="",
+        indentation_kind=INDENTATION_SIMPLE,
+    ):
         """
         Register an instance of language in GPS.
 
@@ -11289,12 +11537,12 @@ class LanguageInfo(object):
     programing languages supported by GPS.
     """
 
-    name = ''
+    name = ""
     """
     Return the name of the language
     """
 
-    keywords = ''
+    keywords = ""
     """
     Return a regular expression that can be used to test whether a
     string is a keyword for the language. The regexp is anchored with
@@ -11333,7 +11581,7 @@ class LanguageServer(object):
 
     def __init__(self):
         """Implemented in Ada; do not call this, call get_by_*()
-           to obtain a language server.
+        to obtain a language server.
         """
         pass  # implemented in Ada
 
@@ -11379,10 +11627,15 @@ class LanguageServer(object):
         """
         pass  # implemented in Ada
 
-    def request_low_level(self, method, params,
-                          on_result_message, on_error_message=None,
-                          on_rejected=None,
-                          auto_cancel=False):
+    def request_low_level(
+        self,
+        method,
+        params,
+        on_result_message,
+        on_error_message=None,
+        on_rejected=None,
+        auto_cancel=False,
+    ):
         """
         Launch a request to the server.
 
@@ -11416,6 +11669,7 @@ class LanguageServer(object):
         :return: A list of String.
         """
         pass  # implemented in Ada
+
 
 ###########################################################
 # Globals
@@ -11649,7 +11903,7 @@ def delete(name):
     pass  # implemented in Ada
 
 
-def dir(pattern=''):
+def dir(pattern=""):
     """
     Lists files matching ``pattern`` (all files by default).
 
@@ -11691,12 +11945,14 @@ def dump_file(text, filename):
     """
     pass  # implemented in Ada
 
+
 def dump_elaborations():
     """
     Dumps the elaboration circularities that may arise after building
     the project.
     """
     pass  # implemented in Ada
+
 
 def echo(*args):
     """
@@ -11785,7 +12041,7 @@ def execute_asynchronous_action(action, *args):
     pass  # implemented in Ada
 
 
-def exit(force=False, status='0'):
+def exit(force=False, status="0"):
     """
     Exits GPS, asking for confirmation if any file is currently modified and
     unsaved. If ``force`` is True, no check is done.
@@ -11800,7 +12056,7 @@ def exit(force=False, status='0'):
     pass  # implemented in Ada
 
 
-def extract_method(file, line_start, line_end, method_name='New_Method'):
+def extract_method(file, line_start, line_end, method_name="New_Method"):
     """
     Extracts the code from ``line_start`` to ``line_end`` in ``file`` into a
     new subprogram with the given name. All needed local variables are
@@ -11928,6 +12184,7 @@ def get_build_output(target_name, shadow, background, as_string):
     """
     pass  # implemented in Ada
 
+
 def get_log_file():
     """
     Returns the log file used for the current GNAT Studio session as
@@ -11936,6 +12193,7 @@ def get_log_file():
     :return: The session's log file
     """
     pass  # implemented in Ada
+
 
 def get_home_dir():
     """
@@ -11982,7 +12240,7 @@ def get_tmp_dir():
     pass  # implemented in Ada
 
 
-def help(command=''):
+def help(command=""):
     """
     Returns the description of the command given in parameter or the list of
     all commands exported by GPS. :func:`GPS.help` is specific to the GPS
@@ -12095,7 +12353,7 @@ def lookup_actions_from_key(key):
     pass  # implemented in Ada
 
 
-def ls(pattern=''):
+def ls(pattern=""):
     """
     Lists the files matching ``pattern`` (all files by default).
 
@@ -12128,7 +12386,7 @@ def macro_load(file):
     pass  # implemented in Ada
 
 
-def macro_play(speed='1.0'):
+def macro_play(speed="1.0"):
     """
     Plays the current set of events.
 
@@ -12214,8 +12472,14 @@ def save_persistent_properties():
 
 
 def send_key_event(
-        keyval, window=None, primary=False, alt=False,
-        shift=False, control=False, hardware_keycode=0):
+    keyval,
+    window=None,
+    primary=False,
+    alt=False,
+    shift=False,
+    control=False,
+    hardware_keycode=0,
+):
     """
     synthesize and queue an event to simulate a key press. This event
     will be processed later by gtk+ (unless you call
@@ -12260,7 +12524,7 @@ def send_crossing_event(window=None, type=None, x=1, y=1, state=0):
     """
 
 
-def set_build_mode(mode=''):
+def set_build_mode(mode=""):
     """
     Sets the current build mode. If ``mode`` is not a registered mode,
     does nothing.
@@ -12324,7 +12588,7 @@ def version():
     pass  # implemented in Ada
 
 
-def visual_diff(file1, file2, file3=''):
+def visual_diff(file1, file2, file3=""):
     """
     Opens a Visual Diff between ``file1``, ``file2`` and (optionally)
     ``file3``.
@@ -12334,5 +12598,6 @@ def visual_diff(file1, file2, file3=''):
     :param file3: A string
     """
     pass  # implemented in Ada
+
 
 # import extensions

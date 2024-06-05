@@ -6,14 +6,16 @@
 
 from GPS import parse_xml, EditorBuffer
 
-parse_xml("""
+parse_xml(
+    """
   <action name="make lines readonly">
      <shell lang="python">readonly.make_readonly()</shell>
   </action>
   <menu action="make lines readonly">
      <title>/Tests/Make Lines Readonly</title>
   </menu>
-""")
+"""
+)
 
 
 def make_readonly():

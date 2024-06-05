@@ -35,7 +35,6 @@ junkOut = open("junk.out", "w+")
 
 
 def analyzeCall(call, fileName, line):
-
     global nonFixableMessages
     global fixedOut
     global toBeFixedOut
@@ -45,18 +44,18 @@ def analyzeCall(call, fileName, line):
 
     basename = re.search("[\w-]+\.adb", fileName).group(0)
 
-    param = re.sub("(\"[\s]*&[\s]*\")", "", call)
+    param = re.sub('("[\s]*&[\s]*")', "", call)
     param = re.sub("\n", "", param)
     param = re.sub("^[^\(]*\(", "", param)
     param = re.sub("\)[^\)]*$", "", param)
-    param = re.sub(",[^\"]*$", "", param)
+    param = re.sub(',[^"]*$', "", param)
 
-    if re.match("^\".*\"$", param) is None:
+    if re.match('^".*"$', param) is None:
         junkOut.write(basename + ":" + str(line) + ": " + param + "\n")
         return
 
-    message = re.sub("^\"", "", param)
-    message = re.sub("\"$", "", message)
+    message = re.sub('^"', "", param)
+    message = re.sub('"$', "", message)
 
     if param is not None:
         if re.search("CODEFIX", call) is not None:
@@ -71,8 +70,16 @@ def analyzeCall(call, fileName, line):
                     mypattern = pattern.pattern
 
             if found:
-                toBeFixedOut.write(basename + ":" + str(line) +
-                                   ": " + message + " - [" + mypattern + "]\n")
+                toBeFixedOut.write(
+                    basename
+                    + ":"
+                    + str(line)
+                    + ": "
+                    + message
+                    + " - ["
+                    + mypattern
+                    + "]\n"
+                )
             else:
                 found = False
 
@@ -82,10 +89,11 @@ def analyzeCall(call, fileName, line):
 
                 if found:
                     knownUnfixableOut.write(
-                        basename + ":" + str(line) + ": " + message + "\n")
+                        basename + ":" + str(line) + ": " + message + "\n"
+                    )
                 else:
-                    unknownOut.write(basename + ":" +
-                                     str(line) + ": " + message + "\n")
+                    unknownOut.write(basename + ":" + str(line) + ": " + message + "\n")
+
 
 ###############
 # analyseFile #
@@ -110,7 +118,7 @@ def analyzeFile(fileName):
     contentStr = file.read()
 
     for c in contentStr:
-        if c == '\n':
+        if c == "\n":
             currentLine = currentLine + 1
 
         if mode == MODE_MATCH:
@@ -127,7 +135,7 @@ def analyzeFile(fileName):
 
         elif mode == MODE_RETREIVE:
             matchStr = matchStr + c
-            if c == "\"":
+            if c == '"':
                 if inString:
                     inString = False
                 elif prevQuote:
@@ -144,6 +152,7 @@ def analyzeFile(fileName):
 
     file.close()
 
+
 ########
 # MAIN #
 ########
@@ -157,14 +166,14 @@ for pattern in nonFixbableMessagesFile.readlines():
     try:
         nonFixableMessages.append(re.compile(cleanPattern))
     except:
-        print("can't compile \"" + cleanPattern + "\"")
+        print("can't compile \"" + cleanPattern + '"')
 
 for pattern in fixableMessageFile.readlines():
     cleanPattern = re.sub("\r|\n", "", pattern)
     try:
         fixableMessages.append(re.compile(cleanPattern))
     except:
-        print("can't compile \"" + cleanPattern + "\"")
+        print("can't compile \"" + cleanPattern + '"')
 
 dirName = sys.argv[1]
 
