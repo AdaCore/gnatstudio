@@ -79,10 +79,13 @@ def create_default_shell():
         """
         :type variables: [name]
         """
-        msg = ("Can't start OS shell, the following environment variables"
-               + " need to be set: ")
-        msg += ", ".join('%s (currently "%s")' % (var, str(os.getenv(var)))
-                         for var in variables)
+        msg = (
+            "Can't start OS shell, the following environment variables"
+            + " need to be set: "
+        )
+        msg += ", ".join(
+            '%s (currently "%s")' % (var, str(os.getenv(var))) for var in variables
+        )
         msg += "\n"
         GPS.Console("Messages").write(msg, mode="error")
 
@@ -107,7 +110,8 @@ def create_default_shell():
                 bash_exe = os_utils.locate_exec_on_path("bash")
                 if bash_exe:
                     GPS.Console("Messages").write(
-                        "Retrying with SHELL=%s\n" % str(bash_exe))
+                        "Retrying with SHELL=%s\n" % str(bash_exe)
+                    )
                     Unix_Shell([str(bash_exe), "-i"])
         else:
             __error_msg(["TERM", "SHELL"])
