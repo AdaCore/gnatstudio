@@ -156,8 +156,18 @@ package body GPS.Kernel.Spawns is
 
       case Self.Process.Status is
          when Spawn.Not_Running =>
-            return (if Self.Failed then Commands.Failure
+
+            declare
+               This : Commands.Command_Access :=
+                 Commands.Command_Access (Self);
+
+               Result : constant Commands.Command_Return_Type :=
+                 (if Self.Failed then Commands.Failure
                     else Commands.Success);
+            begin
+               Commands.Unref (This);
+               return Result;
+            end;
 
          when Spawn.Starting | Spawn.Running =>
             return Commands.Execute_Again;
@@ -414,6 +424,7 @@ package body GPS.Kernel.Spawns is
       Trace
         (Me, "Spawning " & GNATCOLL.Arg_Lists.To_Display_String (Arg_List));
 
+      Obj.Ref;  --  Keep command alive until process finishes
       Obj.Process.Start;
       Command := Commands.Command_Access (Obj);
    end Launch_Process;
