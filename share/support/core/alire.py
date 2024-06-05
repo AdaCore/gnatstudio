@@ -239,6 +239,11 @@ def on_project_recomputed(hook):
                 return
             timeout.counter += 1
 
+            # Project reloaded before timeout is expired
+            if not project_to_reload:
+                timeout.remove()
+                return
+
             # Make sure to give the focus to the Locations view first...
             if GPS.MDI.current().name() != "Locations":
                 GPS.MDI.get("Locations").raise_window()

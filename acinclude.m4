@@ -236,7 +236,7 @@ dnl
   min_gtk_version=ifelse([$1], ,2.0.0,$1)
   AC_MSG_CHECKING(for GtkAda - version >= $min_gtk_version)
 
-  if test "$GNATDRV" = "no" -o ! `$GNATDRV ls -Pgtkada` ; then
+  if test "$GNATDRV" = "no" || ! $GNATDRV ls -Pgtkada > /dev/null ; then
     no_gtk=yes
   else
     # Full version number
