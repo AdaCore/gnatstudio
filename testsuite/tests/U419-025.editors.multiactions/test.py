@@ -21,9 +21,10 @@ def driver():
     v.goto(b.at(3, 1))
 
     # Create a message with an associated action at the same line
-    m = GPS.Message('custom category', GPS.File("hello.adb"),
-                    3, 1, "Zboob", show_in_locations=False)
-    m.set_action('my_action', image='gps-light-bulb', tooltip="My Action")
+    m = GPS.Message(
+        "custom category", GPS.File("hello.adb"), 3, 1, "Zboob", show_in_locations=False
+    )
+    m.set_action("my_action", image="gps-light-bulb", tooltip="My Action")
     yield wait_tasks()
 
     # Click on the side area
@@ -31,14 +32,14 @@ def driver():
 
     # Verify that the multiactions menu is correclty displayed, since we
     # have several actions available
-    multi_actions_menu = get_widget_by_name('gnatstudio_multiple_actions_menu')
-    gps_assert(multi_actions_menu != None, True,
-               "The multi actions menu should be shown")
+    multi_actions_menu = get_widget_by_name("gnatstudio_multiple_actions_menu")
+    gps_assert(
+        multi_actions_menu != None, True, "The multi actions menu should be shown"
+    )
 
     # Click on the action menu item and verify that it executed the action
     items = get_widgets_by_type(Gtk.MenuItem, multi_actions_menu)
     items[-1].activate()
     yield wait_idle()
 
-    gps_assert('My action' in GPS.Console().get_text(), True,
-               "Action was not executed")
+    gps_assert("My action" in GPS.Console().get_text(), True, "Action was not executed")

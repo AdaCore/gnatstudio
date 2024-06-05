@@ -20,15 +20,18 @@ def run_test():
     click_in_tree(tree, path)
 
     # Find the entry for the fixed width font
-    entry = [e for e in get_widgets_by_type(Gtk.Entry, p.dialog)
-             if e.get_text() == "Consolas 9" or
-             e.get_text() == "Lucida Console 9" or
-             e.get_text() == "Menlo 11" or
-             e.get_text() == "Monaco 11" or
-             e.get_text() == "DejaVu Sans Mono 8" or
-             e.get_text() == "DejaVu LGC Sans Mono 8" or
-             e.get_text() == "MiscFixed 10" or
-             e.get_text() == "Courier 10"][0]
+    entry = [
+        e
+        for e in get_widgets_by_type(Gtk.Entry, p.dialog)
+        if e.get_text() == "Consolas 9"
+        or e.get_text() == "Lucida Console 9"
+        or e.get_text() == "Menlo 11"
+        or e.get_text() == "Monaco 11"
+        or e.get_text() == "DejaVu Sans Mono 8"
+        or e.get_text() == "DejaVu LGC Sans Mono 8"
+        or e.get_text() == "MiscFixed 10"
+        or e.get_text() == "Courier 10"
+    ][0]
 
     # Grab the focus on the entry. This is important, since we want a
     # "focus_out" signal to be emitted upon exit.

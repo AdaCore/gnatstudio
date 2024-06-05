@@ -12,9 +12,13 @@ def driver():
     b.current_view().goto(b.at(2, 1))
     GPS.execute_action("Paste from Clipboard")
 
-    gps_assert(b.get_chars(), """package p is
+    gps_assert(
+        b.get_chars(),
+        """package p is
 --  bla
 --  bla bla
 --  bla bla
 end p;
-""", "paste did not work after switching projects")
+""",
+        "paste did not work after switching projects",
+    )

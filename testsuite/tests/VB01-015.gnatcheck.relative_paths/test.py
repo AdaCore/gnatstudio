@@ -7,7 +7,6 @@ from gs_utils.internal.utils import *
 
 
 class Coding_Standard_Editor(Dialog):
-
     def open_and_yield(self):
         yield self._open_and_yield("edit gnatcheck rules")
         self.dialog = get_window_by_title("Coding Standard editor")
@@ -24,8 +23,9 @@ def test_driver():
     rules_file_entry = get_widgets_by_type(Gtk.Entry, editor.dialog)[0]
     gps_assert(
         rules_file_entry.get_text(),
-        os.path.join(GPS.pwd(), '.', 'dir', 'coding_standard.txt'),
-        "The rules file has not been resolved properly")
+        os.path.join(GPS.pwd(), ".", "dir", "coding_standard.txt"),
+        "The rules file has not been resolved properly",
+    )
 
     # Save the rules file
     get_button_from_label("Save", editor.dialog).clicked()
@@ -37,8 +37,11 @@ def test_driver():
     yield wait_tasks(other_than=known_tasks)
 
     location = GPS.Locations.list_locations(
-        "Coding Standard violations",
-        os.path.join(GPS.pwd(), 'main.adb'))[0]
+        "Coding Standard violations", os.path.join(GPS.pwd(), "main.adb")
+    )[0]
 
-    gps_assert(str(location), "main.adb:3:7",
-               "gnatcheck has not been launched with the right rules file")
+    gps_assert(
+        str(location),
+        "main.adb:3:7",
+        "gnatcheck has not been launched with the right rules file",
+    )

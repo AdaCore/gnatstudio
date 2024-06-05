@@ -8,7 +8,7 @@ from gs_utils.internal.utils import *
 
 @run_test_driver
 def test_driver():
-    GPS.Preference('locations-auto-jump-to-first').set(False)
+    GPS.Preference("locations-auto-jump-to-first").set(False)
     buf = GPS.EditorBuffer.get(GPS.File("main.adb"))
     yield wait_idle()
 
@@ -30,8 +30,7 @@ def test_driver():
 
     view = get_widgets_by_type(Gtk.TextView, focus_window)[0]
     buffer = view.get_buffer()
-    text = (buffer.get_text(buffer.get_start_iter(),
-                            buffer.get_end_iter(), False))
+    text = buffer.get_text(buffer.get_start_iter(), buffer.get_end_iter(), False)
 
     lines = text.splitlines()
     gps_assert(len(lines), 9)
@@ -70,8 +69,7 @@ def test_driver():
 
     view = get_widgets_by_type(Gtk.TextView, focus_window)[0]
     buffer = view.get_buffer()
-    text = (buffer.get_text(buffer.get_start_iter(),
-                            buffer.get_end_iter(), False))
+    text = buffer.get_text(buffer.get_start_iter(), buffer.get_end_iter(), False)
 
     lines = text.splitlines()
     gps_assert(len(lines), 4)

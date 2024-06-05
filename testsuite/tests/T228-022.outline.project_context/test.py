@@ -10,9 +10,11 @@ from gs_utils.internal.utils import *
 def verify_loc(tree, button, path, expected, msg):
     click_in_tree(tree, path)
     yield wait_idle()
-    gps_assert(button.get_label(),
-               "(1 line, 1 char) " + expected,
-               "Issue when selecting " + msg)
+    gps_assert(
+        button.get_label(),
+        "(1 line, 1 char) " + expected,
+        "Issue when selecting " + msg,
+    )
 
 
 @run_test_driver
@@ -21,14 +23,12 @@ def run_test():
     # retrieve the Outline tree
     GPS.execute_action("open Outline")
     outline_view = GPS.MDI.get("Outline")
-    outline_tree = get_widgets_by_type(
-        Gtk.TreeView, outline_view.pywidget())[0]
+    outline_tree = get_widgets_by_type(Gtk.TreeView, outline_view.pywidget())[0]
 
     # retrieve the project tree
     GPS.execute_action("open Project")
     project_view = GPS.MDI.get("Project")
-    project_tree = get_widgets_by_type(
-        Gtk.TreeView, project_view.pywidget())[0]
+    project_tree = get_widgets_by_type(Gtk.TreeView, project_view.pywidget())[0]
 
     select_in_tree(project_tree, 1, "foo.adb")
 
@@ -42,6 +42,4 @@ def run_test():
     # node is already selected)
     click_in_tree(outline_tree, "0", events=pygps.double_click_events)
     # ... it should open a file => one more mdi_window
-    gps_assert(GPS.MDI.get("foo.adb") != None,
-               True,
-               "The file should have been opened")
+    gps_assert(GPS.MDI.get("foo.adb") != None, True, "The file should have been opened")

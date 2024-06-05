@@ -17,8 +17,9 @@ from gs_utils.internal.utils import (
 from pygps import double_click_events
 from pygps.tree import click_in_tree
 
-INCREMENTS_MS = 1000     # Timeout increments
+INCREMENTS_MS = 1000  # Timeout increments
 MAX_TIME_MS = 20 * 1000  # Max timeout wait
+
 
 @run_test_driver
 def driver():
@@ -84,9 +85,11 @@ def driver():
         if expected_text in debugger_text:
             break
 
-
-    gps_assert(expected_text in debugger_text, True,
-               f"{expected_text} didn't appear in output:\n{debugger_text}")
+    gps_assert(
+        expected_text in debugger_text,
+        True,
+        f"{expected_text} didn't appear in output:\n{debugger_text}",
+    )
 
     # Quit the debugger
     GPS.execute_action("terminate all debuggers")
@@ -103,5 +106,6 @@ def driver():
     GPS.execute_action("gnatfuzz fuzz workflow")
 
     # And verify that the Fuzz crashes view is empty
-    gps_assert(len(model), 0,
-               "The Fuzz crashes view should clear when starting a session")
+    gps_assert(
+        len(model), 0, "The Fuzz crashes view should clear when starting a session"
+    )

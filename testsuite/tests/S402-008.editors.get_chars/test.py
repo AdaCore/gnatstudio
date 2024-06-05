@@ -17,12 +17,6 @@ def test_driver():
     buf.add_special_line(5, "-- ;)")
     # Needed by GPS.Editor.get_chars
     buf.select()
-    gps_assert(GPS.Editor.get_chars(FILE),
-               expected,
-               "GPS.Editor.get_chars issue")
-    gps_assert(buf.get_chars(),
-               expected,
-               "GPS.EditorBuffer.get_chars issue")
-    gps_assert(GPS.Editor.get_buffer(FILE),
-               expected,
-               "GPS.Editor.get_buffer issue")
+    gps_assert(GPS.Editor.get_chars(FILE), expected, "GPS.Editor.get_chars issue")
+    gps_assert(buf.get_chars(), expected, "GPS.EditorBuffer.get_chars issue")
+    gps_assert(GPS.Editor.get_buffer(FILE), expected, "GPS.Editor.get_buffer issue")

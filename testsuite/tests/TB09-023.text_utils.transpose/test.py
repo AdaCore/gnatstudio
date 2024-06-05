@@ -14,13 +14,13 @@ def run_test():
     # Inverse character 3 and 2 in line 1
     buf.current_view().goto(buf.at(1, 3))
     text_utils.transpose_chars()
-    gps_assert(buf.get_chars().rstrip(),
-               "World\nHello",
-               "Issue when transposing one character")
+    gps_assert(
+        buf.get_chars().rstrip(), "World\nHello", "Issue when transposing one character"
+    )
 
     # Inverse line 2 and the previous = line 1
     buf.current_view().goto(buf.at(2, 1))
     text_utils.transpose_lines()
-    gps_assert(buf.get_chars().rstrip(),
-               "Hello\nWorld",
-               "Issue when transposing one character")
+    gps_assert(
+        buf.get_chars().rstrip(), "Hello\nWorld", "Issue when transposing one character"
+    )

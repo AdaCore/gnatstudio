@@ -9,10 +9,9 @@ from gs_utils.internal.utils import *
 @run_test_driver
 def test_driver():
     GPS.execute_action("Build & Debug Number 1")
-    yield hook('debugger_started')
+    yield hook("debugger_started")
     d = GPS.Debugger.get()
-    for s in ["b main.adb:22",
-              "run"]:
+    for s in ["b main.adb:22", "run"]:
         yield wait_until_not_busy(d)
         d.send(s)
 
@@ -23,14 +22,16 @@ def test_driver():
     yield wait_idle()
 
     b = GPS.EditorBuffer.get(GPS.File("main.adb"))
-    gps_assert(b.current_view().cursor().line() == 22, False,
-               "should be located in the task source")
+    gps_assert(
+        b.current_view().cursor().line() == 22,
+        False,
+        "should be located in the task source",
+    )
 
     d.send("task 1")
     yield wait_idle()
 
-    gps_assert(b.current_view().cursor().line(), 22,
-               "should be located in the main")
-    d.send('q')
+    gps_assert(b.current_view().cursor().line(), 22, "should be located in the main")
+    d.send("q")
 
     yield wait_tasks()

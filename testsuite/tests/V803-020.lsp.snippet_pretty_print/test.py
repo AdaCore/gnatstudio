@@ -23,12 +23,11 @@ def run_test():
     yield wait_idle()
 
     # Trigger the parameter completion
-    for c in ' (':
+    for c in " (":
         send_key_event(ord(c))
         yield timeout(300)
 
-    yield wait_until_true(
-        lambda: get_widget_by_name("completion-view") is not None)
+    yield wait_until_true(lambda: get_widget_by_name("completion-view") is not None)
     pop_tree = get_widget_by_name("completion-view")
     model = pop_tree.get_model()
     yield wait_idle()
@@ -36,6 +35,8 @@ def run_test():
     click_in_tree(pop_tree, path="0", events=double_click_events)
     yield wait_idle()
 
-    gps_assert(buf.get_chars(frm=buf.at(7, 1)),
-               EXPECTED,
-               "Wrong completion when for open parenthese")
+    gps_assert(
+        buf.get_chars(frm=buf.at(7, 1)),
+        EXPECTED,
+        "Wrong completion when for open parenthese",
+    )

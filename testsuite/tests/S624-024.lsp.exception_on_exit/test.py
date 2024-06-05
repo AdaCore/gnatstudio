@@ -1,5 +1,9 @@
-from gs_utils.internal.utils import run_test_driver, get_widget_by_name, \
-                                    dump_tree_model, gps_assert
+from gs_utils.internal.utils import (
+    run_test_driver,
+    get_widget_by_name,
+    dump_tree_model,
+    gps_assert,
+)
 from gs_utils import hook
 from workflows.promises import timeout
 
@@ -10,8 +14,7 @@ def driver():
 
     b = GPS.EditorBuffer.get(GPS.File("main.adb"))
     b.current_view().goto(b.at(4, 5))
-    yield hook('language_server_response_processed')
+    yield hook("language_server_response_processed")
 
     GPS.execute_action("Entity called by")
-    yield hook('language_server_response_processed')
-
+    yield hook("language_server_response_processed")

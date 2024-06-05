@@ -1,4 +1,3 @@
-
 """
 When typing count the number of signatureHelp requests.
 """
@@ -22,10 +21,12 @@ def run_test():
 
     for c in TEXT:
         send_key_event(ord(c), window=main_window)
-        gps_assert(len([r for r in als.get_requests()
-                       if r == "textDocument/signatureHelp"]) <= 1,
-                   True,
-                   "Only one signatureHelp can exist")
+        gps_assert(
+            len([r for r in als.get_requests() if r == "textDocument/signatureHelp"])
+            <= 1,
+            True,
+            "Only one signatureHelp can exist",
+        )
     # Wait for the callback in character_added_debounce to finish
     yield hook("location_changed", debounced=True)
     yield wait_idle()

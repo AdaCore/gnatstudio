@@ -12,16 +12,16 @@ FILE = "foo.adb"
 @run_test_driver
 def run_test():
     buf = GPS.EditorBuffer.get(GPS.File(FILE))
-    gps_assert(GPS.MDI.current().name(short=True),
-               FILE,
-               "Wrong focus when opening the file")
+    gps_assert(
+        GPS.MDI.current().name(short=True), FILE, "Wrong focus when opening the file"
+    )
     GPS.execute_action("Locate file in explorer (no focus)")
     yield wait_tasks(other_than=known_tasks)
-    gps_assert(GPS.MDI.current().name(short=True),
-               FILE,
-               "The focus should not have changed")
+    gps_assert(
+        GPS.MDI.current().name(short=True), FILE, "The focus should not have changed"
+    )
     GPS.execute_action("Locate file in explorer")
     yield wait_tasks(other_than=known_tasks)
-    gps_assert(GPS.MDI.current().name(short=True),
-               "Project",
-               "The focus should have changed")
+    gps_assert(
+        GPS.MDI.current().name(short=True), "Project", "The focus should have changed"
+    )

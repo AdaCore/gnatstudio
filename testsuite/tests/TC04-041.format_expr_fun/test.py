@@ -13,7 +13,6 @@ expected = """procedure t is
 
 @run_test_driver
 def driver():
-
     # Set the conditional continuation pref to a ridiculous amount
     GPS.Preference("Ada-Conditional-Level").set(120)
     b = GPS.EditorBuffer.get(GPS.File("t.adb"))
@@ -23,6 +22,8 @@ def driver():
     GPS.execute_action("format selection")
 
     # Verify that the proper indentation is produced
-    gps_assert(b.get_chars(b.at(1, 1), b.at(6, 24)),
-               expected,
-               "Wrong format for aggregate in expression function")
+    gps_assert(
+        b.get_chars(b.at(1, 1), b.at(6, 24)),
+        expected,
+        "Wrong format for aggregate in expression function",
+    )

@@ -15,11 +15,13 @@ def test_driver():
 
     s = dialogs.Search()
     yield s.open_and_yield()
-    s.pattern.set_text('Result')
+    s.pattern.set_text("Result")
 
     send_key_event(GDK_RETURN, shift=1)
     yield wait_idle()
 
-    gps_assert(buf.current_view().cursor(),
-               buf.at(9, 14),
-               "Shift-Enter did not search backwards")
+    gps_assert(
+        buf.current_view().cursor(),
+        buf.at(9, 14),
+        "Shift-Enter did not search backwards",
+    )

@@ -24,11 +24,14 @@ def run_test():
 
     # Verify that the completion window is there
     pop_tree = get_widget_by_name("completion-view")
-    gps_assert(pop_tree is not None, True,
-               "The completion window should be open at that point")
+    gps_assert(
+        pop_tree is not None, True, "The completion window should be open at that point"
+    )
 
     # Verify that completion items' order: 'Do_Something' (the visible one)
     # should come first.
-    gps_assert(dump_tree_model(pop_tree.get_model(), 6),
-               ['Do_Something', 'Do_Someth1ng (invisible)'],
-               "Wrong order for invisible symbols completion")
+    gps_assert(
+        dump_tree_model(pop_tree.get_model(), 6),
+        ["Do_Something", "Do_Someth1ng (invisible)"],
+        "Wrong order for invisible symbols completion",
+    )

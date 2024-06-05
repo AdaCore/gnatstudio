@@ -17,7 +17,7 @@ def test_driver():
     yield wait_tasks(other_than=known_tasks)
 
     GPS.execute_action("Build & Debug Number 1")
-    yield hook('debugger_started')
+    yield hook("debugger_started")
 
     debug = GPS.Debugger.get()
     debug.send("b zzyyxxkk")

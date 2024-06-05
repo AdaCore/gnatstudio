@@ -15,6 +15,4 @@ def run_test():
     GPS.execute_action("goto beginning of line")
     send_key_event(GDK_TAB)
     yield wait_tasks(other_than=known_tasks)
-    gps_assert(buf.get_chars(),
-               expected,
-               "The completion should have been canceled")
+    gps_assert(buf.get_chars(), expected, "The completion should have been canceled")

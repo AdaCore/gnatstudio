@@ -25,18 +25,16 @@ def test():
     # Call 'help' on some Python API function
 
     text = "help(GPS.MDIWindow.split)"
-    buffer.insert_interactive_at_cursor(
-        text, len(text), True)
+    buffer.insert_interactive_at_cursor(text, len(text), True)
     pygps.send_key_event(pygps.GDK_RETURN, gw)
     yield wait_idle()
 
     # Get the contents of the python console and verify that
     # we retrieve some documentation.
 
-    text = buffer.get_text(
-        buffer.get_start_iter(),
-        buffer.get_end_iter(),
-        True)
+    text = buffer.get_text(buffer.get_start_iter(), buffer.get_end_iter(), True)
     gps_assert(
-        doc_substring in text, True,
-        "help function not working for Python console, got: %s" % text)
+        doc_substring in text,
+        True,
+        "help function not working for Python console, got: %s" % text,
+    )

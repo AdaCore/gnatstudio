@@ -16,7 +16,8 @@ def run_test():
     # Modify the Src-Editor-Reference-Style pref
     GPS.Preference(SRC_EDITOR_REF_STYLE_PREF).set(
         ("Consolas 9" if sys.platform == "win32" else "DejaVu Sans Mono 11")
-        + "@rgb(255,255,255)@rgb(39,40,34)")
+        + "@rgb(255,255,255)@rgb(39,40,34)"
+    )
 
     # Get its new value
     src_ref_style_val = GPS.Preference(SRC_EDITOR_REF_STYLE_PREF).get()
@@ -36,4 +37,5 @@ def run_test():
     gps_assert(
         src_ref_style_val == GPS.Preference(SRC_EDITOR_REF_STYLE_PREF).get(),
         True,
-        "Changes to Src-Editor-Reference-Style pref have been overridden")
+        "Changes to Src-Editor-Reference-Style pref have been overridden",
+    )

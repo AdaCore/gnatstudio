@@ -6,7 +6,7 @@ in a project file
 import GPS
 from gs_utils.internal.utils import *
 
-expect = '''project Test is
+expect = """project Test is
    for Main use ("main.adb");
 
    --  package Builder is
@@ -14,7 +14,7 @@ expect = '''project Test is
    --  end Builder;
 
 end Test;
-'''
+"""
 
 
 @run_test_driver

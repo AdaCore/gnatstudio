@@ -15,7 +15,7 @@ def test_driver():
     GPS.execute_action("debug set line breakpoint")
 
     GPS.execute_action("Build & Debug Number 1")
-    yield hook('debugger_started')
+    yield hook("debugger_started")
     yield wait_idle()
 
     debug = GPS.Debugger.get()
@@ -24,7 +24,7 @@ def test_driver():
     # Run the debugger and wait until it reaches
     # the breakpoint
     debug.send("run")
-    yield hook('debugger_location_changed')
+    yield hook("debugger_location_changed")
 
     NAME_COLUMN = 1
 
@@ -38,16 +38,22 @@ def test_driver():
     tree = get_widgets_by_type(Gtk.TreeView, view.pywidget())[0]
     model = tree.get_model()
     yield wait_idle()
-    gps_assert(dump_tree_model(model, NUMBER_COLUMN),
-               ["1", "2", "* 3"],
-               "Wrong thread selected when stopping")
-    gps_assert(dump_tree_model(model, NAME_COLUMN),
-               ["main", "foo", "bar"],
-               "Wrong thread name when stopping")
+    gps_assert(
+        dump_tree_model(model, NUMBER_COLUMN),
+        ["1", "2", "* 3"],
+        "Wrong thread selected when stopping",
+    )
+    gps_assert(
+        dump_tree_model(model, NAME_COLUMN),
+        ["main", "foo", "bar"],
+        "Wrong thread name when stopping",
+    )
 
     click_in_tree(tree, "1")
     yield wait_idle()
     yield wait_until_not_busy(debug)
-    gps_assert(dump_tree_model(model, NUMBER_COLUMN),
-               ["1", "* 2", "3"],
-               "Wrong thread selected when selecting")
+    gps_assert(
+        dump_tree_model(model, NUMBER_COLUMN),
+        ["1", "* 2", "3"],
+        "Wrong thread selected when selecting",
+    )

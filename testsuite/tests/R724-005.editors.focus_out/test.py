@@ -24,9 +24,7 @@ def run_test():
     default_selection = get_selection(buf)
 
     buf.select()
-    gps_assert(get_selection(buf),
-               expected,
-               "A selection should have been done")
+    gps_assert(get_selection(buf), expected, "A selection should have been done")
 
     # Open the search view to change the focus
     s = dialogs.Search()
@@ -35,12 +33,10 @@ def run_test():
         yield timeout(100)
 
     # The selection should have been stopped and the buffer should still work
-    gps_assert(get_selection(buf),
-               default_selection,
-               "The selection should have been stopped")
+    gps_assert(
+        get_selection(buf), default_selection, "The selection should have been stopped"
+    )
     buf.insert(buf.at(1, 1), TEXT)
     buf.delete(buf.at(1, 1), buf.at(1, len(TEXT)))
     yield wait_idle()
-    gps_assert(buf.get_chars(),
-               expected,
-               "The buffer doesn't seems to work properly")
+    gps_assert(buf.get_chars(), expected, "The buffer doesn't seems to work properly")

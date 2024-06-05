@@ -10,14 +10,16 @@ from GPS import *
 @run_test_driver
 def run():
     # Create a complex custom overlay
-    over = OverlayStyle(name="Hello",
-                        foreground="#00FFFF",
-                        background="#00FFFF",
-                        weight="bold",
-                        slant="italic",
-                        editable=True,
-                        whole_line=True,
-                        style=None)
+    over = OverlayStyle(
+        name="Hello",
+        foreground="#00FFFF",
+        background="#00FFFF",
+        weight="bold",
+        slant="italic",
+        editable=True,
+        whole_line=True,
+        style=None,
+    )
     buf = GPS.EditorBuffer.get(GPS.File("foo.adb"))
     # Apply it
     over.apply(buf.at(1, 1), buf.at(2, 1))

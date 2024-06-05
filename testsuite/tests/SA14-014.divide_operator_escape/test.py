@@ -16,5 +16,6 @@ def test_driver():
     d = dump_contextual(w)
     close_contextual(w)
 
-    gps_assert(['/ is called by', '/ calls'] in d, True,
-               "wrong menu content {}".format(d))
+    gps_assert(
+        ["/ is called by", "/ calls"] in d, True, "wrong menu content {}".format(d)
+    )

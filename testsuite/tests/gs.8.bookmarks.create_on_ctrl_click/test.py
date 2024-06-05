@@ -26,5 +26,4 @@ def test_driver():
     view = Bookmarks()
     yield view.open_and_yield()
     dump = dump_tree_model(view.treeview.get_model(), 1)
-    gps_assert(dump, ['My_Bookmark'])
-
+    gps_assert(dump, ["My_Bookmark"])

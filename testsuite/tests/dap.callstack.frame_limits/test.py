@@ -15,7 +15,7 @@ def test_driver():
     yield wait_idle()
 
     GPS.execute_action("Build & Debug Number 1")
-    yield hook('debugger_started')
+    yield hook("debugger_started")
     yield wait_idle()
 
     p = promises.DebuggerWrapper(GPS.File("main"))
@@ -32,32 +32,35 @@ def test_driver():
     yield wait_idle()
 
     yield p.send_promise("run")
-    yield wait_DAP_server('stackTrace')
+    yield wait_DAP_server("stackTrace")
 
     # Verify the view was correctly updated by the run/break command
-    gps_assert(dump_tree_model(model, NAME_COLUMN),
-               ["main.one.two.three.four",
-                "main.one.two.three"],
-               "Wrong content after breaking")
+    gps_assert(
+        dump_tree_model(model, NAME_COLUMN),
+        ["main.one.two.three.four", "main.one.two.three"],
+        "Wrong content after breaking",
+    )
 
     GPS.execute_action("debug callstack fetch")
     yield wait_DAP_server("stackTrace")
     yield wait_idle()
-    gps_assert(dump_tree_model(model, NAME_COLUMN),
-               ["main.one.two.three.four",
-                "main.one.two.three",
-                "main.one.two",
-                "main.one"],
-               "Wrong content after the first fetch")
+    gps_assert(
+        dump_tree_model(model, NAME_COLUMN),
+        ["main.one.two.three.four", "main.one.two.three", "main.one.two", "main.one"],
+        "Wrong content after the first fetch",
+    )
 
     GPS.execute_action("debug callstack fetch")
     yield wait_DAP_server("stackTrace")
     yield wait_idle()
-    gps_assert(dump_tree_model(model, NAME_COLUMN),
-               ["main.one.two.three.four",
-                "main.one.two.three",
-                "main.one.two",
-                "main.one",
-                "main"],
-               "Wrong content after the next fetch")
-
+    gps_assert(
+        dump_tree_model(model, NAME_COLUMN),
+        [
+            "main.one.two.three.four",
+            "main.one.two.three",
+            "main.one.two",
+            "main.one",
+            "main",
+        ],
+        "Wrong content after the next fetch",
+    )

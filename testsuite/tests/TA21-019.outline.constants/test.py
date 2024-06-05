@@ -27,16 +27,17 @@ def run_test():
     def verify_loc(line, column, name):
         buf.current_view().goto(buf.at(line, column))
         # This wait for the debounce on_location_changed
-        yield hook('location_changed', debounced=True)
+        yield hook("location_changed", debounced=True)
         yield wait_idle()
         model, iter = selection.get_selected()
-        gps_assert(model.get_value(iter, NAME_COLUMN),
-                   name,
-                   "Wrong entity selected: " + name)
-    yield verify_loc(2, 5,  "VarA")
+        gps_assert(
+            model.get_value(iter, NAME_COLUMN), name, "Wrong entity selected: " + name
+        )
+
+    yield verify_loc(2, 5, "VarA")
     yield verify_loc(2, 11, "VarB")
     yield verify_loc(2, 18, "VarC")
-    yield verify_loc(3, 1,  "VarD")
-    yield verify_loc(4, 8,  "VarE")
+    yield verify_loc(3, 1, "VarD")
+    yield verify_loc(4, 8, "VarE")
     yield verify_loc(4, 21, "VarF")
-    yield verify_loc(5, 8,  "VarE")
+    yield verify_loc(5, 8, "VarE")

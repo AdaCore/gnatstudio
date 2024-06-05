@@ -6,12 +6,17 @@ import GPS
 from gs_utils.internal.utils import *
 
 expected = [
-    'References for ch (main.cpp:7) (3 items in 2 files)',
-    ['main.cpp (1 item)',
-     ['<b>7:16</b>      auto a = obj.<b>ch</b>;'],
-     'my_class.hh (2 items)',
-     ['<b>7:16</b>      int num;char <b>ch</b>;My_Record_Of_Record rec;',
-      '<b>12:24</b>     My_Class(){num = 100;<b>ch</b> = &apos;A&apos;;}']]]
+    "References for ch (main.cpp:7) (3 items in 2 files)",
+    [
+        "main.cpp (1 item)",
+        ["<b>7:16</b>      auto a = obj.<b>ch</b>;"],
+        "my_class.hh (2 items)",
+        [
+            "<b>7:16</b>      int num;char <b>ch</b>;My_Record_Of_Record rec;",
+            "<b>12:24</b>     My_Class(){num = 100;<b>ch</b> = &apos;A&apos;;}",
+        ],
+    ],
+]
 
 
 @run_test_driver

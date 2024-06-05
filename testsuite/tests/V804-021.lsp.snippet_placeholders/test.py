@@ -25,12 +25,11 @@ def run_test():
     yield wait_idle()
 
     # Trigger the parameter completion
-    for c in ' (':
+    for c in " (":
         send_key_event(ord(c))
         yield timeout(300)
 
-    yield wait_until_true(
-        lambda: get_widget_by_name("completion-view") is not None)
+    yield wait_until_true(lambda: get_widget_by_name("completion-view") is not None)
     pop_tree = get_widget_by_name("completion-view")
     model = pop_tree.get_model()
     yield wait_idle()
@@ -40,6 +39,8 @@ def run_test():
 
     # Verify that it has been correctly parsed by the aliases plugin
     line = buf.get_chars(buf.at(7, 19), buf.at(25, 1).end_of_line())
-    gps_assert(line.strip(),
-               generate_expected({"A": "Integer", "B": "Float"}),
-               "The completion snippet has not been correctly inserted")
+    gps_assert(
+        line.strip(),
+        generate_expected({"A": "Integer", "B": "Float"}),
+        "The completion snippet has not been correctly inserted",
+    )

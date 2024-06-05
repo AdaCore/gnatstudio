@@ -39,8 +39,9 @@ def delete_random(g):
 def insert_random(g):
     biggest_offset = g.get_end_iter().get_offset()
     o = random.randrange(biggest_offset + 1)
-    text = ''.join([random.choice('abcdefghijklmnopqrstuvwxyz;()-\"\'\n')
-                    for j in range(100)])
+    text = "".join(
+        [random.choice("abcdefghijklmnopqrstuvwxyz;()-\"'\n") for j in range(100)]
+    )
     g.insert(g.get_iter_at_offset(o), text)
 
 
@@ -59,8 +60,7 @@ def driver():
     buf = GPS.EditorBuffer.get()
     lang = buf.file().language()
     als = GPS.LanguageServer.get_by_file(buf.file())
-    ada_sources = [f for f in GPS.Project.root().sources(True)
-                   if f.language() == lang]
+    ada_sources = [f for f in GPS.Project.root().sources(True) if f.language() == lang]
 
     def random_ada_source():
         return random.choice(ada_sources)
@@ -73,10 +73,10 @@ def driver():
         column = identifier.sloc_range.start.column
 
         method = "textDocument/definition"
-        params = {"textDocument":
-                  {"uri": "file://{}".format(buf.file().name())},
-                  "position": {"line": line - 1,
-                               "character": column - 1}}
+        params = {
+            "textDocument": {"uri": "file://{}".format(buf.file().name())},
+            "position": {"line": line - 1, "character": column - 1},
+        }
 
         return (method, params)
 
@@ -130,8 +130,7 @@ def driver():
             new_result = str(result)
 
             if new_result != orig_result:
-                GPS.MDI.dialog("{}\n  /=  \n{}".format(
-                                new_result, orig_result))
+                GPS.MDI.dialog("{}\n  /=  \n{}".format(new_result, orig_result))
                 break
 
             # TODO: execute a past random request

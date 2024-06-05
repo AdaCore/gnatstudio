@@ -4,7 +4,7 @@ Verify that the variable view can display methods' arguments
 import GPS
 from gs_utils.internal.utils import *
 
-data = ['<b>x</b> = integer 2']
+data = ["<b>x</b> = integer 2"]
 
 
 @run_test_driver
@@ -13,7 +13,7 @@ def test_driver():
     yield wait_idle()
 
     GPS.execute_action("Build & Debug Number 1")
-    yield hook('debugger_started')
+    yield hook("debugger_started")
     yield wait_idle()
 
     debug = GPS.Debugger.get()
@@ -31,7 +31,4 @@ def test_driver():
     yield wait_DAP_server("variables")
     yield wait_idle()
 
-    gps_assert(
-        data,
-        view.dump(),
-        "Invalid contents in the Variables view")    
+    gps_assert(data, view.dump(), "Invalid contents in the Variables view")

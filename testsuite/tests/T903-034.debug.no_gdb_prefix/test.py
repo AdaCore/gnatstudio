@@ -7,6 +7,7 @@ import GPS
 from gs_utils.internal.utils import *
 import platform
 
+
 @run_test_driver
 def run_test():
     prj = GPS.Project.root()
@@ -23,5 +24,4 @@ def run_test():
     yield wait_idle()
 
     debug = GPS.Debugger.get()
-    gps_assert(debug != None, True,
-               "The debugger failed to spawn.")
+    gps_assert(debug != None, True, "The debugger failed to spawn.")

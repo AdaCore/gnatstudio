@@ -7,11 +7,12 @@ from GPS import *
 from gs_utils.internal.utils import *
 import os
 
+
 @run_test_driver
 def run_test():
     if os.name == "nt" and os.getenv("COMSPEC"):
         console_name = os.getenv("COMSPEC")
-    elif os.getenv("SHELL") and os.getenv("TERM"):        
+    elif os.getenv("SHELL") and os.getenv("TERM"):
         console_name = os.getenv("SHELL")
 
     # Spawn the console
@@ -23,5 +24,8 @@ def run_test():
     GPS.MDI.load_perspective("Default")
 
     # Verify that the console has been restored
-    gps_assert(GPS.MDI.get(console_name) is not None, True,
-               "The OS Shell console should have been restored")
+    gps_assert(
+        GPS.MDI.get(console_name) is not None,
+        True,
+        "The OS Shell console should have been restored",
+    )

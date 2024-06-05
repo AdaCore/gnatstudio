@@ -20,6 +20,8 @@ def test_driver():
     GPS.execute_action("Copy to clipboard")
     buf.current_view().goto(buf.at(2, 6))
     GPS.execute_action("Paste from clipboard")
-    gps_assert(buf.debug_dump_syntax_highlighting("keyword_text"),
-               expected,
-               "Highlighting issue after paste")
+    gps_assert(
+        buf.debug_dump_syntax_highlighting("keyword_text"),
+        expected,
+        "Highlighting issue after paste",
+    )

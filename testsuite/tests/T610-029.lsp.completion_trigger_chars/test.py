@@ -20,5 +20,8 @@ def run_test():
     yield timeout(100)
 
     completion_tree = get_widget_by_name("completion-view")
-    gps_assert(completion_tree, None,
-               "The completion window should not be shown after typing ';'")
+    gps_assert(
+        completion_tree,
+        None,
+        "The completion window should not be shown after typing ';'",
+    )

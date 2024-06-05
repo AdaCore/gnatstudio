@@ -29,21 +29,21 @@ def run_test():
     pop_tree = get_widget_by_name("completion-view")
     model = pop_tree.get_model()
     yield wait_until_true(
-        lambda: model.get_value(model.get_iter_first(), 0) != "Computing...")
+        lambda: model.get_value(model.get_iter_first(), 0) != "Computing..."
+    )
 
     click_in_tree(pop_tree, path="0", events=double_click_events)
     yield wait_idle()
 
     # Check that we have a snippet
     line = buf.get_chars(buf.at(7, 1), buf.at(7, 1).end_of_line())
-    gps_assert(line.strip(), EXPECTED_SNIPPET.strip(),
-               "Snippet should be inserted")
+    gps_assert(line.strip(), EXPECTED_SNIPPET.strip(), "Snippet should be inserted")
 
     # Disable completion snippets and restart the ALS
     GPS.execute_action("undo")
     GPS.Preference("LSP-Completion-Use-Snippets").set(False)
     GPS.execute_action("Restart ada language server")
-    yield hook('language_server_started')
+    yield hook("language_server_started")
 
     # Retrigger completion...
     for ch in "Do_Some":
@@ -54,12 +54,16 @@ def run_test():
     pop_tree = get_widget_by_name("completion-view")
     model = pop_tree.get_model()
     yield wait_until_true(
-        lambda: model.get_value(model.get_iter_first(), 0) != "Computing...")
+        lambda: model.get_value(model.get_iter_first(), 0) != "Computing..."
+    )
 
     click_in_tree(pop_tree, path="0", events=double_click_events)
     yield wait_idle()
 
     # Check that we don't have a snippet now
     line = buf.get_chars(buf.at(7, 1), buf.at(7, 1).end_of_line())
-    gps_assert(line.strip(), EXPECTED_NO_SNIPPET.strip(),
-               "No snippet should be inserted by default")
+    gps_assert(
+        line.strip(),
+        EXPECTED_NO_SNIPPET.strip(),
+        "No snippet should be inserted by default",
+    )

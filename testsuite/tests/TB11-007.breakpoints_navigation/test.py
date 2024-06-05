@@ -4,6 +4,7 @@
 from GPS import *
 from gs_utils.internal.utils import *
 
+
 @run_test_driver
 def driver():
     GPS.EditorBuffer.get(GPS.File("main.adb"))
@@ -13,7 +14,7 @@ def driver():
 
     # Open the Breakpoints view and check that the breakpoints has been set
     GPS.execute_action("open breakpoints editor")
-    yield wait_for_mdi_child('Breakpoints')
+    yield wait_for_mdi_child("Breakpoints")
     view = GPS.MDI.get("Breakpoints")
     tree = get_widgets_by_type(Gtk.TreeView, view.pywidget())[0]
 
@@ -24,5 +25,4 @@ def driver():
 
     yield wait_idle()
 
-    gps_assert(GPS.MDI.get("a.adb") != None, True,
-               "a.adb should be opened")
+    gps_assert(GPS.MDI.get("a.adb") != None, True, "a.adb should be opened")

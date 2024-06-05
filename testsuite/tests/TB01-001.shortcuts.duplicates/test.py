@@ -7,20 +7,19 @@ import collections
 from gs_utils.internal.utils import run_test_driver, gps_assert
 
 expected = {
-    'Ctrl+Q': ['no casing/indentation on next key', 'exit'],
-    'Escape': ['exit search', 'smart escape'],
-    'BackSpace': [
-                  'backward delete',
-                  'debug tree remove selected variables',
-                  'delete file'],
-    'Tab': ['tab selection', 'toggle to next alias field']
+    "Ctrl+Q": ["no casing/indentation on next key", "exit"],
+    "Escape": ["exit search", "smart escape"],
+    "BackSpace": [
+        "backward delete",
+        "debug tree remove selected variables",
+        "delete file",
+    ],
+    "Tab": ["tab selection", "toggle to next alias field"],
 }
 
-if os_utils.locate_exec_on_path('qgenc'):
-    expected['Escape'].insert(0, 'goto parent subsystem')
-    expected['Left'] = [
-                        'goto previous subsystem',
-                        'move to previous char']
+if os_utils.locate_exec_on_path("qgenc"):
+    expected["Escape"].insert(0, "goto parent subsystem")
+    expected["Left"] = ["goto previous subsystem", "move to previous char"]
 
 
 @run_test_driver
@@ -41,6 +40,8 @@ def driver():
             dups[j] = x[j]
 
     # This is why we don't try to compare 2 dicts
-    gps_assert(len(str(collections.OrderedDict(sorted(dups.items())))),
-               len(str(collections.OrderedDict(sorted(expected.items())))),
-               "Unexpected duplicated shortcuts")
+    gps_assert(
+        len(str(collections.OrderedDict(sorted(dups.items())))),
+        len(str(collections.OrderedDict(sorted(expected.items())))),
+        "Unexpected duplicated shortcuts",
+    )

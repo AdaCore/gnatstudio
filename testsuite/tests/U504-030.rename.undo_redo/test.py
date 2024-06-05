@@ -27,19 +27,24 @@ def run_test():
                 res = res + 1
             return res
 
-        gps_assert(__count(FIRST_NAME),
-                   nb_first,
-                   "Wrong number of ref to " + FIRST_NAME + " for " + comment)
-        gps_assert(__count(SECOND_NAME),
-                   nb_second,
-                   "Wrong number of ref to " + SECOND_NAME + " for " + comment)
-        gps_assert(len(GPS.Message.list(CATEGORY_NAME)),
-                   nb_msg,
-                   "Wrong number of messages for " + comment)
+        gps_assert(
+            __count(FIRST_NAME),
+            nb_first,
+            "Wrong number of ref to " + FIRST_NAME + " for " + comment,
+        )
+        gps_assert(
+            __count(SECOND_NAME),
+            nb_second,
+            "Wrong number of ref to " + SECOND_NAME + " for " + comment,
+        )
+        gps_assert(
+            len(GPS.Message.list(CATEGORY_NAME)),
+            nb_msg,
+            "Wrong number of messages for " + comment,
+        )
 
     # Execute a rename affecting multiple files
-    yield idle_modal_dialog(
-        lambda: GPS.execute_action("rename entity"))
+    yield idle_modal_dialog(lambda: GPS.execute_action("rename entity"))
     new_name_ent = get_widget_by_name("new_name")
     new_name_ent.set_text(SECOND_NAME)
     dialog = get_window_by_title("Renaming entity")
@@ -48,7 +53,7 @@ def run_test():
     check = get_button_from_label("Automatically save modified files", dialog)
     check.set_active(True)
     get_stock_button(dialog, Gtk.STOCK_OK).clicked()
-    yield hook('language_server_response_processed')
+    yield hook("language_server_response_processed")
     yield timeout(500)  # Wait for the messages to be created and sorted
 
     verify(41, 14, 14, "Rename")

@@ -31,7 +31,7 @@ def test_driver():
 
     # Continue the execution until we reach the breakpoint
     debug.send("run")
-    yield wait_DAP_server('stackTrace')
+    yield wait_DAP_server("stackTrace")
 
     # We have reached the breakpoint, but it does not refer to an existing
     # file after the path substitution: verify that the frame for my_main.adb

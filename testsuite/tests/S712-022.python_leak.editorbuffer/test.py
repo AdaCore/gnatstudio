@@ -19,15 +19,11 @@ def count_object(typename, objects=None):
 def test_driver():
     # Simple open/close case
     buf = GPS.EditorBuffer.get(GPS.File("foo.py"))
-    gps_assert(count_object("EditorBuffer"),
-               1,
-               "Initital state")
+    gps_assert(count_object("EditorBuffer"), 1, "Initital state")
     buf.close(force=True)
     del buf
     gc.collect()
-    gps_assert(count_object("EditorBuffer"),
-               0,
-               "The buffer should have been cleaned")
+    gps_assert(count_object("EditorBuffer"), 0, "The buffer should have been cleaned")
 
     # Manual call to get_gtk_buffer
     buf = GPS.EditorBuffer.get(GPS.File("foo.py"))
@@ -35,11 +31,11 @@ def test_driver():
     buf.close(force=True)
     del buf
     gc.collect()
-    gps_assert(count_object("EditorBuffer"),
-               1,
-               "gtk_buf should still have a reference on buf")
+    gps_assert(
+        count_object("EditorBuffer"), 1, "gtk_buf should still have a reference on buf"
+    )
     del gtk_buf
     gc.collect()
-    gps_assert(count_object("EditorBuffer"),
-               0,
-               "The last reference should have been gtk_buf")
+    gps_assert(
+        count_object("EditorBuffer"), 0, "The last reference should have been gtk_buf"
+    )

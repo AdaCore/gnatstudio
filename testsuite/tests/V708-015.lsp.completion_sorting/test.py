@@ -25,15 +25,17 @@ def run_test():
 
     # Verify that the completion window is there
     yield wait_until_true(
-        lambda: get_widget_by_name("completion-view") != None,
-        timeout=2000)
+        lambda: get_widget_by_name("completion-view") != None, timeout=2000
+    )
     pop_tree = get_widget_by_name("completion-view")
-    gps_assert(pop_tree is not None, True,
-               "The completion window should be open at that point")
+    gps_assert(
+        pop_tree is not None, True, "The completion window should be open at that point"
+    )
 
     # Verify that the invisible 'Do_Nothing' subprogram is listed after
     # the visible one
     gps_assert(
         dump_tree_model(pop_tree.get_model(), LABEL_COLUMN),
-        ['Nothing', 'Do_Nothing'],
-        "Wrong order in completion")
+        ["Nothing", "Do_Nothing"],
+        "Wrong order in completion",
+    )

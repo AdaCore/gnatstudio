@@ -35,5 +35,3 @@ def run_test():
         0,
         "There should be no completion request queued",
     )
-
-

@@ -16,14 +16,17 @@ def driver():
     GPS.Preference("Ada-Use-Tabs").set(True)
     b.select()
     GPS.execute_action("Format Selection")
-    if (default == b.get_chars(include_hidden_chars=False) or
-            "\t" not in b.get_chars(include_hidden_chars=False)):
+    if default == b.get_chars(include_hidden_chars=False) or "\t" not in b.get_chars(
+        include_hidden_chars=False
+    ):
         simple_error("Missing tabulations in editors")
 
     # Disable the preference and reformat, we should get the original text
     GPS.Preference("Ada-Use-Tabs").set(False)
     b.select()
     GPS.execute_action("Format Selection")
-    gps_assert(b.get_chars(include_hidden_chars=False),
-               default,
-               "Formatting issue after disabling the preference")
+    gps_assert(
+        b.get_chars(include_hidden_chars=False),
+        default,
+        "Formatting issue after disabling the preference",
+    )

@@ -12,11 +12,13 @@ def driver():
     b.current_view().goto(b.at(6, 19))
     yield timeout(2000)
     select_editor_contextual("Refactoring/Name parameters")
-    yield hook('language_client_response_sent')    
+    yield hook("language_client_response_sent")
     yield wait_tasks(other_than=known_tasks)
 
-    gps_assert(b.get_chars(b.at(6, 4), b.at(6, 34)),
-               "Ada.Text_IO.Create (File => F);",
-               "Does not work")
+    gps_assert(
+        b.get_chars(b.at(6, 4), b.at(6, 34)),
+        "Ada.Text_IO.Create (File => F);",
+        "Does not work",
+    )
 
     b.undo()

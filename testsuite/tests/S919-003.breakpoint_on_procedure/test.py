@@ -11,7 +11,7 @@ def test_driver():
     mode = "Mode:" + GPS.Preference("GPS6-Debugger-Debugger-Kind").get()
 
     GPS.execute_action("Build & Debug Number 1")
-    yield hook('debugger_started')
+    yield hook("debugger_started")
 
     debug = GPS.Debugger.get()
     yield wait_until_not_busy(debug)
@@ -22,5 +22,4 @@ def test_driver():
     yield wait_idle()
 
     select_editor_contextual("Debug/Set breakpoint on Main")
-    gps_assert(len(debug.breakpoints), 1,
-               "Wrong count of breakpoints in " + mode)
+    gps_assert(len(debug.breakpoints), 1, "Wrong count of breakpoints in " + mode)

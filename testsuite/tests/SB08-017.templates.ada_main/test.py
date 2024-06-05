@@ -12,12 +12,11 @@ def test():
     # Click in the 'src' directory in the Project view
     GPS.MDI.get("Project").raise_window()
     explorer = get_widget_by_name("Project Explorer Tree")
-    select_in_tree(explorer, column=1, key='src')
+    select_in_tree(explorer, column=1, key="src")
     yield wait_idle()
 
     # try to create a new Ada main unit from there
-    yield idle_modal_dialog(
-        lambda: GPS.execute_action('new ada main unit'))
+    yield idle_modal_dialog(lambda: GPS.execute_action("new ada main unit"))
     dialog = get_window_by_title("Create Ada Main Unit")
 
     # Create a unit 'my.unit', adding blankspaces before and after:
@@ -33,8 +32,7 @@ def test():
     dialog = get_window_by_title("Confirmation")
     get_stock_button(dialog, Gtk.STOCK_YES).clicked()
 
-    yield hook('project_view_changed')
+    yield hook("project_view_changed")
     mains = GPS.Project.root().get_attribute_as_list("main")
 
-    gps_assert(mains, ["my-unit.adb"],
-               "New Ada main was not correctly added")
+    gps_assert(mains, ["my-unit.adb"], "New Ada main was not correctly added")

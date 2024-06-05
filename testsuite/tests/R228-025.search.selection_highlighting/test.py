@@ -9,15 +9,9 @@ from gs_utils.internal.utils import *
 import gs_utils.internal.dialogs as dialogs
 
 
-EXPECTED_LINE_HIGHLIGHTING = ['',
-                              'Compiler info',
-                              'Compiler info',
-                              '',
-                              '',
-                              '',
-                              '']
+EXPECTED_LINE_HIGHLIGHTING = ["", "Compiler info", "Compiler info", "", "", "", ""]
 
-EXPECTED_NO_HIGHLIGHTING = ['', '', '', '', '', '', '']
+EXPECTED_NO_HIGHLIGHTING = ["", "", "", "", "", "", ""]
 
 EXPECTED_SYNTAX_HIGHLIGHTING = """.................
 .......#######......
@@ -53,7 +47,8 @@ def test_driver():
         buf.debug_dump_line_highlighting(),
         EXPECTED_LINE_HIGHLIGHTING,
         "The editor's selected area has not been highlighted when "
-        + "opening the Search view")
+        + "opening the Search view",
+    )
 
     # Search for 'Integer': verify that the search area is still highlighted
     # and that results are correctly highlighted too.
@@ -65,12 +60,14 @@ def test_driver():
         buf.debug_dump_line_highlighting(),
         EXPECTED_LINE_HIGHLIGHTING,
         "The editor's selected area should still be highlighted "
-        + "since the Search view has still the focus")
+        + "since the Search view has still the focus",
+    )
 
     gps_assert(
         buf.debug_dump_syntax_highlighting("Search results").strip(),
         EXPECTED_SYNTAX_HIGHLIGHTING.strip(),
-        "'Find all' results are not correctly highlighted")
+        "'Find all' results are not correctly highlighted",
+    )
 
     # Open another view to remove the focus from the Search view:
     # the editor's selected area should not be highlighted anymore
@@ -80,4 +77,5 @@ def test_driver():
         buf.debug_dump_line_highlighting(),
         EXPECTED_NO_HIGHLIGHTING,
         "The editor's selected area should not be highlighted "
-        + "anymore once the Search view loses the focus")
+        + "anymore once the Search view loses the focus",
+    )

@@ -17,17 +17,23 @@ def run_test():
     yield idle_modal_dialog(lambda: GPS.execute_action("delete directory"))
 
     dialog = get_window_by_title("Confirmation", Gtk.Window.list_toplevels())
-    gps_assert(dialog is not None, True,
-               "The 'delete file' dialog should have been opened")
+    gps_assert(
+        dialog is not None, True, "The 'delete file' dialog should have been opened"
+    )
     button = get_button_from_label("Yes", dialog)
     button.clicked()
 
     yield wait_tasks(other_than=known_tasks)
 
-    gps_assert("Cannot remove directory: " in GPS.Console().get_text(),
-               True,
-               "An error message stating that we can't remove the directory "
-               + "should be displayed")
+    gps_assert(
+        "Cannot remove directory: " in GPS.Console().get_text(),
+        True,
+        "An error message stating that we can't remove the directory "
+        + "should be displayed",
+    )
 
-    gps_assert(os.path.isfile(GPS.File("main.adb").path), True,
-               "Parent directory files have been removed")
+    gps_assert(
+        os.path.isfile(GPS.File("main.adb").path),
+        True,
+        "Parent directory files have been removed",
+    )

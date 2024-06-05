@@ -11,9 +11,7 @@ def check_location(buf, locs, msg):
     jx = 0
     for cursor in buf.cursors():
         mark = cursor.mark()
-        gps_assert((mark.line, mark.column),
-                   locs[jx],
-                   "Wrong cursor loc " + msg)
+        gps_assert((mark.line, mark.column), locs[jx], "Wrong cursor loc " + msg)
         jx += 1
 
 

@@ -26,7 +26,8 @@ def driver():
     test_buf_child = GPS.MDI.get("test.ads").get_child().pywidget()
     notebook = get_parent_notebook(test_buf_child)
     tab_label = get_widgets_by_type(
-        Gtk.Label, notebook.get_tab_label(notebook.get_nth_page(1)))[0]
+        Gtk.Label, notebook.get_tab_label(notebook.get_nth_page(1))
+    )[0]
     gps_assert(
         tab_label.get_style_context().has_class("not-from-project"),
         True,

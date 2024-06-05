@@ -16,12 +16,11 @@ def test():
     view = Commits()
     yield view.open_and_yield()
 
-    gps_assert(view.dump(),
-               [('Modified',),
-                ('Staged',),
-                ('Untracked',),
-                [('untracked.adb',)]],
-               "No files modified at startup")
+    gps_assert(
+        view.dump(),
+        [("Modified",), ("Staged",), ("Untracked",), [("untracked.adb",)]],
+        "No files modified at startup",
+    )
 
     # Modify and save files => update the Commits view Modified section
     for name in ["a.adb", "b.adb", "c.adb", "untracked.adb"]:
@@ -29,36 +28,60 @@ def test():
         buf.insert(buf.at(1, 1), "--  This is a comment\n")
         buf.save(interactive=False)
         yield hook("vcs_file_status_finished")
-    gps_assert(view.dump(),
-               [('Modified',),
-                [('a.adb',), ('b.adb',), ('c.adb',), ],
-                ('Staged',),
-                ('Untracked',),
-                [('untracked.adb',)]],
-               "Files should be modified in editors")
+    gps_assert(
+        view.dump(),
+        [
+            ("Modified",),
+            [
+                ("a.adb",),
+                ("b.adb",),
+                ("c.adb",),
+            ],
+            ("Staged",),
+            ("Untracked",),
+            [("untracked.adb",)],
+        ],
+        "Files should be modified in editors",
+    )
 
     # Staged a file => verify it was moved in the Commits view
     yield view.stage_via_name(names=["b.adb"])
-    gps_assert(view.dump(),
-               [('Modified',),
-                [('a.adb',), ('c.adb',), ],
-                ('Staged',),
-                [('b.adb',), ],
-                ('Untracked',),
-                [('untracked.adb',)]],
-               "The file should be staged")
+    gps_assert(
+        view.dump(),
+        [
+            ("Modified",),
+            [
+                ("a.adb",),
+                ("c.adb",),
+            ],
+            ("Staged",),
+            [
+                ("b.adb",),
+            ],
+            ("Untracked",),
+            [("untracked.adb",)],
+        ],
+        "The file should be staged",
+    )
 
     # Commit the stage file => it should not affect the modified files
     view.set_message("Commit staged files")
     yield view.commit_staged()
     yield timeout(500)
-    gps_assert(view.dump(),
-               [('Modified',),
-                [('a.adb',), ('c.adb',), ],
-                ('Staged',),
-                ('Untracked',),
-                [('untracked.adb',)]],
-               "Only the staged file should be commited")
+    gps_assert(
+        view.dump(),
+        [
+            ("Modified",),
+            [
+                ("a.adb",),
+                ("c.adb",),
+            ],
+            ("Staged",),
+            ("Untracked",),
+            [("untracked.adb",)],
+        ],
+        "Only the staged file should be commited",
+    )
 
     # When we don't have staged file commiting should stage all the
     # modified files
@@ -68,10 +91,12 @@ def test():
 
     # Timeout necessary because we are executing 2 git commands:
     # "git add" and then "git commit"
-    while view.dump() != [('Modified',),
-                          ('Staged',),
-                          ('Untracked',),
-                          [('untracked.adb',)]]:
+    while view.dump() != [
+        ("Modified",),
+        ("Staged",),
+        ("Untracked",),
+        [("untracked.adb",)],
+    ]:
         yield timeout(500)
 
     # No file staged and no file modified => the action should not
@@ -79,9 +104,8 @@ def test():
     view.set_message("Commit nothing")
     yield view.commit_staged()
     yield timeout(500)
-    gps_assert(view.dump(),
-               [('Modified',),
-                ('Staged',),
-                ('Untracked',),
-                [('untracked.adb',)]],
-               "Nothing should be done")
+    gps_assert(
+        view.dump(),
+        [("Modified",), ("Staged",), ("Untracked",), [("untracked.adb",)]],
+        "Nothing should be done",
+    )

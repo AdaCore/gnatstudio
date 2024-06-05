@@ -1,4 +1,3 @@
-
 """
 Test the navigation inside the signatureHelp window using Left/Right arrow.
 """
@@ -21,17 +20,21 @@ def run_test():
     main_window = GPS.MDI.get_main_window().pywidget()
 
     # Trigger the signatureHelp request by typing ','
-    send_key_event(ord(','), window=main_window)
+    send_key_event(ord(","), window=main_window)
     yield wait_language_server("textDocument/signatureHelp", "Ada")
 
     signature_help_window = get_widget_by_name("signature-help-window")
     labels = get_widgets_by_type(Gtk.Label, signature_help_window)
-    gps_assert(labels[1].get_label(), SECOND_PARAM,
-               "issue when opening the signatureHelp")
+    gps_assert(
+        labels[1].get_label(), SECOND_PARAM, "issue when opening the signatureHelp"
+    )
 
     send_key_event(GDK_LEFT, window=main_window)
     yield wait_language_server("textDocument/signatureHelp", "Ada")
     send_key_event(GDK_LEFT, window=main_window)
     yield wait_language_server("textDocument/signatureHelp", "Ada")
-    gps_assert(labels[1].get_label(), FIRST_PARAM,
-               "signatureHelp has not been updated for the location changed")
+    gps_assert(
+        labels[1].get_label(),
+        FIRST_PARAM,
+        "signatureHelp has not been updated for the location changed",
+    )

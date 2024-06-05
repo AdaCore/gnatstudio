@@ -7,8 +7,8 @@ import GPS
 from gs_utils.internal.utils import *
 
 
-EXPECTED_1 = 'Foo (I => Integer, J => Integer)'
-EXPECTED_2 = 'Bar (S => String)'
+EXPECTED_1 = "Foo (I => Integer, J => Integer)"
+EXPECTED_2 = "Bar (S => String)"
 
 
 def test_completion(buf, s, expected):
@@ -20,9 +20,7 @@ def test_completion(buf, s, expected):
     pop_tree = get_widget_by_name("completion-view")
     click_in_tree(pop_tree, path="0", events=double_click_events)
     yield wait_idle()
-    gps_assert(buf.get_chars().splitlines()[4],
-               expected,
-               "Wrong completion for " + s)
+    gps_assert(buf.get_chars().splitlines()[4], expected, "Wrong completion for " + s)
 
 
 @run_test_driver

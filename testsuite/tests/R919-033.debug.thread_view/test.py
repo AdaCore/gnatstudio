@@ -5,10 +5,9 @@ from gs_utils.internal.utils import *
 @run_test_driver
 def test_driver():
     GPS.execute_action("Build & Debug Number 1")
-    yield hook('debugger_started')
+    yield hook("debugger_started")
     d = GPS.Debugger.get()
-    for s in ["b main.adb:31",
-              "run"]:
+    for s in ["b main.adb:31", "run"]:
         yield wait_until_not_busy(d)
         d.send(s)
 
@@ -21,6 +20,6 @@ def test_driver():
 
     # Expect at least 6 threads in Threads View
     gps_assert(len(tm) >= 6, True, "We expect at least 6 threads")
-    d.send('q')
+    d.send("q")
 
     yield wait_tasks()

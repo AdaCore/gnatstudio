@@ -1,5 +1,3 @@
-
-
 """
 This test checks that GS correctly consider the debugger as started
 after attaching a process.
@@ -15,16 +13,19 @@ def test_driver():
     yield wait_tasks(other_than=known_tasks)
 
     GPS.Console("Messages").clear()
-    yield wait_for_mdi_child('Debugger Console')
+    yield wait_for_mdi_child("Debugger Console")
     debugger = GPS.Debugger.get()
 
-    debugger.send("-target-attach " + os.environ['TESTPID'])
+    debugger.send("-target-attach " + os.environ["TESTPID"])
     e = debugger.get_executable()
     console = debugger.get_console()
     GPS.execute_action("debug continue")
-    yield wait_until_true(lambda: '[program running]' in console.get_text())
+    yield wait_until_true(lambda: "[program running]" in console.get_text())
 
     text = console.get_text()
-    gps_assert("[program running]" in text, True,
-               "The program should have been run on 'debug continue'")
+    gps_assert(
+        "[program running]" in text,
+        True,
+        "The program should have been run on 'debug continue'",
+    )
     debugger.close()

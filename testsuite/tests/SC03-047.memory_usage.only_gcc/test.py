@@ -6,7 +6,9 @@ active when the toolchain is not GCC-based.
 import GPS
 from gs_utils.internal.utils import *
 
+
 @run_test_driver
 def run_test():
-    gps_assert(GPS.MDI.get('Memory Usage'), None,
-               "The Memory Usage View shuould not be opened")
+    gps_assert(
+        GPS.MDI.get("Memory Usage"), None, "The Memory Usage View shuould not be opened"
+    )

@@ -19,6 +19,7 @@ def save_file(timeout):
     GPS.execute_action("save")
     timeout.remove()
 
+
 dialog_found = 0
 
 
@@ -26,8 +27,11 @@ def check_dialog(timeout):
     global dialog_found
     # Look for our confirmation dialog
     windows = Gtk.Window.list_toplevels()
-    dialogs = [x for x in windows if x.get_title() and
-                     x.get_title().startswith("Files changed on disk")]
+    dialogs = [
+        x
+        for x in windows
+        if x.get_title() and x.get_title().startswith("Files changed on disk")
+    ]
     if dialogs:
         dialog_found += 1
         get_button_from_label("Reload", dialogs[0]).clicked()
@@ -42,9 +46,7 @@ def verify_dialog(b, number, should_exist):
     GPS.execute_action("save")
 
     # At this point, the text of the buffer should not contain "some text"
-    gps_assert(b.get_chars(),
-               EXPECTED,
-               "after reloading number: " + str(number))
+    gps_assert(b.get_chars(), EXPECTED, "after reloading number: " + str(number))
 
     # Let's wait a moment and make sure we have received the dialog
     count = 0
@@ -52,9 +54,11 @@ def verify_dialog(b, number, should_exist):
         count += 1
         yield timeout(500)
 
-    gps_assert(dialog_found == number,
-               should_exist,
-               "Issue with the dialog number: " + str(number))
+    gps_assert(
+        dialog_found == number,
+        should_exist,
+        "Issue with the dialog number: " + str(number),
+    )
 
 
 @run_test_driver

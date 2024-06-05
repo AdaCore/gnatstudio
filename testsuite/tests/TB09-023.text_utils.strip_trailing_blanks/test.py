@@ -5,10 +5,12 @@ from GPS import *
 from gs_utils.internal.utils import *
 import text_utils
 
-unstripped = ("procedure Foo is       -- Hello\n" +
-              "begin   \n" +
-              "   null;      \n" +
-              "end Foo;       \n")
+unstripped = (
+    "procedure Foo is       -- Hello\n"
+    + "begin   \n"
+    + "   null;      \n"
+    + "end Foo;       \n"
+)
 
 expected = """procedure Foo is       -- Hello
 begin

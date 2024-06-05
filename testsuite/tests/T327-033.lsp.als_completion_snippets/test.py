@@ -34,24 +34,34 @@ def run_test():
 
     # Verify that it has been correctly parsed by the aliases plugin
     line = buf.get_chars(buf.at(7, 1), buf.at(7, 1).end_of_line())
-    gps_assert(line.strip(), EXPECTED_SNIPPET.strip(),
-               "The completion snippet has not been correctly inserted")
+    gps_assert(
+        line.strip(),
+        EXPECTED_SNIPPET.strip(),
+        "The completion snippet has not been correctly inserted",
+    )
 
     # Iterate over the snippet params using TAB and give a value to
     # each of them
     for ch in "12":
         send_key_event(ord(ch))
         yield wait_idle()
-        yield wait_until_true(lambda:
-            GPS.Action("toggle to next alias field").can_execute())
+        yield wait_until_true(
+            lambda: GPS.Action("toggle to next alias field").can_execute()
+        )
         GPS.execute_action("toggle to next alias field")
         yield wait_idle()
 
     # Verify that the snippet parameters have been inserted properly
     line = buf.get_chars(buf.at(7, 1), buf.at(7, 1).end_of_line())
-    gps_assert(line.strip(), EXPECTED_RESULT.strip(),
-               "The snippet parameter values have not been inserted properly")
+    gps_assert(
+        line.strip(),
+        EXPECTED_RESULT.strip(),
+        "The snippet parameter values have not been inserted properly",
+    )
 
     # Verify that we jumped to the final tab stop
-    gps_assert(view.cursor(), buf.at(7, 1).end_of_line(),
-               "last TAB did not jump to the snippet final tab stop")
+    gps_assert(
+        view.cursor(),
+        buf.at(7, 1).end_of_line(),
+        "last TAB did not jump to the snippet final tab stop",
+    )

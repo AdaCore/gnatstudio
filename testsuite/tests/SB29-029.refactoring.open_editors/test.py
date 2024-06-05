@@ -19,14 +19,11 @@ def on_gps_started():
     def on_file_edited(file):
         simple_error("No new editor should have been opened")
 
-    yield idle_modal_dialog(
-        lambda: GPS.execute_action("rename entity"))
+    yield idle_modal_dialog(lambda: GPS.execute_action("rename entity"))
     new_name_ent = get_widget_by_name("new_name")
     new_name_ent.set_text("FooBar")
     dialog = get_window_by_title("Renaming entity")
 
-    get_button_from_label(
-        "Automatically save modified files", dialog).set_active(True)
+    get_button_from_label("Automatically save modified files", dialog).set_active(True)
 
-    yield idle_modal_dialog(
-        lambda: get_stock_button(dialog, Gtk.STOCK_OK).clicked())
+    yield idle_modal_dialog(lambda: get_stock_button(dialog, Gtk.STOCK_OK).clicked())

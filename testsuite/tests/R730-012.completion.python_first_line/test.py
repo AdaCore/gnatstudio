@@ -14,6 +14,8 @@ def run_test():
     yield wait_tasks(other_than=known_tasks)
     send_key_event(GDK_TAB)
     yield wait_tasks(other_than=known_tasks)
-    gps_assert(buf.get_chars(),
-               "import",
-               "The completion didn't work on a python file in the first line")
+    gps_assert(
+        buf.get_chars(),
+        "import",
+        "The completion didn't work on a python file in the first line",
+    )

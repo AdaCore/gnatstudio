@@ -10,5 +10,5 @@ def test_driver():
     yield wait_tasks(other_than=known_tasks)
 
     gps_assert(
-        GPS.Project.get_main_units(), ['test.adb', 'main.adb'],
-        "Incorrect main units")
+        GPS.Project.get_main_units(), ["test.adb", "main.adb"], "Incorrect main units"
+    )

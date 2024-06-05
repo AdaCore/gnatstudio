@@ -1,4 +1,3 @@
-
 """
 This test checks that the client-side of the textDocument/signatureHelp request
 works fine in GNAT Studio.
@@ -31,19 +30,24 @@ def run_test():
     main_window = GPS.MDI.get_main_window().pywidget()
 
     # Trigger the signatureHelp request by typing '('
-    send_key_event(ord('('), window=main_window)
+    send_key_event(ord("("), window=main_window)
     yield wait_language_server("textDocument/signatureHelp", "C++")
 
     signature_help_window = get_widget_by_name("signature-help-window")
     labels = get_widgets_by_type(Gtk.Label, signature_help_window)
 
     # Verify that all the label contents are correct
-    gps_assert(labels[0].get_text(), "1/2",
-               "The selector label text is not correct")
-    gps_assert(labels[1].get_text(), EXPECTED_SIGNATURE,
-               "The active signature label text is not correct")
-    gps_assert(labels[2].get_text().strip(), EXPECTED_COMMENT,
-               "The documentation label text is not correct")
+    gps_assert(labels[0].get_text(), "1/2", "The selector label text is not correct")
+    gps_assert(
+        labels[1].get_text(),
+        EXPECTED_SIGNATURE,
+        "The active signature label text is not correct",
+    )
+    gps_assert(
+        labels[2].get_text().strip(),
+        EXPECTED_COMMENT,
+        "The documentation label text is not correct",
+    )
 
     # Provide 3 paramters: only one 'do_something' signature should match
     # the provided parameters, so the selector label should be hidden
@@ -52,9 +56,9 @@ def run_test():
     yield wait_language_server("textDocument/signatureHelp", "C++")
     yield wait_idle()
 
-    gps_assert(labels[0].is_visible(), False,
-               "The selector should not be visible")
+    gps_assert(labels[0].is_visible(), False, "The selector should not be visible")
 
     # Verify that the active parameter is bold
-    gps_assert(labels[1].get_label(), EXPECTED_MARKUP,
-               "The active paramer is not bold ")
+    gps_assert(
+        labels[1].get_label(), EXPECTED_MARKUP, "The active paramer is not bold "
+    )

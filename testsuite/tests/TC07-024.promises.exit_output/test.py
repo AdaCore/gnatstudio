@@ -1,4 +1,3 @@
-
 """
 This test checks that a failing promises will output the error and status.
 """

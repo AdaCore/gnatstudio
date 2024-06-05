@@ -11,6 +11,5 @@ def run_test():
     buf = GPS.EditorBuffer.get(GPS.File("hello.adb"))
 
     # Create group
-    GPS.Bookmark.create_group ("group for %M")
+    GPS.Bookmark.create_group("group for %M")
     yield wait_idle()
-

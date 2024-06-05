@@ -27,14 +27,17 @@ def run_test():
 
     # Verify that the completion window is there
     pop_tree = get_widget_by_name("completion-view")
-    gps_assert(pop_tree is not None, True,
-               "The completion window should be open at that point")
+    gps_assert(
+        pop_tree is not None, True, "The completion window should be open at that point"
+    )
 
     # Verify that completion items' order: 'My_Variable_2' should come first,
     # since it's the closest match for 'MyVa' due to the casing.
-    gps_assert(dump_tree_model(pop_tree.get_model(), 4),
-               ['My_Variable_2', 'my_variable_1'],
-               "Wrong order for fuzzy completion")
+    gps_assert(
+        dump_tree_model(pop_tree.get_model(), 4),
+        ["My_Variable_2", "my_variable_1"],
+        "Wrong order for fuzzy completion",
+    )
 
     GPS.execute_action("undo")
 
@@ -45,11 +48,17 @@ def run_test():
 
     # Verify that the completion window is there
     pop_tree = get_widget_by_name("completion-view")
-    gps_assert(pop_tree is not None, True,
-               "The completion window should be open at that point")
+    gps_assert(
+        pop_tree is not None, True, "The completion window should be open at that point"
+    )
 
     # Verify that completion items' order: 'my_variable_1' should come first,
     # since it's the closest match for 'myva' due to the casing.
-    gps_assert(dump_tree_model(pop_tree.get_model(), 4),
-               ['my_variable_1', 'My_Variable_2', ],
-               "Wrong order for fuzzy completion")
+    gps_assert(
+        dump_tree_model(pop_tree.get_model(), 4),
+        [
+            "my_variable_1",
+            "My_Variable_2",
+        ],
+        "Wrong order for fuzzy completion",
+    )

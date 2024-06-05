@@ -7,7 +7,13 @@ from gi.repository import Gdk, Gtk
 from gs_utils.internal.demo_infrastructure import DemoWindow
 from pygps import GDK_RETURN
 
-from gs_utils.internal.utils import run_test_driver, get_widgets_by_type, send_key_event, gps_assert
+from gs_utils.internal.utils import (
+    run_test_driver,
+    get_widgets_by_type,
+    send_key_event,
+    gps_assert,
+)
+
 
 @run_test_driver
 def driver():
@@ -37,7 +43,8 @@ def driver():
         GPS.Console().clear()
         yield dw.wait(
             markup="Build the project",
-            oracle=lambda: "process terminated successfully" in GPS.Console().get_text(),
+            oracle=lambda: "process terminated successfully"
+            in GPS.Console().get_text(),
             action=lambda: GPS.execute_action("Build Main Number 1"),
         )
 
@@ -59,14 +66,16 @@ def driver():
         GPS.MDI.get("Demo").raise_window()
 
         # A bit of scripting is needed to get buffer of the execution window
-        view = get_widgets_by_type(Gtk.TextView,
-                                   GPS.MDI.get("Debugger Execution").pywidget())[0]
+        view = get_widgets_by_type(
+            Gtk.TextView, GPS.MDI.get("Debugger Execution").pywidget()
+        )[0]
         buf = view.get_buffer()
 
         # Wait until the debuggee is ready
         yield dw.wait(
             markup="Run the debugger and wait until it's ready",
-            oracle=lambda: "Welcome to sdc" in buf.get_text(buf.get_start_iter(), buf.get_end_iter(), True),
+            oracle=lambda: "Welcome to sdc"
+            in buf.get_text(buf.get_start_iter(), buf.get_end_iter(), True),
             action=lambda: GPS.Debugger.get().non_blocking_send("run"),
         )
 
@@ -79,7 +88,10 @@ def driver():
 
         yield dw.wait(
             markup=f"Now enter '{text}' in the execution window",
-            oracle=lambda: buf.get_text(buf.get_start_iter(), buf.get_end_iter(), True).find("Error") != -1,
+            oracle=lambda: buf.get_text(
+                buf.get_start_iter(), buf.get_end_iter(), True
+            ).find("Error")
+            != -1,
             action=send_text_to_debuggee,
         )
 

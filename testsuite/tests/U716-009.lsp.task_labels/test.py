@@ -13,5 +13,8 @@ def test_driver():
     GPS.execute_action("Find All References")
 
     tasks_labels = [task.label() for task in GPS.Task.list()]
-    gps_assert("[Ada] querying references" in tasks_labels, True,
-               "Wrong task label after 'find all references': %s" % str(tasks_labels))
+    gps_assert(
+        "[Ada] querying references" in tasks_labels,
+        True,
+        "Wrong task label after 'find all references': %s" % str(tasks_labels),
+    )

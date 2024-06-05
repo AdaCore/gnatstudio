@@ -9,13 +9,15 @@ def check_value(view, name, value, cmd_value, msg):
     var = get_widget_by_name(name, view)
     gps_assert(var is not None, True, "Can't Find " + name + " variable")
     combo = get_widgets_by_type(Gtk.ComboBox, var)[0]
-    gps_assert(combo.get_active_text(),
-               value,
-               "Wrong default value for " + name + " " + msg)
+    gps_assert(
+        combo.get_active_text(), value, "Wrong default value for " + name + " " + msg
+    )
     cmd = "-X" + name + "=" + cmd_value
-    gps_assert(cmd in GPS.Project.scenario_variables_cmd_line(prefix="-X"),
-               True,
-               "Wrong value for " + name + " in the command line " + msg)
+    gps_assert(
+        cmd in GPS.Project.scenario_variables_cmd_line(prefix="-X"),
+        True,
+        "Wrong value for " + name + " in the command line " + msg,
+    )
     return combo
 
 
@@ -43,8 +45,8 @@ def gps_started():
 
     # Discard the change
     yield idle_modal_dialog(
-        lambda: get_button_from_icon_name(
-            view, "gps-stop-symbolic").clicked())
+        lambda: get_button_from_icon_name(view, "gps-stop-symbolic").clicked()
+    )
     check_value(view, "Ext1", "one", "one", "after discard")
     combo = check_value(view, "Ext2", "hello", "hello", "after discard")
 
@@ -55,7 +57,7 @@ def gps_started():
 
     # Validate the change
     yield idle_modal_dialog(
-        lambda: get_button_from_icon_name(
-            view, "gps-syntax-check-symbolic").clicked())
+        lambda: get_button_from_icon_name(view, "gps-syntax-check-symbolic").clicked()
+    )
     check_value(view, "Ext1", "one", "one", "after apply")
     check_value(view, "Ext2", "world!", "world!", "after apply")

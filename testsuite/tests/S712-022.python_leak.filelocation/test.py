@@ -17,21 +17,21 @@ def test_driver():
     initial = count_object("File")
 
     x = GPS.FileLocation(GPS.File("main.adb"), 1, 1)
-    gps_assert(count_object("File"),
-               initial,
-               "A FileLocation should not increase the number of File")
+    gps_assert(
+        count_object("File"),
+        initial,
+        "A FileLocation should not increase the number of File",
+    )
     f = x.file()
-    gps_assert(count_object("File"),
-               initial + 1,
-               "A File should have been created")
+    gps_assert(count_object("File"), initial + 1, "A File should have been created")
     # Deleting the FileLocation should not affect the File
     del x
     gc.collect()
-    gps_assert(count_object("File"),
-               initial + 1,
-               "File should not be affected by the deletion of FileLocation")
+    gps_assert(
+        count_object("File"),
+        initial + 1,
+        "File should not be affected by the deletion of FileLocation",
+    )
     del f
     gc.collect()
-    gps_assert(count_object("File"),
-               initial,
-               "Python should have the last ref to File")
+    gps_assert(count_object("File"), initial, "Python should have the last ref to File")

@@ -13,9 +13,11 @@ def run():
     yield wait_tasks(other_than=known_tasks)
     view_widget = console.pywidget()
     win = get_widgets_by_type(Gtk.ScrolledWindow, view_widget)[0]
-    gps_assert(win.get_vadjustment().get_value(),
-               0,
-               "Wrong vertical adjustment for empty Console")
+    gps_assert(
+        win.get_vadjustment().get_value(),
+        0,
+        "Wrong vertical adjustment for empty Console",
+    )
 
     # By default autoscroll is enabled. Thus inserting some lines should
     # move the vertical adjustment.
@@ -24,9 +26,7 @@ def run():
     yield wait_idle()
 
     expected = win.get_vadjustment().get_value()
-    gps_assert(expected > 0,
-               True,
-               "Wrong vertical adjustment for autoscrolling")
+    gps_assert(expected > 0, True, "Wrong vertical adjustment for autoscrolling")
 
     # Disable the autoscroll behavior and insert some lines = the vertical
     # adjustment should be the same
@@ -36,6 +36,8 @@ def run():
         console.write(str(i) + "\n")
     yield wait_idle()
 
-    gps_assert(win.get_vadjustment().get_value(),
-               expected,
-               "Wrong vertical adjustment without autoscrolling")
+    gps_assert(
+        win.get_vadjustment().get_value(),
+        expected,
+        "Wrong vertical adjustment without autoscrolling",
+    )

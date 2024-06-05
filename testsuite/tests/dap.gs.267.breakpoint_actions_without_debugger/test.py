@@ -22,14 +22,16 @@ def test_driver():
 
     # Open the Breakpoints view and check that the breakpoints has been set
     GPS.execute_action("open breakpoints editor")
-    yield wait_for_mdi_child('Breakpoints')
+    yield wait_for_mdi_child("Breakpoints")
     bp = GPS.MDI.get("Breakpoints")
     tree = get_widgets_by_type(Gtk.TreeView, bp.pywidget())[0]
     selection = tree.get_selection()
     model = tree.get_model()
-    gps_assert(dump_tree_model(model, LINE_COLUMN),
-               [" 5", " 6", " 7", " 8"],
-               "Failed to add breakpoints")
+    gps_assert(
+        dump_tree_model(model, LINE_COLUMN),
+        [" 5", " 6", " 7", " 8"],
+        "Failed to add breakpoints",
+    )
 
     # Test the disable breakpoints action
     selection.unselect_all()
@@ -38,9 +40,11 @@ def test_driver():
     yield wait_idle()
     GPS.execute_action("debug disable breakpoints")
     yield wait_idle()
-    gps_assert(dump_tree_model(model, ENABLED_COLUMN),
-               [False, False, True, True],
-               "Failed to disable breakpoints")
+    gps_assert(
+        dump_tree_model(model, ENABLED_COLUMN),
+        [False, False, True, True],
+        "Failed to disable breakpoints",
+    )
 
     # Test the enable breakpoints action
     selection.unselect_all()
@@ -49,9 +53,11 @@ def test_driver():
     yield wait_idle()
     GPS.execute_action("debug enable breakpoints")
     yield wait_idle()
-    gps_assert(dump_tree_model(model, ENABLED_COLUMN),
-               [False, True, True, True],
-               "Failed to enable breakpoints")
+    gps_assert(
+        dump_tree_model(model, ENABLED_COLUMN),
+        [False, True, True, True],
+        "Failed to enable breakpoints",
+    )
 
     # Test the view breakpoint action
     selection.unselect_all()
@@ -59,9 +65,7 @@ def test_driver():
     yield wait_idle()
     GPS.execute_action("debug view breakpoint")
     yield wait_idle()
-    gps_assert(view.cursor().line(),
-               5,
-               "Failed to goto breakpoint")
+    gps_assert(view.cursor().line(), 5, "Failed to goto breakpoint")
 
     # Test the delete breakpoint action
     selection.unselect_all()
@@ -70,6 +74,8 @@ def test_driver():
     yield wait_idle()
     GPS.execute_action("debug delete breakpoint")
     yield wait_idle()
-    gps_assert(dump_tree_model(model, LINE_COLUMN),
-               [" 6", " 8"],
-               "Failed to delete breakpoints")
+    gps_assert(
+        dump_tree_model(model, LINE_COLUMN),
+        [" 6", " 8"],
+        "Failed to delete breakpoints",
+    )

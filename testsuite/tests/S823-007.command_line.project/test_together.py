@@ -8,9 +8,11 @@ from gs_utils.internal.utils import *
 
 @run_test_driver
 def run_test():
-    gps_assert(GPS.Project.root().name(),
-               "Default",
-               "The default project should be loaded")
-    gps_assert(GPS.MDI.get("foobar.gpr") is not None,
-               True,
-               "The file in the command line should be opened in the editors")
+    gps_assert(
+        GPS.Project.root().name(), "Default", "The default project should be loaded"
+    )
+    gps_assert(
+        GPS.MDI.get("foobar.gpr") is not None,
+        True,
+        "The file in the command line should be opened in the editors",
+    )

@@ -21,7 +21,10 @@ def run_test():
     new_buffer.save(interactive=False, file=GPS.File("foo.ads"))
 
     # Verify that we don't have two 'foo.ads' buffers
-    foo_buffers = [c.name(short=True) for c in GPS.MDI.children()
-                    if c.name(short=True) == "foo.ads"]
+    foo_buffers = [
+        c.name(short=True)
+        for c in GPS.MDI.children()
+        if c.name(short=True) == "foo.ads"
+    ]
 
     gps_assert(len(foo_buffers), 1, "There should be only one 'foo.ads'")

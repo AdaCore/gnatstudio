@@ -3,7 +3,7 @@ import testsuite
 import os
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     this_dir = os.path.dirname(__file__)
 
     suite = testsuite.GSPublicTestsuite(this_dir)

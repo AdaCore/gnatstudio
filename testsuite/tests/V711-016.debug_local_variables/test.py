@@ -2,10 +2,8 @@
 from GPS import *
 from gs_utils.internal.utils import *
 
-expected_locals = (
-    ['', ['i = 0', 'b = false']])
-expected_args = (
-    ['', ['level - 0', 'i = 0', 'b = false']])
+expected_locals = ["", ["i = 0", "b = false"]]
+expected_args = ["", ["level - 0", "i = 0", "b = false"]]
 
 
 @run_test_driver
@@ -13,7 +11,7 @@ def run_test():
     yield wait_tasks()
     buf = GPS.EditorBuffer.get(GPS.File("main.adb"))
     GPS.execute_action("Build & Debug Number 1")
-    yield hook('debugger_started')
+    yield hook("debugger_started")
 
     GPS.MDI.get("main.adb").raise_window()
     buf.current_view().goto(buf.at(6, 1))

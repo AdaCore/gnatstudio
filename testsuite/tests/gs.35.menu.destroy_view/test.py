@@ -27,6 +27,4 @@ def test_driver():
     expected = buf.get_chars()
     send_key_event(ord("a"))
     yield wait_idle()
-    gps_assert(buf.get_chars(),
-               "a" + expected,
-               "The event handler is locked")
+    gps_assert(buf.get_chars(), "a" + expected, "The event handler is locked")

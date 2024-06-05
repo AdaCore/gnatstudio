@@ -16,18 +16,14 @@ def test_driver():
     buffer = GPS.EditorBuffer.get(GPS.File("foo.adb"))
     view = buffer.current_view()
 
-    view.goto(buffer.at(3,1))
+    view.goto(buffer.at(3, 1))
 
-    send_key_event(ord('a'))
+    send_key_event(ord("a"))
 
-    yield wait_until_true(
-        lambda: get_widget_by_name("completion-view") != None)
+    yield wait_until_true(lambda: get_widget_by_name("completion-view") != None)
 
     tree = get_widget_by_name("completion-view")
-    gps_assert(
-        tree.is_visible(),
-        True,
-        "The completion tree should be visible")
+    gps_assert(tree.is_visible(), True, "The completion tree should be visible")
 
     model = tree.get_model()
     tree.get_selection().select_iter(model.get_iter_first())

@@ -20,12 +20,9 @@ def run_test():
 
     gps_assert(
         dump_tree_model(explorer.get_model(), 1),
-        ['exec',
-         ['exec',
-          'obj',
-          'src',
-          'default.gpr']],
-        "Wrong contents for exec dir")
+        ["exec", ["exec", "obj", "src", "default.gpr"]],
+        "Wrong contents for exec dir",
+    )
 
     GPS.Project.load("../lib/lib_prj.gpr")
     yield wait_tasks()
@@ -33,9 +30,6 @@ def run_test():
     explorer = get_widget_by_name("File Explorer Tree")
     gps_assert(
         dump_tree_model(explorer.get_model(), 1),
-        ['lib',
-         ['lib',
-          'obj',
-          'src',
-          'lib_prj.gpr']],
-        "Wrong contents for lib dir")
+        ["lib", ["lib", "obj", "src", "lib_prj.gpr"]],
+        "Wrong contents for lib dir",
+    )

@@ -2,9 +2,15 @@
 Test setting of label of the task when builder reports phase info
 """
 
-from gs_utils.internal.utils import (gps_assert, run_test_driver,
-                                     wait_idle, wait_tasks, timeout)
-#import GPS
+from gs_utils.internal.utils import (
+    gps_assert,
+    run_test_driver,
+    wait_idle,
+    wait_tasks,
+    timeout,
+)
+
+# import GPS
 
 XML = r"""<?xml version="1.0" ?>
 <GNAT_Studio>
@@ -22,6 +28,7 @@ XML = r"""<?xml version="1.0" ?>
 """
 
 GPS.parse_xml(XML)
+
 
 @run_test_driver
 def driver():

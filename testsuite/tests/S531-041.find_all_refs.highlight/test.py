@@ -31,9 +31,12 @@ def driver():
         yield wait_tasks(other_than=known_tasks)
 
     b.find_all_refs(b.at(2, 15), True)
-    yield hook('language_server_response_processed')
+    yield hook("language_server_response_processed")
 
     actual = b.debug_dump_syntax_highlighting("Search results")
-    gps_assert(actual.strip(), expected.strip(),
-               "highlighting is wrong after find all refs:\n"
-               + "\n%s\n!=\n%s\n" % (actual, expected))
+    gps_assert(
+        actual.strip(),
+        expected.strip(),
+        "highlighting is wrong after find all refs:\n"
+        + "\n%s\n!=\n%s\n" % (actual, expected),
+    )

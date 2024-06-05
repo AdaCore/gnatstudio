@@ -6,24 +6,26 @@ from gs_utils.internal.utils import *
 from workflows import promises
 
 expect = [
-   '<b>foo</b> = array (1 .. 12) of character &quot;Hello World!&quot;',
-   '<b>bar</b> = array (1 .. 10) of character &quot;aaaaaaaaaa&quot;',
-   '<b>sym</b> = gnatcoll.symbols.symbol &quot',
-   '<b>norm</b> = string &quot;&quot;']
+    "<b>foo</b> = array (1 .. 12) of character &quot;Hello World!&quot;",
+    "<b>bar</b> = array (1 .. 10) of character &quot;aaaaaaaaaa&quot;",
+    "<b>sym</b> = gnatcoll.symbols.symbol &quot",
+    "<b>norm</b> = string &quot;&quot;",
+]
 
 
 def display(debug, buf, line, col, name):
     GPS.MDI.get_by_child(buf.current_view()).raise_window()
     buf.current_view().goto(buf.at(line, col))
     yield wait_until_true(
-        lambda: GPS.Action('debug tree display variable').can_execute())
+        lambda: GPS.Action("debug tree display variable").can_execute()
+    )
     GPS.execute_action("debug tree display variable")
 
 
 @run_test_driver
 def driver():
     GPS.execute_action("Build & Debug Number 1")
-    yield hook('debugger_started')
+    yield hook("debugger_started")
 
     b = GPS.EditorBuffer.get(GPS.File("main.adb"))
 
@@ -32,8 +34,7 @@ def driver():
 
     yield p.send_promise("break main.adb:17")
     yield p.send_promise("run")
-    yield hook('debugger_location_changed')
-
+    yield hook("debugger_location_changed")
 
     yield display(debug, b, 6, 5, "Foo")
     yield wait_DAP_server("variables")

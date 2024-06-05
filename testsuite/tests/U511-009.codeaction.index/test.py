@@ -1,12 +1,16 @@
 # Check where a code action starts and finishes
 
-from gs_utils.internal.utils import run_test_driver, wait_language_server, \
-    gps_assert, get_widget_by_name, timeout
+from gs_utils.internal.utils import (
+    run_test_driver,
+    wait_language_server,
+    gps_assert,
+    get_widget_by_name,
+    timeout,
+)
 
 
 @run_test_driver
 def driver():
-
     def is_valid(expected, msg):
         """
         `expected` : bool indicating if we should have a code action
@@ -15,8 +19,7 @@ def driver():
         m = GPS.Message.list()
         if expected:
             gps_assert(len(m), 1, "error at " + msg)
-            gps_assert(m[0].get_category(), "_internal_code_actions",
-                       "wrong category")
+            gps_assert(m[0].get_category(), "_internal_code_actions", "wrong category")
         else:
             gps_assert(len(m), 0, "error at " + msg)
 

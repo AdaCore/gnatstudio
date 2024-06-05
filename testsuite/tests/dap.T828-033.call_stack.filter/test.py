@@ -12,13 +12,12 @@ from workflows import promises
 def test_driver():
     yield wait_tasks(other_than=known_tasks)
     GPS.execute_action("Build & Debug Number 1")
-    yield hook('debugger_started')
+    yield hook("debugger_started")
     yield timeout(500)
 
     p = promises.DebuggerWrapper(GPS.File("main"))
     d = p.get()
-    for s in ["b hidden.adb:8",
-              "run"]:
+    for s in ["b hidden.adb:8", "run"]:
         yield wait_until_not_busy(d)
         yield p.send_promise(s)
 
@@ -43,9 +42,9 @@ def test_driver():
     # Frame 0 is filtered out => it should select nothing
     yield p.send_promise("frame 0")
     yield wait_until_not_busy(d)
-    gps_assert(selection.get_selected()[1],
-               None,
-               "This frame is hidden and can't be selected")
+    gps_assert(
+        selection.get_selected()[1], None, "This frame is hidden and can't be selected"
+    )
 
     # Frame 0 is filtered out => it should select nothing
     yield p.send_promise("frame 0")
@@ -63,4 +62,3 @@ def test_driver():
         "1",
         "This frame is visible and should be selected",
     )
-

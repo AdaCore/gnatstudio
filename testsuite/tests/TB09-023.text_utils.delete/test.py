@@ -16,25 +16,21 @@ def run_test():
 
     # Go to the beginning of the buffer
     text_utils.beginning_of_buffer()
-    gps_assert("\n".join(expected),
-               buf.get_chars().rstrip(),
-               "Wrong initial buffer")
+    gps_assert("\n".join(expected), buf.get_chars().rstrip(), "Wrong initial buffer")
 
     # Test delete_forward
     text_utils.delete_forward()
-    gps_assert("\n".join([expected[0][1:], expected[1]]),
-               buf.get_chars().rstrip(),
-               "Issue with delete_forward")
+    gps_assert(
+        "\n".join([expected[0][1:], expected[1]]),
+        buf.get_chars().rstrip(),
+        "Issue with delete_forward",
+    )
 
     # Test delete_line
     text_utils.delete_line()
-    gps_assert(expected[1],
-               buf.get_chars().rstrip(),
-               "Issue with delete_line")
+    gps_assert(expected[1], buf.get_chars().rstrip(), "Issue with delete_line")
 
     # Move to a non existent line and delete it => should go to the last line
     text_utils.end_of_line("foo.adb", 1)
     text_utils.delete_line()
-    gps_assert("",
-               buf.get_chars().rstrip(),
-               "Issue with end_of_line")
+    gps_assert("", buf.get_chars().rstrip(), "Issue with end_of_line")

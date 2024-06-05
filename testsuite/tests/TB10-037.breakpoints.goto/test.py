@@ -16,7 +16,7 @@ def check_action():
     # to run the action "debug view breakpoint"
 
     GPS.execute_action("open breakpoints editor")
-    yield wait_for_mdi_child('Breakpoints')
+    yield wait_for_mdi_child("Breakpoints")
     view = GPS.MDI.get("Breakpoints")
     tree = get_widgets_by_type(Gtk.TreeView, view.pywidget())[0]
     model = tree.get_model()
@@ -29,12 +29,8 @@ def check_action():
     buf = GPS.EditorBuffer.get(GPS.File("main.adb"), open=False)
     if buf:
         loc = buf.get_cursors()[0].location()
-        gps_assert(loc.line(),
-                   line,
-                   "Wrong line")
-        gps_assert(loc.column(),
-                   col,
-                   "Wrong column")
+        gps_assert(loc.line(), line, "Wrong line")
+        gps_assert(loc.column(), col, "Wrong column")
         # Close it for the next call
         buf.close()
     else:
@@ -58,7 +54,7 @@ def test_driver():
     # Launch the debugger
 
     GPS.execute_action("Build & Debug Number 1")
-    yield hook('debugger_started')
+    yield hook("debugger_started")
 
     # Check the action when the debugger session is started
     yield check_action()

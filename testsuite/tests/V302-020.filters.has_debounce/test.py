@@ -16,10 +16,13 @@ def run_test():
     entry.set_text("foo")
     # Wait: no filtering should happpen after changing the entry
     yield timeout(500)
-    gps_assert(dump_tree_model(explorer.get_model(), 1),
-               ['Default', ['.', ['bar.adb', 'foo.adb'], '.']])
+    gps_assert(
+        dump_tree_model(explorer.get_model(), 1),
+        ["Default", [".", ["bar.adb", "foo.adb"], "."]],
+    )
 
     # Return should trigger the filtering
     entry.activate()
-    gps_assert(dump_tree_model(explorer.get_model(), 1),
-               ['Default', ['.', ['foo.adb'], '.']])
+    gps_assert(
+        dump_tree_model(explorer.get_model(), 1), ["Default", [".", ["foo.adb"], "."]]
+    )

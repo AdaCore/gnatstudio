@@ -12,7 +12,7 @@ def test_driver():
     yield prj_view.open_and_yield()
 
     project_tree = prj_view.dialog
-    path = find_in_tree(project_tree, column=1, key='runtime')
+    path = find_in_tree(project_tree, column=1, key="runtime")
     project_tree.expand_row(path, open_all=False)
 
     filt = get_widget_by_name("Project Explorer Filter")
@@ -20,7 +20,8 @@ def test_driver():
     yield hook("filter_view_changed")
 
     dump = dump_tree_model(project_tree.get_model(), 1)
-    gps_assert(dump[1][1],
-               ['a-assert.ads', 'a-assert.adb',
-                's-assert.ads', 's-assert.adb'],
-               "Project view content wrong after filtering")
+    gps_assert(
+        dump[1][1],
+        ["a-assert.ads", "a-assert.adb", "s-assert.ads", "s-assert.adb"],
+        "Project view content wrong after filtering",
+    )

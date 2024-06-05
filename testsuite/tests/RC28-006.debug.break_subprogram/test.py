@@ -23,7 +23,7 @@ def test_driver():
     # set
 
     GPS.execute_action("open breakpoints editor")
-    yield wait_for_mdi_child('Breakpoints')
+    yield wait_for_mdi_child("Breakpoints")
 
     view = GPS.MDI.get("Breakpoints")
 
@@ -31,18 +31,20 @@ def test_driver():
     model = tree.get_model()
     iter = model.get_iter_first()
 
-    gps_assert(dump_tree_model(model, 7), ["Print_Result"],
-               "the bp on Print_Result should be in the Breakpoints view")
+    gps_assert(
+        dump_tree_model(model, 7),
+        ["Print_Result"],
+        "the bp on Print_Result should be in the Breakpoints view",
+    )
 
     # Launch the debugger and verify that we stop in the Print_Result
     # subprogram's body
 
     GPS.execute_action("Build & Debug Number 1")
-    yield hook('debugger_started')
+    yield hook("debugger_started")
 
     debug = GPS.Debugger.get()
     debug.send("run")
     yield wait_until_not_busy(debug)
 
-    gps_assert(debug.current_line, 8,
-               "The debugger should be stopped at line 8")
+    gps_assert(debug.current_line, 8, "The debugger should be stopped at line 8")

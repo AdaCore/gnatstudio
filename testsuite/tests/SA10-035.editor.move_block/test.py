@@ -13,46 +13,69 @@ def driver():
 
     v.goto(b.at(6, 1))
     GPS.execute_action("Move block up")
-    gps_assert(b.get_chars(b.at(5, 1),
-                           b.at(6, 9)),
-               "   --  b\n   --  a\n",
-               "move block up (no selection) error")
-    gps_assert(b.selection_start(), b.at(5, 1),
-               "cursor in the wrong place after move block up")
-    gps_assert(b.selection_start(), b.selection_end(),
-               "selection unexpected after move block up")
+    gps_assert(
+        b.get_chars(b.at(5, 1), b.at(6, 9)),
+        "   --  b\n   --  a\n",
+        "move block up (no selection) error",
+    )
+    gps_assert(
+        b.selection_start(), b.at(5, 1), "cursor in the wrong place after move block up"
+    )
+    gps_assert(
+        b.selection_start(),
+        b.selection_end(),
+        "selection unexpected after move block up",
+    )
 
     # "down" with no selection
 
     GPS.execute_action("Move block down")
-    gps_assert(b.get_chars(), initial,
-               "move block down (no selection) error")
-    gps_assert(b.selection_start(), b.at(6, 1),
-               "cursor in the wrong place after move block down")
-    gps_assert(b.selection_start(), b.selection_end(),
-               "selection unexpected after move block down")
+    gps_assert(b.get_chars(), initial, "move block down (no selection) error")
+    gps_assert(
+        b.selection_start(),
+        b.at(6, 1),
+        "cursor in the wrong place after move block down",
+    )
+    gps_assert(
+        b.selection_start(),
+        b.selection_end(),
+        "selection unexpected after move block down",
+    )
 
     # "up" with selection
 
     b.select(b.at(6, 6), b.at(7, 6))
     GPS.execute_action("Move block up")
-    gps_assert(b.get_chars(b.at(5, 1),
-                           b.at(7, 9)),
-               "   --  b\n   --  c\n   --  a\n",
-               "move block up (selection) error")
-    gps_assert(b.selection_start(), b.at(5, 6),
-               "selection start in the wrong place after move block up")
-    gps_assert(b.selection_end(), b.at(6, 6),
-               "selection end in the wrong place after move block up")
+    gps_assert(
+        b.get_chars(b.at(5, 1), b.at(7, 9)),
+        "   --  b\n   --  c\n   --  a\n",
+        "move block up (selection) error",
+    )
+    gps_assert(
+        b.selection_start(),
+        b.at(5, 6),
+        "selection start in the wrong place after move block up",
+    )
+    gps_assert(
+        b.selection_end(),
+        b.at(6, 6),
+        "selection end in the wrong place after move block up",
+    )
 
     # "down" with selection
 
     GPS.execute_action("Move block down")
     gps_assert(b.get_chars(), initial, "move block down (selection) error")
-    gps_assert(b.selection_start(), b.at(6, 6),
-               "selection start in the wrong place after move block down")
-    gps_assert(b.selection_end(), b.at(7, 6),
-               "selection end in the wrong place after move block down")
+    gps_assert(
+        b.selection_start(),
+        b.at(6, 6),
+        "selection start in the wrong place after move block down",
+    )
+    gps_assert(
+        b.selection_end(),
+        b.at(7, 6),
+        "selection end in the wrong place after move block down",
+    )
 
     # Edge cases on first and last lines
 
@@ -73,41 +96,47 @@ def driver():
     if GPS.LanguageServer.is_enabled_for_language_name("Ada"):
         b.at(6, 1).block_unfold()
 
-    gps_assert(b.get_chars(b.at(2, 1), b.at(4, 15),
-                           include_hidden_chars=False),
-               "   type r is record\n",
-               "block folding didn't work")
+    gps_assert(
+        b.get_chars(b.at(2, 1), b.at(4, 15), include_hidden_chars=False),
+        "   type r is record\n",
+        "block folding didn't work",
+    )
 
     v.goto(b.at(5, 5))
     GPS.execute_action("Move block up")
-    gps_assert(b.get_chars(b.at(2, 1), b.at(4, 15),
-                           include_hidden_chars=False),
-               "   type r is record\n      b : int;\n   end record;\n",
-               "block should have been expanded after move up")
+    gps_assert(
+        b.get_chars(b.at(2, 1), b.at(4, 15), include_hidden_chars=False),
+        "   type r is record\n      b : int;\n   end record;\n",
+        "block should have been expanded after move up",
+    )
     GPS.execute_action("Move block up")
-    gps_assert(b.get_chars(b.at(2, 1), b.at(4, 9),
-                           include_hidden_chars=False),
-               "   type r is record\n      b : int;\n   --  a\n",
-               "line should have been moved after move up")
+    gps_assert(
+        b.get_chars(b.at(2, 1), b.at(4, 9), include_hidden_chars=False),
+        "   type r is record\n      b : int;\n   --  a\n",
+        "line should have been moved after move up",
+    )
 
     b.undo()
     gps_assert(b.get_chars(), initial, "undo after move up didn't work")
 
     v.goto(b.at(7, 5))
-    gps_assert(b.get_chars(b.at(8, 1), b.at(10, 15),
-                           include_hidden_chars=False),
-               "   type s is record\n",
-               "blok folding didn't work")
+    gps_assert(
+        b.get_chars(b.at(8, 1), b.at(10, 15), include_hidden_chars=False),
+        "   type s is record\n",
+        "blok folding didn't work",
+    )
     GPS.execute_action("Move block down")
-    gps_assert(b.get_chars(b.at(8, 1), b.at(10, 15),
-                           include_hidden_chars=False),
-               "   type s is record\n      b : int;\n   end record;\n",
-               "block should have been expanded after move down")
+    gps_assert(
+        b.get_chars(b.at(8, 1), b.at(10, 15), include_hidden_chars=False),
+        "   type s is record\n      b : int;\n   end record;\n",
+        "block should have been expanded after move down",
+    )
     GPS.execute_action("Move block down")
-    gps_assert(b.get_chars(b.at(8, 1), b.at(10, 15),
-                           include_hidden_chars=False),
-               "   --  c\n      b : int;\n   end record;\n",
-               "line should have been moved after move down")
+    gps_assert(
+        b.get_chars(b.at(8, 1), b.at(10, 15), include_hidden_chars=False),
+        "   --  c\n      b : int;\n   end record;\n",
+        "line should have been moved after move down",
+    )
 
     b.undo()
     gps_assert(b.get_chars(), initial, "undo after move down didn't work")

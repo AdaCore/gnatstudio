@@ -19,13 +19,16 @@ def test_driver():
     yield s.open_and_yield()
 
     s.set_scope(dialogs.Search.Context.FILES_FROM_PROJECT)
-    s.pattern.set_text('Hello')
-    s.replace_text.set_text('Bom Dia')
+    s.pattern.set_text("Hello")
+    s.replace_text.set_text("Bom Dia")
 
     GPS.execute_action("replace all")
     yield wait_tasks(other_than=known_tasks)
 
     buffer = GPS.EditorBuffer.get(GPS.File("main.adb"))
 
-    gps_assert(buffer.get_chars().rstrip(), EXPECTED_AFTER_REPLACE,
-               "The 'replace all' did not work properly")
+    gps_assert(
+        buffer.get_chars().rstrip(),
+        EXPECTED_AFTER_REPLACE,
+        "The 'replace all' did not work properly",
+    )

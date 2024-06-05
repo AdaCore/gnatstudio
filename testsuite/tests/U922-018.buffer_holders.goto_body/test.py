@@ -16,6 +16,4 @@ def run_test():
     GPS.execute_action("goto declaration")
     yield wait_tasks()
 
-    gps_assert(GPS.MDI.get("bar.ads") is not None,
-               True,
-               "The buffer should be opened")
+    gps_assert(GPS.MDI.get("bar.ads") is not None, True, "The buffer should be opened")

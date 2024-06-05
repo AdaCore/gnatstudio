@@ -40,7 +40,8 @@ def run_test():
     GPS.execute_action("format file")
     yield wait_language_server("textDocument/formatting", "C++")
 
-    gps_assert(buf.get_chars(include_hidden_chars=False),
-               expected,
-               "Formatting does not work properly")
-
+    gps_assert(
+        buf.get_chars(include_hidden_chars=False),
+        expected,
+        "Formatting does not work properly",
+    )

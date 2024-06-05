@@ -23,7 +23,7 @@ def run_test():
     sloc = str(unit.root.sloc_range)
     gps_assert(sloc, "1:1-6:7")
     ed.undo()
-    prj_view_changed = hook('project_view_changed')
+    prj_view_changed = hook("project_view_changed")
     GPS.Project.load("empty/empty.gpr", force=True)
     yield prj_view_changed
     gps_assert(GPS.Project.root().name(), "empty")
