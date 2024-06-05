@@ -224,7 +224,7 @@ private
       --  The LSP completion proposal ID.
 
       Command                  : LSP.Messages.Optional_Command;
-      --  An optional command that is executed *after* inserting this
+      --  An optional command that is executed after inserting this
       --  completion.
    end record;
 

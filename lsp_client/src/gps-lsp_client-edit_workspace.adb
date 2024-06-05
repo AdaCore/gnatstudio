@@ -132,7 +132,7 @@ package body GPS.LSP_Client.Edit_Workspace is
          --  an implementation of the Myers diff algorithm.
 
          Avoid_Cursor_Move        : Boolean := True;
-         --  If Avoid_Curson_Move is True, the cursor won't be moved to the
+         --  If Avoid_Cursor_Move is True, the cursor won't be moved to the
          --  location of the last change being applied: it will be kept at the
          --  current location.
       end record;

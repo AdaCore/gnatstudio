@@ -663,7 +663,7 @@ package GPS.Editors is
    --  Returns the visible column corresponding to the character position.
 
    procedure Set_Avoid_Cursor_Move_On_Changes
-     (This   : Editor_Buffer; Value : Boolean) is abstract;
+     (This : Editor_Buffer; Value : Boolean) is abstract;
    --  Set wether we should avoid to do cursor modifications in case of
    --  additions / deletions.
 
@@ -1524,7 +1524,7 @@ private
       return Boolean is (False);
 
    overriding procedure Set_Avoid_Cursor_Move_On_Changes
-     (This   : Dummy_Editor_Buffer; Value : Boolean) is null;
+     (This : Dummy_Editor_Buffer; Value : Boolean) is null;
 
    Nil_Editor_Buffer : constant Editor_Buffer'Class :=
      Dummy_Editor_Buffer'(Controlled with null record);

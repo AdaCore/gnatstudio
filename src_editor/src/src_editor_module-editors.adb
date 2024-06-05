@@ -611,7 +611,7 @@ package body Src_Editor_Module.Editors is
       Column : Character_Offset_Type) return Visible_Column_Type;
 
    overriding procedure Set_Avoid_Cursor_Move_On_Changes
-     (This   : Src_Editor_Buffer; Value : Boolean);
+     (This : Src_Editor_Buffer; Value : Boolean);
 
    function Convert is new Ada.Unchecked_Conversion
      (Buffer_Reference_Access, System.Address);
@@ -2372,7 +2372,7 @@ package body Src_Editor_Module.Editors is
    --------------------------------------
 
    overriding procedure Set_Avoid_Cursor_Move_On_Changes
-     (This   : Src_Editor_Buffer; Value : Boolean) is
+     (This : Src_Editor_Buffer; Value : Boolean) is
    begin
       if This.Contents.Buffer /= null then
          This.Contents.Buffer.Set_Avoid_Cursor_Move_On_Changes (Value);
