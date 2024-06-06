@@ -511,7 +511,7 @@ def current_node(context):
     # Return the LAL node corresponding to the subprogram enclosing the
     # current context, or None
     curloc = context.location()
-    buf = GPS.EditorBuffer.get(curloc.file(), open=False)
+    buf = GPS.EditorBuffer.get(curloc.file(), open=False) if curloc else None
     if not buf:
         return None
     unit = buf.get_analysis_unit()
@@ -530,6 +530,9 @@ def fuzz_subp_filter(context):
 
     # Check that we are in the package specification
     node = current_node(context)
+    if not node:
+        return False
+
     root = node.unit.root
     if isinstance(root, lal.CompilationUnit):
         if root.p_unit_kind != "unit_specification":
@@ -539,7 +542,6 @@ def fuzz_subp_filter(context):
 
     # Check that the cursor points to an identifier that we can attach to a
     # subprogram specification.
-    node = current_node(context)
     if not isinstance(node, lal.Identifier):
         return False
     defining_name = node.p_enclosing_defining_name

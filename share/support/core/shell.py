@@ -28,6 +28,7 @@ running inside GPS.
 import os.path
 import GPS
 import os
+import os_utils
 from gs_utils import save_dir, make_interactive, interactive
 from gs_utils.console_process import ANSI_Console_Process, Console_Process
 
@@ -71,15 +72,43 @@ def on_label(context):
 @save_dir
 def create_default_shell():
     """Spawns the user's shell as read from the environment variable SHELL"""
+
+    def __error_msg(variables):
+        """
+        :type variables: [name]
+        """
+        msg = ("Can't start OS shell, the following environment variables"
+               + " need to be set: ")
+        msg += ", ".join('%s (currently "%s")' % (var, str(os.getenv(var)))
+                         for var in variables)
+        msg += "\n"
+        GPS.Console("Messages").write(msg, mode="error")
+
     dir = get_directory(GPS.current_context())
 
     if dir is not None:
         GPS.cd(dir)
 
-    if os.name == "nt" and os.getenv("COMSPEC"):
-        Win32_Shell([os.getenv("COMSPEC"), "/Q"])
-    elif os.getenv("SHELL") and os.getenv("TERM"):
-        Unix_Shell([os.getenv("SHELL"), "-i"])
+    if os.name == "nt":
+        if os.getenv("COMSPEC"):
+            Win32_Shell([os.getenv("COMSPEC"), "/Q"])
+        else:
+            _error_msg(["COMSPEC"])
+
+    else:
+        if os.getenv("TERM"):
+            if os.getenv("SHELL"):
+                Unix_Shell([os.getenv("SHELL"), "-i"])
+            else:
+                __error_msg(["SHELL"])
+                # For Linux, try to start the bash in the path as a fallback
+                bash_exe = os_utils.locate_exec_on_path("bash")
+                if bash_exe:
+                    GPS.Console("Messages").write(
+                        "Retrying with SHELL=%s\n" % str(bash_exe))
+                    Unix_Shell([str(bash_exe), "-i"])
+        else:
+            __error_msg(["TERM", "SHELL"])
 
 
 def get_directory(context):
