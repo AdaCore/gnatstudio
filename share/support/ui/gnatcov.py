@@ -124,6 +124,57 @@ prebuilt_runtime_path = None
 # Used to store the prebuilt GNATcov runtime path, if the user specified
 # one.
 
+
+# Always load the project attributes
+ATTRIBUTES = ["UNITS", "UNITS_LIST",
+              "EXCLUDED_UNITS", "EXCLUDED_UNITS_LIST",
+              "IGNORED_UNITS", "IGNORED_UNITS_LIST",
+              "ROUTINES", "ROUTINES_LIST",
+              "EXCLUDED_ROUTINES", "EXCLUDED_ROUTINES_LIST"]
+
+ATTRIBUTE_TEMPLATE = r"""
+  <project_attribute package="Coverage"
+    name="{name}"
+    editor_page="GNATCoverage"
+    list="{is_list}"
+    hide_in="wizard library_wizard properties">{index}
+  </project_attribute>
+"""
+
+SWITCHES_INDEX = r"""
+   <index attribute="Language" package="">
+      <string default=""/>
+   </index>
+   <specialized_index value="*">
+      <string default=""/>
+   </specialized_index>
+   <specialized_index value="instrument">
+      <string default=""/>
+   </specialized_index>
+   <specialized_index value="coverage">
+      <string default=""/>
+   </specialized_index>
+   <specialized_index value="run">
+      <string default=""/>
+   </specialized_index>"""
+
+XML_TEMPLATE = r"""<?xml version="1.0" ?>
+<gnatcov>
+   {attributes}
+</gnatcov>
+"""
+
+GPS.parse_xml(XML_TEMPLATE.format(attributes=ATTRIBUTE_TEMPLATE.format(
+                                      name="SWITCHES",
+                                      is_list="true",
+                                      index=SWITCHES_INDEX)
+                                  + "".join(ATTRIBUTE_TEMPLATE.format(
+                                      name=attr,
+                                      is_list="true" if "LIST" not in attr
+                                      else "false",
+                                      index="") for attr in ATTRIBUTES)))
+
+
 # The project attributes must be created when the plugin is loaded or they
 # will not be found when opening the first project.
 if gnatcov_path:
