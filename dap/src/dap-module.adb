@@ -18,6 +18,9 @@
 with Ada.Containers.Vectors;
 with Ada.Unchecked_Deallocation;
 
+with GNAT.Strings;
+with GNAT.OS_Lib;
+
 with GNATCOLL.Any_Types;           use GNATCOLL.Any_Types;
 with GNATCOLL.Traces;              use GNATCOLL.Traces;
 
@@ -32,6 +35,7 @@ with Gtk.Label;                    use Gtk.Label;
 with Gtk.Widget;                   use Gtk.Widget;
 
 with Gtkada.Dialogs;
+with Gtkada.File_Selector;         use Gtkada.File_Selector;
 
 with Default_Preferences;
 with Commands;                     use Commands;
@@ -337,6 +341,12 @@ package body DAP.Module is
      (Command : access Detach_Command;
       Context : Interactive_Command_Context) return Command_Return_Type;
    --  Detach command
+
+   type Load_File_Command is new Interactive_Command with null record;
+   overriding function Execute
+     (Command : access Load_File_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type;
+   --  Debug->Debug->Load File
 
    -- Hooks --
 
@@ -1126,6 +1136,76 @@ package body DAP.Module is
       else
          return Commands.Failure;
       end if;
+   end Execute;
+
+   -------------
+   -- Execute --
+   -------------
+
+   overriding function Execute
+     (Command : access Load_File_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type
+   is
+      pragma Unreferenced (Command);
+
+      Kernel      : constant Kernel_Handle := Get_Kernel (Context.Context);
+      Client      : constant DAP.Clients.DAP_Client_Access :=
+        Get_Current_Debugger;
+      Exec        : Virtual_File;
+      Ptr         : GNAT.Strings.String_Access :=
+        GNAT.OS_Lib.Get_Executable_Suffix;
+      Exec_Suffix : constant String := Ptr.all;
+
+   begin
+      GNAT.Strings.Free (Ptr);
+
+      declare
+         Selected_File : Virtual_File :=
+               Select_File
+                 (Title             => "Select File to Debug",
+                  File_Pattern      => +("*" & Exec_Suffix & ";*"),
+                  Pattern_Name      => "Executable files;All files",
+                  Parent            => Get_Current_Window (Kernel),
+                  Use_Native_Dialog =>
+                    GPS.Kernel.Preferences.Use_Native_Dialogs.Get_Pref,
+                  Kind              => Open_File,
+                  History           => Get_History (Kernel));
+      begin
+         if Selected_File = GNATCOLL.VFS.No_File then
+            return Commands.Failure;
+         end if;
+
+         if not Is_Regular_File (Selected_File) then
+            Exec := GNATCOLL.VFS.Locate_On_Path (Base_Name (Selected_File));
+
+            if not Is_Regular_File (Exec) then
+               Kernel.Insert
+                 (("Could not find file: ") &
+                    Display_Base_Name (Selected_File),
+                  Mode => Error);
+               Selected_File := GNATCOLL.VFS.No_File;
+            else
+               Selected_File := Exec;
+            end if;
+         end if;
+
+         if Selected_File /= No_File then
+            Client.Set_Executable (Selected_File);
+
+            Client.Launch_Executable
+              (Executable        => Selected_File,
+               Stop_At_Beginning => True);
+         end if;
+
+      exception
+         when others =>
+            Kernel.Insert
+              (("Could not find file: ") & Display_Full_Name (Selected_File),
+               Mode => Error);
+            return Commands.Failure;
+      end;
+
+      return Commands.Success;
    end Execute;
 
    -------------
@@ -1981,6 +2061,16 @@ package body DAP.Module is
          Description => "Detach the running process from the debugger",
          Filter      => Has_Debugger and Attached_Debuggee,
          Category    => "Debug");
+
+      GPS.Kernel.Actions.Register_Action
+        (Kernel, "debug load file", new Load_File_Command,
+         Description =>
+           "Opens a file selection dialog that allows you to choose a"
+           & " program to debug. The program to debug is either an executable"
+           & " for native debugging, or a partially linked module for cross"
+           & " environments (e.g VxWorks).",
+         Filter   => Debugger_Available,
+         Category => "Debug");
 
       DAP.Module.Breakpoints.Register_Module (Kernel);
       DAP.Modules.Scripts.Register_Module (Kernel);
