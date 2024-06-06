@@ -1518,16 +1518,12 @@ package body Gtkada.Terminal is
             --  We have some UTF8 encoding, and we need to send all the char
             --  at once
 
-            if char'Pos (Txt (C)) < 16#800# then
+            if char'Pos (Txt (C)) < 2#11100000# then
                C := C + 1;  --  utf8 char encoded on 2 bytes
-            elsif char'Pos (Txt (C)) < 16#10000# then
+            elsif char'Pos (Txt (C)) < 2#11110000# then
                C := C + 2;  --  utf8 char encoded on 3 bytes
-            elsif char'Pos (Txt (C)) < 16#200000# then
-               C := C + 3;  --  utf8 char encoded on 4 bytes
-            elsif char'Pos (Txt (C)) < 16#4000000# then
-               C := C + 4;  --  utf8 char encoded on 5 bytes
             else
-               C := C + 5;  --  utf8 char encoded on 6 bytes
+               C := C + 3;  --  utf8 char encoded on 4 bytes
             end if;
          end if;
 
