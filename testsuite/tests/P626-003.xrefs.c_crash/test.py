@@ -1,5 +1,9 @@
-from gs_utils.internal.utils import run_test_driver, wait_tasks, \
-    known_tasks, wait_language_server
+from gs_utils.internal.utils import (
+    run_test_driver,
+    wait_tasks,
+    known_tasks,
+    wait_language_server,
+)
 
 
 @run_test_driver

@@ -35,19 +35,23 @@ import GPS
 import gs_utils
 
 GPS.Preference("Plugins/copy_paste/stdmenu").create(
-    "Contextual menu", "boolean",
+    "Contextual menu",
+    "boolean",
     """If enabled, contextual menus will be created for copying, cutting and
 pasting text. They will correspond to the /Edit/Copy, /Edit/Cut and
 /Edit/Paste menus. You must restart GPS to take changes into account.""",
-    True)
+    True,
+)
 
 GPS.Preference("Plugins/copy_paste/copy_with_line_nums").create(
-    "Copy with line numbers", "boolean",
+    "Copy with line numbers",
+    "boolean",
     """If enabled a contextual menu to copy some text with the line numbers
 will be created.
 Otherwise, the capability will only be accessible from the /Edit/Copy with
 line numbers menu and possibly the associated key shortcut.""",
-    False)
+    False,
+)
 
 
 def on_area(context):
@@ -61,11 +65,12 @@ def on_area(context):
 
 
 @gs_utils.interactive(
-    name='Copy with line numbers',
-    menu='/Edit/Copy with line numbers',
-    before='Paste',
+    name="Copy with line numbers",
+    menu="/Edit/Copy with line numbers",
+    before="Paste",
     contextual_group=GPS.Contextual.Group.CUT_COPY_PASTE,
-    filter=on_area)
+    filter=on_area,
+)
 def copy_with_line_numbers():
     buffer = GPS.EditorBuffer.get()
     loc_start = buffer.selection_start()
@@ -83,29 +88,30 @@ def copy_with_line_numbers():
             end = loc_start.end_of_line()
 
         prefix = ""
-        for j in range(len('%s' % line), max_len):
+        for j in range(len("%s" % line), max_len):
             prefix = prefix + " "
 
-        result = result + '%s%s. %s' % (
-            prefix, line, buffer.get_chars(loc_start, end))
+        result = result + "%s%s. %s" % (prefix, line, buffer.get_chars(loc_start, end))
         loc_start = loc_start.forward_line(1)
 
     GPS.Clipboard.copy(result)
 
 
-@gs_utils.hook('gps_started')
+@gs_utils.hook("gps_started")
 def __gps_started():
     global grey_out_contextual
 
     if GPS.Preference("Plugins/copy_paste/stdmenu").get():
-
-        GPS.Action('cut to clipboard').contextual(
-            'Cut', group=GPS.Contextual.Group.CUT_COPY_PASTE)
-        GPS.Action('copy to clipboard').contextual(
-            'Copy', group=GPS.Contextual.Group.CUT_COPY_PASTE)
+        GPS.Action("cut to clipboard").contextual(
+            "Cut", group=GPS.Contextual.Group.CUT_COPY_PASTE
+        )
+        GPS.Action("copy to clipboard").contextual(
+            "Copy", group=GPS.Contextual.Group.CUT_COPY_PASTE
+        )
         if GPS.Preference("Plugins/copy_paste/copy_with_line_nums").get():
-            GPS.Action('Copy with line numbers').contextual(
-                'Copy with line numbers',
-                group=GPS.Contextual.Group.CUT_COPY_PASTE)
-        GPS.Action('paste from clipboard').contextual(
-            'Paste', group=GPS.Contextual.Group.CUT_COPY_PASTE)
+            GPS.Action("Copy with line numbers").contextual(
+                "Copy with line numbers", group=GPS.Contextual.Group.CUT_COPY_PASTE
+            )
+        GPS.Action("paste from clipboard").contextual(
+            "Paste", group=GPS.Contextual.Group.CUT_COPY_PASTE
+        )

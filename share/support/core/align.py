@@ -101,14 +101,13 @@ when editing other languages
 import re
 import sys
 import GPS
-from gs_utils import interactive, with_save_excursion, in_ada_file, \
-    is_writable
+from gs_utils import interactive, with_save_excursion, in_ada_file, is_writable
 from functools import reduce
 
 
 def try_indent(buffer, top, bottom):
-    """ Ident text in given buffer between top and bottom position.
-        Ignore exceptions raised when ident setting is None"""
+    """Ident text in given buffer between top and bottom position.
+    Ignore exceptions raised when ident setting is None"""
     try:
         buffer.indent(top, bottom)
     except Exception:
@@ -117,18 +116,18 @@ def try_indent(buffer, top, bottom):
 
 def range_align_on(top, bottom, sep, replace_with=None, sep_group=0):
     """Align each line from top to bottom, aligning, for each line, sep in
-       the same column. For instance:
-           a sep b
-           long    sep    short
-       becomes:
-           a    sep b
-           long sep short
-       sep is a regular expression.
-       top and bottom are instances of GPS.EditorLocation
-       replace_with is the text that should replace the text matched by sep.
-       It can do backward references to parenthesis groups in sep by using the
-       usual \1, \2,... strings. All the replacement texts will occupy the same
-       length in the editor, that is they will also be aligned.
+    the same column. For instance:
+        a sep b
+        long    sep    short
+    becomes:
+        a    sep b
+        long sep short
+    sep is a regular expression.
+    top and bottom are instances of GPS.EditorLocation
+    replace_with is the text that should replace the text matched by sep.
+    It can do backward references to parenthesis groups in sep by using the
+    usual \1, \2,... strings. All the replacement texts will occupy the same
+    length in the editor, that is they will also be aligned.
     """
 
     if bottom.beginning_of_line() == bottom:
@@ -149,7 +148,7 @@ def range_align_on(top, bottom, sep, replace_with=None, sep_group=0):
         chars = top.buffer().get_chars(line, line.end_of_line())
         matched = sep_re.search(chars)
         if matched:
-            pos = max(pos, len(chars[:matched.start(sep_group)].rstrip()) + 1)
+            pos = max(pos, len(chars[: matched.start(sep_group)].rstrip()) + 1)
             try:
                 sub = sep_re.sub(replace_with, matched.group(sep_group))
             except Exception:
@@ -174,8 +173,7 @@ def range_align_on(top, bottom, sep, replace_with=None, sep_group=0):
             chars = top.buffer().get_chars(line, line.end_of_line())
             matched = sep_re.search(chars)
             if matched:
-                width = pos - \
-                    len(chars[:matched.start(sep_group)].rstrip()) - 1
+                width = pos - len(chars[: matched.start(sep_group)].rstrip()) - 1
                 try:
                     sub = sep_re.sub(replace_with, matched.group(sep_group))
                 except Exception:
@@ -190,17 +188,24 @@ def range_align_on(top, bottom, sep, replace_with=None, sep_group=0):
 
                 top.buffer().delete(line, line.end_of_line())
                 # do not left-strip if a single char as this will remove the \n
-                if len(chars[matched.end(sep_group):]) == 1:
+                if len(chars[matched.end(sep_group) :]) == 1:
                     top.buffer().insert(
                         line,
-                        chars[:matched.start(sep_group)].rstrip() +
-                        (' ' * width) + sub + (' ' * width2) +
-                        chars[matched.end(sep_group):])
+                        chars[: matched.start(sep_group)].rstrip()
+                        + (" " * width)
+                        + sub
+                        + (" " * width2)
+                        + chars[matched.end(sep_group) :],
+                    )
                 else:
                     top.buffer().insert(
-                        line, chars[:matched.start(sep_group)].rstrip() +
-                        (' ' * width) + sub + (' ' * width2) +
-                        chars[matched.end(sep_group):].lstrip())
+                        line,
+                        chars[: matched.start(sep_group)].rstrip()
+                        + (" " * width)
+                        + sub
+                        + (" " * width2)
+                        + chars[matched.end(sep_group) :].lstrip(),
+                    )
             prev = line
             line = line.forward_line()
             if prev == line:
@@ -222,15 +227,14 @@ def buffer_align_on(sep, replace_with=None, buffer=None, sep_group=0):
     top = buffer.selection_start()
     bottom = buffer.selection_end()
     if top == bottom:
-        GPS.MDI.dialog(
-            "You must first select the intended text (at least two lines)")
+        GPS.MDI.dialog("You must first select the intended text (at least two lines)")
     else:
         tmark = top.create_mark()
         bmark = bottom.create_mark(left_gravity=False)
         try_indent(buffer, top, bottom)
         range_align_on(
-            tmark.location(), bmark.location(), sep,
-            replace_with, sep_group=sep_group)
+            tmark.location(), bmark.location(), sep, replace_with, sep_group=sep_group
+        )
         tmark.delete()
         bmark.delete()
 
@@ -242,7 +246,7 @@ def get_commas(l):
     for k in range(0, len(l) - 1):
         if l[k] == '"':
             enabled = not enabled
-        elif enabled and l[k] == ',':
+        elif enabled and l[k] == ",":
             res.append(k)
             n = n + 1
     res.insert(0, n)
@@ -266,14 +270,17 @@ def in_rw_ada_file(context):
         lang = buffer.file().language().lower()
         has_selection = buffer.selection_start() != buffer.selection_end()
 
-        return has_selection and (
-            in_ada_file(context) or lang in ('project file',))
+        return has_selection and (in_ada_file(context) or lang in ("project file",))
 
 
-@interactive("Ada", in_rw_ada_file,
-             contextual="Align/Colons",
-             contextual_group=GPS.Contextual.Group.EDITING,
-             name="Align colons", for_learning=True)
+@interactive(
+    "Ada",
+    in_rw_ada_file,
+    contextual="Align/Colons",
+    contextual_group=GPS.Contextual.Group.EDITING,
+    name="Align colons",
+    for_learning=True,
+)
 def align_colons():
     """
     Aligns colons (eg in object and record type declarations) and trailing
@@ -283,10 +290,13 @@ def align_colons():
     buffer_align_on(sep=":(?!=)", replace_with=" : ")
 
 
-@interactive("Ada", in_rw_ada_file,
-             contextual="Align/Commas",
-             contextual_group=GPS.Contextual.Group.EDITING,
-             name="Align commas")
+@interactive(
+    "Ada",
+    in_rw_ada_file,
+    contextual="Align/Commas",
+    contextual_group=GPS.Contextual.Group.EDITING,
+    name="Align commas",
+)
 def align_commas():
     """
     Aligns commas (eg actual parameters or arguments in pragmas) in
@@ -300,8 +310,7 @@ def align_commas():
     bottom.create_mark("bottom")
 
     if top == bottom:
-        GPS.MDI.dialog(
-            "You must first select the intended text (at least two lines)")
+        GPS.MDI.dialog("You must first select the intended text (at least two lines)")
         return False
 
     if top.beginning_of_line() != top:
@@ -318,8 +327,7 @@ def align_commas():
             line = top.beginning_of_line()
 
             while line <= bottom:
-                content.append(top.buffer().get_chars(
-                    line, line.end_of_line()))
+                content.append(top.buffer().get_chars(line, line.end_of_line()))
                 line = line.forward_line()
 
             for l in content:
@@ -330,13 +338,13 @@ def align_commas():
                 nl = ""
                 for c in range(0, mm[0] + 1):
                     if c == 0:
-                        nl = nl + content[l][:data[l][c + 1] + 1]
-                        nl = nl + ' ' * (mm[c + 1] - len(nl) + 1)
+                        nl = nl + content[l][: data[l][c + 1] + 1]
+                        nl = nl + " " * (mm[c + 1] - len(nl) + 1)
                     elif c == mm[0]:
-                        nl = nl + content[l][data[l][c] + 1:]
+                        nl = nl + content[l][data[l][c] + 1 :]
                     else:
-                        nl = nl + content[l][data[l][c] + 1:data[l][c + 1] + 1]
-                        nl = nl + ' ' * (mm[c + 1] - len(nl) + 1)
+                        nl = nl + content[l][data[l][c] + 1 : data[l][c + 1] + 1]
+                        nl = nl + " " * (mm[c + 1] - len(nl) + 1)
                 chars = chars + nl
 
             buffer.delete(top, bottom)
@@ -350,10 +358,13 @@ def align_commas():
     return True
 
 
-@interactive("Ada", in_rw_ada_file,
-             contextual="Align/Reserved word 'is'",
-             contextual_group=GPS.Contextual.Group.EDITING,
-             name="Align reserved is")
+@interactive(
+    "Ada",
+    in_rw_ada_file,
+    contextual="Align/Reserved word 'is'",
+    contextual_group=GPS.Contextual.Group.EDITING,
+    name="Align reserved is",
+)
 def align_reserved_is():
     """
     Aligns reserved word 'is' (eg in type declarations) in
@@ -363,28 +374,39 @@ def align_reserved_is():
     buffer_align_on(sep=" is ")
 
 
-@interactive("Ada", in_rw_ada_file,
-             contextual="Align/Reserved word 'renames'",
-             contextual_group=GPS.Contextual.Group.EDITING,
-             name="Align reserved renames")
+@interactive(
+    "Ada",
+    in_rw_ada_file,
+    contextual="Align/Reserved word 'renames'",
+    contextual_group=GPS.Contextual.Group.EDITING,
+    name="Align reserved renames",
+)
 def align_renaming():
     """Aligns reserved word 'renames' in current selection"""
     buffer_align_on(sep=" renames ")
 
 
-@interactive("Ada", in_rw_ada_file,
-             contextual="Align/Use clauses",
-             contextual_group=GPS.Contextual.Group.EDITING,
-             name="Align use clauses", for_learning=True)
+@interactive(
+    "Ada",
+    in_rw_ada_file,
+    contextual="Align/Use clauses",
+    contextual_group=GPS.Contextual.Group.EDITING,
+    name="Align use clauses",
+    for_learning=True,
+)
 def align_use_clauses():
     """Aligns Ada use-clauses in current selection"""
     buffer_align_on(sep=" use ")
 
 
-@interactive("Ada", in_rw_ada_file,
-             contextual="Align/Arrow symbols",
-             contextual_group=GPS.Contextual.Group.EDITING,
-             name="Align arrows", for_learning=True)
+@interactive(
+    "Ada",
+    in_rw_ada_file,
+    contextual="Align/Arrow symbols",
+    contextual_group=GPS.Contextual.Group.EDITING,
+    name="Align arrows",
+    for_learning=True,
+)
 @with_save_excursion
 def align_arrows():
     """Aligns Ada arrow symbol '=>' in current selection"""
@@ -411,21 +433,23 @@ def align_arrows():
                 chars = buffer.get_chars(top, bottom)
                 level = 0
                 for k in range(len(chars)):
-                    if chars[k] == '(':
+                    if chars[k] == "(":
                         level = level + 1
-                    elif chars[k] == ')':
+                    elif chars[k] == ")":
                         level = level - 1
-                    elif chars[k] == '\n':
+                    elif chars[k] == "\n":
                         found = False
-                    elif k + 4 < len(chars) and chars[k:k + 4] == "case":
+                    elif k + 4 < len(chars) and chars[k : k + 4] == "case":
                         level = level + 1
-                    elif k + 8 < len(chars) and chars[k:k + 8] == "end case":
+                    elif k + 8 < len(chars) and chars[k : k + 8] == "end case":
                         level = level - 1
-                    elif (level == lr and
-                          k + 2 < len(chars) and
-                          chars[k:k + 2] == "=>" and
-                          not found):
-                        chars = chars[:k] + "@>" + chars[k + 2:]
+                    elif (
+                        level == lr
+                        and k + 2 < len(chars)
+                        and chars[k : k + 2] == "=>"
+                        and not found
+                    ):
+                        chars = chars[:k] + "@>" + chars[k + 2 :]
                         found = True
                 buffer.delete(top, bottom)
                 buffer.insert(top, chars)
@@ -445,52 +469,61 @@ def align_arrows():
         GPS.Console().write(str(sys.exc_info()) + "\n")
 
 
-@interactive("Ada", in_rw_ada_file,
-             contextual="Align/Assignment symbols",
-             contextual_group=GPS.Contextual.Group.EDITING,
-             name="Align assignments")
+@interactive(
+    "Ada",
+    in_rw_ada_file,
+    contextual="Align/Assignment symbols",
+    contextual_group=GPS.Contextual.Group.EDITING,
+    name="Align assignments",
+)
 def align_assignments():
     """Aligns Ada assignment symbol ':=' in current selection"""
     buffer_align_on(sep=":=", replace_with=" := ")
 
 
-@interactive("Ada", in_rw_ada_file,
-             contextual="Align/Formal parameters",
-             contextual_group=GPS.Contextual.Group.EDITING,
-             name="Align formal parameters", for_learning=True)
+@interactive(
+    "Ada",
+    in_rw_ada_file,
+    contextual="Align/Formal parameters",
+    contextual_group=GPS.Contextual.Group.EDITING,
+    name="Align formal parameters",
+    for_learning=True,
+)
 def align_formal_params():
     """
     Aligns the colons, modes, and formal types in parameter specifications
     """
     # The regexp needs the three nested groups, since we want \\1 to always
     # returns at least the empty string
-    buffer_align_on(sep=":\s*(((in\s+out|out|in|access) )?)",
-                    replace_with=" : \\1")
+    buffer_align_on(sep=":\s*(((in\s+out|out|in|access) )?)", replace_with=" : \\1")
 
 
-@interactive(category="Ada",
-             filter=in_rw_ada_file,
-             contextual="Align/Record representation clause",
-             contextual_group=GPS.Contextual.Group.EDITING,
-             name="Align record representation clause")
+@interactive(
+    category="Ada",
+    filter=in_rw_ada_file,
+    contextual="Align/Record representation clause",
+    contextual_group=GPS.Contextual.Group.EDITING,
+    name="Align record representation clause",
+)
 def align_record_rep_clause():
     """Aligns the various parts of a record representation clause"""
     buffer_align_on(sep=" at ")
     buffer_align_on(sep=" range ")
 
 
-@interactive(category="Ada",
-             filter=in_rw_ada_file,
-             contextual="Align/End of line comments",
-             contextual_group=GPS.Contextual.Group.EDITING,
-             name="Align end of line comments")
+@interactive(
+    category="Ada",
+    filter=in_rw_ada_file,
+    contextual="Align/End of line comments",
+    contextual_group=GPS.Contextual.Group.EDITING,
+    name="Align end of line comments",
+)
 def align_end_of_line_comments():
     """Align end of line comments"""
     buffer = GPS.EditorBuffer.get()
     lang = buffer.file().language().lower()
-    if lang in ('ada', 'project file'):
-        buffer_align_on(sep="\s*[^\s]+\s*( --\s*)",
-                        replace_with=" --  ", sep_group=1)
+    if lang in ("ada", "project file"):
+        buffer_align_on(sep="\s*[^\s]+\s*( --\s*)", replace_with=" --  ", sep_group=1)
     else:
         buffer_align_on(sep=" //\s*", replace_with=" // ")
         buffer_align_on(sep=" #\s*", replace_with=" # ")

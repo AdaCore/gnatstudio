@@ -11,9 +11,11 @@ def run_test():
     buf = GPS.EditorBuffer.get(GPS.File("main.adb"))
     GPS.execute_action("copy_base_file_name")
     clipboard_contents = GPS.Clipboard().contents()
-    gps_assert(clipboard_contents[GPS.Clipboard().current()],
-               "main.adb",
-               "copy_base_file_name not working on focused editors")
+    gps_assert(
+        clipboard_contents[GPS.Clipboard().current()],
+        "main.adb",
+        "copy_base_file_name not working on focused editors",
+    )
 
     # Close the editor and select main.adb in the Project view
     # and check that 'copy_file_name' works
@@ -24,15 +26,19 @@ def run_test():
     select_in_tree(explorer, column=1, key="main.adb")
     GPS.execute_action("copy_file_name")
     clipboard_contents = GPS.Clipboard().contents()
-    gps_assert(clipboard_contents[GPS.Clipboard().current()],
-               GPS.File(os.path.join(GPS.pwd(), "main.adb")).path,
-               "copy_file_name not working on files in the Project view")
+    gps_assert(
+        clipboard_contents[GPS.Clipboard().current()],
+        GPS.File(os.path.join(GPS.pwd(), "main.adb")).path,
+        "copy_file_name not working on files in the Project view",
+    )
 
     # Check that 'copy_file_name' works on directories from the
     # Project view
     select_in_tree(explorer, column=1, key=".")
     GPS.execute_action("copy_file_name")
     clipboard_contents = GPS.Clipboard().contents()
-    gps_assert(clipboard_contents[GPS.Clipboard().current()],
-               GPS.File(os.path.join(GPS.pwd())).path,
-               "copy_file_name not working on dirs in the Project view")
+    gps_assert(
+        clipboard_contents[GPS.Clipboard().current()],
+        GPS.File(os.path.join(GPS.pwd())).path,
+        "copy_file_name not working on dirs in the Project view",
+    )

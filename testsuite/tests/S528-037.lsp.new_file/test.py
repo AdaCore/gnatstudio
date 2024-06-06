@@ -1,5 +1,4 @@
-from gs_utils.internal.utils import \
-    run_test_driver, gps_assert, hook, wait_tasks
+from gs_utils.internal.utils import run_test_driver, gps_assert, hook, wait_tasks
 from workflows.promises import known_tasks
 
 
@@ -29,11 +28,16 @@ def driver():
         yield wait_tasks(other_than=known_tasks)
 
     GPS.execute_action("goto declaration")
-    yield hook('language_server_response_processed')
+    yield hook("language_server_response_processed")
 
     # Check that "Foo" is selected at line 2
-    gps_assert(b.get_cursors()[0].location().line(), 2,
-               "Wrong line selected after goto declaration")
-    gps_assert(b.get_chars(b.selection_start(), b.selection_end()),
-               "Foo ",
-               "'Foo' wasn't selected after the call to goto declaration")
+    gps_assert(
+        b.get_cursors()[0].location().line(),
+        2,
+        "Wrong line selected after goto declaration",
+    )
+    gps_assert(
+        b.get_chars(b.selection_start(), b.selection_end()),
+        "Foo ",
+        "'Foo' wasn't selected after the call to goto declaration",
+    )

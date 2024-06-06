@@ -10,7 +10,7 @@ def test_driver():
     buf = GPS.EditorBuffer.get(GPS.File("main.adb"))
 
     GPS.execute_action("Build & Debug Number 1")
-    yield hook('debugger_started')
+    yield hook("debugger_started")
     yield wait_idle()
 
     # Run the debugger
@@ -23,13 +23,13 @@ def test_driver():
     view = Breakpoints_View()
     ed = view.create()
     yield ed.open_and_yield()
-    ed.filename.set_text('main.adb')
-    ed.line.set_text('5')
+    ed.filename.set_text("main.adb")
+    ed.line.set_text("5")
     yield ed.ok()
     yield wait_until_not_busy(debug)
 
     debug.send("run")
-    yield wait_DAP_server('stackTrace')
+    yield wait_DAP_server("stackTrace")
 
     # check that we set the cursor on the breakpoint line
     # which means that we stopped on the breakpoint

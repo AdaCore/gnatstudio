@@ -18,9 +18,9 @@ class Styles(object):
     """
 
     def __init__(self):
-        self.styles = dict()   # user styles, indexed by id
+        self.styles = dict()  # user styles, indexed by id
         self.default_styles = dict()  # default styles, indexed by item type
-        self.default_props = None   # default style props, by item type
+        self.default_props = None  # default style props, by item type
 
         self.default_item_props = None  # default item properties
 
@@ -45,19 +45,12 @@ class Styles(object):
         """
 
         self.default_props = dict(
-            text=dict(
-                stroke='',
-                fontName='arial 10'),
-            rect=dict(
-                fill='white',
-                stroke='black'),
-            polyline=dict(
-                stroke='black'),
-            hr=dict(
-                stroke='black',
-                fontName='arial 7'),
-            link=dict(
-                stroke='black'))
+            text=dict(stroke="", fontName="arial 10"),
+            rect=dict(fill="white", stroke="black"),
+            polyline=dict(stroke="black"),
+            hr=dict(stroke="black", fontName="arial 7"),
+            link=dict(stroke="black"),
+        )
 
     def parse(self, json, itemType, id=None):
         """
@@ -83,7 +76,7 @@ class Styles(object):
         if isinstance(json, str):
             return self.styles[json]
 
-        if id and id.startswith('__default_props_'):
+        if id and id.startswith("__default_props_"):
             id = id[16:]
             self.default_item_props[id] = json
             return
@@ -91,17 +84,42 @@ class Styles(object):
         default = self.default_props.get(itemType)
 
         props = {}
-        for key in ("stroke", "fill", "lineWidth", "dashes", "sloppy",
-                    "fontName", "fontUnderline", "fontStrike", "fontColor",
-                    "fontLineSpacing", "fontHalign", "arrowFrom",
-                    "arrowFromLength", "arrowFromAngle", "arrowFromStroke",
-                    "arrowFromFill", "arrowFromWidth", "arrowTo",
-                    "arrowToLength", "arrowToAngle", "arrowToStroke",
-                    "arrowToFill", "arrowToWidth", "symbolFrom",
-                    "symbolFromStroke", "symbolFromDist", "symbolFromWidth",
-                    "symbolTo", "symbolToStroke", "symbolToDist",
-                    "symbolToWidth", "shadowColor", "shadowOffsetY",
-                    "shadowOffsetY"):
+        for key in (
+            "stroke",
+            "fill",
+            "lineWidth",
+            "dashes",
+            "sloppy",
+            "fontName",
+            "fontUnderline",
+            "fontStrike",
+            "fontColor",
+            "fontLineSpacing",
+            "fontHalign",
+            "arrowFrom",
+            "arrowFromLength",
+            "arrowFromAngle",
+            "arrowFromStroke",
+            "arrowFromFill",
+            "arrowFromWidth",
+            "arrowTo",
+            "arrowToLength",
+            "arrowToAngle",
+            "arrowToStroke",
+            "arrowToFill",
+            "arrowToWidth",
+            "symbolFrom",
+            "symbolFromStroke",
+            "symbolFromDist",
+            "symbolFromWidth",
+            "symbolTo",
+            "symbolToStroke",
+            "symbolToDist",
+            "symbolToWidth",
+            "shadowColor",
+            "shadowOffsetY",
+            "shadowOffsetY",
+        ):
             if key in json:
                 # JSON 'null' gives a Python None, but we still want to use
                 # the non-default value for the parameter in this case
@@ -112,7 +130,7 @@ class Styles(object):
             elif default and key in default:
                 props[key] = default[key]
 
-        if itemType is None and id and id.startswith('__default_style_'):
+        if itemType is None and id and id.startswith("__default_style_"):
             # were we overriding the default props
             id = id[16:]
             self.default_props[id] = props
@@ -127,7 +145,7 @@ class Styles(object):
         return s
 
 
-class JSON_Diagram_File():
+class JSON_Diagram_File:
     """
     A JSON file that contains the definition of multiple diagrams.
     """
@@ -214,7 +232,7 @@ class JSON_Diagram_File():
         if style is None:
             item.style = item._standard_style
         else:
-            item.style = self.styles.parse(style, 'link')
+            item.style = self.styles.parse(style, "link")
 
     def __load(self, data):
         """
@@ -227,22 +245,21 @@ class JSON_Diagram_File():
             try:
                 data = json.loads(data)
             except ValueError as e:
-                GPS.Console().write("Error when parsing JSON: %s\n" % (
-                    e, ))
+                GPS.Console().write("Error when parsing JSON: %s\n" % (e,))
                 return
         if self.load_styles:
-            for id, s in data.get('styles', {}).items():
+            for id, s in data.get("styles", {}).items():
                 self.styles.parse(s, None, id=id)
 
-        for id, t in data.get('templates', {}).items():
+        for id, t in data.get("templates", {}).items():
             self.templates[id] = t
 
-        for d in data.get('diagrams', []):
+        for d in data.get("diagrams", []):
             # ??? should build diagrams only when they are displayed
-            self.index.append((d.get('id'), d.get('children', [])))
+            self.index.append((d.get("id"), d.get("children", [])))
 
             if self.factory is None:
-                diag = JSON_Diagram(file=self, json=d)   # A new diagram
+                diag = JSON_Diagram(file=self, json=d)  # A new diagram
             else:
                 diag = self.factory(file=self, json=d)
 
@@ -266,7 +283,7 @@ class JSON_Diagram(B.Diagram):
         self.__file = file
         self.__json = json
         self.__items = {}  # id -> item
-        self.id = json.get('id', None)
+        self.id = json.get("id", None)
         super(JSON_Diagram, self).__init__()
 
     def get_item(self, id):
@@ -286,11 +303,11 @@ class JSON_Diagram(B.Diagram):
         d = self.__json
         self.__json = None
 
-        for o in d.get('items', []):
+        for o in d.get("items", []):
             it = self.__parse_item(o)
             self.add(it)
 
-        for link in d.get('links', []):
+        for link in d.get("links", []):
             browserlink = self.__parse_link(link)
             self.add(browserlink)
 
@@ -316,63 +333,61 @@ class JSON_Diagram(B.Diagram):
         """
 
         # Expand templates first, in case the type is defined there
-        if 'template' in json:
-            JSON_Diagram.merge_template(
-                json, self.__file.templates[json['template']])
-            del json['template']
+        if "template" in json:
+            JSON_Diagram.merge_template(json, self.__file.templates[json["template"]])
+            del json["template"]
 
-        f = json.get('from')
-        fitem = self.__items.get(f.get('ref'))
+        f = json.get("from")
+        fitem = self.__items.get(f.get("ref"))
         if not fitem:
-            GPS.Console().write(
-                "Object not found ('%s')\n" % f.get('ref'))
+            GPS.Console().write("Object not found ('%s')\n" % f.get("ref"))
             return None
 
-        t = json.get('to')
-        titem = self.__items.get(t.get('ref'))
+        t = json.get("to")
+        titem = self.__items.get(t.get("ref"))
         if not titem:
-            GPS.Console().write(
-                "Object not found ('%s')\n" % t.get('ref'))
+            GPS.Console().write("Object not found ('%s')\n" % t.get("ref"))
             return None
 
         label = None
-        if json.get('label'):
-            label = self.__parse_item(json.get('label'))
+        if json.get("label"):
+            label = self.__parse_item(json.get("label"))
 
         fromLabel = None
-        if f.get('label'):
-            fromLabel = self.__parse_item(f.get('label'))
+        if f.get("label"):
+            fromLabel = self.__parse_item(f.get("label"))
 
         toLabel = None
-        if t.get('label'):
-            toLabel = self.__parse_item(t.get('label'))
+        if t.get("label"):
+            toLabel = self.__parse_item(t.get("label"))
 
         browserlink = B.Link(
             origin=fitem,
             to=titem,
-            style=self.__file.styles.parse(json.get('style'), 'link'),
-            routing=json.get('route'),
+            style=self.__file.styles.parse(json.get("style"), "link"),
+            routing=json.get("route"),
             label=label,
-            fromX=f.get('anchorx'),
-            fromY=f.get('anchory'),
+            fromX=f.get("anchorx"),
+            fromY=f.get("anchory"),
             fromSide=f.get("side", B.Link.Side.AUTO),
             fromLabel=fromLabel,
-            toX=t.get('anchorx'),
-            toY=t.get('anchory'),
+            toX=t.get("anchorx"),
+            toY=t.get("anchory"),
             toLabel=toLabel,
-            toSide=f.get("side", B.Link.Side.AUTO))
+            toSide=f.get("side", B.Link.Side.AUTO),
+        )
 
         self.__parse_id(browserlink, json)
-        browserlink.data = json.get('data', {})
+        browserlink.data = json.get("data", {})
 
-        w = json.get('waypoints')
+        w = json.get("waypoints")
         if w:
             if isinstance(w, list):
-                browserlink.set_waypoints(
-                    json['waypoints'], relative=False)
+                browserlink.set_waypoints(json["waypoints"], relative=False)
             else:
                 browserlink.set_waypoints(
-                    w['points'], relative=w.get('relative', False))
+                    w["points"], relative=w.get("relative", False)
+                )
 
         return browserlink
 
@@ -384,87 +399,87 @@ class JSON_Diagram(B.Diagram):
         """
 
         # Expand templates first, in case the type is defined there
-        if 'template' in json:
-            JSON_Diagram.merge_template(
-                json, self.__file.templates[json['template']])
-            del json['template']
+        if "template" in json:
+            JSON_Diagram.merge_template(json, self.__file.templates[json["template"]])
+            del json["template"]
 
-        t = json.get('type', None)
+        t = json.get("type", None)
         if t is None:
-            if json.get('text') is not None:
-                t = 'text'
-            elif json.get('points') is not None:
-                t = 'polyline'
+            if json.get("text") is not None:
+                t = "text"
+            elif json.get("points") is not None:
+                t = "polyline"
             else:
-                t = 'rect'
-            json['type'] = t
+                t = "rect"
+            json["type"] = t
 
-        st = self.__file.styles.parse(json.get('style'), t)
+        st = self.__file.styles.parse(json.get("style"), t)
         it_default = self.__file.styles.default_item_props.get(t, {})
 
-        if t == 'text':
+        if t == "text":
             it = B.TextItem(
                 style=st,
-                text=json.get('text', it_default.get('text', '')),
-                directed=json.get('directed'))
-        elif t == 'hr':
-            it = B.HrItem(
-                style=st,
-                text=json.get('text', it_default.get('text', '')))
-        elif t == 'polyline':
+                text=json.get("text", it_default.get("text", "")),
+                directed=json.get("directed"),
+            )
+        elif t == "hr":
+            it = B.HrItem(style=st, text=json.get("text", it_default.get("text", "")))
+        elif t == "polyline":
             it = B.PolylineItem(
                 style=st,
-                points=json.get('points', []),
-                relative=json.get('relative', False),
-                close=json.get('close', it_default.get('close', False)))
-        elif t == 'ellipse':
+                points=json.get("points", []),
+                relative=json.get("relative", False),
+                close=json.get("close", it_default.get("close", False)),
+            )
+        elif t == "ellipse":
             it = B.EllipseItem(style=st)
         else:
             it = B.RectItem(
-                style=st,
-                radius=json.get('radius', it_default.get('radius', 0)))
+                style=st, radius=json.get("radius", it_default.get("radius", 0))
+            )
 
-        if json.get('hbox') is not None:
+        if json.get("hbox") is not None:
             it.set_child_layout(B.Item.Layout.HORIZONTAL)
 
         self.__parse_id(it, json)
-        it.data = json.get('data', {})
+        it.data = json.get("data", {})
 
-        for o in json.get('vbox') or json.get('hbox') or []:
+        for o in json.get("vbox") or json.get("hbox") or []:
             it2 = self.__parse_item(o)
-            it2_default = self.__file.styles.default_item_props.get(
-                o['type'], {})
+            it2_default = self.__file.styles.default_item_props.get(o["type"], {})
 
-            margin = o.get('margin', it2_default.get('margin'))
-            if (margin is not None and
-                (isinstance(margin, float) or
-                 isinstance(margin, int))):
-
+            margin = o.get("margin", it2_default.get("margin"))
+            if margin is not None and (
+                isinstance(margin, float) or isinstance(margin, int)
+            ):
                 margin = [margin, margin, margin, margin]
 
-            it.add(it2,
-                   margin=margin,
-                   align=o.get('align', it2_default.get('align')),
-                   float=o.get('float'),
-                   overflow=o.get('overflow', it2_default.get('overflow')))
+            it.add(
+                it2,
+                margin=margin,
+                align=o.get("align", it2_default.get("align")),
+                float=o.get("float"),
+                overflow=o.get("overflow", it2_default.get("overflow")),
+            )
 
-        w = json.get('width', it_default.get('width', B.Item.Size.FIT))
-        h = json.get('height', it_default.get('height', B.Item.Size.FIT))
+        w = json.get("width", it_default.get("width", B.Item.Size.FIT))
+        h = json.get("height", it_default.get("height", B.Item.Size.FIT))
         it.set_size(w, h)
 
-        w = json.get('minWidth', it_default.get('minWidth', None))
+        w = json.get("minWidth", it_default.get("minWidth", None))
         if w is not None:
             it.set_width_range(min=w)
 
-        h = json.get('minHeight', it_default.get('minHeight', None))
+        h = json.get("minHeight", it_default.get("minHeight", None))
         if h is not None:
             it.set_height_range(min=h)
 
         it.set_position(
-            x=json.get('x'),
-            y=json.get('y'),
-            anchorx=json.get('anchorx', 0),
-            anchory=json.get('anchory', 0))
+            x=json.get("x"),
+            y=json.get("y"),
+            anchorx=json.get("anchorx", 0),
+            anchory=json.get("anchory", 0),
+        )
 
         return it
 
@@ -474,7 +489,7 @@ class JSON_Diagram(B.Diagram):
         :param GPS.Browser.Item item: the link or item created from json
         :param json: the JSON data
         """
-        id = json.get('id')
+        id = json.get("id")
         if id is not None:
             item.id = id
             self.__items[id] = item
@@ -533,7 +548,6 @@ class Link:
 
 @extensions.extend_module(GPS.Browsers)
 class Diagram:
-
     @staticmethod
     def load_json(file, diagramFactory=None, load_styles=None):
         """
@@ -549,10 +563,12 @@ class Diagram:
                 file = open(file)
 
             return GPS.Browsers.Diagram.load_json_data(
-                json.load(file), diagramFactory, load_styles)
+                json.load(file), diagramFactory, load_styles
+            )
         except Exception as e:
-            GPS.Console().write("Unexpected exception %s\n%s\n" % (
-                e, traceback.format_exc()))
+            GPS.Console().write(
+                "Unexpected exception %s\n%s\n" % (e, traceback.format_exc())
+            )
 
     @staticmethod
     def load_json_data(data, diagramFactory=None, load_styles=None):

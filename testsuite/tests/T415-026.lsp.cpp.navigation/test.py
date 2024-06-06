@@ -19,14 +19,21 @@ def run_test():
     yield wait_language_server("textDocument/declaration", "C++")
 
     current_buf = GPS.EditorBuffer.get()
-    gps_assert(current_buf.file(), GPS.File('my_class.hh'),
-               "'goto declaration' did not open the right file")
-    gps_assert(current_buf.current_view().cursor().line(),
-               23,
-               "'goto declaration' did not got the right line")
-    gps_assert(current_buf.current_view().cursor().column(),
-               12,
-               "'goto declaration' did not got the right column")
+    gps_assert(
+        current_buf.file(),
+        GPS.File("my_class.hh"),
+        "'goto declaration' did not open the right file",
+    )
+    gps_assert(
+        current_buf.current_view().cursor().line(),
+        23,
+        "'goto declaration' did not got the right line",
+    )
+    gps_assert(
+        current_buf.current_view().cursor().column(),
+        12,
+        "'goto declaration' did not got the right column",
+    )
 
     # goto declaration or body
     buf = GPS.EditorBuffer.get(GPS.File("my_class.hh"))
@@ -36,13 +43,20 @@ def run_test():
     yield wait_language_server("textDocument/definition", "C++")
 
     current_buf = GPS.EditorBuffer.get()
-    gps_assert(current_buf.file(), GPS.File('my_class.cpp'),
-               "'goto declaration or body' did not open the right file")
-    gps_assert(current_buf.current_view().cursor().line(),
-               3,
-               "'goto declaration or body' did not got the right line")
-    gps_assert(current_buf.current_view().cursor().column(),
-               20,
-               "'goto declaration or body' did not got the right column")
+    gps_assert(
+        current_buf.file(),
+        GPS.File("my_class.cpp"),
+        "'goto declaration or body' did not open the right file",
+    )
+    gps_assert(
+        current_buf.current_view().cursor().line(),
+        3,
+        "'goto declaration or body' did not got the right line",
+    )
+    gps_assert(
+        current_buf.current_view().cursor().column(),
+        20,
+        "'goto declaration or body' did not got the right column",
+    )
 
     # goto body is not supported by clangd

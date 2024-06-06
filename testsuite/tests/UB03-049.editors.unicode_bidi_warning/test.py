@@ -23,4 +23,5 @@ def run_test():
     gps_assert(
         "Warning: the file contains bidirectional" in GPS.Console().get_text(),
         True,
-        "A warning for unicode bidirectional characters should be displayed")
+        "A warning for unicode bidirectional characters should be displayed",
+    )

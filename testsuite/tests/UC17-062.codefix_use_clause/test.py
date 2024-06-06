@@ -37,10 +37,7 @@ def driver():
     GPS.BuildTarget("Build All").execute(force=True)
     yield wait_tasks()
 
-    b.click_on_side_column(line=23, column=1,
-                           icon_name="gps-codefix")
-    b.click_on_side_column(line=22, column=1,
-                           icon_name="gps-codefix")
-    b.click_on_side_column(line=18, column=1,
-                           icon_name="gps-codefix")
+    b.click_on_side_column(line=23, column=1, icon_name="gps-codefix")
+    b.click_on_side_column(line=22, column=1, icon_name="gps-codefix")
+    b.click_on_side_column(line=18, column=1, icon_name="gps-codefix")
     gps_assert(b.get_chars(), expected)

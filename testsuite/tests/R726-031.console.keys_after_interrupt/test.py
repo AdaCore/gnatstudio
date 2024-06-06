@@ -1,7 +1,6 @@
 """Test the pressing of Enter in a Run console after interrupting the run"""
 
-from gs_utils.internal.utils import run_test_driver, timeout, \
-    send_key_event, GDK_RETURN
+from gs_utils.internal.utils import run_test_driver, timeout, send_key_event, GDK_RETURN
 import pygps
 import sys
 
@@ -16,8 +15,7 @@ def driver():
     # Wait until the main is running in the output window
     while not window:
         yield timeout(100)
-        window = GPS.MDI.get("Run: hello"
-                             + (".exe" if sys.platform == "win32" else ""))
+        window = GPS.MDI.get("Run: hello" + (".exe" if sys.platform == "win32" else ""))
 
     view = pygps.get_widgets_by_type(Gtk.TextView, window.pywidget())[0]
 

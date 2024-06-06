@@ -23,6 +23,7 @@ package body {name} is
 end {name};
 """
 
+
 def main(nb, base_name, dir_name):
     if dir_name:
         try:
@@ -32,11 +33,12 @@ def main(nb, base_name, dir_name):
     for i in range(nb):
         pack_name = base_name + "_" + str(i)
         path = os.path.join(dir_name, pack_name + ".ads")
-        with open(path, 'w') as f:
+        with open(path, "w") as f:
             f.write(spec.format(name=pack_name))
         path = os.path.join(dir_name, pack_name + ".adb")
-        with open(path, 'w') as f:
+        with open(path, "w") as f:
             f.write(body.format(name=pack_name))
+
 
 try:
     nb = int(sys.argv[1])

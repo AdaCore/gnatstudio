@@ -25,7 +25,7 @@ def test_driver():
     GPS.execute_action("debug set line breakpoint")
 
     GPS.execute_action("Build & Debug Number 1")
-    yield hook('debugger_started')
+    yield hook("debugger_started")
     yield wait_idle()
 
     debug = GPS.Debugger.get()
@@ -47,22 +47,28 @@ def test_driver():
     view = GPS.MDI.get("Debugger Tasks")
     tree = get_widgets_by_type(Gtk.TreeView, view.pywidget())[0]
     model = tree.get_model()
-    gps_assert(prepare_output(dump_tree_model(model, NUMBER_COLUMN)),
-               ["1", "2", "* 3"],
-               "Wrong task when stopping")
+    gps_assert(
+        prepare_output(dump_tree_model(model, NUMBER_COLUMN)),
+        ["1", "2", "* 3"],
+        "Wrong task when stopping",
+    )
     yield wait_idle()
 
     click_in_tree(tree, "1")
     yield wait_idle()
     yield wait_until_not_busy(debug)
-    gps_assert(prepare_output(dump_tree_model(model, NUMBER_COLUMN)),
-               ["1", "* 2", "3"],
-               "Wrong task after clicking on the row")
+    gps_assert(
+        prepare_output(dump_tree_model(model, NUMBER_COLUMN)),
+        ["1", "* 2", "3"],
+        "Wrong task after clicking on the row",
+    )
 
     # Swap the active Notebook => it should not change the current Task
     GPS.MDI.get("Call Stack").raise_window()
     GPS.MDI.get("Debugger Tasks").raise_window()
     yield wait_idle()
-    gps_assert(prepare_output(dump_tree_model(model, NUMBER_COLUMN)),
-               ["1", "* 2", "3"],
-               "Wrong task after grabing the focus")
+    gps_assert(
+        prepare_output(dump_tree_model(model, NUMBER_COLUMN)),
+        ["1", "* 2", "3"],
+        "Wrong task after grabing the focus",
+    )

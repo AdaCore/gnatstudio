@@ -16,6 +16,7 @@ def create_breakpoint_at_location(file, line):
     yield wait_idle()
     GPS.execute_action("debug set line breakpoint")
 
+
 @run_test_driver
 def test_driver():
     # Create 3 SLOC breakpoints before launching the debugger

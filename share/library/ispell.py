@@ -39,10 +39,14 @@ It also shows how to get the word under the cursor in GPS.
 ###########################################################################
 
 import os_utils
-from text_utils import goto_word_start, goto_word_end, BlockIterator, \
-    with_save_excursion
+from text_utils import (
+    goto_word_start,
+    goto_word_end,
+    BlockIterator,
+    with_save_excursion,
+)
 import GPS
-import modules   # from GPS
+import modules  # from GPS
 from gs_utils import make_interactive
 
 
@@ -73,7 +77,6 @@ def find_current_word(context):
 
 
 class Spell_Check_Module(modules.Module):
-
     def setup(self):
         """Initialize the module"""
         self.pref_cmd = GPS.Preference("Plugins/ispell/cmd")
@@ -84,7 +87,8 @@ class Spell_Check_Module(modules.Module):
 This command should return a list of words that could replace the current
 one. Recommended values are "aspell" or "ispell". Input to this command
 is sent to its stdin.""",
-            "aspell -a --lang=en")
+            "aspell -a --lang=en",
+        )
 
         self.pref_bgcolor = GPS.Preference("Command-Windows-Background-Color")
 
@@ -96,36 +100,44 @@ is sent to its stdin.""",
 - "dynamic" only shows the possible replacements for the current word.
 - "static" displays a single entry that spawns the spell checked for the
   current word.""",
-            0, "static", "dynamic", "none")
+            0,
+            "static",
+            "dynamic",
+            "none",
+        )
 
-        self.ispell = None          # The ispell process
+        self.ispell = None  # The ispell process
         self.ispell_command = None  # The command used to start ispell
-        self.static = None          # context menu
-        self.dynamic = None         # context menu
+        self.static = None  # context menu
+        self.dynamic = None  # context menu
         self.personal_dict_modified = False
-        self.window = None          # The command window for user interaction
-        self.local_dict = set()     # Temporary saves user overrides
+        self.window = None  # The command window for user interaction
+        self.local_dict = set()  # Temporary saves user overrides
 
         make_interactive(
             callback=self.spell_check_comments,
-            name='spell check comments',
-            filter='Source editor',
-            category='Editor')
+            name="spell check comments",
+            filter="Source editor",
+            category="Editor",
+        )
         make_interactive(
             callback=self.spell_check_editor,
-            name='spell check editor',
-            filter='Source editor',
-            category='Editor')
+            name="spell check editor",
+            filter="Source editor",
+            category="Editor",
+        )
         make_interactive(
             callback=self.spell_check_selection,
-            name='spell check selection',
-            filter='Source editor',
-            category='Editor')
+            name="spell check selection",
+            filter="Source editor",
+            category="Editor",
+        )
         make_interactive(
             callback=self.spell_check_word,
-            name='spell check word',
+            name="spell check word",
             filter=self._filter_has_word,
-            category='Editor')
+            category="Editor",
+        )
 
         self.preferences_changed()
 
@@ -138,7 +150,7 @@ is sent to its stdin.""",
         """
         Whether ispell is available, and the cursor on a word
         """
-        if context.module_name == 'Source_Editor' and context.entity_name():
+        if context.module_name == "Source_Editor" and context.entity_name():
             find_current_word(context)
             return context.ispell_module_word != ""
         else:
@@ -146,19 +158,19 @@ is sent to its stdin.""",
 
     def spell_check_comments(self):
         """Check the spelling for all comments in the current editor"""
-        self.start_window(category='comment')
+        self.start_window(category="comment")
 
     def spell_check_editor(self):
         """Check the spelling for the whole contents of the editor"""
-        self.start_window(category='')
+        self.start_window(category="")
 
     def spell_check_selection(self):
         """Check the spelling in the current selection"""
-        self.start_window(category='selection')
+        self.start_window(category="selection")
 
     def spell_check_word(self):
         """Check the spelling in the current word"""
-        self.start_window(category='word')
+        self.start_window(category="word")
 
     def preferences_changed(self):
         """Called when the preferences are changed"""
@@ -167,23 +179,23 @@ is sent to its stdin.""",
 
         if self.ispell_command != cmd:
             if self.ispell:
-                GPS.Logger('ISPELL').log('command changed, restart process')
+                GPS.Logger("ISPELL").log("command changed, restart process")
                 self.kill()
 
-            self.ispell_command = ''
+            self.ispell_command = ""
             if os_utils.locate_exec_on_path(cmd.split()[0]):
-                GPS.Logger('ISPELL').log('initialize ispell module: %s' % cmd)
+                GPS.Logger("ISPELL").log("initialize ispell module: %s" % cmd)
                 self.ispell_command = cmd
 
-        if self.ispell_command and self.pref_type.get() == 'static':
-            GPS.Logger("ISPELL").log('Activate static contextual menu')
+        if self.ispell_command and self.pref_type.get() == "static":
+            GPS.Logger("ISPELL").log("Activate static contextual menu")
             if self.dynamic:
                 self.dynamic.hide()
             Static_Contextual(ispell=self)
 
-        elif self.ispell_command and self.pref_type.get() == 'dynamic':
+        elif self.ispell_command and self.pref_type.get() == "dynamic":
             GPS.Logger("ISPELL").log("Activate dynamic contextual menu")
-            GPS.Contextual('spell check word').hide()  # disable static menu
+            GPS.Contextual("spell check word").hide()  # disable static menu
             if not self.dynamic:
                 self.dynamic = Dynamic_Contextual(ispell=self)
             else:
@@ -197,7 +209,8 @@ is sent to its stdin.""",
         """Save the user's personal dictionary if modified"""
         if self.personal_dict_modified and self.ispell:
             if GPS.MDI.yes_no_dialog(
-                    "Spell-checking personal dictionary modified. Save ?"):
+                "Spell-checking personal dictionary modified. Save ?"
+            ):
                 self.ispell.send("#")
 
                 # Make sure the dict is saved: since ispell doesn't show any
@@ -231,15 +244,15 @@ is sent to its stdin.""",
                 self.ispell = GPS.Process(
                     self.ispell_command,
                     before_kill=self._before_killing_ispell,
-                    task_manager=False)
+                    task_manager=False,
+                )
                 self.ispell.expect("^.*\\n", timeout=2000)
             except Exception:
-                GPS.Console().write(
-                    "Could not start external command: %s\n" % self.cmd)
+                GPS.Console().write("Could not start external command: %s\n" % self.cmd)
 
     def kill(self):
         """Kill ispell if it is running.
-           Always reset self.ispell to None.
+        Always reset self.ispell to None.
         """
         if self.ispell:
             # Will run _before_killing_ispell and save dict
@@ -291,7 +304,7 @@ is sent to its stdin.""",
                     # the beginning of words that might be interpreted by
                     # aspell.
 
-                    self.ispell.send(" %s" % (line, ))
+                    self.ispell.send(" %s" % (line,))
 
                     # output of aspell ends with an empty line, but includes
                     # multiple blank lines
@@ -307,7 +320,7 @@ is sent to its stdin.""",
                     raise StopIteration
 
                 for proposal in result.splitlines():
-                    if proposal and proposal[0] == '&':
+                    if proposal and proposal[0] == "&":
                         colon = proposal.find(":")
                         meta = proposal[:colon].split()
 
@@ -322,16 +335,15 @@ is sent to its stdin.""",
                             e_mark = (e + 1).create_mark()
 
                             self.current = (
-                                meta[1],   # mispelled
+                                meta[1],  # mispelled
                                 s,
                                 e,
-                                proposal[colon + 2:].replace(' ', '')
-                                .split(','))
+                                proposal[colon + 2 :].replace(" ", "").split(","),
+                            )
                             yield self.current
 
                             # Take into account changes in the length of words
-                            offset_adjust += (e_mark.location().offset() -
-                                              e_off - 1)
+                            offset_adjust += e_mark.location().offset() - e_off - 1
 
                 start = next_line.location()
 
@@ -348,7 +360,7 @@ is sent to its stdin.""",
         user. The processing is asynchronous.
         """
 
-        self.replace_mode = False   # User is typing his own replacement
+        self.replace_mode = False  # User is typing his own replacement
         self.mispellings = self.generate_fix(category)  # init generator
         self._next_with_error_or_destroy()
 
@@ -383,7 +395,7 @@ is sent to its stdin.""",
                 if index <= 9:
                     key = "%s" % index
                 else:
-                    key = chr(ord('a') + index - 10)
+                    key = chr(ord("a") + index - 10)
 
                 suggest += "[%s]%s " % (key, p)
 
@@ -392,7 +404,8 @@ is sent to its stdin.""",
                 on_key=self._on_key,
                 on_activate=self._on_activate,
                 on_cancel=self._on_cancel,
-                close_on_activate=False)
+                close_on_activate=False,
+            )
             self.window.set_background(self.pref_bgcolor.get())
 
         self.replace_mode = False
@@ -441,7 +454,7 @@ is sent to its stdin.""",
             self._next_with_error_or_destroy()
         elif key.islower():
             try:
-                self.replace(self.current[3][ord(key) - ord('a') + 10])
+                self.replace(self.current[3][ord(key) - ord("a") + 10])
                 self._next_with_error_or_destroy()
             except IndexError:
                 pass
@@ -450,28 +463,25 @@ is sent to its stdin.""",
 
 
 class Static_Contextual(object):
-
     def __init__(self, ispell):
         """Create a new static contextual menu for spell checking"""
-        GPS.Action('spell check word').contextual(
-            self._label, group=GPS.Contextual.Group.EDITING)
+        GPS.Action("spell check word").contextual(
+            self._label, group=GPS.Contextual.Group.EDITING
+        )
 
     def _label(self, context):
         """Return the label to use for the contextual menu entry"""
-        return "Spell Check %s" % (context.ispell_module_word, )
+        return "Spell Check %s" % (context.ispell_module_word,)
 
 
 class Dynamic_Contextual(GPS.Contextual):
-
     def __init__(self, ispell):
         """Create a new dynamic contextual menu for spell checking"""
-        GPS.Contextual.__init__(self, "Spell Check",
-                                group=GPS.Contextual.Group.EDITING)
+        GPS.Contextual.__init__(self, "Spell Check", group=GPS.Contextual.Group.EDITING)
         self.ispell = ispell
         self.create_dynamic(
-            on_activate=self._on_activate,
-            filter=self._filter,
-            factory=self._factory)
+            on_activate=self._on_activate, filter=self._filter, factory=self._factory
+        )
 
     def _filter(self, context):
         """Decide whether the contextual menu should be made visible"""
@@ -487,7 +497,7 @@ class Dynamic_Contextual(GPS.Contextual):
         entry in the dynamic contextual menu.
         """
         try:
-            current = next(self.ispell.generate_fix('word'))
+            current = next(self.ispell.generate_fix("word"))
         except StopIteration:
             return []
 

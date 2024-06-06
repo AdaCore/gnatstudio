@@ -14,16 +14,18 @@ def add_bookmark():
     if isinstance(context, GPS.FileContext):
         name = GPS.MDI.input_dialog("Name of bookmark", "Name")
         if name != ():
-            GPS.Locations.add("Bookmarks", context.file(),
-                              GPS.Editor.cursor_get_line(
-                                  context.file().name()),
-                              GPS.Editor.cursor_get_column(
-                                  context.file().name()),
-                              name[0],
-                              "bookmarks")
+            GPS.Locations.add(
+                "Bookmarks",
+                context.file(),
+                GPS.Editor.cursor_get_line(context.file().name()),
+                GPS.Editor.cursor_get_column(context.file().name()),
+                name[0],
+                "bookmarks",
+            )
 
 
-GPS.parse_xml("""
+GPS.parse_xml(
+    """
   <action name="add bookmark" category="General">
      <filter id="Source editor" />
      <description>Add a bookmark for the current line</description>
@@ -34,4 +36,5 @@ GPS.parse_xml("""
      <menu action="add bookmark">
         <Title>Add bookmark</Title>
      </menu>
-  </Submenu>""")
+  </Submenu>"""
+)

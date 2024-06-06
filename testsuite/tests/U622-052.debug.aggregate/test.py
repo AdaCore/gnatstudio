@@ -9,4 +9,4 @@ from gs_utils.internal.utils import *
 def test_driver():
     GPS.execute_action("Build & Debug Number 1")
     # This will freeze if the debugger is not launched
-    yield hook('debugger_started')
+    yield hook("debugger_started")

@@ -7,15 +7,18 @@ import GPS
 
 def set_bg_color(hook_name, file):
     name = file.name()
-    if name[len(name) - 4:] == ".adb":
+    if name[len(name) - 4 :] == ".adb":
         GPS.Editor.set_background_color(
-            file.name(), GPS.Preference("custom-adb-file-color").get())
-    elif name[len(name) - 4:] == ".ads":
+            file.name(), GPS.Preference("custom-adb-file-color").get()
+        )
+    elif name[len(name) - 4 :] == ".ads":
         GPS.Editor.set_background_color(
-            file.name(), GPS.Preference("custom-ads-file-color").get())
+            file.name(), GPS.Preference("custom-ads-file-color").get()
+        )
 
 
-GPS.parse_xml("""
+GPS.parse_xml(
+    """
    <preference name="custom-adb-file-color"
                label="Background color for .adb files"
                page="Editor:Fonts &amp; Colors"
@@ -26,6 +29,7 @@ GPS.parse_xml("""
                page="Editor:Fonts &amp; Colors"
                default="red"
                type="color" />
-""")
+"""
+)
 
 GPS.Hook("file_edited").add(set_bg_color)

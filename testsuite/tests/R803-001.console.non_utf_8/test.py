@@ -4,6 +4,7 @@ from GPS import *
 from gs_utils.internal.utils import *
 import sys
 
+
 @run_test_driver
 def run_test():
     yield execute_action("Build Main Number 1")
@@ -13,6 +14,8 @@ def run_test():
 
     name = "Run: accented" + dot_exe
 
-    gps_assert("Printing àéè" in GPS.Console(name).get_text(),
-               True,
-               "The Latin-1 characters should have been displayed")
+    gps_assert(
+        "Printing àéè" in GPS.Console(name).get_text(),
+        True,
+        "The Latin-1 characters should have been displayed",
+    )

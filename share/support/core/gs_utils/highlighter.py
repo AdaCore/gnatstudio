@@ -9,6 +9,7 @@ import traceback
 
 try:
     from gi.repository import GLib
+
     gobject_available = 1
 except Exception:
     gobject_available = 0
@@ -36,9 +37,19 @@ class OverlayStyle(object):
     :param kwargs: other properties supported by EditorOverlay
     """
 
-    def __init__(self, name, foreground="", background="", weight=None,
-                 slant=None, editable=None, whole_line=False, speedbar=False,
-                 style=None, **kwargs):
+    def __init__(
+        self,
+        name,
+        foreground="",
+        background="",
+        weight=None,
+        slant=None,
+        editable=None,
+        whole_line=False,
+        speedbar=False,
+        style=None,
+        **kwargs
+    ):
         self.name = name
         self.foreground = foreground
         self.background = background
@@ -89,8 +100,7 @@ class OverlayStyle(object):
                     over.set_property("foreground", self.foreground)
                 if self.background:
                     if self.whole_line:
-                        over.set_property(
-                            "paragraph-background", self.background)
+                        over.set_property("paragraph-background", self.background)
                     else:
                         over.set_property("background", self.background)
 
@@ -126,7 +136,8 @@ class OverlayStyle(object):
                 column=start.column(),  # index in python starts at 0
                 text="",
                 show_on_editor_side=True,
-                show_in_locations=False)
+                show_in_locations=False,
+            )
 
             if self.whole_line:
                 msg.set_style(over)
@@ -191,6 +202,7 @@ class Background_Highlighter(object):
 
     :param OverlayStyle style: style to use for highlighting.
     """
+
     # Interval in milliseconds between two batches.
     # This is only used when gobject is not available
     timeout_ms = 40
@@ -205,7 +217,7 @@ class Background_Highlighter(object):
     def __init__(self, style, initial_timeout=None):
         self.__source_id = None  # The gtk source_id used for background
         # or the GPS.Timeout instance
-        self.__buffers = []      # The list of buffers to highlight
+        self.__buffers = []  # The list of buffers to highlight
         self.terminated = False
         self.highlighted = 0
         self.highlighted_limit = 0
@@ -214,20 +226,16 @@ class Background_Highlighter(object):
         self.style = style
         GPS.Hook("before_exit_action_hook").add(self.__before_exit)
         GPS.Hook("file_closed").add(self.__on_file_closed)
-        GPS.Hook("source_lines_folded").add(
-            self.__on_lines_folded_or_unfolded)
-        GPS.Hook("source_lines_unfolded").add(
-            self.__on_lines_folded_or_unfolded)
+        GPS.Hook("source_lines_folded").add(self.__on_lines_folded_or_unfolded)
+        GPS.Hook("source_lines_unfolded").add(self.__on_lines_folded_or_unfolded)
 
     def __del__(self):
         self.__source_id = None  # Don't try to kill the idle, GPS is quitting
         self.stop_highlight()
         GPS.Hook("before_exit_action_hook").remove(self.__before_exit)
         GPS.Hook("file_closed").remove(self.__on_file_closed)
-        GPS.Hook("source_lines_folded").remove(
-            self.__on_lines_folded_or_unfolded)
-        GPS.Hook("source_lines_unfolded").remove(
-            self.__on_lines_folded_or_unfolded)
+        GPS.Hook("source_lines_folded").remove(self.__on_lines_folded_or_unfolded)
+        GPS.Hook("source_lines_unfolded").remove(self.__on_lines_folded_or_unfolded)
 
     def __before_exit(self, hook):
         """
@@ -296,7 +304,8 @@ class Background_Highlighter(object):
             # in case the user has computed data for it (see
             # Location_Highlighter)
             self.__buffers.append(
-                (buffer, line, line + 1, start_line, end_line, True, 0))
+                (buffer, line, line + 1, start_line, end_line, True, 0)
+            )
 
             if self.style and self.style.use_messages():
                 self.style.remove(buffer)
@@ -310,14 +319,12 @@ class Background_Highlighter(object):
                 if gobject_available:
                     if self.initial_timeout:
                         self.__source_id = GLib.timeout_add(
-                            self.initial_timeout,
-                            self.__initial_do_highlight)
+                            self.initial_timeout, self.__initial_do_highlight
+                        )
                     else:
-                        self.__source_id = GLib.idle_add(
-                            self.__do_highlight)
+                        self.__source_id = GLib.idle_add(self.__do_highlight)
                 else:
-                    self.__source_id = GPS.Timeout(
-                        self.timeout_ms, self.__do_highlight)
+                    self.__source_id = GPS.Timeout(self.timeout_ms, self.__do_highlight)
 
                 self.on_start_buffer(buffer)
 
@@ -412,9 +419,15 @@ class Background_Highlighter(object):
             return False
 
         try:
-            (buffer, min_line, max_line,
-             start_line, end_line, backward,
-             self.highlighted) = self.__buffers[0]
+            (
+                buffer,
+                min_line,
+                max_line,
+                start_line,
+                end_line,
+                backward,
+                self.highlighted,
+            ) = self.__buffers[0]
 
             changed = False
 
@@ -459,11 +472,18 @@ class Background_Highlighter(object):
                 except Exception:
                     pass
 
-            if changed and (self.highlighted_limit == 0 or
-                            self.highlighted < self.highlighted_limit):
+            if changed and (
+                self.highlighted_limit == 0 or self.highlighted < self.highlighted_limit
+            ):
                 self.__buffers[0] = (
-                    buffer, min_line, max_line, start_line, end_line,
-                    backward, self.highlighted)
+                    buffer,
+                    min_line,
+                    max_line,
+                    start_line,
+                    end_line,
+                    backward,
+                    self.highlighted,
+                )
             else:
                 self.__buffers.pop(0)
                 if self.__buffers:
@@ -630,8 +650,7 @@ class Location_Highlighter(Background_Highlighter):
                     for c in range(1, self.context + 1):
                         # Search after original xref line (same column)
                         try:
-                            s2 = GPS.EditorLocation(
-                                ed, ref.line() + c, ref.column())
+                            s2 = GPS.EditorLocation(ed, ref.line() + c, ref.column())
                             e2 = s2 + (len(u) - 1)
                             b = ed.get_chars(s2, e2).lower()
                             if b == u:
@@ -640,8 +659,7 @@ class Location_Highlighter(Background_Highlighter):
                                 break
 
                             # Search before original xref line
-                            s2 = GPS.EditorLocation(
-                                ed, ref.line() - c, ref.column())
+                            s2 = GPS.EditorLocation(ed, ref.line() - c, ref.column())
                             e2 = s2 + (len(u) - 1)
                             b = ed.get_chars(s2, e2).lower()
                             if b == u:
@@ -700,13 +718,11 @@ class Regexp_Highlighter(On_The_Fly_Highlighter):
 
     def __init__(self, regexp, style, context_lines=0):
         self.regexp = regexp
-        On_The_Fly_Highlighter.__init__(
-            self, context_lines=context_lines, style=style)
+        On_The_Fly_Highlighter.__init__(self, context_lines=context_lines, style=style)
 
     def process(self, start, end):
         while True:
-            start = start.search(
-                self.regexp, regexp=True, dialog_on_failure=False)
+            start = start.search(self.regexp, regexp=True, dialog_on_failure=False)
             if not start or start[0] > end:
                 return
             self.style.apply(start[0], start[1] - 1)
@@ -731,14 +747,16 @@ class Text_Highlighter(On_The_Fly_Highlighter):
     def __init__(self, text, style, whole_word=False, context_lines=0):
         self.text = text
         self.whole_word = whole_word
-        On_The_Fly_Highlighter.__init__(
-            self, context_lines=context_lines, style=style)
+        On_The_Fly_Highlighter.__init__(self, context_lines=context_lines, style=style)
 
     def process(self, start, end):
         while True:
             start = start.search(
-                self.text, regexp=False, dialog_on_failure=False,
-                whole_word=self.whole_word)
+                self.text,
+                regexp=False,
+                dialog_on_failure=False,
+                whole_word=self.whole_word,
+            )
             if not start or start[0] > end:
                 return
             self.style.apply(start[0], start[1] - 1)

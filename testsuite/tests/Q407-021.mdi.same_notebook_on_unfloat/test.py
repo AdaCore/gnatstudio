@@ -27,11 +27,14 @@ def test_driver():
     # Check that the Bookmarks view has returned to the Learn
     # view's notebook, as it was oiginally placed
 
-    bookmarks_widget = GPS.MDI.get('Bookmarks').pywidget()
+    bookmarks_widget = GPS.MDI.get("Bookmarks").pywidget()
     bookmarks_notebook = bookmarks_widget.get_parent()
 
-    learn_widget = GPS.MDI.get('Learn').pywidget()
+    learn_widget = GPS.MDI.get("Learn").pywidget()
     learn_notebook = learn_widget.get_parent()
 
-    gps_assert(bookmarks_notebook, learn_notebook,
-               "The Bookmarks should return to the Learn view's notebook")
+    gps_assert(
+        bookmarks_notebook,
+        learn_notebook,
+        "The Bookmarks should return to the Learn view's notebook",
+    )

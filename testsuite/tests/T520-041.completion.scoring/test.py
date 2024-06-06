@@ -26,15 +26,18 @@ def run_test():
 
     # Verify that the completion window is there
     yield wait_until_true(
-        lambda: get_widget_by_name("completion-view") != None,
-        timeout=2000)
+        lambda: get_widget_by_name("completion-view") != None, timeout=2000
+    )
     pop_tree = get_widget_by_name("completion-view")
-    gps_assert(pop_tree is not None, True,
-               "The completion window should be open at that point")
+    gps_assert(
+        pop_tree is not None, True, "The completion window should be open at that point"
+    )
 
     # Verify that completion items' order: 'My_Var' should come first,
     # since it's the closest match for 'MyVa'. Then it should be
     # 'My_Varibale' and finally 'My_Second_Var'.
-    gps_assert(dump_tree_model(pop_tree.get_model(), 4),
-               ['My_Var', 'My_Variable', 'My_Second_Var'],
-               "Wrong order for fuzzy completion")
+    gps_assert(
+        dump_tree_model(pop_tree.get_model(), 4),
+        ["My_Var", "My_Variable", "My_Second_Var"],
+        "Wrong order for fuzzy completion",
+    )

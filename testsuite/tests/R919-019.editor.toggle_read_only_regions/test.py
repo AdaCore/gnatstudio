@@ -24,7 +24,7 @@ def test_ro_region(ro_region, allow_edit):
 @run_test_driver
 def driver():
     editor = GPS.EditorBuffer.get(GPS.File("main.adb"))
-    ro_region = editor.at(3,1)
+    ro_region = editor.at(3, 1)
     # Check that no editing allowed
     yield test_ro_region(ro_region, allow_edit=False)
     GPS.execute_action("Toggle read-only regions in an editor")

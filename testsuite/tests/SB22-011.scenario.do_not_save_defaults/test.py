@@ -16,8 +16,9 @@ def driver():
 
     t.execute()
     if "-Xmy_variable" in GPS.Console().get_text():
-        simple_error("-X shouldn't contain 'my_variable' "
-                     "when it has the default value")
+        simple_error(
+            "-X shouldn't contain 'my_variable' " "when it has the default value"
+        )
 
     p.set_scenario_variable("my_variable", "other_value")
 

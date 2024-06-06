@@ -10,28 +10,29 @@ import GPS
 import pygps
 from gs_utils.internal.utils import *
 
+
 # A close confirmation dialog
 class Confirmation(Dialog):
-
     def open_and_yield(self):
-        yield self._open_and_yield('Close current window')
+        yield self._open_and_yield("Close current window")
         self.editor = self.dialogs[0]
 
     def cancel(self):
         if self.editor:
             get_button_from_label("gtk-cancel", self.editor).clicked()
 
+
 # "Save All" confirmation dialog
 class Save_All(Dialog):
-
     def open_and_yield(self):
-        yield self._open_and_yield('save files and projects')
+        yield self._open_and_yield("save files and projects")
         self.editor = self.dialogs[0]
         self.tree = get_widgets_by_type(Gtk.TreeView, self.editor)[0]
 
     def cancel(self):
         if self.editor:
             get_button_from_label("gtk-cancel", self.editor).clicked()
+
 
 @run_test_driver
 def run_test():
@@ -55,6 +56,5 @@ def run_test():
     model = saveall.tree.get_model()
     files = [x[1] for x in model]
     files.sort()
-    gps_assert(files, ['Untitled', 'Untitled (1)'])
+    gps_assert(files, ["Untitled", "Untitled (1)"])
     saveall.cancel()
-

@@ -7,5 +7,4 @@ from gs_utils.internal.utils import *
 
 @run_test_driver
 def test_driver():
-    gps_assert(GPS.Preference("General-Charset").get(),
-               "UTF-8")
+    gps_assert(GPS.Preference("General-Charset").get(), "UTF-8")

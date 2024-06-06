@@ -6,14 +6,15 @@ are available only when the debuggee has been started and stopped.
 import GPS
 from gs_utils.internal.utils import *
 
-DEBUG_ACTIONS = ['debug next', 'debug nexti', 'debug step', 'debug stepi']
+DEBUG_ACTIONS = ["debug next", "debug nexti", "debug step", "debug stepi"]
+
 
 @run_test_driver
 def test_driver():
     # Open main.adb and set a breakpoint line 5
     buf = GPS.EditorBuffer.get(GPS.File("main.adb"))
     buf.current_view().goto(buf.at(5, 1))
-    yield hook('location_changed', debounced=True)
+    yield hook("location_changed", debounced=True)
     GPS.execute_action("debug set line breakpoint")
     yield wait_tasks(other_than=known_tasks)
 

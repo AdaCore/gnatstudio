@@ -16,14 +16,10 @@ def driver():
         p.send("1")
         raise Exception("Should not reach this")
     except Exception as e:
-        gps_assert(str(e),
-                   expected,
-                   "Wrong error message")
+        gps_assert(str(e), expected, "Wrong error message")
 
     try:
         p.kill()
         raise Exception("Should not reach this")
     except Exception as e:
-        gps_assert(str(e),
-                   expected,
-                   "Wrong error message")
+        gps_assert(str(e), expected, "Wrong error message")

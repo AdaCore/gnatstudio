@@ -20,29 +20,27 @@ def test_driver():
     yield wait_tasks()
     GPS.execute_action("vcs reload status")
     yield wait_tasks()
-    gps_assert(count_object("Process"),
-               0,
-               "All process should be freed")
+    gps_assert(count_object("Process"), 0, "All process should be freed")
 
     # Test unreferenced process should be freed by gc at the end
     GPS.Process(["sleep", "3"])
-    gps_assert(count_object("Process"),
-               1,
-               "Only one process should be running")
+    gps_assert(count_object("Process"), 1, "Only one process should be running")
     yield timeout(4000)  # More than the 3s
-    gps_assert(count_object("Process"),
-               0,
-               "Sleep was not referenced and thus should be collected")
+    gps_assert(
+        count_object("Process"),
+        0,
+        "Sleep was not referenced and thus should be collected",
+    )
 
     # Test for referenced object in local variable
     p = GPS.Process(["sleep", "0.1"])
     yield timeout(1000)
     gc.collect()
-    gps_assert(count_object("Process"),
-               1,
-               "The process is explicitly referenced and should still exist")
+    gps_assert(
+        count_object("Process"),
+        1,
+        "The process is explicitly referenced and should still exist",
+    )
     p = None
     gc.collect()
-    gps_assert(count_object("Process"),
-               0,
-               "The garbage collector missed Process")
+    gps_assert(count_object("Process"), 0, "The garbage collector missed Process")

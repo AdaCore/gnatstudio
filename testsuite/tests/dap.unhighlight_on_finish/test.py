@@ -22,7 +22,7 @@ def test_driver():
     # Continue until we reach the breakpoint
     debug = GPS.Debugger.get()
     debug.send("run")
-    yield hook('debugger_location_changed')
+    yield hook("debugger_location_changed")
 
     # Check that the debugger's current line is highlighted
     current_line_msgs = GPS.Message.list(

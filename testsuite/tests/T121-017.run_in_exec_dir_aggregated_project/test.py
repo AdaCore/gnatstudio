@@ -7,8 +7,8 @@ project.
 import GPS
 from gs_utils.internal.utils import *
 
-class RunMainDialog(Dialog):
 
+class RunMainDialog(Dialog):
     def open_and_yield(self):
         yield self._open_and_yield("/Build/Run/P1/Run Main main1")
         self.dialog = get_window_by_title("Run Main")
@@ -34,13 +34,17 @@ def driver():
     yield wait_tasks()
 
     title = "Run: main1" + dot_exe
-    buf = get_widgets_by_type(
-      Gtk.TextView, GPS.MDI.get(title).get_child().pywidget())[0].get_buffer()
+    buf = get_widgets_by_type(Gtk.TextView, GPS.MDI.get(title).get_child().pywidget())[
+        0
+    ].get_buffer()
     text = buf.get_text(buf.get_start_iter(), buf.get_end_iter(), True)
     exec_path = text.splitlines()[0]
     work_dir = text.splitlines()[1]
-    exec_name = exec_path[len(work_dir)+1:]
-    gps_assert(exec_name.startswith("main1"),
-               True,
-               "Wrong name of the executable '{}', path '{}', cwd '{}'".format(
-                 exec_name, exec_path, work_dir))
+    exec_name = exec_path[len(work_dir) + 1 :]
+    gps_assert(
+        exec_name.startswith("main1"),
+        True,
+        "Wrong name of the executable '{}', path '{}', cwd '{}'".format(
+            exec_name, exec_path, work_dir
+        ),
+    )

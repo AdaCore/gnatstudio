@@ -25,6 +25,8 @@ def driver():
     GPS.execute_action("Locate file in explorer (no focus)")
     dump = dump_tree_model(explorer.get_model(), 1)
     gps_assert(filt.get_text(), "", "Filter hasn't cleared")
-    gps_assert(dump,
-               ['Default', ['.', ['aaa.ads', 'hello.adb'], '.']],
-               "Project view content wrong after locate")
+    gps_assert(
+        dump,
+        ["Default", [".", ["aaa.ads", "hello.adb"], "."]],
+        "Project view content wrong after locate",
+    )

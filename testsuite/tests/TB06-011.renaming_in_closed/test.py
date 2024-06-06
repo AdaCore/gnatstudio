@@ -12,13 +12,11 @@ def run_test():
     buf.current_view().goto(buf.at(4, 14))
     yield wait_tasks()
 
-    yield idle_modal_dialog(
-        lambda: GPS.execute_action("rename entity"))
+    yield idle_modal_dialog(lambda: GPS.execute_action("rename entity"))
     new_name_ent = get_widget_by_name("new_name")
     new_name_ent.set_text("Object_Type_Aa")
     dialog = get_window_by_title("Renaming entity")
-    yield idle_modal_dialog(
-        lambda: get_stock_button(dialog, Gtk.STOCK_OK).clicked())
+    yield idle_modal_dialog(lambda: get_stock_button(dialog, Gtk.STOCK_OK).clicked())
 
     yield hook("language_server_response_processed")
     yield timeout(1000)

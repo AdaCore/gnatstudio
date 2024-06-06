@@ -9,7 +9,6 @@ from functools import reduce
 
 
 class TimeDisplay(object):
-
     @staticmethod
     def get_timestamp(t):
         """
@@ -29,8 +28,7 @@ class TimeDisplay(object):
         :return: A timestamp string
         """
 
-        return datetime.datetime.fromtimestamp(t).strftime(
-            '[%Y-%m-%d %H:%M:%S]')
+        return datetime.datetime.fromtimestamp(t).strftime("[%Y-%m-%d %H:%M:%S]")
 
     @staticmethod
     def get_elapsed(start, end):
@@ -61,20 +59,30 @@ class TimeDisplay(object):
             in_day = end - start - 86400 * days
 
         rediv = lambda ll, b: list(divmod(ll[0], b)) + ll[1:]
-        elapsed = "%02d:%02d:%02d.%02d" % tuple(reduce(
-            rediv, [[in_day * 1000, ],
-                    1000, 60, 60]))
+        elapsed = "%02d:%02d:%02d.%02d" % tuple(
+            reduce(
+                rediv,
+                [
+                    [
+                        in_day * 1000,
+                    ],
+                    1000,
+                    60,
+                    60,
+                ],
+            )
+        )
 
         start_index = 0
-        unit = 'h'
+        unit = "h"
 
-        if elapsed[start_index:start_index + 2] == "00":
+        if elapsed[start_index : start_index + 2] == "00":
             start_index += 3
-            unit = 'm'
+            unit = "m"
 
-        if elapsed[start_index:start_index + 2] == "00":
+        if elapsed[start_index : start_index + 2] == "00":
             start_index += 3
-            unit = 's'
+            unit = "s"
 
         if days > 0:
             return "%d days, %s%c" % (days, elapsed[start_index:], unit)

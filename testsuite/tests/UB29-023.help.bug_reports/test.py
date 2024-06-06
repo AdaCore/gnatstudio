@@ -17,10 +17,12 @@ def run_test():
     show_prefs_button = show_buttons[1]
     show_prefs_button.clicked()
 
-    gps_assert(GPS.EditorBuffer.get().file().base_name(), "preferences_copy.xml",
-               "Clickin on the 'show' link button should have opened a copy"
-               + " of preferences.xml")
-
+    gps_assert(
+        GPS.EditorBuffer.get().file().base_name(),
+        "preferences_copy.xml",
+        "Clickin on the 'show' link button should have opened a copy"
+        + " of preferences.xml",
+    )
 
     # Only include the ALS log file
     check_buttons = get_widgets_by_type(Gtk.CheckButton, dialog)
@@ -37,14 +39,16 @@ def run_test():
 
     # Verify that the bug report archive has correctly been created
     archive = os.listdir(custom_path)[0]
-    gps_assert(os.path.exists(archive), True,
-               "The bug report archive has not been created")
+    gps_assert(
+        os.path.exists(archive), True, "The bug report archive has not been created"
+    )
 
     # Untar it and check its contents: it should only contain the ALS
     # log
     GPS.cd(custom_path)
-    GPS.Process(['tar', '-xf', archive]).get_result()
+    GPS.Process(["tar", "-xf", archive]).get_result()
 
-    contents = os.listdir(archive.replace('.tar.bz2', ''))
-    gps_assert(contents, ['inout.txt'],
-               "The bug report should only contain the ALS log")
+    contents = os.listdir(archive.replace(".tar.bz2", ""))
+    gps_assert(
+        contents, ["inout.txt"], "The bug report should only contain the ALS log"
+    )

@@ -15,10 +15,11 @@ class Utils:
 
     @staticmethod
     def write_log_header(filename):
-        with open(filename, 'w') as f:
+        with open(filename, "w") as f:
             # The output file contains an html table
             # where each block is associated with its value
-            f.write("""<!DOCTYPE html>
+            f.write(
+                """<!DOCTYPE html>
             <!--For the links to work this file has to be opened inside\
 the Matlab browser-->
             <html>
@@ -89,14 +90,17 @@ the Matlab browser-->
             </style>
             </head>
             <body>
-""")
+"""
+            )
 
     @staticmethod
     def write_log_footer(filename):
-        with open(filename, 'a') as f:
-            f.write("""
+        with open(filename, "a") as f:
+            f.write(
+                """
             </body>
-            </html>""")
+            </html>"""
+            )
 
     @staticmethod
     def set_variable(var, val):
@@ -107,8 +111,11 @@ the Matlab browser-->
         """
 
         if not Utils.separator:
-            lang = gdb.execute("show language", to_string=True).rsplit(
-                "\"")[-2].rsplit(" ", 1)[-1]
+            lang = (
+                gdb.execute("show language", to_string=True)
+                .rsplit('"')[-2]
+                .rsplit(" ", 1)[-1]
+            )
             if lang == "ada":
                 Utils.separator = ":="
             else:
@@ -117,15 +124,13 @@ the Matlab browser-->
         gdb.execute("set variable %s %s %s" % (var, Utils.separator, val))
 
 
-class Watchpoint_Add (gdb.Command):
+class Watchpoint_Add(gdb.Command):
     """
     QGen Debugger watchpoint handling command called qgen_watchpoint
     """
 
     def __init__(self):
-        super(Watchpoint_Add, self).__init__(
-            "qgen_watchpoint", gdb.COMMAND_NONE
-        )
+        super(Watchpoint_Add, self).__init__("qgen_watchpoint", gdb.COMMAND_NONE)
 
     def invoke(self, args, from_tty):
         """
@@ -133,25 +138,23 @@ class Watchpoint_Add (gdb.Command):
         The command will set a watchpoint on the variable name.
         """
         args = gdb.string_to_argv(args)
-        symbol = args[0].split('/')  # Remove the "context/" part
+        symbol = args[0].split("/")  # Remove the "context/" part
         context = symbol[0]
         symbol = symbol[-1].strip()
         numargs = len(args)
         if numargs >= 2:
             # If there is no watchdog for that context, create one
             if not watchdog_dict.get(context):
-                watchdog_dict[context] = Watchpoint_Watchdog(
-                    context, gdb.BP_BREAKPOINT)
+                watchdog_dict[context] = Watchpoint_Watchdog(context, gdb.BP_BREAKPOINT)
                 if numargs == 3:
                     # The watchpoint cleaner is only needed in C
-                    Watchpoint_Cleaner(args[2], gdb.BP_BREAKPOINT,
-                                       watchdog_dict[context])
+                    Watchpoint_Cleaner(
+                        args[2], gdb.BP_BREAKPOINT, watchdog_dict[context]
+                    )
             wp = watchdog_dict[context].watchpoint_dict.get(symbol)
             if not isinstance(wp, Qgen_Watchpoint):
                 try:
-                    wp = Qgen_Watchpoint(
-                        symbol, args[1], gdb.BP_WATCHPOINT
-                    )
+                    wp = Qgen_Watchpoint(symbol, args[1], gdb.BP_WATCHPOINT)
                     watchdog_dict[context].watchpoint_dict[symbol] = wp
                     Utils.set_variable(symbol, args[1])
                 except RuntimeError:
@@ -167,19 +170,17 @@ class Watchpoint_Add (gdb.Command):
 Watchpoint_Add()
 
 
-class Watchpoint_Delete (gdb.Command):
-
+class Watchpoint_Delete(gdb.Command):
     def __init__(self):
         super(Watchpoint_Delete, self).__init__(
             "qgen_delete_watchpoint", gdb.COMMAND_NONE
         )
 
     def invoke(self, args, from_tty):
-
         args = gdb.string_to_argv(args)
 
         if len(args) == 1:
-            symbol = args[0].split('/')  # Remove the "context/" part
+            symbol = args[0].split("/")  # Remove the "context/" part
             context = symbol[0]
             symbol = symbol[-1].strip()
 
@@ -191,8 +192,7 @@ class Watchpoint_Delete (gdb.Command):
                     # Delete watchdog breakpoint if there is no more watchpoint
                     # associated to it
                     if not watchdog_dict[context].watchpoint_dict:
-                        gdb.execute(
-                            "delete %s" % watchdog_dict[context].number)
+                        gdb.execute("delete %s" % watchdog_dict[context].number)
                         del watchdog_dict[context]
 
 
@@ -200,7 +200,6 @@ Watchpoint_Delete()
 
 
 class Qgen_Delete_Logpoint(gdb.Command):
-
     def __init__(self):
         super(Qgen_Delete_Logpoint, self).__init__(
             "qgen_delete_logpoint", gdb.COMMAND_NONE
@@ -221,11 +220,8 @@ Qgen_Delete_Logpoint()
 
 
 class Qgen_Set_Logpoint(gdb.Command):
-
     def __init__(self):
-        super(Qgen_Set_Logpoint, self).__init__(
-            "qgen_logpoint", gdb.COMMAND_NONE
-        )
+        super(Qgen_Set_Logpoint, self).__init__("qgen_logpoint", gdb.COMMAND_NONE)
 
     def invoke(self, args, from_tty):
         # Args are symbol, context, blockname, filename, file:line
@@ -243,13 +239,13 @@ class Qgen_Set_Logpoint(gdb.Command):
         # We remove the dataport part from the blockname because
         # it is not traceable in Matlab
         # symbol => (blockname, filename, model_name)
-        bp.symbols[symbol] = (args[2].rsplit('/', 1)[0], args[3], args[5])
+        bp.symbols[symbol] = (args[2].rsplit("/", 1)[0], args[3], args[5])
 
 
 Qgen_Set_Logpoint()
 
 
-class Watchpoint_Cleaner (gdb.Breakpoint):
+class Watchpoint_Cleaner(gdb.Breakpoint):
     def __init__(self, spec, ty, watchdog):
         super(Watchpoint_Cleaner, self).__init__(spec, ty, internal=True)
         # This breakpoint is associated to a watchdog
@@ -269,8 +265,7 @@ class Watchpoint_Cleaner (gdb.Breakpoint):
         return False
 
 
-class Watchpoint_Watchdog (gdb.Breakpoint):
-
+class Watchpoint_Watchdog(gdb.Breakpoint):
     def __init__(self, spec, ty):
         super(Watchpoint_Watchdog, self).__init__(spec, ty, internal=True)
         self.watchpoint_dict = {}
@@ -293,7 +288,8 @@ class Watchpoint_Watchdog (gdb.Breakpoint):
                     pass
                 del self.watchpoint_dict[symbol]
                 self.watchpoint_dict[symbol] = Qgen_Watchpoint(
-                    symbol, wp.value, gdb.BP_WATCHPOINT)
+                    symbol, wp.value, gdb.BP_WATCHPOINT
+                )
 
             # A watchpoint will not trigger if the value written
             # is equal to its previous value.
@@ -304,8 +300,7 @@ class Watchpoint_Watchdog (gdb.Breakpoint):
         return False
 
 
-class Qgen_Logpoint (gdb.Breakpoint):
-
+class Qgen_Logpoint(gdb.Breakpoint):
     def __init__(self, spec, ty):
         super(Qgen_Logpoint, self).__init__(spec, ty, internal=True)
         # A dict association a symbol to a (blockname, filename, model_name)
@@ -322,21 +317,25 @@ class Qgen_Logpoint (gdb.Breakpoint):
             global_log_hit = self.hit
             for filename in copy_logfiles.keys():
                 processed_logfiles[filename] = False
-                with open(filename, 'a') as f:
-                    f.write("""         </tbody>
+                with open(filename, "a") as f:
+                    f.write(
+                        """         </tbody>
             </table>
           </section>
-""")
+"""
+                    )
 
-        for symbol, (blockname,
-                     filename, model_name) in iter(list(self.symbols.items())):
+        for symbol, (blockname, filename, model_name) in iter(
+            list(self.symbols.items())
+        ):
             if not os.path.exists(filename):
                 Utils.write_log_header(filename)
 
-            with open(filename, 'a') as f:
+            with open(filename, "a") as f:
                 open_table = processed_logfiles.get(filename, False)
                 if not open_table:
-                    f.write("""
+                    f.write(
+                        """
 <div class="togglelist">
   <input id="toggle%d" type="checkbox" name="toggle" />
   <label for="toggle%d">Iteration %d</label>
@@ -348,21 +347,34 @@ class Qgen_Logpoint (gdb.Breakpoint):
             <th>Value</th>
             </tr>
             </thead>
-            <tbody>""" % (global_log_hit, global_log_hit,
-                          global_log_hit, global_log_hit))
+            <tbody>"""
+                        % (
+                            global_log_hit,
+                            global_log_hit,
+                            global_log_hit,
+                            global_log_hit,
+                        )
+                    )
                 if filename not in logfiles_hit:
                     processed_logfiles[filename] = True
                     logfiles_hit.append(filename)
                 try:
-                    f.write("""<tr>
+                    f.write(
+                        """<tr>
                     <td><a href="matlab:open_system('%s');\
  hilite_system('%s')">%s</a></td>
                     <td>%s</td>
                     </tr>
-                    """ % (model_name, blockname, blockname,
-                           gdb.execute(
-                               "p %s" % symbol, to_string=True).rsplit(
-                                   '= ', 1)[-1].split()[0]))
+                    """
+                        % (
+                            model_name,
+                            blockname,
+                            blockname,
+                            gdb.execute("p %s" % symbol, to_string=True)
+                            .rsplit("= ", 1)[-1]
+                            .split()[0],
+                        )
+                    )
                 # We split to get right side of the value and split again in
                 # case gdb displays more information (e.g. language changed)
                 except gdb.error:
@@ -371,8 +383,7 @@ class Qgen_Logpoint (gdb.Breakpoint):
         return False
 
 
-class Qgen_Watchpoint (gdb.Breakpoint):
-
+class Qgen_Watchpoint(gdb.Breakpoint):
     def __init__(self, spec, value, ty):
         super(Qgen_Watchpoint, self).__init__(spec, ty, internal=True)
         self.var = spec

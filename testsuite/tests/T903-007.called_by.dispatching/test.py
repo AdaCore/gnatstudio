@@ -5,13 +5,12 @@ Verify the Call Graph Tree content for dispatching calls.
 import GPS
 from gs_utils.internal.utils import *
 
-call_expected = ['foo.adb:3:11',
-                 ['pack.ads:11:25',
-                  'pack.ads:7:14',
-                  'pack.ads:10:14',
-                  'pack.ads:6:14']]
-loc_expected_a = ['    foo.adb']
-loc_expected_b = ['    foo.adb (through dispatching)']
+call_expected = [
+    "foo.adb:3:11",
+    ["pack.ads:11:25", "pack.ads:7:14", "pack.ads:10:14", "pack.ads:6:14"],
+]
+loc_expected_a = ["    foo.adb"]
+loc_expected_b = ["    foo.adb (through dispatching)"]
 
 
 @run_test_driver
@@ -29,16 +28,16 @@ def driver():
 
     # Verify the general list and the first 2 rows, one of them is dispatching
     call_tree = get_widget_by_name("Call Graph Tree")
-    gps_assert(dump_tree_model(call_tree.get_model(), 1),
-               call_expected,
-               "Wrong content for the Calls list")
+    gps_assert(
+        dump_tree_model(call_tree.get_model(), 1),
+        call_expected,
+        "Wrong content for the Calls list",
+    )
     loc_tree = get_widget_by_name("Call Graph Location Tree")
     loc_model = loc_tree.get_model()
     click_in_tree(call_tree, Gtk.TreePath("0:0"))
-    gps_assert(dump_tree_model(loc_model, 3),
-               loc_expected_a,
-               "Should not be dispatching")
+    gps_assert(
+        dump_tree_model(loc_model, 3), loc_expected_a, "Should not be dispatching"
+    )
     click_in_tree(call_tree, Gtk.TreePath("0:1"))
-    gps_assert(dump_tree_model(loc_model, 3),
-               loc_expected_b,
-               "Should be dispatching")
+    gps_assert(dump_tree_model(loc_model, 3), loc_expected_b, "Should be dispatching")

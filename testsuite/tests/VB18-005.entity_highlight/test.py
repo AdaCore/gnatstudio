@@ -89,10 +89,10 @@ def run_test():
     yield wait_idle()
 
     highlighted_text = editor.debug_dump_syntax_highlighting(
-        "Editor ephemeral highlighting smart")
+        "Editor ephemeral highlighting smart"
+    )
 
-    gps_assert(highlighted_text, item_c,
-               "item_c should be highlighted")
+    gps_assert(highlighted_text, item_c, "item_c should be highlighted")
 
     # Jump to the end of item_a
     view.goto(editor.at(22, 11))
@@ -100,7 +100,7 @@ def run_test():
     yield wait_idle()
 
     highlighted_text = editor.debug_dump_syntax_highlighting(
-        "Editor ephemeral highlighting smart")
+        "Editor ephemeral highlighting smart"
+    )
 
-    gps_assert(highlighted_text, item_a,
-               "item_a should be highlighted")
+    gps_assert(highlighted_text, item_a, "item_a should be highlighted")

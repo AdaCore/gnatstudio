@@ -24,9 +24,9 @@ def run_test():
     current_loc = current_buffer.current_view().cursor()
 
     gps_assert(
-        current_buffer.file(), GPS.File("foo.ads"),
-        "goto type of entity  did not open the right file")
-    gps_assert(
-        current_loc.line(), 3, "Wrong line after Go To Declaration")
-    gps_assert(
-        current_loc.column(), 16, "Wrong column after Go To Declaration")
+        current_buffer.file(),
+        GPS.File("foo.ads"),
+        "goto type of entity  did not open the right file",
+    )
+    gps_assert(current_loc.line(), 3, "Wrong line after Go To Declaration")
+    gps_assert(current_loc.column(), 16, "Wrong column after Go To Declaration")

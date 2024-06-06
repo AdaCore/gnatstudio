@@ -15,9 +15,9 @@ from workflows.promises import hook, timeout, wait_tasks, wait_idle
 
 
 def do_exit(timeout):
-    """ Force an exit of GPS right now, logging as an error the contents
-        of the Messages window. This is useful for capturing more traces
-        for stalled tests that are about to get killed by rlimit.
+    """Force an exit of GPS right now, logging as an error the contents
+    of the Messages window. This is useful for capturing more traces
+    for stalled tests that are about to get killed by rlimit.
     """
     timeout.remove()
     simple_error(GPS.Console("Messages").get_text())
@@ -65,11 +65,11 @@ def run_test_driver(action_fn):
 
         except Exception:
             import traceback
-            GPS.Logger('TESTSUITE').log(
+
+            GPS.Logger("TESTSUITE").log(
                 "Driver workflow received an exception %s %s\n%s"
-                % (sys.exc_info()[0],
-                   sys.exc_info()[1],
-                   traceback.format_exc()))
+                % (sys.exc_info()[0], sys.exc_info()[1], traceback.format_exc())
+            )
 
         finally:
             if "GPS_PREVENT_EXIT" not in os.environ:
@@ -82,8 +82,9 @@ def run_test_driver(action_fn):
                 # of the console to aid post-mortem investigations
                 if get_exit_status() != SUCCESS:
                     msg = "Exiting with the following in the Console:\n{}".format(
-                        GPS.Console().get_text())
-                    GPS.Logger('TESTSUITE').log(msg)
+                        GPS.Console().get_text()
+                    )
+                    GPS.Logger("TESTSUITE").log(msg)
                 GPS.exit(force=True, status=status)
 
     # Install a timeout to catch the errors in GPS, if any, before rlimit
@@ -91,7 +92,7 @@ def run_test_driver(action_fn):
 
     # Exit GPS 10 seconds before the rlimit expires. If the rlimit
     # is not set, default to waiting 130 seconds.
-    timeout_seconds = int(os.environ.get('GPS_RLIMIT_SECONDS', '130')) - 10
+    timeout_seconds = int(os.environ.get("GPS_RLIMIT_SECONDS", "130")) - 10
     GPS.Timeout(timeout_seconds * 1000, do_exit)
 
     # Run the workflow
@@ -111,6 +112,7 @@ def editor_contextual(editor, name):
     and more reliable.
     """
     from gs_utils.internal.utils import activate_contextual, close_contextual
+
     windows = Gtk.Window.list_toplevels()
     click_in_text(editor.current_view().cursor(), button=3)
     yield wait_idle()  # wait for contextual menu to appear

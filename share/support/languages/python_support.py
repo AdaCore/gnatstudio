@@ -29,13 +29,19 @@ import ast
 import os.path
 import gs_utils
 import os_utils
-from constructs import (CAT_FUNCTION, VISIBILITY_PUBLIC,
-                        VISIBILITY_PRIVATE, CAT_TYPE, CAT_LOOP_STATEMENT,
-                        CAT_IF_STATEMENT)
+from constructs import (
+    CAT_FUNCTION,
+    VISIBILITY_PUBLIC,
+    VISIBILITY_PRIVATE,
+    CAT_TYPE,
+    CAT_LOOP_STATEMENT,
+    CAT_IF_STATEMENT,
+)
 import text_utils
 
 try:
     from gi.repository import Gtk
+
     has_pygtk = 1
 except ImportError:
     Gtk = None
@@ -51,14 +57,14 @@ def get_last_body_statement(node):
 
 # noinspection PyPep8Naming
 class ASTVisitor(ast.NodeVisitor):
-
     def __init__(self, bufstr, clist):
         self.buflines = bufstr.splitlines()
         self.lines_offsets = [0 for _ in self.buflines]
 
         for i in range(1, len(self.buflines)):
-            self.lines_offsets[i] = (self.lines_offsets[i - 1] +
-                                     len(self.buflines[i - 1]) + 1)
+            self.lines_offsets[i] = (
+                self.lines_offsets[i - 1] + len(self.buflines[i - 1]) + 1
+            )
 
         self.clist = clist
 
@@ -93,9 +99,9 @@ class ASTVisitor(ast.NodeVisitor):
         argsd = (a.arg for a in args.args)
 
         profile = "({0})".format(
-            ", ".join(argsd) +
-            (", %s" % args.vararg.arg if args.vararg else "") +
-            (", %s" % args.kwarg.arg if args.kwarg else "")
+            ", ".join(argsd)
+            + (", %s" % args.vararg.arg if args.vararg else "")
+            + (", %s" % args.kwarg.arg if args.kwarg else "")
         )
 
         return profile
@@ -104,8 +110,14 @@ class ASTVisitor(ast.NodeVisitor):
         self.generic_visit(n)
         start_pos, end_pos, entity_pos = self.get_locations(n, "def ")
         self.clist.add_construct(
-            CAT_FUNCTION, False, VISIBILITY_PUBLIC, n.name,
-            self.make_fn_profile(n), start_pos, end_pos, entity_pos
+            CAT_FUNCTION,
+            False,
+            VISIBILITY_PUBLIC,
+            n.name,
+            self.make_fn_profile(n),
+            start_pos,
+            end_pos,
+            entity_pos,
         )
 
     def generic_visit(self, n):
@@ -129,16 +141,28 @@ class ASTVisitor(ast.NodeVisitor):
         self.generic_visit(n)
         start_pos, end_pos, entity_pos = self.get_locations(n, "class ")
         self.clist.add_construct(
-            CAT_TYPE, False, VISIBILITY_PUBLIC, n.name, "",
-            start_pos, end_pos, entity_pos
+            CAT_TYPE,
+            False,
+            VISIBILITY_PUBLIC,
+            n.name,
+            "",
+            start_pos,
+            end_pos,
+            entity_pos,
         )
 
     def add_private_construct(self, n, constructs_cat):
         self.generic_visit(n)
         start_pos, end_pos = self.get_locations(n)
         self.clist.add_construct(
-            constructs_cat, False, VISIBILITY_PRIVATE, "", "",
-            start_pos, end_pos, start_pos
+            constructs_cat,
+            False,
+            VISIBILITY_PRIVATE,
+            "",
+            "",
+            start_pos,
+            end_pos,
+            start_pos,
         )
 
     def visit_While(self, n):
@@ -153,7 +177,6 @@ class ASTVisitor(ast.NodeVisitor):
 
 # noinspection PyMethodMayBeStatic
 class PythonLanguage(GPS.Language):
-
     def __init__(self):
         pass
 
@@ -168,7 +191,6 @@ class PythonLanguage(GPS.Language):
 
 
 class PythonSupport(object):
-
     def __init__(self):
         """
         Various initializations done before the gps_started hook
@@ -176,13 +198,15 @@ class PythonSupport(object):
 
         self.port_pref = GPS.Preference("Documentation:Python/port")
         self.port_pref.create(
-            "Pydoc port", "integer",
+            "Pydoc port",
+            "integer",
             "Port that should be used when spawning the pydoc daemon. "
             "This is a small local server to which your web browser "
             "connects to display the documentation for the standard "
             "python library. It is accessed through the /Python menu when "
             "editing a python file",
-            9432)
+            9432,
+        )
 
         # Add the language definition before the gps_started hook, so that
         # python files are correctly found
@@ -231,21 +255,23 @@ class PythonSupport(object):
         """
 
         # This action requires pydoc
-        if os_utils.locate_exec_on_path('pydoc'):
+        if os_utils.locate_exec_on_path("pydoc"):
             gs_utils.make_interactive(
-                callback=self.show_python_library,
-                name='display python library help')
+                callback=self.show_python_library, name="display python library help"
+            )
 
         gs_utils.make_interactive(
             callback=self.reload_file,
-            name='reload python file',
-            filter='Python file',
-            contextual='Python/Import & Reload')
+            name="reload python file",
+            filter="Python file",
+            contextual="Python/Import & Reload",
+        )
 
         gs_utils.make_interactive(
             callback=self.indent_on_new_line,
             name="Python Auto Indentation",
-            filter='Python edition')
+            filter="Python edition",
+        )
 
         self.pydoc_proc = None
         GPS.Hook("project_view_changed").add(self._project_recomputed)
@@ -272,10 +298,10 @@ class PythonSupport(object):
 
     def python_parse_indent(self, e, start):
         """
-           parse the text and predict python indentation when hitting return
-           * return the indentation (int)
-           * text is edited with cursor at indentation level after returned
-           * end is position of cursor
+        parse the text and predict python indentation when hitting return
+        * return the indentation (int)
+        * text is edited with cursor at indentation level after returned
+        * end is position of cursor
         """
 
         def find_level(on_this_string):
@@ -290,8 +316,7 @@ class PythonSupport(object):
             # case : enter subprogram, innermost level decides
             if on_this_string.endswith(":"):
                 level = 1
-                group = ["if", "else", "for", "while",
-                         "def", "class", "try", "except"]
+                group = ["if", "else", "for", "while", "def", "class", "try", "except"]
             else:
                 # case: return to a function, previous def decides
                 if on_this_string.startswith("return"):
@@ -299,8 +324,9 @@ class PythonSupport(object):
                     group = ["def"]
 
                 # case: break out loops, innermost loop decides
-                if on_this_string.startswith("break") or \
-                   on_this_string.startswith("continue"):
+                if on_this_string.startswith("break") or on_this_string.startswith(
+                    "continue"
+                ):
                     level = -1
                     group = ["for", "while"]
 
@@ -388,8 +414,7 @@ class PythonSupport(object):
             # of "from ... import *", not of "import ..."
 
             if module in sys.modules:
-                cmd = ("import importlib;"
-                       + f"importlib.reload(sys.modules['{module}'])")
+                cmd = "import importlib;" + f"importlib.reload(sys.modules['{module}'])"
                 GPS.exec_in_console(cmd)
 
             else:
@@ -406,7 +431,7 @@ class PythonSupport(object):
                 # console
                 GPS.exec_in_console("import " + module)
         except Exception:
-            pass   # Current context is not a file
+            pass  # Current context is not a file
 
     def _project_recomputed(self, hook_name):
         """
@@ -415,8 +440,7 @@ class PythonSupport(object):
         works to open these files as it does for the Ada runtime
         """
 
-        GPS.Project.add_predefined_paths(
-            sources="%splug-ins" % GPS.get_home_dir())
+        GPS.Project.add_predefined_paths(sources="%splug-ins" % GPS.get_home_dir())
         try:
             GPS.Project.root().languages(recursive=True).index("python")
             # The rest is done only if we support python
@@ -431,10 +455,10 @@ class PythonSupport(object):
             while port - base < 10:
                 self.pydoc_proc = GPS.Process(["pydoc", "-p", "%s" % port])
                 out = self.pydoc_proc.expect(
-                    "pydoc server ready|Address already in use", 10000)
+                    "pydoc server ready|Address already in use", 10000
+                )
                 try:
-                    out.rindex(   # raise exception if not found
-                        "Address already in use")
+                    out.rindex("Address already in use")  # raise exception if not found
                     port += 1
                 except Exception:
                     break
@@ -450,8 +474,7 @@ class PythonSupport(object):
 
 
 class PythonTracer(object):
-    """ Basic python tracer, useful for GPS plugin development and debug.
-    """
+    """Basic python tracer, useful for GPS plugin development and debug."""
 
     def __init__(self):
         self.logger = GPS.Logger("Python_Tracer")

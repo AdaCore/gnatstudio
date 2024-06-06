@@ -1,4 +1,9 @@
-from gs_utils.internal.utils import run_test_driver, wait_language_server, gps_assert, timeout
+from gs_utils.internal.utils import (
+    run_test_driver,
+    wait_language_server,
+    gps_assert,
+    timeout,
+)
 
 #  Test proper unfolding of a block when an edit
 #  happens on this block.
@@ -24,6 +29,7 @@ begin
 end Test_Fold;
 """
 
+
 @run_test_driver
 def driver():
     buf = GPS.EditorBuffer.get(GPS.File("test_fold.adb"))
@@ -37,15 +43,18 @@ def driver():
     yield wait_language_server("textDocument/foldingRange")
 
     # Verify that the contents is what we logically expect
-    gps_assert(buf.get_chars(), expected,
-               "Buffer corruption when inserting after folded block")
+    gps_assert(
+        buf.get_chars(), expected, "Buffer corruption when inserting after folded block"
+    )
 
     # Verify that the logical contents correspond to the contents
     # on screen!
     g = buf.gtk_text_buffer()
-    gps_assert(buf.get_chars(),
-               g.get_text(g.get_start_iter(), g.get_end_iter(), False),
-               "Corruption between the visible text and the logical text")
+    gps_assert(
+        buf.get_chars(),
+        g.get_text(g.get_start_iter(), g.get_end_iter(), False),
+        "Corruption between the visible text and the logical text",
+    )
 
     # Last layer of safety: verify that saving + undo works
     buf.undo()

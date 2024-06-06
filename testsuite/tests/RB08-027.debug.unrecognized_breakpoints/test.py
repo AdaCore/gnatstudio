@@ -21,13 +21,13 @@ def test_driver():
     # Launch the debugger
 
     GPS.execute_action("Build & Debug Number 1")
-    yield hook('debugger_started')
+    yield hook("debugger_started")
 
     # Open the Breakpoints view and remove the breakpoint
     # from it
 
     GPS.execute_action("open breakpoints editor")
-    yield wait_for_mdi_child('Breakpoints')
+    yield wait_for_mdi_child("Breakpoints")
 
     view = GPS.MDI.get("Breakpoints")
 
@@ -43,7 +43,7 @@ def test_driver():
     # Verify that the breakpoint has been removed
 
     gps_assert(
-        dump_tree_model(model, 0), [],
-        "The breakpoint should be removed from the Breakpoints view")
-    
-
+        dump_tree_model(model, 0),
+        [],
+        "The breakpoint should be removed from the Breakpoints view",
+    )

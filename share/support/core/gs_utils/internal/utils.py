@@ -17,16 +17,15 @@ import workflows
 from workflows.promises import Promise, timeout, known_tasks
 
 
-system_is_cygwin = ('uname' in os.__dict__ and
-                    os.uname()[0].find('CYGWIN') != -1)
+system_is_cygwin = "uname" in os.__dict__ and os.uname()[0].find("CYGWIN") != -1
 system_is_windows = system_is_cygwin or platform.system().find("Windows") != -1
-system_is_osx = 'uname' in os.__dict__ and os.uname()[0].find('Darwin') != -1
+system_is_osx = "uname" in os.__dict__ and os.uname()[0].find("Darwin") != -1
 
 # This should likely be True in general, but on some setups generating events
 # results in a storage_error.
-can_generate_events = True   # not system_is_osx
+can_generate_events = True  # not system_is_osx
 
-nightly_testsuite = os.getenv('GPS_TEST_CONTEXT') == 'nightly'
+nightly_testsuite = os.getenv("GPS_TEST_CONTEXT") == "nightly"
 
 # A default extension for executables
 dot_exe = ".exe" if system_is_windows else ""
@@ -44,16 +43,16 @@ def compare_to_file(editor, filepath):
 
 def requires_not_windows(reason=""):
     if system_is_windows:
-        gps_not_run('disabled on Windows %s' % reason)
+        gps_not_run("disabled on Windows %s" % reason)
 
 
 def test_pygtk():
     """Test whether pygtk support was built in GPS. This is needed if
-       you want to use pywidget(), but not if you only want to use gtk
-       functions like idle"""
+    you want to use pywidget(), but not if you only want to use gtk
+    functions like idle"""
 
-    if 'pywidget' not in GPS.GUI.__dict__:
-        gps_not_run('PyGTK support not compiled in')
+    if "pywidget" not in GPS.GUI.__dict__:
+        gps_not_run("PyGTK support not compiled in")
     from gi.repository import Gtk, GObject, GLib
 
 
@@ -69,9 +68,9 @@ def sort_by_key(hash):
 
 
 def remove_extension(str):
-    last_dot = str.rfind('.')
-    last_window_sep = str.rfind('\\\\')
-    last_unix_sep = str.rfind('/')
+    last_dot = str.rfind(".")
+    last_window_sep = str.rfind("\\\\")
+    last_unix_sep = str.rfind("/")
 
     if last_dot > last_window_sep and last_dot > last_unix_sep:
         return str[0:last_dot]
@@ -87,7 +86,7 @@ def get_editor_from_title(title):
 
 
 def before_exit(hook):
-    """ Print error messages to stderr and exit GPS """
+    """Print error messages to stderr and exit GPS"""
 
     global before_exit_has_run
     if before_exit_has_run == 0:
@@ -99,10 +98,10 @@ def before_exit(hook):
 
 
 before_exit_has_run = 0
-GPS.Hook('before_exit_action_hook').add(before_exit)
+GPS.Hook("before_exit_action_hook").add(before_exit)
 
 
-def gps_not_run(msg=''):
+def gps_not_run(msg=""):
     """Set the exit status to NOT_RUN"""
 
     global exit_status
@@ -115,7 +114,7 @@ def gps_fatal_error(msg):
 
     global exit_status
     exit_status = FAILURE
-    GPS.Logger('TESTSUITE').log(msg)
+    GPS.Logger("TESTSUITE").log(msg)
     GPS.exit(force=1)
     raise Exception("Fatal Error: %s" % msg)
 
@@ -123,30 +122,35 @@ def gps_fatal_error(msg):
 def log_debug(var):
     """Display a variable. Convenient for debugging test scripts"""
 
-    GPS.Logger('testsuite').log("%s" % (var, ))
+    GPS.Logger("testsuite").log("%s" % (var,))
 
 
 def simple_error(message):
     global exit_status
     exit_status = FAILURE
-    GPS.Logger('TESTSUITE').log(message)
+    GPS.Logger("TESTSUITE").log(message)
 
     if not nightly_testsuite:
         GPS.MDI.dialog(message)
 
 
-Known_Commands = ["load C/C++ xref info", "load entity db", "load C/C++ xref",
-                  "Semantic tree update", "load constructs",
-                  "Recompute Xref info"]
+Known_Commands = [
+    "load C/C++ xref info",
+    "load entity db",
+    "load C/C++ xref",
+    "Semantic tree update",
+    "load constructs",
+    "Recompute Xref info",
+]
 
 
 def safe_exit(expected_commands=[], delay=0, force=1):
     """Close the background tasks which are known to be running, and attempt
-       to exit.
-       expected commands contains a list of commands which are known to be
-         running and which can be safely interrupted.
-       If force is true, ignore any unsaved files.
-       Wait at least delay milliseconds before closing.
+    to exit.
+    expected commands contains a list of commands which are known to be
+      running and which can be safely interrupted.
+    If force is true, ignore any unsaved files.
+    Wait at least delay milliseconds before closing.
     """
 
     global Known_Commands
@@ -170,13 +174,16 @@ def safe_exit(expected_commands=[], delay=0, force=1):
 
     if unexpected_commands != []:
         # If we have encountered unexpected commands, emit an error.
-        simple_error('Commands still running at end of test: ' +
-                     str(unexpected_commands))
+        simple_error(
+            "Commands still running at end of test: " + str(unexpected_commands)
+        )
 
     # exit GPS after a timeout, so that the Tasks view has time to remove
     # the interrupted commands from the list.
-    GPS.Timeout(max(delay, 100) + 300 * commands_found,
-                lambda timeout: GPS.exit(force, status=exit_status))
+    GPS.Timeout(
+        max(delay, 100) + 300 * commands_found,
+        lambda timeout: GPS.exit(force, status=exit_status),
+    )
 
 
 @workflows.run_as_workflow
@@ -192,8 +199,10 @@ def wait_for_mdi_child(name, step=500, n=10):
         yield timeout(step)
         k += 1
 
+
 class TimeoutExceeded(Exception):
     pass
+
 
 @workflows.run_as_workflow
 def wait_until_true(test_func, *args, **kwargs):
@@ -215,7 +224,7 @@ def wait_until_true(test_func, *args, **kwargs):
     timeout = None
     if "timeout" in kwargs:
         timeout = kwargs["timeout"]
-        del(kwargs["timeout"])
+        del kwargs["timeout"]
 
     while not test_func(*args, **kwargs) and k < n:
         # Check for the timeout
@@ -251,6 +260,7 @@ def wait_DAP_server(method=""):
         if m == method:
             break
 
+
 @workflows.run_as_workflow
 def wait_DAP_event(event=""):
     """
@@ -275,7 +285,7 @@ def wait_until_not_busy(debugger, t=100):
 
 def wait_for_entities(cb, *args, **kwargs):
     """Execute cb when all entities have finished loading.
-       This function is not blocking"""
+    This function is not blocking"""
 
     def on_timeout(timeout):
         if GPS.Command.list() == []:
@@ -305,7 +315,6 @@ def wait_for_tasks(cb, *args, **kwargs):
 
 
 def wait_for_idle(cb, *args, **kwargs):
-
     def internal_on_idle():
         cb(*args, **kwargs)
 
@@ -325,46 +334,52 @@ def wait_outline(filename):
 
 
 def record_time(t):
-    """ Record the time t in the time.out file.
-        t should be a float representing the number of seconds we want to
-        record.
+    """Record the time t in the time.out file.
+    t should be a float representing the number of seconds we want to
+    record.
     """
 
-    f = open('time.out', 'w')
+    f = open("time.out", "w")
     f.write(str(t))
     f.close()
 
 
 def recompute_xref():
-    """ Force an Xref recomputation immediately. """
+    """Force an Xref recomputation immediately."""
 
     if GPS.Logger("GPS.LSP.ADA_SUPPORT").active:
         return
     import cross_references
+
     cross_references.r.recompute_xref()
+
 
 ############
 # Editors #
 ############
 
 
-def get_all_tags(buffer, name=''):
+def get_all_tags(buffer, name=""):
     """return a string listing all highlighting tags used in buffer. Each
-      line starts with name, then the name of the tag and the starting line
-      and column, then the ending line and column.
+    line starts with name, then the name of the tag and the starting line
+    and column, then the ending line and column.
     """
 
     if name:
-        name = name + ' '
-    result = ''
+        name = name + " "
+    result = ""
     loc = buffer.beginning_of_buffer()
     while loc < buffer.end_of_buffer():
         over = loc.get_overlays()
         if over != []:
             loc2 = loc.forward_overlay(over[0]) - 1
-            result = result + name + over[0].name() \
-                + ' %s:%s %s:%s\n' % (loc.line(), loc.column(),
-                                      loc2.line(), loc2.column())
+            result = (
+                result
+                + name
+                + over[0].name()
+                + " %s:%s %s:%s\n"
+                % (loc.line(), loc.column(), loc2.line(), loc2.column())
+            )
             loc = loc2 + 1
         else:
             loc = loc.forward_overlay()
@@ -373,7 +388,7 @@ def get_all_tags(buffer, name=''):
 
 def open_and_raise(filename, line, col):
     """Open an editor, if needed, raise it, and move the cursor to the
-       specified (line, column).
+    specified (line, column).
     """
 
     buffer = GPS.EditorBuffer.get(GPS.File(filename))
@@ -394,7 +409,7 @@ def get_completion():
         try:
             pop_tree = get_widget_by_name("completion-view")
             comps = [row[0] for row in dump_tree_model(pop_tree.get_model())]
-            if comps[-1] != 'Computing...':
+            if comps[-1] != "Computing...":
                 t.remove()
                 p.resolve(comps)
         except Exception as e:
@@ -434,9 +449,9 @@ try:
     from gi.repository import Gtk, GObject, GLib
 
     def enqueue(fun, timeout=200):
-        """ Register fun to be executed once, after timeout milliseconds.
-         This function is useful for programming tests that require GPS to
-         process events in a sequence."""
+        """Register fun to be executed once, after timeout milliseconds.
+        This function is useful for programming tests that require GPS to
+        process events in a sequence."""
 
         GLib.idle_add(fun)
 
@@ -448,7 +463,7 @@ try:
             return grab
 
         for win in Gtk.Window.list_toplevels():
-            if win.get_property('has-toplevel-focus'):
+            if win.get_property("has-toplevel-focus"):
                 return win.get_focus()
         return None
 
@@ -458,23 +473,28 @@ try:
 
     def select_action_in_shortcuts_editor(action, key):
         """Select the line corresponding to action in the key shortcuts editor.
-         Check that the keybinding is the one we are expecting"""
+        Check that the keybinding is the one we are expecting"""
 
-        editor = get_widget_by_name('Key shortcuts')
-        gps_not_null(editor, 'Key shortcuts editor not open')
-        toggle_local_config(editor, 'Show categories', False)
+        editor = get_widget_by_name("Key shortcuts")
+        gps_not_null(editor, "Key shortcuts editor not open")
+        toggle_local_config(editor, "Show categories", False)
         process_all_events()
-        tree = get_widget_by_name('Key shortcuts tree', [editor])
+        tree = get_widget_by_name("Key shortcuts tree", [editor])
 
         for m in tree.get_model():
             if m[0].lower() == action.lower():
-                current = m[1].decode('utf-8')
-                gps_assert(current, key, 'Shortcut for ' + action +
-                           ' is "%s", expecting "%s"' % (current, key))
+                current = m[1].decode("utf-8")
+                gps_assert(
+                    current,
+                    key,
+                    "Shortcut for "
+                    + action
+                    + ' is "%s", expecting "%s"' % (current, key),
+                )
                 tree.get_selection().select_path(m.path)
                 return editor
 
-        gps_assert(False, True, action + ' not found in key shortcuts editor')
+        gps_assert(False, True, action + " not found in key shortcuts editor")
         return editor
 
     ###############################
@@ -484,11 +504,12 @@ try:
     def load_xml_startup_script(name):
         """Load an XML startup script. Name must include the .xml extension"""
 
-        for dir in ("%sshare/gnatstudio/support/core/" % GPS.get_system_dir(),
-                    "%sshare/gnatstudio/support/ui/" % GPS.get_system_dir(),
-                    "%sshare/gnatstudio/library/" % GPS.get_system_dir(),
-                    "%sshare/gnatstudio/plug-ins/" % GPS.get_system_dir()):
-
+        for dir in (
+            "%sshare/gnatstudio/support/core/" % GPS.get_system_dir(),
+            "%sshare/gnatstudio/support/ui/" % GPS.get_system_dir(),
+            "%sshare/gnatstudio/library/" % GPS.get_system_dir(),
+            "%sshare/gnatstudio/plug-ins/" % GPS.get_system_dir(),
+        ):
             try:
                 f = open("%s%s" % (dir, name)).read()
                 break
@@ -500,7 +521,7 @@ try:
 
     def load_python_startup_script(name):
         """Load a python startup script, and initializes it immediately so
-         that its menus are visible"""
+        that its menus are visible"""
 
         try:
             return sys.modules[name]
@@ -512,21 +533,19 @@ try:
             module = imp.load_module(name, fp, pathname, description)
             # Special to GPS: if the module has a on_gps_started function,
             # execute it
-            module.on_gps_started('gps_started')
+            module.on_gps_started("gps_started")
         except AttributeError:
             pass
         finally:
-
             if fp:
                 fp.close()
 
         return module
 
     class PyConsole(GPS.Console):
-
         def write(self, text):
             GPS.Console.write(self, text)
-            GPS.Logger('UNEXPECTED_EXCEPTION').log(text)
+            GPS.Logger("UNEXPECTED_EXCEPTION").log(text)
 
     # Redirect the standard error from the Messages window to an instance of
     # the PyConsole class based on the Messages window. Each python error
@@ -535,8 +554,8 @@ try:
     # Disabled on Windows for now so that we can concentrate on the other
     # issues ???
 
-    if os.name != 'nt':
-        sys.stderr = PyConsole('Messages')
+    if os.name != "nt":
+        sys.stderr = PyConsole("Messages")
 
     ##############
     # Notebooks ##
@@ -545,7 +564,7 @@ try:
     def switch_notebook_page(notebook, label):
         result = pygps.notebook.switch_notebook_page(notebook, label)
         if result == -1:
-            gps_fatal_error("Notebook doesn't contain " + label + ' page')
+            gps_fatal_error("Notebook doesn't contain " + label + " page")
         return result
 
     ######################
@@ -554,9 +573,9 @@ try:
 
     def open_from_project(on_open, *args, **kwargs):
         """Focus in the global search box to search files from project.
-           Then call on_open and pass it the search field:
+        Then call on_open and pass it the search field:
 
-               on_open (completionList, entry, tree, *args, **kwargs)
+            on_open (completionList, entry, tree, *args, **kwargs)
         """
         GPS.execute_action("Global Search in context: file names")
 
@@ -583,38 +602,36 @@ try:
 
     def open_key_shortcuts(on_open, *args, **kwargs):
         """Open the keyshortcuts editor, and call
-          on_open (dialog, *args, **kwargs)"""
+        on_open (dialog, *args, **kwargs)"""
 
-        open_menu('/Edit/Key Shortcuts...', on_open, [], args, kwargs)
+        open_menu("/Edit/Key Shortcuts...", on_open, [], args, kwargs)
 
     def open_file_switches(on_open, *args, **kwargs):
         """Open the file-specific switches editor, and call
-          on_open (mdichild, tree, *args, **kwargs)"""
+        on_open (mdichild, tree, *args, **kwargs)"""
 
         def on_timeout(timeout):
             timeout.remove()
-            mdi = GPS.MDI.get('Project Switches')
-            tree = get_widgets_by_type(Gtk.TreeView,
-                                       mdi.get_child().pywidget())[0]
+            mdi = GPS.MDI.get("Project Switches")
+            tree = get_widgets_by_type(Gtk.TreeView, mdi.get_child().pywidget())[0]
             on_open(*(mdi, tree) + args, **kwargs)
 
         GPS.Timeout(1000, on_timeout)
-        GPS.Menu.get(
-            '/Project/Edit File Switches...').action.execute_if_possible()
+        GPS.Menu.get("/Project/Edit File Switches...").action.execute_if_possible()
 
     def open_breakpoint_editor(on_open, *args, **kwargs):
         """Open the breakpoint editor dialog and call
-          on_open (MDIWindow, *args, **kwargs)"""
+        on_open (MDIWindow, *args, **kwargs)"""
 
         def __internal():
-            m = GPS.MDI.get('Breakpoints')
+            m = GPS.MDI.get("Breakpoints")
             if not m:
                 return True  # Wait again
-            on_open(*(m, ) + args, **kwargs)
+            on_open(*(m,) + args, **kwargs)
             return False
 
         GLib.timeout_add(200, __internal)
-        GPS.Menu.get('/Debug/Data/Breakpoints').action.execute_if_possible()
+        GPS.Menu.get("/Debug/Data/Breakpoints").action.execute_if_possible()
 
     ############
     # Wizards ##
@@ -623,7 +640,7 @@ try:
     def wizard_current_page(wizard):
         """Return the widget currently visible in the wizard"""
 
-        contents = get_widget_by_name('wizard contents', wizard)
+        contents = get_widget_by_name("wizard contents", wizard)
         for w in contents.get_children():
             if w.get_mapped():
                 return w
@@ -646,12 +663,11 @@ try:
 
         return b.get_iter_at_mark(mark)
 
-    def compare_editor_contextual(loc, expected, indexes=None, msg='',
-                                  when_done=None):
+    def compare_editor_contextual(loc, expected, indexes=None, msg="", when_done=None):
         """Check the contextual menu in an editor at a specific location.
-         indexes could be set to range(0,2) to only check part of the
-         menu. when_done is done when the contextual menu has been computed
-         (since this is done asynchronously)"""
+        indexes could be set to range(0,2) to only check part of the
+        menu. when_done is done when the contextual menu has been computed
+        (since this is done asynchronously)"""
 
         def on_contextual(windows):
             menu = dump_contextual(windows)
@@ -673,13 +689,17 @@ try:
     # Canvas ##
     ###########
 
-    def click_in_canvas(canvas, xoffset=0, yoffset=0, button=1,
-                        events=single_click_events):
-
+    def click_in_canvas(
+        canvas, xoffset=0, yoffset=0, button=1, events=single_click_events
+    ):
         origin = canvas.get_window().get_origin()
         click_in_widget(
-            canvas.get_window(), x=origin[0] + xoffset, y=origin[1] +
-            yoffset, button=button, events=events)
+            canvas.get_window(),
+            x=origin[0] + xoffset,
+            y=origin[1] + yoffset,
+            button=button,
+            events=events,
+        )
 
     #####################
     # Dialogs          ##
@@ -703,8 +723,11 @@ try:
             ...
             dialog = get_new_toplevels(old)
         """
-        return [w for w in Gtk.Window.list_toplevels()
-                if w not in old_toplevels and w.get_mapped()]
+        return [
+            w
+            for w in Gtk.Window.list_toplevels()
+            if w not in old_toplevels and w.get_mapped()
+        ]
 
     def before_dialog(callback, args=[], kwargs=dict()):
         """Return the current context, needed to compute later on what dialogs
@@ -715,8 +738,11 @@ try:
         """
 
         def on_dialog(windows):
-            new = [w for w in Gtk.Window.list_toplevels() if w not in
-                   windows and w.get_mapped()]
+            new = [
+                w
+                for w in Gtk.Window.list_toplevels()
+                if w not in windows and w.get_mapped()
+            ]
             if new:
                 params = [new[0]]
             else:
@@ -738,8 +764,11 @@ try:
         func()
         while True:
             yield wait_idle()
-            new = [w for w in Gtk.Window.list_toplevels() if w not in
-                   windows and w.get_mapped()]
+            new = [
+                w
+                for w in Gtk.Window.list_toplevels()
+                if w not in windows and w.get_mapped()
+            ]
             if new:
                 yield new[0]
                 break
@@ -750,31 +779,34 @@ try:
 
     def get_contextual(old_windows, is_fatal=True):
         """Return the contextual menu that was displayed. old_windows is the
-         list of windows before you opened the contextual menu"""
+        list of windows before you opened the contextual menu"""
 
-        c = [w for w in Gtk.Window.list_toplevels() if w not in
-             old_windows and w.get_mapped()]
+        c = [
+            w
+            for w in Gtk.Window.list_toplevels()
+            if w not in old_windows and w.get_mapped()
+        ]
         if not c:
             if is_fatal:
-                gps_fatal_error('No contextual menu created')
+                gps_fatal_error("No contextual menu created")
             return None
         return c[0]
 
     def activate_contextual(old_windows, label, accel_prefix="<gps>/"):
         """Activate a contextual menu. Old_Windows should be the list of
-         toplevel windows that existed before the contextual menu was
-         displayed:
-              windows = Gtk.Window.list_toplevels ()
-              ...
-              activate_contextual (windows, "FOO")
-         This is a low-level function, consider using select_editor_contextual
-         when dealing with editors.
+        toplevel windows that existed before the contextual menu was
+        displayed:
+             windows = Gtk.Window.list_toplevels ()
+             ...
+             activate_contextual (windows, "FOO")
+        This is a low-level function, consider using select_editor_contextual
+        when dealing with editors.
         """
         contextual = get_contextual(old_windows)
         contextual = MenuTree(contextual, accel_prefix=accel_prefix)
 
-        goal = '%s%s' % (accel_prefix, label)
-        for (menu, menu_label, accel, level) in contextual:
+        goal = "%s%s" % (accel_prefix, label)
+        for menu, menu_label, accel, level in contextual:
             if menu_label == goal:
                 menu.activate()
                 return True
@@ -783,16 +815,16 @@ try:
 
     def dump_contextual(old_windows):
         """Dump the contextual menu (see dump_menu). old_windows is the
-         list of toplevel windows that existed before the contextual menu
-         is displayed
+        list of toplevel windows that existed before the contextual menu
+        is displayed
 
-         :param old_windows: a list of Gtk.Window, which is used
-            to find a new window and use it as the contextual menu
-         """
+        :param old_windows: a list of Gtk.Window, which is used
+           to find a new window and use it as the contextual menu
+        """
 
         try:
             contextual = get_contextual(old_windows, is_fatal=False)
-            return dump_menu('', topwidget=contextual)
+            return dump_menu("", topwidget=contextual)
         except Exception:
             return None
 
@@ -805,8 +837,7 @@ try:
         except Exception:
             pass
 
-    def select_widget_contextual(widget, menuName, onselected, *args,
-                                 **kwargs):
+    def select_widget_contextual(widget, menuName, onselected, *args, **kwargs):
         """Display the contexual menu on any widget"""
 
         process_all_events()
@@ -822,9 +853,9 @@ try:
 
     def select_editor_contextual(menuName, onselected=None, *args, **kwargs):
         """Select the selection of a contextual menu in the current editor.
-           When the menu item has been selected, the menu is closed and
-           onselected is called with the extra arguments passed to this
-           function.
+        When the menu item has been selected, the menu is closed and
+        onselected is called with the extra arguments passed to this
+        function.
         """
 
         process_all_events()
@@ -852,7 +883,7 @@ try:
             for m in WidgetTree(menu):
                 if isinstance(m, Gtk.Menu):
                     for w in MenuTree(m):
-                        if w[1] == '<gps>/%s' % text:
+                        if w[1] == "<gps>/%s" % text:
                             if value is None:
                                 w[0].emit("toggled")
                             elif value:
@@ -861,34 +892,35 @@ try:
                                 w[0].set_active(False)
                             process_all_events()
                             return
-            GPS.Logger('TESTSUITE').log('Local config not found "%s"' % text)
+            GPS.Logger("TESTSUITE").log('Local config not found "%s"' % text)
 
         windows = Gtk.Window.list_toplevels()
         p = view
-        while p.get_parent() and p.__class__.__name__ != 'AdaMDIChild':
+        while p.get_parent() and p.__class__.__name__ != "AdaMDIChild":
             p = p.get_parent()
 
-        b = get_widget_by_name('local-config', [p])
+        b = get_widget_by_name("local-config", [p])
         button = b.get_child()
         assert isinstance(button, Gtk.Button)
         # ??? Sending an event doesn't seem to work because there is a grab
         # pending. The error might be because we generate our events with a
         # 0 timestamp, which might be "older" than the grab timestamp.
-        click_in_widget(button.get_window(), button=1,
-                        events=[Gdk.EventType.BUTTON_PRESS])
+        click_in_widget(
+            button.get_window(), button=1, events=[Gdk.EventType.BUTTON_PRESS]
+        )
         GLib.idle_add(onidle, windows)
 
     def select_locations_contextual(menuName, onselected, *args, **kwargs):
         """Select the selection of a contextual menu in the locations window.
-           When the menu item has been selected, the menu is closed and
-           onselected is called with the extra arguments passed to this
-           function
+        When the menu item has been selected, the menu is closed and
+        onselected is called with the extra arguments passed to this
+        function
         """
 
         def internal_onidle(windows):
             tree = pygps.get_widgets_by_type(
-                Gtk.TreeView,
-                GPS.MDI.get('Locations').pywidget())[0]
+                Gtk.TreeView, GPS.MDI.get("Locations").pywidget()
+            )[0]
             model = tree.get_model()
 
             if tree.get_selection().get_mode() == Gtk.SelectionMode.MULTIPLE:
@@ -914,14 +946,14 @@ try:
 
     def select_coverage_contextual(menuName, onselected, *args, **kwargs):
         """Select the selection of a contextual menu in the Code Coverage
-           window.
-           When the menu item has been selected, the menu is closed and
-           onselected is called with the extra arguments passed to this
-           function
+        window.
+        When the menu item has been selected, the menu is closed and
+        onselected is called with the extra arguments passed to this
+        function
         """
 
         def internal_onidle(windows):
-            tree = get_widget_by_name('Coverage')
+            tree = get_widget_by_name("Coverage")
             model = tree.get_model()
             path = model.get_path(tree.get_selection().get_selected()[1])
 
@@ -941,9 +973,9 @@ try:
         GLib.idle_add(internal_onidle, windows)
 
     def dump_locations_tree():
-        mdi = GPS.MDI.get('Locations')
+        mdi = GPS.MDI.get("Locations")
         if mdi is None:
-            simple_error('Locations window is not opened')
+            simple_error("Locations window is not opened")
             safe_exit()
         else:
             tree = pygps.get_widgets_by_type(Gtk.TreeView, mdi.pywidget())[0]
@@ -951,7 +983,7 @@ try:
 
     def load_messages_from_file(name, onload, *args, **kwargs):
         """Loads contents of the Messages window and parse it to fill Locations
-           view.
+        view.
         """
 
         def internal_onloaded():
@@ -964,28 +996,28 @@ try:
             wait_for_tasks(internal_onloaded)
 
         before_dialog(internal_onfileopendialog)
-        GPS.execute_action('Messages load from file')
+        GPS.execute_action("Messages load from file")
 
     class Test_Queue:
         """A list of tests to perform. One test is executed when the previous
-           has finished (after setting an explicit flag). The goal is that
-           tests that need idle_callbacks can still be performed sequentially.
+        has finished (after setting an explicit flag). The goal is that
+        tests that need idle_callbacks can still be performed sequentially.
 
-           Example of use:
+        Example of use:
 
-            q = Test_Queue ()
+         q = Test_Queue ()
 
-            def my_test (p1, p2):
-                ...
-                q.test_finished ()
+         def my_test (p1, p2):
+             ...
+             q.test_finished ()
 
-            q.add (my_test, param1, param2)
-            q.add (my_test, param3, param4)
+         q.add (my_test, param1, param2)
+         q.add (my_test, param3, param4)
 
-           The queue will automatically start executing in the "gps_started"
-           hook callback, unless you pass auto_execute to False in the
-           constructor. This means you do not have to connect to that hook
-           yourself
+        The queue will automatically start executing in the "gps_started"
+        hook callback, unless you pass auto_execute to False in the
+        constructor. This means you do not have to connect to that hook
+        yourself
         """
 
         def __init__(self, auto_exec=True):
@@ -995,11 +1027,11 @@ try:
 
             self.list = []
             if auto_exec:
-                GPS.Hook('gps_started').add(self.execute)
+                GPS.Hook("gps_started").add(self.execute)
 
         def add(self, callback, *args, **kwargs):
             """Add a new test to be executed when the previous ones have
-               finished.
+            finished.
             """
 
             self.list.append((callback, args, kwargs))
@@ -1035,7 +1067,7 @@ try:
 except Exception:
     # No graphical mode
     def enqueue(fun, timeout=200):
-        """ Register fun to be executed once, after timeout milliseconds.
+        """Register fun to be executed once, after timeout milliseconds.
         This function is useful for programming tests that require GPS to
         process events in a sequence."""
 

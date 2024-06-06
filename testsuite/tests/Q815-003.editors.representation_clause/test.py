@@ -16,40 +16,42 @@ def play_scenario(name, msg):
     GPS.execute_action(SHOW)
     yield wait_tasks(other_than=known_tasks)
     show_chars = buf.characters_count()
-    gps_assert(show_chars > init_chars,
-               True,
-               "Missing representation clause in " + msg)
+    gps_assert(show_chars > init_chars, True, "Missing representation clause in " + msg)
     # The second call to SHOW should not duplicate the number of special lines
     GPS.execute_action(SHOW)
     yield wait_tasks(other_than=known_tasks)
-    gps_assert(buf.characters_count(),
-               show_chars,
-               "Issue with the second show for " + msg)
+    gps_assert(
+        buf.characters_count(), show_chars, "Issue with the second show for " + msg
+    )
     expected = GPS.Console().get_text()
     # Should remove all the added lines
     GPS.execute_action(HIDE)
     yield wait_tasks(other_than=known_tasks)
-    gps_assert(buf.characters_count(),
-               init_chars,
-               "Issue with the first hide for " + msg)
-    gps_assert(GPS.Console().get_text(),
-               expected,
-               "No message should be added by hide for " + msg)
+    gps_assert(
+        buf.characters_count(), init_chars, "Issue with the first hide for " + msg
+    )
+    gps_assert(
+        GPS.Console().get_text(),
+        expected,
+        "No message should be added by hide for " + msg,
+    )
     # The second call to HIDE should have no effect
     GPS.execute_action(HIDE)
     yield wait_tasks(other_than=known_tasks)
-    gps_assert(buf.characters_count(),
-               init_chars,
-               "Issue with the second hide for " + msg)
-    gps_assert(GPS.Console().get_text(),
-               expected,
-               "No message should be added by hide for " + msg)
+    gps_assert(
+        buf.characters_count(), init_chars, "Issue with the second hide for " + msg
+    )
+    gps_assert(
+        GPS.Console().get_text(),
+        expected,
+        "No message should be added by hide for " + msg,
+    )
     # No error for a SHOW after a HIDE
     GPS.execute_action(SHOW)
     yield wait_tasks(other_than=known_tasks)
-    gps_assert(buf.characters_count(),
-               show_chars,
-               "Issue with the last show for " + msg)
+    gps_assert(
+        buf.characters_count(), show_chars, "Issue with the last show for " + msg
+    )
 
 
 @run_test_driver

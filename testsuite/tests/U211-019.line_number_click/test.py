@@ -6,8 +6,12 @@
 #   - the two clicking operations above should work even if the cursor is not
 #     on the line being clicked
 
-from gs_utils.internal.utils import run_test_driver, gps_assert, \
-   wait_until_not_busy, timeout
+from gs_utils.internal.utils import (
+    run_test_driver,
+    gps_assert,
+    wait_until_not_busy,
+    timeout,
+)
 
 
 @run_test_driver
@@ -53,4 +57,3 @@ def driver():
 
     # One last check that the cursor didn't move
     gps_assert(view.cursor().line(), 3, "cursor moved after clicking on line")
-

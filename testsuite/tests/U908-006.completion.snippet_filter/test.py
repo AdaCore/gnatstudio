@@ -11,7 +11,6 @@ EXPECTED_RESULT = "Obj.Do_Nothing (Hello, Hello);"
 
 @run_test_driver
 def run_test():
-
     def auto_complete(s):
         for ch in s:
             send_key_event(ord(ch))
@@ -49,5 +48,8 @@ def run_test():
 
     # Verify that the snippet parameters have been inserted properly
     line = buf.get_chars(buf.at(7, 1), buf.at(7, 1).end_of_line())
-    gps_assert(line.strip(), EXPECTED_RESULT.strip(),
-               "The snippet parameter values have not been inserted properly")
+    gps_assert(
+        line.strip(),
+        EXPECTED_RESULT.strip(),
+        "The snippet parameter values have not been inserted properly",
+    )

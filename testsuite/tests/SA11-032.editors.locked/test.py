@@ -23,8 +23,7 @@ def run_test():
 
     test_buf.current_view().goto(test_buf.at(3, 1).end_of_line())
     GPS.execute_action("backward delete")
-    gps_assert(test_buf.is_modified(), True,
-               "Locked editors should still be editable")
+    gps_assert(test_buf.is_modified(), True, "Locked editors should still be editable")
     GPS.execute_action("undo")
 
     main_buf = GPS.EditorBuffer.get(GPS.File("main.adb"))
@@ -33,9 +32,11 @@ def run_test():
     GPS.execute_action("goto declaration")
     yield wait_language_server("textDocument/declaration", "Ada")
 
-    gps_assert(len(test_buf.views()), 2,
-               "Opened view for test.ads is locked: another view should have "
-               + "been opened")
+    gps_assert(
+        len(test_buf.views()),
+        2,
+        "Opened view for test.ads is locked: another view should have " + "been opened",
+    )
 
     test_buf.views()[0].destroy()
 
@@ -49,10 +50,13 @@ def run_test():
     msgs = GPS.Message.list(category="Builder results")
     gps_assert(len(msgs), 1, "We should have an error after compiling")
 
-    gps_assert(len(test_buf.views()), 2,
-               "Opened view for test.ads is locked: another view should have "
-               + "been opened after appearance of compilation error in "
-               + "Locations")
+    gps_assert(
+        len(test_buf.views()),
+        2,
+        "Opened view for test.ads is locked: another view should have "
+        + "been opened after appearance of compilation error in "
+        + "Locations",
+    )
 
     test_buf.views()[0].destroy()
 
@@ -67,6 +71,9 @@ def run_test():
     send_key_event(GDK_RETURN)
     yield wait_idle()
 
-    gps_assert(len(test_buf.views()), 2,
-               "Opened view for test.ads is locked: another view should have "
-               + "been opened when selecting test.ads via the omnisearch")
+    gps_assert(
+        len(test_buf.views()),
+        2,
+        "Opened view for test.ads is locked: another view should have "
+        + "been opened when selecting test.ads via the omnisearch",
+    )

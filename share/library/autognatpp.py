@@ -9,6 +9,6 @@ import gnatpp
 import gs_utils
 
 
-@gs_utils.hook('file_saved')
+@gs_utils.hook("file_saved")
 def on_file_saved(file):
     gnatpp.gnatpp(file)

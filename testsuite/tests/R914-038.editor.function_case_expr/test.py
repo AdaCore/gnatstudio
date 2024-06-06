@@ -2,11 +2,10 @@
 from GPS import *
 from gs_utils.internal.utils import *
 
-expected_out_1 = \
-    ['Main',
-     ['Bbb',
-      'Hello <span foreground="#A0A0A0"> return String</span>',
-      'Bool']]
+expected_out_1 = [
+    "Main",
+    ["Bbb", 'Hello <span foreground="#A0A0A0"> return String</span>', "Bool"],
+]
 
 
 @run_test_driver
@@ -15,6 +14,8 @@ def run_test():
     GPS.execute_action("open Outline")
     yield wait_outline("main.adb")
     explorer = get_widget_by_name("Outline View Tree")
-    gps_assert(dump_tree_model(explorer.get_model(), 1),
-               expected_out_1,
-               "Wrong outline view output")
+    gps_assert(
+        dump_tree_model(explorer.get_model(), 1),
+        expected_out_1,
+        "Wrong outline view output",
+    )

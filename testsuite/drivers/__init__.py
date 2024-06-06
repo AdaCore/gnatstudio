@@ -5,8 +5,7 @@ import os
 import logging
 import traceback
 
-TESTSUITE_ROOT_DIR = os.path.dirname(
-    os.path.dirname(os.path.abspath(__file__)))
+TESTSUITE_ROOT_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 PACKAGE_ROOT_DIR = os.path.dirname(TESTSUITE_ROOT_DIR)
 
@@ -20,13 +19,14 @@ class GPSTestDriver(TestDriver):
             otherwise.
         :rtype: None | TestStatus
         """
-        if 'skip' in self.test_env:
+        if "skip" in self.test_env:
             eval_env = {
-                'env': self.env,
-                'test_env': self.test_env,
-                'disk_space': lambda: df(self.env.working_dir)}
+                "env": self.env,
+                "test_env": self.test_env,
+                "disk_space": lambda: df(self.env.working_dir),
+            }
 
-            for status, expr in self.test_env['skip']:
+            for status, expr in self.test_env["skip"]:
                 try:
                     if eval(expr, eval_env):
                         return TestStatus[status]

@@ -12,6 +12,9 @@ def test_driver():
     GPS.execute_action("gnatcheck root project")
     yield wait_tasks(other_than=known_tasks)
 
-    gps_assert ("-rules" in GPS.Console().get_text(), False,
-                "The -rules option should not be speicified again, since " +
-                "it's already specified in the .gpr file")
+    gps_assert(
+        "-rules" in GPS.Console().get_text(),
+        False,
+        "The -rules option should not be speicified again, since "
+        + "it's already specified in the .gpr file",
+    )

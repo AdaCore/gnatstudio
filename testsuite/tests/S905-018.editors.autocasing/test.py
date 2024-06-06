@@ -19,6 +19,8 @@ def driver():
     buf.current_view().goto(buf.at(1, len(EXPECTED) - 1))
     send_key_event(GDK_RETURN)
     yield wait_idle()
-    gps_assert(buf.get_chars().rstrip(),
-               EXPECTED[:-2] + "\n    " + EXPECTED[-2:],
-               "Issue when inserting new line")
+    gps_assert(
+        buf.get_chars().rstrip(),
+        EXPECTED[:-2] + "\n    " + EXPECTED[-2:],
+        "Issue when inserting new line",
+    )

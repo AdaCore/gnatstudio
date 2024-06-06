@@ -142,7 +142,8 @@ GPS.Preference(SPAWN_BROWSER_PREF).create(
     "Spawn a browser",
     "boolean",
     "Load generated documentation in a browser automatically.",
-    True)
+    True,
+)
 
 
 @interactive(name="documentation generate for project", category="GNATdoc")
@@ -162,9 +163,8 @@ def generate_doc_project(self, recursive=False):
     """
 
     run_gnatdoc(
-        target="gnatdoc",
-        force=True,
-        extra_args=["-P", self.file().path, recurse_flag])
+        target="gnatdoc", force=True, extra_args=["-P", self.file().path, recurse_flag]
+    )
 
 
 def run_gnatdoc(target, force=False, extra_args=[]):
@@ -173,8 +173,7 @@ def run_gnatdoc(target, force=False, extra_args=[]):
     """
     extra = list(extra_args)
 
-    GPS.BuildTarget(target).execute(
-        synchronous=False, force=force, extra_args=extra)
+    GPS.BuildTarget(target).execute(synchronous=False, force=force, extra_args=extra)
 
 
 GPS.Project.generate_doc = generate_doc_project
@@ -192,13 +191,12 @@ class GNATdoc_Module(modules.Module):
         # Initialize trusted_mode and other preferences
         self.on_preferences_changed(None)
 
-    def on_compilation_finished(self, hook, category,
-                                target_name="", *args):
-
+    def on_compilation_finished(self, hook, category, target_name="", *args):
         if target_name.startswith("gnatdoc"):
             p = GPS.Project.root()
             doc_dir = p.get_attribute_as_string(
-                package="Documentation", attribute="Output_Dir")
+                package="Documentation", attribute="Output_Dir"
+            )
 
             if not doc_dir:
                 object_dirs = p.object_dirs()
@@ -211,5 +209,4 @@ class GNATdoc_Module(modules.Module):
                 GPS.HTML.browse(os.path.join(doc_dir, "index.html"))
 
     def on_preferences_changed(self, hook_name):
-        GNATdoc_Module.trusted_mode = GPS.Preference(
-            "Prj-Editor-Trusted-Mode").get()
+        GNATdoc_Module.trusted_mode = GPS.Preference("Prj-Editor-Trusted-Mode").get()

@@ -18,21 +18,13 @@ def driver():
 
     v.goto(b.at(2, 1))
     GPS.execute_action("move to next line")
-    gps_assert(
-        v.cursor().line(), 3,
-        "'move to next line' does not work")
+    gps_assert(v.cursor().line(), 3, "'move to next line' does not work")
 
     GPS.execute_action("move to previous line")
-    gps_assert(
-        v.cursor().line(), 2,
-        "'move to previous line' does not work")
+    gps_assert(v.cursor().line(), 2, "'move to previous line' does not work")
 
     GPS.execute_action("move to next paragraph")
-    gps_assert(
-        v.cursor().line(), 7,
-        "'move to next paragraph' does not work")
+    gps_assert(v.cursor().line(), 7, "'move to next paragraph' does not work")
 
     GPS.execute_action("move to previous paragraph")
-    gps_assert(
-        v.cursor().line(), 1,
-        "'move to previous paragraph' does not work")
+    gps_assert(v.cursor().line(), 1, "'move to previous paragraph' does not work")

@@ -14,7 +14,6 @@ can_update_body = True
 
 
 class OnExit(object):
-
     def __init__(self, file, location):
         self.file = file
         self.location = location
@@ -67,12 +66,12 @@ def generate_body(as_separate, for_subprogram):
 
     file = context.file()
     sv = GPS.Project.scenario_variables()
-    x_args = ['-X%s=%s' % (k, v) for k, v in list(sv.items())] if sv else []
+    x_args = ["-X%s=%s" % (k, v) for k, v in list(sv.items())] if sv else []
     confirmation_msg = ""
 
     target = GPS.get_target()
-    gnatstub_exe = 'gnatstub'
-    prefixed_gnatstub_exe = target + '-gnatstub'
+    gnatstub_exe = "gnatstub"
+    prefixed_gnatstub_exe = target + "-gnatstub"
 
     # Use the target prefixed gnatstub executable if present. If not, just
     # use the native 'gnatstub', with the '--target' option when needed.
@@ -82,30 +81,30 @@ def generate_body(as_separate, for_subprogram):
     else:
         command = [gnatstub_exe]
         if target:
-            command.append('--target=' + target)
+            command.append("--target=" + target)
             runtime = GPS.get_runtime()
 
             if runtime:
-                command.append('--RTS=' + runtime)
+                command.append("--RTS=" + runtime)
 
     loc = None
     if for_subprogram:
         loc = context.location()
-        command.append('--update-body=' + str(loc.line()))
-        confirmation_msg = \
-            "Are you sure you want to update the body of %s?" % (
-                context.entity_name())
+        command.append("--update-body=" + str(loc.line()))
+        confirmation_msg = "Are you sure you want to update the body of %s?" % (
+            context.entity_name()
+        )
     else:
-        confirmation_msg = \
-            "Are you sure you want to generate the body of %s?" % (
-                file.base_name())
+        confirmation_msg = "Are you sure you want to generate the body of %s?" % (
+            file.base_name()
+        )
 
     if as_separate:
-        command.append('--subunits')
+        command.append("--subunits")
 
     proj = context.project()
     if proj:
-        command.append('-P%s' % proj.file().path)
+        command.append("-P%s" % proj.file().path)
     command += x_args + [file.path, file.directory()]
 
     if GPS.MDI.yes_no_dialog(confirmation_msg):
@@ -113,7 +112,8 @@ def generate_body(as_separate, for_subprogram):
             command,
             task_manager=True,
             show_command=True,
-            on_exit=OnExit(file, loc).on_exit)
+            on_exit=OnExit(file, loc).on_exit,
+        )
 
 
 @gs_utils.interactive(
@@ -123,9 +123,10 @@ def generate_body(as_separate, for_subprogram):
     filter=gs_utils.in_ada_file,
     name="generate body",
     for_learning=True,
-    description="Run gnatstub on the selected Ada specification to " +
-                "generate a matching body.",
-    static_path="Generate Body")
+    description="Run gnatstub on the selected Ada specification to "
+    + "generate a matching body.",
+    static_path="Generate Body",
+)
 def generate_plain_body():
     generate_body(as_separate=False, for_subprogram=False)
 
@@ -137,9 +138,10 @@ def generate_plain_body():
     filter=gs_utils.in_ada_file,
     name="generate body for subprogram",
     for_learning=False,
-    description="Run gnatstub on the selected Ada subprogram to " +
-                "generate a matching body.",
-    static_path="Generate Body for Subprogram")
+    description="Run gnatstub on the selected Ada subprogram to "
+    + "generate a matching body.",
+    static_path="Generate Body for Subprogram",
+)
 def generate_plain_body_subprogram():
     generate_body(as_separate=False, for_subprogram=True)
 
@@ -151,8 +153,9 @@ def generate_plain_body_subprogram():
     filter=gs_utils.in_ada_file,
     name="generate body as separate",
     for_learning=False,
-    description="Run gnatstub on the selected Ada specification " +
-                "to generate a matching body stub and separate file.")
+    description="Run gnatstub on the selected Ada specification "
+    + "to generate a matching body stub and separate file.",
+)
 def generate_separate_body():
     generate_body(as_separate=True, for_subprogram=False)
 
@@ -164,7 +167,8 @@ def generate_separate_body():
     filter=gs_utils.in_ada_file,
     name="generate body for subprogram as separate",
     for_learning=False,
-    description="Run gnatstub on the selected Ada subprogram specification " +
-                "to generate a matching body stub and separate file.")
+    description="Run gnatstub on the selected Ada subprogram specification "
+    + "to generate a matching body stub and separate file.",
+)
 def generate_separate_body_subprogram():
     generate_body(as_separate=True, for_subprogram=True)

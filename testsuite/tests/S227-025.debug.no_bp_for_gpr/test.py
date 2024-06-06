@@ -14,4 +14,5 @@ def test_driver():
         GPS.Action("debug set line breakpoint").can_execute(),
         False,
         "The 'debug set line breakpoint' should not be executable from "
-        + "project files.")
+        + "project files.",
+    )

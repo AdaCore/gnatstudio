@@ -31,15 +31,21 @@ def run_test():
 
     path = find_in_tree(tree, NAME_COLUMN, BODY)
     click_in_tree(tree, path=path, events=pygps.single_click_events)
-    gps_assert(GPS.MDI.get(BODY),
-               None,
-               "Simple clicking on a file row should not open the file")
+    gps_assert(
+        GPS.MDI.get(BODY),
+        None,
+        "Simple clicking on a file row should not open the file",
+    )
     click_in_tree(tree, path=path, events=pygps.double_click_events)
-    gps_assert(GPS.MDI.get(BODY) is not None,
-               True,
-               "Double clicking on a file row should open the file")
+    gps_assert(
+        GPS.MDI.get(BODY) is not None,
+        True,
+        "Double clicking on a file row should open the file",
+    )
     expected = len(GPS.MDI.children())
     click_in_tree(tree, path=path, events=pygps.double_click_events)
-    gps_assert(len(GPS.MDI.children()),
-               expected,
-               "File already opened: double-clicking should have no effect")
+    gps_assert(
+        len(GPS.MDI.children()),
+        expected,
+        "File already opened: double-clicking should have no effect",
+    )

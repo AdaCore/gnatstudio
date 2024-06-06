@@ -75,7 +75,6 @@ def list_to_xml(items):
 
 
 class AdareducerPlugin(Module):
-
     # Define a build target
     BUILD_TARGETS = [
         X(

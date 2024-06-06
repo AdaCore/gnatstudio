@@ -12,7 +12,7 @@ WARNING = "['<b>Couldn&apos;t get assembly code</b>']"
 @run_test_driver
 def test_driver():
     GPS.execute_action("Build & Debug Number 1")
-    yield hook('debugger_started')
+    yield hook("debugger_started")
     yield wait_idle()
 
     GPS.execute_action("open assembly view")
@@ -23,6 +23,8 @@ def test_driver():
     tree = get_widgets_by_type(Gtk.TreeView, view.pywidget())[0]
     model = tree.get_model()
     # The strip() is here to remove the newline
-    gps_assert(str(dump_tree_model(model, COLUMN)).strip(),
-               WARNING,
-               "Missing warning in the Assembly view")
+    gps_assert(
+        str(dump_tree_model(model, COLUMN)).strip(),
+        WARNING,
+        "Missing warning in the Assembly view",
+    )

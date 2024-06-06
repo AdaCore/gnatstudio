@@ -70,7 +70,7 @@ class Promise(object):
     def __init__(self):
         self.__success = []  # Called when the promise is resolved
         self.__failure = []  # Called when the promise is rejected
-        self.__result = None   # The result of the promise
+        self.__result = None  # The result of the promise
         self._state = Promise.PENDING
 
     def then(self, success=None, failure=None):
@@ -191,7 +191,7 @@ class Stream(Promise):
 
         self.then(success=oncompleted, failure=onerror)
 
-        return self   # for chaining
+        return self  # for chaining
 
     def emit(self, value):
         """
@@ -221,7 +221,8 @@ class Stream(Promise):
         self.subscribe(
             onnext=lambda value: out.emit(transform(value)),
             oncompleted=lambda value: out.resolve(value),
-            onerror=lambda reason: out.reject(reason))
+            onerror=lambda reason: out.reject(reason),
+        )
         return out
 
     def flatMap(self, transform):
@@ -246,7 +247,8 @@ class Stream(Promise):
         self.subscribe(
             onnext=lambda value: transform(out, value),
             oncompleted=oncompleted,
-            onerror=lambda reason: out.reject(reason))
+            onerror=lambda reason: out.reject(reason),
+        )
         return out
 
 
@@ -363,7 +365,7 @@ def wait_tasks(other_than=None):
             process_all_events()
             GLib.idle_add(lambda: p.resolve())
             return False
-        return True   # will try again
+        return True  # will try again
 
     GLib.timeout_add(200, timeout_handler)
     return p
@@ -380,7 +382,7 @@ def wait_specific_tasks(names):
         if not [x for x in GPS.Task.list() if x.name() in names]:
             GLib.idle_add(lambda: p.resolve())
             return False
-        return True   # will try again
+        return True  # will try again
 
     GLib.timeout_add(200, timeout_handler)
     return p
@@ -451,6 +453,7 @@ def hook(hook_name, debounced=False):
             p.resolve(*args)
         else:
             p.resolve(args)
+
     if debounced:
         GPS.Hook(hook_name).add_debounce(hook_handler)
     else:
@@ -459,7 +462,7 @@ def hook(hook_name, debounced=False):
 
 
 def wait_signal(widget, signal_name, *args):
-    """ This primitive allows the writer of a workflow to connect to a Gtk+
+    """This primitive allows the writer of a workflow to connect to a Gtk+
     signal once, as if it were a function, and get the parameters of the signal
     handler as return values. For example:
 
@@ -502,11 +505,17 @@ class ProcessWrapper(object):
 
     """
 
-    def __init__(self, cmdargs=[], spawn_console=False,
-                 directory=None, regexp='.+',
-                 single_line_regexp=True, block_exit=True,
-                 give_focus_on_create=False,
-                 ignore_error=False):
+    def __init__(
+        self,
+        cmdargs=[],
+        spawn_console=False,
+        directory=None,
+        regexp=".+",
+        single_line_regexp=True,
+        block_exit=True,
+        give_focus_on_create=False,
+        ignore_error=False,
+    ):
         """
         Initialize and run a process with no promises,
         no user-defined pattern to match,
@@ -574,10 +583,10 @@ class ProcessWrapper(object):
                 single_line_regexp=single_line_regexp,
                 block_exit=block_exit,
                 on_match=self.__on_match,
-                on_exit=self.__on_exit)
+                on_exit=self.__on_exit,
+            )
         except Exception:
-            GPS.Logger("PROMISES").log(
-                "Failed to spawn %s" % (self.__command, ))
+            GPS.Logger("PROMISES").log("Failed to spawn %s" % (self.__command,))
             self.__process = None
             return
 
@@ -591,27 +600,27 @@ class ProcessWrapper(object):
             else:
                 console_name = cmdargs[0]
 
-            toolbar_name = cmdargs[0] + '_toolbar'
+            toolbar_name = cmdargs[0] + "_toolbar"
             self.__console = GPS.Console(
                 name=console_name,
                 accept_input=False,
                 on_destroy=self.__on_console_destroy,
                 toolbar_name=toolbar_name,
-                give_focus_on_create=give_focus_on_create)
-            self.__action = GPS.Action('launch ' + cmdargs[0])
+                give_focus_on_create=give_focus_on_create,
+            )
+            self.__action = GPS.Action("launch " + cmdargs[0])
 
-            self.__console.write_with_links("%s\n" % ' '.join(self.__command))
+            self.__console.write_with_links("%s\n" % " ".join(self.__command))
 
             # Create the associated action and relaunch button if it
             # does not exist yet.
             if not self.__action.exists():
                 self.__action.create(
                     on_activate=self.__relaunch,
-                    description='relaunch the spawned process',
-                    icon='gps-refresh-symbolic')
-                self.__action.button(
-                    toolbar=toolbar_name,
-                    label='Relaunch')
+                    description="relaunch the spawned process",
+                    icon="gps-refresh-symbolic",
+                )
+                self.__action.button(toolbar=toolbar_name, label="Relaunch")
 
             def __show_console_on_exit(status):
                 end_time = time.time()
@@ -620,8 +629,11 @@ class ProcessWrapper(object):
                     output += " process terminated successfully"
                 else:
                     output += " process exited with status " + str(status)
-                output += ", elapsed time: " + TimeDisplay.get_elapsed(
-                    self.__start_time, end_time) + "\n"
+                output += (
+                    ", elapsed time: "
+                    + TimeDisplay.get_elapsed(self.__start_time, end_time)
+                    + "\n"
+                )
                 if self.__console:
                     self.__console.write_with_links(output)
 
@@ -629,9 +641,7 @@ class ProcessWrapper(object):
                 if self.__console:
                     self.__console.write_with_links("%s\n" % out)
 
-            self.stream.subscribe(
-                __display_output,
-                oncompleted=__show_console_on_exit)
+            self.stream.subscribe(__display_output, oncompleted=__show_console_on_exit)
 
     def __on_match(self, process, match, unmatch):
         """
@@ -662,7 +672,7 @@ class ProcessWrapper(object):
         if self.__current_promise is not None:
             p = self.__current_pattern.search(self.__output)
             if p:
-                self.__output = self.__output[p.end(0):]
+                self.__output = self.__output[p.end(0) :]
                 self.__resolve_promise(p.group(0))
             elif self.finished:
                 # We will never be able to match anyway
@@ -670,9 +680,9 @@ class ProcessWrapper(object):
 
     def __on_exit(self, process, status, remaining_output):
         """
-           Call by GPS when the process is finished.
-           Final_promise will be solved with status
-           Current_promise will be solved with False
+        Call by GPS when the process is finished.
+        Final_promise will be solved with status
+        Current_promise will be solved with False
         """
         self.finished = True
         if self.__current_promise is not None:
@@ -695,10 +705,10 @@ class ProcessWrapper(object):
 
         # User feedback in case of error
         if not self.__ignore_error and status and remaining_output:
-            GPS.Console().write('Process "%s" failed: %s (status: %s)\n' %
-                                (self.__command[0],
-                                 remaining_output,
-                                 str(status)))
+            GPS.Console().write(
+                'Process "%s" failed: %s (status: %s)\n'
+                % (self.__command[0], remaining_output, str(status))
+            )
 
     def wait_until_match(self, pattern, timeout=0):
         """
@@ -748,7 +758,7 @@ class ProcessWrapper(object):
 
         s = self.wait_until_match("^.*\n")
         if s is None:
-            p.resolve(None)   # already finished
+            p.resolve(None)  # already finished
         else:
             s.then(lambda line: p.resolve(line[:-1] if line else None))
 
@@ -816,7 +826,7 @@ class ProcessWrapper(object):
         class map_to_line:
             def __init__(self):
                 self.buffer = ""
-                self.__re = re.compile('^.*\n')
+                self.__re = re.compile("^.*\n")
 
             def __call__(self, out_stream, output):
                 self.buffer += output
@@ -825,7 +835,7 @@ class ProcessWrapper(object):
                     if not p:
                         break
                     out_stream.emit(p.group(0)[:-1])
-                    self.buffer = self.buffer[p.end(0):]
+                    self.buffer = self.buffer[p.end(0) :]
 
             def oncompleted(self, out_stream, status):
                 if self.buffer:
@@ -850,14 +860,20 @@ class ProcessWrapper(object):
         def on_terminate(status):
             out = "".join(output)
             if show_if_error and status != 0:
-                GPS.Console().write_with_links("%s\n" %
-                                               (" ".join(self.__command, )))
+                GPS.Console().write_with_links(
+                    "%s\n"
+                    % (
+                        " ".join(
+                            self.__command,
+                        )
+                    )
+                )
                 GPS.Console().write_with_links(out)
             p.resolve((status, "".join(output)))
 
         self.stream.subscribe(
-            onnext=lambda out: output.append(out),
-            oncompleted=on_terminate)
+            onnext=lambda out: output.append(out), oncompleted=on_terminate
+        )
         return p
 
     def __on_timeout(self):
@@ -882,8 +898,9 @@ class ProcessWrapper(object):
             self.__process.interrupt()
             if self.__console:
                 self.__console.write_with_links(
-                    "\n<^C> process interrupted (elapsed time: %s)\n" %
-                    TimeDisplay.get_elapsed(self.__start_time, end_time))
+                    "\n<^C> process interrupted (elapsed time: %s)\n"
+                    % TimeDisplay.get_elapsed(self.__start_time, end_time)
+                )
 
     def __on_console_destroy(self, console):
         """
@@ -909,15 +926,16 @@ class ProcessWrapper(object):
             command=self.__command,
             regexp=".+",
             on_match=self.__on_match,
-            on_exit=self.__on_exit)
+            on_exit=self.__on_exit,
+        )
         self.__start_time = time.time()
 
 
 class DAPResponse(object):
-    """ Represents a response sent by the gdb over DAP """
+    """Represents a response sent by the gdb over DAP"""
 
     def __init__(self):
-        """ Initialization procedure, meant to be called by request_promise """
+        """Initialization procedure, meant to be called by request_promise"""
 
         self.is_valid = False
         # Whether the gdb responded with a response
@@ -936,41 +954,46 @@ class DAPResponse(object):
         # as a Python view of the gdb response.
 
     def __str__(self):
-        return ("is_valid: {}\nis_reject: {}\n"
-                "is_error: {}\nerror: '{}'\ndata: '{}'\n".format(
-                    self.is_valid, self.is_reject, self.is_error,
-                    self.error_message, self.data))
+        return (
+            "is_valid: {}\nis_reject: {}\n"
+            "is_error: {}\nerror: '{}'\ndata: '{}'\n".format(
+                self.is_valid,
+                self.is_reject,
+                self.is_error,
+                self.error_message,
+                self.data,
+            )
+        )
 
 
 class DebuggerWrapper(object):
     """
-       DebuggerWrapper is a debbuger (essentially a process in GPS) manager
-       It make a promise (yield object of the promise class) when user:
-           want to send a command to debugger
+     DebuggerWrapper is a debbuger (essentially a process in GPS) manager
+     It make a promise (yield object of the promise class) when user:
+         want to send a command to debugger
 
-       and the corresponding promises are answered after
-           1 the debugger is not busy, execute the command required
-           2 timeout
+     and the corresponding promises are answered after
+         1 the debugger is not busy, execute the command required
+         2 timeout
 
-      Instantiating a DebuggerWrapper instance raises an exception when
-      the underlying debugger fails to start.
+    Instantiating a DebuggerWrapper instance raises an exception when
+    the underlying debugger fails to start.
     """
 
     # static variable for interval that the manager checks whether
     # the debugger is busy, in milliseconds
     __query_interval = 200
 
-    def __init__(self, f, reuse_existing=True,
-                 remote_target='', remote_protocol=''):
+    def __init__(self, f, reuse_existing=True, remote_target="", remote_protocol=""):
         """
-           Initialize a manager, begin a debugger on the given file
-           with no timers, no promises, no command.
+        Initialize a manager, begin a debugger on the given file
+        with no timers, no promises, no command.
 
-           The optional ``remote_target`` and ``remote_protocol`` parameters
-           are used to initialize a remote debugging session when spawning the
-           debugger. When not specified, the ``IDE'Program_Host`` and
-           ``IDE'Communication_Protocol`` are used if present in the .gpr
-            project file.
+        The optional ``remote_target`` and ``remote_protocol`` parameters
+        are used to initialize a remote debugging session when spawning the
+        debugger. When not specified, the ``IDE'Program_Host`` and
+        ``IDE'Communication_Protocol`` are used if present in the .gpr
+         project file.
         """
 
         if reuse_existing:
@@ -980,8 +1003,7 @@ class DebuggerWrapper(object):
 
                 # Raise the debugger's console if we are reusing an existing
                 # one.
-                GPS.MDI.get_by_child(
-                    self.__debugger.get_console()).raise_window()
+                GPS.MDI.get_by_child(self.__debugger.get_console()).raise_window()
 
                 # if we reach this, a debugger is running: interrupt it
                 if GPS.Action("debug interrupt").can_execute():
@@ -994,7 +1016,8 @@ class DebuggerWrapper(object):
                 self.__debugger = GPS.Debugger.spawn(
                     executable=f,
                     remote_target=remote_target,
-                    remote_protocol=remote_protocol)
+                    remote_protocol=remote_protocol,
+                )
                 if self.__debugger:
                     pass
                 else:
@@ -1003,7 +1026,8 @@ class DebuggerWrapper(object):
             self.__debugger = GPS.Debugger.spawn(
                 executable=f,
                 remote_target=remote_target,
-                remote_protocol=remote_protocol)
+                remote_protocol=remote_protocol,
+            )
             if not self.__debugger:
                 raise Exception("Could not launch the debugger")
 
@@ -1024,22 +1048,20 @@ class DebuggerWrapper(object):
 
     def __is_busy(self, timeout):
         """
-           Called by GPS at each interval.
+        Called by GPS at each interval.
         """
 
         # if the debugger is not busy
         if not self.__debugger.is_busy():
-
             # remove all timers
             self.__remove_timers()
 
             # and if there's cmd to run, send it
             if self.__next_cmd is not None:
-
                 if self.__next_cmd != "":
                     self.__output = self.__debugger.send(
-                        cmd=self.__next_cmd,
-                        show_in_console=True)
+                        cmd=self.__next_cmd, show_in_console=True
+                    )
                     self.__next_cmd = None
                     self.__remove_timers()
                     self.__this_promise.resolve(self.__output)
@@ -1051,7 +1073,7 @@ class DebuggerWrapper(object):
 
     def __on_cmd_timeout(self, timeout):
         """
-           Called by GPS at when the deadline defined by user is reached
+        Called by GPS at when the deadline defined by user is reached
         """
 
         # remove all timers
@@ -1064,7 +1086,7 @@ class DebuggerWrapper(object):
 
     def __remove_timers(self):
         """
-           Called in timers to remove both: prepare for new timer registration
+        Called in timers to remove both: prepare for new timer registration
         """
         if self.__deadline:
             try:
@@ -1082,12 +1104,12 @@ class DebuggerWrapper(object):
 
     def wait_and_send(self, cmd="", timeout=0, block=False):
         """
-           Called by user on request for command within deadline (time)
-           Promise returned here will be answered with: output
+        Called by user on request for command within deadline (time)
+        Promise returned here will be answered with: output
 
-           This method may also function as a pure block-debugger-and-wait-
-           until-not-busy call, when block=True.
-           Promise returned for this purpose will be answered with: True/False
+        This method may also function as a pure block-debugger-and-wait-
+        until-not-busy call, when block=True.
+        Promise returned for this purpose will be answered with: True/False
         """
 
         self.__this_promise = Promise()
@@ -1104,24 +1126,24 @@ class DebuggerWrapper(object):
 
     def get(self):
         """
-           Accessible interface for my debugger
+        Accessible interface for my debugger
         """
         return self.__debugger
 
     def send_promise(self, command, output=True, show_in_console=False):
         """Make a gdb command as a promise.
 
-           The way to use this is in a workflow, in the following way:
+        The way to use this is in a workflow, in the following way:
 
-               # Retrieve the language server
-               gdb = DebuggerWrapper(GPS.File("foo"))
+            # Retrieve the language server
+            gdb = DebuggerWrapper(GPS.File("foo"))
 
-               # call this with a yield
-               result = yield gdb.command_promise(command)
+            # call this with a yield
+            result = yield gdb.command_promise(command)
 
-               # result is a DAPResponse object: typically
-               # inspect result.is_valid, result.is_error, result.is_reject,
-               # and process result.data if result.is_valid.
+            # result is a DAPResponse object: typically
+            # inspect result.is_valid, result.is_error, result.is_reject,
+            # and process result.data if result.is_valid.
         """
         p = Promise()
         result = DAPResponse()
@@ -1141,24 +1163,24 @@ class DebuggerWrapper(object):
             p.resolve(result)
 
         self.__debugger.send(
-            command, output, show_in_console,
-            on_result, on_error, on_reject)
+            command, output, show_in_console, on_result, on_error, on_reject
+        )
         return p
 
     def get_variable_by_name(self, name):
         """Get variable value as a promise.
 
-           The way to use this is in a workflow, in the following way:
+        The way to use this is in a workflow, in the following way:
 
-               # Retrieve the language server
-               gdb = DebuggerWrapper(GPS.File("foo"))
+            # Retrieve the language server
+            gdb = DebuggerWrapper(GPS.File("foo"))
 
-               # call this with a yield
-               result = yield gdb.get_variable_by_name("variable")
+            # call this with a yield
+            result = yield gdb.get_variable_by_name("variable")
 
-               # result is a DAPResponse object: typically DebuggerVariable
-               # inspect result.is_valid, result.is_error, result.is_reject,
-               # and process result.data if result.is_valid.
+            # result is a DAPResponse object: typically DebuggerVariable
+            # inspect result.is_valid, result.is_error, result.is_reject,
+            # and process result.data if result.is_valid.
         """
         p = Promise()
         result = DAPResponse()
@@ -1177,34 +1199,33 @@ class DebuggerWrapper(object):
             result.is_reject = True
             p.resolve(result)
 
-        self.__debugger.get_variable_by_name(
-            name, on_result, on_error, on_reject)
+        self.__debugger.get_variable_by_name(name, on_result, on_error, on_reject)
         return p
 
 
 class DebuggerVariableWrapper(object):
     """
-       DebuggerVariableWrapper is a debbuger variable manager
-       It makes a promise (yield object of the promise class) when user:
-           want to get variable's children
+    DebuggerVariableWrapper is a debbuger variable manager
+    It makes a promise (yield object of the promise class) when user:
+        want to get variable's children
     """
 
     def __init__(self, var):
         """
-           Initialize a wrapper manager for given var.
+        Initialize a wrapper manager for given var.
         """
         # store variable
         self.__var = var
 
     def get(self):
         """
-           Accessible interface for my variable
+        Accessible interface for my variable
         """
         return self.__var
 
     def children(self):
         """
-           Get variable's children as a promise.
+        Get variable's children as a promise.
         """
         p = Promise()
         result = DAPResponse()
@@ -1227,16 +1248,17 @@ class DebuggerVariableWrapper(object):
         return p
 
 
-class TargetWrapper():
+class TargetWrapper:
     """
     TargetWrapper is a manager that build target and return
     a thenable promise before execute the target
     The promise will be answered with the exit status when
     the target finishes
     """
+
     def __init__(self, target_name):
         """
-           Build the target and initialize promise to None
+        Build the target and initialize promise to None
         """
 
         # handler for my target
@@ -1245,21 +1267,24 @@ class TargetWrapper():
         # promise about building this target
         self.__promise = None
 
-    def wait_on_execute(self, main_name="", file=None,
-                        extra_args=None, quiet=False, force=False):
+    def wait_on_execute(
+        self, main_name="", file=None, extra_args=None, quiet=False, force=False
+    ):
         """
         Called by the user. Will execute the target and return a promise.
         Promises made here will be answered with: exit status of the build.
         """
 
         self.__promise = Promise()
-        self.__target.execute(main_name=main_name,
-                              synchronous=False,
-                              file=file,
-                              extra_args=extra_args,
-                              quiet=quiet,
-                              on_exit=self.__on_exit,
-                              force=force)
+        self.__target.execute(
+            main_name=main_name,
+            synchronous=False,
+            file=file,
+            extra_args=extra_args,
+            quiet=quiet,
+            on_exit=self.__on_exit,
+            force=force,
+        )
         return self.__promise
 
     def __timeout_after_exit(self):
@@ -1268,8 +1293,8 @@ class TargetWrapper():
 
     def __on_exit(self, status):
         """
-           Called by GPS when target finishes executing.
-           Will answer the promise with exiting status.
+        Called by GPS when target finishes executing.
+        Will answer the promise with exiting status.
         """
 
         self.__status = status

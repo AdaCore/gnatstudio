@@ -9,8 +9,7 @@ def driver():
     GPS.EditorBuffer.get(GPS.File("src/main.adb"))
 
     # Open the symlinked file
-    GPS.EditorBuffer.get(
-        GPS.File(os.path.join(GPS.pwd(), "not_src", "main.adb")))
+    GPS.EditorBuffer.get(GPS.File(os.path.join(GPS.pwd(), "not_src", "main.adb")))
 
     # There should be no errors.
     yield wait_tasks(other_than=known_tasks)

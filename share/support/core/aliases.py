@@ -40,8 +40,7 @@ def get_comments_colors():
     """
     Get the preference corresponding to comment color
     """
-    _, c1, c2 = GPS.Preference("Src-Editor-Comments-Variant")\
-                   .get().split("@")
+    _, c1, c2 = GPS.Preference("Src-Editor-Comments-Variant").get().split("@")
     if c2 == "white" or c2 == "rgb(255,255,255)":
         c2 = None
     return c1, c2
@@ -63,7 +62,7 @@ def reset_overlay(editor):
     editor.remove_overlay(
         editor.aliases_overlay,
         editor.alias_begin_mark.location(),
-        editor.alias_end_mark.location()
+        editor.alias_end_mark.location(),
     )
 
 
@@ -78,8 +77,10 @@ def is_in_alias_expansion(editor):
     """
     Returns true if the editor is in the process of alias expansion
     """
-    return (getattr(editor, "current_alias_mark_index", None) is not None
-            and not GPS.Action("Cancel completion").can_execute())
+    return (
+        getattr(editor, "current_alias_mark_index", None) is not None
+        and not GPS.Action("Cancel completion").can_execute()
+    )
 
 
 def move_expected_while_in_alias(editor):
@@ -101,12 +102,12 @@ def exit_alias_expand(editor):
     editor.remove_overlay(
         editor.aliases_background_overlay,
         editor.alias_begin_mark.location().beginning_of_line(),
-        editor.alias_end_mark.location()
+        editor.alias_end_mark.location(),
     )
     editor.remove_overlay(
         editor.aliases_overlay_next,
         editor.alias_begin_mark.location().beginning_of_line(),
-        editor.alias_end_mark.location()
+        editor.alias_end_mark.location(),
     )
 
     editor.current_alias_mark_index = None
@@ -150,7 +151,7 @@ def toggle_field(editor=None, backward=False, first=False):
             editor.apply_overlay(
                 editor.aliases_background_overlay,
                 editor.alias_begin_mark.location().beginning_of_line(),
-                editor.alias_end_mark.location()
+                editor.alias_end_mark.location(),
             )
 
             if editor.current_alias_mark_index is None:
@@ -171,8 +172,7 @@ def toggle_field(editor=None, backward=False, first=False):
             if index > len(editor.alias_marks) - 1:
                 if editor.last_alias_mark:
                     editor.alias_move_expected = True
-                    editor.current_view().goto(
-                        editor.last_alias_mark.location())
+                    editor.current_view().goto(editor.last_alias_mark.location())
                     editor.alias_move_expected = False
                 exit_alias_expand(editor)
                 return False
@@ -198,9 +198,9 @@ def toggle_field(editor=None, backward=False, first=False):
         return
 
 
-@interactive("Editor",
-             name="Toggle to previous alias field",
-             filter=filter_alias_expansion)
+@interactive(
+    "Editor", name="Toggle to previous alias field", filter=filter_alias_expansion
+)
 def toggle_prev_field():
     """
     When in alias expansion, toggle to previous field
@@ -208,9 +208,7 @@ def toggle_prev_field():
     toggle_field(backward=True)
 
 
-@interactive("Editor",
-             name="Toggle to next alias field",
-             filter=filter_alias_expansion)
+@interactive("Editor", name="Toggle to next alias field", filter=filter_alias_expansion)
 def toggle_next_field():
     """
     When in alias expansion, toggle to next field
@@ -241,8 +239,7 @@ def on_move(hook_name, file_name, line, column):
     # return in this case.
     # Similarly, if we are expecting a cursor move at this point, do not
     # exit the alias expansion mode.
-    if not is_in_alias_expansion(editor) \
-            or move_expected_while_in_alias(editor):
+    if not is_in_alias_expansion(editor) or move_expected_while_in_alias(editor):
         return
 
     index = editor.current_alias_mark_index
@@ -294,8 +291,11 @@ def expand_alias(editor, alias, from_lsp=False):
     Hook("mdi_child_selected").add(on_mdi_child_change)
 
     expansion = alias if from_lsp else alias.get_expanded()
-    text_chunks = (lsp_subst_pattern.split(expansion)
-                   if from_lsp else subst_pattern.split(expansion))
+    text_chunks = (
+        lsp_subst_pattern.split(expansion)
+        if from_lsp
+        else subst_pattern.split(expansion)
+    )
 
     # The pattern used to recognize where the last mark (i.e: final tab stop)
     # should be placed
@@ -323,22 +323,16 @@ def expand_alias(editor, alias, from_lsp=False):
     substs_marks_dict = OrderedDict()
 
     editor.aliases_overlay = editor.create_overlay("aliases_overlay")
-    editor.aliases_overlay.set_property(
-        "background", get_current_field_bg_color()
-    )
+    editor.aliases_overlay.set_property("background", get_current_field_bg_color())
 
     color, color1 = get_paragraph_color()
 
     editor.aliases_background_overlay = editor.create_overlay(
         "aliases_background_overlay"
     )
-    editor.aliases_background_overlay.set_property(
-        "paragraph-background", color
-    )
+    editor.aliases_background_overlay.set_property("paragraph-background", color)
 
-    editor.aliases_overlay_next = editor.create_overlay(
-        "aliases_overlay_next"
-    )
+    editor.aliases_overlay_next = editor.create_overlay("aliases_overlay_next")
     c1, c2 = get_comments_colors()
     editor.aliases_overlay_next.set_property("foreground", c1)
     if c2:
@@ -348,8 +342,7 @@ def expand_alias(editor, alias, from_lsp=False):
     # have inserted, giving us the current insert point
 
     new_alias_begin_mark = editor.current_view().cursor().create_mark()
-    new_alias_end_mark = editor.current_view().cursor().create_mark(
-        left_gravity=False)
+    new_alias_end_mark = editor.current_view().cursor().create_mark(left_gravity=False)
     new_last_alias_mark = None
     new_last_alias_mark_idx = -1
 
@@ -372,47 +365,47 @@ def expand_alias(editor, alias, from_lsp=False):
         if subst and subst == last_mark_pattern:
             new_last_alias_mark_idx = len(text_to_insert)
         elif subst:
-            default_value = ("" if from_lsp
-                             else alias.get_default_value(strip_alias(subst)))
-            value = (default_value if default_value
-                     else strip_alias(subst, from_lsp))
+            default_value = (
+                "" if from_lsp else alias.get_default_value(strip_alias(subst))
+            )
+            value = default_value if default_value else strip_alias(subst, from_lsp)
             subst_offset_start = len(text_to_insert)
             text_to_insert += value
             subst_offset_end = len(text_to_insert)
             if subst in substs_offset_dict:
-                substs_offset_dict[subst].append(
-                    (subst_offset_start,
-                     subst_offset_end))
+                substs_offset_dict[subst].append((subst_offset_start, subst_offset_end))
             else:
-                substs_offset_dict[subst] = [(subst_offset_start,
-                                              subst_offset_end)]
+                substs_offset_dict[subst] = [(subst_offset_start, subst_offset_end)]
 
     editor.insert(insert_loc, text_to_insert)
 
     if new_last_alias_mark_idx != -1:
         new_last_alias_mark = insert_loc.forward_char(
-            new_last_alias_mark_idx).create_mark()
+            new_last_alias_mark_idx
+        ).create_mark()
 
     for k in substs_offset_dict:
-        substs_marks_dict[k] = [(insert_loc.forward_char(s).create_mark(),
-                                 insert_loc.forward_char(e).create_mark(
-                                    left_gravity=False))
-                                for (s, e) in substs_offset_dict[k]]
+        substs_marks_dict[k] = [
+            (
+                insert_loc.forward_char(s).create_mark(),
+                insert_loc.forward_char(e).create_mark(left_gravity=False),
+            )
+            for (s, e) in substs_offset_dict[k]
+        ]
     new_alias_marks = list(substs_marks_dict.values())
 
     for marks_list in new_alias_marks:
         for mark_start, mark_end in marks_list:
-            apply_overlay(
-                editor, mark_start, mark_end, editor.aliases_overlay_next
-            )
+            apply_overlay(editor, mark_start, mark_end, editor.aliases_overlay_next)
 
     # If we are dealing with a nested alias expansions, append the new alias
     # marks to the existing ones and don't override the alias begin/end
     # marks.
 
     if len(editor.alias_marks) > 0:
-        editor.alias_marks = new_alias_marks + \
-            editor.alias_marks[editor.current_alias_mark_index:]
+        editor.alias_marks = (
+            new_alias_marks + editor.alias_marks[editor.current_alias_mark_index :]
+        )
     else:
         editor.alias_marks = new_alias_marks
         editor.last_alias_mark = new_last_alias_mark

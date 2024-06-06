@@ -14,8 +14,7 @@ def run_gnatpp(unit_to_check, subprojects=False, excluded_unit=None):
     if subprojects:
         action_name += " and subprojects"
 
-    yield idle_modal_dialog(
-        lambda: GPS.execute_action(action_name))
+    yield idle_modal_dialog(lambda: GPS.execute_action(action_name))
     dialog = get_window_by_title("Pretty Print current project")
     get_button_from_label("Execute", dialog).clicked()
     yield wait_tasks()
@@ -28,10 +27,10 @@ def run_gnatpp(unit_to_check, subprojects=False, excluded_unit=None):
     )
     if excluded_unit:
         gps_assert(
-        excluded_unit not in text,
-        True,
-        excluded_unit + " should not be pretty printed",
-    )
+            excluded_unit not in text,
+            True,
+            excluded_unit + " should not be pretty printed",
+        )
 
 
 @run_test_driver
@@ -42,8 +41,9 @@ def test_driver():
     yield wait_idle()
 
     # Run gnatpp on the root project only
-    yield run_gnatpp(unit_to_check="unit.adb", subprojects=False,
-        excluded_unit="main.adb")
+    yield run_gnatpp(
+        unit_to_check="unit.adb", subprojects=False, excluded_unit="main.adb"
+    )
 
     # Run gnatpp on the root project and subprojects
     yield run_gnatpp(unit_to_check="main.adb", subprojects=True)

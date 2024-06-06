@@ -52,39 +52,39 @@ with open(gnatprove_file, "r") as input_file2:
 
 # constants that are required by the plugin
 
-toolname = 'gnatprove'
-messages_category = 'GNATprove'
+toolname = "gnatprove"
+messages_category = "GNATprove"
 obj_subdir_name = toolname
-report_file_name = toolname + '.out'
-prefix = 'SPARK'
-menu_prefix = '/' + prefix
+report_file_name = toolname + ".out"
+prefix = "SPARK"
+menu_prefix = "/" + prefix
 
-examine_all = 'Examine All'
-examine_root_project = 'Examine All Sources'
-examine_file = 'Examine Single File'
-examine_subp = 'Examine Subprogram'
+examine_all = "Examine All"
+examine_root_project = "Examine All Sources"
+examine_file = "Examine Single File"
+examine_subp = "Examine Subprogram"
 
 # proof targets when user profile is 'Basic'
 
-basic_prove_all = 'Basic Prove All'
-basic_prove_root_project = 'Basic Prove All Sources'
-basic_prove_file = 'Basic Prove File'
-basic_prove_subp = 'Basic Prove Subprogram'
-basic_prove_line = 'Basic Prove Line'
-basic_prove_line_loc = 'Basic Prove Line Location'
-basic_prove_check = 'Basic Prove Check'
-basic_prove_region = 'Basic Prove Selected Region'
+basic_prove_all = "Basic Prove All"
+basic_prove_root_project = "Basic Prove All Sources"
+basic_prove_file = "Basic Prove File"
+basic_prove_subp = "Basic Prove Subprogram"
+basic_prove_line = "Basic Prove Line"
+basic_prove_line_loc = "Basic Prove Line Location"
+basic_prove_check = "Basic Prove Check"
+basic_prove_region = "Basic Prove Selected Region"
 
 # proof targets when user profile is 'Advanced'
 
-advanced_prove_all = 'Prove All'
-advanced_prove_root_project = 'Prove All Sources'
-advanced_prove_file = 'Prove File'
-advanced_prove_subp = 'Prove Subprogram'
-advanced_prove_line = 'Prove Line'
-advanced_prove_line_loc = 'Prove Line Location'
-advanced_prove_check = 'Prove Check'
-advanced_prove_region = 'Prove Selected Region'
+advanced_prove_all = "Prove All"
+advanced_prove_root_project = "Prove All Sources"
+advanced_prove_file = "Prove File"
+advanced_prove_subp = "Prove Subprogram"
+advanced_prove_line = "Prove Line"
+advanced_prove_line_loc = "Prove Line Location"
+advanced_prove_check = "Prove Check"
+advanced_prove_region = "Prove Selected Region"
 
 # Name of the messages console
 MESSAGES = "Messages"
@@ -93,74 +93,74 @@ MESSAGES = "Messages"
 def print_error(message):
     """print errors on the messages console"""
     console = GPS.Console(MESSAGES)
-    console.write(message + '\n', mode="error")
+    console.write(message + "\n", mode="error")
 
 
 # getters for proof target depending on user profile
 
 
 def prove_all():
-    if GPS.Preference(User_Profile_Pref_Name).get() == 'Basic':
+    if GPS.Preference(User_Profile_Pref_Name).get() == "Basic":
         return basic_prove_all
-    elif GPS.Preference(User_Profile_Pref_Name).get() == 'Advanced':
+    elif GPS.Preference(User_Profile_Pref_Name).get() == "Advanced":
         return advanced_prove_all
 
 
 def prove_root_project():
-    if GPS.Preference(User_Profile_Pref_Name).get() == 'Basic':
+    if GPS.Preference(User_Profile_Pref_Name).get() == "Basic":
         return basic_prove_root_project
-    elif GPS.Preference(User_Profile_Pref_Name).get() == 'Advanced':
+    elif GPS.Preference(User_Profile_Pref_Name).get() == "Advanced":
         return advanced_prove_root_project
 
 
 def prove_file():
-    if GPS.Preference(User_Profile_Pref_Name).get() == 'Basic':
+    if GPS.Preference(User_Profile_Pref_Name).get() == "Basic":
         return basic_prove_file
-    elif GPS.Preference(User_Profile_Pref_Name).get() == 'Advanced':
+    elif GPS.Preference(User_Profile_Pref_Name).get() == "Advanced":
         return advanced_prove_file
 
 
 def prove_subp():
-    if GPS.Preference(User_Profile_Pref_Name).get() == 'Basic':
+    if GPS.Preference(User_Profile_Pref_Name).get() == "Basic":
         return basic_prove_subp
-    elif GPS.Preference(User_Profile_Pref_Name).get() == 'Advanced':
+    elif GPS.Preference(User_Profile_Pref_Name).get() == "Advanced":
         return advanced_prove_subp
 
 
 def prove_line():
-    if GPS.Preference(User_Profile_Pref_Name).get() == 'Basic':
+    if GPS.Preference(User_Profile_Pref_Name).get() == "Basic":
         return basic_prove_line
-    elif GPS.Preference(User_Profile_Pref_Name).get() == 'Advanced':
+    elif GPS.Preference(User_Profile_Pref_Name).get() == "Advanced":
         return advanced_prove_line
 
 
 def prove_region():
-    if GPS.Preference(User_Profile_Pref_Name).get() == 'Basic':
+    if GPS.Preference(User_Profile_Pref_Name).get() == "Basic":
         return basic_prove_region
-    elif GPS.Preference(User_Profile_Pref_Name).get() == 'Advanced':
+    elif GPS.Preference(User_Profile_Pref_Name).get() == "Advanced":
         return advanced_prove_region
 
 
 # used to launch Prove Line from Location View
 def prove_line_loc():
-    if GPS.Preference(User_Profile_Pref_Name).get() == 'Basic':
+    if GPS.Preference(User_Profile_Pref_Name).get() == "Basic":
         return basic_prove_line_loc
-    elif GPS.Preference(User_Profile_Pref_Name).get() == 'Advanced':
+    elif GPS.Preference(User_Profile_Pref_Name).get() == "Advanced":
         return advanced_prove_line_loc
 
 
 # in case of manual provers, prove_check is
 # the only one allowed to open editors
 def prove_check():
-    if GPS.Preference(User_Profile_Pref_Name).get() == 'Basic':
+    if GPS.Preference(User_Profile_Pref_Name).get() == "Basic":
         return basic_prove_check
-    elif GPS.Preference(User_Profile_Pref_Name).get() == 'Advanced':
+    elif GPS.Preference(User_Profile_Pref_Name).get() == "Advanced":
         return advanced_prove_check
 
 
-show_report = 'Show Report'
-show_log = 'Show Log'
-clean_up = 'Clean Proofs'
+show_report = "Show Report"
+show_log = "Show Log"
+clean_up = "Clean Proofs"
 
 # moderate blue with 0.7 transparency
 Default_Trace_Color = "rgba(107,174,214, 0.7)"
@@ -168,69 +168,71 @@ Overlay_Name = "Gnatprove_Trace_Overlay"
 Ce_Spec_Lines_Name = "Gnatprove_Ce_Special_Lines"
 Ce_Highlighting = "Editor code annotations"
 
-User_Profile_Pref_Name = 'SPARK/user_profile'
+User_Profile_Pref_Name = "SPARK/user_profile"
 Display_Analysis_Report = "SPARK:General/display_analysis_report"
 
 GPS.Preference(Display_Analysis_Report).create(
-    'Display analysis report',
-    'boolean',
-    'Display an analysis report after running GNATprove.',
-    False)
+    "Display analysis report",
+    "boolean",
+    "Display an analysis report after running GNATprove.",
+    False,
+)
 
 GPS.Preference(User_Profile_Pref_Name).create(
-    'User profile',
-    'enum',
-    'Basic user profile for simple proof panel,' +
-    ' advanced user profile for more complex proof panel.',
+    "User profile",
+    "enum",
+    "Basic user profile for simple proof panel,"
+    + " advanced user profile for more complex proof panel.",
     0,
-    'Basic',
-    'Advanced')
+    "Basic",
+    "Advanced",
+)
 
-Color_Pref_Name = 'SPARK:Colors/color_trace'
+Color_Pref_Name = "SPARK:Colors/color_trace"
 
 GPS.Preference(Color_Pref_Name).create(
-    'Highlight color for trace',
-    'color',
-    'Color to highlight trace lines (restart needed).',
-    Default_Trace_Color)
+    "Highlight color for trace",
+    "color",
+    "Color to highlight trace lines (restart needed).",
+    Default_Trace_Color,
+)
 
 
 def get_root():
-    """retrieve the prefix of the spark install found on the path """
-    return os.path.dirname(os.path.dirname(gnatprove)).replace('\\', '/')
+    """retrieve the prefix of the spark install found on the path"""
+    return os.path.dirname(os.path.dirname(gnatprove)).replace("\\", "/")
 
 
 def get_example_root():
     """retrieve the full path to the directory containing the examples as
-       installed locally.
+    installed locally.
     """
-    return get_root() + '/share/examples/spark'
+    return get_root() + "/share/examples/spark"
 
 
 def get_lemma_library_root():
     """retrieve the full path to the directory containing the lemma library as
-       installed locally.
+    installed locally.
     """
-    return get_root() + '/include/spark'
+    return get_root() + "/include/spark"
 
 
 def get_trace_overlay(buf):
     """retrieve the trace overlay for a buffer. If the buffer hasn't got one
-       yet, create it, add it to the buffer, and return it.
+    yet, create it, add it to the buffer, and return it.
     """
 
     if not hasattr(buf, Overlay_Name):
-        o = buf.create_overlay('trace overlay')
-        o.set_property('paragraph-background',
-                       GPS.Preference(Color_Pref_Name).get())
+        o = buf.create_overlay("trace overlay")
+        o.set_property("paragraph-background", GPS.Preference(Color_Pref_Name).get())
         setattr(buf, Overlay_Name, o)
     return getattr(buf, Overlay_Name)
 
 
 def get_ce_special_lines(buf):
     """retrieve the list of special lines for counterexample for a
-       buffer. If the buffer hasn't got one yet, create it, add it to the
-       buffer, and return it.
+    buffer. If the buffer hasn't got one yet, create it, add it to the
+    buffer, and return it.
     """
 
     if not hasattr(buf, Ce_Spec_Lines_Name):
@@ -241,7 +243,7 @@ def get_ce_special_lines(buf):
 def add_ce_special_line(buf, line, text):
     """create a special line in the buffer"""
 
-    line_marker = buf.add_special_line(line+1, text, Ce_Highlighting)
+    line_marker = buf.add_special_line(line + 1, text, Ce_Highlighting)
     spec_lines = get_ce_special_lines(buf)
     spec_lines.append(line_marker)
     setattr(buf, Ce_Spec_Lines_Name, spec_lines)
@@ -273,14 +275,15 @@ def goto_location(sloc):
 # This is the on_exit callback for the editor process
 def check_proof_after_close(proc, ex_st, outp):
     """run gnatprove to check a proof after the external editor has been
-       closed
+    closed
     """
     if not proc._is_killed:
         try:
             vc_kind = get_vc_kind(proc._proc_msg)
             llarg = limit_line_option(proc._proc_msg, vc_kind)
-            GPS.BuildTarget(prove_check()).execute(extra_args=[llarg],
-                                                   synchronous=False)
+            GPS.BuildTarget(prove_check()).execute(
+                extra_args=[llarg], synchronous=False
+            )
         except TypeError:
             pass
 
@@ -308,9 +311,7 @@ def show_trace(lines):
             buf = GPS.EditorBuffer.get(f)
             goto_location(sloc)
             overlay = get_trace_overlay(buf)
-        buf.apply_overlay(overlay,
-                          buf.at(sloc.line(), 1),
-                          buf.at(sloc.line(), 1))
+        buf.apply_overlay(overlay, buf.at(sloc.line(), 1), buf.at(sloc.line(), 1))
 
 
 def remove_trace(lines):
@@ -327,37 +328,43 @@ def remove_trace(lines):
 
 def get_ce_text_for_line(line_info):
     """Generates the text to be displayed in counterexample for given
-       line."""
-    return " and ".join(['%s = %s' % (ce_element["name"], ce_element["value"])
-                         for ce_element in line_info])
+    line."""
+    return " and ".join(
+        [
+            "%s = %s" % (ce_element["name"], ce_element["value"])
+            for ce_element in line_info
+        ]
+    )
 
 
 def get_str_indent(buf, line):
     """Returns a string of white spaces that indents up to the indentation of
-       the given line."""
+    the given line."""
     line_loc = buf.at(line, 1)
     last_column = line_loc.end_of_line().column()
     indent = 1
     while line_loc.get_char() == " " and indent < last_column:
         indent += 1
         line_loc = buf.at(line, indent)
-    return "" if (indent == last_column) else " " * (indent-1)
+    return "" if (indent == last_column) else " " * (indent - 1)
 
 
 def show_ce(ce):
     def show_ce_section(ce_file, ce_section, ce_pos):
         first = next(iter(ce_section), None)
         if first:
-            first_sloc = GPS.FileLocation(GPS.File(ce_file),
-                                          int(first),
-                                          1)
+            first_sloc = GPS.FileLocation(GPS.File(ce_file), int(first), 1)
             buf = GPS.EditorBuffer.get(first_sloc.file())
             goto_location(first_sloc)
             for line in ce_section:
-                text = get_str_indent(buf, int(line)) + \
-                       "[Counterexample] " + ce_pos + \
-                       get_ce_text_for_line(ce_section[line])
+                text = (
+                    get_str_indent(buf, int(line))
+                    + "[Counterexample] "
+                    + ce_pos
+                    + get_ce_text_for_line(ce_section[line])
+                )
                 add_ce_special_line(buf, int(line), text)
+
     for fn in ce:
         if GPS.File(fn).language() == "ada":
             show_ce_section(fn, ce[fn]["previous"], "[Current Iteration] ")
@@ -408,52 +415,46 @@ def toggle_trace(msg, lines, ce):
             show_trace(lines)
 
     # return focus to the location of the original message
-    msg_sloc = GPS.FileLocation(msg.get_file(),
-                                msg.get_line(),
-                                msg.get_column())
+    msg_sloc = GPS.FileLocation(msg.get_file(), msg.get_line(), msg.get_column())
     goto_location(msg_sloc)
 
 
 def build_msg_full_text(fn, line, col, text):
     """Given a msg text and location, return the string
-       "file:line:col:msg"
-       Note that the returned text must be identical to the text that is
-       produced by GNATprove - this  text is used to match the message
-       produced by GNATprove and extra information about this message
-       stored in *.spark file. See on_stdout and on_exit.
+    "file:line:col:msg"
+    Note that the returned text must be identical to the text that is
+    produced by GNATprove - this  text is used to match the message
+    produced by GNATprove and extra information about this message
+    stored in *.spark file. See on_stdout and on_exit.
     """
     str_col = str(col)
 
     # In the message produced by GNATprove, '0' is always prepended
     # to column number that is less than 10. Do it also here.
     if col < 10:
-        str_col = '0' + str_col
+        str_col = "0" + str_col
     return "%s:%s:%s: %s" % (fn, line, str_col, text)
 
 
 def get_comp_text(m):
     """Returns the computed text of a message"""
     fn = os.path.basename(m.get_file().path)
-    text = build_msg_full_text(
-        fn,
-        m.get_line(),
-        m.get_column(),
-        m.get_text())
-    return (text)
+    text = build_msg_full_text(fn, m.get_line(), m.get_column(), m.get_text())
+    return text
 
 
 def get_norm_text(text):
     """Returns the normalized text of a message text.
 
-       This amounts to getting the basename of the file in the location, so
-       that it matches the result of calling [get_comp_text], even in cases
-       where GNATprove uses the complete path name in its messages, when
-       switch -gnatef is used.
+    This amounts to getting the basename of the file in the location, so
+    that it matches the result of calling [get_comp_text], even in cases
+    where GNATprove uses the complete path name in its messages, when
+    switch -gnatef is used.
     """
     reg = re.compile(r"([^:]*):(.*)")
     m = re.match(reg, text)
     fn = os.path.basename(m.group(1))
-    text = fn + ':' + m.group(2)
+    text = fn + ":" + m.group(2)
     return text
 
 
@@ -472,7 +473,7 @@ reg3 = re.compile(r"in inherited contract at ([\w\.-]+):[0-9]+")
 
 
 def match_regexp_inst(text):
-    """ Find the first reference to instantiation, inherited or inlined filename
+    """Find the first reference to instantiation, inherited or inlined filename
     in the text. Return the matched datastructure to allow new searches in the
     same text."""
     m = re.search(reg1, text)
@@ -484,7 +485,7 @@ def match_regexp_inst(text):
 
 
 def get_compunit_for_message(text, fn):
-    """ Return the compilation unit for a given text and file, so that extra
+    """Return the compilation unit for a given text and file, so that extra
     information for the message will be found in the file
     unit.spark. For generic instantiations, inlined calls and
     inherited contracts, this corresponds to the last unit in the
@@ -495,7 +496,7 @@ def get_compunit_for_message(text, fn):
         m = match_regexp_inst(text)
         if m:
             fname = m.group(1)
-            text = text[m.end():]
+            text = text[m.end() :]
         else:
             break
     return os.path.splitext(fname)[0]
@@ -504,22 +505,23 @@ def get_compunit_for_message(text, fn):
 class GNATprove_Parser(tool_output.OutputParser):
 
     """Class that parses messages of the gnatprove tool, and creates
-       decorates the messages coming from GNATprove with actions (showing
-       traces) when needed.
-       In IDE mode, and when extra info is available for a message, Gnatprove
-       appends a symbol [#id] to a message, where "id" is a number  which is
-       unique for this unit and this message.
-       The GNATprove parser strips the extra symbol from the message so that
-       it's not visible in GPS, and builds up a mapping
-         msg -> id
-       Once GNATprove is terminated, for each msg which has an entry in this
-       mapping, the parser opens the JSON file "unit.spark".
-       See the :func:`parsejson()` function for the format of this file.
-       Once this file is parsed, the GNATprove parser now knows the extra
-       information associated to a message, if any. See
-       :func:`act_on_extra_info()` to know what is done with this extra
-       information.
+    decorates the messages coming from GNATprove with actions (showing
+    traces) when needed.
+    In IDE mode, and when extra info is available for a message, Gnatprove
+    appends a symbol [#id] to a message, where "id" is a number  which is
+    unique for this unit and this message.
+    The GNATprove parser strips the extra symbol from the message so that
+    it's not visible in GPS, and builds up a mapping
+      msg -> id
+    Once GNATprove is terminated, for each msg which has an entry in this
+    mapping, the parser opens the JSON file "unit.spark".
+    See the :func:`parsejson()` function for the format of this file.
+    Once this file is parsed, the GNATprove parser now knows the extra
+    information associated to a message, if any. See
+    :func:`act_on_extra_info()` to know what is done with this extra
+    information.
     """
+
     analysis_tool = None
     # The GPS.AnalysisTool instance that will be responsible to add messages
     # in the Analysis Report.
@@ -550,15 +552,16 @@ class GNATprove_Parser(tool_output.OutputParser):
         self.units_with_extra_info = []
         # holds the mapping "msg" -> msg_id
         self.msg_id = {}
-        self.message_re = re.compile(r"(?P<filename>^[^: ]+)"
-                                     r":"
-                                     r"(?P<line>[0-9]+)"
-                                     r":"
-                                     r"((?P<column>[0-9]+): )?"
-                                     r"((?P<importance>[^:]+): )?"
-                                     r"(?P<text>.+)")
-        self.extra_re = re.compile(r"(?P<text>.*)"
-                                   r"\[#(?P<extra>[0-9]+)\]$")
+        self.message_re = re.compile(
+            r"(?P<filename>^[^: ]+)"
+            r":"
+            r"(?P<line>[0-9]+)"
+            r":"
+            r"((?P<column>[0-9]+): )?"
+            r"((?P<importance>[^:]+): )?"
+            r"(?P<text>.+)"
+        )
+        self.extra_re = re.compile(r"(?P<text>.*)" r"\[#(?P<extra>[0-9]+)\]$")
 
         # holds the mapping "unit,msg_id" -> extra_info
         self.extra_info = {}
@@ -570,162 +573,175 @@ class GNATprove_Parser(tool_output.OutputParser):
 
         # create rules for all the messages not related with SPARK itself
         # (e.g: GNAT warnings etc.).
-        self.analysis_tool.add_rule('warnings', 'WARNINGS')
-        self.analysis_tool.add_rule('informational', 'INFORMATIONAL')
-        self.analysis_tool.add_rule('errors', 'ERRORS')
+        self.analysis_tool.add_rule("warnings", "WARNINGS")
+        self.analysis_tool.add_rule("informational", "INFORMATIONAL")
+        self.analysis_tool.add_rule("errors", "ERRORS")
 
         # create the SPARK rules from the '--list-categories' switch
         process = GPS.Process("gnatprove --list-categories")
         output = process.get_result()
-        for line in output.split('\n'):
-            split_line = line.split(' - ')
+        for line in output.split("\n"):
+            split_line = line.split(" - ")
             if len(split_line) == 4:
                 rule_name = split_line[1]
-                rule_id = split_line[0].split('(')[0]
+                rule_id = split_line[0].split("(")[0]
                 self.analysis_tool.add_rule(rule_name, rule_id)
 
     def print_output(self, text):
         """print the text on to the Messages view"""
         if text:
-            GPS.Console().write(text + '\n')
+            GPS.Console().write(text + "\n")
 
     def parse_trace_file(self, filename):
-        """ parse the trace file as a list of "file:line" information and
-            return the result
+        """parse the trace file as a list of "file:line" information and
+        return the result
         """
 
         lines = []
         if os.path.isfile(filename):
-            with open(filename, 'r') as f:
+            with open(filename, "r") as f:
                 for line in f:
-                    sl = line.split(':')
+                    sl = line.split(":")
                     if len(sl) >= 2:
-                        lines.append(
-                            GPS.FileLocation(GPS.File(sl[0]),
-                                             int(sl[1]),
-                                             1))
+                        lines.append(GPS.FileLocation(GPS.File(sl[0]), int(sl[1]), 1))
         return lines
 
     def handle_entry(self, unit, list, session_map=None):
         """code do handle one entry of the JSON file. See :func:`parsejson()`
-           for the details of the format.
+        for the details of the format.
         """
 
         for entry in list:
-            if 'msg_id' in entry:
-                full_id = unit, entry['msg_id']
+            if "msg_id" in entry:
+                full_id = unit, entry["msg_id"]
                 ent = entry
                 self.extra_info[full_id] = ent
 
     def parsejson(self, unit, fn):
         """parse the json file "fn", which belongs to unit "unit" and fill
-           the "extra_info" mapping for any entry.
-           The json file, if it exists and is a valid JSON value, is a dict
-           with two entries "flow" and "proof" (both entries may be absent).
-           Each entry is mapped to a list of dictionaries. Some of these
-           dictionaries have the field "msg_id", these dictionaries are extra
-           information for the corresponding message for the current unit. For
-           those messages, we simply build up a mapping
-             (unit, id) -> extra_info
-           which is later used to act on this extra information for each
-           message.
+        the "extra_info" mapping for any entry.
+        The json file, if it exists and is a valid JSON value, is a dict
+        with two entries "flow" and "proof" (both entries may be absent).
+        Each entry is mapped to a list of dictionaries. Some of these
+        dictionaries have the field "msg_id", these dictionaries are extra
+        information for the corresponding message for the current unit. For
+        those messages, we simply build up a mapping
+          (unit, id) -> extra_info
+        which is later used to act on this extra information for each
+        message.
         """
         if os.path.isfile(fn):
-            with open(fn, 'r') as f:
+            with open(fn, "r") as f:
                 try:
                     dict = json.load(f)
                     session_map = {}
-                    if 'session_map' in dict:
-                        session_map = dict['session_map']
-                        session_map = {int(k): v for k,
-                                       v in session_map.items()}
-                    if 'flow' in dict:
-                        self.handle_entry(unit, dict['flow'])
-                    if 'proof' in dict:
-                        self.handle_entry(unit, dict['proof'], session_map)
+                    if "session_map" in dict:
+                        session_map = dict["session_map"]
+                        session_map = {int(k): v for k, v in session_map.items()}
+                    if "flow" in dict:
+                        self.handle_entry(unit, dict["flow"])
+                    if "proof" in dict:
+                        self.handle_entry(unit, dict["proof"], session_map)
                 except ValueError:
                     pass
 
     def get_rule_id(self, output, extra):
         """return the rule ID associated to the output.
-           The rule ID is retrieved from "extra" when it exists: otherwise,
-           the rule ID defined for all non-SPARK messages is returned.
+        The rule ID is retrieved from "extra" when it exists: otherwise,
+        the rule ID defined for all non-SPARK messages is returned.
         """
-        if 'rule' in extra:
-            return extra['rule']
-        elif 'warning:' in output:
-            return 'WARNINGS'
-        elif 'info:' in output:
-            return 'INFORMATIONAL'
+        if "rule" in extra:
+            return extra["rule"]
+        elif "warning:" in output:
+            return "WARNINGS"
+        elif "info:" in output:
+            return "INFORMATIONAL"
         else:
-            return 'ERRORS'
+            return "ERRORS"
 
     def act_on_extra_info(self, m, extra, objdir, command):
         """act on extra info for the message m. More precisely, if the message
-           has a tracefile or counterexample, add an action to the message
-           which will show/hide the corresponding trace or counterexample,
-           and if the message has manual proof information, run the external
-           editor.
+        has a tracefile or counterexample, add an action to the message
+        which will show/hide the corresponding trace or counterexample,
+        and if the message has manual proof information, run the external
+        editor.
         """
 
         # We associate the real check location to the text of the message. The
         # locations of the message is not always the same as the one of the
         # check. And we need this information for manual proof.
         text_msg = get_comp_text(m)
-        if 'check_file' in extra:
-            map_msg[text_msg, 'check_file'] = extra['check_file']
-        if 'check_line' in extra:
-            map_msg[text_msg, 'check_line'] = extra['check_line']
-        if 'check_col' in extra:
-            map_msg[text_msg, 'check_col'] = extra['check_col']
+        if "check_file" in extra:
+            map_msg[text_msg, "check_file"] = extra["check_file"]
+        if "check_line" in extra:
+            map_msg[text_msg, "check_line"] = extra["check_line"]
+        if "check_col" in extra:
+            map_msg[text_msg, "check_col"] = extra["check_col"]
 
         counterexample = {}
-        if 'cntexmp' in extra:
-            counterexample = extra['cntexmp']
+        if "cntexmp" in extra:
+            counterexample = extra["cntexmp"]
 
         lines = []
-        if 'tracefile' in extra and extra['tracefile'] != '':
-            tracefile = os.path.join(objdir, extra['tracefile'])
+        if "tracefile" in extra and extra["tracefile"] != "":
+            tracefile = os.path.join(objdir, extra["tracefile"])
             lines = self.parse_trace_file(tracefile)
 
         if counterexample != {} or lines != []:
             if counterexample != {}:
-                msg = 'Show counterexample'
+                msg = "Show counterexample"
             else:
-                msg = 'Show path'
-            m.set_subprogram(lambda m: toggle_trace(m, lines, counterexample),
-                             'gps-gnatprove-symbolic',
-                             msg)
+                msg = "Show path"
+            m.set_subprogram(
+                lambda m: toggle_trace(m, lines, counterexample),
+                "gps-gnatprove-symbolic",
+                msg,
+            )
         # We don't want to open hundreds of editors if a Prove All
         # or Prove File was launched with a manual prover.
         # We only open an editor for prove check.
-        editor_dialog = "The condition couldn't be verified\n" \
-                        + "Would you like to edit the VC file?\n"
+        editor_dialog = (
+            "The condition couldn't be verified\n"
+            + "Would you like to edit the VC file?\n"
+        )
 
-        if command and command.name() == prove_check() and 'vc_file' in extra \
-           and GPS.MDI.yes_no_dialog(editor_dialog):
-            if 'editor_cmd' in extra:
-                cmd = extra['editor_cmd']
-                manual_prover_file_path = extra['vc_file']
+        if (
+            command
+            and command.name() == prove_check()
+            and "vc_file" in extra
+            and GPS.MDI.yes_no_dialog(editor_dialog)
+        ):
+            if "editor_cmd" in extra:
+                cmd = extra["editor_cmd"]
+                manual_prover_file_path = extra["vc_file"]
                 process_cwd = os.path.dirname(manual_prover_file_path)
                 try:
                     # We have to change the directory for an unknown reason
                     # related to issue 6153 of Coq.
-                    proc = GPS.Process(cmd,
-                                       on_exit=check_proof_after_close,
-                                       before_kill=editor_before_kill,
-                                       directory=process_cwd)
+                    proc = GPS.Process(
+                        cmd,
+                        on_exit=check_proof_after_close,
+                        before_kill=editor_before_kill,
+                        directory=process_cwd,
+                    )
                     proc._proc_msg = m
                     proc._is_killed = False
                 except OSError:
-                    GPS.MDI.dialog("Editor " + cmd[0] +
-                                   " not found\n" +
-                                   "Manual proof file saved as: " +
-                                   extra['vc_file'] + "\n")
+                    GPS.MDI.dialog(
+                        "Editor "
+                        + cmd[0]
+                        + " not found\n"
+                        + "Manual proof file saved as: "
+                        + extra["vc_file"]
+                        + "\n"
+                    )
             else:
-                GPS.MDI.dialog("No editor configured for this prover\n" +
-                               "Manual proof file saved as: " +
-                               extra['vc_file'] + "\n")
+                GPS.MDI.dialog(
+                    "No editor configured for this prover\n"
+                    + "Manual proof file saved as: "
+                    + extra["vc_file"]
+                    + "\n"
+                )
 
     def on_exit(self, status, command):
         """When GNATprove has finished, display the Analysis Report if the
@@ -733,8 +749,7 @@ class GNATprove_Parser(tool_output.OutputParser):
 
         self.command = command
 
-        if (GPS.Preference(Display_Analysis_Report).get() and
-                self.has_analysis_messages):
+        if GPS.Preference(Display_Analysis_Report).get() and self.has_analysis_messages:
             GPS.Analysis.display_report(self.analysis_tool)
 
         if self.child is not None:
@@ -745,20 +760,21 @@ class GNATprove_Parser(tool_output.OutputParser):
             GPS.Codefix.parse(messages_category, self.non_spark_output)
             self.non_spark_output = ""
 
-    def split_in_secondary_messages(self, fn, line, column,
-                                    output, importance, extra):
+    def split_in_secondary_messages(self, fn, line, column, output, importance, extra):
         """Parse the output and generate secondary messages.
 
-           :return type: |GPS.Message| the message created
+        :return type: |GPS.Message| the message created
         """
         remainder = output
         list_secondaries = []
-        list_sub_message_header = [", cannot prove",
-                                   " [user message:",
-                                   " (e.g.",
-                                   " [reason for check:",
-                                   " [possible explanation:",
-                                   " [possible fix:"]
+        list_sub_message_header = [
+            ", cannot prove",
+            " [user message:",
+            " (e.g.",
+            " [reason for check:",
+            " [possible explanation:",
+            " [possible fix:",
+        ]
         for header in list_sub_message_header:
             try:
                 index = remainder.index(header)
@@ -769,20 +785,28 @@ class GNATprove_Parser(tool_output.OutputParser):
         list_secondaries.append(remainder)
 
         message_text = list_secondaries[0]
-        msg = self.analysis_tool.create_message(messages_category, fn,
-                                                line, column,
-                                                message_text,
-                                                importance,
-                                                self.get_rule_id(message_text,
-                                                                 extra))
+        msg = self.analysis_tool.create_message(
+            messages_category,
+            fn,
+            line,
+            column,
+            message_text,
+            importance,
+            self.get_rule_id(message_text, extra),
+        )
         for text in list_secondaries[1:]:
-            if text.startswith(', '):
+            if text.startswith(", "):
                 text = text[2:]
-            elif text.startswith(' (') or text.startswith(' ['):
+            elif text.startswith(" (") or text.startswith(" ["):
                 text = text[2:-1]
             GPS.Locations.add(
-                messages_category, fn, line,
-                column, text.strip(), look_for_secondary=True)
+                messages_category,
+                fn,
+                line,
+                column,
+                text.strip(),
+                look_for_secondary=True,
+            )
         return msg
 
     def to_importance(self, importance):
@@ -803,21 +827,23 @@ class GNATprove_Parser(tool_output.OutputParser):
 
     def on_stdout(self, text, command):
         """for each GNATprove message, check for a msg_id tag of the form
-           [#id] where id is a number. If no such tag is found, just pass the
-           text on to the next parser. Otherwise, add a mapping
-              msg text -> msg id
-           which will be used later (in on_exit) to associate more info to the
-           message
+        [#id] where id is a number. If no such tag is found, just pass the
+        text on to the next parser. Otherwise, add a mapping
+           msg text -> msg id
+        which will be used later (in on_exit) to associate more info to the
+        message
         """
         # Remove the previous GNATprove messages first
         if not self.previous_messages_removed:
             GPS.Locations.remove_category(
-                messages_category, GPS.Message.Flags.INVISIBLE)
+                messages_category, GPS.Message.Flags.INVISIBLE
+            )
             self.previous_messages_removed = True
 
-        artifact_dirs = (
-            [os.path.join(f, obj_subdir_name)
-             for f in GPS.Project.root().object_dirs(recursive=True)])
+        artifact_dirs = [
+            os.path.join(f, obj_subdir_name)
+            for f in GPS.Project.root().object_dirs(recursive=True)
+        ]
         imported_units = {}  # map from unit to corresponding object directory
 
         lines = text.splitlines()
@@ -826,28 +852,32 @@ class GNATprove_Parser(tool_output.OutputParser):
             self.print_output(line)
 
             if msg_match:
-                text = msg_match.group('text')
-                fn = GPS.File(msg_match.group('filename'))
-                lineno = int(msg_match.group('line'))
-                if msg_match.group('column'):
-                    column = int(msg_match.group('column'))
+                text = msg_match.group("text")
+                fn = GPS.File(msg_match.group("filename"))
+                lineno = int(msg_match.group("line"))
+                if msg_match.group("column"):
+                    column = int(msg_match.group("column"))
                 else:
                     column = 1
 
                 # Refined the output if extra information
                 extra_match = re.match(self.extra_re, text)
                 if extra_match:
-                    text = extra_match.group('text')
+                    text = extra_match.group("text")
                     extra, unit = self.get_extra_info(
-                        extra_match.group('extra'), text, fn, command,
-                        imported_units, artifact_dirs)
+                        extra_match.group("extra"),
+                        text,
+                        fn,
+                        command,
+                        imported_units,
+                        artifact_dirs,
+                    )
                 else:
                     extra = {}
 
-                if msg_match.group('importance'):
-                    importance = self.to_importance(
-                        msg_match.group('importance'))
-                    text = msg_match.group('importance') + ": " + text
+                if msg_match.group("importance"):
+                    importance = self.to_importance(msg_match.group("importance"))
+                    text = msg_match.group("importance") + ": " + text
                 else:
                     importance = GPS.Message.Importance.HIGH
 
@@ -856,23 +886,30 @@ class GNATprove_Parser(tool_output.OutputParser):
                     self.has_analysis_messages = True
                     # Create the message and its secondaries
                     message = self.split_in_secondary_messages(
-                        fn, lineno, column, text, importance, extra)
+                        fn, lineno, column, text, importance, extra
+                    )
                     self.act_on_extra_info(
-                        message, extra, imported_units[unit], command)
+                        message, extra, imported_units[unit], command
+                    )
                 else:
                     # Let the "location parser" handle non-spark messages
-                    GPS.Locations.add(messages_category, fn, lineno,
-                                      column, text, look_for_secondary=True,
-                                      importance=importance)
+                    GPS.Locations.add(
+                        messages_category,
+                        fn,
+                        lineno,
+                        column,
+                        text,
+                        look_for_secondary=True,
+                        importance=importance,
+                    )
 
                     # Collect the non-spark output to detect potential
                     # codefixes later
                     self.non_spark_output += line + "\n"
 
-    def get_extra_info(self, id, text, fn, command,
-                       imported_units, artifact_dirs):
+    def get_extra_info(self, id, text, fn, command, imported_units, artifact_dirs):
         """Parse the .spark file of the corresponding unit to
-           get the extra info.
+        get the extra info.
         """
         extra = {}
         unit = get_compunit_for_message(text, fn)
@@ -903,10 +940,10 @@ def is_file_context(self):
 
 # It's more convenient to define these callbacks outside of the plugin class
 
+
 def generic_on_analyze(target, force=False, args=[]):
     disable_trace_and_ce()
-    GPS.BuildTarget(target).execute(
-        extra_args=args, synchronous=False, force=force)
+    GPS.BuildTarget(target).execute(extra_args=args, synchronous=False, force=force)
 
 
 def on_examine_all(self):
@@ -943,9 +980,12 @@ def on_prove_line(self, force=False):
 
     target = ""
     try:
-        llarg = "--limit-line=" \
-                + os.path.basename(self.message().get_file().path) \
-                + ":" + str(self.message().get_line())
+        llarg = (
+            "--limit-line="
+            + os.path.basename(self.message().get_file().path)
+            + ":"
+            + str(self.message().get_line())
+        )
         args.append(llarg)
         target = prove_line_loc()
     except Exception:  # No message in context
@@ -963,10 +1003,14 @@ def on_prove_region(self):
         args.append("-U")
 
     target = prove_region()
-    lrarg = "--limit-region=" \
-            + str(os.path.basename(self.file().path)) \
-            + ":" + str(self.start_line()) \
-            + ":" + str(self.end_line())
+    lrarg = (
+        "--limit-region="
+        + str(os.path.basename(self.file().path))
+        + ":"
+        + str(self.start_line())
+        + ":"
+        + str(self.end_line())
+    )
     args.append(lrarg)
 
     generic_on_analyze(target, args=args)
@@ -986,21 +1030,26 @@ def on_clean_up(self):
 
 def mk_debug_loc_string(sloc):
     """Return a location for debugging purpose. sloc can be a FileLocation or
-       an EditorLocation."""
+    an EditorLocation."""
 
-    curfile = sloc.file() if isinstance(sloc, GPS.FileLocation) \
-        else sloc.buffer().file()
-    locstring = os.path.basename(curfile.path) + ':' \
-        + str(sloc.line()) + ':' + str(sloc.column())
+    curfile = (
+        sloc.file() if isinstance(sloc, GPS.FileLocation) else sloc.buffer().file()
+    )
+    locstring = (
+        os.path.basename(curfile.path)
+        + ":"
+        + str(sloc.line())
+        + ":"
+        + str(sloc.column())
+    )
     return locstring
 
 
 def mk_loc_string(sloc):
     """Return a location suitable to pass to switch --limit-subp.
-       sloc should be a FileLocation."""
+    sloc should be a FileLocation."""
 
-    locstring = os.path.basename(sloc.file().path) + ':' \
-        + str(sloc.line())
+    locstring = os.path.basename(sloc.file().path) + ":" + str(sloc.line())
     return locstring
 
 
@@ -1028,9 +1077,9 @@ def build_limit_subp_string(self):
     # Always return --limit-subp if enclosing subprogram is present, even in
     # cases where the subprogram would be inlined in proof. GNATprove will
     # ignore the switch in that case.
-    return '--limit-subp={}:{}'.format(
-        os.path.basename(self.location().file().name()),
-        enclosing.sloc_range.start.line)
+    return "--limit-subp={}:{}".format(
+        os.path.basename(self.location().file().name()), enclosing.sloc_range.start.line
+    )
 
 
 def inside_subp_context(self):
@@ -1038,7 +1087,7 @@ def inside_subp_context(self):
 
     # This is used as a menu filter, so protect against exceptions
     try:
-        return (current_subprogram(self) is not None)
+        return current_subprogram(self) is not None
     except Exception:
         return False
 
@@ -1053,9 +1102,10 @@ def inside_generic_unit_context(self):
     """Return True if the context is inside a generic unit"""
 
     def is_generic_node(node):
-        return isinstance(node, (lal.GenericSubpDecl,
-                                 lal.GenericPackageInternal,
-                                 lal.GenericPackageDecl))
+        return isinstance(
+            node,
+            (lal.GenericSubpDecl, lal.GenericPackageInternal, lal.GenericPackageDecl),
+        )
 
     try:
         # Look at immediate enclosing subprogram decl/body
@@ -1064,9 +1114,9 @@ def inside_generic_unit_context(self):
             # Stop at the first enclosing generic parent node
             if is_generic_node(node):
                 return True
-            elif (isinstance(node, (lal.SubpBody,
-                                    lal.PackageBody))
-                  and is_generic_node(node.p_decl_part())):
+            elif isinstance(node, (lal.SubpBody, lal.PackageBody)) and is_generic_node(
+                node.p_decl_part()
+            ):
                 return True
             else:
                 # Otherwise, look further on the parent chain
@@ -1077,8 +1127,7 @@ def inside_generic_unit_context(self):
 
 
 def generic_action_on_subp(self, action, force=False):
-    """execute the action on the given subprogram entity
-    """
+    """execute the action on the given subprogram entity"""
 
     # The argument --limit-subp is not defined in the examine_subp/prove_subp
     # build targets, because we have no means of designating the proper
@@ -1092,28 +1141,24 @@ def generic_action_on_subp(self, action, force=False):
         if inside_generic_unit_context(self):
             args.append("-U")
         target = GPS.BuildTarget(action)
-        target.execute(extra_args=args,
-                       synchronous=False,
-                       force=force)
+        target.execute(extra_args=args, synchronous=False, force=force)
 
 
 def on_examine_subp(self, force=False):
     """execute the "examine subprogram" action on the given subprogram
-       entity
+    entity
     """
 
     generic_action_on_subp(self, examine_subp, force=force)
 
 
 def on_prove_subp(self, force=False):
-    """execute the "prove subprogram" action on the given subprogram entity
-    """
+    """execute the "prove subprogram" action on the given subprogram entity"""
 
     generic_action_on_subp(self, prove_subp(), force=force)
 
 
 class LemmaAction(GPS.Action):
-
     def __init__(self, filename, src_dir):
         self.path = os.path.join(src_dir, filename)
         split_name = filename.split(".")
@@ -1148,8 +1193,11 @@ def add_lemma_menu():
     # Create the menus (Note: underscores must be escaped by underscore to be
     # visible in Gtk menu)
     for action in actions:
-        action.menu("/Help/{}/SPARK Library/{}/{}".format(
-            prefix, action.menu_postfix, action.name.replace("_", "__")))
+        action.menu(
+            "/Help/{}/SPARK Library/{}/{}".format(
+                prefix, action.menu_postfix, action.name.replace("_", "__")
+            )
+        )
 
 
 class GNATProve_Plugin:
@@ -1162,9 +1210,10 @@ class GNATProve_Plugin:
     def __init__(self):
         process = GPS.Process("gnatprove -h")
         help_msg = process.get_result()
-        GPS.parse_xml(xml_gnatprove.format(help=help_msg,
-                                           output_parsers=OUTPUT_PARSERS))
-        GPS.parse_xml(xml_gnatprove_menus % {'prefix': prefix})
+        GPS.parse_xml(
+            xml_gnatprove.format(help=help_msg, output_parsers=OUTPUT_PARSERS)
+        )
+        GPS.parse_xml(xml_gnatprove_menus % {"prefix": prefix})
         add_lemma_menu()
 
     def show_report(self):
@@ -1175,20 +1224,18 @@ class GNATProve_Plugin:
         """Display the gnatprove.out log"""
 
         artifact_dir = GPS.Project.root().artifacts_dir()
-        report_file = os.path.join(artifact_dir, obj_subdir_name,
-                                   report_file_name)
+        report_file = os.path.join(artifact_dir, obj_subdir_name, report_file_name)
 
         # if build mode is not the default one, the report file may be found in
         # the parent directory of the current object directory
 
         if not os.path.exists(report_file):
             if artifact_dir.endswith(os.sep):
-                artifact_dir = artifact_dir[:len(os.sep)]
+                artifact_dir = artifact_dir[: len(os.sep)]
             artifact_dir = os.path.dirname(artifact_dir)
-            candidate_report_file = \
-                os.path.join(artifact_dir,
-                             obj_subdir_name,
-                             report_file_name)
+            candidate_report_file = os.path.join(
+                artifact_dir, obj_subdir_name, report_file_name
+            )
 
             # if the report file is still not found, leave the original path
             # so that the error message mentions this one
@@ -1196,9 +1243,10 @@ class GNATProve_Plugin:
             if os.path.exists(candidate_report_file):
                 report_file = candidate_report_file
         if not os.path.exists(report_file):
-            GPS.Console().write("The file " + report_file +
-                                " does not exist; run gnatprove first.",
-                                mode='error')
+            GPS.Console().write(
+                "The file " + report_file + " does not exist; run gnatprove first.",
+                mode="error",
+            )
         else:
             buf = GPS.EditorBuffer.get(GPS.File(report_file))
             v = buf.current_view()
@@ -1209,8 +1257,8 @@ class GNATProve_Plugin:
 
 
 class UnknownVCError(Exception):
-    """ Exception raised when the message VC does not correspond to any known
-        VC message."""
+    """Exception raised when the message VC does not correspond to any known
+    VC message."""
 
     def __init__(self, msg):
         self.msg = msg
@@ -1218,76 +1266,59 @@ class UnknownVCError(Exception):
 
 vc_fail_msg_dict = {
     # VC_RTE_Kind - run-time checks
-
-    'divide by zero might fail': 'VC_DIVISION_CHECK',
-    'array index check might fail': 'VC_INDEX_CHECK',
-    'overflow check might fail': 'VC_OVERFLOW_CHECK',
-    'float overflow check might fail': 'VC_FP_OVERFLOW_CHECK',
-    'range check might fail': 'VC_RANGE_CHECK',
-    'predicate check might fail': 'VC_PREDICATE_CHECK',
-    'predicate check might fail on default value':
-        'VC_PREDICATE_CHECK_ON_DEFAULT_VALUE',
-    'pointer dereference check might fail':
-        'VC_NULL_POINTER_DEREFERENCE',
-    'null exclusion check might fail': 'VC_NULL_EXCLUSION',
-    'length check might fail': 'VC_LENGTH_CHECK',
-    'discriminant check might fail': 'VC_DISCRIMINANT_CHECK',
-    'tag check might fail': 'VC_TAG_CHECK',
-    'ceiling priority might not be in Interrupt_Priority':
-        'VC_CEILING_INTERRUPT',
-    'interrupt might be reserved': 'VC_INTERRUPT_RESERVED',
-    'invariant check might fail': 'VC_INVARIANT_CHECK',
-    'invariant check might fail on default value':
-        'VC_INVARIANT_CHECK_ON_DEFAULT_VALUE',
-    'ceiling priority protocol might not be respected':
-        'VC_CEILING_PRIORITY_PROTOCOL',
-    'the task might terminate': 'VC_TASK_TERMINATION',
-    'initialization check might fail': 'VC_INITIALIZATION_CHECK',
-
+    "divide by zero might fail": "VC_DIVISION_CHECK",
+    "array index check might fail": "VC_INDEX_CHECK",
+    "overflow check might fail": "VC_OVERFLOW_CHECK",
+    "float overflow check might fail": "VC_FP_OVERFLOW_CHECK",
+    "range check might fail": "VC_RANGE_CHECK",
+    "predicate check might fail": "VC_PREDICATE_CHECK",
+    "predicate check might fail on default value": "VC_PREDICATE_CHECK_ON_DEFAULT_VALUE",
+    "pointer dereference check might fail": "VC_NULL_POINTER_DEREFERENCE",
+    "null exclusion check might fail": "VC_NULL_EXCLUSION",
+    "length check might fail": "VC_LENGTH_CHECK",
+    "discriminant check might fail": "VC_DISCRIMINANT_CHECK",
+    "tag check might fail": "VC_TAG_CHECK",
+    "ceiling priority might not be in Interrupt_Priority": "VC_CEILING_INTERRUPT",
+    "interrupt might be reserved": "VC_INTERRUPT_RESERVED",
+    "invariant check might fail": "VC_INVARIANT_CHECK",
+    "invariant check might fail on default value": "VC_INVARIANT_CHECK_ON_DEFAULT_VALUE",
+    "ceiling priority protocol might not be respected": "VC_CEILING_PRIORITY_PROTOCOL",
+    "the task might terminate": "VC_TASK_TERMINATION",
+    "initialization check might fail": "VC_INITIALIZATION_CHECK",
     # VC_Assert_Kind - assertions
-
-    'initial condition might fail': 'VC_INITIAL_CONDITION',
-    'default initial condition might fail': 'VC_DEFAULT_INITIAL_CONDITION',
-    'precondition might fail': 'VC_PRECONDITION',
-    'call to nonreturning subprogram might be executed': 'VC_PRECONDITION',
-    'precondition of main program might fail': 'VC_PRECONDITION_MAIN',
-    'postcondition might fail': 'VC_POSTCONDITION',
-    'refined postcondition might fail': 'VC_REFINED_POST',
-    'contract case might fail': 'VC_CONTRACT_CASE',
-    'contract cases might not be disjoint': 'VC_DISJOINT_CONTRACT_CASES',
-    'contract cases might not be complete': 'VC_COMPLETE_CONTRACT_CASES',
-    'loop invariant might fail': 'VC_LOOP_INVARIANT',
-    'loop invariant might fail in first iteration': 'VC_LOOP_INVARIANT_INIT',
-    'loop invariant might fail after first iteration':
-    'VC_LOOP_INVARIANT_PRESERV',
-    'loop variant might fail': 'VC_LOOP_VARIANT',
-    'assertion might fail': 'VC_ASSERT',
-    'exception might be raised': 'VC_RAISE',
-    'Inline_For_Proof annotation might be incorrect': 'VC_INLINE_CHECK',
-    'is unsuitable for unchecked conversion': 'VC_UC_SOURCE',
-    'is unsuitable as a target for unchecked conversion': 'VC_UC_TARGET',
-    'types used for unchecked conversion do not have the same size':
-        'VC_UC_SAME_SIZE',
-
+    "initial condition might fail": "VC_INITIAL_CONDITION",
+    "default initial condition might fail": "VC_DEFAULT_INITIAL_CONDITION",
+    "precondition might fail": "VC_PRECONDITION",
+    "call to nonreturning subprogram might be executed": "VC_PRECONDITION",
+    "precondition of main program might fail": "VC_PRECONDITION_MAIN",
+    "postcondition might fail": "VC_POSTCONDITION",
+    "refined postcondition might fail": "VC_REFINED_POST",
+    "contract case might fail": "VC_CONTRACT_CASE",
+    "contract cases might not be disjoint": "VC_DISJOINT_CONTRACT_CASES",
+    "contract cases might not be complete": "VC_COMPLETE_CONTRACT_CASES",
+    "loop invariant might fail": "VC_LOOP_INVARIANT",
+    "loop invariant might fail in first iteration": "VC_LOOP_INVARIANT_INIT",
+    "loop invariant might fail after first iteration": "VC_LOOP_INVARIANT_PRESERV",
+    "loop variant might fail": "VC_LOOP_VARIANT",
+    "assertion might fail": "VC_ASSERT",
+    "exception might be raised": "VC_RAISE",
+    "Inline_For_Proof annotation might be incorrect": "VC_INLINE_CHECK",
+    "is unsuitable for unchecked conversion": "VC_UC_SOURCE",
+    "is unsuitable as a target for unchecked conversion": "VC_UC_TARGET",
+    "types used for unchecked conversion do not have the same size": "VC_UC_SAME_SIZE",
     # VC_LSP_Kind - Liskov Substitution Principle
-
-    'precondition might be stronger than class-wide precondition':
-    'VC_WEAKER_PRE',
-    'precondition is stronger than the default class-wide precondition '
-    'of True':
-    'VC_TRIVIAL_WEAKER_PRE',
-    'postcondition might be weaker than class-wide postcondition':
-    'VC_STRONGER_POST',
-    'class-wide precondition might be stronger than overridden one':
-    'VC_WEAKER_CLASSWIDE_PRE',
-    'class-wide postcondition might be weaker than overridden one':
-    'VC_STRONGER_CLASSWIDE_POST'
+    "precondition might be stronger than class-wide precondition": "VC_WEAKER_PRE",
+    "precondition is stronger than the default class-wide precondition "
+    "of True": "VC_TRIVIAL_WEAKER_PRE",
+    "postcondition might be weaker than class-wide postcondition": "VC_STRONGER_POST",
+    "class-wide precondition might be stronger than overridden one": "VC_WEAKER_CLASSWIDE_PRE",
+    "class-wide postcondition might be weaker than overridden one": "VC_STRONGER_CLASSWIDE_POST",
 }
 
 
 def is_unproved_check_message(msg):
-    """ Check that the msg is failing and that it is a check message (prover
-        can be run on it). """
+    """Check that the msg is failing and that it is a check message (prover
+    can be run on it)."""
     try:
         get_vc_kind(msg)
     except UnknownVCError:
@@ -1297,8 +1328,11 @@ def is_unproved_check_message(msg):
 
 def get_line_warn(context):
     def msg_filter(msg):
-        return msg.get_line() == context.location().line() \
+        return (
+            msg.get_line() == context.location().line()
             and is_unproved_check_message(msg)
+        )
+
     if len(context.files()) > 0:
         return list(filter(msg_filter, GPS.Message.list(file=context.file())))
     else:
@@ -1306,7 +1340,7 @@ def get_line_warn(context):
 
 
 def not_triggered_from_source(context):
-    """ Check that the menu is not triggered from the source view """
+    """Check that the menu is not triggered from the source view"""
     return context.message() is not None
 
 
@@ -1326,19 +1360,19 @@ def prove_check_context(context):
 
 
 def can_show_report():
-    return len(GPS.Message.list(category=messages_category)) > 0 \
+    return (
+        len(GPS.Message.list(category=messages_category)) > 0
         and gnatprove_plug.output_parser is not None
+    )
 
 
 def get_vc_kind(msg):
-    """ Return the kind of the failing VC according to dictionnary
-        vc_fail_msg_dict. """
+    """Return the kind of the failing VC according to dictionnary
+    vc_fail_msg_dict."""
     # get rid of "medium: ", "low: " and "high: "
     # We assume that "warning: ", "severity: " and "error: " are not checks
     # (ie: something we run provers on).
-    clean_msg = re.sub(r"^(medium\: |low\: |high\: )",
-                       "",
-                       msg.get_text())
+    clean_msg = re.sub(r"^(medium\: |low\: |high\: )", "", msg.get_text())
 
     def best_match(acc, elem):
         if clean_msg.startswith(elem):
@@ -1349,33 +1383,38 @@ def get_vc_kind(msg):
         else:
             return acc
 
-    msg_key = reduce(best_match,
-                     list(vc_fail_msg_dict.keys()), None)
+    msg_key = reduce(best_match, list(vc_fail_msg_dict.keys()), None)
     if not msg_key:
         raise UnknownVCError(clean_msg)
     return vc_fail_msg_dict[msg_key]
 
 
 def limit_line_option(msg, line, col, vc_kind):
-    return "--limit-line=" + os.path.basename(msg.get_file().path) \
-                           + ":" + str(line) \
-                           + ":" + str(col) \
-                           + ":" + vc_kind
+    return (
+        "--limit-line="
+        + os.path.basename(msg.get_file().path)
+        + ":"
+        + str(line)
+        + ":"
+        + str(col)
+        + ":"
+        + vc_kind
+    )
 
 
 def on_prove_check(context, force=False, opt_args=[]):
     msg = context._loc_msg
     text_msg = get_comp_text(msg)
-    msg_line = map_msg[text_msg, 'check_line']
-    msg_col = map_msg[text_msg, 'check_col']
+    msg_line = map_msg[text_msg, "check_line"]
+    msg_col = map_msg[text_msg, "check_col"]
     vc_kind = get_vc_kind(msg)
     llarg = limit_line_option(msg, msg_line, msg_col, vc_kind)
     args = [llarg]
     if inside_generic_unit_context(context):
         args.append("-U")
-    GPS.BuildTarget(prove_check()).execute(extra_args=args+opt_args,
-                                           synchronous=False,
-                                           force=force)
+    GPS.BuildTarget(prove_check()).execute(
+        extra_args=args + opt_args, synchronous=False, force=force
+    )
 
 
 # Check for GNAT toolchain: gnatprove
@@ -1383,37 +1422,41 @@ def on_prove_check(context, force=False, opt_args=[]):
 gnatprove = os_utils.locate_exec_on_path(toolname)
 
 if gnatprove:
-    xml_gnatprove_menus = \
-        xml_gnatprove_menus.format(root=get_root(), example=get_example_root())
+    xml_gnatprove_menus = xml_gnatprove_menus.format(
+        root=get_root(), example=get_example_root()
+    )
 
     gnatprove_plug = GNATProve_Plugin()
 
 
 def load_example_adacore_u():
-    """ load AdaCore U example project, which requires specific code to set
-        SPARKLIB_OBJECT_DIR environment variable.
+    """load AdaCore U example project, which requires specific code to set
+    SPARKLIB_OBJECT_DIR environment variable.
     """
     import os
-    example_root = os.path.join(get_example_root(), 'adacore_u')
-    os.environ["SPARKLIB_OBJECT_DIR"] = '.'
-    GPS.Project.load(os.path.join(example_root, 'adacore_u.gpr'))
+
+    example_root = os.path.join(get_example_root(), "adacore_u")
+    os.environ["SPARKLIB_OBJECT_DIR"] = "."
+    GPS.Project.load(os.path.join(example_root, "adacore_u.gpr"))
 
 
 def load_example_allocators():
-    """ load Allocators example project, which requires specific code to set
-        SPARKLIB_OBJECT_DIR environment variable.
+    """load Allocators example project, which requires specific code to set
+    SPARKLIB_OBJECT_DIR environment variable.
     """
     import os
-    example_root = os.path.join(get_example_root(), 'allocators')
-    os.environ["SPARKLIB_OBJECT_DIR"] = '.'
-    GPS.Project.load(os.path.join(example_root, 'allocators.gpr'))
+
+    example_root = os.path.join(get_example_root(), "allocators")
+    os.environ["SPARKLIB_OBJECT_DIR"] = "."
+    GPS.Project.load(os.path.join(example_root, "allocators.gpr"))
 
 
 def load_example_gnatprove_by_example():
-    """ load GNATprove-by-Example example project, which requires specific code
-        to set SPARKLIB_OBJECT_DIR environment variable.
+    """load GNATprove-by-Example example project, which requires specific code
+    to set SPARKLIB_OBJECT_DIR environment variable.
     """
     import os
-    example_root = os.path.join(get_example_root(), 'gnatprove_by_example')
-    os.environ["SPARKLIB_OBJECT_DIR"] = '.'
-    GPS.Project.load(os.path.join(example_root, 'gnatprove_by_example.gpr'))
+
+    example_root = os.path.join(get_example_root(), "gnatprove_by_example")
+    os.environ["SPARKLIB_OBJECT_DIR"] = "."
+    GPS.Project.load(os.path.join(example_root, "gnatprove_by_example.gpr"))

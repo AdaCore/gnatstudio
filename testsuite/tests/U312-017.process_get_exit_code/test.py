@@ -9,6 +9,4 @@ from gs_utils.internal.utils import run_test_driver, gps_assert
 def driver():
     p = GS.Process("empty")
     p.get_result()
-    gps_assert(p.get_exit_status(),
-               -1,
-               "No error code")
+    gps_assert(p.get_exit_status(), -1, "No error code")

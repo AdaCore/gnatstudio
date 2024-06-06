@@ -1,5 +1,10 @@
-from highlighter.common import register_highlighter, region, existing_style, \
-    tag_keyword, simple
+from highlighter.common import (
+    register_highlighter,
+    region,
+    existing_style,
+    tag_keyword,
+    simple,
+)
 
 
 file_tag = existing_style("Diff-Patch-File-Header-Variant", "file-diff")
@@ -20,6 +25,6 @@ register_highlighter(
         # Match removed line
         region(r"^\-", "\n", tag=removed_tag),
         # Match header keyword
-        simple(r"^[\w|-]+:", tag=tag_keyword)
-    )
+        simple(r"^[\w|-]+:", tag=tag_keyword),
+    ),
 )

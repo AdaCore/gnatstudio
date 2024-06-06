@@ -14,9 +14,9 @@ def verify(buf, init, l, msg, col=1):
     for line in l:
         GPS.execute_action(CYCLE)
         step = step + 1
-        gps_assert(buf.current_view().cursor().line(),
-                   line,
-                   msg + " | step: " + str(step))
+        gps_assert(
+            buf.current_view().cursor().line(), line, msg + " | step: " + str(step)
+        )
 
 
 @run_test_driver

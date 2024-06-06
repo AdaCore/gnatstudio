@@ -19,6 +19,4 @@ def test_driver():
     buf.main_cursor().move(buf.at(10, 29))
     buf.select(buf.at(7, 7), buf.at(10, 29))
     GPS.execute_action("Align arrows")
-    gps_assert(GPS.Editor.get_chars(FILE),
-               expected,
-               "Not formatted as expected")
+    gps_assert(GPS.Editor.get_chars(FILE), expected, "Not formatted as expected")

@@ -20,6 +20,4 @@ def run_test():
 
     buf = GPS.EditorBuffer.get(GPS.File("bar.adb"))
     text = buf.get_chars()
-    gps_assert("with Ada.Text_IO;\nuse Ada.Text_IO;" in text,
-               True,
-               "Codefix failed")
+    gps_assert("with Ada.Text_IO;\nuse Ada.Text_IO;" in text, True, "Codefix failed")

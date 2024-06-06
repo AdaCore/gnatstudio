@@ -26,6 +26,6 @@ def run_test():
         send_key_event(ord(c))
         yield timeout(100)
 
-    gps_assert(GPS.Console().get_text(),
-               "",
-               "The Messages view should not contains any error")
+    gps_assert(
+        GPS.Console().get_text(), "", "The Messages view should not contains any error"
+    )

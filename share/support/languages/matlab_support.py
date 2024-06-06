@@ -1,6 +1,15 @@
-from highlighter.common import words, tag_keyword, region, tag_comment, \
-        hl_comment_notes, hl_inside_strings, simple, tag_number, \
-        register_highlighter, tag_string
+from highlighter.common import (
+    words,
+    tag_keyword,
+    region,
+    tag_comment,
+    hl_comment_notes,
+    hl_inside_strings,
+    simple,
+    tag_number,
+    register_highlighter,
+    tag_string,
+)
 import GPS
 
 
@@ -24,19 +33,35 @@ register_highlighter(
     language="matlab",
     spec=(
         # Match keywords
-        words(["break", "case", "catch", "continue", "else", "elseif",
-               "end", "for", "function", "global", "if", "otherwise",
-               "persistent", "return", "switch", "try", "while", "classdef",
-               "methods"],
-              tag=tag_keyword),
-
+        words(
+            [
+                "break",
+                "case",
+                "catch",
+                "continue",
+                "else",
+                "elseif",
+                "end",
+                "for",
+                "function",
+                "global",
+                "if",
+                "otherwise",
+                "persistent",
+                "return",
+                "switch",
+                "try",
+                "while",
+                "classdef",
+                "methods",
+            ],
+            tag=tag_keyword,
+        ),
         # Match comments lines
         region(r"%", "\n", tag=tag_comment, highlighter=(hl_comment_notes,)),
-
         # Match strings
         region(r"'", r"'|$", tag=tag_string, highlighter=(hl_inside_strings,)),
-
         # Match number literals
         simple(r"\b[0-9]*\.?[0-9]+\b", tag=tag_number),
-    )
+    ),
 )

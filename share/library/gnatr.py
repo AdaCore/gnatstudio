@@ -12,7 +12,6 @@ from tool_output import OutputParser
 
 
 class OutputStore(OutputParser):
-
     def __init__(self, child):
         super(OutputStore, self).__init__(child)
         self.output = ""
@@ -31,7 +30,7 @@ class OutputStore(OutputParser):
         buffer.set_read_only(False)
 
         # ??? How to get access to the file name ?
-        GPS.MDI.get_by_child(buffer.current_view()).rename('Type layout')
+        GPS.MDI.get_by_child(buffer.current_view()).rename("Type layout")
 
 
 XML = r"""<?xml version="1.0" ?>
@@ -68,10 +67,9 @@ GPS.parse_xml(XML)
 
 
 @gs_utils.interactive(
-    name='view types layout in file',
-    filter='Source editor',
-    category='Builder')
+    name="view types layout in file", filter="Source editor", category="Builder"
+)
 def view_types_layout():
     context = GPS.current_context()
     f = context.file()
-    GPS.BuildTarget('Compute Types Layout').execute(file=f)
+    GPS.BuildTarget("Compute Types Layout").execute(file=f)

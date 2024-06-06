@@ -50,34 +50,37 @@ def on_exit(status):
         GPS.execute_action("reload project")
 
 
-@interactive(name="run gnatname",
-             description="Ask naming patterns to the user and run gnatname " +
-             "on the current project to add the files located in the " +
-             "project's source directories matching these patterns " +
-             "to project's sources files.")
+@interactive(
+    name="run gnatname",
+    description="Ask naming patterns to the user and run gnatname "
+    + "on the current project to add the files located in the "
+    + "project's source directories matching these patterns "
+    + "to project's sources files.",
+)
 def run_gnatname():
     """
     Run gnatname with the naming patterns entered by the user
     in a simple input dialog.
     """
     naming_patterns = GPS.MDI.input_dialog(
-        "Enter the space-separated naming patterns that will be " +
-        "used by gnatname to find compilation units " +
-        "(e.g: 'body_* spec_*'). These files are searched among the " +
-        "project's source directories.",
-        "Naming Patterns")
+        "Enter the space-separated naming patterns that will be "
+        + "used by gnatname to find compilation units "
+        + "(e.g: 'body_* spec_*'). These files are searched among the "
+        + "project's source directories.",
+        "Naming Patterns",
+    )
 
     if naming_patterns:
-        naming_patterns = ''.join(naming_patterns)
+        naming_patterns = "".join(naming_patterns)
         source_dirs = GPS.Project.root().source_dirs()
         root = GPS.Project.root().file().directory()
 
-        extra_args = ['-d' + os.path.relpath(source_dir, root)
-                      for source_dir in source_dirs]
-        extra_args = ' '.join(extra_args)
-        extra_args += ' ' + naming_patterns
+        extra_args = [
+            "-d" + os.path.relpath(source_dir, root) for source_dir in source_dirs
+        ]
+        extra_args = " ".join(extra_args)
+        extra_args += " " + naming_patterns
 
         GPS.BuildTarget("gnatname").execute(
-            extra_args=extra_args,
-            synchronous=False,
-            on_exit=on_exit)
+            extra_args=extra_args, synchronous=False, on_exit=on_exit
+        )

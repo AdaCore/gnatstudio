@@ -1,8 +1,13 @@
 # Check the suppression of CR characters when applying edits
 # received from the LSP
 
-from gs_utils.internal.utils import run_test_driver, wait_language_server, \
-    gps_assert, get_widget_by_name, timeout
+from gs_utils.internal.utils import (
+    run_test_driver,
+    wait_language_server,
+    gps_assert,
+    get_widget_by_name,
+    timeout,
+)
 
 
 @run_test_driver
@@ -24,6 +29,6 @@ def driver():
     yield wait_language_server("workspace/executeCommand", "Ada")
 
     # Check that the edits have been received
-    gps_assert("\r" in b.get_chars(),
-               False,
-               "There are stray CR characters in the editor")
+    gps_assert(
+        "\r" in b.get_chars(), False, "There are stray CR characters in the editor"
+    )

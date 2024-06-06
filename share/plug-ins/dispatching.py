@@ -15,21 +15,27 @@ import GPS
 from gs_utils.highlighter import Location_Highlighter, OverlayStyle
 
 GPS.Preference("Plugins/dispatching/color").create(
-    "Highlight color", "color",
+    "Highlight color",
+    "color",
     """Background color to use for dispatching calls""",
-    "#FFF3C2")
+    "#FFF3C2",
+)
 
 GPS.Preference("Plugins/dispatching/context").create(
-    "Search context", "integer",
+    "Search context",
+    "integer",
     """When the cross-reference information is not up-to-date, \
 GPS will search a few lines around the original location for \
 matching entities. This preference indicates how many lines \
 it will search -- the bigger the slower of course, and potentially \
-less precise too""", 5, 0, 50)
+less precise too""",
+    5,
+    0,
+    50,
+)
 
 
 class Dispatching_Highlighter(Location_Highlighter):
-
     def __init__(self):
         Location_Highlighter.__init__(self, style=None)
         self.background_color = None
@@ -42,8 +48,7 @@ class Dispatching_Highlighter(Location_Highlighter):
         if GPS.Logger("ENTITIES.SQLITE").active:
             GPS.Hook("xref_updated").add(self.__on_compilation_finished)
         else:
-            GPS.Hook("compilation_finished").add(
-                self.__on_compilation_finished)
+            GPS.Hook("compilation_finished").add(self.__on_compilation_finished)
 
     def __del__(self):
         Location_Highlighter.__del__(self)
@@ -54,8 +59,7 @@ class Dispatching_Highlighter(Location_Highlighter):
         if GPS.Logger("ENTITIES.SQLITE").active:
             GPS.Hook("xref_updated").remove(self.__on_compilation_finished)
         else:
-            GPS.Hook("compilation_finished").remove(
-                self.__on_compilation_finished)
+            GPS.Hook("compilation_finished").remove(self.__on_compilation_finished)
 
     def __on_preferences_changed(self, hook):
         changed = False

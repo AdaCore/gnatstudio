@@ -24,19 +24,20 @@ def run_test():
     yield wait_idle()
 
     # Trigger the parameter completion and select the first result
-    send_key_event(ord(','))
+    send_key_event(ord(","))
     yield wait_language_server("textDocument/completion")
-    yield wait_until_true(
-        lambda: get_widget_by_name("completion-view") is not None)
+    yield wait_until_true(lambda: get_widget_by_name("completion-view") is not None)
     pop_tree = get_widget_by_name("completion-view")
     model = pop_tree.get_model()
     yield timeout(500)
     click_in_tree(pop_tree, path="0", events=double_click_events)
     yield wait_idle()
 
-    gps_assert(buf.get_chars(frm=buf.at(7, 1)),
-               EXPECTED,
-               "Wrong completion for ',' without newline")
+    gps_assert(
+        buf.get_chars(frm=buf.at(7, 1)),
+        EXPECTED,
+        "Wrong completion for ',' without newline",
+    )
 
     # Remove completion and ","
     buf.undo()
@@ -47,16 +48,17 @@ def run_test():
 
     # It should still work even with a new line
     buf.insert(buf.at(7, 1).end_of_line(), "\n")
-    send_key_event(ord(','))
+    send_key_event(ord(","))
     yield wait_language_server("textDocument/completion")
-    yield wait_until_true(
-        lambda: get_widget_by_name("completion-view") is not None)
+    yield wait_until_true(lambda: get_widget_by_name("completion-view") is not None)
     pop_tree = get_widget_by_name("completion-view")
     model = pop_tree.get_model()
     yield timeout(500)
     click_in_tree(pop_tree, path="0", events=double_click_events)
     yield wait_idle()
 
-    gps_assert(buf.get_chars(frm=buf.at(7, 1)),
-               EXPECTED,
-               "Wrong completion for ',' with newline")
+    gps_assert(
+        buf.get_chars(frm=buf.at(7, 1)),
+        EXPECTED,
+        "Wrong completion for ',' with newline",
+    )

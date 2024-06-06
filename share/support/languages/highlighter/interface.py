@@ -177,6 +177,7 @@ import re
 # Highlight classes creation #
 ##############################
 
+
 def search_for_capturing_groups(regexp_string):
     """
     Return a list of matches for capturing groups in a regular expression.
@@ -196,9 +197,12 @@ def simple(regexp_string, tag):
     :rtype: SimpleMatcher
     """
     if search_for_capturing_groups(regexp_string):
-        raise Exception("""Capturing groups are not supported.
-Please use non-capturing groups when defining regular expressions.""")
+        raise Exception(
+            """Capturing groups are not supported.
+Please use non-capturing groups when defining regular expressions."""
+        )
     from highlighter.engine import SimpleMatcher
+
     return SimpleMatcher(tag, regexp_string)
 
 
@@ -217,8 +221,9 @@ def words(words_list, **kwargs):
     return simple(r"\b(?:{0})\b".format(words_list), **kwargs)
 
 
-def region(start_re, end_re, tag=None, name="", highlighter=(),
-           matchall=True, igncase=False):
+def region(
+    start_re, end_re, tag=None, name="", highlighter=(), matchall=True, igncase=False
+):
     """
     Return a matcher for a region, which can contain a whole specific
     highlighter
@@ -232,8 +237,10 @@ def region(start_re, end_re, tag=None, name="", highlighter=(),
     :rtype: RegionMatcher
     """
     from highlighter.engine import RegionMatcher
-    return RegionMatcher(tag, start_re, end_re, highlighter,
-                         matchall, name, igncase=igncase)
+
+    return RegionMatcher(
+        tag, start_re, end_re, highlighter, matchall, name, igncase=igncase
+    )
 
 
 def region_template(*args, **kwargs):
@@ -263,12 +270,20 @@ def region_ref(name):
     :rtype: RegionRef
     """
     from highlighter.engine import RegionRef
+
     return RegionRef(name)
 
 
-def new_style(lang, name, label, doc, foreground_colors,
-              background_colors=("transparent", "transparent"),
-              font_style="default", prio=-1):
+def new_style(
+    lang,
+    name,
+    label,
+    doc,
+    foreground_colors,
+    background_colors=("transparent", "transparent"),
+    font_style="default",
+    prio=-1,
+):
     """
     Creates a new style to apply when a matcher successfully matches a
     portion of text. A style is the conflation of
@@ -327,19 +342,26 @@ def new_style(lang, name, label, doc, foreground_colors,
         style_id = "{0}_{1}".format(lang, name)
         pref_name = "Editor/Fonts & Colors:{0}/{1}".format(lang, name)
         pref = GPS.Preference(pref_name)
-        pref.create_style(label, doc,
-                          foreground_colors[0],
-                          light_bg_color.to_rgba_string(),
-                          font_style)
+        pref.create_style(
+            label,
+            doc,
+            foreground_colors[0],
+            light_bg_color.to_rgba_string(),
+            font_style,
+        )
 
         theme_handling.variant_prefs[style_id] = pref_name
-        theme_handling.common_dark[style_id] = (font_style.upper(),
-                                                Color(foreground_colors[1]),
-                                                dark_bg_color)
+        theme_handling.common_dark[style_id] = (
+            font_style.upper(),
+            Color(foreground_colors[1]),
+            dark_bg_color,
+        )
 
-        theme_handling.common_light[style_id] = (font_style.upper(),
-                                                 Color(foreground_colors[0]),
-                                                 light_bg_color)
+        theme_handling.common_light[style_id] = (
+            font_style.upper(),
+            Color(foreground_colors[0]),
+            light_bg_color,
+        )
         pref.tag = None
         HighlighterModule.preferences[style_id] = (pref, pref.get())
         return Style(style_id, prio, pref)
@@ -363,6 +385,7 @@ def existing_style(pref_name, name="", prio=-1):
     """
     try:
         from highlighter.engine import Style, HighlighterModule
+
         style_id = "{0}_hl".format(name if name else pref_name)
         pref = GPS.Preference(pref_name)
         pref.tag = None
@@ -383,6 +406,6 @@ def register_highlighter(language, spec, igncase=False):
     :param tuple spec: The spec of the highlighter.
     """
     from highlighter.engine import Highlighter, HighlighterModule
+
     for lang in language.split(","):
-        HighlighterModule.highlighters[lang.lower()] = Highlighter(
-            spec, igncase)
+        HighlighterModule.highlighters[lang.lower()] = Highlighter(spec, igncase)

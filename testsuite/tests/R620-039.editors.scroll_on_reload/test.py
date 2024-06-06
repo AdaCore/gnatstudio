@@ -32,8 +32,10 @@ def test_driver():
 
     # Reset the buffer to its original state outside of GPS
     current_dir = os.getcwd()
-    shutil.copyfile(os.path.join(current_dir, "gps-main.adb.saved"),
-                    os.path.join(current_dir, "gps-main.adb"))
+    shutil.copyfile(
+        os.path.join(current_dir, "gps-main.adb.saved"),
+        os.path.join(current_dir, "gps-main.adb"),
+    )
 
     # Move the focus away of GPS and set it back to the editor after
     # so that GPS can detect the changes on disk and reload the file
@@ -44,6 +46,9 @@ def test_driver():
 
     yield wait_idle()
 
-    gps_assert(vadj.get_value(), value_at_beginning,
-               "The editor should be scrolled back to cursor's location " +
-               "before reloading the file")
+    gps_assert(
+        vadj.get_value(),
+        value_at_beginning,
+        "The editor should be scrolled back to cursor's location "
+        + "before reloading the file",
+    )

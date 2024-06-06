@@ -9,24 +9,28 @@ def driver():
     b = GPS.EditorBuffer.get(GPS.File("code.adb"))
     b.select(b.at(3, 1), b.at(5, 1))
     GPS.execute_action("toggle comment")
-    gps_assert(b.get_chars(),
-               """procedure code is
+    gps_assert(
+        b.get_chars(),
+        """procedure code is
 begin
    --  a;
    --  b;
    c;
 end code;
 """,
-               "wrong lines taken into account when multi-line comment")
+        "wrong lines taken into account when multi-line comment",
+    )
 
     b.select(b.at(3, 1), b.at(4, 1))
     GPS.execute_action("toggle comment")
-    gps_assert(b.get_chars(),
-               """procedure code is
+    gps_assert(
+        b.get_chars(),
+        """procedure code is
 begin
    a;
    --  b;
    c;
 end code;
 """,
-               "wrong lines taken into account when multi-line uncomment")
+        "wrong lines taken into account when multi-line uncomment",
+    )

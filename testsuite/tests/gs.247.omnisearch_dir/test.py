@@ -29,8 +29,10 @@ def driver():
     yield wait_idle()
     yield timeout(500)
 
-    popup = pygps.get_widget_by_name('global_search-results-list')
+    popup = pygps.get_widget_by_name("global_search-results-list")
     results_tree = pygps.get_widgets_by_type(Gtk.TreeView, popup)[0]
-    gps_assert(get_paths(["file_a.adb", "file_b.adb"]),
-               extract_filename(dump_tree_model(results_tree.get_model(), 0)),
-               "issue with omnisearch results")
+    gps_assert(
+        get_paths(["file_a.adb", "file_b.adb"]),
+        extract_filename(dump_tree_model(results_tree.get_model(), 0)),
+        "issue with omnisearch results",
+    )

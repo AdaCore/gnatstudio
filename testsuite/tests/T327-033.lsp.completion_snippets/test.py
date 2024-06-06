@@ -24,8 +24,11 @@ def run_test():
 
     # Verify that it has been correctly parsed by the aliases plugin
     line = buf.get_chars(buf.at(10, 1), buf.at(10, 1).end_of_line())
-    gps_assert(line.strip(), EXPECTED_SNIPPET.strip(),
-               "The completion snippet has not been correctly inserted")
+    gps_assert(
+        line.strip(),
+        EXPECTED_SNIPPET.strip(),
+        "The completion snippet has not been correctly inserted",
+    )
 
     # Iterate over the snippet params using TAB and give a value to
     # each of them
@@ -39,5 +42,8 @@ def run_test():
 
     # Verify that the snippet parameters have been inserted properly
     line = buf.get_chars(buf.at(10, 1), buf.at(10, 1).end_of_line())
-    gps_assert(line.strip(), EXPECTED_RESULT.strip(),
-               "The snippet parameter values have not been inserted properly")
+    gps_assert(
+        line.strip(),
+        EXPECTED_RESULT.strip(),
+        "The snippet parameter values have not been inserted properly",
+    )

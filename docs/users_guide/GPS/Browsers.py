@@ -14,10 +14,10 @@ class Style(object):
     Very often, such a style will be reused for multiple objects.
     """
 
-    Arrow = enum('Style.Arrow', NONE=0, OPEN=1, SOLID=2, DIAMOND=3)
-    Symbol = enum('Style.Symbol', NONE=0, CROSS=1, STRIKE=2, DOUBLE_STRIKE=3)
-    Underline = enum('Style.Underline', NONE=0, SINGLE=1, DOUBLE=2, LOW=3)
-    Align = enum('Style.Align', LEFT=0, MIDDLE=1, RIGHT=2)
+    Arrow = enum("Style.Arrow", NONE=0, OPEN=1, SOLID=2, DIAMOND=3)
+    Symbol = enum("Style.Symbol", NONE=0, CROSS=1, STRIKE=2, DOUBLE_STRIKE=3)
+    Underline = enum("Style.Underline", NONE=0, SINGLE=1, DOUBLE=2, LOW=3)
+    Align = enum("Style.Align", LEFT=0, MIDDLE=1, RIGHT=2)
     # Keep in sync with gs_utils/__init__.py
 
     def __init__(
@@ -55,7 +55,7 @@ class Style(object):
         symbolToWidth=1.0,
         shadowColor=None,
         shadowOffsetX=2.0,
-        shadowOffsetY=2.0
+        shadowOffsetY=2.0,
     ):
         """
         Constructs a new style.
@@ -230,11 +230,11 @@ class Item(AbstractItem):
     Extra margins can be specified to force extra space.
     """
 
-    Align = enum('Item.Align', START=0, MIDDLE=1, END=2)
-    Overflow = enum('Item.Overflow', PREVENT=0, HIDE=1)
-    Layout = enum('Item.Layout', HORIZONTAL=0, VERTICAL=1)
+    Align = enum("Item.Align", START=0, MIDDLE=1, END=2)
+    Overflow = enum("Item.Overflow", PREVENT=0, HIDE=1)
+    Layout = enum("Item.Layout", HORIZONTAL=0, VERTICAL=1)
 
-    Size = enum('Item.Size', FIT=-1, AUTO=-2)
+    Size = enum("Item.Size", FIT=-1, AUTO=-2)
     """
     Describes the size of an item. In general, the size is given as a number
     of pixels. There are however a few special values.
@@ -340,12 +340,14 @@ class Item(AbstractItem):
         :return: a :class:`GPS.Browsers.AbstractItem`
         """
 
-    def add(self,
-            item,
-            align=Align.START,
-            margin=(0, 0, 0, 0),
-            float=False,
-            overflow=Overflow.PREVENT):
+    def add(
+        self,
+        item,
+        align=Align.START,
+        margin=(0, 0, 0, 0),
+        float=False,
+        overflow=Overflow.PREVENT,
+    ):
         """
         Add a child item.
         This child will be displayed as part of the item, and will move with
@@ -480,8 +482,7 @@ class TextItem(Item):
     An item that displays text (optionaly within a rectangular box).
     """
 
-    TextArrow = enum(
-        'TextItem.Text_Arrow', NONE=0, UP=1, DOWN=2, LEFT=3, RIGHT=4)
+    TextArrow = enum("TextItem.Text_Arrow", NONE=0, UP=1, DOWN=2, LEFT=3, RIGHT=4)
 
     text = None
     """
@@ -516,8 +517,7 @@ class EditableTextItem(TextItem):
     Whether this item is currently editable by the user
     """
 
-    def __init__(self, style, text, directed=TextItem.TextArrow.NONE,
-                 on_edited=None):
+    def __init__(self, style, text, directed=TextItem.TextArrow.NONE, on_edited=None):
         """
         Creates a new editable text item
 
@@ -576,10 +576,8 @@ class Link(AbstractItem):
     stay connected to those items.
     """
 
-    Routing = enum('Link.Routing',
-                   ORTHOGONAL=0, STRAIGHT=1, ARC=2, CURVE=3)
-    Side = enum('Link.Side',
-                AUTO=0, TOP=1, RIGHT=2, BOTTOM=3, LEFT=4, NO_CLIP=5)
+    Routing = enum("Link.Routing", ORTHOGONAL=0, STRAIGHT=1, ARC=2, CURVE=3)
+    Side = enum("Link.Side", AUTO=0, TOP=1, RIGHT=2, BOTTOM=3, LEFT=4, NO_CLIP=5)
 
     label = None
     """
@@ -623,7 +621,7 @@ class Link(AbstractItem):
         toX=0.5,
         toY=0.5,
         toSide=Side.AUTO,
-        toLabel=None
+        toLabel=None,
     ):
         """
         Creates a new link attached to the two items FROM and TO.
@@ -714,7 +712,7 @@ class Diagram(object):
                 '''
     """
 
-    Selection = enum('Diagram.Selection', NONE=0, SINGLE=1, MULTIPLE=2)
+    Selection = enum("Diagram.Selection", NONE=0, SINGLE=1, MULTIPLE=2)
 
     selected = None
     """
@@ -1134,7 +1132,7 @@ class View(GPS.GUI):
 
     """
 
-    Background = enum('View.Background', NONE=0, COLOR=1, GRID=2, LINES=3)
+    Background = enum("View.Background", NONE=0, COLOR=1, GRID=2, LINES=3)
 
     scale = 1.0
     """
@@ -1170,9 +1168,15 @@ class View(GPS.GUI):
         This is in particular needed to provide support for user interaction.
         """
 
-    def create(self, diagram, title, save_desktop=None,
-               snap_to_grid=True, snap_to_guides=False,
-               toolbar='Browser'):
+    def create(
+        self,
+        diagram,
+        title,
+        save_desktop=None,
+        snap_to_grid=True,
+        snap_to_guides=False,
+        toolbar="Browser",
+    ):
         """
         Creates a new view that shows the given diagram.
         This view is automatically made visible in GPS.

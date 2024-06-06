@@ -22,10 +22,10 @@ def run_test():
     yield wait_idle()
 
     t = get_widget_by_name("lal_view tree")
-    gps_assert(buf.current_view().cursor(),
-               loc,
-               "The cursor should not have moved")
+    gps_assert(buf.current_view().cursor(), loc, "The cursor should not have moved")
     click_in_tree(t, path="0:1:1:4", events=pygps.double_click_events)
-    gps_assert(buf.current_view().cursor(),
-               buf.at(4, 5),
-               "Double click should have moved the cursor")
+    gps_assert(
+        buf.current_view().cursor(),
+        buf.at(4, 5),
+        "Double click should have moved the cursor",
+    )

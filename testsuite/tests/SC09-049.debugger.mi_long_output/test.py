@@ -14,7 +14,7 @@ def test_driver():
     mode = "Mode:" + GPS.Preference("GPS6-Debugger-Debugger-Kind").get() + "\n"
     yield wait_tasks(other_than=known_tasks)
     GPS.execute_action("Build & Debug Number 1")
-    yield hook('debugger_started')
+    yield hook("debugger_started")
     yield wait_idle()
 
     p = promises.DebuggerWrapper(GPS.File("foo"))
@@ -30,5 +30,7 @@ def test_driver():
     output = debug.get_console().get_text()
     for i in range(1, 100):
         if not (expected_pattern.format(str(i)) in output):
-            simple_error("Issue with the output filter at line: " + str(i) + " " + mode + output)
+            simple_error(
+                "Issue with the output filter at line: " + str(i) + " " + mode + output
+            )
             break

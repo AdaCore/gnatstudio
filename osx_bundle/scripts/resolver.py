@@ -43,12 +43,19 @@ class Resolver(object):
             if line.startswith(prefix):
                 return True
 
-        if not line.startswith("/usr/lib") and not line.startswith("/System/Library") and not line.strip().split()[0].endswith("libgcc_s.1.dylib"):
+        if (
+            not line.startswith("/usr/lib")
+            and not line.startswith("/System/Library")
+            and not line.strip().split()[0].endswith("libgcc_s.1.dylib")
+        ):
             basename = os.path.basename(line)
             for prefix in self.library_path:
-                tentative=os.path.join(prefix, "lib", basename)
+                tentative = os.path.join(prefix, "lib", basename)
                 if os.path.isfile(tentative):
-                    print("Warning, using %s instead of %s: may have been moved" % (tentative, line))
+                    print(
+                        "Warning, using %s instead of %s: may have been moved"
+                        % (tentative, line)
+                    )
                     return True
             # Ignore the library from the OS, and raise a warning for the others
             print("!!! ERROR, library not available in any prefix: %s" % line)
@@ -73,7 +80,7 @@ class Resolver(object):
         """Filters libraries based on their location"""
 
         for lib in f_list:
-            libs = self._get_deps (lib)
+            libs = self._get_deps(lib)
             for lib in libs:
                 if lib in list(self.to_copy.keys()):
                     continue
@@ -96,13 +103,15 @@ class Resolver(object):
                 basename = os.path.basename(lib)
                 found = False
                 for prefix in self.library_path:
-                    tentative=os.path.join(prefix, "lib", basename)
+                    tentative = os.path.join(prefix, "lib", basename)
                     if os.path.isfile(tentative):
-                        self.to_copy[lib] = (tentative, self.to_bundle(tentative, prefix))
+                        self.to_copy[lib] = (
+                            tentative,
+                            self.to_bundle(tentative, prefix),
+                        )
                         self.inputs.append(tentative)
                         found = True
                         break
-
 
     def to_relative(self, filename):
         """Rebase the library dependencies relative to filename location"""
@@ -113,7 +122,10 @@ class Resolver(object):
             libname = os.path.basename(lib)
             cmd = "xcrun install_name_tool -change %s %s %s" % (lib, libname, filename)
             subprocess.call(cmd, shell=True)
-        cmd = "xcrun install_name_tool -id %s %s" % (os.path.basename(filename), filename)
+        cmd = "xcrun install_name_tool -id %s %s" % (
+            os.path.basename(filename),
+            filename,
+        )
         subprocess.call(cmd, shell=True)
 
     def _resolve_library_dependencies(self, mains):
@@ -145,4 +157,3 @@ class Resolver(object):
             if n_iterations > 10:
                 print("Too many tries to resolve library dependencies")
                 sys.exit(1)
-

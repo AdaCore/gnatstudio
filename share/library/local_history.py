@@ -23,8 +23,18 @@ therefore be reverted.
 # No user customization below this line
 ############################################################################
 
-from GPS import Console, Contextual, EditorBuffer, File, Hook, Logger, \
-    Preference, Process, Vdiff, XMLViewer
+from GPS import (
+    Console,
+    Contextual,
+    EditorBuffer,
+    File,
+    Hook,
+    Logger,
+    Preference,
+    Process,
+    Vdiff,
+    XMLViewer,
+)
 import os
 import shutil
 import datetime
@@ -33,35 +43,39 @@ import time
 import re
 
 Preference("Plugins/local_history/rcsdir").create(
-    "Local RCS dir", "string",
+    "Local RCS dir",
+    "string",
     """Name of the local directory created to store history locally.
 One such directory will be created in each object directory of the project
 and its subprojects""",
-    ".gpsrcs")
+    ".gpsrcs",
+)
 
 Preference("Plugins/local_history/maxdays").create(
-    "Max age", "integer",
-    """Keep revisions for that many days at most""",
-    2, 0, 1000)
+    "Max age", "integer", """Keep revisions for that many days at most""", 2, 0, 1000
+)
 
 Preference("Plugins/local_history/maxrevisions").create(
-    "Max revisions", "integer",
-    """Maximal number of revisions to keep""",
-    200, 0, 10000)
+    "Max revisions", "integer", """Maximal number of revisions to keep""", 200, 0, 10000
+)
 
 Preference("Plugins/local_history/diff_switches").create(
-    "Diff switches", "string",
+    "Diff switches",
+    "string",
     """Additional switches to pass to rcsdiff. In particular, this can be used
 to specify your preferred format for diff""",
-    "-u")
+    "-u",
+)
 
 Preference("Plugins/local_history/when_no_prj").create(
-    "When no project", "boolean",
+    "When no project",
+    "boolean",
     """Have a local history for files outside of a project.
 In such a case, the local history will be put in a local_rcs_dir subdirectory
 of the directory that contains the file. When the file belongs to a project,
 the local history goes to the object directory of the project.""",
-    False)
+    False,
+)
 
 
 class LocalHistory:
@@ -70,7 +84,7 @@ class LocalHistory:
 
     def __init__(self, file):
         """Create a new instance of LocalHistory.
-           File must be an instance of GPS.File"""
+        File must be an instance of GPS.File"""
 
         self.file = file.path
         project = file.project(default_to_root=False)
@@ -82,9 +96,9 @@ class LocalHistory:
             return
 
         self.rcs_dir = os.path.join(
-            dir, Preference("Plugins/local_history/rcsdir").get())
-        self.rcs_file = os.path.join(self.rcs_dir,
-                                     os.path.basename(self.file)) + ",v"
+            dir, Preference("Plugins/local_history/rcsdir").get()
+        )
+        self.rcs_file = os.path.join(self.rcs_dir, os.path.basename(self.file)) + ",v"
 
         # convert all \ to / for Cygwin toolset, note that forward
         # slashes are handled by the native Win32 API. So it is safe to
@@ -95,9 +109,9 @@ class LocalHistory:
 
     def get_revisions(self):
         """Extract all revisions and associated dates.
-           Result is a list of tuples: (revision_number, date), where
-           revision is the RCS revision number less the "1." prefix.
-           First in the list is the most recent revision."""
+        Result is a list of tuples: (revision_number, date), where
+        revision is the RCS revision number less the "1." prefix.
+        First in the list is the most recent revision."""
         if not self.rcs_dir:
             return
         try:
@@ -130,9 +144,11 @@ class LocalHistory:
         # last modification of the date, and this might dependent on the local
         # time zone
         proc = Process(
-            "ci -d" +
-            datetime.datetime.now().strftime("%Y/%m/%d\\ %H:%M:%S") +
-            " " + os.path.basename(self.file))
+            "ci -d"
+            + datetime.datetime.now().strftime("%Y/%m/%d\\ %H:%M:%S")
+            + " "
+            + os.path.basename(self.file)
+        )
         os.chdir(pwd)
         proc.send(".\n")
 
@@ -171,18 +187,17 @@ class LocalHistory:
 
             if version >= 1:
                 Logger("LocalHist").log(
-                    "Truncating file %s to revision %s" % (
-                        self.rcs_file, version))
+                    "Truncating file %s to revision %s" % (self.rcs_file, version)
+                )
                 proc = Process("rcs -o:1.%s %s" % (version, self.rcs_file))
                 proc.wait()
 
     def local_checkout(self, revision):
         """Do a local checkout of file at given revision in the RCS directory.
-           Return the name of the checked out file"""
+        Return the name of the checked out file"""
         if self.rcs_dir and os.path.isdir(self.rcs_dir):
             try:
-                os.unlink(os.path.join(self.rcs_dir,
-                                       os.path.basename(self.file)))
+                os.unlink(os.path.join(self.rcs_dir, os.path.basename(self.file)))
             except Exception:
                 pass
 
@@ -207,7 +222,7 @@ class LocalHistory:
 
     def diff_file(self, revision, file_ext="old"):
         """Compare the current version of file with the given revision.
-           The referenced file will have a name ending with file_ext"""
+        The referenced file will have a name ending with file_ext"""
         if not self.rcs_dir:
             return
         local = self.local_checkout(revision)
@@ -224,14 +239,14 @@ class LocalHistory:
 
     def show_diff(self, revision, date):
         """Show, in a console, the diff between the current version and
-           revision"""
+        revision"""
         if self.rcs_dir and os.path.isdir(self.rcs_dir):
             pwd = os.getcwd()
             os.chdir(os.path.dirname(self.file))
-            diff_switches = Preference(
-                "Plugins/local_history/diff_switches").get()
-            proc = Process("rcsdiff " + diff_switches +
-                           " -r" + revision + " " + self.rcs_file)
+            diff_switches = Preference("Plugins/local_history/diff_switches").get()
+            proc = Process(
+                "rcsdiff " + diff_switches + " -r" + revision + " " + self.rcs_file
+            )
             diff = proc.get_result()
             os.chdir(pwd)
             Console("Local History").clear()
@@ -264,15 +279,18 @@ class LocalHistory:
 
             xml = "<local_history>\n"
             for index, r in enumerate(revisions):
-                xml = xml + "  <revision name='" + r + "' date='" \
-                    + dates[index] + "' />"
+                xml = (
+                    xml + "  <revision name='" + r + "' date='" + dates[index] + "' />"
+                )
 
             xml = xml + "</local_history>"
 
-            view = XMLViewer("History",
-                             columns=1,
-                             on_select=self.on_select_xml_node,
-                             parser=self.create_xml_node)
+            view = XMLViewer(
+                "History",
+                columns=1,
+                on_select=self.on_select_xml_node,
+                parser=self.create_xml_node,
+            )
             view.parse_string(xml)
             os.chdir(pwd)
 
@@ -280,8 +298,9 @@ class LocalHistory:
 def has_RCS_on_path():
     """True if RCS was found on the PATH"""
     for path in os.getenv("PATH").split(os.pathsep):
-        if os.path.isfile(os.path.join(path, "ci")) \
-                or os.path.isfile(os.path.join(path, "ci.exe")):
+        if os.path.isfile(os.path.join(path, "ci")) or os.path.isfile(
+            os.path.join(path, "ci.exe")
+        ):
             return True
     return False
 
@@ -294,8 +313,7 @@ def on_file_saved(hook, file):
         hist.add_to_history()
         hist.cleanup_history()
     except Exception:
-        Logger("LocalHist").log(
-            "Unexpected exception " + traceback.format_exc())
+        Logger("LocalHist").log("Unexpected exception " + traceback.format_exc())
 
 
 def contextual_filter(context):
@@ -322,7 +340,8 @@ def contextual_factory(context):
             result = []
             for a in revisions:
                 date = datetime.datetime(
-                    *(time.strptime(a[1], "%Y.%m.%d.%H.%M.%S")[0:6]))
+                    *(time.strptime(a[1], "%Y.%m.%d.%H.%M.%S")[0:6])
+                )
                 result.append(date.strftime("%Y-%m-%d/%H:%M:%S"))
             context.revisions_menu = result
             return context.revisions_menu
@@ -337,14 +356,16 @@ def on_revert(context, choice, choice_index):
 
 def on_diff(context, choice, choice_index):
     hist = LocalHistory(context.file())
-    hist.diff_file(context.revisions[choice_index],
-                   context.revisions_menu[choice_index])
+    hist.diff_file(
+        context.revisions[choice_index], context.revisions_menu[choice_index]
+    )
 
 
 def on_patch(context, choice, choice_index):
     hist = LocalHistory(context.file())
-    hist.show_diff(context.revisions[choice_index],
-                   context.revisions_menu[choice_index])
+    hist.show_diff(
+        context.revisions[choice_index], context.revisions_menu[choice_index]
+    )
 
 
 def on_view_all(context):
@@ -361,21 +382,25 @@ def register_module(hook):
             factory=contextual_factory,
             on_activate=on_revert,
             label="Local History//Revert to",
-            filter=contextual_filter)
+            filter=contextual_filter,
+        )
         Contextual("Local History/Diff").create_dynamic(
             factory=contextual_factory,
             on_activate=on_diff,
             label="Local History//Diff",
-            filter=contextual_filter)
+            filter=contextual_filter,
+        )
         Contextual("Local History/Show Patch").create_dynamic(
             factory=contextual_factory,
             on_activate=on_patch,
             label="Local History//Show Patch",
-            filter=contextual_filter)
+            filter=contextual_filter,
+        )
         Contextual("Local History View").create(
             on_activate=on_view_all,
             label="Local History//View",
-            filter=contextual_filter)
+            filter=contextual_filter,
+        )
 
 
 Hook("gps_started").add(register_module)

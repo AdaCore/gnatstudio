@@ -23,6 +23,7 @@ Example of use:
 
 import re
 import GPS
+
 logger = GPS.Logger("block_complete")
 
 action_name = "Block Completion"
@@ -42,22 +43,21 @@ action_name = "Block Completion"
 #                         pattern.
 
 BLOCKS_DEFS = {
-    'CAT_IF_STATEMENT': ['end if;', ''],
-    'CAT_CASE_STATEMENT': ['end case;', ''],
-    'CAT_CASE_INSIDE_RECORD': ['end case;', ''],
-    'CAT_LOOP_STATEMENT': [r'end loop \1;', r'\s*([^ ]+)\s*:.*?loop.*'],
-    'CAT_RETURN_BLOCK': [r'end return;', ''],
-    'CAT_PROCEDURE': [r'end \1;', r'.*?procedure\s+([^ \n(]+).*'],
-    'CAT_FUNCTION': [r'end \1;', r'.*?function\s+([^ \n(]+).*'],
-    'CAT_DECLARE_BLOCK': [r'end \1;', r'\s*([^ ]+)\s*:\s*declare.*'],
-    'CAT_SIMPLE_BLOCK': [r'end \1;', r'\s*([^ ]+)\s*:\s*declare.*'],
-    'CAT_PACKAGE': [r'end \2;', r'.*?package\s+(body\s+)?([^ \n]+).*'],
-    'CAT_STRUCTURE': ['end record;', ''],
-    'CAT_CLASS': ['end record;', ''],
-    'CAT_PROTECTED':
-        [r'end \3;', r'\s*protected\s+((body|type)\s+)?([^ \n]+).*'],
-    'CAT_TASK': [r'end \3;', r'\s*task\s+((body|type)\s+)?([^ \n]+).*'],
-    'CAT_ENTRY': [r'end \1;', r'\s*entry\s+([^ \n(]+).*']
+    "CAT_IF_STATEMENT": ["end if;", ""],
+    "CAT_CASE_STATEMENT": ["end case;", ""],
+    "CAT_CASE_INSIDE_RECORD": ["end case;", ""],
+    "CAT_LOOP_STATEMENT": [r"end loop \1;", r"\s*([^ ]+)\s*:.*?loop.*"],
+    "CAT_RETURN_BLOCK": [r"end return;", ""],
+    "CAT_PROCEDURE": [r"end \1;", r".*?procedure\s+([^ \n(]+).*"],
+    "CAT_FUNCTION": [r"end \1;", r".*?function\s+([^ \n(]+).*"],
+    "CAT_DECLARE_BLOCK": [r"end \1;", r"\s*([^ ]+)\s*:\s*declare.*"],
+    "CAT_SIMPLE_BLOCK": [r"end \1;", r"\s*([^ ]+)\s*:\s*declare.*"],
+    "CAT_PACKAGE": [r"end \2;", r".*?package\s+(body\s+)?([^ \n]+).*"],
+    "CAT_STRUCTURE": ["end record;", ""],
+    "CAT_CLASS": ["end record;", ""],
+    "CAT_PROTECTED": [r"end \3;", r"\s*protected\s+((body|type)\s+)?([^ \n]+).*"],
+    "CAT_TASK": [r"end \3;", r"\s*task\s+((body|type)\s+)?([^ \n]+).*"],
+    "CAT_ENTRY": [r"end \1;", r"\s*entry\s+([^ \n(]+).*"],
 }
 
 
@@ -70,7 +70,9 @@ def on_gps_started(hook_name):
 <filter language="ada" error='%(action)s requires an Ada file' />
 <shell lang="python"
  output="none">block_completion.block_complete("%%F");</shell>
-   </action>""" % {"action": action_name}
+   </action>""" % {
+        "action": action_name
+    }
     GPS.parse_xml(init)
 
 
@@ -82,7 +84,7 @@ def block_complete_on_location(buffer, location):
     # A new-line character is inserted if there is some text on the left
     # of the current cursor position.
     if buffer.get_chars(start, end).strip() != "":
-        buffer.insert(location, '\n')
+        buffer.insert(location, "\n")
         location = location.forward_line()
 
     block = location.block_type()
@@ -93,7 +95,7 @@ def block_complete_on_location(buffer, location):
 
     (term, pattern) = BLOCKS_DEFS[block]
 
-    if pattern != '':
+    if pattern != "":
         # Retrieve the line at the start of the block
 
         start = buffer.at(location.block_start_line(), 1)
@@ -108,10 +110,10 @@ def block_complete_on_location(buffer, location):
             term = re_pattern.sub(term, bs_content)
         else:
             # The pattern does not match the content, remove the tags
-            term = term.replace(r' \1', '')
-            term = term.replace(r'\1', '')
-            term = term.replace(r' \2', '')
-            term = term.replace(r'\2', '')
+            term = term.replace(r" \1", "")
+            term = term.replace(r"\1", "")
+            term = term.replace(r" \2", "")
+            term = term.replace(r"\2", "")
 
     with buffer.new_undo_group():
         buffer.insert(location, term)

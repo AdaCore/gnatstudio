@@ -44,4 +44,6 @@ def driver():
     yield wait_tasks()
 
     # Check that we've switched to the harness project
-    gps_assert(GPS.Project.root().name(), "Fuzz_Test", "wrong project name after generation")
+    gps_assert(
+        GPS.Project.root().name(), "Fuzz_Test", "wrong project name after generation"
+    )

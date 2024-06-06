@@ -14,7 +14,6 @@ def test_driver():
     yield timeout(2000)
     dialog = get_window_by_title("Comments lost on file save")
 
-
     try:
         get_stock_button(dialog, Gtk.STOCK_OK).clicked()
     except Exception as e:

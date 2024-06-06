@@ -16,7 +16,8 @@ def check_debug_view_visibility(visible, msg):
                 child.pywidget().get_parent().props.visible
                 and child.pywidget().get_parent().get_parent().props.visible,
                 visible,
-                child.name() + " " + msg)
+                child.name() + " " + msg,
+            )
             cpt += 1
     if visible:
         gps_assert(cpt, len(DEBUG_VIEWS), "Missing views %s" % msg)
@@ -35,13 +36,9 @@ def test_driver():
     debug = GPS.Debugger.get()
     debug.send("run")
     yield wait_until_not_busy(debug)
-    check_debug_view_visibility(
-        True,
-        "should be opened")
+    check_debug_view_visibility(True, "should be opened")
 
     debug.send("quit")
     # Wait for context and filter to be recomputed
     yield timeout(3000)
-    check_debug_view_visibility(
-        False,
-        "should be hidden after quitting the debugger")
+    check_debug_view_visibility(False, "should be hidden after quitting the debugger")

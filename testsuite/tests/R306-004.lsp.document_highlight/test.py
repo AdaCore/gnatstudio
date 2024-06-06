@@ -92,16 +92,22 @@ def run_test():
     yield wait_idle()
 
     highlighted_text = editor.debug_dump_syntax_highlighting(
-        "Editor ephemeral highlighting simple")
+        "Editor ephemeral highlighting simple"
+    )
 
-    gps_assert(highlighted_text, EXPECTED_READ_1,
-               "Wrong auto-highlighting for read references")
+    gps_assert(
+        highlighted_text, EXPECTED_READ_1, "Wrong auto-highlighting for read references"
+    )
 
     highlighted_text = editor.debug_dump_syntax_highlighting(
-        "Editor ephemeral highlighting smart")
+        "Editor ephemeral highlighting smart"
+    )
 
-    gps_assert(highlighted_text, EXPECTED_WRITE_1,
-               "Wrong auto-highlighting for write references")
+    gps_assert(
+        highlighted_text,
+        EXPECTED_WRITE_1,
+        "Wrong auto-highlighting for write references",
+    )
 
     # Jump on the Entity_One procedure declaration: verify that the call
     # to this procedure is correctly highlighted, but not the references to
@@ -112,23 +118,25 @@ def run_test():
     yield wait_idle()
 
     highlighted_text = editor.debug_dump_syntax_highlighting(
-        "Editor ephemeral highlighting simple")
+        "Editor ephemeral highlighting simple"
+    )
 
-    gps_assert(highlighted_text, EXPECTED_READ_2,
-               "Wrong auto-highlighting for read references")
+    gps_assert(
+        highlighted_text, EXPECTED_READ_2, "Wrong auto-highlighting for read references"
+    )
 
     # Jump on the 'begin': verify that we don't have any highlighting
     view.goto(editor.at(6, 1))
-    yield hook('location_changed', debounced=True)
+    yield hook("location_changed", debounced=True)
 
     highlighted_text = editor.debug_dump_syntax_highlighting(
-        "Editor ephemeral highlighting simple")
+        "Editor ephemeral highlighting simple"
+    )
 
-    gps_assert(highlighted_text, NO_HIGHLIGHTING,
-               "We should not have any highlighting")
+    gps_assert(highlighted_text, NO_HIGHLIGHTING, "We should not have any highlighting")
 
     highlighted_text = editor.debug_dump_syntax_highlighting(
-        "Editor ephemeral highlighting smart")
+        "Editor ephemeral highlighting smart"
+    )
 
-    gps_assert(highlighted_text, NO_HIGHLIGHTING,
-               "We should not have any highlighting")
+    gps_assert(highlighted_text, NO_HIGHLIGHTING, "We should not have any highlighting")

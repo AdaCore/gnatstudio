@@ -17,5 +17,4 @@ def run_test():
     yield hook("filter_view_changed")
 
     dump = dump_tree_model(explorer.get_model(), 1)
-    gps_assert(dump, ['whole', ['array_viewing', 'Basic_Goto']],
-               "Incorrect filtering")
+    gps_assert(dump, ["whole", ["array_viewing", "Basic_Goto"]], "Incorrect filtering")

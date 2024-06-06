@@ -23,5 +23,4 @@ def run_test():
     execute_action("exit search")
 
     current_view = GPS.MDI.current()
-    gps_assert(current_view.name(short=True), "foo.adb",
-               "foo.adb should be focused")
+    gps_assert(current_view.name(short=True), "foo.adb", "foo.adb should be focused")

@@ -136,15 +136,15 @@ On a multiprocess or machine compilations will occur in parallel" />
 
 
 class Builder:
-
     def compute_buildfile(self):
         """Compute the build file to use. By default, we look in the project
-           itself. If none is specified there, we default on the build file
-           found in the same directory as the root project"""
+        itself. If none is specified there, we default on the build file
+        found in the same directory as the root project"""
 
         root_dir = os.path.dirname(Project.root().file().path)
         self.buildfile = Project.root().get_attribute_as_string(
-            self.build_file_attr, self.pkg_name)
+            self.build_file_attr, self.pkg_name
+        )
 
         self.buildfile = os.path.join(root_dir, self.buildfile)
         if not os.path.isfile(self.buildfile):
@@ -153,8 +153,7 @@ class Builder:
                 if os.path.isfile(self.buildfile):
                     break
                 self.buildfile = None
-        Logger("MAKE").log(
-            "Build file for %s is %s" % (self.pkg_name, self.buildfile))
+        Logger("MAKE").log("Build file for %s is %s" % (self.pkg_name, self.buildfile))
 
     def read_targets(self):
         """Read all targets from the build file, and return a list targets"""
@@ -177,8 +176,7 @@ class Builder:
         Hook("compute_build_targets").add(self.on_compute_build_targets)
 
 
-class Makefile (Builder):
-
+class Makefile(Builder):
     def __init__(self):
         self.pkg_name = "make"
         self.build_file_attr = "makefile"
@@ -187,14 +185,14 @@ class Makefile (Builder):
         # The list of targets at the beginning of a line. Ignore
         # special characters like #.= that are used by GNU make.
         # The list of targets is stored in the 'target' capturing group.
-        targets = '^(?P<targets>[^#.=%\t][^#=\(\)%]*?)'
+        targets = "^(?P<targets>[^#.=%\t][^#=\(\)%]*?)"
 
         # The dependencies for these targets
-        deps = '[^#=:]*'
+        deps = "[^#=:]*"
 
         # Extra comments at the ened of the line. Adding #IGNORE is used
         # to hide this target from GPS.
-        comments = '(?:#(?P<comments>.+))?$'
+        comments = "(?:#(?P<comments>.+))?$"
 
         # It is valid for a target to be followed by two colons, in GNU
         # make at least.
@@ -213,8 +211,7 @@ class Makefile (Builder):
         Return a set of all targets for a given Makefile
         """
         if not self.current_dir:
-            self.current_dir = os.path.join(
-                os.getcwd(), os.path.dirname(filename))
+            self.current_dir = os.path.join(os.getcwd(), os.path.dirname(filename))
         else:
             filename = os.path.join(self.current_dir, filename)
 
@@ -227,22 +224,21 @@ class Makefile (Builder):
         for line in f:
             matches = self.target_matcher.match(line)
             if matches:
-                if matches.group('comments'):
-                    if matches.group('comments').strip() != "IGNORE":
-                        target_name = matches.group('targets')
-                        targets.add((target_name, target_name, ''))
+                if matches.group("comments"):
+                    if matches.group("comments").strip() != "IGNORE":
+                        target_name = matches.group("targets")
+                        targets.add((target_name, target_name, ""))
                 else:
                     # Handle multiple targets on same line
-                    for target in matches.group('targets').split():
-                        targets.add((target, target, ''))
+                    for target in matches.group("targets").split():
+                        targets.add((target, target, ""))
 
             else:
                 matches = self.include_matcher.match(line)
                 if matches:
                     # filenames are relative to the directory of the
                     # current Makefile
-                    targets.update(
-                        self.__read_targets(matches.group('file')))
+                    targets.update(self.__read_targets(matches.group("file")))
 
         f.close()
         return targets
@@ -254,11 +250,11 @@ class Makefile (Builder):
                 return sorted(self.__read_targets(self.buildfile))
         return None
 
+
 ant_targets = []
 
 
-class Antfile (Builder):
-
+class Antfile(Builder):
     def __init__(self):
         self.pkg_name = "ant"
         self.build_file_attr = "antfile"
@@ -269,23 +265,22 @@ class Antfile (Builder):
         global ant_targets
         ant_targets = []
 
-        class MySaxDocumentHandler (handler.ContentHandler):
-
+        class MySaxDocumentHandler(handler.ContentHandler):
             def startElement(self, name, attrs):
                 global ant_targets
                 if name == "target":
                     target = None
-                    description = ''
+                    description = ""
                     for attrName in list(attrs.keys()):
                         if attrName == "name":
                             target = attrs.get(attrName)
                         if attrName == "description":
                             description = attrs.get(attrName)
-                    ant_targets += [(str(target), description, '')]
+                    ant_targets += [(str(target), description, "")]
 
         parser = make_parser()
         parser.setContentHandler(MySaxDocumentHandler())
-        inFile = open(self.buildfile, 'r')
+        inFile = open(self.buildfile, "r")
 
         parser.parse(inFile)
 
@@ -300,11 +295,12 @@ class Antfile (Builder):
                 return self.read_targets()
         return None
 
+
 ant_support = False
 
 
 # This module needs to be initialized before the others
-@hook('gps_started', last=False)
+@hook("gps_started", last=False)
 def __on_gps_started():
     Makefile()
     if ant_support:
@@ -313,7 +309,8 @@ def __on_gps_started():
 
 parse_xml(Make_Model)
 parse_xml(Ant_Model_Template)
-parse_xml("""
+parse_xml(
+    """
   <project_attribute
     name="Makefile"
     package="Make"
@@ -339,14 +336,17 @@ parse_xml("""
     editor_section="Make"
     hide_in="wizard library_wizard properties">
     <string type=""/>
-  </project_attribute>""")
+  </project_attribute>"""
+)
 
 
 if os_utils.locate_exec_on_path("ant"):
     try:
         from xml.sax import handler, make_parser
+
         ant_support = True
-        parse_xml("""
+        parse_xml(
+            """
   <project_attribute
     name="Antfile"
     package="Ant"
@@ -371,7 +371,8 @@ if os_utils.locate_exec_on_path("ant"):
     editor_section="Ant"
     hide_in="wizard library_wizard properties">
     <string type=""/>
- </project_attribute>""")
+ </project_attribute>"""
+        )
 
     except:
         pass

@@ -13,8 +13,11 @@ def test_driver():
     yield wait_tasks(other_than=known_tasks)
 
     location = GPS.Locations.list_locations(
-        "Coding Standard violations",
-        os.path.join(GPS.pwd(), 'main.adb'))[0]
+        "Coding Standard violations", os.path.join(GPS.pwd(), "main.adb")
+    )[0]
 
-    gps_assert(str(location), "main.adb:3:7",
-               "gnatcheck has not been launched without a rules file")
+    gps_assert(
+        str(location),
+        "main.adb:3:7",
+        "gnatcheck has not been launched without a rules file",
+    )

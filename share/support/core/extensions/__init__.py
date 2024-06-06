@@ -3,6 +3,7 @@ import urllib.request
 import urllib.parse
 import urllib.error
 import GPS
+
 #########################################
 # Decorators and auto submodules import #
 #########################################
@@ -46,8 +47,7 @@ class extend_module:
         else:
             for name, method in kls.__dict__.items():
                 # Do not override built-in methods
-                if name in ("__module__", "__dict__", "__doc__",
-                            "__weakref__"):
+                if name in ("__module__", "__dict__", "__doc__", "__weakref__"):
                     continue
 
                 is_override = hasattr(method, "override_gps_method")
@@ -55,15 +55,15 @@ class extend_module:
                 if not hasattr(orig_class, name):
                     if is_override:
                         GPS.Console().write(
-                            "Method %s.%s is not overriding\n" % (
-                                class_name, name))
+                            "Method %s.%s is not overriding\n" % (class_name, name)
+                        )
                     setattr(orig_class, name, method)
 
                 else:
                     if not is_override:
                         GPS.Console().write(
-                            "Method %s.%s is overriding, ignored\n" % (
-                                class_name, name))
+                            "Method %s.%s is overriding, ignored\n" % (class_name, name)
+                        )
                     else:
                         # Save the gps internal method (can be useful to call
                         # it in the new implementation for example)
@@ -110,9 +110,9 @@ GPS.MessageContext = GPS.Context
 # General extensions #
 ######################
 
+
 @extend_gps
 class EditorView(object):
-
     def set_extend_selection(self, extend):
         """
         See :func:`GPS.EditorBuffer.extend_existing_selection`
@@ -127,8 +127,8 @@ class EditorView(object):
 
 
 class _UndoRedoContext(object):
-    """Helper class to implement an undo/redo context manager.
-    """
+    """Helper class to implement an undo/redo context manager."""
+
     def __init__(self, buffer):
         self.buffer = buffer
 
@@ -141,7 +141,6 @@ class _UndoRedoContext(object):
 
 @extend_gps
 class EditorBuffer(object):
-
     __warned_about_undo_redo = False
     # Whether we have already warned about the deprecated undo grouping API
 
@@ -165,8 +164,7 @@ class EditorBuffer(object):
         else:
             text = loc_or_text
             assert isinstance(text, str) or isinstance(text, str)
-            self._insert_at_location(self.current_view().cursor(),
-                                     loc_or_text)
+            self._insert_at_location(self.current_view().cursor(), loc_or_text)
 
     def entity_under_cursor(self):
         """
@@ -180,18 +178,19 @@ class EditorBuffer(object):
     def start_undo_group(self):
         """This is deprecated. Use GPS.EditorBuffer.new_undo_group
 
-           This is done via a context manager:
+        This is done via a context manager:
 
-                with buffer.new_undo_group():
-                    action 1
-                    ...
-                    action N
+             with buffer.new_undo_group():
+                 action 1
+                 ...
+                 action N
         """
         if not GPS.EditorBuffer.__warned_about_undo_redo:
             GPS.EditorBuffer.__warned_about_undo_redo = True
             GPS.Console().write(
                 "GPS.EditorBuffer.start_undo_group is deprecated:"
-                " use GPS.EditorBuffer.new_undo_group instead:\n\n")
+                " use GPS.EditorBuffer.new_undo_group instead:\n\n"
+            )
             GPS.Console().write(self.new_undo_group.__doc__)
         self._start_undo_group()
         if hasattr(self, "undo_group"):
@@ -200,17 +199,18 @@ class EditorBuffer(object):
             self.undo_group = 1
 
     def finish_undo_group(self):
-        """This is deprecated, use GPS.EditorBuffer.new_undo_group
-        """
+        """This is deprecated, use GPS.EditorBuffer.new_undo_group"""
         global warned_about_undo_redo
         if not warned_about_undo_redo:
             warned_about_undo_redo = True
             GPS.Console().write(
                 "GPS.EditorBuffer.finish_undo_group is deprecated:"
-                " use GPS.EditorBuffer.new_undo_group instead.\n")
+                " use GPS.EditorBuffer.new_undo_group instead.\n"
+            )
         if not hasattr(self, "undo_group"):
             GPS.Console().write(
-                "Error: 'finish_undo_group' not matching 'start_undo_group'\n")
+                "Error: 'finish_undo_group' not matching 'start_undo_group'\n"
+            )
         else:
             self.undo_group -= 1
             if self.undo_group >= 0:
@@ -218,32 +218,32 @@ class EditorBuffer(object):
             else:
                 GPS.Console().write(
                     "Error: more calls to 'finish_undo_group'"
-                    " than to 'start_undo_group'\n")
+                    " than to 'start_undo_group'\n"
+                )
 
     def new_undo_group(self):
         """Create a new undo group.
 
-           This returns an object which should be used as a context manager.
-           If you would like N actions to be considered as atomic for
-           undo/redo, use this:
+        This returns an object which should be used as a context manager.
+        If you would like N actions to be considered as atomic for
+        undo/redo, use this:
 
-                 with buffer.new_undo_group():
-                     action 1
-                     ...
-                     action N
+              with buffer.new_undo_group():
+                  action 1
+                  ...
+                  action N
         """
         return _UndoRedoContext(self)
 
 
 @extend_gps
 class File(object):
-
     @property
     def uri(self):
         """Return an URI of the form file://<path> for the given file"""
         return urllib.parse.urljoin(
-            'file:',
-            urllib.parse.quote(urllib.request.pathname2url(self.name())))
+            "file:", urllib.parse.quote(urllib.request.pathname2url(self.name()))
+        )
 
 
 @extend_gps
@@ -298,15 +298,15 @@ class EditorLocation(object):
         """
         try:
             word, start_loc, end_loc = self.get_word()
-            return GPS.Entity(word, self.buffer().file(),
-                              start_loc.line(), start_loc.column())
+            return GPS.Entity(
+                word, self.buffer().file(), start_loc.line(), start_loc.column()
+            )
         except Exception:
             return None
 
 
 @extend_gps
 class BuildTarget(object):
-
     @override_gps_method
     def __init__(self, name):
         """
@@ -324,9 +324,18 @@ class BuildTarget(object):
         self._internal___init__(name)
 
     @override_gps_method
-    def execute(self, main_name='', file=None, force=False,
-                extra_args='', build_mode='', synchronous=True,
-                directory='', quiet=False, on_exit=None):
+    def execute(
+        self,
+        main_name="",
+        file=None,
+        force=False,
+        extra_args="",
+        build_mode="",
+        synchronous=True,
+        directory="",
+        quiet=False,
+        on_exit=None,
+    ):
         """
         Launch the build target.
 
@@ -370,24 +379,34 @@ class BuildTarget(object):
         if self.target_name in wf.workflows_target_name_set:
             idt = (self.target_name, main_name)
             # The workflow was already launched ...
-            if (idt in wf.exit_handlers_table
-                    # ... and it has not finished
-                    and wf.exit_handlers_table[idt]):
+            if (
+                idt in wf.exit_handlers_table
+                # ... and it has not finished
+                and wf.exit_handlers_table[idt]
+            ):
                 GPS.Logger("BUILDTARGET").log(
-                    "Workflow {} already in execution".format(idt))
+                    "Workflow {} already in execution".format(idt)
+                )
                 return
             wf.exit_handlers_table[idt] = on_exit
             on_exit = None
 
         # Call the internal execute with given parameters
         self._internal_execute(
-            main_name, file, force, extra_args, build_mode,
-            synchronous, directory, quiet, on_exit)
+            main_name,
+            file,
+            force,
+            extra_args,
+            build_mode,
+            synchronous,
+            directory,
+            quiet,
+            on_exit,
+        )
 
 
 @extend_gps
 class Language(object):
-
     @override_gps_method
     def __init__(self):
         """
@@ -402,11 +421,17 @@ class Language(object):
 
 @extend_gps
 class Contextual(object):
-
     def create(
-            self, on_activate, label=None, filter=None, ref='',
-            add_before=True,
-            group='0', visibility_filter=None, action=None):
+        self,
+        on_activate,
+        label=None,
+        filter=None,
+        ref="",
+        add_before=True,
+        group="0",
+        visibility_filter=None,
+        action=None,
+    ):
         """
         OBSOLETE: please use GPS.Action.contextual() instead. All contextual
         menus should be associated with a specific action, so that this action
@@ -496,35 +521,30 @@ class Contextual(object):
         """
 
         # Unless we are creating a separator
-        if not label or not label.endswith('-'):
+        if not label or not label.endswith("-"):
             GPS.Logger("GPS.PYTHON").log(
-                'GPS.Contextual("%s").create is deprecated.' % self.name +
-                ' Please use GPS.Action.contextual()')
+                'GPS.Contextual("%s").create is deprecated.' % self.name
+                + " Please use GPS.Action.contextual()"
+            )
             if not action:
                 # Create a dummy action
-                action = GPS.Action('__%s' % self.name)
+                action = GPS.Action("__%s" % self.name)
                 action.create(
                     on_activate=lambda: on_activate(GPS.contextual_context()),
-                    category='',   # hidden
-                    filter=filter)
+                    category="",  # hidden
+                    filter=filter,
+                )
 
             # Unused parameters: 'group' and 'visibility_filter'
-            action.contextual(
-                path=label or self.name,
-                ref=ref,
-                add_before=add_before)
+            action.contextual(path=label or self.name, ref=ref, add_before=add_before)
 
         else:
-            action = GPS.Action('__separator')
-            action.contextual(
-                path=label or self.name,
-                ref=ref,
-                add_before=add_before)
+            action = GPS.Action("__separator")
+            action.contextual(path=label or self.name, ref=ref, add_before=add_before)
 
 
 @extend_gps
 class Menu(GPS.GUI):
-
     def set_sensitive(self, sensitive=True):
         """Disable the action associated with the menu"""
         self.action.disable(not sensitive)
@@ -546,14 +566,13 @@ class Menu(GPS.GUI):
 
     def pywidget(self):
         GPS.Console().write(
-            "GPS.Menu.pywidget is no longer supported." +
-            " Use GPS.Menu.action to interacte with the action" +
-            " directly")
+            "GPS.Menu.pywidget is no longer supported."
+            + " Use GPS.Menu.action to interacte with the action"
+            + " directly"
+        )
 
     @staticmethod
-    def create(
-            path, on_activate='', ref='', add_before=True,
-            filter=None, group=''):
+    def create(path, on_activate="", ref="", add_before=True, filter=None, group=""):
         """
         Creates a new menu in the GPS system. The menu is added at the given
         location (see :func:`GPS.Menu.get` for more information on the
@@ -607,13 +626,13 @@ class Menu(GPS.GUI):
 
         if on_activate:
             GPS.Console().write(
-                'GPS.Menu.create("%s") is deprecated.' % path +
-                ' Please use gs_utils.interactive()\n')
+                'GPS.Menu.create("%s") is deprecated.' % path
+                + " Please use gs_utils.interactive()\n"
+            )
             # Ignore 'group'
             m = None
             a = GPS.Action(path)
-            a.create(lambda: on_activate(m),
-                     filter=filter)
+            a.create(lambda: on_activate(m), filter=filter)
             m = a.menu(path, add_before=add_before, ref=ref)
 
 
@@ -621,14 +640,14 @@ class Menu(GPS.GUI):
 class ToolButton(GPS.GUI):
     """Represents a Button that can be placed in the Toolbar.
 
-       This class is provided for backwards compatibility only.
-       Instead of using this, use GPS.Action and GPS.Action.button().
+    This class is provided for backwards compatibility only.
+    Instead of using this, use GPS.Action and GPS.Action.button().
     """
 
     def __init__(self, stock_id, label, on_click):
         """This class is provided for backwards compatibility only.
 
-           Instead of using this, use GPS.Action and GPS.Action.button().
+        Instead of using this, use GPS.Action and GPS.Action.button().
         """
         self.action_name = "ToolButton {}:{}".format(label, on_click.__name__)
         self.on_click = on_click
@@ -639,14 +658,14 @@ class ToolButton(GPS.GUI):
 class Button(GPS.GUI):
     """Represents a Button that can be placed in the Toolbar.
 
-       This class is provided for backwards compatibility only.
-       Instead of using this, use GPS.Action and GPS.Action.button().
+    This class is provided for backwards compatibility only.
+    Instead of using this, use GPS.Action and GPS.Action.button().
     """
 
     def __init__(self, id, label, on_click):
         """This class is provided for backwards compatibility only.
 
-           Instead of using this, use GPS.Action and GPS.Action.button().
+        Instead of using this, use GPS.Action and GPS.Action.button().
         """
         self.action_name = label
         self.on_click = on_click
@@ -661,35 +680,37 @@ class Button(GPS.GUI):
 class Toolbar(GPS.GUI):
     """The main GPS Toolbar.
 
-       This class is provided for backwards compatibility only.
-       Instead of using this, use GPS.Action and GPS.Action.button().
+    This class is provided for backwards compatibility only.
+    Instead of using this, use GPS.Action and GPS.Action.button().
     """
 
     def __init__(self):
         """This class is provided for backwards compatibility only.
 
-           Instead of using this, use GPS.Action and GPS.Action.button().
+        Instead of using this, use GPS.Action and GPS.Action.button().
         """
         pass
 
-    def append(self, widget, tooltip=''):
+    def append(self, widget, tooltip=""):
         """Append a widget to the Toolbar.
 
-           The widget must be either a GPS.ToolButton or a GPS.Button."""
+        The widget must be either a GPS.ToolButton or a GPS.Button."""
         self.action = GPS.Action(widget.action_name)
-        self.action.create(on_activate=lambda: widget.on_click(widget),
-                           filter="",
-                           category="Custom ToolButtons",
-                           description=tooltip,
-                           icon=widget.stock_id)
+        self.action.create(
+            on_activate=lambda: widget.on_click(widget),
+            filter="",
+            category="Custom ToolButtons",
+            description=tooltip,
+            icon=widget.stock_id,
+        )
         self.action.button()
 
     def insert(self, widget, pos, tooltip):
         """Append a widget to the Toolbar.
 
-           To insert a widget at a specific position in the toolbar, use
-           GPS.Action.button instead, and set a value to the 'section'
-           parameter.
+        To insert a widget at a specific position in the toolbar, use
+        GPS.Action.button instead, and set a value to the 'section'
+        parameter.
         """
         GPS.Console("Messages").write(
             "GPS.Toolbar.insert() is deprecated: use GPS.Action.button.\n"
@@ -699,25 +720,23 @@ class Toolbar(GPS.GUI):
     def get(self, id):
         """Does nothing and writes an error message
 
-           This function is to help detect compatibility errors in plugins.
+        This function is to help detect compatibility errors in plugins.
         """
         GPS.Console("Messages").write("GPS.Toolbar.get() is deprecated.\n")
 
     def get_by_pos(self, pos):
         """Does nothing and writes an error message
 
-           This function is to help detect compatibility errors in plugins.
+        This function is to help detect compatibility errors in plugins.
         """
-        GPS.Console("Messages").write(
-            "GPS.Toolbar.get_by_pos() is deprecated.\n"
-        )
+        GPS.Console("Messages").write("GPS.Toolbar.get_by_pos() is deprecated.\n")
 
 
 class LanguageServerResponse(object):
-    """ Represents a response sent by the language server """
+    """Represents a response sent by the language server"""
 
     def __init__(self):
-        """ Initialization procedure, meant to be called by request_promise """
+        """Initialization procedure, meant to be called by request_promise"""
 
         self.is_valid = False
         # Whether the server responded with a response
@@ -736,18 +755,29 @@ class LanguageServerResponse(object):
         # as a Python view of the json response.
 
     def __str__(self):
-        return ("is_valid: {}\nis_reject: {}\n"
-                "is_error: {}\nerror: '{}'\ndata: '{}'\n".format(
-                    self.is_valid, self.is_reject, self.is_error,
-                    self.error_message, self.data))
+        return (
+            "is_valid: {}\nis_reject: {}\n"
+            "is_error: {}\nerror: '{}'\ndata: '{}'\n".format(
+                self.is_valid,
+                self.is_reject,
+                self.is_error,
+                self.error_message,
+                self.data,
+            )
+        )
 
 
 @extend_gps
 class LanguageServer(object):
-
-    def request(self, method, params,
-                on_result_message, on_error_message=None,
-                on_rejected=None, auto_cancel=False):
+    def request(
+        self,
+        method,
+        params,
+        on_result_message,
+        on_error_message=None,
+        on_rejected=None,
+        auto_cancel=False,
+    ):
         """
         Launch a request to the server.
 
@@ -761,27 +791,34 @@ class LanguageServer(object):
         else:
             json_params = json.dumps(params)
 
-        self.request_low_level(method, json_params, on_result_message,
-                               on_error_message, on_rejected, auto_cancel)
+        self.request_low_level(
+            method,
+            json_params,
+            on_result_message,
+            on_error_message,
+            on_rejected,
+            auto_cancel,
+        )
 
     def request_promise(self, method, params, auto_cancel=False):
         """Make a language server request as a promise.
 
-           method and params are the same arguments as request.
+        method and params are the same arguments as request.
 
-           The way to use this is in a workflow, in the following way:
+        The way to use this is in a workflow, in the following way:
 
-               # Retrieve the language server
-               als = GPS.LanguageServer.get_by_language_name("Ada")
+            # Retrieve the language server
+            als = GPS.LanguageServer.get_by_language_name("Ada")
 
-               # call this with a yield
-               result = yield als.request_promise(method, params)
+            # call this with a yield
+            result = yield als.request_promise(method, params)
 
-               # result is a LanguageServerResponse object: typically
-               # inspect result.is_valid, result.is_error, result.is_reject,
-               # and process result.data if result.is_valid.
+            # result is a LanguageServerResponse object: typically
+            # inspect result.is_valid, result.is_error, result.is_reject,
+            # and process result.data if result.is_valid.
         """
         from workflows.promises import Promise
+
         p = Promise()
         result = LanguageServerResponse()
 
@@ -800,6 +837,5 @@ class LanguageServer(object):
             result.is_reject = True
             p.resolve(result)
 
-        self.request(
-            method, params, on_result, on_error, on_reject, auto_cancel)
+        self.request(method, params, on_result, on_error, on_reject, auto_cancel)
         return p

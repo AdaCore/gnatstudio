@@ -21,16 +21,20 @@ def test_driver():
     # Test on the root project were both of them are properly defined
     select_in_tree(tree, column=NAME_COLUMN, key="Test")
     GPS.execute_action("Edit local configuration file")
-    gps_assert(GPS.MDI.get("gnat.adc") is not None,
-               True,
-               "The local configuration file should be opened")
+    gps_assert(
+        GPS.MDI.get("gnat.adc") is not None,
+        True,
+        "The local configuration file should be opened",
+    )
     # Give the focus back to the Project view, because the action is depending
     # of the project view context
     view.raise_window()
     GPS.execute_action("Edit global configuration file")
-    gps_assert(GPS.MDI.get("my_global.foo") is not None,
-               True,
-               "The global configuration file should be opened")
+    gps_assert(
+        GPS.MDI.get("my_global.foo") is not None,
+        True,
+        "The global configuration file should be opened",
+    )
 
     # Test on the sub project were the global attribute is not set
     # The view support the multiselection, thus we need to unselect before
@@ -38,15 +42,21 @@ def test_driver():
     selection.unselect_all()
     select_in_tree(tree, column=NAME_COLUMN, key="Nested")
     GPS.execute_action("Edit local configuration file")
-    gps_assert(GPS.MDI.get("nested.adc") is not None,
-               True,
-               "Can't open the local configuration for a subproject")
+    gps_assert(
+        GPS.MDI.get("nested.adc") is not None,
+        True,
+        "Can't open the local configuration for a subproject",
+    )
     expected = len(GPS.MDI.children())
     view.raise_window()
     GPS.execute_action("Edit global configuration file")
-    gps_assert(len(GPS.MDI.children()),
-               expected,
-               "The attribute is not defined: no new editor should be opened")
-    gps_assert("is not defined in " in GPS.Console("Messages").get_text(),
-               True,
-               "Missing message in the console")
+    gps_assert(
+        len(GPS.MDI.children()),
+        expected,
+        "The attribute is not defined: no new editor should be opened",
+    )
+    gps_assert(
+        "is not defined in " in GPS.Console("Messages").get_text(),
+        True,
+        "Missing message in the console",
+    )

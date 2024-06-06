@@ -1,5 +1,3 @@
-
-
 from copy import copy
 from xml.sax.saxutils import escape
 
@@ -87,8 +85,9 @@ class X(object):
         kws = " ".join('{0}="{1}"'.format(k, v) for k, v in list(self.kws.items()))
         if self._children:
             return "<{0} {1}>{2}</{0}>".format(
-                self.tag_name, kws,
-                "\n".join(self.child_to_str(c) for c in self._children)
+                self.tag_name,
+                kws,
+                "\n".join(self.child_to_str(c) for c in self._children),
             )
         else:
             return "<{0} {1} />".format(self.tag_name, kws)

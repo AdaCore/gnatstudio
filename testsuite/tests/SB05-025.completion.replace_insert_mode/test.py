@@ -13,7 +13,7 @@ EXPECTED_END_OF_BUFFER = "Ada\nend Main;\n"
 
 @run_test_driver
 def run_test():
-    GPS.Preference('Completion-Insert-Mode').set("replace")
+    GPS.Preference("Completion-Insert-Mode").set("replace")
     buf = GPS.EditorBuffer.get(GPS.File("main.adb"))
     view = buf.current_view()
     view.goto(buf.at(5, 19))
@@ -33,8 +33,11 @@ def run_test():
     # right
 
     line = buf.get_chars(buf.at(5, 1), buf.at(5, 1).end_of_line())
-    gps_assert(line.strip(), EXPECTED_LINE_1.strip(),
-               "The 'replace' completion insert mode did not work on Put_Line")
+    gps_assert(
+        line.strip(),
+        EXPECTED_LINE_1.strip(),
+        "The 'replace' completion insert mode did not work on Put_Line",
+    )
 
     # Trigger completion on "Ad" and select the first result, which should
     # be "Ada": we are not in the middle of any word, so completion should
@@ -55,5 +58,8 @@ def run_test():
     # the rest of the buffer
 
     end_of_buffer = buf.get_chars(buf.at(13, 1), buf.end_of_buffer())
-    gps_assert(end_of_buffer, EXPECTED_END_OF_BUFFER,
-               "The 'replace' completion insert did not work on Var_1")
+    gps_assert(
+        end_of_buffer,
+        EXPECTED_END_OF_BUFFER,
+        "The 'replace' completion insert did not work on Var_1",
+    )

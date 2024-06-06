@@ -35,24 +35,30 @@ import re
 import os
 
 Preference("Plugins/dependencies/show_source").create(
-    "Show source", "boolean",
+    "Show source",
+    "boolean",
     "If enabled, show the file dependencies that explain project dependencies"
     ". If disabled, you only see the dependencies between the projects",
-    False)
+    False,
+)
 
 Preference("Plugins/dependencies/show_diff").create(
-    "Show diff", "boolean",
+    "Show diff",
+    "boolean",
     "If enabled, show only the differences with the current project setup."
     "This mode helps you clean up the with statements in your projects",
-    True)
+    True,
+)
 
 Preference("Plugins/dependencies/no_src_prj").create(
-    "Projects with no sources", "string",
+    "Projects with no sources",
+    "string",
     "comma-separated list of project names that contain no sources, but are "
     "used to share common settings. Since this script looks at source files "
     "to find out dependencies, the dependencies on such projects would not "
     "be shown otherwise.",
-    "shared")
+    "shared",
+)
 
 show_single_file = True
 # If True, we show a single file dependency to explain the dependency
@@ -61,13 +67,12 @@ show_single_file = True
 
 
 class Output:
-
     def __init__(self):
         self.current_project = None
 
     def set_current_project(self, project):
         """Set the name of the current project in the output.
-           Its list of dependencies will be output afterwards"""
+        Its list of dependencies will be output afterwards"""
         Console().write("Project " + project.name() + " depends on:\n")
 
     def add_dependency(self, dependency, newdep=True, removed=False):
@@ -83,8 +88,7 @@ class Output:
         if Preference("Plugins/dependencies/show_source").get():
             Console().write(
                 "   => {} depends on {}\n".format(
-                    os.path.basename(file.path),
-                    os.path.basename(depends_on.path)
+                    os.path.basename(file.path), os.path.basename(depends_on.path)
                 )
             )
 
@@ -93,7 +97,6 @@ class Output:
 
 
 class XMLOutput:
-
     def __init__(self):
         self.xml = "<?xml version='1.0' ?>\n<projects>\n"
         self.current_project = None
@@ -124,13 +127,19 @@ class XMLOutput:
             extra = "extra=' (should be added)'"
         else:
             extra = "extra=''"
-        self.xml = self.xml + "<dependency name='" + \
-            dependency.file().path + "' " + extra + ">\n"
+        self.xml = (
+            self.xml
+            + "<dependency name='"
+            + dependency.file().path
+            + "' "
+            + extra
+            + ">\n"
+        )
 
     def explain_dependency(self, file, depends_on):
-        self.xml = self.xml + \
-            "<file src='" + \
-            file.path + "'>" + depends_on.path + "</file>\n"
+        self.xml = (
+            self.xml + "<file src='" + file.path + "'>" + depends_on.path + "</file>\n"
+        )
 
     def parse_attrs(self, attrs):
         """Parse an XML attribute string  attr='foo' attr="bar" """
@@ -154,18 +163,19 @@ class XMLOutput:
         elif node_name == "dependency":
             return ["<b>" + attr["name"] + "</b>" + attr["extra"], ""]
         elif node_name == "file":
-            return [os.path.basename(attr["src"]),
-                    os.path.basename(value)]
+            return [os.path.basename(attr["src"]), os.path.basename(value)]
         return []
 
     def close(self):
         self.close_project()
         self.xml = self.xml + "</projects>\n"
-        view = XMLViewer(name="Project dependencies",
-                         columns=2,
-                         sorted=True,
-                         parser=self.parse_xml_node,
-                         on_click=self.on_node_clicked)
+        view = XMLViewer(
+            name="Project dependencies",
+            columns=2,
+            sorted=True,
+            parser=self.parse_xml_node,
+            on_click=self.on_node_clicked,
+        )
         view.parse_string(self.xml)
         self.xml = ""
 
@@ -179,8 +189,7 @@ def compute_project_dependencies(output):
             tmp = dict()
             previous = p
             for s in p.sources(recursive=False):
-                for imp in s.imports(include_implicit=True,
-                                     include_system=False):
+                for imp in s.imports(include_implicit=True, include_system=False):
                     ip = imp.project(default_to_root=False)
                     if ip and ip != p:
                         if show_single_file:
@@ -195,8 +204,8 @@ def compute_project_dependencies(output):
             depends_on[p] = tmp
 
         no_source_projects = [
-            s.strip().lower() for s in
-            Preference("Plugins/dependencies/no_src_prj").get().split(",")
+            s.strip().lower()
+            for s in Preference("Plugins/dependencies/no_src_prj").get().split(",")
         ]
 
         for p in depends_on:
@@ -220,8 +229,10 @@ def compute_project_dependencies(output):
         Console().write("Unexpected exception " + traceback.format_exc())
 
 
-@interactive(name='check project dependencies to console',
-             menu='/Analyze/Project Dependencies/Check (to console)')
+@interactive(
+    name="check project dependencies to console",
+    menu="/Analyze/Project Dependencies/Check (to console)",
+)
 def check_project_dependencies_to_console():
     """
     Check whether there are dependencies between the project files that are
@@ -230,8 +241,10 @@ def check_project_dependencies_to_console():
     compute_project_dependencies(Output())
 
 
-@interactive(name='check project dependencies to xml',
-             menu='/Analyze/Project Dependencies/Check (to XML)')
+@interactive(
+    name="check project dependencies to xml",
+    menu="/Analyze/Project Dependencies/Check (to XML)",
+)
 def check_project_dependencies_to_xml():
     """
     Check whether there are dependencies between the project files that are

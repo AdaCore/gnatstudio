@@ -5,7 +5,6 @@ import workflows
 
 
 class WorkflowButtons(object):
-
     __needs_build = {}
     # Used to know if we can skip the 'Build Main' BuildTarget when calling
     # the workflows for a particular main.
@@ -25,12 +24,19 @@ class WorkflowButtons(object):
 
         if not WorkflowButtons.__build_targets_created:
             targets_def = [
-                ["Build & Run", "build-and-run",
-                 WorkflowButtons.__build_and_run_wf,
-                 "gps-run-symbolic"],
-                ["Build & Debug", "build-and-debug",
-                 WorkflowButtons.__build_and_debug_wf,
-                 "gps-debugger-initialize-symbolic"]]
+                [
+                    "Build & Run",
+                    "build-and-run",
+                    WorkflowButtons.__build_and_run_wf,
+                    "gps-run-symbolic",
+                ],
+                [
+                    "Build & Debug",
+                    "build-and-debug",
+                    WorkflowButtons.__build_and_debug_wf,
+                    "gps-debugger-initialize-symbolic",
+                ],
+            ]
 
             for target in targets_def:
                 workflows.create_target_from_workflow(
@@ -38,15 +44,18 @@ class WorkflowButtons(object):
                     workflow_name=target[1],
                     workflow=target[2],
                     icon_name=target[3],
-                    parent_menu='/Build/Project/%s/' % target[0])
+                    parent_menu="/Build/Project/%s/" % target[0],
+                )
 
             WorkflowButtons.__build_targets_created = True
             WorkflowButtons.__connect_editor_hooks()
 
-            GPS.Hook('build_mode_changed').add(
-                WorkflowButtons.__on_mode_or_view_changed)
-            GPS.Hook('project_view_changed').add(
-                WorkflowButtons.__on_mode_or_view_changed)
+            GPS.Hook("build_mode_changed").add(
+                WorkflowButtons.__on_mode_or_view_changed
+            )
+            GPS.Hook("project_view_changed").add(
+                WorkflowButtons.__on_mode_or_view_changed
+            )
 
     @staticmethod
     def force_rebuild_main(main_name):
@@ -64,16 +73,14 @@ class WorkflowButtons(object):
         the workflows or not.
         """
 
-        GPS.Hook('compilation_finished').add(
-            WorkflowButtons.__on_compilation_finished)
-        GPS.Hook('file_changed_on_disk').add(
-            WorkflowButtons.__on_file_changed)
-        GPS.Hook('buffer_edited').add(
-            WorkflowButtons.__on_file_changed)
+        GPS.Hook("compilation_finished").add(WorkflowButtons.__on_compilation_finished)
+        GPS.Hook("file_changed_on_disk").add(WorkflowButtons.__on_file_changed)
+        GPS.Hook("buffer_edited").add(WorkflowButtons.__on_file_changed)
 
     @staticmethod
-    def __on_compilation_finished(hook, category, target_name,
-                                  mode_name, status, *args):
+    def __on_compilation_finished(
+        hook, category, target_name, mode_name, status, *args
+    ):
         """
         Called each time a Build Target is computed.
 
@@ -156,12 +163,11 @@ class WorkflowButtons(object):
         exe_full_path = exe_file.executable_path.path
         exe_base_name = os.path.basename(exe_full_path)
 
-        if '.' in exe_base_name:
-            exe_base_name = ".".join(exe_base_name.split('.')[:-1])
+        if "." in exe_base_name:
+            exe_base_name = ".".join(exe_base_name.split(".")[:-1])
 
         project_name = exe_file.project()
-        GPS.execute_action(
-            "debug initialize %s:%s" % (project_name, exe_base_name))
+        GPS.execute_action("debug initialize %s:%s" % (project_name, exe_base_name))
 
     @staticmethod
     def __build_and_run_wf(main_name):
@@ -186,9 +192,7 @@ class WorkflowButtons(object):
         Display an error message in the console
         """
 
-        GPS.Console("Messages").write(
-            msg + " [workflow stopped]",
-            mode="error")
+        GPS.Console("Messages").write(msg + " [workflow stopped]", mode="error")
 
 
 WorkflowButtons.setup()

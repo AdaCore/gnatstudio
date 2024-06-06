@@ -8,16 +8,16 @@ from workflows.promises import ProcessWrapper, join, Promise
 import datetime
 
 
-CAT_BRANCHES = 'BRANCHES'
-CAT_REMOTES = 'REMOTES'
-CAT_TAGS = 'TAGS'
-CAT_STASHES = 'STASHES'
-CAT_WORKTREES = 'WORKTREES'
-CAT_SUBMODULES = 'SUBMODULES'
+CAT_BRANCHES = "BRANCHES"
+CAT_REMOTES = "REMOTES"
+CAT_TAGS = "TAGS"
+CAT_STASHES = "STASHES"
+CAT_WORKTREES = "WORKTREES"
+CAT_SUBMODULES = "SUBMODULES"
 
 CAN_RENAME = True
 
-LOCAL_CHANGES_ID = 'Local change'
+LOCAL_CHANGES_ID = "Local change"
 # A dummy id to represent local changes in the History view
 
 _version = None
@@ -26,20 +26,19 @@ _version = None
 
 @core.register_vcs(default_status=GPS.VCS2.Status.NO_VCS)
 class Git(core.VCS):
-
     @staticmethod
     def discover_working_dir(file):
-        if os_utils.locate_exec_on_path('git'):
-            p = GPS.Process(["git", "--no-pager", "rev-parse",
-                             "--show-toplevel"],
-                            block_exit=False)
+        if os_utils.locate_exec_on_path("git"):
+            p = GPS.Process(
+                ["git", "--no-pager", "rev-parse", "--show-toplevel"], block_exit=False
+            )
             output = p.get_result()
             status = p.wait()
             if not status and os.path.exists(output):
                 output = os.path.realpath(output)
                 return output
             else:
-                return core.find_admin_directory(file, '.git', allow_file=True)
+                return core.find_admin_directory(file, ".git", allow_file=True)
 
     def __init__(self, *args, **kwargs):
         super(Git, self).__init__(*args, **kwargs)
@@ -57,10 +56,11 @@ class Git(core.VCS):
         :returntype: a ProcessWrapper
         """
         return ProcessWrapper(
-            ['git', '--no-pager'] + args,
+            ["git", "--no-pager"] + args,
             block_exit=block_exit,
             directory=self.working_dir.path,
-            **kwargs)
+            **kwargs
+        )
 
     def __git_path(self, file):
         f = os.path.relpath(file.path, self.working_dir.path)
@@ -73,7 +73,7 @@ class Git(core.VCS):
         :param list all_files: will be modified to include the list of files
         """
         non_default_files = s.files_with_explicit_status
-        p = self._git(['ls-tree', '-r', 'HEAD', '--name-only'])
+        p = self._git(["ls-tree", "-r", "HEAD", "--name-only"])
         while True:
             line = yield p.wait_line()
             if line is None:
@@ -87,35 +87,36 @@ class Git(core.VCS):
         Run and parse "git status"
         :param s: the result of calling self.set_status_for_all_files
         """
+
         def on_line(line):
             if len(line) > 3:
-                if line[0:2] in ('DD', 'AU', 'UD', 'UA', 'DU', 'AA', 'UU'):
+                if line[0:2] in ("DD", "AU", "UD", "UA", "DU", "AA", "UU"):
                     status = GPS.VCS2.Status.CONFLICT
                 else:
                     status = 0
 
-                    if line[0] == 'M':
+                    if line[0] == "M":
                         status = GPS.VCS2.Status.STAGED_MODIFIED
-                    elif line[0] == 'A':
+                    elif line[0] == "A":
                         status = GPS.VCS2.Status.STAGED_ADDED
-                    elif line[0] == 'D':
+                    elif line[0] == "D":
                         status = GPS.VCS2.Status.STAGED_DELETED
-                    elif line[0] == 'R':
+                    elif line[0] == "R":
                         status = GPS.VCS2.Status.STAGED_RENAMED
-                    elif line[0] == 'C':
+                    elif line[0] == "C":
                         status = GPS.VCS2.Status.STAGED_COPIED
-                    elif line[0] == '?':
+                    elif line[0] == "?":
                         status = GPS.VCS2.Status.UNTRACKED
-                    elif line[0] == '!':
+                    elif line[0] == "!":
                         status = GPS.VCS2.Status.IGNORED
 
-                    if line[1] == 'M':
+                    if line[1] == "M":
                         status = status | GPS.VCS2.Status.MODIFIED
-                    elif line[1] == 'D':
+                    elif line[1] == "D":
                         status = status | GPS.VCS2.Status.DELETED
 
                 # Filter some obvious files to speed things up
-                if line[-3:] != '.o' and line[-5:] != '.ali':
+                if line[-3:] != ".o" and line[-5:] != ".ali":
                     # If the path contains whitespaces then the output can be
                     # surrounded by '"' => remove them
                     if line[3] == '"' and line[-1] == '"':
@@ -123,24 +124,23 @@ class Git(core.VCS):
                     else:
                         path = line[3:]
                     s.set_status(
-                        GPS.File(
-                            os.path.join(self.working_dir.path, path)),
-                        status)
+                        GPS.File(os.path.join(self.working_dir.path, path)), status
+                    )
 
         if _version and _version in [1, 7, 2]:
             ignored = []
         else:
-            ignored = ['--ignored']
+            ignored = ["--ignored"]
 
-        p = self._git(['status', '--porcelain'] + ignored)
-        yield p.lines.subscribe(on_line)   # wait until p terminates
+        p = self._git(["status", "--porcelain"] + ignored)
+        yield p.lines.subscribe(on_line)  # wait until p terminates
 
     @workflows.run_as_workflow
     def __set_git_version(self):
         """Find GIT version."""
         global _version
         if not _version:
-            p = self._git(['--version'])
+            p = self._git(["--version"])
             status, output = yield p.wait_until_terminate()
             # The version is the first three dot separated digits of the
             # third word.
@@ -150,14 +150,12 @@ class Git(core.VCS):
             #   git version 1.7.8.msysgit
             #   git version 2.17 GIT for Linux x86_64
             #   git version 2.17.GIT
-            match = re.search(r'\d+(\.\d+)+', output)
-            version = match.group(0).split('.')
+            match = re.search(r"\d+(\.\d+)+", output)
+            version = match.group(0).split(".")
             _version = [int(x) for x in version]
 
     def async_fetch_status_for_files(self, files):
-        self.async_fetch_status_for_all_files(
-            from_user=False,
-            extra_files=files)
+        self.async_fetch_status_for_all_files(from_user=False, extra_files=files)
 
     @core.run_in_background
     def async_fetch_status_for_all_files(self, from_user, extra_files=[]):
@@ -201,69 +199,75 @@ class Git(core.VCS):
             file_paths = [self.__git_path(f) for f in files]
         else:
             file_paths = [f.path for f in files]
-        p = self._git(['add' if stage else 'reset'] + file_paths,
-                      block_exit=True)
+        p = self._git(["add" if stage else "reset"] + file_paths, block_exit=True)
         yield p.wait_until_terminate(show_if_error=True)
         yield self.async_fetch_status_for_all_files(from_user=False)
 
     @core.run_in_background
     def async_commit_staged_files(self, visitor, message):
-        p = self._git(['commit', '-m', message], block_exit=True)
+        p = self._git(["commit", "-m", message], block_exit=True)
         status, _ = yield p.wait_until_terminate(show_if_error=True)
         if status == 0:
-            visitor.success('Commit successful')
+            visitor.success("Commit successful")
 
-    @core.vcs_action(icon='git-commit-amend-symbolic',
-                     name='git amend previous commit',
-                     toolbar='Commits', toolbar_section='commits')
+    @core.vcs_action(
+        icon="git-commit-amend-symbolic",
+        name="git amend previous commit",
+        toolbar="Commits",
+        toolbar_section="commits",
+    )
     def _commit_amend(self):
         """
         Commit all staged files and add these to the previous commit.
         """
         # ??? Should do nothing if the previous commit has been pushed
         # already.
-        GPS.Hook('vcs_before_commit').run()
-        p = self._git(['commit', '--amend', '--reuse-message=HEAD'],
-                      block_exit=True)
+        GPS.Hook("vcs_before_commit").run()
+        p = self._git(["commit", "--amend", "--reuse-message=HEAD"], block_exit=True)
         status, _ = yield p.wait_until_terminate(show_if_error=True)
         if status == 0:
-            GPS.MDI.information_popup(
-                'Commit successful', 'github-commit-symbolic')
-            GPS.Hook('vcs_refresh').run(False)
+            GPS.MDI.information_popup("Commit successful", "github-commit-symbolic")
+            GPS.Hook("vcs_refresh").run(False)
             yield self.async_fetch_status_for_all_files(from_user=False)
 
-    @core.vcs_action(icon='vcs-pull-symbolic',
-                     name='git pull rebase',
-                     menu='/VCS/Pull & rebase',
-                     after='update section')
+    @core.vcs_action(
+        icon="vcs-pull-symbolic",
+        name="git pull rebase",
+        menu="/VCS/Pull & rebase",
+        after="update section",
+    )
     def _pull_rebase(self):
-        p = self._git(['pull', '--rebase'], spawn_console='')
+        p = self._git(["pull", "--rebase"], spawn_console="")
         status, _ = yield p.wait_until_terminate()
         if status == 0:
-            GPS.MDI.information_popup('Pulled', 'github-commit-symbolic')
+            GPS.MDI.information_popup("Pulled", "github-commit-symbolic")
 
-    @core.vcs_action(icon='vcs-pull-symbolic',
-                     name='git pull',
-                     menu='/VCS/Pull',
-                     after='update section')
+    @core.vcs_action(
+        icon="vcs-pull-symbolic",
+        name="git pull",
+        menu="/VCS/Pull",
+        after="update section",
+    )
     def _pull(self):
-        p = self._git(['pull'], spawn_console='')
+        p = self._git(["pull"], spawn_console="")
         status, _ = yield p.wait_until_terminate()
         if status == 0:
-            GPS.MDI.information_popup('Pulled', 'github-commit-symbolic')
+            GPS.MDI.information_popup("Pulled", "github-commit-symbolic")
 
-    @core.vcs_action(icon='vcs-cloud-symbolic',
-                     name='git push',
-                     menu='/VCS/Push',
-                     after='server section')
+    @core.vcs_action(
+        icon="vcs-cloud-symbolic",
+        name="git push",
+        menu="/VCS/Push",
+        after="server section",
+    )
     def _push(self):
         """
         Push all changes to the remote repository.
         """
-        p = self._git(['push'], spawn_console='')
+        p = self._git(["push"], spawn_console="")
         status, _ = yield p.wait_until_terminate()
         if status == 0:
-            GPS.MDI.information_popup('Pushed', 'vcs-cloud-symbolic')
+            GPS.MDI.information_popup("Pushed", "vcs-cloud-symbolic")
 
     def _unpushed_local_changes(self):
         """
@@ -273,7 +277,7 @@ class Git(core.VCS):
         :returntype set: will contain the sha1 of the commits
         """
         unpushed = set()
-        p = self._git(['cherry'], ignore_error=True)
+        p = self._git(["cherry"], ignore_error=True)
         while True:
             line = yield p.wait_line()
             if line is None:
@@ -285,7 +289,7 @@ class Git(core.VCS):
         """
         Check whether there is any uncomitted change.
         """
-        p = self._git(['diff', '--quiet', 'HEAD', '--'], ignore_error=True)
+        p = self._git(["diff", "--quiet", "HEAD", "--"], ignore_error=True)
         status, _ = yield p.wait_until_terminate()
         yield status != 0
 
@@ -293,8 +297,8 @@ class Git(core.VCS):
     def async_fetch_history(self, visitor, filter):
         # Compute, in parallel, needed pieces of information
         (unpushed, has_local) = yield join(
-            self._unpushed_local_changes(),
-            self._has_local_changes())
+            self._unpushed_local_changes(), self._has_local_changes()
+        )
 
         # Then fetch the history
 
@@ -304,43 +308,45 @@ class Git(core.VCS):
         current_branch_only = filter[3]
         branch_commits_only = filter[4]
 
-        filter_switch = ''
+        filter_switch = ""
         if pattern:
-            if pattern.startswith('author:'):
-                filter_switch = '--author=%s' % pattern[7:]
-            elif pattern.startswith('code:'):
-                filter_switch = '-S=%s' % pattern[5:]
+            if pattern.startswith("author:"):
+                filter_switch = "--author=%s" % pattern[7:]
+            elif pattern.startswith("code:"):
+                filter_switch = "-S=%s" % pattern[5:]
             else:
-                filter_switch = '--grep=%s' % pattern
+                filter_switch = "--grep=%s" % pattern
 
         git_cmd = [
-            'log',
+            "log",
             # use tformat to get final newline
-            '--pretty=tformat:%H@@%P@@%an@@%D@@%cD@@%s']
+            "--pretty=tformat:%H@@%P@@%an@@%D@@%cD@@%s",
+        ]
         if not current_branch_only:
-            git_cmd.append('--branches')
-            git_cmd.append('--tags')
-            git_cmd.append('--remotes')
+            git_cmd.append("--branches")
+            git_cmd.append("--tags")
+            git_cmd.append("--remotes")
         if for_file:
-            git_cmd.append('--follow')
+            git_cmd.append("--follow")
         git_cmd += [
-            '--topo-order',  # children before parents
+            "--topo-order",  # children before parents
             filter_switch,
-            '--max-count=%d' % max_lines if not branch_commits_only else '',
-            '%s' % for_file.path if for_file else '']
+            "--max-count=%d" % max_lines if not branch_commits_only else "",
+            "%s" % for_file.path if for_file else "",
+        ]
         p = self._git(git_cmd)
 
         nb_added_lines = 0
 
         while True:
             line = yield p.wait_line()
-            if line is None or '@@' not in line:
+            if line is None or "@@" not in line:
                 GPS.Logger("GIT").log("finished git-status")
                 break
 
-            id, parents, author, branches, date, subject = line.split('@@')
+            id, parents, author, branches, date, subject = line.split("@@")
             parents = parents.split()
-            branches = None if not branches else branches.split(',')
+            branches = None if not branches else branches.split(",")
 
             flags = 0
             if id in unpushed:
@@ -354,21 +360,24 @@ class Git(core.VCS):
                     b = b.strip()
 
                     # ??? How do we detect other remotes
-                    if b.startswith('origin/'):
+                    if b.startswith("origin/"):
                         f = (b, GPS.VCS2.Commit.Kind.REMOTE)
                     elif b.startswith("HEAD"):
                         f = (b, GPS.VCS2.Commit.Kind.HEAD)
                         # Append a dummy entry if we have local changes, and
                         # we have the HEAD
                         if has_local:
-                            visitor.history_line(GPS.VCS2.Commit(
-                                LOCAL_CHANGES_ID,
-                                '',
-                                '',
-                                '<uncommitted changes>',
-                                parents=[id],
-                                flags=GPS.VCS2.Commit.Flags.UNCOMMITTED |
-                                GPS.VCS2.Commit.Flags.UNPUSHED))
+                            visitor.history_line(
+                                GPS.VCS2.Commit(
+                                    LOCAL_CHANGES_ID,
+                                    "",
+                                    "",
+                                    "<uncommitted changes>",
+                                    parents=[id],
+                                    flags=GPS.VCS2.Commit.Flags.UNCOMMITTED
+                                    | GPS.VCS2.Commit.Flags.UNPUSHED,
+                                )
+                            )
 
                     elif b.startswith("tag: "):
                         f = (b[5:], GPS.VCS2.Commit.Kind.TAG)
@@ -377,12 +386,14 @@ class Git(core.VCS):
 
                     branch_descr.append(f)
 
-            visitor.history_line(GPS.VCS2.Commit(
-                id, author, date, subject, parents, branch_descr, flags=flags))
+            visitor.history_line(
+                GPS.VCS2.Commit(
+                    id, author, date, subject, parents, branch_descr, flags=flags
+                )
+            )
             nb_added_lines += 1
 
-        GPS.Logger("GIT").log(
-            "done parsing git-log (%s lines)" % (nb_added_lines, ))
+        GPS.Logger("GIT").log("done parsing git-log (%s lines)" % (nb_added_lines,))
 
     @core.run_in_background
     def async_fetch_commit_details(self, ids, visitor):
@@ -390,22 +401,15 @@ class Git(core.VCS):
             # If there are unstaged changes, show those, otherwise
             # show the staged changes
 
-            p = self._git(['diff', '--exit-code'], ignore_error=True)
+            p = self._git(["diff", "--exit-code"], ignore_error=True)
             status, output = yield p.wait_until_terminate()
             if status != 0:
-                visitor.set_details(
-                    LOCAL_CHANGES_ID,
-                    'Unstaged local changes',
-                    output)
+                visitor.set_details(LOCAL_CHANGES_ID, "Unstaged local changes", output)
 
-            p = self._git(['diff', '--cached', '--exit-code'],
-                          ignore_error=True)
+            p = self._git(["diff", "--cached", "--exit-code"], ignore_error=True)
             status, output = yield p.wait_until_terminate()
             if status != 0:
-                visitor.set_details(
-                    LOCAL_CHANGES_ID,
-                    'Staged local changes',
-                    output)
+                visitor.set_details(LOCAL_CHANGES_ID, "Staged local changes", output)
             return
 
         # If there is a single commit, show the full patch (use
@@ -415,20 +419,26 @@ class Git(core.VCS):
         # We use a custom format to be able to display the refnames, which
         # are not displayed otherwise by git.
 
-        format = ('commit %H%n'
-                  'Author:     %aN <%ae>%n'
-                  'AuthorDate: %aD%n'
-                  'Commit:     %cN <%ce>%n'
-                  'CommitDate: %cD%n'
-                  'Refnames:  %d%n%n'
-                  '%B')
+        format = (
+            "commit %H%n"
+            "Author:     %aN <%ae>%n"
+            "AuthorDate: %aD%n"
+            "Commit:     %cN <%ce>%n"
+            "CommitDate: %cD%n"
+            "Refnames:  %d%n%n"
+            "%B"
+        )
 
         p = self._git(
-            ['show',
-             '-p' if len(ids) == 1 else '--name-only',
-             '--stat' if len(ids) == 1 else '',
-             '--notes',   # show notes
-             '--pretty=format:%s' % format] + ids)
+            [
+                "show",
+                "-p" if len(ids) == 1 else "--name-only",
+                "--stat" if len(ids) == 1 else "",
+                "--notes",  # show notes
+                "--pretty=format:%s" % format,
+            ]
+            + ids
+        )
         id = ""
         message = []
         header = []
@@ -436,8 +446,7 @@ class Git(core.VCS):
 
         def _emit():
             if id:
-                visitor.set_details(
-                    id, '\n'.join(header), '\n'.join(message))
+                visitor.set_details(id, "\n".join(header), "\n".join(message))
 
         while True:
             line = yield p.wait_line()
@@ -445,7 +454,7 @@ class Git(core.VCS):
                 _emit()
                 break
 
-            if line.startswith('commit '):
+            if line.startswith("commit "):
                 _emit()
                 id = line[7:]
                 message = []
@@ -455,7 +464,7 @@ class Git(core.VCS):
             elif in_header:
                 if not line:
                     in_header = False
-                    message = ['']
+                    message = [""]
                 else:
                     header.append(line)
 
@@ -466,15 +475,13 @@ class Git(core.VCS):
     def async_view_file(self, visitor, ref, file):
         # The git command "show HEAD:path" only work with a UNIX path
         f = self.__git_path(file)
-        p = self._git(['show', '%s:%s' % (ref, f)])
+        p = self._git(["show", "%s:%s" % (ref, f)])
         status, output = yield p.wait_until_terminate()
         visitor.file_computed(output)
 
     @core.run_in_background
     def async_diff(self, visitor, ref, file):
-        p = self._git(
-            ['diff', '--no-prefix',
-             ref, '--', file.path if file else ''])
+        p = self._git(["diff", "--no-prefix", ref, "--", file.path if file else ""])
         status, output = yield p.wait_until_terminate()
         if status == 0:
             visitor.diff_computed(output)
@@ -483,35 +490,33 @@ class Git(core.VCS):
 
     @core.run_in_background
     def async_annotations(self, visitor, file):
-        info = {}   # for each commit id, the annotation
+        info = {}  # for each commit id, the annotation
         current_id = None
         first_line = 1
         lines = []
         ids = []
 
-        p = self._git(['blame', '--porcelain', file.path])
+        p = self._git(["blame", "--porcelain", file.path])
         while True:
             line = yield p.wait_line()
             if line is None:
                 break
 
             if current_id is None:
-                current_id = line.split(' ', 1)[0]
+                current_id = line.split(" ", 1)[0]
 
-            elif line[0] == '\t':
+            elif line[0] == "\t":
                 # The line of code, which we ignore
                 lines.append(info[current_id])
                 ids.append(current_id)
                 current_id = None
 
-            elif line.startswith('author '):
+            elif line.startswith("author "):
                 info[current_id] = line[7:17]  # at most 10 chars
 
-            elif line.startswith('committer-time '):
-                d = datetime.datetime.fromtimestamp(
-                    int(line[15:])).strftime('%Y%m%d')
-                info[current_id] = '%s %10s %s' % (
-                    d, info[current_id], current_id[0:7])
+            elif line.startswith("committer-time "):
+                d = datetime.datetime.fromtimestamp(int(line[15:])).strftime("%Y%m%d")
+                info[current_id] = "%s %10s %s" % (d, info[current_id], current_id[0:7])
 
         visitor.annotations(file, first_line, ids, lines)
 
@@ -524,99 +529,108 @@ class Git(core.VCS):
         remotes = []
         r = re.compile(
             r"^(?P<current>\*)?\s+"
-            r"(?P<name>[^(]\S+|\([^)]+\))"   # "(HEAD detached at ...)"
+            r"(?P<name>[^(]\S+|\([^)]+\))"  # "(HEAD detached at ...)"
             r"\s+"
             r"(?P<id>[a-z0-9]+)"
             r"\s+"
-            r"(\[(?P<tracking>.*\]))?")
+            r"(\[(?P<tracking>.*\]))?"
+        )
         emblem_r = re.compile(
             r"^(?P<tracking>.*):\s"
             r"(ahead (?P<ahead>\d+),?)?\s*"
-            r"(behind (?P<behind>\d+))?")
+            r"(behind (?P<behind>\d+))?"
+        )
 
-        p = self._git(['branch', '-a', '--list', '--no-color', '-vv'])
+        p = self._git(["branch", "-a", "--list", "--no-color", "-vv"])
         while True:
             line = yield p.wait_line()
             if line is None:
                 visitor.branches(
-                    CAT_BRANCHES, 'vcs-branch-symbolic', CAN_RENAME, branches)
+                    CAT_BRANCHES, "vcs-branch-symbolic", CAN_RENAME, branches
+                )
                 visitor.branches(
-                    CAT_REMOTES, 'vcs-cloud-symbolic', not CAN_RENAME, remotes)
+                    CAT_REMOTES, "vcs-cloud-symbolic", not CAN_RENAME, remotes
+                )
                 break
             m = r.search(line)
             if m:
-                n = m.group('name')
+                n = m.group("name")
                 emblem = []
-                m2 = emblem_r.search(m.group('tracking') or '')
+                m2 = emblem_r.search(m.group("tracking") or "")
                 if m2:
-                    n = '%s (%s)' % (n, m2.group('tracking'))
-                    if m2.group('ahead'):
-                        emblem.append(u"\u2191%s" % (
-                            m2.group('ahead')))
-                    if m2.group('behind'):
-                        emblem.append(u"\u2193%s" % (
-                            m2.group('behind')))
+                    n = "%s (%s)" % (n, m2.group("tracking"))
+                    if m2.group("ahead"):
+                        emblem.append("\u2191%s" % (m2.group("ahead")))
+                    if m2.group("behind"):
+                        emblem.append("\u2193%s" % (m2.group("behind")))
 
-                emblem = ' '.join(emblem)
+                emblem = " ".join(emblem)
 
-                if n.startswith('remotes/'):
+                if n.startswith("remotes/"):
                     remotes.append(
                         GPS.VCS2.Branch(
                             name=n[8:],
-                            active=m.group('current') is not None,
+                            active=m.group("current") is not None,
                             annotation=emblem,
-                            id=m.group('name')))
+                            id=m.group("name"),
+                        )
+                    )
                 else:
                     branches.append(
                         GPS.VCS2.Branch(
                             name=n,
-                            active=m.group('current') is not None,
+                            active=m.group("current") is not None,
                             annotation=emblem,
-                            id=m.group('name')))
+                            id=m.group("name"),
+                        )
+                    )
 
     def _tags(self, visitor):
         """
         A generator that returns the list of all known tags
         via `visitor.branches`
         """
-        p = self._git(['tag'])
+        p = self._git(["tag"])
         tags = []
         while True:
             line = yield p.wait_line()
             if line is None:
-                visitor.branches(
-                    CAT_TAGS, 'vcs-tag-symbolic', CAN_RENAME, tags)
+                visitor.branches(CAT_TAGS, "vcs-tag-symbolic", CAN_RENAME, tags)
                 break
-            tags.append(GPS.VCS2.Branch(
-                name=line, active=False, annotation='', id=line))
+            tags.append(
+                GPS.VCS2.Branch(name=line, active=False, annotation="", id=line)
+            )
 
     def _stashes(self, visitor):
         """
         A generator that returns the list of all known stashes via
         `visitor.branches`.
         """
-        p = self._git(['stash', 'list'])
+        p = self._git(["stash", "list"])
         stashes = []
         while True:
             line = yield p.wait_line()
             if line is None:
                 visitor.branches(
-                    'stashes', 'vcs-stash-symbolic', not CAN_RENAME, stashes)
+                    "stashes", "vcs-stash-symbolic", not CAN_RENAME, stashes
+                )
                 break
             # Line can contain either
             #   stash@{0}: On master: bla
             # or
             #   stash@{0}: bla
-            splits = line.split(':', 2)
+            splits = line.split(":", 2)
             name = splits[0]
             descr = splits[-1]
             annotation = splits[1]
             stashes.append(
                 GPS.VCS2.Branch(
-                    name='%s: %s' % (name, descr),
+                    name="%s: %s" % (name, descr),
                     active=False,
                     annotation=annotation,
-                    id=name))
+                    id=name,
+                )
+            )
 
     def _worktrees(self, visitor):
         """
@@ -624,8 +638,8 @@ class Git(core.VCS):
         """
         # "--no-pager" results in segfault with git 2.11
         p = ProcessWrapper(
-            ['git', 'worktree', 'list', '--porcelain'],
-            directory=self.working_dir.path)
+            ["git", "worktree", "list", "--porcelain"], directory=self.working_dir.path
+        )
         trees = []
         current = []
         while True:
@@ -635,30 +649,32 @@ class Git(core.VCS):
                 if len(trees) > 1:
                     visitor.branches(
                         CAT_WORKTREES,
-                        'vcs-git-worktrees-symbolic',
+                        "vcs-git-worktrees-symbolic",
                         not CAN_RENAME,
-                        trees)
+                        trees,
+                    )
                 break
             elif not line:
                 trees.append(current)
-            elif line.startswith('worktree '):
+            elif line.startswith("worktree "):
                 current = GPS.VCS2.Branch(
-                    name='"%s"' % line[9:],   # quoted not to expand '/'
+                    name='"%s"' % line[9:],  # quoted not to expand '/'
                     active=self.working_dir == GPS.File(line[9:]),
-                    annotation='',
-                    id='')   # unique id
-            elif line.startswith('HEAD '):
-                current[3] = line[5:]   # unique id
-            elif line.startswith('branch '):
-                current[2] = line[7:]   # details
-            elif line.startswith('detached'):
-                current[2] = 'detached'  # details
+                    annotation="",
+                    id="",
+                )  # unique id
+            elif line.startswith("HEAD "):
+                current[3] = line[5:]  # unique id
+            elif line.startswith("branch "):
+                current[2] = line[7:]  # details
+            elif line.startswith("detached"):
+                current[2] = "detached"  # details
 
     def _submodules(self, visitor):
         """
         A generator that returns the list of submodules via `visitor.branches`
         """
-        p = self._git(['submodule', 'status', '--recursive'])
+        p = self._git(["submodule", "status", "--recursive"])
         modules = []
         while True:
             line = yield p.wait_line()
@@ -666,9 +682,10 @@ class Git(core.VCS):
                 if len(modules) != 0:
                     visitor.branches(
                         CAT_SUBMODULES,
-                        'vcs-submodules-symbolic',
+                        "vcs-submodules-symbolic",
                         not CAN_RENAME,
-                        modules)
+                        modules,
+                    )
                 break
             # Git documentation: This will print the SHA-1 of the currently
             # checked out commit for each submodule, along with the submodule
@@ -678,29 +695,32 @@ class Git(core.VCS):
             # commit does not match the SHA-1 found in the index of the
             # containing repository and U if the submodule has merge conflicts.
             try:
-                words = line.lstrip().split(' ')
+                words = line.lstrip().split(" ")
                 # Remove the prefix if any
-                if words[0][0] in ('-+U'):
+                if words[0][0] in ("-+U"):
                     sha1 = words[0][1:]
                 else:
                     sha1 = words[0]
                 name = words[1]
                 modules.append(
-                    GPS.VCS2.Branch(
-                        name=name, active=False, annotation='', id=sha1))
+                    GPS.VCS2.Branch(name=name, active=False, annotation="", id=sha1)
+                )
             except Exception:
                 # The output of git submodule was invalid => do nothing
-                GPS.Logger("GIT").log("Can't retrieve submodules information" +
-                                      " invalid output: " + line)
+                GPS.Logger("GIT").log(
+                    "Can't retrieve submodules information" + " invalid output: " + line
+                )
 
     @core.run_in_background
     def async_branches(self, visitor):
-        yield join(self._branches(visitor),
-                   self._tags(visitor),
-                   self._stashes(visitor),
-                   self._worktrees(visitor),
-                   self._submodules(visitor),
-                   *self.extensions('async_branches', visitor))
+        yield join(
+            self._branches(visitor),
+            self._tags(visitor),
+            self._stashes(visitor),
+            self._worktrees(visitor),
+            self._submodules(visitor),
+            *self.extensions("async_branches", visitor)
+        )
 
     def _current_branch(self):
         """
@@ -711,120 +731,137 @@ class Git(core.VCS):
         def online(line):
             result.resolve(line)
 
-        p = self._git(['rev-parse', '--abbrev-ref', 'HEAD'])
+        p = self._git(["rev-parse", "--abbrev-ref", "HEAD"])
         p.lines.subscribe(online)
         return result
 
     @core.run_in_background
-    def async_action_on_branch(self, visitor, action, category, id, text=''):
+    def async_action_on_branch(self, visitor, action, category, id, text=""):
         if category == CAT_BRANCHES:
             if action == GPS.VCS2.Actions.DOUBLE_CLICK and id:
-                p = self._git(['checkout', id])
+                p = self._git(["checkout", id])
                 yield p.wait_until_terminate(show_if_error=True)
 
             elif action == GPS.VCS2.Actions.TOOLTIP and id:
                 visitor.tooltip(
-                    '\nDouble-click to checkout this branch.\n'
-                    'Click [+] to create a new branch from this one.\n'
-                    'Click [-] to delete current branch.')
+                    "\nDouble-click to checkout this branch.\n"
+                    "Click [+] to create a new branch from this one.\n"
+                    "Click [-] to delete current branch."
+                )
 
             elif action == GPS.VCS2.Actions.ADD and id:
                 name = GPS.MDI.input_dialog(
-                    'Choose a name for the new branch',
-                    'name=%s-new' % id)
+                    "Choose a name for the new branch", "name=%s-new" % id
+                )
                 if name:
                     name = name[0]
-                    p = self._git(['branch', '--track', name, id])
+                    p = self._git(["branch", "--track", name, id])
                     s, _ = yield p.wait_until_terminate(show_if_error=True)
                     if s == 0:
                         # Checkout will not succeed if there are local changes
-                        p = self._git(['checkout', name])
+                        p = self._git(["checkout", name])
                         yield p.wait_until_terminate(show_if_error=True)
 
             elif action == GPS.VCS2.Actions.RENAME and id and text:
-                p = self._git(['branch', '-m', id, text])
+                p = self._git(["branch", "-m", id, text])
                 yield p.wait_until_terminate(show_if_error=True)
 
             elif action == GPS.VCS2.Actions.REMOVE and id:
-                if (id != 'master' and
-                        GPS.MDI.yes_no_dialog("Delete branch `%s` ?" % id)):
-
+                if id != "master" and GPS.MDI.yes_no_dialog(
+                    "Delete branch `%s` ?" % id
+                ):
                     # If this is the current branch, fallback to master
                     current = yield self._current_branch()
                     if current == id:
-                        p = self._git(['checkout', 'master'])
+                        p = self._git(["checkout", "master"])
                         s, _ = yield p.wait_until_terminate(show_if_error=True)
 
-                    p = self._git(['branch', '-D', id])
+                    p = self._git(["branch", "-D", id])
                     yield p.wait_until_terminate(show_if_error=True)
 
         elif category == CAT_TAGS:
             if action == GPS.VCS2.Actions.DOUBLE_CLICK and id:
-                p = self._git(['checkout', id])
+                p = self._git(["checkout", id])
                 yield p.wait_until_terminate(show_if_error=True)
 
             elif action == GPS.VCS2.Actions.TOOLTIP:
                 visitor.tooltip(
-                    '\nDouble-click to checkout this tag' +
-                    ('\nClick [+] to create a new tag on current branch'
-                     if not id else '') +
-                    ('\nClick [-] to delete tag' if id else ''))
+                    "\nDouble-click to checkout this tag"
+                    + (
+                        "\nClick [+] to create a new tag on current branch"
+                        if not id
+                        else ""
+                    )
+                    + ("\nClick [-] to delete tag" if id else "")
+                )
 
             elif action == GPS.VCS2.Actions.ADD and not id:
                 name = GPS.MDI.input_dialog(
-                    'Choose a name for the new tag',
-                    'name',
-                    'Commit Message (will annotate if set)')
-                if name and name[0]:   # not cancelled
-                    p = self._git(['tag',
-                                   '-a' if name[1] else '',
-                                   '--message=%s' % name[1] if name[1] else '',
-                                   name[0]])
+                    "Choose a name for the new tag",
+                    "name",
+                    "Commit Message (will annotate if set)",
+                )
+                if name and name[0]:  # not cancelled
+                    p = self._git(
+                        [
+                            "tag",
+                            "-a" if name[1] else "",
+                            "--message=%s" % name[1] if name[1] else "",
+                            name[0],
+                        ]
+                    )
                     yield p.wait_until_terminate(show_if_error=True)
 
             elif action == GPS.VCS2.Actions.REMOVE:
                 if id and GPS.MDI.yes_no_dialog("Delete tag `%s` ?" % id):
-                    p = self._git(['tag', '-d', id])
+                    p = self._git(["tag", "-d", id])
                     yield p.wait_until_terminate(show_if_error=True)
 
             elif action == GPS.VCS2.Actions.RENAME and id and text:
                 # ??? Can we create an annotated tag ?
-                p = self._git(['tag', text, id])
+                p = self._git(["tag", text, id])
                 s, _ = yield p.wait_until_terminate(show_if_error=True)
                 if s == 0:
-                    p = self._git(['tag', '-d', id])
+                    p = self._git(["tag", "-d", id])
                     s, _ = yield p.wait_until_terminate(show_if_error=True)
                 # ??? Should we push to origin to remote ?
 
         elif category == CAT_STASHES:
             if action == GPS.VCS2.Actions.DOUBLE_CLICK and id:
-                p = self._git(['stash', 'apply', id])
+                p = self._git(["stash", "apply", id])
                 yield p.wait_until_terminate(show_if_error=True)
 
             elif action == GPS.VCS2.Actions.TOOLTIP:
                 visitor.tooltip(
-                    ('\nDouble-click to apply this stash on HEAD' +
-                     '\nClick [-] to drop this stash' if id else '') +
-                    ('' if id else '\nClick [+] to stash all local changes'))
+                    (
+                        "\nDouble-click to apply this stash on HEAD"
+                        + "\nClick [-] to drop this stash"
+                        if id
+                        else ""
+                    )
+                    + ("" if id else "\nClick [+] to stash all local changes")
+                )
 
             elif action == GPS.VCS2.Actions.ADD and not id:
-                p = self._git(['stash', 'save', 'created from GPS'])
+                p = self._git(["stash", "save", "created from GPS"])
                 yield p.wait_until_terminate(show_if_error=True)
 
             elif action == GPS.VCS2.Actions.REMOVE and id:
-                p = self._git(['stash', 'drop', id])
+                p = self._git(["stash", "drop", id])
                 yield p.wait_until_terminate(show_if_error=True)
 
         elif category == CAT_REMOTES:
             if action == GPS.VCS2.Actions.DOUBLE_CLICK and id:
-                p = self._git(['checkout', id])
+                p = self._git(["checkout", id])
                 yield p.wait_until_terminate(show_if_error=True)
 
             elif action == GPS.VCS2.Actions.TOOLTIP:
                 visitor.tooltip(
-                    '\nDouble-click to checkout this remote branch locally' +
-                    '\nClick [-] to delete this remote branch'
-                    if id else '')
+                    "\nDouble-click to checkout this remote branch locally"
+                    + "\nClick [-] to delete this remote branch"
+                    if id
+                    else ""
+                )
                 pass
 
             elif action == GPS.VCS2.Actions.ADD:
@@ -832,36 +869,38 @@ class Git(core.VCS):
 
             elif action == GPS.VCS2.Actions.REMOVE and id:
                 # id is of the form 'remotes/origin/some/name'
-                _, origin, name = id.split('/', 2)
+                _, origin, name = id.split("/", 2)
                 if GPS.MDI.yes_no_dialog("Delete remote branch `%s` ?" % id):
-                    p = self._git(['push', origin, ':%s' % name])
+                    p = self._git(["push", origin, ":%s" % name])
                     yield p.wait_until_terminate(show_if_error=True)
 
         elif category in (CAT_WORKTREES, CAT_SUBMODULES):
             pass
 
         else:
-            yield join(*self.extensions(
-                'async_action_on_branch', visitor, action, category, id, text))
+            yield join(
+                *self.extensions(
+                    "async_action_on_branch", visitor, action, category, id, text
+                )
+            )
 
     @core.run_in_background
     def async_discard_local_changes(self, files):
         n = [f.path for f in files]
-        yield self._git(['reset'] + n).wait_until_terminate()
-        yield self._git(['checkout'] + n).wait_until_terminate()
-        GPS.MDI.information_popup(
-            'Local changes discarded', 'github-commit-symbolic')
+        yield self._git(["reset"] + n).wait_until_terminate()
+        yield self._git(["checkout"] + n).wait_until_terminate()
+        GPS.MDI.information_popup("Local changes discarded", "github-commit-symbolic")
 
     @core.run_in_background
     def async_checkout(self, visitor, commit):
-        p = self._git(['checkout', commit], block_exit=True)
+        p = self._git(["checkout", commit], block_exit=True)
         status, _ = yield p.wait_until_terminate(show_if_error=True)
         if status == 0:
-            visitor.success('Checkout successful')
+            visitor.success("Checkout successful")
 
     @core.run_in_background
     def async_checkout_file(self, visitor, commit, file):
-        p = self._git(['checkout', commit, '--', file.path], block_exit=True)
+        p = self._git(["checkout", commit, "--", file.path], block_exit=True)
         status, _ = yield p.wait_until_terminate(show_if_error=True)
         if status == 0:
-            visitor.success('Checkout successful')
+            visitor.success("Checkout successful")

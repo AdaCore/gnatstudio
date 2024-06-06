@@ -8,8 +8,7 @@ These themes are inspired from:
 
 import GPS
 from gs_utils import hook
-from theme_handling import (
-    Theme, Rgba, transparent, Color, prefs_to_color_keys)
+from theme_handling import Theme, Rgba, transparent, Color, prefs_to_color_keys
 import textmate
 
 
@@ -21,71 +20,85 @@ except ImportError:
 logger = GPS.Logger("COLORSCHEMES")
 
 STYLE_WARNING = GPS.Style.create_from_preferences(
-    "editor-warnings", "", "Medium-Importance-Messages-Highlight")
+    "editor-warnings", "", "Medium-Importance-Messages-Highlight"
+)
 STYLE_ERROR = GPS.Style.create_from_preferences(
-    "editor-errors", "", "High-Importance-Messages-Highlight")
+    "editor-errors", "", "High-Importance-Messages-Highlight"
+)
 
 _VIEW_TITLE = "Color Theme"
 
-default = Theme("Default", True, {
-    "theme_selected_bg": Rgba(74, 144, 217),
-    "theme_selected_fg": Rgba(255, 255, 255, 255),
-})
+default = Theme(
+    "Default",
+    True,
+    {
+        "theme_selected_bg": Rgba(74, 144, 217),
+        "theme_selected_fg": Rgba(255, 255, 255, 255),
+    },
+)
 
-darkside = Theme("Darkside", False, {
-    "ephemeral_simple": ("DEFAULT", transparent, Rgba(69, 74, 69))
-})
+darkside = Theme(
+    "Darkside", False, {"ephemeral_simple": ("DEFAULT", transparent, Rgba(69, 74, 69))}
+)
 
 color_theme_pref = GPS.Preference("/Color-Theme").create(
-    "Color theme", "string", "Darkside")
+    "Color theme", "string", "Darkside"
+)
 
-monokai = Theme("Monokai", False, {
-    "debugger_current": Rgba(58, 71, 54, 153),
-    "current_line": Rgba(73, 72, 62),
-    "editor_fg": Rgba(248, 248, 242),
-    "editor_bg": Rgba(39, 40, 34),
-    "hyperlinks": ("DEFAULT", Rgba(114, 159, 207), transparent),
-    "strings": ("DEFAULT", Rgba(230, 219, 116), transparent),
-    "numbers": ("DEFAULT", Rgba(255, 51, 51), transparent),
-    "annotated_comments": ("DEFAULT", Rgba(117, 113, 94), transparent),
-    "comments": ("DEFAULT", Rgba(117, 113, 94), transparent),
-    "keywords": ("DEFAULT", Rgba(249, 38, 114), transparent),
-    "types": ("DEFAULT", Rgba(102, 217, 239), transparent),
-    "blocks": ("DEFAULT", Rgba(230, 219, 116), transparent),
-    "browsers_bg": Rgba(39, 40, 34),
-    "ephemeral_simple": ("DEFAULT", transparent, Rgba(106, 108, 92, 128)),
-    "ephemeral_smart": ("DEFAULT", transparent, Rgba(128, 236, 255, 90))
-})
+monokai = Theme(
+    "Monokai",
+    False,
+    {
+        "debugger_current": Rgba(58, 71, 54, 153),
+        "current_line": Rgba(73, 72, 62),
+        "editor_fg": Rgba(248, 248, 242),
+        "editor_bg": Rgba(39, 40, 34),
+        "hyperlinks": ("DEFAULT", Rgba(114, 159, 207), transparent),
+        "strings": ("DEFAULT", Rgba(230, 219, 116), transparent),
+        "numbers": ("DEFAULT", Rgba(255, 51, 51), transparent),
+        "annotated_comments": ("DEFAULT", Rgba(117, 113, 94), transparent),
+        "comments": ("DEFAULT", Rgba(117, 113, 94), transparent),
+        "keywords": ("DEFAULT", Rgba(249, 38, 114), transparent),
+        "types": ("DEFAULT", Rgba(102, 217, 239), transparent),
+        "blocks": ("DEFAULT", Rgba(230, 219, 116), transparent),
+        "browsers_bg": Rgba(39, 40, 34),
+        "ephemeral_simple": ("DEFAULT", transparent, Rgba(106, 108, 92, 128)),
+        "ephemeral_smart": ("DEFAULT", transparent, Rgba(128, 236, 255, 90)),
+    },
+)
 
-iplastic = Theme("iPlastic", True, {
-    "theme_selected_bg": Rgba(74, 144, 217),
-    "debugger_current": Rgba(125, 236, 57, 153),
-    "current_line": Rgba(226, 226, 226, 102),
-    "editor_fg": Rgba(0, 0, 0),
-    "editor_bg": Rgba(238, 238, 238),
-    "hyperlinks": ("DEFAULT", Rgba(0, 0, 255), transparent),
-    "strings": ("DEFAULT", Rgba(0, 153, 51), transparent),
-    "numbers": ("DEFAULT", Rgba(255, 51, 51), transparent),
-    "annotated_comments": ("DEFAULT", Rgba(0, 102, 255), transparent),
-    "aspects": ("DEFAULT", Rgba(0, 102, 255), transparent),
-    "comments": ("DEFAULT", Rgba(0, 102, 255), transparent),
-    "keywords": ("DEFAULT", Rgba(0, 0, 255), transparent),
-    "types": ("DEFAULT", Rgba(102, 217, 239), transparent),
-    "blocks": ("DEFAULT", Rgba(255, 128, 0), transparent),
-    "browsers_bg": Rgba(238, 238, 238)
-})
+iplastic = Theme(
+    "iPlastic",
+    True,
+    {
+        "theme_selected_bg": Rgba(74, 144, 217),
+        "debugger_current": Rgba(125, 236, 57, 153),
+        "current_line": Rgba(226, 226, 226, 102),
+        "editor_fg": Rgba(0, 0, 0),
+        "editor_bg": Rgba(238, 238, 238),
+        "hyperlinks": ("DEFAULT", Rgba(0, 0, 255), transparent),
+        "strings": ("DEFAULT", Rgba(0, 153, 51), transparent),
+        "numbers": ("DEFAULT", Rgba(255, 51, 51), transparent),
+        "annotated_comments": ("DEFAULT", Rgba(0, 102, 255), transparent),
+        "aspects": ("DEFAULT", Rgba(0, 102, 255), transparent),
+        "comments": ("DEFAULT", Rgba(0, 102, 255), transparent),
+        "keywords": ("DEFAULT", Rgba(0, 0, 255), transparent),
+        "types": ("DEFAULT", Rgba(102, 217, 239), transparent),
+        "blocks": ("DEFAULT", Rgba(255, 128, 0), transparent),
+        "browsers_bg": Rgba(238, 238, 238),
+    },
+)
 
 themes = []
 
 
 def get_themes():
-    """ Load and return the list of themes.
-        Each theme is a dictionary of values.
+    """Load and return the list of themes.
+    Each theme is a dictionary of values.
     """
     global themes
 
     if not themes:
-
         # Recompute the gutter's foreground color directly from
         # the editors colors for the basic themes.
         # It makes sure that that the line numbers can't be mixed with
@@ -93,9 +106,9 @@ def get_themes():
 
         basic_themes = [default, darkside, monokai, iplastic]
         for theme in basic_themes:
-            fg_color = theme.d['editor_fg']
-            bg_color = theme.d['editor_bg']
-            theme.d['gutter_fg'] = fg_color.mix(bg_color, 0.6)
+            fg_color = theme.d["editor_fg"]
+            bg_color = theme.d["editor_bg"]
+            theme.d["gutter_fg"] = fg_color.mix(bg_color, 0.6)
 
         themes = basic_themes + textmate.textmate_themes()
 
@@ -117,7 +130,7 @@ def get_current_theme():
 
 def validate_color(s):
     """return a valid color from s"""
-    if s.startswith('#'):
+    if s.startswith("#"):
         if len(s) > 7:
             return s[0:7]
     return s
@@ -131,16 +144,14 @@ def pref_set(gps_pref, val):
 
 
 class ColorThemeSwitcher(object):
-
     def __init__(self):
         self.__modified = False
 
         self.provider = Gtk.CssProvider()
         screen = Gdk.Display.get_default().get_default_screen()
         Gtk.StyleContext.add_provider_for_screen(
-            screen,
-            self.provider,
-            Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION)
+            screen, self.provider, Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION
+        )
 
         self.__set_gtk_properties()
 
@@ -158,9 +169,9 @@ class ColorThemeSwitcher(object):
             self.apply_theme(get_current_theme())
 
     def apply_theme(self, theme):
-        """ Apply the theme to GPS.
-            :param dict theme: dict to map preferences to their values
-            (with special-case support for CSS-defined values, see above.)
+        """Apply the theme to GPS.
+        :param dict theme: dict to map preferences to their values
+        (with special-case support for CSS-defined values, see above.)
         """
         if theme:
             theme.apply_preferences(self.provider)
@@ -171,16 +182,14 @@ the_theme_switcher = ColorThemeSwitcher()
 
 
 def get_luminosity(x):
-    """ Utility function to sort themes based on luminosity.
-    """
-    if '@luminosity' in x:
-        return x['@luminosity']
+    """Utility function to sort themes based on luminosity."""
+    if "@luminosity" in x:
+        return x["@luminosity"]
     else:
         return 0.0
 
 
 class ColorSchemePicker(object):
-
     vbox = None
 
     flow = None
@@ -196,8 +205,9 @@ class ColorSchemePicker(object):
         for pref_name in prefs_to_color_keys:
             current_val = GPS.Preference(pref_name).get()
             if pref_name in self.pref_values:
-                need_update = ((self.pref_values[pref_name] == current_val) or
-                               need_update)
+                need_update = (
+                    self.pref_values[pref_name] == current_val
+                ) or need_update
             else:
                 need_update = True
             # Update the saved values
@@ -221,16 +231,16 @@ class ColorSchemePicker(object):
 
         index = 0
         radio = None
-        active_theme = (active_theme if active_theme is not None else
-                        color_theme_pref.get())
+        active_theme = (
+            active_theme if active_theme is not None else color_theme_pref.get()
+        )
 
         for theme in themes:
             is_theme_active = theme.name == active_theme
 
             child, radio = self.__create_radio_box(
-                theme,
-                radio_group=radio,
-                active=is_theme_active)
+                theme, radio_group=radio, active=is_theme_active
+            )
 
             # Used to synchronize the radio button and the enclosing flowbox
             # child: when one gets selected/toggled, the other widget needs
@@ -269,7 +279,8 @@ class ColorSchemePicker(object):
         self.doc_label.set_markup(
             "You can add your own themes in the TextMate "
             "format (.tmTheme) by adding them in the "
-            "<b>GNATSTUDIO_HOME/.gnatstudio/themes/</b> directory.")
+            "<b>GNATSTUDIO_HOME/.gnatstudio/themes/</b> directory."
+        )
         self.doc_label.get_style_context().add_class("dialog-views-doc-labels")
         self.doc_label_hbox.pack_start(self.doc_label, False, False, PADDING)
 
@@ -340,7 +351,7 @@ class ColorSchemePicker(object):
         if theme.name == color_theme_pref.get():
             b.set_active(True)
 
-        b.connect('toggled', self.__on_chosen, theme)
+        b.connect("toggled", self.__on_chosen, theme)
         hbox.pack_start(b, True, False, 0)
 
         b.set_name("theme-button-" + theme.name)
@@ -365,16 +376,17 @@ class ColorSchemePicker(object):
             # Otherwise, define directly the needed editor CSS colors from
             # the editor's style preference value.
 
-            editor_style = GPS.Preference(
-                "Src-Editor-Reference-Style").get().split("@")
+            editor_style = GPS.Preference("Src-Editor-Reference-Style").get().split("@")
             editor_bg_color = Color(from_pref=editor_style[2])
             editor_fg_color = Color(from_pref=editor_style[1])
 
             themes = get_themes()
             fallback_theme = None
             for t in themes:
-                if (t.d['editor_bg'] == editor_bg_color and
-                        t.d['editor_fg'] == editor_fg_color):
+                if (
+                    t.d["editor_bg"] == editor_bg_color
+                    and t.d["editor_fg"] == editor_fg_color
+                ):
                     fallback_theme = t
                     break
 
@@ -401,14 +413,14 @@ class ColorSchemePicker(object):
         the_theme_switcher.provider = Gtk.CssProvider()
         screen = Gdk.Display.get_default().get_default_screen()
         Gtk.StyleContext.add_provider_for_screen(
-            screen,
-            the_theme_switcher.provider,
-            Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION)
+            screen, the_theme_switcher.provider, Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION
+        )
 
         theme = get_current_theme()
         if theme:
             the_theme_switcher.provider.load_from_data(
-                theme.generate_css(refresh=True).encode())
+                theme.generate_css(refresh=True).encode()
+            )
 
 
 picker = ColorSchemePicker()
@@ -419,22 +431,24 @@ picker = ColorSchemePicker()
 GPS.PreferencesPage.create(
     name="General/Color Theme",
     get_widget=(lambda: picker.get_preferences_page(get_themes())),
-    priority=0)
+    priority=0,
+)
 
 # Register a simpler page for the Preferences assistant, displaying only
 # a light and a dark theme.
 
 GPS.PreferencesPage.create(
     name="Color Theme Assistant",
-    get_widget=(
-        lambda: picker.get_preferences_page([default, darkside], "Darkside")),
-    is_integrated=True)
+    get_widget=(lambda: picker.get_preferences_page([default, darkside], "Darkside")),
+    is_integrated=True,
+)
 
 
 # Check if we need to apply a fallback theme for compatibility reasons.
 # Add a hook function on the 'preferences_changed' hook to reapply the
 # CSS colors if an associated preference has changed (e.g: the
 # editor's style preference).
+
 
 @hook("gps_started")
 def on_started():

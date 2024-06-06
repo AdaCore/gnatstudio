@@ -15,7 +15,8 @@ def find_in_tree(tree, column, key, iter=None):
     result = pygps.tree.find_in_tree(tree, column, key, iter)
     if not result:
         from gs_utils.internal.utils import gps_fatal_error
-        gps_fatal_error('Row not found in tree: %s' % (key, ))
+
+        gps_fatal_error("Row not found in tree: %s" % (key,))
     return result
 
 
@@ -59,17 +60,14 @@ class Tree(object):
     def dump_model(self, column=1):
         return Tree.dump_tree_model(self.treeview.get_model(), column)
 
-    def compare_contents(self, expected, column=1, msg=''):
+    def compare_contents(self, expected, column=1, msg=""):
         """
         Compare the contents of the tree with some expected value.
         :param int column: the column to compare in the model
         :param expected: a list of the form
              [node_name, [child_name, [grand_child], child2_name],...]
         """
-        gps_assert(
-            self.dump_model(column=column),
-            expected,
-            msg)
+        gps_assert(self.dump_model(column=column), expected, msg)
 
     def select_by_name(self, column, value):
         """
@@ -80,7 +78,7 @@ class Tree(object):
         :return GtkTreePath: the path that was selected.
         """
         p = pygps.tree.find_in_tree(self.treeview, column=column, key=value)
-        gps_not_null(p, 'Row not found in tree: %s' % (value, ))
+        gps_not_null(p, "Row not found in tree: %s" % (value,))
         self.treeview.get_selection().select_path(p)
         return p
 
@@ -101,7 +99,8 @@ class Tree(object):
         """
         p = self.select_by_name(column=column, value=value)
         menu = TestContextual(
-            lambda: pygps.tree.click_in_tree(self.treeview, path=p, button=3))
+            lambda: pygps.tree.click_in_tree(self.treeview, path=p, button=3)
+        )
         yield menu.open()
         menu.compare(expected)
 
@@ -124,8 +123,7 @@ class Tree(object):
         """
 
         if not path:
-            path = pygps.tree.find_in_tree(self.treeview,
-                                           column=column, key=value)
+            path = pygps.tree.find_in_tree(self.treeview, column=column, key=value)
 
         p = Promise()
 

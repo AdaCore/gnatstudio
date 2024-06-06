@@ -9,7 +9,8 @@ import re
 
 
 mc_on_entity_color = GPS.Preference(
-    "Editor/Fonts & Colors:General/multicursor_selection_color")
+    "Editor/Fonts & Colors:General/multicursor_selection_color"
+)
 """
 This constant should be synchronized with
 src_editor_buffer-cursors.adb : Selection_Pref_Name
@@ -17,11 +18,8 @@ textmate.py : light_common & dark_common
 """
 
 mc_on_entity_color.create_with_priority(
-    "Multi cursor selection",
-    "color",
-    -2,
-    "",
-    "#96C5D9")
+    "Multi cursor selection", "color", -2, "", "#96C5D9"
+)
 
 
 def cursor_absent(ed, location):
@@ -41,7 +39,7 @@ def mc_down():
     line = min(loc.line() + 1, ed.lines_count())
     to = GPS.EditorLocation(ed, line, loc.column())
     if cursor_absent(ed, to):
-        if (loc.end_of_line().column() > 1):
+        if loc.end_of_line().column() > 1:
             ed.add_cursor(loc)
     else:
         ed.delete_cursor(to)
@@ -58,7 +56,7 @@ def mc_up():
     line = max(loc.line() - 1, 1)
     to = GPS.EditorLocation(ed, line, loc.column())
     if cursor_absent(ed, to):
-        if (loc.end_of_line().column() > 1):
+        if loc.end_of_line().column() > 1:
             ed.add_cursor(loc)
     else:
         ed.delete_cursor(to)
@@ -104,7 +102,6 @@ def mc_skip_to_next_occurence():
 
 @interactive("Editor", name="add cursors to all references of entity")
 def mc_all_entity_references():
-
     def get_word_bounds(loc):
         loc_id_start = goto_word_start(loc)
         loc_id_end = goto_word_end(loc)
@@ -135,37 +132,45 @@ def mc_all_entity_references():
 
     als = GPS.LanguageServer.get_by_language_name("Ada")
 
-    params = {"textDocument": {"uri": editor.file().uri},
-              "position": {"line": loc_id_start.line() - 1,
-                           "character": loc_id_start.column() - 1},
-              "context": {"includeDeclaration": True}}
+    params = {
+        "textDocument": {"uri": editor.file().uri},
+        "position": {
+            "line": loc_id_start.line() - 1,
+            "character": loc_id_start.column() - 1,
+        },
+        "context": {"includeDeclaration": True},
+    }
 
     result = yield als.request_promise("textDocument/references", params)
-    yield hook('language_server_response_processed')
+    yield hook("language_server_response_processed")
 
     if result.is_valid:
-        locs = [editor.at(lsp_loc['range']['end']['line'] + 1,
-                          lsp_loc['range']['end']['character'])
-                for lsp_loc in result.data
-                if lsp_loc['uri'] == editor.file().uri]
+        locs = [
+            editor.at(
+                lsp_loc["range"]["end"]["line"] + 1,
+                lsp_loc["range"]["end"]["character"],
+            )
+            for lsp_loc in result.data
+            if lsp_loc["uri"] == editor.file().uri
+        ]
 
     elif result.is_reject:
         try:
             entity = GPS.Entity(
-                identifier, editor.file(),
-                loc_id_start.line(), loc_id_start.column())
-            locs = [editor.at(floc.line(), floc.column())
-                    for floc in entity.references()
-                    if floc.file() == editor.file()]
+                identifier, editor.file(), loc_id_start.line(), loc_id_start.column()
+            )
+            locs = [
+                editor.at(floc.line(), floc.column())
+                for floc in entity.references()
+                if floc.file() == editor.file()
+            ]
         except GPS.Exception:
             return
     else:
         return
 
     overlay = editor.create_overlay("entityrefs_overlay")
-    overlay.set_property(
-        "background", mc_on_entity_color.get()
-    )
+    overlay.set_property("background", mc_on_entity_color.get())
 
     def loc_tuple(loc):
         return loc.line(), loc.column()
@@ -191,9 +196,7 @@ def mc_all_entity_references():
         """
         if editor == GPS.EditorBuffer.get(file_name):
             editor.remove_overlay(
-                overlay,
-                editor.beginning_of_buffer(),
-                editor.end_of_buffer()
+                overlay, editor.beginning_of_buffer(), editor.end_of_buffer()
             )
             for mark_start, mark_end in marks:
                 apply_overlay(editor, mark_start, mark_end, overlay)
@@ -212,9 +215,7 @@ def mc_all_entity_references():
 
     def exit_alias_expansion():
         editor.remove_overlay(
-            overlay,
-            editor.beginning_of_buffer(),
-            editor.end_of_buffer()
+            overlay, editor.beginning_of_buffer(), editor.end_of_buffer()
         )
         editor.remove_all_slave_cursors()
         GPS.Hook("character_added").remove(on_edit)

@@ -13,14 +13,14 @@ def driver():
 
     # Toggle to comment
     GPS.execute_action("Toggle Comment")
-    gps_assert(b.get_chars(),"/* a */\nb\nc\n",
-        "Text wrong after first toggle to comment")
+    gps_assert(
+        b.get_chars(), "/* a */\nb\nc\n", "Text wrong after first toggle to comment"
+    )
 
     # Toggle to uncomment
     v.goto(b.at(1, 1))
     GPS.execute_action("Toggle Comment")
-    gps_assert(b.get_chars(),"a\nb\nc\n",
-        "Text wrong after first toggle to uncomment")
+    gps_assert(b.get_chars(), "a\nb\nc\n", "Text wrong after first toggle to uncomment")
 
     # Change the preference
     GPS.Preference("C-Comment-Two-Slashes").set(True)
@@ -28,11 +28,13 @@ def driver():
     # Toggle to comment
     v.goto(b.at(2, 1))
     GPS.execute_action("Toggle Comment")
-    gps_assert(b.get_chars(),"a\n// b\nc\n",
-        "Text wrong after seond toggle to comment")
+    gps_assert(
+        b.get_chars(), "a\n// b\nc\n", "Text wrong after seond toggle to comment"
+    )
 
     # Toggle to uncomment
     v.goto(b.at(2, 1))
     GPS.execute_action("Toggle Comment")
-    gps_assert(b.get_chars(),"a\nb\nc\n",
-        "Text wrong after second toggle to uncomment")
+    gps_assert(
+        b.get_chars(), "a\nb\nc\n", "Text wrong after second toggle to uncomment"
+    )

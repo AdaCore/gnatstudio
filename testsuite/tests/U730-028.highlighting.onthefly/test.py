@@ -10,10 +10,9 @@ from GPS import *
 
 class My_Highlighter(On_The_Fly_Highlighter):
     def __init__(self):
-        On_The_Fly_Highlighter.__init__(self,
-                                        style=OverlayStyle(
-                                            name="Mine",
-                                            background="#FF7979"))
+        On_The_Fly_Highlighter.__init__(
+            self, style=OverlayStyle(name="Mine", background="#FF7979")
+        )
 
     def process(self, start, end):
         GPS.Console().write("Hello")
@@ -31,14 +30,16 @@ def run():
     # the overlays.
     expected = buf.at(3, 20).get_overlays()
     buf.insert(buf.at(3, 21), "!")
-    gps_assert(buf.at(3, 21).get_overlays(),
-               expected,
-               "The overlay should be retriggered by character added")
+    gps_assert(
+        buf.at(3, 21).get_overlays(),
+        expected,
+        "The overlay should be retriggered by character added",
+    )
     buf.save()
 
     yield wait_idle()
     my_high.stop()
 
-    gps_assert(buf.at(3, 21).get_overlays() != expected,
-               True,
-               "The overlay should be removed")
+    gps_assert(
+        buf.at(3, 21).get_overlays() != expected, True, "The overlay should be removed"
+    )

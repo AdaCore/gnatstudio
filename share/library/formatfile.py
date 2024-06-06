@@ -14,10 +14,12 @@ import GPS
 import gs_utils
 
 
-@gs_utils.interactive(category="Editor",
-                      name="Format Whole File",
-                      menu="/Edit/Format Whole File",
-                      after="/Edit/Format Selection")
+@gs_utils.interactive(
+    category="Editor",
+    name="Format Whole File",
+    menu="/Edit/Format Whole File",
+    after="/Edit/Format Selection",
+)
 @gs_utils.with_save_excursion
 def format_whole_file():
     buf = GPS.EditorBuffer.get()

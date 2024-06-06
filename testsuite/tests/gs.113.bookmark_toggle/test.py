@@ -18,9 +18,11 @@ def test_driver():
     view = Bookmarks()
     yield view.open_and_yield()
 
-    gps_assert(dump_tree_model(view.treeview.get_model(), 1),
-               ['b1', 'b2'],
-               "Missing Bookmarks from xml")
+    gps_assert(
+        dump_tree_model(view.treeview.get_model(), 1),
+        ["b1", "b2"],
+        "Missing Bookmarks from xml",
+    )
 
     # Simulate a ctrl-click on line 6
     buf = GPS.EditorBuffer.get(GPS.File("main.adb"))
@@ -35,18 +37,24 @@ def test_driver():
     yield wait_idle()
 
     # Verify that it's correctly added to the Bookmarks view
-    gps_assert(dump_tree_model(view.treeview.get_model(), 1),
-               ['b3', 'b1', 'b2'],
-               "Bookmark was not created")
+    gps_assert(
+        dump_tree_model(view.treeview.get_model(), 1),
+        ["b3", "b1", "b2"],
+        "Bookmark was not created",
+    )
 
     # Clicking on a line with multiple bookmarks should do nothing
     buf.click_on_line_number(LINE_WITH_BOOKMARKS, hyper_mode=True)
-    gps_assert(dump_tree_model(view.treeview.get_model(), 1),
-               ['b3', 'b1', 'b2'],
-               "This click should be ignored")
+    gps_assert(
+        dump_tree_model(view.treeview.get_model(), 1),
+        ["b3", "b1", "b2"],
+        "This click should be ignored",
+    )
 
     # Clicking on a line with one bookmark should remove it
     buf.click_on_line_number(LINE_WITH_TOGGLING_BOOKMARK, hyper_mode=True)
-    gps_assert(dump_tree_model(view.treeview.get_model(), 1),
-               ['b1', 'b2'],
-               "Failed to disable a bookmark via a click")
+    gps_assert(
+        dump_tree_model(view.treeview.get_model(), 1),
+        ["b1", "b2"],
+        "Failed to disable a bookmark via a click",
+    )

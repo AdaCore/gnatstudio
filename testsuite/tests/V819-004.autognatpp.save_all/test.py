@@ -1,4 +1,3 @@
-
 """
 This test checks that a failing promises will output the error and status.
 """
@@ -20,5 +19,5 @@ def test_driver():
     yield d.open_and_yield()
     yield d.ok()
     yield wait_tasks()
-    for (b, s) in expected:
+    for b, s in expected:
         gps_assert(b.get_chars(), s, "%s is not formatted" % b.file())

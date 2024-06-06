@@ -27,15 +27,16 @@ def on_exit(self, status, remaining_output):
     shutil.rmtree(tmp_dir)
 
     if status != 0:
-        GPS.Console("Messages").write("error: failed to display standard.ads",
-                                      mode="error")
+        GPS.Console("Messages").write(
+            "error: failed to display standard.ads", mode="error"
+        )
 
     buffer = EditorBuffer.get_new()
-    buffer.delete()   # delete any text inserted via templates
+    buffer.delete()  # delete any text inserted via templates
     buffer.insert(buffer.at(1, 1), remaining_output)
-    buffer.set_lang('ada')
+    buffer.set_lang("ada")
     buffer.current_view().set_read_only(True)
-    MDI.get_by_child(buffer.current_view()).rename('package Standard')
+    MDI.get_by_child(buffer.current_view()).rename("package Standard")
 
 
 @interactive(name="Display standard.ads")
@@ -47,7 +48,7 @@ def display():
     path = None
 
     if os_utils.locate_exec_on_path("gnatpsta") != "":
-        GPS.Process(['gnatpsta'], on_exit=on_exit)
+        GPS.Process(["gnatpsta"], on_exit=on_exit)
     else:
         # We do not create the file on the disk, because: - we cannot create a
         # temporary file and delete it immediately, since GPS will then display
@@ -63,17 +64,16 @@ def display():
         f.write("package p is end p;")
         f.close()
 
-        cmdline = ['gprbuild', '-c', '-gnatc', '-gnatS', '-q']
+        cmdline = ["gprbuild", "-c", "-gnatc", "-gnatS", "-q"]
 
         target = GPS.Project.root().get_attribute_as_string("target")
         if target:
-            cmdline.append('--target=%s' % target)
+            cmdline.append("--target=%s" % target)
 
-        runtime = GPS.Project.root().get_attribute_as_string(
-            "runtime", index="Ada")
+        runtime = GPS.Project.root().get_attribute_as_string("runtime", index="Ada")
         if runtime:
-            cmdline.append('--RTS=%s' % runtime)
+            cmdline.append("--RTS=%s" % runtime)
 
-        cmdline.append('p.ads')
+        cmdline.append("p.ads")
 
         GPS.Process(cmdline, directory=tmp_dir, on_exit=on_exit)

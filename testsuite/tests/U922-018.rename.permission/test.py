@@ -18,8 +18,7 @@ def run_test():
     b2.current_view().goto(b2.at(7, 16))
     expected2 = b2.get_chars()
 
-    yield idle_modal_dialog(
-        lambda: GPS.execute_action("rename entity"))
+    yield idle_modal_dialog(lambda: GPS.execute_action("rename entity"))
     new_name_ent = get_widget_by_name("new_name")
     new_name_ent.set_text("Bye")
     dialog = get_window_by_title("Renaming entity")
@@ -31,14 +30,11 @@ def run_test():
 
     # A dialog reporting an error should be opened, reply no to it
     error_dialog = get_window_by_title(
-        "Refactoring - rename Hello to Bye raises errors")
+        "Refactoring - rename Hello to Bye raises errors"
+    )
     GPS.Console().write(str(error_dialog))
     get_button_from_label("Undo", error_dialog).clicked()
     yield wait_idle()
 
-    gps_assert(b1.get_chars(),
-               expected1,
-               "The read only buffer should not be modified")
-    gps_assert(b2.get_chars(),
-               expected2,
-               "The writable buffer should be restored")
+    gps_assert(b1.get_chars(), expected1, "The read only buffer should not be modified")
+    gps_assert(b2.get_chars(), expected2, "The writable buffer should be restored")

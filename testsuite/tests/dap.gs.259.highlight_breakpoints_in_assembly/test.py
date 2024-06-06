@@ -8,7 +8,10 @@ from gs_utils.internal.utils import *
 
 
 BG_COLOR_COLUMN = 6
-EXPECTED_BG_COLOR = "Gdk.RGBA(red=0.000000, green=0.000000, blue=0.768627, alpha=1.000000)"
+EXPECTED_BG_COLOR = (
+    "Gdk.RGBA(red=0.000000, green=0.000000, blue=0.768627, alpha=1.000000)"
+)
+
 
 @run_test_driver
 def test_driver():

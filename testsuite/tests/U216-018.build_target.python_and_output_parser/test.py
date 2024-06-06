@@ -61,14 +61,18 @@ def test_driver():
     GPS.EditorBuffer.get(GPS.File("a.adb"))
     GPS.execute_action("do_something")
     yield wait_idle()
-    gps_assert(str(GPS.Message.list()[0].get_file()).endswith("a.adb"),
-               True,
-               "Should be a message about a.adb")
+    gps_assert(
+        str(GPS.Message.list()[0].get_file()).endswith("a.adb"),
+        True,
+        "Should be a message about a.adb",
+    )
     # Rerunning the target will remove the previous message and generate a
     # new one
     GPS.EditorBuffer.get(GPS.File("b.adb"))
     GPS.execute_action("do_something")
     yield wait_idle()
-    gps_assert(str(GPS.Message.list()[0].get_file()).endswith("b.adb"),
-               True,
-               "Should be a message about b.adb")
+    gps_assert(
+        str(GPS.Message.list()[0].get_file()).endswith("b.adb"),
+        True,
+        "Should be a message about b.adb",
+    )

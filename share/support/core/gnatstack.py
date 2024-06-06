@@ -11,7 +11,8 @@ import gs_utils
 
 TARGET_NAME = "Run GNATStack"
 
-XML_BASE = ("""
+XML_BASE = (
+    """
   <!--  Support for running GNATStack as a build target  -->
 
   <target-model name="gnathub_gnatstack" category="">
@@ -94,11 +95,11 @@ XML_BASE = ("""
       <check line="4" column="1" switch="-k" label="keep temporary files"/>
     </switches>
   </tool>
-""").format(target_name=TARGET_NAME)
+"""
+).format(target_name=TARGET_NAME)
 
 
-@gs_utils.interactive(
-    category="GNATstack", name="analyze stack usage")
+@gs_utils.interactive(category="GNATstack", name="analyze stack usage")
 def analyze_stack():
     target = GPS.BuildTarget(TARGET_NAME)
     target.execute(synchronous=False)

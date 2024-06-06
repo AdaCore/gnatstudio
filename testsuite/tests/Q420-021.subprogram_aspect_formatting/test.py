@@ -34,6 +34,4 @@ def run_test():
     send_key_event(GDK_RETURN)
     yield wait_idle()
 
-    gps_assert(buf.get_chars(),
-               Expected,
-               "Formatting is incorrect")
+    gps_assert(buf.get_chars(), Expected, "Formatting is incorrect")

@@ -20,9 +20,9 @@ COL_IDLE = 5
 MAX_INT = sys.maxsize // 2
 
 
-class HUD_Widget():
+class HUD_Widget:
 
-    """ A widget representing the GPS HUD """
+    """A widget representing the GPS HUD"""
 
     def __init__(self):
         self.hbox = Gtk.HBox()
@@ -72,7 +72,7 @@ class HUD_Widget():
         self.start_monitoring()
 
     def __destroy(self, widget):
-        """ Callback on destroy """
+        """Callback on destroy"""
         if self.refresh_timeout is not None:
             GLib.source_remove(self.refresh_timeout)
             self.refresh_timeout = None
@@ -80,22 +80,22 @@ class HUD_Widget():
         self.window.destroy()
 
     def __hide_auxiliary_window(self):
-        """ Hide the window that is showing the mini tasks view """
+        """Hide the window that is showing the mini tasks view"""
         self.window.hide()
         if self.window.get_child():
             self.window.get_child().destroy()
 
     def __on_window_key_press(self, window, event):
-        """ Callback for key_press on the auxiliary window """
+        """Callback for key_press on the auxiliary window"""
         if event.get_keyval()[1] == Gdk.KEY_Escape:
             self.__hide_auxiliary_window()
 
     def __on_window_focus_out(self, window, item):
-        """ Callback for focus out on the auxiliary window """
+        """Callback for focus out on the auxiliary window"""
         self.__hide_auxiliary_window()
 
     def __on_button_clicked(self, button):
-        """ Callback for a click on the local button """
+        """Callback for a click on the local button"""
         # show a mini tasks view
 
         parent_window = self.button.get_parent_window()
@@ -111,14 +111,14 @@ class HUD_Widget():
 
         self.window.move(
             parent_x + button_alloc.x + button_alloc.width + 1 - width,
-            parent_y + button_alloc.y + button_alloc.height + 1
+            parent_y + button_alloc.y + button_alloc.height + 1,
         )
 
         self.window.show_all()
         self.window.present()
 
     def refresh(self):
-        """ Refresh the contents of the HUD """
+        """Refresh the contents of the HUD"""
         tasks = [x for x in GPS.Task.list() if x.visible]
         if len(tasks) == 0:
             # No visible tasks
@@ -141,7 +141,7 @@ class HUD_Widget():
                 self.label.set_text(tasks[0].label())
                 cur, tot = tasks[0].progress()
                 if tot > 0:
-                    self.progress_bar.set_fraction(float(cur)/(max(1, tot)))
+                    self.progress_bar.set_fraction(float(cur) / (max(1, tot)))
                     self.progress_label.set_text("{}/{}".format(cur, tot))
                 else:
                     self.progress_bar.pulse()
@@ -152,14 +152,14 @@ class HUD_Widget():
                 for t in tasks:
                     cur, tot = t.progress()
                     if tot > 0:
-                        fraction += float(cur)/tot
-                self.progress_bar.set_fraction(fraction/len(tasks))
+                        fraction += float(cur) / tot
+                self.progress_bar.set_fraction(fraction / len(tasks))
                 self.progress_label.set_text("")
 
         return True
 
     def start_monitoring(self):
-        """ Start the background loop which refreshes the HUD """
+        """Start the background loop which refreshes the HUD"""
         if not self.refresh_timeout:
             self.refresh_timeout = GLib.timeout_add(300, self.refresh)
 
@@ -178,14 +178,14 @@ class HUD_Widget():
             self.progress_label.override_font(font)
 
 
-class Tasks_View_Widget():
+class Tasks_View_Widget:
 
-    """ A widget containing a task view """
+    """A widget containing a task view"""
 
     def _set_progress(self, column, cell, model, iter, user_data):
-        if (model.get_value(iter, COL_IDLE) and
-                (model.get_value(iter, COL_PLAYPAUSE_PIXBUF) ==
-                 "gps-pause-symbolic")):
+        if model.get_value(iter, COL_IDLE) and (
+            model.get_value(iter, COL_PLAYPAUSE_PIXBUF) == "gps-pause-symbolic"
+        ):
             # The pulse property is shared accross all the cells, so we can't
             # rely on the previous value of the property => use self.pulse
             # which counts the number of refresh
@@ -218,8 +218,9 @@ class Tasks_View_Widget():
         self.view.append_column(self.close_col)
 
         self.progress = Gtk.CellRendererProgress()
-        col = Gtk.TreeViewColumn("Progress", self.progress,
-                                 value=COL_PROGRESS, text=COL_PROGRESS_TEXT)
+        col = Gtk.TreeViewColumn(
+            "Progress", self.progress, value=COL_PROGRESS, text=COL_PROGRESS_TEXT
+        )
         col.set_cell_data_func(self.progress, self._set_progress)
         col.set_expand(True)
         self.view.append_column(col)
@@ -227,8 +228,7 @@ class Tasks_View_Widget():
         self.playpause_col = Gtk.TreeViewColumn("Play Pause")
         cell = Gtk.CellRendererPixbuf()
         self.playpause_col.pack_end(cell, False)
-        self.playpause_col.add_attribute(
-            cell, "icon_name", COL_PLAYPAUSE_PIXBUF)
+        self.playpause_col.add_attribute(cell, "icon_name", COL_PLAYPAUSE_PIXBUF)
         self.view.append_column(self.playpause_col)
 
         # Connect to a click on the tree view
@@ -267,8 +267,7 @@ class Tasks_View_Widget():
         """
         Whether the given task should be displayed
         """
-        return task.visible and \
-            (not self.hide_nonblocking or task.block_exit())
+        return task.visible and (not self.hide_nonblocking or task.block_exit())
 
     def __task_changed(self, task):
         """
@@ -281,7 +280,7 @@ class Tasks_View_Widget():
         self.__update_row(iter, task)
 
     def refresh(self):
-        """ Refresh the view """
+        """Refresh the view"""
         # First refresh the status of all tasks
 
         task_ids = set()
@@ -317,13 +316,13 @@ class Tasks_View_Widget():
         return True
 
     def start_monitoring(self):
-        """ Start the background loop which refreshes the HUD """
+        """Start the background loop which refreshes the HUD"""
         if not self.timeout:
             self.timeout = GLib.timeout_add(300, self.refresh)
 
     def __task_from_row(self, path):
-        """ Return the GPS.Task corresponding to the row at path.
-            Verify before that the task does exist.
+        """Return the GPS.Task corresponding to the row at path.
+        Verify before that the task does exist.
         """
         task_id = self.store[path][COL_TASK_ID]
         for task in GPS.Task.list():
@@ -332,7 +331,7 @@ class Tasks_View_Widget():
         return None
 
     def __on_click(self, view, event):
-        """ Called on a button press on the view """
+        """Called on a button press on the view"""
         if event.button == 1:
             results = self.view.get_path_at_pos(event.x, event.y)
             if results:
@@ -350,7 +349,7 @@ class Tasks_View_Widget():
                             task.resume()
 
     def __update_row(self, iter, task):
-        """ Refresh the data in iter """
+        """Refresh the data in iter"""
         progress = task.progress()
         progress_percent = 0
         progress_idle = False
@@ -362,19 +361,19 @@ class Tasks_View_Widget():
 
         if progress[1] > 0:
             progress_percent = (progress[0] * 100) / progress[1]
-            progress_text = ("%s %s / %s" %
-                             (task.label(), progress[0], progress[1]))
+            progress_text = "%s %s / %s" % (task.label(), progress[0], progress[1])
         else:
             progress_idle = True
             progress_text = "%s %s" % (task.label(), task.idle_label())
 
         self.store[iter] = [
-            progress_percent,      # COL_PROGRESS
-            progress_text,         # COL_PROGRESS_TEXT
+            progress_percent,  # COL_PROGRESS
+            progress_text,  # COL_PROGRESS_TEXT
             "gps-close-symbolic",  # COL_CANCEL_PIXBUF
-            status_icon,           # COL_PLAYPAUSE_PIXBUF
-            str(id(task)),         # COL_TASK_ID
-            progress_idle]         # COL_IDLE
+            status_icon,  # COL_PLAYPAUSE_PIXBUF
+            str(id(task)),  # COL_TASK_ID
+            progress_idle,
+        ]  # COL_IDLE
 
     def __iter_from_task(self, task):
         """
@@ -391,7 +390,7 @@ class Tasks_View_Widget():
 
 
 class Tasks_View(Module):
-    """ A GPS module, providing a view that wraps around a task manager """
+    """A GPS module, providing a view that wraps around a task manager"""
 
     view_title = "Tasks"
 
@@ -402,8 +401,8 @@ class Tasks_View(Module):
         GPS.Hook("before_exit_action_hook").add(self.on_exit)
 
     def on_exit(self, hook):
-        """ Intercept the exit hook, and present a dialog if some tasks
-            are present that should block the exit.
+        """Intercept the exit hook, and present a dialog if some tasks
+        are present that should block the exit.
         """
         blocking_tasks = [t for t in GPS.Task.list() if t.block_exit()]
         if not blocking_tasks:
@@ -412,11 +411,13 @@ class Tasks_View(Module):
         d = Gtk.Dialog(
             "Tasks are running",
             flags=Gtk.DialogFlags.MODAL or Gtk.DialogFlags.DESTROY_WITH_PARENT,
-            parent=GPS.MDI.get_main_window().pywidget())
+            parent=GPS.MDI.get_main_window().pywidget(),
+        )
 
         label = Gtk.Label(
-                 "The following tasks are running, do you want to quit GPS?\n"
-                 "Warning: Quitting will kill all running tasks")
+            "The following tasks are running, do you want to quit GPS?\n"
+            "Warning: Quitting will kill all running tasks"
+        )
         label.set_alignment(0.0, 0.0)
         d.get_content_area().pack_start(label, False, False, 10)
 
@@ -426,6 +427,7 @@ class Tasks_View(Module):
         # If the list of tasks becomes empty, assume the user has clicked Quit
         def on_empty():
             d.response(Gtk.ResponseType.YES)
+
         t.set_on_empty(on_empty)
 
         quit_button = d.add_button("gtk-quit", Gtk.ResponseType.YES)
@@ -442,26 +444,25 @@ class Tasks_View(Module):
             dialog.get_content_area().remove(t.box)
             dialog.destroy()
             if response == Gtk.ResponseType.YES:
-                GPS.exit(force=True)   # force exit
-        d.connect('response', on_response)
+                GPS.exit(force=True)  # force exit
 
-        return False   # prevent exit (and hide the "exit" task from dialog")
+        d.connect("response", on_response)
+
+        return False  # prevent exit (and hide the "exit" task from dialog")
 
     def setup(self):
         # Add the Tasks view
         make_interactive(
             self.get_view,
             category="Views",
-            description=(
-                "Open (or reuse if it already exists) the 'Tasks' view"),
-            name="open Tasks")
+            description=("Open (or reuse if it already exists) the 'Tasks' view"),
+            name="open Tasks",
+        )
 
         # Create a HUD widget and add it to the toolbar
         self.HUD = HUD_Widget()
         self.HUD.hbox.show_all()
-        pygps.get_widget_by_name("toolbar-box").pack_end(
-            self.HUD.hbox, False, False, 3
-        )
+        pygps.get_widget_by_name("toolbar-box").pack_end(self.HUD.hbox, False, False, 3)
 
     def task_started(self):
         if self.HUD is not None:

@@ -14,23 +14,25 @@ def perform_search(expected_count):
 
     count = 0
     for result in GPS.Search.search(
-            GPS.Search.CURRENT_FILE_ENTITIES,
-            "Count",
-            GPS.Search.WHOLE_WORD):
+        GPS.Search.CURRENT_FILE_ENTITIES, "Count", GPS.Search.WHOLE_WORD
+    ):
         if result == None:
             yield timeout(10)
         else:
             count += 1
-    gps_assert(count, expected_count, 
-               "Wrong number of search results\n" +
-               "expected: %u vs found: %u" % (expected_count, count))
+    gps_assert(
+        count,
+        expected_count,
+        "Wrong number of search results\n"
+        + "expected: %u vs found: %u" % (expected_count, count),
+    )
 
 
 @run_test_driver
 def test_driver():
-    # Wait for the 'load constructs' task 
+    # Wait for the 'load constructs' task
     yield wait_tasks()
-    
+
     # Open main.adb and perform the search
     buffer = GPS.EditorBuffer.get(GPS.File("main.adb"))
     buffer.current_view().pywidget().grab_focus()
@@ -41,7 +43,3 @@ def test_driver():
     # is focused
     GPS.execute_action("close all editors")
     perform_search(expected_count=0)
-    
-
-    
-

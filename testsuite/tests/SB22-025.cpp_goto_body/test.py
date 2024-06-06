@@ -1,5 +1,5 @@
-'''Test that goto body action does not open Untitled (new) file when the body
-is not found'''
+"""Test that goto body action does not open Untitled (new) file when the body
+is not found"""
 
 import GPS
 from gs_utils.internal.utils import *

@@ -9,7 +9,7 @@ from gs_utils.internal.utils import *
 @run_test_driver
 def test_driver():
     GPS.execute_action("Build & Debug Number 1")
-    yield hook('debugger_started')
+    yield hook("debugger_started")
 
     debug = GPS.Debugger.get()
     yield wait_until_not_busy(debug)
@@ -22,5 +22,4 @@ def test_driver():
     select_editor_contextual("Debug/Set breakpoint on Main")
     yield wait_DAP_server("setFunctionBreakpoints")
 
-    gps_assert(len(debug.breakpoints), 1,
-               "Wrong count of breakpoints")
+    gps_assert(len(debug.breakpoints), 1, "Wrong count of breakpoints")

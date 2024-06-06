@@ -17,24 +17,25 @@ import align
 if not GPS.Logger("GPS.INTERNAL.PREVENT_ALIGN_ON_TAB").active:
     tabs_align_selection = GPS.Preference("Editor/tabs_align_selection")
     tabs_align_selection.create(
-        "Align selection on tab", "boolean",
+        "Align selection on tab",
+        "boolean",
         "Align arrows, use clauses and "
         "assignments (:=) when pressing <tab> while multiple lines "
         "are selected.",
-        True)
+        True,
+    )
 
 
-@interactive(name='tab selection', category='Editor',
-             filter="Writable source editor")
+@interactive(name="tab selection", category="Editor", filter="Writable source editor")
 def smart_tab():
     """
-    This action is the default binding for the tab key, and will
-    apply different behaviors depending on the current context.
+     This action is the default binding for the tab key, and will
+     apply different behaviors depending on the current context.
 
-   When expanding aliases, <tab> will move to the next field. Otherwise:
-    - if there is a multi-line selection, the selection will be reformatted;
-    - otherwise, the current line will be reformatted
-   """
+    When expanding aliases, <tab> will move to the next field. Otherwise:
+     - if there is a multi-line selection, the selection will be reformatted;
+     - otherwise, the current line will be reformatted
+    """
 
     editor = GPS.EditorBuffer.get()
 
@@ -57,9 +58,7 @@ def smart_tab():
 
     # if it's a python code, do it in python way
     if editor.file().language() == "python":
-        python_tab_indent(editor,
-                          editor.selection_start(),
-                          editor.selection_end())
+        python_tab_indent(editor, editor.selection_start(), editor.selection_end())
 
     # Otherwise, reformat the current selection
 
@@ -84,8 +83,7 @@ def python_tab_indent(e, beginning, end, indenting_block=False):
 
             # if line is not empty, indent by 4
             if tmp.strip("\n").strip(" ") != "":
-                indent = python_tab_indent(e, e.at(i, 0),
-                                           e.at(i, end.column()), True)
+                indent = python_tab_indent(e, e.at(i, 0), e.at(i, end.column()), True)
     else:
         s = e.get_chars(end.beginning_of_line(), end.end_of_line())
         n = len(s) - len(s.lstrip(" "))
@@ -99,7 +97,7 @@ def python_tab_indent(e, beginning, end, indenting_block=False):
 
 
 def should_escape(context):
-    """ Filter for the 'smart escape' action """
+    """Filter for the 'smart escape' action"""
     editor = GPS.EditorBuffer.get(force=False, open=False)
 
     if editor:
@@ -128,8 +126,9 @@ def should_escape(context):
     return False
 
 
-@interactive(name='smart escape', category='General',
-             key="Escape", filter=should_escape)
+@interactive(
+    name="smart escape", category="General", key="Escape", filter=should_escape
+)
 def smart_escape():
     """
     This action is the default binding for the Escape key, and will, in order:
@@ -144,7 +143,7 @@ def smart_escape():
     """
 
     def do_something():
-        """ React to the Esc key, and return True if something was done. """
+        """React to the Esc key, and return True if something was done."""
 
         editor = GPS.EditorBuffer.get(force=False, open=False)
 

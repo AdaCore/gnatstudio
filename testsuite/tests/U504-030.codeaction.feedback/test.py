@@ -25,12 +25,12 @@ def driver():
     b = GPS.EditorBuffer.get(GPS.File("foo.adb"))
 
     def check(nb_messages, text, comment):
-        gps_assert(len(GPS.Message.list(category="Apply Workspace Edit")),
-                   nb_messages,
-                   "Wrong message list " + comment)
-        gps_assert(b.get_chars(),
-                   text,
-                   "Wrong text " + comment)
+        gps_assert(
+            len(GPS.Message.list(category="Apply Workspace Edit")),
+            nb_messages,
+            "Wrong message list " + comment,
+        )
+        gps_assert(b.get_chars(), text, "Wrong text " + comment)
 
     expected = b.get_chars()
 
@@ -39,13 +39,13 @@ def driver():
     yield wait_language_server("textDocument/codeAction")
 
     # Click on the side area
-    yield idle_modal_dialog(
-        lambda: b.click_on_side_column(2, 1, icon_name=""))
+    yield idle_modal_dialog(lambda: b.click_on_side_column(2, 1, icon_name=""))
     # Verify that the multiactions menu is correclty displayed even if
     # containing only one element
-    multi_actions_menu = get_widget_by_name('gnatstudio_multiple_actions_menu')
-    gps_assert(multi_actions_menu is not None, True,
-               "The multi actions menu should be shown")
+    multi_actions_menu = get_widget_by_name("gnatstudio_multiple_actions_menu")
+    gps_assert(
+        multi_actions_menu is not None, True, "The multi actions menu should be shown"
+    )
 
     # Click on the action menu item and verify that it executed the action
     items = get_widgets_by_type(Gtk.MenuItem, multi_actions_menu)

@@ -20,13 +20,11 @@ def run_test():
     send_key_event(GDK_RETURN)
     yield wait_tasks(other_than=known_tasks)
 
-    gps_assert(dump_tree_model(outline.get_model(), 1),
-               ['Foo'],
-               "Wrong outline view")
+    gps_assert(dump_tree_model(outline.get_model(), 1), ["Foo"], "Wrong outline view")
 
     # Checks that the filter is taken into account
     buf2 = GPS.EditorBuffer.get(GPS.File("bar.adb"))
     yield wait_outline("bar.adb")
-    gps_assert(dump_tree_model(outline.get_model(), 1),
-               ['Bar', ['Foo']],
-               "Wrong outline view")
+    gps_assert(
+        dump_tree_model(outline.get_model(), 1), ["Bar", ["Foo"]], "Wrong outline view"
+    )

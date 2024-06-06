@@ -12,7 +12,8 @@ class Project_Support(object):
     def register_tool():
         """Register the QGENC tool and its switches"""
 
-        GPS.parse_xml("""<?xml version='1.0' ?>
+        GPS.parse_xml(
+            """<?xml version='1.0' ?>
            <GNAT_Studio>
              <project_attribute
               package="QGen"
@@ -210,7 +211,8 @@ custom block implementations"/>
 
                </switches>
              </tool>
-           </GNAT_Studio>""")
+           </GNAT_Studio>"""
+        )
 
     @staticmethod
     def get_output_dir(file):
@@ -225,12 +227,11 @@ custom block implementations"/>
             return None
 
         p = file.project()
-        dir = p.get_attribute_as_string(
-            package='QGen', attribute='Output_Dir')
+        dir = p.get_attribute_as_string(package="QGen", attribute="Output_Dir")
         if not dir:
             # Defaulting because no output directory specified
             # in project attributes
-            dir = file.path + '_generated'
+            dir = file.path + "_generated"
 
         # Get absolute directory for the output directory
         dir = os.path.join(os.path.dirname(p.file().path), dir)
@@ -249,8 +250,8 @@ custom block implementations"/>
         models_files = []
         try:
             models = f.project().get_attribute_as_list(
-                attribute='Target', package='QGen',
-                index=os.path.basename(filename))
+                attribute="Target", package="QGen", index=os.path.basename(filename)
+            )
             for mod in models:
                 models_files.append(GPS.File(mod))
         except Exception:
@@ -286,13 +287,13 @@ custom block implementations"/>
         """
         try:
             switches = file.project().get_attribute_as_list(
-                attribute='Switches', package='QGen',
-                index=os.path.basename(file.path))
+                attribute="Switches", package="QGen", index=os.path.basename(file.path)
+            )
             if not switches:
                 switches = file.project().get_attribute_as_list(
-                    attribute='Switches', package='QGen',
-                    index='simulink')
+                    attribute="Switches", package="QGen", index="simulink"
+                )
         except Exception:
-            switches = ''
+            switches = ""
 
         return switches

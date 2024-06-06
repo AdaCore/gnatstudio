@@ -1,4 +1,5 @@
-xml_codepeer = """<?xml version="1.0"?>
+xml_codepeer = (
+    """<?xml version="1.0"?>
   <CODEPEER>
     <doc_path>{root}/share/doc/codepeer</doc_path>
 
@@ -62,8 +63,8 @@ xml_codepeer = """<?xml version="1.0"?>
 
     <action name="codepeer_example_codepeer_by_example" category=""
             show-command="false" output="none">
-      <shell>Project.load""" \
-        """ "{example}/codepeer_by_example/codepeer_by_example.gpr"</shell>
+      <shell>Project.load"""
+    """ "{example}/codepeer_by_example/codepeer_by_example.gpr"</shell>
       <shell>Editor.edit "README.txt"</shell>
     </action>
 
@@ -677,6 +678,7 @@ been reanalyzed." />
     </target-model>
   </CODEPEER>
 """
+)
 
 xmlHead = """<?xml version="1.0"?>
   <CODEPEER>

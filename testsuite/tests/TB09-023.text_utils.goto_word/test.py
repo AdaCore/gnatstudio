@@ -24,7 +24,5 @@ def run_test():
         gps_assert(s_loc.column(), start, "goto_word_start")
 
     # Edge cases: no infinite loop at start and end of buffer
-    text_utils.goto_word_end(buf.end_of_buffer(),
-                             underscore_is_word=False)
-    text_utils.goto_word_start(buf.beginning_of_buffer(),
-                               underscore_is_word=False)
+    text_utils.goto_word_end(buf.end_of_buffer(), underscore_is_word=False)
+    text_utils.goto_word_start(buf.beginning_of_buffer(), underscore_is_word=False)

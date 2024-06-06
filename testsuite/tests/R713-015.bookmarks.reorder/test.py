@@ -4,7 +4,7 @@ from GPS import *
 from gs_utils.internal.utils import *
 from gs_utils.internal.dialogs import *
 
-expect = ['Hello (hello.adb:9:1)', 'Nested (hello.adb:6:1)']
+expect = ["Hello (hello.adb:9:1)", "Nested (hello.adb:6:1)"]
 
 
 @run_test_driver

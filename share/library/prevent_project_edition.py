@@ -14,11 +14,11 @@ import GPS
 
 
 def on_gps_started(hook):
-    GPS.Action('open Project Properties').disable()
-    GPS.Action('open Switches editor').disable()
-    GPS.Action('save all projects').disable()
-    GPS.Action('new project').disable()
-    GPS.Action('create project from template').disable()
+    GPS.Action("open Project Properties").disable()
+    GPS.Action("open Switches editor").disable()
+    GPS.Action("save all projects").disable()
+    GPS.Action("new project").disable()
+    GPS.Action("create project from template").disable()
 
     # Remove the contextual menus that may cause modifications in the
     # projects

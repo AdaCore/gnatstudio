@@ -15,7 +15,7 @@ def test_driver():
     GPS.execute_action("debug set line breakpoint")
 
     GPS.execute_action("Build & Debug Number 1")
-    yield hook('debugger_started')
+    yield hook("debugger_started")
     yield wait_idle()
 
     GPS.execute_action("open debugger variables window")
@@ -31,21 +31,15 @@ def test_driver():
     # Run and verify the value
     debug.send("run")
     yield wait_until_not_busy(debug)
-    gps_assert(dump_tree_model(model, VALUE_COLUMN),
-               ['1'],
-               "Wrong value after break")
+    gps_assert(dump_tree_model(model, VALUE_COLUMN), ["1"], "Wrong value after break")
     # Check the next command alone
     debug.send("next")
     yield wait_until_not_busy(debug)
-    gps_assert(dump_tree_model(model, VALUE_COLUMN),
-               ['2'],
-               "Wrong value after break")
+    gps_assert(dump_tree_model(model, VALUE_COLUMN), ["2"], "Wrong value after break")
     # Check the next command with an argument
     debug.send("next 4")
     yield wait_until_not_busy(debug)
-    gps_assert(dump_tree_model(model, VALUE_COLUMN),
-               ['6'],
-               "Wrong value after break")
+    gps_assert(dump_tree_model(model, VALUE_COLUMN), ["6"], "Wrong value after break")
 
     # Clean the Variables view between different debugger runs
     GPS.execute_action("debug tree clear")

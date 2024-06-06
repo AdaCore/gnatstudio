@@ -9,9 +9,9 @@ def hello_cb(button):
 
 
 window = Gtk.Window(Gtk.WindowType.TOPLEVEL)  # create a top level window
-window.set_border_width(10)              # set padding round child widget
+window.set_border_width(10)  # set padding round child widget
 
 button = Gtk.Button("Hello World")
-button.connect("clicked", hello_cb)      # call hello_cb when clicked
-window.add(button)                       # add button to window
-window.show_all()                        # show window and its children
+button.connect("clicked", hello_cb)  # call hello_cb when clicked
+window.add(button)  # add button to window
+window.show_all()  # show window and its children

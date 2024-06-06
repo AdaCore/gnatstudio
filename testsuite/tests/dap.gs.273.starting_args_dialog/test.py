@@ -28,8 +28,7 @@ def test_driver():
     text = ""
     while not text:
         yield timeout(50)
-        text = buf.get_text(buf.get_start_iter(),
-                            buf.get_end_iter(), False).strip()
+        text = buf.get_text(buf.get_start_iter(), buf.get_end_iter(), False).strip()
     gps_assert(
         text,
         "Success",

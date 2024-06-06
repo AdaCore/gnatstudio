@@ -17,9 +17,7 @@ def verify_action(selection, start, backward, expected):
             GPS.execute_action("next tag (same weight)")
         model, selected = selection.get_selected_rows()
         path = selected[0]
-        gps_assert(str(path),
-                   step,
-                   "Issue detected, backward: " + str(backward))
+        gps_assert(str(path), step, "Issue detected, backward: " + str(backward))
 
 
 @run_test_driver
@@ -43,19 +41,10 @@ def run_test():
     selection = tree.get_selection()
 
     # Move forward between files
-    verify_action(selection,
-                  "0",
-                  False,
-                  ["0:0:0", "0:0:2", "0:1:0", "0:1:2", "0:0:0"])
+    verify_action(selection, "0", False, ["0:0:0", "0:0:2", "0:1:0", "0:1:2", "0:0:0"])
 
     # Move backward between files
-    verify_action(selection,
-                  "0:0:1",
-                  True,
-                  ["0:1:1", "0:0:1"])
+    verify_action(selection, "0:0:1", True, ["0:1:1", "0:0:1"])
 
     # Alone => should not move
-    verify_action(selection,
-                  "0:1:3",
-                  False,
-                  ["0:1:3", "0:1:3"])
+    verify_action(selection, "0:1:3", False, ["0:1:3", "0:1:3"])

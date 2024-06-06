@@ -5,18 +5,20 @@ Verify that the Variables view can properly compute simple type.
 from gs_utils.internal.utils import *
 
 expect = [
-   '<b>Foo</b> = string (1 .. 12) &quot;Hello World!&quot;',
-   '<b>Bar</b> = string (1 .. 10) &quot;aaaaaaaaaa&quot;',
-   '<b>Sym</b> = gnatcoll.symbols.symbol 0xfff',
-   ['None'],
-   '<b>Norm</b> = String &quot;&quot;']
+    "<b>Foo</b> = string (1 .. 12) &quot;Hello World!&quot;",
+    "<b>Bar</b> = string (1 .. 10) &quot;aaaaaaaaaa&quot;",
+    "<b>Sym</b> = gnatcoll.symbols.symbol 0xfff",
+    ["None"],
+    "<b>Norm</b> = String &quot;&quot;",
+]
 
 
 def display(debug, buf, line, col, name):
     GPS.MDI.get_by_child(buf.current_view()).raise_window()
     buf.current_view().goto(buf.at(line, col))
     yield wait_until_true(
-        lambda: GPS.Action('debug tree display variable').can_execute())
+        lambda: GPS.Action("debug tree display variable").can_execute()
+    )
     GPS.execute_action("debug tree display variable")
 
 
@@ -25,14 +27,13 @@ def driver():
     mode = GPS.Preference("GPS6-Debugger-Debugger-Kind").get()
 
     GPS.execute_action("Build & Debug Number 1")
-    yield hook('debugger_started')
+    yield hook("debugger_started")
 
     b = GPS.EditorBuffer.get(GPS.File("main.adb"))
     debug = GPS.Debugger.get()
     debug.send("break main.adb:17")
     debug.send("run")
     yield wait_until_not_busy(debug)
-
 
     yield display(debug, b, 6, 5, "Foo")
     yield display(debug, b, 8, 5, "Bar")
