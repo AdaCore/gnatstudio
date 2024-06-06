@@ -145,14 +145,17 @@ package body GPS.LSP_Client.Configurations.ALS is
       Ada_Settings.Set_Field
         ("defaultCharset", GPS.Kernel.Charsets.Get_Default_Charset);
 
-      --  Deactivate diagnostics for now, to be reactivated in master after
-      --  the 20.0 branch.
       Ada_Settings.Set_Field
         ("enableDiagnostics",
          Boolean'(GPS.Kernel.Preferences.LSP_Ada_Diagnostics.Get_Pref));
 
       Ada_Settings.Set_Field
         ("followSymlinks", not GPS.Kernel.Preferences.Trusted_Mode.Get_Pref);
+
+      Ada_Settings.Set_Field
+        ("insertWithClauses",
+         Boolean'
+           (GPS.Kernel.Preferences.LSP_Ada_Insert_With_Clauses.Get_Pref));
 
       --  Documentation options
 

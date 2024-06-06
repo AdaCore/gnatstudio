@@ -26,6 +26,7 @@ with GNATCOLL.Scripts.Python;    use GNATCOLL.Scripts.Python;
 with GNATCOLL.Traces;            use GNATCOLL.Traces;
 with GNAT.Strings;               use GNAT.Strings;
 
+with GPS.Kernel.Preferences;
 with XML_Utils;                  use XML_Utils;
 
 with Pango.Font;                 use Pango.Font;
@@ -1670,6 +1671,14 @@ package body GPS.Kernel.Preferences is
          Doc     => "Limit LSP formatting request to the current selection: "
          & "it prevents overzealous formatting affecting unselected lines.",
          Path    => "LSP:Formatting");
+
+      LSP_Ada_Insert_With_Clauses := Kernel.Get_Preferences.Create
+          (Name    => "LSP-Ada-Insert-With-Clauses",
+           Default => True,
+           Label   => "Insert with clauses",
+           Doc     => "Insert missing with-clauses when "
+           & "accepting completion for invisible symbols.",
+           Path    => "Editor/Ada:Completion");
 
       LSP_Ada_Diagnostics := Kernel.Get_Preferences.Create
         (Name    => "LSP-Ada-Diagnostics",
