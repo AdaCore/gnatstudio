@@ -48,6 +48,8 @@ with Gtk.Icon_Theme;                   use Gtk.Icon_Theme;
 with Gtk.Image;                        use Gtk.Image;
 with Gtk.Handlers;
 with Gtk.Main;
+with Gtk.Overlay;
+with Gtk.Label;                        use Gtk.Label;
 with Gtk.Style_Provider;               use Gtk.Style_Provider;
 with Gtk.Widget;                       use Gtk.Widget;
 with Gdk.Window;
@@ -380,6 +382,9 @@ procedure GPS.Main is
      E      : Ada.Exceptions.Exception_Occurrence);
    --  Trace unexpected exception with Python backtrace when available.
 
+   procedure Update_Splash_Progress_Label (Text : String);
+   --  Update the splash screen's progress label, displaying the given text.
+
    ---------------------------------
    -- Trace_With_Python_Backtrace --
    ---------------------------------
@@ -401,6 +406,28 @@ procedure GPS.Main is
          Trace (Handle, E, "Unexpected exception: ");
       end if;
    end Trace_With_Python_Backtrace;
+
+   ----------------------------------
+   -- Update_Splash_Progress_Label --
+   ----------------------------------
+
+   procedure Update_Splash_Progress_Label (Text : String)
+   is
+      Ignored : Boolean;
+   begin
+      --  The splash screen might not exist while running the testsuite or if
+      --  the corresponding preference has been disabled.
+
+      if Splash /= null and then Splash.Progress_Label /= null then
+         Splash.Progress_Label.Set_Text (Text);
+
+         --  Make sure that Gtk+ paints the new label text.
+         Gdk.Main.Flush;
+         while Gtk.Main.Events_Pending loop
+            Ignored := Gtk.Main.Main_Iteration;
+         end loop;
+      end if;
+   end Update_Splash_Progress_Label;
 
    ----------------------
    -- Startup_Callback --
@@ -488,8 +515,8 @@ procedure GPS.Main is
       Command_Line : not null access Gapplication_Command_Line_Record'Class)
       return Glib.Gint
    is
-      App     : constant GPS_Application := GPS_Application (Application);
-      Tmp     : Boolean;
+      App : constant GPS_Application := GPS_Application (Application);
+      Tmp, Ignored : Boolean;
       pragma Unreferenced (Command_Line, Tmp);
 
    begin
@@ -510,18 +537,22 @@ procedure GPS.Main is
       --  Display the splash screen, if needed, while we continue loading
       Display_Splash_Screen;
 
+      Update_Splash_Progress_Label ("Loading preferences...");
       Create_MDI_Preferences (App.Kernel);
 
       --  Load the fonts
 
+      Update_Splash_Progress_Label ("Loading fonts...");
       Load_Fonts (App.Kernel);
 
       --  Register the stock icons
 
+      Update_Splash_Progress_Label ("Loading icons...");
       GPS.Stock_Icons.Register_Stock_Icons (App.Kernel, Prefix_Dir);
 
       --  Finally create the main window, and setup the project
 
+      Update_Splash_Progress_Label ("Creating the main window...");
       GPS.Main_Window.Gtk_New (GPS_Main, App);
       GPS_Main.Kernel.Set_Ignore_Saved_Scenario_Values (Ignore_Saved_Values);
 
@@ -535,6 +566,7 @@ procedure GPS.Main is
          GPS_Main.Public_Version := False;
       end if;
 
+      Update_Splash_Progress_Label ("Registering menus...");
       GPS.Menu.Register_Common_Menus (App.Kernel);
 
       Kernel_Callback.Connect
@@ -813,19 +845,30 @@ procedure GPS.Main is
           (Prefix_Dir, "share/gnatstudio/gnatstudio-splash.png");
       Image  : Gtk_Image;
       Ignored : Boolean;
+      Overlay : Gtk.Overlay.Gtk_Overlay;
    begin
       if not Hide_GPS
         and then Splash_Screen.Get_Pref
         and then File.Is_Regular_File
       then
-         Gtk_New (Splash, Window_Popup);
+         Splash := new GPS_Splash_Screen_Record;
+         Initialize (Splash, Window_Popup);
+
+         Gtk.Overlay.Gtk_New (Overlay);
+         Splash.Add (Overlay);
+
          Splash.Set_Type_Hint (Gdk.Window.Window_Type_Hint_Splashscreen);
          Splash.Set_Hexpand (False);
          Splash.Set_Vexpand (False);
          Set_Property (Splash, Decorated_Property, False);
          Set_Position (Splash, Win_Pos_Center);
          Gtk_New (Image, Filename => +File.Full_Name);
-         Splash.Add (Image);
+         Overlay.Add (Image);
+
+         Gtk_New (Splash.Progress_Label, "Initializing GNAT Studio...");
+         Splash.Progress_Label.Set_Alignment (0.5, 0.8);
+         Overlay.Add_Overlay (Splash.Progress_Label);
+
          Splash.Show_All;
 
          --  The following is required for the splash screen to be fully
@@ -1100,6 +1143,8 @@ procedure GPS.Main is
       end Load_Sources;
 
    begin
+      Update_Splash_Progress_Label ("Loading modules...");
+
       --  Register the Learn module and the associated view
       Learn.Register_Module (GPS_Main.Kernel);
 
@@ -1480,6 +1525,8 @@ procedure GPS.Main is
       --  so that the usual hooks are taken into account right from the
       --  beginning
 
+      Update_Splash_Progress_Label ("Loading python plug-ins...");
+
       if Active (Python_Trace) then
          Python_Module.Load_System_Python_Startup_Files (GPS_Main.Kernel);
       end if;
@@ -1516,6 +1563,8 @@ procedure GPS.Main is
       GPS.Traces.Register_Module (GPS_Main.Kernel);
 
       Load_Preferences (GPS_Main.Kernel);
+
+      Update_Splash_Progress_Label ("Loading project...");
 
       --  Show the preferences assistant dialog if the user don't have any
       --  GNAT Studio home directory yet.
