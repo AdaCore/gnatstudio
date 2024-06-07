@@ -1,4 +1,5 @@
-xml_gnatsas = """<?xml version="1.0"?>
+xml_gnatsas = (
+    """<?xml version="1.0"?>
   <GNATSAS>
     <doc_path>{root}/share/doc/gnatsas</doc_path>
 
@@ -32,8 +33,8 @@ xml_gnatsas = """<?xml version="1.0"?>
 
     <action name="gnatsas_example_inspector_by_example" category=""
             show-command="false" output="none">
-      <shell>Project.load""" \
-        """ "{example}/inspector_by_example/inspector_by_example.gpr"</shell>
+      <shell>Project.load"""
+    """ "{example}/inspector_by_example/inspector_by_example.gpr"</shell>
       <shell>Editor.edit "README.txt"</shell>
     </action>
 
@@ -767,3 +768,4 @@ many cores as available on the machine)."/>
     </target>
   </GNATSAS>
 """
+)

@@ -16,10 +16,9 @@ def test_driver():
     s = dialogs.Search()
     yield s.open_and_yield()
     s.set_scope(dialogs.Search.Context.CURRENT_FILE)
-    s.pattern.set_text('Hello')
-    s.replace_text.set_text('Hi')
+    s.pattern.set_text("Hello")
+    s.replace_text.set_text("Hi")
 
     GPS.execute_action("replace all")
     yield wait_tasks(other_than=known_tasks)
-    gps_assert(buf.get_chars(), "Hi Hi Hi\n",
-               "'Replace all' action failed")
+    gps_assert(buf.get_chars(), "Hi Hi Hi\n", "'Replace all' action failed")

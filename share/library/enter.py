@@ -16,10 +16,11 @@ import gs_utils
 
 
 @gs_utils.interactive(
-    name='newline no auto-indent',
-    category='Editor',
-    filter='Source editor',
-    key='shift-Return')
+    name="newline no auto-indent",
+    category="Editor",
+    filter="Source editor",
+    key="shift-Return",
+)
 def newline_no_auto_indent():
     """
     Insert a newline character, but do not auto-reindent the current
@@ -28,6 +29,6 @@ def newline_no_auto_indent():
     ctx = GPS.current_context()
     f = ctx.file().path
     GPS.Editor.replace_text(
-        f, GPS.Editor.cursor_get_line(f), GPS.Editor.cursor_get_column(f),
-        "\n", 0, 0)
+        f, GPS.Editor.cursor_get_line(f), GPS.Editor.cursor_get_column(f), "\n", 0, 0
+    )
     GPS.Editor.indent()

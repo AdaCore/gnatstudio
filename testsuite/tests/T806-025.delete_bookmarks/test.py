@@ -15,7 +15,7 @@ def test_driver():
     view = Bookmarks()
     yield view.open_and_yield()
     dump = dump_tree_model(view.treeview.get_model(), 1)
-    gps_assert(dump, ['Main (main.adb:6:1)'])
+    gps_assert(dump, ["Main (main.adb:6:1)"])
 
     buf.delete(buf.at(6, 1), buf.at(7, 1))
     yield wait_idle()

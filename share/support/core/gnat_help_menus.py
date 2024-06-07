@@ -21,86 +21,91 @@ from modules import Module
 #        the new menu
 #
 _DOC_ENTRIES = {
-   # GPRbuild
-   'gprbuild': {"GPR Tools User's Guide":
-                ('gprbuild/html/gprbuild_ug.html', 'GPR/')},
-   'gnatls': {
-       # Ada RMs
-       "Ada 2012 Reference Manual": ('gnat/html/arm12.html', 'Ada/'),
-       "Ada 2005 Reference Manual": ('gnat/html/arm05.html', 'Ada/'),
-       "Ada 95 Reference Manual": ('gnat/html/arm95.html', 'Ada/'),
-
-       # GNU toolchain
-       "Using AS": ('gnat/html/as.html', 'GNU Tools/'),
-       "GNU Binary Utilities": ('gnat/html/binutils.html', 'GNU Tools/'),
-       "Using GCC": ('gnat/html/gcc.html', 'GNU Tools/'),
-       "Using the GNU Debugger": ('gnat/html/gdb.html', 'GNU Tools/'),
-       "GNU gprof": ('gnat/html/gprof.html', 'GNU Tools/'),
-       "GNU ld": ('gnat/html/ld.html', 'GNU Tools/'),
-
-       # GNAT Native
-       "GNAT Reference Manual": ('gnat/html/gnat_rm/gnat_rm.html', 'GNAT/'),
-       "GNAT User's Guide for Native Platforms": (
-            'gnat/html/gnat_ugn/gnat_ugn.html', 'GNAT/'),
-
-       # GNAT Cross
-       "GNAT User's Guide Supplement For Cross Platforms": (
-           'gnat-cross/html/gnat_ugx/gnat_ugx.html', 'GNAT/'),
-       "GNAT User's Guide Supplement for GNAT Pro Safety-Critical"
-       " and GNAT Pro High-Security": (
-           'gnat-cross/html/gnathie_ug/gnathie_ug.html', 'GNAT/'),
+    # GPRbuild
+    "gprbuild": {"GPR Tools User's Guide": ("gprbuild/html/gprbuild_ug.html", "GPR/")},
+    "gnatls": {
+        # Ada RMs
+        "Ada 2012 Reference Manual": ("gnat/html/arm12.html", "Ada/"),
+        "Ada 2005 Reference Manual": ("gnat/html/arm05.html", "Ada/"),
+        "Ada 95 Reference Manual": ("gnat/html/arm95.html", "Ada/"),
+        # GNU toolchain
+        "Using AS": ("gnat/html/as.html", "GNU Tools/"),
+        "GNU Binary Utilities": ("gnat/html/binutils.html", "GNU Tools/"),
+        "Using GCC": ("gnat/html/gcc.html", "GNU Tools/"),
+        "Using the GNU Debugger": ("gnat/html/gdb.html", "GNU Tools/"),
+        "GNU gprof": ("gnat/html/gprof.html", "GNU Tools/"),
+        "GNU ld": ("gnat/html/ld.html", "GNU Tools/"),
+        # GNAT Native
+        "GNAT Reference Manual": ("gnat/html/gnat_rm/gnat_rm.html", "GNAT/"),
+        "GNAT User's Guide for Native Platforms": (
+            "gnat/html/gnat_ugn/gnat_ugn.html",
+            "GNAT/",
+        ),
+        # GNAT Cross
+        "GNAT User's Guide Supplement For Cross Platforms": (
+            "gnat-cross/html/gnat_ugx/gnat_ugx.html",
+            "GNAT/",
+        ),
+        "GNAT User's Guide Supplement for GNAT Pro Safety-Critical"
+        " and GNAT Pro High-Security": (
+            "gnat-cross/html/gnathie_ug/gnathie_ug.html",
+            "GNAT/",
+        ),
     },
-
-   # GNATcheck
-   'gnatcheck': {"GNATcheck Reference Manual":
-                 ('gnatcheck/html/gnatcheck_rm/gnatcheck_rm.html', 'GNATSAS/')},
-
-   # GNATmetric
-   'gnatmetric': {"GNATmetrics User's Guide":
-                  ('gnatsas/gnatmetrics/html/index.html', 'GNATSAS/')},
-
-   # GNATstack
-   'gnatstack': {"GNATstack Reference Manual":
-                 ('gnatstack/html/index.html', 'GNAT/')},
-
-   # Spark2c
-   'c-gcc': {"SPARK to C User's Guide Supplement":
-             ('gnat/html/spark2c/spark2c.html', 'GNAT/')},
+    # GNATcheck
+    "gnatcheck": {
+        "GNATcheck Reference Manual": (
+            "gnatcheck/html/gnatcheck_rm/gnatcheck_rm.html",
+            "GNATSAS/",
+        )
+    },
+    # GNATmetric
+    "gnatmetric": {
+        "GNATmetrics User's Guide": ("gnatsas/gnatmetrics/html/index.html", "GNATSAS/")
+    },
+    # GNATstack
+    "gnatstack": {"GNATstack Reference Manual": ("gnatstack/html/index.html", "GNAT/")},
+    # Spark2c
+    "c-gcc": {
+        "SPARK to C User's Guide Supplement": (
+            "gnat/html/spark2c/spark2c.html",
+            "GNAT/",
+        )
+    },
 }
 
 
 class HTMLAction(GPS.Action):
-
     def __init__(self, description, file, menu_path):
-        """ Create an action to launch a browser for the specific file """
+        """Create an action to launch a browser for the specific file"""
         GPS.Action.__init__(self, description)
         self.menu_path = menu_path
         self.file = file
-        self.create(self.on_activate, filter='', category='Help',
-                    description=description)
+        self.create(
+            self.on_activate, filter="", category="Help", description=description
+        )
 
     def on_activate(self):
-        """ Activate the action """
-        GPS.HTML.browse('file://{}'.format(self.file))
+        """Activate the action"""
+        GPS.HTML.browse("file://{}".format(self.file))
 
 
 class GNATMenus(Module):
-
     def _populate_menu(self):
-        """ Populate the Help menu for the AdaCore tools """
+        """Populate the Help menu for the AdaCore tools"""
 
         help_actions = []
 
         for exec_name in list(_DOC_ENTRIES.keys()):
             executable = exec_name
-            if exec_name == 'gnatls' and GPS.get_target():
-                executable = '{}-gnatls'.format(GPS.get_target())
+            if exec_name == "gnatls" and GPS.get_target():
+                executable = "{}-gnatls".format(GPS.get_target())
             ex = os_utils.locate_exec_on_path(executable)
             if ex:
                 for descr, tup in _DOC_ENTRIES[exec_name].items():
                     html_files, menu_base = tup
-                    menu_path = menu_base + '/' + descr
-                    action_descr = 'display documentation {}'.format(descr)
+                    menu_path = menu_base + "/" + descr
+                    action_descr = "display documentation {}".format(descr)
 
                     # Do not create a menu if the action already exists
                     if GPS.Action(action_descr).exists():
@@ -113,19 +118,21 @@ class GNATMenus(Module):
 
                     for file in html_files:
                         path = os.path.realpath(
-                            os.path.join(os.path.dirname(ex),
-                                         '..', 'share', 'doc', file)
+                            os.path.join(
+                                os.path.dirname(ex), "..", "share", "doc", file
+                            )
                         )
                         if os.path.isfile(path):
-                            action = HTMLAction(action_descr, path,
-                                                '/Help/{}'.format(menu_path))
+                            action = HTMLAction(
+                                action_descr, path, "/Help/{}".format(menu_path)
+                            )
                             help_actions.append(action)
                             break
 
         help_actions.sort(key=lambda x: x.menu_path)
 
         for a in help_actions:
-            a.menu(a.menu_path, ref='About', add_before=False)
+            a.menu(a.menu_path, ref="About", add_before=False)
 
     def setup(self):
         self._populate_menu()

@@ -5,11 +5,15 @@ Test the action "locations copy to clipboard".
 from GPS import *
 from gs_utils.internal.utils import *
 
-expected = [['a.adb:2:6: [reference] with Pack;',
-             'a.adb:6:4: [reference] Pack.Foo;',
-             'a.adb:7:4: [reference] Pack.Foo;'],
-            ['pack.ads:1:9: [reference] package Pack is'],
-            ['pack.adb:1:14: [reference] package body Pack is']]
+expected = [
+    [
+        "a.adb:2:6: [reference] with Pack;",
+        "a.adb:6:4: [reference] Pack.Foo;",
+        "a.adb:7:4: [reference] Pack.Foo;",
+    ],
+    ["pack.ads:1:9: [reference] package Pack is"],
+    ["pack.adb:1:14: [reference] package body Pack is"],
+]
 
 
 def build_expected(path_list):
@@ -40,9 +44,7 @@ def test_selection(selection, path_list, msg):
     for path in path_list:
         selection.select_path(path)
     GPS.execute_action("locations copy to clipboard")
-    gps_assert(get_clipboard_content(),
-               build_expected(path_list),
-               msg)
+    gps_assert(get_clipboard_content(), build_expected(path_list), msg)
 
 
 @run_test_driver
@@ -70,11 +72,7 @@ def run_test():
     test_selection(selection, ["0:0:0"], "Issue when selecting a Message")
 
     # No duplicate when file + message
-    test_selection(selection,
-                   ["0:0", "0:0:0"],
-                   "Issue when overlapping selection")
+    test_selection(selection, ["0:0", "0:0:0"], "Issue when overlapping selection")
 
     # Multi selection of 2 messages
-    test_selection(selection,
-                   ["0:0:0", "0:0:1"],
-                   "Issue with the multiselection")
+    test_selection(selection, ["0:0:0", "0:0:1"], "Issue with the multiselection")

@@ -29,8 +29,14 @@ def run_test():
     title_box = get_widget_by_name("completion-notes-title")
     link_button = get_widgets_by_type(Gtk.LinkButton, title_box)[0]
 
-    gps_assert(link_button != None, True,
-               "The completion proposal's declaration link is not displayed")
+    gps_assert(
+        link_button != None,
+        True,
+        "The completion proposal's declaration link is not displayed",
+    )
 
-    gps_assert(link_button.get_uri(), "main.adb:2",
-               "The completion proposal's declaration link is not correct")
+    gps_assert(
+        link_button.get_uri(),
+        "main.adb:2",
+        "The completion proposal's declaration link is not correct",
+    )

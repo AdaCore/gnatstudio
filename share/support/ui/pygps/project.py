@@ -29,10 +29,13 @@ try:
         """
 
         pygps.open_menu(
-            "/Project/Properties...", on_open,
+            "/Project/Properties...",
+            on_open,
             ["Project Properties Tree"],
-            args, kwargs, 2000)
-
+            args,
+            kwargs,
+            2000,
+        )
 
 except ImportError:
     pass

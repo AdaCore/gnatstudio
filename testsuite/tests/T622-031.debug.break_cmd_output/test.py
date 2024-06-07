@@ -6,15 +6,16 @@ when inserting a breakpoint.
 import GPS
 from gs_utils.internal.utils import *
 
-EXPECTED= """(gdb) -break-insert -f main.adb:25
+EXPECTED = """(gdb) -break-insert -f main.adb:25
 (gdb)"""
+
 
 @run_test_driver
 def test_driver():
     # Launch the debugger
 
     GPS.execute_action("Build & Debug Number 1")
-    yield hook('debugger_started')
+    yield hook("debugger_started")
 
     # Open main.adb and set a breakpoint line 25
 
@@ -31,5 +32,6 @@ def test_driver():
     console = GPS.Debugger.get().get_console()
     text = console.get_text()
 
-    gps_assert(EXPECTED in text, True,
-               "The -break-insert output is not the one expected")
+    gps_assert(
+        EXPECTED in text, True, "The -break-insert output is not the one expected"
+    )

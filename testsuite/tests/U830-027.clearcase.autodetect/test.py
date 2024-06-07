@@ -7,6 +7,4 @@ from gs_utils.internal.utils import *
 
 @run_test_driver
 def test_driver():
-    gps_assert(GPS.VCS2.active_vcs().name,
-               "clearcase native",
-               "Autodection failed")
+    gps_assert(GPS.VCS2.active_vcs().name, "clearcase native", "Autodection failed")

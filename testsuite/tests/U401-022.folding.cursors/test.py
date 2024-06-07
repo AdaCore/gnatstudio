@@ -27,7 +27,7 @@ def driver():
 
     # Start the debugger
     GPS.execute_action("Build & Debug Number 1")
-    yield hook('debugger_started')
+    yield hook("debugger_started")
 
     # Run it until we reach the breakpoint
     debug = GPS.Debugger.get()
@@ -38,10 +38,8 @@ def driver():
     # already be unfolded after reaching the breakpoint
     icon_found = True
     try:
-        b.click_on_side_icon(
-            5, 1, "gps-unfold-block-symbolic")
+        b.click_on_side_icon(5, 1, "gps-unfold-block-symbolic")
     except Exception:
         icon_found = False
 
-    gps_assert(icon_found, False,
-               "The block should already be unfolded")
+    gps_assert(icon_found, False, "The block should already be unfolded")

@@ -14,10 +14,9 @@ FILENAME = "hidden.adb"
 @run_test_driver
 def test_driver():
     GPS.execute_action("Build & Debug Number 1")
-    yield hook('debugger_started')
+    yield hook("debugger_started")
     d = GPS.Debugger.get()
-    for s in ["b pack.adb:17",
-              "run"]:
+    for s in ["b pack.adb:17", "run"]:
         yield wait_until_not_busy(d)
         d.send(s)
 
@@ -28,9 +27,11 @@ def test_driver():
 
     # Set the preference ...
     GPS.Preference(PREF_NAME).set(True)
-    gps_assert(len(GPS.MDI.children()),
-               expected,
-               "Issue when modifying the pref without selection")
+    gps_assert(
+        len(GPS.MDI.children()),
+        expected,
+        "Issue when modifying the pref without selection",
+    )
 
     # Select the first line in the Call Stack Tree
     tree = get_widgets_by_type(Gtk.TreeView, win)[0]
@@ -40,13 +41,17 @@ def test_driver():
 
     # ... unset the preference to trigger a refresh
     GPS.Preference(PREF_NAME).set(False)
-    gps_assert(len(GPS.MDI.children()),
-               expected,
-               "Issue when modifying the pref with selection")
-    gps_assert(GPS.MDI.get(FILENAME),
-               None,
-               "Modifying the pref shouldn't open the files in the callstack")
+    gps_assert(
+        len(GPS.MDI.children()),
+        expected,
+        "Issue when modifying the pref with selection",
+    )
+    gps_assert(
+        GPS.MDI.get(FILENAME),
+        None,
+        "Modifying the pref shouldn't open the files in the callstack",
+    )
 
-    d.send('q')
+    d.send("q")
 
     yield wait_tasks()

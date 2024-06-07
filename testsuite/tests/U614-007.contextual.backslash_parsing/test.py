@@ -1,4 +1,3 @@
-
 """
 This test verifies that custom contextual menu labels that contain '/'
 are correctly displayed.
@@ -17,6 +16,8 @@ def run_test():
 
     contextual = dump_contextual(win)
     GPS.Console().write(str(dump_contextual(win)))
-    gps_assert("Custom" in contextual and ['Something/Something'] in contextual,
-               True,
-               "Wrong custom contextual menu label when containing '/'")
+    gps_assert(
+        "Custom" in contextual and ["Something/Something"] in contextual,
+        True,
+        "Wrong custom contextual menu label when containing '/'",
+    )

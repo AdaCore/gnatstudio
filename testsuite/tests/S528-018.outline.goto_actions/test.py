@@ -15,21 +15,20 @@ def run_test():
     GPS.execute_action("open Outline")
     outline = get_widget_by_name("Outline View Tree")
     outline.grab_focus()
-    yield wait_until_true(
-        lambda: dump_tree_model(outline.get_model()) != [])
+    yield wait_until_true(lambda: dump_tree_model(outline.get_model()) != [])
 
     windows = Gtk.Window.list_toplevels()
     click_in_tree(outline, button=3)
     activate_contextual(windows, "Go To Declaration")
-    yield hook('language_server_response_processed')
+    yield hook("language_server_response_processed")
 
     current_buffer = GPS.EditorBuffer.get()
     current_loc = current_buffer.current_view().cursor()
 
     gps_assert(
-        current_buffer.file(), GPS.File("foo.ads"),
-        "Go To Declaration contextual menu dit not open the right file")
-    gps_assert(
-        current_loc.line(), 3, "Wrong line after Go To Declaration")
-    gps_assert(
-        current_loc.column(), 24, "Wrong column after Go To Declaration")
+        current_buffer.file(),
+        GPS.File("foo.ads"),
+        "Go To Declaration contextual menu dit not open the right file",
+    )
+    gps_assert(current_loc.line(), 3, "Wrong line after Go To Declaration")
+    gps_assert(current_loc.column(), 24, "Wrong column after Go To Declaration")

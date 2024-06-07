@@ -11,13 +11,14 @@ from gs_utils import in_ada_file, interactive
 
 
 def create_dg(f, str):
-    res = open(f, 'w')
-    first = str.find(
-        "\n", str.find("\n", str.find("Source recreated from tree")) + 1) + 2
+    res = open(f, "w")
+    first = (
+        str.find("\n", str.find("\n", str.find("Source recreated from tree")) + 1) + 2
+    )
 
     if first > 2:
         last = str.find("Source recreated from tree", first)
-        res.write(str[first:last - 1])
+        res.write(str[first : last - 1])
 
     res.close()
 
@@ -31,9 +32,15 @@ highlighting = "Editor code annotations"
 
 def subprogram_bounds(cursor):
     """Return the first and last line of the current subprogram, and (0,0) if
-       the current subprogram could not be determined."""
-    blocks = {"CAT_PROCEDURE": 1, "CAT_FUNCTION": 1, "CAT_ENTRY": 1,
-              "CAT_PROTECTED": 1, "CAT_TASK": 1, "CAT_PACKAGE": 1}
+    the current subprogram could not be determined."""
+    blocks = {
+        "CAT_PROCEDURE": 1,
+        "CAT_FUNCTION": 1,
+        "CAT_ENTRY": 1,
+        "CAT_PROTECTED": 1,
+        "CAT_TASK": 1,
+        "CAT_PACKAGE": 1,
+    }
 
     if cursor.block_type() == "CAT_UNKNOWN":
         return 0, 0
@@ -49,7 +56,7 @@ def subprogram_bounds(cursor):
 
 
 def clear_dg(source_filename):
-    """ Clear dg information for filename """
+    """Clear dg information for filename"""
     global expanded_code_marks
 
     if source_filename in expanded_code_marks:
@@ -57,7 +64,7 @@ def clear_dg(source_filename):
 
         srcbuf = GPS.EditorBuffer.get(GPS.File(source_filename))
 
-        for (mark, lines) in expanded_code_marks[source_filename]:
+        for mark, lines in expanded_code_marks[source_filename]:
             srcbuf.remove_special_lines(mark, lines)
 
         # Empty entry in the dictionary
@@ -87,8 +94,7 @@ def edit_dg(dg, source_filename, line, for_subprogram, in_external_editor):
     srcbuf = GPS.EditorBuffer.get(GPS.File(source_filename))
 
     if for_subprogram:
-        (block_first, block_last) = subprogram_bounds(
-            srcbuf.current_view().cursor())
+        (block_first, block_last) = subprogram_bounds(srcbuf.current_view().cursor())
     else:
         (block_first, block_last) = (0, 0)
 
@@ -104,11 +110,10 @@ def edit_dg(dg, source_filename, line, for_subprogram, in_external_editor):
     for line in txt.split("\n"):
         if line.startswith("-- "):
             if current_code:
-                if (block_first == 0 or
-                        (block_first < current_line <= block_last)):
-                    mark = srcbuf.add_special_line(current_line + 1,
-                                                   "\n".join(current_code),
-                                                   highlighting)
+                if block_first == 0 or (block_first < current_line <= block_last):
+                    mark = srcbuf.add_special_line(
+                        current_line + 1, "\n".join(current_code), highlighting
+                    )
 
                     # Add mark to the list of marks
 
@@ -120,7 +125,7 @@ def edit_dg(dg, source_filename, line, for_subprogram, in_external_editor):
                         expanded_code_marks[source_filename] = [mark_num]
                 elif current_line == block_last:
                     break
-            current_line = int(line[3:line.find(":")])
+            current_line = int(line[3 : line.find(":")])
             current_code = []
         else:
             if line != "":
@@ -130,11 +135,10 @@ def edit_dg(dg, source_filename, line, for_subprogram, in_external_editor):
     # of code => it will lost the expanded lines located after the last line
     # of the current block.
     if current_code:
-        if (block_first == 0 or
-                (current_line <= block_last)):
-            mark = srcbuf.add_special_line(current_line + 1,
-                                           "\n".join(current_code),
-                                           highlighting)
+        if block_first == 0 or (current_line <= block_last):
+            mark = srcbuf.add_special_line(
+                current_line + 1, "\n".join(current_code), highlighting
+            )
 
             # Add mark to the list of marks
 
@@ -152,9 +156,13 @@ def on_exit(process, status, full_output):
         GPS.Console("Messages").write(process.get_result(), mode="error")
     else:
         create_dg(process.dg, full_output)
-        edit_dg(process.dg, process.source_filename,
-                process.line, process.for_subprogram,
-                process.in_external_editor)
+        edit_dg(
+            process.dg,
+            process.source_filename,
+            process.line,
+            process.for_subprogram,
+            process.in_external_editor,
+        )
 
 
 def show_gnatdg(for_subprogram=False, in_external_editor=False):
@@ -168,14 +176,14 @@ def show_gnatdg(for_subprogram=False, in_external_editor=False):
     try:
         if context.project():
             list_dir = context.project().object_dirs(False)
-            prj = ' -P """' + \
-                GPS.Project.root().file().name("Build_Server") + '"""'
+            prj = ' -P """' + GPS.Project.root().file().name("Build_Server") + '"""'
         else:
             list_dir = GPS.Project.root().object_dirs(False)
             prj = " -a"
     except Exception:
         GPS.Console("Messages").write(
-            "Could not obtain project information for this file")
+            "Could not obtain project information for this file"
+        )
         return
 
     if list_dir:
@@ -183,18 +191,19 @@ def show_gnatdg(for_subprogram=False, in_external_editor=False):
     else:
         objdir = GPS.get_tmp_dir()
         GPS.Console("Messages").write(
-            "Could not find an object directory for %s, reverting to %s" %
-            (file, objdir))
+            "Could not find an object directory for %s, reverting to %s"
+            % (file, objdir)
+        )
 
-    dg = os.path.join(objdir, os.path.basename(local_file)) + '.dg'
+    dg = os.path.join(objdir, os.path.basename(local_file)) + ".dg"
 
     if distutils.dep_util.newer(local_file, dg):
         file_name = '"""%s"""' % file
         scenario = GPS.Project.root().scenario_variables_cmd_line("-X")
-        cmd = 'gprbuild -q %s -f -c -u -gnatcdx -gnatws -gnatGL' % prj
-        cmd += ' ' + file_name
+        cmd = "gprbuild -q %s -f -c -u -gnatcdx -gnatws -gnatGL" % prj
+        cmd += " " + file_name
         if scenario:
-            cmd += ' ' + scenario
+            cmd += " " + scenario
 
         GPS.Console("Messages").write("Generating " + dg + "...\n")
         proc = GPS.Process(cmd, on_exit=on_exit, remote_server="Build_Server")
@@ -206,39 +215,55 @@ def show_gnatdg(for_subprogram=False, in_external_editor=False):
     else:
         edit_dg(dg, local_file, line, for_subprogram, in_external_editor)
 
+
 #################################
 # Register the contextual menus #
 #################################
 
 
-@interactive("Ada", in_ada_file, contextual="Expanded code/Show subprogram",
-             name="show expanded code for subprogram",
-             contextual_group=GPS.Contextual.Group.EXTRA_INFORMATION)
+@interactive(
+    "Ada",
+    in_ada_file,
+    contextual="Expanded code/Show subprogram",
+    name="show expanded code for subprogram",
+    contextual_group=GPS.Contextual.Group.EXTRA_INFORMATION,
+)
 def show_gnatdg_subprogram():
     """Show the expanded code of the current subprogram"""
     show_gnatdg(True)
 
 
-@interactive("Ada", in_ada_file, contextual="Expanded code/Show entire file",
-             name="show expanded code for file",
-             contextual_group=GPS.Contextual.Group.EXTRA_INFORMATION)
+@interactive(
+    "Ada",
+    in_ada_file,
+    contextual="Expanded code/Show entire file",
+    name="show expanded code for file",
+    contextual_group=GPS.Contextual.Group.EXTRA_INFORMATION,
+)
 def show_gnatdg_file():
     """Show the .dg file of the current file"""
     show_gnatdg(False)
 
 
 @interactive(
-    "Ada", in_ada_file, contextual="Expanded code/Show in separate editor",
+    "Ada",
+    in_ada_file,
+    contextual="Expanded code/Show in separate editor",
     name="show expanded code in separate editor",
-    contextual_group=GPS.Contextual.Group.EXTRA_INFORMATION)
+    contextual_group=GPS.Contextual.Group.EXTRA_INFORMATION,
+)
 def show_gnatdg_separate_editor():
     """Show the expanded code of the current subprogram"""
     show_gnatdg(False, True)
 
 
-@interactive("Ada", in_ada_file, contextual="Expanded code/Clear",
-             name="clear expanded code",
-             contextual_group=GPS.Contextual.Group.EXTRA_INFORMATION)
+@interactive(
+    "Ada",
+    in_ada_file,
+    contextual="Expanded code/Clear",
+    name="clear expanded code",
+    contextual_group=GPS.Contextual.Group.EXTRA_INFORMATION,
+)
 def clear_expanded_code():
     """Show the expanded code of the current subprogram"""
 

@@ -18,6 +18,7 @@ def check_highlighting_color(buffer, line, color):
     serialized_text = str(buffer.serialize(buffer, format, start, end))
     gps_assert(color in serialized_text, True, "Wrong fg color for line %s" % str(line))
 
+
 @run_test_driver
 def run_test():
     # Open a custom console and write an error in it
@@ -33,4 +34,3 @@ def run_test():
     GPS.Preference("Messages-Highlight-Color").set("rgb(165,29,45)")
     yield timeout(300)
     check_highlighting_color(buffer, 0, "a5a5:1d1d:2d2d")
-

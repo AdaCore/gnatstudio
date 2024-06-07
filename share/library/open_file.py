@@ -20,8 +20,7 @@ import os
 from text_utils import get_selection_or_line
 
 
-file_pattern = \
-    '((?:[a-zA-Z]:)?(?:[\\\\/]?[\w\d._$-]+)+)(?::(\d+)(?::(\d+))?)?'
+file_pattern = "((?:[a-zA-Z]:)?(?:[\\\\/]?[\w\d._$-]+)+)(?::(\d+)(?::(\d+))?)?"
 # The regexp pattern to search file file:line:column references on the
 # current line.
 
@@ -70,7 +69,7 @@ def __filter(context):
     cursor_col = context.location().column()
 
     if ed.selection_end() != ed.selection_start():
-        data.file = text   # No post-processing
+        data.file = text  # No post-processing
     else:
         # Try to find the filename we clicked on
         pos = 0
@@ -118,8 +117,7 @@ def __filter(context):
         # not necessarily in the source dirs
 
         # Handle the case where the include statement contains a directory.
-        if os.path.splitext(data.file)[1] in \
-                [".h", ".hh", ".cfg", ".c", ".gen"]:
+        if os.path.splitext(data.file)[1] in [".h", ".hh", ".cfg", ".c", ".gen"]:
             for p in GPS.Project.root().source_dirs(True):
                 f = os.path.join(p, data.file)
                 if os.path.exists(f):
@@ -136,10 +134,11 @@ def __label(context):
 
 
 @gs_utils.interactive(
-    name='open file at cursor location',
+    name="open file at cursor location",
     contextual=__label,
     filter=__filter,
-    static_path="Open file")
+    static_path="Open file",
+)
 def __activate():
     """
     Open the file specified at the cursor's location, for instance in a C

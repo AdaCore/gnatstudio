@@ -14,6 +14,5 @@ def run_test():
 
     expected = ["VAR_2", ["C", "D"], "VAR_1", ["A", "B"]]
 
-    gps_assert(e.get_scenarios(), expected,
-               "All the scenarios should be preselected")
+    gps_assert(e.get_scenarios(), expected, "All the scenarios should be preselected")
     yield e.save()

@@ -62,10 +62,12 @@ def is_c_file(dummy):
         return False
 
 
-@interactive(name="run cpp on file",
-             description="Run the gcc preprocessor on current file",
-             filter=is_c_file,
-             menu="Analyze/Preprocessor/cpp on current file")
+@interactive(
+    name="run cpp on file",
+    description="Run the gcc preprocessor on current file",
+    filter=is_c_file,
+    menu="Analyze/Preprocessor/cpp on current file",
+)
 def cpp_on_file():
     obj_dir = GPS.Project.root().artifacts_dir()
     file = GPS.current_context().file()
@@ -79,5 +81,6 @@ def cpp_on_file():
     def on_exit(status):
         if not status:
             GPS.EditorBuffer.get(GPS.File(output_file))
+
     target = GPS.BuildTarget("c preprocess file")
     target.execute(synchronous=False, on_exit=on_exit, extra_args=output)

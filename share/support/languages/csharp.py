@@ -47,4 +47,5 @@ XML = r"""<?xml version="1.0" ?>
 """
 
 import GPS
+
 GPS.parse_xml(XML)

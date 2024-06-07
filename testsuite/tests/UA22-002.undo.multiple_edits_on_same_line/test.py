@@ -12,10 +12,10 @@ def run_test():
     expected = buf.get_chars()
     GPS.execute_action("format file")
     yield wait_language_server("textDocument/formatting", "C++")
-    gps_assert(buf.get_chars() != expected,
-               True,
-               "The buffer should have been properly formatted")
+    gps_assert(
+        buf.get_chars() != expected,
+        True,
+        "The buffer should have been properly formatted",
+    )
     GPS.execute_action("undo")
-    gps_assert(buf.get_chars(),
-               expected,
-               "The global undo has failed")
+    gps_assert(buf.get_chars(), expected, "The global undo has failed")

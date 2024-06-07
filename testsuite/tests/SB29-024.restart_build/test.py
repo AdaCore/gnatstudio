@@ -34,6 +34,6 @@ def driver():
 
     # Check whether we don't have two building process at the same time
     for task in GPS.Task.list():
-        if 'Build' in task.name():
+        if "Build" in task.name():
             counter += 1
     gps_assert(counter < 2, True, "Building is not interrupted")

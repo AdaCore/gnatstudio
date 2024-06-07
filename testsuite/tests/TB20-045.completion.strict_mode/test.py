@@ -26,21 +26,23 @@ def run_test():
         send_key_event(ord(ch))
         yield timeout(100)
 
-    yield wait_until_true(
-        lambda: get_widget_by_name("completion-view") != None)
+    yield wait_until_true(lambda: get_widget_by_name("completion-view") != None)
 
     # Verify that the completion window is there
     pop_tree = get_widget_by_name("completion-view")
     model = pop_tree.get_model()
     yield wait_until_true(
-        lambda: model.get_value(model.get_iter_first(), 0) != "Computing...")
+        lambda: model.get_value(model.get_iter_first(), 0) != "Computing..."
+    )
 
-    gps_assert(pop_tree is not None, True,
-               "The completion window should be open at that point")
+    gps_assert(
+        pop_tree is not None, True, "The completion window should be open at that point"
+    )
 
     # Verify that the invisible 'Do_Nothing' subprogram is listed after
     # the visible one
     gps_assert(
         dump_tree_model(pop_tree.get_model(), LABEL_COLUMN),
-        ['Text_IO'],
-        "We should only match Text_IO in strict mode.")
+        ["Text_IO"],
+        "We should only match Text_IO in strict mode.",
+    )

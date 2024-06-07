@@ -16,8 +16,7 @@ except Exception:
 
 def enum(**enums):
     # Show valid values in the name of the type, for the documentation
-    name = 'Enum %s' % ', '.join(
-        "%s=%s" % (k, v) for k, v in enums.items())
+    name = "Enum %s" % ", ".join("%s=%s" % (k, v) for k, v in enums.items())
     return type(name, (), enums)
 
 
@@ -64,17 +63,17 @@ GPS.Browsers.Diagram.Selection = enum(NONE=0, SINGLE=1, MULTIPLE=2)
 
 GPS.Browsers.TextItem.TextArrow = enum(NONE=0, UP=1, DOWN=2, LEFT=3, RIGHT=4)
 
-GPS.Browsers.Link.Routing = enum(
-    ORTHOGONAL=0, STRAIGHT=1, ARC=2, CURVE=3)
-GPS.Browsers.Link.Side = enum(
-    AUTO=0, TOP=1, RIGHT=2, BOTTOM=3, LEFT=4, NO_CLIP=5)
+GPS.Browsers.Link.Routing = enum(ORTHOGONAL=0, STRAIGHT=1, ARC=2, CURVE=3)
+GPS.Browsers.Link.Side = enum(AUTO=0, TOP=1, RIGHT=2, BOTTOM=3, LEFT=4, NO_CLIP=5)
 
 GPS.Browsers.View.Background = enum(NONE=0, COLOR=1, GRID=2, DOTS=3)
 
 GPS.Message.Flags = enum(
-    INVISIBLE=0, IN_SIDEBAR=1, IN_LOCATIONS=2, IN_SIDEBAR_AND_LOCATIONS=3)
+    INVISIBLE=0, IN_SIDEBAR=1, IN_LOCATIONS=2, IN_SIDEBAR_AND_LOCATIONS=3
+)
 GPS.Message.Importance = enum(
-    ANNOTATION=0, UNSPECIFIED=1, INFORMATIONAL=2, LOW=3, MEDIUM=4, HIGH=5)
+    ANNOTATION=0, UNSPECIFIED=1, INFORMATIONAL=2, LOW=3, MEDIUM=4, HIGH=5
+)
 
 GPS.Contextual.Group = enum(
     PROJECT=0,
@@ -84,7 +83,8 @@ GPS.Contextual.Group = enum(
     DEBUG=80,
     VCS=100,
     EXTRA_INFORMATION=1000,
-    DEFAULT=10000)
+    DEFAULT=10000,
+)
 
 # Must be kept in sync with GPS.Kernel.Modules.UI
 
@@ -137,7 +137,8 @@ class hook:
     def __call__(self, fn):
         def do_work(hook, *args, **kwargs):
             return fn(*args, **kwargs)
-        do_work.__name__ = fn.__name__   # Reset name for interactive()
+
+        do_work.__name__ = fn.__name__  # Reset name for interactive()
         do_work.__doc__ = fn.__doc__
         GPS.Hook(self.name).add(do_work, last=self.last)
         return do_work
@@ -160,7 +161,8 @@ def save_dir(fn):
             fn(*args, **kwargs)
         finally:
             cd(saved)
-    do_work.__name__ = fn.__name__   # Reset name
+
+    do_work.__name__ = fn.__name__  # Reset name
     do_work.__doc__ = fn.__doc__
     return do_work
 
@@ -188,7 +190,7 @@ def with_save_current_window(fn):
     def do_work(*args, **kwargs):
         save_current_window(fn, *args, **kwargs)
 
-    do_work.__name__ = fn.__name__   # Reset name
+    do_work.__name__ = fn.__name__  # Reset name
     do_work.__doc__ = fn.__doc__
     return do_work
 
@@ -265,26 +267,36 @@ def with_save_excursion(fn):
 
     def do_work(*args, **kwargs):
         return save_excursion(fn, args=args, kwargs=kwargs)
-    do_work.__name__ = fn.__name__   # Reset name for interactive()
+
+    do_work.__name__ = fn.__name__  # Reset name for interactive()
     do_work.__doc__ = fn.__doc__
     return do_work
 
 
-def make_interactive(callback, category="General", filter="", menu="", key="",
-                     contextual='', name="", before="", after="",
-                     contextual_ref='',
-                     icon='', description='',
-
-                     # Adding buttons to a toolbar
-                     toolbar='', toolbar_section='', button_label='',
-                     static_path='',
-
-                     # Keys
-                     key_exclusive=True,
-
-                     # Learn
-                     for_learning=False,
-                     contextual_group=GPS.Contextual.Group.DEFAULT):
+def make_interactive(
+    callback,
+    category="General",
+    filter="",
+    menu="",
+    key="",
+    contextual="",
+    name="",
+    before="",
+    after="",
+    contextual_ref="",
+    icon="",
+    description="",
+    # Adding buttons to a toolbar
+    toolbar="",
+    toolbar_section="",
+    button_label="",
+    static_path="",
+    # Keys
+    key_exclusive=True,
+    # Learn
+    for_learning=False,
+    contextual_group=GPS.Contextual.Group.DEFAULT,
+):
     """
     Declare a new GPS action (an interactive function, in Emacs talk),
     associated with an optional menu and default key.
@@ -360,8 +372,9 @@ def make_interactive(callback, category="General", filter="", menu="", key="",
     # Support for various kinds of callbacks
 
     if isinstance(callback, type):  # Do we have a class ?
+
         def do():
-            return callback()   # Create new instance
+            return callback()  # Create new instance
 
     else:
         # Else we still wrap the callback, in case it is a generator
@@ -369,13 +382,20 @@ def make_interactive(callback, category="General", filter="", menu="", key="",
             r = callback()
             if isinstance(r, types.GeneratorType):
                 import workflows
+
                 workflows.driver(r)  # Execute the generator
                 return None
             return r
 
     a = Action(name or callback.__name__)
-    a.create(do, filter=filter, category=category, description=doc,
-             icon=icon, for_learning=for_learning)
+    a.create(
+        do,
+        filter=filter,
+        category=category,
+        description=doc,
+        icon=icon,
+        for_learning=for_learning,
+    )
 
     if menu:
         if before:
@@ -392,9 +412,12 @@ def make_interactive(callback, category="General", filter="", menu="", key="",
                 the_static_path = contextual
             else:
                 the_static_path = callback.__name__
-        a.contextual(contextual, ref=contextual_ref,
-                     static_path=the_static_path,
-                     group=contextual_group)
+        a.contextual(
+            contextual,
+            ref=contextual_ref,
+            static_path=the_static_path,
+            group=contextual_group,
+        )
 
     if key:
         a.key(key, exclusive=key_exclusive)
@@ -446,7 +469,6 @@ def freeze_prefs():
     """
 
     class Context(object):
-
         def __enter__(self):
             GPS.freeze_prefs()
 
@@ -462,14 +484,16 @@ def freeze_prefs():
 # menus or actions
 ############################################################
 
+
 def in_ada_file(context):
     """Returns True if the focus is currently inside an Ada editor"""
     if not hasattr(context, "in_ada_file"):
         buffer = EditorBuffer.get(open=False)
         context.in_ada_file = (
-            context.module_name == "Source_Editor" and
-            buffer and
-            buffer.file().language().lower() == "ada")
+            context.module_name == "Source_Editor"
+            and buffer
+            and buffer.file().language().lower() == "ada"
+        )
     return context.in_ada_file
 
 
@@ -478,9 +502,10 @@ def in_c_file(context):
     if not hasattr(context, "in_c_file"):
         buffer = EditorBuffer.get(open=False)
         context.in_c_file = (
-            context.module_name == "Source_Editor" and
-            buffer and
-            buffer.file().language().lower() in ["c", "c++", "cpp"])
+            context.module_name == "Source_Editor"
+            and buffer
+            and buffer.file().language().lower() in ["c", "c++", "cpp"]
+        )
     return context.in_c_file
 
 
@@ -501,9 +526,10 @@ def in_xml_file(context):
     if not hasattr(context, "in_xml_file"):
         buffer = EditorBuffer.get(open=False)
         context.in_xml_file = (
-            context.module_name == "Source_Editor" and
-            buffer and
-            buffer.file().language().lower() in ["xml", "html"])
+            context.module_name == "Source_Editor"
+            and buffer
+            and buffer.file().language().lower() in ["xml", "html"]
+        )
     return context.in_xml_file
 
 
@@ -571,9 +597,11 @@ def get_gnat_driver_cmd():
     "powerpc-elf-gnat" for cross PowerPC ELF targets.
     """
     target = GPS.get_target()
-    return '{}-gnat'.format(target) if target else 'gnat'
+    return "{}-gnat".format(target) if target else "gnat"
 
 
-GPS.parse_xml("""
+GPS.parse_xml(
+    """
 <filter name="is_text_widget" shell_lang="python"
-        shell_cmd="gs_utils.filter_text_actions(GPS.current_context())" />""")
+        shell_cmd="gs_utils.filter_text_actions(GPS.current_context())" />"""
+)

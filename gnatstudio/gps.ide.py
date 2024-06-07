@@ -60,7 +60,9 @@ package body %(name) is
    %_
 
 end %(name);</text>
-  </alias>""".format(y=get_current_year())
+  </alias>""".format(
+    y=get_current_year()
+)
 
 
 def flag_storage_of_project_type(source_file):
@@ -70,23 +72,22 @@ def flag_storage_of_project_type(source_file):
 
     # for safety, in case libadalang cannot process a file
     if not a.root:
-        GPS.Console().write(
-            "libadalang could not process {}\n".format(source_file))
+        GPS.Console().write("libadalang could not process {}\n".format(source_file))
         return
 
     # Find all record definitions in the unit
     for record in a.root.findall(lal.RecordTypeDef):
-
         # ... look at all the fields in these records
         for field in record.findall(lal.ComponentDecl):
-
             # if the component def contains "Project_Type" flag the location
-            if 'Project_Type' in field.f_component_def.text:
-                GPS.Message("Dangerous storing of Project_Type",
-                            source_file,
-                            int(field.sloc_range.start.line),
-                            field.sloc_range.start.column,
-                            "warning: you should not store a Project_Type")
+            if "Project_Type" in field.f_component_def.text:
+                GPS.Message(
+                    "Dangerous storing of Project_Type",
+                    source_file,
+                    int(field.sloc_range.start.line),
+                    field.sloc_range.start.column,
+                    "warning: you should not store a Project_Type",
+                )
 
 
 def initialize_project_plugin():
@@ -94,11 +95,18 @@ def initialize_project_plugin():
     # Create a specific menu under Analyze/GPS to flag
 
     if not GPS.Action("find project types stored").exists():
-        @interactive(category="General", name="find project types stored",
-                     menu="/Analyze/GPS/Flag stored Project Types")
+
+        @interactive(
+            category="General",
+            name="find project types stored",
+            menu="/Analyze/GPS/Flag stored Project Types",
+        )
         def find_project_types_stored():
-            all_ada_sources = [x for x in GPS.Project.root().sources(
-                                         recursive=True) if x.language().lower() == 'ada']
+            all_ada_sources = [
+                x
+                for x in GPS.Project.root().sources(recursive=True)
+                if x.language().lower() == "ada"
+            ]
 
             for source_file in all_ada_sources:
                 flag_storage_of_project_type(source_file)
@@ -112,7 +120,8 @@ def initialize_project_plugin():
             unit_param="name",
             language="ada",
             is_impl=False,
-            impl_alias_name="package_gps_header_body")
+            impl_alias_name="package_gps_header_body",
+        )
 
 
 def finalize_project_plugin():

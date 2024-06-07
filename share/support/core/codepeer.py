@@ -59,9 +59,7 @@ def get_supported_warnings():
     xml += "</popup>"
 
     if prev_xml != xml:
-        GPS.parse_xml(xmlHead
-                      + xml.format(default_on=default_on)
-                      + xmlTrailer)
+        GPS.parse_xml(xmlHead + xml.format(default_on=default_on) + xmlTrailer)
         prev_xml = xml
 
 
@@ -71,27 +69,26 @@ def on_project_view_changed(hook):
 
 
 if not gnatsas and codepeer:
-    root = os.path.dirname(os.path.dirname(codepeer)).replace('\\', '/')
-    example_root = root + '/share/examples/codepeer'
+    root = os.path.dirname(os.path.dirname(codepeer)).replace("\\", "/")
+    example_root = root + "/share/examples/codepeer"
     try:
-        with open(root + '/share/doc/codepeer/help.txt', 'r') as help_file:
+        with open(root + "/share/doc/codepeer/help.txt", "r") as help_file:
             help_msg = escape(help_file.read())
     except Exception:
-        help_msg = ''
+        help_msg = ""
 
     # Figure out if long switches support '--'. Assume this is the default.
-    extra_dash = '-'
+    extra_dash = "-"
     version_string = GPS.Process("codepeer --version").get_result()
     m = re.match(r".* \((\d{8})\).*", version_string)
     if m is not None:
         date = int(m.group(1))
         if date < 20220823:
-            extra_dash = ''
+            extra_dash = ""
 
-    xml_codepeer = xml_codepeer.format(example=example_root,
-                                       root=root,
-                                       s=extra_dash,
-                                       help=help_msg)
+    xml_codepeer = xml_codepeer.format(
+        example=example_root, root=root, s=extra_dash, help=help_msg
+    )
     xmlHead = xmlHead.format(help=help_msg, s=extra_dash)
     xmlTrailer = xmlTrailer.format(s=extra_dash)
     GPS.parse_xml(xml_codepeer)

@@ -33,9 +33,9 @@ def current_tree():
     return None
 
 
-@interactive(category="General",
-             filter=lambda x: current_tree() is not None,
-             key="Left")
+@interactive(
+    category="General", filter=lambda x: current_tree() is not None, key="Left"
+)
 def move_cursor_up_or_collapse():
     tree, path = current_tree()
     if tree and path:
@@ -54,9 +54,9 @@ def move_cursor_up_or_collapse():
             tree.set_cursor(path, tree.get_column(0))
 
 
-@interactive(category="General",
-             filter=lambda x: current_tree() is not None,
-             key="Right")
+@interactive(
+    category="General", filter=lambda x: current_tree() is not None, key="Right"
+)
 def expand_and_move_cursor_down():
     tree, path = current_tree()
     if tree and path:

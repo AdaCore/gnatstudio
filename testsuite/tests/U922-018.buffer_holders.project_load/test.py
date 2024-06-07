@@ -10,7 +10,7 @@ from gs_utils.internal.utils import *
 def run_test():
     GPS.Preference("LSP-Ada-Diagnostics").set(True)
     GPS.execute_action("Restart ada language server")
-    yield hook('language_server_started')
+    yield hook("language_server_started")
 
     # Open some buffers
     GPS.EditorBuffer.get(GPS.File("foo.adb"))
@@ -25,12 +25,18 @@ def run_test():
     GPS.EditorBuffer.get(GPS.File("foobar.adb"))
 
     # All the previous buffers should be cleaned
-    gps_assert(GPS.EditorBuffer.get(GPS.File("foo.adb"), open=False),
-               None,
-               "foo.adb should be closed")
-    gps_assert(GPS.EditorBuffer.get(GPS.File("bar.ads"), open=False),
-               None,
-               "bar.ads should be closed")
-    gps_assert(GPS.EditorBuffer.get(GPS.File("bar.adb"), open=False),
-               None,
-               "bar.adb should be closed")
+    gps_assert(
+        GPS.EditorBuffer.get(GPS.File("foo.adb"), open=False),
+        None,
+        "foo.adb should be closed",
+    )
+    gps_assert(
+        GPS.EditorBuffer.get(GPS.File("bar.ads"), open=False),
+        None,
+        "bar.ads should be closed",
+    )
+    gps_assert(
+        GPS.EditorBuffer.get(GPS.File("bar.adb"), open=False),
+        None,
+        "bar.adb should be closed",
+    )

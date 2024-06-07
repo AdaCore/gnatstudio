@@ -46,11 +46,10 @@ def test_driver():
     # change the cursor location, give the focus to the Search view
     # and preselect the "Find" entry
     GPS.execute_action(SEARCH_ACTION)
-    verify_loc(view, 1, 1,
-               "Search failed when the cursor is in the editor")
-    gps_assert(s.pattern.get_selection_bounds(),
-               (0, 3),
-               "The entry text should be preselectioned")
-    gps_assert("Foo",
-               s.pattern.get_text(),
-               "Wrong text in the Search entry")
+    verify_loc(view, 1, 1, "Search failed when the cursor is in the editor")
+    gps_assert(
+        s.pattern.get_selection_bounds(),
+        (0, 3),
+        "The entry text should be preselectioned",
+    )
+    gps_assert("Foo", s.pattern.get_text(), "Wrong text in the Search entry")

@@ -1,22 +1,26 @@
 from highlighter.interface import *
 
 
-tag_string_escapes = new_style(lang="General",
-                               name="string escapes",
-                               label="String escapes",
-                               doc='',
-                               foreground_colors=('#875162', '#DA7495'))
+tag_string_escapes = new_style(
+    lang="General",
+    name="string escapes",
+    label="String escapes",
+    doc="",
+    foreground_colors=("#875162", "#DA7495"),
+)
 """
 Style for escapes in strings, such as \\n or \\t
 
 :type: Style
 """
 
-tag_comment_notes = new_style(lang="General",
-                              name="comment_notes",
-                              label="TODO and NOTE in comments",
-                              doc='',
-                              foreground_colors=("#407A8E", "#907A8E"))
+tag_comment_notes = new_style(
+    lang="General",
+    name="comment_notes",
+    label="TODO and NOTE in comments",
+    doc="",
+    foreground_colors=("#407A8E", "#907A8E"),
+)
 """
 Style for notes in comments. Used for highlighting TODO and NOTE strings in
 comments.
@@ -75,6 +79,5 @@ Style for numbers
 
 ws = r"[^\S\n]*?"
 
-hl_comment_notes = simple("(?:TODO|NOTE){0}:".format(ws),
-                          tag=tag_comment_notes)
+hl_comment_notes = simple("(?:TODO|NOTE){0}:".format(ws), tag=tag_comment_notes)
 hl_inside_strings = simple(r"(?:\\.|\%[^\"]?)", tag=tag_string_escapes)

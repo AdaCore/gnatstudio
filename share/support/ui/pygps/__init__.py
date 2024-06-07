@@ -27,7 +27,8 @@ import sys
 
 # Use pynput for generating Keyboard/Mouse events on Windows
 import os
-if os.name == 'nt':
+
+if os.name == "nt":
     from pynput.keyboard import Key, Controller
 
 global last_sent_event
@@ -55,8 +56,8 @@ def get_children_tree(w):
 
 def delayed_exit(delay=200):
     """Exit GPS after a small timeout.
-     This should be used instead of GPS.exit() in contexts where a command
-     is still executing, since otherwise GPS cannot exit immediately"""
+    This should be used instead of GPS.exit() in contexts where a command
+    is still executing, since otherwise GPS cannot exit immediately"""
 
     def exit_gps(T):
         if not GPS.Command.list():
@@ -68,15 +69,16 @@ def delayed_exit(delay=200):
 try:
     from gi.repository import Gtk, GObject, Gdk
 
-    single_click_events = [Gdk.EventType.BUTTON_PRESS,
-                           Gdk.EventType.BUTTON_RELEASE]
+    single_click_events = [Gdk.EventType.BUTTON_PRESS, Gdk.EventType.BUTTON_RELEASE]
     # List of events to emit for a single click
 
-    double_click_events = [Gdk.EventType.BUTTON_PRESS,
-                           Gdk.EventType.BUTTON_RELEASE,
-                           Gdk.EventType.BUTTON_PRESS,
-                           Gdk.EventType._2BUTTON_PRESS,
-                           Gdk.EventType.BUTTON_RELEASE]
+    double_click_events = [
+        Gdk.EventType.BUTTON_PRESS,
+        Gdk.EventType.BUTTON_RELEASE,
+        Gdk.EventType.BUTTON_PRESS,
+        Gdk.EventType._2BUTTON_PRESS,
+        Gdk.EventType.BUTTON_RELEASE,
+    ]
     # List of events to emit for a double click
 
     triple_click_events = [
@@ -87,7 +89,8 @@ try:
         Gdk.EventType.BUTTON_RELEASE,
         Gdk.EventType.BUTTON_PRESS,
         Gdk.EventType._3BUTTON_PRESS,
-        Gdk.EventType.BUTTON_RELEASE]
+        Gdk.EventType.BUTTON_RELEASE,
+    ]
     # List of events to emit for a triple click
 
     # #########
@@ -97,9 +100,8 @@ try:
     # make their use easier
 
     def default_event_device():
-        """ Retrieve and cache the default event device """
-        return Gdk.Display.get_default(
-            ).get_device_manager().get_client_pointer()
+        """Retrieve and cache the default event device"""
+        return Gdk.Display.get_default().get_device_manager().get_client_pointer()
 
     def process_all_events():
         """
@@ -146,14 +148,14 @@ try:
     class WidgetTree(object):
 
         """Virtual container that represents the widget hierarchy.
-           You can traverse it with
-              for w in WidgetTree(): ...
-           or if you simply want to iterate the children of a dialog:
-              for w in WidgetTree (dialog): ...
-           or for multiple dialogs:
-              for w in WidgetTree ([dialog1, dialog2]): ...
-           To get a list of all buttons in the interface:
-              [x for x in WidgetTree() if isinstance (x, Gtk.Button)]
+        You can traverse it with
+           for w in WidgetTree(): ...
+        or if you simply want to iterate the children of a dialog:
+           for w in WidgetTree (dialog): ...
+        or for multiple dialogs:
+           for w in WidgetTree ([dialog1, dialog2]): ...
+        To get a list of all buttons in the interface:
+           [x for x in WidgetTree() if isinstance (x, Gtk.Button)]
         """
 
         def __init__(self, wlist=None):
@@ -190,13 +192,13 @@ try:
                 self.index += 1
 
                 if isinstance(w, Gtk.MenuItem):
-                    accel_path = ''
+                    accel_path = ""
                     result = None
 
                     for m in w.get_children():
                         if isinstance(m, Gtk.Label):
                             accel_path = prefix + m.get_text()
-                            accel = ''
+                            accel = ""
                             if isinstance(m, Gtk.AccelLabel):
                                 k = Gtk.AccelMap.lookup_entry(accel_path)
                                 if k and k[0] != 0:
@@ -208,7 +210,7 @@ try:
                             for m1 in m.get_children():
                                 if isinstance(m1, Gtk.Label):
                                     accel_path = prefix + m1.get_text()
-                                    accel = ''
+                                    accel = ""
                                     result = (w, accel_path, accel, level)
                                     break
 
@@ -219,8 +221,8 @@ try:
                         index = self.index
                         for c in submenu:
                             self.to_traverse.insert(
-                                index,
-                                (c, accel_path + '/', level + 1))
+                                index, (c, accel_path + "/", level + 1)
+                            )
                             index += 1
 
                     if result:
@@ -228,15 +230,16 @@ try:
 
                 elif isinstance(w, Gtk.Container):
                     self.to_traverse.extend(
-                        (c, prefix, level + 1) for c in w.get_children())
+                        (c, prefix, level + 1) for c in w.get_children()
+                    )
 
             raise StopIteration
 
     class MenuTree(object):
 
         """Iterates over a menu and all its submenus. For each item, return
-           a tuple (menu, label, accel, level), where menu is the
-           Gtk.MenuItem widget.
+        a tuple (menu, label, accel, level), where menu is the
+        Gtk.MenuItem widget.
         """
 
         def __init__(self, menu, accel_prefix="<gps>/"):
@@ -252,9 +255,9 @@ try:
 
     def get_widget_by_name(name, list=None):
         """Search in the whole hierarchy given by list (see WidgetTree) the
-           first widget with the given name.
-           The name must have been set explicitly in Ada through a call to
-           Set_Name (W, "...")
+        first widget with the given name.
+        The name must have been set explicitly in Ada through a call to
+        Set_Name (W, "...")
         """
 
         result = [x for x in WidgetTree(list) if x.get_name() == name]
@@ -277,11 +280,14 @@ try:
 
     def get_window_by_title(title, list=None):
         """Search the whole hierarchy given by list (see WidgetTree) the
-           first window with given title.
+        first window with given title.
         """
 
-        result = [x for x in WidgetTree(list) if isinstance(x, Gtk.Window) and
-                  x.get_title() == title]
+        result = [
+            x
+            for x in WidgetTree(list)
+            if isinstance(x, Gtk.Window) and x.get_title() == title
+        ]
         if result:
             return result[0]
         else:
@@ -289,13 +295,16 @@ try:
 
     def get_window_by_prefix(prefix, list=None):
         """Search the whole hierarchy given by list (see WidgetTree) the
-           first window whose title starts with prefix
+        first window whose title starts with prefix
         """
 
-        result = [x for x in WidgetTree(list) if
-                  isinstance(x, Gtk.Window) and
-                  x.get_title() and
-                  x.get_title().startswith(prefix)]
+        result = [
+            x
+            for x in WidgetTree(list)
+            if isinstance(x, Gtk.Window)
+            and x.get_title()
+            and x.get_title().startswith(prefix)
+        ]
         if result:
             return result[0]
         else:
@@ -303,12 +312,17 @@ try:
 
     def get_stock_button(parents, stock=Gtk.STOCK_OK):
         """Find the first button in the possible parents that is a stock button
-           with the given stock label.
-           Most dialogs in GPS use such buttons, that mix icons and text.
+        with the given stock label.
+        Most dialogs in GPS use such buttons, that mix icons and text.
         """
 
-        return [x for x in WidgetTree(parents) if isinstance(x, Gtk.Button) and
-                x.get_use_stock() and x.get_label() == stock][0]
+        return [
+            x
+            for x in WidgetTree(parents)
+            if isinstance(x, Gtk.Button)
+            and x.get_use_stock()
+            and x.get_label() == stock
+        ][0]
 
     def get_button_from_label(label, parents=None):
         """Return the first button with the matching label"""
@@ -323,9 +337,13 @@ try:
 
     def get_button_from_icon_name(parents, icon_name):
         """Return the first button with the matching icon"""
-        return [x for x in WidgetTree(parents) if isinstance(x, Gtk.Button) and
-                x.get_image() and
-                x.get_image().get_icon_name()[0] == icon_name][0]
+        return [
+            x
+            for x in WidgetTree(parents)
+            if isinstance(x, Gtk.Button)
+            and x.get_image()
+            and x.get_image().get_icon_name()[0] == icon_name
+        ][0]
 
     # ###########
     # # Labels ##
@@ -336,10 +354,11 @@ try:
         Return the first Gtk.Label that displays the given ``text`` or
         None if there is no matching label.
         """
-        result = [x for x in WidgetTree(parents) if
-                  isinstance(x, Gtk.Label) and
-                  x.get_label() == text and
-                  x.is_visible()]
+        result = [
+            x
+            for x in WidgetTree(parents)
+            if isinstance(x, Gtk.Label) and x.get_label() == text and x.is_visible()
+        ]
         if result:
             return result[0]
         else:
@@ -352,18 +371,21 @@ try:
     # until they have open a dialog
     def open_menu(menu, on_open, widgets, args, kwargs, timeout=0):
         """Generic function to open a menu, wait for the dialog to appear,
-           and then call a user callback with several arguments: one for the
-           newly created dialog, one for each widget whose name is specified
-           in widgets, then *args and **kwargs. The latter are provided so
-           that the callback on_open can be given any number of arguments that
-           your application needs.
-           Do not use this directly in general, but rather
-               open_project_properties, open_project_wizard,...
+        and then call a user callback with several arguments: one for the
+        newly created dialog, one for each widget whose name is specified
+        in widgets, then *args and **kwargs. The latter are provided so
+        that the callback on_open can be given any number of arguments that
+        your application needs.
+        Do not use this directly in general, but rather
+            open_project_properties, open_project_wizard,...
         """
 
         def internal_on_open(on_open, widgets, windows, args, kwargs):
-            dialog = [w for w in Gtk.Window.list_toplevels() if w
-                      not in windows and w.get_mapped()]
+            dialog = [
+                w
+                for w in Gtk.Window.list_toplevels()
+                if w not in windows and w.get_mapped()
+            ]
             if not dialog:
                 # Will try again after same timeout or idle
                 return True
@@ -375,17 +397,21 @@ try:
                     # Wrong dialog
                     return True
 
-            params = tuple([dialog] + [get_widget_by_name(name, dialog)
-                                       for name in widgets])
+            params = tuple(
+                [dialog] + [get_widget_by_name(name, dialog) for name in widgets]
+            )
             on_open(*params + args, **kwargs)
 
         windows = Gtk.Window.list_toplevels()
         if timeout == 0:
-            GObject.idle_add(lambda: internal_on_open(on_open, widgets,
-                                                      windows, args, kwargs))
+            GObject.idle_add(
+                lambda: internal_on_open(on_open, widgets, windows, args, kwargs)
+            )
         else:
-            GObject.timeout_add(timeout, lambda: internal_on_open(
-                on_open, widgets, windows, args, kwargs))
+            GObject.timeout_add(
+                timeout,
+                lambda: internal_on_open(on_open, widgets, windows, args, kwargs),
+            )
         GPS.Menu.get(menu).action.execute_if_possible()
 
     # ###############
@@ -425,20 +451,26 @@ try:
         GDK_F5 = Key.f5
         GDK_DELETE = Key.delete
 
-    def send_key_event(keyval, primary=0, alt=0, shift=0, control=0,
-                       window=None,
-                       process_events="linux" in sys.platform,
-                       bypass_keymanager="linux" not in sys.platform):
+    def send_key_event(
+        keyval,
+        primary=0,
+        alt=0,
+        shift=0,
+        control=0,
+        window=None,
+        process_events="linux" in sys.platform,
+        bypass_keymanager="linux" not in sys.platform,
+    ):
         """Emit a key event on GPS, simulating the given key. This event is
-           sent asynchronously.
-           Unless process_events is true, this function will return when the
-           event has not yet been processed by gtk+.
-           keyval is generally the result of calling  ord("x").
-           Sending letters to an editor doesn't seem to work at the moment,
-           except for special characters like GDK_RETURN.
-           If bypass_keymanager is True, do not use the Ada function which
-           passes the event to the key manager, but synthesize the event
-           in Python directly.
+        sent asynchronously.
+        Unless process_events is true, this function will return when the
+        event has not yet been processed by gtk+.
+        keyval is generally the result of calling  ord("x").
+        Sending letters to an editor doesn't seem to work at the moment,
+        except for special characters like GDK_RETURN.
+        If bypass_keymanager is True, do not use the Ada function which
+        passes the event to the key manager, but synthesize the event
+        in Python directly.
         """
         if not bypass_keymanager:
             keycode = 0
@@ -453,10 +485,15 @@ try:
                 keycode = keys[0].keycode
 
             if hasattr(GPS, "send_key_event"):
-                GPS.send_key_event(keyval, window=window,
-                                   primary=primary, control=control,
-                                   alt=alt, shift=shift,
-                                   hardware_keycode=int(keycode))
+                GPS.send_key_event(
+                    keyval,
+                    window=window,
+                    primary=primary,
+                    control=control,
+                    alt=alt,
+                    shift=shift,
+                    hardware_keycode=int(keycode),
+                )
                 return
         else:
             keyboard = Controller()
@@ -511,7 +548,8 @@ try:
         :return: Gtk.TextView
         """
         widgets = get_widgets_by_type(
-            Gtk.TextView, nb.get_nth_page(nb.get_current_page()))
+            Gtk.TextView, nb.get_nth_page(nb.get_current_page())
+        )
 
         return widgets[-1] if widgets else None
 
@@ -520,15 +558,13 @@ try:
         :type ed_buffer: GPS.EditorBuffer
         :return: boolean
         """
-        tv = get_widgets_by_type(
-            Gtk.TextView, ed_buffer.current_view().pywidget())[-1]
+        tv = get_widgets_by_type(Gtk.TextView, ed_buffer.current_view().pywidget())[-1]
         nb = get_notebook(tv)
         if nb:
             return get_current_textview(nb) == tv and tv.is_visible()
         # If nb is None, the editor is not in a notebook
         else:
             return tv.is_visible()
-
 
 except ImportError:
     pass

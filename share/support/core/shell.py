@@ -34,22 +34,22 @@ from gs_utils.console_process import ANSI_Console_Process, Console_Process
 
 
 class Unix_Shell(ANSI_Console_Process):
-
     def __init__(self, command):
         oldterm = os.environ["TERM"]
         os.environ["TERM"] = "xterm"
         os.environ["GPSSHELL"] = "1"
         ANSI_Console_Process.__init__(self, command)
         if GPS.Preference("External Commands:Shell/stty").get():
-            self.send('stty echo; PS1="\[\e[1G\]$PS1";'
-                      ' echo -en "\\e[1;"$(stty size | cut -d" " -f1)'
-                      '";1;"$(stty size | cut -d" " -f2)"r";'
-                      ' clear')
+            self.send(
+                'stty echo; PS1="\[\e[1G\]$PS1";'
+                ' echo -en "\\e[1;"$(stty size | cut -d" " -f1)'
+                '";1;"$(stty size | cut -d" " -f2)"r";'
+                " clear"
+            )
         os.environ["TERM"] = oldterm
 
 
 class Win32_Shell(Console_Process):
-
     def __init__(self, command):
         os.environ["GPSSHELL"] = "1"
         Console_Process.__init__(self, command)
@@ -61,14 +61,16 @@ def on_label(context):
 
     if dir is not None:
         return "Run OS shell in <b>%s</b>" % (
-            os.path.basename(os.path.dirname("%s/" % dir)))
+            os.path.basename(os.path.dirname("%s/" % dir))
+        )
     else:
         # Otherwise open in the current directory
         return "Run OS shell in <b>%s</b>" % (
-            os.path.basename(os.path.dirname("%s/" % os.getcwd())))
+            os.path.basename(os.path.dirname("%s/" % os.getcwd()))
+        )
 
 
-@interactive(name='open os shell')
+@interactive(name="open os shell")
 @save_dir
 def create_default_shell():
     """Spawns the user's shell as read from the environment variable SHELL"""
@@ -77,10 +79,13 @@ def create_default_shell():
         """
         :type variables: [name]
         """
-        msg = ("Can't start OS shell, the following environment variables"
-               + " need to be set: ")
-        msg += ", ".join('%s (currently "%s")' % (var, str(os.getenv(var)))
-                         for var in variables)
+        msg = (
+            "Can't start OS shell, the following environment variables"
+            + " need to be set: "
+        )
+        msg += ", ".join(
+            '%s (currently "%s")' % (var, str(os.getenv(var))) for var in variables
+        )
         msg += "\n"
         GPS.Console("Messages").write(msg, mode="error")
 
@@ -105,7 +110,8 @@ def create_default_shell():
                 bash_exe = os_utils.locate_exec_on_path("bash")
                 if bash_exe:
                     GPS.Console("Messages").write(
-                        "Retrying with SHELL=%s\n" % str(bash_exe))
+                        "Retrying with SHELL=%s\n" % str(bash_exe)
+                    )
                     Unix_Shell([str(bash_exe), "-i"])
         else:
             __error_msg(["TERM", "SHELL"])
@@ -134,18 +140,24 @@ def if_has_directory(context):
 
 
 GPS.Preference("External Commands:Shell/contextual").create(
-    "Contextual menu", "boolean",
-    "Add contextual menu to start OS shell from project view "
-    "(needs to restart GPS)",
-    False)
+    "Contextual menu",
+    "boolean",
+    "Add contextual menu to start OS shell from project view " "(needs to restart GPS)",
+    False,
+)
 GPS.Preference("External Commands:Shell/stty").create(
-    "Send stty setup", "boolean",
+    "Send stty setup",
+    "boolean",
     "Send the 'stty echo' command automatically. This command "
     "is needed in some shells to see the keys typed on the keyboard. "
     "This is only applicable to Unix shells.",
-    True)
+    True,
+)
 
 if GPS.Preference("External Commands:Shell/contextual").get():
     make_interactive(
-        create_default_shell, name='open os shell for contextual menu',
-        contextual=on_label, filter=if_has_directory)
+        create_default_shell,
+        name="open os shell for contextual menu",
+        contextual=on_label,
+        filter=if_has_directory,
+    )

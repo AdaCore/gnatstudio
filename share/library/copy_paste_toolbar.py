@@ -9,11 +9,12 @@ import GPS
 import gs_utils
 
 
-@gs_utils.hook('gps_started')
+@gs_utils.hook("gps_started")
 def __gps_started():
-    GPS.Action('cut to clipboard').button(
-        toolbar='main', section='editor', label='Cut')
-    GPS.Action('copy to clipboard').button(
-        toolbar='main', section='editor', label='Copy')
-    GPS.Action('paste from clipboard').button(
-        toolbar='main', section='editor', label='Paste')
+    GPS.Action("cut to clipboard").button(toolbar="main", section="editor", label="Cut")
+    GPS.Action("copy to clipboard").button(
+        toolbar="main", section="editor", label="Copy"
+    )
+    GPS.Action("paste from clipboard").button(
+        toolbar="main", section="editor", label="Paste"
+    )

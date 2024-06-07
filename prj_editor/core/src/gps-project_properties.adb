@@ -794,7 +794,9 @@ package body GPS.Project_Properties is
             | Attribute_As_Unit
             | Attribute_As_Directory =>
 
-            if Attr_Type.Default.all = "" then
+            if Attr_Type.Default = null
+              or else Attr_Type.Default.all = ""
+            then
                return null;
 
             elsif Attr_Type.Default.all = "project source files" then
@@ -885,7 +887,9 @@ package body GPS.Project_Properties is
             | Attribute_As_Unit
             | Attribute_As_Directory =>
 
-            if Attr_Type.Default.all = "project source files" then
+            if Attr_Type.Default /= null
+              and then Attr_Type.Default.all = "project source files"
+            then
                declare
                   Files  : File_Array_Access :=
                     Project.Source_Files (Recursive => False);

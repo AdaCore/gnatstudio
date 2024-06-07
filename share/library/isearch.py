@@ -56,30 +56,38 @@ if pygtk was installed along with GPS. Otherwise, it is done every time the
 pattern is modified, and will slow things down a little
 """
 
-from GPS import CommandWindow, EditorBuffer, Hook, Preference, \
-    execute_action, lookup_actions_from_key
+from GPS import (
+    CommandWindow,
+    EditorBuffer,
+    Hook,
+    Preference,
+    execute_action,
+    lookup_actions_from_key,
+)
 from gs_utils import interactive
 
-Preference('Plugins/isearch/highlightnext').create(
-    'Highlight next matches',
-    'boolean',
-    "Highlight the next matches in the editor." +
-    " This highlighting will be visible until the next isearch command." +
-    " To cancel, start an isearch and press Esc immediately",
-    True)
+Preference("Plugins/isearch/highlightnext").create(
+    "Highlight next matches",
+    "boolean",
+    "Highlight the next matches in the editor."
+    + " This highlighting will be visible until the next isearch command."
+    + " To cancel, start an isearch and press Esc immediately",
+    True,
+)
 
-bg_next_match_pref = Preference('Search-Src-Highlight-Color')
-bg_color_pref = Preference('Command-Windows-Background-Color')
-bg_error_pref = Preference('High-Importance-Messages-Highlight')
+bg_next_match_pref = Preference("Search-Src-Highlight-Color")
+bg_color_pref = Preference("Command-Windows-Background-Color")
+bg_error_pref = Preference("High-Importance-Messages-Highlight")
 
-isearch_action_name = 'isearch'
-isearch_backward_action_name = 'isearch backward'
+isearch_action_name = "isearch"
+isearch_backward_action_name = "isearch backward"
 # Changing the name of menus should be reflected in emacs.xml
 
 try:
     # If we have PyGTK installed, we'll do the highlighting of the next
     # matches in the background, which makes the interface more responsive
     from gi.repository import GLib
+
     has_pygtk = 1
 except Exception:
     has_pygtk = 0
@@ -88,9 +96,9 @@ except Exception:
 class Isearch(CommandWindow):
 
     """This class provides an incremental search facility in GPS.
-      When instanciated, it immediately starts executing"""
+    When instanciated, it immediately starts executing"""
 
-    last_search = ''
+    last_search = ""
     last_case_sensitive = False
 
     def __init__(self, case_sensitive=0, backward=0, regexp=0):
@@ -102,12 +110,10 @@ class Isearch(CommandWindow):
             self.case_sensitive = case_sensitive
             self.explicit_case_sensitive = False  # # Automatic or from alt-c ?
             self.backward = backward
-            self.stack = [(self.loc, self.end_loc, '', 0)]
+            self.stack = [(self.loc, self.end_loc, "", 0)]
             self.locked = False
-            self.overlay = self.editor.create_overlay('isearch')
-            self.overlay.set_property(
-                'background',
-                bg_next_match_pref.get())
+            self.overlay = self.editor.create_overlay("isearch")
+            self.overlay.set_property("background", bg_next_match_pref.get())
             self.insert_overlays_id = 0
             self.remove_overlays()
             CommandWindow.__init__(
@@ -116,7 +122,8 @@ class Isearch(CommandWindow):
                 on_changed=self.on_changed,
                 on_cancel=self.on_cancel,
                 on_key=self.on_key,
-                on_activate=self.on_activate)
+                on_activate=self.on_activate,
+            )
 
         except Exception:
             pass
@@ -124,10 +131,10 @@ class Isearch(CommandWindow):
     def prompt(self):
         """Return the prompt to use for the command window"""
 
-        prompt = ''
+        prompt = ""
         if self.case_sensitive:
-            prompt = prompt + '[CS] '
-        return prompt + 'Pattern:'
+            prompt = prompt + "[CS] "
+        return prompt + "Pattern:"
 
     def cancel_idle_overlays(self):
         """Cancel the background loop that computes the next matches"""
@@ -139,8 +146,7 @@ class Isearch(CommandWindow):
     def remove_overlays(self):
         """Remove all isearch overlays in the current editor"""
 
-        highlight_next_matches = Preference(
-            'Plugins/isearch/highlightnext').get()
+        highlight_next_matches = Preference("Plugins/isearch/highlightnext").get()
 
         self.cancel_idle_overlays()
 
@@ -157,14 +163,16 @@ class Isearch(CommandWindow):
 
     def insert_next_overlay(self, input):
         result = self.overlay_loc.search(
-            input, regexp=self.regexp,
-            case_sensitive=self.case_sensitive, dialog_on_failure=False,
-            backward=self.backward)
+            input,
+            regexp=self.regexp,
+            case_sensitive=self.case_sensitive,
+            dialog_on_failure=False,
+            backward=self.backward,
+        )
         if result:
             (self.overlay_loc, end_loc) = result
 
-            self.editor.apply_overlay(
-                self.overlay, self.overlay_loc, end_loc - 1)
+            self.editor.apply_overlay(self.overlay, self.overlay_loc, end_loc - 1)
 
             self.overlay_loc += 1
             return True
@@ -173,16 +181,16 @@ class Isearch(CommandWindow):
             return False
 
     def insert_overlays(self):
-        highlight_next_matches = Preference(
-            'Plugins/isearch/highlightnext').get()
+        highlight_next_matches = Preference("Plugins/isearch/highlightnext").get()
 
         if highlight_next_matches:
             input = self.read()
             self.overlay_loc = self.loc
-            if input != '':
+            if input != "":
                 if has_pygtk:
                     self.insert_overlays_id = GLib.idle_add(
-                        self.insert_next_overlay, input)
+                        self.insert_next_overlay, input
+                    )
                 elif len(input) > 2:
                     while self.insert_next_overlay(input):
                         pass
@@ -200,28 +208,31 @@ class Isearch(CommandWindow):
 
     def on_key(self, input, key, cursor_pos):
         """The user has typed a new key.
-           Return True if you have handled the key yourself, or if you want
-           to prevent its insertion in the command line.
-           Return False if the key should be processed as usual.
+        Return True if you have handled the key yourself, or if you want
+        to prevent its insertion in the command line.
+        Return False if the key should be processed as usual.
         """
 
         # ctrl-w copies the current word (do not change case sensitivity
         # though)
         # ctrl-y copies the end of the current line
 
-        if key in ('control-w', 'control-y'):
+        if key in ("control-w", "control-y"):
             start = self.editor.current_view().cursor()
-            if key == 'control-w':
+            if key == "control-w":
                 end = start.forward_word() - 1  # # Go to end of current word
-            elif self.editor.get_chars(start, start) == '\n':
+            elif self.editor.get_chars(start, start) == "\n":
                 end = (start + 1).forward_line() - 2  # # end of next line
             else:
                 end = start.forward_line() - 2  # # Go to end of this line
 
             self.locked = True
             case_sensitive = self.case_sensitive
-            Isearch.last_search = input[:cursor_pos + 1] \
-                + self.editor.get_chars(start, end) + input[cursor_pos + 1:]
+            Isearch.last_search = (
+                input[: cursor_pos + 1]
+                + self.editor.get_chars(start, end)
+                + input[cursor_pos + 1 :]
+            )
             self.write(Isearch.last_search)
             self.locked = False
             self.editor.select(self.loc, end + 1)
@@ -229,7 +240,7 @@ class Isearch(CommandWindow):
             return True
 
         # backspace goes back to stack location and pattern
-        if key.lower() == 'backspace' and self.stack != []:
+        if key.lower() == "backspace" and self.stack != []:
             if self.stack != []:
                 self.stack.pop()
             if self.stack != []:
@@ -247,7 +258,7 @@ class Isearch(CommandWindow):
                 return True
 
         # Toggle case sensitivity
-        if key.lower() == 'alt-c':
+        if key.lower() == "alt-c":
             self.case_sensitive = not self.case_sensitive
             self.explicit_case_sensitive = True
             self.set_prompt(self.prompt())
@@ -263,7 +274,7 @@ class Isearch(CommandWindow):
         actions = lookup_actions_from_key(key)
         if isearch_action_name in actions:
             self.backward = False
-            if input == '':
+            if input == "":
                 self.case_sensitive = Isearch.last_case_sensitive
                 self.explicit_case_sensitive = True
                 self.write(Isearch.last_search)
@@ -274,7 +285,7 @@ class Isearch(CommandWindow):
 
         if isearch_backward_action_name in actions:
             self.backward = True
-            if input == '':
+            if input == "":
                 self.case_sensitive = Isearch.last_case_sensitive
                 self.explicit_case_sensitive = True
                 self.write(Isearch.last_search)
@@ -285,11 +296,11 @@ class Isearch(CommandWindow):
 
         # Cancel the search on any special key. Currently, the key is lost, not
         # sent to the parent window
-        if 'control-' in key or 'alt-' in key:
+        if "control-" in key or "alt-" in key:
             self.destroy()
             return True
 
-        if key.lower() in ('left', 'right', 'up', 'down'):
+        if key.lower() in ("left", "right", "up", "down"):
             self.destroy()
             return True
 
@@ -297,17 +308,19 @@ class Isearch(CommandWindow):
 
     def on_changed(self, input, cursor_pos, redo_overlays=1):
         """The user has modified the command line.
-           cursor_pos can be used to find where on the line the cursor is
-           located, in case we need to change the command line.
-              input [:cursor_pos + 1]  is before the cursor
-              input [cursor_pos + 1:]  is after the cursor"""
+        cursor_pos can be used to find where on the line the cursor is
+        located, in case we need to change the command line.
+           input [:cursor_pos + 1]  is before the cursor
+           input [cursor_pos + 1:]  is after the cursor"""
 
-        if not self.locked and input != '':
+        if not self.locked and input != "":
             # Automatic case sensitivity: when we have an upper case, switch to
             # case sensitive
-            if (not self.explicit_case_sensitive and not
-                    not self.case_sensitive and
-                    input.lower() != input):
+            if (
+                not self.explicit_case_sensitive
+                and not not self.case_sensitive
+                and input.lower() != input
+            ):
                 self.case_sensitive = True
                 self.set_prompt(self.prompt())
             Isearch.last_case_sensitive = self.case_sensitive
@@ -327,9 +340,13 @@ class Isearch(CommandWindow):
         # the current location
 
         if self.backward:
-            result = self.loc.search(input, regexp=self.regexp,
-                                     case_sensitive=self.case_sensitive,
-                                     dialog_on_failure=False, backward=False)
+            result = self.loc.search(
+                input,
+                regexp=self.regexp,
+                case_sensitive=self.case_sensitive,
+                dialog_on_failure=False,
+                backward=False,
+            )
             if result and result[0] == self.loc:
                 self.set_background(bg_color_pref.get())
                 (match_from, match_to) = result
@@ -338,10 +355,13 @@ class Isearch(CommandWindow):
                 self.insert_overlays()
                 return
 
-        result = self.loc.search(input, regexp=self.regexp,
-                                 case_sensitive=self.case_sensitive,
-                                 dialog_on_failure=False,
-                                 backward=self.backward)
+        result = self.loc.search(
+            input,
+            regexp=self.regexp,
+            case_sensitive=self.case_sensitive,
+            dialog_on_failure=False,
+            backward=self.backward,
+        )
         if result:
             self.set_background(bg_color_pref.get())
             (self.loc, self.end_loc) = result
@@ -361,13 +381,13 @@ class Isearch(CommandWindow):
                 self.loc = self.loc.buffer().beginning_of_buffer()
             self.end_loc = self.loc
             self.set_background(bg_error_pref.get())
-            Hook('stop_macro_action_hook').run()
+            Hook("stop_macro_action_hook").run()
 
     def on_activate(self, input):
         """The user has pressed enter"""
 
-        if input == '':
-            execute_action('search')
+        if input == "":
+            execute_action("search")
 
     def on_cancel(self, input):
         """The user has cancelled the search"""
@@ -376,25 +396,23 @@ class Isearch(CommandWindow):
         self.editor.unselect()
 
 
-@interactive(name=isearch_action_name,
-             category='Editor',
-             filter='Source editor')
+@interactive(name=isearch_action_name, category="Editor", filter="Source editor")
 def interactive_search():
     """
-This action provides an incremental search facility: once activated,
-each character you type is added to the search pattern, and GPS jumps
-to the next occurrence of the pattern.
+    This action provides an incremental search facility: once activated,
+    each character you type is added to the search pattern, and GPS jumps
+    to the next occurrence of the pattern.
     """
     Isearch()
 
 
-@interactive(name=isearch_backward_action_name,
-             category="Editor",
-             filter="Source editor")
+@interactive(
+    name=isearch_backward_action_name, category="Editor", filter="Source editor"
+)
 def interactive_search_backward():
     """
-This action provides a backward incremental search facility:
-once activated, each character you type is added to the search pattern, and
-GPS jumps to the stack occurrence of the pattern.
+    This action provides a backward incremental search facility:
+    once activated, each character you type is added to the search pattern, and
+    GPS jumps to the stack occurrence of the pattern.
     """
     Isearch(backward=True)

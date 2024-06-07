@@ -20,8 +20,13 @@ from gs_utils import make_interactive
 
 NB_MAX_PREF = "Plugins/gnatprove_runs/nb_runs"
 GPS.Preference(NB_MAX_PREF).create(
-    "Number of runs saved", "integer",
-    """Number of runs saved in the artifacts directory.""", 2, 1, 10)
+    "Number of runs saved",
+    "integer",
+    """Number of runs saved in the artifacts directory.""",
+    2,
+    1,
+    10,
+)
 
 
 class SavedRunManager(object):
@@ -34,17 +39,16 @@ class SavedRunManager(object):
 
         def on_project_changed(*args):
             self.reload_from_disk()
+
         GPS.Hook("project_view_changed").add(on_project_changed)
 
     def _get_archive_file(self):
-        return os.path.join(
-            GPS.Project.root().artifacts_dir(),
-            'runs.yaml')
+        return os.path.join(GPS.Project.root().artifacts_dir(), "runs.yaml")
 
     def reload_from_disk(self):
         f = self._get_archive_file()
         if os.path.exists(f):
-            with open(f, 'rb') as fd:
+            with open(f, "rb") as fd:
                 self.runs = yaml.load(fd.read(), Loader=yaml.FullLoader)
 
         # Refresh the widget
@@ -52,21 +56,19 @@ class SavedRunManager(object):
             self.widget.refresh()
 
     def _save_to_disk(self):
-        with open(self._get_archive_file(), 'w') as fd:
+        with open(self._get_archive_file(), "w") as fd:
             fd.write(yaml.dump(self.runs))
 
     def _purge_old_runs(self):
-        search_dir = os.path.join(
-            GPS.Project.root().artifacts_dir(), 'saved_runs')
-        full_dirs = [
-            os.path.join(search_dir, d) for d in os.listdir(search_dir)]
+        search_dir = os.path.join(GPS.Project.root().artifacts_dir(), "saved_runs")
+        full_dirs = [os.path.join(search_dir, d) for d in os.listdir(search_dir)]
         full_dirs.sort(key=lambda x: os.path.getmtime(x))
 
         cpt = 1
         for d in reversed(full_dirs):
             if cpt > GPS.Preference(NB_MAX_PREF).get():
                 try:
-                    del self.runs[os.path.basename(d).replace('_', ':')]
+                    del self.runs[os.path.basename(d).replace("_", ":")]
                 except KeyError:
                     # Corruption somewhere: the dir is not listed anymore in
                     # the runs.
@@ -76,18 +78,17 @@ class SavedRunManager(object):
                 cpt += 1
 
     def _save_dir(self, run):
-        base = os.path.join(
-            GPS.Project.root().artifacts_dir(), 'saved_runs')
+        base = os.path.join(GPS.Project.root().artifacts_dir(), "saved_runs")
         if not os.path.exists(base):
             os.mkdir(base)
-        return os.path.join(base, run['timestamp'].replace(':', '_'))
+        return os.path.join(base, run["timestamp"].replace(":", "_"))
 
     def restore_run(self, run_timestamp):
         run = self.runs[run_timestamp]
         # Restore the files from the saved dir
         src = self._save_dir(run)
         dest = GPS.Project.root().artifacts_dir()
-        for f in glob.glob(os.path.join(src, '*')):
+        for f in glob.glob(os.path.join(src, "*")):
             tgt = os.path.join(dest, os.path.basename(f))
             if os.path.exists(tgt):
                 shutil.rmtree(tgt)
@@ -99,23 +100,25 @@ class SavedRunManager(object):
         GPS.Locations.remove_category(run["category"])
 
         parser = spark2014.GNATprove_Parser(None)
-        parser.on_stdout(run['output'], None)
+        parser.on_stdout(run["output"], None)
         parser.on_exit(0, None)
 
     def add_run(self, label, output_parser, files, output):
-        """ Add a stored run.
+        """Add a stored run.
 
-            label: a string in pango markup format, used for display in
-            the tree
+        label: a string in pango markup format, used for display in
+        the tree
         """
         # Add the run to the list
-        run = {'label': label,
-               'category': output_parser.split('_')[0],
-               'output_parser': output_parser,
-               'files': files,
-               'output': output,
-               'timestamp': datetime.datetime.now().isoformat()}
-        self.runs[run['timestamp']] = run
+        run = {
+            "label": label,
+            "category": output_parser.split("_")[0],
+            "output_parser": output_parser,
+            "files": files,
+            "output": output,
+            "timestamp": datetime.datetime.now().isoformat(),
+        }
+        self.runs[run["timestamp"]] = run
 
         # Copy the files to the save dir
         dest = self._save_dir(run)
@@ -138,10 +141,9 @@ run_manager = SavedRunManager()
 
 
 class Job_Recorder(tool_output.OutputParser):
-
     def __init__(self, child):
         tool_output.OutputParser.__init__(self, child)
-        self.raw_text = ''
+        self.raw_text = ""
         self.child = child
 
     def on_stdout(self, text, command):
@@ -156,9 +158,9 @@ class Job_Recorder(tool_output.OutputParser):
             run_manager.add_run(
                 command.name(),
                 self.child.__class__.__name__,
-                [os.path.join(GPS.Project.root().artifacts_dir(),
-                              'gnatprove')],
-                self.raw_text)
+                [os.path.join(GPS.Project.root().artifacts_dir(), "gnatprove")],
+                self.raw_text,
+            )
 
         # Pass the ball to the next child in the chain
         self.child.on_exit(status, command)
@@ -169,17 +171,18 @@ COL_TIMESTAMP_LABEL = 1
 COL_INDEX = 2
 
 
-class GNATprove_Runs_View_Widget():
+class GNATprove_Runs_View_Widget:
     """The widget for the Jobs view"""
 
     def __init__(self):
         self.saved_runs = []
         self.box = Gtk.VBox()
 
-        self.store = Gtk.TreeStore(str,  # the label
-                                   str,  # the timestamp label
-                                   str,  # the index of the entry in saved_runs
-                                   )
+        self.store = Gtk.TreeStore(
+            str,  # the label
+            str,  # the timestamp label
+            str,  # the index of the entry in saved_runs
+        )
 
         # Initialize the tree view
         self.view = Gtk.TreeView(self.store)
@@ -237,14 +240,11 @@ class GNATprove_Runs_View_Widget():
         for run_id in run_manager.runs:
             run = run_manager.runs[run_id]
             it = self.store.append(None)
-            self.store[it] = [
-                run['label'],
-                run['timestamp'],
-                run['timestamp']]
+            self.store[it] = [run["label"], run["timestamp"], run["timestamp"]]
 
 
 class GNATprove_Runs_View(Module):
-    """ A GPS module, providing the Jobs view """
+    """A GPS module, providing the Jobs view"""
 
     view_title = "GNATprove Runs"
     mdi_position = GPS.MDI.POSITION_LEFT
@@ -254,14 +254,17 @@ class GNATprove_Runs_View(Module):
         run_manager.widget = None
 
     def setup(self):
-        if os_utils.locate_exec_on_path('gnatprove'):
+        if os_utils.locate_exec_on_path("gnatprove"):
             make_interactive(
                 self.get_view,
                 category="Views",
-                description=("Open (or reuse if it already exists)" +
-                             " the 'GNATprove Runs' view"),
+                description=(
+                    "Open (or reuse if it already exists)"
+                    + " the 'GNATprove Runs' view"
+                ),
                 menu="SPARK/Show Previous Runs",
-                name="open gnatprove runs")
+                name="open gnatprove runs",
+            )
 
     def on_view_destroy(self):
         run_manager.widget = None

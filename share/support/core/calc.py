@@ -12,7 +12,7 @@ import operator as op
 
 class OmniSearchResult(GPS.Search_Result):
     def __init__(self, expression, result):
-        self.short = "%s" % (expression, )
+        self.short = "%s" % (expression,)
         self.long = "= %s\t%s\t%s" % (result, hex(result), bin(result))
 
 
@@ -40,6 +40,7 @@ GPS.Search.register("Calculator", OmniSearchCalc(), rank=1)
 # http://stackoverflow.com/questions/2371436/
 #   evaluating-a-mathematical-expression-in-a-string
 
+
 class Calculator:
     """
     A simple calculator, that supports combination of standard mathematical
@@ -48,13 +49,19 @@ class Calculator:
        -5.0
     """
 
-    operators = {ast.Add: op.add, ast.Sub: op.sub, ast.Mult: op.mul,
-                 ast.Div: op.truediv, ast.Pow: op.pow, ast.BitXor: op.xor,
-                 ast.USub: op.neg}
+    operators = {
+        ast.Add: op.add,
+        ast.Sub: op.sub,
+        ast.Mult: op.mul,
+        ast.Div: op.truediv,
+        ast.Pow: op.pow,
+        ast.BitXor: op.xor,
+        ast.USub: op.neg,
+    }
 
     @staticmethod
     def eval(expr):
-        return Calculator._eval(ast.parse(expr, mode='eval').body)
+        return Calculator._eval(ast.parse(expr, mode="eval").body)
 
     @staticmethod
     def _eval(node):
@@ -62,10 +69,9 @@ class Calculator:
             return node.n
         elif isinstance(node, ast.BinOp):
             return Calculator.operators[type(node.op)](
-                Calculator._eval(node.left),
-                Calculator._eval(node.right))
+                Calculator._eval(node.left), Calculator._eval(node.right)
+            )
         elif isinstance(node, ast.UnaryOp):
-            return Calculator.operators[type(node.op)](
-                Calculator._eval(node.operand))
+            return Calculator.operators[type(node.op)](Calculator._eval(node.operand))
         else:
             raise TypeError(node)

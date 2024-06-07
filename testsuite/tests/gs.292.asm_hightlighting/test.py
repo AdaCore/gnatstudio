@@ -19,20 +19,20 @@ def run_test():
     buf = GPS.EditorBuffer.get(asm_file)
     yield wait_idle()
     # On windows the language will be either asm or asm_cpp (file insensitive)
-    gps_assert(asm_file.language().lower().startswith("asm"),
-               True,
-               "Wrong language for ASM file")
-    gps_assert(get_all_tags(buf),
-               EXPECTED,
-               "Issue for syntax hightlighting in ASM file")
+    gps_assert(
+        asm_file.language().lower().startswith("asm"),
+        True,
+        "Wrong language for ASM file",
+    )
+    gps_assert(
+        get_all_tags(buf), EXPECTED, "Issue for syntax hightlighting in ASM file"
+    )
 
     # Test ASM2 file
     asm2_file = GPS.File("bar.asm")
     buf = GPS.EditorBuffer.get(asm2_file)
     yield wait_idle()
-    gps_assert(asm2_file.language().lower(),
-               "asm2",
-               "Wrong language for ASM2 file")
-    gps_assert(get_all_tags(buf),
-               EXPECTED,
-               "Issue for syntax hightlighting in ASM2 file")
+    gps_assert(asm2_file.language().lower(), "asm2", "Wrong language for ASM2 file")
+    gps_assert(
+        get_all_tags(buf), EXPECTED, "Issue for syntax hightlighting in ASM2 file"
+    )

@@ -12,8 +12,8 @@ import functools
 
 
 def message_compare(a, b):
-    """ Comparison function between two messages: compare messages based on
-        line, then column, then text.
+    """Comparison function between two messages: compare messages based on
+    line, then column, then text.
     """
     if a.get_line() < b.get_line():
         return 1
@@ -32,7 +32,8 @@ def in_locations_filter(context):
     name="export locations to editor",
     contextual="Export all messages to editor",
     filter=in_locations_filter,
-    after="Change Directory...")
+    after="Change Directory...",
+)
 def export_locations_to_editor():
     """
     Export all messages listed in the Locations view to an editor.
@@ -78,14 +79,14 @@ def export_locations_to_editor():
         for f in files_list:
             text += "    %s\n" % f.path
             messages = categories[c][f]
-            messages = sorted(messages,
-                              key=functools.cmp_to_key(message_compare))
+            messages = sorted(messages, key=functools.cmp_to_key(message_compare))
 
             for m in messages:
                 text += "        %s:%s %s\n" % (
                     m.get_line(),
                     m.get_column(),
-                    m.get_text())
+                    m.get_text(),
+                )
 
         text += "\n"
 
@@ -102,7 +103,8 @@ def export_locations_to_editor():
     name="export filtered locations to editor",
     contextual="Export filtered messages to editor",
     filter=in_locations_filter,
-    after="Change Directory...")
+    after="Change Directory...",
+)
 def export_filtered_locations_to_editor():
     """
     Export filtered messages listed in the Locations view to an editor.
@@ -132,15 +134,16 @@ def on_filter(context):
 
 
 def on_label(context):
-    return "Clear locations for <b>%s</b>" % (
-         os.path.basename(context.file().path))
+    return "Clear locations for <b>%s</b>" % (os.path.basename(context.file().path))
 
 
 @gs_utils.interactive(
-    category='Locations', filter=on_filter,
-    name='Clear locations for file',
+    category="Locations",
+    filter=on_filter,
+    name="Clear locations for file",
     contextual=on_label,
-    static_path="Clear locations")
+    static_path="Clear locations",
+)
 def on_contextual():
     context = GPS.current_context()
     list = GPS.Message.list(file=context.file())
@@ -154,9 +157,11 @@ def in_call_trees_filter(context):
 
 @gs_utils.interactive(
     name="export call trees to editor",
-    icon='gps-save-symbolic',
-    toolbar='Call Trees', button_label='Export to editor',
-    filter=in_call_trees_filter)
+    icon="gps-save-symbolic",
+    toolbar="Call Trees",
+    button_label="Export to editor",
+    filter=in_call_trees_filter,
+)
 def export_call_trees_to_editor():
     """
     Export the current contents of the Call Trees view to an editor.
@@ -167,25 +172,26 @@ def export_call_trees_to_editor():
         if model:
             for row in model:
                 first = row[0]
-                if first == 'computing...':
+                if first == "computing...":
                     return []
-                if not row[1] or \
-                   first.endswith(' called by ') or \
-                   first.endswith('calls '):
+                if (
+                    not row[1]
+                    or first.endswith(" called by ")
+                    or first.endswith("calls ")
+                ):
                     values.append(indent + first)
                 else:
-                    values.append(indent + first + '\t\t{}'.format(row[1]))
+                    values.append(indent + first + "\t\t{}".format(row[1]))
 
-                values.extend(
-                    dump_tree_model(row.iterchildren(), indent + "   "))
+                values.extend(dump_tree_model(row.iterchildren(), indent + "   "))
         return values
 
     m = pygps.get_widget_by_name("Call Graph Tree").get_model()
-    text = '\n'.join(dump_tree_model(m, ""))
+    text = "\n".join(dump_tree_model(m, ""))
 
     # Open an editor and write the contents
 
     GPS.execute_action("new file")
     buf = GPS.EditorBuffer.get()
-    buf.delete()   # in case some template was inserted
+    buf.delete()  # in case some template was inserted
     buf.insert(buf.at(1, 1), text)

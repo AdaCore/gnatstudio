@@ -20,8 +20,6 @@ def run_test():
     editor = GPS.EditorBuffer.get(GPS.File("main.adb"))
     view = editor.current_view()
 
-    highlighted_text = editor.debug_dump_syntax_highlighting(
-        "Aspect_Text")
+    highlighted_text = editor.debug_dump_syntax_highlighting("Aspect_Text")
 
-    gps_assert(highlighted_text, expect,
-               "aspect highlighting fails")
+    gps_assert(highlighted_text, expect, "aspect highlighting fails")

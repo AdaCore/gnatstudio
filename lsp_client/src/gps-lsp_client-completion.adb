@@ -41,6 +41,8 @@ with LSP.Types;                       use LSP.Types;
 with Completion_Module;               use Completion_Module;
 with GPS.Kernel.Contexts;             use GPS.Kernel.Contexts;
 with GPS.Kernel.Style_Manager;        use GPS.Kernel.Style_Manager;
+with GPS.LSP_Client.Editors.Code_Actions;
+with GPS.LSP_Client.Editors.Code_Actions.Dialog;
 with GPS.LSP_Client.Utilities;
 with GPS.LSP_Client.Requests.Completion;
 with GPS.LSP_Client.Requests;         use GPS.LSP_Client.Requests;
@@ -525,18 +527,52 @@ package body GPS.LSP_Client.Completion is
 
    overriding procedure On_Selected
      (Proposal : LSP_Completion_Proposal;
-      Kernel   : not null Kernel_Handle)
-   is
-      Python : constant Scripting_Language :=
-        Kernel.Scripts.Lookup_Scripting_Language ("Python");
-      Args   : Callback_Data'Class := Python.Create (1);
+      Kernel   : not null Kernel_Handle) is
    begin
-      Python_Callback_Data'Class (Args).Set_Nth_Arg
-        (1, VSS.Strings.Conversions.To_UTF_8_String (Proposal.Text));
+      --  The user selected a snippet: expand it using the aliases Python
+      --  plugin.
+      if Proposal.Is_Snippet then
+         declare
+            Python : constant Scripting_Language :=
+              Kernel.Scripts.Lookup_Scripting_Language ("Python");
+            Args   : Callback_Data'Class := Python.Create (1);
+         begin
 
-      --  Call the Python function that will expand the snippet
-      Args.Execute_Command ("aliases.expand_lsp_snippet");
-      Free (Args);
+            Python_Callback_Data'Class (Args).Set_Nth_Arg
+              (1, VSS.Strings.Conversions.To_UTF_8_String (Proposal.Text));
+
+            --  Call the Python function that will expand the snippet
+            Args.Execute_Command ("aliases.expand_lsp_snippet");
+            Free (Args);
+         end;
+
+      --  The proposal has an attached LSP command: execute it.
+      elsif Proposal.Command.Is_Set then
+         declare
+            use GPS.LSP_Client.Editors;
+
+            Resolver : constant LSP_Completion_Resolver_Access :=
+              LSP_Completion_Resolver_Access
+                (Proposal.Resolver);
+            Lang     : constant Language_Access :=
+              Kernel.Get_Language_Handler.Get_Language_By_Name
+                (To_String (Resolver.Lang_Name));
+            Command : constant LSP.Messages.Command := Proposal.Command.Value;
+            Request : Code_Actions.Execute_Command_Request_Access :=
+              new Code_Actions.Execute_Command_Request'
+                (LSP_Request with Kernel => Kernel,
+                 Params                  =>
+                   (Is_Unknown => True,
+                    Base       => (workDoneToken => (Is_Set => False)),
+                    command    => Command.command,
+                    arguments  => Command.arguments));
+         begin
+            Code_Actions.Dialog.Execute_Request_Via_Dialog
+              (Kernel  => Kernel,
+               Lang    => Lang,
+               Request => Request);
+         end;
+      end if;
    end On_Selected;
 
    ----------------------------
@@ -817,7 +853,8 @@ package body GPS.LSP_Client.Completion is
               Is_Snippet           =>
                 (Item.insertTextFormat.Is_Set
                  and then Item.insertTextFormat.Value = Snippet),
-              ID                   => It.Index);
+              ID                   => It.Index,
+              Command              => Item.command);
       begin
          return Proposal;
       end;

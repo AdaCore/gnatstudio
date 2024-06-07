@@ -12,7 +12,6 @@ NEED_INIT = True
 
 
 class GNAThub_Parser(tool_output.OutputParser):
-
     def __init__(self, child=None):
         global NEED_INIT
         tool_output.OutputParser.__init__(self, child)
@@ -23,13 +22,15 @@ class GNAThub_Parser(tool_output.OutputParser):
                 lambda x: None,
                 foreground="green",
                 background="",
-                underline=False)
+                underline=False,
+            )
             GPS.Console().create_link(
                 "\[FAILED\]",
                 lambda x: None,
                 foreground="red",
                 background="",
-                underline=False)
+                underline=False,
+            )
             NEED_INIT = False
 
     def print_output(self, text):
@@ -49,21 +50,22 @@ class GNAThub_Parser(tool_output.OutputParser):
             GPS.execute_action("gnathub display analysis")
         else:
             self.print_output(
-                "No GNAThub plugin has succeeded: " +
-                "don't open the analysis report")
+                "No GNAThub plugin has succeeded: " + "don't open the analysis report"
+            )
         if self.child is not None:
             self.child.on_exit(status, command)
 
 
 gnathub_menu = "/Analyze/GNAThub/"
-tools = {'codepeer':     'codepeer',
-         'gcov':         'gcov',
-         'gnatcoverage': 'gnatcov',
-         'gnatcheck':    'gnatcheck',
-         'gnatstack':    'gnatstack',
-         'gnatmetric':   'gnatmetric',
-         'spark2014':    'gnatprove'
-         }
+tools = {
+    "codepeer": "codepeer",
+    "gcov": "gcov",
+    "gnatcoverage": "gnatcov",
+    "gnatcheck": "gnatcheck",
+    "gnatstack": "gnatstack",
+    "gnatmetric": "gnatmetric",
+    "spark2014": "gnatprove",
+}
 
 
 XML = r"""<?xml version="1.0" ?>
@@ -145,9 +147,9 @@ if logger.active:
 
     GPS.parse_xml(XML.format(checkboxes))
 
-    @gs_utils.interactive(category="Gnathub",
-                          menu=gnathub_menu+"Run...",
-                          name="Run gnathub...")
+    @gs_utils.interactive(
+        category="Gnathub", menu=gnathub_menu + "Run...", name="Run gnathub..."
+    )
     def show_dialog_and_run_gnathub():
         target = GPS.BuildTarget("gnathub")
         target.execute(synchronous=False)

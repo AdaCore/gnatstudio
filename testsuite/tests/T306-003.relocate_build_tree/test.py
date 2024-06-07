@@ -10,4 +10,5 @@ def run_test():
     gps_assert(
         GPS.Console("Messages").get_text().find("obj"),
         -1,
-        GPS.Console("Messages").get_text())
+        GPS.Console("Messages").get_text(),
+    )

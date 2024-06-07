@@ -21,4 +21,5 @@ def driver():
     gps_assert(
         buf.get_chars(start_loc, end_loc).rstrip(),
         EXPECTED,
-        "Wrong autocasing after inserting newline in the middle of a line")
+        "Wrong autocasing after inserting newline in the middle of a line",
+    )

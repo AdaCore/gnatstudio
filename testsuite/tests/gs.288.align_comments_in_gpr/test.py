@@ -15,6 +15,4 @@ def driver():
     b = GS.EditorBuffer.get(GS.File("test.gpr"))
     b.select()
     GS.execute_action("Align end of line comments")
-    gps_assert(b.get_chars(),
-               expected,
-               "Align comments failed")
+    gps_assert(b.get_chars(), expected, "Align comments failed")

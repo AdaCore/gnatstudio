@@ -25,15 +25,15 @@ def run_test():
         yield timeout(100)
 
     # Wait for the completion window...
-    yield wait_until_true(
-        lambda: get_widget_by_name("completion-view") != None)
+    yield wait_until_true(lambda: get_widget_by_name("completion-view") != None)
     pop_tree = get_widget_by_name("completion-view")
 
     # Verify that we have 'hdr (alias)' listed
     gps_assert(
-        'hdr (alias)' in dump_tree_model(pop_tree.get_model(), LABEL_COLUMN),
+        "hdr (alias)" in dump_tree_model(pop_tree.get_model(), LABEL_COLUMN),
         True,
-        "'hdr' alias should be present in completion results")
+        "'hdr' alias should be present in completion results",
+    )
 
     # Navigate among completion results: no Gtk warning should appear
     send_key_event(GDK_DOWN)

@@ -7,28 +7,28 @@ from workflows import promises
 
 
 def check_variable(var, name, type, value, pattern=False, type_pattern=False):
-
-    if (type_pattern):
+    if type_pattern:
         t = var.type_name
-        gps_assert(re.search(type, t) is None, False,
-                   "Invalid type of " + name +
-                   " is:" + t + " expected:" + type)
+        gps_assert(
+            re.search(type, t) is None,
+            False,
+            "Invalid type of " + name + " is:" + t + " expected:" + type,
+        )
     else:
-        gps_assert(var.type_name, type,
-                   "Invalid type of " + name +
-                   " " + var.type_name)
-    if (pattern):
+        gps_assert(var.type_name, type, "Invalid type of " + name + " " + var.type_name)
+    if pattern:
         val = var.simple_value
-        gps_assert(re.search(value, val) is None, False,
-                   "Invalid value of " + name + " " + val)
+        gps_assert(
+            re.search(value, val) is None, False, "Invalid value of " + name + " " + val
+        )
     else:
-        gps_assert(var.simple_value, value,
-                   "Invalid value of " + name +
-                   " " + var.simple_value)
+        gps_assert(
+            var.simple_value, value, "Invalid value of " + name + " " + var.simple_value
+        )
+
 
 @run_as_workflow
 def check(promise, name, type, value, pattern=False, type_pattern=False):
-
     yield timeout(5)
     var = yield promise.get_variable_by_name(name)
     yield timeout(5)
@@ -44,36 +44,37 @@ def check(promise, name, type, value, pattern=False, type_pattern=False):
 
     yield var
 
+
 @run_as_workflow
 def get_children(var):
     promise = promises.DebuggerVariableWrapper(var)
     children = yield promise.children()
     yield children
 
+
 @run_test_driver
 def test_driver():
     # Wait for the DAP server to give us the sources of
     # the debugged executable.
-    yield wait_DAP_server('loadedSources')
+    yield wait_DAP_server("loadedSources")
 
     p = promises.DebuggerWrapper(GPS.File("parse"))
     debug = GPS.Debugger.get()
     yield wait_until_not_busy(debug)
 
     debug.break_at_exception(False)
-    yield wait_DAP_server('setExceptionBreakpoints')
+    yield wait_DAP_server("setExceptionBreakpoints")
     yield wait_until_not_busy(debug)
 
     debug.send("cont")
-    yield wait_DAP_server('stackTrace')
+    yield wait_DAP_server("stackTrace")
     yield wait_until_not_busy(debug)
 
     debug.send("frame 7")
     yield wait_until_not_busy(debug)
 
     info = yield p.get_variable_by_name("Non_Existant_Variable")
-    gps_assert(info.data is None,
-               True, "Non_Existant_Variable exists")
+    gps_assert(info.data is None, True, "Non_Existant_Variable exists")
 
     yield check(p, "A", "integer", "1")
     yield check(p, "B", "float", "2.0")
@@ -110,9 +111,30 @@ def test_driver():
     var = yield check(p, "Aoa", "parse.array_of_access", "")
     children = yield get_children(var.data)
     gps_assert(len(children.data), 3, "Invalid count of Aoa children")
-    yield check_variable(children.data[0], "Aoa.4", "parse.access_type|access integer", r"0x[0-9a-f]+", True, True)
-    yield check_variable(children.data[1], "Aoa.5", "parse.access_type|access integer", r"0x[0-9a-f]+", True, True)
-    yield check_variable(children.data[2], "Aoa.6", "parse.access_type|access integer", r"0x[0-9a-f]+", True, True)
+    yield check_variable(
+        children.data[0],
+        "Aoa.4",
+        "parse.access_type|access integer",
+        r"0x[0-9a-f]+",
+        True,
+        True,
+    )
+    yield check_variable(
+        children.data[1],
+        "Aoa.5",
+        "parse.access_type|access integer",
+        r"0x[0-9a-f]+",
+        True,
+        True,
+    )
+    yield check_variable(
+        children.data[2],
+        "Aoa.6",
+        "parse.access_type|access integer",
+        r"0x[0-9a-f]+",
+        True,
+        True,
+    )
 
     var = yield check(p, "Fiia", "parse.first_index_integer_array", "")
     children = yield get_children(var.data)
@@ -142,18 +164,28 @@ def test_driver():
     var = yield check(p, "Enum_Array_Variable", "parse.enum_array", "")
     children = yield get_children(var.data)
     gps_assert(len(children.data), 3, "Invalid count of Enum_Array_Variable children")
-    yield check_variable(children.data[0], "Enum_Array_Variable.0", "parse.my_enum", "red")
-    yield check_variable(children.data[1], "Enum_Array_Variable.1", "parse.my_enum", "my_green")
-    yield check_variable(children.data[2], "Enum_Array_Variable.1", "parse.my_enum", "blue")
+    yield check_variable(
+        children.data[0], "Enum_Array_Variable.0", "parse.my_enum", "red"
+    )
+    yield check_variable(
+        children.data[1], "Enum_Array_Variable.1", "parse.my_enum", "my_green"
+    )
+    yield check_variable(
+        children.data[2], "Enum_Array_Variable.1", "parse.my_enum", "blue"
+    )
 
     var = yield check(p, "Erm", "parse.enum_range_matrix", "")
     children = yield get_children(var.data)
     gps_assert(len(children.data), 2, "Invalid count of Erm children")
-    yield check_variable(children.data[0], "Erm(0)", "array (blue .. red) of integer", "")
+    yield check_variable(
+        children.data[0], "Erm(0)", "array (blue .. red) of integer", ""
+    )
     children1 = yield get_children(children.data[0])
     yield check_variable(children1.data[0], "Erm(0,0)", "integer", "0")
     yield check_variable(children1.data[1], "Erm(0,1)", "integer", "0")
-    yield check_variable(children.data[1], "Erm(1)", "array (blue .. red) of integer", "")
+    yield check_variable(
+        children.data[1], "Erm(1)", "array (blue .. red) of integer", ""
+    )
     children2 = yield get_children(children.data[1])
     gps_assert(len(children2.data), 2, "Erm(1)", "array (blue .. red) of integer")
     yield check_variable(children2.data[0], "Erm(1,0)", "integer", "0")
@@ -161,20 +193,26 @@ def test_driver():
 
     var = yield check(p, "Negative_Array_Variable", "parse.negative_array", '"ABCDE"')
     children = yield get_children(var.data)
-    gps_assert(len(children.data), 0, "Invalid count of Negative_Array_Variable children")
+    gps_assert(
+        len(children.data), 0, "Invalid count of Negative_Array_Variable children"
+    )
 
     var = yield check(p, "Aa", "parse.array_of_array", "")
     children = yield get_children(var.data)
     gps_assert(len(children.data), 2, "Invalid count of Aa children")
     # Aa(1)
-    yield check_variable(children.data[0], "Aa(1)", "parse.first_index_integer_array", "")
+    yield check_variable(
+        children.data[0], "Aa(1)", "parse.first_index_integer_array", ""
+    )
     children1 = yield get_children(children.data[0])
     gps_assert(len(children1.data), 3, "Invalid count of Aa.(1) children")
     yield check_variable(children1.data[0], "Aa.(1,24)", "integer", "3")
     yield check_variable(children1.data[1], "Aa.(1,25)", "integer", "4")
     yield check_variable(children1.data[2], "Aa.(1,26)", "integer", "5")
     # Aa(2)
-    yield check_variable(children.data[1], "Aa(2)", "parse.first_index_integer_array", "")
+    yield check_variable(
+        children.data[1], "Aa(2)", "parse.first_index_integer_array", ""
+    )
     children2 = yield get_children(children.data[1])
     gps_assert(len(children1.data), 3, "Invalid count of Aa.(2) children")
     yield check_variable(children2.data[0], "Aa.(2,24)", "integer", "6")
@@ -185,7 +223,9 @@ def test_driver():
     children = yield get_children(var.data)
     gps_assert(len(children.data), 2, "Invalid count of A3d children")
     # A3d(1)
-    yield check_variable(children.data[0], "A3d(1)", "array (1 .. 2, 6 .. 7) of integer", "")
+    yield check_variable(
+        children.data[0], "A3d(1)", "array (1 .. 2, 6 .. 7) of integer", ""
+    )
     children1 = yield get_children(children.data[0])
     gps_assert(len(children1.data), 2, "Invalid count of A3d(1) children")
     # A3d(1,1)
@@ -201,7 +241,9 @@ def test_driver():
     yield check_variable(children2.data[0], "Aa.(1,2,1)", "integer", "1")
     yield check_variable(children2.data[1], "Aa.(1,2,2)", "integer", "2")
     # A3d(2)
-    yield check_variable(children.data[1], "A3d(2)", "array (1 .. 2, 6 .. 7) of integer", "")
+    yield check_variable(
+        children.data[1], "A3d(2)", "array (1 .. 2, 6 .. 7) of integer", ""
+    )
     children1 = yield get_children(children.data[1])
     gps_assert(len(children1.data), 2, "Invalid count of A3d(2) children")
     # A3d(2,1)
@@ -228,8 +270,12 @@ def test_driver():
     var = yield check(p, "V", "parse.my_record", "")
     children = yield get_children(var.data)
     gps_assert(len(children.data), 2, "Invalid count of V children")
-    yield check_variable(children.data[0], "V.field1", "parse.access_type", r"^0x[0-9a-f]+", True)
-    yield check_variable(children.data[1], "V.field2", "array (1 .. 2) of character", '"ab"')
+    yield check_variable(
+        children.data[0], "V.field1", "parse.access_type", r"^0x[0-9a-f]+", True
+    )
+    yield check_variable(
+        children.data[1], "V.field2", "array (1 .. 2) of character", '"ab"'
+    )
 
     yield check(p, "Mra", "parse.my_record_access", r"^0x[0-9a-f]+", True)
 
@@ -240,24 +286,42 @@ def test_driver():
     yield check_variable(children.data[0], "W(0)", "parse.my_record", "")
     children1 = yield get_children(children.data[0])
     gps_assert(len(children1.data), 2, "Invalid count of W.(0) children")
-    yield check_variable(children1.data[0], "W(0).field1", "parse.access_type", r"^0x[0-9a-f]+", True)
-    yield check_variable(children1.data[1], "W(0).field2", "array (1 .. 2) of character", '"ab"')
+    yield check_variable(
+        children1.data[0], "W(0).field1", "parse.access_type", r"^0x[0-9a-f]+", True
+    )
+    yield check_variable(
+        children1.data[1], "W(0).field2", "array (1 .. 2) of character", '"ab"'
+    )
     # W(1)
     yield check_variable(children.data[1], "W(1)", "parse.my_record", "")
     children1 = yield get_children(children.data[1])
     gps_assert(len(children1.data), 2, "Invalid count of W.(1) children")
-    yield check_variable(children1.data[0], "W(1).field1", "parse.access_type", r"^0x[0-9a-f]+", True)
-    yield check_variable(children1.data[1], "W(1).field2", "array (1 .. 2) of character", '"rt"')
+    yield check_variable(
+        children1.data[0], "W(1).field1", "parse.access_type", r"^0x[0-9a-f]+", True
+    )
+    yield check_variable(
+        children1.data[1], "W(1).field2", "array (1 .. 2) of character", '"rt"'
+    )
 
     var = yield check(p, "Rr", "parse.record_of_record", "")
     children = yield get_children(var.data)
     gps_assert(len(children.data), 2, "Invalid count of Rr children")
-    yield check_variable(children.data[0], "Rr.casefield1", "parse.access_type", r"^0x[0-9a-f]+", True)
+    yield check_variable(
+        children.data[0], "Rr.casefield1", "parse.access_type", r"^0x[0-9a-f]+", True
+    )
     yield check_variable(children.data[1], "Rr.field2", "parse.my_record", "")
     children1 = yield get_children(children.data[1])
     gps_assert(len(children1.data), 2, "Invalid count of Rr.field2 children")
-    yield check_variable(children1.data[0], "Rr.field2.field1", "parse.access_type", r"^0x[0-9a-f]+", True)
-    yield check_variable(children1.data[1], "Rr.field2.field2", "array (1 .. 2) of character", '"ab"')
+    yield check_variable(
+        children1.data[0],
+        "Rr.field2.field1",
+        "parse.access_type",
+        r"^0x[0-9a-f]+",
+        True,
+    )
+    yield check_variable(
+        children1.data[1], "Rr.field2.field2", "array (1 .. 2) of character", '"ab"'
+    )
 
     var = yield check(p, "Roa", "parse.record_of_array", "")
     children = yield get_children(var.data)
@@ -300,13 +364,21 @@ def test_driver():
     yield check_variable(children.data[0], "Ar(1)", "parse.my_record", "")
     children1 = yield get_children(children.data[0])
     gps_assert(len(children1.data), 2, "Invalid count of Ar.(1) children")
-    yield check_variable(children1.data[0], "Ar.(1).field1", "parse.access_type", r"^0x[0-9a-f]+", True)
-    yield check_variable(children1.data[1], "Ar.(1).field2", "array (1 .. 2) of character", '"ab"')
+    yield check_variable(
+        children1.data[0], "Ar.(1).field1", "parse.access_type", r"^0x[0-9a-f]+", True
+    )
+    yield check_variable(
+        children1.data[1], "Ar.(1).field2", "array (1 .. 2) of character", '"ab"'
+    )
     yield check_variable(children.data[1], "Ar(2)", "parse.my_record", "")
     children1 = yield get_children(children.data[1])
     gps_assert(len(children1.data), 2, "Invalid count of Ar.(2) children")
-    yield check_variable(children1.data[0], "Ar.(2).field1", "parse.access_type", r"^0x[0-9a-f]+", True)
-    yield check_variable(children1.data[1], "Ar.(2).field2", "array (1 .. 2) of character", '"cd"')
+    yield check_variable(
+        children1.data[0], "Ar.(2).field1", "parse.access_type", r"^0x[0-9a-f]+", True
+    )
+    yield check_variable(
+        children1.data[1], "Ar.(2).field2", "array (1 .. 2) of character", '"cd"'
+    )
 
     var = yield check(p, "Z", "parse.discriminants_record", "")
     children = yield get_children(var.data)
@@ -335,19 +407,31 @@ def test_driver():
     var = yield check(p, "Tt", "parse.tagged_type", "")
     children = yield get_children(var.data)
     gps_assert(len(children.data), 3, "Invalid count of Tt children")
-    yield check_variable(children.data[0], "Tt.tag", "ada.tags.tag", r"^0x[0-9a-f]+", True)
+    yield check_variable(
+        children.data[0], "Tt.tag", "ada.tags.tag", r"^0x[0-9a-f]+", True
+    )
     yield check_variable(children.data[1], "Tt.a", "integer", "2")
     yield check_variable(children.data[2], "Tt.a", "character", "67 " + "'" + "C" + "'")
 
     var = yield check(p, "Ctt2", "parse.child_tagged_type2", "")
     children = yield get_children(var.data)
     gps_assert(len(children.data), 1, "Invalid count of Ctt2 children")
-    yield check_variable(children.data[0], "Ctt2.<tagged_type>", "parse.tagged_type", "")
+    yield check_variable(
+        children.data[0], "Ctt2.<tagged_type>", "parse.tagged_type", ""
+    )
     children1 = yield get_children(children.data[0])
     gps_assert(len(children1.data), 3, "Invalid count of Ctt2.<tagged_type> children")
-    yield check_variable(children1.data[0], "Ctt2.<tagged_type>.tag", "ada.tags.tag", r"^0x[0-9a-f]+", True)
+    yield check_variable(
+        children1.data[0],
+        "Ctt2.<tagged_type>.tag",
+        "ada.tags.tag",
+        r"^0x[0-9a-f]+",
+        True,
+    )
     yield check_variable(children1.data[1], "Ctt2.<tagged_type>.a", "integer", "2")
-    yield check_variable(children1.data[2], "Ctt2.<tagged_type>.b", "character", "67 " + "'" + "C" + "'")
+    yield check_variable(
+        children1.data[2], "Ctt2.<tagged_type>.b", "character", "67 " + "'" + "C" + "'"
+    )
 
     var = yield check(p, "T_Ptr", "parse.t_ptr_type", "")
     children = yield get_children(var.data)
@@ -364,7 +448,14 @@ def test_driver():
     var = yield check(p, "Ba", "parse.big_array", "")
     children = yield get_children(var.data)
     gps_assert(len(children.data), 1000, "Invalid count of Ba children")
-    yield check_variable(children.data[0], "Ba(1)", "parse.access_type|access integer", r"^0x[0-9a-f]+", True, True)
+    yield check_variable(
+        children.data[0],
+        "Ba(1)",
+        "parse.access_type|access integer",
+        r"^0x[0-9a-f]+",
+        True,
+        True,
+    )
 
     var = yield check(p, "Ba2", "parse.big_array2", "")
     children = yield get_children(var.data)
@@ -450,34 +541,88 @@ def test_driver():
     children1 = yield get_children(children.data[0])
     gps_assert(len(children1.data), 2, "Invalid count of This.attributes children")
     # .attributes(0)
-    yield check_variable(children1.data[0], "This.attributes(0)", "array (channel_1 .. channel_2) of parse.pointer", "")
+    yield check_variable(
+        children1.data[0],
+        "This.attributes(0)",
+        "array (channel_1 .. channel_2) of parse.pointer",
+        "",
+    )
     children2 = yield get_children(children1.data[0])
     gps_assert(len(children2.data), 2, "Invalid count of This.attributes(0) children")
-    yield check_variable(children2.data[0], "This.attributes(0,0)", "parse.pointer", r"^0x[0-9a-f]+", True)
-    yield check_variable(children2.data[1], "This.attributes(0,1)", "parse.pointer", r"^0x[0-9a-f]+", True)
+    yield check_variable(
+        children2.data[0],
+        "This.attributes(0,0)",
+        "parse.pointer",
+        r"^0x[0-9a-f]+",
+        True,
+    )
+    yield check_variable(
+        children2.data[1],
+        "This.attributes(0,1)",
+        "parse.pointer",
+        r"^0x[0-9a-f]+",
+        True,
+    )
     # .attributes(1)
-    yield check_variable(children1.data[1], "This.attributes(1)", "array (channel_1 .. channel_2) of parse.pointer", "")
+    yield check_variable(
+        children1.data[1],
+        "This.attributes(1)",
+        "array (channel_1 .. channel_2) of parse.pointer",
+        "",
+    )
     children2 = yield get_children(children1.data[1])
     gps_assert(len(children2.data), 2, "Invalid count of This.attributes(1) children")
-    yield check_variable(children2.data[0], "This.attributes(1,0)", "parse.pointer", r"^0x[0-9a-f]+", True)
-    yield check_variable(children2.data[1], "This.attributes(1,1)", "parse.pointer", r"^0x[0-9a-f]+", True)
+    yield check_variable(
+        children2.data[0],
+        "This.attributes(1,0)",
+        "parse.pointer",
+        r"^0x[0-9a-f]+",
+        True,
+    )
+    yield check_variable(
+        children2.data[1],
+        "This.attributes(1,1)",
+        "parse.pointer",
+        r"^0x[0-9a-f]+",
+        True,
+    )
 
     var = yield check(p, "Scr", "parse.screen_image_type", "")
     children = yield get_children(var.data)
     gps_assert(len(children.data), 1, "Invalid count of Scr children")
-    yield check_variable(children.data[0], "Scr.new_screen_image", "parse.screen_image_type_0", "")
+    yield check_variable(
+        children.data[0], "Scr.new_screen_image", "parse.screen_image_type_0", ""
+    )
     children1 = yield get_children(children.data[0])
-    gps_assert(len(children1.data), 14, "Invalid count of Scr.new_screen_image children")
-    yield check_variable(children1.data[0], "Scr.new_screen_image(1)", "parse.line_buffer_type", "")
+    gps_assert(
+        len(children1.data), 14, "Invalid count of Scr.new_screen_image children"
+    )
+    yield check_variable(
+        children1.data[0], "Scr.new_screen_image(1)", "parse.line_buffer_type", ""
+    )
     children2 = yield get_children(children1.data[0])
-    gps_assert(len(children2.data), 24, "Invalid count of Scr.new_screen_image(1) children")
-    yield check_variable(children2.data[0], "Scr.new_screen_image(1,1)", "parse.screen_element_type", "")
+    gps_assert(
+        len(children2.data), 24, "Invalid count of Scr.new_screen_image(1) children"
+    )
+    yield check_variable(
+        children2.data[0], "Scr.new_screen_image(1,1)", "parse.screen_element_type", ""
+    )
     children3 = yield get_children(children2.data[0])
-    gps_assert(len(children3.data), 4, "Invalid count of Scr.new_screen_image(1,1) children")
-    yield check_variable(children3.data[0], "Scr.new_screen_image(1,1).char", "character", "32 ' '")
-    yield check_variable(children3.data[1], "Scr.new_screen_image(1,1).color", "parse.color_type", "cyan")
-    yield check_variable(children3.data[2], "Scr.new_screen_image(1,1).font", "parse.font_type", "small")
-    yield check_variable(children3.data[3], "Scr.new_screen_image(1,1).reverse_video", "boolean", "true")
+    gps_assert(
+        len(children3.data), 4, "Invalid count of Scr.new_screen_image(1,1) children"
+    )
+    yield check_variable(
+        children3.data[0], "Scr.new_screen_image(1,1).char", "character", "32 ' '"
+    )
+    yield check_variable(
+        children3.data[1], "Scr.new_screen_image(1,1).color", "parse.color_type", "cyan"
+    )
+    yield check_variable(
+        children3.data[2], "Scr.new_screen_image(1,1).font", "parse.font_type", "small"
+    )
+    yield check_variable(
+        children3.data[3], "Scr.new_screen_image(1,1).reverse_video", "boolean", "true"
+    )
 
     var = yield check(p, "More_Fruits", "parse.fruits_array_type", "")
     children = yield get_children(var.data)
@@ -485,7 +630,9 @@ def test_driver():
     yield check_variable(children.data[0], "More_Fruits(0)", "parse.fruit", "")
     children1 = yield get_children(children.data[0])
     gps_assert(len(children1.data), 2, "Invalid count of More_Fruits.(0) children")
-    yield check_variable(children1.data[0], "More_Fruits(0).choice", "parse.choice_type", "apple")
+    yield check_variable(
+        children1.data[0], "More_Fruits(0).choice", "parse.choice_type", "apple"
+    )
     yield check_variable(children1.data[1], "More_Fruits(0).abc", "integer", "20")
     yield check_variable(children.data[1], "More_Fruits(1)", "parse.fruit", "")
 
@@ -493,41 +640,132 @@ def test_driver():
     debug.send("frame 6")
     yield wait_until_not_busy(debug)
 
-    var = yield check(p, "Args", "array (1 .. 3) of parse.tn_9305_014.string_access", "")
+    var = yield check(
+        p, "Args", "array (1 .. 3) of parse.tn_9305_014.string_access", ""
+    )
     children = yield get_children(var.data)
     gps_assert(len(children.data), 3, "Invalid count of Args children")
-    yield check_variable(children.data[0], "Args(1)", "parse.tn_9305_014.string_access", r"0x[0-9a-f]+", True)
-    yield check_variable(children.data[1], "Args(2)", "parse.tn_9305_014.string_access", r"0x[0-9a-f]+", True)
-    yield check_variable(children.data[2], "Args(3)", "parse.tn_9305_014.string_access", r"0x[0-9a-f]+", True)
+    yield check_variable(
+        children.data[0],
+        "Args(1)",
+        "parse.tn_9305_014.string_access",
+        r"0x[0-9a-f]+",
+        True,
+    )
+    yield check_variable(
+        children.data[1],
+        "Args(2)",
+        "parse.tn_9305_014.string_access",
+        r"0x[0-9a-f]+",
+        True,
+    )
+    yield check_variable(
+        children.data[2],
+        "Args(3)",
+        "parse.tn_9305_014.string_access",
+        r"0x[0-9a-f]+",
+        True,
+    )
 
-    var = yield check(p, "Args2", "array (1 .. 3, 1 .. 3) of parse.tn_9305_014.string_access", "")
+    var = yield check(
+        p, "Args2", "array (1 .. 3, 1 .. 3) of parse.tn_9305_014.string_access", ""
+    )
     children = yield get_children(var.data)
     gps_assert(len(children.data), 3, "Invalid count of Args2 children")
     # Args2(1)
-    yield check_variable(children.data[0], "Args2(1)", "array (1 .. 3) of parse.tn_9305_014.string_access", "")
+    yield check_variable(
+        children.data[0],
+        "Args2(1)",
+        "array (1 .. 3) of parse.tn_9305_014.string_access",
+        "",
+    )
     children1 = yield get_children(children.data[0])
     gps_assert(len(children1.data), 3, "Invalid count of Args2(1) children")
-    yield check_variable(children1.data[0], "Args2(1,1)", "parse.tn_9305_014.string_access", r"0x[0-9a-f]+", True)
-    yield check_variable(children1.data[1], "Args2(1,2)", "parse.tn_9305_014.string_access", r"0x[0-9a-f]+", True)
-    yield check_variable(children1.data[2], "Args2(1,3)", "parse.tn_9305_014.string_access", r"0x[0-9a-f]+", True)
+    yield check_variable(
+        children1.data[0],
+        "Args2(1,1)",
+        "parse.tn_9305_014.string_access",
+        r"0x[0-9a-f]+",
+        True,
+    )
+    yield check_variable(
+        children1.data[1],
+        "Args2(1,2)",
+        "parse.tn_9305_014.string_access",
+        r"0x[0-9a-f]+",
+        True,
+    )
+    yield check_variable(
+        children1.data[2],
+        "Args2(1,3)",
+        "parse.tn_9305_014.string_access",
+        r"0x[0-9a-f]+",
+        True,
+    )
     # Args2(2)
-    yield check_variable(children.data[1], "Args2(2)", "array (1 .. 3) of parse.tn_9305_014.string_access", "")
+    yield check_variable(
+        children.data[1],
+        "Args2(2)",
+        "array (1 .. 3) of parse.tn_9305_014.string_access",
+        "",
+    )
     children1 = yield get_children(children.data[1])
     gps_assert(len(children1.data), 3, "Invalid count of Args2(1) children")
-    yield check_variable(children1.data[0], "Args2(1,1)", "parse.tn_9305_014.string_access", r"0x[0-9a-f]+", True)
-    yield check_variable(children1.data[1], "Args2(1,2)", "parse.tn_9305_014.string_access", r"0x[0-9a-f]+", True)
-    yield check_variable(children1.data[2], "Args2(1,3)", "parse.tn_9305_014.string_access", r"0x[0-9a-f]+", True)
+    yield check_variable(
+        children1.data[0],
+        "Args2(1,1)",
+        "parse.tn_9305_014.string_access",
+        r"0x[0-9a-f]+",
+        True,
+    )
+    yield check_variable(
+        children1.data[1],
+        "Args2(1,2)",
+        "parse.tn_9305_014.string_access",
+        r"0x[0-9a-f]+",
+        True,
+    )
+    yield check_variable(
+        children1.data[2],
+        "Args2(1,3)",
+        "parse.tn_9305_014.string_access",
+        r"0x[0-9a-f]+",
+        True,
+    )
     # Args2(3)
-    yield check_variable(children.data[2], "Args2(3)", "array (1 .. 3) of parse.tn_9305_014.string_access", "")
+    yield check_variable(
+        children.data[2],
+        "Args2(3)",
+        "array (1 .. 3) of parse.tn_9305_014.string_access",
+        "",
+    )
     children1 = yield get_children(children.data[2])
     gps_assert(len(children1.data), 3, "Invalid count of Args2(1) children")
-    yield check_variable(children1.data[0], "Args2(1,1)", "parse.tn_9305_014.string_access", r"0x[0-9a-f]+", True)
-    yield check_variable(children1.data[1], "Args2(1,2)", "parse.tn_9305_014.string_access", r"0x[0-9a-f]+", True)
-    yield check_variable(children1.data[2], "Args2(1,3)", "parse.tn_9305_014.string_access", r"0x[0-9a-f]+", True)
+    yield check_variable(
+        children1.data[0],
+        "Args2(1,1)",
+        "parse.tn_9305_014.string_access",
+        r"0x[0-9a-f]+",
+        True,
+    )
+    yield check_variable(
+        children1.data[1],
+        "Args2(1,2)",
+        "parse.tn_9305_014.string_access",
+        r"0x[0-9a-f]+",
+        True,
+    )
+    yield check_variable(
+        children1.data[2],
+        "Args2(1,3)",
+        "parse.tn_9305_014.string_access",
+        r"0x[0-9a-f]+",
+        True,
+    )
 
     yield wait_until_not_busy(debug)
     debug.send("cont")
-    yield wait_DAP_server('stackTrace')
+    yield wait_DAP_server("stackTrace")
     yield wait_until_not_busy(debug)
     debug.send("frame 6")
     yield wait_until_not_busy(debug)
@@ -546,70 +784,126 @@ def test_driver():
     yield check_variable(children.data[0], "T(1)", "parse.tagged_type", "")
     children1 = yield get_children(children.data[0])
     gps_assert(len(children1.data), 3, "Invalid count of T.tagged_type children")
-    yield check_variable(children1.data[0], "T'tag", "ada.tags.tag", r"0x[0-9a-f]+", True)
+    yield check_variable(
+        children1.data[0], "T'tag", "ada.tags.tag", r"0x[0-9a-f]+", True
+    )
     yield check_variable(children1.data[1], "T.a", "integer", "2")
     yield check_variable(children1.data[2], "T.b", "character", "67 'C'")
 
-    if platform.system().lower() == 'windows':
+    if platform.system().lower() == "windows":
         var = yield check(p, "R", "<ref> parse.my_record", "")
     else:
         var = yield check(p, "R", "parse.my_record", "")
 
     children = yield get_children(var.data)
     gps_assert(len(children.data), 2, "Invalid count of R children")
-    yield check_variable(children.data[0], "T.field1", "parse.access_type", r"0x[0-9a-f]+", True)
-    yield check_variable(children.data[1], "T.field2", "array (1 .. 2) of character", '"ab"')
+    yield check_variable(
+        children.data[0], "T.field1", "parse.access_type", r"0x[0-9a-f]+", True
+    )
+    yield check_variable(
+        children.data[1], "T.field2", "array (1 .. 2) of character", '"ab"'
+    )
 
-    var = yield check(p, "Ustring", "ada.strings.unbounded.unbounded_string", '"not_set"')
+    var = yield check(
+        p, "Ustring", "ada.strings.unbounded.unbounded_string", '"not_set"'
+    )
 
     var = yield check(p, "Asu_Test", "parse.bar.matrix_map", "")
     children = yield get_children(var.data)
     gps_assert(len(children.data), 2, "Invalid count of Asu_Test children")
-    yield check_variable(children.data[0], "Asu_Test(1)", "array (1 .. 1) of ada.strings.unbounded.unbounded_string", "")
+    yield check_variable(
+        children.data[0],
+        "Asu_Test(1)",
+        "array (1 .. 1) of ada.strings.unbounded.unbounded_string",
+        "",
+    )
     children1 = yield get_children(children.data[0])
     gps_assert(len(children1.data), 1, "Invalid count of Asu_Test(1) children")
-    yield check_variable(children1.data[0], "Asu_Test(1,1)", "ada.strings.unbounded.unbounded_string", '"not_set"')
-    yield check_variable(children.data[1], "Asu_Test(2)", "array (1 .. 1) of ada.strings.unbounded.unbounded_string", "")
+    yield check_variable(
+        children1.data[0],
+        "Asu_Test(1,1)",
+        "ada.strings.unbounded.unbounded_string",
+        '"not_set"',
+    )
+    yield check_variable(
+        children.data[1],
+        "Asu_Test(2)",
+        "array (1 .. 1) of ada.strings.unbounded.unbounded_string",
+        "",
+    )
     children1 = yield get_children(children.data[1])
     gps_assert(len(children1.data), 1, "Invalid count of Asu_Test(2) children")
-    yield check_variable(children1.data[0], "Asu_Test(2,1)", "ada.strings.unbounded.unbounded_string", '"not_set"')
+    yield check_variable(
+        children1.data[0],
+        "Asu_Test(2,1)",
+        "ada.strings.unbounded.unbounded_string",
+        '"not_set"',
+    )
 
     var = yield check(p, "Asu_Test2", "parse.bar.matrix_map_instance", "")
     children = yield get_children(var.data)
     gps_assert(len(children.data), 2, "Invalid count of Asu_Test2 children")
-    yield check_variable(children.data[0], "Asu_Test2'tag", "ada.tags.tag", r"0x[0-9a-f]+", True)
+    yield check_variable(
+        children.data[0], "Asu_Test2'tag", "ada.tags.tag", r"0x[0-9a-f]+", True
+    )
     yield check_variable(children.data[1], "Asu_Test2.map", "parse.bar.matrix_map", "")
     children1 = yield get_children(children.data[1])
     gps_assert(len(children1.data), 2, "Invalid count of Asu_Test2.map children")
-    yield check_variable(children1.data[0], "Asu_Test2.map(1)", "array (1 .. 1) of ada.strings.unbounded.unbounded_string", "")
+    yield check_variable(
+        children1.data[0],
+        "Asu_Test2.map(1)",
+        "array (1 .. 1) of ada.strings.unbounded.unbounded_string",
+        "",
+    )
     children2 = yield get_children(children1.data[0])
     gps_assert(len(children2.data), 1, "Invalid count of Asu_Test2.map(1) children")
-    yield check_variable(children2.data[0], "Asu_Test2.map(1,1)", "ada.strings.unbounded.unbounded_string", '"not_set"')
-    yield check_variable(children1.data[1], "Asu_Test2.map(2)", "array (1 .. 1) of ada.strings.unbounded.unbounded_string", "")
+    yield check_variable(
+        children2.data[0],
+        "Asu_Test2.map(1,1)",
+        "ada.strings.unbounded.unbounded_string",
+        '"not_set"',
+    )
+    yield check_variable(
+        children1.data[1],
+        "Asu_Test2.map(2)",
+        "array (1 .. 1) of ada.strings.unbounded.unbounded_string",
+        "",
+    )
     children2 = yield get_children(children1.data[1])
     gps_assert(len(children2.data), 1, "Invalid count of Asu_Test2.map(2) children")
-    yield check_variable(children2.data[0], "Asu_Test2.map(2,1)", "ada.strings.unbounded.unbounded_string", '"not_set"')
+    yield check_variable(
+        children2.data[0],
+        "Asu_Test2.map(2,1)",
+        "ada.strings.unbounded.unbounded_string",
+        '"not_set"',
+    )
 
     var = yield check(p, "NBI_N", "parse.value_type", "")
     children = yield get_children(var.data)
     gps_assert(len(children.data), 1, "Invalid count of NBI_N children")
-    yield check_variable(children.data[0], "NBI_N.var", "parse.value_var_type", "v_null")
+    yield check_variable(
+        children.data[0], "NBI_N.var", "parse.value_var_type", "v_null"
+    )
 
     var = yield check(p, "NBI_B", "parse.value_type", "")
     children = yield get_children(var.data)
     gps_assert(len(children.data), 2, "Invalid count of NBI_B children")
-    yield check_variable(children.data[0], "NBI_B.var", "parse.value_var_type", "v_boolean")
+    yield check_variable(
+        children.data[0], "NBI_B.var", "parse.value_var_type", "v_boolean"
+    )
     yield check_variable(children.data[1], "NBI_B.boolean_value", "boolean", "true")
 
     var = yield check(p, "NBI_I", "parse.value_type", "")
     children = yield get_children(var.data)
     gps_assert(len(children.data), 2, "Invalid count of NBI_I children")
-    yield check_variable(children.data[0], "NBI_I.var", "parse.value_var_type", "v_integer")
+    yield check_variable(
+        children.data[0], "NBI_I.var", "parse.value_var_type", "v_integer"
+    )
     yield check_variable(children.data[1], "NBI_I.integer_value", "integer", "18")
 
-    var = yield check(p, "AP", "parse.access_procedure", r'0x[0-9a-f]+', True)
+    var = yield check(p, "AP", "parse.access_procedure", r"0x[0-9a-f]+", True)
 
-    var = yield check(p, "AF", "parse.access_function", r'0x[0-9a-f]+', True)
+    var = yield check(p, "AF", "parse.access_function", r"0x[0-9a-f]+", True)
 
     info = yield p.get_variable_by_name("AF.all")
     gps_assert(info.data is None, True, "AF.all exists")
@@ -618,13 +912,15 @@ def test_driver():
     children = yield get_children(var.data)
     gps_assert(len(children.data), 3, "Invalid count of RAF children")
     yield check_variable(children.data[0], "RAF.i", "integer", "0")
-    yield check_variable(children.data[1], "RAF.af", "parse.access_function", r'0x[0-9a-f]+', True)
+    yield check_variable(
+        children.data[1], "RAF.af", "parse.access_function", r"0x[0-9a-f]+", True
+    )
     yield check_variable(children.data[2], "RAF.i2", "integer", "0")
 
     debug.send("b swap")
     yield wait_until_not_busy(debug)
     debug.send("cont")
-    yield wait_DAP_server('stackTrace')
+    yield wait_DAP_server("stackTrace")
     yield wait_until_not_busy(debug)
 
     var = yield check(p, "Word", "string", '"qeaLfjb"')

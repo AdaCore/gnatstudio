@@ -36,6 +36,8 @@ def run_test():
     # Verify that no widget is grabbing user events
 
     gps_assert(
-        Gtk.grab_get_current(), None,
-        "The Python console is grabbing all the user events after " +
-        "spawning the debugger.")
+        Gtk.grab_get_current(),
+        None,
+        "The Python console is grabbing all the user events after "
+        + "spawning the debugger.",
+    )

@@ -32,18 +32,19 @@ def driver():
     # simulate a click at coordinates 40, 5: regardless of the font,
     # this is somewhere on the first line, well past the last character
     win = v.get_window(Gtk.TextWindowType.TEXT)
-    click_in_widget(window=win,
-                    x=40,
-                    y=5,
-                    button=2)
+    click_in_widget(window=win, x=40, y=5, button=2)
 
     yield timeout(200)
 
     # Verify that paste happend
-    gps_assert(buf.get_chars(), expected_after_click,
-               """Middle click paste didn't happen at the right place""")
+    gps_assert(
+        buf.get_chars(),
+        expected_after_click,
+        """Middle click paste didn't happen at the right place""",
+    )
 
     # Verify noncorruption after Undo
     buf.undo()
-    gps_assert(buf.get_chars(), expected_orig,
-               """Undo didn't restore the right contents""")
+    gps_assert(
+        buf.get_chars(), expected_orig, """Undo didn't restore the right contents"""
+    )

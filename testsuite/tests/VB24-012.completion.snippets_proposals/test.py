@@ -30,5 +30,6 @@ def run_test():
 
     gps_assert(
         dump_tree_model(model, LABEL_COLUMN),
-        ['Do_Nothing', 'Do_Nothing'],
-        "We should have two proposals for Do_Nothing since it's overloaded")
+        ["Do_Nothing", "Do_Nothing"],
+        "We should have two proposals for Do_Nothing since it's overloaded",
+    )

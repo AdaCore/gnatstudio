@@ -10,9 +10,11 @@ from gs_utils.internal.utils import *
 def verify_loc(tree, button, path, expected, msg):
     click_in_tree(tree, path)
     yield wait_idle()
-    gps_assert(button.get_label(),
-               "(1 line, 1 char) " + expected,
-               "Issue when selecting " + msg)
+    gps_assert(
+        button.get_label(),
+        "(1 line, 1 char) " + expected,
+        "Issue when selecting " + msg,
+    )
 
 
 @run_test_driver

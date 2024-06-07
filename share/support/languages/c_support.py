@@ -229,19 +229,20 @@ XML = r"""<?xml version="1.0" ?>
 GPS.parse_xml(XML)
 
 
-@hook('gps_started')
+@hook("gps_started")
 def __on_gps_started():
-
     GPS.FileTemplate.register(
         alias_name="c_main",
         label="C Main File",
         unit_param="name",
         language="c",
-        is_impl=True)
+        is_impl=True,
+    )
 
     GPS.FileTemplate.register(
         alias_name="c++_class",
         label="C++ Class",
         unit_param="name",
         language="c++",
-        is_impl=False)
+        is_impl=False,
+    )

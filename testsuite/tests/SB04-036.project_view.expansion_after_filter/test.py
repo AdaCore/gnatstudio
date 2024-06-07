@@ -3,8 +3,16 @@ Verify that the we correctly preserve the nodes that are expanded
 when filtering the Project view.
 """
 
-from gs_utils.internal.utils import run_test_driver, get_widget_by_name, \
-    dump_tree_model, gps_assert, timeout, wait_idle, wait_tasks, hook
+from gs_utils.internal.utils import (
+    run_test_driver,
+    get_widget_by_name,
+    dump_tree_model,
+    gps_assert,
+    timeout,
+    wait_idle,
+    wait_tasks,
+    hook,
+)
 from gs_utils.internal.dialogs import Project_View
 
 
@@ -20,14 +28,18 @@ def driver():
     filt.set_text("be")
     yield hook("filter_view_changed")
     dump = dump_tree_model(explorer.get_model(), 1)
-    gps_assert(dump,
-               ['p', ['src1', ['beau.adb']]],
-               "Project view content wrong after filtering")
+    gps_assert(
+        dump,
+        ["p", ["src1", ["beau.adb"]]],
+        "Project view content wrong after filtering",
+    )
 
     filt.set_text("")
     yield wait_tasks()
     dump = dump_tree_model(explorer.get_model(), 1)
     GPS.Console().write(str(dump))
-    gps_assert(dump,
-               ['p', ['src1', ['beau.adb'], 'src2', ['nico.adb'], '.']],
-               "Project view content wrong after removing the filter text")
+    gps_assert(
+        dump,
+        ["p", ["src1", ["beau.adb"], "src2", ["nico.adb"], "."]],
+        "Project view content wrong after removing the filter text",
+    )

@@ -15,13 +15,15 @@ def view_url(url):
     try:
         if url.startswith("file"):
             GPS.MDI.get_by_child(
-                GPS.EditorBuffer.get(
-                    GPS.File(url[7:])).current_view()).raise_window()
+                GPS.EditorBuffer.get(GPS.File(url[7:])).current_view()
+            ).raise_window()
         else:
             GPS.HTML.browse(url)
     except:
         pass
 
+
 # Register a highlighter to URLs
 GPS.EditorHighlighter(
-    r'(file:[\\/][\\/][^\s]*|http(s)?://[^\s:,]*)', view_url, 0, view_url)
+    r"(file:[\\/][\\/][^\s]*|http(s)?://[^\s:,]*)", view_url, 0, view_url
+)

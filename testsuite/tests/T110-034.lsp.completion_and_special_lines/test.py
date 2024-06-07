@@ -27,21 +27,24 @@ def run_test():
         send_key_event(ord(ch))
         yield timeout(200)
 
-    yield wait_until_true(
-        lambda: get_widget_by_name("completion-view") != None)
+    yield wait_until_true(lambda: get_widget_by_name("completion-view") != None)
 
     pop_tree = get_widget_by_name("completion-view")
     model = pop_tree.get_model()
     yield wait_until_true(
-        lambda: model.get_value(model.get_iter_first(), 0) != "Computing...")
+        lambda: model.get_value(model.get_iter_first(), 0) != "Computing..."
+    )
 
     click_in_tree(pop_tree, path="0", events=double_click_events)
     yield wait_idle()
 
     # Verify that it has been correctly parsed by the aliases plugin
     line = buf.get_chars(buf.at(8, 1), buf.at(8, 1).end_of_line())
-    gps_assert(line.strip(), EXPECTED_SNIPPET.strip(),
-               "The completion snippet has not been correctly inserted")
+    gps_assert(
+        line.strip(),
+        EXPECTED_SNIPPET.strip(),
+        "The completion snippet has not been correctly inserted",
+    )
 
     # Iterate over the snippet params using TAB and give a value to
     # each of them
@@ -53,9 +56,15 @@ def run_test():
 
     # Verify that the snippet parameters have been inserted properly
     line = buf.get_chars(buf.at(8, 1), buf.at(8, 1).end_of_line())
-    gps_assert(line.strip(), EXPECTED_RESULT.strip(),
-               "The snippet parameter values have not been inserted properly")
+    gps_assert(
+        line.strip(),
+        EXPECTED_RESULT.strip(),
+        "The snippet parameter values have not been inserted properly",
+    )
 
     # Verify that we jumped to the final tab stop
-    gps_assert(view.cursor(), buf.at(8, 1).end_of_line(),
-               "last TAB did not jump to the snippet final tab stop")
+    gps_assert(
+        view.cursor(),
+        buf.at(8, 1).end_of_line(),
+        "last TAB did not jump to the snippet final tab stop",
+    )

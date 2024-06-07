@@ -6,37 +6,61 @@ triggered by a build target with on_file_save.
 from GPS import *
 from gs_utils.internal.utils import *
 
-RUNS = {"first":
-        ['Builder results (4 items in 1 file)',
-            ['foo.adb (4 items)',
-                ['<b>6:10</b>      warning: null value not allowed here'
-                 + ' [enabled by default]',
-                 ['          warning: Constraint_Error will be' +
-                  ' raised at run time [enabled by default]'],
-                 '<b>6:22</b>      warning: null value not allowed here'
-                 + ' [enabled by default]',
-                 ['          warning: Constraint_Error will be' +
-                  ' raised at run time [enabled by default]'],
-                 '<b>10:10</b>     warning: null value not allowed here'
-                 + ' [enabled by default]',
-                 ['          warning: Constraint_Error will be' +
-                  ' raised at run time [enabled by default]'],
-                 '<b>10:22</b>     warning: null value not allowed here'
-                 + ' [enabled by default]',
-                 ['          warning: Constraint_Error will be' +
-                  ' raised at run time [enabled by default]']]]],
-        "second":
-        ['Builder results (2 items in 1 file)',
-            ['foo.adb (2 items)',
-                ['<b>10:10</b>     warning: null value not allowed here'
-                 + ' [enabled by default]',
-                 ['          warning: Constraint_Error will be' +
-                  ' raised at run time [enabled by default]'],
-                 '<b>10:22</b>     warning: null value not allowed here'
-                 + ' [enabled by default]',
-                 ['          warning: Constraint_Error will be' +
-                  ' raised at run time [enabled by default]']]]],
-        "third": []}
+RUNS = {
+    "first": [
+        "Builder results (4 items in 1 file)",
+        [
+            "foo.adb (4 items)",
+            [
+                "<b>6:10</b>      warning: null value not allowed here"
+                + " [enabled by default]",
+                [
+                    "          warning: Constraint_Error will be"
+                    + " raised at run time [enabled by default]"
+                ],
+                "<b>6:22</b>      warning: null value not allowed here"
+                + " [enabled by default]",
+                [
+                    "          warning: Constraint_Error will be"
+                    + " raised at run time [enabled by default]"
+                ],
+                "<b>10:10</b>     warning: null value not allowed here"
+                + " [enabled by default]",
+                [
+                    "          warning: Constraint_Error will be"
+                    + " raised at run time [enabled by default]"
+                ],
+                "<b>10:22</b>     warning: null value not allowed here"
+                + " [enabled by default]",
+                [
+                    "          warning: Constraint_Error will be"
+                    + " raised at run time [enabled by default]"
+                ],
+            ],
+        ],
+    ],
+    "second": [
+        "Builder results (2 items in 1 file)",
+        [
+            "foo.adb (2 items)",
+            [
+                "<b>10:10</b>     warning: null value not allowed here"
+                + " [enabled by default]",
+                [
+                    "          warning: Constraint_Error will be"
+                    + " raised at run time [enabled by default]"
+                ],
+                "<b>10:22</b>     warning: null value not allowed here"
+                + " [enabled by default]",
+                [
+                    "          warning: Constraint_Error will be"
+                    + " raised at run time [enabled by default]"
+                ],
+            ],
+        ],
+    ],
+    "third": [],
+}
 
 
 TARGET = """
@@ -79,9 +103,11 @@ def modify_and_save(buf, loc, text, run):
     yield wait_tasks()
     yield wait_idle()
     yield wait_until_true(lambda: dump_locations_tree() != None)
-    gps_assert(dump_locations_tree(),
-               RUNS[run],
-               "Wrong content in the Locations view after " + run + " save")
+    gps_assert(
+        dump_locations_tree(),
+        RUNS[run],
+        "Wrong content in the Locations view after " + run + " save",
+    )
 
 
 @run_test_driver

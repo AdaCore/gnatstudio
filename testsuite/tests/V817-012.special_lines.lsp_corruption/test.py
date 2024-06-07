@@ -18,12 +18,10 @@ def run_test():
 
     def test_goto(msg):
         buf.current_view().goto(buf.at(5, 5))
-        GPS.execute_action('goto declaration')
-        yield wait_language_server('textDocument/declaration')
+        GPS.execute_action("goto declaration")
+        yield wait_language_server("textDocument/declaration")
         current_loc = buf.main_cursor().location()
-        gps_assert(current_loc,
-                   buf.at(2, 15),
-                   "Goto Failed when %s" % msg)
+        gps_assert(current_loc, buf.at(2, 15), "Goto Failed when %s" % msg)
 
     # Delete \n without any mark on it
     buf.delete(buf.at(2, 1).end_of_line(), buf.at(2, 1).end_of_line())

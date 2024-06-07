@@ -16,7 +16,7 @@ COL_END_LINE = 4
 COL_END_COLUMN = 5
 
 
-class LAL_View_Widget():
+class LAL_View_Widget:
     """The widget for the Libadalang view"""
 
     def __init__(self):
@@ -120,11 +120,12 @@ class LAL_View_Widget():
                 self.file.name(),
                 row[COL_START_LINE],
                 row[COL_START_COLUMN],
-                row[COL_LABEL].split(" ")[0][3:-4]))
+                row[COL_LABEL].split(" ")[0][3:-4],
+            )
+        )
 
     def _on_view_button_press(self, _, event):
-        """React to a button_press on the view.
-        """
+        """React to a button_press on the view."""
         if event.button == 3:
             # On this button, raise the contextual menu
             self.menu.popup(None, None, None, None, 3, event.time)
@@ -145,8 +146,7 @@ class LAL_View_Widget():
             buf.current_view().goto(begin_loc)
 
             # Select the current node
-            buf.select(begin_loc,
-                       buf.at(row[COL_END_LINE], row[COL_END_COLUMN]))
+            buf.select(begin_loc, buf.at(row[COL_END_LINE], row[COL_END_COLUMN]))
             return False
 
     def preferences_changed(self):
@@ -154,9 +154,9 @@ class LAL_View_Widget():
         prev = (self.default_fg, self.highlight_fg)
 
         default = GPS.Preference("Src-Editor-Reference-Style").get()
-        self.default_fg.parse(default.split('@')[1])
+        self.default_fg.parse(default.split("@")[1])
         highlight = GPS.Preference("Src-Editor-Keywords-Variant").get()
-        self.highlight_fg.parse(highlight.split('@')[1])
+        self.highlight_fg.parse(highlight.split("@")[1])
 
         if prev != (self.default_fg, self.highlight_fg):
             self.show_current_location(self.line, self.column)
@@ -172,17 +172,19 @@ class LAL_View_Widget():
         end_column = node.sloc_range.end.column
 
         if not self.compact_mode or (
-            (start_line, start_column) <=
-                (self.line, self.column) <=
-                (end_line, end_column)):
-
+            (start_line, start_column)
+            <= (self.line, self.column)
+            <= (end_line, end_column)
+        ):
             it = self.store.append(parent)
             text = "<b>{}</b>{}".format(
                 # Uncomment this for a representation useful for debug:
                 # GLib.markup_escape_text(repr(node)),
                 node.kind_name,
                 " {}".format(GLib.markup_escape_text(node.text))
-                if start_line == end_line else "")
+                if start_line == end_line
+                else "",
+            )
 
             self.store[it] = [
                 text,
@@ -198,9 +200,9 @@ class LAL_View_Widget():
 
     def _traverse_and_highlight(self, it, line, column):
         """Traverse the subtree starting at iter it, and highlight the
-           nodes that encompass the location at line/column.
+        nodes that encompass the location at line/column.
 
-           Return the deepest iter found that matches.
+        Return the deepest iter found that matches.
         """
         lowest_found = None
         child = self.store.iter_children(it)
@@ -212,10 +214,11 @@ class LAL_View_Widget():
                 # location: we can stop traversing.
                 return lowest_found
 
-            if ((row[COL_START_LINE], row[COL_START_COLUMN]) <=
-                (line, column) <=
-                    (row[COL_END_LINE], row[COL_END_COLUMN])):
-
+            if (
+                (row[COL_START_LINE], row[COL_START_COLUMN])
+                <= (line, column)
+                <= (row[COL_END_LINE], row[COL_END_COLUMN])
+            ):
                 # This node encompasses the location: highlight it...
                 lowest_found = child
                 self.highlighted_iters.append(child)
@@ -254,16 +257,17 @@ class LAL_View_Widget():
             # If we have finished iterating, scroll to the lowest found
             if lowest_found:
                 self.view.scroll_to_cell(
-                    self.store.get_path(lowest_found),
-                    self.node_col, True, 0.5, 0.5)
+                    self.store.get_path(lowest_found), self.node_col, True, 0.5, 0.5
+                )
 
         # Display the current token in the label
         self.token = self.unit.lookup_token(libadalang.Sloc(line, column))
         if self.token:
             self.message_label.set_markup(
-                "Token: <b>{}</b> {}".format(self.token.kind,
-                                             self.token.text.strip()
-                                             if self.token.text else ''))
+                "Token: <b>{}</b> {}".format(
+                    self.token.kind, self.token.text.strip() if self.token.text else ""
+                )
+            )
         else:
             self.message_label.set_text("")
 
@@ -288,17 +292,20 @@ class LAL_View_Widget():
         if not unit.root:
             if unit.diagnostics:
                 self.message_label.set_text(
-                    "\n".join([str(d) for d in unit.diagnostics]))
+                    "\n".join([str(d) for d in unit.diagnostics])
+                )
             else:
-                self.message_label.set_text("{} failed to load".format(
-                    os.path.basename(buf.file().name())))
+                self.message_label.set_text(
+                    "{} failed to load".format(os.path.basename(buf.file().name()))
+                )
 
             self.unit = None
             return
         else:
             self.unit = unit
-            self.message_label.set_text("{} loaded ok".format(
-                os.path.basename(buf.file().name())))
+            self.message_label.set_text(
+                "{} loaded ok".format(os.path.basename(buf.file().name()))
+            )
 
         if self.compact_mode:
             # In compact mode, the view is regenerated when we change
@@ -313,7 +320,7 @@ class LAL_View_Widget():
 
 
 class LAL_View(Module):
-    """ A GPS module, providing the libadalang view """
+    """A GPS module, providing the libadalang view"""
 
     view_title = "Libadalang"
     mdi_position = GPS.MDI.POSITION_RIGHT
@@ -326,13 +333,12 @@ class LAL_View(Module):
         make_interactive(
             self.get_view,
             category="Views",
-            description=(
-                "Open (or reuse if it already exists) the 'Libadalang' view"),
-            name="open Libadalang")
-        GPS.Hook("location_changed").add_debounce(
-            self.location_changed_debounced)
+            description=("Open (or reuse if it already exists) the 'Libadalang' view"),
+            name="open Libadalang",
+        )
+        GPS.Hook("location_changed").add_debounce(self.location_changed_debounced)
 
-    def preferences_changed(self, name='', pref=None):
+    def preferences_changed(self, name="", pref=None):
         if self.widget:
             self.widget.preferences_changed()
 
@@ -348,7 +354,8 @@ class LAL_View(Module):
             if current_loc:
                 self.widget.refresh()
                 self.widget.show_current_location(
-                    current_loc.line(), current_loc.column())
+                    current_loc.line(), current_loc.column()
+                )
 
     def on_view_destroy(self):
         self.widget = None

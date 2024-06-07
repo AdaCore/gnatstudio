@@ -1,5 +1,9 @@
-from gs_utils.internal.utils import run_test_driver, gps_assert, \
-    wait_tasks, wait_for_mdi_child
+from gs_utils.internal.utils import (
+    run_test_driver,
+    gps_assert,
+    wait_tasks,
+    wait_for_mdi_child,
+)
 from pygps import get_widgets_by_type
 from workflows.promises import timeout
 
@@ -20,6 +24,8 @@ def driver():
     yield wait_for_mdi_child("Debugger Execution")
 
     # sanity check that the test ran
-    gps_assert("finished!" in GPS.Debugger.get().get_console().get_text(),
-               True,
-               "debug output not visible in console")
+    gps_assert(
+        "finished!" in GPS.Debugger.get().get_console().get_text(),
+        True,
+        "debug output not visible in console",
+    )

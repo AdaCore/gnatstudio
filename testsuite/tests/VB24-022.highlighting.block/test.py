@@ -49,4 +49,5 @@ def test_driver():
     gps_assert(
         buf.debug_dump_syntax_highlighting("Block_Text").strip(),
         EXPECTED_SYNTAX_HIGHLIGHTING.strip(),
-        "Block_Text are not properly highlighted")
+        "Block_Text are not properly highlighted",
+    )

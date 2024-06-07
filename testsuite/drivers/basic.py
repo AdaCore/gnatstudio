@@ -49,19 +49,19 @@ class Xvfb(object):
 
 
 class XvfbRegistry(object):
-    """ A class to hold the Xvfb registries """
+    """A class to hold the Xvfb registries"""
 
     def __init__(self):
         self.xvfbs = []
 
     def start_displays(self, start_display, jobs):
-        """ Initialize Xvfb servers """
+        """Initialize Xvfb servers"""
         self.start_display = start_display
         for slot in range(jobs):
             self.xvfbs.append(Xvfb(start_display + slot))
 
     def get_env(self, slot):
-        """ Return the environment snippet needed for the given slot. """
+        """Return the environment snippet needed for the given slot."""
         # Useful to bypass display setting when launching tests via anod
         if "GNATSTUDIO_NO_XVFB" in os.environ:
             return {}
@@ -79,14 +79,14 @@ Xvfbs = XvfbRegistry()
 
 
 class BasicTestDriver(GPSTestDriver):
-    """ Each test should have:
-          - a test.yaml containing
-                title: '<test name>'
+    """Each test should have:
+    - a test.yaml containing
+          title: '<test name>'
 
-          - a test driver: a test.cmd or a test.py. test.cmd has priority
-                if it exists.
+    - a test driver: a test.cmd or a test.py. test.cmd has priority
+          if it exists.
 
-            If the execution returns code 100, it's an XFAIL.
+      If the execution returns code 100, it's an XFAIL.
     """
 
     def add_test(self, dag):
@@ -109,11 +109,15 @@ class BasicTestDriver(GPSTestDriver):
             delete=False,
         )
         if self.env.options.pycov:
-            cp(os.path.join(testsuite_dir, "pycov_data", "pycov_startup.xml"),
-               os.path.join(self.gps_home, "startup.xml"),)
+            cp(
+                os.path.join(testsuite_dir, "pycov_data", "pycov_startup.xml"),
+                os.path.join(self.gps_home, "startup.xml"),
+            )
             # Copy the coverage preference
-            cp(os.path.join(testsuite_dir, "pycov_data", ".coveragerc"),
-               self.test_env["working_dir"],)
+            cp(
+                os.path.join(testsuite_dir, "pycov_data", ".coveragerc"),
+                self.test_env["working_dir"],
+            )
             py_name = ".coverage"
             py_dir = os.path.join(testsuite_dir, "pycov_data")
             mkdir(py_dir)
@@ -123,7 +127,7 @@ class BasicTestDriver(GPSTestDriver):
 
     def _capture_for_developers(self):
         """Utility for GPS developers: if GPS_DEV is set, capture the
-           logs in $GPS_DEV
+        logs in $GPS_DEV
         """
         printed = ""
         if GPS_DEV in os.environ:

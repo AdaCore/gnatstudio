@@ -27,11 +27,13 @@ def run_test():
 
     # Verify that the completion window is there
     pop_tree = get_widget_by_name("completion-view")
-    gps_assert(pop_tree is not None, True,
-               "The completion window should be open at that point")
+    gps_assert(
+        pop_tree is not None, True, "The completion window should be open at that point"
+    )
 
     # Verify that we don't match the invisible 'Do_Nothing' subprogram
     gps_assert(
         dump_tree_model(pop_tree.get_model(), LABEL_COLUMN),
-        ['Do_inv'],
-        "'(invisible)' should not be matched")
+        ["Do_inv"],
+        "'(invisible)' should not be matched",
+    )

@@ -13,7 +13,7 @@ for x in psutil.pids():
         p = psutil.Process(x)
         # count the processes that are named clangd[.exe] and are children
         # of this process
-        if p.ppid() == the_pid and p.name().startswith('clangd'):
+        if p.ppid() == the_pid and p.name().startswith("clangd"):
             child_clangds += 1
     except psutil.NoSuchProcess:
         pass

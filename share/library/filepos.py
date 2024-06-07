@@ -11,7 +11,7 @@ from GPS import EditorBuffer
 import gs_utils
 
 
-@gs_utils.hook('file_closed')
+@gs_utils.hook("file_closed")
 def on_file_closed(file):
     buffer = EditorBuffer.get(file, open=False)
     if buffer:
@@ -21,7 +21,7 @@ def on_file_closed(file):
         file.set_property("lastloc_column", repr(column), persistent=True)
 
 
-@gs_utils.hook('file_edited')
+@gs_utils.hook("file_edited")
 def on_file_edited(file):
     try:
         # If the file was opened inside an editor (as opposed to a
@@ -36,7 +36,6 @@ def on_file_edited(file):
         if cursor.line() == 1 and cursor.column() == 1:
             line = file.get_property("lastloc_line")
             column = file.get_property("lastloc_column")
-            buffer.current_view().goto(
-                buffer.at(int(line), int(column)))
+            buffer.current_view().goto(buffer.at(int(line), int(column)))
     except:
         pass

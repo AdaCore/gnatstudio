@@ -11,8 +11,8 @@ import gs_utils
 
 
 def __on_gnatfind_exit(gprfind_process, status, full_output):
-    """  Parse the output of the gprfind command and enter it in the
-         GPS Locations View.
+    """Parse the output of the gprfind command and enter it in the
+    GPS Locations View.
     """
 
     if status == 0:
@@ -21,18 +21,19 @@ def __on_gnatfind_exit(gprfind_process, status, full_output):
         GPS.Locations.parse(
             output=full_output,
             category="gnatfind %s" % gprfind_process.query,
-            highlight_category="Search results")
+            highlight_category="Search results",
+        )
     else:
         # Raise an error, listing the full output in the Messages
-        GPS.Console().write("Error with gnatfind:\n %s\n" % full_output,
-                            "error")
+        GPS.Console().write("Error with gnatfind:\n %s\n" % full_output, "error")
 
 
 @gs_utils.interactive(
-    'run gnatfind',
-    contextual='gnatfind %e',
-    contextual_ref='goto other file',
-    filter=lambda ctx: hasattr(ctx, 'entity') and ctx.entity() is not None)
+    "run gnatfind",
+    contextual="gnatfind %e",
+    contextual_ref="goto other file",
+    filter=lambda ctx: hasattr(ctx, "entity") and ctx.entity() is not None,
+)
 def __activate():
     context = GPS.contextual_context() or GPS.current_context()
 
@@ -57,12 +58,16 @@ def __activate():
 
     # Create the gnatfind command line
 
-    command = (["gnatfind", "-r"] +
-               ["-aI%s" % d for d in source_dirs] +
-               ["-aO", object_dir,
-                "%s:%s:%s:%s" % (
-                    entity_name, entity_file.split('\\')[-1],
-                    entity_line, entity_column)])
+    command = (
+        ["gnatfind", "-r"]
+        + ["-aI%s" % d for d in source_dirs]
+        + [
+            "-aO",
+            object_dir,
+            "%s:%s:%s:%s"
+            % (entity_name, entity_file.split("\\")[-1], entity_line, entity_column),
+        ]
+    )
 
     # Write the command line in the Messages window
 

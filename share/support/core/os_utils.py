@@ -10,8 +10,8 @@ import os.path
 def locate_exec_on_path(prog):
     """Utility function to locate an executable on path."""
 
-    if os.name == 'nt':
-        pathext = os.getenv('PATHEXT')
+    if os.name == "nt":
+        pathext = os.getenv("PATHEXT")
         if pathext:
             extensions = str.split(pathext, os.pathsep)
         else:
@@ -19,7 +19,7 @@ def locate_exec_on_path(prog):
     else:
         extensions = [""]
 
-    alldirs = str.split(os.getenv('PATH'), os.pathsep)
+    alldirs = str.split(os.getenv("PATH"), os.pathsep)
     for file in [os.path.join(dir, prog) for dir in alldirs]:
         for ext in extensions:
             if os.path.isfile(file + ext.lower()):
@@ -28,7 +28,7 @@ def locate_exec_on_path(prog):
 
 
 def display_name(filename):
-    if os.name == 'nt' and os.getenv("GNAT_CODE_PAGE") == "CP_ACP":
+    if os.name == "nt" and os.getenv("GNAT_CODE_PAGE") == "CP_ACP":
         return str(filename, "ISO-8859-1").encode("UTF-8")
     else:
         return filename

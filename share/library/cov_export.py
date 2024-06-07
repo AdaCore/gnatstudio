@@ -10,8 +10,9 @@ import gs_utils
 
 
 @gs_utils.interactive(
-    contextual='Coverage/Show in HTML Browser',
-    filter=lambda c: c.module_name == 'CodeAnalysis')
+    contextual="Coverage/Show in HTML Browser",
+    filter=lambda c: c.module_name == "CodeAnalysis",
+)
 def show_in_html_browser():
     a = GPS.CodeAnalysis.get("Coverage")
     file_name = GPS.get_tmp_dir() + "cov.xml"

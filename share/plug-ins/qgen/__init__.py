@@ -58,14 +58,15 @@ from .sig_utils import Signal
 from .signal_setter import signalSetter
 
 
-logger = GPS.Logger('MODELING')
+logger = GPS.Logger("MODELING")
 
 
 class MDL_Language(GPS.Language):
     """
     A class that describes the MDL and Simulink language for GPS.
     """
-    const_split = re.compile('#QGEN(.*)#')
+
+    const_split = re.compile("#QGEN(.*)#")
     # The constant string used to create a construct id
     const_id = "#QGEN"
 
@@ -77,15 +78,11 @@ class MDL_Language(GPS.Language):
     def register():
         """Add support for the Simulink language"""
         GPS.Language.register(
-            MDL_Language(),
-            name="Simulink",
-            body_suffix=".mdl",
-            spec_suffix=".slx")
+            MDL_Language(), name="Simulink", body_suffix=".mdl", spec_suffix=".slx"
+        )
 
-        GPS.Language.register(
-            MDL_Language(),
-            name="QGen",
-            body_suffix=".xmi")
+        GPS.Language.register(MDL_Language(), name="QGen", body_suffix=".xmi")
+
     # @overriding
 
     def should_refresh_constructs(self, file):
@@ -94,44 +91,68 @@ class MDL_Language(GPS.Language):
         file asynchronously, otherwise use the stored constructs
         """
 
-        flat = GPS.Preference('outline-flat-view').get()
+        flat = GPS.Preference("outline-flat-view").get()
         logger.log("Asking if refreshing constructs")
 
         @workflows.run_as_workflow
         def workflow_gen_constructs(viewer):
             logger.log("Starting constructs parsing")
             workflows.task_workflow(
-                "Creating outline for %s" % file.name(),
-                parse_model_tree, viewer=viewer)
+                "Creating outline for %s" % file.name(), parse_model_tree, viewer=viewer
+            )
 
         @workflows.run_as_workflow
-        def fill_tree(task, viewer, it_name, it_id,
-                      sloc_start, sloc_end, type, idx, offset, task_max):
+        def fill_tree(
+            task,
+            viewer,
+            it_name,
+            it_id,
+            sloc_start,
+            sloc_end,
+            type,
+            idx,
+            offset,
+            task_max,
+        ):
             c_id = "{0}{1}{2}#{3}".format(
-                it_name, MDL_Language.const_id, sloc_end[-1], it_id)
-            c_name = it_name if flat else Diagram_Utils.block_split(
-                it_name, count=1, backward=True)[-1]
-            viewer.constructs.append(
-                (c_name, c_id, sloc_start, sloc_end, type, it_id))
-            viewer.constructs_map[c_id] = (c_name, sloc_start,
-                                           sloc_end, type, it_id)
+                it_name, MDL_Language.const_id, sloc_end[-1], it_id
+            )
+            c_name = (
+                it_name
+                if flat
+                else Diagram_Utils.block_split(it_name, count=1, backward=True)[-1]
+            )
+            viewer.constructs.append((c_name, c_id, sloc_start, sloc_end, type, it_id))
+            viewer.constructs_map[c_id] = (c_name, sloc_start, sloc_end, type, it_id)
             task.set_progress(idx, task_max)
 
         def parse_model_tree(task, viewer):
             GPS.Console().write(
-                "Generating outline view for the model %s...\n" % viewer.file)
+                "Generating outline view for the model %s...\n" % viewer.file
+            )
             id, val = viewer.diags.index[0]
             idx = 0
             offset = 1
-            for it_name, it_id, sloc_start, sloc_end, type, task_max in\
-                    process_item(viewer):
+            for it_name, it_id, sloc_start, sloc_end, type, task_max in process_item(
+                viewer
+            ):
                 idx += 1
                 offset = max(offset, sloc_end[2]) + 1
-                yield fill_tree(task, viewer, it_name, it_id, sloc_start,
-                                sloc_end, type, idx, offset, task_max)
+                yield fill_tree(
+                    task,
+                    viewer,
+                    it_name,
+                    it_id,
+                    sloc_start,
+                    sloc_end,
+                    type,
+                    idx,
+                    offset,
+                    task_max,
+                )
             viewer.parsing_done()
             GPS.Console().write("Outline view generated\n")
-            GPS.Hook('file_edited').run(file)
+            GPS.Hook("file_edited").run(file)
 
         def process_item(viewer):
             """
@@ -160,8 +181,9 @@ class MDL_Language(GPS.Language):
                         if child_entry_name == child_id:
                             offset = offset + 1
                             items_len += len(child_children)
-                            item_stack.append((child_name, child_id,
-                                               list(child_children), offset))
+                            item_stack.append(
+                                (child_name, child_id, list(child_children), offset)
+                            )
                             break
                     children.remove(child)
                     # If the subsystem has no child, add the construct as a
@@ -169,8 +191,14 @@ class MDL_Language(GPS.Language):
                     if not item_stack[-1][2]:
                         it, it_id, _, start_offset = item_stack.pop()
                         offset = offset + 1
-                        yield (it, it_id, (0, 0, start_offset),
-                               (0, 0, offset), constructs.CAT_CLASS, items_len)
+                        yield (
+                            it,
+                            it_id,
+                            (0, 0, start_offset),
+                            (0, 0, offset),
+                            constructs.CAT_CLASS,
+                            items_len,
+                        )
                     else:
                         break
 
@@ -183,8 +211,14 @@ class MDL_Language(GPS.Language):
                 # the containing subsystem construct
                 while not children:
                     offset = offset + 1
-                    yield (item, item_id, (0, 0, start_offset),
-                           (0, 0, offset), constructs.CAT_CLASS, items_len)
+                    yield (
+                        item,
+                        item_id,
+                        (0, 0, start_offset),
+                        (0, 0, offset),
+                        constructs.CAT_CLASS,
+                        items_len,
+                    )
                     item_stack.pop()
 
                     if item_stack:
@@ -194,16 +228,26 @@ class MDL_Language(GPS.Language):
 
         viewer = QGEN_Diagram_Viewer.retrieve_active_qgen_viewer_for_file(file)
 
-        if viewer and viewer.loading_complete and not viewer.parsing_complete\
-           and viewer.diags and not viewer.parsing_started:
+        if (
+            viewer
+            and viewer.loading_complete
+            and not viewer.parsing_complete
+            and viewer.diags
+            and not viewer.parsing_started
+        ):
             # If we have not started creating the constructs and the models
             # have been properly loaded, launch a workflow generating the
             # constructs.
             viewer.parsing_started = True
             logger.log("Creating constructs for outline of %s" % file.name)
             workflow_gen_constructs(viewer)
-        if viewer and viewer.loading_complete and viewer.parsing_complete \
-           and viewer.diags and viewer.constructs:
+        if (
+            viewer
+            and viewer.loading_complete
+            and viewer.parsing_complete
+            and viewer.diags
+            and viewer.constructs
+        ):
             # Call parse_constructs if it has not been setup yet.
             return not viewer.constructs_setup
         else:
@@ -229,14 +273,16 @@ class MDL_Language(GPS.Language):
                     view.update_nav_status(construct.id)
                 except ValueError:
                     logger.log(
-                        "Malformed construct id : %s, not added to history" %
-                        construct.id)
+                        "Malformed construct id : %s, not added to history"
+                        % construct.id
+                    )
                 finally:
                     view.set_diagram(diag)
-                    logger.log('Set diagram for construct : %s' % diag.id)
+                    logger.log("Set diagram for construct : %s" % diag.id)
             else:
                 info = QGEN_Module.modeling_map.get_diagram_for_item(
-                    view.diags, construct_id)
+                    view.diags, construct_id
+                )
                 if info:
                     diagram, item = info
                     view.diags.clear_selection()
@@ -245,7 +291,8 @@ class MDL_Language(GPS.Language):
                     view.scroll_into_view(item)
 
         QGEN_Diagram_Viewer.get_or_create_from_model(
-            construct.file, on_loaded=__on_loaded)
+            construct.file, on_loaded=__on_loaded
+        )
 
     # @overriding
     def parse_constructs(self, clist, file, file_contents):
@@ -263,7 +310,7 @@ class MDL_Language(GPS.Language):
                 is_declaration=True,
                 visibility=constructs.VISIBILITY_PUBLIC,
                 name=c_name,
-                profile='',
+                profile="",
                 # We combine the name of the block with its id and a #QGEN#
                 # string to both create a unique id (it_name is unique) and
                 # be able to retrieve the id to display the correct diagram
@@ -272,15 +319,15 @@ class MDL_Language(GPS.Language):
                 id=c_id,
                 sloc_start=sloc_start,
                 sloc_end=sloc_end,
-                sloc_entity=sloc_start)
+                sloc_entity=sloc_start,
+            )
 
         if viewer.constructs and viewer.loading_complete:
             logger.log("Adding constructs to outline")
-            for c_name, c_id, sloc_start, sloc_end,\
-                    type, _ in viewer.constructs:
+            for c_name, c_id, sloc_start, sloc_end, type, _ in viewer.constructs:
                 add_construct(c_name, c_id, sloc_start, sloc_end, type)
                 logger.log("Added construct %s" % c_id)
-            GPS.Hook('semantic_tree_updated').run(file)
+            GPS.Hook("semantic_tree_updated").run(file)
             viewer.constructs_setup = True
 
 
@@ -290,7 +337,7 @@ class CLI(GPS.Process):
     converting an mdl file to a JSON format that can be displayed by GPS.
     """
 
-    qgenc = os_utils.locate_exec_on_path('qgenc')
+    qgenc = os_utils.locate_exec_on_path("qgenc")
     plugins_dir = None
     # path to qgenc
 
@@ -303,15 +350,16 @@ class CLI(GPS.Process):
         if CLI.qgenc:
             # Check that the python modules are stored in the qgen directory
             CLI.plugins_dir = os.path.join(
-                os.path.dirname(os.path.dirname(CLI.qgenc)),
-                'share', 'gnatstudio')
-            has_qgen_modules = os.path.exists(os.path.join(
-                CLI.plugins_dir, 'mapping.py')) and os.path.exists(
-                    os.path.join(CLI.plugins_dir, 'diagram_utils.py'))
+                os.path.dirname(os.path.dirname(CLI.qgenc)), "share", "gnatstudio"
+            )
+            has_qgen_modules = os.path.exists(
+                os.path.join(CLI.plugins_dir, "mapping.py")
+            ) and os.path.exists(os.path.join(CLI.plugins_dir, "diagram_utils.py"))
             if not has_qgen_modules:
                 logger.log(
-                    'mapping.py and/or diagram_utils.py not '
-                    'found in the qgen installation')
+                    "mapping.py and/or diagram_utils.py not "
+                    "found in the qgen installation"
+                )
             else:
                 return True
         return False
@@ -329,6 +377,7 @@ class CLI(GPS.Process):
         argument as well.
         :return str: The string containing the cli arguments for qgenc.
         """
+
         def remove_arg(li, val, positional):
             res = []
             skip = False
@@ -350,19 +399,16 @@ class CLI(GPS.Process):
 
             # Always ignore -o and --output.  The Output_Dir project attribute
             # should be used instead.
-            remove_list.extend([
-                ('-o', True),
-                ('--output', True)
-            ])
+            remove_list.extend([("-o", True), ("--output", True)])
             for arg, has_param in remove_list:
                 switches = remove_arg(switches, arg, has_param)
 
-            extra.extend(['-o', outdir])
+            extra.extend(["-o", outdir])
 
             for extra_switch in extra:
                 if extra_switch not in switches:
                     switches.append(extra_switch)
-            return ' '.join(switches)
+            return " ".join(switches)
 
     @staticmethod
     def get_json(file):
@@ -377,14 +423,19 @@ class CLI(GPS.Process):
         filepath = file.path
 
         switches = CLI.get_qgenc_switches(
-            file, extra=['--with-gui-only', '--incremental', "--no-misra"],
-            remove_list=[('-c', False), ('--clean', False)])
+            file,
+            extra=["--with-gui-only", "--incremental", "--no-misra"],
+            remove_list=[("-c", False), ("--clean", False)],
+        )
         outdir = Project_Support.get_output_dir(file)
         result_path = os.path.join(
-            outdir, '.qgeninfo',
+            outdir,
+            ".qgeninfo",
             Diagram_Utils.get_diagram_hash(
-                os.path.splitext(
-                    os.path.basename(filepath))[0].encode("utf-8")) + '.qmdl')
+                os.path.splitext(os.path.basename(filepath))[0].encode("utf-8")
+            )
+            + ".qmdl",
+        )
 
         logger.log("Looking for diagram %s" % result_path)
 
@@ -397,19 +448,20 @@ class CLI(GPS.Process):
             if diagram_dt >= mdl_dt:
                 promise.resolve(result_path)
                 return promise
-            logger.log("Model file has been modified recently,"
-                       "{0} >= {1}  recomputing diagram info".format(
-                           mdl_dt, diagram_dt))
+            logger.log(
+                "Model file has been modified recently,"
+                "{0} >= {1}  recomputing diagram info".format(mdl_dt, diagram_dt)
+            )
 
-        cmd = ' '.join(
-            [CLI.qgenc, filepath, switches])
+        cmd = " ".join([CLI.qgenc, filepath, switches])
 
         def __on_exit(proc, exit_status, output):
             if exit_status == 0:
                 promise.resolve(result_path)
             else:
-                GPS.Console().write('When running qgenc for gui: %s\n' % (
-                    output), mode='error')
+                GPS.Console().write(
+                    "When running qgenc for gui: %s\n" % (output), mode="error"
+                )
                 promise.reject()
 
         # qgenc is relatively fast, and since the user is waiting for
@@ -433,7 +485,7 @@ class CLI(GPS.Process):
                 f = ctx_or_file.file()
             else:
                 f = ctx_or_file
-            return f.language() == 'simulink' or f.language() == 'qgen'
+            return f.language() == "simulink" or f.language() == "qgen"
         except Exception:
             return False
 
@@ -451,9 +503,12 @@ class CLI(GPS.Process):
         st = 1
         for f in files:
             if CLI.is_model_file(f):
-                switches = (f.path + ' ' + CLI.get_qgenc_switches(
-                    f, extra=['--with-gui', '--trace']))
-                w = TargetWrapper(target_name='QGen for file')
+                switches = (
+                    f.path
+                    + " "
+                    + CLI.get_qgenc_switches(f, extra=["--with-gui", "--trace"])
+                )
+                w = TargetWrapper(target_name="QGen for file")
                 st = yield w.wait_on_execute(file=f, extra_args=switches)
                 if st != 0:
                     break
@@ -494,12 +549,13 @@ class CLI(GPS.Process):
             GPS.Console().write(
                 "No models specified for %s: use the 'Target' property "
                 "in the project file to fix. See QGen Model Debugger "
-                "user guide for more detail.\n" % main_name)
+                "user guide for more detail.\n" % main_name
+            )
 
         status = yield CLI.__compile_files_to_source_code(models)
 
         if status == 0:
-            w = TargetWrapper(target_name='Build Main')
+            w = TargetWrapper(target_name="Build Main")
             yield w.wait_on_execute(main_name=main_name)
 
     @staticmethod
@@ -512,13 +568,14 @@ class CLI(GPS.Process):
         """
         exe = GPS.File(main_name).executable_path
         debuggers_to_close = [
-            d for d in GPS.Debugger.list()
-            if d.get_executable().executable_path == exe]
+            d for d in GPS.Debugger.list() if d.get_executable().executable_path == exe
+        ]
 
         if len(debuggers_to_close) > 0:
             if GPS.MDI.yes_no_dialog(
-                    "One or more debuggers are already running for that"
-                    " executable, do you want to terminate them ?"):
+                "One or more debuggers are already running for that"
+                " executable, do you want to terminate them ?"
+            ):
                 for debugger in debuggers_to_close:
                     debugger.close()
 
@@ -528,12 +585,13 @@ class CLI(GPS.Process):
             GPS.Console().write(
                 "No models specified for %s: use the 'Target' property "
                 "in the project file to fix. See QGen Model Debugger "
-                "user guide for more detail.\n" % main_name)
+                "user guide for more detail.\n" % main_name
+            )
 
         status = yield CLI.__compile_files_to_source_code(models)
 
         if status == 0:
-            w = TargetWrapper(target_name='Build Main')
+            w = TargetWrapper(target_name="Build Main")
             status = yield w.wait_on_execute(main_name=main_name)
         if status == 0:
             GPS.Debugger.spawn(exe)
@@ -554,7 +612,8 @@ class CLI(GPS.Process):
 
         if ask_overwrite and os.path.exists(filename):
             res = GPS.MDI.yes_no_dialog(
-                "%s already exists, do you want to delete it?" % filename)
+                "%s already exists, do you want to delete it?" % filename
+            )
             if res:
                 os.remove(filename)
             else:
@@ -562,7 +621,8 @@ class CLI(GPS.Process):
 
         GPS.Console().write(
             "Logfile will be written in %s, open it in the Matlab"
-            " web browser.\n" % filename)
+            " web browser.\n" % filename
+        )
         return True
 
     @staticmethod
@@ -575,8 +635,7 @@ class CLI(GPS.Process):
         viewer = QGEN_Diagram_Viewer.retrieve_active_qgen_viewer()
 
         if viewer:
-            v = GPS.MDI.input_dialog("Log current subsystem signals in",
-                                     "filename")
+            v = GPS.MDI.input_dialog("Log current subsystem signals in", "filename")
             if v:
                 QGEN_Module.log_values_in_file([viewer.diagram], v[0])
 
@@ -649,7 +708,6 @@ class CLI(GPS.Process):
 
 
 class QGEN_Diagram(gpsbrowsers.JSON_Diagram):
-
     def __init__(self, file, json):
         self.current_priority = 0
         self.reset_priority = False
@@ -695,7 +753,7 @@ class QGEN_Diagram_Viewer(GPS.Browsers.View):
         in GPS
         """
         for win in GPS.MDI.children():
-            if hasattr(win, '_gmc_viewer'):
+            if hasattr(win, "_gmc_viewer"):
                 yield win._gmc_viewer
 
     @staticmethod
@@ -707,7 +765,7 @@ class QGEN_Diagram_Viewer(GPS.Browsers.View):
         """
         try:
             for win in GPS.MDI.children():
-                if hasattr(win, '_gmc_viewer'):
+                if hasattr(win, "_gmc_viewer"):
                     v = win._gmc_viewer
                     if v.file == f:
                         return v
@@ -723,7 +781,7 @@ class QGEN_Diagram_Viewer(GPS.Browsers.View):
         """
         try:
             win = GPS.MDI.current()
-            if hasattr(win, '_gmc_viewer'):
+            if hasattr(win, "_gmc_viewer"):
                 return win._gmc_viewer
         except Exception:
             return None
@@ -735,7 +793,7 @@ class QGEN_Diagram_Viewer(GPS.Browsers.View):
         :return: (view, newly_created)
         """
         for win in GPS.MDI.children():
-            if hasattr(win, '_gmc_viewer'):
+            if hasattr(win, "_gmc_viewer"):
                 v = win._gmc_viewer
                 if v.file == file:
                     if raise_win:
@@ -750,13 +808,14 @@ class QGEN_Diagram_Viewer(GPS.Browsers.View):
             diagram=GPS.Browsers.Diagram(),  # a temporary diagram
             title=os.path.basename(file.path),
             save_desktop=v.save_desktop,
-            toolbar="MDL Browser")
+            toolbar="MDL Browser",
+        )
         v.set_read_only(True)
 
         c = GPS.MDI.get_by_child(v)
         c._gmc_viewer = v
 
-        GPS.Hook('file_edited').run(file)
+        GPS.Hook("file_edited").run(file)
         return (v, True)
 
     @staticmethod
@@ -774,9 +833,13 @@ class QGEN_Diagram_Viewer(GPS.Browsers.View):
 
         logger.log("Lauching background diagram loading")
         workflows.task_workflow(
-            'Loading referenced diagrams',
+            "Loading referenced diagrams",
             QGEN_Diagram_Viewer.load_all_referenced_diagrams,
-            viewer=viewer, jsonfile=jsonfile, style=style, on_loaded=on_loaded)
+            viewer=viewer,
+            jsonfile=jsonfile,
+            style=style,
+            on_loaded=on_loaded,
+        )
 
     @staticmethod
     def load_all_referenced_diagrams(task, viewer, jsonfile, style, on_loaded):
@@ -790,7 +853,8 @@ class QGEN_Diagram_Viewer(GPS.Browsers.View):
                 diag_to_load = child["diagram"]
                 logger.log("Searching diagram %s" % diag_to_load)
                 yield QGEN_Diagram_Viewer.load_referenced_diagram(
-                    viewer, diag_to_load, json_dir, style)
+                    viewer, diag_to_load, json_dir, style
+                )
                 idx += 1
                 task.set_progress(idx, task_max)
         viewer.loading_complete = True
@@ -799,7 +863,7 @@ class QGEN_Diagram_Viewer(GPS.Browsers.View):
             on_loaded(viewer)
 
         MDL_Language().should_refresh_constructs(viewer.file)
-        GPS.Hook('file_edited').run(viewer.file)
+        GPS.Hook("file_edited").run(viewer.file)
 
     @staticmethod
     @workflows.run_as_workflow
@@ -807,13 +871,15 @@ class QGEN_Diagram_Viewer(GPS.Browsers.View):
         # We loaded the first diagram as the one requested was not
         # found so we need to retrieve it from the directory
         if not viewer.diags.contains(diag_to_load):
-            f = os.path.join(json_dir, Diagram_Utils.get_diagram_hash(
-                diag_to_load.encode("utf-8")) + '.qmdl')
+            f = os.path.join(
+                json_dir,
+                Diagram_Utils.get_diagram_hash(diag_to_load.encode("utf-8")) + ".qmdl",
+            )
             if os.path.exists(f):
                 logger.log("Loading contained %s" % f)
                 loaded_diag = GPS.Browsers.Diagram.load_json(
-                    open(f), diagramFactory=QGEN_Diagram,
-                    load_styles=style)
+                    open(f), diagramFactory=QGEN_Diagram, load_styles=style
+                )
                 logger.log("Done loading")
                 viewer.diags.index.extend(loaded_diag.index)
                 viewer.diags.diagrams.extend(loaded_diag.diagrams)
@@ -860,12 +926,15 @@ class QGEN_Diagram_Viewer(GPS.Browsers.View):
         v, newly_created = QGEN_Diagram_Viewer.get_or_create_view(file)
 
         if newly_created:
+
             def __on_json(jsonfile):
                 v.diags = GPS.Browsers.Diagram.load_json(
-                    jsonfile, diagramFactory=QGEN_Diagram)
+                    jsonfile, diagramFactory=QGEN_Diagram
+                )
                 if v.diags:
                     QGEN_Diagram_Viewer.launch_diagram_loading_task(
-                        v, jsonfile, v.diags.styles, on_loaded)
+                        v, jsonfile, v.diags.styles, on_loaded
+                    )
                     root_diag = v.diags.get()
                     v.set_diagram(root_diag)
                     v.root_diag_id = root_diag.id
@@ -880,7 +949,7 @@ class QGEN_Diagram_Viewer(GPS.Browsers.View):
             if on_loaded:
                 on_loaded(v)
 
-        GPS.Hook('file_edited').run(file)
+        GPS.Hook("file_edited").run(file)
         return v
 
     @staticmethod
@@ -894,7 +963,8 @@ class QGEN_Diagram_Viewer(GPS.Browsers.View):
         v, newly_created = QGEN_Diagram_Viewer.get_or_create_view(file)
         if newly_created:
             v.diags = GPS.Browsers.Diagram.load_json_data(
-                data, diagramFactory=QGEN_Diagram)
+                data, diagramFactory=QGEN_Diagram
+            )
             if v.diags:
                 v.diagram = v.diags.get()
         return v
@@ -930,15 +1000,14 @@ class QGEN_Diagram_Viewer(GPS.Browsers.View):
         in the history.
         """
         self.parsing_complete = True
-        logger.log("Parsing done, status is %d %s" % (self.nav_index,
-                                                      self.nav_status))
+        logger.log("Parsing done, status is %d %s" % (self.nav_index, self.nav_status))
         if self.nav_index > -1:
             for i in range(0, self.nav_index + 1):
                 # The user browsed diagrams using double click and
                 # previous/parent, we need to recreate this history.
                 # First we create a reverse list for each path to
                 # a diagram
-                path_l = self.pre_load_browsing[:i+1]
+                path_l = self.pre_load_browsing[: i + 1]
                 c_id = self.get_construct_from_list(path_l, (-1, None))
                 self.nav_status.insert(i, c_id)
         else:
@@ -949,8 +1018,10 @@ class QGEN_Diagram_Viewer(GPS.Browsers.View):
         """
         :return str: The last construct selected.
         """
-        logger.log("Last construct index is %d from %s\n" % (
-            self.nav_index, str(self.nav_status)))
+        logger.log(
+            "Last construct index is %d from %s\n"
+            % (self.nav_index, str(self.nav_status))
+        )
         if self.parsing_complete and self.nav_index >= 0:
             return self.nav_status[self.nav_index]
         return None
@@ -989,8 +1060,8 @@ class QGEN_Diagram_Viewer(GPS.Browsers.View):
 
         for _, cons_id, sloc_start, sloc_end, _, d_id in self.constructs:
             if sloc_start[-1] > start_sloc and (
-                    end_sloc is None or sloc_end[-1] < end_sloc):
-
+                end_sloc is None or sloc_end[-1] < end_sloc
+            ):
                 if sloc_start[-1] == last_child_sloc + 1:
                     last_child_sloc = sloc_end[-1]
                     if name == d_id:
@@ -998,7 +1069,8 @@ class QGEN_Diagram_Viewer(GPS.Browsers.View):
                             return cons_id
                         else:
                             return self.get_construct_from_list(
-                                li[1:], (sloc_start[-1], sloc_end[-1]), cons_id)
+                                li[1:], (sloc_start[-1], sloc_end[-1]), cons_id
+                            )
 
         return res
 
@@ -1007,11 +1079,12 @@ class QGEN_Diagram_Viewer(GPS.Browsers.View):
         Returns the construct corresponding to the last dlbcliked diagram.
         :return string: The construct id for the dblclicked item.
         """
-        logger.log("Looking for construct %d from %s\n" % (
-            self.nav_index, str(self.nav_status)))
+        logger.log(
+            "Looking for construct %d from %s\n"
+            % (self.nav_index, str(self.nav_status))
+        )
         if self.parsing_complete and self.nav_index >= 0:
-            current_construct = self.constructs_map[
-                self.nav_status[self.nav_index]]
+            current_construct = self.constructs_map[self.nav_status[self.nav_index]]
             start_sloc = current_construct[1][-1]
             last_child_sloc = start_sloc
             item_len = len(self.last_dblclicked)
@@ -1023,10 +1096,11 @@ class QGEN_Diagram_Viewer(GPS.Browsers.View):
                     last_child_sloc = sloc_end[-1]
                     if self.last_dblclicked.endswith(d_name):
                         n_idx = item_len - len(d_name)
-                        logger.log("Supposing construct %s for %s" % (
-                            d_name, self.last_dblclicked))
-                        if n_idx < idx and self.last_dblclicked[
-                                n_idx - 1] == '/':
+                        logger.log(
+                            "Supposing construct %s for %s"
+                            % (d_name, self.last_dblclicked)
+                        )
+                        if n_idx < idx and self.last_dblclicked[n_idx - 1] == "/":
                             res = cons_id
                             idx = n_idx
             return res
@@ -1058,9 +1132,11 @@ class QGEN_Diagram_Viewer(GPS.Browsers.View):
             # which correspond to the encapsulating construct
             current_sloc = -1
             for _, cons_id, sloc_start, sloc_end, _, it_id in self.constructs:
-                if sloc_start[-1] < sloc and \
-                   sloc_start[-1] - sloc > current_sloc - sloc and \
-                   sloc_end[-1] > sloc:
+                if (
+                    sloc_start[-1] < sloc
+                    and sloc_start[-1] - sloc > current_sloc - sloc
+                    and sloc_end[-1] > sloc
+                ):
                     current_sloc = sloc_start[-1]
                     parent = it_id
                     parent_cons = cons_id
@@ -1077,20 +1153,17 @@ class QGEN_Diagram_Viewer(GPS.Browsers.View):
         res = self.diags.get(diag_id)
         if res.id != diag_id:
             if showerror:
-                GPS.Console().write(
-                    "%s was not found, " % diag_id)
+                GPS.Console().write("%s was not found, " % diag_id)
                 if not self.parsing_complete:
-                    GPS.Console().write(
-                        "wait for the loading to complete...\n")
+                    GPS.Console().write("wait for the loading to complete...\n")
                 else:
-                    GPS.Console().write(
-                        " it might not be supported by the debugger.\n")
+                    GPS.Console().write(" it might not be supported by the debugger.\n")
             return None
         return res
 
     def save_desktop(self, child):
         """Save the contents of the viewer in the desktop"""
-        info = {'file': self.file.path}
+        info = {"file": self.file.path}
         return (module.name(), json.dumps(info))
 
     def perform_action(self, action, item):
@@ -1102,24 +1175,24 @@ class QGEN_Diagram_Viewer(GPS.Browsers.View):
         """
 
         # Split the command into its name and arguments
-        (name, args) = action.split('(', 1)
-        if args and args[-1] != ')':
+        (name, args) = action.split("(", 1)
+        if args and args[-1] != ")":
             GPS.Console().write(
-                "Invalid command: %s (missing closing parenthesis)\n" % (
-                    action, ))
+                "Invalid command: %s (missing closing parenthesis)\n" % (action,)
+            )
             return
 
-        args = args[:-1].split(',')  # ??? fails if arguments contain nested ,
+        args = args[:-1].split(",")  # ??? fails if arguments contain nested ,
         for idx, a in enumerate(args):
             if a[0] in ('"', "'") and a[-1] == a[0]:
                 args[idx] = a[1:-1]
             elif a.isdigit():
                 args[idx] = int(a)
             else:
-                GPS.Console().write("Invalid command: %s\n" % (action, ))
+                GPS.Console().write("Invalid command: %s\n" % (action,))
                 return
 
-        if name == 'showdiagram':
+        if name == "showdiagram":
             diag = self.get_existing_diagram(args[0], showerror=True)
             if diag is not None:
                 self.set_diagram(diag, is_dblclick=True)
@@ -1152,16 +1225,16 @@ class QGEN_Diagram_Viewer(GPS.Browsers.View):
         """
         Called when the user double clicks on an item.
         """
-        action = topitem.data.get('dblclick')
+        action = topitem.data.get("dblclick")
         if action:
-            if hasattr(item, 'id'):
+            if hasattr(item, "id"):
                 self.last_dblclicked = item.id
                 self.perform_action(action, topitem)
 
     # @overriding
     def on_item_clicked(self, topitem, item, x, y, *args):
         def is_link(i):
-            return hasattr(i, "data") and i.data.get('auto') == "true"
+            return hasattr(i, "data") and i.data.get("auto") == "true"
 
         if is_link(item):
             QGEN_Module.display_variable_in_view(item)
@@ -1181,10 +1254,10 @@ class QGEN_Diagram_Viewer(GPS.Browsers.View):
         context.modeling_topitem = topitem
 
 
-MDL_Language.register()   # available before project is loaded
+MDL_Language.register()  # available before project is loaded
 
 if not CLI.is_available():
-    logger.log('QGen Debugger not found')
+    logger.log("QGen Debugger not found")
 
 else:
     sys.path.append(CLI.plugins_dir)
@@ -1211,13 +1284,11 @@ else:
 
             # if the debugger is not busy
             if not self._debugger.is_busy():
-
                 # remove all timers
                 self._remove_timers()
 
                 # and if there's cmd to run, send it
                 if self._symbol is not None:
-
                     if self._symbol != "":
                         self._output = self._debugger.value_of(self._symbol)
                         self._symbol = None
@@ -1283,9 +1354,8 @@ else:
             return self._this_promise
 
     class QGEN_Module(modules.Module):
-
         display_tasks = []
-        modeling_map = None   # a Mapping_File instance
+        modeling_map = None  # a Mapping_File instance
         models = []  # List of model files in the project
         # id => Signal object
         signal_attributes = {}
@@ -1303,7 +1373,8 @@ else:
             else:
                 logger.log("Loading debug information from %s" % d)
             QGEN_Module.modeling_map.load(
-                f, d if d is not None else Project_Support.get_output_dir(f))
+                f, d if d is not None else Project_Support.get_output_dir(f)
+            )
 
         @staticmethod
         def get_model_for_source(file):
@@ -1327,7 +1398,7 @@ else:
             QGEN_Module.display_tasks = []
 
         @staticmethod
-        @gs_utils.hook('project_view_changed')
+        @gs_utils.hook("project_view_changed")
         def __on_project_view_changed():
             """
             Load all mapping files used in this project.
@@ -1357,8 +1428,7 @@ else:
 
             for viewer in QGEN_Diagram_Viewer.retrieve_qgen_viewers():
                 viewer.diagram.clear_selection()
-                QGEN_Module.on_diagram_changed(
-                    viewer, viewer.diagram, clear=True)
+                QGEN_Module.on_diagram_changed(viewer, viewer.diagram, clear=True)
 
             QGEN_Module.previous_breakpoints = debugger.breakpoints
             QGEN_Module.signal_attributes.clear()
@@ -1383,8 +1453,7 @@ else:
             Clears the signal values displayed on a diagram
             """
 
-            for _, _, it in Diagram_Utils.forall_auto_items(
-                    [diagram]):
+            for _, _, it in Diagram_Utils.forall_auto_items([diagram]):
                 item_parent = QGEN_Module.get_item_parent_to_display(it)
                 item_parent.hide()
             diagram.changed()
@@ -1393,14 +1462,13 @@ else:
         def compute_all_item_values(task, debugger, diagram, viewer):
             # Compute the value for all items with an "auto" property
             QGEN_Module.display_tasks.append(task)
-            auto_items_list = list(Diagram_Utils.forall_auto_items(
-                [diagram]))
+            auto_items_list = list(Diagram_Utils.forall_auto_items([diagram]))
             auto_items_len = len(auto_items_list)
             idx = 0
-            for diag, toplevel, it in \
-                    Diagram_Utils.forall_auto_items([diagram]):
+            for diag, toplevel, it in Diagram_Utils.forall_auto_items([diagram]):
                 yield QGEN_Module.compute_item_values(
-                    debugger, diag, toplevel=toplevel, item=it)
+                    debugger, diag, toplevel=toplevel, item=it
+                )
                 diagram.changed()
                 idx = idx + 1
                 task.set_progress(idx, auto_items_len)
@@ -1425,10 +1493,10 @@ else:
                     # Signals can have a symbol that is a function call
                     # Those won't have a '/' in the name, discard them as
                     # we are looking for variables here.
-                    if '/' in s:
-                        inf = s.rsplit('/', 1)
+                    if "/" in s:
+                        inf = s.rsplit("/", 1)
                         # Sometimes gdb adds info in the func name, remove it
-                        context = inf[0].split(' ', 1)[0]
+                        context = inf[0].split(" ", 1)[0]
                         ret = inf[-1].strip()
                         if context == cur_frame:
                             return ret
@@ -1479,12 +1547,11 @@ else:
                     # in scientific notation.
                     # Otherwise no formatting is done on the value
                     try:
-                        if (len(value) >= 7 or
-                                float(value) != int(value)):
-                            value = '%.2e' % float(value)
+                        if len(value) >= 7 or float(value) != int(value):
+                            value = "%.2e" % float(value)
                     except ValueError:
                         if len(value) >= 7:
-                            value = '%s ..' % value[:6]
+                            value = "%s .." % value[:6]
 
                     if value:
                         item_parent.show()
@@ -1501,8 +1568,7 @@ else:
             logger.log("Associating it to variable %s " % str(ss))
             if ss is not None:
                 async_debugger = AsyncDebugger(debugger)
-                yield async_debugger.async_print_value(ss).then(
-                    update_item_value)
+                yield async_debugger.async_print_value(ss).then(update_item_value)
             else:
                 item_parent.hide()
 
@@ -1529,9 +1595,14 @@ else:
             # not stopped at an execution point, we do not display any
             # signal value.
             if debugger is None or debugger.current_frame() == -1:
-                logger.log("Clearing no debugger running %s" %
-                           (debugger.current_frame() if debugger
-                            is not None else "No debugger"))
+                logger.log(
+                    "Clearing no debugger running %s"
+                    % (
+                        debugger.current_frame()
+                        if debugger is not None
+                        else "No debugger"
+                    )
+                )
                 QGEN_Module.clear_all_item_values(diag)
             else:
                 count = 0
@@ -1555,10 +1626,13 @@ else:
                             yield timeout(100)
 
                     workflows.task_workflow(
-                        'Updating signal values',
+                        "Updating signal values",
                         QGEN_Module.compute_all_item_values,
-                        debugger=debugger, diagram=diag, viewer=viewer,
-                        active=True)
+                        debugger=debugger,
+                        diagram=diag,
+                        viewer=viewer,
+                        active=True,
+                    )
 
             # Restore default style for previous items with breakpoints
             map = QGEN_Module.modeling_map
@@ -1573,12 +1647,15 @@ else:
                 Diagram_Utils.set_block_style(viewer, diag, map, b, bp_blocks)
 
             Diagram_Utils.update_signal_style(
-                QGEN_Module.signal_attributes, viewer, diag)
+                QGEN_Module.signal_attributes, viewer, diag
+            )
 
             # Remove False elements from the lists
             QGEN_Module.signal_attributes = {
-                k: sig for k, sig in QGEN_Module.signal_attributes.items()
-                if sig.style is not None}
+                k: sig
+                for k, sig in QGEN_Module.signal_attributes.items()
+                if sig.style is not None
+            }
 
             # The clear method will reset the breakpoints after all the
             # diagrams have been processed
@@ -1594,14 +1671,14 @@ else:
                 QGEN_Module.previous_breakpoints = debugger.breakpoints
 
             Diagram_Utils.highlight_breakpoints(
-                viewer, diag, map,
-                bp_blocks, QGEN_Module.previous_breakpoints)
+                viewer, diag, map, bp_blocks, QGEN_Module.previous_breakpoints
+            )
 
             Diagram_Utils.update_priority_style(viewer, [diag], bp_blocks)
             diag.changed()
 
         @staticmethod
-        @gs_utils.hook('debugger_location_changed')
+        @gs_utils.hook("debugger_location_changed")
         def __on_debugger_location_changed(debugger):
             logger.log("Debugger location changed")
             QGEN_Module.__show_diagram_and_signal_values(debugger)
@@ -1616,12 +1693,21 @@ else:
                 symbol = Diagram_Utils.block_split(s)
                 context = symbol[0]
                 symbol = symbol[-1].strip()
-                src_file, lines = QGEN_Module.modeling_map.get_func_bounds(
-                    context)
+                src_file, lines = QGEN_Module.modeling_map.get_func_bounds(context)
 
-                debugger.send("qgen_logpoint %s %s '%s' %s '%s:%s' %s" % (
-                    symbol, context, itid, filename, src_file, lines[1],
-                    Diagram_Utils.block_split(itid, 1)[0]), output=False)
+                debugger.send(
+                    "qgen_logpoint %s %s '%s' %s '%s:%s' %s"
+                    % (
+                        symbol,
+                        context,
+                        itid,
+                        filename,
+                        src_file,
+                        lines[1],
+                        Diagram_Utils.block_split(itid, 1)[0],
+                    ),
+                    output=False,
+                )
                 sig_obj = QGEN_Module.signal_attributes.get(itid, None)
                 if sig_obj is None:
                     sig_obj = Signal(itid)
@@ -1641,8 +1727,9 @@ else:
                 symbol = Diagram_Utils.block_split(s)
                 context = symbol[0]
                 symbol = symbol[-1].strip()
-                debugger.send("qgen_delete_logpoint %s %s" % (symbol, context),
-                              output=False)
+                debugger.send(
+                    "qgen_delete_logpoint %s %s" % (symbol, context), output=False
+                )
 
             sig_obj = QGEN_Module.signal_attributes.get(itid, None)
             sig_obj.logged = False
@@ -1658,8 +1745,7 @@ else:
                 parent = it.get_parent_with_id() or toplvl
                 sig_obj = QGEN_Module.signal_attributes.get(parent.id, None)
                 if sig_obj is not None and sig_obj.logged:
-                    QGEN_Module.stop_logging_value_for_item(
-                        parent.id, debugger)
+                    QGEN_Module.stop_logging_value_for_item(parent.id, debugger)
 
             QGEN_Module.__show_diagram_and_signal_values(debugger, force=True)
 
@@ -1676,28 +1762,27 @@ else:
             ctxt = GPS.current_context()
             debugger = GPS.Debugger.get()
             filename = os.path.join(
-                Project_Support.get_output_dir(
-                    ctxt.file()), filename + '.html')
+                Project_Support.get_output_dir(ctxt.file()), filename + ".html"
+            )
 
             if not CLI.delete_logfile_dialog(filename):
                 return
 
             for diag, toplvl, it in Diagram_Utils.forall_auto_items(diagrams):
                 parent = it.get_parent_with_id() or toplvl
-                QGEN_Module.log_values_from_item(parent.id, filename,
-                                                 debugger)
-            QGEN_Module.__show_diagram_and_signal_values(debugger,
-                                                         force=True)
+                QGEN_Module.log_values_from_item(parent.id, filename, debugger)
+            QGEN_Module.__show_diagram_and_signal_values(debugger, force=True)
 
         @staticmethod
         def __load_debug_script(debugger):
-            script = "%sshare/gnatstudio/plug-ins/qgen/gdb_scripts.py" \
-                     % GPS.get_system_dir()
+            script = (
+                "%sshare/gnatstudio/plug-ins/qgen/gdb_scripts.py" % GPS.get_system_dir()
+            )
 
             # gdb-mi handles the cli source command aswell
             debugger.send("source %s" % script, output=False)
 
-        @gs_utils.hook('debugger_breakpoints_changed')
+        @gs_utils.hook("debugger_breakpoints_changed")
         def __on_debugger_breakpoints_changed(debugger):
             # ??? Could highlight blocks even though the debugger is not
             # started
@@ -1709,16 +1794,15 @@ else:
                 QGEN_Module.debugger = debugger
                 # Load qgen gdb script for custom commands
                 QGEN_Module.__load_debug_script(debugger)
-                debug_args = debugger.current_file.project(
-                ).get_attribute_as_string(attribute="Debug_Args",
-                                          package="QGen")
+                debug_args = debugger.current_file.project().get_attribute_as_string(
+                    attribute="Debug_Args", package="QGen"
+                )
                 if debug_args != "":
                     debugger.send("set args %s" % debug_args)
                 QGEN_Module.__clear(debugger)
             else:
                 # Show blocks with breakpoints
-                QGEN_Module.__show_diagram_and_signal_values(
-                    debugger, force=True)
+                QGEN_Module.__show_diagram_and_signal_values(debugger, force=True)
 
         @staticmethod
         def __update_current_construct(debugger, viewer):
@@ -1743,8 +1827,9 @@ else:
                     f = fileloc.file()
                     line = fileloc.line()
                     blocks = QGEN_Module.modeling_map.get_block(f, line)
-                    logger.log("Block {0} for {1}:{2}".format(
-                        str(blocks), str(f), str(line)))
+                    logger.log(
+                        "Block {0} for {1}:{2}".format(str(blocks), str(f), str(line))
+                    )
                 # If the backtrace was not available no file is found
                 except AttributeError:
                     blocks = None
@@ -1753,7 +1838,8 @@ else:
                     break
                 for block in blocks:
                     diag = QGEN_Module.modeling_map.get_diagram_for_item(
-                        viewer.diags, block)[0]
+                        viewer.diags, block
+                    )[0]
                     insert = True
                     for id, _ in frame_infos:
                         if diag.id == id:
@@ -1788,34 +1874,31 @@ else:
                 # after mangling, e.g. Subsystem/Subsystem/Unit Delay
                 # needs to generate 'Subsystem', 'Subsystem_Subsystem'
                 while split_idx < split_len and diagram_name != current_d_name:
-                    frame_infos.insert(i + split_idx - 1, (diagram_name, ''))
+                    frame_infos.insert(i + split_idx - 1, (diagram_name, ""))
                     diagram_name = Diagram_Utils.mangle_block_name(
-                        diagram_name + '/' + model_split[split_idx])
+                        diagram_name + "/" + model_split[split_idx]
+                    )
                     split_idx += 1
 
                 i += split_idx
                 frames_len += split_idx - 1
 
             frame_infos = [it[0] for it in frame_infos]
-            logger.log("Frames info after adding subsystems is %s" % str(
-                frame_infos))
+            logger.log("Frames info after adding subsystems is %s" % str(frame_infos))
             # Try to find a construct starting with the longest model path
             # and narrowing it down until a construct is found or
             # the path is empty
             while frame_infos:
                 cons_id = viewer.get_construct_from_list(frame_infos)
                 if cons_id != "":
-                    logger.log('Got construct %s from %s' % (
-                        cons_id, str(frame_infos)))
+                    logger.log("Got construct %s from %s" % (cons_id, str(frame_infos)))
                     viewer.update_nav_status(cons_id)
-                    viewer.highlight_gps_construct(
-                        viewer.selected_construct_id())
+                    viewer.highlight_gps_construct(viewer.selected_construct_id())
                     return
                 frame_infos.pop()
 
         @staticmethod
-        def __show_diagram_and_signal_values(
-                debugger, force=False):
+        def __show_diagram_and_signal_values(debugger, force=False):
             """
             Show the model corresponding to the current debugger file and line
             :param force boolean: Used to force an update of the view after a
@@ -1833,8 +1916,7 @@ else:
                 assert isinstance(viewer, QGEN_Diagram_Viewer)
 
                 if not viewer.parsing_complete:
-                    MDL_Language().should_refresh_constructs(
-                        viewer.file)
+                    MDL_Language().should_refresh_constructs(viewer.file)
 
                 # User interaction happened, update the current diagram
                 if force:
@@ -1847,9 +1929,13 @@ else:
                     # We will only select the first block corresponding to the
                     # current line
                     info = QGEN_Module.modeling_map.get_diagram_for_item(
-                        viewer.diags, block[0])
-                    logger.log("Block for {0}:{1} is {2}".format
-                               (str(filename), str(line), str(block[0])))
+                        viewer.diags, block[0]
+                    )
+                    logger.log(
+                        "Block for {0}:{1} is {2}".format(
+                            str(filename), str(line), str(block[0])
+                        )
+                    )
                     if info:
                         logger.log("Got info : %s" % repr(info))
                         diagram, item = info
@@ -1858,7 +1944,7 @@ else:
                             # Unselect items from the previous step
                             viewer.diags.clear_selection()
                             diagram.select(item)
-                            item_prio = item.data.get('priority')
+                            item_prio = item.data.get("priority")
                             if item_prio is not None and item_prio > 0:
                                 if diagram.current_priority > item_prio:
                                     # If the priority is going down then we
@@ -1866,22 +1952,22 @@ else:
                                     # to reset the processed styles
                                     diagram.reset_priority = True
                                 diagram.current_priority = item_prio
-                        QGEN_Module.__update_current_construct(
-                            debugger, viewer)
+                        QGEN_Module.__update_current_construct(debugger, viewer)
                         viewer.set_diagram(diagram)  # calls on_diagram_changed
                     GPS.MDI.get_by_child(viewer).raise_window()
 
                 if scroll_to:
                     logger.log("Scroll to " + str(scroll_to.id))
                     viewer.scroll_into_view(scroll_to)
+
             if filename:
                 mdl = QGEN_Module.get_model_for_source(filename)
-                logger.log("Mdl file for current file {0} is {1}".format(
-                    filename, mdl))
+                logger.log("Mdl file for current file {0} is {1}".format(filename, mdl))
 
                 if mdl:
                     QGEN_Diagram_Viewer.get_or_create_from_model(
-                        mdl, on_loaded=__on_viewer_loaded)
+                        mdl, on_loaded=__on_viewer_loaded
+                    )
                 else:
                     for viewer in QGEN_Diagram_Viewer.retrieve_qgen_viewers():
                         __on_viewer_loaded(viewer)
@@ -1901,13 +1987,11 @@ else:
                     # Update the textitem style if it exists and debug infos
                     # are available for the corresponding block (textitem
                     # preceeds block rectitem)
-                    if hasattr(it, 'id'):
-                        if not QGEN_Module.modeling_map.get_source_ranges(
-                                it.id):
+                    if hasattr(it, "id"):
+                        if not QGEN_Module.modeling_map.get_source_ranges(it.id):
                             break
                         if textitem is not None:
-                            viewer.diags.set_item_style(textitem,
-                                                        '#name-style-bp')
+                            viewer.diags.set_item_style(textitem, "#name-style-bp")
                             textitem = None
                     # If an item does not have an id it can contain the textid
                     # we want, recurse to find the name
@@ -1931,22 +2015,21 @@ else:
             lines
             """
             while item is not None:
-                if not hasattr(
-                        item, 'id') or not self.block_source_ranges(item.id):
+                if not hasattr(item, "id") or not self.block_source_ranges(item.id):
                     item = item.parent
                 else:
                     break
             return item
 
         @staticmethod
-        @gs_utils.hook('open_file_action_hook', last=False)
+        @gs_utils.hook("open_file_action_hook", last=False)
         def __on_open_file_action(file, *args):
             """
             When a model file is opened, use a diagram viewer instead of a
             text file to view it.
             """
-            if file.language() == 'simulink' or file.language() == 'qgen':
-                logger.log('Open %s' % file)
+            if file.language() == "simulink" or file.language() == "qgen":
+                logger.log("Open %s" % file)
                 QGEN_Diagram_Viewer.get_or_create_as_root(file)
                 QGEN_Module.load_debug_info_for(file)
                 return True
@@ -1955,16 +2038,17 @@ else:
         def load_desktop(self, data):
             """Restore the contents from the desktop"""
             info = json.loads(data)
-            f = GPS.File(info['file'])
-            if f.path.endswith(
-                    '.mdl') or f.path.endswith(
-                        '.slx') or f.path.endswith('.xmi'):
+            f = GPS.File(info["file"])
+            if (
+                f.path.endswith(".mdl")
+                or f.path.endswith(".slx")
+                or f.path.endswith(".xmi")
+            ):
                 viewer = QGEN_Diagram_Viewer.get_or_create_as_root(f)
                 MDL_Language().should_refresh_constructs(f)
             else:
-                viewer = QGEN_Diagram_Viewer.open_json(
-                    f, open(f.path).read())
-            GPS.Hook('file_edited').run(f)
+                viewer = QGEN_Diagram_Viewer.open_json(f, open(f.path).read())
+            GPS.Hook("file_edited").run(f)
 
             return GPS.MDI.get_by_child(viewer)
 
@@ -1975,7 +2059,7 @@ else:
             debugger must have been started too.
             """
             try:
-                GPS.Debugger.get()   # or raise exception
+                GPS.Debugger.get()  # or raise exception
                 return self.__contextual_filter_sources(context)
             except Exception:
                 return False
@@ -1986,7 +2070,7 @@ else:
             symbols. The debugger must have been started too.
             """
             try:
-                GPS.Debugger.get()   # or raise exception
+                GPS.Debugger.get()  # or raise exception
                 it = context.modeling_item
                 return len(self.modeling_map.get_symbols(blockid=it.id)) != 0
             except Exception:
@@ -1994,7 +2078,7 @@ else:
 
         def __contextual_filter_debug_and_watchpoint(self, context):
             try:
-                GPS.Debugger.get()   # or raise exception
+                GPS.Debugger.get()  # or raise exception
                 it = context.modeling_item
                 sig_obj = QGEN_Module.signal_attributes.get(it.id, None)
 
@@ -2009,7 +2093,7 @@ else:
             """
 
             try:
-                GPS.Debugger.get()   # or raise exception
+                GPS.Debugger.get()  # or raise exception
                 it = context.modeling_item
                 sig_obj = QGEN_Module.signal_attributes.get(it.id, None)
 
@@ -2023,7 +2107,7 @@ else:
             """
 
             try:
-                GPS.Debugger.get()   # or raise exception
+                GPS.Debugger.get()  # or raise exception
                 return True
             except Exception:
                 return False
@@ -2031,8 +2115,9 @@ else:
         def __contextual_filter_viewer_active_history_parent(self, context):
             try:
                 viewer = QGEN_Diagram_Viewer.retrieve_active_qgen_viewer()
-                return viewer.nav_index \
-                    != -1 and viewer.diagram.id != viewer.root_diag_id
+                return (
+                    viewer.nav_index != -1 and viewer.diagram.id != viewer.root_diag_id
+                )
             except Exception:
                 return False
 
@@ -2045,28 +2130,27 @@ else:
 
         def __contextual_filter_viewer_active(self, context):
             try:
-                return QGEN_Diagram_Viewer.retrieve_active_qgen_viewer() \
-                    is not None
+                return QGEN_Diagram_Viewer.retrieve_active_qgen_viewer() is not None
             except Exception:
                 return False
 
         def __contextual_show_original_block(self):
-
             def __on_viewer_loaded(viewer):
                 d, it = QGEN_Module.modeling_map.get_diagram_for_item(
-                    viewer.diags, b[0])
+                    viewer.diags, b[0]
+                )
                 if it is not None:
                     d.select(it)
                     viewer.set_diagram(d)
                     GPS.MDI.get_by_child(viewer).raise_window()
 
             ctxt = GPS.contextual_context() or GPS.current_context()
-            b = QGEN_Module.modeling_map.get_block(
-                ctxt.file(), ctxt.location().line())
+            b = QGEN_Module.modeling_map.get_block(ctxt.file(), ctxt.location().line())
             mdl_file = QGEN_Module.get_model_for_source(ctxt.file())
             if mdl_file:
                 QGEN_Diagram_Viewer.get_or_create_from_model(
-                    mdl_file, on_loaded=__on_viewer_loaded)
+                    mdl_file, on_loaded=__on_viewer_loaded
+                )
             else:
                 GPS.Console().write("No model found\n")
 
@@ -2078,7 +2162,8 @@ else:
 
             try:
                 b = QGEN_Module.modeling_map.get_block(
-                    context.file(), context.location().line())
+                    context.file(), context.location().line()
+                )
                 return b is not None
             except Exception:
                 return False
@@ -2096,11 +2181,11 @@ else:
 
         def __contextual_name_for_break_on_block(self, context):
             it = self.get_item_with_sources(context.modeling_item)
-            return 'Break on %s' % it.id.replace("/", "\\/")
+            return "Break on %s" % it.id.replace("/", "\\/")
 
         def __contextual_name_for_unbreak_on_block(self, context):
             it = self.get_item_with_sources(context.modeling_item)
-            return 'Delete breakpoints on %s' % it.id.replace("/", "\\/")
+            return "Delete breakpoints on %s" % it.id.replace("/", "\\/")
 
         def __contextual_log_signal_value(self):
             """
@@ -2115,15 +2200,14 @@ else:
 
             if v:
                 filename = os.path.join(
-                    Project_Support.get_output_dir(
-                        ctx.file()), v[0] + '.html')
+                    Project_Support.get_output_dir(ctx.file()), v[0] + ".html"
+                )
                 if not CLI.delete_logfile_dialog(filename):
                     return
 
                 QGEN_Module.log_values_from_item(it.id, filename, debugger)
 
-                QGEN_Module.__show_diagram_and_signal_values(debugger,
-                                                             force=True)
+                QGEN_Module.__show_diagram_and_signal_values(debugger, force=True)
 
         def __contextual_disable_log_signal_value(self):
             ctx = GPS.contextual_context() or GPS.current_context()
@@ -2145,15 +2229,15 @@ else:
                 QGEN_Module.signal_attributes[it.id] = sig_obj
 
             signalDialog = signalSetter(
-                debugger, it.id, self.modeling_map, sig_obj.watched)
+                debugger, it.id, self.modeling_map, sig_obj.watched
+            )
 
             signalDialog.run()
 
             sig_obj.watched = signalDialog.is_watched
             signalDialog.destroy()
 
-            QGEN_Module.__show_diagram_and_signal_values(debugger,
-                                                         force=True)
+            QGEN_Module.__show_diagram_and_signal_values(debugger, force=True)
 
         def __contextual_set_breakpoint(self):
             """
@@ -2176,8 +2260,7 @@ else:
                     debugger.break_at_location(file, line=rg[0])
 
                 # Force a refresh to show blocks with breakpoints
-                QGEN_Module.__show_diagram_and_signal_values(
-                    debugger, force=True)
+                QGEN_Module.__show_diagram_and_signal_values(debugger, force=True)
 
         def __contextual_delete_breakpoint(self):
             """
@@ -2192,8 +2275,7 @@ else:
                     line = rg[0]
                     debugger.unbreak_at_location(file, line=line)
 
-                QGEN_Module.__show_diagram_and_signal_values(
-                    debugger, force=True)
+                QGEN_Module.__show_diagram_and_signal_values(debugger, force=True)
 
         def __contextual_show_source_code(self):
             """
@@ -2210,8 +2292,9 @@ else:
                     line = rg[0]
                     init = True
                 for f, b in QGEN_Module.modeling_map.get_file_funcinfos(
-                        os.path.basename(file.path)):
-                    if f.endswith('comp'):
+                    os.path.basename(file.path)
+                ):
+                    if f.endswith("comp"):
                         for ln in rg:
                             if ln >= b[0] and ln <= b[1]:
                                 line = ln
@@ -2234,131 +2317,149 @@ else:
 
             gs_utils.make_interactive(
                 callback=CLI.workflow_compile_context_to_source_code,
-                name='MDL generate code for file',
-                category='QGen',
+                name="MDL generate code for file",
+                category="QGen",
                 filter=CLI.is_model_file,
-                contextual='Generate code for %f')
+                contextual="Generate code for %f",
+            )
 
             gs_utils.make_interactive(
                 callback=CLI.workflow_compile_project_to_source_code,
-                name='MDL generate code for whole project',
-                category='QGen')
+                name="MDL generate code for whole project",
+                category="QGen",
+            )
 
             # ??? Should work when no debugger is currently running
             gs_utils.make_interactive(
-                name='MDL break debugger on block',
+                name="MDL break debugger on block",
                 contextual=self.__contextual_name_for_break_on_block,
                 filter=self.__contextual_filter_debug_and_sources,
                 callback=self.__contextual_set_breakpoint,
-                static_path='Debug/Break')
+                static_path="Debug/Break",
+            )
 
             gs_utils.make_interactive(
-                name='MDL delete breakpoints on block',
+                name="MDL delete breakpoints on block",
                 contextual=self.__contextual_name_for_unbreak_on_block,
                 filter=self.__contextual_filter_debug_and_sources,
                 callback=self.__contextual_delete_breakpoint,
-                static_path='Debug/DelBreak')
+                static_path="Debug/DelBreak",
+            )
 
             gs_utils.make_interactive(
-                name='MDL set signal value',
-                contextual='Debug/Set value for signal',
+                name="MDL set signal value",
+                contextual="Debug/Set value for signal",
                 filter=self.__contextual_filter_debug_and_symbols,
-                callback=self.__contextual_set_signal_value)
+                callback=self.__contextual_set_signal_value,
+            )
 
             gs_utils.make_interactive(
-                name='MDL log signal value',
-                contextual='Debug/Log this signal',
+                name="MDL log signal value",
+                contextual="Debug/Log this signal",
                 filter=self.__contextual_filter_debug_and_symbols,
-                callback=self.__contextual_log_signal_value)
+                callback=self.__contextual_log_signal_value,
+            )
 
             gs_utils.make_interactive(
-                name='MDL disable log signal value',
-                contextual='Debug/Stop logging this signal',
+                name="MDL disable log signal value",
+                contextual="Debug/Stop logging this signal",
                 filter=self.__contextual_filter_debug_and_logpoint,
-                callback=self.__contextual_disable_log_signal_value)
+                callback=self.__contextual_disable_log_signal_value,
+            )
 
             gs_utils.make_interactive(
                 callback=CLI.action_goto_parent_subsystem,
-                name='Goto parent subsystem',
-                category='QGen Debugger',
+                name="Goto parent subsystem",
+                category="QGen Debugger",
                 filter=self.__contextual_filter_viewer_active_history_parent,
-                icon='gps-upward-symbolic',
-                key='Escape',
-                for_learning=True)
+                icon="gps-upward-symbolic",
+                key="Escape",
+                for_learning=True,
+            )
 
             gs_utils.make_interactive(
                 callback=CLI.action_goto_previous_subsystem,
-                name='Goto previous subsystem',
-                category='QGen Debugger',
+                name="Goto previous subsystem",
+                category="QGen Debugger",
                 filter=self.__contextual_filter_viewer_active_history,
-                icon='gps-backward-symbolic',
-                key='Left',
-                for_learning=True)
+                icon="gps-backward-symbolic",
+                key="Left",
+                for_learning=True,
+            )
 
             gs_utils.make_interactive(
                 callback=CLI.action_scale_to_fit,
-                name='Fit window to view',
-                category='QGen Debugger',
+                name="Fit window to view",
+                category="QGen Debugger",
                 filter=self.__contextual_filter_viewer_active,
-                icon='gps-zoom-fit-symbolic',
-                key='space',
-                for_learning=True)
+                icon="gps-zoom-fit-symbolic",
+                key="space",
+                for_learning=True,
+            )
 
             gs_utils.make_interactive(
                 callback=CLI.action_zoom_in,
-                name='Zoom in',
-                category='QGen Debugger',
+                name="Zoom in",
+                category="QGen Debugger",
                 filter=self.__contextual_filter_viewer_active,
-                key='plus',
-                for_learning=True)
+                key="plus",
+                for_learning=True,
+            )
 
             gs_utils.make_interactive(
                 callback=CLI.action_zoom_out,
-                name='Zoom out',
-                category='QGen Debugger',
+                name="Zoom out",
+                category="QGen Debugger",
                 filter=self.__contextual_filter_viewer_active,
-                key='minus',
-                for_learning=True)
+                key="minus",
+                for_learning=True,
+            )
 
             gs_utils.make_interactive(
                 callback=CLI.stop_logging_subsystem_values,
-                name='Stop logging subsystem values',
-                category='QGen Debugger',
+                name="Stop logging subsystem values",
+                category="QGen Debugger",
                 filter=self.__contextual_filter_debugger_active,
-                icon='gps-stop-save-symbolic')
+                icon="gps-stop-save-symbolic",
+            )
 
             gs_utils.make_interactive(
                 callback=CLI.log_subsystem_values,
-                name='Log subsystem values',
-                category='QGen Debugger',
+                name="Log subsystem values",
+                category="QGen Debugger",
                 filter=self.__contextual_filter_debugger_active,
-                icon='gps-save-symbolic')
+                icon="gps-save-symbolic",
+            )
 
             gs_utils.make_interactive(
-                name='MDL show source for block',
-                contextual='Models/Show source code',
+                name="MDL show source for block",
+                contextual="Models/Show source code",
                 filter=self.__contextual_filter_sources,
-                callback=self.__contextual_show_source_code)
+                callback=self.__contextual_show_source_code,
+            )
 
             gs_utils.make_interactive(
-                name='MDL show block from source code',
-                contextual='Models/Show block from source',
+                name="MDL show block from source code",
+                contextual="Models/Show block from source",
                 filter=self.__contextual_filter_qgen_code,
-                callback=self.__contextual_show_original_block)
+                callback=self.__contextual_show_original_block,
+            )
 
             workflows.create_target_from_workflow(
-                parent_menu='/Build/MDL generate & build/',
+                parent_menu="/Build/MDL generate & build/",
                 target_name="MDL Generate code then build",
                 workflow_name="generate-from-mdl-then-build",
                 workflow=CLI.workflow_generate_from_mdl_then_build,
-                icon_name="gps-build-mdl-symbolic")
+                icon_name="gps-build-mdl-symbolic",
+            )
 
             workflows.create_target_from_workflow(
-                parent_menu='/Build/MDL generate, build & debug/',
+                parent_menu="/Build/MDL generate, build & debug/",
                 target_name="MDL Generate code then build then debug",
                 workflow_name="generate-from-mdl-then-build-then-debug",
                 workflow=CLI.workflow_generate_from_mdl_then_build_then_debug,
                 icon_name="gps-qgen-debug-symbolic",
-                in_toolbar=True)
+                in_toolbar=True,
+            )
 
     module = QGEN_Module()

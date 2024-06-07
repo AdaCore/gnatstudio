@@ -10,7 +10,7 @@ default_help = help
 def helpdoc(gps_class_name):
     import GNATStudio_doc
 
-    items = gps_class_name.split('.')
+    items = gps_class_name.split(".")
 
     parent = GNATStudio_doc
 
@@ -45,9 +45,8 @@ def help(item):
             for class_name in dir(GPS):
                 klass = getattr(GPS, class_name)
                 if inspect.isclass(klass):
-                    if (hasattr(klass, item_name)
-                            and getattr(klass, item_name) == item):
-                        class_name = klass.__name__ + '.' + item_name
+                    if hasattr(klass, item_name) and getattr(klass, item_name) == item:
+                        class_name = klass.__name__ + "." + item_name
                         break
 
         if class_name:

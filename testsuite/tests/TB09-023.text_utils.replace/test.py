@@ -15,20 +15,18 @@ def run_test():
 
     loc = buf.at(1, 1)
     text_utils.upper_case_word(loc)
-    gps_assert(buf.get_chars().rstrip(),
-               initial.upper(),
-               "Upper casing issue")
+    gps_assert(buf.get_chars().rstrip(), initial.upper(), "Upper casing issue")
     text_utils.lower_case_word(loc)
-    gps_assert(buf.get_chars().rstrip(),
-               initial.lower(),
-               "Lower casing issue")
+    gps_assert(buf.get_chars().rstrip(), initial.lower(), "Lower casing issue")
     text_utils.capitalize_case_word(loc)
-    gps_assert(buf.get_chars().rstrip(),
-               initial.capitalize(),
-               "Capitalize casing issue")
+    gps_assert(
+        buf.get_chars().rstrip(), initial.capitalize(), "Capitalize casing issue"
+    )
     buf.undo()
     buf.undo()
     buf.undo()
-    gps_assert(buf.get_chars().rstrip(),
-               initial,
-               "Only one undo should be necessary for each replace above")
+    gps_assert(
+        buf.get_chars().rstrip(),
+        initial,
+        "Only one undo should be necessary for each replace above",
+    )

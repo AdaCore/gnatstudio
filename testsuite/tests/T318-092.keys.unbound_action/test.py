@@ -13,6 +13,6 @@ def run_test():
     # Send Empty Key which is mapped with "Close current window"
     pygps.send_key_event(0)
     yield wait_idle()
-    gps_assert(GPS.MDI.current().name(),
-               current_window,
-               "Empty Key should not be handled.")
+    gps_assert(
+        GPS.MDI.current().name(), current_window, "Empty Key should not be handled."
+    )

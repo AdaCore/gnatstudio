@@ -1,8 +1,14 @@
 # Verify that the language server correctly detects changes made on the
 # filesystem
 
-from gs_utils.internal.utils import run_test_driver, wait_language_server, \
-   gps_assert, timeout, wait_tasks, known_tasks
+from gs_utils.internal.utils import (
+    run_test_driver,
+    wait_language_server,
+    gps_assert,
+    timeout,
+    wait_tasks,
+    known_tasks,
+)
 import shutil
 import os
 
@@ -17,9 +23,11 @@ def driver():
     GPS.execute_action("Find All References")
     yield wait_language_server("textDocument/references")
 
-    gps_assert(len(GPS.Message.list(category="References for Foo (p.ads:2)")),
-               2,
-               "There should be two references for Foo")
+    gps_assert(
+        len(GPS.Message.list(category="References for Foo (p.ads:2)")),
+        2,
+        "There should be two references for Foo",
+    )
 
     # Simulate a file change on the filesystem for a file that has never
     # been opened
@@ -34,9 +42,11 @@ def driver():
     GPS.execute_action("Find All References")
     yield wait_language_server("textDocument/references")
 
-    gps_assert(len(GPS.Message.list(category="References for Foo (p.ads:2)")),
-               5,
-               "There should now be five references for Foo")
+    gps_assert(
+        len(GPS.Message.list(category="References for Foo (p.ads:2)")),
+        5,
+        "There should now be five references for Foo",
+    )
 
     # Now do the same as above, after deleting the file
 
@@ -46,6 +56,8 @@ def driver():
     GPS.execute_action("Find All References")
     yield wait_language_server("textDocument/references")
 
-    gps_assert(len(GPS.Message.list(category="References for Foo (p.ads:2)")),
-               1,
-               "There should now be one references for Foo")
+    gps_assert(
+        len(GPS.Message.list(category="References for Foo (p.ads:2)")),
+        1,
+        "There should now be one references for Foo",
+    )

@@ -21,8 +21,15 @@ import GPS
 import re
 import sys
 from gi.repository import Gtk
-from gs_utils import interactive, filter_text_actions, with_save_excursion, \
-    in_ada_file, get_focused_widget, make_interactive, hook
+from gs_utils import (
+    interactive,
+    filter_text_actions,
+    with_save_excursion,
+    in_ada_file,
+    get_focused_widget,
+    make_interactive,
+    hook,
+)
 
 
 should_extend_selection = False
@@ -30,8 +37,16 @@ should_extend_selection = False
 
 transient_mark_pref = GPS.Preference("Src-Editor-Transient-Mark")
 
-SUBPROGRAM_BLOCKS = set(["CAT_PROCEDURE", "CAT_FUNCTION", "CAT_ENTRY",
-                         "CAT_PROTECTED", "CAT_TASK", "CAT_PACKAGE"])
+SUBPROGRAM_BLOCKS = set(
+    [
+        "CAT_PROCEDURE",
+        "CAT_FUNCTION",
+        "CAT_ENTRY",
+        "CAT_PROTECTED",
+        "CAT_TASK",
+        "CAT_PACKAGE",
+    ]
+)
 # The block_types that are considered to be "subprogram" blocks
 
 
@@ -52,7 +67,7 @@ def parse_parentheses(editor, begin=None, end=None):
     t = list(pairs.values())
     stack = []
     source = editor.get_chars(begin, end).rstrip("\n").splitlines()
-    last = end.line()-1
+    last = end.line() - 1
 
     # parse all parentheses, find open parentheses
     for i in range(0, len(source)):
@@ -68,9 +83,9 @@ def parse_parentheses(editor, begin=None, end=None):
                     # when parenthesis is closed, remember its line number
                     last = stack.pop()[0]
 
-    closed = (len(stack) == 0)
+    closed = len(stack) == 0
     # get the last char of parsed text
-    tail = editor.at(end.line(), end.end_of_line().column()-1).get_char()
+    tail = editor.at(end.line(), end.end_of_line().column() - 1).get_char()
 
     # if the parsed text is ending a parenthesis -->
     # last char is a closing parentheses, then the cursor should
@@ -78,16 +93,13 @@ def parse_parentheses(editor, begin=None, end=None):
     if tail in t and closed:
         tmp = source[last]
         start = len(tmp) - len(tmp.lstrip(" "))
-        stack.append((last, start-1))
+        stack.append((last, start - 1))
     return (stack, closed)
 
 
-def forward_until(loc, pred,
-                  skip_first_char=False,
-                  stop_at_eol=False,
-                  backwards=False,
-                  give_up=True):
-
+def forward_until(
+    loc, pred, skip_first_char=False, stop_at_eol=False, backwards=False, give_up=True
+):
     step = -1 if backwards else 1
     cur_loc = loc
 
@@ -161,9 +173,8 @@ class Zap_To_Char(GPS.CommandWindow):
 
     def __init__(self):
         GPS.CommandWindow.__init__(
-            self,
-            prompt="Zap to char:",
-            on_changed=self.on_changed)
+            self, prompt="Zap to char:", on_changed=self.on_changed
+        )
 
     @with_save_excursion
     def on_changed(self, input, cursor_pos):
@@ -186,7 +197,7 @@ def add_subprogram_box():
     if loc:
         name = loc.block_name()
         loc = loc.block_start().beginning_of_line()
-        dashes = '-' * (len(name) + 6)
+        dashes = "-" * (len(name) + 6)
         box = dashes + "\n" + "-- " + name + " --\n" + dashes + "\n\n"
         buffer.insert(loc, box)
         buffer.indent(loc, loc.forward_line(3))
@@ -203,7 +214,7 @@ def strip_trailing_blanks():
     s = buf.get_chars()
     current_line = 1
     for line in s.splitlines():
-        new_line = r.sub('', line)
+        new_line = r.sub("", line)
         if new_line != line:
             # We have found a difference: perform a replacement
             beg = buf.at(current_line, 1)
@@ -246,8 +257,9 @@ def select_enclosing_block():
     # Find the enclosing subprogram
     loc = sel_start
 
-    while (loc.block_type() not in SUBPROGRAM_BLOCKS and
-           loc.line() > 1) or (sel_start == loc.block_start()):
+    while (loc.block_type() not in SUBPROGRAM_BLOCKS and loc.line() > 1) or (
+        sel_start == loc.block_start()
+    ):
         start = loc.block_start()
         if start.line() == 1:
             loc = start
@@ -349,8 +361,9 @@ def move_block_up():
 
     # replace the cursor/selection after moving
     v.goto(buf.at(start_line - 1, start.column()))
-    buf.select(buf.at(start_line - 1, start.column()),
-               buf.at(end.line() - 1, end.column()))
+    buf.select(
+        buf.at(start_line - 1, start.column()), buf.at(end.line() - 1, end.column())
+    )
 
 
 @interactive("Editor", "Source editor", name="Move block down")
@@ -369,8 +382,7 @@ def move_block_down():
     v = buf.current_view()
 
     # Flatten the line below before moving the block
-    if (end_line + 2 <= lines_count and
-            buf.flatten_area(end_line + 1, end_line + 2)):
+    if end_line + 2 <= lines_count and buf.flatten_area(end_line + 1, end_line + 2):
         # If there was indeed a folded block, do not perform the move,
         # but unfold the block first, so the users can see what's happening.
 
@@ -391,14 +403,15 @@ def move_block_down():
     with buf.new_undo_group():
         buf.delete(a, e)
         # Edge case when last line of the editor doesn't have a terminator
-        if content[-1] != '\n':
-            content = content + '\n'
+        if content[-1] != "\n":
+            content = content + "\n"
         buf.insert(buf.at(start.line(), 1), content)
 
     # replace the cursor/selection after moving
     v.goto(buf.at(end_line + 1, start.column()))
-    buf.select(buf.at(start.line() + 1, start.column()),
-               buf.at(end_line + 1, end.column()))
+    buf.select(
+        buf.at(start.line() + 1, start.column()), buf.at(end_line + 1, end.column())
+    )
 
 
 @interactive("Editor", "Source editor", name="Move block right")
@@ -431,7 +444,7 @@ def move_block(chars=1):
     text = buffer.get_chars(beg_loc, end_loc)
 
     newtext = []
-    for line in text.split('\n'):
+    for line in text.split("\n"):
         if chars > 0:
             # Insert x chars at the beginning of the line
             newtext += [" " * chars + line]
@@ -441,9 +454,9 @@ def move_block(chars=1):
             for c in range(-chars):
                 if line == "":
                     break
-                if line[0] == '\t':
+                if line[0] == "\t":
                     line = " " * (tab_width - 1) + line[1:]
-                elif line[0] == ' ':
+                elif line[0] == " ":
                     line = line[1:]
                 else:
                     break
@@ -460,15 +473,15 @@ def move_block(chars=1):
         buffer.select(start_loc, end_loc)
     else:
         # Replace the cursor
-        buffer.current_view().goto(
-            buffer.at(
-                cursor_line,
-                max(0, cursor_col + chars)))
+        buffer.current_view().goto(buffer.at(cursor_line, max(0, cursor_col + chars)))
 
 
-make_interactive(lambda: move_block(-1),
-                 category="Editor", filter="Source editor",
-                 name="Move block left")
+make_interactive(
+    lambda: move_block(-1),
+    category="Editor",
+    filter="Source editor",
+    name="Move block left",
+)
 
 
 @interactive("Editor", "Source editor")
@@ -580,7 +593,7 @@ def serialize(increment=1):
     while buffer.get_chars(repl, repl).isdigit():
         repl = repl + 1
 
-    frm_col = loc.column() - 1    # columns start at 0 on a line
+    frm_col = loc.column() - 1  # columns start at 0 on a line
     end_col = (repl - 1).column() - 1
 
     try:
@@ -599,12 +612,9 @@ def serialize(increment=1):
             # line, and fill it with the value
             eol = repl.end_of_line()
             if repl + frm_col > eol:
-                buffer.insert(eol,
-                              " " * ((eol - repl) - frm_col + 2) +
-                              format % value)
+                buffer.insert(eol, " " * ((eol - repl) - frm_col + 2) + format % value)
             else:
-                replace(repl + frm_col, min(repl + end_col, eol),
-                        format % value)
+                replace(repl + frm_col, min(repl + end_col, eol), format % value)
         else:
             # We had no selection: replace the digit, no matter how many cols
             to = repl + frm_col
@@ -630,9 +640,9 @@ def delete_line():
     Delete the current line and place the cursor on the beginning of the next
     line.
     """
-    buffer = GPS.EditorBuffer.get()   # get the current buffer
-    view = buffer.current_view()      # get the current view of this buffer
-    location = view.cursor()          # get the location of the cursor
+    buffer = GPS.EditorBuffer.get()  # get the current buffer
+    view = buffer.current_view()  # get the current view of this buffer
+    location = view.cursor()  # get the location of the cursor
 
     # Get the bounds to delete
     start = location.beginning_of_line()
@@ -667,7 +677,7 @@ def kill_line(location=None, count=1):
             entry.cut_clipboard()
         else:
             text = entry.get_chars(start, -1)
-            end = text.find('\n')
+            end = text.find("\n")
             text = entry.get_chars(start, end)
             GPS.Clipboard.copy(text, append=append)
             entry.delete_text(start, end)
@@ -687,9 +697,12 @@ def kill_line(location=None, count=1):
                 eol.forward_to_line_end()
                 text = text_buffer.get_text(start, eol, False)
                 strip_text = text.rstrip()
-                if (count == 1 and
-                    len(text) > 0 and
-                        text[len(text) - 1] == '\n' and strip_text != ""):
+                if (
+                    count == 1
+                    and len(text) > 0
+                    and text[len(text) - 1] == "\n"
+                    and strip_text != ""
+                ):
                     eol = eol.backward_char()
             eol.forward_char()
 
@@ -715,9 +728,12 @@ def kill_line(location=None, count=1):
                 end = bol.end_of_line()
                 str = buffer.get_chars(start, end)
                 strip_str = str.rstrip()
-                if (count == 1 and
-                    len(str) > 0 and
-                        str[len(str) - 1] == '\n' and strip_str != ""):
+                if (
+                    count == 1
+                    and len(str) > 0
+                    and str[len(str) - 1] == "\n"
+                    and strip_str != ""
+                ):
                     end = end.forward_char(-1)
                 bol = end + 1
 
@@ -749,21 +765,18 @@ def kill_line(location=None, count=1):
 ################################################
 
 
-@interactive("Editor", "Source editor",
-             name="goto beginning of buffer")
+@interactive("Editor", "Source editor", name="goto beginning of buffer")
 def beginning_of_buffer():
     """Move the cursor to the beginning of the buffer"""
     buffer = GPS.EditorBuffer.get()
-    buffer.current_view().goto(buffer.beginning_of_buffer(),
-                               should_extend_selection)
+    buffer.current_view().goto(buffer.beginning_of_buffer(), should_extend_selection)
 
 
 @interactive("Editor", "Source editor", name="goto end of buffer")
 def end_of_buffer():
     """Move the cursor to the end of the buffer"""
     buffer = GPS.EditorBuffer.get()
-    buffer.current_view().goto(
-        buffer.end_of_buffer(), should_extend_selection)
+    buffer.current_view().goto(buffer.end_of_buffer(), should_extend_selection)
 
 
 def _goto_line_bound(beginning, extend_selection):
@@ -776,6 +789,7 @@ def _goto_line_bound(beginning, extend_selection):
     """
 
     from pygps import get_widgets_by_type
+
     widget = get_focused_widget()
 
     # When in a standard Gtk_Entry field:
@@ -806,7 +820,8 @@ def _goto_line_bound(beginning, extend_selection):
         ed = GPS.EditorBuffer.get(open=False)
         if ed:
             gtk_ed_view = get_widgets_by_type(
-                Gtk.TextView, ed.current_view().pywidget())[0]
+                Gtk.TextView, ed.current_view().pywidget()
+            )[0]
 
         if not ed or gtk_ed_view != widget:
             # in a Gtk.TextView, but not a GPS code editor
@@ -818,15 +833,17 @@ def _goto_line_bound(beginning, extend_selection):
                 cur_index = it.get_line_index()
                 # Retrieve the first non blank location
                 start_it = b.get_iter_at_line_offset(it.get_line(), 0)
-                while start_it.get_char() in (' ', '\t'):
+                while start_it.get_char() in (" ", "\t"):
                     start_it.forward_char()
                 if cur_index == start_it.get_line_index():
                     # Already at the first non blank => go at the beginning
                     b.place_cursor(b.get_iter_at_line_offset(it.get_line(), 0))
                 else:
-                    b.place_cursor(b.get_iter_at_line_offset(
-                        it.get_line(),
-                        start_it.get_line_index()))
+                    b.place_cursor(
+                        b.get_iter_at_line_offset(
+                            it.get_line(), start_it.get_line_index()
+                        )
+                    )
 
             else:
                 it.forward_to_line_end()
@@ -840,7 +857,7 @@ def _goto_line_bound(beginning, extend_selection):
                     cursor_col = cursor_loc.column()
                     # Retrieve the first non blank location
                     begin_loc = cursor_loc.beginning_of_line()
-                    while begin_loc.get_char() in (' ', '\t'):
+                    while begin_loc.get_char() in (" ", "\t"):
                         begin_loc = begin_loc.forward_char(1)
                     if cursor_col == begin_loc.column():
                         # Already at the first non blank => go at the beginning
@@ -851,12 +868,12 @@ def _goto_line_bound(beginning, extend_selection):
                 else:
                     cursor_loc = cursor_loc.end_of_line()
 
-                c.move(cursor_loc,
-                       extend_selection or ed.extend_existing_selection)
+                c.move(cursor_loc, extend_selection or ed.extend_existing_selection)
 
 
-@interactive("Editor", filter_text_actions,
-             name="goto beginning of line (extend selection)")
+@interactive(
+    "Editor", filter_text_actions, name="goto beginning of line (extend selection)"
+)
 def goto_beginning_of_line_ext_sel():
     """
     Move the cursor to the beginning of the line:
@@ -870,8 +887,9 @@ def goto_beginning_of_line_ext_sel():
     _goto_line_bound(beginning=True, extend_selection=True)
 
 
-@interactive("Editor", filter_text_actions,
-             name="goto beginning of line", for_learning=True)
+@interactive(
+    "Editor", filter_text_actions, name="goto beginning of line", for_learning=True
+)
 def goto_beginning_of_line():
     """
     Move the cursor to the beginning of the line:
@@ -884,15 +902,13 @@ def goto_beginning_of_line():
     _goto_line_bound(beginning=True, extend_selection=False)
 
 
-@interactive("Editor", filter_text_actions,
-             name="goto end of line (extend selection)")
+@interactive("Editor", filter_text_actions, name="goto end of line (extend selection)")
 def goto_end_of_line_ext_sel():
     GPS.Action("Cancel completion").execute_if_possible()
     _goto_line_bound(beginning=False, extend_selection=True)
 
 
-@interactive("Editor", filter_text_actions, name="goto end of line",
-             for_learning=True)
+@interactive("Editor", filter_text_actions, name="goto end of line", for_learning=True)
 def goto_end_of_line():
     GPS.Action("Cancel completion").execute_if_possible()
     _goto_line_bound(beginning=False, extend_selection=False)
@@ -920,12 +936,10 @@ def backward_delete():
 
     if e.file().language() == "python":
         if end.line() == cursor.line() and end.column() == cursor.column():
-
             did = False
 
             # not include the first position
             if cursor.column() != 1:
-
                 # see if I should forward deletion by 4
                 try:
                     did = python_forward_indent(e, cursor)
@@ -942,22 +956,21 @@ def backward_delete():
 
 def python_forward_indent(e, cursor):
     """
-       Indent with backspace in the leading white spaces with 4
-       * e is EditorBuffer
-       * cursor is EditorLocation of cursor
+    Indent with backspace in the leading white spaces with 4
+    * e is EditorBuffer
+    * cursor is EditorLocation of cursor
     """
     line = e.get_chars(cursor.beginning_of_line(), cursor.end_of_line())
     spaces_len = len(line) - len(line.lstrip(" "))
     indent = 4 if spaces_len % 4 == 0 else spaces_len % 4
     # if cursor is in the middle of the leading whitespaces
 
-    if spaces_len > 0 and spaces_len >= cursor.column()-1:
-
+    if spaces_len > 0 and spaces_len >= cursor.column() - 1:
         # remove 4 blanks if possible
         e.delete(e.at(cursor.line(), 1), e.at(cursor.line(), indent))
 
         # adjust cursor position
-        e.main_cursor().move(e.at(cursor.line(), cursor.column()-indent))
+        e.main_cursor().move(e.at(cursor.line(), cursor.column() - indent))
 
         return True
 
@@ -1004,7 +1017,7 @@ def delete(forward=True):
 
 
 def is_space(char):
-    return char == ' ' or char == '\t'
+    return char == " " or char == "\t"
 
 
 def goto_word_start(loc, underscore_is_word=True):
@@ -1022,7 +1035,7 @@ def goto_word_start(loc, underscore_is_word=True):
             prev = loc
             loc = loc.forward_char(-1)
             c = loc.get_char()
-            if c == '_':
+            if c == "_":
                 return prev
         return loc
 
@@ -1033,7 +1046,7 @@ def goto_word_end(loc, underscore_is_word=True):
         while loc != end:
             loc = loc.forward_word()
             try:
-                if loc.get_char() != '_':
+                if loc.get_char() != "_":
                     return loc.forward_char(-1)
             except Exception:
                 return loc.buffer().end_of_buffer()
@@ -1043,7 +1056,7 @@ def goto_word_end(loc, underscore_is_word=True):
             prev = loc
             loc = loc.forward_char(1)
             try:
-                if loc.get_char() == '_':
+                if loc.get_char() == "_":
                     return prev
             except Exception:
                 # Probably an invalid position.
@@ -1053,7 +1066,7 @@ def goto_word_end(loc, underscore_is_word=True):
 
 def isword(a):
     # test if a (a char) is a word
-    return (a.isalpha() or a.isdigit() or a == "_")
+    return a.isalpha() or a.isdigit() or a == "_"
 
 
 def delete_spaces(backward=True, forward=True, leave_one=False):
@@ -1079,8 +1092,7 @@ def delete_spaces(backward=True, forward=True, leave_one=False):
         buffer.insert(start, " ")
 
 
-@interactive("Editor", "Writable source editor",
-             name="delete horizontal space")
+@interactive("Editor", "Writable source editor", name="delete horizontal space")
 @with_save_excursion
 def delete_horizontal_space(backward=1, forward=1):
     """
@@ -1217,7 +1229,7 @@ def center_line():
             if before + after != spaces:
                 after = after + 1
             buffer.delete(start, end)
-            buffer.insert(start, ' ' * before + text + ' ' * after)
+            buffer.insert(start, " " * before + text + " " * after)
         else:
             # No right comment characters, use the highlight column to center
             # the text
@@ -1226,14 +1238,16 @@ def center_line():
             spaces = int(col) - start.column() - len(text)
             before = spaces // 2
             buffer.delete(start, end - 1)
-            buffer.insert(start, ' ' * before + text)
+            buffer.insert(start, " " * before + text)
 
         # Move to next line
-        buffer.current_view().goto(GPS.EditorLocation
-                                   (buffer,
-                                    line=initial.location().forward_line(
-                                        1).line(),
-                                    column=location.column()))
+        buffer.current_view().goto(
+            GPS.EditorLocation(
+                buffer,
+                line=initial.location().forward_line(1).line(),
+                column=location.column(),
+            )
+        )
 
 
 class BlockIterator:
@@ -1257,12 +1271,13 @@ class BlockIterator:
 
     def __init__(self, buffer, overlay_name):
         self.mark = buffer.beginning_of_buffer().create_mark()
-        if overlay_name != "" \
-                and overlay_name != "selection" \
-                and overlay_name != "word":
+        if (
+            overlay_name != ""
+            and overlay_name != "selection"
+            and overlay_name != "word"
+        ):
             self.overlay = buffer.create_overlay(overlay_name)
-            self.in_comment = \
-                buffer.beginning_of_buffer().has_overlay(self.overlay)
+            self.in_comment = buffer.beginning_of_buffer().has_overlay(self.overlay)
         else:
             self.overlay = None
             self.overlay_name = overlay_name
@@ -1276,8 +1291,10 @@ class BlockIterator:
             if loc < loc.buffer().end_of_buffer():
                 self.mark.move(loc.buffer().end_of_buffer())
                 if self.overlay_name == "selection":
-                    return (loc.buffer().selection_start(),
-                            loc.buffer().selection_end())
+                    return (
+                        loc.buffer().selection_start(),
+                        loc.buffer().selection_end(),
+                    )
                 elif self.overlay_name == "word":
                     cursor = loc.buffer().current_view().cursor()
                     start = cursor
@@ -1287,8 +1304,10 @@ class BlockIterator:
                         cursor = cursor + 1
                     return (start, cursor + 1)
                 else:
-                    return (loc.buffer().beginning_of_buffer(),
-                            loc.buffer().end_of_buffer())
+                    return (
+                        loc.buffer().beginning_of_buffer(),
+                        loc.buffer().end_of_buffer(),
+                    )
             raise StopIteration
         else:
             # Find beginning of next section
@@ -1401,11 +1420,11 @@ KP_END = 65436
 
 def override_key_bindings(select):
     """Override the default TextView keybinding to either always force
-       the extension the selection, or not"""
+    the extension the selection, or not"""
 
     global should_extend_selection
 
-    Gtk.TextView()   # make sure the BindingSet was created
+    Gtk.TextView()  # make sure the BindingSet was created
     bind = Gtk.binding_set_find("GtkTextView")
 
     def override(key, mvt, step):
@@ -1415,14 +1434,15 @@ def override_key_bindings(select):
         # Gtk.binding_entry_remove(bind, key, modifier)
         subst = (key, mvt, step, 1 if select else 0)
         Gtk.binding_entry_add_signal_from_string(
-            bind, 'bind "%s" {"move_cursor" (%s,%s,%s)}' % subst)
+            bind, 'bind "%s" {"move_cursor" (%s,%s,%s)}' % subst
+        )
 
     should_extend_selection = select
 
-    override("Right",    "visual-positions", 1)
+    override("Right", "visual-positions", 1)
     override("KP_Right", "visual-positions", 1)
-    override("Left",     "visual-positions", -1)
-    override("KP_Left",  "visual-positions", -1)
+    override("Left", "visual-positions", -1)
+    override("KP_Left", "visual-positions", -1)
 
     override("<ctrl>Right", "words", 1)
     override("<ctrl>KP_Right", "words", 1)
@@ -1460,7 +1480,7 @@ def override_key_bindings(select):
     override("<ctrl>KP_Page_Down", "horizontal-pages", 1)
 
 
-prev_char = ''  # To pre-fill the dialog with the last char
+prev_char = ""  # To pre-fill the dialog with the last char
 
 
 @interactive("Editor", "Source editor", name="insert extended character")
@@ -1476,8 +1496,9 @@ def insert_extended_character(location=None):
         buffer = GPS.EditorBuffer.get()
         location = buffer.current_view().cursor()
 
-    r = GPS.MDI.input_dialog("Insert Extended Character",
-                             "Character code={}".format(prev_char))
+    r = GPS.MDI.input_dialog(
+        "Insert Extended Character", "Character code={}".format(prev_char)
+    )
 
     try:
         prev_char = r[0]
@@ -1532,7 +1553,7 @@ def __on_clipboard_changed():
         cancel_mark_command()
 
 
-@interactive(name='New View Horizontal reuse', category='MDI')
+@interactive(name="New View Horizontal reuse", category="MDI")
 def new_view_horizontal_reuse():
     """
     When on an editor, splits the current notebook into two side-by-side
@@ -1544,7 +1565,7 @@ def new_view_horizontal_reuse():
     GPS.MDI.current().split(vertically=False, new_view=True, reuse=True)
 
 
-@interactive(name='New View Horizontal', category='MDI')
+@interactive(name="New View Horizontal", category="MDI")
 def new_view_horizontal():
     """
     When on an editor, splits the current notebook into two side-by-side
@@ -1553,7 +1574,7 @@ def new_view_horizontal():
     GPS.MDI.current().split(vertically=False, new_view=True, reuse=False)
 
 
-@interactive(name='New View Vertical reuse', category='MDI')
+@interactive(name="New View Vertical reuse", category="MDI")
 def new_view_vertical_reuse():
     """
     When on an editor, splits the current notebook into two windows
@@ -1565,7 +1586,7 @@ def new_view_vertical_reuse():
     GPS.MDI.current().split(vertically=True, new_view=True, reuse=True)
 
 
-@interactive(name='New View Vertical', category='MDI')
+@interactive(name="New View Vertical", category="MDI")
 def new_view_vertical():
     """
     When on an editor, splits the current notebook into two windows
@@ -1574,7 +1595,8 @@ def new_view_vertical():
     GPS.MDI.current().split(vertically=True, new_view=True, reuse=False)
 
 
-GPS.parse_xml("""
+GPS.parse_xml(
+    """
    <action name="kill line" output="none" category="Editor">
       <description>
       This is similar to Emacs' kill-line function. It deletes the end of the
@@ -1592,17 +1614,20 @@ GPS.parse_xml("""
 if $repeat == 1: text_utils.kill_line(None, $remaining+1)
       </shell>
    </action>
-""")
+"""
+)
 
 ##################
 # Comment toggle #
 ##################
 
-COMMENTS = {"c":            ("/* ", " */"),
-            "c++":          ("// ", ""),
-            "ada":          ("--  ", ""),
-            "project file": ("--  ", ""),
-            "python":       ("#", "")}
+COMMENTS = {
+    "c": ("/* ", " */"),
+    "c++": ("// ", ""),
+    "ada": ("--  ", ""),
+    "project file": ("--  ", ""),
+    "python": ("#", ""),
+}
 # The start and end line comments for each language
 # TODO: Move this knowledge to the Language class.
 
@@ -1665,8 +1690,7 @@ def toggle_comment(force_comment=False, force_uncomment=False):
     # Flatten the area before we start working
     buf.flatten_area(loc_start.line(), loc_end.line() + 1)
     start_pos = loc_start.beginning_of_line()
-    original_text = buf.get_chars(start_pos,
-                                  loc_end.end_of_line())
+    original_text = buf.get_chars(start_pos, loc_end.end_of_line())
 
     # Do a first pass on the range of lines, to figure out if it's commented,
     # and to measure the minimum indent of the block, and maximum block length
@@ -1684,12 +1708,13 @@ def toggle_comment(force_comment=False, force_uncomment=False):
         # Strip the line in two bits, so we can count the leading blanks here
         stripped = line.lstrip()
         if stripped:
-            min_leading_blanks = min(min_leading_blanks,
-                                     len(line) - len(stripped))
+            min_leading_blanks = min(min_leading_blanks, len(line) - len(stripped))
         stripped = stripped.rstrip()
         if stripped:  # do not consider blank lines as uncommented
-            if not (stripped.startswith(c_start_stripped) and
-                    stripped.endswith(c_end_stripped)):
+            if not (
+                stripped.startswith(c_start_stripped)
+                and stripped.endswith(c_end_stripped)
+            ):
                 is_commented = False
 
     if saved_toggle_point and saved_toggle_point[0] == loc_start:
@@ -1715,48 +1740,51 @@ def toggle_comment(force_comment=False, force_uncomment=False):
 
     def comment_one_line(line):
         """Comment the given line.
-           Return a tuple (the new text, whether comment did happen).
+        Return a tuple (the new text, whether comment did happen).
         """
         # Handle adding blanks before the end marker, if needs be
-        blanks = ''
+        blanks = ""
         if c_end:
-            blanks = ' ' * (max_line_length - len(line) if line
-                            else max_line_length - min_leading_blanks)
+            blanks = " " * (
+                max_line_length - len(line)
+                if line
+                else max_line_length - min_leading_blanks
+            )
 
-        new_line = '{}{}{}{}{}'.format(
-            ' ' * min_leading_blanks,
+        new_line = "{}{}{}{}{}".format(
+            " " * min_leading_blanks,
             c_start,
             line[min_leading_blanks:].rstrip(),
             blanks,
-            c_end)
+            c_end,
+        )
         return (new_line, True)
 
     def uncomment_one_line(line):
         """Uncomment the given line.
-           Return a tuple (the new text, whether uncomment did happen).
+        Return a tuple (the new text, whether uncomment did happen).
         """
         stripped = line.strip()
         # Support lines that were commented out with fewer spaces
         # than the style indicates
         if stripped.startswith(c_start):
-            new_bit = stripped[len(c_start):]
+            new_bit = stripped[len(c_start) :]
         elif stripped.startswith(c_start.strip()):
-            new_bit = stripped[len(c_start.strip()):]
+            new_bit = stripped[len(c_start.strip()) :]
         else:
             # This is not a commented line: do not uncomment it
             return (line, False)
 
         if c_end:
             if new_bit.endswith(c_end):
-                new_bit = new_bit[:-len(c_end)]
+                new_bit = new_bit[: -len(c_end)]
             elif new_bit.endswith(c_end.strip()):
-                new_bit = new_bit[:-len(c_end.strip())]
+                new_bit = new_bit[: -len(c_end.strip())]
             else:
                 # This line does not contain the end marker: do nothing
                 return (line, False)
 
-        new_line = '{}{}'.format(' ' * min_leading_blanks,
-                                 new_bit.rstrip())
+        new_line = "{}{}".format(" " * min_leading_blanks, new_bit.rstrip())
         return (new_line, True)
 
     for line in original_text.splitlines():
@@ -1792,21 +1820,32 @@ def toggle_comment(force_comment=False, force_uncomment=False):
         start_delta = 0
         end_delta = 0
         if operations[0]:
-            start_delta = (0 if loc_start.column() < min_leading_blanks else
-                           (-len(c_start)) if is_commented else len(c_start))
+            start_delta = (
+                0
+                if loc_start.column() < min_leading_blanks
+                else (-len(c_start))
+                if is_commented
+                else len(c_start)
+            )
         if operations[-1]:
-            end_delta = (0 if loc_end.column() < min_leading_blanks else
-                         (-len(c_start)) if is_commented else len(c_start))
+            end_delta = (
+                0
+                if loc_end.column() < min_leading_blanks
+                else (-len(c_start))
+                if is_commented
+                else len(c_start)
+            )
 
         if cursor_end == loc_end:
-            buf.select(buf.at(loc_start.line(),
-                              loc_start.column() + start_delta),
-                       buf.at(loc_end.line(),
-                              loc_end.column() + end_delta))
+            buf.select(
+                buf.at(loc_start.line(), loc_start.column() + start_delta),
+                buf.at(loc_end.line(), loc_end.column() + end_delta),
+            )
         else:
-            buf.select(buf.at(loc_start.line(),
-                              loc_start.column() + start_delta),
-                       buf.at(cursor_end.line(), cursor_end.column()))
+            buf.select(
+                buf.at(loc_start.line(), loc_start.column() + start_delta),
+                buf.at(cursor_end.line(), cursor_end.column()),
+            )
 
 
 @interactive("Editor", "Source editor", name="comment lines")

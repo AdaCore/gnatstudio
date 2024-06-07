@@ -28,10 +28,10 @@ def test_driver():
     yield timeout(200)
     send_key_event(GDK_BACKSPACE)
     yield timeout(200)
-    gps_assert(entry.get_text(),
-               ".adb",
-               "Backspace should have affected the entry")
+    gps_assert(entry.get_text(), ".adb", "Backspace should have affected the entry")
     yield d.cancel()
-    gps_assert(len(b.get_chars()),
-               len(expected),
-               "The buffer has been modified while a modal dialog was shown")
+    gps_assert(
+        len(b.get_chars()),
+        len(expected),
+        "The buffer has been modified while a modal dialog was shown",
+    )

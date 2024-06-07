@@ -2,13 +2,7 @@
 from GPS import *
 from gs_utils.internal.utils import *
 
-expected_out_1 = (
-    ['Default',
-     ['.',
-      ['aaa.ads',
-       'aaa.adb',
-       'aaa-ccc.adb'],
-      '.']])
+expected_out_1 = ["Default", [".", ["aaa.ads", "aaa.adb", "aaa-ccc.adb"], "."]]
 
 
 @run_test_driver
@@ -16,8 +10,7 @@ def run_test():
     yield wait_tasks()
     buf = GPS.EditorBuffer.get(GPS.File("aaa.ads"))
     buf.current_view().goto(buf.at(2, 14))
-    yield idle_modal_dialog(lambda: GPS.execute_action(
-        "generate body for subprogram"))
+    yield idle_modal_dialog(lambda: GPS.execute_action("generate body for subprogram"))
     dialog = get_window_by_title("Confirmation")
     get_stock_button(dialog, Gtk.STOCK_YES).clicked()
     yield hook("project_view_changed")
@@ -29,16 +22,19 @@ def run_test():
     buf = GPS.EditorBuffer.get(GPS.File("aaa.ads"))
     buf.current_view().goto(buf.at(3, 14))
 
-    yield idle_modal_dialog(lambda: GPS.execute_action(
-        "generate body for subprogram as separate"))
+    yield idle_modal_dialog(
+        lambda: GPS.execute_action("generate body for subprogram as separate")
+    )
     dialog = get_window_by_title("Confirmation")
     get_stock_button(dialog, Gtk.STOCK_YES).clicked()
     yield hook("project_view_changed")
 
     explorer = get_widget_by_name("Project Explorer Tree")
-    gps_assert(dump_tree_model(explorer.get_model(), 1),
-               expected_out_1,
-               "Wrong project view output")
+    gps_assert(
+        dump_tree_model(explorer.get_model(), 1),
+        expected_out_1,
+        "Wrong project view output",
+    )
     buf = GPS.EditorBuffer.get(GPS.File("aaa.adb"))
     body_text = buf.get_chars()
     buf = GPS.EditorBuffer.get(GPS.File("aaa.adb.expect"))

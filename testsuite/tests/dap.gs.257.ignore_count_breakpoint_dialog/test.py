@@ -36,16 +36,16 @@ def test_driver():
     # Run the debugger and hit the breakpoint for the first time
     debug.send("run")
     yield wait_DAP_server("variables")
-    gps_assert(dump_tree_model(model, VALUE_COLUMN),
-               ['0'],
-               "Wrong value after run")
+    gps_assert(dump_tree_model(model, VALUE_COLUMN), ["0"], "Wrong value after run")
 
     # Continuing should increase the value by 1
     debug.send("continue")
     yield wait_DAP_server("variables")
-    gps_assert(dump_tree_model(model, VALUE_COLUMN),
-               ['1'],
-               "Wrong value after continuing a single time")
+    gps_assert(
+        dump_tree_model(model, VALUE_COLUMN),
+        ["1"],
+        "Wrong value after continuing a single time",
+    )
 
     # Open the Breakpoints view edit dialog
     view = Breakpoints_View()
@@ -57,6 +57,8 @@ def test_driver():
     yield ed.ok()
     debug.send("continue")
     yield wait_DAP_server("variables")
-    gps_assert(dump_tree_model(model, VALUE_COLUMN),
-               ['7'],
-               "Wrong value after continuing multiple time")
+    gps_assert(
+        dump_tree_model(model, VALUE_COLUMN),
+        ["7"],
+        "Wrong value after continuing multiple time",
+    )

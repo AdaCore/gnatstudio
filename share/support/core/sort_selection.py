@@ -17,12 +17,11 @@ from gs_utils import interactive
 import functools
 
 
-@interactive("Editor", filter="Source editor",
-             name="sort selected lines ascending")
+@interactive("Editor", filter="Source editor", name="sort selected lines ascending")
 def sort_selection(revert=False, no_duplicate=False):
     """Sorts the current selection, in ascending order"""
     GPS.current_context(refresh=True)
-    ed = GPS.EditorBuffer.get()   # current editor, always
+    ed = GPS.EditorBuffer.get()  # current editor, always
     start = ed.selection_start()
     to = ed.selection_end()
 
@@ -56,9 +55,10 @@ def sort_selection(revert=False, no_duplicate=False):
     if case_sensitive:
         lines.sort()
     else:
-        lines = sorted(lines,
-                       key=functools.cmp_to_key(
-                           lambda x, y: -1 if x.lower() < y.lower() else 1))
+        lines = sorted(
+            lines,
+            key=functools.cmp_to_key(lambda x, y: -1 if x.lower() < y.lower() else 1),
+        )
 
     if revert:
         lines.reverse()
@@ -67,22 +67,27 @@ def sort_selection(revert=False, no_duplicate=False):
         ed.insert(start, "\n".join(lines) + "\n")
 
 
-@interactive("Editor", filter="Source editor",
-             name="sort selected lines descending")
+@interactive("Editor", filter="Source editor", name="sort selected lines descending")
 def sort_selection_revert():
     """Sorts the current selection, in descending order"""
     sort_selection(revert=True)
 
 
-@interactive("Editor", filter="Source editor",
-             name="sort selected lines ascending (no duplicate)")
+@interactive(
+    "Editor",
+    filter="Source editor",
+    name="sort selected lines ascending (no duplicate)",
+)
 def sort_selection_no_duplicate():
     """Sorts the current selection, in ascending order without duplicate"""
     sort_selection(revert=False, no_duplicate=True)
 
 
-@interactive("Editor", filter="Source editor",
-             name="sort selected lines descending (no duplicate)")
+@interactive(
+    "Editor",
+    filter="Source editor",
+    name="sort selected lines descending (no duplicate)",
+)
 def sort_selection_revert_no_duplicate():
     """Sorts the current selection, in descending order without duplicate"""
     sort_selection(revert=True, no_duplicate=True)

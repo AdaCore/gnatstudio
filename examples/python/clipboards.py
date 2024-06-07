@@ -22,45 +22,77 @@ paste_key = "primary-t"
 
 
 def get_customization_string(suffix):
-    return """
-  <action name="copy_clipboard"""+suffix+"""" category="General">
+    return (
+        """
+  <action name="copy_clipboard"""
+        + suffix
+        + """" category="General">
     <filter id="Source editor" />
-    <description>Copy the current selection to the named clipboard """+suffix+"""</description>
-    <shell lang="python" >clipboards.copy_to_clipboard(\""""+suffix+"""")</shell>
+    <description>Copy the current selection to the named clipboard """
+        + suffix
+        + """</description>
+    <shell lang="python" >clipboards.copy_to_clipboard(\""""
+        + suffix
+        + """")</shell>
   </action>
-  <action name="paste_clipboard"""+suffix+"""" category="General">
+  <action name="paste_clipboard"""
+        + suffix
+        + """" category="General">
     <filter id="Source editor" />
-    <description>Paste the contents of the named clipboard """+suffix+"""</description>
-    <shell lang="python">clipboards.paste_from_clipboard(\""""+suffix+"""")</shell>
+    <description>Paste the contents of the named clipboard """
+        + suffix
+        + """</description>
+    <shell lang="python">clipboards.paste_from_clipboard(\""""
+        + suffix
+        + """")</shell>
   </action>
-  <key action="copy_clipboard"""+suffix+"\">"+copy_key+" "+suffix+"""</key>
-  <key action="paste_clipboard"""+suffix+"\">"+paste_key+" "+suffix+"""</key>
+  <key action="copy_clipboard"""
+        + suffix
+        + '">'
+        + copy_key
+        + " "
+        + suffix
+        + """</key>
+  <key action="paste_clipboard"""
+        + suffix
+        + '">'
+        + paste_key
+        + " "
+        + suffix
+        + """</key>
 """
+    )
 
 
-GPS.parse_xml(get_customization_string("0") +
-              get_customization_string("1") +
-              get_customization_string("2") +
-              get_customization_string("3") +
-              get_customization_string("4") +
-              get_customization_string("5") +
-              get_customization_string("6") +
-              get_customization_string("7") +
-              get_customization_string("8") +
-              get_customization_string("9"))
+GPS.parse_xml(
+    get_customization_string("0")
+    + get_customization_string("1")
+    + get_customization_string("2")
+    + get_customization_string("3")
+    + get_customization_string("4")
+    + get_customization_string("5")
+    + get_customization_string("6")
+    + get_customization_string("7")
+    + get_customization_string("8")
+    + get_customization_string("9")
+)
 clipboard = {}
 
 
 def copy_to_clipboard(suffix):
     try:
-        clipboard[suffix] = GPS.Editor.get_chars(
-            GPS.current_context().file().name())
+        clipboard[suffix] = GPS.Editor.get_chars(GPS.current_context().file().name())
     except Exception:
         pass
 
 
 def paste_from_clipboard(suffix):
     context = GPS.current_context()
-    GPS.Editor.replace_text(context.file().name(), context.location().line(),
-                            context.location().column(),
-                            clipboard[suffix], 0, 0)
+    GPS.Editor.replace_text(
+        context.file().name(),
+        context.location().line(),
+        context.location().column(),
+        clipboard[suffix],
+        0,
+        0,
+    )

@@ -11,6 +11,7 @@ from gs_utils.internal.utils import *
 EXPECTED_TEXT = """package Quickfix is
 end Quickfix;"""
 
+
 @run_test_driver
 def run_test():
     GPS.BuildTarget("Build All").execute()
@@ -30,5 +31,8 @@ def run_test():
     buf = GPS.EditorBuffer.get(GPS.File("quickfix.ads"))
     text = buf.get_chars()
 
-    gps_assert(text.strip(), EXPECTED_TEXT,
-               "The buffer contents after applying codefixes is not expected")
+    gps_assert(
+        text.strip(),
+        EXPECTED_TEXT,
+        "The buffer contents after applying codefixes is not expected",
+    )

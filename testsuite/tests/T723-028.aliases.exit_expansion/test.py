@@ -28,15 +28,19 @@ def run_test():
     pop_tree = get_widget_by_name("completion-view")
     model = pop_tree.get_model()
     yield wait_until_true(
-        lambda: model.get_value(model.get_iter_first(), 0) != "Computing...")
+        lambda: model.get_value(model.get_iter_first(), 0) != "Computing..."
+    )
 
     click_in_tree(pop_tree, path="0", events=double_click_events)
     yield wait_idle()
 
     # Verify that it has been correctly parsed by the aliases plugin
     line = buf.get_chars(buf.at(6, 1), buf.at(6, 1).end_of_line())
-    gps_assert(line.strip(), EXPECTED_SNIPPET.strip(),
-               "The completion snippet has not been correctly inserted")
+    gps_assert(
+        line.strip(),
+        EXPECTED_SNIPPET.strip(),
+        "The completion snippet has not been correctly inserted",
+    )
 
     view.goto(buf.at(5, 1))
     yield wait_idle()

@@ -22,7 +22,7 @@ def run_test():
     # Insert a completion snippet received from clangd
 
     buf.insert("No")
-    send_key_event(ord('t'))
+    send_key_event(ord("t"))
     yield wait_language_server("textDocument/completion")
     yield wait_idle()
 
@@ -32,11 +32,12 @@ def run_test():
 
     # Trigger the completion window by typing "Var"
     send_key_event(ord("V"))
-    yield hook('language_server_response_processed')
+    yield hook("language_server_response_processed")
     yield wait_idle()
     line = buf.get_chars(buf.at(8, 1), buf.at(8, 1).end_of_line())
-    gps_assert("Obj.Do_Nothing (V" in line.strip(), True,
-               "V has not been inserted properly")
+    gps_assert(
+        "Obj.Do_Nothing (V" in line.strip(), True, "V has not been inserted properly"
+    )
 
     pop_tree = get_widget_by_name("completion-view")
     gps_assert(pop_tree != None, True, "The completion window is absent")
@@ -50,10 +51,13 @@ def run_test():
     yield wait_idle()
 
     # Type '1' to give a value to the last snippet parameter
-    send_key_event(ord('1'))
+    send_key_event(ord("1"))
     yield wait_idle()
 
     # Verify that the snippet parameters have been inserted properly
     line = buf.get_chars(buf.at(8, 1), buf.at(8, 1).end_of_line())
-    gps_assert(line.strip(), EXPECTED_RESULT.strip(),
-               "The snippet parameter values have not been inserted properly")
+    gps_assert(
+        line.strip(),
+        EXPECTED_RESULT.strip(),
+        "The snippet parameter values have not been inserted properly",
+    )

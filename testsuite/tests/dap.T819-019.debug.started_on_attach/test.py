@@ -31,7 +31,7 @@ def test_driver():
     ok_button = get_button_from_label("OK", dialog)
     entry.set_text(str(pid))
     ok_button.clicked()
-    yield hook('debugger_location_changed')
+    yield hook("debugger_location_changed")
 
     # Check that the debugger has been stopped when attaching to
     # the running process
@@ -57,4 +57,3 @@ def test_driver():
 
     # Kill the process manually
     proc.kill()
-

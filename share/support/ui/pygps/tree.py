@@ -10,11 +10,11 @@ try:
 
     def find_in_tree(tree, column, key, iter=None):
         """Return the path for the row in tree that has "key" as the
-           content for the given column. Search starts at iter, or
-           by default the top of the tree.
-           Column is an integer (starting at 0) that indicates the
-           column.
-           Returns None if no such row exists."""
+        content for the given column. Search starts at iter, or
+        by default the top of the tree.
+        Column is an integer (starting at 0) that indicates the
+        column.
+        Returns None if no such row exists."""
         if not iter:
             iter = tree.get_model()
 
@@ -31,8 +31,8 @@ try:
 
     def select_in_tree(tree, column, key):
         """Select a row in a tree view. The row is such that the
-           contents of the given column is key.
-           :return: the path of the selected row
+        contents of the given column is key.
+        :return: the path of the selected row
         """
 
         path = find_in_tree(tree, column, key)
@@ -49,29 +49,37 @@ try:
             return path
         return None
 
-    def click_in_tree(view, path=None, column=0, button=1,
-                      events=pygps.single_click_events, process_events=True,
-                      control=False, alt=False, shift=False,
-                      modifier=None, through_gps=True):
+    def click_in_tree(
+        view,
+        path=None,
+        column=0,
+        button=1,
+        events=pygps.single_click_events,
+        process_events=True,
+        control=False,
+        alt=False,
+        shift=False,
+        modifier=None,
+        through_gps=True,
+    ):
         """Simulate a click in the TreeView on the given path and column.
-           This event is sent asynchronously, and you should check its
-           result in an idle callback, or call process_all_events() immediately
-           after the call to click_in_tree.
-           If path is none, the event is sent to the first selected row.
+        This event is sent asynchronously, and you should check its
+        result in an idle callback, or call process_all_events() immediately
+        after the call to click_in_tree.
+        If path is none, the event is sent to the first selected row.
 
-           modifier is a Gdk.ModifierType, overriding control, alt or shift.
+        modifier is a Gdk.ModifierType, overriding control, alt or shift.
 
-           If you are using the third button to display a contextual menu, see
-           also activate_contextual()
+        If you are using the third button to display a contextual menu, see
+        also activate_contextual()
 
-           To send a double-click, emit an event with type=Gdk._2BUTTON_PRESS
+        To send a double-click, emit an event with type=Gdk._2BUTTON_PRESS
         """
         if not view.get_realized():
             GPS.Logger("TESTSUITE").log("click_in_tree: view is not realized")
             return
 
-        if (os.name == 'nt'
-                and button == 3 and events == pygps.single_click_events):
+        if os.name == "nt" and button == 3 and events == pygps.single_click_events:
             # ??? work around
             # On Windows sending a BUTTON_PRESS followed by a
             # BUTTON_RELEASE event when opening a contextual menu does
@@ -91,7 +99,7 @@ try:
         else:
             state = Gdk.ModifierType(0)
             if control:
-                if sys.platform == 'darwin':
+                if sys.platform == "darwin":
                     # on Mac, we need to also pass the Command key
                     state |= Gdk.ModifierType.MOD2_MASK
                 else:
@@ -110,7 +118,8 @@ try:
                 window=view.get_bin_window(),
                 x=int(x),
                 y=int(y),
-                state=0)
+                state=0,
+            )
         else:
             event = Gdk.EventCrossing()
             event.type = Gdk.EventType.ENTER_NOTIFY
@@ -129,7 +138,8 @@ try:
                     y=int(y),
                     window=view.get_bin_window(),
                     state=state,
-                    type=t)
+                    type=t,
+                )
             else:
                 # event = Gdk.Event.new(t)
                 event = Gdk.EventButton()

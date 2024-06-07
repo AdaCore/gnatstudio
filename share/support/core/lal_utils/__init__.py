@@ -13,9 +13,11 @@ def node(file, line, column, kind_name):
     if not buf:
         return None
     unit = buf.get_analysis_unit()
-    return unit.root.find(lambda x: x.sloc_range.start.line == line and
-                          x.sloc_range.start.column == column and
-                          x.kind_name == kind_name)
+    return unit.root.find(
+        lambda x: x.sloc_range.start.line == line
+        and x.sloc_range.start.column == column
+        and x.kind_name == kind_name
+    )
 
 
 def get_enclosing_subprogram(node):
@@ -25,7 +27,9 @@ def get_enclosing_subprogram(node):
     """
     if not node:
         return None
-    enclosing = [x for x in node.parent_chain if x.is_a(lal.BasicDecl) and x.p_is_subprogram]
+    enclosing = [
+        x for x in node.parent_chain if x.is_a(lal.BasicDecl) and x.p_is_subprogram
+    ]
     # Return the first item in the chain: this is the innermost one
     if enclosing:
         return enclosing[0]

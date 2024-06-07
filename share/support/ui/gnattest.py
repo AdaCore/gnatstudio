@@ -25,10 +25,10 @@ from workflows.promises import ProcessWrapper, TargetWrapper
 
 
 last_gnattest = {
-    'project':     None,  # project which gnattest run for
-    'root':        None,  # root project opened before switching to harness
-    'harness':     None,  # harness project name before switching to it
-    'harness_dir': None   # Explicit specified directory to harness project
+    "project": None,  # project which gnattest run for
+    "root": None,  # root project opened before switching to harness
+    "harness": None,  # harness project name before switching to it
+    "harness_dir": None,  # Explicit specified directory to harness project
 }
 
 
@@ -53,20 +53,27 @@ def run_test_list_in_emulator(main_name):
 
 
 __targetsDef = [
-    ["Run test driver with emulator", "run-test-driver-with-emulator",
-     lambda x: GNATemulator.build_and_run(
-         x, in_console=False), "gps-gnattest-run"],
-    ["Run test-drivers list with emulator",
-     "run-test-drivers-list-with-emulator",
-     run_test_list_in_emulator, "gps-gnattest-run"]]
+    [
+        "Run test driver with emulator",
+        "run-test-driver-with-emulator",
+        lambda x: GNATemulator.build_and_run(x, in_console=False),
+        "gps-gnattest-run",
+    ],
+    [
+        "Run test-drivers list with emulator",
+        "run-test-drivers-list-with-emulator",
+        run_test_list_in_emulator,
+        "gps-gnattest-run",
+    ],
+]
 
 
 def run(project, target, extra_args="", synchronous=False, force=False):
-    """ Run gnattest and switch to harness if success. """
-    last_gnattest['project'] = project
-    GPS.BuildTarget(target).execute(extra_args=extra_args,
-                                    synchronous=synchronous,
-                                    force=force)
+    """Run gnattest and switch to harness if success."""
+    last_gnattest["project"] = project
+    GPS.BuildTarget(target).execute(
+        extra_args=extra_args, synchronous=synchronous, force=force
+    )
 
 
 def version(exe):
@@ -77,7 +84,7 @@ def version(exe):
 
     # Support gnattest built in dev mode
     if "GNATTEST Pro dev" in version_out:
-        return 'dev'
+        return "dev"
 
     matches = TOOL_VERSION_REGEXP.findall(version_out.splitlines()[0])
     return matches[0]
@@ -91,9 +98,9 @@ def use_rts_and_target_options():
     should be prefixed by the project's target instead (e.g: arm-eabi-gnattest)
     """
 
-    if locate_exec_on_path('gnattest'):
-        v = version('gnattest')
-        if v == 'dev':
+    if locate_exec_on_path("gnattest"):
+        v = version("gnattest")
+        if v == "dev":
             return True
         major, _ = v
         return int(major) >= 22
@@ -113,11 +120,11 @@ def get_gnattest_exe():
     if should_use_prefix:
         target = GPS.get_target()
         if target:
-            return '{}-gnattest'.format(target)
+            return "{}-gnattest".format(target)
         else:
-            return 'gnattest'
+            return "gnattest"
     else:
-        return 'gnattest'
+        return "gnattest"
 
 
 def get_target_arg():
@@ -156,7 +163,7 @@ def get_runtime_arg():
 
 
 def get_driver_list():
-    """ Check if root project has test_drivers.list file and return it. """
+    """Check if root project has test_drivers.list file and return it."""
     root_project = GPS.Project.root().file().path
     (name, ext) = os.path.splitext(root_project)
     name = name + ".list"
@@ -167,7 +174,7 @@ def get_driver_list():
 
 
 def get_harness_project_file(cur):
-    """ Return name of harness project with last modification time """
+    """Return name of harness project with last modification time"""
     harness_dir = cur.get_attribute_as_string("Harness_Dir", "GNATtest")
     project_dir = cur.file().directory()
     object_dir = cur.get_attribute_as_string("Object_Dir")
@@ -175,43 +182,29 @@ def get_harness_project_file(cur):
 
     list = []
 
-    if last_gnattest['harness_dir']:
-        list.append(os.path.join(last_gnattest['harness_dir'],
-                                 "test_driver.gpr"))
-        list.append(os.path.join(last_gnattest['harness_dir'],
-                                 "test_drivers.gpr"))
+    if last_gnattest["harness_dir"]:
+        list.append(os.path.join(last_gnattest["harness_dir"], "test_driver.gpr"))
+        list.append(os.path.join(last_gnattest["harness_dir"], "test_drivers.gpr"))
 
     if harness_dir == "":
-        list.append(os.path.join(parent_dir,
-                                 "gnattest", "harness",
-                                 "test_driver.gpr"))
-        list.append(os.path.join(parent_dir,
-                                 "gnattest", "harness",
-                                 "test_drivers.gpr"))
-        list.append(os.path.join(parent_dir,
-                                 "gnattest_stub", "harness",
-                                 "test_drivers.gpr"))
+        list.append(os.path.join(parent_dir, "gnattest", "harness", "test_driver.gpr"))
+        list.append(os.path.join(parent_dir, "gnattest", "harness", "test_drivers.gpr"))
+        list.append(
+            os.path.join(parent_dir, "gnattest_stub", "harness", "test_drivers.gpr")
+        )
     else:
         if os.path.isabs(harness_dir):
-            list.append(os.path.join(harness_dir,
-                                     "test_driver.gpr"))
-            list.append(os.path.join(harness_dir,
-                                     "test_drivers.gpr"))
+            list.append(os.path.join(harness_dir, "test_driver.gpr"))
+            list.append(os.path.join(harness_dir, "test_drivers.gpr"))
 
         else:
-            list.append(os.path.join(parent_dir,
-                                     harness_dir,
-                                     "test_driver.gpr"))
-            list.append(os.path.join(parent_dir,
-                                     harness_dir,
-                                     "test_drivers.gpr"))
+            list.append(os.path.join(parent_dir, harness_dir, "test_driver.gpr"))
+            list.append(os.path.join(parent_dir, harness_dir, "test_drivers.gpr"))
 
     def compare(a, b):
         if not os.path.exists(a):
             return b
-        elif not os.path.exists(b) or \
-                os.path.getmtime(a) > os.path.getmtime(b):
-
+        elif not os.path.exists(b) or os.path.getmtime(a) > os.path.getmtime(b):
             return a
         else:
             return b
@@ -221,8 +214,8 @@ def get_harness_project_file(cur):
 
 def get_user_project_file():
     root_project = GPS.Project.root()
-    if last_gnattest['harness'] == root_project.file().path:
-        user_project = last_gnattest['root']
+    if last_gnattest["harness"] == root_project.file().path:
+        user_project = last_gnattest["root"]
     else:
         # Check if we are in the harness project
         if root_project.original_project():
@@ -235,34 +228,33 @@ def get_user_project_file():
 
 
 def open_harness_project(cur):
-    """ Open harness project if it hasn't open yet."""
+    """Open harness project if it hasn't open yet."""
     if GPS.Project.root().is_harness_project():
         return
 
     prj = get_harness_project_file(cur)
 
     if os.path.exists(prj):
-        last_gnattest['root'] = GPS.Project.root().file().path
+        last_gnattest["root"] = GPS.Project.root().file().path
         GPS.Project.load(prj, False, True)
-        GPS.Console("Messages").write("Switched to harness project: " +
-                                      GPS.Project.root().file().path + "\n")
-        last_gnattest['harness'] = GPS.Project.root().file().path
+        GPS.Console("Messages").write(
+            "Switched to harness project: " + GPS.Project.root().file().path + "\n"
+        )
+        last_gnattest["harness"] = GPS.Project.root().file().path
     else:
-        GPS.Console("Messages").write("No harness project found: %s!\n" %
-                                      (prj))
+        GPS.Console("Messages").write("No harness project found: %s!\n" % (prj))
 
 
 def exit_harness_project():
-    """ Leave harness project and open user's project. """
+    """Leave harness project and open user's project."""
     GPS.Project.load(get_user_project_file(), False, True)
-    GPS.Console("Messages").write("Exit harness project to: " +
-                                  GPS.Project.root().file().path + "\n")
+    GPS.Console("Messages").write(
+        "Exit harness project to: " + GPS.Project.root().file().path + "\n"
+    )
 
 
-@hook('compilation_finished')
-def __on_compilation_finished(category, target_name,
-                              mode_name, status, cmd):
-
+@hook("compilation_finished")
+def __on_compilation_finished(category, target_name, mode_name, status, cmd):
     if not target_name.startswith("GNATtest"):
         return
 
@@ -270,9 +262,9 @@ def __on_compilation_finished(category, target_name,
         return
 
     hd = [arg[14:] for arg in cmd if arg.startswith("--harness-dir=")]
-    last_gnattest['harness_dir'] = hd[0] if hd else ""
+    last_gnattest["harness_dir"] = hd[0] if hd else ""
 
-    open_harness_project(last_gnattest['project'])
+    open_harness_project(last_gnattest["project"])
 
 
 def __update_build_targets_visibility():
@@ -285,10 +277,10 @@ def __update_build_targets_visibility():
         test_run_target = GPS.BuildTarget("Run a test-driver")
         test_run_targets = GPS.BuildTarget("Run a test drivers list")
         run_main_target = GPS.BuildTarget("Run Main")
-        test_run_emulator_target = GPS.BuildTarget(
-            "Run test driver with emulator")
+        test_run_emulator_target = GPS.BuildTarget("Run test driver with emulator")
         test_run_emulator_targets = GPS.BuildTarget(
-            "Run test-drivers list with emulator")
+            "Run test-drivers list with emulator"
+        )
     except Exception:
         # In some rare cases GPS recompute project view before build targets
         # are actually created. We don't update targets in these cases.
@@ -301,7 +293,7 @@ def __update_build_targets_visibility():
         test_run_emulator_targets.hide()
         test_run_emulator_target.hide()
     elif get_driver_list() == "":
-        """ We have a single test driver. """
+        """We have a single test driver."""
         run_main_target.hide()
         test_run_targets.hide()
         test_run_emulator_targets.hide()
@@ -335,11 +327,15 @@ def create_build_targets_gnatemu():
 
     for target_def in __targetsDef:
         workflows.create_target_from_workflow(
-            target_def[0], target_def[1], target_def[2], target_def[3],
-            parent_menu='/Build/Emulator/%s/' % target_def[0])
+            target_def[0],
+            target_def[1],
+            target_def[2],
+            target_def[3],
+            parent_menu="/Build/Emulator/%s/" % target_def[0],
+        )
 
 
-@hook('gps_started')
+@hook("gps_started")
 def on_gps_start():
     """
     Make sure that the 'Run main' build target is not hidden when opening
@@ -348,9 +344,9 @@ def on_gps_start():
     __update_build_targets_visibility()
 
 
-@hook('project_view_changed')
+@hook("project_view_changed")
 def on_project_view_changed():
-    """ Replace run target in harness project. """
+    """Replace run target in harness project."""
     __update_build_targets_visibility()
 
 
@@ -366,8 +362,12 @@ def open_harness_filter(context):
     return os.path.exists(get_harness_project_file(project))
 
 
-@interactive("General", open_harness_filter, name="open harness",
-             contextual="GNATtest/Open harness project")
+@interactive(
+    "General",
+    open_harness_filter,
+    name="open harness",
+    contextual="GNATtest/Open harness project",
+)
 def open_harness():
     """
     Open harness project for current project
@@ -411,9 +411,7 @@ def build_instr_harness_workflow():
     # regenerate it.
     console = GPS.Console("GNATtest")
     if not is_harness_instr():
-        cmd = [
-            "gnattest",
-            "-P", get_user_project_file(), "--dump-test-inputs"]
+        cmd = ["gnattest", "-P", get_user_project_file(), "--dump-test-inputs"]
         console.write("Generating an instrumented test harness...")
         p = ProcessWrapper(cmd, spawn_console="GNATtest")
 
@@ -423,25 +421,19 @@ def build_instr_harness_workflow():
 
         # If it failed, exit early
         if status != 0:
-            console.write(
-                "Failed to generate an instrumented harness\n", mode="error"
-            )
+            console.write("Failed to generate an instrumented harness\n", mode="error")
             yield status
     # Once done, we need to build the instrumented harness. For now, we will
     # only support the most basic gnattest usage: a single driver named
     # test_driver and use the test_driver-build-instr target of the generated
     # Makefile. TODO: support separate drivers and stub mode on.
-    cmd = [
-        "make", "-C", get_harness_dir(), "test_driver-build-inst"
-    ]
+    cmd = ["make", "-C", get_harness_dir(), "test_driver-build-inst"]
     p = ProcessWrapper(cmd, spawn_console="GNATtest")
     status, output = yield p.wait_until_terminate(show_if_error=True)
     console.write(output)
 
     if status != 0:
-        console.write(
-            "Failed to build the instrumented test harness\n", mode="error"
-        )
+        console.write("Failed to build the instrumented test harness\n", mode="error")
     yield status
 
 
@@ -476,14 +468,15 @@ def start_fuzz(task, corpus_dir, fuzz_dir, subp_sloc, force=False):
 
     p = TargetWrapper("GNATtest minimization")
     r = yield p.wait_on_execute(
-        extra_args=[f"--minimization-filter={subp_sloc}",
-                    f"-P{get_user_project_file()}"],
-        force=force
+        extra_args=[
+            f"--minimization-filter={subp_sloc}",
+            f"-P{get_user_project_file()}",
+        ],
+        force=force,
     )
     if r != 0:
         GPS.Console().write("Failed to re-generate harness")
     else:
-
         # The test mapping may have changed after minimization, so recompute
         # the project view.
         GPS.Project.recompute()
@@ -575,7 +568,7 @@ def is_type_supported(type_decl):
 
     # Likewise, skip all derived type declarations, as we support any type
     # derived from a supported type.
-    assert (isinstance (current_type, lal.BaseTypeDecl))
+    assert isinstance(current_type, lal.BaseTypeDecl)
     if current_type.p_is_derived_type and current_type.p_root_type():
         current_type = current_type.p_root_type()
 
@@ -590,9 +583,7 @@ def is_type_supported(type_decl):
         # Check that we do not have an access type discriminant
         if isinstance(discrs, lal.DiscriminantSpecList):
             for disc in discrs.f_discr_specs:
-                if not (
-                    is_type_supported(disc.f_type_expr.p_designated_type_decl)
-                ):
+                if not (is_type_supported(disc.f_type_expr.p_designated_type_decl)):
                     return False
 
         # Check whether this is a limited type
@@ -607,8 +598,9 @@ def is_type_supported(type_decl):
             for comp in variant.f_components.f_components:
                 if isinstance(comp, lal.ComponentDecl):
                     if not (
-                            is_type_supported
-                            (comp.f_component_def.f_type_expr.p_designated_type_decl)
+                        is_type_supported(
+                            comp.f_component_def.f_type_expr.p_designated_type_decl
+                        )
                     ):
                         return False
 
@@ -618,13 +610,13 @@ def is_type_supported(type_decl):
                         return False
             return True
 
-        return visit_variant (record_type)
+        return visit_variant(record_type)
 
     elif current_type.p_is_array_type():
         # Check that the component type is supported
         array_type = current_type.f_type_def
-        return (
-            is_type_supported(array_type.f_component_type.f_type_expr.p_designated_type_decl)
+        return is_type_supported(
+            array_type.f_component_type.f_type_expr.p_designated_type_decl
         )
 
     else:
@@ -637,7 +629,6 @@ def is_type_supported(type_decl):
 
 
 def is_supported_by_tgen(subp_spec):
-
     for param_type in subp_spec.p_param_types():
         try:
             if not is_type_supported(param_type):
@@ -651,18 +642,20 @@ def is_supported_by_tgen(subp_spec):
         except:
             GPS.Console().write(
                 "Warning: unexpected exception while checking subprogram"
-                " compatibility with TGen:\n"
-                + traceback.format_exc(),
-                mode="error"
+                " compatibility with TGen:\n" + traceback.format_exc(),
+                mode="error",
             )
     return True
 
 
-@interactive("General", fuzz_subp_filter,
-             contextual="GNATtest/Start\/Stop fuzzing subprogram",
-             name="gnattest fuzz subprogram",
-             description="Fuzz suprogram using test cases as initial seeds",
-             contextual_group=GPS.Contextual.Group.EXTRA_INFORMATION)
+@interactive(
+    "General",
+    fuzz_subp_filter,
+    contextual="GNATtest/Start\/Stop fuzzing subprogram",
+    name="gnattest fuzz subprogram",
+    description="Fuzz suprogram using test cases as initial seeds",
+    contextual_group=GPS.Contextual.Group.EXTRA_INFORMATION,
+)
 def fuzz_subp_workflow():
     """
     Workflow to fuzz a subprogram using gnattest test-cases as a starting
@@ -679,7 +672,7 @@ def fuzz_subp_workflow():
             "This subprogram profile is not supported. See "
             "https://docs.adacore.com/gnatcoverage-docs/html/gnattest/gnattest_part.html#generating-test-inputs"
             " for an exhaustive list of supported subprogram profiles.\n",
-            mode="error"
+            mode="error",
         )
         return
 
@@ -716,9 +709,7 @@ def fuzz_subp_workflow():
     corpus_dir = tempfile.mkdtemp()
     cwd = os.getcwd()
     os.chdir(corpus_dir)
-    console.write(
-        "Generating starting corpus in " + corpus_dir + "\n"
-    )
+    console.write("Generating starting corpus in " + corpus_dir + "\n")
     cmd = [
         os.path.join(get_harness_dir(), "test_runner"),
         "--routines",
@@ -727,9 +718,7 @@ def fuzz_subp_workflow():
     p = ProcessWrapper(cmd, spawn_console="GNATtest")
     status, output = yield p.wait_until_terminate()
     if status != 0:
-        console.write(
-            "Failed to run: " + ' '.join(cmd) + "\n"
-        )
+        console.write("Failed to run: " + " ".join(cmd) + "\n")
         return status
 
     os.chdir(cwd)
@@ -739,9 +728,7 @@ def fuzz_subp_workflow():
     # beforehand.
 
     user_project = GPS.Project(get_user_project_file())
-    fuzz_dir = os.path.join(
-        user_project.object_dirs()[0], "fuzz" + function_hash
-    )
+    fuzz_dir = os.path.join(user_project.object_dirs()[0], "fuzz" + function_hash)
 
     if os.path.exists(fuzz_dir):
         shutil.rmtree(fuzz_dir)
@@ -751,7 +738,7 @@ def fuzz_subp_workflow():
     # means that the BuildTargets will execute without waiting for a user
     # action (a click on the Execute button). TODO! there should be a cleaner
     # way to do that.
-    force = bool(os.environ.get('GS_TESTSUITE_RUN'))
+    force = bool(os.environ.get("GS_TESTSUITE_RUN"))
     p = TargetWrapper("gnattest gnatfuzz generate")
     r = yield p.wait_on_execute(
         extra_args=[
@@ -762,15 +749,12 @@ def fuzz_subp_workflow():
             "-L",
             line,
             "-o",
-            fuzz_dir
+            fuzz_dir,
         ],
         force=force,
     )
     if r != 0:
-        GPS.Console("Messages").write(
-            '"fuzz generate" execution failed',
-            mode="error"
-        )
+        GPS.Console("Messages").write('"fuzz generate" execution failed', mode="error")
         return
 
     # Now onto fuzzing: execute the GNATfuzz fuzz workflow. Run it in a
@@ -778,8 +762,11 @@ def fuzz_subp_workflow():
     # back on it.
 
     workflows.task_workflow(
-        "fuzz" + function_hash, start_fuzz, False,
-        corpus_dir=corpus_dir, fuzz_dir=fuzz_dir,
+        "fuzz" + function_hash,
+        start_fuzz,
+        False,
+        corpus_dir=corpus_dir,
+        fuzz_dir=fuzz_dir,
         subp_sloc=f"{local_file_basename}:{line}",
         force=force,
     )
@@ -788,16 +775,17 @@ def fuzz_subp_workflow():
     # workflow, or if the workflow is interrupted by the user.
 
 
-XML = r"""<?xml version="1.0" ?>
+XML = (
+    r"""<?xml version="1.0" ?>
 <gnattest>
   <project_attribute package="gnattest"
     name="harness_dir"
     editor_page="GNATtest"
     editor_section="Directories"
     label="Harness Directory"
-    description="Used to specify the directory in which to """ \
-    """place harness packages and project file for the test driver. If """ \
-    """it's a relative path, it is considered relative to the """ \
+    description="Used to specify the directory in which to """
+    """place harness packages and project file for the test driver. If """
+    """it's a relative path, it is considered relative to the """
     """object directory of the project file."
     hide_in="wizard library_wizard"
     >
@@ -811,12 +799,12 @@ XML = r"""<?xml version="1.0" ?>
     disable_if_not_set="true"
     disable="gnattest.tests_root gnattest.subdir"
     label="Tests Directory"
-    description="All test packages are placed in this directory. """ \
-    """If it's a relative path, it is considered relative """ \
-    """to the object directory of the project file. When all """ \
-    """sources from all projects are taken recursively from """ \
-    """all projects, directories with the given relative path are """ \
-    """created for each project in their object directories and test """ \
+    description="All test packages are placed in this directory. """
+    """If it's a relative path, it is considered relative """
+    """to the object directory of the project file. When all """
+    """sources from all projects are taken recursively from """
+    """all projects, directories with the given relative path are """
+    """created for each project in their object directories and test """
     """packages are placed accordingly."
     >
     <string default="gnatest/tests"/>
@@ -829,12 +817,12 @@ XML = r"""<?xml version="1.0" ?>
     disable_if_not_set="true"
     disable="gnattest.tests_dir gnattest.subdir"
     label="Tests Root"
-    description="Test files are put in a same directory hierarchy """ \
-    """as the sources with this directory as the root directory. If """ \
-    """it's a relative path, it is considered relative to the """ \
-    """object directory of the project file. When projects are """ \
-    """considered recursively, directory hierarchies of tested """ \
-    """sources are recreated for each project in their object """ \
+    description="Test files are put in a same directory hierarchy """
+    """as the sources with this directory as the root directory. If """
+    """it's a relative path, it is considered relative to the """
+    """object directory of the project file. When projects are """
+    """considered recursively, directory hierarchies of tested """
+    """sources are recreated for each project in their object """
     """directories and test packages are placed accordingly."
     hide_in="wizard library_wizard"
     />
@@ -846,10 +834,10 @@ XML = r"""<?xml version="1.0" ?>
     disable_if_not_set="true"
     disable="gnattest.tests_dir gnattest.tests_root"
     label="Tests Subdir"
-    description="Test packages are placed in a subdirectory of the """ \
-    """corresponding source directory, with the specified name. Thus, """ \
-    """each set of unit tests are placed in a subdirectory of the code """ \
-    """under test. If the sources are in separate directories, each """ \
+    description="Test packages are placed in a subdirectory of the """
+    """corresponding source directory, with the specified name. Thus, """
+    """each set of unit tests are placed in a subdirectory of the code """
+    """under test. If the sources are in separate directories, each """
     """source directory will have a test subdirectory."
     hide_in="wizard library_wizard"
     >
@@ -862,13 +850,13 @@ XML = r"""<?xml version="1.0" ?>
     disable_if_not_set="true"
     disable="gnattest.tests_dir gnattest.tests_root"
     label="Stubs Directories"
-    description="The hierarchy of directories containing stubbed units """ \
-    """is recreated in the specified directory, with stubs placed """ \
-    """in directories corresponding to projects they are derived from. """ \
-    """If it's a relative path, it is considered relative to the object """ \
-    """directory of the project file. When projects are considered """ \
-    """recursively, directory hierarchies of stubs are recreated for """ \
-    """each project in their object directories and test packages """ \
+    description="The hierarchy of directories containing stubbed units """
+    """is recreated in the specified directory, with stubs placed """
+    """in directories corresponding to projects they are derived from. """
+    """If it's a relative path, it is considered relative to the object """
+    """directory of the project file. When projects are considered """
+    """recursively, directory hierarchies of stubs are recreated for """
+    """each project in their object directories and test packages """
     """are placed accordingly."
     >
   </project_attribute>
@@ -877,7 +865,7 @@ XML = r"""<?xml version="1.0" ?>
     name="additional_tests"
     editor_page="GNATtest"
     label="Additional Tests"
-    description="Sources described in given project are considered """ \
+    description="Sources described in given project are considered """
     """potential additional manual tests to be added to the test suite."
     hide_in="wizard library_wizard"
     >
@@ -921,7 +909,7 @@ XML = r"""<?xml version="1.0" ?>
     </filter_and>
     <description>Run gnattest on current project</description>
     <shell lang="python" output="none"
-    >gnattest.run(GPS.current_context().project(), """ \
+    >gnattest.run(GPS.current_context().project(), """
     """"GNATtest for project")</shell>
   </action>
 
@@ -936,7 +924,7 @@ XML = r"""<?xml version="1.0" ?>
 
   <action name="exit harness" output="none">
     <filter id="Harness project"/>
-    <description>Return to user project from current """ \
+    <description>Return to user project from current """
     """harness project</description>
     <shell lang="python">gnattest.exit_harness_project()</shell>
   </action>
@@ -982,15 +970,15 @@ XML = r"""<?xml version="1.0" ?>
              switch="--harness-dir"
              separator="="
              as-directory="true"
-             tip="is used to specify the directory in which to """ \
-"""place harness packages and project file for the test driver." />
+             tip="is used to specify the directory in which to """
+    """place harness packages and project file for the test driver." />
       <field label="separate tests root"
              line="1"  column="1"
              switch="--tests-root"
              separator="="
              as-directory="true"
-             tip="The directory hierarchy of tested sources is """ \
-    """recreated in this directory, and test packages are placed in """ \
+             tip="The directory hierarchy of tested sources is """
+    """recreated in this directory, and test packages are placed in """
     """corresponding directories." />
       <field label="tests subdir"
              line="1"  column="1"
@@ -1009,7 +997,7 @@ XML = r"""<?xml version="1.0" ?>
              switch="--additional-tests"
              separator="="
              as-file="true"
-             tip="Sources described in given project are considered """ \
+             tip="Sources described in given project are considered """
     """potential additional manual tests to be added to the test suite." />
       <combo label="skeletons default"
              line="2"  column="1"
@@ -1023,17 +1011,17 @@ XML = r"""<?xml version="1.0" ?>
       <check label="automatic testcase generation (beta)"
              line="1"  column="2"
              switch="--gen-test-vectors"
-             tip="Automatically generate testcases for all subprograms """ \
-                 """ supporting automatic generation (beta). " />
+             tip="Automatically generate testcases for all subprograms """
+    """ supporting automatic generation (beta). " />
       <check label="use stubbing"
              line="1"  column="2"
              switch="--stub"
-             tip="Generates the testing framework that uses subsystem """ \
+             tip="Generates the testing framework that uses subsystem """
     """stubbing to isolate the code under test. " />
       <check label="generate harness only"
              line="1"  column="2"
              switch="--harness-only"
-             tip="Create a harness for all sources, treating them as """ \
+             tip="Create a harness for all sources, treating them as """
     """test packages." />
       <check label="no-subprojects"
              line="1"  column="2"
@@ -1050,7 +1038,7 @@ XML = r"""<?xml version="1.0" ?>
       <check label="validate type ext."
              line="1"  column="2"
              switch="--validate-type-extensions"
-             tip="Enables substitution check: run all tests from all """ \
+             tip="Enables substitution check: run all tests from all """
     """parents in order to check substitutability." />
       <check label="generated tests minimization (beta)."
              line="1"  column="2"
@@ -1060,13 +1048,13 @@ XML = r"""<?xml version="1.0" ?>
              line="1" column="1"
              switch="--minimization-filter"
              separator="="
-             tip="Restrict minimization to the specified subprogram, """ \
+             tip="Restrict minimization to the specified subprogram, """
     """designated by [simple filename]:[line]. (beta)" />
       <field label="Coverage level for minimization (beta)"
              line="1" column="1"
              switch="--cov-level"
              separator="="
-             tip="Coverage level to be used as guide for test """ \
+             tip="Coverage level to be used as guide for test """
     """minimization (beta)" />
     </switches>
   </target-model>
@@ -1157,8 +1145,8 @@ XML = r"""<?xml version="1.0" ?>
         <check label="disable testsuite minimization for generated testcases"
             line="1"  column="2"
             switch="--no-minimize"
-            tip="Do not minimize the testsuite according to the coverage """ \
-        """level specified in --cov-level, or in the project file." />
+            tip="Do not minimize the testsuite according to the coverage """
+    """level specified in --cov-level, or in the project file." />
     </switches>
   </target-model>
 
@@ -1264,6 +1252,7 @@ XML = r"""<?xml version="1.0" ?>
 
 </gnattest>
 """
+)
 
 GPS.parse_xml(XML)
 

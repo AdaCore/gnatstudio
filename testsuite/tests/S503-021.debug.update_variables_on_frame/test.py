@@ -6,15 +6,15 @@ Verify that switching between frames causes updating the variables view.
 
 """
 
+
 @run_test_driver
 def test_driver():
     b = GPS.EditorBuffer.get(GPS.File("main.adb"))
     view = b.current_view()
     GPS.execute_action("Build & Debug Number 1")
-    yield hook('debugger_started')
+    yield hook("debugger_started")
     d = GPS.Debugger.get()
-    for s in ["b main.adb:17",
-              "run"]:
+    for s in ["b main.adb:17", "run"]:
         d.send(s)
         yield wait_until_not_busy(d)
 

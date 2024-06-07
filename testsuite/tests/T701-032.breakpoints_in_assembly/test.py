@@ -15,13 +15,13 @@ def test_driver():
     GPS.execute_action("debug set line breakpoint")
 
     GPS.execute_action("Build & Debug Number 1")
-    yield hook('debugger_started')
+    yield hook("debugger_started")
     yield wait_idle()
-    
+
     debug = GPS.Debugger.get()
     # Open the Breakpoints view
     GPS.execute_action("open breakpoints editor")
-    yield wait_for_mdi_child('Breakpoints')
+    yield wait_for_mdi_child("Breakpoints")
 
     # Clear breakpoints
     yield wait_until_not_busy(debug)
@@ -33,8 +33,10 @@ def test_driver():
     tree = get_widgets_by_type(Gtk.TreeView, view.pywidget())[0]
     model = tree.get_model()
     gps_assert(
-        dump_tree_model(model, NUMBER_COLUMN), [],
-        "The Breakpoints view should be empty " + mode)
+        dump_tree_model(model, NUMBER_COLUMN),
+        [],
+        "The Breakpoints view should be empty " + mode,
+    )
 
     # Open the assembly view
     GPS.execute_action("open assembly view")
@@ -44,13 +46,17 @@ def test_driver():
     # Create a breakpoint in the Assembly view
     GPS.execute_action("assembly_view toggle breakpoint")
     yield wait_until_not_busy(debug)
-    gps_assert(dump_tree_model(model, NUMBER_COLUMN),
-               [" 2"],
-               "The Breakpoints view should have one breakpoint " + mode)
+    gps_assert(
+        dump_tree_model(model, NUMBER_COLUMN),
+        [" 2"],
+        "The Breakpoints view should have one breakpoint " + mode,
+    )
 
     # Delete the breakpoint in the Assembly view
     GPS.execute_action("assembly_view toggle breakpoint")
     yield wait_until_not_busy(debug)
     gps_assert(
-        dump_tree_model(model, NUMBER_COLUMN), [],
-        "The Breakpoints view should be empty " + mode)
+        dump_tree_model(model, NUMBER_COLUMN),
+        [],
+        "The Breakpoints view should be empty " + mode,
+    )

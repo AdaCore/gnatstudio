@@ -13,12 +13,8 @@ import GPS
 from gs_utils import hook, interactive
 
 read_only_pref = GPS.Preference(
-    "Editor/Fonts & Colors:General/read_only_color").create_with_priority(
-        "Read-only code",
-        "color",
-        -2,
-        "",
-        "#e0e0e0")
+    "Editor/Fonts & Colors:General/read_only_color"
+).create_with_priority("Read-only code", "color", -2, "", "#e0e0e0")
 
 overlay_name = "read_only_region"
 read_only_files = []
@@ -40,7 +36,7 @@ def toggle_read_only():
             mark_read_only_areas(buffer)
 
 
-@hook('file_edited')
+@hook("file_edited")
 def __on_file_edited(file):
     editor = GPS.EditorBuffer.get(file, open=False)
 
@@ -50,9 +46,9 @@ def __on_file_edited(file):
         mark_read_only_areas(editor)
 
 
-@hook('preferences_changed')
+@hook("preferences_changed")
 def __on_pref_changed():
-    """  Update the color of read-only code areas. """
+    """Update the color of read-only code areas."""
     for file in read_only_files:
         buffer = GPS.EditorBuffer.get(file, force=False, open=False)
 

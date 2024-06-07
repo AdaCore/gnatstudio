@@ -13,14 +13,15 @@ FOOBAR = "foobar.c"
 
 def verify_macro(name_list, msg):
     expanded = GPS.BuildTarget.expand_macros(["%fo"])[0].split()
-    gps_assert(len(name_list),
-               len(expanded),
-               "Both list should have the same length " + msg)
+    gps_assert(
+        len(name_list), len(expanded), "Both list should have the same length " + msg
+    )
     for name in name_list:
-        gps_assert(len([s for s in expanded if s.endswith(name)]),
-                   1,
-                   "Only one match of " + name +
-                   " should be present when expanding " + msg)
+        gps_assert(
+            len([s for s in expanded if s.endswith(name)]),
+            1,
+            "Only one match of " + name + " should be present when expanding " + msg,
+        )
 
 
 @run_test_driver

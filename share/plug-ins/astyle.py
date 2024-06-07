@@ -17,14 +17,19 @@ import workflows.promises as promises
 
 
 def in_proper_file(context):
-    return in_c_file(context) and is_writable(context) and \
-      os_utils.locate_exec_on_path('astyle') != ""
+    return (
+        in_c_file(context)
+        and is_writable(context)
+        and os_utils.locate_exec_on_path("astyle") != ""
+    )
 
 
-@interactive(name="Astyle",
-             contextual="Format with Astyle",
-             contextual_group=GPS.Contextual.Group.EDITING,
-             filter=in_proper_file)
+@interactive(
+    name="Astyle",
+    contextual="Format with Astyle",
+    contextual_group=GPS.Contextual.Group.EDITING,
+    filter=in_proper_file,
+)
 def on_activate():
     f = GPS.current_context().file()
     cmd = ["astyle", f.path]

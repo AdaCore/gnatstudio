@@ -1,5 +1,10 @@
-from gs_utils.internal.utils import run_test_driver, GDK_RETURN,\
-    send_key_event, gps_assert, wait_idle
+from gs_utils.internal.utils import (
+    run_test_driver,
+    GDK_RETURN,
+    send_key_event,
+    gps_assert,
+    wait_idle,
+)
 
 
 @run_test_driver
@@ -12,8 +17,11 @@ def driver():
     yield wait_idle()
 
     # Check contents after entern
-    gps_assert(b.get_chars(), orig.replace(" Foo", "\n   Foo"),
-               "enter character was not received")
+    gps_assert(
+        b.get_chars(),
+        orig.replace(" Foo", "\n   Foo"),
+        "enter character was not received",
+    )
 
     # Undo and check for contents
     b.undo()

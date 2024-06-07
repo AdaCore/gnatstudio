@@ -25,5 +25,5 @@ def run_test():
 
     # Verify that cursor is set to the operator body
     gps_assert(
-        v.cursor().line(), 14,
-        "Goto body of overridding operator works incorrect.")
+        v.cursor().line(), 14, "Goto body of overridding operator works incorrect."
+    )

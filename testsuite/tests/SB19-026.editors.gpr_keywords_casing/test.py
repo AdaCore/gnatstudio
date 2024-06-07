@@ -12,6 +12,8 @@ def run_test():
     buf = GPS.EditorBuffer.get(GPS.File("qbug.gpr"))
     buf.select()
     GPS.execute_action("format selection")
-    gps_assert(buf.get_chars(buf.at(1, 1), buf.at(1, 1).end_of_line()),
-               "aggregate project Qbug is\n",
-               "Wrong indentation")
+    gps_assert(
+        buf.get_chars(buf.at(1, 1), buf.at(1, 1).end_of_line()),
+        "aggregate project Qbug is\n",
+        "Wrong indentation",
+    )

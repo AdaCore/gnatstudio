@@ -14,8 +14,8 @@ import random
 
 
 N_OPERATIONS = 1000
-RANDOM_SNIPPET_SIZE_RANGE = 100   # range size of random snippets
-RANDOM_TEXT = ['a', 'b',  'é', ';', ' ', '\n']
+RANDOM_SNIPPET_SIZE_RANGE = 100  # range size of random snippets
+RANDOM_TEXT = ["a", "b", "é", ";", " ", "\n"]
 
 
 def delete_random(g):
@@ -29,9 +29,15 @@ def delete_random(g):
 def insert_random(g):
     biggest_offset = g.get_end_iter().get_offset()
     o = random.randrange(biggest_offset + 1)
-    g.insert(g.get_iter_at_offset(o), ''.join(
-                [random.choice(RANDOM_TEXT)
-                 for j in range(random.randrange(RANDOM_SNIPPET_SIZE_RANGE))]))
+    g.insert(
+        g.get_iter_at_offset(o),
+        "".join(
+            [
+                random.choice(RANDOM_TEXT)
+                for j in range(random.randrange(RANDOM_SNIPPET_SIZE_RANGE))
+            ]
+        ),
+    )
 
 
 @run_test_driver

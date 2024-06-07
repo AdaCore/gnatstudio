@@ -20,9 +20,11 @@ def test_driver():
     tree = get_widgets_by_type(Gtk.TreeView, bp.pywidget())[0]
     selection = tree.get_selection()
     model = tree.get_model()
-    gps_assert(len(dump_tree_model(model)),
-               1,
-               "Wrong number of breakpoints when opening the view")
+    gps_assert(
+        len(dump_tree_model(model)),
+        1,
+        "Wrong number of breakpoints when opening the view",
+    )
 
     # Open the Breakpoints view edit dialog
     view = Breakpoints_View()
@@ -30,13 +32,13 @@ def test_driver():
     ed = view.edit()
     yield ed.open_and_yield()
     bp_type = get_widget_by_name("breakpoint-type-combo", ed.dialogs)
-    gps_assert(bp_type.get_active(),
-               0,
-               "Check the initial breakpoint type")
+    gps_assert(bp_type.get_active(), 0, "Check the initial breakpoint type")
     yield ed.ok()
-    gps_assert(len(dump_tree_model(model)),
-               1,
-               "Wrong number of breakpoints after editing without debugger")
+    gps_assert(
+        len(dump_tree_model(model)),
+        1,
+        "Wrong number of breakpoints after editing without debugger",
+    )
 
     view = Breakpoints_View()
     yield view.select(0)
@@ -45,16 +47,20 @@ def test_driver():
     bp_type = get_widget_by_name("breakpoint-type-combo", ed.dialogs)
     bp_type.set_active(3)
     yield ed.ok()
-    gps_assert(len(dump_tree_model(model)),
-               1,
-               "Wrong number of breakpoints after changing breakpoint type")
+    gps_assert(
+        len(dump_tree_model(model)),
+        1,
+        "Wrong number of breakpoints after changing breakpoint type",
+    )
 
     # Start the debugger
     GPS.execute_action("Build & Debug Number 1")
     yield hook("debugger_started")
-    gps_assert(len(dump_tree_model(model)),
-               1,
-               "Wrong number of breakpoints when starting the debugger")
+    gps_assert(
+        len(dump_tree_model(model)),
+        1,
+        "Wrong number of breakpoints when starting the debugger",
+    )
 
     # Run the debuggee
     debug = GPS.Debugger.get()
@@ -66,10 +72,10 @@ def test_driver():
     ed = view.edit()
     yield ed.open_and_yield()
     bp_type = get_widget_by_name("breakpoint-type-combo", ed.dialogs)
-    gps_assert(bp_type.get_active(),
-               3,
-               "The breakpoint type was not preserved")
+    gps_assert(bp_type.get_active(), 3, "The breakpoint type was not preserved")
     yield ed.ok()
-    gps_assert(len(dump_tree_model(model)),
-               1,
-               "Wrong number of breakpoints after editing with debugger")
+    gps_assert(
+        len(dump_tree_model(model)),
+        1,
+        "Wrong number of breakpoints after editing with debugger",
+    )

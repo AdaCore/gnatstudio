@@ -25,9 +25,5 @@ def test_driver():
     # automatically.
     gc.collect()
 
-    gps_assert(count_object("Git"),
-               1,
-               "Reloading should freed the previous git engine")
-    gps_assert(count_object("File"),
-               expected,
-               "Reloading should not leak files")
+    gps_assert(count_object("Git"), 1, "Reloading should freed the previous git engine")
+    gps_assert(count_object("File"), expected, "Reloading should not leak files")

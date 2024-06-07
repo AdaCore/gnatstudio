@@ -104,14 +104,14 @@ CAT_SNIPPET = 40
 
 def to_completion_point(ed_loc):
     """
-       Find the beginning of the word currently being completed.
-       Word = [a-zA-Z0-9_]
+    Find the beginning of the word currently being completed.
+    Word = [a-zA-Z0-9_]
     """
     loc = text_utils.forward_until(
-            ed_loc.forward_char(-1),
-            lambda c: not (c.isalpha() or c.isdigit() or c == "_"),
-            backwards=True,
-        ).forward_char()
+        ed_loc.forward_char(-1),
+        lambda c: not (c.isalpha() or c.isdigit() or c == "_"),
+        backwards=True,
+    ).forward_char()
     # Special case for a word beginning at (1, 1)
     if ed_loc.line() == 1 and loc.column() == ed_loc.column():
         loc = loc.beginning_of_line()
@@ -121,26 +121,32 @@ def to_completion_point(ed_loc):
 
 class CompletionProposal(object):
 
-    """ A completion proposal.
-    """
+    """A completion proposal."""
 
-    def __init__(self, name, label, documentation,
-                 icon_name="", action_name="", language_category=CAT_CUSTOM):
+    def __init__(
+        self,
+        name,
+        label,
+        documentation,
+        icon_name="",
+        action_name="",
+        language_category=CAT_CUSTOM,
+    ):
         """
-            Creates a Completion Proposal.
-            The following fields can be defined:
-                - name: the actual string which will be inserted in the editor
-                        if this proposal is chosen
-                - label: the label to be used in the list in the completion
-                        window. For a short text completion, this should be
-                        the same as name.
-                - documentation: text appearing in the documentation window
-                        when this proposal is selected in the list.
-                        In pango markup language.
-                - icon_name: (optional) the name of a named icon in the icon
-                        theme.
-                - action_name: (optional) the name of an action to execute
-                        when this proposal is selected.
+        Creates a Completion Proposal.
+        The following fields can be defined:
+            - name: the actual string which will be inserted in the editor
+                    if this proposal is chosen
+            - label: the label to be used in the list in the completion
+                    window. For a short text completion, this should be
+                    the same as name.
+            - documentation: text appearing in the documentation window
+                    when this proposal is selected in the list.
+                    In pango markup language.
+            - icon_name: (optional) the name of a named icon in the icon
+                    theme.
+            - action_name: (optional) the name of an action to execute
+                    when this proposal is selected.
         """
 
         self.name = name
@@ -151,60 +157,64 @@ class CompletionProposal(object):
         self.language_category = language_category
 
     def get_data_as_list(self):
-        return [self.name, self.label, self.documentation,
-                self.icon_name, self.action_name, self.language_category]
+        return [
+            self.name,
+            self.label,
+            self.documentation,
+            self.icon_name,
+            self.action_name,
+            self.language_category,
+        ]
 
 
 class SimpleCompletionResolver(object):
-
     def __init__(self):
         pass
 
     def get_completions(self, loc):
         """
-            Return a list of CompletionProposals.
-            loc is an EditorLocation, pointing to the point at which the
-            completion is occurring.
+        Return a list of CompletionProposals.
+        loc is an EditorLocation, pointing to the point at which the
+        completion is occurring.
         """
         return []
 
 
 class CompletionResolver(object):
-
     def __init__(self):
         pass
 
     def get_completion_prefix(self, loc):
         """
-           Return the current replacement prefix, as a string.
-           For instance when completing
-             foo (bl
-           then this should return "bl", indicating that the completions
-           being proposed will complete a word starting with "bl"
+        Return the current replacement prefix, as a string.
+        For instance when completing
+          foo (bl
+        then this should return "bl", indicating that the completions
+        being proposed will complete a word starting with "bl"
 
-           The engine will call get_completion_prefix before get_completions,
-           so you may cache the result of get_completion_prefix if you need.
+        The engine will call get_completion_prefix before get_completions,
+        so you may cache the result of get_completion_prefix if you need.
         """
         return ""
 
     def get_completions(self, loc):
         """
-            Return an iterable object returning iteration proposals.
-            loc is an EditorLocation, pointing to the point at which the
-            completion is occurring.
+        Return an iterable object returning iteration proposals.
+        loc is an EditorLocation, pointing to the point at which the
+        completion is occurring.
         """
         return []
 
     def _ada_get_completions(self, loc):
-        """ Binding function, do not override """
+        """Binding function, do not override"""
         return AdaIterableWrapper(self.get_completions(loc))
 
 
 class AdaIterableWrapper(object):
 
     """
-        This object wraps around a python iterable object, and provides
-        binding to the Ada completion iterator. For internal use only.
+    This object wraps around a python iterable object, and provides
+    binding to the Ada completion iterator. For internal use only.
     """
 
     def __init__(self, iterable):
@@ -222,7 +232,7 @@ class AdaIterableWrapper(object):
 
 class AdaIteratorWrapper(object):
 
-    """ Binding to a Python iterator, for internal use only. """
+    """Binding to a Python iterator, for internal use only."""
 
     def __init__(self, iterator):
         self.iterator = iterator

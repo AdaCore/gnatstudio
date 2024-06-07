@@ -12,45 +12,43 @@ cu_count = 5
 
 # Initialize preference for regexp with number num
 
+
 def cu_create_preference(num):
-    cu_regexp = GPS.Preference(
-        "Messages:Custom Highlighting " + str(num) + "/regexp")
-    cu_style = GPS.Preference(
-        "Messages:Custom Highlighting " + str(num) + "/variant")
+    cu_regexp = GPS.Preference("Messages:Custom Highlighting " + str(num) + "/regexp")
+    cu_style = GPS.Preference("Messages:Custom Highlighting " + str(num) + "/variant")
 
     cu_regexp.create(
         "Regexp to highlight",
         "string",
         "Enter a regular expression to highlight in the Messages View.",
-        "")
-    cu_style.create_style(
-        label="Regexp style",
-        doc="")
+        "",
+    )
+    cu_style.create_style(label="Regexp style", doc="")
 
 
 def cu_load_preference(num):
-    cu_regexp = GPS.Preference(
-        "Messages:Custom Highlighting " + str(num) + "/regexp")
-    cu_style = GPS.Preference(
-        "Messages:Custom Highlighting " + str(num) + "/variant")
+    cu_regexp = GPS.Preference("Messages:Custom Highlighting " + str(num) + "/regexp")
+    cu_style = GPS.Preference("Messages:Custom Highlighting " + str(num) + "/variant")
 
     if cu_regexp.get() == "":
         return
 
-    style_value = cu_style.get().split('@')
+    style_value = cu_style.get().split("@")
 
     try:
-        GPS.Console().create_link(regexp=cu_regexp.get(),
-                                  on_click=lambda x: None,
-                                  foreground=style_value[1],
-                                  background=style_value[2],
-                                  underline=False,
-                                  font_variant=style_value[0])
+        GPS.Console().create_link(
+            regexp=cu_regexp.get(),
+            on_click=lambda x: None,
+            foreground=style_value[1],
+            background=style_value[2],
+            underline=False,
+            font_variant=style_value[0],
+        )
     except GPS.Exception:
         return
 
 
-@hook('preferences_changed')
+@hook("preferences_changed")
 def on_preferences_changed(reload=True):
     cu_load_preferences()
 
@@ -59,7 +57,7 @@ def on_gps_started(hook):
     cu_load_preferences()
 
 
-@hook('gps_started')
+@hook("gps_started")
 def __on_gps_started():
     cu_load_preferences()
 

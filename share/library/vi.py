@@ -72,18 +72,20 @@ from GPS import Preference, CommandWindow, EditorBuffer, Hook, parse_xml
 import re
 
 Preference("Plugins/vi/bgcolor").create(
-    "Background color", "color",
-    """Color to use for the command line window""",
-    "red")
+    "Background color", "color", """Color to use for the command line window""", "red"
+)
 
 Preference("Plugins/vi/ignorecase").create(
-    "Ignore case", "boolean",
+    "Ignore case",
+    "boolean",
     """If enabled, searching will ignore casing by default""",
-    False)
+    False,
+)
 
 
 def on_gps_started(hook_name):
-    parse_xml("""
+    parse_xml(
+        """
   <action name='vi_command_line' category="Editor" output="none">
      <description />
      <filter id="Source editor" />
@@ -99,7 +101,8 @@ def on_gps_started(hook_name):
   </menu>
   <key action="vi_command_line">control-colon</key>
   <key action="vi_repeat_cmd">control-period</key>
-""")
+"""
+    )
 
 
 class CmdLine(CommandWindow):
@@ -108,11 +111,13 @@ class CmdLine(CommandWindow):
     def __init__(self):
         try:
             self.loc = EditorBuffer.get().current_view().cursor()
-            CommandWindow.__init__(self,
-                                   prompt=self.prompt(),
-                                   on_cancel=self.on_cancel,
-                                   on_key=self.on_key,
-                                   on_activate=self.on_activate)
+            CommandWindow.__init__(
+                self,
+                prompt=self.prompt(),
+                on_cancel=self.on_cancel,
+                on_key=self.on_key,
+                on_activate=self.on_activate,
+            )
             self.set_background(Preference("Plugins/vi/bgcolor").get())
 
             self.current_in_history = -1
@@ -151,8 +156,8 @@ class CmdLine(CommandWindow):
     @staticmethod
     def get_loc(cmd, loc, buffer):
         """Parse the first location described in ref, and returns it and
-           the remaining of the command. LOC is used when the location is
-           "." or relative"""
+        the remaining of the command. LOC is used when the location is
+        "." or relative"""
         if cmd[0] == ".":
             return (loc, cmd[1:])
         elif cmd[0] == "$":
@@ -175,11 +180,9 @@ class CmdLine(CommandWindow):
     @staticmethod
     def get_scope(cmd, current, buffer):
         """return a tuple: (cmd_to_execute, FROM, TO).
-           TO is set to FROM if the command should be executed only once"""
+        TO is set to FROM if the command should be executed only once"""
         if cmd[0] == "%":
-            return (cmd[1:],
-                    buffer.beginning_of_buffer(),
-                    buffer.end_of_buffer())
+            return (cmd[1:], buffer.beginning_of_buffer(), buffer.end_of_buffer())
 
         comma = cmd.find(",")
         if comma < 0:
@@ -187,7 +190,7 @@ class CmdLine(CommandWindow):
             return (c, l, l)  # Execute only once
         else:
             l, c = CmdLine.get_loc(cmd[:comma], current, buffer)
-            e, c = CmdLine.get_loc(cmd[comma + 1:], l,   buffer)
+            e, c = CmdLine.get_loc(cmd[comma + 1 :], l, buffer)
             return (c, l, e)
 
     @staticmethod
@@ -201,8 +204,7 @@ class CmdLine(CommandWindow):
             options = ""
 
         count = 1
-        icase = Preference(
-            "Plugins/vi/ignorecase").get() or (options.find("i") < 0)
+        icase = Preference("Plugins/vi/ignorecase").get() or (options.find("i") < 0)
         if loc == maxloc:
             maxloc = loc.end_of_line()  # On whole line by default
         else:
@@ -213,8 +215,8 @@ class CmdLine(CommandWindow):
 
         while count > 0:
             result = loc.search(
-                pattern, regexp=True,
-                dialog_on_failure=False, case_sensitive=icase)
+                pattern, regexp=True, dialog_on_failure=False, case_sensitive=icase
+            )
             if not result:
                 return
             else:
@@ -260,5 +262,6 @@ class CmdLine(CommandWindow):
     def on_cancel(self, input):
         """The user has cancelled the search"""
         pass
+
 
 Hook("gps_started").add(on_gps_started)

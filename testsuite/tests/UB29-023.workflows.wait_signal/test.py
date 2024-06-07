@@ -16,7 +16,6 @@ def run_test():
     custom_dialog.show_all()
 
     GPS.Timeout(300, lambda x: custom_dialog.response(Gtk.ResponseType.OK))
-    response = yield wait_signal(custom_dialog, 'response')
+    response = yield wait_signal(custom_dialog, "response")
 
-    gps_assert(response, Gtk.ResponseType.OK,
-               "Wrong response has been returned")
+    gps_assert(response, Gtk.ResponseType.OK, "Wrong response has been returned")

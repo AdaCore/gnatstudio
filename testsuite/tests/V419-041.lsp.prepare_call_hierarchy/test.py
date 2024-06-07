@@ -6,8 +6,8 @@ should be corrected via preparecallHierarchy.
 import GPS
 from gs_utils.internal.utils import *
 
-call_expected = ['p.ads:3:14', ['p.ads:4:14']]
-loc_expected = ['    p.adb']
+call_expected = ["p.ads:3:14", ["p.ads:4:14"]]
+loc_expected = ["    p.adb"]
 
 
 @run_test_driver
@@ -22,13 +22,15 @@ def driver():
     yield timeout(300)
 
     call_tree = get_widget_by_name("Call Graph Tree")
-    gps_assert(dump_tree_model(call_tree.get_model(), 1),
-               call_expected,
-               "Wrong content for the Calls list")
+    gps_assert(
+        dump_tree_model(call_tree.get_model(), 1),
+        call_expected,
+        "Wrong content for the Calls list",
+    )
     click_in_tree(call_tree, path="0:0")
 
     loc_tree = get_widget_by_name("Call Graph Location Tree")
     loc_model = loc_tree.get_model()
-    gps_assert(dump_tree_model(loc_model, 3),
-               loc_expected,
-               "Wrong location for the call")
+    gps_assert(
+        dump_tree_model(loc_model, 3), loc_expected, "Wrong location for the call"
+    )

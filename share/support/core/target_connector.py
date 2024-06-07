@@ -20,7 +20,10 @@ class TargetConnector(GPS.BuildTarget):
         name="%s">
         <launch-mode>MANUALLY_WITH_NO_DIALOG</launch-mode>
         <command-line>
-        <arg>%s</arg>""" % (tool_name, tool_name)
+        <arg>%s</arg>""" % (
+            tool_name,
+            tool_name,
+        )
 
         for arg in default_args:
             xml += r"""<arg>%s</arg>\n""" % (arg)

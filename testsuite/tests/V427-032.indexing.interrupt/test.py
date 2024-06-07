@@ -13,6 +13,7 @@ def test_driver():
                 task.interrupt()
                 return False
         return True
+
     while stop_indexing():
         yield timeout(50)
 

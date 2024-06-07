@@ -523,6 +523,8 @@ Extension of the GPS.Project class.
 Used to provide small helpers on top of existing functions
 implemented in Ada.
 """
+
+
 @extensions.extend_module(GPS)
 class Project:
     def get_executable_file(self, main):

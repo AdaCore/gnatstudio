@@ -9,7 +9,9 @@ from gs_utils.internal.utils import *
 
 COL_FG_COLOR = 10
 
-EXPECTED_FG_COLOR = "Gdk.RGBA(red=0.000000, green=0.000000, blue=0.729412, alpha=1.000000)"
+EXPECTED_FG_COLOR = (
+    "Gdk.RGBA(red=0.000000, green=0.000000, blue=0.729412, alpha=1.000000)"
+)
 
 
 @run_test_driver

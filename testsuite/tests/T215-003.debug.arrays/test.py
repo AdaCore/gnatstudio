@@ -10,11 +10,9 @@ def test_driver():
     b = GPS.EditorBuffer.get(GPS.File("main.adb"))
     view = b.current_view()
     GPS.execute_action("Build & Debug Number 1")
-    yield hook('debugger_started')
+    yield hook("debugger_started")
     d = GPS.Debugger.get()
-    for s in ["b main.adb:23",
-              "b main.adb:27",
-              "run"]:
+    for s in ["b main.adb:23", "b main.adb:27", "run"]:
         d.send(s)
         yield wait_until_not_busy(d)
 
@@ -23,8 +21,7 @@ def test_driver():
     Variables_View.display("Matrix_3")
     yield wait_idle()
 
-    for s in ["step",
-              "finish"]:
+    for s in ["step", "finish"]:
         d.send(s)
         yield wait_until_not_busy(d)
     yield wait_idle()

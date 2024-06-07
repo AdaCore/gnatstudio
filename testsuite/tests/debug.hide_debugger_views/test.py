@@ -13,7 +13,7 @@ def test_driver():
     expected = len(GPS.MDI.children())
 
     GPS.execute_action("Build & Debug Number 1")
-    yield hook('debugger_started')
+    yield hook("debugger_started")
     yield wait_idle()
 
     debug = GPS.Debugger.get()
@@ -22,21 +22,21 @@ def test_driver():
     GPS.execute_action("open assembly view")
     yield wait_for_mdi_child("Assembly")
     yield wait_idle()
-    gps_assert(GPS.MDI.get("Assembly") is not None,
-               True,
-               "The Assembly view should be opened")
+    gps_assert(
+        GPS.MDI.get("Assembly") is not None, True, "The Assembly view should be opened"
+    )
     GPS.execute_action("examine memory")
     yield wait_for_mdi_child("Memory")
     yield wait_idle()
-    gps_assert(GPS.MDI.get("Memory") is not None,
-               True,
-               "The Memory view should be opened")
+    gps_assert(
+        GPS.MDI.get("Memory") is not None, True, "The Memory view should be opened"
+    )
     yield wait_idle()
 
     # Closing the debugger
     debug.close()
     yield wait_idle()
 
-    gps_assert(len(GPS.MDI.children()),
-               expected,
-               "The debugger views should be closed/hidden")
+    gps_assert(
+        len(GPS.MDI.children()), expected, "The debugger views should be closed/hidden"
+    )

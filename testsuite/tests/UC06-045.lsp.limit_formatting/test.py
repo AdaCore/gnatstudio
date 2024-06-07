@@ -36,23 +36,29 @@ def run_test():
     buf.current_view().goto(buf.at(2, 1))
     send_key_event(GDK_TAB)
     yield wait_tasks(other_than=known_tasks)
-    gps_assert(different_lines(buf.get_chars(include_hidden_chars=False),
-                               init_buf),
-               1,
-               "Too many different lines without selection")
-    gps_assert(buf.get_chars(include_hidden_chars=False),
-               MAIN_EXPECTED,
-               "Wrong formatting without selection")
+    gps_assert(
+        different_lines(buf.get_chars(include_hidden_chars=False), init_buf),
+        1,
+        "Too many different lines without selection",
+    )
+    gps_assert(
+        buf.get_chars(include_hidden_chars=False),
+        MAIN_EXPECTED,
+        "Wrong formatting without selection",
+    )
 
     buf = GPS.EditorBuffer.get(GPS.File("foo.cpp"))
     init_buf = buf.get_chars(include_hidden_chars=False)
     buf.select(buf.at(2, 3), buf.at(4, 8))
     send_key_event(GDK_TAB)
     yield wait_tasks(other_than=known_tasks)
-    gps_assert(different_lines(buf.get_chars(include_hidden_chars=False),
-                               init_buf),
-               3,
-               "Too many different lines with selection")
-    gps_assert(buf.get_chars(include_hidden_chars=False),
-               FOO_EXPECTED,
-               "Wrong formatting with selection")
+    gps_assert(
+        different_lines(buf.get_chars(include_hidden_chars=False), init_buf),
+        3,
+        "Too many different lines with selection",
+    )
+    gps_assert(
+        buf.get_chars(include_hidden_chars=False),
+        FOO_EXPECTED,
+        "Wrong formatting with selection",
+    )

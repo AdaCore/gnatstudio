@@ -12,14 +12,21 @@ def test_driver():
     yield wait_tasks(other_than=known_tasks)
 
     GPS.Console("Messages").clear()
-    yield wait_for_mdi_child('Debugger Console')
+    yield wait_for_mdi_child("Debugger Console")
     debugger = GPS.Debugger.get()
-    debugger.send("-target-attach " + os.environ['TESTPID'])
+    debugger.send("-target-attach " + os.environ["TESTPID"])
     e = debugger.get_executable()
 
-    t = GPS.Console("Messages").get_text().replace(
-            "There is no debug information for this frame.\n", "")
-    gps_assert(t, "",
-               "Wrong content of the Messages view '{}'".format(
-                   GPS.Console("Messages").get_text()))
+    t = (
+        GPS.Console("Messages")
+        .get_text()
+        .replace("There is no debug information for this frame.\n", "")
+    )
+    gps_assert(
+        t,
+        "",
+        "Wrong content of the Messages view '{}'".format(
+            GPS.Console("Messages").get_text()
+        ),
+    )
     debugger.close()

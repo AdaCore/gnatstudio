@@ -99,7 +99,7 @@ Exceptions
 
     def generate_rest(self):
         """Generate a REST file for the given module.
-           The output should be processed by sphinx.
+        The output should be processed by sphinx.
         """
 
         n = self.module.__name__
@@ -116,7 +116,6 @@ Exceptions
         if self.classes:
             fd.write(Inspect.classes_header)
             for name, c in self.classes:
-
                 # Only show inheritance diagram if base classes are other
                 # than just "object"
 

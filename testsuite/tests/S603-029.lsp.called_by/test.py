@@ -1,5 +1,9 @@
-from gs_utils.internal.utils import run_test_driver, get_widget_by_name, \
-                                     dump_tree_model, gps_assert
+from gs_utils.internal.utils import (
+    run_test_driver,
+    get_widget_by_name,
+    dump_tree_model,
+    gps_assert,
+)
 from gs_utils import hook
 from pygps import double_click_events
 from pygps.tree import click_in_tree
@@ -15,7 +19,7 @@ def driver():
     yield wait_idle()
 
     GPS.execute_action("Entity called by")
-    yield hook('language_server_response_processed')
+    yield hook("language_server_response_processed")
     yield timeout(500)
 
     call_tree = get_widget_by_name("Call Graph Tree")
@@ -25,16 +29,24 @@ def driver():
     selection.select_iter(model.iter_nth_child(model.get_iter_first(), 0))
 
     GPS.execute_action("calltree expand selected")
-    yield hook('language_server_response_processed')
+    yield hook("language_server_response_processed")
     yield timeout(500)
 
-    expected = ['Foo is called by ',
-                ['Foo', ['Foo', ['computing...'],
-                         'Main', ['computing...']],
-                 'Main', ['computing...']]]
+    expected = [
+        "Foo is called by ",
+        [
+            "Foo",
+            ["Foo", ["computing..."], "Main", ["computing..."]],
+            "Main",
+            ["computing..."],
+        ],
+    ]
 
-    gps_assert(expected, dump_tree_model(model, 0),
-               "The model didn't contain the expected text")
+    gps_assert(
+        expected,
+        dump_tree_model(model, 0),
+        "The model didn't contain the expected text",
+    )
 
     # Now verify that double-clicking on the row that lists 'Main'
     # correctly open its editor.
@@ -42,11 +54,15 @@ def driver():
     GPS.execute_action("close all editors")
     yield wait_tasks(other_than=known_tasks)
 
-    click_in_tree(call_tree, path=Gtk.TreePath("0:0:1"),
-                  button=1, events=double_click_events)
+    click_in_tree(
+        call_tree, path=Gtk.TreePath("0:0:1"), button=1, events=double_click_events
+    )
     yield wait_idle()
 
     buffer = GPS.EditorBuffer.get()
-    gps_assert(buffer.file(), GPS.File("main.adb"),
-               "double-clicking on a Call Trees row should open an "
-               + "editor for the clicked entity")
+    gps_assert(
+        buffer.file(),
+        GPS.File("main.adb"),
+        "double-clicking on a Call Trees row should open an "
+        + "editor for the clicked entity",
+    )

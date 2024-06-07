@@ -11,11 +11,11 @@ def run_test():
     explorer = get_widget_by_name("Project Explorer Tree")
     explorer.grab_focus()
 
-    explorer.expand_row(Gtk.TreePath((0,0)), open_all=False)
-    explorer.expand_row(Gtk.TreePath((0,2)), open_all=False)
-    explorer.expand_row(Gtk.TreePath((0,2,0)), open_all=False)
-    explorer.expand_row(Gtk.TreePath((0,3)), open_all=False)
-    explorer.expand_row(Gtk.TreePath((0,3,0)), open_all=False)
+    explorer.expand_row(Gtk.TreePath((0, 0)), open_all=False)
+    explorer.expand_row(Gtk.TreePath((0, 2)), open_all=False)
+    explorer.expand_row(Gtk.TreePath((0, 2, 0)), open_all=False)
+    explorer.expand_row(Gtk.TreePath((0, 3)), open_all=False)
+    explorer.expand_row(Gtk.TreePath((0, 3, 0)), open_all=False)
 
     path = find_in_tree(explorer, column=1, key="main.adb")
     explorer.get_selection().select_path(path)

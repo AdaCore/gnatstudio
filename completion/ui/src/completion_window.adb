@@ -800,10 +800,8 @@ package body Completion_Window is
    function Idle_Expand
      (Explorer : Completion_Explorer_Access) return Boolean
    is
-      Info          : Information_Record;
-      Iter          : Gtk_Tree_Iter;
-      Last_Comp_Cat : Language_Category := Cat_Unknown;
-
+      Info : Information_Record;
+      Iter : Gtk_Tree_Iter;
    begin
       if Explorer.Iter.At_End then
 
@@ -890,89 +888,58 @@ package body Completion_Window is
                   Markup         => Markup,
                   Score          => Score));
          begin
-            --  Check whether the current iter contains the same completion
-            --  by comparing their completion text (i.e: the text that gets
-            --  inserted in the editor).
-            if
-              Explorer.Index = 1
-              or else Explorer.Info (Explorer.Index - 1).Text = null
-              or else
-                Explorer.Info (Explorer.Index - 1).Text.all /= Completion
-              or else
-                Proposal.Get_Category /= Last_Comp_Cat
-            then
+            --  Append the completion proposal to the completion window
 
-               if Custom_Icon_Name /= "" then
-                  Icon_Name := new String'(Custom_Icon_Name);
-               else
-                  Icon_Name := new String'
-                    (Stock_From_Category
-                       (False, Get_Visibility (Proposal),
-                        Get_Category (Proposal)));
-               end if;
-
-               Last_Comp_Cat := Proposal.Get_Category;
-               Info :=
-                 (new String'(Markup.all),
-                  new String'(Completion),
-                  Icon_Name,
-                  Get_Caret_Offset (Proposal, Explorer.Kernel.Databases),
-                  List,
-                  Proposal.Is_Accessible);
-
-               Augment_Notes (Info, Proposal);
-
-               Explorer.Info (Explorer.Index) := Info;
-               Explorer.Model.Insert_Before (Iter, Explorer.Computing_Iter);
-
-               --  Set all columns
-               Explorer.Model.Set (Iter, Markup_Column, Info.Markup.all);
-               Explorer.Model.Set (Iter, Icon_Name_Column, Icon_Name.all);
-               Explorer.Model.Set
-                 (Iter, Index_Column, Gint (Explorer.Index));
-               Explorer.Model.Set (Iter, Completion_Column, Info.Text.all);
-               Explorer.Model.Set (Iter, Sort_Text_Column, Sort_Text);
-               Explorer.Model.Set (Iter, Label_Column, Label);
-               Explorer.Model.Set (Iter, Shown_Column, Do_Show_Completion);
-               Explorer.Model.Set (Iter, Filter_Text_Column, Filter_Text);
-               Explorer.Model.Set (Iter, Accessible_Column, Is_Accessible);
-               Explorer.Model.Set (Iter, Score_Column, Gint (Score));
-
-               if Do_Show_Completion then
-                  Explorer.Shown := Explorer.Shown + 1;
-               end if;
-
-               Explorer.Index := Explorer.Index + 1;
-
-               if Explorer.Index > Explorer.Info'Last then
-                  declare
-                     A : Information_Array (1 .. Explorer.Info'Last * 2);
-                  begin
-                     A (1 .. Explorer.Index - 1) :=
-                       Explorer.Info (1 .. Explorer.Index - 1);
-                     Unchecked_Free (Explorer.Info);
-                     Explorer.Info := new Information_Array'(A);
-                  end;
-               end if;
+            if Custom_Icon_Name /= "" then
+               Icon_Name := new String'(Custom_Icon_Name);
             else
-               --  Check if current item is accessible while previous is not
-               if not Explorer.Info (Explorer.Index - 1).Accessible
-                 and then Proposal.Is_Accessible
-               then
-                  --  If it is indeed the case, ungray the text (replace it)
+               Icon_Name := new String'
+                 (Stock_From_Category
+                    (False, Get_Visibility (Proposal),
+                     Get_Category (Proposal)));
+            end if;
 
-                  Unchecked_Free (Explorer.Info (Explorer.Index - 1).Markup);
-                  Explorer.Info (Explorer.Index - 1).Markup
-                    := new String'(Markup.all);
+            Info :=
+              (new String'(Markup.all),
+               new String'(Completion),
+               Icon_Name,
+               Get_Caret_Offset (Proposal, Explorer.Kernel.Databases),
+               List,
+               Proposal.Is_Accessible);
 
-                  --  Mark the entry as accessible in the info array
-                  Explorer.Info (Explorer.Index - 1).Accessible := True;
+            Augment_Notes (Info, Proposal);
 
-                  --  Modify the tree model accordingly
-                  Explorer.Model.Set
-                    (Iter, Markup_Column, Markup.all);
-               end if;
-               Augment_Notes (Explorer.Info (Explorer.Index - 1), Proposal);
+            Explorer.Info (Explorer.Index) := Info;
+            Explorer.Model.Insert_Before (Iter, Explorer.Computing_Iter);
+
+            --  Set all columns
+            Explorer.Model.Set (Iter, Markup_Column, Info.Markup.all);
+            Explorer.Model.Set (Iter, Icon_Name_Column, Icon_Name.all);
+            Explorer.Model.Set
+              (Iter, Index_Column, Gint (Explorer.Index));
+            Explorer.Model.Set (Iter, Completion_Column, Info.Text.all);
+            Explorer.Model.Set (Iter, Sort_Text_Column, Sort_Text);
+            Explorer.Model.Set (Iter, Label_Column, Label);
+            Explorer.Model.Set (Iter, Shown_Column, Do_Show_Completion);
+            Explorer.Model.Set (Iter, Filter_Text_Column, Filter_Text);
+            Explorer.Model.Set (Iter, Accessible_Column, Is_Accessible);
+            Explorer.Model.Set (Iter, Score_Column, Gint (Score));
+
+            if Do_Show_Completion then
+               Explorer.Shown := Explorer.Shown + 1;
+            end if;
+
+            Explorer.Index := Explorer.Index + 1;
+
+            if Explorer.Index > Explorer.Info'Last then
+               declare
+                  A : Information_Array (1 .. Explorer.Info'Last * 2);
+               begin
+                  A (1 .. Explorer.Index - 1) :=
+                    Explorer.Info (1 .. Explorer.Index - 1);
+                  Unchecked_Free (Explorer.Info);
+                  Explorer.Info := new Information_Array'(A);
+               end;
             end if;
 
             Shallow_Free (Proposal);

@@ -20,17 +20,17 @@ end Default;
 
 @run_test_driver
 def run_test():
-    e = Project_Properties_Editor ()
-    yield e.open_and_yield (wait_scan=False)
+    e = Project_Properties_Editor()
+    yield e.open_and_yield(wait_scan=False)
 
-    page = e.get_page('General')
+    page = e.get_page("General")
     toggle = get_widgets_by_type(Gtk.ToggleButton, page)[0]
     toggle.set_active(True)
 
-    page = e.get_page('Build/Switches/GNATcheck')
+    page = e.get_page("Build/Switches/GNATcheck")
     entry = get_widgets_by_type(Gtk.Entry, page)[0]
-    entry.set_text('-rules -from=' + GPS.pwd() +'test.yaml')
+    entry.set_text("-rules -from=" + GPS.pwd() + "test.yaml")
     yield e.save()
 
-    f = open ('default.gpr', 'r')
+    f = open("default.gpr", "r")
     gps_assert(f.read(), expected)

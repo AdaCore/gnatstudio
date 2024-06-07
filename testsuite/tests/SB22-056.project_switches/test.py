@@ -15,22 +15,24 @@ def run_test():
     e = Project_Properties_Editor()
     yield e.open_and_yield()
 
-    page = e.get_page('Build/Switches/Ada')
+    page = e.get_page("Build/Switches/Ada")
     ent = get_widgets_by_type(Gtk.Entry, page)[-1]
     optimization = get_widgets_by_type(Gtk.ComboBox, page)[0]
-    gps_assert(optimization is None, False,
-               "Optimization level combobox is not found")
+    gps_assert(optimization is None, False, "Optimization level combobox is not found")
 
     optimization.set_active(1)
-    gps_assert(ent.get_text(), "-O",
-               "Command line is incorrect for `Some optimization` level")
+    gps_assert(
+        ent.get_text(), "-O", "Command line is incorrect for `Some optimization` level"
+    )
 
     optimization.set_active(2)
-    gps_assert(ent.get_text(), "-O2",
-               "Command line is incorrect for `Full optimization` level")
+    gps_assert(
+        ent.get_text(), "-O2", "Command line is incorrect for `Full optimization` level"
+    )
 
     optimization.set_active(0)
-    gps_assert(ent.get_text(), "",
-               "Command line is incorrect for `No optimization` level")
+    gps_assert(
+        ent.get_text(), "", "Command line is incorrect for `No optimization` level"
+    )
 
     yield e.cancel()

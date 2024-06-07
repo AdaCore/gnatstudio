@@ -19,9 +19,11 @@ def open_traces_page():
 
     # Verify the content of the Traces view
     view_tree = get_widget_by_name("Traces editor tree")
-    gps_assert(view_tree.get_model().iter_n_children(None) != 0,
-               True,
-               "The Traces view should not be empty")
+    gps_assert(
+        view_tree.get_model().iter_n_children(None) != 0,
+        True,
+        "The Traces view should not be empty",
+    )
 
     # Close the dialog
     p.dialog.close()

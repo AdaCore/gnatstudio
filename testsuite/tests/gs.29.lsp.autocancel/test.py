@@ -23,13 +23,13 @@ def driver():
         simple_error("exception when executing the request:\n%s" % str(args))
 
     for i in range(0, 10):
-        als.request_low_level(method=REQUEST,
-                              params=PARAM_TEMPLATE % f.path.replace("\\", "/"),
-                              on_result_message=on_result_message,
-                              on_error_message=on_error_message,
-                              auto_cancel=True)
-        gps_assert(len(als.get_requests()),
-                   1,
-                   "Only one request should be queued")
+        als.request_low_level(
+            method=REQUEST,
+            params=PARAM_TEMPLATE % f.path.replace("\\", "/"),
+            on_result_message=on_result_message,
+            on_error_message=on_error_message,
+            auto_cancel=True,
+        )
+        gps_assert(len(als.get_requests()), 1, "Only one request should be queued")
         if i % 3 == 0:
             yield wait_language_server(REQUEST, "Ada")

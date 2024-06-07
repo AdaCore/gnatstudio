@@ -4,7 +4,7 @@ Verify that commands for handling string literals works.
 
 from gs_utils.internal.utils import *
 
-expected = '''with ada.text_io;
+expected = """with ada.text_io;
 
 procedure hello is
    V : String := "V";
@@ -17,7 +17,7 @@ begin
       Ada.Text_IO.Put_Line ("hel" & V & "lo");
    end if;
 end;
-'''
+"""
 
 
 @run_test_driver
@@ -30,7 +30,7 @@ def driver():
     GPS.execute_action("Insert in string template")
     yield wait_idle()
     gps_assert(v.cursor(), GPS.EditorLocation(b, 9, 37))
-    send_key_event(ord('V'))
+    send_key_event(ord("V"))
     yield wait_idle()
 
     # Add comment

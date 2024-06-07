@@ -9,9 +9,8 @@ from gs_utils.internal.utils import run_test_driver, timeout
 
 @run_test_driver
 def driver():
-
     def generic_on_match(process, match, since_last):
-        GPS.Console("Messages").write(since_last.strip() + '\n' + match)
+        GPS.Console("Messages").write(since_last.strip() + "\n" + match)
 
     # Launch a process that outputs a non utf-8 string,
     # with a function called on match which writes the text
@@ -25,5 +24,5 @@ def driver():
     while "REACHED THIS" not in GPS.Console().get_text():
         waited += 1
         if waited > 20:
-           GPS.exit(1)
+            GPS.exit(1)
         yield timeout(100)

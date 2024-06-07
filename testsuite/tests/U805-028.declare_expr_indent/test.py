@@ -15,7 +15,6 @@ def driver():
     GPS.execute_action("tab selection")
     line = b.get_chars(b.at(7, 1), b.at(7, 1).end_of_line())
 
-    gps_assert(line.rstrip(),
-               EXPECTED, "Wrong formatting after declare expression")
+    gps_assert(line.rstrip(), EXPECTED, "Wrong formatting after declare expression")
 
     GPS.execute_action("undo")

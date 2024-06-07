@@ -12,9 +12,7 @@ import GPS
 import gs_utils
 
 
-@gs_utils.interactive(name='close all editors',
-                      category="MDI",
-                      for_learning=True)
+@gs_utils.interactive(name="close all editors", category="MDI", for_learning=True)
 def close_editors():
     """
     Save and close all source editors.
@@ -24,9 +22,9 @@ def close_editors():
         ed.close(True)
 
 
-@gs_utils.interactive(name='close all editors except current',
-                      category="MDI",
-                      for_learning=True)
+@gs_utils.interactive(
+    name="close all editors except current", category="MDI", for_learning=True
+)
 def close_editors_except_current():
     """
     Save and close all source editors, except the curret one.

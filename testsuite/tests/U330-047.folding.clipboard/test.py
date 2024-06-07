@@ -34,4 +34,5 @@ def driver():
     gps_assert(
         GPS.Clipboard.contents()[GPS.Clipboard.current()].strip(),
         EXPECTED.strip(),
-        "Wrong clipboard after copying folded block")
+        "Wrong clipboard after copying folded block",
+    )

@@ -1,4 +1,3 @@
-
 """
 Test the navigation inside the signatureHelp window using Up/Down.
 """
@@ -18,7 +17,7 @@ def run_test():
     main_window = GPS.MDI.get_main_window().pywidget()
 
     # Trigger the signatureHelp request by typing '('
-    send_key_event(ord('('), window=main_window)
+    send_key_event(ord("("), window=main_window)
     yield wait_language_server("textDocument/signatureHelp", "Ada")
 
     signature_help_window = get_widget_by_name("signature-help-window")
@@ -26,22 +25,19 @@ def run_test():
 
     # Down (Up) should select the next (previous) signature if any and
     # close the window when at the edge.
-    gps_assert(labels[0].get_text(), "1/3",
-               "The selector label text is not correct")
+    gps_assert(labels[0].get_text(), "1/3", "The selector label text is not correct")
     send_key_event(GDK_DOWN, window=main_window)
     yield wait_idle()
-    gps_assert(labels[0].get_text(), "2/3",
-               "The selector label text is not correct")
+    gps_assert(labels[0].get_text(), "2/3", "The selector label text is not correct")
     send_key_event(GDK_UP, window=main_window)
     yield wait_idle()
-    gps_assert(labels[0].get_text(), "1/3",
-               "The selector label text is not correct")
+    gps_assert(labels[0].get_text(), "1/3", "The selector label text is not correct")
     send_key_event(GDK_DOWN, window=main_window)
     send_key_event(GDK_DOWN, window=main_window)
     yield wait_idle()
-    gps_assert(labels[0].get_text(), "3/3",
-               "The selector label text is not correct")
+    gps_assert(labels[0].get_text(), "3/3", "The selector label text is not correct")
     send_key_event(GDK_DOWN, window=main_window)
     yield wait_idle()
-    gps_assert(get_widget_by_name("signature-help-window"), None,
-               "The window should be closed")
+    gps_assert(
+        get_widget_by_name("signature-help-window"), None, "The window should be closed"
+    )

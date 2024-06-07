@@ -48,4 +48,3 @@ def test_driver():
         "1",
         "This frame is visible and should be selected",
     )
-

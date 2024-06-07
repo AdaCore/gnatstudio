@@ -36,35 +36,39 @@ def test_driver():
     # Run the debugger and hit the breakpoint for the first time
     debug.send("run")
     yield wait_DAP_server("variables")
-    gps_assert(dump_tree_model(model, VALUE_COLUMN),
-               ['0'],
-               "Wrong value after run")
+    gps_assert(dump_tree_model(model, VALUE_COLUMN), ["0"], "Wrong value after run")
 
     # Continuing should increase the value by 1
     debug.send("continue")
     yield wait_DAP_server("variables")
-    gps_assert(dump_tree_model(model, VALUE_COLUMN),
-               ['1'],
-               "Wrong value after continuing a single time")
+    gps_assert(
+        dump_tree_model(model, VALUE_COLUMN),
+        ["1"],
+        "Wrong value after continuing a single time",
+    )
 
     # Continuing 3 more times
     debug.send("continue 3")
     yield wait_DAP_server("variables")
-    gps_assert(dump_tree_model(model, VALUE_COLUMN),
-               ['4'],
-               "Wrong value after continuing multiple time")
+    gps_assert(
+        dump_tree_model(model, VALUE_COLUMN),
+        ["4"],
+        "Wrong value after continuing multiple time",
+    )
 
     # Ignore 3 times the breakpoint
     debug.send("ignore 1 3")
     debug.send("continue")
     yield wait_DAP_server("variables")
-    gps_assert(dump_tree_model(model, VALUE_COLUMN),
-               ['8'],
-               "Wrong value after ignoring bp")
+    gps_assert(
+        dump_tree_model(model, VALUE_COLUMN), ["8"], "Wrong value after ignoring bp"
+    )
 
     # The breakpoint should behave normally now
     debug.send("continue")
     yield wait_DAP_server("variables")
-    gps_assert(dump_tree_model(model, VALUE_COLUMN),
-               ['9'],
-               "Wrong value after continue when stopping to ignore bp")
+    gps_assert(
+        dump_tree_model(model, VALUE_COLUMN),
+        ["9"],
+        "Wrong value after continue when stopping to ignore bp",
+    )

@@ -19,12 +19,10 @@ def run_test():
 
     def test_goto(msg):
         buf.current_view().goto(buf.at(7, 5))
-        GPS.execute_action('goto declaration')
-        yield wait_language_server('textDocument/declaration')
+        GPS.execute_action("goto declaration")
+        yield wait_language_server("textDocument/declaration")
         current_loc = buf.main_cursor().location()
-        gps_assert(current_loc,
-                   buf.at(3, 15),
-                   "Goto Failed when %s" % msg)
+        gps_assert(current_loc, buf.at(3, 15), "Goto Failed when %s" % msg)
 
     # Delete a new line
     buf.delete(buf.at(6, 1), buf.at(8, 1).end_of_line())
@@ -35,8 +33,7 @@ def run_test():
     buf.undo()
     yield wait_idle()
 
-    yield wait_until_true(
-        lambda: buf.has_blocks_information())
+    yield wait_until_true(lambda: buf.has_blocks_information())
     buf.at(7, 1).block_fold()
     yield wait_idle()
 

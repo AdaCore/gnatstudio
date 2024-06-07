@@ -9,9 +9,12 @@ from workflows.promises import timeout
 def driver():
     # Generate a giant file on disk and load it from disk
     with open("p.ads", "w") as f:
-        f.write("""package P is
+        f.write(
+            """package P is
    function Foo return Integer is (42);
-end P;""" + ("--" + "spam" * 100 + "\n") * 10000)
+end P;"""
+            + ("--" + "spam" * 100 + "\n") * 10000
+        )
 
     # Reload the project so that p.ads is considered as a source
     GPS.execute_action("reload project")
@@ -27,9 +30,11 @@ end P;""" + ("--" + "spam" * 100 + "\n") * 10000)
 
     als = GPS.LanguageServer.get_by_language_name("Ada")
 
-    params = {"textDocument": {"uri": q_ads.uri},
-              "position": {"line": 2, "character": 27},
-              "context": {"includeDeclaration": True}}
+    params = {
+        "textDocument": {"uri": q_ads.uri},
+        "position": {"line": 2, "character": 27},
+        "context": {"includeDeclaration": True},
+    }
 
     result = yield als.request_promise("textDocument/references", params)
 
@@ -37,15 +42,27 @@ end P;""" + ("--" + "spam" * 100 + "\n") * 10000)
         simple_error("we were expecting a valid result")
 
     # The result we expect from find_all_references
-    expected = [{"uri": p_ads.uri,
-                 "range": {"start": {"line": 1, "character": 12},
-                           "end": {"line": 1, "character": 15}},
-                 "alsKind": ["reference"]},
-                {"uri": q_ads.uri,
-                 "range": {"start": {"line": 2, "character": 27},
-                           "end": {"line": 2, "character": 30}},
-                 "alsKind": ["call"]}]
+    expected = [
+        {
+            "uri": p_ads.uri,
+            "range": {
+                "start": {"line": 1, "character": 12},
+                "end": {"line": 1, "character": 15},
+            },
+            "alsKind": ["reference"],
+        },
+        {
+            "uri": q_ads.uri,
+            "range": {
+                "start": {"line": 2, "character": 27},
+                "end": {"line": 2, "character": 30},
+            },
+            "alsKind": ["call"],
+        },
+    ]
 
     gps_assert(
-        result.data, expected,
-        "result contents doesn't match expectations: {}".format(result))
+        result.data,
+        expected,
+        "result contents doesn't match expectations: {}".format(result),
+    )

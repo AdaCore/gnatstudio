@@ -13,7 +13,7 @@ def test_driver():
 
     # Launch the debugger
     GPS.execute_action("Build & Debug Number 1")
-    yield hook('debugger_started')
+    yield hook("debugger_started")
 
     # Send a breakpoint instruction which will result in a <PENDING> address
     GPS.Debugger.get().send("break f")
@@ -22,7 +22,7 @@ def test_driver():
     # from it
 
     GPS.execute_action("open breakpoints editor")
-    yield wait_for_mdi_child('Breakpoints')
+    yield wait_for_mdi_child("Breakpoints")
 
     view = GPS.MDI.get("Breakpoints")
 
@@ -33,7 +33,5 @@ def test_driver():
     # breakpoint: verify that this is properly escaped in the model.
 
     gps_assert(
-        dump_tree_model(model, 8), ['0x&lt;PENDING&gt;'],
-        "Wrong contents in the model")
-    
-
+        dump_tree_model(model, 8), ["0x&lt;PENDING&gt;"], "Wrong contents in the model"
+    )
