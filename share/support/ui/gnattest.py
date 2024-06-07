@@ -18,11 +18,11 @@ import libadalang as lal
 
 from gnatemulator import GNATemulator
 import GPS
-from gs_utils import hook, in_ada_file, interactive
+from gs_utils import hook, interactive
 from os_utils import locate_exec_on_path
 import workflows
 from workflows.promises import ProcessWrapper, TargetWrapper
-
+from workflow_buttons import WorkflowButtons
 
 last_gnattest = {
     "project": None,  # project which gnattest run for
@@ -33,6 +33,8 @@ last_gnattest = {
 
 
 TOOL_VERSION_REGEXP = re.compile(r"[a-zA-Z\s]+ ([0-9]*)\.?([0-9]*w?)")
+
+BUILD_AND_RUN_TESTS_TARGET_NAME = "Build & Run Test Driver"
 
 
 def run_test_list_in_emulator(main_name):
@@ -277,51 +279,53 @@ def __update_build_targets_visibility():
         test_run_target = GPS.BuildTarget("Run a test-driver")
         test_run_targets = GPS.BuildTarget("Run a test drivers list")
         run_main_target = GPS.BuildTarget("Run Main")
+        test_build_and_run_target = GPS.BuildTarget(BUILD_AND_RUN_TESTS_TARGET_NAME)
         test_run_emulator_target = GPS.BuildTarget("Run test driver with emulator")
         test_run_emulator_targets = GPS.BuildTarget(
             "Run test-drivers list with emulator"
         )
-    except Exception:
-        # In some rare cases GPS recompute project view before build targets
+    except Exception as e:
+        # In some rare cases GS recomputes the project view before build targets
         # are actually created. We don't update targets in these cases.
+        GPS.Logger("GNATTEST").log(str(e))
         return
 
+    # Always hide the individual BuildTargets that just run the test driver:
+    # we want to show the workflow ones in the UI, the ones that build the
+    # test-runner before running it.
+    test_run_targets.hide()
+    test_run_target.hide()
+
     if not GPS.Project.root().is_harness_project():
+        # We are not within a harness project: hide all the GNATtest
+        # BuildTargets from the GS UI.
         run_main_target.show()
-        test_run_target.hide()
-        test_run_targets.hide()
+        test_build_and_run_target.hide()
         test_run_emulator_targets.hide()
         test_run_emulator_target.hide()
-    elif get_driver_list() == "":
-        """We have a single test driver."""
+    else:
+        # We are within a harness project: show the
+        # GNATtest workflow BuildTarget,
         run_main_target.hide()
-        test_run_targets.hide()
-        test_run_emulator_targets.hide()
+
         if GNATemulator.gnatemu_on_path():
-            test_run_emulator_target.show()
-            test_run_target.hide()
+            if get_driver_list() == "":
+                test_run_emulator_target.show()
+                test_run_emulator_targets.hide()
+            else:
+                test_run_emulator_target.hide()
+                test_run_emulator_targets.show()
+
+            test_build_and_run_target.hide()
         else:
             test_run_emulator_target.hide()
-            test_run_target.show()
-    else:
-        """
-        The file 'test_drivers.list' is present.
-        We have a list of test drivers to execute.
-        """
-        run_main_target.hide()
-        test_run_target.hide()
-        test_run_emulator_target.hide()
-        if GNATemulator.gnatemu_on_path():
-            test_run_targets.hide()
-            test_run_emulator_targets.show()
-        else:
-            test_run_targets.show()
-            test_run_emulator_targets.hide()
+            test_build_and_run_target.show()
 
 
-def create_build_targets_gnatemu():
+def create_workflow_build_targets():
     """
-    Creates the Build Targets used to call gnatemu when in a test harness.
+    Creates the workflow Build Targets used to call gnatemu when in a cross test harness,
+    and the 'Build & Run Test Driver' for native harness projects.
     """
     global __targetsDef
 
@@ -333,6 +337,13 @@ def create_build_targets_gnatemu():
             target_def[3],
             parent_menu="/Build/Emulator/%s/" % target_def[0],
         )
+
+    workflows.create_target_from_workflow(
+        target_name=BUILD_AND_RUN_TESTS_TARGET_NAME,
+        workflow_name="build-and-run-test-driver",
+        workflow=__build_and_run_tests_wf,
+        icon_name="gps-gnattest-run",
+    )
 
 
 @hook("gps_started")
@@ -403,6 +414,25 @@ def is_harness_instr():
     if gnattest_config()["dump_test_inputs"]:
         return True
     return False
+
+@workflows.run_as_workflow
+def __build_and_run_tests_wf(main_name):
+    """
+    Workflow to build and run the test driver.
+    """
+    # Build the executable
+    yield WorkflowButtons.build_main(main_name)
+    if not WorkflowButtons.build_succeed:
+        GPS.Console().write("Failed to build\n")
+        return
+
+    # Run the test runner
+    target_name = (
+        "Run a test-driver" if get_driver_list() == "" else "Run a test drivers list"
+    )
+    exe = GPS.File(main_name).executable_path
+    runner = TargetWrapper(target_name)
+    yield runner.wait_on_execute(str(exe))
 
 
 @workflows.run_as_workflow
@@ -639,7 +669,7 @@ def is_supported_by_tgen(subp_spec):
         # workflow. At worse, this results in a gnattest / gnatfuzz crash, at
         # best the type was correctly supported. Still display the exception to
         # allow investigation.
-        except:
+        except Exception:
             GPS.Console().write(
                 "Warning: unexpected exception while checking subprogram"
                 " compatibility with TGen:\n" + traceback.format_exc(),
@@ -670,7 +700,8 @@ def fuzz_subp_workflow():
     if not is_supported_by_tgen(subp_spec):
         GPS.Console().write(
             "This subprogram profile is not supported. See "
-            "https://docs.adacore.com/gnatcoverage-docs/html/gnattest/gnattest_part.html#generating-test-inputs"
+            "https://docs.adacore.com/gnatcoverage-docs/html/"
+            + "gnattest/gnattest_part.html#generating-test-inputs"
             " for an exhaustive list of supported subprogram profiles.\n",
             mode="error",
         )
@@ -1068,7 +1099,7 @@ XML = (
       <arg>--passed-tests=hide</arg>
     </command-line>
     <server>Execution_Server</server>
-    <iconname>gps-run-symbolic</iconname>
+    <iconname>gps-gnattest-run</iconname>
 
     <switches command="%(tool_name)s" columns="1" separator="=">
       <combo label="Default test behavior "
@@ -1099,7 +1130,7 @@ XML = (
       <arg>--passed-tests=hide</arg>
     </command-line>
     <server>Execution_Server</server>
-    <iconname>gps-run-symbolic</iconname>
+    <iconname>gps-gnattest-run</iconname>
 
     <switches command="%(tool_name)s" columns="1" separator="=">
       <spin label="Runs N tests in parallel"
@@ -1203,7 +1234,7 @@ XML = (
           messages_category="test-driver">
     <visible>FALSE</visible>
     <in-menu>TRUE</in-menu>
-    <in-toolbar>TRUE</in-toolbar>
+    <in-toolbar>FALSE</in-toolbar>
     <in-contextual-menus-for-projects>TRUE</in-contextual-menus-for-projects>
     <launch-mode>MANUALLY_WITH_DIALOG</launch-mode>
     <target-type>executable</target-type>
@@ -1219,7 +1250,7 @@ XML = (
           messages_category="test-driver">
     <visible>FALSE</visible>
     <in-menu>TRUE</in-menu>
-    <in-toolbar>TRUE</in-toolbar>
+    <in-toolbar>FALSE</in-toolbar>
     <in-contextual-menus-for-projects>TRUE</in-contextual-menus-for-projects>
     <launch-mode>MANUALLY_WITH_DIALOG</launch-mode>
     <target-type>executable</target-type>
@@ -1256,6 +1287,6 @@ XML = (
 
 GPS.parse_xml(XML)
 
-# We create the Build Targets related to gnatemu when GPS is launched.
-# Afteward we only update the visibility of the affected Build Targets
-create_build_targets_gnatemu()
+# We create the Build Targets related to GNATtest when GNAT Studio is launched.
+# Afterwards we only update the visibility of the affected Build Targets
+create_workflow_build_targets()
