@@ -2,9 +2,9 @@
 
 # Parse a .rst file to extract documentation for some of the GNAT switches.
 
-doc = "gnat/building_executable_programs_with_gnat.rst"
-
 import re
+
+doc = "gnat/building_executable_programs_with_gnat.rst"
 
 try:
     input = open(doc)
@@ -18,9 +18,9 @@ class Switch(object):
     # Switches that appear in the documentation, but that we do not want to
     # document.
 
-    BOLD = re.compile("\*(.+?)\*")
+    BOLD = re.compile(r"\*(.+?)\*")
     SAMP = re.compile(":switch:`(.+?)`")
-    COMMENT = re.compile("\.\. .*$")
+    COMMENT = re.compile(r"\.\. .*$")
 
     def __init__(self, name):
         self.name = name

@@ -42,12 +42,12 @@ def analyzeCall(call, fileName, line):
     global unknownOut
     global junkOut
 
-    basename = re.search("[\w-]+\.adb", fileName).group(0)
+    basename = re.search(r"[\w-]+\.adb", fileName).group(0)
 
-    param = re.sub('("[\s]*&[\s]*")', "", call)
+    param = re.sub(r'("[\s]*&[\s]*")', "", call)
     param = re.sub("\n", "", param)
-    param = re.sub("^[^\(]*\(", "", param)
-    param = re.sub("\)[^\)]*$", "", param)
+    param = re.sub(r"^[^\(]*\(", "", param)
+    param = re.sub(r"\)[^\)]*$", "", param)
     param = re.sub(',[^"]*$', "", param)
 
     if re.match('^".*"$', param) is None:
@@ -178,7 +178,7 @@ for pattern in fixableMessageFile.readlines():
 dirName = sys.argv[1]
 
 for fileName in os.listdir(dirName):
-    if re.match("[\w-]+\.adb$", fileName):
+    if re.match(r"[\w-]+\.adb$", fileName):
         analyzeFile(dirName + "/" + fileName)
 
 fixedOut.close()

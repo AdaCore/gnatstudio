@@ -34,7 +34,7 @@ Preference("Plugins/addr2line/args").create(
     "--functions --demangle=gnat",
 )
 
-file_line_re = "(([-_\w./\\\\]+):(\d+)(:(\d+))?)"
+file_line_re = r"(([-_\w./\\]+):(\d+)(:(\d+))?)"
 
 
 class Addr2line(Console):
