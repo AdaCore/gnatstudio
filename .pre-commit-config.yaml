@@ -3,3 +3,4 @@ repos:
     rev: 23.1.0
     hooks:
     - id: black
+      exclude: docs/users_guide/GPS/generated_hooks.py
