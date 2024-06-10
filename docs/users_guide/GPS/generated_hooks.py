@@ -84,7 +84,7 @@ class Predefined_Hooks:
     def analysis_loading_finsished(name):
         """
         Emitted when all the messages that should be displayed in the Analysis
-         Report have been loaded.
+        Report have been loaded.
 
         :param str name:
 
@@ -338,11 +338,11 @@ class Predefined_Hooks:
     # context_changed = 'context_changed'
     def context_changed(name, context):
         """
-        Emitted when the current context changes in GPS, such as when a new
-        file or entity is selected, or a window is created
+          Emitted when the current context changes in GPS, such as when a new
+          file or entity is selected, or a window is created
 
-        :param str name:
-        :param GPS.Context context:
+          :param str name:
+          :param GPS.Context context:
 
         :asynchronous 400 (ms)
 
@@ -546,7 +546,6 @@ class Predefined_Hooks:
     # debugger_process_terminated = 'debugger_process_terminated'
     def debugger_process_terminated(name, debugger):
         """
-        '
         Emitted when the debugged process has finished
 
         :param str name:
@@ -731,7 +730,7 @@ class Predefined_Hooks:
     # file_deleting = 'file_deleting'
     def file_deleting(name, file):
         """
-        +Emitted before GPS delete a file.
+        Emitted before GPS delete a file.
 
         :param str name:
         :param GPS.File file:
@@ -921,12 +920,12 @@ class Predefined_Hooks:
     # location_changed = 'location_changed'
     def location_changed(name, file, line, column, project):
         """
-        Emitted when the location in the current editor has changed.
+          Emitted when the location in the current editor has changed.
 
-        :param str name:
-        :param GPS.File file:
-        :param int line:
-        :param int column:
+          :param str name:
+          :param GPS.File file:
+          :param int line:
+          :param int column:
 
         :asynchronous 200 (ms)
 
@@ -955,11 +954,11 @@ class Predefined_Hooks:
     # mdi_child_selected = 'mdi_child_selected'
     def mdi_child_selected(name, child):
         """
-        Emitted when the currently focused MDI child has changed in GPS (e.g: when
-        switching editors)
+          Emitted when the currently focused MDI child has changed in GPS (e.g: when
+          switching editors)
 
-        :param str name:
-        :param GPS.MDIWindow child:
+          :param str name:
+          :param GPS.MDIWindow child:
 
         :asynchronous 400 (ms)
 
@@ -1052,10 +1051,10 @@ class Predefined_Hooks:
     # preferences_changed = 'preferences_changed'
     def preferences_changed(name, pref):
         """
-        Emitted when the value of some of the preferences changes. Modules should
-        refresh themselves dynamically.
+          Emitted when the value of some of the preferences changes. Modules should
+          refresh themselves dynamically.
 
-        :param str name:
+          :param str name:
 
         :asynchronous 400 (ms)
 

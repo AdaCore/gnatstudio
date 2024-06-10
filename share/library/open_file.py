@@ -20,7 +20,7 @@ import os
 from text_utils import get_selection_or_line
 
 
-file_pattern = "((?:[a-zA-Z]:)?(?:[\\\\/]?[\w\d._$-]+)+)(?::(\d+)(?::(\d+))?)?"
+file_pattern = r"((?:[a-zA-Z]:)?(?:[\\/]?[\w\d._$-]+)+)(?::(\d+)(?::(\d+))?)?"
 # The regexp pattern to search file file:line:column references on the
 # current line.
 

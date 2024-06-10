@@ -144,7 +144,7 @@ class XMLOutput:
     def parse_attrs(self, attrs):
         """Parse an XML attribute string  attr='foo' attr="bar" """
         attr = dict()
-        for a in re.findall("""(\\w+)=['"](.*?)['"]\B""", attrs):
+        for a in re.findall(r"""(\w+)=['"](.*?)['"]\B""", attrs):
             attr[a[0]] = a[1]
         return attr
 
