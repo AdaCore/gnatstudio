@@ -2567,6 +2567,7 @@ def generate_doc():
     f.write(
         '''
 import GPS
+
 class Predefined_Hooks:
     """
     This class is not available in GPS itself. It is included in this
@@ -2587,11 +2588,11 @@ class Predefined_Hooks:
         def p_param(p):
             descr = p.descr.strip()
             if descr:
-                descr = "\n         " + descr.replace("\n", "\n         ")
+                descr = "\n           " + descr.replace("\n", "\n           ")
             return descr
 
         params = [
-            "\n      :param %(python)s %(name)s:%(default)s%(doc)s"
+            "\n        :param %(python)s %(name)s:%(default)s%(doc)s"
             % {
                 "python": types[p.type].python,
                 "doc": p_param(p),
@@ -2602,13 +2603,13 @@ class Predefined_Hooks:
             if p.show_in_python()
         ]
 
-        plist = ",".join([p.name for p in type.params])
+        plist = ", ".join([p.name for p in type.params])
         descr = h.raw_descr.strip()
         if descr:
-            descr = "\n      " + descr.replace("\n", "\n      ") + "\n"
+            descr = "\n        " + descr.replace("\n", "\n        ") + "\n"
 
         if type.returns is not None and types[type.returns].python is not None:
-            returns = "\n      :return: %s\n" % types[type.returns].python
+            returns = "\n        :return: %s\n" % types[type.returns].python
         else:
             returns = ""
 
