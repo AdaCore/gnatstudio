@@ -59,6 +59,11 @@ issue-check:
   script:
     - require_issue # launch the verification
 
+include:
+  - component: $CI_SERVER_FQDN/eng/gitlab-templates/pre-commit@~latest
+    inputs:
+      stage: build_and_test
+
 # Manual CI for integration-testsuite
 test-integration:
   stage: integration-tests

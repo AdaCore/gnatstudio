@@ -1,5 +1,5 @@
-import GPS
 
+import GPS
 
 class Predefined_Hooks:
     """
@@ -59,9 +59,9 @@ class Predefined_Hooks:
         """
         Emitted when a character has been added in the editor. This hook is also
         called for the backspace key.
-
+        
         .. seealso:: :func:`GPS.Predefined_Hooks.character_added`
-
+        
         .. seealso:: :func:`GPS.Predefined_Hooks.word_added`
 
         :param str name:
@@ -188,9 +188,9 @@ class Predefined_Hooks:
         Emitted when a character is going to be added in the editor. It is also
         called when a character is going to be removed, in which case the last
         parameter is 8 (control-h).
-
+        
         .. seealso:: :func:`GPS.Predefined_Hooks.after_character_added`
-
+        
         .. seealso:: :func:`GPS.Predefined_Hooks.word_added`
 
         :param str name:
@@ -219,12 +219,10 @@ class Predefined_Hooks:
         """
 
     # compilation_finished = 'compilation_finished'
-    def compilation_finished(
-        name, category, target, mode, shadow, background, status, cmd
-    ):
+    def compilation_finished(name, category, target, mode, shadow, background, status, cmd):
         """
         Emitted when a compile operation has finished.
-
+        
         Among the various tasks that GPS connects to this hook are the
         automatic reparsing of all xref information, and the activation of
         the automatic-error fixes. See also the hook "xref_updated"
@@ -241,28 +239,26 @@ class Predefined_Hooks:
         """
 
     # compilation_starting = 'compilation_starting'
-    def compilation_starting(
-        name, category, quiet, shadow, background, preserve_output
-    ):
+    def compilation_starting(name, category, quiet, shadow, background, preserve_output):
         """
         Emitted when a compilation operation is about to start.
-
+        
         Among the various tasks that GPS connects to this hook are: check
         whether unsaved editors should be saved (asking the user), and stop the
         background task that parses all xref info. If ``quiet`` is True, no
         visible modification should be done in the MDI, such as raising consoles
         or clearing their content, since the compilation should happen in
         background mode.
-
+        
         Funtions connected to this hook should return False if the compilation
         should not occur for some reason, True if it is OK to start the
         compilation. Typically, the reason to reject a compilation would be
         because the user has explicitly cancelled it through a graphical dialog,
         or because running a background compilation is not suitable at this
         time.
-
+        
         .. code-block:: python
-
+        
            # The following code adds a confirmation dialog to all
            # compilation commands.
            import gs_utils
@@ -272,20 +268,20 @@ class Predefined_Hooks:
                  return MDI.yes_no_dialog("Confirm compilation ?")
               else:
                  return True
-
+        
         .. code-block:: python
-
+        
            # If you create a script to execute your own build script, you
            # should always do the following as part of your script. This
            # ensures a better integration in GPS (saving unsaved editors,
            # reloading xref information automatically in the end, raising
            # the GPS console, parsing error messages for automatically
            # fixable errors,...)
-
+        
            if notHook ("compilation_starting").run_until_failure(
                 "Builder results", False, False):
               return
-
+        
            # ... spawn your command
            Hook("compilation_finished").run("Builder results")
 
@@ -315,14 +311,14 @@ class Predefined_Hooks:
         target, and if so, return a list of tuples, where each tuple corresponds
         to one target and contains a display name (used in the menus, for
         instance), the name of the target and the full path for the project.
-
+        
         If `str` is not known, it should return an empty list.
-
+        
         The `str` parameter is the name of the target, for instance 'main', 'exec'
         or 'make'.
-
+        
         .. code-block:: python
-
+        
            def compute_targets(hook, name):
               if name == "my_target":
                 return [(display_name_1, target_1, ''),
@@ -338,13 +334,13 @@ class Predefined_Hooks:
     # context_changed = 'context_changed'
     def context_changed(name, context):
         """
-          Emitted when the current context changes in GPS, such as when a new
-          file or entity is selected, or a window is created
+        Emitted when the current context changes in GPS, such as when a new
+        file or entity is selected, or a window is created
 
-          :param str name:
-          :param GPS.Context context:
+        :param str name:
+        :param GPS.Context context:
 
-        :asynchronous 400 (ms)
+      :asynchronous 400 (ms)
 
         """
 
@@ -357,7 +353,7 @@ class Predefined_Hooks:
         you stored in the context. This hook is called even if no action was
         selected by the user. However, it is always called before the action is
         executed, since the menu itself is closed first.
-
+        
          .. seealso:: :func:`GPS.Predefined_Hooks.contextual_menu_open`
 
         :param str name:
@@ -372,7 +368,7 @@ class Predefined_Hooks:
         by multiple filters to speed up the computation. Use
         :func:`GPS.contextual_context` to get the context of the contextual menu
         and store precomputed data in it.
-
+        
         .. seealso:: :func:`GPS.Predefined_Hooks.contextual_menu_close`
 
         :param str name:
@@ -459,9 +455,9 @@ class Predefined_Hooks:
         the output of your custom command (which is printed in the debugger
         console), or Debugger.Command_Intercepted to indicate the command was
         handled (but this is not output in the console)
-
+        
         .. code-block:: python
-
+        
             ## The following example implements a new gdb command, "hello". When
             ## the user types this command in the console, we end up executing
             ## "print A" instead. This can be used for instance to implement
@@ -535,7 +531,7 @@ class Predefined_Hooks:
         debugger_state_changed hook instead. Conceptually, you could connect to
         debugger_state_changed at all times instead of debugger_process_stopped
         and check when the state is now "idle".
-
+        
         .. seealso:: :func:`GPS.Predefined_Hooks.debugger_stated_changed`
 
         :param str name:
@@ -563,14 +559,14 @@ class Predefined_Hooks:
         debugger if the dialog should not be displayed.
         You cannot send any command to the debugger in this hook.
         The string parameter contains the debugger question.
-
+        
         .. code-block:: python
-
+        
             def gps_question(hook, debugger, str):
                return "1"   ## Always choose choice 1
-
+        
             GPS.Hook("debugger_question_action_hook").add(gps_question)
-
+        
             debug=GPS.Debugger.get()
             debug.send("print &foo")
 
@@ -587,7 +583,7 @@ class Predefined_Hooks:
         """
         Emitted after the debugger has been spawned, and when it is possible
         to send commands to it. Better to use debugger_state_changed
-
+        
         .. seealso:: :func:`GPS.Predefined_Hooks.debugger_stated_changed`
 
         :param str name:
@@ -605,16 +601,16 @@ class Predefined_Hooks:
         debugger_process_stopped, this hook is called when the command is just
         starting its executing (hence the debugger is busy while this hook is
         called, unless the process immediately stopped).
-
+        
         This hook is also called when internal commands are sent to the
         debugger, and thus much more often than if it was just reacting to user
         input. It is therefore recommended that the callback does the minimal
         amount of work, possibly doing the rest of the work in an idle callback
         to be executed when GPS is no longer busy.
-
+        
         If the new state is "busy", you cannot send additional commands to the
         debugger.
-
+        
         When the state is either "busy" or "idle", GPS.Debugger.command will
         return the command that is about to be executed or the command that was
         just executed and just completed.
@@ -667,19 +663,19 @@ class Predefined_Hooks:
         behavior, which is asking if the user wants to reload the file. Your
         function should return 1 if the action is handled by the function, and
         return 0 if the default behavior is desired.
-
+        
         This hook stops propagating as soon as a handler returns True. If you want
         get noticed systematically, use the `after_file_changed_detected` instead.
-
+        
         .. code-block:: python
-
+        
           import GPS
-
+        
           def on_file_changed(hook, file):
               # automatically reload the file without prompting the user
               ed = GPS.EditorBuffer.get(file, force = 1)
               return 1
-
+        
           # install a handler on "file_changed_detected" hook
           GPS.Hook("file_changed_detected").add(on_file_changed)
 
@@ -743,7 +739,7 @@ class Predefined_Hooks:
         Emitted when a file editor has been opened for a file that was not already
         opened before. Do not confuse with the hook open_file_action, which is
         used to request the opening of a file.
-
+        
         .. seealso:: :func:`GPS.Predefined_Hooks.open_file_action_hook`
 
         :param str name:
@@ -752,9 +748,7 @@ class Predefined_Hooks:
         """
 
     # file_line_action_hook = 'file_line_action_hook'
-    def file_line_action_hook(
-        name, identifier, file, every_line, tooltip, info, icon_name
-    ):
+    def file_line_action_hook(name, identifier, file, every_line, tooltip, info, icon_name):
         """
         Emitted to request the display of new information on the side of the
         editors. You usually will not connect to this hook, but you might want to
@@ -920,14 +914,14 @@ class Predefined_Hooks:
     # location_changed = 'location_changed'
     def location_changed(name, file, line, column, project):
         """
-          Emitted when the location in the current editor has changed.
+        Emitted when the location in the current editor has changed.
 
-          :param str name:
-          :param GPS.File file:
-          :param int line:
-          :param int column:
+        :param str name:
+        :param GPS.File file:
+        :param int line:
+        :param int column:
 
-        :asynchronous 200 (ms)
+      :asynchronous 200 (ms)
 
         """
 
@@ -954,13 +948,13 @@ class Predefined_Hooks:
     # mdi_child_selected = 'mdi_child_selected'
     def mdi_child_selected(name, child):
         """
-          Emitted when the currently focused MDI child has changed in GPS (e.g: when
-          switching editors)
+        Emitted when the currently focused MDI child has changed in GPS (e.g: when
+        switching editors)
 
-          :param str name:
-          :param GPS.MDIWindow child:
+        :param str name:
+        :param GPS.MDIWindow child:
 
-        :asynchronous 400 (ms)
+      :asynchronous 400 (ms)
 
         """
 
@@ -973,29 +967,13 @@ class Predefined_Hooks:
         """
 
     # open_file_action_hook = 'open_file_action_hook'
-    def open_file_action_hook(
-        name,
-        file,
-        line,
-        column,
-        column_end,
-        enable_navigation,
-        new_file,
-        force_reload,
-        focus,
-        project,
-        group,
-        initial_position,
-        Areas,
-        Title,
-        Is_Load_Desktop,
-    ):
+    def open_file_action_hook(name, file, line, column, column_end, enable_navigation, new_file, force_reload, focus, project, group, initial_position, Areas, Title, Is_Load_Desktop):
         """
         Emitted when GPS needs to open a file. You can connect to this hook if
         you want to have your own editor open, instead of GPS's internal
         editor. Your function should return 1 if it did open the file or 0 if
         the next function connected to this hook should be called.
-
+        
         The file should be opened directly at `line` and `column`. If
         `column_end` is not 0, the given range should be highlighted if
         possible.  `enable_navigation` is set to True if the new location
@@ -1006,11 +984,11 @@ class Predefined_Hooks:
         file should be reloaded from the disk, discarding any change the user
         might have done. focus is set to true if the open editor should be given
         the keyboard focus.
-
+        
         .. seealso:: :func:`GPS.Predefined_Hooks.file_edited`
-
+        
         .. code-block:: python
-
+        
             GPS.Hook('open_file_action_hook').run(
                       GPS.File("gps-kernel.ads"),
                       322, # line
@@ -1051,12 +1029,12 @@ class Predefined_Hooks:
     # preferences_changed = 'preferences_changed'
     def preferences_changed(name, pref):
         """
-          Emitted when the value of some of the preferences changes. Modules should
-          refresh themselves dynamically.
+        Emitted when the value of some of the preferences changes. Modules should
+        refresh themselves dynamically.
 
-          :param str name:
+        :param str name:
 
-        :asynchronous 400 (ms)
+      :asynchronous 400 (ms)
 
         """
 
@@ -1068,7 +1046,7 @@ class Predefined_Hooks:
         this hook, the attribute values have not been computed from the project
         yet, and will only return the default values. Connect to the
         project_view_changed hook instead to query the actual values.
-
+        
         .. seealso:: :func:`GPS.Predefined_Hooks.project_view_changed`
 
         :param str name:
@@ -1129,18 +1107,7 @@ class Predefined_Hooks:
         """
 
     # rsync_action_hook = 'rsync_action_hook'
-    def rsync_action_hook(
-        name,
-        synchronous,
-        force,
-        to_remote,
-        print_output,
-        print_command,
-        tool_name,
-        host_name,
-        queue_id,
-        file,
-    ):
+    def rsync_action_hook(name, synchronous, force, to_remote, print_output, print_command, tool_name, host_name, queue_id, file):
         """
         internal use only
 
@@ -1210,7 +1177,7 @@ class Predefined_Hooks:
     def server_config_hook(name, server, nickname):
         """
         Emitted when a server is assigned to a server operations category.
-
+        
         The `server_type` parameter is the server operations category. It can
         take the values "BUILD_SERVER", "EXECUTION_SERVER" or "DEBUG_SERVER".
 
@@ -1357,7 +1324,7 @@ class Predefined_Hooks:
     def word_added(name, file):
         """
         Emitted when a word has been added in an editor.
-
+        
         .. seealso:: :func:`GPS.Predefined_Hooks.character_added`
 
         :param str name:
@@ -1373,6 +1340,4 @@ class Predefined_Hooks:
         :param str name:
 
         """
-
-
 GPS.Predefined_Hooks = Predefined_Hooks
