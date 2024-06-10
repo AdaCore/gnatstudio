@@ -444,8 +444,8 @@ If -1, all editors for this file will be closed instead""",
         ],
         returns="Boolean",
         return_default="False",  # Stops when one returns True
-        returns_run=None,
-    ),  # Ignore return value for Run
+        returns_run=None,  # Ignore return value for Run
+    ),
     # If file is set to No_File, this hook applies to all open_files.
     # ??? We used to emit the hook for all open_files, one by one, but it is
     # more efficient to run it once only
@@ -510,8 +510,8 @@ Content of Messages view is not cleaned""",
             ),
         ],
         returns="Boolean",
-        return_default="True",
-    ),  # Stops when one returns False
+        return_default="True",  # Stops when one returns False
+    ),
     "compilation_finished_hooks": Hook_Type(
         [
             Param("name", "__hookname__"),
@@ -564,8 +564,8 @@ executed command line as list of arguments""",
         ],
         returns="Boolean",
         return_default="False",  # Stop when one function returns True
-        returns_run=None,
-    ),  # Ignore return value for Run
+        returns_run=None,  # Ignore return value for Run
+    ),
     "message_hooks": Hook_Type(
         [Param("name", "__hookname__"), Param("message", "Message")]
     ),
@@ -608,8 +608,8 @@ executed command line as list of arguments""",
             Param("str", "String"),
         ],
         returns="String",
-        return_default='""',
-    ),  # Stop when one returns non-empty string
+        return_default='""',  # Stop when one returns non-empty string
+    ),
     "vcs_file_status_hooks": Hook_Type(
         [
             Param("VCS", "VCS_Engine"),
@@ -666,7 +666,7 @@ called for the backspace key.\n
         "simple_hooks",
         descr="""
 Emitted when all the messages that should be displayed in the Analysis
- Report have been loaded.""",
+Report have been loaded.""",
     ),
     Hook(
         "annotation_parsed_hook",
@@ -813,7 +813,7 @@ or 'make'.\n
         return [(display_name_1, target_1, ''),
                 (display_name_2, target_2, '')]
       return ""
-   GPS.Hook("compute_build_targets").add(compute_targets) """,
+   GPS.Hook("compute_build_targets").add(compute_targets)""",
     ),
     Hook(
         "context_changed",
@@ -945,7 +945,7 @@ and check when the state is now "idle".\n
     Hook(
         "debugger_process_terminated",
         "debugger_hooks",
-        descr="""'
+        descr="""
 Emitted when the debugged process has finished""",
     ),
     Hook(
@@ -1080,7 +1080,7 @@ editor for `file`.""",
         "file_deleting",
         "file_hooks",
         descr="""
-+Emitted before GPS delete a file.""",
+Emitted before GPS delete a file.""",
     ),
     Hook(
         "file_deleted",
@@ -1171,7 +1171,8 @@ Emitted when the location in the current editor has changed.""",
     Hook(
         "log_parsed_hook",
         "simple_hooks",
-        descr="Emitted when the last log has been parsed",
+        descr="""
+Emitted when the last log has been parsed""",
     ),
     Hook(
         "marker_added_to_history",
@@ -1269,7 +1270,8 @@ for this hook, you can safely query the new attribute values.""",
     Hook(
         "revision_parsed_hook",
         "simple_hooks",
-        descr="Emitted when the last revision has been parsed",
+        descr="""
+Emitted when the last revision has been parsed""",
     ),
     Hook("rsync_action_hook", "rsync_hooks", descr="internal use only"),
     Hook("rsync_finished", "simple_hooks"),
@@ -1311,7 +1313,8 @@ Emitted when the list of configured servers has changed.""",
     Hook(
         "status_parsed_hook",
         "simple_hooks",
-        descr="Emitted when the last status has been parsed",
+        descr="""
+Emitted when the last status has been parsed""",
     ),
     Hook(
         "stop_macro_action_hook",
@@ -1494,7 +1497,8 @@ def generate():
 
     f = open("../generated/gps-kernel-hooks.ads", "w")
     f.write(
-        """--  Automatically generated from hooks.py
+        """
+--  Automatically generated from hooks.py
 pragma Style_Checks (Off);
 with GNATCOLL.Scripts;   use GNATCOLL.Scripts;
 %(withs)s
@@ -1608,7 +1612,8 @@ package GPS.Kernel.Hooks is
 
     b = open("../generated/gps-kernel-hooks.adb", "w")
     b.write(
-        """--  Automatically generated from hooks.py
+        """
+--  Automatically generated from hooks.py
 pragma Style_Checks (Off);
 pragma Warnings (Off, "comparison with True is redundant");
 pragma Warnings (Off, "constant * is not referenced");
