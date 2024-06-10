@@ -569,12 +569,14 @@ private
       File      : GNATCOLL.VFS.Virtual_File;
       Timestamp : Ada.Calendar.Time := GNATCOLL.Utils.No_Time;
       Sha1      : GNAT.SHA1.Message_Digest;
+      Size      : Long_Integer;
       Exists    : Boolean := True;
    end record;
    No_Monitored_File : constant Monitored_File :=
      (File      => GNATCOLL.VFS.No_File,
       Timestamp => GNATCOLL.Utils.No_Time,
       Sha1      => (others => '-'),
+      Size      => -1,
       Exists    => False);
 
    type GPS_MDI_Child_Record is new Gtkada.MDI.MDI_Child_Record with record
@@ -586,7 +588,7 @@ private
 
       Default_Width, Default_Height : Glib.Gint := -1;
 
-      Files               : Monitored_File := No_Monitored_File;
+      File_Monitored      : Monitored_File := No_Monitored_File;
    end record;
 
    type MDI_Location_Marker_Data is new Location_Marker_Data with record
