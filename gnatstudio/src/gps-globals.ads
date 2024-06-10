@@ -25,6 +25,7 @@ with GNATCOLL.Traces;        use GNATCOLL.Traces;
 with GNATCOLL.VFS;           use GNATCOLL.VFS;
 with GPS.Main_Window;        use GPS.Main_Window;
 with Gtk;                    use Gtk;
+with Gtk.Label;              use Gtk.Label;
 with Gtk.Enums;              use Gtk.Enums;
 with Gtk.Window;             use Gtk.Window;
 with Spawn.Environments;
@@ -60,6 +61,13 @@ package GPS.Globals is
       Line  : Positive := 1;
       --  Line to use when opening files from the command line.
    end record;
+
+   type GPS_Splash_Screen_Record is new Gtk_Window_Record with record
+      Progress_Label : Gtk_Label;
+      --  Label displaying the loading progress of GNAT Studio.
+   end record;
+   type GPS_Splash_Screen is access all GPS_Splash_Screen_Record'Class;
+   --  The GNAT Studio initial splash screen
 
    GPS_Command_Line           : GPS_Option_Context;
    --  Handling of command line
@@ -97,7 +105,7 @@ package GPS.Globals is
    Port_Number                : Natural := 0;
 
    GPS_Main                   : GPS_Window;
-   Splash                     : Gtk_Window;
+   Splash                     : GPS_Splash_Screen;
 
    Env                        : Spawn.Environments.Process_Environment :=
      Spawn.Environments.System_Environment;
