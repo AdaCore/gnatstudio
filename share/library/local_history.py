@@ -260,13 +260,13 @@ class LocalHistory:
     def on_select_xml_node(self, node_name, attrs, value):
         if node_name == "revision":
             attr = dict()
-            for a in re.findall("""(\\w+)=['"](.*?)['"]\B""", attrs):
+            for a in re.findall(r"""(\w+)=['"](.*?)['"]\B""", attrs):
                 attr[a[0]] = a[1]
             self.show_diff(attr["name"], attr["date"])
 
     def create_xml_node(self, node_name, attrs, value):
         attr = dict()
-        for a in re.findall("""(\\w+)=['"](.*?)['"]\B""", attrs):
+        for a in re.findall(r"""(\w+)=['"](.*?)['"]\B""", attrs):
             attr[a[0]] = a[1]
         if node_name == "revision":
             return ["[<b>" + attr["date"] + "</b>] " + attr["name"]]

@@ -124,11 +124,18 @@ prebuilt_runtime_path = None
 
 
 # Always load the project attributes
-ATTRIBUTES = ["UNITS", "UNITS_LIST",
-              "EXCLUDED_UNITS", "EXCLUDED_UNITS_LIST",
-              "IGNORED_UNITS", "IGNORED_UNITS_LIST",
-              "ROUTINES", "ROUTINES_LIST",
-              "EXCLUDED_ROUTINES", "EXCLUDED_ROUTINES_LIST"]
+ATTRIBUTES = [
+    "UNITS",
+    "UNITS_LIST",
+    "EXCLUDED_UNITS",
+    "EXCLUDED_UNITS_LIST",
+    "IGNORED_UNITS",
+    "IGNORED_UNITS_LIST",
+    "ROUTINES",
+    "ROUTINES_LIST",
+    "EXCLUDED_ROUTINES",
+    "EXCLUDED_ROUTINES_LIST",
+]
 
 ATTRIBUTE_TEMPLATE = r"""
   <project_attribute package="Coverage"
@@ -162,15 +169,19 @@ XML_TEMPLATE = r"""<?xml version="1.0" ?>
 </gnatcov>
 """
 
-GPS.parse_xml(XML_TEMPLATE.format(attributes=ATTRIBUTE_TEMPLATE.format(
-                                      name="SWITCHES",
-                                      is_list="true",
-                                      index=SWITCHES_INDEX)
-                                  + "".join(ATTRIBUTE_TEMPLATE.format(
-                                      name=attr,
-                                      is_list="true" if "LIST" not in attr
-                                      else "false",
-                                      index="") for attr in ATTRIBUTES)))
+GPS.parse_xml(
+    XML_TEMPLATE.format(
+        attributes=ATTRIBUTE_TEMPLATE.format(
+            name="SWITCHES", is_list="true", index=SWITCHES_INDEX
+        )
+        + "".join(
+            ATTRIBUTE_TEMPLATE.format(
+                name=attr, is_list="true" if "LIST" not in attr else "false", index=""
+            )
+            for attr in ATTRIBUTES
+        )
+    )
+)
 
 
 # The project attributes must be created when the plugin is loaded or they
