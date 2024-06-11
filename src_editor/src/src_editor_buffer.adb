@@ -3549,6 +3549,12 @@ package body Src_Editor_Buffer is
    begin
       --  Implementation must be in sync with Is_Auto_Save below
       return Create_From_Dir (Dir (File), ".#" & Base_Name (File) & "#");
+   exception
+      when VFS_Invalid_File_Error =>
+         Trace
+           (Me,
+            "Failed to create Autosaved File for " & Display_Full_Name (File));
+         return No_File;
    end Autosaved_File;
 
    ------------------
@@ -3851,7 +3857,7 @@ package body Src_Editor_Buffer is
       Success         : out Boolean;
       Is_Load_Desktop : Boolean := False)
    is
-      File_Is_New   : constant Boolean := not Buffer.Original_Text_Inserted;
+      File_Is_New : constant Boolean := not Buffer.Original_Text_Inserted;
 
       procedure Check_Auto_Saved_File;
       --  Chech whether there exists an auto-saved file, and whether the user

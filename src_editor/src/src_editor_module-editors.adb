@@ -916,10 +916,10 @@ package body Src_Editor_Module.Editors is
       --  Search the view from any project, we do not have more information
       Project : constant Project_Type := No_Project;
 
-      Child : MDI_Child;
-      Box   : Source_Editor_Box;
-      Buf   : Source_Buffer;
-      Success        : Boolean;
+      Child   : MDI_Child;
+      Box     : Source_Editor_Box;
+      Buf     : Source_Buffer;
+      Success : Boolean;
    begin
       if File = GNATCOLL.VFS.No_File then
          Child := Find_Current_Editor
@@ -968,11 +968,20 @@ package body Src_Editor_Module.Editors is
       else
          Box := Get_Source_Box_From_MDI (Child);
 
-         if File /= GNATCOLL.VFS.No_File and Force then
-            Box.Get_Buffer.Load_File (File, Success => Success);
-            if not Success then
-               Trace (Me, "Failed to reload " & File.Display_Full_Name);
-            end if;
+         if Force then
+            declare
+               Current_File : constant GNATCOLL.VFS.Virtual_File :=
+                 (if File /= No_File
+                  then File
+                  else Get_Filename (Child));
+            begin
+               Box.Get_Buffer.Load_File
+                 (Current_File, Success => Success);
+               if not Success then
+                  Trace
+                    (Me, "Failed to reload " & Current_File.Display_Full_Name);
+               end if;
+            end;
          end if;
       end if;
 

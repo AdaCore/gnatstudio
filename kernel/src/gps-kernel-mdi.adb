@@ -2473,13 +2473,14 @@ package body GPS.Kernel.MDI is
 
    procedure Monitor_File
      (Self : not null access GPS_MDI_Child_Record;
-      File : GNATCOLL.VFS.Virtual_File)
-   is
+      File : GNATCOLL.VFS.Virtual_File) is
    begin
-      Self.Files := (File      => File,
-                     Timestamp => GNATCOLL.Utils.No_Time,
-                     Sha1      => (others => '-'),
-                     Exists    => True);
+      Self.File_Monitored :=
+        (File      => File,
+         Timestamp => GNATCOLL.Utils.No_Time,
+         Sha1      => (others => '-'),
+         Size      => File.Size,
+         Exists    => True);
    end Monitor_File;
 
    ----------------------
@@ -2489,15 +2490,18 @@ package body GPS.Kernel.MDI is
    procedure Update_File_Info (Self : not null access GPS_MDI_Child_Record) is
       Str : GNAT.Strings.String_Access;
    begin
-      if Self.Files.File /= No_File then
-         Trace (Me, "Update file info " & Self.Files.File.Display_Full_Name);
-         Self.Files.Timestamp := Self.Files.File.File_Time_Stamp;
+      if Self.File_Monitored.File /= No_File then
+         Trace (Me,
+                "Update file info "
+                & Self.File_Monitored.File.Display_Full_Name);
+         Self.File_Monitored.Timestamp :=
+           Self.File_Monitored.File.File_Time_Stamp;
 
-         Str := Self.Files.File.Read_File;
+         Str := Self.File_Monitored.File.Read_File;
          if Str /= null then
-            Self.Files.Sha1 := GNAT.SHA1.Digest (Str.all);
+            Self.File_Monitored.Sha1 := GNAT.SHA1.Digest (Str.all);
          else
-            Self.Files.Sha1 := (others => '-');
+            Self.File_Monitored.Sha1 := (others => '-');
          end if;
          Free (Str);
       end if;
@@ -2513,16 +2517,16 @@ package body GPS.Kernel.MDI is
       Str     : GNAT.Strings.String_Access;
       Default : constant GNAT.SHA1.Message_Digest := (others => '-');
    begin
-      if Self.Files.File /= No_File then
-         if Self.Files.Sha1 = Default then
+      if Self.File_Monitored.File /= No_File then
+         if Self.File_Monitored.Sha1 = Default then
             --  No SHA1 computed yet: force a recomputation
-            Str := Self.Files.File.Read_File;
+            Str := Self.File_Monitored.File.Read_File;
             if Str /= null then
-               Self.Files.Sha1 := GNAT.SHA1.Digest (Str.all);
+               Self.File_Monitored.Sha1 := GNAT.SHA1.Digest (Str.all);
             end if;
             Free (Str);
          end if;
-         return Self.Files.Sha1;
+         return Self.File_Monitored.Sha1;
       else
          return Default;
       end if;
@@ -2710,7 +2714,11 @@ package body GPS.Kernel.MDI is
          end if;
 
          New_Timestamp := Info.File.File_Time_Stamp;
-         if New_Timestamp = Info.Timestamp then
+         --  Timestamps can be rounded by the kernel or the file system so
+         --  also compare the file sizes to be sure.
+         if New_Timestamp = Info.Timestamp
+           and then Info.Size = Info.File.Size
+         then
             --  Same timestamp, don't check anything else.
             --  This is of course not perfect, but we are not trying to deal
             --  with tools that would change the file and yet preserve its
@@ -2768,11 +2776,11 @@ package body GPS.Kernel.MDI is
          if C.all in GPS_MDI_Child_Record'Class then
             G := GPS_MDI_Child (C);
 
-            if Is_File_Modified (G, G.Files)
+            if Is_File_Modified (G, G.File_Monitored)
                and then not File_Changed_Detected_Hook.Run
-                  (Kernel, G.Files.File)
+                  (Kernel, G.File_Monitored.File)
             then
-               Modified.Append ((Child => G, File => G.Files.File));
+               Modified.Append ((Child => G, File => G.File_Monitored.File));
             end if;
          end if;
 
