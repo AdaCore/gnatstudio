@@ -123,6 +123,12 @@ package Src_Editor_Module is
       File   : Virtual_File) return Source_Buffer;
    --  Return the editor for File
 
+   function Get_Filename
+     (Child : not null access MDI_Child_Record'Class)
+      return GNATCOLL.VFS.Virtual_File;
+   --  If Child is a file editor, return the corresponding filename,
+   --  otherwise return No_File.
+
    function Find_Other_Editor
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
       View   : Gtk_Text_View;

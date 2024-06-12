@@ -292,12 +292,6 @@ package body Src_Editor_Module is
    --  Add an entry for File to the Recent menu, if needed
    --  Remove the older menu if the history is full.
 
-   function Get_Filename
-     (Child : not null access MDI_Child_Record'Class)
-      return GNATCOLL.VFS.Virtual_File;
-   --  If Child is a file editor, return the corresponding filename,
-   --  otherwise return an empty string.
-
    function Get_File_Identifier (Child  : MDI_Child) return Virtual_File;
    --  Return the file identifier if Child is a file editor
 
