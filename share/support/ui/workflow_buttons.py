@@ -13,7 +13,7 @@ class WorkflowButtons(object):
     # Used to know if the build targets for the build-and-run and
     # build-and-debug buttons have been created.
 
-    __build_succeed = False
+    build_succeed = False
     # Used to know if the 'Build Main' BuildTarget has succeed.
 
     @staticmethod
@@ -127,23 +127,23 @@ class WorkflowButtons(object):
             WorkflowButtons.__needs_build[main_name] = True
 
         if not WorkflowButtons.__needs_build[main_name]:
-            WorkflowButtons.__build_succeed = True
+            WorkflowButtons.build_succeed = True
             return
 
         if not main_name:
             WorkflowButtons.__display_error("Main is not specified")
-            WorkflowButtons.__build_succeed = False
+            WorkflowButtons.build_succeed = False
             return
 
         # Build the executable
         builder = promises.TargetWrapper("Build Main")
         r0 = yield builder.wait_on_execute(main_name)
         if r0 != 0:
-            WorkflowButtons.__build_succeed = False
+            WorkflowButtons.build_succeed = False
             return
 
         WorkflowButtons.__needs_build[main_name] = False
-        WorkflowButtons.__build_succeed = True
+        WorkflowButtons.build_succeed = True
 
     @staticmethod
     def __build_and_debug_wf(main_name):
@@ -154,7 +154,7 @@ class WorkflowButtons(object):
 
         # Build the executable
         yield WorkflowButtons.build_main(main_name)
-        if not WorkflowButtons.__build_succeed:
+        if not WorkflowButtons.build_succeed:
             return
 
         # Launch the debugger on the given main executable base name, without
@@ -178,7 +178,7 @@ class WorkflowButtons(object):
 
         # Build the executable
         yield WorkflowButtons.build_main(main_name)
-        if not WorkflowButtons.__build_succeed:
+        if not WorkflowButtons.build_succeed:
             return
 
         # Run it
