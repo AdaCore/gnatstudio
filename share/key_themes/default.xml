@@ -19,6 +19,8 @@
   <key action="Paste From Clipboard">primary-v</key>
   <key action="Paste From Clipboard">shift-Insert</key>
   <key action="Paste Previous From Clipboard">shift-primary-Insert</key>
+  <key action="Paste to Console">primary-v</key>
+  <key action="Paste to Console">shift-Insert</key>
   <key action="select all">primary-a</key>
   <key action="subprogram box">primary-h</key>
 
