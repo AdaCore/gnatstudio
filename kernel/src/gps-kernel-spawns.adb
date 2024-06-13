@@ -392,7 +392,13 @@ package body GPS.Kernel.Spawns is
    begin
       if Exec = "" then
          return;
-      elsif not Use_Pipes then
+
+      elsif Console /= null
+        or else not Use_Pipes
+      then
+         --  We're displaying the process output in a Console: set
+         --  stdout and stderr to use a pseudo terminal - this allows
+         --  the program to use ncurses, colors, etc.
          Obj.Process.Set_Standard_Input_PTY;
          Obj.Process.Set_Standard_Output_PTY;
          Obj.Process.Set_Standard_Error_PTY;
