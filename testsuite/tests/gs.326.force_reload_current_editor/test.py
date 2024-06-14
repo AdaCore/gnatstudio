@@ -16,30 +16,26 @@ FILE = "foo.adb"
 def driver():
     gps_f = GPS.File(FILE)
     buf = GPS.EditorBuffer.get(gps_f)
-    gps_assert(buf.get_chars(),
-               "a\n",
-               "Wrong content when opening the file")
+    gps_assert(buf.get_chars(), "a\n", "Wrong content when opening the file")
 
     # Don't save the buffer, "b" will be discarded at the next reload
     buf.insert(buf.at(1, 2), "b")
-    gps_assert(buf.get_chars(),
-               "ab\n",
-               "Wrong content when editing the file via GS API")
+    gps_assert(
+        buf.get_chars(), "ab\n", "Wrong content when editing the file via GS API"
+    )
 
     with open(FILE, "w") as f:
         f.write("ac\n")
 
     GPS.EditorBuffer.get(gps_f, force=True)
     yield wait_idle()
-    gps_assert(buf.get_chars(),
-               "ac\n",
-               "Wrong content when reloading the GPS.File")
+    gps_assert(buf.get_chars(), "ac\n", "Wrong content when reloading the GPS.File")
 
     with open(FILE, "w") as f:
         f.write("acd\n")
 
     GPS.EditorBuffer.get(force=True)
     yield wait_idle()
-    gps_assert(buf.get_chars(),
-               "acd\n",
-               "Wrong content when reloading the current buffer")
+    gps_assert(
+        buf.get_chars(), "acd\n", "Wrong content when reloading the current buffer"
+    )

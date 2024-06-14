@@ -10,6 +10,7 @@ from gs_utils.internal.utils import (
 )
 import sys
 
+
 @run_test_driver
 def driver():
     # Build and debug
@@ -23,6 +24,6 @@ def driver():
         if "stdout" in text:
             # Write text to "console.txt"
             with open("console.txt", "w") as f:
-                  f.write(text)
+                f.write(text)
             break
         yield timeout(100)

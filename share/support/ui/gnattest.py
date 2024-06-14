@@ -415,6 +415,7 @@ def is_harness_instr():
         return True
     return False
 
+
 @workflows.run_as_workflow
 def __build_and_run_tests_wf(main_name):
     """
