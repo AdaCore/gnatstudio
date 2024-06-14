@@ -16,12 +16,12 @@ expected = {
     ],
     "Tab": ["tab selection", "toggle to next alias field"],
     "Ctrl+V": ["paste to console"],
-    "Shift+Insert": ["paste to console"]
+    "Shift+Insert": ["paste to console"],
 }
 
-if os_utils.locate_exec_on_path('qgenc'):
-    expected['Escape'].insert(0, 'goto parent subsystem')
-    expected['Left'] = ['goto previous subsystem', 'move to previous char']
+if os_utils.locate_exec_on_path("qgenc"):
+    expected["Escape"].insert(0, "goto parent subsystem")
+    expected["Left"] = ["goto previous subsystem", "move to previous char"]
 
 
 @run_test_driver
