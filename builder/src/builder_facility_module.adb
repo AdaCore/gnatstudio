@@ -1831,9 +1831,9 @@ package body Builder_Facility_Module is
 
       declare
          Progress_Pattern : constant String :=
-           "completed ([0-9]+) out of ([0-9]+) \(([^\n]*)%\)\.\.\.\n";
+           "completed ([0-9]+) out of ([0-9]+) \(([^\n]*)%\)\.\.\.\r?\n";
          Phase_Pattern    : constant String :=
-           "phase ([^\n]*)\.\.\.\n";
+           "phase ([^\n]*)\.\.\.\r?\n";
          --  ??? This is configurable in some cases (from XML for instance),
          --  so we should not have a hard coded regexp here.
          --  ??? For progress pattern indecies of matching groups for current
