@@ -99,7 +99,7 @@ package body DAP.Clients.Disconnect is
 
       --  Send the 'disconnect' request
       Client.Enqueue
-        (DAP.Requests.DAP_Request_Access (Disconnect_Req));
+        (DAP.Requests.DAP_Request_Access (Disconnect_Req), Force => True);
 
       --  Set the DAP client's status to Terminating
       Client.Set_Status (Terminating);
