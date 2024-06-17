@@ -176,7 +176,10 @@ package body GVD.Process_Lists is
       Iter  : Gtk_Tree_Iter;
    begin
       Self.Tree_View.Get_Selection.Get_Selected (Model, Iter);
-      Self.Ent.Set_Text (Trim (Get_String (Model, Iter, Column_Pid), Left));
+      Self.Ent.Set_Text
+        (Trim
+           (Source => Get_String (Model, Iter, Column_Pid),
+            Side   => Both));
    end On_Select_Row;
 
    ----------------------
