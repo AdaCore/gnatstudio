@@ -38,9 +38,9 @@ def test_driver():
     yield timeout(1000)
 
     gps_assert(
-        debug.is_busy(),
-        False,
-        "The debugger should be stopped after attaching the process",
+        len(debug.frames()) > 0,
+        True,
+        "We should have frames after attaching to the process",
     )
 
     # Detach the debugger
