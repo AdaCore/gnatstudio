@@ -41,6 +41,13 @@ package body GVD.Process_Lists is
    procedure On_Select_Row (List : access GObject_Record'Class);
    --  Called when the user selects a new row in the list
 
+   procedure On_Row_Activated
+     (Self   : access Glib.Object.GObject_Record'Class;
+      Path   : Gtk.Tree_Model.Gtk_Tree_Path;
+      Column : not null access Gtk_Tree_View_Column_Record'Class);
+   --  Called when pressing Enter or when double-clicking on row.
+   --  Activates the dialog's default response ('OK' in this case).
+
    -------------
    -- Gtk_New --
    -------------
@@ -87,6 +94,7 @@ package body GVD.Process_Lists is
       Scrolled.Add (Self.Tree_View);
       Self.Tree_View.Set_Headers_Visible (True);
       Self.Tree_View.Get_Selection.On_Changed (On_Select_Row'Access, Self);
+      Self.Tree_View.On_Row_Activated (On_Row_Activated'Access, Slot => Self);
 
       Gtk_New (C);
       C.Set_Title ("Pid");
@@ -117,8 +125,10 @@ package body GVD.Process_Lists is
       --  Action buttons
 
       Dummy_Button := Self.Add_Button (Stock_Ok, Gtk_Response_OK);
-      Dummy_Button.Grab_Default;
       Dummy_Button := Self.Add_Button (Stock_Cancel, Gtk_Response_Cancel);
+
+      Self.Set_Default_Response (Gtk_Response_OK);
+      Set_Activates_Default (Self.Ent, True);
 
       --  Show the list of processes
 
@@ -168,5 +178,21 @@ package body GVD.Process_Lists is
       Self.Tree_View.Get_Selection.Get_Selected (Model, Iter);
       Self.Ent.Set_Text (Trim (Get_String (Model, Iter, Column_Pid), Left));
    end On_Select_Row;
+
+   ----------------------
+   -- On_Row_Activated --
+   ----------------------
+
+   procedure On_Row_Activated
+     (Self   : access Glib.Object.GObject_Record'Class;
+      Path   : Gtk.Tree_Model.Gtk_Tree_Path;
+      Column : not null access Gtk_Tree_View_Column_Record'Class)
+   is
+      pragma Unreferenced (Path, Column);
+
+      Dialog : constant Process_List := Process_List (Self);
+   begin
+      Dialog.Response (Gtk_Response_OK);
+   end On_Row_Activated;
 
 end GVD.Process_Lists;
