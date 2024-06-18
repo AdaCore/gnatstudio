@@ -29,12 +29,15 @@ def check_variable(var, name, type, value, pattern=False, type_pattern=False):
 
 @run_as_workflow
 def check(promise, name, type, value, pattern=False, type_pattern=False):
-    yield timeout(5)
+    yield timeout(10)
     var = yield promise.get_variable_by_name(name)
-    yield timeout(5)
+    yield timeout(10)
 
     if var.is_valid:
-        check_variable(var.data, name, type, value, pattern, type_pattern)
+        if var.data is None:
+            simple_error(name + " is None")
+        else:
+            check_variable(var.data, name, type, value, pattern, type_pattern)
 
     elif var.is_error:
         simple_error(name + " error:" + var.error_message)
@@ -47,31 +50,38 @@ def check(promise, name, type, value, pattern=False, type_pattern=False):
 
 @run_as_workflow
 def get_children(var):
-    promise = promises.DebuggerVariableWrapper(var)
-    children = yield promise.children()
-    yield children
+    if var is not None:
+        yield timeout(20)
+        promise = promises.DebuggerVariableWrapper(var)
+        children = yield promise.children()
+        yield children
 
 
 @run_test_driver
 def test_driver():
-    # Wait for the DAP server to give us the sources of
-    # the debugged executable.
-    yield wait_DAP_server("loadedSources")
+    # Wait the debugger console to be sure that debugger is started.
+    yield wait_tasks()
+    yield wait_for_mdi_child("Debugger Console parse")
+    yield wait_idle()
 
     p = promises.DebuggerWrapper(GPS.File("parse"))
     debug = GPS.Debugger.get()
     yield wait_until_not_busy(debug)
+    yield wait_idle()
 
     debug.break_at_exception(False)
     yield wait_DAP_server("setExceptionBreakpoints")
     yield wait_until_not_busy(debug)
+    yield wait_idle()
 
     debug.send("cont")
     yield wait_DAP_server("stackTrace")
     yield wait_until_not_busy(debug)
+    yield wait_idle()
 
     debug.send("frame 7")
     yield wait_until_not_busy(debug)
+    yield wait_idle()
 
     info = yield p.get_variable_by_name("Non_Existant_Variable")
     gps_assert(info.data is None, True, "Non_Existant_Variable exists")
@@ -637,8 +647,10 @@ def test_driver():
     yield check_variable(children.data[1], "More_Fruits(1)", "parse.fruit", "")
 
     yield wait_until_not_busy(debug)
+    yield wait_idle()
     debug.send("frame 6")
     yield wait_until_not_busy(debug)
+    yield wait_idle()
 
     var = yield check(
         p, "Args", "array (1 .. 3) of parse.tn_9305_014.string_access", ""
@@ -764,11 +776,15 @@ def test_driver():
     )
 
     yield wait_until_not_busy(debug)
+    yield wait_idle()
     debug.send("cont")
     yield wait_DAP_server("stackTrace")
     yield wait_until_not_busy(debug)
+    yield wait_idle()
+
     debug.send("frame 6")
     yield wait_until_not_busy(debug)
+    yield wait_idle()
 
     var = yield check(p, "Ut", "parse.union_type", "")
     children = yield get_children(var.data)
@@ -917,10 +933,18 @@ def test_driver():
     )
     yield check_variable(children.data[2], "RAF.i2", "integer", "0")
 
+    yield wait_until_not_busy(debug)
+    yield wait_idle()
     debug.send("b swap")
     yield wait_until_not_busy(debug)
+    yield wait_idle()
     debug.send("cont")
     yield wait_DAP_server("stackTrace")
     yield wait_until_not_busy(debug)
+    yield wait_idle()
 
     var = yield check(p, "Word", "string", '"qeaLfjb"')
+
+    GPS.execute_action("terminate all debuggers")
+    yield wait_idle()
+    GPS.exit(True)

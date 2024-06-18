@@ -152,7 +152,7 @@ package DAP.Clients.Breakpoint_Managers is
    --  the breakpoint should be ignored before stopping on it).
 
    function Get_Breakpoints
-     (Self : Breakpoint_Manager_Access)
+     (Self : not null access Breakpoint_Manager_Type)
       return DAP.Types.Breakpoints.Breakpoint_Vectors.Vector;
    --  Returns the list of the breakpoints
 

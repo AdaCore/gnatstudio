@@ -519,7 +519,7 @@ package body DAP.Clients.Breakpoint_Managers is
    ---------------------
 
    function Get_Breakpoints
-     (Self : Breakpoint_Manager_Access)
+     (Self : not null access Breakpoint_Manager_Type)
       return DAP.Types.Breakpoints.Breakpoint_Vectors.Vector is
    begin
       return Self.Holder.Get_Breakpoints;

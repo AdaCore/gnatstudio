@@ -21,16 +21,17 @@ def check_variable(var, name, type, value, pattern=False):
 
 @run_as_workflow
 def get_children(var):
-    promise = promises.DebuggerVariableWrapper(var)
-    children = yield promise.children()
-    yield children
+    if var is not None:
+        promise = promises.DebuggerVariableWrapper(var)
+        children = yield promise.children()
+        yield children
 
 
 @run_as_workflow
 def check(promise, name, type, value, pattern=False):
-    yield timeout(5)
+    yield timeout(10)
     var = yield promise.get_variable_by_name(name)
-    yield timeout(5)
+    yield timeout(10)
 
     if var.is_valid:
         if var.data is None:
@@ -53,19 +54,28 @@ def check_simple(debug, name, type, value, description, pattern=False, var=None)
 
 @run_test_driver
 def test_driver():
-    # Wait for the DAP server to give us the sources of
-    # the debugged executable.
-    yield wait_DAP_server("loadedSources")
+    # Wait the debugger console to be sure that debugger is started.
+    yield wait_tasks()
+    yield wait_for_mdi_child("Debugger Console parse_c")
+    yield wait_idle()
 
     p = promises.DebuggerWrapper(GPS.File("parse_c"))
     debug = GPS.Debugger.get()
+    yield wait_until_not_busy(debug)
 
     debug.break_at_location(GPS.File("parse_c.c"), 3)
     yield wait_DAP_server("setBreakpoints")
+    yield wait_until_not_busy(debug)
+    yield wait_idle()
+
     debug.send("run")
     yield wait_DAP_server("stackTrace")
+    yield wait_until_not_busy(debug)
+    yield wait_idle()
 
     debug.frame_up()
+    yield wait_until_not_busy(debug)
+    yield wait_idle()
 
     info = yield p.get_variable_by_name("Non_Existant_Variable")
     gps_assert(info.data is None, True, "Non_Existant_Variable")
@@ -406,5 +416,6 @@ def test_driver():
     gps_assert(len(children2.data), 1, "Invalid count of test_volatile.u.x children")
     yield check_variable(children2.data[0], "test_volatile.u.x.xx", "int", "12")
 
-    debug.send("q")
+    GPS.execute_action("terminate all debuggers")
     yield wait_idle()
+    GPS.exit(True)

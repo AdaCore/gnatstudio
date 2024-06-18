@@ -398,5 +398,4 @@ def test_driver():
     yield check_variable(children.data[3], "MI.third_protected_var", "int", "8")
     yield check_variable(children.data[4], "MI.third_protected_var", "int", "9")
 
-    debug.send("q")
-    yield wait_idle()
+    yield wait_until_not_busy(debug)
