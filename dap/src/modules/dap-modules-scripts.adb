@@ -223,23 +223,49 @@ package body DAP.Modules.Scripts is
    procedure Create_No_Debugger_Variable_For_Callback
      (Params : DAP.Clients.Variables.Request_Parameters) is
    begin
-      if Params.On_Result = null then
+      --  We did not found the variable for some reason
+
+      if Params.On_Result = null
+        and then Params.On_Error = null
+      then
          return;
       end if;
 
       declare
-         Arguments : Callback_Data'Class :=
-           Params.On_Result.Get_Script.Create (1);
-         Dummy     : Boolean;
+         Dummy : Boolean;
       begin
-         Set_Nth_Arg (Arguments, 1, No_Class_Instance);
-         Dummy := Params.On_Result.Execute (Arguments);
-         Free (Arguments);
+         if Params.On_Error = null then
+            --  We do not have On_Error callback, use On_Result and
+            --  send None object.
+            declare
+               Arguments : Callback_Data'Class :=
+                 Params.On_Result.Get_Script.Create (1);
+            begin
+               Set_Nth_Arg (Arguments, 1, No_Class_Instance);
+               Dummy := Params.On_Result.Execute (Arguments);
+               Free (Arguments);
+            exception
+               when E : others =>
+                  Free (Arguments);
+                  Trace (Me, E);
+            end;
 
-      exception
-         when E : others =>
-            Free (Arguments);
-            Trace (Me, E);
+         else
+            --  We have On_Error callback, call it with "not found" message
+            declare
+               Arguments : Callback_Data'Class :=
+                 Params.On_Error.Get_Script.Create (1);
+            begin
+               Set_Nth_Arg (Arguments, 1, String'("Not found."));
+               Dummy := Params.On_Error.Execute (Arguments);
+               Free (Arguments);
+
+            exception
+               when E : others =>
+                  Free (Arguments);
+                  Trace (Me, E);
+            end;
+         end if;
       end;
    end Create_No_Debugger_Variable_For_Callback;
 
