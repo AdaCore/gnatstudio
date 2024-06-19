@@ -16,7 +16,6 @@
 ------------------------------------------------------------------------------
 
 with GNATCOLL.Traces;         use GNATCOLL.Traces;
-with DAP.Views.Variables;
 
 package body DAP.Clients.Variables.Variables is
 
@@ -125,7 +124,7 @@ package body DAP.Clients.Variables.Variables is
       DAP.Requests.Variables.Variables_DAP_Request
         (Self).On_Error_Message (Client, Message);
 
-      DAP.Views.Variables.On_Variable_Not_Found (Client, Self.Params);
+      Client.Variables.On_Variable_Not_Found (Self.Params);
       Free (Self.Params);
    end On_Error_Message;
 
