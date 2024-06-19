@@ -48,7 +48,6 @@ with Gtk.Label;                  use Gtk.Label;
 with Gtk.Paned;                  use Gtk.Paned;
 with Gtk.Scrolled_Window;        use Gtk.Scrolled_Window;
 with Gtk.Spin_Button;            use Gtk.Spin_Button;
-with Gtk.Stock;                  use Gtk.Stock;
 with Gtk.Style_Context;          use Gtk.Style_Context;
 with Gtk.Table;                  use Gtk.Table;
 with Gtk.Text_Buffer;            use Gtk.Text_Buffer;
@@ -64,6 +63,7 @@ with Gtkada.Dialogs;             use Gtkada.Dialogs;
 with Gtkada.File_Selector;       use Gtkada.File_Selector;
 with Gtkada.Handlers;            use Gtkada.Handlers;
 with Gtkada.Multiline_Entry;     use Gtkada.Multiline_Entry;
+with Gtkada.Stock_Labels;        use Gtkada.Stock_Labels;
 
 with Gexpect;                    use Gexpect;
 with GPS.Intl;                   use GPS.Intl;

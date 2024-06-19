@@ -41,8 +41,9 @@ with Gtk.Box;                         use Gtk.Box;
 with Gtk.Dialog;                      use Gtk.Dialog;
 with Gtk.GEntry;                      use Gtk.GEntry;
 with Gtk.Label;                       use Gtk.Label;
-with Gtk.Stock;                       use Gtk.Stock;
 with Gtk.Widget;                      use Gtk.Widget;
+with Gtkada.Stock_Labels;             use Gtkada.Stock_Labels;
+
 with Language;                        use Language;
 with Language.Abstract_Language_Tree; use Language.Abstract_Language_Tree;
 with Language.Tree.Database;          use Language.Tree.Database;

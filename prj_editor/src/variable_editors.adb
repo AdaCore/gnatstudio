@@ -24,7 +24,6 @@ with Gtk.Dialog;               use Gtk.Dialog;
 with Gtk.Enums;                use Gtk.Enums;
 with Gtk.GEntry;               use Gtk.GEntry;
 with Gtk.Label;                use Gtk.Label;
-with Gtk.Stock;                use Gtk.Stock;
 with Gtk.Tree_Model;           use Gtk.Tree_Model;
 with Gtk.Tree_Selection;       use Gtk.Tree_Selection;
 with Gtk.Tree_Store;           use Gtk.Tree_Store;
@@ -35,6 +34,7 @@ with Gtk.Window;               use Gtk.Window;
 with Gtkada.Handlers;          use Gtkada.Handlers;
 with GUI_Utils;                use GUI_Utils;
 with Gtkada.Dialogs;           use Gtkada.Dialogs;
+with Gtkada.Stock_Labels;      use Gtkada.Stock_Labels;
 with GNAT.Strings;             use GNAT.Strings;
 with GNATCOLL.Utils;           use GNATCOLL.Utils;
 

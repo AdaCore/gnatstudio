@@ -23,13 +23,13 @@ with Gtk.Enums;                 use Gtk.Enums;
 with Gtk.Handlers;              use Gtk.Handlers;
 with Gtk.Image;                 use Gtk.Image;
 with Gtk.Label;                 use Gtk.Label;
-with Gtk.Stock;                 use Gtk.Stock;
 with Gtk.Table;                 use Gtk.Table;
 with Gtk.Toggle_Button;         use Gtk.Toggle_Button;
 with Gtk.Widget;                use Gtk.Widget;
 with Gtk.Window;                use Gtk.Window;
 with Gtkada.Dialogs;            use Gtkada.Dialogs;
 with Gtkada.File_Selector;      use Gtkada.File_Selector;
+with Gtkada.Stock_Labels;
 
 with Toolchains_Old;            use Toolchains_Old;
 with GPS.Intl;                  use GPS.Intl;
@@ -213,9 +213,11 @@ package body Toolchains_Dialog is
          Flags  => Gtk.Dialog.Modal or Destroy_With_Parent);
 
       Widget.OK_Button :=
-        Gtk_Button (Widget.Add_Button (Gtk.Stock.Stock_Ok, Gtk_Response_OK));
+        Gtk_Button
+          (Widget.Add_Button (Gtkada.Stock_Labels.Stock_Ok, Gtk_Response_OK));
       Dead :=
-        Widget.Add_Button (Gtk.Stock.Stock_Cancel, Gtk_Response_Cancel);
+        Widget.Add_Button
+          (Gtkada.Stock_Labels.Stock_Cancel, Gtk_Response_Cancel);
 
       Gtk_New (Check, -"Activate multiple toolchains setup");
       Show_All (Check);

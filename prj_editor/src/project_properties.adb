@@ -51,7 +51,6 @@ with Gtk.Label;                    use Gtk.Label;
 with Gtk.Paned;                    use Gtk.Paned;
 with Gtk.Radio_Button;             use Gtk.Radio_Button;
 with Gtk.Scrolled_Window;          use Gtk.Scrolled_Window;
-with Gtk.Stock;                    use Gtk.Stock;
 with Gtk.Toggle_Button;            use Gtk.Toggle_Button;
 with Gtk.Tree_Model;               use Gtk.Tree_Model;
 with Gtk.Tree_Model_Filter;        use Gtk.Tree_Model_Filter;
@@ -65,6 +64,7 @@ with Gtk.Window;                   use Gtk.Window;
 with Gtkada.Dialogs;               use Gtkada.Dialogs;
 with Gtkada.File_Selector;         use Gtkada.File_Selector;
 with Gtkada.Handlers;              use Gtkada.Handlers;
+with Gtkada.Stock_Labels;          use Gtkada.Stock_Labels;
 
 with Basic_Types;                  use Basic_Types;
 with Dialog_Utils;                 use Dialog_Utils;

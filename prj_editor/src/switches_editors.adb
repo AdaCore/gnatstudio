@@ -28,10 +28,10 @@ with Glib;                      use Glib;
 with Gtk.Box;                   use Gtk.Box;
 with Gtk.Button;                use Gtk.Button;
 with Gtk.Dialog;                use Gtk.Dialog;
-with Gtk.Stock;                 use Gtk.Stock;
 with Gtk.Widget;                use Gtk.Widget;
 
 with Gtkada.Handlers;           use Gtkada.Handlers;
+with Gtkada.Stock_Labels;
 
 with GPS.Intl;                  use GPS.Intl;
 with GPS.Kernel.Contexts;       use GPS.Kernel.Contexts;
@@ -721,7 +721,7 @@ package body Switches_Editors is
       Ignore := Dialog.Add_Button ("Save", Gtk_Response_OK);
 
       if Files'Length /= 0 then
-         Gtk_New_From_Stock (B, Stock_Revert_To_Saved);
+         Gtk_New_From_Stock (B, Gtkada.Stock_Labels.Stock_Revert_To_Saved);
          Dialog.Get_Action_Area.Pack_Start (B);
          Widget_Callback.Object_Connect
            (B, Signal_Clicked, Revert_To_Default'Access,
@@ -729,7 +729,9 @@ package body Switches_Editors is
          B.Show_All;
       end if;
 
-      Button := Dialog.Add_Button (Stock_Cancel, Gtk_Response_Cancel);
+      Button := Dialog.Add_Button
+        (Gtkada.Stock_Labels.Stock_Cancel,
+         Gtk_Response_Cancel);
       Button.Show_All;
 
       --  Note: if the dialog is no longer modal, then we need to create a copy

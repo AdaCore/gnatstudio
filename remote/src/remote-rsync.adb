@@ -28,9 +28,9 @@ with Gtk.Button;            use Gtk.Button;
 with Gtk.Dialog;            use Gtk.Dialog;
 with Gtk.Label;             use Gtk.Label;
 with Gtk.Progress_Bar;      use Gtk.Progress_Bar;
-with Gtk.Stock;             use Gtk.Stock;
 with Gtk.Widget;            use Gtk.Widget;
 with Gtkada.Handlers;       use Gtkada.Handlers;
+with Gtkada.Stock_Labels;   use Gtkada.Stock_Labels;
 
 with GPS.Intl;              use GPS.Intl;
 with GPS.Kernel.Console;    use GPS.Kernel.Console;

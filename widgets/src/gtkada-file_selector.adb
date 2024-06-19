@@ -31,6 +31,8 @@ with GNATCOLL.VFS_Utils;        use GNATCOLL.VFS_Utils;
 with Gtk.File_Chooser;
 with Gtk.File_Chooser_Dialog;   use Gtk.File_Chooser_Dialog;
 with Gtk.File_Filter;           use Gtk.File_Filter;
+with Gtkada.Stock_Labels;
+with Gtkada.Stock_Icons;
 with Interfaces.C.Strings;
 with System;
 
@@ -53,7 +55,6 @@ with Gtk.Cell_Renderer_Text;    use Gtk.Cell_Renderer_Text;
 with Gtk.Combo_Box;
 with Gtk.Enums;                 use Gtk.Enums;
 with Gtk.Paned;                 use Gtk.Paned;
-with Gtk.Stock;                 use Gtk.Stock;
 with Gtk.Toolbar;               use Gtk.Toolbar;
 with Gtk.Tree_Model;            use Gtk.Tree_Model;
 with Gtk.Tree_Selection;        use Gtk.Tree_Selection;
@@ -789,10 +790,12 @@ package body Gtkada.File_Selector is
                   Parent => Parent,
                   Action => To_Action (Kind));
 
-               Button := Dialog.Add_Button (Stock_Ok, Gtk_Response_OK);
+               Button := Dialog.Add_Button
+                 (Gtkada.Stock_Labels.Stock_Ok, Gtk_Response_OK);
                Button.Set_Name ("gtk_file_chooser_dialog.ok_button");
 
-               Button := Dialog.Add_Button (Stock_Cancel, Gtk_Response_Cancel);
+               Button := Dialog.Add_Button
+                 (Gtkada.Stock_Labels.Stock_Cancel, Gtk_Response_Cancel);
 
                Ignore := Dialog.Set_Current_Folder (+Full_Name (Initial_Dir));
 
@@ -2058,35 +2061,50 @@ package body Gtkada.File_Selector is
       Toolbar1.Set_Icon_Size (Icon_Size_Small_Toolbar);
       Self.Get_Content_Area.Pack_Start (Toolbar1, False, False);
 
-      Gtk_New_From_Stock (Self.Back_Button, Stock_Go_Back);
+      Gtk_New
+        (Self.Back_Button,
+         Label => Gtkada.Stock_Icons.Stock_Go_Back);
+      Self.Back_Button.Set_Icon_Name (Gtkada.Stock_Icons.Stock_Go_Back);
       Self.Back_Button.Set_Tooltip_Text (-"Go To Previous Location");
       Toolbar1.Insert (Self.Back_Button);
       Widget_Callback.Connect
         (Self.Back_Button, Gtk.Tool_Button.Signal_Clicked,
          On_Back_Button_Clicked'Access);
 
-      Gtk_New_From_Stock (Self.Forward_Button, Stock_Go_Forward);
+      Gtk_New
+        (Self.Forward_Button,
+         Label => Gtkada.Stock_Icons.Stock_Go_Forward);
+      Self.Forward_Button.Set_Icon_Name (Gtkada.Stock_Icons.Stock_Go_Forward);
       Self.Forward_Button.Set_Tooltip_Text (-"Go To Next Location");
       Toolbar1.Insert (Self.Forward_Button);
       Widget_Callback.Connect
         (Self.Forward_Button, Gtk.Tool_Button.Signal_Clicked,
          On_Forward_Button_Clicked'Access);
 
-      Gtk_New_From_Stock (Self.Up_Button, Stock_Go_Up);
+      Gtk_New
+        (Button => Self.Up_Button,
+         Label  => Gtkada.Stock_Icons.Stock_Go_Up);
+      Self.Up_Button.Set_Icon_Name (Gtkada.Stock_Icons.Stock_Go_Up);
       Self.Up_Button.Set_Tooltip_Text (-"Go To Parent Directory");
       Toolbar1.Insert (Self.Up_Button);
       Widget_Callback.Connect
         (Self.Up_Button, Gtk.Tool_Button.Signal_Clicked,
          On_Up_Button_Clicked'Access);
 
-      Gtk_New_From_Stock (Self.Refresh_Button, Stock_Refresh);
+      Gtk_New
+        (Button => Self.Refresh_Button,
+         Label  => Gtkada.Stock_Icons.Stock_Refresh);
+      Self.Up_Button.Set_Icon_Name (Gtkada.Stock_Icons.Stock_Refresh);
       Self.Refresh_Button.Set_Tooltip_Text (-"Refresh");
       Toolbar1.Insert (Self.Refresh_Button);
       Widget_Callback.Connect
         (Self.Refresh_Button, Gtk.Tool_Button.Signal_Clicked,
          On_Refresh_Button_Clicked'Access);
 
-      Gtk_New_From_Stock (Self.Home_Button, Stock_Home);
+      Gtk_New
+        (Self.Home_Button,
+         Label => Gtkada.Stock_Icons.Stock_Home);
+      Self.Home_Button.Set_Icon_Name (Gtkada.Stock_Icons.Stock_Home);
       Self.Home_Button.Set_Tooltip_Text (-"Go To Home Directory");
       Toolbar1.Insert (Self.Home_Button);
       Widget_Callback.Connect
@@ -2234,11 +2252,13 @@ package body Gtkada.File_Selector is
       Self.Get_Content_Area.Pack_Start (Hbox6, False, False, 3);
 
       Self.OK_Button :=
-        Gtk_Button (Add_Button (Self, Stock_Ok, Gtk_Response_OK));
+        Gtk_Button
+          (Add_Button (Self, Gtkada.Stock_Labels.Stock_Ok, Gtk_Response_OK));
 
       Self.OK_Button.Set_Name ("file_selector_window.ok_button");
 
-      Button := Add_Button (Self, Stock_Cancel, Gtk_Response_Cancel);
+      Button := Add_Button
+        (Self, Gtkada.Stock_Labels.Stock_Cancel, Gtk_Response_Cancel);
       Self.Set_Default_Response (Gtk_Response_OK);
 
       if Initial_Directory /= No_File then

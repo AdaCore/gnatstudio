@@ -44,13 +44,13 @@ with Gtk.Label;                use Gtk.Label;
 with Gtk.Main;
 with Gtk.Scrolled_Window;      use Gtk.Scrolled_Window;
 with Gtk.Spinner;              use Gtk.Spinner;
-with Gtk.Stock;                use Gtk.Stock;
 with Gtk.Tree_Model;           use Gtk.Tree_Model;
 with Gtk.Tree_Selection;       use Gtk.Tree_Selection;
 with Gtk.Tree_View_Column;     use Gtk.Tree_View_Column;
 with Gtk.Widget;               use Gtk.Widget;
 with Gtk.Window;               use Gtk.Window;
 with Gtkada.Handlers;          use Gtkada.Handlers;
+with Gtkada.Stock_Labels;
 
 with GNATCOLL.Arg_Lists;       use GNATCOLL.Arg_Lists;
 with GNATCOLL.Utils;           use GNATCOLL.Utils;
@@ -1343,10 +1343,10 @@ package body Toolchains_Editor is
       GNAT.Strings.Free (Known_Tc);
 
       Ignore := Dialog.Add_Button
-        (Gtk.Stock.Stock_Ok, Response_Id => Gtk_Response_OK);
+        (Gtkada.Stock_Labels.Stock_Ok, Response_Id => Gtk_Response_OK);
       Dialog.Set_Default_Response (Gtk_Response_OK);
       Ignore := Dialog.Add_Button
-        (Gtk.Stock.Stock_Cancel, Response_Id => Gtk_Response_Cancel);
+        (Gtkada.Stock_Labels.Stock_Cancel, Response_Id => Gtk_Response_Cancel);
 
       Dialog.Show_All;
       Res := Dialog.Run;

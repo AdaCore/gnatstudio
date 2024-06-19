@@ -19,8 +19,6 @@ with Ada.Strings.Unbounded;      use Ada.Strings.Unbounded;
 with GNATCOLL.Scripts;           use GNATCOLL.Scripts;
 with GNATCOLL.VFS;               use GNATCOLL.VFS;
 
-with Gtk.Stock;                  use Gtk.Stock;
-
 with GPS.Editors;                use GPS.Editors;
 with GPS.Intl;                   use GPS.Intl;
 with GPS.Kernel.Contexts;        use GPS.Kernel.Contexts;
@@ -32,6 +30,8 @@ with Refactoring.UI;             use Refactoring.UI;
 with Refactoring.Performers;     use Refactoring.Performers;
 with Refactoring.Services;       use Refactoring.Services;
 with GNATCOLL.Traces;            use GNATCOLL.Traces;
+
+with Gtkada.Stock_Labels;
 
 with Commands;                   use Commands;
 with Xref;                       use Xref;
@@ -220,8 +220,8 @@ package body Refactoring.Rename is
             -("Some references could not be replaced because one or more files"
               & " were already modified"),
             Files         => Errors,
-            Execute_Label => Gtk.Stock.Stock_Ok,
-            Cancel_Label  => Gtk.Stock.Stock_Undo)
+            Execute_Label => Gtkada.Stock_Labels.Stock_Ok,
+            Cancel_Label  => Gtkada.Stock_Labels.Stock_Undo)
          then
             declare
                Filenames   : File_Array (1 .. Integer (Refs.Length));

@@ -48,13 +48,13 @@ with Gtk.GEntry;                 use Gtk.GEntry;
 with Gtk.Rc;
 with Gtk.Scrolled_Window;        use Gtk.Scrolled_Window;
 with Gtk.Spin_Button;            use Gtk.Spin_Button;
-with Gtk.Stock;                  use Gtk.Stock;
 with Gtk.Text_Buffer;            use Gtk.Text_Buffer;
 with Gtk.Text_Iter;              use Gtk.Text_Iter;
 with Gtk.Text_View;              use Gtk.Text_View;
 with Gtk.Toggle_Button;          use Gtk.Toggle_Button;
 with Gtk.Widget;                 use Gtk.Widget;
 with Gtk.Window;                 use Gtk.Window;
+with Gtkada.Stock_Labels;        use Gtkada.Stock_Labels;
 
 with Pango.Context;              use Pango.Context;
 with Pango.Enums;                use Pango.Enums;

@@ -50,7 +50,6 @@ with Gtk.List_Store;            use Gtk.List_Store;
 with Gtk.Radio_Button;          use Gtk.Radio_Button;
 with Gtk.Scrolled_Window;       use Gtk.Scrolled_Window;
 with Gtk.Size_Group;            use Gtk.Size_Group;
-with Gtk.Stock;                 use Gtk.Stock;
 with Gtk.Spin_Button;           use Gtk.Spin_Button;
 with Gtk.Text_Buffer;           use Gtk.Text_Buffer;
 with Gtk.Text_Iter;             use Gtk.Text_Iter;
@@ -63,6 +62,7 @@ with Gtk.Widget;                use Gtk.Widget;
 
 with Gtkada.MDI;                use Gtkada.MDI;
 with Gtkada.Multiline_Entry;    use Gtkada.Multiline_Entry;
+with Gtkada.Stock_Labels;       use Gtkada.Stock_Labels;
 
 with GPS.Debuggers;             use GPS.Debuggers;
 with GPS.Editors;               use GPS.Editors;
