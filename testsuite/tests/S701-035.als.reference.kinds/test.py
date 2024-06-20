@@ -8,7 +8,7 @@ def test_driver():
 
     yield idle_modal_dialog(lambda: GPS.execute_action("find references..."))
     dialog = get_window_by_title("Find References Options")
-    get_stock_button(dialog, Gtk.STOCK_OK).clicked()
+    get_stock_button(dialog, STOCK_OK).clicked()
     yield hook("language_server_response_processed")
     yield timeout(500)
 
@@ -26,7 +26,7 @@ def test_driver():
     yield idle_modal_dialog(lambda: GPS.execute_action("find references..."))
     dialog = get_window_by_title("Find References Options")
     get_button_from_label("call", dialog).set_active(False)
-    get_stock_button(dialog, Gtk.STOCK_OK).clicked()
+    get_stock_button(dialog, STOCK_OK).clicked()
     yield hook("language_server_response_processed")
     yield timeout(500)
 

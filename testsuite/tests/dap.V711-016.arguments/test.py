@@ -43,7 +43,7 @@ def run_test():
     box = get_widgets_by_type(Gtk.ComboBoxText, dialog)[0]
     box.prepend_text("arguments")
     box.set_active(0)
-    get_stock_button(dialog, Gtk.STOCK_OK).clicked()
+    get_stock_button(dialog, STOCK_OK).clicked()
     yield wait_idle()
 
     dump = dump_tree_model(tree.get_model(), 1)

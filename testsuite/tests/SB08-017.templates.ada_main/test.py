@@ -30,7 +30,7 @@ def test():
     # Confirmation that we want to add this new unit as
     # a main for the loaded project.
     dialog = get_window_by_title("Confirmation")
-    get_stock_button(dialog, Gtk.STOCK_YES).clicked()
+    get_stock_button(dialog, STOCK_YES).clicked()
 
     yield hook("project_view_changed")
     mains = GPS.Project.root().get_attribute_as_list("main")

@@ -992,7 +992,7 @@ try:
         def internal_onfileopendialog(dialog):
             entry = pygps.get_widgets_by_type(Gtk.Entry, dialog)[0]
             entry.set_text(name)
-            get_stock_button(dialog, Gtk.STOCK_OK).clicked()
+            get_stock_button(dialog, pygps.STOCK_OK).clicked()
             wait_for_tasks(internal_onloaded)
 
         before_dialog(internal_onfileopendialog)

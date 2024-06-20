@@ -12,7 +12,7 @@ def run_test():
     buf.current_view().goto(buf.at(2, 14))
     yield idle_modal_dialog(lambda: GPS.execute_action("generate body for subprogram"))
     dialog = get_window_by_title("Confirmation")
-    get_stock_button(dialog, Gtk.STOCK_YES).clicked()
+    get_stock_button(dialog, STOCK_YES).clicked()
     yield hook("project_view_changed")
     yield wait_tasks()
 
@@ -26,7 +26,7 @@ def run_test():
         lambda: GPS.execute_action("generate body for subprogram as separate")
     )
     dialog = get_window_by_title("Confirmation")
-    get_stock_button(dialog, Gtk.STOCK_YES).clicked()
+    get_stock_button(dialog, STOCK_YES).clicked()
     yield hook("project_view_changed")
 
     explorer = get_widget_by_name("Project Explorer Tree")
