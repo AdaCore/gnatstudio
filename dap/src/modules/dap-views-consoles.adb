@@ -50,6 +50,7 @@ with GPS.Kernel.MDI;             use GPS.Kernel.MDI;
 with GPS.Kernel.Modules.UI;      use GPS.Kernel.Modules.UI;
 with GPS.Kernel.Preferences;     use GPS.Kernel.Preferences;
 
+with DAP.Types;
 with DAP.Clients.Evaluate;
 with DAP.Module;
 with DAP.Modules.Preferences;
@@ -175,8 +176,11 @@ package body DAP.Views.Consoles is
       Debuggee_C : System.Address) return String;
    --  Handler of I/O for the debuggee console.
 
-   procedure On_Debuggee_Destroy (Console : access Gtk_Widget_Record'Class);
-   --  Callback for the "destroy" signal on the debugee console
+   overriding procedure On_Detach
+     (Self   : not null access Debuggee_Console_Record;
+      Client : not null access DAP.Clients.DAP_Client'Class);
+   --  Callback for the "destroy" or debugger termination signal
+   --  on the debuggee console.
 
    function Convert is new Ada.Unchecked_Conversion
      (System.Address, Debuggee_Console);
@@ -401,8 +405,6 @@ package body DAP.Views.Consoles is
       Self.Pack_Start (Self.Console, Expand => True, Fill => True);
 
       Set_Font_And_Colors (Self.Console.Get_View, Fixed_Font => True);
-      Widget_Callback.Object_Connect
-        (Self.Console, Signal_Destroy, On_Debuggee_Destroy'Access, Self);
 
       return Gtk_Widget (Self);
    end Initialize;
@@ -519,14 +521,27 @@ package body DAP.Views.Consoles is
       Console.Allocate_TTY;
    end On_Attach;
 
-   -------------------------
-   -- On_Debuggee_Destroy --
-   -------------------------
+   ------------------------------------
+   -- overriding procedure On_Detach --
+   ------------------------------------
 
-   procedure On_Debuggee_Destroy (Console : access Gtk_Widget_Record'Class) is
+   overriding procedure On_Detach
+     (Self   : not null access Debuggee_Console_Record;
+      Client : not null access DAP.Clients.DAP_Client'Class)
+   is
+      use DAP.Types;
+
+      Quit : Boolean := False;
    begin
-      Debuggee_Console (Console).Close_TTY;
-   end On_Debuggee_Destroy;
+      Quit := Client /= null
+        and then Client.Get_Status /= Terminating;
+
+      Self.Close_TTY;
+
+      if Quit then
+         Client.Quit;
+      end if;
+   end On_Detach;
 
    -------------------
    -- On_Grab_Focus --
@@ -590,7 +605,7 @@ package body DAP.Views.Consoles is
    ------------------------------
 
    procedure Create_Execution_Console
-     (Client : access DAP.Clients.DAP_Client'Class) is
+     (Client : not null access DAP.Clients.DAP_Client'Class) is
    begin
       Attach_To_Debuggee_Console
         (Client,
