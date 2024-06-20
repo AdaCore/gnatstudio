@@ -59,7 +59,7 @@ package DAP.Views.Consoles is
    --------------
 
    procedure Create_Execution_Console
-     (Client : access DAP.Clients.DAP_Client'Class);
+     (Client : not null access DAP.Clients.DAP_Client'Class);
    --  Creates the debuggee console.
 
    procedure Display_In_Debuggee_Console
