@@ -318,13 +318,16 @@ package body Gtkada.File_Selector is
       Dir            : Virtual_File) is
    begin
       if Is_Local (Dir) then
-         Add_Unique_Combo_Entry (Location_Combo,
-                                 Display_Full_Name (Dir, True),
-                                 True);
+         Add_Unique_Combo_Entry
+           (Location_Combo,
+            VSS.Strings.Conversions.To_Virtual_String
+              (Display_Full_Name (Dir, True)),
+            True);
       else
          Add_Unique_Combo_Entry
            (Location_Combo,
-            Get_Host (Dir) & ":|" & Display_Full_Name (Dir, True),
+            VSS.Strings.Conversions.To_Virtual_String
+              (Get_Host (Dir) & ":|" & Display_Full_Name (Dir, True)),
             Select_Text => True);
       end if;
    end Set_Location;
@@ -1125,9 +1128,7 @@ package body Gtkada.File_Selector is
       Filter : access File_Filter_Record'Class) is
    begin
       Append (Win.Filters, File_Filter (Filter));
-      Add_Unique_Combo_Entry
-        (Win.Filter_Combo,
-         VSS.Strings.Conversions.To_UTF_8_String (Filter.Label));
+      Add_Unique_Combo_Entry (Win.Filter_Combo, Filter.Label);
       if Get_Active (Win.Filter_Combo) = -1 then
          Set_Active (Win.Filter_Combo, 0);
       end if;

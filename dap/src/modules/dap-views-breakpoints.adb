@@ -984,14 +984,15 @@ package body DAP.Views.Breakpoints is
         and then Client.Get_Capabilities.Is_Set
       then
          Capabilities := Client.Get_Capabilities;
+
          for Index in 3 .. Length
            (Capabilities.Value.exceptionBreakpointFilters)
          loop
             Add_Unique_Combo_Entry
               (Self.Exception_Name,
-               To_UTF8 (Capabilities.Value.exceptionBreakpointFilters
-                 (Index).label));
+               Capabilities.Value.exceptionBreakpointFilters (Index).label);
          end loop;
+
          Self.Exception_Name.Set_Active (0);
       end if;
    end Load_Exceptions;
@@ -1910,7 +1911,8 @@ package body DAP.Views.Breakpoints is
          else
             Add_Unique_Combo_Entry
               (Self.Exception_Name,
-               To_String (Br.Exception_Name), Select_Text => True);
+               VSS.Strings.Conversions.To_Virtual_String (Br.Exception_Name),
+               Select_Text => True);
          end if;
 
          Set_Active (Self.Temporary, Br.Disposition /= Keep);
@@ -1918,15 +1920,15 @@ package body DAP.Views.Breakpoints is
       elsif Br.Kind = On_Subprogram then
          Self.Breakpoint_Type.Set_Active (Breakpoint_Kind'Pos (On_Subprogram));
 
-         Add_Unique_Combo_Entry
-           (Self.Subprogram_Combo, To_UTF_8_String (Br.Subprogram), True);
+         Add_Unique_Combo_Entry (Self.Subprogram_Combo, Br.Subprogram, True);
 
       elsif Br.Kind = On_Instruction then
          Self.Breakpoint_Type.Set_Active
            (Breakpoint_Kind'Pos (On_Instruction));
 
          Add_Unique_Combo_Entry
-           (Self.Address_Combo, Address_To_String (Br.Location.Address));
+           (Self.Address_Combo,
+            To_Virtual_String (Address_To_String (Br.Location.Address)));
          Set_Text
            (Gtk_Entry (Self.Address_Combo.Get_Child),
             Address_To_String (Br.Location.Address));
@@ -1958,9 +1960,7 @@ package body DAP.Views.Breakpoints is
 
       if not Br.Condition.Is_Empty then
          Add_Unique_Combo_Entry
-           (Self.Condition_Combo,
-            To_UTF8 (Br.Condition),
-            Select_Text => True);
+           (Self.Condition_Combo, Br.Condition, Select_Text => True);
       else
          Self.Condition_Combo.Set_Active (-1);
       end if;
