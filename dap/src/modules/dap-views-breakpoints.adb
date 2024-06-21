@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                               GNAT Studio                                --
 --                                                                          --
---                        Copyright (C) 2022-2023, AdaCore                  --
+--                        Copyright (C) 2022-2024, AdaCore                  --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -461,8 +461,8 @@ package body DAP.Views.Breakpoints is
                    Commands       => Commands,
                    Verified       => False,
                    Subprogram     =>
-                      To_Unbounded_String
-                     (Self.Subprogram_Combo.Get_Active_Text));
+                      To_Virtual_String
+                        (Self.Subprogram_Combo.Get_Active_Text));
 
          when On_Exception =>
             declare
@@ -1345,7 +1345,7 @@ package body DAP.Views.Breakpoints is
          Columns (Last_Column_Idx) := Col_Subprogs;
          Glib.Values.Init_Set_String
            (Values (Last_Column_Idx),
-            Escape_Text (To_String (Data.Subprogram)));
+            Escape_Text (To_UTF_8_String (Data.Subprogram)));
       end if;
 
       if Data.Kind = On_Instruction then
@@ -1919,7 +1919,7 @@ package body DAP.Views.Breakpoints is
          Self.Breakpoint_Type.Set_Active (Breakpoint_Kind'Pos (On_Subprogram));
 
          Add_Unique_Combo_Entry
-           (Self.Subprogram_Combo, To_String (Br.Subprogram), True);
+           (Self.Subprogram_Combo, To_UTF_8_String (Br.Subprogram), True);
 
       elsif Br.Kind = On_Instruction then
          Self.Breakpoint_Type.Set_Active

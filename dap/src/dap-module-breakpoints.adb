@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                               GNAT Studio                                --
 --                                                                          --
---                        Copyright (C) 2022-2023, AdaCore                  --
+--                        Copyright (C) 2022-2024, AdaCore                  --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -359,7 +359,9 @@ package body DAP.Module.Breakpoints is
             if Is_Fuzzy (Entity) or else Is_Subprogram (Entity) then
                Break_Subprogram
                  (Kernel,
-                  Subprogram => Entity_Name_Information (Context.Context));
+                  Subprogram =>
+                    To_Virtual_String
+                      (Entity_Name_Information (Context.Context)));
             end if;
          end;
       end if;
@@ -613,7 +615,7 @@ package body DAP.Module.Breakpoints is
                end if;
 
             when On_Subprogram =>
-               Value.Set_Field ("subprogram", To_String (B.Subprogram));
+               Value.Set_Field ("subprogram", To_UTF_8_String (B.Subprogram));
 
             when On_Instruction =>
                --  we do not store breakpoints for addresses
@@ -715,7 +717,8 @@ package body DAP.Module.Breakpoints is
                      Disposition   => Breakpoint_Disposition'Value
                        (Item.Get ("disposition")),
                      Enabled       => True,
-                     Subprogram    => Item.Get ("subprogram"),
+                     Subprogram    =>
+                        To_Virtual_String (Item.Get ("subprogram")),
                      Ignore        => Item.Get ("ignore"),
                      Condition     => Condition,
                      Commands      => Commands,
@@ -957,7 +960,7 @@ package body DAP.Module.Breakpoints is
 
    procedure Break_Subprogram
      (Kernel        : not null access Kernel_Handle_Record'Class;
-      Subprogram    : String;
+      Subprogram    : VSS.Strings.Virtual_String;
       Temporary     : Boolean := False;
       Condition : VSS.Strings.Virtual_String :=
         VSS.Strings.Empty_Virtual_String;
@@ -968,7 +971,7 @@ package body DAP.Module.Breakpoints is
       B : Breakpoint_Data := Breakpoint_Data'
         (Kind        => On_Subprogram,
          Num         => No_Breakpoint,
-         Subprogram  => To_Unbounded_String (Subprogram),
+         Subprogram  => Subprogram,
          Disposition => (if Temporary then Delete else Keep),
          Condition   => Condition,
          Ignore      => Ignore,

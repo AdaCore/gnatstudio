@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                               GNAT Studio                                --
 --                                                                          --
---                        Copyright (C) 2022-2023, AdaCore                  --
+--                        Copyright (C) 2022-2024, AdaCore                  --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -1840,13 +1840,10 @@ package body DAP.Clients is
                         Self.Breakpoints.Break_Subprogram
                           (Subprogram =>
                              (if Details_Match.Has_Capture (Bp_File_Idx)
-                              then To_UTF8
-                                (Details_Match.Captured (Bp_File_Idx))
-                              & ":" & To_UTF8
-                                (Details_Match.Captured (Bp_Subprogram_Idx))
-                              else
-                                 To_UTF8 (Details_Match.Captured
-                                   (Bp_Subprogram_Idx))),
+                              then Details_Match.Captured (Bp_File_Idx)
+                                & ":"
+                                & Details_Match.Captured (Bp_Subprogram_Idx)
+                              else Details_Match.Captured (Bp_Subprogram_Idx)),
                            Temporary  =>
                              Matched.Has_Capture (Bp_Temporary_Idx),
                            Condition  =>
