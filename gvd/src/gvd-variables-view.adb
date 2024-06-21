@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                               GNAT Studio                                --
 --                                                                          --
---                     Copyright (C) 2016-2023, AdaCore                     --
+--                     Copyright (C) 2016-2024, AdaCore                     --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -91,6 +91,8 @@ with Generic_Views;               use Generic_Views;
 with GUI_Utils;                   use GUI_Utils;
 with Language.Icons;              use Language.Icons;
 with Language;                    use Language;
+with VSS.Strings;
+with VSS.Strings.Conversions;
 with XML_Utils;                   use XML_Utils;
 
 package body GVD.Variables.View is
@@ -1807,6 +1809,9 @@ package body GVD.Variables.View is
       Context : Interactive_Command_Context) return Command_Return_Type
    is
       pragma Unreferenced (Command);
+
+      use type VSS.Strings.Virtual_String;
+
       View : constant GVD_Variable_View :=
         Variable_MDI_Views.Retrieve_View (Get_Kernel (Context.Context));
       Info : constant Item_Info := Get_Variable (Context.Context);
@@ -1825,7 +1830,8 @@ package body GVD.Variables.View is
                if Display_Value_Select_Dialog
                  (Get_Kernel (Context.Context),
                   "Set format",
-                  "Format for " & Name,
+                  "Format for "
+                    & VSS.Strings.Conversions.To_Virtual_String (Name),
                   Format)
                then
                   Item.Info.Format := Format;

@@ -2130,7 +2130,7 @@ package body DAP.Views.Variables is
                if Display_Value_Select_Dialog
                  (Get_Kernel (Context.Context),
                   "Set format",
-                  "Format for " & To_UTF8 (Name),
+                  "Format for " & Name,
                   Format)
                then
                   Item.Format := Convert (Format);
