@@ -147,11 +147,11 @@ class gnatCheckProc:
                 self.checkCmd = "{}-gnatcheck".format(target)
 
         if not locate_exec_on_path(self.checkCmd):
-            self.gnatCmd = ""
-            self.checkCmd = ""
             GPS.Console("Messages").write(
                 "Error: '%s' is not in the path.\n" % self.checkCmd
             )
+            self.gnatCmd = ""
+            self.checkCmd = ""
             GPS.Console("Messages").write(
                 "Error: Could not initialize the gnatcheck module.\n"
             )

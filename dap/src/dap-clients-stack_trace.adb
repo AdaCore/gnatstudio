@@ -106,7 +106,9 @@ package body DAP.Clients.Stack_Trace is
    function Get_Current_Frame_Id
      (Self : Stack_Trace_Access) return DAP.Tools.Optional_Integer is
    begin
-      if Self.Selected_Frame.Id >= 0 then
+      if Self /= null
+        and then Self.Selected_Frame.Id >= 0
+      then
          return (Is_Set => True, Value => Self.Selected_Frame.Id);
       else
          return (Is_Set => False);
@@ -119,7 +121,11 @@ package body DAP.Clients.Stack_Trace is
 
    function Get_Current_Frame_Id (Self : Stack_Trace_Access) return Integer is
    begin
-      return Self.Selected_Frame.Id;
+      if Self /= null then
+         return Self.Selected_Frame.Id;
+      else
+         return -1;
+      end if;
    end Get_Current_Frame_Id;
 
    ----------------------
@@ -129,7 +135,11 @@ package body DAP.Clients.Stack_Trace is
    function Get_Current_File
      (Self : Stack_Trace_Access) return GNATCOLL.VFS.Virtual_File is
    begin
-      return Self.Selected_Frame.File;
+      if Self /= null then
+         return Self.Selected_Frame.File;
+      else
+         return No_File;
+      end if;
    end Get_Current_File;
 
    ----------------------
@@ -138,7 +148,11 @@ package body DAP.Clients.Stack_Trace is
 
    function Get_Current_Line (Self : Stack_Trace_Access) return Integer is
    begin
-      return Self.Selected_Frame.Line;
+      if Self /= null then
+         return Self.Selected_Frame.Line;
+      else
+         return 0;
+      end if;
    end Get_Current_Line;
 
    -------------------------
@@ -148,7 +162,11 @@ package body DAP.Clients.Stack_Trace is
    function Get_Current_Address
      (Self : Stack_Trace_Access) return Address_Type is
    begin
-      return Self.Selected_Frame.Address;
+      if Self /= null then
+         return Self.Selected_Frame.Address;
+      else
+         return Invalid_Address;
+      end if;
    end Get_Current_Address;
 
    ---------------
@@ -158,7 +176,11 @@ package body DAP.Clients.Stack_Trace is
    function Get_Trace
      (Self : Stack_Trace_Access) return Frames_Vectors.Vector is
    begin
-      return Self.Frames;
+      if Self /= null then
+         return Self.Frames;
+      else
+         return Frames_Vectors.Empty_Vector;
+      end if;
    end Get_Trace;
 
    ------------------
@@ -300,6 +322,10 @@ package body DAP.Clients.Stack_Trace is
      (Self   : Stack_Trace_Access;
       Client : access DAP.Clients.DAP_Client'Class) return Boolean is
    begin
+      if Self = null then
+         return False;
+      end if;
+
       if Client.Get_Status /= Stopped then
          return False;
 
