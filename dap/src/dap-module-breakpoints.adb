@@ -591,11 +591,11 @@ package body DAP.Module.Breakpoints is
          Value.Set_Field ("ignore", B.Ignore);
 
          if not B.Condition.Is_Empty then
-            Value.Set_Field ("condition", UTF8 (B.Condition));
+            Value.Set_Field ("condition", To_UTF8 (B.Condition));
          end if;
 
          if not B.Commands.Is_Empty then
-            Value.Set_Field ("command", UTF8 (B.Commands));
+            Value.Set_Field ("command", To_UTF8 (B.Commands));
          end if;
 
          Value.Set_Field

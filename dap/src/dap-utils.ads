@@ -41,7 +41,7 @@ package DAP.Utils is
       Line   : Integer);
    --  Open the file and set the cursor on the line.
 
-   function UTF8
+   function To_UTF8
      (Item : VSS.Strings.Virtual_String'Class)
       return Ada.Strings.UTF_Encoding.UTF_8_String
       renames VSS.Strings.Conversions.To_UTF_8_String;

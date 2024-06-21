@@ -90,7 +90,7 @@ package body DAP.Clients.Stack_Trace.StackTrace is
 
             if not Frame_Ref.instructionPointerReference.Is_Empty then
                Frame.Address := String_To_Address
-                 (UTF8 (Frame_Ref.instructionPointerReference));
+                 (To_UTF8 (Frame_Ref.instructionPointerReference));
             end if;
 
             if Frame_Ref.source.Is_Set then
