@@ -53,7 +53,7 @@ package body DAP.Modules.Variables.Items.Variables is
       Value : in out GNATCOLL.JSON.JSON_Value) is
    begin
       Value.Set_Field ("tag", "variable");
-      Value.Set_Field ("value", DAP.Utils.UTF8 (Info.Varname));
+      Value.Set_Field ("value", DAP.Utils.To_UTF8 (Info.Varname));
       Value.Set_Field
         ("format", Value_Format'Image (Convert (Info.Format)));
    end Store;

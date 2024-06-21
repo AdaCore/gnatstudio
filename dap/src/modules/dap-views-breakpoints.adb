@@ -989,7 +989,7 @@ package body DAP.Views.Breakpoints is
          loop
             Add_Unique_Combo_Entry
               (Self.Exception_Name,
-               UTF8 (Capabilities.Value.exceptionBreakpointFilters
+               To_UTF8 (Capabilities.Value.exceptionBreakpointFilters
                  (Index).label));
          end loop;
          Self.Exception_Name.Set_Active (0);
@@ -1959,7 +1959,7 @@ package body DAP.Views.Breakpoints is
       if not Br.Condition.Is_Empty then
          Add_Unique_Combo_Entry
            (Self.Condition_Combo,
-            UTF8 (Br.Condition),
+            To_UTF8 (Br.Condition),
             Select_Text => True);
       else
          Self.Condition_Combo.Set_Active (-1);
@@ -1976,7 +1976,7 @@ package body DAP.Views.Breakpoints is
       Delete (Buffer, Start, The_End);
 
       if not Br.Commands.Is_Empty then
-         Insert_At_Cursor (Buffer, UTF8 (Br.Commands));
+         Insert_At_Cursor (Buffer, To_UTF8 (Br.Commands));
       end if;
    end Fill;
 

@@ -1026,7 +1026,7 @@ package body DAP.Views.Memory is
       if Result.a_body.Is_Set then
          declare
             Base64_Decoder : GNATCOLL.Coders.Base64.Decoder_Type;
-            Str     : constant String := UTF8 (Result.a_body.Value.data);
+            Str     : constant String := To_UTF8 (Result.a_body.Value.data);
             Src     : Stream_Element_Array (1 .. Str'Length) with Import;
             for Src'Address use Str'Address;
             Index   : Stream_Element_Offset := Src'First;

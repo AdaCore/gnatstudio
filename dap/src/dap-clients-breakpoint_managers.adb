@@ -148,7 +148,7 @@ package body DAP.Clients.Breakpoint_Managers is
       end if;
 
       if not Item.instructionReference.Is_Empty then
-         Address := String_To_Address (UTF8 (Item.instructionReference));
+         Address := String_To_Address (To_UTF8 (Item.instructionReference));
 
          if Item.offset.Is_Set then
             Address := Set_Offset (Address, Item.offset.Value);
