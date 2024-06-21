@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                               GNAT Studio                                --
 --                                                                          --
---                        Copyright (C) 2023, AdaCore                       --
+--                     Copyright (C) 2023-2024, AdaCore                     --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -236,14 +236,14 @@ package body DAP.Clients.Evaluate is
               and then Client /= null
             then
                Client.Display_In_Debugger_Console
-                 (To_UTF8 (Result.a_body.result), False);
+                 (Result.a_body.result, False);
             end if;
 
             if Self.On_Result_Message /= null then
                declare
-
                   Arguments : Callback_Data'Class :=
                     Self.On_Result_Message.Get_Script.Create (1);
+
                begin
                   Set_Nth_Arg (Arguments, 1, To_UTF8 (Result.a_body.result));
 
@@ -332,7 +332,7 @@ package body DAP.Clients.Evaluate is
 
          when Command =>
             if Self.Output then
-               Client.Display_In_Debugger_Console (To_UTF8 (Message), False);
+               Client.Display_In_Debugger_Console (Message, False);
             end if;
 
             if Self.On_Error_Message /= null then

@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                               GNAT Studio                                --
 --                                                                          --
---                        Copyright (C) 2022-2023, AdaCore                  --
+--                        Copyright (C) 2022-2024, AdaCore                  --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -16,6 +16,7 @@
 ------------------------------------------------------------------------------
 
 with Ada.Unchecked_Conversion;
+with DAP.Utils;
 with System;
 
 with GNAT.Expect;                use GNAT.Expect;
@@ -129,6 +130,8 @@ package body DAP.Views.Consoles is
       Input   : String;
       User    : System.Address) return String;
    --  Input command interpreter. Execute command and display output.
+   --
+   --  String type is indented to match expected subprogram's profile.
 
    procedure On_Grab_Focus (Console : access Gtk_Widget_Record'Class);
    --  Callback for the "grab_focus" signal on the console.
@@ -464,7 +467,9 @@ package body DAP.Views.Consoles is
       end if;
 
       Client.Process_User_Command
-        (Cmd => Input, Output_Command => False, Result_In_Console => True);
+        (Cmd               => DAP.Utils.To_Virtual_String (Input),
+         Output_Command    => False,
+         Result_In_Console => True);
 
       return "";
    end Interpret_Command_Handler;

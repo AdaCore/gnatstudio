@@ -1752,8 +1752,9 @@ package body DAP.Views.Variables is
    is
       Client : constant DAP.Clients.DAP_Client_Access :=
         DAP.Module.Get_Current_Debugger;
-      Name   : constant String :=
-        Get_Variable_Name (Context.Context, Command.Dereference);
+      Name   : constant Virtual_String :=
+        To_Virtual_String
+          (Get_Variable_Name (Context.Context, Command.Dereference));
    begin
       if GPS.Kernel.Contexts.Has_Debugging_Variable (Context.Context) then
          declare
@@ -1761,7 +1762,7 @@ package body DAP.Views.Variables is
          begin
             if Info.Is_Command then
                Client.Process_User_Command
-                 (Cmd               => To_UTF8 (Info.Get_Name),
+                 (Cmd               => Info.Get_Name,
                   Output_Command    => True,
                   Result_In_Console => True);
 
