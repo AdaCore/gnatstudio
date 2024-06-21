@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                  GtkAda - Ada95 binding for Gtk+/Gnome                   --
 --                                                                          --
---                     Copyright (C) 2001-2023, AdaCore                     --
+--                     Copyright (C) 2001-2024, AdaCore                     --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -21,6 +21,10 @@ with GNAT.Calendar.Time_IO;     use GNAT.Calendar.Time_IO;
 with GNAT.Expect;               use GNAT.Expect;
 with GNAT.Regexp;               use GNAT.Regexp;
 with GNAT.Strings;
+
+with VSS.Strings;               use VSS.Strings;
+with VSS.Strings.Conversions;
+
 with GNATCOLL.VFS;              use GNATCOLL.VFS;
 with GNATCOLL.VFS.GtkAda;       use GNATCOLL.VFS.GtkAda;
 with GNATCOLL.VFS_Utils;        use GNATCOLL.VFS_Utils;
@@ -388,13 +392,15 @@ package body Gtkada.File_Selector is
            and then Pattern (Pattern'Last) = '}'
          then
             Filter.Label :=
-              new String'(Pattern (Pattern'First + 1 .. Pattern'Last - 1));
+              VSS.Strings.Conversions.To_Virtual_String
+                (Pattern (Pattern'First + 1 .. Pattern'Last - 1));
          else
-            Filter.Label := new String'(Pattern);
+            Filter.Label :=
+              VSS.Strings.Conversions.To_Virtual_String (Pattern);
          end if;
 
       else
-         Filter.Label := new String'(Name);
+         Filter.Label := VSS.Strings.Conversions.To_Virtual_String (Name);
       end if;
 
       Filter.Pattern :=
@@ -415,7 +421,8 @@ package body Gtkada.File_Selector is
    function Except_File_Filter (Pattern : String) return Except_Filter is
       Filter : constant Except_Filter := new Except_Filter_Record;
    begin
-      Filter.Label := new String'(Except & Pattern);
+      Filter.Label :=
+        VSS.Strings.Conversions.To_Virtual_String (Except & Pattern);
 
       Filter.Pattern :=
         Compile
@@ -886,7 +893,8 @@ package body Gtkada.File_Selector is
    begin
       pragma Assert (File_Selector /= null);
 
-      Filter_A.Label := new String'(-"All files");
+      Filter_A.Label :=
+        VSS.Strings.Conversions.To_Virtual_String (-"All files");
 
       Register_Filter (File_Selector, Filter_A);
       Set_Modal (File_Selector, True);
@@ -945,7 +953,8 @@ package body Gtkada.File_Selector is
    begin
       pragma Assert (File_Selector /= null);
 
-      Filter_A.Label := new String'(-"All files");
+      Filter_A.Label :=
+        VSS.Strings.Conversions.To_Virtual_String (-"All files");
 
       Register_Filter (File_Selector, Filter_A);
       Set_Modal (File_Selector, True);
@@ -1116,7 +1125,9 @@ package body Gtkada.File_Selector is
       Filter : access File_Filter_Record'Class) is
    begin
       Append (Win.Filters, File_Filter (Filter));
-      Add_Unique_Combo_Entry (Win.Filter_Combo, Filter.Label.all);
+      Add_Unique_Combo_Entry
+        (Win.Filter_Combo,
+         VSS.Strings.Conversions.To_UTF_8_String (Filter.Label));
       if Get_Active (Win.Filter_Combo) = -1 then
          Set_Active (Win.Filter_Combo, 0);
       end if;
@@ -1167,11 +1178,12 @@ package body Gtkada.File_Selector is
       --  Find out which filter to use
 
       declare
-         S : constant String :=
-               Locale_From_UTF8 (Get_Active_Text (Win.Filter_Combo));
+         S : constant Virtual_String :=
+           VSS.Strings.Conversions.To_Virtual_String
+             (Get_Active_Text (Win.Filter_Combo));
       begin
          for Item of Win.Filters loop
-            if Item.Label.all = S then
+            if Item.Label = S then
                Filter := Item;
                exit;
             end if;
@@ -2254,7 +2266,7 @@ package body Gtkada.File_Selector is
 
    procedure Destroy (Filter : access File_Filter_Record) is
    begin
-      Free (Filter.Label);
+      null;
    end Destroy;
 
    ----------
