@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                               GNAT Studio                                --
 --                                                                          --
---                     Copyright (C) 2005-2023, AdaCore                     --
+--                     Copyright (C) 2005-2024, AdaCore                     --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -2819,9 +2819,9 @@ package body GPS.Kernel.MDI is
 
          Gtk_New (Auto_Reload, -"Auto-reload");
          Auto_Reload.Set_Tooltip_Text
-           (-"Whether to reload files as soon as they are modified on disk."
+           (-("Whether to reload files as soon as they are modified on disk."
             & " This setting can also be changed in the preferences"
-            & " dialog. This will not affect files in unsaved editors.");
+            & " dialog. This will not affect files in unsaved editors."));
          Auto_Reload.Set_Alignment (0.0, 0.5);
          Auto_Reload.Set_Active (Is_Auto_Reload);
          Ref (Auto_Reload);

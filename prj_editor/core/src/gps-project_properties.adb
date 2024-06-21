@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                               GNAT Studio                                --
 --                                                                          --
---                     Copyright (C) 2002-2023, AdaCore                     --
+--                     Copyright (C) 2002-2024, AdaCore                     --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -236,15 +236,15 @@ package body GPS.Project_Properties is
          begin
             if Child.Tag.all /= "project_attribute" then
                Module.Kernel.Messages_Window.Insert
-                 (-"<mutually_exclusive> Parent should only have "
-                  & "<project_attribute> Parents as children",
+                 (-("<mutually_exclusive> Parent should only have "
+                    & "<project_attribute> Parents as children"),
                   Mode => Error);
 
                return False;
             elsif Get_Attribute (Child, "editor_page") /= Page_Name then
                Module.Kernel.Messages_Window.Insert
-                 (-"<mutually_exclusive> children ""editor_page"" attribute "
-                  & "should be equal to their parent's one",
+                 (-("<mutually_exclusive> children ""editor_page"" attribute "
+                    & "should be equal to their parent's one"),
                  Mode => Error);
 
                return False;
