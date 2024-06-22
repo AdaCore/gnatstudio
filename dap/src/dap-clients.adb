@@ -993,7 +993,7 @@ package body DAP.Clients is
             declare
                Remote_File : constant Virtual_File :=
                  Create_From_Base
-                   (+UTF8 (Self.Source_Files.Element (L)),
+                   (+To_UTF8 (Self.Source_Files.Element (L)),
                     Dir_Name (Self.Get_Executable),
                     Remote.Get_Nickname (Remote.Debug_Server));
                Local_File  : constant Virtual_File := To_Local (Remote_File);
@@ -1032,7 +1032,7 @@ package body DAP.Clients is
 
                   if not Found then
                      Bases (Bases_Index) := new String'
-                       (Base_Name (UTF8 (Self.Source_Files.Element (L))));
+                       (Base_Name (To_UTF8 (Self.Source_Files.Element (L))));
                      Bases_Index := Bases_Index + 1;
                   end if;
 
@@ -1225,7 +1225,7 @@ package body DAP.Clients is
          while not JS.R.Is_End_Object loop
             pragma Assert (JS.R.Is_Key_Name);
             declare
-               Key : constant String := UTF8 (JS.R.Key_Name);
+               Key : constant String := To_UTF8 (JS.R.Key_Name);
 
             begin
                JS.R.Read_Next;
@@ -1448,7 +1448,7 @@ package body DAP.Clients is
                      when others  =>
                        GPS.Kernel.Info);
                Text             : constant String :=
-                 UTF8 (output.a_body.output);
+                 To_UTF8 (output.a_body.output);
             begin
                if Output_Console /= null then
                   Output_Console.Insert
@@ -1604,9 +1604,9 @@ package body DAP.Clients is
 
       else
          Self.Kernel.Get_Messages_Window.Insert_Error
-           ("Event:" & UTF8 (Event));
+           ("Event:" & To_UTF8 (Event));
 
-         Trace (Me, "Event:" & UTF8 (Event));
+         Trace (Me, "Event:" & To_UTF8 (Event));
       end if;
 
    exception
@@ -1659,7 +1659,7 @@ package body DAP.Clients is
       procedure Add_BP_For_Offset is
          Line : Editable_Line_Type :=
            Editable_Line_Type'Value
-             (UTF8 (Details_Match.Captured (Bp_Offset_Idx)));
+             (To_UTF8 (Details_Match.Captured (Bp_Offset_Idx)));
       begin
          if Details_Match.Captured
            (Bp_Offset_Sig_Idx) = "+"
@@ -1757,7 +1757,7 @@ package body DAP.Clients is
             Matched := Is_Catch_Exception_Pattern.Match (VSS_Cmd);
             if Matched.Has_Match then
                Self.Breakpoints.Break_Exception
-                 (Name      => UTF8 (Matched.Captured (2)),
+                 (Name      => To_UTF8 (Matched.Captured (2)),
                   Unhandled => False,
                   Temporary => Matched.Captured (1) = "tcatch");
 
@@ -1797,7 +1797,8 @@ package body DAP.Clients is
                      elsif Details_Match.Has_Capture (Bp_Address_Idx) then
                         Self.Breakpoints.Break_Address
                           (String_To_Address
-                             (UTF8 (Details_Match.Captured (Bp_Address_Idx))),
+                             (To_UTF8
+                                (Details_Match.Captured (Bp_Address_Idx))),
                            Matched.Has_Capture (Bp_Temporary_Idx),
                            Details_Match.Captured (Bp_Condition_Idx));
 
@@ -1814,7 +1815,7 @@ package body DAP.Clients is
                                      (Details_Match.Captured (Bp_File_Idx)),
                                  Self.Kernel),
                               Line      =>
-                                Editable_Line_Type'Value (UTF8
+                                Editable_Line_Type'Value (To_UTF8
                                   (Details_Match.Captured (Bp_Line_Idx))),
                               Temporary =>
                                 Matched.Has_Capture (Bp_Temporary_Idx),
@@ -1827,7 +1828,7 @@ package body DAP.Clients is
                              (File      =>
                                 Self.Get_Stack_Trace.Get_Current_File,
                               Line      =>
-                                Editable_Line_Type'Value (UTF8
+                                Editable_Line_Type'Value (To_UTF8
                                   (Details_Match.Captured (Bp_Line_Idx))),
                               Temporary =>
                                 Matched.Has_Capture (Bp_Temporary_Idx),
@@ -1839,11 +1840,12 @@ package body DAP.Clients is
                         Self.Breakpoints.Break_Subprogram
                           (Subprogram =>
                              (if Details_Match.Has_Capture (Bp_File_Idx)
-                              then UTF8 (Details_Match.Captured (Bp_File_Idx))
-                              & ":" & UTF8
+                              then To_UTF8
+                                (Details_Match.Captured (Bp_File_Idx))
+                              & ":" & To_UTF8
                                 (Details_Match.Captured (Bp_Subprogram_Idx))
                               else
-                                 UTF8 (Details_Match.Captured
+                                 To_UTF8 (Details_Match.Captured
                                    (Bp_Subprogram_Idx))),
                            Temporary  =>
                              Matched.Has_Capture (Bp_Temporary_Idx),

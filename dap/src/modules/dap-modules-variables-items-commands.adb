@@ -65,7 +65,7 @@ package body DAP.Modules.Variables.Items.Commands is
       Value : in out GNATCOLL.JSON.JSON_Value) is
    begin
       Value.Set_Field ("tag", "cmd");
-      Value.Set_Field ("value", DAP.Utils.UTF8 (Info.Cmd));
+      Value.Set_Field ("value", DAP.Utils.To_UTF8 (Info.Cmd));
       Value.Set_Field ("split", Info.Split_Lines);
    end Store;
 

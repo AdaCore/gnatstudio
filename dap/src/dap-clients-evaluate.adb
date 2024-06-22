@@ -214,12 +214,12 @@ package body DAP.Clients.Evaluate is
          when Hover =>
             Self.Label.Set_Markup
               ("<b>Debugger value :</b> " & Glib.Convert.Escape_Text
-                 (UTF8 (Result.a_body.result)));
+                 (To_UTF8 (Result.a_body.result)));
             Unref (GObject (Self.Label));
 
          when Variable_Address =>
             declare
-               S     : constant String := UTF8 (Result.a_body.result);
+               S     : constant String := To_UTF8 (Result.a_body.result);
                Index : Integer := S'Last;
             begin
                String_Utils.Skip_To_Char (S, Index, 'x', Step => -1);
@@ -236,7 +236,7 @@ package body DAP.Clients.Evaluate is
               and then Client /= null
             then
                Client.Display_In_Debugger_Console
-                 (UTF8 (Result.a_body.result), False);
+                 (To_UTF8 (Result.a_body.result), False);
             end if;
 
             if Self.On_Result_Message /= null then
@@ -245,7 +245,7 @@ package body DAP.Clients.Evaluate is
                   Arguments : Callback_Data'Class :=
                     Self.On_Result_Message.Get_Script.Create (1);
                begin
-                  Set_Nth_Arg (Arguments, 1, UTF8 (Result.a_body.result));
+                  Set_Nth_Arg (Arguments, 1, To_UTF8 (Result.a_body.result));
 
                   declare
                      Dummy : GNATCOLL.Any_Types.Any_Type :=
@@ -332,7 +332,7 @@ package body DAP.Clients.Evaluate is
 
          when Command =>
             if Self.Output then
-               Client.Display_In_Debugger_Console (UTF8 (Message), False);
+               Client.Display_In_Debugger_Console (To_UTF8 (Message), False);
             end if;
 
             if Self.On_Error_Message /= null then
@@ -341,7 +341,7 @@ package body DAP.Clients.Evaluate is
                     Self.On_Error_Message.Get_Script.Create (1);
 
                begin
-                  Set_Nth_Arg (Arguments, 1, UTF8 (Message));
+                  Set_Nth_Arg (Arguments, 1, To_UTF8 (Message));
 
                   declare
                      Dummy : GNATCOLL.Any_Types.Any_Type :=
