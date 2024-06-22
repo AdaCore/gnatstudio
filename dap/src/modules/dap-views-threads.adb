@@ -299,7 +299,7 @@ package body DAP.Views.Threads is
                            then "* "
                            else "") & Image (Thread.id)),
                       --  Name
-                      Name_Column => As_String (UTF8 (Thread.name))));
+                      Name_Column => As_String (To_UTF8 (Thread.name))));
                   exit Th;
                end if;
             end;

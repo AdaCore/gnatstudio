@@ -446,7 +446,7 @@ package body DAP.Views.Variables is
                Iter    => Iter,
                Columns => (Column_Value, Column_Value_Fg),
                Values  =>
-                 (1 => As_String (UTF8 (Variable.value)),
+                 (1 => As_String (To_UTF8 (Variable.value)),
                   2 => As_String (To_String (Numbers_Style.Get_Pref_Fg))));
          end if;
       end if;
@@ -767,7 +767,7 @@ package body DAP.Views.Variables is
             return Wrap (Get_Name (Item));
 
          else
-            return Wrap (UTF8 (Element (Cursor).Data.name));
+            return Wrap (To_UTF8 (Element (Cursor).Data.name));
          end if;
       end Display_Name;
 
@@ -782,7 +782,7 @@ package body DAP.Views.Variables is
          then
             return "";
          else
-            return XML_Utils.Protect (UTF8 (Element (Cursor).Data.a_type));
+            return XML_Utils.Protect (To_UTF8 (Element (Cursor).Data.a_type));
          end if;
       end Display_Type_Name;
 
@@ -820,7 +820,7 @@ package body DAP.Views.Variables is
 
          else
             return XML_Utils.Protect
-              (Validate_UTF_8 (UTF8 (Element (Cursor).Data.value)));
+              (Validate_UTF_8 (To_UTF8 (Element (Cursor).Data.value)));
          end if;
       end Display_Value;
 
@@ -833,7 +833,7 @@ package body DAP.Views.Variables is
       end if;
 
       Trace
-        (Me, "Add row:" & UTF8
+        (Me, "Add row:" & To_UTF8
            ((if Var.name.Is_Empty
             then Item.Get_Name
             else Var.name)) &
@@ -1761,7 +1761,7 @@ package body DAP.Views.Variables is
          begin
             if Info.Is_Command then
                Client.Process_User_Command
-                 (Cmd               => UTF8 (Info.Get_Name),
+                 (Cmd               => To_UTF8 (Info.Get_Name),
                   Output_Command    => True,
                   Result_In_Console => True);
 
@@ -2129,7 +2129,7 @@ package body DAP.Views.Variables is
                if Display_Value_Select_Dialog
                  (Get_Kernel (Context.Context),
                   "Set format",
-                  "Format for " & UTF8 (Name),
+                  "Format for " & To_UTF8 (Name),
                   Format)
                then
                   Item.Format := Convert (Format);

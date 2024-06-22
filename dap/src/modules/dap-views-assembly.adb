@@ -1004,7 +1004,8 @@ package body DAP.Views.Assembly is
             begin
                S.Append
                  (Disassemble_Element'
-                    (Address       => String_To_Address (UTF8 (Line.address)),
+                    (Address       => String_To_Address
+                         (To_UTF8 (Line.address)),
                      Method_Offset =>
                        Ada.Strings.Unbounded.Null_Unbounded_String,
                      Instr         => VSS.Strings.Conversions.
