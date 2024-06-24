@@ -232,7 +232,7 @@ class gnatCheckProc:
         self.full_output += msg + "\n"
 
     def on_match(self, process, matched, unmatched):
-        if unmatched == "\n":
+        if unmatched.startswith("\n"):
             GPS.Console("Messages").write(self.msg + unmatched)
             self.parse_output(self.msg)
             self.msg = ""
