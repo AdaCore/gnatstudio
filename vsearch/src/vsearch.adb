@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                               GNAT Studio                                --
 --                                                                          --
---                     Copyright (C) 2001-2023, AdaCore                     --
+--                     Copyright (C) 2001-2024, AdaCore                     --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -22,6 +22,10 @@ with Ada.Strings.Unbounded;     use Ada.Strings.Unbounded;
 with Ada.Unchecked_Deallocation;
 with GNAT.OS_Lib;               use GNAT.OS_Lib;
 with GNAT.Strings;
+
+with VSS.Strings;               use VSS.Strings;
+with VSS.Strings.Conversions;
+
 with GNATCOLL.Projects;         use GNATCOLL.Projects;
 with GNATCOLL.Templates;
 with GNATCOLL.Traces;           use GNATCOLL.Traces;
@@ -976,8 +980,9 @@ package body Vsearch is
                          Get_History (Vsearch_Module_Id.Kernel).all;
       Pattern        : constant String :=
                          To_String (Vsearch_Module_Id.Pattern);
-      Replace_Text   : constant String :=
-                         To_String (Vsearch_Module_Id.Replace);
+      Replace_Text   : constant Virtual_String :=
+                         VSS.Strings.Conversions.To_Virtual_String
+                           (Vsearch_Module_Id.Replace);
       Whole_Word     : constant Boolean :=
                          Get_History (History, Key => Whole_Word_Hist_Key);
       Case_Sensitive : constant Boolean :=
@@ -1019,12 +1024,15 @@ package body Vsearch is
             Regexp         => Kind = Regexp);
 
          Add_Unique_Combo_Entry
-           (Vsearch.Replace_Combo, Replace_Text, Prepend => True);
+           (Vsearch.Replace_Combo,
+            Replace_Text,
+            Prepend => True);
       end if;
 
       Add_To_History
         (Get_History (Vsearch_Module_Id.Kernel).all,
-         Replace_Hist_Key, Replace_Text);
+         Replace_Hist_Key,
+         VSS.Strings.Conversions.To_UTF_8_String (Replace_Text));
 
       return Ctxt;
    end Create_Context;
@@ -1528,7 +1536,8 @@ package body Vsearch is
          --  Set the widgets' sensitivity/sate according to the options
          --  supported by the newly selected search module.
          Has_Replace := Module.Is_Option_Supported (Supports_Replace);
-         Has_Case_Sensitive := Module.Is_Option_Supported (Case_Sensitive);
+         Has_Case_Sensitive :=
+           Module.Is_Option_Supported (Find_Utils.Case_Sensitive);
          Has_All_Occurrences := Module.Is_Option_Supported (All_Occurrences);
          Has_Whole_Word := Module.Is_Option_Supported (Whole_Word);
          Has_Backward := Module.Is_Option_Supported (Search_Backward);
@@ -1911,7 +1920,10 @@ package body Vsearch is
 
       if Vsearch_Module_Id.Search_Regexps /= null then
          for R of Vsearch_Module_Id.Search_Regexps.all loop
-            Item := Add_Unique_Combo_Entry (Vsearch.Pattern_Combo, R.Name.all);
+            Item :=
+              Add_Unique_Combo_Entry
+                (Vsearch.Pattern_Combo,
+                 VSS.Strings.Conversions.To_Virtual_String (R.Name.all));
             Model.Set (Item, Column_Pattern,        R.Regexp.all);
             Model.Set (Item, Column_Case_Sensitive, R.Case_Sensitive);
             Model.Set (Item, Column_Is_Regexp,      R.Is_Regexp);

@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                               GNAT Studio                                --
 --                                                                          --
---                     Copyright (C) 2001-2023, AdaCore                     --
+--                     Copyright (C) 2001-2024, AdaCore                     --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -21,7 +21,8 @@
 --  be associated with menus, keys and toolbar buttons among other things.
 
 with Ada.Tags;
-with GNAT.Strings;
+
+with VSS.Strings;
 
 with Gtkada.MDI;           use Gtkada.MDI;
 with Gdk.Event;
@@ -231,16 +232,16 @@ private
    type Action_Record is record
       Command                  : access Interactive_Command'Class;
       Filter                   : Action_Filter;
-      Description              : GNAT.Strings.String_Access;
-      Name                     : GNAT.Strings.String_Access;
+      Description              : VSS.Strings.Virtual_String;
+      Name                     : VSS.Strings.Virtual_String;
       Modified                 : Boolean;
       Overridden               : Boolean;
-      Category                 : GNAT.Strings.String_Access;
+      Category                 : VSS.Strings.Virtual_String;
 
       Disabled                 : Boolean := False;
       --  Whether this command was disabled explicitly.
 
-      Icon_Name                : GNAT.Strings.String_Access;
+      Icon_Name                : VSS.Strings.Virtual_String;
 
       Shortcut_Active_For_View : Ada.Tags.Tag := Ada.Tags.No_Tag;
       --  Used to enable the key shortcut associated to this action only when

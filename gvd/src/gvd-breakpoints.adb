@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                               GNAT Studio                                --
 --                                                                          --
---                     Copyright (C) 2000-2023, AdaCore                     --
+--                     Copyright (C) 2000-2024, AdaCore                     --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -18,6 +18,8 @@
 with Ada.Characters.Handling;   use Ada.Characters.Handling;
 with Ada.Strings.Unbounded;     use Ada.Strings.Unbounded;
 with GNAT.Strings;              use GNAT.Strings;
+
+with VSS.Strings.Conversions;   use VSS.Strings.Conversions;
 
 with GNATCOLL.Projects;
 with GNATCOLL.VFS;              use GNATCOLL.VFS;
@@ -1211,7 +1213,7 @@ package body GVD.Breakpoints is
          else
             Add_Unique_Combo_Entry
               (Self.Exception_Name,
-               To_String (Br.Except), Select_Text => True);
+               To_Virtual_String (Br.Except), Select_Text => True);
          end if;
 
          Set_Active (Self.Temporary, Br.Disposition /= Keep);
@@ -1228,7 +1230,7 @@ package body GVD.Breakpoints is
 
          if Br.Subprogram /= "" then
             Add_Unique_Combo_Entry
-              (Self.Subprogram_Combo, To_String (Br.Subprogram), True);
+              (Self.Subprogram_Combo, To_Virtual_String (Br.Subprogram), True);
          end if;
 
       else
@@ -1236,7 +1238,8 @@ package body GVD.Breakpoints is
            (Breakpoint_Type'Pos (Break_At_Address));
 
          Add_Unique_Combo_Entry
-           (Self.Address_Combo, Address_To_String (Br.Address));
+           (Self.Address_Combo,
+            To_Virtual_String (Address_To_String (Br.Address)));
          Set_Text
            (Gtk_Entry (Self.Address_Combo.Get_Child),
             Address_To_String (Br.Address));
@@ -1259,7 +1262,7 @@ package body GVD.Breakpoints is
       if Br.Condition /= "" then
          Add_Unique_Combo_Entry
            (Self.Condition_Combo,
-            To_String (Br.Condition), Select_Text => True);
+            To_Virtual_String (Br.Condition), Select_Text => True);
       else
          Self.Condition_Combo.Set_Active (-1);
       end if;
@@ -1794,7 +1797,8 @@ package body GVD.Breakpoints is
 
          for J in Exception_Arr'Range loop
             Add_Unique_Combo_Entry
-              (View.Exception_Name, To_String (Exception_Arr (J).Name));
+              (View.Exception_Name,
+               To_Virtual_String (Exception_Arr (J).Name));
          end loop;
       end if;
    end On_Load_Exception_List_Clicked;

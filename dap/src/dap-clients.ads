@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                               GNAT Studio                                --
 --                                                                          --
---                        Copyright (C) 2022-2023, AdaCore                  --
+--                        Copyright (C) 2022-2024, AdaCore                  --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -243,7 +243,7 @@ package DAP.Clients is
 
    procedure Display_In_Debugger_Console
      (Self       : in out DAP_Client;
-      Msg        : String;
+      Msg        : VSS.Strings.Virtual_String;
       Is_Command : Boolean := False);
    --  Displays the message in the console. Highlight it and add to the
    --  history if Is_Command is True.
@@ -265,7 +265,7 @@ package DAP.Clients is
 
    procedure Process_User_Command
      (Self              : in out DAP_Client;
-      Cmd               : String;
+      Cmd               : VSS.Strings.Virtual_String;
       Output_Command    : Boolean := False;
       Result_In_Console : Boolean := False;
       On_Result_Message : GNATCOLL.Scripts.Subprogram_Type := null;

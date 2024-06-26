@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                               GNAT Studio                                --
 --                                                                          --
---                     Copyright (C) 2002-2023, AdaCore                     --
+--                     Copyright (C) 2002-2024, AdaCore                     --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -88,6 +88,8 @@ with Project_Dependencies_Editors; use Project_Dependencies_Editors;
 with Scenario_Selectors;           use Scenario_Selectors;
 with Switches_Editors;             use Switches_Editors;
 with Toolchains_Editor;            use Toolchains_Editor;
+with VSS.Strings;
+with VSS.Strings.Conversions;
 
 package body Project_Properties is
    use Widget_List;
@@ -2022,10 +2024,11 @@ package body Project_Properties is
 
          GUI_Utils.Add_Unique_Combo_Entry
            (Editor.Combo,
-            Get_Current_Value
-              (Project => Project,
-               Attr    => Description,
-               Index   => ""),
+            VSS.Strings.Conversions.To_Virtual_String
+              (Get_Current_Value
+                 (Project => Project,
+                  Attr    => Description,
+                  Index   => "")),
             Select_Text    => True,
             Case_Sensitive => Description.Case_Sensitive_Index);
       end if;

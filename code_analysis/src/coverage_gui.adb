@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                               GNAT Studio                                --
 --                                                                          --
---                     Copyright (C) 2006-2023, AdaCore                     --
+--                     Copyright (C) 2006-2024, AdaCore                     --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -657,9 +657,9 @@ package body Coverage_GUI is
 
             if Gcov_Root = No_File then
                Kernel.Insert
-                 (-"Could not determine directory for GCOV files: make sure" &
-                  " that the root project has an object directory, or that" &
-                  " the environment variable GCOV_ROOT is set.",
+                 (-("Could not determine directory for GCOV files: make sure" &
+                    " that the root project has an object directory, or that" &
+                    " the environment variable GCOV_ROOT is set."),
                   Mode => Error);
             end if;
 

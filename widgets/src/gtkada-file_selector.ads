@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                  GtkAda - Ada95 binding for Gtk+/Gnome                   --
 --                                                                          --
---                     Copyright (C) 2001-2023, AdaCore                     --
+--                     Copyright (C) 2001-2024, AdaCore                     --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -51,6 +51,8 @@
 
 with Ada.Containers.Doubly_Linked_Lists;
 with GNAT.OS_Lib;         use GNAT.OS_Lib;
+
+with VSS.Strings;
 
 with Glib.Main;           use Glib.Main;
 
@@ -180,7 +182,7 @@ package Gtkada.File_Selector is
    -------------
 
    type File_Filter_Record is abstract tagged record
-      Label : String_Access;
+      Label : VSS.Strings.Virtual_String;
    end record;
    type File_Filter is access all File_Filter_Record'Class;
    --  The basic type for file filters
