@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                               GNAT Studio                                --
 --                                                                          --
---                        Copyright (C) 2022-2023, AdaCore                  --
+--                        Copyright (C) 2022-2024, AdaCore                  --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -72,7 +72,7 @@ package DAP.Clients.Breakpoint_Managers is
 
    procedure Break_Subprogram
      (Self       : not null access Breakpoint_Manager_Type;
-      Subprogram : String;
+      Subprogram : VSS.Strings.Virtual_String;
       Temporary  : Boolean := False;
       Condition  : VSS.Strings.Virtual_String :=
         VSS.Strings.Empty_Virtual_String);

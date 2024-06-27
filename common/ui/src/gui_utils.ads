@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                               GNAT Studio                                --
 --                                                                          --
---                     Copyright (C) 2000-2023, AdaCore                     --
+--                     Copyright (C) 2000-2024, AdaCore                     --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -23,6 +23,8 @@ with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
 with System;                   use System;
 
 with GNAT.Strings;
+
+with VSS.Strings;
 
 with Glib.Object;
 with Glib.Values;
@@ -68,8 +70,6 @@ with Gtk.Widget;
 with Gtk.Window; use Gtk.Window;
 with Gtkada.Dialogs;           use Gtkada.Dialogs;
 with Gtkada.MDI;
-
-with VSS.Strings;
 
 with String_List_Utils;
 with Histories;                use Histories;
@@ -218,7 +218,7 @@ package GUI_Utils is
 
    procedure Add_Unique_Combo_Entry
      (Combo        : access Gtk.Combo_Box.Gtk_Combo_Box_Record'Class;
-      Text         : String;
+      Text         : VSS.Strings.Virtual_String;
       Select_Text  : Boolean := False;
       Prepend      : Boolean := False;
       Col          : Gint := 0;
@@ -232,7 +232,7 @@ package GUI_Utils is
 
    function Add_Unique_Combo_Entry
      (Combo        : access Gtk.Combo_Box.Gtk_Combo_Box_Record'Class;
-      Text         : String;
+      Text         : VSS.Strings.Virtual_String;
       Select_Text  : Boolean := False;
       Prepend      : Boolean := False;
       Col          : Gint := 0;

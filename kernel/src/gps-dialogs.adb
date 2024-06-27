@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                               GNAT Studio                                --
 --                                                                          --
---                     Copyright (C) 2000-2023, AdaCore                     --
+--                     Copyright (C) 2000-2024, AdaCore                     --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -29,6 +29,7 @@ with Gtk.Widget;            use Gtk.Widget;
 with Gtk.Window;            use Gtk.Window;
 with GPS.Kernel.MDI;        use GPS.Kernel.MDI;
 with GPS.Main_Window;       use GPS.Main_Window;
+with VSS.Strings.Conversions;
 
 package body GPS.Dialogs is
 
@@ -307,8 +308,8 @@ package body GPS.Dialogs is
 
    function Display_Select_Dialog
      (Kernel  : not null access Kernel_Handle_Record'Class;
-      Title   : String;
-      Message : String;
+      Title   : VSS.Strings.Virtual_String;
+      Message : VSS.Strings.Virtual_String;
       Value   : in out Enumerated_Type) return Boolean
    is
       Dialog  : GPS_Dialog;
@@ -319,14 +320,14 @@ package body GPS.Dialogs is
    begin
       Gtk_New
         (Dialog,
-         Title  => Title,
+         Title  => VSS.Strings.Conversions.To_UTF_8_String (Title),
          Kernel => Kernel,
          Flags  => Destroy_With_Parent or Modal);
 
       Gtk_New_Hbox (Box, Homogeneous => False);
       Dialog.Get_Content_Area.Pack_Start (Box, Expand => False);
 
-      Gtk_New (Label, Message);
+      Gtk_New (Label, VSS.Strings.Conversions.To_UTF_8_String (Message));
       Label.Set_Halign (Align_Start);
       Box.Pack_Start (Label, Expand => False, Padding => 5);
 

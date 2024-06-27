@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                               GNAT Studio                                --
 --                                                                          --
---                     Copyright (C) 2001-2023, AdaCore                     --
+--                     Copyright (C) 2001-2024, AdaCore                     --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -18,6 +18,8 @@
 with Ada.Characters.Handling; use Ada.Characters.Handling;
 with Ada.Strings.Unbounded;
 with Ada.Unchecked_Deallocation;
+
+with VSS.Strings;             use VSS.Strings;
 
 with Commands;                use Commands;
 with Gdk.Event;               use Gdk.Event;
@@ -36,6 +38,7 @@ with Gtk.Size_Group;          use Gtk.Size_Group;
 with Pango.Layout;            use Pango.Layout;
 with String_Utils;            use String_Utils;
 with Learn;                   use Learn;
+with VSS.Strings.Conversions;
 
 package body GPS.Kernel.Actions is
    Me       : constant Trace_Handle := Create ("GPS.KERNEL.ACTIONS");
@@ -225,10 +228,6 @@ package body GPS.Kernel.Actions is
       --  kernel itself is destroyed. This means that filters always have a
       --  lifespan equal to that of GNAT Studio
 
-      Free (Action.Category);
-      Free (Action.Description);
-      Free (Action.Name);
-      Free (Action.Icon_Name);
       Unchecked_Free (Action);
    end Free;
 
@@ -250,10 +249,10 @@ package body GPS.Kernel.Actions is
    is
       Old            : constant Action_Access :=
         Lookup_Action (Kernel, Name);
-      Overridden      : Boolean := False;
-      Cat            : GNAT.Strings.String_Access;
+      Overridden     : Boolean := False;
+      Cat            : Virtual_String;
       Action         : Action_Access;
-      Stock          : GNAT.Strings.String_Access;
+      Stock          : Virtual_String;
       Status_Changed : Boolean := False;
 
    begin
@@ -279,11 +278,11 @@ package body GPS.Kernel.Actions is
       end if;
 
       if Category /= "" then
-         Cat := new String'(Category);
+         Cat := VSS.Strings.Conversions.To_Virtual_String (Category);
       end if;
 
       if Icon_Name /= "" then
-         Stock := new String'(Icon_Name);
+         Stock := VSS.Strings.Conversions.To_Virtual_String (Icon_Name);
       end if;
 
       --  Handle memory management for the filter
@@ -297,8 +296,9 @@ package body GPS.Kernel.Actions is
       Action := new Action_Record'
         (Command,
          Filter,
-         new String'(Description),
-         Name                         => new String'(Name),
+         VSS.Strings.Conversions.To_Virtual_String (Description),
+         Name                         =>
+           VSS.Strings.Conversions.To_Virtual_String (Name),
          Modified                     => False,
          Category                     => Cat,
          Overridden                   => Overridden,
@@ -731,11 +731,7 @@ package body GPS.Kernel.Actions is
 
    function Get_Icon_Name (Self : access Action_Record) return String is
    begin
-      if Self.Icon_Name = null then
-         return "";
-      else
-         return Self.Icon_Name.all;
-      end if;
+      return VSS.Strings.Conversions.To_UTF_8_String (Self.Icon_Name);
    end Get_Icon_Name;
 
    ----------------------------
@@ -821,36 +817,41 @@ package body GPS.Kernel.Actions is
         (if Use_Markup then "<b>" & T & "</b>" else T);
       --  Utility function, to highlight a bit of text
 
-      function Escape (T : String) return String is
-         (if Use_Markup then Escape_Text (T) else T);
+      function Escape (T : Virtual_String) return String is
+        (if Use_Markup
+         then Escape_Text (VSS.Strings.Conversions.To_UTF_8_String (T))
+         else VSS.Strings.Conversions.To_UTF_8_String (T));
       --  Utility function, to escape a bit of text
 
       Shortcut : constant String :=
         (if Kernel = null
          then ""
          else Kernel.Get_Shortcut
-           (Action          => Action.Name.all,
+           (Action          =>
+                VSS.Strings.Conversions.To_UTF_8_String (Action.Name),
             Use_Markup      => Use_Markup,
             Return_Multiple => True));
       Menus : Unbounded_String :=
-        (if Include_Menus then Menu_List_For_Action (Action.Name.all)
+        (if Include_Menus
+         then Menu_List_For_Action
+           (VSS.Strings.Conversions.To_UTF_8_String (Action.Name))
          else Null_Unbounded_String);
 
    begin
       if Menus /= Null_Unbounded_String then
          Menus := Tag ("Menu: ") & To_Unbounded_String
-           (Escape (To_String (Menus)));
+           (Escape (VSS.Strings.Conversions.To_Virtual_String (Menus)));
       end if;
 
       return
-        (if Action.Description = null or else Action.Description.all = ""
-         then ""
-         else Escape (Action.Description.all) & ASCII.LF & ASCII.LF)
+        (if Action.Description.Is_Empty then ""
+         else Escape (Action.Description) & ASCII.LF & ASCII.LF)
         & (if Include_Name then Tag ("Action: ")
-           & Escape (Action.Name.all) & ASCII.LF else "")
+           & Escape (Action.Name)
+           & ASCII.LF else "")
         & (if Include_Category then Tag ("Category: ")
            & Escape
-             ((if Action.Category = null then "" else Action.Category.all))
+             ((if Action.Category.Is_Empty then "" else Action.Category))
            & ASCII.LF
            else "")
         & (if Shortcut = "" then ""
@@ -863,14 +864,9 @@ package body GPS.Kernel.Actions is
    ------------------
 
    function Get_Category
-     (Action : not null access Action_Record) return String
-   is
+     (Action : not null access Action_Record) return String is
    begin
-      if Action.Category = null then
-         return "";
-      else
-         return Action.Category.all;
-      end if;
+      return VSS.Strings.Conversions.To_UTF_8_String (Action.Category);
    end Get_Category;
 
    ----------------
@@ -889,7 +885,7 @@ package body GPS.Kernel.Actions is
 
    function Get_Name (Self : not null access Action_Record) return String is
    begin
-      return Self.Name.all;
+      return VSS.Strings.Conversions.To_UTF_8_String (Self.Name);
    end Get_Name;
 
    ---------------

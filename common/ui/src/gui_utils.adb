@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                               GNAT Studio                                --
 --                                                                          --
---                     Copyright (C) 2000-2023, AdaCore                     --
+--                     Copyright (C) 2000-2024, AdaCore                     --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -24,6 +24,9 @@ with Ada.Unchecked_Deallocation;
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 with GNAT.OS_Lib;               use GNAT.OS_Lib;
 with GNATCOLL.Utils;            use GNATCOLL.Utils;
+
+with VSS.Strings;               use VSS.Strings;
+with VSS.Strings.Conversions;   use VSS.Strings.Conversions;
 
 with Glib.Convert;              use Glib.Convert;
 with Glib.Object;               use Glib.Object;
@@ -223,7 +226,7 @@ package body GUI_Utils is
 
    procedure Add_Unique_Combo_Entry
      (Combo        : access Gtk.Combo_Box.Gtk_Combo_Box_Record'Class;
-      Text         : String;
+      Text         : VSS.Strings.Virtual_String;
       Select_Text  : Boolean := False;
       Prepend      : Boolean := False;
       Col          : Gint := 0;
@@ -242,7 +245,7 @@ package body GUI_Utils is
 
    function Add_Unique_Combo_Entry
      (Combo        : access Gtk.Combo_Box.Gtk_Combo_Box_Record'Class;
-      Text         : String;
+      Text         : VSS.Strings.Virtual_String;
       Select_Text  : Boolean := False;
       Prepend      : Boolean := False;
       Col          : Gint := 0;
@@ -255,11 +258,13 @@ package body GUI_Utils is
 
       while Iter /= Null_Iter loop
          declare
-            Str : String renames Model.Get_String (Iter, Col);
+            Str : Virtual_String
+              renames To_Virtual_String (Model.Get_String (Iter, Col));
          begin
             exit when Str = Text
               or else (not Case_Sensitive
-                       and then Equal_Case_Insensitive (Text, Str));
+                       and then Equal_Case_Insensitive
+                         (To_UTF_8_String (Text), To_UTF_8_String (Str)));
          end;
 
          Model.Next (Iter);
@@ -272,7 +277,7 @@ package body GUI_Utils is
             Gtk.List_Store.Append (Model, Iter);
          end if;
 
-         Model.Set (Iter, Col, Text);
+         Model.Set (Iter, Col, To_UTF_8_String (Text));
       end if;
 
       if Select_Text then

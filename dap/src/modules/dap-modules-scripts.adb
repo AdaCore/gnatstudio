@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                               GNAT Studio                                --
 --                                                                          --
---                        Copyright (C) 2022-2023, AdaCore                  --
+--                        Copyright (C) 2022-2024, AdaCore                  --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -41,7 +41,7 @@ with DAP.Modules.Variables.Items;
 with DAP.Clients.Breakpoint_Managers;
 with DAP.Clients.Stack_Trace;  use DAP.Clients.Stack_Trace;
 with DAP.Clients.Variables;    use DAP.Clients.Variables;
-
+with DAP.Utils;                use DAP.Utils;
 with DAP.Views.Consoles;
 
 with Interactive_Consoles;    use Interactive_Consoles;
@@ -540,7 +540,7 @@ package body DAP.Modules.Scripts is
            (Glib.Object.GObject'(Get_Data (Inst)));
 
          Visual.Client.Process_User_Command
-           (Cmd               => Nth_Arg (Data, 2),
+           (Cmd               => To_Virtual_String (Nth_Arg (Data, 2)),
             Output_Command    => Nth_Arg (Data, 3, True),
             Result_In_Console => Nth_Arg (Data, 4, False),
             On_Result_Message => Get_Subprogram (Data, 5),
@@ -552,7 +552,7 @@ package body DAP.Modules.Scripts is
          Visual := DAP_Visual_Debugger_Access
            (Glib.Object.GObject'(Get_Data (Inst)));
          Visual.Client.Process_User_Command
-           (Nth_Arg (Data, 2), Nth_Arg (Data, 3, True));
+           (To_Virtual_String (Nth_Arg (Data, 2)), Nth_Arg (Data, 3, True));
 
       elsif Command = "close" then
          Inst   := Nth_Arg (Data, 1, New_Class (Kernel, "Debugger"));

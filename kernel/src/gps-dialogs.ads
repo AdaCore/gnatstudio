@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                               GNAT Studio                                --
 --                                                                          --
---                     Copyright (C) 2001-2023, AdaCore                     --
+--                     Copyright (C) 2001-2024, AdaCore                     --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -29,6 +29,7 @@ with Gtk.Size_Group;       use Gtk.Size_Group;
 with Gtkada.File_Selector; use Gtkada.File_Selector;
 with GPS.Kernel;           use GPS.Kernel;
 with Histories;            use Histories;
+with VSS.Strings;
 
 package GPS.Dialogs is
 
@@ -180,8 +181,8 @@ package GPS.Dialogs is
 
    function Display_Select_Dialog
      (Kernel  : not null access Kernel_Handle_Record'Class;
-      Title   : String;
-      Message : String;
+      Title   : VSS.Strings.Virtual_String;
+      Message : VSS.Strings.Virtual_String;
       Value   : in out Enumerated_Type) return Boolean;
    --  Like as above but with a combobox for a value selection.
    --  This displays the dialog, and waits for the user to press [OK] (in

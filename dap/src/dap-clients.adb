@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                               GNAT Studio                                --
 --                                                                          --
---                        Copyright (C) 2022-2023, AdaCore                  --
+--                        Copyright (C) 2022-2024, AdaCore                  --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -168,13 +168,16 @@ package body DAP.Clients is
    --  stack traces.
 
    procedure Log
-     (Self                    : in out DAP_Client'Class;
-      Handle                  : GNATCOLL.Traces.Trace_Handle;
-      Msg                     : String;
+     (Self               : in out DAP_Client'Class;
+      Handle             : GNATCOLL.Traces.Trace_Handle;
+      Msg                : String;
       Display_In_Console : Boolean := False);
    --  Log a message using the given trace handle, if active.
    --  If Display_In_Console is True, the message will also be printed
    --  in the debugger console.
+   --
+   --  `String` type is used intentially, this subprogram is used to dump
+   --  incoming messages that is a seqeunce of bytes.
 
    type Continue_Until_Line_Command is
      new Commands.Interactive.Interactive_Command
@@ -1298,9 +1301,8 @@ package body DAP.Clients is
    begin
       if DAP_Log.Is_Active then
          Self.Log
-           (Handle                  => DAP_Log,
-            Msg                     =>
-              "[" & Self.Id'Img & "<-]" & To_String (Data),
+           (Handle             => DAP_Log,
+            Msg                => "[" & Self.Id'Img & "<-]" & To_String (Data),
             Display_In_Console =>
               DAP.Modules.Preferences.Debugger_Console_In_Out.Get_Pref);
       end if;
@@ -1620,7 +1622,7 @@ package body DAP.Clients is
 
    procedure Process_User_Command
      (Self              : in out DAP_Client;
-      Cmd               : String;
+      Cmd               : VSS.Strings.Virtual_String;
       Output_Command    : Boolean := False;
       Result_In_Console : Boolean := False;
       On_Result_Message : GNATCOLL.Scripts.Subprogram_Type := null;
@@ -1635,7 +1637,7 @@ package body DAP.Clients is
         Debugger_Command_Action_Hook.Run
           (Kernel   => Self.Kernel,
            Debugger => Self.Get_Visual,
-           Str      => Cmd);
+           Str      => To_UTF_8_String (Cmd));
 
       Result_Message : GNATCOLL.Scripts.Subprogram_Type := On_Result_Message;
       Error_Message  : GNATCOLL.Scripts.Subprogram_Type := On_Error_Message;
@@ -1840,13 +1842,10 @@ package body DAP.Clients is
                         Self.Breakpoints.Break_Subprogram
                           (Subprogram =>
                              (if Details_Match.Has_Capture (Bp_File_Idx)
-                              then To_UTF8
-                                (Details_Match.Captured (Bp_File_Idx))
-                              & ":" & To_UTF8
-                                (Details_Match.Captured (Bp_Subprogram_Idx))
-                              else
-                                 To_UTF8 (Details_Match.Captured
-                                   (Bp_Subprogram_Idx))),
+                              then Details_Match.Captured (Bp_File_Idx)
+                                & ":"
+                                & Details_Match.Captured (Bp_Subprogram_Idx)
+                              else Details_Match.Captured (Bp_Subprogram_Idx)),
                            Temporary  =>
                              Matched.Has_Capture (Bp_Temporary_Idx),
                            Condition  =>
@@ -1965,7 +1964,7 @@ package body DAP.Clients is
 
    procedure Display_In_Debugger_Console
      (Self       : in out DAP_Client;
-      Msg        : String;
+      Msg        : VSS.Strings.Virtual_String;
       Is_Command : Boolean := False)
    is
       Console : constant access Interactive_Console_Record'Class :=
@@ -1976,12 +1975,12 @@ package body DAP.Clients is
       if Console /= null then
          if Is_Command then
             Console.Insert
-              (Msg,
+              (To_UTF_8_String (Msg),
                Add_LF         => True,
-               Mode      => GPS.Kernel.Verbose,
+               Mode           => GPS.Kernel.Verbose,
                Add_To_History => True);
          else
-            Console.Insert (Msg, Add_LF => True);
+            Console.Insert (To_UTF_8_String (Msg), Add_LF => True);
          end if;
 
          Console_Child := Find_MDI_Child
@@ -2055,8 +2054,8 @@ package body DAP.Clients is
          Self.Send_Buffer (Stream.Buffer);
 
          Self.Log
-           (Handle                  => DAP_Log,
-            Msg                     => "[" & Self.Id'Img & "->]"
+           (Handle             => DAP_Log,
+            Msg                => "[" & Self.Id'Img & "->]"
             & VSS.Stream_Element_Vectors.Conversions.Unchecked_To_String
               (Stream.Buffer),
             Display_In_Console =>
@@ -2204,9 +2203,9 @@ package body DAP.Clients is
    ---------
 
    procedure Log
-     (Self                    : in out DAP_Client'Class;
-      Handle                  : Trace_Handle;
-      Msg                     : String;
+     (Self               : in out DAP_Client'Class;
+      Handle             : Trace_Handle;
+      Msg                : String;
       Display_In_Console : Boolean := False)
    is
    begin
@@ -2217,7 +2216,7 @@ package body DAP.Clients is
       if Display_In_Console then
          Display_In_Debugger_Console
            (Self       => Self,
-            Msg        => Msg,
+            Msg        => To_Virtual_String (Msg),
             Is_Command => True);
       end if;
    end Log;

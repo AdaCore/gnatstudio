@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                               GNAT Studio                                --
 --                                                                          --
---                        Copyright (C) 2022-2023, AdaCore                  --
+--                        Copyright (C) 2022-2024, AdaCore                  --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -45,6 +45,16 @@ package DAP.Utils is
      (Item : VSS.Strings.Virtual_String'Class)
       return Ada.Strings.UTF_Encoding.UTF_8_String
       renames VSS.Strings.Conversions.To_UTF_8_String;
+
+   function To_UTF_8_String
+     (Item : VSS.Strings.Virtual_String'Class)
+      return Ada.Strings.UTF_Encoding.UTF_8_String
+      renames VSS.Strings.Conversions.To_UTF_8_String;
+
+   function To_Virtual_String
+     (Item : Ada.Strings.UTF_Encoding.UTF_8_String)
+      return VSS.Strings.Virtual_String
+      renames VSS.Strings.Conversions.To_Virtual_String;
 
    function To_File
      (Item : VSS.Strings.Virtual_String'Class)

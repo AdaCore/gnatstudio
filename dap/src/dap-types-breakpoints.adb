@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                               GNAT Studio                                --
 --                                                                          --
---                        Copyright (C) 2022-2023, AdaCore                  --
+--                        Copyright (C) 2022-2024, AdaCore                  --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -221,7 +221,7 @@ package body DAP.Types.Breakpoints is
             end if;
 
          when On_Subprogram =>
-            return To_String (Data.Subprogram);
+            return VSS.Strings.Conversions.To_UTF_8_String (Data.Subprogram);
 
          when On_Instruction =>
             return Address_To_String (Data.Location.Address);

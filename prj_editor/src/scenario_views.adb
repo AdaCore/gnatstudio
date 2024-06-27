@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                               GNAT Studio                                --
 --                                                                          --
---                     Copyright (C) 2001-2023, AdaCore                     --
+--                     Copyright (C) 2001-2024, AdaCore                     --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -18,6 +18,8 @@
 with Ada.Containers.Indefinite_Doubly_Linked_Lists;
 with Ada.Containers.Doubly_Linked_Lists;
 with Ada.Strings.Unbounded;    use Ada.Strings.Unbounded;
+
+with VSS.Strings.Conversions;
 
 with Gdk.Event;
 
@@ -1047,7 +1049,8 @@ package body Scenario_Views is
             --  Append the value to the combo for untyped variables.
 
             if Combo.Untyped then
-               Add_Unique_Combo_Entry (Combo, Value);
+               Add_Unique_Combo_Entry
+                 (Combo, VSS.Strings.Conversions.To_Virtual_String (Value));
             end if;
          end;
       end loop;
