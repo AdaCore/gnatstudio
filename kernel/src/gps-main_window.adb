@@ -50,7 +50,6 @@ with Gtk.Handlers;
 with Gtk.Menu_Item;             use Gtk.Menu_Item;
 with Gtk.Notebook;              use Gtk.Notebook;
 with Gtk.Settings;
-with Gtk.Stock;                 use Gtk.Stock;
 with Gtk.Style_Context;         use Gtk.Style_Context;
 with Gtk.Style_Provider;
 with Gtk.Widget;                use Gtk.Widget;
@@ -61,6 +60,7 @@ with Gtkada.File_Selector;      use Gtkada.File_Selector;
 with Gtkada.Handlers;           use Gtkada.Handlers;
 with Gtkada.Multiline_Entry;    use Gtkada.Multiline_Entry;
 with Gtkada.Style;
+with Gtkada.Stock_Labels;       use Gtkada.Stock_Labels;
 
 with Pango.Enums;               use Pango.Enums;
 with Pango.Font;                use Pango.Font;

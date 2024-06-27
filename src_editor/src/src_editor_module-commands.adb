@@ -46,9 +46,9 @@ with Gtk.Tree_View;               use Gtk.Tree_View;
 with Gtk.Tree_View_Column;        use Gtk.Tree_View_Column;
 with Gtk.Widget;                  use Gtk.Widget;
 with Gtk;                         use Gtk;
-with Gtk.Stock;                   use Gtk.Stock;
 
 with Gtkada.File_Selector;        use Gtkada.File_Selector;
+with Gtkada.Stock_Labels;         use Gtkada.Stock_Labels;
 
 with GPS.Editors;                 use GPS.Editors;
 with GPS.Intl;                    use GPS.Intl;

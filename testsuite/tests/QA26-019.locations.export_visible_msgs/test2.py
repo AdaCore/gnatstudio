@@ -19,4 +19,4 @@ def run_test():
     dialog = get_window_by_title("Select a file", Gtk.Window.list_toplevels())
     ent = get_widgets_by_type(Gtk.Entry, dialog)[0]
     ent.set_text("messages.txt")
-    get_stock_button(dialog, Gtk.STOCK_OK).clicked()
+    get_stock_button(dialog, STOCK_OK).clicked()

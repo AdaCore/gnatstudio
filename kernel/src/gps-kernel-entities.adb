@@ -27,10 +27,11 @@ with Gtk.Dialog;                    use Gtk.Dialog;
 with Gtk.Enums;                     use Gtk.Enums;
 with Gtk.Frame;                     use Gtk.Frame;
 with Gtk.Radio_Button;              use Gtk.Radio_Button;
-with Gtk.Stock;                     use Gtk.Stock;
 with Gtk.Vbutton_Box;               use Gtk.Vbutton_Box;
 with Gtk.Widget;                    use Gtk.Widget;
 with Gtkada.Handlers;               use Gtkada.Handlers;
+with Gtkada.Stock_Labels;           use Gtkada.Stock_Labels;
+
 with GNAT.Strings;                  use GNAT.Strings;
 with GNATCOLL.Scripts;              use GNATCOLL.Scripts;
 with GNATCOLL.Projects;             use GNATCOLL.Projects;

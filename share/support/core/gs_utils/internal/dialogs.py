@@ -24,6 +24,8 @@ from pygps import (
     select_combo,
     get_window_by_prefix,
     get_window_by_title,
+    STOCK_OK,
+    STOCK_CANCEL,
 )
 import pygps.tree
 from pygps.tree import select_in_tree
@@ -80,7 +82,7 @@ class Dialog(object):
         Press the OK button. Use as::
             yield self.ok()
         """
-        get_stock_button(self.dialogs, Gtk.STOCK_OK).clicked()
+        get_stock_button(self.dialogs, STOCK_OK).clicked()
         yield wait_idle()
 
     def cancel(self):
@@ -89,7 +91,7 @@ class Dialog(object):
             yield self.cancel()
         """
 
-        get_stock_button(self.dialogs, Gtk.STOCK_CANCEL).clicked()
+        get_stock_button(self.dialogs, STOCK_CANCEL).clicked()
         yield wait_idle()
 
 
@@ -987,7 +989,7 @@ class Debug_Run_Dialog(Dialog):
         check.set_active(value)
 
     def ok(self):
-        get_stock_button(self.dialogs, Gtk.STOCK_OK).clicked()
+        get_stock_button(self.dialogs, STOCK_OK).clicked()
         yield hook("debuggee_started")
 
 

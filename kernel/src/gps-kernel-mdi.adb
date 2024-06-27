@@ -54,7 +54,6 @@ with Gtk.Menu_Item;             use Gtk.Menu_Item;
 with Gtk.Notebook;              use Gtk.Notebook;
 with Gtk.Scrolled_Window;       use Gtk.Scrolled_Window;
 with Gtk.Separator_Menu_Item;   use Gtk.Separator_Menu_Item;
-with Gtk.Stock;                 use Gtk.Stock;
 with Gtk.Style_Context;         use Gtk.Style_Context;
 with Gtk.Toolbar;               use Gtk.Toolbar;
 with Gtk.Tree_Model;            use Gtk.Tree_Model;
@@ -65,6 +64,7 @@ with Gtk.Tree_View_Column;      use Gtk.Tree_View_Column;
 with Gtk.Widget;                use Gtk.Widget;
 with Gtkada.Dialogs;            use Gtkada.Dialogs;
 with Gtkada.Handlers;           use Gtkada.Handlers;
+with Gtkada.Stock_Labels;       use Gtkada.Stock_Labels;
 
 with Basic_Types;               use Basic_Types;
 with Commands.Interactive;      use Commands, Commands.Interactive;

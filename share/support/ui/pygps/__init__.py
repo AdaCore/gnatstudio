@@ -40,6 +40,16 @@ last_sent_event = None
 # __all__ = ["notebook", "project", "tree"]
 
 
+# Commonly used labels.
+# Used as a replacement for the old deprecated Gtk.Stock package.
+STOCK_OK = "_OK"
+STOCK_CANCEL = "_Cancel"
+STOCK_YES = "_Yes"
+STOCK_NO = "_No"
+STOCK_REVERT_TO_SAVED = "_Revert"
+STOCK_APPLY = "_Apply"
+
+
 def get_children_tree(w):
     """
     Returns a tree of widgets for which w is the root
@@ -310,7 +320,7 @@ try:
         else:
             return result
 
-    def get_stock_button(parents, stock=Gtk.STOCK_OK):
+    def get_stock_button(parents, stock=STOCK_OK):
         """Find the first button in the possible parents that is a stock button
         with the given stock label.
         Most dialogs in GPS use such buttons, that mix icons and text.
@@ -319,9 +329,7 @@ try:
         return [
             x
             for x in WidgetTree(parents)
-            if isinstance(x, Gtk.Button)
-            and x.get_use_stock()
-            and x.get_label() == stock
+            if isinstance(x, Gtk.Button) and x.get_label() == stock
         ][0]
 
     def get_button_from_label(label, parents=None):

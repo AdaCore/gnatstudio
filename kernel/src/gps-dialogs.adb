@@ -24,9 +24,10 @@ with Gtk;                   use Gtk;
 with Gtk.Box;               use Gtk.Box;
 with Gtk.Button;            use Gtk.Button;
 with Gtk.Label;             use Gtk.Label;
-with Gtk.Stock;             use Gtk.Stock;
 with Gtk.Widget;            use Gtk.Widget;
 with Gtk.Window;            use Gtk.Window;
+with Gtkada.Stock_Labels;   use Gtkada.Stock_Labels;
+
 with GPS.Kernel.MDI;        use GPS.Kernel.MDI;
 with GPS.Main_Window;       use GPS.Main_Window;
 with VSS.Strings.Conversions;

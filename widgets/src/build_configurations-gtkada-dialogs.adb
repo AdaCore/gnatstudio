@@ -26,7 +26,6 @@ with Gtk.Dialog;               use Gtk.Dialog;
 with Gtk.Enums;                use Gtk.Enums;
 with Gtk.GEntry;               use Gtk.GEntry;
 with Gtk.Label;                use Gtk.Label;
-with Gtk.Stock;                use Gtk.Stock;
 with Gtk.Table;                use Gtk.Table;
 with Gtk.Tree_Model;           use Gtk.Tree_Model;
 with Gtk.Tree_Selection;       use Gtk.Tree_Selection;
@@ -36,9 +35,10 @@ with Gtk.Cell_Renderer_Text;   use Gtk.Cell_Renderer_Text;
 with Gtk.Cell_Renderer_Pixbuf; use Gtk.Cell_Renderer_Pixbuf;
 with Gtk.Widget;               use Gtk.Widget;
 with Gtk.Window;               use Gtk.Window;
-
 with Gtk.Cell_Layout;          use Gtk.Cell_Layout;
 with Gtkada.Dialogs;           use Gtkada.Dialogs;
+with Gtkada.Stock_Labels;       use Gtkada.Stock_Labels;
+
 with GUI_Utils;                use GUI_Utils;
 
 package body Build_Configurations.Gtkada.Dialogs is

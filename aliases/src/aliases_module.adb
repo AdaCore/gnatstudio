@@ -53,7 +53,6 @@ with Gtk.Menu_Item;            use Gtk.Menu_Item;
 with Gtk.Paned;                use Gtk.Paned;
 with Gtk.Scrolled_Window;      use Gtk.Scrolled_Window;
 with Gtk.Separator;            use Gtk.Separator;
-with Gtk.Stock;                use Gtk.Stock;
 with Gtk.Text_Buffer;          use Gtk.Text_Buffer;
 with Gtk.Text_Iter;            use Gtk.Text_Iter;
 with Gtk.Text_Tag;             use Gtk.Text_Tag;
@@ -70,6 +69,7 @@ with Gtk.Window;               use Gtk.Window;
 
 with Gtkada.Dialogs;           use Gtkada.Dialogs;
 with Gtkada.Handlers;          use Gtkada.Handlers;
+with Gtkada.Stock_Labels;      use Gtkada.Stock_Labels;
 
 with Spawn.Environments;
 

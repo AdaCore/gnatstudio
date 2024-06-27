@@ -30,7 +30,6 @@ with Gtk.Handlers;
 with Gtk.Label;
 with Gtk.Paned;
 with Gtk.Scrolled_Window;
-with Gtk.Stock;
 with Gtk.Table;
 with Gtk.Text_Iter;
 with Gtk.Text_View;
@@ -39,6 +38,7 @@ with Gtk.Tree_Store; use Gtk.Tree_Store;
 with Gtk.Tree_View;
 with Gtk.Tree_View_Column;
 with Gtk.Widget;
+with Gtkada.Stock_Labels;
 
 with GUI_Utils;
 
@@ -393,7 +393,8 @@ package body CodePeer.Multiple_Message_Review_Dialogs is
          --  Dialog buttons
 
          Dummy_W :=
-           Self.Add_Button (Gtk.Stock.Stock_Ok, Gtk.Dialog.Gtk_Response_OK);
+           Self.Add_Button
+             (Gtkada.Stock_Labels.Stock_Ok, Gtk.Dialog.Gtk_Response_OK);
          Message_Review_Callbacks.Connect
            (Dummy_W,
             Gtk.Button.Signal_Clicked,
@@ -403,7 +404,7 @@ package body CodePeer.Multiple_Message_Review_Dialogs is
 
       Dummy_W :=
         Self.Add_Button
-          (Gtk.Stock.Stock_Cancel, Gtk.Dialog.Gtk_Response_Cancel);
+          (Gtkada.Stock_Labels.Stock_Cancel, Gtk.Dialog.Gtk_Response_Cancel);
       Message_Review_Callbacks.Connect
         (Dummy_W,
          Gtk.Button.Signal_Clicked,

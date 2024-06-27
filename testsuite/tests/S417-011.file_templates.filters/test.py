@@ -45,7 +45,7 @@ def run_test():
         )
 
         # Cancel the dialog
-        cancel_button = get_stock_button(dialog, Gtk.STOCK_CANCEL)
+        cancel_button = get_stock_button(dialog, STOCK_CANCEL)
         cancel_button.clicked()
 
     # Click in the 'src' directory in the Project view

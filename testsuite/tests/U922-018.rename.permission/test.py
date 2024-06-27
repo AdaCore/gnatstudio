@@ -25,7 +25,7 @@ def run_test():
     # Don't allow the permission to change
     check = get_button_from_label("Make files writable", dialog)
     check.set_active(False)
-    get_stock_button(dialog, Gtk.STOCK_OK).clicked()
+    get_stock_button(dialog, STOCK_OK).clicked()
     yield timeout(500)
 
     # A dialog reporting an error should be opened, reply no to it
