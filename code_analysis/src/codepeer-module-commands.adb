@@ -42,6 +42,12 @@ package body CodePeer.Module.Commands is
    package Message_Reference_Vectors is
      new Ada.Containers.Vectors (Positive, Message_Reference);
 
+   procedure Review_Messages (Module : CodePeer_Module_Id);
+   --  Initiate showing the review dialog for manual reviewing GNATSAS message
+
+   procedure Annotate_Messages (Module : CodePeer_Module_Id);
+   --  Initiate adding 'pragma annotate' for reviewing GNATSAS message
+
    Messages : Message_Reference_Vectors.Vector;
    --  For holding messages when an action should be chosen
 
@@ -137,28 +143,39 @@ package body CodePeer.Module.Commands is
          return Standard.Commands.Success;
       end if;
 
-      Msg := Standard.CodePeer.Message_Access (Messages.First_Element.Message);
-      Create_Menu_Item
-        (Index => Manual_Review_Position,
-         Text  => (if Msg.Status.Category = Uncategorized
-                   then "Manual review"
-                   else Image (Msg.Status) & ASCII.LF &
-                     "Update manual review"),
-         Image => (case Msg.Status.Category is
-                      when Uncategorized => Grey_Analysis_Cst,
-                      when Pending       => Purple_Analysis_Cst,
-                      when Bug           => Red_Analysis_Cst,
-                      when Not_A_Bug     => Blue_Analysis_Cst));
+      case Review_Methods_Type'(Self.Module.Review_Methods.Get_Pref) is
+         when Both =>
+            Msg := Standard.CodePeer.Message_Access
+              (Messages.First_Element.Message);
 
-      Create_Menu_Item
-        (Index => Annotate_Position,
-         Text  => "Annotate",
-         Image => Grey_Analysis_Cst);
+            Create_Menu_Item
+              (Index => Manual_Review_Position,
+               Text  => (if Msg.Status.Category = Uncategorized
+                         then "Manual review"
+                         else Image (Msg.Status) & ASCII.LF &
+                           "Update manual review"),
+               Image => (case Msg.Status.Category is
+                            when Uncategorized => Grey_Analysis_Cst,
+                            when Pending       => Purple_Analysis_Cst,
+                            when Bug           => Red_Analysis_Cst,
+                            when Not_A_Bug     => Blue_Analysis_Cst));
 
-      Show_All (Menu);
-      Menu.Set_Can_Focus (True);
-      GPS.Kernel.Modules.UI.Popup_Custom_Contextual_Menu
-        (Menu, Self.Module.Kernel);
+            Create_Menu_Item
+              (Index => Annotate_Position,
+               Text  => "Annotate",
+               Image => Grey_Analysis_Cst);
+
+            Show_All (Menu);
+            Menu.Set_Can_Focus (True);
+            GPS.Kernel.Modules.UI.Popup_Custom_Contextual_Menu
+              (Menu, Self.Module.Kernel);
+
+         when Review =>
+            Review_Messages (Self.Module);
+
+         when Annotate =>
+            Annotate_Messages (Self.Module);
+      end case;
 
       return Standard.Commands.Success;
    end Execute;
@@ -170,29 +187,50 @@ package body CodePeer.Module.Commands is
    procedure On_Menu_Item_Activated
      (Self : access Gtk_Menu_Item_Record'Class)
    is
-      Item   : constant Action_Menu_Item := Action_Menu_Item (Self);
-      Vector : CodePeer.Message_Vectors.Vector;
+      Item : constant Action_Menu_Item := Action_Menu_Item (Self);
    begin
       if Item.Index = Manual_Review_Position then
-         for Message of Messages loop
-            if not Message.Is_Empty then
-               Vector.Append
-                 (Standard.CodePeer.Message_Access (Message.Message));
-            end if;
-         end loop;
-
-         Item.Module.Review_Messages (Vector, Need_Reload => True);
+         Review_Messages (Item.Module);
 
       else
-         for Message of Messages loop
-            if not Message.Is_Empty then
-               Item.Module.Annotate_Message
-                 (Standard.CodePeer.Message_Access (Message.Message));
-            end if;
-         end loop;
+         Annotate_Messages (Item.Module);
       end if;
 
       Messages.Clear;
    end On_Menu_Item_Activated;
+
+   -----------------------
+   -- Annotate_Messages --
+   -----------------------
+
+   procedure Annotate_Messages (Module : CodePeer_Module_Id) is
+   begin
+      for Message of Messages loop
+         if not Message.Is_Empty then
+            Module.Annotate_Message
+              (Standard.CodePeer.Message_Access (Message.Message));
+         end if;
+      end loop;
+      Messages.Clear;
+   end Annotate_Messages;
+
+   ---------------------
+   -- Review_Messages --
+   ---------------------
+
+   procedure Review_Messages (Module : CodePeer_Module_Id) is
+      Vector : CodePeer.Message_Vectors.Vector;
+   begin
+      for Message of Messages loop
+         if not Message.Is_Empty then
+            Vector.Append
+              (Standard.CodePeer.Message_Access (Message.Message));
+         end if;
+      end loop;
+
+      Module.Review_Messages (Vector, Need_Reload => True);
+
+      Messages.Clear;
+   end Review_Messages;
 
 end CodePeer.Module.Commands;

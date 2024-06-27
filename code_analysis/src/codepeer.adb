@@ -611,6 +611,10 @@ package body CodePeer is
       return Add_Audit_Status (Name, Not_A_Bug);
    end Get_Status;
 
+   ----------------
+   -- Get_Status --
+   ----------------
+
    function Get_Status (Name : String; Category : Audit_Status_Category)
                        return Audit_Status_Kinds
    is
@@ -625,6 +629,10 @@ package body CodePeer is
 
       return Add_Audit_Status (Name, Category);
    end Get_Status;
+
+   ----------------
+   -- Get_Status --
+   ----------------
 
    function Get_Status (Id : Integer) return Audit_Status_Kinds is
    begin
