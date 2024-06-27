@@ -1996,9 +1996,10 @@ package body CodePeer.Module is
          Name    => "CodePeer-Review-Methods",
          Label   => "Default review action",
          Path    => CodePeer.Module_Name & ":General",
-         Doc     => -("Choose the default action performed when clicking on a review action. " &
-             "'Review' to add a manual review; 'Annotate' to add a pragma Annotate to " &
-             "the code; or 'Both' to let the user choose the method for each review."),
+         Doc     => -("Choose the default action performed when clicking" &
+             " on a review action. 'Review' to add a manual review;" &
+             " 'Annotate' to add a pragma Annotate to the code; or 'Both'" &
+             " to let the user choose the method for each review."),
          Default => Both);
 
       Module.Removed_Message_Color :=
