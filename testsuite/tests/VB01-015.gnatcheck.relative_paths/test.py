@@ -19,7 +19,7 @@ def test_driver():
     # file
     editor = Coding_Standard_Editor()
     yield editor.open_and_yield()
-
+    yield wait_idle()
     rules_file_entry = get_widgets_by_type(Gtk.Entry, editor.dialog)[0]
     gps_assert(
         rules_file_entry.get_text(),
