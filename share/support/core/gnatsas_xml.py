@@ -361,6 +361,7 @@ many cores as available on the machine)." />
           <arg>report</arg>
           <arg>-P%PP</arg>
           <arg>%X</arg>
+          <arg>%subdirsarg</arg>
        </command-line>
        <iconname>gps-build-all-symbolic</iconname>
     </target-model>
@@ -378,6 +379,7 @@ many cores as available on the machine)." />
           <arg>html</arg>
           <arg>-P%PP</arg>
           <arg>%X</arg>
+          <arg>%subdirsarg</arg>
        </command-line>
        <output-parsers>
          {output_parsers}
@@ -392,6 +394,7 @@ many cores as available on the machine)." />
           <arg>report</arg>
           <arg>-P%PP</arg>
           <arg>%X</arg>
+          <arg>%subdirsarg</arg>
        </command-line>
        <iconname>gps-build-all-symbolic</iconname>
        <switches command="%(tool_name)s" columns="2" lines="4">
@@ -433,6 +436,7 @@ many cores as available on the machine)." />
           <arg>-P%PP</arg>
           <arg>%X</arg>
           <arg>--out=gnatsas.csv</arg>
+          <arg>%subdirsarg</arg>
        </command-line>
        <output-parsers>
         {output_parsers}
@@ -453,6 +457,7 @@ many cores as available on the machine)." />
           <arg>%eL</arg>
           <arg>-P%PP</arg>
           <arg>%X</arg>
+          <arg>%subdirsarg</arg>
        </command-line>
     </target>
 
@@ -466,6 +471,7 @@ many cores as available on the machine)." />
           <arg>-P%PP</arg>
           <arg>%X</arg>
           <arg>--show-annotations</arg>
+          <arg>%subdirsarg</arg>
        </command-line>
        <iconname>gps-build-all-symbolic</iconname>
        <switches command="%(tool_name)s" columns="3" lines="2">
@@ -501,6 +507,7 @@ many cores as available on the machine)." />
           <arg>-P%PP</arg>
           <arg>%X</arg>
           <arg>--show-annotations</arg>
+          <arg>%subdirsarg</arg>
        </command-line>
        <output-parsers>
         {output_parsers}
@@ -518,6 +525,7 @@ many cores as available on the machine)." />
           <arg>%X</arg>
           <arg>%Fp</arg>
           <arg>--show-annotations</arg>
+          <arg>%subdirsarg</arg>
        </command-line>
        <iconname>gps-build-all-symbolic</iconname>
     </target-model>
@@ -536,6 +544,7 @@ many cores as available on the machine)." />
           <arg>%X</arg>
           <arg>%Fp</arg>
           <arg>--show-annotations</arg>
+          <arg>%subdirsarg</arg>
        </command-line>
        <output-parsers>
         {output_parsers}
@@ -550,6 +559,7 @@ many cores as available on the machine)." />
           <arg>analyze</arg>
           <arg>-P%PP</arg>
           <arg>%X</arg>
+          <arg>%subdirsarg</arg>
        </command-line>
        <iconname>gps-build-all-symbolic</iconname>
        <switches command="%(tool_name)s" columns="2" lines="6">
@@ -593,6 +603,7 @@ many cores as available on the machine)."/>
           <arg>-P%PP</arg>
           <arg>%X</arg>
           <arg>--progress-bar=gnat-studio</arg>
+          <arg>%subdirsarg</arg>
        </command-line>
        <output-parsers>
         {output_parsers}
@@ -612,6 +623,7 @@ many cores as available on the machine)."/>
           <arg>-P%PP</arg>
           <arg>%X</arg>
           <arg>--progress-bar=gnat-studio</arg>
+          <arg>%subdirsarg</arg>
        </command-line>
        <output-parsers>
         {output_parsers}
@@ -634,6 +646,7 @@ many cores as available on the machine)."/>
           <arg>--file</arg>
           <arg>%fp</arg>
           <arg>--progress-bar=gnat-studio</arg>
+          <arg>%subdirsarg</arg>
        </command-line>
        <output-parsers>
         {output_parsers}
@@ -647,6 +660,7 @@ many cores as available on the machine)."/>
           <arg>report</arg>
           <arg>-P%PP</arg>
           <arg>%X</arg>
+          <arg>%subdirsarg</arg>
        </command-line>
        <iconname>gps-build-all-symbolic</iconname>
     </target-model>
@@ -665,6 +679,7 @@ many cores as available on the machine)."/>
           <arg>-P%PP</arg>
           <arg>%X</arg>
           <arg>--show-annotations</arg>
+          <arg>%subdirsarg</arg>
        </command-line>
     </target>
 
@@ -676,6 +691,7 @@ many cores as available on the machine)."/>
           <arg>-P%PP</arg>
           <arg>%X</arg>
           <arg>--gs-request</arg>
+          <arg>%subdirsarg</arg>
        </command-line>
        <iconname>gps-build-all-symbolic</iconname>
     </target-model>
@@ -693,6 +709,7 @@ many cores as available on the machine)."/>
           <arg>-P%PP</arg>
           <arg>%X</arg>
           <arg>--gs-request</arg>
+          <arg>%subdirsarg</arg>
        </command-line>
        <output-parsers>
         {output_parsers}
@@ -706,6 +723,7 @@ many cores as available on the machine)."/>
           <arg>baseline</arg>
           <arg>-P%PP</arg>
           <arg>%X</arg>
+          <arg>%subdirsarg</arg>
        </command-line>
        <iconname>gps-build-all-symbolic</iconname>
     </target-model>
@@ -723,6 +741,7 @@ many cores as available on the machine)."/>
           <arg>-P%PP</arg>
           <arg>%X</arg>
           <arg>--bump-baseline</arg>
+          <arg>%subdirsarg</arg>
        </command-line>
        <output-parsers>
         {output_parsers}
@@ -742,6 +761,7 @@ many cores as available on the machine)."/>
           <arg>-P%PP</arg>
           <arg>%X</arg>
           <arg>--set-baseline=%Fp</arg>
+          <arg>%subdirsarg</arg>
        </command-line>
        <output-parsers>
         {output_parsers}
@@ -761,6 +781,7 @@ many cores as available on the machine)."/>
           <arg>-P%PP</arg>
           <arg>%X</arg>
           <arg>--set-current=%Fp</arg>
+          <arg>%subdirsarg</arg>
        </command-line>
        <output-parsers>
         {output_parsers}
