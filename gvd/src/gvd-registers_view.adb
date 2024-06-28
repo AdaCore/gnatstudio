@@ -44,7 +44,6 @@ with Gtk.Menu;
 with Gtk.Menu_Item;
 with Gdk.RGBA;
 with Gtk.Scrolled_Window;       use Gtk.Scrolled_Window;
-with Gtk.Stock;                 use Gtk.Stock;
 with Gtk.Tree_Model;            use Gtk.Tree_Model;
 with Gtk.Tree_View;             use Gtk.Tree_View;
 with Gtk.Tree_View_Column;      use Gtk.Tree_View_Column;
@@ -53,6 +52,7 @@ with Gtk.Widget;                use Gtk.Widget;
 
 with Gtkada.MDI;                use Gtkada.MDI;
 with Gtkada.Style;
+with Gtkada.Stock_Labels;       use Gtkada.Stock_Labels;
 
 with GPS.Debuggers;             use GPS.Debuggers;
 with GPS.Dialogs;               use GPS.Dialogs;

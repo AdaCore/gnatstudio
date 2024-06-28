@@ -58,7 +58,6 @@ with Gtk.Scrolled_Window;      use Gtk.Scrolled_Window;
 with Gtk.Separator;            use Gtk.Separator;
 with Gtk.Separator_Menu_Item;  use Gtk.Separator_Menu_Item;
 with Gtk.Size_Group;           use Gtk.Size_Group;
-with Gtk.Stock;                use Gtk.Stock;
 with Gtk.Text_Tag;             use Gtk.Text_Tag;
 with Gtk.Toggle_Button;        use Gtk.Toggle_Button;
 with Gtk.Toolbar;              use Gtk.Toolbar;
@@ -74,6 +73,7 @@ with Gtk.Widget;               use Gtk.Widget;
 with Gtk.Window;               use Gtk.Window;
 with Gtkada.Handlers;          use Gtkada.Handlers;
 with Gtkada.MDI;               use Gtkada.MDI;
+with Gtkada.Stock_Labels;      use Gtkada.Stock_Labels;
 with Pango.Enums;              use Pango.Enums;
 with Pango.Layout;             use Pango.Layout;
 

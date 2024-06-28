@@ -30,7 +30,7 @@ with GNATCOLL.Projects; use GNATCOLL.Projects;
 with GNATCOLL.VFS;      use GNATCOLL.VFS;
 
 private with Commands;
-private with Default_Preferences;
+private with Default_Preferences.Enums;
 
 with GPS.Kernel;               use GPS.Kernel;
 with GPS.Kernel.MDI;           use GPS.Kernel.MDI;
@@ -159,6 +159,11 @@ private
    package String_Sets is
      new Ada.Containers.Indefinite_Hashed_Sets (String, Ada.Strings.Hash, "=");
 
+   type Review_Methods_Type is (Review, Annotate, Both);
+   package Review_Methods_Preferences is new
+     Default_Preferences.Enums.Generics (Review_Methods_Type);
+   --  Used to control reviewing methods
+
    type Codepeer_Child_Record is new GPS_MDI_Child_Record with null record;
    type Codepeer_Child is access all Codepeer_Child_Record'Class;
    overriding function Build_Context
@@ -192,6 +197,8 @@ private
       Import_Backtraces      : Default_Preferences.Boolean_Preference;
       --  Control import of CodePeer backtraces
       Show_Msg_Id            : Default_Preferences.Boolean_Preference;
+      Review_Methods         : Review_Methods_Preferences.Preference;
+      --  Control which methods will be allowed for review
 
       Listener               : CodePeer.Listeners.Listener_Access;
 

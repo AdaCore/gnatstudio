@@ -30,10 +30,10 @@ with Gtk.Dialog;                use Gtk.Dialog;
 with Gtk.Flow_Box;              use Gtk.Flow_Box;
 with Gtk.Flow_Box_Child;        use Gtk.Flow_Box_Child;
 with Gtk.Scrolled_Window;       use Gtk.Scrolled_Window;
-with Gtk.Stock;                 use Gtk.Stock;
 with Gtk.Tree_Model;            use Gtk.Tree_Model;
 
 with Gtkada.Style;
+with Gtkada.Stock_Labels;       use Gtkada.Stock_Labels;
 
 with GPS.Dialogs;               use GPS.Dialogs;
 with GPS.Kernel.Preferences;    use GPS.Kernel.Preferences;

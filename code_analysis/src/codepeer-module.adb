@@ -341,12 +341,13 @@ package body CodePeer.Module is
          Action := new GPS.Editors.Line_Information.Line_Information_Record'
            (Text                     => Null_Unbounded_String,
             Tooltip_Text             => To_Unbounded_String
-              (CodePeer.Module_Name & " actions"),
+              ("Review: ") & Message.Get_Text,
             Image                    => To_Unbounded_String
               (Grey_Analysis_Cst),
             Message                  =>
               Create (GPS.Kernel.Messages.Message_Access (Message)),
-            Category                 => <>,
+            Category                 => To_Unbounded_String
+              (CodePeer.Module_Name),
             Associated_Command       => Module.Multiple_Command,
             Display_Popup_When_Alone => False);
 
@@ -367,7 +368,8 @@ package body CodePeer.Module is
                   when Not_A_Bug     => Blue_Analysis_Cst),
             Message                  =>
               Create (GPS.Kernel.Messages.Message_Access (Message)),
-            Category                 => <>,
+            Category                 => To_Unbounded_String
+              (CodePeer.Module_Name),
             Associated_Command       => Module.Review_Command,
             Display_Popup_When_Alone => False);
       end if;
@@ -1952,8 +1954,7 @@ package body CodePeer.Module is
 
       --  Create a preference for importing annotations and backtraces
 
-      Module.Import_Annotations :=
-        Default_Preferences.Create
+      Module.Import_Annotations := Default_Preferences.Create
           (Kernel.Get_Preferences,
            Name    => "CodePeer-Import-Annotations",
            Label   => -"Import Inspector annotations",
@@ -1968,29 +1969,38 @@ package body CodePeer.Module is
              & " for large projects."),
            Default => True);
 
-      Module.Import_Backtraces :=
-        (Default_Preferences.Create
-           (Kernel.Get_Preferences,
-            Name    => "CodePeer-Import-Backtraces",
-            Label   => -"Import " & CodePeer.Module_Name & " backtraces",
-            Path    => (if CodePeer.Is_GNATSAS
-                        then ":" & CodePeer.Module_Name & " (Deprecated)"
-                        else CodePeer.Module_Name & ":General"),
-            Doc     => -("Import and display "
-              & CodePeer.Module_Name
-              & " backtraces"),
-            Default => True));
+      Module.Import_Backtraces := Default_Preferences.Create
+        (Kernel.Get_Preferences,
+         Name    => "CodePeer-Import-Backtraces",
+         Label   => -"Import " & CodePeer.Module_Name & " backtraces",
+         Path    => (if CodePeer.Is_GNATSAS
+                     then ":" & CodePeer.Module_Name & " (Deprecated)"
+                     else CodePeer.Module_Name & ":General"),
+         Doc     => -("Import and display "
+           & CodePeer.Module_Name
+           & " backtraces"),
+         Default => True);
 
-      Module.Show_Msg_Id :=
-        (Default_Preferences.Create
-           (Kernel.Get_Preferences,
-            Name    => "CodePeer-Show-Msg-Id",
-            Label   => -"Show " & CodePeer.Module_Name & " Message IDs",
-            Path    => (if CodePeer.Is_GNATSAS
-                        then ":" & CodePeer.Module_Name & " (Deprecated)"
-                        else CodePeer.Module_Name & ":General"),
-            Doc     => -("Show message IDs in Locations view"),
-            Default => False));
+      Module.Show_Msg_Id := Default_Preferences.Create
+        (Kernel.Get_Preferences,
+         Name    => "CodePeer-Show-Msg-Id",
+         Label   => -"Show " & CodePeer.Module_Name & " Message IDs",
+         Path    => (if CodePeer.Is_GNATSAS
+                     then ":" & CodePeer.Module_Name & " (Deprecated)"
+                     else CodePeer.Module_Name & ":General"),
+         Doc     => -("Show message IDs in Locations view"),
+         Default => False);
+
+      Module.Review_Methods := Review_Methods_Preferences.Create
+        (Manager => Kernel.Get_Preferences,
+         Name    => "CodePeer-Review-Methods",
+         Label   => "Default review action",
+         Path    => CodePeer.Module_Name & ":General",
+         Doc     => -("Choose the default action performed when clicking" &
+             " on a review action. 'Review' to add a manual review;" &
+             " 'Annotate' to add a pragma Annotate to the code; or 'Both'" &
+             " to let the user choose the method for each review."),
+         Default => Both);
 
       Module.Removed_Message_Color :=
         Default_Preferences.Create

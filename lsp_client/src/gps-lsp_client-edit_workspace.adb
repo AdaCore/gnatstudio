@@ -21,6 +21,8 @@ with Ada.Strings.UTF_Encoding;
 
 with GNAT.Strings;
 
+with Gtkada.Stock_Labels;
+
 with GNATCOLL.Traces;                 use GNATCOLL.Traces;
 with GNATCOLL.Scripts;                use GNATCOLL.Scripts;
 with GNATCOLL.Scripts.Python;         use GNATCOLL.Scripts.Python;
@@ -28,8 +30,6 @@ with GNATCOLL.VFS;                    use GNATCOLL.VFS;
 
 with VSS.Strings.Conversions;
 with VSS.Unicode;
-
-with Gtk.Stock;
 
 with GPS.Editors;                     use GPS.Editors;
 with GPS.Kernel.Messages;
@@ -835,8 +835,8 @@ package body GPS.LSP_Client.Edit_Workspace is
               "Some references could not be processed because one or more" &
               " files were already modified or non writable",
             Files         => Errors,
-            Execute_Label => Gtk.Stock.Stock_Ok,
-            Cancel_Label  => Gtk.Stock.Stock_Undo)
+            Execute_Label => Gtkada.Stock_Labels.Stock_Ok,
+            Cancel_Label  => Gtkada.Stock_Labels.Stock_Undo)
          then
             if Command.Undo then
                return Success;

@@ -19,7 +19,7 @@ class Confirmation(Dialog):
 
     def cancel(self):
         if self.editor:
-            get_button_from_label("gtk-cancel", self.editor).clicked()
+            get_button_from_label(STOCK_CANCEL, self.editor).clicked()
 
 
 # "Save All" confirmation dialog
@@ -31,7 +31,7 @@ class Save_All(Dialog):
 
     def cancel(self):
         if self.editor:
-            get_button_from_label("gtk-cancel", self.editor).clicked()
+            get_button_from_label(STOCK_CANCEL, self.editor).clicked()
 
 
 @run_test_driver

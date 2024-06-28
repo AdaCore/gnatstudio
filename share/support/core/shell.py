@@ -98,7 +98,7 @@ def create_default_shell():
         if os.getenv("COMSPEC"):
             Win32_Shell([os.getenv("COMSPEC"), "/Q"])
         else:
-            _error_msg(["COMSPEC"])
+            __error_msg(["COMSPEC"])
 
     else:
         if os.getenv("TERM"):

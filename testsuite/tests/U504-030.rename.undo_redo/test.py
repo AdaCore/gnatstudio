@@ -52,7 +52,7 @@ def run_test():
     # prevent opening them.
     check = get_button_from_label("Automatically save modified files", dialog)
     check.set_active(True)
-    get_stock_button(dialog, Gtk.STOCK_OK).clicked()
+    get_stock_button(dialog, STOCK_OK).clicked()
     yield hook("language_server_response_processed")
     yield timeout(500)  # Wait for the messages to be created and sorted
 

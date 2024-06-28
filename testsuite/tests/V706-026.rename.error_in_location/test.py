@@ -45,9 +45,7 @@ def driver():
         new_name_ent = get_widget_by_name("new_name")
         new_name_ent.set_text(new_name)
         dialog = get_window_by_title("Renaming entity")
-        yield idle_modal_dialog(
-            lambda: get_stock_button(dialog, Gtk.STOCK_OK).clicked()
-        )
+        yield idle_modal_dialog(lambda: get_stock_button(dialog, STOCK_OK).clicked())
         yield timeout(1000)
 
     yield rename(buf.at(5, 11), "Foo_Bar")

@@ -17,4 +17,4 @@ def run_test():
 
     yield idle_modal_dialog(lambda: GPS.MDI.file_selector("*.xml", except_filter=""))
     dialog = get_window_by_title("Select a file", Gtk.Window.list_toplevels())
-    get_button_from_label("gtk-cancel", dialog).clicked()
+    get_button_from_label(STOCK_CANCEL, dialog).clicked()

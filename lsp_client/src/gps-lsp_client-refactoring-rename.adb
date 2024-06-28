@@ -28,8 +28,8 @@ with Gtk.Box;                       use Gtk.Box;
 with Gtk.Check_Button;              use Gtk.Check_Button;
 with Gtk.Dialog;                    use Gtk.Dialog;
 with Gtk.GEntry;                    use Gtk.GEntry;
-with Gtk.Stock;                     use Gtk.Stock;
 with Gtk.Widget;                    use Gtk.Widget;
+with Gtkada.Stock_Labels;           use Gtkada.Stock_Labels;
 
 with Dialog_Utils;                  use Dialog_Utils;
 with GPS.Dialogs;                   use GPS.Dialogs;

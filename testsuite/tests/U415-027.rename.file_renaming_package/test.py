@@ -22,7 +22,7 @@ def run_test():
     new_name_ent = get_widget_by_name("new_name")
     new_name_ent.set_text("Barz")
     dialog = get_window_by_title("Renaming entity")
-    get_stock_button(dialog, Gtk.STOCK_OK).clicked()
+    get_stock_button(dialog, STOCK_OK).clicked()
     yield hook("project_view_changed")
     yield timeout(500)
 

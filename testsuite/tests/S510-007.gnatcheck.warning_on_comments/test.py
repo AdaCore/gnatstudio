@@ -15,7 +15,7 @@ def test_driver():
     dialog = get_window_by_title("Comments lost on file save")
 
     try:
-        get_stock_button(dialog, Gtk.STOCK_OK).clicked()
+        get_stock_button(dialog, STOCK_OK).clicked()
     except Exception as e:
         GPS.Logger("TESTSUITE").log(str(e))
         simple_error("No warning dialog displayed")

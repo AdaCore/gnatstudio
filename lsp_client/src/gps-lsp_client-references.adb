@@ -33,13 +33,13 @@ with GNATCOLL.Utils;             use GNATCOLL.Utils;
 with GNATCOLL.Xref;
 
 with Gtkada.Handlers;            use Gtkada.Handlers;
+with Gtkada.Stock_Labels;
 with Gtk.Box;                    use Gtk.Box;
 with Gtk.Button;                 use Gtk.Button;
 with Gtk.Check_Button;           use Gtk.Check_Button;
 with Gtk.Dialog;                 use Gtk.Dialog;
 with Gtk.Enums;                  use Gtk.Enums;
 with Gtk.Radio_Button;           use Gtk.Radio_Button;
-with Gtk.Stock;
 with Gtk.Widget;                 use Gtk.Widget;
 with Glib.Convert;               use Glib.Convert;
 
@@ -496,10 +496,12 @@ package body GPS.LSP_Client.References is
                --  Extra info choice
 
                Ignore := Add_Button
-                 (Dialog, Gtk.Stock.Stock_Ok, Gtk_Response_OK);
+                 (Dialog,
+                  Gtkada.Stock_Labels.Stock_Ok, Gtk_Response_OK);
                Set_Default_Response (Dialog, Gtk_Response_OK);
                Ignore := Add_Button
-                 (Dialog, Gtk.Stock.Stock_Cancel, Gtk_Response_Cancel);
+                 (Dialog,
+                  Gtkada.Stock_Labels.Stock_Cancel, Gtk_Response_Cancel);
 
                Show_All (Dialog);
 

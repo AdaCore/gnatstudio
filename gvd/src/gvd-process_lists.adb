@@ -25,12 +25,12 @@ with Gtk.Box;                   use Gtk.Box;
 with Gtk.Cell_Renderer_Text;    use Gtk.Cell_Renderer_Text;
 with Gtk.Enums;                 use Gtk.Enums;
 with Gtk.Scrolled_Window;       use Gtk.Scrolled_Window;
-with Gtk.Stock;                 use Gtk.Stock;
 with Gtk.Tree_Model;            use Gtk.Tree_Model;
 with Gtk.Tree_Selection;
 with Gtk.Tree_View_Column;      use Gtk.Tree_View_Column;
 with Gtk.Widget;                use Gtk.Widget;
 with Gtk;                       use Gtk;
+with Gtkada.Stock_Labels;       use Gtkada.Stock_Labels;
 with GVD.Proc_Utils;            use GVD.Proc_Utils;
 
 package body GVD.Process_Lists is

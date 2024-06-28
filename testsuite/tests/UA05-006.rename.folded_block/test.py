@@ -26,7 +26,7 @@ def run_test():
     new_name_ent = get_widget_by_name("new_name")
     new_name_ent.set_text("Pri")
     dialog = get_window_by_title("Renaming entity")
-    yield idle_modal_dialog(lambda: get_stock_button(dialog, Gtk.STOCK_OK).clicked())
+    yield idle_modal_dialog(lambda: get_stock_button(dialog, STOCK_OK).clicked())
     yield timeout(500)
 
     gps_assert(

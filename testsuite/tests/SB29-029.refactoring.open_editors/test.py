@@ -26,4 +26,4 @@ def on_gps_started():
 
     get_button_from_label("Automatically save modified files", dialog).set_active(True)
 
-    yield idle_modal_dialog(lambda: get_stock_button(dialog, Gtk.STOCK_OK).clicked())
+    yield idle_modal_dialog(lambda: get_stock_button(dialog, STOCK_OK).clicked())
