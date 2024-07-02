@@ -1775,14 +1775,7 @@ package body GPS.Kernel.Scripts is
             Data.Set_Return_Value (Lang.Keywords.all);
          end if;
       elsif Command = "tab_width" then
-         declare
-            Params       : Indent_Parameters;
-            Indent_Style : Indentation_Kind;
-         begin
-            Get_Indentation_Parameters
-              (Lang, Params, Indent_Style);
-            Data.Set_Return_Value (Params.Indent_Level);
-         end;
+         Data.Set_Return_Value (Lang.Get_Indentation_Level);
       end if;
    end Language_Info_Handler;
 

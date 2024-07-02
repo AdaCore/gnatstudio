@@ -63,7 +63,7 @@ package body Cpp_Module is
                   Indent_Case_Extra   => Automatic,
                   Casing_Policy       => Case_Handling.Disabled,
                   Reserved_Casing     => Case_Handling.Unchanged,
-                  Ident_Casing        => Case_Handling.Unchanged,
+                  Identifier_Casing   => Case_Handling.Unchanged,
                   Format_Operators    => False,
                   Use_Tabs            => C_Use_Tabs.Get_Pref,
                   Align_On_Colons     => C_Indent_Extra.Get_Pref,

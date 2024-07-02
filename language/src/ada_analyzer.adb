@@ -713,7 +713,8 @@ package body Ada_Analyzer is
         Indent_Params.Indent_Case_Extra;
       Indent_Conditional  : Natural renames Indent_Params.Indent_Conditional;
       Reserved_Casing     : Casing_Type renames Indent_Params.Reserved_Casing;
-      Ident_Casing        : Casing_Type renames Indent_Params.Ident_Casing;
+      Identifier_Casing   : Casing_Type renames
+        Indent_Params.Identifier_Casing;
       Use_Tabs            : Boolean renames Indent_Params.Use_Tabs;
       Format_Operators    : constant Boolean :=
                               Format and then Indent_Params.Format_Operators;
@@ -4745,7 +4746,7 @@ package body Ada_Analyzer is
                Entity : Language_Entity;
             begin
                Entity := Identifier_Text;
-               Casing := Ident_Casing;
+               Casing := Identifier_Casing;
 
                if Is_Digit (Buffer (Prec))
                  or else (Prev_Token = Tok_Pound
@@ -4857,7 +4858,7 @@ package body Ada_Analyzer is
                      or else Token = Tok_Access)
          then
             --  This token should not be considered as a reserved word
-            Casing := Ident_Casing;
+            Casing := Identifier_Casing;
 
             if Callback /= null then
                Start_Of_Line := Line_Start (Buffer, Prec);

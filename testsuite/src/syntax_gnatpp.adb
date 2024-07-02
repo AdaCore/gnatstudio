@@ -98,7 +98,7 @@ begin
             Indent_Case_Extra   => Automatic,
             Casing_Policy       => End_Of_Line,
             Reserved_Casing     => Lower,
-            Ident_Casing        => Smart_Mixed,
+            Identifier_Casing   => Smart_Mixed,
             Format_Operators    => True,
             Use_Tabs            => False,
             Align_On_Colons     => True,

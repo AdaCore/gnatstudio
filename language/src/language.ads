@@ -314,7 +314,7 @@ package Language is
       Indent_Case_Extra   : Indent_Style;
       Casing_Policy       : Case_Handling.Casing_Policy;
       Reserved_Casing     : Case_Handling.Casing_Type;
-      Ident_Casing        : Case_Handling.Casing_Type;
+      Identifier_Casing   : Case_Handling.Casing_Type;
       Format_Operators    : Boolean;
       Use_Tabs            : Boolean;
       Align_On_Colons     : Boolean;
@@ -343,7 +343,7 @@ package Language is
    --  Indent_Case_Extra   whether to add extra indent level for case
    --                      statements
    --  Reserved_Casing     casing of reserved words.
-   --  Indent_Casing       casing of identifiers.
+   --  Identifier_Casing   casing of identifiers.
    --  Format_Operators    whether operators should be reformatted (e.g. spaces
    --                      added around "<")
    --  Use_Tabs            whether tabs should be used instead of spaces.
@@ -366,7 +366,7 @@ package Language is
       Indent_Case_Extra   => Automatic,
       Casing_Policy       => Case_Handling.Disabled,
       Reserved_Casing     => Case_Handling.Unchanged,
-      Ident_Casing        => Case_Handling.Unchanged,
+      Identifier_Casing   => Case_Handling.Unchanged,
       Format_Operators    => False,
       Use_Tabs            => False,
       Align_On_Colons     => False,
@@ -400,6 +400,9 @@ package Language is
      (Lang : access Language_Root) return Integer;
    --  Return the indentation level for this language. This often defines
    --  the size of tabs.
+
+   function Get_Indentation_Style
+     (Lang : access Language_Root) return Indentation_Kind;
 
    type Language_Category is
      (Cat_Unknown,

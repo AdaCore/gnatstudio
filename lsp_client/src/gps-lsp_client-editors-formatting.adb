@@ -65,14 +65,6 @@ package body GPS.LSP_Client.Editors.Formatting is
    Me : constant Trace_Handle := Create ("GPS.LSP.FORMATTING.ADVANCED", Off);
    --  Logging trace
 
-   LSP_FORMATTING_ON : constant Trace_Handle := Create
-     ("GPS.LSP.FORMATTING", On);
-   --  Enable/disable overall LSP formatting
-
-   LSP_FORMATTING_ADA_ON : constant Trace_Handle := Create
-     ("GPS.LSP.FORMATTING.ADA", Off);
-   --  Enable/disable Ada LSP formatting
-
    -- Document_Formatting_Request --
 
    type Document_Formatting_Request is
@@ -419,8 +411,8 @@ package body GPS.LSP_Client.Editors.Formatting is
    begin
       Lang := Self.Kernel.Get_Language_Handler.Get_Language_From_File (File);
 
-      if not LSP_FORMATTING_ON.Is_Active
-        or else (Lang = Ada_Lang and then not LSP_FORMATTING_ADA_ON.Is_Active)
+      if Lang = Ada_Lang
+        and then not GPS.LSP_Module.LSP_Ada_Formatting_Trace_Is_Active
       then
          return False;
       end if;
@@ -477,8 +469,8 @@ package body GPS.LSP_Client.Editors.Formatting is
 
       Lang := Self.Kernel.Get_Language_Handler.Get_Language_From_File (File);
 
-      if not LSP_FORMATTING_ON.Is_Active
-        or else (Lang = Ada_Lang and then not LSP_FORMATTING_ADA_ON.Is_Active)
+      if Lang = Ada_Lang
+        and then not GPS.LSP_Module.LSP_Ada_Formatting_Trace_Is_Active
       then
          return False;
       end if;

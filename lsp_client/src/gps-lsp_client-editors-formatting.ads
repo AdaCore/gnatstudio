@@ -22,5 +22,6 @@ with GPS.Kernel;        use GPS.Kernel;
 package GPS.LSP_Client.Editors.Formatting is
 
    procedure Register_Module (Kernel : Kernel_Handle);
+   --  The support can be deactivated for Ada by setting For_Ada to False.
 
 end GPS.LSP_Client.Editors.Formatting;
