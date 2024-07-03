@@ -41,6 +41,14 @@ package body CodePeer is
         (Position : Entry_Point_Information_Sets.Cursor);
       --  Deallocates entry point information
 
+      procedure Process_Lifeage_Subcategories
+        (Position : Lifeage_Kinds_Sets.Cursor);
+      --  Deallocates lifeage information
+
+      procedure Process_Ranking_Subcategories
+        (Position : Ranking_Kinds_Sets.Cursor);
+      --  Deallocates ranking information
+
       ---------------------------------
       -- Process_Annotation_Category --
       ---------------------------------
@@ -92,10 +100,71 @@ package body CodePeer is
          Free (Element);
       end Process_Message_Category;
 
+      -----------------------------------
+      -- Process_Lifeage_Subcategories --
+      -----------------------------------
+
+      procedure Process_Lifeage_Subcategories
+        (Position : Lifeage_Kinds_Sets.Cursor)
+      is
+         Element : Lifeage_Kind_Access :=
+                     Lifeage_Kinds_Sets.Element (Position);
+
+         procedure Free is new Ada.Unchecked_Deallocation
+           (Lifeage_Kinds, Lifeage_Kind_Access);
+
+      begin
+         Free (Element);
+      end Process_Lifeage_Subcategories;
+
+      -----------------------------------
+      -- Process_Ranking_Subcategories --
+      -----------------------------------
+
+      procedure Process_Ranking_Subcategories
+        (Position : Ranking_Kinds_Sets.Cursor)
+      is
+         Element : Ranking_Kind_Access :=
+                     Ranking_Kinds_Sets.Element (Position);
+
+         procedure Free is new Ada.Unchecked_Deallocation
+           (Ranking_Kinds, Ranking_Kind_Access);
+
+      begin
+         Free (Element);
+      end Process_Ranking_Subcategories;
+
+      --------------------------
+      -- Process_Audit_Status --
+      --------------------------
+
+      procedure Process_Audit_Status
+        (Position : Audit_Status_Sets.Cursor);
+
+      procedure Process_Audit_Status
+        (Position : Audit_Status_Sets.Cursor)
+      is
+         Element : Audit_Status_Access :=
+                     Audit_Status_Sets.Element (Position);
+
+         procedure Free is new Ada.Unchecked_Deallocation
+           (Audit_Status_Kinds, Audit_Status_Access);
+
+      begin
+         Free (Element);
+      end Process_Audit_Status;
+
    begin
       Self.Message_Categories.Iterate (Process_Message_Category'Access);
       Self.Annotation_Categories.Iterate (Process_Annotation_Category'Access);
       Self.Entry_Points.Iterate (Process_Entry_Point'Access);
+      Self.Lifeage_Subcategories.Iterate
+        (Process_Lifeage_Subcategories'Access);
+      Self.Ranking_Subcategories.Iterate
+        (Process_Ranking_Subcategories'Access);
+      Audit_Statuses.Iterate (Process_Audit_Status'Access);
+      Audit_Statuses.Clear;
+
       Self.Object_Races.Clear;
    end Finalize;
 
@@ -221,6 +290,15 @@ package body CodePeer is
    function Get_Name (Self : Message_Category) return String is
    begin
       return To_String (Self.Name);
+   end Get_Name;
+
+   --------------
+   -- Get_Name --
+   --------------
+
+   function Get_Name (Self : Lifeage_Kinds) return String is
+   begin
+      return Lifeage_Kinds'Image (Self);
    end Get_Name;
 
    --------------
@@ -531,6 +609,52 @@ package body CodePeer is
       return Left.Name < Right.Name;
    end Less;
 
+   ----------
+   -- Less --
+   ----------
+
+   function Less
+     (Left, Right : CodePeer.Lifeage_Kind_Access) return Boolean is
+   begin
+      return Left.all < Right.all;
+   end Less;
+
+   ----------
+   -- Less --
+   ----------
+
+   function Less
+     (Left, Right : CodePeer.Ranking_Kind_Access) return Boolean is
+   begin
+      return Left.all < Right.all;
+   end Less;
+
+   ----------
+   -- Less --
+   ----------
+
+   function Less
+     (Left, Right : CodePeer.Audit_Status_Access) return Boolean is
+   begin
+      return Left.Name < Right.Name;
+   end Less;
+
+   ----------------------------
+   -- To_Lifeage_Kinds_Flags --
+   ----------------------------
+
+   function To_Lifeage_Kinds_Flags
+     (Set : Lifeage_Kinds_Sets.Set) return Lifeage_Kinds_Flags
+   is
+      Result : Lifeage_Kinds_Flags := (others => False);
+   begin
+      for Item of Set loop
+         Result (Item.all) := True;
+      end loop;
+
+      return Result;
+   end To_Lifeage_Kinds_Flags;
+
    ----------------------
    -- Add_Audit_Status --
    ----------------------
@@ -545,8 +669,9 @@ package body CodePeer is
    procedure Add_Audit_Status
      (Status : String; Category : Audit_Status_Category) is
    begin
-      Audit_Statuses.Append
-        (Audit_Status_Kinds'(To_Unbounded_String (Status), Category, Next_Id));
+      Audit_Statuses.Include
+        (new Audit_Status_Kinds'
+           (To_Unbounded_String (Status), Category, Next_Id));
       Next_Id := Next_Id + 1;
    end Add_Audit_Status;
 
@@ -557,7 +682,7 @@ package body CodePeer is
       Result : constant Audit_Status_Kinds :=
         (To_Unbounded_String (Status), Category, Next_Id);
    begin
-      Audit_Statuses.Append (Result);
+      Audit_Statuses.Include (new Audit_Status_Kinds'(Result));
       Next_Id := Next_Id + 1;
       return Result;
    end Add_Audit_Status;
@@ -566,8 +691,30 @@ package body CodePeer is
    -- Clear_Audit_Statuses --
    --------------------------
 
-   procedure Clear_Audit_Statuses is
+   procedure Clear_Audit_Statuses
+   is
+      --------------------------
+      -- Process_Audit_Status --
+      --------------------------
+
+      procedure Process_Audit_Status
+        (Position : Audit_Status_Sets.Cursor);
+
+      procedure Process_Audit_Status
+        (Position : Audit_Status_Sets.Cursor)
+      is
+         Element : Audit_Status_Access :=
+                     Audit_Status_Sets.Element (Position);
+
+         procedure Free is new Ada.Unchecked_Deallocation
+           (Audit_Status_Kinds, Audit_Status_Access);
+
+      begin
+         Free (Element);
+      end Process_Audit_Status;
+
    begin
+      Audit_Statuses.Iterate (Process_Audit_Status'Access);
       Audit_Statuses.Clear;
       Next_Id := 1;
    end Clear_Audit_Statuses;
@@ -596,7 +743,7 @@ package body CodePeer is
    begin
       for Status of Audit_Statuses loop
          if Standardize (To_String (Status.Name)) = Standardize (Name) then
-            return Status;
+            return Status.all;
          end if;
       end loop;
 
@@ -623,7 +770,7 @@ package body CodePeer is
          if Standardize (To_String (Status.Name)) = Standardize (Name) then
             --  In case of inconsistent status category, the one already in the
             --  mapping comes from the project file so is the one to be used.
-            return Status;
+            return Status.all;
          end if;
       end loop;
 
@@ -638,7 +785,7 @@ package body CodePeer is
    begin
       for Status of Audit_Statuses loop
          if Status.Id = Id then
-            return Status;
+            return Status.all;
          end if;
       end loop;
 

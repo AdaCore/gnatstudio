@@ -69,7 +69,7 @@ package body CodePeer.Message_Review_Dialogs.Utils is
          0);
 
       for Status of Audit_Statuses loop
-         Set_Status (Status);
+         Set_Status (Status.all);
       end loop;
 
       return Result;
