@@ -268,6 +268,10 @@ package CodePeer is
      (Self : not null access constant Message)
       return Ada.Strings.Unbounded.Unbounded_String;
 
+   overriding function Get_Tooltip_Markup
+     (Self : not null access Message)
+      return Ada.Strings.Unbounded.Unbounded_String;
+
    overriding procedure Finalize (Self : not null access Message);
 
    package Message_Vectors is

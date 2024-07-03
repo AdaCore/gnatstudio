@@ -272,6 +272,40 @@ package body CodePeer is
       end return;
    end Get_Markup;
 
+   ------------------------
+   -- Get_Tooltip_Markup --
+   ------------------------
+
+   overriding function Get_Tooltip_Markup
+     (Self : not null access Message)
+      return Ada.Strings.Unbounded.Unbounded_String
+   is
+      use type GNATCOLL.VFS.Virtual_File;
+
+      Result     : Ada.Strings.Unbounded.Unbounded_String := Self.Get_Markup;
+      Children   : constant GPS.Kernel.Messages.Message_Array :=
+        Self.Get_Children;
+      Child_Text : Ada.Strings.Unbounded.Unbounded_String;
+   begin
+      for Child of Children loop
+         if Self.Get_File /= Child.Get_File
+           or else Self.Get_Line /= Child.Get_Line
+         then
+            Child_Text := Child.Get_Tooltip_Markup;
+
+            if Child_Text /= Null_Unbounded_String then
+               if Result /= Null_Unbounded_String then
+                  Result := Result & ASCII.LF;
+               end if;
+
+               Result := Result & Child_Text;
+            end if;
+         end if;
+      end loop;
+
+      return Result;
+   end Get_Tooltip_Markup;
+
    --------------
    -- Get_Name --
    --------------
