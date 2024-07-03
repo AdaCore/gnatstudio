@@ -767,8 +767,11 @@ package body GPS.LSP_Module is
            / "als"
            / ("ada_language_server"
               & (if Host = Windows then ".exe" else ""));
+         Language_Prefix : constant String :=
+           (if For_GPR then "gpr" else "ada");
          Tracefile      : constant Virtual_File :=
-           Kernel.Get_Home_Dir / "ada_ls_traces.cfg";
+           Kernel.Get_Home_Dir / Filesystem_String
+             (Language_Prefix & "_ls_traces.cfg");
       begin
          if From_Env /= "" then
             Configuration.Server_Program := Create (+From_Env);

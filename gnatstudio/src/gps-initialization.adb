@@ -332,6 +332,53 @@ package body GPS.Initialization is
       Ignored     : Log_Handler_Id;
       pragma Unreferenced (Ignored);
 
+      procedure Create_ALS_Traces_File_If_Needed (Language : String);
+      --  Create the ALS traces file for the given language ('ada' or 'gpr').
+
+      --------------------------------------
+      -- Create_ALS_Traces_File_If_Needed --
+      --------------------------------------
+
+      procedure Create_ALS_Traces_File_If_Needed (Language : String) is
+         Filename   : constant String := Language & "_ls_traces.cfg";
+         ALS_Traces : constant Virtual_File :=
+           Create_From_Dir (GNATStudio_Home_Dir, +Filename);
+         File       : Writable_File;
+      begin
+         if not ALS_Traces.Is_Regular_File then
+            File := ALS_Traces.Write_File;
+            if Active (Testsuite_Handle) then
+               --  In testsuite mode, create the ALS log traces with
+               --  the full contents by default.
+               Write
+                 (File,
+                  ">log/"
+                  & Language
+                  & "_ls_log.$T.txt:buffer_size=0:buffer_size=0"
+                  & "ALS.MAIN=yes" & ASCII.LF
+                  & "ALS.IN=yes" & ASCII.LF
+                  & "ALS.OUT=yes" & ASCII.LF);
+            else
+               Write
+                 (File,
+                  ">log/"
+                  & Language
+                  & "_ls_log.$T.txt:buffer_size=0:buffer_size=0"
+                  & ASCII.LF
+                  & "DEBUG.ABSOLUTE_TIME=yes"
+                  & ASCII.LF
+                  & "ALS.MAIN=yes" & ASCII.LF
+                  & ASCII.LF
+                  & "## uncomment the following 2 lines"
+                  & " to activate full traces" & ASCII.LF
+                  & "#ALS.IN=yes" & ASCII.LF
+                  & "#ALS.OUT=yes" & ASCII.LF);
+            end if;
+
+            Close (File);
+         end if;
+      end Create_ALS_Traces_File_If_Needed;
+
    begin
       Gtkada.Intl.Setlocale;
       Gtkada.Intl.Bind_Text_Domain
@@ -457,43 +504,11 @@ package body GPS.Initialization is
             return;
       end;
 
-      --  Create the traces file for the Ada Language Server. Do this
+      --  Create the traces files for the Ada Language Server. Do this
       --  after initializing the GNAT Studio traces, since the contents
       --  depends on the testsuite trace.
-      declare
-         ALS_Traces : constant Virtual_File :=
-           Create_From_Dir (GNATStudio_Home_Dir, "ada_ls_traces.cfg");
-         File       : Writable_File;
-      begin
-         if not ALS_Traces.Is_Regular_File then
-            File := ALS_Traces.Write_File;
-            if Active (Testsuite_Handle) then
-               --  In testsuite mode, create the ALS log traces with
-               --  the full contents by default.
-               Write
-                 (File,
-                  ">log/ada_ls_log.$T.txt:buffer_size=0:buffer_size=0"
-                  & "ALS.MAIN=yes" & ASCII.LF
-                  & "ALS.IN=yes" & ASCII.LF
-                  & "ALS.OUT=yes" & ASCII.LF);
-            else
-               Write
-                 (File,
-                  ">log/ada_ls_log.$T.txt:buffer_size=0:buffer_size=0"
-                  & ASCII.LF
-                  & "DEBUG.ABSOLUTE_TIME=yes"
-                  & ASCII.LF
-                  & "ALS.MAIN=yes" & ASCII.LF
-                  & ASCII.LF
-                  & "## uncomment the following 2 lines"
-                  & " to activate full traces" & ASCII.LF
-                  & "#ALS.IN=yes" & ASCII.LF
-                  & "#ALS.OUT=yes" & ASCII.LF);
-            end if;
-
-            Close (File);
-         end if;
-      end;
+      Create_ALS_Traces_File_If_Needed ("ada");
+      Create_ALS_Traces_File_If_Needed ("gpr");
 
       --  Check whether we should enable memory monitor. We do not use a
       --  constant for the trace_handle, since we must create it only after
