@@ -104,6 +104,20 @@ package body CodePeer.Bridge.Inspection_Readers is
         GNATCOLL.VFS.Create (Filesystem_String (Input.Get_System_Id)).Dir;
       Self.Root_Inspection := new CodePeer.Project_Data;
 
+      --  Prepare Lifeage kinds
+      for Item in CodePeer.Lifeage_Kinds'Range loop
+         CodePeer.Project_Data'Class (Self.Root_Inspection.all).
+           Lifeage_Subcategories.Include
+             (new CodePeer.Lifeage_Kinds'(Item));
+      end loop;
+
+      --  Ranking Lifeage kinds
+      for Item in CodePeer.Ranking_Kinds'Range loop
+         CodePeer.Project_Data'Class (Self.Root_Inspection.all).
+           Ranking_Subcategories.Include
+             (new CodePeer.Ranking_Kinds'(Item));
+      end loop;
+
       Self.Version         := Supported_Format_Version'First;
       Self.Ignore_Depth    := 0;
       Self.Messages        := Messages'Unchecked_Access;
