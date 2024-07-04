@@ -155,6 +155,12 @@ package GPS.Kernel.Messages is
    --  Returns text of the message with possible Pango markup. Default
    --  implementation returns escaped plain text.
 
+   function Get_Tooltip_Markup
+     (Self : not null access Abstract_Message)
+      return Ada.Strings.Unbounded.Unbounded_String;
+   --  Returns text of the message for the tooltip with possible Pango markup.
+   --  Default implementation calls Get_Markup.
+
    procedure Notify_Listeners_About_Markup_Changed
      (Self : not null access Abstract_Message'Class);
    --  Used to notify the listeners about changes in the message's markup.

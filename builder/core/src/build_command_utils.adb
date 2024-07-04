@@ -46,7 +46,7 @@ package body Build_Command_Utils is
    function Scenario_Variables_Cmd_Line
      (Adapter           : Abstract_Build_Command_Adapter'Class;
       Prefix            : String;
-      Explicit_Scenario : Boolean) return String;
+      Explicit_Scenario : Boolean) return Arg_List;
 
    type Build_Command_Adapter is new Abstract_Build_Command_Adapter with record
       Last_Main_For_Background : Virtual_File := No_File;
@@ -380,13 +380,13 @@ package body Build_Command_Utils is
    function Scenario_Variables_Cmd_Line
      (Adapter           : Abstract_Build_Command_Adapter'Class;
       Prefix            : String;
-      Explicit_Scenario : Boolean) return String
+      Explicit_Scenario : Boolean) return Arg_List
    is
       Scenario_Vars : constant Scenario_Variable_Array :=
         Get_Scenario_Variables (Adapter);
       Untyped_Vars  : constant Untyped_Variable_Array  :=
         Get_Untyped_Variables (Adapter);
-      Res : Unbounded_String;
+      Res : Arg_List;
 
    begin
       --  Process all typed variables...
@@ -399,16 +399,10 @@ package body Build_Command_Utils is
             declare
                V : constant String := Value (Var);
             begin
-               --  Escape variable values that contain blankspaces in the
-               --  middle.
-               if Ada.Strings.Fixed.Index (V, " ") in V'Range
-                 and then V'Length > 1
-               then
-                  Append
-                    (Res, Prefix & External_Name (Var) & "=""" & V & """ ");
-               else
-                  Append (Res, Prefix & External_Name (Var) & "=" & V & " ");
-               end if;
+               Append_Argument
+                 (Res,
+                  Prefix & External_Name (Var) & "=" & V,
+                  Mode => One_Arg);
             end;
          end if;
       end loop;
@@ -421,20 +415,15 @@ package body Build_Command_Utils is
             declare
                V : constant String := Value (Var);
             begin
-               --  Escape variable values that contain blankspaces in the
-               --  middle.
-               if Ada.Strings.Fixed.Index (V, " ") in V'Range
-                 and then V'Length > 1
-               then
-                  Append
-                    (Res, Prefix & External_Name (Var) & "=""" & V & """ ");
-               else
-                  Append (Res, Prefix & External_Name (Var) & "=" & V & " ");
-               end if;
+               Append_Argument
+                 (Res,
+                  Prefix & External_Name (Var) & "=" & V,
+                  Mode => One_Arg);
             end;
          end if;
       end loop;
-      return To_String (Res);
+
+      return Res;
    end Scenario_Variables_Cmd_Line;
 
    ----------------
@@ -892,19 +881,16 @@ package body Build_Command_Utils is
       --  See H926-007.
 
       if Arg = "%X" then
-         Result.Args := Parse_String
-           (Scenario_Variables_Cmd_Line (Adapter.all, "-X", Explicit_Scenario),
-            Separate_Args);
+         Result.Args :=
+           Scenario_Variables_Cmd_Line (Adapter.all, "-X", Explicit_Scenario);
 
       elsif Arg = "%vars" then
-         Result.Args := Parse_String
-           (Scenario_Variables_Cmd_Line (Adapter.all, "", Explicit_Scenario),
-            Separate_Args);
+         Result.Args :=
+           Scenario_Variables_Cmd_Line (Adapter.all, "", Explicit_Scenario);
 
       elsif Arg = "%vars(-D)" then
-         Result.Args := Parse_String
-           (Scenario_Variables_Cmd_Line (Adapter.all, "-D", Explicit_Scenario),
-            Separate_Args);
+         Result.Args :=
+           Scenario_Variables_Cmd_Line (Adapter.all, "-D", Explicit_Scenario);
 
       elsif Starts_With (Arg, "%attr(") and then Arg (Arg'Last) = ')' then
          Result.Args := Parse_String (Get_Attr_Value (Arg, 5), Separate_Args);

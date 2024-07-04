@@ -772,6 +772,17 @@ package body GPS.Kernel.Messages is
                (To_String (Abstract_Message'Class (Self.all).Get_Text)));
    end Get_Markup;
 
+   ------------------------
+   -- Get_Tooltip_Markup --
+   ------------------------
+
+   function Get_Tooltip_Markup
+     (Self : not null access Abstract_Message)
+      return Ada.Strings.Unbounded.Unbounded_String is
+   begin
+      return Self.Get_Markup;
+   end Get_Tooltip_Markup;
+
    -------------------------------------------
    -- Notify_Listeners_About_Markup_Changed --
    -------------------------------------------

@@ -26,14 +26,12 @@ with Glib.Values;
 with Gtk.Box;               use Gtk.Box;
 with Gtk.Cell_Renderer_Pixbuf;
 with Gtk.Cell_Renderer_Text;
-with Gtk.Check_Button;
 with Gtk.Enums;
 with Gtk.Handlers;
 with Gtk.Label;             use Gtk.Label;
 with Gtk.Paned;
 with Gtk.Scrolled_Window;
 with Gtk.Separator;
-with Gtk.Toggle_Button;
 with Gtk.Tree_Model;        use Gtk.Tree_Model;
 with Gtk.Tree_Selection;
 with Gtk.Tree_Sortable;
@@ -68,9 +66,6 @@ package body CodePeer.Messages_Reports is
    package Summary_Report_Callbacks is new Gtk.Handlers.Callback
      (Messages_Report_Record);
 
-   package Check_Button_Report_Callbacks is new Gtk.Handlers.User_Callback
-     (Gtk.Check_Button.Gtk_Check_Button_Record, Messages_Report);
-
    package Message_Categories_Criteria_Callbacks is
      new Gtk.Handlers.User_Callback
           (CodePeer.Categories_Criteria_Editors.Criteria_Editor_Record,
@@ -81,34 +76,25 @@ package body CodePeer.Messages_Reports is
           (CodePeer.CWE_Criteria_Editors.Criteria_Editor_Record,
            Messages_Report);
 
-   package Message_Lifeage_Criteria_Callbacks is
+   package Lifeage_Criteria_Callbacks is
      new Gtk.Handlers.User_Callback
-          (CodePeer.Lifeage_Criteria_Editors.Lifeage_Criteria_Editor_Record,
+          (CodePeer.Lifeage_Categories_Criteria_Editors.Criteria_Editor_Record,
+           Messages_Report);
+
+   package Ranking_Criteria_Callbacks is
+     new Gtk.Handlers.User_Callback
+          (CodePeer.Ranking_Categories_Criteria_Editors.Criteria_Editor_Record,
+           Messages_Report);
+
+   package Audit_Statuses_Callbacks is
+     new Gtk.Handlers.User_Callback
+          (CodePeer.Audit_Statuses_Criteria_Editors.Criteria_Editor_Record,
            Messages_Report);
 
    package Compare_Functions is
      new Gtk.Tree_Sortable.Set_Default_Sort_Func_User_Data (Messages_Report);
 
    procedure On_Destroy (Self : access Messages_Report_Record'Class);
-
-   procedure On_Show_Informational_Messages_Toggled
-     (Object : access Gtk.Check_Button.Gtk_Check_Button_Record'Class;
-      Self   : Messages_Report);
-   procedure On_Show_Low_Messages_Toggled
-     (Object : access Gtk.Check_Button.Gtk_Check_Button_Record'Class;
-      Self   : Messages_Report);
-   procedure On_Show_Medium_Messages_Toggled
-     (Object : access Gtk.Check_Button.Gtk_Check_Button_Record'Class;
-      Self   : Messages_Report);
-   procedure On_Show_High_Messages_Toggled
-     (Object : access Gtk.Check_Button.Gtk_Check_Button_Record'Class;
-      Self   : Messages_Report);
-   --  Handles change of state of items of ranking filter
-
-   procedure On_Show_Messages_Toggled
-     (Object : access Gtk.Check_Button.Gtk_Check_Button_Record'Class;
-      Self   : Messages_Report);
-   --  Handles change of state of items of review status filter
 
    procedure On_Categories_Criteria_Changed
      (Object : access
@@ -124,9 +110,24 @@ package body CodePeer.Messages_Reports is
 
    procedure On_Lifeage_Criteria_Changed
      (Object : access
-        CodePeer.Lifeage_Criteria_Editors.Lifeage_Criteria_Editor_Record'Class;
+        CodePeer.Lifeage_Categories_Criteria_Editors.
+          Criteria_Editor_Record'Class;
       Self   : Messages_Report);
    --  Handles change of set of visible message's lifeages.
+
+   procedure On_Ranking_Criteria_Changed
+     (Object : access
+        CodePeer.Ranking_Categories_Criteria_Editors.
+          Criteria_Editor_Record'Class;
+      Self   : Messages_Report);
+   --  Handles change of set of visible message's ranking.
+
+   procedure On_Audit_Statuses_Changed
+     (Object : access
+        CodePeer.Audit_Statuses_Criteria_Editors.
+          Criteria_Editor_Record'Class;
+      Self   : Messages_Report);
+   --  Handles change of set of visible message's audit status.
 
    function On_Analysis_Click
      (View  : access Gtk.Tree_View.Gtk_Tree_View_Record'Class;
@@ -540,15 +541,12 @@ package body CodePeer.Messages_Reports is
 
       Panel           : Gtk.Paned.Gtk_Hpaned;
       Scrolled        : Gtk.Scrolled_Window.Gtk_Scrolled_Window;
-      Box             : Gtk.Box.Gtk_Vbox;
       Column          : Gtk.Tree_View_Column.Gtk_Tree_View_Column;
       Pixbuf_Renderer : Gtk.Cell_Renderer_Pixbuf.Gtk_Cell_Renderer_Pixbuf;
       Text_Renderer   : Gtk.Cell_Renderer_Text.Gtk_Cell_Renderer_Text;
       Message_Box     : Gtk.Box.Gtk_Hbox;
       Category_Box    : Gtk.Box.Gtk_Vbox;
       Filter_Box      : Gtk.Box.Gtk_Vbox;
-      Check           : Gtk.Check_Button.Gtk_Check_Button;
-      Label           : Gtk.Label.Gtk_Label;
       Separator       : Gtk.Separator.Gtk_Separator;
       Dummy           : Glib.Gint;
       Tooltip         : Tooltips.Tooltip_Handler_Access;
@@ -611,7 +609,7 @@ package body CodePeer.Messages_Reports is
          declare
             Name : constant History_Key :=
               Status_History_Prefix &
-              History_Key (Standardize (Image (Status)));
+              History_Key (Standardize (Image (Status.all)));
          begin
             Histories.Create_New_Boolean_Key_If_Necessary
               (Kernel.Get_History.all, Name, Status.Category /= Not_A_Bug);
@@ -820,17 +818,19 @@ package body CodePeer.Messages_Reports is
 
       --  Messages history
 
-      CodePeer.Lifeage_Criteria_Editors.Gtk_New
-        (Self.Lifeage_Editor,
-         Kernel,
-         -"Message history",
-         "codepeer-summary_report-lifeage");
+      CodePeer.Lifeage_Categories_Criteria_Editors.Gtk_New
+        (Editor         => Self.Lifeage_Editor,
+         Kernel         => Self.Kernel,
+         Title          => -"Message history",
+         History_Prefix => "codepeer-summary_report-lifeage",
+         Items          => Project_Data.Lifeage_Subcategories,
+         Default        => True);
       Filter_Box.Pack_Start (Self.Lifeage_Editor);
 
-      Message_Lifeage_Criteria_Callbacks.Connect
+      Lifeage_Criteria_Callbacks.Connect
         (Self.Lifeage_Editor,
-         CodePeer.Lifeage_Criteria_Editors.Signal_Criteria_Changed,
-         Message_Lifeage_Criteria_Callbacks.To_Marshaller
+         CodePeer.Lifeage_Categories_Criteria_Editors.Signal_Criteria_Changed,
+         Lifeage_Criteria_Callbacks.To_Marshaller
            (On_Lifeage_Criteria_Changed'Access),
          Messages_Report (Self));
 
@@ -839,55 +839,20 @@ package body CodePeer.Messages_Reports is
       Gtk.Separator.Gtk_New_Hseparator (Separator);
       Filter_Box.Pack_Start (Separator, False);
 
-      Gtk.Label.Gtk_New (Label, -"Message ranking");
-      Filter_Box.Pack_Start (Label, False);
+      CodePeer.Ranking_Categories_Criteria_Editors.Gtk_New
+        (Editor         => Self.Ranking_Editor,
+         Kernel         => Self.Kernel,
+         Title          => -"Message ranking",
+         History_Prefix => "codepeer-summary_report-ranking",
+         Items          => Project_Data.Ranking_Subcategories,
+         Default        => True);
+      Filter_Box.Pack_Start (Self.Ranking_Editor);
 
-      Gtk.Scrolled_Window.Gtk_New (Scrolled);
-      Scrolled.Set_Policy
-        (Gtk.Enums.Policy_Automatic, Gtk.Enums.Policy_Automatic);
-      Filter_Box.Pack_Start (Scrolled, True);
-
-      Gtk.Box.Gtk_New_Vbox (Box);
-      Scrolled.Add (Box);
-
-      Gtk.Check_Button.Gtk_New (Check, -"informational");
-      Check.Set_Active (Self.Show_Ranking (CodePeer.Info));
-      Box.Pack_Start (Check, False);
-      Check_Button_Report_Callbacks.Connect
-        (Check,
-         Gtk.Toggle_Button.Signal_Toggled,
-         Check_Button_Report_Callbacks.To_Marshaller
-           (On_Show_Informational_Messages_Toggled'Access),
-         Messages_Report (Self));
-
-      Gtk.Check_Button.Gtk_New (Check, -"low");
-      Check.Set_Active (Self.Show_Ranking (CodePeer.Low));
-      Box.Pack_Start (Check, False);
-      Check_Button_Report_Callbacks.Connect
-        (Check,
-         Gtk.Toggle_Button.Signal_Toggled,
-         Check_Button_Report_Callbacks.To_Marshaller
-           (On_Show_Low_Messages_Toggled'Access),
-         Messages_Report (Self));
-
-      Gtk.Check_Button.Gtk_New (Check, -"medium");
-      Check.Set_Active (Self.Show_Ranking (CodePeer.Medium));
-      Box.Pack_Start (Check, False);
-      Check_Button_Report_Callbacks.Connect
-        (Check,
-         Gtk.Toggle_Button.Signal_Toggled,
-         Check_Button_Report_Callbacks.To_Marshaller
-           (On_Show_Medium_Messages_Toggled'Access),
-         Messages_Report (Self));
-
-      Gtk.Check_Button.Gtk_New (Check, -"high");
-      Check.Set_Active (Self.Show_Ranking (CodePeer.High));
-      Box.Pack_Start (Check, False);
-      Check_Button_Report_Callbacks.Connect
-        (Check,
-         Gtk.Toggle_Button.Signal_Toggled,
-         Check_Button_Report_Callbacks.To_Marshaller
-           (On_Show_High_Messages_Toggled'Access),
+      Ranking_Criteria_Callbacks.Connect
+        (Self.Ranking_Editor,
+         CodePeer.Ranking_Categories_Criteria_Editors.Signal_Criteria_Changed,
+         Ranking_Criteria_Callbacks.To_Marshaller
+           (On_Ranking_Criteria_Changed'Access),
          Messages_Report (Self));
 
       --  Message review status
@@ -895,34 +860,27 @@ package body CodePeer.Messages_Reports is
       Gtk.Separator.Gtk_New_Hseparator (Separator);
       Filter_Box.Pack_Start (Separator, False);
 
-      Gtk.Label.Gtk_New (Label, -"Message review status");
-      Filter_Box.Pack_Start (Label, False);
+      CodePeer.Audit_Statuses_Criteria_Editors.Gtk_New
+        (Editor         => Self.Audit_Editor,
+         Kernel         => Self.Kernel,
+         Title          => -"Message review status",
+         History_Prefix => "codepeer-summary_report-review",
+         Items          => Audit_Statuses,
+         Default        => True);
+      Filter_Box.Pack_Start (Self.Audit_Editor);
 
-      Gtk.Scrolled_Window.Gtk_New (Scrolled);
-      Scrolled.Set_Policy
-        (Gtk.Enums.Policy_Automatic, Gtk.Enums.Policy_Automatic);
-      Filter_Box.Pack_Start (Scrolled, True);
-
-      Gtk.Box.Gtk_New_Vbox (Box);
-      Scrolled.Add (Box);
-
-      for Status of Audit_Statuses loop
-         Gtk.Check_Button.Gtk_New (Check, Image (Status));
-         Check.Set_Active (Self.Show_Status (Status.Id));
-         Box.Pack_Start (Check, False);
-         Check_Button_Report_Callbacks.Connect
-           (Check,
-            Gtk.Toggle_Button.Signal_Toggled,
-            Check_Button_Report_Callbacks.To_Marshaller
-              (On_Show_Messages_Toggled'Access),
-            Messages_Report (Self));
-      end loop;
+      Audit_Statuses_Callbacks.Connect
+        (Self.Audit_Editor,
+         CodePeer.Audit_Statuses_Criteria_Editors.Signal_Criteria_Changed,
+         Audit_Statuses_Callbacks.To_Marshaller
+           (On_Audit_Statuses_Changed'Access),
+         Messages_Report (Self));
 
       --  Set actual filter criteria (criteria are loaded from preferences to
       --  restore values used in last session).
 
       Self.Analysis_Model.Set_Visible_Message_Lifeages
-        (Self.Lifeage_Editor.Get_Visible_Lifeages);
+        (To_Lifeage_Kinds_Flags (Self.Lifeage_Editor.Get_Visible_Items));
       Self.Analysis_Model.Set_Visible_Message_Status (Self.Show_Status);
       Self.Analysis_Model.Set_Visible_Message_Categories
         (Self.Warning_Categories_Editor.Get_Visible_Items.Union
@@ -1078,113 +1036,87 @@ package body CodePeer.Messages_Reports is
       Self.Analysis_Model.Clear;
    end On_Destroy;
 
-   -----------------------------------
-   -- On_Show_High_Messages_Toggled --
-   -----------------------------------
-
-   procedure On_Show_High_Messages_Toggled
-     (Object : access Gtk.Check_Button.Gtk_Check_Button_Record'Class;
-      Self   : Messages_Report) is
-   begin
-      Self.Show_Ranking (High) := Object.Get_Active;
-      Histories.Set_History
-        (Self.Kernel.Get_History.all,
-         Ranking_High_History,
-         Self.Show_Ranking (High));
-
-      Self.Analysis_Model.Set_Visible_Ranking_Categories (Self.Show_Ranking);
-      Emit_By_Name (Self.Get_Object, Signal_Criteria_Changed & ASCII.NUL);
-   end On_Show_High_Messages_Toggled;
-
-   --------------------------------------------
-   -- On_Show_Informational_Messages_Toggled --
-   --------------------------------------------
-
-   procedure On_Show_Informational_Messages_Toggled
-     (Object : access Gtk.Check_Button.Gtk_Check_Button_Record'Class;
-      Self   : Messages_Report) is
-   begin
-      Self.Show_Ranking (Info) := Object.Get_Active;
-      Histories.Set_History
-        (Self.Kernel.Get_History.all,
-         Ranking_Informational_History,
-         Self.Show_Ranking (Info));
-      Emit_By_Name (Self.Get_Object, Signal_Criteria_Changed & ASCII.NUL);
-   end On_Show_Informational_Messages_Toggled;
-
-   ----------------------------------
-   -- On_Show_Low_Messages_Toggled --
-   ----------------------------------
-
-   procedure On_Show_Low_Messages_Toggled
-     (Object : access Gtk.Check_Button.Gtk_Check_Button_Record'Class;
-      Self   : Messages_Report) is
-   begin
-      Self.Show_Ranking (Low) := Object.Get_Active;
-      Histories.Set_History
-        (Self.Kernel.Get_History.all,
-         Ranking_Low_History,
-         Self.Show_Ranking (Low));
-      Self.Analysis_Model.Set_Visible_Ranking_Categories (Self.Show_Ranking);
-      Emit_By_Name (Self.Get_Object, Signal_Criteria_Changed & ASCII.NUL);
-   end On_Show_Low_Messages_Toggled;
-
-   -------------------------------------
-   -- On_Show_Medium_Messages_Toggled --
-   -------------------------------------
-
-   procedure On_Show_Medium_Messages_Toggled
-     (Object : access Gtk.Check_Button.Gtk_Check_Button_Record'Class;
-      Self   : Messages_Report) is
-   begin
-      Self.Show_Ranking (Medium) := Object.Get_Active;
-      Histories.Set_History
-        (Self.Kernel.Get_History.all,
-         Ranking_Medium_History,
-         Self.Show_Ranking (Medium));
-      Self.Analysis_Model.Set_Visible_Ranking_Categories (Self.Show_Ranking);
-      Emit_By_Name (Self.Get_Object, Signal_Criteria_Changed & ASCII.NUL);
-   end On_Show_Medium_Messages_Toggled;
-
-   ------------------------------
-   -- On_Show_Messages_Toggled --
-   ------------------------------
-
-   procedure On_Show_Messages_Toggled
-     (Object : access Gtk.Check_Button.Gtk_Check_Button_Record'Class;
-      Self   : Messages_Report)
-   is
-      Status : Audit_Status_Kinds;
-   begin
-      Status := Get_Status (Object.Get_Label);
-      Self.Show_Status (Status.Id) := Object.Get_Active;
-      Histories.Set_History
-        (Self.Kernel.Get_History.all,
-         Status_History_Prefix & History_Key (Standardize (Image (Status))),
-         Self.Show_Status (Status.Id));
-      Self.Analysis_Model.Set_Visible_Message_Status (Self.Show_Status);
-      Emit_By_Name (Self.Get_Object, Signal_Criteria_Changed & ASCII.NUL);
-   end On_Show_Messages_Toggled;
-
    ---------------------------------
    -- On_Lifeage_Criteria_Changed --
    ---------------------------------
 
    procedure On_Lifeage_Criteria_Changed
      (Object : access
-        CodePeer.Lifeage_Criteria_Editors.Lifeage_Criteria_Editor_Record'Class;
+        CodePeer.Lifeage_Categories_Criteria_Editors.
+          Criteria_Editor_Record'Class;
       Self   : Messages_Report)
    is
       pragma Unreferenced (Object);
 
    begin
       Self.Analysis_Model.Set_Visible_Message_Lifeages
-        (Self.Lifeage_Editor.Get_Visible_Lifeages);
+        (To_Lifeage_Kinds_Flags (Self.Lifeage_Editor.Get_Visible_Items));
 
       --  Emit 'criteria-changed' signal.
 
       Emit_By_Name (Self.Get_Object, Signal_Criteria_Changed & ASCII.NUL);
    end On_Lifeage_Criteria_Changed;
+
+   ---------------------------------
+   -- On_Ranking_Criteria_Changed --
+   ---------------------------------
+
+   procedure On_Ranking_Criteria_Changed
+     (Object : access
+        CodePeer.Ranking_Categories_Criteria_Editors.
+          Criteria_Editor_Record'Class;
+      Self   : Messages_Report)
+   is
+      pragma Unreferenced (Object);
+
+   begin
+      for Item in Ranking_Kinds'Range loop
+         Self.Show_Ranking (Item) := False;
+      end loop;
+
+      for Item of Self.Ranking_Editor.Get_Visible_Items loop
+         Self.Show_Ranking (Item.all) := True;
+      end loop;
+
+      Self.Analysis_Model.Set_Visible_Ranking_Categories (Self.Show_Ranking);
+
+      --  Emit 'criteria-changed' signal.
+
+      Emit_By_Name (Self.Get_Object, Signal_Criteria_Changed & ASCII.NUL);
+   end On_Ranking_Criteria_Changed;
+
+   -------------------------------
+   -- On_Audit_Statuses_Changed --
+   -------------------------------
+
+   procedure On_Audit_Statuses_Changed
+     (Object : access
+        CodePeer.Audit_Statuses_Criteria_Editors.
+          Criteria_Editor_Record'Class;
+      Self   : Messages_Report)
+   is
+      pragma Unreferenced (Object);
+
+   begin
+      for Status of Audit_Statuses loop
+         Self.Show_Status (Status.Id) := False;
+      end loop;
+
+      for Status of Self.Audit_Editor.Get_Visible_Items loop
+         Self.Show_Status (Status.Id) := True;
+      end loop;
+
+      for Status of Audit_Statuses loop
+         Histories.Set_History
+           (Self.Kernel.Get_History.all,
+            Status_History_Prefix &
+              History_Key (Standardize (Image (Status.all))),
+            Self.Show_Status (Status.Id));
+      end loop;
+
+      Self.Analysis_Model.Set_Visible_Message_Status (Self.Show_Status);
+      Emit_By_Name (Self.Get_Object, Signal_Criteria_Changed & ASCII.NUL);
+   end On_Audit_Statuses_Changed;
 
    ------------
    -- Update --
@@ -1214,7 +1146,8 @@ package body CodePeer.Messages_Reports is
          then Self.CWE_Editor.Get_Visible_Items
          else CodePeer.CWE_Category_Sets.Empty_Set);
       Criteria.Rankings   := Self.Show_Ranking;
-      Criteria.Lineages   := Self.Lifeage_Editor.Get_Visible_Lifeages;
+      Criteria.Lineages   := CodePeer.To_Lifeage_Kinds_Flags
+        (Self.Lifeage_Editor.Get_Visible_Items);
       Criteria.Statuses   := Self.Show_Status;
    end Update_Criteria;
 

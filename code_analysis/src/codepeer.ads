@@ -20,7 +20,6 @@ with Ada.Containers.Hashed_Sets;
 with Ada.Containers.Ordered_Maps;
 with Ada.Containers.Ordered_Sets;
 with Ada.Containers.Vectors;
-with Ada.Containers.Indefinite_Vectors;
 with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
 
 with GNATCOLL.VFS;
@@ -64,12 +63,52 @@ package CodePeer is
    --  Messages  --
    ----------------
 
+   -- Lifeage_Kinds --
+
    type Lifeage_Kinds is (Added, Unchanged, Removed);
+   type Lifeage_Kind_Access is access all Lifeage_Kinds;
+
+   function Get_Name (Self : Lifeage_Kinds) return String;
+
+   function Get_Tooltip (Dummy_Self : Lifeage_Kinds) return String is ("");
+   --  Returns tooltip's text to be displayed for given lifeage category.
+
+   function Less
+     (Left, Right : CodePeer.Lifeage_Kind_Access) return Boolean;
+
+   type Lifeage_Kinds_Flags is array (Lifeage_Kinds) of Boolean;
+
+   package Lifeage_Kinds_Sets is new Ada.Containers.Ordered_Sets
+     (Lifeage_Kind_Access, Less, "=");
+
+   function To_Lifeage_Kinds_Flags
+     (Set : Lifeage_Kinds_Sets.Set) return Lifeage_Kinds_Flags;
+
+   -- Message_Ranking_Level --
 
    type Message_Ranking_Level is
      (Not_An_Error, Suppressed, Info, Low, Medium, High);
 
    function Image (Level : CodePeer.Message_Ranking_Level) return String;
+
+   type Message_Ranking_Level_Flags is
+     array (Message_Ranking_Level) of Boolean;
+
+   --  Ranking_Kinds --
+
+   subtype Ranking_Kinds is Message_Ranking_Level range Info .. High;
+   type Ranking_Kind_Access is access all Ranking_Kinds;
+
+   function Get_Tooltip (Dummy_Self : Ranking_Kinds) return String is ("");
+   --  Returns tooltip's text to be displayed for given ranking category.
+
+   function Less
+     (Left, Right : CodePeer.Ranking_Kind_Access) return Boolean;
+
+   package Ranking_Kinds_Sets is new Ada.Containers.Ordered_Sets
+     (Ranking_Kind_Access, Less, "=");
+
+   -- Audit_Status_Category --
 
    type Audit_Status_Category is (Uncategorized, Pending, Not_A_Bug, Bug);
    --  The categories of audit status
@@ -80,11 +119,21 @@ package CodePeer is
       Id       : Positive;
    end record;
    --  Generic audit status, so that the user can define custom ones
+   type Audit_Status_Access is access all Audit_Status_Kinds;
 
-   package Audit_Status_Vectors is
-     new Ada.Containers.Indefinite_Vectors (Positive, Audit_Status_Kinds);
+   function Image (Status : Audit_Status_Kinds) return String;
 
-   Audit_Statuses : Audit_Status_Vectors.Vector;
+   function Get_Tooltip (Dummy_Self : Audit_Status_Kinds)
+                         return String is ("");
+   --  Returns tooltip's text to be displayed for given audit category.
+
+   function Less
+     (Left, Right : CodePeer.Audit_Status_Access) return Boolean;
+
+   package Audit_Status_Sets is
+     new Ada.Containers.Ordered_Sets (Audit_Status_Access, Less, "=");
+
+   Audit_Statuses : Audit_Status_Sets.Set;
    --  The list of registered audit statuses
 
    Uncategorized_Status : constant Audit_Status_Kinds :=
@@ -116,8 +165,6 @@ package CodePeer is
    function Standardize (S : String) return String;
    --  Return a standardized string.
    --  Concretely this means convert S in lower case, and replace ' ' by '_'
-
-   function Image (Status : Audit_Status_Kinds) return String;
 
    type CWE_Identifier is new Natural;
 
@@ -219,6 +266,10 @@ package CodePeer is
 
    overriding function Get_Markup
      (Self : not null access constant Message)
+      return Ada.Strings.Unbounded.Unbounded_String;
+
+   overriding function Get_Tooltip_Markup
+     (Self : not null access Message)
       return Ada.Strings.Unbounded.Unbounded_String;
 
    overriding procedure Finalize (Self : not null access Message);
@@ -340,6 +391,8 @@ package CodePeer is
 
       Check_Subcategories   : Message_Category_Sets.Set;
       Warning_Subcategories : Message_Category_Sets.Set;
+      Lifeage_Subcategories : Lifeage_Kinds_Sets.Set;
+      Ranking_Subcategories : Ranking_Kinds_Sets.Set;
       --  These sets of categories are subsets of Message_Categories and
       --  are used by messages filter.
 
@@ -382,11 +435,6 @@ package CodePeer is
 
    package File_Sets is new Ada.Containers.Hashed_Sets
      (Code_Analysis.File_Access, Hash, Code_Analysis."=");
-
-   type Message_Ranking_Level_Flags is
-     array (Message_Ranking_Level) of Boolean;
-
-   type Lifeage_Kinds_Flags is array (Lifeage_Kinds) of Boolean;
 
    type Review_Status_Kinds_Flags is array (1 .. 256) of Boolean;
    --  Use a hard coded max size "large enough" for convenience

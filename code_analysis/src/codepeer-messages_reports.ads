@@ -27,7 +27,9 @@ with Code_Analysis;
 private with CodePeer.CWE_Criteria_Editors;
 private with CodePeer.Categories_Criteria_Editors;
 private with CodePeer.Messages_Summary_Models;
-private with CodePeer.Lifeage_Criteria_Editors;
+private with CodePeer.Lifeage_Categories_Criteria_Editors;
+private with CodePeer.Ranking_Categories_Criteria_Editors;
+private with CodePeer.Audit_Statuses_Criteria_Editors;
 
 package CodePeer.Messages_Reports is
 
@@ -91,7 +93,11 @@ private
       CWE_Editor          :
         CodePeer.CWE_Criteria_Editors.Criteria_Editor;
       Lifeage_Editor      :
-        CodePeer.Lifeage_Criteria_Editors.Lifeage_Criteria_Editor;
+        CodePeer.Lifeage_Categories_Criteria_Editors.Criteria_Editor;
+      Ranking_Editor      :
+        CodePeer.Ranking_Categories_Criteria_Editors.Criteria_Editor;
+      Audit_Editor        :
+        CodePeer.Audit_Statuses_Criteria_Editors.Criteria_Editor;
 
       Version             : Supported_Format_Version;
       Show_Status         : Review_Status_Kinds_Flags := (others => False);
