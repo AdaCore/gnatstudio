@@ -21,6 +21,7 @@ with GNATCOLL.Projects; use GNATCOLL.Projects;
 with GNATCOLL.Utils;    use GNATCOLL.Utils;
 with GNATCOLL.VFS;      use GNATCOLL.VFS;
 with GPS.Intl;          use GPS.Intl;
+
 with CodePeer.Module;
 
 package body CodePeer.Messages_Summary_Models is
@@ -242,7 +243,12 @@ package body CodePeer.Messages_Summary_Models is
             Glib.Values.Init (Value, Glib.GType_String);
 
             if File_Node /= null then
-               Glib.Values.Set_String (Value, File_Pixbuf_Cst);
+               if CodePeer.Module.Is_File_Visible (File_Node.Node) then
+                  Glib.Values.Set_String (Value, File_Pixbuf_Cst);
+               else
+                  Glib.Values.Set_String (Value, Hidden_File_Pixbuf_Cst);
+               end if;
+
             elsif Project_Node /= null then
                Glib.Values.Set_String (Value, Prj_Pixbuf_Cst);
             else
@@ -530,6 +536,7 @@ package body CodePeer.Messages_Summary_Models is
       Project : Code_Analysis.Tree_Models.Project_Item_Access;
       File    : Code_Analysis.Tree_Models.File_Item_Access) return Boolean
    is
+      use GPS.Search;
       pragma Unreferenced (Project);
 
       File_Node : constant File_Item_Access := File_Item_Access (File);
@@ -537,6 +544,16 @@ package body CodePeer.Messages_Summary_Models is
    begin
       if +File.Node.Name.Base_Name = "Standard" then
          return False;
+      end if;
+
+      if Self.Pattern /= null
+        and then Self.Pattern.Start (+File.Node.Name.Full_Name) = No_Match
+      then
+         CodePeer.Module.Hide_File_Messages (File.Node);
+         return False;
+
+      else
+         CodePeer.Module.Show_File_Messages (File.Node);
       end if;
 
       CodePeer.Utilities.Compute_Messages_Count
@@ -555,6 +572,20 @@ package body CodePeer.Messages_Summary_Models is
         or else File_Node.Messages_Counts (Medium) /= (others => 0)
         or else File_Node.Messages_Counts (High)   /= (others => 0);
    end Is_Visible;
+
+   -----------------
+   -- Set_Pattern --
+   -----------------
+
+   procedure Set_Pattern
+     (Self    : access Messages_Summary_Model_Record'Class;
+      Pattern : GPS.Search.Search_Pattern_Access)
+   is
+   begin
+      GPS.Search.Free (Self.Pattern);
+      Self.Pattern := Pattern;
+      Self.Reconstruct;
+   end Set_Pattern;
 
    --------------------------------
    -- Set_Visible_CWE_Categories --

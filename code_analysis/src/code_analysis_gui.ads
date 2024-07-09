@@ -45,6 +45,9 @@ package Code_Analysis_GUI is
    File_Pixbuf_Cst  : constant String :=
      "gps-emblem-file-unmodified";
    --  Name of the icon used for file node in the analysis report
+   Hidden_File_Pixbuf_Cst  : constant String :=
+     "gps-emblem-file-unmodified-locked";
+   --  Name of the icon used for file node in the analysis report
    Subp_Pixbuf_Cst  : constant String :=
      "gps-emblem-entity-subprogram";
    --  Name of the icon used for subprogram node in the analysis report

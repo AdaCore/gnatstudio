@@ -157,8 +157,21 @@ package body CodePeer.Module is
      (Self : not null access Module_Id_Record'Class;
       File : Code_Analysis.File_Access);
    --  Hides file and its messages in the location view
+   --  and recompute the report.
+
+   procedure Hide_File_Messages
+     (Self : not null access Module_Id_Record'Class;
+      File : Code_Analysis.File_Access);
+   --  Hides file and its messages in the location view
 
    procedure Show_Messages
+     (Self : not null access Module_Id_Record'Class;
+      File : Code_Analysis.File_Access);
+   --  Shows file and its messages in the location view. Current messages
+   --  filter is applied. Messages container's messages are created when
+   --  necessary. Recompute the report.
+
+   procedure Show_File_Messages
      (Self : not null access Module_Id_Record'Class;
       File : Code_Analysis.File_Access);
    --  Shows file and its messages in the location view. Current messages
@@ -312,6 +325,16 @@ package body CodePeer.Module is
          Module.Kernel.Set_Build_Mode (CodePeer.Build_Mode);
       end if;
    end Initialize;
+
+   ---------------------
+   -- Is_File_Visible --
+   ---------------------
+
+   function Is_File_Visible
+     (File_Node : Code_Analysis.File_Access) return Boolean is
+   begin
+      return Module.Filter_Criteria.Files.Contains (File_Node);
+   end Is_File_Visible;
 
    --------------
    -- Finalize --
@@ -999,11 +1022,22 @@ package body CodePeer.Module is
       end if;
    end Codepeer_CPM_Directory;
 
-   -------------------
-   -- Hide_Messages --
-   -------------------
+   ------------------------
+   -- Hide_File_Messages --
+   ------------------------
 
-   procedure Hide_Messages
+   procedure Hide_File_Messages (File : Code_Analysis.File_Access) is
+   begin
+      if Module.Filter_Criteria.Files.Contains (File) then
+         Module.Hide_File_Messages (File);
+      end if;
+   end Hide_File_Messages;
+
+   ------------------------
+   -- Hide_File_Messages --
+   ------------------------
+
+   procedure Hide_File_Messages
      (Self : not null access Module_Id_Record'Class;
       File : Code_Analysis.File_Access)
    is
@@ -1049,6 +1083,25 @@ package body CodePeer.Module is
    begin
       Self.Filter_Criteria.Files.Delete (File);
       File.Subprograms.Iterate (Process_Subprogram'Access);
+   end Hide_File_Messages;
+
+   -------------------
+   -- Hide_Messages --
+   -------------------
+
+   procedure Hide_Messages
+     (Self : not null access Module_Id_Record'Class;
+      File : Code_Analysis.File_Access)
+   is
+      use type CodePeer.Reports.Report;
+   begin
+      Self.Hide_File_Messages (File);
+
+      if Self.Report /= null
+        and then Self.Report.Messages_Report /= null
+      then
+         Self.Report.Messages_Report.Update;
+      end if;
    end Hide_Messages;
 
    ----------
@@ -2051,16 +2104,46 @@ package body CodePeer.Module is
       Editors.Register_Editor_Integration (Module);
    end Register_Module;
 
+   ------------------------
+   -- Show_File_Messages --
+   ------------------------
+
+   procedure Show_File_Messages (File : Code_Analysis.File_Access) is
+   begin
+      if not Module.Filter_Criteria.Files.Contains (File) then
+         Module.Show_File_Messages (File);
+      end if;
+   end Show_File_Messages;
+
+   ------------------------
+   -- Show_File_Messages --
+   ------------------------
+
+   procedure Show_File_Messages
+     (Self : not null access Module_Id_Record'Class;
+      File : Code_Analysis.File_Access) is
+   begin
+      Self.Filter_Criteria.Files.Insert (File);
+      Self.Update_Location_View;
+   end Show_File_Messages;
+
    -------------------
    -- Show_Messages --
    -------------------
 
    procedure Show_Messages
      (Self : not null access Module_Id_Record'Class;
-      File : Code_Analysis.File_Access) is
+      File : Code_Analysis.File_Access)
+   is
+      use type CodePeer.Reports.Report;
    begin
-      Self.Filter_Criteria.Files.Insert (File);
-      Self.Update_Location_View;
+      Self.Show_File_Messages (File);
+
+      if Self.Report /= null
+        and then Self.Report.Messages_Report /= null
+      then
+         Self.Report.Messages_Report.Update;
+      end if;
    end Show_Messages;
 
    ---------------------
