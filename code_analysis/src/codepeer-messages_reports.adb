@@ -171,6 +171,8 @@ package body CodePeer.Messages_Reports is
 
    Status_History_Prefix : constant Histories.History_Key :=
      "codepeer-summary_report-status-";
+   Lifeage_History_Prefix : constant Histories.History_Key :=
+     "codepeer-summary_report-lifeage-";
 
    Class_Record : Glib.Object.Ada_GObject_Class :=
       Glib.Object.Uninitialized_Class;
@@ -624,6 +626,17 @@ package body CodePeer.Messages_Reports is
          end;
       end loop;
 
+      for Lifeage of Project_Data.Lifeage_Subcategories loop
+         declare
+            Name : constant History_Key :=
+              Lifeage_History_Prefix &
+              History_Key (Get_Name (Lifeage.all));
+         begin
+            Histories.Create_New_Boolean_Key_If_Necessary
+              (Kernel.Get_History.all, Name, Lifeage.all /= Removed);
+         end;
+      end loop;
+
       --  Create report's widgets
 
       Gtk.Paned.Gtk_New_Hpaned (Panel);
@@ -897,7 +910,7 @@ package body CodePeer.Messages_Reports is
         (Editor         => Self.Audit_Editor,
          Kernel         => Self.Kernel,
          Title          => -"Message review status",
-         History_Prefix => "codepeer-summary_report-review",
+         History_Prefix => "codepeer-summary_report-status",
          Items          => Audit_Statuses,
          Default        => True);
       Filter_Box.Pack_Start (Self.Audit_Editor);

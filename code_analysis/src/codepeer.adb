@@ -134,26 +134,6 @@ package body CodePeer is
          Free (Element);
       end Process_Ranking_Subcategories;
 
-      --------------------------
-      -- Process_Audit_Status --
-      --------------------------
-
-      procedure Process_Audit_Status
-        (Position : Audit_Status_Sets.Cursor);
-
-      procedure Process_Audit_Status
-        (Position : Audit_Status_Sets.Cursor)
-      is
-         Element : Audit_Status_Access :=
-                     Audit_Status_Sets.Element (Position);
-
-         procedure Free is new Ada.Unchecked_Deallocation
-           (Audit_Status_Kinds, Audit_Status_Access);
-
-      begin
-         Free (Element);
-      end Process_Audit_Status;
-
    begin
       Self.Message_Categories.Iterate (Process_Message_Category'Access);
       Self.Annotation_Categories.Iterate (Process_Annotation_Category'Access);
@@ -162,8 +142,6 @@ package body CodePeer is
         (Process_Lifeage_Subcategories'Access);
       Self.Ranking_Subcategories.Iterate
         (Process_Ranking_Subcategories'Access);
-      Audit_Statuses.Iterate (Process_Audit_Status'Access);
-      Audit_Statuses.Clear;
 
       Self.Object_Races.Clear;
    end Finalize;
@@ -332,7 +310,7 @@ package body CodePeer is
 
    function Get_Name (Self : Lifeage_Kinds) return String is
    begin
-      return Lifeage_Kinds'Image (Self);
+      return Standardize (Lifeage_Kinds'Image (Self));
    end Get_Name;
 
    --------------
