@@ -22,6 +22,7 @@ private with Gtk.Tree_Model_Sort;
 private with Gtk.Tree_View;
 
 with GPS.Kernel;           use GPS.Kernel;
+with Filter_Panels;
 
 with Code_Analysis;
 private with CodePeer.CWE_Criteria_Editors;
@@ -98,6 +99,7 @@ private
         CodePeer.Ranking_Categories_Criteria_Editors.Criteria_Editor;
       Audit_Editor        :
         CodePeer.Audit_Statuses_Criteria_Editors.Criteria_Editor;
+      Filter              : Filter_Panels.Filter_Panel;
 
       Version             : Supported_Format_Version;
       Show_Status         : Review_Status_Kinds_Flags := (others => False);
