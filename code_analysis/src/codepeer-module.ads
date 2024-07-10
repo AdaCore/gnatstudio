@@ -134,6 +134,14 @@ package CodePeer.Module is
    --  Returns host user if Set_Approved_By preference is True and
    --  an empty string in other case.
 
+   function Is_File_Visible
+     (File_Node : Code_Analysis.File_Access) return Boolean;
+   --  Returns True if the file is visible
+
+   procedure Hide_File_Messages (File : Code_Analysis.File_Access);
+   procedure Show_File_Messages (File : Code_Analysis.File_Access);
+   --  Shows and hides messages associated with the file
+
 private
 
    type Message_Ranking_Color_Preference_Array is

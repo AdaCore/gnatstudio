@@ -49,6 +49,7 @@ with GPS.Kernel.Project;
 with GPS.Kernel.MDI;        use GPS.Kernel.MDI;
 with GPS.Kernel.Modules.UI; use GPS.Kernel.Modules.UI;
 with GPS.Location_View;     use GPS.Location_View;
+with GPS.Search;
 with GUI_Utils;             use GUI_Utils;
 with Projects.Views;
 with Tooltips;              use Tooltips;
@@ -95,6 +96,9 @@ package body CodePeer.Messages_Reports is
      new Gtk.Tree_Sortable.Set_Default_Sort_Func_User_Data (Messages_Report);
 
    procedure On_Destroy (Self : access Messages_Report_Record'Class);
+
+   procedure On_Filter_Changed (Self : access Messages_Report_Record'Class);
+   --  Callback for filter-canged signal
 
    procedure On_Categories_Criteria_Changed
      (Object : access
@@ -167,6 +171,8 @@ package body CodePeer.Messages_Reports is
 
    Status_History_Prefix : constant Histories.History_Key :=
      "codepeer-summary_report-status-";
+   Lifeage_History_Prefix : constant Histories.History_Key :=
+     "codepeer-summary_report-lifeage-";
 
    Class_Record : Glib.Object.Ada_GObject_Class :=
       Glib.Object.Uninitialized_Class;
@@ -537,9 +543,11 @@ package body CodePeer.Messages_Reports is
       Tree    : Code_Analysis.Code_Analysis_Tree)
    is
       use Gtk.Tree_Model_Sort;
+      use Filter_Panels;
       use type CodePeer.CWE_Criteria_Editors.Criteria_Editor;
 
       Panel           : Gtk.Paned.Gtk_Hpaned;
+      Filter_Panel    : Gtk.Paned.Gtk_Vpaned;
       Scrolled        : Gtk.Scrolled_Window.Gtk_Scrolled_Window;
       Column          : Gtk.Tree_View_Column.Gtk_Tree_View_Column;
       Pixbuf_Renderer : Gtk.Cell_Renderer_Pixbuf.Gtk_Cell_Renderer_Pixbuf;
@@ -618,15 +626,53 @@ package body CodePeer.Messages_Reports is
          end;
       end loop;
 
+      for Lifeage of Project_Data.Lifeage_Subcategories loop
+         declare
+            Name : constant History_Key :=
+              Lifeage_History_Prefix &
+              History_Key (Get_Name (Lifeage.all));
+         begin
+            Histories.Create_New_Boolean_Key_If_Necessary
+              (Kernel.Get_History.all, Name, Lifeage.all /= Removed);
+         end;
+      end loop;
+
       --  Create report's widgets
 
       Gtk.Paned.Gtk_New_Hpaned (Panel);
       Self.Pack_Start (Panel);
 
+      --  Filter. It will be automatically deallocated by gtk+, because it is
+      --  put in the toolbar of the view, which is destroyed when the view is
+      --  destroyed.
+
+      Gtk.Paned.Gtk_New_Vpaned (Filter_Panel);
+      Gtk_New
+        (Panel       => Self.Filter,
+         Kernel      => Self.Kernel,
+         Hist_Prefix => "codepeer-summary_report-filter",
+         Tooltip     => "The text pattern or regular expression",
+         Placeholder => "filter",
+         Options     =>
+           Has_Regexp or Has_Negate or Has_Whole_Word or Has_Fuzzy,
+         Name        => "Report View Filter");
+
+      Summary_Report_Callbacks.Object_Connect
+        (Self.Filter,
+         Filter_Panels.Signal_Filter_Changed,
+         Summary_Report_Callbacks.To_Marshaller
+           (On_Filter_Changed'Access),
+         Self);
+      Filter_Panel.Pack1 (Self.Filter, Resize => False);
+
+      --  Projects/files tree view
+
       Gtk.Scrolled_Window.Gtk_New (Scrolled);
       Scrolled.Set_Policy
         (Gtk.Enums.Policy_Automatic, Gtk.Enums.Policy_Automatic);
-      Panel.Pack1 (Scrolled, Resize => True);
+      Filter_Panel.Pack2 (Scrolled, Resize => True);
+
+      Panel.Pack1 (Filter_Panel, Resize => True);
 
       CodePeer.Messages_Summary_Models.Gtk_New
         (Self.Analysis_Model,
@@ -864,7 +910,7 @@ package body CodePeer.Messages_Reports is
         (Editor         => Self.Audit_Editor,
          Kernel         => Self.Kernel,
          Title          => -"Message review status",
-         History_Prefix => "codepeer-summary_report-review",
+         History_Prefix => "codepeer-summary_report-status",
          Items          => Audit_Statuses,
          Default        => True);
       Filter_Box.Pack_Start (Self.Audit_Editor);
@@ -1034,7 +1080,20 @@ package body CodePeer.Messages_Reports is
       --  analysis data.
 
       Self.Analysis_Model.Clear;
+      Self.Analysis_Model.Set_Pattern (null);
    end On_Destroy;
+
+   -----------------------
+   -- On_Filter_Changed --
+   -----------------------
+
+   procedure On_Filter_Changed (Self : access Messages_Report_Record'Class)
+   is
+      P : constant GPS.Search.Search_Pattern_Access :=
+        Self.Filter.Get_Filter_Pattern;
+   begin
+      Self.Analysis_Model.Set_Pattern (P);
+   end On_Filter_Changed;
 
    ---------------------------------
    -- On_Lifeage_Criteria_Changed --

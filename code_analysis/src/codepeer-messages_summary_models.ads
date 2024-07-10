@@ -21,6 +21,8 @@ with Gtk.Tree_Model;
 with Code_Analysis.Tree_Models;
 with CodePeer.Utilities;
 
+with GPS.Search;
+
 package CodePeer.Messages_Summary_Models is
 
    Entity_Icon_Name_Column            : constant :=  0;
@@ -77,6 +79,11 @@ package CodePeer.Messages_Summary_Models is
       To   : CodePeer.Review_Status_Kinds_Flags);
    --  Sets subset of visible message review statuses.
 
+   procedure Set_Pattern
+     (Self    : access Messages_Summary_Model_Record'Class;
+      Pattern : GPS.Search.Search_Pattern_Access);
+   --  Sets pattern to be used for filtering.
+
    procedure Clear (Self : access Messages_Summary_Model_Record);
 
 private
@@ -86,6 +93,8 @@ private
       Tree                 : Code_Analysis.Code_Analysis_Tree;
       Show_All_Files       : Boolean := False;
       Show_All_Projects    : Boolean := True;
+      Pattern              : GPS.Search.Search_Pattern_Access;
+
       Message_Categories   : CodePeer.Message_Category_Sets.Set;
       --  Set of the message categories, which is shown in the report
       CWE_Categories       : CodePeer.CWE_Category_Sets.Set;
