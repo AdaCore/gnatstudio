@@ -1305,57 +1305,49 @@ package body DAP.Views.Breakpoints is
            else Breakpoint_Identifier'Image (Data.Num)));
       Last_Column_Idx := 5;
 
-      if Data.Kind = On_Line
-        and then Data.Location.Marker /= No_Marker
-      then
-         Last_Column_Idx := Last_Column_Idx + 1;
-         Columns (Last_Column_Idx) := Col_File;
-         Glib.Values.Init
-           (Values (Last_Column_Idx), Column_Types (Guint (Col_File)));
+      case Data.Kind is
+         when On_Line | On_Instruction =>
+            if Data.Location.Marker /= No_Marker then
+               Last_Column_Idx := Last_Column_Idx + 1;
+               Columns (Last_Column_Idx) := Col_File;
+               Glib.Values.Init
+                 (Values (Last_Column_Idx), Column_Types (Guint (Col_File)));
 
-         Glib.Values.Set_String
-           (Values (Last_Column_Idx), Escape_Text
-            (+Base_Name (Get_File (Get_Location (Data)))));
+               Glib.Values.Set_String
+                 (Values (Last_Column_Idx), Escape_Text
+                  (+Base_Name (Get_File (Get_Location (Data)))));
 
-         Last_Column_Idx := Last_Column_Idx + 1;
-         Columns (Last_Column_Idx) := Col_Line;
-         Glib.Values.Init_Set_String
-           (Values (Last_Column_Idx), Get_Line (Get_Location (Data))'Img);
+               Last_Column_Idx := Last_Column_Idx + 1;
+               Columns (Last_Column_Idx) := Col_Line;
+               Glib.Values.Init_Set_String
+                 (Values (Last_Column_Idx),
+                  Get_Line (Get_Location (Data))'Img);
+            end if;
 
-         if Data.Location.Address /= Invalid_Address then
+            if Data.Location.Address /= Invalid_Address then
+               Last_Column_Idx := Last_Column_Idx + 1;
+               Columns (Last_Column_Idx) := Col_Address;
+               Glib.Values.Init_Set_String
+                 (Values (Last_Column_Idx),
+                  Escape_Text
+                    (Address_To_String
+                         (Data.Location.Address)));
+            end if;
+
+         when On_Exception =>
             Last_Column_Idx := Last_Column_Idx + 1;
-            Columns (Last_Column_Idx) := Col_Address;
+            Columns (Last_Column_Idx) := Col_Exception;
             Glib.Values.Init_Set_String
               (Values (Last_Column_Idx),
-               Escape_Text
-                 (Address_To_String
-                      (Data.Location.Address)));
-         end if;
-      end if;
+               Escape_Text (To_String (Data.Exception_Name)));
 
-      if Data.Kind = On_Exception then
-         Last_Column_Idx := Last_Column_Idx + 1;
-         Columns (Last_Column_Idx) := Col_Exception;
-         Glib.Values.Init_Set_String
-           (Values (Last_Column_Idx),
-            Escape_Text (To_String (Data.Exception_Name)));
-      end if;
-
-      if Data.Kind = On_Subprogram then
-         Last_Column_Idx := Last_Column_Idx + 1;
-         Columns (Last_Column_Idx) := Col_Subprogs;
-         Glib.Values.Init_Set_String
-           (Values (Last_Column_Idx),
-            Escape_Text (To_UTF_8_String (Data.Subprogram)));
-      end if;
-
-      if Data.Kind = On_Instruction then
-         Last_Column_Idx := Last_Column_Idx + 1;
-         Columns (Last_Column_Idx) := Col_Address;
-         Glib.Values.Init_Set_String
-           (Values (Last_Column_Idx),
-            Escape_Text (Address_To_String (Data.Location.Address)));
-      end if;
+         when On_Subprogram =>
+            Last_Column_Idx := Last_Column_Idx + 1;
+            Columns (Last_Column_Idx) := Col_Subprogs;
+            Glib.Values.Init_Set_String
+              (Values (Last_Column_Idx),
+               Escape_Text (To_UTF_8_String (Data.Subprogram)));
+      end case;
 
       Set_And_Clear
         (Model   => Model,
