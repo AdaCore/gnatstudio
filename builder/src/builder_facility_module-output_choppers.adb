@@ -15,11 +15,12 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with Ada.Strings.Fixed;
+with Ada.Characters.Latin_1;
 
 package body Builder_Facility_Module.Output_Choppers is
 
-   New_Line : constant String := (1 => ASCII.LF);
+   LF : constant Character := Ada.Characters.Latin_1.LF;
+   CR : constant Character := Ada.Characters.Latin_1.CR;
 
    ------------
    -- Create --
@@ -44,25 +45,29 @@ package body Builder_Facility_Module.Output_Choppers is
    overriding procedure Parse_Standard_Output
      (Self    : not null access Output_Chopper;
       Item    : String;
-      Command : access Root_Command'Class)
-   is
-      Last_EOL : Natural;
+      Command : access Root_Command'Class) is
    begin
-      if Self.Child = null then
+      if Self.Child = null or Item = "" then
          return;
       end if;
 
-      Last_EOL := Ada.Strings.Fixed.Index
-        (Item, New_Line, Ada.Strings.Backward);
+      for Char of Item loop
+         case Char is
+            when CR =>
+               null;  --  skip CR
 
-      if Last_EOL = 0 then
-         Append (Self.Buffer, Item);
-      else
-         Self.Child.Parse_Standard_Output
-           (To_String (Self.Buffer) & Item (Item'First .. Last_EOL),
-            Command);
-         Self.Buffer := To_Unbounded_String (Item (Last_EOL + 1 .. Item'Last));
-      end if;
+            when LF =>
+               Append (Self.Buffer, Char);
+
+               Self.Child.Parse_Standard_Output
+                 (To_String (Self.Buffer), Command);
+
+               Self.Buffer := Null_Unbounded_String;
+
+            when others =>
+               Append (Self.Buffer, Char);
+         end case;
+      end loop;
    end Parse_Standard_Output;
 
    -------------------
@@ -80,7 +85,7 @@ package body Builder_Facility_Module.Output_Choppers is
 
       if Self.Buffer /= Null_Unbounded_String then
          Self.Child.Parse_Standard_Output
-           (To_String (Self.Buffer) & New_Line, Command);
+           (To_String (Self.Buffer) & LF, Command);
       end if;
 
       --  Call parent procedure
