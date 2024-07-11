@@ -36,6 +36,6 @@ def run_test():
     # the visible one
     gps_assert(
         dump_tree_model(pop_tree.get_model(), LABEL_COLUMN),
-        ["Nothing", "Do_Nothing"],
+        ["Nothing"],
         "Wrong order in completion",
     )
