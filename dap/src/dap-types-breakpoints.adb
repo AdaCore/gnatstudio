@@ -154,7 +154,7 @@ package body DAP.Types.Breakpoints is
 
    function Get_Location (Data : Breakpoint_Data) return Location_Marker is
    begin
-      if Data.Kind = On_Line then
+      if Data.Kind in On_Line | On_Instruction then
          return Data.Location.Marker;
       else
          return No_Marker;

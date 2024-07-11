@@ -790,8 +790,10 @@ package body DAP.Module.Breakpoints is
       Action : GPS.Editors.Line_Information.Line_Information_Access;
    begin
       --  We should only show breakpoints that have a unique location, so
-      --  source breakpoints.
-      if B.Kind /= On_Line then
+      --  source or address breakpoints.
+      if B.Kind /= On_Line
+        and then B.Kind /= On_Instruction
+      then
          return;
       end if;
 

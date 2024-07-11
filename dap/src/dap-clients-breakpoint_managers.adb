@@ -140,6 +140,7 @@ package body DAP.Clients.Breakpoint_Managers is
       Data   : in out Breakpoint_Data;
       File   : Virtual_File := No_File)
    is
+      F       : Virtual_File := File;
       Line    : Basic_Types.Editable_Line_Type := 0;
       Address : Address_Type := Invalid_Address;
    begin
@@ -155,6 +156,17 @@ package body DAP.Clients.Breakpoint_Managers is
          end if;
       end if;
 
+      if F = No_File
+        and then Item.source.Is_Set
+      then
+         begin
+            F := To_File (Item.source.Value.path);
+         exception
+            when others =>
+               F := No_File;
+         end;
+      end if;
+
       Data.Verified := Item.verified and then Item.line.Is_Set;
 
       --  If we are dealing with a source breakpoint or an instruction
@@ -162,7 +174,7 @@ package body DAP.Clients.Breakpoint_Managers is
       --  the debugger's response.
       if Data.Kind in On_Line | On_Instruction
         and then Data.Verified
-        and then File /= No_File
+        and then F /= No_File
         and then Item.line.Is_Set
       then
          Line := Basic_Types.Editable_Line_Type (Item.line.Value);
@@ -171,11 +183,11 @@ package body DAP.Clients.Breakpoint_Managers is
             use GPS.Editors;
 
             Holder : constant GPS.Editors.Controlled_Editor_Buffer_Holder :=
-              Kernel.Get_Buffer_Factory.Get_Holder (File);
+              Kernel.Get_Buffer_Factory.Get_Holder (F);
          begin
             Data.Location :=
               (Kernel.Get_Buffer_Factory.Create_Marker
-                 (File   => File,
+                 (File   => F,
                   Line   => Line,
                   Column => Holder.Editor.Expand_Tabs
                     (Line,

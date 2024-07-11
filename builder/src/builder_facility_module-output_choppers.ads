@@ -49,7 +49,7 @@ private
      new GPS.Tools_Output.Output_Parser_Fabric with null record;
 
    type Output_Chopper is new Tools_Output_Parser with record
-      Buffer : Unbounded_String;
+      Buffer : Unbounded_String; --  Part of the line not containing LF
    end record;
 
 end Builder_Facility_Module.Output_Choppers;
