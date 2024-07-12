@@ -322,6 +322,7 @@
          <menu label='Ad_vanced'>
             <menu label='_Regenerate Report...' action='gnatsas regenerate report' optional='true'/>
             <menu label='Display Result File...' action='gnatsas display baseline' optional='true'/>
+            <menu label='R_emove Lock'   action='gnatsas remove lock' optional='true'/>
             <menu label='GNATSAS _Log'  action='gnatsas log'           optional='true'/>
          </menu>
       </menu>
