@@ -11,12 +11,12 @@ EXPECTED = [
         "foo.adb (2 items)",
         [
             "<b>5:8</b>       warning: call to obsolescent procedure"
-            + " &quot;Obs&quot; declared at pack.ads:3 [enabled by default]",
+            + " &quot;Obs&quot; declared at pack.ads:3 [-gnatwj]",
             [
                 "          warning: call to obsolescent procedure"
                 + ' &quot;Obs&quot; declared at <span color="#729FCF">'
-                + "<u>pack.ads:3</u></span> [enabled by default]",
-                "          warning: Use Real [enabled by default]",
+                + "<u>pack.ads:3</u></span> [-gnatwj]",
+                "          warning: Use Real [-gnatwj]",
             ],
             "<b>5:8</b>       error: missing argument for parameter"
             + " &quot;L&quot; in call to &quot;Obs&quot;"
