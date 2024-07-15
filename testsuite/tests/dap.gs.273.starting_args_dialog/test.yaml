@@ -1,1 +1,4 @@
 title: 'dap.gs.273.starting_args_dialog'
+# we don't have execution console inside GS on Windows
+skip:
+    - ['SKIP', 'env.build.os.name == "windows"']
