@@ -12,6 +12,7 @@ def test_driver():
     # Start the debugger
     GPS.execute_action("Build & Debug Number 1")
     yield hook("debugger_started")
+    yield wait_idle()
 
     # Open the Variables view
     GPS.execute_action("open debugger variables window")
