@@ -168,9 +168,13 @@ def propagate_change(pref):
 
 
 def get_hex_color(rgba_color):
+    """
+    :type rgba_color: GdkRGBA
+    :return: hexadecimal representation of RGB
+    """
     fg_color = rgba_color.to_color()
-    return '#{:01x}{:01x}{:01x}'.format(
-        fg_color.red, fg_color.green, fg_color.blue)
+    return "#{:01x}{:01x}{:01x}".format(fg_color.red, fg_color.green, fg_color.blue)
+
 
 # Data classes for highlighters
 
@@ -680,9 +684,9 @@ class Highlighter(object):
                     result += text[current_offset:start_tag_offset]
                     current_offset = start_tag_offset
                     for tag in start_tag_map[start_tag_offset]:
-                        result += ('<span foreground="%s">'
-                                   % get_hex_color(
-                                        tag.get_property("foreground_rgba")))
+                        result += '<span foreground="%s">' % get_hex_color(
+                            tag.get_property("foreground_rgba")
+                        )
                         try:
                             start_tag_offset = next(start_iter)
                         except StopIteration:
@@ -694,9 +698,9 @@ class Highlighter(object):
                     for tag in end_tag_map[end_tag_offset]:
                         result += "</span>"
                     for tag in start_tag_map[start_tag_offset]:
-                        result += ('<span foreground="%s">'
-                                   % get_hex_color(
-                                        tag.get_property("foreground_rgba")))
+                        result += '<span foreground="%s">' % get_hex_color(
+                            tag.get_property("foreground_rgba")
+                        )
                         try:
                             start_tag_offset = next(start_iter)
                         except StopIteration:
@@ -729,9 +733,9 @@ class Highlighter(object):
                     result += text[current_offset:start]
                     if tag:
                         need_close_span = True
-                        result += ('<span foreground="%s">'
-                                   % get_hex_color(
-                                       tag.get_property("foreground_rgba")))
+                        result += '<span foreground="%s">' % get_hex_color(
+                            tag.get_property("foreground_rgba")
+                        )
                         result += text[start:end]
                         result += "</span>"
                     else:
@@ -744,7 +748,7 @@ class Highlighter(object):
         return result
 
 
-class StringTextIter():
+class StringTextIter:
     """
     An iterator in a string mimicking the implementation of Gtk.TextIter
     """
@@ -770,7 +774,7 @@ class StringTextIter():
         return self.column
 
 
-class StringTextBuffer():
+class StringTextBuffer:
     """
     A text buffer mimicking the implementation of Gtk.TextBuffer.
     """
@@ -803,7 +807,7 @@ class StringTextBuffer():
         return len(self.text.splitlines())
 
     def get_text(self, start, end, ignored):
-        return self.text[start.offset:end.offset]
+        return self.text[start.offset : end.offset]
 
     def get_tag_table(self):
         return self.tagtable
@@ -827,8 +831,7 @@ def markup_for_text(language, text, allow_nested_tag=False):
     """
     highlighter = HighlighterModule.highlighters.get(language.lower(), None)
     if highlighter:
-        return highlighter.generate_markup(text,
-                                           allow_nested_tag=allow_nested_tag)
+        return highlighter.generate_markup(text, allow_nested_tag=allow_nested_tag)
     else:
         return text
 

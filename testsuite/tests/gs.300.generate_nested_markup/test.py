@@ -37,9 +37,13 @@ ERROR_TEMPLATE = "Issue when generating markup (cond=%s)"
 
 @run_test_driver
 def run_test():
-    gps_assert(markup_for_text("C", TEXT, allow_nested_tag=True),
-               EXPECTED_SIMPLE,
-               ERROR_TEMPLATE % True)
-    gps_assert(markup_for_text("C", TEXT, allow_nested_tag=False),
-               EXPECTED_COMPLEX,
-               ERROR_TEMPLATE % False)
+    gps_assert(
+        markup_for_text("C", TEXT, allow_nested_tag=True),
+        EXPECTED_SIMPLE,
+        ERROR_TEMPLATE % True,
+    )
+    gps_assert(
+        markup_for_text("C", TEXT, allow_nested_tag=False),
+        EXPECTED_COMPLEX,
+        ERROR_TEMPLATE % False,
+    )

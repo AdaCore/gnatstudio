@@ -38,12 +38,18 @@ ERROR_TEMPLATE = "Issue when generating markup for %s (cond=%s)"
 def run_test():
     # The language name should be case insensitive, use weird casing
     for cond in (True, False):
-        gps_assert(markup_for_text("PyThon", TEXT, cond),
-                   EXPECTED_PYTHON,
-                   ERROR_TEMPLATE % ("Python", cond))
-        gps_assert(markup_for_text("ASM", TEXT, cond),
-                   EXPECTED_ASM,
-                   ERROR_TEMPLATE % ("ASM", cond))
-        gps_assert(markup_for_text("Not_A_Language", TEXT, cond),
-                   TEXT,
-                   ERROR_TEMPLATE % ("a Fake language", cond))
+        gps_assert(
+            markup_for_text("PyThon", TEXT, cond),
+            EXPECTED_PYTHON,
+            ERROR_TEMPLATE % ("Python", cond),
+        )
+        gps_assert(
+            markup_for_text("ASM", TEXT, cond),
+            EXPECTED_ASM,
+            ERROR_TEMPLATE % ("ASM", cond),
+        )
+        gps_assert(
+            markup_for_text("Not_A_Language", TEXT, cond),
+            TEXT,
+            ERROR_TEMPLATE % ("a Fake language", cond),
+        )
