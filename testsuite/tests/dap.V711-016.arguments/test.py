@@ -15,12 +15,15 @@ def run_test():
     buf = GPS.EditorBuffer.get(GPS.File("main.adb"))
     GPS.execute_action("Build & Debug Number 1")
     yield hook("debugger_started")
+    yield wait_idle()
+
     debug = GPS.Debugger.get()
     yield wait_until_not_busy(debug)
 
     GPS.MDI.get("main.adb").raise_window()
     yield wait_tasks(other_than=known_tasks)
     buf.current_view().goto(buf.at(6, 1))
+    yield wait_idle()
     GPS.execute_action("debug set line breakpoint")
     yield wait_DAP_server("setBreakpoints")
     yield wait_tasks(other_than=known_tasks)
