@@ -1,8 +1,8 @@
+
 with "../../prj_editor/prj_editor";
 with "../../gvd/gvd";
 with "../../shared";
 with "../../cpp_module/cpp_module";
-with "gtkada";
 
 with "../core/ada_module_core";
 

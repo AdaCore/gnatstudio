@@ -1,6 +1,6 @@
+
 with "../shared";
 with "../kernel/kernel";
-with "gtkada";
 with "gnatcoll";
 with "python_core";
 
