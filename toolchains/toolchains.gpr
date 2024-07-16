@@ -1,6 +1,6 @@
+
 with "../builder/builder";
 with "../common/common";
-with "gtkada";
 with "../kernel/kernel";
 with "../shared";
 

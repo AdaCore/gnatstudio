@@ -1,4 +1,4 @@
-with "gtkada";
+
 with "language";
 with "../kernel/kernel";
 with "../shared";
