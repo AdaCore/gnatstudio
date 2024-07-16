@@ -1,5 +1,4 @@
 with "gtkada";
-with "lsp";
 
 with "../common/common";
 with "../kernel/kernel";
