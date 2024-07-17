@@ -1786,6 +1786,32 @@ package body GPS.Kernel.Scripts is
       end if;
    end Language_Info_Handler;
 
+   -----------------------------
+   -- Get_Markup_For_Language --
+   -----------------------------
+
+   function Get_Markup_For_Language
+     (Kernel   : access Kernel_Handle_Record'Class;
+      Language : String;
+      Text     : String) return String
+   is
+      Errors : aliased Boolean;
+      Script : constant Scripting_Language :=
+        Kernel.Scripts.Lookup_Scripting_Language ("Python");
+   begin
+      return GNATCOLL.Scripts.Execute_Command
+        (Script       => Script,
+         Command      => ("highlighter.engine.markup_for_text("""
+                          & Language
+                          & """, """
+                          & Text
+                          & """)"),
+         Console      => null,
+         Hide_Output  => True,
+         Show_Command => True,
+         Errors       => Errors'Unchecked_Access);
+   end Get_Markup_For_Language;
+
    --------------------
    -- Filter_Handler --
    --------------------

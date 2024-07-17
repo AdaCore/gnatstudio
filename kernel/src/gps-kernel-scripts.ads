@@ -240,6 +240,12 @@ package GPS.Kernel.Scripts is
      (Instance : Class_Instance) return Language_Access;
    --  Return language represented by given instance.
 
+   function Get_Markup_For_Language
+     (Kernel   : access Kernel_Handle_Record'Class;
+      Language : String;
+      Text     : String) return String;
+   --  Return the markup representation of Text in Language
+
 private
    No_File_Location : constant File_Location_Info :=
      File_Location_Info (GPS.Scripts.File_Locations.No_File_Location);
