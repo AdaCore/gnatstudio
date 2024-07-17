@@ -265,7 +265,7 @@ package body Ada_Module is
       Shared_Pref_Indent_Path  : constant Preference_Path :=
         -"Editor/Ada:Indentation";
       Non_LSP_Pref_Indent_Path : constant Preference_Path :=
-        (if GPS.LSP_Module.LSP_Ada_Formatting_Trace_Is_Active
+        (if GPS.LSP_Module.LSP_Ada_Formatting_Is_Active
          then ":" & Shared_Pref_Indent_Path
          else Shared_Pref_Indent_Path);
       --  If LSP is activated then hide the preferences

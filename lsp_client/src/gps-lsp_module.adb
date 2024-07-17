@@ -1114,29 +1114,29 @@ package body GPS.LSP_Module is
    -- LSP_Ada_Support_Trace_Is_Active --
    -------------------------------------
 
-   function LSP_Ada_Support_Trace_Is_Active return Boolean is
+   function LSP_Ada_Support_Is_Active return Boolean is
    begin
       return Me_Ada_Support.Is_Active;
-   end LSP_Ada_Support_Trace_Is_Active;
+   end LSP_Ada_Support_Is_Active;
 
    ----------------------------------------
    -- LSP_Ada_Formatting_Trace_Is_Active --
    ----------------------------------------
 
-   function LSP_Ada_Formatting_Trace_Is_Active return Boolean is
+   function LSP_Ada_Formatting_Is_Active return Boolean is
    begin
       return Me_LSP_FORMATTING.Is_Active
         and then Me_LSP_FORMATTING_ADA.Is_Active;
-   end LSP_Ada_Formatting_Trace_Is_Active;
+   end LSP_Ada_Formatting_Is_Active;
 
    -------------------------------------
    -- LSP_Cpp_Support_Trace_Is_Active --
    -------------------------------------
 
-   function LSP_Cpp_Support_Trace_Is_Active return Boolean is
+   function LSP_Cpp_Support_Is_Active return Boolean is
    begin
       return Me_Cpp_Support.Is_Active;
-   end LSP_Cpp_Support_Trace_Is_Active;
+   end LSP_Cpp_Support_Is_Active;
 
    ------------------------
    -- Remove_Diagnostics --

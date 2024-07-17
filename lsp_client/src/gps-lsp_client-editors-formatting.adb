@@ -412,7 +412,7 @@ package body GPS.LSP_Client.Editors.Formatting is
       Lang := Self.Kernel.Get_Language_Handler.Get_Language_From_File (File);
 
       if Lang = Ada_Lang
-        and then not GPS.LSP_Module.LSP_Ada_Formatting_Trace_Is_Active
+        and then not GPS.LSP_Module.LSP_Ada_Formatting_Is_Active
       then
          return False;
       end if;
@@ -470,7 +470,7 @@ package body GPS.LSP_Client.Editors.Formatting is
       Lang := Self.Kernel.Get_Language_Handler.Get_Language_From_File (File);
 
       if Lang = Ada_Lang
-        and then not GPS.LSP_Module.LSP_Ada_Formatting_Trace_Is_Active
+        and then not GPS.LSP_Module.LSP_Ada_Formatting_Is_Active
       then
          return False;
       end if;

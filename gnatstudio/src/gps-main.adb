@@ -1201,7 +1201,7 @@ procedure GPS.Main is
       --  Enable the old xrefs engine relying on gnatinspect if the LSP support
       --  for Ada is not enabled.
 
-      if not GPS.LSP_Module.LSP_Ada_Support_Trace_Is_Active then
+      if not GPS.LSP_Module.LSP_Ada_Support_Is_Active then
          GPS.Kernel.Xref.Register_Module (GPS_Main.Kernel);
       end if;
 
@@ -1276,7 +1276,7 @@ procedure GPS.Main is
       Browsers.Canvas.Register_Actions (GPS_Main.Kernel);
 
       if Active (Call_Graph_Trace)
-        and then not GPS.LSP_Module.LSP_Ada_Support_Trace_Is_Active
+        and then not GPS.LSP_Module.LSP_Ada_Support_Is_Active
       then
          Browsers.Call_Graph.Register_Module (GPS_Main.Kernel);
       end if;
@@ -1304,7 +1304,7 @@ procedure GPS.Main is
       end if;
 
       if Active (Entities_Browser_Trace)
-        and then not GPS.LSP_Module.LSP_Ada_Support_Trace_Is_Active
+        and then not GPS.LSP_Module.LSP_Ada_Support_Is_Active
       then
          Browsers.Entities.Register_Module (GPS_Main.Kernel);
       end if;
@@ -1457,7 +1457,7 @@ procedure GPS.Main is
 
       if Active (Refactor_Trace) then
          Refactoring_Module.Register_Module
-           (GPS_Main.Kernel, GPS.LSP_Module.LSP_Ada_Support_Trace_Is_Active);
+           (GPS_Main.Kernel, GPS.LSP_Module.LSP_Ada_Support_Is_Active);
       end if;
 
       if Active (Code_Analysis_Trace) then
