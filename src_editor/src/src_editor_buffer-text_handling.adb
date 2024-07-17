@@ -443,7 +443,7 @@ package body Src_Editor_Buffer.Text_Handling is
 
          if Indent_Params.Casing_Policy not in End_Of_Word .. On_The_Fly
            or else (Indent_Params.Reserved_Casing = Unchanged
-                      and then Indent_Params.Ident_Casing = Unchanged)
+                      and then Indent_Params.Identifier_Casing = Unchanged)
            or else (In_Completion (Source_Buffer (Buffer))
                      and then Casing = On_The_Fly)
            or else (Indent_Params.Casing_Policy = End_Of_Word

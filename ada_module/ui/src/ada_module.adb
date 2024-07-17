@@ -27,6 +27,7 @@ with GPS.Kernel.Hooks;          use GPS.Kernel.Hooks;
 with GPS.Kernel.Preferences;    use GPS.Kernel.Preferences;
 with GPS.Kernel.Project;        use GPS.Kernel.Project;
 with GPS.Intl;                  use GPS.Intl;
+with GPS.LSP_Module;
 
 with Language.Ada;              use Language.Ada;
 with Ada_Semantic_Tree.Lang;    use Ada_Semantic_Tree.Lang;
@@ -66,7 +67,7 @@ package body Ada_Module is
    Ada_Indent_Case_Extra     : Indent_Preferences.Preference;
    Ada_Casing_Policy         : Casing_Policy_Preferences.Preference;
    Ada_Reserved_Casing       : Casing_Preferences.Preference;
-   Ada_Ident_Casing          : Casing_Preferences.Preference;
+   Ada_Identifier_Casing     : Casing_Preferences.Preference;
    Ada_Format_Operators      : Boolean_Preference;
    Ada_Align_On_Colons       : Boolean_Preference;
    Ada_Align_On_Arrows       : Boolean_Preference;
@@ -130,7 +131,7 @@ package body Ada_Module is
             Indent_Case_Extra   => Ada_Indent_Case_Extra.Get_Pref,
             Casing_Policy       => Ada_Casing_Policy.Get_Pref,
             Reserved_Casing     => Ada_Reserved_Casing.Get_Pref,
-            Ident_Casing        => Ada_Ident_Casing.Get_Pref,
+            Identifier_Casing   => Ada_Identifier_Casing.Get_Pref,
             Format_Operators    => Ada_Format_Operators.Get_Pref,
             Use_Tabs            => Ada_Use_Tabs.Get_Pref,
             Align_On_Colons     => Ada_Align_On_Colons.Get_Pref,
@@ -260,6 +261,17 @@ package body Ada_Module is
       Spec_Has_No_Body_Filter : constant Action_Filter :=
                                   (Is_Ada_Spec_Filter
                                    and not Has_Other_File_Filter);
+
+      Shared_Pref_Indent_Path  : constant Preference_Path :=
+        -"Editor/Ada:Indentation";
+      Non_LSP_Pref_Indent_Path : constant Preference_Path :=
+        (if GPS.LSP_Module.LSP_Ada_Formatting_Is_Active
+         then ":" & Shared_Pref_Indent_Path
+         else Shared_Pref_Indent_Path);
+      --  If LSP is activated then hide the preferences
+      Pref_Casing_Path         : constant Preference_Path :=
+        -"Editor/Ada:Casing";
+
       Manager                 : constant Preferences_Manager :=
                                   Kernel.Get_Preferences;
       Page                    : Preferences_Page;
@@ -312,17 +324,9 @@ package body Ada_Module is
 
       --  Register the default Ada-related preferences
 
-      Ada_Automatic_Indentation := Indentation_Kind_Preferences.Create
-        (Manager,
-         Path    => -"Editor/Ada:Indentation",
-         Name    => "Ada-Auto-Indentation",
-         Default => Extended,
-         Doc     => -"Enable auto-indentation for Ada sources.",
-         Label   => -"Auto indentation");
-
       Ada_Indentation_Level := Create
         (Manager,
-         Path    => -"Editor/Ada:Indentation",
+         Path    => Shared_Pref_Indent_Path,
          Name    => "Ada-Indent-Level",
          Minimum => 1,
          Maximum => 9,
@@ -330,9 +334,18 @@ package body Ada_Module is
          Doc     => -"Number of spaces for the default Ada indentation.",
          Label   => -"Default indentation");
 
+      Ada_Use_Tabs := Create
+        (Manager,
+         Path     => Shared_Pref_Indent_Path,
+         Name    => "Ada-Use-Tabs",
+         Default => False,
+         Doc     =>
+         -"Use tabulations when indenting.",
+         Label    => -"Use tabulations");
+
       Ada_Continuation_Level := Create
         (Manager,
-         Path    => -"Editor/Ada:Indentation",
+         Path    => Shared_Pref_Indent_Path,
          Name    => "Ada-Continuation-Level",
          Minimum => 0,
          Maximum => 9,
@@ -340,29 +353,37 @@ package body Ada_Module is
          Doc     => -"Number of extra spaces for continuation lines.",
          Label   => -"Continuation lines");
 
+      Ada_Automatic_Indentation := Indentation_Kind_Preferences.Create
+        (Manager,
+         Path    => Non_LSP_Pref_Indent_Path,
+         Name    => "Ada-Auto-Indentation",
+         Default => Extended,
+         Doc     => -"Enable auto-indentation for Ada sources.",
+         Label   => -"Auto indentation");
+
       Ada_Declaration_Level := Create
         (Manager,
-         Path  => -"Editor/Ada:Indentation",
+         Path    => Non_LSP_Pref_Indent_Path,
          Name    => "Ada-Declaration-Level:Indentation",
          Minimum => 0,
          Maximum => 9,
          Default => 0,
-         Doc   => -"Number of extra spaces for multi line declarations.",
-         Label => -"Declaration lines");
+         Doc     => -"Number of extra spaces for multi line declarations.",
+         Label   => -"Declaration lines");
 
       Ada_Conditional_Level := Create
         (Manager,
-         Path    => -"Editor/Ada:Indentation",
+         Path    => Non_LSP_Pref_Indent_Path,
          Name    => "Ada-Conditional-Level",
          Minimum => 0,
          Maximum => 9,
          Default => 1,
-         Doc   => -"Number of extra spaces for multiple line conditionals.",
+         Doc     => -"Number of extra spaces for multiple line conditionals.",
          Label   => -"Conditional continuation lines");
 
       Ada_Record_Level := Create
         (Manager,
-         Path    => -"Editor/Ada:Indentation",
+         Path    => Non_LSP_Pref_Indent_Path,
          Name    => "Ada-Record-Level",
          Minimum => 0,
          Maximum => 9,
@@ -372,48 +393,15 @@ package body Ada_Module is
 
       Ada_Indent_Case_Extra := Indent_Preferences.Create
         (Manager,
-         Path    => -"Editor/Ada:Indentation",
+         Path    => Non_LSP_Pref_Indent_Path,
          Name    => "Ada-Indent-Case-Style",
          Default => Automatic,
          Doc     => -"Indent case statement with an extra level.",
          Label   => -"Case indentation");
 
-      Ada_Casing_Policy := Casing_Policy_Preferences.Create
-        (Manager,
-         Path    => -"Editor/Ada:Casing",
-         Name    => "Ada-Casing-Policy",
-         Label   => -"Keywords and Identifiers casing",
-         Doc     => "",
-         Default => Disabled);
-
-      Ada_Reserved_Casing := Casing_Preferences.Create
-        (Manager,
-         Path    => -"Editor/Ada:Casing",
-         Name    => "Ada-Reserved-Casing",
-         Default => Lower,
-         Doc     => "",
-         Label   => -"Reserved word casing");
-
-      Ada_Ident_Casing := Casing_Preferences.Create
-        (Manager,
-         Path    => -"Editor/Ada:Casing",
-         Name    => "Ada-Ident-Casing",
-         Default => Smart_Mixed,
-         Doc     => "",
-         Label   => -"Identifier casing");
-
-      Ada_Use_Tabs := Create
-        (Manager,
-         Path     => -"Editor/Ada:Indentation",
-         Name    => "Ada-Use-Tabs",
-         Default => False,
-         Doc     =>
-         -"Use tabulations when indenting.",
-         Label    => -"Use tabulations");
-
       Ada_Format_Operators := Create
         (Manager,
-         Path    => -"Editor/Ada:Indentation",
+         Path    => Non_LSP_Pref_Indent_Path,
          Name    => "Ada-Format-Operators",
          Default => False,
          Doc     => -"Add spaces around operators and delimiters.",
@@ -421,7 +409,7 @@ package body Ada_Module is
 
       Ada_Align_On_Colons := Create
         (Manager,
-         Path    => -"Editor/Ada:Indentation",
+         Path    => Non_LSP_Pref_Indent_Path,
          Name    => "Ada-Align-On-Colons",
          Default => False,
          Doc     => -"Align colons in declaration statements.",
@@ -429,7 +417,7 @@ package body Ada_Module is
 
       Ada_Align_On_Arrows := Create
         (Manager,
-         Path    => -"Editor/Ada:Indentation",
+         Path    => Non_LSP_Pref_Indent_Path,
          Name    => "Ada-Align-On-Arrows",
          Default => False,
          Doc     => -"Align associations on arrow delimiters.",
@@ -437,7 +425,7 @@ package body Ada_Module is
 
       Ada_Align_Decl_On_Colon := Create
         (Manager,
-         Path    => -"Editor/Ada:Indentation",
+         Path    => Non_LSP_Pref_Indent_Path,
          Name    => "Ada-Align-Decl-On_Colon",
          Default => False,
          Doc     =>
@@ -447,7 +435,7 @@ package body Ada_Module is
 
       Ada_Indent_Comments := Create
         (Manager,
-         Path    => -"Editor/Ada:Indentation",
+         Path    => Non_LSP_Pref_Indent_Path,
          Name    => "Ada-Indent-Comments",
          Default => True,
          Doc     => -"Indent lines with only comments.",
@@ -455,13 +443,37 @@ package body Ada_Module is
 
       Ada_Stick_Comments := Create
         (Manager,
-         Path    => -"Editor/Ada:Indentation",
+         Path    => Non_LSP_Pref_Indent_Path,
          Name    => "Ada-Stick-Comments",
          Default => False,
          Doc     =>
          -("Align comment lines following 'record' and " &
            "'is' keywords immediately with no extra space"),
          Label   => -"Align comments on keywords");
+
+      Ada_Casing_Policy := Casing_Policy_Preferences.Create
+        (Manager,
+         Path    => Pref_Casing_Path,
+         Name    => "Ada-Casing-Policy",
+         Label   => -"Keywords and Identifiers casing",
+         Doc     => "",
+         Default => Disabled);
+
+      Ada_Reserved_Casing := Casing_Preferences.Create
+        (Manager,
+         Path    => Pref_Casing_Path,
+         Name    => "Ada-Reserved-Casing",
+         Default => Lower,
+         Doc     => "",
+         Label   => -"Reserved word casing");
+
+      Ada_Identifier_Casing := Casing_Preferences.Create
+        (Manager,
+         Path    => Pref_Casing_Path,
+         Name    => "Ada-Ident-Casing",
+         Default => Smart_Mixed,
+         Doc     => "",
+         Label   => -"Identifier casing");
 
       --  Register some of the Ada casing preferences in the 'General' page of
       --  the preferences assistant too.
@@ -484,7 +496,7 @@ package body Ada_Module is
          Pref    => Preference (Ada_Reserved_Casing));
       Group.Add_Pref
         (Manager => Manager,
-         Pref    => Preference (Ada_Ident_Casing));
+         Pref    => Preference (Ada_Identifier_Casing));
 
       Preferences_Changed_Hook.Add (new On_Pref_Changed);
 

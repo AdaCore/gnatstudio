@@ -502,28 +502,25 @@ package body Src_Editor_View.Commands is
       return Standard.Commands.Command_Return_Type
    is
       pragma Unreferenced (Context, Command);
-      Kernel        : constant Kernel_Handle := Get_Kernel
+      Kernel     : constant Kernel_Handle := Get_Kernel
         (Src_Editor_Module_Id.all);
-      Editor        : constant MDI_Child := Find_Current_Editor (Kernel);
-      Source_Box    : constant Source_Editor_Box :=
+      Editor     : constant MDI_Child := Find_Current_Editor (Kernel);
+      Source_Box : constant Source_Editor_Box :=
                         Get_Source_Box_From_MDI (Editor);
-      View          : constant Source_View := Source_Box.Get_View;
-      Buffer        : constant Source_Buffer := Source_Box.Get_Buffer;
-      Indent_Params : Indent_Parameters;
-      Indent_Style  : Indentation_Kind;
-      Tab_Width     : Natural renames Indent_Params.Indent_Level;
+      View       : constant Source_View := Source_Box.Get_View;
+      Buffer     : constant Source_Buffer := Source_Box.Get_Buffer;
+      Tab_Width  : Natural;
 
-      Line          : Editable_Line_Type;
-      Column        : Character_Offset_Type;
-      Num           : Natural;
+      Line       : Editable_Line_Type;
+      Column     : Character_Offset_Type;
+      Num        : Natural;
    begin
       if View = null then
          return Failure;
       end if;
 
       --  Read the indentation parameters corresponding to the language
-      Get_Indentation_Parameters
-        (Get_Language (Buffer), Indent_Params, Indent_Style);
+      Tab_Width := Get_Language (Buffer).Get_Indentation_Level;
 
       --  Get the cursor position
       Get_Cursor_Position (Buffer, Line, Column);

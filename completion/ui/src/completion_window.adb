@@ -1144,6 +1144,10 @@ package body Completion_Window is
       Window.Explorer.Pattern := new String'
         (Get_Text (Window.Buffer, Beg, Iter));
 
+      if Window.Explorer.Pattern.all = "" then
+         Delete (Window);
+      end if;
+
       --  If the character we just inserted is not in the set of identifier
       --  characters, we know that we won't find the result in the list of
       --  stored items, so return immediately.

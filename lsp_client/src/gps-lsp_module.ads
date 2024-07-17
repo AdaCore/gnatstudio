@@ -34,15 +34,20 @@ package GPS.LSP_Module is
    --  Use of language server is enabled and is configured for given language.
    --  It doesn't mean that language server is up and running.
 
-   function LSP_Ada_Support_Trace_Is_Active return Boolean;
-   --  Return True if the LSP support trace for Ada is active.
+   function LSP_Ada_Support_Is_Active return Boolean;
+   --  Return True if the LSP support for Ada is active.
    --  This does not mean that a language server for Ada is up and running: it
-   --  just means that the LSP for will be used for Ada at some point.
+   --  just means that LSP will be used for Ada at some point.
 
-   function LSP_Cpp_Support_Trace_Is_Active return Boolean;
-   --  Return True if the LSP support trace for C++ is active.
+   function LSP_Ada_Formatting_Is_Active return Boolean;
+   --  Return True if the LSP formatting for Ada is active.
+   --  This does not mean that a language server for Ada is up and running: it
+   --  just means that LSP will be used for Ada at some point.
+
+   function LSP_Cpp_Support_Is_Active return Boolean;
+   --  Return True if the LSP support for C++ is active.
    --  This does not mean that a language server for C++ is up and running: it
-   --  just means that the LSP for will be used for C++ at some point.
+   --  just means that LSP will be used for C++ at some point.
 
    function Get_Language_Server
      (Language : not null Standard.Language.Language_Access)

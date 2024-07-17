@@ -141,6 +141,16 @@ package body GPS.LSP_Module is
        ("GPS.LSP.LOGS", GNATCOLL.Traces.On);
    --  Whether to log the LSP notifications that arrive with the 'log' type
 
+   Me_LSP_FORMATTING : constant GNATCOLL.Traces.Trace_Handle :=
+     GNATCOLL.Traces.Create
+       ("GPS.LSP.FORMATTING", GNATCOLL.Traces.On);
+   --  Enable/disable overall LSP formatting
+
+   Me_LSP_FORMATTING_ADA : constant GNATCOLL.Traces.Trace_Handle :=
+     GNATCOLL.Traces.Create
+       ("GPS.LSP.FORMATTING.ADA", GNATCOLL.Traces.Off);
+   --  Enable/disable Ada LSP formatting
+
    Progress_Pattern : constant VSS.Regular_Expressions.Regular_Expression :=
      VSS.Regular_Expressions.To_Regular_Expression
        ("([0-9][0-9]*)/([0-9][0-9]*)");  --  &1 - processed, &2 - total files
@@ -1104,19 +1114,29 @@ package body GPS.LSP_Module is
    -- LSP_Ada_Support_Trace_Is_Active --
    -------------------------------------
 
-   function LSP_Ada_Support_Trace_Is_Active return Boolean is
+   function LSP_Ada_Support_Is_Active return Boolean is
    begin
       return Me_Ada_Support.Is_Active;
-   end LSP_Ada_Support_Trace_Is_Active;
+   end LSP_Ada_Support_Is_Active;
+
+   ----------------------------------------
+   -- LSP_Ada_Formatting_Trace_Is_Active --
+   ----------------------------------------
+
+   function LSP_Ada_Formatting_Is_Active return Boolean is
+   begin
+      return Me_LSP_FORMATTING.Is_Active
+        and then Me_LSP_FORMATTING_ADA.Is_Active;
+   end LSP_Ada_Formatting_Is_Active;
 
    -------------------------------------
    -- LSP_Cpp_Support_Trace_Is_Active --
    -------------------------------------
 
-   function LSP_Cpp_Support_Trace_Is_Active return Boolean is
+   function LSP_Cpp_Support_Is_Active return Boolean is
    begin
       return Me_Cpp_Support.Is_Active;
-   end LSP_Cpp_Support_Trace_Is_Active;
+   end LSP_Cpp_Support_Is_Active;
 
    ------------------------
    -- Remove_Diagnostics --
@@ -1774,7 +1794,9 @@ package body GPS.LSP_Module is
       GPS.LSP_Client.Editors.Highlight.Register (Kernel);
       GPS.LSP_Client.Editors.Navigation.Register_Module (Kernel);
       GPS.LSP_Client.Editors.Folding.Register_Module (Kernel);
-      GPS.LSP_Client.Editors.Formatting.Register_Module (Kernel);
+      if Me_LSP_FORMATTING.Is_Active then
+         GPS.LSP_Client.Editors.Formatting.Register_Module (Kernel);
+      end if;
       GPS.LSP_Client.Editors.Signature_Help.Register_Module (Kernel);
       GPS.LSP_Client.Call_Tree.Register_Module (Kernel);
       GPS.LSP_Client.Outline.Register_Module (Kernel);
