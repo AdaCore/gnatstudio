@@ -1,4 +1,4 @@
-with "gtkada";
+
 with "../kernel/kernel";
 with "../shared";
 with "builder_core";

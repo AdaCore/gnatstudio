@@ -1,5 +1,5 @@
+
 with "../common/common";
-with "gtkada";
 with "../kernel/kernel";
 with "../completion/ui/completion_ui";
 with "../vsearch/vsearch";

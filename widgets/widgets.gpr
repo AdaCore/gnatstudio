@@ -1,4 +1,4 @@
-with "gtkada";
+
 with "../common/common_ui";
 with "../shared";
 with "../gnatcoll_extras/gnatcoll_extras";
