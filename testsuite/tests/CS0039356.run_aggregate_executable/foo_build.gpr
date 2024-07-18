@@ -1,0 +1,6 @@
+aggregate project Foo_Build is
+
+   for Project_Files use ("foo.gpr", "foo-test.gpr");
+--   for Project_Files use ("foo.gpr");
+   
+end Foo_Build;

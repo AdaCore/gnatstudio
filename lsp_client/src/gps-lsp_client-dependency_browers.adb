@@ -239,7 +239,7 @@ package body GPS.LSP_Client.Dependency_Browers is
       Provider : constant Dependency_Browser_Provider_Access :=
         new LSP_Dependency_Browser_Provider_Type;
    begin
-      if LSP_Ada_Support_Trace_Is_Active then
+      if LSP_Ada_Support_Is_Active then
          Browsers.Dependency_Items.Set_Dependency_Browser_Provider
            (Provider);
       end if;

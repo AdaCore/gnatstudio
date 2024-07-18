@@ -1721,17 +1721,13 @@ package body Src_Editor_View is
 
    procedure Compute_Pango_Tabs (View : access Source_View_Record'Class)
    is
-      P             : Pango.Tabs.Pango_Tab_Array;
-      Indent_Params : Indent_Parameters;
-      Indent_Style  : Indentation_Kind;
+      P            : Pango.Tabs.Pango_Tab_Array;
+      Indent_Level : constant Natural :=
+        Source_Buffer (Get_Buffer (View)).Get_Language.Get_Indentation_Level;
    begin
       if View.Get_Tabs /= Null_Pango_Tab_Array then
          Pango.Tabs.Free (View.Get_Tabs);
       end if;
-      Get_Indentation_Parameters
-        (Lang         => Source_Buffer (Get_Buffer (View)).Get_Language,
-         Params       => Indent_Params,
-         Indent_Style => Indent_Style);
 
       if View.Width_Of_256_Chars = -1 then
          Recompute_Font_Size (Source_View (View));
@@ -1743,7 +1739,7 @@ package body Src_Editor_View is
       Pango.Tabs.Set_Tab
         (P, 0, Pango.Tabs.Pango_Tab_Left,
          ((View.Width_Of_256_Chars / 256) + 1)
-         * Gint (Indent_Params.Indent_Level));
+         * Gint (Indent_Level));
       View.Set_Tabs (P);
    end Compute_Pango_Tabs;
 

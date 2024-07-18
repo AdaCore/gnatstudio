@@ -588,17 +588,10 @@ package body Src_Editor_Buffer is
    ----------------------
 
    procedure Adjust_Tab_Width
-     (Buffer : access Source_Buffer_Record'Class)
-   is
-      Indent_Params : Indent_Parameters;
-      Indent_Style  : Indentation_Kind;
+     (Buffer : access Source_Buffer_Record'Class) is
    begin
       if Buffer.Lang /= null then
-         Get_Indentation_Parameters
-           (Lang         => Buffer.Lang,
-            Params       => Indent_Params,
-            Indent_Style => Indent_Style);
-         Buffer.Tab_Width := Indent_Params.Indent_Level;
+         Buffer.Tab_Width := Buffer.Lang.Get_Indentation_Level;
       end if;
    end Adjust_Tab_Width;
 
@@ -6186,8 +6179,6 @@ package body Src_Editor_Buffer is
 
    function Should_Indent (Buffer : Source_Buffer) return Boolean is
       Lang          : constant Language_Access := Get_Language (Buffer);
-      Indent_Params : Indent_Parameters;
-      Indent_Style  : Indentation_Kind;
    begin
       if Formatting_Provider = null
         and then not Get_Language_Context (Lang).Can_Indent
@@ -6195,12 +6186,7 @@ package body Src_Editor_Buffer is
          return False;
       end if;
 
-      Get_Indentation_Parameters
-        (Lang         => Lang,
-         Params       => Indent_Params,
-         Indent_Style => Indent_Style);
-
-      return Indent_Style /= None;
+      return Lang.Get_Indentation_Style /= None;
    end Should_Indent;
 
    --------------------

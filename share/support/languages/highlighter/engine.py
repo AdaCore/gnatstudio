@@ -146,15 +146,15 @@ except NameError:
 
 
 def propagate_change(pref):
-    fg_color = Gdk.RGBA()
+    fg_rgba = Gdk.RGBA()
     style_string = pref.get()
     font_style, fg_style, bg_style = style_string.split("@")
-    fg_color.parse(fg_style)
-    pref.tag.set_property("foreground_rgba", fg_color)
+    fg_rgba.parse(fg_style)
+    pref.tag.set_property("foreground_rgba", fg_rgba)
 
-    bg_color = Gdk.RGBA()
-    bg_color.parse(bg_style)
-    pref.tag.set_property("background_rgba", bg_color)
+    bg_rgba = Gdk.RGBA()
+    bg_rgba.parse(bg_style)
+    pref.tag.set_property("background_rgba", bg_rgba)
 
     if font_style in ["BOLD", "BOLD_ITALIC"]:
         pref.tag.set_property("weight", Pango.Weight.BOLD)
@@ -165,6 +165,15 @@ def propagate_change(pref):
     if font_style in ["DEFAULT", "NORMAL"]:
         pref.tag.set_property("style", Pango.Style.NORMAL)
         pref.tag.set_property("weight", Pango.Weight.NORMAL)
+
+
+def get_hex_color(rgba_color):
+    """
+    :type rgba_color: GdkRGBA
+    :return: hexadecimal representation of RGB
+    """
+    fg_color = rgba_color.to_color()
+    return "#{:01x}{:01x}{:01x}".format(fg_color.red, fg_color.green, fg_color.blue)
 
 
 # Data classes for highlighters
@@ -473,8 +482,8 @@ class Highlighter(object):
                 tk_end_offset = start_offset + m.end(i)
 
                 if start_line > current_line:
-                    for l in range(current_line + 1, start_line):
-                        gtk_ed.stacks.set(l, subhl_stack)
+                    for ll in range(current_line + 1, start_line):
+                        gtk_ed.stacks.set(ll, subhl_stack)
                     current_line = start_line
 
                     # We exit because the stack we're setting is == to the
@@ -536,8 +545,8 @@ class Highlighter(object):
         # of the buffer (didn't meet a stop pattern, or is the top level hl).
         #  In this case, we want to set the stack correctly for the remaining
         #  lines
-        for l in range(current_line + 1, end.get_line() + 1):
-            gtk_ed.stacks.set(l, subhl_stack)
+        for ll in range(current_line + 1, end.get_line() + 1):
+            gtk_ed.stacks.set(ll, subhl_stack)
 
         results.append((None, end_offset, end_offset))
         return results
@@ -597,7 +606,7 @@ class Highlighter(object):
             if gtk_ed.idle_highlight_id:
                 GLib.source_remove(gtk_ed.idle_highlight_id)
 
-            # Highlight all the rest of the buffer
+            # Highlight the rest of the buffer
             self.gtk_highlight_region(gtk_ed, loc.get_line(), nb_lines)
 
         # noinspection PyUnusedLocal
@@ -624,6 +633,207 @@ class Highlighter(object):
         gtk_ed.connect_after("delete-range", highlighting_delete_range)
         gtk_ed.connect("delete-range", highlighting_delete_range_before)
         gtk_ed.connect("insert-text", highlighting_insert_text_before)
+
+    def generate_markup(self, text, allow_nested_tag=False):
+        """
+        Generate the pango markup representation of text by Highlighter.
+        :param allow_nested_tag: When True, insert markup for each tags.
+        Otherwise skip nested tags.
+        For example the '"Str\!"' in C will return with allow_nested_tag:
+           <span foreground="#1">"Str<span foreground="#2">\!"</span></span>";
+        and without:
+           <span foreground="#1">"Str\!"</span>;
+        (#1 and #2 will be rgba hexadecimal colors matching the theme)
+        """
+        text_ed = StringTextBuffer(text)
+        actions_list = self.highlight_info_gen(text_ed, 0, 0)
+
+        # Sort actions_list by start offset
+        actions_list.sort(key=lambda x: x[1])
+
+        result = ""
+        if not allow_nested_tag:
+            # Map of list of tag for index in the buffer
+            start_tag_map = {}
+            end_tag_map = {}
+            last_tag = None
+            for tag, start, end in actions_list:
+                if tag:
+                    if start in start_tag_map:
+                        start_tag_map[start].append(tag)
+                    else:
+                        start_tag_map[start] = [tag]
+
+                    if end in end_tag_map:
+                        end_tag_map[end].append(tag)
+                    else:
+                        end_tag_map[end] = [tag]
+
+            current_offset = 0
+            max_offset = len(text)
+            start_iter = iter(start_tag_map)
+            end_iter = iter(end_tag_map)
+            start_tag_offset = next(start_iter)
+            end_tag_offset = next(end_iter)
+
+            iterator_stopped = 0
+            # Iter in both map in parallel until both are empty which means
+            # we received 2 StopIteration exception
+            while iterator_stopped < 2:
+                if start_tag_offset < end_tag_offset:
+                    result += text[current_offset:start_tag_offset]
+                    current_offset = start_tag_offset
+                    for tag in start_tag_map[start_tag_offset]:
+                        result += '<span foreground="%s">' % get_hex_color(
+                            tag.get_property("foreground_rgba")
+                        )
+                        try:
+                            start_tag_offset = next(start_iter)
+                        except StopIteration:
+                            iterator_stopped += 1
+                            start_tag_offset = max_offset + 1
+                elif start_tag_offset == end_tag_offset:
+                    result += text[current_offset:end_tag_offset]
+                    current_offset = end_tag_offset
+                    for tag in end_tag_map[end_tag_offset]:
+                        result += "</span>"
+                    for tag in start_tag_map[start_tag_offset]:
+                        result += '<span foreground="%s">' % get_hex_color(
+                            tag.get_property("foreground_rgba")
+                        )
+                        try:
+                            start_tag_offset = next(start_iter)
+                        except StopIteration:
+                            iterator_stopped += 1
+                            start_tag_offset = max_offset + 1
+                        try:
+                            end_tag_offset = next(end_iter)
+                        except StopIteration:
+                            iterator_stopped += 1
+                            end_tag_offset = max_offset + 1
+                elif end_tag_offset < max_offset:
+                    result += text[current_offset:end_tag_offset]
+                    current_offset = end_tag_offset
+                    for tag in end_tag_map[end_tag_offset]:
+                        result += "</span>"
+                    try:
+                        end_tag_offset = next(end_iter)
+                    except StopIteration:
+                        iterator_stopped += 1
+                        end_tag_offset = max_offset + 1
+
+            # Add the rest of the text
+            result += text[current_offset:]
+        else:
+            current_offset = 0
+            for tag, start, end in actions_list:
+                # This check allows to ignore nested span
+                if current_offset <= start:
+                    # Add the text before the one in the span
+                    result += text[current_offset:start]
+                    if tag:
+                        need_close_span = True
+                        result += '<span foreground="%s">' % get_hex_color(
+                            tag.get_property("foreground_rgba")
+                        )
+                        result += text[start:end]
+                        result += "</span>"
+                    else:
+                        result += text[start:end]
+                    current_offset = end
+
+            # Add the rest of the text
+            result += text[current_offset:]
+
+        return result
+
+
+class StringTextIter:
+    """
+    An iterator in a string mimicking the implementation of Gtk.TextIter
+    """
+
+    def __init__(self, line, column, offset):
+        self.line = line
+        self.column = column
+        self.offset = offset
+
+    def compare(self, other):
+        if self.offset < other.offset:
+            return -1
+        else:
+            return 1
+
+    def get_offset(self):
+        return self.offset
+
+    def get_line(self):
+        return self.line
+
+    def get_column(self):
+        return self.column
+
+
+class StringTextBuffer:
+    """
+    A text buffer mimicking the implementation of Gtk.TextBuffer.
+    """
+
+    def __init__(self, text):
+        self.text = text
+        self.lines = self.text.splitlines()
+        self.stacks = HighlighterStacks()
+        self.tagtable = Gtk.TextTagTable()
+
+    def _create_text_iter(self, line, column):
+        offset = 0
+        for i in range(0, len(self.lines)):
+            if offset > 0:
+                offset += 1  # Add the newline
+            if i == line:
+                offset += column
+                return StringTextIter(line, column, offset)
+            else:
+                offset += len(self.lines[i])
+        return None
+
+    def get_iter_at_line(self, line):
+        return self._create_text_iter(line, 0)
+
+    def get_end_iter(self):
+        return self._create_text_iter(len(self.lines) - 1, len(self.lines[-1]))
+
+    def get_line_count(self):
+        return len(self.text.splitlines())
+
+    def get_text(self, start, end, ignored):
+        return self.text[start.offset : end.offset]
+
+    def get_tag_table(self):
+        return self.tagtable
+
+    def create_tag(self, id):
+        tag = Gtk.TextTag(name=id)
+        self.tagtable.add(tag)
+        return tag
+
+
+def markup_for_text(language, text, allow_nested_tag=False):
+    """
+    Reuse the Highlighter engine on a string for the given language.
+    The result is the same string with markup tags.
+    :param language: the language used for highlighting
+    :type language: str
+    :param text: the text to highlight
+    :type text: str
+    :param allow_nested_tag: should the markup be complex or simple
+    :type allow_nested_tag: bool
+    """
+    highlighter = HighlighterModule.highlighters.get(language.lower(), None)
+    if highlighter:
+        return highlighter.generate_markup(text, allow_nested_tag=allow_nested_tag)
+    else:
+        return text
 
 
 def gps_fun(fun):

@@ -379,15 +379,9 @@ package body Codefix.GPS_Io is
           (Get_File_Name (This),
            Open_View   => False,
            Open_Buffer => True);
-      Indent_Params : Indent_Parameters;
-      Indent_Style  : Indentation_Kind;
    begin
       if Editor.Get_Language /= null then
-         Get_Indentation_Parameters
-           (Lang         => Editor.Get_Language,
-            Params       => Indent_Params,
-            Indent_Style => Indent_Style);
-         return Indent_Params.Indent_Level;
+         return Editor.Get_Language.Get_Indentation_Level;
       else
          return 8;
       end if;
