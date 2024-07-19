@@ -40,8 +40,7 @@ project Sdc is
    --  end CodePeer;
 
    package Analyzer is
-      for Switches use ("--mode", "deep");
+      for Switches ("Analyze") use ("--mode", "deep");
    end Analyzer;
 
 end Sdc;
-
