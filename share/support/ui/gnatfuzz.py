@@ -97,14 +97,12 @@ class GNATfuzzPlugin(Module):
                 ).children(
                     X("combo-entry", label="PLAIN", value="afl_plain"),
                     X("combo-entry", label="PERSIST", value="afl_persist"),
-                    # "DEFER" and "DEFER_AND_PERSIST" are not available yet;
-                    # uncomment these lines when they are available.
-                    #    X("combo-entry", label="DEFER", value="afl_defer"),
-                    #    X(
-                    #        "combo-entry",
-                    #        label="DEFER_AND_PERSIST",
-                    #        value="afl_defer_and_persist",
-                    #    ),
+                    X("combo-entry", label="DEFER", value="afl_defer"),
+                    X(
+                        "combo-entry",
+                        label="DEFER_AND_PERSIST",
+                        value="afl_defer_and_persist",
+                    ),
                 ),
                 X(
                     "check",
