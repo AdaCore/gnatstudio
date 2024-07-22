@@ -20,9 +20,33 @@ def test_driver():
 
     debug = GPS.Debugger.get()
 
+    # Open the assembly view
+    GPS.execute_action("open assembly view")
+    yield wait_for_mdi_child("Assembly")
+    yield wait_idle()
+
+    # Check that the assembly view is empty
+    assembly = GPS.MDI.get("Assembly").pywidget()
+    model = get_widgets_by_type(Gtk.TreeView, assembly)[0].get_model()
+    chars = model.get_value(model.get_iter_first(), 3)
+    gps_assert(
+        chars.find("get assembly code") == -1,
+        False,
+        "The Assembly view should be empty",
+    )
+
     # start to have the valid address
     debug.send("run")
-    yield hook("debugger_location_changed")
+    yield wait_DAP_server("disassemble")
+    yield wait_idle()
+
+    # Check that the assembly view is not empty after the first stop
+    chars = model.get_value(model.get_iter_first(), 3)
+    gps_assert(
+        chars.find("get assembly code") == -1,
+        True,
+        "The Assembly view should be filled",
+    )
 
     # Open the Breakpoints view
     GPS.execute_action("open breakpoints editor")
@@ -42,11 +66,6 @@ def test_driver():
         [],
         "The Breakpoints view should be empty",
     )
-
-    # Open the assembly view
-    GPS.execute_action("open assembly view")
-    yield wait_for_mdi_child("Assembly")
-    yield wait_idle()
 
     # Create a breakpoint in the Assembly view
     GPS.execute_action("assembly_view toggle breakpoint")
