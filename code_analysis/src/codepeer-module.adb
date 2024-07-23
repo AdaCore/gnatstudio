@@ -1911,11 +1911,15 @@ package body CodePeer.Module is
          for Object of Data.Object_Races loop
             for Entry_Point of Object.Entry_Points loop
                for Object_Access of Entry_Point.Object_Accesses loop
-                  Object_Access.Message.Set_Flags (Empty_Message_Flags);
+                  if Object_Access.Message /= null then
+                     Object_Access.Message.Set_Flags (Empty_Message_Flags);
+                  end if;
                end loop;
             end loop;
 
-            Object.Message.Set_Flags (Empty_Message_Flags);
+            if Object.Message /= null then
+               Object.Message.Set_Flags (Empty_Message_Flags);
+            end if;
          end loop;
       end if;
    end Update_Location_View;
