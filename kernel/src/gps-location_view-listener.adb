@@ -169,6 +169,10 @@ package body GPS.Location_View.Listener is
       Values     : Glib.Values.GValue_Array);
    --  ??? Must be moved to GtkAda
 
+   function Get_Markup
+     (Message  : not null access Abstract_Message'Class) return String;
+   --  Returns string that is used for the markup column
+
    Stop_Sorting_On_Count : constant Glib.Gint := 1000;
    --  The count of messages when we stop sorting "on the fly".
 
@@ -862,6 +866,25 @@ package body GPS.Location_View.Listener is
       return GNATCOLL.VFS.GtkAda.Get_File (Self, Iter, Column);
    end Get;
 
+   ----------------
+   -- Get_Markup --
+   ----------------
+
+   function Get_Markup
+     (Message  : not null access Abstract_Message'Class) return String
+   is
+      Location : constant String :=
+        Image (Message.Get_Line)
+        & ':'
+        & Image (Natural (Message.Get_Column));
+      Length   : constant Natural :=
+        Integer'Max (0, Location_Padding - Location'Length);
+
+   begin
+      return "<b>" & Location & "</b>" & (Length * ' ')
+        & To_String (Message.Get_Markup);
+   end Get_Markup;
+
    -----------------
    -- Get_Message --
    -----------------
@@ -1039,20 +1062,7 @@ package body GPS.Location_View.Listener is
          --  For primary messages, output line:column information and text of
          --  the message when line:column information is available.
 
-         declare
-            Location : constant String :=
-              Image (Message.Get_Line)
-                & ':'
-                & Image (Natural (Message.Get_Column));
-            Length   : constant Natural :=
-              Integer'Max (0, Location_Padding - Location'Length);
-
-         begin
-            Glib.Values.Init_Set_String
-              (Values (8),
-               "<b>" & Location & "</b>" & (Length * ' ')
-               & To_String (Message.Get_Markup));
-         end;
+         Glib.Values.Init_Set_String (Values (8), Get_Markup (Message));
 
       else
          --  Otherwise output message text only.
@@ -1216,7 +1226,7 @@ package body GPS.Location_View.Listener is
          Set_And_Clear
            (Gtk_Tree_Store (Self.Model), Iter,
             (1 => -Node_Markup_Column),
-            (1 => As_String (To_String (Message.Get_Markup))));
+            (1 => As_String (Get_Markup (Message))));
       end if;
    end Message_Property_Changed;
 
