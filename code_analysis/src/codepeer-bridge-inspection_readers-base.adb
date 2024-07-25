@@ -870,10 +870,10 @@ package body CodePeer.Bridge.Inspection_Readers.Base is
 
       Audit : constant CodePeer.Audit_Record_Access :=
         new CodePeer.Audit_Record'
-          (Status => Get_Status (Attrs.Get_Value ("status")),
+          (Status      => Get_Status (Attrs.Get_Value ("status")),
            Approved_By => To_Unbounded_String (Attrs.Get_Value ("author")),
-           Timestamp => To_Unbounded_String (Attrs.Get_Value ("date")),
-           Comment => To_Unbounded_String (Attrs.Get_Value ("text")));
+           Timestamp   => To_Unbounded_String (Attrs.Get_Value ("date")),
+           Comment     => To_Unbounded_String (Attrs.Get_Value ("text")));
    begin
       Self.Current_Message.Audit.Append (Audit);
    end Start_Review;
