@@ -54,6 +54,10 @@ with CodePeer.Module;
 with CodePeer.Message_Review_Dialogs.Utils;
 use CodePeer.Message_Review_Dialogs.Utils;
 
+with VSS.Strings;
+with VSS.Strings.Conversions;
+with VSS.String_Vectors;
+
 package body CodePeer.Multiple_Message_Review_Dialogs is
 
    Messages_Model_Id_Column       : constant := 0;
@@ -170,6 +174,34 @@ package body CodePeer.Multiple_Message_Review_Dialogs is
          Audit : constant CodePeer.Audit_Record_Access :=
            CodePeer.Audit_Vectors.Element (Position);
 
+         function Unmask_New_Lines (From : Unbounded_String) return String;
+         --  Replace the "\n" by ASCII.LF
+
+         function Unmask_New_Lines (From : Unbounded_String) return String is
+            S      : Unbounded_String := From;
+            Vector : VSS.String_Vectors.Virtual_String_Vector;
+            Idx    : Natural;
+         begin
+            loop
+               Idx := S.Index ("\n");
+               if Idx > 0 then
+                  Vector.Append
+                    (VSS.Strings.Conversions.To_Virtual_String
+                       (S.Slice (1, Idx - 1)));
+                  S.Delete (1, Idx + 1);
+               else
+                  Vector.Append
+                    (VSS.Strings.Conversions.To_Virtual_String (S));
+                  exit;
+               end if;
+            end loop;
+
+            return VSS.Strings.Conversions.To_UTF_8_String
+              (Vector.Join_Lines
+                 (Terminator     => VSS.Strings.LF,
+                  Terminate_Last => False));
+         end Unmask_New_Lines;
+
       begin
          Store.Append (Iter, Gtk.Tree_Model.Null_Iter);
          Set_All_And_Clear
@@ -178,7 +210,7 @@ package body CodePeer.Multiple_Message_Review_Dialogs is
              1 => As_String (To_String (Audit.Timestamp)),
              2 => As_String (Image (Audit.Status)),
              3 => As_String (To_String (Audit.Approved_By)),
-             4 => As_String (To_String (Audit.Comment))));
+             4 => As_String (Unmask_New_Lines (Audit.Comment))));
       end Process_Audit;
 
    begin
@@ -455,12 +487,33 @@ package body CodePeer.Multiple_Message_Review_Dialogs is
       Start_Iter : Gtk.Text_Iter.Gtk_Text_Iter;
       End_Iter   : Gtk.Text_Iter.Gtk_Text_Iter;
 
+      function Mask_New_Lines (S : String) return Unbounded_String;
+      --  Replace the new line ASCII.LF by "\n"
+
+      function Mask_New_Lines (S : String) return Unbounded_String is
+         Vector : constant VSS.String_Vectors.Virtual_String_Vector :=
+           VSS.Strings.Conversions.To_Virtual_String (S).Split_Lines;
+         Result : VSS.Strings.Virtual_String;
+      begin
+         for Line of Vector loop
+            if not Result.Is_Empty then
+               Result.Append ("\n");
+            end if;
+
+            Result.Append (Line);
+         end loop;
+
+         return VSS.Strings.Conversions.To_Unbounded_UTF_8_String (Result);
+      end Mask_New_Lines;
+
    begin
       Self.Comment_Buffer.Get_Start_Iter (Start_Iter);
       Self.Comment_Buffer.Get_End_Iter (End_Iter);
-      Comment :=
-        To_Unbounded_String
-          (Self.Comment_Buffer.Get_Text (Start_Iter, End_Iter));
+      Comment := Mask_New_Lines
+        (Self.Comment_Buffer.Get_Text
+           (Start                => Start_Iter,
+            The_End              => End_Iter,
+            Include_Hidden_Chars => True));
 
       --  Add new record and change message probability
 
