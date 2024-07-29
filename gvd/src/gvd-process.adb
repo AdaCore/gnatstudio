@@ -1468,8 +1468,10 @@ package body GVD.Process is
             else
                Buttons := GPS_Message_Dialog
                  (Msg =>
-                    -("The executable specified with" &
-                      " --debug does not exist on disk"),
+                    "The following executable specified with"
+                  & " --debug does not exist on disk: "
+                  & ASCII.LF
+                  & Exec.Display_Full_Name,
                   Dialog_Type => Error,
                   Buttons => Button_OK,
                   Title =>  -"Executable not found",

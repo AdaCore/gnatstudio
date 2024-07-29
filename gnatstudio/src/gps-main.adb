@@ -1837,9 +1837,16 @@ procedure GPS.Main is
          --  windows with height=0 or width=0
          if GVD.Preferences.Debugger_Kind.Get_Pref = GVD.Types.DAP then
             declare
-               File : constant Virtual_File :=
-                 Create_From_Base (+Program_Args.all);
+               File : Virtual_File := Create_From_Base (+Program_Args.all);
             begin
+               --  If we are on Windows ahd the file does not exist, try to
+               --  append the file extension.
+               --  This can be useful on Cygwin, where the extension if often
+               --  omitted.
+               if Config.Host = Windows and then not File.Is_Regular_File then
+                  File := Create_From_Base (+Program_Args.all & ".exe");
+               end if;
+
                GNATCOLL.VFS.Normalize_Path (File);
                DAP.Module.Initialize_Debugger
                  (Kernel  => GPS_Main.Kernel,

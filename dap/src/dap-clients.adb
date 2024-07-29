@@ -932,8 +932,10 @@ package body DAP.Clients is
          begin
             Buttons := GUI_Utils.GPS_Message_Dialog
               (Msg         =>
-                 "The executable specified with" &
-                   " --debug does not exist on disk",
+                 "The following executable specified with"
+               & " --debug does not exist on disk: "
+               & ASCII.LF
+               & Self.Executable.Display_Full_Name,
                Dialog_Type => Error,
                Buttons     => Button_OK,
                Title       => "Executable not found",
