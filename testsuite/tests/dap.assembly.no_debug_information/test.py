@@ -5,7 +5,7 @@ information.
 import GPS
 from gs_utils.internal.utils import *
 
-COLUMN = 3
+INSTR_COLUMN = 2
 WARNING = "['<b>Couldn&apos;t get assembly code</b>']"
 
 
@@ -24,7 +24,7 @@ def test_driver():
     model = tree.get_model()
     # The strip() is here to remove the newline
     gps_assert(
-        str(dump_tree_model(model, COLUMN)).strip(),
+        str(dump_tree_model(model, INSTR_COLUMN)).strip(),
         WARNING,
         "Missing warning in the Assembly view",
     )

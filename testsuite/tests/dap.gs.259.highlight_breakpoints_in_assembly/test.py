@@ -7,7 +7,7 @@ import GPS
 from gs_utils.internal.utils import *
 
 
-BG_COLOR_COLUMN = 6
+BG_COLOR_COLUMN = 5
 
 
 @run_test_driver
