@@ -30,7 +30,7 @@ EOF
       if [ "$basedir" = "" ]; then
          basedir="$default_dir"
       fi
-      if echo "$basedir" | egrep "^[/~]" >/dev/null; then
+      if echo "$basedir" | grep -E -e "^[/~]" >/dev/null; then
          true
       else
          basedir=`pwd`/"$basedir"
@@ -103,7 +103,7 @@ install_binaries() {
 
   for f in "$basedir/share/gnatstudio/plug-ins"/*.xml \
            "$basedir/share/gnatstudio/plug-ins"/*.py; do
-    egrep -e '(<documentation_file>|<gnat_examples>)' "$f" >/dev/null 2>&1
+    grep -E -e '(<documentation_file>|<gnat_examples>)' "$f" >/dev/null 2>&1
     if [ $? -ne 0 ]; then
       rm -f "$f"
     fi
