@@ -15,6 +15,7 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
+with Ada.Calendar.Arithmetic;
 with Ada.Calendar.Formatting;
 with Ada.Characters.Latin_1;
 
@@ -56,10 +57,9 @@ package body CodePeer.Reports is
       use type Ada.Calendar.Time;
       use Ada.Strings;
 
-      Inspections_Box     : Gtk.Box.Gtk_Hbox;
-      Baseline_Inspection : Gtk.Label.Gtk_Label;
+      Header_Box          : Gtk.Box.Gtk_Vbox;
+      Box                 : Gtk.Box.Gtk_Hbox;
       Inspection_Switches : Gtk.Label.Gtk_Label;
-      Current_Inspection  : Gtk.Label.Gtk_Label;
       Notebook            : Gtk.Notebook.Gtk_Notebook;
       Project_Data        : CodePeer.Project_Data'Class renames
         CodePeer.Project_Data'Class
@@ -68,54 +68,126 @@ package body CodePeer.Reports is
              GPS.Kernel.Project.Get_Root_Project_View
                (Kernel)).Analysis_Data.CodePeer_Data.all);
 
+      procedure Add_Run (Name, Label, Tooltip : String);
+      --  Add information about report generation
+
+      function Time_Span (From : Ada.Calendar.Time) return String;
+      --  Calculates time that passed from the report generation
+
+      -------------
+      -- Add_Run --
+      -------------
+
+      procedure Add_Run (Name, Label, Tooltip : String)
+      is
+         Inspection : Gtk.Label.Gtk_Label;
+      begin
+         Gtk.Box.Gtk_New_Hbox (Box, True);
+         Header_Box.Pack_Start (Box, False);
+
+         Gtk.Label.Gtk_New (Inspection, Name);
+         Inspection.Set_Alignment (0.0, 0.0);
+         Inspection.Set_Label
+           ("   " & Label
+            & Ada.Characters.Latin_1.LF & "      " & Tooltip);
+         Inspection.Set_Tooltip_Text (Tooltip);
+         Box.Pack_Start (Inspection);
+      end Add_Run;
+
+      ---------------
+      -- Time_Span --
+      ---------------
+
+      function Time_Span (From : Ada.Calendar.Time) return String
+      is
+         use Ada.Calendar.Arithmetic;
+         use Ada.Calendar.Formatting;
+
+         Now          : constant Ada.Calendar.Time := Ada.Calendar.Clock;
+         Days         : Day_Count;
+         Seconds      : Duration;
+         Leap_Seconds : Leap_Seconds_Count;
+         Value        : Integer;
+         Pr           : constant String := " /";
+         Sf           : constant String := "(s) ago";
+
+      begin
+         Ada.Calendar.Arithmetic.Difference
+           (Now, From, Days, Seconds, Leap_Seconds);
+
+         if Days > 0 then
+            return Pr & Day_Count'Image (Days) & " day" & Sf;
+
+         else
+            Value := Integer (Hour (Now) - Hour (From));
+
+            if Value > 0 then
+               return Pr & Integer'Image (Value) & " hour" & Sf;
+
+            else
+               Value := Integer (Minute (Now) - Minute (From));
+
+               if Value > 0 then
+                  return Pr & Integer'Image (Value) & " minute" & Sf;
+
+               else
+                  return Pr & Integer'Image
+                    (Integer (Second (Now) - Second (From)))
+                    & " second" & Sf;
+               end if;
+            end if;
+         end if;
+      end Time_Span;
+
    begin
       Gtk.Box.Initialize_Vbox (Self);
 
       --  Baseline and current review' ids
 
-      Gtk.Box.Gtk_New_Hbox (Inspections_Box, True);
-      Self.Pack_Start (Inspections_Box, False);
+      Gtk.Box.Gtk_New_Vbox (Header_Box, True);
+      Self.Pack_Start (Header_Box, False);
 
-      Gtk.Label.Gtk_New (Baseline_Inspection, "baseline");
-      Baseline_Inspection.Set_Alignment (0.1, 0.0);
-      Baseline_Inspection.Set_Label
-        ((if Is_GNATSAS then
-            "Base run: "
-         else
-            "Base run #")
+      Add_Run
+        (Name  => "baseline",
+         Label => (if Is_GNATSAS then
+               "Base run: "
+          else
+             "Base run #")
          & To_String (Project_Data.Baseline.Inspection)
          & (if Project_Data.Baseline.Timestamp = Unknown_Timestamp then ""
-           else ASCII.LF & Ada.Calendar.Formatting.Image
-             (Project_Data.Baseline.Timestamp)));
-      Baseline_Inspection.Set_Tooltip_Text
-        (To_String (Project_Data.Baseline.Main)
+           else " " & Ada.Calendar.Formatting.Image
+             (Project_Data.Baseline.Timestamp)
+              & Time_Span (Project_Data.Baseline.Timestamp)),
+         Tooltip => To_String (Project_Data.Baseline.Main)
          & Ada.Characters.Latin_1.LF
          & To_String (Project_Data.Baseline.Switches));
-      Inspections_Box.Pack_Start (Baseline_Inspection);
 
-      Gtk.Label.Gtk_New (Inspection_Switches, "switches");
-      Inspection_Switches.Set_Alignment (0.5, 1.0);
-      Inspection_Switches.Set_Label
-        (To_String (Project_Data.Current.Switches));
-      Inspection_Switches.Set_Ellipsize (Ellipsize_End);
-      Inspections_Box.Pack_Start (Inspection_Switches, True, True);
-
-      Gtk.Label.Gtk_New (Current_Inspection, "current");
-      Current_Inspection.Set_Alignment (0.9, 0.0);
-      Current_Inspection.Set_Label
-        ((if Is_GNATSAS then
+      Add_Run
+        (Name  => "current",
+         Label => (if Is_GNATSAS then
             "Current run: "
          else
             "Current run #")
          & To_String (Project_Data.Current.Inspection)
          & (if Project_Data.Current.Timestamp = Unknown_Timestamp then ""
-           else ASCII.LF & Ada.Calendar.Formatting.Image
-             (Project_Data.Current.Timestamp)));
-      Current_Inspection.Set_Tooltip_Text
-        (To_String (Project_Data.Current.Main)
+           else " " & Ada.Calendar.Formatting.Image
+             (Project_Data.Current.Timestamp)
+              & Time_Span (Project_Data.Current.Timestamp)),
+         Tooltip => To_String (Project_Data.Current.Main)
          & Ada.Characters.Latin_1.LF
          & To_String (Project_Data.Current.Switches));
-      Inspections_Box.Pack_End (Current_Inspection);
+
+      if Project_Data.Current.Switches.Length > 0 then
+         Gtk.Box.Gtk_New_Hbox (Box, True);
+         Header_Box.Pack_End (Box, False);
+
+         Gtk.Label.Gtk_New (Inspection_Switches, "switches");
+         Inspection_Switches.Set_Alignment (0.0, 1.0);
+         Inspection_Switches.Set_Label
+           (To_String (Project_Data.Current.Switches));
+         Inspection_Switches.Set_Ellipsize (Ellipsize_End);
+         Box.Pack_Start (Inspection_Switches, True, True);
+      end if;
 
       --  Notebook
 
@@ -147,8 +219,7 @@ package body CodePeer.Reports is
    function Build_Context
      (Self  : not null access Report_Record'Class;
       Event : Gdk.Event.Gdk_Event)
-      return GPS.Kernel.Selection_Context
-   is
+      return GPS.Kernel.Selection_Context is
    begin
       return CodePeer.Messages_Reports.Build_Context
         (Self.Messages_Report, Event);
