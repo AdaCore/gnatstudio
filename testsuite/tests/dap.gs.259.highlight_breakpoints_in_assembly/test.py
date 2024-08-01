@@ -16,15 +16,25 @@ EXPECTED_BG_COLOR = (
 @run_test_driver
 def test_driver():
     yield wait_tasks()
+
     buf = GPS.EditorBuffer.get(GPS.File("main.adb"))
+    yield wait_for_mdi_child("main.adb")
+
     buf.current_view().goto(buf.at(6, 1))
+    GPS.process_all_events()
+    yield wait_idle()
+    yield wait_until_true(
+        lambda: GPS.Action("debug set line breakpoint").can_execute() == False
+    )
     GPS.execute_action("debug set line breakpoint")
+    yield wait_idle()
 
     GPS.execute_action("Build & Debug Number 1")
     yield hook("debugger_started")
     yield wait_idle()
 
     debug = GPS.Debugger.get()
+    yield wait_until_not_busy(debug)
 
     # start to have the valid address
     debug.start()

@@ -9,9 +9,11 @@ VALUE_COLUMN = 1
 
 @run_test_driver
 def test_driver():
+    yield wait_tasks()
+
     # Start the debugger
     GPS.execute_action("Build & Debug Number 1")
-    yield hook("debugger_started")
+    yield wait_for_mdi_child("Debugger Console")
     yield wait_idle()
 
     # Open the Variables view
@@ -31,6 +33,9 @@ def test_driver():
     view = b.current_view()
     view.goto(b.at(5, 1))
     yield wait_idle()
+    yield wait_until_true(
+        lambda: GPS.Action("debug set line breakpoint").can_execute() == False
+    )
     GPS.execute_action("debug set line breakpoint")
     yield wait_idle()
 

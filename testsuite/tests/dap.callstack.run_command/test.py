@@ -11,9 +11,15 @@ def test_driver():
     NAME_COLUMN = 1
     LOCATION_COLUMN = 2
 
+    yield wait_tasks()
     buf = GPS.EditorBuffer.get(GPS.File("main.adb"))
     buf.current_view().goto(buf.at(5, 1))
+    yield wait_idle()
+    yield wait_until_true(
+        lambda: GPS.Action("debug set line breakpoint").can_execute() == False
+    )
     GPS.execute_action("debug set line breakpoint")
+    yield wait_idle()
 
     GPS.execute_action("Build & Debug Number 1")
     yield hook("debugger_started")
@@ -37,6 +43,7 @@ def test_driver():
 
     debug.send("run")
     yield wait_DAP_server("stackTrace")
+    yield wait_until_not_busy(debug)
 
     # Verify the view was correctly updated by the run/break command
     gps_assert(

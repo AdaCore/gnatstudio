@@ -10,15 +10,21 @@ LINE_COLUMN = 5
 
 @run_test_driver
 def test_driver():
+    yield wait_tasks()
+
     b = GPS.EditorBuffer.get(GPS.File("main.adb"))
-    view = b.current_view()
+    yield wait_for_mdi_child("main.adb")
 
     # Create some breakpoints
     for i in range(5, 9):
-        view.goto(b.at(i, 1))
+        GPS.EditorBuffer.get(GPS.File("main.adb")).current_view().goto(b.at(i, 1))
+        GPS.process_all_events()
         yield wait_idle()
+        yield wait_until_true(
+            lambda: GPS.Action("debug set line breakpoint").can_execute() == False
+        )
         GPS.execute_action("debug set line breakpoint")
-        yield wait_idle()
+        yield wait_tasks()
 
     # Open the Breakpoints view and check that the breakpoints has been set
     GPS.execute_action("open breakpoints editor")
@@ -65,6 +71,7 @@ def test_driver():
     yield wait_idle()
     GPS.execute_action("debug view breakpoint")
     yield wait_idle()
+    view = GPS.EditorBuffer.get(GPS.File("main.adb")).current_view()
     gps_assert(view.cursor().line(), 5, "Failed to goto breakpoint")
 
     # Test the delete breakpoint action

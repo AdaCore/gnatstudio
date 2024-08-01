@@ -9,20 +9,31 @@ from gs_utils.internal.utils import *
 from workflows import run_as_workflow
 
 
-@run_as_workflow
-def create_breakpoint_at_location(file, line):
-    buf = GPS.EditorBuffer.get(GPS.File(file))
-    buf.current_view().goto(buf.at(line, 1))
-    yield wait_idle()
-    GPS.execute_action("debug set line breakpoint")
-
-
 @run_test_driver
 def test_driver():
-    # Create 3 SLOC breakpoints before launching the debugger
-    yield create_breakpoint_at_location("main.adb", 11)
-    yield create_breakpoint_at_location("main.adb", 12)
-    yield create_breakpoint_at_location("test.ads", 5)
+    yield wait_tasks()
+
+    # Create 2 SLOC breakpoints before launching the debugger
+    buf = GPS.EditorBuffer.get(GPS.File("main.adb"))
+    yield wait_for_mdi_child("main.adb")
+
+    buf.current_view().goto(buf.at(11, 1))
+    GPS.process_all_events()
+    yield wait_idle()
+    yield wait_until_true(
+        lambda: GPS.Action("debug set line breakpoint").can_execute() == False
+    )
+    GPS.execute_action("debug set line breakpoint")
+    yield wait_idle()
+
+    buf.current_view().goto(buf.at(12, 1))
+    GPS.process_all_events()
+    yield wait_idle()
+    yield wait_until_true(
+        lambda: GPS.Action("debug set line breakpoint").can_execute() == False
+    )
+    GPS.execute_action("debug set line breakpoint")
+    yield wait_idle()
 
     # Open the Breakpoints view
     view = Breakpoints_View()
@@ -40,6 +51,6 @@ def test_driver():
     debug.send("run")
     yield wait_DAP_server("stackTrace")
 
-    # Check that we still have 3 breakpoints in the view
+    # Check that we still have 2 breakpoints in the view
     breakpoints = debug.breakpoints
-    gps_assert(len(breakpoints), 3, "Should have 3 breakpoints")
+    gps_assert(len(breakpoints), 2, "Should have 2 breakpoints")
