@@ -9,11 +9,15 @@ from gs_utils.internal.utils import *
 @run_test_driver
 def test_driver():
     GPS.Preference("Debugger-Pending-Breakpoints").set(True)
+    yield wait_tasks()
 
     # Set a breakpoint in the Ada library
     buf = GPS.EditorBuffer.get(GPS.File("p.adb"))
     buf.current_view().goto(buf.at(8, 1))
     yield wait_idle()
+    yield wait_until_true(
+        lambda: GPS.Action("debug set line breakpoint").can_execute() == False
+    )
     GPS.execute_action("debug set line breakpoint")
     yield wait_tasks()
 
@@ -28,6 +32,7 @@ def test_driver():
     yield wait_until_not_busy(debug)
     debug.send("run")
     yield hook("debugger_location_changed")
+    yield wait_until_not_busy(debug)
 
     gps_assert(
         debug.current_file,

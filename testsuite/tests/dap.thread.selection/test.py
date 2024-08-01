@@ -10,9 +10,17 @@ NUMBER_COLUMN = 0
 
 @run_test_driver
 def test_driver():
+    yield wait_tasks()
+
     buf = GPS.EditorBuffer.get(GPS.File("main.adb"))
     buf.current_view().goto(buf.at(23, 1))
+    GPS.process_all_events()
+    yield wait_idle()
+    yield wait_until_true(
+        lambda: GPS.Action("debug set line breakpoint").can_execute() == False
+    )
     GPS.execute_action("debug set line breakpoint")
+    yield wait_idle()
 
     GPS.execute_action("Build & Debug Number 1")
     yield hook("debugger_started")
@@ -50,8 +58,9 @@ def test_driver():
     )
 
     click_in_tree(tree, "1")
-    yield wait_idle()
     yield wait_until_not_busy(debug)
+    GPS.process_all_events()
+    yield wait_idle()
     gps_assert(
         dump_tree_model(model, NUMBER_COLUMN),
         ["1", "* 2", "3"],

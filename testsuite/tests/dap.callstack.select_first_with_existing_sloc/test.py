@@ -12,15 +12,21 @@ FG_COLOR_COLUMN_ID = 5
 
 @run_test_driver
 def test_driver():
+    yield wait_tasks()
+
     # Set a breakpoint in my_print.adb
     buf = GPS.EditorBuffer.get(GPS.File("my_print.adb"))
     buf.current_view().goto(buf.at(5, 1))
+    yield wait_idle()
+    yield wait_until_true(
+        lambda: GPS.Action("debug set line breakpoint").can_execute() == False
+    )
     GPS.execute_action("debug set line breakpoint")
     yield wait_idle()
 
     # Launch the debugger
     GPS.execute_action("Build & Debug Number 1")
-    yield hook("debugger_started")
+    yield wait_for_mdi_child("Debugger Console")
 
     # Substitute the path for my_print.adb, so that its location
     # does not exist anymore on the disk

@@ -18,7 +18,9 @@ def test_driver():
     view = b.current_view()
     view.goto(b.at(3, 12))
     yield wait_idle()
-
+    yield wait_until_true(
+        lambda: GPS.Action("debug set line breakpoint").can_execute() == False
+    )
     select_editor_contextual("Debug/Set breakpoint on Main")
     yield wait_DAP_server("setFunctionBreakpoints")
 

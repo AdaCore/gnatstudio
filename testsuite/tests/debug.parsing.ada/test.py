@@ -68,11 +68,16 @@ def check(
 
 @run_test_driver
 def test_driver():
-    debug = GPS.Debugger.get()
     yield wait_tasks(other_than=known_tasks)
+    debug = GPS.Debugger.get()
+    yield wait_until_not_busy(debug)
 
     debug.send("begin")
+    yield wait_until_not_busy(debug)
+
     debug.break_at_exception(False)
+    yield wait_until_not_busy(debug)
+
     debug.send("run")
     yield wait_until_not_busy(debug)
 

@@ -7,6 +7,7 @@ from gs_utils.internal.utils import *
 
 @run_test_driver
 def test_driver():
+    yield wait_tasks()
     # Open the editor and add a breakpoint
     b = GPS.EditorBuffer.get(GPS.File("main.adb"))
     view = b.current_view()

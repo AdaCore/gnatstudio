@@ -8,9 +8,13 @@ from gs_utils.internal.utils import *
 @run_test_driver
 def test_driver():
     GPS.Preference("assembly_view-show-opcodes").set(True)
+    yield wait_tasks()
+
     b = GPS.EditorBuffer.get(GPS.File("main.adb"))
     b.current_view().goto(b.at(5, 1))
+    yield wait_idle()
     GPS.execute_action("debug set line breakpoint")
+    yield wait_tasks()
 
     GPS.execute_action("Build & Debug Number 1")
     yield hook("debugger_started")

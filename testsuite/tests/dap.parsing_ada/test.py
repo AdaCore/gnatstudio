@@ -61,7 +61,7 @@ def get_children(var):
 def test_driver():
     # Wait the debugger console to be sure that debugger is started.
     yield wait_tasks()
-    yield wait_for_mdi_child("Debugger Console parse")
+    yield wait_for_mdi_child("Debugger Console parse" + dot_exe)
     yield wait_idle()
 
     p = promises.DebuggerWrapper(GPS.File("parse"))

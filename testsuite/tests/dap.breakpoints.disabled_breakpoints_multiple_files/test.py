@@ -9,6 +9,7 @@ from gs_utils.internal.utils import *
 
 @run_test_driver
 def test_driver():
+    yield wait_tasks()
     # Open main.adb and set a breakpoint line 6
     buf = GPS.EditorBuffer.get(GPS.File("main.adb"))
     buf.current_view().goto(buf.at(6, 1))
