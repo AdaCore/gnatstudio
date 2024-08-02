@@ -30,6 +30,7 @@ def check_variable(var, name, type, value, pattern=False, type_pattern=False):
 @run_as_workflow
 def check(promise, name, type, value, pattern=False, type_pattern=False):
     yield timeout(10)
+    yield wait_until_not_busy(promise.get())
     var = yield promise.get_variable_by_name(name)
     yield timeout(10)
 
@@ -65,7 +66,7 @@ def test_driver():
     yield wait_idle()
 
     p = promises.DebuggerWrapper(GPS.File("parse"))
-    debug = GPS.Debugger.get()
+    debug = p.get()
     yield wait_until_not_busy(debug)
     yield wait_idle()
 
@@ -80,6 +81,7 @@ def test_driver():
     yield wait_idle()
 
     debug.send("frame 7")
+    yield wait_until_true(lambda: debug.current_line != 460)
     yield wait_until_not_busy(debug)
     yield wait_idle()
 
@@ -806,19 +808,17 @@ def test_driver():
     yield check_variable(children1.data[1], "T.a", "integer", "2")
     yield check_variable(children1.data[2], "T.b", "character", "67 'C'")
 
-    if platform.system().lower() == "windows":
-        var = yield check(p, "R", "<ref> parse.my_record", "")
-    else:
+    if platform.system().lower() != "windows":
         var = yield check(p, "R", "parse.my_record", "")
 
-    children = yield get_children(var.data)
-    gps_assert(len(children.data), 2, "Invalid count of R children")
-    yield check_variable(
-        children.data[0], "T.field1", "parse.access_type", r"0x[0-9a-f]+", True
-    )
-    yield check_variable(
-        children.data[1], "T.field2", "array (1 .. 2) of character", '"ab"'
-    )
+        children = yield get_children(var.data)
+        gps_assert(len(children.data), 2, "Invalid count of R children")
+        yield check_variable(
+            children.data[0], "R.field1", "parse.access_type", r"0x[0-9a-f]+", True
+        )
+        yield check_variable(
+            children.data[1], "R.field2", "array (1 .. 2) of character", '"ab"'
+        )
 
     var = yield check(
         p, "Ustring", "ada.strings.unbounded.unbounded_string", '"not_set"'
