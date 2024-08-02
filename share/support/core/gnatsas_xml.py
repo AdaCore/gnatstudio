@@ -604,6 +604,7 @@ many cores as available on the machine)."/>
           <arg>%X</arg>
           <arg>--progress-bar=gnat-studio</arg>
           <arg>%subdirsarg</arg>
+          <arg>--keep-going</arg>
        </command-line>
        <output-parsers>
         {output_parsers}
@@ -624,6 +625,7 @@ many cores as available on the machine)."/>
           <arg>%X</arg>
           <arg>--progress-bar=gnat-studio</arg>
           <arg>%subdirsarg</arg>
+          <arg>--keep-going</arg>
        </command-line>
        <output-parsers>
         {output_parsers}
@@ -647,6 +649,7 @@ many cores as available on the machine)."/>
           <arg>%fp</arg>
           <arg>--progress-bar=gnat-studio</arg>
           <arg>%subdirsarg</arg>
+          <arg>--keep-going</arg>
        </command-line>
        <output-parsers>
         {output_parsers}
