@@ -10,9 +10,12 @@ VALUE_COLUMN = 1
 
 @run_test_driver
 def test_driver():
+    yield wait_tasks()
     buf = GPS.EditorBuffer.get(GPS.File("main.adb"))
     buf.current_view().goto(buf.at(6, 1))
+    yield wait_idle()
     GPS.execute_action("debug set line breakpoint")
+    yield wait_idle()
 
     GPS.execute_action("Build & Debug Number 1")
     yield hook("debugger_started")

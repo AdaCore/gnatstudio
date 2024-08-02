@@ -447,6 +447,8 @@ package body DAP.Module.Breakpoints is
        Kernel   : not null access GPS.Kernel.Kernel_Handle_Record'Class;
        Debugger : access Base_Visual_Debugger'Class)
    is
+      use type DAP.Clients.Breakpoint_Managers.Breakpoint_Manager_Access;
+
       Client : constant DAP_Client_Access :=
         (if Debugger = null then null
          else DAP_Visual_Debugger_Access (Debugger).Client);
@@ -456,7 +458,9 @@ package body DAP.Module.Breakpoints is
       Show_Breakpoints_In_All_Editors
         (Kernel      => Kernel,
          Breakpoints =>
-           (if Client /= null then
+           (if Client /= null
+              and then Client.Get_Breakpoints_Manager /= null
+            then
                Client.Get_Breakpoints_Manager.Get_Breakpoints
             else
                Persistent_Breakpoints.Get_Breakpoints));

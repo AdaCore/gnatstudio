@@ -11,12 +11,20 @@ DEBUG_ACTIONS = ["debug next", "debug nexti", "debug step", "debug stepi"]
 
 @run_test_driver
 def test_driver():
+    yield wait_tasks()
+
     # Open main.adb and set a breakpoint line 5
     buf = GPS.EditorBuffer.get(GPS.File("main.adb"))
-    buf.current_view().goto(buf.at(5, 1))
-    yield hook("location_changed", debounced=True)
+    yield wait_for_mdi_child("main.adb")
+
+    GPS.EditorBuffer.get(GPS.File("main.adb")).current_view().goto(buf.at(5, 1))
+    GPS.process_all_events()
+    yield wait_idle()
+    yield wait_until_true(
+        lambda: GPS.Action("debug set line breakpoint").can_execute() == False
+    )
     GPS.execute_action("debug set line breakpoint")
-    yield wait_tasks(other_than=known_tasks)
+    yield wait_tasks()
 
     # Start a debugging session
     GPS.execute_action("Build & Debug Number 1")

@@ -10,9 +10,9 @@ from workflows import promises
 
 @run_test_driver
 def test_driver():
-    yield wait_tasks(other_than=known_tasks)
+    yield wait_tasks()
     GPS.execute_action("Build & Debug Number 1")
-    yield hook("debugger_started")
+    yield wait_for_mdi_child("Debugger Console")
     yield timeout(500)
 
     p = promises.DebuggerWrapper(GPS.File("main"))

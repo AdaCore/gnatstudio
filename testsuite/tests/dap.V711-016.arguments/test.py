@@ -12,21 +12,28 @@ expected_names_1 = ["<b>Arguments</b>", ["<b>i</b>", "<b>b</b>"], "<b>arguments<
 @run_test_driver
 def run_test():
     yield wait_tasks()
+
     buf = GPS.EditorBuffer.get(GPS.File("main.adb"))
+    yield wait_for_mdi_child("main.adb")
+
     GPS.execute_action("Build & Debug Number 1")
-    yield hook("debugger_started")
+    yield wait_for_mdi_child("Debugger Console")
     yield wait_idle()
 
     debug = GPS.Debugger.get()
     yield wait_until_not_busy(debug)
 
     GPS.MDI.get("main.adb").raise_window()
-    yield wait_tasks(other_than=known_tasks)
-    buf.current_view().goto(buf.at(6, 1))
+    yield wait_tasks()
+    GPS.EditorBuffer.get(GPS.File("main.adb")).current_view().goto(buf.at(6, 1))
+    GPS.process_all_events()
     yield wait_idle()
+    yield wait_until_true(
+        lambda: GPS.Action("debug set line breakpoint").can_execute() == False
+    )
     GPS.execute_action("debug set line breakpoint")
     yield wait_DAP_server("setBreakpoints")
-    yield wait_tasks(other_than=known_tasks)
+    yield wait_tasks()
 
     debug.send("run")
     yield wait_DAP_server("stackTrace")

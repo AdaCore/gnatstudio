@@ -56,7 +56,7 @@ def check_simple(debug, name, type, value, description, pattern=False, var=None)
 def test_driver():
     # Wait the debugger console to be sure that debugger is started.
     yield wait_tasks()
-    yield wait_for_mdi_child("Debugger Console parse_c")
+    yield wait_for_mdi_child("Debugger Console parse_c" + dot_exe)
     yield wait_idle()
 
     p = promises.DebuggerWrapper(GPS.File("parse_c"))
