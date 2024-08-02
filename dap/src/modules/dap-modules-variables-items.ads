@@ -40,7 +40,7 @@ package DAP.Modules.Variables.Items is
    function Convert (Format : Value_Format) return DAP.Tools.ValueFormat;
 
    type Item_Info is abstract tagged record
-      Id           : Item_ID;   --  unique id
+      Id           : Item_ID := Unknown_Id;   --  unique id
       Auto_Refresh : Boolean := True;
       Format       : DAP.Tools.ValueFormat := Default_Format;
    end record;
