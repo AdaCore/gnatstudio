@@ -108,7 +108,7 @@ Otherwise, use default according to the level.">
       </combo>
       <check
           label="Error on unproved"
-          switch="--checks-as-errors"
+          switch="--checks-as-errors=on"
           column="1"
           tip="Treat unproved check messages as errors"/>
       <check
