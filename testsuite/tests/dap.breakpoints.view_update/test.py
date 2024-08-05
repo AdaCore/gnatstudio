@@ -28,6 +28,7 @@ def test_driver():
 
     buf.current_view().goto(buf.at(12, 1))
     GPS.process_all_events()
+    yield wait_until_true(lambda: buf.current_view().cursor().line() != 12)
     yield wait_idle()
     yield wait_until_true(
         lambda: GPS.Action("debug set line breakpoint").can_execute() == False
