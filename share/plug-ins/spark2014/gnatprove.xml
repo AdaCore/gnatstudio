@@ -108,7 +108,7 @@ Otherwise, use default according to the level.">
       </combo>
       <check
           label="Error on unproved"
-          switch="--checks-as-errors"
+          switch="--checks-as-errors=on"
           column="1"
           tip="Treat unproved check messages as errors"/>
       <check
@@ -169,7 +169,7 @@ Level 4 is equivalent to --prover=cvc4,z3,altergo --timeout=60 --memlimit=2000 -
           tip="Comma-separated list (no spaces) of provers among cvc4,z3,colibri,alt-ergo or 'all' for all four provers" />
       <check
           label="Enable proof warnings"
-          switch="--proof-warnings"
+          switch="--proof-warnings=on"
           column="2"
           tip="Enable warnings by proof to detect inconsistencies" />
       <check
@@ -294,7 +294,7 @@ Level 4 is equivalent to --prover=cvc4,z3,altergo --timeout=60 --memlimit=2000 -
       </combo>
       <check
           label="Enable proof warnings"
-          switch="--proof-warnings"
+          switch="--proof-warnings=on"
           column="2"
           tip="Enable warnings by proof to detect inconsistencies" />
       <check
@@ -461,7 +461,7 @@ Level 4 is equivalent to --prover=cvc4,z3,altergo --timeout=60 --memlimit=2000 -
           tip="Comma-separated list (no spaces) of provers among cvc4,z3,colibri,alt-ergo or 'all' for all four provers" />
       <check
           label="Enable proof warnings"
-          switch="--proof-warnings"
+          switch="--proof-warnings=on"
           column="2"
           tip="Enable warnings by proof to detect inconsistencies" />
       <check
