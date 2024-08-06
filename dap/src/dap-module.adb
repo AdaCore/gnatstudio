@@ -24,6 +24,9 @@ with GNAT.OS_Lib;
 with GNATCOLL.Any_Types;           use GNATCOLL.Any_Types;
 with GNATCOLL.Traces;              use GNATCOLL.Traces;
 
+with VSS.Characters.Latin;
+with VSS.Strings.Conversions;
+
 with Glib;                         use Glib;
 with Glib.Main;                    use Glib.Main;
 with Glib.Object;                  use Glib.Object;
@@ -80,8 +83,6 @@ with DAP.Views.Variables;
 with DAP.Types;
 with DAP.Utils;
 with String_Utils;
-with VSS.Characters.Latin;
-with VSS.Strings.Conversions;
 
 package body DAP.Module is
 

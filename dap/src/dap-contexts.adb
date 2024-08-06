@@ -15,7 +15,7 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with Ada.Strings.Unbounded;      use Ada.Strings.Unbounded;
+with Ada.Strings.Unbounded;
 
 with Language;                   use Language;
 with Language_Handlers;          use Language_Handlers;
@@ -52,12 +52,12 @@ package body DAP.Contexts is
       if Has_Debugging_Variable (Context) then
          if Dereference and then Lang /= null then
             return Dereference_Name
-              (Lang, To_String
+              (Lang, Ada.Strings.Unbounded.To_String
                  (Context_Item_Info_Access
                       (Debugging_Variable (Context)).Text));
          end if;
 
-         return To_String
+         return Ada.Strings.Unbounded.To_String
            (Context_Item_Info_Access (Debugging_Variable (Context)).Text);
       end if;
 
@@ -130,7 +130,8 @@ package body DAP.Contexts is
       Item   : Context_Item_Info_Access;
    begin
       Set (Holder, Info);
-      Item := new Context_Item_Info'(To_Unbounded_String (Full_Name), Holder);
+      Item := new Context_Item_Info'
+        (Ada.Strings.Unbounded.To_Unbounded_String (Full_Name), Holder);
       Set_Debugging_Variable (Context, Context_Item_Access (Item));
    end Store_Variable;
 

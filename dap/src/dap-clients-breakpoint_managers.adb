@@ -15,7 +15,6 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with Ada.Strings.Unbounded;        use Ada.Strings.Unbounded;
 with GNATCOLL.Traces;
 with VSS.Characters;
 with VSS.Characters.Latin;
@@ -316,13 +315,13 @@ package body DAP.Clients.Breakpoint_Managers is
          if DAP.Modules.Preferences.Break_On_Exception.Get_Pref then
             declare
                Data    : constant Breakpoint_Data := Breakpoint_Data'
-                 (Kind        => On_Exception,
-                  Num         => 0,
-                  Exception_Name      => To_Unbounded_String
-                    (DAP.Module.Breakpoints.All_Exceptions_Filter),
-                  Unhandled   => False,
-                  Disposition => Keep,
-                  others      => <>);
+                 (Kind           => On_Exception,
+                  Num            => 0,
+                  Exception_Name =>
+                    DAP.Module.Breakpoints.All_Exceptions_Filter,
+                  Unhandled      => False,
+                  Disposition    => Keep,
+                  others         => <>);
             begin
                Self.Holder.Append (Data);
             end;
@@ -400,7 +399,7 @@ package body DAP.Clients.Breakpoint_Managers is
       Data    : constant Breakpoint_Data := Breakpoint_Data'
         (Kind        => On_Exception,
          Num         => 0,
-         Exception_Name      => To_Unbounded_String (Name),
+         Exception_Name      => To_Virtual_String (Name),
          Unhandled   => Unhandled,
          Disposition => (if Temporary then Delete else Keep),
          others      => <>);
@@ -727,25 +726,19 @@ package body DAP.Clients.Breakpoint_Managers is
       Req.Breakpoints := Indexes;
 
       for Data of Self.Holder.Get_Breakpoints (Indexes => Indexes) loop
+         Req.Parameters.arguments.filters.Append (Data.Exception_Name);
          declare
-            N : constant VSS.Strings.Virtual_String :=
-              VSS.Strings.Conversions.To_Virtual_String
-                (Data.Exception_Name);
+            Option : DAP.Tools.ExceptionOptions;
+            Names  : VSS.String_Vectors.Virtual_String_Vector;
          begin
-            Req.Parameters.arguments.filters.Append (N);
-            declare
-               Option : DAP.Tools.ExceptionOptions;
-               Names  : VSS.String_Vectors.Virtual_String_Vector;
-            begin
-               Names.Append (N);
-               Option.path.Append ((negate => False, names => Names));
-               if Data.Unhandled then
-                  Option.breakMode := DAP.Tools.Enum.unhandled;
-               else
-                  Option.breakMode := DAP.Tools.Enum.always;
-               end if;
-               Req.Parameters.arguments.exceptionOptions.Append (Option);
-            end;
+            Names.Append (Data.Exception_Name);
+            Option.path.Append ((negate => False, names => Names));
+            if Data.Unhandled then
+               Option.breakMode := DAP.Tools.Enum.unhandled;
+            else
+               Option.breakMode := DAP.Tools.Enum.always;
+            end if;
+            Req.Parameters.arguments.exceptionOptions.Append (Option);
          end;
       end loop;
 

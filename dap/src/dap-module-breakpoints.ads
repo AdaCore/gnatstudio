@@ -24,7 +24,7 @@ with VSS.Strings;
 with Basic_Types;             use Basic_Types;
 with GPS.Kernel;              use GPS.Kernel;
 with DAP.Types;               use DAP.Types;
-with DAP.Types.Breakpoints; use DAP.Types.Breakpoints;
+with DAP.Types.Breakpoints;   use DAP.Types.Breakpoints;
 
 --  Used to manage DAP breakpoints as a whole, dealing with persistant
 --  breakpoints and debugger-specific ones.
@@ -147,7 +147,7 @@ package DAP.Module.Breakpoints is
      (Kernel : not null access Kernel_Handle_Record'Class);
    --  Save persistent breakpoints to properties database
 
-   All_Exceptions_Filter : constant String := "exception";
+   All_Exceptions_Filter : constant VSS.Strings.Virtual_String := "exception";
    --  Filter that contains the name that means "all exceptions"
 
 end DAP.Module.Breakpoints;

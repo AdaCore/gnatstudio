@@ -16,9 +16,7 @@
 ------------------------------------------------------------------------------
 
 with Ada.Characters.Handling;
-with Ada.Containers.Vectors;
 with Ada.Strings.Fixed;           use Ada.Strings.Fixed;
-with Ada.Strings.Unbounded;       use Ada.Strings.Unbounded;
 
 with GNAT.Decode_UTF8_String;
 
@@ -46,6 +44,7 @@ with Gtk.Scrolled_Window;         use Gtk.Scrolled_Window;
 with Gtkada.File_Selector;
 
 with VSS.Regular_Expressions;     use VSS.Regular_Expressions;
+with VSS.String_Vectors;
 with VSS.Strings.Conversions;
 with VSS.Transformers.Casing;     use VSS.Transformers.Casing;
 
@@ -1982,12 +1981,9 @@ package body DAP.Views.Variables is
            History           => Get_History
              (Get_Kernel (Context.Context)));
 
-      package Unbounded_String_Vectors is new Ada.Containers.Vectors
-        (Positive, Ada.Strings.Unbounded.Unbounded_String);
-
-      Names      : Unbounded_String_Vectors.Vector;
-      Values     : Unbounded_String_Vectors.Vector;
-      Types      : Unbounded_String_Vectors.Vector;
+      Names      : VSS.String_Vectors.Virtual_String_Vector;
+      Values     : VSS.String_Vectors.Virtual_String_Vector;
+      Types      : VSS.String_Vectors.Virtual_String_Vector;
 
       Max_Names  : Integer := 0;
       Max_Values : Integer := 0;
@@ -2023,7 +2019,7 @@ package body DAP.Views.Variables is
                   Name : constant String := Get_String (Value);
                begin
                   Names.Append
-                    (To_Unbounded_String
+                    (To_Virtual_String
                        (Prefix &
                         (if Type_Of (Value) = GType_String
                            then Name (Name'First + 3 .. Name'Last - 4)
@@ -2033,7 +2029,7 @@ package body DAP.Views.Variables is
                --  Value
                View.Tree.Model.Get_Value (I, Column_Value, Value);
                Values.Append
-                 (To_Unbounded_String
+                 (To_Virtual_String
                     (Prefix &
                      (if Type_Of (Value) = GType_String
                         then XML_Utils.Translate (Get_String (Value))
@@ -2043,7 +2039,7 @@ package body DAP.Views.Variables is
                if Show_Types.Get_Pref then
                   View.Tree.Model.Get_Value (I, Column_Type, Value);
                   Types.Append
-                    (To_Unbounded_String
+                    (To_Virtual_String
                        (Prefix &
                         (if Type_Of (Value) = GType_String
                            then XML_Utils.Translate (Get_String (Value))
@@ -2062,35 +2058,37 @@ package body DAP.Views.Variables is
       begin
          Process (View.Tree.Model.Get_Iter_First, "");
 
-         for Index in 1 .. Natural (Names.Length) loop
+         for Index in 1 .. Names.Length loop
             Max_Names := Natural'Max
-              (Max_Names, Length (Names.Element (Index)));
+              (Max_Names, Natural (Names.Element (Index).Character_Length));
 
             if Show_Types.Get_Pref then
                Max_Values := Natural'Max
-                 (Max_Values, Length (Values.Element (Index)));
+                 (Max_Values,
+                  Natural (Values.Element (Index).Character_Length));
 
                Max_Types := Natural'Max
-                 (Max_Types, Length (Types.Element (Index)));
+                 (Max_Types, Natural (Types.Element (Index).Character_Length));
             end if;
          end loop;
 
          WF := File.Write_File;
-         for Index in 1 .. Natural (Names.Length) loop
+         for Index in 1 .. Names.Length loop
             GNATCOLL.VFS.Write
-              (WF, To_String (Names.Element (Index)) &
-               ((Max_Names - Length (Names.Element (Index)) + 1) * ' ') &
+              (WF, To_UTF_8_String (Names.Element (Index)) &
+               ((Max_Names - Natural
+                  (Names.Element (Index).Character_Length) + 1) * ' ') &
                  " | ");
 
             GNATCOLL.VFS.Write
-              (WF, To_String (Values.Element (Index)) &
+              (WF, To_UTF_8_String (Values.Element (Index)) &
                (if Show_Types.Get_Pref
-                  then ((Max_Values - Length
-                    (Values.Element (Index)) + 1) * ' ')
+                  then ((Max_Values - Natural
+                    (Values.Element (Index).Character_Length) + 1) * ' ')
                   else ""));
 
             if Show_Types.Get_Pref then
-               Write (WF, " | " & To_String (Types.Element (Index)));
+               Write (WF, " | " & To_UTF_8_String (Types.Element (Index)));
             end if;
 
             Write (WF, GPS.Kernel.Preferences.Get_Line_Terminator);

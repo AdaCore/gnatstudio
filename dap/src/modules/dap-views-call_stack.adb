@@ -15,7 +15,6 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with Ada.Strings.Unbounded;      use Ada.Strings.Unbounded;
 with GNATCOLL.Utils;
 
 with Glib;                       use Glib;
@@ -52,6 +51,8 @@ with GUI_Utils;
 
 with DAP.Types;                  use DAP.Types;
 with DAP.Clients.Stack_Trace;    use DAP.Clients.Stack_Trace;
+with VSS.Strings;
+with VSS.Strings.Conversions;
 
 package body DAP.Views.Call_Stack is
 
@@ -548,7 +549,8 @@ package body DAP.Views.Call_Stack is
                   (Frame_Id_Column  => As_String
                        (GNATCOLL.Utils.Image (Frame.Id, 1)),
                    Name_Column      => As_String
-                     (Escape_Text (To_String (Frame.Name))),
+                     (Escape_Text (VSS.Strings.Conversions.To_UTF_8_String
+                      (Frame.Name))),
                    Location_Column  => As_String
                      (Escape_Text (+Full_Name (Frame.File) & ":" &
                         GNATCOLL.Utils.Image (Frame.Line, 1))),

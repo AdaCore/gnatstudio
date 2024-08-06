@@ -17,9 +17,10 @@
 
 --  Concrete implementation of the DAP 'loadedSources' request
 
+with GPS.Kernel;          use GPS.Kernel;
+
 with DAP.Requests;        use DAP.Requests;
 with DAP.Requests.LoadedSources;
-with GPS.Kernel;          use GPS.Kernel;
 
 package DAP.Clients.LoadedSources is
 
