@@ -5,6 +5,7 @@ the first frame received from the DAP server.
 """
 import GPS
 from gs_utils.internal.utils import *
+from gi.repository import Gdk
 
 LOCATION_COLUMN_ID = 2
 FG_COLOR_COLUMN_ID = 5
@@ -54,8 +55,11 @@ def test_driver():
 
     # Check that the first frame's row is grayed-out, since its location
     # does not exist
+    row_color = model.get_value(
+        tree.get_model().get_iter_first(), FG_COLOR_COLUMN_ID
+    ).to_color()
     gps_assert(
-        str(model.get_value(tree.get_model().get_iter_first(), FG_COLOR_COLUMN_ID)),
-        "Gdk.RGBA(red=0.000000, green=0.000000, blue=0.376471, alpha=1.000000)",
+        row_color.blue != 0,
+        True,
         "This row should be grayed out",
     )

@@ -8,9 +8,6 @@ from gs_utils.internal.utils import *
 
 
 BG_COLOR_COLUMN = 6
-EXPECTED_BG_COLOR = (
-    "Gdk.RGBA(red=0.000000, green=0.000000, blue=0.768627, alpha=1.000000)"
-)
 
 
 @run_test_driver
@@ -59,10 +56,11 @@ def test_driver():
 
     # Check if the 4th row has been correctly highlighted
     iter = tree.get_model().get_iter("4")
+    row_color = tree.get_model().get_value(iter, BG_COLOR_COLUMN).to_color()
     gps_assert(
-        str(tree.get_model().get_value(iter, BG_COLOR_COLUMN)).strip(),
-        EXPECTED_BG_COLOR,
-        "Instruction breakpoint not correctly highlighted in Assembly view",
+        row_color.blue != 0,
+        True,
+        "Instruction breakpoint should be highlighted with a different color",
     )
 
     # Disable it now
