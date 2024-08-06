@@ -14,12 +14,14 @@
 -- COPYING3.  If not, go to http://www.gnu.org/licenses for a complete copy --
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
+
+with VSS.Strings.Conversions;
+
 with GPS.Kernel;              use GPS.Kernel;
 
 with DAP.Clients.Breakpoint_Managers;
 with DAP.Requests;            use DAP.Requests;
 with DAP.Requests.Initialize;
-with VSS.Strings.Conversions;
 
 package body DAP.Clients.Initialize is
 

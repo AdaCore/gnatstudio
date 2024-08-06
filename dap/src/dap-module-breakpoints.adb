@@ -16,7 +16,7 @@
 ------------------------------------------------------------------------------
 
 with Ada.Containers.Ordered_Sets;
-with Ada.Strings.Unbounded;          use Ada.Strings.Unbounded;
+with Ada.Strings.Unbounded;
 
 with GNATCOLL.JSON;                  use GNATCOLL.JSON;
 with GNATCOLL.Traces;                use GNATCOLL.Traces;
@@ -626,7 +626,8 @@ package body DAP.Module.Breakpoints is
                null;
 
             when On_Exception =>
-               Value.Set_Field ("exception", To_String (B.Exception_Name));
+               Value.Set_Field
+                 ("exception", To_UTF_8_String (B.Exception_Name));
                Value.Set_Field ("unhandled", B.Unhandled);
          end case;
 
@@ -739,7 +740,8 @@ package body DAP.Module.Breakpoints is
                      Disposition     => Breakpoint_Disposition'Value
                        (Item.Get ("disposition")),
                      Enabled         => True,
-                     Exception_Name  => Item.Get ("exception"),
+                     Exception_Name  => To_Virtual_String
+                       (Item.Get ("exception")),
                      Unhandled       => Item.Get ("unhandled"),
                      Ignore          => Item.Get ("ignore"),
                      Condition       => Condition,
@@ -822,9 +824,11 @@ package body DAP.Module.Breakpoints is
             Allow_Auto_Jump_To_First => False);
 
          Action := new GPS.Editors.Line_Information.Line_Information_Record'
-           (Text                     => Null_Unbounded_String,
+           (Text                     =>
+              Ada.Strings.Unbounded.Null_Unbounded_String,
             Tooltip_Text             => Msg.Get_Text,
-            Image                    => Null_Unbounded_String,
+            Image                    =>
+              Ada.Strings.Unbounded.Null_Unbounded_String,
             Message                  =>
               GPS.Kernel.Messages.References.Create
                 (Message_Access (Msg)),
@@ -931,12 +935,12 @@ package body DAP.Module.Breakpoints is
       Temporary : Boolean := False)
    is
       B : Breakpoint_Data := Breakpoint_Data'
-        (Kind        => On_Exception,
-         Num         => No_Breakpoint,
-         Exception_Name      => To_Unbounded_String (Name),
-         Unhandled   => Unhandled,
-         Disposition => (if Temporary then Delete else Keep),
-         others      => <>);
+        (Kind           => On_Exception,
+         Num            => No_Breakpoint,
+         Exception_Name => To_Virtual_String (Name),
+         Unhandled      => Unhandled,
+         Disposition    => (if Temporary then Delete else Keep),
+         others         => <>);
    begin
       Break (Kernel, B);
    end Break_Exception;
@@ -950,12 +954,12 @@ package body DAP.Module.Breakpoints is
       Unhandled : Boolean := False)
    is
       B : Breakpoint_Data := Breakpoint_Data'
-        (Kind        => On_Exception,
-         Num         => No_Breakpoint,
-         Exception_Name      => To_Unbounded_String (All_Exceptions_Filter),
-         Unhandled   => Unhandled,
-         Disposition => Keep,
-         others      => <>);
+        (Kind           => On_Exception,
+         Num            => No_Breakpoint,
+         Exception_Name => All_Exceptions_Filter,
+         Unhandled      => Unhandled,
+         Disposition    => Keep,
+         others         => <>);
    begin
       Break (Kernel, B);
    end Break_On_All_Exceptions;

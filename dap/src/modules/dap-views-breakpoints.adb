@@ -16,7 +16,6 @@
 ------------------------------------------------------------------------------
 
 with Ada.Characters.Handling;    use Ada.Characters.Handling;
-with Ada.Strings.Unbounded;      use Ada.Strings.Unbounded;
 with GNAT.Strings;               use GNAT.Strings;
 
 with GNATCOLL.Traces;            use GNATCOLL.Traces;
@@ -466,18 +465,17 @@ package body DAP.Views.Breakpoints is
 
          when On_Exception =>
             declare
-               Exception_Name : Unbounded_String;
+               Exception_Name : VSS.Strings.Virtual_String;
             begin
                if Self.Exception_Name.Get_Active = 0 then
-                  Exception_Name :=
-                    To_Unbounded_String (All_Exceptions_Filter);
+                  Exception_Name := All_Exceptions_Filter;
 
                elsif Self.Exception_Name.Get_Active = 1 then
-                  Exception_Name := To_Unbounded_String ("assert");
+                  Exception_Name := "assert";
 
                else
                   Exception_Name :=
-                    To_Unbounded_String (Self.Exception_Name.Get_Active_Text);
+                    To_Virtual_String (Self.Exception_Name.Get_Active_Text);
                end if;
 
                Br := (Kind           => On_Exception,
@@ -1339,7 +1337,7 @@ package body DAP.Views.Breakpoints is
             Columns (Last_Column_Idx) := Col_Exception;
             Glib.Values.Init_Set_String
               (Values (Last_Column_Idx),
-               Escape_Text (To_String (Data.Exception_Name)));
+               Escape_Text (To_UTF_8_String (Data.Exception_Name)));
 
          when On_Subprogram =>
             Last_Column_Idx := Last_Column_Idx + 1;
@@ -1888,6 +1886,10 @@ package body DAP.Views.Breakpoints is
      (Self : not null access Properties_Editor_Record'Class;
       Br   : Breakpoint_Data)
    is
+      use VSS.Strings;
+      All_Text       : constant Virtual_String := "all";
+      Unhandled_Text : constant Virtual_String := "unhandled";
+
       Start, The_End : Gtk_Text_Iter;
       Buffer         : Gtk_Text_Buffer;
    begin
@@ -1895,15 +1897,15 @@ package body DAP.Views.Breakpoints is
          Self.Breakpoint_Type.Set_Active (Breakpoint_Kind'Pos (On_Exception));
          Set_Active (Self.Stop_Always_Exception, True);
 
-         if Br.Exception_Name = "all" then
+         if Br.Exception_Name = All_Text then
             Set_Active_Text (Self.Exception_Name, "All Ada exceptions");
-         elsif Br.Exception_Name = "unhandled" then
+         elsif Br.Exception_Name = Unhandled_Text then
             Set_Active_Text (Self.Exception_Name, "All Ada exceptions");
             Set_Active (Self.Stop_Not_Handled_Exception, True);
          else
             Add_Unique_Combo_Entry
               (Self.Exception_Name,
-               VSS.Strings.Conversions.To_Virtual_String (Br.Exception_Name),
+               Br.Exception_Name,
                Select_Text => True);
          end if;
 

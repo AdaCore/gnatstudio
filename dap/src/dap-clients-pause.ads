@@ -17,9 +17,10 @@
 
 --  Concrete implementation of the DAP 'pause' request
 
+with GPS.Kernel;          use GPS.Kernel;
+
 with DAP.Requests;        use DAP.Requests;
 with DAP.Requests.Pause;
-with GPS.Kernel;          use GPS.Kernel;
 
 package DAP.Clients.Pause is
 

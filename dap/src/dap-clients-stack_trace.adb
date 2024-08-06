@@ -15,16 +15,13 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with Ada.Strings.Unbounded;
-
 with GPS.Kernel.Hooks;
 with GPS.Debuggers;     use GPS.Debuggers;
 
+with DAP.Clients.Stack_Trace.StackTrace;
+with DAP.Modules.Preferences;
 with DAP.Requests;
 with DAP.Utils;
-
-with DAP.Modules.Preferences;
-with DAP.Clients.Stack_Trace.StackTrace;
 
 package body DAP.Clients.Stack_Trace is
 
@@ -280,7 +277,7 @@ package body DAP.Clients.Stack_Trace is
       Address : Address_Type) is
    begin
       Self.Selected_Frame :=
-        (Id, Ada.Strings.Unbounded.Null_Unbounded_String,
+        (Id, VSS.Strings.Empty_Virtual_String,
          File, Line, Address, File.Is_Regular_File);
    end Set_Frame;
 

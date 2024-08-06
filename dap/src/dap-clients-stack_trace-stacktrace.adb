@@ -16,7 +16,6 @@
 ------------------------------------------------------------------------------
 
 with GNATCOLL.Traces;         use GNATCOLL.Traces;
-with VSS.Strings.Conversions;
 
 with GPS.Kernel;
 with DAP.Views.Call_Stack;
@@ -84,9 +83,8 @@ package body DAP.Clients.Stack_Trace.StackTrace is
                 (Result.a_body.stackFrames, Index);
             Frame     : Frame_Record;
          begin
-            Frame.Id := Frame_Ref.id;
-            Frame.Name     := VSS.Strings.Conversions.
-              To_Unbounded_UTF_8_String (Frame_Ref.name);
+            Frame.Id   := Frame_Ref.id;
+            Frame.Name := Frame_Ref.name;
 
             if not Frame_Ref.instructionPointerReference.Is_Empty then
                Frame.Address := String_To_Address

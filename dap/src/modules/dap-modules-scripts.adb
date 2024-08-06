@@ -15,8 +15,6 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with Ada.Strings.Unbounded;    use Ada.Strings.Unbounded;
-
 with GNATCOLL.Traces;          use GNATCOLL.Traces;
 with GNATCOLL.Scripts.Gtkada;  use GNATCOLL.Scripts.Gtkada;
 with GNATCOLL.VFS;             use GNATCOLL.VFS;
@@ -629,8 +627,8 @@ package body DAP.Modules.Scripts is
                      Set_Nth_Arg (List, 2, Empty);
                   end if;
 
-                  if Frame.Name /= Null_Unbounded_String then
-                     Set_Nth_Arg (List, 3, To_String (Frame.Name));
+                  if not Frame.Name.Is_Empty then
+                     Set_Nth_Arg (List, 3, To_UTF_8_String (Frame.Name));
                   else
                      Set_Nth_Arg (List, 3, Empty);
                   end if;

@@ -20,7 +20,6 @@
 with Ada.Containers.Doubly_Linked_Lists;
 with Ada.Containers.Hashed_Maps;
 with Ada.Containers.Vectors;
-with Ada.Strings.Unbounded;  use Ada.Strings.Unbounded;
 
 with GNATCOLL.VFS;           use GNATCOLL.VFS;
 
@@ -126,7 +125,7 @@ package DAP.Types.Breakpoints is
             --  The name of the subprogram, for subprogram breakpoints.
 
          when On_Exception =>
-            Exception_Name : Ada.Strings.Unbounded.Unbounded_String;
+            Exception_Name : VSS.Strings.Virtual_String;
             --  The exception's name.
 
             Unhandled : Boolean := False;

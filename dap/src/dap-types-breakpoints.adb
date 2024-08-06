@@ -227,7 +227,8 @@ package body DAP.Types.Breakpoints is
             return Address_To_String (Data.Location.Address);
 
          when On_Exception =>
-            return "exception " & To_String (Data.Exception_Name);
+            return "exception " & VSS.Strings.Conversions.To_UTF_8_String
+              (Data.Exception_Name);
       end case;
    end To_String;
 

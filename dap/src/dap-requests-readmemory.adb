@@ -15,8 +15,9 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with GNATCOLL.Traces;       use GNATCOLL.Traces;
+with GNATCOLL.Traces;          use GNATCOLL.Traces;
 with VSS.Strings.Conversions;
+
 with DAP.Tools.Inputs;
 with DAP.Tools.Outputs;
 

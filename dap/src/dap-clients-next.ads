@@ -17,9 +17,10 @@
 
 --  Concrete implementation of the DAP 'next' request
 
+with GPS.Kernel;          use GPS.Kernel;
+
 with DAP.Requests;        use DAP.Requests;
 with DAP.Requests.Next;
-with GPS.Kernel;          use GPS.Kernel;
 
 package DAP.Clients.Next is
 

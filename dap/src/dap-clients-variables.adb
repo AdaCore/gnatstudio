@@ -14,11 +14,11 @@
 -- COPYING3.  If not, go to http://www.gnu.org/licenses for a complete copy --
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
-with VSS.Strings.Conversions;
 
 with GNATCOLL.Traces;              use GNATCOLL.Traces;
 
 with VSS.Characters;
+with VSS.Strings.Conversions;
 with VSS.Strings.Cursors.Iterators.Characters;
 with VSS.Transformers.Casing;      use VSS.Transformers.Casing;
 
@@ -30,8 +30,8 @@ with DAP.Clients.Variables.Variables;
 with DAP.Clients.Variables.Evaluate;
 with DAP.Clients.Variables.SetExpression;
 with DAP.Clients.Variables.SetVariable;
-with DAP.Views.Variables;
 with DAP.Modules.Scripts;
+with DAP.Views.Variables;
 
 package body DAP.Clients.Variables is
 

@@ -19,7 +19,6 @@ with Ada.Characters.Handling;  use Ada.Characters.Handling;
 with Ada.Streams;
 with Ada.Strings.Fixed;        use Ada.Strings.Fixed;
 with Ada.Strings.Maps;         use Ada.Strings.Maps;
-with Ada.Strings.Unbounded;    use Ada.Strings.Unbounded;
 with Ada.Text_IO;
 with Ada.Unchecked_Deallocation;
 
@@ -71,6 +70,7 @@ with Gtkada.Handlers;          use Gtkada.Handlers;
 with Gtkada.MDI;               use Gtkada.MDI;
 with Gtkada.Types;
 
+with VSS.Strings;
 with VSS.Strings.Conversions;
 
 with GPS.Kernel.Actions;
@@ -112,8 +112,8 @@ package body DAP.Views.Memory is
    -- Memory_Dump_Item --
 
    type Memory_Dump_Item is record
-      Label : Ada.Strings.Unbounded.Unbounded_String;
-      Value : Ada.Strings.Unbounded.Unbounded_String;
+      Label : VSS.Strings.Virtual_String;
+      Value : VSS.Strings.Virtual_String;
    end record;
    --  Element of memody dump. Value should be a hexadecimal string with no
    --  separator. Label is optional symbol corresponding to first byte of
@@ -828,7 +828,7 @@ package body DAP.Views.Memory is
                    ((Line_Index - 1) * View.Number_Of_Columns *
                       View.Unit_Size / 2),
                16, Address_Length)
-            & ' ' & Ada.Strings.Unbounded.To_String
+            & ' ' & VSS.Strings.Conversions.To_UTF_8_String
               (View.Dump (Line_Index).Label)
             & Address_Separator);
 
@@ -994,12 +994,12 @@ package body DAP.Views.Memory is
       procedure Swap;
       procedure Swap
       is
-         L : constant Natural := Length (View.Dump (Dump_Index).Value);
+         S :          String := To_UTF_8_String (View.Dump (Dump_Index).Value);
+         L : constant Natural := S'Last;
       begin
          if Client.Get_Endian_Type = Little_Endian then
             declare
-               Src : constant String := Slice
-                 (View.Dump (Dump_Index).Value, L - 15, L);
+               Src : constant String := S (L - 15 .. L);
                Dst : String (1 .. 16);
             begin
                for J in 1 .. 8 loop
@@ -1007,8 +1007,8 @@ package body DAP.Views.Memory is
                     Src (Src'Last - J * 2 + 1 .. Src'Last - J * 2 + 2);
                end loop;
 
-               Ada.Strings.Unbounded.Replace_Slice
-                 (View.Dump (Dump_Index).Value, L - 15, L, Dst);
+               S (L - 15 .. L) := Dst;
+               View.Dump (Dump_Index).Value := To_Virtual_String (S);
             end;
          end if;
       end Swap;
@@ -1062,9 +1062,8 @@ package body DAP.Views.Memory is
 
             Index := Dest'First;
             while Index <= Last loop
-               Append
-                 (View.Dump (Dump_Index).Value,
-                  To_Hex_String (Dest (Index)));
+               View.Dump (Dump_Index).Value.Append
+                 (To_Virtual_String (To_Hex_String (Dest (Index))));
                Index := Index + 1;
                Count := Count + 1;
                Total := Total + 1;
@@ -1091,6 +1090,8 @@ package body DAP.Views.Memory is
      (View    : access DAP_Memory_View_Record'Class;
       Address : Long_Long_Integer := 0)
    is
+      use VSS.Strings;
+
       Values : String (1 .. 2 * View.Number_Of_Bytes);
       Index  : Positive := Values'First;
    begin
@@ -1102,27 +1103,29 @@ package body DAP.Views.Memory is
 
       --  Fill the values that could not be accessed with "-"
       for J in View.Dump'Range loop
-         while Length (View.Dump (J).Value) < Dump_Item_Size * 2 loop
-            Append (View.Dump (J).Value, "--");
+         while View.Dump (J).Value.Character_Length < Dump_Item_Size * 2 loop
+            View.Dump (J).Value.Append ("--");
          end loop;
       end loop;
 
       View.Label_Length := 0;
       --  Copy all Dump.Value-s to Values
       for J in View.Dump'Range loop
-         Values (Index .. Index + Length (View.Dump (J).Value) - 1)
-           := To_String (View.Dump (J).Value);
+         Values (Index .. Index +
+                   Positive (View.Dump (J).Value.Character_Length) - 1) :=
+             To_UTF_8_String (View.Dump (J).Value);
 
-         Index := Index + Length (View.Dump (J).Value);
+         Index := Index + Positive (View.Dump (J).Value.Character_Length);
 
-         if View.Label_Length < Length (View.Dump (J).Label) then
-            View.Label_Length := Length (View.Dump (J).Label);
-         end if;
+         View.Label_Length := Natural'Max
+           (View.Label_Length, Natural (View.Dump (J).Label.Character_Length));
       end loop;
 
       --  Make length of all labels equal
       for J in View.Dump'Range loop
-         Head (View.Dump (J).Label, View.Label_Length);
+         View.Dump (J).Label := To_Virtual_String
+           (Head
+              (To_UTF_8_String (View.Dump (J).Label), View.Label_Length));
       end loop;
 
       Free (View.New_Values);

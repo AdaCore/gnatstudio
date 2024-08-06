@@ -15,8 +15,6 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with Ada.Strings.Unbounded;    use Ada.Strings.Unbounded;
-
 with GNATCOLL.VFS;             use GNATCOLL.VFS;
 
 with VSS.Strings.Conversions;
