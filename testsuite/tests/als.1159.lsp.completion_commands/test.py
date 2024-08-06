@@ -30,7 +30,7 @@ def run_test():
 
     # Select the first entry in the completion window
     click_in_tree(pop_tree, path="0", events=double_click_events)
-    yield wait_idle()
+    yield timeout(1000)
 
     text = buf.get_chars(buf.at(1, 1), buf.at(2, 1).end_of_line())
     gps_assert(
