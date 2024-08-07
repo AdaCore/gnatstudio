@@ -802,12 +802,14 @@ package body GPS.Kernel.Search.Filenames is
 
          if Self.Source_Dirs /= null then
             for Source_Dir of Self.Source_Dirs.all loop
-               declare
-                  Files_In_Dir : File_Array_Access := Source_Dir.Read_Dir;
-               begin
-                  Count := Count + Files_In_Dir'Length;
-                  Unchecked_Free (Files_In_Dir);
-               end;
+               if Source_Dir.Is_Regular_File then
+                  declare
+                     Files_In_Dir : File_Array_Access := Source_Dir.Read_Dir;
+                  begin
+                     Count := Count + Files_In_Dir'Length;
+                     Unchecked_Free (Files_In_Dir);
+                  end;
+               end if;
             end loop;
          end if;
 
