@@ -23,11 +23,11 @@ with Ada.Containers.Multiway_Trees;
 with Ada.Containers.Vectors;
 with Ada.Containers.Ordered_Sets;
 with Ada.Strings.Hash;
-with Ada.Strings.Unbounded;
 
 with GNATCOLL.VFS;
-with GPS.Kernel.Messages;
+with VSS.Strings;
 
+with GPS.Kernel.Messages;
 with DAP.Tools;
 
 package DAP.Types is
@@ -121,9 +121,9 @@ package DAP.Types is
 
    type Disassemble_Element is record
       Address       : Address_Type := Invalid_Address;
-      Method_Offset : Ada.Strings.Unbounded.Unbounded_String;
-      Instr         : Ada.Strings.Unbounded.Unbounded_String;
-      Opcodes       : Ada.Strings.Unbounded.Unbounded_String;
+      Method_Offset : VSS.Strings.Virtual_String;
+      Instr         : VSS.Strings.Virtual_String;
+      Opcodes       : VSS.Strings.Virtual_String;
       File          : GNATCOLL.VFS.Virtual_File := GNATCOLL.VFS.No_File;
       Line          : Natural := 0;
    end record;
@@ -141,7 +141,7 @@ package DAP.Types is
       Id             : Integer := -1;
       --  The frame's unique ID. The first existing frame starts at 0.
 
-      Name           : Ada.Strings.Unbounded.Unbounded_String;
+      Name           : VSS.Strings.Virtual_String;
       --  The frame's name. Usually refers to the subprogram name.
 
       File           : GNATCOLL.VFS.Virtual_File := GNATCOLL.VFS.No_File;
@@ -160,7 +160,7 @@ package DAP.Types is
    end record;
 
    No_Frame : constant Frame_Record :=
-     (-1, Ada.Strings.Unbounded.Null_Unbounded_String,
+     (-1, VSS.Strings.Empty_Virtual_String,
       GNATCOLL.VFS.No_File, 0, Invalid_Address, False);
    --  The first frame has id=0, so no_frame has id -1
 

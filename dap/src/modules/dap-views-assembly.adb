@@ -486,7 +486,7 @@ package body DAP.Views.Assembly is
      (Self     : Assembly_View;
       Elements : Disassemble_Elements)
    is
-      use Ada.Strings.Unbounded;
+      use VSS.Strings;
 
       Model   : Gtk.Tree_Store.Gtk_Tree_Store renames Self.Model;
       Row     : Gtk_Tree_Iter;
@@ -521,29 +521,29 @@ package body DAP.Views.Assembly is
             end if;
          end;
 
-         if El.Method_Offset /= Null_Unbounded_String then
+         if not El.Method_Offset.Is_Empty then
             Last           := Last + 1;
             Columns (Last) := Method_Offset_Column;
-            Values  (Last) := As_String (To_String (El.Method_Offset));
+            Values  (Last) := As_String (To_UTF_8_String (El.Method_Offset));
          end if;
 
-         if El.Instr /= Null_Unbounded_String then
+         if not El.Instr.Is_Empty then
             Last           := Last + 1;
             Columns (Last) := Instr_Column;
-            if To_String (El.Instr) = Can_Not_Get then
+            if El.Instr = To_Virtual_String (Can_Not_Get) then
                Values  (Last) := As_String
                  ("<b>" & Glib.Convert.Escape_Text (Can_Not_Get) & "</b>");
             else
                Values  (Last) := As_String
-                 (Glib.Convert.Escape_Text (To_String (El.Instr)));
+                 (Glib.Convert.Escape_Text (To_UTF_8_String (El.Instr)));
             end if;
 
          end if;
 
-         if El.Opcodes /= Null_Unbounded_String then
+         if not El.Opcodes.Is_Empty then
             Last           := Last + 1;
             Columns (Last) := Opcodes_Column;
-            Values  (Last) := As_String (To_String (El.Opcodes));
+            Values  (Last) := As_String (To_UTF_8_String (El.Opcodes));
          end if;
 
          if El.File /= No_File then
@@ -729,7 +729,6 @@ package body DAP.Views.Assembly is
      (View         : access Assembly_View_Record'Class;
       Scroll_To_Pc : Boolean := True)
    is
-      use Ada.Strings.Unbounded;
       use DAP.Types.Breakpoints;
 
       Client   : constant DAP.Clients.DAP_Client_Access := Get_Client (View);
@@ -861,7 +860,8 @@ package body DAP.Views.Assembly is
       if Found then
          Model.Set
            (Iter, PC_Pixmap_Column,
-            To_String (Debugger_Pixmaps.Current_Line_Pixbuf));
+            Ada.Strings.Unbounded.To_String
+              (Debugger_Pixmaps.Current_Line_Pixbuf));
 
       elsif In_Range
         (Client.Get_Stack_Trace.Get_Current_Address, View.Current_Range)
@@ -878,7 +878,8 @@ package body DAP.Views.Assembly is
             if Found then
                Model.Set
                  (Iter, PC_Pixmap_Column,
-                  To_String (Debugger_Pixmaps.Current_Line_Inside_Pixbuf));
+                  Ada.Strings.Unbounded.To_String
+                    (Debugger_Pixmaps.Current_Line_Inside_Pixbuf));
             end if;
          end if;
       end if;
@@ -962,11 +963,9 @@ package body DAP.Views.Assembly is
 
       -- Format_Opcodes --
       function Format_Opcodes
-        (S : VSS.Strings.Virtual_String)
-         return Ada.Strings.Unbounded.Unbounded_String;
+        (S : VSS.Strings.Virtual_String) return VSS.Strings.Virtual_String;
       function Format_Opcodes
-        (S : VSS.Strings.Virtual_String)
-         return Ada.Strings.Unbounded.Unbounded_String
+        (S : VSS.Strings.Virtual_String) return VSS.Strings.Virtual_String
       is
          Result : VSS.Strings.Virtual_String;
          I      : VSS.Strings.Cursors.Iterators.Characters.
@@ -985,7 +984,7 @@ package body DAP.Views.Assembly is
             Dummy := I.Forward;
          end loop;
 
-         return VSS.Strings.Conversions.To_Unbounded_UTF_8_String (Result);
+         return Result;
       end Format_Opcodes;
 
    begin
@@ -1006,10 +1005,8 @@ package body DAP.Views.Assembly is
                  (Disassemble_Element'
                     (Address       => String_To_Address
                          (To_UTF8 (Line.address)),
-                     Method_Offset =>
-                       Ada.Strings.Unbounded.Null_Unbounded_String,
-                     Instr         => VSS.Strings.Conversions.
-                       To_Unbounded_UTF_8_String (Line.instruction),
+                     Method_Offset => VSS.Strings.Empty_Virtual_String,
+                     Instr         => Line.instruction,
                      Opcodes       => Format_Opcodes (Line.instructionBytes),
                      File          =>
                        (if Line.location.Is_Set
@@ -1508,7 +1505,7 @@ package body DAP.Views.Assembly is
       Invalid_Cache_Data.Data.Append
         (Disassemble_Element'
            (Address => Invalid_Address,
-            Instr   => Ada.Strings.Unbounded.To_Unbounded_String (Can_Not_Get),
+            Instr   => To_Virtual_String (Can_Not_Get),
             others  => <>));
 
       Assembly_Views.Register_Module (Kernel);

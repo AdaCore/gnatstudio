@@ -15,7 +15,6 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with Ada.Strings.Unbounded;      use Ada.Strings.Unbounded;
 with Ada.Unchecked_Deallocation;
 
 with Basic_Types;                use Basic_Types;
@@ -808,8 +807,6 @@ package body DAP.Clients is
 
       --  Add a "Continue to line" clickable icon if the context allows it
       declare
-         use Ada.Strings.Unbounded;
-
          File                    : constant GNATCOLL.VFS.Virtual_File :=
            GPS.Kernel.Contexts.File_Information (Context);
          Line                    : constant Natural := Natural
@@ -840,10 +837,13 @@ package body DAP.Clients is
                Allow_Auto_Jump_To_First => False);
 
             Action := new GPS.Editors.Line_Information.Line_Information_Record'
-              (Text                     => Null_Unbounded_String,
+              (Text                     =>
+                 Ada.Strings.Unbounded.Null_Unbounded_String,
                Display_Popup_When_Alone => False,
-               Tooltip_Text             => To_Unbounded_String (Help_Text),
-               Image                    => To_Unbounded_String
+               Tooltip_Text             =>
+                 Ada.Strings.Unbounded.To_Unbounded_String (Help_Text),
+               Image                    =>
+                 Ada.Strings.Unbounded.To_Unbounded_String
                  ("gps-debugger-continue-until"),
                Message                  => <>,
                Category                 => <>,
@@ -1304,7 +1304,8 @@ package body DAP.Clients is
       if DAP_Log.Is_Active then
          Self.Log
            (Handle             => DAP_Log,
-            Msg                => "[" & Self.Id'Img & "<-]" & To_String (Data),
+            Msg                => "[" & Self.Id'Img & "<-]" &
+              Ada.Strings.Unbounded.To_String (Data),
             Display_In_Console =>
               DAP.Modules.Preferences.Debugger_Console_In_Out.Get_Pref);
       end if;

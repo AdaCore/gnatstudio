@@ -14,6 +14,7 @@
 -- COPYING3.  If not, go to http://www.gnu.org/licenses for a complete copy --
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
+
 with GPS.Kernel;          use GPS.Kernel;
 with DAP.Requests;        use DAP.Requests;
 with DAP.Requests.Attach;

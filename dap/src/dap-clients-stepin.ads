@@ -17,9 +17,10 @@
 
 --  Concrete implementation of the DAP 'stepIn' request
 
+with GPS.Kernel;          use GPS.Kernel;
+
 with DAP.Requests;        use DAP.Requests;
 with DAP.Requests.StepIn;
-with GPS.Kernel;          use GPS.Kernel;
 
 package DAP.Clients.StepIn is
 

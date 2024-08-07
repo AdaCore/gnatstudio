@@ -15,9 +15,9 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with Ada.Strings.Unbounded;        use Ada.Strings.Unbounded;
-
+with Ada.Strings.Unbounded;
 with Gtkada.MDI;                   use Gtkada.MDI;
+
 with GPS.Default_Styles;
 with GPS.Editors;                  use GPS.Editors;
 with GPS.Editors.GtkAda;
@@ -28,8 +28,10 @@ with GPS.Kernel.Messages.Simple;   use GPS.Kernel.Messages.Simple;
 package body DAP.Utils is
 
    Debugger_Messages_Category : constant String := "debugger-current-line";
-   Current_Line_Pixbuf        : constant Unbounded_String :=
-     To_Unbounded_String ("gps-emblem-debugger-current");
+   Current_Line_Pixbuf        : constant
+     Ada.Strings.Unbounded.Unbounded_String :=
+       Ada.Strings.Unbounded.To_Unbounded_String
+         ("gps-emblem-debugger-current");
 
    -------------------------------------
    -- Highlight_Current_File_And_Line --
@@ -66,8 +68,9 @@ package body DAP.Utils is
         (GPS.Default_Styles.Debugger_Current_Line_Style, Highlight_Whole_Line);
 
       Action := new Line_Information_Record'
-        (Text         => Null_Unbounded_String,
-         Tooltip_Text => To_Unbounded_String ("Current line in debugger"),
+        (Text         => Ada.Strings.Unbounded.Null_Unbounded_String,
+         Tooltip_Text => Ada.Strings.Unbounded.To_Unbounded_String
+           ("Current line in debugger"),
          Image        => Current_Line_Pixbuf,
          others       => <>);
       Msg.Set_Action (Action);

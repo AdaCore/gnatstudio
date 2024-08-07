@@ -15,9 +15,8 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with Ada.Strings.Unbounded;                   use Ada.Strings.Unbounded;
-
 with String_Utils;
+with VSS.Strings.Conversions;
 
 package body DAP.Types is
 
@@ -117,21 +116,21 @@ package body DAP.Types is
            (Address.Address_String'First .. Address.Last);
       else
          declare
-            Offset : Unbounded_String;
+            Offset : VSS.Strings.Virtual_String;
          begin
             if Address.Offset < 0 then
-               Append (Offset, "-");
+               Offset.Append ("-");
             else
-               Append (Offset, "+");
+               Offset.Append ("+");
             end if;
 
-            Append
-              (Offset,
-               String_Utils.Image (abs Address.Offset));
+            Offset.Append
+              (VSS.Strings.Conversions.To_Virtual_String
+                 (String_Utils.Image (abs Address.Offset)));
 
             return Address.Address_String
               (Address.Address_String'First .. Address.Last) &
-            To_String (Offset);
+            VSS.Strings.Conversions.To_UTF_8_String (Offset);
          end;
       end if;
    end Address_To_String;
