@@ -98,11 +98,6 @@ class BasicTestDriver(GPSTestDriver):
         mkdir(self.test_env["working_dir"])
         sync_tree(self.test_env["test_dir"], self.test_env["working_dir"])
 
-        # Create the fontconfig cache directory
-        fc_cache_dir = os.path.join(self.test_env["working_dir"], ".cache")
-        mkdir(fc_cache_dir)
-        self.test_env["XDG_CACHE_HOME"] = fc_cache_dir
-
         # Create .gnatstudio
         self.gps_home = os.path.join(self.test_env["working_dir"], ".gnatstudio")
         mkdir(self.gps_home)
