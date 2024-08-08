@@ -363,7 +363,9 @@ package body DAP.Types.Breakpoints is
       return Boolean is
    begin
       for Data of Self.Vector loop
-         if Is_Same_Location (Data, Marker) then
+         if Data.Kind = On_Line
+           and then Is_Same_Location (Data, Marker)
+         then
             return True;
          end if;
       end loop;
