@@ -735,25 +735,24 @@ def fuzz_subp_workflow():
     if status != 0:
         return
 
-    # Then, execute the test runner with the adequate test filter. Run it in a
-    # temporary directory: this is where the starting corpus will be generated.
+    # Then, execute the test runner with the adequate test filter.
+    # Put the starting corpus in a temp dir so as not to pollute the user
+    # project space
 
     corpus_dir = tempfile.mkdtemp()
-    cwd = os.getcwd()
-    os.chdir(corpus_dir)
     console.write("Generating starting corpus in " + corpus_dir + "\n")
     cmd = [
         os.path.join(get_harness_dir(), "test_runner"),
         "--routines",
         local_file_basename + ":" + line,
+        "-o",
+        corpus_dir
     ]
     p = ProcessWrapper(cmd, spawn_console="GNATtest")
     status, output = yield p.wait_until_terminate()
     if status != 0:
         console.write("Failed to run: " + " ".join(cmd) + "\n")
         return status
-
-    os.chdir(cwd)
 
     # We can now start fuzzing: execute the GNATfuzz generate workflow passing
     # the right subprogram. Ensure that the harness directory was cleaned
