@@ -277,7 +277,7 @@ package body CodePeer.Module.Bridge is
       Commands.Builder.Launch_Target
         (Builder         => Builder,
          Target_Name     => Target_Name,
-         Mode_Name       => CodePeer.Package_Name,
+         Mode_Name       => CodePeer.Build_Mode,
          Force_File      => No_File,
          Extra_Args      => Extra_Args,
          Quiet           => not Preserve_Output,
