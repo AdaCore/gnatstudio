@@ -51,6 +51,7 @@ package CodePeer.Reports is
 private
 
    type Report_Record is new Gtk.Box.Gtk_Vbox_Record with record
+      Kernel          : GPS.Kernel.Kernel_Handle;
       Messages_Report : CodePeer.Messages_Reports.Messages_Report;
       Race_Report     : CodePeer.Race_Condition_Reports.Race_Condition_Report;
    end record;
