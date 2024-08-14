@@ -693,6 +693,7 @@ many cores as available on the machine)."/>
           <arg>review</arg>
           <arg>-P%PP</arg>
           <arg>%X</arg>
+          <arg>%subdirsarg</arg>
           <arg>--gs-request</arg>
        </command-line>
        <iconname>gps-build-all-symbolic</iconname>
@@ -710,6 +711,7 @@ many cores as available on the machine)."/>
           <arg>review</arg>
           <arg>-P%PP</arg>
           <arg>%X</arg>
+          <arg>%subdirsarg</arg>
           <arg>--gs-request</arg>
        </command-line>
        <output-parsers>

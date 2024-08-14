@@ -20,6 +20,8 @@ with LSP.Messages;             use LSP.Messages;
 
 with GPS.LSP_Client.Utilities; use GPS.LSP_Client.Utilities;
 
+with URIs;
+
 package body GPS.LSP_Client.Requests.Execute_Command.Named_Parameters is
 
    ------------
@@ -48,7 +50,10 @@ package body GPS.LSP_Client.Requests.Execute_Command.Named_Parameters is
       Where.Set_Field ("textDocument", Document);
       Where.Set_Field ("position", Position);
 
-      Argument.Set_Field ("context", Create (Self.Project.Name));
+      Argument.Set_Field
+        ("context",
+         Create (URIs.Conversions.From_File
+           (Self.Project.Project_Path.Display_Full_Name)));
       Argument.Set_Field ("where", Where);
 
       Arguments.Append (Argument);
