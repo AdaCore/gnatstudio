@@ -19,16 +19,64 @@ with Ada.Calendar.Arithmetic;
 with Ada.Calendar.Formatting;
 with Ada.Characters.Latin_1;
 
+with Gtkada.Handlers;
+
+with Gtk.Button;
+with Gtk.Enums;
+with Gtk.Hbutton_Box;
 with Gtk.Label;
 with Gtk.Notebook;
+with Gtk.Widget;
+
+with GPS.Kernel.Actions;
+with GPS.Kernel.Project;
 
 with Pango.Layout; use Pango.Layout;
-
-with GPS.Kernel.Project;
 
 package body CodePeer.Reports is
 
    use Ada.Strings.Unbounded;
+
+   procedure Bump_Clicked (Rec : access Gtk.Widget.Gtk_Widget_Record'Class);
+   procedure Set_Clicked (Rec : access Gtk.Widget.Gtk_Widget_Record'Class);
+   procedure Replace_Clicked (Rec : access Gtk.Widget.Gtk_Widget_Record'Class);
+
+   ------------------
+   -- Bump_Clicked --
+   ------------------
+
+   procedure Bump_Clicked (Rec : access Gtk.Widget.Gtk_Widget_Record'Class) is
+      Dummy : Boolean;
+   begin
+      Dummy := GPS.Kernel.Actions.Execute_Action
+        (Report (Rec).Kernel, CodePeer.Package_Name & " bump");
+   end Bump_Clicked;
+
+   ---------------------
+   -- Replace_Clicked --
+   ---------------------
+
+   procedure Replace_Clicked
+     (Rec : access Gtk.Widget.Gtk_Widget_Record'Class)
+   is
+      Dummy : Boolean;
+   begin
+      Dummy := GPS.Kernel.Actions.Execute_Action
+        (Report (Rec).Kernel, CodePeer.Package_Name & " baseline replace");
+   end Replace_Clicked;
+
+   -----------------
+   -- Set_Clicked --
+   -----------------
+
+   procedure Set_Clicked
+     (Rec : access Gtk.Widget.Gtk_Widget_Record'Class)
+   is
+      Dummy : Boolean;
+   begin
+      Dummy := GPS.Kernel.Actions.Execute_Action
+        (Report (Rec).Kernel, CodePeer.Package_Name & " baseline set");
+   end Set_Clicked;
 
    -------------
    -- Gtk_New --
@@ -61,6 +109,8 @@ package body CodePeer.Reports is
       Box                 : Gtk.Box.Gtk_Hbox;
       Inspection_Switches : Gtk.Label.Gtk_Label;
       Notebook            : Gtk.Notebook.Gtk_Notebook;
+      Button_Box          : Gtk.Hbutton_Box.Gtk_Hbutton_Box;
+      Button              : Gtk.Button.Gtk_Button;
       Project_Data        : CodePeer.Project_Data'Class renames
         CodePeer.Project_Data'Class
           (Code_Analysis.Get_Or_Create
@@ -68,7 +118,7 @@ package body CodePeer.Reports is
              GPS.Kernel.Project.Get_Root_Project_View
                (Kernel)).Analysis_Data.CodePeer_Data.all);
 
-      procedure Add_Run (Name, Label, Tooltip : String);
+      procedure Add_Run (Name, Label, Main, Switches : String);
       --  Add information about report generation
 
       function Time_Span (From : Ada.Calendar.Time) return String;
@@ -78,20 +128,24 @@ package body CodePeer.Reports is
       -- Add_Run --
       -------------
 
-      procedure Add_Run (Name, Label, Tooltip : String)
+      procedure Add_Run (Name, Label, Main, Switches : String)
       is
          Inspection : Gtk.Label.Gtk_Label;
       begin
          Gtk.Box.Gtk_New_Hbox (Box, True);
+         Box.Set_Spacing (5);
          Header_Box.Pack_Start (Box, False);
 
          Gtk.Label.Gtk_New (Inspection, Name);
          Inspection.Set_Alignment (0.0, 0.0);
          Inspection.Set_Label
            ("   " & Label
-            & Ada.Characters.Latin_1.LF & "      " & Tooltip);
-         Inspection.Set_Tooltip_Text (Tooltip);
-         Box.Pack_Start (Inspection);
+            & Ada.Characters.Latin_1.LF & "      " & Main & Switches
+            & Ada.Characters.Latin_1.LF
+           );
+         Inspection.Set_Tooltip_Text
+           (Main & Ada.Characters.Latin_1.LF & Switches);
+         Box.Pack_End (Inspection);
       end Add_Run;
 
       ---------------
@@ -131,9 +185,7 @@ package body CodePeer.Reports is
                   return Pr & Integer'Image (Value) & " minute" & Sf;
 
                else
-                  return Pr & Integer'Image
-                    (Integer (Second (Now) - Second (From)))
-                    & " second" & Sf;
+                  return Pr & " now";
                end if;
             end if;
          end if;
@@ -141,41 +193,61 @@ package body CodePeer.Reports is
 
    begin
       Gtk.Box.Initialize_Vbox (Self);
+      Self.Kernel := Kernel;
 
       --  Baseline and current review' ids
 
       Gtk.Box.Gtk_New_Vbox (Header_Box, True);
       Self.Pack_Start (Header_Box, False);
 
+      Gtk.Hbutton_Box.Gtk_New (Button_Box);
+      Button_Box.Set_Layout (Gtk.Enums.Buttonbox_Start);
+      Header_Box.Add (Button_Box);
+
+      Gtk.Button.Gtk_New (Button);
+      Button.Set_Label ("Bump");
+      Button.Set_Tooltip_Text ("Bump Baseline to Current Run");
+      Button_Box.Pack_Start (Button, False, False);
+      Gtkada.Handlers.Widget_Callback.Object_Connect
+        (Button, Gtk.Button.Signal_Clicked, Bump_Clicked'Access, Self);
+
+      Gtk.Button.Gtk_New (Button);
+      Button.Set_Label ("Set");
+      Button.Set_Tooltip_Text ("Set Baseline to Run");
+      Button_Box.Pack_Start (Button, False, False);
+      Gtkada.Handlers.Widget_Callback.Object_Connect
+        (Button, Gtk.Button.Signal_Clicked, Set_Clicked'Access, Self);
+
+      Gtk.Button.Gtk_New (Button);
+      Button.Set_Label ("Replace");
+      Button.Set_Tooltip_Text ("Replace Current Run with Run");
+      Button_Box.Pack_Start (Button, False, False);
+      Gtkada.Handlers.Widget_Callback.Object_Connect
+        (Button, Gtk.Button.Signal_Clicked, Replace_Clicked'Access, Self);
+
       Add_Run
-        (Name  => "baseline",
-         Label => (if Is_GNATSAS then
-               "Base run: "
-          else
-             "Base run #")
+        (Name     => "baseline",
+         Label    => (if Is_GNATSAS then "Base run: "
+                      else "Base run #")
          & To_String (Project_Data.Baseline.Inspection)
          & (if Project_Data.Baseline.Timestamp = Unknown_Timestamp then ""
            else " " & Ada.Calendar.Formatting.Image
              (Project_Data.Baseline.Timestamp)
               & Time_Span (Project_Data.Baseline.Timestamp)),
-         Tooltip => To_String (Project_Data.Baseline.Main)
-         & Ada.Characters.Latin_1.LF
-         & To_String (Project_Data.Baseline.Switches));
+         Main     => To_String (Project_Data.Baseline.Main),
+         Switches => To_String (Project_Data.Baseline.Switches));
 
       Add_Run
-        (Name  => "current",
-         Label => (if Is_GNATSAS then
-            "Current run: "
-         else
-            "Current run #")
+        (Name     => "current",
+         Label    => (if Is_GNATSAS then "Current run: "
+                      else "Current run #")
          & To_String (Project_Data.Current.Inspection)
          & (if Project_Data.Current.Timestamp = Unknown_Timestamp then ""
            else " " & Ada.Calendar.Formatting.Image
              (Project_Data.Current.Timestamp)
               & Time_Span (Project_Data.Current.Timestamp)),
-         Tooltip => To_String (Project_Data.Current.Main)
-         & Ada.Characters.Latin_1.LF
-         & To_String (Project_Data.Current.Switches));
+         Main     => To_String (Project_Data.Current.Main),
+         Switches => To_String (Project_Data.Current.Switches));
 
       if Project_Data.Current.Switches.Length > 0 then
          Gtk.Box.Gtk_New_Hbox (Box, True);
