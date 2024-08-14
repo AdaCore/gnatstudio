@@ -746,7 +746,7 @@ def fuzz_subp_workflow():
         "--routines",
         local_file_basename + ":" + line,
         "-o",
-        corpus_dir
+        corpus_dir,
     ]
     p = ProcessWrapper(cmd, spawn_console="GNATtest")
     status, output = yield p.wait_until_terminate()
