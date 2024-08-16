@@ -1212,7 +1212,7 @@ package body DAP.Clients is
          Reader : aliased
            VSS.JSON.Pull_Readers.Simple.JSON_Simple_Pull_Reader;
          JS     : aliased LSP.JSON_Streams.JSON_Stream
-           (False, Reader'Access);
+           (False, Reader'Unchecked_Access);
 
       begin
          Seq         := 0;
@@ -1287,7 +1287,7 @@ package body DAP.Clients is
 
       Reader : aliased VSS.JSON.Pull_Readers.Simple.JSON_Simple_Pull_Reader;
       Stream : aliased LSP.JSON_Streams.JSON_Stream
-        (Is_Server_Side => False, R => Reader'Access);
+        (Is_Server_Side => False, R => Reader'Unchecked_Access);
 
       Seq         : LSP.Types.LSP_Number;
       A_Type      : VSS.Strings.Virtual_String;

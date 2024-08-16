@@ -523,7 +523,7 @@ package body GPS.LSP_Clients is
          Reader   : aliased
            VSS.JSON.Pull_Readers.Simple.JSON_Simple_Pull_Reader;
          JS       : aliased LSP.JSON_Streams.JSON_Stream
-           (False, Reader'Access);
+           (False, Reader'Unchecked_Access);
          Id_Found : Boolean := False;
 
       begin
@@ -609,7 +609,7 @@ package body GPS.LSP_Clients is
 
       Reader : aliased VSS.JSON.Pull_Readers.Simple.JSON_Simple_Pull_Reader;
       Stream : aliased LSP.JSON_Streams.JSON_Stream
-        (Is_Server_Side => False, R => Reader'Access);
+        (Is_Server_Side => False, R => Reader'Unchecked_Access);
       Id     : LSP.Types.LSP_Number_Or_String;
       Method : LSP.Types.Optional_Virtual_String;
 
