@@ -490,6 +490,37 @@ eliminate bad candidates without having to take time to compile them.
 You can test your oracle script from GNAT Studio, with the menu
 :guilabel:`Analyze -> Automatic code reducer-> Test the Oracle script`
 
+If your goal is to create a reduced reproducer of a compiler warning, error or
+bug, your oracle must be written to check for the exact message that you are
+expecting and not just a non-zero exit code of the build command. That's
+because the build might end with a non-zero exit for a wide variety of reasons
+that don't relate to the problem you are investigating.
+
+For example, if your oracle only checks for a non-zero exit code, the automatic
+code reducer will start by removing the source files one by one until all
+source files are removed. This empty set of sources satisfies the oracle
+because building a project with no sources will indeed result in a non-zero
+exit code. But this of course does not help your investigation.
+
+Instead, the oracle should look for an exact message, for example:
+
+.. code-block:: bash
+
+  # oracle.sh
+  gprbuild -m2 -P <your project> 2>&1 | grep "GNAT BUG DETECTED"
+
+Note that ``2>&1`` is necessary to redirect the standard error stream to the
+standard output so that it may be processed by ``grep``.
+
+Finally, if you know that the compiler issue occurs on a specific source file,
+it may be interesting to add build flags to compile only that source file which
+would make the oracle more efficient. For example:
+
+.. code-block:: bash
+
+  # oracle.sh
+  gprbuild -m2 -P <your project> -c my-problematic-file.adb 2>&1 | grep "GNAT BUG DETECTED"
+
 Running the reducer
 -------------------
 
