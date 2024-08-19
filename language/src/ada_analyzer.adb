@@ -3757,9 +3757,7 @@ package body Ada_Analyzer is
             First := P;
             Set_Prev_Token (Paren_Token);
 
-            if Num_Parens = 0
-              and then Paren_Token /= Tok_Left_Square_Bracket
-            then
+            if Num_Parens = 0 then
                if In_Declaration = Subprogram_Decl
                  and then
                    (Top_Token = null
