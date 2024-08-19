@@ -78,6 +78,8 @@ def parse_value(component, name):
         """Recursively build the formula"""
         if isinstance(elem, int):
             return str(elem)
+        elif isinstance(elem, str):
+            return elem
         code = elem.get("code", "")
         operands = elem.get("operands", [])
         if not code or not operands:
