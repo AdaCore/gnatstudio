@@ -287,7 +287,7 @@ package body CodePeer.Module.Actions is
         Execute_Internal_With_Baseline
           (Context   => Context,
            Target_ID => "GNATSAS Baseline Set Current",
-           Title     => "Select Baseline File",
+           Title     => "Select Run To Replace Current Run",
            Action    => None);
    end Execute;
 
