@@ -205,21 +205,21 @@ package body CodePeer.Reports is
       Header_Box.Add (Button_Box);
 
       Gtk.Button.Gtk_New (Button);
-      Button.Set_Label ("Bump");
+      Button.Set_Label ("Bump baseline");
       Button.Set_Tooltip_Text ("Bump Baseline to Current Run");
       Button_Box.Pack_Start (Button, False, False);
       Gtkada.Handlers.Widget_Callback.Object_Connect
         (Button, Gtk.Button.Signal_Clicked, Bump_Clicked'Access, Self);
 
       Gtk.Button.Gtk_New (Button);
-      Button.Set_Label ("Set");
+      Button.Set_Label ("Set baseline");
       Button.Set_Tooltip_Text ("Set Baseline to Run");
       Button_Box.Pack_Start (Button, False, False);
       Gtkada.Handlers.Widget_Callback.Object_Connect
         (Button, Gtk.Button.Signal_Clicked, Set_Clicked'Access, Self);
 
       Gtk.Button.Gtk_New (Button);
-      Button.Set_Label ("Replace");
+      Button.Set_Label ("Replace current run");
       Button.Set_Tooltip_Text ("Replace Current Run with Run");
       Button_Box.Pack_Start (Button, False, False);
       Gtkada.Handlers.Widget_Callback.Object_Connect
@@ -227,7 +227,7 @@ package body CodePeer.Reports is
 
       Add_Run
         (Name     => "baseline",
-         Label    => (if Is_GNATSAS then "Base run: "
+         Label    => (if Is_GNATSAS then "Baseline: "
                       else "Base run #")
          & To_String (Project_Data.Baseline.Inspection)
          & (if Project_Data.Baseline.Timestamp = Unknown_Timestamp then ""
