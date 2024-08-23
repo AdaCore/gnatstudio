@@ -4,6 +4,7 @@ Test whether breakpoints can be set/deleted in the assembly view.
 import GPS
 from gs_utils.internal.utils import *
 
+INST_COLUMN = 2
 NUMBER_COLUMN = 3
 
 
@@ -30,7 +31,7 @@ def test_driver():
     # Check that the assembly view is empty
     assembly = GPS.MDI.get("Assembly").pywidget()
     model = get_widgets_by_type(Gtk.TreeView, assembly)[0].get_model()
-    chars = model.get_value(model.get_iter_first(), 3)
+    chars = model.get_value(model.get_iter_first(), INST_COLUMN)
     gps_assert(
         chars.find("get assembly code") == -1,
         False,
@@ -43,7 +44,7 @@ def test_driver():
     yield wait_idle()
 
     # Check that the assembly view is not empty after the first stop
-    chars = model.get_value(model.get_iter_first(), 3)
+    chars = model.get_value(model.get_iter_first(), INST_COLUMN)
     gps_assert(
         chars.find("get assembly code") == -1,
         True,
