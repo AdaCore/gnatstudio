@@ -17,6 +17,8 @@
 
 with Ada.Containers.Indefinite_Doubly_Linked_Lists;
 with Ada.Containers.Doubly_Linked_Lists;
+with Ada.Containers.Indefinite_Hashed_Maps;
+with Ada.Strings.Hash;
 with Ada.Strings.Unbounded;    use Ada.Strings.Unbounded;
 
 with VSS.Strings.Conversions;
@@ -304,6 +306,18 @@ package body Scenario_Views is
    --  Called when a build target is starting.
    --  Used to display a confirmation dialog asking the user if he wants to
    --  apply his changes regarding scenario variables before pursuing.
+
+   package External_Maps is new Ada.Containers.Indefinite_Hashed_Maps
+     (Key_Type        => String,
+      Element_Type    => String,
+      Hash            => Ada.Strings.Hash,
+      Equivalent_Keys => "=",
+      "="             => "=");
+
+   function Get_Aggregate_Externals
+     (Kernel : not null access Kernel_Handle_Record'Class)
+      return External_Maps.Map;
+   --  Return the map of External explicitly set in the aggregate project
 
    -------------
    -- Destroy --
@@ -1113,6 +1127,37 @@ package body Scenario_Views is
       Append_Menu (Menu, View.Kernel, Explicit_Default_Value);
    end Create_Menu;
 
+   -----------------------------
+   -- Get_Aggregate_Externals --
+   -----------------------------
+
+   function Get_Aggregate_Externals
+     (Kernel : not null access Kernel_Handle_Record'Class)
+      return External_Maps.Map
+   is
+      Project   : constant Project_Type :=
+        Kernel.Get_Project_Tree.Root_Project;
+      Attribute : constant Attribute_Pkg_String := Build ("", "External");
+      Result    : External_Maps.Map;
+   begin
+      if Project.Is_Aggregate_Project
+        and then Project.Has_Attribute (Attribute, "")
+      then
+         declare
+            Indexes : GNAT.Strings.String_List :=
+              Project.Attribute_Indexes (Attribute);
+         begin
+            for Index of Indexes loop
+               Result.Insert
+                 (Index.all, Project.Attribute_Value (Attribute, Index.all));
+            end loop;
+            GNATCOLL.Utils.Free (Indexes);
+         end;
+      end if;
+
+      return Result;
+   end Get_Aggregate_Externals;
+
    -------------
    -- Execute --
    -------------
@@ -1121,11 +1166,13 @@ package body Scenario_Views is
      (Self   : On_Refresh;
       Kernel : not null access Kernel_Handle_Record'Class)
    is
-      Combo      : Variable_Combo_Box;
-      Ent        : Gtk_Entry;
-      Group      : Dialog_Group_Widget;
-      View       : constant Scenario_View := Scenario_View (Self.View);
-      Show_Build : constant Boolean := Show_Build_Modes.Get_Pref;
+      Combo              : Variable_Combo_Box;
+      Ent                : Gtk_Entry;
+      Group              : Dialog_Group_Widget;
+      View               : constant Scenario_View := Scenario_View (Self.View);
+      Show_Build         : constant Boolean := Show_Build_Modes.Get_Pref;
+      Aggregate_External : constant External_Maps.Map :=
+        Get_Aggregate_Externals (Kernel);
 
       procedure Add_Scenario_Variable_Combo
         (Name            : String;
@@ -1183,10 +1230,16 @@ package body Scenario_Views is
             end if;
          end loop;
 
-         --  Select the variable's current value
-         Set_Active_Text (Combo, Value);
-
          Ent := Gtk_Entry (Combo.Get_Child);
+
+         --  Select the variable's current value
+         if Aggregate_External.Contains (Name) then
+            Set_Active_Text (Combo, Aggregate_External.Element (Name));
+            Combo.Set_Sensitive (False);
+            Ent.Set_Tooltip_Text ("Explicitly set in the Aggregate");
+         else
+            Set_Active_Text (Combo, Value);
+         end if;
 
          --  Decrease the entry's minimum width so that the combobox buttons
          --  are still displayed when reducing the Scenario view's width.
