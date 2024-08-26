@@ -4,6 +4,8 @@ Verify that assembly view shows OpCodes.
 import GPS
 from gs_utils.internal.utils import *
 
+OPCODE_COLUMN = 3
+
 
 @run_test_driver
 def test_driver():
@@ -32,6 +34,6 @@ def test_driver():
 
     assembly = GPS.MDI.get("Assembly").pywidget()
     model = get_widgets_by_type(Gtk.TreeView, assembly)[0].get_model()
-    chars = model.get_value(model.get_iter_first(), 4)
+    chars = model.get_value(model.get_iter_first(), OPCODE_COLUMN)
     gps_assert(chars is not None, True, "The Assembly view does not have OpCodes")
     gps_assert(len(chars) > 0, True, "The Assembly view does not have OpCodes")

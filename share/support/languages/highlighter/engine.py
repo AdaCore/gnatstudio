@@ -652,7 +652,7 @@ class Highlighter(object):
         actions_list.sort(key=lambda x: x[1])
 
         result = ""
-        if not allow_nested_tag:
+        if allow_nested_tag:
             # Map of list of tag for index in the buffer
             start_tag_map = {}
             end_tag_map = {}
@@ -711,7 +711,7 @@ class Highlighter(object):
                         except StopIteration:
                             iterator_stopped += 1
                             end_tag_offset = max_offset + 1
-                elif end_tag_offset < max_offset:
+                elif end_tag_offset <= max_offset:
                     result += text[current_offset:end_tag_offset]
                     current_offset = end_tag_offset
                     for tag in end_tag_map[end_tag_offset]:

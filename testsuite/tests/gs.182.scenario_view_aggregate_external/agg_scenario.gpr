@@ -1,0 +1,10 @@
+aggregate project Agg_Scenario is
+
+   --  This external overwrite the value in default.gpr
+   for External ("Ext1") use "Val2";
+
+   --  This external is not used in subproject
+   for External ("Ext3") use "Val2";
+   for Project_Files use ("subproject/default.gpr");
+
+end Agg_Scenario;

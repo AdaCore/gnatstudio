@@ -1,0 +1,6 @@
+project Default is
+
+   Ext1 := External ("Ext1", "Val1");
+   Ext2 := External ("Ext2", "Val1");
+
+end Default;

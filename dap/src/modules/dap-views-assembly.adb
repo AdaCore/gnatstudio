@@ -54,6 +54,7 @@ with GPS.Kernel.Actions;
 with GPS.Kernel.Hooks;           use GPS.Kernel.Hooks;
 with GPS.Kernel.MDI;             use GPS.Kernel.MDI;
 with GPS.Kernel.Preferences;     use GPS.Kernel.Preferences;
+with GPS.Kernel.Scripts;         use GPS.Kernel.Scripts;
 with GPS.Kernel.Style_Manager;
 with Default_Preferences;        use Default_Preferences;
 
@@ -68,10 +69,9 @@ with DAP.Clients.Stack_Trace;    use DAP.Clients.Stack_Trace;
 with DAP.Tools;                  use DAP.Tools;
 with DAP.Types;                  use DAP.Types;
 with DAP.Modules.Preferences;    use DAP.Modules.Preferences;
-with DAP.Types.Breakpoints;    use DAP.Types.Breakpoints;
-with DAP.Utils;                  use DAP.Utils;
-
 with DAP.Requests.Disassemble;
+with DAP.Types.Breakpoints;      use DAP.Types.Breakpoints;
+with DAP.Utils;                  use DAP.Utils;
 
 package body DAP.Views.Assembly is
 
@@ -96,16 +96,13 @@ package body DAP.Views.Assembly is
 
    type Assembly_View_Record is new View_Record with
       record
-         Tree                : Gtk.Tree_View.Gtk_Tree_View;
-         Model               : Gtk.Tree_Store.Gtk_Tree_Store;
+         Tree          : Gtk.Tree_View.Gtk_Tree_View;
+         Model         : Gtk.Tree_Store.Gtk_Tree_Store;
          --  The actual contents of the viewer
 
-         Cache               : Cache_Data_Access;
-         Current_Range       : Cache_Data_Access;
+         Cache         : Cache_Data_Access;
+         Current_Range : Cache_Data_Access;
          --  The range of assembly code being displayed.
-
-         Source_Line_Start   : Address_Type := Invalid_Address;
-         Source_Line_End     : Address_Type := Invalid_Address;
       end record;
    type Assembly_View is access all Assembly_View_Record'Class;
 
@@ -215,6 +212,13 @@ package body DAP.Views.Assembly is
       Address : Address_Type) return Cache_Data_Access;
    --  Return the cached data that contains Address.
    --  null is returned if none is found.
+
+   procedure Find_Iter_Location_Bounds
+     (View         : Assembly_View;
+      Current_Iter : Gtk_Tree_Iter;
+      Start_Iter   : out Gtk_Tree_Iter;
+      End_Iter     : out Gtk_Tree_Iter);
+   --  Find the start and end iter at the same location as Current_Iter
 
    procedure Meta_Scroll
      (View : Assembly_View;
@@ -332,13 +336,13 @@ package body DAP.Views.Assembly is
 
    PC_Pixmap_Column     : constant := 0;
    Address_Column       : constant := 1;
-   Method_Offset_Column : constant := 2;
-   Instr_Column         : constant := 3;
-   Opcodes_Column       : constant := 4;
-   FG_Color_Column      : constant := 5;
-   BG_Color_Column      : constant := 6;
-   File_Column          : constant := 7;
-   Line_Column          : constant := 8;
+   Instr_Column         : constant := 2;
+   Opcodes_Column       : constant := 3;
+   FG_Color_Column      : constant := 4;
+   BG_Color_Column      : constant := 5;
+   File_Column          : constant := 6;
+   Line_Column          : constant := 7;
+   Symbol_Column        : constant := 8;
 
    Can_Not_Get : constant String := "Couldn't get assembly code";
 
@@ -352,15 +356,15 @@ package body DAP.Views.Assembly is
       Scrolled : Gtk_Scrolled_Window;
 
       Column_Types : constant GType_Array :=
-        (PC_Pixmap_Column     => GType_String,
-         Address_Column       => GType_String,
-         Method_Offset_Column => GType_String,
-         Instr_Column         => GType_String,
-         Opcodes_Column       => GType_String,
-         FG_Color_Column      => Gdk.RGBA.Get_Type,
-         BG_Color_Column      => Gdk.RGBA.Get_Type,
-         File_Column          => GType_String,
-         Line_Column          => GType_Int);
+        (PC_Pixmap_Column => GType_String,
+         Address_Column   => GType_String,
+         Instr_Column     => GType_String,
+         Opcodes_Column   => GType_String,
+         FG_Color_Column  => Gdk.RGBA.Get_Type,
+         BG_Color_Column  => Gdk.RGBA.Get_Type,
+         File_Column      => GType_String,
+         Line_Column      => GType_Int,
+         Symbol_Column    => GType_String);
 
       Col           : Gtk_Tree_View_Column;
       Render        : Gtk_Cell_Renderer_Text;
@@ -376,11 +380,11 @@ package body DAP.Views.Assembly is
       Gtk_New (Widget.Model, Column_Types);
       Gtk_New (Widget.Tree,  Widget.Model);
       Widget.Tree.Get_Selection.Set_Mode (Selection_Single);
-      Widget.Tree.Set_Headers_Visible (False);
       Widget.Tree.Set_Enable_Search (False);
       Widget.Tree.Set_Show_Expanders (False);
       Add (Scrolled, Widget.Tree);
 
+      --  PC_Pixmap_Column
       Gtk_New (Col);
       Col_Number := Widget.Tree.Append_Column (Col);
       Col.Set_Resizable (True);
@@ -390,8 +394,10 @@ package body DAP.Views.Assembly is
       Col.Pack_Start (Pixmap_Render, False);
       Col.Add_Attribute (Pixmap_Render, "icon-name", PC_Pixmap_Column);
 
+      --  Address_Column
       Gtk_New (Col);
       Col_Number := Widget.Tree.Append_Column (Col);
+      Col.Set_Title ("Address");
       Col.Set_Resizable (True);
       Col.Set_Reorderable (False);
       Col.Set_Clickable (False);
@@ -404,23 +410,11 @@ package body DAP.Views.Assembly is
          Col.Set_Visible (False);
       end if;
 
+      --  Instr_Column
       Gtk_New (Col);
       Col_Number := Widget.Tree.Append_Column (Col);
-      Col.Set_Resizable (False);
-      Col.Set_Reorderable (False);
-      Col.Set_Clickable (False);
-      Gtk_New (Render);
-      Col.Pack_Start (Render, False);
-      Col.Add_Attribute (Render, "text", Method_Offset_Column);
-      Col.Add_Attribute (Render, "foreground-rgba", FG_Color_Column);
-      Col.Add_Attribute (Render, "background-rgba", BG_Color_Column);
-      if not Asm_Show_Offset.Get_Pref then
-         Col.Set_Visible (False);
-      end if;
-
-      Gtk_New (Col);
-      Col_Number := Widget.Tree.Append_Column (Col);
-      Col.Set_Resizable (False);
+      Col.Set_Title ("Instruction");
+      Col.Set_Resizable (True);
       Col.Set_Reorderable (False);
       Col.Set_Clickable (False);
       Gtk_New (Render);
@@ -429,8 +423,10 @@ package body DAP.Views.Assembly is
       Col.Add_Attribute (Render, "foreground-rgba", FG_Color_Column);
       Col.Add_Attribute (Render, "background-rgba", BG_Color_Column);
 
+      --  Opcodes_Column
       Gtk_New (Col);
       Col_Number := Widget.Tree.Append_Column (Col);
+      Col.Set_Title ("Opcode");
       Col.Set_Resizable (False);
       Col.Set_Reorderable (False);
       Col.Set_Clickable (False);
@@ -490,7 +486,7 @@ package body DAP.Views.Assembly is
 
       Model   : Gtk.Tree_Store.Gtk_Tree_Store renames Self.Model;
       Row     : Gtk_Tree_Iter;
-      Values  : Glib.Values.GValue_Array (1 .. 7);
+      Values  : Glib.Values.GValue_Array (1 .. 9);
       Columns : Columns_Array (Values'Range);
       Last    : Gint := 0;
    begin
@@ -521,12 +517,6 @@ package body DAP.Views.Assembly is
             end if;
          end;
 
-         if not El.Method_Offset.Is_Empty then
-            Last           := Last + 1;
-            Columns (Last) := Method_Offset_Column;
-            Values  (Last) := As_String (To_UTF_8_String (El.Method_Offset));
-         end if;
-
          if not El.Instr.Is_Empty then
             Last           := Last + 1;
             Columns (Last) := Instr_Column;
@@ -534,8 +524,11 @@ package body DAP.Views.Assembly is
                Values  (Last) := As_String
                  ("<b>" & Glib.Convert.Escape_Text (Can_Not_Get) & "</b>");
             else
-               Values  (Last) := As_String
-                 (Glib.Convert.Escape_Text (To_UTF_8_String (El.Instr)));
+               Values (Last) := As_String
+                 (Get_Markup_For_Language
+                    (Self.Kernel,
+                     "ASM",
+                     Glib.Convert.Escape_Text (To_UTF_8_String (El.Instr))));
             end if;
 
          end if;
@@ -555,6 +548,12 @@ package body DAP.Views.Assembly is
          Last           := Last + 1;
          Columns (Last) := Line_Column;
          Values  (Last) := As_Int (Gint (El.Line));
+
+         if not El.Symbol.Is_Empty then
+            Last           := Last + 1;
+            Columns (Last) := Symbol_Column;
+            Values  (Last) := As_String (To_UTF_8_String (El.Symbol));
+         end if;
 
          Set_And_Clear (Model, Row, Columns (1 .. Last), Values (1 .. Last));
       end loop;
@@ -609,7 +608,6 @@ package body DAP.Views.Assembly is
       K : constant Kernel_Handle := Self.Kernel;
    begin
       Append_Menu (Menu, K, Asm_Show_Addresses);
-      Append_Menu (Menu, K, Asm_Show_Offset);
       Append_Menu (Menu, K, Asm_Show_Opcodes);
    end Create_Menu;
 
@@ -721,6 +719,84 @@ package body DAP.Views.Assembly is
       end loop;
    end Iter_From_Address;
 
+   -------------------------------
+   -- Find_Iter_Location_Bounds --
+   -------------------------------
+
+   procedure Find_Iter_Location_Bounds
+     (View         : Assembly_View;
+      Current_Iter : Gtk_Tree_Iter;
+      Start_Iter   : out Gtk_Tree_Iter;
+      End_Iter     : out Gtk_Tree_Iter)
+   is
+      use Ada.Strings.Unbounded;
+      Model        : Gtk.Tree_Store.Gtk_Tree_Store renames View.Model;
+      Current_File : Unbounded_String;
+      Current_Line : Gint := 0;
+
+      function Has_File_Information (Iter : Gtk_Tree_Iter) return Boolean;
+      --  Check if Iter contains file information
+
+      function Compare_File_Information (Iter : Gtk_Tree_Iter) return Boolean;
+      --  Check if we have the same information at the stored one
+
+      --------------------------
+      -- Has_File_Information --
+      --------------------------
+
+      function Has_File_Information (Iter : Gtk_Tree_Iter) return Boolean is
+      begin
+         return Model.Get_String (Iter, File_Column) /= ""
+           and then Model.Get_Int (Iter, Line_Column) /= 0;
+      end Has_File_Information;
+
+      ------------------------------
+      -- Compare_File_Information --
+      ------------------------------
+
+      function Compare_File_Information (Iter : Gtk_Tree_Iter) return Boolean
+      is
+      begin
+         return Model.Get_String (Iter, File_Column) = To_String (Current_File)
+           and then Model.Get_Int (Iter, Line_Column) /= Current_Line;
+      end Compare_File_Information;
+   begin
+      Start_Iter := Current_Iter;
+      --  Find the first previously Iter with File Information
+      while Start_Iter /= Null_Iter
+        and then not Has_File_Information (Start_Iter)
+      loop
+         Model.Previous (Start_Iter);
+      end loop;
+
+      if Start_Iter = Null_Iter then
+         return;
+      end if;
+
+      --  Save the File Information
+      Current_File :=
+        To_Unbounded_String (Model.Get_String (Start_Iter, File_Column));
+      Current_Line := Model.Get_Int (Start_Iter, Line_Column);
+
+      --  Find the first previous Iter with the exact same File Information
+      while Start_Iter /= Null_Iter
+        and then Has_File_Information (Start_Iter)
+        and then Compare_File_Information (Start_Iter)
+      loop
+         Model.Previous (Start_Iter);
+      end loop;
+
+      --  Find the last next Iter with the same File Information
+      End_Iter := Current_Iter;
+      while End_Iter /= Null_Iter
+        and then
+          (not Has_File_Information (End_Iter)
+           or else not Compare_File_Information (End_Iter))
+      loop
+         Model.Next (End_Iter);
+      end loop;
+   end Find_Iter_Location_Bounds;
+
    ---------------
    -- Highlight --
    ---------------
@@ -743,7 +819,6 @@ package body DAP.Views.Assembly is
 
       First_Visible_Line_Iter : Gtk_Tree_Iter := Null_Iter;
       Selected_Line_Iter      : Gtk_Tree_Iter := Null_Iter;
-
    begin
       if View = null
         or else Client = null
@@ -752,6 +827,8 @@ package body DAP.Views.Assembly is
       end if;
 
       if not Scroll_To_Pc then
+         --  Detaching the model will reset the scrolling and the selection so
+         --  store them now.
          declare
             From : Gtk_Tree_Path  := Null_Gtk_Tree_Path;
             To   : Gtk_Tree_Path  := Null_Gtk_Tree_Path;
@@ -772,55 +849,21 @@ package body DAP.Views.Assembly is
       View.Tree.Set_Model (Null_Gtk_Tree_Model);
 
       --  Reset the current highlighting
-
       Columns := (FG_Color_Column, BG_Color_Column, PC_Pixmap_Column);
-
-      Iter := Model.Get_Iter_First;
       Glib.Values.Init (Values (1), Gdk.RGBA.Get_Type);
       Gdk.RGBA.Set_Value (Values (1), Null_RGBA);
       Glib.Values.Init (Values (2), Gdk.RGBA.Get_Type);
       Gdk.RGBA.Set_Value (Values (2), Null_RGBA);
       Values (3) := As_String ("");
 
+      Iter := Model.Get_Iter_First;
       while Iter /= Null_Iter loop
          Model.Set (Iter, Glib.Gint_Array (Columns), Values);
          Model.Next (Iter);
       end loop;
       Unset (Values);
 
-      --  Highlight address range
-
-      if View.Source_Line_Start /= Invalid_Address
-        and then View.Source_Line_End /= Invalid_Address
-      then
-         Iter_From_Address (View, View.Source_Line_Start, Iter, Found);
-
-         --  Highlight the new range
-
-         if Found then
-            Columns (1) := BG_Color_Column;
-            Glib.Values.Init (Values (1), Gdk.RGBA.Get_Type);
-            Gdk.RGBA.Set_Value
-              (Values (1), Debugger_Current_Line_Color.Get_Pref);
-
-            while Iter /= Null_Iter
-              and then String_To_Address
-                (Model.Get_String (Iter, Address_Column)) <=
-                  View.Source_Line_End
-            loop
-               Model.Set
-                 (Iter,
-                  Glib.Gint_Array (Columns (1 .. 1)),
-                  Values (1 .. 1));
-
-               Model.Next (Iter);
-            end loop;
-            Unset (Values (1 .. 1));
-         end if;
-      end if;
-
       --  Highlight breakpoint lines
-
       Columns (1) := BG_Color_Column;
       for Data of Client.Get_Breakpoints_Manager.Get_Breakpoints loop
          if Data.Kind in On_Line | On_Instruction then
@@ -884,6 +927,33 @@ package body DAP.Views.Assembly is
          end if;
       end if;
 
+      --  Highlight the instructions at the same line as PC
+      if Iter /= Null_Iter then
+         declare
+            Start_Iter : Gtk_Tree_Iter;
+            End_Iter   : Gtk_Tree_Iter;
+         begin
+            Find_Iter_Location_Bounds
+              (Assembly_View (View), Iter, Start_Iter, End_Iter);
+
+            Columns (1) := BG_Color_Column;
+            Glib.Values.Init (Values (1), Gdk.RGBA.Get_Type);
+            Gdk.RGBA.Set_Value
+              (Values (1), Debugger_Current_Line_Color.Get_Pref);
+
+            Iter := Start_Iter;
+            while Iter /= Null_Iter and then Iter /= End_Iter loop
+               Model.Set
+                 (Iter,
+                  Glib.Gint_Array (Columns (1 .. 1)),
+                  Values (1 .. 1));
+
+               Model.Next (Iter);
+            end loop;
+            Unset (Values (1 .. 1));
+         end;
+      end if;
+
       View.Tree.Set_Model (Detached);
 
       if Scroll_To_Pc then
@@ -900,6 +970,7 @@ package body DAP.Views.Assembly is
          end if;
 
       else
+         --  Restore the scrolling and the selection
          if First_Visible_Line_Iter /= Null_Iter then
             declare
                P : Gtk_Tree_Path;
@@ -961,9 +1032,14 @@ package body DAP.Views.Assembly is
         (Self.Kernel, True);
       S    : Disassemble_Elements;
 
-      -- Format_Opcodes --
       function Format_Opcodes
         (S : VSS.Strings.Virtual_String) return VSS.Strings.Virtual_String;
+      --  Split S in pair of bytes separated by whitespaces.
+
+      --------------------
+      -- Format_Opcodes --
+      --------------------
+
       function Format_Opcodes
         (S : VSS.Strings.Virtual_String) return VSS.Strings.Virtual_String
       is
@@ -1003,18 +1079,18 @@ package body DAP.Views.Assembly is
             begin
                S.Append
                  (Disassemble_Element'
-                    (Address       => String_To_Address
-                         (To_UTF8 (Line.address)),
-                     Method_Offset => VSS.Strings.Empty_Virtual_String,
+                    (Address       =>
+                         String_To_Address (To_UTF8 (Line.address)),
                      Instr         => Line.instruction,
                      Opcodes       => Format_Opcodes (Line.instructionBytes),
+                     Symbol        => Line.symbol,
                      File          =>
                        (if Line.location.Is_Set
                         then To_File (Line.location.Value.path)
                         else GNATCOLL.VFS.No_File),
-                     Line          => (if Line.line.Is_Set
-                                       then Line.line.Value
-                                       else 0)));
+                     Line    => (if Line.line.Is_Set
+                                 then Line.line.Value
+                                 else 0)));
             end;
          end loop;
 
@@ -1306,19 +1382,6 @@ package body DAP.Views.Assembly is
             Self.View.Tree.Get_Column (Address_Column).Set_Visible (True);
          else
             Self.View.Tree.Get_Column (Address_Column).Set_Visible (False);
-         end if;
-      end if;
-
-      if Pref = null
-        or else Pref = Preference (Asm_Show_Offset)
-      then
-         Do_Update := True;
-         if Asm_Show_Offset.Get_Pref then
-            Self.View.Tree.Get_Column
-              (Method_Offset_Column).Set_Visible (True);
-         else
-            Self.View.Tree.Get_Column
-              (Method_Offset_Column).Set_Visible (False);
          end if;
       end if;
 

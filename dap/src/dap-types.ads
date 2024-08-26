@@ -120,12 +120,21 @@ package DAP.Types is
       Offset         => 0);
 
    type Disassemble_Element is record
-      Address       : Address_Type := Invalid_Address;
-      Method_Offset : VSS.Strings.Virtual_String;
-      Instr         : VSS.Strings.Virtual_String;
-      Opcodes       : VSS.Strings.Virtual_String;
-      File          : GNATCOLL.VFS.Virtual_File := GNATCOLL.VFS.No_File;
-      Line          : Natural := 0;
+      Address : Address_Type := Invalid_Address;
+      --  The address of the instruction in memory
+
+      Instr   : VSS.Strings.Virtual_String;
+      --  The instruction and its comment and details
+
+      Opcodes : VSS.Strings.Virtual_String;
+      --  Representation of the instruction in bytes
+
+      Symbol  : VSS.Strings.Virtual_String;
+      --  The name of the symbol that corresponds with the location of
+      --  this instruction, if any.
+
+      File    : GNATCOLL.VFS.Virtual_File := GNATCOLL.VFS.No_File;
+      Line    : Natural := 0;
    end record;
 
    package Disassemble_Element_Vectors is new Ada.Containers.Vectors
