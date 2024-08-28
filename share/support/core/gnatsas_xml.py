@@ -274,9 +274,9 @@ excluded from GNATSAS's analysis."
       name="Pending_Status"
       editor_page="GNATSAS"
       editor_section="GNATSAS configuration"
-      label="Custom 'pending' status"
+      label="Custom 'pending' statuses"
       hide_in="wizard gnatname_wizard library_wizard"
-      description="Custom message review status for the 'pending' category"
+      description="Custom message review statuses for the 'pending' kind"
       list="true">
       <string/>
     </project_attribute>
@@ -286,9 +286,9 @@ excluded from GNATSAS's analysis."
       name="Not_A_Bug_Status"
       editor_page="GNATSAS"
       editor_section="GNATSAS configuration"
-      label="Custom 'not a bug' status"
+      label="Custom 'not a bug' statuses"
       hide_in="wizard gnatname_wizard library_wizard"
-      description="Custom message review status for the 'not a bug' category"
+      description="Custom message review statuses for the 'not a bug' kind"
       list="true">
       <string/>
     </project_attribute>
@@ -298,9 +298,9 @@ excluded from GNATSAS's analysis."
       name="Bug_Status"
       editor_page="GNATSAS"
       editor_section="GNATSAS configuration"
-      label="Custom 'bug' status"
+      label="Custom 'bug' statuses"
       hide_in="wizard gnatname_wizard library_wizard"
-      description="Custom message review status for the 'bug' category"
+      description="Custom message review statuses for the 'bug' kind"
       list="true">
       <string/>
     </project_attribute>
