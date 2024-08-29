@@ -83,7 +83,7 @@ package body GPS.Callbacks is
    is
       pragma Unreferenced (Mdi);
    begin
-      Kernel.Refresh_Context;
+      Kernel.Refresh_Context (Focus_Check => False);
       Reset_Title (Kernel);
    end Child_Selected;
 
