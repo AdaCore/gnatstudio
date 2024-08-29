@@ -49,6 +49,30 @@ package body CodePeer.Race_Condition_Reports is
      new System.Address_To_Access_Conversions
        (GPS.Kernel.Messages.Abstract_Message'Class);
 
+   -----------------
+   -- Get_Message --
+   -----------------
+
+   function Get_Message
+     (Self : not null access Race_Condition_Report_Record'Class;
+      Iter : Gtk_Tree_Iter)
+      return GPS.Kernel.Messages.Message_Access
+   is
+      Message : GPS.Kernel.Messages.Message_Access;
+      Value   : Glib.Values.GValue;
+
+   begin
+      Self.Summary_Model.Get_Value
+        (Iter, CodePeer.Race_Summary_Models.Message_Column, Value);
+      Message :=
+        GPS.Kernel.Messages.Message_Access
+          (Message_Conversions.To_Pointer
+             (Glib.Values.Get_Address (Value)));
+      Glib.Values.Unset (Value);
+
+      return Message;
+   end Get_Message;
+
    -------------
    -- Gtk_New --
    -------------
@@ -194,7 +218,6 @@ package body CodePeer.Race_Condition_Reports is
       pragma Unreferenced (Column);
 
       Iter    : Gtk_Tree_Iter;
-      Value   : Glib.Values.GValue;
       Message : GPS.Kernel.Messages.Message_Access;
 
    begin
@@ -202,13 +225,7 @@ package body CodePeer.Race_Condition_Reports is
       Self.Details_Model.Set
         (Self.Summary_Model.Get_Entry_Points (Iter));
 
-      Self.Summary_Model.Get_Value
-        (Iter, CodePeer.Race_Summary_Models.Message_Column, Value);
-      Message :=
-        GPS.Kernel.Messages.Message_Access
-          (Message_Conversions.To_Pointer
-             (Glib.Values.Get_Address (Value)));
-      Glib.Values.Unset (Value);
+      Message := Self.Get_Message (Iter);
 
       GPS.Location_View.Expand_File
         (GPS.Location_View.Get_Or_Create_Location_View (Self.Kernel),

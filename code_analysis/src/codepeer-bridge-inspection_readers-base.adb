@@ -25,6 +25,7 @@ with GPS.Kernel.Project; use GPS.Kernel.Project;
 with Projects.Views;
 
 with CodePeer.Bridge.Reader_Utilities;
+with VSS.Strings.Conversions;
 
 package body CodePeer.Bridge.Inspection_Readers.Base is
 
@@ -999,7 +1000,7 @@ package body CodePeer.Bridge.Inspection_Readers.Base is
       end if;
 
       Self.Object_Race.Name :=
-        Ada.Strings.Unbounded.To_Unbounded_String
+        VSS.Strings.Conversions.To_Virtual_String
           (Attrs.Get_Value (Name_Attribute));
       Self.Object_Race.File := Get_Optional_File;
       Self.Object_Race.Line := Get_Optional_Line;
