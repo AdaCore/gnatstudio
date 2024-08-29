@@ -274,9 +274,9 @@ excluded from GNATSAS's analysis."
       name="Pending_Status"
       editor_page="GNATSAS"
       editor_section="GNATSAS configuration"
-      label="Custom 'pending' status"
+      label="Custom 'pending' statuses"
       hide_in="wizard gnatname_wizard library_wizard"
-      description="Custom message review status for the 'pending' category"
+      description="Custom message review statuses for the 'pending' kind"
       list="true">
       <string/>
     </project_attribute>
@@ -286,9 +286,9 @@ excluded from GNATSAS's analysis."
       name="Not_A_Bug_Status"
       editor_page="GNATSAS"
       editor_section="GNATSAS configuration"
-      label="Custom 'not a bug' status"
+      label="Custom 'not a bug' statuses"
       hide_in="wizard gnatname_wizard library_wizard"
-      description="Custom message review status for the 'not a bug' category"
+      description="Custom message review statuses for the 'not a bug' kind"
       list="true">
       <string/>
     </project_attribute>
@@ -298,9 +298,9 @@ excluded from GNATSAS's analysis."
       name="Bug_Status"
       editor_page="GNATSAS"
       editor_section="GNATSAS configuration"
-      label="Custom 'bug' status"
+      label="Custom 'bug' statuses"
       hide_in="wizard gnatname_wizard library_wizard"
-      description="Custom message review status for the 'bug' category"
+      description="Custom message review statuses for the 'bug' kind"
       list="true">
       <string/>
     </project_attribute>
@@ -562,7 +562,7 @@ many cores as available on the machine)." />
           <arg>%subdirsarg</arg>
        </command-line>
        <iconname>gps-build-all-symbolic</iconname>
-       <switches command="%(tool_name)s" columns="2" lines="6">
+       <switches command="%(tool_name)s" columns="2" lines="7">
          <spin label="Multiprocessing" switch="-j" min="0" max="1000"
                default="0" separator="" column="1"
                tip="Specify the number of processes to generate SCIL files and analyze files (0 means use as
@@ -587,6 +587,8 @@ many cores as available on the machine)."/>
                 column="2" tip="Enable/disable Inspector analysis (enabled by default)."/>
          <check label="Enable GNATcheck" switch="--gnatcheck" switch-off="--no-gnatcheck" default="on"
                 column="2" tip="Enable/disable GNATcheck analysis (enabled by default)."/>
+         <check label="Keep going" switch="--keep-going"
+                column="2" tip="If set, do not stop on failure of an analysis engine, but only if all analysis engines fail."/>
        </switches>
     </target-model>
 
@@ -604,7 +606,6 @@ many cores as available on the machine)."/>
           <arg>%X</arg>
           <arg>--progress-bar=gnat-studio</arg>
           <arg>%subdirsarg</arg>
-          <arg>--keep-going</arg>
        </command-line>
        <output-parsers>
         {output_parsers}
@@ -625,7 +626,6 @@ many cores as available on the machine)."/>
           <arg>%X</arg>
           <arg>--progress-bar=gnat-studio</arg>
           <arg>%subdirsarg</arg>
-          <arg>--keep-going</arg>
        </command-line>
        <output-parsers>
         {output_parsers}
@@ -649,7 +649,6 @@ many cores as available on the machine)."/>
           <arg>%fp</arg>
           <arg>--progress-bar=gnat-studio</arg>
           <arg>%subdirsarg</arg>
-          <arg>--keep-going</arg>
        </command-line>
        <output-parsers>
         {output_parsers}
