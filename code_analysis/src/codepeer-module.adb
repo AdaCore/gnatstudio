@@ -25,6 +25,10 @@ with GNAT.Strings;                   use GNAT.Strings;
 with GNATCOLL.Arg_Lists;
 with GNATCOLL.Traces;                use GNATCOLL.Traces;
 
+with VSS.Strings.Conversions;
+with VSS.Strings.Formatters.Strings; use VSS.Strings.Formatters.Strings;
+with VSS.Strings.Templates;          use VSS.Strings.Templates;
+
 with Input_Sources.File;
 
 with Glib.Object;                    use Glib.Object;
@@ -539,13 +543,18 @@ package body CodePeer.Module is
    -- Fill_Object_Races --
    -----------------------
 
-   procedure Fill_Object_Races (Self : access Module_Id_Record'Class) is
+   procedure Fill_Object_Races (Self : access Module_Id_Record'Class)
+   is
+      use Count_Type_Formatters;
+
       Data : CodePeer.Project_Data'Class
       renames CodePeer.Project_Data'Class
         (Self.Tree.Element
            (GPS.Kernel.Project.Get_Root_Project_View
                 (Self.Kernel)).Analysis_Data.CodePeer_Data.all);
-      File : GNATCOLL.VFS.Virtual_File;
+
+      File     : GNATCOLL.VFS.Virtual_File;
+      Template : Virtual_String_Template := "{} race condition ({} items)";
 
    begin
       for Object of Data.Object_Races loop
@@ -563,7 +572,10 @@ package body CodePeer.Module is
                     File,
                     Object.Line,
                     Basic_Types.Visible_Column_Type (Object.Column),
-                    To_String (Object.Name) & " race condition",
+                    VSS.Strings.Conversions.To_UTF_8_String
+                      (Template.Format
+                           (Image (Object.Name),
+                            Image (Object.Entry_Points.Length))),
                     Unspecified,
                     Race_Message_Flags,
                     True));

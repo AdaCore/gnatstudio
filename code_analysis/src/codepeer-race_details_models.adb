@@ -19,12 +19,23 @@ with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
 with Ada.Unchecked_Conversion;
 with System;
 
+with VSS.Strings.Conversions;
+with VSS.Strings.Formatters.Strings;
+with VSS.Strings.Formatters.Integers;
+with VSS.Strings.Formatters.Generic_Integers;
+with VSS.Strings.Templates;
+
 with Gtk.Tree_Model;        use Gtk.Tree_Model;
 with Gtk.Tree_Model.Utils;
 
+with Basic_Types;
 with GPS.Editors.GtkAda;
 
 package body CodePeer.Race_Details_Models is
+
+   package Visible_Column_Type_Formatters is
+     new VSS.Strings.Formatters.Generic_Integers
+       (Basic_Types.Visible_Column_Type);
 
    function To_Iter (Index : Natural) return Gtk.Tree_Model.Gtk_Tree_Iter;
 
@@ -148,7 +159,43 @@ package body CodePeer.Race_Details_Models is
       Column : Glib.Gint;
       Value  : out Glib.Values.GValue)
    is
+      function Get_Location (Object : Object_Access_Information) return String;
+
       Index : constant Natural := From_Iter (Iter);
+
+      ------------------
+      -- Get_Location --
+      ------------------
+
+      function Get_Location (Object : Object_Access_Information) return String
+      is
+         use VSS.Strings.Conversions;
+         use VSS.Strings.Formatters.Strings;
+         use VSS.Strings.Formatters.Integers;
+         use Visible_Column_Type_Formatters;
+         use VSS.Strings.Templates;
+
+         use type GPS.Kernel.Messages.Message_Access;
+
+         Template : Virtual_String_Template := " {} {}:{}";
+      begin
+         if Object.Message /= null then
+            return To_UTF_8_String
+              (Template.Format
+                 (Image (To_Virtual_String
+                  (GNATCOLL.VFS."+" (Object.Message.Get_File.Base_Name))),
+                  Image (Object.Message.Get_Editor_Mark.Line),
+                  Image (Object.Message.Get_Editor_Mark.Column)));
+
+         else
+            return To_UTF_8_String
+              (Template.Format
+                 (Image (To_Virtual_String
+                  (GNATCOLL.VFS."+" (Object.File.Base_Name))),
+                  Image (Object.Line),
+                  Image (Object.Column)));
+         end if;
+      end Get_Location;
 
    begin
       if Iter /= Gtk.Tree_Model.Null_Iter
@@ -159,7 +206,8 @@ package body CodePeer.Race_Details_Models is
                Glib.Values.Init (Value, Glib.GType_String);
                Glib.Values.Set_String
                  (Value,
-                  To_String (Self.Data.Element (Index).Entry_Point.Name));
+                  To_String (Self.Data.Element (Index).Entry_Point.Name)
+                  & Get_Location (Self.Data.Element (Index).Object_Access));
 
             when Access_Kind_Column =>
                Glib.Values.Init (Value, Glib.GType_String);

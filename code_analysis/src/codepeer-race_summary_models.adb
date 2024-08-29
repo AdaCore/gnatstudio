@@ -15,9 +15,13 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
+with Ada.Strings.Unbounded;          use Ada.Strings.Unbounded;
 with Ada.Unchecked_Conversion;
 with System.Address_To_Access_Conversions;
+
+with VSS.Strings.Conversions;
+with VSS.Strings.Formatters.Strings; use VSS.Strings.Formatters.Strings;
+with VSS.Strings.Templates;          use VSS.Strings.Templates;
 
 with Gtk.Tree_Model.Utils;
 with GPS.Kernel.Project;
@@ -172,7 +176,10 @@ package body CodePeer.Race_Summary_Models is
       Column : Glib.Gint;
       Value  : out Glib.Values.GValue)
    is
-      Index : constant Natural := From_Iter (Iter);
+      use Count_Type_Formatters;
+
+      Index    : constant Natural := From_Iter (Iter);
+      Template : Virtual_String_Template := "{} ({} items)";
 
    begin
       if Index in Self.Data.First_Index .. Self.Data.Last_Index then
@@ -180,7 +187,12 @@ package body CodePeer.Race_Summary_Models is
             when Object_Name_Column =>
                Glib.Values.Init (Value, Glib.GType_String);
                Glib.Values.Set_String
-                 (Value, To_String (Self.Data.Element (Index).Name));
+                 (Value,
+                  VSS.Strings.Conversions.To_UTF_8_String
+                    (Template.Format
+                         (Image (Self.Data.Element (Index).Name),
+                          Image (Self.Data.Element
+                            (Index).Entry_Points.Length))));
 
             when Message_Column =>
                Glib.Values.Init (Value, Glib.GType_Pointer);
