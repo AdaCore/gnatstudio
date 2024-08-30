@@ -18,6 +18,7 @@
 --  Object race condition report for CodePeer.
 
 with Gtk.Box;
+private with Gtk.Tree_Model;
 private with Gtk.Tree_View;
 
 private with CodePeer.Race_Details_Models;
@@ -50,5 +51,11 @@ private
       Details_Model : CodePeer.Race_Details_Models.Race_Details_Model;
       Details_View  : Gtk.Tree_View.Gtk_Tree_View;
    end record;
+
+   function Get_Message
+     (Self : not null access Race_Condition_Report_Record'Class;
+      Iter : Gtk.Tree_Model.Gtk_Tree_Iter)
+      return GPS.Kernel.Messages.Message_Access;
+   --  Returns message associated with the Iter
 
 end CodePeer.Race_Condition_Reports;

@@ -24,6 +24,9 @@ with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
 
 with GNATCOLL.VFS;
 
+with VSS.Strings;
+with VSS.Strings.Formatters.Generic_Integers;
+
 with Default_Preferences;
 with GPS.Editors;
 with GPS.Kernel.Messages;
@@ -363,7 +366,7 @@ package CodePeer is
        (Positive, Entry_Point_Object_Access_Information);
 
    type Object_Race_Information is record
-      Name         : Ada.Strings.Unbounded.Unbounded_String;
+      Name         : VSS.Strings.Virtual_String;
       Entry_Points : Entry_Point_Object_Access_Vectors.Vector;
       File         : GNATCOLL.VFS.Virtual_File;
       Line         : Natural;
@@ -448,5 +451,8 @@ package CodePeer is
       Lineages   : Lifeage_Kinds_Flags;
       Statuses   : Review_Status_Kinds_Flags := (others => False);
    end record;
+
+   package Count_Type_Formatters is
+     new VSS.Strings.Formatters.Generic_Integers (Ada.Containers.Count_Type);
 
 end CodePeer;
