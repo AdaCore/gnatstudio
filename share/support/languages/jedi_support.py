@@ -126,13 +126,16 @@ class Jedi_Module(Module):
         """
         Update resolver's source_dirs with user's working directory
         """
-        self.__resolver.source_dirs = set(
-            chain.from_iterable(
-                i.source_dirs()
-                for i in [GPS.Project.root()] + GPS.Project.root().dependencies()
-                if "python" in i.languages()
+        try:
+            self.__resolver.source_dirs = set(
+                chain.from_iterable(
+                    i.source_dirs()
+                    for i in [GPS.Project.root()] + GPS.Project.root().dependencies()
+                    if "python" in i.languages()
+                )
             )
-        )
+        except:
+            GPS.Logger("JEDI_SUPPORT").log("Dependencies are not processed")
 
     # The followings are hooks:
 
