@@ -1,1 +1,5 @@
 title: 'debug.attach.ok_on_press_enter'
+# The GPS.Process.get_pid() function does not work on
+# Windows (eng/ide/gnatstudio#371)
+skip:
+    - ['SKIP', 'env.build.os.name == "windows"']
