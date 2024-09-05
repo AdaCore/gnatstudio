@@ -2079,15 +2079,19 @@ package body DAP.Clients is
    -------------------------
 
    procedure Reject_All_Requests (Self : in out DAP_Client) is
+      C       : Requests_Maps.Cursor;
+      Request : DAP.Requests.DAP_Request_Access;
    begin
       --  Reject all queued requests. Clean commands queue.
 
-      for Request of Self.Sent loop
+      while not Self.Sent.Is_Empty loop
+         C := Self.Sent.First;
+         Request := Requests_Maps.Element (C);
+         Self.Sent.Delete (C);
+
          Request.On_Rejected (Self'Access);
          DAP.Requests.Destroy (Request);
       end loop;
-
-      Self.Sent.Clear;
    end Reject_All_Requests;
 
    -----------

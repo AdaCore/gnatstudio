@@ -95,15 +95,15 @@ package body DAP.Clients.Disconnect is
           (Kernel             => Client.Kernel,
            Terminate_Debuggee => Terminate_Debuggee);
    begin
+      --  Set the DAP client's status to Terminating
+      Client.Set_Status (Terminating);
+
       --  Clear the queue
       Client.Reject_All_Requests;
 
       --  Send the 'disconnect' request
       Client.Enqueue
         (DAP.Requests.DAP_Request_Access (Disconnect_Req), Force => True);
-
-      --  Set the DAP client's status to Terminating
-      Client.Set_Status (Terminating);
    end Send_Disconnect_Request;
 
 end DAP.Clients.Disconnect;
