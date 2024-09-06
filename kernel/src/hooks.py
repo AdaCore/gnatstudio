@@ -741,7 +741,7 @@ the index of the last paste operation has changed (Paste Previous)""",
         "codepeer_report_ready",
         "simple_hooks",
         descr="""
-Emitted when the codepeer report is displayed within GNAT Studio""",
+Emitted when the CodePeer/GNAT SAS report is displayed within GNAT Studio""",
     ),
     Hook(
         "compilation_starting",
