@@ -186,7 +186,6 @@ class BasicTestDriver(GPSTestDriver):
 
         env = {
             "GNATSTUDIO_HOME": self.test_env["working_dir"],
-            "GNATINSPECT": shutil.which("gnatinspect") + " --exit",
             "GNATSTUDIO": GS,
             "GPS": GS,
             "GPS_WRAPPER": " ".join(self.env.valgrind_cmd),
