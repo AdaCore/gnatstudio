@@ -14,7 +14,9 @@
 -- COPYING3.  If not, go to http://www.gnu.org/licenses for a complete copy --
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
+
 with Ada.Characters.Handling;   use Ada.Characters.Handling;
+with Ada.Strings.Unbounded;     use Ada.Strings.Unbounded;
 
 with GPS.Intl;                  use GPS.Intl;
 with Default_Preferences;       use Default_Preferences;
@@ -95,6 +97,69 @@ package body GPS.Default_Styles is
       Aspect_Styles : array (1 .. 4) of Style_Access;
       pragma Unreferenced (Aspect_Styles);
 
+      type LSP_Styles_Data is record
+         Name : Ada.Strings.Unbounded.Unbounded_String;
+         Pref : Variant_Preference;
+      end record;
+
+      LSP_Styles : constant array (1 .. 14) of LSP_Styles_Data :=
+        ((To_Unbounded_String ("namespace"), LSP_Namespace_Style),
+         (To_Unbounded_String ("class"), LSP_Class_Style),
+         (To_Unbounded_String ("enum"), LSP_Enum_Style),
+         (To_Unbounded_String ("interface"), LSP_Interface_Style),
+         (To_Unbounded_String ("struct"), LSP_Struct_Style),
+         (To_Unbounded_String ("typeparameter"), LSP_TypeParameter_Style),
+         (To_Unbounded_String ("parameter"), LSP_Parameter_Style),
+         (To_Unbounded_String ("variable"), LSP_Variable_Style),
+         (To_Unbounded_String ("property"), LSP_Property_Style),
+         (To_Unbounded_String ("enummember"), LSP_EnumMember_Style),
+         (To_Unbounded_String ("function"), LSP_Function_Style),
+         (To_Unbounded_String ("modifier"), LSP_Modifier_Style),
+         (To_Unbounded_String ("operator"), LSP_Operator_Style),
+         (To_Unbounded_String ("lsp_missing"), LSP_Missing_Style));
+
+      All_Styles : constant array (1 .. 18) of LSP_Styles_Data :=
+        ((To_Unbounded_String ("namespace"), LSP_Namespace_Style),
+         (To_Unbounded_String ("type"), Types_Style),
+         (To_Unbounded_String ("class"), LSP_Class_Style),
+         (To_Unbounded_String ("enum"), LSP_Enum_Style),
+         (To_Unbounded_String ("interface"), LSP_Interface_Style),
+         (To_Unbounded_String ("struct"), LSP_Struct_Style),
+         (To_Unbounded_String ("typeparameter"), LSP_TypeParameter_Style),
+         (To_Unbounded_String ("parameter"), LSP_Parameter_Style),
+         (To_Unbounded_String ("variable"), LSP_Variable_Style),
+         (To_Unbounded_String ("property"), LSP_Property_Style),
+         (To_Unbounded_String ("enummember"), LSP_EnumMember_Style),
+         (To_Unbounded_String ("function"), LSP_Function_Style),
+         (To_Unbounded_String ("keyword"), Keywords_Style),
+         (To_Unbounded_String ("modifier"), LSP_Modifier_Style),
+         (To_Unbounded_String ("comment"), Comments_Style),
+         (To_Unbounded_String ("string"), Strings_Style),
+         (To_Unbounded_String ("number"), Numbers_Style),
+         (To_Unbounded_String ("operator"), LSP_Operator_Style));
+
+      LSP_Semantic_Styles : array (LSP_Styles'Range) of Style_Access;
+      pragma Unreferenced (LSP_Semantic_Styles);
+
+      LSP_Semantic_Abstract_Styles : array (All_Styles'Range) of Style_Access;
+
+      LSP_Semantic_Declaration_Styles : array
+        (All_Styles'Range) of Style_Access;
+
+      LSP_Semantic_Definition_Styles : array
+        (All_Styles'Range) of Style_Access;
+
+      LSP_Semantic_Readonly_Styles : array (All_Styles'Range) of Style_Access;
+
+      LSP_Semantic_Static_Styles : array
+        (All_Styles'Range) of Style_Access;
+
+      LSP_Semantic_Documentation_Styles : array
+        (All_Styles'Range) of Style_Access;
+
+      LSP_Semantic_Defaultlibrary_Styles : array
+        (All_Styles'Range) of Style_Access;
+
    begin
       Aspect_Styles (1) := M.Create_From_Preferences
         (Key     => "aspect_block",
@@ -158,6 +223,81 @@ package body GPS.Default_Styles is
             Icon_Name => "gps-goto-symbolic",
             Bg        => Bookmark_Color,
             Speedbar  => True);
+
+      ---------
+      -- LSP --
+      ---------
+
+      for Index in LSP_Styles'Range loop
+         LSP_Semantic_Styles (Index) := M.Create_From_Preferences
+           (Key     => To_String (LSP_Styles (Index).Name),
+            Style   => Default_Style,
+            Variant => LSP_Styles (Index).Pref);
+      end loop;
+
+      --  *-declaration
+      for Index in All_Styles'Range loop
+         LSP_Semantic_Declaration_Styles (Index) := M.Create_From_Style
+           (Key     => To_String (All_Styles (Index).Name) & "-declaration",
+            Style   => To_String (All_Styles (Index).Name),
+            Shade_Or_Lighten_Amount => 0.0);
+         LSP_Semantic_Declaration_Styles (Index).Set_Variant (Italic);
+      end loop;
+
+      --  *-definition
+      for Index in All_Styles'Range loop
+         LSP_Semantic_Definition_Styles (Index) := M.Create_From_Style
+           (Key     => To_String (All_Styles (Index).Name) & "-definition",
+            Style   => To_String (All_Styles (Index).Name),
+            Shade_Or_Lighten_Amount => 0.0);
+         LSP_Semantic_Definition_Styles (Index).Set_Variant (Bold);
+      end loop;
+
+      --  *-readonly
+      for Index in All_Styles'Range loop
+         LSP_Semantic_Readonly_Styles (Index) := M.Create_From_Style
+           (Key     => To_String (All_Styles (Index).Name) & "-readonly",
+            Style   => To_String (All_Styles (Index).Name),
+            Shade_Or_Lighten_Amount => 0.0);
+         LSP_Semantic_Readonly_Styles (Index).Set_Background
+           (LSP_Readonly_Bg.Get_Pref);
+      end loop;
+
+      --  *-abstract
+      for Index in All_Styles'Range loop
+         LSP_Semantic_Abstract_Styles (Index) := M.Create_From_Style
+           (Key     => To_String (All_Styles (Index).Name) & "-abstract",
+            Style   => To_String (All_Styles (Index).Name),
+            Shade_Or_Lighten_Amount => 0.0);
+         LSP_Semantic_Abstract_Styles (Index).Set_Variant (Italic);
+      end loop;
+
+      --  *-static
+      for Index in All_Styles'Range loop
+         LSP_Semantic_Static_Styles (Index) := M.Create_From_Style
+           (Key     => To_String (All_Styles (Index).Name) & "-static",
+            Style   => To_String (All_Styles (Index).Name),
+            Shade_Or_Lighten_Amount => 0.0);
+         LSP_Semantic_Static_Styles (Index).Set_Variant (Bold_Italic);
+      end loop;
+
+      --  *-documentation
+      for Index in All_Styles'Range loop
+         LSP_Semantic_Documentation_Styles (Index) := M.Create_From_Style
+           (Key     => To_String (All_Styles (Index).Name) & "-documentation",
+            Style   => To_String (All_Styles (Index).Name),
+            Shade_Or_Lighten_Amount => 0.0);
+         LSP_Semantic_Documentation_Styles (Index).Set_Variant (Bold);
+      end loop;
+
+      --  *-defaultlibrary
+      for Index in All_Styles'Range loop
+         LSP_Semantic_Defaultlibrary_Styles (Index) := M.Create_From_Style
+           (Key     => To_String (All_Styles (Index).Name) & "-defaultlibrary",
+            Style   => To_String (All_Styles (Index).Name),
+            Shade_Or_Lighten_Amount => 0.0);
+         LSP_Semantic_Defaultlibrary_Styles (Index).Set_Variant (Bold_Italic);
+      end loop;
 
       ------------
       -- Search --
