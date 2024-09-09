@@ -56,6 +56,7 @@ with GNATCOLL.Traces;
 with GNATCOLL.Utils;
 with GNATCOLL.VFS;                      use GNATCOLL.VFS;
 
+with GPS.LSP_Client.Editors.Semantic_Tokens;
 with VSS.Application;
 with VSS.Regular_Expressions;
 with VSS.Strings.Conversions;
@@ -1798,6 +1799,8 @@ package body GPS.LSP_Module is
          GPS.LSP_Client.Editors.Formatting.Register_Module (Kernel);
       end if;
       GPS.LSP_Client.Editors.Signature_Help.Register_Module (Kernel);
+      GPS.LSP_Client.Editors.Semantic_Tokens.Register (Kernel);
+
       GPS.LSP_Client.Call_Tree.Register_Module (Kernel);
       GPS.LSP_Client.Outline.Register_Module (Kernel);
       GPS.LSP_Client.References.Register (Kernel);

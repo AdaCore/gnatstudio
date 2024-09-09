@@ -32,6 +32,7 @@ with VSS.Text_Streams.Memory_UTF8_Output;
 with GNATCOLL.JSON;
 with GNATCOLL.Traces;    use GNATCOLL.Traces;
 
+with LSP.Messages;
 with LSP.JSON_Streams;
 
 with GPS.Editors;
@@ -40,7 +41,7 @@ with GPS.Kernel.Project;
 with GPS.LSP_Client.Utilities;
 with GPS.LSP_Client.Edit_Workspace;
 with GPS.LSP_Clients.Shutdowns;
-with LSP.Messages;
+with GPS.LSP_Client.Editors.Semantic_Tokens;
 
 package body GPS.LSP_Clients is
 
@@ -928,6 +929,7 @@ package body GPS.LSP_Clients is
       My_PID  : constant LSP.Types.LSP_Number :=
         LSP.Types.LSP_Number
           (GNAT.OS_Lib.Pid_To_Integer (GNAT.OS_Lib.Current_Process_Id));
+
       Request : constant LSP.Messages.InitializeParams :=
                   (processId    => (True, My_PID),
                    rootPath     => (Is_Set => False),
@@ -1016,6 +1018,8 @@ package body GPS.LSP_Clients is
                            (Is_Set => True,
                             Value  =>
                               (dynamicRegistration => LSP.Types.False)),
+                         semanticTokens => GPS.LSP_Client.Editors.
+                           Semantic_Tokens.Get_Supported_Options,
                          others         => <>),
                       window       => (Is_Set => False),
                       general      => (Is_Set => False),
