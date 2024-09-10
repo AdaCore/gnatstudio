@@ -158,6 +158,7 @@ package GPS.Kernel.Style_Manager is
 
    procedure Set_Foreground (Style : Style_Access; Color : Gdk_RGBA);
    procedure Set_Background (Style : Style_Access; Color : Gdk_RGBA);
+   procedure Set_Variant (Style : Style_Access; Variant : Variant_Enum);
 
    --  These subprograms change the behavior of the style but do not
    --  mark the style as being "overridden".
@@ -196,6 +197,7 @@ package GPS.Kernel.Style_Manager is
       Style  : Style_Key;
       Shade_Or_Lighten_Amount : Gdouble) return Style_Access;
    --  Create an entry for Key in the manager.
+
    --  Key will get its value from Source and a Shade_Or_Lighten amount
    --  (specified between 0 and 1)
    --  If this key was already entered, set it to follow the formula.

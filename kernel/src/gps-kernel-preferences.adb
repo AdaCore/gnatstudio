@@ -994,6 +994,143 @@ package body GPS.Kernel.Preferences is
          Doc             => "",
          Path            => -"Editor/Fonts & Colors:General");
 
+      ---------
+      -- LSP --
+      ---------
+
+      LSP_Namespace_Style := Manager.Create
+        (Name         => "LSP-Semantic-Namespace",
+         Label        => -"Namespace",
+         Base            => Default_Style,
+         Doc             => "",
+         Default_Variant => Default,
+         Default_Fg   => "#310142",
+         Path            => -"Editor/Fonts & Colors:LSP semantic");
+
+      LSP_Interface_Style := Manager.Create
+        (Name         => "LSP-Semantic-Interface",
+         Label        => -"Interface",
+         Base            => Default_Style,
+         Doc             => "",
+         Default_Variant => Default,
+         Default_Fg   => "#8900ba",
+         Path            => -"Editor/Fonts & Colors:LSP semantic");
+
+      LSP_Class_Style := Manager.Create
+        (Name         => "LSP-Semantic-Class",
+         Label        => -"Class",
+         Base            => Default_Style,
+         Doc             => "",
+         Default_Variant => Default,
+         Default_Fg   => "#550073",
+         Path            => -"Editor/Fonts & Colors:LSP semantic");
+
+      LSP_Function_Style := Manager.Create
+        (Name         => "LSP-Semantic-Function",
+         Label        => -"Subprogram",
+         Base            => Default_Style,
+         Doc             => "",
+         Default_Variant => Default,
+         Default_Fg   => "#b500f5",
+         Path            => -"Editor/Fonts & Colors:LSP semantic");
+
+      LSP_Struct_Style := Manager.Create
+        (Name         => "LSP-Semantic-Struct",
+         Label        => -"Structure",
+         Base            => Default_Style,
+         Doc             => "",
+         Default_Variant => Default,
+         Default_Fg   => "#015878",
+         Path            => -"Editor/Fonts & Colors:LSP semantic");
+
+      LSP_TypeParameter_Style := Manager.Create
+        (Name         => "LSP-Semantic-TypeParameter",
+         Label        => -"TypeParameter",
+         Base            => Default_Style,
+         Doc             => "",
+         Default_Variant => Default,
+         Default_Fg   => "#590034",
+         Path            => -"Editor/Fonts & Colors:LSP semantic");
+
+      LSP_Property_Style := Manager.Create
+        (Name         => "LSP-Semantic-Property",
+         Label        => -"Property",
+         Base            => Default_Style,
+         Doc             => "",
+         Default_Variant => Default,
+         Default_Fg   => "#bf0270",
+         Path            => -"Editor/Fonts & Colors:LSP semantic");
+
+      LSP_Enum_Style := Manager.Create
+        (Name         => "LSP-Semantic-Enum",
+         Label        => -"Enum",
+         Base            => Default_Style,
+         Doc             => "",
+         Default_Variant => Default,
+         Default_Fg   => "#a38a27",
+         Path            => -"Editor/Fonts & Colors:LSP semantic");
+
+      LSP_EnumMember_Style := Manager.Create
+        (Name         => "LSP-Semantic-EnumMember",
+         Label        => -"EnumMember",
+         Base            => Default_Style,
+         Doc             => "",
+         Default_Variant => Default,
+         Default_Fg   => "#c4a321",
+         Path            => -"Editor/Fonts & Colors:LSP semantic");
+
+      LSP_Parameter_Style := Manager.Create
+        (Name         => "LSP-Semantic-Parameter",
+         Label        => -"Parameter",
+         Base            => Default_Style,
+         Doc             => "",
+         Default_Variant => Default,
+         Default_Fg   => "#008cbf",
+         Path            => -"Editor/Fonts & Colors:LSP semantic");
+
+      LSP_Variable_Style := Manager.Create
+        (Name         => "LSP-Semantic-Variable",
+         Label        => -"Variable",
+         Base            => Default_Style,
+         Doc             => "",
+         Default_Variant => Default,
+         Default_Fg   => "#c93c00",
+         Path            => -"Editor/Fonts & Colors:LSP semantic");
+
+      LSP_Modifier_Style := Manager.Create
+        (Name         => "LSP-Semantic-Modifier",
+         Label        => -"Modifier",
+         Base            => Default_Style,
+         Doc             => "",
+         Default_Variant => Default,
+         Default_Fg   => "#00873f",
+         Path            => -"Editor/Fonts & Colors:LSP semantic");
+
+      LSP_Operator_Style := Manager.Create
+        (Name         => "LSP-Semantic-Operator",
+         Label        => -"Operator",
+         Base            => Default_Style,
+         Doc             => "",
+         Default_Variant => Default,
+         Default_Fg   => "#005427",
+         Path            => -"Editor/Fonts & Colors:LSP semantic");
+
+      LSP_Missing_Style := Manager.Create
+        (Name         => "LSP-Semantic-Missing",
+         Label        => -"Deprecated or missing",
+         Base            => Default_Style,
+         Doc             => "",
+         Default_Variant => Default,
+         Default_Fg   => "red",
+         Path            => -"Editor/Fonts & Colors:LSP semantic");
+
+      LSP_Readonly_Bg := Manager.Create
+        (Name     => "LSP-Semantic-Readonly",
+         Default  => "#f2ffed",
+         Label    => -"Background for readonly",
+         Doc      => "",
+         Path     => -"Editor/Fonts & Colors:LSP semantic");
+
       Current_Block_Color := Manager.Create
         (Name     => "Src-Editor-Current-Block-Color",
          Default  => "#9C9CFF",
@@ -1698,6 +1835,13 @@ package body GPS.Kernel.Preferences is
          Maximum => Integer'Last,
          Default => 3,
          Path    => "Editor/Ada:Diagnostics");
+
+      Use_LSP_In_Highlight := Kernel.Get_Preferences.Create
+        (Name     => "use-lsp-in-highlight",
+         Label    => -"Use LSP to highlight",
+         Doc      => -"Enable usage of language server to highlight code.",
+         Default  => False,
+         Path     => "LSP:Highlight");
 
       LSP_Diagnostics_Display := LSP_Diagnostics_Display_Policy_Prefs.Create
         (Manager  => Kernel.Get_Preferences,

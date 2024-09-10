@@ -368,6 +368,26 @@ package GPS.Kernel.Preferences is
    LSP_Ada_Param_Threshold     : Integer_Preference;
    LSP_Diagnostics_Display   : LSP_Diagnostics_Display_Policy_Prefs.Preference;
 
+   Use_LSP_In_Highlight        : Boolean_Preference;
+
+   -- LSP semantic styles --
+
+   LSP_Namespace_Style       : Variant_Preference;
+   LSP_Interface_Style       : Variant_Preference;
+   LSP_Class_Style           : Variant_Preference;
+   LSP_Function_Style        : Variant_Preference;
+   LSP_Struct_Style          : Variant_Preference;
+   LSP_Property_Style        : Variant_Preference;
+   LSP_Enum_Style            : Variant_Preference;
+   LSP_EnumMember_Style      : Variant_Preference;
+   LSP_TypeParameter_Style   : Variant_Preference;
+   LSP_Parameter_Style       : Variant_Preference;
+   LSP_Variable_Style        : Variant_Preference;
+   LSP_Modifier_Style        : Variant_Preference;
+   LSP_Operator_Style        : Variant_Preference;
+   LSP_Missing_Style         : Variant_Preference;
+   LSP_Readonly_Bg           : Color_Preference;
+
    package Indentation_Kind_Preferences is new
      Default_Preferences.Enums.Generics (Language.Indentation_Kind);
 

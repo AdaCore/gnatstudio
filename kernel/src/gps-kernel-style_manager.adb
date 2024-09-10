@@ -806,6 +806,21 @@ package body GPS.Kernel.Style_Manager is
       end if;
    end Set_Background;
 
+   -----------------
+   -- Set_Variant --
+   -----------------
+
+   procedure Set_Variant (Style : Style_Access; Variant : Variant_Enum) is
+   begin
+      if Style.Variant /= Variant then
+         Unchecked_Free (Style.Source);
+         Style.Source := new Source_Override;
+         Style.Variant := Variant;
+         --  Update the existing tags
+         Refresh_Values (Style);
+      end if;
+   end Set_Variant;
+
    ---------------------
    -- Set_In_Speedbar --
    ---------------------

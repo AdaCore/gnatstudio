@@ -1209,6 +1209,26 @@ package body Src_Editor_Buffer is
       CL : Arg_List;
       Start_Iter : Gtk_Text_Iter;
       End_Iter   : Gtk_Text_Iter;
+
+      ------------------------------
+      -- Run_Highlight_Range_Hook --
+      ------------------------------
+
+      procedure Run_Highlight_Range_Hook;
+
+      procedure Run_Highlight_Range_Hook is
+      begin
+         Get_Iter_At_Mark
+           (Buffer, Start_Iter, Buffer.Highlighter.First_Highlight_Mark);
+         Get_Iter_At_Mark
+           (Buffer, End_Iter, Buffer.Highlighter.Last_Highlight_Mark);
+         Highlight_Range_Hook.Run
+           (Kernel    => Buffer.Kernel,
+            File      => Buffer.Filename,
+            From_Line => Natural (Get_Line (Start_Iter) + 1),
+            To_Line   => Natural (Get_Line (End_Iter) + 1));
+      end Run_Highlight_Range_Hook;
+
    begin
       if Buffer.In_Destruction
         or else Clock < Buffer.Blocks_Request_Timestamp +
@@ -1219,17 +1239,15 @@ package body Src_Editor_Buffer is
 
       --  Re-highlight the highlight region if needed
       if Buffer.Highlighter.Use_Highlighting_Hook then
-         Get_Iter_At_Mark
-           (Buffer, Start_Iter, Buffer.Highlighter.First_Highlight_Mark);
-         Get_Iter_At_Mark
-           (Buffer, End_Iter, Buffer.Highlighter.Last_Highlight_Mark);
-         Highlight_Range_Hook.Run
-           (Kernel    => Buffer.Kernel,
-            File      => Buffer.Filename,
-            From_Line => Natural (Get_Line (Start_Iter) + 1),
-            To_Line   => Natural (Get_Line (End_Iter) + 1));
+         Run_Highlight_Range_Hook;
+
       else
          Buffer.Highlighter.Highlight_Region;
+
+         if GPS.Kernel.Preferences.Use_LSP_In_Highlight.Get_Pref then
+            --  Run hook to get semantic highlighting from language server
+            Run_Highlight_Range_Hook;
+         end if;
       end if;
 
       --  Perform on-the-fly style check
