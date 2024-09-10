@@ -585,14 +585,6 @@ class GNATfuzzPlugin(Module):
             if not (variable.startswith("GNATFUZZ") or variable == "AFL_MODE"):
                 args.append(f"-X{variable}={value}")
 
-        args.extend(
-            [
-                f"--corpus-path={self.output_dir}/fuzz_testing/starting_corpus",
-                f"--stop-criteria={self.output_dir}"
-                "/fuzz_testing/user_configuration/stop_criteria.xml",
-            ]
-        )
-
         GPS.BuildTarget("gnatfuzz fuzz").execute(
             extra_args=args,
             synchronous=False,
