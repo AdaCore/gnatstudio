@@ -1838,8 +1838,8 @@ package body GPS.Kernel.Preferences is
 
       Use_LSP_In_Highlight := Kernel.Get_Preferences.Create
         (Name     => "use-lsp-in-highlight",
-         Label    => -"Use LSP to highlight",
-         Doc      => -"Enable usage of language server to highlight code.",
+         Label    => -"LSP Semantic Highlighting",
+         Doc      => -"Enable LSP semantic highlighting in opened editors.",
          Default  => False,
          Path     => "LSP:Highlight");
 
