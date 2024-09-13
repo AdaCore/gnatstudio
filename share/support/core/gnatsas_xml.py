@@ -313,7 +313,7 @@ excluded from GNATSAS's analysis."
               tip="Specify the number of processes to generate SCIL files and analyze files (0 means use as
 many cores as available on the machine)." />
          <check label="Enable GNAT warnings" switch="--gnat"
-                switch-off="--no-gnat" default="off"
+                switch-off="--no-gnat" default="on"
                 column="2" tip="Enable/disable launching GNAT front-end and collecting its warnings."/>
          <check label="Enable Infer" switch="--infer" switch-off="--no-infer" default="on"
                 column="2" tip="Enable/disable Infer analysis (enabled by default)."/>
@@ -579,7 +579,7 @@ many cores as available on the machine)."/>
          <check label="Force analysis" switch="-f" column="2"
           tip="Force analysis of all files (disable incrementality)."/>
          <check label="Enable GNAT warnings" switch="--gnat"
-                default="off"
+                default="on"
                 column="2" tip="Enable/disable launching GNAT front-end and collecting its warnings."/>
          <check label="Enable Infer" switch="--infer" switch-off="--no-infer" default="on"
                 column="2" tip="Enable/disable Infer analysis (enabled by default)."/>
