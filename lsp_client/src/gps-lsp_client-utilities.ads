@@ -21,6 +21,7 @@ with Language;
 with LSP.Messages;
 
 with GPS.Editors;
+with GPS.Kernel;
 
 package GPS.LSP_Client.Utilities is
 
@@ -55,5 +56,11 @@ package GPS.LSP_Client.Utilities is
      (V : LSP.Messages.Als_Visibility)
       return Language.Construct_Visibility;
    --  Converts AlsVisibility to Construct_Visibility.
+
+   function Get_Formatting_Options
+     (Kernel : GPS.Kernel.Kernel_Handle;
+      File   : GNATCOLL.VFS.Virtual_File)
+      return LSP.Messages.FormattingOptions;
+   --  Return the formatting options used for LSP Formatting for Document
 
 end GPS.LSP_Client.Utilities;
