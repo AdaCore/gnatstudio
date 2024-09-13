@@ -402,11 +402,9 @@ package body GPS.LSP_Client.Editors.Formatting is
       Force    : Boolean := False)
       return Boolean
    is
-      File         : constant Virtual_File := From.Buffer.File;
-      Lang         : Language.Language_Access;
-      Params       : Indent_Parameters;
-      Indent_Style : Indentation_Kind;
-      Request      : Range_Formatting_Request_Access;
+      File    : constant Virtual_File := From.Buffer.File;
+      Lang    : Language.Language_Access;
+      Request : Range_Formatting_Request_Access;
 
    begin
       Lang := Self.Kernel.Get_Language_Handler.Get_Language_From_File (File);
@@ -418,7 +416,6 @@ package body GPS.LSP_Client.Editors.Formatting is
       end if;
 
       Lang := Self.Kernel.Get_Language_Handler.Get_Language_From_File (File);
-      Get_Indentation_Parameters (Lang, Params, Indent_Style);
 
       Request := new Range_Formatting_Request'
         (GPS.LSP_Client.Requests.LSP_Request with
@@ -427,8 +424,6 @@ package body GPS.LSP_Client.Editors.Formatting is
            Span            =>
            (first => GPS.LSP_Client.Utilities.Location_To_LSP_Position (From),
             last  => GPS.LSP_Client.Utilities.Location_To_LSP_Position (To)),
-         Indentation_Level => Params.Indent_Level,
-         Use_Tabs          => Params.Use_Tabs,
          Document_Version  => From.Buffer.Version);
 
       return GPS.LSP_Client.Requests.Execute
@@ -555,8 +550,6 @@ package body GPS.LSP_Client.Editors.Formatting is
                   Position          =>
                     GPS.LSP_Client.Utilities.Location_To_LSP_Position (Loc),
                   Text              => Text,
-                  Indentation_Level => Params.Indent_Level,
-                  Use_Tabs          => Params.Use_Tabs,
                   Document_Version  => Buffer.Version);
 
                return GPS.LSP_Client.Requests.Execute
@@ -607,9 +600,6 @@ package body GPS.LSP_Client.Editors.Formatting is
       File         : Virtual_File;
 
       Lang         : Language.Language_Access;
-      Params       : Indent_Parameters;
-      Indent_Style : Indentation_Kind;
-
       Request      : Document_Formatting_Request_Access;
 
    begin
@@ -624,15 +614,12 @@ package body GPS.LSP_Client.Editors.Formatting is
 
       File := Buffer.Get_Filename;
       Lang := Kernel.Get_Language_Handler.Get_Language_From_File (File);
-      Get_Indentation_Parameters (Lang, Params, Indent_Style);
 
       Request := new Document_Formatting_Request'
         (GPS.LSP_Client.Requests.LSP_Request with
            Kernel            => Kernel,
            File              => File,
            Editor            => Editor,
-           Indentation_Level => Params.Indent_Level,
-           Use_Tabs          => Params.Use_Tabs,
            Document_Version  => Buffer.Get_Editor_Buffer.Version);
 
       if GPS.LSP_Client.Requests.Execute
