@@ -1580,10 +1580,16 @@ package body DAP.Views.Memory is
                      + 1 + Gint (View.Label_Length));
          Place_Cursor (Buffer, Iter);
       else
-         while not Editable (Iter, False) loop
+         Result := True;
+         while Result
+           and then not Editable (Iter, False)
+         loop
             Forward_Cursor_Position (Iter, Result);
          end loop;
-         Place_Cursor (Buffer, Iter);
+
+         if Result then
+            Place_Cursor (Buffer, Iter);
+         end if;
       end if;
    end Watch_Cursor_Location;
 
