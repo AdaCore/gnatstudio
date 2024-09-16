@@ -69,6 +69,23 @@ package body GVD.Dialogs is
        Context : Selection_Context) return Boolean;
    --  Whether the current debugger is for a vx653 target
 
+   ------------------------
+   -- Gdb_Answer_Suffixc --
+   ------------------------
+
+   function Gdb_Answer_Suffix return String is
+   begin
+      if Config.Host = Windows then
+         --  This is needed when sending an answer to Gdb's questions,
+         --  one-line answers do not seem supported under Windows.
+
+         return "\" & ASCII.LF & " ";
+
+      else
+         return "";
+      end if;
+   end Gdb_Answer_Suffix;
+
    -----------------
    -- Thread View --
    -----------------
