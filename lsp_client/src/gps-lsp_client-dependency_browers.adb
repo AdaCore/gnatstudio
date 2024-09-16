@@ -26,8 +26,8 @@ with Browsers.Dependency_Items;       use Browsers.Dependency_Items;
 
 with GPS.Editors;                     use GPS.Editors;
 with GPS.LSP_Client.Language_Servers; use GPS.LSP_Client.Language_Servers;
-with GPS.LSP_Client.Requests.Show_Dependencies;
-use GPS.LSP_Client.Requests.Show_Dependencies;
+with GPS.LSP_Client.Requests.Execute_Command.Show_Dependencies;
+use GPS.LSP_Client.Requests.Execute_Command.Show_Dependencies;
 with GPS.LSP_Client.Requests;         use GPS.LSP_Client.Requests;
 with GPS.LSP_Client.Utilities;        use GPS.LSP_Client.Utilities;
 with GPS.LSP_Module;                  use GPS.LSP_Module;
@@ -50,7 +50,8 @@ package body GPS.LSP_Client.Dependency_Browers is
       Kind          : Dependency_Kind_Type;
       Show_Implicit : Boolean);
 
-   type Show_Dependencies_Request is new Abstract_Show_Dependencies_Request
+   type Show_Dependencies_Request is
+     new Abstract_Show_Dependencies_Command_Request
    with record
       Close_Document_On_Finish : Boolean := False;
    end record;
@@ -59,7 +60,7 @@ package body GPS.LSP_Client.Dependency_Browers is
 
    overriding procedure On_Result_Message
      (Self   : in out Show_Dependencies_Request;
-      Result : LSP.Messages.ALS_Unit_Description_Vector);
+      Result : Unit_Description_Vectors.Vector);
 
    overriding procedure On_Rejected
      (Self : in out Show_Dependencies_Request; Reason : Reject_Reason);
@@ -75,9 +76,8 @@ package body GPS.LSP_Client.Dependency_Browers is
    is
      ("querying dependencies");
 
-   function To_LSP_Kind
-     (Kind : Dependency_Kind_Type)
-      return LSP.Messages.ALS_ShowDependenciesKind;
+   function To_LSP_Kind (Kind : Dependency_Kind_Type)
+     return ALS_ShowDependenciesKind;
 
    -----------------------
    -- On_Result_Message --
@@ -85,7 +85,7 @@ package body GPS.LSP_Client.Dependency_Browers is
 
    overriding procedure On_Result_Message
      (Self   : in out Show_Dependencies_Request;
-      Result : LSP.Messages.ALS_Unit_Description_Vector)
+      Result : Unit_Description_Vectors.Vector)
    is
       Dependencies : Dependency_Description_Vectors.Vector;
       Lang         : constant Language_Access :=
@@ -164,11 +164,11 @@ package body GPS.LSP_Client.Dependency_Browers is
 
    function To_LSP_Kind
      (Kind : Dependency_Kind_Type)
-      return LSP.Messages.ALS_ShowDependenciesKind is
+      return ALS_ShowDependenciesKind is
    begin
       case Kind is
-         when Show_Imported  => return LSP.Messages.Show_Imported;
-         when Show_Importing => return LSP.Messages.Show_Importing;
+         when Show_Imported  => return Show_Imported;
+         when Show_Importing => return Show_Importing;
       end case;
    end To_LSP_Kind;
 
