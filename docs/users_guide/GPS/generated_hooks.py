@@ -212,7 +212,8 @@ class Predefined_Hooks:
     # codepeer_report_ready = 'codepeer_report_ready'
     def codepeer_report_ready(name):
         """
-        Emitted when the codepeer report is displayed within GNAT Studio
+        Emitted when the CodePeer/GNAT SAS report is displayed within GNAT
+        Studio.
 
         :param str name:
 

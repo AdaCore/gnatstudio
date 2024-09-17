@@ -476,18 +476,24 @@ many cores as available on the machine)." />
        <iconname>gps-build-all-symbolic</iconname>
        <switches command="%(tool_name)s" columns="3" lines="2">
          <field label="Compare with"
-                tip="Specify a SAM file with which to compare the current analysis run.
- These files are located under the 'obj_dir/gnatsas/P.outputs' directory."
+                tip="Specify a SAM file for a one-off comparison with the selected
+analysis run (the last run of the specified timeline, or the current run if no timeline
+was specified). Generated SAM files are located under the 'obj_dir/gnatsas/P.outputs'
+directory (or the directory specified by the 'Output_Dir' attribute of the 'Analyzer' package).
+If no file is selected, the baseline of the selected run is used for comparison."
                 switch="--compare-with"
                 separator=" "
                 as-file="true"
                 file-filter="*.sam"/>
-         <combo label="Analysis mode" switch="--mode" noswitch="default"
+         <combo label="Timeline" switch="--timeline" noswitch="default"
                separator="=" column="1"
-              tip="Analysis mode for which to regenerate a report." >
-            <combo-entry label="Last analysis mode" value="default" />
-            <combo-entry label="fast" value="fast" />
-            <combo-entry label="deep" value="deep" />
+              tip="Timeline for which to regenerate a report. If &quot;--timeline&quot;
+is not specified, the timeline of the last analysis is used. To display the report for
+a different timeline (e.g. for the analysis of a given file), specify
+&quot;--timeline=&lt;timeline_name&gt;&quot; in the command-line." >
+            <combo-entry label="Timeline from last analysis" value="default" />
+            <combo-entry label="fast (analysis of the project in fast mode)" value="fast" />
+            <combo-entry label="deep (analysis of the project in deep mode)" value="deep" />
          </combo>
          <hidden switch="--progress-bar=gnat-studio" separator=" "/>
        </switches>

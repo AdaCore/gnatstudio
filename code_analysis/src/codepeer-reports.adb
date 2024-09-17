@@ -140,11 +140,19 @@ package body CodePeer.Reports is
          Inspection.Set_Alignment (0.0, 0.0);
          Inspection.Set_Label
            ("   " & Label
-            & Ada.Characters.Latin_1.LF & "      " & Main & Switches
+            & Ada.Characters.Latin_1.LF & "      " & Main
+            & (if Switches /= "" then
+                   " " & Switches
+              else
+                 "")
             & Ada.Characters.Latin_1.LF
            );
          Inspection.Set_Tooltip_Text
-           (Main & Ada.Characters.Latin_1.LF & Switches);
+           (Main
+            & (if Switches /= "" then
+                   Ada.Characters.Latin_1.LF & Switches
+              else
+                 ""));
          Box.Pack_End (Inspection);
       end Add_Run;
 
@@ -206,21 +214,24 @@ package body CodePeer.Reports is
 
       Gtk.Button.Gtk_New (Button);
       Button.Set_Label ("Bump baseline");
-      Button.Set_Tooltip_Text ("Bump Baseline to Current Run");
+      Button.Set_Tooltip_Text ("Bump the Baseline of current timeline to the"
+                               & " current Run.");
       Button_Box.Pack_Start (Button, False, False);
       Gtkada.Handlers.Widget_Callback.Object_Connect
         (Button, Gtk.Button.Signal_Clicked, Bump_Clicked'Access, Self);
 
       Gtk.Button.Gtk_New (Button);
       Button.Set_Label ("Set baseline");
-      Button.Set_Tooltip_Text ("Set Baseline to Run");
+      Button.Set_Tooltip_Text ("Select a Run (SAM file) that will become the"
+                               & " new Baseline for the current timeline.");
       Button_Box.Pack_Start (Button, False, False);
       Gtkada.Handlers.Widget_Callback.Object_Connect
         (Button, Gtk.Button.Signal_Clicked, Set_Clicked'Access, Self);
 
       Gtk.Button.Gtk_New (Button);
       Button.Set_Label ("Replace current run");
-      Button.Set_Tooltip_Text ("Replace Current Run with Run");
+      Button.Set_Tooltip_Text ("Select a Run (SAM file) that will replace the"
+                               & " current Run.");
       Button_Box.Pack_Start (Button, False, False);
       Gtkada.Handlers.Widget_Callback.Object_Connect
         (Button, Gtk.Button.Signal_Clicked, Replace_Clicked'Access, Self);
