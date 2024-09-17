@@ -1,3 +1,6 @@
 title: 'gs.377.debug_dialog'
+
+# On Windows GS uses native file selection dialog
+# and we can't drive it from python
 skip:
     - ['SKIP', 'env.build.os.name == "windows"']
