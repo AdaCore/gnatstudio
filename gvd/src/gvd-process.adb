@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                               GNAT Studio                                --
 --                                                                          --
---                     Copyright (C) 2000-2023, AdaCore                     --
+--                     Copyright (C) 2000-2024, AdaCore                     --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -1265,7 +1265,8 @@ package body GVD.Process is
             when others =>
                declare
                   Tc      : constant Toolchain :=
-                    Kernel.Get_Toolchains_Manager.Get_Toolchain (Project);
+                    Kernel.Get_Toolchains_Manager.Get_Toolchain
+                      (Kernel.Get_Project_Tree.Root_Project);
                   Command : constant String := Get_Command
                     (Tc, Toolchains.Debugger);
                begin
