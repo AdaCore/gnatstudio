@@ -280,6 +280,10 @@ XML = r"""<?xml version="1.0" ?>
   <toolchain name="riscv64-elf"/>
 
   <toolchain name="x86_64-elf"/>
+
+  <toolchain name="x86-lynx178elf">
+    <debugger>i586-elf-lynxos178e-gdb</debugger>
+  </toolchain>
 </GNAT_Studio>
 """
 
