@@ -2135,7 +2135,8 @@ package body DAP.Clients is
          --  Return the debugger command set from the toolchain
          declare
             Tc           : constant Toolchain :=
-              Self.Kernel.Get_Toolchains_Manager.Get_Toolchain (Project);
+              Self.Kernel.Get_Toolchains_Manager.Get_Toolchain
+                (Self.Kernel.Get_Project_Tree.Root_Project);
             Debugger_Cmd : constant String := Get_Command
               (Tc, Toolchains.Debugger);
          begin
@@ -2146,7 +2147,6 @@ package body DAP.Clients is
       Debug_Adapter_Cmd : constant String := Get_Debug_Adapter_Command;
 
    begin
-
       Self.Project := Project;
       Self.Executable := Executable;
       Self.Executable_Args.Clear;

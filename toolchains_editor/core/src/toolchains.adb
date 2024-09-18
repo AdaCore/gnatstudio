@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                               GNAT Studio                                --
 --                                                                          --
---                     Copyright (C) 2010-2023, AdaCore                     --
+--                     Copyright (C) 2010-2024, AdaCore                     --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -1451,6 +1451,8 @@ package body Toolchains is
      (Manager : access Toolchain_Manager_Record;
       Project : Project_Type) return Toolchain
    is
+      Target_Name   : constant String :=
+                        Project.Get_Target (Default_To_Host => False);
       Target_Str    : aliased constant String :=
                         Attribute_Value (Project, Target_Attribute);
       Runtime_Str   : aliased constant String :=
@@ -1491,17 +1493,18 @@ package body Toolchains is
          use Compiler_Vector;
 
       begin
-         if (Target_Str = ""
-             or else Target_Str = Get_Target_Name (TC))
+         if ((Target_Name /= "" and then Target_Name = Get_Target_Name (TC))
+               or else (Target_Name = "" and then Target_Str = "")
+               or else Target_Str = Get_Target_Name (TC))
            and then
              (GNAT_List_Str = ""
-           or else GNAT_List_Str = Get_Command (TC, GNAT_List))
+                or else GNAT_List_Str = Get_Command (TC, GNAT_List))
            and then
              (GNAT_Str = ""
-              or else GNAT_Str = Get_Command (TC, GNAT_Driver))
+                or else GNAT_Str = Get_Command (TC, GNAT_Driver))
            and then
              (Debugger_Str = ""
-              or else Debugger_Str = Get_Command (TC, Debugger))
+                or else Debugger_Str = Get_Command (TC, Debugger))
          then
             Cursor := New_Toolchain.Full_Compiler_List.First;
 
@@ -1642,11 +1645,12 @@ package body Toolchains is
       --  in the manager
 
       Is_Empty : constant Boolean :=
-                   Target_Str = ""
-                       and then GNAT_List_Str = ""
-                       and then GNAT_Str = ""
-                       and then Gnatmake_Str = ""
-                       and then Debugger_Str = "";
+        Project.Get_Target (Default_To_Host => False) = ""
+          and then Target_Str = ""
+          and then GNAT_List_Str = ""
+          and then GNAT_Str = ""
+          and then Gnatmake_Str = ""
+          and then Debugger_Str = "";
 
    begin
       --  We read the compilers defined directly in the project first, and
@@ -1698,10 +1702,11 @@ package body Toolchains is
          --  Second case: we retrieve the toolchain from the prefix
 
          declare
-            Prefix : constant String := (if Target_Str /= "" then
-                                            Target_Str
-                                         else
-                                            Get_Prefix);
+            Prefix : constant String :=
+              (if Target_Name /= "" then Target_Name
+               elsif Target_Str /= "" then Target_Str
+               else Get_Prefix);
+
          begin
             if Prefix /= ""
               and then Is_Known_Toolchain_Name (Prefix)
