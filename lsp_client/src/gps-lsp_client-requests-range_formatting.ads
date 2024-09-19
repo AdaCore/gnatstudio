@@ -22,10 +22,8 @@ package GPS.LSP_Client.Requests.Range_Formatting is
    type Abstract_Range_Formatting_Request is
      abstract new GPS.LSP_Client.Requests.Base.Text_Document_Request with
       record
-         Span              : LSP.Messages.Span;
-         Indentation_Level : Integer;
-         Use_Tabs          : Boolean;
-         Document_Version  : Integer;
+         Span             : LSP.Messages.Span;
+         Document_Version : Integer;
       end record;
 
    function Params

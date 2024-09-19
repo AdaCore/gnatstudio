@@ -22,8 +22,6 @@ package GPS.LSP_Client.Requests.Document_Formatting is
    type Abstract_Document_Formatting_Request is
      abstract new GPS.LSP_Client.Requests.Base.Text_Document_Request with
       record
-         Indentation_Level : Integer;
-         Use_Tabs          : Boolean;
          Document_Version  : Integer;
       end record;
 
