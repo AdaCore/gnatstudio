@@ -64,6 +64,20 @@ variant_prefs = {
     "diff_patch_append": "Diff-Patch-Append-Variant",
     "blocks_in_aspects": "Src-Editor-Aspects-Block-Variant",
     "types_in_aspects": "Src-Editor-Aspects-Type-Variant",
+    "namespaces": "LSP-Semantic-Namespace",
+    "classes": "LSP-Semantic-Class",
+    "enums": "LSP-Semantic-Enum",
+    "interfaces": "LSP-Semantic-Interface",
+    "structs": "LSP-Semantic-Struct",
+    "typeparameters": "LSP-Semantic-TypeParameter",
+    "parameters": "LSP-Semantic-Parameter",
+    "variables": "LSP-Semantic-Variable",
+    "propertys": "LSP-Semantic-Property",
+    "enummembers": "LSP-Semantic-EnumMember",
+    "functions": "LSP-Semantic-Function",
+    "modifiers": "LSP-Semantic-Modifier",
+    "operators": "LSP-Semantic-Operator",
+    "lsp_missings": "LSP-Semantic-Missing",
 }
 # These keys are interpreted as variant preferences
 # Keys: our internal easy-to-remember key; values: current names of GPS prefs
@@ -289,6 +303,20 @@ common_light = {
     "bookmarks": Rgba(205, 0, 255, 77),
     "blocks_in_aspects": ("DEFAULT", Color("#60615F"), transparent),
     "types_in_aspects": ("DEFAULT", Color("#009900"), transparent),
+    "namespaces": ("DEFAULT", Color("#310142"), transparent),
+    "classes": ("DEFAULT", Color("#550073"), transparent),
+    "enums": ("DEFAULT", Color("#a38a27"), transparent),
+    "interfaces": ("DEFAULT", Color("#8900ba"), transparent),
+    "structs": ("DEFAULT", Color("#015878"), transparent),
+    "typeparameters": ("DEFAULT", Color("#590034"), transparent),
+    "parameters": ("DEFAULT", Color("#008cbf"), transparent),
+    "variables": ("DEFAULT", Color("#c93c00"), transparent),
+    "propertys": ("DEFAULT", Color("#bf0270"), transparent),
+    "enummembers": ("DEFAULT", Color("#c4a321"), transparent),
+    "functions": ("DEFAULT", Color("#b500f5"), transparent),
+    "modifiers": ("DEFAULT", Color("#00873f"), transparent),
+    "operators": ("DEFAULT", Color("#005427"), transparent),
+    "lsp_missings": ("DEFAULT", Color("#ff0000"), transparent),
 }
 
 common_dark = {
@@ -348,6 +376,20 @@ common_dark = {
     "bookmarks": Rgba(205, 0, 255, 77),
     "blocks_in_aspects": ("DEFAULT", Color("#E6E6E6"), transparent),
     "types_in_aspects": ("DEFAULT", Color("#CCFFCC"), transparent),
+    "namespaces": ("DEFAULT", Color("#C8C8C8"), transparent),
+    "classes": ("DEFAULT", Color("#4CD5E0"), transparent),
+    "enums": ("DEFAULT", Color("#4CE099"), transparent),
+    "interfaces": ("ITALIC", Rgba(186, 186, 186), Color("#4CD5E0")),
+    "structs": ("DEFAULT", Color("#49D66A"), transparent),
+    "typeparameters": ("ITALIC", Rgba(186, 186, 186), Color("#3E52EB")),
+    "parameters": ("ITALIC", Rgba(186, 186, 186), Color("#9CDCFE")),
+    "variables": ("DEFAULT", Color("#9CDCFE"), transparent),
+    "propertys": ("DEFAULT", Color("#8F9DFF"), transparent),
+    "enummembers": ("DEFAULT", Color("#93E6BE"), transparent),
+    "functions": ("DEFAULT", Color("#DCDCAA"), transparent),
+    "modifiers": ("DEFAULT", Color("#569cd6"), transparent),
+    "operators": ("DEFAULT", Color("#C586C0"), transparent),
+    "lsp_missings": ("DEFAULT", Color("#ff0000"), transparent),
 }
 
 

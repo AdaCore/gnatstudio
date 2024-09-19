@@ -1243,11 +1243,6 @@ package body Src_Editor_Buffer is
 
       else
          Buffer.Highlighter.Highlight_Region;
-
-         if GPS.Kernel.Preferences.Use_LSP_In_Highlight.Get_Pref then
-            --  Run hook to get semantic highlighting from language server
-            Run_Highlight_Range_Hook;
-         end if;
       end if;
 
       --  Perform on-the-fly style check
@@ -3422,10 +3417,18 @@ package body Src_Editor_Buffer is
    begin
       --  Connect timeout, to handle automatic saving of buffer
 
+      B.Highlighter.Update_Use_Highlighting_Hook;
+
       Prev := B.Block_Highlighting;
       B.Block_Highlighting := Block_Highlighting.Get_Pref;
 
       if Prev /= B.Block_Highlighting then
+         Register_Edit_Timeout (B);
+      end if;
+
+      Prev := B.LSP_Highlighting;
+      B.LSP_Highlighting := Use_LSP_In_Highlight.Get_Pref;
+      if Prev /= B.LSP_Highlighting then
          Register_Edit_Timeout (B);
       end if;
 
@@ -8315,6 +8318,32 @@ package body Src_Editor_Buffer is
    end Update_All_Column_Memory;
    pragma Unreferenced (Update_All_Column_Memory);
 
+   ----------------------------------
+   -- Update_Use_Highlighting_Hook --
+   ----------------------------------
+
+   procedure Update_Use_Highlighting_Hook
+     (Self : access Source_Highlighter_Record)
+   is
+      Prev : constant Boolean := Self.Use_Highlighting_Hook;
+   begin
+      Self.Use_Highlighting_Hook :=
+        Self.Buffer.Lang /= null
+          and then Self.Buffer.Lang.Get_Name = "Ada"
+          and then
+            (Use_LAL_In_Highlight.Get_Pref
+             or else Use_LSP_In_Highlight.Get_Pref);
+
+      if Prev /= Self.Use_Highlighting_Hook
+        and then Prev
+      then
+         --  We don't use hook anymore, so should clear old highlighting
+         --  styles prodused by code connected to highlighting hook
+
+         Self.Call_Clear_Highlighting := True;
+      end if;
+   end Update_Use_Highlighting_Hook;
+
    ---------------
    -- Inserting --
    ---------------
@@ -9310,6 +9339,14 @@ package body Src_Editor_Buffer is
       Start_Iter : Gtk_Text_Iter;
       End_Iter   : Gtk_Text_Iter;
    begin
+      if Self.Call_Clear_Highlighting then
+         Self.Call_Clear_Highlighting := False;
+
+         Clear_Highlighting_Hook.Run
+           (Kernel => Self.Buffer.Kernel,
+            File   => Self.Buffer.Filename);
+      end if;
+
       if not Self.Highlight_Needed then
          return;
       end if;
@@ -9354,10 +9391,7 @@ package body Src_Editor_Buffer is
       Start_Iter : Gtk_Text_Iter;
       End_Iter   : Gtk_Text_Iter) is
    begin
-      Self.Use_Highlighting_Hook :=
-        Self.Buffer.Lang /= null
-          and then Self.Buffer.Lang.Get_Name = "Ada"
-          and then Use_LAL_In_Highlight.Get_Pref;
+      Self.Update_Use_Highlighting_Hook;
 
       --  Do not try to highlight an empty buffer
       if not Is_End (Start_Iter) then

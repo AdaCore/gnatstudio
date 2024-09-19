@@ -1,5 +1,6 @@
 """
 Check that textDocument/semanticTokens works correctly.
+Also that use-lsp-in-highlight preference works.
 """
 
 import GPS
@@ -61,6 +62,11 @@ expected_tags = [
 
 @run_test_driver
 def test_driver():
+    yield wait_tasks()
+    buf = GPS.EditorBuffer.get(GPS.File("foo.adb"))
+    editor_view = buf.current_view()
+    yield wait_idle()
+
     GPS.Preference("use-lsp-in-highlight").set(True)
     yield wait_tasks()
     buf = GPS.EditorBuffer.get(GPS.File("foo.adb"))
@@ -72,3 +78,10 @@ def test_driver():
     tags_list = tags.split("\n")
 
     gps_assert(tags_list, expected_tags, "The highlighting is not correct")
+
+    GPS.Preference("use-lsp-in-highlight").set(False)
+    yield hook("clear_highlighting")
+    yield wait_idle()
+
+    changed = tags != get_all_tags(buf)
+    gps_assert(changed, True, "Semantic highlighting should be off")

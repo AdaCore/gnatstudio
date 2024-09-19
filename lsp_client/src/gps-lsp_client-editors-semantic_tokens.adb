@@ -20,6 +20,7 @@ with Ada.Characters.Handling;
 with Ada.Containers.Indefinite_Vectors;
 
 with Ada.Strings.Unbounded;
+with GNATCOLL.Utils;
 with Interfaces;
 with VSS.Strings.Conversions;
 
@@ -69,6 +70,13 @@ package body GPS.LSP_Client.Editors.Semantic_Tokens is
       To_Line   : Integer);
    --  Highlight piece of code between From_Line and To_Line in a buffer
    --  corresponding to given File.
+
+   type On_Clear_Highlighting is new File_Hooks_Function with null record;
+   overriding procedure Execute
+     (Self   : On_Clear_Highlighting;
+      Kernel : not null access GPS.Kernel.Kernel_Handle_Record'Class;
+      File   : GNATCOLL.VFS.Virtual_File);
+   --  Clear highlighting styles for the given file
 
    --------------------------------------
    -- Semantic_Tokens_Module_ID_Record --
@@ -165,10 +173,10 @@ package body GPS.LSP_Client.Editors.Semantic_Tokens is
    Empty_Modifiers_Array : constant Modifiers_Array := (others => False);
 
    function Check_Style_Name
-     (Name      : String;
-      Modifiers : Modifiers_Array := Empty_Modifiers_Array)
+     (Name        : String;
+      Modifiers   : Modifiers_Array := Empty_Modifiers_Array)
       return String;
-   --  Returns `lsp_missing` if style name does not exist.
+   --  Returns empty string if style name does not exist.
 
    function Send_Request
      (Kernel : not null access Kernel_Handle_Record'Class;
@@ -227,7 +235,7 @@ package body GPS.LSP_Client.Editors.Semantic_Tokens is
          if Manager.Get (Value, True) /= null then
             return Value;
          else
-            return "lsp_missing";
+            return "";
          end if;
       end Check;
 
@@ -278,7 +286,7 @@ package body GPS.LSP_Client.Editors.Semantic_Tokens is
         Type_Name & Get_Modifiers (Modifiers);
 
    begin
-      if Check (Type_Modifiers_Name) = Type_Modifiers_Name then
+      if Check (Type_Modifiers_Name) /= "" then
          --  style has been found
          return Type_Modifiers_Name;
 
@@ -297,7 +305,7 @@ package body GPS.LSP_Client.Editors.Semantic_Tokens is
                        Type_Name & Get_Modifiers (M);
 
                   begin
-                     if Check (Curr) = Curr then
+                     if Check (Curr) /= "" then
                         return Curr;
                      end if;
                   end;
@@ -354,6 +362,24 @@ package body GPS.LSP_Client.Editors.Semantic_Tokens is
          if not Send_Request (Kernel, (File, From_Line, To_Line)) then
             Store_Request ((File, From_Line, To_Line));
          end if;
+      end if;
+   end Execute;
+
+   -------------
+   -- Execute --
+   -------------
+
+   overriding procedure Execute
+     (Self   : On_Clear_Highlighting;
+      Kernel : not null access GPS.Kernel.Kernel_Handle_Record'Class;
+      File   : GNATCOLL.VFS.Virtual_File)
+   is
+      Buffer     : constant Editor_Buffer'Class :=
+        Kernel.Get_Buffer_Factory.Get
+          (File, Open_Buffer => False, Open_View => False);
+   begin
+      if Buffer /= Nil_Editor_Buffer then
+         Remove_Highlighting_On_Lines (Buffer, 0, 0);
       end if;
    end Execute;
 
@@ -511,8 +537,6 @@ package body GPS.LSP_Client.Editors.Semantic_Tokens is
       Legend : SemanticTokensLegend;
 
    begin
-      Trace (Me, "On_Idle");
-
       if Module.Get_Kernel.Is_In_Destruction then
          Module.Idle_ID := Glib.Main.No_Source_Id;
          return False;
@@ -592,8 +616,10 @@ package body GPS.LSP_Client.Editors.Semantic_Tokens is
                Name : constant String :=
                  Get_Style (Token_Type, Token_Modifiers, Legend);
             begin
-               Len := Char + Visible_Column_Type (Length);
-               Buffer.Apply_Style (Name, Line, Char, Len);
+               if Name /= "" then
+                  Len := Char + Visible_Column_Type (Length);
+                  Buffer.Apply_Style (Name, Line, Char, Len);
+               end if;
             end;
 
             Module.Prev_Line := Line;
@@ -685,6 +711,11 @@ package body GPS.LSP_Client.Editors.Semantic_Tokens is
    begin
       Module.Data.Append
         (Result_Type'((Self.File, Self.From, Self.To), Result.data));
+
+      if Module.Idle_ID = Glib.Main.No_Source_Id then
+         --  register Idle
+         Module.Idle_ID := Glib.Main.Idle_Add (On_Idle'Access);
+      end if;
    end On_Result_Message;
 
    ----------------------------------
@@ -694,20 +725,67 @@ package body GPS.LSP_Client.Editors.Semantic_Tokens is
    procedure Remove_Highlighting_On_Lines
      (Buffer : GPS.Editors.Editor_Buffer'Class;
       From   : Integer;
-      To     : Integer) is
-   begin
-      for J in Styles_To_Clear'Range loop
-         declare
-            Name : constant String := Get_Style_Name (Styles_To_Clear (J));
-         begin
-            if From = 0 then
-               Buffer.Remove_Style (Name, 0);
+      To     : Integer)
+   is
+      function In_Clear (Token : SemanticTokenTypes) return Boolean;
+      --  SemanticTokenType is in the Styles_To_Clear list, so we should
+      --  clear the buffer from this style
 
-            else
-               Buffer.Remove_Style_On_Lines
-                 (Name,
-                  Basic_Types.Editable_Line_Type (From),
-                  Basic_Types.Editable_Line_Type (To));
+      procedure Remove (Name : String);
+      --  Call Remove_Style_On_Lines for the given style name
+
+      --------------
+      -- In_Clear --
+      --------------
+
+      function In_Clear (Token : SemanticTokenTypes) return Boolean is
+      begin
+         for Index in Styles_To_Clear'Range loop
+            if Token = Styles_To_Clear (Index) then
+               return True;
+            end if;
+         end loop;
+
+         return False;
+      end In_Clear;
+
+      ------------
+      -- Remove --
+      ------------
+
+      procedure Remove (Name : String) is
+      begin
+         if From = 0 then
+            Buffer.Remove_Style (Name, 0);
+
+         else
+            Buffer.Remove_Style_On_Lines
+              (Name,
+               Basic_Types.Editable_Line_Type (From),
+               Basic_Types.Editable_Line_Type (To));
+         end if;
+      end Remove;
+
+      Styles : constant GPS.Kernel.Style_Manager.Style_Vector.Vector :=
+        GPS.Kernel.Style_Manager.Get_Style_Manager
+          (Module.Get_Kernel).List_Styles;
+
+   begin
+      Remove ("lsp_missing");
+
+      for J in SemanticTokenTypes'Range loop
+         declare
+            N : constant String := Get_Style_Name (J);
+         begin
+            if N /= "" then
+               for Style of Styles loop
+                  if GNATCOLL.Utils.Starts_With
+                    (Style.Get_Name,
+                     N & (if In_Clear (J) then "" else "-"))
+                  then
+                     Remove (Style.Get_Name);
+                  end if;
+               end loop;
             end if;
          end;
       end loop;
@@ -833,9 +911,10 @@ package body GPS.LSP_Client.Editors.Semantic_Tokens is
          Kernel      => Kernel,
          Module_Name => "LSP_Semantic_Tokens");
 
-      File_Edited_Hook.Add     (new On_File_Edited_Or_Reloaded);
-      File_Reloaded_Hook.Add   (new On_File_Edited_Or_Reloaded);
-      Highlight_Range_Hook.Add (new On_Highlight_Range);
+      File_Edited_Hook.Add        (new On_File_Edited_Or_Reloaded);
+      File_Reloaded_Hook.Add      (new On_File_Edited_Or_Reloaded);
+      Highlight_Range_Hook.Add    (new On_Highlight_Range);
+      Clear_Highlighting_Hook.Add (new On_Clear_Highlighting);
    end Register;
 
 end GPS.LSP_Client.Editors.Semantic_Tokens;

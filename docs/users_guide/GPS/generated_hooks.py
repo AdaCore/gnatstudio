@@ -198,6 +198,16 @@ class Predefined_Hooks:
 
         """
 
+    # clear_highlighting = 'clear_highlighting'
+    def clear_highlighting(name, file):
+        """
+        Emitted when highlighting styles should be removed in given file.
+
+        :param str name:
+        :param GPS.File file:
+
+        """
+
     # clipboard_changed = 'clipboard_changed'
     def clipboard_changed(name):
         """
