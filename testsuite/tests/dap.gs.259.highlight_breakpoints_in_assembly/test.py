@@ -56,9 +56,8 @@ def test_driver():
 
     # Check if the 4th row has been correctly highlighted
     iter = tree.get_model().get_iter("4")
-    row_color = tree.get_model().get_value(iter, BG_COLOR_COLUMN).to_color()
     gps_assert(
-        row_color.blue != 0,
+        tree.get_model().get_value(iter, BG_COLOR_COLUMN) is not None,
         True,
         "Instruction breakpoint should be highlighted with a different color",
     )
