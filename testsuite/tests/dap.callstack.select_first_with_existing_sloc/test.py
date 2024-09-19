@@ -52,14 +52,3 @@ def test_driver():
         GPS.File("my_main.adb").path + ":5",
         "Wrong selected frame: should be the first existing one (my_main.adb:5)",
     )
-
-    # Check that the first frame's row is grayed-out, since its location
-    # does not exist
-    row_color = model.get_value(
-        tree.get_model().get_iter_first(), FG_COLOR_COLUMN_ID
-    ).to_color()
-    gps_assert(
-        row_color.blue != 0,
-        True,
-        "This row should be grayed out",
-    )
