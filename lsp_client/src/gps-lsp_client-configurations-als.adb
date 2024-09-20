@@ -150,6 +150,11 @@ package body GPS.LSP_Client.Configurations.ALS is
          Boolean'(GPS.Kernel.Preferences.LSP_Ada_Diagnostics.Get_Pref));
 
       Ada_Settings.Set_Field
+        ("projectDiagnostics",
+         Boolean'(
+           GPS.Kernel.Preferences.LSP_Ada_Project_Diagnostics.Get_Pref));
+
+      Ada_Settings.Set_Field
         ("followSymlinks", not GPS.Kernel.Preferences.Trusted_Mode.Get_Pref);
 
       Ada_Settings.Set_Field

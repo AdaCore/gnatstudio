@@ -1825,6 +1825,15 @@ package body GPS.Kernel.Preferences is
          & "(e.g: syntax errors).",
          Path    => "Editor/Ada:Diagnostics");
 
+      LSP_Ada_Project_Diagnostics := Kernel.Get_Preferences.Create
+        (Name    => "LSP-Ada-Project-Diagnostics",
+         Default => True,
+         Label   => "Enable Project diagnostics",
+         Doc     => "Enable project related diagnostics in Ada code. "
+         & """Enable diagnotics"" must be enabled for this preference to "
+         & "apply and the Server must be restarted",
+         Path    => "Editor/Ada:Diagnostics");
+
       LSP_Ada_Param_Threshold := Kernel.Get_Preferences.Create
         (Name    => "LSP-Ada-Param-Naming-Threshold",
          Label   => -"Ada named parameters threshold",
@@ -1834,7 +1843,7 @@ package body GPS.Kernel.Preferences is
          Minimum => 0,
          Maximum => Integer'Last,
          Default => 3,
-         Path    => "Editor/Ada:Diagnostics");
+         Path    => "Editor/Ada:Completion");
 
       Use_LSP_In_Highlight := Kernel.Get_Preferences.Create
         (Name     => "use-lsp-in-highlight",
