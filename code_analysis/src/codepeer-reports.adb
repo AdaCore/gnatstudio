@@ -15,7 +15,6 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with Ada.Calendar.Arithmetic;
 with Ada.Calendar.Formatting;
 with Ada.Characters.Latin_1;
 
@@ -162,39 +161,35 @@ package body CodePeer.Reports is
 
       function Time_Span (From : Ada.Calendar.Time) return String
       is
-         use Ada.Calendar.Arithmetic;
+         use Ada.Calendar;
          use Ada.Calendar.Formatting;
 
-         Now          : constant Ada.Calendar.Time := Ada.Calendar.Clock;
-         Days         : Day_Count;
-         Seconds      : Duration;
-         Leap_Seconds : Leap_Seconds_Count;
-         Value        : Integer;
-         Pr           : constant String := " /";
-         Sf           : constant String := "(s) ago";
+         Spent      : constant Duration := Ada.Calendar.Clock - From;
+         Pr         : constant String := " /";
+         Sf         : constant String := "(s) ago";
+         Hour       : Hour_Number;
+         Minute     : Minute_Number;
+         Second     : Second_Number;
+         Sub_Second : Second_Duration;
 
       begin
-         Ada.Calendar.Arithmetic.Difference
-           (Now, From, Days, Seconds, Leap_Seconds);
+         if Spent < 1.0 then
+            return Pr & " 1 second";
 
-         if Days > 0 then
-            return Pr & Day_Count'Image (Days) & " day" & Sf;
+         elsif Spent > Day_Duration'Last then
+            return Pr & Integer'Image
+              (Integer (Spent / Day_Duration'Last)) & " day" & Sf;
 
          else
-            Value := Integer (Hour (Now) - Hour (From));
+            Split (Spent, Hour, Minute, Second, Sub_Second);
+            if Hour > 0 then
+               return Pr & Hour_Number'Image (Hour) & " hour" & Sf;
 
-            if Value > 0 then
-               return Pr & Integer'Image (Value) & " hour" & Sf;
+            elsif Minute > 0 then
+               return Pr & Minute_Number'Image (Minute) & " minute" & Sf;
 
             else
-               Value := Integer (Minute (Now) - Minute (From));
-
-               if Value > 0 then
-                  return Pr & Integer'Image (Value) & " minute" & Sf;
-
-               else
-                  return Pr & " now";
-               end if;
+               return Pr & Second_Number'Image (Second) & " second" & Sf;
             end if;
          end if;
       end Time_Span;
