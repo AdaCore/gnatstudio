@@ -27,5 +27,5 @@ def test_driver():
     while it.forward_to_tag_toggle():
         tag_list.append("%d:%d" % (it.get_line() + 1, it.get_line_offset() + 1))
 
-    expect = ["4:1", "4:13", "7:23", "7:41", "8:1"]
+    expect = ["4:1", "4:13", "13:23", "13:41", "14:1"]
     gps_assert(tag_list, expect, "Wrong highlighting")

@@ -21,11 +21,9 @@ package GPS.LSP_Client.Requests.On_Type_Formatting is
 
    type Abstract_On_Type_Formatting_Request is abstract new
      GPS.LSP_Client.Requests.Base.Text_Document_Request with record
-      Position          : LSP.Messages.Position;
-      Text              : VSS.Strings.Virtual_String;
-      Indentation_Level : Integer;
-      Use_Tabs          : Boolean;
-      Document_Version  : Integer;
+      Position         : LSP.Messages.Position;
+      Text             : VSS.Strings.Virtual_String;
+      Document_Version : Integer;
    end record;
 
    function Params

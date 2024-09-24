@@ -1,0 +1,3 @@
+project Test is
+   for Main use ("file1.adb", "file2.adb", "file3.adb");
+end Test;

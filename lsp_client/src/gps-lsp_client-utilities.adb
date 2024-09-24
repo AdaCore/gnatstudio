@@ -141,4 +141,39 @@ package body GPS.LSP_Client.Utilities is
       end case;
    end To_Construct_Visibility;
 
+   ----------------------------
+   -- Get_Formatting_Options --
+   ----------------------------
+
+   function Get_Formatting_Options
+     (Kernel : GPS.Kernel.Kernel_Handle;
+      File   : GNATCOLL.VFS.Virtual_File)
+      return LSP.Messages.FormattingOptions
+   is
+      use GPS.Kernel.Preferences;
+      Lang         : constant Language.Language_Access :=
+        Kernel.Get_Language_Handler.Get_Language_From_File (File);
+      Params       : Indent_Parameters;
+      Indent_Style : Indentation_Kind;
+      Max_Line     : constant Integer := Highlight_Column.Get_Pref;
+   begin
+      Get_Indentation_Parameters (Lang, Params, Indent_Style);
+      return LSP.Messages.FormattingOptions'
+        (tabSize                          =>
+           LSP.Types.LSP_Number (Params.Indent_Level),
+         insertSpaces                     =>  not Params.Use_Tabs,
+         trimTrailingWhitespace           =>
+           (Is_Set => True, Value => Strip_Blanks.Get_Pref /= Never),
+         insertFinalNewline               =>
+           (Is_Set => True, Value => False),
+         trimFinalNewlines                =>
+           (Is_Set => True, Value => Strip_Lines.Get_Pref /= Never),
+         gnatFormatMaxSize                =>
+           (Is_Set => True,
+            Value  => LSP.Types.LSP_Number (Max_Line)),
+         gnatFormatContinuationLineIndent =>
+           (Is_Set => True,
+            Value  => LSP.Types.LSP_Number (Params.Indent_Continue)));
+   end Get_Formatting_Options;
+
 end GPS.LSP_Client.Utilities;

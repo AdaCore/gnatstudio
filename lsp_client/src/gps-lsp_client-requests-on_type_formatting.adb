@@ -17,7 +17,6 @@
 
 with LSP.JSON_Streams;
 
-with GPS.Kernel.Preferences;    use GPS.Kernel.Preferences;
 with GPS.LSP_Client.Utilities;
 
 package body GPS.LSP_Client.Requests.On_Type_Formatting is
@@ -62,18 +61,12 @@ package body GPS.LSP_Client.Requests.On_Type_Formatting is
    begin
       return
         (textDocument  =>
-           (uri   => GPS.LSP_Client.Utilities.To_URI (Self.Text_Document)),
-         position => Self.Position,
-         ch       => Self.Text,
-         options  =>
-           (tabSize                => LSP.Types.LSP_Number
-              (Self.Indentation_Level),
-            insertSpaces           => not Self.Use_Tabs,
-            trimTrailingWhitespace =>
-              (Is_Set => True, Value => Strip_Blanks.Get_Pref /= Never),
-            insertFinalNewline     => (Is_Set => True, Value => False),
-            trimFinalNewlines      =>
-              (Is_Set => True, Value => Strip_Lines.Get_Pref /= Never)));
+           (uri => GPS.LSP_Client.Utilities.To_URI (Self.Text_Document)),
+         position      => Self.Position,
+         ch            => Self.Text,
+         options       =>
+           GPS.LSP_Client.Utilities.Get_Formatting_Options
+             (Self.Kernel, Self.Text_Document));
    end Params;
 
    --------------------------
