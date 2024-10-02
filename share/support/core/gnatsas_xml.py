@@ -180,6 +180,19 @@ xml_gnatsas = (
       </menu>
     </submenu>
 
+    <action name="gnatsas_example_sdc" category=""
+            show-command="false" output="none">
+      <shell>Project.load "{example}/sdc/sdc.gpr"</shell>
+      <shell>Editor.edit "common/sdc.adb"</shell>
+    </action>
+
+    <submenu before="About">
+      <title>/Help/GNATSAS/Examples</title>
+      <menu action="gnatsas_example_sdc">
+        <title>Sdc</title>
+      </menu>
+    </submenu>
+
     <action name="gnatsas_example_uninitialized" category=""
             show-command="false" output="none">
       <shell>Project.load "{example}/uninitialized/uninitialized.gpr"</shell>
