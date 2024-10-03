@@ -379,7 +379,7 @@ class BoardLoader(Module):
         if self.__connection_tool == "st-util":
             return "Listening at"
         elif self.__connection_tool == "openocd":
-            return ".cpu: hardware has"
+            return r"(hardware|target) has \d+ breakpoints"
         elif self.__connection_tool == "pyocd":
             return r"INFO:gdbserver:GDB server started on port \d+"
         else:
