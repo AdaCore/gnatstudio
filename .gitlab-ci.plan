@@ -1,0 +1,29 @@
+def build_(qualifier={}):
+    with defaults(qualifier=qualifier):
+        anod_build("gps")
+        anod_build("gps_testsuite_drivers")
+
+
+def test_(qualifier={}):
+    with defaults(qualifier=qualifier):
+        anod_install("gps")
+        anod_install("gps_testsuite_drivers")
+        anod_test("gps", qualifier={**qualifier, "gnatsas": True, "gdb-head": True})
+
+# Edge
+
+edge_qualifier={"edge": True}
+
+def build_edge():
+    build_(edge_qualifier)
+
+def test_edge():
+    test_(edge_qualifier)
+
+
+# Integration testsuite (no edge version)
+
+def test_integration_testsuite():
+    anod_install("gps")
+    # Testing per se
+    anod_test("integration-testsuite", qualifier={"report-tool": "vscode"})
