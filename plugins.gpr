@@ -2,7 +2,7 @@ with "shared";
 
 project Plugins is
 
-   for Languages use ("XML", "Python", "CSS");
+   for Languages use ("XML", "CSS");
    for Source_Dirs use
      ("share", "share/plug-ins/**", "share/support/**", "share/library/**");
 
