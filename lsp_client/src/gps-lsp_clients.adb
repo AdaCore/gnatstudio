@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                               GNAT Studio                                --
 --                                                                          --
---                     Copyright (C) 2018-2023, AdaCore                     --
+--                     Copyright (C) 2018-2024, AdaCore                     --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -32,18 +32,21 @@ with VSS.Text_Streams.Memory_UTF8_Output;
 with GNATCOLL.JSON;
 with GNATCOLL.Traces;    use GNATCOLL.Traces;
 
-with LSP.Messages;
 with LSP.JSON_Streams;
+with LSP.Messages;
 
 with GPS.Editors;
 with GPS.Kernel.Preferences; use GPS.Kernel.Preferences;
 with GPS.Kernel.Project;
-with GPS.LSP_Client.Utilities;
-with GPS.LSP_Client.Edit_Workspace;
-with GPS.LSP_Clients.Shutdowns;
 with GPS.LSP_Client.Editors.Semantic_Tokens;
+with GPS.LSP_Client.Edit_Workspace;
+with GPS.LSP_Client.Partial_Results;
+with GPS.LSP_Client.Utilities;
+with GPS.LSP_Clients.Shutdowns;
 
 package body GPS.LSP_Clients is
+
+   use type VSS.Strings.Virtual_String;
 
    Me : constant Trace_Handle := Create ("GPS.LSP_CLIENT");
    --  General trace following the behavior of the LSP client
@@ -145,6 +148,17 @@ package body GPS.LSP_Clients is
 
                Self.Canceled_Requests.Insert (Request_Maps.Key (Position));
                Self.Requests.Delete (Position);
+
+               if Request.all
+                    in GPS.LSP_Client.Partial_Results
+                         .LSP_Request_Partial_Result'Class
+               then
+                  Self.Partials.Delete
+                    (GPS.LSP_Client.Partial_Results
+                       .LSP_Request_Partial_Result'Class
+                          (Request.all).Partial_Result_Token);
+               end if;
+
                Request.On_Rejected (GPS.LSP_Client.Requests.Canceled);
 
                --  Notify about cancelation of the request
@@ -501,6 +515,7 @@ package body GPS.LSP_Clients is
       procedure Look_Ahead
         (Id         : out LSP.Types.LSP_Number_Or_String;
          Method     : out LSP.Types.Optional_Virtual_String;
+         Token      : out LSP.Messages.Optional_ProgressToken;
          error      : out LSP.Messages.Optional_ResponseError;
          Has_Result : out Boolean);
       --  Parse message to find significant fields of the message: "id",
@@ -516,6 +531,7 @@ package body GPS.LSP_Clients is
       procedure Look_Ahead
         (Id         : out LSP.Types.LSP_Number_Or_String;
          Method     : out LSP.Types.Optional_Virtual_String;
+         Token      : out LSP.Messages.Optional_ProgressToken;
          error      : out LSP.Messages.Optional_ResponseError;
          Has_Result : out Boolean)
       is
@@ -543,11 +559,14 @@ package body GPS.LSP_Clients is
          --
          --  "id"/"method"                --  request
          --  "method"                     --  notification
+         --  "method":"$/progress"/"params"."token"
+         --                               --  partial result
          --  "id"/"result"                --  result response
          --  "id"/"error"                 --  error response
 
          while not JS.R.Is_End_Object loop
             pragma Assert (JS.R.Is_Key_Name);
+
             declare
                Key : constant String :=
                  VSS.Strings.Conversions.To_UTF_8_String (JS.R.Key_Name);
@@ -599,6 +618,53 @@ package body GPS.LSP_Clients is
 
                   JS.Skip_Value;
 
+               elsif Key = "params" then
+                  --  Parse 'params' object to get 'token' value from a
+                  --  notification if any
+
+                  pragma Assert (JS.R.Is_Start_Object);
+
+                  JS.R.Read_Next;
+
+                  while not JS.R.Is_End_Object loop
+                     pragma Assert (JS.R.Is_Key_Name);
+
+                     declare
+                        Key : constant String :=
+                          VSS.Strings.Conversions.To_UTF_8_String
+                            (JS.R.Key_Name);
+
+                     begin
+                        JS.R.Read_Next;
+
+                        if Key = "token" then
+                           case JS.R.Element_Kind is
+                              when String_Value =>
+                                 Token :=
+                                   (Is_Set => True,
+                                    Value =>
+                                      (Is_Number => False,
+                                       String    => JS.R.String_Value));
+
+                              when Number_Value =>
+                                 Token :=
+                                   (Is_Set => True,
+                                    Value =>
+                                      (Is_Number => True,
+                                       Number    => LSP.Types.LSP_Number
+                                         (JS.R.Number_Value.Integer_Value)));
+
+                              when others =>
+                                 raise Constraint_Error;
+                           end case;
+                        end if;
+
+                        JS.Skip_Value;
+                     end;
+                  end loop;
+
+                  JS.R.Read_Next;
+
                else
                   JS.Skip_Value;
                end if;
@@ -612,6 +678,7 @@ package body GPS.LSP_Clients is
       Stream : aliased LSP.JSON_Streams.JSON_Stream
         (Is_Server_Side => False, R => Reader'Unchecked_Access);
       Id     : LSP.Types.LSP_Number_Or_String;
+      Token  : LSP.Messages.Optional_ProgressToken;
       Method : LSP.Types.Optional_Virtual_String;
 
       Position   : Request_Maps.Cursor;
@@ -628,7 +695,7 @@ package body GPS.LSP_Clients is
         (VSS.Stream_Element_Vectors.Conversions.Unchecked_From_Unbounded_String
            (Data));
 
-      Look_Ahead (Id, Method, error, Has_Result);
+      Look_Ahead (Id, Method, Token, error, Has_Result);
 
       if LSP.Types.Assigned (Id) and not Method.Is_Set then
          --  Process response message when request was send by this object
@@ -645,6 +712,16 @@ package body GPS.LSP_Clients is
          elsif Request_Maps.Has_Element (Position) then
             Request := Request_Maps.Element (Position);
             Self.Requests.Delete (Position);
+
+            if Request.all
+                 in GPS.LSP_Client.Partial_Results
+                      .LSP_Request_Partial_Result'Class
+            then
+               Self.Partials.Delete
+                 (GPS.LSP_Client.Partial_Results
+                    .LSP_Request_Partial_Result'Class
+                       (Request.all).Partial_Result_Token);
+            end if;
 
             Req_Method := Request.Method;
 
@@ -708,6 +785,68 @@ package body GPS.LSP_Clients is
             end if;
 
             GPS.LSP_Client.Requests.Destroy (Request);
+
+            Processed := True;
+         end if;
+
+      elsif Method.Is_Set
+        and then Method.Value = "$/progress"
+        and then Token.Is_Set
+      then
+         --  Partial result notification
+
+         Position := Self.Partials.Find (Token.Value);
+
+         if Request_Maps.Has_Element (Position) then
+            Request := Request_Maps.Element (Position);
+
+            Reader.Set_Stream (Text_Stream'Unchecked_Access);
+
+            --  Rewind Stream to "params"."value" key
+
+            Outer : loop
+               Stream.R.Read_Next;
+
+               if Stream.R.Is_Key_Name
+                 and then VSS.Strings.Conversions.To_UTF_8_String
+                   (Stream.R.Key_Name) = "params"
+               then
+                  Stream.R.Read_Next;
+                  pragma Assert (Stream.R.Is_Start_Object);
+
+                  Stream.R.Read_Next;
+
+                  loop
+                     pragma Assert (Stream.R.Is_Key_Name);
+
+                     exit Outer when
+                       VSS.Strings.Conversions.To_UTF_8_String
+                         (Stream.R.Key_Name) = "value";
+
+                     Stream.R.Read_Next;
+                     Stream.Skip_Value;
+                  end loop;
+               end if;
+            end loop Outer;
+
+            Stream.R.Read_Next;
+
+            declare
+               use type GPS.Kernel.Kernel_Handle;
+
+            begin
+               if Request.Kernel = null
+                 or else not Request.Kernel.Is_In_Destruction
+               then
+                  GPS.LSP_Client.Partial_Results
+                    .LSP_Request_Partial_Result'Class
+                       (Request.all).On_Partial_Result_Message (Stream'Access);
+               end if;
+
+            exception
+               when E : others =>
+                  Trace (Me_Exceptions, E);
+            end;
 
             Processed := True;
          end if;
@@ -1149,12 +1288,32 @@ package body GPS.LSP_Clients is
 
       procedure Process_Request is
          Id     : constant LSP.Types.LSP_Number_Or_String :=
-                    Self.Allocate_Request_Id;
+           Self.Allocate_Request_Id;
          Stream : aliased LSP.JSON_Streams.JSON_Stream;
          Output : aliased
            VSS.Text_Streams.Memory_UTF8_Output.Memory_UTF8_Output_Stream;
 
       begin
+         --  Allocate and set id of the request and token of the partial result
+         --  when supported. Add request to the maps.
+
+         Item.Request.Set_Id (Id);
+         Self.Requests.Insert (Id, Item.Request);
+
+         if Item.Request.all
+           in GPS.LSP_Client.Partial_Results.LSP_Request_Partial_Result'Class
+         then
+            declare
+               Token : constant LSP.Types.LSP_Number_Or_String :=
+                 Self.Allocate_Request_Id;
+
+            begin
+               GPS.LSP_Client.Partial_Results.LSP_Request_Partial_Result'Class
+                 (Item.Request.all).Set_Partial_Result_Token (Token);
+               Self.Partials.Insert (Token, Item.Request);
+            end;
+         end if;
+
          Stream.Set_Stream (Output'Unchecked_Access);
          Stream.Start_Object;
 
@@ -1190,13 +1349,6 @@ package body GPS.LSP_Clients is
          --  Send request's message
 
          Self.Send_Buffer (Output.Buffer);
-
-         --  Add request to the map
-
-         Self.Requests.Insert (Id, Item.Request);
-
-         --  Set the Id field in the request
-         Item.Request.Set_Id (Id);
       end Process_Request;
 
    begin
@@ -1261,6 +1413,7 @@ package body GPS.LSP_Clients is
       end loop;
 
       Self.Requests.Clear;
+      Self.Partials.Clear;
       Self.Canceled_Requests.Clear;
 
       --  Reject all queued requests. Clean commands queue.
@@ -1292,7 +1445,6 @@ package body GPS.LSP_Clients is
      (Self    : in out LSP_Client'Class;
       Method  : VSS.Strings.Virtual_String)
    is
-      use type VSS.Strings.Virtual_String;
       use GPS.LSP_Client.Requests.Requests_Lists;
       --  Keep a copy of the requests list because we are tampering with the
       --  real list.

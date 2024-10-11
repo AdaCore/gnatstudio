@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                               GNAT Studio                                --
 --                                                                          --
---                     Copyright (C) 2018-2023, AdaCore                     --
+--                     Copyright (C) 2018-2024, AdaCore                     --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -274,6 +274,10 @@ private
 
       Requests                      : Request_Maps.Map;
       --  Map from sent request's ids to request objects to handle response.
+
+      Partials                      : Request_Maps.Map;
+      --  Map from sent request's partial result token to request objects to
+      --  handle partial result message.
 
       Canceled_Requests             : Request_Id_Sets.Set;
       --  Set of canceled requests for which reply message is still expected.
