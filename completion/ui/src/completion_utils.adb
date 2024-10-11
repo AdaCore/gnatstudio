@@ -99,8 +99,9 @@ package body Completion_Utils is
 
       procedure Initialize_Doc_Label (Markup : String) is
       begin
-         --  Create the label containing the documentaion
+         --  Create the label containing the documentation
          Gtk_New (Doc_Label);
+         Doc_Label.Set_Name ("completion-notes-documentation");
          Doc_Label.Set_Halign (Align_Start);
          Set_Selectable (Doc_Label, True);
          Set_Line_Wrap (Doc_Label, False);
