@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                               GNAT Studio                                --
 --                                                                          --
---                        Copyright (C) 2020-2023, AdaCore                  --
+--                     Copyright (C) 2020-2024, AdaCore                     --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -204,6 +204,9 @@ package body GPS.LSP_Client.Search.Entities is
       Provider : Entities_Search_Provider_Access;
       Num      : Integer := 0;
    end record;
+   overriding procedure On_Partial_Result_Message
+     (Self   : in out Symbol_Request;
+      Result : LSP.Messages.SymbolInformation_Vector);
    overriding procedure On_Result_Message
      (Self   : in out Symbol_Request;
       Result : LSP.Messages.SymbolInformation_Vector);
@@ -662,6 +665,19 @@ package body GPS.LSP_Client.Search.Entities is
       Self.Provider.On_Response (Self.Num);
    end On_Rejected;
 
+   -------------------------------
+   -- On_Partial_Result_Message --
+   -------------------------------
+
+   overriding procedure On_Partial_Result_Message
+     (Self   : in out Symbol_Request;
+      Result : LSP.Messages.SymbolInformation_Vector) is
+   begin
+      if Self.Provider.Request_Num = Self.Num then
+         Self.Provider.Results.Append (Result);
+      end if;
+   end On_Partial_Result_Message;
+
    -----------------------
    -- On_Result_Message --
    -----------------------
@@ -671,6 +687,7 @@ package body GPS.LSP_Client.Search.Entities is
       Result : LSP.Messages.SymbolInformation_Vector) is
    begin
       Self.Provider.On_Response (Self.Num);
+
       if Self.Provider.Request_Num = Self.Num then
          Self.Provider.Results.Append (Result);
       end if;

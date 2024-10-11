@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                               GNAT Studio                                --
 --                                                                          --
---                       Copyright (C) 2019-2023, AdaCore                   --
+--                     Copyright (C) 2019-2024, AdaCore                     --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -17,10 +17,13 @@
 
 with LSP.Types;
 
+with GPS.LSP_Client.Partial_Results;
+
 package GPS.LSP_Client.Requests.Symbols is
 
    type Abstract_Symbol_Request is
-     abstract new LSP_Request with
+     abstract new LSP_Request
+       and GPS.LSP_Client.Partial_Results.LSP_Request_Partial_Result with
       record
          Query              : VSS.Strings.Virtual_String;
          Case_Sensitive     : LSP.Types.Optional_Boolean;
@@ -29,6 +32,11 @@ package GPS.LSP_Client.Requests.Symbols is
          Kind               : LSP.Messages.Optional_Search_Kind;
          partialResultToken : LSP.Messages.Optional_ProgressToken;
       end record;
+
+   procedure On_Partial_Result_Message
+     (Self   : in out Abstract_Symbol_Request;
+      Result : LSP.Messages.SymbolInformation_Vector) is abstract;
+   --  Called when a partial result response is received from the server.
 
    procedure On_Result_Message
      (Self   : in out Abstract_Symbol_Request;
@@ -51,9 +59,21 @@ package GPS.LSP_Client.Requests.Symbols is
      (Self   : in out Abstract_Symbol_Request;
       Stream : not null access LSP.JSON_Streams.JSON_Stream'Class);
 
+   overriding procedure On_Partial_Result_Message
+     (Self   : in out Abstract_Symbol_Request;
+      Stream : not null access LSP.JSON_Streams.JSON_Stream'Class);
+
    overriding function Get_Task_Label
      (Self : Abstract_Symbol_Request) return String
    is
      ("querying symbols");
+
+   overriding procedure Set_Partial_Result_Token
+     (Self : in out Abstract_Symbol_Request;
+      To   : LSP.Types.ProgressToken);
+
+   overriding function Partial_Result_Token
+     (Self : Abstract_Symbol_Request)
+      return LSP.Types.ProgressToken is (Self.partialResultToken.Value);
 
 end GPS.LSP_Client.Requests.Symbols;
