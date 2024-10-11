@@ -17,7 +17,6 @@
 
 with Glib_Values_Utils;        use Glib_Values_Utils;
 
-with Code_Analysis_Tree_Model; use Code_Analysis_Tree_Model;
 with Code_Analysis_GUI;        use Code_Analysis_GUI;
 with Code_Coverage;            use Code_Coverage;
 with GNATCOLL.VFS;
