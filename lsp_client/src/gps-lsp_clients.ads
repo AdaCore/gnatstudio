@@ -289,6 +289,9 @@ private
       Canceled_Requests             : Request_Id_Sets.Set;
       --  Set of canceled requests for which reply message is still expected.
 
+      Canceled_Tokens               : Request_Id_Maps.Map;
+      --  Map from request's id to partial result token.
+
       Text_Document_Synchronization :
         GPS.LSP_Client.Text_Documents.Text_Document_Sync_Kind_Type;
       --  Current mode of text synchronization.

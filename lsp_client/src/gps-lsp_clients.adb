@@ -137,26 +137,32 @@ package body GPS.LSP_Clients is
       --  Lookup for request in progress
 
       declare
-         Position : Request_Maps.Cursor := Self.Requests.First;
-         Item     : Command;
+         Position      : Request_Maps.Cursor := Self.Requests.First;
+         Request_Id    : LSP.Types.LSP_Number_Or_String;
+         Partial_Token : LSP.Types.LSP_Number_Or_String;
+         Item          : Command;
 
       begin
          while Request_Maps.Has_Element (Position) loop
             if Request_Maps.Element (Position) = Request then
-               Item := (Cancel_GPS_Request, Request_Maps.Key (Position));
+               Request_Id := Request_Maps.Key (Position);
+
+               Item := (Cancel_GPS_Request, Request_Id);
                Self.Enqueue (Item);
 
-               Self.Canceled_Requests.Insert (Request_Maps.Key (Position));
+               Self.Canceled_Requests.Insert (Request_Id);
                Self.Requests.Delete (Position);
 
                if Request.all
                     in GPS.LSP_Client.Partial_Results
                          .LSP_Request_Partial_Result'Class
                then
-                  Self.Partials.Delete
-                    (GPS.LSP_Client.Partial_Results
-                       .LSP_Request_Partial_Result'Class
-                          (Request.all).Partial_Result_Token);
+                  Partial_Token :=
+                    GPS.LSP_Client.Partial_Results
+                      .LSP_Request_Partial_Result'Class
+                         (Request.all).Partial_Result_Token;
+
+                  Self.Canceled_Tokens.Insert (Request_Id, Partial_Token);
                end if;
 
                Request.On_Rejected (GPS.LSP_Client.Requests.Canceled);
@@ -708,6 +714,12 @@ package body GPS.LSP_Clients is
             --  but not need to be processed.
 
             Self.Canceled_Requests.Delete (Id);
+
+            if Self.Canceled_Tokens.Contains (Id) then
+               Self.Partials.Delete (Self.Canceled_Tokens (Id));
+               Self.Canceled_Tokens.Delete (Id);
+            end if;
+
             Processed := True;
 
          elsif Request_Maps.Has_Element (Request_Position) then
@@ -1427,6 +1439,7 @@ package body GPS.LSP_Clients is
       Self.Requests.Clear;
       Self.Partials.Clear;
       Self.Canceled_Requests.Clear;
+      Self.Canceled_Tokens.Clear;
 
       --  Reject all queued requests. Clean commands queue.
 
