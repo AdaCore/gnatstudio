@@ -682,6 +682,7 @@ package body GPS.LSP_Clients is
       Method : LSP.Types.Optional_Virtual_String;
 
       Position   : Request_Maps.Cursor;
+      Partial_Position : Request_Id_Maps.Cursor;
       Request    : GPS.LSP_Client.Requests.Request_Access := null;
       Req_Method : VSS.Strings.Virtual_String;
       --  The method for the request to which this response corresponds, if any
@@ -795,58 +796,69 @@ package body GPS.LSP_Clients is
       then
          --  Partial result notification
 
-         Position := Self.Partials.Find (Token.Value);
+         Partial_Position := Self.Partials.Find (Token.Value);
 
-         if Request_Maps.Has_Element (Position) then
-            Request := Request_Maps.Element (Position);
+         if Request_Id_Maps.Has_Element (Partial_Position) then
+            Position :=
+              Self.Requests.Find (Request_Id_Maps.Element (Partial_Position));
 
-            Reader.Set_Stream (Text_Stream'Unchecked_Access);
+            if Request_Maps.Has_Element (Position) then
+               Request := Request_Maps.Element (Position);
 
-            --  Rewind Stream to "params"."value" key
+               Reader.Set_Stream (Text_Stream'Unchecked_Access);
 
-            Outer : loop
-               Stream.R.Read_Next;
+               --  Rewind Stream to "params"."value" key
 
-               if Stream.R.Is_Key_Name
-                 and then VSS.Strings.Conversions.To_UTF_8_String
-                   (Stream.R.Key_Name) = "params"
-               then
-                  Stream.R.Read_Next;
-                  pragma Assert (Stream.R.Is_Start_Object);
-
+               Outer : loop
                   Stream.R.Read_Next;
 
-                  loop
-                     pragma Assert (Stream.R.Is_Key_Name);
-
-                     exit Outer when
-                       VSS.Strings.Conversions.To_UTF_8_String
-                         (Stream.R.Key_Name) = "value";
+                  if Stream.R.Is_Key_Name
+                    and then VSS.Strings.Conversions.To_UTF_8_String
+                               (Stream.R.Key_Name) = "params"
+                  then
+                     Stream.R.Read_Next;
+                     pragma Assert (Stream.R.Is_Start_Object);
 
                      Stream.R.Read_Next;
-                     Stream.Skip_Value;
-                  end loop;
-               end if;
-            end loop Outer;
 
-            Stream.R.Read_Next;
+                     loop
+                        pragma Assert (Stream.R.Is_Key_Name);
 
-            declare
-               use type GPS.Kernel.Kernel_Handle;
+                        exit Outer when
+                          VSS.Strings.Conversions.To_UTF_8_String
+                            (Stream.R.Key_Name) = "value";
 
-            begin
-               if Request.Kernel = null
-                 or else not Request.Kernel.Is_In_Destruction
-               then
-                  GPS.LSP_Client.Partial_Results
-                    .LSP_Request_Partial_Result'Class
-                       (Request.all).On_Partial_Result_Message (Stream'Access);
-               end if;
+                        Stream.R.Read_Next;
+                        Stream.Skip_Value;
+                     end loop;
+                  end if;
+               end loop Outer;
 
-            exception
-               when E : others =>
-                  Trace (Me_Exceptions, E);
-            end;
+               Stream.R.Read_Next;
+
+               declare
+                  use type GPS.Kernel.Kernel_Handle;
+
+               begin
+                  if Request.Kernel = null
+                    or else not Request.Kernel.Is_In_Destruction
+                  then
+                     GPS.LSP_Client.Partial_Results
+                       .LSP_Request_Partial_Result'Class
+                          (Request.all).On_Partial_Result_Message
+                             (Stream'Access);
+                  end if;
+
+               exception
+                  when E : others =>
+                     Trace (Me_Exceptions, E);
+               end;
+
+            else
+               pragma Assert
+                 (Self.Canceled_Requests.Contains
+                    (Request_Id_Maps.Element (Partial_Position)));
+            end if;
 
             Processed := True;
          end if;
@@ -1310,7 +1322,7 @@ package body GPS.LSP_Clients is
             begin
                GPS.LSP_Client.Partial_Results.LSP_Request_Partial_Result'Class
                  (Item.Request.all).Set_Partial_Result_Token (Token);
-               Self.Partials.Insert (Token, Item.Request);
+               Self.Partials.Insert (Token, Id);
             end;
          end if;
 

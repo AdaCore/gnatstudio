@@ -175,6 +175,13 @@ private
       Equivalent_Keys => LSP.Types."=",
       "="             => GPS.LSP_Client.Requests."=");
 
+   package Request_Id_Maps is new Ada.Containers.Hashed_Maps
+     (Key_Type        => LSP.Types.LSP_Number_Or_String,
+      Element_Type    => LSP.Types.LSP_Number_Or_String,
+      Hash            => LSP.Types.Hash,
+      Equivalent_Keys => LSP.Types."=",
+      "="             => LSP.Types."=");
+
    package Request_Id_Sets is new Ada.Containers.Hashed_Sets
      (Element_Type        => LSP.Types.LSP_Number_Or_String,
       Hash                => LSP.Types.Hash,
@@ -275,9 +282,9 @@ private
       Requests                      : Request_Maps.Map;
       --  Map from sent request's ids to request objects to handle response.
 
-      Partials                      : Request_Maps.Map;
-      --  Map from sent request's partial result token to request objects to
-      --  handle partial result message.
+      Partials                      : Request_Id_Maps.Map;
+      --  Map from sent request's partial result token to request's id to
+      --  handle partial result messages.
 
       Canceled_Requests             : Request_Id_Sets.Set;
       --  Set of canceled requests for which reply message is still expected.
