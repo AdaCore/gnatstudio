@@ -26,7 +26,6 @@ with GNATCOLL.Scripts.Python;    use GNATCOLL.Scripts.Python;
 with GNATCOLL.Traces;            use GNATCOLL.Traces;
 with GNAT.Strings;               use GNAT.Strings;
 
-with GPS.Kernel.Preferences;
 with XML_Utils;                  use XML_Utils;
 
 with Pango.Font;                 use Pango.Font;

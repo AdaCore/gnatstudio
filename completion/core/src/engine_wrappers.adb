@@ -17,6 +17,7 @@
 
 with Ada_Semantic_Tree.Parts; use Ada_Semantic_Tree.Parts;
 with GNATCOLL.Symbols;        use GNATCOLL.Symbols;
+with Glib.Convert;            use Glib.Convert;
 with Xref;                    use Xref;
 with GPS.Kernel.Xref;         use GPS.Kernel.Xref;
 
@@ -432,7 +433,7 @@ package body Engine_Wrappers is
    is
       Loc : constant Completion.File_Location :=
         Proposal.Get_Location (Kernel.Databases);
-      Doc : constant String := Proposal.P.Get_Documentation;
+      Doc : constant String := Escape_Text (Proposal.P.Get_Documentation);
    begin
       if Doc /= "" then
          return Doc;
