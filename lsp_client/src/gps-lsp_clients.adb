@@ -681,10 +681,10 @@ package body GPS.LSP_Clients is
       Token  : LSP.Messages.Optional_ProgressToken;
       Method : LSP.Types.Optional_Virtual_String;
 
-      Position   : Request_Maps.Cursor;
+      Request_Position : Request_Maps.Cursor;
       Partial_Position : Request_Id_Maps.Cursor;
-      Request    : GPS.LSP_Client.Requests.Request_Access := null;
-      Req_Method : VSS.Strings.Virtual_String;
+      Request          : GPS.LSP_Client.Requests.Request_Access := null;
+      Req_Method       : VSS.Strings.Virtual_String;
       --  The method for the request to which this response corresponds, if any
 
       error      : LSP.Messages.Optional_ResponseError;
@@ -701,7 +701,7 @@ package body GPS.LSP_Clients is
       if LSP.Types.Assigned (Id) and not Method.Is_Set then
          --  Process response message when request was send by this object
 
-         Position := Self.Requests.Find (Id);
+         Request_Position := Self.Requests.Find (Id);
 
          if Self.Canceled_Requests.Contains (Id) then
             --  Request was canceled, reply message is required by protocol
@@ -710,9 +710,9 @@ package body GPS.LSP_Clients is
             Self.Canceled_Requests.Delete (Id);
             Processed := True;
 
-         elsif Request_Maps.Has_Element (Position) then
-            Request := Request_Maps.Element (Position);
-            Self.Requests.Delete (Position);
+         elsif Request_Maps.Has_Element (Request_Position) then
+            Request := Request_Maps.Element (Request_Position);
+            Self.Requests.Delete (Request_Position);
 
             if Request.all
                  in GPS.LSP_Client.Partial_Results
@@ -799,11 +799,11 @@ package body GPS.LSP_Clients is
          Partial_Position := Self.Partials.Find (Token.Value);
 
          if Request_Id_Maps.Has_Element (Partial_Position) then
-            Position :=
+            Request_Position :=
               Self.Requests.Find (Request_Id_Maps.Element (Partial_Position));
 
-            if Request_Maps.Has_Element (Position) then
-               Request := Request_Maps.Element (Position);
+            if Request_Maps.Has_Element (Request_Position) then
+               Request := Request_Maps.Element (Request_Position);
 
                Reader.Set_Stream (Text_Stream'Unchecked_Access);
 
@@ -824,9 +824,9 @@ package body GPS.LSP_Clients is
                      loop
                         pragma Assert (Stream.R.Is_Key_Name);
 
-                        exit Outer when
-                          VSS.Strings.Conversions.To_UTF_8_String
-                            (Stream.R.Key_Name) = "value";
+                        exit Outer
+                          when VSS.Strings.Conversions.To_UTF_8_String
+                                 (Stream.R.Key_Name) = "value";
 
                         Stream.R.Read_Next;
                         Stream.Skip_Value;
