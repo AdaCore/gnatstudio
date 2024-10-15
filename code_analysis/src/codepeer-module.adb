@@ -641,6 +641,35 @@ package body CodePeer.Module is
       return Module.Message_Colors (Ranking).Get_Pref;
    end Get_Color;
 
+   ------------------
+   -- Get_Messages --
+   ------------------
+
+   function Get_Messages
+     (Self     : access Module_Id_Record'Class;
+      Ids      : Natural_Sets.Set;
+      Messages : out CodePeer.Message_Vectors.Vector)
+      return Boolean
+   is
+      use CodePeer.Message_Maps;
+
+      C      : CodePeer.Message_Maps.Cursor;
+      Result : Boolean := True;
+   begin
+      Messages.Clear;
+
+      for Id of Ids loop
+         C := Self.Messages.Find (Id);
+         if C = No_Element then
+            Result := False;
+         else
+            Messages.Append (Element (C));
+         end if;
+      end loop;
+
+      return Result;
+   end Get_Messages;
+
    ------------
    -- Review --
    ------------
@@ -1118,6 +1147,88 @@ package body CodePeer.Module is
          Self.Report.Messages_Report.Update;
       end if;
    end Hide_Messages;
+
+   -------------------------------
+   -- Previous_Editable_Message --
+   -------------------------------
+
+   function Previous_Editable_Message
+     (Self    : access Module_Id_Record'Class;
+      Message : CodePeer.Message_Access)
+      return CodePeer.Message_Access
+   is
+      use CodePeer.Message_Maps;
+      C : Message_Maps.Cursor := Self.Messages.Find (Message.Id);
+   begin
+      if not Has_Element (C) then
+         return null;
+      end if;
+
+      loop
+         Previous (C);
+         exit when not Has_Element (C);
+
+         if Element (C).Status_Editable
+           and then Element (C).Get_Flags /= Empty_Message_Flags
+         then
+            return Element (C);
+         end if;
+      end loop;
+
+      return null;
+   end Previous_Editable_Message;
+
+   ---------------------------
+   -- Next_Editable_Message --
+   ---------------------------
+
+   function Next_Editable_Message
+     (Self    : access Module_Id_Record'Class;
+      Message : CodePeer.Message_Access)
+      return CodePeer.Message_Access
+   is
+      use CodePeer.Message_Maps;
+      C : Message_Maps.Cursor := Self.Messages.Find (Message.Id);
+   begin
+      if not Has_Element (C) then
+         return null;
+      end if;
+
+      loop
+         Next (C);
+         exit when not Has_Element (C);
+
+         if Element (C).Status_Editable
+           and then Element (C).Get_Flags /= Empty_Message_Flags
+         then
+            return Element (C);
+         end if;
+      end loop;
+
+      return null;
+   end Next_Editable_Message;
+
+   -----------------------
+   -- Editable_Messages --
+   -----------------------
+
+   function Editable_Messages
+     (Self : access Module_Id_Record'Class)
+      return CodePeer.Message_Vectors.Vector
+   is
+      use CodePeer.Message_Maps;
+      Result : CodePeer.Message_Vectors.Vector;
+   begin
+      for Message of Self.Messages loop
+         if Message.Status_Editable
+           and then Message.Get_Flags /= Empty_Message_Flags
+         then
+            Result.Append (Message);
+         end if;
+      end loop;
+
+      return Result;
+   end Editable_Messages;
 
    ----------
    -- Load --
@@ -1823,7 +1934,7 @@ package body CodePeer.Module is
       else
          --  Create and show review dialog
          CodePeer.Multiple_Message_Review_Dialogs.Gtk_New
-           (Review, Self.Kernel, Messages);
+           (Review, Self.Kernel, Self, Messages);
          Review.Set_Transient_For (Self.Kernel.Get_Main_Window);
          Review.Show_All;
          Context_CB.Connect
@@ -1944,6 +2055,19 @@ package body CodePeer.Module is
          end case;
       end;
    end Annotate_Message;
+
+   -----------------------
+   -- Annotate_Messages --
+   -----------------------
+
+   procedure Annotate_Messages
+     (Self     : access Module_Id_Record'Class;
+      Messages : CodePeer.Message_Vectors.Vector) is
+   begin
+      for Message of Messages loop
+         Annotate_Message (Self, Message);
+      end loop;
+   end Annotate_Messages;
 
    ----------------------
    -- Open_HTML_Report --

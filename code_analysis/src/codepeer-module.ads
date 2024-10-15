@@ -79,6 +79,36 @@ package CodePeer.Module is
       Message : CodePeer.Message_Access);
    --  Add 'pragma Annotate' for a message
 
+   procedure Annotate_Messages
+     (Self     : access Module_Id_Record'Class;
+      Messages : CodePeer.Message_Vectors.Vector);
+   --  Add 'pragma Annotate' for messages
+
+   function Previous_Editable_Message
+     (Self    : access Module_Id_Record'Class;
+      Message : CodePeer.Message_Access)
+      return CodePeer.Message_Access;
+   --  Returns previous editable and visible codepeer message or null
+
+   function Next_Editable_Message
+     (Self    : access Module_Id_Record'Class;
+      Message : CodePeer.Message_Access)
+      return CodePeer.Message_Access;
+   --  Returns next editable and visible codepeer message or null
+
+   function Editable_Messages
+     (Self : access Module_Id_Record'Class)
+      return CodePeer.Message_Vectors.Vector;
+   --  Returns editable and visible codepeer messages
+
+   function Get_Messages
+     (Self     : access Module_Id_Record'Class;
+      Ids      : Natural_Sets.Set;
+      Messages : out CodePeer.Message_Vectors.Vector)
+      return Boolean;
+   --  Returns messages with given Ids in Messages.
+   --  Return False if some Ids are not found.
+
    procedure Open_HTML_Report (Kernel : GPS.Kernel.Kernel_Handle);
    --  Open analyzer html report in the browser if it exist
 
