@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                               GNAT Studio                                --
 --                                                                          --
---                     Copyright (C) 2018-2023, AdaCore                     --
+--                     Copyright (C) 2018-2024, AdaCore                     --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -175,6 +175,13 @@ private
       Equivalent_Keys => LSP.Types."=",
       "="             => GPS.LSP_Client.Requests."=");
 
+   package Request_Id_Maps is new Ada.Containers.Hashed_Maps
+     (Key_Type        => LSP.Types.LSP_Number_Or_String,
+      Element_Type    => LSP.Types.LSP_Number_Or_String,
+      Hash            => LSP.Types.Hash,
+      Equivalent_Keys => LSP.Types."=",
+      "="             => LSP.Types."=");
+
    package Request_Id_Sets is new Ada.Containers.Hashed_Sets
      (Element_Type        => LSP.Types.LSP_Number_Or_String,
       Hash                => LSP.Types.Hash,
@@ -275,8 +282,15 @@ private
       Requests                      : Request_Maps.Map;
       --  Map from sent request's ids to request objects to handle response.
 
+      Partials                      : Request_Id_Maps.Map;
+      --  Map from sent request's partial result token to request's id to
+      --  handle partial result messages.
+
       Canceled_Requests             : Request_Id_Sets.Set;
       --  Set of canceled requests for which reply message is still expected.
+
+      Canceled_Tokens               : Request_Id_Maps.Map;
+      --  Map from request's id to partial result token.
 
       Text_Document_Synchronization :
         GPS.LSP_Client.Text_Documents.Text_Document_Sync_Kind_Type;

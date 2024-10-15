@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                               GNAT Studio                                --
 --                                                                          --
---                       Copyright (C) 2021-2023, AdaCore                   --
+--                       Copyright (C) 2024, AdaCore                        --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -15,34 +15,29 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with Ada.Unchecked_Deallocation;
+--  Interface to handle partial results of the LSP request.
 
-with LSP.Client_Notification_Receivers;
-with LSP.Messages;
+with LSP.JSON_Streams;
 with LSP.Types;
 
-package GPS.LSP_Client.Partial_Responses is
+package GPS.LSP_Client.Partial_Results is
 
-   ------------------------------
-   -- Partial_Response_Handler --
-   ------------------------------
+   type LSP_Request_Partial_Result is limited interface;
 
-   type Partial_Response_Handler is abstract tagged null record;
+   procedure On_Partial_Result_Message
+     (Self   : in out LSP_Request_Partial_Result;
+      Stream : not null access LSP.JSON_Streams.JSON_Stream'Class) is null;
+   --  Called when partial result is received from the server.
 
-   type Partial_Response_Handler_Access is
-     access all Partial_Response_Handler'Class;
+   procedure Set_Partial_Result_Token
+     (Self : in out LSP_Request_Partial_Result;
+      To   : LSP.Types.ProgressToken) is abstract;
+   --  Set token to return partial requests. Request must store it and return
+   --  by Partial_Result_Token function.
 
-   function Get_Progress_Type
-     (Self  : Partial_Response_Handler)
-      return LSP.Client_Notification_Receivers.Progress_Value_Kind is
-     abstract;
+   function Partial_Result_Token
+     (Self : LSP_Request_Partial_Result)
+      return LSP.Types.ProgressToken is abstract;
+   --  Returns partial result token allocated for the given request.
 
-   procedure Process_Partial_Response
-        (Self   : Partial_Response_Handler;
-         Token  : LSP.Types.LSP_Number_Or_String;
-         Vector : LSP.Messages.SymbolInformation_Vector) is null;
-
-   procedure Free is new Ada.Unchecked_Deallocation
-     (Partial_Response_Handler'Class, Partial_Response_Handler_Access);
-
-end GPS.LSP_Client.Partial_Responses;
+end GPS.LSP_Client.Partial_Results;

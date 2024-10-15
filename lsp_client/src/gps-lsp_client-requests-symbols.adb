@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                               GNAT Studio                                --
 --                                                                          --
---                       Copyright (C) 2019-2023, AdaCore                   --
+--                     Copyright (C) 2019-2024, AdaCore                     --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -61,6 +61,21 @@ package body GPS.LSP_Client.Requests.Symbols is
       return Options.workspaceSymbolProvider.Is_Set;
    end Is_Request_Supported;
 
+   -------------------------------
+   -- On_Partial_Result_Message --
+   -------------------------------
+
+   overriding procedure On_Partial_Result_Message
+     (Self   : in out Abstract_Symbol_Request;
+      Stream : not null access LSP.JSON_Streams.JSON_Stream'Class)
+   is
+      Info : LSP.Messages.SymbolInformation_Vector;
+   begin
+      LSP.Messages.SymbolInformation_Vector'Read (Stream, Info);
+      Abstract_Symbol_Request'Class
+        (Self).On_Partial_Result_Message (Info);
+   end On_Partial_Result_Message;
+
    -----------------------
    -- On_Result_Message --
    -----------------------
@@ -72,8 +87,18 @@ package body GPS.LSP_Client.Requests.Symbols is
       Info : LSP.Messages.SymbolInformation_Vector;
    begin
       LSP.Messages.SymbolInformation_Vector'Read (Stream, Info);
-      Abstract_Symbol_Request'Class
-        (Self).On_Result_Message (Info);
+      Abstract_Symbol_Request'Class (Self).On_Result_Message (Info);
    end On_Result_Message;
+
+   ------------------------------
+   -- Set_Partial_Result_Token --
+   ------------------------------
+
+   overriding procedure Set_Partial_Result_Token
+     (Self : in out Abstract_Symbol_Request;
+      To   : LSP.Types.ProgressToken) is
+   begin
+      Self.partialResultToken := (Is_Set => True, Value => To);
+   end Set_Partial_Result_Token;
 
 end GPS.LSP_Client.Requests.Symbols;

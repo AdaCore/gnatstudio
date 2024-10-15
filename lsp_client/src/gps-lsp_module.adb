@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                               GNAT Studio                                --
 --                                                                          --
---                     Copyright (C) 2018-2023, AdaCore                     --
+--                     Copyright (C) 2018-2024, AdaCore                     --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -40,7 +40,6 @@
 
 with Ada.Characters.Handling; use Ada.Characters.Handling;
 with Ada.Containers.Hashed_Maps;
-with Ada.Containers.Indefinite_Hashed_Maps;
 with Ada.Strings.Unbounded;   use Ada.Strings.Unbounded;
 with GNAT.Strings;
 with GNAT.OS_Lib;  use GNAT.OS_Lib;
@@ -246,14 +245,6 @@ package body GPS.LSP_Module is
       Hash            => Hash,
       Equivalent_Keys => "=");
 
-   package Prefix_Handler_Maps is new Ada.Containers.Indefinite_Hashed_Maps
-     (Key_Type        => VSS.Strings.Virtual_String,
-      Element_Type    => GPS.LSP_Client.Partial_Responses.
-        Partial_Response_Handler_Access,
-      Hash            => Hash,
-      Equivalent_Keys => VSS.Strings."=",
-      "="             => GPS.LSP_Client.Partial_Responses."=");
-
    ------------
    -- Module --
    ------------
@@ -272,9 +263,6 @@ package body GPS.LSP_Module is
 
       Token_To_Command : Token_Command_Maps.Map;
       --  Associate the progress token to the Scheduled_Command monitoring it
-
-      Prefix_To_Handler : Prefix_Handler_Maps.Map;
-      --  Holds handlers for partial responses
    end record;
 
    type LSP_Module_Id is access all Module_Id_Record'Class;
@@ -1562,29 +1550,8 @@ package body GPS.LSP_Module is
    overriding function Get_Progress_Type
      (Self  : access Module_Id_Record;
       Token : LSP.Types.LSP_Number_Or_String)
-      return LSP.Client_Notification_Receivers.Progress_Value_Kind
-   is
-      Cursor : Prefix_Handler_Maps.Cursor := Self.Prefix_To_Handler.First;
+      return LSP.Client_Notification_Receivers.Progress_Value_Kind is
    begin
-      --  Right now we register handlers only for string tokens, so skip
-      --  searching when the token has number.
-      if not Token.Is_Number then
-
-         --  Looking for a handler that registered for the token string
-         --  "prefix". It means that we can register a handler for the
-         --  "prefix-" prefix and the real token string can be "prefix-1"
-         --  for example, where "prefix-" will allow finding the
-         --  handler and "1" is used inside the handler itself to
-         --  understand for which request this response is.
-
-         while Prefix_Handler_Maps.Has_Element (Cursor) loop
-            if Token.String.Starts_With (Prefix_Handler_Maps.Key (Cursor)) then
-               return Prefix_Handler_Maps.Element (Cursor).Get_Progress_Type;
-            end if;
-            Prefix_Handler_Maps.Next (Cursor);
-         end loop;
-      end if;
-
       return LSP.Client_Notification_Receivers.ProgressParams;
    end Get_Progress_Type;
 
@@ -1747,24 +1714,9 @@ package body GPS.LSP_Module is
 
    overriding procedure On_Progress_SymbolInformation_Vector
      (Self   : access Module_Id_Record;
-      Params : LSP.Messages.Progress_SymbolInformation_Vector)
-   is
-      Cursor : Prefix_Handler_Maps.Cursor := Self.Prefix_To_Handler.First;
+      Params : LSP.Messages.Progress_SymbolInformation_Vector) is
    begin
-      if not Params.token.Is_Number then
-         --  Looking for a handler. See Get_Progress_Type for detailed info.
-         while Prefix_Handler_Maps.Has_Element (Cursor) loop
-            if Params.token.String.Starts_With
-              (Prefix_Handler_Maps.Key (Cursor))
-            then
-               Prefix_Handler_Maps.Element
-                 (Cursor).Process_Partial_Response
-                 (Params.token, Params.value);
-               return;
-            end if;
-            Prefix_Handler_Maps.Next (Cursor);
-         end loop;
-      end if;
+      raise Program_Error;
    end On_Progress_SymbolInformation_Vector;
 
    ---------------------
@@ -1815,27 +1767,5 @@ package body GPS.LSP_Module is
          GPS.LSP_Client.Configurations.Clangd.Register (Kernel);
       end if;
    end Register_Module;
-
-   ------------------------------
-   -- Register_Partial_Handler --
-   ------------------------------
-
-   procedure Register_Partial_Handler
-     (Prefix  : VSS.Strings.Virtual_String;
-      Handler : GPS.LSP_Client.Partial_Responses.
-        Partial_Response_Handler_Access) is
-   begin
-      Module.Prefix_To_Handler.Include (Prefix, Handler);
-   end Register_Partial_Handler;
-
-   --------------------------------
-   -- Unregister_Partial_Handler --
-   --------------------------------
-
-   procedure Unregister_Partial_Handler
-     (Prefix : VSS.Strings.Virtual_String) is
-   begin
-      Module.Prefix_To_Handler.Exclude (Prefix);
-   end Unregister_Partial_Handler;
 
 end GPS.LSP_Module;
