@@ -253,6 +253,7 @@ dnl
     rm -f conf.gtktest
     AC_TRY_RUN([
 #include <stdio.h>
+#include <stdlib.h>
 
 int
 main ()
