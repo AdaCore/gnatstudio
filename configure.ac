@@ -125,6 +125,15 @@ AC_CHECK_LIB(util,openpty,
 
 case "${host}" in
 
+  # ARM64 processors
+  aarch64-*-* )
+    case "${host}" in
+      *-linux-gnu* )
+        EXEC_COMMAND="xterm -hold -e"
+        PRINT_CMD="a2ps" ;;
+    esac
+  ;;
+
   ## Alpha (DEC) machines.
   alpha*-dec-osf* ) EXECUTION_WINDOW=False ;;
 
