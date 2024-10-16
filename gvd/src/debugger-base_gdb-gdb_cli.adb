@@ -103,7 +103,8 @@ package body Debugger.Base_Gdb.Gdb_CLI is
 
    Remote_Error_Pattern      : constant Pattern_Matcher :=
      Compile ("(.+): (No such file or directory."
-              & "|The system cannot find the file specified.)",
+              & "|The system cannot find the file specified."
+              & "|Cannot assign requested address.)",
               Multiple_Lines);
    --  Matches errors when trying to connect to a remote target
    --  (e.g: 'target remote :1234').
