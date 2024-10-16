@@ -261,6 +261,9 @@ package GPS.Editors is
    --  Whether the location is on a word boundary. The definition of a word
    --  depends on the language
 
+   function Is_End_Of_Line (This : Editor_Location) return Boolean is abstract;
+   --  Return True if the location set on EOL
+
    function Get_Char (This : Editor_Location) return Integer is abstract;
    --  Return the character at the current location. Returns the unicode value
 
@@ -1205,6 +1208,8 @@ private
    overriding function Ends_Word
      (This : Dummy_Editor_Location) return Boolean;
    overriding function Inside_Word
+     (This : Dummy_Editor_Location) return Boolean;
+   overriding function Is_End_Of_Line
      (This : Dummy_Editor_Location) return Boolean;
 
    overriding function Get_Overlays

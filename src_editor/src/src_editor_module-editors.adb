@@ -298,6 +298,8 @@ package body Src_Editor_Module.Editors is
      (This  : Src_Editor_Location) return Boolean;
    overriding function Inside_Word
      (This  : Src_Editor_Location) return Boolean;
+   overriding function Is_End_Of_Line
+     (This : Src_Editor_Location) return Boolean;
 
    overriding function Get_Overlays
      (This    : Src_Editor_Location) return Overlay_Lists.List;
@@ -1696,6 +1698,27 @@ package body Src_Editor_Module.Editors is
         and then Standard.Src_Editor_Buffer.Inside_Word
           (This.Buffer.Contents.Buffer, Iter);
    end Inside_Word;
+
+   --------------------
+   -- Is_End_Of_Line --
+   --------------------
+
+   overriding function Is_End_Of_Line
+     (This : Src_Editor_Location) return Boolean
+   is
+      Iter    : Gtk_Text_Iter;
+      Success : Boolean;
+
+   begin
+      Get_Location
+        (Iter     => Iter,
+         Location => This,
+         Default  => Null_Text_Iter,
+         Success  => Success);
+
+      return Success
+        and then Ends_Line (Iter);
+   end Is_End_Of_Line;
 
    ------------
    -- Adjust --
