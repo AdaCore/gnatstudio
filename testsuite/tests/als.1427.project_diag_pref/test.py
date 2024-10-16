@@ -14,11 +14,8 @@ EXPECTED = [
     [
         "foo.adb (1 item)",
         [
-            "<b>1:1</b>       Project Problems",
-            [
-                "          The project file was loaded but contains Warnings.",
-                "          project name &apos;test&apos; expected",
-            ],
+            "<b>1:1</b>       The project file was loaded but contains warnings.",
+            ["          project name &apos;test&apos; expected"],
         ],
     ],
 ]
