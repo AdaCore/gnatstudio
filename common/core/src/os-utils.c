@@ -31,8 +31,15 @@
 #include <pwd.h>
 #endif
 
+/* ??? Arranging to allow #include <adaint.h> or so would be better
+   than the hand crafted prototype below.  The actual gnat runtime
+   function signature varies across plaforms wrt struct stat vs struct
+   stat64, for example.  */
+
+extern int __gnat_stat(char *name, struct stat *statbuf);
+
 int
-__gps_subdirectories_count (name)
+__gps_subdirectories_count (char *name)
 {
   struct stat statbuf;
   int ret;
