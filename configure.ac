@@ -103,7 +103,7 @@ AM_TO_GPR($GTK_GCC_FLAGS,   GTK_GCC_FLAGS_GPR)
 AM_PATH_PYTHON
 AX_PYTHON_DEVEL
 AM_TO_GPR($PYTHON_CPPFLAGS, PYTHON_CFLAGS_GPR)
-AM_TO_GPR($PYTHON_LIBS $PYTHON_EXTRA_LIBS $PYTHON_EXTRA_LDFLAGS, PYTHON_SHARED_LIBS_GPR)
+AM_TO_GPR("$PYTHON_LIBS $PYTHON_EXTRA_LIBS $PYTHON_EXTRA_LDFLAGS", PYTHON_SHARED_LIBS_GPR)
 
 ######### checking for pygobject
 AM_PATH_PYGOBJECT
@@ -124,6 +124,15 @@ AC_CHECK_LIB(util,openpty,
 )
 
 case "${host}" in
+
+  # ARM64 processors
+  aarch64-*-* )
+    case "${host}" in
+      *-linux-gnu* )
+        EXEC_COMMAND="xterm -hold -e"
+        PRINT_CMD="a2ps" ;;
+    esac
+  ;;
 
   ## Alpha (DEC) machines.
   alpha*-dec-osf* ) EXECUTION_WINDOW=False ;;
