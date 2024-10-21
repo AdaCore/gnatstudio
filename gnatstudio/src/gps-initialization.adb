@@ -621,16 +621,6 @@ package body GPS.Initialization is
                         Description     => New_String
                           ("Start a debug session"),
                         Arg_Description => New_String ("[program]"));
-      Opt_Debugger : constant Glib.Option.GOption_Entry :=
-                       (Long_Name       => New_String ("debugger"),
-                        Short_Name      => To_Gchar (ASCII.NUL),
-                        Flags           => Glib.Option.G_Option_Flag_Filename,
-                        Arg             => Glib.Option.G_Option_Arg_Callback,
-                        Arg_Data        => On_Switch'Address,
-                        Description     => New_String
-                          ("Specify the debugger's command line"),
-                        Arg_Description => New_String
-                          ("debugger"));
       Opt_Hide     : constant Glib.Option.GOption_Entry :=
                        (Long_Name       => New_String ("hide"),
                         Short_Name      => To_Gchar (ASCII.NUL),
@@ -829,7 +819,6 @@ package body GPS.Initialization is
                          Opt_Help_All,
                          Opt_Version,
                          Opt_Debug,
-                         Opt_Debugger,
                          Opt_Hide,
                          Opt_Host,
                          Opt_Target,
