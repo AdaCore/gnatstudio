@@ -1889,6 +1889,19 @@ Classes
 
    .. automethod:: GPS.ProjectTemplate.add_templates_dir
 
+:class:`GPS.ProjectViewFilters`
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. autoclass:: ProjectViewFilters()
+
+
+
+   .. automethod:: GPS.ProjectViewFilters.add_filter
+
+   .. automethod:: GPS.ProjectViewFilters.list_filters
+
+   .. automethod:: GPS.ProjectViewFilters.remove_filter
+
 :class:`GPS.ReferencesCommand`
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 

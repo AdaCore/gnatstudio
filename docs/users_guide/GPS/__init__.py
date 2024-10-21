@@ -9834,6 +9834,55 @@ class ProjectTemplate(object):
 
 
 ###########################################################
+# ProjectViewFilters
+###########################################################
+
+
+class ProjectViewFilters(object):
+
+    """
+    This class is used to add extra filters for the Project View
+    """
+
+    @staticmethod
+    def add_filter(identifier, extra_filter):
+        """
+        Add an extra_filter to the project view and link it to identifier.
+        If several filters are registered with the same id,
+        only the last one is retained.
+
+        extra_filter takes a GPS.File as parameter and returns True if the file
+        should be displayed in the Project View, False otherwise.
+
+        :param identifier: A string
+        :param extra_filter: A Subprogram
+        :type extra_filter: (GPS.File) -> Boolean
+
+        """
+        pass  # implemented in Ada
+
+    @staticmethod
+    def remove_filter(id):
+        """
+        Remove a filter using its identifier.
+
+        :param identifier: A string
+
+        """
+        pass  # implemented in Ada
+
+    @staticmethod
+    def list_filters():
+        """
+        Return the list of available filters.
+
+        :return List(str): List of filters' identifiers.
+
+        """
+        pass  # implemented in Ada
+
+
+###########################################################
 # ReferencesCommand
 ###########################################################
 
