@@ -8,7 +8,7 @@ def test_(qualifier={}):
     with defaults(qualifier=qualifier):
         anod_install("gps")
         anod_install("gps_testsuite_drivers")
-        anod_test("gps", qualifier={**qualifier, "gnatsas": True, "gdb-head": True})
+        anod_test("gps", qualifier={**qualifier, "gnatsas": True})
 
 # Edge
 
