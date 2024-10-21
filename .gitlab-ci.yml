@@ -1,81 +1,36 @@
 stages:
-  - build_and_test
-  - integration-tests
-
-.basic-setup:
-    # Use generic_anod_ci here.
-    - generic_anod_ci
-         --add-dep eng/ide/gnatstudio-internal
-
-    - cat /tmp/ci_env.sh
-    - . /tmp/ci_env.sh
-
-build_and_test:
-  services:
-     - image:gtk-deps
-     - cpu:8
-  stage: build_and_test
-  rules:
-    - if: $CI_PIPELINE_SOURCE == 'merge_request_event'
-    - if: $CI_PIPELINE_SOURCE == 'pipeline'
-  interruptible: true
-  script:
-    - !reference [.basic-setup]
-
-    # Build & test using anod
-    - anod build gps $ACI_TRACK_QUALIFIER --latest
-    - anod build gps_testsuite_drivers $ACI_TRACK_QUALIFIER --latest
-
-    # Set this to deactivate some event-synth tests
-    - export GITLAB_CI=1
-
-    # Pass --latest to the test command to ensure the CI remains
-    # available even if a dependency is not available.
-    - anod test gps $ACI_TRACK_QUALIFIER -Qgnatsas -Qgdb-head --latest
-
-    # Process the report
-    - BUILD_SPACE_NAME=`anod eval gps build_space_name --primitive test $ACI_TRACK_QUALIFIER -Qgnatsas -Qgdb-head`
-    - SB_BASE=$ANOD_DEFAULT_SANDBOX_DIR/x86_64-linux/$BUILD_SPACE_NAME
-    - e3-testsuite-report
-       --failure-exit-code 1
-       --xunit-output $CI_PROJECT_DIR/xunit_output.xml
-       $SB_BASE//results/new/ || FAILED=true
-
-    - if [ ! -z ${FAILED+x} ]; then echo "There was at least one testcase failure" && exit 1; fi
-
-  artifacts:
-    reports:
-      junit: xunit_output.xml
-
-issue-check:
-  services:
-    - image:e3
-  stage: build_and_test
-  interruptible: true  # Cancel job if the branch is pushed
-  variables: # do not checkout the git repository, not needed
-    GIT_STRATEGY: none
-  rules: # Launch only on merge requests
-    - if: $CI_PIPELINE_SOURCE == 'merge_request_event'
-  script:
-    - require_issue # launch the verification
+  - build
+  - test
+  - check
 
 include:
+# Issue check and pre-commit
+  - component: $CI_SERVER_FQDN/eng/gitlab-templates/check-issue@~latest
   - component: $CI_SERVER_FQDN/eng/gitlab-templates/pre-commit@~latest
-    inputs:
-      stage: build_and_test
 
-# Manual CI for integration-testsuite
-test-integration:
-  stage: integration-tests
-  rules:
-    - if: $CI_PIPELINE_SOURCE == 'merge_request_event'
-      when: manual
-      allow_failure: true
-  trigger:
-    project: eng/shared/integration-testsuite
-    strategy: depend
-  inherit:
-    variables: false
-  variables:
-    ACI_UPSTREAM_PROJECT_ID: $CI_PROJECT_ID
-    ACI_UPSTREAM_MERGE_REQUEST_IID: $CI_MERGE_REQUEST_IID
+# Build
+  - component: $CI_SERVER_FQDN/eng/gitlab-templates/build@~latest
+    inputs:
+      anod-args: run build_$ACI_TRACK
+      cpus: 16
+      image: systemgtk
+      save-component: true
+
+# Testing
+  - component: $CI_SERVER_FQDN/eng/gitlab-templates/test@~latest
+    inputs:
+      job-name: gs
+      anod-args: run test_$ACI_TRACK
+      image: systemgtk
+      generic-anod-ci-args: --add-dep eng/ide/gnatstudio-internal
+
+# Integration testsuite
+  - component: $CI_SERVER_FQDN/eng/gitlab-templates/test@~latest
+    inputs:
+      job-name: integration-testsuite
+      anod-args: run test_integration_testsuite
+      image: systemgtk
+      cpus: 4
+      rules:
+      # Does not work on edge
+      - if: $CI_PIPELINE_SOURCE == 'merge_request_event' && $CI_TARGET_BRANCH_NAME != 'edge'
