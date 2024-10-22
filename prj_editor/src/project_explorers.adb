@@ -86,6 +86,7 @@ with Filter_Panels;             use Filter_Panels;
 with GUI_Utils;                 use GUI_Utils;
 with Projects;                  use Projects;
 with Project_Explorers_Common;  use Project_Explorers_Common;
+with Project_Explorers_Scripts; use Project_Explorers_Scripts;
 with String_List_Utils;
 with String_Utils;
 with Tooltips;
@@ -1205,7 +1206,7 @@ package body Project_Explorers is
      (Self : not null access Explorer_Tree_View_Record;
       Iter : Gtk.Tree_Model.Gtk_Tree_Iter) return Boolean
    is
-      File : Virtual_File;
+      File : Virtual_File := No_File;
       Icon : constant String :=
         (if Self.Filter_VCS /= null
          then Self.Filter_VCS.Get_Icon_Name
@@ -1223,10 +1224,19 @@ package body Project_Explorers is
                end;
             end if;
 
+            if Has_Project_Filters then
+               File := Self.Get_File_From_Node (Iter);
+               if not Is_Visible_In_Project (Self.Kernel, File) then
+                  return False;
+               end if;
+            end if;
+
             if Self.User_Filter.Pattern = null then
                return True;
             else
-               File := Self.Get_File_From_Node (Iter);
+               if File = No_File then
+                  File := Self.Get_File_From_Node (Iter);
+               end if;
                return Self.User_Filter.Visible.Contains (File);
             end if;
 
@@ -2785,6 +2795,8 @@ package body Project_Explorers is
         (Kernel,
          Filter => File_Node_Filter,
          Name   => "Explorer_File_Node");
+
+      Project_Explorers_Scripts.Register_Module (Kernel);
    end Register_Module;
 
 end Project_Explorers;
