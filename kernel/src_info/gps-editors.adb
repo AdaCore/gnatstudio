@@ -487,6 +487,16 @@ package body GPS.Editors is
       return False;
    end Inside_Word;
 
+   --------------------
+   -- Is_End_Of_Line --
+   --------------------
+
+   overriding function Is_End_Of_Line
+     (This : Dummy_Editor_Location) return Boolean is
+   begin
+      return False;
+   end Is_End_Of_Line;
+
    --------------
    -- Get_Char --
    --------------

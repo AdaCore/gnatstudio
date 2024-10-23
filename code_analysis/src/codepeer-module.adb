@@ -73,9 +73,12 @@ with CodePeer.Module.Commands;
 with CodePeer.Module.Editors;
 with CodePeer.Multiple_Message_Review_Dialogs;
 with CodePeer.Shell_Commands;        use CodePeer.Shell_Commands;
+
 with Commands;                       use Commands;
 with Code_Analysis_GUI;
 with String_Utils;                   use String_Utils;
+
+with Language;                       use Language;
 
 package body CodePeer.Module is
 
@@ -1846,21 +1849,99 @@ package body CodePeer.Module is
           (Message.Get_File,
            Open_View   => False,
            Open_Buffer => True);
-      Location : constant Editor_Location'Class :=
-        Message.Get_Editor_Mark.Location.End_Of_Line;
+      Location : Editor_Location'Class :=
+        Message.Get_Editor_Mark.Location;
+
+      type Words_Array is array (Positive range <>) of Unbounded_String;
+      Empty : constant Words_Array (1 .. 0) :=
+        (others => Null_Unbounded_String);
+
+      procedure Insert_After
+        (Words   : Words_Array := Empty;
+         Excepts : Words_Array := Empty);
+      --  Place pragma after the keyword from Words (skips Excepts)
+      --  or the first semicolon.
+
+      procedure Insert_After
+        (Words   : Words_Array := Empty;
+         Excepts : Words_Array := Empty)
+      is
+         EoB  : constant Editor_Location'Class := Editor.End_Of_Buffer;
+         Skip : Boolean;
+      begin
+         Main : while Location /= EoB loop
+            if Location.Get_Char = Character'Pos (';') then
+               --  Place location after the semicolon and exit loop
+               Location := Location.Forward_Char (1);
+               exit Main;
+            end if;
+
+            if Location.Starts_Word then
+               --  We are on the word start, check if we have it in Words
+               declare
+                  Current : constant String :=
+                    Editor.Get_Chars (Location, Location.Forward_To_Word_End);
+               begin
+                  for Word of Words loop
+                     if Current = Word then
+                        --  We have found the word from Words
+                        Skip := False;
+
+                        --  Check that we should skip the words combination
+                        for Except of Excepts loop
+                           Skip := Editor.Get_Chars
+                             (Location,
+                              Location.Forward_Char (Except.Length - 1)) =
+                               Except;
+                        end loop;
+
+                        if not Skip then
+                           --  We have found the word, set Location after it
+                           --  and exit loop
+                           Location := Location.Forward_To_Word_End;
+                           Location := Location.Forward_Char (1);
+                           exit Main;
+                        end if;
+                     end if;
+                  end loop;
+               end;
+            end if;
+
+            Location := Location.Forward_Char (1);
+         end loop Main;
+
+         Editor.Insert
+           (Location, ASCII.LF &
+              "pragma Annotate" & ASCII.LF &
+              "(" & CodePeer.Module_Name &
+              ", False_Positive, """ &
+              To_String (Message.Category.Name) &
+              """, ""<insert review>"");" &
+            (if Location.Is_End_Of_Line
+               then ""
+               else "" & ASCII.LF));
+         Editor.Indent (Location, Location.Forward_Line (2));
+      end Insert_After;
 
    begin
       declare
          G : Group_Block := Editor.New_Undo_Group;
       begin
-         Editor.Insert
-           (Location.End_Of_Line, ASCII.LF &
-              "pragma Annotate" & ASCII.LF &
-              "(" & CodePeer.Module_Name &
-              ", False_Positive, """ &
-              To_String (Message.Category.Name) &
-              """, ""<insert review>"");");
-         Editor.Indent (Location, Location.Forward_Line (2));
+         case Location.Block_Type is
+            when Cat_Loop_Statement =>
+               Insert_After ((1 => To_Unbounded_String ("loop")));
+
+            when Language.Cat_If_Statement =>
+               Insert_After
+                 ((1 => To_Unbounded_String ("then")),
+                  (1 => To_Unbounded_String ("and then")));
+
+            when Cat_Case_Statement =>
+               Insert_After ((1 => To_Unbounded_String ("is")));
+
+            when others =>
+               Insert_After;
+         end case;
       end;
    end Annotate_Message;
 
