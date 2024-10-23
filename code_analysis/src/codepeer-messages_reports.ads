@@ -109,6 +109,13 @@ private
       --  event and checking of value on mouse release event.
    end record;
 
+   procedure Set_Visible_Ranking_Categories
+     (Self : in out Messages_Report_Record);
+   --  Update Show_Ranking and Analysis_Model after ranking has been changed
+
+   procedure Set_Visible_Message_Status (Self : in out Messages_Report_Record);
+   --  Update Show_Status and Analysis_Model after status has been changed
+
    Signal_Activated        : constant Glib.Signal_Name := "activated";
    Signal_Criteria_Changed : constant Glib.Signal_Name := "criteria_changed";
 
