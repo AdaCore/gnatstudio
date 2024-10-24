@@ -170,6 +170,20 @@ private
       Context : Interactive_Command_Context) return Command_Return_Type;
    --  Called on "hide annotations" item of contextual menu
 
+   type Review_Messages_Command is
+     new CodePeer_Interactive_Command with null record;
+   overriding function Execute
+     (Self    : access Review_Messages_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type;
+   --  Called on "review codepeer messages" item of contextual menu
+
+   type Annotate_Messages_Command is
+     new CodePeer_Interactive_Command with null record;
+   overriding function Execute
+     (Self    : access Annotate_Messages_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type;
+   --  Called on "annotate codepeer messages" item of contextual menu
+
    -------------
    -- Filters --
    -------------
@@ -197,5 +211,14 @@ private
      (Self    : access Is_Local_Mode_Filter;
       Context : Selection_Context) return Boolean;
    --  Controls availability of actions which is possible in local mode only.
+
+   type Is_Review_Messages_Filter
+     (Module : not null CodePeer.Module.CodePeer_Module_Id) is
+     new Action_Filter_Record with null record;
+   overriding function Filter_Matches_Primitive
+     (Filter  : access Is_Review_Messages_Filter;
+      Context : Selection_Context) return Boolean;
+   --  Controls availability of "review codepeer messages" contextual menu.
+   --  Return True if at least one message is codepeer message.
 
 end CodePeer.Module.Actions;
