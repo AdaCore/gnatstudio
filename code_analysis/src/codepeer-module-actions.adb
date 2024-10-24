@@ -55,6 +55,30 @@ package body CodePeer.Module.Actions is
    --  Open a dialog to select a baseline and execute a BuiltTarget with
    --  the selected file.
 
+   function Get_Codepeer_Messages
+     (Messages : GPS.Kernel.Messages.Message_Array)
+      return CodePeer.Message_Vectors.Vector;
+   --  Get CodePeer messages form the array
+
+   ---------------------------
+   -- Get_Codepeer_Messages --
+   ---------------------------
+
+   function Get_Codepeer_Messages
+     (Messages : GPS.Kernel.Messages.Message_Array)
+      return CodePeer.Message_Vectors.Vector
+   is
+      Vector : CodePeer.Message_Vectors.Vector;
+   begin
+      for Message of Messages loop
+         if Message.all in CodePeer.Message'Class then
+            Vector.Append (CodePeer.Message_Access (Message));
+         end if;
+      end loop;
+
+      return Vector;
+   end Get_Codepeer_Messages;
+
    -------------
    -- Execute --
    -------------
@@ -734,6 +758,39 @@ package body CodePeer.Module.Actions is
       return Success;
    end Execute;
 
+   -------------
+   -- Execute --
+   -------------
+
+   overriding function Execute
+     (Self    : access Review_Messages_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type is
+   begin
+      CodePeer.Module.Review_Messages
+        (Self        => Self.Module,
+         Messages    => Get_Codepeer_Messages
+           (Messages_Information (Context.Context)),
+         Need_Reload => False);
+
+      return Success;
+   end Execute;
+
+   -------------
+   -- Execute --
+   -------------
+
+   overriding function Execute
+     (Self    : access Annotate_Messages_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type is
+   begin
+      CodePeer.Module.Annotate_Messages
+        (Self     => Self.Module,
+         Messages => Get_Codepeer_Messages
+           (Messages_Information (Context.Context)));
+
+      return Success;
+   end Execute;
+
    ------------------------------
    -- Filter_Matches_Primitive --
    ------------------------------
@@ -853,6 +910,27 @@ package body CodePeer.Module.Actions is
       return Codepeer_Server_URL (Project) = "";
    end Filter_Matches_Primitive;
 
+   ------------------------------
+   -- Filter_Matches_Primitive --
+   ------------------------------
+
+   overriding function Filter_Matches_Primitive
+     (Filter  : access Is_Review_Messages_Filter;
+      Context : Selection_Context) return Boolean is
+   begin
+      if not Is_Show_Hide_Allowed (Filter.Module, Context) then
+         return False;
+      end if;
+
+      for Message of Messages_Information (Context) loop
+         if Message.all in CodePeer.Message'Class then
+            return True;
+         end if;
+      end loop;
+
+      return False;
+   end Filter_Matches_Primitive;
+
    --------------------------
    -- Is_Show_Hide_Allowed --
    --------------------------
@@ -874,6 +952,8 @@ package body CodePeer.Module.Actions is
    is
       Is_Local_Mode : constant Action_Filter :=
         new Is_Local_Mode_Filter (Module);
+      Is_Review     : constant Action_Filter :=
+        new Is_Review_Messages_Filter (Module);
 
    begin
       Register_Action
@@ -996,6 +1076,28 @@ package body CodePeer.Module.Actions is
         (Kernel => Module.Kernel,
          Action => "hide codepeer annotations",
          Label  => CodePeer.Module_Name & "/Hide annotations");
+
+      Register_Action
+        (Kernel   => Module.Kernel,
+         Name     => "review codepeer messages",
+         Command  => new Review_Messages_Command (Module),
+         Category => CodePeer.Module_Name,
+         Filter   => Is_Review);
+      GPS.Kernel.Modules.UI.Register_Contextual_Menu
+        (Kernel => Module.Kernel,
+         Action => "review codepeer messages",
+         Label  => CodePeer.Module_Name & "/Review messages");
+
+      Register_Action
+        (Kernel   => Module.Kernel,
+         Name     => "annotate codepeer messages",
+         Command  => new Annotate_Messages_Command (Module),
+         Category => CodePeer.Module_Name,
+         Filter   => Is_Review);
+      GPS.Kernel.Modules.UI.Register_Contextual_Menu
+        (Kernel => Module.Kernel,
+         Action => "annotate codepeer messages",
+         Label  => CodePeer.Module_Name & "/Annotate messages");
    end Register_Actions;
 
 end CodePeer.Module.Actions;

@@ -56,6 +56,7 @@ package CodePeer.Generic_Criteria_Models is
       History_Prefix : String;
       Items          : Item_Sets.Set;
       Default        : Boolean);
+
    --  Creates new instance. History_Prefix is a prefix to manage persistent
    --  state of selected categories.
 

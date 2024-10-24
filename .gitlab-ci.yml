@@ -11,7 +11,7 @@ include:
 # Build
   - component: $CI_SERVER_FQDN/eng/gitlab-templates/build@~latest
     inputs:
-      anod-args: run build_$ACI_TRACK
+      anod-args: run build_$ACI_TRACK --latest
       cpus: 16
       image: systemgtk
       save-component: true
@@ -20,7 +20,7 @@ include:
   - component: $CI_SERVER_FQDN/eng/gitlab-templates/test@~latest
     inputs:
       job-name: gs
-      anod-args: run test_$ACI_TRACK
+      anod-args: run test_$ACI_TRACK --latest
       image: systemgtk
       generic-anod-ci-args: --add-dep eng/ide/gnatstudio-internal
 
@@ -28,7 +28,7 @@ include:
   - component: $CI_SERVER_FQDN/eng/gitlab-templates/test@~latest
     inputs:
       job-name: integration-testsuite
-      anod-args: run test_integration_testsuite
+      anod-args: run test_integration_testsuite --latest
       image: systemgtk
       cpus: 4
       rules:
