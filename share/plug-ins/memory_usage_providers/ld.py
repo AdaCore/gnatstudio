@@ -14,6 +14,8 @@ xml = """
 GPS.current_context())" />
 """
 
+PARSING_ERROR_MSG = "Exception while parsing map file:"
+
 
 @core.register_memory_usage_provider("LD")
 class LD(core.MemoryUsageProvider):
@@ -143,7 +145,12 @@ class LD(core.MemoryUsageProvider):
                 region_addr = int(region[1], 16)
                 region_size = region[2]
 
-                if addr >= region_addr and addr < (region_addr + region_size):
+                # Check if the section's address is contained in the region's
+                # range. Consider that it's the case when a region has a negative
+                # size, which means that its size is an unknown for the linker.
+                if addr >= region_addr and (
+                    region_size < 0.0 or addr < (region_addr + region_size)
+                ):
                     return region[0]
 
             return ""
@@ -180,7 +187,22 @@ class LD(core.MemoryUsageProvider):
 
             m = region_r.search(line)
             if m:
-                return (m.group("name"), m.group("origin"), int(m.group("length"), 16))
+                name = m.group("name")
+                origin = m.group("origin")
+                length = m.group("length")
+
+                # Memory regions that have a '0xffffffffffffffff' have an unknown
+                # size for the linker: in that case set it to a negative size to
+                # avoid possible overflows when converting to C types.
+                # The Memory Usage View will then set this region's size to 'unknown'
+                # when displaying it.
+                length = (
+                    float(int(length, 16))
+                    if not length.startswith("0xffffffffffffffff")
+                    else -1.0
+                )
+
+                return (name, origin, length)
             else:
                 return None
 
@@ -290,12 +312,20 @@ class LD(core.MemoryUsageProvider):
 
             sections = [s for s in sections if is_section_allocated(s)]
 
+            GPS.Console().write("regions: %s\n" % str(regions))
+            GPS.Console().write("sections: %s\n" % str(sections))
+
             visitor.on_memory_usage_data_fetched(regions, sections, modules)
 
         except Exception:
-            logger = GPS.Logger("GPS.MEMORY_USAGE.SCRIPTS.LD")
-            logger.log("Exception caught while parsing ld's map file:")
-            logger.log(traceback.format_exc())
+            tb = traceback.format_exc()
+            GPS.Logger("MEMORY_USAGE.SCRIPTS.LD").log(PARSING_ERROR_MSG)
+            GPS.Logger("MEMORY_USAGE.SCRIPTS.LD").log(tb)
+
+            # Log the exception in the Messages view if we are running the testsuite
+            if GPS.Logger("TESTSUITE"):
+                GPS.Console().write("%s\n" % PARSING_ERROR_MSG)
+                GPS.Console().write(tb)
 
 
 GPS.parse_xml(xml)
