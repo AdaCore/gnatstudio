@@ -158,16 +158,8 @@ package body CodePeer.Messages_Reports is
       Name   : Glib.Signal_Name);
    pragma Import (C, Emit_By_Name, "ada_g_signal_emit_by_name");
 
-   Ranking_Suppressed_History    : constant Histories.History_Key :=
-     "codepeer-summary_report-ranking-suppressed";
-   Ranking_Informational_History : constant Histories.History_Key :=
-     "codepeer-summary_report-ranking-informational";
-   Ranking_Low_History           : constant Histories.History_Key :=
-     "codepeer-summary_report-ranking-low";
-   Ranking_Medium_History        : constant Histories.History_Key :=
-     "codepeer-summary_report-ranking-medium";
-   Ranking_High_History          : constant Histories.History_Key :=
-     "codepeer-summary_report-ranking-high";
+   Ranking_History_Prefix : constant Histories.History_Key :=
+     "codepeer-summary_report-ranking-";
 
    Status_History_Prefix : constant Histories.History_Key :=
      "codepeer-summary_report-status-";
@@ -588,30 +580,49 @@ package body CodePeer.Messages_Reports is
       --  Restore filter settings from histories.
 
       Histories.Create_New_Boolean_Key_If_Necessary
-        (Kernel.Get_History.all, Ranking_Suppressed_History, False);
+        (Kernel.Get_History.all,
+         Ranking_History_Prefix &
+           Histories.History_Key (Image (CodePeer.Suppressed)), False);
       Histories.Create_New_Boolean_Key_If_Necessary
-        (Kernel.Get_History.all, Ranking_Informational_History, False);
+        (Kernel.Get_History.all,
+         Ranking_History_Prefix &
+           Histories.History_Key (Image (CodePeer.Info)), False);
       Histories.Create_New_Boolean_Key_If_Necessary
-        (Kernel.Get_History.all, Ranking_Low_History, False);
+        (Kernel.Get_History.all,
+         Ranking_History_Prefix &
+           Histories.History_Key (Image (CodePeer.Low)), False);
       Histories.Create_New_Boolean_Key_If_Necessary
-        (Kernel.Get_History.all, Ranking_Medium_History, True);
+        (Kernel.Get_History.all,
+         Ranking_History_Prefix &
+           Histories.History_Key (Image (CodePeer.Medium)), True);
       Histories.Create_New_Boolean_Key_If_Necessary
-        (Kernel.Get_History.all, Ranking_High_History, True);
+        (Kernel.Get_History.all,
+         Ranking_History_Prefix &
+           Histories.History_Key (Image (CodePeer.High)), True);
 
       Self.Show_Ranking :=
         (Not_An_Error => False,
          Suppressed   => False,
          Info         =>
            Histories.Get_History
-             (Kernel.Get_History.all, Ranking_Informational_History),
+             (Kernel.Get_History.all,
+              Ranking_History_Prefix &
+                Histories.History_Key (Image (CodePeer.Info))),
          Low          =>
-           Histories.Get_History (Kernel.Get_History.all, Ranking_Low_History),
+           Histories.Get_History
+             (Kernel.Get_History.all,
+              Ranking_History_Prefix &
+                Histories.History_Key (Image (CodePeer.Low))),
          Medium       =>
            Histories.Get_History
-             (Kernel.Get_History.all, Ranking_Medium_History),
+             (Kernel.Get_History.all,
+              Ranking_History_Prefix &
+                Histories.History_Key (Image (CodePeer.Medium))),
          High         =>
            Histories.Get_History
-             (Kernel.Get_History.all, Ranking_High_History));
+             (Kernel.Get_History.all,
+              Ranking_History_Prefix &
+                Histories.History_Key (Image (CodePeer.High))));
 
       for Status of Audit_Statuses loop
          declare
@@ -889,7 +900,10 @@ package body CodePeer.Messages_Reports is
         (Editor         => Self.Ranking_Editor,
          Kernel         => Self.Kernel,
          Title          => -"Message ranking",
-         History_Prefix => "codepeer-summary_report-ranking",
+         History_Prefix => String
+           (Ranking_History_Prefix
+                (Ranking_History_Prefix'First ..
+                     Ranking_History_Prefix'Last - 1)),  --  Delete last '-'
          Items          => Project_Data.Ranking_Subcategories,
          Default        => True);
       Filter_Box.Pack_Start (Self.Ranking_Editor);
