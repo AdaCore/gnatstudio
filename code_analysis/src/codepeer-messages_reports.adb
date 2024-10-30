@@ -927,11 +927,11 @@ package body CodePeer.Messages_Reports is
 
       Self.Analysis_Model.Set_Visible_Message_Lifeages
         (To_Lifeage_Kinds_Flags (Self.Lifeage_Editor.Get_Visible_Items));
-      Self.Analysis_Model.Set_Visible_Message_Status (Self.Show_Status);
+      Self.Set_Visible_Message_Status;
       Self.Analysis_Model.Set_Visible_Message_Categories
         (Self.Warning_Categories_Editor.Get_Visible_Items.Union
            (Self.Check_Categories_Editor.Get_Visible_Items));
-      Self.Analysis_Model.Set_Visible_Ranking_Categories (Self.Show_Ranking);
+      Self.Set_Visible_Ranking_Categories;
 
       if Self.CWE_Editor /= null then
          Self.Analysis_Model.Set_Visible_CWE_Categories
@@ -1116,6 +1116,24 @@ package body CodePeer.Messages_Reports is
       Emit_By_Name (Self.Get_Object, Signal_Criteria_Changed & ASCII.NUL);
    end On_Lifeage_Criteria_Changed;
 
+   ------------------------------------
+   -- Set_Visible_Ranking_Categories --
+   ------------------------------------
+
+   procedure Set_Visible_Ranking_Categories
+     (Self : in out Messages_Report_Record) is
+   begin
+      for Item in Ranking_Kinds'Range loop
+         Self.Show_Ranking (Item) := False;
+      end loop;
+
+      for Item of Self.Ranking_Editor.Get_Visible_Items loop
+         Self.Show_Ranking (Item.all) := True;
+      end loop;
+
+      Self.Analysis_Model.Set_Visible_Ranking_Categories (Self.Show_Ranking);
+   end Set_Visible_Ranking_Categories;
+
    ---------------------------------
    -- On_Ranking_Criteria_Changed --
    ---------------------------------
@@ -1129,33 +1147,19 @@ package body CodePeer.Messages_Reports is
       pragma Unreferenced (Object);
 
    begin
-      for Item in Ranking_Kinds'Range loop
-         Self.Show_Ranking (Item) := False;
-      end loop;
-
-      for Item of Self.Ranking_Editor.Get_Visible_Items loop
-         Self.Show_Ranking (Item.all) := True;
-      end loop;
-
-      Self.Analysis_Model.Set_Visible_Ranking_Categories (Self.Show_Ranking);
+      Self.Set_Visible_Ranking_Categories;
 
       --  Emit 'criteria-changed' signal.
 
       Emit_By_Name (Self.Get_Object, Signal_Criteria_Changed & ASCII.NUL);
    end On_Ranking_Criteria_Changed;
 
-   -------------------------------
-   -- On_Audit_Statuses_Changed --
-   -------------------------------
+   --------------------------------
+   -- Set_Visible_Message_Status --
+   --------------------------------
 
-   procedure On_Audit_Statuses_Changed
-     (Object : access
-        CodePeer.Audit_Statuses_Criteria_Editors.
-          Criteria_Editor_Record'Class;
-      Self   : Messages_Report)
-   is
-      pragma Unreferenced (Object);
-
+   procedure Set_Visible_Message_Status
+     (Self : in out Messages_Report_Record) is
    begin
       for Status of Audit_Statuses loop
          Self.Show_Status (Status.Id) := False;
@@ -1174,6 +1178,23 @@ package body CodePeer.Messages_Reports is
       end loop;
 
       Self.Analysis_Model.Set_Visible_Message_Status (Self.Show_Status);
+   end Set_Visible_Message_Status;
+
+   -------------------------------
+   -- On_Audit_Statuses_Changed --
+   -------------------------------
+
+   procedure On_Audit_Statuses_Changed
+     (Object : access
+        CodePeer.Audit_Statuses_Criteria_Editors.
+          Criteria_Editor_Record'Class;
+      Self   : Messages_Report)
+   is
+      pragma Unreferenced (Object);
+
+   begin
+      Self.Set_Visible_Message_Status;
+
       Emit_By_Name (Self.Get_Object, Signal_Criteria_Changed & ASCII.NUL);
    end On_Audit_Statuses_Changed;
 
