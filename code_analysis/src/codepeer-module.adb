@@ -1666,7 +1666,7 @@ package body CodePeer.Module is
       Context.Module.Report := null;
       Context.Module.Report_Subwindow := null;
 
-      --  Cleanup project tree
+      --  Cleanup project tree.
 
       Code_Analysis.Free_Code_Analysis (Context.Module.Tree);
 
