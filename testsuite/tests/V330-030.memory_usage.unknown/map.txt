@@ -237,7 +237,7 @@ END GROUP
 .rodata         0x00000000000085d8      0x139
  *(.rodata .rodata.* .gnu.linkonce.r.*)
  .rodata        0x00000000000085d8        0xb main_2.o
- *fill*         0x00000000000085e3        0x1 
+ *fill*         0x00000000000085e3        0x1
  .rodata        0x00000000000085e4       0x3c b__main_2.o
                 0x00000000000085ec                __gnat_version
                 0x0000000000008614                __gnat_ada_main_program_name
@@ -251,7 +251,7 @@ END GROUP
                 0x000000000000867c                test__my_typeT
  .rodata.__gnat_last_chance_handler.str1.4
                 0x0000000000008690       0x5a /home/leonardo/Development/releases/gnatpro-arm-elf-21.2/arm-eabi/lib/gnat/zfp-cortex-m4/adalib/libgnat.a(a-elchha.o)
- *fill*         0x00000000000086ea        0x2 
+ *fill*         0x00000000000086ea        0x2
  .rodata        0x00000000000086ec       0x18 /home/leonardo/Development/releases/gnatpro-arm-elf-21.2/arm-eabi/lib/gnat/zfp-cortex-m4/adalib/libgnat.a(a-elchha.o)
  .rodata        0x0000000000008704        0xd /home/leonardo/Development/releases/gnatpro-arm-elf-21.2/arm-eabi/lib/gnat/zfp-cortex-m4/adalib/libgnat.a(s-secsta.o)
 
@@ -393,7 +393,7 @@ END GROUP
                 0x000000000001872a        0x1 /home/leonardo/Development/releases/gnatpro-arm-elf-21.2/arm-eabi/lib/gnat/zfp-cortex-m4/adalib/libgnat.a(s-textio.o)
                 0x000000000001872a                system__text_io__initialized
  .data          0x000000000001872b        0x0 /home/leonardo/Development/releases/gnatpro-arm-elf-21.2/arm-eabi/lib/gnat/zfp-cortex-m4/adalib/libgnat.a(s-semiho.o)
- *fill*         0x000000000001872b        0x1 
+ *fill*         0x000000000001872b        0x1
  .data.system__semihosting_E
                 0x000000000001872c        0x2 /home/leonardo/Development/releases/gnatpro-arm-elf-21.2/arm-eabi/lib/gnat/zfp-cortex-m4/adalib/libgnat.a(s-semiho.o)
                 0x000000000001872c                system__semihosting_E

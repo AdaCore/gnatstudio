@@ -308,11 +308,11 @@ package body Memory_Usage_Views.Scripts is
                        Used_Size => 0.0,
                        Sections  => <>);
                begin
-                  --  If the memory region's length is equal to -1, it means
-                  --  that it's unknown for the linker: set it to Integer'Last
+                  --  If the memory region's length is negative, it means
+                  --  that it's unknown for the linker: set it to Float'Last
                   --  to keep percentages etc. The view will set the length
                   --  to 'unknown' after.
-                  if Memory_Region.Length = -1.0 then
+                  if Memory_Region.Length < 0.0 then
                      Memory_Region.Length := Float'Last;
                   end if;
 
