@@ -514,56 +514,75 @@ package body CodePeer.Module.Actions is
 
       Kernel       : constant Kernel_Handle := Get_Kernel (Context.Context);
       Lock_File    : constant Virtual_File :=
-        Codepeer_Output_Directory (Kernel).Create_From_Dir ("inspector.lock");
+        Inspector_Output_Directory (Kernel).Create_From_Dir ("inspector.lock");
       Project      : constant Project_Type := Get_Project (Kernel);
-      DB_Lock_File : constant Virtual_File :=
-        Codepeer_Database_Directory
-          (Project).Create_From_Dir ("Sqlite.db.lock");
       Deleted      : Boolean;
       Command      : Command_Return_Type;
-      --  If both lock files are not deleted, Command is set to Failure.
+      --  Try deleting lock files if they exist. If lock files remain after
+      --  execution, fails. If no lock file exists, succeeds.
+
+      ------------
+      -- Delete --
+      ------------
+
+      procedure Delete
+        (Lock_File : Virtual_File;
+         Command : in out Command_Return_Type);
+
+      procedure Delete
+        (Lock_File : Virtual_File;
+         Command : in out Command_Return_Type)
+      is
+      begin
+         if Is_Regular_File (Lock_File) then
+            Delete (Lock_File, Deleted);
+
+            if Deleted then
+               Kernel.Insert
+                 (-"deleted: " & Lock_File.Display_Full_Name);
+            else
+               Kernel.Insert
+                 (-"could not delete: " &
+                    Lock_File.Display_Full_Name);
+               Command := Failure;
+            end if;
+         else
+            Kernel.Insert
+              (-"not found: " & Lock_File.Display_Full_Name);
+         end if;
+
+      end Delete;
 
    begin
-      if Is_Regular_File (Lock_File) then
-         Delete (Lock_File, Deleted);
+      Kernel.Insert (-"Checking locks:");
+      Command := Success;
+      Delete (Lock_File, Command);
 
-         if Deleted then
-            Kernel.Insert
-              (-"deleted lock file: " & Lock_File.Display_Full_Name);
-
-         else
-            Kernel.Insert
-              (-"could not delete lock file: " &
-               Lock_File.Display_Full_Name);
-         end if;
-
-         Command := Success;
-
+      if Is_GNATSAS then
+         declare
+            Lock_File_GNATSAS : constant Virtual_File :=
+              Codepeer_GNATSAS_Directory (Kernel).Create_From_Dir
+              ("gnatsas.lock");
+         begin
+            Delete (Lock_File_GNATSAS, Command);
+         end;
       else
-         Kernel.Insert
-           (-"no lock file found: " & Lock_File.Display_Full_Name);
-
-         Command := Failure;
+         declare
+            DB_Lock_File : constant Virtual_File :=
+              Codepeer_Database_Directory
+                (Project).Create_From_Dir ("Sqlite.db.lock");
+         begin
+            Delete (DB_Lock_File, Command);
+         end;
       end if;
 
-      if Is_Regular_File (DB_Lock_File) then
-         Delete (DB_Lock_File, Deleted);
-
-         if Deleted then
-            Kernel.Insert
-              (-"deleted lock file: " & DB_Lock_File.Display_Full_Name);
-
-         else
-            Kernel.Insert
-              (-"could not delete lock file: " &
-               DB_Lock_File.Display_Full_Name);
-         end if;
-
-         Command := Success;
+      if Command = Success then
+         Kernel.Insert
+           (-"No remaining lock files, you may now run an analysis.");
       else
          Kernel.Insert
-           (-"no lock file found: " & DB_Lock_File.Display_Full_Name);
-
+           (-("Some locks could not be deleted, try manually deleting them "
+            & "before running an analysis."));
       end if;
 
       return Command;
