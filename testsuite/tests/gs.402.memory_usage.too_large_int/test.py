@@ -1,5 +1,5 @@
 """
-This test checks that the ld plugin hanles unknown memory regions
+This test checks that the ld plugin handles unknown memory regions
 in the generated map file.
 """
 

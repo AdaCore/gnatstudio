@@ -312,9 +312,6 @@ class LD(core.MemoryUsageProvider):
 
             sections = [s for s in sections if is_section_allocated(s)]
 
-            GPS.Console().write("regions: %s\n" % str(regions))
-            GPS.Console().write("sections: %s\n" % str(sections))
-
             visitor.on_memory_usage_data_fetched(regions, sections, modules)
 
         except Exception:
