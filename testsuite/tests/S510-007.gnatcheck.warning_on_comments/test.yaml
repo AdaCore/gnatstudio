@@ -1,3 +1,0 @@
-title: 'S510-007.gnatcheck.warning_on_comments'
-skip:
-    - ['SKIP', 'env.build.os.name == "windows" and env.valgrind_cmd != []']
