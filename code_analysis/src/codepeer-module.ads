@@ -296,11 +296,16 @@ private
    --  Returns CodePeer server URL if specified in the project, otherwise
    --  returns empty string.
 
-   function Codepeer_Output_Directory
+   function Inspector_Output_Directory
      (Kernel : not null access Kernel_Handle_Record'Class)
       return GNATCOLL.VFS.Virtual_File;
-   --  Return directory which is used by CodePeer for output inspection
-   --  results.
+   --  Return directory which is used by CodePeer/GNATSAS for outputting
+   --  Inspector results.
+
+   function Codepeer_GNATSAS_Directory
+     (Kernel : not null access Kernel_Handle_Record'Class)
+      return GNATCOLL.VFS.Virtual_File;
+   --  Return directory which is used by GNATSAS for storing a lock and logs.
 
    function Codepeer_Log_Directory
      (Kernel : not null access Kernel_Handle_Record'Class)

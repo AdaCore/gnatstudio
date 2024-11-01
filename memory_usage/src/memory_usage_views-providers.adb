@@ -19,15 +19,16 @@ with Ada.Strings.Hash_Case_Insensitive;
 with Ada.Unchecked_Deallocation;
 with GNATCOLL.Arg_Lists;
 with GNATCOLL.Traces;                       use GNATCOLL.Traces;
-
 with GPS.Kernel.Hooks;                      use GPS.Kernel.Hooks;
+with Gtkada.MDI;
+with Glib.Object;                           use Glib.Object;
 
 package body Memory_Usage_Views.Providers is
 
    Me : constant Trace_Handle := Create ("GPS.MEMORY_USAGE.PROVIDERS");
 
-   package Memory_Usage_Provider_Maps is
-     new Ada.Containers.Indefinite_Hashed_Maps
+   package Memory_Usage_Provider_Maps is new
+     Ada.Containers.Indefinite_Hashed_Maps
        (Key_Type        => String,
         Element_Type    => Memory_Usage_Provider,
         Hash            => Ada.Strings.Hash_Case_Insensitive,
@@ -41,10 +42,10 @@ package body Memory_Usage_Views.Providers is
    --  Used to store the registered providers
 
    type On_Compilation_Finished is new Compilation_Finished_Hooks_Function
-      with null record;
+   with null record;
    overriding procedure Execute
-     (Self   : On_Compilation_Finished;
-      Kernel : not null access Kernel_Handle_Record'Class;
+     (Self                   : On_Compilation_Finished;
+      Kernel                 : not null access Kernel_Handle_Record'Class;
       Category, Target, Mode : String;
       Shadow, Background     : Boolean;
       Status                 : Integer;
@@ -61,36 +62,74 @@ package body Memory_Usage_Views.Providers is
    --  Ask the currently selected memory usage provider to fetch the data
    --  that needs to be displayed in the memory usage view.
 
+   procedure MDI_Child_Added
+     (MDI : access GObject_Record'Class; Kernel : Kernel_Handle);
+   --  Called when a new MDI child is added
+
+   procedure Async_Fetch_Memory_Usage_Data
+     (Kernel : not null access Kernel_Handle_Record'Class);
+   --  If there is a regitsred memory usage provider, asynchronously fetch the
+   --  memory usage data.
+
+   ---------------------
+   -- MDI_Child_Added --
+   ---------------------
+
+   procedure MDI_Child_Added
+     (MDI : access GObject_Record'Class; Kernel : Kernel_Handle)
+   is
+      pragma Unreferenced (MDI);
+
+      use Memory_Usage_MDI_Views;
+      View : constant Memory_Usage_MDI_Views.View_Access :=
+        Memory_Usage_MDI_Views.Retrieve_View (Kernel);
+   begin
+      if View /= null then
+         Async_Fetch_Memory_Usage_Data (Kernel);
+      end if;
+   end MDI_Child_Added;
+
+   -----------------------------
+   -- Fecth_Memory_Usage_Data --
+   -----------------------------
+
+   procedure Async_Fetch_Memory_Usage_Data
+     (Kernel : not null access Kernel_Handle_Record'Class) is
+   begin
+      declare
+         Provider : constant Memory_Usage_Provider :=
+           (if Global_Data.Providers.Contains ("LD")
+            then Global_Data.Providers ("LD")
+            else null);
+      begin
+         if Provider /= null and then Provider.Is_Enabled then
+            Provider.Async_Fetch_Memory_Usage_Data
+              (Visitor =>
+                 new Provider_Task_Visitor_Type'
+                   (Kernel => Kernel_Handle (Kernel)));
+         end if;
+      end;
+   end Async_Fetch_Memory_Usage_Data;
+
    -------------
    -- Execute --
    -------------
 
    overriding procedure Execute
-     (Self   : On_Compilation_Finished;
-      Kernel : not null access Kernel_Handle_Record'Class;
+     (Self                   : On_Compilation_Finished;
+      Kernel                 : not null access Kernel_Handle_Record'Class;
       Category, Target, Mode : String;
       Shadow, Background     : Boolean;
       Status                 : Integer;
-      Cmd                    : GNATCOLL.Arg_Lists.Arg_List) is
+      Cmd                    : GNATCOLL.Arg_Lists.Arg_List)
+   is
       pragma Unreferenced (Self, Mode, Category, Background, Shadow, Status);
       pragma Unreferenced (Cmd);
    begin
       --  ??? use the currently selected provider once we have the
       --  possibility to choose the memory usage provider to use.
       if Target = "Build All" or else Target = "Build Main" then
-         declare
-            Provider : constant Memory_Usage_Provider :=
-              (if Global_Data.Providers.Contains ("LD") then
-                  Global_Data.Providers ("LD")
-               else
-                  null);
-         begin
-            if Provider /= null and then Provider.Is_Enabled then
-               Provider.Async_Fetch_Memory_Usage_Data
-                 (Visitor => new Provider_Task_Visitor_Type'
-                    (Kernel => Kernel_Handle (Kernel)));
-            end if;
-         end;
+         Async_Fetch_Memory_Usage_Data (Kernel => Kernel);
       end if;
    end Execute;
 
@@ -103,15 +142,15 @@ package body Memory_Usage_Views.Providers is
       Kernel : not null access Kernel_Handle_Record'Class)
    is
       Provider : constant Memory_Usage_Provider :=
-                   (if Global_Data.Providers.Contains ("LD") then
-                       Global_Data.Providers ("LD")
-                    else
-                       null);
+        (if Global_Data.Providers.Contains ("LD")
+         then Global_Data.Providers ("LD")
+         else null);
    begin
       if Provider /= null and then Provider.Is_Enabled then
          Provider.Async_Fetch_Memory_Usage_Data
-           (Visitor => new Provider_Task_Visitor_Type'
-              (Kernel => Kernel_Handle (Kernel)));
+           (Visitor =>
+              new Provider_Task_Visitor_Type'
+                (Kernel => Kernel_Handle (Kernel)));
       end if;
    end Execute;
 
@@ -120,8 +159,10 @@ package body Memory_Usage_Views.Providers is
    ----------
 
    procedure Free (Self : in out Provider_Task_Visitor) is
-      procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-        (Provider_Task_Visitor_Type'Class, Provider_Task_Visitor);
+      procedure Unchecked_Free is new
+        Ada.Unchecked_Deallocation
+          (Provider_Task_Visitor_Type'Class,
+           Provider_Task_Visitor);
    begin
       if Self /= null then
          Self.all.Free;
@@ -139,9 +180,8 @@ package body Memory_Usage_Views.Providers is
    is
 
       function Has_Memory_Overflow return Boolean
-      is
-        (for some Region of Memory_Regions =>
-            Region.Used_Size > Region.Length);
+      is (for some Region of Memory_Regions
+          => Region.Used_Size > Region.Length);
 
    begin
       if not Memory_Regions.Is_Empty then
@@ -149,24 +189,23 @@ package body Memory_Usage_Views.Providers is
             use Memory_Usage_MDI_Views;
 
             View       : Memory_Usage_MDI_Views.View_Access :=
-                           Memory_Usage_MDI_Views.Retrieve_View
-                             (Kernel       => Self.Kernel,
-                              Visible_Only => True);
+              Memory_Usage_MDI_Views.Retrieve_View
+                (Kernel => Self.Kernel, Visible_Only => True);
             Give_Focus : constant Boolean :=
-                           (View = null or else Has_Memory_Overflow);
+              (View = null or else Has_Memory_Overflow);
          begin
             --  Raise the view only if it was not there before or if a memory
             --  overflow occured.
-            View := Memory_Usage_MDI_Views.Get_Or_Create_View
-              (Self.Kernel,
-               Focus => Give_Focus,
-               Init  => Memory_Usage_Views.On_Init'Access);
+            View :=
+              Memory_Usage_MDI_Views.Get_Or_Create_View
+                (Self.Kernel,
+                 Focus => Give_Focus,
+                 Init  => Memory_Usage_Views.On_Init'Access);
 
             --  Highlight the view when it does not gain the focus to warn
             --  users that the view has been refreshed.
             if not Give_Focus then
-               Highlight_Child
-                 (Memory_Usage_MDI_Views.Child_From_View (View));
+               Highlight_Child (Memory_Usage_MDI_Views.Child_From_View (View));
             end if;
 
             View.Refresh (Memory_Regions => Memory_Regions);
@@ -188,8 +227,7 @@ package body Memory_Usage_Views.Providers is
       Trace (Me, Name & " memory usage provider registered");
       Provider.Name := To_Unbounded_String (Name);
       Global_Data.Providers.Include
-        (Key      => Name,
-         New_Item => Memory_Usage_Provider (Provider));
+        (Key => Name, New_Item => Memory_Usage_Provider (Provider));
    end Register_Provider;
 
    ---------------------
@@ -197,12 +235,15 @@ package body Memory_Usage_Views.Providers is
    ---------------------
 
    procedure Register_Module
-     (Kernel : not null access GPS.Kernel.Kernel_Handle_Record'Class)
-   is
-      pragma Unreferenced (Kernel);
+     (Kernel : not null access GPS.Kernel.Kernel_Handle_Record'Class) is
    begin
       Compilation_Finished_Hook.Add (new On_Compilation_Finished);
       Project_View_Changed_Hook.Add (new On_Project_View_Changed);
+      Kernel_Callback.Connect
+        (Widget    => Get_MDI (Kernel),
+         Name      => Gtkada.MDI.Signal_Child_Added,
+         Cb        => MDI_Child_Added'Access,
+         User_Data => Kernel_Handle (Kernel));
    end Register_Module;
 
 end Memory_Usage_Views.Providers;
