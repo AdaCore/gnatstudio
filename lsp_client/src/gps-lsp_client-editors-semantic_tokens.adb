@@ -173,8 +173,8 @@ package body GPS.LSP_Client.Editors.Semantic_Tokens is
    Empty_Modifiers_Array : constant Modifiers_Array := (others => False);
 
    function Check_Style_Name
-     (Name        : String;
-      Modifiers   : Modifiers_Array := Empty_Modifiers_Array)
+     (Name      : String;
+      Modifiers : Modifiers_Array := Empty_Modifiers_Array)
       return String;
    --  Returns empty string if style name does not exist.
 
@@ -374,7 +374,7 @@ package body GPS.LSP_Client.Editors.Semantic_Tokens is
       Kernel : not null access GPS.Kernel.Kernel_Handle_Record'Class;
       File   : GNATCOLL.VFS.Virtual_File)
    is
-      Buffer     : constant Editor_Buffer'Class :=
+      Buffer : constant Editor_Buffer'Class :=
         Kernel.Get_Buffer_Factory.Get
           (File, Open_Buffer => False, Open_View => False);
    begin
