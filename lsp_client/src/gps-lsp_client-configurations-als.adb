@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                               GNAT Studio                                --
 --                                                                          --
---                       Copyright (C) 2019-2023, AdaCore                   --
+--                     Copyright (C) 2019-2024, AdaCore                     --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -15,23 +15,26 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
 with GNAT.Strings;
+
+with VSS.Strings;
 
 with GNATCOLL.Projects;
 
 with GPS.Kernel.Charsets;
 with GPS.Kernel.Project;
 with GPS.Kernel.Preferences;
+with VSS.Strings.Conversions;
 
 package body GPS.LSP_Client.Configurations.ALS is
 
    Supported_Settings : constant array (Setting_Kind) of Boolean :=
      (Rename_In_Comments => True, Fold_Comments => True);
 
-   Settings_Names : constant array (Setting_Kind) of Unbounded_String :=
-     (Rename_In_Comments => To_Unbounded_String ("renameInComments"),
-      Fold_Comments      => To_Unbounded_String ("foldComments"));
+   Settings_Names :
+     constant array (Setting_Kind) of VSS.Strings.Virtual_String :=
+       (Rename_In_Comments => "renameInComments",
+        Fold_Comments      => "foldComments");
 
    ----------------------------
    -- Configuration_Settings --
@@ -174,7 +177,8 @@ package body GPS.LSP_Client.Configurations.ALS is
          Integer'(GPS.Kernel.Preferences.LSP_Ada_Param_Threshold.Get_Pref));
 
       Ada_Settings.Set_Field
-        (To_String (Settings_Names (Fold_Comments)),
+        (VSS.Strings.Conversions.To_UTF_8_String
+           (Settings_Names (Fold_Comments)),
          Boolean'(GPS.Kernel.Preferences.Fold_Comments.Get_Pref));
 
       Settings.Set_Field ("ada", Ada_Settings);
@@ -223,7 +227,9 @@ package body GPS.LSP_Client.Configurations.ALS is
 
          when Boolean_Type =>
             Ada_Settings.Set_Field
-              (To_String (Settings_Names (Setting)), Value.vBoolean);
+              (VSS.Strings.Conversions.To_UTF_8_String
+                 (Settings_Names (Setting)),
+               Value.vBoolean);
             Settings.Set_Field ("ada", Ada_Settings);
             return Settings;
       end case;
