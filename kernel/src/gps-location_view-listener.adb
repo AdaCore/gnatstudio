@@ -232,7 +232,7 @@ package body GPS.Location_View.Listener is
           14 => As_Int
             (Sort_Order_Hint'Pos
                (Self.Kernel.Get_Messages_Container.Get_Sort_Order_Hint
-                    (To_String (Category)))),
+                    (VSS.Strings.Conversions.To_Virtual_String (Category)))),
           15 => As_Pointer (System.Null_Address)));
    end Category_Added;
 
@@ -1125,8 +1125,7 @@ package body GPS.Location_View.Listener is
          15 => As_Int
            (Sort_Order_Hint'Pos
                 (Self.Kernel.Get_Messages_Container.Get_Sort_Order_Hint
-                     (VSS.Strings.Conversions.To_UTF_8_String
-                        (Message.Get_Category)))),
+                     (Message.Get_Category))),
          --  XXX Can it be changed dynamically?
          16 => As_Pointer
            (Message_Conversions.To_Address

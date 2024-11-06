@@ -2936,12 +2936,10 @@ package body GPS.Kernel.Messages is
 
    function Get_Sort_Order_Hint
      (Self     : not null access Messages_Container'Class;
-      Category : String) return Sort_Order_Hint
+      Category : VSS.Strings.Virtual_String) return Sort_Order_Hint
    is
-      Category_Name : constant VSS.Strings.Virtual_String :=
-        VSS.Strings.Conversions.To_Virtual_String (Category);
-      Position      : constant Sort_Order_Hint_Maps.Cursor :=
-        Self.Sort_Order_Hints.Find (Category_Name);
+      Position : constant Sort_Order_Hint_Maps.Cursor :=
+        Self.Sort_Order_Hints.Find (Category);
 
    begin
       if Has_Element (Position) then

@@ -461,7 +461,7 @@ package GPS.Kernel.Messages is
 
    function Get_Sort_Order_Hint
      (Self     : not null access Messages_Container'Class;
-      Category : String) return Sort_Order_Hint;
+      Category : VSS.Strings.Virtual_String) return Sort_Order_Hint;
    --  Get the sort order hint for this category
 
    procedure Register_Listener
