@@ -2148,9 +2148,9 @@ package body Aliases_Module is
          if N.Tag.all = "alias" then
             declare
                Name          : constant String :=
-                                 Get_Attribute (N, "name");
+                                 Get_Attribute_S (N, "name");
                Must_Reindent : constant Boolean :=
-                 Get_Attribute (N, "indent", "false") = "true";
+                 Get_Attribute_S (N, "indent", "false") = "true";
             begin
                Expand := null;
 
@@ -2168,13 +2168,13 @@ package body Aliases_Module is
                   elsif Child.Tag.all = "param" then
                      Params.Append
                        ((Name        =>
-                            To_UStr (Get_Attribute (Child, "name")),
+                            To_UStr (Get_Attribute_S (Child, "name")),
                          Description =>
-                            To_UStr (Get_Attribute (Child, "description")),
+                            To_UStr (Get_Attribute_S (Child, "description")),
                          Initial     =>
                             To_UStr (Child.Value.all),
                          From_Env    =>
-                            Get_Attribute (Child, "environment") = "true"));
+                            Get_Attribute_S (Child, "environment") = "true"));
 
                   else
                      Insert (Kernel,

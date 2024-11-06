@@ -291,7 +291,7 @@ package body XML_Utils is
    -- Get_Attribute --
    -------------------
 
-   function Get_Attribute
+   function Get_Attribute_S
      (N              : Node_Ptr;
       Attribute_Name : UTF8_String;
       Default        : UTF8_String := "") return UTF8_String
@@ -331,7 +331,7 @@ package body XML_Utils is
             return V;
          end;
       end if;
-   end Get_Attribute;
+   end Get_Attribute_S;
 
    -------------------
    -- Set_Attribute --
@@ -814,7 +814,7 @@ package body XML_Utils is
       while P /= null loop
          if P.Tag.all = Tag then
             declare
-               The_Value : constant String := Get_Attribute (P, Key);
+               The_Value : constant String := Get_Attribute_S (P, Key);
             begin
                if The_Value /= "" then
                   if Value = "" or The_Value = Value then
@@ -1183,7 +1183,7 @@ package body XML_Utils is
          --  be the case when trying to parse previous XML file formats.
 
          declare
-            S : constant String := Get_Attribute (N, Tag, "");
+            S : constant String := Get_Attribute_S (N, Tag, "");
          begin
             if S /= "" then
                if Host /= "" then
@@ -1210,7 +1210,7 @@ package body XML_Utils is
          Value     : constant String :=
                        Encoded_ASCII_To_String (Child.Value.all);
          Host_Attr : constant String :=
-                       Get_Attribute (Child, "server", Host);
+                       Get_Attribute_S (Child, "server", Host);
       begin
          if Value = "" then
             return No_File;

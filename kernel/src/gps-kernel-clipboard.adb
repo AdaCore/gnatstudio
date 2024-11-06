@@ -194,7 +194,7 @@ package body GPS.Kernel.Clipboard is
               and then Child /= null
             loop
                Clipboard.List (Size) := new String'(Child.Value.all);
-               if Get_Attribute (Child, "last", "false") = "true" then
+               if Get_Attribute_S (Child, "last", "false") = "true" then
                   Clipboard.Last_Paste := Size;
                end if;
 

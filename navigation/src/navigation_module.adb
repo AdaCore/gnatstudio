@@ -580,7 +580,8 @@ package body Navigation_Module is
                      M.Last_Marker := M.Last_Marker + 1;
                      M.Markers (M.Last_Marker) := Marker;
 
-                     if Get_Attribute (Child, "current", "false") = "true" then
+                     if Get_Attribute_S (Child, "current", "false") = "true"
+                     then
                         M.Current_Marker := M.Last_Marker;
                      end if;
 

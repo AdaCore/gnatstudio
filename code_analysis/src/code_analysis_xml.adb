@@ -88,7 +88,7 @@ package body Code_Analysis_XML is
                Projects.Views.Create_Project_View_Reference
                  (Kernel,
                   Kernel.Get_Project_Tree.Project_From_Name
-                    (Get_Attribute (Child, "name"))));
+                    (Get_Attribute_S (Child, "name"))));
             Parse_Project (Prj_Node, Child);
          end if;
 
@@ -150,7 +150,7 @@ package body Code_Analysis_XML is
                --  than to the number of code lines in the original src code
                --  file. It will contain the lines with analysis information.
                File_Node.Lines := new Line_Array
-                 (1 .. Positive'Value (Get_Attribute (Child, "line_count")));
+                 (1 .. Positive'Value (Get_Attribute_S (Child, "line_count")));
                File_Node.Lines.all := (others => Null_Line);
                Parse_File (File_Node, Child);
             end if;
@@ -219,16 +219,17 @@ package body Code_Analysis_XML is
                   Subp_Node : Subprogram_Access;
                begin
                   Subp_Node := Get_Or_Create
-                    (File_Node, Get_Attribute (Child, "name"));
-                  Subp_Node.Name := new String'(Get_Attribute (Child, "name"));
+                    (File_Node, Get_Attribute_S (Child, "name"));
+                  Subp_Node.Name :=
+                    new String'(Get_Attribute_S (Child, "name"));
                   Subp_Node.Line :=
-                    Natural'Value (Get_Attribute (Child, "line"));
+                    Natural'Value (Get_Attribute_S (Child, "line"));
                   Subp_Node.Column :=
-                    Natural'Value (Get_Attribute (Child, "column"));
+                    Natural'Value (Get_Attribute_S (Child, "column"));
                   Subp_Node.Start :=
-                    Natural'Value (Get_Attribute (Child, "start"));
+                    Natural'Value (Get_Attribute_S (Child, "start"));
                   Subp_Node.Stop :=
-                    Natural'Value (Get_Attribute (Child, "stop"));
+                    Natural'Value (Get_Attribute_S (Child, "stop"));
                   XML_Parse_Coverage
                     (Subp_Node.Analysis_Data.Coverage_Data, Child);
                end;
@@ -238,9 +239,10 @@ package body Code_Analysis_XML is
                   Line_Node : Line;
                   Line_Num  : Natural;
                   Line_Contents : constant String :=
-                                    Get_Attribute (Child, "contents");
+                                    Get_Attribute_S (Child, "contents");
                begin
-                  Line_Num := Natural'Value (Get_Attribute (Child, "number"));
+                  Line_Num :=
+                    Natural'Value (Get_Attribute_S (Child, "number"));
                   Line_Node.Number  := Line_Num;
 
                   if Line_Contents /= "" then

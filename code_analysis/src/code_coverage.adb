@@ -452,7 +452,7 @@ package body Code_Coverage is
             return Undetermined;
       end Status_Value;
 
-      Txt_Status : constant String := Get_Attribute (Loc, "status");
+      Txt_Status : constant String := Get_Attribute_S (Loc, "status");
 
    begin
       if Txt_Status /= "" then
@@ -476,11 +476,11 @@ package body Code_Coverage is
 
             if Coverage.Is_Valid then
                Node_Coverage (Coverage.all).Children :=
-                 Natural'Value (Get_Attribute (Loc, "children"));
+                 Natural'Value (Get_Attribute_S (Loc, "children"));
 
                declare
                   Txt_Called : constant String :=
-                    Get_Attribute (Loc, "called");
+                    Get_Attribute_S (Loc, "called");
                begin
                   if Txt_Called /= "" then
                      Subprogram_Coverage (Coverage.all).Called :=
@@ -495,7 +495,7 @@ package body Code_Coverage is
 
             if Coverage.Is_Valid then
                Node_Coverage (Coverage.all).Children :=
-                 Natural'Value (Get_Attribute (Loc, "children"));
+                 Natural'Value (Get_Attribute_S (Loc, "children"));
             end if;
 
          elsif Loc.Tag.all = "Project" then
@@ -505,10 +505,10 @@ package body Code_Coverage is
 
             if Coverage.Is_Valid then
                Node_Coverage (Coverage.all).Children :=
-                 Natural'Value (Get_Attribute (Loc, "children"));
+                 Natural'Value (Get_Attribute_S (Loc, "children"));
 
                declare
-                  Txt_Runs : constant String := Get_Attribute (Loc, "runs");
+                  Txt_Runs : constant String := Get_Attribute_S (Loc, "runs");
                begin
                   if Txt_Runs /= "" then
                      Project_Coverage (Coverage.all).Have_Runs := True;
@@ -521,7 +521,7 @@ package body Code_Coverage is
 
          if Coverage.Is_Valid then
             Coverage.Coverage :=
-              Natural'Value (Get_Attribute (Loc, "coverage"));
+              Natural'Value (Get_Attribute_S (Loc, "coverage"));
          end if;
       end if;
    end XML_Parse_Coverage;

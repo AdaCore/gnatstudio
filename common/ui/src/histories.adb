@@ -272,23 +272,23 @@ package body Histories is
          while Key /= null loop
             begin
                if Key.Attributes = null
-                 or else Get_Attribute (Key, Type_Name) = Strings_Name
+                 or else Get_Attribute_S (Key, Type_Name) = Strings_Name
                then
                   Value := Create_New_Key_If_Necessary
                     (Hist,
-                     History_Key (Get_Attribute (Key, Name_Name)),
+                     History_Key (Get_Attribute_S (Key, Name_Name)),
                      Strings);
 
-               elsif Get_Attribute (Key, Type_Name) = Booleans_Name then
+               elsif Get_Attribute_S (Key, Type_Name) = Booleans_Name then
                   Value := Create_New_Key_If_Necessary
-                    (Hist, History_Key (Get_Attribute (Key, Name_Name)),
+                    (Hist, History_Key (Get_Attribute_S (Key, Name_Name)),
                      Booleans);
 
                else
                   Value := null;
                   Trace (Me, "Invalid data type in "
                          & File_Name.Display_Full_Name
-                         & " : " & Get_Attribute (Key, Type_Name));
+                         & " : " & Get_Attribute_S (Key, Type_Name));
                end if;
 
             exception

@@ -160,12 +160,12 @@ package body GPS.Kernel.Messages.Multilines is
       return not null Message_Access
    is
       pragma Unreferenced (Actual_Line, Actual_Column);
-      Text       : constant String := Get_Attribute (XML_Node, "text", "");
+      Text       : constant String := Get_Attribute_S (XML_Node, "text", "");
       End_Line   : constant Natural
-        := Natural'Value (Get_Attribute (XML_Node, "end_line", "1"));
+        := Natural'Value (Get_Attribute_S (XML_Node, "end_line", "1"));
       End_Column : constant Basic_Types.Visible_Column_Type
         := Basic_Types.Visible_Column_Type'Value
-          (Get_Attribute (XML_Node, "end_column", "1"));
+          (Get_Attribute_S (XML_Node, "end_column", "1"));
    begin
       return
         Message_Access

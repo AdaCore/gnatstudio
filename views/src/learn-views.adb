@@ -530,7 +530,7 @@ package body Learn.Views is
       end if;
 
       declare
-         Pos_Str : constant String := Get_Attribute (Learn_Node, "position");
+         Pos_Str : constant String := Get_Attribute_S (Learn_Node, "position");
       begin
          if Pos_Str /= "" then
             View.Stored_Pos := Float'Value

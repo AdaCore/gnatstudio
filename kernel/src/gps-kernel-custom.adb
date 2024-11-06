@@ -454,7 +454,7 @@ package body GPS.Kernel.Custom is
             while N /= null loop
                if N.Tag.all = "startup" then
                   begin
-                     if Boolean'Value (Get_Attribute (N, "load")) then
+                     if Boolean'Value (Get_Attribute_S (N, "load")) then
                         Mode := Explicit_On;
                      else
                         Mode := Explicit_Off;
@@ -472,7 +472,7 @@ package body GPS.Kernel.Custom is
                   Set
                     (Scripts_Htable_Access
                        (Kernel.Startup_Scripts).Table,
-                     K => Get_Attribute (N, "file"),
+                     K => Get_Attribute_S (N, "file"),
                      E => Script);
                end if;
                N := N.Next;

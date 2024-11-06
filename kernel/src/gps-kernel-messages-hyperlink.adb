@@ -163,11 +163,11 @@ package body GPS.Kernel.Messages.Hyperlink is
       Actual_Column : Integer;
       Flags         : Message_Flags)
    is
-      Text  : constant String := Get_Attribute (XML_Node, "text", "");
+      Text  : constant String := Get_Attribute_S (XML_Node, "text", "");
       First : constant Positive :=
-                Positive'Value (Get_Attribute (XML_Node, "first", "1"));
+                Positive'Value (Get_Attribute_S (XML_Node, "first", "1"));
       Last  : constant Natural :=
-                Natural'Value (Get_Attribute (XML_Node, "last", "0"));
+                Natural'Value (Get_Attribute_S (XML_Node, "last", "0"));
 
    begin
       Create_Hyperlink_Message

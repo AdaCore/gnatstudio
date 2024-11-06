@@ -2440,7 +2440,7 @@ package body Code_Analysis_Module is
       View        : Views.View_Access;
    begin
       if Node.Tag.all = "Code_Analysis_Tree" then
-         Analysis := Get_Or_Create (Get_Attribute (Node, "name"));
+         Analysis := Get_Or_Create (Get_Attribute_S (Node, "name"));
 
          --  We do not parse the subtree, as the project is not loaded yet,
          --  and we need it loaded to restore the view. This will be done later

@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                               GNAT Studio                                --
 --                                                                          --
---                     Copyright (C) 2001-2023, AdaCore                     --
+--                     Copyright (C) 2001-2024, AdaCore                     --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -1902,15 +1902,17 @@ package body GPS.Kernel.Preferences is
    begin
       if Node.Tag.all = "preference" then
          declare
-            Name    : constant String := Get_Attribute (Node, "name", "");
+            Name    : constant String := Get_Attribute_S (Node, "name", "");
             Path    : constant String :=
-                        Get_Attribute (Node, "page", "General");
-            Default : constant String := Get_Attribute (Node, "default", "");
-            Tooltip : constant String := Get_Attribute (Node, "tip", "");
-            Label   : constant String := Get_Attribute (Node, "label", "");
-            Typ     : constant String := Get_Attribute (Node, "type", "");
-            Min     : constant String := Get_Attribute (Node, "minimum", "0");
-            Max     : constant String := Get_Attribute (Node, "maximum", "10");
+                        Get_Attribute_S (Node, "page", "General");
+            Default : constant String := Get_Attribute_S (Node, "default", "");
+            Tooltip : constant String := Get_Attribute_S (Node, "tip", "");
+            Label   : constant String := Get_Attribute_S (Node, "label", "");
+            Typ     : constant String := Get_Attribute_S (Node, "type", "");
+            Min     : constant String :=
+              Get_Attribute_S (Node, "minimum", "0");
+            Max     : constant String :=
+              Get_Attribute_S (Node, "maximum", "10");
             Pref    : Preference;
             pragma Unreferenced (Pref);
             Minimum, Maximum, Def : Integer;

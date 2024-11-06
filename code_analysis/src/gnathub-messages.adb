@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                               GNAT Studio                                --
 --                                                                          --
---                       Copyright (C) 2016-2024, AdaCore                   --
+--                     Copyright (C) 2016-2024, AdaCore                     --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -231,10 +231,12 @@ package body GNAThub.Messages is
       pragma Unreferenced
         (Actual_Line, Actual_Column, Flags,
          Allow_Auto_Jump_To_First, Category);
-      Text      : constant String := Get_Attribute (XML_Node, "text", "");
-      Tool_Name : constant String := Get_Attribute (XML_Node, "tool_name", "");
-      Rule_Name : constant String := Get_Attribute (XML_Node, "rule_name", "");
-      Rule_ID   : constant String := Get_Attribute (XML_Node, "rule_id", "");
+      Text      : constant String := Get_Attribute_S (XML_Node, "text", "");
+      Tool_Name : constant String :=
+        Get_Attribute_S (XML_Node, "tool_name", "");
+      Rule_Name : constant String :=
+        Get_Attribute_S (XML_Node, "rule_name", "");
+      Rule_ID   : constant String := Get_Attribute_S (XML_Node, "rule_id", "");
       Tool      : constant Tool_Access :=
         GNAThub_Module.Get_Or_Create_Tool (To_Unbounded_String (Tool_Name));
       Rule      : constant Rule_Access := GNAThub_Module.Get_Or_Create_Rule

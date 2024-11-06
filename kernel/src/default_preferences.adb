@@ -2072,7 +2072,8 @@ package body Default_Preferences is
                while Node /= null loop
                   if Node.Tag.all = "pref" then
                      declare
-                        Name : constant String := Get_Attribute (Node, "name");
+                        Name : constant String :=
+                          Get_Attribute_S (Node, "name");
                      begin
                         Set_Pref
                           (Manager => Manager,

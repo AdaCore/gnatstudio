@@ -1333,10 +1333,11 @@ package body Call_Graph_Views is
    function From_XML (N : Node_Ptr) return Reference_Record is
       Result : Reference_Record;
    begin
-      Result.Line := Integer'Value (Get_Attribute (N, "line"));
-      Result.Column := Visible_Column_Type'Value (Get_Attribute (N, "column"));
-      Result.File := Create (+Get_Attribute (N, "file"));
-      Result.Through_Dispatching := Get_Attribute (N, "dispatch") = "true";
+      Result.Line   := Integer'Value (Get_Attribute_S (N, "line"));
+      Result.Column :=
+        Visible_Column_Type'Value (Get_Attribute_S (N, "column"));
+      Result.File   := Create (+Get_Attribute_S (N, "file"));
+      Result.Through_Dispatching := Get_Attribute_S (N, "dispatch") = "true";
       return Result;
    end From_XML;
 
@@ -1539,27 +1540,31 @@ package body Call_Graph_Views is
                   (Name_Column, Decl_Column, Entity_Name_Column, File_Column,
                    Line_Column, Column_Column, Project_Column, Kind_Column,
                    Sort_Column),
-                  (1 => As_String (Get_Attribute (N, "name")),
-                   2 => As_String (Get_Attribute (N, "decl")),
-                   3 => As_String (Get_Attribute (N, "entity_name")),
-                   4 => As_File   (Create (+Get_Attribute (N, "entity_decl"))),
-                   5 => As_Int (Gint'Value (Get_Attribute (N, "entity_line"))),
+                  (1 => As_String (Get_Attribute_S (N, "name")),
+                   2 => As_String (Get_Attribute_S (N, "decl")),
+                   3 => As_String (Get_Attribute_S (N, "entity_name")),
+                   4 =>
+                     As_File   (Create (+Get_Attribute_S (N, "entity_decl"))),
+                   5 =>
+                     As_Int (Gint'Value (Get_Attribute_S (N, "entity_line"))),
                    6 => As_Int
-                     (Gint'Value (Get_Attribute (N, "entity_column"))),
+                     (Gint'Value (Get_Attribute_S (N, "entity_column"))),
                    7 => As_File
-                     (Create (+Get_Attribute (N, "entity_project"))),
+                     (Create (+Get_Attribute_S (N, "entity_project"))),
                    8 => As_Int (View_Type'Pos
                      (View_Type'Value
                         (if Is_Calls
-                           then Get_Attribute (N, "type", "view_calls")
-                           else Get_Attribute (N, "type", "view_called_by")))),
-                   9 => As_String (Get_Attribute
-                     (N, "name") & " " & Get_Attribute (N, "decl"))));
+                           then Get_Attribute_S (N, "type", "view_calls")
+                           else Get_Attribute_S
+                                  (N, "type", "view_called_by")))),
+                   9 => As_String (Get_Attribute_S
+                     (N, "name") & " " & Get_Attribute_S (N, "decl"))));
 
                if N.Child /= null then
                   Recursive_Load
                     (Iter, N.Child,
-                     Expand_Parent => Get_Attribute (N, "expanded") = "true");
+                     Expand_Parent =>
+                       Get_Attribute_S (N, "expanded") = "true");
                else
                   Append (Model, Dummy, Iter);
                   Model.Set (Dummy, Name_Column, Computing_Label);
@@ -1577,8 +1582,8 @@ package body Call_Graph_Views is
       end if;
 
       declare
-         Pos_Str : constant String := Get_Attribute (Callgraph, "position");
-         V_Type  : constant String := Get_Attribute (XML, "type");
+         Pos_Str : constant String := Get_Attribute_S (Callgraph, "position");
+         V_Type  : constant String := Get_Attribute_S (XML, "type");
       begin
          if Pos_Str /= "" then
             if Pos_Str (Pos_Str'Last) = '%' then

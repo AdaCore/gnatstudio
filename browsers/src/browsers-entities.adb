@@ -350,15 +350,15 @@ package body Browsers.Entities is
    is
       E : constant Root_Entity'Class :=
         Self.Kernel.Databases.Get_Entity
-          (Name => XML_Utils.Get_Attribute (Node, "name"),
+          (Name => XML_Utils.Get_Attribute_S (Node, "name"),
            Loc  =>
-             (File    => Create (+XML_Utils.Get_Attribute (Node, "file")),
+             (File    => Create (+XML_Utils.Get_Attribute_S (Node, "file")),
               Project_Path => <>,
               Line    =>
-                Integer'Value (XML_Utils.Get_Attribute (Node, "line")),
+                Integer'Value (XML_Utils.Get_Attribute_S (Node, "line")),
               Column  =>
                 Visible_Column_Type'Value
-                  (XML_Utils.Get_Attribute (Node, "col"))));
+                  (XML_Utils.Get_Attribute_S (Node, "col"))));
       It : Type_Item;
       Newly_Added : Boolean;
    begin
@@ -380,8 +380,8 @@ package body Browsers.Entities is
    begin
       Add_Link
         (Type_Item (From), Type_Item (To),
-         Link_Name   => XML_Utils.Get_Attribute (Node, "name"),
-         Parent_Link => XML_Utils.Get_Attribute (Node, "parent") = "1");
+         Link_Name   => XML_Utils.Get_Attribute_S (Node, "name"),
+         Parent_Link => XML_Utils.Get_Attribute_S (Node, "parent") = "1");
    end Load_From_XML;
 
    -----------------

@@ -1296,14 +1296,14 @@ package body GPS.Kernel.Messages is
          ----------------------------
 
          function Get_Message_Importance return Message_Importance_Type is
-            Importance_Val : constant String := Get_Attribute
+            Importance_Val : constant String := Get_Attribute_S
               (XML_Node, "importance", "");
          begin
             if Importance_Val /= "" then
                return Message_Importance_Type'Value (Importance_Val);
             else
                declare
-                  Weight_Val : constant String := Get_Attribute
+                  Weight_Val : constant String := Get_Attribute_S
                     (XML_Node, "weight", "");
                   Weight     : constant Integer :=
                                  (if Weight_Val = "" then
@@ -1329,35 +1329,35 @@ package body GPS.Kernel.Messages is
 
          Class         : constant Tag :=
                            Internal_Tag
-                             (Get_Attribute (XML_Node, "class", ""));
+                             (Get_Attribute_S (XML_Node, "class", ""));
          Line          : constant Natural :=
                            Natural'Value
-                             (Get_Attribute (XML_Node, "line", ""));
+                             (Get_Attribute_S (XML_Node, "line", ""));
          Column        : constant Visible_Column_Type :=
                            Visible_Column_Type'Value
-                             (Get_Attribute (XML_Node, "column", ""));
+                             (Get_Attribute_S (XML_Node, "column", ""));
          Importance    : constant Message_Importance_Type :=
                            Get_Message_Importance;
          Flags         : constant Message_Flags :=
-           From_Int (Integer'Value (Get_Attribute (XML_Node, "flags", "0")));
+           From_Int (Integer'Value (Get_Attribute_S (XML_Node, "flags", "0")));
 
          Actual_Line   : constant Integer :=
                            Integer'Value
-                             (Get_Attribute
+                             (Get_Attribute_S
                                 (XML_Node,
                                  "actual_line",
                                  Natural'Image (Line)));
          Actual_Column : constant Integer :=
                            Integer'Value
-                             (Get_Attribute
+                             (Get_Attribute_S
                                 (XML_Node,
                                  "actual_column",
                                  Visible_Column_Type'Image (Column)));
          Style_Name    : constant String :=
-                           Get_Attribute (XML_Node, "highlighting_style", "");
+           Get_Attribute_S (XML_Node, "highlighting_style", "");
          Length        : constant Highlight_Length :=
                            Highlight_Length'Value
-                             (Get_Attribute
+                             (Get_Attribute_S
                                 (XML_Node, "highlighting_length",
                                  Highlight_Whole_Line'Img));
          Message       : Message_Access;
@@ -1404,28 +1404,28 @@ package body GPS.Kernel.Messages is
       is
          Class         : constant Tag :=
                            Internal_Tag
-                             (Get_Attribute (XML_Node, "class", ""));
+                             (Get_Attribute_S (XML_Node, "class", ""));
          File          : constant Virtual_File :=
                            Get_File_Child (XML_Node, "file");
          Line          : constant Natural :=
                            Natural'Value
-                             (Get_Attribute (XML_Node, "line", ""));
+                             (Get_Attribute_S (XML_Node, "line", ""));
          Column        : constant Visible_Column_Type :=
                            Visible_Column_Type'Value
-             (Get_Attribute (XML_Node, "column", ""));
+             (Get_Attribute_S (XML_Node, "column", ""));
 
          Flags : constant Message_Flags :=
-           From_Int (Integer'Value (Get_Attribute (XML_Node, "flags", "0")));
+           From_Int (Integer'Value (Get_Attribute_S (XML_Node, "flags", "0")));
 
          Actual_Line   : constant Integer :=
                            Integer'Value
-                             (Get_Attribute
+                             (Get_Attribute_S
                                 (XML_Node,
                                  "actual_line",
                                  Natural'Image (Line)));
          Actual_Column : constant Integer :=
                            Integer'Value
-                             (Get_Attribute
+                             (Get_Attribute_S
                                 (XML_Node,
                                  "actual_column",
                                  Visible_Column_Type'Image (Column)));
@@ -1477,9 +1477,9 @@ package body GPS.Kernel.Messages is
             if Category_XML_Node.Tag.all = "sort_order_hint" then
                Self.Sort_Order_Hints.Insert
                  (To_Unbounded_String
-                    (Get_Attribute (Category_XML_Node, "category", "")),
+                    (Get_Attribute_S (Category_XML_Node, "category", "")),
                   Sort_Order_Hint'Value
-                    (Get_Attribute
+                    (Get_Attribute_S
                        (Category_XML_Node,
                         "hint",
                         Sort_Order_Hint'Image (Chronological))));
@@ -1487,7 +1487,7 @@ package body GPS.Kernel.Messages is
             elsif Category_XML_Node.Tag.all = "category" then
                Category :=
                  To_Unbounded_String
-                   (Get_Attribute (Category_XML_Node, "name", "ERROR"));
+                   (Get_Attribute_S (Category_XML_Node, "name", "ERROR"));
 
                File_XML_Node := Category_XML_Node.Child;
 

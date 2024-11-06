@@ -1747,9 +1747,9 @@ package body KeyManager_Module is
             while Child /= null loop
                declare
                   Action        : constant String :=
-                    Get_Attribute (Child, "action");
+                    Get_Attribute_S (Child, "action");
                   Load          : constant String :=
-                    Get_Attribute (Child, "load");
+                    Get_Attribute_S (Child, "load");
                   Actual_Action : constant String :=
                     (if Action'Length > 0
                      and then Action (Action'First) = '/'
@@ -2084,10 +2084,10 @@ package body KeyManager_Module is
    begin
       if Node.Tag.all = "key" then
          declare
-            Action    : constant String := Get_Attribute (Node, "action");
+            Action    : constant String := Get_Attribute_S (Node, "action");
             Exclusive : constant Boolean :=
                           To_Lower
-                            (Get_Attribute
+                            (Get_Attribute_S
                                (Node, "exclusive", "true")) = "true";
          begin
             if Action = "" then

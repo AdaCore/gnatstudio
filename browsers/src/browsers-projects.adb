@@ -232,7 +232,7 @@ package body Browsers.Projects is
       P : constant Project_Type :=
             Lookup_Project
               (Self.Kernel,
-               Create (+XML_Utils.Get_Attribute (Node, "path")));
+               Create (+XML_Utils.Get_Attribute_S (Node, "path")));
 
    begin
       return Self.Add_Project_If_Not_Present (P);
@@ -249,7 +249,8 @@ package body Browsers.Projects is
    begin
       Self.Add_Link_If_Not_Present
         (Project_Item (From), Project_Item (To),
-         Limited_With => XML_Utils.Get_Attribute (Node, "limited_with") = "1");
+         Limited_With =>
+           XML_Utils.Get_Attribute_S (Node, "limited_with") = "1");
    end Load_From_XML;
 
    --------------------

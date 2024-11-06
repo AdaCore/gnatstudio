@@ -765,10 +765,10 @@ package body Src_Editor_Module.Markers is
                Project => Get_Registry (Kernel).Tree.Project_From_Path
                (Get_File_Child (From_XML, "project")),
                Line    => Editable_Line_Type'Value
-                 (Get_Attribute (From_XML, "line")),
+                 (Get_Attribute_S (From_XML, "line")),
                Column  =>
                  Visible_Column_Type'Value
-                   (Get_Attribute (From_XML, "column")));
+                   (Get_Attribute_S (From_XML, "column")));
          end if;
 
       elsif JSON /= JSON_Null then

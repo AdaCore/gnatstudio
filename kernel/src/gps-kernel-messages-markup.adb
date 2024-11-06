@@ -248,7 +248,7 @@ package body GPS.Kernel.Messages.Markup is
       Allow_Auto_Jump_To_First : Boolean)
       return not null Message_Access
    is
-      Text : constant String := Get_Attribute (XML_Node, "text", "");
+      Text : constant String := Get_Attribute_S (XML_Node, "text", "");
 
    begin
       return

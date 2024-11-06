@@ -465,7 +465,7 @@ package body Remote.View is
    is
       Mode     : Boolean;
       Mode_Str : constant String :=
-                   Get_Attribute (XML, "simple_mode", "True");
+                   Get_Attribute_S (XML, "simple_mode", "True");
    begin
       begin
          Mode := Boolean'Value (Mode_Str);

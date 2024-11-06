@@ -3610,7 +3610,7 @@ package body Vsearch is
                Name           => Name.Value.all,
                Regexp         => Patt.Value.all,
                Case_Sensitive =>
-                 To_Lower (Get_Attribute (Patt, "case-sensitive")) = "true",
+                 To_Lower (Get_Attribute_S (Patt, "case-sensitive")) = "true",
                Is_Regexp      => Patt.Tag.all = "regexp");
          end if;
       end if;

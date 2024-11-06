@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                               GNAT Studio                                --
 --                                                                          --
---                     Copyright (C) 2001-2023, AdaCore                     --
+--                     Copyright (C) 2001-2024, AdaCore                     --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -658,11 +658,11 @@ package body Commands.Custom is
       Default_Show_Command : Boolean) return Command_Component
    is
       Output       : constant String :=
-                       Get_Attribute (Command, "output", "@@");
+                       Get_Attribute_S (Command, "output", "@@");
       Script       : constant String :=
-                       Get_Attribute (Command, "lang", GPS_Shell_Name);
+                       Get_Attribute_S (Command, "lang", GPS_Shell_Name);
       Show_Command : constant String :=
-                       Get_Attribute (Command, "show-command");
+                       Get_Attribute_S (Command, "show-command");
       Show_C       : Boolean := Show_Command = "true";
       Outp         : GNAT.Strings.String_Access := null;
 
@@ -694,29 +694,28 @@ package body Commands.Custom is
       Default_Show_Command         : Boolean) return Command_Component
    is
       Output            : constant String :=
-                            Get_Attribute (Command, "output", "@@");
+                            Get_Attribute_S (Command, "output", "@@");
       Show_Command      : constant String :=
-                            Get_Attribute (Command, "show-command");
+                            Get_Attribute_S (Command, "show-command");
       Show_C            : Boolean := Show_Command = "true";
       Show_Task_Manager : constant String :=
-                            Get_Attribute (Command, "show-task-manager");
+                            Get_Attribute_S (Command, "show-task-manager");
       Show_TM           : Boolean := Show_Task_Manager = "true";
       Progress_Regexp   : constant String :=
-                            Get_Attribute (Command, "progress-regexp", "");
+                            Get_Attribute_S (Command, "progress-regexp", "");
       Progress_Current  : constant Integer :=
                             Safe_Value
-                              (Get_Attribute
+                              (Get_Attribute_S
                                  (Command, "progress-current", "1"));
       Progress_Final    : constant Integer :=
-                            Safe_Value
-                              (Get_Attribute (Command, "progress-final", "2"));
+        Safe_Value (Get_Attribute_S (Command, "progress-final", "2"));
       Progress_Hide     : constant Boolean :=
-                            Get_Attribute
+                            Get_Attribute_S
                               (Command, "progress-hide", "true") = "true";
       Server            : constant String :=
-                            Get_Attribute (Command, "server", "gps_server");
+                            Get_Attribute_S (Command, "server", "gps_server");
       Check_Password    : constant Boolean :=
-                            Get_Attribute
+                            Get_Attribute_S
                               (Command, "check-password", "false") = "true";
       Outp              : GNAT.Strings.String_Access := null;
       Server_T          : Server_Type;

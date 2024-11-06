@@ -254,13 +254,13 @@ package body Browsers.Call_Graph is
    is
       E : constant Root_Entity'Class :=
         Self.Kernel.Databases.Get_Entity
-          (Name => Get_Attribute (Node, "name"),
+          (Name => Get_Attribute_S (Node, "name"),
            Loc  =>
-             (File         => Create (+Get_Attribute (Node, "file")),
+             (File         => Create (+Get_Attribute_S (Node, "file")),
               Project_Path => <>,
-              Line    => Integer'Value (Get_Attribute (Node, "line")),
+              Line    => Integer'Value (Get_Attribute_S (Node, "line")),
               Column  =>
-                Visible_Column_Type'Value (Get_Attribute (Node, "col"))));
+                Visible_Column_Type'Value (Get_Attribute_S (Node, "col"))));
       It            : Entity_Item;
       Newly_Created : Boolean;
    begin

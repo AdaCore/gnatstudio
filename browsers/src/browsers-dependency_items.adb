@@ -318,11 +318,11 @@ package body Browsers.Dependency_Items is
    begin
       Find_Or_Create_File
         (General_Browser (Self),
-         Filename => Create (+XML_Utils.Get_Attribute (Node, "file")),
+         Filename => Create (+XML_Utils.Get_Attribute_S (Node, "file")),
          Project  =>
            Lookup_Project
              (Self.Kernel,
-              Create (+XML_Utils.Get_Attribute (Node, "project"))),
+              Create (+XML_Utils.Get_Attribute_S (Node, "project"))),
          Item     => It,
          Newly_Added => Newly_Added);
       return It;
@@ -340,7 +340,7 @@ package body Browsers.Dependency_Items is
    begin
       Self.Add_Link
         (File_Item (From), File_Item (To),
-         Explicit => XML_Utils.Get_Attribute (Node, "explicit") = "1");
+         Explicit => XML_Utils.Get_Attribute_S (Node, "explicit") = "1");
    end Load_From_XML;
 
    --------------------

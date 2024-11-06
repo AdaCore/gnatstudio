@@ -327,7 +327,7 @@ package body GPS.Kernel.Messages.Simple is
       Allow_Auto_Jump_To_First : Boolean := True)
       return not null Message_Access
    is
-      Text : constant String := Get_Attribute (XML_Node, "text", "");
+      Text : constant String := Get_Attribute_S (XML_Node, "text", "");
 
    begin
       return
@@ -360,7 +360,7 @@ package body GPS.Kernel.Messages.Simple is
       Actual_Column : Integer;
       Flags         : Message_Flags)
    is
-      Text  : constant String := Get_Attribute (XML_Node, "text", "");
+      Text  : constant String := Get_Attribute_S (XML_Node, "text", "");
       Dummy : Simple_Message_Access;
 
    begin

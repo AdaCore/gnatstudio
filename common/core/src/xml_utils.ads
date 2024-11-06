@@ -127,7 +127,7 @@ package XML_Utils is
    --  If Free_Data is not null, it is used to free the memory occupied by
    --  the Specific_Data for each node.
 
-   function Get_Attribute
+   function Get_Attribute_S
      (N : Node_Ptr;
       Attribute_Name : UTF8_String;
       Default        : UTF8_String := "") return UTF8_String;

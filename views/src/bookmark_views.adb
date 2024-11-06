@@ -2488,14 +2488,14 @@ package body Bookmark_Views is
             B := null;
 
             if Child.Tag.all = "group" then
-               B := New_Group (Get_Attribute (Child, "bookmark_name", ""));
+               B := New_Group (Get_Attribute_S (Child, "bookmark_name", ""));
                Load_Same_Level (Parent => B, First => Child.Child);
 
             elsif Child.Tag.all = "unattached" then
                B := New_Bookmark
                  (Kernel, No_Marker,
                   Name       => Encoded_ASCII_To_String
-                    (Get_Attribute (Child, "bookmark_name", "")),
+                    (Get_Attribute_S (Child, "bookmark_name", "")),
                   On_Project => False);
 
             else
@@ -2506,7 +2506,7 @@ package body Bookmark_Views is
                      Adjust_Marker
                        (Marker,
                         Encoded_ASCII_To_String
-                          (Get_Attribute
+                          (Get_Attribute_S
                                (Child, Line_Text_Attribute, "no-line-text")));
                   end if;
 
@@ -2515,7 +2515,7 @@ package body Bookmark_Views is
                        (Kernel,
                         Marker,
                         Name =>
-                          Get_Attribute (Child, "bookmark_name", ""),
+                          Get_Attribute_S (Child, "bookmark_name", ""),
                         On_Project => False);
                   end if;
                end if;

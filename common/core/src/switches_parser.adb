@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                               GNAT Studio                                --
 --                                                                          --
---                     Copyright (C) 2008-2023, AdaCore                     --
+--                     Copyright (C) 2008-2024, AdaCore                     --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -54,9 +54,9 @@ package body Switches_Parser is
       --  Size of the grid for this tool.
 
       Char        : constant String :=
-                      Get_Attribute (Node, "switch_char", "-");
+                      Get_Attribute_S (Node, "switch_char", "-");
       Default_Sep : constant String :=
-                      Get_Attribute (Node, "separator", "");
+                      Get_Attribute_S (Node, "separator", "");
 
       Scrolled_Window   : Boolean;
       Show_Command_Line : Boolean;
@@ -131,10 +131,10 @@ package body Switches_Parser is
         (N : Node_Ptr; Line, Col : out Natural)
       is
       begin
-         Line := Safe_Value (Get_Attribute (N, "line", "1"));
+         Line := Safe_Value (Get_Attribute_S (N, "line", "1"));
          Lines := Integer'Max (Lines, Line);
 
-         Col  := Safe_Value (Get_Attribute (N, "column", "1"));
+         Col  := Safe_Value (Get_Attribute_S (N, "column", "1"));
          Columns := Integer'Max (Columns, Col);
       end Coordinates_From_Node;
 
@@ -145,9 +145,9 @@ package body Switches_Parser is
       procedure Process_Title_Node (N : Node_Ptr; Popup : Popup_Index) is
          Line, Col : Natural;
          Line_Span : constant Integer :=
-                       Safe_Value (Get_Attribute (N, "line-span", "1"));
+                       Safe_Value (Get_Attribute_S (N, "line-span", "1"));
          Col_Span  : constant Integer :=
-                       Safe_Value (Get_Attribute (N, "column-span", "1"));
+                       Safe_Value (Get_Attribute_S (N, "column-span", "1"));
       begin
          Coordinates_From_Node (N, Line, Col);
          Set_Frame_Title
@@ -165,10 +165,13 @@ package body Switches_Parser is
       -------------------------------------------
 
       procedure Process_Default_Value_Dependency_Node (N : Node_Ptr) is
-         Master_Switch : constant String := Get_Attribute (N, "master-switch");
-         Slave_Switch  : constant String := Get_Attribute (N, "slave-switch");
+         Master_Switch : constant String :=
+           Get_Attribute_S (N, "master-switch");
+         Slave_Switch  : constant String :=
+           Get_Attribute_S (N, "slave-switch");
          Slave_Status  : constant String :=
-                          Get_Attribute (N, "slave-status", "on");
+           Get_Attribute_S (N, "slave-status", "on");
+
       begin
          if Master_Switch = "" or else Slave_Switch = "" then
             Log_Error
@@ -181,9 +184,9 @@ package body Switches_Parser is
          Add_Default_Value_Dependency
            (Current_Tool_Config,
             Master_Switch,
-            Get_Attribute (N, "master-section"),
+            Get_Attribute_S (N, "master-section"),
             Slave_Switch,
-            Get_Attribute (N, "slave-section"),
+            Get_Attribute_S (N, "slave-section"),
             Slave_Status = "on" or else Slave_Status = "true");
       end Process_Default_Value_Dependency_Node;
 
@@ -192,15 +195,18 @@ package body Switches_Parser is
       -----------------------------
 
       procedure Process_Dependency_Node (N : Node_Ptr) is
-         Master_Page   : constant String := Get_Attribute (N, "master-page");
-         Master_Switch : constant String := Get_Attribute (N, "master-switch");
-         Slave_Page    : constant String := Get_Attribute (N, "slave-page");
-         Slave_Switch  : constant String := Get_Attribute (N, "slave-switch");
+         Master_Page   : constant String := Get_Attribute_S (N, "master-page");
+         Master_Switch : constant String :=
+           Get_Attribute_S (N, "master-switch");
+         Slave_Page    : constant String := Get_Attribute_S (N, "slave-page");
+         Slave_Switch  : constant String :=
+           Get_Attribute_S (N, "slave-switch");
          Master_Status : constant String :=
-                           Get_Attribute (N, "master-status", "true");
+           Get_Attribute_S (N, "master-status", "true");
          Slave_Status  : constant String :=
-                           Get_Attribute (N, "slave-status", "true");
+           Get_Attribute_S (N, "slave-status", "true");
          Config        : Switches_Editor_Config;
+
       begin
          if Master_Page = ""
            or else Master_Switch = ""
@@ -235,11 +241,11 @@ package body Switches_Parser is
          Add_Dependency
            (Config,
             Master_Switch,
-            Get_Attribute (N, "master-section"),
+            Get_Attribute_S (N, "master-section"),
             Master_Status = "true" or else Master_Status = "on",
             Slave_Page,
             Slave_Switch,
-            Get_Attribute (N, "slave-section"),
+            Get_Attribute_S (N, "slave-section"),
             Slave_Status = "true" or else Slave_Status = "on");
       end Process_Dependency_Node;
 
@@ -256,9 +262,9 @@ package body Switches_Parser is
          while N /= null loop
             if N.Tag.all = "radio-entry" then
                declare
-                  Label  : constant String := Get_Attribute (N, "label");
-                  Switch : constant String := Get_Attribute (N, "switch");
-                  Filter : constant String := Get_Attribute (N, "filter");
+                  Label  : constant String := Get_Attribute_S (N, "label");
+                  Switch : constant String := Get_Attribute_S (N, "switch");
+                  Filter : constant String := Get_Attribute_S (N, "filter");
                begin
                   if Label = "" then
                      Log_Error
@@ -276,9 +282,9 @@ package body Switches_Parser is
                      Radio      => Radio,
                      Label      => Label,
                      Switch     => Switch,
-                     Section    => Get_Attribute (N, "section"),
+                     Section    => Get_Attribute_S (N, "section"),
                      Tip        => Get_Tip_Value (N),
-                     Add_Before => Get_Attribute (N, "before") = "true",
+                     Add_Before => Get_Attribute_S (N, "before") = "true",
                      Filter     => Filter);
                end;
             end if;
@@ -313,8 +319,8 @@ package body Switches_Parser is
                end loop;
 
                declare
-                  Label : constant String := Get_Attribute (N, "label");
-                  Value : constant String := Get_Attribute (N, "value");
+                  Label : constant String := Get_Attribute_S (N, "label");
+                  Value : constant String := Get_Attribute_S (N, "value");
                begin
                   if Label = "" or else Value = "" then
                      Log_Error
@@ -342,7 +348,7 @@ package body Switches_Parser is
       procedure Process_Radio_Node (N : Node_Ptr; Popup : Popup_Index) is
          Line, Col : Natural;
          R         : Radio_Switch;
-         Label     : constant String := Get_Attribute (N, "label");
+         Label     : constant String := Get_Attribute_S (N, "label");
          Tip       : constant String := Get_Tip_Value (N);
       begin
          Coordinates_From_Node (N, Line, Col);
@@ -369,7 +375,7 @@ package body Switches_Parser is
 
       procedure Process_Popup_Node (N : Node_Ptr; Popup : Popup_Index) is
          Line, Col : Natural;
-         Label     : constant String := Get_Attribute (N, "label");
+         Label     : constant String := Get_Attribute_S (N, "label");
          Pop       : Popup_Index;
          Saved_Lines : constant Integer := Lines;
          Saved_Columns : constant Integer := Columns;
@@ -407,9 +413,9 @@ package body Switches_Parser is
 
       procedure Process_Combo_Node (N : Node_Ptr; Popup : Popup_Index) is
          Line, Col : Natural;
-         Label     : constant String := Get_Attribute (N, "label");
-         Switch    : constant String := Get_Attribute (N, "switch");
-         Filter    : constant String := Get_Attribute (N, "filter");
+         Label     : constant String := Get_Attribute_S (N, "label");
+         Switch    : constant String := Get_Attribute_S (N, "switch");
+         Filter    : constant String := Get_Attribute_S (N, "filter");
       begin
          Coordinates_From_Node (N, Line, Col);
 
@@ -428,15 +434,15 @@ package body Switches_Parser is
            (Config     => Current_Tool_Config,
             Label      => Label,
             Switch     => Switch,
-            Separator  => Get_Attribute (N, "separator", ""),
-            No_Switch  => Get_Attribute (N, "noswitch"),
-            No_Digit   => Get_Attribute (N, "nodigit"),
+            Separator  => Get_Attribute_S (N, "separator", ""),
+            No_Switch  => Get_Attribute_S (N, "noswitch"),
+            No_Digit   => Get_Attribute_S (N, "nodigit"),
             Entries    => Process_Combo_Entry_Nodes (N),
-            Section    => Get_Attribute (N, "section"),
+            Section    => Get_Attribute_S (N, "section"),
             Tip        => Get_Tip_Value (N),
             Line       => Line,
             Column     => Col,
-            Add_Before => Get_Attribute (N, "before") = "true",
+            Add_Before => Get_Attribute_S (N, "before") = "true",
             Popup      => Popup,
             Filter     => Filter);
       end Process_Combo_Node;
@@ -446,7 +452,7 @@ package body Switches_Parser is
       -------------------------
 
       procedure Process_Hidden_Node (N : Node_Ptr) is
-         Switch : constant String := Get_Attribute (N, "switch");
+         Switch : constant String := Get_Attribute_S (N, "switch");
 
       begin
          if Switch = "" then
@@ -462,7 +468,7 @@ package body Switches_Parser is
          Add_Hidden
            (Config    => Current_Tool_Config,
             Switch    => Switch,
-            Separator => Get_Attribute (N, "separator", Default_Sep));
+            Separator => Get_Attribute_S (N, "separator", Default_Sep));
       end Process_Hidden_Node;
 
       ------------------------
@@ -471,9 +477,9 @@ package body Switches_Parser is
 
       procedure Process_Field_Node (N : Node_Ptr; Popup : Popup_Index) is
          Line, Col : Natural;
-         Label     : constant String := Get_Attribute (N, "label");
-         Switch    : constant String := Get_Attribute (N, "switch");
-         Filter    : constant String := Get_Attribute (N, "filter");
+         Label     : constant String := Get_Attribute_S (N, "label");
+         Switch    : constant String := Get_Attribute_S (N, "switch");
+         Filter    : constant String := Get_Attribute_S (N, "filter");
       begin
          Coordinates_From_Node (N, Line, Col);
 
@@ -492,18 +498,18 @@ package body Switches_Parser is
            (Current_Tool_Config,
             Label         => Label,
             Switch        => Switch,
-            Separator     => Get_Attribute (N, "separator", Default_Sep),
-            Section       => Get_Attribute (N, "section"),
+            Separator     => Get_Attribute_S (N, "separator", Default_Sep),
+            Section       => Get_Attribute_S (N, "section"),
             Tip           => Get_Tip_Value (N),
             As_Directory  =>
-              Get_Attribute (N, "as-directory", "false") = "true",
-            As_File       => Get_Attribute (N, "as-file", "false") = "true",
-            File_Filter   => Get_Attribute (N, "file-filter", ""),
-            Base_Dir      => Get_Attribute (N, "base-dir", ""),
-            Except_Filter => Get_Attribute (N, "except-filter", ""),
+              Get_Attribute_S (N, "as-directory", "false") = "true",
+            As_File       => Get_Attribute_S (N, "as-file", "false") = "true",
+            File_Filter   => Get_Attribute_S (N, "file-filter", ""),
+            Base_Dir      => Get_Attribute_S (N, "base-dir", ""),
+            Except_Filter => Get_Attribute_S (N, "except-filter", ""),
             Line          => Line,
             Column        => Col,
-            Add_Before    => Get_Attribute (N, "before") = "true",
+            Add_Before    => Get_Attribute_S (N, "before") = "true",
             Popup         => Popup,
             Filter        => Filter);
       end Process_Field_Node;
@@ -514,9 +520,9 @@ package body Switches_Parser is
 
       procedure Process_Spin_Node  (N : Node_Ptr; Popup : Popup_Index) is
          Line, Col : Natural;
-         Label     : constant String := Get_Attribute (N, "label");
-         Switch    : constant String := Get_Attribute (N, "switch");
-         Filter    : constant String := Get_Attribute (N, "filter");
+         Label     : constant String := Get_Attribute_S (N, "label");
+         Switch    : constant String := Get_Attribute_S (N, "switch");
+         Filter    : constant String := Get_Attribute_S (N, "filter");
       begin
          Coordinates_From_Node (N, Line, Col);
 
@@ -535,15 +541,15 @@ package body Switches_Parser is
            (Config     => Current_Tool_Config,
             Label      => Label,
             Switch     => Switch,
-            Section    => Get_Attribute (N, "section"),
+            Section    => Get_Attribute_S (N, "section"),
             Tip        => Get_Tip_Value (N),
-            Separator  => Get_Attribute (N, "separator", Default_Sep),
-            Min        => Safe_Value (Get_Attribute (N, "min", "1")),
-            Max        => Safe_Value (Get_Attribute (N, "max", "1")),
-            Default    => Safe_Value (Get_Attribute (N, "default", "1")),
+            Separator  => Get_Attribute_S (N, "separator", Default_Sep),
+            Min        => Safe_Value (Get_Attribute_S (N, "min", "1")),
+            Max        => Safe_Value (Get_Attribute_S (N, "max", "1")),
+            Default    => Safe_Value (Get_Attribute_S (N, "default", "1")),
             Line       => Line,
             Column     => Col,
-            Add_Before => Get_Attribute (N, "before") = "true",
+            Add_Before => Get_Attribute_S (N, "before") = "true",
             Popup      => Popup,
             Filter     => Filter);
       end Process_Spin_Node;
@@ -554,15 +560,15 @@ package body Switches_Parser is
 
       procedure Process_Check_Node (N : Node_Ptr; Popup : Popup_Index) is
          Line, Col     : Natural;
-         Label         : constant String := Get_Attribute (N, "label");
-         Switch        : constant String := Get_Attribute (N, "switch");
-         Filter        : constant String := Get_Attribute (N, "filter");
+         Label         : constant String := Get_Attribute_S (N, "label");
+         Switch        : constant String := Get_Attribute_S (N, "switch");
+         Filter        : constant String := Get_Attribute_S (N, "filter");
          Active_State  : constant String :=
-                           Get_Attribute (N, "active", "on");
+                           Get_Attribute_S (N, "active", "on");
          Switch_Unset  : constant String :=
-                           Get_Attribute (N, "switch-off");
+                           Get_Attribute_S (N, "switch-off");
          Default       : constant String :=
-                           To_Lower (Get_Attribute (N, "default", "off"));
+                           To_Lower (Get_Attribute_S (N, "default", "off"));
          Default_State : Boolean;
          Active        : Boolean;
       begin
@@ -616,11 +622,11 @@ package body Switches_Parser is
             Switch_Unset  => Switch_Unset,
             Default_State => Default_State,
             Active        => Active,
-            Section       => Get_Attribute (N, "section"),
+            Section       => Get_Attribute_S (N, "section"),
             Tip           => Get_Tip_Value (N),
             Line          => Line,
             Column        => Col,
-            Add_Before    => Get_Attribute (N, "before") = "true",
+            Add_Before    => Get_Attribute_S (N, "before") = "true",
             Popup         => Popup,
             Filter        => Filter);
       end Process_Check_Node;
@@ -630,7 +636,7 @@ package body Switches_Parser is
       -------------------
 
       function Get_Tip_Value (N : Node_Ptr) return String is
-         Tip_Attr : constant String := Get_Attribute (N, "tip");
+         Tip_Attr : constant String := Get_Attribute_S (N, "tip");
          C        : Node_Ptr;
       begin
          if Tip_Attr /= "" then
@@ -652,8 +658,8 @@ package body Switches_Parser is
       ----------------------------
 
       procedure Process_Expansion_Node (N : Node_Ptr) is
-         Switch : constant String := Get_Attribute (N, "switch");
-         Alias  : constant String := Get_Attribute (N, "alias");
+         Switch : constant String := Get_Attribute_S (N, "switch");
+         Alias  : constant String := Get_Attribute_S (N, "alias");
       begin
          if Switch = "" then
             Log_Error
@@ -733,23 +739,23 @@ package body Switches_Parser is
    begin
       begin
          Scrolled_Window := Boolean'Value
-           (Get_Attribute (Node, "use_scrolled_window", "false"));
+           (Get_Attribute_S (Node, "use_scrolled_window", "false"));
       exception
          when Constraint_Error =>
             Log_Error
               (-("Invalid value specified for use_scrolled_windows: ")
-               & Get_Attribute (Node, "use_scrolled_window"));
+               & Get_Attribute_S (Node, "use_scrolled_window"));
             Scrolled_Window := False;
       end;
 
       begin
          Show_Command_Line := Boolean'Value
-           (Get_Attribute (Node, "show_command_line", "true"));
+           (Get_Attribute_S (Node, "show_command_line", "true"));
       exception
          when Constraint_Error =>
             Log_Error
               (-("Invalid value specified for show_command_line: ")
-               & Get_Attribute (Node, "show_command_line"));
+               & Get_Attribute_S (Node, "show_command_line"));
             Show_Command_Line := True;
       end;
 
@@ -758,7 +764,7 @@ package body Switches_Parser is
          Switch_Char       => Char (Char'First),
          Scrolled_Window   => Scrolled_Window,
          Show_Command_Line => Show_Command_Line,
-         Sections          => Get_Attribute (Node, "sections"));
+         Sections          => Get_Attribute_S (Node, "sections"));
 
       Parse_Popup_Or_Main (Node, Main_Window);
 
