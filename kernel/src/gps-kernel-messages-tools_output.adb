@@ -32,6 +32,7 @@ with GPS.Editors;                     use GPS.Editors;
 with GPS.Editors.Line_Information;    use GPS.Editors.Line_Information;
 with GPS.Intl;                        use GPS.Intl;
 with UTF8_Utils;                      use UTF8_Utils;
+with VSS.Strings.Conversions;
 
 package body GPS.Kernel.Messages.Tools_Output is
 
@@ -95,7 +96,7 @@ package body GPS.Kernel.Messages.Tools_Output is
    is
       Category_Position : constant Category_Maps.Cursor :=
         Container.Category_Map.Find
-          (To_Unbounded_String (Category));
+          (VSS.Strings.Conversions.To_Virtual_String (Category));
       Category_Node     : Node_Access;
       File_Position     : File_Maps.Cursor;
       File_Node         : Node_Access;

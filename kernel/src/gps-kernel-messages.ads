@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                               GNAT Studio                                --
 --                                                                          --
---                     Copyright (C) 2009-2023, AdaCore                     --
+--                     Copyright (C) 2009-2024, AdaCore                     --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -33,12 +33,15 @@ private with Ada.Containers.Hashed_Maps;
 private with Ada.Containers.Vectors;
 with Ada.Finalization;
 with Ada.Strings.Unbounded;
-private with Ada.Strings.Unbounded.Hash;
 with Ada.Tags;
+
+with VSS.Strings;
+private with VSS.Strings.Hash;
 
 with GNATCOLL.Utils;                       use GNATCOLL.Utils;
 
 with Gdk.RGBA;
+
 with Default_Preferences;                  use Default_Preferences;
 with GNATCOLL.VFS;
 limited with GPS.Editors.Line_Information;
@@ -640,10 +643,10 @@ private
 
    package Category_Maps is
      new Ada.Containers.Hashed_Maps
-       (Ada.Strings.Unbounded.Unbounded_String,
+       (VSS.Strings.Virtual_String,
         Node_Access,
-        Ada.Strings.Unbounded.Hash,
-        Ada.Strings.Unbounded."=");
+        VSS.Strings.Hash,
+        VSS.Strings."=");
 
    package File_Maps is
      new Ada.Containers.Hashed_Maps
@@ -684,7 +687,7 @@ private
             case Kind is
                when Node_Category =>
                   Container : Messages_Container_Access;
-                  Name      : Ada.Strings.Unbounded.Unbounded_String;
+                  Name      : VSS.Strings.Virtual_String;
                   File_Map  : File_Maps.Map;
                   Sort_Hint : Sort_Order_Hint;
 
@@ -794,10 +797,10 @@ private
 
    package Sort_Order_Hint_Maps is
      new Ada.Containers.Hashed_Maps
-       (Ada.Strings.Unbounded.Unbounded_String,
+       (VSS.Strings.Virtual_String,
         Sort_Order_Hint,
-        Ada.Strings.Unbounded.Hash,
-        Ada.Strings.Unbounded."=");
+        VSS.Strings.Hash,
+        VSS.Strings."=");
 
    type Messages_Container
      (Kernel : not null access Kernel_Handle_Record'Class)

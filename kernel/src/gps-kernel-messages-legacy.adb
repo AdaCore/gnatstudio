@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                               GNAT Studio                                --
 --                                                                          --
---                     Copyright (C) 2010-2023, AdaCore                     --
+--                     Copyright (C) 2010-2024, AdaCore                     --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -14,6 +14,8 @@
 -- COPYING3.  If not, go to http://www.gnu.org/licenses for a complete copy --
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
+
+with VSS.Strings.Conversions;
 
 with GPS.Editors.Line_Information; use GPS.Editors.Line_Information;
 
@@ -38,7 +40,8 @@ package body GPS.Kernel.Messages.Legacy is
       Container         : constant Messages_Container_Access :=
         Get_Messages_Container (Kernel);
       Category_Position : constant Category_Maps.Cursor :=
-        Container.Category_Map.Find (To_Unbounded_String (Category));
+        Container.Category_Map.Find
+          (VSS.Strings.Conversions.To_Virtual_String (Category));
 
    begin
       if Has_Element (Category_Position) then
@@ -58,11 +61,11 @@ package body GPS.Kernel.Messages.Legacy is
       Category : String;
       File     : GNATCOLL.VFS.Virtual_File;
       Line     : Natural;
-      Column   : Basic_Types.Visible_Column_Type)
-      return Message_Access
+      Column   : Basic_Types.Visible_Column_Type) return Message_Access
    is
       Category_Position : constant Category_Maps.Cursor :=
-        Self.Category_Map.Find (To_Unbounded_String (Category));
+        Self.Category_Map.Find
+          (VSS.Strings.Conversions.To_Virtual_String (Category));
       File_Position     : File_Maps.Cursor;
       Message_Position  : Node_Vectors.Cursor;
       Message           : Node_Access;
@@ -124,7 +127,8 @@ package body GPS.Kernel.Messages.Legacy is
       --  Resolve category node
 
       Category_Position :=
-        Container.Category_Map.Find (To_Unbounded_String (Category));
+        Container.Category_Map.Find
+          (VSS.Strings.Conversions.To_Virtual_String (Category));
 
       if not Has_Element (Category_Position) then
          return;
