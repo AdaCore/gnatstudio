@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                               GNAT Studio                                --
 --                                                                          --
---                     Copyright (C) 2013-2023, AdaCore                     --
+--                     Copyright (C) 2013-2024, AdaCore                     --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -647,7 +647,9 @@ package body GPS.Kernel.Search.Sources is
    begin
       Msg := GPS.Kernel.Messages.Markup.Create_Markup_Message
         (Container                => Get_Messages_Container (Self.Kernel),
-         Category                 => Self.Provider.Display_Name,
+         Category                 =>
+           VSS.Strings.Conversions.To_Virtual_String
+             (Self.Provider.Display_Name),
          File                     => Self.File,
          Line                     => Self.Line,
          Column                   => Visible_Column_Type (Self.Column),

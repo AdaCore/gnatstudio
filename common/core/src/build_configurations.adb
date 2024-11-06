@@ -19,6 +19,9 @@ with Ada.Characters.Latin_1;   use Ada.Characters.Latin_1;
 with Ada.Strings.Fixed;
 with Ada.Strings.Maps;
 with Ada.Characters.Handling;  use Ada.Characters.Handling;
+
+with VSS.Strings.Conversions;
+
 with Switches_Parser;
 with String_Utils;             use String_Utils;
 with GNATCOLL.Traces;          use GNATCOLL.Traces;
@@ -1771,20 +1774,12 @@ package body Build_Configurations is
    ---------------------------
 
    function Get_Messages_Category
-     (Target : Target_Access) return Unbounded_String is
+     (Target : Target_Access) return VSS.Strings.Virtual_String is
    begin
-      return Target.Properties.Messages_Category;
+      return
+        VSS.Strings.Conversions.To_Virtual_String
+          (Target.Properties.Messages_Category);
    end Get_Messages_Category;
-
-   ----------------------------------
-   -- Get_Messages_Category_String --
-   ----------------------------------
-
-   function Get_Messages_Category_String
-     (Target : Target_Access) return String is
-   begin
-      return To_String (Get_Messages_Category (Target));
-   end Get_Messages_Category_String;
 
    ----------------
    -- Get_Server --

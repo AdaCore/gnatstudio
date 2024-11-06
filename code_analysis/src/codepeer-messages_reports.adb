@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                               GNAT Studio                                --
 --                                                                          --
---                     Copyright (C) 2008-2023, AdaCore                     --
+--                     Copyright (C) 2008-2024, AdaCore                     --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -19,6 +19,8 @@ with Ada.Characters.Handling; use Ada.Characters.Handling;
 with Ada.Characters.Latin_1;
 with Interfaces.C.Strings;
 with System;
+
+with VSS.Strings.Conversions;
 
 with Gdk.Rectangle;         use Gdk.Rectangle;
 with Glib.Object;
@@ -179,7 +181,8 @@ package body CodePeer.Messages_Reports is
 
    CWE_Attribute :
      constant GNATCOLL.Projects.Attribute_Pkg_String :=
-     GNATCOLL.Projects.Build (CodePeer.Module_Name, "CWE");
+     GNATCOLL.Projects.Build
+       (VSS.Strings.Conversions.To_UTF_8_String (CodePeer.Module_Name), "CWE");
 
    --------------
    -- Tooltips --

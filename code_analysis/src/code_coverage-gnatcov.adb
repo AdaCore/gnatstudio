@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                               GNAT Studio                                --
 --                                                                          --
---                     Copyright (C) 2008-2023, AdaCore                     --
+--                     Copyright (C) 2008-2024, AdaCore                     --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -20,6 +20,9 @@ with Ada.Strings.Fixed;            use Ada.Strings.Fixed;
 with Ada.Strings.Unbounded;        use Ada.Strings.Unbounded;
 
 with GNAT.Regpat;                  use GNAT.Regpat;
+
+with VSS.Strings;
+
 with GNATCOLL.Traces;              use GNATCOLL.Traces;
 
 with GPS.Editors;                  use GPS.Editors;
@@ -348,7 +351,7 @@ package body Code_Coverage.GNATcov is
    is
       pragma Unreferenced (Line_Text);
 
-      Coverage_Category : Cst_String_Access;
+      Coverage_Category : VSS.Strings.Virtual_String;
 
       procedure Process (Item : GNATcov_Item_Coverage);
       --  Helper to add a message in the location window for the current line
@@ -357,7 +360,7 @@ package body Code_Coverage.GNATcov is
       begin
          Create_Simple_Message
            (Kernel.Get_Messages_Container,
-            Coverage_Category.all,
+            Coverage_Category,
             File,
             Line_Number,
             Item.Column,
@@ -369,9 +372,9 @@ package body Code_Coverage.GNATcov is
 
    begin
       if Coverage.Status = Not_Covered then
-         Coverage_Category := Uncovered_Category'Unrestricted_Access;
+         Coverage_Category := Uncovered_Category;
       elsif Coverage.Status in GNATcov_Partially_Covered then
-         Coverage_Category := Partially_Covered_Category'Unrestricted_Access;
+         Coverage_Category := Partially_Covered_Category;
       else
          return;
       end if;

@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                               GNAT Studio                                --
 --                                                                          --
---                     Copyright (C) 2000-2023, AdaCore                     --
+--                     Copyright (C) 2000-2024, AdaCore                     --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -16,6 +16,9 @@
 ------------------------------------------------------------------------------
 
 with Ada.Strings.Unbounded;        use Ada.Strings.Unbounded;
+
+with VSS.Strings;
+
 with Gtkada.MDI;                   use Gtkada.MDI;
 
 with Debugger_Pixmaps;             use Debugger_Pixmaps;
@@ -31,7 +34,8 @@ with GPS.Default_Styles;           use GPS.Default_Styles;
 
 package body GVD.Code_Editors is
 
-   Debugger_Messages_Category : constant String := "debugger-current-line";
+   Debugger_Messages_Category : constant VSS.Strings.Virtual_String :=
+     "debugger-current-line";
 
    -------------------------------
    -- Set_Current_File_And_Line --

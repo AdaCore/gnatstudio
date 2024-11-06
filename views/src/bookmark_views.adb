@@ -24,6 +24,8 @@ with GNAT.Strings;                   use GNAT.Strings;
 with System;                         use System;
 with System.Address_Image;
 
+with VSS.Strings;
+
 with GNATCOLL.JSON;                  use GNATCOLL.JSON;
 with GNATCOLL.Projects;              use GNATCOLL.Projects;
 with GNATCOLL.Scripts;               use GNATCOLL.Scripts;
@@ -119,7 +121,8 @@ package body Bookmark_Views is
 
    Line_Text_Attribute : constant String := "line_text";
 
-   Messages_Category_For_Bookmarks : constant String := "bookmarks";
+   Messages_Category_For_Bookmarks : constant VSS.Strings.Virtual_String :=
+     "bookmarks";
    Message_Flags_For_Bookmarks     : constant Message_Flags :=
      (Editor_Side => True,
       Locations   => False,

@@ -31,7 +31,7 @@ package body GPS.Kernel.Messages.Simple is
    function Load
      (XML_Node      : not null Node_Ptr;
       Container     : not null Messages_Container_Access;
-      Category      : String;
+      Category      : VSS.Strings.Virtual_String;
       File          : GNATCOLL.VFS.Virtual_File;
       Line          : Natural;
       Column        : Basic_Types.Visible_Column_Type;
@@ -58,7 +58,7 @@ package body GPS.Kernel.Messages.Simple is
 
    function Create_Simple_Message
      (Container     : not null Messages_Container_Access;
-      Category      : String;
+      Category      : VSS.Strings.Virtual_String;
       File          : GNATCOLL.VFS.Virtual_File;
       Line          : Natural;
       Column        : Basic_Types.Visible_Column_Type;
@@ -88,7 +88,7 @@ package body GPS.Kernel.Messages.Simple is
 
    procedure Create_Simple_Message
      (Container  : not null Messages_Container_Access;
-      Category   : String;
+      Category   : VSS.Strings.Virtual_String;
       File       : GNATCOLL.VFS.Virtual_File;
       Line       : Natural;
       Column     : Basic_Types.Visible_Column_Type;
@@ -113,7 +113,7 @@ package body GPS.Kernel.Messages.Simple is
 
    function Create_Simple_Message
      (Container  : not null Messages_Container_Access;
-      Category   : String;
+      Category   : VSS.Strings.Virtual_String;
       File       : GNATCOLL.VFS.Virtual_File;
       Line       : Natural;
       Column     : Basic_Types.Visible_Column_Type;
@@ -145,7 +145,7 @@ package body GPS.Kernel.Messages.Simple is
    procedure Initialize
      (Message       : not null access Simple_Message'Class;
       Container     : not null Messages_Container_Access;
-      Category      : String;
+      Category      : VSS.Strings.Virtual_String;
       File          : GNATCOLL.VFS.Virtual_File;
       Line          : Natural;
       Column        : Basic_Types.Visible_Column_Type;
@@ -178,7 +178,7 @@ package body GPS.Kernel.Messages.Simple is
 
    function Create_Simple_Message
      (Container     : not null Messages_Container_Access;
-      Category      : String;
+      Category      : VSS.Strings.Virtual_String;
       File          : GNATCOLL.VFS.Virtual_File;
       Line          : Natural;
       Column        : Basic_Types.Visible_Column_Type;
@@ -316,7 +316,7 @@ package body GPS.Kernel.Messages.Simple is
    function Load
      (XML_Node      : not null Node_Ptr;
       Container     : not null Messages_Container_Access;
-      Category      : String;
+      Category      : VSS.Strings.Virtual_String;
       File          : GNATCOLL.VFS.Virtual_File;
       Line          : Natural;
       Column        : Basic_Types.Visible_Column_Type;

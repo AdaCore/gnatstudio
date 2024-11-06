@@ -15,6 +15,8 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
+with VSS.Strings.Conversions;
+
 with GNAThub.Module;                  use GNAThub.Module;
 with GPS.Kernel;                      use GPS.Kernel;
 with GPS.Kernel.Messages.Tools_Output;
@@ -32,7 +34,7 @@ package body GNAThub.Messages is
    function Load
      (XML_Node      : not null Node_Ptr;
       Container     : not null Messages_Container_Access;
-      Category      : String;
+      Category      : VSS.Strings.Virtual_String;
       File          : GNATCOLL.VFS.Virtual_File;
       Line          : Natural;
       Column        : Basic_Types.Visible_Column_Type;
@@ -160,7 +162,8 @@ package body GNAThub.Messages is
       Line                     : Natural;
       Column                   : Basic_Types.Visible_Column_Type;
       Entity                   : Entity_Data := No_Entity_Data;
-      Category                 : String := "";
+      Category                 : VSS.Strings.Virtual_String :=
+        VSS.Strings.Empty_Virtual_String;
       Allow_Auto_Jump_To_First : Boolean := False) is
    begin
       Self.Rule     := Rule;
@@ -174,9 +177,11 @@ package body GNAThub.Messages is
       GPS.Kernel.Messages.Tools_Output.Create_Tool_Message
         (Self                     => Self,
          Container                => Container,
-         Category                 => (if Category /= ""
-                                      then Category
-                                      else To_String (Self.Rule.Tool.Name)),
+         Category                 =>
+           (if not Category.Is_Empty
+              then Category
+              else VSS.Strings.Conversions.To_Virtual_String
+                     (Self.Rule.Tool.Name)),
          File                     => File,
          Line                     => Natural'Max (Line, 1),
          Column                   => Column,
@@ -217,7 +222,7 @@ package body GNAThub.Messages is
    function Load
      (XML_Node      : not null Node_Ptr;
       Container     : not null Messages_Container_Access;
-      Category      : String;
+      Category      : VSS.Strings.Virtual_String;
       File          : GNATCOLL.VFS.Virtual_File;
       Line          : Natural;
       Column        : Basic_Types.Visible_Column_Type;

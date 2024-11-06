@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                               GNAT Studio                                --
 --                                                                          --
---                     Copyright (C) 2012-2023, AdaCore                     --
+--                     Copyright (C) 2012-2024, AdaCore                     --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -14,6 +14,8 @@
 -- COPYING3.  If not, go to http://www.gnu.org/licenses for a complete copy --
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
+
+with VSS.Strings.Conversions;
 
 with GPS.Intl;                         use GPS.Intl;
 with GPS.Kernel;                       use GPS.Kernel;
@@ -255,7 +257,8 @@ package body Build_Command_Manager.End_Of_Build is
       if Build.Launch and then not Is_Run (Build.Target) then
          Build.Launch := Compilation_Starting_Hook.Run
            (Kernel          => Kernel_Handle (Self.Builder.Kernel),
-            Category        => To_String (Build.Category),
+            Category        =>
+              VSS.Strings.Conversions.To_UTF_8_String (Build.Category),
             Quiet           => Build.Quiet,
             Shadow          => Build.Shadow,
             Background      => Build.Background,
@@ -342,7 +345,7 @@ package body Build_Command_Manager.End_Of_Build is
 
       Compilation_Finished_Hook.Run
         (Kernel,
-         To_String (Self.Build.Category),
+         VSS.Strings.Conversions.To_UTF_8_String (Self.Build.Category),
          Get_Name (Self.Build.Target),
          To_String (Self.Build.Mode),
          Self.Build.Shadow,
@@ -354,8 +357,7 @@ package body Build_Command_Manager.End_Of_Build is
       if Self.Force_File /= No_File
         and then Get_Messages
           (Get_Messages_Container (Kernel),
-           Ada.Strings.Unbounded.To_Unbounded_String
-             (Commands.Builder.Error_Category),
+           Commands.Builder.Error_Category,
            Self.Force_File)'Length > 0
       then
          GPS.Location_View.Expand_File

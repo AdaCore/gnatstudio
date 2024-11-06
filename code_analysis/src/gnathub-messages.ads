@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                               GNAT Studio                                --
 --                                                                          --
---                       Copyright (C) 2016-2023, AdaCore                   --
+--                     Copyright (C) 2016-2024, AdaCore                     --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -14,9 +14,12 @@
 -- COPYING3.  If not, go to http://www.gnu.org/licenses for a complete copy --
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
+
 --  Provides subclass of message to be used to represent GNAThub's messages
 
 with Ada.Strings.Unbounded;
+
+with VSS.Strings;
 
 with Gdk.RGBA;
 with GNATCOLL.VFS;
@@ -42,7 +45,8 @@ package GNAThub.Messages is
       Line                     : Natural;
       Column                   : Basic_Types.Visible_Column_Type;
       Entity                   : Entity_Data := No_Entity_Data;
-      Category                 : String := "";
+      Category                 : VSS.Strings.Virtual_String :=
+        VSS.Strings.Empty_Virtual_String;
       Allow_Auto_Jump_To_First : Boolean := False);
    --  Initialize instance of GNAThub's message.
 

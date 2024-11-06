@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                               GNAT Studio                                --
 --                                                                          --
---                     Copyright (C) 2010-2023, AdaCore                     --
+--                     Copyright (C) 2010-2024, AdaCore                     --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -64,7 +64,7 @@ package body GPS.Kernel.Messages.Tools_Output is
 
    function Get_Duplicated_Message
      (Container : not null access Messages_Container'Class;
-      Category  : String;
+      Category  : VSS.Strings.Virtual_String;
       File      : GNATCOLL.VFS.Virtual_File;
       Line      : Positive;
       Column    : Basic_Types.Visible_Column_Type;
@@ -87,7 +87,7 @@ package body GPS.Kernel.Messages.Tools_Output is
 
    function Get_Duplicated_Message
      (Container : not null access Messages_Container'Class;
-      Category  : String;
+      Category  : VSS.Strings.Virtual_String;
       File      : GNATCOLL.VFS.Virtual_File;
       Line      : Positive;
       Column    : Basic_Types.Visible_Column_Type;
@@ -95,8 +95,7 @@ package body GPS.Kernel.Messages.Tools_Output is
       return Message_Access
    is
       Category_Position : constant Category_Maps.Cursor :=
-        Container.Category_Map.Find
-          (VSS.Strings.Conversions.To_Virtual_String (Category));
+        Container.Category_Map.Find (Category);
       Category_Node     : Node_Access;
       File_Position     : File_Maps.Cursor;
       File_Node         : Node_Access;
@@ -173,7 +172,7 @@ package body GPS.Kernel.Messages.Tools_Output is
 
    function Add_Tool_Message
      (Container          : not null access Messages_Container'Class;
-      Category           : String;
+      Category           : VSS.Strings.Virtual_String;
       File               : GNATCOLL.VFS.Virtual_File;
       Line               : Positive;
       Column             : Basic_Types.Visible_Column_Type;
@@ -274,7 +273,7 @@ package body GPS.Kernel.Messages.Tools_Output is
    procedure Create_Tool_Message
      (Self               : not null access Abstract_Message'Class;
       Container          : not null access Messages_Container'Class;
-      Category           : String;
+      Category           : VSS.Strings.Virtual_String;
       File               : GNATCOLL.VFS.Virtual_File;
       Line               : Positive;
       Column             : Basic_Types.Visible_Column_Type;
@@ -434,7 +433,7 @@ package body GPS.Kernel.Messages.Tools_Output is
    procedure Parse_File_Locations
      (Kernel            : access Kernel_Handle_Record'Class;
       Text              : Basic_Types.UTF8_String;
-      Category          : Basic_Types.UTF8_String;
+      Category          : VSS.Strings.Virtual_String;
       Highlight         : Boolean := False;
       Styles            : Message_Styles_Array :=
         (others => null);
@@ -467,7 +466,7 @@ package body GPS.Kernel.Messages.Tools_Output is
    procedure Parse_File_Locations
      (Kernel                   : access Kernel_Handle_Record'Class;
       Text                     : Basic_Types.UTF8_String;
-      Category                 : String;
+      Category                 : VSS.Strings.Virtual_String;
       Highlight                : Boolean := False;
       Styles                   : Message_Styles_Array := (others => null);
       File_Location_Regexp     : String;
@@ -668,7 +667,9 @@ package body GPS.Kernel.Messages.Tools_Output is
 
                Message := Add_Tool_Message
                  (Get_Messages_Container (Kernel),
-                  Glib.Convert.Escape_Text (Category),
+                  VSS.Strings.Conversions.To_Virtual_String
+                    (Glib.Convert.Escape_Text
+                         (VSS.Strings.Conversions.To_UTF_8_String (Category))),
                   Create
                     (+Text (Matched
                      (File_Index).First .. Matched (File_Index).Last),
@@ -710,7 +711,7 @@ package body GPS.Kernel.Messages.Tools_Output is
    procedure Parse_File_Locations_Unknown_Encoding
      (Kernel                  : access Kernel_Handle_Record'Class;
       Text                    : String;
-      Category                : Glib.UTF8_String;
+      Category                : VSS.Strings.Virtual_String;
       Highlight               : Boolean := False;
       Highlight_Category      : String := "Builder results";
       Style_Category          : String := "Style errors";

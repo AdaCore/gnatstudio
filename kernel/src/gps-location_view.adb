@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                               GNAT Studio                                --
 --                                                                          --
---                     Copyright (C) 2001-2023, AdaCore                     --
+--                     Copyright (C) 2001-2024, AdaCore                     --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -21,9 +21,10 @@ with Ada.Strings.Fixed;                use Ada.Strings.Fixed;
 with Ada.Text_IO;                      use Ada.Text_IO;
 with Ada.Strings.Unbounded;            use Ada.Strings.Unbounded;
 
+with VSS.Strings.Conversions;
+
 with GNATCOLL.Projects;                use GNATCOLL.Projects;
 with GNATCOLL.Scripts;                 use GNATCOLL.Scripts;
-with GNATCOLL.Utils;                   use GNATCOLL.Utils;
 with GNATCOLL.VFS;                     use GNATCOLL.VFS;
 with GNATCOLL.VFS.GtkAda;              use GNATCOLL.VFS.GtkAda;
 
@@ -100,7 +101,7 @@ package body GPS.Location_View is
       return Selection_Context;
 
    type Expansion_Request is record
-      Category   : Ada.Strings.Unbounded.Unbounded_String;
+      Category   : VSS.Strings.Virtual_String;
       File       : GNATCOLL.VFS.Virtual_File;
       Goto_First : Boolean;
    end record;
@@ -378,7 +379,7 @@ package body GPS.Location_View is
 
    function Format_Messages
      (Container : not null GPS.Kernel.Messages_Container_Access;
-      Category  : Ada.Strings.Unbounded.Unbounded_String;
+      Category  : VSS.Strings.Virtual_String;
       File      : GNATCOLL.VFS.Virtual_File)
       return String;
    function Format_Message
@@ -402,9 +403,8 @@ package body GPS.Location_View is
    begin
       Expand_Category
         (Location_View_Access
-           (Location_Views.Get_Or_Create_View
-              (Self.Kernel, Focus => Auto)),
-         Ada.Strings.Unbounded.To_String (Category),
+           (Location_Views.Get_Or_Create_View (Self.Kernel, Focus => Auto)),
+         VSS.Strings.Conversions.To_Virtual_String (Category),
          Auto);
    end Category_Added;
 
@@ -430,7 +430,7 @@ package body GPS.Location_View is
 
    procedure Expand_Category
      (Self       : Location_View_Access;
-      Category   : String;
+      Category   : VSS.Strings.Virtual_String;
       Goto_First : Boolean)
    is
       Loc : constant Location_View := Location_View (Self);
@@ -438,9 +438,7 @@ package body GPS.Location_View is
       Loc.View.Get_Selection.Unselect_All;
 
       Loc.Requests.Prepend
-        (Expansion_Request'
-           (Ada.Strings.Unbounded.To_Unbounded_String (Category),
-            GNATCOLL.VFS.No_File, Goto_First));
+        (Expansion_Request'(Category, GNATCOLL.VFS.No_File, Goto_First));
 
       if Loc.Idle_Expand_Handler = No_Source_Id then
          Loc.Idle_Expand_Handler :=
@@ -454,7 +452,7 @@ package body GPS.Location_View is
 
    procedure Expand_File
      (Self       : Location_View_Access;
-      Category   : String;
+      Category   : VSS.Strings.Virtual_String;
       File       : GNATCOLL.VFS.Virtual_File;
       Goto_First : Boolean)
    is
@@ -462,10 +460,7 @@ package body GPS.Location_View is
    begin
       Loc.View.Get_Selection.Unselect_All;
 
-      Loc.Requests.Prepend
-        (Expansion_Request'
-           (Ada.Strings.Unbounded.To_Unbounded_String (Category),
-            File, Goto_First));
+      Loc.Requests.Prepend (Expansion_Request'(Category, File, Goto_First));
 
       if Loc.Idle_Expand_Handler = No_Source_Id then
          Loc.Idle_Expand_Handler :=
@@ -479,7 +474,7 @@ package body GPS.Location_View is
 
    procedure Expand_File
      (Self     : Location_View_Access;
-      Category : String;
+      Category : VSS.Strings.Virtual_String;
       File     : GNATCOLL.VFS.Virtual_File) is
    begin
       Expand_File (Self, Category, File, Auto_Jump_To_First.Get_Pref);
@@ -491,7 +486,7 @@ package body GPS.Location_View is
 
    function Format_Messages
      (Container : not null GPS.Kernel.Messages_Container_Access;
-      Category  : Ada.Strings.Unbounded.Unbounded_String;
+      Category  : VSS.Strings.Virtual_String;
       File      : GNATCOLL.VFS.Virtual_File)
       return String
    is
@@ -567,7 +562,8 @@ package body GPS.Location_View is
 
          while Iter /= Null_Iter loop
             exit Requests when Get_String (Model, Iter, -Category_Column)
-              = Self.Requests.First_Element.Category;
+              = VSS.Strings.Conversions.To_UTF_8_String
+                  (Self.Requests.First_Element.Category);
 
             Next (Model, Iter);
          end loop;
@@ -1791,7 +1787,9 @@ package body GPS.Location_View is
                or else Style_Category /= ""
                or else Warning_Category /= "",
                Text                    => Nth_Arg (Data, 1),
-               Category                => Nth_Arg (Data, 2),
+               Category                =>
+                 VSS.Strings.Conversions.To_Virtual_String
+                   (String'(Nth_Arg (Data, 2))),
                Highlight_Category      => Highlight_Category,
                Style_Category          => Style_Category,
                Warning_Category        => Warning_Category,
@@ -1806,7 +1804,9 @@ package body GPS.Location_View is
 
       elsif Command = "remove_category" then
          declare
-            Category  : constant String := Data.Nth_Arg (1);
+            Category  : constant VSS.Strings.Virtual_String :=
+              VSS.Strings.Conversions.To_Virtual_String
+                (String'(Data.Nth_Arg (1)));
             Int_Flags : constant Integer := Data.Nth_Arg (2, Default => 2);
             Flags     : Message_Flags;
          begin
@@ -1827,28 +1827,26 @@ package body GPS.Location_View is
          end;
 
       elsif Command = "list_categories" then
-         declare
-            Categories : constant Unbounded_String_Array :=
-              Get_Messages_Container (Get_Kernel (Data)).Get_Categories;
+         Set_Return_Value_As_List (Data);
 
-         begin
-            Set_Return_Value_As_List (Data);
-
-            for J in Categories'Range loop
-               Set_Return_Value (Data, To_String (Categories (J)));
-            end loop;
-         end;
+         for Category of Get_Messages_Container
+                           (Get_Kernel (Data)).Get_Categories
+         loop
+            Set_Return_Value
+              (Data, VSS.Strings.Conversions.To_UTF_8_String (Category));
+         end loop;
 
       elsif Command = "list_locations" then
          declare
             Script   : constant Scripting_Language := Get_Script (Data);
-            Category : constant Unbounded_String :=
-              To_Unbounded_String (String'(Nth_Arg (Data, 1)));
+            Category : constant VSS.Strings.Virtual_String :=
+              VSS.Strings.Conversions.To_Virtual_String
+                (String'(Nth_Arg (Data, 1)));
             File     : constant GNATCOLL.VFS.Virtual_File := Create
               (Nth_Arg (Data, 2), Get_Kernel (Data), Use_Source_Path => True);
             Messages : constant Message_Array :=
               Get_Messages_Container (Get_Kernel (Data)).Get_Messages
-              (Category, File);
+                (Category, File);
 
          begin
             Set_Return_Value_As_List (Data);
@@ -1880,7 +1878,8 @@ package body GPS.Location_View is
                Ignore :=
                  GPS.Kernel.Messages.Tools_Output.Add_Tool_Message
                    (Get_Messages_Container (Get_Kernel (Data)),
-                    Glib.Convert.Escape_Text (Nth_Arg (Data, 1)),
+                    VSS.Strings.Conversions.To_Virtual_String
+                      (Glib.Convert.Escape_Text (Nth_Arg (Data, 1))),
                     File,
                     Nth_Arg (Data, 3),
                     Visible_Column_Type (Nth_Arg (Data, 4, Default => 1)),
@@ -1899,7 +1898,7 @@ package body GPS.Location_View is
          Name_Parameters (Data, Add_Multi_Loc_Parameters);
 
          declare
-            File : constant Virtual_File :=
+            File   : constant Virtual_File :=
               Get_Data
                 (Nth_Arg (Data, 2, Get_File_Class (Get_Kernel (Data))));
             Ignore : GPS.Kernel.Messages.Multilines.Multiline_Message_Access;
@@ -1912,7 +1911,8 @@ package body GPS.Location_View is
                    (Container          =>
                       Get_Messages_Container (Get_Kernel (Data)),
                     Category           =>
-                      Glib.Convert.Escape_Text (Nth_Arg (Data, 1)),
+                      VSS.Strings.Conversions.To_Virtual_String
+                        (Glib.Convert.Escape_Text (Nth_Arg (Data, 1))),
                     File               => File,
                     Line               => Nth_Arg (Data, 3),
                     Column             =>
@@ -1934,7 +1934,8 @@ package body GPS.Location_View is
          Name_Parameters (Data, Set_Sorting_Hint_Parameters);
 
          Get_Messages_Container (Get_Kernel (Data)).Set_Sort_Order_Hint
-           (Nth_Arg (Data, 1),
+           (VSS.Strings.Conversions.To_Virtual_String
+              (String'(Nth_Arg (Data, 1))),
             Sort_Order_Hint'Value (Nth_Arg (Data, 2)));
 
       elsif Command = "dump" then
@@ -2097,13 +2098,15 @@ package body GPS.Location_View is
          if Iter /= Null_Iter then
             if Path.Get_Depth = 1 then
                Get_Messages_Container (View.Kernel).Remove_Category
-                 (Get_String (Model, Iter, -Category_Column),
+                 (VSS.Strings.Conversions.To_Virtual_String
+                    (Get_String (Model, Iter, -Category_Column)),
                   Locations_Message_Flags);
 
             elsif Path.Get_Depth = 2 then
                if not Is_Parent_Selected (Selection, Path) then
                   Get_Messages_Container (View.Kernel).Remove_File
-                    (Get_String (Model, Iter, -Category_Column),
+                    (VSS.Strings.Conversions.To_Virtual_String
+                       (Get_String (Model, Iter, -Category_Column)),
                      Get_File (Model, Iter, -File_Column),
                      Locations_Message_Flags);
                end if;
@@ -2161,8 +2164,8 @@ package body GPS.Location_View is
          --  Category node, retrieve all the files and add their messages
          if Path.Get_Depth = 1 then
             declare
-               Category : constant Unbounded_String :=
-                 To_Unbounded_String
+               Category : constant VSS.Strings.Virtual_String :=
+                 VSS.Strings.Conversions.To_Virtual_String
                    (Get_String (Model, Iter, -Category_Column));
                Files    : constant Virtual_File_Array :=
                  Get_Files (Container, Category);
@@ -2179,12 +2182,11 @@ package body GPS.Location_View is
             --  also selected
             if not Is_Parent_Selected (View.View.Get_Selection, Path) then
                declare
-                  Category : constant Unbounded_String :=
-                    To_Unbounded_String
+                  Category : constant VSS.Strings.Virtual_String :=
+                    VSS.Strings.Conversions.To_Virtual_String
                       (Get_String (Model, Iter, -Category_Column));
                   F        : constant Virtual_File :=
-                    GNATCOLL.VFS.GtkAda.Get_File
-                      (Model, Iter, -File_Column);
+                    GNATCOLL.VFS.GtkAda.Get_File (Model, Iter, -File_Column);
                begin
                   Append (Result, Format_Messages (Container, Category, F));
                end;

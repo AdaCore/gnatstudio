@@ -14,6 +14,7 @@
 -- COPYING3.  If not, go to http://www.gnu.org/licenses for a complete copy --
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
+
 --  There are four user visible entities in the centralized messages
 --  container: message, message's note, container and listener.
 --
@@ -37,8 +38,7 @@ with Ada.Tags;
 
 with VSS.Strings;
 private with VSS.Strings.Hash;
-
-with GNATCOLL.Utils;                       use GNATCOLL.Utils;
+with VSS.String_Vectors;
 
 with Gdk.RGBA;
 
@@ -124,10 +124,7 @@ package GPS.Kernel.Messages is
 
    function Get_Category
      (Self : not null access constant Abstract_Message'Class)
-      return Ada.Strings.Unbounded.Unbounded_String;
-
-   function Get_Category
-     (Self : not null access constant Abstract_Message'Class) return String;
+      return VSS.Strings.Virtual_String;
 
    function Get_Flags
      (Self : not null access constant Abstract_Message'Class)
@@ -290,7 +287,7 @@ package GPS.Kernel.Messages is
    procedure Initialize
      (Self          : not null access Abstract_Message'Class;
       Container     : not null Messages_Container_Access;
-      Category      : String;
+      Category      : VSS.Strings.Virtual_String;
       File          : GNATCOLL.VFS.Virtual_File;
       Line          : Natural;
       Column        : Basic_Types.Visible_Column_Type;
@@ -308,7 +305,7 @@ package GPS.Kernel.Messages is
    procedure Initialize
      (Self          : not null access Abstract_Message'Class;
       Container     : not null Messages_Container_Access;
-      Category      : String;
+      Category      : VSS.Strings.Virtual_String;
       File          : GNATCOLL.VFS.Virtual_File;
       Line          : Natural;
       Column        : Basic_Types.Visible_Column_Type;
@@ -396,29 +393,28 @@ package GPS.Kernel.Messages is
 
    function Has_Category
      (Self     : not null access constant Messages_Container'Class;
-      Category : String) return Boolean;
+      Category : VSS.Strings.Virtual_String) return Boolean;
    --  Return True if Category is present in the container
 
    function Get_Categories
      (Self : not null access constant Messages_Container'Class)
-      return Unbounded_String_Array;
+      return VSS.String_Vectors.Virtual_String_Vector;
    --  Returns list of all categories.
 
    function Get_Flags
      (Self     : not null access constant Messages_Container'Class;
-      Category : String) return Message_Flags;
+      Category : VSS.Strings.Virtual_String) return Message_Flags;
    --  Returns set of flags of given category.
 
    function Get_Files
      (Self     : not null access constant Messages_Container'Class;
-      Category : Ada.Strings.Unbounded.Unbounded_String)
-      return Virtual_File_Array;
+      Category : VSS.Strings.Virtual_String) return Virtual_File_Array;
    --  Returns list of files in the specified category. Empty array is returned
    --  when there is not such category.
 
    function Get_Messages
      (Self     : not null access constant Messages_Container'Class;
-      Category : Ada.Strings.Unbounded.Unbounded_String;
+      Category : VSS.Strings.Virtual_String;
       File     : GNATCOLL.VFS.Virtual_File)
       return Message_Array;
    --  Returns list of messages for the specified file in the specified
@@ -443,14 +439,14 @@ package GPS.Kernel.Messages is
 
    procedure Remove_Category
      (Self     : not null access Messages_Container'Class;
-      Category : String;
+      Category : VSS.Strings.Virtual_String;
       Flags    : Message_Flags);
    --  Removes all messages in the specified category. Do nothing when there
    --  is no such category.
 
    procedure Remove_File
      (Self     : not null access Messages_Container'Class;
-      Category : String;
+      Category : VSS.Strings.Virtual_String;
       File     : GNATCOLL.VFS.Virtual_File;
       Flags    : Message_Flags);
    --  Removes all messages for specified file in the specified category.
@@ -458,7 +454,7 @@ package GPS.Kernel.Messages is
 
    procedure Set_Sort_Order_Hint
      (Self     : not null access Messages_Container'Class;
-      Category : String;
+      Category : VSS.Strings.Virtual_String;
       Hint     : Sort_Order_Hint);
    --  Sets sort order hint for the specified category. Hint must be set before
    --  first message in the category is created.
@@ -567,7 +563,7 @@ package GPS.Kernel.Messages is
      access function
        (XML_Node      : not null XML_Utils.Node_Ptr;
         Container     : not null Messages_Container_Access;
-        Category      : String;
+        Category      : VSS.Strings.Virtual_String;
         File          : GNATCOLL.VFS.Virtual_File;
         Line          : Natural;
         Column        : Basic_Types.Visible_Column_Type;

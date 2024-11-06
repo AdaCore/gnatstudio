@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                               GNAT Studio                                --
 --                                                                          --
---                        Copyright (C) 2019-2023, AdaCore                  --
+--                        Copyright (C) 2019-2024, AdaCore                  --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -84,7 +84,8 @@ package body GPS.LSP_Client.Editors.Highlight is
    --  Called when the focused editor changes.
    --  Used to cleanup all the auto-highlight messages.
 
-   Document_Highlight_Message_Category : constant String := "Autohighlight";
+   Document_Highlight_Message_Category : constant VSS.Strings.Virtual_String :=
+     "Autohighlight";
    Document_Highlight_Message_Flags    : constant Message_Flags :=
      (Editor_Side => True,
       Locations   => False,

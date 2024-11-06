@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                               GNAT Studio                                --
 --                                                                          --
---                     Copyright (C) 2010-2023, AdaCore                     --
+--                     Copyright (C) 2010-2024, AdaCore                     --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -27,7 +27,7 @@ package GPS.Kernel.Messages.Tools_Output is
    procedure Parse_File_Locations
      (Kernel            : access Kernel_Handle_Record'Class;
       Text              : UTF8_String;
-      Category          : Glib.UTF8_String;
+      Category          : VSS.Strings.Virtual_String;
       Highlight         : Boolean := False;
       Styles            : GPS.Default_Styles.Message_Styles_Array :=
         (others => null);
@@ -45,7 +45,7 @@ package GPS.Kernel.Messages.Tools_Output is
    procedure Parse_File_Locations
      (Kernel                   : access Kernel_Handle_Record'Class;
       Text                     : String;
-      Category                 : String;
+      Category                 : VSS.Strings.Virtual_String;
       Highlight                : Boolean := False;
       Styles                   : GPS.Default_Styles.Message_Styles_Array :=
         (others => null);
@@ -75,7 +75,7 @@ package GPS.Kernel.Messages.Tools_Output is
    procedure Parse_File_Locations_Unknown_Encoding
      (Kernel                  : access Kernel_Handle_Record'Class;
       Text                    : String;
-      Category                : Glib.UTF8_String;
+      Category                : VSS.Strings.Virtual_String;
       Highlight               : Boolean := False;
       Highlight_Category      : String := "Builder results";
       Style_Category          : String := "Style errors";
@@ -96,7 +96,7 @@ package GPS.Kernel.Messages.Tools_Output is
 
    function Add_Tool_Message
      (Container          : not null access Messages_Container'Class;
-      Category           : String;
+      Category           : VSS.Strings.Virtual_String;
       File               : GNATCOLL.VFS.Virtual_File;
       Line               : Positive;
       Column             : Basic_Types.Visible_Column_Type;
@@ -117,7 +117,7 @@ package GPS.Kernel.Messages.Tools_Output is
    procedure Create_Tool_Message
      (Self               : not null access Abstract_Message'Class;
       Container          : not null access Messages_Container'Class;
-      Category           : String;
+      Category           : VSS.Strings.Virtual_String;
       File               : GNATCOLL.VFS.Virtual_File;
       Line               : Positive;
       Column             : Basic_Types.Visible_Column_Type;

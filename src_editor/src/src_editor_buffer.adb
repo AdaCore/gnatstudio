@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                               GNAT Studio                                --
 --                                                                          --
---                     Copyright (C) 2001-2023, AdaCore                     --
+--                     Copyright (C) 2001-2024, AdaCore                     --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -460,7 +460,7 @@ package body Src_Editor_Buffer is
    --  stored in the undo/redo queue.
 
    function Conversion_Error_Message
-     (Charset : String) return Basic_Types.UTF8_String;
+     (Charset : String) return VSS.Strings.Virtual_String;
    --  Return the location category corresponding to errors when converting
    --  to Charset.
 
@@ -3998,9 +3998,11 @@ package body Src_Editor_Buffer is
    ------------------------------
 
    function Conversion_Error_Message
-     (Charset : String) return Basic_Types.UTF8_String is
+     (Charset : String) return VSS.Strings.Virtual_String is
    begin
-      return -"Error converting from UTF8 to " & Charset;
+      return
+        VSS.Strings.Conversions.To_Virtual_String
+          (-"Error converting from UTF8 to " & Charset);
    end Conversion_Error_Message;
 
    ---------------------------

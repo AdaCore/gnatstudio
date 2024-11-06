@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                               GNAT Studio                                --
 --                                                                          --
---                     Copyright (C) 2009-2023, AdaCore                     --
+--                     Copyright (C) 2009-2024, AdaCore                     --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -14,6 +14,7 @@
 -- COPYING3.  If not, go to http://www.gnu.org/licenses for a complete copy --
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
+
 --  This package provides simple implementation of Abstract_Message
 --  which is suitable for general purpose. Message's text is escaped
 --  to protect from interpretation as markup by Pango.
@@ -27,7 +28,7 @@ package GPS.Kernel.Messages.Simple is
 
    function Create_Simple_Message
      (Container  : not null Messages_Container_Access;
-      Category   : String;
+      Category   : VSS.Strings.Virtual_String;
       File       : GNATCOLL.VFS.Virtual_File;
       Line       : Natural;
       Column     : Basic_Types.Visible_Column_Type;
@@ -40,7 +41,7 @@ package GPS.Kernel.Messages.Simple is
 
    procedure Create_Simple_Message
      (Container  : not null Messages_Container_Access;
-      Category   : String;
+      Category   : VSS.Strings.Virtual_String;
       File       : GNATCOLL.VFS.Virtual_File;
       Line       : Natural;
       Column     : Basic_Types.Visible_Column_Type;
@@ -53,7 +54,7 @@ package GPS.Kernel.Messages.Simple is
    procedure Initialize
      (Message       : not null access Simple_Message'Class;
       Container     : not null Messages_Container_Access;
-      Category      : String;
+      Category      : VSS.Strings.Virtual_String;
       File          : GNATCOLL.VFS.Virtual_File;
       Line          : Natural;
       Column        : Basic_Types.Visible_Column_Type;

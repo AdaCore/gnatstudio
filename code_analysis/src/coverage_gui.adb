@@ -22,7 +22,6 @@ with GNAT.OS_Lib;                     use GNAT.OS_Lib;
 with GNATCOLL.Projects;               use GNATCOLL.Projects;
 
 with VSS.Application;
-with VSS.Strings;
 
 with GNATCOLL.VFS.VSS_Utils;          use GNATCOLL.VFS.VSS_Utils;
 

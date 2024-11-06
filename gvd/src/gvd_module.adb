@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                               GNAT Studio                                --
 --                                                                          --
---                     Copyright (C) 2001-2023, AdaCore                     --
+--                     Copyright (C) 2001-2024, AdaCore                     --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -20,6 +20,8 @@ with Ada.Strings.Unbounded;
 
 with GNAT.OS_Lib;
 with GNAT.Strings;                 use GNAT.Strings;
+
+with VSS.Strings.Conversions;
 
 with GNATCOLL.Any_Types;           use GNATCOLL.Any_Types;
 with GNATCOLL.Projects;            use GNATCOLL.Projects;
@@ -112,7 +114,7 @@ package body GVD_Module is
    GVD_Module_Name : constant String := "Debugger";
    GVD_Module_ID   : GVD_Module;
 
-   Messages_Category_Continue_To_Line : constant String :=
+   Messages_Category_Continue_To_Line : constant VSS.Strings.Virtual_String :=
                                          "debugger-run-to-line";
    Continue_To_Line_Messages_Flags    : constant Message_Flags :=
                                          (Editor_Line => True,
@@ -2031,12 +2033,15 @@ package body GVD_Module is
    begin
       if Buffer /= Nil_Editor_Buffer
         and then not Buffer.Has_Information_Column
-          (Messages_Category_Continue_To_Line)
+          (VSS.Strings.Conversions.To_UTF_8_String
+             (Messages_Category_Continue_To_Line))
       then
          Create_Line_Information_Column
            (Kernel     => Kernel,
             File       => Buffer.File,
-            Identifier => Messages_Category_Continue_To_Line);
+            Identifier =>
+              VSS.Strings.Conversions.To_UTF_8_String
+                (Messages_Category_Continue_To_Line));
       end if;
    end Create_Continue_To_Line_Columns;
 
@@ -2103,12 +2108,15 @@ package body GVD_Module is
       for Buffer of Buffers loop
          if Buffer /= Nil_Editor_Buffer
            and Buffer.Has_Information_Column
-             (Messages_Category_Continue_To_Line)
+             (VSS.Strings.Conversions.To_UTF_8_String
+                (Messages_Category_Continue_To_Line))
          then
             Remove_Line_Information_Column
               (Kernel     => Kernel,
                File       => Buffer.File,
-               Identifier => Messages_Category_Continue_To_Line);
+               Identifier =>
+                 VSS.Strings.Conversions.To_UTF_8_String
+                   (Messages_Category_Continue_To_Line));
          end if;
       end loop;
    end Disable_Continue_To_Line_On_Editors;

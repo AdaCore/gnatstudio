@@ -20,6 +20,8 @@ with Ada.Unchecked_Deallocation;
 
 with GNAT.OS_Lib;               use GNAT.OS_Lib;
 
+with VSS.Strings.Conversions;
+
 with Gtk.Handlers;
 with Gtk.Menu;                  use Gtk.Menu;
 with Gtk.Menu_Item;             use Gtk.Menu_Item;
@@ -307,7 +309,7 @@ package body Builder_Facility_Module is
 
    procedure Clear_Compilation_Output
      (Kernel          : Kernel_Handle;
-      Category        : String;
+      Category        : VSS.Strings.Virtual_String;
       Clear_Console   : Boolean;
       Clear_Locations : Boolean;
       Shadow          : Boolean;
@@ -928,7 +930,7 @@ package body Builder_Facility_Module is
 
    procedure Clear_Compilation_Output
      (Kernel          : Kernel_Handle;
-      Category        : String;
+      Category        : VSS.Strings.Virtual_String;
       Clear_Console   : Boolean;
       Clear_Locations : Boolean;
       Shadow          : Boolean;
@@ -1054,7 +1056,8 @@ package body Builder_Facility_Module is
 
       Clear_Compilation_Output
         (Kernel_Handle (Kernel),
-         Category        => Category,
+         Category        =>
+           VSS.Strings.Conversions.To_Virtual_String (Category),
          Clear_Console   =>
             not Preserve_Output
               and then not Quiet

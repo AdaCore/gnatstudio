@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                               GNAT Studio                                --
 --                                                                          --
---                     Copyright (C) 2001-2023, AdaCore                     --
+--                     Copyright (C) 2001-2024, AdaCore                     --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -17,6 +17,8 @@
 
 --  This package handles source file locations and displays them
 --  in a graphical tree, per category.
+
+with VSS.Strings;
 
 with GNATCOLL.VFS;
 with Gtk.Tree_View_Column;           use Gtk.Tree_View_Column;
@@ -58,13 +60,13 @@ package GPS.Location_View is
 
    procedure Expand_Category
      (Self       : Location_View_Access;
-      Category   : String;
+      Category   : VSS.Strings.Virtual_String;
       Goto_First : Boolean);
    --  Requests to expand specified category and goto first visible location
 
    procedure Expand_File
      (Self       : Location_View_Access;
-      Category   : String;
+      Category   : VSS.Strings.Virtual_String;
       File       : GNATCOLL.VFS.Virtual_File;
       Goto_First : Boolean);
    --  Requests to expand specified category and file and goto first visible
@@ -72,7 +74,7 @@ package GPS.Location_View is
 
    procedure Expand_File
      (Self     : Location_View_Access;
-      Category : String;
+      Category : VSS.Strings.Virtual_String;
       File     : GNATCOLL.VFS.Virtual_File);
    --  Same as above but jump to first visible location is controlled
    --  by locations-auto-jump-to-first preference

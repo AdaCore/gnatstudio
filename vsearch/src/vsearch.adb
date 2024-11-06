@@ -1081,10 +1081,11 @@ package body Vsearch is
                               (not Is_In_Incremental_Mode
                                and then Select_On_Match.Get_Pref);
       Search_Category     : constant String :=
-                              Get_Search_Category_Name
-                                (Look_For    => To_String
-                                   (Vsearch_Module_Id.Pattern),
-                                 Interactive => not All_Occurrences);
+        VSS.Strings.Conversions.To_UTF_8_String
+          (Get_Search_Category_Name
+             (Look_For    => To_String (Vsearch_Module_Id.Pattern),
+              Interactive => not All_Occurrences));
+
    begin
       if All_Occurrences then
          --  If there is already a search going on for this category, do not

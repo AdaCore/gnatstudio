@@ -35,13 +35,12 @@ package body GPS.Kernel.Messages.Legacy is
 
    function Category_Count
      (Kernel   : not null access Kernel_Handle_Record'Class;
-      Category : String) return Natural
+      Category : VSS.Strings.Virtual_String) return Natural
    is
       Container         : constant Messages_Container_Access :=
         Get_Messages_Container (Kernel);
       Category_Position : constant Category_Maps.Cursor :=
-        Container.Category_Map.Find
-          (VSS.Strings.Conversions.To_Virtual_String (Category));
+        Container.Category_Map.Find (Category);
 
    begin
       if Has_Element (Category_Position) then
@@ -58,14 +57,13 @@ package body GPS.Kernel.Messages.Legacy is
 
    function Get_Message_At
      (Self     : not null access constant Messages_Container'Class;
-      Category : String;
+      Category : VSS.Strings.Virtual_String;
       File     : GNATCOLL.VFS.Virtual_File;
       Line     : Natural;
       Column   : Basic_Types.Visible_Column_Type) return Message_Access
    is
       Category_Position : constant Category_Maps.Cursor :=
-        Self.Category_Map.Find
-          (VSS.Strings.Conversions.To_Virtual_String (Category));
+        Self.Category_Map.Find (Category);
       File_Position     : File_Maps.Cursor;
       Message_Position  : Node_Vectors.Cursor;
       Message           : Node_Access;

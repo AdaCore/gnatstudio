@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                               GNAT Studio                                --
 --                                                                          --
---                     Copyright (C) 2010-2023, AdaCore                     --
+--                     Copyright (C) 2010-2024, AdaCore                     --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -18,6 +18,8 @@
 with Ada.Strings.Fixed;            use Ada.Strings.Fixed;
 with Ada.Unchecked_Deallocation;
 with System.Address_To_Access_Conversions;
+
+with VSS.Strings.Conversions;
 
 with Glib;                         use Glib;
 with Glib.Object;
@@ -832,7 +834,7 @@ package body GPS.Location_View.Listener is
    begin
       if Message.Level = Primary then
          Self.Find_File
-           (To_String (Message.Get_Category),
+           (VSS.Strings.Conversions.To_UTF_8_String (Message.Get_Category),
             Message.Get_File,
             Category_Iter,
             File_Iter);
@@ -1019,7 +1021,7 @@ package body GPS.Location_View.Listener is
 
       else
          Self.Find_File
-           (To_String (Message.Get_Category),
+           (VSS.Strings.Conversions.To_UTF_8_String (Message.Get_Category),
             Message.Get_File,
             Category_Iter,
             File_Iter);
@@ -1027,7 +1029,8 @@ package body GPS.Location_View.Listener is
       end if;
 
       Glib.Values.Init_Set_String
-        (Values (1), To_String (Message.Get_Category));
+        (Values (1),
+         VSS.Strings.Conversions.To_UTF_8_String (Message.Get_Category));
 
       case Message.Level is
          when Primary =>
@@ -1092,7 +1095,7 @@ package body GPS.Location_View.Listener is
          end loop;
 
          Markup :=
-           M.Get_Category
+           VSS.Strings.Conversions.To_Unbounded_UTF_8_String (M.Get_Category)
            & ASCII.LF
            & String (M.Get_File.Base_Name)
            & ":" & Image (M.Get_Line)
@@ -1122,7 +1125,8 @@ package body GPS.Location_View.Listener is
          15 => As_Int
            (Sort_Order_Hint'Pos
                 (Self.Kernel.Get_Messages_Container.Get_Sort_Order_Hint
-                     (To_String (Message.Get_Category)))),
+                     (VSS.Strings.Conversions.To_UTF_8_String
+                        (Message.Get_Category)))),
          --  XXX Can it be changed dynamically?
          16 => As_Pointer
            (Message_Conversions.To_Address
@@ -1401,8 +1405,10 @@ package body GPS.Location_View.Listener is
       --  Construct tree for currently visible messages
 
       for Category of Container.Get_Categories loop
-         if Container.Get_Flags (To_String (Category)) (Locations) then
-            Self.Category_Added (Category, False);
+         if Container.Get_Flags (Category) (Locations) then
+            Self.Category_Added
+              (VSS.Strings.Conversions.To_Unbounded_UTF_8_String (Category),
+               False);
 
             for File of Container.Get_Files (Category) loop
                File_Added := False;
@@ -1411,7 +1417,10 @@ package body GPS.Location_View.Listener is
                   if Message.Get_Flags (GPS.Kernel.Messages.Locations) then
                      if not File_Added then
                         File_Added := True;
-                        Self.File_Added (Category, File);
+                        Self.File_Added
+                          (VSS.Strings.Conversions.To_Unbounded_UTF_8_String
+                             (Category),
+                           File);
                      end if;
 
                      Self.Message_Added (Message);

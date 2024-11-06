@@ -116,7 +116,7 @@ package body GPS.Kernel.Messages is
    procedure Initialize_Internal
      (Self          : not null access Abstract_Message'Class;
       Container     : not null Messages_Container_Access;
-      Category      : String;
+      Category      : VSS.Strings.Virtual_String;
       File          : GNATCOLL.VFS.Virtual_File;
       Line          : Natural;
       Column        : Basic_Types.Visible_Column_Type;
@@ -492,11 +492,9 @@ package body GPS.Kernel.Messages is
 
    function Has_Category
      (Self     : not null access constant Messages_Container'Class;
-      Category : String) return Boolean is
+      Category : VSS.Strings.Virtual_String) return Boolean is
    begin
-      return
-        Self.Category_Map.Contains
-          (VSS.Strings.Conversions.To_Virtual_String (Category));
+      return Self.Category_Map.Contains (Category);
    end Has_Category;
 
    --------------------
@@ -505,29 +503,14 @@ package body GPS.Kernel.Messages is
 
    function Get_Categories
      (Self : not null access constant Messages_Container'Class)
-      return Unbounded_String_Array
-   is
-      Result : Unbounded_String_Array (1 .. Natural (Self.Categories.Length));
-
+      return VSS.String_Vectors.Virtual_String_Vector is
    begin
-      for J in Result'Range loop
-         Result (J) :=
-           VSS.Strings.Conversions.To_Unbounded_UTF_8_String
-             (Self.Categories.Element (J).Name);
-      end loop;
-
-      return Result;
+      return Result : VSS.String_Vectors.Virtual_String_Vector do
+         for Node of Self.Categories loop
+            Result.Append (Node.Name);
+         end loop;
+      end return;
    end Get_Categories;
-
-   ------------------
-   -- Get_Category --
-   ------------------
-
-   function Get_Category
-     (Self : not null access constant Abstract_Message'Class) return String is
-   begin
-      return To_String (Self.Get_Category);
-   end Get_Category;
 
    ---------------
    -- Get_Flags --
@@ -554,11 +537,10 @@ package body GPS.Kernel.Messages is
 
    function Get_Flags
      (Self     : not null access constant Messages_Container'Class;
-      Category : String) return Message_Flags
+      Category : VSS.Strings.Virtual_String) return Message_Flags
    is
       Position : constant Category_Maps.Cursor :=
-        Self.Category_Map.Find
-          (VSS.Strings.Conversions.To_Virtual_String (Category));
+        Self.Category_Map.Find (Category);
 
    begin
       if Has_Element (Position) then
@@ -595,13 +577,11 @@ package body GPS.Kernel.Messages is
 
    function Get_Category
      (Self : not null access constant Abstract_Message'Class)
-      return Ada.Strings.Unbounded.Unbounded_String is
+      return VSS.Strings.Virtual_String is
    begin
       case Self.Level is
          when Primary =>
-            return
-              VSS.Strings.Conversions.To_Unbounded_UTF_8_String
-                (Self.Parent.Parent.Name);
+            return Self.Parent.Parent.Name;
 
          when Secondary =>
             return Abstract_Message'Class (Self.Parent.all).Get_Category;
@@ -674,12 +654,10 @@ package body GPS.Kernel.Messages is
 
    function Get_Files
      (Self     : not null access constant Messages_Container'Class;
-      Category : Ada.Strings.Unbounded.Unbounded_String)
-      return Virtual_File_Array
+      Category : VSS.Strings.Virtual_String) return Virtual_File_Array
    is
       Category_Position : constant Category_Maps.Cursor :=
-        Self.Category_Map.Find
-          (VSS.Strings.Conversions.To_Virtual_String (Category));
+        Self.Category_Map.Find (Category);
       Category_Node     : Node_Access;
 
    begin
@@ -809,12 +787,11 @@ package body GPS.Kernel.Messages is
 
    function Get_Messages
      (Self     : not null access constant Messages_Container'Class;
-      Category : Ada.Strings.Unbounded.Unbounded_String;
+      Category : VSS.Strings.Virtual_String;
       File     : GNATCOLL.VFS.Virtual_File) return Message_Array
    is
       Category_Position : constant Category_Maps.Cursor :=
-        Self.Category_Map.Find
-          (VSS.Strings.Conversions.To_Virtual_String (Category));
+        Self.Category_Map.Find (Category);
       Category_Node     : Node_Access;
       File_Position     : File_Maps.Cursor;
       File_Node         : Node_Access;
@@ -1064,7 +1041,7 @@ package body GPS.Kernel.Messages is
    procedure Initialize
      (Self          : not null access Abstract_Message'Class;
       Container     : not null Messages_Container_Access;
-      Category      : String;
+      Category      : VSS.Strings.Virtual_String;
       File          : GNATCOLL.VFS.Virtual_File;
       Line          : Natural;
       Column        : Basic_Types.Visible_Column_Type;
@@ -1112,7 +1089,7 @@ package body GPS.Kernel.Messages is
    procedure Initialize
      (Self          : not null access Abstract_Message'Class;
       Container     : not null Messages_Container_Access;
-      Category      : String;
+      Category      : VSS.Strings.Virtual_String;
       File          : GNATCOLL.VFS.Virtual_File;
       Line          : Natural;
       Column        : Basic_Types.Visible_Column_Type;
@@ -1179,7 +1156,7 @@ package body GPS.Kernel.Messages is
    procedure Initialize_Internal
      (Self          : not null access Abstract_Message'Class;
       Container     : not null Messages_Container_Access;
-      Category      : String;
+      Category      : VSS.Strings.Virtual_String;
       File          : GNATCOLL.VFS.Virtual_File;
       Line          : Natural;
       Column        : Basic_Types.Visible_Column_Type;
@@ -1187,12 +1164,10 @@ package body GPS.Kernel.Messages is
       Actual_Line   : Integer;
       Actual_Column : Integer)
    is
-      pragma Assert (Category /= "");
+      pragma Assert (not Category.Is_Empty);
 
-      Category_Name     : constant VSS.Strings.Virtual_String :=
-        VSS.Strings.Conversions.To_Virtual_String (Category);
       Category_Position : constant Category_Maps.Cursor :=
-        Container.Category_Map.Find (Category_Name);
+        Container.Category_Map.Find (Category);
       Category_Node     : Node_Access;
       File_Position     : File_Maps.Cursor;
       File_Node         : Node_Access;
@@ -1220,7 +1195,7 @@ package body GPS.Kernel.Messages is
          Category_Node := Element (Category_Position);
 
       else
-         Sort_Position := Container.Sort_Order_Hints.Find (Category_Name);
+         Sort_Position := Container.Sort_Order_Hints.Find (Category);
 
          if Has_Element (Sort_Position) then
             Sort_Hint := Element (Sort_Position);
@@ -1236,11 +1211,11 @@ package body GPS.Kernel.Messages is
               Children      => Node_Vectors.Empty_Vector,
               Counters      => (others => 0),
               Container     => Container,
-              Name          => Category_Name,
+              Name          => Category,
               File_Map      => File_Maps.Empty_Map,
               Sort_Hint     => Sort_Hint);
          Container.Categories.Append (Category_Node);
-         Container.Category_Map.Insert (Category_Name, Category_Node);
+         Container.Category_Map.Insert (Category, Category_Node);
       end if;
 
       --  Resolve file node, create new one when there is no existent node
@@ -1278,7 +1253,7 @@ package body GPS.Kernel.Messages is
    is
       procedure Load_Message
         (XML_Node : Node_Ptr;
-         Category : String;
+         Category : VSS.Strings.Virtual_String;
          File     : Virtual_File);
       --  Loads primary message and its secondary messages
 
@@ -1293,7 +1268,7 @@ package body GPS.Kernel.Messages is
 
       procedure Load_Message
         (XML_Node : Node_Ptr;
-         Category : String;
+         Category : VSS.Strings.Virtual_String;
          File     : Virtual_File)
       is
          function Get_Message_Importance return Message_Importance_Type;
@@ -1456,7 +1431,7 @@ package body GPS.Kernel.Messages is
       File_XML_Node     : Node_Ptr;
       Message_XML_Node  : Node_Ptr;
       Error             : GNAT.Strings.String_Access;
-      Category          : Unbounded_String;
+      Category          : VSS.Strings.Virtual_String;
       File              : Virtual_File;
 
    begin
@@ -1495,9 +1470,7 @@ package body GPS.Kernel.Messages is
                         Sort_Order_Hint'Image (Chronological))));
 
             elsif Category_XML_Node.Tag.all = "category" then
-               Category :=
-                 To_Unbounded_String
-                   (Get_Attribute_S (Category_XML_Node, "name", "ERROR"));
+               Category := Get_Attribute (Category_XML_Node, "name", "ERROR");
 
                File_XML_Node := Category_XML_Node.Child;
 
@@ -1508,8 +1481,7 @@ package body GPS.Kernel.Messages is
 
                   while Message_XML_Node /= null loop
                      if Message_XML_Node.Tag.all = "message" then
-                        Load_Message
-                          (Message_XML_Node, To_String (Category), File);
+                        Load_Message (Message_XML_Node, Category, File);
                      end if;
 
                      Message_XML_Node := Message_XML_Node.Next;
@@ -2118,10 +2090,8 @@ package body GPS.Kernel.Messages is
       File, Renamed : Virtual_File)
    is
       pragma Unreferenced (Self, Renamed);
-      Container : constant Messages_Container_Access :=
+      Container         : constant Messages_Container_Access :=
         Get_Messages_Container (Kernel);
-      Categories : constant Unbounded_String_Array :=
-        Get_Categories (Container);
       Category_Position : Category_Maps.Cursor;
       Category_Node     : Node_Access;
       File_Position     : File_Maps.Cursor;
@@ -2133,10 +2103,8 @@ package body GPS.Kernel.Messages is
       --  original file to the new file. For now we just remove messages
       --  from the original file, for safety.
 
-      for J in Categories'Range loop
-         Category_Position :=
-           Container.Category_Map.Find
-             (VSS.Strings.Conversions.To_Virtual_String (Categories (J)));
+      for Category of Get_Categories (Container) loop
+         Category_Position := Container.Category_Map.Find (Category);
 
          if Has_Element (Category_Position) then
             Category_Node := Element (Category_Position);
@@ -2319,12 +2287,11 @@ package body GPS.Kernel.Messages is
 
    procedure Remove_Category
      (Self     : not null access Messages_Container'Class;
-      Category : String;
+      Category : VSS.Strings.Virtual_String;
       Flags    : Message_Flags)
    is
       Category_Position : Category_Maps.Cursor :=
-        Self.Category_Map.Find
-          (VSS.Strings.Conversions.To_Virtual_String (Category));
+        Self.Category_Map.Find (Category);
       Category_Index    : Positive;
       Category_Node     : Node_Access;
 
@@ -2400,13 +2367,12 @@ package body GPS.Kernel.Messages is
 
    procedure Remove_File
      (Self     : not null access Messages_Container'Class;
-      Category : String;
+      Category : VSS.Strings.Virtual_String;
       File     : GNATCOLL.VFS.Virtual_File;
       Flags    : Message_Flags)
    is
       Category_Position : constant Category_Maps.Cursor :=
-        Self.Category_Map.Find
-          (VSS.Strings.Conversions.To_Virtual_String (Category));
+        Self.Category_Map.Find (Category);
       Category_Node     : Node_Access;
       File_Position     : File_Maps.Cursor;
       File_Index        : Positive;
@@ -2419,7 +2385,7 @@ package body GPS.Kernel.Messages is
          File_Position := Category_Node.File_Map.Find (File);
 
          if Has_Element (File_Position) then
-            File_Node := Element (File_Position);
+            File_Node  := Element (File_Position);
             File_Index := Category_Node.Children.Find_Index (File_Node);
             Self.Remove_File
               (File_Position, File_Index, File_Node, Flags, True);
@@ -2448,9 +2414,8 @@ package body GPS.Kernel.Messages is
         Self.Cleanup_Mode
           or else Notifiers.Ask_About_Message_Destroy (Self, Message);
       Category_Node  : Node_Access;
-      Category_Name  : constant VSS.Strings.Virtual_String :=
-        VSS.Strings.Conversions.To_Virtual_String
-          (String'(Message.Get_Category));
+      Category       : constant VSS.Strings.Virtual_String :=
+        Message.Get_Category;
       Category_Flags : Message_Flags;
       File           : constant Virtual_File := Message.Get_File;
       File_Node      : Node_Access;
@@ -2499,13 +2464,13 @@ package body GPS.Kernel.Messages is
 
             Notifiers.Notify_Listeners_About_File_Removed
               (Self,
-               Category_Name,
+               Category,
                File,
                File_Flags,
                Get_Flags (File_Node));
             Notifiers.Notify_Listeners_About_Category_Removed
               (Self,
-               Category_Name,
+               Category,
                Category_Flags,
                Get_Flags (Category_Node));
          end if;
@@ -2950,20 +2915,18 @@ package body GPS.Kernel.Messages is
 
    procedure Set_Sort_Order_Hint
      (Self     : not null access Messages_Container'Class;
-      Category : String;
+      Category : VSS.Strings.Virtual_String;
       Hint     : Sort_Order_Hint)
    is
-      Category_Name : constant VSS.Strings.Virtual_String :=
-        VSS.Strings.Conversions.To_Virtual_String (Category);
-      Position      : constant Sort_Order_Hint_Maps.Cursor :=
-        Self.Sort_Order_Hints.Find (Category_Name);
+      Position : constant Sort_Order_Hint_Maps.Cursor :=
+        Self.Sort_Order_Hints.Find (Category);
 
    begin
       if Has_Element (Position) then
          Self.Sort_Order_Hints.Replace_Element (Position, Hint);
 
       else
-         Self.Sort_Order_Hints.Insert (Category_Name, Hint);
+         Self.Sort_Order_Hints.Insert (Category, Hint);
       end if;
    end Set_Sort_Order_Hint;
 
