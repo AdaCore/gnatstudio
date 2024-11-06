@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                      GVD - The GNU Visual Debugger                       --
 --                                                                          --
---                     Copyright (C) 2003-2023, AdaCore                     --
+--                     Copyright (C) 2003-2024, AdaCore                     --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -735,8 +735,8 @@ package body GVD.Call_Stack is
 
             Set_And_Clear
               (View.Model, Iter, (Frame_Num_Column, Subprog_Name_Column),
-               (1 => As_String ("0"),
-                2 => As_String ("Running...")));
+               (1 => As_String (String'("0")),
+                2 => As_String (String'("Running..."))));
          end if;
       end if;
    end On_State_Changed;

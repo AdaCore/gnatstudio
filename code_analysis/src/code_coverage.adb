@@ -679,7 +679,7 @@ package body Code_Coverage is
          Values :=
            (1 => As_String (Coverage.Print_Status),
             2 => As_Int    (0),
-            3 => As_String ("n/a"),
+            3 => As_String (String'("n/a")),
             4 => As_Int    (0));
       end if;
 
