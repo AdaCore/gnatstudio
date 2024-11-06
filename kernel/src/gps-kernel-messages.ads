@@ -502,24 +502,24 @@ package GPS.Kernel.Messages is
 
    procedure Category_Added
      (Self     : not null access Abstract_Listener;
-      Category : Ada.Strings.Unbounded.Unbounded_String;
+      Category : VSS.Strings.Virtual_String;
       Allow_Auto_Jump_To_First : Boolean) is null;
    --  If Allow_Auto_Jump_To_First is True and the user preference is also true
    --  then the locations window will automatically jump to the first message.
 
    procedure Category_Removed
      (Self     : not null access Abstract_Listener;
-      Category : Ada.Strings.Unbounded.Unbounded_String) is null;
+      Category : VSS.Strings.Virtual_String) is null;
    --  Called on remove of category
 
    procedure File_Added
      (Self     : not null access Abstract_Listener;
-      Category : Ada.Strings.Unbounded.Unbounded_String;
+      Category : VSS.Strings.Virtual_String;
       File     : GNATCOLL.VFS.Virtual_File) is null;
 
    procedure File_Removed
      (Self     : not null access Abstract_Listener;
-      Category : Ada.Strings.Unbounded.Unbounded_String;
+      Category : VSS.Strings.Virtual_String;
       File     : GNATCOLL.VFS.Virtual_File) is null;
 
    procedure Message_Added

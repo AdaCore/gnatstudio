@@ -1704,8 +1704,7 @@ package body GPS.Kernel.Messages is
                                     /= Empty_Message_Flags)
                then
                   Listener.Category_Added
-                    (VSS.Strings.Conversions.To_Unbounded_UTF_8_String
-                       (Category),
+                    (Category                 => Category,
                      Allow_Auto_Jump_To_First => Allow_Auto_Jump_To_First);
                end if;
 
@@ -1748,9 +1747,7 @@ package body GPS.Kernel.Messages is
                                      and Listener.Flags)
                                     /= Empty_Message_Flags)
                then
-                  Listener.Category_Removed
-                    (VSS.Strings.Conversions.To_Unbounded_UTF_8_String
-                       (Category));
+                  Listener.Category_Removed (Category);
                end if;
 
             exception
@@ -1793,10 +1790,7 @@ package body GPS.Kernel.Messages is
                                      and Listener.Flags)
                                     /= Empty_Message_Flags)
                then
-                  Listener.File_Added
-                    (VSS.Strings.Conversions.To_Unbounded_UTF_8_String
-                       (Category),
-                     File);
+                  Listener.File_Added (Category, File);
                end if;
 
             exception
@@ -1839,10 +1833,7 @@ package body GPS.Kernel.Messages is
                                      and Listener.Flags)
                                     /= Empty_Message_Flags)
                then
-                  Listener.File_Removed
-                    (VSS.Strings.Conversions.To_Unbounded_UTF_8_String
-                       (Category),
-                     File);
+                  Listener.File_Removed (Category, File);
                end if;
 
             exception

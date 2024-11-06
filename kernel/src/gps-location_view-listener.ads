@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                               GNAT Studio                                --
 --                                                                          --
---                     Copyright (C) 2010-2023, AdaCore                     --
+--                     Copyright (C) 2010-2024, AdaCore                     --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -198,22 +198,22 @@ private
       Message : not null access Abstract_Message'Class);
 
    overriding procedure File_Added
-     (Self    : not null access Locations_Listener;
-      Category : Ada.Strings.Unbounded.Unbounded_String;
+     (Self     : not null access Locations_Listener;
+      Category : VSS.Strings.Virtual_String;
       File     : GNATCOLL.VFS.Virtual_File);
 
    overriding procedure File_Removed
      (Self     : not null access Locations_Listener;
-      Category : Unbounded_String;
+      Category : VSS.Strings.Virtual_String;
       File     : GNATCOLL.VFS.Virtual_File);
 
    overriding procedure Category_Added
      (Self     : not null access Locations_Listener;
-      Category : Ada.Strings.Unbounded.Unbounded_String;
+      Category : VSS.Strings.Virtual_String;
       Allow_Auto_Jump_To_First : Boolean);
 
    overriding procedure Category_Removed
      (Self     : not null access Locations_Listener;
-      Category : Ada.Strings.Unbounded.Unbounded_String);
+      Category : VSS.Strings.Virtual_String);
 
 end GPS.Location_View.Listener;

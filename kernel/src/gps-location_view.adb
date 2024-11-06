@@ -248,7 +248,7 @@ package body GPS.Location_View is
       Message : not null access Abstract_Message'Class);
    overriding procedure Category_Added
      (Self     : not null access View_Manager;
-      Category : Ada.Strings.Unbounded.Unbounded_String;
+      Category : VSS.Strings.Virtual_String;
       Allow_Auto_Jump_To_First : Boolean);
    --  Monitoring messages.
    --  ??? Can this be done simply by monitoring the model instead ? We are at
@@ -395,7 +395,7 @@ package body GPS.Location_View is
 
    overriding procedure Category_Added
      (Self     : not null access View_Manager;
-      Category : Ada.Strings.Unbounded.Unbounded_String;
+      Category : VSS.Strings.Virtual_String;
       Allow_Auto_Jump_To_First : Boolean)
    is
       Auto : constant Boolean := Allow_Auto_Jump_To_First
@@ -404,7 +404,7 @@ package body GPS.Location_View is
       Expand_Category
         (Location_View_Access
            (Location_Views.Get_Or_Create_View (Self.Kernel, Focus => Auto)),
-         VSS.Strings.Conversions.To_Virtual_String (Category),
+         Category,
          Auto);
    end Category_Added;
 
