@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                               GNAT Studio                                --
 --                                                                          --
---                     Copyright (C) 2002-2023, AdaCore                     --
+--                     Copyright (C) 2002-2024, AdaCore                     --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -384,11 +384,11 @@ package body Histories is
 
          Key := new Node;
          Key.Tag := new String'("key");
-         Set_Attribute (Key, Name_Name, Get_Key (Iter));
+         Set_Attribute_S (Key, Name_Name, Get_Key (Iter));
 
          case Value.Typ is
             when Strings =>
-               Set_Attribute (Key, Type_Name, Strings_Name);
+               Set_Attribute_S (Key, Type_Name, Strings_Name);
 
                if Value.Max_Length /= -1 then
                   N := new Node;
@@ -407,7 +407,7 @@ package body Histories is
                end if;
 
             when Booleans =>
-               Set_Attribute (Key, Type_Name, Booleans_Name);
+               Set_Attribute_S (Key, Type_Name, Booleans_Name);
                N := new Node;
                N.Tag := new String'(Value_Name);
                N.Value := new String'(Boolean'Image (Value.Value));

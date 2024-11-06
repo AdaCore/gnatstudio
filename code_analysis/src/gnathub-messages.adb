@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                               GNAT Studio                                --
 --                                                                          --
---                       Copyright (C) 2016-2023, AdaCore                   --
+--                       Copyright (C) 2016-2024, AdaCore                   --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -200,13 +200,13 @@ package body GNAThub.Messages is
       Self : constant GNAThub_Message_Access :=
         GNAThub_Message_Access (Message_Node);
    begin
-      Set_Attribute
+      Set_Attribute_S
         (XML_Node, "text", To_String (Self.Text));
-      Set_Attribute
+      Set_Attribute_S
         (XML_Node, "tool_name", To_String (Self.Get_Tool.Name));
-      Set_Attribute
+      Set_Attribute_S
         (XML_Node, "rule_name", To_String (Self.Get_Rule.Name));
-      Set_Attribute
+      Set_Attribute_S
         (XML_Node, "rule_id", To_String (Self.Get_Rule.Identifier));
    end Save;
 

@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                               GNAT Studio                                --
 --                                                                          --
---                     Copyright (C) 2005-2023, AdaCore                     --
+--                     Copyright (C) 2005-2024, AdaCore                     --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -238,7 +238,7 @@ package body GPS.Kernel.Clipboard is
                Child.Tag := new String'("clipboard");
 
                if L = Clipboard.Last_Paste then
-                  Set_Attribute (Child, "last", "true");
+                  Set_Attribute_S (Child, "last", "true");
                end if;
 
                if Clipboard.List (L)'Length <= 100_000 then

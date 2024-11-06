@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                               GNAT Studio                                --
 --                                                                          --
---                     Copyright (C) 2001-2023, AdaCore                     --
+--                     Copyright (C) 2001-2024, AdaCore                     --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -1643,9 +1643,9 @@ package body Browsers.Canvas is
          Pos  : constant Point := It.Position;
       begin
          if N /= null then
-            Set_Attribute (N, "id", System.Address_Image (E.all'Address));
-            Set_Attribute (N, "x", Pos.X'Img);
-            Set_Attribute (N, "y", Pos.Y'Img);
+            Set_Attribute_S (N, "id", System.Address_Image (E.all'Address));
+            Set_Attribute_S (N, "x", Pos.X'Img);
+            Set_Attribute_S (N, "y", Pos.Y'Img);
             Add_Child (XML, N);
          end if;
       end On_Item;
@@ -1656,9 +1656,9 @@ package body Browsers.Canvas is
       begin
          N := new Node;
          N.Tag := new String'("link");
-         Set_Attribute
+         Set_Attribute_S
            (N, "from", System.Address_Image (L.Get_From.all'Address));
-         Set_Attribute
+         Set_Attribute_S
            (N, "to", System.Address_Image (L.Get_To.all'Address));
          Add_Child (XML, N, Append => True);
       end On_Link;
@@ -1668,9 +1668,9 @@ package body Browsers.Canvas is
       View.Get_View.Model.For_Each_Item (On_Item'Access, Filter => Kind_Item);
       View.Get_View.Model.For_Each_Item (On_Link'Access, Filter => Kind_Link);
 
-      Set_Attribute (XML, "scale", View.Get_View.Get_Scale'Img);
-      Set_Attribute (XML, "top", Gdouble'Image (Area.Y));
-      Set_Attribute (XML, "left", Gdouble'Image (Area.X));
+      Set_Attribute_S (XML, "scale", View.Get_View.Get_Scale'Img);
+      Set_Attribute_S (XML, "top", Gdouble'Image (Area.Y));
+      Set_Attribute_S (XML, "left", Gdouble'Image (Area.X));
    end Save_To_XML;
 
    -------------------

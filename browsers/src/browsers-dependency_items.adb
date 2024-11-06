@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                               GNAT Studio                                --
 --                                                                          --
---                     Copyright (C) 2001-2023, AdaCore                     --
+--                     Copyright (C) 2001-2024, AdaCore                     --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -284,8 +284,8 @@ package body Browsers.Dependency_Items is
 
    begin
       N.Tag := new String'("file");
-      XML_Utils.Set_Attribute (N, "file", Self.Source.Display_Full_Name);
-      XML_Utils.Set_Attribute
+      XML_Utils.Set_Attribute_S (N, "file", Self.Source.Display_Full_Name);
+      XML_Utils.Set_Attribute_S
         (N, "project", Project_Of (Self).Project_Path.Display_Full_Name);
 
       return N;
@@ -301,7 +301,7 @@ package body Browsers.Dependency_Items is
    is
    begin
       if Self.Explicit then
-         XML_Utils.Set_Attribute (Node, "explicit", "1");
+         XML_Utils.Set_Attribute_S (Node, "explicit", "1");
       end if;
    end Save_To_XML;
 

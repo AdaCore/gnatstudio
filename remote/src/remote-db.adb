@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                               GNAT Studio                                --
 --                                                                          --
---                     Copyright (C) 2009-2023, AdaCore                     --
+--                     Copyright (C) 2009-2024, AdaCore                     --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -1062,17 +1062,17 @@ package body Remote.Db is
          Main_Child.Tag := new String'("remote_machine_descriptor");
          Add_Child (Node, Main_Child, True);
 
-         Set_Attribute
+         Set_Attribute_S
            (Main_Child, "nickname", Nickname (Machine.all));
-         Set_Attribute
+         Set_Attribute_S
            (Main_Child, "network_name", Network_Name (Machine.all));
-         Set_Attribute
+         Set_Attribute_S
            (Main_Child, "remote_access", Access_Tool (Machine.all));
-         Set_Attribute
+         Set_Attribute_S
            (Main_Child, "remote_shell", Shell (Machine.all));
-         Set_Attribute
+         Set_Attribute_S
            (Main_Child, "remote_sync", Sync_Tool (Machine.all));
-         Set_Attribute
+         Set_Attribute_S
            (Main_Child, "debug_console", Use_Dbg (Machine.all)'Img);
 
          Child := new XML_Utils.Node;
@@ -1132,7 +1132,7 @@ package body Remote.Db is
                Child.Tag := new String'("mirror_path");
                Add_Child (Main_Child, Child);
 
-               Set_Attribute (Child, "sync", Mount_Pts (J).Sync'Img);
+               Set_Attribute_S (Child, "sync", Mount_Pts (J).Sync'Img);
                Add_File_Child
                  (Child, "local_path", Mount_Pts (J).Local_Root);
                Add_File_Child

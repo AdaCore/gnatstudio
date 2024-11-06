@@ -1500,7 +1500,7 @@ package body GPS.Kernel.MDI is
         and then Desktop_Perspective /= ""
         and then not Backup
       then
-         Set_Attribute (Central_Convert, "perspective", Desktop_Perspective);
+         Set_Attribute_S (Central_Convert, "perspective", Desktop_Perspective);
          UI_Module.Desktop_Saved := True;
       end if;
 
@@ -2093,7 +2093,7 @@ package body GPS.Kernel.MDI is
       Node : constant Node_Ptr := new XML_Utils.Node;
    begin
       Node.Tag := new String'("mdi_marker");
-      Set_Attribute (Node, "title", To_String (Marker.Title));
+      Set_Attribute_S (Node, "title", To_String (Marker.Title));
       return Node;
    end Save;
 

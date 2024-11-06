@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                               GNAT Studio                                --
 --                                                                          --
---                     Copyright (C) 2003-2023, AdaCore                     --
+--                     Copyright (C) 2003-2024, AdaCore                     --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -515,9 +515,9 @@ package body GPS.Kernel.Custom is
                Child := new Node;
                Child.Tag := new String'("startup");
 
-               Set_Attribute
+               Set_Attribute_S
                  (Child, "load", Boolean'Image (Script.Mode = Explicit_On));
-               Set_Attribute (Child, "file", Get_Key (Iter));
+               Set_Attribute_S (Child, "file", Get_Key (Iter));
 
                Add_Child (File, Child);
          end case;

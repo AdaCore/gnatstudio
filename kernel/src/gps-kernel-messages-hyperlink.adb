@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                               GNAT Studio                                --
 --                                                                          --
---                     Copyright (C) 2010-2023, AdaCore                     --
+--                     Copyright (C) 2010-2024, AdaCore                     --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -205,14 +205,14 @@ package body GPS.Kernel.Messages.Hyperlink is
                Hyperlink_Message_Access (Message_Node);
 
    begin
-      Set_Attribute (XML_Node, "text", To_String (Self.Text));
+      Set_Attribute_S (XML_Node, "text", To_String (Self.Text));
 
       if Self.Level = Secondary
         and then Self.First <= Self.Last
       then
-         Set_Attribute
+         Set_Attribute_S
            (XML_Node, "first", Trim (Integer'Image (Self.First), Both));
-         Set_Attribute
+         Set_Attribute_S
            (XML_Node, "last", Trim (Integer'Image (Self.Last), Both));
       end if;
    end Save;

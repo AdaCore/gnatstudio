@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                               GNAT Studio                                --
 --                                                                          --
---                     Copyright (C) 2005-2023, AdaCore                     --
+--                     Copyright (C) 2005-2024, AdaCore                     --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -2872,7 +2872,7 @@ package body Bookmark_Views is
                                    Holder.Editor.New_Location_At_Line
                                      (Integer (Get_Line (Tmp.Marker)));
                               begin
-                                 Set_Attribute
+                                 Set_Attribute_S
                                    (Child, Line_Text_Attribute,
                                     String_To_Encoded_ASCII
                                       (Holder.Editor.Get_Chars
@@ -2885,7 +2885,7 @@ package body Bookmark_Views is
             end case;
 
             if Child /= null then
-               Set_Attribute
+               Set_Attribute_S
                  (Child, "bookmark_name",
                   String_To_Encoded_ASCII (To_String (Tmp.Name)));
 

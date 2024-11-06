@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                               GNAT Studio                                --
 --                                                                          --
---                     Copyright (C) 2005-2023, AdaCore                     --
+--                     Copyright (C) 2005-2024, AdaCore                     --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -1314,14 +1314,14 @@ package body Call_Graph_Views is
    begin
       Result := new Node;
       Result.Tag := new String'("loc");
-      Set_Attribute (Result, "line", R.Line'Img);
-      Set_Attribute (Result, "column", R.Column'Img);
-      Set_Attribute (Result, "file", Display_Full_Name (R.File));
+      Set_Attribute_S (Result, "line", R.Line'Img);
+      Set_Attribute_S (Result, "column", R.Column'Img);
+      Set_Attribute_S (Result, "file", Display_Full_Name (R.File));
       --   ??? Wrong: we have to call Display_Full_Name above only because we
       --  are setting an attribute in an XML node. We should not put
       --  text which is potentially not UTF8 in an attribute.
       if R.Through_Dispatching then
-         Set_Attribute (Result, "dispatch", "true");
+         Set_Attribute_S (Result, "dispatch", "true");
       end if;
       return Result;
    end To_XML;
@@ -1417,37 +1417,37 @@ package body Call_Graph_Views is
 
                Path := Get_Path (Model, Iter);
                if Row_Expanded (View.Tree, Path) then
-                  Set_Attribute (N, "expanded", "true");
+                  Set_Attribute_S (N, "expanded", "true");
                end if;
                Path_Free (Path);
 
-               Set_Attribute
+               Set_Attribute_S
                  (N, "name", Get_String (Model, Iter, Name_Column));
-               Set_Attribute
+               Set_Attribute_S
                  (N, "decl", Get_String (Model, Iter, Decl_Column));
 
-               Set_Attribute
+               Set_Attribute_S
                  (N, "type",
                   View_Type'Image
                     (View_Type'Val (Get_Int (Model, Iter, Kind_Column))));
                N.Tag := new String'("entity");
-               Set_Attribute
+               Set_Attribute_S
                  (N, "entity_name",
                   Get_String (Model, Iter, Entity_Name_Column));
                --  ??? This is potentially not UTF8, should not be in an
                --  attribute
-               Set_Attribute
+               Set_Attribute_S
                  (N, "entity_decl",
                   Get_File (Model, Iter, File_Column).Display_Full_Name);
                --  ??? This is potentially not UTF8, should not be in an
                --  attribute
-               Set_Attribute
+               Set_Attribute_S
                  (N, "entity_line",
                   Image (Integer (Get_Int (Model, Iter, Line_Column))));
-               Set_Attribute
+               Set_Attribute_S
                  (N, "entity_column",
                   Image (Integer (Get_Int (Model, Iter, Column_Column))));
-               Set_Attribute
+               Set_Attribute_S
                  (N, "entity_project",
                   Get_File (Model, Iter, Project_Column).Display_Full_Name);
 
@@ -1470,7 +1470,7 @@ package body Call_Graph_Views is
       Root := new Node;
       XML.Child := Root;
       Root.Tag := new String'("callgraph");
-      Set_Attribute
+      Set_Attribute_S
         (Root, "position",
          Float'Image (Get_Position_Percent (View.Pane)) & "%");
 

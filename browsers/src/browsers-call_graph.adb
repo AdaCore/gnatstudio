@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                               GNAT Studio                                --
 --                                                                          --
---                     Copyright (C) 2001-2023, AdaCore                     --
+--                     Copyright (C) 2001-2024, AdaCore                     --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -237,10 +237,10 @@ package body Browsers.Call_Graph is
       N    : constant Node_Ptr := new Node;
    begin
       N.Tag := new String'("entity");
-      Set_Attribute (N, "name", To_String (Decl.Name));
-      Set_Attribute (N, "file", Decl.Loc.File.Display_Full_Name);
-      Set_Attribute (N, "line", Decl.Loc.Line'Img);
-      Set_Attribute (N, "col",  Decl.Loc.Column'Img);
+      Set_Attribute_S (N, "name", To_String (Decl.Name));
+      Set_Attribute_S (N, "file", Decl.Loc.File.Display_Full_Name);
+      Set_Attribute_S (N, "line", Decl.Loc.Line'Img);
+      Set_Attribute_S (N, "col",  Decl.Loc.Column'Img);
       return N;
    end Save_To_XML;
 

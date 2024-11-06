@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                               GNAT Studio                                --
 --                                                                          --
---                     Copyright (C) 2009-2023, AdaCore                     --
+--                     Copyright (C) 2009-2024, AdaCore                     --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -136,7 +136,7 @@ package XML_Utils is
    --  string.
    --  Return Default otherwise.
 
-   procedure Set_Attribute
+   procedure Set_Attribute_S
      (N : Node_Ptr; Attribute_Name, Attribute_Value : UTF8_String);
    --  Create a new attribute, or replace an existing one. The attribute value
    --  is automatically protected for special XML characters

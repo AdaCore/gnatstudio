@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                               GNAT Studio                                --
 --                                                                          --
---                     Copyright (C) 2001-2023, AdaCore                     --
+--                     Copyright (C) 2001-2024, AdaCore                     --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -317,10 +317,10 @@ package body Browsers.Entities is
 
    begin
       N.Tag := new String'("entity");
-      XML_Utils.Set_Attribute (N, "name", To_String (Decl.Name));
-      XML_Utils.Set_Attribute (N, "file", Decl.Loc.File.Display_Full_Name);
-      XML_Utils.Set_Attribute (N, "line", Decl.Loc.Line'Img);
-      XML_Utils.Set_Attribute (N, "col",  Decl.Loc.Column'Img);
+      XML_Utils.Set_Attribute_S (N, "name", To_String (Decl.Name));
+      XML_Utils.Set_Attribute_S (N, "file", Decl.Loc.File.Display_Full_Name);
+      XML_Utils.Set_Attribute_S (N, "line", Decl.Loc.Line'Img);
+      XML_Utils.Set_Attribute_S (N, "col",  Decl.Loc.Column'Img);
 
       return N;
    end Save_To_XML;
@@ -333,10 +333,10 @@ package body Browsers.Entities is
      (Self : not null access Entity_Link_Record;
       Node : not null XML_Utils.Node_Ptr) is
    begin
-      XML_Utils.Set_Attribute (Node, "name", To_String (Self.Name));
+      XML_Utils.Set_Attribute_S (Node, "name", To_String (Self.Name));
 
       if Self.Parent_Link then
-         XML_Utils.Set_Attribute (Node, "parent", "1");
+         XML_Utils.Set_Attribute_S (Node, "parent", "1");
       end if;
    end Save_To_XML;
 

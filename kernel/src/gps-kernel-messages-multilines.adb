@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                               GNAT Studio                                --
 --                                                                          --
---                     Copyright (C) 2021-2023, AdaCore                     --
+--                     Copyright (C) 2021-2024, AdaCore                     --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -213,9 +213,9 @@ package body GPS.Kernel.Messages.Multilines is
       Self : constant Multiline_Message_Access :=
         Multiline_Message_Access (Message_Node);
    begin
-      Set_Attribute (XML_Node, "text", To_String (Self.Get_Text));
-      Set_Attribute (XML_Node, "end_line", Self.End_Line'Image);
-      Set_Attribute (XML_Node, "end_column", Self.End_Column'Image);
+      Set_Attribute_S (XML_Node, "text", To_String (Self.Get_Text));
+      Set_Attribute_S (XML_Node, "end_line", Self.End_Line'Image);
+      Set_Attribute_S (XML_Node, "end_column", Self.End_Column'Image);
    end Save;
 
 end GPS.Kernel.Messages.Multilines;

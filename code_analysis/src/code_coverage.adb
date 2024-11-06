@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                               GNAT Studio                                --
 --                                                                          --
---                     Copyright (C) 2006-2023, AdaCore                     --
+--                     Copyright (C) 2006-2024, AdaCore                     --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -323,18 +323,19 @@ package body Code_Coverage is
    begin
       if Coverage /= null then
          if Coverage.Is_Valid then
-            Set_Attribute (Loc, "coverage", Natural'Image (Coverage.Coverage));
+            Set_Attribute_S
+              (Loc, "coverage", Natural'Image (Coverage.Coverage));
          end if;
 
          if Coverage.all in GNATcov_Line_Coverage'Class then
-            Set_Attribute
+            Set_Attribute_S
               (Loc,
                "status",
                GNATcov_Line_Coverage_Status'Image
                  (GNATcov_Line_Coverage (Coverage.all).Status));
 
          elsif Coverage.all in Gcov_Line_Coverage'Class then
-            Set_Attribute
+            Set_Attribute_S
               (Loc,
                "status",
                Gcov_Line_Coverage_Status'Image
@@ -342,31 +343,31 @@ package body Code_Coverage is
 
          elsif Coverage.all in Node_Coverage'Class then
             if Coverage.Is_Valid then
-               Set_Attribute (Loc, "children", Natural'Image
+               Set_Attribute_S (Loc, "children", Natural'Image
                               (Node_Coverage (Coverage.all).Children));
             end if;
 
             if Coverage.all in Subprogram_Coverage'Class then
-               Set_Attribute
+               Set_Attribute_S
                  (Loc,
                   "status",
                   Coverage_Status'Image
                     (Subprogram_Coverage (Coverage.all).Status));
 
                if Coverage.Is_Valid then
-                  Set_Attribute (Loc, "called", Natural'Image
+                  Set_Attribute_S (Loc, "called", Natural'Image
                                  (Subprogram_Coverage (Coverage.all).Called));
                end if;
 
             elsif Coverage.all in File_Coverage'Class then
-               Set_Attribute
+               Set_Attribute_S
                  (Loc,
                   "status",
                   File_Coverage_Status'Image
                     (File_Coverage (Coverage.all).Status));
 
             elsif Coverage.all in Project_Coverage'Class then
-               Set_Attribute
+               Set_Attribute_S
                  (Loc,
                   "status",
                   Coverage_Status'Image
@@ -374,7 +375,7 @@ package body Code_Coverage is
 
                if Coverage.Is_Valid then
                   if Project_Coverage (Coverage.all).Have_Runs then
-                     Set_Attribute (Loc, "runs", Natural'Image
+                     Set_Attribute_S (Loc, "runs", Natural'Image
                                     (Project_Coverage (Coverage.all).Runs));
                   end if;
                end if;

@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                               GNAT Studio                                --
 --                                                                          --
---                     Copyright (C) 2009-2023, AdaCore                     --
+--                     Copyright (C) 2009-2024, AdaCore                     --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -2590,19 +2590,20 @@ package body GPS.Kernel.Messages is
 
          case Current_Node.Kind is
             when Node_Category =>
-               Set_Attribute (XML_Node, "name", To_String (Current_Node.Name));
+               Set_Attribute_S
+                 (XML_Node, "name", To_String (Current_Node.Name));
 
             when Node_File =>
                Add_File_Child (XML_Node, "name", Current_Node.File);
 
             when Node_Message =>
-               Set_Attribute
+               Set_Attribute_S
                  (XML_Node, "class", External_Tag (Current_Node'Tag));
-               Set_Attribute
+               Set_Attribute_S
                  (XML_Node,
                   "line",
                   Trim (Positive'Image (Current_Node.Line), Both));
-               Set_Attribute
+               Set_Attribute_S
                  (XML_Node,
                   "column",
                   Trim
@@ -2614,7 +2615,7 @@ package body GPS.Kernel.Messages is
                   --  No need to emit a flag node if it is going to be 0, since
                   --  this is the default. Saves some bytes in the XML files.
                   if Flags_Int /= 0 then
-                     Set_Attribute
+                     Set_Attribute_S
                        (XML_Node,
                         "flags", Trim (Integer'Image (Flags_Int), Both));
                   end if;
@@ -2623,7 +2624,7 @@ package body GPS.Kernel.Messages is
                if not Current_Node.Mark.Is_Empty
                  and then Current_Node.Mark.Element.Line /= Current_Node.Line
                then
-                  Set_Attribute
+                  Set_Attribute_S
                     (XML_Node,
                      "actual_line",
                      Trim
@@ -2634,7 +2635,7 @@ package body GPS.Kernel.Messages is
                  and then Current_Node.Mark.Element.Column
                    /= Current_Node.Column
                then
-                  Set_Attribute
+                  Set_Attribute_S
                     (XML_Node,
                      "actual_column",
                      Trim (Visible_Column_Type'Image
@@ -2642,13 +2643,13 @@ package body GPS.Kernel.Messages is
                end if;
 
                if Current_Node.Style /= null then
-                  Set_Attribute
+                  Set_Attribute_S
                     (XML_Node,
                      "highlighting_style",
                      Get_Name (Current_Node.Style));
 
                   if Current_Node.Length /= Highlight_Whole_Line then
-                     Set_Attribute
+                     Set_Attribute_S
                        (XML_Node,
                         "highlighting_length",
                         Trim
@@ -2657,7 +2658,7 @@ package body GPS.Kernel.Messages is
                   end if;
                end if;
 
-               Set_Attribute
+               Set_Attribute_S
                  (XML_Node,
                   "importance",
                   Trim
@@ -2693,7 +2694,7 @@ package body GPS.Kernel.Messages is
                   --  action
 
                   if Current_Node.Action /= null then
-                     Set_Attribute (XML_Node, "has_action", "true");
+                     Set_Attribute_S (XML_Node, "has_action", "true");
                   end if;
                end if;
          end case;
@@ -2762,11 +2763,11 @@ package body GPS.Kernel.Messages is
                Sort_XML_Node :=
                  new Node'
                    (Tag => new String'("sort_order_hint"), others => <>);
-               Set_Attribute
+               Set_Attribute_S
                  (Sort_XML_Node,
                   "category",
                   To_String (Key (Sort_Position)));
-               Set_Attribute
+               Set_Attribute_S
                  (Sort_XML_Node,
                   "hint",
                   Sort_Order_Hint'Image (Element (Sort_Position)));

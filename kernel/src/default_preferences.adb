@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                               GNAT Studio                                --
 --                                                                          --
---                     Copyright (C) 2001-2023, AdaCore                     --
+--                     Copyright (C) 2001-2024, AdaCore                     --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -2117,7 +2117,7 @@ package body Default_Preferences is
          if not Pref.Is_Default then
             Node     := new XML_Utils.Node;
             Node.Tag := new String'("pref");
-            Set_Attribute (Node, "name", Get_Name (Pref));
+            Set_Attribute_S (Node, "name", Get_Name (Pref));
             Node.Value := new String'(Get_Pref (Pref));
             Add_Child (File, Node);
          end if;

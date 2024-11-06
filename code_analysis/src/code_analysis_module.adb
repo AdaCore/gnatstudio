@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                               GNAT Studio                                --
 --                                                                          --
---                     Copyright (C) 2006-2023, AdaCore                     --
+--                     Copyright (C) 2006-2024, AdaCore                     --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -2415,9 +2415,9 @@ package body Code_Analysis_Module is
          Root     := new XML_Utils.Node;
          Root.Tag := new String'("Code_Analysis_Tree");
          if Analysis /= null then
-            Set_Attribute (Root, "name", To_String (Analysis.Name));
+            Set_Attribute_S (Root, "name", To_String (Analysis.Name));
          else
-            Set_Attribute (Root, "name", -"Coverage");
+            Set_Attribute_S (Root, "name", -"Coverage");
          end if;
 
          return Root;
@@ -2466,7 +2466,7 @@ package body Code_Analysis_Module is
    begin
       Root     := new XML_Utils.Node;
       Root.Tag := new String'("Code_Analysis_Tree");
-      Set_Attribute (Root, "name", To_String (Analysis.Name));
+      Set_Attribute_S (Root, "name", To_String (Analysis.Name));
       Dump_Full_XML (Analysis.Projects, Root);
       Print (Root, File, Success_1, Style.Display_Base_Name);
       Style.Copy (File.Dir_Name, Success_2);
