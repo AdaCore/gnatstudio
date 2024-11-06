@@ -28,6 +28,8 @@ with GNAT.Encode_UTF8_String;         use GNAT.Encode_UTF8_String;
 with GNAT.Strings;                    use GNAT.Strings;
 with GNAT.UTF_32;                     use GNAT.UTF_32;
 
+with VSS.Strings.Conversions;
+
 with GNATCOLL.Traces;       use GNATCOLL.Traces;
 
 package body XML_Utils is
@@ -334,6 +336,25 @@ package body XML_Utils is
    end Get_Attribute_S;
 
    -------------------
+   -- Get_Attribute --
+   -------------------
+
+   function Get_Attribute
+     (N              : Node_Ptr;
+      Attribute_Name : VSS.Strings.Virtual_String;
+      Default        : VSS.Strings.Virtual_String :=
+        VSS.Strings.Empty_Virtual_String)
+      return VSS.Strings.Virtual_String is
+   begin
+      return
+        VSS.Strings.Conversions.To_Virtual_String
+          (Get_Attribute_S
+             (N,
+              VSS.Strings.Conversions.To_UTF_8_String (Attribute_Name),
+              VSS.Strings.Conversions.To_UTF_8_String (Default)));
+   end Get_Attribute;
+
+   -------------------
    -- Set_Attribute --
    -------------------
 
@@ -381,6 +402,21 @@ package body XML_Utils is
          N.Attributes := new String'(Str);
       end if;
    end Set_Attribute_S;
+
+   -------------------
+   -- Set_Attribute --
+   -------------------
+
+   procedure Set_Attribute
+     (N               : Node_Ptr;
+      Attribute_Name  : VSS.Strings.Virtual_String;
+      Attribute_Value : VSS.Strings.Virtual_String) is
+   begin
+      Set_Attribute_S
+        (N,
+         VSS.Strings.Conversions.To_UTF_8_String (Attribute_Name),
+         VSS.Strings.Conversions.To_UTF_8_String (Attribute_Value));
+   end Set_Attribute;
 
    ---------------
    -- Add_Child --

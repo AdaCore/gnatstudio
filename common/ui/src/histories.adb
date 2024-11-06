@@ -281,7 +281,8 @@ package body Histories is
 
                elsif Get_Attribute_S (Key, Type_Name) = Booleans_Name then
                   Value := Create_New_Key_If_Necessary
-                    (Hist, History_Key (Get_Attribute_S (Key, Name_Name)),
+                    (Hist,
+                     History_Key (Get_Attribute_S (Key, Name_Name)),
                      Booleans);
 
                else

@@ -21,6 +21,8 @@
 with Interfaces.C;
 with Ada.Unchecked_Deallocation;
 
+with VSS.Strings;
+
 with GNATCOLL.VFS; use GNATCOLL.VFS;
 
 package XML_Utils is
@@ -128,9 +130,15 @@ package XML_Utils is
    --  the Specific_Data for each node.
 
    function Get_Attribute_S
-     (N : Node_Ptr;
+     (N              : Node_Ptr;
       Attribute_Name : UTF8_String;
       Default        : UTF8_String := "") return UTF8_String;
+   function Get_Attribute
+     (N              : Node_Ptr;
+      Attribute_Name : VSS.Strings.Virtual_String;
+      Default        : VSS.Strings.Virtual_String :=
+        VSS.Strings.Empty_Virtual_String)
+      return VSS.Strings.Virtual_String;
    --  Return the value of the attribute 'Attribute_Name' if present.
    --  Special XML characters have already been interpreted in the result
    --  string.
@@ -138,6 +146,10 @@ package XML_Utils is
 
    procedure Set_Attribute_S
      (N : Node_Ptr; Attribute_Name, Attribute_Value : UTF8_String);
+   procedure Set_Attribute
+     (N               : Node_Ptr;
+      Attribute_Name  : VSS.Strings.Virtual_String;
+      Attribute_Value : VSS.Strings.Virtual_String);
    --  Create a new attribute, or replace an existing one. The attribute value
    --  is automatically protected for special XML characters
 
