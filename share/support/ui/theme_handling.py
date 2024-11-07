@@ -56,9 +56,14 @@ variant_prefs = {
     "types": "Src-Editor-Type-Variant",
     "blocks": "Src-Editor-Block-Variant",
     "keywords_in_aspects": "Src-Editor-Aspects-Keywords-Variant",
+    "comments_in_aspects": "Src-Editor-Aspects-Comments-Variant",
+    "numbers_in_aspects": "Src-Editor-Aspects-Numbers-Variant",
+    "strings_in_aspects": "Src-Editor-Aspects-Strings-Variant",
     "preprocessor": "Editor/Fonts & Colors:General/preprocessor",
     "diff_patch_remove": "Diff-Patch-Remove-Variant",
     "diff_patch_append": "Diff-Patch-Append-Variant",
+    "blocks_in_aspects": "Src-Editor-Aspects-Block-Variant",
+    "types_in_aspects": "Src-Editor-Aspects-Type-Variant",
 }
 # These keys are interpreted as variant preferences
 # Keys: our internal easy-to-remember key; values: current names of GPS prefs
@@ -88,6 +93,7 @@ rgb_prefs = {
     "diff_side_change": "Diff-Side-Change-Color",
     "diff_side_remove": "Diff-Side-Remove-Color",
     "diff_side_append": "Diff-Side-Append-Color",
+    "bookmarks": "Src-Editor-Bookmarks",
 }
 # These keys are interpreted as rgb preferences
 # Keys: our internal easy-to-remember key; values: current names of GPS prefs
@@ -276,7 +282,13 @@ common_light = {
     "current_block": Rgba(226, 226, 226),
     "browsers_bg": Rgba(255, 255, 255),
     "keywords_in_aspects": ("DEFAULT", Rgba(0, 109, 151), transparent),
+    "comments_in_aspects": ("DEFAULT", Color("#969696"), transparent),
+    "numbers_in_aspects": ("DEFAULT", Color("#FF3333"), transparent),
+    "strings_in_aspects": ("DEFAULT", Color("#CE7B00"), transparent),
     "preprocessor": ("DEFAULT", Color("#606090"), transparent),
+    "bookmarks": Rgba(205, 0, 255, 77),
+    "blocks_in_aspects": ("DEFAULT", Color("#60615F"), transparent),
+    "types_in_aspects": ("DEFAULT", Color("#009900"), transparent),
 }
 
 common_dark = {
@@ -329,7 +341,13 @@ common_dark = {
     "current_block": Rgba(48, 51, 51),
     "browsers_bg": Rgba(34, 35, 36),
     "keywords_in_aspects": ("DEFAULT", Rgba(173, 127, 168), transparent),
+    "comments_in_aspects": ("DEFAULT", Color("#7398BF"), transparent),
+    "numbers_in_aspects": ("DEFAULT", Color("#FF3333"), transparent),
+    "strings_in_aspects": ("DEFAULT", Color("#CE7B00"), transparent),
     "preprocessor": ("DEFAULT", Color("#606090"), transparent),
+    "bookmarks": Rgba(205, 0, 255, 77),
+    "blocks_in_aspects": ("DEFAULT", Color("#E6E6E6"), transparent),
+    "types_in_aspects": ("DEFAULT", Color("#CCFFCC"), transparent),
 }
 
 

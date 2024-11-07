@@ -109,8 +109,11 @@ def get_themes():
             fg_color = theme.d["editor_fg"]
             bg_color = theme.d["editor_bg"]
             theme.d["gutter_fg"] = fg_color.mix(bg_color, 0.6)
-
-        themes = basic_themes + textmate.textmate_themes()
+        try:
+            themes = basic_themes + textmate.textmate_themes()
+        except Exception as e:
+            GPS.Console().write("Exception while getting color themes: %s\n" % str(e))
+            logger.log("Exception while getting color themes: %s" % str(e))
 
     return themes
 
@@ -165,7 +168,10 @@ class ColorThemeSwitcher(object):
                 else:
                     self.provider.load_from_data(c.encode())
         except Exception as e:
-            GPS.Console().write("resetting theme preference: " + str(e) + "\n")
+            GPS.Console().write(
+                "Exception while loading '%s' theme: %s\n" % (current, str(e))
+            )
+            logger.log("Exception while loading '%s' theme: %s" % (current, str(e)))
             self.apply_theme(get_current_theme())
 
     def apply_theme(self, theme):

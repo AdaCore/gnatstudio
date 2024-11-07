@@ -33,6 +33,63 @@ also import your themes in the
 :file:`INSTALL/share/gnatstudio/color_themes/themes/`
 directory if you want to share themes accross your team.
 
+.. list-table:: Correspondence between TextMate scope names and GNAT Studio preferences
+   :widths: 50 50
+   :header-rows: 1
+
+   * - Scope name
+     - Preference
+   * - `lineHighlight` in `settings` key
+     - Current line color
+   * - `comment`
+     - Comments
+   * - `comment.todo`
+     - TODO and NOTE in comments
+   * - `comment.aspect`
+     - Comments in aspect
+   * - `comment.annotated`
+     - SPARK Annotations
+   * - `keyword`
+     - Keywords
+   * - `keyword.aspect`
+     - Keywords in aspect
+   * - `constant.numeric`
+     - Numbers
+   * - `constant.numeric.aspect`
+     - Numbers in aspect
+   * - `string`, `constant.character`
+     - Strings
+   * - `constant.character.escape`
+     - String escapes
+   * - `constant.language`
+     - Ada/SPARK aspects
+   * - `constant.preprocessor.c`, `constant.preprocessor.c.entity`, `meta.preprocessor`
+     - Preprocessor
+   * - `constant.ephemeral`
+     - Ephemeral highlighting (simple)
+   * - `entity.name.type`, `entity.name.type.class`
+     - Types
+   * - `entity.name.type.aspect`
+     - Types in ghost
+   * - `entity.name.aspect`
+     - Ghost names
+   * - `entity.name.function`
+     - Block Higghlighting
+   * - `entity.ephemeral`
+     - Ephemeral highlighting (smart)
+   * - `string.aspect`
+     - Strings in aspect
+   * - `string.other.link`
+     - Hyper links
+   * - `meta.multicursor_selection`
+     - Multi cursor selection
+   * - `meta.annotations`
+     - Code annotations
+   * - `meta.readonly`
+     - Read-only code
+   * - `meta.bookmark`
+     - Lines with a bookmark
+
 Custom Fonts
 ============
 
