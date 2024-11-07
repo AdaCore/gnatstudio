@@ -8,6 +8,9 @@ import os
 import sys
 from itertools import chain
 
+# Markupsafe is not package with our python so use html.escape
+from html import escape
+
 try:
     import jedi
 except ImportError:
@@ -87,7 +90,7 @@ class PythonResolver(CompletionResolver):
                     CompletionProposal(
                         name=i.name,
                         label=i.name,
-                        documentation=i.docstring(),
+                        documentation=escape(i.docstring()),
                         language_category=TYPE_LABELS.get(
                             i.type, completion.CAT_UNKNOWN
                         ),
