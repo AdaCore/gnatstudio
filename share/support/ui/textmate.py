@@ -12,25 +12,38 @@ import GPS
 from theme_handling import Theme, Color, transparent
 
 text_variant_prefs = {
-    "comment": "comments",
-    "constant.numeric": "numbers",
-    "constant.character": "strings",
-    "constant.language": "aspects",  # because why not
-    "keyword": "keywords",
-    "entity.name.type.class": "types",
-    "entity.name.type": "types",
-    "string": "strings",
-    "entity.name.function": "blocks",
-    "string.other.link": "hyperlinks",
-    # TODO: convert these
-    #    "constant.character.escape":      "Editor/General/string_escapes",
-    #    "constant.preprocessor.c":        "Editor/General/preprocessor",
-    #    "constant.preprocessor.c.entity": "Editor/General/preprocessor",
-    #    "meta.preprocessor":              "Editor/General/preprocessor",
+    "comment": "comments",  # Comments
+    "comment.todo": "comment_notes",  # TODO and NOTE in comments
+    "comment.aspect": "comments_in_aspects",  # Comments in aspect
+    "comment.annotated": "annotated_comments",  # SPARK Annotations
+    "keyword": "keywords",  # Keywords
+    "keyword.aspect": "keywords_in_aspects",  # Keywords in aspect
+    "constant.numeric": "numbers",  # Numbers
+    "constant.numeric.aspect": "numbers_in_aspects",  # Numbers in aspect
+    "constant.character": "strings",  # Strings
+    "constant.character.escape": "string escapes",  # String escapes
+    "constant.language": "aspects",  # Ada/SPARK aspects
+    "constant.preprocessor.c": "preprocessor",  # Preprocessor
+    "constant.preprocessor.c.entity": "preprocessor",  # Preprocessor
+    "constant.ephemeral": "ephemeral_simple",  # Ephemeral highlighting (simple)
+    "entity.name.type": "types",  # Types
+    "entity.name.type.class": "types",  # Types
+    "entity.name.type.aspect": "types_in_aspects",  # Types in ghost
+    "entity.name.aspect": "blocks_in_aspects",  # Ghost names
+    "entity.name.function": "blocks",  # Block Higghlighting
+    "entity.ephemeral": "ephemeral_smart",  # Ephemeral highlighting (smart)
+    "string": "strings",  # Strings
+    "string.aspect": "strings_in_aspects",  # Strings in aspect
+    "string.other.link": "hyperlinks",  # Hyper links
+    "meta.preprocessor": "preprocessor",  # Preprocessor
+    "meta.multicursor_selection": "multicursor_selection",  # Multi cursor selection
+    "meta.annotations": "annotations",  # Code annotations
 }
 
 color_prefs = {
-    "entity.name.function": "current_block",
+    "entity.name.function": "current_block",  # Current block color
+    "meta.readonly": "readonly",  # Read-only code
+    "meta.bookmark": "bookmarks",  # Lines with a bookmark
 }
 
 
@@ -166,16 +179,23 @@ class TextmateTheme(object):
 
             d["caret"] = Color(self.general["caret"])
 
-        # Ignore the line highlight in textmate themes. instead,
-        # compute them from the background.
-
+        # Current line
         cl_color = bg_color.lighten(-0.15 * light_val)
         cl_color.a = 0.5
-        d["current_line"] = cl_color
 
-        cb_color = fg_color.lighten(0.25 * light_val)
-        cb_color.a = 0.5
-        d["current_block"] = cb_color
+        if "lineHighlight" in self.general:
+            d["current_line"] = Color(self.general["lineHighlight"])
+
+        else:
+            # Compute them from the background if not specified
+            d["current_line"] = cl_color
+
+        if "current_block" not in d:
+            # Compute them from the background if not specified
+            cb_color = fg_color.lighten(0.25 * light_val)
+            cb_color.a = 0.5
+            d["current_block"] = cb_color
+
         d["annotations"] = ("DEFAULT", transparent, cl_color)
 
         # Compute values for the auto-highlight-occurrences
