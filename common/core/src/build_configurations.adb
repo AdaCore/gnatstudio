@@ -2236,9 +2236,13 @@ package body Build_Configurations is
       Model_Rec : Model_Record;
       C         : Model_List.Cursor;
       Supported : Boolean := True;
-      Result    : Command_Line := Model.Switches.Empty_Command_Line;
+      Result    : Command_Line;
 
    begin
+      if Model.Switches /= null then
+         Result := Model.Switches.Empty_Command_Line;
+      end if;
+
       Result.Append_Switches (Cmd_Line);
 
       if Mode = "" then
