@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                               GNAT Studio                                --
 --                                                                          --
---                     Copyright (C) 2000-2023, AdaCore                     --
+--                     Copyright (C) 2000-2024, AdaCore                     --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -31,7 +31,6 @@ with Glib.Main;                  use Glib.Main;
 with Gtk.Main;
 with Gtk.Window;                 use Gtk.Window;
 with Gtkada.Dialogs;             use Gtkada.Dialogs;
-with Gtkada.Types;               use Gtkada.Types;
 
 with Config;                     use Config;
 with GVD;                        use GVD;
@@ -1103,17 +1102,6 @@ package body Debugger is
          Current_Process := Debugger.Get_Process;
       end loop;
    end Wait_User_Command;
-
-   ----------
-   -- Free --
-   ----------
-
-   procedure Free (Info : in out Thread_Information_Array) is
-   begin
-      for J in Info'Range loop
-         Free (Info (J).Information);
-      end loop;
-   end Free;
 
    -------------------
    -- Queue_Command --

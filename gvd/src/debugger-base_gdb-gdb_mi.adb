@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                               GNAT Studio                                --
 --                                                                          --
---                     Copyright (C) 2000-2023, AdaCore                     --
+--                     Copyright (C) 2000-2024, AdaCore                     --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -23,6 +23,8 @@ with Ada.Unchecked_Deallocation;
 with GNAT.Expect;               use GNAT.Expect;
 with GNAT.Expect.TTY;           use GNAT.Expect.TTY;
 with GNAT.OS_Lib;               use GNAT.OS_Lib;
+
+with VSS.Strings.Conversions;
 
 with GNATCOLL.Utils;            use GNATCOLL.Utils;
 with GNATCOLL.VFS;              use GNATCOLL.VFS;
@@ -2815,7 +2817,7 @@ package body Debugger.Base_Gdb.Gdb_MI is
          Tokens  : Token_List_Controller;
          C       : Token_Lists.Cursor;
          Current : Boolean;
-         P       : Interfaces.C.size_t;
+         P       : Thread_Fields;
 
       begin
          Tokens.List := Build_Tokens (S);
@@ -2833,15 +2835,14 @@ package body Debugger.Base_Gdb.Gdb_MI is
 
          Len := Info'First;
          Info (Len) :=
-           (Num_Fields  => 7,
-            Information =>
-              (New_String ("id"),
-               New_String ("task-id"),
-               New_String ("thread-id"),
-               New_String ("parent-id"),
-               New_String ("priority"),
-               New_String ("state"),
-               New_String ("name")));
+           (Information =>
+              ["id",
+               "task-id",
+               "thread-id",
+               "parent-id",
+               "priority",
+               "state",
+               "name"]);
 
          loop -- over elements
             if Element (C).Code = Comma then
@@ -2852,9 +2853,8 @@ package body Debugger.Base_Gdb.Gdb_MI is
             Current := False;
 
             Len := Len + 1;
-            Info (Len) :=
-              (Num_Fields => 7,
-               Information => (others => <>));
+            Info (Len) := (Information => [for J in 1 .. 7 => ""]);
+            --                             ^^^  replace by 7 * ""
 
             while Element (C).Code /= R_Brace loop -- over elemet tags till '}'
                if Element (C).Code = Comma then
@@ -2873,8 +2873,9 @@ package body Debugger.Base_Gdb.Gdb_MI is
 
                elsif Element (C).Text.all = "id" then
                   Next (C, 2); -- skip '='
-                  Info (Len).Information (1) := New_String
-                    ((if Current then "* " else "") & Element (C).Text.all);
+                  Info (Len).Information (1) :=
+                    VSS.Strings.Conversions.To_Virtual_String
+                      ((if Current then "* " else "") & Element (C).Text.all);
                else
                   if Element (C).Text.all = "task-id" then
                      P := 2;
@@ -2892,18 +2893,13 @@ package body Debugger.Base_Gdb.Gdb_MI is
 
                   Next (C, 2); -- skip '='
                   Info (Len).Information (P) :=
-                    New_String (Element (C).Text.all);
+                    VSS.Strings.Conversions.To_Virtual_String
+                      (Element (C).Text.all);
                end if;
 
                Next (C, 1); -- next element
             end loop;
             Next (C, 1); -- skip '}' from previouse element
-
-            for P in Interfaces.C.size_t'(1) .. 7 loop
-               if Info (Len).Information (P) = Null_Ptr then
-                  Info (Len).Information (P) := New_String ("");
-               end if;
-            end loop;
 
             exit when Element (C).Code = R_Bracket; -- last ']'
          end loop;
@@ -3024,14 +3020,13 @@ package body Debugger.Base_Gdb.Gdb_MI is
 
       Len := Info'First;
       Info (Len) :=
-        (Num_Fields  => 6,
-         Information =>
-           (New_String ("id"),
-            New_String ("target-id"),
-            New_String ("name"),
-            New_String ("frame"),
-            New_String ("state"),
-            New_String ("core")));
+        (Information =>
+           ["id",
+            "target-id",
+            "name",
+            "frame",
+            "state",
+            "core"]);
 
       Tmp := Find_Identifier (C, "current-thread-id");
       if Tmp /= Token_Lists.No_Element then
@@ -3049,55 +3044,54 @@ package body Debugger.Base_Gdb.Gdb_MI is
          Next (Tmp, 2);
 
          Len := Len + 1;
-         Info (Len) :=
-           (Num_Fields => 6,
-            Information => (others => <>));
+         Info (Len) := (Information => [for J in 1 .. 6 => ""]);
+         --                             ^^^  replace by 6 * ""
 
-         Info (Len).Information (1) := New_String
-           ((if Current = Element (Tmp).Text.all
-            then "* "
-            else "") & Element (Tmp).Text.all);
+         Info (Len).Information (1) :=
+           VSS.Strings.Conversions.To_Virtual_String
+             ((if Current = Element (Tmp).Text.all
+              then "* "
+              else "") & Element (Tmp).Text.all);
 
          Tmp := Find_Identifier (C, "target-id");
          if Tmp /= Token_Lists.No_Element then
             Next (Tmp, 2);
             Info (Len).Information (2) :=
-              New_String (Element (Tmp).Text.all);
+              VSS.Strings.Conversions.To_Virtual_String
+                (Element (Tmp).Text.all);
          end if;
 
          Tmp := Find_Identifier (C, "name");
          if Tmp /= Token_Lists.No_Element then
             Next (Tmp, 2);
             Info (Len).Information (3) :=
-              New_String (Element (Tmp).Text.all);
+              VSS.Strings.Conversions.To_Virtual_String
+                (Element (Tmp).Text.all);
          end if;
 
          Tmp := Find_Identifier (C, "frame");
          if Tmp /= Token_Lists.No_Element then
             Next (Tmp, 3);
             Info (Len).Information (4) :=
-              New_String (Collect (Tmp, R_Brace, L_Brace));
+              VSS.Strings.Conversions.To_Virtual_String
+                (Collect (Tmp, R_Brace, L_Brace));
          end if;
 
          Tmp := Find_Identifier (C, "state");
          if Tmp /= Token_Lists.No_Element then
             Next (Tmp, 2);
             Info (Len).Information (5) :=
-              New_String (Element (Tmp).Text.all);
+              VSS.Strings.Conversions.To_Virtual_String
+                (Element (Tmp).Text.all);
          end if;
 
          Tmp := Find_Identifier (C, "core");
          if Tmp /= Token_Lists.No_Element then
             Next (Tmp, 2);
             Info (Len).Information (6) :=
-              New_String (Element (Tmp).Text.all);
+              VSS.Strings.Conversions.To_Virtual_String
+                (Element (Tmp).Text.all);
          end if;
-
-         for P in Interfaces.C.size_t'(1) .. 6 loop
-            if Info (Len).Information (P) = Null_Ptr then
-               Info (Len).Information (P) := New_String ("");
-            end if;
-         end loop;
 
          Brace_Count := 0;
          loop

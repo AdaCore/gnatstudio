@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                               GNAT Studio                                --
 --                                                                          --
---                     Copyright (C) 2017-2023, AdaCore                     --
+--                     Copyright (C) 2017-2024, AdaCore                     --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -15,8 +15,6 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-pragma Ada_2012;
-
 with Ada.Tags;                            use Ada.Tags;
 with Ada.Characters.Handling;
 with Ada.Strings.Fixed;
@@ -26,6 +24,8 @@ with GNAT.Expect;                         use GNAT.Expect;
 with GNAT.OS_Lib;                         use GNAT.OS_Lib;
 with GNAT.Regpat;                         use GNAT.Regpat;
 with GNAT.Strings;
+
+with VSS.Strings.Conversions;
 
 with GNATCOLL.VFS;                        use GNATCOLL.VFS;
 with GNATCOLL.Traces;                     use GNATCOLL.Traces;
@@ -751,9 +751,7 @@ package body Debugger.LLDB is
 
    begin
       Len := Info'First;
-      Info (Len) :=
-        (Num_Fields => 1,
-         Information => (1 => New_String ("Thread")));
+      Info (Len) := (Information => ["Thread"]);
 
       while Index > Output'First loop
          Len := Len + 1;
@@ -770,8 +768,9 @@ package body Debugger.LLDB is
          exit when EOL < Output'First and then Len > Info'First + 1;
 
          Info (Len) :=
-           (Num_Fields => 1,
-            Information => (1 => New_String (Output (EOL + 1 .. Index))));
+           (Information =>
+              [VSS.Strings.Conversions.To_Virtual_String
+                   (Output (EOL + 1 .. Index))]);
          Index := EOL - 1;
       end loop;
    end Info_Threads;
