@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                               GNAT Studio                                --
 --                                                                          --
---                     Copyright (C) 2000-2023, AdaCore                     --
+--                     Copyright (C) 2000-2024, AdaCore                     --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -16,11 +16,11 @@
 ------------------------------------------------------------------------------
 
 with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
-with Interfaces.C.Strings;  use Interfaces.C.Strings;
-with Interfaces.C;          use Interfaces.C;
 
 with GNAT.OS_Lib;           use GNAT.OS_Lib;
 with GNAT.Regpat;           use GNAT.Regpat;
+
+with VSS.Strings.Conversions;
 
 with GNATCOLL.Traces;       use GNATCOLL.Traces;
 with GNATCOLL.Utils;        use GNATCOLL.Utils;
@@ -560,7 +560,7 @@ package body GVD.Dialogs is
         and then V.Debugger.Get_Process /= null
       then
          Thread.Get_Info (V.Debugger, Info, Len);
-         Num_Columns := Info (Info'First).Num_Fields;
+         Num_Columns := Info (Info'First).Information.Length;
 
          if Thread.Tree /= null
            and then Get_N_Columns (Thread.Tree.Get_Model) /=
@@ -580,7 +580,7 @@ package body GVD.Dialogs is
 
                for T in Titles'Range loop
                   Titles (T) := new String'
-                    (Value
+                    (VSS.Strings.Conversions.To_UTF_8_String
                        (Info (Info'First).Information (Thread_Fields (T))));
                end loop;
 
@@ -616,18 +616,21 @@ package body GVD.Dialogs is
             Append (-Get_Model (Thread.Tree), Iter, Null_Iter);
             declare
                Values  : Glib.Values.GValue_Array
-                 (Gint (Info (J).Information'First) ..
-                    Gint (Info (J).Information'Last));
+                 (Gint (Info (J).Information.First_Index) ..
+                    Gint (Info (J).Information.Last_Index));
                Columns : Columns_Array (Values'Range);
             begin
-               for Col in Info (J).Information'Range loop
+               for Col in Info (J).Information.First_Index
+                            .. Info (J).Information.Last_Index
+               loop
                   Columns (Gint (Col)) :=
-                    Gint (Col - Info (J).Information'First);
+                    Gint (Col - Info (J).Information.First_Index);
                   Glib.Values.Init_Set_String
                     (Values (Gint (Col)),
-                     (if Info (J).Information (Col) = Null_Ptr then ""
+                     (if Info (J).Information (Col).Is_Empty then ""
                       else Glib.Convert.Escape_Text
-                        (Value (Info (J).Information (Col)))));
+                        (VSS.Strings.Conversions.To_UTF_8_String
+                           (Info (J).Information (Col)))));
                end loop;
                Set_And_Clear (-Get_Model (Thread.Tree), Iter, Columns, Values);
             end;
@@ -639,8 +642,6 @@ package body GVD.Dialogs is
             Set_Cursor (Thread.Tree, Path, null, False);
             Path_Free (Path);
          end if;
-
-         Free (Info);
       end if;
    end Update;
 
