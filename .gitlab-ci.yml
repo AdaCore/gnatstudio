@@ -20,7 +20,10 @@ include:
   - component: $CI_SERVER_FQDN/eng/gitlab-templates/test@~latest
     inputs:
       job-name: gs
-      anod-args: run test_$ACI_TRACK --latest
+      # --latest should not be used here because it causes Anod to re-download
+      # components from Cathod instead of using the ones built in this pipeline
+      # by the build job.
+      anod-args: run test_$ACI_TRACK
       image: systemgtk
       generic-anod-ci-args: --add-dep eng/ide/gnatstudio-internal
 
@@ -28,7 +31,10 @@ include:
   - component: $CI_SERVER_FQDN/eng/gitlab-templates/test@~latest
     inputs:
       job-name: integration-testsuite
-      anod-args: run test_integration_testsuite --latest
+      # --latest should not be used here because it causes Anod to re-download
+      # components from Cathod instead of using the ones built in this pipeline
+      # by the build job.
+      anod-args: run test_integration_testsuite
       image: systemgtk
       cpus: 4
       rules:
