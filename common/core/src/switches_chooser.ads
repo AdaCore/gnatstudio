@@ -542,7 +542,7 @@ package Switches_Chooser is
    --  Switches_Editor_Config object Switches vector length getter
 
    function Empty_Command_Line
-     (Switches : access Switches_Editor_Config_Record'Class)
+     (Switches : not null access Switches_Editor_Config_Record'Class)
      return Command_Lines.Command_Line;
    --  Return empty command line configured using current settings of
    --  given Switches_Editor_Config
