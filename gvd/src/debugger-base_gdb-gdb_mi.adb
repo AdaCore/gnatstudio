@@ -2873,9 +2873,11 @@ package body Debugger.Base_Gdb.Gdb_MI is
 
                elsif Element (C).Text.all = "id" then
                   Next (C, 2); -- skip '='
-                  Info (Len).Information (1) :=
-                    VSS.Strings.Conversions.To_Virtual_String
-                      ((if Current then "* " else "") & Element (C).Text.all);
+                  Info (Len).Information.Replace
+                    (1,
+                     VSS.Strings.Conversions.To_Virtual_String
+                       ((if Current then "* " else "")
+                           & Element (C).Text.all));
                else
                   if Element (C).Text.all = "task-id" then
                      P := 2;
@@ -2892,9 +2894,10 @@ package body Debugger.Base_Gdb.Gdb_MI is
                   end if;
 
                   Next (C, 2); -- skip '='
-                  Info (Len).Information (P) :=
-                    VSS.Strings.Conversions.To_Virtual_String
-                      (Element (C).Text.all);
+                     Info (Len).Information.Replace
+                       (P,
+                        VSS.Strings.Conversions.To_Virtual_String
+                          (Element (C).Text.all));
                end if;
 
                Next (C, 1); -- next element
@@ -3047,50 +3050,56 @@ package body Debugger.Base_Gdb.Gdb_MI is
          Info (Len) := (Information => [for J in 1 .. 6 => ""]);
          --                             ^^^  replace by 6 * ""
 
-         Info (Len).Information (1) :=
-           VSS.Strings.Conversions.To_Virtual_String
-             ((if Current = Element (Tmp).Text.all
-              then "* "
-              else "") & Element (Tmp).Text.all);
+         Info (Len).Information.Replace
+           (1,
+            VSS.Strings.Conversions.To_Virtual_String
+              ((if Current = Element (Tmp).Text.all
+                  then "* "
+                  else "") & Element (Tmp).Text.all));
 
          Tmp := Find_Identifier (C, "target-id");
          if Tmp /= Token_Lists.No_Element then
             Next (Tmp, 2);
-            Info (Len).Information (2) :=
-              VSS.Strings.Conversions.To_Virtual_String
-                (Element (Tmp).Text.all);
+            Info (Len).Information.Replace
+              (2,
+               VSS.Strings.Conversions.To_Virtual_String
+                 (Element (Tmp).Text.all));
          end if;
 
          Tmp := Find_Identifier (C, "name");
          if Tmp /= Token_Lists.No_Element then
             Next (Tmp, 2);
-            Info (Len).Information (3) :=
-              VSS.Strings.Conversions.To_Virtual_String
-                (Element (Tmp).Text.all);
+            Info (Len).Information.Replace
+              (3,
+               VSS.Strings.Conversions.To_Virtual_String
+                 (Element (Tmp).Text.all));
          end if;
 
          Tmp := Find_Identifier (C, "frame");
          if Tmp /= Token_Lists.No_Element then
             Next (Tmp, 3);
-            Info (Len).Information (4) :=
-              VSS.Strings.Conversions.To_Virtual_String
-                (Collect (Tmp, R_Brace, L_Brace));
+            Info (Len).Information.Replace
+              (4,
+               VSS.Strings.Conversions.To_Virtual_String
+                 (Collect (Tmp, R_Brace, L_Brace)));
          end if;
 
          Tmp := Find_Identifier (C, "state");
          if Tmp /= Token_Lists.No_Element then
             Next (Tmp, 2);
-            Info (Len).Information (5) :=
-              VSS.Strings.Conversions.To_Virtual_String
-                (Element (Tmp).Text.all);
+            Info (Len).Information.Replace
+              (5,
+               VSS.Strings.Conversions.To_Virtual_String
+                 (Element (Tmp).Text.all));
          end if;
 
          Tmp := Find_Identifier (C, "core");
          if Tmp /= Token_Lists.No_Element then
             Next (Tmp, 2);
-            Info (Len).Information (6) :=
-              VSS.Strings.Conversions.To_Virtual_String
-                (Element (Tmp).Text.all);
+            Info (Len).Information.Replace
+              (6,
+               VSS.Strings.Conversions.To_Virtual_String
+                 (Element (Tmp).Text.all));
          end if;
 
          Brace_Count := 0;

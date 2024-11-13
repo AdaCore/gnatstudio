@@ -548,7 +548,7 @@ package body GVD.Dialogs is
    overriding procedure Update (Thread : not null access Thread_View_Record) is
       Info        : Thread_Information_Array (1 .. Max_Tasks);
       Len         : Natural;
-      Num_Columns : Thread_Fields;
+      Num_Columns : Guint;
       Iter        : Gtk_Tree_Iter;
       Model       : Gtk_Tree_Model;
       Path        : Gtk_Tree_Path;
@@ -560,7 +560,7 @@ package body GVD.Dialogs is
         and then V.Debugger.Get_Process /= null
       then
          Thread.Get_Info (V.Debugger, Info, Len);
-         Num_Columns := Info (Info'First).Information.Length;
+         Num_Columns := Guint (Info (Info'First).Information.Length);
 
          if Thread.Tree /= null
            and then Get_N_Columns (Thread.Tree.Get_Model) /=
@@ -585,9 +585,8 @@ package body GVD.Dialogs is
                end loop;
 
                Thread.Tree := Create_Tree_View
-                 (Column_Types       =>
-                    (0 .. Guint (Num_Columns) - 1 => GType_String),
-                  Column_Names       => Titles);
+                 (Column_Types => (0 .. Num_Columns - 1 => GType_String),
+                  Column_Names => Titles);
                Free (Titles);
 
                Thread.Scrolled.Add (Thread.Tree);
