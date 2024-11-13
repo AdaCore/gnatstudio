@@ -937,11 +937,11 @@ package body CodePeer.Module is
       end if;
    end CodePeer_Object_Directory;
 
-   -------------------------------
-   -- Codepeer_Output_Directory --
-   -------------------------------
+   --------------------------------
+   -- Inspector_Output_Directory --
+   --------------------------------
 
-   function Codepeer_Output_Directory
+   function Inspector_Output_Directory
      (Kernel : not null access Kernel_Handle_Record'Class)
       return GNATCOLL.VFS.Virtual_File
    is
@@ -959,7 +959,15 @@ package body CodePeer.Module is
         Build (CodePeer.GPR_Name, "Output_Directory");
 
    begin
-      if not Is_GNATSAS then
+      if Is_GNATSAS then
+         return
+           GNATCOLL.VFS.Create_From_Dir
+             (GNATCOLL.VFS.Create_From_Dir
+                (CodePeer_Object_Directory (Project),
+                 Name (Name'First .. Name'Last - Extension'Length)
+                 & ".inspector"),
+              "output");
+      else
          if Project.Has_Attribute (Output_Directory_Attribute) then
             declare
                Dir : constant GNATCOLL.VFS.Filesystem_String :=
@@ -978,16 +986,8 @@ package body CodePeer.Module is
                  Name (Name'First .. Name'Last - Extension'Length)
                  & ".output");
          end if;
-      else
-         return
-           GNATCOLL.VFS.Create_From_Dir
-             (GNATCOLL.VFS.Create_From_Dir
-                (CodePeer_Object_Directory (Project),
-                 Name (Name'First .. Name'Last - Extension'Length)
-                 & ".inspector"),
-              "output");
       end if;
-   end Codepeer_Output_Directory;
+   end Inspector_Output_Directory;
 
    ----------------------------
    -- Codepeer_Log_Directory --
@@ -1013,7 +1013,7 @@ package body CodePeer.Module is
       if not Is_GNATSAS
         and then Project.Has_Attribute (Output_Directory_Attribute)
       then
-         return Codepeer_Output_Directory (Kernel);
+         return Inspector_Output_Directory (Kernel);
 
       else
          return
@@ -1065,6 +1065,31 @@ package body CodePeer.Module is
               Name (Name'First .. Name'Last - Extension'Length) & ".outputs");
       end if;
    end Codepeer_CPM_Directory;
+
+   ----------------------------------
+   --  Codepeer_GNATSAS_Directory  --
+   ----------------------------------
+
+   function Codepeer_GNATSAS_Directory
+     (Kernel : not null access Kernel_Handle_Record'Class)
+      return GNATCOLL.VFS.Virtual_File
+   is
+      Ensure_Build_Mode : CodePeer_Build_Mode (Kernel);
+      pragma Unreferenced (Ensure_Build_Mode);
+
+      Project   : constant Project_Type := Get_Project (Kernel);
+      Name      : constant Filesystem_String :=
+        Filesystem_String
+          (Ada.Characters.Handling.To_Lower
+             (String (Project_Path (Project).Base_Name)));
+      Extension : constant GNATCOLL.VFS.Filesystem_String :=
+        Project_Path (Project).File_Extension;
+   begin
+      return
+        GNATCOLL.VFS.Create_From_Dir
+          (CodePeer_Object_Directory (Project),
+           Name (Name'First .. Name'Last - Extension'Length) & ".gnatsas");
+   end Codepeer_GNATSAS_Directory;
 
    ------------------------
    -- Hide_File_Messages --
