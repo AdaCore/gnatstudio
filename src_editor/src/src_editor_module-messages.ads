@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                               GNAT Studio                                --
 --                                                                          --
---                     Copyright (C) 2010-2023, AdaCore                     --
+--                     Copyright (C) 2010-2024, AdaCore                     --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -18,10 +18,10 @@
 --  This package implements the message listener which adds messages to the
 --  side of editors, as well as implements line highlighting.
 
-with Ada.Strings.Unbounded;
 with Ada.Containers.Hashed_Maps;
-
 private with Ada.Containers.Hashed_Sets;
+
+with VSS.Strings;
 
 with GPS.Kernel.Messages; use GPS.Kernel.Messages;
 
@@ -35,14 +35,11 @@ package Src_Editor_Module.Messages is
 
 private
 
-   use Ada;
-   use Ada.Strings.Unbounded;
-
    --  ??? Do we need all this? Why not create styles once and for
    --  all in the Style_Manager?
 
    function Hash
-     (Item : Style_Access) return Containers.Hash_Type;
+     (Item : Style_Access) return Ada.Containers.Hash_Type;
    --  Returns hash value constructed from style's name
 
    package Style_Sets is
@@ -51,15 +48,15 @@ private
    type Style_Set_Access is access all Style_Sets.Set;
 
    type Key is record
-      Category : Unbounded_String;
+      Category : VSS.Strings.Virtual_String;
       File     : GNATCOLL.VFS.Virtual_File;
    end record;
 
-   function Hash (Item : Key) return Containers.Hash_Type;
+   function Hash (Item : Key) return Ada.Containers.Hash_Type;
    --  Returns has value constructed from the category's and file's name
 
    package Style_Maps is
-     new Containers.Hashed_Maps (Key, Style_Set_Access, Hash, "=", "=");
+     new Ada.Containers.Hashed_Maps (Key, Style_Set_Access, Hash, "=", "=");
 
    type Highlighting_Manager
      (Kernel : not null access Kernel_Handle_Record'Class)
@@ -78,7 +75,7 @@ private
 
    overriding procedure File_Removed
      (Self     : not null access Highlighting_Manager;
-      Category : Unbounded_String;
+      Category : VSS.Strings.Virtual_String;
       File     : GNATCOLL.VFS.Virtual_File);
 
    overriding procedure Message_Property_Changed

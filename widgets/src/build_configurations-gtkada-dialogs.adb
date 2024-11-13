@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                               GNAT Studio                                --
 --                                                                          --
---                     Copyright (C) 2008-2023, AdaCore                     --
+--                     Copyright (C) 2008-2024, AdaCore                     --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -137,7 +137,7 @@ package body Build_Configurations.Gtkada.Dialogs is
          Append (Model, It, Null_Iter);
          Set_And_Clear
            (Model, It, (Desc_Column, Name_Column),
-            (As_String  (PP_Cat), As_String  ("")));
+            (As_String  (PP_Cat), As_String  (String'(""))));
 
          return It;
       end Get_Or_Create_Category;
@@ -196,7 +196,7 @@ package body Build_Configurations.Gtkada.Dialogs is
             (As_String  (To_String (M.Icon)),
              As_String  (To_String (M.Name)),
              As_String  (To_String (M.Description)),
-             As_String  ("        ")));
+             As_String  (String'("        "))));
 
          Next (C);
       end loop;

@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                               GNAT Studio                                --
 --                                                                          --
---                     Copyright (C) 2010-2023, AdaCore                     --
+--                     Copyright (C) 2010-2024, AdaCore                     --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -28,10 +28,10 @@ package body CodePeer.Listeners is
       Message : not null access GPS.Kernel.Messages.Abstract_Message'Class)
       return Boolean
    is
-      Category : constant String := Message.Get_Category;
+      use type VSS.Strings.Virtual_String;
 
    begin
-      if Category = CodePeer.Module.CodePeer_Category_Name then
+      if Message.Get_Category = CodePeer.Module.CodePeer_Category_Name then
          return Self.Cleanup;
 
       else

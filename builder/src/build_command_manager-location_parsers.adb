@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                               GNAT Studio                                --
 --                                                                          --
---                     Copyright (C) 2012-2023, AdaCore                     --
+--                     Copyright (C) 2012-2024, AdaCore                     --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -91,7 +91,7 @@ package body Build_Command_Manager.Location_Parsers is
       GPS.Kernel.Messages.Tools_Output.Parse_File_Locations
         (Kernel_Handle (Self.Builder.Kernel),
          Item,
-         Category          => To_String (Self.Build.Category),
+         Category          => Self.Build.Category,
          Highlight         => True,
          Styles            => GPS.Default_Styles.Messages_Styles,
          Show_In_Locations => not Self.Build.Background);

@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                               GNAT Studio                                --
 --                                                                          --
---                       Copyright (C) 2016-2023, AdaCore                   --
+--                     Copyright (C) 2016-2024, AdaCore                     --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -331,11 +331,18 @@ package body CodePeer.Multiple_Message_Review_Dialogs is
 
       GPS.Dialogs.Initialize
         (Self,
-         Title  => -(CodePeer.Module_Name & " message review"),
+         Title  =>
+           -(VSS.Strings.Conversions.To_UTF_8_String (CodePeer.Module_Name)
+               & " message review"),
          Kernel => Kernel,
          Typ    => Class_Record.The_Type);
       GPS.Main_Window.Set_Default_Size_From_History
-        (Self, CodePeer.Module_Name & " message review", Kernel, 400, 400);
+        (Self,
+         VSS.Strings.Conversions.To_UTF_8_String (CodePeer.Module_Name)
+           & " message review",
+         Kernel,
+         400,
+         400);
 
       Self.Module := Module;
       Gtk.Paned.Gtk_New_Vpaned (VPaned);

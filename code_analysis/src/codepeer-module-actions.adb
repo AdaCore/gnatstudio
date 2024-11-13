@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                               GNAT Studio                                --
 --                                                                          --
---                       Copyright (C) 2014-2023, AdaCore                   --
+--                     Copyright (C) 2014-2024, AdaCore                     --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -17,6 +17,8 @@
 
 with GNAT.Strings;      use GNAT.Strings;
 with GNATCOLL.Projects; use GNATCOLL.Projects;
+
+with VSS.Strings.Conversions;
 
 with GPS.Intl;            use GPS.Intl;
 with GPS.Kernel.Actions;  use GPS.Kernel.Actions;
@@ -91,7 +93,10 @@ package body CodePeer.Module.Actions is
 
    begin
       Self.Module.Review
-        (False, "Run " & CodePeer.Module_Name & "...");
+        (False,
+         "Run "
+           & VSS.Strings.Conversions.To_UTF_8_String (CodePeer.Module_Name)
+           & "...");
 
       return Success;
    end Execute;
@@ -107,7 +112,10 @@ package body CodePeer.Module.Actions is
       pragma Unreferenced (Context);
 
    begin
-      Self.Module.Review (True, "Run " & CodePeer.Module_Name);
+      Self.Module.Review
+        (True,
+         "Run "
+           & VSS.Strings.Conversions.To_UTF_8_String (CodePeer.Module_Name));
 
       return Success;
    end Execute;
@@ -134,7 +142,10 @@ package body CodePeer.Module.Actions is
       --  Run the Build Target
       Module.Review
         (Force        => True,
-         Build_Target => "Run " & CodePeer.Module_Name & " File");
+         Build_Target =>
+           "Run "
+             & VSS.Strings.Conversions.To_UTF_8_String (CodePeer.Module_Name)
+             & " File");
 
       return Success;
    end Execute;
@@ -150,7 +161,9 @@ package body CodePeer.Module.Actions is
       pragma Unreferenced (Self);
 
       Build_Target : constant String :=
-        "Run " & CodePeer.Module_Name & " File By File";
+        "Run "
+          & VSS.Strings.Conversions.To_UTF_8_String (CodePeer.Module_Name)
+          & " File By File";
 
       Kernel   : constant Kernel_Handle := Get_Kernel (Context.Context);
       Project  : constant Project_Type  := Get_Project (Kernel);
@@ -496,7 +509,9 @@ package body CodePeer.Module.Actions is
       Review
         (Self.Module,
          False,
-         "Regenerate " & CodePeer.Module_Name & " Report",
+         "Regenerate "
+           & VSS.Strings.Conversions.To_UTF_8_String (CodePeer.Module_Name)
+           & " Report",
          Need_Reload => False);
 
       return Success;
@@ -1078,45 +1093,57 @@ package body CodePeer.Module.Actions is
         (Kernel   => Module.Kernel,
          Name     => "show codepeer annotations",
          Command  => new Show_Annotations_Command (Module),
-         Category => CodePeer.Module_Name,
+         Category =>
+           VSS.Strings.Conversions.To_UTF_8_String (CodePeer.Module_Name),
          Filter   => new Is_Show_Annotations_Filter (Module));
       GPS.Kernel.Modules.UI.Register_Contextual_Menu
         (Kernel => Module.Kernel,
          Action => "show codepeer annotations",
-         Label  => CodePeer.Module_Name & "/Show annotations");
+         Label  =>
+           VSS.Strings.Conversions.To_UTF_8_String (CodePeer.Module_Name)
+             & "/Show annotations");
 
       Register_Action
         (Kernel   => Module.Kernel,
          Name     => "hide codepeer annotations",
          Command  => new Hide_Annotations_Command (Module),
-         Category => CodePeer.Module_Name,
+         Category =>
+           VSS.Strings.Conversions.To_UTF_8_String (CodePeer.Module_Name),
          Filter   => new Is_Hide_Annotations_Filter (Module));
       GPS.Kernel.Modules.UI.Register_Contextual_Menu
         (Kernel => Module.Kernel,
          Action => "hide codepeer annotations",
-         Label  => CodePeer.Module_Name & "/Hide annotations");
+         Label  =>
+           VSS.Strings.Conversions.To_UTF_8_String (CodePeer.Module_Name)
+             & "/Hide annotations");
 
       Register_Action
         (Kernel   => Module.Kernel,
          Name     => "review codepeer messages",
          Command  => new Review_Messages_Command (Module),
-         Category => CodePeer.Module_Name,
+         Category =>
+           VSS.Strings.Conversions.To_UTF_8_String (CodePeer.Module_Name),
          Filter   => Is_Review);
       GPS.Kernel.Modules.UI.Register_Contextual_Menu
         (Kernel => Module.Kernel,
          Action => "review codepeer messages",
-         Label  => CodePeer.Module_Name & "/Review messages");
+         Label  =>
+           VSS.Strings.Conversions.To_UTF_8_String (CodePeer.Module_Name)
+             & "/Review messages");
 
       Register_Action
         (Kernel   => Module.Kernel,
          Name     => "annotate codepeer messages",
          Command  => new Annotate_Messages_Command (Module),
-         Category => CodePeer.Module_Name,
+         Category =>
+           VSS.Strings.Conversions.To_UTF_8_String (CodePeer.Module_Name),
          Filter   => Is_Review);
       GPS.Kernel.Modules.UI.Register_Contextual_Menu
         (Kernel => Module.Kernel,
          Action => "annotate codepeer messages",
-         Label  => CodePeer.Module_Name & "/Annotate messages");
+         Label  =>
+           VSS.Strings.Conversions.To_UTF_8_String (CodePeer.Module_Name)
+             & "/Annotate messages");
    end Register_Actions;
 
 end CodePeer.Module.Actions;

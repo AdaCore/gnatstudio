@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                               GNAT Studio                                --
 --                                                                          --
---                     Copyright (C) 2008-2023, AdaCore                     --
+--                     Copyright (C) 2008-2024, AdaCore                     --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -19,6 +19,9 @@ with Ada.Characters.Latin_1;   use Ada.Characters.Latin_1;
 with Ada.Strings.Fixed;
 with Ada.Strings.Maps;
 with Ada.Characters.Handling;  use Ada.Characters.Handling;
+
+with VSS.Strings.Conversions;
+
 with Switches_Parser;
 with String_Utils;             use String_Utils;
 with GNATCOLL.Traces;          use GNATCOLL.Traces;
@@ -286,8 +289,8 @@ package body Build_Configurations is
       -----------------------------
 
       procedure Parse_Target_Model_Node (N : Node_Ptr) is
-         Name  : constant String := Get_Attribute (N, "name", "");
-         Cat   : constant String := Get_Attribute (N, "category", "");
+         Name  : constant String := Get_Attribute_S (N, "name", "");
+         Cat   : constant String := Get_Attribute_S (N, "category", "");
          Child : Node_Ptr;
 
       begin
@@ -1073,7 +1076,7 @@ package body Build_Configurations is
    is
       Config   : Command_Line_Configuration;
       Sections : Argument_List_Access := Argument_String_To_List
-        (Get_Attribute (N, "sections", ""));
+        (Get_Attribute_S (N, "sections", ""));
       Arg    : Node_Ptr := N.Child;
    begin
       for Section of Sections.all loop
@@ -1087,7 +1090,7 @@ package body Build_Configurations is
             if Arg.Value /= null then
                Result.Append_Switch
                  (Arg.Value.all,
-                  Section => Get_Attribute (Arg, "section", ""));
+                  Section => Get_Attribute_S (Arg, "section", ""));
             end if;
 
             Arg := Arg.Next;
@@ -1246,17 +1249,17 @@ package body Build_Configurations is
 
       declare
          Parent_Menu      : constant String :=
-           Get_Attribute (XML, "menu", Build_Menu);
+           Get_Attribute_S (XML, "menu", Build_Menu);
          Menu_Name         : constant String :=
-           Get_Attribute (XML, "name", "");
+           Get_Attribute_S (XML, "name", "");
          Target_Name       : constant String :=
            Strip_Single_And_Unescape_Underscores (Menu_Name);
          Category          : constant String :=
-           Get_Attribute (XML, "category", "");
+           Get_Attribute_S (XML, "category", "");
          Model             : constant String :=
-           Get_Attribute (XML, "model", "");
+           Get_Attribute_S (XML, "model", "");
          Messages_Category : constant String :=
-           Get_Attribute (XML, "messages_category", "");
+           Get_Attribute_S (XML, "messages_category", "");
 
       begin
          if Menu_Name = "" then
@@ -1526,7 +1529,7 @@ package body Build_Configurations is
          elsif N.Tag.all = "supported-model" then
             Mode.Models.Append
               ((To_Unbounded_String (N.Value.all),
-                To_Unbounded_String (Get_Attribute (N, "filter"))));
+                To_Unbounded_String (Get_Attribute_S (N, "filter"))));
          elsif N.Tag.all = "shadow" then
             Mode.Shadow := Boolean'Value (N.Value.all);
          elsif N.Tag.all = "server" then
@@ -1551,8 +1554,8 @@ package body Build_Configurations is
                Count := 0;
                while C /= null loop
                   Count := Count + 1;
-                  Srcs  (Count) := new String'(Get_Attribute (C, "src"));
-                  Dests (Count) := new String'(Get_Attribute (C, "dest"));
+                  Srcs  (Count) := new String'(Get_Attribute_S (C, "src"));
+                  Dests (Count) := new String'(Get_Attribute_S (C, "dest"));
                   C := C.Next;
                end loop;
 
@@ -1574,7 +1577,7 @@ package body Build_Configurations is
          return Mode;
       end if;
 
-      Mode.Name := To_Unbounded_String (Get_Attribute (XML, "name", ""));
+      Mode.Name := To_Unbounded_String (Get_Attribute_S (XML, "name", ""));
 
       if Mode.Name = "" then
          return Mode;
@@ -1771,20 +1774,12 @@ package body Build_Configurations is
    ---------------------------
 
    function Get_Messages_Category
-     (Target : Target_Access) return Unbounded_String is
+     (Target : Target_Access) return VSS.Strings.Virtual_String is
    begin
-      return Target.Properties.Messages_Category;
+      return
+        VSS.Strings.Conversions.To_Virtual_String
+          (Target.Properties.Messages_Category);
    end Get_Messages_Category;
-
-   ----------------------------------
-   -- Get_Messages_Category_String --
-   ----------------------------------
-
-   function Get_Messages_Category_String
-     (Target : Target_Access) return String is
-   begin
-      return To_String (Get_Messages_Category (Target));
-   end Get_Messages_Category_String;
 
    ----------------
    -- Get_Server --

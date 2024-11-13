@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                               GNAT Studio                                --
 --                                                                          --
---                     Copyright (C) 2010-2023, AdaCore                     --
+--                     Copyright (C) 2010-2024, AdaCore                     --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -157,17 +157,17 @@ package body Ada_Semantic_Tree.Std_Entities is
          Doc : String_Access;
          Category : Language_Category := Cat_Unknown;
       begin
-         New_Element.Name := new String'(Get_Attribute (Node, "name"));
+         New_Element.Name := new String'(Get_Attribute_S (Node, "name"));
 
-         if Get_Attribute (Node, "category") /= "" then
+         if Get_Attribute_S (Node, "category") /= "" then
             Category := Language_Category'Value
-              ("CAT_" & Get_Attribute (Node, "category"));
+              ("CAT_" & Get_Attribute_S (Node, "category"));
          end if;
 
-         Is_Standard_Ada := Get_Attribute (Node, "origin") = "Ada RM";
+         Is_Standard_Ada := Get_Attribute_S (Node, "origin") = "Ada RM";
 
          New_Element.Index := new String'
-           (To_Lower (Get_Attribute (Node, "name")));
+           (To_Lower (Get_Attribute_S (Node, "name")));
 
          while Current /= null loop
             if Current.Tag.all = "DOC" then
@@ -257,7 +257,7 @@ package body Ada_Semantic_Tree.Std_Entities is
          elsif Current.Tag.all = "STANDARD" then
             Analyze_Element (Current, A_Standard_Component);
 
-            if Get_Attribute (Current, "name") = "ASCII" then
+            if Get_Attribute_S (Current, "name") = "ASCII" then
                declare
                   Ascii_Node  : XML_Utils.Node_Ptr := Current.Child;
                   New_Element : Std_Description;
@@ -265,11 +265,11 @@ package body Ada_Semantic_Tree.Std_Entities is
                   while Ascii_Node /= null loop
                      New_Element := new Std_Description_Record;
                      New_Element.Name := new String'
-                       (Get_Attribute (Ascii_Node, "name"));
+                       (Get_Attribute_S (Ascii_Node, "name"));
                      New_Element.Index := new String'
-                       (To_Lower (Get_Attribute (Ascii_Node, "name")));
+                       (To_Lower (Get_Attribute_S (Ascii_Node, "name")));
                      New_Element.Documentation := new String'
-                       (Get_Attribute (Ascii_Node, "doc"));
+                       (Get_Attribute_S (Ascii_Node, "doc"));
                      New_Element.Category := Cat_Variable;
 
                      Std_Description_Tries.Insert

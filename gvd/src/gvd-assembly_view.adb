@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                               GNAT Studio                                --
 --                                                                          --
---                     Copyright (C) 2000-2023, AdaCore                     --
+--                     Copyright (C) 2000-2024, AdaCore                     --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -558,7 +558,7 @@ package body GVD.Assembly_View is
       Gdk.RGBA.Set_Value (Values (1), Null_RGBA);
       Glib.Values.Init (Values (2), Gdk.RGBA.Get_Type);
       Gdk.RGBA.Set_Value (Values (2), Null_RGBA);
-      Values (3) := As_String ("");
+      Values (3) := As_String (String'(""));
 
       while Start_Iter /= Null_Iter loop
          Model.Set (Start_Iter, Glib.Gint_Array (Columns), Values);

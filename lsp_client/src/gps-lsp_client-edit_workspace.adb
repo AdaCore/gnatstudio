@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                               GNAT Studio                                --
 --                                                                          --
---                       Copyright (C) 2019-2023, AdaCore                   --
+--                     Copyright (C) 2019-2024, AdaCore                     --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -118,7 +118,7 @@ package body GPS.LSP_Client.Edit_Workspace is
          --  This is used for instance to revert file renamings before undoing
          --  all the workspaceEdits individually.
 
-         Title                    : Unbounded_String;
+         Title                    : VSS.Strings.Virtual_String;
          Make_Writable            : Boolean;
          Auto_Save                : Boolean;
          Allow_File_Renaming      : Boolean;
@@ -593,7 +593,7 @@ package body GPS.LSP_Client.Edit_Workspace is
                elsif not Writable then
                   GPS.Kernel.Messages.Simple.Create_Simple_Message
                     (Container  => Get_Messages_Container (Command.Kernel),
-                     Category   => To_String (Command.Title),
+                     Category   => Command.Title,
                      File       => File,
                      Line       => From.Line,
                      Column     => From.Column,
@@ -618,7 +618,7 @@ package body GPS.LSP_Client.Edit_Workspace is
                   Rev_To_Line := -1;
                   GPS.Kernel.Messages.Simple.Create_Simple_Message
                     (Container  => Get_Messages_Container (Command.Kernel),
-                     Category   => To_String (Command.Title),
+                     Category   => Command.Title,
                      File       => File,
                      Line       => From.Line,
                      Column     => From.Column,
@@ -633,7 +633,7 @@ package body GPS.LSP_Client.Edit_Workspace is
 
                   Ignored := GPS.Kernel.Messages.Markup.Create_Markup_Message
                     (Container  => Get_Messages_Container (Command.Kernel),
-                     Category   => To_String (Command.Title),
+                     Category   => Command.Title,
                      File       => File,
                      Line       => From.Line,
                      Column     => From.Column,
@@ -830,7 +830,9 @@ package body GPS.LSP_Client.Edit_Workspace is
 
          if not Refactoring.UI.Dialog
            (Command.Kernel,
-            Title         => To_String (Command.Title) & " raises errors",
+            Title         =>
+              VSS.Strings.Conversions.To_UTF_8_String (Command.Title)
+                & " raises errors",
             Msg           =>
               "Some references could not be processed because one or more" &
               " files were already modified or non writable",
@@ -1033,7 +1035,7 @@ package body GPS.LSP_Client.Edit_Workspace is
 
       --  Remove the messages related to the worskspaceEdit being undone
       Get_Messages_Container (Command.Kernel).Remove_Category
-        (To_String (Command.Title), GPS.Kernel.Messages.Side_And_Locations);
+        (Command.Title, GPS.Kernel.Messages.Side_And_Locations);
 
       --  Loop through the generated edit to undo WorkspaceEdit
       declare
@@ -1082,8 +1084,7 @@ package body GPS.LSP_Client.Edit_Workspace is
          Limit_Span               => Limit_Span,
          Workspace_Edit           => Workspace_Edit,
          Reverse_Edit             => <>,
-         Title                    =>
-           VSS.Strings.Conversions.To_Unbounded_UTF_8_String (Title),
+         Title                    => Title,
          Reverse_Document_Changes => <>,
          Make_Writable            => Make_Writable,
          Auto_Save                => Auto_Save,

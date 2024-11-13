@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                               GNAT Studio                                --
 --                                                                          --
---                     Copyright (C) 2005-2023, AdaCore                     --
+--                     Copyright (C) 2005-2024, AdaCore                     --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -23,6 +23,8 @@ with Ada.Unchecked_Deallocation;
 with GNAT.Strings;                   use GNAT.Strings;
 with System;                         use System;
 with System.Address_Image;
+
+with VSS.Strings;
 
 with GNATCOLL.JSON;                  use GNATCOLL.JSON;
 with GNATCOLL.Projects;              use GNATCOLL.Projects;
@@ -119,7 +121,8 @@ package body Bookmark_Views is
 
    Line_Text_Attribute : constant String := "line_text";
 
-   Messages_Category_For_Bookmarks : constant String := "bookmarks";
+   Messages_Category_For_Bookmarks : constant VSS.Strings.Virtual_String :=
+     "bookmarks";
    Message_Flags_For_Bookmarks     : constant Message_Flags :=
      (Editor_Side => True,
       Locations   => False,
@@ -2488,14 +2491,14 @@ package body Bookmark_Views is
             B := null;
 
             if Child.Tag.all = "group" then
-               B := New_Group (Get_Attribute (Child, "bookmark_name", ""));
+               B := New_Group (Get_Attribute_S (Child, "bookmark_name", ""));
                Load_Same_Level (Parent => B, First => Child.Child);
 
             elsif Child.Tag.all = "unattached" then
                B := New_Bookmark
                  (Kernel, No_Marker,
                   Name       => Encoded_ASCII_To_String
-                    (Get_Attribute (Child, "bookmark_name", "")),
+                    (Get_Attribute_S (Child, "bookmark_name", "")),
                   On_Project => False);
 
             else
@@ -2506,7 +2509,7 @@ package body Bookmark_Views is
                      Adjust_Marker
                        (Marker,
                         Encoded_ASCII_To_String
-                          (Get_Attribute
+                          (Get_Attribute_S
                                (Child, Line_Text_Attribute, "no-line-text")));
                   end if;
 
@@ -2515,7 +2518,7 @@ package body Bookmark_Views is
                        (Kernel,
                         Marker,
                         Name =>
-                          Get_Attribute (Child, "bookmark_name", ""),
+                          Get_Attribute_S (Child, "bookmark_name", ""),
                         On_Project => False);
                   end if;
                end if;
@@ -2872,7 +2875,7 @@ package body Bookmark_Views is
                                    Holder.Editor.New_Location_At_Line
                                      (Integer (Get_Line (Tmp.Marker)));
                               begin
-                                 Set_Attribute
+                                 Set_Attribute_S
                                    (Child, Line_Text_Attribute,
                                     String_To_Encoded_ASCII
                                       (Holder.Editor.Get_Chars
@@ -2885,7 +2888,7 @@ package body Bookmark_Views is
             end case;
 
             if Child /= null then
-               Set_Attribute
+               Set_Attribute_S
                  (Child, "bookmark_name",
                   String_To_Encoded_ASCII (To_String (Tmp.Name)));
 

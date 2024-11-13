@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                               GNAT Studio                                --
 --                                                                          --
---                     Copyright (C) 2006-2023, AdaCore                     --
+--                     Copyright (C) 2006-2024, AdaCore                     --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -20,7 +20,7 @@
 --  subprograms for Code Analysis Module use
 --  </description>
 
-with Glib;
+with VSS.Strings;
 
 with GNATCOLL.Traces;     use GNATCOLL.Traces;
 with GNATCOLL.VFS;        use GNATCOLL.VFS;
@@ -46,9 +46,9 @@ package Coverage_GUI is
 
    CodeAnalysis_Cst : constant String := "CodeAnalysis";
 
-   Uncovered_Category         : constant Glib.UTF8_String :=
+   Uncovered_Category         : constant VSS.Strings.Virtual_String :=
      -"Uncovered lines";
-   Partially_Covered_Category : constant Glib.UTF8_String :=
+   Partially_Covered_Category : constant VSS.Strings.Virtual_String :=
      -"Partially covered lines";
    Coverage_Message_Flags     : constant GPS.Kernel.Messages.Message_Flags :=
      GPS.Kernel.Messages.Side_And_Locations;

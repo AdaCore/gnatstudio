@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                               GNAT Studio                                --
 --                                                                          --
---                     Copyright (C) 2010-2023, AdaCore                     --
+--                     Copyright (C) 2010-2024, AdaCore                     --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -34,12 +34,12 @@ package GPS.Kernel.Messages.Legacy is
 
    function Category_Count
      (Kernel   : not null access Kernel_Handle_Record'Class;
-      Category : String) return Natural;
+      Category : VSS.Strings.Virtual_String) return Natural;
    --  Returns the number of entries for a given category
 
    function Get_Message_At
      (Self     : not null access constant Messages_Container'Class;
-      Category : String;
+      Category : VSS.Strings.Virtual_String;
       File     : GNATCOLL.VFS.Virtual_File;
       Line     : Natural;
       Column   : Basic_Types.Visible_Column_Type)

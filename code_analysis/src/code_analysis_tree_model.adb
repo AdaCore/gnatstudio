@@ -50,9 +50,9 @@ package body Code_Analysis_Tree_Model is
       else
          Set_And_Clear
            (Model, Iter, (Cov_Col, Cov_Sort, Cov_Bar_Txt, Cov_Bar_Val),
-            (1 => As_String ("n/a"),
+            (1 => As_String (String'("n/a")),
              2 => As_Int    (0),
-             3 => As_String ("n/a"),
+             3 => As_String (String'("n/a")),
              4 => As_Int    (0)));
       end if;
    end Fill_Iter;

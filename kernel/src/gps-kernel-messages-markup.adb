@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                               GNAT Studio                                --
 --                                                                          --
---                     Copyright (C) 2010-2023, AdaCore                     --
+--                     Copyright (C) 2010-2024, AdaCore                     --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -28,7 +28,7 @@ package body GPS.Kernel.Messages.Markup is
    function Load
      (XML_Node      : not null Node_Ptr;
       Container     : not null Messages_Container_Access;
-      Category      : String;
+      Category      : VSS.Strings.Virtual_String;
       File          : GNATCOLL.VFS.Virtual_File;
       Line          : Natural;
       Column        : Basic_Types.Visible_Column_Type;
@@ -41,7 +41,7 @@ package body GPS.Kernel.Messages.Markup is
 
    function Create_Markup_Message
      (Container     : not null Messages_Container_Access;
-      Category      : String;
+      Category      : VSS.Strings.Virtual_String;
       File          : GNATCOLL.VFS.Virtual_File;
       Line          : Natural;
       Column        : Basic_Types.Visible_Column_Type;
@@ -67,7 +67,7 @@ package body GPS.Kernel.Messages.Markup is
 
    function Create_Markup_Message
      (Container  : not null Messages_Container_Access;
-      Category   : String;
+      Category   : VSS.Strings.Virtual_String;
       File       : GNATCOLL.VFS.Virtual_File;
       Line       : Natural;
       Column     : Basic_Types.Visible_Column_Type;
@@ -98,7 +98,7 @@ package body GPS.Kernel.Messages.Markup is
 
    function Create_Markup_Message
      (Container     : not null Messages_Container_Access;
-      Category      : String;
+      Category      : VSS.Strings.Virtual_String;
       File          : GNATCOLL.VFS.Virtual_File;
       Line          : Natural;
       Column        : Basic_Types.Visible_Column_Type;
@@ -237,7 +237,7 @@ package body GPS.Kernel.Messages.Markup is
    function Load
      (XML_Node      : not null Node_Ptr;
       Container     : not null Messages_Container_Access;
-      Category      : String;
+      Category      : VSS.Strings.Virtual_String;
       File          : GNATCOLL.VFS.Virtual_File;
       Line          : Natural;
       Column        : Basic_Types.Visible_Column_Type;
@@ -248,7 +248,7 @@ package body GPS.Kernel.Messages.Markup is
       Allow_Auto_Jump_To_First : Boolean)
       return not null Message_Access
    is
-      Text : constant String := Get_Attribute (XML_Node, "text", "");
+      Text : constant String := Get_Attribute_S (XML_Node, "text", "");
 
    begin
       return
@@ -289,7 +289,7 @@ package body GPS.Kernel.Messages.Markup is
                Markup_Message_Access (Message_Node);
 
    begin
-      Set_Attribute (XML_Node, "text", To_String (Self.Text));
+      Set_Attribute_S (XML_Node, "text", To_String (Self.Text));
    end Save;
 
 end GPS.Kernel.Messages.Markup;

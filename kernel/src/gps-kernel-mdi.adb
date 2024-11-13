@@ -1500,7 +1500,7 @@ package body GPS.Kernel.MDI is
         and then Desktop_Perspective /= ""
         and then not Backup
       then
-         Set_Attribute (Central_Convert, "perspective", Desktop_Perspective);
+         Set_Attribute_S (Central_Convert, "perspective", Desktop_Perspective);
          UI_Module.Desktop_Saved := True;
       end if;
 
@@ -1522,17 +1522,17 @@ package body GPS.Kernel.MDI is
       --  Do not store perspectives like "Debug" as a desktop
       declare
          Name : constant XML_Utils.UTF8_String :=
-           Get_Attribute (Central_Convert, "perspective", "");
+           Get_Attribute_S (Central_Convert, "perspective", "");
       begin
          if Name /= "" then
             M := Perspectives_Convert.Child;
             while M /= null loop
                if M.Tag /= null
                  and then M.Tag.all = "perspective"
-                 and then Get_Attribute (M, "name") = Name
+                 and then Get_Attribute_S (M, "name") = Name
                then
                   if To_Lower
-                    (Get_Attribute (M, "save_as_central", "")) = "false"
+                    (Get_Attribute_S (M, "save_as_central", "")) = "false"
                   then
                      Trace (Me, "not saving central area" &
                               " (perspective can't be saved as a central)");
@@ -1657,7 +1657,7 @@ package body GPS.Kernel.MDI is
             if Node.Tag /= null
               and then Node.Tag.all = "perspective"
             then
-               return Get_Attribute (Node, "name");
+               return Get_Attribute_S (Node, "name");
             else
                return "";
             end if;
@@ -2093,7 +2093,7 @@ package body GPS.Kernel.MDI is
       Node : constant Node_Ptr := new XML_Utils.Node;
    begin
       Node.Tag := new String'("mdi_marker");
-      Set_Attribute (Node, "title", To_String (Marker.Title));
+      Set_Attribute_S (Node, "title", To_String (Marker.Title));
       return Node;
    end Save;
 
@@ -2165,7 +2165,7 @@ package body GPS.Kernel.MDI is
         and then Load.Tag.all = "mdi_marker"
       then
          return Create_MDI_Marker
-           (Module.Get_Kernel, Get_Attribute (Load, "title"));
+           (Module.Get_Kernel, Get_Attribute_S (Load, "title"));
 
       elsif JSON /= JSON_Null
         and then JSON.Has_Field ("tag")

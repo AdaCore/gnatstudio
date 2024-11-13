@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                               GNAT Studio                                --
 --                                                                          --
---                     Copyright (C) 2010-2023, AdaCore                     --
+--                     Copyright (C) 2010-2024, AdaCore                     --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -18,6 +18,8 @@
 with Ada.Strings.Fixed;            use Ada.Strings.Fixed;
 with Ada.Unchecked_Deallocation;
 with System.Address_To_Access_Conversions;
+
+with VSS.Strings.Conversions;
 
 with Glib;                         use Glib;
 with Glib.Object;
@@ -80,13 +82,13 @@ package body GPS.Location_View.Listener is
 
    procedure Find_Category
      (Self     : not null access Locations_Listener'Class;
-      Category : String;
+      Category : VSS.Strings.Virtual_String;
       Iter     : out Gtk.Tree_Model.Gtk_Tree_Iter);
    --  Lookup for specified category and set Iter to it's iterator in tree.
 
    procedure Find_File
      (Self          : not null access Locations_Listener'Class;
-      Category      : String;
+      Category      : VSS.Strings.Virtual_String;
       File          : GNATCOLL.VFS.Virtual_File;
       Category_Iter : out Gtk.Tree_Model.Gtk_Tree_Iter;
       File_Iter     : out Gtk.Tree_Model.Gtk_Tree_Iter);
@@ -182,7 +184,7 @@ package body GPS.Location_View.Listener is
 
    overriding procedure Category_Added
      (Self                     : not null access Locations_Listener;
-      Category                 : Ada.Strings.Unbounded.Unbounded_String;
+      Category                 : VSS.Strings.Virtual_String;
       Allow_Auto_Jump_To_First : Boolean)
    is
       pragma Unreferenced (Allow_Auto_Jump_To_First);
@@ -214,23 +216,23 @@ package body GPS.Location_View.Listener is
           -Number_Of_Children_Column,
           -Sort_Order_Hint_Column,
           -Message_Column),
-         (1  => As_String  (To_String (Category)),
+         (1  => As_String  (Category),
           2  => As_Int     (0),
           3  => As_File    (No_File),
           4  => As_Int     (-1),
           5  => As_Int     (-1),
-          6  => As_String  (To_String (Category)),
-          7  => As_String  ("gps-emblem-category"),
-          8  => As_String  (To_String (Category)),
-          9  => As_String  (To_String (Category)),
+          6  => As_String  (Category),
+          7  => As_String  (String'("gps-emblem-category")),
+          8  => As_String  (Category),
+          9  => As_String  (Category),
           10 => Mark,
           11 => As_Pointer (System.Null_Address),
-          12 => As_String  (To_String (Category)),
+          12 => As_String  (Category),
           13 => As_Int     (0),
           14 => As_Int
             (Sort_Order_Hint'Pos
                (Self.Kernel.Get_Messages_Container.Get_Sort_Order_Hint
-                    (To_String (Category)))),
+                    (Category))),
           15 => As_Pointer (System.Null_Address)));
    end Category_Added;
 
@@ -240,14 +242,14 @@ package body GPS.Location_View.Listener is
 
    overriding procedure Category_Removed
      (Self     : not null access Locations_Listener;
-      Category : Ada.Strings.Unbounded.Unbounded_String)
+      Category : VSS.Strings.Virtual_String)
    is
       Iter : Gtk.Tree_Model.Gtk_Tree_Iter;
 
    begin
       Self.Model.Disable_Sorting;
 
-      Self.Find_Category (To_String (Category), Iter);
+      Self.Find_Category (Category, Iter);
       Self.Model.Remove (Iter);
    end Category_Removed;
 
@@ -493,7 +495,7 @@ package body GPS.Location_View.Listener is
 
    overriding procedure File_Added
      (Self     : not null access Locations_Listener;
-      Category : Ada.Strings.Unbounded.Unbounded_String;
+      Category : VSS.Strings.Virtual_String;
       File     : GNATCOLL.VFS.Virtual_File)
    is
       Category_Iter : Gtk.Tree_Model.Gtk_Tree_Iter;
@@ -504,7 +506,7 @@ package body GPS.Location_View.Listener is
 
       --  Lookup for iter for parent category row.
 
-      Self.Find_Category (To_String (Category), Category_Iter);
+      Self.Find_Category (Category, Category_Iter);
 
       --  Append row for file.
 
@@ -530,7 +532,7 @@ package body GPS.Location_View.Listener is
           -Number_Of_Children_Column,
           -Sort_Order_Hint_Column,
           -Message_Column),
-         (1 => As_String (To_String (Category)),
+         (1 => As_String (Category),
           2 => As_Int  (0),
           3 => As_File (File),
           4 => As_Int  (-1),
@@ -539,7 +541,7 @@ package body GPS.Location_View.Listener is
             ((if File /= No_File
              then String (File.Base_Name)
              else "<unknown>")),
-          7 => As_String ("gps-emblem-file-unmodified"),
+          7 => As_String (String'("gps-emblem-file-unmodified")),
           8 => As_String
             ((if File /= No_File
              then String (File.Base_Name)
@@ -560,7 +562,7 @@ package body GPS.Location_View.Listener is
 
    overriding procedure File_Removed
      (Self     : not null access Locations_Listener;
-      Category : Unbounded_String;
+      Category : VSS.Strings.Virtual_String;
       File     : GNATCOLL.VFS.Virtual_File)
    is
       Category_Iter : Gtk.Tree_Model.Gtk_Tree_Iter;
@@ -569,7 +571,7 @@ package body GPS.Location_View.Listener is
 
    begin
       Self.Model.Disable_Sorting;
-      Self.Find_File (To_String (Category), File, Category_Iter, File_Iter);
+      Self.Find_File (Category, File, Category_Iter, File_Iter);
       File_Path := Self.Model.Get_Path (File_Iter);
 
       for Index in reverse
@@ -726,8 +728,11 @@ package body GPS.Location_View.Listener is
 
    procedure Find_Category
      (Self     : not null access Locations_Listener'Class;
-      Category : String;
-      Iter     : out Gtk.Tree_Model.Gtk_Tree_Iter) is
+      Category : VSS.Strings.Virtual_String;
+      Iter     : out Gtk.Tree_Model.Gtk_Tree_Iter)
+   is
+      use type VSS.Strings.Virtual_String;
+
    begin
       if Self.Category /= Null_Gtk_Tree_Path then
          --  we have path to the last accessed node
@@ -741,8 +746,8 @@ package body GPS.Location_View.Listener is
 
          --  whether this last node is what we are looking for
          if Iter /= Null_Iter
-           and then Self.Model.Get_String
-             (Iter, -Category_Column) = Category
+           and then VSS.Strings.Conversions.To_Virtual_String
+             (Self.Model.Get_String (Iter, -Category_Column)) = Category
          then
             return;
          end if;
@@ -758,7 +763,9 @@ package body GPS.Location_View.Listener is
       Iter := Self.Model.Get_Iter_First;
 
       while Iter /= Null_Iter loop
-         if Self.Model.Get_String (Iter, -Category_Column) = Category then
+         if VSS.Strings.Conversions.To_Virtual_String
+           (Self.Model.Get_String (Iter, -Category_Column)) = Category
+         then
             Self.Category := Self.Model.Get_Path (Iter);
             return;
          end if;
@@ -773,7 +780,7 @@ package body GPS.Location_View.Listener is
 
    procedure Find_File
      (Self          : not null access Locations_Listener'Class;
-      Category      : String;
+      Category      : VSS.Strings.Virtual_String;
       File          : GNATCOLL.VFS.Virtual_File;
       Category_Iter : out Gtk.Tree_Model.Gtk_Tree_Iter;
       File_Iter     : out Gtk.Tree_Model.Gtk_Tree_Iter) is
@@ -832,7 +839,7 @@ package body GPS.Location_View.Listener is
    begin
       if Message.Level = Primary then
          Self.Find_File
-           (To_String (Message.Get_Category),
+           (Message.Get_Category,
             Message.Get_File,
             Category_Iter,
             File_Iter);
@@ -1019,7 +1026,7 @@ package body GPS.Location_View.Listener is
 
       else
          Self.Find_File
-           (To_String (Message.Get_Category),
+           (Message.Get_Category,
             Message.Get_File,
             Category_Iter,
             File_Iter);
@@ -1027,7 +1034,8 @@ package body GPS.Location_View.Listener is
       end if;
 
       Glib.Values.Init_Set_String
-        (Values (1), To_String (Message.Get_Category));
+        (Values (1),
+         VSS.Strings.Conversions.To_UTF_8_String (Message.Get_Category));
 
       case Message.Level is
          when Primary =>
@@ -1054,7 +1062,7 @@ package body GPS.Location_View.Listener is
          4 => As_Int    (Glib.Gint (Message.Get_Line)),
          5 => As_Int    (Glib.Gint (Message.Get_Column)),
          6 => As_String (To_String (Message.Get_Text)),
-         7 => As_String (""));
+         7 => As_String (String'("")));
 
       if Message.Level = Primary
         and (Message.Get_Line /= 0 or Message.Get_Column /= 0)
@@ -1092,7 +1100,7 @@ package body GPS.Location_View.Listener is
          end loop;
 
          Markup :=
-           M.Get_Category
+           VSS.Strings.Conversions.To_Unbounded_UTF_8_String (M.Get_Category)
            & ASCII.LF
            & String (M.Get_File.Base_Name)
            & ":" & Image (M.Get_Line)
@@ -1122,7 +1130,7 @@ package body GPS.Location_View.Listener is
          15 => As_Int
            (Sort_Order_Hint'Pos
                 (Self.Kernel.Get_Messages_Container.Get_Sort_Order_Hint
-                     (To_String (Message.Get_Category)))),
+                     (Message.Get_Category))),
          --  XXX Can it be changed dynamically?
          16 => As_Pointer
            (Message_Conversions.To_Address
@@ -1401,7 +1409,7 @@ package body GPS.Location_View.Listener is
       --  Construct tree for currently visible messages
 
       for Category of Container.Get_Categories loop
-         if Container.Get_Flags (To_String (Category)) (Locations) then
+         if Container.Get_Flags (Category) (Locations) then
             Self.Category_Added (Category, False);
 
             for File of Container.Get_Files (Category) loop

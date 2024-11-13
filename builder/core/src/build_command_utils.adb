@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                               GNAT Studio                                --
 --                                                                          --
---                     Copyright (C) 2012-2023, AdaCore                     --
+--                     Copyright (C) 2012-2024, AdaCore                     --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -19,6 +19,8 @@ with Ada.Strings.Fixed;
 with Ada.Unchecked_Deallocation;
 with GNAT.Directory_Operations;
 with GNAT.Strings;
+
+with VSS.Strings.Conversions;
 
 with GNATCOLL.Scripts.Projects;
 with GNATCOLL.Templates;
@@ -1525,9 +1527,12 @@ package body Build_Command_Utils is
    ---------------------------------
 
    function Current_Background_Build_Id
-     (Self : access Builder_Context_Record) return String is
+     (Self : access Builder_Context_Record)
+      return VSS.Strings.Virtual_String is
    begin
-      return Integer'Image (Self.Background_Build_ID);
+      return
+        VSS.Strings.Conversions.To_Virtual_String
+          (Integer'Image (Self.Background_Build_ID));
    end Current_Background_Build_Id;
 
    ----------------------------------
@@ -1535,9 +1540,12 @@ package body Build_Command_Utils is
    ----------------------------------
 
    function Previous_Background_Build_Id
-     (Self : access Builder_Context_Record) return String is
+     (Self : access Builder_Context_Record)
+      return VSS.Strings.Virtual_String is
    begin
-      return Integer'Image (Self.Background_Build_ID - 1);
+      return
+        VSS.Strings.Conversions.To_Virtual_String
+          (Integer'Image (Self.Background_Build_ID - 1));
    end Previous_Background_Build_Id;
 
    -------------------------------

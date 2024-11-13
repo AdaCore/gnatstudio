@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                               GNAT Studio                                --
 --                                                                          --
---                     Copyright (C) 2001-2023, AdaCore                     --
+--                     Copyright (C) 2001-2024, AdaCore                     --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -370,8 +370,9 @@ package body Help_Module is
    begin
       while Tmp /= null loop
          if Tmp.Tag.all = "shell_doc"
-           and then (Get_Attribute (Tmp, "name", "") = Full_Name
-                     or else Get_Attribute (Tmp, "real_name", "") = Full_Name)
+           and then (Get_Attribute_S (Tmp, "name", "") = Full_Name
+                     or else Get_Attribute_S (Tmp, "real_name", "")
+                               = Full_Name)
          then
             Child       := Tmp.Child;
             Obsolescent := Null_Unbounded_String;
@@ -397,17 +398,17 @@ package body Help_Module is
                      Params := Params
                        & "<tr><td class=""name"">"
                        & XML_Utils.Protect
-                          (Get_Attribute (Child, "name")) & "</td>";
+                          (Get_Attribute_S (Child, "name")) & "</td>";
                   else
                      if Params /= Null_Unbounded_String then
                         Params := Params & ASCII.LF;
                      end if;
                      Params := Params
-                       & Get_Attribute (Child, "name") & ASCII.HT;
+                       & Get_Attribute_S (Child, "name") & ASCII.HT;
                   end if;
 
                   declare
-                     Default : constant String := Get_Attribute
+                     Default : constant String := Get_Attribute_S
                        (Child, "default", "@@");
                   begin
                      if Default /= "@@" then
@@ -450,13 +451,13 @@ package body Help_Module is
                        & "<tr><td class='header'>See also</td>"
                        & "<td class='seeAlso' colspan='2'>"
                        & XML_Utils.Protect
-                          (Get_Attribute (Child, "name", ""))
+                          (Get_Attribute_S (Child, "name", ""))
                        & "</td></tr>";
                   end if;
 
                elsif Child.Tag.all = "example" then
                   if Equal
-                    (Get_Attribute (Child, "lang", GPS_Shell_Name),
+                    (Get_Attribute_S (Child, "lang", GPS_Shell_Name),
                      Language, False)
                   then
                      if HTML_Format then
@@ -1047,7 +1048,7 @@ package body Help_Module is
             elsif Field.Tag.all = "shell" then
                Shell := new String'(Field.Value.all);
                Shell_Lang := new String'
-                 (Get_Attribute (Field, "lang", "shell"));
+                 (Get_Attribute_S (Field, "lang", "shell"));
 
             else
                Insert
@@ -1084,8 +1085,8 @@ package body Help_Module is
                      URL         => URL,
                      Descr       => Descr.Value.all,
                      Category    => (if Cat = null then "" else Cat.Value.all),
-                     Menu_Before => Get_Attribute (Menu, "before", ""),
-                     Menu_After  => Get_Attribute (Menu, "after", ""),
+                     Menu_Before => Get_Attribute_S (Menu, "before", ""),
+                     Menu_After  => Get_Attribute_S (Menu, "after", ""),
                      Menu_Path   => Menu.Value.all);
                end if;
             end;
@@ -1106,8 +1107,8 @@ package body Help_Module is
                   Shell_Lang  => Shell_Lang.all,
                   Descr       => Descr.Value.all,
                   Category    => (if Cat = null then "" else Cat.Value.all),
-                  Menu_Before => Get_Attribute (Menu, "before", ""),
-                  Menu_After  => Get_Attribute (Menu, "after", ""),
+                  Menu_Before => Get_Attribute_S (Menu, "before", ""),
+                  Menu_After  => Get_Attribute_S (Menu, "after", ""),
                   Menu_Path   => Menu.Value.all);
             end if;
          end if;

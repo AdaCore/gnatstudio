@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                               GNAT Studio                                --
 --                                                                          --
---                     Copyright (C) 2010-2023, AdaCore                     --
+--                     Copyright (C) 2010-2024, AdaCore                     --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -17,11 +17,13 @@
 
 with Ada.Unchecked_Conversion;
 with Ada.Strings.Hash;
+
+with VSS.Strings.Conversions;
+
 with GPS.Editors;                    use GPS.Editors;
 with GPS.Kernel.Hooks;               use GPS.Kernel.Hooks;
 with GPS.Kernel.Messages.References;
 with GNATCOLL.Projects;              use GNATCOLL.Projects;
-with GNATCOLL.Utils;                 use GNATCOLL.Utils;
 with Src_Editor_Buffer;              use Src_Editor_Buffer;
 
 with Src_Editor_Buffer.Line_Information;
@@ -65,15 +67,13 @@ package body Src_Editor_Module.Messages is
    is
       Controller : constant Messages_Container_Access :=
                      Get_Messages_Container (Self.Kernel);
-      Categories : constant Unbounded_String_Array :=
-                     Get_Categories (Controller);
+      B          : Source_Buffer;
 
-      B : Source_Buffer;
    begin
-      for J in Categories'Range loop
+      for Category of Get_Categories (Controller) loop
          declare
             Messages : Message_Array :=
-              Get_Messages (Controller, Categories (J), File);
+              Get_Messages (Controller, Category, File);
             Last     : Natural := 0;
             pragma Assert (Messages'First = 1);
 
@@ -102,7 +102,9 @@ package body Src_Editor_Module.Messages is
 
             if Last > 0 then
                Add_File_Information
-                 (B, To_String (Categories (J)), Messages (1 .. Last));
+                 (B,
+                  VSS.Strings.Conversions.To_UTF_8_String (Category),
+                  Messages (1 .. Last));
             end if;
          end;
       end loop;
@@ -114,11 +116,11 @@ package body Src_Editor_Module.Messages is
 
    overriding procedure File_Removed
      (Self     : not null access Highlighting_Manager;
-      Category : Unbounded_String;
+      Category : VSS.Strings.Virtual_String;
       File     : GNATCOLL.VFS.Virtual_File)
    is
       procedure Free is
-        new Unchecked_Deallocation (Style_Sets.Set, Style_Set_Access);
+        new Ada.Unchecked_Deallocation (Style_Sets.Set, Style_Set_Access);
 
       Map_Position : Style_Maps.Cursor := Self.Map.Find ((Category, File));
       Styles       : Style_Set_Access;
@@ -151,20 +153,21 @@ package body Src_Editor_Module.Messages is
    ----------
 
    function Hash
-     (Item : Style_Access) return Containers.Hash_Type is
+     (Item : Style_Access) return Ada.Containers.Hash_Type is
    begin
-      return Strings.Hash (Get_Name (Item));
+      return Ada.Strings.Hash (Get_Name (Item));
    end Hash;
 
    ----------
    -- Hash --
    ----------
 
-   function Hash (Item : Key) return Containers.Hash_Type is
+   function Hash (Item : Key) return Ada.Containers.Hash_Type is
    begin
       return
-        Strings.Hash
-          (To_String (Item.Category) & String (Item.File.Full_Name.all));
+        Ada.Strings.Hash
+          (VSS.Strings.Conversions.To_UTF_8_String (Item.Category)
+             & String (Item.File.Full_Name.all));
    end Hash;
 
    -------------------
@@ -182,7 +185,9 @@ package body Src_Editor_Module.Messages is
 
       if B /= null then
          Add_File_Information
-           (B, Message.Get_Category, (1 => Message_Access (Message)));
+           (B,
+            VSS.Strings.Conversions.To_UTF_8_String (Message.Get_Category),
+            (1 => Message_Access (Message)));
       end if;
    end Message_Added;
 
@@ -250,7 +255,8 @@ package body Src_Editor_Module.Messages is
    procedure Register (Kernel : not null access Kernel_Handle_Record'Class) is
 
       function To_Address is
-        new Unchecked_Conversion (Highlighting_Manager_Access, System.Address);
+        new Ada.Unchecked_Conversion
+              (Highlighting_Manager_Access, System.Address);
 
       Id      : constant Source_Editor_Module :=
                   Source_Editor_Module (Src_Editor_Module_Id);
@@ -278,11 +284,12 @@ package body Src_Editor_Module.Messages is
      (Kernel : not null access Kernel_Handle_Record'Class)
    is
       function To_Highlighting_Manager is
-        new Unchecked_Conversion (System.Address, Highlighting_Manager_Access);
+        new Ada.Unchecked_Conversion
+              (System.Address, Highlighting_Manager_Access);
 
       procedure Free is
-        new Unchecked_Deallocation
-          (Highlighting_Manager'Class, Highlighting_Manager_Access);
+        new Ada.Unchecked_Deallocation
+              (Highlighting_Manager'Class, Highlighting_Manager_Access);
 
       Id      : constant Source_Editor_Module :=
                   Source_Editor_Module (Src_Editor_Module_Id);

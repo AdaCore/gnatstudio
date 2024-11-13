@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                               GNAT Studio                                --
 --                                                                          --
---                     Copyright (C) 2003-2023, AdaCore                     --
+--                     Copyright (C) 2003-2024, AdaCore                     --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -19,6 +19,8 @@ with Ada.Containers.Ordered_Sets;
 with Ada.Strings.Unbounded;    use Ada.Strings.Unbounded;
 with Ada.Tags;
 with GNAT.OS_Lib;              use GNAT.OS_Lib;
+
+with VSS.Strings.Conversions;
 
 with GNATCOLL.Utils;           use GNATCOLL.Utils;
 
@@ -3451,8 +3453,9 @@ package body Src_Editor_Buffer.Line_Information is
       if Data.Message = null then
          return "null";
       else
-         return To_String (Data.Message.Get_Category) &
-           ":" & To_String (Data.Message.Get_Text);
+         return
+           VSS.Strings.Conversions.To_UTF_8_String (Data.Message.Get_Category)
+             & ":" & To_String (Data.Message.Get_Text);
       end if;
    end Image;
 

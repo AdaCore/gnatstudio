@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                               GNAT Studio                                --
 --                                                                          --
---                     Copyright (C) 2002-2023, AdaCore                     --
+--                     Copyright (C) 2002-2024, AdaCore                     --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -494,7 +494,7 @@ package body Navigation_Module is
             Child := Save (M.Markers (Index));
             if Child /= null then
                if Index = M.Current_Marker then
-                  Set_Attribute (Child, "current", "true");
+                  Set_Attribute_S (Child, "current", "true");
                end if;
                Add_Child (Project, Child, Append => True);
             end if;
@@ -580,7 +580,8 @@ package body Navigation_Module is
                      M.Last_Marker := M.Last_Marker + 1;
                      M.Markers (M.Last_Marker) := Marker;
 
-                     if Get_Attribute (Child, "current", "false") = "true" then
+                     if Get_Attribute_S (Child, "current", "false") = "true"
+                     then
                         M.Current_Marker := M.Last_Marker;
                      end if;
 

@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                               GNAT Studio                                --
 --                                                                          --
---                     Copyright (C) 2009-2023, AdaCore                     --
+--                     Copyright (C) 2009-2024, AdaCore                     --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -91,7 +91,7 @@ package body CodePeer.Bridge.Commands is
       Message_Node   : XML_Utils.Node_Ptr;
 
    begin
-      XML_Utils.Set_Attribute
+      XML_Utils.Set_Attribute_S
         (Database_Node, "format", Supported_Format_Version'Image (Version));
 
       --  ??? Potentially non-utf8 string should not be
@@ -105,27 +105,27 @@ package body CodePeer.Bridge.Commands is
               Value  =>
                  new String'(To_String (Message.Audit.First_Element.Comment)),
               others => <>);
-         XML_Utils.Set_Attribute
+         XML_Utils.Set_Attribute_S
            (Message_Node, "identifier", Positive'Image (Message.Id));
-         XML_Utils.Set_Attribute
+         XML_Utils.Set_Attribute_S
            (Message_Node,
             "status",
             Standardize (Image (Message.Audit.First_Element.Status)));
-         XML_Utils.Set_Attribute
+         XML_Utils.Set_Attribute_S
            (Message_Node,
             "status_category",
             Audit_Status_Category'Image
               (Message.Audit.First_Element.Status.Category));
-         XML_Utils.Set_Attribute
+         XML_Utils.Set_Attribute_S
            (Message_Node,
             "approved", To_String (Message.Audit.First_Element.Approved_By));
 
          if Is_GNATSAS then
-            XML_Utils.Set_Attribute
+            XML_Utils.Set_Attribute_S
               (Message_Node, "subp", To_String (Message.GNATSAS_Id.Subp));
-            XML_Utils.Set_Attribute
+            XML_Utils.Set_Attribute_S
               (Message_Node, "kind", To_String (Message.GNATSAS_Id.Kind));
-            XML_Utils.Set_Attribute
+            XML_Utils.Set_Attribute_S
               (Message_Node, "key_seq",
                To_String (Message.GNATSAS_Id.Key_Seq));
 
@@ -223,13 +223,14 @@ package body CodePeer.Bridge.Commands is
          end if;
       end loop;
 
-      XML_Utils.Set_Attribute
+      XML_Utils.Set_Attribute_S
         (Database_Node, "format", Supported_Format_Version'Image (Version));
 
       --  ??? Potentially non-utf8 string should not be
       --  stored in an XML attribute.
-      XML_Utils.Set_Attribute (Audit_Trail_Node, "messages", To_String (Ids));
-      XML_Utils.Set_Attribute
+      XML_Utils.Set_Attribute_S
+        (Audit_Trail_Node, "messages", To_String (Ids));
+      XML_Utils.Set_Attribute_S
         (Audit_Trail_Node, "output_file", +Export_File_Name.Full_Name);
       --  ??? Potentially non-utf8 string should not be
       --  stored in an XML attribute.
@@ -256,34 +257,35 @@ package body CodePeer.Bridge.Commands is
            others => <>)
       do
          if Server_URL /= "" then
-            XML_Utils.Set_Attribute (Database_Node, "server_url", Server_URL);
+            XML_Utils.Set_Attribute_S
+              (Database_Node, "server_url", Server_URL);
 
          else
-            XML_Utils.Set_Attribute
+            XML_Utils.Set_Attribute_S
               (Database_Node, "output_directory", +Output_Directory.Full_Name);
 
             if Is_GNATSAS then
                if CPM_File /= Null_Unbounded_String then
-                  XML_Utils.Set_Attribute
+                  XML_Utils.Set_Attribute_S
                     (Database_Node, "cpm_file", To_String (CPM_File));
                end if;
 
-               XML_Utils.Set_Attribute
+               XML_Utils.Set_Attribute_S
                  (Database_Node, "cpm_directory", +CPM_Directory.Full_Name);
 
             else
-               XML_Utils.Set_Attribute
+               XML_Utils.Set_Attribute_S
                  (Database_Node, "db_directory", +DB_Directory.Full_Name);
             end if;
          end if;
 
          if Message_Patterns /= No_File then
-            XML_Utils.Set_Attribute
+            XML_Utils.Set_Attribute_S
               (Database_Node, "message_patterns", +Message_Patterns.Full_Name);
          end if;
 
          if Additional_Patterns /= No_File then
-            XML_Utils.Set_Attribute
+            XML_Utils.Set_Attribute_S
               (Database_Node,
                "additional_patterns", +Additional_Patterns.Full_Name);
          end if;
@@ -342,7 +344,7 @@ package body CodePeer.Bridge.Commands is
       end Do_Annot_File;
 
    begin
-      XML_Utils.Set_Attribute
+      XML_Utils.Set_Attribute_S
         (Database_Node,
          "maximum_format",
          Format_Version'Image (Maximum_Version));
@@ -354,23 +356,23 @@ package body CodePeer.Bridge.Commands is
 
       --  ??? Potentially non-utf8 string should not be
       --  stored in an XML attribute.
-      XML_Utils.Set_Attribute
+      XML_Utils.Set_Attribute_S
         (Database_Node,
          "display_progress",
          "true");
-      XML_Utils.Set_Attribute
+      XML_Utils.Set_Attribute_S
         (Inspection_Node, "output_file", +Inspection_File_Name.Full_Name);
       --  ??? Potentially non-utf8 string should not be
       --  stored in an XML attribute.
-      XML_Utils.Set_Attribute
+      XML_Utils.Set_Attribute_S
         (Inspection_Node, "status_file", +Status_File_Name.Full_Name);
       --  ??? Potentially non-utf8 string should not be
       --  stored in an XML attribute.
-      XML_Utils.Set_Attribute
+      XML_Utils.Set_Attribute_S
         (Inspection_Node,
          "export_annotations",
          To_Lower (Boolean'Image (Import_Annotations)));
-      XML_Utils.Set_Attribute
+      XML_Utils.Set_Attribute_S
         (Inspection_Node,
          "export_backtraces",
          To_Lower (Boolean'Image (Import_Backtraces)));

@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                               GNAT Studio                                --
 --                                                                          --
---                     Copyright (C) 2001-2023, AdaCore                     --
+--                     Copyright (C) 2001-2024, AdaCore                     --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -1643,9 +1643,9 @@ package body Browsers.Canvas is
          Pos  : constant Point := It.Position;
       begin
          if N /= null then
-            Set_Attribute (N, "id", System.Address_Image (E.all'Address));
-            Set_Attribute (N, "x", Pos.X'Img);
-            Set_Attribute (N, "y", Pos.Y'Img);
+            Set_Attribute_S (N, "id", System.Address_Image (E.all'Address));
+            Set_Attribute_S (N, "x", Pos.X'Img);
+            Set_Attribute_S (N, "y", Pos.Y'Img);
             Add_Child (XML, N);
          end if;
       end On_Item;
@@ -1656,9 +1656,9 @@ package body Browsers.Canvas is
       begin
          N := new Node;
          N.Tag := new String'("link");
-         Set_Attribute
+         Set_Attribute_S
            (N, "from", System.Address_Image (L.Get_From.all'Address));
-         Set_Attribute
+         Set_Attribute_S
            (N, "to", System.Address_Image (L.Get_To.all'Address));
          Add_Child (XML, N, Append => True);
       end On_Link;
@@ -1668,9 +1668,9 @@ package body Browsers.Canvas is
       View.Get_View.Model.For_Each_Item (On_Item'Access, Filter => Kind_Item);
       View.Get_View.Model.For_Each_Item (On_Link'Access, Filter => Kind_Link);
 
-      Set_Attribute (XML, "scale", View.Get_View.Get_Scale'Img);
-      Set_Attribute (XML, "top", Gdouble'Image (Area.Y));
-      Set_Attribute (XML, "left", Gdouble'Image (Area.X));
+      Set_Attribute_S (XML, "scale", View.Get_View.Get_Scale'Img);
+      Set_Attribute_S (XML, "top", Gdouble'Image (Area.Y));
+      Set_Attribute_S (XML, "left", Gdouble'Image (Area.X));
    end Save_To_XML;
 
    -------------------
@@ -1692,7 +1692,7 @@ package body Browsers.Canvas is
       C             : Node_Ptr;
       It, It2       : GPS_Item;
    begin
-      if Get_Attribute (XML, "scale") = "" then
+      if Get_Attribute_S (XML, "scale") = "" then
          --  No contents was saved
          return;
       end if;
@@ -1703,17 +1703,17 @@ package body Browsers.Canvas is
             It := General_Browser_Record'Class (View).Load_From_XML (C);
             if It /= null then
                It.Set_Position
-                 ((X => Gdouble'Value (Get_Attribute (C, "x")),
-                   Y => Gdouble'Value (Get_Attribute (C, "y"))));
-               Items.Include (Get_Attribute (C, "id"), It);
+                 ((X => Gdouble'Value (Get_Attribute_S (C, "x")),
+                   Y => Gdouble'Value (Get_Attribute_S (C, "y"))));
+               Items.Include (Get_Attribute_S (C, "id"), It);
             end if;
 
          else
-            Elem := Items.Find (Get_Attribute (C, "from"));
+            Elem := Items.Find (Get_Attribute_S (C, "from"));
             if Has_Element (Elem) then
                It := Element (Elem);
 
-               Elem := Items.Find (Get_Attribute (C, "to"));
+               Elem := Items.Find (Get_Attribute_S (C, "to"));
                if Has_Element (Elem) then
                   It2 := Element (Elem);
                   General_Browser_Record'Class
@@ -1727,10 +1727,10 @@ package body Browsers.Canvas is
 
       View.Get_View.Model.Refresh_Layout;
 
-      View.Get_View.Set_Scale (Gdouble'Value (Get_Attribute (XML, "scale")));
+      View.Get_View.Set_Scale (Gdouble'Value (Get_Attribute_S (XML, "scale")));
       View.Get_View.Set_Topleft
-        ((X => Gdouble'Value (Get_Attribute (XML, "left")),
-          Y => Gdouble'Value (Get_Attribute (XML, "top"))));
+        ((X => Gdouble'Value (Get_Attribute_S (XML, "left")),
+          Y => Gdouble'Value (Get_Attribute_S (XML, "top"))));
    end Load_From_XML;
 
 end Browsers.Canvas;

@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                               GNAT Studio                                --
 --                                                                          --
---                     Copyright (C) 2007-2023, AdaCore                     --
+--                     Copyright (C) 2007-2024, AdaCore                     --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -88,7 +88,7 @@ package body Code_Analysis_XML is
                Projects.Views.Create_Project_View_Reference
                  (Kernel,
                   Kernel.Get_Project_Tree.Project_From_Name
-                    (Get_Attribute (Child, "name"))));
+                    (Get_Attribute_S (Child, "name"))));
             Parse_Project (Prj_Node, Child);
          end if;
 
@@ -112,7 +112,7 @@ package body Code_Analysis_XML is
    begin
       Loc.Tag := new String'("Project");
       Add_Child (Parent, Loc, True);
-      Set_Attribute (Loc, "name", Prj_Node.View.Name);
+      Set_Attribute_S (Loc, "name", Prj_Node.View.Name);
       XML_Dump_Coverage (Prj_Node.Analysis_Data.Coverage_Data, Loc);
 
       for J in Sort_Arr'Range loop
@@ -150,7 +150,7 @@ package body Code_Analysis_XML is
                --  than to the number of code lines in the original src code
                --  file. It will contain the lines with analysis information.
                File_Node.Lines := new Line_Array
-                 (1 .. Positive'Value (Get_Attribute (Child, "line_count")));
+                 (1 .. Positive'Value (Get_Attribute_S (Child, "line_count")));
                File_Node.Lines.all := (others => Null_Line);
                Parse_File (File_Node, Child);
             end if;
@@ -177,7 +177,7 @@ package body Code_Analysis_XML is
       Add_Child (Parent, Loc, True);
       Add_File_Child (Loc, "name", File_Node.Name);
 
-      Set_Attribute
+      Set_Attribute_S
         (Loc, "line_count", Positive'Image (File_Node.Lines'Length));
       XML_Dump_Coverage (File_Node.Analysis_Data.Coverage_Data, Loc);
 
@@ -219,16 +219,17 @@ package body Code_Analysis_XML is
                   Subp_Node : Subprogram_Access;
                begin
                   Subp_Node := Get_Or_Create
-                    (File_Node, Get_Attribute (Child, "name"));
-                  Subp_Node.Name := new String'(Get_Attribute (Child, "name"));
+                    (File_Node, Get_Attribute_S (Child, "name"));
+                  Subp_Node.Name :=
+                    new String'(Get_Attribute_S (Child, "name"));
                   Subp_Node.Line :=
-                    Natural'Value (Get_Attribute (Child, "line"));
+                    Natural'Value (Get_Attribute_S (Child, "line"));
                   Subp_Node.Column :=
-                    Natural'Value (Get_Attribute (Child, "column"));
+                    Natural'Value (Get_Attribute_S (Child, "column"));
                   Subp_Node.Start :=
-                    Natural'Value (Get_Attribute (Child, "start"));
+                    Natural'Value (Get_Attribute_S (Child, "start"));
                   Subp_Node.Stop :=
-                    Natural'Value (Get_Attribute (Child, "stop"));
+                    Natural'Value (Get_Attribute_S (Child, "stop"));
                   XML_Parse_Coverage
                     (Subp_Node.Analysis_Data.Coverage_Data, Child);
                end;
@@ -238,9 +239,10 @@ package body Code_Analysis_XML is
                   Line_Node : Line;
                   Line_Num  : Natural;
                   Line_Contents : constant String :=
-                                    Get_Attribute (Child, "contents");
+                                    Get_Attribute_S (Child, "contents");
                begin
-                  Line_Num := Natural'Value (Get_Attribute (Child, "number"));
+                  Line_Num :=
+                    Natural'Value (Get_Attribute_S (Child, "number"));
                   Line_Node.Number  := Line_Num;
 
                   if Line_Contents /= "" then
@@ -270,11 +272,11 @@ package body Code_Analysis_XML is
    begin
       Loc.Tag := new String'("Subprogram");
       Add_Child (Parent, Loc, True);
-      Set_Attribute (Loc, "name", Subp_Node.Name.all);
-      Set_Attribute (Loc, "line", Natural'Image (Subp_Node.Line));
-      Set_Attribute (Loc, "column", Natural'Image (Subp_Node.Column));
-      Set_Attribute (Loc, "start", Natural'Image (Subp_Node.Start));
-      Set_Attribute (Loc, "stop", Natural'Image (Subp_Node.Stop));
+      Set_Attribute_S (Loc, "name", Subp_Node.Name.all);
+      Set_Attribute_S (Loc, "line", Natural'Image (Subp_Node.Line));
+      Set_Attribute_S (Loc, "column", Natural'Image (Subp_Node.Column));
+      Set_Attribute_S (Loc, "start", Natural'Image (Subp_Node.Start));
+      Set_Attribute_S (Loc, "stop", Natural'Image (Subp_Node.Stop));
       XML_Dump_Coverage (Subp_Node.Analysis_Data.Coverage_Data, Loc);
    end Dump_Subprogram;
 
@@ -290,11 +292,11 @@ package body Code_Analysis_XML is
          Loc := new XML_Utils.Node;
          Loc.Tag := new String'("Line");
          Add_Child (Parent, Loc, True);
-         Set_Attribute (Loc, "number", Natural'Image (Line_Node.Number));
+         Set_Attribute_S (Loc, "number", Natural'Image (Line_Node.Number));
          XML_Dump_Coverage (Line_Node.Analysis_Data.Coverage_Data, Loc);
 
          if Line_Node.Contents /= null then
-            Set_Attribute
+            Set_Attribute_S
               (Loc, "contents",
                Unknown_To_UTF8 (Line_Node.Contents.all, Dummy'Access));
          end if;

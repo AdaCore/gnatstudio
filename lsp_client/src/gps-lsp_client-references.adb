@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                               GNAT Studio                                --
 --                                                                          --
---                       Copyright (C) 2019-2023, AdaCore                   --
+--                     Copyright (C) 2019-2024, AdaCore                     --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -125,7 +125,7 @@ package body GPS.LSP_Client.References is
    type References_Request is
      new GPS.LSP_Client.Requests.References.Abstract_References_Request with
       record
-         Title     : Unbounded_String;
+         Title     : VSS.Strings.Virtual_String;
          Name      : Unbounded_String;
          Filter    : Result_Filter;
          Command   : Ref_Command_Access;
@@ -154,11 +154,11 @@ package body GPS.LSP_Client.References is
    -- Others --
 
    function All_Refs_Category
-     (Entity             : String;
-      Line               : Integer;
-      Local_Only         : Boolean;
-      Local_File         : GNATCOLL.VFS.Virtual_File)
-      return String;
+     (Entity     : String;
+      Line       : Integer;
+      Local_Only : Boolean;
+      Local_File : GNATCOLL.VFS.Virtual_File)
+      return VSS.Strings.Virtual_String;
    --  Return a suitable category for references action messages.
 
    type Filters_Buttons is array (Natural range <>) of Gtk_Check_Button;
@@ -235,7 +235,7 @@ package body GPS.LSP_Client.References is
       Kernel               : Kernel_Handle;
       File                 : GNATCOLL.VFS.Virtual_File;
       Position             : LSP.Messages.Position;
-      Title                : Unbounded_String;
+      Title                : VSS.Strings.Virtual_String;
       Name                 : Unbounded_String;
       Filter               : Result_Filter;
       Command              : Ref_Command_Access;
@@ -259,23 +259,27 @@ package body GPS.LSP_Client.References is
    -----------------------
 
    function All_Refs_Category
-     (Entity             : String;
-      Line               : Integer;
-      Local_Only         : Boolean;
-      Local_File         : GNATCOLL.VFS.Virtual_File)
-      return String is
+     (Entity     : String;
+      Line       : Integer;
+      Local_Only : Boolean;
+      Local_File : GNATCOLL.VFS.Virtual_File)
+      return VSS.Strings.Virtual_String is
    begin
       if Local_Only then
-         return "Local references for "
-           & Entity
-           & " ("  & Local_File.Display_Base_Name
-           & ":" & String_Utils.Image (Line) & ") " & "in "
-           & (Local_File.Display_Base_Name);
+         return
+           VSS.Strings.Conversions.To_Virtual_String
+             ("Local references for "
+              & Entity
+              & " ("  & Local_File.Display_Base_Name
+              & ":" & String_Utils.Image (Line) & ") " & "in "
+              & (Local_File.Display_Base_Name));
 
       else
-         return "References for " & Entity
-           & " (" & Local_File.Display_Base_Name
-           & ":" & String_Utils.Image (Line) & ")";
+         return
+           VSS.Strings.Conversions.To_Virtual_String
+             ("References for " & Entity
+              & " (" & Local_File.Display_Base_Name
+              & ":" & String_Utils.Image (Line) & ")");
       end if;
    end All_Refs_Category;
 
@@ -331,7 +335,7 @@ package body GPS.LSP_Client.References is
       Kernel : constant Kernel_Handle := Get_Kernel (Context.Context);
       Lang   : Standard.Language.Language_Access;
       File   : GNATCOLL.VFS.Virtual_File;
-      Title  : Unbounded_String;
+      Title  : VSS.Strings.Virtual_String;
       Line   : Integer;
       Column : Visible_Column_Type;
    begin
@@ -350,12 +354,12 @@ package body GPS.LSP_Client.References is
             else
                Column_Information (Context.Context));
 
-         Title := To_Unbounded_String
-           (All_Refs_Category
-              (Entity     => Entity_Name_Information (Context.Context),
-               Line       => Line,
-               Local_Only => Command.Locals_Only,
-               Local_File => File));
+         Title :=
+           All_Refs_Category
+             (Entity     => Entity_Name_Information (Context.Context),
+              Line       => Line,
+              Local_Only => Command.Locals_Only,
+              Local_File => File);
 
          if Command.Specific then
             declare
@@ -507,7 +511,7 @@ package body GPS.LSP_Client.References is
 
                if Run (Dialog) = Gtk_Response_OK then
                   Kernel.Get_Messages_Container.Remove_Category
-                    (To_String (Title), Message_Flag);
+                    (Title, Message_Flag);
 
                   declare
                      Filter  : Result_Filter (Is_Set => True);
@@ -566,7 +570,7 @@ package body GPS.LSP_Client.References is
 
          else
             Kernel.Get_Messages_Container.Remove_Category
-              (To_String (Title), Message_Flag);
+              (Title, Message_Flag);
 
             --  Open the Locations view if needed and put in foreground.
             --  Display an activity progress bar on since references can take
@@ -782,7 +786,7 @@ package body GPS.LSP_Client.References is
       Data     : GNATCOLL.Scripts.Callback_Data_Access)
    is
       Lang   : Standard.Language.Language_Access;
-      Title  : Unbounded_String;
+      Title  : VSS.Strings.Virtual_String;
       Result : Boolean := False;
 
    begin
@@ -790,15 +794,15 @@ package body GPS.LSP_Client.References is
 
       if GPS.LSP_Module.LSP_Is_Enabled (Lang) then
          --  Implicit is used for Is_Read_Or_Write_Or_Implicit_Reference
-            Title := To_Unbounded_String
-              (All_Refs_Category
-                   (Entity     => Name,
-                    Line       => Line,
-                    Local_Only => False,
-                    Local_File => File));
+         Title :=
+           All_Refs_Category
+             (Entity     => Name,
+              Line       => Line,
+              Local_Only => False,
+              Local_File => File);
 
          Kernel.Get_Messages_Container.Remove_Category
-           (To_String (Title), Message_Flag);
+           (Title, Message_Flag);
 
          declare
             use GNATCOLL.Scripts;
@@ -1090,7 +1094,7 @@ package body GPS.LSP_Client.References is
                              GPS.Kernel.Messages.Markup.Create_Markup_Message
                                (Container  =>
                                   Data.Kernel.Get_Messages_Container,
-                                Category   => To_String (Data.Title),
+                                Category   => Data.Title,
                                 File       => File,
                                 Line       => From.Line,
                                 Column     => From.Column,
@@ -1175,7 +1179,7 @@ package body GPS.LSP_Client.References is
             Message :=
               GPS.Kernel.Messages.Markup.Create_Markup_Message
                 (Container  => Data.Kernel.Get_Messages_Container,
-                 Category   => To_String (Data.Title),
+                 Category   => Data.Title,
                  File       => Data.File,
                  Line       => Integer (Data.Position.line) + 1,
                  Column     => Data.Column,

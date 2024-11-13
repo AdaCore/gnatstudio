@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                               GNAT Studio                                --
 --                                                                          --
---                     Copyright (C) 2008-2023, AdaCore                     --
+--                     Copyright (C) 2008-2024, AdaCore                     --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -30,11 +30,12 @@
 
 with Ada.Containers.Doubly_Linked_Lists;
 with Ada.Containers.Ordered_Maps;
-
 with Ada.Strings.Unbounded;       use Ada.Strings.Unbounded;
 with Ada.Unchecked_Deallocation;
 
 with GNAT.OS_Lib;
+
+with VSS.Strings;
 
 with GNATCOLL.VFS;
 
@@ -394,13 +395,9 @@ package Build_Configurations is
    --  Return the category of Target
 
    function Get_Messages_Category
-     (Target : Target_Access) return Unbounded_String;
+     (Target : Target_Access) return VSS.Strings.Virtual_String;
    --  Return the messages category to be used for messages in messages
    --  container
-
-   function Get_Messages_Category_String
-     (Target : Target_Access) return String;
-   --  Return the messages category
 
    function Get_Icon_Name (Target : Target_Access) return String;
    --  Return the icon name corresponding to the icon for target

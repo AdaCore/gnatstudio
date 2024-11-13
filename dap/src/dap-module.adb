@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                               GNAT Studio                                --
 --                                                                          --
---                        Copyright (C) 2022-2023, AdaCore                  --
+--                     Copyright (C) 2022-2024, AdaCore                     --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -1314,12 +1314,15 @@ package body DAP.Module is
       for Buffer of Buffers loop
          if Buffer /= Nil_Editor_Buffer
            and Buffer.Has_Information_Column
-             (DAP.Types.Messages_Category_Continue_To_Line)
+             (VSS.Strings.Conversions.To_UTF_8_String
+                (DAP.Types.Messages_Category_Continue_To_Line))
          then
             Remove_Line_Information_Column
               (Kernel     => Kernel,
                File       => Buffer.File,
-               Identifier => DAP.Types.Messages_Category_Continue_To_Line);
+               Identifier =>
+                 VSS.Strings.Conversions.To_UTF_8_String
+                   (DAP.Types.Messages_Category_Continue_To_Line));
          end if;
       end loop;
    end Disable_Continue_To_Line_On_Editors;
@@ -1334,12 +1337,15 @@ package body DAP.Module is
    begin
       if Buffer /= Nil_Editor_Buffer
         and then not Buffer.Has_Information_Column
-          (DAP.Types.Messages_Category_Continue_To_Line)
+          (VSS.Strings.Conversions.To_UTF_8_String
+             (DAP.Types.Messages_Category_Continue_To_Line))
       then
          Create_Line_Information_Column
            (Kernel     => Kernel,
             File       => Buffer.File,
-            Identifier => DAP.Types.Messages_Category_Continue_To_Line);
+            Identifier =>
+              VSS.Strings.Conversions.To_UTF_8_String
+                (DAP.Types.Messages_Category_Continue_To_Line));
       end if;
    end Create_Continue_To_Line_Columns;
 

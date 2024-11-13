@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                               GNAT Studio                                --
 --                                                                          --
---                        Copyright (C) 2022-2024, AdaCore                  --
+--                     Copyright (C) 2022-2024, AdaCore                     --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -1297,7 +1297,7 @@ package body DAP.Views.Breakpoints is
       Values  (1 .. 5) :=
         (1 => As_Boolean (Data.Enabled),
          2 => As_Boolean (Self.Activatable),
-         3 => As_String ("break"),
+         3 => As_String (String'("break")),
          4 => As_String (To_Lower (Data.Disposition'Img)),
          5 => As_String (if Data.Num = No_Breakpoint then ""
            else Breakpoint_Identifier'Image (Data.Num)));

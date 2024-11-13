@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                               GNAT Studio                                --
 --                                                                          --
---                       Copyright (C) 2013-2023, AdaCore                   --
+--                     Copyright (C) 2013-2024, AdaCore                     --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -14,6 +14,8 @@
 -- COPYING3.  If not, go to http://www.gnu.org/licenses for a complete copy --
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
+
+with VSS.Strings.Conversions;
 
 with GNATCOLL.VFS.GtkAda;
 
@@ -112,6 +114,19 @@ package body Glib_Values_Utils is
    begin
       return Result : Glib.Values.GValue do
          Glib.Values.Init_Set_String (Result, Value);
+      end return;
+   end As_String;
+
+   ---------------
+   -- As_String --
+   ---------------
+
+   function As_String
+     (Value : VSS.Strings.Virtual_String) return Glib.Values.GValue is
+   begin
+      return Result : Glib.Values.GValue do
+         Glib.Values.Init_Set_String
+           (Result, VSS.Strings.Conversions.To_UTF_8_String (Value));
       end return;
    end As_String;
 

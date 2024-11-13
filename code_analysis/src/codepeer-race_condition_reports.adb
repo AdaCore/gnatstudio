@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                               GNAT Studio                                --
 --                                                                          --
---                     Copyright (C) 2011-2023, AdaCore                     --
+--                     Copyright (C) 2011-2024, AdaCore                     --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -229,7 +229,7 @@ package body CodePeer.Race_Condition_Reports is
 
       GPS.Location_View.Expand_File
         (GPS.Location_View.Get_Or_Create_Location_View (Self.Kernel),
-         Ada.Strings.Unbounded.To_String (Message.Get_Category),
+         Message.Get_Category,
          Message.Get_File,
          False);
       GPS.Location_View.Raise_Locations_Window (Self.Kernel);

@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                               GNAT Studio                                --
 --                                                                          --
---                     Copyright (C) 2010-2023, AdaCore                     --
+--                     Copyright (C) 2010-2024, AdaCore                     --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -14,6 +14,7 @@
 -- COPYING3.  If not, go to http://www.gnu.org/licenses for a complete copy --
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
+
 --  This package provides implementation of Abstract_Message which is
 --  suitable for use when message text includes Pango markup. Support
 --  for secondary messages are not provided.
@@ -26,7 +27,7 @@ package GPS.Kernel.Messages.Markup is
 
    function Create_Markup_Message
      (Container  : not null Messages_Container_Access;
-      Category   : String;
+      Category   : VSS.Strings.Virtual_String;
       File       : GNATCOLL.VFS.Virtual_File;
       Line       : Natural;
       Column     : Basic_Types.Visible_Column_Type;

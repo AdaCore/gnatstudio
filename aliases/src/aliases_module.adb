@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                               GNAT Studio                                --
 --                                                                          --
---                     Copyright (C) 2003-2023, AdaCore                     --
+--                     Copyright (C) 2003-2024, AdaCore                     --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -569,10 +569,10 @@ package body Aliases_Module is
          if not Value.Read_Only then
             XML_Key := new Node;
             XML_Key.Tag := new String'("alias");
-            Set_Attribute (XML_Key, "name", SU.To_String (Key (Iter)));
+            Set_Attribute_S (XML_Key, "name", SU.To_String (Key (Iter)));
 
             if Value.Must_Reindent then
-               Set_Attribute (XML_Key, "indent", "true");
+               Set_Attribute_S (XML_Key, "indent", "true");
             end if;
 
             Child := new Node;
@@ -583,10 +583,10 @@ package body Aliases_Module is
             for P of Value.Params loop
                Child := new Node;
                Child.Tag := new String'("param");
-               Set_Attribute (Child, "name", To_Str (P.Name));
+               Set_Attribute_S (Child, "name", To_Str (P.Name));
 
                if P.From_Env then
-                  Set_Attribute (Child, "environment", "true");
+                  Set_Attribute_S (Child, "environment", "true");
                end if;
 
                Child.Value := new String'(To_Str (P.Initial));
@@ -2148,9 +2148,9 @@ package body Aliases_Module is
          if N.Tag.all = "alias" then
             declare
                Name          : constant String :=
-                                 Get_Attribute (N, "name");
+                                 Get_Attribute_S (N, "name");
                Must_Reindent : constant Boolean :=
-                 Get_Attribute (N, "indent", "false") = "true";
+                 Get_Attribute_S (N, "indent", "false") = "true";
             begin
                Expand := null;
 
@@ -2168,13 +2168,13 @@ package body Aliases_Module is
                   elsif Child.Tag.all = "param" then
                      Params.Append
                        ((Name        =>
-                            To_UStr (Get_Attribute (Child, "name")),
+                            To_UStr (Get_Attribute_S (Child, "name")),
                          Description =>
-                            To_UStr (Get_Attribute (Child, "description")),
+                            To_UStr (Get_Attribute_S (Child, "description")),
                          Initial     =>
                             To_UStr (Child.Value.all),
                          From_Env    =>
-                            Get_Attribute (Child, "environment") = "true"));
+                            Get_Attribute_S (Child, "environment") = "true"));
 
                   else
                      Insert (Kernel,

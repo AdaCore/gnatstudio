@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                               GNAT Studio                                --
 --                                                                          --
---                     Copyright (C) 2001-2023, AdaCore                     --
+--                     Copyright (C) 2001-2024, AdaCore                     --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -36,6 +36,7 @@ with Gdk.Window;                use Gdk.Window;
 
 with Glib.Object;               use Glib.Object;
 with Glib.Main;                 use Glib.Main;
+with VSS.Strings;
 with XML_Utils;                 use XML_Utils;
 
 with Gtk.Enums;                 use Gtk.Enums;
@@ -155,7 +156,7 @@ package body GPS.Kernel is
       Msg  : String);
    overriding procedure Report_Location
      (Self     : access GPS_Refactoring_Factory_Context;
-      Category : String;
+      Category : VSS.Strings.Virtual_String;
       File     : GNATCOLL.VFS.Virtual_File;
       Line     : Natural;
       Column   : Basic_Types.Visible_Column_Type := 1;
@@ -225,7 +226,7 @@ package body GPS.Kernel is
 
    overriding procedure Report_Location
      (Self     : access GPS_Refactoring_Factory_Context;
-      Category : String;
+      Category : VSS.Strings.Virtual_String;
       File     : GNATCOLL.VFS.Virtual_File;
       Line     : Natural;
       Column   : Basic_Types.Visible_Column_Type := 1;

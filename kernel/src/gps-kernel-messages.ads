@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                               GNAT Studio                                --
 --                                                                          --
---                     Copyright (C) 2009-2023, AdaCore                     --
+--                     Copyright (C) 2009-2024, AdaCore                     --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -14,6 +14,7 @@
 -- COPYING3.  If not, go to http://www.gnu.org/licenses for a complete copy --
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
+
 --  There are four user visible entities in the centralized messages
 --  container: message, message's note, container and listener.
 --
@@ -33,12 +34,14 @@ private with Ada.Containers.Hashed_Maps;
 private with Ada.Containers.Vectors;
 with Ada.Finalization;
 with Ada.Strings.Unbounded;
-private with Ada.Strings.Unbounded.Hash;
 with Ada.Tags;
 
-with GNATCOLL.Utils;                       use GNATCOLL.Utils;
+with VSS.Strings;
+private with VSS.Strings.Hash;
+with VSS.String_Vectors;
 
 with Gdk.RGBA;
+
 with Default_Preferences;                  use Default_Preferences;
 with GNATCOLL.VFS;
 limited with GPS.Editors.Line_Information;
@@ -121,10 +124,7 @@ package GPS.Kernel.Messages is
 
    function Get_Category
      (Self : not null access constant Abstract_Message'Class)
-      return Ada.Strings.Unbounded.Unbounded_String;
-
-   function Get_Category
-     (Self : not null access constant Abstract_Message'Class) return String;
+      return VSS.Strings.Virtual_String;
 
    function Get_Flags
      (Self : not null access constant Abstract_Message'Class)
@@ -287,7 +287,7 @@ package GPS.Kernel.Messages is
    procedure Initialize
      (Self          : not null access Abstract_Message'Class;
       Container     : not null Messages_Container_Access;
-      Category      : String;
+      Category      : VSS.Strings.Virtual_String;
       File          : GNATCOLL.VFS.Virtual_File;
       Line          : Natural;
       Column        : Basic_Types.Visible_Column_Type;
@@ -305,7 +305,7 @@ package GPS.Kernel.Messages is
    procedure Initialize
      (Self          : not null access Abstract_Message'Class;
       Container     : not null Messages_Container_Access;
-      Category      : String;
+      Category      : VSS.Strings.Virtual_String;
       File          : GNATCOLL.VFS.Virtual_File;
       Line          : Natural;
       Column        : Basic_Types.Visible_Column_Type;
@@ -393,29 +393,28 @@ package GPS.Kernel.Messages is
 
    function Has_Category
      (Self     : not null access constant Messages_Container'Class;
-      Category : String) return Boolean;
+      Category : VSS.Strings.Virtual_String) return Boolean;
    --  Return True if Category is present in the container
 
    function Get_Categories
      (Self : not null access constant Messages_Container'Class)
-      return Unbounded_String_Array;
+      return VSS.String_Vectors.Virtual_String_Vector;
    --  Returns list of all categories.
 
    function Get_Flags
      (Self     : not null access constant Messages_Container'Class;
-      Category : String) return Message_Flags;
+      Category : VSS.Strings.Virtual_String) return Message_Flags;
    --  Returns set of flags of given category.
 
    function Get_Files
      (Self     : not null access constant Messages_Container'Class;
-      Category : Ada.Strings.Unbounded.Unbounded_String)
-      return Virtual_File_Array;
+      Category : VSS.Strings.Virtual_String) return Virtual_File_Array;
    --  Returns list of files in the specified category. Empty array is returned
    --  when there is not such category.
 
    function Get_Messages
      (Self     : not null access constant Messages_Container'Class;
-      Category : Ada.Strings.Unbounded.Unbounded_String;
+      Category : VSS.Strings.Virtual_String;
       File     : GNATCOLL.VFS.Virtual_File)
       return Message_Array;
    --  Returns list of messages for the specified file in the specified
@@ -440,14 +439,14 @@ package GPS.Kernel.Messages is
 
    procedure Remove_Category
      (Self     : not null access Messages_Container'Class;
-      Category : String;
+      Category : VSS.Strings.Virtual_String;
       Flags    : Message_Flags);
    --  Removes all messages in the specified category. Do nothing when there
    --  is no such category.
 
    procedure Remove_File
      (Self     : not null access Messages_Container'Class;
-      Category : String;
+      Category : VSS.Strings.Virtual_String;
       File     : GNATCOLL.VFS.Virtual_File;
       Flags    : Message_Flags);
    --  Removes all messages for specified file in the specified category.
@@ -455,14 +454,14 @@ package GPS.Kernel.Messages is
 
    procedure Set_Sort_Order_Hint
      (Self     : not null access Messages_Container'Class;
-      Category : String;
+      Category : VSS.Strings.Virtual_String;
       Hint     : Sort_Order_Hint);
    --  Sets sort order hint for the specified category. Hint must be set before
    --  first message in the category is created.
 
    function Get_Sort_Order_Hint
      (Self     : not null access Messages_Container'Class;
-      Category : String) return Sort_Order_Hint;
+      Category : VSS.Strings.Virtual_String) return Sort_Order_Hint;
    --  Get the sort order hint for this category
 
    procedure Register_Listener
@@ -503,24 +502,24 @@ package GPS.Kernel.Messages is
 
    procedure Category_Added
      (Self     : not null access Abstract_Listener;
-      Category : Ada.Strings.Unbounded.Unbounded_String;
+      Category : VSS.Strings.Virtual_String;
       Allow_Auto_Jump_To_First : Boolean) is null;
    --  If Allow_Auto_Jump_To_First is True and the user preference is also true
    --  then the locations window will automatically jump to the first message.
 
    procedure Category_Removed
      (Self     : not null access Abstract_Listener;
-      Category : Ada.Strings.Unbounded.Unbounded_String) is null;
+      Category : VSS.Strings.Virtual_String) is null;
    --  Called on remove of category
 
    procedure File_Added
      (Self     : not null access Abstract_Listener;
-      Category : Ada.Strings.Unbounded.Unbounded_String;
+      Category : VSS.Strings.Virtual_String;
       File     : GNATCOLL.VFS.Virtual_File) is null;
 
    procedure File_Removed
      (Self     : not null access Abstract_Listener;
-      Category : Ada.Strings.Unbounded.Unbounded_String;
+      Category : VSS.Strings.Virtual_String;
       File     : GNATCOLL.VFS.Virtual_File) is null;
 
    procedure Message_Added
@@ -564,7 +563,7 @@ package GPS.Kernel.Messages is
      access function
        (XML_Node      : not null XML_Utils.Node_Ptr;
         Container     : not null Messages_Container_Access;
-        Category      : String;
+        Category      : VSS.Strings.Virtual_String;
         File          : GNATCOLL.VFS.Virtual_File;
         Line          : Natural;
         Column        : Basic_Types.Visible_Column_Type;
@@ -640,10 +639,10 @@ private
 
    package Category_Maps is
      new Ada.Containers.Hashed_Maps
-       (Ada.Strings.Unbounded.Unbounded_String,
+       (VSS.Strings.Virtual_String,
         Node_Access,
-        Ada.Strings.Unbounded.Hash,
-        Ada.Strings.Unbounded."=");
+        VSS.Strings.Hash,
+        VSS.Strings."=");
 
    package File_Maps is
      new Ada.Containers.Hashed_Maps
@@ -684,7 +683,7 @@ private
             case Kind is
                when Node_Category =>
                   Container : Messages_Container_Access;
-                  Name      : Ada.Strings.Unbounded.Unbounded_String;
+                  Name      : VSS.Strings.Virtual_String;
                   File_Map  : File_Maps.Map;
                   Sort_Hint : Sort_Order_Hint;
 
@@ -794,10 +793,10 @@ private
 
    package Sort_Order_Hint_Maps is
      new Ada.Containers.Hashed_Maps
-       (Ada.Strings.Unbounded.Unbounded_String,
+       (VSS.Strings.Virtual_String,
         Sort_Order_Hint,
-        Ada.Strings.Unbounded.Hash,
-        Ada.Strings.Unbounded."=");
+        VSS.Strings.Hash,
+        VSS.Strings."=");
 
    type Messages_Container
      (Kernel : not null access Kernel_Handle_Record'Class)

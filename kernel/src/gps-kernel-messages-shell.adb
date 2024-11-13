@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                               GNAT Studio                                --
 --                                                                          --
---                     Copyright (C) 2010-2023, AdaCore                     --
+--                     Copyright (C) 2010-2024, AdaCore                     --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -16,6 +16,12 @@
 ------------------------------------------------------------------------------
 
 with Ada.Strings.Unbounded;          use Ada.Strings.Unbounded;
+
+with VSS.Strings.Conversions;
+
+with Gtk.Enums;                      use Gtk.Enums;
+with Gtk.Widget;                     use Gtk.Widget;
+
 with Basic_Types;                    use Basic_Types;
 with Commands;                       use Commands;
 with GNATCOLL.Scripts;               use GNATCOLL.Scripts;
@@ -27,8 +33,6 @@ with GPS.Kernel.Messages.References; use GPS.Kernel.Messages.References;
 with GPS.Kernel.Messages.Simple;     use GPS.Kernel.Messages.Simple;
 with GPS.Kernel.Scripts;             use GPS.Kernel.Scripts;
 with GPS.Kernel.Style_Manager.Shell; use GPS.Kernel.Style_Manager.Shell;
-with Gtk.Enums;                      use Gtk.Enums;
-with Gtk.Widget;                     use Gtk.Widget;
 
 package body GPS.Kernel.Messages.Shell is
 
@@ -209,7 +213,9 @@ package body GPS.Kernel.Messages.Shell is
            (Data, Message.Get_Editor_Mark.Create_Instance (Get_Script (Data)));
 
       elsif Command = "get_category" then
-         Set_Return_Value (Data, Message.Get_Category);
+         Set_Return_Value
+           (Data,
+            VSS.Strings.Conversions.To_UTF_8_String (Message.Get_Category));
 
       elsif Command = "get_flags" then
          Set_Return_Value (Data, To_Int (Message.Get_Flags));
@@ -280,7 +286,9 @@ package body GPS.Kernel.Messages.Shell is
       if Command = Constructor_Method then
 
          declare
-            Category   : constant String := Nth_Arg (Data, 2);
+            Category   : constant VSS.Strings.Virtual_String :=
+              VSS.Strings.Conversions.To_Virtual_String
+                (String'(Nth_Arg (Data, 2)));
             File       : constant Virtual_File :=
               Get_Data (Nth_Arg
                         (Data, 3, Get_File_Class (Kernel),
@@ -428,7 +436,9 @@ package body GPS.Kernel.Messages.Shell is
              2 => Hint_Cst'Access));
 
          declare
-            Category : constant String := Nth_Arg (Data, 1);
+            Category : constant VSS.Strings.Virtual_String :=
+              VSS.Strings.Conversions.To_Virtual_String
+                (String'(Nth_Arg (Data, 1)));
             Hint     : constant Sort_Order_Hint :=
               Sort_Order_Hint'Value (Nth_Arg (Data, 2));
 
@@ -445,18 +455,21 @@ package body GPS.Kernel.Messages.Shell is
          Set_Return_Value_As_List (Data);
 
          declare
-            Cat       : constant String := Nth_Arg (Data, 1, "");
+            Cat       : constant VSS.Strings.Virtual_String :=
+              VSS.Strings.Conversions.To_Virtual_String
+                (Nth_Arg (Data, 1, ""));
             File_Inst : constant Class_Instance :=
               Nth_Arg
                 (Data, 2, Get_File_Class (Kernel),
                  Default => No_Class_Instance, Allow_Null => True);
 
             procedure Add_Messages_For_Category_File
-              (C : Unbounded_String;
+              (C : VSS.Strings.Virtual_String;
                F : Virtual_File);
             --  Add to the return list messages for category C and file F.
 
-            procedure Add_Messages_For_Category (C : Unbounded_String);
+            procedure Add_Messages_For_Category
+              (C : VSS.Strings.Virtual_String);
             --  Add to the return list all the messages in C for the given
             --  file.
 
@@ -465,11 +478,12 @@ package body GPS.Kernel.Messages.Shell is
             ------------------------------------
 
             procedure Add_Messages_For_Category_File
-              (C : Unbounded_String;
+              (C : VSS.Strings.Virtual_String;
                F : Virtual_File)
             is
                Messages : constant Message_Array :=
                  Get_Messages (Container, C, F);
+
             begin
                for J in Messages'Range loop
                   Set_Return_Value
@@ -483,7 +497,8 @@ package body GPS.Kernel.Messages.Shell is
             -- Add_Messages_For_Category --
             -------------------------------
 
-            procedure Add_Messages_For_Category (C : Unbounded_String) is
+            procedure Add_Messages_For_Category
+              (C : VSS.Strings.Virtual_String) is
             begin
                if File_Inst = No_Class_Instance then
                   declare
@@ -500,17 +515,12 @@ package body GPS.Kernel.Messages.Shell is
             end Add_Messages_For_Category;
 
          begin
-            if Cat = "" then
-               declare
-                  Categories : constant Unbounded_String_Array :=
-                    Get_Categories (Container);
-               begin
-                  for J in Categories'Range loop
-                     Add_Messages_For_Category (Categories (J));
-                  end loop;
-               end;
+            if Cat.Is_Empty then
+               for Category of Get_Categories (Container) loop
+                  Add_Messages_For_Category (Category);
+               end loop;
             else
-               Add_Messages_For_Category (To_Unbounded_String (Cat));
+               Add_Messages_For_Category (Cat);
             end if;
          end;
       end if;

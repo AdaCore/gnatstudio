@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                               GNAT Studio                                --
 --                                                                          --
---                     Copyright (C) 2018-2023, AdaCore                     --
+--                     Copyright (C) 2018-2024, AdaCore                     --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -512,9 +512,10 @@ package body Project_Templates.GUI is
             Set_All_And_Clear
               (Model, Child,
                (Name_Col        => As_String (Name),
-                Icon_Name_Col   => As_String ("gps-emblem-directory-symbolic"),
+                Icon_Name_Col   =>
+                  As_String (String'("gps-emblem-directory-symbolic")),
                 Num_Col         => As_Int    (-1),
-                Desc_Col        => As_String ("")));
+                Desc_Col        => As_String (String'(""))));
 
             return Child;
          end Find_Child;
@@ -627,7 +628,7 @@ package body Project_Templates.GUI is
            (Model, Iter,
             (Name_Col         => As_String (To_String
                                              (Template.Project.Label)),
-             Icon_Name_Col    => As_String ("gps-run-symbolic"),
+             Icon_Name_Col    => As_String (String'("gps-run-symbolic")),
              Num_Col          => As_Int    (Page_Num),
              Desc_Col         => As_String
                                  (To_String (Template.Project.Description))));

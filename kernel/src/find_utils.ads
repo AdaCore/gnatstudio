@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                               GNAT Studio                                --
 --                                                                          --
---                     Copyright (C) 2001-2023, AdaCore                     --
+--                     Copyright (C) 2001-2024, AdaCore                     --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -46,6 +46,8 @@
 
 with Ada.Containers.Doubly_Linked_Lists;
 with Ada.Strings.Unbounded;              use Ada.Strings.Unbounded;
+
+with VSS.Strings;
 
 with Gtk.Combo_Box_Text;
 with Gtk.Widget;
@@ -432,7 +434,7 @@ package Find_Utils is
 
    function Get_Search_Category_Name
      (Look_For    : String;
-      Interactive : Boolean) return String;
+      Interactive : Boolean) return VSS.Strings.Virtual_String;
    --  Return the name of the category to use in the Locations window.
 
 private

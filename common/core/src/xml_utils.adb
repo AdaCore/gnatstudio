@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                               GNAT Studio                                --
 --                                                                          --
---                     Copyright (C) 2009-2023, AdaCore                     --
+--                     Copyright (C) 2009-2024, AdaCore                     --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -27,6 +27,8 @@ with GNAT.Decode_UTF8_String;         use GNAT.Decode_UTF8_String;
 with GNAT.Encode_UTF8_String;         use GNAT.Encode_UTF8_String;
 with GNAT.Strings;                    use GNAT.Strings;
 with GNAT.UTF_32;                     use GNAT.UTF_32;
+
+with VSS.Strings.Conversions;
 
 with GNATCOLL.Traces;       use GNATCOLL.Traces;
 
@@ -291,7 +293,7 @@ package body XML_Utils is
    -- Get_Attribute --
    -------------------
 
-   function Get_Attribute
+   function Get_Attribute_S
      (N              : Node_Ptr;
       Attribute_Name : UTF8_String;
       Default        : UTF8_String := "") return UTF8_String
@@ -331,13 +333,32 @@ package body XML_Utils is
             return V;
          end;
       end if;
+   end Get_Attribute_S;
+
+   -------------------
+   -- Get_Attribute --
+   -------------------
+
+   function Get_Attribute
+     (N              : Node_Ptr;
+      Attribute_Name : VSS.Strings.Virtual_String;
+      Default        : VSS.Strings.Virtual_String :=
+        VSS.Strings.Empty_Virtual_String)
+      return VSS.Strings.Virtual_String is
+   begin
+      return
+        VSS.Strings.Conversions.To_Virtual_String
+          (Get_Attribute_S
+             (N,
+              VSS.Strings.Conversions.To_UTF_8_String (Attribute_Name),
+              VSS.Strings.Conversions.To_UTF_8_String (Default)));
    end Get_Attribute;
 
    -------------------
    -- Set_Attribute --
    -------------------
 
-   procedure Set_Attribute
+   procedure Set_Attribute_S
      (N : Node_Ptr; Attribute_Name, Attribute_Value : UTF8_String)
    is
       Index, Tmp : Natural;
@@ -380,6 +401,21 @@ package body XML_Utils is
       else
          N.Attributes := new String'(Str);
       end if;
+   end Set_Attribute_S;
+
+   -------------------
+   -- Set_Attribute --
+   -------------------
+
+   procedure Set_Attribute
+     (N               : Node_Ptr;
+      Attribute_Name  : VSS.Strings.Virtual_String;
+      Attribute_Value : VSS.Strings.Virtual_String) is
+   begin
+      Set_Attribute_S
+        (N,
+         VSS.Strings.Conversions.To_UTF_8_String (Attribute_Name),
+         VSS.Strings.Conversions.To_UTF_8_String (Attribute_Value));
    end Set_Attribute;
 
    ---------------
@@ -814,7 +850,7 @@ package body XML_Utils is
       while P /= null loop
          if P.Tag.all = Tag then
             declare
-               The_Value : constant String := Get_Attribute (P, Key);
+               The_Value : constant String := Get_Attribute_S (P, Key);
             begin
                if The_Value /= "" then
                   if Value = "" or The_Value = Value then
@@ -1148,7 +1184,7 @@ package body XML_Utils is
          Host : constant String := Get_Host (File);
       begin
          if Host /= Local_Host then
-            Set_Attribute (Child, "server", Host);
+            Set_Attribute_S (Child, "server", Host);
          end if;
       end;
 
@@ -1183,7 +1219,7 @@ package body XML_Utils is
          --  be the case when trying to parse previous XML file formats.
 
          declare
-            S : constant String := Get_Attribute (N, Tag, "");
+            S : constant String := Get_Attribute_S (N, Tag, "");
          begin
             if S /= "" then
                if Host /= "" then
@@ -1210,7 +1246,7 @@ package body XML_Utils is
          Value     : constant String :=
                        Encoded_ASCII_To_String (Child.Value.all);
          Host_Attr : constant String :=
-                       Get_Attribute (Child, "server", Host);
+                       Get_Attribute_S (Child, "server", Host);
       begin
          if Value = "" then
             return No_File;

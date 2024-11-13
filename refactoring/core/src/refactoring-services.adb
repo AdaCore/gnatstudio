@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                               GNAT Studio                                --
 --                                                                          --
---                     Copyright (C) 2003-2023, AdaCore                     --
+--                     Copyright (C) 2003-2024, AdaCore                     --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -1632,7 +1632,8 @@ package body Refactoring.Services is
      (Context  : not null access Factory_Context_Record'Class;
       In_File  : GNATCOLL.VFS.Virtual_File;
       Decl     : String;
-      Category : String := "")
+      Category : VSS.Strings.Virtual_String :=
+        VSS.Strings.Empty_Virtual_String)
    is
       Struct   : Structured_File_Access;
       Tree     : Construct_Tree;
@@ -1675,7 +1676,7 @@ package body Refactoring.Services is
             & In_File.Display_Full_Name & ":" & Image (Line, 1));
       end if;
 
-      if Category /= "" then
+      if not Category.Is_Empty then
          Context.Report_Location
            (Category => Category,
             File     => In_File,
@@ -1695,7 +1696,8 @@ package body Refactoring.Services is
       Name        : String;
       Code        : String;
       Before_Line : Integer := Integer'Last;
-      Category    : String := "")
+      Category    : VSS.Strings.Virtual_String :=
+        VSS.Strings.Empty_Virtual_String)
    is
       Struct   : Structured_File_Access;
       Tree     : Construct_Tree;
@@ -1746,7 +1748,7 @@ package body Refactoring.Services is
             & In_File.Display_Full_Name & ":" & Image (Line, 1));
       end if;
 
-      if Category /= "" then
+      if not Category.Is_Empty then
          Context.Report_Location
            (Category => Category,
             File     => In_File,

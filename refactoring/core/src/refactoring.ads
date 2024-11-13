@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                               GNAT Studio                                --
 --                                                                          --
---                     Copyright (C) 2003-2023, AdaCore                     --
+--                     Copyright (C) 2003-2024, AdaCore                     --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -15,9 +15,12 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
+with VSS.Strings;
+
+with GNATCOLL.VFS;
+
 with Basic_Types;
 with Language.Tree.Database;
-with GNATCOLL.VFS;
 with GPS.Editors;
 with Xref;
 
@@ -107,7 +110,7 @@ package Refactoring is
 
    procedure Report_Location
      (Self     : access Factory_Context_Record;
-      Category : String;
+      Category : VSS.Strings.Virtual_String;
       File     : GNATCOLL.VFS.Virtual_File;
       Line     : Natural;
       Column   : Basic_Types.Visible_Column_Type := 1;

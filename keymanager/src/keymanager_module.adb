@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                               GNAT Studio                                --
 --                                                                          --
---                     Copyright (C) 2003-2023, AdaCore                     --
+--                     Copyright (C) 2003-2024, AdaCore                     --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -354,7 +354,7 @@ package body KeyManager_Module is
                then
                   Child := new Node;
                   Child.Tag := new String'("key");
-                  Set_Attribute (Child, "action", Binding.Action.all);
+                  Set_Attribute_S (Child, "action", Binding.Action.all);
 
                   --  Key will be 0 if we have voluntarily saved an invalid
                   --  binding to indicate the binding should be disabled on the
@@ -1747,9 +1747,9 @@ package body KeyManager_Module is
             while Child /= null loop
                declare
                   Action        : constant String :=
-                    Get_Attribute (Child, "action");
+                    Get_Attribute_S (Child, "action");
                   Load          : constant String :=
-                    Get_Attribute (Child, "load");
+                    Get_Attribute_S (Child, "load");
                   Actual_Action : constant String :=
                     (if Action'Length > 0
                      and then Action (Action'First) = '/'
@@ -2084,10 +2084,10 @@ package body KeyManager_Module is
    begin
       if Node.Tag.all = "key" then
          declare
-            Action    : constant String := Get_Attribute (Node, "action");
+            Action    : constant String := Get_Attribute_S (Node, "action");
             Exclusive : constant Boolean :=
                           To_Lower
-                            (Get_Attribute
+                            (Get_Attribute_S
                                (Node, "exclusive", "true")) = "true";
          begin
             if Action = "" then
