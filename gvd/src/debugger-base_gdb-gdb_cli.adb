@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                               GNAT Studio                                --
 --                                                                          --
---                     Copyright (C) 2000-2023, AdaCore                     --
+--                     Copyright (C) 2000-2024, AdaCore                     --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -27,6 +27,8 @@ pragma Warnings (On);
 with GNAT.Expect;               use GNAT.Expect;
 with GNAT.Expect.TTY;           use GNAT.Expect.TTY;
 with GNAT.OS_Lib;               use GNAT.OS_Lib;
+
+with VSS.Strings.Conversions;
 
 with GNATCOLL.Utils;            use GNATCOLL.Utils;
 with GNATCOLL.VFS;              use GNATCOLL.VFS;
@@ -2350,14 +2352,13 @@ package body Debugger.Base_Gdb.Gdb_CLI is
 
                      Len := Len + 1;
                      Info (Len) :=
-                       (Num_Fields => 6,
-                        Information =>
-                          (New_String ("ID"),
-                           New_String ("TID"),
-                           New_String ("P-ID"),
-                           New_String ("Pri"),
-                           New_String ("State"),
-                           New_String ("Name")));
+                       (Information =>
+                          ["ID",
+                           "TID",
+                           "P-ID",
+                           "Pri",
+                           "State",
+                           "Name"]);
                   end if;
                end;
             else
@@ -2368,15 +2369,19 @@ package body Debugger.Base_Gdb.Gdb_CLI is
                   if S'Length > Name_Start then
                      Len := Len + 1;
                      Info (Len) :=
-                       (Num_Fields => 6,
-                        Information =>
-                          (New_String (S (F .. ID_End + F)),
-                           New_String (S (ID_End + F + 1 .. TID_End + F)),
-                           New_String (S (TID_End + F + 1 .. P_ID_End + F)),
-                           New_String (S (P_ID_End + F + 1 .. Pri_End + F)),
-                           New_String
+                       (Information =>
+                          [VSS.Strings.Conversions.To_Virtual_String
+                               (S (F .. ID_End + F)),
+                           VSS.Strings.Conversions.To_Virtual_String
+                             (S (ID_End + F + 1 .. TID_End + F)),
+                           VSS.Strings.Conversions.To_Virtual_String
+                             (S (TID_End + F + 1 .. P_ID_End + F)),
+                           VSS.Strings.Conversions.To_Virtual_String
+                             (S (P_ID_End + F + 1 .. Pri_End + F)),
+                           VSS.Strings.Conversions.To_Virtual_String
                              (S (State_Start + F .. Name_Start + F - 1)),
-                           New_String (S (Name_Start + F .. S'Last))));
+                           VSS.Strings.Conversions.To_Virtual_String
+                             (S (Name_Start + F .. S'Last))]);
                   end if;
                end;
             end if;
@@ -2408,9 +2413,7 @@ package body Debugger.Base_Gdb.Gdb_CLI is
 
    begin
       Len := Info'First;
-      Info (Len) :=
-        (Num_Fields => 1,
-         Information => (1 => New_String ("Thread")));
+      Info (Len) := (Information => ["Thread"]);
 
       while Index > Output'First loop
          Len := Len + 1;
@@ -2427,8 +2430,9 @@ package body Debugger.Base_Gdb.Gdb_CLI is
          exit when EOL < Output'First and then Len > Info'First + 1;
 
          Info (Len) :=
-           (Num_Fields => 1,
-            Information => (1 => New_String (Output (EOL + 1 .. Index))));
+           (Information =>
+              [VSS.Strings.Conversions.To_Virtual_String
+                   (Output (EOL + 1 .. Index))]);
          Index := EOL - 1;
       end loop;
    end Info_Threads;
@@ -2492,10 +2496,11 @@ package body Debugger.Base_Gdb.Gdb_CLI is
          end loop;
 
          Info (Len) :=
-           (Num_Fields => 2,
-            Information =>
-              (New_String (Output (Start  .. First)),
-               New_String (Output (Second .. EOL - 1))));
+           (Information =>
+              [VSS.Strings.Conversions.To_Virtual_String
+                   (Output (Start  .. First)),
+               VSS.Strings.Conversions.To_Virtual_String
+                 (Output (Second .. EOL - 1))]);
          Start := EOL + 1;
       end loop;
 

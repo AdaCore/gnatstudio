@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                               GNAT Studio                                --
 --                                                                          --
---                     Copyright (C) 2000-2023, AdaCore                     --
+--                     Copyright (C) 2000-2024, AdaCore                     --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -18,9 +18,10 @@
 with Ada.Containers.Doubly_Linked_Lists;
 with Ada.Containers.Vectors;
 with Ada.Strings.Unbounded;    use Ada.Strings.Unbounded;
-with Interfaces.C.Strings;     use Interfaces.C.Strings;
 with GNAT.Regpat;
 with GNAT.Strings;
+
+with VSS.String_Vectors;
 
 with GNATCOLL.VFS;
 
@@ -853,15 +854,15 @@ package Debugger is
    -- Thread Support --
    --------------------
 
-   subtype Thread_Fields is Interfaces.C.size_t range 1 .. 20;
+   subtype Thread_Fields is Positive range 1 .. 20;
    --  This represents the maximum number of fields in a thread list output.
 
-   type Thread_Information
-     (Num_Fields : Thread_Fields := Thread_Fields'First) is
-   record
-      Information : chars_ptr_array (1 .. Num_Fields);
+   type Thread_Information is record
+      Information : VSS.String_Vectors.Virtual_String_Vector;
    end record;
    --  Represent the information of one thread.
+   --
+   --  Number of element was limited to 20 in original code.
 
    type Thread_Information_Array is
      array (Positive range <>) of Thread_Information;
@@ -869,9 +870,6 @@ package Debugger is
 
    subtype PD_Information_Array is Thread_Information_Array;
    --  List of protection domains information
-
-   procedure Free (Info : in out Thread_Information_Array);
-   --  Free the dyamic memory associated with each element of the array.
 
    procedure Task_Switch
      (Debugger : access Debugger_Root;
