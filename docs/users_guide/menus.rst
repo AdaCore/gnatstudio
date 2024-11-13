@@ -1082,18 +1082,6 @@ The Analyze Menu
 
    Clear coverage information from memory
 
-.. index:: menu; analyze --> metrics --> compute metrics on current file
-
-* :menuselection:`Analyze --> Metrics --> Compute Metrics on Current File`
-
-.. index:: menu; analyze --> metrics --> compute metrics on current project
-
-* :menuselection:`Analyze --> Metrics --> Compute Metrics on Current Project`
-
-.. index:: menu; analyze --> metrics --> compute metrics on current project & subprojects
-
-* :menuselection:`Analyze --> Metrics --> Compute Metrics on Current Project & Subprojects`
-
 .. index:: menu; analyze --> stack analysis --> analyze stack usage
 
 * :menuselection:`Analyze --> Stack Analysis --> Analyze Stack Usage`
