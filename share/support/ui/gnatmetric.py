@@ -353,45 +353,14 @@ def get_no_subprojects_arg():
         return ""
 
 
-def has_gnatmetric(context):
-    """
-    Return True when gnathub and gnatmetric are on path
-    """
-    target = GPS.get_target()
-    if not os_utils.locate_exec_on_path(
-        target + "-gnathub"
-    ) and not os_utils.locate_exec_on_path("gnathub"):
-        return False
-
-    if not os_utils.locate_exec_on_path(
-        target + "-gnatmetric"
-    ) and not os_utils.locate_exec_on_path("gnatmetric"):
-        return False
-    else:
-        return True
-
-
-def file_and_gnatmetric(context):
-    if not has_gnatmetric(context):
-        return False
-
-    return gs_utils.in_ada_file(context)
-
-
-@gs_utils.interactive(
-    category=CATEGORY,
-    name="gnat metric on current project",
-    filter=has_gnatmetric,
-)
+@gs_utils.interactive(category=CATEGORY, name="gnat metric on current project")
 def gnatmetric_on_project():
     target = GPS.BuildTarget("GNAT Metrics for project")
     target.execute(synchronous=False)
 
 
 @gs_utils.interactive(
-    category=CATEGORY,
-    name="gnat metric on current project and subprojects",
-    filter=has_gnatmetric,
+    category=CATEGORY, name="gnat metric on current project and subprojects"
 )
 def gnatmetric_on_all_project():
     target = GPS.BuildTarget("GNAT Metrics for project and subprojects")
@@ -399,9 +368,7 @@ def gnatmetric_on_all_project():
 
 
 @gs_utils.interactive(
-    category=CATEGORY,
-    name="gnat metric on current file",
-    filter=file_and_gnatmetric,
+    category=CATEGORY, name="gnat metric on current file", filter="File"
 )
 def gnatmetric_on_file():
     target = GPS.BuildTarget("GNAT Metrics for file")
