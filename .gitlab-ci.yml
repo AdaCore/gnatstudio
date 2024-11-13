@@ -31,6 +31,7 @@ include:
       anod-args: run test_integration_testsuite
       image: systemgtk
       cpus: 4
+      disk: 80
       rules:
       # Does not work on edge
       - if: $CI_PIPELINE_SOURCE == 'merge_request_event' && $CI_TARGET_BRANCH_NAME != 'edge'
