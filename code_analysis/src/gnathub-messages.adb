@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                               GNAT Studio                                --
 --                                                                          --
---                       Copyright (C) 2016-2023, AdaCore                   --
+--                     Copyright (C) 2016-2024, AdaCore                     --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -14,6 +14,8 @@
 -- COPYING3.  If not, go to http://www.gnu.org/licenses for a complete copy --
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
+
+with VSS.Strings.Conversions;
 
 with GNAThub.Module;                  use GNAThub.Module;
 with GPS.Kernel;                      use GPS.Kernel;
@@ -32,7 +34,7 @@ package body GNAThub.Messages is
    function Load
      (XML_Node      : not null Node_Ptr;
       Container     : not null Messages_Container_Access;
-      Category      : String;
+      Category      : VSS.Strings.Virtual_String;
       File          : GNATCOLL.VFS.Virtual_File;
       Line          : Natural;
       Column        : Basic_Types.Visible_Column_Type;
@@ -160,7 +162,8 @@ package body GNAThub.Messages is
       Line                     : Natural;
       Column                   : Basic_Types.Visible_Column_Type;
       Entity                   : Entity_Data := No_Entity_Data;
-      Category                 : String := "";
+      Category                 : VSS.Strings.Virtual_String :=
+        VSS.Strings.Empty_Virtual_String;
       Allow_Auto_Jump_To_First : Boolean := False) is
    begin
       Self.Rule     := Rule;
@@ -174,9 +177,11 @@ package body GNAThub.Messages is
       GPS.Kernel.Messages.Tools_Output.Create_Tool_Message
         (Self                     => Self,
          Container                => Container,
-         Category                 => (if Category /= ""
-                                      then Category
-                                      else To_String (Self.Rule.Tool.Name)),
+         Category                 =>
+           (if not Category.Is_Empty
+              then Category
+              else VSS.Strings.Conversions.To_Virtual_String
+                     (Self.Rule.Tool.Name)),
          File                     => File,
          Line                     => Natural'Max (Line, 1),
          Column                   => Column,
@@ -200,13 +205,13 @@ package body GNAThub.Messages is
       Self : constant GNAThub_Message_Access :=
         GNAThub_Message_Access (Message_Node);
    begin
-      Set_Attribute
+      Set_Attribute_S
         (XML_Node, "text", To_String (Self.Text));
-      Set_Attribute
+      Set_Attribute_S
         (XML_Node, "tool_name", To_String (Self.Get_Tool.Name));
-      Set_Attribute
+      Set_Attribute_S
         (XML_Node, "rule_name", To_String (Self.Get_Rule.Name));
-      Set_Attribute
+      Set_Attribute_S
         (XML_Node, "rule_id", To_String (Self.Get_Rule.Identifier));
    end Save;
 
@@ -217,7 +222,7 @@ package body GNAThub.Messages is
    function Load
      (XML_Node      : not null Node_Ptr;
       Container     : not null Messages_Container_Access;
-      Category      : String;
+      Category      : VSS.Strings.Virtual_String;
       File          : GNATCOLL.VFS.Virtual_File;
       Line          : Natural;
       Column        : Basic_Types.Visible_Column_Type;
@@ -231,10 +236,12 @@ package body GNAThub.Messages is
       pragma Unreferenced
         (Actual_Line, Actual_Column, Flags,
          Allow_Auto_Jump_To_First, Category);
-      Text      : constant String := Get_Attribute (XML_Node, "text", "");
-      Tool_Name : constant String := Get_Attribute (XML_Node, "tool_name", "");
-      Rule_Name : constant String := Get_Attribute (XML_Node, "rule_name", "");
-      Rule_ID   : constant String := Get_Attribute (XML_Node, "rule_id", "");
+      Text      : constant String := Get_Attribute_S (XML_Node, "text", "");
+      Tool_Name : constant String :=
+        Get_Attribute_S (XML_Node, "tool_name", "");
+      Rule_Name : constant String :=
+        Get_Attribute_S (XML_Node, "rule_name", "");
+      Rule_ID   : constant String := Get_Attribute_S (XML_Node, "rule_id", "");
       Tool      : constant Tool_Access :=
         GNAThub_Module.Get_Or_Create_Tool (To_Unbounded_String (Tool_Name));
       Rule      : constant Rule_Access := GNAThub_Module.Get_Or_Create_Rule

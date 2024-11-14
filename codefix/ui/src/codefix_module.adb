@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                               GNAT Studio                                --
 --                                                                          --
---                     Copyright (C) 2001-2023, AdaCore                     --
+--                     Copyright (C) 2001-2024, AdaCore                     --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -22,6 +22,8 @@ with Ada.Unchecked_Deallocation;
 with GNAT.Regpat;                  use GNAT.Regpat;
 with GNAT.Strings;                 use GNAT.Strings;
 with GNATCOLL.Scripts;             use GNATCOLL.Scripts;
+
+with VSS.Strings.Conversions;
 
 with Gtk.Menu_Item;                use Gtk.Menu_Item;
 with Gtk.Widget;                   use Gtk.Widget;
@@ -820,7 +822,9 @@ package body Codefix_Module is
               Messages_Information (Context);
          begin
             Session :=
-              Get_Session_By_Name (Messages (Messages'First).Get_Category);
+              Get_Session_By_Name
+                (VSS.Strings.Conversions.To_UTF_8_String
+                   (Messages (Messages'First).Get_Category));
 
             if Session = null then
                return;

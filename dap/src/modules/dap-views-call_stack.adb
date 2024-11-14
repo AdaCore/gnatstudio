@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                               GNAT Studio                                --
 --                                                                          --
---                        Copyright (C) 2022-2023, AdaCore                  --
+--                     Copyright (C) 2022-2024, AdaCore                     --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -586,7 +586,7 @@ package body DAP.Views.Call_Stack is
             View.Model.Append (Iter, Null_Iter);
             Set_And_Clear
               (View.Model, Iter, (Frame_Id_Column, Name_Column),
-               (1 => As_String (""),
+               (1 => As_String (String'("")),
                 2 => As_String (if Status = Running
                   then "Running..."
                   else "No data")));

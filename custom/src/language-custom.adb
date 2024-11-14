@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                               GNAT Studio                                --
 --                                                                          --
---                     Copyright (C) 2000-2023, AdaCore                     --
+--                     Copyright (C) 2000-2024, AdaCore                     --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -442,8 +442,8 @@ package body Language.Custom is
          end if;
 
          Lang.Project_Fields (Lang.Project_Fields'Last) :=
-           (Attribute_Name  => new String'(Get_Attribute (Node, "Name")),
-            Attribute_Index => new String'(Get_Attribute (Node, "Index")),
+           (Attribute_Name  => new String'(Get_Attribute_S (Node, "Name")),
+            Attribute_Index => new String'(Get_Attribute_S (Node, "Index")),
             Description     => new String'(Node.Value.all),
             Values          => null,   --  ??? Not supported in XML yet
             Editable        => True);  --  ??? Not supported in XML yet
@@ -466,7 +466,7 @@ package body Language.Custom is
             if NL = null then
                New_Line_Comment_Start := null;
 
-            elsif Get_Attribute (NL, "mode", "override") = "append"
+            elsif Get_Attribute_S (NL, "mode", "override") = "append"
               and then Lang.Parent /= null
               and then Get_Language_Context (Lang.Parent) /= null
               and then Get_Language_Context
@@ -540,7 +540,7 @@ package body Language.Custom is
 
          --  Check inherited mode
 
-         if Get_Attribute (Node, "mode", "override") = "append" then
+         if Get_Attribute_S (Node, "mode", "override") = "append" then
             Keyword_Append := True;
          end if;
 

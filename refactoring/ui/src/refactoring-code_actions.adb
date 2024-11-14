@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                               GNAT Studio                                --
 --                                                                          --
---                        Copyright (C) 2021-2023, AdaCore                  --
+--                     Copyright (C) 2021-2024, AdaCore                     --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -30,7 +30,8 @@ package body Refactoring.Code_Actions is
 
    Me : constant Trace_Handle := Create ("Refactoring.Code_Actions");
 
-   Msg_Category : constant String := "_internal_code_actions";
+   Msg_Category : constant VSS.Strings.Virtual_String :=
+     "_internal_code_actions";
    --  By design, there should be only one "Code Action" message, at the
    --  place of the cursor. We guarantee in this module that there is only
    --  one such message. This message always belongs to the category below.

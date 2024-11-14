@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                               GNAT Studio                                --
 --                                                                          --
---                     Copyright (C) 2005-2023, AdaCore                     --
+--                     Copyright (C) 2005-2024, AdaCore                     --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -720,8 +720,8 @@ package body Src_Editor_Module.Markers is
       Node.Tag := new String'("file_marker");
       Add_File_Child (Node, "file", Marker.File);
       Add_File_Child (Node, "project", Marker.Project_View.Get_Project_Path);
-      Set_Attribute (Node, "line", Editable_Line_Type'Image (Marker.Line));
-      Set_Attribute (Node, "column", Visible_Column_Type'Image
+      Set_Attribute_S (Node, "line", Editable_Line_Type'Image (Marker.Line));
+      Set_Attribute_S (Node, "column", Visible_Column_Type'Image
                      (Marker.Column));
       return Node;
    end Save;
@@ -765,10 +765,10 @@ package body Src_Editor_Module.Markers is
                Project => Get_Registry (Kernel).Tree.Project_From_Path
                (Get_File_Child (From_XML, "project")),
                Line    => Editable_Line_Type'Value
-                 (Get_Attribute (From_XML, "line")),
+                 (Get_Attribute_S (From_XML, "line")),
                Column  =>
                  Visible_Column_Type'Value
-                   (Get_Attribute (From_XML, "column")));
+                   (Get_Attribute_S (From_XML, "column")));
          end if;
 
       elsif JSON /= JSON_Null then

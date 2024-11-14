@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                               GNAT Studio                                --
 --                                                                          --
---                     Copyright (C) 2003-2023, AdaCore                     --
+--                     Copyright (C) 2003-2024, AdaCore                     --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -21,6 +21,8 @@ with Ada.Strings.Unbounded;     use Ada.Strings.Unbounded;
 
 with GNAT.OS_Lib;               use GNAT.OS_Lib;
 
+with VSS.Strings;
+
 with GNATCOLL.Projects;         use GNATCOLL.Projects;
 with GNATCOLL.Scripts;          use GNATCOLL.Scripts;
 with GNATCOLL.VFS;              use GNATCOLL.VFS;
@@ -28,7 +30,7 @@ with Build_Command_Utils;       use Build_Command_Utils;
 
 package Commands.Builder is
 
-   Error_Category : constant String := "Builder results";
+   Error_Category : constant VSS.Strings.Virtual_String := "Builder results";
    --  -"Builder results"
 
    procedure Launch_Target

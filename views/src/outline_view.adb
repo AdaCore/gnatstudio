@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                               GNAT Studio                                --
 --                                                                          --
---                     Copyright (C) 2005-2023, AdaCore                     --
+--                     Copyright (C) 2005-2024, AdaCore                     --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -1941,7 +1941,7 @@ package body Outline_View is
                       End_Line_Column     => As_Int (0),
                       Category_Column     =>
                         As_Int (Gint (Sort_Entities (Category))),
-                      Id_Column           => As_String ("")));
+                      Id_Column           => As_String (String'(""))));
                   Self.Category_Map.Include
                     (Category, Get_Path (Model, Cat_Iter));
                   return Cat_Iter;
@@ -2045,7 +2045,7 @@ package body Outline_View is
                      Set_And_Clear
                        (Outline.Tree.Model,
                         Iter,
-                        (Icon_Column         => As_String (""),
+                        (Icon_Column         => As_String (String'("")),
                          Name_Column         => As_String
                            (Span_Header & "No symbols available" & Span_End),
                          Start_Line_Column   => As_Int (0),
@@ -2054,7 +2054,7 @@ package body Outline_View is
                          Def_End_Col_Column  => As_Int (0),
                          End_Line_Column     => As_Int (0),
                          Category_Column     => As_Int (4),
-                         Id_Column           => As_String ("")));
+                         Id_Column           => As_String (String'(""))));
                   end;
                else
                   Outline.Tree.Refilter;

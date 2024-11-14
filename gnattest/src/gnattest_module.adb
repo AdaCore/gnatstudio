@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                               GNAT Studio                                --
 --                                                                          --
---                     Copyright (C) 2011-2023, AdaCore                     --
+--                     Copyright (C) 2011-2024, AdaCore                     --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -16,6 +16,8 @@
 ------------------------------------------------------------------------------
 
 with Ada.Characters.Handling;
+
+with VSS.Strings;
 
 with Commands.GNATTest;
 with Commands.Interactive;
@@ -461,7 +463,7 @@ package body GNATTest_Module is
         (GPS.Kernel.Messages.Locations => True,
          others                        => False);
 
-      Category : constant String := "GNATtest";
+      Category : constant VSS.Strings.Virtual_String := "GNATtest";
       Kernel   : constant Kernel_Handle := Get_Kernel (Context.Context);
       Messages : constant not null GPS.Kernel.Messages_Container_Access :=
                    Kernel.Get_Messages_Container;

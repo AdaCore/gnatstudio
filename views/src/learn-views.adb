@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                               GNAT Studio                                --
 --                                                                          --
---                     Copyright (C) 2017-2023, AdaCore                     --
+--                     Copyright (C) 2017-2024, AdaCore                     --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -511,7 +511,7 @@ package body Learn.Views is
       Root := new Node;
       XML.Child := Root;
       Root.Tag := new String'("learn");
-      Set_Attribute
+      Set_Attribute_S
         (Root, "position",
          Float'Image (Get_Position_Percent (View.Paned_View)) & "%");
    end Save_To_XML;
@@ -530,7 +530,7 @@ package body Learn.Views is
       end if;
 
       declare
-         Pos_Str : constant String := Get_Attribute (Learn_Node, "position");
+         Pos_Str : constant String := Get_Attribute_S (Learn_Node, "position");
       begin
          if Pos_Str /= "" then
             View.Stored_Pos := Float'Value

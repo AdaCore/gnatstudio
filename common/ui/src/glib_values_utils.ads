@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                               GNAT Studio                                --
 --                                                                          --
---                       Copyright (C) 2013-2023, AdaCore                   --
+--                       Copyright (C) 2013-2024, AdaCore                   --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -17,6 +17,8 @@
 
 --  This package contains a series of subprograms that can be used
 --  for GValue_Array hadnling.
+
+with VSS.Strings;
 
 with Glib.Object;
 with Glib.Values;
@@ -50,6 +52,8 @@ package Glib_Values_Utils is
 
    function As_Boolean (Value : Boolean)        return Glib.Values.GValue;
    function As_String  (Value : String)         return Glib.Values.GValue;
+   function As_String
+     (Value : VSS.Strings.Virtual_String) return Glib.Values.GValue;
    function As_Int     (Value : Glib.Gint)      return Glib.Values.GValue;
    function As_Pointer (Value : System.Address) return Glib.Values.GValue;
    function As_File

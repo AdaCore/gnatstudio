@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                               GNAT Studio                                --
 --                                                                          --
---                        Copyright (C) 2022-2023, AdaCore                  --
+--                     Copyright (C) 2022-2024, AdaCore                     --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -27,7 +27,8 @@ with GPS.Kernel.Messages.Simple;   use GPS.Kernel.Messages.Simple;
 
 package body DAP.Utils is
 
-   Debugger_Messages_Category : constant String := "debugger-current-line";
+   Debugger_Messages_Category : constant VSS.Strings.Virtual_String :=
+     "debugger-current-line";
    Current_Line_Pixbuf        : constant
      Ada.Strings.Unbounded.Unbounded_String :=
        Ada.Strings.Unbounded.To_Unbounded_String

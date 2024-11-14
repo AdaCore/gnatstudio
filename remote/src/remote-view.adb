@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                               GNAT Studio                                --
 --                                                                          --
---                     Copyright (C) 2006-2023, AdaCore                     --
+--                     Copyright (C) 2006-2024, AdaCore                     --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -465,7 +465,7 @@ package body Remote.View is
    is
       Mode     : Boolean;
       Mode_Str : constant String :=
-                   Get_Attribute (XML, "simple_mode", "True");
+                   Get_Attribute_S (XML, "simple_mode", "True");
    begin
       begin
          Mode := Boolean'Value (Mode_Str);
@@ -490,9 +490,9 @@ package body Remote.View is
       XML  : in out XML_Utils.Node_Ptr) is
    begin
       if Get_State (View.Pane) = Collapsed then
-         Set_Attribute (XML, "simple_mode", "true");
+         Set_Attribute_S (XML, "simple_mode", "true");
       else
-         Set_Attribute (XML, "simple_mode", "false");
+         Set_Attribute_S (XML, "simple_mode", "false");
       end if;
    end Save_To_XML;
 

@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                               GNAT Studio                                --
 --                                                                          --
---                     Copyright (C) 2012-2023, AdaCore                     --
+--                     Copyright (C) 2012-2024, AdaCore                     --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -162,7 +162,7 @@ package body Build_Command_Manager.Console_Writers is
       --  and no error was parsed. See D914-005
 
       if Self.Raise_On_Error and then Status /= 0 and then
-        Category_Count (Kernel, To_String (Self.Build.Category)) = 0
+        Category_Count (Kernel, Self.Build.Category) = 0
       then
          Kernel.Raise_Console;
       end if;

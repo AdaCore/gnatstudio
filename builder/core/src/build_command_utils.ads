@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                               GNAT Studio                                --
 --                                                                          --
---                     Copyright (C) 2012-2023, AdaCore                     --
+--                     Copyright (C) 2012-2024, AdaCore                     --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -27,6 +27,8 @@ with Ada.Strings.Unbounded;            use Ada.Strings.Unbounded;
 with Ada.Strings.Unbounded.Hash;
 
 with GNAT.OS_Lib;                      use GNAT.OS_Lib;
+
+with VSS.Strings;
 
 with GNATCOLL.Arg_Lists;               use GNATCOLL.Arg_Lists;
 with GNATCOLL.VFS;                     use GNATCOLL.VFS;
@@ -337,11 +339,11 @@ package Build_Command_Utils is
    --  the notion of background build ID.
 
    function Previous_Background_Build_Id
-     (Self : access Builder_Context_Record) return String;
+     (Self : access Builder_Context_Record) return VSS.Strings.Virtual_String;
    --  Return the ID of the previous background build
 
    function Current_Background_Build_Id
-     (Self : access Builder_Context_Record) return String;
+     (Self : access Builder_Context_Record) return VSS.Strings.Virtual_String;
    --  Return the ID of the current background build
 
    procedure Background_Build_Finished (Self : access Builder_Context_Record);
@@ -368,7 +370,7 @@ package Build_Command_Utils is
       Main_Project    : Project_Type;
       Force_File      : Virtual_File;
       Env             : Extending_Environment;
-      Category        : Unbounded_String;
+      Category        : VSS.Strings.Virtual_String;
       Mode            : Unbounded_String;
       Background      : Boolean;
       Shadow          : Boolean;

@@ -1393,7 +1393,7 @@ package body Scenario_Views is
          --  Create the mode and add it to the list of supported modes
 
          declare
-            Name : constant String := Get_Attribute (Node, "name", "");
+            Name : constant String := Get_Attribute_S (Node, "name", "");
             Description : constant XML_Utils.String_Ptr :=
               Get_Field (Node, "description");
             Shadow : constant XML_Utils.String_Ptr :=

@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                               GNAT Studio                                --
 --                                                                          --
---                     Copyright (C) 2010-2023, AdaCore                     --
+--                     Copyright (C) 2010-2024, AdaCore                     --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -163,11 +163,11 @@ package body GPS.Kernel.Messages.Hyperlink is
       Actual_Column : Integer;
       Flags         : Message_Flags)
    is
-      Text  : constant String := Get_Attribute (XML_Node, "text", "");
+      Text  : constant String := Get_Attribute_S (XML_Node, "text", "");
       First : constant Positive :=
-                Positive'Value (Get_Attribute (XML_Node, "first", "1"));
+                Positive'Value (Get_Attribute_S (XML_Node, "first", "1"));
       Last  : constant Natural :=
-                Natural'Value (Get_Attribute (XML_Node, "last", "0"));
+                Natural'Value (Get_Attribute_S (XML_Node, "last", "0"));
 
    begin
       Create_Hyperlink_Message
@@ -205,14 +205,14 @@ package body GPS.Kernel.Messages.Hyperlink is
                Hyperlink_Message_Access (Message_Node);
 
    begin
-      Set_Attribute (XML_Node, "text", To_String (Self.Text));
+      Set_Attribute_S (XML_Node, "text", To_String (Self.Text));
 
       if Self.Level = Secondary
         and then Self.First <= Self.Last
       then
-         Set_Attribute
+         Set_Attribute_S
            (XML_Node, "first", Trim (Integer'Image (Self.First), Both));
-         Set_Attribute
+         Set_Attribute_S
            (XML_Node, "last", Trim (Integer'Image (Self.Last), Both));
       end if;
    end Save;

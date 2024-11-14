@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                               GNAT Studio                                --
 --                                                                          --
---                     Copyright (C) 2009-2023, AdaCore                     --
+--                     Copyright (C) 2009-2024, AdaCore                     --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -47,11 +47,11 @@ package body GPS.Kernel.Locations is
 
    procedure Remove_Location_Category
      (Kernel   : access Kernel_Handle_Record'Class;
-      Category : String;
+      Category : VSS.Strings.Virtual_String;
       File     : GNATCOLL.VFS.Virtual_File;
       Line     : Positive)
    is
-      pragma Assert (Category /= "");
+      pragma Assert (not Category.Is_Empty);
       pragma Assert (File /= No_File);
 
    begin

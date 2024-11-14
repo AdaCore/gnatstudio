@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                               GNAT Studio                                --
 --                                                                          --
---                        Copyright (C) 2022-2023, AdaCore                  --
+--                        Copyright (C) 2022-2024, AdaCore                  --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -176,7 +176,7 @@ package DAP.Types is
    package Frames_Vectors is new Ada.Containers.Vectors
      (Natural, Frame_Record);
 
-   Messages_Category_Continue_To_Line : constant String :=
+   Messages_Category_Continue_To_Line : constant VSS.Strings.Virtual_String :=
      "debugger-run-to-line";
 
    Continue_To_Line_Messages_Flags    : constant GPS.Kernel.Messages.

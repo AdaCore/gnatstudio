@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                               GNAT Studio                                --
 --                                                                          --
---                     Copyright (C) 2009-2023, AdaCore                     --
+--                     Copyright (C) 2009-2024, AdaCore                     --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -103,17 +103,17 @@ package body Remote.Db is
       Is_System : Boolean)
    is
       Nickname           : constant String :=
-                             Get_Attribute (Node, "nickname");
+                             Get_Attribute_S (Node, "nickname");
       Network_Name       : constant String :=
-                             Get_Attribute (Node, "network_name");
+                             Get_Attribute_S (Node, "network_name");
       Remote_Access      : constant String :=
-                             Get_Attribute (Node, "remote_access");
+                             Get_Attribute_S (Node, "remote_access");
       Remote_Shell       : constant String :=
-                             Get_Attribute (Node, "remote_shell");
+                             Get_Attribute_S (Node, "remote_shell");
       Remote_Sync        : constant String :=
-                             Get_Attribute (Node, "remote_sync", "rsync");
+                             Get_Attribute_S (Node, "remote_sync", "rsync");
       Debug_Console      : constant String :=
-                             Get_Attribute (Node, "debug_console", "false");
+                             Get_Attribute_S (Node, "debug_console", "false");
       Field              : XML_Utils.String_Ptr;
       Max_Nb_Connections : Natural;
       User_Name          : GNAT.Strings.String_Access;
@@ -281,7 +281,7 @@ package body Remote.Db is
             return Synchronisation_Type'First;
       end Get_Sync;
 
-      Nickname : constant String := Get_Attribute (Node, "server_name", "");
+      Nickname : constant String := Get_Attribute_S (Node, "server_name", "");
       M_Point  : Mount_Point;
       Child    : Node_Ptr := Node.Child;
 
@@ -290,7 +290,8 @@ package body Remote.Db is
          M_Point :=
            (Local_Root  => Get_File_Child (Child, "local_path"),
             Remote_Root => Get_File_Child (Child, "remote_path", Nickname),
-            Sync        => Get_Sync (Get_Attribute (Child, "sync", "Never")));
+            Sync        =>
+              Get_Sync (Get_Attribute_S (Child, "sync", "Never")));
 
          if M_Point.Local_Root = No_File
            or else M_Point.Remote_Root = No_File
@@ -334,7 +335,7 @@ package body Remote.Db is
    is
       Tmp             : XML_Utils.String_Ptr;
       Shell_Name      : constant String :=
-                          Get_Attribute (Node, "name", "");
+                          Get_Attribute_S (Node, "name", "");
       Shell_Cmd       : String_Access;
       Generic_Prompt  : Pattern_Matcher_Access;
       GPS_Prompt      : Pattern_Matcher_Access;
@@ -553,7 +554,7 @@ package body Remote.Db is
    is
       Child                     : Node_Ptr;
       Name                      : constant String :=
-                                    Get_Attribute (Node, "name");
+                                    Get_Attribute_S (Node, "name");
       Start_Command             : String_Access;
       Start_Command_Common_Args : String_List_Access;
       Start_Command_User_Args   : String_List_Access;
@@ -590,7 +591,7 @@ package body Remote.Db is
 
       if Child /= null then
          Use_Pipes :=
-           Boolean'Value (Get_Attribute (Child, "use_pipes", "false"));
+           Boolean'Value (Get_Attribute_S (Child, "use_pipes", "false"));
          Start_Command := GNAT.OS_Lib.Locate_Exec_On_Path (Child.Value.all);
 
          if Start_Command = null then
@@ -689,21 +690,21 @@ package body Remote.Db is
          if Child.Tag.all = "extra_ptrn" then
             Extra_Ptrn_Length := Extra_Ptrn_Length + 1;
             Auto_Answer := Boolean'Value
-              (Get_Attribute (Child, "auto_answer", "true"));
+              (Get_Attribute_S (Child, "auto_answer", "true"));
 
             if Auto_Answer then
                Extra_Ptrns (Extra_Ptrn_Length) :=
                  (Auto_Answer => True,
                   Ptrn        => new Pattern_Matcher'(Compile
                     (Child.Value.all, Single_Line or Multiple_Lines)),
-                  Answer      => new String'(Get_Attribute
+                  Answer      => new String'(Get_Attribute_S
                     (Child, "answer", "")));
             else
                Extra_Ptrns (Extra_Ptrn_Length) :=
                  (Auto_Answer => False,
                   Ptrn        => new Pattern_Matcher'(Compile
                     (Child.Value.all, Single_Line or Multiple_Lines)),
-                  Question    => new String'(Get_Attribute
+                  Question    => new String'(Get_Attribute_S
                     (Child, "question", "")));
             end if;
          end if;
@@ -766,7 +767,7 @@ package body Remote.Db is
       Kernel    : access Kernel_Handle_Record'Class;
       Node      : XML_Utils.Node_Ptr)
    is
-      Name         : constant String := Get_Attribute (Node, "name");
+      Name         : constant String := Get_Attribute_S (Node, "name");
       Child        : Node_Ptr;
       Args         : String_List_Access;
       Desc         : Sync_Tool_Access;
@@ -1062,17 +1063,17 @@ package body Remote.Db is
          Main_Child.Tag := new String'("remote_machine_descriptor");
          Add_Child (Node, Main_Child, True);
 
-         Set_Attribute
+         Set_Attribute_S
            (Main_Child, "nickname", Nickname (Machine.all));
-         Set_Attribute
+         Set_Attribute_S
            (Main_Child, "network_name", Network_Name (Machine.all));
-         Set_Attribute
+         Set_Attribute_S
            (Main_Child, "remote_access", Access_Tool (Machine.all));
-         Set_Attribute
+         Set_Attribute_S
            (Main_Child, "remote_shell", Shell (Machine.all));
-         Set_Attribute
+         Set_Attribute_S
            (Main_Child, "remote_sync", Sync_Tool (Machine.all));
-         Set_Attribute
+         Set_Attribute_S
            (Main_Child, "debug_console", Use_Dbg (Machine.all)'Img);
 
          Child := new XML_Utils.Node;
@@ -1132,7 +1133,7 @@ package body Remote.Db is
                Child.Tag := new String'("mirror_path");
                Add_Child (Main_Child, Child);
 
-               Set_Attribute (Child, "sync", Mount_Pts (J).Sync'Img);
+               Set_Attribute_S (Child, "sync", Mount_Pts (J).Sync'Img);
                Add_File_Child
                  (Child, "local_path", Mount_Pts (J).Local_Root);
                Add_File_Child

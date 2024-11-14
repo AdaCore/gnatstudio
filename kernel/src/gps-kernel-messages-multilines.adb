@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                               GNAT Studio                                --
 --                                                                          --
---                     Copyright (C) 2021-2023, AdaCore                     --
+--                     Copyright (C) 2021-2024, AdaCore                     --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -29,7 +29,7 @@ package body GPS.Kernel.Messages.Multilines is
    function Load
      (XML_Node      : not null Node_Ptr;
       Container     : not null Messages_Container_Access;
-      Category      : String;
+      Category      : VSS.Strings.Virtual_String;
       File          : GNATCOLL.VFS.Virtual_File;
       Line          : Natural;
       Column        : Basic_Types.Visible_Column_Type;
@@ -60,7 +60,7 @@ package body GPS.Kernel.Messages.Multilines is
 
    function Create_Message
      (Container                : not null Messages_Container_Access;
-      Category                 : String;
+      Category                 : VSS.Strings.Virtual_String;
       File                     : GNATCOLL.VFS.Virtual_File;
       Line                     : Natural;
       Column                   : Basic_Types.Visible_Column_Type;
@@ -148,7 +148,7 @@ package body GPS.Kernel.Messages.Multilines is
    function Load
      (XML_Node      : not null Node_Ptr;
       Container     : not null Messages_Container_Access;
-      Category      : String;
+      Category      : VSS.Strings.Virtual_String;
       File          : GNATCOLL.VFS.Virtual_File;
       Line          : Natural;
       Column        : Basic_Types.Visible_Column_Type;
@@ -160,12 +160,12 @@ package body GPS.Kernel.Messages.Multilines is
       return not null Message_Access
    is
       pragma Unreferenced (Actual_Line, Actual_Column);
-      Text       : constant String := Get_Attribute (XML_Node, "text", "");
+      Text       : constant String := Get_Attribute_S (XML_Node, "text", "");
       End_Line   : constant Natural
-        := Natural'Value (Get_Attribute (XML_Node, "end_line", "1"));
+        := Natural'Value (Get_Attribute_S (XML_Node, "end_line", "1"));
       End_Column : constant Basic_Types.Visible_Column_Type
         := Basic_Types.Visible_Column_Type'Value
-          (Get_Attribute (XML_Node, "end_column", "1"));
+          (Get_Attribute_S (XML_Node, "end_column", "1"));
    begin
       return
         Message_Access
@@ -213,9 +213,9 @@ package body GPS.Kernel.Messages.Multilines is
       Self : constant Multiline_Message_Access :=
         Multiline_Message_Access (Message_Node);
    begin
-      Set_Attribute (XML_Node, "text", To_String (Self.Get_Text));
-      Set_Attribute (XML_Node, "end_line", Self.End_Line'Image);
-      Set_Attribute (XML_Node, "end_column", Self.End_Column'Image);
+      Set_Attribute_S (XML_Node, "text", To_String (Self.Get_Text));
+      Set_Attribute_S (XML_Node, "end_line", Self.End_Line'Image);
+      Set_Attribute_S (XML_Node, "end_column", Self.End_Column'Image);
    end Save;
 
 end GPS.Kernel.Messages.Multilines;

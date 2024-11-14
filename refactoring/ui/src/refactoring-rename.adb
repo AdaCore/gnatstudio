@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                               GNAT Studio                                --
 --                                                                          --
---                     Copyright (C) 2003-2023, AdaCore                     --
+--                     Copyright (C) 2003-2024, AdaCore                     --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -16,6 +16,9 @@
 ------------------------------------------------------------------------------
 
 with Ada.Strings.Unbounded;      use Ada.Strings.Unbounded;
+
+with VSS.Strings.Conversions;
+
 with GNATCOLL.Scripts;           use GNATCOLL.Scripts;
 with GNATCOLL.VFS;               use GNATCOLL.VFS;
 
@@ -100,8 +103,9 @@ package body Refactoring.Rename is
          Create_Simple_Message
            (Container  => Get_Messages_Container (Kernel),
             Category   =>
-              (-"Refactoring - rename ") & To_String (Factory.Old_Name)
-            & (-" to ") & To_String (Factory.New_Name),
+              VSS.Strings.Conversions.To_Virtual_String
+                ((-"Refactoring - rename ") & To_String (Factory.Old_Name)
+                    & (-" to ") & To_String (Factory.New_Name)),
             File       => Loc.File,
             Line       => Loc.Line,
             Column     => Loc.Column,
@@ -314,7 +318,8 @@ package body Refactoring.Rename is
       else
          Create_Simple_Message
            (Get_Messages_Container (Kernel),
-            (-"Refactoring - rename ") & Get_Name (Entity) & " failed",
+            VSS.Strings.Conversions.To_Virtual_String
+              ((-"Refactoring - rename ") & Get_Name (Entity) & " failed"),
             File_Information (Context.Context),
             0,
             0,

@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                               GNAT Studio                                --
 --                                                                          --
---                     Copyright (C) 2001-2023, AdaCore                     --
+--                     Copyright (C) 2001-2024, AdaCore                     --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -511,9 +511,9 @@ package body Custom_Module is
       ---------------------------
 
       procedure Parse_Contextual_Node (Node : Node_Ptr) is
-         Action  : constant String := Get_Attribute (Node, "action");
-         Before  : constant String := Get_Attribute (Node, "before", "");
-         After   : constant String := Get_Attribute (Node, "after", "");
+         Action  : constant String := Get_Attribute_S (Node, "action");
+         Before  : constant String := Get_Attribute_S (Node, "before", "");
+         After   : constant String := Get_Attribute_S (Node, "after", "");
          Group   : Integer := Default_Contextual_Group;
          Child   : Node_Ptr;
          Title   : GNAT.OS_Lib.String_Access;
@@ -522,7 +522,8 @@ package body Custom_Module is
          Title := new String'(Action);
 
          declare
-            Group_Image : constant String := Get_Attribute (Node, "group", "");
+            Group_Image : constant String :=
+              Get_Attribute_S (Node, "group", "");
          begin
             if Group_Image /= "" then
                Group := Integer'Value (Group_Image);
@@ -540,7 +541,7 @@ package body Custom_Module is
 
             elsif To_Lower (Child.Tag.all) = "filter" then
                declare
-                  Id : constant String := Get_Attribute (Child, "id", "");
+                  Id : constant String := Get_Attribute_S (Child, "id", "");
                begin
                   if Id /= "" then
                      Filter := Lookup_Filter (Kernel, Id);
@@ -605,15 +606,15 @@ package body Custom_Module is
       ---------------------
 
       procedure Parse_Tool_Node (Node : Node_Ptr) is
-         Name      : constant String := Get_Attribute (Node, "name");
+         Name      : constant String := Get_Attribute_S (Node, "name");
          Pack      : constant String :=
-                       Get_Attribute (Node, "package", Ide_Package);
+                       Get_Attribute_S (Node, "package", Ide_Package);
          Index     : constant String :=
-                       To_Lower (Get_Attribute (Node, "index", Name));
+                       To_Lower (Get_Attribute_S (Node, "index", Name));
          Attribute : constant String :=
-                       Get_Attribute (Node, "attribute", "default_switches");
+                       Get_Attribute_S (Node, "attribute", "default_switches");
          Override  : constant Boolean :=
-                       (To_Lower (Get_Attribute (Node, "override", "false"))
+                       (To_Lower (Get_Attribute_S (Node, "override", "false"))
                         = "true");
          N         : Node_Ptr := Node.Child;
          Tool      : Tool_Properties;
@@ -671,13 +672,14 @@ package body Custom_Module is
       begin
          if Node.Tag.all = "filter" then
             declare
-               Lang    : constant String  := Get_Attribute (Node, "language");
-               Shell   : constant String  := Get_Attribute (Node, "shell_cmd");
+               Lang    : constant String  :=
+                 Get_Attribute_S (Node, "language");
+               Shell   : constant String  :=
+                 Get_Attribute_S (Node, "shell_cmd");
                Shell_Lang : constant String :=
-                              Get_Attribute
-                                (Node, "shell_lang", GPS_Shell_Name);
-               Module  : constant String := Get_Attribute (Node, "module");
-               Id      : constant String := Get_Attribute (Node, "id");
+                 Get_Attribute_S (Node, "shell_lang", GPS_Shell_Name);
+               Module  : constant String := Get_Attribute_S (Node, "module");
+               Id      : constant String := Get_Attribute_S (Node, "id");
             begin
                if Id /= "" then
                   Filter := Lookup_Filter (Kernel, Id);
@@ -730,7 +732,7 @@ package body Custom_Module is
                        Module     => Module);
                   Set_Error_Message
                     (Filter,
-                     To_Unbounded_String (Get_Attribute (Node, "error")));
+                     To_Unbounded_String (Get_Attribute_S (Node, "error")));
                end if;
             end;
 
@@ -756,7 +758,7 @@ package body Custom_Module is
             end loop;
 
             Set_Error_Message
-              (Filter, To_Unbounded_String (Get_Attribute (Node, "error")));
+              (Filter, To_Unbounded_String (Get_Attribute_S (Node, "error")));
          end if;
 
          return Filter;
@@ -767,9 +769,9 @@ package body Custom_Module is
       -----------------------
 
       procedure Parse_Action_Node (Node : Node_Ptr) is
-         Name            : constant String := Get_Attribute (Node, "name");
+         Name            : constant String := Get_Attribute_S (Node, "name");
          Category        : constant String :=
-                             Get_Attribute (Node, "category", "General");
+                             Get_Attribute_S (Node, "category", "General");
          Child           : Node_Ptr;
          Command         : Custom_Command_Access;
          Description     : GNAT.OS_Lib.String_Access := new String'("");
@@ -825,14 +827,16 @@ package body Custom_Module is
                  Name                 => Name,
                  Kernel               => Kernel,
                  Command              => Node.Child,
-                 Active               => To_Lower
-                   (Get_Attribute (Node, "active-execution", "true")) = "true",
-                 Default_Output       => Get_Attribute
+                 Active               =>
+                   To_Lower
+                     (Get_Attribute_S (Node, "active-execution", "true"))
+                        = "true",
+                 Default_Output       => Get_Attribute_S
                    (Node, "output", Console_Output),
                  Show_In_Task_Manager => To_Lower
-                   (Get_Attribute (Node, "show-task-manager")) = "true",
+                   (Get_Attribute_S (Node, "show-task-manager")) = "true",
                  Show_Command         => To_Lower
-                   (Get_Attribute (Node, "show-command", "true")) = "true");
+                   (Get_Attribute_S (Node, "show-command", "true")) = "true");
 
          Implicit_Filter := Create_Filter (Kernel, Node.Child);
 
@@ -858,7 +862,7 @@ package body Custom_Module is
             Description => Description.all,
             Category    => Category,
             Filter      => Filter_A,
-            Icon_Name   => Get_Attribute (Node, "icon", ""));
+            Icon_Name   => Get_Attribute_S (Node, "icon", ""));
          Free (Description);
       end Parse_Action_Node;
 
@@ -867,10 +871,10 @@ package body Custom_Module is
       -----------------------
 
       procedure Parse_Button_Node (Node : Node_Ptr) is
-         Action  : constant String := Get_Attribute (Node, "action");
-         Icon    : constant String := Get_Attribute (Node, "iconname");
+         Action  : constant String := Get_Attribute_S (Node, "action");
+         Icon    : constant String := Get_Attribute_S (Node, "iconname");
          --  For back compability support stock='icon' attribute
-         Stock   : constant String := Get_Attribute (Node, "stock");
+         Stock   : constant String := Get_Attribute_S (Node, "stock");
          Child   : Node_Ptr;
 
       begin
@@ -917,8 +921,8 @@ package body Custom_Module is
 
       procedure Parse_Entry_Node (Node : Node_Ptr) is
          Child : Node_Ptr;
-         Id    : constant String := Get_Attribute (Node, "id", "");
-         Label : constant String := Get_Attribute (Node, "label", "");
+         Id    : constant String := Get_Attribute_S (Node, "id", "");
+         Label : constant String := Get_Attribute_S (Node, "label", "");
          CL    : Arg_List;
       begin
          if Id = "" then
@@ -939,7 +943,7 @@ package body Custom_Module is
 
          CL := Parse_String ("Toolbar.append %1 """
               & Id & """ """ & Label & """ """
-              & Get_Attribute (Node, "on-changed") & """", Separate_Args);
+              & Get_Attribute_S (Node, "on-changed") & """", Separate_Args);
          Execute_GPS_Shell_Command (Kernel, CL);
 
          --  Parse the child nodes
@@ -951,7 +955,7 @@ package body Custom_Module is
                --  ??? Need to implement "default" attribute.
                declare
                   On_Selected : constant String :=
-                    Get_Attribute (Child, "on-selected");
+                    Get_Attribute_S (Child, "on-selected");
                begin
                   if On_Selected /= "" then
                      CL := Create ("Toolbar");
@@ -1040,9 +1044,10 @@ package body Custom_Module is
       ---------------------
 
       procedure Parse_Menu_Node (Node : Node_Ptr; Parent_Path : UTF8_String) is
-         Action  : constant String := Get_Attribute (Node, "action");
-         Before  : constant String := Get_Attribute (Node, "before");
-         After_Attribute   : constant String := Get_Attribute (Node, "after");
+         Action  : constant String := Get_Attribute_S (Node, "action");
+         Before  : constant String := Get_Attribute_S (Node, "before");
+         After_Attribute   : constant String :=
+           Get_Attribute_S (Node, "after");
          After   : constant String :=
             (if After_Attribute /= ""
              then After_Attribute
@@ -1141,7 +1146,7 @@ package body Custom_Module is
          then
             declare
                Name   : constant String :=
-                          Get_Attribute (Current_Node, "name");
+                          Get_Attribute_S (Current_Node, "name");
                Filter : Action_Filter;
             begin
                if Name = "" then

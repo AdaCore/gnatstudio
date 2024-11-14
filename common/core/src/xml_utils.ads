@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                               GNAT Studio                                --
 --                                                                          --
---                     Copyright (C) 2009-2023, AdaCore                     --
+--                     Copyright (C) 2009-2024, AdaCore                     --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -20,6 +20,8 @@
 
 with Interfaces.C;
 with Ada.Unchecked_Deallocation;
+
+with VSS.Strings;
 
 with GNATCOLL.VFS; use GNATCOLL.VFS;
 
@@ -127,17 +129,27 @@ package XML_Utils is
    --  If Free_Data is not null, it is used to free the memory occupied by
    --  the Specific_Data for each node.
 
-   function Get_Attribute
-     (N : Node_Ptr;
+   function Get_Attribute_S
+     (N              : Node_Ptr;
       Attribute_Name : UTF8_String;
       Default        : UTF8_String := "") return UTF8_String;
+   function Get_Attribute
+     (N              : Node_Ptr;
+      Attribute_Name : VSS.Strings.Virtual_String;
+      Default        : VSS.Strings.Virtual_String :=
+        VSS.Strings.Empty_Virtual_String)
+      return VSS.Strings.Virtual_String;
    --  Return the value of the attribute 'Attribute_Name' if present.
    --  Special XML characters have already been interpreted in the result
    --  string.
    --  Return Default otherwise.
 
-   procedure Set_Attribute
+   procedure Set_Attribute_S
      (N : Node_Ptr; Attribute_Name, Attribute_Value : UTF8_String);
+   procedure Set_Attribute
+     (N               : Node_Ptr;
+      Attribute_Name  : VSS.Strings.Virtual_String;
+      Attribute_Value : VSS.Strings.Virtual_String);
    --  Create a new attribute, or replace an existing one. The attribute value
    --  is automatically protected for special XML characters
 

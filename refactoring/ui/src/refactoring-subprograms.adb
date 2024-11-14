@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                               GNAT Studio                                --
 --                                                                          --
---                     Copyright (C) 2005-2023, AdaCore                     --
+--                     Copyright (C) 2005-2024, AdaCore                     --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -18,6 +18,9 @@
 with Ada.Characters.Handling;
 with Ada.Containers.Doubly_Linked_Lists;
 with Ada.Strings.Unbounded;           use Ada.Strings.Unbounded;
+
+with VSS.Strings.Conversions;
+
 with Basic_Types;                     use Basic_Types;
 with Commands.Interactive;            use Commands, Commands.Interactive;
 with Glib;                            use Glib;
@@ -696,8 +699,10 @@ package body Refactoring.Subprograms is
       Iter       : Extracted_Entity_Lists.Cursor;
       Result     : Command_Return_Type;
       E          : Extracted_Entity;
-      Category   : constant String :=
-        -"Refactoring - extract subprogram " & Method_Name;
+      Category   : constant VSS.Strings.Virtual_String :=
+        VSS.Strings.Conversions.To_Virtual_String
+          (-"Refactoring - extract subprogram " & Method_Name);
+
    begin
       if Context = Invalid_Context then
          Trace (Me, "Extract_Method: Invalid context");

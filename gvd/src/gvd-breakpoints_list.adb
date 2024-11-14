@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                               GNAT Studio                                --
 --                                                                          --
---                     Copyright (C) 2016-2023, AdaCore                     --
+--                     Copyright (C) 2016-2024, AdaCore                     --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -14,6 +14,8 @@
 -- COPYING3.  If not, go to http://www.gnu.org/licenses for a complete copy --
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
+
+with VSS.Strings;
 
 with Commands;                       use Commands;
 with Commands.Interactive;           use Commands.Interactive;
@@ -55,7 +57,8 @@ package body GVD.Breakpoints_List is
    end record;
    type Breakpoints_Module_Access is access all Breakpoints_Module'Class;
 
-   Messages_Category_For_Breakpoints : constant String := "breakpoints";
+   Messages_Category_For_Breakpoints : constant VSS.Strings.Virtual_String :=
+     "breakpoints";
    Breakpoints_Message_Flags         : constant Message_Flags :=
      (Editor_Side => False,
       Locations   => False,

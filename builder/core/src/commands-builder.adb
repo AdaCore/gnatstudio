@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                               GNAT Studio                                --
 --                                                                          --
---                     Copyright (C) 2003-2023, AdaCore                     --
+--                     Copyright (C) 2003-2024, AdaCore                     --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -88,7 +88,7 @@ package body Commands.Builder is
       is
          Server         : Server_Type;
          Background_Env : Extending_Environment;
-         Category_Name  : Unbounded_String;
+         Category_Name  : VSS.Strings.Virtual_String;
          The_Exit       : Subprogram_Type;
 
       begin
@@ -117,14 +117,13 @@ package body Commands.Builder is
          --  compatibility and compatibility with codefix.
 
          if Background then
-            Category_Name :=
-              To_Unbounded_String (Builder.Current_Background_Build_Id);
+            Category_Name := Builder.Current_Background_Build_Id;
             The_Exit := null;
          else
             Category_Name := Get_Messages_Category (T);
 
-            if Category_Name = Null_Unbounded_String then
-               Category_Name := To_Unbounded_String (Error_Category);
+            if Category_Name.Is_Empty then
+               Category_Name := Error_Category;
             end if;
 
             if Main /= No_File then

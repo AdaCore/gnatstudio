@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                               GNAT Studio                                --
 --                                                                          --
---                     Copyright (C) 2005-2023, AdaCore                     --
+--                     Copyright (C) 2005-2024, AdaCore                     --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -456,7 +456,8 @@ package body XML_Viewer is
       --------------
 
       function Get_Kind return String is
-         Kind : constant XML_Utils.UTF8_String := Get_Attribute (Node, "kind");
+         Kind : constant XML_Utils.UTF8_String :=
+           Get_Attribute_S (Node, "kind");
       begin
          if Kind = "" then
             return "";
@@ -475,11 +476,11 @@ package body XML_Viewer is
          return (1 .. 7 - Img'Length => ' ') & Img;
       end Right_Align;
 
-      Name : constant XML_Utils.UTF8_String := Get_Attribute (Node, "name");
+      Name : constant XML_Utils.UTF8_String := Get_Attribute_S (Node, "name");
    begin
       if Node.Tag.all = "file" then
          GNAT.Strings.Free (View.File);
-         View.File := new String'(Get_Attribute (Node, "name"));
+         View.File := new String'(Get_Attribute_S (Node, "name"));
          return Set_Row_Content
            (View, Parent,
             Col0      => "<b>" & Base_Name (Name) & "</b>",
@@ -493,8 +494,8 @@ package body XML_Viewer is
             On_Click  =>
               "Editor.edit """""""
             & View.File.all & """"""" "
-            & Get_Attribute (Node, "line") & " "
-            & Get_Attribute (Node, "col"));
+            & Get_Attribute_S (Node, "line") & " "
+            & Get_Attribute_S (Node, "col"));
 
       elsif Node.Tag.all = "metric" then
          return Set_Row_Content

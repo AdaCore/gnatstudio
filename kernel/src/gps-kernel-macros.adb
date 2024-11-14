@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                               GNAT Studio                                --
 --                                                                          --
---                     Copyright (C) 2005-2023, AdaCore                     --
+--                     Copyright (C) 2005-2024, AdaCore                     --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -14,6 +14,8 @@
 -- COPYING3.  If not, go to http://www.gnu.org/licenses for a complete copy --
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
+
+with VSS.Strings.Conversions;
 
 with GPS.Kernel.Contexts;     use GPS.Kernel.Contexts;
 with GPS.Kernel.MDI;          use GPS.Kernel.MDI;
@@ -235,7 +237,9 @@ package body GPS.Kernel.Macros is
                Messages : constant GPS.Kernel.Messages.Message_Array :=
                  Messages_Information (Context);
             begin
-               return Messages (Messages'First).Get_Category;
+               return
+                 VSS.Strings.Conversions.To_UTF_8_String
+                   (Messages (Messages'First).Get_Category);
             end;
          end if;
 

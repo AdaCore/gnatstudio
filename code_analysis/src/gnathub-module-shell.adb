@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                               GNAT Studio                                --
 --                                                                          --
---                       Copyright (C) 2018-2023, AdaCore                   --
+--                     Copyright (C) 2018-2024, AdaCore                     --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -16,6 +16,9 @@
 ------------------------------------------------------------------------------
 
 with Ada.Strings.Unbounded;     use Ada.Strings.Unbounded;
+
+with VSS.Strings.Conversions;
+
 with GNATCOLL.Scripts;          use GNATCOLL.Scripts;
 
 with Basic_Types;               use Basic_Types;
@@ -157,7 +160,9 @@ package body GNAThub.Module.Shell is
             Tool       : constant Tool_Access := Get_Tool (Tool_Inst);
             Container  : constant Messages_Container_Access :=
               GNAThub_Module.Kernel.Get_Messages_Container;
-            Category   : constant String := Nth_Arg (Data, 2);
+            Category   : constant VSS.Strings.Virtual_String :=
+              VSS.Strings.Conversions.To_Virtual_String
+                (String'(Nth_Arg (Data, 2)));
             File       : constant Virtual_File :=
               Get_Data (Nth_Arg
                         (Data, 3, Get_File_Class (Kernel),

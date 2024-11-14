@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                               GNAT Studio                                --
 --                                                                          --
---                     Copyright (C) 2001-2023, AdaCore                     --
+--                     Copyright (C) 2001-2024, AdaCore                     --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -284,8 +284,8 @@ package body Browsers.Dependency_Items is
 
    begin
       N.Tag := new String'("file");
-      XML_Utils.Set_Attribute (N, "file", Self.Source.Display_Full_Name);
-      XML_Utils.Set_Attribute
+      XML_Utils.Set_Attribute_S (N, "file", Self.Source.Display_Full_Name);
+      XML_Utils.Set_Attribute_S
         (N, "project", Project_Of (Self).Project_Path.Display_Full_Name);
 
       return N;
@@ -301,7 +301,7 @@ package body Browsers.Dependency_Items is
    is
    begin
       if Self.Explicit then
-         XML_Utils.Set_Attribute (Node, "explicit", "1");
+         XML_Utils.Set_Attribute_S (Node, "explicit", "1");
       end if;
    end Save_To_XML;
 
@@ -318,11 +318,11 @@ package body Browsers.Dependency_Items is
    begin
       Find_Or_Create_File
         (General_Browser (Self),
-         Filename => Create (+XML_Utils.Get_Attribute (Node, "file")),
+         Filename => Create (+XML_Utils.Get_Attribute_S (Node, "file")),
          Project  =>
            Lookup_Project
              (Self.Kernel,
-              Create (+XML_Utils.Get_Attribute (Node, "project"))),
+              Create (+XML_Utils.Get_Attribute_S (Node, "project"))),
          Item     => It,
          Newly_Added => Newly_Added);
       return It;
@@ -340,7 +340,7 @@ package body Browsers.Dependency_Items is
    begin
       Self.Add_Link
         (File_Item (From), File_Item (To),
-         Explicit => XML_Utils.Get_Attribute (Node, "explicit") = "1");
+         Explicit => XML_Utils.Get_Attribute_S (Node, "explicit") = "1");
    end Load_From_XML;
 
    --------------------

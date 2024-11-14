@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                               GNAT Studio                                --
 --                                                                          --
---                     Copyright (C) 2005-2023, AdaCore                     --
+--                     Copyright (C) 2005-2024, AdaCore                     --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -1314,14 +1314,14 @@ package body Call_Graph_Views is
    begin
       Result := new Node;
       Result.Tag := new String'("loc");
-      Set_Attribute (Result, "line", R.Line'Img);
-      Set_Attribute (Result, "column", R.Column'Img);
-      Set_Attribute (Result, "file", Display_Full_Name (R.File));
+      Set_Attribute_S (Result, "line", R.Line'Img);
+      Set_Attribute_S (Result, "column", R.Column'Img);
+      Set_Attribute_S (Result, "file", Display_Full_Name (R.File));
       --   ??? Wrong: we have to call Display_Full_Name above only because we
       --  are setting an attribute in an XML node. We should not put
       --  text which is potentially not UTF8 in an attribute.
       if R.Through_Dispatching then
-         Set_Attribute (Result, "dispatch", "true");
+         Set_Attribute_S (Result, "dispatch", "true");
       end if;
       return Result;
    end To_XML;
@@ -1333,10 +1333,11 @@ package body Call_Graph_Views is
    function From_XML (N : Node_Ptr) return Reference_Record is
       Result : Reference_Record;
    begin
-      Result.Line := Integer'Value (Get_Attribute (N, "line"));
-      Result.Column := Visible_Column_Type'Value (Get_Attribute (N, "column"));
-      Result.File := Create (+Get_Attribute (N, "file"));
-      Result.Through_Dispatching := Get_Attribute (N, "dispatch") = "true";
+      Result.Line   := Integer'Value (Get_Attribute_S (N, "line"));
+      Result.Column :=
+        Visible_Column_Type'Value (Get_Attribute_S (N, "column"));
+      Result.File   := Create (+Get_Attribute_S (N, "file"));
+      Result.Through_Dispatching := Get_Attribute_S (N, "dispatch") = "true";
       return Result;
    end From_XML;
 
@@ -1417,37 +1418,37 @@ package body Call_Graph_Views is
 
                Path := Get_Path (Model, Iter);
                if Row_Expanded (View.Tree, Path) then
-                  Set_Attribute (N, "expanded", "true");
+                  Set_Attribute_S (N, "expanded", "true");
                end if;
                Path_Free (Path);
 
-               Set_Attribute
+               Set_Attribute_S
                  (N, "name", Get_String (Model, Iter, Name_Column));
-               Set_Attribute
+               Set_Attribute_S
                  (N, "decl", Get_String (Model, Iter, Decl_Column));
 
-               Set_Attribute
+               Set_Attribute_S
                  (N, "type",
                   View_Type'Image
                     (View_Type'Val (Get_Int (Model, Iter, Kind_Column))));
                N.Tag := new String'("entity");
-               Set_Attribute
+               Set_Attribute_S
                  (N, "entity_name",
                   Get_String (Model, Iter, Entity_Name_Column));
                --  ??? This is potentially not UTF8, should not be in an
                --  attribute
-               Set_Attribute
+               Set_Attribute_S
                  (N, "entity_decl",
                   Get_File (Model, Iter, File_Column).Display_Full_Name);
                --  ??? This is potentially not UTF8, should not be in an
                --  attribute
-               Set_Attribute
+               Set_Attribute_S
                  (N, "entity_line",
                   Image (Integer (Get_Int (Model, Iter, Line_Column))));
-               Set_Attribute
+               Set_Attribute_S
                  (N, "entity_column",
                   Image (Integer (Get_Int (Model, Iter, Column_Column))));
-               Set_Attribute
+               Set_Attribute_S
                  (N, "entity_project",
                   Get_File (Model, Iter, Project_Column).Display_Full_Name);
 
@@ -1470,7 +1471,7 @@ package body Call_Graph_Views is
       Root := new Node;
       XML.Child := Root;
       Root.Tag := new String'("callgraph");
-      Set_Attribute
+      Set_Attribute_S
         (Root, "position",
          Float'Image (Get_Position_Percent (View.Pane)) & "%");
 
@@ -1539,27 +1540,31 @@ package body Call_Graph_Views is
                   (Name_Column, Decl_Column, Entity_Name_Column, File_Column,
                    Line_Column, Column_Column, Project_Column, Kind_Column,
                    Sort_Column),
-                  (1 => As_String (Get_Attribute (N, "name")),
-                   2 => As_String (Get_Attribute (N, "decl")),
-                   3 => As_String (Get_Attribute (N, "entity_name")),
-                   4 => As_File   (Create (+Get_Attribute (N, "entity_decl"))),
-                   5 => As_Int (Gint'Value (Get_Attribute (N, "entity_line"))),
+                  (1 => As_String (Get_Attribute_S (N, "name")),
+                   2 => As_String (Get_Attribute_S (N, "decl")),
+                   3 => As_String (Get_Attribute_S (N, "entity_name")),
+                   4 =>
+                     As_File   (Create (+Get_Attribute_S (N, "entity_decl"))),
+                   5 =>
+                     As_Int (Gint'Value (Get_Attribute_S (N, "entity_line"))),
                    6 => As_Int
-                     (Gint'Value (Get_Attribute (N, "entity_column"))),
+                     (Gint'Value (Get_Attribute_S (N, "entity_column"))),
                    7 => As_File
-                     (Create (+Get_Attribute (N, "entity_project"))),
+                     (Create (+Get_Attribute_S (N, "entity_project"))),
                    8 => As_Int (View_Type'Pos
                      (View_Type'Value
                         (if Is_Calls
-                           then Get_Attribute (N, "type", "view_calls")
-                           else Get_Attribute (N, "type", "view_called_by")))),
-                   9 => As_String (Get_Attribute
-                     (N, "name") & " " & Get_Attribute (N, "decl"))));
+                           then Get_Attribute_S (N, "type", "view_calls")
+                           else Get_Attribute_S
+                                  (N, "type", "view_called_by")))),
+                   9 => As_String (Get_Attribute_S
+                     (N, "name") & " " & Get_Attribute_S (N, "decl"))));
 
                if N.Child /= null then
                   Recursive_Load
                     (Iter, N.Child,
-                     Expand_Parent => Get_Attribute (N, "expanded") = "true");
+                     Expand_Parent =>
+                       Get_Attribute_S (N, "expanded") = "true");
                else
                   Append (Model, Dummy, Iter);
                   Model.Set (Dummy, Name_Column, Computing_Label);
@@ -1577,8 +1582,8 @@ package body Call_Graph_Views is
       end if;
 
       declare
-         Pos_Str : constant String := Get_Attribute (Callgraph, "position");
-         V_Type  : constant String := Get_Attribute (XML, "type");
+         Pos_Str : constant String := Get_Attribute_S (Callgraph, "position");
+         V_Type  : constant String := Get_Attribute_S (XML, "type");
       begin
          if Pos_Str /= "" then
             if Pos_Str (Pos_Str'Last) = '%' then

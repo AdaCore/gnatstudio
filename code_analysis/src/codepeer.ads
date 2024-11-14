@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                               GNAT Studio                                --
 --                                                                          --
---                     Copyright (C) 2008-2023, AdaCore                     --
+--                     Copyright (C) 2008-2024, AdaCore                     --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -48,7 +48,7 @@ package CodePeer is
    CPM_File         : Unbounded_String;
 
    function Is_GNATSAS return Boolean is (Current_Analyzer = GNATSAS_Exe);
-   function Module_Name return String is
+   function Module_Name return VSS.Strings.Virtual_String is
      (if Is_GNATSAS then "GNATSAS" else "CodePeer");
    function Package_Name return String is
      (if Is_GNATSAS then "gnatsas" else "codepeer");

@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                               GNAT Studio                                --
 --                                                                          --
---                     Copyright (C) 2001-2023, AdaCore                     --
+--                     Copyright (C) 2001-2024, AdaCore                     --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -16,6 +16,9 @@
 ------------------------------------------------------------------------------
 
 with Ada.Unchecked_Deallocation;
+
+with VSS.Strings.Conversions;
+
 with GPS.Kernel;                use GPS.Kernel;
 with GNATCOLL.Utils;            use GNATCOLL.Utils;
 with Glib.Convert;
@@ -502,13 +505,12 @@ package body Find_Utils is
 
    function Get_Search_Category_Name
      (Look_For    : String;
-      Interactive : Boolean) return String is
+      Interactive : Boolean) return VSS.Strings.Virtual_String is
    begin
       return
-        (if Interactive then
-            -"interactive search"
-         else -"Search for: ")
-        & Glib.Convert.Escape_Text (Look_For);
+        VSS.Strings.Conversions.To_Virtual_String
+          ((if Interactive then -"interactive search" else -"Search for: ")
+             & Glib.Convert.Escape_Text (Look_For));
    end Get_Search_Category_Name;
 
 end Find_Utils;

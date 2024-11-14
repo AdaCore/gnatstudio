@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                               GNAT Studio                                --
 --                                                                          --
---                     Copyright (C) 2008-2023, AdaCore                     --
+--                     Copyright (C) 2008-2024, AdaCore                     --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -44,6 +44,8 @@ private with CodePeer.Listeners;
 private with CodePeer.Reports;
 
 package CodePeer.Module is
+
+   use type VSS.Strings.Virtual_String;
 
    type Module_Id_Record
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class) is
@@ -127,7 +129,7 @@ package CodePeer.Module is
    function Get_Color
      (Ranking : CodePeer.Message_Ranking_Level) return Gdk.RGBA.Gdk_RGBA;
 
-   function CodePeer_Category_Name return String is
+   function CodePeer_Category_Name return VSS.Strings.Virtual_String is
       (CodePeer.Module_Name & ": messages");
    Race_Condition_Category : constant String := "race condition";
 

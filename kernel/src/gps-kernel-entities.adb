@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                               GNAT Studio                                --
 --                                                                          --
---                     Copyright (C) 2014-2023, AdaCore                     --
+--                     Copyright (C) 2014-2024, AdaCore                     --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -17,6 +17,9 @@
 
 with Ada.Containers.Indefinite_Doubly_Linked_Lists;
 with Ada.Unchecked_Deallocation;
+
+with VSS.Strings.Conversions;
+
 with Basic_Types;
 with Commands.Generic_Asynchronous; use Commands;
 with Glib.Convert;
@@ -90,7 +93,7 @@ package body GPS.Kernel.Entities is
    procedure Find_All_References_Internal
      (Kernel             : access Kernel_Handle_Record'Class;
       Info               : Root_Entity'Class;
-      Category_Title     : String;
+      Category_Title     : VSS.Strings.Virtual_String;
       Show_Caller        : Boolean;
       Filter             : in out Custom_Filter;
       Include_Overriding : Boolean := False);
@@ -104,7 +107,7 @@ package body GPS.Kernel.Entities is
       Entity             : Root_Entity'Class;
       Local_Only         : Boolean;
       Local_File         : GNATCOLL.VFS.Virtual_File;
-      All_From_Same_File : Boolean) return String;
+      All_From_Same_File : Boolean) return VSS.Strings.Virtual_String;
    --  Return the category title when doing a find all refs on a given entity.
    --  If All_From_Same_File is true, we will in fact list all entities
    --  imported form the same file as Entity.
@@ -167,7 +170,7 @@ package body GPS.Kernel.Entities is
       Filter             : Custom_Filter;
       Iter_Started       : Boolean;
       Show_Caller        : Boolean;
-      Category           : GNAT.Strings.String_Access;
+      Category           : VSS.Strings.Virtual_String;
       Include_Overriding : Boolean;
       Count              : Natural := 0;
    end record;
@@ -188,7 +191,7 @@ package body GPS.Kernel.Entities is
      (Kernel       : access Kernel_Handle_Record'Class;
       Ref          : Root_Entity_Reference'Class;
       Name         : String;
-      Category     : String;
+      Category     : VSS.Strings.Virtual_String;
       Show_Caller  : Boolean;
       Sort_In_File : Boolean);
    --  Display a reference in the locations tree, after looking for the
@@ -591,7 +594,7 @@ package body GPS.Kernel.Entities is
    begin
       Free (Data.Filter);
       Data.Iter.Reference.Destroy;
-      Free (Data.Category);
+      Data.Category.Clear;
    end Destroy_Idle;
 
    ---------------
@@ -602,7 +605,7 @@ package body GPS.Kernel.Entities is
      (Kernel       : access Kernel_Handle_Record'Class;
       Ref          : Root_Entity_Reference'Class;
       Name         : String;
-      Category     : String;
+      Category     : VSS.Strings.Virtual_String;
       Show_Caller  : Boolean;
       Sort_In_File : Boolean)
    is
@@ -674,7 +677,8 @@ package body GPS.Kernel.Entities is
          if At_End (Data.Iter.Element) then
             --  Inform user that finding is finished without results.
             Data.Kernel.Messages_Window.Insert_UTF8
-              ("No references found for " & Data.Category.all);
+              ("No references found for "
+               & VSS.Strings.Conversions.To_UTF_8_String (Data.Category));
             Result := Success;
             return;
          end if;
@@ -709,7 +713,7 @@ package body GPS.Kernel.Entities is
                     (Data.Kernel,
                      Ref,
                      (Get_Entity_Name (Ref)),
-                     Data.Category.all,
+                     Data.Category,
                      Show_Caller  => Data.Show_Caller,
                      Sort_In_File => False);
 
@@ -742,29 +746,35 @@ package body GPS.Kernel.Entities is
       Entity             : Root_Entity'Class;
       Local_Only         : Boolean;
       Local_File         : GNATCOLL.VFS.Virtual_File;
-      All_From_Same_File : Boolean) return String
+      All_From_Same_File : Boolean) return VSS.Strings.Virtual_String
    is
       pragma Unreferenced (Kernel);
       Decl : constant General_Location := Get_Declaration (Entity).Loc;
    begin
       if All_From_Same_File then
-         return -"Entities imported from "
-           & (+Decl.File.Base_Name)
-           & (-" into ")
-           & (+Local_File.Base_Name);
+         return
+           VSS.Strings.Conversions.To_Virtual_String
+             (-"Entities imported from "
+              & (+Decl.File.Base_Name)
+              & (-" into ")
+              & (+Local_File.Base_Name));
 
       elsif Local_Only then
-         return -"Local references for "
-           & Get_Name (Entity)
-           & " ("  & (+Decl.File.Base_Name)
-           & ":" & Image (Decl.Line) & ") " & (-"in ")
-           & (+Local_File.Base_Name);
+         return
+           VSS.Strings.Conversions.To_Virtual_String
+             (-"Local references for "
+              & Get_Name (Entity)
+              & " ("  & (+Decl.File.Base_Name)
+              & ":" & Image (Decl.Line) & ") " & (-"in ")
+              & (+Local_File.Base_Name));
 
       else
-         return -"References for "
-           & Get_Name (Entity)
-           & " ("  & (+Decl.File.Base_Name)
-           & ":" & Image (Decl.Line) & ")";
+         return
+           VSS.Strings.Conversions.To_Virtual_String
+             (-"References for "
+              & Get_Name (Entity)
+              & " ("  & (+Decl.File.Base_Name)
+              & ":" & Image (Decl.Line) & ")");
       end if;
    end All_Refs_Category;
 
@@ -775,7 +785,7 @@ package body GPS.Kernel.Entities is
    procedure Find_All_References_Internal
      (Kernel             : access Kernel_Handle_Record'Class;
       Info               : Root_Entity'Class;
-      Category_Title     : String;
+      Category_Title     : VSS.Strings.Virtual_String;
       Show_Caller        : Boolean;
       Filter             : in out Custom_Filter;
       Include_Overriding : Boolean := False)
@@ -792,7 +802,7 @@ package body GPS.Kernel.Entities is
             Data := (Kernel             => Kernel_Handle (Kernel),
                      Iter               => <>,
                      Filter             => Filter,
-                     Category           => new String'(Category_Title),
+                     Category           => Category_Title,
                      Iter_Started       => False,
                      Show_Caller        => Show_Caller,
                      Include_Overriding => Include_Overriding,
@@ -1093,14 +1103,15 @@ package body GPS.Kernel.Entities is
       Filter             : in out Custom_Filter;
       Include_Overriding : Boolean := False)
    is
-      Title       : constant String := All_Refs_Category
-        (Entity             => Entity,
-         Kernel             => Kernel,
-         Local_Only         => Locals_Only,
-         Local_File         => Local_File,
-         All_From_Same_File => All_From_Same_File);
-      Decl : constant General_Location := Get_Declaration (Entity).Loc;
-      Decl2 : General_Location;
+      Title       : constant VSS.Strings.Virtual_String :=
+        All_Refs_Category
+          (Entity             => Entity,
+           Kernel             => Kernel,
+           Local_Only         => Locals_Only,
+           Local_File         => Local_File,
+           All_From_Same_File => All_From_Same_File);
+      Decl        : constant General_Location := Get_Declaration (Entity).Loc;
+      Decl2       : General_Location;
       Entity_Decl : constant Virtual_File := Decl.File;
       Iter2       : Entities_In_File_Cursor;
       Message     : Simple_Message_Access;

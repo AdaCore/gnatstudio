@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                               GNAT Studio                                --
 --                                                                          --
---                     Copyright (C) 2008-2023, AdaCore                     --
+--                     Copyright (C) 2008-2024, AdaCore                     --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -19,6 +19,8 @@ with Ada.Containers.Doubly_Linked_Lists;
 with Ada.Unchecked_Deallocation;
 
 with GNAT.OS_Lib;               use GNAT.OS_Lib;
+
+with VSS.Strings.Conversions;
 
 with Gtk.Handlers;
 with Gtk.Menu;                  use Gtk.Menu;
@@ -307,7 +309,7 @@ package body Builder_Facility_Module is
 
    procedure Clear_Compilation_Output
      (Kernel          : Kernel_Handle;
-      Category        : String;
+      Category        : VSS.Strings.Virtual_String;
       Clear_Console   : Boolean;
       Clear_Locations : Boolean;
       Shadow          : Boolean;
@@ -928,7 +930,7 @@ package body Builder_Facility_Module is
 
    procedure Clear_Compilation_Output
      (Kernel          : Kernel_Handle;
-      Category        : String;
+      Category        : VSS.Strings.Virtual_String;
       Clear_Console   : Boolean;
       Clear_Locations : Boolean;
       Shadow          : Boolean;
@@ -1054,7 +1056,8 @@ package body Builder_Facility_Module is
 
       Clear_Compilation_Output
         (Kernel_Handle (Kernel),
-         Category        => Category,
+         Category        =>
+           VSS.Strings.Conversions.To_Virtual_String (Category),
          Clear_Console   =>
             not Preserve_Output
               and then not Quiet
@@ -1385,7 +1388,7 @@ package body Builder_Facility_Module is
       T          : Target_Access;
 
    begin
-      Model_Name := To_Unbounded_String (Get_Attribute (XML, "model", ""));
+      Model_Name := To_Unbounded_String (Get_Attribute_S (XML, "model", ""));
 
       --  Sanity check
       if Model_Name = "" then

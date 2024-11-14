@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                               GNAT Studio                                --
 --                                                                          --
---                     Copyright (C) 2001-2023, AdaCore                     --
+--                     Copyright (C) 2001-2024, AdaCore                     --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -20,6 +20,9 @@ with Ada.Containers.Indefinite_Hashed_Maps;
 with Ada.Strings.Hash;
 with Ada.Strings.Fixed;
 with Ada.Unchecked_Deallocation;
+
+with VSS.Strings;
+
 with GNATCOLL.JSON;
 with GNATCOLL.Projects;                use GNATCOLL.Projects;
 with GNATCOLL.Traces;                  use GNATCOLL.Traces;
@@ -56,7 +59,7 @@ package body GPS.Kernel.Project is
      Create ("GPS.INTERNAL.PROJECTS_MISSING_DIRS_WARNING",
              Default => Off);
 
-   Location_Category : constant String := "Project";
+   Location_Category : constant VSS.Strings.Virtual_String := "Project";
    --  Category uses in the Location window for errors related to loading the
    --  project file
    Location_Message_Flags : constant Message_Flags :=

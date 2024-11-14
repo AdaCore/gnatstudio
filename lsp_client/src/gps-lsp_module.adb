@@ -424,7 +424,8 @@ package body GPS.LSP_Module is
       File   : Virtual_File) return Language_Server_Access;
    --  Return the running server supporting File if it exists, or null
 
-   Diagnostics_Messages_Category_Prefix : constant String := "Diagnostics";
+   Diagnostics_Messages_Category_Prefix :
+     constant VSS.Strings.Virtual_String := "Diagnostics";
 
    -----------------------
    -- Share_Same_Server --
@@ -1139,11 +1140,9 @@ package body GPS.LSP_Module is
         Self.Get_Kernel.Get_Messages_Container;
    begin
       for Category of Container.Get_Categories loop
-         if GNATCOLL.Utils.Starts_With
-           (To_String (Category), Diagnostics_Messages_Category_Prefix)
-         then
+         if Category.Starts_With (Diagnostics_Messages_Category_Prefix) then
             Container.Remove_File
-              (Category => To_String (Category),
+              (Category => Category,
                File     => File,
                Flags    => Get_Diagnostics_Message_Flags);
          end if;
@@ -1386,6 +1385,7 @@ package body GPS.LSP_Module is
 
       for Diagnostic of Params.diagnostics loop
          declare
+            use type VSS.Strings.Virtual_String;
             use type VSS.Unicode.UTF16_Code_Unit_Count;
 
             Location : constant GPS.Editors.Editor_Location'Class :=
@@ -1398,13 +1398,12 @@ package body GPS.LSP_Module is
                   Side_And_Locations
                else
                  Get_Diagnostics_Message_Flags);
-            Category   : constant String := (if Diagnostic.source.Is_Set then
-               Diagnostics_Messages_Category_Prefix
-                 & ": " & VSS.Strings.Conversions.To_UTF_8_String
-                 (Diagnostic.source.Value)
-            else
-               Diagnostics_Messages_Category_Prefix);
-            M : constant Simple_Message_Access :=
+            Category   : constant VSS.Strings.Virtual_String :=
+              (if Diagnostic.source.Is_Set
+                 then Diagnostics_Messages_Category_Prefix
+                        & ": " & Diagnostic.source.Value
+                 else Diagnostics_Messages_Category_Prefix);
+            M          : constant Simple_Message_Access :=
               GPS.Kernel.Messages.Simple.Create_Simple_Message
                 (Container    => Container,
                  Category     => Category,

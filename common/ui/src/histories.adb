@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                               GNAT Studio                                --
 --                                                                          --
---                     Copyright (C) 2002-2023, AdaCore                     --
+--                     Copyright (C) 2002-2024, AdaCore                     --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -272,23 +272,24 @@ package body Histories is
          while Key /= null loop
             begin
                if Key.Attributes = null
-                 or else Get_Attribute (Key, Type_Name) = Strings_Name
+                 or else Get_Attribute_S (Key, Type_Name) = Strings_Name
                then
                   Value := Create_New_Key_If_Necessary
                     (Hist,
-                     History_Key (Get_Attribute (Key, Name_Name)),
+                     History_Key (Get_Attribute_S (Key, Name_Name)),
                      Strings);
 
-               elsif Get_Attribute (Key, Type_Name) = Booleans_Name then
+               elsif Get_Attribute_S (Key, Type_Name) = Booleans_Name then
                   Value := Create_New_Key_If_Necessary
-                    (Hist, History_Key (Get_Attribute (Key, Name_Name)),
+                    (Hist,
+                     History_Key (Get_Attribute_S (Key, Name_Name)),
                      Booleans);
 
                else
                   Value := null;
                   Trace (Me, "Invalid data type in "
                          & File_Name.Display_Full_Name
-                         & " : " & Get_Attribute (Key, Type_Name));
+                         & " : " & Get_Attribute_S (Key, Type_Name));
                end if;
 
             exception
@@ -384,11 +385,11 @@ package body Histories is
 
          Key := new Node;
          Key.Tag := new String'("key");
-         Set_Attribute (Key, Name_Name, Get_Key (Iter));
+         Set_Attribute_S (Key, Name_Name, Get_Key (Iter));
 
          case Value.Typ is
             when Strings =>
-               Set_Attribute (Key, Type_Name, Strings_Name);
+               Set_Attribute_S (Key, Type_Name, Strings_Name);
 
                if Value.Max_Length /= -1 then
                   N := new Node;
@@ -407,7 +408,7 @@ package body Histories is
                end if;
 
             when Booleans =>
-               Set_Attribute (Key, Type_Name, Booleans_Name);
+               Set_Attribute_S (Key, Type_Name, Booleans_Name);
                N := new Node;
                N.Tag := new String'(Value_Name);
                N.Value := new String'(Boolean'Image (Value.Value));

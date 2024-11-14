@@ -215,9 +215,11 @@ package body GPS.Project_Properties is
       -----------------------------------
 
       procedure Parse_Mutually_Exclusive_Node (Parent : Node_Ptr) is
-         Name      : constant String := Get_Attribute (Parent, "name");
-         Desc      : constant String := Get_Attribute (Parent, "description");
-         Page_Name : constant String := Get_Attribute (Parent, "editor_page");
+         Name      : constant String := Get_Attribute_S (Parent, "name");
+         Desc      : constant String :=
+           Get_Attribute_S (Parent, "description");
+         Page_Name : constant String :=
+           Get_Attribute_S (Parent, "editor_page");
          Page      : constant Attribute_Page :=
                        Find_Editor_Page_By_Name (Module, Page_Name);
          Section   : Attribute_Page_Section;
@@ -241,7 +243,7 @@ package body GPS.Project_Properties is
                   Mode => Error);
 
                return False;
-            elsif Get_Attribute (Child, "editor_page") /= Page_Name then
+            elsif Get_Attribute_S (Child, "editor_page") /= Page_Name then
                Module.Kernel.Messages_Window.Insert
                  (-("<mutually_exclusive> children ""editor_page"" attribute "
                     & "should be equal to their parent's one"),
@@ -302,13 +304,13 @@ package body GPS.Project_Properties is
          Page      : constant Attribute_Page :=
                        Find_Editor_Page_By_Name
                          (Module,
-                          Name => Get_Attribute (Parent, "editor_page"));
+                          Name => Get_Attribute_S (Parent, "editor_page"));
          Section   : constant Attribute_Page_Section :=
                        Find_Editor_Section_By_Name
                          (Page => Page,
-                          Name => Get_Attribute (Parent, "editor_section"));
-         Name      : String := Get_Attribute (Parent, "name");
-         Pkg       : String := Get_Attribute (Parent, "package");
+                          Name => Get_Attribute_S (Parent, "editor_section"));
+         Name      : String := Get_Attribute_S (Parent, "name");
+         Pkg       : String := Get_Attribute_S (Parent, "package");
          Indexed   : constant Boolean := Parent.Child /= null
            and then (Parent.Child.Tag.all = "index"
                      or else Parent.Child.Tag.all = "specialized_index");
@@ -972,28 +974,28 @@ package body GPS.Project_Properties is
       A      : Attribute_Description_Access)
    is
       Descr                : constant String :=
-                               Get_Attribute (N, "description");
+                               Get_Attribute_S (N, "description");
       Label                : constant String :=
-                               Get_Attribute (N, "label", A.Name.all);
+                               Get_Attribute_S (N, "label", A.Name.all);
       Is_List              : constant String :=
-                               Get_Attribute (N, "list", "false");
+                               Get_Attribute_S (N, "list", "false");
       Ordered              : constant String :=
-                               Get_Attribute (N, "ordered", "false");
+                               Get_Attribute_S (N, "ordered", "false");
       Case_Sensitive_Index : constant String :=
-                               Get_Attribute
+                               Get_Attribute_S
                                  (N, "case_sensitive_index", "false");
       Omit                 : constant String :=
-                               Get_Attribute (N, "omit_if_default", "false");
+                               Get_Attribute_S (N, "omit_if_default", "false");
       Base                 : constant String :=
-                               Get_Attribute (N, "base_name_only", "false");
+                               Get_Attribute_S (N, "base_name_only", "false");
       Indexed              : constant Boolean :=
                                N.Child /= null
                                    and then (N.Child.Tag.all = "index"
                                              or else N.Child.Tag.all =
                                                "specialized_index");
-      Hide_In              : constant String := Get_Attribute (N, "hide_in");
+      Hide_In              : constant String := Get_Attribute_S (N, "hide_in");
       Disable_If_Not_Set   : constant String :=
-                               Get_Attribute
+                               Get_Attribute_S
                                  (N, "disable_if_not_set", "false");
       Child                : Node_Ptr;
 
@@ -1083,15 +1085,15 @@ package body GPS.Project_Properties is
          while Child /= null loop
             if Child.Tag.all = "index" then
                A.Index_Attribute := new String'
-                 (Get_Attribute (Child, "attribute"));
+                 (Get_Attribute_S (Child, "attribute"));
                To_Lower (A.Index_Attribute.all);
                A.Index_Package := new String'
-                 (Get_Attribute (Child, "package"));
+                 (Get_Attribute_S (Child, "package"));
                To_Lower (A.Index_Package.all);
                Parse_Indexed_Type ("");
 
             elsif Child.Tag.all = "specialized_index" then
-               Parse_Indexed_Type (Get_Attribute (Child, "value"));
+               Parse_Indexed_Type (Get_Attribute_S (Child, "value"));
             end if;
 
             Child := Child.Next;
@@ -1126,14 +1128,14 @@ package body GPS.Project_Properties is
       elsif Child.Tag.all = "string" then
          declare
             Typ         : constant String :=
-              Get_Attribute (Child, "type");
+              Get_Attribute_S (Child, "type");
             Default     : constant String :=
-              Get_Attribute (Child, "default");
+              Get_Attribute_S (Child, "default");
             Allow_Empty : constant Boolean :=
               Boolean'Value
-                (Get_Attribute (Child, "allow_empty", "True"));
+                (Get_Attribute_S (Child, "allow_empty", "True"));
             Filter_Attr : constant String :=
-              Get_Attribute (Child, "filter", "none");
+              Get_Attribute_S (Child, "filter", "none");
             Filter      : File_Filter := Filter_None;
 
          begin
@@ -1218,8 +1220,8 @@ package body GPS.Project_Properties is
          loop
             A.Static_List (Choice_Count) := new String'(Child2.Value.all);
             A.Static_Default (Choice_Count) :=
-              Get_Attribute (Child2, "default") = "true"
-              or else Get_Attribute (Child2, "default") = "1";
+              Get_Attribute_S (Child2, "default") = "true"
+              or else Get_Attribute_S (Child2, "default") = "1";
             Choice_Count := Choice_Count + 1;
             Child2 := Child2.Next;
          end loop;
@@ -1230,9 +1232,9 @@ package body GPS.Project_Properties is
             Dynamic_Allows_Any_String => Child.Next /= null
             and then Child.Next.Tag.all = "string",
             Dynamic_Default           =>
-            new String'(Get_Attribute (Child, "default")),
+            new String'(Get_Attribute_S (Child, "default")),
             Dynamic_List_Lang         => new String'
-              (Get_Attribute (Child, "lang", "shell")),
+              (Get_Attribute_S (Child, "lang", "shell")),
             Dynamic_List_Cmd          => new String'(Child.Value.all));
 
          if Child.Next /= null

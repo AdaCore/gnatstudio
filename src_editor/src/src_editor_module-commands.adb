@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                               GNAT Studio                                --
 --                                                                          --
---                     Copyright (C) 2013-2023, AdaCore                     --
+--                     Copyright (C) 2013-2024, AdaCore                     --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -19,6 +19,8 @@ with Ada.Calendar;                use Ada.Calendar;
 with Ada.Containers.Ordered_Sets;
 with Ada.Strings.Unbounded;       use Ada.Strings.Unbounded;
 with GNAT.Calendar.Time_IO;
+
+with VSS.Strings.Conversions;
 
 with GNATCOLL.Projects;           use GNATCOLL.Projects;
 with GNATCOLL.Traces;             use GNATCOLL.Traces;
@@ -441,7 +443,8 @@ package body Src_Editor_Module.Commands is
       begin
          Create_Simple_Message
            (Get_Messages_Container (Kernel),
-            -"Type Hierarchy for " & Name,
+            VSS.Strings.Conversions.To_Virtual_String
+              (-"Type Hierarchy for " & Name),
             Loc.File,
             Loc.Line,
             Loc.Column,

@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                               GNAT Studio                                --
 --                                                                          --
---                     Copyright (C) 2003-2023, AdaCore                     --
+--                     Copyright (C) 2003-2024, AdaCore                     --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -272,7 +272,8 @@ package Refactoring.Services is
      (Context  : not null access Factory_Context_Record'Class;
       In_File  : GNATCOLL.VFS.Virtual_File;
       Decl     : String;
-      Category : String := "");
+      Category : VSS.Strings.Virtual_String :=
+        VSS.Strings.Empty_Virtual_String);
    --  Insert the subprogram declaration in In_File at an appropriate place.
    --  If Category is specified, Report_Location is called for the context to
    --  report the change to the user.
@@ -283,7 +284,8 @@ package Refactoring.Services is
       Name        : String;
       Code        : String;
       Before_Line : Integer := Integer'Last;
-      Category    : String := "");
+      Category    : VSS.Strings.Virtual_String :=
+        VSS.Strings.Empty_Virtual_String);
    --  Insert the body for a subprogram at an appropriate location in In_File.
    --  If Before_Line is specified, the insertion must occur before that line.
    --  Name is the name of the subprogram (so that we can possibly insert a
