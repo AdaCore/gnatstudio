@@ -355,13 +355,13 @@
                   action="coverage clear from memory"/>
          </menu>
 
-         <menu label="_Metrics">
+         <menu label="_Metrics" optional="true">
             <menu label="Compute Metrics on Current _File"
-                  action="gnat metric on current file"/>
+                  action="gnat metric on current file" optional="true"/>
             <menu label="Compute Metrics on Current P_roject"
-                  action="gnat metric on current project"/>
+                  action="gnat metric on current project" optional="true"/>
             <menu label="Compute Metrics on Current Project &amp; _Subprojects"
-                  action="gnat metric on current project and subprojects"/>
+                  action="gnat metric on current project and subprojects" optional="true"/>
          </menu>
 
          <menu label="Stac_k Analysis">
