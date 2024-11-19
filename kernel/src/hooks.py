@@ -1182,6 +1182,7 @@ Emitted when a new marker is added to the history list of previous
 locations, where the user can navigate backwards and forwards.""",
     ),
     Hook("message_selected", "message_hooks"),
+    Hook("message_created", "message_hooks"),
     Hook(
         "mdi_child_selected",
         "mdi_child_hooks",

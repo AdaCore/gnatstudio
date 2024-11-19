@@ -1875,6 +1875,8 @@ package body GPS.Kernel.Messages is
             end;
          end loop;
 
+         GPS.Kernel.Hooks.Message_Created_Hook.Run (Self.Kernel, Message);
+
          Unlock (Self);
       end Notify_Listeners_About_Message_Added;
 
