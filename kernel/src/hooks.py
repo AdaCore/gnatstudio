@@ -1374,7 +1374,7 @@ Request to highlight range of text in given file.""",
         "clear_highlighting",
         "file_hooks",
         descr="""
-Emitted when highlighting styles should be removed in given file.""",
+Request to remove the highlighting in the given file.""",
     ),
     Hook(
         "vcs_file_status_changed",

@@ -49,6 +49,7 @@ with Commands;                        use Commands;
 with GPS.Editors;                     use GPS.Editors;
 with GPS.Editors.Line_Information;    use GPS.Editors.Line_Information;
 with GPS.Kernel;
+with GPS.Kernel.Preferences;
 with GPS.Kernel.Style_Manager;        use GPS.Kernel.Style_Manager;
 with GPS.Kernel.Messages.References;  use GPS.Kernel.Messages.References;
 with Language.Tree;
@@ -1607,7 +1608,8 @@ private
       Lang          : Language.Language_Access;
       Highlighter   : Source_Highlighter;
 
-      LSP_Highlighting : Boolean := False;
+      LSP_Highlighting : GPS.Kernel.Preferences.External_Highlighting :=
+        GPS.Kernel.Preferences.None;
       --  Whether we use LSP highlighter
 
       Hidden_Text_Tag : Gtk.Text_Tag.Gtk_Text_Tag;

@@ -77,7 +77,7 @@ variant_prefs = {
     "functions": "LSP-Semantic-Function",
     "modifiers": "LSP-Semantic-Modifier",
     "operators": "LSP-Semantic-Operator",
-    "lsp_missings": "LSP-Semantic-Missing",
+    "deprecateds": "LSP-Semantic-Deprecated",
 }
 # These keys are interpreted as variant preferences
 # Keys: our internal easy-to-remember key; values: current names of GPS prefs
@@ -316,7 +316,7 @@ common_light = {
     "functions": ("DEFAULT", Color("#b500f5"), transparent),
     "modifiers": ("DEFAULT", Color("#00873f"), transparent),
     "operators": ("DEFAULT", Color("#005427"), transparent),
-    "lsp_missings": ("DEFAULT", Color("#ff0000"), transparent),
+    "deprecateds": ("DEFAULT", Color("#ff0000"), transparent),
 }
 
 common_dark = {
@@ -389,7 +389,7 @@ common_dark = {
     "functions": ("DEFAULT", Color("#DCDCAA"), transparent),
     "modifiers": ("DEFAULT", Color("#569cd6"), transparent),
     "operators": ("DEFAULT", Color("#C586C0"), transparent),
-    "lsp_missings": ("DEFAULT", Color("#ff0000"), transparent),
+    "deprecateds": ("DEFAULT", Color("#ff0000"), transparent),
 }
 
 

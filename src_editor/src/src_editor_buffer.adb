@@ -3410,9 +3410,10 @@ package body Src_Editor_Buffer is
       Pref   : Preference)
    is
       pragma Unreferenced (Kernel, Pref);
-      B            : constant Source_Buffer := Self.Buffer;
-      Prev         : Boolean;
-      Prev_Folding : Folding_Preferences_Values;
+      B                 : constant Source_Buffer := Self.Buffer;
+      Prev              : Boolean;
+      Prev_Highlighting : GPS.Kernel.Preferences.External_Highlighting;
+      Prev_Folding      : Folding_Preferences_Values;
 
    begin
       --  Connect timeout, to handle automatic saving of buffer
@@ -3426,9 +3427,9 @@ package body Src_Editor_Buffer is
          Register_Edit_Timeout (B);
       end if;
 
-      Prev := B.LSP_Highlighting;
-      B.LSP_Highlighting := Use_LSP_In_Highlight.Get_Pref;
-      if Prev /= B.LSP_Highlighting then
+      Prev_Highlighting := B.LSP_Highlighting;
+      B.LSP_Highlighting := Use_External_Highlighting.Get_Pref;
+      if Prev_Highlighting /= B.LSP_Highlighting then
          Register_Edit_Timeout (B);
       end if;
 
@@ -8330,9 +8331,7 @@ package body Src_Editor_Buffer is
       Self.Use_Highlighting_Hook :=
         Self.Buffer.Lang /= null
           and then Self.Buffer.Lang.Get_Name = "Ada"
-          and then
-            (Use_LAL_In_Highlight.Get_Pref
-             or else Use_LSP_In_Highlight.Get_Pref);
+          and then Use_External_Highlighting.Get_Pref /= None;
 
       if Prev /= Self.Use_Highlighting_Hook
         and then Prev

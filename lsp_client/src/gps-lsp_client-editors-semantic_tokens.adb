@@ -50,6 +50,9 @@ package body GPS.LSP_Client.Editors.Semantic_Tokens is
 
    Me : constant Trace_Handle := Create ("GPS.LSP.SEMANTIC_TOKENS", On);
 
+   LSP_Deprecated_Style_Name : constant String := "deprecated";
+   --  Used as a depricated style name
+
    --------------------
    -- Hooks_Function --
    --------------------
@@ -158,7 +161,7 @@ package body GPS.LSP_Client.Editors.Semantic_Tokens is
    --  Remove highlighting from the buffer
 
    function Get_Style_Name (T : LSP.Messages.SemanticTokenTypes) return String;
-   --  Convert SemanticTokenTypes to the style name. Returns `lsp_missing` if
+   --  Convert SemanticTokenTypes to the style name. Returns empty string if
    --  corresponding style name does not exist.
 
    function Get_Style
@@ -166,7 +169,7 @@ package body GPS.LSP_Client.Editors.Semantic_Tokens is
       Token_Modifiers : LSP.Messages.uinteger;
       Legend          : LSP.Messages.SemanticTokensLegend)
       return String;
-   --  Convert Token_Type to the style name. Returns `lsp_missing` if
+   --  Convert Token_Type to the style name. Returns empty string if
    --  corresponding style name does not exist.
 
    type Modifiers_Array is array (SemanticTokenModifiers) of Boolean;
@@ -335,9 +338,11 @@ package body GPS.LSP_Client.Editors.Semantic_Tokens is
    overriding procedure Execute
      (Self   : On_File_Edited_Or_Reloaded;
       Kernel : not null access Kernel_Handle_Record'Class;
-      File   : Virtual_File) is
+      File   : Virtual_File)
+   is
+      use GPS.Kernel.Preferences;
    begin
-      if GPS.Kernel.Preferences.Use_LSP_In_Highlight.Get_Pref then
+      if Use_External_Highlighting.Get_Pref = GPS.Kernel.Preferences.LSP then
          if not Send_Request (Kernel, (File, 0, 0)) then
             Store_Request ((File, 0, 0));
          end if;
@@ -356,9 +361,10 @@ package body GPS.LSP_Client.Editors.Semantic_Tokens is
       To_Line   : Integer)
    is
       pragma Unreferenced (Self);
+      use GPS.Kernel.Preferences;
 
    begin
-      if GPS.Kernel.Preferences.Use_LSP_In_Highlight.Get_Pref then
+      if Use_External_Highlighting.Get_Pref = GPS.Kernel.Preferences.LSP then
          if not Send_Request (Kernel, (File, From_Line, To_Line)) then
             Store_Request ((File, From_Line, To_Line));
          end if;
@@ -510,7 +516,7 @@ package body GPS.LSP_Client.Editors.Semantic_Tokens is
       end loop;
 
       if Modifiers (deprecated) then
-         return "lsp_missing";
+         return LSP_Deprecated_Style_Name;
 
       else
          return Check_Style_Name
@@ -771,7 +777,7 @@ package body GPS.LSP_Client.Editors.Semantic_Tokens is
           (Module.Get_Kernel).List_Styles;
 
    begin
-      Remove ("lsp_missing");
+      Remove (LSP_Deprecated_Style_Name);
 
       for J in SemanticTokenTypes'Range loop
          declare
