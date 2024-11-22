@@ -72,16 +72,13 @@ def test_driver():
 
     debug.break_at_exception(False)
     yield wait_DAP_server("setExceptionBreakpoints")
-    yield wait_until_not_busy(debug)
     yield wait_idle()
 
     debug.send("cont")
     yield wait_DAP_server("stackTrace")
-    yield wait_until_not_busy(debug)
     yield wait_idle()
 
     debug.send("frame 7")
-    yield wait_until_true(lambda: debug.current_line != 460)
     yield wait_until_not_busy(debug)
     yield wait_idle()
 
