@@ -1,3 +1,5 @@
+#include <stdlib.h>
+#include <string.h>
 
 void
 foo () {}
@@ -40,7 +42,7 @@ main () {
   /* Note: the following lines are indented with tabs (ASCII.HT), instead of
      spaces, so that we can easily test that feature.
 	<->	The tab in this comment is also intended as a test. */	int t;
-  
+
 	int   A	= 1;
 	float B  = 2.0;
 	char  C  = 'A';
@@ -111,10 +113,10 @@ main () {
     } c;
     int d;
     int e;  /* different number of fields in internal and external structs. */
-    int f; 
+    int f;
   };
   struct My_Record_Of_Record2 Mror2 = {{1, &A}, 2, 3, 4};
-  
+
   /* Record of unions */
   struct My_Record_Of_Unions {
     union {
@@ -160,7 +162,7 @@ main () {
     float field2;
   };
   struct My_Record_With_Union Mrwu = {Uni, 3.4};
-  
+
   /* Access to subprograms */
   void (*as) () = foo;
 
@@ -200,7 +202,7 @@ main () {
   struct _test_volatile {
   union{
     volatile struct
-    {  
+    {
        int xx;
     } x;
       int y;
@@ -209,23 +211,23 @@ main () {
 
   list.chain = (union tree_node *) malloc (sizeof (union tree_node));
   list.chain->common = list;
-  
+
   tv.tv_sec  = 1100 / 1000;
   tv.tv_usec = (1100 % 1000) * 1000;
 
   /* Initialize to 0 so that test_parse_c gives reliable results */
   memset (&Uni2, 0, sizeof (Uni2));
   memset (&Uni3, 0, sizeof (Uni3));
-  
+
   Uni2.a = V;
   Uni3.b = 2;
 
   memset (S4, 'a', 1024);
   memset (S4 + 50, 'b', 100);
   memset (S4 + 100, 'c', 100);
- 
+
   test_volatile.u.y = 12;
-  
+
   func_string ("aa");
   foo ();
   case_func ('\"');
