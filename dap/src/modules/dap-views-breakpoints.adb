@@ -1390,9 +1390,11 @@ package body DAP.Views.Breakpoints is
 
    overriding procedure Update (View : not null access Breakpoint_View_Record)
    is
-      Client  : constant DAP.Clients.DAP_Client_Access :=
+      use type DAP.Clients.Breakpoint_Managers.Breakpoint_Manager_Access;
+
+      Client : constant DAP.Clients.DAP_Client_Access :=
         DAP.Module.Get_Current_Debugger;
-      Model   : constant Gtk_Tree_Store := -Get_Model (View.List);
+      Model  : constant Gtk_Tree_Store := -Get_Model (View.List);
    begin
       Clear (Model);
 
@@ -1405,7 +1407,8 @@ package body DAP.Views.Breakpoints is
          for Data of DAP.Module.Breakpoints.Get_Persistent_Breakpoints loop
             View.Update_Breakpoint (Data);
          end loop;
-      else
+
+      elsif Client.Get_Breakpoints_Manager /= null then
          Trace
            (Me, "Add"
             & Client.Get_Breakpoints_Manager.Get_Breakpoints.Length'Img
