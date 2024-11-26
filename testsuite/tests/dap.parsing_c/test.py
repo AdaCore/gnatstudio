@@ -24,6 +24,11 @@ def get_children(var):
     if var is not None:
         promise = promises.DebuggerVariableWrapper(var)
         children = yield promise.children()
+        if children.is_error:
+            simple_error("get_children error:" + children.error_message)
+        elif children.is_reject:
+            simple_error("get_children rejected")
+
         yield children
 
 
@@ -46,10 +51,6 @@ def check(promise, name, type, value, pattern=False):
         simple_error(name + " rejected")
 
     yield var
-
-
-def check_simple(debug, name, type, value, description, pattern=False, var=None):
-    return var
 
 
 @run_test_driver
