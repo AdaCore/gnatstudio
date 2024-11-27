@@ -284,6 +284,7 @@ package body CodePeer.Module.Actions is
      (Self    : access Baseline_Bump_Command;
       Context : Interactive_Command_Context) return Command_Return_Type is
    begin
+      Module.Action := Report;
       CodePeer.Shell_Commands.Build_Target_Execute
         (Kernel_Handle (Module.Kernel),
          CodePeer.Shell_Commands.Build_Target
@@ -309,7 +310,7 @@ package body CodePeer.Module.Actions is
           (Context   => Context,
            Target_ID => "GNATSAS Baseline Set Baseline",
            Title     => "Select New Baseline",
-           Action    => None);
+           Action    => Report);
    end Execute;
 
    -------------
@@ -325,7 +326,7 @@ package body CodePeer.Module.Actions is
           (Context   => Context,
            Target_ID => "GNATSAS Baseline Set Current",
            Title     => "Select Run To Replace Current Run",
-           Action    => None);
+           Action    => Report);
    end Execute;
 
    -------------
