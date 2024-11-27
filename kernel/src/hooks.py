@@ -1371,6 +1371,12 @@ Emitted when the semantic_tree for a file has been updated.""",
 Request to highlight range of text in given file.""",
     ),
     Hook(
+        "clear_highlighting",
+        "file_hooks",
+        descr="""
+Request to remove the highlighting in the given file.""",
+    ),
+    Hook(
         "vcs_file_status_changed",
         "vcs_file_status_hooks",
         descr="""

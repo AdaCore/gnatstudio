@@ -116,7 +116,7 @@ package body GPS.Default_Styles is
          (To_Unbounded_String ("function"), LSP_Function_Style),
          (To_Unbounded_String ("modifier"), LSP_Modifier_Style),
          (To_Unbounded_String ("operator"), LSP_Operator_Style),
-         (To_Unbounded_String ("lsp_missing"), LSP_Missing_Style));
+         (To_Unbounded_String ("deprecated"), LSP_Deprecated_Style));
 
       All_Styles : constant array (1 .. 18) of LSP_Styles_Data :=
         ((To_Unbounded_String ("namespace"), LSP_Namespace_Style),
