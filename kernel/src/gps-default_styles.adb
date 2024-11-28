@@ -33,8 +33,9 @@ package body GPS.Default_Styles is
      (Self   : On_Pref_Changed;
       Kernel : not null access Kernel_Handle_Record'Class;
       Pref   : Default_Preferences.Preference);
-   --  Called when the preferences have changed to update "synthetic"
-   --  preferences that based on another
+   --  Called when the preferences have changed to update preferences that
+   --  are used for semantic highlighting and created based on another
+   --  preferences.
 
    type LSP_Styles_Data is record
       Name : Ada.Strings.Unbounded.Unbounded_String;
@@ -42,28 +43,14 @@ package body GPS.Default_Styles is
    end record;
 
    All_Styles : array (1 .. 18) of LSP_Styles_Data;
-
-   LSP_Namespace_Style_Pos     : constant := 1;
-   Types_Style_Pos             : constant := 2;
-   LSP_Class_Style_Pos         : constant := 3;
-   LSP_Enum_Style_Pos          : constant := 4;
-   LSP_Interface_Style_Pos     : constant := 5;
-   LSP_Struct_Style_Pos        : constant := 6;
-   LSP_TypeParameter_Style_Pos : constant := 7;
-   LSP_Parameter_Style_Pos     : constant := 8;
-   LSP_Variable_Style_Pos      : constant := 9;
-   LSP_Property_Style_Pos      : constant := 10;
-   LSP_EnumMember_Style_Pos    : constant := 11;
-   LSP_Function_Style_Pos      : constant := 12;
-   Keywords_Style_Pos          : constant := 13;
-   LSP_Modifier_Style_Pos      : constant := 14;
-   Comments_Style_Pos          : constant := 15;
-   Strings_Style_Pos           : constant := 16;
-   Numbers_Style_Pos           : constant := 17;
-   LSP_Operator_Style_Pos      : constant := 18;
+   --  All styles that used by semantic highlihgting
 
    LSP_Styles : array (1 .. 14) of LSP_Styles_Data;
+   --  Exclusive LSP styles for semantic highlighting that are not used
+   --  anywhere else.
 
+   --  Styles' arrays for semantic tokens + modifiers, for example
+   --  Variable + Read_only
    type LSP_Synthetic_Pref_Array is array (All_Styles'Range) of Style_Access;
 
    LSP_Semantic_Readonly_Styles       : LSP_Synthetic_Pref_Array;
@@ -416,53 +403,7 @@ package body GPS.Default_Styles is
       Style : Style_Access;
 
       procedure Update_Prefs (Arr : LSP_Synthetic_Pref_Array);
-      procedure Update_Prefs (Index : Positive);
       --  Update preferences based on the changed one
-
-      ------------------
-      -- Update_Prefs --
-      ------------------
-
-      procedure Update_Prefs (Index : Positive) is
-         procedure Update (Arr : LSP_Synthetic_Pref_Array);
-
-         ------------
-         -- Update --
-         ------------
-
-         procedure Update (Arr : LSP_Synthetic_Pref_Array) is
-         begin
-            Arr (Index).Set_Foreground (Style.Foreground);
-            Arr (Index).Set_Background (Style.Background);
-         end Update;
-
-      begin
-         Style := M.Get (Style_Key (To_String (All_Styles (Index).Name)));
-
-         --  *-declaration
-         Update (LSP_Semantic_Declaration_Styles);
-
-         --  *-definition
-         Update (LSP_Semantic_Definition_Styles);
-
-         --  *-abstract
-         Update (LSP_Semantic_Abstract_Styles);
-
-         --  *-static
-         Update (LSP_Semantic_Static_Styles);
-
-         --  *-documentation
-         Update (LSP_Semantic_Documentation_Styles);
-
-         --  *-defaultlibrary
-         Update (LSP_Semantic_Defaultlibrary_Styles);
-
-         --  *-readonly
-         LSP_Semantic_Readonly_Styles (Index).Set_Foreground
-           (Style.Foreground);
-         LSP_Semantic_Readonly_Styles (Index).Set_Background
-           (LSP_Readonly_Bg.Get_Pref);
-      end Update_Prefs;
 
       ------------------
       -- Update_Prefs --
@@ -479,25 +420,13 @@ package body GPS.Default_Styles is
 
    begin
       if Pref = null then
-         --  *-declaration
          Update_Prefs (LSP_Semantic_Declaration_Styles);
-
-         --  *-definition
          Update_Prefs (LSP_Semantic_Definition_Styles);
-
-         --  *-abstract
          Update_Prefs (LSP_Semantic_Abstract_Styles);
-
-         --  *-static
          Update_Prefs (LSP_Semantic_Static_Styles);
-
-         --  *-documentation
          Update_Prefs (LSP_Semantic_Documentation_Styles);
-
-         --  *-defaultlibrary
          Update_Prefs (LSP_Semantic_Defaultlibrary_Styles);
 
-         --  *-readonly
          for Index in All_Styles'Range loop
             Style := M.Get (Style_Key (To_String (All_Styles (Index).Name)));
             LSP_Semantic_Readonly_Styles (Index).Set_Foreground
@@ -507,81 +436,37 @@ package body GPS.Default_Styles is
          end loop;
 
       else
-         if Pref = Preference (LSP_Namespace_Style) then
-            Update_Prefs (LSP_Namespace_Style_Pos);
-         end if;
+         for Index in All_Styles'Range loop
+            if Pref = Preference (All_Styles (Index).Pref) then
+               declare
+                  ------------
+                  -- Update --
+                  ------------
 
-         if Pref = Preference (Types_Style) then
-            Update_Prefs (Types_Style_Pos);
-         end if;
+                  procedure Update (Arr : LSP_Synthetic_Pref_Array);
+                  procedure Update (Arr : LSP_Synthetic_Pref_Array) is
+                  begin
+                     Arr (Index).Set_Foreground (Style.Foreground);
+                     Arr (Index).Set_Background (Style.Background);
+                  end Update;
 
-         if Pref = Preference (LSP_Class_Style) then
-            Update_Prefs (LSP_Class_Style_Pos);
-         end if;
+               begin
+                  Style := M.Get
+                    (Style_Key (To_String (All_Styles (Index).Name)));
 
-         if Pref = Preference (LSP_Enum_Style) then
-            Update_Prefs (LSP_Enum_Style_Pos);
-         end if;
-
-         if Pref = Preference (LSP_Interface_Style) then
-            Update_Prefs (LSP_Interface_Style_Pos);
-         end if;
-
-         if Pref = Preference (LSP_Struct_Style) then
-            Update_Prefs (LSP_Struct_Style_Pos);
-         end if;
-
-         if Pref = Preference (LSP_TypeParameter_Style) then
-            Update_Prefs (LSP_TypeParameter_Style_Pos);
-         end if;
-
-         if Pref = Preference (LSP_Parameter_Style) then
-            Update_Prefs (LSP_Parameter_Style_Pos);
-         end if;
-
-         if Pref = Preference (LSP_Variable_Style) then
-            Update_Prefs (LSP_Variable_Style_Pos);
-         end if;
-
-         if Pref = Preference (LSP_Property_Style) then
-            Update_Prefs (LSP_Property_Style_Pos);
-         end if;
-
-         if Pref = Preference (LSP_EnumMember_Style) then
-            Update_Prefs (LSP_EnumMember_Style_Pos);
-         end if;
-
-         if Pref = Preference (LSP_Function_Style) then
-            Update_Prefs (LSP_Function_Style_Pos);
-         end if;
-
-         if Pref = Preference (Keywords_Style) then
-            Update_Prefs (Keywords_Style_Pos);
-         end if;
-
-         if Pref = Preference (LSP_Modifier_Style) then
-            Update_Prefs (LSP_Modifier_Style_Pos);
-         end if;
-
-         if Pref = Preference (Comments_Style) then
-            Update_Prefs (Comments_Style_Pos);
-         end if;
-
-         if Pref = Preference (Strings_Style) then
-            Update_Prefs (Strings_Style_Pos);
-         end if;
-
-         if Pref = Preference (Numbers_Style) then
-            Update_Prefs (Numbers_Style_Pos);
-         end if;
-
-         if Pref = Preference (LSP_Operator_Style) then
-            Update_Prefs (LSP_Operator_Style_Pos);
-         end if;
+                  Update (LSP_Semantic_Declaration_Styles);
+                  Update (LSP_Semantic_Definition_Styles);
+                  Update (LSP_Semantic_Abstract_Styles);
+                  Update (LSP_Semantic_Static_Styles);
+                  Update (LSP_Semantic_Documentation_Styles);
+                  Update (LSP_Semantic_Defaultlibrary_Styles);
+               end;
+               exit;
+            end if;
+         end loop;
 
          if Pref = Preference (LSP_Readonly_Bg) then
-            --  *-readonly
-            for Index in All_Styles'Range loop
+            for Index in LSP_Semantic_Readonly_Styles'Range loop
                LSP_Semantic_Readonly_Styles (Index).Set_Background
                  (LSP_Readonly_Bg.Get_Pref);
             end loop;
