@@ -108,6 +108,7 @@ rgb_prefs = {
     "diff_side_remove": "Diff-Side-Remove-Color",
     "diff_side_append": "Diff-Side-Append-Color",
     "bookmarks": "Src-Editor-Bookmarks",
+    "semantic_readonly": "LSP-Semantic-Readonly",
 }
 # These keys are interpreted as rgb preferences
 # Keys: our internal easy-to-remember key; values: current names of GPS prefs
@@ -317,6 +318,7 @@ common_light = {
     "modifiers": ("DEFAULT", Color("#00873f"), transparent),
     "operators": ("DEFAULT", Color("#005427"), transparent),
     "deprecateds": ("DEFAULT", Color("#ff0000"), transparent),
+    "semantic_readonly": Rgba(242, 255, 237),
 }
 
 common_dark = {
@@ -382,7 +384,7 @@ common_dark = {
     "interfaces": ("ITALIC", Rgba(186, 186, 186), Color("#4CD5E0")),
     "structs": ("DEFAULT", Color("#49D66A"), transparent),
     "typeparameters": ("ITALIC", Rgba(186, 186, 186), Color("#3E52EB")),
-    "parameters": ("ITALIC", Rgba(186, 186, 186), Color("#9CDCFE")),
+    "parameters": ("ITALIC", Rgba(186, 186, 186), Color("#241f31")),
     "variables": ("DEFAULT", Color("#9CDCFE"), transparent),
     "propertys": ("DEFAULT", Color("#8F9DFF"), transparent),
     "enummembers": ("DEFAULT", Color("#93E6BE"), transparent),
@@ -390,6 +392,7 @@ common_dark = {
     "modifiers": ("DEFAULT", Color("#569cd6"), transparent),
     "operators": ("DEFAULT", Color("#C586C0"), transparent),
     "deprecateds": ("DEFAULT", Color("#ff0000"), transparent),
+    "semantic_readonly": Rgba(62, 62, 62),
 }
 
 

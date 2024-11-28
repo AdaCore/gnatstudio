@@ -3472,6 +3472,8 @@ package body Src_Editor_Buffer is
 
       B.Highlighter.Highlight_Delimiters :=
         Highlight_Delimiters.Get_Pref;
+
+
    end Execute;
 
    ---------------------
