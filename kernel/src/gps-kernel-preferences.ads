@@ -133,6 +133,11 @@ package GPS.Kernel.Preferences is
      Default_Preferences.Enums.Generics (Toolbar_Icons_Size);
    --  The list of styles/sizes for GNAT Studio icons.
 
+   type External_Highlighting is (None, LSP, LAL);
+   package External_Highlighting_Preferences is new
+     Default_Preferences.Enums.Generics (External_Highlighting);
+   --  The list of external providers for highlighting.
+
    ------------------------------------------
    -- Associating preferences with widgets --
    ------------------------------------------
@@ -351,13 +356,12 @@ package GPS.Kernel.Preferences is
    --  Debugger preferences are registered in GVD.Preferences
 
    -- LibAdaLang --
-   Use_LAL_In_Outline   : Boolean_Preference;
-   Use_LAL_In_Shell     : Boolean_Preference;
-   Use_LAL_In_Info      : Boolean_Preference;
-   Use_LAL_In_GNATHUB   : Boolean_Preference;
-   Use_LAL_In_COV       : Boolean_Preference;
-   Use_LAL_In_Indent    : Boolean_Preference;
-   Use_LAL_In_Highlight : Boolean_Preference;
+   Use_LAL_In_Outline        : Boolean_Preference;
+   Use_LAL_In_Shell          : Boolean_Preference;
+   Use_LAL_In_Info           : Boolean_Preference;
+   Use_LAL_In_GNATHUB        : Boolean_Preference;
+   Use_LAL_In_COV            : Boolean_Preference;
+   Use_LAL_In_Indent         : Boolean_Preference;
 
    --  LSP
    LSP_Use_Snippets            : Boolean_Preference;
@@ -367,11 +371,11 @@ package GPS.Kernel.Preferences is
    LSP_Ada_Insert_With_Clauses : Boolean_Preference;
    LSP_Limit_Formatting        : Boolean_Preference;
    LSP_Ada_Param_Threshold     : Integer_Preference;
-   LSP_Diagnostics_Display   : LSP_Diagnostics_Display_Policy_Prefs.Preference;
-
-   Use_LSP_In_Highlight        : Boolean_Preference;
+   LSP_Diagnostics_Display     : LSP_Diagnostics_Display_Policy_Prefs.
+     Preference;
 
    -- LSP semantic styles --
+   Use_External_Highlighting : External_Highlighting_Preferences.Preference;
 
    LSP_Namespace_Style       : Variant_Preference;
    LSP_Interface_Style       : Variant_Preference;
@@ -386,7 +390,7 @@ package GPS.Kernel.Preferences is
    LSP_Variable_Style        : Variant_Preference;
    LSP_Modifier_Style        : Variant_Preference;
    LSP_Operator_Style        : Variant_Preference;
-   LSP_Missing_Style         : Variant_Preference;
+   LSP_Deprecated_Style      : Variant_Preference;
    LSP_Readonly_Bg           : Color_Preference;
 
    package Indentation_Kind_Preferences is new

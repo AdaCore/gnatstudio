@@ -56,7 +56,7 @@ GNAT Studio and its default plugins require the following python packages:
 
   PyUSB offers easy USB devices communication in Python. It should work
   without additional code in any environment with Python >= 3.6, ctypes
-  and a pre-built USB backend library (currently: libusb 1.x, libusb 
+  and a pre-built USB backend library (currently: libusb 1.x, libusb
   0.1.x or OpenUSB).
 
 .. note::
@@ -108,7 +108,7 @@ in PYTHON_DIST environment variable.
 
 .. code-block:: bash
 
-   git clone git@ssh.gitlab.adacore-it.com:eng/toolchain/gnatcoll-bindings.git
+   git clone git@github.com:AdaCore/gnatcoll-bindings.git # Use the internal Git URL if available
    cd gnatcoll-bindings/python3
    ./setup.py build
    ./setup.py install

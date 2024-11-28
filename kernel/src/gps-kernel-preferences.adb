@@ -549,12 +549,6 @@ package body GPS.Kernel.Preferences is
          Doc      => -("Enable usage of libadalang in indent."),
          Default  => False);
 
-      Use_LAL_In_Highlight := Manager.Create_Invisible_Pref
-        (Name     => "use-lal-in-highlight",
-         Label    => -"Use LAL to highlight",
-         Doc      => -("Enable usage of libadalang to highlight code."),
-         Default  => Active (Experimental_LAL));
-
       -- General --
 
       Gtk_Theme := Manager.Create
@@ -1114,9 +1108,9 @@ package body GPS.Kernel.Preferences is
          Default_Fg   => "#005427",
          Path            => -"Editor/Fonts & Colors:LSP semantic");
 
-      LSP_Missing_Style := Manager.Create
-        (Name         => "LSP-Semantic-Missing",
-         Label        => -"Deprecated or missing",
+      LSP_Deprecated_Style := Manager.Create
+        (Name         => "LSP-Semantic-Deprecated",
+         Label        => -"Deprecated",
          Base            => Default_Style,
          Doc             => "",
          Default_Variant => Default,
@@ -1844,12 +1838,18 @@ package body GPS.Kernel.Preferences is
          Default => 3,
          Path    => "Editor/Ada:Completion");
 
-      Use_LSP_In_Highlight := Kernel.Get_Preferences.Create
-        (Name     => "use-lsp-in-highlight",
-         Label    => -"LSP Semantic Highlighting",
-         Doc      => -"Enable LSP semantic highlighting in opened editors.",
-         Default  => False,
-         Path     => "LSP:Highlight");
+      Use_External_Highlighting := External_Highlighting_Preferences.Create
+        (Manager  => Manager,
+         Path     => "LSP:Highlight",
+         Name     => "use-external-highlighting",
+         Label    => -"Use LAL/LSP to highlight",
+         Doc      => -("Enable usage of libadalang or LSP to highlight code."),
+         Default  => None);
+      if Active (Experimental_LAL) then
+         Use_External_Highlighting.Set_Pref (Manager, "LAL");
+      else
+         Use_External_Highlighting.Hide (LAL);
+      end if;
 
       LSP_Diagnostics_Display := LSP_Diagnostics_Display_Policy_Prefs.Create
         (Manager  => Kernel.Get_Preferences,
