@@ -1703,6 +1703,9 @@ package body GPS.Kernel.Modules.UI is
         (Toolbar : not null access Gtk_Toolbar_Record'Class);
       --  Remove all buttons for Action from toolbar
 
+      procedure Remove_Contextual_Menus;
+      --  Remove contextual menus for Action. There may be more than one.
+
       procedure Remove_Menu
         (W : not null access GPS_Application_Window_Record'Class)
       is
@@ -1745,6 +1748,48 @@ package body GPS.Kernel.Modules.UI is
             Toolbar.Remove (C);
          end loop;
       end Remove_Button;
+
+      procedure Remove_Contextual_Menus is
+         procedure Walk (Menus : in out Contextual_Menu_Vectors.Vector);
+         --  Walk the tree of contextual menus and remove all menus
+         --  for the given action.
+
+         procedure Walk (Menus : in out Contextual_Menu_Vectors.Vector) is
+            Index : Contextual_Menu_Vectors.Extended_Index;
+            M     : Contextual_Menu_Access;
+         begin
+            if Menus.Is_Empty then
+               return;
+            end if;
+            Index := Menus.First_Index;
+            while Index <= Menus.Last_Index loop
+               M := Menus.Element (Index);
+               if M.Menu_Type = Type_Submenu then
+                  Walk (M.Nested);
+                  Index := Index + 1;
+               elsif M.Menu_Type = Type_Action then
+                  if M.Action /= null and then M.Action.all = Action then
+                     Menus.Delete (Index);
+                  else
+                     Index := Index + 1;
+                  end if;
+               end if;
+            end loop;
+         end Walk;
+
+         Root_Menu : Contextual_Menu_Access;
+
+      begin
+         if Kernel.Contextual /= System.Null_Address then
+            Root_Menu := Convert (Kernel.Contextual);
+            --  Root_Menu should definitely be of Type_Submenu. Still add
+            --  an explicit test to avoid flagging this with static analysis
+            --  tools.
+            if Root_Menu.Menu_Type = Type_Submenu then
+               Walk (Root_Menu.Nested);
+            end if;
+         end if;
+      end Remove_Contextual_Menus;
 
       Item : Menu_Item_Info;
       C : Action_Elements.Cursor := Globals.Actions_To_UI.Find (Action);
@@ -1800,6 +1845,8 @@ package body GPS.Kernel.Modules.UI is
 
          Globals.Actions_To_UI.Delete (C);
       end if;
+
+      Remove_Contextual_Menus;
    end Remove_UI_For_Action;
 
    -------------------
