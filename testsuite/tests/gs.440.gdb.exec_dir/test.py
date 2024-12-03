@@ -1,5 +1,10 @@
 """
 Test that exec_dir is taken into account by gdb
+
+We start with project where exec_dir is commented.
+After, we uncomment it in the project file itself,
+save file and reload project and ensure that the
+attribute is used by GS to start GDB
 """
 
 from GPS import *

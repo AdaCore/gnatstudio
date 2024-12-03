@@ -150,6 +150,17 @@ package GPS.Core_Kernels is
    --  path based on the source and object paths. If no file is found,
    --  use Name instead.
 
+   function To_File
+     (Kernel      : access Core_Kernel_Record'Class;
+      Name        : String;
+      Check_Exist : Boolean := True)
+      return GNATCOLL.VFS.Virtual_File;
+   --  Convert from a file name read from the debugger to a Virtual_File.
+   --  If Check_Exist is True, this takes into account the fact that program
+   --  might have been compiled on another machine, with sources located
+   --  elsewhere. In this case it uses Create_From_Base if the file
+   --  doesn't exist.
+
    function Opened_Files
      (Self : not null access Core_Kernel_Record)
       return Basic_Types.File_Sets.Set is abstract;
