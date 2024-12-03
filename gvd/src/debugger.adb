@@ -1430,18 +1430,21 @@ package body Debugger is
    -------------
 
    function To_File
-     (Kernel  : not null access Kernel_Handle_Record'Class;
-      Name    : String)
-     return GNATCOLL.VFS.Virtual_File
+     (Kernel      : not null access Kernel_Handle_Record'Class;
+      Name        : String;
+      Check_Exist : Boolean := True)
+      return GNATCOLL.VFS.Virtual_File
    is
       F : Virtual_File;
    begin
       --  Translate filename into local file if needed
       F := To_Local (Create (+Name, Get_Nickname (Debug_Server)));
 
-      --  Convert from a patch returned by the debugger to the actual
+      --  Convert from a path returned by the debugger to the actual
       --  path in the project, in case sources have changed
-      if not F.Is_Absolute_Path or else not F.Is_Regular_File then
+      if not F.Is_Absolute_Path
+        or else (Check_Exist and then not F.Is_Regular_File)
+      then
          F := Kernel.Create_From_Base (F.Full_Name);
       end if;
 

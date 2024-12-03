@@ -45,6 +45,7 @@ with Commands;                     use Commands;
 with Commands.Interactive;         use Commands.Interactive;
 with Histories;
 with Language;                     use Language;
+with Remote;
 
 with Generic_Views;
 with GPS.Dialogs;                  use GPS.Dialogs;
@@ -60,7 +61,6 @@ with GPS.Kernel.Project;
 with GUI_Utils;
 
 with Basic_Types;
-with Remote;
 
 with DAP.Contexts;
 with DAP.Module.Breakpoints;
@@ -388,9 +388,14 @@ package body DAP.Module is
    --  debugged executable.
 
    function To_File
-     (Kernel  : not null access Kernel_Handle_Record'Class;
-      Name    : String)
+     (Kernel      : not null access Kernel_Handle_Record'Class;
+      Name        : String;
+      Check_Exist : Boolean := True)
       return GNATCOLL.VFS.Virtual_File;
+   --  Convert from a file name read from the debugger to a Virtual_File.
+   --  If Check_Exist is True, this takes into account the fact that program
+   --  might have been compiled on another machine, with sources located
+   --  elsewhere.
 
    DAP_Module_Name  : constant String := "DAP";
    DAP_Module_ID    : DAP_Module;
@@ -536,6 +541,33 @@ package body DAP.Module is
          Trace (Me, E);
          return False;
    end On_Idle;
+
+   -------------
+   -- To_File --
+   -------------
+
+   function To_File
+     (Kernel      : not null access Kernel_Handle_Record'Class;
+      Name        : String;
+      Check_Exist : Boolean := True)
+      return GNATCOLL.VFS.Virtual_File
+   is
+      F : Virtual_File;
+   begin
+      --  Translate filename into local file if needed
+      F := To_Local
+        (Create (+Name, Remote.Get_Nickname (Remote.Debug_Server)));
+
+      --  Convert from a path returned by the debugger to the actual
+      --  path in the project, in case sources have changed
+      if not F.Is_Absolute_Path
+        or else (Check_Exist and then not F.Is_Regular_File)
+      then
+         F := Kernel.Create_From_Base (F.Full_Name);
+      end if;
+
+      return F;
+   end To_File;
 
    ---------------------
    -- Tooltip_Handler --
@@ -724,8 +756,15 @@ package body DAP.Module is
       for J in 1 .. Mains.Length loop
          if Mains.List (J).Length /= 0 then
             declare
-               Main : constant Virtual_File :=
-                 To_File (Kernel, Mains.List (J).Tuple (2).Str);
+               Main : constant Virtual_File := To_File
+                 (Kernel, Mains.List (J).Tuple (2).Str,
+                  --  Here we obtain the file name not from the debugger but
+                  --  from the project so don't need to looking for the
+                  --  executable. In other case we can find "old" executable
+                  --  in the obj directory when project already has exec
+                  --  directoryjust added.
+                  Check_Exist => False);
+
                Prj  : constant Virtual_File :=
                  To_File (Kernel, Mains.List (J).Tuple (3).Str);
                P    : constant Project_Type :=
@@ -2093,29 +2132,5 @@ package body DAP.Module is
       DAP.Views.Variables.Register_Module (Kernel);
       DAP.Views.Registers.Register_Module (Kernel);
    end Register_Module;
-
-   -------------
-   -- To_File --
-   -------------
-
-   function To_File
-     (Kernel  : not null access Kernel_Handle_Record'Class;
-      Name    : String)
-      return GNATCOLL.VFS.Virtual_File
-   is
-      F : Virtual_File;
-   begin
-      --  Translate filename into local file if needed
-      F := To_Local
-        (Create (+Name, Remote.Get_Nickname (Remote.Debug_Server)));
-
-      --  Convert from a patch returned by the debugger to the actual
-      --  path in the project, in case sources have changed
-      if not F.Is_Absolute_Path or else not F.Is_Regular_File then
-         F := Kernel.Create_From_Base (F.Full_Name);
-      end if;
-
-      return F;
-   end To_File;
 
 end DAP.Module;

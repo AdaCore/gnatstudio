@@ -767,12 +767,14 @@ package Debugger is
    --  Remove any breakpoint set at that location
 
    function To_File
-     (Kernel   : not null access Kernel_Handle_Record'Class;
-      Name     : String)
-     return GNATCOLL.VFS.Virtual_File;
+     (Kernel      : not null access Kernel_Handle_Record'Class;
+      Name        : String;
+      Check_Exist : Boolean := True)
+      return GNATCOLL.VFS.Virtual_File;
    --  Convert from a file name read from the debugger to a Virtual_File.
-   --  This takes into account the fact that program might have been
-   --  compiled on another machine, with sources located elsewhere
+   --  If Check_Exist is True, this takes into account the fact that program
+   --  might have been compiled on another machine, with sources located
+   --  elsewhere.
 
    procedure List_Breakpoints
      (Debugger  : not null access Debugger_Root;

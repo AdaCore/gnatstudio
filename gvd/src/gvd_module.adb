@@ -1868,8 +1868,15 @@ package body GVD_Module is
       for J in 1 .. Mains.Length loop
          if Mains.List (J).Length /= 0 then
             declare
-               Main : constant Virtual_File :=
-                  To_File (Kernel, Mains.List (J).Tuple (2).Str);
+               Main : constant Virtual_File := To_File
+                 (Kernel, Mains.List (J).Tuple (2).Str,
+                  --  Here we obtain the file name not from the debugger but
+                  --  from the project so don't need to looking for the
+                  --  executable. In other case we can find "old" executable
+                  --  in the obj directory when project already has exec
+                  --  directoryjust added.
+                  Check_Exist => False);
+
                Prj  : constant Virtual_File :=
                   To_File (Kernel, Mains.List (J).Tuple (3).Str);
                P    : constant Project_Type :=
