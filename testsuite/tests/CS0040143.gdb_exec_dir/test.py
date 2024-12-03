@@ -1,5 +1,5 @@
 """
-Test that exec_dir is taken into account for the gdb
+Test that exec_dir is taken into account by gdb
 """
 
 from GPS import *
