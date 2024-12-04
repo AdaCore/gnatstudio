@@ -33,6 +33,7 @@ with GNATCOLL.Tribooleans;      use GNATCOLL.Tribooleans;
 with Config;                    use Config;
 with Default_Preferences;       use Default_Preferences;
 with GPS.Kernel.Hooks;          use GPS.Kernel.Hooks;
+with GPS.Core_Kernels;
 with GVD.Preferences;           use GVD.Preferences;
 with GVD.Trace;                 use GVD.Trace;
 with GVD.Types;                 use GVD.Types;
@@ -2349,7 +2350,7 @@ package body Debugger.Base_Gdb.Gdb_MI is
             C2 := Find_Identifier (C2, "fullname");
             if C2 /= Token_Lists.No_Element then
                Next (C2, 2);
-               Rec.File := To_File
+               Rec.File := GPS.Core_Kernels.To_File
                  (Debugger.Kernel, Strip_Escape (Element (C2).Text.all));
 
                C3 := Find_Identifier (C2, "line");
@@ -3707,8 +3708,8 @@ package body Debugger.Base_Gdb.Gdb_MI is
 
                   elsif Element (C).Text.all = "fullname" then
                      Next (C, 2);
-                     F := To_File (Kernel, Strip_Escape
-                                   (Element (C).Text.all));
+                     F := GPS.Core_Kernels.To_File
+                       (Kernel, Strip_Escape (Element (C).Text.all));
 
                   elsif Element (C).Text.all = "line" then
                      Next (C, 2);

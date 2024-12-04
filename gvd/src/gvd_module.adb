@@ -21,6 +21,7 @@ with Ada.Strings.Unbounded;
 with GNAT.OS_Lib;
 with GNAT.Strings;                 use GNAT.Strings;
 
+with GPS.Core_Kernels;
 with VSS.Strings.Conversions;
 
 with GNATCOLL.Any_Types;           use GNATCOLL.Any_Types;
@@ -1868,10 +1869,15 @@ package body GVD_Module is
       for J in 1 .. Mains.Length loop
          if Mains.List (J).Length /= 0 then
             declare
-               Main : constant Virtual_File :=
-                  To_File (Kernel, Mains.List (J).Tuple (2).Str);
-               Prj  : constant Virtual_File :=
-                  To_File (Kernel, Mains.List (J).Tuple (3).Str);
+               Main : constant Virtual_File := GPS.Core_Kernels.To_File
+                 (Kernel, Mains.List (J).Tuple (2).Str,
+                  --  Here we obtain the file name not from the debugger but
+                  --  from the project itself: we don't need to check if the
+                  --  main's file actually exists on the disk.
+                  Check_Exist => False);
+
+               Prj  : constant Virtual_File := GPS.Core_Kernels.To_File
+                 (Kernel, Mains.List (J).Tuple (3).Str);
                P    : constant Project_Type :=
                   Kernel.Registry.Tree.Project_From_Path (Prj);
             begin

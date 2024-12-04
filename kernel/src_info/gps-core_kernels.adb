@@ -22,7 +22,8 @@ with GNATCOLL.VFS_Utils;               use GNATCOLL.VFS_Utils;
 with GPS.Scripts;
 
 with Language_Handlers;                use Language_Handlers;
-with Language.Unknown; use Language.Unknown;
+with Language.Unknown;                 use Language.Unknown;
+with Remote;
 
 package body GPS.Core_Kernels is
 
@@ -43,6 +44,33 @@ package body GPS.Core_Kernels is
 
       return File;
    end Create_From_Base;
+
+   -------------
+   -- To_File --
+   -------------
+
+   function To_File
+     (Kernel      : access Core_Kernel_Record'Class;
+      Name        : String;
+      Check_Exist : Boolean := True)
+      return GNATCOLL.VFS.Virtual_File
+   is
+      F : Virtual_File;
+   begin
+      --  Translate filename into local file if needed
+      F := To_Local
+        (Create (+Name, Remote.Get_Nickname (Remote.Debug_Server)));
+
+      --  Convert from a path returned by the debugger to the actual
+      --  path in the project, in case sources have changed
+      if not F.Is_Absolute_Path
+        or else (Check_Exist and then not F.Is_Regular_File)
+      then
+         F := Kernel.Create_From_Base (F.Full_Name);
+      end if;
+
+      return F;
+   end To_File;
 
    -------------------------------
    -- Create_Scripts_Repository --
