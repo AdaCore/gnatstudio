@@ -33,6 +33,7 @@ with GNATCOLL.Utils;                      use GNATCOLL.Utils;
 
 with Default_Preferences;                 use Default_Preferences;
 
+with GPS.Core_Kernels;
 with GPS.Kernel.Hooks;                    use GPS.Kernel.Hooks;
 
 with GVD.Preferences;                     use GVD.Preferences;
@@ -2883,7 +2884,7 @@ package body Debugger.LLDB is
       if Ada.Strings.Fixed.Index
         (File, "" & GNAT.OS_Lib.Path_Separator) < File'First
       then
-         Result := To_File (Debugger.Get_Kernel, File);
+         Result := GPS.Core_Kernels.To_File (Debugger.Get_Kernel, File);
       else
          Result := Debugger.Get_Kernel.Create_From_Base (+File);
       end if;

@@ -43,6 +43,7 @@ with Language;                  use Language;
 with Process_Proxies;           use Process_Proxies;
 with Remote;                    use Remote;
 with String_Utils;              use String_Utils;
+with GPS.Core_Kernels;
 with GPS.Kernel.Hooks;          use GPS.Kernel.Hooks;
 with GNATCOLL.Traces;           use GNATCOLL.Traces;
 
@@ -1735,7 +1736,7 @@ package body Debugger.Base_Gdb.Gdb_CLI is
             end;
 
             if Matched (Frame_Pattern_Kind'Pos (Frame_File)) /= No_Match then
-               Rec.File := To_File
+               Rec.File := GPS.Core_Kernels.To_File
                  (Kernel,
                   S (Matched (Frame_Pattern_Kind'Pos (Frame_File)).First ..
                         Matched (Frame_Pattern_Kind'Pos (Frame_File)).Last));
@@ -2932,7 +2933,8 @@ package body Debugger.Base_Gdb.Gdb_CLI is
                    S (First .. Last - 2), Matched);
          end if;
          if Matched (0) /= No_Match then
-            F := To_File (Kernel, S (Matched (1).First .. Matched (1).Last));
+            F := GPS.Core_Kernels.To_File
+              (Kernel, S (Matched (1).First .. Matched (1).Last));
             Current.Location := Kernel.Get_Buffer_Factory.Create_Marker
               (File => F,
                Line => Editable_Line_Type'Value

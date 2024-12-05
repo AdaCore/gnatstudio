@@ -48,6 +48,7 @@ with Debugger.Base_Gdb.Gdb_MI;   use Debugger.Base_Gdb.Gdb_MI;
 with Debugger.LLDB;              use Debugger.LLDB;
 with Default_Preferences;        use Default_Preferences;
 with GPS.Intl;                   use GPS.Intl;
+with GPS.Core_Kernels;
 with GPS.Kernel.Hooks;           use GPS.Kernel.Hooks;
 with GPS.Kernel.MDI;             use GPS.Kernel.MDI;
 with GPS.Kernel.Modules;         use GPS.Kernel.Modules;
@@ -406,7 +407,8 @@ package body GVD.Process is
          Set_Current_File_And_Line
            (Kernel  => Process.Kernel,
             Process => Base_Visual_Debugger_Access (Process),
-            File    => To_File (Process.Kernel, To_String (File)),
+            File    =>
+              GPS.Core_Kernels.To_File (Process.Kernel, To_String (File)),
             Line    => Line,
             Focus   => False);
 
