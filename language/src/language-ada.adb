@@ -942,7 +942,9 @@ package body Language.Ada is
                   null;
             end case;
 
-            Offset := UTF8_Prev_Char (Buffer, Offset);
+            if Offset > Offset_Limit then
+               Offset := UTF8_Prev_Char (Buffer, Offset);
+            end if;
          end loop;
       end Skip_String;
 
@@ -968,8 +970,10 @@ package body Language.Ada is
                when ''' =>
                   Local_Offset := UTF8_Prev_Char
                     (Buffer, Local_Offset);
-                  Local_Offset := UTF8_Prev_Char
-                    (Buffer, Local_Offset);
+                  if Local_Offset > Offset_Limit then
+                     Local_Offset := UTF8_Prev_Char
+                       (Buffer, Local_Offset);
+                  end if;
 
                when '-' =>
                   Prev_Offset := UTF8_Prev_Char
@@ -1182,7 +1186,8 @@ package body Language.Ada is
                   Local_Offset :=
                     UTF8_Prev_Char (Buffer, Local_Offset);
 
-                  if not Is_Alphanumeric
+                  if Local_Offset <= Offset_Limit
+                    or else not Is_Alphanumeric
                     (UTF8_Get_Char (Buffer (Local_Offset .. Offset)))
                   then
                      Token.Tok_Type := No_Token;
