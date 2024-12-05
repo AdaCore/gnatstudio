@@ -1,6 +1,1 @@
-repos:
-  - repo: https://github.com/psf/black
-    rev: 23.1.0
-    hooks:
-    - id: black
-      exclude: docs/users_guide/GPS/generated_hooks.py
+repos: []
