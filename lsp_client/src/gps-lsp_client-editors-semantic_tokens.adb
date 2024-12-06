@@ -121,8 +121,26 @@ package body GPS.LSP_Client.Editors.Semantic_Tokens is
       Prev_Char : Basic_Types.Visible_Column_Type := 1;
    end record;
 
+   overriding procedure Destroy (Id : in out Semantic_Tokens_Module_ID_Record);
+
    type Semantic_Tokens_Module_ID is
      access all Semantic_Tokens_Module_ID_Record'Class;
+
+   -------------
+   -- Destroy --
+   -------------
+
+   overriding procedure Destroy
+     (Id : in out Semantic_Tokens_Module_ID_Record) is
+   begin
+      Id.Postponed.Clear;
+      Id.Data.Clear;
+
+      if Id.Idle_ID /= Glib.Main.No_Source_Id then
+         Remove (Id.Idle_ID);
+         Id.Idle_ID := Glib.Main.No_Source_Id;
+      end if;
+   end Destroy;
 
    ---------------------------------
    -- SemanticTokens_Full_Request --
