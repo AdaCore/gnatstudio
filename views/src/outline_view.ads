@@ -125,6 +125,7 @@ package Outline_View is
       Category       : Language_Category;
       Is_Declaration : Boolean;
       Visibility     : Construct_Visibility;
+      Start_Line     : Integer;
       Def_Line       : Integer;
       Def_Col        : Visible_Column_Type;
       Def_End_Line   : Integer;
