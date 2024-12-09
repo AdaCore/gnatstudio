@@ -156,9 +156,9 @@ package body GPS.LSP_Module is
      VSS.Regular_Expressions.To_Regular_Expression
        ("([0-9][0-9]*)/([0-9][0-9]*)");  --  &1 - processed, &2 - total files
 
-   Log_Dir_Pattern : constant VSS.Regular_Expressions.Regular_Expression :=
+   Log_File_Pattern : constant VSS.Regular_Expressions.Regular_Expression :=
      VSS.Regular_Expressions.To_Regular_Expression
-       ("^Log directory is ([^\n]*)");  --  &1 - path
+       ("Log file is: ([^\n]*)");  --  &1 - path
 
    type Listener_Factory is
      new GPS.Core_Kernels.Editor_Listener_Factory with null record;
@@ -1682,7 +1682,7 @@ package body GPS.LSP_Module is
 
                Match : constant
                  VSS.Regular_Expressions.Regular_Expression_Match :=
-                   Log_Dir_Pattern.Match (Value.message);
+                   Log_File_Pattern.Match (Value.message);
             begin
                if Match.Has_Match then
                   File := GNATCOLL.VFS.Create_From_UTF8
