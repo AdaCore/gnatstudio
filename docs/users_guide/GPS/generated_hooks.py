@@ -968,6 +968,14 @@ class Predefined_Hooks:
 
         """
 
+    # message_created = 'message_created'
+    def message_created(name, message):
+        """
+        :param str name:
+        :param GPS.Message message:
+
+        """
+
     # message_selected = 'message_selected'
     def message_selected(name, message):
         """

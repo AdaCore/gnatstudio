@@ -41,6 +41,7 @@
 with Ada.Characters.Handling; use Ada.Characters.Handling;
 with Ada.Containers.Hashed_Maps;
 with Ada.Strings.Unbounded;   use Ada.Strings.Unbounded;
+with Basic_Types;
 with GNAT.Strings;
 with GNAT.OS_Lib;  use GNAT.OS_Lib;
 
@@ -1345,6 +1346,35 @@ package body GPS.LSP_Module is
       --  Return the editor side icon displayed for diagnostics, according
       --  to their importance.
 
+      function Get_Category
+        (Diag : LSP.Messages.Diagnostic) return VSS.Strings.Virtual_String;
+      --  Return the message category of Diag
+
+      function Contains
+        (Messages : Message_Array;
+         Diag     : LSP.Messages.Diagnostic)
+         return Boolean;
+      --  Return True if Diag is already in messages
+
+      function Contains
+        (Messages : Message_Array;
+         Info     : LSP.Messages.DiagnosticRelatedInformation)
+         return Boolean;
+      --  Return True if Info is already in messages
+
+      function Compare_Diagnostics
+        (Diagnostics : LSP.Messages.Diagnostic_Vector;
+         File        : GNATCOLL.VFS.Virtual_File)
+         return Boolean;
+      --  Return True if the Diagnostics are still the same
+
+      Container : constant not null GPS.Kernel.Messages_Container_Access :=
+        Self.Get_Kernel.Get_Messages_Container;
+      File      : constant GNATCOLL.VFS.Virtual_File :=
+        GPS.LSP_Client.Utilities.To_Virtual_File (Params.uri);
+      Holder : constant GPS.Editors.Controlled_Editor_Buffer_Holder :=
+        Self.Get_Kernel.Get_Buffer_Factory.Get_Holder (File => File);
+
       -------------------
       -- To_Importance --
       -------------------
@@ -1373,19 +1403,153 @@ package body GPS.LSP_Module is
          end if;
       end  To_Importance;
 
-      Container : constant not null GPS.Kernel.Messages_Container_Access :=
-                    Self.Get_Kernel.Get_Messages_Container;
-      File      : constant GNATCOLL.VFS.Virtual_File :=
-        GPS.LSP_Client.Utilities.To_Virtual_File (Params.uri);
-      Holder : constant GPS.Editors.Controlled_Editor_Buffer_Holder :=
-        Self.Get_Kernel.Get_Buffer_Factory.Get_Holder (File => File);
+      --------------
+      -- Contains --
+      --------------
+
+      function Contains
+        (Messages : Message_Array;
+         Diag     : LSP.Messages.Diagnostic)
+         return Boolean
+      is
+         use type Basic_Types.Visible_Column_Type;
+         use type VSS.Strings.Virtual_String;
+         Location : constant GPS.Editors.Editor_Location'Class :=
+           GPS.LSP_Client.Utilities.LSP_Position_To_Location
+             (Holder.Editor, Diag.span.first);
+      begin
+         for Msg of Messages loop
+            --  The primary message must match a diagnostics
+            if VSS.Strings.Conversions.To_Virtual_String (Msg.Get_Text)
+              = Diag.message
+              and then Msg.Get_Line = Location.Line
+              and then Msg.Get_Column = Location.Column
+            then
+               declare
+                  Children : constant Message_Array := Msg.Get_Children;
+               begin
+                  --  The secondary messages must match the relatedInformation
+                  if Integer (Diag.relatedInformation.Length)
+                    /= Msg.Get_Children'Length
+                  then
+                     --  Not the same number
+                     return False;
+                  else
+                     for Related_Diag of Diag.relatedInformation loop
+                        if not Contains (Children, Related_Diag) then
+                           return False;
+                        end if;
+                     end loop;
+
+                     return True;
+                  end if;
+               end;
+            end if;
+         end loop;
+
+         return False;
+      end Contains;
+
+      --------------
+      -- Contains --
+      --------------
+
+      function Contains
+        (Messages : Message_Array;
+         Info     : LSP.Messages.DiagnosticRelatedInformation)
+         return Boolean
+      is
+         use GPS.Editors;
+         use type Basic_Types.Visible_Column_Type;
+         use type VSS.Strings.Virtual_String;
+
+         Holder    : constant Controlled_Editor_Buffer_Holder
+           := Self.Get_Kernel.Get_Buffer_Factory.Get_Holder (File => File);
+         Start_Loc : constant GPS.Editors.Editor_Location'Class :=
+           GPS.LSP_Client.Utilities.LSP_Position_To_Location
+             (Holder.Editor, Info.location.span.first);
+      begin
+         for Msg of Messages loop
+            if VSS.Strings.Conversions.To_Virtual_String (Msg.Get_Text)
+              = Info.message
+              and then Msg.Get_Line = Start_Loc.Line
+              and then Msg.Get_Column = Start_Loc.Column
+            then
+               return True;
+            end if;
+         end loop;
+
+         return False;
+      end Contains;
+
+      ------------------
+      -- Get_Category --
+      ------------------
+
+      function Get_Category
+        (Diag : LSP.Messages.Diagnostic) return VSS.Strings.Virtual_String
+      is
+         use type VSS.Strings.Virtual_String;
+      begin
+         return
+           (if Diag.source.Is_Set
+            then Diagnostics_Messages_Category_Prefix
+            & ": " & Diag.source.Value
+            else Diagnostics_Messages_Category_Prefix);
+      end Get_Category;
+
+      -------------------------
+      -- Compare_Diagnostics --
+      -------------------------
+
+      function Compare_Diagnostics
+        (Diagnostics : LSP.Messages.Diagnostic_Vector;
+         File        : GNATCOLL.VFS.Virtual_File)
+         return Boolean
+      is
+         use type VSS.Strings.Virtual_String;
+         --  Count the number of diagnostics in the messages view
+         Nb_Old_Diag : Integer := 0;
+      begin
+         for Category of Container.Get_Categories loop
+            if Category.Starts_With (Diagnostics_Messages_Category_Prefix) then
+               declare
+                  Messages : constant Message_Array :=
+                    Container.Get_Messages
+                      (Category => Category, File => File);
+               begin
+                  Nb_Old_Diag := Nb_Old_Diag + Messages'Length;
+                  for Diag of Diagnostics loop
+                     if Get_Category (Diag) = Category
+                       and then not Contains (Messages, Diag)
+                     then
+                        return False;
+                     end if;
+                  end loop;
+               end;
+            end if;
+         end loop;
+
+         --  Refresh in case we don't have the same number of messages or
+         --  this is the first time we are receiving diagnostics
+         if (Nb_Old_Diag = 0 and then not Diagnostics.Is_Empty)
+           or else Nb_Old_Diag /= Integer (Diagnostics.Length)
+         then
+            return False;
+         else
+            return True;
+         end if;
+      end Compare_Diagnostics;
 
    begin
+      if Compare_Diagnostics (Params.diagnostics, File) then
+         return;
+      end if;
+
       Module.Remove_Diagnostics (File);
 
       for Diagnostic of Params.diagnostics loop
          declare
-            use type VSS.Strings.Virtual_String;
             use type VSS.Unicode.UTF16_Code_Unit_Count;
 
             Location : constant GPS.Editors.Editor_Location'Class :=
@@ -1399,10 +1563,7 @@ package body GPS.LSP_Module is
                else
                  Get_Diagnostics_Message_Flags);
             Category   : constant VSS.Strings.Virtual_String :=
-              (if Diagnostic.source.Is_Set
-                 then Diagnostics_Messages_Category_Prefix
-                        & ": " & Diagnostic.source.Value
-                 else Diagnostics_Messages_Category_Prefix);
+              Get_Category (Diagnostic);
             M          : constant Simple_Message_Access :=
               GPS.Kernel.Messages.Simple.Create_Simple_Message
                 (Container    => Container,
