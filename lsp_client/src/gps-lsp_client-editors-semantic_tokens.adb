@@ -891,7 +891,7 @@ package body GPS.LSP_Client.Editors.Semantic_Tokens is
               (Kernel.Get_Language_Handler.Get_Language_From_File (File),
                Request_Access (Request));
          else
-            --  Don't supported, do not resend
+            --  Not supported, do not send
             return True;
          end if;
       end Send_Range_Request;
