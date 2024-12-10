@@ -857,9 +857,14 @@ package body GPS.LSP_Client.Editors.Semantic_Tokens is
               Kernel => Kernel_Handle (Kernel),
               File   => File);
       begin
-         return GPS.LSP_Client.Requests.Execute
-           (Kernel.Get_Language_Handler.Get_Language_From_File (File),
-            Request_Access (Request));
+         if Request.Is_Request_Supported (Server.Get_Client.Capabilities) then
+            return GPS.LSP_Client.Requests.Execute
+              (Kernel.Get_Language_Handler.Get_Language_From_File (File),
+               Request_Access (Request));
+         else
+            --  Don't supported, do not resend
+            return True;
+         end if;
       end Send_Full_Request;
 
       ------------------------
@@ -881,9 +886,14 @@ package body GPS.LSP_Client.Editors.Semantic_Tokens is
               From   => From_Line,
               To     => To_Line);
       begin
-         return GPS.LSP_Client.Requests.Execute
-           (Kernel.Get_Language_Handler.Get_Language_From_File (File),
-            Request_Access (Request));
+         if Request.Is_Request_Supported (Server.Get_Client.Capabilities) then
+            return GPS.LSP_Client.Requests.Execute
+              (Kernel.Get_Language_Handler.Get_Language_From_File (File),
+               Request_Access (Request));
+         else
+            --  Don't supported, do not resend
+            return True;
+         end if;
       end Send_Range_Request;
 
    begin
