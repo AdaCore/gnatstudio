@@ -1520,9 +1520,7 @@ package body GPS.LSP_Module is
                begin
                   Nb_Old_Diag := Nb_Old_Diag + Messages'Length;
                   for Diag of Diagnostics loop
-                     if Get_Category (Diag) = Category
-                       and then not Contains (Messages, Diag)
-                     then
+                     if not Contains (Messages, Diag) then
                         return False;
                      end if;
                   end loop;
