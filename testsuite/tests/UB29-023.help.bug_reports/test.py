@@ -9,6 +9,7 @@ import os.path
 
 @run_test_driver
 def run_test():
+    yield wait_tasks()
     GPS.execute_action("Create bug report")
     dialog = get_widget_by_name("gps-bug-report-dialog")
 
