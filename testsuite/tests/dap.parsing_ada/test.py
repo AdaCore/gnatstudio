@@ -67,6 +67,7 @@ def test_driver():
 
     p = promises.DebuggerWrapper(GPS.File("parse"))
     debug = p.get()
+    yield wait_idle()
     yield wait_until_not_busy(debug)
     yield wait_idle()
 
