@@ -61,8 +61,10 @@ def test_driver():
     yield wait_idle()
 
     p = promises.DebuggerWrapper(GPS.File("parse_c"))
-    debug = GPS.Debugger.get()
+    debug = p.get()
+    yield wait_idle()
     yield wait_until_not_busy(debug)
+    yield wait_idle()
 
     debug.break_at_location(GPS.File("parse_c.c"), 3)
     yield wait_DAP_server("setBreakpoints")
