@@ -8,16 +8,16 @@ from gs_utils.internal.utils import *
 
 
 EXPECTED = [
-    "Diagnostics: libadalang (1 item in 1 file)",
-    ["foo.adb (1 item)", ["<b>4:1</b>       Missing &apos;;&apos;"]],
     "Diagnostics: ada.project (1 item in 1 file)",
     [
-        "foo.adb (1 item)",
+        "gs.418.lsp_diagnostics (1 item)",
         [
             "<b>1:1</b>       The project file was loaded but contains warnings.",
             ["          project name &apos;test&apos; expected"],
         ],
     ],
+    "Diagnostics: libadalang (1 item in 1 file)",
+    ["foo.adb (1 item)", ["<b>4:1</b>       Missing &apos;;&apos;"]],
 ]
 
 # Count all the messages created across the session, it should not increase
