@@ -56,6 +56,7 @@ with GNATCOLL.Traces;
 with GNATCOLL.Utils;
 with GNATCOLL.VFS;                      use GNATCOLL.VFS;
 
+with GPS.Kernel.Messages.Hyperlink;
 with GPS.LSP_Client.Editors.Semantic_Tokens;
 with VSS.Application;
 with VSS.Regular_Expressions;
@@ -1611,22 +1612,35 @@ package body GPS.LSP_Module is
                   File      : constant GNATCOLL.VFS.Virtual_File :=
                     GPS.LSP_Client.Utilities.To_Virtual_File
                       (Info.location.uri);
-                  Holder    : constant Controlled_Editor_Buffer_Holder
-                    := Self.Get_Kernel.Get_Buffer_Factory.Get_Holder
+                  Holder    : constant Controlled_Editor_Buffer_Holder :=
+                    Self.Get_Kernel.Get_Buffer_Factory.Get_Holder
                       (File => File);
                   Start_Loc : constant GPS.Editors.Editor_Location'Class :=
                     GPS.LSP_Client.Utilities.LSP_Position_To_Location
                       (Holder.Editor, Info.location.span.first);
-                  Text      : constant String :=
-                    VSS.Strings.Conversions.To_UTF_8_String
-                      (Info.message);
+
+                  SLOC_Prefix : constant String :=
+                    File.Display_Base_Name
+                    & ":"
+                    & GNATCOLL.Utils.Image (Start_Loc.Line, 1)
+                    & ":"
+                    & GNATCOLL.Utils.Image (Integer (Start_Loc.Column), 1)
+                    & ": ";
+                  --  Prefix of the message used to indicate the SLOC of the
+                  --  relatedInformation, displayed as an hyperlink.
+
+                  Info_Msg  : constant String :=
+                    VSS.Strings.Conversions.To_UTF_8_String (Info.message);
+                  Text      : constant String := SLOC_Prefix & Info_Msg;
                begin
-                  GPS.Kernel.Messages.Simple.Create_Simple_Message
+                  GPS.Kernel.Messages.Hyperlink.Create_Hyperlink_Message
                     (Parent => GPS.Kernel.Messages.Message_Access (M),
                      File   => File,
                      Line   => Start_Loc.Line,
                      Column => Start_Loc.Column,
                      Text   => Text,
+                     First  => Text'First,
+                     Last   => Text'First + SLOC_Prefix'Length - 2,
                      Flags  => Flags);
                end;
             end loop;

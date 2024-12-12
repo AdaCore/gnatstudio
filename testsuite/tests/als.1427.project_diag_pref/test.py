@@ -13,12 +13,15 @@ EXPECTED = [
         "als.1427.project_diag_pref (1 item)",
         [
             "<b>1:1</b>       The project file was loaded but contains warnings.",
-            ["          project name &apos;test&apos; expected"],
+            [
+                '          <span color="#729FCF"><u>test.gpr:1:9:</u></span> project name &apos;test&apos; expected'
+            ],
         ],
     ],
     "Diagnostics: libadalang (1 item in 1 file)",
     ["foo.adb (1 item)", ["<b>4:1</b>       Missing &apos;;&apos;"]],
 ]
+
 
 EXPECTED2 = [
     "Diagnostics: libadalang (1 item in 1 file)",
