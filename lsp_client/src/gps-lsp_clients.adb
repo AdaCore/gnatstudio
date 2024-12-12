@@ -1004,6 +1004,10 @@ package body GPS.LSP_Clients is
       function Get_Experimental_Features return LSP.Types.LSP_Any;
       --  Return the selection of experimental features that are supported
 
+      -------------------------------
+      -- Get_Experimental_Features --
+      -------------------------------
+
       function Get_Experimental_Features return LSP.Types.LSP_Any is
          --  Craft something like:
          --     {"advanced_refactorings":["add_parameter"
@@ -1022,7 +1026,7 @@ package body GPS.LSP_Clients is
       ------------------------------------------
 
       function Get_Completion_Documentation_Formats
-        return LSP.Messages.MarkupKind_Vector
+         return LSP.Messages.MarkupKind_Vector
       is
          Completion_Doc_Format : LSP.Messages.MarkupKind_Vector;
       begin
@@ -1037,7 +1041,7 @@ package body GPS.LSP_Clients is
       -------------------------------------------
 
       function Get_CompletionItem_Resolve_Properties
-        return VSS.String_Vectors.Virtual_String_Vector
+         return VSS.String_Vectors.Virtual_String_Vector
       is
          Properties : VSS.String_Vectors.Virtual_String_Vector;
       begin
@@ -1052,13 +1056,12 @@ package body GPS.LSP_Clients is
       --------------------------------------
 
       function Get_Supported_ResourceOperations
-        return LSP.Messages.ResourceOperationKindSet
+         return LSP.Messages.ResourceOperationKindSet
       is
          Result : LSP.Messages.ResourceOperationKindSets.Set;
       begin
          LSP.Messages.ResourceOperationKindSets.Include
-           (Result,
-            LSP.Messages.ResourceOperationKind'(LSP.Messages.rename));
+           (Result, LSP.Messages.ResourceOperationKind'(LSP.Messages.rename));
 
          return LSP.Messages.ResourceOperationKindSet (Result);
       end Get_Supported_ResourceOperations;
@@ -1068,131 +1071,119 @@ package body GPS.LSP_Clients is
       -----------------------------------
 
       function Get_Supported_CodeActionKinds
-        return LSP.Messages.CodeActionKindSet
+         return LSP.Messages.CodeActionKindSet
       is
          Result : LSP.Messages.CodeActionKindSets.Set;
       begin
          for Kind in LSP.Messages.CodeActionKind loop
-            LSP.Messages.CodeActionKindSets.Include
-              (Result,
-               Kind);
+            LSP.Messages.CodeActionKindSets.Include (Result, Kind);
          end loop;
 
          return LSP.Messages.CodeActionKindSet (Result);
       end Get_Supported_CodeActionKinds;
 
-      Root    : constant GNATCOLL.VFS.Virtual_File :=
-                  GPS.Kernel.Project.Get_Project
-                    (Self.Kernel).Project_Path.Dir;
+      Root   : constant GNATCOLL.VFS.Virtual_File :=
+        GPS.Kernel.Project.Get_Project (Self.Kernel).Project_Path.Dir;
       --  ??? Root directory of the project is directoy where
       --  project file is stored.
       --  ??? Must be synchronized with ada.projectFile passed in
       --  WorkspaceDidChangeConfiguration notification.
-      Id      : LSP.Types.LSP_Number_Or_String;
-      My_PID  : constant LSP.Types.LSP_Number :=
+      Id     : LSP.Types.LSP_Number_Or_String;
+      My_PID : constant LSP.Types.LSP_Number :=
         LSP.Types.LSP_Number
           (GNAT.OS_Lib.Pid_To_Integer (GNAT.OS_Lib.Current_Process_Id));
 
       Request : constant LSP.Messages.InitializeParams :=
-                  (processId    => (True, My_PID),
-                   rootPath     => (Is_Set => False),
-                   rootUri      =>
-                     (True,
-                      LSP.Types.To_Virtual_String
-                        (GPS.LSP_Client.Utilities.To_URI (Root))),
-                   initializationOptions => (Is_Set => False),
-                   capabilities =>
-                     (workspace    =>
-                          (applyEdit => LSP.Types.True,
-                           workspaceEdit =>
-                             (documentChanges   => (True, True),
-                              resourceOperations =>
-                                (True,
-                                 Value => Get_Supported_ResourceOperations),
-                              others             => <>),
-                           fileOperations =>
-                             (Is_Set    => True,
-                              Value     => (didRename => (True, True),
-                                            others   => <>)),
-                           others    => <>),
-                      textDocument =>
-                        (hover          => (Is_Set => True, others => <>),
-                         signatureHelp  => (Is_Set => True, others => <>),
-                         declaration    => (Is_Set => True, others => <>),
-                         definition     => (Is_Set => True, others => <>),
-                         typeDefinition => (Is_Set => True, others => <>),
-                         implementation => (Is_Set => True, others => <>),
-                         publishDiagnostics =>
-                           (Is_Set => True,
-                            Value  =>
-                              (relatedInformation => (True, True),
-                               others             => <>)),
-                         codeAction =>
-                           (Is_Set => True,
-                            Value =>
-                              (codeActionLiteralSupport =>
-                                   (Is_Set => True,
-                                    Value =>
-                                      (codeActionKind =>
-                                         (valueSet =>
-                                              Get_Supported_CodeActionKinds))),
-                               others => <>)),
-                         completion     =>
-                           (dynamicRegistration =>
-                              (Is_Set => True, Value => True),
-                            completionItem      =>
-                              (Is_Set => True,
-                               Value  =>
-                                 (snippetSupport      =>
-                                   (Is_Set => True,
-                                    Value  => LSP_Use_Snippets.Get_Pref),
-                                  documentationFormat =>
-                                    Get_Completion_Documentation_Formats,
-                                  resolveSupport      =>
-                                    (True,
-                                     (properties =>
-                                      Get_CompletionItem_Resolve_Properties)),
-                                  others              => <>)),
-                            completionItemKind  => <>,
-                            contextSupport      => <>),
-                         --  Right now we support only whole line folding
-                         foldingRange   =>
-                           (Is_Set => True,
-                            Value  =>
-                              (lineFoldingOnly =>
-                                 (Is_Set => True, Value => True),
-                               others          => <>)),
-                         documentSymbol =>
-                           (Is_Set => True,
-                            Value  =>
-                              (hierarchicalDocumentSymbolSupport =>
-                                   (Is_Set => True,
-                                    Value  => True),
-                               others                            => <>)),
-                         formatting       =>
-                           (Is_Set => True,
-                            Value  =>
-                              (dynamicRegistration => LSP.Types.False)),
-                         rangeFormatting  =>
-                           (Is_Set => True,
-                            Value  =>
-                              (dynamicRegistration => LSP.Types.False)),
-                         onTypeFormatting =>
-                           (Is_Set => True,
-                            Value  =>
-                              (dynamicRegistration => LSP.Types.False)),
-                         semanticTokens => GPS.LSP_Client.Editors.
-                           Semantic_Tokens.Get_Supported_Options,
-                         others         => <>),
-                      window       => (Is_Set => False),
-                      general      => (Is_Set => False),
-                      experimental => (Is_Set => True,
-                                       Value  => Get_Experimental_Features)),
-                   trace            => (Is_Set => False),
-                   workspaceFolders => (Is_Set => False),
-                   workDoneToken    => (Is_Set => False),
-                   clientInfo       => (Is_Set => False),
-                   locale           => (Is_Set => False));
+        (processId             => (True, My_PID),
+         rootPath              => (Is_Set => False),
+         rootUri               =>
+           (True,
+
+              LSP.Types.To_Virtual_String
+                (GPS.LSP_Client.Utilities.To_URI (Root))),
+         initializationOptions => Self.Initialization_Options,
+         capabilities          =>
+           (workspace    =>
+              (applyEdit      => LSP.Types.True,
+               workspaceEdit  =>
+                 (documentChanges    => (True, True),
+                  resourceOperations =>
+                    (True, Value => Get_Supported_ResourceOperations),
+                  others             => <>),
+               fileOperations =>
+                 (Is_Set => True,
+                  Value  => (didRename => (True, True), others => <>)),
+               others         => <>),
+            textDocument =>
+              (hover              => (Is_Set => True, others => <>),
+               signatureHelp      => (Is_Set => True, others => <>),
+               declaration        => (Is_Set => True, others => <>),
+               definition         => (Is_Set => True, others => <>),
+               typeDefinition     => (Is_Set => True, others => <>),
+               implementation     => (Is_Set => True, others => <>),
+               publishDiagnostics =>
+                 (Is_Set => True,
+                  Value  =>
+                    (relatedInformation => (True, True), others => <>)),
+               codeAction         =>
+                 (Is_Set => True,
+                  Value  =>
+                    (codeActionLiteralSupport =>
+                       (Is_Set => True,
+                        Value  =>
+                          (codeActionKind =>
+                             (valueSet => Get_Supported_CodeActionKinds))),
+                     others                   => <>)),
+               completion         =>
+                 (dynamicRegistration => (Is_Set => True, Value => True),
+                  completionItem      =>
+                    (Is_Set => True,
+                     Value  =>
+                       (snippetSupport      =>
+                          (Is_Set => True, Value => LSP_Use_Snippets.Get_Pref),
+                        documentationFormat =>
+                          Get_Completion_Documentation_Formats,
+                        resolveSupport      =>
+                          (True,
+
+                             (properties =>
+                                Get_CompletionItem_Resolve_Properties)),
+                        others              => <>)),
+                  completionItemKind  => <>,
+                  contextSupport      => <>),
+               --  Right now we support only whole line folding
+               foldingRange       =>
+                 (Is_Set => True,
+                  Value  =>
+                    (lineFoldingOnly => (Is_Set => True, Value => True),
+                     others          => <>)),
+               documentSymbol     =>
+                 (Is_Set => True,
+                  Value  =>
+                    (hierarchicalDocumentSymbolSupport =>
+                       (Is_Set => True, Value => True),
+                     others                            => <>)),
+               formatting         =>
+                 (Is_Set => True,
+                  Value  => (dynamicRegistration => LSP.Types.False)),
+               rangeFormatting    =>
+                 (Is_Set => True,
+                  Value  => (dynamicRegistration => LSP.Types.False)),
+               onTypeFormatting   =>
+                 (Is_Set => True,
+                  Value  => (dynamicRegistration => LSP.Types.False)),
+               semanticTokens     =>
+                 GPS.LSP_Client.Editors.Semantic_Tokens.Get_Supported_Options,
+               others             => <>),
+            window       => (Is_Set => False),
+            general      => (Is_Set => False),
+            experimental =>
+              (Is_Set => True, Value => Get_Experimental_Features)),
+         trace                 => (Is_Set => False),
+         workspaceFolders      => (Is_Set => False),
+         workDoneToken         => (Is_Set => False),
+         clientInfo            => (Is_Set => False),
+         locale                => (Is_Set => False));
 
    begin
       Self.Initialize_Request (Id, Request);
@@ -1636,9 +1627,10 @@ package body GPS.LSP_Clients is
    -----------
 
    procedure Start
-     (Self       : aliased in out LSP_Client;
-      Executable : String;
-      Arguments  : Spawn.String_Vectors.UTF_8_String_Vector)
+     (Self                   : aliased in out LSP_Client;
+      Executable             : String;
+      Arguments              : Spawn.String_Vectors.UTF_8_String_Vector;
+      Initialization_Options : LSP.Types.Optional_LSP_Any)
    is
 
       function Get_Arguments_As_String
@@ -1668,6 +1660,7 @@ package body GPS.LSP_Clients is
       Self.Set_Program (Executable);
       Self.Set_Arguments (Arguments);
       Self.Set_Environment (Self.Kernel.Get_Original_Environment);
+      Self.Initialization_Options := Initialization_Options;
 
       --  TODO: Self.Set_Working_Directory
       Me.Trace
@@ -1719,8 +1712,14 @@ package body GPS.LSP_Clients is
    -- Restart --
    -------------
 
-   procedure Restart (Self : in out LSP_Client'Class) is
+   procedure Restart
+     (Self                   : in out LSP_Client'Class;
+      Initialization_Options : LSP.Types.Optional_LSP_Any)
+   is
    begin
+      --  Reset the initialization options
+      Self.Initialization_Options := Initialization_Options;
+
       --  Initiate normal server shutdown sequence
       Self.Stop (Reject_Immediately => False);
 
