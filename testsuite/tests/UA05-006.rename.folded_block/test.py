@@ -9,7 +9,7 @@ from gs_utils.internal.utils import *
 @run_test_driver
 def run_test():
     buf_1 = GPS.EditorBuffer.get(GPS.File("main.adb"))
-    yield wait_tasks()
+    yield wait_tasks(other_than=known_tasks)
 
     # Add a special line
     buf_1.add_special_line(3, "Special line")
@@ -27,7 +27,7 @@ def run_test():
     new_name_ent.set_text("Pri")
     dialog = get_window_by_title("Renaming entity")
     yield idle_modal_dialog(lambda: get_stock_button(dialog, STOCK_OK).clicked())
-    yield wait_language_server("textDocument/rename")
+    yield timeout(1000)
 
     gps_assert(
         buf_1.get_chars(buf_1.at(6, 1), buf_1.at(6, 1).end_of_line()).strip(),
