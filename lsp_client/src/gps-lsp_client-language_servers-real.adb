@@ -215,20 +215,8 @@ package body GPS.LSP_Client.Language_Servers.Real is
    -----------------------
 
    overriding procedure On_Server_Started
-     (Self : in out Real_Language_Server)
-   is
-      Settings : constant GNATCOLL.JSON.JSON_Value :=
-                   Self.Configuration.Configuration_Settings;
-
+     (Self : in out Real_Language_Server) is
    begin
-      if not Settings.Is_Empty then
-         --  Send WorkspaceDidChangeConfiguration notification to complete
-         --  initialization of the language server.
-
-         Self.Client.On_DidChangeConfiguration_Notification
-           ((settings => (Settings with null record)));
-      end if;
-
       Self.Server_Interceptor.On_Server_Started (Self'Unchecked_Access);
    end On_Server_Started;
 
@@ -270,8 +258,12 @@ package body GPS.LSP_Client.Language_Servers.Real is
    procedure Start (Self : in out Real_Language_Server'Class) is
    begin
       Self.Client.Start
-        (+Self.Configuration.Server_Program.Full_Name.all,
-         Self.Configuration.Server_Arguments);
+        (Executable             =>
+           +Self.Configuration.Server_Program.Full_Name.all,
+         Arguments              => Self.Configuration.Server_Arguments,
+         Initialization_Options =>
+           (True,
+            (Self.Configuration.Configuration_Settings with null record)));
    end Start;
 
    --------------
@@ -292,7 +284,11 @@ package body GPS.LSP_Client.Language_Servers.Real is
 
    procedure Restart (Self : in out Real_Language_Server'Class) is
    begin
-      Self.Client.Restart;
+      Self.Client.Restart
+        (Initialization_Options =>
+           (True,
+            (Self.Configuration.Configuration_Settings with
+             null record)));
    end Restart;
 
    -------------------------
