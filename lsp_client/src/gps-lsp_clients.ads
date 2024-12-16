@@ -100,10 +100,13 @@ package GPS.LSP_Clients is
    type LSP_Client_Access is access all LSP_Client'Class;
 
    procedure Start
-     (Self       : aliased in out LSP_Client;
-      Executable : String;
-      Arguments  : Spawn.String_Vectors.UTF_8_String_Vector);
-   --  Use given command line to start LSP server
+     (Self                   : aliased in out LSP_Client;
+      Executable             : String;
+      Arguments              : Spawn.String_Vectors.UTF_8_String_Vector;
+      Initialization_Options : LSP.Types.Optional_LSP_Any);
+   --  Use given command line to start LSP server.
+   --  When set, Initialization_Options will be sent to the server via the
+   --  LSP 'initialize' request.
 
    procedure Stop
      (Self               : in out LSP_Client'Class;
@@ -113,8 +116,12 @@ package GPS.LSP_Clients is
    --  necessary to avoid possible crashes due to dangling cursors at
    --  GNAT Studio exit.
 
-   procedure Restart (Self : in out LSP_Client'Class);
-   --  Restart the language server executable
+   procedure Restart
+     (Self                   : in out LSP_Client'Class;
+      Initialization_Options : LSP.Types.Optional_LSP_Any);
+   --  Restart the language server process.
+   --  Initialization_Options will be sent to the server via the
+   --  LSP 'initialize' request.
 
    function Is_Ready (Self : LSP_Client'Class) return Boolean;
    --  Return True when language server is running.
@@ -305,6 +312,10 @@ private
       --  Timer to postpone restart of the language server to allow to process
       --  all notifications for currently shutting down language server
       --  process.
+
+      Initialization_Options : LSP.Types.Optional_LSP_Any := (others => <>);
+      --  User provided initialization options. Will be sent via the LSP
+      --  'initialize' request.
    end record;
 
    procedure Process_Command

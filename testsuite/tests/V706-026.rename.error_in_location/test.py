@@ -13,7 +13,7 @@ EXPECT_FIRST = [
         [
             "<b>5:11</b>      Can&apos;t rename identifier &apos;Bar&apos;",
             [
-                "          Renaming Bar to Foo_Bar creates a name collision with &lt;Id &quot;Foo_Bar&quot; foo.adb:3:13-3:20&gt;"
+                '          <span color="#729FCF"><u>foo.adb:3:13:</u></span> Renaming Bar to Foo_Bar creates a name collision with &lt;Id &quot;Foo_Bar&quot; foo.adb:3:13-3:20&gt;'
             ],
         ],
     ],
@@ -27,7 +27,7 @@ EXPECT_SECOND = [
         [
             "<b>5:17</b>      Can&apos;t rename identifier &apos;Foo_Bar&apos;",
             [
-                "          Renaming Foo_Bar to Bar creates a name collision with &lt;Id &quot;Bar&quot; foo.adb:2:4-2:7&gt;"
+                '          <span color="#729FCF"><u>foo.adb:2:4:</u></span> Renaming Foo_Bar to Bar creates a name collision with &lt;Id &quot;Bar&quot; foo.adb:2:4-2:7&gt;'
             ],
         ],
     ],
