@@ -1,6 +1,8 @@
 """
 This checks that opening the project file does not
-cause an infinite loop.
+causes an infinite loop, due to unsupported 
+textDocument/semanticTokens/full request by the ALS
+server for GPR files.
 """
 
 from GPS import *
