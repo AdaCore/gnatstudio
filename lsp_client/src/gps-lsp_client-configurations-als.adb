@@ -119,6 +119,17 @@ package body GPS.LSP_Client.Configurations.ALS is
       Ada_Settings.Set_Field
         ("projectFile", Project.Project_Path.Display_Full_Name);
 
+      declare
+         Conf : constant GNATCOLL.VFS.Virtual_File :=
+           GPS.Kernel.Project.Get_Registry
+             (Self.Kernel).Environment.Get_Config_File;
+      begin
+         if Conf /= No_File then
+            Ada_Settings.Set_Field
+              ("gprConfigurationFile", Conf.Display_Full_Name);
+         end if;
+      end;
+
       --  Set the scenario variables
       for Variable of GPS.Kernel.Project.Scenario_Variables (Self.Kernel) loop
          declare
