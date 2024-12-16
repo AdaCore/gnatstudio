@@ -12,8 +12,9 @@ def test_driver():
     yield wait_idle()
     b = GPS.EditorBuffer.get(GPS.File("main.adb"))
     b.current_view().goto(b.at(5, 49))
+    yield wait_idle()
     GPS.execute_action("goto declaration")
-    yield hook("language_server_response_processed")
+    yield wait_language_server("textDocument/declaration")
     yield wait_idle()
 
     current_buf = GPS.EditorBuffer.get()

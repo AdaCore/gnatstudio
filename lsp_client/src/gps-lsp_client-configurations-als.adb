@@ -126,7 +126,7 @@ package body GPS.LSP_Client.Configurations.ALS is
       begin
          if Conf /= No_File then
             Ada_Settings.Set_Field
-              ("GPRconfigurationFile", Conf.Display_Full_Name);
+              ("gprConfigurationFile", Conf.Display_Full_Name);
          end if;
       end;
 
