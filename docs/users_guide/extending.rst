@@ -788,6 +788,174 @@ transformed every time the command is executed.  The macro arguments below
 are provided by GNAT Studio.  The equivalent Python code is given for some
 arguments.  This code is useful when you are writing a full python script.
 
+Some macros are accessible only for scripts and others only for build targets
+in Python plugins.
+
+.. list-table:: Accessibility of macros
+   :header-rows: 1
+   * - Macro
+     - Shell
+     - Build Targets
+   * - `%a`
+     - *
+     -
+   * - `%builder`
+     -
+     - *
+   * - `%c`
+     - *
+     -
+   * - `%d`
+     - *
+     -
+   * - `%dk`
+     - *
+     -
+   * - `%E`
+     -
+     - *
+   * - `%e`
+     - *
+     -
+   * - `%ef`
+     - *
+     -
+   * - `%ek`
+     - *
+     -
+   * - `%eL`
+     -
+     - *
+   * - `%external`
+     -
+     - *
+   * - `%F`
+     - *
+     - *
+   * - `%f`
+     - *
+     - *
+   * - `%fd`
+     - *
+     - *
+   * - `%fk`
+     - *
+     - *
+   * - `%fp`
+     -
+     - *
+   * - `%gnatmake`
+     - *
+     - *
+   * - `%gprbuild`
+     -
+     - *
+   * - `%gprclean`
+     -
+     - *
+   * - `%GPS`
+     - *
+     -
+   * - `%i`
+     - *
+     -
+   * - `%l`
+     - *
+     -
+   * - `%O`
+     - *
+     - *
+   * - `%o`
+     - *
+     - *
+   * - `%system_bin_dir`
+     - *
+     -
+   * - `%P`
+     - *
+     - *
+   * - `%PP`
+     - *
+     - *
+   * - `%PPs`
+     - *
+     - *
+   * - `%p`
+     - *
+     - *
+   * - `%Pb`
+     - *
+     - *
+   * - `%Pl`
+     - *
+     - *
+   * - `%pp`
+     - *
+     - *
+   * - `%pps`
+     - *
+     - *
+   * - `%(p|P)[r](d|s)[f]`
+     - *
+     - *
+   * - `%rbt`
+     -
+     - *
+   * - `%rd`
+     -
+     - *
+   * - `%S`
+     - *
+     -
+   * - `%s`
+     - *
+     -
+   * - `%switches(tool)`
+     -
+     - *
+   * - `%T`
+     -
+     - *
+   * - `%TT`
+     -
+     - *
+   * - `%TP`
+     -
+     - *
+   * - `%python(cmd)`
+     -
+     - *
+   * - `%attr(Package'Name[,{default}])`
+     -
+     - *
+   * - `%dirattr(Package'Name[,default])`
+     -
+     - *
+   * - `%baseattr(Package'Name[,default])`
+     -
+     - *
+   * - `%vars`
+     -
+     - *
+   * - `%X`
+     -
+     - *
+   * - `%target`
+     - *
+     -
+   * - `%ts`
+     - *
+     -
+   * - `%tl`
+     - *
+     -
+   * - `%rbl`
+     - *
+     -
+   * - `%(env:VAR)`
+     - *
+     -
+
 .. highlight:: python
 
 * :file:`%a`

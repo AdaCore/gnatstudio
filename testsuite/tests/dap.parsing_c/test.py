@@ -73,12 +73,15 @@ def test_driver():
 
     debug.send("run")
     yield wait_DAP_server("stackTrace")
+    yield wait_idle()
     yield wait_until_not_busy(debug)
     yield wait_idle()
 
     debug.frame_up()
     yield wait_until_not_busy(debug)
     yield wait_idle()
+
+    gps_assert(debug.current_frame(), 1, "Wrong frame")
 
     info = yield p.get_variable_by_name("Non_Existant_Variable")
     gps_assert(info.data is None, True, "Non_Existant_Variable")
@@ -253,11 +256,11 @@ def test_driver():
     yield check_variable(children1.data[0], "Mrora[1].c", "struct Field1_Record", "")
     children2 = yield get_children(children1.data[0])
     gps_assert(len(children2.data), 2, "Invalid count of Mrora[0].c children")
-    yield check_variable(children2.data[0], "Mrora[0].c.a", "int", "1")
+    yield check_variable(children2.data[0], "Mrora[1].c.a", "int", "1")
     yield check_variable(
-        children2.data[1], "Mrora[0].c.b", "int *", r"^0x[0-9a-f]+", True
+        children2.data[1], "Mrora[1].c.b", "int *", r"^0x[0-9a-f]+", True
     )
-    yield check_variable(children1.data[1], "Mrora[0].d", "int", "2")
+    yield check_variable(children1.data[1], "Mrora[1].d", "int", "2")
 
     var = yield check(p, "Mrorpa", "struct My_Record_Of_Record *[2]", "")
     children = yield get_children(var.data)
