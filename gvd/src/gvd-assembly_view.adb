@@ -437,12 +437,14 @@ package body GVD.Assembly_View is
       end if;
 
       if Asm_Highlight_Instructions.Get_Pref then
-         for Item of
-           Visual_Debugger
-             (Get_Process (View)).Debugger.Get_Register_Names
-         loop
-            Registers.Insert (Item, Position, Inserted);
-         end loop;
+         declare
+            Debugger : constant Debugger_Access :=
+                Visual_Debugger (Get_Process (View)).Debugger;
+         begin
+            for Item of Debugger.Get_Register_Names loop
+               Registers.Insert (Item, Position, Inserted);
+            end loop;
+         end;
       end if;
 
       for El of Elements loop
