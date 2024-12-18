@@ -241,13 +241,9 @@ package body Switches_Chooser is
    ------------------------
 
    function Empty_Command_Line
-     (Switches : access Switches_Editor_Config_Record'Class)
+     (Switches : not null access Switches_Editor_Config_Record'Class)
       return Command_Lines.Command_Line is
    begin
-      if Switches = null then
-         return Result : Command_Lines.Command_Line;
-      end if;
-
       return Result : Command_Lines.Command_Line do
          Result.Set_Configuration (Switches.Config);
       end return;
