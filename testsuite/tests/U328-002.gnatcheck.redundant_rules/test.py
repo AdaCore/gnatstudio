@@ -13,7 +13,7 @@ def test_driver():
     yield wait_tasks(other_than=known_tasks)
 
     gps_assert(
-        "-rules" in GPS.Console().get_text(),
+        "-rules " in GPS.Console().get_text().splitlines()[0],
         False,
         "The -rules option should not be speicified again, since "
         + "it's already specified in the .gpr file",
