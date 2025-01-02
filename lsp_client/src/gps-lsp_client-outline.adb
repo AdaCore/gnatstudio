@@ -433,6 +433,7 @@ package body GPS.LSP_Client.Outline is
                  Get_Optional_Boolean (Symbol.alsIsDeclaration),
                Visibility     =>
                  Get_Optional_Visibility (Symbol.alsVisibility),
+               Start_Line     => Integer (Symbol.span.first.line + 1),
                Def_Line       => First_Location.Line,
                Def_Col        => First_Location.Column,
                Def_End_Line   => Last_Location.Line,
@@ -507,12 +508,12 @@ package body GPS.LSP_Client.Outline is
                Category       => To_Language_Category (Symbol.kind),
                Is_Declaration => False,
                Visibility     => Visibility_Public,
+               Start_Line     => Integer (Symbol.location.span.first.line + 1),
                Def_Line       => Location.Line,
                Def_Col        => Location.Column,
                Def_End_Line   => -1,
                Def_End_Col    => -1,
-               End_Line       =>
-                 Integer (Symbol.location.span.last.line + 1),
+               End_Line       => Integer (Symbol.location.span.last.line + 1),
                Id             => "",
                Visible        => Dummy);
             Outline_View.Move_Cursor (Self.Model, Outline_View.Up);
