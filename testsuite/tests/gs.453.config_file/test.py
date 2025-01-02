@@ -19,7 +19,7 @@ def test_driver():
 
     current_buf = GPS.EditorBuffer.get()
     gps_assert(
-        "sjlj" in current_buf.file().path,
+        "light" in current_buf.file().path,
         True,
         "Wrong RTS file opened " + current_buf.file().path,
     )
