@@ -7,8 +7,11 @@ save file and reload project and ensure that the
 attribute is used by GS to start GDB
 """
 
+import re
 from GPS import *
 from gs_utils.internal.utils import *
+
+pattern = "exec[\\/]main" + dot_exe + ": No such file or directory."
 
 
 @run_test_driver
@@ -32,8 +35,7 @@ def run_test():
 
     console = GPS.Debugger.get().get_console()
     text = console.get_text()
-    found = (
-        text.find(os.path.join("exec", "main") + ": No such file or directory.") != -1
+    x = re.search(pattern, text)
+    gps_assert(
+        x is not None, True, "Wrong executable used, see console output:\n" + text
     )
-
-    gps_assert(found, True, "Incorrect debugger's executable used" + text)
