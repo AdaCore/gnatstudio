@@ -32,6 +32,8 @@ def run_test():
 
     console = GPS.Debugger.get().get_console()
     text = console.get_text()
-    found = text.find("/exec/main: No such file or directory.") != -1
+    found = (
+        text.find(os.path.join("exec", "main") + ": No such file or directory.") != -1
+    )
 
-    gps_assert(found, True, "Incorrect debugger's executable used")
+    gps_assert(found, True, "Incorrect debugger's executable used" + text)
