@@ -114,29 +114,32 @@ package body Outline_View is
 
    --  User defined preference values, used as a cache
 
-   Icon_Column         : constant := 0;
+   Icon_Column           : constant := 0;
    --  icon representing the entity type
-   Name_Column         : constant := 1;
+   Name_Column           : constant := 1;
    --  defining name + profile
 
    --  All the columns below should be hidden
-   Start_Line_Column   : constant := 2;
+   Def_Start_Line_Column : constant := 2;
    --  line containing the defining name
-   Start_Col_Column    : constant := 3;
+   Def_Start_Col_Column  : constant := 3;
    --  column of the defining name
 
-   Def_End_Line_Column : constant := 4;
+   Def_End_Line_Column   : constant := 4;
    --  defining name end symbol line
-   Def_End_Col_Column  : constant := 5;
+   Def_End_Col_Column    : constant := 5;
    --  defining name end symbol column
 
-   End_Line_Column     : constant := 6;
+   End_Line_Column       : constant := 6;
    --  end of the block
-   Category_Column     : constant := 7;
+   Category_Column       : constant := 7;
    --  integer representing the weight of the category
 
-   Id_Column           : constant := 8;
+   Id_Column             : constant := 8;
    --  Id defined by QGEN plugin, can be refered by the python API
+
+   Start_Line_Column     : constant := 9;
+   --  startof the block
 
    type Outline_Child_Record is new GPS_MDI_Child_Record with null record;
    overriding function Build_Context
@@ -400,9 +403,9 @@ package body Outline_View is
             Name : constant String := Decode_Name
               (Get_String (Model, Iter, Name_Column));
          begin
-            Line   := Integer (Get_Int (Model, Iter, Start_Line_Column));
+            Line   := Integer (Get_Int (Model, Iter, Def_Start_Line_Column));
             Column := Visible_Column
-              (Get_Int (Model, Iter, Start_Col_Column));
+              (Get_Int (Model, Iter, Def_Start_Col_Column));
 
             if Ada.Strings.Fixed.Index (Name, ".") in Name'Range then
                --  Dotted notation, getting the corresponding buffer
@@ -498,9 +501,9 @@ package body Outline_View is
          end if;
          Path_Free (Path);
 
-         Line := Integer (Get_Int (Model, Iter, Start_Line_Column));
+         Line := Integer (Get_Int (Model, Iter, Def_Start_Line_Column));
          Column :=
-           Visible_Column_Type (Get_Int (Model, Iter, Start_Col_Column));
+           Visible_Column_Type (Get_Int (Model, Iter, Def_Start_Col_Column));
 
          Set_Entity_Information
            (Context       => Context,
@@ -815,7 +818,7 @@ package body Outline_View is
          return Res;
       end if;
 
-      return Compare_Value (Start_Col_Column);
+      return Compare_Value (Def_Start_Col_Column);
    end Sort_Func;
 
    ----------------------
@@ -958,8 +961,8 @@ package body Outline_View is
       begin
          if L_A = L_B then
             declare
-               C_A : constant Gint := Get_Int (Model, A, Start_Col_Column);
-               C_B : constant Gint := Get_Int (Model, B, Start_Col_Column);
+               C_A : constant Gint := Get_Int (Model, A, Def_Start_Col_Column);
+               C_B : constant Gint := Get_Int (Model, B, Def_Start_Col_Column);
             begin
                --  Multiple entities in the same line: choose the entity
                --  depending on the current Column
@@ -1112,13 +1115,13 @@ package body Outline_View is
    begin
       Outline.Tree.Get_Selection.Get_Selected (Model, Iter);
       if Iter /= Null_Iter
-        and then Get_Int (Model, Iter, Start_Line_Column) /= -1
+        and then Get_Int (Model, Iter, Def_Start_Line_Column) /= -1
       then
          declare
             Start_Line   : constant Integer :=
-              Integer (Get_Int (Model, Iter, Start_Line_Column));
+              Integer (Get_Int (Model, Iter, Def_Start_Line_Column));
             Start_Column : constant Visible_Column :=
-              Visible_Column (Get_Int (Model, Iter, Start_Col_Column));
+              Visible_Column (Get_Int (Model, Iter, Def_Start_Col_Column));
             End_Line     : constant Integer :=
               Integer (Get_Int (Model, Iter, Def_End_Line_Column));
             End_Column   : constant Visible_Column :=
@@ -1202,7 +1205,7 @@ package body Outline_View is
             Name : constant String :=
               Self.Model.Get_String (Iter, Name_Column);
             Line : constant Integer :=
-              Integer (Self.Model.Get_Int (Iter, Start_Line_Column));
+              Integer (Self.Model.Get_Int (Iter, Def_Start_Line_Column));
          begin
             return Name & ":" & Integer'Image (Line);
          end;
@@ -1387,15 +1390,16 @@ package body Outline_View is
       Outline.Tree := new Outline_Tree_Record;
       Initialize
         (Outline.Tree,
-         Column_Types    => (Icon_Column         => GType_String,
-                             Name_Column         => GType_String,
-                             Start_Line_Column   => GType_Int,
-                             Start_Col_Column    => GType_Int,
-                             Def_End_Line_Column => GType_Int,
-                             Def_End_Col_Column  => GType_Int,
-                             End_Line_Column     => GType_Int,
-                             Category_Column     => GType_Int,
-                             Id_Column           => GType_String),
+         Column_Types    => (Icon_Column           => GType_String,
+                             Name_Column           => GType_String,
+                             Def_Start_Line_Column => GType_Int,
+                             Def_Start_Col_Column  => GType_Int,
+                             Def_End_Line_Column   => GType_Int,
+                             Def_End_Col_Column    => GType_Int,
+                             End_Line_Column       => GType_Int,
+                             Category_Column       => GType_Int,
+                             Id_Column             => GType_String,
+                             Start_Line_Column     => GType_Int),
          Capability_Type  => Filtered_And_Sortable,
          Set_Visible_Func => True);
 
@@ -1416,11 +1420,11 @@ package body Outline_View is
       --  Add Start_Line
       Gtk_New (Text_Render);
       Tree_Column.Pack_Start (Text_Render, False);
-      Tree_Column.Add_Attribute (Text_Render, "text", Start_Line_Column);
+      Tree_Column.Add_Attribute (Text_Render, "text", Def_Start_Line_Column);
       --  Add Start_Column
       Gtk_New (Text_Render);
       Tree_Column.Pack_Start (Text_Render, False);
-      Tree_Column.Add_Attribute (Text_Render, "text", Start_Col_Column);
+      Tree_Column.Add_Attribute (Text_Render, "text", Def_Start_Col_Column);
       --  Add Def_End_Line_Column
       Gtk_New (Text_Render);
       Tree_Column.Pack_Start (Text_Render, False);
@@ -1441,6 +1445,10 @@ package body Outline_View is
       Gtk_New (Text_Render);
       Tree_Column.Pack_Start (Text_Render, False);
       Tree_Column.Add_Attribute (Text_Render, "text", Id_Column);
+      --  Add Start_Line
+      Gtk_New (Text_Render);
+      Tree_Column.Pack_Start (Text_Render, False);
+      Tree_Column.Add_Attribute (Text_Render, "text", Start_Line_Column);
       Tree_Column.Set_Visible (False);
       Dummy := Outline.Tree.Append_Column (Tree_Column);
 
@@ -1892,6 +1900,7 @@ package body Outline_View is
       Category       : Language_Category;
       Is_Declaration : Boolean;
       Visibility     : Construct_Visibility;
+      Start_Line     : Integer;
       Def_Line       : Integer;
       Def_Col        : Visible_Column_Type;
       Def_End_Line   : Integer;
@@ -1934,14 +1943,15 @@ package body Outline_View is
                            (False, Visibility_Public, Category)),
                       Name_Column         =>
                         As_String (Category_Name (Category)),
-                      Start_Line_Column   => As_Int (-1),
-                      Start_Col_Column    => As_Int (-1),
-                      Def_End_Line_Column => As_Int (-1),
-                      Def_End_Col_Column  => As_Int (-1),
-                      End_Line_Column     => As_Int (0),
-                      Category_Column     =>
+                      Def_Start_Line_Column => As_Int (-1),
+                      Def_Start_Col_Column  => As_Int (-1),
+                      Def_End_Line_Column   => As_Int (-1),
+                      Def_End_Col_Column    => As_Int (-1),
+                      End_Line_Column       => As_Int (0),
+                      Category_Column       =>
                         As_Int (Gint (Sort_Entities (Category))),
-                      Id_Column           => As_String (String'(""))));
+                      Id_Column             => As_String (String'("")),
+                      Start_Line_Column     => As_Int (-1)));
                   Self.Category_Map.Include
                     (Category, Get_Path (Model, Cat_Iter));
                   return Cat_Iter;
@@ -1972,13 +1982,14 @@ package body Outline_View is
                As_String
                  (Encode_Name
                     (VSS.Strings.Conversions.To_UTF_8_String (Name), Profile)),
-             Start_Line_Column   => As_Int (Gint (Def_Line)),
-             Start_Col_Column    => As_Int (Gint (Def_Col)),
-             Def_End_Line_Column => As_Int (Gint (Def_End_Line)),
-             Def_End_Col_Column  => As_Int (Gint (Def_End_Col)),
-             End_Line_Column     => As_Int (Gint (End_Line)),
-             Category_Column     => As_Int (Gint (Sort_Entities (Category))),
-             Id_Column           => As_String (Id)));
+             Def_Start_Line_Column => As_Int (Gint (Def_Line)),
+             Def_Start_Col_Column  => As_Int (Gint (Def_Col)),
+             Def_End_Line_Column   => As_Int (Gint (Def_End_Line)),
+             Def_End_Col_Column    => As_Int (Gint (Def_End_Col)),
+             End_Line_Column       => As_Int (Gint (End_Line)),
+             Category_Column       => As_Int (Gint (Sort_Entities (Category))),
+             Id_Column             => As_String (Id),
+             Start_Line_Column     => As_Int (Gint (Start_Line))));
          Self.Current_Path := Get_Path (Model, Iter);
       end if;
    end Add_Row;
@@ -2045,16 +2056,17 @@ package body Outline_View is
                      Set_And_Clear
                        (Outline.Tree.Model,
                         Iter,
-                        (Icon_Column         => As_String (String'("")),
-                         Name_Column         => As_String
+                        (Icon_Column           => As_String (String'("")),
+                         Name_Column           => As_String
                            (Span_Header & "No symbols available" & Span_End),
-                         Start_Line_Column   => As_Int (0),
-                         Start_Col_Column    => As_Int (0),
-                         Def_End_Line_Column => As_Int (0),
-                         Def_End_Col_Column  => As_Int (0),
-                         End_Line_Column     => As_Int (0),
-                         Category_Column     => As_Int (4),
-                         Id_Column           => As_String (String'(""))));
+                         Def_Start_Line_Column => As_Int (0),
+                         Def_Start_Col_Column  => As_Int (0),
+                         Def_End_Line_Column   => As_Int (0),
+                         Def_End_Col_Column    => As_Int (0),
+                         End_Line_Column       => As_Int (0),
+                         Category_Column       => As_Int (4),
+                         Id_Column             => As_String (String'("")),
+                         Start_Line_Column     => As_Int (0)));
                   end;
                else
                   Outline.Tree.Refilter;

@@ -125,6 +125,7 @@ package Outline_View is
       Category       : Language_Category;
       Is_Declaration : Boolean;
       Visibility     : Construct_Visibility;
+      Start_Line     : Integer;
       Def_Line       : Integer;
       Def_Col        : Visible_Column_Type;
       Def_End_Line   : Integer;
@@ -139,6 +140,7 @@ package Outline_View is
    --  Category       : the Entity's category
    --  Is_Declaration : True if the Entity is a declaration
    --  Visibility     : the Entity's visibility
+   --  Start_Line     : the line where then Entity's block starts
    --  Def_Line       : the line containing the Entity's Defining_Name
    --                   (this can be different from Start_Line)
    --  Def_Column     : the column containing the Entity's Defining_Name

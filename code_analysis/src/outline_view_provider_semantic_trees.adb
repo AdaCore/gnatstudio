@@ -145,6 +145,7 @@ package body Outline_View_Provider_Semantic_Trees is
                      Category       => Node.Category,
                      Is_Declaration => Node.Is_Declaration,
                      Visibility     => Node.Visibility,
+                     Start_Line     => Node.Sloc_Start.Line,
                      Def_Line       => Def.Line,
                      Def_Col        => Def.Column,
                      Def_End_Line   => -1,
