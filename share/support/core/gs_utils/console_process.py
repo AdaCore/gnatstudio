@@ -164,7 +164,12 @@ class Console_Process(GPS.Console, GPS.Process):
         As a result, we terminate the process (this also results in a
         call to on_exit
         """
-        self.kill()
+        # Kill the process when its console gets closed. If the process is already
+        # dead, killing it raises an exception: just ignore it in that case.
+        try:
+            self.kill()
+        except Exception:
+            pass
 
     def on_resize(self, console, rows, columns=None):
         """This method is called when the console is being resized. We then
