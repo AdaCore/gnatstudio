@@ -40,6 +40,7 @@ with Gtk.Enums;                        use Gtk.Enums;
 with Gtkada.File_Selector;             use Gtkada.File_Selector;
 
 with GPS.Intl;                         use GPS.Intl;
+with GPS.Kernel.Custom;
 with GPS.Kernel.Hooks;                 use GPS.Kernel.Hooks;
 with GPS.Kernel.Messages;              use GPS.Kernel.Messages;
 with GPS.Kernel.Messages.Tools_Output; use GPS.Kernel.Messages.Tools_Output;
@@ -430,17 +431,50 @@ package body GPS.Kernel.Project is
       Clear                : Boolean := True)
    is
       Block_Me : constant Block_Trace_Handle := Create (Me) with Unreferenced;
-      Project             : Virtual_File :=
-                              Create_From_Dir (Directory, "default.gpr");
-      Share_Dir           : constant Virtual_File :=
-                              Create_From_Dir
-                                (Get_System_Dir (Kernel), "share/gnatstudio/");
-      Default             : constant Virtual_File :=
-                              Create_From_Dir (Share_Dir, "default.gpr");
-      Readonly            : constant Virtual_File :=
-                              Create_From_Dir (Share_Dir, "readonly.gpr");
-      Found               : Boolean;
-      Is_Default          : Boolean := False;
+
+      function Find_Custom_File (Name : Filesystem_String) return Virtual_File;
+      --  Parse GNATSTUDIO_CUSTOM_PATH for a file named Name overriding the
+      --  installation one.
+      --  If no such file exist then return the one from the installation.
+
+      ----------------------
+      -- Find_Custom_File --
+      ----------------------
+
+      function Find_Custom_File (Name : Filesystem_String) return Virtual_File
+      is
+         Env_Path  : constant File_Array := GPS.Kernel.Custom.Get_Custom_Path;
+         Share_Dir : constant Virtual_File :=
+           Create_From_Dir (Get_System_Dir (Kernel), "share/gnatstudio/");
+      begin
+         --  Search for an user file overriding the default one in
+         --  GNATSTUDIO_CUSTOM_PATH
+         for J in Env_Path'Range loop
+            if Env_Path (J).Is_Directory then
+               declare
+                  File : constant Virtual_File :=
+                    Create_From_Dir (Env_Path (J), Name);
+               begin
+                  if File.Is_Regular_File then
+                     return File;
+                  end if;
+               end;
+            elsif Env_Path (J).Is_Regular_File
+              and then Env_Path (J).Base_Name = Name
+            then
+               return Env_Path (J);
+            end if;
+         end loop;
+
+         --  Use the file from the installation
+         return Create_From_Dir (Share_Dir, Name);
+      end Find_Custom_File;
+
+      Project    : Virtual_File := Create_From_Dir (Directory, "default.gpr");
+      Default    : constant Virtual_File := Find_Custom_File ("default.gpr");
+      Readonly   : constant Virtual_File := Find_Custom_File ("readonly.gpr");
+      Found      : Boolean;
+      Is_Default : Boolean := False;
 
       Ignore : Boolean;
       pragma Unreferenced (Ignore);
