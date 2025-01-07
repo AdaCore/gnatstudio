@@ -45,11 +45,11 @@ package body GPS.CLI_Process_Launchers is
       Arg_List    : GNAT.OS_Lib.Argument_List :=
         To_List (CL, Include_Command => False);
 
-      procedure Finally;
+      procedure FFinally;
       --  Gather instruction to do at the end of the procedure
       --  in any case
 
-      procedure Finally is
+      procedure FFinally is
       begin
          if Directory /= No_File then
             Change_Dir (Old_Dir);
@@ -58,7 +58,7 @@ package body GPS.CLI_Process_Launchers is
          for J in Arg_List'Range loop
             GNAT.OS_Lib.Free (Arg_List (J));
          end loop;
-      end Finally;
+      end FFinally;
 
    begin
       if not Is_Local (Server) then
@@ -88,14 +88,14 @@ package body GPS.CLI_Process_Launchers is
          Output_Parser.End_Of_Stream (Status, Command => null);
       end;
 
-      Finally;
+      FFinally;
 
    exception
       when E : Invalid_Process =>
          Trace (Me, "Exception " & Exception_Name (E)
                 & ": Could not launch process: " & Get_Command (CL));
          Success := False;
-         Finally;
+         FFinally;
    end Launch_Process;
 
    ----------------------------------
