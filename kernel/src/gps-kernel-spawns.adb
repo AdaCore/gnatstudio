@@ -40,6 +40,8 @@ package body GPS.Kernel.Spawns is
    Me_IO : constant Trace_Handle := Create
      ("GPS.KERNEL.SPAWN_IO", Off);
 
+   Buffer_Size : constant := 2048;
+
    type Monitor_Command is new Commands.Root_Command
      and Spawn.Process_Listeners.Process_Listener with
       record
@@ -189,8 +191,8 @@ package body GPS.Kernel.Spawns is
      (Self : in out Monitor_Command)
    is
       use type Ada.Streams.Stream_Element_Count;
-      Data    : Ada.Streams.Stream_Element_Array (1 .. 512);
-      Text    : String (1 .. 512) with Import, Address => Data'Address;
+      Data    : Ada.Streams.Stream_Element_Array (1 .. Buffer_Size);
+      Text    : String (1 .. Buffer_Size) with Import, Address => Data'Address;
       Last    : Ada.Streams.Stream_Element_Count;
       Success : Boolean := True;
 
@@ -217,8 +219,8 @@ package body GPS.Kernel.Spawns is
      (Self : in out Monitor_Command)
    is
       use type Ada.Streams.Stream_Element_Count;
-      Data    : Ada.Streams.Stream_Element_Array (1 .. 512);
-      Text    : String (1 .. 512) with Import, Address => Data'Address;
+      Data    : Ada.Streams.Stream_Element_Array (1 .. Buffer_Size);
+      Text    : String (1 .. Buffer_Size) with Import, Address => Data'Address;
       Last    : Ada.Streams.Stream_Element_Count;
       Success : Boolean := True;
 
