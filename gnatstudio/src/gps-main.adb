@@ -304,9 +304,6 @@ procedure GPS.Main is
    Elaboration_Browser_Trace : constant Trace_Handle :=
      Create ("GPS.INTERNAL.MODULE_Elaboration_Browser",
              GNATCOLL.Traces.On);
-   Remote_Module_Trace : constant Trace_Handle :=
-     Create ("GPS.INTERNAL.MODULE_REMOTE",
-             GNATCOLL.Traces.Off);
 
    Debugger_GDB_Trace : constant Trace_Handle :=
      Create ("MODULE.Debugger_GDB", GNATCOLL.Traces.Off);
@@ -1212,7 +1209,7 @@ procedure GPS.Main is
       GPS.Kernel.Messages.Shell.Register_Commands (GPS_Main.Kernel);
       GPS.Kernel.Style_Manager.Shell.Register_Commands (GPS_Main.Kernel);
 
-      if Remote_Module_Trace.Is_Active then
+      if Remote_Module.Remote_Module_Trace.Is_Active then
          --  Register this very early so that other modules can access remote
          --  files. Note that we need the scripting capabilities to be
          --  initialized before the remote mode.

@@ -18,7 +18,6 @@
 with GNAT.Strings;
 
 with GNATCOLL.Projects;
-with GNATCOLL.Traces;           use GNATCOLL.Traces;
 with GNATCOLL.VFS;              use GNATCOLL.VFS;
 pragma Warnings (Off, ".*is an internal GNAT unit");
 with GNAT.Expect.TTY.Remote;
