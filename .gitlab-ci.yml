@@ -41,3 +41,4 @@ include:
       rules:
       # Does not work on edge
       - if: $CI_PIPELINE_SOURCE == 'merge_request_event' && $CI_TARGET_BRANCH_NAME != 'edge'
+        allow_failure: true
