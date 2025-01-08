@@ -22,7 +22,6 @@ The command line options are::
      --debug[=program]              Start a debug session and optionally load
                                     the program with the given arguments
      --hide                         Hide GNAT Studio main window
-     --host=tools_host              Use tools_host to launch tools (e.g. gdb)
      --target=TARG:PRO              Load program on machine TARG using protocol
                                     PRO
      --load=lang:file               Execute an external file written in the
@@ -54,9 +53,6 @@ searched anywhere on the project's source path
 
 To open a file at a given line, use the :command`+line` prefix, e.g.
 :command:`gnatstudio +40 source.adb`.
-
-:samp:`tools_host` corresponds to a remote host's nickname as defined
-in :ref:`Setup_the_remote_servers`.
 
 By default, files you specify on the command line can have absolute or
 relative pathnames.  If you prepend a filename with the :samp:`=`
