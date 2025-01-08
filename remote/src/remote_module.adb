@@ -18,7 +18,6 @@
 with GNAT.Strings;
 
 with GNATCOLL.Projects;
-with GNATCOLL.Scripts;          use GNATCOLL.Scripts;
 with GNATCOLL.Traces;           use GNATCOLL.Traces;
 with GNATCOLL.VFS;              use GNATCOLL.VFS;
 pragma Warnings (Off, ".*is an internal GNAT unit");
@@ -36,7 +35,6 @@ with GPS.Kernel.MDI;
 with GPS.Kernel.Modules;        use GPS.Kernel.Modules;
 with GPS.Kernel.Project;
 with GPS.Kernel.Remote;         use GPS.Kernel.Remote;
-with GPS.Kernel.Scripts;        use GPS.Kernel.Scripts;
 with Gtkada.File_Selector;      use Gtkada.File_Selector;
 with XML_Parsers;
 with XML_Utils;                 use XML_Utils;
@@ -68,10 +66,6 @@ package body Remote_Module is
       Kernel : not null access Kernel_Handle_Record'Class;
       File   : Virtual_File);
    --  Called when a file has been modified
-
-   procedure Remote_Commands_Handler
-     (Data : in out Callback_Data'Class; Command : String);
-   --  Command handler for the "is_local_server" command
 
    type Open_From_Host_Command is new Interactive_Command with null record;
    overriding
@@ -240,13 +234,6 @@ package body Remote_Module is
 
       File_Saved_Hook.Add (new On_File_Saved);
 
-      Register_Command
-        (Kernel,
-         "is_server_local",
-         Minimum_Args => 1,
-         Maximum_Args => 1,
-         Handler      => Remote_Commands_Handler'Access);
-
       GPS.Kernel.Actions.Register_Action
         (Kernel,
          "open remote project",
@@ -261,25 +248,6 @@ package body Remote_Module is
 
       Remote.View.Register_Module (Kernel);
    end Register_Module;
-
-   -----------------------------
-   -- Remote_Commands_Handler --
-   -----------------------------
-
-   procedure Remote_Commands_Handler
-     (Data    : in out Callback_Data'Class;
-      Command : String)
-   is
-      Server : Remote.Server_Type;
-   begin
-      if Command = "is_server_local" then
-         Server := Remote.Server_Type'Value (Nth_Arg (Data, 1));
-         GNATCOLL.Scripts.Set_Return_Value (Data, Remote.Is_Local (Server));
-      end if;
-   exception
-      when others =>
-         GNATCOLL.Scripts.Set_Return_Value (Data, True);
-   end Remote_Commands_Handler;
 
    ------------------
    -- Get_Database --
