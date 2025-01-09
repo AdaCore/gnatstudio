@@ -16,6 +16,7 @@
 ------------------------------------------------------------------------------
 
 with VSS.Strings.Conversions;
+with VSS.Transformers.Casing;      use VSS.Transformers.Casing;
 
 with DAP.Clients.Variables;
 with DAP.Utils;
@@ -33,6 +34,32 @@ package body DAP.Modules.Variables.Items.Variables is
    end Get_Name;
 
    -------------------
+   -- Get_Full_Name --
+   -------------------
+
+   overriding function Get_Full_Name
+     (Self : Variable_Item_Info)
+      return Virtual_String is
+   begin
+      if Self.Full_Name = Empty_Virtual_String then
+         return To_Lowercase.Transform (Self.Get_Name);
+      else
+         return Self.Full_Name;
+      end if;
+   end Get_Full_Name;
+
+   -------------------
+   -- Set_Full_Name --
+   -------------------
+
+   overriding procedure Set_Full_Name
+     (Self  : in out Variable_Item_Info;
+      Value : Virtual_String) is
+   begin
+      Self.Full_Name := To_Lowercase.Transform (Value);
+   end Set_Full_Name;
+
+   -------------------
    -- Find_DAP_Item --
    -------------------
 
@@ -41,7 +68,7 @@ package body DAP.Modules.Variables.Items.Variables is
       C     : in out DAP.Types.Variables_References_Trees.Cursor;
       Found : out Boolean) is
    begin
-      DAP.Clients.Variables.Find_Name_Or_Parent (Info.Varname, C, Found);
+      DAP.Clients.Variables.Find_Name_Or_Parent (Info.Get_Full_Name, C, Found);
    end Find_DAP_Item;
 
    -----------

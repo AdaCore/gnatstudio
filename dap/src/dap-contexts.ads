@@ -17,6 +17,7 @@
 
 --  Utilities to support selection contexts in the contxt of the debugger
 
+with VSS.Strings;
 with GPS.Kernel;                   use GPS.Kernel;
 with DAP.Modules.Variables.Items;  use DAP.Modules.Variables.Items;
 
@@ -31,7 +32,7 @@ package DAP.Contexts is
 
    procedure Store_Variable
      (Context   : in out GPS.Kernel.Selection_Context;
-      Full_Name : String;
+      Full_Name : VSS.Strings.Virtual_String;
       Info      : Item_Info'Class);
    --  Set the debugging variable into the Context.
 

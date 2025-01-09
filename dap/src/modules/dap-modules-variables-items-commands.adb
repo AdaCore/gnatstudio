@@ -32,6 +32,16 @@ package body DAP.Modules.Variables.Items.Commands is
       return Self.Cmd;
    end Get_Name;
 
+   -------------------
+   -- Get_Full_Name --
+   -------------------
+
+   overriding function Get_Full_Name
+     (Self : Command_Item_Info) return Virtual_String is
+   begin
+      return Self.Cmd;
+   end Get_Full_Name;
+
    ----------------
    -- Is_Command --
    ----------------

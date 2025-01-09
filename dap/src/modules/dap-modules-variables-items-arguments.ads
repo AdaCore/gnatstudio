@@ -25,6 +25,9 @@ package DAP.Modules.Variables.Items.Arguments is
    overriding function Get_Name
      (Self : Arguments_Item_Info) return Virtual_String;
 
+   overriding function Get_Full_Name
+     (Self : Arguments_Item_Info) return Virtual_String;
+
    overriding procedure Find_DAP_Item
      (Info  : Arguments_Item_Info;
       C     : in out DAP.Types.Variables_References_Trees.Cursor;

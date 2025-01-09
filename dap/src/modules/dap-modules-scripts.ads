@@ -53,9 +53,14 @@ package DAP.Modules.Scripts is
    --  fills it with Data and pass it to the callback. Used to pass children
    --  to python callback.
 
-   procedure Create_No_Debugger_Variable_For_Callback
+   procedure Create_Debugger_No_Variable_For_Callback
      (Params : DAP.Clients.Variables.Request_Parameters);
    --  Calls callback with No_Class_Instance parameter when variable
    --  is not found.
+
+   procedure Create_Debugger_Variable_Rejected_For_Callback
+     (Params : DAP.Clients.Variables.Request_Parameters);
+   --  Calls callback with No_Class_Instance parameter when the request
+   --  was rejected.
 
 end DAP.Modules.Scripts;

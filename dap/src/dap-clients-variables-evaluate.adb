@@ -86,9 +86,7 @@ package body DAP.Clients.Variables.Evaluate is
    begin
       DAP.Requests.Evaluate.Evaluate_DAP_Request
         (Self).On_Error_Message (Client, Message);
-
       DAP.Views.Variables.On_Variable_Not_Found (Client, Self.Params);
-      Free (Self.Params);
    end On_Error_Message;
 
    -----------------
@@ -100,7 +98,7 @@ package body DAP.Clients.Variables.Evaluate is
       Client  : not null access DAP.Clients.DAP_Client'Class) is
    begin
       DAP.Requests.Evaluate.Evaluate_DAP_Request (Self).On_Rejected (Client);
-      Free (Self.Params);
+      Client.Variables.On_Variable_Request_Rejected (Self.Params);
    end On_Rejected;
 
 end DAP.Clients.Variables.Evaluate;

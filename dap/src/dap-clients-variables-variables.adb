@@ -16,6 +16,7 @@
 ------------------------------------------------------------------------------
 
 with GNATCOLL.Traces;         use GNATCOLL.Traces;
+with VSS.Strings.Conversions;
 
 package body DAP.Clients.Variables.Variables is
 
@@ -61,8 +62,9 @@ package body DAP.Clients.Variables.Variables is
       Id      : constant Integer :=
         Self.Parameters.arguments.variablesReference;
       C       : Variables_References_Trees.Cursor;
-      Next_Id : Integer := 0;
+      Next_Id : Integer := -1;
       Kind    : Variable_Kind;
+      Scope   : VSS.Strings.Virtual_String := "Locals";
    begin
       Trace (Me, "On_Result_Message");
       New_Request := null;
@@ -79,6 +81,8 @@ package body DAP.Clients.Variables.Variables is
       elsif Id = Var.Locals_Scope_Id then
          Kind := Locals;
 
+      elsif Id = Var.Globals_Scope_Id then
+         Kind := Globals;
       else
          --  Clear children, they will be rewrited,
          --  if we don't process Locals or Arguments
@@ -98,11 +102,18 @@ package body DAP.Clients.Variables.Variables is
 
       if Id = Var.Arguments_Scope_Id then
          Next_Id := Var.Locals_Scope_Id;
+      elsif Id = Var.Locals_Scope_Id then
+         Next_Id := Var.Globals_Scope_Id;
+         Scope := "Globals";
       end if;
 
-      if Next_Id /= 0 then
-         --  We loaded Locals and Arguments also exist, so load them too
-         Trace (Me, "Load Locals");
+      if Next_Id = 0 then
+         Next_Id := Var.Globals_Scope_Id;
+      end if;
+
+      if Next_Id > 0 then
+         --  Load next kind of variables
+         Trace (Me, "Load " & VSS.Strings.Conversions.To_UTF_8_String (Scope));
          Send_Variables_Request (Client, Next_Id, Self.Params);
 
       else
@@ -123,9 +134,7 @@ package body DAP.Clients.Variables.Variables is
    begin
       DAP.Requests.Variables.Variables_DAP_Request
         (Self).On_Error_Message (Client, Message);
-
       Client.Variables.On_Variable_Not_Found (Self.Params);
-      Free (Self.Params);
    end On_Error_Message;
 
    -----------------
@@ -136,8 +145,8 @@ package body DAP.Clients.Variables.Variables is
      (Self   : in out Variables_Request;
       Client : not null access DAP.Clients.DAP_Client'Class) is
    begin
+      Client.Variables.On_Variable_Request_Rejected (Self.Params);
       DAP.Requests.Variables.Variables_DAP_Request (Self).On_Rejected (Client);
-      Free (Self.Params);
    end On_Rejected;
 
 end DAP.Clients.Variables.Variables;

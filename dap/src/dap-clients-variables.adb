@@ -171,7 +171,9 @@ package body DAP.Clients.Variables is
 
    procedure Clear (Self : in out Variables_Holder) is
    begin
+      Trace (Me, "Clear");
       Self.Locals_Scope_Id    := 0;
+      Self.Globals_Scope_Id   := 0;
       Self.Arguments_Scope_Id := 0;
       Self.Has_Scopes_Ids     := False;
       Self.Scopes.Clear;
@@ -258,9 +260,11 @@ package body DAP.Clients.Variables is
                if Parent = Self.Scopes.Root then
                   DAP.Clients.Variables.SetVariable.Send_Set_Variable_Request
                     (Self.Client,
-                     (if Element (Cursor).Kind = Locals
-                      then Self.Locals_Scope_Id
-                      else Self.Arguments_Scope_Id), P);
+                     (case Element (Cursor).Kind is
+                         when Locals => Self.Locals_Scope_Id,
+                         when Globals => Self.Globals_Scope_Id,
+                         when others => Self.Arguments_Scope_Id),
+                     P);
 
                else
                   DAP.Clients.Variables.SetVariable.Send_Set_Variable_Request
@@ -288,12 +292,16 @@ package body DAP.Clients.Variables is
 
       else
          --  It is not a command, use variable request. Request contents of
-         --  Locals or Arguments if any.
+         --  Locals, Arguments or Globals if any.
 
          if Self.Arguments_Scope_Id /= 0 then
             Id := Self.Arguments_Scope_Id;
-         else
+
+         elsif Self.Locals_Scope_Id /= 0 then
             Id := Self.Locals_Scope_Id;
+
+         else
+            Id := Self.Globals_Scope_Id;
          end if;
 
          if Id /= 0 then
@@ -353,6 +361,7 @@ package body DAP.Clients.Variables is
 
    begin
       if Id = Self.Locals_Scope_Id
+        or else Id = Self.Globals_Scope_Id
         or else Id = Self.Arguments_Scope_Id
       then
          return Self.Scopes.Root;
@@ -371,7 +380,8 @@ package body DAP.Clients.Variables is
       Cursor : in out Variables_References_Trees.Cursor)
    is
       use type Ada.Containers.Count_Type;
-      N : constant Virtual_String := To_Lowercase.Transform (Name);
+      N       : constant Virtual_String := To_Lowercase.Transform (Name);
+      Current : Virtual_String;
 
    begin
       if Child_Count (Cursor) = 0 then
@@ -380,7 +390,13 @@ package body DAP.Clients.Variables is
 
       Cursor := First_Child (Cursor);
       while Cursor /= Variables_References_Trees.No_Element loop
-         if To_Lowercase.Transform (Element (Cursor).Data.name) = N then
+         Current := To_Lowercase.Transform (Element (Cursor).Data.name);
+         if Current = N
+         --  for Globals GDB sends variables' names prepended by module's
+         --  name like `help_module.help_module_id` where actual variable's
+         --  name is `help_module_id`
+           or else Current.Ends_With ("." & N)
+         then
             return;
          end if;
          Next_Sibling (Cursor);
@@ -400,40 +416,81 @@ package body DAP.Clients.Variables is
       use VSS.Strings.Cursors.Iterators.Characters;
       use VSS.Characters;
 
-      procedure Find (N : Virtual_String);
-      procedure Find (N : Virtual_String) is
-         Pos   : VSS.Strings.Cursors.Iterators.Characters.Character_Iterator :=
-           N.Before_First_Character;
-         Part  : Virtual_String;
-         Dummy : Boolean;
+      procedure Find (N : Virtual_String; First : Boolean);
+      procedure Find (N : Virtual_String; First : Boolean) is
+         Pos            : VSS.Strings.Cursors.Iterators.Characters.
+           Character_Iterator := N.Before_First_Character;
+         Current_Cursor : Variables_References_Trees.Cursor :=
+           First_Child (Cursor);
+         Part           : Virtual_String;
+         Current        : Virtual_String;
+         Dummy          : Boolean;
       begin
          if Child_Count (Cursor) = 0 then
             return;
          end if;
 
-         while Forward (Pos)
-           and then Element (Pos) /= '.'
-         loop
-            Part.Append (Element (Pos));
-         end loop;
+         Main : loop
+            while Forward (Pos)
+              and then Element (Pos) /= '.'
+            loop
+               Part.Append (Element (Pos));
+            end loop;
 
-         Cursor := First_Child (Cursor);
-         while Cursor /= Variables_References_Trees.No_Element loop
-            if To_Lowercase.Transform (Element (Cursor).Data.name) = Part then
-               exit;
+            while Current_Cursor /= Variables_References_Trees.No_Element loop
+               Current := To_Lowercase.Transform
+                 (Element (Current_Cursor).Data.name);
+               if Current = Part
+               --  for Globals GDB sends variables' names prepended by module's
+               --  name like `help_module.help_module_id` where actual
+               --  variable's name is `help_module_id`
+                 or else (First and then Current.Ends_With ("." & Part))
+               then
+                  --  found `help_module.help_module_id` or `.help_module_id`
+                  exit Main;
+               end if;
+
+               Next_Sibling (Current_Cursor);
+            end loop;
+
+            if First
+              and then Has_Element (Pos)
+            then
+               --  we did not find anything at the first pass but if we are
+               --  looking for `help_module.help_module_id.value` and have
+               --  `help_module.help_module_id` as the parent we can't stop
+               --  after we processed `help_module`. We should redo searching
+               --  with adding `.help_module_id` to have
+               --  `help_module.help_module_id` as a pattern
+
+               Current_Cursor := First_Child (Cursor);
+               Part.Append (Element (Pos));
+
+            else
+               --  It is not the first pass and we did not find `.Some_Name`
+               --  suffix
+               exit Main;
             end if;
-            Next_Sibling (Cursor);
-         end loop;
+         end loop Main;
 
-         if Cursor /= Variables_References_Trees.No_Element then
+         if Current_Cursor /= Variables_References_Trees.No_Element then
+            --  we found at least part, so store the cursor to point on this
+            --  part/parent
+            Cursor := Current_Cursor;
+
             if Has_Element (Pos) then
                --  the part of the name is found
                Dummy := Forward (Pos); --  skip '.'
-               Find (N.Slice (Pos, N.At_Last_Character));
+               Find (N.Slice (Pos, N.At_Last_Character), False);
             else
                --  the last name part is found
                Found := True;
             end if;
+
+         elsif First then
+            --  We did not found anything at the first pass, so return
+            --  No_Element to indicate that nothing is found.
+            Cursor := Variables_References_Trees.No_Element;
          end if;
       end Find;
 
@@ -445,7 +502,11 @@ package body DAP.Clients.Variables is
          return;
       end if;
 
-      Find (To_Lowercase.Transform (Name));
+      Find (To_Lowercase.Transform (Name), True);
+
+      if Cursor.Is_Root then
+         Cursor := Variables_References_Trees.No_Element;
+      end if;
    end Find_Name_Or_Parent;
 
    ---------------------------
@@ -461,7 +522,9 @@ package body DAP.Clients.Variables is
       Found : Boolean;
 
    begin
-      Trace (Me, "On_Variables_Response:" & Params.Item.Info.Get_Name);
+      Trace (Me, "On_Variables_Response:" &
+               VSS.Strings.Conversions.To_UTF_8_String
+               (Params.Item.Info.Get_Full_Name));
 
       Params.Item.Info.Find_DAP_Item (C, Found);
 
@@ -598,7 +661,7 @@ package body DAP.Clients.Variables is
 
          when Python_API =>
             --  inform the Python side
-            DAP.Modules.Scripts.Create_No_Debugger_Variable_For_Callback
+            DAP.Modules.Scripts.Create_Debugger_No_Variable_For_Callback
               (Params);
 
          when Set_Variable =>
@@ -607,6 +670,23 @@ package body DAP.Clients.Variables is
 
       Free (Params);
    end On_Variable_Not_Found;
+
+   ----------------------------------
+   -- On_Variable_Request_Rejected --
+   ----------------------------------
+
+   procedure On_Variable_Request_Rejected
+     (Self   : in out Variables_Holder;
+      Params : in out Request_Parameters) is
+   begin
+      if Params.Kind = Python_API then
+         --  inform the Python side
+         DAP.Modules.Scripts.Create_Debugger_Variable_Rejected_For_Callback
+           (Params);
+      end if;
+
+      Free (Params);
+   end On_Variable_Request_Rejected;
 
    ---------------------
    -- On_Variable_Set --
@@ -634,10 +714,10 @@ package body DAP.Clients.Variables is
       while C /= Variables_References_Trees.No_Element
         and then not Is_Root (C)
       loop
-         if Result /= "" then
-            Result := Element (C).Data.name & "." & Result;
-         else
+         if Result = "" then
             Result := Element (C).Data.name;
+         else
+            Result.Prepend (Element (C).Data.name & ".");
          end if;
          C := Parent (C);
       end loop;

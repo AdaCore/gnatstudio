@@ -18,11 +18,19 @@
 package DAP.Modules.Variables.Items.Variables is
 
    type Variable_Item_Info is new Item_Info with record
-      Varname : Virtual_String;
+      Varname   : Virtual_String;
+      Full_Name : Virtual_String;
    end record;
 
    overriding function Get_Name
      (Self : Variable_Item_Info) return Virtual_String;
+
+   overriding function Get_Full_Name
+     (Self : Variable_Item_Info) return Virtual_String;
+
+   overriding procedure Set_Full_Name
+     (Self  : in out Variable_Item_Info;
+      Value : Virtual_String);
 
    overriding procedure Find_DAP_Item
      (Info  : Variable_Item_Info;

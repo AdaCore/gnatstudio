@@ -25,6 +25,9 @@ package DAP.Modules.Variables.Items.Commands is
    overriding function Get_Name
      (Self : Command_Item_Info) return Virtual_String;
 
+   overriding function Get_Full_Name
+     (Self : Command_Item_Info) return Virtual_String;
+
    overriding function Is_Command (Info : Command_Item_Info) return Boolean;
 
    overriding procedure Find_DAP_Item
