@@ -163,7 +163,7 @@ package body DAP.Modules.Variables.Items is
    function Is_Same_Name
      (Info : Item_Info'Class; Name : Virtual_String) return Boolean is
    begin
-      return Info.Get_Name = Name;
+      return Info.Get_Full_Name = Name;
    end Is_Same_Name;
 
    -----------

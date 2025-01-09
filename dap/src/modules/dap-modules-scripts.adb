@@ -100,6 +100,10 @@ package body DAP.Modules.Scripts is
    --  Return the subprogram parameter from the data/position if any or null.
    --  The caller side is responsible for freeing returned Subprogram.
 
+   procedure Call_On_Result_With_No_Class
+     (Params : DAP.Clients.Variables.Request_Parameters);
+   --  Calls On_Result with No_Class_Instance
+
    --------------------------------
    -- Create_Debugger_Breakpoint --
    --------------------------------
@@ -215,10 +219,10 @@ package body DAP.Modules.Scripts is
    end Create_Debugger_Variables_For_Callback;
 
    ----------------------------------------------
-   -- Create_No_Debugger_Variable_For_Callback --
+   -- Create_Debugger_No_Variable_For_Callback --
    ----------------------------------------------
 
-   procedure Create_No_Debugger_Variable_For_Callback
+   procedure Create_Debugger_No_Variable_For_Callback
      (Params : DAP.Clients.Variables.Request_Parameters) is
    begin
       --  We did not found the variable for some reason
@@ -235,18 +239,7 @@ package body DAP.Modules.Scripts is
          if Params.On_Error = null then
             --  We do not have On_Error callback, use On_Result and
             --  send None object.
-            declare
-               Arguments : Callback_Data'Class :=
-                 Params.On_Result.Get_Script.Create (1);
-            begin
-               Set_Nth_Arg (Arguments, 1, No_Class_Instance);
-               Dummy := Params.On_Result.Execute (Arguments);
-               Free (Arguments);
-            exception
-               when E : others =>
-                  Free (Arguments);
-                  Trace (Me, E);
-            end;
+            Call_On_Result_With_No_Class (Params);
 
          else
             --  We have On_Error callback, call it with "not found" message
@@ -265,7 +258,69 @@ package body DAP.Modules.Scripts is
             end;
          end if;
       end;
-   end Create_No_Debugger_Variable_For_Callback;
+   end Create_Debugger_No_Variable_For_Callback;
+
+   ----------------------------------------------------
+   -- Create_Debugger_Variable_Rejected_For_Callback --
+   ----------------------------------------------------
+
+   procedure Create_Debugger_Variable_Rejected_For_Callback
+     (Params : DAP.Clients.Variables.Request_Parameters) is
+   begin
+      --  We did not found the variable for some reason
+
+      if Params.On_Result = null
+        and then Params.On_Rejected = null
+      then
+         return;
+      end if;
+
+      declare
+         Dummy : Boolean;
+      begin
+         if Params.On_Rejected = null then
+            --  We do not have On_Rejected callback, use On_Result and
+            --  send None object.
+            Call_On_Result_With_No_Class (Params);
+
+         else
+            --  We have On_Rejected callback, call it
+            declare
+               Arguments : Callback_Data'Class :=
+                 Params.On_Rejected.Get_Script.Create (1);
+            begin
+               Set_Nth_Arg (Arguments, 1, No_Class_Instance);
+               Dummy := Params.On_Rejected.Execute (Arguments);
+               Free (Arguments);
+
+            exception
+               when E : others =>
+                  Free (Arguments);
+                  Trace (Me, E);
+            end;
+         end if;
+      end;
+   end Create_Debugger_Variable_Rejected_For_Callback;
+
+   ----------------------------------
+   -- Call_On_Result_With_No_Class --
+   ----------------------------------
+
+   procedure Call_On_Result_With_No_Class
+     (Params : DAP.Clients.Variables.Request_Parameters)
+   is
+      Arguments : Callback_Data'Class :=
+        Params.On_Result.Get_Script.Create (1);
+      Dummy     : Boolean;
+   begin
+      Set_Nth_Arg (Arguments, 1, No_Class_Instance);
+      Dummy := Params.On_Result.Execute (Arguments);
+      Free (Arguments);
+   exception
+      when E : others =>
+         Free (Arguments);
+         Trace (Me, E);
+   end Call_On_Result_With_No_Class;
 
    --------------------
    -- Get_Breakpoint --

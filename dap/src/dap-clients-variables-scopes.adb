@@ -57,6 +57,10 @@ package body DAP.Clients.Variables.Scopes is
                Var.Locals_Scope_Id :=
                  Result.a_body.scopes (Index).variablesReference;
 
+            elsif Result.a_body.scopes (Index).name = "Globals" then
+               Var.Globals_Scope_Id :=
+                 Result.a_body.scopes (Index).variablesReference;
+
             elsif Result.a_body.scopes (Index).name = "Arguments" then
                Var.Arguments_Scope_Id :=
                  Result.a_body.scopes (Index).variablesReference;
@@ -82,7 +86,7 @@ package body DAP.Clients.Variables.Scopes is
    begin
       DAP.Requests.Scopes.Scopes_DAP_Request
         (Self).On_Error_Message (Client, Message);
-      Free (Self.Params);
+      Client.Variables.On_Variable_Not_Found (Self.Params);
    end On_Error_Message;
 
    -----------------
@@ -94,7 +98,7 @@ package body DAP.Clients.Variables.Scopes is
       Client : not null access DAP.Clients.DAP_Client'Class) is
    begin
       DAP.Requests.Scopes.Scopes_DAP_Request (Self).On_Rejected (Client);
-      Free (Self.Params);
+      Client.Variables.On_Variable_Request_Rejected (Self.Params);
    end On_Rejected;
 
 end DAP.Clients.Variables.Scopes;
