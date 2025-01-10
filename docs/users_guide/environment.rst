@@ -107,6 +107,10 @@ settings in GNAT Studio:
   Contains a list of directories to search for custom files. See
   :ref:`Customizing_through_XML_and_Python_files` for more details.
 
+  Can be used to redefine the default project created via
+  `Start with default project` startup menu entry, by adding a directory
+  containing a new project :file:`default.gpr`.
+
 * :file:`GNATSTUDIO_CHANGELOG_USER`
 
   .. index:: GNATSTUDIO_CHANGELOG_USER
