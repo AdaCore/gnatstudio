@@ -28,7 +28,8 @@
          <!-- Project section -->
          <menu label='_New Project...'                        action='create project from template'/>
          <menu label='Open Project...'                        action='open project dialog'/>
-         <menu label='Open Project from _Host...'             action='open remote project'/>
+         <menu label='Open Project from _Host...'             action='open remote project'
+               optional='true'                                hide='true'/>
          <menu label='Open Recent Projects'/>  <!--  contents is dynamic -->
 
          <menu label='Project'> <!-- TODO: decide whether we want to organize these differently -->
@@ -41,7 +42,8 @@
          <menu label='_New File'                          action='new file'/>
          <menu label='New File _View'                     action='new view'/>
          <menu label='_Open File...'                      action='open file'/>
-         <menu label='Open File from _Host...'            action='open from host'/>
+         <menu label='Open File from _Host...'            action='open from host'
+               optional='true'                            hide='true'/>
          <menu label='Open Recent Files' />
          <menu label='_Save'                         action='save'/>
          <menu label='Save _As...'                   action='save as'/>
@@ -485,7 +487,8 @@
          <menu label="File Sw_itches"             action="open switches editor"
                optional='true'  hide='true' />
          <menu label="Learn"                      action="open Learn"/>
-         <menu label="_Remote"                    action="open remote"/>
+         <menu label="_Remote"                    action="open remote"
+               optional='true'                    hide='true'/>
          <menu label="Scenario"                  action="open scenario"/>
          <menu label="Tasks"                     action="open Tasks"/>
          <menu label="Tests"                     action="open Tests"/>

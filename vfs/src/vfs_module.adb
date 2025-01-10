@@ -105,13 +105,6 @@ package body VFS_Module is
    --  Open a file selector dialog allowing the user to open a file from
    --  the current context's directory
 
-   type Open_Remote_Command is new Interactive_Command with null record;
-   overriding function Execute
-     (Command : access Open_Remote_Command;
-      Context : Interactive_Command_Context) return Command_Return_Type;
-   --  Open a file selector allowing the user to open a file on a remote
-   --  machine.
-
    -------------
    -- Filters --
    -------------
@@ -779,38 +772,6 @@ package body VFS_Module is
       return Standard.Commands.Success;
    end Execute;
 
-   -------------
-   -- Execute --
-   -------------
-
-   overriding function Execute
-     (Command : access Open_Remote_Command;
-      Context : Interactive_Command_Context) return Command_Return_Type
-   is
-      pragma Unreferenced (Command);
-      Kernel : constant Kernel_Handle := Get_Kernel (Context.Context);
-   begin
-      declare
-         Filename : constant Virtual_File :=
-           Select_File
-             (Title             => -"Open Remote File",
-              Parent            => Get_Current_Window (Kernel),
-              Remote_Browsing   => True,
-              Use_Native_Dialog => False,
-              Kind              => Open_File,
-              File_Pattern      => "*;*.ad?;{*.c,*.h,*.cpp,*.cc,*.C}",
-              Pattern_Name      => -"All files;Ada files;C/C++ files",
-              History           => Get_History (Kernel));
-
-      begin
-         if Filename /= GNATCOLL.VFS.No_File then
-            Open_File_Action_Hook.Run
-               (Kernel, Filename, Project => No_Project);
-         end if;
-      end;
-      return Standard.Commands.Success;
-   end Execute;
-
    ------------------------------
    -- Filter_Matches_Primitive --
    ------------------------------
@@ -974,11 +935,6 @@ package body VFS_Module is
          Action => Open_Command_Name,
          Label  => "Open file from folder containing %f",
          Filter => File_Explorer_Filter and File_Filter);
-
-      Register_Action
-        (Kernel, "open from host", new Open_Remote_Command,
-         Description => -"Open a file from a remote host",
-         Icon_Name   => "gps-open-file-symbolic");
 
       Register_Contextual_Submenu
         (Kernel,

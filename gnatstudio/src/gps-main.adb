@@ -1209,11 +1209,13 @@ procedure GPS.Main is
       GPS.Kernel.Messages.Shell.Register_Commands (GPS_Main.Kernel);
       GPS.Kernel.Style_Manager.Shell.Register_Commands (GPS_Main.Kernel);
 
-      --  Register this very early so that other modules can access remote
-      --  files. Note that we need the scripting capabilities to be initialized
-      --  before the remote mode.
+      if Remote_Module.Remote_Module_Trace.Is_Active then
+         --  Register this very early so that other modules can access remote
+         --  files. Note that we need the scripting capabilities to be
+         --  initialized before the remote mode.
+         Remote_Module.Register_Module (GPS_Main.Kernel);
+      end if;
 
-      Remote_Module.Register_Module (GPS_Main.Kernel);
       GPS.Kernel.Remote.Register_Module (GPS_Main.Kernel);
       Remote.Rsync.Register_Module (GPS_Main.Kernel);
 
@@ -1360,8 +1362,9 @@ procedure GPS.Main is
               Name    => "GPS6-Debugger-Debugger-Kind",
               Label   => -"Debugger kind",
               Path    => "Debugger:General",
-              Doc     => -("Prefered kind of debugger spawned by GNAT Studio."
-                & " Project file settings may override this."),
+              Doc     =>
+                -("Prefered kind of debugger spawned by GNAT Studio."
+                  & " Project file settings may override this."),
               Default => GVD.Types.Gdb_MI);
 
          --  MODULE.Debugger_* traces that are used in testing
@@ -1475,10 +1478,11 @@ procedure GPS.Main is
 
       LAL.Module.Register_Module
         (GPS_Main.Kernel,
-         (LAL.Use_LAL_In_Editor    => Use_LAL_In_Outline.Get_Pref
+         (LAL.Use_LAL_In_Editor    =>
+            Use_LAL_In_Outline.Get_Pref
             or else Use_LAL_In_Indent.Get_Pref
-            or else Use_External_Highlighting.Get_Pref =
-              GPS.Kernel.Preferences.LAL,
+            or else Use_External_Highlighting.Get_Pref
+                    = GPS.Kernel.Preferences.LAL,
           LAL.Use_LAL_In_Outline   => Use_LAL_In_Outline.Get_Pref,
           LAL.Use_LAL_In_Shell     => Use_LAL_In_Shell.Get_Pref,
           LAL.Use_LAL_In_Info      => Use_LAL_In_Info.Get_Pref,
@@ -1487,7 +1491,7 @@ procedure GPS.Main is
           LAL.Use_LAL_In_Indent    => Use_LAL_In_Indent.Get_Pref,
           LAL.Use_LAL_In_Highlight =>
             Use_External_Highlighting.Get_Pref = GPS.Kernel.Preferences.LAL),
-         Legacy     => Ada_Semantic_Tree.Lang.Ada_Tree_Lang);
+         Legacy => Ada_Semantic_Tree.Lang.Ada_Tree_Lang);
 
       if Active (CPP_Trace) then
          Cpp_Module.Register_Module (GPS_Main.Kernel);
@@ -1570,9 +1574,7 @@ procedure GPS.Main is
 
       --  Show the preferences assistant dialog if the user don't have any
       --  GNAT Studio home directory yet.
-      if Show_Preferences_Assistant
-        or else Auto_Run_Assistant.Active
-      then
+      if Show_Preferences_Assistant or else Auto_Run_Assistant.Active then
          --  Remove the splash screen, since it conflicts with the preferences
          --  assistant dialog.
          if Splash /= null then
@@ -1582,35 +1584,44 @@ procedure GPS.Main is
 
          Display_Preferences_Assistant
            (GPS_Main.Kernel,
-            Pages => (1 => Create
-                      (Pref_Page =>
-                         GPS_Main.Kernel.Get_Preferences.Get_Registered_Page
-                           ("Color Theme Assistant"),
-                       Label     => "Set the color theme",
-                       Message   => "The color theme can be changed later via "
-                       & "<b>Edit/Preferences/Color Theme</b>."),
-                      2 => Create
-                        (Pref_Page =>
-                           GPS_Main.Kernel.Get_Preferences.Get_Registered_Page
-                             ("Key shortcuts theme"),
-                         Label     => "Select a key shortcuts theme",
-                         Message   => "Key shortcuts can be changed later "
-                         & "later via "
-                         & "<b>Edit/Preferences/General/Key Shortcuts</b>."),
-                      3 => Create
-                        (Pref_Page =>
-                           GPS_Main.Kernel.Get_Preferences.Get_Registered_Page
-                             ("Preferences Assistant General"),
-                         Label     => "Set general settings",
-                         Message   => "These preferences can be changed "
-                         & "later via <b>Edit/Preferences</b>"),
-                      4 => Create
-                        (Pref_Page =>
-                           GPS_Main.Kernel.Get_Preferences.Get_Registered_Page
-                             ("Preferences Assistant Plugins"),
-                         Label     => "Select your plugins",
-                         Message   => "Enabled plugins can be changed later "
-                         & "via <b>Edit/Preferences/Plugins</b>.")));
+            Pages =>
+              (1 =>
+                 Create
+                   (Pref_Page =>
+                      GPS_Main.Kernel.Get_Preferences.Get_Registered_Page
+                        ("Color Theme Assistant"),
+                    Label     => "Set the color theme",
+                    Message   =>
+                      "The color theme can be changed later via "
+                      & "<b>Edit/Preferences/Color Theme</b>."),
+               2 =>
+                 Create
+                   (Pref_Page =>
+                      GPS_Main.Kernel.Get_Preferences.Get_Registered_Page
+                        ("Key shortcuts theme"),
+                    Label     => "Select a key shortcuts theme",
+                    Message   =>
+                      "Key shortcuts can be changed later "
+                      & "later via "
+                      & "<b>Edit/Preferences/General/Key Shortcuts</b>."),
+               3 =>
+                 Create
+                   (Pref_Page =>
+                      GPS_Main.Kernel.Get_Preferences.Get_Registered_Page
+                        ("Preferences Assistant General"),
+                    Label     => "Set general settings",
+                    Message   =>
+                      "These preferences can be changed "
+                      & "later via <b>Edit/Preferences</b>"),
+               4 =>
+                 Create
+                   (Pref_Page =>
+                      GPS_Main.Kernel.Get_Preferences.Get_Registered_Page
+                        ("Preferences Assistant Plugins"),
+                    Label     => "Select your plugins",
+                    Message   =>
+                      "Enabled plugins can be changed later "
+                      & "via <b>Edit/Preferences/Plugins</b>.")));
 
          --  The list of plugins to load at startup may have been changed by
          --  the user: reload the system custom files (XML and Python plugins)
@@ -1633,10 +1644,13 @@ procedure GPS.Main is
 
       --  Set default icon for dialogs and windows
 
-      Icon := Gtk.Icon_Theme.Get_Default.Load_Icon_For_Scale
-         ("gnatstudio_logo", 32,
-          Scale => GPS_Main.Get_Scale_Factor,
-          Flags => 0, Error => null);
+      Icon :=
+        Gtk.Icon_Theme.Get_Default.Load_Icon_For_Scale
+          ("gnatstudio_logo",
+           32,
+           Scale => GPS_Main.Get_Scale_Factor,
+           Flags => 0,
+           Error => null);
 
       if Icon /= null then
          Set_Default_Icon (Icon);
@@ -1646,21 +1660,26 @@ procedure GPS.Main is
       --  messages, so that these are visible
 
       declare
-         About_File     : constant Virtual_File := Create_From_Dir
-           (Prefix_Dir, "share/gnatstudio/about.txt");
+         About_File     : constant Virtual_File :=
+           Create_From_Dir (Prefix_Dir, "share/gnatstudio/about.txt");
          About_Contents : GPS.Globals.String_Access :=
-           (if About_File.Is_Regular_File
-            then About_File.Read_File
-            else null);
+           (if About_File.Is_Regular_File then About_File.Read_File else null);
       begin
          if About_Contents = null then
             About_Contents := new String'("");
          end if;
          GPS_Main.Kernel.Insert
-           (-"Welcome to GNAT Studio " & To_String (Config.Version)
-            & " (" & Config.Source_Date
-            & (-") hosted on ") & Config.Target & ASCII.LF
-            & "(c) 2001-" & Config.Current_Year & " AdaCore" & ASCII.LF);
+           (-"Welcome to GNAT Studio "
+            & To_String (Config.Version)
+            & " ("
+            & Config.Source_Date
+            & (-") hosted on ")
+            & Config.Target
+            & ASCII.LF
+            & "(c) 2001-"
+            & Config.Current_Year
+            & " AdaCore"
+            & ASCII.LF);
          Free (About_Contents);
       end;
 
@@ -1674,8 +1693,10 @@ procedure GPS.Main is
       --  When the hooks have been registered, in particular context_changed,
       --  we can start monitoring focus change.
       Kernel_Callback.Connect
-        (Get_MDI (GPS_Main.Kernel), Signal_Child_Selected,
-         Child_Selected'Access, GPS_Main.Kernel);
+        (Get_MDI (GPS_Main.Kernel),
+         Signal_Child_Selected,
+         Child_Selected'Access,
+         GPS_Main.Kernel);
 
       --  Take config file from GPR_CONFIG environment if any
       declare
@@ -1685,8 +1706,8 @@ procedure GPS.Main is
          if Config_Files.Config_File = GNATCOLL.VFS.No_File
            and then GPR_CONFIG /= ""
          then
-            Config_Files.Config_File := Create_From_Base
-              (+GPR_CONFIG, Get_Current_Dir.Full_Name);
+            Config_Files.Config_File :=
+              Create_From_Base (+GPR_CONFIG, Get_Current_Dir.Full_Name);
          end if;
       end;
 
@@ -1716,11 +1737,10 @@ procedure GPS.Main is
       end if;
 
       if Config_Files.Autoconf
-         and then Config_Files.Config_File = GNATCOLL.VFS.No_File
+        and then Config_Files.Config_File = GNATCOLL.VFS.No_File
       then
          Get_Registry (GPS_Main.Kernel).Environment.Set_Config_File
-            (Create_From_Base
-               ("auto.cgpr", Get_Current_Dir.Full_Name.all));
+           (Create_From_Base ("auto.cgpr", Get_Current_Dir.Full_Name.all));
       end if;
 
       --  We now make sure we have a project loaded, so that opening editors
@@ -1736,16 +1756,17 @@ procedure GPS.Main is
          Setup_Debug (Empty_Project => Empty_Project);
 
       else
-         if Project_Name /= No_File
-           and then not Is_Regular_File (Project_Name)
+         if Project_Name /= No_File and then not Is_Regular_File (Project_Name)
          then
             --  We can finally search on ADA_PROJECT_PATH, which is now known
 
             declare
-               P : constant Virtual_File := Locate_Regular_File
-                 (Base_Name (Project_Name),
-                  Get_Registry (GPS_Main.Kernel)
-                  .Environment.Predefined_Project_Path);
+               P : constant Virtual_File :=
+                 Locate_Regular_File
+                   (Base_Name (Project_Name),
+                    Get_Registry (GPS_Main.Kernel)
+                      .Environment
+                      .Predefined_Project_Path);
             begin
                if P /= No_File then
                   Project_Name := P;
@@ -1778,9 +1799,7 @@ procedure GPS.Main is
          Load_Sources;
       end if;
 
-      if not File_Opened
-        and then not Has_User_Desktop (GPS_Main.Kernel)
-      then
+      if not File_Opened and then not Has_User_Desktop (GPS_Main.Kernel) then
          Display_Welcome_View (GPS_Main.Kernel);
       end if;
 
@@ -1852,14 +1871,14 @@ procedure GPS.Main is
                GNATCOLL.VFS.Normalize_Path (File);
                DAP.Module.Initialize_Debugger
                  (Kernel  => GPS_Main.Kernel,
-                  Project => (if Empty_Project then No_Project
-                              else Get_Project (GPS_Main.Kernel)),
+                  Project =>
+                    (if Empty_Project then No_Project
+                     else Get_Project (GPS_Main.Kernel)),
                   File    => File);
             end;
          else
             GVD_Module.Initialize_Debugger
-              (Kernel => GPS_Main.Kernel,
-               Args   => Program_Args.all);
+              (Kernel => GPS_Main.Kernel, Args => Program_Args.all);
          end if;
       end if;
 

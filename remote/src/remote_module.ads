@@ -17,10 +17,15 @@
 
 --  This package provides a view that allows the remote servers configuration
 
+with GNATCOLL.Traces; use GNATCOLL.Traces;
 with GPS.Kernel;
 with Remote.Db;
 
 package Remote_Module is
+
+   Remote_Module_Trace : constant Trace_Handle :=
+     Create ("GPS.INTERNAL.MODULE_REMOTE", GNATCOLL.Traces.Off);
+   --  Trace used to disable the remote mode module.
 
    procedure Register_Module
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class);

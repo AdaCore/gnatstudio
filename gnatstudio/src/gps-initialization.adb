@@ -45,6 +45,7 @@ with Gtkada.Dialogs;                   use Gtkada.Dialogs;
 with Gtkada.Intl;
 with Gtkada.Types;                     use Gtkada.Types;
 with GUI_Utils;                        use GUI_Utils;
+with Remote_Module;
 with Src_Editor_Box;                   use Src_Editor_Box;
 with String_Utils;
 with VSS.Standard_Paths;
@@ -961,6 +962,23 @@ package body GPS.Initialization is
       elsif Switch = "--host" then
          Free (Tools_Host);
          Tools_Host := new String'(ICS.Value (Value));
+
+         --  Warn the user that the remote mode is now obsolete.
+         declare
+            Obsolete_Msg : constant String :=
+              "Note: you are attempting to use the GNAT Studio remote mode; "
+            & "this feature is deprecated and will be removed in an "
+            & "upcoming GNAT Studio release. "
+            & ASCII.LF
+            & "For now, you can still access this feature by enabling "
+            & "the GPS.INTERNAL.MODULE_REMOTE trace.";
+         begin
+            Put_Line (Standard_Error, Obsolete_Msg);
+
+            --  Exit immediately if the remote mode module is disabled.
+            GPS_Command_Line.Do_Exit :=
+              not Remote_Module.Remote_Module_Trace.Is_Active;
+         end;
 
       elsif Switch = "--load" then
          Free (Batch_File);

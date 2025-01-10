@@ -267,23 +267,3 @@ Cross-reference files generation does not output anything in the
 :guilabel:`Messages` view so as not to be confused with the output of the
 regular build process. If needed, you can see the output of the cross-ref
 generation command with the :menuselection:`View --> Auxiliary Builds` menu.
-
-
-Interaction with the remote mode
---------------------------------
-
-The ability to work with two compilers has impacts on the remote mode
-configuration: paths defined here are local paths so they have no meaning
-on the server side.  To handle the case of using a specific compiler
-version on the remote side while wanting up-to-date tools on the local
-side, GNAT Studio does the following when both a remote compilation server is
-defined and the multiple toolchains mode is in use:
-
-* The compiler path is ignored when a remote build server is defined. All
-  compilation actions are performed normally on the build server.
-* The tools path is used and all related actions are performed on the local
-  machine using this path.
-* The cross-reference files are handled :program:`rsync` so they do not get
-  overwritten during local and remote host synchronizations.  Otherwise,
-  they would cause build and cross-reference generation actions to occur at
-  the same time on the local machine and on remote server.
