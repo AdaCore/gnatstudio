@@ -189,7 +189,7 @@ package DAP.Types is
    -- Variable_Data --
    -------------------
 
-   type Variable_Kind is (Locals, Arguments, Non_Specified);
+   type Variable_Kind is (Locals, Globals, Arguments, Non_Specified);
    --  Kind is used to determine from where we get the variable
 
    type Variable_Data (Kind : Variable_Kind := Non_Specified) is record

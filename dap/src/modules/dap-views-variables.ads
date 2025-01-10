@@ -139,6 +139,12 @@ private
       Name : String)
       return Item_Info'Class;
 
+   procedure Set_Item_Full_Name
+     (Self : not null access Variables_Tree_View_Record'Class;
+      Item : Item_Info'Class;
+      Name : VSS.Strings.Virtual_String);
+   --  Set full name for the Item_Info
+
    --  DAP_Variables_View_Record --
 
    type DAP_Variables_View_Record is new View_Record with record
@@ -213,7 +219,7 @@ private
 
    procedure Set_Variable_Value
      (Self      : access DAP_Variables_View_Record'Class;
-      Full_Name : String;
+      Full_Name : VSS.Strings.Virtual_String;
       Value     : String;
       Path      : Gtk.Tree_Model.Gtk_Tree_Path);
 

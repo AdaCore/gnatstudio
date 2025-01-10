@@ -152,16 +152,16 @@ package body DAP.Views.Variables is
      (Filter  : access Access_Variable_Filter;
       Context : Selection_Context) return Boolean;
 
-   type Is_Variables_View_Focused_Filter is
-     new Action_Filter_Record with null record;
-   overriding function Filter_Matches_Primitive
-     (Filter  : access Is_Variables_View_Focused_Filter;
-      Context : Selection_Context) return Boolean;
-
    type Is_Variable_Editable_Filter is
      new Action_Filter_Record with null record;
    overriding function Filter_Matches_Primitive
      (Filter  : access Is_Variable_Editable_Filter;
+      Context : Selection_Context) return Boolean;
+
+   type Is_Variables_View_Focused_Filter is
+     new Action_Filter_Record with null record;
+   overriding function Filter_Matches_Primitive
+     (Filter  : access Is_Variables_View_Focused_Filter;
       Context : Selection_Context) return Boolean;
 
    type Variable_Single_Selection is
@@ -253,7 +253,7 @@ package body DAP.Views.Variables is
         (Variables_MDI_Views.Retrieve_View (Client.Kernel));
    begin
       if View /= null
-        and then Get_Client (View) = Client
+        and then View.Get_Client = Client
       then
          if Params.Path = Null_Gtk_Tree_Path
            and then Params.Item.Info.Id /= Unknown_Id
@@ -693,9 +693,9 @@ package body DAP.Views.Variables is
       --  in general), so no need for a more elaborate data structure.
 
       Path := Self.Model.Get_Path (Store_Iter);
-      for It2 of Self.Items loop
-         if To_Lowercase.Transform (It2.Get_Name) = Full_Name then
-            DAP_Variables_View (Self.View).Update (It2, 0, Path, True);
+      for Item of Self.Items loop
+         if Item.Get_Full_Name = Full_Name then
+            DAP_Variables_View (Self.View).Update (Item, 0, Path, True);
             return;
          end if;
       end loop;
@@ -703,16 +703,17 @@ package body DAP.Views.Variables is
       Self.Find_Best_Info (Full_Name, C, Found);
 
       declare
-         It : constant DAP.Modules.Variables.Items.Item_Info'Class :=
+         Item : constant DAP.Modules.Variables.Items.Item_Info'Class :=
            DAP.Modules.Variables.Items.Create
              (Variable => Full_Name,
               Format   =>
-                (if C /= Item_Info_Vectors.No_Element
+                (if Found
                  then Element (C).Format
                  else Default_Format));
       begin
-         Self.Items.Append (It);
-         DAP_Variables_View (Self.View).Update (It, 0, Path, True);
+         Self.Items.Append (Item);
+         Trace (Me, "Add_Children->Update");
+         DAP_Variables_View (Self.View).Update (Item, 0, Path, True);
       end;
    end Add_Children;
 
@@ -733,6 +734,9 @@ package body DAP.Views.Variables is
       Dummy  : Boolean;
       Fg     : constant String := To_String (Default_Style.Get_Pref_Fg);
       Var_Id : Integer := -1;
+
+      Item_Full_Name : constant VSS.Strings.Virtual_String :=
+        To_Lowercase.Transform (Full_Name (Cursor));
 
       function Display_Type_Name return String with Inline;
       function Display_Name return String with Inline;
@@ -763,10 +767,10 @@ package body DAP.Views.Variables is
          if Cursor = Variables_References_Trees.No_Element
            or else Cursor.Is_Root
          then
-            return Wrap (Get_Name (Item));
+            return Wrap (Item.Get_Name);
 
          else
-            return Wrap (To_UTF8 (Element (Cursor).Data.name));
+            return Wrap (To_UTF8 (Var.name));
          end if;
       end Display_Name;
 
@@ -781,7 +785,7 @@ package body DAP.Views.Variables is
          then
             return "";
          else
-            return XML_Utils.Protect (To_UTF8 (Element (Cursor).Data.a_type));
+            return XML_Utils.Protect (To_UTF8 (Var.a_type));
          end if;
       end Display_Type_Name;
 
@@ -819,7 +823,7 @@ package body DAP.Views.Variables is
 
          else
             return XML_Utils.Protect
-              (Validate_UTF_8 (To_UTF8 (Element (Cursor).Data.value)));
+              (Validate_UTF_8 (To_UTF8 (Var.value)));
          end if;
       end Display_Value;
 
@@ -834,13 +838,18 @@ package body DAP.Views.Variables is
       Trace
         (Me, "Add row:" & To_UTF8
            ((if Var.name.Is_Empty
-            then Item.Get_Name
+            then Item.Get_Full_Name
             else Var.name)) &
            Var_Id'Img &
            " " & Item.Is_Arguments'Img);
 
       if Parent /= Null_Iter then
          Self.Remove_Dummy_Child (Parent);
+
+      elsif Var_Id /= -1 then
+         if To_Lowercase.Transform (Item.Get_Name) /= Item_Full_Name then
+            Self.Set_Item_Full_Name (Item, Item_Full_Name);
+         end if;
       end if;
 
       Self.Model.Append (Iter => Row, Parent => Parent);
@@ -867,8 +876,7 @@ package body DAP.Views.Variables is
             Column_Type_Fg      => As_String
               (To_String (Types_Style.Get_Pref_Fg)),
             Column_Full_Name    => As_String
-              (VSS.Strings.Conversions.To_UTF_8_String
-                   (Full_Name (Cursor)))));
+              (VSS.Strings.Conversions.To_UTF_8_String (Item_Full_Name))));
 
       if Cursor /= Variables_References_Trees.No_Element then
          if Item.Is_Arguments then
@@ -965,6 +973,27 @@ package body DAP.Views.Variables is
       return No_Item;
    end Find_Info;
 
+   ------------------------
+   -- Set_Item_Full_Name --
+   ------------------------
+
+   procedure Set_Item_Full_Name
+     (Self : not null access Variables_Tree_View_Record'Class;
+      Item : Item_Info'Class;
+      Name : VSS.Strings.Virtual_String) is
+   begin
+      Trace (Me, "Set_Item_Full_Name " &
+               VSS.Strings.Conversions.To_UTF_8_String (Item.Get_Name)
+             & " " & VSS.Strings.Conversions.To_UTF_8_String (Name));
+
+      for Old of Self.Items loop
+         if Virtual_String'(Old.Get_Name) = Virtual_String'(Item.Get_Name) then
+            Old.Set_Full_Name (Name);
+            exit;
+         end if;
+      end loop;
+   end Set_Item_Full_Name;
+
    ---------------
    -- On_Edited --
    ---------------
@@ -986,18 +1015,10 @@ package body DAP.Views.Variables is
          begin
             if Self.View /= null
               and then Get_Client (Self.View) /= null
-              and then not It.Is_No_Item
             then
-               if It.Is_Command then
+               if It.Get_Full_Name /= Empty_Virtual_String then
                   DAP_Variables_View (Self.View).Set_Variable_Value
-                    (Full_Name => Get_Name (It),
-                     Value     => Text,
-                     Path      => Self.Model.Get_Path (Store_Iter));
-
-               elsif It.Get_Name /= Empty_Virtual_String then
-                  DAP_Variables_View (Self.View).Set_Variable_Value
-                    (Full_Name => Self.Model.Get_String
-                       (Store_Iter, Column_Full_Name),
+                    (Full_Name => Get_Full_Name (It),
                      Value     => Text,
                      Path      => Self.Model.Get_Path (Store_Iter));
                end if;
@@ -1012,15 +1033,13 @@ package body DAP.Views.Variables is
 
    procedure Set_Variable_Value
      (Self      : access DAP_Variables_View_Record'Class;
-      Full_Name : String;
+      Full_Name : VSS.Strings.Virtual_String;
       Value     : String;
       Path      : Gtk.Tree_Model.Gtk_Tree_Path)
    is
       use type DAP.Clients.DAP_Client_Access;
 
       Client : constant DAP.Clients.DAP_Client_Access := Get_Client (Self);
-      N      : constant VSS.Strings.Virtual_String :=
-        VSS.Strings.Conversions.To_Virtual_String (Full_Name);
       Cursor : Item_Info_Vectors.Cursor;
       Found  : Boolean;
    begin
@@ -1029,7 +1048,7 @@ package body DAP.Views.Variables is
          return;
       end if;
 
-      Self.Tree.Find_Best_Info (N, Cursor, Found);
+      Self.Tree.Find_Best_Info (Full_Name, Cursor, Found);
 
       if Found then
          declare
@@ -1041,7 +1060,7 @@ package body DAP.Views.Variables is
               ((Kind     => Set_Variable,
                 Item     => Holder,
                 Children => False,
-                Name     => N,
+                Name     => Full_Name,
                 Value    => VSS.Strings.Conversions.To_Virtual_String (Value),
                 Set_Path => Path));
          end;
@@ -1197,20 +1216,8 @@ package body DAP.Views.Variables is
             View.Tree.Get_Selection.Select_Iter (Filter_Iter);
          end if;
 
-         if not It.Is_No_Item then
-            if It.Is_Command then
-               Store_Variable (Context, It.Get_Name, It);
-
-            elsif It.Get_Name /= "" then
-               --  We use the full display name to store the variable's value
-               --  in Column_Full_Name field, to have a unique ID
-               --  (e.g: "variable.field1" instead of "field1")
-
-               Store_Variable
-                 (Context,
-                  View.Tree.Filter.Get_String (Filter_Iter, Column_Full_Name),
-                  It);
-            end if;
+         if It.Get_Full_Name /= "" then
+               Store_Variable (Context, It.Get_Full_Name, It);
          end if;
       end;
 
@@ -1299,6 +1306,7 @@ package body DAP.Views.Variables is
             Found => Found);
 
          if Found then
+            Self.Tree.Ids   := DAP.Modules.Variables.Items.Unknown_Id;
             Self.Tree.Items := Property.Items;
 
             for It of Self.Tree.Items loop
@@ -1315,18 +1323,24 @@ package body DAP.Views.Variables is
 
    overriding procedure On_Detach
      (Self   : not null access DAP_Variables_View_Record;
-      Client : not null access DAP.Clients.DAP_Client'Class) is
+      Client : not null access DAP.Clients.DAP_Client'Class)
+   is
+      Store : Item_Info_Vectors.Vector;
    begin
       if Client /= null
         and then DAP.Modules.Preferences.Preserve_State_On_Exit.Get_Pref
       then
+         for Item of Self.Tree.Items loop
+            if Item.Id /= Unknown_Id then
+               Store.Append (Item);
+            end if;
+         end loop;
+
          Set_Property
            (Kernel     => Self.Kernel,
             File       => Client.Get_Executable,
             Name       => "dap_debugger_variables",
-            Property   =>
-               new Variables_Property_Record'
-                 (Items => Self.Tree.Items),
+            Property   => new Variables_Property_Record'(Items => Store),
             Persistent => True);
       end if;
 
@@ -1388,7 +1402,7 @@ package body DAP.Views.Variables is
             Self.Update;
          end;
       else
-         Self.Undisplay (Get_Name (Item));
+         Self.Undisplay (Get_Full_Name (Item));
       end if;
    end Undisplay;
 
@@ -1698,8 +1712,7 @@ package body DAP.Views.Variables is
             end if;
 
             View.Set_Variable_Value
-              (Full_Name => VSS.Strings.Conversions.To_UTF_8_String
-                 (Match.Captured (1)),
+              (Full_Name => Match.Captured (1),
                Value     => VSS.Strings.Conversions.To_UTF_8_String
                  (Match.Captured (2)),
                Path      => Null_Gtk_Tree_Path);
@@ -1852,8 +1865,8 @@ package body DAP.Views.Variables is
          end if;
 
          Free_Path_List (List);
+         View.Tree.Get_Selection.Unselect_All;
       end if;
-      View.Tree.Get_Selection.Unselect_All;
 
       return Commands.Success;
    end Execute;
@@ -2123,7 +2136,7 @@ package body DAP.Views.Variables is
         and then Name /= ""
       then
          for Item of View.Tree.Items loop
-            if Item.Get_Name = Name then
+            if Item.Get_Full_Name = Name then
                Format := Convert (Item.Format);
                if Display_Value_Select_Dialog
                  (Get_Kernel (Context.Context),
@@ -2161,8 +2174,7 @@ package body DAP.Views.Variables is
 
       while Has_Element (Cursor) loop
          declare
-            N : constant Virtual_String :=
-              To_Lowercase.Transform (Get_Name (Element (Cursor)));
+            N : constant Virtual_String := Get_Full_Name (Element (Cursor));
          begin
             if Lower_Name = N then
                Found := True;
@@ -2195,7 +2207,7 @@ package body DAP.Views.Variables is
         (VSS.Strings.Conversions.To_Virtual_String (Name));
    begin
       for It of Self.Items loop
-         if To_Lowercase.Transform (It.Get_Name) = N then
+         if It.Get_Full_Name = N then
             return It;
          end if;
       end loop;
@@ -2236,14 +2248,12 @@ package body DAP.Views.Variables is
              & Self.Items.Length'Img);
 
       for Item of Self.Items loop
-         if Item.Id /= Unknown_Id then
-            declare
-               Value : JSON_Value := Create_Object;
-            begin
-               Item.Store (Value);
-               Append (Values, Value);
-            end;
-         end if;
+         declare
+            Value : JSON_Value := Create_Object;
+         begin
+            Item.Store (Value);
+            Append (Values, Value);
+         end;
       end loop;
       Value.Set_Field ("value", Values);
    end Save;
@@ -2275,14 +2285,15 @@ package body DAP.Views.Variables is
    procedure Register_Module
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
    is
-      Printable_Var_Filter    : Action_Filter;
-      Debugger_Stopped_Filter : Action_Filter;
-      Not_Connamd_Filter      : Action_Filter;
-      Access_Filter           : Action_Filter;
-      View_Focused_Filter     : Action_Filter;
-      Is_Editable_Filter      : Action_Filter;
-      Selection_Filter        : Action_Filter;
-      Command                 : Interactive_Command_Access;
+      Printable_Var_Filter     : Action_Filter;
+      Debugger_Stopped_Filter  : Action_Filter;
+      Not_Command_Filter       : Action_Filter;
+      Access_Filter            : Action_Filter;
+      Is_Editable_Filter       : Action_Filter;
+      Selection_Filter         : Action_Filter;
+      No_Or_Initialized_Filter : Action_Filter;
+      View_Focused_Filter      : Action_Filter;
+      Command                  : Interactive_Command_Access;
 
    begin
       Variables_Views.Register_Module (Kernel);
@@ -2296,8 +2307,10 @@ package body DAP.Views.Variables is
       Debugger_Stopped_Filter := Kernel.Lookup_Filter ("Debugger stopped");
       Printable_Var_Filter    := Kernel.Lookup_Filter
         ("Debugger printable variable");
-      Not_Connamd_Filter := Kernel.Lookup_Filter
+      Not_Command_Filter := Kernel.Lookup_Filter
         ("Debugger not command variable");
+      No_Or_Initialized_Filter := Kernel.Lookup_Filter
+        ("No debugger or initialized");
 
       Access_Filter := new Access_Variable_Filter;
       Register_Filter
@@ -2308,7 +2321,7 @@ package body DAP.Views.Variables is
          Command => new Tree_Display_Command,
          Description =>
            "Display the value of the variable in the Variables view",
-         Filter      => Debugger_Stopped_Filter and Not_Connamd_Filter and
+         Filter      => Debugger_Stopped_Filter and Not_Command_Filter and
            Printable_Var_Filter,
          Category    => "Debug");
       Register_Contextual_Menu
@@ -2332,7 +2345,7 @@ package body DAP.Views.Variables is
          Description =>
            "Remove the display of the selected variables"
            & " in the Variables view",
-         Filter      => Debugger_Stopped_Filter,
+         Filter      => No_Or_Initialized_Filter,
          Icon_Name   => "gps-remove-symbolic",
          Category    => "Debug");
 
@@ -2341,14 +2354,13 @@ package body DAP.Views.Variables is
          Command     => new Tree_Clear_Command,
          Description =>
            "Remove the display of all variables in the Variables view",
-         Filter      => Debugger_Stopped_Filter,
+         Filter      => No_Or_Initialized_Filter,
          Icon_Name   => "gps-clear-symbolic",
          Category    => "Debug");
 
-      Command := new Set_Value_Command;
       Register_Action
         (Kernel, "debug tree set value",
-         Command     => Command,
+         Command     => new Set_Value_Command,
          Description => "Set a new value for the selected variable.",
          Icon_Name   => "gps-rename-symbolic",
          Category    => "Debug");
@@ -2395,7 +2407,7 @@ package body DAP.Views.Variables is
          Description =>
            "Remove the display of the selected variables"
            & " in the Variables view, when focused",
-         Filter      => View_Focused_Filter and Debugger_Stopped_Filter,
+         Filter      => View_Focused_Filter and No_Or_Initialized_Filter,
          Icon_Name   => "gps-remove-symbolic",
          Category    => "Debug");
 
@@ -2408,8 +2420,7 @@ package body DAP.Views.Variables is
          Command => new Set_Format_Command,
          Description =>
            "Set format for the variable in the Variables view",
-         Filter      => Kernel.Lookup_Filter
-           ("Debugger inactive or stopped") and Is_Editable_Filter,
+         Filter      => No_Or_Initialized_Filter and Is_Editable_Filter,
          Category    => "Debug");
       Register_Contextual_Menu
         (Kernel,
@@ -2420,10 +2431,9 @@ package body DAP.Views.Variables is
       Show_Types := Kernel.Get_Preferences.Create_Invisible_Pref
         ("debugger-variables-show-types", True, Label => "Show types");
 
-      Command := new Print_Variable_Command;
       Register_Action
         (Kernel, "debug print variable",
-         Command     => Command,
+         Command     => new Print_Variable_Command,
          Description =>
            "Print the value of the variable in the debugger console",
          Filter      => Debugger_Stopped_Filter and Printable_Var_Filter,

@@ -38,6 +38,16 @@ package body DAP.Modules.Variables.Items.Arguments is
    end Get_Name;
 
    -------------------
+   -- Get_Full_Name --
+   -------------------
+
+   overriding function Get_Full_Name
+     (Self : Arguments_Item_Info) return Virtual_String is
+   begin
+      return "Arguments";
+   end Get_Full_Name;
+
+   -------------------
    -- Find_DAP_Item --
    -------------------
 

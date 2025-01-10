@@ -19,6 +19,10 @@ with Ada.Strings.Unbounded;
 
 with Language;                   use Language;
 with Language_Handlers;          use Language_Handlers;
+
+with VSS.Strings.Conversions;
+with VSS.Transformers.Casing;    use VSS.Transformers.Casing;
+
 with Xref;                       use Xref;
 with GPS.Kernel.Contexts;        use GPS.Kernel.Contexts;
 
@@ -123,7 +127,7 @@ package body DAP.Contexts is
 
    procedure Store_Variable
      (Context   : in out GPS.Kernel.Selection_Context;
-      Full_Name : String;
+      Full_Name : VSS.Strings.Virtual_String;
       Info      : Item_Info'Class)
    is
       Holder : Item_Holder;
@@ -131,7 +135,9 @@ package body DAP.Contexts is
    begin
       Set (Holder, Info);
       Item := new Context_Item_Info'
-        (Ada.Strings.Unbounded.To_Unbounded_String (Full_Name), Holder);
+        (VSS.Strings.Conversions.To_Unbounded_UTF_8_String
+           (To_Lowercase.Transform (Full_Name)),
+         Holder);
       Set_Debugging_Variable (Context, Context_Item_Access (Item));
    end Store_Variable;
 

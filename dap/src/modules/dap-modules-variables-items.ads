@@ -50,6 +50,16 @@ package DAP.Modules.Variables.Items is
    function Get_Name (Self : Item_Info'Class) return String;
    --  Return the display name for this item
 
+   function Get_Full_Name
+     (Self : Item_Info)
+      return Virtual_String is abstract;
+   --  Returns DAP full name that used in the variables view as variable's name
+
+   procedure Set_Full_Name
+     (Self  : in out Item_Info;
+      Value : Virtual_String) is null;
+   --  Set the DAP full name
+
    function Get_Format (Self : Item_Info) return String;
    --  Returns the format name
 
@@ -124,6 +134,9 @@ package DAP.Modules.Variables.Items is
    type No_Item_Info is new Item_Info with null record;
 
    overriding function Get_Name
+     (Self : No_Item_Info) return Virtual_String is ("");
+
+   overriding function Get_Full_Name
      (Self : No_Item_Info) return Virtual_String is ("");
 
    overriding procedure Find_DAP_Item

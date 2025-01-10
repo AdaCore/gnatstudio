@@ -130,6 +130,9 @@ private
       Locals_Scope_Id    : Integer := 0;
       --  Current 'Locals' scope Id on debugger side.
 
+      Globals_Scope_Id    : Integer := 0;
+      --  Current 'Globals' scope Id on debugger side.
+
       Arguments_Scope_Id : Integer := 0;
       --  Current 'Arguments' scope Id on debugger side.
 
@@ -166,6 +169,12 @@ private
       Params : in out Request_Parameters);
    --  Called when the requested variable is not found.
    --  Informs View or Python side.
+
+   procedure On_Variable_Request_Rejected
+     (Self   : in out Variables_Holder;
+      Params : in out Request_Parameters);
+   --  Called when the variable request was rejected.
+   --  Informs Python side.
 
    Empty_Variable : constant DAP.Tools.Variable :=
      (name               => <>,
