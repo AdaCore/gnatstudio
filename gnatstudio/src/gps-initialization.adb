@@ -966,11 +966,12 @@ package body GPS.Initialization is
          --  Warn the user that the remote mode is now obsolete.
          declare
             Obsolete_Msg : constant String :=
-              "warning: the remote mode is now obsolete "
-            & "and will be completely removed from next GNAT Studio versions. "
-            & "You can still enable the GPS.INTERNAL.MODULE_REMOTE trace "
-            & "expicilty with this version of GNAT Studio to enable remote "
-            & "mode capabilities.";
+              "Note: you are attempting to use the GNAT Studio remote mode; "
+            & "this feature is deprecated and will be removed in an "
+            & "upcoming GNAT Studio release. "
+            & ASCII.LF
+            & "For now, you can still access this feature by enabling "
+            & "the GPS.INTERNAL.MODULE_REMOTE trace.";
          begin
             Put_Line (Standard_Error, Obsolete_Msg);
 
