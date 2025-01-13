@@ -1,3 +1,10 @@
+--  This is GNAT Studio's "Readonly" project. This file, readonly.gpr, from
+--  <gnatstudio install>/share/gnatstudio/readonly.gpr is used when GNAT Studio
+--  is opened in a read-only directory that does not contain any other project
+--  files. A different, customized readonly.gpr may be used by placing it in
+--  one of the directories specified by the GNATSTUDIO_CUSTOM_PATH environment
+--  variable. See the GNAT Studio User's Guide for more information.
+
 project Readonly is
 
    for Source_Dirs use ();
