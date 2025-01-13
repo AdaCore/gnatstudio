@@ -29,6 +29,7 @@ with GNATCOLL.JSON;
 with GNATCOLL.Traces;            use GNATCOLL.Traces;
 with GNATCOLL.Projects;          use GNATCOLL.Projects;
 with GNATCOLL.VFS;               use GNATCOLL.VFS;
+with GNATCOLL.Scripts;           use GNATCOLL.Scripts;
 
 with Glib;                       use Glib;
 with Glib.Main;                  use Glib.Main;
@@ -41,6 +42,7 @@ with GPS.Kernel.Modules;         use GPS.Kernel.Modules;
 with GPS.Kernel.Preferences;     use GPS.Kernel.Preferences;
 with GPS.Kernel.Project;         use GPS.Kernel.Project;
 with GPS.Kernel.Properties;      use GPS.Kernel.Properties;
+with GPS.Kernel.Scripts;         use GPS.Kernel.Scripts;
 
 with Interactive_Consoles;       use Interactive_Consoles;
 with Toolchains_Old;             use Toolchains_Old;
@@ -67,6 +69,14 @@ package body GPS.Kernel.Remote is
    Id : Natural := 0;
    function Get_New_Queue_Id return String;
    --  Returns a new unique queue id
+
+   ---------------
+   -- Scripting --
+   ---------------
+
+   procedure Remote_Commands_Handler
+     (Data : in out Callback_Data'Class; Command : String);
+   --  Command handler for the "is_local_server" command
 
    -----------------------
    -- Server Assignment --
@@ -131,12 +141,32 @@ package body GPS.Kernel.Remote is
    -- Destroy --
    -------------
 
-   overriding procedure Destroy (Property : in out Servers_Property) is
+   overriding
+   procedure Destroy (Property : in out Servers_Property) is
    begin
       for C in Property.Servers'Range loop
          Free (Property.Servers (C).Nickname);
       end loop;
    end Destroy;
+
+   -----------------------------
+   -- Remote_Commands_Handler --
+   -----------------------------
+
+   procedure Remote_Commands_Handler
+     (Data    : in out Callback_Data'Class;
+      Command : String)
+   is
+      Server : Server_Type;
+   begin
+      if Command = "is_server_local" then
+         Server := Server_Type'Value (Nth_Arg (Data, 1));
+         GNATCOLL.Scripts.Set_Return_Value (Data, Is_Local (Server));
+      end if;
+   exception
+      when others =>
+         GNATCOLL.Scripts.Set_Return_Value (Data, True);
+   end Remote_Commands_Handler;
 
    ---------------------
    -- Register_Module --
@@ -150,6 +180,14 @@ package body GPS.Kernel.Remote is
       Remote_Module.Kernel := Kernel_Handle (Kernel);
       Remote_Module.Project_Reloading := False;
       Register_Module (Remote_Module, Kernel, "remote");
+
+      --  Register the scripting API
+      Register_Command
+        (Kernel,
+         "is_server_local",
+         Minimum_Args => 1,
+         Maximum_Args => 1,
+         Handler      => Remote_Commands_Handler'Access);
 
       --  Connect to project_changing hook
       Project_Changing_Hook.Add (new On_Project_Changing);

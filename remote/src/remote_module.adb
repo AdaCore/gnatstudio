@@ -17,19 +17,24 @@
 
 with GNAT.Strings;
 
-with GNATCOLL.Scripts;          use GNATCOLL.Scripts;
-with GNATCOLL.Traces;           use GNATCOLL.Traces;
+with GNATCOLL.Projects;
 with GNATCOLL.VFS;              use GNATCOLL.VFS;
 pragma Warnings (Off, ".*is an internal GNAT unit");
 with GNAT.Expect.TTY.Remote;
 pragma Warnings (On, ".*is an internal GNAT unit");
 
+with Commands;                  use Commands;
+with Commands.Interactive;      use Commands.Interactive;
+with GPS.Intl;                  use GPS.Intl;
 with GPS.Customizable_Modules;  use GPS.Customizable_Modules;
 with GPS.Kernel;                use GPS.Kernel;
+with GPS.Kernel.Actions;
 with GPS.Kernel.Hooks;          use GPS.Kernel.Hooks;
+with GPS.Kernel.MDI;
 with GPS.Kernel.Modules;        use GPS.Kernel.Modules;
+with GPS.Kernel.Project;
 with GPS.Kernel.Remote;         use GPS.Kernel.Remote;
-with GPS.Kernel.Scripts;        use GPS.Kernel.Scripts;
+with Gtkada.File_Selector;      use Gtkada.File_Selector;
 with XML_Parsers;
 with XML_Utils;                 use XML_Utils;
 
@@ -61,10 +66,78 @@ package body Remote_Module is
       File   : Virtual_File);
    --  Called when a file has been modified
 
-   procedure Remote_Commands_Handler
-     (Data    : in out Callback_Data'Class;
-      Command : String);
-   --  Command handler for the "is_local_server" command
+   type Open_From_Host_Command is new Interactive_Command with null record;
+   overriding
+   function Execute
+     (Command : access Open_From_Host_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type;
+   --  Project->Open remote menu
+
+   type Open_Remote_Command is new Interactive_Command with null record;
+   overriding function Execute
+     (Command : access Open_Remote_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type;
+   --  Open a file selector allowing the user to open a file on a remote
+   --  machine.
+
+   -------------
+   -- Execute --
+   -------------
+
+   overriding
+   function Execute
+     (Command : access Open_From_Host_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type
+   is
+      pragma Unreferenced (Command);
+      Kernel   : constant Kernel_Handle := Get_Kernel (Context.Context);
+      Filename : constant Virtual_File :=
+        Select_File
+          (-"Open Project",
+           File_Pattern    => "*.gpr",
+           Pattern_Name    => "Project files",
+           Parent          => GPS.Kernel.MDI.Get_Current_Window (Kernel),
+           Remote_Browsing => True,
+           Kind            => Open_File,
+           History         => Get_History (Kernel));
+   begin
+      if Filename /= GNATCOLL.VFS.No_File then
+         GPS.Kernel.Project.Load_Project (Kernel, Filename);
+      end if;
+      return Commands.Success;
+   end Execute;
+
+   -------------
+   -- Execute --
+   -------------
+
+   overriding function Execute
+     (Command : access Open_Remote_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type
+   is
+      pragma Unreferenced (Command);
+      Kernel : constant Kernel_Handle := Get_Kernel (Context.Context);
+   begin
+      declare
+         Filename : constant Virtual_File :=
+           Select_File
+             (Title             => -"Open Remote File",
+              Parent            => GPS.Kernel.MDI.Get_Current_Window (Kernel),
+              Remote_Browsing   => True,
+              Use_Native_Dialog => False,
+              Kind              => Open_File,
+              File_Pattern      => "*;*.ad?;{*.c,*.h,*.cpp,*.cc,*.C}",
+              Pattern_Name      => -"All files;Ada files;C/C++ files",
+              History           => Get_History (Kernel));
+
+      begin
+         if Filename /= GNATCOLL.VFS.No_File then
+            Open_File_Action_Hook.Run
+               (Kernel, Filename, Project => GNATCOLL.Projects.No_Project);
+         end if;
+      end;
+      return Success;
+   end Execute;
 
    -------------
    -- Execute --
@@ -160,33 +233,20 @@ package body Remote_Module is
 
       File_Saved_Hook.Add (new On_File_Saved);
 
-      Register_Command
-        (Kernel, "is_server_local",
-         Minimum_Args => 1,
-         Maximum_Args => 1,
-         Handler      => Remote_Commands_Handler'Access);
+      GPS.Kernel.Actions.Register_Action
+        (Kernel,
+         "open remote project",
+         new Open_From_Host_Command,
+         Icon_Name   => "gps-open-project-symbolic",
+         Description => -"Open remote project");
+
+      GPS.Kernel.Actions.Register_Action
+        (Kernel, "open from host", new Open_Remote_Command,
+         Description => -"Open a file from a remote host",
+         Icon_Name   => "gps-open-file-symbolic");
 
       Remote.View.Register_Module (Kernel);
    end Register_Module;
-
-   -----------------------------
-   -- Remote_Commands_Handler --
-   -----------------------------
-
-   procedure Remote_Commands_Handler
-     (Data    : in out Callback_Data'Class;
-      Command : String)
-   is
-      Server : Remote.Server_Type;
-   begin
-      if Command = "is_server_local" then
-         Server := Remote.Server_Type'Value (Nth_Arg (Data, 1));
-         GNATCOLL.Scripts.Set_Return_Value (Data, Remote.Is_Local (Server));
-      end if;
-   exception
-      when others =>
-         GNATCOLL.Scripts.Set_Return_Value (Data, True);
-   end Remote_Commands_Handler;
 
    ------------------
    -- Get_Database --

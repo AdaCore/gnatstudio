@@ -68,12 +68,6 @@ The File Menu
 
    Open the Open Project dialog
 
-.. index:: menu; file --> open project from host...
-
-* :menuselection:`File --> Open Project from Host...`
-
-   Open remote project
-
 .. index:: menu; file --> open recent projects
 
 * :menuselection:`File --> Open Recent Projects`
@@ -111,13 +105,6 @@ The File Menu
    Open an existing file
 
    Shortcut: F3
-.. index:: menu; file --> open file from host...
-
-* :menuselection:`File --> Open File from Host...`
-
-   Open a file from a remote host
-
-   Shortcut: Ctrl+F3
 .. index:: menu; file --> save
 
 * :menuselection:`File --> Save`
@@ -664,12 +651,6 @@ The View Menu
 * :menuselection:`View --> Learn`
 
    Open (or reuse if it already exists) the 'Learn' view
-
-.. index:: menu; view --> remote
-
-* :menuselection:`View --> Remote`
-
-   Open (or reuse if it already exists) the 'Remote' view
 
 .. index:: menu; view --> scenario
 

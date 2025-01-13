@@ -129,12 +129,6 @@ package body GPS.Menu is
       Context : Interactive_Command_Context) return Command_Return_Type;
    --  Project->Open menu
 
-   type Open_From_Host_Command is new Interactive_Command with null record;
-   overriding function Execute
-     (Command : access Open_From_Host_Command;
-      Context : Interactive_Command_Context) return Command_Return_Type;
-   --  Project->Open remote menu
-
    type Reload_Project_Command is new Interactive_Command with null record;
    overriding function Execute
      (Command : access Reload_Project_Command;
@@ -575,32 +569,6 @@ package body GPS.Menu is
       return Commands.Success;
    end Execute;
 
-   -------------
-   -- Execute --
-   -------------
-
-   overriding function Execute
-     (Command : access Open_From_Host_Command;
-      Context : Interactive_Command_Context) return Command_Return_Type
-   is
-      pragma Unreferenced (Command);
-      Kernel : constant Kernel_Handle := Get_Kernel (Context.Context);
-      Filename : constant Virtual_File :=
-        Select_File
-          (-"Open Project",
-           File_Pattern    => "*.gpr",
-           Pattern_Name    => -"Project files",
-           Parent          => Get_Current_Window (Kernel),
-           Remote_Browsing => True,
-           Kind            => Open_File,
-           History         => Get_History (Kernel));
-   begin
-      if Filename /= GNATCOLL.VFS.No_File then
-         Load_Project (Kernel, Filename);
-      end if;
-      return Commands.Success;
-   end Execute;
-
    ---------------------------
    -- Register_Common_Menus --
    ---------------------------
@@ -614,11 +582,6 @@ package body GPS.Menu is
         (Kernel, "open project dialog", new Open_Project_Command,
          Icon_Name => "gps-open-project-symbolic",
          Description => -"Open the Open Project dialog");
-
-      Register_Action
-        (Kernel, "open remote project", new Open_From_Host_Command,
-         Icon_Name   => "gps-open-project-symbolic",
-         Description => -"Open remote project");
 
       Project_Changed_Hook.Add (new On_Project_Changed);
 

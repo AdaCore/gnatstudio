@@ -18,7 +18,6 @@
    vcs
    tools
    cross_env
-   remote
    extending
    environment
    GPS

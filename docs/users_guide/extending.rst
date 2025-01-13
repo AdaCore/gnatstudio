@@ -484,14 +484,6 @@ It includes:
 
 * :ref:`<project\_attribute>\ <Defining_project_attributes>`
 
-* :ref:`<remote_machine\_descriptor>\ <Defining_a_remote_server>`
-
-* :ref:`<remote_path\_config>\ <Defining_a_remote_path_translation>`
-
-* :ref:`<remote_connection\_config>\ <Defining_a_remote_connection_tool>`
-
-* :ref:`<rsync\_configuration>\ <Configuring_rsync_usage>`
-
 .. _Defining_Actions:
 
 Defining Actions
@@ -576,14 +568,6 @@ The valid children of :file:`<action>` are the following XML tags:
   .. index:: external
 
   Defines a system command (i.e. a standard Unix or Windows command).
-
-  * :file:`server` (optional)
-
-    Execute the external command on a remote server. The values are
-    :command:`gps_server` (default), :command:`build_server`,
-    :command:`execution_server`, :command:`debug_server`, and
-    :command:`tools_server`.  See :ref:`Remote_operations` for information
-    on what each of these servers are.
 
   * :file:`check-password` (optional)
 
@@ -1345,11 +1329,6 @@ in Python plugins.
 
   The long name for the current window ('Search', 'Project', 'Outline' or
   the absolute path name for the current file).
-
-* :file:`%rbl`
-
-  The name of the Remote Build server (defaults to 'localhost' when no such
-  server is configured, hence the final 'l' in the name of the macro).
 
 * :file:`%(env:VAR)`
 
@@ -3403,278 +3382,6 @@ Further information about icons could be found in a separate document -
 <http://www.freedesktop.org/wiki/Specifications/icon-theme-spec/>`_.
 
 
-.. _Remote_programming_customization:
-
-Customizing Remote Programming
-------------------------------
-
-.. index:: remote
-
-There are two parts to specifying the configuration of remote programming
-functionality: the configuration of the tools (remote connection tools,
-shells, and rsync parameters) and the servers.
-
-The first part (see :ref:`Defining_a_remote_connection_tool`,
-:ref:`Defining_a_shell`, and :ref:`Configuring_rsync_usage`) is performed by
-a pre-installed file in the plugins directory called
-:file:`protocols.py`.
-
-The second part (see :ref:`Defining_a_remote_server` and
-:ref:`Defining_a_remote_path_translation`) creates a :file:`remote.xml`
-file in the user's :file:`gps` directory when the user has configured them
-(see :ref:`Setup_the_remote_servers`). System-wide servers can be also
-installed.
-
-.. _Defining_a_remote_connection_tool:
-
-Defining a remote connection tool
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-.. index:: remote
-
-A remote connection tool is responsible for making a connection to a remote
-machine.  GNAT Studio already defines several remote access tools: :program:`ssh`,
-:program:`rsh`, :program:`telnet`, and :program:`plink`. You can add support
-other tools using the tag :file:`<remote_connection_config>`, which
-requires a :file:`name` attribute giving the name of the tool. This name
-need not necessarily correspond to the command used to launch the tool.
-
-The following child tags are defined:
-
-* :file:`<start_command>` (required)
-
-  The command used to launch the tool.  This tag supports the
-  :file:`use_pipes` attribute, which selects on Windows the manner in which
-  GNAT Studio launches the remote tools and accepts the following values:
-
-  * :command:`true`
-
-    Use pipes to launch the tool.
-
-  * :command:`false` (default)
-
-    Use a tty emulation, a bit slower but allows password prompt
-    retrieval with some tools.
-
-* :file:`<start_command_common_arg>`
-
-  Arguments provided to the tool. This string can contain the
-  following macros, which are replaced by the following strings:
-
-  * :command:`%C`: Command executed on the remote host (normally the shell
-    command).
-
-  * :command:`%h`: Remote host name.
-
-  * :command:`%U`: Value of :file:`<fstart_command_user_args>`, if specified.
-
-  * :command:`%u`: User name.
-
-  If you have not included either :command:`%u` or :command:`%U` in the
-  string and the user specifies a username in the remote connection
-  configuration, GNAT Studio places the value of :file:`<start_command_user_args>`
-  at the beginning of the arguments.
-
-* :file:`<start_command_user_args>`
-
-  Arguments used to define a specific user during connection. :command:`%u`
-  is replaced by the user name.
-
-* :file:`<send_interrupt>`
-
-  Character sequence to send to the connection tool to interrupt the remote
-  application. If not specified, an Interrupt signal is sent directly to the
-  tool.
-
-* :file:`<user_prompt_ptrn>`, :file:`<password_prompt_ptrn>`,
-  :file:`<passphrase_prompt_ptrn>`
-
-  Regular expressions to detect username, password, and passphrase prompts,
-  respectively, sent by the connection tool. If not specified,
-  appropriate defaults are used.
-
-* :file:`<extra_ptrn>`
-
-  Used to handle prompts from the connection tool other than for username,
-  password or passphrase.  The :file:`auto_answer` attribute selects
-  whether GNAT Studio provides an answer to this prompt or asks the user. If
-  :command:`true`, a :file:`<answer>` child is required.  Its value is the
-  answer to be supplied by GNAT Studio. If :command:`false`, a :file:`<question>`
-  child is required.  Its value is used by GNAT Studio to ask the user a
-  question. Provide this child once for every prompt that must be handled.
-
-.. _Defining_a_shell:
-
-Defining a shell
-^^^^^^^^^^^^^^^^
-
-.. index:: shell
-
-GNAT Studio already defines several shells: :program:`sh`, :program:`bash`,
-:program:`csh`, :program:`tcsh`, and, on Windows, :file:`cmd.exe`). You can
-add other shells by using the :file:`<remote_shell_config>` tag which has
-one required attribute, :file:`name`, denoting the name of the shell. This
-name need not be same as the command used to launch the shell.
-
-The following child tags are defined:
-
-* :file:`<start_command>` (require)
-
-  Command used to launch the shell.  Put any required arguments here,
-  separated by spaces.
-
-* :file:`<generic_prompt>` (optional)
-
-  Regular expression used to identify a prompt after the initial
-  connection. If not set, a default value is used.
-
-* :file:`<gps_prompt>` (required)
-
-  Regular expression used to identify a prompt after the initial setup is
-  performed. If not set, a default value is used.
-
-* :file:`<filesystem>` (required)
-
-  Either :command:`unix` or :command:`windows`, representing the filesystem
-  used by the shell.
-
-* :file:`<init_commands>` (optional)
-
-  Contains :file:`<cmd>` children, each containing a command to initialize
-  a new session.
-
-* :file:`<exit_commands>` (optional)
-
-  Like :file:`<init_commands>`, but each :file:`<cmd>` child contains a
-  command to exit a session.
-
-* :file:`<no_echo_command>` (optional)
-
-  Command used to tell the remote shell to suppress echo.
-
-* :file:`<cd_command>` (require)
-
-  Command to change directories. :command:`%d` is replaced by the
-  directory's full name.
-
-* :file:`<get_status_command>` (required)
-
-  Command used to retrieve the status of the last command launched.
-
-* :file:`<get_status_ptrn>` (mandatory)
-
-  Regular expression used to retrieve the status returned by
-  :file:`<get_status_command>`. You must include a single pair of
-  parentheses; that subexpression identifies the status.
-
-.. _Configuring_rsync_usage:
-
-Configuring :command:`rsync` usage
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-.. index:: rsync
-
-GNAT Studio includes native support for the :command:`rsync` tool to synchronize
-paths during remote programming operations.
-
-By default, GNAT Studio uses the :command:`--rsh=ssh` option if :program:`ssh`
-is the connection tool used for the server. It also uses the :command:`-L`
-switch when transferring files to a Windows local host.
-
-You can define additional arguments to rsync by using the
-:file:`<rsync_configuration>` tag, which accepts :file:`<arguments>` tags
-as children, each containing additional arguments to pass to
-:program:`rsync`.
-
-.. _Defining_a_remote_server:
-
-Defining a remote server
-^^^^^^^^^^^^^^^^^^^^^^^^
-
-.. index:: server
-.. index:: remote
-
-Users can define remote servers, as described in
-:ref:`Setup_the_remote_servers`.  Doing this creates a :file:`remote.xml`
-file in the user's :file:`gps` directory, which can be installed in any
-plugins directory to set the values system-wide.  The tag used in this file
-is :file:`<remote_machine_descriptor>` for each remote server.  You can
-also write this tag manually.  Its attributes are:
-
-* :file:`nickname` (required)
-
-  Uniquely identifies the server.
-
-* :file:`network_name` (required)
-
-  Server's network name or IP address.
-
-* :file:`remote_access` (required)
-
-  Name of the remote access tool used to access the server.  These tools
-  are defined in :ref:`Defining_a_remote_connection_tool`.
-
-* :file:`remote_shell` (required)
-
-  Name of the shell used to access the server. See :ref:`Defining_a_shell`.
-
-* :file:`remote_sync` (required)
-
-  Remote file synchronization tool used to synchronize files between the
-  local host and the server. Must be :command:`rsync`.
-
-* :file:`debug_console` (optional)
-
-  Boolean that indicates whether GNAT Studio displays a debug console during
-  the connection with a remote host. Default is :command:`false`.
-
-The optionally child tags for this tag are:
-
-* :file:`<extra_init_commands>`
-
-  Contains :file:`<cmd>` children whose values are used to set
-  server-specific initialization commands.
-
-* :file:`max_nb_connections`
-
-  Positive number representing the maximum number of simultaneous
-  connections GNAT Studio is permitted to launch.
-
-* :file:`timeout`
-
-  Positive number representing a timeout value (in ms) for every action
-  performed on the remote host.
-
-.. _Defining_a_remote_path_translation:
-
-Defining a remote path translation
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-.. index:: server
-.. index:: path
-.. index:: remote
-
-The user can also define a remote path translation, as described in
-:ref:`Setup_the_remote_servers`.  Each remote paths translations
-corresponds to one :file:`<remote_path_config>` tag, which has one required
-attribute, :file:`server_name`, the server name that uses this path
-translation, and contains child :file:`<remote_path_config>` tags, that have
-the following required attributes:
-
-* :file:`local_path`
-
-  Absolute local path, written using local filesystem syntax.
-
-* :file:`remote_path`
-
-  Absolute remote path, written using remote filesystem syntax.
-
-* :file:`sync`
-
-  Synchronization mechanism used for the paths (see
-  :ref:`Path_settings`). Must be one of :command:`NEVER`,
-  :command:`ONCE_TO_LOCAL`, :command:`ONCE_TO_REMOTE`, or :command:`ALWAYS`.
-
 .. _Customizing_build_Targets_and_Models:
 
 Customizing Build Targets and Models
@@ -3703,11 +3410,6 @@ following child tags:
 * :file:`<description>` (required)
 
   One-line description of what the model supports.
-
-* :file:`<server>` (default :command:`Build Server`)
-
-  Server used for launching targets of this model. See
-  :ref:`Remote_operations`.
 
 * :file:`<is-run>` (default :command:`False`)
 
@@ -3889,10 +3591,6 @@ This tag accepts the following child tags:
   How GNAT Studio should launch the target. Possible values are
   :command:`MANUALLY`, :command:`MANUALLY_WITH_DIALOG`,
   :command:`MANUALLY_WITH_NO_DIALOG`, and :command:`ON_FILE_SAVE`.
-
-* :file:`<server>` (default :command:`Build_Server`)
-
-  Server used for launching Target. See :ref:`Remote_operations`.
 
 * :file:`<command-line>`
 
