@@ -1,3 +1,10 @@
+--  This is GNAT Studio's "Default" project. This file, default.gpr, is copied
+--  from <gnatstudio install>/share/gnatstudio/default.gpr when GNAT Studio is
+--  opened in a writable directory that does not contain any other project
+--  files. A different, customized default.gpr may be used by placing it in one
+--  of the directories specified by the GNATSTUDIO_CUSTOM_PATH environment
+--  variable. See the GNAT Studio User's Guide for more information.
+
 project Default is
 
    package Compiler is
