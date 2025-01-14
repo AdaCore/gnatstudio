@@ -21,9 +21,10 @@ with GNAT.Regpat;               use GNAT.Regpat;
 
 with Glib.Object;               use Glib, Glib.Object;
 with XML_Utils;                 use XML_Utils;
+with Gdk.Display;
 with Gdk.Event;                 use Gdk.Event;
 with Gdk.Rectangle;             use Gdk.Rectangle;
-with Gdk.Screen;                use Gdk.Screen;
+with Gdk.Monitor;
 with Gdk.Window;                use Gdk.Window;
 with Gtk.Box;                   use Gtk.Box;
 with Gtk.Button;                use Gtk.Button;
@@ -457,7 +458,7 @@ package body Generic_Views is
          Position_Found : out Boolean;
          X, Y           : out Gint);
       --  Retrieve from history the position of the view's dialog.
-      --  Position_Found is set to True iff the position was set, and, in this
+      --  Position_Found is set to True if the position was set, and, in this
       --  case, (X, Y) is set to the position.
 
       -------------------------
@@ -469,14 +470,12 @@ package body Generic_Views is
          Position_Found : out Boolean;
          X, Y           : out Gint)
       is
-         Win     : Gtk_Widget := View.Get_Toplevel;
          Hist_X  : constant String_List_Access := Get_History
            (Get_History (View.Kernel).all, Window_X_Hist_Key);
          Hist_Y  : constant String_List_Access := Get_History
            (Get_History (View.Kernel).all, Window_Y_Hist_Key);
 
-         Screen : Gdk_Screen;
-         Monitor : Gint;
+         Monitor : Gdk.Monitor.Gdk_Monitor;
          Rect    : Gdk_Rectangle;
       begin
          Position_Found := False;
@@ -489,30 +488,21 @@ package body Generic_Views is
 
          --  Ensure the window is at least partially visible on the current
          --  screen.
-         --  Screen.Get_{Width,Height} returns the total size for all monitors
-         --    for instance 5760x1200
-         --  So we need to look at the specific monitor that the window is on.
-
-         if Win = null
-           or else Win.all not in Gtk_Window_Record'Class
-         then
-            Win := Gtk_Widget (View.Kernel.Get_Main_Window);
-
-            if Win = null then
-               return;
-            end if;
-         end if;
+         --  Get_Monitor_At_Point returns monitor in which the point (X, Y)
+         --  is located, or a nearby monitor if the point is not in
+         --  any monitor. So we need to look at the specific monitor where
+         --  the window will be shown.
 
          X := Gint'Value (Hist_X (Hist_X'First).all);
          Y := Gint'Value (Hist_Y (Hist_Y'First).all);
 
-         Screen := Gtk_Window (Win).Get_Screen;
+         Monitor := Gdk.Display.Get_Default.Get_Monitor_At_Point (X, Y);
+         Monitor.Get_Geometry (Rect);
 
-         Monitor := Screen.Get_Monitor_At_Point (X, Y);
-         Screen.Get_Monitor_Geometry (Monitor, Rect);
-
-         X := Gint'Min (Gint'Max (X, Rect.X), Rect.X + Rect.Width - 10);
-         Y := Gint'Min (Gint'Max (Y, Rect.Y), Rect.Y + Rect.Height - 10);
+         X := Gint'Min
+           (Gint'Max (X, Rect.X), Rect.X + Rect.Width - Default_Width);
+         Y := Gint'Min
+           (Gint'Max (Y, Rect.Y), Rect.Y + Rect.Height - Default_Height);
 
          Position_Found := True;
       end Get_Stored_Position;
