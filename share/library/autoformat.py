@@ -9,16 +9,13 @@ import GPS
 
 
 def on_file_saved(hook, file):
-    # Rely on the context and not the current buffer: Format Selection will
-    # raise an exception if the context is not properly set.
-    context = GPS.current_context()
-    if not context or not context.file() or context.file().language() == "python":
+    if file.language() == "python":
         # Deactivate on Python files: the formatting action
         # indents the entire selection - this is intended for user
         # selection, but it is not suitable to do this automatically.
         return
 
-    buf = GPS.EditorBuffer.get()
+    buf = GPS.EditorBuffer.get(file)
     # Save the cursor location
     view = buf.current_view()
     if view.cursor().line() == 0:
@@ -27,11 +24,8 @@ def on_file_saved(hook, file):
     else:
         mark = view.cursor().create_mark()
 
-    # Select the whole buffer
-    buf.select(buf.beginning_of_buffer(), buf.end_of_buffer())
-
     # Reformat the buffer
-    GPS.execute_action("Format Selection")
+    buf.indent()
 
     if mark:
         # Restore the cursor location
@@ -41,4 +35,4 @@ def on_file_saved(hook, file):
 
 
 # Register the callback on the "before_file_saved" hook
-GPS.Hook("file_saved").add(on_file_saved)
+GPS.Hook("before_file_saved").add(on_file_saved)
