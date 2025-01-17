@@ -33,7 +33,7 @@ with DAP.Tools;
 package DAP.Types is
 
    type Debugger_Status_Kind is
-     (Initialization, Initialized, Ready, Stopped, Running, Terminating);
+     (Initialization, Initialized, Stopped, Running, Terminating);
 
    type Debuggee_Start_Method_Kind is
      (None, Launched, Attached);

@@ -42,7 +42,9 @@ package body DAP.Clients.Launch is
      (Self        : in out Launch_Request;
       Client      : not null access DAP.Clients.DAP_Client'Class;
       Result      : DAP.Tools.LaunchResponse;
-      New_Request : in out DAP_Request_Access);
+      New_Request : in out DAP_Request_Access) is null;
+   --  gdb 17.x send the answer after the configurationDone request when the
+   --  executable has been started so we don't have what to do here.
 
    overriding procedure On_Error_Message
      (Self    : in out Launch_Request;
@@ -70,22 +72,6 @@ package body DAP.Clients.Launch is
 
       return Self;
    end Create;
-
-   -----------------------
-   -- On_Result_Message --
-   -----------------------
-
-   overriding procedure On_Result_Message
-     (Self        : in out Launch_Request;
-      Client      : not null access DAP.Clients.DAP_Client'Class;
-      Result      : DAP.Tools.LaunchResponse;
-      New_Request : in out DAP_Request_Access) is
-   begin
-      New_Request := null;
-
-      --  Notify the client that the debugee was launched.
-      Client.On_Launched (Start_Method => DAP.Types.Launched);
-   end On_Result_Message;
 
    ----------------------
    -- On_Error_Message --
@@ -122,6 +108,10 @@ package body DAP.Clients.Launch is
          Stop_At_Beginning => Stop_At_Beginning);
    begin
       Client.Enqueue (DAP.Requests.DAP_Request_Access (Launch_Req));
+
+      --  gdb 17.x does not send the answer until configurationDone request
+      --  is sent. Move this code to On_Result when it is changed.
+      Client.On_Launched (Start_Method => DAP.Types.Launched);
    end Send_Launch_Request;
 
 end DAP.Clients.Launch;

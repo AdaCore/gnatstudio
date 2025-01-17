@@ -47,6 +47,10 @@ package DAP.Clients.Breakpoint_Managers is
    --  Finalize the breakpoints' manager, saving the persistant breakpoints
    --  if needed.
 
+   procedure Initialize_Breakpoints
+     (Self : not null access Breakpoint_Manager_Type);
+   --  Send all breakpoints to DAP server.
+
    procedure Get_Stopped_Event_Location
      (Self         : not null access Breakpoint_Manager_Type;
       Event        : in out DAP.Tools.StoppedEvent;

@@ -77,7 +77,7 @@ package body DAP.Requests.StackTrace is
       Client  : not null access DAP.Clients.DAP_Client'Class;
       Message : VSS.Strings.Virtual_String) is
    begin
-      Trace (Me, VSS.Strings.Conversions.To_UTF_8_String (Message));
+      Trace (Me, "Error:" & VSS.Strings.Conversions.To_UTF_8_String (Message));
    end On_Error_Message;
 
    -------------

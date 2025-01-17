@@ -47,8 +47,9 @@ package body DAP.Clients.Attach is
      (Self        : in out Attach_Request;
       Client      : not null access DAP.Clients.DAP_Client'Class;
       Result      : DAP.Tools.AttachResponse;
-      New_Request : in out DAP_Request_Access);
-   --  Called when the 'attach' request has succeed.
+      New_Request : in out DAP_Request_Access) is null;
+   --  gdb 17.x send the answer after the configurationDone request when the
+   --  executable has been started so we don't have what to do here.
 
    ------------
    -- Create --
@@ -80,20 +81,6 @@ package body DAP.Clients.Attach is
       return Self;
    end Create;
 
-   -----------------------
-   -- On_Result_Message --
-   -----------------------
-
-   overriding procedure On_Result_Message
-     (Self        : in out Attach_Request;
-      Client      : not null access DAP.Clients.DAP_Client'Class;
-      Result      : DAP.Tools.AttachResponse;
-      New_Request : in out DAP_Request_Access) is
-   begin
-      New_Request := null;
-      Client.On_Launched (Start_Method => DAP.Types.Attached);
-   end On_Result_Message;
-
    -------------------------
    -- Send_Attach_Request --
    -------------------------
@@ -114,6 +101,10 @@ package body DAP.Clients.Attach is
    begin
       Client.Endian := Unknown_Endian;
       Client.Enqueue (DAP.Requests.DAP_Request_Access (Attach_Req));
+
+      --  gdb 17.x does not send the answer until configurationDone request
+      --  is sent. Move this code to On_Result when it is changed.
+      Client.On_Launched (Start_Method => DAP.Types.Attached);
    end Send_Attach_Request;
 
 end DAP.Clients.Attach;
