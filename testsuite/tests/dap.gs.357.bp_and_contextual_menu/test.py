@@ -29,6 +29,8 @@ def on_gps_started():
 
     main = GPS.EditorBuffer.get(GPS.File("main.adb"))
     main.current_view().goto(buf.at(5, 1))
+    yield wait_idle()
+    yield wait_until_not_busy(debug)
     GPS.execute_action("debug set line breakpoint")
     yield wait_for_mdi_child("Breakpoints")
     check_menu("With normal breakpoint")

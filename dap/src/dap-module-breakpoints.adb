@@ -77,11 +77,10 @@ package body DAP.Module.Breakpoints is
    --  at a specific location.
 
    -- Commands --
+   type Set_Breakpoint_Command_Kind is (On_Line, Continue_Till, Entity);
 
-   type Set_Breakpoint_Command_Context is new Interactive_Command with record
-      On_Line       : Boolean := False;  --  If False, on entity
-      Continue_Till : Boolean := False;  --  Continue until given line ?
-   end record;
+   type Set_Breakpoint_Command_Context (Kind : Set_Breakpoint_Command_Kind) is
+     new Interactive_Command with null record;
    overriding function Execute
      (Command : access Set_Breakpoint_Command_Context;
       Context : Interactive_Command_Context) return Command_Return_Type;
@@ -322,50 +321,52 @@ package body DAP.Module.Breakpoints is
       Kernel : constant Kernel_Handle := Get_Kernel (Context.Context);
 
    begin
-      if Command.Continue_Till then
-         if DAP.Module.Get_Current_Debugger /= null
-           and then DAP.Module.Get_Current_Debugger.Is_Stopped
-         then
-            declare
-               Location : constant Breakpoint_Location_Type :=
-                 (Marker =>
-                    Kernel.Get_Buffer_Factory.Create_Marker
-                      (File   => File_Information (Context.Context),
-                       Line   => Editable_Line_Type
-                         ((if Has_File_Line_Information (Context.Context)
-                          then File_Line_Information (Context.Context)
-                          else Contexts.Line_Information
-                            (Context.Context))),
-                       Column => 1),
-                  Address => Invalid_Address);
-            begin
-               DAP.Module.Get_Current_Debugger.
-                 Get_Breakpoints_Manager.Continue_Until_Location (Location);
-            end;
-         end if;
-
-      elsif Command.On_Line then
-         Break_Source
-           (Kernel,
-            File  => File_Information (Context.Context),
-            Line  => Editable_Line_Type
-              ((if Has_File_Line_Information (Context.Context)
-               then File_Line_Information (Context.Context)
-               else Contexts.Line_Information (Context.Context))));
-      else
-         declare
-            Entity : constant Root_Entity'Class :=
-              Get_Entity (Context.Context);
-         begin
-            if Is_Fuzzy (Entity) or else Is_Subprogram (Entity) then
-               Break_Subprogram
-                 (Kernel,
-                  Subprogram =>
-                    To_Virtual_String
-                      (Entity_Name_Information (Context.Context)));
+      case Command.Kind is
+         when Continue_Till =>
+            if DAP.Module.Get_Current_Debugger /= null
+              and then DAP.Module.Get_Current_Debugger.Is_Stopped
+            then
+               declare
+                  Location : constant Breakpoint_Location_Type :=
+                    (Marker =>
+                       Kernel.Get_Buffer_Factory.Create_Marker
+                         (File   => File_Information (Context.Context),
+                          Line   => Editable_Line_Type
+                            ((if Has_File_Line_Information (Context.Context)
+                             then File_Line_Information (Context.Context)
+                             else Contexts.Line_Information
+                               (Context.Context))),
+                          Column => 1),
+                     Address => Invalid_Address);
+               begin
+                  DAP.Module.Get_Current_Debugger.
+                    Get_Breakpoints_Manager.Continue_Until_Location (Location);
+               end;
             end if;
-         end;
-      end if;
+
+         when On_Line =>
+            Break_Source
+              (Kernel,
+               File  => File_Information (Context.Context),
+               Line  => Editable_Line_Type
+                 ((if Has_File_Line_Information (Context.Context)
+                  then File_Line_Information (Context.Context)
+                  else Contexts.Line_Information (Context.Context))));
+
+         when Entity =>
+            declare
+               Entity : constant Root_Entity'Class :=
+                 Get_Entity (Context.Context);
+            begin
+               if Is_Fuzzy (Entity) or else Is_Subprogram (Entity) then
+                  Break_Subprogram
+                    (Kernel,
+                     Subprogram =>
+                       To_Virtual_String
+                         (Entity_Name_Information (Context.Context)));
+               end if;
+            end;
+      end case;
 
       return Commands.Success;
    end Execute;
@@ -864,6 +865,7 @@ package body DAP.Module.Breakpoints is
      (Kernel : not null access Kernel_Handle_Record'Class;
       Data   : in out Breakpoint_Data)
    is
+      use type DAP.Clients.Breakpoint_Managers.Breakpoint_Manager_Access;
 
       procedure On_Debugger
         (Debugger : DAP.Clients.DAP_Client_Access);
@@ -1229,7 +1231,8 @@ package body DAP.Module.Breakpoints is
    procedure Register_Module
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
    is
-      No_Debugger_Or_Ready : Action_Filter;
+      No_Debugger_Or_Available : Action_Filter;
+      Source                   : Action_Filter;
    begin
       --  Connect to project' hooks
       Project_Changing_Hook.Add (new On_Project_Changing);
@@ -1244,17 +1247,18 @@ package body DAP.Module.Breakpoints is
         (new On_Breakpoint_Event (Changed));
       Debugger_Breakpoint_Deleted_Hook.Add
         (new On_Breakpoint_Event (Deleted));
-      No_Debugger_Or_Ready := Kernel.Lookup_Filter ("No debugger or ready");
+
+      No_Debugger_Or_Available := Kernel.Lookup_Filter
+        ("No debugger or available");
+      Source := Kernel.Lookup_Filter ("Source editor");
 
       --  Register all the breakpoint-related actions
       GPS.Kernel.Actions.Register_Action
         (Kernel, "debug set line breakpoint",
-         Command     => new Set_Breakpoint_Command_Context'
-           (Interactive_Command with On_Line => True, Continue_Till => False),
+         Command     => new Set_Breakpoint_Command_Context (On_Line),
          Description => "Set a breakpoint on line",
-         Filter      => Kernel.Lookup_Filter ("Source editor") and
-             No_Debugger_Or_Ready and
-             Kernel.Lookup_Filter ("Debugger breakable source"),
+         Filter      => No_Debugger_Or_Available and Source and
+           Kernel.Lookup_Filter ("Debugger breakable source"),
          Category    => "Debug");
       GPS.Kernel.Modules.UI.Register_Contextual_Menu
         (Kernel => Kernel,
@@ -1269,10 +1273,9 @@ package body DAP.Module.Breakpoints is
 
       GPS.Kernel.Actions.Register_Action
         (Kernel, "debug set subprogram breakpoint",
-         Command     => new Set_Breakpoint_Command_Context'
-           (Interactive_Command with On_Line => False, Continue_Till => False),
+         Command     => new Set_Breakpoint_Command_Context (Entity),
          Description => "Set a breakpoint on subprogram",
-         Filter      => No_Debugger_Or_Ready and
+         Filter      => No_Debugger_Or_Available and
              Kernel.Lookup_Filter ("Debugger entity name"),
          Category    => "Debug");
       GPS.Kernel.Modules.UI.Register_Contextual_Menu
@@ -1284,7 +1287,7 @@ package body DAP.Module.Breakpoints is
         (Kernel, "debug remove breakpoint",
          Command     => new Remove_Breakpoint_Command,
          Description => "Remove breakpoint",
-         Filter      => Kernel.Lookup_Filter ("Source editor"),
+         Filter      => Source,
          Category    => "Debug");
       GPS.Kernel.Modules.UI.Register_Contextual_Menu
         (Kernel => Kernel,
@@ -1295,11 +1298,9 @@ package body DAP.Module.Breakpoints is
 
       GPS.Kernel.Actions.Register_Action
         (Kernel, "continue till line",
-         Command     => new Set_Breakpoint_Command_Context'
-           (Interactive_Command with On_Line => True, Continue_Till => True),
+         Command     => new Set_Breakpoint_Command_Context (Continue_Till),
          Description => "Continue executing until the given line",
-         Filter      => Kernel.Lookup_Filter ("Debugger stopped") and
-           Kernel.Lookup_Filter ("Source editor"),
+         Filter      => Kernel.Lookup_Filter ("Debugger stopped") and Source,
          Category    => "Debug");
       GPS.Kernel.Modules.UI.Register_Contextual_Menu
         (Kernel => Kernel,

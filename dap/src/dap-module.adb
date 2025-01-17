@@ -33,7 +33,6 @@ with Glib.Object;                  use Glib.Object;
 
 with Gtk.Check_Button;             use Gtk.Check_Button;
 with Gtk.Dialog;                   use Gtk.Dialog;
-with Gtk.Handlers;
 with Gtk.Label;                    use Gtk.Label;
 with Gtk.Widget;                   use Gtk.Widget;
 
@@ -46,7 +45,6 @@ with Commands.Interactive;         use Commands.Interactive;
 with Histories;
 with Language;                     use Language;
 
-with Generic_Views;
 with GPS.Dialogs;                  use GPS.Dialogs;
 with GPS.Editors;                  use GPS.Editors;
 with GPS.Core_Kernels;
@@ -140,15 +138,6 @@ package body DAP.Module is
       Context : Selection_Context) return Gtk_Widget;
    --  See inherited documentation
 
-   package Client_ID_Callback is new Gtk.Handlers.User_Callback
-     (Generic_Views.View_Record, Integer);
-
-   procedure On_Console_Destroy
-     (Console : access Generic_Views.View_Record'Class;
-      Id      : Integer);
-   --  Called when the debugger console is destroyed, which also terminates the
-   --  debugger itself
-
    function On_Idle return Boolean;
    --  Called from Gtk on Idle to deallocate clients
 
@@ -200,10 +189,10 @@ package body DAP.Module is
      (Filter  : access Has_Debuggers_Filter;
       Context : Selection_Context) return Boolean;
 
-   type Debugger_Ready_State_Filter is
+   type Debugger_Initialized_Filter is
      new Action_Filter_Record with null record;
    overriding function Filter_Matches_Primitive
-     (Filter  : access Debugger_Ready_State_Filter;
+     (Filter  : access Debugger_Initialized_Filter;
       Context : Selection_Context) return Boolean;
 
    type Debugger_Available_Filter is
@@ -224,10 +213,10 @@ package body DAP.Module is
      (Filter  : access Debuggee_Running_Filter;
       Context : Selection_Context) return Boolean;
 
-   type No_Debugger_Or_Ready_Filter is
+   type No_Debugger_Or_Available_Filter is
      new Action_Filter_Record with null record;
    overriding function Filter_Matches_Primitive
-     (Filter  : access No_Debugger_Or_Ready_Filter;
+     (Filter  : access No_Debugger_Or_Available_Filter;
       Context : Selection_Context) return Boolean;
 
    type No_Debugger_Or_Initialized_Filter is
@@ -418,8 +407,6 @@ package body DAP.Module is
       Remote_Target   : String)
       return DAP.Clients.DAP_Client_Access
    is
-      use type Generic_Views.Abstract_View_Access;
-
       Client : DAP.Clients.DAP_Client_Access;
    begin
       if DAP_Module_ID = null then
@@ -439,7 +426,7 @@ package body DAP.Module is
 
       if DAP_Module_ID.Clients.Is_Empty then
          Client_Started := 1;
-         --  Start first debugger
+         --  Start the first debugger
 
          --  Switch to the "Debug" perspective if available
          GPS.Kernel.MDI.Load_Perspective
@@ -454,25 +441,6 @@ package body DAP.Module is
       end if;
 
       DAP_Module_ID.Clients.Append (Client);
-
-      --  Create console
-      DAP.Views.Consoles.Attach_To_Debugger_Console
-        (Client              => Client,
-         Kernel              => Kernel,
-         Create_If_Necessary => True,
-         Name                => " " & (+Base_Name (File)));
-
-      if Client.Get_Debugger_Console /= null then
-         Client_ID_Callback.Connect
-           (Client.Get_Debugger_Console,
-            Signal_Destroy,
-            On_Console_Destroy'Access,
-            After       => True,
-            User_Data   => Client.Id);
-
-         DAP.Views.Consoles.Get_Debugger_Interactive_Console
-           (DAP.Clients.DAP_Client (Client.all)).Display_Prompt;
-      end if;
 
       Client.Start
         (Project         => Project,
@@ -957,7 +925,7 @@ package body DAP.Module is
       end Display_Dialog;
 
    begin
-      if Client.Get_Status /= DAP.Types.Ready then
+      if Client.Get_Status /= DAP.Types.Initialized then
          Ignore := GUI_Utils.GPS_Message_Dialog
            ("Cannot rerun while the underlying debugger is busy." &
               ASCII.LF &
@@ -995,7 +963,7 @@ package body DAP.Module is
          return Commands.Failure;
       end if;
 
-      if Client.Get_Status = DAP.Types.Ready then
+      if Client.Get_Status = DAP.Types.Initialized then
          Start_Executable
            (Kernel               => GPS.Kernel.Get_Kernel (Context.Context),
             Client               => Client,
@@ -1372,14 +1340,14 @@ package body DAP.Module is
    ------------------------------
 
    overriding function Filter_Matches_Primitive
-     (Filter  : access Debugger_Ready_State_Filter;
+     (Filter  : access Debugger_Initialized_Filter;
       Context : Selection_Context) return Boolean
    is
       use DAP.Types;
       use type DAP.Clients.DAP_Client_Access;
    begin
       return DAP.Module.Get_Current_Debugger /= null
-        and then DAP.Module.Get_Current_Debugger.Get_Status = Ready;
+        and then DAP.Module.Get_Current_Debugger.Get_Status = Initialized;
    end Filter_Matches_Primitive;
 
    ------------------------------
@@ -1401,7 +1369,7 @@ package body DAP.Module is
    ------------------------------
 
    overriding function Filter_Matches_Primitive
-     (Filter  : access No_Debugger_Or_Ready_Filter;
+     (Filter  : access No_Debugger_Or_Available_Filter;
       Context : Selection_Context) return Boolean
    is
       pragma Unreferenced (Filter);
@@ -1735,25 +1703,6 @@ package body DAP.Module is
          Remote_Target   => Remote_Target);
    end Initialize_Debugger;
 
-   ------------------------
-   -- On_Console_Destroy --
-   ------------------------
-
-   procedure On_Console_Destroy
-     (Console : access Generic_Views.View_Record'Class;
-      Id      : Integer)
-   is
-      pragma Unreferenced (Console);
-      use type DAP.Clients.DAP_Client_Access;
-
-      Client : constant DAP.Clients.DAP_Client_Access := Get_Debugger (Id);
-   begin
-      if Client /= null then
-         Client.Set_Debugger_Console (null);
-         Client.Quit;
-      end if;
-   end On_Console_Destroy;
-
    --------------
    -- Finished --
    --------------
@@ -1864,13 +1813,12 @@ package body DAP.Module is
          return True;
       end Set_Current_Debugger;
 
-      Set : Boolean;
       Old : constant Integer := DAP_Module_ID.Current_Debuger_ID;
 
    begin
-      Set := Set_Current_Debugger (DAP_Module_ID, Current);
-
-      if Set and then Current /= null then
+      if Set_Current_Debugger (DAP_Module_ID, Current)
+        and then Current /= null
+      then
          GPS.Kernel.Hooks.Debugger_Breakpoints_Changed_Hook.Run
            (Current.Kernel, Current.Get_Visual);
       end if;
@@ -1925,10 +1873,10 @@ package body DAP.Module is
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
    is
       Has_Debugger               : Action_Filter;
-      No_Debugger_Or_Ready       : Action_Filter;
+      No_Debugger_Or_Available   : Action_Filter;
       No_Debugger_Or_Initialized : Action_Filter;
       Debugger_Available         : Action_Filter;
-      Debugger_Ready_State       : Action_Filter;
+      Debugger_Initialized       : Action_Filter;
       Debugger_Stopped           : Action_Filter;
       Debuggee_Running           : Action_Filter;
       Breakable_Filter           : Action_Filter;
@@ -1954,9 +1902,9 @@ package body DAP.Module is
       Has_Debugger := new Has_Debuggers_Filter;
       Register_Filter (Kernel, Has_Debugger, "Has debuggers");
 
-      No_Debugger_Or_Ready := new No_Debugger_Or_Ready_Filter;
+      No_Debugger_Or_Available := new No_Debugger_Or_Available_Filter;
       Register_Filter
-        (Kernel, No_Debugger_Or_Ready, "No debugger or ready");
+        (Kernel, No_Debugger_Or_Available, "No debugger or available");
 
       No_Debugger_Or_Initialized := new No_Debugger_Or_Initialized_Filter;
       Register_Filter
@@ -1978,8 +1926,8 @@ package body DAP.Module is
       Entity_Filter := new Entity_Name_Filter;
       Register_Filter (Kernel, Entity_Filter, "Debugger entity name");
 
-      Debugger_Ready_State := new Debugger_Ready_State_Filter;
-      Register_Filter (Kernel, Debugger_Ready_State, "Debugger ready state");
+      Debugger_Initialized := new Debugger_Initialized_Filter;
+      Register_Filter (Kernel, Debugger_Initialized, "Debugger initialized");
 
       Is_Not_Command_Filter := new Not_Command_Filter;
       Register_Filter
@@ -2021,7 +1969,7 @@ package body DAP.Module is
 
       GPS.Kernel.Actions.Register_Action
         (Kernel, "debug run dialog", new Start_Command,
-         Filter      => Debugger_Ready_State,
+         Filter      => Debugger_Initialized,
          Description =>
            "Choose the arguments to the program, and start running it",
          Category    => "Debug");
@@ -2083,7 +2031,7 @@ package body DAP.Module is
          Description =>
            "Opens a simple dialog to connect to a remote board. This option"
            & " is only relevant to cross debuggers.",
-         Filter   => No_Debugger_Or_Ready,
+         Filter   => No_Debugger_Or_Available,
          Category => "Debug");
 
       GPS.Kernel.Actions.Register_Action

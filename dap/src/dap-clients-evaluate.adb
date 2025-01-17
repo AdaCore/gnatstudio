@@ -65,7 +65,9 @@ package body DAP.Clients.Evaluate is
 
       Req.Parameters.arguments.expression := Cmd;
       Req.Parameters.arguments.frameId :=
-        Client.Get_Stack_Trace.Get_Current_Frame_Id;
+        (if Client.Get_Stack_Trace /= null
+         then Client.Get_Stack_Trace.Get_Current_Frame_Id
+         else (Is_Set => False));
       Req.Parameters.arguments.context :=
         (Is_Set => True, Value => DAP.Tools.Enum.repl);
 

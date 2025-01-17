@@ -36,6 +36,7 @@ def test_driver():
     yield wait_until_true(
         lambda: GPS.Action("debug set line breakpoint").can_execute() == False
     )
+    yield wait_idle()
     GPS.execute_action("debug set line breakpoint")
     yield wait_idle()
 

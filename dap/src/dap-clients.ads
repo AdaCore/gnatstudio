@@ -102,9 +102,6 @@ package DAP.Clients is
    function Is_Stopped (Self : DAP_Client) return Boolean;
    --  Debugging program is stopped and new command can be accepted
 
-   function Is_Ready (Self : DAP_Client) return Boolean;
-   --  Debugging program is ready to start
-
    function Is_Available (Self : DAP_Client) return Boolean;
    --  Debugger can accept new command. Debugging can be not started yet.
 
@@ -138,12 +135,12 @@ package DAP.Clients is
    --  for debugging.
    --  Start_Method should specify which method was used to start the debuggee.
 
-   procedure On_Configured (Self : in out DAP_Client);
-   --  Set the status to Ready once the confuguration has been done.
-
-   procedure On_Breakpoints_Set (Self : in out DAP_Client);
+   procedure On_Breakpoints_Initialized (Self : in out DAP_Client);
    --  Called when all the initial breakpoints have been set on the server
    --  side. Will set the debugger's status to Ready.
+
+   procedure On_Configured (Self : in out DAP_Client);
+   --  Called when we have `configurationDone` response
 
    procedure On_Continue (Self : in out DAP_Client);
    --  Called on continue requests. Will set the debugger's status to Running.
@@ -473,5 +470,15 @@ private
    procedure Load_Project_From_Executable (Self : in out DAP_Client);
    --  Creates a project based on the debugger's response about sources. Used
    --  when the debugger is started via the --debug switch.
+
+   procedure Create_Debuggee_Console (Self : not null access DAP_Client);
+   --  Creates Debuggee_Console and attach it to the executable
+
+   procedure Initialize_Breakpoints (Self : not null access DAP_Client);
+   --  Initialize the Breakpoints' manager: it will send the needed requests
+   --  to set all the initial breakpoints on the server's side.
+
+   procedure On_Initialized (Self : in out DAP_Client);
+   --  Called when we have `initialize` response
 
 end DAP.Clients;

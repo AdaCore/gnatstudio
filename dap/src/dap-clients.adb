@@ -29,6 +29,9 @@ with Spawn.String_Vectors;
 
 with Glib.Object;                use Glib.Object;
 
+with Gtk.Handlers;
+with Gtk.Widget;
+
 with Gtkada.Dialogs;
 with Gtkada.MDI;                 use Gtkada.MDI;
 
@@ -51,6 +54,7 @@ with GPS.Kernel.MDI;             use GPS.Kernel.MDI;
 with GPS.Kernel.Messages.Simple;
 with GPS.Kernel.Hooks;
 with GPS.Kernel.Project;
+with GPS.Messages_Windows;
 
 with LSP.Types;
 with LSP.JSON_Streams;
@@ -190,6 +194,15 @@ package body DAP.Clients is
       return Commands.Command_Return_Type;
    --  Debug->Continue until current line
 
+   package Client_ID_Callback is new Gtk.Handlers.User_Callback
+     (Generic_Views.View_Record, Integer);
+
+   procedure On_Console_Destroy
+     (Console : access Generic_Views.View_Record'Class;
+      Id      : Integer);
+   --  Called when the debugger console is destroyed, which also terminates the
+   --  debugger itself
+
    ------------------
    -- Allocate_TTY --
    ------------------
@@ -259,8 +272,12 @@ package body DAP.Clients is
      (Self  : in out DAP_Client;
       Error : String) is
    begin
+      Self.Kernel.Messages_Window.Insert
+        ("Can't start debugger:" & Error, Mode => GPS.Messages_Windows.Error);
+
       Trace (Me, "On_Error:" & Error);
       Self.Reject_All_Requests;
+      Self.On_Finished;
    end On_Error;
 
    -------------------------------
@@ -294,12 +311,17 @@ package body DAP.Clients is
    -----------------------
 
    procedure Initialize_Client (Self : not null access DAP_Client) is
+      use DAP.Clients.Breakpoint_Managers;
    begin
       Self.Visual := new DAP_Visual_Debugger'
         (Glib.Object.GObject_Record with Client => Self.This);
       Glib.Object.Initialize (Self.Visual);
       Ref (Self.Visual);
 
+      Self.Breakpoints :=
+        Breakpoint_Manager_Access'
+          (new Breakpoint_Manager_Type (Kernel_Handle (Self.Kernel),
+           Self.This));
       Self.Stack_Trace := DAP.Clients.Stack_Trace.Stack_Trace_Access'
         (new DAP.Clients.Stack_Trace.Stack_Trace);
       Self.Variables   := DAP.Clients.Variables.Variables_Holder_Access'
@@ -330,22 +352,13 @@ package body DAP.Clients is
       return Self.Status = Stopped;
    end Is_Stopped;
 
-   --------------
-   -- Is_Ready --
-   --------------
-
-   function Is_Ready (Self : DAP_Client) return Boolean is
-   begin
-      return Self.Status = Ready;
-   end Is_Ready;
-
    ------------------
    -- Is_Available --
    ------------------
 
    function Is_Available (Self : DAP_Client) return Boolean is
    begin
-      return Self.Status in Ready .. Stopped
+      return Self.Status in Initialized .. Stopped
         and then Self.Sent.Is_Empty;
    end Is_Available;
 
@@ -444,8 +457,6 @@ package body DAP.Clients is
      (Self   : in out DAP_Client'Class;
       Status : Debugger_Status_Kind)
    is
-      use type Generic_Views.Abstract_View_Access;
-
       Old : constant Debugger_Status_Kind := Self.Status;
    begin
       if Self.Status = Status
@@ -458,26 +469,21 @@ package body DAP.Clients is
 
       Me.Trace ("Setting debugger's status to: " & Status'Img);
 
-      if Self.Status not in Ready .. Stopped then
+      if Self.Status not in Initialized .. Stopped then
          Self.Selected_Thread := 0;
 
          DAP.Utils.Unhighlight_Current_Line (Self.Kernel);
       end if;
 
       case Self.Status is
-         when Ready =>
-            if Self.Debuggee_Console = null then
-               DAP.Views.Consoles.Create_Execution_Console (Self.This);
-            end if;
-
-            --  Trigger this hook when we did all preparations
-            --  (for example set breakpoints). In either case we will
-            --  have the mess with debugging
+         when Initialized =>
+            --  Trigger this hook when we did initialization
+            --  and debugger is ready for commands
             GPS.Kernel.Hooks.Debugger_Started_Hook.Run
               (Self.Kernel, Self.Visual);
 
-            --  Give the focus to the Debugger Console
-            DAP.Views.Consoles.Raise_Debugger_Console (Self'Access);
+            --  Raise the debugger console to make it focused
+            DAP.Views.Consoles.Raise_Debugger_Console (Self.This);
 
          when Stopped =>
             --  Inform that the debugger has stopped
@@ -599,6 +605,19 @@ package body DAP.Clients is
       Self.Debugger_Console := Console;
    end Set_Debugger_Console;
 
+   -----------------------------
+   -- Create_Debuggee_Console --
+   -----------------------------
+
+   procedure Create_Debuggee_Console (Self : not null access DAP_Client)
+   is
+      use type Generic_Views.Abstract_View_Access;
+   begin
+      if Self.Debuggee_Console = null then
+         DAP.Views.Consoles.Create_Execution_Console (Self);
+      end if;
+   end Create_Debuggee_Console;
+
    ------------------------
    -- Get_Current_Thread --
    ------------------------
@@ -674,8 +693,11 @@ package body DAP.Clients is
 
    procedure Set_Executable
      (Self : in out DAP_Client;
-      File : GNATCOLL.VFS.Virtual_File) is
+      File : GNATCOLL.VFS.Virtual_File)
+   is
+      use GNATCOLL.VFS;
    begin
+      DAP_Log.Trace ("Set executable:" & (+Base_Name (File)));
       Self.Executable := File;
    end Set_Executable;
 
@@ -865,15 +887,6 @@ package body DAP.Clients is
    begin
       return Self.Error_Msg;
    end Error_Message;
-
-   -------------------
-   -- On_Configured --
-   -------------------
-
-   procedure On_Configured (Self : in out DAP_Client) is
-   begin
-      Self.Set_Status (Ready);
-   end On_Configured;
 
    -----------------
    -- On_Continue --
@@ -1143,20 +1156,42 @@ package body DAP.Clients is
       if not Self.Source_Files.Is_Empty then
          Self.Load_Project_From_Executable;
       end if;
+
+      Self.Create_Debuggee_Console;
+      Self.Initialize_Breakpoints;
    end On_Launched;
 
-   ------------------------
-   -- On_Breakpoints_Set --
-   ------------------------
+   -------------------
+   -- On_Configured --
+   -------------------
 
-   procedure On_Breakpoints_Set (Self : in out DAP_Client)
-   is
-      use GNATCOLL.Projects;
+   procedure On_Configured (Self : in out DAP_Client) is
+   begin
+      --  GDB started the executable execution. Nothing to do.
+      null;
+   end On_Configured;
+
+   --------------------------------
+   -- On_Breakpoints_Initialized --
+   --------------------------------
+
+   procedure On_Breakpoints_Initialized (Self : in out DAP_Client) is
    begin
       --  Initial breakpoints have been set: we can now send the
       --  'configurationDone' request to notify the DAP server that everything
       --  has been properly configured.
       DAP.Clients.ConfigurationDone.Send_Configuration_Done (Self);
+   end On_Breakpoints_Initialized;
+
+   --------------------
+   -- On_Initialized --
+   --------------------
+
+   procedure On_Initialized (Self : in out DAP_Client)
+   is
+      use GNATCOLL.Projects;
+   begin
+      Self.Breakpoints.Initialize;
 
       --  No project has been set for this debugger: this means that the
       --  debugger was launched through GNAT Studio's --debug option, directly
@@ -1171,7 +1206,7 @@ package body DAP.Clients is
             Executable_Args   => Self.Get_Executable_Args,
             Stop_At_Beginning => True);
       end if;
-   end On_Breakpoints_Set;
+   end On_Initialized;
 
    --------------------
    -- On_Raw_Message --
@@ -1596,7 +1631,7 @@ package body DAP.Clients is
             GPS.Kernel.Hooks.Debugger_Process_Terminated_Hook.Run
               (Self.Kernel, Self.Visual);
          end if;
-         Self.Set_Status (Ready);
+         Self.Set_Status (Initialized);
          Display_In_Debugger_Console (Self, "Terminated");
 
       elsif Event = "module" then
@@ -2027,6 +2062,15 @@ package body DAP.Clients is
       DAP.Clients.Initialize.Send_Initialize_Request (Self);
    end On_Started;
 
+   ----------------------------
+   -- Initialize_Breakpoints --
+   ----------------------------
+
+   procedure Initialize_Breakpoints (Self : not null access DAP_Client) is
+   begin
+      Self.Breakpoints.Initialize_Breakpoints;
+   end Initialize_Breakpoints;
+
    -------------
    -- Process --
    -------------
@@ -2105,6 +2149,9 @@ package body DAP.Clients is
       Executable_Args : String;
       Remote_Target   : String)
    is
+      use GNATCOLL.VFS;
+      use type Generic_Views.Abstract_View_Access;
+
       Node_Args : Spawn.String_Vectors.UTF_8_String_Vector;
 
       function Get_Debug_Adapter_Command return String;
@@ -2148,7 +2195,7 @@ package body DAP.Clients is
 
    begin
       Self.Project := Project;
-      Self.Executable := Executable;
+      Self.Set_Executable (Executable);
       Self.Executable_Args.Clear;
       Self.Remote_Target := VSS.Strings.Conversions.To_Virtual_String
         (Remote_Target);
@@ -2180,9 +2227,47 @@ package body DAP.Clients is
          GNAT.Strings.Free (Debug_Adapter_Args);
       end;
 
+      --  Create debugger console
+      DAP.Views.Consoles.Attach_To_Debugger_Console
+        (Client              => Self.This,
+         Kernel              => Self.Kernel,
+         Create_If_Necessary => True,
+         Name                => " " & (+Base_Name (Executable)));
+
+      if Self.Get_Debugger_Console /= null then
+         Client_ID_Callback.Connect
+           (Self.Get_Debugger_Console,
+            Gtk.Widget.Signal_Destroy,
+            On_Console_Destroy'Access,
+            After       => True,
+            User_Data   => Self.Id);
+
+         DAP.Views.Consoles.
+           Get_Debugger_Interactive_Console (Self).Display_Prompt;
+      end if;
+
       Self.Set_Arguments (Node_Args);
       Self.Start;
    end Start;
+
+   ------------------------
+   -- On_Console_Destroy --
+   ------------------------
+
+   procedure On_Console_Destroy
+     (Console : access Generic_Views.View_Record'Class;
+      Id      : Integer)
+   is
+      pragma Unreferenced (Console);
+
+      Client : constant DAP.Clients.DAP_Client_Access :=
+        DAP.Module.Get_Debugger (Id);
+   begin
+      if Client /= null then
+         Client.Set_Debugger_Console (null);
+         Client.Quit;
+      end if;
+   end On_Console_Destroy;
 
    -----------
    -- Clear --
@@ -2289,6 +2374,7 @@ package body DAP.Clients is
 
          Self.Clear;
       else
+         Self.Clear;
          Self.Stop;
       end if;
 

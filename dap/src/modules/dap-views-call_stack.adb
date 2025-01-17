@@ -351,7 +351,7 @@ package body DAP.Views.Call_Stack is
    function Initialize
      (Widget : access Call_Stack_Record'Class) return Gtk_Widget
    is
-      Scrolled     : Gtk_Scrolled_Window;
+      Scrolled : Gtk_Scrolled_Window;
 
       procedure Add_Column (Name : String; Index : Gint);
 
