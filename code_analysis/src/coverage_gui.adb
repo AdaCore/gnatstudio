@@ -81,14 +81,14 @@ package body Coverage_GUI is
                Kernel.Insert
                  (-"Could not find coverage file " &
                     Display_Full_Name (Cov_File));
-            end if;
 
-            declare
-               File_Node : constant Code_Analysis.File_Access :=
-                             Get_Or_Create (Prj_Node, Src_File);
-            begin
-               Set_Error (File_Node, File_Not_Found);
-            end;
+               declare
+                  File_Node : constant Code_Analysis.File_Access :=
+                    Get_Or_Create (Prj_Node, Src_File);
+               begin
+                  Set_Error (File_Node, File_Not_Found);
+               end;
+            end if;
          end if;
       end loop;
 
