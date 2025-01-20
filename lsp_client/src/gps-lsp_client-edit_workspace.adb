@@ -69,7 +69,8 @@ package body GPS.LSP_Client.Edit_Workspace is
    --  of editor buffers.
 
    procedure Debug_Print_Changes
-     (Msg     : String;
+     (Editor  : GPS.Editors.Editor_Buffer'Class;
+      Msg     : String;
       Changes : Maps.Map);
    --  Trace the given edit changes.
 
@@ -177,8 +178,8 @@ package body GPS.LSP_Client.Edit_Workspace is
             New_Text    : String renames Maps.Element (C);
          begin
             Debug_Print_Changes
-              (Msg     => "Original edits:",
-               Changes =>  Changes);
+              (Editor => Editor, Msg => "Original edits:", Changes => Changes);
+            Me.Trace ("Computing minimal diffs...");
             Get_Diff_Changes
               (Kernel        => Kernel,
                Original_Span => Span,
@@ -186,8 +187,7 @@ package body GPS.LSP_Client.Edit_Workspace is
                New_Text      => New_Text,
                Changes       => New_Changes);
             Debug_Print_Changes
-              (Msg     => "New edits:",
-               Changes => New_Changes);
+              (Editor => Editor, Msg => "New edits:", Changes => New_Changes);
          end;
          Maps.Previous (C);
       end loop;
@@ -400,30 +400,44 @@ package body GPS.LSP_Client.Edit_Workspace is
    -------------------------
 
    procedure Debug_Print_Changes
-     (Msg     : String;
+     (Editor  : GPS.Editors.Editor_Buffer'Class;
+      Msg     : String;
       Changes : Maps.Map)
    is
       C : Maps.Cursor;
    begin
+      --  Return immediately if the debug trace is not active, since
+      --  we are doing a loop with some position conversions, which can
+      --  be costly if we have a lot of edits.
+      if not Me.Is_Active then
+         return;
+      end if;
+
       Trace (Me, Msg);
       C := Changes.Last;
 
       while Maps.Has_Element (C) loop
          declare
-            Span : constant LSP.Messages.Span := Maps.Key (C);
+            Span     : constant LSP.Messages.Span := Maps.Key (C);
             New_Text : constant String := Maps.Element (C);
+            From     : constant GPS.Editors.Editor_Location'Class :=
+              GPS.LSP_Client.Utilities.LSP_Position_To_Location
+                (Editor, Span.first);
+            To       : constant GPS.Editors.Editor_Location'Class :=
+              GPS.LSP_Client.Utilities.LSP_Position_To_Location
+                (Editor, Span.last);
          begin
             Trace
               (Me,
                ((if New_Text = "" then "* Delete " else "* Insert ")
                 & "from ("
-                & Span.first.line'Img
+                & Integer'Image (From.Line)
                 & ","
-                & Span.first.character'Img
+                & Visible_Column_Type'Image (From.Column)
                 & ") to ("
-                & Span.last.line'Img
+                & Integer'Image (To.Line)
                 & ","
-                & Span.last.character'Img
+                & Visible_Column_Type'Image (To.Column)
                 & ") new text:" & New_Text));
             Maps.Previous (C);
          end;
