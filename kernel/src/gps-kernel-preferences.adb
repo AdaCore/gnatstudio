@@ -1791,6 +1791,18 @@ package body GPS.Kernel.Preferences is
                & "default value"),
            Default => False);
 
+      LSP_Ada_Use_GNATformat :=
+        Kernel.Get_Preferences.Create
+          (Name    => "LSP-Ada-Use-GNATformat",
+           Default => True,
+           Label   => "Use GNATformat",
+           Doc     =>
+             "Enable GNATformat as the LSP "
+             & "formatting provider for Ada source files. "
+             & "When disabled, the deprecated GNATpp engine will be "
+             & "used instead.",
+           Path    => "Editor/Ada:Formatting");
+
       LSP_Use_Snippets := Kernel.Get_Preferences.Create
         (Name    => "LSP-Completion-Use-Snippets",
          Default => False,

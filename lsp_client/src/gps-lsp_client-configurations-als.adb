@@ -176,6 +176,11 @@ package body GPS.LSP_Client.Configurations.ALS is
          Boolean'
            (GPS.Kernel.Preferences.LSP_Ada_Insert_With_Clauses.Get_Pref));
 
+      Ada_Settings.Set_Field
+        ("useGnatformat",
+         Boolean'
+           (GPS.Kernel.Preferences.LSP_Ada_Use_GNATformat.Get_Pref));
+
       --  Documentation options
 
       Ada_Settings.Set_Field
