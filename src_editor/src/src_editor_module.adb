@@ -2375,7 +2375,7 @@ package body Src_Editor_Module is
 
       File := File_Information (Ctxt);
 
-      return not (Starts_With (To_Lower (+File.Base_Name), "makefile"));
+      return not Starts_With (To_Lower (+File.Base_Name), "makefile");
    end Filter_Matches_Primitive;
 
    ------------------------------
