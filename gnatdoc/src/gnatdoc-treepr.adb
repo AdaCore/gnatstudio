@@ -182,7 +182,7 @@ package body GNATdoc.Treepr is
             & Get_Short_Name (Entity));
 
          if not Context.Options.Show_Private
-           or else not (Is_Partial_View (Entity))
+           or else not Is_Partial_View (Entity)
            or else No (Get_Src (Get_Full_View (Entity)))
          then
             if Present (Get_Src (Entity)) then
