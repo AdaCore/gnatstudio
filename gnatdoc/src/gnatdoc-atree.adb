@@ -3127,7 +3127,7 @@ package body GNATdoc.Atree is
 
    procedure Set_Is_Private (E : Entity_Id) is
    begin
-      pragma Assert (not (Is_Private (E)));
+      pragma Assert (not Is_Private (E));
       E.Is_Private := True;
    end Set_Is_Private;
 
