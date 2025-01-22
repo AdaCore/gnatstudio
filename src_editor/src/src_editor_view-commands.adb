@@ -136,7 +136,7 @@ package body Src_Editor_View.Commands is
 
             else
                Move_Paragraph_Backward :
-               for J in 1 .. abs (Step) loop
+               for J in 1 .. abs Step loop
                   loop
                      Set_Line_Index (Iter, 0);
                      Backward_Char (Iter, Success); --  to end of previous line
