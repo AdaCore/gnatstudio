@@ -1232,7 +1232,7 @@ package body DAP.Module.Breakpoints is
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
    is
       No_Debugger_Or_Available : Action_Filter;
-      Source                   : Action_Filter;
+      In_Source_Editor         : Action_Filter;
    begin
       --  Connect to project' hooks
       Project_Changing_Hook.Add (new On_Project_Changing);
@@ -1250,14 +1250,14 @@ package body DAP.Module.Breakpoints is
 
       No_Debugger_Or_Available := Kernel.Lookup_Filter
         ("No debugger or available");
-      Source := Kernel.Lookup_Filter ("Source editor");
+      In_Source_Editor := Kernel.Lookup_Filter ("Source editor");
 
       --  Register all the breakpoint-related actions
       GPS.Kernel.Actions.Register_Action
         (Kernel, "debug set line breakpoint",
          Command     => new Set_Breakpoint_Command_Context (On_Line),
          Description => "Set a breakpoint on line",
-         Filter      => No_Debugger_Or_Available and Source and
+         Filter      => No_Debugger_Or_Available and In_Source_Editor and
            Kernel.Lookup_Filter ("Debugger breakable source"),
          Category    => "Debug");
       GPS.Kernel.Modules.UI.Register_Contextual_Menu
@@ -1287,7 +1287,7 @@ package body DAP.Module.Breakpoints is
         (Kernel, "debug remove breakpoint",
          Command     => new Remove_Breakpoint_Command,
          Description => "Remove breakpoint",
-         Filter      => Source,
+         Filter      => In_Source_Editor,
          Category    => "Debug");
       GPS.Kernel.Modules.UI.Register_Contextual_Menu
         (Kernel => Kernel,
@@ -1300,7 +1300,8 @@ package body DAP.Module.Breakpoints is
         (Kernel, "continue till line",
          Command     => new Set_Breakpoint_Command_Context (Continue_Till),
          Description => "Continue executing until the given line",
-         Filter      => Kernel.Lookup_Filter ("Debugger stopped") and Source,
+         Filter      => Kernel.Lookup_Filter ("Debugger stopped") and
+             In_Source_Editor,
          Category    => "Debug");
       GPS.Kernel.Modules.UI.Register_Contextual_Menu
         (Kernel => Kernel,

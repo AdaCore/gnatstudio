@@ -301,7 +301,7 @@ package DAP.Types.Breakpoints is
    --  Set the 'ignore' count for the breakpoint refered by Id.
 
    function Is_Empty (Self : Breakpoint_Holder) return Boolean;
-   --  Returns True if no breakpoints
+   --  Returns True if the breakpoints holder is empty
 
 private
 
