@@ -49,7 +49,7 @@ package DAP.Clients.Breakpoint_Managers is
 
    procedure Initialize_Breakpoints
      (Self : not null access Breakpoint_Manager_Type);
-   --  Send all breakpoints to DAP server.
+   --  Send all initial breakpoints to DAP server.
 
    procedure Get_Stopped_Event_Location
      (Self         : not null access Breakpoint_Manager_Type;
