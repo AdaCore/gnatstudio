@@ -315,31 +315,32 @@ class gnatCheckProc:
                 GPS.Project.root().recompute()
 
         self.full_output = ""
-        opts_project = project
-        opts = opts_project.get_attribute_as_list(
-            "switches", package="check", index="ada"
-        )
-        if len(opts) == 0:
-            opts = opts_project.get_attribute_as_list(
-                "default_switches", package="check", index="ada"
-            )
-        if len(opts) == 0:
-            opts_project = GPS.Project.root()
-            opts = opts_project.get_attribute_as_list(
-                "switches", package="check", index="ada"
-            )
-        if len(opts) == 0:
-            opts = opts_project.get_attribute_as_list(
-                "default_switches", package="check", index="ada"
-            )
+        opts = []
+        lkql_rule_file = ""
+        rules = []
+        for project in [project, GPS.Project.root()]:
+            if len(opts) == 0:
+                opts = project.get_attribute_as_list(
+                    "switches", package="check", index="ada"
+                )
+                if len(opts) == 0:
+                    opts = project.get_attribute_as_list(
+                        "default_switches", package="check", index="ada"
+                    )
+            if lkql_rule_file == "":
+                lkql_rule_file = project.get_attribute_as_string(
+                    "rule_file", package="check"
+                )
+            if len(rules) == 0:
+                rules = project.get_attribute_as_list("rules", package="check")
 
         # We need a rules file if no rules are specified in the project,
-        # either directly or via a dedicated rules file
-        need_rules_file = True
-        if len(opts) != 0:
-            for opt in opts:
-                if "-rules" in opt:
-                    need_rules_file = False
+        # either directly or via a dedicated rules file.
+        need_rules_file = not (
+            any(["-rules" in opt for opt in opts])
+            or lkql_rule_file != ""
+            or len(rules) > 0
+        )
 
         if need_rules_file:
             # Display a dialog, but without using run(), since we are
@@ -533,22 +534,32 @@ def edit_gnatcheck_rules():
     gnatcheckproc.edit()
 
 
-@hook("gps_started")
-def __on_gps_started():
-    GPS.parse_xml(
-        """
-    <tool name="GNATcheck" package="Check" index="Ada" override="false"
-    attribute="Default_Switches">
-        <language>Ada</language>
-        <switches sections="-rules">
-            <check label="process RTL units" switch="-a" line="1"/>
-            <check label="debug mode" switch="-d" line="1"/>
-            <field label="Coding standard file"
-                   switch="-from"
-                   separator="="
-                   as-file="true"
-                   line="1"
-                   section="-rules"/>
-       </switches>
-    </tool>"""
-    )
+GPS.parse_xml(
+    """
+<tool name="GNATcheck" package="Check" index="Ada" override="false"
+attribute="Default_Switches">
+    <language>Ada</language>
+    <switches sections="-rules">
+        <check label="process RTL units" switch="-a" line="1"/>
+        <check label="debug mode" switch="-d" line="1"/>
+        <field label="Coding standard file"
+                switch="-from"
+                separator="="
+                as-file="true"
+                line="1"
+                section="-rules"/>
+    </switches>
+</tool>
+<project_attribute package="Check"
+    name="Rules"
+    editor_page="GNATCheck"
+    list="true"
+    hide_in="wizard library_wizard properties">
+</project_attribute>
+<project_attribute package="Check"
+    name="Rule_File"
+    editor_page="GNATCheck"
+    list="false"
+    hide_in="wizard library_wizard properties">
+</project_attribute>"""
+)
