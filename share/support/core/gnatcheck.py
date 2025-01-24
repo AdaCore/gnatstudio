@@ -161,6 +161,7 @@ class gnatCheckProc:
                 + "The following rules' sections will be missing:\n"
                 + "    Warnings     - compiler warnings\n"
                 + "    Style_Checks - compiler style checks\n"
+                + "    Restrictions - compiler restrictions\n"
             )
 
     def onResponse(self, dialog, response_id):
