@@ -18,7 +18,6 @@ from gi.repository import Gtk
 from gs_utils import interactive, hook
 from gs_utils.gnatcheck_rules_editor import rulesEditor, get_supported_rules
 
-gnatcheck = None
 gnatsas = os_utils.locate_exec_on_path("gnatsas")
 
 
