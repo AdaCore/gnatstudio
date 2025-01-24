@@ -817,6 +817,12 @@ package body DAP.Clients.Breakpoint_Managers is
       Sync_Data : Synchonization_Data) is
    begin
       if Self.Client.Get_Status not in Stopped .. Running then
+         --  We have not sent the initial breakpoints list yet and the
+         --  debugger does not have the executable for debugging set yet.
+         --  We have stored changes in Breakpoint_Manager itself for now
+         --  and trigger the hook to update the GUI. We trigger the same
+         --  hook when sending requests below when we have responses to them.
+
          GPS.Kernel.Hooks.Debugger_Breakpoints_Changed_Hook.Run
            (Self.Client.Kernel, Self.Client.Get_Visual);
          return;
