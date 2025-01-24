@@ -4987,20 +4987,32 @@ package body Debugger.Base_Gdb.Gdb_MI is
                declare
                   Added : Boolean := False;
                begin
-                  --  If we have extra information after the ^done then
-                  --  we need to skip the next character which will be ','
-                  --  and we need to add a new line.
-                  while J <= Str'Last and then Str (J) /= ASCII.LF loop
-                     if not Added then
-                        Added := True;
-                     else
-                        Append (Results_Output, Str (J));
-                     end if;
+                  if Lookup (",value=""") then
+                     --  result for the print variable command
+                     Append (Console_Output, "value=""");
+                     while J <= Str'Last and then Str (J) /= '"' loop
+                        Append (Console_Output, Str (J));
+                        J := J + 1;
+                     end loop;
+                     Append (Console_Output, '"' & ASCII.LF);
                      J := J + 1;
-                  end loop;
 
-                  if Added then
-                     Append (Results_Output, ASCII.LF);
+                  else
+                     --  If we have extra information after the ^done then
+                     --  we need to skip the next character which will be ','
+                     --  and we need to add a new line.
+                     while J <= Str'Last and then Str (J) /= ASCII.LF loop
+                        if not Added then
+                           Added := True;
+                        else
+                           Append (Results_Output, Str (J));
+                        end if;
+                        J := J + 1;
+                     end loop;
+
+                     if Added then
+                        Append (Results_Output, ASCII.LF);
+                     end if;
                   end if;
                end;
 
