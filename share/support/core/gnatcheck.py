@@ -99,18 +99,19 @@ class gnatCheckProc:
         self.ruleseditor = None  # The GUI to edit rules
 
     def getRulesFile(self):
-        # we retrieve the coding standard file from the project
-        for opt in GPS.Project.root().get_attribute_as_list(
-            "default_switches", package="check", index="ada"
-        ):
-            res = re.split(r"^\-from\=(.*)$", opt)
-            if len(res) > 1:
-                # Go to the project's directory to resolve potential
-                # relative paths from the right location
-                project_dir = GPS.Project.root().file().directory()
-                rules_file = res[1]
-                path_to_rules_file = GPS.File(os.path.join(project_dir, rules_file))
-                return path_to_rules_file
+        # We retrieve the coding standard file from the project's "Switches"
+        # and "Default_Switches" attributes.
+        for attribute in ["switches", "default_switches"]:
+            for opt in GPS.Project.root().get_attribute_as_list(
+                attribute, package="check", index="ada"
+            ):
+                res = re.split(r"^\-from\=(.*)$", opt)
+                if len(res) > 1:
+                    # Resolve the coding standard relatively to the current
+                    # project file.
+                    return GPS.File(
+                        os.path.join(GPS.Project.root().file().directory(), res[1])
+                    )
         return None
 
     def updateGnatCmd(self):
@@ -318,21 +319,21 @@ class gnatCheckProc:
         opts = []
         lkql_rule_file = ""
         rules = []
-        for project in [project, GPS.Project.root()]:
+        for proj in [project, GPS.Project.root()]:
             if len(opts) == 0:
-                opts = project.get_attribute_as_list(
+                opts = proj.get_attribute_as_list(
                     "switches", package="check", index="ada"
                 )
                 if len(opts) == 0:
-                    opts = project.get_attribute_as_list(
+                    opts = proj.get_attribute_as_list(
                         "default_switches", package="check", index="ada"
                     )
             if lkql_rule_file == "":
-                lkql_rule_file = project.get_attribute_as_string(
+                lkql_rule_file = proj.get_attribute_as_string(
                     "rule_file", package="check"
                 )
             if len(rules) == 0:
-                rules = project.get_attribute_as_list("rules", package="check")
+                rules = proj.get_attribute_as_list("rules", package="check")
 
         # We need a rules file if no rules are specified in the project,
         # either directly or via a dedicated rules file.
