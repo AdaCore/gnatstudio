@@ -49,7 +49,7 @@ package body DAP.Clients.Attach is
       Result      : DAP.Tools.AttachResponse;
       New_Request : in out DAP_Request_Access) is null;
    --  gdb 17.x send the answer after the configurationDone request when the
-   --  executable has been started so we don't have what to do here.
+   --  executable starts so we don't have nothing to do here.
 
    ------------
    -- Create --
