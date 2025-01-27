@@ -63,7 +63,7 @@ def test_driver():
     # Check that pending breakpoints have been grayed out, by checking
     # that the foreground color is not white (default fg color)
     model = view.list.get_model()
-    iter = model.get_iter("0")
+    iter = model.get_iter("2")
     gps_assert(
         model.get_value(iter, COL_FG_COLOR) != Gdk.RGBA(0, 0, 0, 0),
         True,

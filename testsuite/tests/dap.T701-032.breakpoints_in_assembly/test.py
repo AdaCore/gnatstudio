@@ -14,6 +14,10 @@ def test_driver():
     buf = GPS.EditorBuffer.get(GPS.File("main.adb"))
     buf.current_view().goto(buf.at(6, 1))
     yield wait_idle()
+    yield wait_until_true(
+        lambda: GPS.Action("debug set line breakpoint").can_execute() == False
+    )
+    yield wait_idle()
     GPS.execute_action("debug set line breakpoint")
     yield wait_idle()
 

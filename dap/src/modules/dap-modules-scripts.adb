@@ -575,7 +575,7 @@ package body DAP.Modules.Scripts is
          Visual := DAP_Visual_Debugger_Access
            (Glib.Object.GObject'(Get_Data (Inst)));
 
-         if Visual.Client.Is_Ready then
+         if Visual.Client.Get_Status = Initialized then
             DAP.Module.Start_Executable
               (Kernel               => Kernel,
                Client               => Visual.Client,
@@ -583,7 +583,7 @@ package body DAP.Modules.Scripts is
          else
             Data.Set_Error_Msg
               ("Can't start the executable: the debugger is"
-               & " not in 'ready' state (current state: "
+               & " not in 'initialized' state (current state: "
                & Visual.Client.Get_Status'Img);
          end if;
 

@@ -60,10 +60,10 @@ package body DAP.Clients.ConfigurationDone is
      (Self        : in out ConfigurationDone_Request;
       Client      : not null access DAP.Clients.DAP_Client'Class;
       Result      : DAP.Tools.ConfigurationDoneResponse;
-      New_Request : in out DAP_Request_Access)
-   is
-      pragma Unreferenced (New_Request);
+      New_Request : in out DAP_Request_Access) is
    begin
+      New_Request := null;
+
       Client.On_Configured;
    end On_Result_Message;
 

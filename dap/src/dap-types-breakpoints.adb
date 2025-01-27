@@ -243,8 +243,8 @@ package body DAP.Types.Breakpoints is
    is
       Data : Breakpoint_Data;
    begin
-      --  Clear any breakpoints stored in this holder first.
-      Self.Vector.Clear;
+      --  Clear old breakpoints
+      Self.Clear;
 
       --  Copy the breakpoints into the holder
       for Idx in Vector.First_Index .. Vector.Last_Index loop
@@ -354,6 +354,15 @@ package body DAP.Types.Breakpoints is
    end Clear;
 
    --------------
+   -- Is_Empty --
+   --------------
+
+   function Is_Empty (Self : Breakpoint_Holder) return Boolean is
+   begin
+      return Self.Vector.Is_Empty;
+   end Is_Empty;
+
+   --------------
    -- Contains --
    --------------
 
@@ -398,11 +407,14 @@ package body DAP.Types.Breakpoints is
    is
       C    : Breakpoint_Vectors.Cursor;
       Data : Breakpoint_Data;
+      Idx  : Positive := Self.Vector.First_Index;
    begin
-      for Idx in Self.Vector.First_Index .. Self.Vector.Last_Index loop
+      while Idx <= Self.Vector.Last_Index loop
          if not Breakpoints.Contains (Self.Vector (Idx)) then
             --  no more exist
             Self.Vector.Delete (Idx);
+         else
+            Idx := Idx + 1;
          end if;
       end loop;
 

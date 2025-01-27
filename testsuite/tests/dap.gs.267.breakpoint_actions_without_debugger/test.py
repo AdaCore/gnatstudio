@@ -17,12 +17,13 @@ def test_driver():
 
     # Create some breakpoints
     for i in range(5, 9):
-        GPS.EditorBuffer.get(GPS.File("main.adb")).current_view().goto(b.at(i, 1))
+        b.current_view().goto(b.at(i, 1))
         GPS.process_all_events()
         yield wait_idle()
         yield wait_until_true(
             lambda: GPS.Action("debug set line breakpoint").can_execute() == False
         )
+        yield wait_idle()
         GPS.execute_action("debug set line breakpoint")
         yield wait_tasks()
 

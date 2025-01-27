@@ -17,24 +17,17 @@ def test_driver():
     buf = GPS.EditorBuffer.get(GPS.File("main.adb"))
     yield wait_for_mdi_child("main.adb")
 
-    buf.current_view().goto(buf.at(11, 1))
-    GPS.process_all_events()
-    yield wait_idle()
-    yield wait_until_true(
-        lambda: GPS.Action("debug set line breakpoint").can_execute() == False
-    )
-    GPS.execute_action("debug set line breakpoint")
-    yield wait_idle()
-
-    buf.current_view().goto(buf.at(12, 1))
-    GPS.process_all_events()
-    yield wait_until_true(lambda: buf.current_view().cursor().line() != 12)
-    yield wait_idle()
-    yield wait_until_true(
-        lambda: GPS.Action("debug set line breakpoint").can_execute() == False
-    )
-    GPS.execute_action("debug set line breakpoint")
-    yield wait_idle()
+    # Create breakpoints
+    for i in range(11, 13):
+        buf.current_view().goto(buf.at(i, 1))
+        GPS.process_all_events()
+        yield wait_idle()
+        yield wait_until_true(
+            lambda: GPS.Action("debug set line breakpoint").can_execute() == False
+        )
+        yield wait_idle()
+        GPS.execute_action("debug set line breakpoint")
+        yield wait_tasks()
 
     # Open the Breakpoints view
     view = Breakpoints_View()
