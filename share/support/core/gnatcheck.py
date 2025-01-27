@@ -51,7 +51,7 @@ class RuleFile:
     """
 
 
-class rulesSelector(Gtk.Dialog):
+class RulesSelector(Gtk.Dialog):
     """
     Dialog used to select a coding standard file before launching gnatcheck.
     """
@@ -113,7 +113,7 @@ class rulesSelector(Gtk.Dialog):
             self.fileEntry.set_text(file.path)
 
 
-class gnatCheckProc:
+class GnatcheckProc:
     """This class controls the gnatcheck execution"""
 
     def __init__(self):
@@ -128,7 +128,7 @@ class gnatCheckProc:
 
         self.ruleseditor = None  # The GUI to edit rules
 
-    def getRulesFile(self):
+    def get_rules_file(self):
         def project_relative_rule_file(
             file_name: str,
             kind: RuleFileKind,
@@ -172,7 +172,7 @@ class gnatCheckProc:
         # If no rule file was found, return the current value of the rules file
         return self.rules_file
 
-    def updateGnatCmd(self):
+    def update_gnat_cmd(self):
         target = GPS.get_target()
 
         # Use the correct GNAT driver to spawn GNATcheck. On old versions,
@@ -223,7 +223,7 @@ class gnatCheckProc:
                 + "    Restrictions - compiler restrictions\n"
             )
 
-    def onResponse(self, dialog, response_id):
+    def on_response(self, dialog, response_id):
         if response_id == Gtk.ResponseType.APPLY:
             fname = self.ruleseditor.get_filename()
             if fname:
@@ -239,7 +239,7 @@ class gnatCheckProc:
 
         prev_gnat = self.gnatCmd
         prev_check = self.checkCmd
-        self.updateGnatCmd()
+        self.update_gnat_cmd()
 
         if self.checkCmd == "":
             return
@@ -253,13 +253,13 @@ class gnatCheckProc:
             self.rules = get_supported_rules(self.checkCmd, self.gnatCmd)
 
         # We retrieve the coding standard file from the project
-        self.rules_file = self.getRulesFile()
+        self.rules_file = self.get_rules_file()
 
         # Then, according to the rule file kind, we either open the rule editor
         # or open the LKQL rule file in a buffer.
         if self.rules_file.kind == RuleFileKind.LEGACY:
             self.ruleseditor = rulesEditor(self.rules, self.rules_file.file)
-            self.ruleseditor.connect("response", self.onResponse)
+            self.ruleseditor.connect("response", self.on_response)
         else:
             GPS.EditorBuffer.get(self.rules_file.file)
 
@@ -319,7 +319,7 @@ class gnatCheckProc:
         Must be called only after we have set the rules file
         """
 
-        self.updateGnatCmd()
+        self.update_gnat_cmd()
 
         if self.checkCmd == "":
             GPS.Console("Messages").write("Error: could not find gnatcheck")
@@ -372,7 +372,7 @@ class gnatCheckProc:
             show_command=True,
         )
 
-    def internalSpawn(self, filestr, project, recursive=False):
+    def internal_spawn(self, filestr, project, recursive=False):
         if GPS.Preference("General-Auto-Save").get():
             # Force, since otherwise we get a modal dialog while within
             # a GPS action, which gtk+ doesn't like
@@ -413,7 +413,7 @@ class gnatCheckProc:
             # Display a dialog, but without using run(), since we are
             # running a GS action in the task manager and that would
             # crash GS on some platforms
-            selector = rulesSelector(project.name(), self.rules_file.file)
+            selector = RulesSelector(project.name(), self.rules_file.file)
 
             def on_response(dialog, response_id):
                 if response_id == Gtk.ResponseType.OK:
@@ -433,7 +433,7 @@ class gnatCheckProc:
 
     def check_project(self, project, recursive=False):
         try:
-            self.internalSpawn("", project, recursive)
+            self.internal_spawn("", project, recursive)
         except Exception:
             GPS.Console("Messages").write(
                 "Unexpected exception in gnatcheck.py:\n%s\n" % (traceback.format_exc())
@@ -441,7 +441,7 @@ class gnatCheckProc:
 
     def check_file(self, file):
         try:
-            self.internalSpawn(file.name("Tools_Server"), GPS.Project.root())
+            self.internal_spawn(file.name("Tools_Server"), GPS.Project.root())
         except Exception:
             GPS.Console("Messages").write(
                 "Unexpected exception in gnatcheck.py:\n%s\n" % (traceback.format_exc())
@@ -452,7 +452,7 @@ class gnatCheckProc:
             filestr = ""
             for f in files:
                 filestr += '"""' + f.name("Tools_Server") + '""" '
-            self.internalSpawn(filestr, GPS.Project.root())
+            self.internal_spawn(filestr, GPS.Project.root())
         except Exception:
             GPS.Console("Messages").write(
                 "Unexpected exception in gnatcheck.py:\n%s\n" % (traceback.format_exc())
@@ -464,13 +464,13 @@ class gnatCheckProc:
 # that we do not need to recompute it if the action is executed
 
 
-class __contextualMenuData(object):
+class __ContextualMenuData(object):
     pass
 
 
-def __contextualMenuFilter(context):
+def __contextual_menu_filter(context):
     global gnatcheckproc
-    data = __contextualMenuData()
+    data = __ContextualMenuData()
     context.gnatcheck = data
 
     data.desttype = "none"
@@ -514,7 +514,7 @@ def __contextualMenuFilter(context):
     return False
 
 
-def __contextualMenuLabel(context):
+def __contextual_menu_label(context):
     data = context.gnatcheck
     if data.desttype == "file":
         fmt = "Check Coding standard of <b>{}</b>"
@@ -532,8 +532,8 @@ def __contextualMenuLabel(context):
 
 @interactive(
     name="Check Coding Standard",
-    contextual=__contextualMenuLabel,
-    filter=__contextualMenuFilter,
+    contextual=__contextual_menu_label,
+    filter=__contextual_menu_filter,
     static_path="Check Coding standard",
 )
 def on_activate():
@@ -573,7 +573,7 @@ def gnatsas_warning():
 
 
 # create the menus instances.
-gnatcheckproc = gnatCheckProc()
+gnatcheckproc = GnatcheckProc()
 
 
 @interactive(name="gnatcheck root project", category="Coding Standard")
