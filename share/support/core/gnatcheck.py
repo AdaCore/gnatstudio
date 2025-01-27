@@ -7,6 +7,9 @@ This plugin adds support for gnatcheck, a coding standard checker
 # No user customization below this line
 ###########################################################################
 
+from enum import Enum
+from dataclasses import dataclass
+
 import GPS
 import os
 import os.path
@@ -19,6 +22,33 @@ from gs_utils import interactive, hook
 from gs_utils.gnatcheck_rules_editor import rulesEditor, get_supported_rules
 
 gnatsas = os_utils.locate_exec_on_path("gnatsas")
+
+
+class RuleFileKind(Enum):
+    """
+    Represents possible types of rule file.
+    """
+
+    LEGACY = 1
+    LKQL = 2
+
+
+@dataclass
+class RuleFile:
+    """
+    This class represents a GNATcheck rule file.
+    """
+
+    file: GPS.File
+    """
+    Absolute path to the rule file.
+    """
+
+    kind: RuleFileKind
+    """
+    The kind of rule file. This have influence on how the file si handled by
+    GNATcheck and how it should be considered.
+    """
 
 
 class rulesSelector(Gtk.Dialog):
@@ -87,7 +117,7 @@ class gnatCheckProc:
     """This class controls the gnatcheck execution"""
 
     def __init__(self):
-        self.rules_file = None
+        self.rules_file: RuleFile = RuleFile(None, RuleFileKind.LEGACY)
         self.rules = None
 
         self.locations_string = "Coding Standard violations"
@@ -99,8 +129,26 @@ class gnatCheckProc:
         self.ruleseditor = None  # The GUI to edit rules
 
     def getRulesFile(self):
-        # We retrieve the coding standard file from the project's "Switches"
-        # and "Default_Switches" attributes.
+        def project_relative_rule_file(
+            file_name: str,
+            kind: RuleFileKind,
+        ) -> RuleFile:
+            """
+            Return a `RuleFile` object after resolving the `file_name`
+            relatively to the current project.
+            """
+            return RuleFile(
+                file=GPS.File(
+                    os.path.join(
+                        GPS.Project.root().file().directory(),
+                        file_name,
+                    )
+                ),
+                kind=kind,
+            )
+
+        # First, we try to retrieve the coding standard file from the project's
+        # "Switches" and "Default_Switches" attributes.
         for attribute in ["switches", "default_switches"]:
             for opt in GPS.Project.root().get_attribute_as_list(
                 attribute, package="check", index="ada"
@@ -109,10 +157,20 @@ class gnatCheckProc:
                 if len(res) > 1:
                     # Resolve the coding standard relatively to the current
                     # project file.
-                    return GPS.File(
-                        os.path.join(GPS.Project.root().file().directory(), res[1])
+                    return project_relative_rule_file(
+                        res[1],
+                        RuleFileKind.LEGACY,
                     )
-        return None
+        # Then try to get the LKQL rule file from the "Check'Rule_File" GPR
+        # attribute.
+        lkql_rule_file = GPS.Project.root().get_attribute_as_string(
+            "rule_file", package="check"
+        )
+        if lkql_rule_file != "":
+            return project_relative_rule_file(lkql_rule_file, RuleFileKind.LKQL)
+
+        # If no rule file was found, return the current value of the rules file
+        return self.rules_file
 
     def updateGnatCmd(self):
         target = GPS.get_target()
@@ -169,7 +227,7 @@ class gnatCheckProc:
         if response_id == Gtk.ResponseType.APPLY:
             fname = self.ruleseditor.get_filename()
             if fname:
-                self.rules_file = fname
+                self.rules_file = RuleFile(fname, RuleFileKind.LEGACY)
 
         self.ruleseditor.destroy()
         self.ruleseditor = None
@@ -194,11 +252,16 @@ class gnatCheckProc:
         ):
             self.rules = get_supported_rules(self.checkCmd, self.gnatCmd)
 
-        # we retrieve the coding standard file from the project
+        # We retrieve the coding standard file from the project
         self.rules_file = self.getRulesFile()
 
-        self.ruleseditor = rulesEditor(self.rules, self.rules_file)
-        self.ruleseditor.connect("response", self.onResponse)
+        # Then, according to the rule file kind, we either open the rule editor
+        # or open the LKQL rule file in a buffer.
+        if self.rules_file.kind == RuleFileKind.LEGACY:
+            self.ruleseditor = rulesEditor(self.rules, self.rules_file.file)
+            self.ruleseditor.connect("response", self.onResponse)
+        else:
+            GPS.EditorBuffer.get(self.rules_file.file)
 
     def parse_output(self, msg):
         # gnatcheck sometimes displays incorrectly formatted warnings (not
@@ -286,8 +349,11 @@ class gnatCheckProc:
         # now specify the files to check
         cmd.append(filestr)
 
-        if self.rules_file:
-            cmd.extend(["-rules", "-from=%s" % self.rules_file.name("Tools_Server")])
+        if self.rules_file.file is not None:
+            if self.rules_file.kind == RuleFileKind.LEGACY:
+                cmd.extend(
+                    ["-rules", "-from=%s" % self.rules_file.file.name("Tools_Server")]
+                )
 
         # clear the Checks category in the Locations view
         if GPS.Locations.list_categories().count(self.locations_string) > 0:
@@ -347,12 +413,14 @@ class gnatCheckProc:
             # Display a dialog, but without using run(), since we are
             # running a GS action in the task manager and that would
             # crash GS on some platforms
-
-            selector = rulesSelector(project.name(), self.rules_file)
+            selector = rulesSelector(project.name(), self.rules_file.file)
 
             def on_response(dialog, response_id):
                 if response_id == Gtk.ResponseType.OK:
-                    self.rules_file = selector.get_file()
+                    self.rules_file = RuleFile(
+                        selector.get_file(),
+                        RuleFileKind.LEGACY,
+                    )
                     dialog.destroy()
                     self.on_spawn(filestr, project, recursive)
                 else:
