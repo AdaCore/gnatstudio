@@ -58,11 +58,6 @@ package GPS.LSP_Client.Language_Servers.Real is
       Setting : GPS.LSP_Client.Configurations.Setting_Kind)
       return Boolean;
 
-   overriding procedure Set_Configuration
-     (Self    : in out Real_Language_Server;
-      Setting : GPS.LSP_Client.Configurations.Setting_Kind;
-      Value   : GPS.LSP_Client.Configurations.Configuration_Value);
-
    function Create
      (Kernel              : not null access
         GPS.Kernel.Kernel_Handle_Record'Class;

@@ -230,27 +230,6 @@ package body GPS.LSP_Client.Language_Servers.Real is
       Self.Server_Interceptor.On_Server_Stopped (Self'Unchecked_Access);
    end On_Server_Stopped;
 
-   -----------------------
-   -- Set_Configuration --
-   -----------------------
-
-   overriding procedure Set_Configuration
-     (Self    : in out Real_Language_Server;
-      Setting : GPS.LSP_Client.Configurations.Setting_Kind;
-      Value   : GPS.LSP_Client.Configurations.Configuration_Value)
-   is
-      use GNATCOLL.JSON;
-
-      V : constant JSON_Value :=
-        Self.Configuration.Set_Configuration_Option (Setting, Value);
-
-   begin
-      if V /= JSON_Null then
-         Self.Client.On_DidChangeConfiguration_Notification
-           ((settings => (V with null record)));
-      end if;
-   end Set_Configuration;
-
    -----------
    -- Start --
    -----------

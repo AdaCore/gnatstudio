@@ -20,6 +20,7 @@ with GNATCOLL.JSON;
 with GNATCOLL.Traces;               use GNATCOLL.Traces;
 with GNATCOLL.VFS;                  use GNATCOLL.VFS;
 
+with GPS.Kernel.Preferences;
 with VSS.Strings.Conversions;
 
 with Glib;                          use Glib;
@@ -120,14 +121,14 @@ package body GPS.LSP_Client.Refactoring.Rename is
       Rename_Files       : Boolean;
       Rename_In_Comments : Boolean);
 
-   Auto_Save_Hist         : constant History_Key := "refactor_auto_save";
-   Make_Writable_Hist     : constant History_Key := "refactor_make_writable";
-   Rename_Files_Hist      : constant History_Key := "refactor_rename_files";
-   In_Comments_Hist       : constant History_Key := "refactor_rename_comments";
+   Auto_Save_Hist     : constant History_Key := "refactor_auto_save";
+   Make_Writable_Hist : constant History_Key := "refactor_make_writable";
+   Rename_Files_Hist  : constant History_Key := "refactor_rename_files";
 
    procedure Set_Rename_In_Comments_Option
-     (Lang  : Language.Language_Access;
-      Value : Boolean);
+     (Kernel : access Kernel_Handle_Record'Class;
+      Lang   : Language.Language_Access;
+      Value  : Boolean);
    --  Set server configuration option
 
    -------------
@@ -226,13 +227,9 @@ package body GPS.LSP_Client.Refactoring.Rename is
          Set_Tooltip_Text
            (Dialog.In_Comments,
             "Also rename entities in all comments.");
-         Create_New_Boolean_Key_If_Necessary
-           (Hist          => Get_History (Kernel).all,
-            Key           => In_Comments_Hist,
-            Default_Value => False);
-         Associate (Get_History (Kernel).all,
-                    In_Comments_Hist,
-                    Dialog.In_Comments);
+         Set_Active
+           (Dialog.In_Comments,
+            GPS.Kernel.Preferences.LSP_Ada_Rename_In_Comment.Get_Pref);
          Group.Create_Child (Widget => Dialog.In_Comments);
       end if;
 
@@ -312,7 +309,7 @@ package body GPS.LSP_Client.Refactoring.Rename is
 
             if Dialog.In_Comments /= null then
                Set_Rename_In_Comments_Option
-                 (Lang, Get_Active (Dialog.In_Comments));
+                 (Kernel, Lang, Get_Active (Dialog.In_Comments));
             end if;
 
             if not GPS.LSP_Client.Requests.Execute
@@ -441,7 +438,7 @@ package body GPS.LSP_Client.Refactoring.Rename is
          Auto_Save     => Auto_Save,
          Allow_File_Renaming  => Rename_Files);
 
-      Set_Rename_In_Comments_Option (Lang, Rename_In_Comments);
+      Set_Rename_In_Comments_Option (Kernel, Lang, Rename_In_Comments);
 
       if GPS.LSP_Client.Requests.Execute
         (Lang, GPS.LSP_Client.Requests.Request_Access (Request))
@@ -494,14 +491,15 @@ package body GPS.LSP_Client.Refactoring.Rename is
    -----------------------------------
 
    procedure Set_Rename_In_Comments_Option
-     (Lang  : Language.Language_Access;
-      Value : Boolean)
-   is
-      use GPS.LSP_Client.Configurations;
+     (Kernel : access Kernel_Handle_Record'Class;
+      Lang   : Language.Language_Access;
+      Value  : Boolean) is
    begin
-      GPS.LSP_Module.Get_Language_Server (Lang).Set_Configuration
-        (Rename_In_Comments,
-         Configuration_Value'(Kind => Boolean_Type, vBoolean => Value));
+      if Lang.Get_Name = "ada" then
+         GPS.Kernel.Preferences.LSP_Ada_Rename_In_Comment.Set_Pref
+           (Kernel.Get_Preferences,
+            Value);
+      end if;
    end Set_Rename_In_Comments_Option;
 
    --------------

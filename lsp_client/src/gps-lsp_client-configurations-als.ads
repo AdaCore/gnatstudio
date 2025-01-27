@@ -29,11 +29,6 @@ package GPS.LSP_Client.Configurations.ALS is
       Setting : Setting_Kind)
       return Boolean;
 
-   overriding function Set_Configuration_Option
-     (Self    : in out ALS_Configuration;
-      Setting : Setting_Kind;
-      Value   : Configuration_Value) return GNATCOLL.JSON.JSON_Value;
-
 private
 
    type Settings_Values is array (Setting_Kind) of Configuration_Value;
