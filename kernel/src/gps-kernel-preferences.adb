@@ -1773,13 +1773,15 @@ package body GPS.Kernel.Preferences is
          Default => True,
          Path    => -"GNAThub");
 
-      Explicit_Default_Value := Manager.Create_Invisible_Pref
-        (Name    => "Scenario-Explicit-Default-Value",
-         Label   => -"Always pass on command line",
-         Doc     =>
-           -("When False, only add -X switches when a scenario variable is "
-             & "not set to its default value."),
-         Default => True);
+      Explicit_Default_Value :=
+        Manager.Create_Invisible_Pref
+          (Name    => "Scenario-Explicit-Default-Value",
+           Label   => -"Always pass on command line",
+           Doc     =>
+             -("When True, it will add explicit -X switches "
+               & "for each scenario variable, even when set to its "
+               & "default value"),
+           Default => False);
 
       LSP_Use_Snippets := Kernel.Get_Preferences.Create
         (Name    => "LSP-Completion-Use-Snippets",
