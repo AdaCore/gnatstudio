@@ -57,12 +57,6 @@ package GPS.LSP_Client.Language_Servers is
       return Boolean;
    --  Return True when server supports the configuration option.
 
-   procedure Set_Configuration
-     (Self    : in out Abstract_Language_Server;
-      Setting : GPS.LSP_Client.Configurations.Setting_Kind;
-      Value   : GPS.LSP_Client.Configurations.Configuration_Value) is null;
-   --  Set configuration parameter on server side.
-
 private
 
    type Abstract_Language_Server is tagged limited null record;

@@ -214,41 +214,4 @@ package body GPS.LSP_Client.Configurations.ALS is
       return Supported_Settings (Setting);
    end Is_Configuration_Supported;
 
-   ------------------------------
-   -- Set_Configuration_Option --
-   ------------------------------
-
-   overriding function Set_Configuration_Option
-     (Self    : in out ALS_Configuration;
-      Setting : Setting_Kind;
-      Value   : Configuration_Value) return GNATCOLL.JSON.JSON_Value
-   is
-      Settings     : constant GNATCOLL.JSON.JSON_Value :=
-                       GNATCOLL.JSON.Create_Object;
-      Ada_Settings : constant GNATCOLL.JSON.JSON_Value :=
-                       GNATCOLL.JSON.Create_Object;
-
-   begin
-      if not Self.Is_Configuration_Supported (Setting)
-        or else Self.Settings (Setting) = Value
-      then
-         return GNATCOLL.JSON.JSON_Null;
-      end if;
-
-      Self.Settings (Setting) := Value;
-
-      case Value.Kind is
-         when None_Type =>
-            return GNATCOLL.JSON.JSON_Null;
-
-         when Boolean_Type =>
-            Ada_Settings.Set_Field
-              (VSS.Strings.Conversions.To_UTF_8_String
-                 (Settings_Names (Setting)),
-               Value.vBoolean);
-            Settings.Set_Field ("ada", Ada_Settings);
-            return Settings;
-      end case;
-   end Set_Configuration_Option;
-
 end GPS.LSP_Client.Configurations.ALS;

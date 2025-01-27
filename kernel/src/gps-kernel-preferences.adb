@@ -1867,6 +1867,15 @@ package body GPS.Kernel.Preferences is
          Default => 3,
          Path    => "Editor/Ada:Completion");
 
+      LSP_Ada_Rename_In_Comment := Kernel.Get_Preferences.Create
+        (Name    => "LSP-Ada-Rename-In-Comment",
+         Default => True,
+         Label   => -"Ada rename in comment",
+         Doc     => -"Enable also rename a variable name in all the comments."
+         & " There are no semantic check so the name must be unique enough "
+         & "to avoid false positive.",
+         Path    => "Editor/Ada:Renaming");
+
       Use_External_Highlighting := External_Highlighting_Preferences.Create
         (Manager  => Manager,
          Path     => "LSP:Highlight",
