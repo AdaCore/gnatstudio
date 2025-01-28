@@ -160,13 +160,18 @@ package body GPS.LSP_Client.Configurations.ALS is
         ("defaultCharset", GPS.Kernel.Charsets.Get_Default_Charset);
 
       Ada_Settings.Set_Field
-        ("enableDiagnostics",
-         Boolean'(GPS.Kernel.Preferences.LSP_Ada_Diagnostics.Get_Pref));
+        ("adaFileDiagnostics",
+         Boolean'(GPS.Kernel.Preferences.LSP_Ada_File_Diagnostics.Get_Pref));
 
       Ada_Settings.Set_Field
         ("projectDiagnostics",
          Boolean'(
            GPS.Kernel.Preferences.LSP_Ada_Project_Diagnostics.Get_Pref));
+
+      Ada_Settings.Set_Field
+        ("alireDiagnostics",
+         Boolean'(
+           GPS.Kernel.Preferences.LSP_Alire_Diagnostics.Get_Pref));
 
       Ada_Settings.Set_Field
         ("followSymlinks", not GPS.Kernel.Preferences.Trusted_Mode.Get_Pref);

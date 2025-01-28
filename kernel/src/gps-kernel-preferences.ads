@@ -366,8 +366,9 @@ package GPS.Kernel.Preferences is
    --  LSP
    LSP_Use_Snippets            : Boolean_Preference;
    LSP_Use_Signatures          : Boolean_Preference;
-   LSP_Ada_Diagnostics         : Boolean_Preference;
+   LSP_Ada_File_Diagnostics    : Boolean_Preference;
    LSP_Ada_Project_Diagnostics : Boolean_Preference;
+   LSP_Alire_Diagnostics       : Boolean_Preference;
    LSP_Ada_Insert_With_Clauses : Boolean_Preference;
    LSP_Ada_Use_GNATformat      : Boolean_Preference;
    LSP_Limit_Formatting        : Boolean_Preference;
