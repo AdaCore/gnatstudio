@@ -1042,10 +1042,10 @@ package body CodePeer.Module is
    end Codepeer_Log_Directory;
 
    ------------------------------
-   --  Codepeer_CPM_Directory  --
+   --  Codepeer_SAM_Directory  --
    ------------------------------
 
-   function Codepeer_CPM_Directory
+   function Codepeer_SAM_Directory
      (Kernel : not null access Kernel_Handle_Record'Class)
       return GNATCOLL.VFS.Virtual_File
    is
@@ -1081,7 +1081,7 @@ package body CodePeer.Module is
              (CodePeer_Object_Directory (Project),
               Name (Name'First .. Name'Last - Extension'Length) & ".outputs");
       end if;
-   end Codepeer_CPM_Directory;
+   end Codepeer_SAM_Directory;
 
    ----------------------------------
    --  Codepeer_GNATSAS_Directory  --
@@ -2126,7 +2126,7 @@ package body CodePeer.Module is
    is
       Index : constant String := "index.html";
       Report_File : constant Virtual_File := Create_From_Dir
-        (Dir => Codepeer_CPM_Directory (Kernel) / "html-report",
+        (Dir => Codepeer_SAM_Directory (Kernel) / "html-report",
          Base_Name => +Index);
       Legacy_Report_File : constant Virtual_File :=
         Get_Project (Kernel).Object_Dir.Create_From_Dir

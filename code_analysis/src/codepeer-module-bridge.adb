@@ -87,7 +87,7 @@ package body CodePeer.Module.Bridge is
               (Command_File_Name,
                Codepeer_Server_URL (Project),
                Inspector_Output_Directory (Module.Kernel),
-               Codepeer_CPM_Directory (Module.Kernel),
+               Codepeer_SAM_Directory (Module.Kernel),
                Codepeer_Database_Directory (Project),
                Codepeer_Message_Patterns (Project),
                Codepeer_Additional_Patterns (Project),
@@ -126,8 +126,8 @@ package body CodePeer.Module.Bridge is
         Create_From_Dir (Object_Directory, Review_Status_File_Name);
       Output_Directory      : constant Virtual_File :=
         Inspector_Output_Directory (Module.Kernel);
-      CPM_Directory         : constant Virtual_File :=
-        Codepeer_CPM_Directory (Module.Kernel);
+      SAM_Directory         : constant Virtual_File :=
+        Codepeer_SAM_Directory (Module.Kernel);
       Bts_Directory         : constant Virtual_File :=
         Output_Directory.Create_From_Dir ("bts");
       Success               : Boolean;
@@ -156,7 +156,7 @@ package body CodePeer.Module.Bridge is
            (Command_File_Name    => Command_File_Name,
             Server_URL           => Codepeer_Server_URL (Project),
             Output_Directory     => Output_Directory,
-            CPM_Directory        => CPM_Directory,
+            SAM_Directory        => SAM_Directory,
             DB_Directory         => Codepeer_Database_Directory (Project),
             Message_Patterns     => Codepeer_Message_Patterns (Project),
             Additional_Patterns  => Codepeer_Additional_Patterns (Project),
