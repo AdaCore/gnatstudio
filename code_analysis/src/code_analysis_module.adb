@@ -916,14 +916,15 @@ package body Code_Analysis_Module is
       Cov_File := Find_Gcov_File (Kernel, File);
 
       if not Is_Regular_File (Cov_File) then
+         --  For GNATCov 25, if there is no Cov_File then we should not
+         --  include it in the report.
          if Current_Coverage_Tool /= GNATcov then
             Kernel.Insert
               (-"Could not find coverage file "
                & Display_Full_Name (Cov_File));
+
+            Set_Error (File_Node, File_Not_Found);
          end if;
-
-         Set_Error (File_Node, File_Not_Found);
-
       else
          Add_Gcov_File_Info (Kernel, File, Cov_File, Prj_Node);
          Compute_Project_Coverage (Prj_Node);
