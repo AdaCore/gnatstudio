@@ -112,7 +112,7 @@ package CodePeer.Module is
    --  Return False if some Ids are not found.
 
    procedure Open_HTML_Report (Kernel : GPS.Kernel.Kernel_Handle);
-   --  Open analyzer html report in the browser if it exist
+   --  Open analyzer html report in the browser if it exists.
 
    type Submenu_Factory_Record
      (Module : access Module_Id_Record'Class) is
