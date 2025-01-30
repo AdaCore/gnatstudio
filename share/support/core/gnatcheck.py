@@ -385,21 +385,13 @@ class GnatcheckProc:
         opts = []
         lkql_rule_file = ""
         rules = []
-        for proj in [project, GPS.Project.root()]:
-            if len(opts) == 0:
-                opts = proj.get_attribute_as_list(
-                    "switches", package="check", index="ada"
-                )
-                if len(opts) == 0:
-                    opts = proj.get_attribute_as_list(
-                        "default_switches", package="check", index="ada"
-                    )
-            if lkql_rule_file == "":
-                lkql_rule_file = proj.get_attribute_as_string(
-                    "rule_file", package="check"
-                )
-            if len(rules) == 0:
-                rules = proj.get_attribute_as_list("rules", package="check")
+        opts = project.get_attribute_as_list("switches", package="check", index="ada")
+        if len(opts) == 0:
+            opts = project.get_attribute_as_list(
+                "default_switches", package="check", index="ada"
+            )
+        lkql_rule_file = project.get_attribute_as_string("rule_file", package="check")
+        rules = project.get_attribute_as_list("rules", package="check")
 
         # We need a rules file if no rules are specified in the project,
         # either directly or via a dedicated rules file.
