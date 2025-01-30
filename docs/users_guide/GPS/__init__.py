@@ -1,7 +1,7 @@
 # This package contains the documentation for the GPS module
 # and all its classes and methods.
 # There is no code in this package, since the code is written
-# in Ada. If you need to access the documentation from GPS
+# in Ada. If you need to access the documentation from GNAT Studio
 # itself (in the python console for instance), you will need
 # to do the following:
 #
@@ -103,30 +103,30 @@ purposes, and you can use your own), as in::
     ed.field1 = "value1"
     ed.field2 = 2
 
-GPS takes great care for most classes to always return the same Python
+GNAT Studio takes great care for most classes to always return the same Python
 instance for a given GUI object. For example, if you were to get another
 instance of :class:`GPS.EditorBuffer` for the same file as above, you would
-receive the same Python instance and thus the two fields are available to
-you, as in::
+receive the same Python instance and thus the two fields are available to you,
+as in::
 
     ed = GPS.EditorBuffer.get(GPS.File("a.adb"))
     # ed.field1 is still "value1"
 
 This is a very convenient way to store your own data associated with the
-various objects exported by GPS. These data cease to exist when the GPS
-object itself is destroyed (for instance when the editor is closed in the
-example above).
+various objects exported by GNAT Studio. These data cease to exist when the
+GNAT Studio object itself is destroyed (for instance when the editor is closed
+in the example above).
 
 Hooks
 -----
 
-In many cases, you need to connect to specific hooks exported by GPS to be
-aware of events happening in GPS (such as the loading of a file or closing
-a file).  These hooks and their use are described in the GPS manual (see
-also the :class:`GPS.Hook` class).
+In many cases, you need to connect to specific hooks exported by GNAT Studio to
+be aware of events happening in GNAT Studio (such as the loading of a file or
+closing a file).  These hooks and their use are described in the GNAT Studio
+manual (see also the :class:`GPS.Hook` class).
 
 Here is a small example, where the function :func:`on_gps_started` is called
-when the GPS window is fully visible to the user::
+when the GNAT Studio window is fully visible to the user::
 
     import GPS
     def on_gps_started(hook):
@@ -177,7 +177,7 @@ class GUI(object):
 
     """
     This is an abstract class (ie no instances of it can be created from your
-    code, which represents a graphical element of the GPS interface.
+    code, which represents a graphical element of the GNAT Studio interface.
 
     .. seealso:: :func:`GPS.GUI.__init__`
     """
@@ -185,8 +185,8 @@ class GUI(object):
     def __init__(self):
         """
         Prevents the creation of instances of :class:`GPS.GUI`. Such
-        instances are created automatically by GPS as a result of calling
-        other functions.
+        instances are created automatically by GNAT Studio as a result of
+        calling other functions.
 
         .. seealso:: :func:`GPS.Toolbar.append`
         .. seealso:: :func:`GPS.Toolbar.entry`
@@ -223,11 +223,12 @@ class GUI(object):
 
     def pywidget(self):
         """
-        This function is only available if GPS was compiled with support for
-        pygobject and the latter was found at run time. It returns a widget
-        that can be manipulated through the usual PyGtk functions. PyGObject
-        is a binding to the gtk+ toolkit, and allows you to create your own
-        windows easily, or manipulate the entire GPS GUI from Python.
+        This function is only available if GNAT Studio was compiled with
+        support for pygobject and the latter was found at run time. It returns
+        a widget that can be manipulated through the usual PyGtk functions.
+        PyGObject is a binding to the gtk+ toolkit, and allows you to create
+        your own windows easily, or manipulate the entire GNAT Studio GUI from
+        Python.
 
         :return: An instance of PyWidget
 
@@ -271,10 +272,9 @@ class GUI(object):
 
 class Filter(object):
     """
-    This class gives access to various aspects of the filters that
-    are used by GPS to compute whether an action (and thus a menu,
-    contextual menu or toolbar button) can be activated by the user
-    at the current time.
+    This class gives access to various aspects of the filters that are used by
+    GNAT Studio to compute whether an action (and thus a menu, contextual menu
+    or toolbar button) can be activated by the user at the current time.
     """
 
     @staticmethod
@@ -283,9 +283,9 @@ class Filter(object):
         Return the list of all registered named filters.
         Instead of duplicating their implementation, it is better to
         reuse existing filters when possible, since their result is
-        cached by GPS. Since lots of filters might be evaluated when
-        computing the contextual menu, it will be faster when using
-        named filters in such a case.
+        cached by GNAT Studio. Since lots of filters might be evaluated when
+        computing the contextual menu, it will be faster when using named
+        filters in such a case.
 
         The returned named can be used in :func:`GPS.Action.create`
         for instance.
@@ -301,10 +301,10 @@ class Filter(object):
 
 class Action(object):
     """
-    This class gives access to the interactive commands in GPS. These are the
-    commands to which the user can bind a key shortcut or for which we can
-    create a menu. Another way to manipulate those commands is through the XML
-    tag <action>, but it might be more convenient to use Python since you
+    This class gives access to the interactive commands in GNAT Studio. These
+    are the commands to which the user can bind a key shortcut or for which we
+    can create a menu. Another way to manipulate those commands is through the
+    XML tag <action>, but it might be more convenient to use Python since you
     do not have to qualify the function name.
     """
 
@@ -386,8 +386,8 @@ class Action(object):
            value is on_activate.__doc__, which avoids duplicating the comment.
 
         :param str icon: Name of the icon to use for this action (in toolbars,
-           dialogs, ...). This is the name of an icon file in the GPS icons
-           directory.
+           dialogs, ...). This is the name of an icon file in the GNAT Studio
+           icons directory.
 
         :param bool for_learning: Set it to True if you want to display this
            action in the Learn view.
@@ -489,8 +489,9 @@ class Action(object):
 
         :param string toolbar: identifies which toolbar the action should be
            added to. The default is to add to the main toolbar for the main
-           GPS window and all floating windows. Other possible names are the
-           names of the various views, as listed in the /Tools/Views menu.
+           GNAT Studio window and all floating windows. Other possible names
+           are the names of the various views, as listed in the /Tools/Views
+           menu.
 
         :param string section: identifies which part of the toolbar the button
            should be added to. By default, the button is added at the end of
@@ -538,7 +539,7 @@ class Analysis(object):
     @staticmethod
     def display_report(tool=None):
         """
-        Display the GPS analysis report.
+        Display the GNAT Studio analysis report.
         Make sure to add your messages before calling this function in order
         to display them.
 
@@ -558,10 +559,10 @@ class Analysis(object):
 
 class AnalysisTool(object):
     """
-    This class is used to interface external analysis tools with GPS.
+    This class is used to interface external analysis tools with GNAT Studio.
     A :class:`GPS.AnalysisTool` should define some rules that will be later
     associated to the messages retrieved from the analysis tool's output.
-    The messages added via this class will then be displated in the GPS
+    The messages added via this class will then be displated in the GNAT Studio
     Analysis Report.
 
     See :func:`GPS.Analysis.display_report` to display the messages added
@@ -580,7 +581,8 @@ class AnalysisTool(object):
         """
         Adds a rule for the :class:`GPS.AnalysisTool`.
         A rule is defined by a name and a unique ID. Rules will then be used
-        to filter the analysys tool's messages in the GPS Analysis Report.
+        to filter the analysys tool's messages in the GNAT Studio Analysis
+        Report.
 
         :param string name: The rule's name.
         :param string id: The rule's id.
@@ -590,9 +592,9 @@ class AnalysisTool(object):
     def create_message(self, category, file, line, column, text, importance, rule_id):
         """
         Create a new message and add it to the list of messages that will be
-        displayed in the GPS Analysis Report. The message will be associated to
-        this tool and to the rule identified by ``rule_id``. For the others
-        parameters see the documentation of GPS.Messages.__init__.
+        displayed in the GNAT Studio Analysis Report. The message will be
+        associated to this tool and to the rule identified by ``rule_id``. For
+        the others parameters see the documentation of GPS.Messages.__init__.
 
         :param :class:`GPS.Message` msg: The message.
         :param string rule_id: The id of the rule associated to the message.
@@ -608,13 +610,13 @@ class AnalysisTool(object):
 class Context(object):
 
     """
-    Represents a context in GPS. Depending on the currently selected window, an
-    instance of one of the derived classes will be used.
+    Represents a context in GNAT Studio. Depending on the currently selected
+    window, an instance of one of the derived classes will be used.
     """
 
     module_name = None
     """
-    The name (a string) of the GPS module which created the context.
+    The name (a string) of the GNAT Studio module which created the context.
     """
 
     @staticmethod
@@ -741,11 +743,11 @@ class Context(object):
 
 class Bookmark(object):
     """
-    This class provides access to GPS's bookmarks. These are special types
-    of markers that are saved across sessions, and can be used to save a
-    context within GPS. They are generally associated with a specific location
-    in an editor, but can also be used to locate special boxes in a graphical
-    browser, for example.
+    This class provides access to GNAT Studio's bookmarks. These are special
+    types of markers that are saved across sessions, and can be used to save a
+    context within GNAT Studio. They are generally associated with a specific
+    location in an editor, but can also be used to locate special boxes in a
+    graphical browser, for example.
     """
 
     note = ""
@@ -768,10 +770,10 @@ class Bookmark(object):
     def create(name):
         """
         This function creates a new bookmark at the current location in
-        GPS. If the current window is an editor, it creates a bookmark that
-        will save the exact line and column, so the user can go back to them
-        easily. Name is the string that appears in the bookmarks window, and
-        that can be used later to query the same instance using
+        GNAT Studio. If the current window is an editor, it creates a bookmark
+        that will save the exact line and column, so the user can go back to
+        them easily. Name is the string that appears in the bookmarks window,
+        and that can be used later to query the same instance using
         :func:`GPS.Bookmark.get`. This function emits the hook
         bookmark_added.
 
@@ -806,8 +808,8 @@ class Bookmark(object):
         exception is raised. The same instance of :class:GPS.Bookmark is
         always returned for a given bookmark, so you can store your own user
         data within the instance. Note however that this custom data will not
-        be automatically preserved across GPS sessions, so you may want to
-        save all your data when GPS exits
+        be automatically preserved across GNAT Studio sessions, so you may want
+        to save all your data when GNAT Studio exits
 
         :param string name: The name of the bookmark
         :rtype: :class:`GPS.Bookmark`
@@ -824,9 +826,9 @@ class Bookmark(object):
 
     def goto(self):
         """
-        Changes the current context in GPS so it matches the one saved in the
-        bookmark. In particular, if the bookmark is inside an editor, this
-        editor is raised, and the cursor moved to the correct line and
+        Changes the current context in GNAT Studio so it matches the one saved
+        in the bookmark. In particular, if the bookmark is inside an editor,
+        this editor is raised, and the cursor moved to the correct line and
         column. You cannot query directly the line and column from the
         bookmark, since these might not exist, for instance when the editor
         points inside a browser.
@@ -888,8 +890,9 @@ class Bookmark(object):
 class BuildTarget(object):
 
     """
-    This class provides an interface to the GPS build targets. Build targets
-    can be configured through XML or through the Target Configuration dialog.
+    This class provides an interface to the GNAT Studio build targets. Build
+    targets can be configured through XML or through the Target Configuration
+    dialog.
     """
 
     def __init__(self, name):
@@ -1046,10 +1049,10 @@ class BuildTarget(object):
 class Clipboard(object):
 
     """
-    This class provides an interface to the GPS clipboard. This clipboard
-    contains the previous selections that were copied or cut from a text
-    editor. Several older selections are also saved so that they can be pasted
-    later on.
+    This class provides an interface to the GNAT Studio clipboard. This
+    clipboard contains the previous selections that were copied or cut from a
+    text editor. Several older selections are also saved so that they can be
+    pasted later on.
     """
 
     @staticmethod
@@ -1085,9 +1088,9 @@ class Clipboard(object):
         """
         This function returns the index, in :func:`GPS.Clipboard.contents`, of
         the text that was last pasted by the user. If you were to select the
-        menu /Edit/Paste, that would be the text pasted by GPS. If you select
-        /Edit/Paste Previous, current will be incremented by 1, and the next
-        selection in the clipboard is pasted.
+        menu /Edit/Paste, that would be the text pasted by GNAT Studio. If you
+        select /Edit/Paste Previous, current will be incremented by 1, and the
+        next selection in the clipboard is pasted.
 
         :rtype: integer
         """
@@ -1133,7 +1136,7 @@ class CodeAnalysis(object):
     def add_all_gcov_project_info(self):
         """
         Adds coverage information for every source files referenced in the
-        current project loaded in GPS and every imported projects.
+        current project loaded in GNAT Studio and every imported projects.
 
         .. seealso::
 
@@ -1247,7 +1250,7 @@ class CodeAnalysis(object):
         :param string name: The name of the code analysis data structure to
            get or create
         :return: An instance of :class:`GPS.CodeAnalysis` associated to a code
-           analysis data structure in GPS.
+           analysis data structure in GNAT Studio.
         :rtype: :class:`GPS.CodeAnalysis`
 
         .. code-block:: python
@@ -1317,7 +1320,7 @@ class CodeAnalysis(object):
 class Codefix(object):
 
     """
-    This class gives access to GPS's features for automatically fixing
+    This class gives access to GNAT Studio's features for automatically fixing
     compilation errors.
 
     .. seealso::
@@ -1506,13 +1509,14 @@ class CodefixError(object):
 class Command(object):
 
     """
-    Interface to GPS command. This class is abstract, and can be subclassed.
+    Interface to GNAT Studio command. This class is abstract, and can be
+    subclassed.
     """
 
     def __del__(self):
         """
-        Destructor of a GPS command. This should not be called manually by the
-        user.
+        Destructor of a GNAT Studio command. This should not be called manually
+        by the user.
         """
         pass  # implemented in Ada
 
@@ -1616,8 +1620,8 @@ class CommandWindow(GUI):
     ):
         """
         Initializes an instance of a command window. An exception is raised
-        if such a window is already active in GPS. Otherwise, the new window
-        is popped up on the screen. Its location depends on the
+        if such a window is already active in GNAT Studio. Otherwise, the new
+        window is popped up on the screen. Its location depends on the
         ``global_window`` parameter.
 
         :param string prompt: the short string displayed just before the
@@ -1625,8 +1629,8 @@ class CommandWindow(GUI):
           is entering.
 
         :param bool global_window: If true, the command window is displayed
-          at the bottom of the GPS window and occupies its whole width. If
-          false, it is displayed at the bottom of the currently selected
+          at the bottom of the GNAT Studio window and occupies its whole width.
+          If false, it is displayed at the bottom of the currently selected
           window.
 
         :param on_changed: A subprogram, is called when the user has entered
@@ -1718,8 +1722,8 @@ class Console(GUI):
 
     """
     This class is used to create and interact with the interactive consoles in
-    GPS. It can be used to redirect the output of scripts to various consoles
-    in GPS, or to get input from the user has needed.
+    GNAT Studio. It can be used to redirect the output of scripts to various
+    consoles in GNAT Studio, or to get input from the user has needed.
 
     .. seealso::
 
@@ -1730,7 +1734,7 @@ class Console(GUI):
     .. code-block:: python
 
         # The following example shows how to redirect the output of a script to
-        # a new console in GPS:
+        # a new console in GNAT Studio:
 
         console = GPS.Console("My_Script")
         console.write("Hello world")  # Explicit redirection
@@ -1741,13 +1745,13 @@ class Console(GUI):
         sys.stdout = GPS.Console("My_Script")
         print "Hello world, too"  # Implicit redirection
         sys.stdout = GPS.Console("Python")  # Back to python's console
-        sys.stdout = GPS.Console() # Or back to GPS's console
+        sys.stdout = GPS.Console() # Or back to GNAT Studio's console
 
     .. code-block:: python
 
         # The following example shows an integration between the GPS.Console
         # and GPS.Process classes, so that a window containing a shell can be
-        # added to GPS.
+        # added to GNAT Studio.
 
         # Note that this class is in fact available directly through "from
         # gs_utils.console_process import Console_Process" if you need it in
@@ -1802,9 +1806,9 @@ class Console(GUI):
         save_desktop=None,
     ):
         """
-        Creates a new instance of :class:`GPS.Console`. GPS tries to reuse
-        any existing console with the same name. If none exists yet, or the
-        parameter force is set to True, GPS creates a new console.
+        Creates a new instance of :class:`GPS.Console`. GNAT Studio tries to
+        reuse any existing console with the same name. If none exists yet, or
+        the parameter force is set to True, GNAT Studio creates a new console.
 
         You cannot create the Python and Shell consoles through this call. If
         you try, an exception is raised. Instead, use
@@ -1813,10 +1817,10 @@ class Console(GUI):
         these two consoles are tightly associated with each of the scripting
         languages.
 
-        If GPS reuses an existing console, :func:`on_input` overrides the
-        callback that was already set on the console, while
-        :func:`on_destroy` is called in addition to the one that was
-        already set on the console.
+        If GNAT Studio reuses an existing console, :func:`on_input` overrides
+        the callback that was already set on the console, while
+        :func:`on_destroy` is called in addition to the one that was already
+        set on the console.
 
         If this is not the desired behavior, you can also call
         :func:`destroy` on the console and call the constructor again.
@@ -1858,42 +1862,39 @@ class Console(GUI):
           :func:`GPS.Process.set_size` to let the process know the
           size. Note that the size passed to this callback is
           conservative: since all characters might not have the same
-          size, GPS tries to compute the maximal number of visible
+          size, GNAT Studio tries to compute the maximal number of visible
           characters and pass this to the callback, but the exact
           number of characters might depend on the font.
 
         - The subprogram :func:`on_interrupt` is called when the user
           presses :kbd:`Ctrl-c` in the console. It receives a single
           parameter, the instance of :class:`GPS.Console`. By default a
-          :kbd:`Ctrl-c` is handled by GPS itself by killing the last
+          :kbd:`Ctrl-c` is handled by GNAT Studio itself by killing the last
           process that was started.
 
-          As described above, GPS provides a high-level handling of
-          consoles, where it manages histories, completion, command
-          line editing and execution on its own through the callbacks
-          described above. This is usually a good thing and provides
-          advanced functionalities to some programs that lack
-          them. However, there are cases where this gets in the
-          way. For example, if you want to run a Unix shell or a
-          program that manipulates the console by moving the cursor
-          around on its own, the high-level handling of GPS gets in
-          the way. In such a case, the following parameters can be
-          used: on_key, manage_prompt and ansi.
+          As described above, GNAT Studio provides a high-level handling of
+          consoles, where it manages histories, completion, command line
+          editing and execution on its own through the callbacks described
+          above. This is usually a good thing and provides advanced
+          functionalities to some programs that lack them. However, there are
+          cases where this gets in the way. For example, if you want to run a
+          Unix shell or a program that manipulates the console by moving the
+          cursor around on its own, the high-level handling of GNAT Studio gets
+          in the way. In such a case, the following parameters can be used:
+          on_key, manage_prompt and ansi.
 
-        - ``ansi`` should be set to true if GPS should emulate an ANSI
+        - ``ansi`` should be set to true if GNAT Studio should emulate an ANSI
           terminal. These are terminals that understand certain escape
-          sequences that applications sent to move the cursor to
-          specific positions on screen or to change the color and
-          attributes of text.
+          sequences that applications sent to move the cursor to specific
+          positions on screen or to change the color and attributes of text.
 
-        - ``manage_prompt`` should be set to False to disable GPS's
-          handling of prompts. In general, this is incompatible with
-          using the :func:`on_input` callback, since GPS no longer
-          distinguishes what was typed by the user and what was
-          written by the external application. This also means that
-          the application is free to write anywhere on the
-          screen. This should in general be set to True if you expect
-          your application to send ANSI sequences.
+        - ``manage_prompt`` should be set to False to disable GNAT Studio's
+          handling of prompts. In general, this is incompatible with using the
+          :func:`on_input` callback, since GNAT Studio no longer distinguishes
+          what was typed by the user and what was written by the external
+          application. This also means that the application is free to write
+          anywhere on the screen. This should in general be set to True if you
+          expect your application to send ANSI sequences.
 
         - :func:`on_key` is a function called every time the user
           presses a key in the console. This is much lower-level than
@@ -1931,16 +1932,15 @@ class Console(GUI):
           the console will not receive the focus: its tab label
           will be highlighted instead.
 
-        -:``save_desktop`` a function that is called when GPS saves
-         the desktop into XML. This function receives the
-         :class:`GPS.MDIWindow` as a parameter and should return a tuple
-         of two elements (name, data) where name is a unique identifier
-         for this window, and data is a string containing additional data
-         to be saved (and later restored).  One suggestion is to encode
-         any Python data through JSON and send the resulting string as
-         data.  An easier alternative is to use the :file:`modules.py`
-         support script in GPS, which handles this parameter automatically
-         on your behalf.
+        -:``save_desktop`` a function that is called when GNAT Studio saves the
+        desktop into XML. This function receives the :class:`GPS.MDIWindow` as
+        a parameter and should return a tuple of two elements (name, data)
+        where name is a unique identifier for this window, and data is a string
+        containing additional data to be saved (and later restored).  One
+        suggestion is to encode any Python data through JSON and send the
+        resulting string as data.  An easier alternative is to use the
+        :file:`modules.py` support script in GNAT Studio, which handles this
+        parameter automatically on your behalf.
 
 
         :param name: A string
@@ -2110,7 +2110,8 @@ class Console(GUI):
     def readline(self):
         """
         Asks the user to enter a new line in the console, and returns that
-        line. GPS is blocked until enter has been pressed in the console.
+        line. GNAT Studio is blocked until enter has been pressed in the
+        console.
 
         :return: A String
         """
@@ -2186,9 +2187,9 @@ class Console(GUI):
 class Contextual(object):
 
     """
-    This class is a general interface to the contextual menus in GPS. It gives
-    you control over which menus should be displayed when the user right clicks
-    in parts of GPS.
+    This class is a general interface to the contextual menus in GNAT Studio.
+    It gives you control over which menus should be displayed when the user
+    right clicks in parts of GNAT Studio.
 
     .. seealso:: :func:`GPS.Contextual.__init__`
     """
@@ -2247,8 +2248,8 @@ class Contextual(object):
 
         This is a submenu of a contextual menu, where the entries are
         generated by the ``factory`` parameter. This parameter should return
-        a list of strings, which will be converted to menus by GPS. These
-        strings can contain '/' characters to indicate submenus.
+        a list of strings, which will be converted to menus by GNAT Studio.
+        These strings can contain '/' characters to indicate submenus.
 
         ``filter`` is a subprogram that takes the :class:`GPS.Context` as a
         parameter and returns a boolean indicating whether the submenu
@@ -2257,7 +2258,8 @@ class Contextual(object):
         ``label`` can be used to specify the label to use for the menu
         entry. It can include directory-like syntax to indicate
         submenus. This label can include standard macro substitution (see the
-        GPS documentation), for instance %e for the current entity name.
+        GNAT Studio documentation), for instance %e for the current entity
+        name.
 
         ``on_activate`` is called whenever any of the entry of the menu is
         selected, and is passed three parameters, the context in which the
@@ -2334,7 +2336,7 @@ class Contextual(object):
     def hide(self):
         """
         Makes sure the contextual menu never appears when the user right
-        clicks anywhere in GPS. This is the standard way to disable
+        clicks anywhere in GNAT Studio. This is the standard way to disable
         contextual menus.
 
         .. seealso:: :func:`GPS.Contextual.show`
@@ -2347,7 +2349,7 @@ class Contextual(object):
         Returns the list of all registered contextual menus. This is a list
         of strings which are valid names that can be passed to the
         constructor of :class:`GPS.Contextual`. These names were created when
-        the contextual menu was registered in GPS.
+        the contextual menu was registered in GNAT Studio.
 
         :return: A list of strings
 
@@ -2452,8 +2454,8 @@ class Debugger(object):
     breakpoints = []
     """
     A read-only property that returns the list of breakpoints currently set
-    in the debugger. This information is updated automatically by GPS whenever
-    a command that might modify this list of breakpoints is executed.
+    in the debugger. This information is updated automatically by GNAT Studio
+    whenever a command that might modify this list of breakpoints is executed.
     The elements in this list are instances of :class:`GPS.DebuggerBreakpoint`
     """
 
@@ -2595,9 +2597,9 @@ class Debugger(object):
         on_rejected=None,
     ):
         """
-        Executes ``cmd`` in the debugger. GPS is blocked while ``cmd`` is
-        executing on the debugger. If output is true, the command is displayed
-        in the console.
+        Executes ``cmd`` in the debugger. GNAT Studio is blocked while ``cmd``
+        is executing on the debugger. If output is true, the command is
+        displayed in the console.
 
         If ``show_in_console`` is True, the output of the command is displayed
         in the debugger console, but is not returned by this function. If
@@ -2729,8 +2731,8 @@ class Debugger(object):
         ``IDE'Program_Host`` and ``IDE'Communication_Protocol`` are used
         if present in the .gpr project file.
 
-        When ``load_executable`` is True, GPS will try to load ``executable``
-        on the specified remote target, if any.
+        When ``load_executable`` is True, GNAT Studio will try to load
+        ``executable`` on the specified remote target, if any.
 
         :param executable: An instance of GPS.File
         :param args: A string
@@ -3323,7 +3325,7 @@ class Editor(object):
             protocol://username@host:port/full/path
 
         where protocol is one of the recognized protocols (http, ftp,.. see the
-        GPS documentation), and the username and port are optional.
+        GNAT Studio documentation), and the username and port are optional.
 
         :param filename: A string
         :param line: An integer
@@ -3429,7 +3431,8 @@ class Editor(object):
         OBSOLESCENT.
 
         Indents the selection (or the current line if requested) in current
-        editor. Does nothing if the current GPS window is not an editor.
+        editor. Does nothing if the current GNAT Studio window is not an
+        editor.
 
         :param current_line_only: A boolean
 
@@ -3441,8 +3444,8 @@ class Editor(object):
         """
         OBSOLESCENT.
 
-        Indents the current editor. Does nothing if the current GPS window is
-        not an editor.
+        Indents the current editor. Does nothing if the current GNAT Studio
+        window is not an editor.
         """
         pass  # implemented in Ada
 
@@ -3508,7 +3511,7 @@ class Editor(object):
         OBSOLESCENT.
 
         Refills selected (or current) editor lines. Does nothing if the
-        current GPS window is not an editor.
+        current GNAT Studio window is not an editor.
         """
         pass  # implemented in Ada
 
@@ -3894,8 +3897,8 @@ class EditorBuffer(object):
     def copy(self, frm="beginning of buffer", to="end of buffer", append=False):
         """
         Copies the given range of text into the clipboard, so that it can be
-        further pasted into other applications or other parts of GPS. If
-        append is True, the text is appended to the last clipboard entry
+        further pasted into other applications or other parts of GNAT Studio.
+        If append is True, the text is appended to the last clipboard entry
         instead of generating a new one.
 
         :param EditorLocation frm : An instance of :class:`EditorLocation`
@@ -3918,7 +3921,7 @@ class EditorBuffer(object):
         views associated with the buffer.
 
         A number of predefined overlays exit. Among these are the ones used
-        for syntax highlighting by GPS itself, which are "keyword",
+        for syntax highlighting by GNAT Studio itself, which are "keyword",
         "comment", "string", "character". You can use these to navigate from
         one comment section to the next for example.
 
@@ -3940,8 +3943,8 @@ class EditorBuffer(object):
     def cut(self, frm="beginning of buffer", to="end of buffer", append=False):
         """
         Copies the given range of text into the clipboard so that it can be
-        further pasted into other applications or other parts of GPS. The
-        text is removed from the edited buffer. If append is True, the text
+        further pasted into other applications or other parts of GNAT Studio.
+        The text is removed from the edited buffer. If append is True, the text
         is appended to the last clipboard entry instead of generating a new
         one.
 
@@ -4144,7 +4147,7 @@ class EditorBuffer(object):
     @staticmethod
     def list():
         """
-        Returns the list of all editors that are currently open in GPS.
+        Returns the list of all editors that are currently open in GNAT Studio.
 
         :return: A list of instances of :class:`GPS.EditorBuffer`
         :rtype: [EditorBuffer]
@@ -4176,7 +4179,7 @@ class EditorBuffer(object):
     def refill(self, frm="beginning of buffer", to="end of buffer"):
         """
         Refills the given range of text, i.e., cuts long lines if necessary
-        so that they fit in the limit specified in the GPS preferences.
+        so that they fit in the limit specified in the GNAT Studio preferences.
 
         :param EditorLocation frm: An instance of :class:`EditorLocation`
         :param EditorLocation to: An instance of :class:`EditorLocation`
@@ -4280,9 +4283,10 @@ class EditorBuffer(object):
     def set_lang(self, lang):
         """
         Set the highlighting programming language. When you open an existing
-        file, GPS automatically computes the best highlighting language based
-        on file extensions and naming schemes defined in your project, or on
-        the language that was set manually via the Properties contextual menu.
+        file, GNAT Studio automatically computes the best highlighting language
+        based on file extensions and naming schemes defined in your project, or
+        on the language that was set manually via the Properties contextual
+        menu.
 
         This function can be used to override this, or set it for newly
         created files (:func:`GPS.EditorBuffer.get_new`)
@@ -4801,7 +4805,7 @@ class EditorLocation(object):
         permanently at that location, and follows it if the buffer is
         modified. In fact, even if the buffer is closed and then reopened,
         the mark will keep track of the location, but of course not if the
-        file is edited outside of GPS.
+        file is edited outside of GNAT Studio.
 
         :param str name: The name of the mark. If specified, this creates a
            named mark, which can later be retrieved through a call to
@@ -5128,10 +5132,10 @@ class EditorOverlay(object):
     This class represents properties that can be applied to one or more ranges
     of text. This can be used to change the display properties of the text
     (colors, fonts,...) or store any user-specific attributes that can be
-    retrieved later. GPS itself uses overlays to do syntax highlighting. If two
-    or more overlays are applied to the same range of text, the final colors
-    and fonts of the text depends on the priorities of these overlays and the
-    order in which they were applied to the buffer.
+    retrieved later. GNAT Studio itself uses overlays to do syntax
+    highlighting. If two or more overlays are applied to the same range of
+    text, the final colors and fonts of the text depends on the priorities of
+    these overlays and the order in which they were applied to the buffer.
 
     This class is fairly low-level; we recommend using the class
     :py:class:`gs_utils.highlighter.OverlayStyle` instead. That class
@@ -5287,8 +5291,8 @@ class EditorView(GUI):
     def __init__(self, buffer):
         """
         Called implicitly whenever you create a new view. It creates a new
-        view for the given buffer, and is automatically inserted into the GPS
-        MDI.
+        view for the given buffer, and is automatically inserted into the GNAT
+        Studio MDI.
 
         :param EditorBuffer buffer: An instance of :class:`GPS.EditorBuffer`
         """
@@ -5400,8 +5404,9 @@ class Entity(object):
     Obsolescent interface to source code entities. This class can only be used
     after disabling the GPS.LSP.ADA_SUPPORT trace.
 
-    You can use the libadalang Python API (available directly from GPS plugins)
-    instead to get information about entities present in your source code.
+    You can use the libadalang Python API (available directly from GNAT Studio
+    plugins) instead to get information about entities present in your source
+    code.
 
     More information about libadalang and its Python API can be found
     `here <http://docs.adacore.com/live/wave/libadalang/html/libadalang_ug/index.html>`_.
@@ -5483,7 +5488,7 @@ class Entity(object):
         OBSOLESCENT.
 
         Returns a string suitable for the display of self on screen. This is
-        called implicitly by GPS and Python.
+        called implicitly by GNAT Studio and Python.
 
         :return: A string
         """
@@ -5494,7 +5499,7 @@ class Entity(object):
         OBSOLESCENT.
 
         Returns a string suitable for the display of self on screen. This is
-        called implicitly by GPS and Python.
+        called implicitly by GNAT Studio and Python.
 
         :return: A string
         """
@@ -5586,8 +5591,8 @@ class Entity(object):
 
         Returns the category of a given entity. Possible values include:
         label, literal, object, subprogram, package, namespace, type, and
-        unknown.  The exact list of strings is not hard-coded in GPS and
-        depends on the programming language of the corresponding source.
+        unknown. The exact list of strings is not hard-coded in GNAT Studio
+        and depends on the programming language of the corresponding source.
 
         See instead :func:`is_access`, :func:`is_array`,
         :func:`is_subprogram`, etc.
@@ -5801,7 +5806,7 @@ class Entity(object):
         entities. This applies to Ada record and tagged types, or C structs
         for instance.
 
-        In older versions of GPS, this used to return the literals for
+        In older versions of GNAT Studio, this used to return the literals for
         enumeration types, but these should now be queried through
         :func:`self.literals` instead.
 
@@ -6095,8 +6100,9 @@ class Entity(object):
 class Exception(builtins.Exception):
 
     """
-    One of the exceptions that can be raised by GPS. It is a general error
-    message, and its semantic depends on what subprogram raised the exception.
+    One of the exceptions that can be raised by GNAT Studio. It is a general
+    error message, and its semantic depends on what subprogram raised the
+    exception.
     """
 
     pass  # implemented in Ada
@@ -6157,10 +6163,10 @@ class File(object):
     def __init__(self, name, local=False):
         """
         Initializes a new instance of the class :class:`File`. This does not
-        need to be called explicitly, since GPS calls it automatically when
-        you create such an instance. If name is a base file name (no
-        directory is specified), GPS attempts to search for this file in the
-        list of source directories of the project. If a directory is
+        need to be called explicitly, since GNAT Studio calls it automatically
+        when you create such an instance. If name is a base file name (no
+        directory is specified), GNAT Studio attempts to search for this file
+        in the list of source directories of the project. If a directory is
         specified, or the base file name was not found in the source
         directories, then the file name is considered as relative to the
         current directory. If ``local`` is "true", the specified file name is
@@ -6181,7 +6187,7 @@ class File(object):
     def __repr__(self):
         """
         Returns a string suitable for the display of self on screen. This is
-        called implicitly by GPS and Python.
+        called implicitly by GNAT Studio and Python.
 
         :return: A string
         """
@@ -6190,7 +6196,7 @@ class File(object):
     def __str__(self):
         """
         Returns a string suitable for the display of self on screen. This is
-        called implicitly by GPS and Python.
+        called implicitly by GNAT Studio and Python.
 
         :return: A string
         """
@@ -6282,7 +6288,7 @@ class File(object):
     def get_property(self, name):
         """
         Returns the value of the property associated with the file. This
-        property might have been set in a previous GPS session if it is
+        property might have been set in a previous GNAT Studio session if it is
         persistent. An exception is raised if no such property already exists
         for the file.
 
@@ -6296,7 +6302,7 @@ class File(object):
     def imported_by(self, include_implicit=False, include_system=True):
         """
         Returns the list of files that depends on file_name. This command
-        might take some time to execute since GPS needs to parse the
+        might take some time to execute since GNAT Studio needs to parse the
         cross-reference information for multiple source files. If
         ``include_implicit`` is true, implicit dependencies are also
         returned. If ``include_system`` is true, dependent system files from
@@ -6382,7 +6388,7 @@ class File(object):
 
            GPS.File("tokens.ads").other_file().name()
            => will print "/full/path/to/tokens.adb" in the context of the
-           => project file used for the GPS tutorial.
+           => project file used for the GNAT Studio tutorial.
         """
         pass  # implemented in Ada
 
@@ -6400,7 +6406,7 @@ class File(object):
 
            GPS.File("tokens.ads").project().name()
            => will print "/full/path/to/sdc.gpr" in the context of the project
-           => file used for the GPS tutorial
+           => file used for the GNAT Studio tutorial
         """
         pass  # implemented in Ada
 
@@ -6479,8 +6485,8 @@ class File(object):
     def set_property(self, name, value, persistent=False):
         """
         Associates a string property with the file. This property is
-        retrievable during the whole GPS session, or across GPS sessions if
-        persistent is set to True.
+        retrievable during the whole GNAT Studio session, or across GNAT Studio
+        sessions if persistent is set to True.
 
         This is different than setting instance properties through Python's
         standard mechanism in that there is no guarantee that the same
@@ -6548,9 +6554,9 @@ class File(object):
     def used_by(self):
         """
         Displays in the dependency browser the list of files that depends on
-        file_name. This command might take some time to execute since GPS
-        needs.  to parse the cross-reference information for multiple source
-        files
+        file_name. This command might take some time to execute since GNAT
+        Studio needs. To parse the cross-reference information for multiple
+        source files
 
         .. seealso:: :func:`GPS.File.uses`
         """
@@ -6614,7 +6620,7 @@ class FileLocation(object):
     def __repr__(self):
         """
         Returns a string suitable for the display of self on screen. This is
-        called implicitly by GPS and Python.
+        called implicitly by GNAT Studio and Python.
 
         :return: A string
         """
@@ -6623,7 +6629,7 @@ class FileLocation(object):
     def __str__(self):
         """
         Returns a string suitable for the display of self on screen. This is
-        called implicitly by GPS and Python.
+        called implicitly by GNAT Studio and Python.
 
         :return: A string
         """
@@ -6774,7 +6780,7 @@ class FileTemplate(object):
 class HTML(object):
 
     """
-    This class gives access to the help system of GPS as well as the
+    This class gives access to the help system of GNAT Studio as well as the
     integrated browser.
     """
 
@@ -6785,8 +6791,8 @@ class HTML(object):
         variable. This directory is searched for documentation files. If this
         directory contains a :file:`gnatstudio_index.xml` file, it is parsed to
         find the list of documentation files to add to the :guilabel:`Help`
-        menu. See the GPS documentation for more information on the format of
-        the :file:`gnatstudio_index.xml` files
+        menu. See the GNAT Studio documentation for more information on the
+        format of the :file:`gnatstudio_index.xml` files
 
         :param directory: Directory containing the documentation
         """
@@ -6795,10 +6801,10 @@ class HTML(object):
     @staticmethod
     def browse(URL, anchor="", navigation=True):
         """
-        Opens the GPS HTML viewer, and loads the given URL. If anchor matches
-        a <a> tag in this file, GPS jumps to it. If URL is not an absolute file
-        name, it is searched in the path set by the environment variable
-        :file:`GNATSTUDIO_DOC_PATH`.
+        Opens the GNAT Studio HTML viewer, and loads the given URL. If anchor
+        matches a <a> tag in this file, GNAT Studio jumps to it. If URL is not
+        an absolute file name, it is searched in the path set by the
+        environment variable :file:`GNATSTUDIO_DOC_PATH`.
 
         If ``navigation`` is True, the URL is saved in the navigation list, so
          users can move back and forward from and to this location later on.
@@ -6808,7 +6814,7 @@ class HTML(object):
            protocol://username@host:port/full/path
 
         where protocol is one of the recognized protocols (http, ftp,.. see the
-        GPS documentation), and the username and port are optional.
+        GNAT Studio documentation), and the username and port are optional.
 
         :param URL: Name of the file to browse
         :param anchor: Location in the file where to jump to
@@ -6819,7 +6825,7 @@ class HTML(object):
         .. code-block:: python
 
            GPS.HTML.browse("gps.html")
-           => will open the GPS documentation in the internal browser
+           => will open the GNAT Studio documentation in the internal browser
 
            GPS.HTML.browse("http://host.com/my/document")
            => will download documentation from the web
@@ -6837,12 +6843,12 @@ class Help(object):
     """
     This class gives access to the external documentation for shell
     commands. This external documentation is stored in the file
-    :file:`shell_commands.xml`, part of the GPS installation, and is what you
-    are currently seeing.
+    :file:`shell_commands.xml`, part of the GNAT Studio installation, and is
+    what you are currently seeing.
 
     You almost never need to use this class yourself, since it is used
-    implicitly by Python when you call the help(object) command at the GPS
-    prompt.
+    implicitly by Python when you call the help(object) command at the GNAT
+    Studio prompt.
 
     The help browser understands the standard http urls, with links to specific
     parts of the document. For instance::
@@ -6851,8 +6857,8 @@ class Help(object):
         or  "#link"
 
     As a special case, it also supports links starting with '%'. These are
-    shell commands to execute within GPS, instead of a standard html file. For
-    instance::
+    shell commands to execute within GNAT Studio, instead of a standard html
+    file. For instance::
 
         <a href="%shell:Editor.edit g-os_lib.ads">GNAT.OS_Lib%lt;/a%gt;
 
@@ -6867,7 +6873,7 @@ class Help(object):
         Initializes the instance of the :class:`Help` class. This parses the
         XML file that contains the description of all the commands. With
         python, the memory occupied by this XML tree will be automatically
-        freed. However, with the GPS shell you need to explicitly call
+        freed. However, with the GNAT Studio shell you need to explicitly call
         :func:`GPS.Help.reset`.
 
         .. seealso:: :func:`GPS.Help.reset`
@@ -6928,7 +6934,8 @@ class Hook(object):
 
     """
     General interface to hooks. Hooks are commands executed when some specific
-    events occur in GPS, and allow you to customize some of the aspects of GPS.
+    events occur in GNAT Studio, and allow you to customize some of the aspects
+    of GNAT Studio.
 
     All standard hooks are documented in the :class:`GPS.Predefined_Hooks`
     class.
@@ -6953,7 +6960,7 @@ class Hook(object):
         hook. If false, it is called before.
 
         :param function_name: A subprogram, see the "Subprogram Parameters"
-           section in the GPS documentation
+           section in the GNAT Studio documentation
         :param last: A boolean
 
         .. seealso:: :func:`GPS.Hook.remove`
@@ -7016,9 +7023,9 @@ class Hook(object):
         of the hook and is described by the optional second parameter. The
         value of this parameter should be either the empty string for a hook
         that does not take any parameter. Or it could be one of the predefined
-        types exported by GPS itself (see :func:`list_hook_types`). Finally,
-        it could be the word ""generic"" if this is a new type of hook purely
-        defined for this scripting language
+        types exported by GNAT Studio itself (see :func:`list_hook_types`).
+        Finally, it could be the word ""generic"" if this is a new type of hook
+        purely defined for this scripting language
 
         :param name: A string, the name of the hook to create
         :param type: A string, the type of the hook.
@@ -7032,7 +7039,7 @@ class Hook(object):
         hook is run. This is the reverse of :func:`GPS.Hook.add`.
 
         :param function_name: A subprogram, see the "Subprogram Parameters"
-           section in the GPS documentation
+           section in the GNAT Studio documentation
 
         .. seealso:: :func:`GPS.Hook.add`
         """
@@ -7102,9 +7109,9 @@ class Hook(object):
 class Invalid_Argument(Exception):
 
     """
-    An exception raised by GPS. Raised when calling a subprogram from the GPS
-    module with an invalid argument type (passing an integer when a string is
-    expected, for example).
+    An exception raised by GNAT Studio. Raised when calling a subprogram from
+    the GNAT Studio module with an invalid argument type (passing an integer
+    when a string is expected, for example).
     """
 
     pass  # implemented in Ada
@@ -7118,22 +7125,23 @@ class Invalid_Argument(Exception):
 class Logger(object):
 
     """
-    This class provides an interface to the GPS logging mechanism. This can
-    be used when debugging scripts, or even be left in production scripts for
-    post-mortem analysis for instance. All output through this class is done
-    in the GPS log file, :file:`$HOME/.gnatstudio/log`.
+    This class provides an interface to the GNAT Studio logging mechanism. This
+    can be used when debugging scripts, or even be left in production scripts
+    for post-mortem analysis for instance. All output through this class is
+    done in the GNAT Studio log file, :file:`$HOME/.gnatstudio/log`.
 
-    GPS comes with some predefined logging streams, which can be used to
-    configure the format of the log file, such as whether colors should be
+    GNAT Studio comes with some predefined logging streams, which can be used
+    to configure the format of the log file, such as whether colors should be
     used or whether timestamps should be logged with each message.
     """
 
     def __init__(self, name):
         """
         Creates a new logging stream. Each stream is associated with a name,
-        which is displayed before each line in the GPS log file, and is used
-        to distinguish between various parts of GPS. Calling this constructor
-        with the same name multiple times creates a new class instance.
+        which is displayed before each line in the GNAT Studio log file, and is
+        used to distinguish between various parts of GNAT Studio. Calling this
+        constructor with the same name multiple times creates a new class
+        instance.
 
         :param name: A string
 
@@ -7167,7 +7175,7 @@ class Logger(object):
 
     def log(self, message):
         """
-        Logs a message in the GPS log file.
+        Logs a message in the GNAT Studio log file.
 
         :param message: A string
         """
@@ -7195,17 +7203,17 @@ class Logger(object):
 class MDI(object):
 
     """
-    Represents GPS's Multiple Document Interface. This gives access to general
-    graphical commands for GPS, as well as control over the current layout of
-    the windows within GPS
+    Represents GNAT Studio's Multiple Document Interface. This gives access to
+    general graphical commands for GNAT Studio, as well as control over the
+    current layout of the windows within GNAT Studio
 
     .. seealso:: :class:`GPS.MDIWindow`
 
-    If the pygobject package is installed, GPS will export a few more functions
-    to Python so that it is easier to interact with GPS itself. In particular,
-    the :func:`GPS.MDI.add` function allows you to put a widget created by
-    pygobject under control of GPS's MDI, so users can interact with it as with
-    all other GPS windows.
+    If the pygobject package is installed, GNAT Studio will export a few more
+    functions to Python so that it is easier to interact with GNAT Studio
+    itself. In particular, the :func:`GPS.MDI.add` function allows you to put a
+    widget created by pygobject under control of GNAT Studio's MDI, so users
+    can interact with it as with all other GNAT Studio windows.
 
     .. code-block:: python
 
@@ -7261,11 +7269,11 @@ class MDI(object):
         python shell. You must install this library first, see the
         documentation for GPS.MDI itself.
 
-        This function adds a widget inside the MDI of GPS. The resulting
-        window can be manipulated by the user like any other standard GPS
-        window. For example, it can be split, floated, or resized. ``title``
-        is the string used in the title bar of the window, ``short`` is the
-        string used in the notebook tabs. You can immediately retrieve a
+        This function adds a widget inside the MDI of GNAT Studio. The
+        resulting window can be manipulated by the user like any other standard
+        GNAT Studio window. For example, it can be split, floated, or resized.
+        ``title`` is the string used in the title bar of the window, ``short``
+        is the string used in the notebook tabs. You can immediately retrieve a
         handle to the created window by calling GPS.MDI.get (short).
 
         This function has no effect if the widget is already in the MDI.
@@ -7285,16 +7293,16 @@ class MDI(object):
             specify the initial location of the newly created notebook.
             When other widgets of the same group exist, the widget is put
             on top of them.
-        :param save_desktop: A function that should be called when GPS saves
-            the desktop into XML. This function receives the
+        :param save_desktop: A function that should be called when GNAT Studio
+            saves the desktop into XML. This function receives the
             :class:`GPS.MDIWindow` as a parameter and should return a tuple
             of two elements (name, data) where name is a unique identifier
             for this window, and data is a string containing additional data
             to be saved (and later restored).  One suggestion is to encode
             any Python data through JSON and send the resulting string as
             data.  An easier alternative is to use the :file:`modules.py`
-            support script in GPS, which handles this parameter automatically
-            on your behalf.
+            support script in GNAT Studio, which handles this parameter
+            automatically on your behalf.
         :return: The instance of :class:`GPS.MDIWindow` that was created
 
         .. code-block:: python
@@ -7358,10 +7366,10 @@ class MDI(object):
     @staticmethod
     def exit(force=False):
         """
-        Exits GPS. If there are unsaved changes, a dialog is first displayed
-        to ask whether these should be saved. If the user cancels the
-        operation through the dialog, GPS will not exit. If ``force`` is
-        true, no dialog is opened and nothing is saved.
+        Exits GNAT Studio. If there are unsaved changes, a dialog is first
+        displayed to ask whether these should be saved. If the user cancels the
+        operation through the dialog, GNAT Studio will not exit. If ``force``
+        is true, no dialog is opened and nothing is saved.
 
         :param force: A boolean
         """
@@ -7434,7 +7442,7 @@ class MDI(object):
     @staticmethod
     def hide():
         """
-        Hides the graphical interface of GPS.
+        Hides the graphical interface of GNAT Studio.
         """
         pass  # implemented in Ada
 
@@ -7502,7 +7510,7 @@ class MDI(object):
     @staticmethod
     def show():
         """
-        Shows the graphical interface of GPS.
+        Shows the graphical interface of GNAT Studio.
         """
         pass  # implemented in Ada
 
@@ -7558,8 +7566,8 @@ class MDI(object):
     @staticmethod
     def present_main_window():
         """
-        Present the GPS main window. This is useful when you want to
-        programatically give the focus to the GPS main window.
+        Present the GNAT Studio main window. This is useful when you want to
+        programatically give the focus to the GNAT Studio main window.
         """
 
         pass  # implemented in Ada
@@ -7567,9 +7575,9 @@ class MDI(object):
     @staticmethod
     def get_main_window():
         """
-        Return the GPS main window. This is useful when you want to
-        create dialogs or windows that should always stay on top of
-        GPS.
+        Return the GNAT Studio main window. This is useful when you want to
+        create dialogs or windows that should always stay on top of GNAT
+        Studio.
 
         :return: An instance of :class:`GPS.GUI`
         """
@@ -7585,10 +7593,11 @@ class MDI(object):
 class MDIWindow(GUI):
 
     """
-    This class represents one of the windows currently displayed in GPS. This
-    includes both the windows currently visible to the user, and the ones that
-    are temporarily hidden, for instance because they are displayed below
-    another window.  Windows acts as containers for other widgets.
+    This class represents one of the windows currently displayed in GNAT
+    Studio. This includes both the windows currently visible to the user, and
+    the ones that are temporarily hidden, for instance because they are
+    displayed below another window. Windows acts as containers for other
+    widgets.
     """
 
     def __init__(self):
@@ -7614,7 +7623,7 @@ class MDIWindow(GUI):
         Floats the window, i.e., creates a new toplevel window to display
         it. It is then under control of the user's operating system or window
         manager. If ``float`` is False, the window is reintegrated within the
-        GPS MDI instead.
+        GNAT Studio MDI instead.
 
         :param float: A boolean
         """
@@ -7640,7 +7649,7 @@ class MDIWindow(GUI):
         """
         Returns True if the window is currently floating (i.e., in its own
         toplevel window) or False if the window is integrated into the main
-        GPS window.
+        GNAT Studio window.
 
         :return: A boolean
         """
@@ -7682,8 +7691,8 @@ class MDIWindow(GUI):
         it appears in the title bar, and ``short``, if specified, is the name
         that appears in  notebook tabs.
 
-        Using this function may be dangereous in some contexts, since GPS
-        keeps track of editors through their name.
+        Using this function may be dangereous in some contexts, since GNAT
+        Studio keeps track of editors through their name.
 
         :param name: A string
         :param short: A string
@@ -7732,9 +7741,9 @@ class MDIWindow(GUI):
 class Menu(object):
 
     """
-    This class is a general interface to the menu system in GPS. It gives you
-    control over such things as which menus should be active and what should
-    be executed when the menu is selected by the user.
+    This class is a general interface to the menu system in GNAT Studio. It
+    gives you control over such things as which menus should be active and what
+    should be executed when the menu is selected by the user.
 
     .. seealso:: :func:`GPS.Menu.__init__`
 
@@ -7746,10 +7755,11 @@ class Menu(object):
     def __init__(self):
         """
         Prevents the creation of a menu instance. Such instances can only be
-        created internally by GPS as a result of calling :func:`GPS.Menu.get`
-        or :func:`GPS.Menu.create`. This is so you always get the same
-        instance of :class:`GPS.Menu` when refering to a given menu in GPS
-        and so you can store your own specific data with the menu.
+        created internally by GNAT Studio as a result of calling
+        :func:`GPS.Menu.get` or :func:`GPS.Menu.create`. This is so you always
+        get the same instance of :class:`GPS.Menu` when refering to a given
+        menu in GNAT Studio and so you can store your own specific data with
+        the menu.
         """
         pass  # implemented in Ada
 
@@ -7757,7 +7767,7 @@ class Menu(object):
     def get(path):
         """
         Returns the menu found at the given path. ``path`` is similar to
-        file paths, starting with the main GPS menu ('/'), down to each
+        file paths, starting with the main GNAT Studio menu ('/'), down to each
         submenus. For example, '/VCS/Directory/Update Directory' refers to
         the submenu 'Update Directory' of the submenu 'Directory' of the menu
         'VCS'. Path is case-sensitive.
@@ -7783,7 +7793,7 @@ class Menu(object):
 class MemoryUsageProvider(object):
 
     """
-    General interface used to populate the GPS Memory Usage View.
+    General interface used to populate the GNAT Studio Memory Usage View.
 
     In practice, this class is derived in the code to provide memory usage
     providers that are specific to ones or more external tools (e.g: a memory
@@ -7811,9 +7821,9 @@ class MemoryUsageProvider(object):
 class MemoryUsageProviderVisitor(object):
 
     """
-    This class is used to notify GPS of events that occur during a memory usage
-    provider task (e.g: when a memory usage provider has finished to fetch all
-    the memory usage data needed by the Memory Usage View).
+    This class is used to notify GNAT Studio of events that occur during a
+    memory usage provider task (e.g: when a memory usage provider has finished
+    to fetch all the memory usage data needed by the Memory Usage View).
     """
 
     def on_memory_usage_data_fetched(self, regions, sections, modules):
@@ -7852,7 +7862,7 @@ class MemoryUsageProviderVisitor(object):
 class Message(object):
 
     """
-    This class is used to manipulate GPS messages: build errors, editor
+    This class is used to manipulate GNAT Studio messages: build errors, editor
     annotations, etc.
     """
 
@@ -7894,7 +7904,7 @@ class Message(object):
         importance=Importance.UNSPECIFIED,
     ):
         """
-        Adds a Message in GPS.
+        Adds a Message in GNAT Studio.
 
         :param category: A String indicating the message category
         :param file: A File indicating the file
@@ -8019,7 +8029,7 @@ class Message(object):
     def list(category=None, file=None):
         """
         Returns a list of top (nested are not included) messages currently
-        stored in GPS.
+        stored in GNAT Studio.
 
         :param file: a :class:`GPS File`.
             Specifying this parameter restricts the output to messages
@@ -8035,7 +8045,7 @@ class Message(object):
 
     def remove(self):
         """
-        Removes the message from GPS.
+        Removes the message from GNAT Studio.
         """
         pass  # implemented in Ada
 
@@ -8044,7 +8054,8 @@ class Message(object):
         Adds an action item to the message. This adds an icon to the message;
         Clicking on the icon executes ``action``.
 
-        :param action: A String corresponding to a registered GPS action
+        :param action: A String corresponding to a registered GNAT Studio
+           action
         :param image: A String name of the icon to display.
            See :ref:`Adding_stock_icons` for more information on icons
         :param tooltip: A string containing the tooltip to
@@ -8266,8 +8277,8 @@ class Locations(object):
         reference the colors to use in the editor to highlight the messages
         when the regexp has matched. If they are set to the empty string, no
         highlighting is done in the editor. The default values match those by
-        GPS itself to highlight the error messages. Create these categories
-        with :func:`GPS.Editor.register_highlighting`.
+        GNAT Studio itself to highlight the error messages. Create these
+        categories with :func:`GPS.Editor.register_highlighting`.
 
         :param output: A string
         :param category: A string
@@ -8321,8 +8332,8 @@ class Locations(object):
 class Missing_Arguments(Exception):
 
     """
-    An exception raised by GPS. Raised when calling a subprogram from the GPS
-    module with missing arguments.
+    An exception raised by GNAT Studio. Raised when calling a subprogram from
+    the GNAT Studio module with missing arguments.
     """
 
     pass  # implemented in Ada
@@ -8395,10 +8406,10 @@ class Cursor(object):
 class Preference(object):
 
     """
-    Interface to the GPS preferences, as set in the :menuselection:`Edit -->
-    Preferences...` dialog. New preferences are created through XML
-    customization files (or calls to :func:`GPS.parse_xml`, see the GPS
-    documentation).
+    Interface to the GNAT Studio preferences, as set in the
+    :menuselection:`Edit --> Preferences...` dialog. New preferences are
+    created through XML customization files (or calls to :func:`GPS.parse_xml`,
+    see the GNAT Studio documentation).
 
     .. seealso:: :func:`GPS.Preference.__init__`
 
@@ -8426,7 +8437,7 @@ class Preference(object):
         group. If the name starts with '/' and contains no other
         '/', the preference is not visible in the :guilabel:`Preferences`
         dialog, though it can be manipulated as usual and is loaded
-        automatically by GPS on startup.
+        automatically by GNAT Studio on startup.
 
         :param name: A string
         """
@@ -8546,7 +8557,7 @@ class Preference(object):
 
 class PreferencesPage:
     """
-    Interface to the GPS preferences pages, as set in the
+    Interface to the GNAT Studio preferences pages, as set in the
     :menuselection:`Edit --> Preferences...` dialog.
 
     This interface can be used to create custom preferences pages.
@@ -8578,7 +8589,7 @@ class PreferencesPage:
         when ``is_integrated`` is True, the preferences editor dialog will
         not create an entry for this page in its left tree view. This is
         generally needed for pages that are integrated in another visible
-        preferences pages or for pages displayed in the GPS preferences
+        preferences pages or for pages displayed in the GNAT Studio preferences
         assistant.
 
         :param name: A string
@@ -8598,8 +8609,8 @@ class Process(Command):
     """
     Interface to :program:`expect`-related commands. This class can be used
     to spawn new processes and communicate with them later. It is similar to
-    what GPS uses to communicate with :program:`gdb`. This is a subclass of
-    :class:`GPS.Command`.
+    what GNAT Studio uses to communicate with :program:`gdb`. This is a
+    subclass of :class:`GPS.Command`.
 
     .. seealso::
 
@@ -8611,9 +8622,10 @@ class Process(Command):
 
        # The following example launches a gdb process, lets it print its
        # welcome message, and kills it as soon as a prompt is seen in the
-       # output.  In addition, it displays debugging messages in a new GPS
-       # window.  As you might note, some instance-specific data is stored in
-       # the instance of the process, and can be retrieve in each callback.
+       # output.  In addition, it displays debugging messages in a new GNAT
+       # Studio window.  As you might note, some instance-specific data is
+       # stored in the instance of the process, and can be retrieve in each
+       # callback.
 
        import GPS, sys
 
@@ -8685,9 +8697,9 @@ class Process(Command):
         to Python, which are always preserved as one argument.
 
         The external process might not start immediately. Instead, it will
-        start whenever GPS starts processing events again (once your script
-        gives the hand back to GPS), or when you call :func:`expect()`
-        or :func:`get_result()` below.
+        start whenever GNAT Studio starts processing events again (once your
+        script gives the hand back to GNAT Studio), or when you call
+        :func:`expect()` or :func:`get_result()` below.
 
         If ``regexp`` is not-empty and ``on_match_action`` is specified,
         launch ``on_match_action`` when ``regexp`` is found in the process
@@ -8709,9 +8721,9 @@ class Process(Command):
 
         ``before_kill`` is a subprogram called just before the process is
         about to be killed. It is called when the user is interrupting the
-        process through the tasks view, or when GPS exits. It is not called
-        when the process terminates normally. When it is called, the process
-        is still valid and can be send commands. Its parameters are:
+        process through the tasks view, or when GNAT Studio exits. It is not
+        called when the process terminates normally. When it is called, the
+        process is still valid and can be send commands. Its parameters are:
 
         - $1 = the instance of :class:`GPS.Process`
         - $2 = the entire output of the process
@@ -8724,21 +8736,21 @@ class Process(Command):
         - $3 = the output of the process since the last call to
           :func:`on_match`
 
-          If ``task_manager`` is True, the process will be visible in the GPS
-          tasks view and can be interrupted or paused by users. Otherwise,
-          it is running in the background and never visible to the user.  If
-          ``progress_regexp`` is specified, the output of the process will be
-          scanned for this regexp. The part that matches will not be returned
-          to ``on_match``. Instead, they will be used to guess the current
-          progress of the command. Two groups of parenthesis are parsed, the
-          one at ``progress_current``, and the one at ``progress_total``. The
-          number returned for each of these groups indicate the current
-          progress of the command and the total that must be reached for this
-          command to complete. For example, if your process outputs lines like
-          "done 2 out of 5", you should create a regular expression that
-          matches the 2 and the 5 to guess the current progress. As a result,
-          a progress bar is displayed in the tasks view of GPS, and will
-          allow users to monitor commands.
+          If ``task_manager`` is True, the process will be visible in the GNAT
+          Studio tasks view and can be interrupted or paused by users.
+          Otherwise, it is running in the background and never visible to the
+          user.  If ``progress_regexp`` is specified, the output of the process
+          will be scanned for this regexp. The part that matches will not be
+          returned to ``on_match``. Instead, they will be used to guess the
+          current progress of the command. Two groups of parenthesis are
+          parsed, the one at ``progress_current``, and the one at
+          ``progress_total``. The number returned for each of these groups
+          indicate the current progress of the command and the total that must
+          be reached for this command to complete. For example, if your process
+          outputs lines like "done 2 out of 5", you should create a regular
+          expression that matches the 2 and the 5 to guess the current
+          progress. As a result, a progress bar is displayed in the tasks view
+          of GNAT Studio, and will allow users to monitor commands.
 
           An exception is raised if the process could not be spawned.
 
@@ -8748,7 +8760,7 @@ class Process(Command):
              are using a string, you need to quote such arguments.
           :param regexp: A string
           :param on_match: A subprogram, see the section
-             "Subprogram parameters" in the GPS documentation
+             "Subprogram parameters" in the GNAT Studio documentation
           :param on_exit: A subprogram
           :param task_manager: A boolean
           :param progress_regexp: A string
@@ -8759,27 +8771,28 @@ class Process(Command):
              the empty string (equivalent to "GPS_Server"), "Build_Server",
              "Debug_Server", "Execution_Server" and "Tools_Server".
              This represents the server used to spawn the process. By
-             default, the GPS_Server is used, which is always the
-             local machine. See the section "Using GPS for Remote Development"
-             in the GPS documentation for more information on this field.
+             default, the GPS_Server is used, which is always the local
+             machine. See the section "Using GNAT Studio for Remote
+             Development" in the GNAT Studio documentation for more information
+             on this field.
           :param bool show_command: if True, the command line used to spawn
              the new process is displayed in the :guilabel:`Messages` console.
           :param bool single_line_regexp:
           :param bool case_sensitive_regexp:
           :param bool strip_cr: If true, the output of the process will have
-             all its ASCII.CR removed before the string is passed to GPS and
-             your script. This, in general, provides better portability to
-             Windows systems, but might not be suitable for applications for
-             which CR is relevant (for example, those that drive an ANSI
-             terminal).
-          :param bool active: Whether GPS should actively monitor the state
-             of the process. This will require more CPU (and might make the
-             GUI less reactive while the process runs), but ensures that
+             all its ASCII.CR removed before the string is passed to GNAT
+             Studio and your script. This, in general, provides better
+             portability to Windows systems, but might not be suitable for
+             applications for which CR is relevant (for example, those that
+             drive an ANSI terminal).
+          :param bool active: Whether GNAT Studio should actively monitor the
+             state of the process. This will require more CPU (and might make
+             the GUI less reactive while the process runs), but ensures that
              events like on_exit will be called earlier.
           :param str directory: The directory in which the external process
              should be started.
-          :param bool block_exit: If true, then GPS will display a dialog
-             when the user wants to exit, asking whether to kill this
+          :param bool block_exit: If true, then GNAT Studio will display a
+             dialog when the user wants to exit, asking whether to kill this
              process.
           :param str task_manager_name: The name to display in the task
              manager.
@@ -8855,13 +8868,13 @@ class Process(Command):
 
     def interrupt(self):
         """
-        Interrupts a process controlled by GPS.
+        Interrupts a process controlled by GNAT Studio.
         """
         pass  # implemented in Ada
 
     def kill(self):
         """
-        Terminates a process controlled by GPS.
+        Terminates a process controlled by GNAT Studio.
         """
         pass  # implemented in Ada
 
@@ -8909,8 +8922,8 @@ class Process(Command):
 class Project(object):
 
     """
-     Represents a project file. Also see the GPS documentation on how to
-     create new project attributes.
+     Represents a project file. Also see the GNAT Studio documentation on how
+     to create new project attributes.
 
      .. seealso:: :func:`GPS.Project.__init__`
 
@@ -8962,7 +8975,7 @@ class Project(object):
     def __init__(self, name):
         """
         Initializes an instance of :class:`GPS.Project`. The project must be
-        currently loaded in GPS.
+        currently loaded in GNAT Studio.
 
         :param name: The project name
 
@@ -8973,7 +8986,7 @@ class Project(object):
     def __repr__(self):
         """
         Returns a string suitable for the display of self on screen. This is
-        called implicitly by GPS and Python.
+        called implicitly by GNAT Studio and Python.
 
         :return: A string
         """
@@ -8982,7 +8995,7 @@ class Project(object):
     def __str__(self):
         """
         Returns a string suitable for the display of self on screen. This is
-        called implicitly by GPS and Python.
+        called implicitly by GNAT Studio and Python.
 
         :return: A string
         """
@@ -9046,8 +9059,8 @@ class Project(object):
     def add_predefined_paths(sources="", objects=""):
         """
         Adds some predefined directories to the source path or the objects
-        path. These are searched when GPS needs to open a file by its base
-        name, in particular from the :menuselection:`Find --> Find File in
+        path. These are searched when GNAT Studio needs to open a file by its
+        base name, in particular from the :menuselection:`Find --> Find File in
         Project` dialog.  The new paths are added in front, so they have
         priorities over previously defined paths.
 
@@ -9235,9 +9248,9 @@ class Project(object):
 
         When the attribute is not explicitely overridden in the project, the
         default value is returned. This default value is the one described in
-        an XML file (see the GPS documentation for more information). This
-        default value is not necessarily valid, and could for instance be a
-        string starting with a parenthesis, as explained in the GPS
+        an XML file (see the GNAT Studio documentation for more information).
+        This default value is not necessarily valid, and could for instance be
+        a string starting with a parenthesis, as explained in the GNAT Studio
         documentation.
 
         :param attribute: A string, the name of the attribute
@@ -9316,7 +9329,7 @@ class Project(object):
     def get_property(self, name):
         """
         Returns the value of the property associated with the project. This
-        property might have been set in a previous GPS session if it is
+        property might have been set in a previous GNAT Studio session if it is
         persistent. An exception is raised if no such property exists for the
         project.
 
@@ -9331,7 +9344,7 @@ class Project(object):
         """
         Like :func:`get_attribute_as_list`, but specialized for the switches
         of ``tool``. Tools are defined through XML customization files, see
-        the GPS documentation for more information.
+        the GNAT Studio documentation for more information.
 
         :param tool: The name of the tool whose switches you want to get
         :return: A list of strings
@@ -9344,7 +9357,7 @@ class Project(object):
 
         .. code-block:: python
 
-           # If GPS has loaded a customization file that contains the
+           # If GNAT Studio has loaded a customization file that contains the
            # following tags:
            #
            #    <?xml version="1.0" ?>
@@ -9518,7 +9531,7 @@ class Project(object):
         Recomputes the contents of a project, including the list of source
         files that are automatically loaded from the source directories. The
         project file is not reloaded from the disk and this should only be
-        used if you have created new source files outside of GPS.
+        used if you have created new source files outside of GNAT Studio.
 
         .. code-block:: python
 
@@ -9609,7 +9622,7 @@ class Project(object):
     @staticmethod
     def root():
         """
-        Returns the root project currently loaded in GPS.
+        Returns the root project currently loaded in GNAT Studio.
 
         :return: An instance of GPS.Project
 
@@ -9624,11 +9637,11 @@ class Project(object):
         """
         Returns the list of scenario variables for the current project
         hierarchy and their current values. These variables are visible at
-        the top of the :guilabel:`Project` view in the GPS window. The
+        the top of the :guilabel:`Project` view in the GNAT Studio window. The
         initial value for these variables is set from the environment
-        variables' value when GPS is started. However, changing the value of
-        the environment variable later does not change the value of the
-        scenario variable.
+        variables' value when GNAT Studio is started. However, changing the
+        value of the environment variable later does not change the value of
+        the scenario variable.
 
         :return: hash table associating variable names and values
 
@@ -9656,10 +9669,9 @@ class Project(object):
 
         .. code-block:: python
 
-           # The following GPS action can be defined in an XML file, and will
-           # launch the make command with the appropriate setup for the
-           # environment
-           # variables:
+           # The following GNAT Studio action can be defined in an XML file,
+           # and will launch the make command with the appropriate setup for
+           # the environment variables:
            # <action name="launch make"> \\
            #  <shell lang="python">GPS.scenario_variables_cmd_line()</shell> \\
            #  <external>make %1</external> \\
@@ -9723,8 +9735,8 @@ class Project(object):
     def set_property(self, name, value, persistent=False):
         """
         Associates a string property with the project. This property is
-        retrievable during the whole GPS session, or across GPS sessions if
-        persistent is set to True.
+        retrievable during the whole GNAT Studio session, or across GNAT Studio
+        sessions if persistent is set to True.
 
         This is different than setting instance properties through Python's
         standard mechanism in that there is no guarantee that the same
@@ -9817,15 +9829,15 @@ class Project(object):
 class ProjectTemplate(object):
 
     """
-    This class is used to manipulate GPS Project Templates.
+    This class is used to manipulate GNAT Studio Project Templates.
     """
 
     @staticmethod
     def add_templates_dir(noname):
         """
-        Adds a directory to the path in which GPS looks for templates.  GPS
-        will look for project templates in immediate subdirectories of this
-        directory.
+        Adds a directory to the path in which GNAT Studio looks for templates.
+        GNAT Studio will look for project templates in immediate subdirectories
+        of this directory.
 
         :param noname: A :class:`GPS.File` pointing to a directory.
 
@@ -9977,8 +9989,8 @@ class Search(object):
 
     """
     This class provides an interface to the search facilities used for the
-    GPS omni-search. In particular, this allows you to search file names,
-    sources, and actions, etc.
+    GNAT Studio omni-search. In particular, this allows you to search file
+    names, sources, and actions, etc.
 
     This class provides facilities exported directly by Ada, so you can
     for example look for file names by writting::
@@ -9994,8 +10006,9 @@ class Search(object):
             if not has_next:
                 break
 
-    However, one of the mandatory GPS plugins augments this base class with
-    high-level constructs such as iterators and now you can write code as::
+    However, one of the mandatory GNAT Studio plugins augments this base class
+    with high-level constructs such as iterators and now you can write code
+    as::
 
         for result in GPS.Search.search(
            GPS.Search.FILE_NAMES, "search", GPS.Search.FUZZY):
@@ -10005,7 +10018,8 @@ class Search(object):
     small units.
 
     It is possible to create your own search providers (which would be fully
-    included in the omni-search of GPS) by subclassing this class, as in::
+    included in the omni-search of in GNAT Studio) by subclassing this class,
+    as in::
 
           class MySearchResult(GPS.Search_Result):
               def __init__(self, str):
@@ -10045,7 +10059,7 @@ class Search(object):
     SUBSTRINGS = 2
     REGEXP = 4
     """
-    The various types of search, similar to what GPS provides in its
+    The various types of search, similar to what GNAT Studio provides in its
     omni-search.
     """
 
@@ -10125,7 +10139,7 @@ class Search(object):
     def register(name, factory, rank=-1):
         """
         Registers a new custom search.  This will be available to users via
-        the omni-search in GPS, or via the :class:`GPS.Search` class.
+        the omni-search in GNAT Studio, or via the :class:`GPS.Search` class.
 
         :param name: a string
         :param factory: an instance of :class:`GPS.Search` that will be reused
@@ -10196,8 +10210,8 @@ class Search_Result(object):
 
 class SemanticTree(object):
     """
-    This class represents the semantic information known to GPS for
-    a given file.
+    This class represents the semantic information known to GNAT Studio for a
+    given file.
     """
 
     def __init__(self, file):
@@ -10218,7 +10232,7 @@ class SemanticTree(object):
         """Ask for an immediate recomputation of the sematic tree.
 
         This should be used by custom implementations of semantic trees,
-        to force GPS to ask for the new contents of the tree.
+        to force GNAT Studio to ask for the new contents of the tree.
         """
 
 
@@ -10230,7 +10244,7 @@ class SemanticTree(object):
 class Style(object):
 
     """
-    This class is used to manipulate GPS Styles, which are used, for example,
+    This class is used to manipulate GNAT Studio Styles, which are used, for example,
     to represent graphical attributes given to Messages.
 
     This class is fairly low-level, and we recommend using the class
@@ -10315,7 +10329,7 @@ class Style(object):
     @staticmethod
     def list():
         """
-        Returns a list of all styles currently registered in GPS.
+        Returns a list of all styles currently registered in GNAT Studio.
 
         :return: a list of :class:`GPS.Style`
         """
@@ -10396,8 +10410,8 @@ class Task(object):
 
     """
     This class provides an interface to the background tasks being handled by
-    GPS, such as the build commands, the query of cross references,
-    etc. These are the same tasks that are visible through the GPS
+    GNAT Studio, such as the build commands, the query of cross references,
+    etc. These are the same tasks that are visible through the GNAT Studio
     :guilabel:`Tasks` view.
     """
 
@@ -10408,7 +10422,7 @@ class Task(object):
     FAILURE = "failure"
 
     """
-    Whether the task has a visible progress bar in GPS's toolbar or the
+    Whether the task has a visible progress bar in GNAT Studio's toolbar or the
     Tasks view.
     """
 
@@ -10419,7 +10433,8 @@ class Task(object):
         :param name: A string identifying the task.
         :param execute: a function which takes the task as parameter and
             returns one of the constants:
-            GPS.Task.EXECUTE_AGAIN if execute should be reexecuted by GPS
+            GPS.Task.EXECUTE_AGAIN if execute should be reexecuted by GNAT
+            Studio
             GPS.Task.SUCCESS if the task has terminated successfully
             GPS.Task.FAILURE if the task has terminated unsuccessfully
         :param active: A boolean. By default the 'execute' function is
@@ -10428,8 +10443,8 @@ class Task(object):
             you can set this to False to only execute it approximately
             every 100ms.
         :param block_exit: A boolean. Set this to True if a confirmation
-            popup should appear when the task is running and GPS has been
-            asked to quit.
+            popup should appear when the task is running and GNAT Studio has
+            been asked to quit.
         """
         pass  # implemented in Ada
 
@@ -10441,7 +10456,8 @@ class Task(object):
 
     def block_exit(self):
         """
-        Returns True if and only if this task should block the exit of GPS.
+        Returns True if and only if this task should block the exit of GNAT
+        Studio.
 
         :return: A boolean
         """
@@ -10582,10 +10598,10 @@ class Timeout(object):
 class Unexpected_Exception(Exception):
 
     """
-    An exception raised by GPS. It indicates an internal error in GPS, raised
-    by the Ada code itself. This exception is unexpected and indicates a bug
-    in GPS itself, not in the Python script, although it might be possible to
-    modify the latter to work around the issue.
+    An exception raised by GNAT Studio. It indicates an internal error in GNAT
+    Studio, raised by the Ada code itself. This exception is unexpected and
+    indicates a bug in GNAT Studio itself, not in the Python script, although
+    it might be possible to modify the latter to work around the issue.
     """
 
     pass  # implemented in Ada
@@ -10598,9 +10614,10 @@ class Unexpected_Exception(Exception):
 
 class Valgrind(object):
     """
-    This class helps testing GPS. To use it run GPS under valgrind and call
-    corresponding methods to turn on/off callgrin for intresting part of
-    GPS execution. See more info in valgrind documentation.
+    This class helps testing GNAT Studio. To use it run GNAT Studio under
+    valgrind and call corresponding methods to turn on/off callgrin for
+    intresting part of GNAT Studio execution. See more info in valgrind
+    documentation.
     """
 
     @staticmethod
@@ -10656,14 +10673,14 @@ class VCS2(object):
     As a result, for a given source file you first need to find the
     relevant engine, via a call to `GPS.VCS2.get`.
 
-    For efficiency, GPS caches the status of files locally, and only refreshes
-    at specific points. To get the status of a file as currently cached, use
-    `GPS.VCS2.get_file_status`. This will always return a valid status, even if
-    the cache has never been initialized by querying the actual VCS on the
-    disk. To do this, call one of `GPS.VCS2.ensure_status_for_*` methods. These
-    methods will eventually run the `vcs_file_status_update` hook to let you
-    know that the status has changed. This is all implemented asynchronously
-    though, since such a query might take time.
+    For efficiency, GNAT Studio caches the status of files locally, and only
+    refreshes at specific points. To get the status of a file as currently
+    cached, use `GPS.VCS2.get_file_status`. This will always return a valid
+    status, even if the cache has never been initialized by querying the actual
+    VCS on the disk. To do this, call one of `GPS.VCS2.ensure_status_for_*`
+    methods. These methods will eventually run the `vcs_file_status_update`
+    hook to let you know that the status has changed. This is all implemented
+    asynchronously though, since such a query might take time.
 
     This class provides the user view for VCS engines.
 
@@ -10791,9 +10808,9 @@ class VCS2(object):
 
     def set_run_in_background(self, background):
         """
-        Should be called to let GPS know when background commands are
-        executing. This is used to queue commands instead of running
-        several of them in parallel.
+        Should be called to let GNAT Studio know when background commands are
+        executing. This is used to queue commands instead of running several of
+        them in parallel.
         Do not call this function directly. Instead, use the python
         function vcs2.core.run_in_background which provides a higher-level
         API for this purpose.
@@ -10942,9 +10959,9 @@ class Vdiff(object):
 
     """
     This class provides access to the graphical comparison between two or
-    three files or two versions of the same file within GPS. A visual diff is
-    a group of two or three editors with synchronized scrolling. Differences
-    are rendered using blank lines and color highlighting.
+    three files or two versions of the same file within GNAT Studio. A visual
+    diff is a group of two or three editors with synchronized scrolling.
+    Differences are rendered using blank lines and color highlighting.
     """
 
     @staticmethod
@@ -11011,7 +11028,7 @@ class Vdiff(object):
     @staticmethod
     def list():
         """
-        Returns the list of visual diffs currently opened in GPS.
+        Returns the list of visual diffs currently opened in GNAT Studio.
 
         :return: A list :class:`GPS.Vdiff`
 
@@ -11184,8 +11201,8 @@ class XMLViewer(object):
 class Alias(object):
 
     """
-    This class represents a GPS Alias, a code template to be expanded in an
-    editor. This class allows you to manipulate them programmatically.
+    This class represents a GNAT Studio Alias, a code template to be expanded
+    in an editor. This class allows you to manipulate them programmatically.
     """
 
     @staticmethod
@@ -11270,7 +11287,7 @@ class OutputParserWrapper(object):
           <output-parsers>[default] popupparser</output-parsers>
        </target>
 
-    Where [default] abbreviates names of all parsers predefined in GPS.
+    Where [default] abbreviates names of all parsers predefined in GNAT Studio.
     """
 
     def __init__(self, child=None):
@@ -11317,8 +11334,8 @@ class Icon(object):
     ):
         """
         This will create a new icon with specified parameters, and add it to
-        GPS stock icons. The returned instance is a placeholder that has no
-        methods at the moment.
+        GNAT Studio stock icons. The returned instance is a placeholder that
+        has no methods at the moment.
 
         :param string id: The id of the icon
         :param string label: The label of the icon
@@ -11343,10 +11360,10 @@ class Icon(object):
 
 class History(object):
     """
-    This class gives access to GPS internal settings. These settings are
-    used in addition to the preferences, and are used to keep information
-    such as the list of files recently opened, or the state of various
-    check boxes in the interface so that GPS can display them again in the
+    This class gives access to GNAT Studio internal settings. These settings
+    are used in addition to the preferences, and are used to keep information
+    such as the list of files recently opened, or the state of various check
+    boxes in the interface so that GNAT Studio can display them again in the
     same state when it is restarted.
     """
 
@@ -11361,7 +11378,7 @@ class History(object):
         Update the value of one of the settings. The new value is added to
         the list (for instance for recently opened files), and the oldest
         previous value might be removed, depending on the maximum number
-        of elements that GPS wants to preserve for that key.
+        of elements that GNAT Studio wants to preserve for that key.
         """
 
     @staticmethod
@@ -11383,13 +11400,13 @@ class Construct(object):
     """
     One node of the semantic tree when parsing a file for a given programming
     language.
-    Instances of such classes are only created by GPS internally
+    Instances of such classes are only created by GNAT Studio internally
 
     .. seealso: GPS.Language.clicked_on_construct
     """
 
     def __init__(self):
-        """Instances are only created by GPS itself"""
+        """Instances are only created by GNAT Studio itself"""
 
     name = ""
     """The name of the construct"""
@@ -11412,11 +11429,12 @@ class ConstructsList(object):
     file.
 
     This can be used in particular to populate the Outline view for custom
-    languages (see the :file:`python_support.py` plugin in the GPS sources).
+    languages (see the :file:`python_support.py` plugin in the GNAT Studio
+    sources).
     """
 
     def __init__(self):
-        """Instances are only created by GPS itself"""
+        """Instances are only created by GNAT Studio itself"""
 
     def add_construct(
         self,
@@ -11481,7 +11499,7 @@ class Language(object):
             Given an empty list of constructs, a file instance and a string
             containing the contents of the file, this needs to populate the
             list of language constructs. In turn this will give support for
-            a number of features in GPS including:
+            a number of features in GNAT Studio including:
 
             - Outline support
             - Block highlighting/folding support
@@ -11500,10 +11518,10 @@ class Language(object):
 
         def should_refresh_constructs(self, file):
             '''
-            Whether GPS should call parse_constructs to refresh the list.
-            This is called when the file has not changed on the disk, but
-            GPS thinks there might be a need to refresh because various
-            hooks have been run.
+            Whether GNAT Studio should call parse_constructs to refresh the
+            list.  This is called when the file has not changed on the disk,
+            but GNAT Studio thinks there might be a need to refresh because
+            various hooks have been run.
             By default, this returns False, so that parse_constructs is
             only called when the file changes on the disk.
 
@@ -11547,7 +11565,7 @@ class Language(object):
         indentation_kind=INDENTATION_SIMPLE,
     ):
         """
-        Register an instance of language in GPS.
+        Register an instance of language in GNAT Studio.
 
         :param Language instance: The instance you want to register
         :param string name: The name of the language
@@ -11583,7 +11601,7 @@ class Language(object):
 class LanguageInfo(object):
     """
     This class gives access to various information known about the
-    programing languages supported by GPS.
+    programing languages supported by GNAT Studio.
     """
 
     name = ""
@@ -11606,8 +11624,8 @@ class LanguageInfo(object):
 
 class OutlineView(object):
     """
-    This class gives access to suprograms used to control the GPS Outline
-    view (e.g: selecting a specific construct in the Ouline view).
+    This class gives access to suprograms used to control the GNAT Studio
+    Outline view (e.g: selecting a specific construct in the Ouline view).
     """
 
     @staticmethod
@@ -11735,9 +11753,9 @@ def __run_hook__():
 def add_location_command(command):
     """
     Adds a command to the navigation buttons in the toolbar. When the user
-    presses the :guilabel:`Back` button, this command is executed and puts GPS
-    in a previous state. This is, for example, used while navigating in the
-    HTML browsers to handle their :guilabel:`Back` button.
+    presses the :guilabel:`Back` button, this command is executed and puts GNAT
+    Studio in a previous state. This is, for example, used while navigating in
+    the HTML browsers to handle their :guilabel:`Back` button.
 
     :param command: A string
 
@@ -11777,9 +11795,9 @@ def clear_cache():
 
 def compute_xref():
     """
-    Updates the cross-reference information stored in GPS. This needs to be
-    called after major changes to the sources only, since GPS itself is able
-    to work with partially up-to-date information
+    Updates the cross-reference information stored in GNAT Studio. This needs
+    to be called after major changes to the sources only, since GNAT Studio
+    itself is able to work with partially up-to-date information
 
     """
     pass  # implemented in Ada
@@ -11787,7 +11805,8 @@ def compute_xref():
 
 def compute_xref_bg():
     """
-    Updates cross-reference information stored in GPS in the background.
+    Updates cross-reference information stored in GNAT Studio in the
+    background.
 
     .. seealso:: :func:`GPS.compute_xref`
 
@@ -11902,11 +11921,11 @@ def contextual_context():
 
 def current_context(refresh=False, focus_check=True):
     """
-    Returns the current context in GPS. This is the currently selected file,
-    line, column, project, etc. depending on what window is currently
-    active. From one call of this function to the next, a different instance
-    is returned, so you should not store your own data in the
-    instance, since you will not be able to recover it later on
+    Returns the current context in GNAT Studio. This is the currently selected
+    file, line, column, project, etc. depending on what window is currently
+    active. From one call of this function to the next, a different instance is
+    returned, so you should not store your own data in the instance, since you
+    will not be able to recover it later on
 
     :param boolean refresh: If false, the last compute context is returned.
        The context is set by the views whenever their selection change. You
@@ -11934,8 +11953,8 @@ def current_context(refresh=False, focus_check=True):
 
 def debug__usage(size):
     """
-    Dumps on stdout the largest (by size) memory allocators in GPS. This is
-    meant as a debug function for GPS developers.
+    Dumps on stdout the largest (by size) memory allocators in GNAT Studio.
+    This is meant as a debug function for GNAT Studio developers.
 
     :param size: An integer
 
@@ -11986,8 +12005,8 @@ def dump(string, add_lf=False):
 def dump_file(text, filename):
     """
     Writes text to the file specified by ``filename``. This is mostly
-    intended for poor shells like the GPS shell which do not have better
-    solutions. In Python, you should use its own mechanisms.
+    intended for poor shells like the GNAT Studio shell which do not have
+    better solutions. In Python, you should use its own mechanisms.
 
     :param text: A string
     :param filename: A string
@@ -12005,7 +12024,7 @@ def dump_elaborations():
 
 def echo(*args):
     """
-    Displays a line of text. This command is specific to the GPS shell.
+    Displays a line of text. This command is specific to the GNAT Studio shell.
 
     :param args: Any number of parameters
     """
@@ -12014,8 +12033,8 @@ def echo(*args):
 
 def echo_error(*args):
     """
-    Displays a line of text. This command is specific to the GPS shell. It is
-    designed to be used to output error messages. This command raises the
+    Displays a line of text. This command is specific to the GNAT Studio shell.
+    It is designed to be used to output error messages. This command raises the
     shell window.
 
     :param args: Any number of parameters
@@ -12026,9 +12045,9 @@ def echo_error(*args):
 def exec_in_console(noname):
     """
     This function is specific to Python. It executes the string given in
-    argument in the context of the GPS Python console. If you use the
-    standard Python :func:`exec` function instead, it only modifies the
-    current context, which generally has no impact on the GPS console itself.
+    argument in the context of the GNAT Studio Python console. If you use the
+    standard Python :func:`exec` function instead, it only modifies the current
+    context, which generally has no impact on the GNAT Studio console itself.
 
     :param noname: A string
 
@@ -12043,11 +12062,12 @@ def exec_in_console(noname):
 
 def execute_action(action, *args):
     """
-    Executes one of the actions defined in GPS. Such actions are either
-    predefined by GPS or defined by the users through customization files.
-    See the GPS documentation for more information on how to create new
-    actions.  GPS waits until the command completes to return control to the
-    caller, whether you execute a shell command or an external process.
+    Executes one of the actions defined in GNAT Studio. Such actions are either
+    predefined by GNAT Studio or defined by the users through customization
+    files.  See the GNAT Studio documentation for more information on how to
+    create new actions. GNAT Studio waits until the command completes to return
+    control to the caller, whether you execute a shell command or an external
+    process.
 
     The action's name can start with a '/', and be a full menu path. As a
     result, the menu itself will be executed, just as if the user had pressed
@@ -12092,8 +12112,8 @@ def execute_asynchronous_action(action, *args):
 
 def exit(force=False, status="0"):
     """
-    Exits GPS, asking for confirmation if any file is currently modified and
-    unsaved. If ``force`` is True, no check is done.
+    Exits GNAT Studio, asking for confirmation if any file is currently
+    modified and unsaved. If ``force`` is True, no check is done.
 
     ``status`` is the exit status to return to the calling shell. 0 means
     success on most systems.
@@ -12169,8 +12189,8 @@ def thaw_prefs():
 def xref_db():
     """
     Returns the location of the xref database. This is an :program:`sqlite`
-    database created by GPS when it parses the :file:`.ali` files generated
-    by the compiler.
+    database created by GNAT Studio when it parses the :file:`.ali` files
+    generated by the compiler.
 
     Its location depends mainly on the optional IDE'Artifacts_Dir
     attribute, which defaults to the project's object directory if not
@@ -12194,7 +12214,8 @@ def get_build_mode():
 
 def get_target():
     """
-    Returns the target currently set in the project or the GPS interface.
+    Returns the target currently set in the project or the GNAT Studio
+    interface.
 
     :return: a string
     """
@@ -12203,7 +12224,8 @@ def get_target():
 
 def get_runtime():
     """
-    Returns the runtime currently set in the project or the GPS interface.
+    Returns the runtime currently set in the project or the GNAT Studio
+    interface.
 
     :return: a string
     """
@@ -12249,14 +12271,14 @@ def get_home_dir():
     Returns the directory that contains the user-specific files. This
     string always ends with a directory separator.
 
-    :return: The user's GPS directory
+    :return: The user's GNAT Studio directory
 
     .. seealso:: :func:`GPS.get_system_dir`
 
     .. code-block:: python
 
        log = GPS.get_home_dir() + "log"
-       # will compute the name of the log file generated by GPS
+       # will compute the name of the log file generated by GNAT Studio
 
     """
     pass  # implemented in Ada
@@ -12264,17 +12286,17 @@ def get_home_dir():
 
 def get_system_dir():
     """
-    Returns the installation directory for GPS.  This string always ends with
-    a directory separator.
+    Returns the installation directory for GNAT Studio.  This string always
+    ends with a directory separator.
 
-    :return: The install directory for GPS
+    :return: The install directory for GNAT Studio
 
     .. seealso:: :func:`GPS.get_home_dir`
 
     .. code-block:: python
 
        html = GPS.get_system_dir() + "share/doc/gnatstudio/html/gps.html"
-       # will compute the location of GPS's documentation
+       # will compute the location of GNAT Studio's documentation
     """
     pass  # implemented in Ada
 
@@ -12284,7 +12306,7 @@ def get_tmp_dir():
     Returns the directory where gps creates temporary files.  This string
     always ends with a directory separator.
 
-    :return: The install directory for GPS
+    :return: The install directory for GNAT Studio
     """
     pass  # implemented in Ada
 
@@ -12292,8 +12314,8 @@ def get_tmp_dir():
 def help(command=""):
     """
     Returns the description of the command given in parameter or the list of
-    all commands exported by GPS. :func:`GPS.help` is specific to the GPS
-    shell.
+    all commands exported by GNAT Studio. :func:`GPS.help` is specific to the
+    GNAT Studio shell.
 
     :param command: A string
     :return: A string
@@ -12307,11 +12329,11 @@ def insmod(shared_lib, module):
 
     The library must define the following two symbols:
 
-    - _init: This is called by GPS to initialize the library itself
+    - _init: This is called by GNAT Studio to initialize the library itself
 
     - __register_module: This is called to do the actual module registration,
-      and should call the :func:`Register_Module` function in the GPS source
-      code.
+      and should call the :func:`Register_Module` function in the GNAT Studio
+      source code.
 
     This is work in progress, and not fully supported on all systems.
 
@@ -12336,9 +12358,9 @@ def is_server_local(server):
 
 def last_command():
     """
-    Returns the name of the last action executed by GPS. This name is not
-    ultra-precise: it is accurate only when the action is executed through a
-    key binding. Otherwise, an empty string is returned. However, the intent
+    Returns the name of the last action executed by GNAT Studio. This name is
+    not ultra-precise: it is accurate only when the action is executed through
+    a key binding. Otherwise, an empty string is returned. However, the intent
     is for a command to be able to check whether it is called multiple times
     consecutively. For this reason, this function returns the command set by
     :func:`GPS.set_last_command`, if any.
@@ -12353,11 +12375,11 @@ def last_command():
           '''Emulates Emacs behavior: when called multiple times, the cut line
              must be appended to the previously cut one.'''
 
-          # The name of the command below is unknown to GPS. This is just a
-          # string we use in this implementation to detect multiple
+          # The name of the command below is unknown to GNAT Studio. This is
+          # just a string we use in this implementation to detect multiple
           # consecutive calls to this function. Note that this works whether
           # the function is called from the same key binding or not and from
-          # the same GPS action or not
+          # the same GNAT Studio action or not
 
           append = GPS.last_command() == "my-kill-line":
           GPS.set_last_command("my-kill-line")
@@ -12367,8 +12389,8 @@ def last_command():
 
 def load(filename):
     """
-    Loads and executes a script file. This command is specific to the GPS
-    shell.
+    Loads and executes a script file. This command is specific to the GNAT
+    Studio shell.
 
     :param filename: A string
     """
@@ -12377,8 +12399,9 @@ def load(filename):
 
 def lookup_actions():
     """
-    Returns the list of all known GPS actions, not including menu names. All
-    actions are lower-cased, but the order of the list is not significant.
+    Returns the list of all known GNAT Studio actions, not including menu
+    names. All actions are lower-cased, but the order of the list is not
+    significant.
 
     :return: A list of strings
 
@@ -12414,10 +12437,10 @@ def ls(pattern=""):
 
 def lsmod():
     """
-    Returns the list of modules currently registered in GPS. Each facility in
-    GPS is provided in a separate module so that users can choose whether to
-    activate specific modules or not. Some modules can also be dynamically
-    loaded.
+    Returns the list of modules currently registered in GNAT Studio. Each
+    facility in GNAT Studio is provided in a separate module so that users can
+    choose whether to activate specific modules or not. Some modules can also
+    be dynamically loaded.
 
     :return: List of strings
 
@@ -12467,7 +12490,7 @@ def parse_xml(xml):
        GPS.parse_xml(
           '''<action name="A"><shell>my_action</shell></action>
              <menu action="A"><title>/Edit/A</title></menu>''')
-       Adds a new menu in GPS, which executes the command my_action
+       Adds a new menu in GNAT Studio, which executes the command my_action
     """
     pass  # implemented in Ada
 
@@ -12510,12 +12533,12 @@ def repeat_next(count):
 
 def save_persistent_properties():
     """
-    Forces an immediate save of the persistent properties that GPS maintains
-    for files and projects (for example the text encoding, the programming
-    language, and the debugger breakpoints).
+    Forces an immediate save of the persistent properties that GNAT Studio
+    maintains for files and projects (for example the text encoding, the
+    programming language, and the debugger breakpoints).
 
-    This is done automatically by GPS on exit, so you normally do not have to
-    call this subprogram.
+    This is done automatically by GNAT Studio on exit, so you normally do not
+    have to call this subprogram.
     """
     pass  # implemented in Ada
 
@@ -12585,11 +12608,11 @@ def set_build_mode(mode=""):
 
 def set_last_command(command):
     """
-    Overrides the name of the last command executed by GPS. This new name is
-    the one returned by :func:`GPS.last_command` until the user performs a
-    different action. Thus, multiple consecutive calls of the same action
-    always return the value of the ``command`` parameter. See the example in
-    :func:`GPS.last_command`.
+    Overrides the name of the last command executed by GNAT Studio. This new
+    name is the one returned by :func:`GPS.last_command` until the user
+    performs a different action. Thus, multiple consecutive calls of the same
+    action always return the value of the ``command`` parameter. See the
+    example in :func:`GPS.last_command`.
 
     :param command: A string
 
@@ -12600,11 +12623,11 @@ def set_last_command(command):
 
 def supported_languages():
     """
-    Returns the list of languages for which GPS has special handling. Any
-    file can be opened in GPS, but some extensions are recognized specially
-    by GPS to provide syntax highlighting, cross-references, or other special
-    handling. See the GPS documentation on how to add support for new
-    languages in GPS.
+    Returns the list of languages for which GNAT Studio has special handling.
+    Any file can be opened in GNAT Studio, but some extensions are recognized
+    specially by GPS to provide syntax highlighting, cross-references, or other
+    special handling. See the GNAT Studio documentation on how to add support
+    for new languages in GNAT Studio.
 
     The returned list is sorted alphabetically and the name of the language
     has been normalized (starts with an upper case character and is lowercase
@@ -12622,15 +12645,15 @@ def supported_languages():
 
 def reset_xref_db():
     """
-    Empties the internal xref database for GPS. This is rarely useful,
-    unless you want to force GPS to reload everything.
+    Empties the internal xref database for GNAT Studio. This is rarely useful,
+    unless you want to force GNAT Studio to reload everything.
     """
     pass
 
 
 def version():
     """
-    Returns the GPS version as a string.
+    Returns the GNAT Studio version as a string.
 
     :return: A string
     """
