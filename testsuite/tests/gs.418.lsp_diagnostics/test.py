@@ -10,7 +10,7 @@ from gs_utils.internal.utils import *
 EXPECTED = [
     "Diagnostics: ada.project (1 item in 1 file)",
     [
-        "gs.418.lsp_diagnostics (1 item)",
+        "test.gpr (1 item)",
         [
             "<b>1:1</b>       The project file was loaded but contains warnings.",
             [
