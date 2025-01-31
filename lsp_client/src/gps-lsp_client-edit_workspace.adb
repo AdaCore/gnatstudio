@@ -15,9 +15,8 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with Ada.Containers.Indefinite_Ordered_Maps;
+with Ada.Containers.Indefinite_Vectors;
 with Ada.Strings.Unbounded;           use Ada.Strings.Unbounded;
-with Ada.Strings.UTF_Encoding;
 
 with GNAT.Strings;
 
@@ -28,8 +27,8 @@ with GNATCOLL.Scripts;                use GNATCOLL.Scripts;
 with GNATCOLL.Scripts.Python;         use GNATCOLL.Scripts.Python;
 with GNATCOLL.VFS;                    use GNATCOLL.VFS;
 
+with VSS.Strings.Character_Iterators;
 with VSS.Strings.Conversions;
-with VSS.Unicode;
 
 with GPS.Editors;                     use GPS.Editors;
 with GPS.Kernel.Messages;
@@ -56,13 +55,16 @@ package body GPS.LSP_Client.Edit_Workspace is
    Me : constant Trace_Handle :=
      Create ("GPS.LSP_Client.Edit_Workspace.Debug", Off);
 
-   function "<" (Left, Right : LSP.Messages.Span) return Boolean;
+   type Text_Edit is record
+      Span  : LSP.Messages.Span;
+      Text  : Ada.Strings.Unbounded.Unbounded_String;
+   end record;
 
-   package Maps is new Ada.Containers.Indefinite_Ordered_Maps
-     (LSP.Messages.Span, Ada.Strings.UTF_Encoding.UTF_8_String);
+   package Vectors is new Ada.Containers.Indefinite_Vectors
+     (Natural, Text_Edit);
 
    procedure Insert_Change
-     (Map    : in out Maps.Map;
+     (Vector : in out Vectors.Vector;
       Span   : LSP.Messages.Span;
       Change : VSS.Strings.Virtual_String);
    --  Add to Map the contents of Change, converted to fit the needs
@@ -71,13 +73,13 @@ package body GPS.LSP_Client.Edit_Workspace is
    procedure Debug_Print_Changes
      (Editor  : GPS.Editors.Editor_Buffer'Class;
       Msg     : String;
-      Changes : Maps.Map);
+      Changes : Vectors.Vector);
    --  Trace the given edit changes.
 
    function Get_Minimal_Changes
      (Kernel   : not null access Kernel_Handle_Record'Class;
       Editor   : GPS.Editors.Editor_Buffer'Class;
-      Changes  : Maps.Map) return Maps.Map;
+      Changes  : Vectors.Vector) return Vectors.Vector;
    --  Reduce the given changes to more minimal ones, to allow keeping track of
    --  the cursor when applying TextEdits.
    --
@@ -93,10 +95,12 @@ package body GPS.LSP_Client.Edit_Workspace is
 
    procedure Get_Diff_Changes
      (Kernel        : not null access Kernel_Handle_Record'Class;
+      Editor        : GPS.Editors.Editor_Buffer'Class;
       Original_Span : LSP.Messages.Span;
+      Index         : in out Integer;
       Old_Text      : String;
       New_Text      : String;
-      Changes       : out Maps.Map);
+      Changes       : out Vectors.Vector);
    --  Compute the diff between Old_Text and New_Text using a Python
    --  implementation of the Myers diff algorithm.
 
@@ -150,18 +154,22 @@ package body GPS.LSP_Client.Edit_Workspace is
    function Get_Minimal_Changes
      (Kernel  : not null access Kernel_Handle_Record'Class;
       Editor  : GPS.Editors.Editor_Buffer'Class;
-      Changes : Maps.Map) return Maps.Map
+      Changes : Vectors.Vector) return Vectors.Vector
    is
-      New_Changes : Maps.Map;
-      C           : Maps.Cursor;
+      New_Changes : Vectors.Vector;
+      C           : Vectors.Cursor;
    begin
       C := Changes.Last;
 
       Trace (Me, "Nb changes: " & Integer'Image (Integer ((Changes.Length))));
 
-      while Maps.Has_Element (C) loop
+      Debug_Print_Changes
+        (Editor => Editor, Msg => "Original edits:", Changes => Changes);
+
+      while Vectors.Has_Element (C) loop
          declare
-            Span        : constant LSP.Messages.Span := Maps.Key (C);
+            Span        : constant LSP.Messages.Span :=
+              Vectors.Element (C).Span;
             From        : constant GPS.Editors.Editor_Location'Class :=
               GPS.LSP_Client.Utilities.LSP_Position_To_Location
                 (Editor, Span.first);
@@ -175,22 +183,33 @@ package body GPS.LSP_Client.Edit_Workspace is
                  Include_Hidden_Chars => False);
             Old_Text    : constant String :=
               Span_Text (Span_Text'First .. Span_Text'Last - 1);
-            New_Text    : String renames Maps.Element (C);
+            New_Text    : constant String :=
+              To_String (Vectors.Element (C).Text);
+
+            Cur_Change  : Vectors.Vector;
+            Index       : Integer := 1;
          begin
+
+            Cur_Change.Append (Vectors.Element (C));
             Debug_Print_Changes
-              (Editor => Editor, Msg => "Original edits:", Changes => Changes);
-            Me.Trace ("Computing minimal diffs...");
+              (Editor  => Editor,
+               Msg     => "Computing minimal diff:",
+               Changes => Cur_Change);
             Get_Diff_Changes
               (Kernel        => Kernel,
+               Editor        => Editor,
                Original_Span => Span,
+               Index         => Index,
                Old_Text      => Old_Text,
                New_Text      => New_Text,
                Changes       => New_Changes);
-            Debug_Print_Changes
-              (Editor => Editor, Msg => "New edits:", Changes => New_Changes);
+
          end;
-         Maps.Previous (C);
+         Vectors.Previous (C);
       end loop;
+
+      Debug_Print_Changes
+        (Editor => Editor, Msg => "New edits:", Changes => New_Changes);
 
       return New_Changes;
    end Get_Minimal_Changes;
@@ -201,31 +220,21 @@ package body GPS.LSP_Client.Edit_Workspace is
 
    procedure Get_Diff_Changes
      (Kernel        : not null access Kernel_Handle_Record'Class;
+      Editor        : GPS.Editors.Editor_Buffer'Class;
       Original_Span : LSP.Messages.Span;
+      Index         : in out Integer;
       Old_Text      : String;
       New_Text      : String;
-      Changes       : out Maps.Map)
+      Changes       : out Vectors.Vector)
    is
       use LSP.Types;
-      use type VSS.Unicode.UTF16_Code_Unit_Count;
 
       Script : constant GNATCOLL.Scripts.Scripting_Language :=
         Kernel.Scripts.Lookup_Scripting_Language (Python_Name);
       Data   : Callback_Data'Class := Create (Script, 2);
 
-      Cur_Delete_Cursor  : LSP.Messages.Position := Original_Span.first;
-      Next_Delete_Cursor : LSP.Messages.Position := Original_Span.first;
-      --  The buffer cursors that get updated each time we receive Delete/Keep
-      --  diff operations. This corresponds to characters being consumed in the
-      --  original state of the buffer after each diff operation, but without
-      --  modifying the actual buffer contents.
-
-      Cur_Insert_Cursor  : LSP.Messages.Position := Original_Span.first;
-      Next_Insert_Cursor : LSP.Messages.Position := Original_Span.first;
-      --  The buffer cursors that get updated each time we receive an
-      --  Insert/Keep diff operations. This corresponds to the buffer's cursor
-      --  as if we were applying each diff operation sequentially, with the
-      --  actual modifications to the buffer contents being peformed.
+      Cur_Cursor  : LSP.Messages.Position := Original_Span.last;
+      Next_Cursor : LSP.Messages.Position := Original_Span.last;
 
       type Diff_Operation_Type is (Keep, Insert, Delete);
       --  The type of diff operation.
@@ -268,24 +277,18 @@ package body GPS.LSP_Client.Edit_Workspace is
         (Cursor : LSP.Messages.Position;
          Str    : String) return LSP.Messages.Position
       is
-         New_Cursor : LSP.Messages.Position := Cursor;
+         Cur_Loc  : constant GPS.Editors.Editor_Location'Class :=
+           LSP_Position_To_Location (Editor, Cursor);
+         S        : constant VSS.Strings.Virtual_String :=
+           VSS.Strings.Conversions.To_Virtual_String (Str);
+         Iterator : constant VSS.Strings.Character_Iterators.Character_Iterator
+           := S.After_Last_Character;
+         Offset   : constant Integer := Integer (Iterator.First_UTF8_Offset);
+         New_Loc  : constant GPS.Editors.Editor_Location'Class :=
+           Editor.New_Location
+             (Offset => Cur_Loc.Offset - Offset);
       begin
-         --  Iterate over the string that we are deleting/inserting/keeping
-         --  to update the buffer's cursor new position..
-
-         for J in Str'Range loop
-            --  If we are deleting/inserting/keeping a newline, make sure to
-            --  take it into account by going to the next line.
-            --  Otherwise, just forward the character offset.
-            if Str (J) = ASCII.LF then
-               New_Cursor.line := New_Cursor.line + 1;
-               New_Cursor.character := 0;
-            else
-               New_Cursor.character := New_Cursor.character + 1;
-            end if;
-         end loop;
-
-         return New_Cursor;
+         return Location_To_LSP_Position (New_Loc);
       end Compute_New_Cursor;
 
    begin
@@ -296,9 +299,11 @@ package body GPS.LSP_Client.Edit_Workspace is
 
       --  Iterate over the results and create the new edit changes.
       declare
-         Result : constant List_Instance'Class := Return_Value (Data);
+         Result    : constant List_Instance'Class := Return_Value (Data);
+         Total_Arg : constant Integer := Number_Of_Arguments (Result);
       begin
-         for J in 1 .. Number_Of_Arguments (Result) loop
+         for J in reverse 1 .. Total_Arg loop
+            Index := Index + 1;
             declare
                Item      : constant List_Instance'Class :=
                  Result.Nth_Arg (J);
@@ -308,40 +313,34 @@ package body GPS.LSP_Client.Edit_Workspace is
             begin
                case Operation is
                   when Keep =>
-                     Next_Delete_Cursor :=
-                       Compute_New_Cursor (Cur_Delete_Cursor, Str);
-                     Next_Insert_Cursor :=
-                       Compute_New_Cursor (Cur_Insert_Cursor, Str);
+                     Next_Cursor :=
+                       Compute_New_Cursor (Cur_Cursor, Str);
 
                   when Delete =>
-                     Next_Delete_Cursor :=
-                       Compute_New_Cursor (Cur_Delete_Cursor, Str);
-                     Changes.Insert
-                       (Key      => (first => Cur_Delete_Cursor,
-                                     last  => Next_Delete_Cursor),
-                        New_Item => "");
+                     Next_Cursor :=
+                       Compute_New_Cursor (Cur_Cursor, Str);
+                     Changes.Prepend
+                       (Text_Edit'(Span => (first => Next_Cursor,
+                                            last  => Cur_Cursor),
+                                   Text  => To_Unbounded_String ("")));
 
                   when Insert =>
-                     Next_Insert_Cursor :=
-                       Compute_New_Cursor (Cur_Insert_Cursor, Str);
-                     Changes.Insert
-                       (Key      => (first => Cur_Insert_Cursor,
-                                     last  => Cur_Insert_Cursor),
-                        New_Item => Str);
+                     --  The cursor doesn't move when inserting
+                     Changes.Prepend
+                       (Text_Edit'(Span  => (first => Cur_Cursor,
+                                             last  => Next_Cursor),
+                                   Text => To_Unbounded_String (Str)));
                end case;
 
                Trace
                  (Me,
                   "===" & ASCII.LF
                   & Operation'Img & ": '" & Str & "'" & ASCII.LF
-                  & Print_Cursor (Cur_Insert_Cursor, "Cur_Insert")
-                  & Print_Cursor (Next_Insert_Cursor, "Next_Insert")
-                  & Print_Cursor (Cur_Delete_Cursor, "Cur_Delete")
-                  & Print_Cursor (Next_Delete_Cursor, "Next_Delete")
+                  & Print_Cursor (Next_Cursor, "Next_Cursor")
+                  & Print_Cursor (Cur_Cursor, "Cur_Cursor")
                   & "===" & ASCII.LF);
 
-               Cur_Delete_Cursor := Next_Delete_Cursor;
-               Cur_Insert_Cursor := Next_Insert_Cursor;
+               Cur_Cursor := Next_Cursor;
             end;
          end loop;
       end;
@@ -352,7 +351,7 @@ package body GPS.LSP_Client.Edit_Workspace is
    -------------------
 
    procedure Insert_Change
-     (Map    : in out Maps.Map;
+     (Vector : in out Vectors.Vector;
       Span   : LSP.Messages.Span;
       Change : VSS.Strings.Virtual_String)
    is
@@ -368,32 +367,13 @@ package body GPS.LSP_Client.Edit_Workspace is
 
       --  Strip any CRs from the text
       String_Utils.Strip_CR (Contents.all, Last, Ignored);
-      Map.Insert (Span, Contents (Contents'First .. Last));
+      Vector.Append
+        (Text_Edit'(Span => Span,
+                    Text =>
+                      To_Unbounded_String
+                        (Contents (Contents'First .. Last))));
       GNAT.Strings.Free (Contents);
    end Insert_Change;
-
-   -------
-   -- < --
-   -------
-
-   function "<" (Left, Right : LSP.Messages.Span) return Boolean is
-      use type VSS.Unicode.UTF16_Code_Unit_Count;
-
-   begin
-      if Left.first.line = Right.first.line then
-         if Left.first.character = Right.first.character then
-            if Left.last.line = Right.last.line then
-               return Left.last.character < Right.last.character;
-            else
-               return Left.last.line < Right.last.line;
-            end if;
-         else
-            return Left.first.character < Right.first.character;
-         end if;
-      else
-         return Left.first.line < Right.first.line;
-      end if;
-   end "<";
 
    -------------------------
    -- Debug_Print_Changes --
@@ -402,9 +382,9 @@ package body GPS.LSP_Client.Edit_Workspace is
    procedure Debug_Print_Changes
      (Editor  : GPS.Editors.Editor_Buffer'Class;
       Msg     : String;
-      Changes : Maps.Map)
+      Changes : Vectors.Vector)
    is
-      C : Maps.Cursor;
+      C : Vectors.Cursor;
    begin
       --  Return immediately if the debug trace is not active, since
       --  we are doing a loop with some position conversions, which can
@@ -416,10 +396,11 @@ package body GPS.LSP_Client.Edit_Workspace is
       Trace (Me, Msg);
       C := Changes.Last;
 
-      while Maps.Has_Element (C) loop
+      while Vectors.Has_Element (C) loop
          declare
-            Span     : constant LSP.Messages.Span := Maps.Key (C);
-            New_Text : constant String := Maps.Element (C);
+            Span     : constant LSP.Messages.Span :=
+              Vectors.Element (C).Span;
+            New_Text : constant String := To_String (Vectors.Element (C).Text);
             From     : constant GPS.Editors.Editor_Location'Class :=
               GPS.LSP_Client.Utilities.LSP_Position_To_Location
                 (Editor, Span.first);
@@ -438,8 +419,8 @@ package body GPS.LSP_Client.Edit_Workspace is
                 & Integer'Image (To.Line)
                 & ","
                 & Visible_Column_Type'Image (To.Column)
-                & ") new text:" & New_Text));
-            Maps.Previous (C);
+                & ") new text:""" & New_Text & """"));
+            Vectors.Previous (C);
          end;
       end loop;
    end Debug_Print_Changes;
@@ -466,14 +447,14 @@ package body GPS.LSP_Client.Edit_Workspace is
          return Boolean;
 
       procedure Process_File
-        (File : Virtual_File;
-         Map  : Maps.Map);
+        (File   : Virtual_File;
+         Vector : Vectors.Vector);
       --  Apply changes in the Map to the file
 
       procedure Internal_Process_File
         (File   : Virtual_File;
          Editor : GPS.Editors.Editor_Buffer'Class;
-         Map    : Maps.Map);
+         Vector : Vectors.Vector);
 
       ----------------------
       -- Edit_Affect_Span --
@@ -511,8 +492,8 @@ package body GPS.LSP_Client.Edit_Workspace is
       ------------------
 
       procedure Process_File
-        (File : Virtual_File;
-         Map  : Maps.Map) is
+        (File   : Virtual_File;
+         Vector : Vectors.Vector) is
       begin
          if Command.Auto_Save then
             declare
@@ -533,7 +514,7 @@ package body GPS.LSP_Client.Edit_Workspace is
                   Holder.Editor.Set_Opened_On_LSP_Server (True);
                end if;
 
-               Internal_Process_File (File, Holder.Editor, Map);
+               Internal_Process_File (File, Holder.Editor, Vector);
             end;
          else
             declare
@@ -543,7 +524,7 @@ package body GPS.LSP_Client.Edit_Workspace is
                     Open_View   => True,
                     Open_Buffer => True);
             begin
-               Internal_Process_File (File, Editor, Map);
+               Internal_Process_File (File, Editor, Vector);
             end;
          end if;
       end Process_File;
@@ -555,18 +536,18 @@ package body GPS.LSP_Client.Edit_Workspace is
       procedure Internal_Process_File
         (File   : Virtual_File;
          Editor : GPS.Editors.Editor_Buffer'Class;
-         Map    : Maps.Map)
+         Vector : Vectors.Vector)
       is
          G        : constant Group_Block := Editor.New_Undo_Group;
-         C        : Maps.Cursor;
+         C        : Vectors.Cursor;
          Writable : Boolean := False;
          Ignored  : GPS.Kernel.Messages.Markup.Markup_Message_Access;
          URI      : constant LSP.Messages.DocumentUri :=
            GPS.LSP_Client.Utilities.To_URI (File);
-         Changes  : constant Maps.Map :=
+         Changes  : constant Vectors.Vector :=
            (if Command.Compute_Minimal_Edits then
-               Get_Minimal_Changes (Kernel, Editor, Map)
-            else Map);
+               Get_Minimal_Changes (Kernel, Editor, Vector)
+            else Vector);
       begin
          if Command.Make_Writable
            and then Editor.Is_Read_Only
@@ -583,16 +564,16 @@ package body GPS.LSP_Client.Edit_Workspace is
          --  from the last to the first line
 
          C := Changes.Last;
-         while Maps.Has_Element (C) loop
+         while Vectors.Has_Element (C) loop
             declare
                use type Visible_Column_Type;
 
                From : constant GPS.Editors.Editor_Location'Class :=
                  GPS.LSP_Client.Utilities.LSP_Position_To_Location
-                   (Editor, Maps.Key (C).first);
+                   (Editor, Vectors.Element (C).Span.first);
                To   : constant GPS.Editors.Editor_Location'Class :=
                  GPS.LSP_Client.Utilities.LSP_Position_To_Location
-                   (Editor, Maps.Key (C).last);
+                   (Editor, Vectors.Element (C).Span.last);
 
                --  Set to -1 to detect if an edit was done
                Rev_To_Line     : Integer := -1;
@@ -600,7 +581,8 @@ package body GPS.LSP_Client.Edit_Workspace is
                Rev_Text        : Unbounded_String;
             begin
                if not Edit_Affect_Span
-                 (Maps.Key (C).first, Maps.Key (C).last)
+                 (Vectors.Element (C).Span.first,
+                  Vectors.Element (C).Span.last)
                then
                   --  This edit is silently ignored
                   Rev_To_Line := -1;
@@ -621,7 +603,7 @@ package body GPS.LSP_Client.Edit_Workspace is
                  (Command.Kernel.Refactoring_Context,
                   File,
                   From.Line, From.Column, To.Line, To.Column,
-                  Text          => Maps.Element (C),
+                  Text          => To_String (Vectors.Element (C).Text),
                   Rev_To_Line   => Rev_To_Line,
                   Rev_To_Column => Rev_To_Column,
                   Rev_Text      => Rev_Text)
@@ -658,7 +640,7 @@ package body GPS.LSP_Client.Edit_Workspace is
                      Allow_Auto_Jump_To_First => False);
                end if;
 
-               Maps.Previous (C);
+               Vectors.Previous (C);
 
                if Rev_To_Line /= -1 then
                   if not Command.Reverse_Edit.Contains (URI) then
@@ -708,20 +690,20 @@ package body GPS.LSP_Client.Edit_Workspace is
       declare
          use LSP.Messages.TextDocumentEdit_Maps;
 
-         Map : Maps.Map;
-         C   : LSP.Messages.TextDocumentEdit_Maps.Cursor :=
+         Vector : Vectors.Vector;
+         C      : LSP.Messages.TextDocumentEdit_Maps.Cursor :=
            Command.Workspace_Edit.changes.First;
       begin
          while Has_Element (C) loop
             for Change of Element (C) loop
-               Insert_Change (Map, Change.span, Change.newText);
+               Insert_Change (Vector, Change.span, Change.newText);
             end loop;
 
             Process_File
               (GPS.LSP_Client.Utilities.To_Virtual_File (Key (C)),
-               Map);
+               Vector);
 
-            Map.Clear;
+            Vector.Clear;
             Next (C);
          end loop;
       end;
@@ -734,19 +716,19 @@ package body GPS.LSP_Client.Edit_Workspace is
       begin
          while Has_Element (C) loop
             declare
-               Item : constant LSP.Messages.Document_Change := Element (C);
-               Map  : Maps.Map;
+               Item   : constant LSP.Messages.Document_Change := Element (C);
+               Vector : Vectors.Vector;
             begin
                case Item.Kind is
                   when LSP.Messages.Text_Document_Edit =>
                      for Change of Item.Text_Document_Edit.edits loop
-                        Insert_Change (Map, Change.span, Change.newText);
+                        Insert_Change (Vector, Change.span, Change.newText);
                      end loop;
 
                      Process_File
                        (GPS.LSP_Client.Utilities.To_Virtual_File
                           (Item.Text_Document_Edit.textDocument.uri),
-                        Map);
+                        Vector);
 
                   when LSP.Messages.Create_File =>
                      Error := True;
@@ -881,22 +863,22 @@ package body GPS.LSP_Client.Edit_Workspace is
       Need_Project_Refresh : Boolean := False;
 
       procedure Process_File
-        (File : Virtual_File;
-         Map  : Maps.Map);
-      --  Apply changes in the Map to the file
+        (File   : Virtual_File;
+         Vector : Vectors.Vector);
+      --  Apply changes in the Vector to the file
 
       procedure Internal_Process_File
         (File   : Virtual_File;
          Editor : GPS.Editors.Editor_Buffer'Class;
-         Map    : Maps.Map);
+         Vector : Vectors.Vector);
 
       ------------------
       -- Process_File --
       ------------------
 
       procedure Process_File
-        (File : Virtual_File;
-         Map  : Maps.Map) is
+        (File   : Virtual_File;
+         Vector : Vectors.Vector) is
       begin
          if Command.Auto_Save then
             declare
@@ -904,7 +886,7 @@ package body GPS.LSP_Client.Edit_Workspace is
                  Controlled_Editor_Buffer_Holder :=
                    Buffer_Factory.Get_Holder (File);
             begin
-               Internal_Process_File (File, Holder.Editor, Map);
+               Internal_Process_File (File, Holder.Editor, Vector);
             end;
          else
             declare
@@ -914,7 +896,7 @@ package body GPS.LSP_Client.Edit_Workspace is
                     Open_View   => True,
                     Open_Buffer => True);
             begin
-               Internal_Process_File (File, Editor, Map);
+               Internal_Process_File (File, Editor, Vector);
             end;
          end if;
       end Process_File;
@@ -926,7 +908,7 @@ package body GPS.LSP_Client.Edit_Workspace is
       procedure Internal_Process_File
         (File   : Virtual_File;
          Editor : GPS.Editors.Editor_Buffer'Class;
-         Map    : Maps.Map) is
+         Vector : Vectors.Vector) is
       begin
          if Editor.Can_Undo then
             --  At this point we are focused on an Editor for File with an
@@ -935,14 +917,15 @@ package body GPS.LSP_Client.Edit_Workspace is
          else
             declare
                G : constant Group_Block := Editor.New_Undo_Group;
-               C : Maps.Cursor;
+               C : Vectors.Cursor;
             begin
-               C := Map.First;
-               while Maps.Has_Element (C) loop
+               C := Vector.First;
+               while Vectors.Has_Element (C) loop
                   declare
                      --  S is a fake span which is already converted to an
                      --  Editor Location
-                     S     : constant LSP.Messages.Span := Maps.Key (C);
+                     S     : constant LSP.Messages.Span :=
+                       Vectors.Element (C).Span;
                      Dummy : constant Boolean :=
                        Refactoring.Services.Insert_Text
                          (Context     => Command.Kernel.Refactoring_Context,
@@ -953,9 +936,9 @@ package body GPS.LSP_Client.Edit_Workspace is
                           To_Line     => Integer (S.last.line),
                           To_Column   =>
                             Visible_Column_Type (S.last.character),
-                          Text        => Maps.Element (C));
+                          Text        => To_String (Vectors.Element (C).Text));
                   begin
-                     Maps.Next (C);
+                     Vectors.Next (C);
                   end;
                end loop;
             end;
@@ -1055,20 +1038,20 @@ package body GPS.LSP_Client.Edit_Workspace is
       declare
          use LSP.Messages.TextDocumentEdit_Maps;
 
-         Map : Maps.Map;
-         C   : LSP.Messages.TextDocumentEdit_Maps.Cursor :=
+         Vector : Vectors.Vector;
+         C      : LSP.Messages.TextDocumentEdit_Maps.Cursor :=
            Command.Reverse_Edit.First;
       begin
          while Has_Element (C) loop
             for Change of Element (C) loop
-               Insert_Change (Map, Change.span, Change.newText);
+               Insert_Change (Vector, Change.span, Change.newText);
             end loop;
 
             Process_File
               (GPS.LSP_Client.Utilities.To_Virtual_File (Key (C)),
-               Map);
+               Vector);
 
-            Map.Clear;
+            Vector.Clear;
             Next (C);
          end loop;
       end;
