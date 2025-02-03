@@ -698,6 +698,7 @@ package body CodePeer.Messages_Reports is
         (+Self.Analysis_Sort_Model, Compare'Access, Messages_Report (Self));
       Gtk.Tree_View.Gtk_New
         (Self.Analysis_View, +Self.Analysis_Sort_Model);
+      Self.Analysis_View.Set_Name ("gnatsas-messages_summary_tree");
       Scrolled.Add (Self.Analysis_View);
 
       Gtk.Tree_View_Column.Gtk_New (Column);
@@ -818,7 +819,8 @@ package body CodePeer.Messages_Reports is
          Title          => -"Warning categories",
          History_Prefix => "codepeer-summary_report-categories-warning",
          Items          => Project_Data.Warning_Subcategories,
-         Default        => True);
+         Default        => True,
+         Tree_Name      => "gnatsas-warning_categories");
       Category_Box.Pack_Start (Self.Warning_Categories_Editor);
 
       Message_Categories_Criteria_Callbacks.Connect
@@ -836,7 +838,8 @@ package body CodePeer.Messages_Reports is
          Title          => -"Check categories",
          History_Prefix => "codepeer-summary_report-categories-check",
          Items          => Project_Data.Check_Subcategories,
-         Default        => True);
+         Default        => True,
+         Tree_Name      => "gnatsas-check_categories");
       Category_Box.Pack_Start (Self.Check_Categories_Editor);
 
       Message_Categories_Criteria_Callbacks.Connect
@@ -859,7 +862,8 @@ package body CodePeer.Messages_Reports is
             Title          => -"CWE categories",
             History_Prefix => "codepeer-summary-report-categories-cwe",
             Items          => Project_Data.CWE_Categories,
-            Default        => False);
+            Default        => False,
+            Tree_Name      => "gnatsas-cwe_categories");
          Category_Box.Pack_Start (Self.CWE_Editor);
 
          CWE_Categories_Criteria_Callbacks.Connect
@@ -884,7 +888,8 @@ package body CodePeer.Messages_Reports is
          Title          => -"Message history",
          History_Prefix => "codepeer-summary_report-lifeage",
          Items          => Project_Data.Lifeage_Subcategories,
-         Default        => True);
+         Default        => True,
+         Tree_Name      => "gnatsas-message_history");
       Filter_Box.Pack_Start (Self.Lifeage_Editor);
 
       Lifeage_Criteria_Callbacks.Connect
@@ -908,7 +913,8 @@ package body CodePeer.Messages_Reports is
                 (Ranking_History_Prefix'First ..
                      Ranking_History_Prefix'Last - 1)),  --  Delete last '-'
          Items          => Project_Data.Ranking_Subcategories,
-         Default        => True);
+         Default        => True,
+         Tree_Name      => "gnatsas-message_ranking");
       Filter_Box.Pack_Start (Self.Ranking_Editor);
 
       Ranking_Criteria_Callbacks.Connect
@@ -929,7 +935,8 @@ package body CodePeer.Messages_Reports is
          Title          => -"Message review status",
          History_Prefix => "codepeer-summary_report-status",
          Items          => Audit_Statuses,
-         Default        => True);
+         Default        => True,
+         Tree_Name      => "gnatsas-message_review_status");
       Filter_Box.Pack_Start (Self.Audit_Editor);
 
       Audit_Statuses_Callbacks.Connect
