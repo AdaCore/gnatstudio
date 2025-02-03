@@ -1,0 +1,5 @@
+title: 'gs.450.execs_in_cwd'
+
+# This test is relevant only on Windows
+skip:
+    - ['SKIP', 'env.build.os.name == "linux"']

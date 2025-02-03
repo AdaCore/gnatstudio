@@ -299,34 +299,49 @@ package body DAP.Clients.Breakpoint_Managers is
    ----------------
 
    procedure Initialize
+     (Self : not null access Breakpoint_Manager_Type) is
+   begin
+      if Self.Client.Get_Executable = No_File then
+         Me.Trace ("No executable, do not load persistent breakpoints");
+
+      else
+         Me.Trace ("Load persistent breakpoints");
+
+         --  Initialize the debugger's breakpoints with the persistent ones set
+         --  for this executable outside the debugging session, if any.
+         Self.Holder.Initialize
+           (Vector => DAP.Module.Breakpoints.Get_Persistent_Breakpoints);
+      end if;
+
+      --  Add an exception breakpoint to catch any exception if the
+      --  corresponding preference is set.
+      if DAP.Modules.Preferences.Break_On_Exception.Get_Pref then
+         declare
+            Data    : constant Breakpoint_Data := Breakpoint_Data'
+              (Kind           => On_Exception,
+               Num            => 0,
+               Exception_Name =>
+                 DAP.Module.Breakpoints.All_Exceptions_Filter,
+               Unhandled      => False,
+               Disposition    => Keep,
+               others         => <>);
+         begin
+            Self.Holder.Append (Data);
+         end;
+      end if;
+   end Initialize;
+
+   ----------------------------
+   -- Initialize_Breakpoints --
+   ----------------------------
+
+   procedure Initialize_Breakpoints
      (Self : not null access Breakpoint_Manager_Type)
    is
       Map     : Breakpoint_Hash_Maps.Map;
       Indexes : Breakpoint_Index_Lists.List;
    begin
-      if Self.Client.Get_Executable /= No_File then
-         --  Initialize the debugger's breakpoints with the persistent ones set
-         --  for this executable outside the debugging session, if any.
-         Self.Holder.Initialize
-           (Vector => DAP.Module.Breakpoints.Get_Persistent_Breakpoints);
-
-         --  Add an exception breakpoint to catch any exception if the
-         --  corresponding preference is set.
-         if DAP.Modules.Preferences.Break_On_Exception.Get_Pref then
-            declare
-               Data    : constant Breakpoint_Data := Breakpoint_Data'
-                 (Kind           => On_Exception,
-                  Num            => 0,
-                  Exception_Name =>
-                    DAP.Module.Breakpoints.All_Exceptions_Filter,
-                  Unhandled      => False,
-                  Disposition    => Keep,
-                  others         => <>);
-            begin
-               Self.Holder.Append (Data);
-            end;
-         end if;
-
+      if not Self.Holder.Is_Empty then
          --  Monitor DAP responses to know when all the initial breakpoint
          --  requests have been processed.
          GPS.Kernel.Hooks.Dap_Response_Processed_Hook.Add
@@ -361,10 +376,11 @@ package body DAP.Clients.Breakpoint_Managers is
                   Kind    => Kind);
             end if;
          end loop;
+
       else
          Self.On_Initialized;
       end if;
-   end Initialize;
+   end Initialize_Breakpoints;
 
    -----------
    -- Break --
@@ -379,7 +395,6 @@ package body DAP.Clients.Breakpoint_Managers is
       --  Add the breakpoint in the holder
       Self.Holder.Append (Data);
 
-      --  Send the needed requests to the DAP server
       Update_Sychronization_Data
         (Data       => Sync_Data,
          Breakpoint => Data);
@@ -525,6 +540,7 @@ package body DAP.Clients.Breakpoint_Managers is
 
       Self.Synchonize_Breakpoints (Sync_Data);
    end Toggle_Instruction_Breakpoint;
+
    ---------------------
    -- Get_Breakpoints --
    ---------------------
@@ -759,7 +775,7 @@ package body DAP.Clients.Breakpoint_Managers is
       GPS.Kernel.Hooks.Debugger_Breakpoints_Changed_Hook.Run
         (Self.Kernel, Self.Client.Get_Visual);
 
-      Self.Client.On_Breakpoints_Set;
+      Self.Client.On_Breakpoints_Initialized;
    end On_Initialized;
 
    ----------------------------------------
@@ -800,6 +816,18 @@ package body DAP.Clients.Breakpoint_Managers is
      (Self      : not null access Breakpoint_Manager_Type;
       Sync_Data : Synchonization_Data) is
    begin
+      if Self.Client.Get_Status not in Stopped .. Running then
+         --  We have not sent the initial breakpoints list yet and the
+         --  debugger does not have the executable for debugging set yet.
+         --  We have stored changes in Breakpoint_Manager itself for now
+         --  and trigger the hook to update the GUI. We trigger the same
+         --  hook when sending requests below when we have responses to them.
+
+         GPS.Kernel.Hooks.Debugger_Breakpoints_Changed_Hook.Run
+           (Self.Client.Kernel, Self.Client.Get_Visual);
+         return;
+      end if;
+
       for File of Sync_Data.Files_To_Sync loop
          Self.Send_Breakpoint_Request
            (Indexes => Self.Holder.Get_For_File (File),
@@ -1068,7 +1096,7 @@ package body DAP.Clients.Breakpoint_Managers is
    procedure Finalize (Self : not null access Breakpoint_Manager_Type) is
       use Breakpoint_Vectors;
    begin
-      --  do not store breakpoints when we started debugging with no_executable
+      --  Do not store breakpoints when we started debugging with no_executable
       if Self.Client.Get_Executable /= No_File then
          --  Store breakpoints in the persistent storage
          if DAP.Modules.Preferences.Break_On_Exception.Get_Pref then

@@ -1,4 +1,5 @@
-""" Test how local variables/arguments is displayed """
+""" Test how local variables/arguments are displayed """
+
 from GPS import *
 from gs_utils.internal.utils import *
 
@@ -25,14 +26,14 @@ def run_test():
 
     GPS.MDI.get("main.adb").raise_window()
     yield wait_tasks()
-    GPS.EditorBuffer.get(GPS.File("main.adb")).current_view().goto(buf.at(6, 1))
+    buf.current_view().goto(buf.at(6, 1))
     GPS.process_all_events()
     yield wait_idle()
     yield wait_until_true(
         lambda: GPS.Action("debug set line breakpoint").can_execute() == False
     )
+    yield wait_idle()
     GPS.execute_action("debug set line breakpoint")
-    yield wait_DAP_server("setBreakpoints")
     yield wait_tasks()
 
     debug.send("run")

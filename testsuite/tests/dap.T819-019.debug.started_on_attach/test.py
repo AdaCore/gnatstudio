@@ -22,6 +22,7 @@ def test_driver():
 
     # Initialize a debug session without any main
     GPS.execute_action("/Debug/Initialize/no main file")
+    yield hook("debugger_started")
     yield wait_idle()
 
     # Attach to the running 'main' process

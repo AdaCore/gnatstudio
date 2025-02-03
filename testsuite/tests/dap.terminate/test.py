@@ -21,7 +21,7 @@ def test_driver():
     get_widgets_by_type(Gtk.CheckButton, dialog)[0].set_active(False)
     get_button_from_label("OK", dialog).clicked()
 
-    yield wait_for_mdi_child("Debugger Console main" + dot_exe)
+    yield wait_for_mdi_child("Debugger Execution main" + dot_exe)
     console = GPS.MDI.get("Debugger Console main" + dot_exe)
     console.close()
     yield hook("DAP_debugger_unloaded")
