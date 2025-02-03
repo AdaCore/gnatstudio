@@ -50,7 +50,8 @@ package CodePeer.Generic_Criteria_Editors is
       Title          : String;
       History_Prefix : String;
       Items          : Item_Sets.Set;
-      Default        : Boolean);
+      Default        : Boolean;
+      Tree_Name      : String);
 
    procedure Initialize
      (Self           : not null access Criteria_Editor_Record'Class;
@@ -58,7 +59,8 @@ package CodePeer.Generic_Criteria_Editors is
       Title          : String;
       History_Prefix : String;
       Items          : Item_Sets.Set;
-      Default        : Boolean);
+      Default        : Boolean;
+      Tree_Name      : String);
 
    function Get_Visible_Items
      (Self : access Criteria_Editor_Record'Class) return Item_Sets.Set;
