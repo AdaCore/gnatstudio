@@ -107,6 +107,8 @@ package body VCS2.Engines is
    type Dummy_VCS_Engine is new VCS_Engine with null record;
    overriding function Name
      (Self : not null access Dummy_VCS_Engine) return String is ("unknown");
+   overriding function User_Name
+     (Self : not null access Dummy_VCS_Engine) return String is ("");
    overriding procedure Ensure_Status_For_Files
      (Self      : not null access Dummy_VCS_Engine;
       Files     : File_Array;

@@ -904,3 +904,10 @@ class Git(core.VCS):
         status, _ = yield p.wait_until_terminate(show_if_error=True)
         if status == 0:
             visitor.success("Checkout successful")
+
+    def user_name(self):
+        process = GPS.Process(
+            ["git", "config", "user.name"], directory=self.working_dir.path
+        )
+        output = process.get_result()
+        return output

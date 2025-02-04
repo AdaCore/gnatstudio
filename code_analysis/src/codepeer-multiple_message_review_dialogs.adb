@@ -426,7 +426,8 @@ package body CodePeer.Multiple_Message_Review_Dialogs is
          Gtk.GEntry.Gtk_New (Self.Approved_Entry);
          Self.Approved_Entry.Set_Name ("Codepeer_Approved_Entry");
          Table.Attach (Self.Approved_Entry, 1, 2, 1, 2);
-         Self.Approved_Entry.Set_Text (CodePeer.Module.Get_Current_User);
+         Self.Approved_Entry.Set_Text
+           (CodePeer.Module.Get_Current_User (Kernel));
          Self.Approved_Entry.Select_Region (0);
 
          --  Comment field
