@@ -35,7 +35,7 @@ def test_driver():
     debug = GPS.Debugger.get()
     yield wait_tasks(other_than=known_tasks)
 
-    debug.break_at_location(GPS.File("parse_c.c"), 3)
+    debug.send("break foo")
     debug.send("run")
     yield wait_until_not_busy(debug)
 
