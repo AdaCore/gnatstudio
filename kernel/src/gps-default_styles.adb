@@ -21,11 +21,45 @@ with Ada.Strings.Unbounded;     use Ada.Strings.Unbounded;
 with GPS.Intl;                  use GPS.Intl;
 with Default_Preferences;       use Default_Preferences;
 with GPS.Kernel.Preferences;    use GPS.Kernel.Preferences;
+with GPS.Kernel.Hooks;          use GPS.Kernel.Hooks;
 
 package body GPS.Default_Styles is
 
    type Entity_To_Pref_Array is array
      (Standout_Language_Entity) of Variant_Preference;
+
+   type On_Pref_Changed is new Preferences_Hooks_Function with null record;
+   overriding procedure Execute
+     (Self   : On_Pref_Changed;
+      Kernel : not null access Kernel_Handle_Record'Class;
+      Pref   : Default_Preferences.Preference);
+   --  Called when the preferences have changed to update preferences that
+   --  are used for semantic highlighting and created based on another
+   --  preferences.
+
+   type LSP_Styles_Data is record
+      Name : Ada.Strings.Unbounded.Unbounded_String;
+      Pref : Variant_Preference;
+   end record;
+
+   All_Styles : array (1 .. 18) of LSP_Styles_Data;
+   --  All styles that used by semantic highlihgting
+
+   LSP_Styles : array (1 .. 14) of LSP_Styles_Data;
+   --  Exclusive LSP styles for semantic highlighting that are not used
+   --  anywhere else.
+
+   --  Styles' arrays for semantic tokens + modifiers, for example
+   --  Variable + Read_only
+   type LSP_Synthetic_Pref_Array is array (All_Styles'Range) of Style_Access;
+
+   LSP_Semantic_Readonly_Styles       : LSP_Synthetic_Pref_Array;
+   LSP_Semantic_Abstract_Styles       : LSP_Synthetic_Pref_Array;
+   LSP_Semantic_Declaration_Styles    : LSP_Synthetic_Pref_Array;
+   LSP_Semantic_Definition_Styles     : LSP_Synthetic_Pref_Array;
+   LSP_Semantic_Static_Styles         : LSP_Synthetic_Pref_Array;
+   LSP_Semantic_Documentation_Styles  : LSP_Synthetic_Pref_Array;
+   LSP_Semantic_Defaultlibrary_Styles : LSP_Synthetic_Pref_Array;
 
    -------------------------------
    -- Initialize_Default_Styles --
@@ -97,70 +131,46 @@ package body GPS.Default_Styles is
       Aspect_Styles : array (1 .. 4) of Style_Access;
       pragma Unreferenced (Aspect_Styles);
 
-      type LSP_Styles_Data is record
-         Name : Ada.Strings.Unbounded.Unbounded_String;
-         Pref : Variant_Preference;
-      end record;
-
-      LSP_Styles : constant array (1 .. 14) of LSP_Styles_Data :=
-        ((To_Unbounded_String ("namespace"), LSP_Namespace_Style),
-         (To_Unbounded_String ("class"), LSP_Class_Style),
-         (To_Unbounded_String ("enum"), LSP_Enum_Style),
-         (To_Unbounded_String ("interface"), LSP_Interface_Style),
-         (To_Unbounded_String ("struct"), LSP_Struct_Style),
-         (To_Unbounded_String ("typeparameter"), LSP_TypeParameter_Style),
-         (To_Unbounded_String ("parameter"), LSP_Parameter_Style),
-         (To_Unbounded_String ("variable"), LSP_Variable_Style),
-         (To_Unbounded_String ("property"), LSP_Property_Style),
-         (To_Unbounded_String ("enummember"), LSP_EnumMember_Style),
-         (To_Unbounded_String ("function"), LSP_Function_Style),
-         (To_Unbounded_String ("modifier"), LSP_Modifier_Style),
-         (To_Unbounded_String ("operator"), LSP_Operator_Style),
-         (To_Unbounded_String ("deprecated"), LSP_Deprecated_Style));
-
-      All_Styles : constant array (1 .. 18) of LSP_Styles_Data :=
-        ((To_Unbounded_String ("namespace"), LSP_Namespace_Style),
-         (To_Unbounded_String ("type"), Types_Style),
-         (To_Unbounded_String ("class"), LSP_Class_Style),
-         (To_Unbounded_String ("enum"), LSP_Enum_Style),
-         (To_Unbounded_String ("interface"), LSP_Interface_Style),
-         (To_Unbounded_String ("struct"), LSP_Struct_Style),
-         (To_Unbounded_String ("typeparameter"), LSP_TypeParameter_Style),
-         (To_Unbounded_String ("parameter"), LSP_Parameter_Style),
-         (To_Unbounded_String ("variable"), LSP_Variable_Style),
-         (To_Unbounded_String ("property"), LSP_Property_Style),
-         (To_Unbounded_String ("enummember"), LSP_EnumMember_Style),
-         (To_Unbounded_String ("function"), LSP_Function_Style),
-         (To_Unbounded_String ("keyword"), Keywords_Style),
-         (To_Unbounded_String ("modifier"), LSP_Modifier_Style),
-         (To_Unbounded_String ("comment"), Comments_Style),
-         (To_Unbounded_String ("string"), Strings_Style),
-         (To_Unbounded_String ("number"), Numbers_Style),
-         (To_Unbounded_String ("operator"), LSP_Operator_Style));
-
       LSP_Semantic_Styles : array (LSP_Styles'Range) of Style_Access;
       pragma Unreferenced (LSP_Semantic_Styles);
 
-      LSP_Semantic_Abstract_Styles : array (All_Styles'Range) of Style_Access;
-
-      LSP_Semantic_Declaration_Styles : array
-        (All_Styles'Range) of Style_Access;
-
-      LSP_Semantic_Definition_Styles : array
-        (All_Styles'Range) of Style_Access;
-
-      LSP_Semantic_Readonly_Styles : array (All_Styles'Range) of Style_Access;
-
-      LSP_Semantic_Static_Styles : array
-        (All_Styles'Range) of Style_Access;
-
-      LSP_Semantic_Documentation_Styles : array
-        (All_Styles'Range) of Style_Access;
-
-      LSP_Semantic_Defaultlibrary_Styles : array
-        (All_Styles'Range) of Style_Access;
-
    begin
+      All_Styles :=
+        ((To_Unbounded_String ("namespace"),     LSP_Namespace_Style),
+         (To_Unbounded_String ("type"),          Types_Style),
+         (To_Unbounded_String ("class"),         LSP_Class_Style),
+         (To_Unbounded_String ("enum"),          LSP_Enum_Style),
+         (To_Unbounded_String ("interface"),     LSP_Interface_Style),
+         (To_Unbounded_String ("struct"),        LSP_Struct_Style),
+         (To_Unbounded_String ("typeparameter"), LSP_TypeParameter_Style),
+         (To_Unbounded_String ("parameter"),     LSP_Parameter_Style),
+         (To_Unbounded_String ("variable"),      LSP_Variable_Style),
+         (To_Unbounded_String ("property"),      LSP_Property_Style),
+         (To_Unbounded_String ("enummember"),    LSP_EnumMember_Style),
+         (To_Unbounded_String ("function"),      LSP_Function_Style),
+         (To_Unbounded_String ("keyword"),       Keywords_Style),
+         (To_Unbounded_String ("modifier"),      LSP_Modifier_Style),
+         (To_Unbounded_String ("comment"),       Comments_Style),
+         (To_Unbounded_String ("string"),        Strings_Style),
+         (To_Unbounded_String ("number"),        Numbers_Style),
+         (To_Unbounded_String ("operator"),      LSP_Operator_Style));
+
+      LSP_Styles :=
+        ((To_Unbounded_String ("namespace"),     LSP_Namespace_Style),
+         (To_Unbounded_String ("class"),         LSP_Class_Style),
+         (To_Unbounded_String ("enum"),          LSP_Enum_Style),
+         (To_Unbounded_String ("interface"),     LSP_Interface_Style),
+         (To_Unbounded_String ("struct"),        LSP_Struct_Style),
+         (To_Unbounded_String ("typeparameter"), LSP_TypeParameter_Style),
+         (To_Unbounded_String ("parameter"),     LSP_Parameter_Style),
+         (To_Unbounded_String ("variable"),      LSP_Variable_Style),
+         (To_Unbounded_String ("property"),      LSP_Property_Style),
+         (To_Unbounded_String ("enummember"),    LSP_EnumMember_Style),
+         (To_Unbounded_String ("function"),      LSP_Function_Style),
+         (To_Unbounded_String ("modifier"),      LSP_Modifier_Style),
+         (To_Unbounded_String ("operator"),      LSP_Operator_Style),
+         (To_Unbounded_String ("deprecated"),    LSP_Deprecated_Style));
+
       Aspect_Styles (1) := M.Create_From_Preferences
         (Key     => "aspect_block",
          Style   => Default_Style,
@@ -375,6 +385,93 @@ package body GPS.Default_Styles is
             Bg        => Low_Messages_Highlight,
             Speedbar  => True);
 
+      Preferences_Changed_Hook.Add
+        (Obj => new On_Pref_Changed);
    end Initialize_Default_Styles;
+
+   -------------
+   -- Execute --
+   -------------
+
+   overriding procedure Execute
+     (Self   : On_Pref_Changed;
+      Kernel : not null access Kernel_Handle_Record'Class;
+      Pref   : Default_Preferences.Preference)
+   is
+      M     : constant Style_Manager_Access := Get_Style_Manager
+        (Kernel_Handle (Kernel));
+      Style : Style_Access;
+
+      procedure Update_Prefs (Arr : LSP_Synthetic_Pref_Array);
+      --  Update preferences based on the changed one
+
+      ------------------
+      -- Update_Prefs --
+      ------------------
+
+      procedure Update_Prefs (Arr : LSP_Synthetic_Pref_Array) is
+      begin
+         for Index in All_Styles'Range loop
+            Style := M.Get (Style_Key (To_String (All_Styles (Index).Name)));
+            Arr (Index).Set_Foreground (Style.Foreground);
+            Arr (Index).Set_Background (Style.Background);
+         end loop;
+      end Update_Prefs;
+
+   begin
+      if Pref = null then
+         Update_Prefs (LSP_Semantic_Declaration_Styles);
+         Update_Prefs (LSP_Semantic_Definition_Styles);
+         Update_Prefs (LSP_Semantic_Abstract_Styles);
+         Update_Prefs (LSP_Semantic_Static_Styles);
+         Update_Prefs (LSP_Semantic_Documentation_Styles);
+         Update_Prefs (LSP_Semantic_Defaultlibrary_Styles);
+
+         for Index in All_Styles'Range loop
+            Style := M.Get (Style_Key (To_String (All_Styles (Index).Name)));
+            LSP_Semantic_Readonly_Styles (Index).Set_Foreground
+              (Style.Foreground);
+            LSP_Semantic_Readonly_Styles (Index).Set_Background
+              (LSP_Readonly_Bg.Get_Pref);
+         end loop;
+
+      else
+         for Index in All_Styles'Range loop
+            if Pref = Preference (All_Styles (Index).Pref) then
+               declare
+                  ------------
+                  -- Update --
+                  ------------
+
+                  procedure Update (Arr : LSP_Synthetic_Pref_Array);
+                  procedure Update (Arr : LSP_Synthetic_Pref_Array) is
+                  begin
+                     Arr (Index).Set_Foreground (Style.Foreground);
+                     Arr (Index).Set_Background (Style.Background);
+                  end Update;
+
+               begin
+                  Style := M.Get
+                    (Style_Key (To_String (All_Styles (Index).Name)));
+
+                  Update (LSP_Semantic_Declaration_Styles);
+                  Update (LSP_Semantic_Definition_Styles);
+                  Update (LSP_Semantic_Abstract_Styles);
+                  Update (LSP_Semantic_Static_Styles);
+                  Update (LSP_Semantic_Documentation_Styles);
+                  Update (LSP_Semantic_Defaultlibrary_Styles);
+               end;
+               exit;
+            end if;
+         end loop;
+
+         if Pref = Preference (LSP_Readonly_Bg) then
+            for Index in LSP_Semantic_Readonly_Styles'Range loop
+               LSP_Semantic_Readonly_Styles (Index).Set_Background
+                 (LSP_Readonly_Bg.Get_Pref);
+            end loop;
+         end if;
+      end if;
+   end Execute;
 
 end GPS.Default_Styles;
