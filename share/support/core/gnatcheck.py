@@ -603,12 +603,6 @@ attribute="Default_Switches">
     <switches sections="-rules">
         <check label="process RTL units" switch="-a" line="1"/>
         <check label="debug mode" switch="-d" line="1"/>
-        <field label="Coding standard file"
-                switch="-from"
-                separator="="
-                as-file="true"
-                line="1"
-                section="-rules"/>
     </switches>
 </tool>
 <project_attribute package="Check"
@@ -617,10 +611,13 @@ attribute="Default_Switches">
     list="true"
     hide_in="wizard library_wizard properties">
 </project_attribute>
-<project_attribute package="Check"
+  <project_attribute
     name="Rule_File"
-    editor_page="GNATCheck"
-    list="false"
-    hide_in="wizard library_wizard properties">
-</project_attribute>"""
+    label="Rule File"
+    package="Check"
+    editor_page="GNATcheck"
+    editor_section="Rule File"
+    description="LKQL file to use as coding standard.">
+    <string type="file"/>
+  </project_attribute>"""
 )
