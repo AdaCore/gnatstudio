@@ -74,9 +74,35 @@ directory if you want to share themes accross your team.
    * - `entity.name.aspect`
      - Ghost names
    * - `entity.name.function`
-     - Block Higghlighting
-   * - `entity.ephemeral`
+     - Subprogram
+   * - `entity.name.type.class.semantic`
+     - Class
+   * - `entity.name.enum`
+     - Enum
+   * - `entity.name.enum.member`
+     - EnumMember
+   * - `entity.name.interface`
+     - Interface
+   * - `entity.name.struct`
+     - Structure
+   * - `entity.name.typeparameter`
+     - TypeParameter
+   * - `entity.name.parameter`
+     - Parameter
+   * - `entity.name.variable`
+     - Variable
+   * - `entity.name.property`
+     - Property
+   * - `entity.name.modifier`
+     - Modifier
+   * - `entity.name.operator`
+     - Operator
+   * - `entity.name.deprecated`
+     - Deprecated
+   * - `entity.other.ephemeral`
      - Ephemeral highlighting (smart)
+   * - `entity.other.namespace`
+     - Namespace
    * - `string.aspect`
      - Strings in aspect
    * - `string.other.link`
@@ -89,6 +115,10 @@ directory if you want to share themes accross your team.
      - Read-only code
    * - `meta.bookmark`
      - Lines with a bookmark
+   * - `meta.block`
+     - Block Higghlighting
+   * - `meta.block.current`
+     - Current block color
 
 Custom Fonts
 ============

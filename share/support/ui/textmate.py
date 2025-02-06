@@ -28,20 +28,34 @@ text_variant_prefs = {
     "constant.ephemeral": "ephemeral_simple",  # Ephemeral highlighting (simple)
     "entity.name.type": "types",  # Types
     "entity.name.type.class": "types",  # Types
+    "entity.name.type.class.semantic": "classes",  # Class
     "entity.name.type.aspect": "types_in_aspects",  # Types in ghost
     "entity.name.aspect": "blocks_in_aspects",  # Ghost names
-    "entity.name.function": "blocks",  # Block Higghlighting
-    "entity.ephemeral": "ephemeral_smart",  # Ephemeral highlighting (smart)
+    "entity.name.function": "functions",  # Block Higghlighting
+    "entity.name.enum": "enums",  # Enum
+    "entity.name.enum.member": "enummembers",  # EnumMember
+    "entity.name.interface": "interfaces",  # Interface
+    "entity.name.struct": "structs",  # Structure
+    "entity.name.typeparameter": "typeparameters",  # TypeParameter
+    "entity.name.parameter": "parameters",  # Parameter
+    "entity.name.variable": "variables",  # Variable
+    "entity.name.property": "propertys",  # Property
+    "entity.name.modifier": "modifiers",  # Modifier
+    "entity.name.operator": "operators",  # Operator
+    "entity.name.deprecated": "deprecateds",  # Deprecated
+    "entity.other.ephemeral": "ephemeral_smart",  # Ephemeral highlighting (smart)
+    "entity.other.namespace": "namespaces",  # Namespace
     "string": "strings",  # Strings
     "string.aspect": "strings_in_aspects",  # Strings in aspect
     "string.other.link": "hyperlinks",  # Hyper links
     "meta.preprocessor": "preprocessor",  # Preprocessor
     "meta.multicursor_selection": "multicursor_selection",  # Multi cursor selection
     "meta.annotations": "annotations",  # Code annotations
+    "meta.block": "blocks",  # Block Higghlighting
 }
 
 color_prefs = {
-    "entity.name.function": "current_block",  # Current block color
+    "meta.block.current": "current_block",  # Current block color
     "meta.readonly": "readonly",  # Read-only code
     "meta.bookmark": "bookmarks",  # Lines with a bookmark
 }
