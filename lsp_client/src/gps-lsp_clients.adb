@@ -739,8 +739,7 @@ package body GPS.LSP_Clients is
                begin
                   Request.On_Error_Message
                     (Code    => error.Value.code,
-                     Message => VSS.Strings.Conversions.To_UTF_8_String
-                                  (error.Value.message),
+                     Message => error.Value.message,
                      Data    => GNATCOLL.JSON.JSON_Value (error.Value.data));
 
                exception

@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                               GNAT Studio                                --
 --                                                                          --
---                        Copyright (C) 2020-2023, AdaCore                  --
+--                        Copyright (C) 2020-2025, AdaCore                  --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -68,7 +68,7 @@ package body GPS.LSP_Client.Dependency_Browers is
    overriding procedure On_Error_Message
      (Self    : in out Show_Dependencies_Request;
       Code    : LSP.Messages.ErrorCodes;
-      Message : String;
+      Message : VSS.Strings.Virtual_String;
       Data    : GNATCOLL.JSON.JSON_Value);
 
    overriding function Get_Task_Label
@@ -140,7 +140,7 @@ package body GPS.LSP_Client.Dependency_Browers is
    overriding procedure On_Error_Message
      (Self    : in out Show_Dependencies_Request;
       Code    : LSP.Messages.ErrorCodes;
-      Message : String;
+      Message : VSS.Strings.Virtual_String;
       Data    : GNATCOLL.JSON.JSON_Value)
    is
       Lang   : constant Language_Access :=

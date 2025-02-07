@@ -28,6 +28,7 @@ with VSS.Strings.Character_Iterators;
 pragma Unreferenced (VSS.Strings.Character_Iterators);
 --  GNAT 20211114 generates incorrect warning, with clause is necessary to
 --  make visible Virtual_String.First_Character.Element subprogram.
+with VSS.Strings.Conversions;
 
 with Gtkada.MDI;
 
@@ -84,7 +85,7 @@ package body GPS.LSP_Client.Editors.Formatting is
    overriding procedure On_Error_Message
      (Self    : in out Document_Formatting_Request;
       Code    : LSP.Messages.ErrorCodes;
-      Message : String;
+      Message : VSS.Strings.Virtual_String;
       Data    : GNATCOLL.JSON.JSON_Value);
 
    -- Range_Formatting_Request --
@@ -102,7 +103,7 @@ package body GPS.LSP_Client.Editors.Formatting is
    overriding procedure On_Error_Message
      (Self    : in out Range_Formatting_Request;
       Code    : LSP.Messages.ErrorCodes;
-      Message : String;
+      Message : VSS.Strings.Virtual_String;
       Data    : GNATCOLL.JSON.JSON_Value);
 
    -- On_Type_Formatting_Request --
@@ -222,25 +223,30 @@ package body GPS.LSP_Client.Editors.Formatting is
    overriding procedure On_Error_Message
      (Self    : in out Document_Formatting_Request;
       Code    : LSP.Messages.ErrorCodes;
-      Message : String;
+      Message : VSS.Strings.Virtual_String;
       Data    : GNATCOLL.JSON.JSON_Value) is
    begin
       --  Try to parse the formatter's output, in case the format is recognized
       --  (which is the case for the ALS).
       GPS.Kernel.Messages.Tools_Output.Parse_File_Locations
         (Self.Kernel,
-         Text              => Message,
+         Text              =>
+           VSS.Strings.Conversions.To_UTF_8_String (Message),
          Category          => "Formatting",
          Highlight         => True,
          Styles            => GPS.Default_Styles.Messages_Styles,
          Show_In_Locations => True);
 
       --  Display the message in the Messages view
-      Self.Kernel.Insert (Message);
+      Self.Kernel.Insert
+        (VSS.Strings.Conversions.To_UTF_8_String (Message));
 
    exception
       when E : others =>
-         Trace (Me, "Exception found when parsing message: " & Message);
+         Trace
+           (Me,
+            "Exception found when parsing message: "
+            & VSS.Strings.Conversions.To_UTF_8_String (Message));
          Trace (Me, Exception_Message (E));
    end On_Error_Message;
 
@@ -313,25 +319,30 @@ package body GPS.LSP_Client.Editors.Formatting is
    overriding procedure On_Error_Message
      (Self    : in out Range_Formatting_Request;
       Code    : LSP.Messages.ErrorCodes;
-      Message : String;
+      Message : VSS.Strings.Virtual_String;
       Data    : GNATCOLL.JSON.JSON_Value) is
    begin
       --  Try to parse the formatter's output, in case the format is recognized
       --  (which is the case for the ALS).
       GPS.Kernel.Messages.Tools_Output.Parse_File_Locations
         (Self.Kernel,
-         Text              => Message,
+         Text              =>
+           VSS.Strings.Conversions.To_UTF_8_String (Message),
          Category          => "Formatting",
          Highlight         => True,
          Styles            => GPS.Default_Styles.Messages_Styles,
          Show_In_Locations => True);
 
       --  Display the message in the Messages view
-      Self.Kernel.Insert (Message);
+      Self.Kernel.Insert
+        (VSS.Strings.Conversions.To_UTF_8_String (Message));
 
    exception
       when E : others =>
-         Trace (Me, "Exception found when parsing message: " & Message);
+         Trace
+           (Me,
+            "Exception found when parsing message: "
+            & VSS.Strings.Conversions.To_UTF_8_String (Message));
          Trace (Me, Exception_Message (E));
    end On_Error_Message;
 

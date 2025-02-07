@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                               GNAT Studio                                --
 --                                                                          --
---                        Copyright (C) 2019-2023, AdaCore                  --
+--                        Copyright (C) 2019-2025, AdaCore                  --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -104,7 +104,7 @@ package body GPS.LSP_Client.Editors.Tooltips is
    overriding procedure On_Error_Message
      (Self    : in out GPS_LSP_Hover_Request;
       Code    : LSP.Messages.ErrorCodes;
-      Message : String;
+      Message : VSS.Strings.Virtual_String;
       Data    : GNATCOLL.JSON.JSON_Value);
 
    overriding procedure On_Rejected
@@ -463,12 +463,15 @@ package body GPS.LSP_Client.Editors.Tooltips is
    overriding procedure On_Error_Message
      (Self    : in out GPS_LSP_Hover_Request;
       Code    : LSP.Messages.ErrorCodes;
-      Message : String;
+      Message : VSS.Strings.Virtual_String;
       Data    : GNATCOLL.JSON.JSON_Value)
    is
       pragma Unreferenced (Code, Self);
    begin
-      Trace (Me, "Error received on hover request: " & Message);
+      Trace
+        (Me,
+         "Error received on hover request: "
+         & VSS.Strings.Conversions.To_UTF_8_String (Message));
       Trace (Me, "Data: " & GNATCOLL.JSON.Write (Data));
    end On_Error_Message;
 

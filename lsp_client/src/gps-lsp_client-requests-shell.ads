@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                               GNAT Studio                                --
 --                                                                          --
---                       Copyright (C) 2019-2023, AdaCore                   --
+--                       Copyright (C) 2019-2025, AdaCore                   --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -14,6 +14,7 @@
 -- COPYING3.  If not, go to http://www.gnu.org/licenses for a complete copy --
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
+
 --  LSP request to be used by scripting languages integration.
 
 with GNATCOLL.Scripts;
@@ -54,7 +55,7 @@ package GPS.LSP_Client.Requests.Shell is
    overriding procedure On_Error_Message
      (Self    : in out Shell_Request;
       Code    : LSP.Messages.ErrorCodes;
-      Message : String;
+      Message : VSS.Strings.Virtual_String;
       Data    : GNATCOLL.JSON.JSON_Value);
 
    overriding procedure On_Rejected

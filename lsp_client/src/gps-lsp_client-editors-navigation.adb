@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                               GNAT Studio                                --
 --                                                                          --
---                        Copyright (C) 2019-2023, AdaCore                  --
+--                        Copyright (C) 2019-2025, AdaCore                  --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -118,7 +118,7 @@ package body GPS.LSP_Client.Editors.Navigation is
    overriding procedure On_Error_Message
      (Self    : in out GPS_LSP_Simple_Request;
       Code    : LSP.Messages.ErrorCodes;
-      Message : String;
+      Message : VSS.Strings.Virtual_String;
       Data    : GNATCOLL.JSON.JSON_Value);
 
    overriding function Auto_Cancel
@@ -743,7 +743,7 @@ package body GPS.LSP_Client.Editors.Navigation is
    overriding procedure On_Error_Message
      (Self    : in out GPS_LSP_Simple_Request;
       Code    : LSP.Messages.ErrorCodes;
-      Message : String;
+      Message : VSS.Strings.Virtual_String;
       Data    : GNATCOLL.JSON.JSON_Value) is
    begin
       Cancel_Activity_Bar (Self.Kernel, Self.File);

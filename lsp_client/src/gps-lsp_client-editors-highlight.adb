@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                               GNAT Studio                                --
 --                                                                          --
---                        Copyright (C) 2019-2024, AdaCore                  --
+--                        Copyright (C) 2019-2025, AdaCore                  --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -16,13 +16,17 @@
 ------------------------------------------------------------------------------
 
 with Ada.Strings.Unbounded;      use Ada.Strings.Unbounded;
-with Basic_Types;                use Basic_Types;
-with Glib.Main;                  use Glib.Main;
-with Glib;                       use Glib;
+
 with GNATCOLL.JSON;
 with GNATCOLL.Projects;
 with GNATCOLL.Traces;            use GNATCOLL.Traces;
 with GNATCOLL.VFS;               use GNATCOLL.VFS;
+
+with VSS.Strings.Conversions;
+
+with Basic_Types;                use Basic_Types;
+with Glib.Main;                  use Glib.Main;
+with Glib;                       use Glib;
 with GPS.Default_Styles;         use GPS.Default_Styles;
 with GPS.Kernel.Contexts;        use GPS.Kernel.Contexts;
 with GPS.Kernel.Hooks;           use GPS.Kernel.Hooks;
@@ -57,7 +61,7 @@ package body GPS.LSP_Client.Editors.Highlight is
    overriding procedure On_Error_Message
      (Self    : in out GPS_LSP_Document_Highlight_Request;
       Code    : LSP.Messages.ErrorCodes;
-      Message : String;
+      Message : VSS.Strings.Virtual_String;
       Data    : GNATCOLL.JSON.JSON_Value);
 
    overriding procedure On_Rejected
@@ -191,12 +195,15 @@ package body GPS.LSP_Client.Editors.Highlight is
    overriding procedure On_Error_Message
      (Self    : in out GPS_LSP_Document_Highlight_Request;
       Code    : LSP.Messages.ErrorCodes;
-      Message : String;
+      Message : VSS.Strings.Virtual_String;
       Data    : GNATCOLL.JSON.JSON_Value)
    is
       pragma Unreferenced (Code, Self);
    begin
-      Trace (Me, "Error received on hover request: " & Message);
+      Trace
+        (Me,
+         "Error received on hover request: "
+         & VSS.Strings.Conversions.To_UTF_8_String (Message));
       Trace (Me, "Data: " & GNATCOLL.JSON.Write (Data));
    end On_Error_Message;
 

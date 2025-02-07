@@ -112,7 +112,7 @@ package body GPS.LSP_Client.Completion is
    overriding procedure On_Error_Message
      (Self    : in out LSP_Completion_Request;
       Code    : LSP.Messages.ErrorCodes;
-      Message : String;
+      Message : VSS.Strings.Virtual_String;
       Data    : GNATCOLL.JSON.JSON_Value);
 
    overriding procedure Finalize (Self : in out LSP_Completion_Request)
@@ -731,7 +731,7 @@ package body GPS.LSP_Client.Completion is
    overriding procedure On_Error_Message
      (Self    : in out LSP_Completion_Request;
       Code    : LSP.Messages.ErrorCodes;
-      Message : String;
+      Message : VSS.Strings.Virtual_String;
       Data    : GNATCOLL.JSON.JSON_Value)
    is
       pragma Unreferenced (Self);
@@ -739,7 +739,10 @@ package body GPS.LSP_Client.Completion is
       Window : constant Completion_Display_Interface_Access :=
                   Get_Completion_Display;
    begin
-      Trace (Advanced_Me, "Error received: " & Message);
+      Trace
+        (Advanced_Me,
+         "Error received: "
+         & VSS.Strings.Conversions.To_UTF_8_String (Message));
 
       if Window /= null then
          Window.Display_Proposals (Null_Completion_List);

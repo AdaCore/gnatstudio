@@ -20,7 +20,6 @@ with GNATCOLL.JSON;
 with GNATCOLL.Traces;               use GNATCOLL.Traces;
 with GNATCOLL.VFS;                  use GNATCOLL.VFS;
 
-with GPS.Kernel.Preferences;
 with VSS.Strings.Conversions;
 
 with Glib;                          use Glib;
@@ -39,6 +38,7 @@ with GPS.Editors;                   use GPS.Editors;
 with GPS.Kernel.Actions;            use GPS.Kernel.Actions;
 with GPS.Kernel.Contexts;           use GPS.Kernel.Contexts;
 with GPS.Kernel.Modules.UI;         use GPS.Kernel.Modules.UI;
+with GPS.Kernel.Preferences;
 with GPS.Main_Window;               use GPS.Main_Window;
 
 with Basic_Types;
@@ -89,7 +89,7 @@ package body GPS.LSP_Client.Refactoring.Rename is
    overriding procedure On_Error_Message
      (Self    : in out Rename_Request;
       Code    : LSP.Messages.ErrorCodes;
-      Message : String;
+      Message : VSS.Strings.Virtual_String;
       Data    : GNATCOLL.JSON.JSON_Value);
 
    -- Entity_Renaming_Dialog_Record --
@@ -394,7 +394,7 @@ package body GPS.LSP_Client.Refactoring.Rename is
    overriding procedure On_Error_Message
      (Self    : in out Rename_Request;
       Code    : LSP.Messages.ErrorCodes;
-      Message : String;
+      Message : VSS.Strings.Virtual_String;
       Data    : GNATCOLL.JSON.JSON_Value)
    is
       Holder : constant Controlled_Editor_Buffer_Holder :=
@@ -403,7 +403,10 @@ package body GPS.LSP_Client.Refactoring.Rename is
    begin
       Holder.Editor.Current_View.Set_Activity_Progress_Bar_Visibility
         (False);
-      Trace (Me, "Error when renaming: " & Message);
+      Trace
+        (Me,
+         "Error when renaming: "
+         & VSS.Strings.Conversions.To_UTF_8_String (Message));
    end On_Error_Message;
 
    ----------------------------------

@@ -32,6 +32,12 @@ with GNATCOLL.VFS;
 with GNATCOLL.Utils;             use GNATCOLL.Utils;
 with GNATCOLL.Xref;
 
+with VSS.JSON.Pull_Readers.Simple;
+with VSS.String_Vectors;
+with VSS.Strings.Conversions;
+with VSS.Text_Streams.Memory_UTF8_Input;
+with VSS.Text_Streams.Memory_UTF8_Output;
+
 with Gtkada.Handlers;            use Gtkada.Handlers;
 with Gtkada.Stock_Labels;
 with Gtk.Box;                    use Gtk.Box;
@@ -42,12 +48,6 @@ with Gtk.Enums;                  use Gtk.Enums;
 with Gtk.Radio_Button;           use Gtk.Radio_Button;
 with Gtk.Widget;                 use Gtk.Widget;
 with Glib.Convert;               use Glib.Convert;
-
-with VSS.JSON.Pull_Readers.Simple;
-with VSS.String_Vectors;
-with VSS.Strings.Conversions;
-with VSS.Text_Streams.Memory_UTF8_Input;
-with VSS.Text_Streams.Memory_UTF8_Output;
 
 with GPS.Default_Styles;         use GPS.Default_Styles;
 with GPS.Editors;
@@ -148,7 +148,7 @@ package body GPS.LSP_Client.References is
    overriding procedure On_Error_Message
      (Self    : in out References_Request;
       Code    : LSP.Messages.ErrorCodes;
-      Message : String;
+      Message : VSS.Strings.Virtual_String;
       Data    : GNATCOLL.JSON.JSON_Value);
 
    -- Others --
@@ -709,7 +709,7 @@ package body GPS.LSP_Client.References is
    overriding procedure On_Error_Message
      (Self    : in out References_Request;
       Code    : LSP.Messages.ErrorCodes;
-      Message : String;
+      Message : VSS.Strings.Virtual_String;
       Data    : GNATCOLL.JSON.JSON_Value)
    is
       Locations : constant GPS.Location_View.Location_View_Access :=
