@@ -2006,9 +2006,10 @@ package body CodePeer.Module is
       Location : Editor_Location'Class :=
         Message.Get_Editor_Mark.Location;
 
-      type Words_Array is array (Positive range <>) of Unbounded_String;
+      type Words_Array is
+        array (Positive range <>) of VSS.Strings.Virtual_String;
       Empty : constant Words_Array (1 .. 0) :=
-        (others => Null_Unbounded_String);
+        (others => VSS.Strings.Empty_Virtual_String);
 
       procedure Insert_After
         (Words   : Words_Array := Empty;
@@ -2035,9 +2036,8 @@ package body CodePeer.Module is
             if Location.Starts_Word then
                --  We are on the word start, check if we have it in Words
                declare
-                  Current : constant String :=
-                    Editor.Get_Chars_S
-                      (Location, Location.Forward_To_Word_End);
+                  Current : constant VSS.Strings.Virtual_String :=
+                    Editor.Get_Text (Location, Location.Forward_To_Word_End);
                begin
                   for Word of Words loop
                      if Current = Word then
@@ -2046,10 +2046,11 @@ package body CodePeer.Module is
 
                         --  Check that we should skip the words combination
                         for Except of Excepts loop
-                           Skip := Editor.Get_Chars_S
+                           Skip := Editor.Get_Text
                              (Location,
-                              Location.Forward_Char (Except.Length - 1)) =
-                               Except;
+                              Location.Forward_Char
+                                (Integer (Except.Character_Length) - 1))
+                               = Except;
                         end loop;
 
                         if not Skip then
@@ -2087,15 +2088,15 @@ package body CodePeer.Module is
       begin
          case Location.Block_Type is
             when Cat_Loop_Statement =>
-               Insert_After ((1 => To_Unbounded_String ("loop")));
+               Insert_After (["loop"]);
 
             when Language.Cat_If_Statement =>
                Insert_After
-                 ((1 => To_Unbounded_String ("then")),
-                  (1 => To_Unbounded_String ("and then")));
+                 ([1 => "then"],
+                  [1 => "and then"]);
 
             when Cat_Case_Statement =>
-               Insert_After ((1 => To_Unbounded_String ("is")));
+               Insert_After (["is"]);
 
             when others =>
                Insert_After;
