@@ -15,8 +15,6 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with Ada.Strings.Unbounded;      use Ada.Strings.Unbounded;
-
 with GNATCOLL.JSON;
 with GNATCOLL.Projects;
 with GNATCOLL.Traces;            use GNATCOLL.Traces;
@@ -96,16 +94,16 @@ package body GPS.LSP_Client.Editors.Highlight is
       Editor_Line => True);
 
    type Highlighting_Context_Type is record
-      Line   : Integer := 0;
+      Line   : Integer             := 0;
       Column : Visible_Column_Type := 0;
-      Word   : Unbounded_String := Null_Unbounded_String;
+      Word   : VSS.Strings.Virtual_String;
    end record;
 
    Null_Highlighting_Context : constant Highlighting_Context_Type :=
      Highlighting_Context_Type'
        (Line   => 0,
         Column => 0,
-        Word   => Null_Unbounded_String);
+        Word   => <>);
 
    type Document_Highlight_Module_ID_Record is
      new Module_ID_Record with record
@@ -304,7 +302,9 @@ package body GPS.LSP_Client.Editors.Highlight is
    begin
       --  Search the next occurrence
       Search_Start_Loc.Search
-        (Pattern           => To_String (Module.Highlighting_Context.Word),
+        (Pattern           =>
+           VSS.Strings.Conversions.To_UTF_8_String
+             (Module.Highlighting_Context.Word),
          Whole_Word        => True,
          Dialog_On_Failure => False,
          Starts            => Occurrence_Start_Loc,
@@ -377,7 +377,7 @@ package body GPS.LSP_Client.Editors.Highlight is
         Highlighting_Context_Type'
           (Line   => Line,
            Column => Entity_Column_Information (Context),
-           Word   => To_Unbounded_String (Current_Word));
+           Word   => VSS.Strings.Conversions.To_Virtual_String (Current_Word));
    begin
       if Line = 0 then
          --  This is a special line => do nothing
