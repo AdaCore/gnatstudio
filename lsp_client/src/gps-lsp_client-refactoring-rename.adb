@@ -21,6 +21,8 @@ with GNATCOLL.Traces;               use GNATCOLL.Traces;
 with GNATCOLL.VFS;                  use GNATCOLL.VFS;
 
 with VSS.Strings.Conversions;
+with VSS.Strings.Formatters.Strings;
+with VSS.Strings.Templates;
 
 with Glib;                          use Glib;
 with Glib.Convert;                  use Glib.Convert;
@@ -355,6 +357,8 @@ package body GPS.LSP_Client.Refactoring.Rename is
    is
       use type VSS.Strings.Virtual_String;
 
+      Template : constant VSS.Strings.Templates.Virtual_String_Template :=
+        "<b>{}</b> renamed to <b>{}</b>";
       On_Error : Boolean;
       Holder   : constant Controlled_Editor_Buffer_Holder :=
         Self.Kernel.Get_Buffer_Factory.Get_Holder
@@ -372,14 +376,11 @@ package body GPS.LSP_Client.Refactoring.Rename is
          Auto_Save                => Self.Auto_Save,
          Allow_File_Renaming      => Self.Allow_File_Renaming,
          Locations_Message_Markup =>
-           "<b>"
-         & Escape_Text
-             (VSS.Strings.Conversions.To_UTF_8_String (Self.Old_Name))
-         & "</b>"
-         & " renamed to <b>"
-         & Escape_Text
-             (VSS.Strings.Conversions.To_UTF_8_String (Self.New_Name))
-         & "</b>",
+           Template.Format
+             (VSS.Strings.Formatters.Strings.Image
+                (Escape_Text (Self.Old_Name)),
+              VSS.Strings.Formatters.Strings.Image
+                (Escape_Text (Self.New_Name))),
          Error                    => On_Error);
 
    exception
