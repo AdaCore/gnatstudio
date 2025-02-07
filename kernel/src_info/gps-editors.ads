@@ -29,6 +29,7 @@ with GNATCOLL.Scripts;      use GNATCOLL.Scripts;
 with GNATCOLL.VFS;          use GNATCOLL.VFS;
 
 with VSS.Characters;
+with VSS.Strings;
 
 with Basic_Types;           use Basic_Types;
 with Commands;              use Commands;
@@ -572,6 +573,12 @@ package GPS.Editors is
    --  before the end of the selection, no matter the order of parameters given
    --  to Select_Text were.
 
+   function Get_Text
+     (This                 : Editor_Buffer;
+      From                 : Editor_Location'Class := Nil_Editor_Location;
+      To                   : Editor_Location'Class := Nil_Editor_Location;
+      Include_Hidden_Chars : Boolean := True)
+      return VSS.Strings.Virtual_String is abstract;
    function Get_Chars_S
      (This                 : Editor_Buffer;
       From                 : Editor_Location'Class := Nil_Editor_Location;
@@ -1360,6 +1367,12 @@ private
    overriding function Selection_End
      (This : Dummy_Editor_Buffer) return Editor_Location'Class;
 
+   overriding function Get_Text
+     (This                 : Dummy_Editor_Buffer;
+      From                 : Editor_Location'Class := Nil_Editor_Location;
+      To                   : Editor_Location'Class := Nil_Editor_Location;
+      Include_Hidden_Chars : Boolean := True)
+      return VSS.Strings.Virtual_String is (VSS.Strings.Empty_Virtual_String);
    overriding function Get_Chars_S
      (This                 : Dummy_Editor_Buffer;
       From                 : Editor_Location'Class := Nil_Editor_Location;

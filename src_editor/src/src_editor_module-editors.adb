@@ -25,6 +25,8 @@ with GNATCOLL.Scripts.Gtkada;  use GNATCOLL.Scripts.Gtkada;
 with GNATCOLL.Symbols;         use GNATCOLL.Symbols;
 with GNATCOLL.Traces;          use GNATCOLL.Traces;
 
+with VSS.Strings;
+
 with Gdk.RGBA;                  use Gdk.RGBA;
 with Glib.Object;               use Glib.Object;
 with Glib.Properties;           use Glib.Properties;
@@ -494,6 +496,12 @@ package body Src_Editor_Module.Editors is
    overriding function Selection_End
      (This : Src_Editor_Buffer) return Editor_Location'Class;
    overriding procedure Unselect (This : Src_Editor_Buffer);
+   overriding function Get_Text
+     (This                 : Src_Editor_Buffer;
+      From                 : Editor_Location'Class := Nil_Editor_Location;
+      To                   : Editor_Location'Class := Nil_Editor_Location;
+      Include_Hidden_Chars : Boolean := True)
+      return VSS.Strings.Virtual_String;
    overriding function Get_Chars_S
      (This                 : Src_Editor_Buffer;
       From                 : Editor_Location'Class := Nil_Editor_Location;
@@ -2541,6 +2549,45 @@ package body Src_Editor_Module.Editors is
          return Null_Unbounded_String;
       end if;
    end Get_Chars_U;
+
+   --------------
+   -- Get_Text --
+   --------------
+
+   overriding function Get_Text
+     (This                 : Src_Editor_Buffer;
+      From                 : Editor_Location'Class := Nil_Editor_Location;
+      To                   : Editor_Location'Class := Nil_Editor_Location;
+      Include_Hidden_Chars : Boolean := True) return VSS.Strings.Virtual_String
+   is
+      Iter, Iter2 : Gtk_Text_Iter;
+      Begin_Line : Editable_Line_Type;
+      Begin_Col  : Character_Offset_Type;
+      End_Line   : Editable_Line_Type;
+      End_Col     : Character_Offset_Type;
+   begin
+      if This.Contents.Buffer /= null then
+         Get_Locations (Iter, Iter2, This.Contents.Buffer, From, To);
+         Get_Iter_Position (This.Contents.Buffer, Iter, Begin_Line, Begin_Col);
+         Get_Iter_Position (This.Contents.Buffer, Iter2, End_Line, End_Col);
+
+         if From = Nil_Editor_Location then
+            Begin_Line := 1;
+         end if;
+
+         return
+           Get_Text
+             (Buffer               => This.Contents.Buffer,
+              Start_Line           => Begin_Line,
+              Start_Column         => Begin_Col,
+              End_Line             => End_Line,
+              End_Column           => End_Col,
+              Include_Hidden_Chars => Include_Hidden_Chars);
+
+      else
+         return VSS.Strings.Empty_Virtual_String;
+      end if;
+   end Get_Text;
 
    ---------------------
    -- Get_Entity_Name --
