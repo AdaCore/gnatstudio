@@ -49,6 +49,9 @@ with Refactoring.UI;
 with String_Utils;
 with Src_Editor_Module;
 with VFS_Module;
+with VSS.Strings.Cursors;
+with VSS.Strings.Cursors.Iterators;
+with VSS.Strings.Cursors.Iterators.Lines;
 
 package body GPS.LSP_Client.Edit_Workspace is
 
@@ -228,6 +231,7 @@ package body GPS.LSP_Client.Edit_Workspace is
       Changes       : out Vectors.Vector)
    is
       use LSP.Types;
+      use VSS.Strings.Cursors.Iterators.Lines;
 
       Script : constant GNATCOLL.Scripts.Scripting_Language :=
         Kernel.Scripts.Lookup_Scripting_Language (Python_Name);
@@ -310,15 +314,25 @@ package body GPS.LSP_Client.Edit_Workspace is
                Operation : constant Diff_Operation_Type :=
                  To_Diff_Operation (Item.Nth_Arg (1));
                Str       : constant String := Item.Nth_Arg (2);
+               V_Str     : constant VSS.Strings.Virtual_String :=
+                 VSS.Strings.Conversions.To_Virtual_String (Str);
+               Safe_Str  : constant String :=
+                 VSS.Strings.Conversions.To_UTF_8_String
+                   (V_Str.Split_Lines.Join_Lines
+                      (Terminator     => VSS.Strings.LF,
+                       Terminate_Last => V_Str.At_Line
+                         (V_Str.At_Last_Character).Has_Line_Terminator));
+               --  Fancy way to remove all CR characters which could corrupt
+               --  the offset.
             begin
                case Operation is
                   when Keep =>
                      Next_Cursor :=
-                       Compute_New_Cursor (Cur_Cursor, Str);
+                       Compute_New_Cursor (Cur_Cursor, Safe_Str);
 
                   when Delete =>
                      Next_Cursor :=
-                       Compute_New_Cursor (Cur_Cursor, Str);
+                       Compute_New_Cursor (Cur_Cursor, Safe_Str);
                      Changes.Prepend
                        (Text_Edit'(Span => (first => Next_Cursor,
                                             last  => Cur_Cursor),
@@ -327,15 +341,15 @@ package body GPS.LSP_Client.Edit_Workspace is
                   when Insert =>
                      --  The cursor doesn't move when inserting
                      Changes.Prepend
-                       (Text_Edit'(Span  => (first => Cur_Cursor,
-                                             last  => Next_Cursor),
-                                   Text => To_Unbounded_String (Str)));
+                       (Text_Edit'(Span => (first => Cur_Cursor,
+                                            last  => Next_Cursor),
+                                   Text => To_Unbounded_String (Safe_Str)));
                end case;
 
                Trace
                  (Me,
                   "===" & ASCII.LF
-                  & Operation'Img & ": '" & Str & "'" & ASCII.LF
+                  & Operation'Img & ": '" & Safe_Str & "'" & ASCII.LF
                   & Print_Cursor (Next_Cursor, "Next_Cursor")
                   & Print_Cursor (Cur_Cursor, "Cur_Cursor")
                   & "===" & ASCII.LF);
