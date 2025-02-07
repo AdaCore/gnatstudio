@@ -19,6 +19,7 @@
 
 with GNATCOLL.VFS;
 
+private with VSS.Characters;
 private with VSS.Strings;
 
 with Basic_Types;           use Basic_Types;
@@ -252,7 +253,7 @@ private
 
    function LSP_Completion_Trigger_Chars_Func
      (Editor : Editor_Buffer'Class;
-      C      : Wide_Wide_Character) return Boolean;
+      C      : VSS.Characters.Virtual_Character) return Boolean;
    --  The LSP function used to determine whether this character should trigger
    --  completion in the given editor.
 

@@ -16,7 +16,6 @@
 ------------------------------------------------------------------------------
 
 with Ada.Characters.Handling;         use Ada.Characters.Handling;
-with Ada.Strings;                     use Ada.Strings;
 with Ada.Strings.Wide_Wide_Fixed;
 with Ada_Semantic_Tree;               use Ada_Semantic_Tree;
 with GNAT.Regpat;                     use GNAT.Regpat;
@@ -1091,7 +1090,7 @@ package body GPS.LSP_Client.Completion is
 
    function LSP_Completion_Trigger_Chars_Func
      (Editor : Editor_Buffer'Class;
-      C      : Wide_Wide_Character) return Boolean
+      C      : VSS.Characters.Virtual_Character) return Boolean
    is
       Lang   : constant Language.Language_Access :=
         Editor.Get_Language;
@@ -1103,7 +1102,7 @@ package body GPS.LSP_Client.Completion is
       if Server = null then
          return Default_Completion_Trigger_Chars_Func
            (Editor => Editor,
-            C      => VSS.Characters.Virtual_Character (C));
+            C      => C);
       end if;
 
       --  Check if the entered character is present in the server's
@@ -1121,7 +1120,7 @@ package body GPS.LSP_Client.Completion is
                  Capabilities.completionProvider.Value;
 
             begin
-               S.Append (VSS.Characters.Virtual_Character (C));
+               S.Append (C);
 
                return Completion_Options.triggerCharacters.Is_Set and then
                  Completion_Options.triggerCharacters.Value.Contains (S);

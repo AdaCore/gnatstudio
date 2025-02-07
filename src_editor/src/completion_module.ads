@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                               GNAT Studio                                --
 --                                                                          --
---                     Copyright (C) 2005-2023, AdaCore                     --
+--                     Copyright (C) 2005-2025, AdaCore                     --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -16,6 +16,8 @@
 ------------------------------------------------------------------------------
 
 with GNATCOLL.VFS;
+
+with VSS.Characters;
 
 with Completion;  use Completion;
 with GPS.Editors; use GPS.Editors;
@@ -48,7 +50,7 @@ package Completion_Module is
    type Completion_Trigger_Chars_Func_Type is access
      function
        (Editor : Editor_Buffer'Class;
-        C      : Wide_Wide_Character) return Boolean;
+        C      : VSS.Characters.Virtual_Character) return Boolean;
    --  Type for the function used to determine if the given character typed in
    --  Editor should trigger auto completion.
    --  Note that this function is only called for special characters that are
