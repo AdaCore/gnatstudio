@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                               GNAT Studio                                --
 --                                                                          --
---                        Copyright (C) 2020-2023, AdaCore                  --
+--                        Copyright (C) 2020-2025, AdaCore                  --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -17,7 +17,6 @@
 
 --  Integration with GNAT Studio's completion engine.
 
-with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
 with GNATCOLL.VFS;
 
 private with VSS.Strings;
@@ -178,7 +177,7 @@ private
 
    type LSP_Completion_Resolver is new Completion_Resolver with record
       Kernel      : Kernel_Handle;
-      Lang_Name   : Unbounded_String;
+      Lang_Name   : VSS.Strings.Virtual_String;
       Completions : LSP.Messages.CompletionList;
    end record;
 
@@ -201,7 +200,7 @@ private
       --  The filter text used to filter completion proposals. Defaults to the
       --  label when not set.
 
-      Detail                   : Unbounded_String;
+      Detail                   : VSS.Strings.Virtual_String;
       --  The detail displayed in the completion window notes.
       --  In the LSP world, this field is commonly used to display the
       --  profile of subprograms for instance.
@@ -236,7 +235,7 @@ private
         Label                => <>,
         Sort_Text            => <>,
         Filter_Text          => <>,
-        Detail               => Null_Unbounded_String,
+        Detail               => <>,
         Highlightable_Detail => False,
         Documentation        => <>,
         Category             => Cat_Unknown,

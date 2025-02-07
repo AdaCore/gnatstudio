@@ -16,12 +16,12 @@
 ------------------------------------------------------------------------------
 
 with Ada.Characters.Handling;         use Ada.Characters.Handling;
-with Ada.Characters.Wide_Wide_Latin_1;
 with Ada.Strings;                     use Ada.Strings;
 with Ada.Strings.Wide_Wide_Fixed;
 with Ada_Semantic_Tree;               use Ada_Semantic_Tree;
-
 with GNAT.Regpat;                     use GNAT.Regpat;
+with GNAT.Strings;
+
 with GNATCOLL.Traces;                 use GNATCOLL.Traces;
 with GNATCOLL.VFS;                    use GNATCOLL.VFS;
 with GNATCOLL.JSON;
@@ -29,7 +29,7 @@ with GNATCOLL.Scripts;                use GNATCOLL.Scripts;
 with GNATCOLL.Scripts.Python;         use GNATCOLL.Scripts.Python;
 with GNATCOLL.Projects;               use GNATCOLL.Projects;
 
-with VSS.Characters;
+with VSS.Characters.Latin;
 with VSS.Strings.Conversions;
 
 with Glib;
@@ -186,7 +186,7 @@ package body GPS.LSP_Client.Completion is
    type LSP_Completion_Detail_Highlighter is
      new LAL.Highlighters.Highlightable_Interface with record
       Kernel : Kernel_Handle;
-      Detail : Unbounded_String;
+      Detail : VSS.Strings.Virtual_String;
    end record;
    --  Used to highlight the completion item's detail.
 
@@ -202,9 +202,11 @@ package body GPS.LSP_Client.Completion is
       To    : Integer) is null;
 
    function Default_Completion_Trigger_Chars_Func
-     (Editor : Editor_Buffer'Class; C : Wide_Wide_Character) return Boolean;
+     (Editor : Editor_Buffer'Class;
+      C      : VSS.Characters.Virtual_Character) return Boolean;
 
-   function Get_Detail (Item : CompletionItem) return Unbounded_String;
+   function Get_Detail
+     (Item : CompletionItem) return VSS.Strings.Virtual_String;
    --  Get the detail field of the given completion item, if any.
 
    function Get_Documentation
@@ -218,7 +220,8 @@ package body GPS.LSP_Client.Completion is
    overriding function Get_Id
      (Resolver : LSP_Completion_Resolver) return String
    is
-     (LSP_Resolver_ID_Prefix & To_String (Resolver.Lang_Name));
+     (LSP_Resolver_ID_Prefix
+      & VSS.Strings.Conversions.To_UTF_8_String (Resolver.Lang_Name));
 
    --------------------
    -- Get_Completion --
@@ -364,7 +367,7 @@ package body GPS.LSP_Client.Completion is
         LSP_Completion_Resolver_Access (Proposal.Get_Resolver);
       Item           : constant CompletionItem :=
         Resolver.Completions.items (Proposal.ID);
-      Detail         : Unbounded_String;
+      Detail         : VSS.Strings.Virtual_String;
       Documentation  : VSS.Strings.Virtual_String;
       Is_Highlighted : Boolean := False;
    begin
@@ -374,7 +377,7 @@ package body GPS.LSP_Client.Completion is
       --  Try to highlight the completion item's detail, if any.
 
       if Proposal.Highlightable_Detail
-        and then Detail /= Null_Unbounded_String
+        and then not Detail.Is_Empty
       then
          declare
             Highlighter     : LSP_Completion_Detail_Highlighter :=
@@ -389,7 +392,8 @@ package body GPS.LSP_Client.Completion is
                    LAL_Module.Get_Current_Analysis_Context,
                  Filename => "",
                  Charset  => "UTF-8",
-                 Buffer   => To_String (Detail),
+                 Buffer   =>
+                   VSS.Strings.Conversions.To_Unbounded_UTF_8_String (Detail),
                  Rule     => Basic_Decl_Rule);
          begin
             Is_Highlighted := Highlighter.Highlight_Using_Tree
@@ -400,9 +404,12 @@ package body GPS.LSP_Client.Completion is
          end;
       end if;
 
-      if Detail /= Null_Unbounded_String then
-         return (if Is_Highlighted then To_String (Detail)
-                 else Escape_Text (To_String (Detail)))
+      if not Detail.Is_Empty then
+         return
+           (if Is_Highlighted
+            then VSS.Strings.Conversions.To_UTF_8_String (Detail)
+            else Escape_Text
+              (VSS.Strings.Conversions.To_UTF_8_String (Detail)))
            & ASCII.LF
            & ASCII.LF
            & Escape_Text
@@ -489,15 +496,14 @@ package body GPS.LSP_Client.Completion is
    -- Get_Detail --
    ----------------
 
-   function Get_Detail (Item : CompletionItem) return Unbounded_String is
+   function Get_Detail
+     (Item : CompletionItem) return VSS.Strings.Virtual_String is
    begin
       if Item.detail.Is_Set then
-         return
-           VSS.Strings.Conversions.To_Unbounded_UTF_8_String
-             (Item.detail.Value);
+         return Item.detail.Value;
 
       else
-         return Null_Unbounded_String;
+         return VSS.Strings.Empty_Virtual_String;
       end if;
    end Get_Detail;
 
@@ -556,7 +562,7 @@ package body GPS.LSP_Client.Completion is
                 (Proposal.Resolver);
             Lang     : constant Language_Access :=
               Kernel.Get_Language_Handler.Get_Language_By_Name
-                (To_String (Resolver.Lang_Name));
+                (VSS.Strings.Conversions.To_UTF_8_String (Resolver.Lang_Name));
             Command : constant LSP.Messages.Command := Proposal.Command.Value;
             Request : Code_Actions.Execute_Command_Request_Access :=
               new Code_Actions.Execute_Command_Request'
@@ -588,7 +594,7 @@ package body GPS.LSP_Client.Completion is
       Kernel   : constant Kernel_Handle := Resolver.Kernel;
       Lang     : constant Language_Access :=
         Kernel.Get_Language_Handler.Get_Language_By_Name
-          (To_String (Resolver.Lang_Name));
+          (VSS.Strings.Conversions.To_UTF_8_String (Resolver.Lang_Name));
       Request  : LSP_CompletionItem_Resolve_Request_Access :=
         new LSP_CompletionItem_Resolve_Request'
           (GPS.LSP_Client.Requests.LSP_Request with
@@ -630,6 +636,7 @@ package body GPS.LSP_Client.Completion is
       Token : Libadalang.Common.Token_Reference;
       Style : String)
    is
+      use type VSS.Strings.Virtual_String;
       use Langkit_Support.Text;
       use Libadalang.Common;
 
@@ -640,12 +647,15 @@ package body GPS.LSP_Client.Completion is
    begin
       if Highlight_Style = null then
          Self.Detail := Self.Detail
-           & Escape_Text (To_UTF8 (Text (Token)));
+           & VSS.Strings.Conversions.To_Virtual_String
+           (Escape_Text (To_UTF8 (Text (Token))));
       else
          Self.Detail := Self.Detail & "<span foreground="""
-           & Gtkada.Style.To_Hex (Get_Foreground (Highlight_Style))
+           & VSS.Strings.Conversions.To_Virtual_String
+           (Gtkada.Style.To_Hex (Get_Foreground (Highlight_Style)))
            & """>"
-           & Escape_Text (To_UTF8 (Text (Token)))
+           & VSS.Strings.Conversions.To_Virtual_String
+           (Escape_Text (To_UTF8 (Text (Token))))
            & "</span>";
       end if;
    end Highlight_Token;
@@ -817,6 +827,8 @@ package body GPS.LSP_Client.Completion is
       end if;
 
       declare
+         use type VSS.Strings.Virtual_String;
+
          Item     : constant CompletionItem := It.Resolver.Completions.items
            (It.Index);
          Proposal : constant LSP_Completion_Proposal :=
@@ -845,8 +857,7 @@ package body GPS.LSP_Client.Completion is
                  then Item.filterText.Value
                  else Item.label),
               Detail               => Get_Detail (Item),
-              Highlightable_Detail =>
-                To_String (It.Resolver.Lang_Name) = "ada",
+              Highlightable_Detail => It.Resolver.Lang_Name = "ada",
               Documentation        => Get_Documentation (Item),
               Category             =>
                 (if Item.kind.Is_Set then
@@ -996,7 +1007,9 @@ package body GPS.LSP_Client.Completion is
          Resolver := new LSP_Completion_Resolver'
            (Completion_Resolver with
             Kernel      => Kernel,
-            Lang_Name   => To_Unbounded_String (To_Lower (Lang.Get_Name)),
+            Lang_Name   =>
+              VSS.Strings.Conversions.To_Virtual_String
+                (To_Lower (Lang.Get_Name)),
             Completions => <>);
 
          Register_Resolver
@@ -1012,8 +1025,11 @@ package body GPS.LSP_Client.Completion is
    -------------------------------------------
 
    function Default_Completion_Trigger_Chars_Func
-     (Editor : Editor_Buffer'Class; C : Wide_Wide_Character) return Boolean
+     (Editor : Editor_Buffer'Class;
+      C      : VSS.Characters.Virtual_Character) return Boolean
    is
+      use type VSS.Characters.Virtual_Character;
+
       Lang   : constant Language.Language_Access
         := (if Editor /= Nil_Editor_Buffer then Editor.Get_Language
             else null);
@@ -1038,7 +1054,7 @@ package body GPS.LSP_Client.Completion is
                Insert_Mark_Loc : constant Editor_Location'Class :=
                  Editor.Get_Main_Cursor.Get_Insert_Mark.Location;
                Exp             : Parsed_Expression;
-               The_Text        : String_Access;
+               The_Text        : GNAT.Strings.String_Access;
                Ret             : Boolean;
             begin
                The_Text := new String'(Editor.Get_Chars_S
@@ -1065,7 +1081,7 @@ package body GPS.LSP_Client.Completion is
       elsif Lang in Cpp_Lang | C_Lang then
          return C in '.' | '(' | '>';
       else
-         return C not in ' ' | Ada.Characters.Wide_Wide_Latin_1.HT;
+         return C not in ' ' | VSS.Characters.Latin.Character_Tabulation;
       end if;
    end Default_Completion_Trigger_Chars_Func;
 
@@ -1087,7 +1103,7 @@ package body GPS.LSP_Client.Completion is
       if Server = null then
          return Default_Completion_Trigger_Chars_Func
            (Editor => Editor,
-            C      => C);
+            C      => VSS.Characters.Virtual_Character (C));
       end if;
 
       --  Check if the entered character is present in the server's
