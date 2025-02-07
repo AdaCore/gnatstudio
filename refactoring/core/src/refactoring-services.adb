@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                               GNAT Studio                                --
 --                                                                          --
---                     Copyright (C) 2003-2024, AdaCore                     --
+--                     Copyright (C) 2003-2025, AdaCore                     --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -1334,7 +1334,7 @@ package body Refactoring.Services is
          declare
             Loc2  : constant Editor_Location'Class := Loc.Forward_Line (-1);
             C     : constant String :=
-                      Loc.Buffer.Get_Chars (Loc2, Loc2.End_Of_Line);
+                      Loc.Buffer.Get_Chars_S (Loc2, Loc2.End_Of_Line);
             Index : Natural := C'First;
          begin
             exit when Loc2 = Loc;  --  Beginning of buffer
@@ -1398,7 +1398,7 @@ package body Refactoring.Services is
          declare
             Replacing_Str : constant String := To_Lower (Only_If_Replacing);
             Str           : constant String :=
-                              To_Lower (Editor.Get_Chars (Loc_Start, Loc_End));
+              To_Lower (Editor.Get_Chars_S (Loc_Start, Loc_End));
          begin
             if Str /= Replacing_Str then
                return False;
@@ -1432,7 +1432,7 @@ package body Refactoring.Services is
                L : constant Editor_Location'Class :=
                  Loc_Start.Beginning_Of_Line;
             begin
-               if String'(Editor.Get_Chars (L, L)) /= "" & ASCII.LF then
+               if String'(Editor.Get_Chars_S (L, L)) /= "" & ASCII.LF then
                   Editor.Insert (Loc_Start, "" & ASCII.LF);
                end if;
             end;
@@ -1449,7 +1449,7 @@ package body Refactoring.Services is
                L : constant Editor_Location'Class :=
                  Loc_Start.Forward_Line (-1).Beginning_Of_Line;
             begin
-               if String'(Editor.Get_Chars (L, L)) /= "" & ASCII.LF then
+               if String'(Editor.Get_Chars_S (L, L)) /= "" & ASCII.LF then
                   Editor.Insert (Loc_Start, "" & ASCII.LF);
                end if;
             end;
@@ -1582,7 +1582,7 @@ package body Refactoring.Services is
            or else To_Column - From_Column > 0
          then
             Rev_Text := To_Unbounded_String
-              (Holder.Editor.Get_Chars (Loc_Start, Loc_End));
+              (Holder.Editor.Get_Chars_S (Loc_Start, Loc_End));
             Holder.Editor.Delete (Loc_Start, Loc_End);
          end if;
 

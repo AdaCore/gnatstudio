@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                               GNAT Studio                                --
 --                                                                          --
---                     Copyright (C) 2008-2023, AdaCore                     --
+--                     Copyright (C) 2008-2025, AdaCore                     --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -493,7 +493,7 @@ package body Src_Editor_Module.Editors is
    overriding function Selection_End
      (This : Src_Editor_Buffer) return Editor_Location'Class;
    overriding procedure Unselect (This : Src_Editor_Buffer);
-   overriding function Get_Chars
+   overriding function Get_Chars_S
      (This                 : Src_Editor_Buffer;
       From                 : Editor_Location'Class := Nil_Editor_Location;
       To                   : Editor_Location'Class := Nil_Editor_Location;
@@ -2489,11 +2489,11 @@ package body Src_Editor_Module.Editors is
       end if;
    end Unselect;
 
-   ---------------
-   -- Get_Chars --
-   ---------------
+   -----------------
+   -- Get_Chars_S --
+   -----------------
 
-   overriding function Get_Chars
+   overriding function Get_Chars_S
      (This                 : Src_Editor_Buffer;
       From                 : Editor_Location'Class := Nil_Editor_Location;
       To                   : Editor_Location'Class := Nil_Editor_Location;
@@ -2501,11 +2501,11 @@ package body Src_Editor_Module.Editors is
    is
    begin
       return To_String (Get_Chars_U (This, From, To, Include_Hidden_Chars));
-   end Get_Chars;
+   end Get_Chars_S;
 
-   ---------------
-   -- Get_Chars --
-   ---------------
+   -----------------
+   -- Get_Chars_U --
+   -----------------
 
    overriding function Get_Chars_U
      (This                 : Src_Editor_Buffer;

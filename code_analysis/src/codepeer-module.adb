@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                               GNAT Studio                                --
 --                                                                          --
---                     Copyright (C) 2008-2024, AdaCore                     --
+--                     Copyright (C) 2008-2025, AdaCore                     --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -2033,7 +2033,8 @@ package body CodePeer.Module is
                --  We are on the word start, check if we have it in Words
                declare
                   Current : constant String :=
-                    Editor.Get_Chars (Location, Location.Forward_To_Word_End);
+                    Editor.Get_Chars_S
+                      (Location, Location.Forward_To_Word_End);
                begin
                   for Word of Words loop
                      if Current = Word then
@@ -2042,7 +2043,7 @@ package body CodePeer.Module is
 
                         --  Check that we should skip the words combination
                         for Except of Excepts loop
-                           Skip := Editor.Get_Chars
+                           Skip := Editor.Get_Chars_S
                              (Location,
                               Location.Forward_Char (Except.Length - 1)) =
                                Except;

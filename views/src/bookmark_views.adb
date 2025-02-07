@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                               GNAT Studio                                --
 --                                                                          --
---                     Copyright (C) 2005-2024, AdaCore                     --
+--                     Copyright (C) 2005-2025, AdaCore                     --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -2422,7 +2422,7 @@ package body Bookmark_Views is
             Line : constant Editor_Location'Class :=
               Holder.Editor.New_Location_At_Line (Current);
          begin
-            if Holder.Editor.Get_Chars (Line, Line.End_Of_Line) = Text then
+            if Holder.Editor.Get_Chars_S (Line, Line.End_Of_Line) = Text then
                --  The line has not been moved
                return;
             end if;
@@ -2462,7 +2462,8 @@ package body Bookmark_Views is
                Line : constant Editor_Location'Class :=
                  Holder.Editor.New_Location_At_Line (Current);
             begin
-               if Holder.Editor.Get_Chars (Line, Line.End_Of_Line) = Text then
+               if Holder.Editor.Get_Chars_S (Line, Line.End_Of_Line) = Text
+               then
                   --  The line is found
                   Marker := Kernel.Get_Buffer_Factory.Create_Marker
                     (File   => Get_File (Marker),
@@ -2878,7 +2879,7 @@ package body Bookmark_Views is
                                  Set_Attribute_S
                                    (Child, Line_Text_Attribute,
                                     String_To_Encoded_ASCII
-                                      (Holder.Editor.Get_Chars
+                                      (Holder.Editor.Get_Chars_S
                                            (Line, Line.End_Of_Line)));
                               end;
                            end if;
@@ -3004,7 +3005,7 @@ package body Bookmark_Views is
                                     B.Line_Text :=
                                       (False,
                                        To_Unbounded_String
-                                         (Holder.Editor.Get_Chars
+                                         (Holder.Editor.Get_Chars_S
                                               (Line, Line.End_Of_Line)));
                                  end;
                               end if;

@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                               GNAT Studio                                --
 --                                                                          --
---                     Copyright (C) 2008-2023, AdaCore                     --
+--                     Copyright (C) 2008-2025, AdaCore                     --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -561,7 +561,7 @@ package GPS.Editors is
    --  before the end of the selection, no matter the order of parameters given
    --  to Select_Text were.
 
-   function Get_Chars
+   function Get_Chars_S
      (This                 : Editor_Buffer;
       From                 : Editor_Location'Class := Nil_Editor_Location;
       To                   : Editor_Location'Class := Nil_Editor_Location;
@@ -1341,11 +1341,11 @@ private
    overriding function Selection_End
      (This : Dummy_Editor_Buffer) return Editor_Location'Class;
 
-   overriding function Get_Chars
+   overriding function Get_Chars_S
      (This                 : Dummy_Editor_Buffer;
       From                 : Editor_Location'Class := Nil_Editor_Location;
       To                   : Editor_Location'Class := Nil_Editor_Location;
-      Include_Hidden_Chars : Boolean := True) return String;
+      Include_Hidden_Chars : Boolean := True) return String is ("");
    overriding function Get_Chars_U
      (This                 : Dummy_Editor_Buffer;
       From                 : Editor_Location'Class := Nil_Editor_Location;

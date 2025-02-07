@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                               GNAT Studio                                --
 --                                                                          --
---                     Copyright (C) 2017-2023, AdaCore                     --
+--                     Copyright (C) 2017-2025, AdaCore                     --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -163,7 +163,7 @@ package body LAL.Module is
                                   Libadalang.Analysis.Get_From_Buffer
                                     (Context  => Module.Core.Context,
                                      Filename => Buffer.File.Display_Full_Name,
-                                     Buffer   => Buffer.Get_Chars);
+                                     Buffer   => Buffer.Get_Chars_S);
          Dummy              : Boolean;
       begin
          Dummy := Highlightable_Buffer.Highlight_Using_Tree

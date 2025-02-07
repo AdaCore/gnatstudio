@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                               GNAT Studio                                --
 --                                                                          --
---                     Copyright (C) 2005-2024, AdaCore                     --
+--                     Copyright (C) 2005-2025, AdaCore                     --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -550,7 +550,7 @@ package body Refactoring.Subprograms is
       Editor  : constant Editor_Buffer'Class :=
         Context.Code.Context.Buffer_Factory.Get (Context.Code.File);
       Code    : constant String :=
-        Editor.Get_Chars
+        Editor.Get_Chars_S
           (Editor.New_Location_At_Line (Context.Code.From_Line),
            Editor.New_Location_At_Line (Context.Code.To_Line).End_Of_Line);
 

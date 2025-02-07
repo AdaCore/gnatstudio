@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                               GNAT Studio                                --
 --                                                                          --
---                     Copyright (C) 2005-2023, AdaCore                     --
+--                     Copyright (C) 2005-2025, AdaCore                     --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -1603,7 +1603,7 @@ package body Completion_Module is
                The_Text        : String_Access;
                Ret             : Boolean;
             begin
-               The_Text := new String'(Editor.Get_Chars
+               The_Text := new String'(Editor.Get_Chars_S
                  (From                 => Insert_Mark_Loc,
                   To                   => Insert_Mark_Loc.Beginning_Of_Line,
                   Include_Hidden_Chars => False));

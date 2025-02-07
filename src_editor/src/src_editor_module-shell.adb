@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                               GNAT Studio                                --
 --                                                                          --
---                     Copyright (C) 2005-2023, AdaCore                     --
+--                     Copyright (C) 2005-2025, AdaCore                     --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -1912,7 +1912,7 @@ package body Src_Editor_Module.Shell is
              2 => To_Cst'Access,
              3 => Hidden_Chars_Cst'Access));
          Set_Return_Value
-           (Data, Get_Buffer (Data, 1).Get_Chars
+           (Data, Get_Buffer (Data, 1).Get_Chars_S
             (From                 => Get_Location (Data, 2),
              To                   => Get_Location (Data, 3),
              Include_Hidden_Chars => Nth_Arg (Data, 4, Default => True)));
