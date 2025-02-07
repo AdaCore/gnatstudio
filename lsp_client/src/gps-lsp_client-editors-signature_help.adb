@@ -34,6 +34,7 @@ with Gdk.Types.Keysyms;               use Gdk.Types.Keysyms;
 with Gdk.Types;                       use Gdk.Types;
 with Gdk.Window;                      use Gdk.Window;
 with Glib.Convert;                    use Glib.Convert;
+with Glib.Convert.VSS_Utils;          use Glib.Convert.VSS_Utils;
 with Glib.Main;
 with Glib.Object;
 
@@ -318,12 +319,12 @@ package body GPS.LSP_Client.Editors.Signature_Help is
         and then Signature.documentation.Value.Is_String
       then
          declare
-            Doc : constant String := Escape_Text
-              (VSS.Strings.Conversions.To_UTF_8_String
-                 (Signature.documentation.Value.String));
+            Doc : constant VSS.Strings.Virtual_String :=
+              Escape_Text (Signature.documentation.Value.String);
          begin
-            if Doc /= "" then
-               Self.Documentation_Label.Set_Text (Doc);
+            if not Doc.Is_Empty then
+               Self.Documentation_Label.Set_Text
+                 (VSS.Strings.Conversions.To_UTF_8_String (Doc));
             else
                Self.Documentation_Label.Hide;
                Self.Sep.Hide;

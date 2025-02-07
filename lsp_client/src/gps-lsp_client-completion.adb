@@ -33,6 +33,7 @@ with VSS.Strings.Conversions;
 
 with Glib;
 with Glib.Convert;                    use Glib.Convert;
+with Glib.Convert.VSS_Utils;          use Glib.Convert.VSS_Utils;
 with Gtkada.Style;
 
 with LSP.Types;                       use LSP.Types;
@@ -653,8 +654,7 @@ package body GPS.LSP_Client.Completion is
            & VSS.Strings.Conversions.To_Virtual_String
            (Gtkada.Style.To_Hex (Get_Foreground (Highlight_Style)))
            & """>"
-           & VSS.Strings.Conversions.To_Virtual_String
-           (Escape_Text (To_UTF8 (Text (Token))))
+           & Escape_Text (Text (Token))
            & "</span>";
       end if;
    end Highlight_Token;

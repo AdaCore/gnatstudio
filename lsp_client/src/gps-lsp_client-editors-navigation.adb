@@ -36,7 +36,7 @@ with Gdk.Screen;                use Gdk.Screen;
 with Gdk.Types;                 use Gdk.Types;
 with Gdk.Types.Keysyms;         use Gdk.Types.Keysyms;
 with Gdk.Window;                use Gdk.Window;
-with Glib.Convert;              use Glib.Convert;
+with Glib.Convert.VSS_Utils;    use Glib.Convert.VSS_Utils;
 with Glib.Object;               use Glib.Object;
 with Glib;                      use Glib;
 with Glib_Values_Utils;         use Glib_Values_Utils;
@@ -728,13 +728,9 @@ package body GPS.LSP_Client.Editors.Navigation is
                             (VSS.Strings.Formatters.Strings.Image
                                (Kinds_Label (Location.alsKind)),
                              VSS.Strings.Formatters.Strings.Image
-                               (VSS.Strings.Conversions.To_Virtual_String
-                                    (Escape_Text
-                                       (VSS.Strings.Conversions.To_UTF_8_String
-                                          (Self.Entity_Name)))),
+                               (Escape_Text (Self.Entity_Name)),
                            VSS.Strings.Formatters.Strings.Image
-                             (VSS.Strings.Conversions.To_Virtual_String
-                                (Escape_Text (File.Display_Base_Name)))),
+                             (Escape_Text (File.Display_Base_Name))),
                         Project_Path => Project.Project_Path,
                         File         => File,
                         Line         => Editable_Line_Type (From.Line),
@@ -1060,15 +1056,11 @@ package body GPS.LSP_Client.Editors.Navigation is
               (Label         =>
                  Template.Format
                    (VSS.Strings.Formatters.Strings.Image
-                      (VSS.Strings.Conversions.To_Virtual_String
-                         (Escape_Text (Type_Entity.Get_Name))),
+                      (Escape_Text (Type_Entity.Get_Name)),
                     VSS.Strings.Formatters.Strings.Image
-                      (VSS.Strings.Conversions.To_Virtual_String
-                         (Escape_Text (Callee.Get_Name))),
+                      (Escape_Text (Callee.Get_Name)),
                     VSS.Strings.Formatters.Strings.Image
-                      (VSS.Strings.Conversions.To_Virtual_String
-                         (Escape_Text
-                            (Target_Location.File.Display_Base_Name)))),
+                      (Escape_Text (Target_Location.File.Display_Base_Name))),
                Project_Path => Target_Location.Project_Path,
                File         => Target_Location.File,
                Line         => Editable_Line_Type (Target_Location.Line),
