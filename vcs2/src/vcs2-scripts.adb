@@ -59,6 +59,8 @@ package body VCS2.Scripts is
    end record;
    overriding function Name
      (Self : not null access Script_Engine) return String;
+   overriding function User_Name
+     (Self : not null access Script_Engine) return String;
    overriding procedure Async_Fetch_Status_For_Files
      (Self    : not null access Script_Engine;
       Files   : File_Array);
@@ -621,6 +623,33 @@ package body VCS2.Scripts is
       Call_Method (Self, "async_checkout_file", D);
    end Async_Checkout_File;
 
+   ---------------
+   -- User_Name --
+   ---------------
+
+   overriding function User_Name
+     (Self : not null access Script_Engine) return String
+   is
+      Inst : constant Class_Instance :=
+        Create_VCS_Instance (Self.Script, Self);
+      F    : Subprogram_Type := Get_Method (Inst, "user_name");
+   begin
+      if F /= null then
+         declare
+            Data   : Callback_Data'Class := Self.Script.Create (0);
+            Result : constant String := F.Execute (Data);
+         begin
+            Free (Data);
+            Free (F);
+
+            return Result;
+         end;
+
+      else
+         return "";
+      end if;
+   end User_Name;
+
    -----------------
    -- VCS_Handler --
    -----------------
@@ -711,6 +740,7 @@ package body VCS2.Scripts is
             Display   =>
               (Label     => To_Unbounded_String (Data.Nth_Arg (3, "")),
                Icon_Name => To_Unbounded_String (Data.Nth_Arg (4, ""))));
+
       end if;
    end VCS_Handler;
 
@@ -977,6 +1007,7 @@ package body VCS2.Scripts is
                            2 => Param ("construct"),
                            3 => Param ("default_status"),
                            4 => Param ("discover_working_dir")),
+
          Static_Method => True,
          Class         => VCS,
          Handler       => Static_VCS_Handler'Access);

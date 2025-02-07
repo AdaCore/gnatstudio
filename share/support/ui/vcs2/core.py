@@ -471,6 +471,12 @@ class VCS(GPS.VCS2):
         """
         self.warn_action_not_supported("branch action")
 
+    def user_name(self):
+        """
+        Returns current user's name.
+        """
+        return ""
+
     ############
     # Services #
     ############
