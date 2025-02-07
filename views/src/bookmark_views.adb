@@ -899,7 +899,8 @@ package body Bookmark_Views is
          File                     => Get_File (Mark),
          Line                     => Integer (Get_Line (Mark)),
          Column                   => Get_Column (Mark),
-         Text                     => To_String (Mark),
+         Text                     =>
+           VSS.Strings.Conversions.To_Virtual_String (To_String (Mark)),
          Importance               => Unspecified,
          Flags                    => Message_Flags_For_Bookmarks,
          Allow_Auto_Jump_To_First => False);

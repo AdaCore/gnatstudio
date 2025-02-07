@@ -579,10 +579,9 @@ package body CodePeer.Module is
                     File,
                     Object.Line,
                     Basic_Types.Visible_Column_Type (Object.Column),
-                    VSS.Strings.Conversions.To_UTF_8_String
-                      (Template.Format
-                           (Image (Object.Name),
-                            Image (Object.Entry_Points.Length))),
+                    Template.Format
+                      (Image (Object.Name),
+                       Image (Object.Entry_Points.Length)),
                     Unspecified,
                     Race_Message_Flags,
                     True));
@@ -603,10 +602,12 @@ package body CodePeer.Module is
                        (case Object_Access.Kind is
                            when Read =>
                              "read by "
-                        & To_String (Entry_Point.Entry_Point.Name),
+                        & VSS.Strings.Conversions.To_Virtual_String
+                          (Entry_Point.Entry_Point.Name),
                            when Update =>
                              "update by "
-                        & To_String (Entry_Point.Entry_Point.Name)),
+                        & VSS.Strings.Conversions.To_Virtual_String
+                          (Entry_Point.Entry_Point.Name)),
                        Race_Message_Flags));
             end loop;
          end loop;

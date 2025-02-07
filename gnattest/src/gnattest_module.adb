@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                               GNAT Studio                                --
 --                                                                          --
---                     Copyright (C) 2011-2024, AdaCore                     --
+--                     Copyright (C) 2011-2025, AdaCore                     --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -16,18 +16,17 @@
 ------------------------------------------------------------------------------
 
 with Ada.Characters.Handling;
-
-with VSS.Strings;
-
-with Commands.GNATTest;
-with Commands.Interactive;
-with GNATCOLL.Utils;
-with Glib.Object;                       use Glib.Object;
-with Glib.Values;                       use Glib.Values;
-
 with GNAT.Calendar.Time_IO;
 
 with GNATCOLL.Scripts;                  use GNATCOLL.Scripts;
+with GNATCOLL.Utils;
+
+with VSS.Strings.Conversions;
+
+with Commands.GNATTest;
+with Commands.Interactive;
+with Glib.Object;                       use Glib.Object;
+with Glib.Values;                       use Glib.Values;
 
 with Basic_Types;                       use Basic_Types;
 with Entities_Tooltips;
@@ -474,6 +473,8 @@ package body GNATTest_Module is
 
       while Source_Entity_Maps.Has_Element (Cursor) loop
          declare
+            use type VSS.Strings.Virtual_String;
+
             Key  : constant Source_Entity := Source_Entity_Maps.Key (Cursor);
             Item : constant Test_Entity := Source_Entity_Maps.Element (Cursor);
             File : constant GNATCOLL.VFS.Virtual_File := Key.Source_File;
@@ -488,8 +489,10 @@ package body GNATTest_Module is
                   Line       => Key.Line,
                   Column     => Basic_Types.Visible_Column_Type (Key.Column),
                   Text       => "Unimplemented " &
-                    To_String (Key.Test_Case_Name) & " " &
-                    To_String (Key.Subprogram_Name),
+                    VSS.Strings.Conversions.To_Virtual_String
+                    (Key.Test_Case_Name) & " " &
+                    VSS.Strings.Conversions.To_Virtual_String
+                    (Key.Subprogram_Name),
                   Importance => GPS.Kernel.Messages.Low,
                   Flags      => Flags);
             end if;

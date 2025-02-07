@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                               GNAT Studio                                --
 --                                                                          --
---                     Copyright (C) 2010-2024, AdaCore                     --
+--                     Copyright (C) 2010-2025, AdaCore                     --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -15,11 +15,15 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with GNAT.Regpat;
-with GNAT.Strings;                    use GNAT.Strings;
-with GNATCOLL.Traces;                 use GNATCOLL.Traces;
 with Ada.Containers.Vectors;
 with Ada.Strings.Unbounded;           use Ada.Strings.Unbounded;
+with GNAT.Regpat;
+with GNAT.Strings;                    use GNAT.Strings;
+
+with GNATCOLL.Traces;                 use GNATCOLL.Traces;
+
+with VSS.Strings.Conversions;
+
 with Glib.Convert;
 
 with GPS.Default_Styles;              use GPS.Default_Styles;
@@ -32,7 +36,6 @@ with GPS.Editors;                     use GPS.Editors;
 with GPS.Editors.Line_Information;    use GPS.Editors.Line_Information;
 with GPS.Intl;                        use GPS.Intl;
 with UTF8_Utils;                      use UTF8_Utils;
-with VSS.Strings.Conversions;
 
 package body GPS.Kernel.Messages.Tools_Output is
 
@@ -233,7 +236,7 @@ package body GPS.Kernel.Messages.Tools_Output is
                       File,
                       Line,
                       Column,
-                      Text,
+                      VSS.Strings.Conversions.To_Virtual_String (Text),
                       Importance,
                       (Editor_Side => True,
                        Editor_Line => False,
@@ -250,7 +253,7 @@ package body GPS.Kernel.Messages.Tools_Output is
                File,
                Line,
                Column,
-               Text,
+               VSS.Strings.Conversions.To_Virtual_String (Text),
                (Editor_Side => True,
                 Editor_Line => False,
                 Locations   => Show_In_Locations));

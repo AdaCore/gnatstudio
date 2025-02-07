@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                               GNAT Studio                                --
 --                                                                          --
---                     Copyright (C) 2009-2024, AdaCore                     --
+--                     Copyright (C) 2009-2025, AdaCore                     --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -32,7 +32,7 @@ package GPS.Kernel.Messages.Simple is
       File       : GNATCOLL.VFS.Virtual_File;
       Line       : Natural;
       Column     : Basic_Types.Visible_Column_Type;
-      Text       : String;
+      Text       : VSS.Strings.Virtual_String;
       Importance : Message_Importance_Type;
       Flags      : Message_Flags;
       Allow_Auto_Jump_To_First : Boolean := True)
@@ -45,7 +45,7 @@ package GPS.Kernel.Messages.Simple is
       File       : GNATCOLL.VFS.Virtual_File;
       Line       : Natural;
       Column     : Basic_Types.Visible_Column_Type;
-      Text       : String;
+      Text       : VSS.Strings.Virtual_String;
       Importance : Message_Importance_Type;
       Flags      : Message_Flags;
       Allow_Auto_Jump_To_First : Boolean := True);
@@ -58,7 +58,7 @@ package GPS.Kernel.Messages.Simple is
       File          : GNATCOLL.VFS.Virtual_File;
       Line          : Natural;
       Column        : Basic_Types.Visible_Column_Type;
-      Text          : String;
+      Text          : VSS.Strings.Virtual_String;
       Importance    : Message_Importance_Type;
       Actual_Line   : Integer;
       Actual_Column : Integer;
@@ -70,7 +70,7 @@ package GPS.Kernel.Messages.Simple is
       File   : GNATCOLL.VFS.Virtual_File;
       Line   : Natural;
       Column : Basic_Types.Visible_Column_Type;
-      Text   : String;
+      Text   : VSS.Strings.Virtual_String;
       Flags  : Message_Flags) return Simple_Message_Access;
    --  Creates new instance of secondary Simple_Message.
 
@@ -79,7 +79,7 @@ package GPS.Kernel.Messages.Simple is
       File   : GNATCOLL.VFS.Virtual_File;
       Line   : Natural;
       Column : Basic_Types.Visible_Column_Type;
-      Text   : String;
+      Text   : VSS.Strings.Virtual_String;
       Flags  : Message_Flags);
    --  Creates new instance of secondary Simple_Message.
 
@@ -90,7 +90,7 @@ private
 
    type Simple_Message (Level : Message_Levels) is
      new Abstract_Message (Level) with record
-      Text : Ada.Strings.Unbounded.Unbounded_String;
+      Text : VSS.Strings.Virtual_String;
    end record;
 
    overriding function Get_Text

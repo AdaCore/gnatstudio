@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                               GNAT Studio                                --
 --                                                                          --
---                     Copyright (C) 2013-2024, AdaCore                     --
+--                     Copyright (C) 2013-2025, AdaCore                     --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -448,7 +448,8 @@ package body Src_Editor_Module.Commands is
             Loc.File,
             Loc.Line,
             Loc.Column,
-            Get_Name (Entity) & " (" & Kind & ')',
+            VSS.Strings.Conversions.To_Virtual_String
+              (Get_Name (Entity) & " (" & Kind & ')'),
             Unspecified,
             Side_And_Locations);
       end Insert;
