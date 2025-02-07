@@ -486,18 +486,6 @@ package body GPS.Editors is
       return False;
    end Is_End_Of_Line;
 
-   --------------
-   -- Get_Char --
-   --------------
-
-   overriding function Get_Char
-     (This : Dummy_Editor_Location) return Integer
-   is
-      pragma Unreferenced (This);
-   begin
-      return 0;
-   end Get_Char;
-
    ----------------
    -- Block_Name --
    ----------------

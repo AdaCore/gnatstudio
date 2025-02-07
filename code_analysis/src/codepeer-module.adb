@@ -25,6 +25,7 @@ with GNAT.Strings;                   use GNAT.Strings;
 with GNATCOLL.Arg_Lists;
 with GNATCOLL.Traces;                use GNATCOLL.Traces;
 
+with VSS.Characters;
 with VSS.Strings.Conversions;
 with VSS.Strings.Formatters.Strings; use VSS.Strings.Formatters.Strings;
 with VSS.Strings.Templates;          use VSS.Strings.Templates;
@@ -2019,11 +2020,13 @@ package body CodePeer.Module is
         (Words   : Words_Array := Empty;
          Excepts : Words_Array := Empty)
       is
+         use type VSS.Characters.Virtual_Character;
+
          EoB  : constant Editor_Location'Class := Editor.End_Of_Buffer;
          Skip : Boolean;
       begin
          Main : while Location /= EoB loop
-            if Location.Get_Char = Character'Pos (';') then
+            if Location.Get_Char = ';' then
                --  Place location after the semicolon and exit loop
                Location := Location.Forward_Char (1);
                exit Main;

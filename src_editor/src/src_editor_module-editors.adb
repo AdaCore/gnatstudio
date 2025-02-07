@@ -313,7 +313,8 @@ package body Src_Editor_Module.Editors is
      (This    : Src_Editor_Location;
       Overlay : Editor_Overlay'Class) return Editor_Location'Class;
 
-   overriding function Get_Char (This : Src_Editor_Location) return Integer;
+   overriding function Get_Char_GB
+     (This : Src_Editor_Location) return Integer;
 
    overriding function Create_Instance
      (This   : Src_Editor_Location;
@@ -1367,12 +1368,13 @@ package body Src_Editor_Module.Editors is
       end if;
    end Block_Unfold;
 
-   --------------
-   -- Get_Char --
-   --------------
+   -----------------
+   -- Get_Char_GB --
+   -----------------
 
-   overriding function Get_Char (This : Src_Editor_Location) return Integer is
-      Unichar : Gunichar;
+   overriding function Get_Char_GB
+     (This : Src_Editor_Location) return Integer
+   is
       Iter    : Gtk_Text_Iter;
       Success : Boolean;
 
@@ -1384,12 +1386,11 @@ package body Src_Editor_Module.Editors is
          Success  => Success);
 
       if Success then
-         Unichar := Get_Char (Iter);
-         return Integer (Unichar);
+         return Integer (Gunichar'(Iter.Get_Char));
       else
          raise Editor_Exception with -"Invalid location";
       end if;
-   end Get_Char;
+   end Get_Char_GB;
 
    ----------
    -- Line --

@@ -22,13 +22,17 @@ with Ada.Containers.Indefinite_Doubly_Linked_Lists;
 with Ada.Containers.Indefinite_Holders;
 with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
 with Ada.Finalization;      use Ada.Finalization;
-with Basic_Types;           use Basic_Types;
+
 with GNATCOLL.JSON;         use GNATCOLL.JSON;
 with GNATCOLL.Projects;     use GNATCOLL.Projects;
 with GNATCOLL.Scripts;      use GNATCOLL.Scripts;
 with GNATCOLL.VFS;          use GNATCOLL.VFS;
-with GPS.Markers;           use GPS.Markers;
+
+with VSS.Characters;
+
+with Basic_Types;           use Basic_Types;
 with Commands;              use Commands;
+with GPS.Markers;           use GPS.Markers;
 with Language;              use Language;
 with System;
 with XML_Utils;
@@ -264,8 +268,15 @@ package GPS.Editors is
    function Is_End_Of_Line (This : Editor_Location) return Boolean is abstract;
    --  Return True if the location set on EOL
 
-   function Get_Char (This : Editor_Location) return Integer is abstract;
+   function Get_Char
+     (This : Editor_Location'Class)
+      return VSS.Characters.Virtual_Character'Base;
+   pragma Annotate (AJIS, Bind, Get_Char, False);
    --  Return the character at the current location. Returns the unicode value
+
+   function Get_Char_GB (This : Editor_Location) return Integer is abstract;
+   --  Return the character at the current location. Returns the unicode value.
+   --  This function is intended to be used by GNATbench only.
 
    procedure Search
      (This              : Editor_Location;
@@ -1117,6 +1128,11 @@ package GPS.Editors is
 
 private
 
+   function Get_Char
+     (This : Editor_Location'Class)
+      return VSS.Characters.Virtual_Character'Base is
+        (VSS.Characters.Virtual_Character'Base'Val (This.Get_Char_GB));
+
    overriding function Go_To
      (Self  : not null access Abstract_File_Marker_Data) return Boolean
      is (False);
@@ -1224,7 +1240,10 @@ private
      (This    : Dummy_Editor_Location;
       Overlay : Editor_Overlay'Class) return Editor_Location'Class;
 
-   overriding function Get_Char (This : Dummy_Editor_Location) return Integer;
+   overriding function Get_Char_GB
+     (This : Dummy_Editor_Location) return Integer is
+       (VSS.Characters.Virtual_Character'Base'Pos
+         (VSS.Characters.Virtual_Character'Base'Last));
 
    overriding procedure Search
      (This              : Dummy_Editor_Location;

@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                               GNAT Studio                                --
 --                                                                          --
---                        Copyright (C) 2020-2023, AdaCore                  --
+--                        Copyright (C) 2020-2025, AdaCore                  --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -531,17 +531,17 @@ package body GPS.LSP_Client.Editors.Formatting is
 
       while To > Loc loop
          declare
-            Ch   : constant Wide_Wide_Character :=
-              Wide_Wide_Character'Val (Get_Char (Loc));
+            Ch   : constant VSS.Characters.Virtual_Character'Base :=
+              Loc.Get_Char;
             Text : VSS.Strings.Virtual_String;
 
          begin
             --  Check whether we have trigger character typed in a line
 
-            if Is_In (Ch, Element (C)) then
+            if Is_In (Wide_Wide_Character (Ch), Element (C)) then
                Loc := Forward_Char (Loc, 1);
                Get_Indentation_Parameters (Lang, Params, Indent_Style);
-               Text.Append (VSS.Characters.Virtual_Character (Ch));
+               Text.Append (Ch);
 
                Request := new On_Type_Formatting_Request'
                  (GPS.LSP_Client.Requests.LSP_Request with

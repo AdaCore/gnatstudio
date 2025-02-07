@@ -18,7 +18,12 @@
 with Ada.Characters.Handling;    use Ada.Characters.Handling;
 with Ada.Strings;                use Ada.Strings;
 with Ada.Unchecked_Deallocation;
-with Refactoring.Buffer_Helpers; use Refactoring.Buffer_Helpers;
+
+with GNATCOLL.Utils;             use GNATCOLL.Utils;
+with GNATCOLL.Traces;            use GNATCOLL.Traces;
+with GNATCOLL.Xref;              use GNATCOLL.Xref;
+
+with VSS.Characters.Latin;
 
 with Basic_Types;                use Basic_Types;
 with Commands;                   use Commands;
@@ -28,10 +33,8 @@ with Language;                   use Language;
 with Language.Ada;               use Language.Ada;
 with Language.Tree;              use Language.Tree;
 with Language.Tree.Database;     use Language.Tree.Database;
+with Refactoring.Buffer_Helpers; use Refactoring.Buffer_Helpers;
 with String_Utils;               use String_Utils;
-with GNATCOLL.Utils;             use GNATCOLL.Utils;
-with GNATCOLL.Traces;            use GNATCOLL.Traces;
-with GNATCOLL.Xref;              use GNATCOLL.Xref;
 
 package body Refactoring.Services is
    Me : constant Trace_Handle := Create ("GPS.REFACTORING.SERVICES");
@@ -850,9 +853,10 @@ package body Refactoring.Services is
    begin
       while From /= EoB loop
          case From.Get_Char is
-            when Character'Pos (' ')
-               | Character'Pos (ASCII.HT)
-               | Character'Pos (ASCII.LF) =>
+            when ' '
+               | VSS.Characters.Latin.Character_Tabulation
+               | VSS.Characters.Latin.Line_Feed
+            =>
                From.Buffer.Delete (From, From);
 
             when others =>
@@ -888,6 +892,8 @@ package body Refactoring.Services is
 
          if Self.Shared then
             declare
+               use type VSS.Characters.Virtual_Character;
+
                TM : Editor_Mark'Class := To.Create_Mark;
             begin
                --  Only remove the name of the entity and the preceding or
@@ -898,16 +904,16 @@ package body Refactoring.Services is
                     (Get_Name (Self.Entity.Element)'Length - 1));
                Remove_Blanks (From);
 
-               if From.Get_Char = Character'Pos (',') then
+               if From.Get_Char = ',' then
                   From.Buffer.Delete (From, From);
                   Remove_Blanks (From);
 
-               elsif From.Get_Char = Character'Pos (':') then
+               elsif From.Get_Char = ':' then
                   From := From.Forward_Char (-1);
                   --  Remove backward instead
                   Remove_Blanks (From, -1);
 
-                  if From.Get_Char = Character'Pos (',') then
+                  if From.Get_Char = ',' then
                      From.Buffer.Delete (From, From);
                      From := From.Forward_Char (-1);
                      Remove_Blanks (From, -1);

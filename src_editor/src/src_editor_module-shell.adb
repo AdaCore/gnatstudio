@@ -68,6 +68,7 @@ with Src_Editor_Module.Editors;       use Src_Editor_Module.Editors;
 with Src_Editor_Module.Line_Highlighting;
 with Src_Editor_Module.Markers;       use Src_Editor_Module.Markers;
 with Src_Editor_View;                 use Src_Editor_View;
+with VSS.Characters;
 with Xref;
 
 package body Src_Editor_Module.Shell is
@@ -2475,12 +2476,15 @@ package body Src_Editor_Module.Shell is
 
       elsif Command = "get_char" then
          declare
-            Unichar : constant Integer :=
-              Get_Location (Data, 1).Get_Char;
-            Buffer  : String (1 .. 6);
-            Last    : Natural;
+            Buffer : String (1 .. 6);
+            Last   : Natural;
          begin
-            Unichar_To_UTF8 (Gunichar (Unichar), Buffer, Last);
+            Unichar_To_UTF8
+              (Gunichar
+                 (VSS.Characters.Virtual_Character'Pos
+                      (Get_Location (Data, 1).Get_Char)),
+               Buffer,
+               Last);
             Set_Return_Value (Data, Buffer (1 .. Last));
          end;
 
