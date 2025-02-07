@@ -24,7 +24,7 @@ with GNAT.Strings;                   use GNAT.Strings;
 with System;                         use System;
 with System.Address_Image;
 
-with VSS.Strings;
+with VSS.Strings.Conversions;
 
 with GNATCOLL.JSON;                  use GNATCOLL.JSON;
 with GNATCOLL.Projects;              use GNATCOLL.Projects;
@@ -159,7 +159,7 @@ package body Bookmark_Views is
          when True =>
             null;
          when False =>
-            Text : Unbounded_String;
+            Text : VSS.Strings.Virtual_String;
       end case;
    end record;
    --  Is used for holding the line text to which the bookmark is attached
@@ -2393,7 +2393,7 @@ package body Bookmark_Views is
 
       procedure Adjust_Marker
         (Marker : in out Location_Marker;
-         Text   : String);
+         Text   : VSS.Strings.Virtual_String);
       --  Check whether the Marker line was moved and find it if so.
       --  Return Null marker if the line is not found.
 
@@ -2403,8 +2403,10 @@ package body Bookmark_Views is
 
       procedure Adjust_Marker
         (Marker : in out Location_Marker;
-         Text   : String)
+         Text   : VSS.Strings.Virtual_String)
       is
+         use type VSS.Strings.Virtual_String;
+
          Holder  : constant Controlled_Editor_Buffer_Holder :=
            Kernel.Get_Buffer_Factory.Get_Holder (Get_File (Marker));
          Current : Integer := Integer (Get_Line (Marker));
@@ -2422,7 +2424,7 @@ package body Bookmark_Views is
             Line : constant Editor_Location'Class :=
               Holder.Editor.New_Location_At_Line (Current);
          begin
-            if Holder.Editor.Get_Chars_S (Line, Line.End_Of_Line) = Text then
+            if Holder.Editor.Get_Text (Line, Line.End_Of_Line) = Text then
                --  The line has not been moved
                return;
             end if;
@@ -2462,7 +2464,7 @@ package body Bookmark_Views is
                Line : constant Editor_Location'Class :=
                  Holder.Editor.New_Location_At_Line (Current);
             begin
-               if Holder.Editor.Get_Chars_S (Line, Line.End_Of_Line) = Text
+               if Holder.Editor.Get_Text (Line, Line.End_Of_Line) = Text
                then
                   --  The line is found
                   Marker := Kernel.Get_Buffer_Factory.Create_Marker
@@ -2509,9 +2511,12 @@ package body Bookmark_Views is
                   if Dynamically_Moving.Get_Pref then
                      Adjust_Marker
                        (Marker,
-                        Encoded_ASCII_To_String
-                          (Get_Attribute_S
-                               (Child, Line_Text_Attribute, "no-line-text")));
+                        VSS.Strings.Conversions.To_Virtual_String
+                          (Encoded_ASCII_To_String
+                               (Get_Attribute_S
+                                    (Child,
+                                     Line_Text_Attribute,
+                                     "no-line-text"))));
                   end if;
 
                   if not Marker.Is_Null then
@@ -2608,9 +2613,7 @@ package body Bookmark_Views is
                               if Dynamically_Moving.Get_Pref
                                 and then not Tmp.Line_Text.Is_Empty
                               then
-                                 Adjust_Marker
-                                   (Marker,
-                                    To_String (Tmp.Line_Text.Text));
+                                 Adjust_Marker (Marker, Tmp.Line_Text.Text);
                               end if;
 
                               if not Marker.Is_Null then
@@ -2877,10 +2880,12 @@ package body Bookmark_Views is
                                      (Integer (Get_Line (Tmp.Marker)));
                               begin
                                  Set_Attribute_S
-                                   (Child, Line_Text_Attribute,
+                                   (Child,
+                                    Line_Text_Attribute,
                                     String_To_Encoded_ASCII
-                                      (Holder.Editor.Get_Chars_S
-                                           (Line, Line.End_Of_Line)));
+                                      (VSS.Strings.Conversions.To_UTF_8_String
+                                           (Holder.Editor.Get_Text
+                                                (Line, Line.End_Of_Line))));
                               end;
                            end if;
                         end;
@@ -3004,9 +3009,8 @@ package body Bookmark_Views is
                                  begin
                                     B.Line_Text :=
                                       (False,
-                                       To_Unbounded_String
-                                         (Holder.Editor.Get_Chars_S
-                                              (Line, Line.End_Of_Line)));
+                                       Holder.Editor.Get_Text
+                                         (Line, Line.End_Of_Line));
                                  end;
                               end if;
                            end;
@@ -3317,7 +3321,8 @@ package body Bookmark_Views is
                         then
                            Value.Set_Field
                              (Line_Text_Attribute,
-                              To_String (Tmp.Line_Text.Text));
+                              VSS.Strings.Conversions.To_UTF_8_String
+                                (Tmp.Line_Text.Text));
                         end if;
                      end if;
 
@@ -3414,7 +3419,7 @@ package body Bookmark_Views is
                   then
                      B.Line_Text :=
                        (False,
-                        To_Unbounded_String
+                        VSS.Strings.Conversions.To_Virtual_String
                           (String'(Item.Get (Line_Text_Attribute))));
                   end if;
                end if;
