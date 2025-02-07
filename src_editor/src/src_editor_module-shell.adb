@@ -20,18 +20,22 @@ with Ada.Exceptions;               use Ada.Exceptions;
 with Ada.Strings.Unbounded;        use Ada.Strings.Unbounded;
 with Ada.Tags;                     use Ada.Tags;
 with Ada.Unchecked_Deallocation;
-with Casing_Exceptions;            use Casing_Exceptions;
-with Commands;                     use Commands;
-with Find_Utils;                   use Find_Utils;
 with GNAT.OS_Lib;                  use GNAT.OS_Lib;
 with GNAT.Regpat;                  use GNAT.Regpat;
 with GNAT.Strings;
+
 with GNATCOLL.Projects;            use GNATCOLL.Projects;
 with GNATCOLL.Python;              use GNATCOLL.Python;
 with GNATCOLL.Python.State;
 with GNATCOLL.Traces;              use GNATCOLL.Traces;
 with GNATCOLL.Utils;               use GNATCOLL.Utils;
 
+with VSS.Characters;
+with VSS.Strings.Conversions;
+
+with Casing_Exceptions;            use Casing_Exceptions;
+with Commands;                     use Commands;
+with Find_Utils;                   use Find_Utils;
 with GPS.Editors.Line_Information; use GPS.Editors.Line_Information;
 with GPS.Intl;                     use GPS.Intl;
 with GPS.Kernel.Charsets;          use GPS.Kernel.Charsets;
@@ -68,7 +72,6 @@ with Src_Editor_Module.Editors;       use Src_Editor_Module.Editors;
 with Src_Editor_Module.Line_Highlighting;
 with Src_Editor_Module.Markers;       use Src_Editor_Module.Markers;
 with Src_Editor_View;                 use Src_Editor_View;
-with VSS.Characters;
 with Xref;
 
 package body Src_Editor_Module.Shell is
@@ -1913,10 +1916,12 @@ package body Src_Editor_Module.Shell is
              2 => To_Cst'Access,
              3 => Hidden_Chars_Cst'Access));
          Set_Return_Value
-           (Data, Get_Buffer (Data, 1).Get_Chars_S
-            (From                 => Get_Location (Data, 2),
-             To                   => Get_Location (Data, 3),
-             Include_Hidden_Chars => Nth_Arg (Data, 4, Default => True)));
+           (Data,
+            VSS.Strings.Conversions.To_UTF_8_String
+              (Get_Buffer (Data, 1).Get_Text
+               (From                 => Get_Location (Data, 2),
+                To                   => Get_Location (Data, 3),
+                Include_Hidden_Chars => Nth_Arg (Data, 4, Default => True))));
 
       elsif Command = "_insert_at_location" then
          Name_Parameters
