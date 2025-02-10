@@ -579,6 +579,11 @@ package GPS.Editors is
       To                   : Editor_Location'Class := Nil_Editor_Location;
       Include_Hidden_Chars : Boolean := True)
       return VSS.Strings.Virtual_String is abstract;
+   --  Returns the contents of the buffer between the two locations given in
+   --  parameter. Modifying the returned value has no effect on the buffer.
+   --  If Include_Hidden_Chars is True, the returned text will also include
+   --  all hidden chars (e.g: folded blocks).
+
    function Get_Chars_S
      (This                 : Editor_Buffer;
       From                 : Editor_Location'Class := Nil_Editor_Location;
@@ -591,6 +596,9 @@ package GPS.Editors is
       To                   : Editor_Location'Class := Nil_Editor_Location;
       Include_Hidden_Chars : Boolean := True)
       return Unbounded_String is abstract;
+   --  These functions are obsolete, please don't use them in new code and
+   --  replace by `Get_Text` when modify existing code.
+   --
    --  Returns the contents of the buffer between the two locations given in
    --  parameter. Modifying the returned value has no effect on the buffer.
    --  If Include_Hidden_Chars is True, the returned text will also include
