@@ -358,6 +358,12 @@ class CVS(core_staging.Emulate_Staging, core.File_Based_VCS):
                     yield p.wait_until_terminate(show_if_error=True)
             elif action == GPS.VCS2.Actions.RENAME:
                 pass
+            elif action == GPS.VCS2.Actions.STASH:
+                pass
+            elif action == GPS.VCS2.Actions.COMMIT:
+                pass
+            elif action == GPS.VCS2.Actions.MERGE:
+                pass
 
     @core.run_in_background
     def async_discard_local_changes(self, files):

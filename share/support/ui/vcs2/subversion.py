@@ -321,6 +321,12 @@ class SVN(core_staging.Emulate_Staging, core.File_Based_VCS):
                 pass
             elif action == GPS.VCS2.Actions.REMOVE and id:
                 pass
+            elif action == GPS.VCS2.Actions.STASH:
+                pass
+            elif action == GPS.VCS2.Actions.COMMIT:
+                pass
+            elif action == GPS.VCS2.Actions.MERGE:
+                pass
 
     @core.run_in_background
     def async_discard_local_changes(self, files):

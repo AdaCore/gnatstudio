@@ -16,6 +16,7 @@
 ------------------------------------------------------------------------------
 
 with Ada.Characters.Handling;
+with Ada.Strings.Unbounded;
 with System.Address_To_Access_Conversions;
 
 with GNATCOLL.Projects;    use GNATCOLL.Projects;
@@ -1135,6 +1136,44 @@ package body GPS.Kernel.Contexts is
       Context.Ref.Get.Has_Browser_Details := True;
       Context.Ref.Get.Browser_Details := Details;
    end Set_Browser_Information;
+
+   ----------------
+   -- Get_VCS_Id --
+   ----------------
+
+   function Get_VCS_Id
+     (Context : Selection_Context)
+      return String is
+   begin
+      return Ada.Strings.Unbounded.To_String (Context.Ref.Get.VCS_Branch_Id);
+   end Get_VCS_Id;
+
+   ----------------------
+   -- Get_VCS_Category --
+   ----------------------
+
+   function Get_VCS_Category
+     (Context : Selection_Context)
+      return String is
+   begin
+      return Ada.Strings.Unbounded.To_String
+        (Context.Ref.Get.VCS_Branch_Category);
+   end Get_VCS_Category;
+
+   -------------------------
+   -- Set_VCS_Information --
+   -------------------------
+
+   procedure Set_VCS_Information
+     (Context  : Selection_Context;
+      Category : String;
+      Id       : String) is
+   begin
+      Context.Ref.Get.VCS_Branch_Category :=
+        Ada.Strings.Unbounded.To_Unbounded_String (Category);
+      Context.Ref.Get.VCS_Branch_Id :=
+        Ada.Strings.Unbounded.To_Unbounded_String (Id);
+   end Set_VCS_Information;
 
    -----------------------------
    -- Has_Browser_Information --

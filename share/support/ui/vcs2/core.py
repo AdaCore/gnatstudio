@@ -32,8 +32,15 @@ GPS.VCS2.Status = gs_utils.enum(
 )
 # Valid statuses for files (they can be combined)
 
-GPS.VCS2.Actions = gs_utils.enum(DOUBLE_CLICK=0, TOOLTIP=1, ADD=2, REMOVE=3, RENAME=4)
-
+GPS.VCS2.Actions = gs_utils.enum(
+    DOUBLE_CLICK=0,
+    TOOLTIP=1,
+    ADD=2,
+    REMOVE=3,
+    RENAME=4,
+    STASH=5,
+    COMMIT=6,
+    MERGE=7)
 
 Traverse_Limit_Pref = GPS.Preference(":VCS/Traverse-Limit")
 Traverse_Limit_Pref.create(

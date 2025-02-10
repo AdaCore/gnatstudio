@@ -779,6 +779,24 @@ class Git(core.VCS):
                     p = self._git(["branch", "-D", id])
                     yield p.wait_until_terminate(show_if_error=True)
 
+            elif action == GPS.VCS2.Actions.STASH:
+                p = self._git(["stash"])
+                yield p.wait_until_terminate(show_if_error=True)
+
+            elif action == GPS.VCS2.Actions.COMMIT:
+                comment = GPS.MDI.input_dialog(
+                    "Comment for the commit", "comment=")
+                if comment:
+                    p = self._git(["commit", "-a", "-m", comment[0]])
+                    yield p.wait_until_terminate(show_if_error=True)
+
+            elif action == GPS.VCS2.Actions.MERGE:
+                comment = GPS.MDI.input_dialog(
+                    "Comment for the merge", "comment=")
+                if comment:
+                    p = self._git(["merge", "-m", comment[0]])
+                    yield p.wait_until_terminate(show_if_error=True)
+
         elif category == CAT_TAGS:
             if action == GPS.VCS2.Actions.DOUBLE_CLICK and id:
                 p = self._git(["checkout", id])
