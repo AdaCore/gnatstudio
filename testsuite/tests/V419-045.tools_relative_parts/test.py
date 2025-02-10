@@ -10,11 +10,10 @@ expected = """project Default is
    for Main use ("foo.adb");
 
    package Check is
-      for Default_Switches ("ada") use ("-rules", "-from=test.yaml");
+      for Rule_File use "test.yaml";
    end Check;
 
 end Default;
-
 """
 
 
@@ -27,10 +26,10 @@ def run_test():
     toggle = get_widgets_by_type(Gtk.ToggleButton, page)[0]
     toggle.set_active(True)
 
-    page = e.get_page("Build/Switches/GNATcheck")
+    page = e.get_page("GNATcheck")
     entry = get_widgets_by_type(Gtk.Entry, page)[0]
-    entry.set_text("-rules -from=" + GPS.pwd() + "test.yaml")
+    entry.set_text(GPS.pwd() + "test.yaml")
     yield e.save()
 
     f = open("default.gpr", "r")
-    gps_assert(f.read(), expected)
+    gps_assert(f.read().rstrip(), expected.rstrip())

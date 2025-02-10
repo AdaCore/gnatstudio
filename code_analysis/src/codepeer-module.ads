@@ -162,7 +162,8 @@ package CodePeer.Module is
    procedure Set_Review_Action (Message : Message_Access);
    --  Create a review action icon associated with Message
 
-   function Get_Current_User return String;
+   function Get_Current_User
+     (Kernel : not null access Kernel_Handle_Record'Class) return String;
    --  Returns host user if Set_Approved_By preference is True and
    --  an empty string in other case.
 

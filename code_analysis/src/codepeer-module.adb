@@ -56,6 +56,7 @@ with GPS.Kernel.Messages.References; use GPS.Kernel.Messages.References;
 with GPS.Kernel.Messages.Simple;     use GPS.Kernel.Messages.Simple;
 with GPS.Kernel.Modules.UI;          use GPS.Kernel.Modules.UI;
 with GPS.Location_View;
+with GPS.VCS;
 with Projects.Views;
 
 with BT.Xml.Reader;
@@ -615,8 +616,20 @@ package body CodePeer.Module is
    -- Get_Current_User --
    ----------------------
 
-   function Get_Current_User return String is
+   function Get_Current_User
+     (Kernel : not null access Kernel_Handle_Record'Class) return String
+   is
+      use GPS.VCS;
+
+      VCS_Engine : constant Abstract_VCS_Engine_Access :=
+        Kernel.VCS.Get_VCS (Kernel.Get_Project_Tree.Root_Project);
+      User : Unbounded_String;
    begin
+      User := To_Unbounded_String (VCS_Engine.User_Name);
+      if User /= "" then
+         Current_User := User;
+      end if;
+
       if Current_User = "" then
          declare
             Env : constant Spawn.Environments.Process_Environment :=

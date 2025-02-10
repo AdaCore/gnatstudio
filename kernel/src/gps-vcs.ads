@@ -255,6 +255,10 @@ package GPS.VCS is
      (Self : not null access Abstract_VCS_Engine) return String is ("");
    --  The name of the engine
 
+   function User_Name
+     (Self : not null access Abstract_VCS_Engine) return String is abstract;
+   --  The name of the user for engine
+
    function Get_Display
      (Self         : not null access Abstract_VCS_Engine;
       Dummy_Status : VCS_File_Status) return Status_Display
