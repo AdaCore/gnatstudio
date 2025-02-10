@@ -393,6 +393,24 @@ package GPS.Kernel.Contexts is
       return Context_Item_Access;
    --  Store information about debugger variable.
 
+   ---------
+   -- VCS --
+   ---------
+
+   procedure Set_VCS_Information
+     (Context  : Selection_Context;
+      Category : String;
+      Id       : String);
+   --  Store information about VCS branch
+
+   function Get_VCS_Id
+     (Context : Selection_Context)
+      return String;
+
+   function Get_VCS_Category
+     (Context : Selection_Context)
+      return String;
+
 private
 
    pragma Inline (Has_Project_Information);
