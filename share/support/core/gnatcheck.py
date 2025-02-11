@@ -603,6 +603,15 @@ attribute="Default_Switches">
     <switches sections="-rules">
         <check label="process RTL units" switch="-a" line="1"/>
         <check label="debug mode" switch="-d" line="1"/>
+        <field label="Coding standard file"
+               switch="-from"
+               separator="="
+               as-file="true"
+               line="1"
+               section="-rules"
+               tip="Warning: this switch is now deprecated.
+Use the Check'Rule_File project attribute instead.\n\n
+Rules file to use as coding standard."/>
     </switches>
 </tool>
 <project_attribute package="Check"
