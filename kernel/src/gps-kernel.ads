@@ -1044,6 +1044,9 @@ private
       GVD_Variable : Context_Item_Access := null;
 
       Refactoring_Variable : Context_Item_Access := null;
+
+      VCS_Branch_Id       : Ada.Strings.Unbounded.Unbounded_String;
+      VCS_Branch_Category : Ada.Strings.Unbounded.Unbounded_String;
    end record;
 
    procedure Free (Self : in out Selection_Context_Data_Record);

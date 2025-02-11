@@ -19,6 +19,7 @@ with Ada.Strings;
 with Ada.Strings.Fixed;
 
 with Glib;                       use Glib;
+with Glib.Convert;
 with Glib.Object;                use Glib.Object;
 with Glib_Values_Utils;          use Glib_Values_Utils;
 
@@ -59,7 +60,6 @@ with Language_Handlers;          use Language_Handlers;
 with Language.Icons;             use Language.Icons;
 with Tooltips;                   use Tooltips;
 with Unchecked_Deallocation;
-with XML_Utils;
 
 with GPS.Editors;                use GPS.Editors;
 with GPS.Intl;                   use GPS.Intl;
@@ -1729,13 +1729,13 @@ package body Outline_View is
                    Integer'Min (Profile'Last, Profile'First + 500));
          begin
             return
-              XML_Utils.Protect (Name)
+              Glib.Convert.Escape_Text (Name)
               & Span_Header
-              & XML_Utils.Protect (Truncated_Profile)
+              & Glib.Convert.Escape_Text (Truncated_Profile)
               & Span_End;
          end;
       else
-         return Name;
+         return Glib.Convert.Escape_Text (Name);
       end if;
    end Encode_Name;
 

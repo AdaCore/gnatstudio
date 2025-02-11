@@ -546,7 +546,10 @@ package VCS2.Engines is
                           Action_Tooltip,
                           Action_Add,
                           Action_Remove,
-                          Action_Rename);
+                          Action_Rename,
+                          Action_Stash,
+                          Action_Commit,
+                          Action_Merge);
    procedure Async_Action_On_Branch
      (Self         : not null access VCS_Engine;
       Visitor      : not null access Task_Visitor'Class;

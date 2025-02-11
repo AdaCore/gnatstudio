@@ -606,7 +606,7 @@ class Menu(GPS.GUI):
         If ``group`` is specified, create a radio menu item in given group.
 
         :param path: A string
-        :param on_activate: A subprogram, see the GPS documentation on
+        :param on_activate: A subprogram, see the GNAT Studio documentation on
             subprogram parameters
         :param ref: A string
         :param add_before: A boolean
