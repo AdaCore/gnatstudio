@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                               GNAT Studio                                --
 --                                                                          --
---                     Copyright (C) 2003-2023, AdaCore                     --
+--                     Copyright (C) 2003-2025, AdaCore                     --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -847,7 +847,7 @@ package body Vdiff2_Module.Utils is
            Buf.New_Location_At_Line (Line);
          The_End : constant Editor_Location'Class := Start.End_Of_Line;
       begin
-         return Buf.Get_Chars (Start, The_End);
+         return Buf.Get_Chars_S (Start, The_End);
       end Get_Line;
 
       ------------------

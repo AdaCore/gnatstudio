@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                               GNAT Studio                                --
 --                                                                          --
---                     Copyright (C) 2008-2023, AdaCore                     --
+--                     Copyright (C) 2008-2025, AdaCore                     --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -22,13 +22,18 @@ with Ada.Containers.Indefinite_Doubly_Linked_Lists;
 with Ada.Containers.Indefinite_Holders;
 with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
 with Ada.Finalization;      use Ada.Finalization;
-with Basic_Types;           use Basic_Types;
+
 with GNATCOLL.JSON;         use GNATCOLL.JSON;
 with GNATCOLL.Projects;     use GNATCOLL.Projects;
 with GNATCOLL.Scripts;      use GNATCOLL.Scripts;
 with GNATCOLL.VFS;          use GNATCOLL.VFS;
-with GPS.Markers;           use GPS.Markers;
+
+with VSS.Characters;
+with VSS.Strings;
+
+with Basic_Types;           use Basic_Types;
 with Commands;              use Commands;
+with GPS.Markers;           use GPS.Markers;
 with Language;              use Language;
 with System;
 with XML_Utils;
@@ -264,8 +269,15 @@ package GPS.Editors is
    function Is_End_Of_Line (This : Editor_Location) return Boolean is abstract;
    --  Return True if the location set on EOL
 
-   function Get_Char (This : Editor_Location) return Integer is abstract;
+   function Get_Char
+     (This : Editor_Location'Class)
+      return VSS.Characters.Virtual_Character'Base;
+   pragma Annotate (AJIS, Bind, Get_Char, False);
    --  Return the character at the current location. Returns the unicode value
+
+   function Get_Char_GB (This : Editor_Location) return Integer is abstract;
+   --  Return the character at the current location. Returns the unicode value.
+   --  This function is intended to be used by GNATbench only.
 
    procedure Search
      (This              : Editor_Location;
@@ -561,7 +573,18 @@ package GPS.Editors is
    --  before the end of the selection, no matter the order of parameters given
    --  to Select_Text were.
 
-   function Get_Chars
+   function Get_Text
+     (This                 : Editor_Buffer;
+      From                 : Editor_Location'Class := Nil_Editor_Location;
+      To                   : Editor_Location'Class := Nil_Editor_Location;
+      Include_Hidden_Chars : Boolean := True)
+      return VSS.Strings.Virtual_String is abstract;
+   --  Returns the contents of the buffer between the two locations given in
+   --  parameter. Modifying the returned value has no effect on the buffer.
+   --  If Include_Hidden_Chars is True, the returned text will also include
+   --  all hidden chars (e.g: folded blocks).
+
+   function Get_Chars_S
      (This                 : Editor_Buffer;
       From                 : Editor_Location'Class := Nil_Editor_Location;
       To                   : Editor_Location'Class := Nil_Editor_Location;
@@ -573,6 +596,9 @@ package GPS.Editors is
       To                   : Editor_Location'Class := Nil_Editor_Location;
       Include_Hidden_Chars : Boolean := True)
       return Unbounded_String is abstract;
+   --  These functions are obsolete, please don't use them in new code and
+   --  replace by `Get_Text` when modify existing code.
+   --
    --  Returns the contents of the buffer between the two locations given in
    --  parameter. Modifying the returned value has no effect on the buffer.
    --  If Include_Hidden_Chars is True, the returned text will also include
@@ -1117,6 +1143,11 @@ package GPS.Editors is
 
 private
 
+   function Get_Char
+     (This : Editor_Location'Class)
+      return VSS.Characters.Virtual_Character'Base is
+        (VSS.Characters.Virtual_Character'Base'Val (This.Get_Char_GB));
+
    overriding function Go_To
      (Self  : not null access Abstract_File_Marker_Data) return Boolean
      is (False);
@@ -1224,7 +1255,10 @@ private
      (This    : Dummy_Editor_Location;
       Overlay : Editor_Overlay'Class) return Editor_Location'Class;
 
-   overriding function Get_Char (This : Dummy_Editor_Location) return Integer;
+   overriding function Get_Char_GB
+     (This : Dummy_Editor_Location) return Integer is
+       (VSS.Characters.Virtual_Character'Base'Pos
+         (VSS.Characters.Virtual_Character'Base'Last));
 
    overriding procedure Search
      (This              : Dummy_Editor_Location;
@@ -1341,11 +1375,17 @@ private
    overriding function Selection_End
      (This : Dummy_Editor_Buffer) return Editor_Location'Class;
 
-   overriding function Get_Chars
+   overriding function Get_Text
      (This                 : Dummy_Editor_Buffer;
       From                 : Editor_Location'Class := Nil_Editor_Location;
       To                   : Editor_Location'Class := Nil_Editor_Location;
-      Include_Hidden_Chars : Boolean := True) return String;
+      Include_Hidden_Chars : Boolean := True)
+      return VSS.Strings.Virtual_String is (VSS.Strings.Empty_Virtual_String);
+   overriding function Get_Chars_S
+     (This                 : Dummy_Editor_Buffer;
+      From                 : Editor_Location'Class := Nil_Editor_Location;
+      To                   : Editor_Location'Class := Nil_Editor_Location;
+      Include_Hidden_Chars : Boolean := True) return String is ("");
    overriding function Get_Chars_U
      (This                 : Dummy_Editor_Buffer;
       From                 : Editor_Location'Class := Nil_Editor_Location;

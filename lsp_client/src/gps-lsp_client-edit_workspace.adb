@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                               GNAT Studio                                --
 --                                                                          --
---                     Copyright (C) 2019-2024, AdaCore                     --
+--                     Copyright (C) 2019-2025, AdaCore                     --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -180,7 +180,7 @@ package body GPS.LSP_Client.Edit_Workspace is
               GPS.LSP_Client.Utilities.LSP_Position_To_Location
                 (Editor, Span.last);
             Span_Text : constant String :=
-              Editor.Get_Chars
+              Editor.Get_Chars_S
                 (From                 => From,
                  To                   => To,
                  Include_Hidden_Chars => False);

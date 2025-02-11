@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                               GNAT Studio                                --
 --                                                                          --
---                     Copyright (C) 2010-2023, AdaCore                     --
+--                     Copyright (C) 2010-2025, AdaCore                     --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -148,7 +148,7 @@ package body Extending_Environments is
          Write
            (Dest,
             Get_Buffer_Factory (Kernel).Get
-            (Source, Open_View => False).Get_Chars);
+            (Source, Open_View => False).Get_Chars_S);
          Close (Dest);
       end;
 

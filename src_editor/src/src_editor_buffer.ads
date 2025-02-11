@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                               GNAT Studio                                --
 --                                                                          --
---                     Copyright (C) 2001-2023, AdaCore                     --
+--                     Copyright (C) 2001-2025, AdaCore                     --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -23,17 +23,20 @@
 --  </description>
 
 with Ada.Finalization;
-with Ada.Containers.Doubly_Linked_Lists;
 with Ada.Calendar;
+with Ada.Containers.Doubly_Linked_Lists;
+with Ada.Containers.Vectors;
 with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
 with Ada.Unchecked_Deallocation;
 with Ada.Unchecked_Conversion;
+with GNAT.Strings;
 with System;
 
-with GNAT.Strings;
 with GNATCOLL.Symbols;
 with GNATCOLL.VFS;
 with GNATCOLL.Scripts;                use GNATCOLL.Scripts;
+
+with VSS.Strings;
 
 with Gdk.RGBA;
 with Glib;                            use Glib;
@@ -58,7 +61,6 @@ with GPS.Core_Kernels;                use GPS.Core_Kernels;
 with Gtk.Clipboard;
 with Language.Abstract_Language_Tree; use Language.Abstract_Language_Tree;
 with Gtkada.Types;
-with Ada.Containers.Vectors;
 
 package Src_Editor_Buffer is
    type Source_Buffer_Record is new Gtkada_Text_Buffer_Record with private;
@@ -439,6 +441,15 @@ package Src_Editor_Buffer is
       Include_Hidden_Chars : Boolean := True;
       Include_Last         : Boolean := False)
       return GNAT.Strings.String_Access;
+   function Get_Text
+     (Buffer               : access Source_Buffer_Record;
+      Start_Line           : Editable_Line_Type;
+      Start_Column         : Character_Offset_Type;
+      End_Line             : Editable_Line_Type := 0;
+      End_Column           : Character_Offset_Type := 0;
+      Include_Hidden_Chars : Boolean := True;
+      Include_Last         : Boolean := False)
+      return VSS.Strings.Virtual_String;
    function Get_Text
      (Buffer               : access Source_Buffer_Record;
       Start_Line           : Editable_Line_Type;

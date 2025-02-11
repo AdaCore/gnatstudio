@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                               GNAT Studio                                --
 --                                                                          --
---                     Copyright (C) 2008-2023, AdaCore                     --
+--                     Copyright (C) 2008-2025, AdaCore                     --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -181,17 +181,6 @@ package body GPS.Editors is
    begin
       return 0;
    end Characters_Count;
-
-   overriding function Get_Chars
-     (This                 : Dummy_Editor_Buffer;
-      From                 : Editor_Location'Class := Nil_Editor_Location;
-      To                   : Editor_Location'Class := Nil_Editor_Location;
-      Include_Hidden_Chars : Boolean := True) return String
-   is
-      pragma Unreferenced (This, From, To, Include_Hidden_Chars);
-   begin
-      return "";
-   end Get_Chars;
 
    ---------------------
    -- Get_Entity_Name --
@@ -496,18 +485,6 @@ package body GPS.Editors is
    begin
       return False;
    end Is_End_Of_Line;
-
-   --------------
-   -- Get_Char --
-   --------------
-
-   overriding function Get_Char
-     (This : Dummy_Editor_Location) return Integer
-   is
-      pragma Unreferenced (This);
-   begin
-      return 0;
-   end Get_Char;
 
    ----------------
    -- Block_Name --

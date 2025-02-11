@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                               GNAT Studio                                --
 --                                                                          --
---                     Copyright (C) 2019-2024, AdaCore                     --
+--                     Copyright (C) 2019-2025, AdaCore                     --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -1026,9 +1026,10 @@ package body GPS.LSP_Client.References is
                           := Buffer.Editor.New_Location_At_Line (From.Line);
                         End_Loc    : constant GPS.Editors.Editor_Location'Class
                           := Start_Loc.End_Of_Line;
-                        Whole_Line : constant String := Buffer.Editor.Get_Chars
-                          (From => Start_Loc,
-                           To   => End_Loc);
+                        Whole_Line : constant String :=
+                          Buffer.Editor.Get_Chars_S
+                            (From => Start_Loc,
+                             To   => End_Loc);
 
                         Start      : Natural := Whole_Line'First;
                         Last       : Natural := Whole_Line'Last;
