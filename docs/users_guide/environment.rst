@@ -488,7 +488,7 @@ For both versions following packages need to be installed:
  * `libxcb1`
  * `shared-mime-info`
 
-*Ubuntu 18.04 LTS and 20.04 LTS*
+*Ubuntu 18.04 LTS, 20.04 LTS, 22.04 LTS*
 
  * `libbsd0`
  * `libc6`
@@ -497,6 +497,7 @@ For both versions following packages need to be installed:
  * `libx11-6`
  * `libxau6`
  * `libxcb1`
+ * `libx11-xcb1` (22.04 only)
  * `libxcb-render0`
  * `libxcb-shm0`
  * `libxcomposite1`
