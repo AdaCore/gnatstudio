@@ -133,4 +133,8 @@ private
      (Lang : access LLDB_Cpp_Language) return String;
    --  See inherited documentation
 
+   overriding function Is_Interpolation_Char
+     (Lang : access LLDB_Cpp_Language; Char : Wide_Wide_Character)
+      return Boolean is (False);
+
 end Language.Debugger.Lldb.Cpp;

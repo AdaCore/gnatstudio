@@ -647,9 +647,15 @@ package Src_Editor_Buffer is
    --  coloring has not been computed for the given location.
 
    function Is_In_String
-     (Buffer : Source_Buffer;
-      Iter   : Gtk.Text_Iter.Gtk_Text_Iter) return Boolean;
+     (Buffer              : Source_Buffer;
+      Iter                : Gtk.Text_Iter.Gtk_Text_Iter;
+      Added_Character     : Glib.Gunichar := 0;
+      Check_Interpolation : Boolean := False) return Boolean;
    --  Returns true if Iter is inside a string
+   --  Added_Character is the character which triggered the hook but was not
+   --  inserted yet in the buffer. It should be null when not called by a hook.
+   --  If Check_Interpolation then support interpolated string, it will
+   --  considered the 'f' in f"abcd" as part of the string.
 
    type Action_Type is
      (No_Action,      --  No action

@@ -1339,10 +1339,13 @@ class Predefined_Hooks:
         """
 
     # word_added = 'word_added'
-    def word_added(name, file):
+    def word_added(name, file, char, interactive):
         """
         Emitted when a word has been added in an editor.
         
+        char is the last character added and which created the new word like
+        space or a new line. It can be null.
+        interactive indicates if the action was triggered by the user.
         .. seealso:: :func:`GPS.Predefined_Hooks.character_added`
 
         :param str name:
