@@ -109,6 +109,19 @@ package body Language.Unknown is
       return GNAT.Strings.String_List'(1 .. 0 => null);
    end Keywords;
 
+   ---------------------------
+   -- Is_Interpolation_Char --
+   ---------------------------
+
+   overriding function Is_Interpolation_Char
+     (Lang : access Unknown_Language; Char : Wide_Wide_Character)
+      return Boolean
+   is
+      pragma Unreferenced (Lang, Char);
+   begin
+      return False;
+   end Is_Interpolation_Char;
+
    --------------------------
    -- Get_Language_Context --
    --------------------------

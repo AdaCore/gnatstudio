@@ -61,5 +61,9 @@ private
    overriding function Get_Name (Lang : access Java_Language) return String;
    --  See inherited documentation
 
+   overriding function Is_Interpolation_Char
+     (Lang : access Java_Language; Char : Wide_Wide_Character)
+      return Boolean is (False);
+
    Java_Lang : constant Language_Access := new Java_Language;
 end Language.Java;

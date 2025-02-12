@@ -51,6 +51,9 @@ package Language.Ada is
       Name : String)
       return Boolean;
 
+   overriding function Is_Interpolation_Char
+     (Lang : access Ada_Language; Char : Wide_Wide_Character) return Boolean;
+
    ----------------
    -- Completion --
    ----------------

@@ -4945,7 +4945,11 @@ package body Ada_Analyzer is
                   --  possible to determine if some is used as identifier or as
                   --  keyword, so to avoid upsetting users we never change
                   --  casing of some.
-                  if To_Lower (Buffer (Prec .. Current)) /= "some" then
+                  if To_Lower (Buffer (Prec .. Current)) /= "some"
+                    --  Special case for string interpolation
+                    and then (Buffer (Prec .. Current) /= "f"
+                              and then Buffer (Current + 1) /= '"')
+                  then
                      Replace_Text
                        (Prec,
                         Current + 1,
