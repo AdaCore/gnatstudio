@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                               GNAT Studio                                --
 --                                                                          --
---                     Copyright (C) 2002-2023, AdaCore                     --
+--                     Copyright (C) 2002-2025, AdaCore                     --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -71,7 +71,7 @@ package body Refactoring.Buffer_Helpers is
         Editor.New_Location_At_Line (Get_Line (Location));
       Loc_End   : constant Editor_Location'Class := Loc_Start.End_Of_Line;
 
-      Line : constant String := Editor.Get_Chars (Loc_Start, Loc_End);
+      Line : constant String := Editor.Get_Chars_S (Loc_Start, Loc_End);
 
       Char_Ind : String_Index_Type;
       Last_Ind : Integer := Line'Last;
@@ -105,7 +105,7 @@ package body Refactoring.Buffer_Helpers is
       Loc_End   : constant Editor_Location'CLass :=
         Editor.New_Location (Get_Line (Stop), Get_Column (Stop));
    begin
-      return Editor.Get_Chars (Loc_Start, Loc_End);
+      return Editor.Get_Chars_S (Loc_Start, Loc_End);
    end Get;
 
    -----------------

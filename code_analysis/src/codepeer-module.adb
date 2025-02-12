@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                               GNAT Studio                                --
 --                                                                          --
---                     Copyright (C) 2008-2024, AdaCore                     --
+--                     Copyright (C) 2008-2025, AdaCore                     --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -25,6 +25,7 @@ with GNAT.Strings;                   use GNAT.Strings;
 with GNATCOLL.Arg_Lists;
 with GNATCOLL.Traces;                use GNATCOLL.Traces;
 
+with VSS.Characters;
 with VSS.Strings.Conversions;
 with VSS.Strings.Formatters.Strings; use VSS.Strings.Formatters.Strings;
 with VSS.Strings.Templates;          use VSS.Strings.Templates;
@@ -2005,9 +2006,10 @@ package body CodePeer.Module is
       Location : Editor_Location'Class :=
         Message.Get_Editor_Mark.Location;
 
-      type Words_Array is array (Positive range <>) of Unbounded_String;
+      type Words_Array is
+        array (Positive range <>) of VSS.Strings.Virtual_String;
       Empty : constant Words_Array (1 .. 0) :=
-        (others => Null_Unbounded_String);
+        (others => VSS.Strings.Empty_Virtual_String);
 
       procedure Insert_After
         (Words   : Words_Array := Empty;
@@ -2019,11 +2021,13 @@ package body CodePeer.Module is
         (Words   : Words_Array := Empty;
          Excepts : Words_Array := Empty)
       is
+         use type VSS.Characters.Virtual_Character;
+
          EoB  : constant Editor_Location'Class := Editor.End_Of_Buffer;
          Skip : Boolean;
       begin
          Main : while Location /= EoB loop
-            if Location.Get_Char = Character'Pos (';') then
+            if Location.Get_Char = ';' then
                --  Place location after the semicolon and exit loop
                Location := Location.Forward_Char (1);
                exit Main;
@@ -2032,8 +2036,8 @@ package body CodePeer.Module is
             if Location.Starts_Word then
                --  We are on the word start, check if we have it in Words
                declare
-                  Current : constant String :=
-                    Editor.Get_Chars (Location, Location.Forward_To_Word_End);
+                  Current : constant VSS.Strings.Virtual_String :=
+                    Editor.Get_Text (Location, Location.Forward_To_Word_End);
                begin
                   for Word of Words loop
                      if Current = Word then
@@ -2042,10 +2046,11 @@ package body CodePeer.Module is
 
                         --  Check that we should skip the words combination
                         for Except of Excepts loop
-                           Skip := Editor.Get_Chars
+                           Skip := Editor.Get_Text
                              (Location,
-                              Location.Forward_Char (Except.Length - 1)) =
-                               Except;
+                              Location.Forward_Char
+                                (Integer (Except.Character_Length) - 1))
+                               = Except;
                         end loop;
 
                         if not Skip then
@@ -2083,15 +2088,15 @@ package body CodePeer.Module is
       begin
          case Location.Block_Type is
             when Cat_Loop_Statement =>
-               Insert_After ((1 => To_Unbounded_String ("loop")));
+               Insert_After (["loop"]);
 
             when Language.Cat_If_Statement =>
                Insert_After
-                 ((1 => To_Unbounded_String ("then")),
-                  (1 => To_Unbounded_String ("and then")));
+                 ([1 => "then"],
+                  [1 => "and then"]);
 
             when Cat_Case_Statement =>
-               Insert_After ((1 => To_Unbounded_String ("is")));
+               Insert_After (["is"]);
 
             when others =>
                Insert_After;

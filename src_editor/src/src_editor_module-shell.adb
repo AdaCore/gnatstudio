@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                               GNAT Studio                                --
 --                                                                          --
---                     Copyright (C) 2005-2023, AdaCore                     --
+--                     Copyright (C) 2005-2025, AdaCore                     --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -20,18 +20,22 @@ with Ada.Exceptions;               use Ada.Exceptions;
 with Ada.Strings.Unbounded;        use Ada.Strings.Unbounded;
 with Ada.Tags;                     use Ada.Tags;
 with Ada.Unchecked_Deallocation;
-with Casing_Exceptions;            use Casing_Exceptions;
-with Commands;                     use Commands;
-with Find_Utils;                   use Find_Utils;
 with GNAT.OS_Lib;                  use GNAT.OS_Lib;
 with GNAT.Regpat;                  use GNAT.Regpat;
 with GNAT.Strings;
+
 with GNATCOLL.Projects;            use GNATCOLL.Projects;
 with GNATCOLL.Python;              use GNATCOLL.Python;
 with GNATCOLL.Python.State;
 with GNATCOLL.Traces;              use GNATCOLL.Traces;
 with GNATCOLL.Utils;               use GNATCOLL.Utils;
 
+with VSS.Characters;
+with VSS.Strings.Conversions;
+
+with Casing_Exceptions;            use Casing_Exceptions;
+with Commands;                     use Commands;
+with Find_Utils;                   use Find_Utils;
 with GPS.Editors.Line_Information; use GPS.Editors.Line_Information;
 with GPS.Intl;                     use GPS.Intl;
 with GPS.Kernel.Charsets;          use GPS.Kernel.Charsets;
@@ -1912,10 +1916,12 @@ package body Src_Editor_Module.Shell is
              2 => To_Cst'Access,
              3 => Hidden_Chars_Cst'Access));
          Set_Return_Value
-           (Data, Get_Buffer (Data, 1).Get_Chars
-            (From                 => Get_Location (Data, 2),
-             To                   => Get_Location (Data, 3),
-             Include_Hidden_Chars => Nth_Arg (Data, 4, Default => True)));
+           (Data,
+            VSS.Strings.Conversions.To_UTF_8_String
+              (Get_Buffer (Data, 1).Get_Text
+               (From                 => Get_Location (Data, 2),
+                To                   => Get_Location (Data, 3),
+                Include_Hidden_Chars => Nth_Arg (Data, 4, Default => True))));
 
       elsif Command = "_insert_at_location" then
          Name_Parameters
@@ -2475,12 +2481,15 @@ package body Src_Editor_Module.Shell is
 
       elsif Command = "get_char" then
          declare
-            Unichar : constant Integer :=
-              Get_Location (Data, 1).Get_Char;
-            Buffer  : String (1 .. 6);
-            Last    : Natural;
+            Buffer : String (1 .. 6);
+            Last   : Natural;
          begin
-            Unichar_To_UTF8 (Gunichar (Unichar), Buffer, Last);
+            Unichar_To_UTF8
+              (Gunichar
+                 (VSS.Characters.Virtual_Character'Pos
+                      (Get_Location (Data, 1).Get_Char)),
+               Buffer,
+               Last);
             Set_Return_Value (Data, Buffer (1 .. Last));
          end;
 

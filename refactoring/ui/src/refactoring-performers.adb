@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                               GNAT Studio                                --
 --                                                                          --
---                     Copyright (C) 2003-2023, AdaCore                     --
+--                     Copyright (C) 2003-2025, AdaCore                     --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -288,7 +288,7 @@ package body Refactoring.Performers is
       Loc_End   : constant Editor_Location'Class :=
         Loc_Start.Forward_Char (Length - 1);
    begin
-      return Editor.Get_Chars (Loc_Start, Loc_End);
+      return Editor.Get_Chars_S (Loc_Start, Loc_End);
    end Get_Text;
 
    -----------------

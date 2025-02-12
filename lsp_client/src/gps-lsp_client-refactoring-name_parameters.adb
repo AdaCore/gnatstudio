@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                               GNAT Studio                                --
 --                                                                          --
---                       Copyright (C) 2020-2023, AdaCore                   --
+--                       Copyright (C) 2020-2025, AdaCore                   --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -21,6 +21,8 @@ with GNATCOLL.Traces;               use GNATCOLL.Traces;
 with GNATCOLL.Tribooleans;          use GNATCOLL.Tribooleans;
 with GNATCOLL.VFS;                  use GNATCOLL.VFS;
 with GNATCOLL.Xref;                 use GNATCOLL.Xref;
+
+with VSS.Characters;
 
 with GPS.Editors;                   use GPS.Editors;
 with GPS.Kernel.Actions;            use GPS.Kernel.Actions;
@@ -79,6 +81,8 @@ package body GPS.LSP_Client.Refactoring.Name_Parameters is
    is
       pragma Unreferenced (Command);
 
+      use type VSS.Characters.Virtual_Character;
+
       Kernel   : constant Kernel_Handle := Get_Kernel (Context.Context);
       File     : constant GNATCOLL.VFS.Virtual_File :=
         File_Information (Context.Context);
@@ -98,7 +102,7 @@ package body GPS.LSP_Client.Refactoring.Name_Parameters is
         (Line, Column);
       EoB      : constant Editor_Location'Class := Buf.End_Of_Buffer;
 
-      Char     : Integer;
+      Char     : VSS.Characters.Virtual_Character'Base;
       Is_Param : Boolean := False;
 
    begin
@@ -109,16 +113,14 @@ package body GPS.LSP_Client.Refactoring.Name_Parameters is
       while Loc /= EoB loop
          Char := Loc.Get_Char;
 
-         if Char = Character'Pos (')')
-           or else Char = Character'Pos (';')
-         then
+         if Char in ')' | ';' then
             exit;
 
-         elsif Char = Character'Pos ('(') then
+         elsif Char = '(' then
             Is_Param := True;
 
          elsif Is_Param
-           and then Lang.Is_Word_Char (Wide_Wide_Character'Val (Char))
+           and then Lang.Is_Word_Char (Wide_Wide_Character (Char))
          then
             Line   := Loc.Line;
             Column := Loc.Column;

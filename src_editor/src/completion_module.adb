@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                               GNAT Studio                                --
 --                                                                          --
---                     Copyright (C) 2005-2023, AdaCore                     --
+--                     Copyright (C) 2005-2025, AdaCore                     --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -22,6 +22,15 @@ with Ada_Semantic_Tree;            use Ada_Semantic_Tree;
 with Ada.Strings.Unbounded;
 with Ada.Strings.Wide_Wide_Maps;   use Ada.Strings.Wide_Wide_Maps;
 
+with GNAT.Strings;                 use GNAT.Strings;
+with GNATCOLL.Projects;            use GNATCOLL.Projects;
+with GNATCOLL.Scripts;             use GNATCOLL.Scripts;
+with GNATCOLL.Traces;              use GNATCOLL.Traces;
+with GNATCOLL.Utils;               use GNATCOLL.Utils;
+with GNATCOLL.VFS;                 use GNATCOLL.VFS;
+
+with VSS.Characters;
+
 with Basic_Types;                  use Basic_Types;
 with Commands.Editor;              use Commands.Editor;
 with Commands.Interactive;         use Commands, Commands.Interactive;
@@ -37,12 +46,6 @@ with Completion_Window;            use Completion_Window;
 with Completion.Aliases;           use Completion.Aliases;
 
 with Default_Preferences.Enums;    use Default_Preferences;
-with GNAT.Strings;                 use GNAT.Strings;
-with GNATCOLL.Projects;            use GNATCOLL.Projects;
-with GNATCOLL.Scripts;             use GNATCOLL.Scripts;
-with GNATCOLL.Traces;              use GNATCOLL.Traces;
-with GNATCOLL.Utils;               use GNATCOLL.Utils;
-with GNATCOLL.VFS;                 use GNATCOLL.VFS;
 with GPS.Editors.Line_Information; use GPS.Editors.Line_Information;
 with GPS.Intl;                     use GPS.Intl;
 with GPS.Kernel.Actions;           use GPS.Kernel.Actions;
@@ -392,7 +395,7 @@ package body Completion_Module is
       begin
          loop
             Loc := Loc.Forward_Char (-1);
-            Unichar := Glib.Gunichar (Loc.Get_Char);
+            Unichar := VSS.Characters.Virtual_Character'Pos (Loc.Get_Char);
 
             --  Exit when we are out of an identifier, eg. the current char is
             --  neither an alphanumeric character, neither an underscore
@@ -1603,7 +1606,7 @@ package body Completion_Module is
                The_Text        : String_Access;
                Ret             : Boolean;
             begin
-               The_Text := new String'(Editor.Get_Chars
+               The_Text := new String'(Editor.Get_Chars_S
                  (From                 => Insert_Mark_Loc,
                   To                   => Insert_Mark_Loc.Beginning_Of_Line,
                   Include_Hidden_Chars => False));

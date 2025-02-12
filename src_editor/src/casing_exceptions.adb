@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                               GNAT Studio                                --
 --                                                                          --
---                     Copyright (C) 2004-2023, AdaCore                     --
+--                     Copyright (C) 2004-2025, AdaCore                     --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -449,7 +449,7 @@ package body Casing_Exceptions is
                              Column_Information
                                (Context)).Forward_Char (Area'Length);
             Text      : constant String :=
-                          Editor.Get_Chars (Loc_Start, Loc_End);
+                          Editor.Get_Chars_S (Loc_Start, Loc_End);
          begin
             return Text'Length <= 1
               or else not Is_In (Text (Text'First), W_Seps)

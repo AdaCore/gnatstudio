@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                               GNAT Studio                                --
 --                                                                          --
---                     Copyright (C) 2001-2024, AdaCore                     --
+--                     Copyright (C) 2001-2025, AdaCore                     --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -7938,6 +7938,37 @@ package body Src_Editor_Buffer is
             Include_Last         => Include_Last);
    begin
       return To_Unbounded_String (Text_Access);
+   end Get_Text;
+
+   --------------
+   -- Get_Text --
+   --------------
+
+   function Get_Text
+     (Buffer               : access Source_Buffer_Record;
+      Start_Line           : Editable_Line_Type;
+      Start_Column         : Character_Offset_Type;
+      End_Line             : Editable_Line_Type := 0;
+      End_Column           : Character_Offset_Type := 0;
+      Include_Hidden_Chars : Boolean := True;
+      Include_Last         : Boolean := False)
+      return VSS.Strings.Virtual_String
+   is
+      Text_Access : GNAT.Strings.String_Access :=
+        Get_Text
+           (Buffer               => Buffer,
+            Start_Line           => Start_Line,
+            Start_Column         => Start_Column,
+            End_Line             => End_Line,
+            End_Column           => End_Column,
+            Include_Hidden_Chars => Include_Hidden_Chars,
+            Include_Last         => Include_Last);
+   begin
+      return Result : constant VSS.Strings.Virtual_String :=
+        VSS.Strings.Conversions.To_Virtual_String (Text_Access.all)
+      do
+         GNAT.Strings.Free (Text_Access);
+      end return;
    end Get_Text;
 
    -------------------------
