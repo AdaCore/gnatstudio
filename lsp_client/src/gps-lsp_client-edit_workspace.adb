@@ -25,6 +25,7 @@ with Gtkada.Stock_Labels;
 with GNATCOLL.Traces;                 use GNATCOLL.Traces;
 with GNATCOLL.Scripts;                use GNATCOLL.Scripts;
 with GNATCOLL.Scripts.Python;         use GNATCOLL.Scripts.Python;
+with GNATCOLL.Scripts.VSS_Utils;      use GNATCOLL.Scripts.VSS_Utils;
 with GNATCOLL.VFS;                    use GNATCOLL.VFS;
 
 with VSS.Strings.Character_Iterators;
@@ -295,10 +296,8 @@ package body GPS.LSP_Client.Edit_Workspace is
 
    begin
       --  Call the Myers diff Python implementation
-      Set_Nth_Arg
-        (Data, 1, VSS.Strings.Conversions.To_UTF_8_String (Old_Text));
-      Set_Nth_Arg
-        (Data, 2, VSS.Strings.Conversions.To_UTF_8_String (New_Text));
+      Set_Nth_Arg (Data, 1, Old_Text);
+      Set_Nth_Arg (Data, 2, New_Text);
       Execute_Command (Data, "diff_match_patch.compute_diff");
 
       --  Iterate over the results and create the new edit changes.
@@ -313,9 +312,8 @@ package body GPS.LSP_Client.Edit_Workspace is
                  Result.Nth_Arg (J);
                Operation : constant Diff_Operation_Type :=
                  To_Diff_Operation (Item.Nth_Arg (1));
-               Str       : constant String := Item.Nth_Arg (2);
                V_Str     : constant VSS.Strings.Virtual_String :=
-                 VSS.Strings.Conversions.To_Virtual_String (Str);
+                 Nth_Arg (Item, 2);
                Safe_Str  : constant VSS.Strings.Virtual_String :=
                  V_Str.Split_Lines.Join_Lines
                    (Terminator     => VSS.Strings.LF,
