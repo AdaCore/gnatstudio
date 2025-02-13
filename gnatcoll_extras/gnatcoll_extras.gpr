@@ -1,6 +1,7 @@
 with "gtkada";
 with "gnatcoll";
 with "gnatcoll_python";
+with "vss_text";
 with "../shared";
 
 project GNATCOLL_Extras is
