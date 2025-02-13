@@ -279,6 +279,7 @@ package body DAP.Module.Breakpoints is
       Context : GPS.Kernel.Selection_Context) return Boolean
    is
       use GPS.Kernel.Contexts;
+      use type DAP.Clients.Breakpoint_Managers.Breakpoint_Manager_Access;
 
       Kernel : constant Kernel_Handle := Get_Kernel (Context);
       Loc    : Location_Marker;
@@ -302,9 +303,10 @@ package body DAP.Module.Breakpoints is
          end if;
 
       else
-         return Filter.Found =
-           DAP.Module.Get_Current_Debugger.Get_Breakpoints_Manager.
-             Has_Breakpoint (Loc);
+         return DAP.Module.Get_Current_Debugger.Get_Breakpoints_Manager /= null
+           and then Filter.Found =
+             DAP.Module.Get_Current_Debugger.Get_Breakpoints_Manager.
+               Has_Breakpoint (Loc);
       end if;
    end Filter_Matches_Primitive;
 
