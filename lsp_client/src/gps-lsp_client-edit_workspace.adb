@@ -16,7 +16,7 @@
 ------------------------------------------------------------------------------
 
 with Ada.Containers.Indefinite_Vectors;
-with Ada.Strings.Unbounded;           use Ada.Strings.Unbounded;
+with Ada.Strings.Unbounded;
 
 with GNAT.Strings;
 
@@ -130,7 +130,7 @@ package body GPS.LSP_Client.Edit_Workspace is
          Make_Writable            : Boolean;
          Auto_Save                : Boolean;
          Allow_File_Renaming      : Boolean;
-         Locations_Message_Markup : Unbounded_String;
+         Locations_Message_Markup : VSS.Strings.Virtual_String;
 
          Compute_Minimal_Edits    : Boolean := False;
          --  Compute_Minimal_Edits controls whether we'll try to split the
@@ -596,7 +596,7 @@ package body GPS.LSP_Client.Edit_Workspace is
                --  Set to -1 to detect if an edit was done
                Rev_To_Line     : Integer := -1;
                Rev_To_Column   : Visible_Column_Type;
-               Rev_Text        : Unbounded_String;
+               Rev_Text        : Ada.Strings.Unbounded.Unbounded_String;
             begin
                if not Edit_Affect_Span
                  (Vectors.Element (C).Span.first,
@@ -643,7 +643,7 @@ package body GPS.LSP_Client.Edit_Workspace is
                      Flags      => GPS.Kernel.Messages.Side_And_Locations);
                   Errors.Include (File);
 
-               elsif To_String (Command.Locations_Message_Markup) /= "" then
+               elsif not Command.Locations_Message_Markup.Is_Empty then
                   --  Edit done, insert entry into locations view, don't auto
                   --  jump: it will keep the initial file focused
 
@@ -654,7 +654,8 @@ package body GPS.LSP_Client.Edit_Workspace is
                      Line       => From.Line,
                      Column     => From.Column,
                      Text       =>
-                       To_String (Command.Locations_Message_Markup),
+                       VSS.Strings.Conversions.To_UTF_8_String
+                         (Command.Locations_Message_Markup),
                      Importance => GPS.Kernel.Messages.Unspecified,
                      Flags      => GPS.Kernel.Messages.Side_And_Locations,
                      Allow_Auto_Jump_To_First => False);
@@ -1091,7 +1092,7 @@ package body GPS.LSP_Client.Edit_Workspace is
       Make_Writable            : Boolean;
       Auto_Save                : Boolean;
       Allow_File_Renaming      : Boolean;
-      Locations_Message_Markup : String;
+      Locations_Message_Markup : VSS.Strings.Virtual_String;
       Error                    : out Boolean;
       Limit_Span               : LSP.Messages.Span := LSP.Messages.Empty_Span;
       Compute_Minimal_Edits    : Boolean := False;
@@ -1108,8 +1109,7 @@ package body GPS.LSP_Client.Edit_Workspace is
          Make_Writable            => Make_Writable,
          Auto_Save                => Auto_Save,
          Allow_File_Renaming      => Allow_File_Renaming,
-         Locations_Message_Markup =>
-           To_Unbounded_String (Locations_Message_Markup),
+         Locations_Message_Markup => Locations_Message_Markup,
          Compute_Minimal_Edits    => Compute_Minimal_Edits,
          Avoid_Cursor_Move        => Avoid_Cursor_Move);
 
