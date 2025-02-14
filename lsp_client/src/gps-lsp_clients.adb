@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                               GNAT Studio                                --
 --                                                                          --
---                     Copyright (C) 2018-2024, AdaCore                     --
+--                     Copyright (C) 2018-2025, AdaCore                     --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -398,10 +398,7 @@ package body GPS.LSP_Clients is
          Auto_Save                => False,
          Allow_File_Renaming      => False,
          Locations_Message_Markup =>
-           (if Params.label.Is_Set
-            then VSS.Strings.Conversions.To_UTF_8_String
-              (Params.label.Value)
-            else ""),
+           (if Params.label.Is_Set then Params.label.Value else ""),
          Error                    => On_Error);
 
       declare

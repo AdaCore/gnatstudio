@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                               GNAT Studio                                --
 --                                                                          --
---                       Copyright (C) 2019-2023, AdaCore                   --
+--                       Copyright (C) 2019-2025, AdaCore                   --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -29,7 +29,7 @@ package GPS.LSP_Client.Edit_Workspace is
       Make_Writable            : Boolean;
       Auto_Save                : Boolean;
       Allow_File_Renaming      : Boolean;
-      Locations_Message_Markup : String;
+      Locations_Message_Markup : VSS.Strings.Virtual_String;
       Error                    : out Boolean;
       Limit_Span               : LSP.Messages.Span := LSP.Messages.Empty_Span;
       Compute_Minimal_Edits    : Boolean := False;

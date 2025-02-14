@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                               GNAT Studio                                --
 --                                                                          --
---                       Copyright (C) 2019-2023, AdaCore                   --
+--                       Copyright (C) 2019-2025, AdaCore                   --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -25,6 +25,7 @@ with VSS.Strings.Conversions;
 
 with Glib;                          use Glib;
 with Glib.Convert;                  use Glib.Convert;
+with Glib.Convert.VSS_Utils;        use Glib.Convert.VSS_Utils;
 with Gtk.Box;                       use Gtk.Box;
 with Gtk.Check_Button;              use Gtk.Check_Button;
 with Gtk.Dialog;                    use Gtk.Dialog;
