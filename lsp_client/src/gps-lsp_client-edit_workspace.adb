@@ -187,6 +187,12 @@ package body GPS.LSP_Client.Edit_Workspace is
                  Include_Hidden_Chars => False);
             Old_Text   : constant VSS.Strings.Virtual_String :=
               Span_Text.Head_Before (Span_Text.At_Last_Character);
+            --  XXX It is not clear why last character is ignored here. There
+            --  are two incorrect things might be here:
+            --   - remove LF character (CRLF must be handled too)
+            --   - conversion of LSP range is not equivalent to conversion of
+            --     two LSP positions
+            --  Need to be investigated!
             New_Text   : constant VSS.Strings.Virtual_String :=
               Vectors.Element (C).Text;
 
