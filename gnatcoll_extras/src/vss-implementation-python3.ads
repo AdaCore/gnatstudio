@@ -4,7 +4,11 @@
 --  SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 --
 
---  C binding of Python3 Stable API
+--  C binding of Python3 Stable API, see
+--
+--  https://docs.python.org/3/c-api/
+--
+--  for detailed documentation of each entity declared here.
 
 with Interfaces.C;
 
