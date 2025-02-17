@@ -284,6 +284,10 @@ XML = r"""<?xml version="1.0" ?>
   <toolchain name="x86-lynx178elf">
     <debugger>i586-elf-lynxos178e-gdb</debugger>
   </toolchain>
+
+  <toolchain name="x86-lynx178v111">
+    <debugger>i586-elf-lynxos178v111-gdb</debugger>
+  </toolchain>
 </GNAT_Studio>
 """
 
