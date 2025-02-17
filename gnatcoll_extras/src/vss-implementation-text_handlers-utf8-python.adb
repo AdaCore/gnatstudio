@@ -97,6 +97,7 @@ package body VSS.Implementation.Text_Handlers.UTF8.Python is
       Position : in out VSS.Implementation.Strings.Cursor)
    is
       use type VSS.Unicode.UTF16_Code_Unit_Offset;
+      use type VSS.Unicode.UTF8_Code_Unit_Offset;
 
    begin
       Position := (Index => 0, UTF8_Offset => -1, UTF16_Offset => -1);
@@ -307,7 +308,7 @@ package body VSS.Implementation.Text_Handlers.UTF8.Python is
          Storage : constant
            VSS.Implementation.UTF8_Encoding.UTF8_Code_Unit_Array
              (0 .. VSS.Unicode.UTF8_Code_Unit_Count (Size))
-             with Import, Convention => Ada, Address => Pointer.all'Address;
+               with Import, Convention => Ada, Address => Pointer.all'Address;
 
       begin
          Split_Lines_Common
@@ -358,6 +359,35 @@ package body VSS.Implementation.Text_Handlers.UTF8.Python is
       end;
    end To_UTF_8_String;
 
+   ------------------------------------
+   -- UTF8_Constant_Storage_And_Size --
+   ------------------------------------
+
+   overriding procedure UTF8_Constant_Storage_And_Size
+     (Self    : Python_UTF8_Text;
+      Pointer : out
+        VSS.Implementation.Interfaces_C.UTF8_Code_Unit_Constant_Access;
+      Size    : out VSS.Unicode.UTF8_Code_Unit_Count) is
+   begin
+      Pointer :=
+        VSS.Implementation.Python3.PyBytes_AsString (Self.Bytes);
+      Size :=
+        VSS.Unicode.UTF8_Code_Unit_Offset
+          (VSS.Implementation.Python3.PyBytes_Size (Self.Bytes));
+   end UTF8_Constant_Storage_And_Size;
+
+   ----------------------------------
+   -- UTF8_Constant_Storage_Poiner --
+   ----------------------------------
+
+   overriding function UTF8_Constant_Storage_Poiner
+     (Self : Python_UTF8_Text)
+      return not null
+        VSS.Implementation.Interfaces_C.UTF8_Code_Unit_Constant_Access is
+   begin
+      return VSS.Implementation.Python3.PyBytes_AsString (Self.Bytes);
+   end UTF8_Constant_Storage_Poiner;
+
    ---------------
    -- UTF8_Size --
    ---------------
@@ -369,18 +399,6 @@ package body VSS.Implementation.Text_Handlers.UTF8.Python is
         VSS.Unicode.UTF8_Code_Unit_Offset
           (VSS.Implementation.Python3.PyBytes_Size (Self.Bytes));
    end UTF8_Size;
-
-   ----------------------------------
-   -- UTF8_Storage_Constant_Poiner --
-   ----------------------------------
-
-   overriding function UTF8_Storage_Constant_Poiner
-     (Self : Python_UTF8_Text)
-      return not null
-        VSS.Implementation.Interfaces_C.UTF8_Code_Unit_Constant_Access is
-   begin
-      return VSS.Implementation.Python3.PyBytes_AsString (Self.Bytes);
-   end UTF8_Storage_Constant_Poiner;
 
    -----------------
    -- Unreference --

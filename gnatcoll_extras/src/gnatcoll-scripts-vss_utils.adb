@@ -122,17 +122,17 @@ package body GNATCOLL.Scripts.VSS_Utils is
            VSS.Implementation.Python3.PyUnicode_FromStringAndSize (null, 0);
 
       elsif Text.all
-        in VSS.Implementation.Text_Handlers.UTF8.Interface_UTF8_Text'Class
+        in VSS.Implementation.Text_Handlers.UTF8.Abstract_UTF8_Text'Class
       then
          declare
-            S : VSS.Implementation.Text_Handlers.UTF8.Interface_UTF8_Text'Class
+            S : VSS.Implementation.Text_Handlers.UTF8.Abstract_UTF8_Text'Class
               renames VSS.Implementation.Text_Handlers.UTF8
-                        .Interface_UTF8_Text'Class (Text.all);
+                        .Abstract_UTF8_Text'Class (Text.all);
 
          begin
             return
               VSS.Implementation.Python3.PyUnicode_FromStringAndSize
-                (S.UTF8_Storage_Constant_Poiner,
+                (S.UTF8_Constant_Storage_Poiner,
                  VSS.Implementation.Python3.Py_ssize_t (S.UTF8_Size));
          end;
 
