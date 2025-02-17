@@ -137,10 +137,12 @@ package body CodePeer.Generic_Criteria_Editors is
       Title          : String;
       History_Prefix : String;
       Items          : Item_Sets.Set;
-      Default        : Boolean) is
+      Default        : Boolean;
+      Tree_Name      : String) is
    begin
       Editor := new Criteria_Editor_Record;
-      Initialize (Editor, Kernel, Title, History_Prefix, Items, Default);
+      Initialize
+        (Editor, Kernel, Title, History_Prefix, Items, Default, Tree_Name);
    end Gtk_New;
 
    ----------------
@@ -153,7 +155,8 @@ package body CodePeer.Generic_Criteria_Editors is
       Title          : String;
       History_Prefix : String;
       Items          : Item_Sets.Set;
-      Default        : Boolean)
+      Default        : Boolean;
+      Tree_Name      : String)
    is
       Column          : Gtk.Tree_View_Column.Gtk_Tree_View_Column;
       Text_Renderer   : Gtk.Cell_Renderer_Text.Gtk_Cell_Renderer_Text;
@@ -187,6 +190,9 @@ package body CodePeer.Generic_Criteria_Editors is
            (On_Model_Row_Changed'Access),
          Criteria_Editor (Self));
       Gtk.Tree_View.Gtk_New (Self.View, Self.Model);
+      if Tree_Name /= "" then
+         Self.View.Set_Name (Tree_Name);
+      end if;
       Self.Add (Self.View);
 
       if Enable_Tooltips then
