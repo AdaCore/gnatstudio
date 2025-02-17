@@ -13,7 +13,7 @@ private with VSS.Implementation.Interfaces_C;
 
 package VSS.Implementation.Text_Handlers.UTF8.Python is
 
-   type Python_UTF8_Text is new Interface_UTF8_Text with private;
+   type Python_UTF8_Text is new Abstract_UTF8_Text with private;
 
    procedure Unsafe_Initialize
      (Data   : out VSS.Implementation.Strings.String_Data;
@@ -21,7 +21,7 @@ package VSS.Implementation.Text_Handlers.UTF8.Python is
 
 private
 
-   type Python_UTF8_Text is new Interface_UTF8_Text with record
+   type Python_UTF8_Text is new Abstract_UTF8_Text with record
       Bytes  : GNATCOLL.Python.PyObject;
       Length : VSS.Implementation.Strings.Character_Count;
    end record with Object_Size => 192;
@@ -104,9 +104,15 @@ private
    overriding function UTF8_Size
      (Self : Python_UTF8_Text) return VSS.Unicode.UTF8_Code_Unit_Count;
 
-   overriding function UTF8_Storage_Constant_Poiner
+   overriding function UTF8_Constant_Storage_Poiner
      (Self : Python_UTF8_Text)
       return not null
         VSS.Implementation.Interfaces_C.UTF8_Code_Unit_Constant_Access;
+
+   overriding procedure UTF8_Constant_Storage_And_Size
+     (Self    : Python_UTF8_Text;
+      Pointer : out
+        VSS.Implementation.Interfaces_C.UTF8_Code_Unit_Constant_Access;
+      Size    : out VSS.Unicode.UTF8_Code_Unit_Count);
 
 end VSS.Implementation.Text_Handlers.UTF8.Python;
