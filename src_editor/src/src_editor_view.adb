@@ -2588,7 +2588,10 @@ package body Src_Editor_View is
             Clear_Typed_Chars (Buffer);
 
             if not View.As_Is_Enabled then
-               Word_Added (Buffer);
+               Word_Added
+                 (Buffer      => Buffer,
+                  Character   => Gdk.Keyval.To_Unicode (Key),
+                  Interactive => False);
             end if;
 
             Graph_Key := True;
@@ -2611,7 +2614,10 @@ package body Src_Editor_View is
                     and then not VSS.Characters.Is_Control (Char)
                   then
                      if not View.As_Is_Enabled then
-                        Word_Added (Buffer);
+                        Word_Added
+                          (Buffer      => Buffer,
+                           Character   => Gdk.Keyval.To_Unicode (Key),
+                           Interactive => False);
                      end if;
                   end if;
                end if;
