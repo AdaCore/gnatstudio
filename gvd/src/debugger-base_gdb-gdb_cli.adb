@@ -488,17 +488,32 @@ package body Debugger.Base_Gdb.Gdb_CLI is
    is
       pragma Unreferenced (From_API);
 
+      ----------------
+      -- Is_Command --
+      ----------------
+
+      function Is_Command (Name : String) return Boolean;
+
+      function Is_Command (Name : String) return Boolean is
+      begin
+         return Standard.Ada.Strings.Fixed.Index (Name, " ") > Name'First;
+      end Is_Command;
+
       --  Remove CR and LF characters which can be present in the result by
       --    "set print pretty on" and others commands modifying outputs.
 
       S : constant String := Strip_Character
         (Strip_CR
            (Send_And_Get_Clean_Output
-                (Debugger, "print " & Fmt_Array (Format) & ' ' & Entity,
+                (Debugger,
+                 (if Is_Command (Entity)
+                  then Entity
+                  else "print " & Fmt_Array (Format) & ' ' & Entity),
                  Mode => Internal)),
          ASCII.LF);
 
       Matched : Match_Array (0 .. 1);
+
    begin
       Match (Variable_Pattern, S, Matched);
 
