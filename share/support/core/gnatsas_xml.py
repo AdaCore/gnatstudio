@@ -327,7 +327,7 @@ excluded from GNATSAS's analysis."
 many cores as available on the machine)." />
          <check label="Enable GNAT warnings" switch="--gnat"
                 switch-off="--no-gnat" default="on"
-                column="2" tip="Enable/disable launching GNAT front-end and collecting its warnings."/>
+                column="2" tip="Enable/disable launching GNAT front-end and collecting its warnings (enabled by default)."/>
          <check label="Enable Infer" switch="--infer" switch-off="--no-infer" default="on"
                 column="2" tip="Enable/disable Infer analysis (enabled by default)."/>
          <check label="Enable Inspector" switch="--inspector" switch-off="--no-inspector" default="on"
@@ -597,9 +597,9 @@ many cores as available on the machine)."/>
                 column="2" tip="GNAT SAS will only analyze the source files associated with the root project file (presuming your application uses a tree of project files to represent all of its constituents)."/>
          <check label="Force analysis" switch="-f" column="2"
           tip="Force analysis of all files (disable incrementality)."/>
-         <check label="Enable GNAT warnings" switch="--gnat"
+         <check label="Enable GNAT warnings" switch="--gnat" switch-off="--no-gnat"
                 default="on"
-                column="2" tip="Enable/disable launching GNAT front-end and collecting its warnings."/>
+                column="2" tip="Enable/disable launching GNAT front-end and collecting its warnings (enabled by default)."/>
          <check label="Enable Infer" switch="--infer" switch-off="--no-infer" default="on"
                 column="2" tip="Enable/disable Infer analysis (enabled by default)."/>
          <check label="Enable Inspector" switch="--inspector" switch-off="--no-inspector" default="on"
