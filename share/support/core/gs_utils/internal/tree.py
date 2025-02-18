@@ -3,7 +3,7 @@
 
 
 import GPS
-from gi.repository import Gtk
+from gi.repository import Gtk, GObject
 from .menu import TestContextual
 from .asserts import gps_assert, gps_not_null, gps_assert_menu
 import pygps.tree
@@ -46,7 +46,8 @@ class Tree(object):
         value = []
         for row in model:
             if column == -1:
-                value.append([r for r in row])
+                value.append([c for c in row if not isinstance(c, GObject.GBoxed)])
+
             elif row[column] is not None:
                 value.append(row[column])
 

@@ -115,6 +115,7 @@ package body CodePeer.Race_Condition_Reports is
       Self.Pack_Start (Scrolled);
 
       Gtk.Tree_View.Gtk_New (Self.Summary_View, Self.Summary_Model);
+      Self.Summary_View.Set_Name ("gnatsas-race_object");
       Scrolled.Add (Self.Summary_View);
       Self.Summary_View.Set_Activate_On_Single_Click (True);
 
@@ -136,6 +137,7 @@ package body CodePeer.Race_Condition_Reports is
       Self.Pack_Start (Scrolled);
 
       Gtk.Tree_View.Gtk_New (Self.Details_View, Self.Details_Model);
+      Self.Details_View.Set_Name ("gnatsas-race_entry");
       Scrolled.Add (Self.Details_View);
       Self.Details_View.Set_Activate_On_Single_Click (True);
 
