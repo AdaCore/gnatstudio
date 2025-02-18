@@ -567,6 +567,7 @@ package body Debugger.Base_Gdb.Gdb_MI is
       function Fmt return String;
       function Data_Evaluate (Name : String) return String;
       function Var_Evaluate  (Name : String) return String;
+      function Is_Command (Name : String) return Boolean;
 
       procedure Update_Value
         (Name  : String;
@@ -631,6 +632,7 @@ package body Debugger.Base_Gdb.Gdb_MI is
 
          N   : Node_Access := Node;
          Idx : Natural     := 0;
+
       begin
          if N = null then
             declare
@@ -833,9 +835,22 @@ package body Debugger.Base_Gdb.Gdb_MI is
          end if;
       end Build_Result;
 
+      ----------------
+      -- Is_Command --
+      ----------------
+
+      function Is_Command (Name : String) return Boolean is
+      begin
+         return Standard.Ada.Strings.Fixed.Index (Name, " ") > Name'First;
+      end Is_Command;
+
    begin
       if From_API then
          return Data_Evaluate (Entity);
+      end if;
+
+      if Is_Command (Entity) then
+         return Debugger.Send_And_Get_Clean_Output (Entity, Mode => Internal);
       end if;
 
       V := Debugger.Create_Var (Entity);
@@ -882,7 +897,10 @@ package body Debugger.Base_Gdb.Gdb_MI is
 
             else
                Update_Value
-                 (To_String (V.Name), To_String (V.Name), V.Nodes, null);
+                 (To_String (V.Name),
+                  To_String (V.Name),
+                  V.Nodes,
+                  null);
             end if;
          end if;
       else
