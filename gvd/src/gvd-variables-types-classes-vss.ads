@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                               GNAT Studio                                --
 --                                                                          --
---                     Copyright (C) 2004-2023, AdaCore                     --
+--                     Copyright (C) 2025, AdaCore                          --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -15,33 +15,7 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
---  This package contains the hooks that are used by the editors
+--  Base package for VSS classes
 
-package Src_Editor_Buffer.Hooks is
-
-   procedure Location_Changed (Buffer : Source_Buffer);
-   --  Emit the hook Cursor_Stopped_Hook
-
-   procedure Word_Added
-     (Buffer      : Source_Buffer;
-      Character   : Gunichar;
-      Interactive : Boolean);
-   --  Emit the hook Word_Added_Hook.
-   --  Character is the last character added creating the new word and
-   --  it should be 8 (control-H) when a character was removed from the buffer.
-   --  Interactive indicates whether the word creation is the result of
-   --  a user interaction.
-
-   procedure Character_Added
-     (Buffer      : Source_Buffer;
-      Character   : Gunichar;
-      Interactive : Boolean);
-   --  Emit the Character_Added_Hook. Character should be 8 (control-H) when a
-   --  character was removed from the buffer.
-   --  Interactive indicates whether the character is a result of user
-   --  interaction.
-
-   procedure Buffer_Modified (Buffer : Source_Buffer);
-   --  Emit the Buffer_Modified hook
-
-end Src_Editor_Buffer.Hooks;
+package GVD.Variables.Types.Classes.VSS is
+end GVD.Variables.Types.Classes.VSS;

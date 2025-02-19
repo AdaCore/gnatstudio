@@ -1,0 +1,9 @@
+project Test is
+
+   for Main use ("foo.adb");
+
+   package Compiler is
+      for Switches ("Ada") use ("-gnatX");
+   end Compiler;
+
+end Test;

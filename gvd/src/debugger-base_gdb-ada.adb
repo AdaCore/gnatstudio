@@ -35,6 +35,8 @@ with GVD.Variables.Types.Classes.Ada.Finalization;
 pragma Unreferenced (GVD.Variables.Types.Classes.Ada.Finalization);
 with GVD.Variables.Types.Classes.Ada.Strings.Unbounded;
 pragma Unreferenced (GVD.Variables.Types.Classes.Ada.Strings.Unbounded);
+with GVD.Variables.Types.Classes.VSS.Strings;
+pragma Unreferenced (GVD.Variables.Types.Classes.VSS.Strings);
 
 package body Debugger.Base_Gdb.Ada is
 

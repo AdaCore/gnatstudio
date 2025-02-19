@@ -156,4 +156,8 @@ private
       Word_Chars       : Wide_Wide_Character_Set;
    end record;
 
+   overriding function Is_Interpolation_Char
+     (Lang : access Custom_Language; Char : Wide_Wide_Character) return Boolean
+   is (False);
+
 end Language.Custom;
