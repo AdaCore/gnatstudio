@@ -1858,7 +1858,7 @@ package body GPS.Kernel.Preferences is
         (Name    => "LSP-Alire-Diagnostics",
          Default => True,
          Label   => "Enable Alire diagnostics",
-         Doc     => "Enable diagnostics related to alire",
+         Doc     => "Enable diagnostics related to Alire",
          Path    => "Editor/Ada:Diagnostics");
 
       LSP_Ada_Param_Threshold := Kernel.Get_Preferences.Create
