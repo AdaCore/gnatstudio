@@ -49,7 +49,7 @@ def run_test():
 
     # Enable all diagnostics and show them in the Location views
     GPS.Preference("LSP-Diagnostics-Display").set("Editor_And_Locations")
-    GPS.Preference("LSP-Ada-Diagnostics").set(True)
+    GPS.Preference("LSP-Ada-File-Diagnostics").set(True)
     GPS.Preference("LSP-Ada-Project-Diagnostics").set(True)
     # Restart to force the preferences
     GPS.execute_action("restart ada language server")
