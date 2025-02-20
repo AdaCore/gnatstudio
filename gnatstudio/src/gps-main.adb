@@ -949,8 +949,7 @@ procedure GPS.Main is
          File_Opened := True;
          Auto_Load_Project := False;
 
-         if Project_Name /= No_File
-           and then Is_Regular_File (Project_Name)
+         if Project_Name /= No_File and then Is_Regular_File (Project_Name)
          then
             --  Do not clear to keep the welcome message on kernel's console
             Load_Project (GPS_Main.Kernel, Project_Name, Clear => False);
@@ -966,28 +965,39 @@ procedure GPS.Main is
          --  Project will be overridden when the executable is loaded
          Load_Sources;
 
-         --  ??? re-enable this...
---           if Tools_Host /= null then
---              Project.Set_Attribute
---                (Scenario  => All_Scenarios,
---                 Attribute => Remote_Host_Attribute,
---                 Value     => Tools_Host.all);
---           end if;
+         --  Attempt to set the IDE'Program_Host and IDE'Communication_Protocol
+         --  project attributes if specified in the command line.
+         --  If the project is not editable, just catch the exception and
+         --  pursue without setting the attributes.
+         begin
+            if GPS.Globals.Target /= null then
+               Project.Set_Attribute
+                 (Scenario  => All_Scenarios,
+                  Attribute => Program_Host_Attribute,
+                  Value     => GPS.Globals.Target.all);
+            end if;
 
-         if GPS.Globals.Target /= null then
-            Project.Set_Attribute
-              (Scenario  => All_Scenarios,
-               Attribute => Program_Host_Attribute,
-               Value     => GPS.Globals.Target.all);
-         end if;
+            if Protocol /= null then
+               Project.Set_Attribute
+                 (Scenario  => All_Scenarios,
+                  Attribute => Protocol_Attribute,
+                  Value     => Protocol.all);
 
-         if Protocol /= null then
-            Project.Set_Attribute
-              (Scenario  => All_Scenarios,
-               Attribute => Protocol_Attribute,
-               Value     => Protocol.all);
-         end if;
+            end if;
 
+         exception
+            when GNATCOLL.Projects.Project_Not_Editable =>
+            Trace
+              (Main_Trace,
+               "Can't edit project attributes needed for "
+               & "--debug and --target options: '"
+               & Project.Name
+               & "'' is not editable");
+         end;
+
+         --  No project was specified on the command line: set the default
+         --  languages of the empty project (Ada and C++ to cover most of
+         --  cases).
          if Empty_Project then
             Project.Set_Attribute
               (Scenario  => All_Scenarios,
