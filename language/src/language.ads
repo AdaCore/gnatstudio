@@ -151,12 +151,6 @@ package Language is
    --  For case-insensitive languages, the keywords are listed in lower case.
    --  Caller must not free the results.
 
-   function Is_Interpolation_Char
-     (Lang : access Language_Root; Char : Wide_Wide_Character) return Boolean
-      is abstract;
-   --  Return True if Char belongs to the set of characters used in string
-   --  interpolation for Lang.
-
    function Is_Entity_Name
      (Lang : access Language_Root;
       Name : String)
