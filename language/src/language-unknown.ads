@@ -42,10 +42,6 @@ package Language.Unknown is
    overriding function Keywords
      (Lang : access Unknown_Language) return Strings.String_Access;
 
-   overriding function Is_Interpolation_Char
-     (Lang : access Unknown_Language; Char : Wide_Wide_Character)
-      return Boolean;
-
    overriding function Keywords
      (Lang : access Unknown_Language)
       return GNAT.Expect.Pattern_Matcher_Access;

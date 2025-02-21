@@ -63,9 +63,6 @@ package body Language.Shell is
      is (To_String (Lang.Name));
    overriding function Is_Simple_Type
      (Lang : access Shell_Language; Str : String) return Boolean is (False);
-   overriding function Is_Interpolation_Char
-     (Lang : access Shell_Language; Char : Wide_Wide_Character)
-      return Boolean is (False);
    overriding function Keywords
      (Lang : access Shell_Language) return GNAT.Strings.String_List
      is ((1 .. 0 => null));

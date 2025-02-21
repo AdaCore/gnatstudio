@@ -182,13 +182,11 @@ package body Src_Editor_Module is
        Context : Interactive_Command_Context) return Command_Return_Type;
    --  Called to reopen a source file
 
-   type On_Word_Added is new Character_Hooks_Function with null record;
+   type On_Word_Added is new File_Hooks_Function with null record;
    overriding procedure Execute
-     (Self        : On_Word_Added;
-      Kernel      : not null access Kernel_Handle_Record'Class;
-      File        : Virtual_File;
-      Char        : Glib.Gunichar := 0;
-      Interactive : Boolean := True);
+     (Self   : On_Word_Added;
+      Kernel : not null access Kernel_Handle_Record'Class;
+      File   : Virtual_File);
    --  Reacts to the word_added Hook
 
    type On_Character_Added is new Character_Hooks_Function with null record;
@@ -2162,10 +2160,7 @@ package body Src_Editor_Module is
             if Get_View (Box).As_Is_Enabled then
                Get_View (Box).Reset_As_Is_Mode;
             else
-               Autocase_Text
-                 (Buffer    => Buffer,
-                  Character => Character,
-                  Casing    => On_The_Fly);
+               Autocase_Text (Buffer, Casing => On_The_Fly);
             end if;
 
          elsif Character = Space then
@@ -2241,11 +2236,9 @@ package body Src_Editor_Module is
    -------------
 
    overriding procedure Execute
-     (Self        : On_Word_Added;
-      Kernel      : not null access Kernel_Handle_Record'Class;
-      File        : Virtual_File;
-      Char        : Glib.Gunichar := 0;
-      Interactive : Boolean := True)
+     (Self   : On_Word_Added;
+      Kernel : not null access Kernel_Handle_Record'Class;
+      File   : Virtual_File)
    is
       pragma Unreferenced (Self);
       Buffer    : Source_Buffer;
@@ -2254,10 +2247,7 @@ package body Src_Editor_Module is
          --  Get the most recent editor for this file, for any project
          Buffer := Get_Buffer
            (Get_Source_Box_From_MDI (Find_Editor (Kernel, File, No_Project)));
-         Autocase_Text
-           (Buffer    => Buffer,
-            Character => Char,
-            Casing    => End_Of_Word);
+         Autocase_Text (Buffer, Casing => End_Of_Word);
       end if;
    end Execute;
 

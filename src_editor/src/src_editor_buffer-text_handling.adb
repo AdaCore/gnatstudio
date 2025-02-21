@@ -288,9 +288,8 @@ package body Src_Editor_Buffer.Text_Handling is
      Compile ("^([^""]|"".*?""|'.')*--.*$");
 
    procedure Autocase_Text
-     (Buffer    : access Source_Buffer_Record'Class;
-      Character : Glib.Gunichar;
-      Casing    : Casing_Policy)
+     (Buffer : access Source_Buffer_Record'Class;
+      Casing : Casing_Policy)
    is
       use type VSS.Characters.Virtual_Character;
 
@@ -451,11 +450,7 @@ package body Src_Editor_Buffer.Text_Handling is
                     and then Casing = On_The_Fly)
            or else Get_Language_Context (Lang).Case_Sensitive
            or else Is_In_Comment (W_End)
-           or else Is_In_String
-             (Buffer              => Source_Buffer (Buffer),
-              Iter                => W_End,
-              Added_Character     => Character,
-              Check_Interpolation => True)
+           or else Is_In_String (Source_Buffer (Buffer), W_End)
          then
             --  On-the-fly casing not activated, the language is case sensitive
             --  or we are in a comment or a string. We also disable on-the-fly

@@ -51,16 +51,9 @@ package body Src_Editor_Buffer.Hooks is
    -- Word_Added --
    ----------------
 
-   procedure Word_Added
-     (Buffer      : Source_Buffer;
-      Character   : Gunichar;
-      Interactive : Boolean) is
+   procedure Word_Added (Buffer : Source_Buffer) is
    begin
-      Word_Added_Hook.Run
-        (Buffer.Kernel,
-         File        => Buffer.Filename,
-         Char        => Character,
-         Interactive => Interactive);
+      Word_Added_Hook.Run (Buffer.Kernel, File => Buffer.Filename);
    end Word_Added;
 
    ---------------------
