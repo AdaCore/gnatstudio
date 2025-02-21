@@ -1839,10 +1839,10 @@ package body GPS.Kernel.Preferences is
            & "accepting completion for invisible symbols.",
            Path    => "Editor/Ada:Completion");
 
-      LSP_Ada_Diagnostics := Kernel.Get_Preferences.Create
-        (Name    => "LSP-Ada-Diagnostics",
+      LSP_Ada_File_Diagnostics := Kernel.Get_Preferences.Create
+        (Name    => "LSP-Ada-File-Diagnostics",
          Default => True,
-         Label   => "Enable diagnostics",
+         Label   => "Enable Ada File diagnostics",
          Doc     => "Enable live diagnostics when editing Ada code "
          & "(e.g: syntax errors).",
          Path    => "Editor/Ada:Diagnostics");
@@ -1851,9 +1851,14 @@ package body GPS.Kernel.Preferences is
         (Name    => "LSP-Ada-Project-Diagnostics",
          Default => True,
          Label   => "Enable Project diagnostics",
-         Doc     => "Enable project related diagnostics in Ada code. "
-         & """Enable diagnotics"" must be enabled for this preference to "
-         & "apply and the Server must be restarted",
+         Doc     => "Enable diagnostics related to project loading",
+         Path    => "Editor/Ada:Diagnostics");
+
+      LSP_Alire_Diagnostics := Kernel.Get_Preferences.Create
+        (Name    => "LSP-Alire-Diagnostics",
+         Default => True,
+         Label   => "Enable Alire diagnostics",
+         Doc     => "Enable diagnostics related to Alire",
          Path    => "Editor/Ada:Diagnostics");
 
       LSP_Ada_Param_Threshold := Kernel.Get_Preferences.Create
