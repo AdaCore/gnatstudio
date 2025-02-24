@@ -149,4 +149,8 @@ private
    overriding function Get_Name (Lang : access Gdb_Ada_Language) return String;
    --  See inherited documentation
 
+   overriding function Is_Interpolation_Char
+     (Lang : access Gdb_Ada_Language; Char : Wide_Wide_Character)
+      return Boolean is (False);
+
 end Debugger.Base_Gdb.Ada;
