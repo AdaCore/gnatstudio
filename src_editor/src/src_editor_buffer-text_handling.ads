@@ -19,7 +19,6 @@
 --  editable text (ie corresponding to editable lines, with opposition
 --  to buffer text).
 
-with Glib;
 with Gtk.Text_Iter; use Gtk.Text_Iter;
 
 with Case_Handling; use Case_Handling;
@@ -62,9 +61,8 @@ package Src_Editor_Buffer.Text_Handling is
    --  Replace the characters around given position
 
    procedure Autocase_Text
-     (Buffer    : access Source_Buffer_Record'Class;
-      Character : Glib.Gunichar;
-      Casing    : Casing_Policy);
+     (Buffer : access Source_Buffer_Record'Class;
+      Casing : Casing_Policy);
    --  Apply automatic casing to the text before the cursor,
    --  if the language preferences allow it. Otherwise, do nothing.
 

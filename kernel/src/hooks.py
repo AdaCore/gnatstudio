@@ -1348,12 +1348,9 @@ when one of its possible values has changed.""",
     ),
     Hook(
         "word_added",
-        "character_hooks",
+        "file_hooks",
         descr="""
 Emitted when a word has been added in an editor.\n
-char is the last character added which created the new word
-(for example a space or a new line). It can be null.
-interactive indicates if the action was triggered by the user.
 .. seealso:: :func:`GPS.Predefined_Hooks.character_added`""",
     ),
     Hook(

@@ -16,7 +16,6 @@
 ------------------------------------------------------------------------------
 
 with Ada.Calendar;                        use Ada.Calendar;
-with Ada.Characters.Conversions;
 with Ada.Text_IO;
 with System.Address_To_Access_Conversions;
 
@@ -42,9 +41,7 @@ with GNATCOLL.VFS;                        use GNATCOLL.VFS;
 
 with VSS.Strings.Conversions;
 
-with Gdk.Keyval;
 with Gdk.RGBA;                            use Gdk.RGBA;
-with Gdk.Types.Keysyms;                   use Gdk.Types.Keysyms;
 with Glib.Convert;
 with Glib.Error;                          use Glib.Error;
 with Glib.Object;                         use Glib.Object;
@@ -3316,19 +3313,15 @@ package body Src_Editor_Buffer is
    ------------------
 
    function Is_In_String
-     (Buffer              : Source_Buffer;
-      Iter                : Gtk_Text_Iter;
-      Added_Character     : Glib.Gunichar := 0;
-      Check_Interpolation : Boolean := False) return Boolean
+     (Buffer : Source_Buffer;
+      Iter   : Gtk_Text_Iter) return Boolean
    is
       Lang         : constant Language_Access := Buffer.Lang;
       Lang_Context : Language_Context_Access;
       C1, C2       : Character;
-      Added_C      : Character;
       Pos          : Gtk_Text_Iter;
       Quoted       : Boolean := False;
       Result       : Boolean;
-      Skip_First   : Boolean := False;
    begin
       if Lang = null then
          return False;
@@ -3346,47 +3339,9 @@ package body Src_Editor_Buffer is
 
       C2 := Get_Char (Pos);
 
-      if Added_Character /= 0 then
-         declare
-            The_Char : String (1 .. 6);
-            --  Unichar_To_UTF8 requires a buffer of size 6
-            Last     : Natural;
-         begin
-            Unichar_To_UTF8 (Added_Character, The_Char, Last);
-            Added_C := The_Char (Last);
-            Skip_First := True;
-         end;
-      end if;
-
-      if Check_Interpolation
-        and then Lang.Is_Interpolation_Char
-          (Ada.Characters.Conversions.To_Wide_Wide_Character (C2))
-      then
-         --  In case of interpolation character, consider that we are in
-         --  a string if the next character is in string.
-         Forward_Char (Pos, Result);
-         if Result then
-            return Is_In_String (Buffer, Pos) xor
-              (Added_Character /= 0
-               and then C2 /= Lang_Context.Quote_Character
-               and then Added_C = Lang_Context.String_Delimiter);
-         end if;
-      end if;
-
-      if Added_Character /= 0 then
-         --  For the first loop iteration use the added character
-         --  which is not in the buffer yet
-         C2 := Added_C;
-         Skip_First := True;
-      end if;
-
       while C2 /= ASCII.LF loop
-         if Skip_First then
-            Skip_First := False;
-         else
-            Backward_Char (Pos, Result);
-            exit when not Result;
-         end if;
+         Backward_Char (Pos, Result);
+         exit when not Result;
 
          C1 := C2;
          C2 := Get_Char (Pos);
@@ -6738,10 +6693,7 @@ package body Src_Editor_Buffer is
 
    begin
       if not As_Is then
-         Word_Added
-           (Buffer      => Source_Buffer (Buffer),
-            Character   => Gdk.Keyval.To_Unicode (GDK_Return),
-            Interactive => not Buffer.Inserting);
+         Word_Added (Source_Buffer (Buffer));
       end if;
 
       --  If there is a selection, delete it
