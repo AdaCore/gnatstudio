@@ -26,4 +26,4 @@ def test_edge():
 def test_integration_testsuite():
     anod_install("gps")
     # Testing per se
-    anod_test("integration-testsuite", qualifier={"report-tool": "vscode"})
+    anod_test("integration-testsuite")
