@@ -38,6 +38,7 @@ with Gtk.Text_Buffer;
 with Gtk.Text_View;
 with Gtk.Text_Mark;
 with Gtk.Text_Tag;
+with Gtk.Widget;
 with Gtkada.Terminal;
 
 with Generic_Views;
@@ -288,6 +289,13 @@ package Interactive_Consoles is
       return Boolean;
    --  Export buffer's contents to the file
 
+   procedure Paste_Text
+     (Console : not null access Interactive_Console_Record'Class;
+      Str     : String;
+      Stop    : out Boolean);
+   --  Paste Str into Console using Console.On_Key handler. Return Stop = True
+   --  if the handler returns True at least once.
+
    function From_View
      (View : access Gtk.Text_View.Gtk_Text_View_Record'Class)
       return Interactive_Console;
@@ -435,6 +443,15 @@ package Interactive_Consoles is
      (Term  : not null access Interactive_Console_Record'Class;
       Color : Gtkada.Terminal.Color_Kind;
       Value : Gdk.RGBA.Gdk_RGBA);
+
+   ------------
+   --  Utils --
+   ------------
+
+   function Find_Interactive_Console
+     (From : Gtk.Widget.Gtk_Widget)
+      return Gtk.Widget.Gtk_Widget;
+   --  Returns Interactive_Console if it is parent of the From or null
 
 private
 
