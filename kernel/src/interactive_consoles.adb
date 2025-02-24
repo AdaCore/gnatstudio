@@ -329,13 +329,6 @@ package body Interactive_Consoles is
    --  If Filter_Changed is True and if a search is already ongoing, the search
    --  will start from the last matching occurrence.
 
-   procedure Paste_Text
-     (Console : not null access Interactive_Console_Record'Class;
-      Str     : String;
-      Stop    : out Boolean);
-   --  Paste Str into Console using Console.On_Key handler. Return Stop = True
-   --  if the handler returns True at least once.
-
    function Replace_Zeros_And_Count_Lines (S : in out String) return Natural;
    pragma Inline (Replace_Zeros_And_Count_Lines);
    --  Replace ASCII.NULs in S. Return the number of lines in S.
@@ -1435,16 +1428,9 @@ package body Interactive_Consoles is
    ---------------------
 
    procedure Paste_Clipboard
-     (Console  : not null access Interactive_Console_Record'Class)
-   is
-      Clipboard : constant Clipboard_Access := Get_Clipboard (Console.Kernel);
-      List      : constant Selection_List := Get_Content (Clipboard);
-      Current   : constant Integer := Get_Last_Paste (Clipboard);
-      Ignore    : Boolean;
+     (Console  : not null access Interactive_Console_Record'Class) is
    begin
-      if Current in List'Range and then List (Current) /= null then
-         Console.Paste_Text (Strip_CR (List (Current).all), Ignore);
-      end if;
+      Get_Clipboard (Console.Kernel).Paste_Clipboard;
    end Paste_Clipboard;
 
    ----------------------------
@@ -2775,5 +2761,24 @@ package body Interactive_Consoles is
       Close (Writable);
       return Result;
    end Export;
+
+   ------------------------------
+   -- Find_Interactive_Console --
+   ------------------------------
+
+   function Find_Interactive_Console
+     (From : Gtk.Widget.Gtk_Widget)
+      return Gtk.Widget.Gtk_Widget
+   is
+      Result : Gtk_Widget := From;
+   begin
+      while Result /= null
+        and then Result.all not in Interactive_Console_Record'Class
+      loop
+         Result := Result.Get_Parent;
+      end loop;
+
+      return Result;
+   end Find_Interactive_Console;
 
 end Interactive_Consoles;

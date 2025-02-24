@@ -27,7 +27,7 @@ def run_test():
 
     GPS.Clipboard.copy('GPS.execute_action("debug initialize Default:a")')
 
-    GPS.execute_action("Paste from Clipboard")
+    GPS.execute_action("Paste to console")
 
     # Press enter to execute the Python command
 
