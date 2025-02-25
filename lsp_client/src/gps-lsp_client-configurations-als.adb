@@ -169,6 +169,10 @@ package body GPS.LSP_Client.Configurations.ALS is
            GPS.Kernel.Preferences.LSP_Ada_Project_Diagnostics.Get_Pref));
 
       Ada_Settings.Set_Field
+        ("gprFileDiagnostics",
+         Boolean'(GPS.Kernel.Preferences.LSP_GPR_File_Diagnostics.Get_Pref));
+
+      Ada_Settings.Set_Field
         ("alireDiagnostics",
          Boolean'(
            GPS.Kernel.Preferences.LSP_Alire_Diagnostics.Get_Pref));

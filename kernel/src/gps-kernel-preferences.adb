@@ -1852,14 +1852,22 @@ package body GPS.Kernel.Preferences is
          Default => True,
          Label   => "Enable Project diagnostics",
          Doc     => "Enable diagnostics related to project loading",
-         Path    => "Editor/Ada:Diagnostics");
+         Path    => "Project:Diagnostics");
+
+      LSP_GPR_File_Diagnostics := Kernel.Get_Preferences.Create
+        (Name    => "LSP-GPR-File-Diagnostics",
+         Default => True,
+         Label   => "Enable GPR File diagnostics",
+         Doc     => "Enable live diagnostics when editing GPR files "
+         & "(e.g: syntax errors).",
+         Path    => "Project:Diagnostics");
 
       LSP_Alire_Diagnostics := Kernel.Get_Preferences.Create
         (Name    => "LSP-Alire-Diagnostics",
          Default => True,
          Label   => "Enable Alire diagnostics",
          Doc     => "Enable diagnostics related to Alire",
-         Path    => "Editor/Ada:Diagnostics");
+         Path    => "Project:Diagnostics");
 
       LSP_Ada_Param_Threshold := Kernel.Get_Preferences.Create
         (Name    => "LSP-Ada-Param-Naming-Threshold",
