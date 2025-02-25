@@ -489,6 +489,18 @@ package body Language.Ada is
       return Keywords_List'Access;
    end Keywords;
 
+   ---------------------------
+   -- Is_Interpolation_Char --
+   ---------------------------
+
+   overriding function Is_Interpolation_Char
+     (Lang : access Ada_Language; Char : Wide_Wide_Character) return Boolean
+   is
+      pragma Unreferenced (Lang);
+   begin
+      return Char = 'f';
+   end Is_Interpolation_Char;
+
    --------------------------
    -- Get_Language_Context --
    --------------------------

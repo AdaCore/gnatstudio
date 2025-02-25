@@ -128,6 +128,9 @@ private
       Line    : String;
       Comment : Boolean := True;
       Clean   : Boolean := False) return String;
+   overriding function Is_Interpolation_Char
+     (Lang : access C_Language; Char : Wide_Wide_Character) return Boolean
+   is (False);
 
    overriding function Entities_Indexed (Self : C_Language) return Boolean;
    --  Unconditionally return True. This enables storing all the C entities

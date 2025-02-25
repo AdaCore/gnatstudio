@@ -17,6 +17,8 @@
 
 with Ada.Unchecked_Conversion;
 with Ada.Unchecked_Deallocation;
+with GNATCOLL.Utils;
+with Interactive_Consoles;
 with System;                     use System;
 
 with GNAT.OS_Lib;                use GNAT.OS_Lib;
@@ -503,8 +505,12 @@ package body GPS.Kernel.Clipboard is
    is
       Clipboard : constant Clipboard_Access :=
         Get_Clipboard (Clipboard_Module_Id.Get_Kernel);
+      Widget    : Gtk_Widget;
+      Ignore    : Boolean;
    begin
-      if Clipboard = null then
+      if Clipboard = null
+        or else Text = ""
+      then
          return;
       end if;
 
@@ -522,7 +528,14 @@ package body GPS.Kernel.Clipboard is
          Set_Text (Clip, Clipboard.List (Clipboard.Last_Paste).all);
       end if;
 
-      Do_Paste_On_Target_Widget (Clipboard);
+      Widget := Interactive_Consoles.Find_Interactive_Console
+        (Get_Current_Focus_Widget (Clipboard.Kernel));
+      if Widget /= null then
+         Interactive_Consoles.Interactive_Console (Widget).Paste_Text
+           (GNATCOLL.Utils.Strip_CR (Text), Ignore);
+      else
+         Do_Paste_On_Target_Widget (Clipboard);
+      end if;
    end Cb_Paste;
 
    -------------------------------
@@ -536,7 +549,7 @@ package body GPS.Kernel.Clipboard is
       Iter             : Gtk_Text_Iter;
       Default_Editable : Boolean;
       Widget           : constant Gtk_Widget :=
-          Get_Current_Focus_Widget (Clipboard.Kernel);
+        Get_Current_Focus_Widget (Clipboard.Kernel);
    begin
       if Widget /= null then
          if Is_A (Widget.Get_Type, Gtk.Editable.Get_Type) then

@@ -22,8 +22,15 @@ package Src_Editor_Buffer.Hooks is
    procedure Location_Changed (Buffer : Source_Buffer);
    --  Emit the hook Cursor_Stopped_Hook
 
-   procedure Word_Added (Buffer : Source_Buffer);
-   --  Emit the hook Word_Added_Hook
+   procedure Word_Added
+     (Buffer      : Source_Buffer;
+      Character   : Gunichar;
+      Interactive : Boolean);
+   --  Emit the hook Word_Added_Hook.
+   --  Character is the last character added creating the new word and
+   --  it should be 8 (control-H) when a character was removed from the buffer.
+   --  Interactive indicates whether the word creation is the result of
+   --  a user interaction.
 
    procedure Character_Added
      (Buffer      : Source_Buffer;

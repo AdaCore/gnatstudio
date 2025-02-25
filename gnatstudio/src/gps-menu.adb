@@ -48,6 +48,7 @@ with GPS.Main_Window;        use GPS.Main_Window;
 with Histories;              use Histories;
 with File_Utils;             use File_Utils;
 with GUI_Utils;              use GUI_Utils;
+with Interactive_Consoles;
 with String_List_Utils;      use String_List_Utils;
 with Tooltips;               use Tooltips;
 
@@ -198,6 +199,16 @@ package body GPS.Menu is
          end;
 
       elsif Widget.all in Gtk_Text_View_Record'Class then
+         if Self.Kind = Paste then
+            if Interactive_Consoles.Find_Interactive_Console
+              (Widget) /= null
+            then
+               --  Disable Paste for interactive consoles because we have
+               --  separate "Paste to console" action for this
+               return False;
+            end if;
+         end if;
+
          declare
             Text_View : constant Gtk_Text_View := Gtk_Text_View (Widget);
          begin
