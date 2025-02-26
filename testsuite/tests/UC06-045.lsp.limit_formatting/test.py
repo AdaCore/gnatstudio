@@ -30,12 +30,12 @@ FOO_EXPECTED = """int foo ()
 @run_test_driver
 def run_test():
     GPS.Preference("LSP-Limit-Formatting").set(True)
-
     buf = GPS.EditorBuffer.get(GPS.File("main.cpp"))
+    yield wait_tasks(other_than=known_tasks)
     init_buf = buf.get_chars(include_hidden_chars=False)
     buf.current_view().goto(buf.at(2, 1))
-    send_key_event(GDK_TAB)
-    yield wait_tasks(other_than=known_tasks)
+    GPS.execute_action('format selection')
+    yield timeout(500)
     gps_assert(
         different_lines(buf.get_chars(include_hidden_chars=False), init_buf),
         1,
@@ -50,8 +50,8 @@ def run_test():
     buf = GPS.EditorBuffer.get(GPS.File("foo.cpp"))
     init_buf = buf.get_chars(include_hidden_chars=False)
     buf.select(buf.at(2, 3), buf.at(4, 8))
-    send_key_event(GDK_TAB)
-    yield wait_tasks(other_than=known_tasks)
+    GPS.execute_action('format selection')
+    yield timeout(500)
     gps_assert(
         different_lines(buf.get_chars(include_hidden_chars=False), init_buf),
         3,
