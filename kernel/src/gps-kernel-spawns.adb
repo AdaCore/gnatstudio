@@ -111,6 +111,11 @@ package body GPS.Kernel.Spawns is
      (Console : access Interactive_Consoles.Interactive_Console_Record'Class;
       Command : Monitor_Command_Access) return Boolean;
 
+   function To_Exit_Code (Code : Spawn.Process_Exit_Code) return Integer;
+   --  This code convert unsigned Process_Exit_Code value to Integer.
+   --  We can't just do Integer (Code), because we will get Constraint_Error
+   --  if Code >= 2**31.
+
    ---------------
    -- Interrupt --
    ---------------
@@ -258,6 +263,23 @@ package body GPS.Kernel.Spawns is
       Self.Finished := True;
    end Exception_Occurred;
 
+   ------------------
+   -- To_Exit_Code --
+   ------------------
+
+   function To_Exit_Code (Code : Spawn.Process_Exit_Code) return Integer is
+      use type Spawn.Process_Exit_Code;
+
+      Integer_Last : constant Spawn.Process_Exit_Code :=
+        Spawn.Process_Exit_Code (Integer'Last);
+
+      Result : constant Integer :=
+        (if Code in 0 .. Integer_Last then Integer (Code)
+         else -Integer (Spawn.Process_Exit_Code'Last - Code) - 1);
+   begin
+      return Result;
+   end To_Exit_Code;
+
    --------------
    -- Finished --
    --------------
@@ -268,15 +290,8 @@ package body GPS.Kernel.Spawns is
       Exit_Code   : Spawn.Process_Exit_Code)
    is
       use all type Spawn.Process_Exit_Status;
-      use type Spawn.Process_Exit_Code;
       use type Interactive_Consoles.Interactive_Console;
 
-      Integer_Last : constant Spawn.Process_Exit_Code :=
-        Spawn.Process_Exit_Code (Integer'Last);
-
-      Int_Code : constant Integer :=
-        (if Exit_Code in 0 .. Integer_Last then Integer (Exit_Code)
-         else -Integer (Spawn.Process_Exit_Code'Last - Exit_Code) - 1);
    begin
       --  Complete reading from stdout
       while Self.Read_Output loop
@@ -291,7 +306,8 @@ package body GPS.Kernel.Spawns is
       Self.Failed := Exit_Status = Crash;
       Self.Finished := True;
       Me_IO.Trace ("Finished: " & Exit_Status'Image & Exit_Code'Image);
-      Self.Output_Parser.End_Of_Stream (Int_Code, Self'Unchecked_Access);
+      Self.Output_Parser.End_Of_Stream
+        (To_Exit_Code (Exit_Code), Self'Unchecked_Access);
 
       if Self.Console /= null then
          Gtk.Handlers.Disconnect (Self.Console, Self.Delete_Id);
@@ -383,6 +399,7 @@ package body GPS.Kernel.Spawns is
       Command       : out Commands.Command_Access)
    is
       use type Interactive_Consoles.Interactive_Console;
+      use type Spawn.Process_Status;
 
       Obj : constant Monitor_Command_Access := new Monitor_Command'
         (Commands.Root_Command with
@@ -434,6 +451,16 @@ package body GPS.Kernel.Spawns is
 
       Obj.Ref;  --  Keep command alive until process finishes
       Obj.Process.Start;
+
+      if Obj.Process.Status = Spawn.Not_Running then
+         --  The proccess can't be started, call End_Of_Stream
+         --  with Exit_Code to print message in the Message view
+         --  to inform a user that process is not started.
+
+         Obj.Output_Parser.End_Of_Stream
+           (To_Exit_Code (Obj.Process.Exit_Code), Obj);
+      end if;
+
       Command := Commands.Command_Access (Obj);
    end Launch_Process;
 
