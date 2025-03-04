@@ -1266,9 +1266,7 @@ package body GPS.LSP_Clients is
                            VSS.Strings.Conversions.To_Virtual_String
                              (Lang.Get_Name),
                          version    => 0,
-                         text       =>
-                           VSS.Strings.Conversions.To_Virtual_String
-                             (Buffer.Get_Chars_U)));
+                         text       => Buffer.Get_Text));
 
       begin
          Self.On_DidOpenTextDocument_Notification (Value);

@@ -18,7 +18,6 @@
 with Ada.Characters.Handling;
 with Ada.Containers.Vectors;
 with Ada.Strings.UTF_Encoding;
-with Ada.Strings.Unbounded;           use Ada.Strings.Unbounded;
 
 with GNAT.OS_Lib;                     use GNAT.OS_Lib;
 with GNAT.Strings;
@@ -830,7 +829,9 @@ package body GPS.LSP_Client.Search.Entities is
                      Num      => Self.Request_Num,
                      Kernel   => Self.Kernel,
                      File     => Self.File,
-                     Query    => To_Unbounded_String (Self.Pattern.Get_Text),
+                     Query    =>
+                       VSS.Strings.Conversions.To_Virtual_String
+                         (Self.Pattern.Get_Text),
                      Case_Sensitive =>
                        (Is_Set => True,
                         Value  => Self.Pattern.Get_Case_Sensitive),
