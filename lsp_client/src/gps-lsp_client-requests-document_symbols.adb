@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                               GNAT Studio                                --
 --                                                                          --
---                       Copyright (C) 2020-2023, AdaCore                   --
+--                       Copyright (C) 2020-2025, AdaCore                   --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -14,8 +14,6 @@
 -- COPYING3.  If not, go to http://www.gnu.org/licenses for a complete copy --
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
-
-with VSS.Strings.Conversions;
 
 with LSP.JSON_Streams;
 
@@ -63,9 +61,7 @@ package body GPS.LSP_Client.Requests.Document_Symbols is
           partialResultToken => <>,
           textDocument       =>
             (uri => GPS.LSP_Client.Utilities.To_URI (Self.Text_Document)),
-          query              =>
-            VSS.Strings.Conversions.To_Virtual_String
-              (To_String (Self.Query)),
+          query              => Self.Query,
           case_sensitive     => Self.Case_Sensitive,
           whole_word         => Self.Whole_Word,
           negate             => Self.Negate,

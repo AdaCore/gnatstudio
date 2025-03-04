@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                               GNAT Studio                                --
 --                                                                          --
---                       Copyright (C) 2020-2023, AdaCore                   --
+--                       Copyright (C) 2020-2025, AdaCore                   --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -15,7 +15,6 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with Ada.Strings.Unbounded;        use Ada.Strings.Unbounded;
 with GPS.LSP_Client.Requests.Base;
 
 package GPS.LSP_Client.Requests.Document_Symbols is
@@ -23,7 +22,7 @@ package GPS.LSP_Client.Requests.Document_Symbols is
    type Document_Symbols_Request is
      abstract new GPS.LSP_Client.Requests.Base.Text_Document_Request
    with record
-      Query          : Unbounded_String;
+      Query          : VSS.Strings.Virtual_String;
       Case_Sensitive : LSP.Types.Optional_Boolean;
       Whole_Word     : LSP.Types.Optional_Boolean;
       Negate         : LSP.Types.Optional_Boolean;
