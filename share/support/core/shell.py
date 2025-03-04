@@ -54,6 +54,8 @@ class Win32_Shell(Console_Process):
         os.environ["GPSSHELL"] = "1"
         Console_Process.__init__(self, command)
 
+    def on_completion(self, input):
+        self.add_input("\t")
 
 def on_label(context):
     # If the context has directory information, use that
