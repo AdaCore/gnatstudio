@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                               GNAT Studio                                --
 --                                                                          --
---                        Copyright (C) 2020-2023, AdaCore                  --
+--                        Copyright (C) 2020-2025, AdaCore                  --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -14,8 +14,6 @@
 -- COPYING3.  If not, go to http://www.gnu.org/licenses for a complete copy --
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
-
-with Ada.Strings.Unbounded;             use Ada.Strings.Unbounded;
 
 with VSS.Strings.Conversions;
 with VSS.Unicode;
@@ -66,13 +64,14 @@ package body GPS.LSP_Client.Call_Tree is
       ID       : String;
       File     : Virtual_File;
       Location : GPS.Editors.Editor_Location'Class);
+
    -------------------------------------
    -- Prepare_Call_Hierarchy_Request  --
    -------------------------------------
 
    type Prepare_Call_Hierarchy_Request
    is new Abstract_Prepare_Call_Hierarchy_Request with record
-      ID     : Unbounded_String;
+      ID     : VSS.Strings.Virtual_String;
       Kind   : View_Type;
    end record;
    type Prepare_Call_Hierarchy_Request_Access is
@@ -88,7 +87,7 @@ package body GPS.LSP_Client.Call_Tree is
    overriding procedure On_Error_Message
      (Self    : in out Prepare_Call_Hierarchy_Request;
       Code    : LSP.Messages.ErrorCodes;
-      Message : String;
+      Message : VSS.Strings.Virtual_String;
       Data    : GNATCOLL.JSON.JSON_Value);
 
    overriding function Get_Task_Label
@@ -101,7 +100,7 @@ package body GPS.LSP_Client.Call_Tree is
    ------------------------
 
    type Called_By_Request is new Abstract_Called_By_Request with record
-      ID : Unbounded_String;
+      ID : VSS.Strings.Virtual_String;
    end record;
    type Called_By_Request_Access is access all Called_By_Request'Class;
 
@@ -119,7 +118,7 @@ package body GPS.LSP_Client.Call_Tree is
    overriding procedure On_Error_Message
      (Self    : in out Called_By_Request;
       Code    : LSP.Messages.ErrorCodes;
-      Message : String;
+      Message : VSS.Strings.Virtual_String;
       Data    : GNATCOLL.JSON.JSON_Value);
 
    --------------------
@@ -127,7 +126,7 @@ package body GPS.LSP_Client.Call_Tree is
    --------------------
 
    type Calls_Request is new Abstract_Calls_Request with record
-      ID : Unbounded_String;
+      ID : VSS.Strings.Virtual_String;
    end record;
    type Calls_Request_Access is access all Calls_Request'Class;
 
@@ -141,12 +140,12 @@ package body GPS.LSP_Client.Call_Tree is
    overriding procedure On_Error_Message
      (Self    : in out Calls_Request;
       Code    : LSP.Messages.ErrorCodes;
-      Message : String;
+      Message : VSS.Strings.Virtual_String;
       Data    : GNATCOLL.JSON.JSON_Value);
 
    procedure Results_Received
      (Kernel   : Kernel_Handle;
-      ID       : Unbounded_String;
+      ID       : VSS.Strings.Virtual_String;
       Item     : LSP.Messages.CallHierarchyItem;
       Spans    : LSP.Messages.Span_Vector;
       Kinds    : LSP.Messages.Boolean_Vector;
@@ -184,14 +183,15 @@ package body GPS.LSP_Client.Call_Tree is
                File         => File,
                Project      => Lookup_Project
                  (Self.Kernel, File).Project_Path,
-               ID           => To_String (Self.ID),
+               ID           =>
+                 VSS.Strings.Conversions.To_UTF_8_String (Self.ID),
                Kind         => Self.Kind);
          end;
       end loop;
 
       if Result.Is_Empty then
          Call_Graph_Views.Finished_Computing
-           (Self.Kernel, To_String (Self.ID));
+           (Self.Kernel, VSS.Strings.Conversions.To_UTF_8_String (Self.ID));
       end if;
    end On_Result_Message;
 
@@ -204,7 +204,8 @@ package body GPS.LSP_Client.Call_Tree is
    is
       pragma Unreferenced (Reason);
    begin
-      Call_Graph_Views.Finished_Computing (Self.Kernel, To_String (Self.ID));
+      Call_Graph_Views.Finished_Computing
+        (Self.Kernel, VSS.Strings.Conversions.To_UTF_8_String (Self.ID));
    end On_Rejected;
 
    ----------------------
@@ -214,10 +215,11 @@ package body GPS.LSP_Client.Call_Tree is
    overriding procedure On_Error_Message
      (Self    : in out Prepare_Call_Hierarchy_Request;
       Code    : LSP.Messages.ErrorCodes;
-      Message : String;
+      Message : VSS.Strings.Virtual_String;
       Data    : GNATCOLL.JSON.JSON_Value) is
    begin
-      Call_Graph_Views.Finished_Computing (Self.Kernel, To_String (Self.ID));
+      Call_Graph_Views.Finished_Computing
+        (Self.Kernel, VSS.Strings.Conversions.To_UTF_8_String (Self.ID));
    end On_Error_Message;
 
    -----------------------
@@ -241,7 +243,8 @@ package body GPS.LSP_Client.Call_Tree is
             Ref_File => No_File);
       end loop;
 
-      Call_Graph_Views.Finished_Computing (Self.Kernel, To_String (Self.ID));
+      Call_Graph_Views.Finished_Computing
+        (Self.Kernel, VSS.Strings.Conversions.To_UTF_8_String (Self.ID));
    end On_Result_Message;
 
    -----------------------
@@ -267,7 +270,8 @@ package body GPS.LSP_Client.Call_Tree is
             Ref_File => Ref_File);
       end loop;
 
-      Call_Graph_Views.Finished_Computing (Self.Kernel, To_String (Self.ID));
+      Call_Graph_Views.Finished_Computing
+        (Self.Kernel, VSS.Strings.Conversions.To_UTF_8_String (Self.ID));
    end On_Result_Message;
 
    ----------------------
@@ -276,13 +280,13 @@ package body GPS.LSP_Client.Call_Tree is
 
    procedure Results_Received
      (Kernel   : Kernel_Handle;
-      ID       : Unbounded_String;
+      ID       : VSS.Strings.Virtual_String;
       Item     : LSP.Messages.CallHierarchyItem;
       Spans    : LSP.Messages.Span_Vector;
       Kinds    : LSP.Messages.Boolean_Vector;
       Ref_File : Virtual_File)
    is
-      Decl_Name      : Unbounded_String;
+      Decl_Name      : VSS.Strings.Virtual_String;
       Decl_Line      : Integer;
       Decl_Column    : Integer;
       Decl_File      : Virtual_File;
@@ -305,8 +309,7 @@ package body GPS.LSP_Client.Call_Tree is
       procedure Get_Decl (X : LSP.Messages.CallHierarchyItem) is
       begin
          Decl_File := To_Virtual_File (X.uri);
-         Decl_Name :=
-           VSS.Strings.Conversions.To_Unbounded_UTF_8_String (X.name);
+         Decl_Name := X.name;
 
          declare
             Holder   : constant GPS.Editors.Controlled_Editor_Buffer_Holder :=
@@ -347,8 +350,9 @@ package body GPS.LSP_Client.Call_Tree is
          Get_Reference_Record (Span);
          Call_Graph_Views.Add_Row
            (Kernel       => Kernel,
-            ID           => To_String (ID),
-            Decl_Name    => To_String (Decl_Name),
+            ID           => VSS.Strings.Conversions.To_UTF_8_String (ID),
+            Decl_Name    =>
+              VSS.Strings.Conversions.To_UTF_8_String (Decl_Name),
             Decl_Line    => Decl_Line,
             Decl_Column  => Decl_Column,
             Decl_File    => Decl_File,
@@ -368,10 +372,11 @@ package body GPS.LSP_Client.Call_Tree is
    overriding procedure On_Error_Message
      (Self    : in out Called_By_Request;
       Code    : LSP.Messages.ErrorCodes;
-      Message : String;
+      Message : VSS.Strings.Virtual_String;
       Data    : GNATCOLL.JSON.JSON_Value) is
    begin
-      Call_Graph_Views.Finished_Computing (Self.Kernel, To_String (Self.ID));
+      Call_Graph_Views.Finished_Computing
+        (Self.Kernel, VSS.Strings.Conversions.To_UTF_8_String (Self.ID));
    end On_Error_Message;
 
    ----------------------
@@ -381,10 +386,11 @@ package body GPS.LSP_Client.Call_Tree is
    overriding procedure On_Error_Message
      (Self    : in out Calls_Request;
       Code    : LSP.Messages.ErrorCodes;
-      Message : String;
+      Message : VSS.Strings.Virtual_String;
       Data    : GNATCOLL.JSON.JSON_Value) is
    begin
-      Call_Graph_Views.Finished_Computing (Self.Kernel, To_String (Self.ID));
+      Call_Graph_Views.Finished_Computing
+        (Self.Kernel, VSS.Strings.Conversions.To_UTF_8_String (Self.ID));
    end On_Error_Message;
 
    -----------------
@@ -396,7 +402,8 @@ package body GPS.LSP_Client.Call_Tree is
    is
       pragma Unreferenced (Reason);
    begin
-      Call_Graph_Views.Finished_Computing (Self.Kernel, To_String (Self.ID));
+      Call_Graph_Views.Finished_Computing
+        (Self.Kernel, VSS.Strings.Conversions.To_UTF_8_String (Self.ID));
    end On_Rejected;
 
    -----------------
@@ -408,7 +415,8 @@ package body GPS.LSP_Client.Call_Tree is
    is
       pragma Unreferenced (Reason);
    begin
-      Call_Graph_Views.Finished_Computing (Self.Kernel, To_String (Self.ID));
+      Call_Graph_Views.Finished_Computing
+        (Self.Kernel, VSS.Strings.Conversions.To_UTF_8_String (Self.ID));
    end On_Rejected;
 
    -----------------------
@@ -441,7 +449,7 @@ package body GPS.LSP_Client.Call_Tree is
            Kernel   => Self.Kernel,
            File     => File,
            Position => Location_To_LSP_Position (Location),
-           ID       => To_Unbounded_String (ID),
+           ID       => VSS.Strings.Conversions.To_Virtual_String (ID),
            Kind     => Kind);
       GPS.LSP_Client.Requests.Execute
         (Self.Kernel.Get_Language_Handler.Get_Language_From_File (File),
@@ -477,7 +485,7 @@ package body GPS.LSP_Client.Call_Tree is
             name           => <>,
             detail         => <>,
             tags           => (Is_Set => False)),
-           ID     => To_Unbounded_String (ID));
+           ID     => VSS.Strings.Conversions.To_Virtual_String (ID));
 
       GPS.LSP_Client.Requests.Execute
         (Self.Kernel.Get_Language_Handler.Get_Language_From_File (File),
@@ -513,7 +521,7 @@ package body GPS.LSP_Client.Call_Tree is
             name           => <>,
             detail         => <>,
             tags           => (Is_Set => False)),
-         ID     => To_Unbounded_String (ID));
+         ID     => VSS.Strings.Conversions.To_Virtual_String (ID));
 
       GPS.LSP_Client.Requests.Execute
         (Self.Kernel.Get_Language_Handler.Get_Language_From_File (File),

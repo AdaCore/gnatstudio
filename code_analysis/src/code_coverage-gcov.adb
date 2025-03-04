@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                               GNAT Studio                                --
 --                                                                          --
---                     Copyright (C) 2008-2023, AdaCore                     --
+--                     Copyright (C) 2008-2025, AdaCore                     --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -19,6 +19,8 @@ with Ada.Strings;                use Ada.Strings;
 with Ada.Strings.Fixed;          use Ada.Strings.Fixed;
 with Ada.Strings.Unbounded;      use Ada.Strings.Unbounded;
 with GNAT.Regpat;                use GNAT.Regpat;
+
+with VSS.Strings.Conversions;
 
 with GPS.Intl;                   use GPS.Intl;
 with GPS.Kernel.Messages;        use GPS.Kernel.Messages;
@@ -177,7 +179,7 @@ package body Code_Coverage.Gcov is
               File,
               Line_Number,
               1,
-              Line_Text.all,
+              VSS.Strings.Conversions.To_Virtual_String (Line_Text.all),
               High,
               Coverage_Message_Flags,
               Allow_Auto_Jump_To_First => Allow_Auto_Jump_To_First);

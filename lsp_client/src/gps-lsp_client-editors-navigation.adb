@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                               GNAT Studio                                --
 --                                                                          --
---                        Copyright (C) 2019-2023, AdaCore                  --
+--                        Copyright (C) 2019-2025, AdaCore                  --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -17,13 +17,16 @@
 
 with Ada.Containers.Vectors;
 with Ada.Exceptions;            use Ada.Exceptions;
-with Ada.Strings.Unbounded;     use Ada.Strings.Unbounded;
+
 with GNATCOLL.JSON;
 with GNATCOLL.Projects;         use GNATCOLL.Projects;
 with GNATCOLL.Traces;           use GNATCOLL.Traces;
 with GNATCOLL.VFS;              use GNATCOLL.VFS;
 with GNATCOLL.VFS.GtkAda;       use GNATCOLL.VFS.GtkAda;
 with GNATCOLL.Xref;
+
+with VSS.Strings.Formatters.Strings;
+with VSS.Strings.Templates;
 
 with Gdk.Device;                use Gdk.Device;
 with Gdk.Event;                 use Gdk.Event;
@@ -33,7 +36,7 @@ with Gdk.Screen;                use Gdk.Screen;
 with Gdk.Types;                 use Gdk.Types;
 with Gdk.Types.Keysyms;         use Gdk.Types.Keysyms;
 with Gdk.Window;                use Gdk.Window;
-with Glib.Convert;              use Glib.Convert;
+with Glib.Convert.VSS_Utils;    use Glib.Convert.VSS_Utils;
 with Glib.Object;               use Glib.Object;
 with Glib;                      use Glib;
 with Glib_Values_Utils;         use Glib_Values_Utils;
@@ -107,7 +110,7 @@ package body GPS.LSP_Client.Editors.Navigation is
    --  Implementation of simple text editor requests
 
    type GPS_LSP_Simple_Request is new Abstract_Simple_Request with record
-      Entity_Name : Unbounded_String;
+      Entity_Name : VSS.Strings.Virtual_String;
       Column      : Visible_Column_Type;
    end record;
 
@@ -118,7 +121,7 @@ package body GPS.LSP_Client.Editors.Navigation is
    overriding procedure On_Error_Message
      (Self    : in out GPS_LSP_Simple_Request;
       Code    : LSP.Messages.ErrorCodes;
-      Message : String;
+      Message : VSS.Strings.Virtual_String;
       Data    : GNATCOLL.JSON.JSON_Value);
 
    overriding function Auto_Cancel
@@ -140,7 +143,7 @@ package body GPS.LSP_Client.Editors.Navigation is
    --  Goto actions command type.
 
    type Entity_Info_Type is record
-      Label        : Unbounded_String;
+      Label        : VSS.Strings.Virtual_String;
       Project_Path : Virtual_File;
       File         : Virtual_File;
       Line         : Editable_Line_Type;
@@ -327,7 +330,7 @@ package body GPS.LSP_Client.Editors.Navigation is
             Command     => Command.Action_Kind,
             File        => File_Information (Context.Context),
             Position    => Location_To_LSP_Position (Location),
-            Entity_Name => To_Unbounded_String
+            Entity_Name => VSS.Strings.Conversions.To_Virtual_String
               (Entity_Name_Information (Context.Context)),
             Display_Ancestry_On_Navigation =>
               Display_Ancestry_On_Navigation_Pref.Get_Pref,
@@ -504,7 +507,7 @@ package body GPS.LSP_Client.Editors.Navigation is
                   Position                       =>
                     Location_To_LSP_Position (Location),
                   Entity_Name                    =>
-                    To_Unbounded_String (Entity_Name),
+                    VSS.Strings.Conversions.To_Virtual_String (Entity_Name),
                   Display_Ancestry_On_Navigation =>
                     Display_Ancestry_On_Navigation_Pref.Get_Pref,
                   Column                         => Location.Column);
@@ -525,7 +528,7 @@ package body GPS.LSP_Client.Editors.Navigation is
                   Position                       =>
                     Location_To_LSP_Position (Location),
                   Entity_Name                    =>
-                    To_Unbounded_String (Entity_Name),
+                    VSS.Strings.Conversions.To_Virtual_String (Entity_Name),
                   Display_Ancestry_On_Navigation =>
                     Display_Ancestry_On_Navigation_Pref.Get_Pref,
                   Column                         => Location.Column);
@@ -585,7 +588,8 @@ package body GPS.LSP_Client.Editors.Navigation is
       use type Ada.Containers.Count_Type;
 
       function Kinds_Label
-        (Kind : LSP.Messages.AlsReferenceKind_Set) return String;
+        (Kind : LSP.Messages.AlsReferenceKind_Set)
+         return VSS.Strings.Virtual_String;
       --  Return a label for displaying the kinds in the menus
 
       -----------------
@@ -593,12 +597,14 @@ package body GPS.LSP_Client.Editors.Navigation is
       -----------------
 
       function Kinds_Label
-        (Kind : LSP.Messages.AlsReferenceKind_Set) return String
+        (Kind : LSP.Messages.AlsReferenceKind_Set)
+         return VSS.Strings.Virtual_String
       is
          use type LSP.Messages.AlsReferenceKind_Set;
+         use type VSS.Strings.Virtual_String;
 
          Has_Content : Boolean := False;
-         Result      : Unbounded_String;
+         Result      : VSS.Strings.Virtual_String;
       begin
          if Kind = LSP.Messages.Empty_Set then
             return "";
@@ -606,15 +612,15 @@ package body GPS.LSP_Client.Editors.Navigation is
 
          for Str of Kind.As_Strings loop
             if Has_Content then
-               Append (Result, ", ");
+               Result.Append (", ");
             end if;
-            Append
-              (Result, VSS.Strings.Conversions.To_UTF_8_String (Str));
+
+            Result.Append (Str);
             Has_Content := True;
          end loop;
 
          if Has_Content then
-            return "[" & To_String (Result) & "] ";
+            return "[" & Result & "] ";
          else
             return "";
          end if;
@@ -669,7 +675,9 @@ package body GPS.LSP_Client.Editors.Navigation is
                      Project     => Project,
                      Line        => Editable_Line_Type (Location.Line),
                      Column      => Location.Column,
-                     Entity_Name => To_String (Self.Entity_Name),
+                     Entity_Name =>
+                       VSS.Strings.Conversions.To_UTF_8_String
+                         (Self.Entity_Name),
                      Display_Msg_On_Non_Accurate => False);
 
                when Goto_Type_Decl =>
@@ -696,30 +704,33 @@ package body GPS.LSP_Client.Editors.Navigation is
          begin
             for Location of Result.Locations loop
                declare
-                  File    : constant Virtual_File := To_Virtual_File
+                  Template : constant
+                    VSS.Strings.Templates.Virtual_String_Template :=
+                      "{}<b>{}</b> in <b>{}</b>";
+                  File     : constant Virtual_File := To_Virtual_File
                     (Location.uri);
-                  Infos   : constant File_Info_Set := Get_Registry
+                  Infos    : constant File_Info_Set := Get_Registry
                     (Self.Kernel).Tree.Info_Set (File);
-                  Project : constant Project_Type :=
+                  Project  : constant Project_Type :=
                     File_Info'Class (Infos.First_Element).Project
                     (True);
-                  Holder  : constant GPS.Editors.
+                  Holder   : constant GPS.Editors.
                     Controlled_Editor_Buffer_Holder :=
                       Self.Kernel.Get_Buffer_Factory.Get_Holder (File => File);
-                  From    : constant GPS.Editors.Editor_Location'Class :=
+                  From     : constant GPS.Editors.Editor_Location'Class :=
                     GPS.LSP_Client.Utilities.LSP_Position_To_Location
                       (Holder.Editor, Location.span.first);
                begin
                   Entities.Append
                     (Entity_Info_Type'
-                       (Label        => To_Unbounded_String
-                            (Kinds_Label (Location.alsKind)
-                             & "<b>" & Escape_Text
-                               (To_String (Self.Entity_Name))
-                             & "</b>"
-                             & " in <b>"
-                             & Escape_Text (File.Display_Base_Name)
-                             & "</b>"),
+                       (Label        =>
+                          Template.Format
+                            (VSS.Strings.Formatters.Strings.Image
+                               (Kinds_Label (Location.alsKind)),
+                             VSS.Strings.Formatters.Strings.Image
+                               (Escape_Text (Self.Entity_Name)),
+                           VSS.Strings.Formatters.Strings.Image
+                             (Escape_Text (File.Display_Base_Name))),
                         Project_Path => Project.Project_Path,
                         File         => File,
                         Line         => Editable_Line_Type (From.Line),
@@ -743,7 +754,7 @@ package body GPS.LSP_Client.Editors.Navigation is
    overriding procedure On_Error_Message
      (Self    : in out GPS_LSP_Simple_Request;
       Code    : LSP.Messages.ErrorCodes;
-      Message : String;
+      Message : VSS.Strings.Virtual_String;
       Data    : GNATCOLL.JSON.JSON_Value) is
    begin
       Cancel_Activity_Bar (Self.Kernel, Self.File);
@@ -949,7 +960,9 @@ package body GPS.LSP_Client.Editors.Navigation is
            (Model,
             Iter,
             (Col_Label, Col_Project, Col_File, Col_Line, Col_Column),
-            (1 => As_String (To_String (Entity.Label)),
+            (1 =>
+                 As_String
+                   (VSS.Strings.Conversions.To_UTF_8_String (Entity.Label)),
              2 => As_File (Entity.Project_Path),
              3 => As_File (Entity.File),
              4 => As_Int (Gint (Entity.Line)),
@@ -1024,6 +1037,9 @@ package body GPS.LSP_Client.Editors.Navigation is
 
       function Append_Entity (Callee : Root_Entity'Class) return Boolean
       is
+         Template        : constant
+           VSS.Strings.Templates.Virtual_String_Template :=
+             "<b>{}.{}</b> in <b>{}</b>";
          Target_Location : constant General_Location :=
                              (case Action_Kind is
                                  when Goto_Body => Get_Body (Callee),
@@ -1037,12 +1053,14 @@ package body GPS.LSP_Client.Editors.Navigation is
       begin
          Entities.Append
            (Entity_Info_Type'
-              (Label         => To_Unbounded_String
-                   ("<b>" & Escape_Text (Type_Entity.Get_Name) & "."
-                    & Escape_Text (Callee.Get_Name) & "</b>"
-                    & " in <b>"
-                    & Escape_Text (Target_Location.File.Display_Base_Name)
-                    & "</b>"),
+              (Label         =>
+                 Template.Format
+                   (VSS.Strings.Formatters.Strings.Image
+                      (Escape_Text (Type_Entity.Get_Name)),
+                    VSS.Strings.Formatters.Strings.Image
+                      (Escape_Text (Callee.Get_Name)),
+                    VSS.Strings.Formatters.Strings.Image
+                      (Escape_Text (Target_Location.File.Display_Base_Name))),
                Project_Path => Target_Location.Project_Path,
                File         => Target_Location.File,
                Line         => Editable_Line_Type (Target_Location.Line),

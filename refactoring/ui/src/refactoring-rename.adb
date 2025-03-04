@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                               GNAT Studio                                --
 --                                                                          --
---                     Copyright (C) 2003-2024, AdaCore                     --
+--                     Copyright (C) 2003-2025, AdaCore                     --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -109,7 +109,7 @@ package body Refactoring.Rename is
             File       => Loc.File,
             Line       => Loc.Line,
             Column     => Loc.Column,
-            Text       => Msg,
+            Text       => VSS.Strings.Conversions.To_Virtual_String (Msg),
             Importance => Unspecified,
             Flags      => Side_And_Locations);
       end Rename_Message;
@@ -290,6 +290,8 @@ package body Refactoring.Rename is
       Overridden    : Boolean;
       Make_Writable : Boolean)
    is
+      use type VSS.Strings.Virtual_String;
+
       Entity : constant Root_Entity'Class := Get_Entity (Context.Context);
    begin
       if Entity = No_Root_Entity then
@@ -323,8 +325,9 @@ package body Refactoring.Rename is
             File_Information (Context.Context),
             0,
             0,
-            -"The navigation information for this file is not up-to-date"
-            & " (recompile to regenerate it)",
+            -VSS.Strings.Virtual_String'
+              ("The navigation information for this file is not up-to-date"
+               & " (recompile to regenerate it)"),
             Medium,
             Side_And_Locations);
       end if;

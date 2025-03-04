@@ -22,7 +22,6 @@
 --    - List of real reference kinds for an entity
 --    - all entities in project/file
 
-with Ada.Strings.Unbounded;      use Ada.Strings.Unbounded;
 with Ada.Unchecked_Deallocation;
 with Ada.Containers.Indefinite_Hashed_Maps;
 
@@ -31,6 +30,12 @@ with GNATCOLL.Scripts;
 with GNATCOLL.VFS;
 with GNATCOLL.Utils;             use GNATCOLL.Utils;
 with GNATCOLL.Xref;
+
+with VSS.JSON.Pull_Readers.Simple;
+with VSS.String_Vectors;
+with VSS.Strings.Conversions;
+with VSS.Text_Streams.Memory_UTF8_Input;
+with VSS.Text_Streams.Memory_UTF8_Output;
 
 with Gtkada.Handlers;            use Gtkada.Handlers;
 with Gtkada.Stock_Labels;
@@ -42,12 +47,6 @@ with Gtk.Enums;                  use Gtk.Enums;
 with Gtk.Radio_Button;           use Gtk.Radio_Button;
 with Gtk.Widget;                 use Gtk.Widget;
 with Glib.Convert;               use Glib.Convert;
-
-with VSS.JSON.Pull_Readers.Simple;
-with VSS.String_Vectors;
-with VSS.Strings.Conversions;
-with VSS.Text_Streams.Memory_UTF8_Input;
-with VSS.Text_Streams.Memory_UTF8_Output;
 
 with GPS.Default_Styles;         use GPS.Default_Styles;
 with GPS.Editors;
@@ -126,7 +125,7 @@ package body GPS.LSP_Client.References is
      new GPS.LSP_Client.Requests.References.Abstract_References_Request with
       record
          Title     : VSS.Strings.Virtual_String;
-         Name      : Unbounded_String;
+         Name      : VSS.Strings.Virtual_String;
          Filter    : Result_Filter;
          Command   : Ref_Command_Access;
          File_Only : Boolean;
@@ -148,7 +147,7 @@ package body GPS.LSP_Client.References is
    overriding procedure On_Error_Message
      (Self    : in out References_Request;
       Code    : LSP.Messages.ErrorCodes;
-      Message : String;
+      Message : VSS.Strings.Virtual_String;
       Data    : GNATCOLL.JSON.JSON_Value);
 
    -- Others --
@@ -236,7 +235,7 @@ package body GPS.LSP_Client.References is
       File                 : GNATCOLL.VFS.Virtual_File;
       Position             : LSP.Messages.Position;
       Title                : VSS.Strings.Virtual_String;
-      Name                 : Unbounded_String;
+      Name                 : VSS.Strings.Virtual_String;
       Filter               : Result_Filter;
       Command              : Ref_Command_Access;
       File_Only            : Boolean;
@@ -538,7 +537,7 @@ package body GPS.LSP_Client.References is
                            File                => File,
                            Title               => Title,
                            Name                =>
-                             To_Unbounded_String
+                             VSS.Strings.Conversions.To_Virtual_String
                                (Entity_Name_Information (Context.Context)),
                            Position            =>
                              Location_To_LSP_Position (Location),
@@ -596,8 +595,9 @@ package body GPS.LSP_Client.References is
                    (GPS.LSP_Client.Requests.LSP_Request with
                     Kernel              => Kernel,
                     Title               => Title,
-                    Name                => To_Unbounded_String
-                      (Entity_Name_Information (Context.Context)),
+                    Name                =>
+                      VSS.Strings.Conversions.To_Virtual_String
+                        (Entity_Name_Information (Context.Context)),
                     Position            => Location_To_LSP_Position (Location),
                     Include_Declaration => True,
                     File                => File,
@@ -709,7 +709,7 @@ package body GPS.LSP_Client.References is
    overriding procedure On_Error_Message
      (Self    : in out References_Request;
       Code    : LSP.Messages.ErrorCodes;
-      Message : String;
+      Message : VSS.Strings.Virtual_String;
       Data    : GNATCOLL.JSON.JSON_Value)
    is
       Locations : constant GPS.Location_View.Location_View_Access :=
@@ -823,7 +823,8 @@ package body GPS.LSP_Client.References is
                 (GPS.LSP_Client.Requests.LSP_Request with
                  Kernel              => Kernel,
                  Title               => Title,
-                 Name                => To_Unbounded_String (Name),
+                 Name                =>
+                   VSS.Strings.Conversions.To_Virtual_String (Name),
                  Position            => Location_To_LSP_Position (Location),
                  Include_Declaration => True,
                  File                => File,
@@ -965,7 +966,7 @@ package body GPS.LSP_Client.References is
 
       File            : Virtual_File;
       Message         : GPS.Kernel.Messages.Markup.Markup_Message_Access;
-      Kinds           : Ada.Strings.Unbounded.Unbounded_String;
+      Kinds           : VSS.Strings.Virtual_String;
       Max_Nb_To_Parse : constant Natural := 50;
       Cur_Nb_Parsed   : Natural := 0;
    begin
@@ -992,26 +993,23 @@ package body GPS.LSP_Client.References is
                      --  Construct list of reference kinds in form
                      --  "[kind, kind]" if any.
 
-                     Kinds := Null_Unbounded_String;
+                     Kinds.Clear;
 
                      if Loc.alsKind /= Empty_Set
                        and then not Loc.alsKind.As_Strings.Is_Empty
                      then
                         for S of Loc.alsKind.As_Strings loop
-                           if Kinds = "" then
-                              Append (Kinds, '[');
+                           if Kinds.Is_Empty then
+                              Kinds.Append ('[');
 
                            else
-                              Append (Kinds, ", ");
+                              Kinds.Append (", ");
                            end if;
 
-                           Append
-                             (Kinds,
-                              VSS.Strings.Conversions
-                                .To_Unbounded_UTF_8_String (S));
+                           Kinds.Append (S);
                         end loop;
 
-                        Append (Kinds, "] ");
+                        Kinds.Append ("] ");
                      end if;
 
                      declare
@@ -1099,7 +1097,9 @@ package body GPS.LSP_Client.References is
                                 File       => File,
                                 Line       => From.Line,
                                 Column     => From.Column,
-                                Text       => To_String (Kinds) & Msg_Text,
+                                Text       =>
+                                  VSS.Strings.Conversions.To_UTF_8_String
+                                    (Kinds) & Msg_Text,
                                 Importance => Unspecified,
                                 Flags      => Message_Flag);
 
@@ -1153,26 +1153,22 @@ package body GPS.LSP_Client.References is
 
       if not Data.References_Displayed then
          declare
-            Filter_List : Unbounded_String;
+            use type VSS.Strings.Virtual_String;
+
+            Filter_List : VSS.Strings.Virtual_String;
 
          begin
             if Data.Filter.Is_Set then
                for Name of Data.Filter.Ref_Kinds loop
-                  if Filter_List /= Null_Unbounded_String then
-                     Append
-                       (Filter_List,
-                        " | "
-                        & VSS.Strings.Conversions
-                            .To_Unbounded_UTF_8_String (Name));
+                  if not Filter_List.Is_Empty then
+                     Filter_List.Append (" | " & Name);
                   else
-                     Append
-                       (Filter_List,
-                        VSS.Strings.Conversions
-                          .To_Unbounded_UTF_8_String (Name));
+                     Filter_List.Append (Name);
                   end if;
                end loop;
-               if Filter_List /= Null_Unbounded_String then
-                  Append (Filter_List, "]");
+
+               if not Filter_List.Is_Empty then
+                  Filter_List.Append ("]");
                   Filter_List := " for filters [" & Filter_List;
                end if;
             end if;
@@ -1186,8 +1182,8 @@ package body GPS.LSP_Client.References is
                  Column     => Data.Column,
                  Text       =>
                    "No references found for "
-                 & To_String (Data.Name)
-                 & To_String (Filter_List),
+                   & VSS.Strings.Conversions.To_UTF_8_String (Data.Name)
+                   & VSS.Strings.Conversions.To_UTF_8_String (Filter_List),
                  Importance => Unspecified,
                  Flags      => Message_Flag);
          end;

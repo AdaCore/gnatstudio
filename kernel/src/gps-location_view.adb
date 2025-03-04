@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                               GNAT Studio                                --
 --                                                                          --
---                     Copyright (C) 2001-2024, AdaCore                     --
+--                     Copyright (C) 2001-2025, AdaCore                     --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -1920,7 +1920,10 @@ package body GPS.Location_View is
                     End_Line           => Nth_Arg (Data, 5),
                     End_Column         =>
                       Visible_Column_Type (Nth_Arg (Data, 6, Default => 1)),
-                    Text               => Nth_Arg (Data, 7),
+                    Text               =>
+                      VSS.Strings.Conversions.To_Virtual_String
+                        (Ada.Strings.Unbounded.Unbounded_String'
+                           (Nth_Arg (Data, 7))),
                     Highlight_Category => Get_Style_Manager
                       (Get_Kernel (Data)).Get
                     (Nth_Arg (Data, 8, ""), Allow_Null => True),

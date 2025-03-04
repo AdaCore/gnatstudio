@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                               GNAT Studio                                --
 --                                                                          --
---                     Copyright (C) 2021-2024, AdaCore                     --
+--                     Copyright (C) 2021-2025, AdaCore                     --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -66,7 +66,7 @@ package body GPS.Kernel.Messages.Multilines is
       Column                   : Basic_Types.Visible_Column_Type;
       End_Line                 : Natural;
       End_Column               : Basic_Types.Visible_Column_Type;
-      Text                     : String;
+      Text                     : VSS.Strings.Virtual_String;
       Highlight_Category       : GPS.Kernel.Style_Manager.Style_Access;
       Importance               : Message_Importance_Type;
       Show_In_Locations        : Boolean;
@@ -160,7 +160,9 @@ package body GPS.Kernel.Messages.Multilines is
       return not null Message_Access
    is
       pragma Unreferenced (Actual_Line, Actual_Column);
-      Text       : constant String := Get_Attribute_S (XML_Node, "text", "");
+
+      Text       : constant VSS.Strings.Virtual_String :=
+        Get_Attribute (XML_Node, "text", "");
       End_Line   : constant Natural
         := Natural'Value (Get_Attribute_S (XML_Node, "end_line", "1"));
       End_Column : constant Basic_Types.Visible_Column_Type

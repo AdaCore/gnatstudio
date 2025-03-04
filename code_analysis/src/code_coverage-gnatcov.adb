@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                               GNAT Studio                                --
 --                                                                          --
---                     Copyright (C) 2008-2024, AdaCore                     --
+--                     Copyright (C) 2008-2025, AdaCore                     --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -18,10 +18,9 @@
 with Ada.Strings;                  use Ada.Strings;
 with Ada.Strings.Fixed;            use Ada.Strings.Fixed;
 with Ada.Strings.Unbounded;        use Ada.Strings.Unbounded;
-
 with GNAT.Regpat;                  use GNAT.Regpat;
 
-with VSS.Strings;
+with VSS.Strings.Conversions;
 
 with GNATCOLL.Traces;              use GNATCOLL.Traces;
 
@@ -364,7 +363,7 @@ package body Code_Coverage.GNATcov is
             File,
             Line_Number,
             Item.Column,
-            To_String (Item.Message),
+            VSS.Strings.Conversions.To_Virtual_String (Item.Message),
             GNATcov_Msg_Importances (Coverage.Status),
             Coverage_Message_Flags,
             Allow_Auto_Jump_To_First => Allow_Auto_Jump_To_First);

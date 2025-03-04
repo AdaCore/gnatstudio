@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                               GNAT Studio                                --
 --                                                                          --
---                     Copyright (C) 2014-2024, AdaCore                     --
+--                     Copyright (C) 2014-2025, AdaCore                     --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -1188,7 +1188,9 @@ package body GPS.Kernel.Entities is
                      end;
                   else
                      declare
-                        Name2 : constant String := Get_Name (Entity2);
+                        Name2 : constant VSS.Strings.Virtual_String :=
+                          VSS.Strings.Conversions.To_Virtual_String
+                            (Get_Name (Entity2));
                      begin
                         Message :=
                           Create_Simple_Message
@@ -1201,7 +1203,8 @@ package body GPS.Kernel.Entities is
                              Unspecified,
                              Call_Graph_Message_Flags);
                         Message.Set_Highlighting
-                          (Search_Results_Style, Name2'Length);
+                          (Search_Results_Style,
+                           Highlight_Length (Name2.Character_Length));
                      end;
                   end if;
                end if;

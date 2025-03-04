@@ -27,7 +27,6 @@ with Ada.Strings.Maps;                    use Ada.Strings.Maps;
 
 with Interfaces.C.Strings;                use Interfaces.C.Strings;
 with System.Address_Image;
-
 with GNAT.Expect;                         use GNAT.Expect;
 with GNAT.Regpat;                         use GNAT.Regpat;
 with GNAT.SHA1;
@@ -4199,7 +4198,8 @@ package body Src_Editor_Buffer is
                            Buffer.Filename,
                            Positive (Line),
                            1,
-                           Get_Message (Error.all),
+                           VSS.Strings.Conversions.To_Virtual_String
+                             (Get_Message (Error.all)),
                            High,
                            Src_Editor_Message_Flags);
 

@@ -21,6 +21,8 @@ with Ada.Unchecked_Deallocation;
 with GNATCOLL.Arg_Lists;                use GNATCOLL.Arg_Lists;
 with GNATCOLL.Projects;                 use GNATCOLL.Projects;
 
+with VSS.Strings.Conversions;
+
 with Gtk.Enums;                         use Gtk.Enums;
 with Gtkada.Dialogs;                    use Gtkada.Dialogs;
 with Gtkada.MDI;                        use Gtkada.MDI;
@@ -51,6 +53,7 @@ with Vdiff2_Module.Utils.Text;          use Vdiff2_Module.Utils.Text;
 
 package body Vdiff2_Module.Utils is
 
+   use type VSS.Strings.Virtual_String;
    use Diff_Head_List;
    use Diff_Chunk_List;
 
@@ -787,7 +790,8 @@ package body Vdiff2_Module.Utils is
                Highlight_File,
                Line,
                1,
-               "1 line " & Modification,
+               "1 line "
+               & VSS.Strings.Conversions.To_Virtual_String (Modification),
                Unspecified,
                Side_And_Locations);
 
@@ -798,7 +802,9 @@ package body Vdiff2_Module.Utils is
                Highlight_File,
                Line,
                1,
-               Image (The_Range) & " lines " & Modification,
+               VSS.Strings.Conversions.To_Virtual_String (Image (The_Range))
+               & " lines "
+               & VSS.Strings.Conversions.To_Virtual_String (Modification),
                Unspecified,
                Side_And_Locations);
          end if;
@@ -897,8 +903,10 @@ package body Vdiff2_Module.Utils is
             Natural'Max (Curr_Chunk.Range2.First - 1, 1),
             1,
             (if Arr'Length = 1
-             then "1 line removed"
-             else Image (Arr'Length) & " lines removed"),
+               then "1 line removed"
+               else VSS.Strings.Conversions.To_Virtual_String
+                 (Image (Arr'Length))
+               & " lines removed"),
             Informational,
             Side_And_Locations);
 
@@ -941,7 +949,8 @@ package body Vdiff2_Module.Utils is
             1,
             (if Arr'Length = 1
              then "1 line added"
-             else Image (Arr'Length) & " lines added"),
+             else VSS.Strings.Conversions.To_Virtual_String
+               (Image (Arr'Length)) & " lines added"),
             Informational,
             Side_And_Locations);
 

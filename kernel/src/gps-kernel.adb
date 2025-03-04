@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                               GNAT Studio                                --
 --                                                                          --
---                     Copyright (C) 2001-2024, AdaCore                     --
+--                     Copyright (C) 2001-2025, AdaCore                     --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -19,24 +19,25 @@ with Ada.Characters.Handling;   use Ada.Characters.Handling;
 with Ada.Strings.Fixed;         use Ada.Strings.Fixed;
 with Ada.Tags;                  use Ada.Tags;
 with Ada.Unchecked_Conversion;
+with System;                    use System;
 with System.Address_Image;
-
 with GNAT.Regpat;               use GNAT.Regpat;
 with GNAT.Strings;              use GNAT.Strings;
+
 with GNATCOLL.Arg_Lists;        use GNATCOLL.Arg_Lists;
 with GNATCOLL.Scripts;          use GNATCOLL.Scripts;
 with GNATCOLL.Projects;         use GNATCOLL.Projects;
 with GNATCOLL.Traces;           use GNATCOLL.Traces;
 with GNATCOLL.Tribooleans;      use GNATCOLL.Tribooleans;
 with GNATCOLL.Utils;            use GNATCOLL.Utils;
-with System;                    use System;
+
+with VSS.Strings.Conversions;
 
 with Gdk;                       use Gdk;
 with Gdk.Window;                use Gdk.Window;
 
 with Glib.Object;               use Glib.Object;
 with Glib.Main;                 use Glib.Main;
-with VSS.Strings;
 with XML_Utils;                 use XML_Utils;
 
 with Gtk.Enums;                 use Gtk.Enums;
@@ -235,7 +236,8 @@ package body GPS.Kernel is
    begin
       Create_Simple_Message
         (Get_Messages_Container (Self.Kernel),
-         Category, File, Line, Column, Text,
+         Category, File, Line, Column,
+         VSS.Strings.Conversions.To_Virtual_String (Text),
          Informational,
          (Editor_Side => True, Locations => True, Editor_Line => False));
    end Report_Location;

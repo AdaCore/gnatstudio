@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                               GNAT Studio                                --
 --                                                                          --
---                    Copyright (C) 2019-2024, AdaCore                      --
+--                    Copyright (C) 2019-2025, AdaCore                      --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -133,7 +133,7 @@ package GPS.LSP_Client.Requests is
    procedure On_Error_Message
      (Self    : in out LSP_Request;
       Code    : LSP.Messages.ErrorCodes;
-      Message : String;
+      Message : VSS.Strings.Virtual_String;
       Data    : GNATCOLL.JSON.JSON_Value) is null;
    --  Called when an "error" response is received from the server.
 

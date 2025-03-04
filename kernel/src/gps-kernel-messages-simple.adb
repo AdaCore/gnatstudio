@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                               GNAT Studio                                --
 --                                                                          --
---                     Copyright (C) 2009-2024, AdaCore                     --
+--                     Copyright (C) 2009-2025, AdaCore                     --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -15,12 +15,12 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with Glib.Convert;
+with Glib.Convert.VSS_Utils;
+with VSS.Strings.Conversions;
 
 package body GPS.Kernel.Messages.Simple is
 
-   use Ada.Strings.Unbounded;
-   use Glib.Convert;
+   use Glib.Convert.VSS_Utils;
    use XML_Utils;
 
    procedure Save
@@ -62,7 +62,7 @@ package body GPS.Kernel.Messages.Simple is
       File          : GNATCOLL.VFS.Virtual_File;
       Line          : Natural;
       Column        : Basic_Types.Visible_Column_Type;
-      Text          : String;
+      Text          : VSS.Strings.Virtual_String;
       Importance    : Message_Importance_Type;
       Actual_Line   : Integer;
       Actual_Column : Integer;
@@ -76,7 +76,7 @@ package body GPS.Kernel.Messages.Simple is
       File          : GNATCOLL.VFS.Virtual_File;
       Line          : Natural;
       Column        : Basic_Types.Visible_Column_Type;
-      Text          : String;
+      Text          : VSS.Strings.Virtual_String;
       Actual_Line   : Integer;
       Actual_Column : Integer;
       Flags         : Message_Flags) return Simple_Message_Access;
@@ -92,7 +92,7 @@ package body GPS.Kernel.Messages.Simple is
       File       : GNATCOLL.VFS.Virtual_File;
       Line       : Natural;
       Column     : Basic_Types.Visible_Column_Type;
-      Text       : String;
+      Text       : VSS.Strings.Virtual_String;
       Importance : Message_Importance_Type;
       Flags      : Message_Flags;
       Allow_Auto_Jump_To_First : Boolean := True)
@@ -117,7 +117,7 @@ package body GPS.Kernel.Messages.Simple is
       File       : GNATCOLL.VFS.Virtual_File;
       Line       : Natural;
       Column     : Basic_Types.Visible_Column_Type;
-      Text       : String;
+      Text       : VSS.Strings.Virtual_String;
       Importance : Message_Importance_Type;
       Flags      : Message_Flags;
       Allow_Auto_Jump_To_First : Boolean := True)
@@ -149,14 +149,14 @@ package body GPS.Kernel.Messages.Simple is
       File          : GNATCOLL.VFS.Virtual_File;
       Line          : Natural;
       Column        : Basic_Types.Visible_Column_Type;
-      Text          : String;
+      Text          : VSS.Strings.Virtual_String;
       Importance    : Message_Importance_Type;
       Actual_Line   : Integer;
       Actual_Column : Integer;
       Flags         : Message_Flags;
       Allow_Auto_Jump_To_First : Boolean := True) is
    begin
-      Message.Text := To_Unbounded_String (Text);
+      Message.Text := Text;
 
       Initialize
         (Message,
@@ -182,7 +182,7 @@ package body GPS.Kernel.Messages.Simple is
       File          : GNATCOLL.VFS.Virtual_File;
       Line          : Natural;
       Column        : Basic_Types.Visible_Column_Type;
-      Text          : String;
+      Text          : VSS.Strings.Virtual_String;
       Importance    : Message_Importance_Type;
       Actual_Line   : Integer;
       Actual_Column : Integer;
@@ -219,7 +219,7 @@ package body GPS.Kernel.Messages.Simple is
       File   : GNATCOLL.VFS.Virtual_File;
       Line   : Natural;
       Column : Basic_Types.Visible_Column_Type;
-      Text   : String;
+      Text   : VSS.Strings.Virtual_String;
       Flags  : Message_Flags) return Simple_Message_Access is
    begin
       return Create_Simple_Message
@@ -242,7 +242,7 @@ package body GPS.Kernel.Messages.Simple is
       File          : GNATCOLL.VFS.Virtual_File;
       Line          : Natural;
       Column        : Basic_Types.Visible_Column_Type;
-      Text          : String;
+      Text          : VSS.Strings.Virtual_String;
       Actual_Line   : Integer;
       Actual_Column : Integer;
       Flags         : Message_Flags) return Simple_Message_Access
@@ -251,7 +251,7 @@ package body GPS.Kernel.Messages.Simple is
         new Simple_Message (Secondary);
 
    begin
-      Result.Text := To_Unbounded_String (Text);
+      Result.Text := Text;
 
       Initialize
         (Result, Parent, File, Line, Column, Actual_Line, Actual_Column,
@@ -269,7 +269,7 @@ package body GPS.Kernel.Messages.Simple is
       File   : GNATCOLL.VFS.Virtual_File;
       Line   : Natural;
       Column : Basic_Types.Visible_Column_Type;
-      Text   : String;
+      Text   : VSS.Strings.Virtual_String;
       Flags  : Message_Flags)
    is
       Dummy : Simple_Message_Access;
@@ -295,7 +295,9 @@ package body GPS.Kernel.Messages.Simple is
       return Ada.Strings.Unbounded.Unbounded_String
    is
    begin
-      return To_Unbounded_String (Escape_Text (To_String (Self.Text)));
+      return
+        VSS.Strings.Conversions.To_Unbounded_UTF_8_String
+          (Escape_Text (Self.Text));
    end Get_Markup;
 
    --------------
@@ -306,7 +308,7 @@ package body GPS.Kernel.Messages.Simple is
      (Self : not null access constant Simple_Message)
       return Ada.Strings.Unbounded.Unbounded_String is
    begin
-      return Self.Text;
+      return VSS.Strings.Conversions.To_Unbounded_UTF_8_String (Self.Text);
    end Get_Text;
 
    ----------
@@ -327,7 +329,8 @@ package body GPS.Kernel.Messages.Simple is
       Allow_Auto_Jump_To_First : Boolean := True)
       return not null Message_Access
    is
-      Text : constant String := Get_Attribute_S (XML_Node, "text", "");
+      Text : constant VSS.Strings.Virtual_String :=
+        Get_Attribute (XML_Node, "text", "");
 
    begin
       return
@@ -360,7 +363,8 @@ package body GPS.Kernel.Messages.Simple is
       Actual_Column : Integer;
       Flags         : Message_Flags)
    is
-      Text  : constant String := Get_Attribute_S (XML_Node, "text", "");
+      Text  : constant VSS.Strings.Virtual_String :=
+        Get_Attribute (XML_Node, "text", "");
       Dummy : Simple_Message_Access;
 
    begin
@@ -397,7 +401,7 @@ package body GPS.Kernel.Messages.Simple is
                Simple_Message_Access (Message_Node);
 
    begin
-      Set_Attribute_S (XML_Node, "text", To_String (Self.Text));
+      Set_Attribute (XML_Node, "text", Self.Text);
    end Save;
 
 end GPS.Kernel.Messages.Simple;
