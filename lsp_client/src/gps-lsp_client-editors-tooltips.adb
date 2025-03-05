@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                               GNAT Studio                                --
 --                                                                          --
---                        Copyright (C) 2019-2023, AdaCore                  --
+--                        Copyright (C) 2019-2025, AdaCore                  --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -15,20 +15,26 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with Ada.Strings.Unbounded;         use Ada.Strings.Unbounded;
+with Ada.Strings.Unbounded;
+
 with GNATCOLL.JSON;
 with GNATCOLL.Traces;               use GNATCOLL.Traces;
 
+with VSS.Strings.Formatters.Strings;
+with VSS.Strings.Templates;
+
 with Glib;                          use Glib;
-with Glib.Convert;                  use Glib.Convert;
+with Glib.Convert.VSS_Utils;        use Glib.Convert.VSS_Utils;
 with Glib.Object; use Glib.Object;
 with Glib.Values;
 
-with Gtkada.Style;
+with Gdk.Event; use Gdk.Event;
 with Gtk.Box;                       use Gtk.Box;
+with Gtk.Event_Box; use Gtk.Event_Box;
 with Gtk.Handlers;                  use Gtk.Handlers;
 with Gtk.Label;                     use Gtk.Label;
 with Gtk.Separator;                 use Gtk.Separator;
+with Gtkada.Style;
 
 with VSS.Strings.Conversions;
 
@@ -48,13 +54,10 @@ with LAL.Core_Module;
 with LAL.Highlighters;
 with Libadalang.Analysis;
 with Libadalang.Common;
-with Langkit_Support.Text;
 with Outline_View;                  use Outline_View;
 with String_Utils;
 with Tooltips;                      use Tooltips;
 with Xref;                          use Xref;
-with Gtk.Event_Box; use Gtk.Event_Box;
-with Gdk.Event; use Gdk.Event;
 
 package body GPS.LSP_Client.Editors.Tooltips is
 
@@ -104,7 +107,7 @@ package body GPS.LSP_Client.Editors.Tooltips is
    overriding procedure On_Error_Message
      (Self    : in out GPS_LSP_Hover_Request;
       Code    : LSP.Messages.ErrorCodes;
-      Message : String;
+      Message : VSS.Strings.Virtual_String;
       Data    : GNATCOLL.JSON.JSON_Value);
 
    overriding procedure On_Rejected
@@ -142,7 +145,7 @@ package body GPS.LSP_Client.Editors.Tooltips is
      new Gtk_Label_Record and LAL.Highlighters.Highlightable_Interface with
       record
          Kernel      : Kernel_Handle;
-         Markup_Text : Unbounded_String;
+         Markup_Text : VSS.Strings.Virtual_String;
       end record;
    --  A type of label that implements the LAL highlightable interface to
    --  highlight the declarations displayed in tooltips.
@@ -357,7 +360,7 @@ package body GPS.LSP_Client.Editors.Tooltips is
 
             Tooltip_Block_Label.Set_Use_Markup (False);
             Tooltip_Block_Label.Set_Text
-              (To_String
+              (Ada.Strings.Unbounded.To_String
                  (String_Utils.Wrap_At_Words
                       (S     => VSS.Strings.Conversions.To_UTF_8_String
                            (Result.Value.contents.MarkupContent.value),
@@ -403,7 +406,7 @@ package body GPS.LSP_Client.Editors.Tooltips is
                        Filename => "",
                        Charset  => "UTF-8",
                        Buffer   =>
-                         To_String
+                         Ada.Strings.Unbounded.To_String
                            (String_Utils.Wrap_At_Words
                               (S     => Tooltip_Text,
                                Limit => Max_Width_Chars)),
@@ -418,11 +421,12 @@ package body GPS.LSP_Client.Editors.Tooltips is
 
                   if Success then
                      Tooltip_Block_Label.Set_Markup
-                       (To_String (Tooltip_Block_Label.Markup_Text));
+                       (VSS.Strings.Conversions.To_UTF_8_String
+                          (Tooltip_Block_Label.Markup_Text));
                   else
                      Tooltip_Block_Label.Set_Use_Markup (False);
                      Tooltip_Block_Label.Set_Text
-                       (To_String
+                       (Ada.Strings.Unbounded.To_String
                           (String_Utils.Wrap_At_Words
                                (S     => Tooltip_Text,
                                 Limit => Max_Width_Chars)));
@@ -432,7 +436,7 @@ package body GPS.LSP_Client.Editors.Tooltips is
             else
                Tooltip_Block_Label.Set_Use_Markup (False);
                Tooltip_Block_Label.Set_Text
-                 (To_String
+                 (Ada.Strings.Unbounded.To_String
                     (String_Utils.Wrap_At_Words
                          (S     => VSS.Strings.Conversions.To_UTF_8_String
                               (Tooltip_Block.value),
@@ -463,12 +467,15 @@ package body GPS.LSP_Client.Editors.Tooltips is
    overriding procedure On_Error_Message
      (Self    : in out GPS_LSP_Hover_Request;
       Code    : LSP.Messages.ErrorCodes;
-      Message : String;
+      Message : VSS.Strings.Virtual_String;
       Data    : GNATCOLL.JSON.JSON_Value)
    is
       pragma Unreferenced (Code, Self);
    begin
-      Trace (Me, "Error received on hover request: " & Message);
+      Trace
+        (Me,
+         "Error received on hover request: "
+         & VSS.Strings.Conversions.To_UTF_8_String (Message));
       Trace (Me, "Data: " & GNATCOLL.JSON.Write (Data));
    end On_Error_Message;
 
@@ -563,22 +570,27 @@ package body GPS.LSP_Client.Editors.Tooltips is
       Style : String)
    is
       use Libadalang.Common;
-      use Langkit_Support.Text;
+      use type VSS.Strings.Virtual_String;
 
+      Template        : constant
+        VSS.Strings.Templates.Virtual_String_Template :=
+          "<span foreground=""{}"">{}</span>";
       Highlight_Style : constant Style_Access :=
         Get_Style_Manager (Self.Kernel).Get
         (Key        => Style,
          Allow_Null => True);
    begin
       if Highlight_Style = null then
-         Self.Markup_Text := Self.Markup_Text
-           & Escape_Text (To_UTF8 (Text (Token)));
+         Self.Markup_Text := Self.Markup_Text & Escape_Text (Text (Token));
       else
-         Self.Markup_Text := Self.Markup_Text & "<span foreground="""
-           & Gtkada.Style.To_Hex (Get_Foreground (Highlight_Style))
-           & """>"
-           & Escape_Text (To_UTF8 (Text (Token)))
-           & "</span>";
+         Self.Markup_Text :=
+           Self.Markup_Text
+           & Template.Format
+           (VSS.Strings.Formatters.Strings.Image
+              (VSS.Strings.Conversions.To_Virtual_String
+                   (Gtkada.Style.To_Hex (Get_Foreground (Highlight_Style)))),
+           VSS.Strings.Formatters.Strings.Image
+              (Escape_Text (Text (Token))));
       end if;
    end Highlight_Token;
 

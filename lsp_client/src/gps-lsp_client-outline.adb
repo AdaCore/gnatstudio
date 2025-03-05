@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                               GNAT Studio                                --
 --                                                                          --
---                        Copyright (C) 2020-2023, AdaCore                  --
+--                        Copyright (C) 2020-2025, AdaCore                  --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -17,6 +17,8 @@
 
 with Ada.Unchecked_Deallocation;
 with VSS.Strings.Conversions;
+
+with VSS.Strings;
 
 with Glib;                            use Glib;
 with Glib.Main;                       use Glib.Main;
@@ -113,7 +115,7 @@ package body GPS.LSP_Client.Outline is
    overriding procedure On_Error_Message
      (Self    : in out GPS_LSP_Outline_Request;
       Code    : LSP.Messages.ErrorCodes;
-      Message : String;
+      Message : VSS.Strings.Virtual_String;
       Data    : GNATCOLL.JSON.JSON_Value);
 
    overriding function Auto_Cancel
@@ -225,7 +227,7 @@ package body GPS.LSP_Client.Outline is
    overriding procedure On_Error_Message
      (Self    : in out GPS_LSP_Outline_Request;
       Code    : LSP.Messages.ErrorCodes;
-      Message : String;
+      Message : VSS.Strings.Virtual_String;
       Data    : GNATCOLL.JSON.JSON_Value)
    is
       Lang   : constant Language_Access :=

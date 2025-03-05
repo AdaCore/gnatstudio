@@ -739,8 +739,7 @@ package body GPS.LSP_Clients is
                begin
                   Request.On_Error_Message
                     (Code    => error.Value.code,
-                     Message => VSS.Strings.Conversions.To_UTF_8_String
-                                  (error.Value.message),
+                     Message => error.Value.message,
                      Data    => GNATCOLL.JSON.JSON_Value (error.Value.data));
 
                exception
@@ -1267,9 +1266,7 @@ package body GPS.LSP_Clients is
                            VSS.Strings.Conversions.To_Virtual_String
                              (Lang.Get_Name),
                          version    => 0,
-                         text       =>
-                           VSS.Strings.Conversions.To_Virtual_String
-                             (Buffer.Get_Chars_U)));
+                         text       => Buffer.Get_Text));
 
       begin
          Self.On_DidOpenTextDocument_Notification (Value);

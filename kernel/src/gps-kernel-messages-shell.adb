@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                               GNAT Studio                                --
 --                                                                          --
---                     Copyright (C) 2010-2024, AdaCore                     --
+--                     Copyright (C) 2010-2025, AdaCore                     --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -330,7 +330,9 @@ package body GPS.Kernel.Messages.Shell is
                          Default => No_Class_Instance, Allow_Null => False));
             Line    : constant Natural := Nth_Arg (Data, 3);
             Column  : constant Natural := Nth_Arg (Data, 4);
-            Text    : constant String := Nth_Arg (Data, 5);
+            Text    : constant VSS.Strings.Virtual_String :=
+              VSS.Strings.Conversions.To_Virtual_String
+                (Ada.Strings.Unbounded.Unbounded_String'(Nth_Arg (Data, 5)));
             Message : constant Simple_Message_Access :=
               Create_Simple_Message
                 (Parent => Parent,

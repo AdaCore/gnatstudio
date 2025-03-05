@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                               GNAT Studio                                --
 --                                                                          --
---                     Copyright (C) 2022-2024, AdaCore                     --
+--                     Copyright (C) 2022-2025, AdaCore                     --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -820,6 +820,7 @@ package body DAP.Module.Breakpoints is
             Line                     => Natural (Line),
             Column                   => 0,
             Text                     =>
+              VSS.Strings.Virtual_String'
               (if B.Condition.Is_Empty
                then "An active breakpoint has been set on this line"
                else "A conditional breakpoint has been set on this line"),

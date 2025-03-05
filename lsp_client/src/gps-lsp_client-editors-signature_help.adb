@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                               GNAT Studio                                --
 --                                                                          --
---                        Copyright (C) 2020-2023, AdaCore                  --
+--                        Copyright (C) 2020-2025, AdaCore                  --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -16,16 +16,8 @@
 ------------------------------------------------------------------------------
 
 with Ada.Exceptions;                  use Ada.Exceptions;
-with Completion_Module;               use Completion_Module;
-with Dialog_Utils;                    use Dialog_Utils;
-with Gdk.Event;                       use Gdk.Event;
-with Gdk.Types.Keysyms;               use Gdk.Types.Keysyms;
-with Gdk.Types;                       use Gdk.Types;
-with Gdk.Window;                      use Gdk.Window;
-with Glib.Convert;                    use Glib.Convert;
-with Glib.Main;
-with Glib.Object;
 with GNAT.Regpat;                     use GNAT.Regpat;
+
 with GNATCOLL.JSON;
 with GNATCOLL.Projects;
 with GNATCOLL.Traces;                 use GNATCOLL.Traces;
@@ -34,6 +26,17 @@ with GNATCOLL.VFS;                    use GNATCOLL.VFS;
 
 with VSS.Characters;
 with VSS.Strings.Conversions;
+
+with Completion_Module;               use Completion_Module;
+with Dialog_Utils;                    use Dialog_Utils;
+with Gdk.Event;                       use Gdk.Event;
+with Gdk.Types.Keysyms;               use Gdk.Types.Keysyms;
+with Gdk.Types;                       use Gdk.Types;
+with Gdk.Window;                      use Gdk.Window;
+with Glib.Convert;                    use Glib.Convert;
+with Glib.Convert.VSS_Utils;          use Glib.Convert.VSS_Utils;
+with Glib.Main;
+with Glib.Object;
 
 with GPS.Editors;                     use GPS.Editors;
 with GPS.Kernel.Contexts;             use GPS.Kernel.Contexts;
@@ -85,8 +88,10 @@ package body GPS.LSP_Client.Editors.Signature_Help is
       Result :        LSP.Messages.SignatureHelp);
 
    overriding procedure On_Error_Message
-     (Self    : in out Signature_Help_Request; Code : LSP.Messages.ErrorCodes;
-      Message :        String; Data : GNATCOLL.JSON.JSON_Value) is null;
+     (Self    : in out Signature_Help_Request;
+      Code    : LSP.Messages.ErrorCodes;
+      Message : VSS.Strings.Virtual_String;
+      Data    : GNATCOLL.JSON.JSON_Value) is null;
 
    overriding procedure On_Rejected
      (Self : in out Signature_Help_Request; Reason : Reject_Reason) is null;
@@ -314,12 +319,12 @@ package body GPS.LSP_Client.Editors.Signature_Help is
         and then Signature.documentation.Value.Is_String
       then
          declare
-            Doc : constant String := Escape_Text
-              (VSS.Strings.Conversions.To_UTF_8_String
-                 (Signature.documentation.Value.String));
+            Doc : constant VSS.Strings.Virtual_String :=
+              Escape_Text (Signature.documentation.Value.String);
          begin
-            if Doc /= "" then
-               Self.Documentation_Label.Set_Text (Doc);
+            if not Doc.Is_Empty then
+               Self.Documentation_Label.Set_Text
+                 (VSS.Strings.Conversions.To_UTF_8_String (Doc));
             else
                Self.Documentation_Label.Hide;
                Self.Sep.Hide;

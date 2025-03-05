@@ -15,22 +15,15 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with Ada.Characters.Wide_Wide_Latin_1;
 with Ada.Containers.Doubly_Linked_Lists;
-with Ada.Unchecked_Deallocation;
-with Ada_Semantic_Tree;            use Ada_Semantic_Tree;
 with Ada.Strings.Unbounded;
 with Ada.Strings.Wide_Wide_Maps;   use Ada.Strings.Wide_Wide_Maps;
-
+with Ada.Unchecked_Deallocation;
 with GNAT.Strings;                 use GNAT.Strings;
-with GNATCOLL.Projects;            use GNATCOLL.Projects;
-with GNATCOLL.Scripts;             use GNATCOLL.Scripts;
-with GNATCOLL.Traces;              use GNATCOLL.Traces;
-with GNATCOLL.Utils;               use GNATCOLL.Utils;
-with GNATCOLL.VFS;                 use GNATCOLL.VFS;
 
-with VSS.Characters;
+with VSS.Characters.Latin;
 
+with Ada_Semantic_Tree;            use Ada_Semantic_Tree;
 with Basic_Types;                  use Basic_Types;
 with Commands.Editor;              use Commands.Editor;
 with Commands.Interactive;         use Commands, Commands.Interactive;
@@ -46,6 +39,11 @@ with Completion_Window;            use Completion_Window;
 with Completion.Aliases;           use Completion.Aliases;
 
 with Default_Preferences.Enums;    use Default_Preferences;
+with GNATCOLL.Projects;            use GNATCOLL.Projects;
+with GNATCOLL.Scripts;             use GNATCOLL.Scripts;
+with GNATCOLL.Traces;              use GNATCOLL.Traces;
+with GNATCOLL.Utils;               use GNATCOLL.Utils;
+with GNATCOLL.VFS;                 use GNATCOLL.VFS;
 with GPS.Editors.Line_Information; use GPS.Editors.Line_Information;
 with GPS.Intl;                     use GPS.Intl;
 with GPS.Kernel.Actions;           use GPS.Kernel.Actions;
@@ -346,7 +344,7 @@ package body Completion_Module is
 
    function Triggers_Auto_Completion
      (Editor : Editor_Buffer'Class;
-      C      : Wide_Wide_Character) return Boolean;
+      C      : VSS.Characters.Virtual_Character) return Boolean;
    --  Return true if C enables opening an auto-completion window; false
    --  otherwise.
 
@@ -1576,8 +1574,10 @@ package body Completion_Module is
 
    function Triggers_Auto_Completion
      (Editor : Editor_Buffer'Class;
-      C      : Wide_Wide_Character) return Boolean
+      C      : VSS.Characters.Virtual_Character) return Boolean
    is
+      use type VSS.Characters.Virtual_Character;
+
       Lang   : constant Language.Language_Access
         := (if Editor /= Nil_Editor_Buffer then Editor.Get_Language
             else null);
@@ -1630,7 +1630,7 @@ package body Completion_Module is
       elsif Lang in Cpp_Lang | C_Lang then
          return C in '.' | '(' | '>';
       else
-         return C not in ' ' | Ada.Characters.Wide_Wide_Latin_1.HT;
+         return C not in ' ' | VSS.Characters.Latin.Character_Tabulation;
       end if;
    end Triggers_Auto_Completion;
 
@@ -1719,7 +1719,7 @@ package body Completion_Module is
          return
            Completion_Module.Trigger_Chars_Func
              (Editor => Buffer.Get_Editor_Buffer.all,
-              C      => Wide_Wide_Character'Val (Char));
+              C      => VSS.Characters.Virtual_Character'Val (Char));
       end Char_Triggers_Auto_Completion;
 
       ------------------------

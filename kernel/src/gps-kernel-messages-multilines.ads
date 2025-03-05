@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                               GNAT Studio                                --
 --                                                                          --
---                     Copyright (C) 2021-2024, AdaCore                     --
+--                     Copyright (C) 2021-2025, AdaCore                     --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -35,7 +35,7 @@ package GPS.Kernel.Messages.Multilines is
       Column                   : Basic_Types.Visible_Column_Type;
       End_Line                 : Natural;
       End_Column               : Basic_Types.Visible_Column_Type;
-      Text                     : String;
+      Text                     : VSS.Strings.Virtual_String;
       Highlight_Category       : GPS.Kernel.Style_Manager.Style_Access;
       Importance               : Message_Importance_Type;
       Show_In_Locations        : Boolean;

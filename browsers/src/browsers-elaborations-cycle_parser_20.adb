@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                               GNAT Studio                                --
 --                                                                          --
---                     Copyright (C) 2019-2024, AdaCore                     --
+--                     Copyright (C) 2019-2025, AdaCore                     --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -24,6 +24,7 @@ with GNATCOLL.VFS;
 with Basic_Types;
 with GPS.Kernel.Messages.Simple;
 with String_Utils;
+with VSS.Strings.Conversions;
 
 package body Browsers.Elaborations.Cycle_Parser_20 is
 
@@ -531,12 +532,14 @@ package body Browsers.Elaborations.Cycle_Parser_20 is
                              (Item (Matched (2).First .. Matched (2).Last)),
                            Column     => Basic_Types.Visible_Column_Type'Value
                              (Item (Matched (3).First .. Matched (3).Last)),
-                           Text       => "Path" &
-                             Integer'Image (Self.Path_Id) &
-                             --  Add Item without "info:" prefix
-                             ": " & Ada.Strings.Fixed.Trim
-                             (Item (Item'First + 5 .. Item'Last),
-                              Ada.Strings.Left),
+                           Text       =>
+                             VSS.Strings.Conversions.To_Virtual_String
+                               ("Path" &
+                                  Integer'Image (Self.Path_Id) &
+                                    --  Add Item without "info:" prefix
+                                  ": " & Ada.Strings.Fixed.Trim
+                                  (Item (Item'First + 5 .. Item'Last),
+                                   Ada.Strings.Left)),
                            Importance => GPS.Kernel.Messages.High,
                            Flags      =>
                              GPS.Kernel.Messages.Side_And_Locations);

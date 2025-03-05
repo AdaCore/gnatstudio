@@ -16,10 +16,10 @@
 ------------------------------------------------------------------------------
 
 with Ada.Characters.Handling;
-with Ada.Strings.Unbounded;   use Ada.Strings.Unbounded;
 
 with GNATCOLL.JSON;
-with GNATCOLL.Scripts;        use GNATCOLL.Scripts;
+with GNATCOLL.Scripts;           use GNATCOLL.Scripts;
+with GNATCOLL.Scripts.VSS_Utils; use GNATCOLL.Scripts.VSS_Utils;
 with GNATCOLL.VFS;
 
 with Language;
@@ -53,7 +53,7 @@ package body GPS.LSP_Client.Shell is
 
    type LanguageServer_Properties_Record is
      new GNATCOLL.Scripts.Instance_Property_Record with record
-      Language : Ada.Strings.Unbounded.Unbounded_String;
+      Language : VSS.Strings.Virtual_String;
    end record;
    type LanguageServer_Properties_Access is
      access all LanguageServer_Properties_Record'Class;
@@ -157,8 +157,10 @@ package body GPS.LSP_Client.Shell is
             Instance    : constant Class_Instance := Nth_Arg (Data, 1);
             Language    : constant Standard.Language.Language_Access :=
                           Get_Language (Instance);
-            Method      : constant Unbounded_String := Nth_Arg (Data, 2);
-            Params      : constant Unbounded_String := Nth_Arg (Data, 3);
+            Method      : constant VSS.Strings.Virtual_String :=
+              Nth_Arg (Data, 2);
+            Params      : constant VSS.Strings.Virtual_String :=
+              Nth_Arg (Data, 3);
             On_Result   : constant Subprogram_Type := Nth_Arg (Data, 4);
             Auto_Cancel : constant Boolean := Nth_Arg (Data, 7, False);
             On_Error    : Subprogram_Type;
@@ -187,9 +189,11 @@ package body GPS.LSP_Client.Shell is
               new GPS.LSP_Client.Requests.Shell.Shell_Request'
                 (GPS.LSP_Client.Requests.LSP_Request with
                  Kernel            => null,
-                 Method            => VSS.Strings.Conversions.To_Virtual_String
-                   (Ada.Strings.Unbounded.To_String (Method)),
-                 Params            => GNATCOLL.JSON.Read (Params),
+                 Method            => Method,
+                 Params            =>
+                   GNATCOLL.JSON.Read
+                     (VSS.Strings.Conversions.To_Unbounded_UTF_8_String
+                        (Params)),
                  On_Result_Message => On_Result,
                  On_Error_Message  => On_Error,
                  On_Rejected       => On_Reject,
@@ -270,7 +274,8 @@ package body GPS.LSP_Client.Shell is
             return
               GPS.Kernel.Scripts.Get_Kernel (Get_Script (Instance))
                 .Get_Language_Handler.Get_Language_By_Name
-                  (To_String (Properties.Language));
+                  (VSS.Strings.Conversions.To_UTF_8_String
+                     (Properties.Language));
          end if;
       end if;
 
@@ -362,7 +367,8 @@ package body GPS.LSP_Client.Shell is
          Name     => LanguageServer_Class_Name,
          Property =>
            LanguageServer_Properties_Record'
-             (Language => To_Unbounded_String (Language)));
+             (Language =>
+                  VSS.Strings.Conversions.To_Virtual_String (Language)));
    end Set_Data;
 
 end GPS.LSP_Client.Shell;
