@@ -1490,6 +1490,17 @@ package body GPS.LSP_Clients is
           (Ada.Characters.Handling.To_Lower (Self.Language.Get_Name));
    end Request_Id_Prefix;
 
+   ---------------------
+   -- Server_Language --
+   ---------------------
+
+   overriding function Server_Language
+     (Self : LSP_Client) return VSS.Strings.Virtual_String is
+   begin
+      return
+        VSS.Strings.Conversions.To_Virtual_String (Self.Language.Get_Name);
+   end Server_Language;
+
    -----------------------------------
    -- Send_Text_Document_Did_Change --
    -----------------------------------
