@@ -28,6 +28,9 @@ def run_test():
 
     locations = GPS.MDI.get("Locations")
     tree = get_widgets_by_type(Gtk.TreeView, locations.pywidget())[0]
+    # Expand the file nodes so we can click on the messages
+    tree.expand_row(Gtk.TreePath("0:1"), open_all=False)
+    tree.expand_row(Gtk.TreePath("0:2"), open_all=False)
 
     path = find_in_tree(tree, NAME_COLUMN, BODY)
     click_in_tree(tree, path=path, events=pygps.single_click_events)

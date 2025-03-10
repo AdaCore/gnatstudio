@@ -8,6 +8,8 @@ from gs_utils.internal.utils import *
 
 
 EXPECTED = [
+    "Diagnostics: libadalang (1 item in 1 file)",
+    ["foo.adb (1 item)", ["<b>4:1</b>       Missing &apos;;&apos;"]],
     "Diagnostics: ada.project (1 item in 1 file)",
     [
         "test.gpr (1 item)",
@@ -18,8 +20,6 @@ EXPECTED = [
             ],
         ],
     ],
-    "Diagnostics: libadalang (1 item in 1 file)",
-    ["foo.adb (1 item)", ["<b>4:1</b>       Missing &apos;;&apos;"]],
 ]
 
 
@@ -43,15 +43,9 @@ def run_test():
     GPS.Preference("LSP-Diagnostics-Display").set("Editor_And_Locations")
     GPS.Preference("LSP-Ada-File-Diagnostics").set(True)
     GPS.Preference("LSP-Ada-Project-Diagnostics").set(True)
-    # Restart to force the preferences
-    GPS.execute_action("restart ada language server")
-
-    yield wait_until_true(lambda: dump_locations_tree() != [])
+    yield wait_idle()
     gps_assert(dump_locations_tree(), EXPECTED, "Issue when pref enabled")
 
-    # Remove the project diagnostics and restart the server to apply
-    GPS.execute_action("locations clear")
     GPS.Preference("LSP-Ada-Project-Diagnostics").set(False)
-    GPS.execute_action("restart ada language server")
-    yield wait_until_true(lambda: dump_locations_tree() != [])
+    yield wait_idle()
     gps_assert(dump_locations_tree(), EXPECTED2, "Issue when pref disabled")

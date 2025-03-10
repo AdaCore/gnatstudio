@@ -357,6 +357,9 @@ private
      (Self : LSP_Client) return VSS.Strings.Virtual_String;
    --  Return unique prefix to generate request id.
 
+   overriding function Server_Language
+     (Self : LSP_Client) return VSS.Strings.Virtual_String;
+
    -------------------------------------------
    -- Methods of Text_Document_Server_Proxy --
    -------------------------------------------

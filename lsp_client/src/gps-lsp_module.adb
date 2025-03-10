@@ -39,6 +39,7 @@
 --       -  didChange ->  sent in reaction to After_Insert_Text
 
 with Ada.Characters.Handling; use Ada.Characters.Handling;
+with Ada.Containers.Hashed_Sets;
 with Ada.Containers.Hashed_Maps;
 with Ada.Strings.Unbounded;   use Ada.Strings.Unbounded;
 with Basic_Types;
@@ -247,6 +248,19 @@ package body GPS.LSP_Module is
       Hash            => Hash,
       Equivalent_Keys => "=");
 
+   package Source_Sets is new Ada.Containers.Hashed_Sets
+     (Element_Type        => VSS.Strings.Virtual_String,
+      Hash                => Hash,
+      Equivalent_Elements => VSS.Strings."=",
+      "="                 => VSS.Strings."=");
+
+   package Language_Diagnostic_Sources is new Ada.Containers.Hashed_Maps
+     (Key_Type        => VSS.Strings.Virtual_String,
+      Element_Type    => Source_Sets.Set,
+      Hash            => Hash,
+      Equivalent_Keys => VSS.Strings."=",
+      "="             => Source_Sets."=");
+
    ------------
    -- Module --
    ------------
@@ -256,15 +270,19 @@ package body GPS.LSP_Module is
      and LSP.Client_Notification_Receivers.Client_Notification_Receiver
      and GPS.LSP_Client.Language_Servers.Interceptors.Server_Listener
    with record
-      Language_Servers : Language_Server_Maps.Map;
+      Language_Servers   : Language_Server_Maps.Map;
       --  Map from language to LSP client
 
-      Unknown_Server   : Language_Server_Access;
+      Unknown_Server     : Language_Server_Access;
       --  Pseudo-server to handle managed text documents of language not
       --  supported by any configured language servers.
 
-      Token_To_Command : Token_Command_Maps.Map;
+      Token_To_Command   : Token_Command_Maps.Map;
       --  Associate the progress token to the Scheduled_Command monitoring it
+
+      Diagnostic_Sources : Language_Diagnostic_Sources.Map;
+      --  Map monitoring the sources of diagnostics associated which each
+      --  language.
    end record;
 
    type LSP_Module_Id is access all Module_Id_Record'Class;
@@ -272,10 +290,28 @@ package body GPS.LSP_Module is
    overriding procedure Destroy (Self : in out Module_Id_Record);
    --  Stops all language server processes and cleanup data structures.
 
+   Diagnostics_Messages_Category_Prefix :
+     constant VSS.Strings.Virtual_String := "Diagnostics";
+
    procedure Remove_Diagnostics
-     (Self : in out Module_Id_Record'Class;
-      File : GNATCOLL.VFS.Virtual_File);
-   --  Remove the diagnostics corresponding to File from the interface
+     (Self     : in out Module_Id_Record'Class;
+      File     : GNATCOLL.VFS.Virtual_File;
+      Language : VSS.Strings.Virtual_String);
+   --  Remove the diagnostics related to file for the sources of Language
+
+   procedure Register_Diagnostic_Source
+     (Self     : in out Module_Id_Record'Class;
+      Language : VSS.Strings.Virtual_String;
+      Source   : VSS.Strings.Virtual_String);
+   --  Register a new source of diagnostics for language. It will do nothing
+   --  if Source is already registered.
+
+   function Is_Language_Diagnostic_Category
+     (Self     : Module_Id_Record'Class;
+      Language : VSS.Strings.Virtual_String;
+      Category : VSS.Strings.Virtual_String)
+      return Boolean;
+   --  Return True if category match a source of Language
 
    function Get_Diagnostics_Message_Flags return Message_Flags
    is
@@ -306,16 +342,19 @@ package body GPS.LSP_Module is
       Data   : Unbounded_String);
 
    overriding procedure On_Publish_Diagnostics
-     (Self   : access Module_Id_Record;
-      Params : LSP.Messages.PublishDiagnosticsParams);
+     (Self     : access Module_Id_Record;
+      Params   : LSP.Messages.PublishDiagnosticsParams;
+      Language : VSS.Strings.Virtual_String);
 
    overriding procedure On_Show_Message
-     (Self  : access Module_Id_Record;
-      Value : LSP.Messages.ShowMessageParams);
+     (Self     : access Module_Id_Record;
+      Value    : LSP.Messages.ShowMessageParams;
+      Language : VSS.Strings.Virtual_String);
 
    overriding procedure On_Log_Message
-     (Self  : access Module_Id_Record;
-      Value : LSP.Messages.LogMessageParams);
+     (Self     : access Module_Id_Record;
+      Value    : LSP.Messages.LogMessageParams;
+      Language : VSS.Strings.Virtual_String);
 
    overriding function Get_Progress_Type
      (Self  : access Module_Id_Record;
@@ -426,9 +465,6 @@ package body GPS.LSP_Module is
       File   : Virtual_File) return Language_Server_Access;
    --  Return the running server supporting File if it exists, or null
 
-   Diagnostics_Messages_Category_Prefix :
-     constant VSS.Strings.Virtual_String := "Diagnostics";
-
    -----------------------
    -- Share_Same_Server --
    -----------------------
@@ -510,7 +546,7 @@ package body GPS.LSP_Module is
       Server : constant Language_Server_Access :=
         Get_Server_For_File (Kernel, File);
    begin
-      Module.Remove_Diagnostics (File);
+      Module.Remove_Diagnostics (File, VSS.Strings.Empty_Virtual_String);
       if Server /= null then
          Server.Get_Client.Send_Text_Document_Did_Close (File);
       end if;
@@ -579,7 +615,7 @@ package body GPS.LSP_Module is
       if Server /= null then
          Server.Get_Client.Send_Text_Document_Did_Open (To);
       end if;
-      Module.Remove_Diagnostics (From);
+      Module.Remove_Diagnostics (From, VSS.Strings.Empty_Virtual_String);
    end Execute;
 
    -------------
@@ -1130,19 +1166,77 @@ package body GPS.LSP_Module is
       return Me_Cpp_Support.Is_Active;
    end LSP_Cpp_Support_Is_Active;
 
+   --------------------------------
+   -- Register_Diagnostic_Source --
+   --------------------------------
+
+   procedure Register_Diagnostic_Source
+     (Self     : in out Module_Id_Record'Class;
+      Language : VSS.Strings.Virtual_String;
+      Source   : VSS.Strings.Virtual_String) is
+   begin
+      if Self.Diagnostic_Sources.Contains (Language) then
+         Self.Diagnostic_Sources (Language).Include (Source);
+      else
+         declare
+            Source_Set : Source_Sets.Set := Source_Sets.Empty_Set;
+         begin
+            Source_Set.Include (Source);
+            Self.Diagnostic_Sources.Insert (Language, Source_Set);
+         end;
+      end if;
+   end Register_Diagnostic_Source;
+
+   -------------------------------------
+   -- Is_Language_Diagnostic_Category --
+   -------------------------------------
+
+   function Is_Language_Diagnostic_Category
+     (Self     : Module_Id_Record'Class;
+      Language : VSS.Strings.Virtual_String;
+      Category : VSS.Strings.Virtual_String)
+      return Boolean
+   is
+      use type VSS.Strings.Virtual_String;
+   begin
+      if Language.Is_Empty then
+         --  No Language given, clean all the diagnostics
+         if Category.Starts_With (Diagnostics_Messages_Category_Prefix) then
+            return True;
+         end if;
+      elsif Self.Diagnostic_Sources.Contains (Language) then
+         --  Check for the sources related to Language
+         for Source of Self.Diagnostic_Sources (Language) loop
+            declare
+               Prefix : constant VSS.Strings.Virtual_String :=
+                 Diagnostics_Messages_Category_Prefix & ": " & Source;
+               --  This format should match the one from Get_Category
+            begin
+               if Category.Starts_With (Prefix) then
+                  return True;
+               end if;
+            end;
+         end loop;
+      end if;
+
+      return False;
+   end Is_Language_Diagnostic_Category;
+
    ------------------------
    -- Remove_Diagnostics --
    ------------------------
 
    procedure Remove_Diagnostics
-     (Self : in out Module_Id_Record'Class;
-      File : GNATCOLL.VFS.Virtual_File)
+     (Self     : in out Module_Id_Record'Class;
+      File     : GNATCOLL.VFS.Virtual_File;
+      Language : VSS.Strings.Virtual_String)
    is
       Container : constant not null GPS.Kernel.Messages_Container_Access :=
         Self.Get_Kernel.Get_Messages_Container;
    begin
+      --  Get_Sources_For_Language: need to store the sources
       for Category of Container.Get_Categories loop
-         if Category.Starts_With (Diagnostics_Messages_Category_Prefix) then
+         if Self.Is_Language_Diagnostic_Category (Language, Category) then
             Container.Remove_File
               (Category => Category,
                File     => File,
@@ -1326,8 +1420,9 @@ package body GPS.LSP_Module is
    -------------------------
 
    overriding procedure On_Publish_Diagnostics
-     (Self   : access Module_Id_Record;
-      Params : LSP.Messages.PublishDiagnosticsParams)
+     (Self     : access Module_Id_Record;
+      Params   : LSP.Messages.PublishDiagnosticsParams;
+      Language : VSS.Strings.Virtual_String)
    is
       function To_Importance
         (Item : LSP.Messages.Optional_DiagnosticSeverity)
@@ -1492,11 +1587,10 @@ package body GPS.LSP_Module is
       is
          use type VSS.Strings.Virtual_String;
       begin
-         return
-           (if Diag.source.Is_Set
-            then Diagnostics_Messages_Category_Prefix
-            & ": " & Diag.source.Value
-            else Diagnostics_Messages_Category_Prefix);
+         return Diagnostics_Messages_Category_Prefix & ": "
+           & (if Diag.source.Is_Set
+              then Diag.source.Value
+              else Language);
       end Get_Category;
 
       -------------------------
@@ -1545,9 +1639,19 @@ package body GPS.LSP_Module is
          return;
       end if;
 
-      Module.Remove_Diagnostics (File);
+      Module.Remove_Diagnostics (File, Language);
 
       for Diagnostic of Params.diagnostics loop
+         if Diagnostic.source.Is_Set then
+            --  Register the source so we can clean it later
+            Module.Register_Diagnostic_Source
+              (Language, Diagnostic.source.Value);
+         else
+            --  Use Language as the backup source
+            Module.Register_Diagnostic_Source
+              (Language, Language);
+         end if;
+
          declare
             use type VSS.Unicode.UTF16_Code_Unit_Count;
 
@@ -1651,9 +1755,11 @@ package body GPS.LSP_Module is
    ------------------
 
    overriding procedure On_Show_Message
-     (Self  : access Module_Id_Record;
-      Value : LSP.Messages.ShowMessageParams)
+     (Self     : access Module_Id_Record;
+      Value    : LSP.Messages.ShowMessageParams;
+      Language : VSS.Strings.Virtual_String)
    is
+      pragma Unreferenced (Language);
       Mode   : GPS.Messages_Windows.Message_Type;
       Is_Log : Boolean := False;   --  Whether the message is a log
    begin
@@ -1684,8 +1790,11 @@ package body GPS.LSP_Module is
    --------------------
 
    overriding procedure On_Log_Message
-     (Self  : access Module_Id_Record;
-      Value : LSP.Messages.LogMessageParams) is
+     (Self     : access Module_Id_Record;
+      Value    : LSP.Messages.LogMessageParams;
+      Language : VSS.Strings.Virtual_String)
+   is
+      pragma Unreferenced (Language);
    begin
       case Value.a_type is
          when LSP.Messages.Log =>
