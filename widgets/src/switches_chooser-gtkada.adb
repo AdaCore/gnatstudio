@@ -933,9 +933,11 @@ package body Switches_Chooser.Gtkada is
          Gtk_New_With_Entry (Combo);
          Editor.Ent := Gtk_Entry (Get_Child (Combo));
          Widget_For_Command_Line := Gtk_Widget (Combo);
+
          Get_History (History.all, Key, Combo, False, False);
       end if;
 
+      Editor.Ent.Set_Name ("switches-chooser-cmd-line-entry");
       Editor.Ent.Set_Sensitive (not Read_Only);
 
       if Fixed_Font /= null then
