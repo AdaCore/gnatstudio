@@ -343,10 +343,16 @@ def on_project_changing(hook, file):
 
     saved_env = {}
 
-    root = find_alire_root(file.path)
+    root = (
+        os.path.dirname(file.path)
+        if file.base_name() == "alire.toml"
+        else find_alire_root(file.path)
+    )
 
     if root:
-        GPS.Logger("ALIRE").log("Alire manifest detected at: %s" % file.path)
+        GPS.Logger("ALIRE").log(
+            "Alire manifest detected: %s" % os.path.join(root, "alire.toml")
+        )
         project_to_reload = (file.path, root)
 
 
