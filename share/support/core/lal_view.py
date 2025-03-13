@@ -6,7 +6,7 @@ import os
 import libadalang
 from modules import Module
 from gi.repository import Gtk, Gdk, GLib, Pango
-from gs_utils import make_interactive
+from gs_utils import interactive, make_interactive
 
 COL_LABEL = 0
 COL_FOREGROUND = 1
@@ -62,13 +62,23 @@ class LAL_View_Widget:
         scroll.add(self.view)
         self.box.pack_start(scroll, True, True, 3)
 
-        # The contextual menu
+        # The contextual menu: create one item to display the node
+        # in the GS Python Console, and another one to create a Python script
+        # file that can act as a standalone Libadalang reproducer.
         self.menu = Gtk.Menu()
-        item = Gtk.MenuItem()
-        item.set_label("view in Python Console")
-        item.connect("activate", self._on_view_in_python_console)
-        self.menu.append(item)
-        self.menu.show_all()
+        for menu in [
+            ("View Node in Python Console", self._on_view_in_python_console),
+            (
+                "Create Python File Reproducer",
+                lambda x: GPS.execute_action("create lal python reproducer"),
+            ),
+        ]:
+            (label, handler) = menu
+            item = Gtk.MenuItem()
+            item.set_label(label)
+            item.connect("activate", handler)
+            self.menu.append(item)
+            self.menu.show_all()
 
         # This is the current location
         self.file = None
@@ -108,8 +118,72 @@ class LAL_View_Widget:
         it = self.store.get_iter(paths[0])
         return self.store[it]
 
+    def _on_create_python_file_reproducer(self):
+        """Contextual menu 'Create Python File Reproducer'"""
+        row = self._selected_row()
+        if not row:
+            return False
+
+        lal_repro_file = GPS.File('lal_repro.py')
+        buf = None
+
+        # If a 'lal_repro.py' file already exists, warn the user and delete
+        # its content if the user agrees
+        if os.path.exists(lal_repro_file.path):
+            response = GPS.MDI.yes_no_dialog(f"""A '{lal_repro_file.base_name}'
+ file already exists: do you want to overwite it?""")
+            if not response:
+                return False
+            else:
+                buf = GPS.EditorBuffer.get(lal_repro_file, open=True)
+                buf.delete()
+
+        buf = GPS.EditorBuffer.get(
+           lal_repro_file, force=True, open=True, open_buffer=True) if not buf else buf
+        project_file = GPS.Project.root().file().base_name()
+
+        # Generate the LAL reproducer
+        buf.insert(buf.beginning_of_buffer(),
+                   f"""# Template for Libadalang Python standalone reproducers.
+# By default the script retrieves the node selected in the Libadalang view and
+# tries to call 'p_complete' on it, printing the results.
+# A commented snippet that calls 'p_find_all_references' is also available:
+# feel free to uncomment it if needed, or to call whatever Libadalang function
+# you actually need.
+#
+# You can test your reproducer by opening the GS 'Python Console' and execute
+# the following Python command:
+#
+#  >>> exec(open("lal_repro.py").read())
+
+import libadalang as lal
+
+proj_mgr = lal.GPRProject('{project_file}')
+ctxt = proj_mgr.create_context()
+source_files = proj_mgr.source_files()
+units = [ctxt.get_from_file(f) for f in source_files]
+unit = ctxt.get_from_file('{self.file.name()}')
+node = unit.root.lookup(lal.Sloc({row[COL_START_LINE]}, {row[COL_START_COLUMN]}))
+
+# Print results for completion
+res_p_complete = list(node.p_complete) if node else []
+print(f"Completion results for {{node}}:\\n\\n {{res_p_complete}} \\n\\n")
+
+# Uncomment this code to print results for 'p_find_all_references'.
+# Note that this works only for DefiningName nodes.
+
+# try:
+#     res_p_find_all_refs = list(node.p_find_all_references(units)) if node else []
+#     print(f"References results for {{node}}:\\n\\n {{res_p_find_all_refs}} \\n\\n")
+# except Exception:
+#     print(f\"""Can't print 'p_find_all_references' results on node of type
+# {{type(node)}}, should be called on a DefiningName node instead\\n\\n\""")
+""")
+        buf.save(interactive=False)
+        return True
+
     def _on_view_in_python_console(self, _):
-        """Contextual menu 'view in Python console'"""
+        """Contextual menu 'View Node in Python console'"""
         row = self._selected_row()
         if not row:
             return False
@@ -336,6 +410,12 @@ class LAL_View(Module):
             description=("Open (or reuse if it already exists) the 'Libadalang' view"),
             name="open Libadalang",
         )
+        make_interactive(
+            callback=self.create_python_reproducer,
+            name="create lal python reproducer",
+            category="Libadalang",
+        )
+
         GPS.Hook("location_changed").add_debounce(self.location_changed_debounced)
 
     def preferences_changed(self, name="", pref=None):
@@ -359,6 +439,9 @@ class LAL_View(Module):
 
     def on_view_destroy(self):
         self.widget = None
+
+    def create_python_reproducer(self):
+        self.widget._on_create_python_file_reproducer()
 
     def create_view(self):
         self.widget = LAL_View_Widget()
