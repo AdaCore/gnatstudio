@@ -71,7 +71,6 @@ mode.">
          output_chopper
          utf8_converter
          progress_parser
-         alire_parser
          console_writer
          end_of_build
        </output-parsers>
@@ -100,13 +99,14 @@ remain when alr is interrupted via Ctrl-C or other forceful means.s" />
          output_chopper
          utf8_converter
          progress_parser
-         alire_parser
          console_writer
          end_of_build
        </output-parsers>
     </target-model>
+"""
 
-    <target model="Alire" category="Alire" name="Alire"
+ALIRE_TARGETS_XML = """
+    <target model="Alire" category="Alire" name="Alire Printenv"
             messages_category="Alire">
        <in-toolbar>FALSE</in-toolbar>
        <in-menu>FALSE</in-menu>
@@ -130,9 +130,7 @@ remain when alr is interrupted via Ctrl-C or other forceful means.s" />
          end_of_build
        </output-parsers>
     </target>
-"""
 
-ALIRE_TARGETS_XML = """
     <target model="Alire Builder" category="Alire" name="Alire Build All"
             messages_category="Alire">
        <in-toolbar>FALSE</in-toolbar>
@@ -265,7 +263,7 @@ def on_project_recomputed(hook):
 
         # Run Alire to setup the environment
         GPS.Logger("ALIRE").log("Running alire...")
-        alire_target = GPS.BuildTarget("Alire")
+        alire_target = GPS.BuildTarget("Alire Printenv")
         alire_target.execute(directory=root, synchronous=False)
 
         # Display a message in the Locations view to warn the user that
@@ -285,7 +283,7 @@ def on_compilation_finished(hook, category, target_name, mode_name, status, cmd)
     environment.
     """
     global project_to_reload
-    if not target_name.startswith("Alire"):
+    if target_name != "Alire Printenv":
         return
 
     if project_to_reload:
