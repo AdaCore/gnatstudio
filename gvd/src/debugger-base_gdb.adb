@@ -35,6 +35,7 @@ with GPS.Kernel.Hooks;                    use GPS.Kernel.Hooks;
 with GPS.Intl;                            use GPS.Intl;
 with GPS.Markers;
 
+with GVD.Consoles;
 with GVD.Dialogs;                         use GVD.Dialogs;
 with GVD.Trace;                           use GVD.Trace;
 
@@ -65,6 +66,23 @@ package body Debugger.Base_Gdb is
    --  set $eax := 3
    --  $eax := 3
    --  $eax = 3
+
+   ------------------------------
+   -- Should_Have_Current_Line --
+   ------------------------------
+
+   procedure Should_Have_Current_Line
+     (Debugger : access Base_Gdb_Debugger'Class)
+   is
+      Process : constant Visual_Debugger := GVD.Process.Convert (Debugger);
+
+   begin
+      if Process.Current_Line = 0 then
+         GVD.Consoles.Get_Debugger_Interactive_Console (Process).Insert
+           ("Can't retrieve line information for the debugged executable:"
+            & " ensure that it has proper debug information.", Mode => Error);
+      end if;
+   end Should_Have_Current_Line;
 
    ------------------------------
    -- Continuation_Line_Filter --
