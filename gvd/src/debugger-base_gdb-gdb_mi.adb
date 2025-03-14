@@ -1144,6 +1144,7 @@ package body Debugger.Base_Gdb.Gdb_MI is
 
          if Get_Pref (Open_Main_Unit) then
             Debugger.Send ("info line", Mode => Internal);
+            Should_Have_Current_Line (Debugger);
          end if;
 
          Debugger.Display_Prompt;
@@ -1439,6 +1440,8 @@ package body Debugger.Base_Gdb.Gdb_MI is
 
             Debugger.Send ("info line", Mode => Internal);
          end;
+
+         Should_Have_Current_Line (Debugger);
       end if;
    end Set_Executable;
 
