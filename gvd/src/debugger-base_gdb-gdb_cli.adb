@@ -788,6 +788,7 @@ package body Debugger.Base_Gdb.Gdb_CLI is
 
          if Get_Pref (Open_Main_Unit) then
             Send (Debugger, "info line", Mode => Internal);
+            Should_Have_Current_Line (Debugger);
          end if;
 
          --  Display the prompt when there is no executable at startup since
@@ -1109,6 +1110,8 @@ package body Debugger.Base_Gdb.Gdb_CLI is
 
             Send (Debugger, "info line", Mode => Internal);
          end;
+
+         Should_Have_Current_Line (Debugger);
       end if;
    end Set_Executable;
 

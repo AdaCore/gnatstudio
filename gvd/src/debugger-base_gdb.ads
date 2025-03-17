@@ -152,4 +152,10 @@ private
       Matched : Match_Array);
    --  Filter used to detect commands handled on multiple lines
 
+   procedure Should_Have_Current_Line
+     (Debugger : access Base_Gdb_Debugger'Class);
+   --  Checks that we have current line and print warning in the debugger
+   --  console if not. We use it after `info line` command to ensure that
+   --  executable has debug info.
+
 end Debugger.Base_Gdb;
