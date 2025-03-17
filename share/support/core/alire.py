@@ -15,8 +15,9 @@ import shlex
 from gi.repository import Gtk
 
 alr = os_utils.locate_exec_on_path("alr")
-saved_env = {}  # all changed env variables and their values
+saved_env: dict[str, str] = {}  # all changed env variables and their values
 project_to_reload = None  # The project we should reload after finding an Alire manifest
+alire_manifest = None  # The alire.toml file we are trying to load
 
 ALIRE_MODELS_XML = """
     <target-model name="Alire" category="">
@@ -56,9 +57,9 @@ ALIRE_MODELS_XML = """
             <radio
             line="1"
             label="Build Profiles"
-            tip="A build profile can be selected with the appropriate switch. The profile is
-applied to the root release only, whereas dependencies are built in release
-mode.">
+            tip="A build profile can be selected with the appropriate switch.
+The profile is applied to the root release only, whereas dependencies are built
+in release mode.">
             <radio-entry label="Development"
             switch = ""/>
             <radio-entry label="Release"
@@ -122,6 +123,51 @@ ALIRE_TARGETS_XML = """
           <arg>printenv</arg>
        </command-line>
        <output-parsers>
+         output_chopper
+         utf8_converter
+         progress_parser
+         alire_parser
+         console_writer
+         end_of_build
+       </output-parsers>
+    </target>
+
+    <target model="Alire" category="Alire" name="Alire Show"
+            messages_category="Alire">
+       <in-toolbar>FALSE</in-toolbar>
+       <in-menu>FALSE</in-menu>
+       <iconname>gps-build-all-symbolic</iconname>
+       <launch-mode>MANUALLY_WITH_NO_DIALOG</launch-mode>
+       <read-only>TRUE</read-only>
+       <command-line>
+          <arg>alr</arg>
+          <arg>--non-interactive</arg>
+          <arg>show</arg>
+       </command-line>
+      <output-parsers>
+         output_chopper
+         utf8_converter
+         progress_parser
+         alire_parser
+         console_writer
+         end_of_build
+       </output-parsers>
+    </target>
+
+   <target model="Alire" category="Alire" name="Alire Sync"
+           messages_category="Alire">
+       <in-toolbar>FALSE</in-toolbar>
+       <in-menu>FALSE</in-menu>
+       <iconname>gps-refresh-symbolic</iconname>
+       <launch-mode>MANUALLY_WITH_NO_DIALOG</launch-mode>
+       <read-only>TRUE</read-only>
+       <command-line>
+          <arg>alr</arg>
+          <arg>--non-interactive</arg>
+          <arg>build</arg>
+          <arg>=--stop-after=generation</arg>
+       </command-line>
+      <output-parsers>
          output_chopper
          utf8_converter
          progress_parser
@@ -222,6 +268,10 @@ def update_aliases_for_alire_targets(is_alire_project):
 def on_project_recomputed(hook):
     global progress_timeout
 
+    GPS.Logger("ALIRE").log(
+        f"on_project_recomputed called. project_to_reload: {project_to_reload}"
+    )
+
     if project_to_reload:
         file, root = project_to_reload
 
@@ -255,14 +305,15 @@ def on_project_recomputed(hook):
                     GPS.File(file),
                     1,
                     1,
-                    "Alire project detected, setting the needed environment to reload it properly...",
+                    """Alire project detected, setting the needed
+ environment to reload it properly...""",
                     importance=GPS.Message.Importance.MEDIUM,
                 )
                 GPS.MDI.get("Locations").set_activity_progress_bar_visibility(True)
                 timeout.remove()
 
         # Run Alire to setup the environment
-        GPS.Logger("ALIRE").log("Running alire...")
+        GPS.Logger("ALIRE").log("Running 'alr printenv'...")
         alire_target = GPS.BuildTarget("Alire Printenv")
         alire_target.execute(directory=root, synchronous=False)
 
@@ -325,7 +376,7 @@ def on_project_changing(hook, file):
     can launch Alire after failing to load it, in order to
     reload it once the needed environment is set.
     """
-    global saved_env, project_to_reload
+    global saved_env, project_to_reload, alire_manifest
 
     if project_to_reload:
         project_to_reload = None
@@ -350,10 +401,18 @@ def on_project_changing(hook, file):
     )
 
     if root:
-        GPS.Logger("ALIRE").log(
-            "Alire manifest detected: %s" % os.path.join(root, "alire.toml")
-        )
+        # TODO: if file is an alire.toml file, set project_to_reload
+        # to <base_name>.gpr by default
         project_to_reload = (file.path, root)
+        alire_manifest = os.path.join(root, "alire.toml")
+        GPS.Logger("ALIRE").log(
+            "Alire manifest detected: %s" % alire_manifest)
+        GPS.Logger("ALIRE").log("Performing minimal Alire sync...")
+        GPS.BuildTarget("Alire Sync").execute(directory=root, synchronous=True)
+        GPS.Logger("ALIRE").log("Synchronization done")
+        GPS.Logger("ALIRE").log("Determining project to load via 'alr show'...")
+        alire_target = GPS.BuildTarget("Alire Show")
+        alire_target.execute(directory=root, synchronous=False)
 
 
 class Alire_Parser(tool_output.OutputParser):
@@ -363,14 +422,17 @@ class Alire_Parser(tool_output.OutputParser):
     """
 
     def __init__(self, child=None):
+        GPS.Logger("ALIRE").log("Initializing alire output parser...")
         tool_output.OutputParser.__init__(self, child)
-        self.exp = re.compile(r"export (\S+)=(.*)")
+        self.export_var_regexp = re.compile(r"export (\S+)=(.*)")
+        self.project_file_regexp = re.compile(r" +Project_File: ([^\n]+)")
+        self.crate_name_regexp = re.compile(r" +Name: (\S+)")
 
     def on_stdout(self, text, command):
-        global saved_env
+        global saved_env, project_to_reload, alire_manifest
 
         for line in text.splitlines():
-            m = self.exp.fullmatch(line)
+            m = self.export_var_regexp.fullmatch(line)
 
             if m:
                 # Parse the output of 'alr printenv'.
@@ -382,6 +444,39 @@ class Alire_Parser(tool_output.OutputParser):
                 saved_env[name] = GPS.getenv(name)
                 GPS.setenv(name, value)
                 os.environ[name] = value
+            else:
+                m = self.crate_name_regexp.fullmatch(line)
+                if m:
+                    root = os.path.dirname(alire_manifest)
+                    project_file_basename = m.group(1) + ".gpr"
+                    GPS.Logger("ALIRE").log(
+                        "project_base_name: %s" % project_file_basename
+                    )
+
+                    project_to_reload = (
+                        os.path.join(root, project_file_basename),
+                        root,
+                    )
+                else:
+                    m = self.project_file_regexp.fullmatch(line)
+                    if m:
+                        project_file_path = m.group(1)
+                        GPS.Logger("ALIRE").log(
+                            "Project file found through 'alr show': %s"
+                            % project_file_path
+                        )
+                        root = os.path.dirname(alire_manifest)
+
+                        if os.path.isabs(project_file_path):
+                            project_to_reload = (
+                                project_file_path,
+                                root
+                            )
+                        else:
+                            project_to_reload = (
+                                os.path.join(root, project_file_path),
+                                root,
+                            )
 
 
 if alr:
