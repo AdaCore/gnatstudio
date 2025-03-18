@@ -6,7 +6,6 @@ Breakpoints view.
 import GPS
 from gs_utils.internal.utils import *
 
-
 COL_FG_COLOR = 10
 
 
@@ -56,16 +55,19 @@ def test_driver():
     debug = GPS.Debugger.get()
     debug.send("run")
     yield wait_DAP_server("stackTrace")
-
-    view = Breakpoints_View()
     yield wait_idle()
 
     # Check that pending breakpoints have been grayed out, by checking
     # that the foreground color is not white (default fg color)
     model = view.list.get_model()
     iter = model.get_iter("2")
+    fg_color = model.get_value(iter, COL_FG_COLOR)
     gps_assert(
-        model.get_value(iter, COL_FG_COLOR) != Gdk.RGBA(0, 0, 0, 0),
-        True,
-        "Wrong fg color for rows in the Breakpoints view",
+        Gdk.RGBA.equal(
+            fg_color,
+            Gdk.RGBA(red=0.000000, green=0.000000, blue=0.000000, alpha=0.000000),
+        ),
+        False,
+        "Wrong fg color for rows in the Breakpoints view, actual color is: %s"
+        % str(fg_color),
     )

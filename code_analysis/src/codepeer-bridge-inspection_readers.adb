@@ -41,7 +41,8 @@ package body CodePeer.Bridge.Inspection_Readers is
    Previous_Timestamp_Attribute : constant String := "previous_timestamp";
    Timestamp_Attribute          : constant String := "timestamp";
    Library_File_Attribute       : constant String := "library_file";
-   CPM_File_Attribute           : constant String := "cpm_file";
+   SAM_File_Attribute : constant String := "cpm_file";
+   --  use cpm instead of sam for compatibility
 
    -----------------
    -- End_Element --
@@ -228,7 +229,7 @@ package body CodePeer.Bridge.Inspection_Readers is
               Get_Value (Attrs, Library_File_Attribute);
 
             if Is_GNATSAS then
-               CPM_File := Get_Value (Attrs, CPM_File_Attribute);
+               SAM_File := Get_Value (Attrs, SAM_File_Attribute);
             end if;
 
             Data.Baseline.Inspection :=
