@@ -36,7 +36,7 @@ package body CodePeer.Bridge.Commands is
    function Create_Database_Node
      (Server_URL          : String;
       Output_Directory    : Virtual_File;
-      CPM_Directory       : Virtual_File;
+      SAM_Directory       : Virtual_File;
       DB_Directory        : Virtual_File;
       Message_Patterns    : Virtual_File;
       Additional_Patterns : Virtual_File) return XML_Utils.Node_Ptr;
@@ -50,7 +50,7 @@ package body CodePeer.Bridge.Commands is
      (Command_File_Name   : Virtual_File;
       Server_URL          : String;
       Output_Directory    : Virtual_File;
-      CPM_Directory       : Virtual_File;
+      SAM_Directory       : Virtual_File;
       DB_Directory        : Virtual_File;
       Message_Patterns    : Virtual_File;
       Additional_Patterns : Virtual_File;
@@ -80,7 +80,7 @@ package body CodePeer.Bridge.Commands is
                          Create_Database_Node
                            (Server_URL          => Server_URL,
                             Output_Directory    => Output_Directory,
-                            CPM_Directory       => CPM_Directory,
+                            SAM_Directory       => SAM_Directory,
                             DB_Directory        => DB_Directory,
                             Message_Patterns    => Message_Patterns,
                             Additional_Patterns => Additional_Patterns);
@@ -198,7 +198,7 @@ package body CodePeer.Bridge.Commands is
                            Create_Database_Node
                              (Server_URL          => Server_URL,
                               Output_Directory    => Output_Directory,
-                              CPM_Directory       => No_File,
+                              SAM_Directory       => No_File,
                               DB_Directory        => DB_Directory,
                               Message_Patterns    => Message_Patterns,
                               Additional_Patterns => Additional_Patterns);
@@ -246,7 +246,7 @@ package body CodePeer.Bridge.Commands is
    function Create_Database_Node
      (Server_URL          : String;
       Output_Directory    : Virtual_File;
-      CPM_Directory       : Virtual_File;
+      SAM_Directory       : Virtual_File;
       DB_Directory        : Virtual_File;
       Message_Patterns    : Virtual_File;
       Additional_Patterns : Virtual_File) return XML_Utils.Node_Ptr is
@@ -265,13 +265,15 @@ package body CodePeer.Bridge.Commands is
               (Database_Node, "output_directory", +Output_Directory.Full_Name);
 
             if Is_GNATSAS then
-               if CPM_File /= Null_Unbounded_String then
+               if SAM_File /= Null_Unbounded_String then
                   XML_Utils.Set_Attribute_S
-                    (Database_Node, "cpm_file", To_String (CPM_File));
+                    (Database_Node, "cpm_file", To_String (SAM_File));
+               --  use cpm instead of sam for compatibility
                end if;
 
                XML_Utils.Set_Attribute_S
-                 (Database_Node, "cpm_directory", +CPM_Directory.Full_Name);
+                 (Database_Node, "cpm_directory", +SAM_Directory.Full_Name);
+               --  use cpm instead of sam for compatibility
 
             else
                XML_Utils.Set_Attribute_S
@@ -300,7 +302,7 @@ package body CodePeer.Bridge.Commands is
      (Command_File_Name    : Virtual_File;
       Server_URL           : String;
       Output_Directory     : Virtual_File;
-      CPM_Directory        : Virtual_File;
+      SAM_Directory        : Virtual_File;
       DB_Directory         : Virtual_File;
       Message_Patterns     : Virtual_File;
       Additional_Patterns  : Virtual_File;
@@ -314,7 +316,7 @@ package body CodePeer.Bridge.Commands is
                          Create_Database_Node
                            (Server_URL          => Server_URL,
                             Output_Directory    => Output_Directory,
-                            CPM_Directory       => CPM_Directory,
+                            SAM_Directory       => SAM_Directory,
                             DB_Directory        => DB_Directory,
                             Message_Patterns    => Message_Patterns,
                             Additional_Patterns => Additional_Patterns);

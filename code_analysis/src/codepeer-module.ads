@@ -112,7 +112,7 @@ package CodePeer.Module is
    --  Return False if some Ids are not found.
 
    procedure Open_HTML_Report (Kernel : GPS.Kernel.Kernel_Handle);
-   --  Open analyzer html report in the browser if it exist
+   --  Open analyzer html report in the browser if it exists.
 
    type Submenu_Factory_Record
      (Module : access Module_Id_Record'Class) is
@@ -315,11 +315,11 @@ private
       return GNATCOLL.VFS.Virtual_File;
    --  Return directroy which is used by CodePeer to store the last run log
 
-   function Codepeer_CPM_Directory
+   function Codepeer_SAM_Directory
      (Kernel : not null access Kernel_Handle_Record'Class)
       return GNATCOLL.VFS.Virtual_File;
-   --  Return directory which is used by CodePeer for runs_info.json & cpm
-   --  files.
+   --  Return directory which is used by CodePeer for runs_info.json & SAM
+   --  files, taking into account the Output_Dir attribute.
 
    function Codepeer_Message_Patterns
      (Project : Project_Type) return GNATCOLL.VFS.Virtual_File;

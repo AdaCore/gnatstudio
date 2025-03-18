@@ -231,7 +231,7 @@ package body CodePeer.Module.Actions is
    is
       Kernel : constant Kernel_Handle := Get_Kernel (Context.Context);
       Dir    : constant Virtual_File :=
-        CodePeer.Module.Codepeer_CPM_Directory (Kernel);
+        CodePeer.Module.Codepeer_SAM_Directory (Kernel);
       File   : constant Virtual_File :=
         Gtkada.File_Selector.Select_File
           (Title             => -Title,

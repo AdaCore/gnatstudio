@@ -1042,10 +1042,10 @@ package body CodePeer.Module is
    end Codepeer_Log_Directory;
 
    ------------------------------
-   --  Codepeer_CPM_Directory  --
+   --  Codepeer_SAM_Directory  --
    ------------------------------
 
-   function Codepeer_CPM_Directory
+   function Codepeer_SAM_Directory
      (Kernel : not null access Kernel_Handle_Record'Class)
       return GNATCOLL.VFS.Virtual_File
    is
@@ -1081,7 +1081,7 @@ package body CodePeer.Module is
              (CodePeer_Object_Directory (Project),
               Name (Name'First .. Name'Last - Extension'Length) & ".outputs");
       end if;
-   end Codepeer_CPM_Directory;
+   end Codepeer_SAM_Directory;
 
    ----------------------------------
    --  Codepeer_GNATSAS_Directory  --
@@ -2124,18 +2124,28 @@ package body CodePeer.Module is
 
    procedure Open_HTML_Report (Kernel : GPS.Kernel.Kernel_Handle)
    is
-      HTML_File : constant Virtual_File :=
+      Index : constant String := "index.html";
+      Report_File : constant Virtual_File := Create_From_Dir
+        (Dir => Codepeer_SAM_Directory (Kernel) / "html-report",
+         Base_Name => +Index);
+      Legacy_Report_File : constant Virtual_File :=
         Get_Project (Kernel).Object_Dir.Create_From_Dir
-          ("gnathub/html-report/index.html");
+        (+("gnathub/html-report/" & Index));
    begin
-      if not HTML_File.Is_Regular_File then
-         Kernel.Insert
-           (Text => HTML_File.Display_Full_Name
-            & (-" does not exist. Please perform a full analysis first"),
-            Mode => GPS.Kernel.Error);
-      else
+      if Report_File.Is_Regular_File then
          Html_Action_Hook.Run
-           (Kernel, String (Full_Name (HTML_File).all));
+           (Kernel, String (Full_Name (Report_File).all));
+      elsif Legacy_Report_File.Is_Regular_File then
+         Html_Action_Hook.Run
+           (Kernel, String (Full_Name (Legacy_Report_File).all));
+      else
+         Kernel.Insert
+           (Text => ("HTML report does not exist." &
+                       " Please perform a full analysis first." & ASCII.LF &
+                       " Report not found in: " & ASCII.LF &
+                       " - " & Report_File.Display_Full_Name & ASCII.LF &
+                       " - " & Legacy_Report_File.Display_Full_Name),
+            Mode => GPS.Kernel.Error);
       end if;
    end Open_HTML_Report;
 

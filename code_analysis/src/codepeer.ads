@@ -45,7 +45,7 @@ package CodePeer is
 
    type Analyzer_Exe is (Codepeer_Exe, GNATSAS_Exe);
    Current_Analyzer : Analyzer_Exe := Codepeer_Exe;
-   CPM_File         : Unbounded_String;
+   SAM_File         : Unbounded_String;
 
    function Is_GNATSAS return Boolean is (Current_Analyzer = GNATSAS_Exe);
    function Module_Name return VSS.Strings.Virtual_String is
