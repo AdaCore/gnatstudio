@@ -46,9 +46,9 @@ package body Src_Editor_View.Commands is
    --  See Gtkada.MDI for other MDI groups.
 
    procedure Move_Iter
-     (Iter : in out Gtk_Text_Iter;
-      Kind : Movement_Type;
-      Step : Integer;
+     (Iter         : in out Gtk_Text_Iter;
+      Kind         : Movement_Type;
+      Step         : Integer;
       Horiz_Offset : Gint := -1);
    --  Move the iterator according to Kind. Kind should be different from page
 
@@ -101,9 +101,9 @@ package body Src_Editor_View.Commands is
    ---------------
 
    procedure Move_Iter
-     (Iter : in out Gtk_Text_Iter;
-      Kind : Movement_Type;
-      Step : Integer;
+     (Iter         : in out Gtk_Text_Iter;
+      Kind         : Movement_Type;
+      Step         : Integer;
       Horiz_Offset : Gint := -1)
    is
       Ignored, Success : Boolean;
@@ -392,6 +392,8 @@ package body Src_Editor_View.Commands is
      (Command : access Delete_Command;
       Context : Interactive_Command_Context) return Command_Return_Type
    is
+      pragma Unreferenced (Context);
+
       Kernel      : constant Kernel_Handle := Get_Kernel
         (Src_Editor_Module_Id.all);
       Editor      : constant MDI_Child := Find_Current_Editor (Kernel);
@@ -399,20 +401,53 @@ package body Src_Editor_View.Commands is
                        Get_Source_Box_From_MDI (Editor);
       View        : constant Source_View := Source_Box.Get_View;
       Buffer      : constant Source_Buffer :=
-                      Source_Buffer (Get_Buffer (View));
-      Iter, Start : Gtk_Text_Iter;
-      pragma Unreferenced (Context);
+        Source_Buffer (Get_Buffer (View));
+      Iter, Start, To : Gtk_Text_Iter;
 
    begin
       Remove_Completion;
       for Cursor of Get_Cursors (Buffer) loop
          declare
             Cursor_Mark : constant Gtk_Text_Mark := Get_Mark (Cursor);
+            Delete_Line : Boolean := True;
+            Result      : Boolean := True;
          begin
             Set_Manual_Sync (Cursor);
             Get_Iter_At_Mark (Buffer, Iter, Cursor_Mark);
             Copy (Source => Iter, Dest => Start);
-            Move_Iter (Iter, Command.Kind, Command.Count);
+            Copy (Source => Iter, Dest => To);
+
+            --  Do nothing if we at the beggining of the line
+            if Get_Line_Offset (To) = 0 then
+               Move_Iter
+                 (Iter         => To,
+                  Kind         => Line,
+                  Step         => -1,
+                  Horiz_Offset => Gint'Last);
+
+            else
+               --  Checks that current line is empty
+               loop
+                  if Character'Pos (Get_Char (To)) > 32 then
+                     Delete_Line := False;
+                     exit;
+                  end if;
+                  exit when Get_Line_Offset (To) = 0;
+                  Backward_Char (To, Result);
+                  exit when not Result;
+               end loop;
+            end if;
+
+            if Delete_Line then
+               Copy (Source => To, Dest => Iter);
+
+            else
+               Move_Iter
+                 (Iter => Iter,
+                  Kind => Command.Kind,
+                  Step => Command.Count);
+            end if;
+
             Delete (Buffer, Iter, Start);
          end;
       end loop;
