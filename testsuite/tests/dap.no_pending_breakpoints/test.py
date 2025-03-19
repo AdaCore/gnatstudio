@@ -5,8 +5,18 @@ Breakpoints view.
 
 import GPS
 from gs_utils.internal.utils import *
+import math
 
 COL_FG_COLOR = 10
+
+
+def is_equal(a: Gdk.RGBA, b : Gdk.RGBA):
+    return (
+        math.isclose(a.red, b.red)
+        and math.isclose(a.green, b.green)
+        and math.isclose(a.blue, b.blue)
+        and math.isclose(a.alpha, b.alpha)
+    )
 
 
 @run_test_driver
@@ -63,7 +73,7 @@ def test_driver():
     iter = model.get_iter("2")
     fg_color = model.get_value(iter, COL_FG_COLOR)
     gps_assert(
-        Gdk.RGBA.equal(
+        is_equal(
             fg_color,
             Gdk.RGBA(red=0.000000, green=0.000000, blue=0.000000, alpha=0.000000),
         ),

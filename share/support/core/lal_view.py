@@ -135,6 +135,7 @@ class LAL_View_Widget:
             if not response:
                 return False
             else:
+
                 buf = GPS.EditorBuffer.get(lal_repro_file, open=True)
                 buf.delete()
 
@@ -162,7 +163,7 @@ proj_mgr = lal.GPRProject('{project_file}')
 ctxt = proj_mgr.create_context()
 source_files = proj_mgr.source_files()
 units = [ctxt.get_from_file(f) for f in source_files]
-unit = ctxt.get_from_file('{self.file.name()}')
+unit = ctxt.get_from_file('{self.file.base_name()}')
 node = unit.root.lookup(lal.Sloc({row[COL_START_LINE]}, {row[COL_START_COLUMN]}))
 
 # Print results for completion
