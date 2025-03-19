@@ -65,7 +65,7 @@ def test_driver():
     debug = GPS.Debugger.get()
     debug.send("run")
     yield wait_DAP_server("stackTrace")
-    yield wait_idle()
+    yield timeout(1000)
 
     # Check that pending breakpoints have been grayed out, by checking
     # that the foreground color is not white (default fg color)
