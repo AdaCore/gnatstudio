@@ -137,6 +137,12 @@ package GPS.Kernel.Preferences is
      Default_Preferences.Enums.Generics (External_Highlighting);
    --  The list of external providers for highlighting.
 
+   package Indentation_Kind_Preferences is new
+     Default_Preferences.Enums.Generics (Language.Indentation_Kind);
+
+   package Action_On_New_Line_Preferences is new
+     Default_Preferences.Enums.Generics (Language.Action_On_New_Line);
+
    ------------------------------------------
    -- Associating preferences with widgets --
    ------------------------------------------
@@ -372,6 +378,7 @@ package GPS.Kernel.Preferences is
    LSP_Alire_Diagnostics           : Boolean_Preference;
    LSP_Ada_Insert_With_Clauses     : Boolean_Preference;
    LSP_Ada_Use_GNATformat          : Boolean_Preference;
+   LSP_Ada_On_Type_Formatting      : Boolean_Preference;
    LSP_Limit_Formatting            : Boolean_Preference;
    LSP_Ada_Param_Threshold         : Integer_Preference;
    LSP_Ada_Rename_In_Comment       : Boolean_Preference;
@@ -396,12 +403,6 @@ package GPS.Kernel.Preferences is
    LSP_Operator_Style      : Variant_Preference;
    LSP_Deprecated_Style    : Variant_Preference;
    LSP_Readonly_Bg         : Color_Preference;
-
-   package Indentation_Kind_Preferences is new
-     Default_Preferences.Enums.Generics (Language.Indentation_Kind);
-
-   package Action_On_New_Line_Preferences is new
-     Default_Preferences.Enums.Generics (Language.Action_On_New_Line);
 
    -----------
    -- Utils --

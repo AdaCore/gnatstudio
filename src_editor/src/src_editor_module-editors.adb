@@ -2710,7 +2710,7 @@ package body Src_Editor_Module.Editors is
       if This.Contents.Buffer /= null then
          Get_Locations (Iter, Iter2, This.Contents.Buffer, From, To);
 
-         if not Do_Indentation (This.Contents.Buffer, Iter, Iter2) then
+         if not On_Indent_Action (This.Contents.Buffer, Iter, Iter2) then
             raise Editor_Exception with -"Error while indenting";
          end if;
       end if;

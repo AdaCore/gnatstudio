@@ -1,1 +1,1 @@
-$GPS --load=python:test.py --traceon=GPS.LSP.FORMATTING.ADA
+$GPS --load=python:test.py --traceon=GPS.LSP.FORMATTING

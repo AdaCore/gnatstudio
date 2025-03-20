@@ -18,6 +18,7 @@
 with Ada.Calendar;                        use Ada.Calendar;
 with Ada.Characters.Conversions;
 with Ada.Text_IO;
+with Src_Editor_Buffer.Formatters;
 with System.Address_To_Access_Conversions;
 
 pragma Warnings (Off, ".*is an internal GNAT unit");
@@ -66,8 +67,6 @@ with Gtkada.Types;                        use Gtkada.Types;
 
 with Pango.Enums;                         use Pango.Enums;
 
-with Casing_Exceptions;                   use Casing_Exceptions;
-with Case_Handling;                       use Case_Handling;
 with Commands.Editor;                     use Commands.Editor;
 with Completion_Module;                   use Completion_Module;
 with Default_Preferences;                 use Default_Preferences;
@@ -668,7 +667,7 @@ package body Src_Editor_Buffer is
       if Get_Line (From) /= Get_Line (To)
         and then Auto_Indent_On_Paste.Get_Pref
       then
-         Success := Do_Indentation (Source_Buffer (Buffer), From, To);
+         Success := On_Indent_Action (Source_Buffer (Buffer), From, To);
       end if;
 
       Set_Cursors_Auto_Sync (Source_Buffer (Buffer));
@@ -6288,32 +6287,24 @@ package body Src_Editor_Buffer is
    -------------------
 
    function Should_Indent (Buffer : Source_Buffer) return Boolean is
-      Lang          : constant Language_Access := Get_Language (Buffer);
+      Lang : constant Language_Access := Get_Language (Buffer);
    begin
-      if Formatting_Provider = null
-        and then not Get_Language_Context (Lang).Can_Indent
-      then
-         return False;
-      end if;
-
-      return Lang.Get_Indentation_Style /= None;
+      return
+        Get_Language_Context (Lang).Can_Indent
+        and then Lang.Get_Indentation_Style /= None;
    end Should_Indent;
 
    --------------------
    -- Do_Indentation --
    --------------------
 
-   function Do_Indentation
+   function On_Indent_Action
      (Buffer            : Source_Buffer;
       Current_Line_Only : Boolean := False;
-      Force             : Boolean := False;
-      Formatting        : Boolean := True) return Boolean
+      Force             : Boolean := False) return Boolean
    is
       Iter, End_Pos : Gtk_Text_Iter;
       Result        : Boolean;
-
-      Start_Line, End_Line     : Editable_Line_Type;
-      Start_Column, End_Column : Visible_Column_Type;
    begin
       if not Buffer.Writable then
          End_Action (Buffer);
@@ -6342,186 +6333,32 @@ package body Src_Editor_Buffer is
          Copy (Iter, Dest => End_Pos);
       end if;
 
-      if Formatting and then Formatting_Provider /= null then
-         Get_Iter_Position (Buffer, Iter, Start_Line, Start_Column);
-         Get_Iter_Position (Buffer, End_Pos, End_Line, End_Column);
-
-         if Formatting_Provider.Format_Section
-           (Buffer.Editor_Buffer.New_Location
-              (Integer (Start_Line), Start_Column),
-            Buffer.Editor_Buffer.New_Location
-              (Integer (End_Line), End_Column),
-            Force)
-         then
-            return True;
-         else
-            Trace (Me, "Formatting is not done, uses Indentation");
-         end if;
-      end if;
-
-      return Do_Indentation (Buffer, Iter, End_Pos, Force, Formatting);
-   end Do_Indentation;
+      return On_Indent_Action (Buffer, Iter, End_Pos, Force);
+   end On_Indent_Action;
 
    --------------------
    -- Do_Indentation --
    --------------------
 
-   function Do_Indentation
+   function On_Indent_Action
      (Buffer     : Source_Buffer;
       From, To   : Gtk_Text_Iter;
-      Force      : Boolean := False;
-      Formatting : Boolean := True) return Boolean
+      Force      : Boolean := False) return Boolean
    is
       Lang          : constant Language_Access := Get_Language (Buffer);
       Indent_Style  : Indentation_Kind;
       End_Pos       : Gtk_Text_Iter;
       Iter          : Gtk_Text_Iter;
-      Slice         : Unbounded_String;
       pragma Suppress (Access_Check, Slice);
-      Line          : Gint;
-      Current_Line  : Gint;
-      Cursor_Line   : Natural;
-      Cursor_Offset : Gint;
       Result        : Boolean;
-      Buffer_Text   : GNAT.Strings.String_Access;
       Indent_Params : Indent_Parameters;
-      From_Line     : Editable_Line_Type;
-      To_Line       : Editable_Line_Type;
-
-      procedure Local_Format_Buffer
-        (Lang          : Language_Access;
-         Local_Buffer  : String;
-         Replace       : Replace_Text_Callback;
-         From, To      : Natural := 0;
-         Indent_Params : Indent_Parameters);
-      --  Wrapper around Format_Buffer to take into account Indent_Style
-
-      procedure Replace_Text
-        (Line    : Natural;
-         First   : Natural;
-         Last    : Natural;
-         Replace : String);
-      --  Callback for Format_Buffer
-
-      procedure Skip_To_First_Non_Blank (Iter : in out Gtk_Text_Iter);
-      --  Move Iter to the first non-blank character on the line
-
-      -----------------------------
-      -- Skip_To_First_Non_Blank --
-      -----------------------------
-
-      procedure Skip_To_First_Non_Blank (Iter : in out Gtk_Text_Iter) is
-         Result : Boolean := True;
-         Offset : Gint := 0;
-      begin
-         Set_Line_Offset (Iter, 0);
-
-         while Result
-           and then not Ends_Line (Iter)
-           and then Glib.Unicode.Is_Space (Get_Char (Iter))
-         loop
-            Forward_Char (Iter, Result);
-            Offset := Offset + 1;
-         end loop;
-
-         Cursor_Offset := Cursor_Offset - Offset;
-      end Skip_To_First_Non_Blank;
-
-      -------------------------
-      -- Local_Format_Buffer --
-      -------------------------
-
-      procedure Local_Format_Buffer
-        (Lang          : Language_Access;
-         Local_Buffer  : String;
-         Replace       : Replace_Text_Callback;
-         From, To      : Natural := 0;
-         Indent_Params : Indent_Parameters) is
-      begin
-         if Indent_Style = Language.Simple then
-            Format_Buffer
-              (Language_Root (Lang.all)'Access,
-               Local_Buffer, Replace, From, To,
-               Indent_Params, Get_Case_Exceptions);
-         else
-            Format_Buffer
-              (Lang, Local_Buffer, Replace, From, To,
-               Indent_Params, Get_Case_Exceptions);
-         end if;
-      end Local_Format_Buffer;
-
-      ------------------
-      -- Replace_Text --
-      ------------------
-
-      procedure Replace_Text
-        (Line    : Natural;
-         First   : Natural;
-         Last    : Natural;
-         Replace : String)
-      is
-         Iter         : Gtk_Text_Iter;
-         Buffer_Line  : Buffer_Line_Type;
-         Start_Column : Character_Offset_Type;
-         End_Column   : Character_Offset_Type;
-         Replace_Cmd  : Editor_Replace_Slice;
-
-      begin
-         Unfold_Line (Buffer, Editable_Line_Type (Line));
-         Buffer_Line := Get_Buffer_Line (Buffer, Editable_Line_Type (Line));
-
-         if Buffer_Line = 0 then
-            Trace (Me, "invalid buffer line");
-            return;
-         end if;
-
-         --  Convert byte offsets into char counts
-
-         Get_Iter_At_Line_Index
-           (Buffer, Iter,
-            Gint (Buffer_Line - 1), Gint (First - 1));
-         Start_Column := Character_Offset_Type (Get_Line_Offset (Iter) + 1);
-         Set_Line_Index (Iter, Gint (Last - 1));
-         End_Column := Character_Offset_Type (Get_Line_Offset (Iter) + 1);
-
-         --  Only replace if needed
-
-         if Get_Text (Buffer,
-                      Editable_Line_Type (Line), Start_Column,
-                      Editable_Line_Type (Line), End_Column) /= Replace
-         then
-            if Line = Cursor_Line then
-               --  ??? Need to handle folded lines
-               Cursor_Offset := Cursor_Offset +
-                 Gint (Replace'Length - (End_Column - Start_Column));
-            end if;
-
-            declare
-               G : Group_Block := New_Group (Buffer.Queue);
-            begin
-               Create
-                 (Replace_Cmd,
-                  Buffer,
-                  Editable_Line_Type (Line),
-                  Start_Column,
-                  Editable_Line_Type (Line),
-                  End_Column,
-                  Replace,
-                  Move_Cursor => False);
-               Enqueue (Buffer, Command_Access (Replace_Cmd), External);
-            end;
-         end if;
-      end Replace_Text;
-
-   begin  --  Do_Indentation
+   begin
       if not Buffer.Writable then
          End_Action (Buffer);
          return False;
       end if;
 
-      if Formatting_Provider = null
-        and then not Get_Language_Context (Lang).Can_Indent
-      then
+      if not Get_Language_Context (Lang).Can_Indent then
          return False;
       end if;
 
@@ -6530,170 +6367,28 @@ package body Src_Editor_Buffer is
          Params       => Indent_Params,
          Indent_Style => Indent_Style);
 
-      --  Allow the "Format selection" command to indent the selected text even
-      --  if the indentation style for normal text entry is Simple or None.
-
-      if Force then
-         Indent_Style := Extended;
-      end if;
-
       if Indent_Style = None then
          return False;
       end if;
-
-      --  Set proper casing policy, we want to disable the auto-casing here if
-      --  we are using the on-the-fly casing policy and we are not in Force
-      --  mode.
-
-      if Indent_Params.Casing_Policy in End_Of_Word .. On_The_Fly
-        and then not Force
-      then
-         Indent_Params.Casing_Policy := Disabled;
-      end if;
-
-      Buffer.Do_Not_Move_Cursor := True;
-
-      --  Where is the cursor (so we can keep it on the same line)
-
-      Get_Iter_At_Mark (Buffer, Iter, Buffer.Insert_Mark);
-      Cursor_Line   := Natural (Get_Line (Iter)) + 1;
-      Cursor_Offset := Get_Line_Offset (Iter);
 
       --  What should we indent (current line or current selection) ?
 
       Copy (From, Dest => Iter);
       Set_Line_Offset (Iter, 0);
-      Current_Line := Get_Line (Iter);
       Copy (To, Dest => End_Pos);
 
       if not Ends_Line (End_Pos) then
          Forward_To_Line_End (End_Pos, Result);
       end if;
 
-      Line := Get_Line (End_Pos);
-
       End_Action (Buffer);
 
-      declare
-         G : Group_Block := New_Group (Buffer.Queue);
-
-         Formatted  : Boolean := False;
-         End_Line   : Editable_Line_Type;
-         End_Column : Visible_Column_Type;
-
-      begin
-         if Lines_Are_Real (Buffer) then
-            if Formatting and then Formatting_Provider /= null then
-               Get_Iter_Position (Buffer, End_Pos, End_Line, End_Column);
-
-               Formatted := Formatting_Provider.Format_Section
-                 (Buffer.Editor_Buffer.New_Location
-                    (Integer (Current_Line + 1), 1),
-                  Buffer.Editor_Buffer.New_Location
-                    (Integer (End_Line + 1), End_Column + 1),
-                  Force);
-
-               if not Formatted then
-                  Trace (Me, "Formatting is not done, uses Indentation");
-               end if;
-            end if;
-
-            if not Formatted then
-               Slice :=
-                 Get_Text
-                   (Buffer,
-                    Start_Line   => 0,
-                    Start_Column => 0,
-                    End_Line     => Line,
-                    End_Column   => Get_Line_Offset (End_Pos),
-                    Include_Last => True);
-
-               if Is_End (End_Pos) then
-                  Append (Slice, ASCII.LF);
-               end if;
-
-               Local_Format_Buffer
-                 (Lang,
-                  To_String (Slice),
-                  Replace_Text'Unrestricted_Access,
-                  Integer (Current_Line + 1),
-                  Integer (Line + 1),
-                  Indent_Params);
-            end if;
-
-         else
-            From_Line :=
-              Get_Editable_Line (Buffer, Buffer_Line_Type (Current_Line + 1));
-            To_Line := Get_Editable_Line
-              (Buffer, Buffer_Line_Type (Line + 1));
-
-            declare
-               Line_Cursor : Gint;
-            begin
-               Line_Cursor := Current_Line + 1;
-               while From_Line = 0 and then Line_Cursor < Line loop
-                  Line_Cursor := Line_Cursor + 1;
-                  From_Line :=
-                    Get_Editable_Line
-                      (Buffer, Buffer_Line_Type (Line_Cursor + 1));
-               end loop;
-
-               Line_Cursor := Line + 1;
-               while To_Line = 0 and then Line_Cursor > Current_Line loop
-                  Line_Cursor := Line_Cursor - 1;
-                  To_Line :=
-                    Get_Editable_Line
-                      (Buffer, Buffer_Line_Type (Line_Cursor + 1));
-               end loop;
-            end;
-
-            if From_Line /= 0 and then To_Line /= 0 then
-               --  There is at least one editable line in the selection of
-               --  lines to be reformatted.
-
-               if Formatting and then Formatting_Provider /= null then
-                  Formatted := Formatting_Provider.Format_Section
-                    (Buffer.Editor_Buffer.New_Location
-                       (Integer (From_Line), 1),
-                     Buffer.Editor_Buffer.New_Location
-                       (Integer (To_Line), 1),
-                     Force);
-
-                  if not Formatted then
-                     Trace (Me, "Formatting is not done, uses Indentation");
-                  end if;
-               end if;
-
-               if not Formatted then
-                  Buffer_Text := Get_Buffer_Lines (Buffer, 1, To_Line);
-
-                  Local_Format_Buffer
-                    (Lang,
-                     Buffer_Text.all,
-                     Replace_Text'Unrestricted_Access,
-                     Integer (From_Line), Integer (To_Line), Indent_Params);
-                  GNAT.Strings.Free (Buffer_Text);
-               end if;
-            end if;
-         end if;
-
-         End_Action (Buffer);
-      end;
-
-      --  If the cursor was located before the first non-blank character,
-      --  move it to that character. This is more usual for Emacs users,
-      --  and more user friendly generally.
-
-      --  ??? Fix handling of folded lines
-      Get_Iter_At_Line (Buffer, Iter, Gint (Cursor_Line - 1));
-      Skip_To_First_Non_Blank (Iter);
-
-      if Cursor_Offset > 0 then
-         Forward_Chars (Iter, Cursor_Offset, Result);
-      end if;
-
-      Buffer.Do_Not_Move_Cursor := False;
-      Place_Cursor (Buffer, Iter);
+      Src_Editor_Buffer.Formatters.Range_Formatting
+        (Buffer => Buffer,
+         Mark   => Buffer.Insert_Mark,
+         From   => Iter,
+         To     => End_Pos,
+         Force  => Force);
 
       return True;
 
@@ -6704,13 +6399,9 @@ package body Src_Editor_Buffer is
 
          Buffer.Do_Not_Move_Cursor := False;
 
-         if Buffer_Text /= null then
-            GNAT.Strings.Free (Buffer_Text);
-         end if;
-
          Trace (Me, E);
          return False;
-   end Do_Indentation;
+   end On_Indent_Action;
 
    ------------------------
    -- Newline_And_Indent --
@@ -6773,10 +6464,6 @@ package body Src_Editor_Buffer is
       end Strip_Blanks_From_Previous_Line;
 
       G : Group_Block := New_Group (Buffer.Queue);
-
-      Start_Line, End_Line     : Editable_Line_Type;
-      Start_Column, End_Column : Visible_Column_Type;
-
    begin
       if not As_Is then
          Word_Added
@@ -6826,30 +6513,11 @@ package body Src_Editor_Buffer is
                   Forward_To_Line_End (L, Ignore);
                end if;
 
-               case Params.On_New_Line is
-                  when Format =>
-                     if Formatting_Provider /= null then
-                        Get_Iter_Position
-                          (Source_Buffer (Buffer), S,
-                           Start_Line, Start_Column);
-                        Get_Iter_Position
-                          (Source_Buffer (Buffer), L,
-                           End_Line, End_Column);
-
-                        if not Formatting_Provider.On_Type_Formatting
-                          (Buffer.Editor_Buffer.New_Location
-                             (Integer (Start_Line), Start_Column),
-                           Buffer.Editor_Buffer.New_Location
-                             (Integer (End_Line), End_Column))
-                        then
-                           Ignore := Do_Indentation (+Buffer, S, L);
-                        end if;
-                     end if;
-
-                  when Indent =>
-                     Ignore := Do_Indentation
-                       (+Buffer, S, L, Formatting => False);
-               end case;
+               Src_Editor_Buffer.Formatters.On_Type_Formatting
+                 (Buffer => Source_Buffer (Buffer),
+                  Mark   => M,
+                  From   => S,
+                  To     => L);
             end Indent_Cursor;
 
          begin
@@ -8562,16 +8230,6 @@ package body Src_Editor_Buffer is
    begin
       Folding_Provider := Provider;
    end Set_Folding_Provider;
-
-   -----------------------------
-   -- Set_Formatting_Provider --
-   -----------------------------
-
-   procedure Set_Formatting_Provider
-     (Provider : Editor_Formatting_Provider_Access) is
-   begin
-      Formatting_Provider := Provider;
-   end Set_Formatting_Provider;
 
    -----------------------
    -- Get_Editor_Buffer --

@@ -138,8 +138,7 @@ package body Ada_Module is
             Align_On_Arrows     => Ada_Align_On_Arrows.Get_Pref,
             Align_Decl_On_Colon => Ada_Align_Decl_On_Colon.Get_Pref,
             Indent_Comments     => Ada_Indent_Comments.Get_Pref,
-            Stick_Comments      => Ada_Stick_Comments.Get_Pref,
-            On_New_Line         => Indent));
+            Stick_Comments      => Ada_Stick_Comments.Get_Pref));
    end Execute;
 
    ------------------------------
@@ -265,7 +264,7 @@ package body Ada_Module is
       Shared_Pref_Indent_Path  : constant Preference_Path :=
         -"Editor/Ada:Indentation";
       Non_LSP_Pref_Indent_Path : constant Preference_Path :=
-        (if GPS.LSP_Module.LSP_Ada_Formatting_Is_Active
+        (if GPS.LSP_Module.LSP_Formatting_Is_Active
          then ":" & Shared_Pref_Indent_Path
          else Shared_Pref_Indent_Path);
       --  If LSP is activated then hide the preferences

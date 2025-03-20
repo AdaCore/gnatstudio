@@ -1803,6 +1803,17 @@ package body GPS.Kernel.Preferences is
              & "used instead.",
            Path    => "Editor/Ada:Formatting");
 
+      LSP_Ada_On_Type_Formatting :=
+        Kernel.Get_Preferences.Create
+          (Name    => "LSP-Ada-On-Type-Formatting",
+           Default => True,
+           Label   => "Action on new line",
+           Doc     =>
+             -"Decide if GNAT Studio should just indent when adding"
+             & " a new line or if it should also format the current"
+             & " block of code.",
+           Path    => "Editor/Ada:Formatting");
+
       LSP_Use_Snippets := Kernel.Get_Preferences.Create
         (Name    => "LSP-Completion-Use-Snippets",
          Default => False,

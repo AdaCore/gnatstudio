@@ -559,7 +559,7 @@ package body Completion_Module is
                --  lines using the user preferences.
 
                if Get_Line (First) < Get_Line (Last) then
-                  Dummy := Do_Indentation (D.Buffer, First, Last, False);
+                  Dummy := On_Indent_Action (D.Buffer, First, Last, False);
                end if;
             end if;
          end if;

@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                               GNAT Studio                                --
 --                                                                          --
---                     Copyright (C) 2002-2023, AdaCore                     --
+--                     Copyright (C) 2025, AdaCore                          --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -15,30 +15,36 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with GPS.Kernel;
-with GPS.Kernel.Preferences;     use GPS.Kernel.Preferences;
-with Default_Preferences;        use Default_Preferences;
+with GPS.Kernel;  use GPS.Kernel;
+with GPS.Editors; use GPS.Editors;
+with Src_Editor_Buffer.Formatters;
 
-package Cpp_Module is
+package Language_Formatter is
 
-   procedure Register_Module
-     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class);
-   --  Register the C/C++ parsers in GNAT Studio.
-   --  If the external source navigator executables are not found on the path,
-   --  an error is displayed in the console and the C/C++ browsing will not be
-   --  available.
+   type Language_Formatting_Provider is
+     new Src_Editor_Buffer.Formatters.Formatting_Provider
+   with record
+      Kernel : Kernel_Handle;
+   end record;
 
-   C_Automatic_Indentation : Indentation_Kind_Preferences.Preference;
-   C_Use_Tabs              : Boolean_Preference;
-   --  Use tabulations when indenting.
+private
 
-   C_Comment_Two_Slashes   : Boolean_Preference;
-   --  Whether to indent C with // rather than with /* */
+   overriding
+   function On_Range_Formatting
+     (Self        : in out Language_Formatting_Provider;
+      From, To    : Editor_Location'Class;
+      Cursor_Line : Natural;
+      Cursor_Move : in out Integer) return Boolean;
+   --  Called for formatting code section. Return False when provider
+   --  can't be used on this editor.
+   --  Cursor_Line is the location of the cursor when rangeFormatting was asked
+   --  Cursor_Move indicates the number of characters that the cursor should
+   --  move (Negative numbers are allowed to move backward).
 
-   C_Indentation_Level     : Integer_Preference;
-   --  Number of spaces for the default indentation.
+   overriding
+   function On_Type_Formatting
+     (Self        : in out Language_Formatting_Provider;
+      From, To    : Editor_Location'Class;
+      Cursor_Line : Natural) return Boolean;
 
-   C_Indent_Extra          : Boolean_Preference;
-   C_Indent_Comments       : Boolean_Preference;
-
-end Cpp_Module;
+end Language_Formatter;
