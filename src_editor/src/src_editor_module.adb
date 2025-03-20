@@ -2534,7 +2534,8 @@ package body Src_Editor_Module is
       Delete_Command (Command.all).Count := -1;
       Register_Action
         (Kernel, "Delete word backward", Command,
-           -"Delete the word preceding the current cursor position",
+           -"Delete the word preceding the current cursor position or"
+         & " all spaces from the current line.",
          Category => "Editor",
          Filter       => Writable_Src_Action_Context,
          For_Learning => True);
