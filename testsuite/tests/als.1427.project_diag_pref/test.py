@@ -39,13 +39,16 @@ def run_test():
     buf = GPS.EditorBuffer.get(GPS.File("foo.adb"))
     yield wait_tasks()
 
-    # Enable all diagnostics and show them in the Location views
+    # Enable all diagnostics and show them in the Locations view
     GPS.Preference("LSP-Diagnostics-Display").set("Editor_And_Locations")
     GPS.Preference("LSP-Ada-File-Diagnostics").set(True)
     GPS.Preference("LSP-Ada-Project-Diagnostics").set(True)
     yield wait_idle()
     gps_assert(dump_locations_tree(), EXPECTED, "Issue when pref enabled")
 
+    # Disable project diagnostics and check that the project diagnostic
+    # disappears from the Locations view
     GPS.Preference("LSP-Ada-Project-Diagnostics").set(False)
     yield wait_idle()
+    yield timeout(1000)
     gps_assert(dump_locations_tree(), EXPECTED2, "Issue when pref disabled")
