@@ -95,6 +95,8 @@ package body Outline_View is
    type Outline_View_Module_Access is
      access all Outline_View_Module_Record'Class;
 
+   overriding procedure Destroy (Module : in out Outline_View_Module_Record);
+
    Outline_View_Module : Outline_View_Module_Access := null;
    Outline_View_Module_Name : constant String := "Outline_View";
 
@@ -357,7 +359,9 @@ package body Outline_View is
    overriding function Show_Tooltip_On_Create_Contents
      (Tooltip : not null access Outline_View_Tooltip_Handler) return Boolean
    is
-     (Outline_View_Module.Synchronous_Tooltips);
+     (if Outline_View_Module /= null
+      then Outline_View_Module.Synchronous_Tooltips
+      else False);
 
    -------------
    -- Actions --
@@ -388,6 +392,10 @@ package body Outline_View is
       Line   : Integer;
       Column : Visible_Column;
    begin
+      if Outline_View_Module = null then
+         return null;
+      end if;
+
       Initialize_Tooltips (Tooltip.Outline.Tree, X, Y, Area, Iter);
 
       if Iter /= Null_Iter then
@@ -799,23 +807,25 @@ package body Outline_View is
       end Compare_Value;
 
    begin
-      if Sort_Category.Get_Pref then
-         Res := Compare_Value (Category_Column);
+      if Outline_View_Module /= null then
+         if Sort_Category.Get_Pref then
+            Res := Compare_Value (Category_Column);
+            if Res /= 0 then
+               return Res;
+            end if;
+         end if;
+
+         if Sort_Alphabetical.Get_Pref then
+            Res := Compare_Name (Name_Column);
+            if Res /= 0 then
+               return Res;
+            end if;
+         end if;
+
+         Res := Compare_Value (Start_Line_Column);
          if Res /= 0 then
             return Res;
          end if;
-      end if;
-
-      if Sort_Alphabetical.Get_Pref then
-         Res := Compare_Name (Name_Column);
-         if Res /= 0 then
-            return Res;
-         end if;
-      end if;
-
-      Res := Compare_Value (Start_Line_Column);
-      if Res /= 0 then
-         return Res;
       end if;
 
       return Compare_Value (Def_Start_Col_Column);
@@ -1488,6 +1498,7 @@ package body Outline_View is
 
       Refresh_Filter (Outline);
       Outline.File := No_File;
+
       return Gtk_Widget (Outline.Tree);
    end Initialize;
 
@@ -1534,15 +1545,20 @@ package body Outline_View is
    begin
       if Outline /= null then
          Stop_Providers;
-         if Outline.File /= Outline.Prev_File then
-            Clear (Outline);
-            Outline.Prev_File := Outline.File;
+
+         if Outline_View_Module /= null then
+            if Outline.File /= Outline.Prev_File then
+               Clear (Outline);
+               Outline.Prev_File := Outline.File;
+            end if;
+            if Outline.File /= No_File then
+               Generic_Views.Abstract_View_Access
+                 (Outline).Set_Activity_Progress_Bar_Visibility (True);
+            end if;
+
+            Start_Provider
+              (Outline.Kernel, Outline.File, Only_LSP => Only_LSP);
          end if;
-         if Outline.File /= No_File then
-            Generic_Views.Abstract_View_Access
-              (Outline).Set_Activity_Progress_Bar_Visibility (True);
-         end if;
-         Start_Provider (Outline.Kernel, Outline.File, Only_LSP => Only_LSP);
       end if;
    end Refresh;
 
@@ -1713,6 +1729,19 @@ package body Outline_View is
       end if;
    end Set_Outline_Tooltips_Synchronous;
 
+   -------------
+   -- Destroy --
+   -------------
+
+   overriding procedure Destroy (Module : in out Outline_View_Module_Record)
+   is
+      pragma Unreferenced (Module);
+   begin
+      --  The module itself will be freed in GPS.Kernel.Modules.Free_Modules
+      --  so here we just clear access to it
+      Outline_View_Module := null;
+   end Destroy;
+
    -----------------
    -- Encode_Name --
    -----------------
@@ -1782,7 +1811,11 @@ package body Outline_View is
 
    function Get_LSP_Provider return Outline_Provider_Access is
    begin
-      return Outline_View_Module.LSP_Provider;
+      if Outline_View_Module /= null then
+         return Outline_View_Module.LSP_Provider;
+      else
+         return null;
+      end if;
    end Get_LSP_Provider;
 
    -----------
@@ -2036,7 +2069,9 @@ package body Outline_View is
       Outline : constant Outline_View_Access :=
         Outline_Views.Retrieve_View (Kernel);
    begin
-      if Outline /= null then
+      if Outline /= null
+        and then Outline_View_Module /= null
+      then
          Generic_Views.Abstract_View_Access
            (Outline).Set_Activity_Progress_Bar_Visibility (False);
          case Status is
@@ -2166,7 +2201,8 @@ package body Outline_View is
         Get_Language_From_File (Get_Language_Handler (Kernel), File);
       Provider : Outline_Provider_Access := null;
    begin
-      if Outline_View_Module.LSP_Provider /= null
+      if Outline_View_Module /= null
+        and then Outline_View_Module.LSP_Provider /= null
         and then Outline_View_Module.LSP_Provider.Support_Language (Lang)
       then
          Trace (Me, "Start_Provider LSP");
