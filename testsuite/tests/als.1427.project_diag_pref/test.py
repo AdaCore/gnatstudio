@@ -44,6 +44,7 @@ def run_test():
     GPS.Preference("LSP-Ada-File-Diagnostics").set(True)
     GPS.Preference("LSP-Ada-Project-Diagnostics").set(True)
     yield wait_idle()
+    yield timeout(1000)
     gps_assert(dump_locations_tree(), EXPECTED, "Issue when pref enabled")
 
     # Disable project diagnostics and check that the project diagnostic
