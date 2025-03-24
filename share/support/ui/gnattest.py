@@ -895,12 +895,12 @@ XML = (
   <project_attribute package="gnattest"
     name="additional_tests"
     editor_page="GNATtest"
-    label="Additional Tests"
-    description="Sources described in given project are considered """
-    """potential additional manual tests to be added to the test suite."
+    label="Additional Tests Project"
+    description="Treat sources from given project as additional """
+    """manual tests to add to the test suite."
     hide_in="wizard library_wizard"
     >
-    <string type="file" filter="project"/>
+    <string type="file"/>
   </project_attribute>
 
   <project_attribute package="gnattest"
