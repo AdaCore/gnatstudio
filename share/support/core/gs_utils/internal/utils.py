@@ -215,21 +215,31 @@ def wait_until_true(test_func, *args, **kwargs):
         wait_until_true(lambda:<test>, timeout=X),
 
     wait until X milliseconds at most; if the timeout is exceeded,
-    raise TimeoutExceeded.
+    GS exits with an error message. You can override the error message
+    by specifying an "error_msg" string parameter.
     """
     k = 0
     n = 30
     increment = 500
     total_waited = 0
     timeout = None
+    error_msg = None
+
     if "timeout" in kwargs:
         timeout = kwargs["timeout"]
         del kwargs["timeout"]
 
+    if "error_msg" in kwargs:
+        error_msg = kwargs["error_msg"]
+        del kwargs["error_msg"]
+
     while not test_func(*args, **kwargs) and k < n:
-        # Check for the timeout
+        # Check for the timeout and exit with a fatal error when we exceed it
         if timeout is not None and total_waited > timeout:
-            raise TimeoutExceeded
+            gps_fatal_error(
+                "'wait_until_true' timeout exceeded" if not error_msg else error_msg
+            )
+
         yield workflows.promises.timeout(increment)
         total_waited += increment
         k += 1
