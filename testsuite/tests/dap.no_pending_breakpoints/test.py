@@ -10,15 +10,6 @@ import math
 COL_FG_COLOR = 10
 
 
-def is_equal(a: Gdk.RGBA, b : Gdk.RGBA):
-    return (
-        math.isclose(a.red, b.red)
-        and math.isclose(a.green, b.green)
-        and math.isclose(a.blue, b.blue)
-        and math.isclose(a.alpha, b.alpha)
-    )
-
-
 @run_test_driver
 def test_driver():
     GPS.Preference("Debugger-Pending-Breakpoints").set(False)
@@ -62,10 +53,10 @@ def test_driver():
     yield hook("debugger_started")
     yield wait_idle()
 
+    # Run the executable and wait for the 'debugger_breakpoints_changed' hook
     debug = GPS.Debugger.get()
     debug.send("run")
-    yield wait_DAP_server("stackTrace")
-    yield timeout(1000)
+    yield hook('debugger_breakpoints_changed')
 
     # Check that pending breakpoints have been grayed out, by checking
     # that the foreground color is not white (default fg color)
@@ -73,9 +64,9 @@ def test_driver():
     iter = model.get_iter("2")
     fg_color = model.get_value(iter, COL_FG_COLOR)
     gps_assert(
-        is_equal(
-            fg_color,
-            Gdk.RGBA(red=0.000000, green=0.000000, blue=0.000000, alpha=0.000000),
+        math.isclose(
+            fg_color.blue,
+            0.0,
         ),
         False,
         "Wrong fg color for rows in the Breakpoints view, actual color is: %s"
