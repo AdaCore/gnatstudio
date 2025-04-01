@@ -505,6 +505,10 @@ package Src_Editor_Buffer is
    --  If Enable_Undo is True, then the deletion action will be
    --  stored in the undo/redo queue.
 
+   procedure Delete_Tab_Backward (Buffer : access Source_Buffer_Record);
+   --  Delete spaces that are placed instead of <tab> or <tab> itself backward
+   --  for cursors.
+
    procedure Replace_Slice
      (Buffer       : access Source_Buffer_Record;
       Start_Line   : Editable_Line_Type;

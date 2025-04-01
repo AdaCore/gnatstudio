@@ -81,6 +81,13 @@ package Src_Editor_View.Commands is
       return Standard.Commands.Command_Return_Type;
    --  A command that inserts spaces in the current editor
 
+   type Delete_Tab_Command is new Interactive_Command with null record;
+   overriding function Execute
+     (Command : access Delete_Tab_Command;
+      Context : Interactive_Command_Context)
+      return Standard.Commands.Command_Return_Type;
+   --  A command that deletes spaces/tabs in the current editor
+
    type Lock_Or_Unlock_Commmand is new Interactive_Command with record
       Split : Boolean;
       --  When set to True, the editor being locked will be put in a separate

@@ -583,6 +583,27 @@ package body Src_Editor_View.Commands is
    -------------
 
    overriding function Execute
+     (Command : access Delete_Tab_Command;
+      Context : Interactive_Command_Context)
+      return Standard.Commands.Command_Return_Type
+   is
+      pragma Unreferenced (Context, Command);
+      Kernel     : constant Kernel_Handle := Get_Kernel
+        (Src_Editor_Module_Id.all);
+      Editor     : constant MDI_Child := Find_Current_Editor (Kernel);
+      Source_Box : constant Source_Editor_Box :=
+                        Get_Source_Box_From_MDI (Editor);
+      Buffer     : constant Source_Buffer := Source_Box.Get_Buffer;
+   begin
+      Buffer.Delete_Tab_Backward;
+      return Success;
+   end Execute;
+
+   -------------
+   -- Execute --
+   -------------
+
+   overriding function Execute
      (Command : access Add_String_Comment_Command;
       Context : Interactive_Command_Context)
       return Standard.Commands.Command_Return_Type
