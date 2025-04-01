@@ -19,6 +19,9 @@ a specific board:
    must be installed in order for them to operate correctly, but this
    plugin is not concerned with that aspect.
 
+   There is a preference to pass the additional option --connect-under-reset
+   when calling st-util, st-flash.
+
 . OpenOCD (for possibly any board supporting JTAG connections )
 
    OpenOCD (Open On-Chip Debugger) is open-source software that interfaces with
@@ -55,6 +58,17 @@ from target_connector import TargetConnector
 from gs_utils.internal.dialogs import Project_Properties_Editor
 import workflows
 import workflows.promises as promises
+
+
+connect_under_reset = GPS.Preference(
+    "Debugger:ST Util/connect_under_reset"
+)
+
+
+connect_under_reset.create(
+    "Use 'connect under reset'", "boolean",
+    "Pass --connect-under-reset to st-util/st-flash"
+)
 
 
 class BoardLoader(Module):
@@ -255,7 +269,11 @@ class BoardLoader(Module):
             ]
 
         elif self.__flashing_tool == "st-flash":
-            args = ["--reset", "write", binary, self.__load_address]
+
+            if connect_under_reset.get():
+                args += ["--connect-under-reset"]
+
+            args += ["--reset", "write", binary, self.__load_address]
 
         elif self.__flashing_tool == "pyocd":
             args = ["flash", "-a", self.__load_address, binary]
@@ -348,6 +366,9 @@ class BoardLoader(Module):
             semihosting_switch = "--semihosting"
 
             args = ["-p", gdb_port]
+
+            if connect_under_reset.get():
+                args += ["--connect-under-reset"]
 
             # Add semihosting support if it's supported by the used st-util
             try:
