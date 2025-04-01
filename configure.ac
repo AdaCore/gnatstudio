@@ -1,4 +1,4 @@
-AC_INIT([GNAT Studio],[0.0],[report@adacore.com])
+AC_INIT([GNAT Studio],[0.0],[support@adacore.com])
 AC_CONFIG_SRCDIR(gnatstudio/src/gps-main.adb)
 AC_CONFIG_MACRO_DIRS([m4])
 AC_CANONICAL_TARGET

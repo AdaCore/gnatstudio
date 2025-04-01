@@ -1452,7 +1452,7 @@ package body GNATdoc is
          if Is_GPL_Version then
             Write_Line
               ("Please submit a bug report by email " &
-               "to report@adacore.com.");
+               "to support@adacore.com.");
             Write_Line
               ("GAP members can alternatively use GNAT Tracker:");
             Write_Line
@@ -1469,7 +1469,7 @@ package body GNATdoc is
                "section 'send a report'.");
             Write_Line
               ("Alternatively submit a bug report by email " &
-               "to report@adacore.com,");
+               "to support@adacore.com,");
             Write_Line
               ("including your customer number #nnn " &
                "in the subject line.");
