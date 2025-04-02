@@ -5322,6 +5322,47 @@ package body Src_Editor_Buffer is
               Enable_Undo);
    end Delete;
 
+   -------------------------
+   -- Delete_Tab_Backward --
+   -------------------------
+
+   procedure Delete_Tab_Backward (Buffer : access Source_Buffer_Record)
+   is
+      Cursor_Mark : Gtk_Text_Mark;
+      Iter, To    : Gtk_Text_Iter;
+      Result      : Boolean;
+   begin
+      for Cursor of Get_Cursors (Source_Buffer (Buffer)) loop
+         --  For all cursors
+
+         Cursor_Mark := Get_Mark (Cursor);
+         Set_Manual_Sync (Cursor);
+         Get_Iter_At_Mark (Buffer, To, Cursor_Mark);
+
+         if Get_Line_Offset (To) /= 0 then
+            --  Not at the beginning of the line
+
+            Copy (Source => To, Dest => Iter);
+            Backward_Char (Iter, Result);
+            for Pos in 1 .. Buffer.Tab_Width - 1 loop
+               --  Move backward until we reach Tab_Width or find not HT/space
+               exit when not Result
+                 or else Get_Line_Offset (Iter) = 0
+                 or else Get_Char (Iter) /= ' ';
+               Backward_Char (Iter, Result);
+            end loop;
+
+            if Get_Char (Iter) /= Character'Pos (ASCII.HT)
+              and then Get_Char (Iter) /= ' '
+            then
+               --  Move forward when cursor is not on the space or <tab>
+               Forward_Char (Iter, Result);
+            end if;
+            Delete (Buffer, Iter, To);
+         end if;
+      end loop;
+   end Delete_Tab_Backward;
+
    ------------------------
    -- Replace_Slice_Real --
    ------------------------

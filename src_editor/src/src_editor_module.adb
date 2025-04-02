@@ -2647,6 +2647,14 @@ package body Src_Editor_Module is
          Category => "Editor",
          Filter   => Writable_Src_Action_Context);
 
+      Register_Action
+        (Kernel, "Delete TAB with spaces",
+         new Delete_Tab_Command,
+         -("Delete spaces according to indentation level set in the "
+           & "Preferences for the corresponding language"),
+         Category => "Editor",
+         Filter   => Writable_Src_Action_Context);
+
       Command := new Add_String_Comment_Command;
       Register_Action
         (Kernel, "Wrap string/comment", Command,
