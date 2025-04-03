@@ -1,6 +1,6 @@
 """
 Test for ALS source information diagnostics, making sure they
-are properly displayed/cleard in the Locations view according to
+are properly displayed/cleared in the Locations view according to
 its related preference.
 """
 
