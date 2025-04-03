@@ -24,16 +24,17 @@ with Gtk.Menu;                 use Gtk.Menu;
 
 package GPS.Kernel.Preferences is
 
-   type GPS_Preferences_Manager_Record is new Preferences_Manager_Record
-     with private;
-   type GPS_Preferences_Manager is access
-     all GPS_Preferences_Manager_Record'Class;
+   type GPS_Preferences_Manager_Record is
+     new Preferences_Manager_Record with private;
+   type GPS_Preferences_Manager is
+     access all GPS_Preferences_Manager_Record'Class;
 
-   overriding procedure Notify_Pref_Changed
+   overriding
+   procedure Notify_Pref_Changed
      (Self : not null access GPS_Preferences_Manager_Record;
       Pref : not null access Preference_Record'Class);
-   overriding procedure Thaw
-     (Self : not null access GPS_Preferences_Manager_Record);
+   overriding
+   procedure Thaw (Self : not null access GPS_Preferences_Manager_Record);
 
    procedure Set_Kernel
      (Self   : not null access GPS_Preferences_Manager_Record;
@@ -41,7 +42,7 @@ package GPS.Kernel.Preferences is
    --  Set the kernel
 
    function Get_Kernel
-     (Self   : not null access GPS_Preferences_Manager_Record)
+     (Self : not null access GPS_Preferences_Manager_Record)
       return access GPS.Kernel.Kernel_Handle_Record'Class;
    --  Get the kernel
 
@@ -101,8 +102,7 @@ package GPS.Kernel.Preferences is
      Default_Preferences.Enums.Generics (Editor_Desktop_Policy);
    --  The list of possible behaviours when saving editors in the desktop
 
-   type LSP_Diagnostics_Display_Policy is
-     (Editor_Only, Editor_And_Locations);
+   type LSP_Diagnostics_Display_Policy is (Editor_Only, Editor_And_Locations);
    package LSP_Diagnostics_Display_Policy_Prefs is new
      Default_Preferences.Enums.Generics (LSP_Diagnostics_Display_Policy);
    --  The list of possible display types for LSP diagnostics
@@ -120,15 +120,14 @@ package GPS.Kernel.Preferences is
      Default_Preferences.Enums.Generics (Strip_Trailing_Blanks_Policy);
    --  The list of possible behaviours for stripping trailing blanks
 
-   type Current_Line_Highlighting_Type is
-     (Whole_Line, Underline, Gutter_Only);
+   type Current_Line_Highlighting_Type is (Whole_Line, Underline, Gutter_Only);
    package Current_Line_Highlighting_Prefs is new
      Default_Preferences.Enums.Generics (Current_Line_Highlighting_Type);
    --  The list of possible choices regarding editors' current line
    --  highlighting.
 
-   type Toolbar_Icons_Size
-   is (Text_Only, Text_And_Icons, Small_Icons, Large_Icons);
+   type Toolbar_Icons_Size is
+     (Text_Only, Text_And_Icons, Small_Icons, Large_Icons);
    package Toolbar_Icons_Size_Preferences is new
      Default_Preferences.Enums.Generics (Toolbar_Icons_Size);
    --  The list of styles/sizes for GNAT Studio icons.
@@ -150,24 +149,24 @@ package GPS.Kernel.Preferences is
    --  change the preference, the views are still refreshed.
 
    procedure Append_Menu
-     (Menu    : not null access Gtk_Menu_Record'Class;
-      Kernel  : not null access Kernel_Handle_Record'Class;
-      Pref    : Boolean_Preference);
+     (Menu   : not null access Gtk_Menu_Record'Class;
+      Kernel : not null access Kernel_Handle_Record'Class;
+      Pref   : Boolean_Preference);
    --  Append a new entry in the menu showing the preference.
    --  This entry stays synchronizes with the preference at all time.
 
    procedure Append_Menu
-     (Menu    : not null access Gtk_Menu_Record'Class;
-      Kernel  : not null access Kernel_Handle_Record'Class;
-      Pref    : Color_Preference);
+     (Menu   : not null access Gtk_Menu_Record'Class;
+      Kernel : not null access Kernel_Handle_Record'Class;
+      Pref   : Color_Preference);
    --  Some as above but for color
 
    generic
       type Enumeration is (<>);
    procedure Append_Enum_To_Menu
-     (Menu    : not null access Gtk_Menu_Record'Class;
-      Kernel  : not null access Kernel_Handle_Record'Class;
-      Pref    : Enum_Preference);
+     (Menu   : not null access Gtk_Menu_Record'Class;
+      Kernel : not null access Kernel_Handle_Record'Class;
+      Pref   : Enum_Preference);
    --  Append new radio menu items for each value of the given enumeration
    --  type, grouping them in one group. It will keep the associated enum
    --  preference in sync with the changes made regarding the selected value
@@ -181,29 +180,29 @@ package GPS.Kernel.Preferences is
    --  preference.
 
    -- General --
-   Gtk_Theme                : Theme_Preference;
+   Gtk_Theme : Theme_Preference;
 
-   Default_Font             : Font_Preference;
-   View_Fixed_Font          : Font_Preference;
-   Small_Font               : Font_Preference;
+   Default_Font    : Font_Preference;
+   View_Fixed_Font : Font_Preference;
+   Small_Font      : Font_Preference;
 
    Command_Windows_Bg_Color : Color_Preference;
 
-   Use_Native_Dialogs       : Boolean_Preference;
-   Splash_Screen            : Boolean_Preference;
-   Display_Welcome          : Boolean_Preference;
-   Auto_Save                : Boolean_Preference;
-   Save_Desktop_On_Exit     : Boolean_Preference;
-   Desktop_Backup_Save      : Boolean_Preference;
-   Save_Editor_Desktop      : Editor_Desktop_Policy_Prefs.Preference;
-   Multi_Language_Builder   : Multi_Language_Builder_Policy_Prefs.Preference;
-   Hyper_Mode               : Boolean_Preference;
-   Tip_Of_The_Day           : Boolean_Preference;
-   System_Menus             : Boolean_Preference;
-   Show_Ellipsis            : Boolean_Preference;
-   Animations               : Boolean_Preference;
+   Use_Native_Dialogs     : Boolean_Preference;
+   Splash_Screen          : Boolean_Preference;
+   Display_Welcome        : Boolean_Preference;
+   Auto_Save              : Boolean_Preference;
+   Save_Desktop_On_Exit   : Boolean_Preference;
+   Desktop_Backup_Save    : Boolean_Preference;
+   Save_Editor_Desktop    : Editor_Desktop_Policy_Prefs.Preference;
+   Multi_Language_Builder : Multi_Language_Builder_Policy_Prefs.Preference;
+   Hyper_Mode             : Boolean_Preference;
+   Tip_Of_The_Day         : Boolean_Preference;
+   System_Menus           : Boolean_Preference;
+   Show_Ellipsis          : Boolean_Preference;
+   Animations             : Boolean_Preference;
 
-   Max_Nb_Of_Log_Files      : Integer_Preference;
+   Max_Nb_Of_Log_Files : Integer_Preference;
 
    --  Whether to use ellipsis for long filenames
 
@@ -235,34 +234,34 @@ package GPS.Kernel.Preferences is
    Location_Only_High_Messages    : Boolean_Preference;
 
    -- Diff_Utils --
-   Diff_Mode           : Vdiff_Modes_Prefs.Preference;
-   Diff_Cmd            : String_Preference;
-   Patch_Cmd           : String_Preference;
+   Diff_Mode : Vdiff_Modes_Prefs.Preference;
+   Diff_Cmd  : String_Preference;
+   Patch_Cmd : String_Preference;
 
    -- Source Editor --
-   Default_Style             : Style_Preference;
-   Keywords_Style            : Variant_Preference;
-   Blocks_Style              : Variant_Preference;
-   Types_Style               : Variant_Preference;
-   Comments_Style            : Variant_Preference;
-   Strings_Style             : Variant_Preference;
-   Numbers_Style             : Variant_Preference;
-   Code_Annotations_Style    : Variant_Preference;
-   Annotated_Comments_Style  : Variant_Preference;
-   Aspects_Style             : Variant_Preference;
-   Aspects_Keywords_Style    : Variant_Preference;
-   Aspects_Blocks_Style      : Variant_Preference;
-   Aspects_Types_Style       : Variant_Preference;
-   Aspects_Comments_Style    : Variant_Preference;
-   Aspects_Strings_Style     : Variant_Preference;
-   Aspects_Numbers_Style     : Variant_Preference;
-   Hyper_Links_Style         : Variant_Preference;
-   Bookmark_Color            : Color_Preference;
+   Default_Style            : Style_Preference;
+   Keywords_Style           : Variant_Preference;
+   Blocks_Style             : Variant_Preference;
+   Types_Style              : Variant_Preference;
+   Comments_Style           : Variant_Preference;
+   Strings_Style            : Variant_Preference;
+   Numbers_Style            : Variant_Preference;
+   Code_Annotations_Style   : Variant_Preference;
+   Annotated_Comments_Style : Variant_Preference;
+   Aspects_Style            : Variant_Preference;
+   Aspects_Keywords_Style   : Variant_Preference;
+   Aspects_Blocks_Style     : Variant_Preference;
+   Aspects_Types_Style      : Variant_Preference;
+   Aspects_Comments_Style   : Variant_Preference;
+   Aspects_Strings_Style    : Variant_Preference;
+   Aspects_Numbers_Style    : Variant_Preference;
+   Hyper_Links_Style        : Variant_Preference;
+   Bookmark_Color           : Color_Preference;
 
    Ephemeral_Highlighting_Simple : Variant_Preference;
    Ephemeral_Highlighting_Smart  : Variant_Preference;
 
-   Pref_Toolbar_Style            : Toolbar_Icons_Size_Preferences.Preference;
+   Pref_Toolbar_Style : Toolbar_Icons_Size_Preferences.Preference;
 
    Transient_Mark            : Boolean_Preference;
    Block_Highlighting        : Boolean_Preference;
@@ -273,33 +272,33 @@ package GPS.Kernel.Preferences is
    Alter_Bg_For_RO_Files     : Boolean_Preference;
 
    --  stripping blanks at end of line
-   Strip_Blanks              : Strip_Trailing_Blanks_Policy_Prefs.Preference;
+   Strip_Blanks             : Strip_Trailing_Blanks_Policy_Prefs.Preference;
    --  stripping blank lines at end of file
-   Strip_Lines               : Strip_Trailing_Blanks_Policy_Prefs.Preference;
-   Line_Terminator           : Line_Terminators_Prefs.Preference;
-   Display_Line_Numbers      : Line_Number_Policy_Prefs.Preference;
-   Display_Subprogram_Names  : Boolean_Preference;
-   Auto_Indent_On_Paste      : Boolean_Preference;
-   Display_Tooltip           : Boolean_Preference;
-   Highlight_Delimiters      : Boolean_Preference;
-   Periodic_Save             : Integer_Preference;
-   Highlight_Column          : Integer_Preference;
-   Gutter_Right_Margin       : Integer_Preference;
-   Use_ACL                   : Boolean_Preference;
+   Strip_Lines              : Strip_Trailing_Blanks_Policy_Prefs.Preference;
+   Line_Terminator          : Line_Terminators_Prefs.Preference;
+   Display_Line_Numbers     : Line_Number_Policy_Prefs.Preference;
+   Display_Subprogram_Names : Boolean_Preference;
+   Auto_Indent_On_Paste     : Boolean_Preference;
+   Display_Tooltip          : Boolean_Preference;
+   Highlight_Delimiters     : Boolean_Preference;
+   Periodic_Save            : Integer_Preference;
+   Highlight_Column         : Integer_Preference;
+   Gutter_Right_Margin      : Integer_Preference;
+   Use_ACL                  : Boolean_Preference;
 
-   Block_Folding             : Boolean_Preference;
-   Fold_With_Use_Blocks      : Integer_Preference;
-   Fold_Comments             : Boolean_Preference;
-   Autofold_Comment_Blocks   : Integer_Preference;
-   Fold_Comment_Reg1         : String_Preference;
-   Fold_Comment_Reg2         : String_Preference;
-   Fold_Comment_Reg3         : String_Preference;
+   Block_Folding           : Boolean_Preference;
+   Fold_With_Use_Blocks    : Integer_Preference;
+   Fold_Comments           : Boolean_Preference;
+   Autofold_Comment_Blocks : Integer_Preference;
+   Fold_Comment_Reg1       : String_Preference;
+   Fold_Comment_Reg2       : String_Preference;
+   Fold_Comment_Reg3       : String_Preference;
 
    -- Debugger --
-   Debugger_Current_Line_Color   : Color_Preference;
-   Breakpoint_Color              : Color_Preference;
-   Conditional_Breakpoint_Color  : Color_Preference;
-   Disabled_Breakpoint_Color     : Color_Preference;
+   Debugger_Current_Line_Color  : Color_Preference;
+   Breakpoint_Color             : Color_Preference;
+   Conditional_Breakpoint_Color : Color_Preference;
+   Disabled_Breakpoint_Color    : Color_Preference;
 
    -- GNAThub --
    GNAThub_Semantic_Pass : Boolean_Preference;
@@ -308,11 +307,11 @@ package GPS.Kernel.Preferences is
    Explicit_Default_Value : Boolean_Preference;
 
    -- External Commands --
-   List_Processes            : String_Preference;
-   Html_Browser              : String_Preference;
-   Execute_Command           : String_Preference;
-   Print_Command             : String_Preference;
-   Max_Output_Length         : Integer_Preference;
+   List_Processes    : String_Preference;
+   Html_Browser      : String_Preference;
+   Execute_Command   : String_Preference;
+   Print_Command     : String_Preference;
+   Max_Output_Length : Integer_Preference;
 
    -- Project Editor --
    Default_Switches_Color          : Color_Preference;
@@ -322,11 +321,11 @@ package GPS.Kernel.Preferences is
    Generate_Relative_Paths         : Boolean_Preference;
    Trusted_Mode                    : Boolean_Preference;
 
-   Automatic_Xrefs_Load            : Boolean_Preference;
+   Automatic_Xrefs_Load : Boolean_Preference;
    --  Only when using the old xref engine, null otherwise
 
-   Hidden_Files_Pattern            : String_Preference;
-   Show_Hidden_Files               : Boolean_Preference;
+   Hidden_Files_Pattern : String_Preference;
+   Show_Hidden_Files    : Boolean_Preference;
    --  Whether to hide some files in explorers and other contexts
 
    -- Refactoring --
@@ -349,53 +348,54 @@ package GPS.Kernel.Preferences is
    Selected_Item_Color       : Color_Preference;
    Title_Color               : Color_Preference;
 
-   Doc_Search_Before_First   : Boolean_Preference;
+   Doc_Search_Before_First : Boolean_Preference;
    --  Whether we should look for the documentation of entities first in the
    --  comments before (and fallback to the comments after), or the opposite
 
    --  Debugger preferences are registered in GVD.Preferences
 
    -- LibAdaLang --
-   Use_LAL_In_Outline        : Boolean_Preference;
-   Use_LAL_In_Shell          : Boolean_Preference;
-   Use_LAL_In_Info           : Boolean_Preference;
-   Use_LAL_In_GNATHUB        : Boolean_Preference;
-   Use_LAL_In_COV            : Boolean_Preference;
-   Use_LAL_In_Indent         : Boolean_Preference;
+   Use_LAL_In_Outline : Boolean_Preference;
+   Use_LAL_In_Shell   : Boolean_Preference;
+   Use_LAL_In_Info    : Boolean_Preference;
+   Use_LAL_In_GNATHUB : Boolean_Preference;
+   Use_LAL_In_COV     : Boolean_Preference;
+   Use_LAL_In_Indent  : Boolean_Preference;
 
    --  LSP
-   LSP_Use_Snippets            : Boolean_Preference;
-   LSP_Use_Signatures          : Boolean_Preference;
-   LSP_Ada_File_Diagnostics    : Boolean_Preference;
-   LSP_Ada_Project_Diagnostics : Boolean_Preference;
-   LSP_GPR_File_Diagnostics    : Boolean_Preference;
-   LSP_Alire_Diagnostics       : Boolean_Preference;
-   LSP_Ada_Insert_With_Clauses : Boolean_Preference;
-   LSP_Ada_Use_GNATformat      : Boolean_Preference;
-   LSP_Limit_Formatting        : Boolean_Preference;
-   LSP_Ada_Param_Threshold     : Integer_Preference;
-   LSP_Ada_Rename_In_Comment   : Boolean_Preference;
-   LSP_Diagnostics_Display     : LSP_Diagnostics_Display_Policy_Prefs.
-     Preference;
+   LSP_Use_Snippets                : Boolean_Preference;
+   LSP_Use_Signatures              : Boolean_Preference;
+   LSP_Ada_File_Diagnostics        : Boolean_Preference;
+   LSP_Ada_Project_Diagnostics     : Boolean_Preference;
+   LSP_Ada_Source_Info_Diagnostics : Boolean_Preference;
+   LSP_GPR_File_Diagnostics        : Boolean_Preference;
+   LSP_Alire_Diagnostics           : Boolean_Preference;
+   LSP_Ada_Insert_With_Clauses     : Boolean_Preference;
+   LSP_Ada_Use_GNATformat          : Boolean_Preference;
+   LSP_Limit_Formatting            : Boolean_Preference;
+   LSP_Ada_Param_Threshold         : Integer_Preference;
+   LSP_Ada_Rename_In_Comment       : Boolean_Preference;
+   LSP_Diagnostics_Display         :
+     LSP_Diagnostics_Display_Policy_Prefs.Preference;
 
    -- LSP semantic styles --
    Use_External_Highlighting : External_Highlighting_Preferences.Preference;
 
-   LSP_Namespace_Style       : Variant_Preference;
-   LSP_Interface_Style       : Variant_Preference;
-   LSP_Class_Style           : Variant_Preference;
-   LSP_Function_Style        : Variant_Preference;
-   LSP_Struct_Style          : Variant_Preference;
-   LSP_Property_Style        : Variant_Preference;
-   LSP_Enum_Style            : Variant_Preference;
-   LSP_EnumMember_Style      : Variant_Preference;
-   LSP_TypeParameter_Style   : Variant_Preference;
-   LSP_Parameter_Style       : Variant_Preference;
-   LSP_Variable_Style        : Variant_Preference;
-   LSP_Modifier_Style        : Variant_Preference;
-   LSP_Operator_Style        : Variant_Preference;
-   LSP_Deprecated_Style      : Variant_Preference;
-   LSP_Readonly_Bg           : Color_Preference;
+   LSP_Namespace_Style     : Variant_Preference;
+   LSP_Interface_Style     : Variant_Preference;
+   LSP_Class_Style         : Variant_Preference;
+   LSP_Function_Style      : Variant_Preference;
+   LSP_Struct_Style        : Variant_Preference;
+   LSP_Property_Style      : Variant_Preference;
+   LSP_Enum_Style          : Variant_Preference;
+   LSP_EnumMember_Style    : Variant_Preference;
+   LSP_TypeParameter_Style : Variant_Preference;
+   LSP_Parameter_Style     : Variant_Preference;
+   LSP_Variable_Style      : Variant_Preference;
+   LSP_Modifier_Style      : Variant_Preference;
+   LSP_Operator_Style      : Variant_Preference;
+   LSP_Deprecated_Style    : Variant_Preference;
+   LSP_Readonly_Bg         : Color_Preference;
 
    package Indentation_Kind_Preferences is new
      Default_Preferences.Enums.Generics (Language.Indentation_Kind);

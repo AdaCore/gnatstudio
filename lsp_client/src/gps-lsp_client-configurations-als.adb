@@ -164,6 +164,11 @@ package body GPS.LSP_Client.Configurations.ALS is
          Boolean'(GPS.Kernel.Preferences.LSP_Ada_File_Diagnostics.Get_Pref));
 
       Ada_Settings.Set_Field
+        ("sourceInfoDiagnostics",
+         Boolean'
+           (GPS.Kernel.Preferences.LSP_Ada_Source_Info_Diagnostics.Get_Pref));
+
+      Ada_Settings.Set_Field
         ("projectDiagnostics",
          Boolean'(
            GPS.Kernel.Preferences.LSP_Ada_Project_Diagnostics.Get_Pref));

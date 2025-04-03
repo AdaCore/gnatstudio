@@ -1847,6 +1847,17 @@ package body GPS.Kernel.Preferences is
          & "(e.g: syntax errors).",
          Path    => "Editor/Ada:Diagnostics");
 
+      LSP_Ada_Source_Info_Diagnostics :=
+        Kernel.Get_Preferences.Create
+          (Name    => "LSP-Ada-Source-Info-Diagnostics",
+           Default => True,
+           Label   => "Enable Ada Source Information diagnostics",
+           Doc     =>
+             "Enable source information diagnostics for Ada. "
+             & "(e.g: for opened files that do not belong "
+             & "to the loaded project tree)",
+           Path    => "Editor/Ada:Diagnostics");
+
       LSP_Ada_Project_Diagnostics := Kernel.Get_Preferences.Create
         (Name    => "LSP-Ada-Project-Diagnostics",
          Default => True,
