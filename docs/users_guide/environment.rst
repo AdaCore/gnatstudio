@@ -416,7 +416,7 @@ Reporting Suggestions and Bugs
 .. index:: submitting bugs
 
 If you would like to make suggestions about GNAT Studio or if you encounter a
-bug, please send it to `mailto:report@adacore.com <mailto:report@adacore.com>`_
+bug, please send it to `mailto:support@adacore.com <mailto:support@adacore.com>`_
 or use GNATtracker if you are a supported user.
 
 Please try to include a detailed description of the problem, including
