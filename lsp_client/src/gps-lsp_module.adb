@@ -1437,7 +1437,7 @@ package body GPS.LSP_Module is
             when High          => "gps-emblem-build-error",
             when Medium        => "gps-emblem-build-warning",
             when Low           => "gps-emblem-build-style",
-            when Informational => "gps-emblem-build-info-symbolic",
+            when Informational => "gps-info-symbolic",
             when others        => "");
       --  Return the editor side icon displayed for diagnostics, according
       --  to their importance.
