@@ -224,20 +224,20 @@ User's Guide for the full list):
 Alire Support
 =============
 
-In addition to :file:`.gpr`` files GNAT Studio supports loading Alire crates via the
+In addition to :file:`.gpr`` files, GNAT Studio supports loading Alire crates via the
 the :menuselection:`Open Alire Crate` entry in the :ref:`welcome dialog
 <The_Welcome_Dialog>` and
-the :menuselection:`File --> Open Alire Crate...` menu once GNAT Studio has started.
+the :menuselection:`File --> Open Alire Crate...` menu.
 
 When the workspace is an Alire crate (i.e. it contains an :file:`alire.toml`
-file), GNAT Studio uses Alire to determine the GPR project that should be loaded
-and to obtain an environment where the crate's dependencies have been provisioned.
+file), GNAT Studio uses Alire to determine the GPR project that should be loaded,
+and to enter an environment providing access to the crate's dependencies.
 
-Moreover when working with an Alire crate, GNAT Studio build-related actions
-automatically use standard Alire commands.
-For example, the :guilabel:`Build All` menu and toolbar button uses
-the command :guilabel:`alr build` and the :guilabel:`Clean All` menu and toolbar
-button uses the command :guilabel:`alr clean`.
+Moreover, when working with an Alire crate, GNAT Studio build-related actions
+will use standard Alire commands.
+For example, the :guilabel:`Build All` menu and toolbar button will call
+the command :guilabel:`alr build`, and the :guilabel:`Clean All` menu and toolbar
+button will call :guilabel:`alr clean`.
 
 
 Supported Languages
