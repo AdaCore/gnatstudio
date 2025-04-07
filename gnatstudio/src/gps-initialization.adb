@@ -545,6 +545,11 @@ package body GPS.Initialization is
          Setenv
            (Name  => Val (Val'First .. Idx - 1),
             Value => Val (Idx + 1 .. Val'Last));
+
+         --  Store X switch in the map
+         Cmd_Line_Scenario_Vars.Include
+           (Val (Val'First .. Idx - 1), Val (Idx + 1 .. Val'Last));
+
       else
          Report_Error ("Invalid value for -X, should be VAR=VALUE");
          GPS_Command_Line.Do_Exit := True;
