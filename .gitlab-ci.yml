@@ -36,7 +36,7 @@ include:
       # by the build job.
       anod-args: run test_integration_testsuite
       image: systemgtk
-      cpus: 4
+      cpus: 8
       disk: 80
       rules:
       # Does not work on edge
