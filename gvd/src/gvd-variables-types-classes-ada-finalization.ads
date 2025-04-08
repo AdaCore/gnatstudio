@@ -25,7 +25,7 @@ package GVD.Variables.Types.Classes.Ada.Finalization is
    -- GVD_Ada_Finalization_Type --
    -------------------------------
 
-   type GVD_Ada_Finalization_Type is new GVD_Class_Type (0) with private;
+   type GVD_Ada_Finalization_Type is new GVD_Class_Type with private;
    type GVD_Ada_Finalization_Type_Access is
      access all GVD_Ada_Finalization_Type'Class;
 
