@@ -12,7 +12,6 @@ import os.path
 import re
 import tool_output
 import shlex
-from gi.repository import Gtk
 
 alr = os_utils.locate_exec_on_path("alr")
 saved_env: dict[str, str] = {}  # all changed env variables and their values

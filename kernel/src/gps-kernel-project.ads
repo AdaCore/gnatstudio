@@ -50,6 +50,11 @@ with Gtk.Window;        use Gtk.Window;
 
 package GPS.Kernel.Project is
 
+   Project_Files_History_Key : constant Histories.History_Key :=
+     "project_files";
+   --  Key to use in the kernel histories to store the most recently opened
+   --  project files and alire crates.
+
    -------------------
    -- Project files --
    -------------------

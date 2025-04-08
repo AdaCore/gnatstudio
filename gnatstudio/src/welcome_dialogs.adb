@@ -17,6 +17,7 @@
 
 with GNAT.Strings;           use GNAT.Strings;
 with GNATCOLL.Traces;        use GNATCOLL.Traces;
+with GNATCOLL.Utils;
 with GNATCOLL.VFS;           use GNATCOLL.VFS;
 
 with Glib.Object;
@@ -45,12 +46,13 @@ with GUI_Utils;              use GUI_Utils;
 with Gtk.Info_Bar; use Gtk.Info_Bar;
 with Glib; use Glib;
 with Gtk.Dialog; use Gtk.Dialog;
+with VSS.String_Vectors;
+with VSS.Strings;
+with VSS.Strings.Conversions;
 
 package body Welcome_Dialogs is
 
    Me : constant Trace_Handle := Create ("GPS.MAIN.WELCOME_DIALOG");
-
-   Recent_Projects_History_Key : constant History_Key := "project_files";
 
    type Welcome_Dialog_Record is new GPS_Dialog_Record with record
       Response : Welcome_Dialog_Response := Quit_GPS;
@@ -67,13 +69,14 @@ package body Welcome_Dialogs is
    --  of the welcome dialog.
 
    type Recent_Project_Item_Box_Record is new Gtk_Info_Bar_Record with record
-      Project_File  : Virtual_File;
-      Kernel        : Kernel_Handle;
+      File   : Virtual_File;
+      Kernel : Kernel_Handle;
    end record;
    type Recent_Project_Item_Box is
      access all Recent_Project_Item_Box_Record'Class;
    --  Type representing the recent project items displayed in the recent
    --  projects list view.
+   --  Can list project files (.gpr) and Alire manifests (alire.toml).
 
    type Welcome_Dialog_Action_Button_Record is new Gtk_Button_Record
    with record
@@ -137,7 +140,7 @@ package body Welcome_Dialogs is
                  Recent_Project_Item_Box (Row.Get_Child);
    begin
       Gtk.Main.Main_Quit;
-      Load_Project (Dialog.Kernel, Item.Project_File);
+      Load_Project (Dialog.Kernel, Item.File);
       Dialog.Response := Project_Loaded;
    end On_Row_Activated;
 
@@ -155,8 +158,8 @@ package body Welcome_Dialogs is
       if Gtk_Response_Type (Response_Id) = Gtk_Response_Close then
          Remove_From_History
            (Hist            => Item.Kernel.Get_History.all,
-            Key             => Recent_Projects_History_Key,
-            Entry_To_Remove => Item.Project_File.Display_Full_Name);
+            Key             => Project_Files_History_Key,
+            Entry_To_Remove => Item.File.Display_Full_Name);
          Item.Get_Parent.Destroy;
       end if;
    end On_Response;
@@ -203,60 +206,88 @@ package body Welcome_Dialogs is
       Actions : Welcome_Dialog_Action_Array)
       return Welcome_Dialog_Response
    is
-      Dialog               : Welcome_Dialog;
-      Pane                 : Gtk_Paned;
-      Main_View            : Dialog_View;
-      Response             : Welcome_Dialog_Response;
-      Scrolled             : Gtk_Scrolled_Window;
-      Recent_Projects_View : Recent_Projects_List_Box;
-      Recent_Projects      : constant String_List_Access :=
-        Get_History
-          (Kernel.Get_History.all,
-           Recent_Projects_History_Key);
+      Dialog                 : Welcome_Dialog;
+      Pane                   : Gtk_Paned;
+      Main_View              : Dialog_View;
+      Response               : Welcome_Dialog_Response;
+      Scrolled               : Gtk_Scrolled_Window;
+      Recent_Projects_View   : Recent_Projects_List_Box;
+      Stored_Recent_Projects : constant String_List_Access :=
+        Get_History (Kernel.Get_History.all, Project_Files_History_Key);
+      Recent_Projects        : VSS.String_Vectors.Virtual_String_Vector;
+
+      procedure Filter_Recent_Projects;
+      --  Filter the recent projects stored in the history.
+      --  We only want to display project files that exist on the disk
+      --  and Alire crates only if Alire is available in the user's PATH.
 
       procedure Fill_Recent_Projects_View;
+      --  Fill the recent projects' view with the already filtered recent
+      --  projects.
 
       procedure Create_Welcome_Dialog_Options;
+      --  Create the options displayed on the right panel of the Welcome
+      --  dialog (e.g: 'Open a project').
+
+      ----------------------------
+      -- Filter_Recent_Projects --
+      ----------------------------
+
+      procedure Filter_Recent_Projects is
+      begin
+         if Stored_Recent_Projects = null then
+            return;
+         end if;
+
+         for Item of Stored_Recent_Projects.all loop
+            if Create_From_UTF8 (Item.all).Is_Regular_File
+              and then (Is_Alire_Available (Kernel)
+                        or else not GNATCOLL.Utils.Ends_With
+                                      (Item.all, "alire.toml"))
+            then
+               Recent_Projects.Append
+                 (VSS.Strings.Conversions.To_Virtual_String (Item.all));
+            end if;
+         end loop;
+      end Filter_Recent_Projects;
 
       -------------------------------
       -- Fill_Recent_Projects_View --
       -------------------------------
 
       procedure Fill_Recent_Projects_View is
-         Project_File    : Virtual_File;
-
-         Label           : Gtk_Label;
-         Item            : Recent_Project_Item_Box;
-         Box             : Gtk_Vbox;
+         File  : Virtual_File;
+         Label : Gtk_Label;
+         Item  : Recent_Project_Item_Box;
+         Box   : Gtk_Vbox;
       begin
-         for Project_Name of Recent_Projects.all loop
-            if Create_From_UTF8 (Project_Name.all).Is_Regular_File then
-               Project_File := Create (+Project_Name.all);
+         for Project_Path of Recent_Projects loop
+            File :=
+              Create (+VSS.Strings.Conversions.To_UTF_8_String (Project_Path));
 
-               Item := new Recent_Project_Item_Box_Record;
-               Gtk.Info_Bar.Initialize (Item);
-               Item.Kernel := Kernel_Handle (Kernel);
-               Item.Project_File := Project_File;
-               Item.Set_Show_Close_Button (True);
+            Item := new Recent_Project_Item_Box_Record;
+            Gtk.Info_Bar.Initialize (Item);
+            Item.Kernel := Kernel_Handle (Kernel);
+            Item.File := File;
+            Item.Set_Show_Close_Button (True);
 
-               Gtk_New_Vbox (Box);
-               Gtk_Box (Item.Get_Content_Area).Pack_Start (Box);
+            Gtk_New_Vbox (Box);
+            Gtk_Box (Item.Get_Content_Area).Pack_Start (Box);
 
-               Gtk_New (Label, Project_File.Display_Base_Name);
-               Get_Style_Context (Label).Add_Class
-                 ("gps-welcome-dialog-project-label");
-               Label.Set_Alignment (0.0, 0.5);
-               Box.Pack_Start (Label, Expand => True);
+            Gtk_New (Label, File.Display_Base_Name);
+            Get_Style_Context (Label).Add_Class
+              ("gps-welcome-dialog-project-label");
+            Label.Set_Alignment (0.0, 0.5);
+            Box.Pack_Start (Label, Expand => True);
 
-               Gtk_New (Label, Project_File.Display_Full_Name);
-               Label.Set_Alignment (0.0, 0.5);
-               Apply_Doc_Style (Label);
-               Label.Set_Justify (Justify_Left);
-               Box.Pack_Start (Label, Expand => False);
+            Gtk_New (Label, File.Display_Full_Name);
+            Label.Set_Alignment (0.0, 0.5);
+            Apply_Doc_Style (Label);
+            Label.Set_Justify (Justify_Left);
+            Box.Pack_Start (Label, Expand => False);
 
-               Item.On_Response (On_Response'Access);
-               Recent_Projects_View.Add (Item);
-            end if;
+            Item.On_Response (On_Response'Access);
+            Recent_Projects_View.Add (Item);
          end loop;
       end Fill_Recent_Projects_View;
 
@@ -275,9 +306,7 @@ package body Welcome_Dialogs is
          for Action of Actions loop
             Gtk_New_Hbox (Action_Box);
             Main_View.Append
-              (Action_Box,
-               Expand        => False,
-               Add_Separator => False);
+              (Action_Box, Expand => False, Add_Separator => False);
 
             Action_Button := new Welcome_Dialog_Action_Button_Record;
             Initialize (Action_Button, To_String (Action.Label));
@@ -300,9 +329,7 @@ package body Welcome_Dialogs is
             Action_Button.On_Clicked (On_Clicked'Access);
 
             Action_Box.Pack_Start
-              (Action_Button,
-               Expand => True,
-               Fill   => False);
+              (Action_Button, Expand => True, Fill => False);
          end loop;
       end Create_Welcome_Dialog_Options;
 
@@ -333,10 +360,12 @@ package body Welcome_Dialogs is
          Expand => False);
       Create_Welcome_Dialog_Options;
 
+      Filter_Recent_Projects;
+
       --  If there is no recent project in the history, don't create the
       --  recent projects view on the left side of the dialog.
 
-      if Recent_Projects /= null and then Recent_Projects'Length > 0 then
+      if not Recent_Projects.Is_Empty then
          Gtk_New (Scrolled);
          Scrolled.Set_Policy (Policy_Automatic, Policy_Automatic);
 

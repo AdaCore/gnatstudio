@@ -56,11 +56,6 @@ with Tooltips;               use Tooltips;
 package body GPS.Menu is
    Me : constant Trace_Handle := Create ("GPS.MENU");
 
-   Project_History_Key : constant Histories.History_Key := "project_files";
-   --  Key to use in the kernel histories to store the most recently opened
-   --  files.
-   --  Synchronize with welcome.adb
-
    type Menu_Module_Record is new Module_ID_Record with record
       Recent_Project_Actions : Action_Lists.List;
       --  The list of actions that open recent projects. These actions
@@ -71,10 +66,22 @@ package body GPS.Menu is
       --  True if the Alire executable ('alr') is available in the PATH
       --  at startup, False otherwise. Using a triboolean to cache the
       --  value once it's computed the first time.
+
+      Alire_Crate_Loaded : Boolean := False;
+      --  True when a project has been loaded through an Alire crate.
+      --  When it's the case we don't want to consider the .gpr file that
+      --  gets finally loaded as a recent project, just the Alire manifest.
    end record;
    Menu_Module : aliased Menu_Module_Record :=
      (Module_ID_Record with others => <>);
    --  ??? Should be registered as standard module
+
+   type On_Project_Changing is new File_Hooks_Function with null record;
+   overriding procedure Execute
+     (Self   : On_Project_Changing;
+      Kernel : not null access Kernel_Handle_Record'Class;
+      File   : GNATCOLL.VFS.Virtual_File);
+   --  Called when project is about to change
 
    type On_Project_Changed is new Simple_Hooks_Function with null record;
    overriding
@@ -441,6 +448,26 @@ package body GPS.Menu is
       return Standard.Commands.Success;
    end Execute;
 
+      -------------
+      -- Execute --
+      -------------
+
+   overriding
+   procedure Execute
+     (Self   : On_Project_Changing;
+      Kernel : not null access Kernel_Handle_Record'Class;
+      File   : GNATCOLL.VFS.Virtual_File)
+   is
+      Filename : constant String := UTF8_Full_Name (File);
+   begin
+      --  We are loading an Alire crate: store the Alire manifest
+      --  (alire.toml) as a recent project in the history.
+      if GNATCOLL.Utils.Ends_With (Filename, "alire.toml") then
+         Add_To_History (Kernel, Project_Files_History_Key, Filename);
+         Menu_Module.Alire_Crate_Loaded := True;
+      end if;
+   end Execute;
+
    -------------
    -- Execute --
    -------------
@@ -457,6 +484,13 @@ package body GPS.Menu is
    begin
       if Path = No_File then
          return;
+      end if;
+
+      --  Store the project file that just got loaded as a recent project
+      --  only if it has not been loaded through an Alire crate.
+      if not Menu_Module.Alire_Crate_Loaded then
+         Add_To_History
+           (Kernel, Project_Files_History_Key, UTF8_Full_Name (Path));
       end if;
 
       --  We cannot recompute the old menus and actions immediately as
@@ -489,9 +523,9 @@ package body GPS.Menu is
       Kernel          : constant Kernel_Handle := Command.Kernel;
       Hist            : constant History := Kernel.Get_History;
       Name_List       : String_List_Access :=  --  Do not free
-        Get_History (Kernel.Get_History.all, Project_History_Key);
+        Get_History (Kernel.Get_History.all, Project_Files_History_Key);
       Max_Length      : constant Integer :=
-        Get_Max_Length (Hist.all, Project_History_Key);
+        Get_Max_Length (Hist.all, Project_Files_History_Key);
       File_Menu_Paths : constant Unbounded_String_Array :=
         Split
           (To_String (Menu_List_For_Action ("open project dialog")),
@@ -560,11 +594,9 @@ package body GPS.Menu is
    begin
       if Menu_Module.Recent_Project_Actions.Is_Empty then
 
-         --  We are at startup: fill the menus using the history
-         Add_To_History
-           (Kernel, Project_History_Key, UTF8_Full_Name (Project_File));
+         --  Get the recently loaded projects using the dedicated history key
          Name_List :=
-           Get_History (Kernel.Get_History.all, Project_History_Key);
+           Get_History (Kernel.Get_History.all, Project_Files_History_Key);
 
          for Idx in Name_List'First .. Name_List'Last loop
             if Name_List (Idx) = null then
@@ -589,7 +621,7 @@ package body GPS.Menu is
          for Name of Names_To_Remove loop
             Remove_From_History
               (Hist            => Kernel.Get_History.all,
-               Key             => Project_History_Key,
+               Key             => Project_Files_History_Key,
                Entry_To_Remove => Name);
          end loop;
       else
@@ -617,9 +649,12 @@ package body GPS.Menu is
             end;
          end if;
 
-         Add_To_History
-           (Kernel, Project_History_Key, UTF8_Full_Name (Project_File));
-         Create_New_Menu (Project_File, Prepend => True);
+         --  Create a menu item for the currently loaded project
+         --  only if it has not been loaded through Alire.
+         if not Menu_Module.Alire_Crate_Loaded then
+            Create_New_Menu (Project_File, Prepend => True);
+         end if;
+         Menu_Module.Alire_Crate_Loaded := False;
       end if;
       return Success;
    end Execute;
@@ -712,6 +747,7 @@ package body GPS.Menu is
          Filter      => Has_Alire_Filter,
          Description => -"Open the Open Alire Crate dialog");
 
+      Project_Changing_Hook.Add (new On_Project_Changing);
       Project_Changed_Hook.Add (new On_Project_Changed);
 
       Register_Action
