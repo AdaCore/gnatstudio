@@ -18,6 +18,6 @@ def driver():
     gps_assert(
         len(GPS.Locations.list_categories()) == 0,
         True,
-        "We should not have empty locations"
+        "We should not have any messages in the Locations view"
     )    
 
