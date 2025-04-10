@@ -1695,6 +1695,19 @@ procedure GPS.Main is
       Get_Registry (GPS_Main.Kernel).Environment.Set_Automatic_Config_File
         (Config_Files.Autoconf);
 
+      --  Set scenario variables
+      declare
+         use Cmd_Line_Scenario_Vars_Maps;
+         C : Cmd_Line_Scenario_Vars_Maps.Cursor :=
+           Cmd_Line_Scenario_Vars.First;
+      begin
+         while Has_Element (C) loop
+            Get_Registry (GPS_Main.Kernel).Environment.
+              Change_Environment (Key (C), Element (C));
+            Next (C);
+         end loop;
+      end;
+
       if GPS.Globals.Build_Tree_Dir /= No_File then
          Ensure_Directory (GPS.Globals.Build_Tree_Dir);
          Get_Registry (GPS_Main.Kernel).Environment.Set_Build_Tree_Dir

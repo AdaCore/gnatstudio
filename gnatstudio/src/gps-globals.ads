@@ -15,6 +15,7 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
+with Ada.Containers.Indefinite_Ordered_Maps;
 with Ada.Containers.Vectors;
 with Ada.Strings.Unbounded;  use Ada.Strings.Unbounded;
 with Glib;
@@ -69,6 +70,9 @@ package GPS.Globals is
    type GPS_Splash_Screen is access all GPS_Splash_Screen_Record'Class;
    --  The GNAT Studio initial splash screen
 
+   package Cmd_Line_Scenario_Vars_Maps is
+     new Ada.Containers.Indefinite_Ordered_Maps (String, String);
+
    GPS_Command_Line           : GPS_Option_Context;
    --  Handling of command line
 
@@ -109,5 +113,8 @@ package GPS.Globals is
 
    Env                        : Spawn.Environments.Process_Environment :=
      Spawn.Environments.System_Environment;
+
+   Cmd_Line_Scenario_Vars     : Cmd_Line_Scenario_Vars_Maps.Map;
+   --  Stores -XVAR=VALUE command line switches as Key=VAR, Element=VALUE
 
 end GPS.Globals;
