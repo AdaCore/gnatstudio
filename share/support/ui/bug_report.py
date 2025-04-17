@@ -254,6 +254,17 @@ def get_als_log_file():
         return None
 
 
+def get_clangd_log_file():
+    """
+    Return the clangd log file if any, or None when there is no log.
+    """
+    server = GPS.LanguageServer.get_by_language_name("C")
+    if server:
+        return server.get_log_file().path
+    else:
+        return None
+
+
 def get_plugins_file():
     """
     Return the plugins file if any, or None when not present
@@ -368,3 +379,68 @@ def create_bug_report():
         GPS.Console().write("Bug report folder created at: ")
         GPS.Console().insert_link(bug_report_dir, open_bug_report_in_folder)
         GPS.Console().write("\n")
+
+
+def has_gs_log_file(context):
+    """
+    Filter function that returns True there is a log file for the
+    current GNAT Studio session.
+    """
+    return GPS.get_log_file() != ""
+
+
+def has_als_log_file(context):
+    """
+    Filter function that returns True if the Ada Language Server for Ada
+    is running and if there is a log file for this session.
+    """
+    return (
+        GPS.LanguageServer.is_enabled_for_language_name("ada")
+        and get_als_log_file() is not None
+    )
+
+
+def has_clangd_log_file(context):
+    """
+    Filter function that returns True if clangd is running and if there
+    is a log file for this session.
+    """
+    return (
+        GPS.LanguageServer.is_enabled_for_language_name("c")
+        or GPS.LanguageServer.is_enabled_for_language_name("c++")
+    ) and get_clangd_log_file() is not None
+
+
+@interactive(
+    "General",
+    name="Open GNAT Studio log file",
+    description="Open the GNAT Studio log file in a separate editor.",
+    filter=has_gs_log_file)
+def open_gs_log_file():
+    gs_log_file = GPS.get_log_file()
+    if gs_log_file:
+        GPS.EditorBuffer.get(GPS.File(gs_log_file))
+
+
+@interactive(
+    "General",
+    name="Open ALS log file",
+    description="Open the Ada Language Server log file in in a separate editor.",
+    filter=has_als_log_file
+)
+def open_als_log_file():
+    als_log_file = get_als_log_file()
+    if als_log_file:
+        GPS.EditorBuffer.get(GPS.File(als_log_file))
+
+
+@interactive(
+    "General",
+    name="Open clangd log file",
+    description="Open the clangd log file in a separate editor.",
+    filter=has_clangd_log_file,
+)
+def open_clangd_log_file():
+    als_log_file = get_clangd_log_file()
+    if als_log_file:
+        GPS.EditorBuffer.get(GPS.File(als_log_file))
