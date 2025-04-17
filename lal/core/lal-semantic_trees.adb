@@ -30,7 +30,6 @@ with Langkit_Support.Text;
 with Langkit_Support.Tree_Traversal_Iterator;
 with Libadalang.Common; use Libadalang.Common;
 with Libadalang.Iterators;
-with Libadalang.Unparsing;
 
 with GPS.Editors;
 
@@ -1453,7 +1452,8 @@ package body LAL.Semantic_Trees is
          return Langkit_Support.Text.To_UTF8 (Element.Text);
       else
          --  Unparsing the LAL node generates a pretty-print single line string
-         return Libadalang.Unparsing.Unparse (Element);
+         return Langkit_Support.Text.Encode
+                  (Element.Text, Element.Unit.Get_Charset);
       end if;
    end To_Text;
 
