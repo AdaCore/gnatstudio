@@ -144,11 +144,6 @@ package body GPS.LSP_Module is
        ("GPS.LSP.LOGS", GNATCOLL.Traces.On);
    --  Whether to log the LSP notifications that arrive with the 'log' type
 
-   Me_LSP_FORMATTING : constant GNATCOLL.Traces.Trace_Handle :=
-     GNATCOLL.Traces.Create
-       ("GPS.LSP.FORMATTING", GNATCOLL.Traces.On);
-   --  Enable/disable overall LSP formatting
-
    Progress_Pattern : constant VSS.Regular_Expressions.Regular_Expression :=
      VSS.Regular_Expressions.To_Regular_Expression
        ("([0-9][0-9]*)/([0-9][0-9]*)");  --  &1 - processed, &2 - total files
@@ -1141,15 +1136,6 @@ package body GPS.LSP_Module is
    begin
       return Me_Ada_Support.Is_Active;
    end LSP_Ada_Support_Is_Active;
-
-   ------------------------------
-   -- LSP_Formatting_Is_Active --
-   ------------------------------
-
-   function LSP_Formatting_Is_Active return Boolean is
-   begin
-      return Me_LSP_FORMATTING.Is_Active;
-   end LSP_Formatting_Is_Active;
 
    -------------------------------------
    -- LSP_Cpp_Support_Trace_Is_Active --

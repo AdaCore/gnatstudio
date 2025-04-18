@@ -37,11 +37,6 @@ package GPS.LSP_Module is
    --  This does not mean that a language server for Ada is up and running: it
    --  just means that LSP will be used for Ada at some point.
 
-   function LSP_Formatting_Is_Active return Boolean;
-   --  Return True if the LSP formatting for Ada is active.
-   --  This does not mean that a language server for Ada is up and running: it
-   --  just means that LSP will be used for Ada at some point.
-
    function LSP_Cpp_Support_Is_Active return Boolean;
    --  Return True if the LSP support for C++ is active.
    --  This does not mean that a language server for C++ is up and running: it
