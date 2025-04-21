@@ -1387,7 +1387,7 @@ package body Codefix.GNAT_Parser is
      (This : in out GnatCheck_Missing_Storage_Order) is
    begin
       This.Matcher := (1 => new Pattern_Matcher'
-        (Compile ("check: Scalar_Storage_Order is not specified")));
+        (Compile ("rule violation: Scalar_Storage_Order is not specified")));
    end Initialize;
 
    overriding procedure Fix
