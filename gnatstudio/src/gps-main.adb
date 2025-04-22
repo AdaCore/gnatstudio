@@ -1069,33 +1069,44 @@ procedure GPS.Main is
          --  Display the welcome dialog if no project has been automatically
          --  loaded.
 
-         case Display_Welcome_Dialog
-           (GPS_Main.Kernel,
-            Actions => (1 => Create
-                        (Callback  =>
-                            Display_Project_Templates_Assistant'Access,
-                         Label     => "Create new project",
-                         Icon_Name => "gps-add-symbolic"),
-                        2 => Create
-                          (Callback  =>
-                              Display_Open_Project_Dialog'Access,
-                           Label     => "Open project",
-                           Icon_Name => "gps-open-file-symbolic"),
-                        3 => Create
-                          (Callback  =>
-                              Load_Default_Project'Access,
-                           Label     => "Start with default project",
-                           Icon_Name => "gps-run-symbolic")))
-         is
-            when Quit_GPS =>
-               GPS_Main.Application.Quit;
-               return False;
+         declare
+            Actions : constant Welcome_Dialog_Action_Array :=
+              (1 =>
+                 Create
+                   (Callback  => Display_Project_Templates_Assistant'Access,
+                    Label     => "Create new project",
+                    Icon_Name => "gps-add-symbolic"),
+               2 =>
+                 Create
+                   (Callback  => Display_Open_Project_Dialog'Access,
+                    Label     => "Open project",
+                    Icon_Name => "gps-open-file-symbolic"),
+               3 =>
+                 Create
+                   (Callback  => Display_Open_Alire_Crate_Dialog'Access,
+                    Label     => "Open Alire crate",
+                    Icon_Name => "alr-logo-symbolic"),
+               4 =>
+                 Create
+                   (Callback  => Load_Default_Project'Access,
+                    Label     => "Start with default project",
+                    Icon_Name => "gps-run-symbolic"));
+         begin
+            case Display_Welcome_Dialog
+                   (GPS_Main.Kernel,
+                    Actions => (if Is_Alire_Available (GPS_Main.Kernel) then
+                     Actions else Actions (1 .. 2) & Actions (Actions'Last)))
+            is
+               when Quit_GPS =>
+                  GPS_Main.Application.Quit;
+                  return False;
 
-            when Project_Loaded =>
-               --  Desktop was already loaded when the project itself
-               --  was loaded.
-               return True;
-         end case;
+               when Project_Loaded =>
+                  --  Desktop was already loaded when the project itself
+                  --  was loaded.
+                  return True;
+            end case;
+         end;
       exception
          when E : others =>
             Unexpected_Exception := True;

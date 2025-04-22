@@ -28,6 +28,8 @@
          <!-- Project section -->
          <menu label='_New Project...'                        action='create project from template'/>
          <menu label='Open Project...'                        action='open project dialog'/>
+         <menu label='Open Alire Crate...'                    action='open alire crate dialog'
+               optional='true'                                hide='true'/>
          <menu label='Open Project from _Host...'             action='open remote project'
                optional='true'                                hide='true'/>
          <menu label='Open Recent Projects'/>  <!--  contents is dynamic -->
