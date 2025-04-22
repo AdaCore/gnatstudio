@@ -288,8 +288,9 @@ package Debugger is
    --  GDB_COMMAND: "whatis"
 
    function Info_Locals
-     (Debugger : access Debugger_Root) return String is abstract;
-   --  Return the command to be used to display local variables
+     (Debugger : access Debugger_Root)
+      return VSS.String_Vectors.Virtual_String_Vector is abstract;
+   --  Return the names of the local variables
 
    function Info_Args
      (Debugger : access Debugger_Root) return String is abstract;

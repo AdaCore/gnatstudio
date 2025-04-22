@@ -26,11 +26,13 @@ def test_driver():
 
     # Add the variable Foo
     debug = GPS.Debugger.get()
-    debug.send("graph display Foo")
     yield wait_until_not_busy(debug)
     # Run and verify the value
     debug.send("run")
     yield wait_until_not_busy(debug)
+    debug.send("graph display Foo")
+    yield wait_until_not_busy(debug)
+
     gps_assert(dump_tree_model(model, VALUE_COLUMN), ["1"], "Wrong value after break")
     # Check the next command alone
     debug.send("next")

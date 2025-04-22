@@ -93,6 +93,7 @@ with Language.Icons;              use Language.Icons;
 with Language;                    use Language;
 with VSS.Strings;
 with VSS.Strings.Conversions;
+with VSS.String_Vectors;
 with XML_Utils;                   use XML_Utils;
 
 package body GVD.Variables.View is
@@ -114,8 +115,11 @@ package body GVD.Variables.View is
       Nested : Boolean := False;
       --  True if this is a nested item, as opposed to one that appears as a
       --  root item in the tree.
+
+      Is_Local_Variable : Boolean := False;
+      --  Represent local variable if True
    end record;
-   No_Item : constant Item := (Unknown_Id, No_Item_Info, False);
+   No_Item : constant Item := (Unknown_Id, No_Item_Info, False, False);
 
    package Item_Vectors is new Ada.Containers.Vectors (Positive, Item);
 
@@ -129,8 +133,12 @@ package body GVD.Variables.View is
          Items        : Item_Vectors.Vector;
          Types_Column : Gtk_Tree_View_Column;
          Text         : Gtk_Cell_Renderer_Text;
+
+         Ids          : Item_ID := Unknown_Id;
+         --  to compute unique ids for items
       end record;
    type Variable_Tree_View is access all Variable_Tree_View_Record'Class;
+
    overriding function Is_Visible
      (Self   : not null access Variable_Tree_View_Record;
       Iter   : Gtk_Tree_Iter) return Boolean;
@@ -142,6 +150,10 @@ package body GVD.Variables.View is
       Store_Iter  : Gtk_Tree_Iter;
       View_Column : Edited_Column_Id;
       Text        : String);
+   procedure Update
+     (Self    : Variable_Tree_View;
+      Info    : in out Item_Info;
+      Process : Visual_Debugger);
 
    function Get_Id
      (Self : not null access Variable_Tree_View_Record'Class;
@@ -152,9 +164,9 @@ package body GVD.Variables.View is
    --  An Id that uniquely identifies each row of the tree view
 
    type GVD_Variable_View_Record is new Process_View_Record with record
-      Tree    : Variable_Tree_View;
-      Ids     : Item_ID := Unknown_Id;  --  to compute unique ids for items
+      Tree : Variable_Tree_View;
    end record;
+   type GVD_Variable_View_Access is access all GVD_Variable_View_Record;
 
    function Initialize
      (Self   : access GVD_Variable_View_Record'Class) return Gtk_Widget;
@@ -337,6 +349,7 @@ package body GVD.Variables.View is
       Parent          : Gtk_Tree_Iter;
       Id              : Item_ID;
       Lang            : not null Language_Access;
+      Row             : out Gtk_Tree_Iter;
       Recurse         : Boolean := False);
    --  Add a new row in the tree to represent a variable
 
@@ -622,6 +635,7 @@ package body GVD.Variables.View is
 
       for Item of Self.Items loop
          if not Item.Nested
+           and then not Item.Is_Local_Variable
          --  or else Item.Info.Format /= Default_Format
          --  Restore old functionality before
          --  Change-Id: Ice1f6b4459aae94bf381b626e5e8d462cc3652a5
@@ -673,20 +687,22 @@ package body GVD.Variables.View is
          begin
             if String'(V.Get ("tag")) = "cmd" then
                It :=
-                 (Info   => Wrap_Debugger_Command
+                 (Info              => Wrap_Debugger_Command
                     (V.Get ("value"),
                      Split_Lines => V.Get ("split")),
-                  Nested => Boolean'Value (V.Get ("nested")),
-                  Id     => Unknown_Id);
+                  Nested            => Boolean'Value (V.Get ("nested")),
+                  Is_Local_Variable => False,
+                  Id                => Unknown_Id);
                Self.Items.Append (It);
 
             elsif String'(V.Get ("tag")) = "variable" then
                It :=
-                 (Info   => Wrap_Variable
+                 (Info              => Wrap_Variable
                     (V.Get ("value"),
                      Debugger.Value_Format'Value (V.Get ("format"))),
-                  Nested => Boolean'Value (V.Get ("nested")),
-                  Id     => Unknown_Id);
+                  Nested            => Boolean'Value (V.Get ("nested")),
+                  Is_Local_Variable => False,
+                  Id                => Unknown_Id);
                Self.Items.Append (It);
             end if;
          end;
@@ -810,11 +826,9 @@ package body GVD.Variables.View is
       Context : Interactive_Command_Context) return Command_Return_Type
    is
       pragma Unreferenced (Command);
-      Process  : constant Visual_Debugger :=
-        Visual_Debugger (Get_Current_Debugger (Get_Kernel (Context.Context)));
    begin
       Execute_In_Debugger
-        (Context, "tree display `" & Process.Debugger.Info_Locals & "` split");
+        (Context, "tree display `" & Local_Variables_Name & "`");
       return Commands.Success;
    end Execute;
 
@@ -929,9 +943,13 @@ package body GVD.Variables.View is
             --  Try if variables does not crash gdb
             --  and add it into list only if not
 
-            Update (It.Info, Visual_Debugger (Process));
-            View.Ids := View.Ids + 1;
-            It.Id := View.Ids;
+            Update
+              (GVD_Variable_View_Access (View).Tree,
+               It.Info,
+               Visual_Debugger (Process));
+
+            View.Tree.Ids := View.Tree.Ids + 1;
+            It.Id         := View.Tree.Ids;
             View.Tree.Items.Append (It);
 
          elsif Cmd = "undisplay" then
@@ -972,8 +990,8 @@ package body GVD.Variables.View is
          return "";
       end if;
 
-      if Cmd = Debugger.Info_Locals then
-         return "local variables";
+      if Cmd = Local_Variables_Name then
+         return Local_Variables_Name;
 
       elsif Cmd = Debugger.Info_Args then
          return "arguments";
@@ -1007,8 +1025,8 @@ package body GVD.Variables.View is
             Self.Tree.Items := Property.Items;
 
             for It of Self.Tree.Items loop
-               Self.Ids := Self.Ids + 1;
-               It.Id := Self.Ids;
+               Self.Tree.Ids := Self.Tree.Ids + 1;
+               It.Id         := Self.Tree.Ids;
             end loop;
 
             Update (Self);
@@ -1089,6 +1107,7 @@ package body GVD.Variables.View is
         Get_Language (Self.Process.Debugger);
       Deref     : constant String := Lang.Dereference_Name (Full_Name);
       It        : Item;
+      Row       : Gtk_Tree_Iter;
 
       procedure Add (It : in out Item);
       --  Add a new row for It
@@ -1106,6 +1125,7 @@ package body GVD.Variables.View is
             Name      => It.Info.Name,
             Full_Name => It.Info.Name,
             Parent    => Store_Iter,
+            Row       => Row,
             Id        => It.Id,
             Lang      => Lang);
       end Add;
@@ -1123,9 +1143,10 @@ package body GVD.Variables.View is
       end loop;
 
       It :=
-        (Info   => Wrap_Variable (Deref),
-         Nested => True,
-         Id     => Unknown_Id);
+        (Info              => Wrap_Variable (Deref),
+         Nested            => True,
+         Is_Local_Variable => False,
+         Id                => Unknown_Id);
       Self.Items.Append (It);
       Add (It);
    end Add_Children;
@@ -1178,11 +1199,12 @@ package body GVD.Variables.View is
       Parent          : Gtk_Tree_Iter;
       Id              : Item_ID;
       Lang            : not null Language_Access;
+      Row             : out Gtk_Tree_Iter;
       Recurse         : Boolean := False)
    is
-      Row   : Gtk_Tree_Iter;
       Ent   : GVD_Type_Holder;
       Dummy : Boolean;
+      Child : Gtk_Tree_Iter;
 
       Fg       : constant String := To_String (Default_Style.Get_Pref_Fg);
 
@@ -1356,6 +1378,7 @@ package body GVD.Variables.View is
                               Full_Name => Iter.Field_Name (Lang, Full_Name),
                               Parent    =>
                                 (if Recurse then Parent else Row),
+                              Row       => Child,
                               Id        => Unknown_Id,
                               Lang      => Lang,
                               Recurse   => True);
@@ -1370,6 +1393,7 @@ package body GVD.Variables.View is
                               Name      => Iter.Field_Name (Lang, ""),
                               Full_Name => Iter.Field_Name (Lang, Full_Name),
                               Parent    => Row,
+                              Row       => Child,
                               Id        => Unknown_Id,
                               Lang      => Lang);
                         end if;
@@ -1388,6 +1412,7 @@ package body GVD.Variables.View is
                         Name      => Iter.Field_Name (Lang, ""),
                         Full_Name => Iter.Field_Name (Lang, Full_Name),
                         Parent    => Row,
+                        Row       => Child,
                         Id        => Unknown_Id,
                         Lang      => Lang);
                   end if;
@@ -1413,10 +1438,15 @@ package body GVD.Variables.View is
    overriding procedure Update
      (Self : not null access GVD_Variable_View_Record)
    is
-      Process   : constant Visual_Debugger :=
+      Process    : constant Visual_Debugger :=
         Visual_Debugger (Get_Process (Self));
-      Lang      : Language.Language_Access;
-      Expansion : Expansions.Expansion_Status;
+      Lang       : Language.Language_Access;
+      Expansion  : Expansions.Expansion_Status;
+      Row, Child : Gtk_Tree_Iter;
+      Expand     : Gtk_Tree_Iter := Null_Iter;
+      Path       : Gtk_Tree_Path;
+      Dummy      : Boolean;
+      Index      : Integer;
    begin
       Self.Tree.Types_Column.Set_Visible (Show_Types.Get_Pref);
 
@@ -1426,18 +1456,24 @@ package body GVD.Variables.View is
 
       if Process.Debugger /= null then
          --  Compute the new value for all the items
-         for Item of Self.Tree.Items loop
-            if not Item.Nested then
-               if Item.Info.Cmd_Name = "<>" then
-                  Item.Info.Cmd_Name := To_Unbounded_String
-                    (Cmd_Name (Process.Debugger, To_String (Item.Info.Cmd)));
-               end if;
+         Index := Self.Tree.Items.First_Index;
+         while Index <= Self.Tree.Items.Last_Index loop
+            declare
+               I : Item := Self.Tree.Items.Element (Index);
+            begin
+               if not I.Nested then
+                  if I.Info.Cmd_Name = "<>" then
+                     I.Info.Cmd_Name := To_Unbounded_String
+                       (Cmd_Name (Process.Debugger, To_String (I.Info.Cmd)));
+                  end if;
 
-               if Item.Info.Auto_Refresh then
-                  Trace (Me, "Update:" & Item.Info.Name);
-                  Update (Item.Info, Process);
+                  if I.Info.Auto_Refresh then
+                     Trace (Me, "Update:" & I.Info.Name);
+                     Update (Self.Tree, I.Info, Process);
+                  end if;
                end if;
-            end if;
+            end;
+            Index := Index + 1;
          end loop;
 
          Lang := Get_Language (Process.Debugger);
@@ -1449,7 +1485,12 @@ package body GVD.Variables.View is
 
       --  Now display them, and preserve the expansion of items
 
-      Expansions.Get_Expansion_Status (Self.Tree, Expansion);
+      if Process.Debugger /= null
+        and then not Self.Tree.Items.Is_Empty
+      then
+         Expansions.Get_Expansion_Status (Self.Tree, Expansion);
+      end if;
+
       Self.Tree.Model.Clear;
 
       if Process.Debugger /= null
@@ -1462,12 +1503,112 @@ package body GVD.Variables.View is
                   Name      => It.Info.Name,
                   Full_Name => It.Info.Name,
                   Parent    => Null_Iter,
+                  Row       => Row,
                   Id        => It.Id,
                   Lang      => Lang);
+
+               if It.Info.Cmd = Local_Variables_Name then
+                  Expand := Row;
+
+                  for Item of Self.Tree.Items loop
+                     if Item.Is_Local_Variable then
+                        Self.Tree.Add_Row
+                          (Entity    => Item.Info.Entity,
+                           Name      => Item.Info.Name,
+                           Full_Name => Item.Info.Name,
+                           Parent    => Row,
+                           Row       => Child,
+                           Id        => Item.Id,
+                           Lang      => Lang);
+                     end if;
+                  end loop;
+               end if;
             end if;
          end loop;
          Expansions.Set_Expansion_Status (Self.Tree, Expansion);
+
+         if Expand /= Null_Iter then
+            Path  := Self.Tree.Model.Get_Path (Expand);
+            Dummy := Self.Tree.Expand_Row (Path, False);
+            Path_Free (Path);
+         end if;
       end if;
+   end Update;
+
+   ------------
+   -- Update --
+   ------------
+
+   procedure Update
+     (Self    : Variable_Tree_View;
+      Info    : in out Item_Info;
+      Process : Visual_Debugger)
+   is
+      use VSS.Strings;
+
+      Names : VSS.String_Vectors.Virtual_String_Vector;
+      Index : Integer;
+
+      function Has_Variable (Name : Virtual_String) return Boolean;
+      function Has_Variable (Name : Virtual_String) return Boolean is
+         Idx : Integer := Names.First_Index;
+      begin
+         while Idx <= Names.Last_Index loop
+            if Names.Element (Idx) = Name then
+               Names.Delete (Idx);
+               return True;
+            end if;
+
+            Idx := Idx + 1;
+         end loop;
+
+         return False;
+      end Has_Variable;
+
+   begin
+      Update (Info, Process);
+
+      if Info.Cmd_Name /= Local_Variables_Name then
+         return;
+      end if;
+
+      Names := Process.Debugger.Info_Locals;
+      Index := Self.Items.First_Index;
+
+      while Index <= Self.Items.Last_Index loop
+         declare
+            I : Item := Self.Items.Element (Index);
+         begin
+            if I.Is_Local_Variable
+              and then not Has_Variable
+                (VSS.Strings.Conversions.To_Virtual_String (I.Info.Varname))
+            then
+               --  Delete variable that we don't have anymore
+               Item_Vectors.Delete (Self.Items, Index);
+            else
+               Update (I.Info, Process);
+               Self.Items.Replace_Element (Index, I);
+               Index := Index + 1;
+            end if;
+         end;
+      end loop;
+
+      --  Add new names that we did not have
+      for Name of Names loop
+         declare
+            I : Item;
+         begin
+            I.Info              := Wrap_Variable
+              (VSS.Strings.Conversions.To_UTF_8_String (Name));
+            Self.Ids            := Self.Ids + 1;
+            I.Id                := Self.Ids;
+            I.Nested            := True;
+            I.Is_Local_Variable := True;
+
+            Update (I.Info, Process);
+            Self.Items.Append (I);
+         end;
+      end loop;
    end Update;
 
    -------------------

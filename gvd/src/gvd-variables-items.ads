@@ -88,4 +88,6 @@ package GVD.Variables.Items is
    end record;
    type Context_Item_Info_Access is access all Context_Item_Info'Class;
 
+   Local_Variables_Name : constant String := "Local variables";
+
 end GVD.Variables.Items;
