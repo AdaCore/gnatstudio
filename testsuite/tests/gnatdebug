@@ -47,3 +47,6 @@ GPS.LSP.GPR_SUPPORT=no
 
 --  Disable logging
 GPS.LSP.SEARCH_ENTITIES_SUPPORT.ADVANCED=no
+
+-- Disable LSP tooltips trace
+GPS.LSP.TOOLTIPS=no
