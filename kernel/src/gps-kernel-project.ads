@@ -50,6 +50,11 @@ with Gtk.Window;        use Gtk.Window;
 
 package GPS.Kernel.Project is
 
+   Project_Files_History_Key : constant Histories.History_Key :=
+     "project_files";
+   --  Key to use in the kernel histories to store the most recently opened
+   --  project files and alire crates.
+
    -------------------
    -- Project files --
    -------------------
@@ -96,6 +101,11 @@ package GPS.Kernel.Project is
    procedure Load_Empty_Project
      (Kernel : access Kernel_Handle_Record'Class);
    --  Create and load an empty project in memory.
+
+   procedure Load_Alire_Crate
+     (Kernel         : access Kernel_Handle_Record'Class;
+      Alire_Manifest : GNATCOLL.VFS.Virtual_File);
+   --  Load given Alire crate based on the specified alire.toml manifest.
 
    procedure Reload_Project_If_Needed
      (Kernel : access Kernel_Handle_Record'Class;
@@ -226,6 +236,15 @@ package GPS.Kernel.Project is
    --  Recompute_View needs to be called after to take the new directory into
    --  account.
 
+   -----------
+   -- Alire --
+   -----------
+
+   function Is_Alire_Available
+     (Kernel : not null access Kernel_Handle_Record'Class) return Boolean;
+   --  Return True if Alire ('alr' executable) in available in the PATH,
+   --  False otherwise.
+
    -------------
    -- Dialogs --
    -------------
@@ -241,5 +260,17 @@ package GPS.Kernel.Project is
    --
    --  Return True if the selected project has been correctly loaded by
    --  GNAT Studio and False if the dialog was cancelled by the user.
+
+   function Display_Open_Alire_Crate_Dialog
+     (Kernel : not null access Kernel_Handle_Record'Class;
+      Parent : not null access Gtk_Window_Record'Class) return Boolean;
+   --  Display a file selection dialog asking allowing the user to open an
+   --  Alire crate ('alire.toml' files).
+   --
+   --  Parent is set to be the transient window of the displayed file selection
+   --  dialog.
+   --
+   --  Return True if the user selected an Alire crate to load or False if he
+   --  cancelled the dialog.
 
 end GPS.Kernel.Project;

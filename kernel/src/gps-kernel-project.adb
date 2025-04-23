@@ -559,6 +559,27 @@ package body GPS.Kernel.Project is
       Ignore := Load_Desktop (Kernel);
    end Load_Empty_Project;
 
+   ----------------------
+   -- Load_Alire_Crate --
+   ----------------------
+
+   procedure Load_Alire_Crate
+     (Kernel         : access Kernel_Handle_Record'Class;
+      Alire_Manifest : GNATCOLL.VFS.Virtual_File)
+   is
+      Ignore : Boolean;
+   begin
+      --  Run the 'project_changing' hook with the alire.toml manifest and
+      --  load an empty project meanwhile the  alire.py Python plugin is then
+      --  responsible to parse it and load the .gpr file after setting all the
+      --  needed dependencies and environment.
+      Trace (Me, "Running the 'project_changing' hook for Alire");
+      Project_Changing_Hook.Run (Kernel, Alire_Manifest);
+      Trace (Me, "Finished running the 'project_changing' hook for Alire");
+      Load_Empty_Project (Kernel);
+      Ignore := Load_Desktop (Kernel);
+   end Load_Alire_Crate;
+
    ------------------------------
    -- Reload_Project_If_Needed --
    ------------------------------
@@ -1188,6 +1209,18 @@ package body GPS.Kernel.Project is
       end if;
    end Add_Source_Dir;
 
+   ------------------------
+   -- Is_Alire_Available --
+   ------------------------
+
+   function Is_Alire_Available
+     (Kernel : not null access Kernel_Handle_Record'Class) return Boolean
+   is
+      pragma Unreferenced (Kernel);
+   begin
+      return Locate_On_Path ("alr") /= No_File;
+   end Is_Alire_Available;
+
    ---------------------------------
    -- Display_Open_Project_Dialog --
    ---------------------------------
@@ -1213,5 +1246,31 @@ package body GPS.Kernel.Project is
          return False;
       end if;
    end Display_Open_Project_Dialog;
+
+   -------------------------------------
+   -- Display_Open_Alire_Crate_Dialog --
+   -------------------------------------
+
+   function Display_Open_Alire_Crate_Dialog
+     (Kernel : not null access Kernel_Handle_Record'Class;
+      Parent : not null access Gtk_Window_Record'Class) return Boolean
+   is
+      Filename : constant Virtual_File :=
+        Select_File
+          (-"Open Project",
+           File_Pattern      => "alire.toml",
+           Pattern_Name      => -"Alire Crate files",
+           Parent            => Gtk_Window (Parent),
+           Use_Native_Dialog => Use_Native_Dialogs.Get_Pref,
+           Kind              => Open_File,
+           History           => Get_History (Kernel));
+   begin
+      if Filename /= GNATCOLL.VFS.No_File then
+         Load_Alire_Crate (Kernel, Filename);
+         return True;
+      else
+         return False;
+      end if;
+   end Display_Open_Alire_Crate_Dialog;
 
 end GPS.Kernel.Project;
