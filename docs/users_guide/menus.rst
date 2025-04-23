@@ -1544,6 +1544,12 @@ The Help Menu
 
    Create an archive containing information (logs, plugins file etc.) that can be used for bug reports.
 
+.. index:: menu; help --> open ada language server log file
+
+* :menuselection:`Help --> Open Ada Language Server Log File`
+
+   Open the Ada Language Server log file in in a separate editor.
+
 .. index:: menu; help --> about
 
 * :menuselection:`Help --> About`
