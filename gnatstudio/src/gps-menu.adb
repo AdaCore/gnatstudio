@@ -598,25 +598,28 @@ package body GPS.Menu is
          Name_List :=
            Get_History (Kernel.Get_History.all, Project_Files_History_Key);
 
-         for Idx in Name_List'First .. Name_List'Last loop
-            if Name_List (Idx) = null then
-               --  defensive code
-               Trace (Me, "Null project name in the history");
-               Name_List (Idx) := new String'("");
+         if Name_List /= null then
+            for Idx in Name_List'First .. Name_List'Last loop
+               if Name_List (Idx) = null then
+                  --  defensive code
+                  Trace (Me, "Null project name in the history");
+                  Name_List (Idx) := new String'("");
 
-            else
-               --  Create a menu if the project actually exists. Remove it from
-               --  the history otherwise.
-               if Create_From_UTF8 (Name_List (Idx).all).Is_Regular_File then
-                  Create_New_Menu
-                    (Create (+Name_List (Idx).all), Prepend => False);
                else
-                  --  Mark the name for removal. We cannot do this while we're
-                  --  iterating on the list of names.
-                  Names_To_Remove.Append (Name_List (Idx).all);
+                  --  Create a menu if the project actually exists. Remove
+                  --  it from the history otherwise.
+                  if Create_From_UTF8 (Name_List (Idx).all).Is_Regular_File
+                  then
+                     Create_New_Menu
+                       (Create (+Name_List (Idx).all), Prepend => False);
+                  else
+                     --  Mark the name for removal. We cannot do this while
+                     --  we're iterating on the list of names.
+                     Names_To_Remove.Append (Name_List (Idx).all);
+                  end if;
                end if;
-            end if;
-         end loop;
+            end loop;
+         end if;
 
          for Name of Names_To_Remove loop
             Remove_From_History
