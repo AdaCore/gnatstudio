@@ -541,7 +541,10 @@
          <menu label='CodePeer'/>
          <menu label='GNATSAS'/>
          <separator />
-         <menu label='Create Bug Report'  action='Create bug report'/>
+         <menu label='Create Bug Report'                  action='Create bug report'/>
+         <menu label='Open GNAT Studio Log File'          action='Open GNAT Studio log file' optional='true'/>
+         <menu label='Open Ada Language Server Log File'  action='Open ALS log file' optional='true'/>
+         <menu label='Open Clangd Log File'               action='Open clangd log file' optional='true'/>
          <separator />
          <menu label='A_bout'             action='about gnatstudio'/>
       </menu>

@@ -426,7 +426,9 @@ performed to reproduce the problem as well as listing all the tools (e.g
 
 The files :file:`$HOME/.gnatstudio/log.<timestamp>.txt` (GNAT Studio log file) and
 :file:`$HOME/.gnatstudio/ada_ls_log.<timestamp>.txt` (Ada Language Server log file) may
-also bring some useful information when reporting a bug.
+also bring some useful information when reporting a bug. You can open them directly
+in GNAT Studio respectively via the :menuselection:`Help --> Open GNAT Studio Log File`
+and :menuselection:`Help --> Open Ada Language Server Log File` menus.
 
 Note that you can use the :menuselection:`Help --> Create Bug Report` menu to help
 you creating a bug report archive (tar.gz archive file) that includes all the information
