@@ -16,7 +16,12 @@ else
 endif
 
 GPRBUILD=gprbuild
-GPRBUILD_FLAGS=-j0
+ifeq ($(BUILD),cov)
+  GPRBUILD_FLAGS=-j0 -m2 -p --src-subdirs=gnatcov-instr --implicit-with=gnatcov_rts.gpr
+else
+  GPRBUILD_FLAGS=-j0
+endif
+
 PYTHON=python
 
 BUILD?=Debug
