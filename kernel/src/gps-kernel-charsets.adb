@@ -372,7 +372,7 @@ package body GPS.Kernel.Charsets is
 
       if Contents = null then
          --  Reset Text to null state to report "file" error.
-
+         Trace (Me, "Unable to read file: " & File.Display_Full_Name);
          Text.Clear;
 
          return;
@@ -391,7 +391,7 @@ package body GPS.Kernel.Charsets is
 
       begin
          --  Attempt to decode text from specified encoding.
-
+         Trace (Me, "Decoding file: " & File.Display_Full_Name);
          Decoder.Initialize (Charset, Decoder_Flags);
 
          if Decoder.Is_Valid then
