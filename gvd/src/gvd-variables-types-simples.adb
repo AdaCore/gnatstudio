@@ -520,7 +520,8 @@ package body GVD.Variables.Types.Simples is
 
                Local_Pattern : constant Pattern_Matcher := Compile
                  ("level=""(\d*)""|" &
-                    "{name=""([^""]*)"",value=""([^""]*)""},?");
+                    "{name=""([^""]*)""," &
+                    "value=""(?:\\"")?([^""]*)(?:\\"")?""},?");
                From          : Integer := S'First;
                Matched       : Match_Array (0 .. 3);
 

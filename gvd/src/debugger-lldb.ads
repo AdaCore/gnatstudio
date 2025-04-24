@@ -102,7 +102,8 @@ package Debugger.LLDB is
       Default   : String) return String;
 
    overriding function Info_Locals
-     (Debugger : access LLDB_Debugger) return String;
+     (Debugger : access LLDB_Debugger)
+      return VSS.String_Vectors.Virtual_String_Vector;
 
    overriding function Info_Args
      (Debugger : access LLDB_Debugger) return String;

@@ -116,7 +116,8 @@ package Debugger.Base_Gdb.Gdb_MI is
       Entity   : String) return String;
 
    overriding function Info_Locals
-     (Debugger : access Gdb_MI_Debugger) return String;
+     (Debugger : access Gdb_MI_Debugger)
+      return VSS.String_Vectors.Virtual_String_Vector;
 
    overriding function Info_Args
      (Debugger : access Gdb_MI_Debugger) return String;
