@@ -92,7 +92,23 @@ package body DAP.Clients.Variables.Variables is
 
       --  Add childs to Id
       if Result.a_body.variables.Length = 0 then
-         Var.Scopes.Append_Child (C, Empty_Variable_Data);
+         --  GDB did not return nested elements, for example:
+         --  {"request_seq": 17, "type": "response", "command": "variables",
+         --   "success": true, "body": {"variables": []}, "seq": 146}
+         --  so display "[]" as a value
+         Var.Scopes.Append_Child
+           (C,
+            (Non_Specified,
+             (name               => "<>",
+              value              => "[]",
+              a_type             => "<>",
+              presentationHint   => (Is_Set => False),
+              evaluateName       => <>,
+              variablesReference => 0,
+              namedVariables     => (Is_Set => False),
+              indexedVariables   => (Is_Set => False),
+              memoryReference    => <>)));
+
       else
          for Index in 1 .. Result.a_body.variables.Length loop
             Var.Scopes.Append_Child
@@ -130,11 +146,46 @@ package body DAP.Clients.Variables.Variables is
    overriding procedure On_Error_Message
      (Self    : in out Variables_Request;
       Client  : not null access DAP.Clients.DAP_Client'Class;
-      Message : VSS.Strings.Virtual_String) is
+      Message : VSS.Strings.Virtual_String)
+   is
+      Var     : constant Variables_Holder_Access := Client.Get_Variables;
+      Id      : constant Integer :=
+        Self.Parameters.arguments.variablesReference;
+      C       : Variables_References_Trees.Cursor;
    begin
       DAP.Requests.Variables.Variables_DAP_Request
         (Self).On_Error_Message (Client, Message);
-      Client.Variables.On_Variable_Not_Found (Self.Params);
+
+      C := Var.Find_By_Id (Id);
+      if C = Variables_References_Trees.No_Element then
+         --  We did not find any entrance
+         return;
+      end if;
+
+      if Id = Var.Arguments_Scope_Id
+        or else Id = Var.Locals_Scope_Id
+        or else Id = Var.Globals_Scope_Id
+        or else Message.Is_Empty
+      then
+         Client.Variables.On_Variable_Not_Found (Self.Params);
+
+      else
+         --  Can't get nested elements for some reason, display
+         --  error message as a value to let user know about the problem.
+         Var.Scopes.Append_Child
+           (C,
+            (Non_Specified,
+             (name               => "<>",
+              value              => Message,
+              a_type             => "<>",
+              presentationHint   => (Is_Set => False),
+              evaluateName       => <>,
+              variablesReference => 0,
+              namedVariables     => (Is_Set => False),
+              indexedVariables   => (Is_Set => False),
+              memoryReference    => <>)));
+         Var.On_Variables_Response (Self.Params);
+      end if;
    end On_Error_Message;
 
    -----------------
