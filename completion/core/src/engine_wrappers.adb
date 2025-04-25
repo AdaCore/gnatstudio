@@ -533,4 +533,14 @@ package body Engine_Wrappers is
                               Construct => Proposal.Construct);
    end Deep_Copy;
 
+   --------------------------
+   -- Get_Custom_Icon_Name --
+   --------------------------
+
+   function Get_Custom_Icon_Name (Proposal : Root_Proposal) return String is
+   begin
+      --  Provide a function body to work around eng/das/cov/gnatcov#410
+      return "";
+   end Get_Custom_Icon_Name;
+
 end Engine_Wrappers;

@@ -378,7 +378,7 @@ package Default_Preferences is
    --  generally be done through Preference_Handlers below.
 
    function Editor_Needs_Label
-     (Pref : not null access Preference_Record) return Boolean is (True);
+     (Pref : not null access Preference_Record) return Boolean;
    --  Whether a separate label should be displayed for the preference in
    --  the editor. If False is returned, it is assumed that the widget returned
    --  by Edit already shows the label.

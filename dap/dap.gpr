@@ -18,4 +18,11 @@ project DAP is
 
    package Compiler renames Shared.Compiler;
 
+   package Coverage is
+      for Excluded_Units use (
+         --  eng/das/cov/gnatcoverage#409
+         "DAP.Views.Memory"
+      );
+   end Coverage;
+
 end DAP;

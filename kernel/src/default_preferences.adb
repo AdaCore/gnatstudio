@@ -3255,4 +3255,15 @@ package body Default_Preferences is
       return Font_Box;
    end Create_Box_For_Font;
 
+   ------------------------
+   -- Editor_Needs_Label --
+   ------------------------
+
+   function Editor_Needs_Label
+     (Pref : not null access Preference_Record) return Boolean is
+   begin
+      --  Provide a function body to work around eng/das/cov/gnatcov#410
+      return True;
+   end Editor_Needs_Label;
+
 end Default_Preferences;
