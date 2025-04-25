@@ -623,7 +623,7 @@ package body Histories is
    procedure Remove_From_History
      (Hist            : in out History_Record;
       Key             : History_Key;
-      Entry_To_Remove : String)
+      Entry_To_Remove : VSS.Strings.Virtual_String)
    is
       procedure Unchecked_Free is new Ada.Unchecked_Deallocation
         (String_List, String_List_Access);
@@ -641,7 +641,9 @@ package body Histories is
          while J <= Value.List'Last loop
 
             --  Find the entry to remove
-            if Value.List (J).all = Entry_To_Remove then
+            if Value.List (J).all
+              = VSS.Strings.Conversions.To_UTF_8_String (Entry_To_Remove)
+            then
 
                --  Create a new list by appending the slices before and after
                --  the position of the entry to remove.
@@ -663,6 +665,7 @@ package body Histories is
          end loop;
       end;
    end Remove_From_History;
+
    -----------------
    -- Set_History --
    -----------------

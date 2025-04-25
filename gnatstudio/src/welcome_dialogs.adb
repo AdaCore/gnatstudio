@@ -158,7 +158,7 @@ package body Welcome_Dialogs is
          Remove_From_History
            (Hist            => Item.Kernel.Get_History.all,
             Key             => Project_Files_History_Key,
-            Entry_To_Remove => Item.File.Display_Full_Name);
+            Entry_To_Remove => GNATCOLL.VFS.VSS_Utils.Full_Name (Item.File));
          Item.Get_Parent.Destroy;
       end if;
    end On_Response;

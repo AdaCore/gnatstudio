@@ -152,7 +152,7 @@ package Histories is
    procedure Remove_From_History
      (Hist            : in out History_Record;
       Key             : History_Key;
-      Entry_To_Remove : String);
+      Entry_To_Remove : VSS.Strings.Virtual_String);
    --  Remove the given entry from the history, if present.
    --  This works only if the history for this key does not allow duplicates.
 

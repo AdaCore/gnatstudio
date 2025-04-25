@@ -624,8 +624,7 @@ package body GPS.Menu is
                   Remove_From_History
                     (Hist            => Kernel.Get_History.all,
                      Key             => Project_Files_History_Key,
-                     Entry_To_Remove =>
-                       VSS.Strings.Conversions.To_UTF_8_String (Name));
+                     Entry_To_Remove => Name);
                end if;
             end;
          end loop;
