@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                               GNAT Studio                                --
 --                                                                          --
---                     Copyright (C) 2013-2023, AdaCore                     --
+--                     Copyright (C) 2013-2025, AdaCore                     --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -18,11 +18,14 @@
 --  This package describes the base types used for the various search and
 --  completion engines in GNAT Studio.
 
+private with Ada.Containers.Doubly_Linked_Lists;
 with Ada.Strings.Unbounded;
-with Basic_Types;   use Basic_Types;
 with GNAT.Regpat;
 with GNAT.Strings;
-private with Ada.Containers.Doubly_Linked_Lists;
+
+with VSS.Strings;
+
+with Basic_Types;   use Basic_Types;
 
 package GPS.Search is
 
@@ -308,7 +311,7 @@ package GPS.Search is
       Score    : Integer := 100;
       Short    : GNAT.Strings.String_Access;
       Long     : GNAT.Strings.String_Access;
-      Id       : GNAT.Strings.String_Access;
+      Id       : VSS.Strings.Virtual_String;
       Provider : access Search_Provider'Class;  --  do not free
    end record;
    type Search_Result_Access is access all Search_Result'Class;

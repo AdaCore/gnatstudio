@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                               GNAT Studio                                --
 --                                                                          --
---                     Copyright (C) 2013-2023, AdaCore                     --
+--                     Copyright (C) 2013-2025, AdaCore                     --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -1195,7 +1195,7 @@ package body GPS.Search.GUI is
                Score    => 100,
                Short    => new String'(""),
                Long     => null,
-               Id       => new String'(""),
+               Id       => <>,
                Provider => null);
             --  Provider is set in the handler for "next", before returning
             --  the type to Ada.
@@ -1442,9 +1442,7 @@ package body GPS.Search.GUI is
             Result : constant Result_Property :=
               Get_Search_Result (Data, 1);
          begin
-            if Result.Result.Id /= Result.Result.Short
-              and then Result.Result.Short /= Result.Result.Long
-            then
+            if Result.Result.Short /= Result.Result.Long then
                Free (Result.Result.Short);
             end if;
 
@@ -1456,9 +1454,7 @@ package body GPS.Search.GUI is
             Result : constant Result_Property :=
               Get_Search_Result (Data, 1);
          begin
-            if Result.Result.Id /= Result.Result.Long
-              and then Result.Result.Short /= Result.Result.Long
-            then
+            if Result.Result.Short /= Result.Result.Long then
                Free (Result.Result.Long);
             end if;
 

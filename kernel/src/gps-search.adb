@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                               GNAT Studio                                --
 --                                                                          --
---                     Copyright (C) 2013-2023, AdaCore                     --
+--                     Copyright (C) 2013-2025, AdaCore                     --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -963,10 +963,6 @@ package body GPS.Search is
    procedure Free (Self : in out Search_Result) is
    begin
       Trace (Memcheck_Handle, "Free Search_Result");
-      if Self.Id /= Self.Short and then Self.Id /= Self.Long then
-         Free (Self.Id);
-      end if;
-
       Free (Self.Short);
       Free (Self.Long);
    end Free;

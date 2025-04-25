@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                               GNAT Studio                                --
 --                                                                          --
---                     Copyright (C) 2001-2023, AdaCore                     --
+--                     Copyright (C) 2001-2025, AdaCore                     --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -14,6 +14,8 @@
 -- COPYING3.  If not, go to http://www.gnu.org/licenses for a complete copy --
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
+
+with VSS.Strings.Conversions;
 
 with String_Utils;            use String_Utils;
 
@@ -233,9 +235,7 @@ package body GPS.Kernel.Search.Preferences is
       Pref  : not null Default_Preferences.Preference;
       Short : GNAT.Strings.String_Access;
       Long  : GNAT.Strings.String_Access;
-      Score : Natural) return GPS.Search.Search_Result_Access
-   is
-      Name  : constant String := Get_Name (Pref);
+      Score : Natural) return GPS.Search.Search_Result_Access is
    begin
       return new Preferences_Search_Result'
         (Kernel   => Self.Kernel,
@@ -243,7 +243,8 @@ package body GPS.Kernel.Search.Preferences is
          Score    => Score,
          Short    => Short,
          Long     => Long,
-         Id       => new String'(Name),
+         Id       =>
+           VSS.Strings.Conversions.To_Virtual_String (Get_Name (Pref)),
          Pref     => Pref);
    end Create_Preferences_Search_Result;
 

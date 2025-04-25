@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                               GNAT Studio                                --
 --                                                                          --
---                     Copyright (C) 2008-2024, AdaCore                     --
+--                     Copyright (C) 2008-2025, AdaCore                     --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -2003,15 +2003,17 @@ package body Builder_Facility_Module is
                C := Self.Pattern.Start (Name);
                if C /= GPS.Search.No_Match then
                   Result := new Builder_Search_Result'
-                     (Kernel   => Self.Kernel,
-                      Provider => Self,
-                       Score   => C.Score,
-                       Short   => new String'
-                          (Self.Pattern.Highlight_Match (Name, Context => C)),
-                       Long    => null,
-                       Id      => new String'("build-" & Name),
-                       Main    => Main,
-                       Target  => T);
+                    (Kernel   => Self.Kernel,
+                     Provider => Self,
+                     Score   => C.Score,
+                     Short   => new String'
+                       (Self.Pattern.Highlight_Match (Name, Context => C)),
+                     Long    => null,
+                     Id      =>
+                       VSS.Strings.Conversions.To_Virtual_String
+                         ("build-" & Name),
+                     Main    => Main,
+                     Target  => T);
                   Self.Adjust_Score (Result);
                end if;
             end;
