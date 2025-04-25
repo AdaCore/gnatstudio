@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                               GNAT Studio                                --
 --                                                                          --
---                     Copyright (C) 2001-2023, AdaCore                     --
+--                     Copyright (C) 2001-2025, AdaCore                     --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -1959,22 +1959,6 @@ package body Interactive_Consoles is
       Get_Bounds (Console.Buffer, Start, The_End);
       return Get_Text (Start, The_End);
    end Get_Chars;
-
-   -----------------
-   -- Get_History --
-   -----------------
-
-   function Get_History
-     (Console : access Interactive_Console_Record)
-      return GNAT.Strings.String_List_Access is
-   begin
-      if Console.History = null then
-         return null;
-      else
-         return Get_History
-           (Console.History.all, History_Key (Console.Key.all));
-      end if;
-   end Get_History;
 
    ------------------------
    -- Insert_And_Execute --
