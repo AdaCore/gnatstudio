@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                               GNAT Studio                                --
 --                                                                          --
---                     Copyright (C) 2002-2024, AdaCore                     --
+--                     Copyright (C) 2002-2025, AdaCore                     --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -2234,10 +2234,13 @@ package body Project_Properties is
                    Kernel         => Ed.Kernel,
                    Project        => Ed.Project,
                    Default        =>
-                     +Histories.Most_Recent
-                       (Hist => Ed.Kernel.Get_History,
-                        Key  => History_Name (Ed.Attribute),
-                        Default => Get_Safe_Text (Ed.Ent)),
+                     +VSS.Strings.Conversions.To_UTF_8_String
+                     (Histories.Most_Recent
+                        (Hist    => Ed.Kernel.Get_History,
+                         Key     => History_Name (Ed.Attribute),
+                         Default =>
+                           VSS.Strings.Conversions.To_Virtual_String
+                             (Get_Safe_Text (Ed.Ent)))),
                    Project_Path   => +Get_Safe_Text (Ed.Path_Widget),
                    --  ??? What if the filesystem path is non-UTF8?
                    As_Directory   => Ed.As_Directory,

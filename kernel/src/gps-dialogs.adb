@@ -208,8 +208,9 @@ package body GPS.Dialogs is
       LabelW               : Gtk_Label;
       Ent                  : Gtk_Entry;
       Button               : Browse_Button;
-      Default_History_Path : constant String :=
+      Default_History_Path : constant VSS.Strings.Virtual_String :=
         Most_Recent (Self.Kernel.Get_History, Key);
+
    begin
       Gtk_New_Hbox (Box, Homogeneous => False);
       Self.Get_Content_Area.Pack_Start (Box, Expand => False);
@@ -223,8 +224,11 @@ package body GPS.Dialogs is
       Gtk_New (Ent);
       Box.Pack_Start (Ent, Expand => True, Fill => True);
 
-      if Default_History_Path /= "" then
-         Ent.Set_Text (Text => Default_History_Path);
+      if not Default_History_Path.Is_Empty then
+         Ent.Set_Text
+           (Text =>
+              VSS.Strings.Conversions.To_UTF_8_String (Default_History_Path));
+
       else
          Ent.Set_Text
            (Create_From_Base

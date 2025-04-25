@@ -751,7 +751,8 @@ package body GPS.Search.GUI is
 
       --  Fill initial contents based on history
       Module.Search.Set_Text
-         (Most_Recent (Get_History (Kernel), Self.History.all));
+        (VSS.Strings.Conversions.To_UTF_8_String
+           (Most_Recent (Get_History (Kernel), Self.History.all)));
 
       --  Force the display of the popup, even if empty, to help the user
       --  see where the focus is.

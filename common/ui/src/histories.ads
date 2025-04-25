@@ -157,9 +157,10 @@ package Histories is
    --  This works only if the history for this key does not allow duplicates.
 
    function Most_Recent
-     (Hist : access History_Record;
-      Key  : History_Key;
-      Default : String := "") return String;
+     (Hist    : access History_Record;
+      Key     : History_Key;
+      Default : VSS.Strings.Virtual_String := "")
+      return VSS.Strings.Virtual_String;
    --  Return the most recent history for this key, or Default if the key did
    --  not exist yet.
 

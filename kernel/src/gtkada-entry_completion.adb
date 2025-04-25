@@ -20,7 +20,7 @@ with Ada.Unchecked_Conversion;
 with Ada.Unchecked_Deallocation;
 with GNAT.Strings;               use GNAT.Strings;
 
-with VSS.Strings;
+with VSS.Strings.Conversions;
 
 with Commands;                   use Commands;
 with Default_Preferences;        use Default_Preferences;
@@ -569,10 +569,12 @@ package body Gtkada.Entry_Completion is
       procedure Create_Search_Kind_Radio_Buttons
         (Parent_Box : Gtk_Box)
       is
-         Current_Search_Kind : constant String := Most_Recent
-           (Get_History (Kernel),
-            Name & "-kind",
-            Search_Kind'Image (Fuzzy));
+         Current_Search_Kind : constant VSS.Strings.Virtual_String :=
+           Most_Recent
+             (Get_History (Kernel),
+              Name & "-kind",
+              VSS.Strings.To_Virtual_String
+                (Search_Kind'Wide_Wide_Image (Fuzzy)));
          Search_Kind_Radios  : Search_Kind_Radio_Button_Array (1 .. 3);
          Idx                 : Integer := Search_Kind_Radios'First;
          Active_Idx          : Integer := Idx;
@@ -601,7 +603,10 @@ package body Gtkada.Entry_Completion is
                   Expand  => False,
                   Padding => Padding);
 
-               if Kind_Image = Current_Search_Kind then
+               if Kind_Image
+                 = VSS.Strings.Conversions.To_UTF_8_String
+                     (Current_Search_Kind)
+               then
                   Active_Idx := Idx;
                   Self.Search_Kind := Kind;
                end if;
@@ -635,11 +640,13 @@ package body Gtkada.Entry_Completion is
       Self.GEntry.Set_Placeholder_Text (Placeholder);
       Self.GEntry.Set_Tooltip_Markup (Completion.Documentation);
       Self.GEntry.Set_Name (String (Name));
+
       begin
          Self.GEntry.Set_Width_Chars
-           (Gint'Value
-              (Most_Recent (Get_History (Kernel), Name & "-width",
-               Default => "25")));
+           (Gint'Wide_Wide_Value
+              (VSS.Strings.Conversions.To_Wide_Wide_String
+                   (Most_Recent (Get_History (Kernel), Name & "-width",
+                    Default => "25"))));
       exception
          when others =>
             Self.GEntry.Set_Width_Chars (25);

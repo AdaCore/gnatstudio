@@ -1446,8 +1446,9 @@ package body KeyManager_Module is
      (Kernel : not null access GPS.Kernel.Kernel_Handle_Record'Class)
       return String is
    begin
-      return Most_Recent
-        (Get_History (Kernel), Hist_Key_Theme, "default");
+      return
+        VSS.Strings.Conversions.To_UTF_8_String
+          (Most_Recent (Get_History (Kernel), Hist_Key_Theme, "default"));
    end Get_Key_Theme;
 
    ------------------

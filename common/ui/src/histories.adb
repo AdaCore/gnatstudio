@@ -795,9 +795,10 @@ package body Histories is
    -----------------
 
    function Most_Recent
-     (Hist : access History_Record;
-      Key  : History_Key;
-      Default : String := "") return String
+     (Hist    : access History_Record;
+      Key     : History_Key;
+      Default : VSS.Strings.Virtual_String := "")
+      return VSS.Strings.Virtual_String
    is
       Past : VSS.String_Vectors.Virtual_String_Vector;
 
@@ -810,7 +811,7 @@ package body Histories is
          return Default;
 
       else
-         return VSS.Strings.Conversions.To_UTF_8_String (Past.First_Element);
+         return Past.First_Element;
       end if;
    end Most_Recent;
 
