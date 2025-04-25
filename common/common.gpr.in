@@ -22,7 +22,7 @@ project Common is
           when "Production" =>
              for Switches ("htables.adb") use No_Checks;
              for Switches ("dynamic_arrays.adb") use No_Checks;
-          when "Debug" | "AddressSanitizer" | "cov" =>
+          when "Debug" | "AddressSanitizer" | "Coverage" =>
       end case;
    end Compiler;
 
