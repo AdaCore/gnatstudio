@@ -493,7 +493,8 @@ package body Histories is
       Clear_Combo : Boolean := True;
       Prepend     : Boolean := False;
       Col         : Gint := 0;
-      Filter      : access function (Item : String) return Boolean := null)
+      Filter      : access
+        function (Item : VSS.Strings.Virtual_String) return Boolean := null)
    is
       List  : constant Gtk_List_Store := -Get_Model (Combo);
       Value : constant VSS.String_Vectors.Virtual_String_Vector :=
@@ -514,9 +515,7 @@ package body Histories is
             --  restore the contents of the entry, but shouldn't appear in the
             --  list.
             if not V.Is_Empty
-              and then (Filter = null
-                        or else Filter
-                                (VSS.Strings.Conversions.To_UTF_8_String (V)))
+              and then (Filter = null or else Filter (V))
             then
                --  Do not add the item directly, in case there was already a
                --  similar entry in the list if it wasn't cleared

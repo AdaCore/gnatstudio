@@ -21,10 +21,11 @@
 --  It also provides a way to save the current value for check buttons from one
 --  session of GNAT Studio to the other.
 
-with GNAT.Strings;
+private with GNAT.Strings;
 with GNATCOLL.VFS;
 
 with VSS.String_Vectors;
+with VSS.Strings;
 
 with Glib;
 with Gtk.Check_Menu_Item;
@@ -132,7 +133,8 @@ package Histories is
       Clear_Combo : Boolean := True;
       Prepend     : Boolean := False;
       Col         : Glib.Gint := 0;
-      Filter      : access function (Item : String) return Boolean := null);
+      Filter      : access
+        function (Item : VSS.Strings.Virtual_String) return Boolean := null);
    --  Set the contents of the combo to the list of strings associated with
    --  Key.
    --  If Clear_Combo is False, then the previous contents of the combo is kept
