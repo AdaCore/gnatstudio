@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                               GNAT Studio                                --
 --                                                                          --
---                       Copyright (C) 2022-2023, AdaCore                   --
+--                       Copyright (C) 2022-2025, AdaCore                   --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -34,5 +34,18 @@ package body GNATCOLL.VFS.VSS_Utils is
            Host,
            Normalize);
    end Create;
+
+   ---------------
+   -- Full_Name --
+   ---------------
+
+   function Full_Name
+     (File      : Virtual_File;
+      Normalize : Boolean := False) return VSS.Strings.Virtual_String is
+   begin
+      return
+        VSS.Strings.Conversions.To_Virtual_String
+          (File.Display_Full_Name (Normalize));
+   end Full_Name;
 
 end GNATCOLL.VFS.VSS_Utils;
