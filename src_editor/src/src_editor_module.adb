@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                               GNAT Studio                                --
 --                                                                          --
---                     Copyright (C) 2001-2023, AdaCore                     --
+--                     Copyright (C) 2001-2025, AdaCore                     --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -22,9 +22,13 @@ with Ada.Strings.Unbounded;             use Ada.Strings.Unbounded;
 with GNAT.OS_Lib;                       use GNAT.OS_Lib;
 with GNAT.Regpat;
 
+with VSS.String_Vectors;
+
 with GNATCOLL.Projects;                 use GNATCOLL.Projects;
 with GNATCOLL.Traces;                   use GNATCOLL.Traces;
 with GNATCOLL.Utils;                    use GNATCOLL.Utils;
+with GNATCOLL.VFS.VSS_Utils;
+
 with Gdk.Event;                         use Gdk.Event;
 with Glib.Object;                       use Glib.Object;
 with Glib.Unicode;                      use Glib.Unicode;
@@ -1492,7 +1496,7 @@ package body Src_Editor_Module is
    is
       M : constant Source_Editor_Module :=
         Source_Editor_Module (Src_Editor_Module_Id);
-      V : constant String_List_Access :=  --  Do not free
+      V : constant VSS.String_Vectors.Virtual_String_Vector :=
         Get_History (Kernel.Get_History.all, Hist_Key);
       F : Virtual_File;
    begin
@@ -1510,12 +1514,10 @@ package body Src_Editor_Module is
       --  always in the same toplevel menu, even when menus.xml has been
       --  changed by the user.
 
-      if V /= null then
-         for N of V.all loop
-            F := Create (+N.all);
-            Create_New_Recent_Menu (Kernel, F, Prepend => False);
-         end loop;
-      end if;
+      for N of V loop
+         F := GNATCOLL.VFS.VSS_Utils.Create (N);
+         Create_New_Recent_Menu (Kernel, F, Prepend => False);
+      end loop;
    end Regenerate_Recent_Files_Menu;
 
    ------------------------
@@ -1535,22 +1537,22 @@ package body Src_Editor_Module is
       --  normalizing capitalization under Windows.
       declare
          Hist      : constant History := Kernel.Get_History;
-         Name_List : constant String_List_Access :=  --  Do not free
-            Get_History (Hist.all, Hist_Key);
+         Name_List : constant VSS.String_Vectors.Virtual_String_Vector :=
+           Get_History (Hist.all, Hist_Key);
          F         : Virtual_File;
+
       begin
-         if Name_List /= null then
+         Is_Full := Name_List.Length = Get_Max_Length (Hist.all, Hist_Key);
 
-            Is_Full := Name_List'Length = Get_Max_Length (Hist.all, Hist_Key);
+         for Name of Name_List loop
+            F := GNATCOLL.VFS.VSS_Utils.Create (Name);
 
-            for Name of Name_List.all loop
-               F := Create (+Name.all);
-               if F = File then
-                  --  The menu and actions are already there, nothing to do.
-                  return;
-               end if;
-            end loop;
-         end if;
+            if F = File then
+               --  The menu and actions are already there, nothing to do.
+
+               return;
+            end if;
+         end loop;
       end;
 
       --  If we reach this, it means the menu doesn't already exist.

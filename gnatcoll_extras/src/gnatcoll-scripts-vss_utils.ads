@@ -34,4 +34,8 @@ package GNATCOLL.Scripts.VSS_Utils is
       N     : Positive;
       Value : VSS.Strings.Virtual_String);
 
+   procedure Set_Return_Value
+     (Data  : in out Callback_Data'Class;
+      Value : VSS.Strings.Virtual_String);
+
 end GNATCOLL.Scripts.VSS_Utils;

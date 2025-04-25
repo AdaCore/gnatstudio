@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                               GNAT Studio                                --
 --                                                                          --
---                     Copyright (C) 2002-2023, AdaCore                     --
+--                     Copyright (C) 2002-2025, AdaCore                     --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -23,6 +23,8 @@
 
 with GNAT.Strings;
 with GNATCOLL.VFS;
+
+with VSS.String_Vectors;
 
 with Glib;
 with Gtk.Check_Menu_Item;
@@ -117,7 +119,7 @@ package Histories is
 
    function Get_History
      (Hist : History_Record; Key : History_Key)
-      return GNAT.Strings.String_List_Access;
+      return VSS.String_Vectors.Virtual_String_Vector;
    --  Return the list of strings stored as Key.
    --  The returned array mustn't be freed by the user, it references internal
    --  data.

@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                               GNAT Studio                                --
 --                                                                          --
---                     Copyright (C) 2002-2024, AdaCore                     --
+--                     Copyright (C) 2002-2025, AdaCore                     --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -20,6 +20,8 @@ with Ada.Unchecked_Deallocation;
 with GNAT.OS_Lib;         use GNAT.OS_Lib;
 
 with GNATCOLL.VFS;        use GNATCOLL.VFS;
+
+with VSS.Strings.Conversions;
 
 with Glib;                use Glib;
 
@@ -463,12 +465,21 @@ package body Histories is
 
    function Get_History
      (Hist : History_Record; Key : History_Key)
-      return GNAT.Strings.String_List_Access
+      return VSS.String_Vectors.Virtual_String_Vector
    is
       Val : constant History_Key_Access :=
               Create_New_Key_If_Necessary (Hist, Key, Strings);
    begin
-      return Val.List;
+      return Result : VSS.String_Vectors.Virtual_String_Vector do
+         if Val.List /= null then
+            for Item of Val.List.all loop
+               Result.Append
+                 (if Item /= null
+                    then VSS.Strings.Conversions.To_Virtual_String (Item.all)
+                    else VSS.Strings.Empty_Virtual_String);
+            end loop;
+         end if;
+      end return;
    end Get_History;
 
    -----------------
@@ -485,7 +496,8 @@ package body Histories is
       Filter      : access function (Item : String) return Boolean := null)
    is
       List  : constant Gtk_List_Store := -Get_Model (Combo);
-      Value : constant String_List_Access := Get_History (Hist, Key);
+      Value : constant VSS.String_Vectors.Virtual_String_Vector :=
+        Get_History (Hist, Key);
       Iter  : Gtk_Tree_Iter;
 
    begin
@@ -493,33 +505,40 @@ package body Histories is
          List.Clear;
       end if;
 
-      if Value /= null then
-         for V in Value'Range loop
+      if Value.Is_Empty then
+         Set_Text (Gtk_Entry (Get_Child (Combo)), "");
+
+      else
+         for V of Value loop
             --  Do not add the empty item. It is stored internally to properly
             --  restore the contents of the entry, but shouldn't appear in the
             --  list.
-            if Value (V).all /= ""
-              and then (Filter = null or else Filter (Value (V).all))
+            if not V.Is_Empty
+              and then (Filter = null
+                        or else Filter
+                                (VSS.Strings.Conversions.To_UTF_8_String (V)))
             then
                --  Do not add the item directly, in case there was already a
                --  similar entry in the list if it wasn't cleared
                if Clear_Combo then
                   List.Append (Iter);
-                  List.Set (Iter, Col, Value (V).all);
+                  List.Set
+                    (Iter, Col, VSS.Strings.Conversions.To_UTF_8_String (V));
                else
-                  Iter := Add_Unique_List_Entry (List, Value (V).all, Prepend);
+                  Iter :=
+                    Add_Unique_List_Entry
+                      (List,
+                       VSS.Strings.Conversions.To_UTF_8_String (V),
+                       Prepend);
                end if;
             end if;
          end loop;
 
-         if Value (Value'First).all /= "" then
+         if not Value.First_Element.Is_Empty then
             --  select ony when combo had value last time
             Set_Active (Combo, 0);
             Select_Region (Gtk_Entry (Get_Child (Combo)), 0, -1);
          end if;
-
-      else
-         Set_Text (Gtk_Entry (Get_Child (Combo)), "");
       end if;
    end Get_History;
 
@@ -770,16 +789,19 @@ package body Histories is
       Key  : History_Key;
       Default : String := "") return String
    is
-      Past : String_List_Access;
+      Past : VSS.String_Vectors.Virtual_String_Vector;
+
    begin
       Create_New_Key_If_Necessary (Hist.all, Key, Strings);
 
       Past := Get_History (Hist.all, Key);
-      if Past /= null then
-         return Past (Past'First).all;
-      end if;
 
-      return Default;
+      if Past.Is_Empty then
+         return Default;
+
+      else
+         return VSS.Strings.Conversions.To_UTF_8_String (Past.First_Element);
+      end if;
    end Most_Recent;
 
    ---------------
