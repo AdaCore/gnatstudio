@@ -163,4 +163,29 @@ package body GNATCOLL.Scripts.VSS_Utils is
       end if;
    end Set_Nth_Arg;
 
+   ----------------------
+   -- Set_Return_Value --
+   ----------------------
+
+   procedure Set_Return_Value
+     (Data  : in out Callback_Data'Class;
+      Value : VSS.Strings.Virtual_String) is
+   begin
+      if Data in GNATCOLL.Scripts.Python.Python_Callback_Data'Class then
+         declare
+            V : constant GNATCOLL.Python.PyObject :=
+              PyUnicode_FromStringAndSize (Value);
+
+         begin
+            GNATCOLL.Scripts.Python.Set_Return_Value
+              (GNATCOLL.Scripts.Python.Python_Callback_Data'Class (Data), V);
+            GNATCOLL.Python.Py_DECREF (V);
+         end;
+
+      else
+         Data.Set_Return_Value
+           (VSS.Strings.Conversions.To_UTF_8_String (Value));
+      end if;
+   end Set_Return_Value;
+
 end GNATCOLL.Scripts.VSS_Utils;
