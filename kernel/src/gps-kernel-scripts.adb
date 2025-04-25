@@ -1210,8 +1210,9 @@ package body GPS.Kernel.Scripts is
               and then PyString_Check (Item)
             then
                Add_To_History
-                 (Get_Kernel (Data).Get_History.all, Key,
-                  Nth_Arg (Data, 2));
+                 (Get_Kernel (Data).Get_History.all,
+                  Key,
+                  GNATCOLL.Scripts.VSS_Utils.Nth_Arg (Data, 2));
             else
                Set_History
                  (Get_Kernel (Data).Get_History.all, Key,

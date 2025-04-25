@@ -25,6 +25,8 @@ with GNATCOLL.Utils;                use GNATCOLL.Utils;
 with System;
 with System.Address_Image;
 
+with VSS.Strings.Conversions;
+
 with Glib;                          use Glib;
 with Glib.Properties;               use Glib.Properties;
 with Glib.Values;                   use Glib.Values;
@@ -707,7 +709,7 @@ package body GPS.Search.GUI is
          Add_To_History
            (Get_History (S.Get_Kernel).all,
             Module.Current_Command.History.all,
-            S.Get_Text);
+            VSS.Strings.Conversions.To_Virtual_String (S.Get_Text));
       end if;
    end On_Entry_Changed;
 
@@ -722,7 +724,7 @@ package body GPS.Search.GUI is
          Add_To_History
             (Get_History (S.Get_Kernel).all,
              Module.Current_Command.History.all,
-             S.Get_Text);
+             VSS.Strings.Conversions.To_Virtual_String (S.Get_Text));
       end if;
 
       Reset;

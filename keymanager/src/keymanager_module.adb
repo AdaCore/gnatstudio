@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                               GNAT Studio                                --
 --                                                                          --
---                     Copyright (C) 2003-2024, AdaCore                     --
+--                     Copyright (C) 2003-2025, AdaCore                     --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -18,6 +18,9 @@
 with Ada.Characters.Handling;        use Ada.Characters.Handling;
 with Ada.Unchecked_Conversion;
 with GNAT.OS_Lib;                    use GNAT.OS_Lib;
+
+with VSS.Strings.Conversions;
+
 with GNATCOLL.Scripts.Python.Gtkada; use GNATCOLL.Scripts.Python.Gtkada;
 with GNATCOLL.Scripts;               use GNATCOLL.Scripts;
 with GNATCOLL.Traces;                use GNATCOLL.Traces;
@@ -1469,7 +1472,10 @@ package body KeyManager_Module is
       Name   : String)
    is
    begin
-      Add_To_History (Get_History (Kernel).all, Hist_Key_Theme, Name);
+      Add_To_History
+        (Get_History (Kernel).all,
+         Hist_Key_Theme,
+         VSS.Strings.Conversions.To_Virtual_String (Name));
    end Set_Key_Theme;
 
    --------------

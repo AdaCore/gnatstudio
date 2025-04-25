@@ -1542,7 +1542,7 @@ package body Build_Configurations.Gtkada is
             Add_To_History
               (History.all,
                Target_To_Key (Target),
-               Get_Text (Ent));
+               VSS.Strings.Conversions.To_Virtual_String (Get_Text (Ent)));
 
             Set_Persistent
               (History.all,
@@ -1692,7 +1692,7 @@ package body Build_Configurations.Gtkada is
                Add_To_History
                  (History.all,
                   Target_To_Key (UI.Target_UI.Target),
-                  Default);
+                  VSS.Strings.Conversions.To_Virtual_String (Default));
             end if;
          end;
       end if;
@@ -1716,7 +1716,8 @@ package body Build_Configurations.Gtkada is
             Add_To_History
               (History.all,
                Target_To_Key (UI.Target_UI.Target),
-               Get_Text (Get_Entry (UI.Target_UI.Editor)));
+               VSS.Strings.Conversions.To_Virtual_String
+                 (Get_Text (Get_Entry (UI.Target_UI.Editor))));
 
             Set_Persistent
               (History.all,

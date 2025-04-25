@@ -535,10 +535,10 @@ package body Generic_Views is
 
          Add_To_History
            (Get_History (View.Kernel).all, Window_X_Hist_Key,
-            Gint'Image (X));
+            VSS.Strings.To_Virtual_String (Gint'Wide_Wide_Image (X)));
          Add_To_History
            (Get_History (View.Kernel).all, Window_Y_Hist_Key,
-            Gint'Image (Y));
+            VSS.Strings.To_Virtual_String (Gint'Wide_Wide_Image (Y)));
       end Store_Position;
 
       -----------------------------

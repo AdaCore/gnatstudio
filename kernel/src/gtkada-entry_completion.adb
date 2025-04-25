@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                               GNAT Studio                                --
 --                                                                          --
---                     Copyright (C) 2002-2023, AdaCore                     --
+--                     Copyright (C) 2002-2025, AdaCore                     --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -19,6 +19,8 @@ with Ada.Calendar;               use Ada.Calendar;
 with Ada.Unchecked_Conversion;
 with Ada.Unchecked_Deallocation;
 with GNAT.Strings;               use GNAT.Strings;
+
+with VSS.Strings;
 
 with Commands;                   use Commands;
 with Default_Preferences;        use Default_Preferences;
@@ -1816,7 +1818,9 @@ package body Gtkada.Entry_Completion is
       S.GEntry.Set_Width_Chars (Size);
       S.GEntry.Queue_Resize;
       Add_To_History
-        (Get_History (S.Kernel).all, S.Name.all & "-width", Size'Img);
+        (Get_History (S.Kernel).all,
+         S.Name.all & "-width",
+         VSS.Strings.To_Virtual_String (Gint'Wide_Wide_Image (Size)));
 
       Show_Preview (S);
       On_Entry_Changed (S);
@@ -1837,7 +1841,8 @@ package body Gtkada.Entry_Completion is
       Add_To_History
         (Get_History (Radio.Entry_View.Kernel).all,
          Radio.Entry_View.Name.all & "-kind",
-         Search_Kind'Image (Radio.Kind));
+         VSS.Strings.To_Virtual_String
+           (Search_Kind'Wide_Wide_Image (Radio.Kind)));
 
       Show_Preview (Radio.Entry_View);
       On_Entry_Changed (Radio.Entry_View);

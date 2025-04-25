@@ -143,7 +143,7 @@ package Histories is
    procedure Add_To_History
      (Hist      : in out History_Record;
       Key       : History_Key;
-      New_Entry : String);
+      New_Entry : VSS.Strings.Virtual_String);
    --  Store a new history string.
    --  If too many strings are stored, the oldest one is removed.
    --  If New_Entry is already in the history, it is not added a second time,

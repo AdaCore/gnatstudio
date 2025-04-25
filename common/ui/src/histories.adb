@@ -548,7 +548,7 @@ package body Histories is
    procedure Add_To_History
      (Hist      : in out History_Record;
       Key       : History_Key;
-      New_Entry : String)
+      New_Entry : VSS.Strings.Virtual_String)
    is
       procedure Unchecked_Free is new Ada.Unchecked_Deallocation
         (String_List, String_List_Access);
@@ -563,7 +563,9 @@ package body Histories is
       if Value.List /= null then
          if not Value.Allow_Duplicates then
             for V in Value.List'Range loop
-               if Value.List (V).all = New_Entry then
+               if Value.List (V).all
+                    = VSS.Strings.Conversions.To_UTF_8_String (New_Entry)
+               then
                   Tmp := Value.List (V);
                   Value.List (Value.List'First + 1 .. V) :=
                     Value.List (Value.List'First .. V - 1);
@@ -573,7 +575,8 @@ package body Histories is
             end loop;
 
          elsif Value.Merge_First
-           and then Value.List (Value.List'First).all = New_Entry
+           and then Value.List (Value.List'First).all
+                      = VSS.Strings.Conversions.To_UTF_8_String (New_Entry)
          then
             return;
          end if;
@@ -589,13 +592,15 @@ package body Histories is
             Free (Value.List (Value.List'Last));
             Value.List (Value.List'First + 1 .. Value.List'Last) :=
               Value.List (Value.List'First .. Value.List'Last - 1);
-            Value.List (Value.List'First) := new String'(New_Entry);
+            Value.List (Value.List'First) :=
+              new String'(VSS.Strings.Conversions.To_UTF_8_String (New_Entry));
          else
             --  Insert the element in the table
             Tmp2 := new String_List (1 .. Value.List'Length + 1);
             Tmp2 (2 .. Tmp2'Last) := Value.List.all;
             Unchecked_Free (Value.List);
-            Tmp2 (Tmp2'First) := new String'(New_Entry);
+            Tmp2 (Tmp2'First) :=
+              new String'(VSS.Strings.Conversions.To_UTF_8_String (New_Entry));
             Value.List := Tmp2;
          end if;
 
@@ -604,7 +609,10 @@ package body Histories is
          end if;
 
       else
-         Value.List := new String_List'(1 => new String'(New_Entry));
+         Value.List :=
+           new String_List'
+             (1 => new String'
+                (VSS.Strings.Conversions.To_UTF_8_String (New_Entry)));
       end if;
    end Add_To_History;
 
@@ -810,10 +818,12 @@ package body Histories is
    procedure Save_Text
      (Self : access Gtk.GEntry.Gtk_Entry_Record'Class;
       Hist : access History_Record;
-      Key  : History_Key)
-   is
+      Key  : History_Key) is
    begin
-      Add_To_History (Hist.all, Key, Self.Get_Text);
+      Add_To_History
+        (Hist.all,
+         Key,
+         VSS.Strings.Conversions.To_Virtual_String (Self.Get_Text));
    end Save_Text;
 
 end Histories;

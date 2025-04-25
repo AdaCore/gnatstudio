@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                               GNAT Studio                                --
 --                                                                          --
---                     Copyright (C) 2000-2024, AdaCore                     --
+--                     Copyright (C) 2000-2025, AdaCore                     --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -17,6 +17,9 @@
 
 with Ada.Unchecked_Deallocation;
 with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
+
+with VSS.Strings.Conversions;
+
 with GNATCOLL.VFS;          use GNATCOLL.VFS;
 with Gdk.Event;             use Gdk.Event;
 with Glib.Object;           use Glib.Object;
@@ -30,7 +33,6 @@ with Gtkada.Stock_Labels;   use Gtkada.Stock_Labels;
 
 with GPS.Kernel.MDI;        use GPS.Kernel.MDI;
 with GPS.Main_Window;       use GPS.Main_Window;
-with VSS.Strings.Conversions;
 
 package body GPS.Dialogs is
 
@@ -466,7 +468,11 @@ package body GPS.Dialogs is
    is
       S : constant String := Self.Get_Active_Text;
    begin
-      Add_To_History (Self.Kernel.Get_History.all, Self.Key.all, S);
+      Add_To_History
+        (Self.Kernel.Get_History.all,
+         Self.Key.all,
+         VSS.Strings.Conversions.To_Virtual_String (S));
+
       return S;
    end Get_Text;
 

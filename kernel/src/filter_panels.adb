@@ -663,10 +663,11 @@ package body Filter_Panels is
            (Hist  => Panel.Kernel.Get_History.all,
             Key   => Key,
             New_Entry =>
-              Prefix
-              & (if Add.Get_Negate then '-' else '+')
-              & (if Add.Get_Whole_Word then 'w' else ' ')
-              & Add.Get_Text);
+              VSS.Strings.Conversions.To_Virtual_String
+                (Prefix
+                 & (if Add.Get_Negate then '-' else '+')
+                 & (if Add.Get_Whole_Word then 'w' else ' ')
+                 & Add.Get_Text));
       end if;
 
       if Panel.Pattern_Config_Menu = null then
