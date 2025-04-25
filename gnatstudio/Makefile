@@ -16,7 +16,7 @@ else
 endif
 
 GPRBUILD=gprbuild
-ifeq ($(BUILD),cov)
+ifeq ($(BUILD),Coverage)
   GPRBUILD_FLAGS=-j0 -m2 -p --src-subdirs=gnatcov-instr --implicit-with=gnatcov_rts.gpr
 else
   GPRBUILD_FLAGS=-j0
