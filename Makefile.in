@@ -15,12 +15,14 @@ bindir          = $(prefix)/bin
 sharedir        = $(prefix)/share
 examplesdir     = $(prefix)/share/examples/gnatstudio
 
+BUILD?=Debug
+
 SYS := $(shell gcc -dumpmachine)
 
 all default:
-	$(MAKE) -C gnatstudio default
-	$(MAKE) -C cli default
-	$(MAKE) -C testsuite default
+	$(MAKE) -C gnatstudio BUILD=$(BUILD) $@
+	$(MAKE) -C cli BUILD=$(BUILD) $@
+	$(MAKE) -C testsuite BUILD=$(BUILD) $@
 
 codepeer:
 	$(MAKE) -C gnatstudio scil
