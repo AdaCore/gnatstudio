@@ -1210,8 +1210,9 @@ package body GPS.Kernel.Scripts is
               and then PyString_Check (Item)
             then
                Add_To_History
-                 (Get_Kernel (Data).Get_History.all, Key,
-                  Nth_Arg (Data, 2));
+                 (Get_Kernel (Data).Get_History.all,
+                  Key,
+                  GNATCOLL.Scripts.VSS_Utils.Nth_Arg (Data, 2));
             else
                Set_History
                  (Get_Kernel (Data).Get_History.all, Key,
@@ -1235,8 +1236,8 @@ package body GPS.Kernel.Scripts is
             case Get_Type (History, Key) is
                when Strings =>
                   if Most_Recent then
-                     Data.Set_Return_Value
-                       (Histories.Most_Recent (History, Key));
+                     GNATCOLL.Scripts.VSS_Utils.Set_Return_Value
+                       (Data, Histories.Most_Recent (History, Key));
                   else
                      Values := Get_History (History.all, Key);
                      Data.Set_Return_Value_As_List;

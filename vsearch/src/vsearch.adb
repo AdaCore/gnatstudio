@@ -961,7 +961,10 @@ package body Vsearch is
         & (if Case_Sensitive then '*' else ' ')
         & Character'Val (127);
    begin
-      Add_To_History (Get_History (Vsearch.Kernel).all, Pattern_Hist_Key, V);
+      Add_To_History
+        (Get_History (Vsearch.Kernel).all,
+         Pattern_Hist_Key,
+         VSS.Strings.Conversions.To_Virtual_String (V));
 
       if To_Combo then
          Add_History_To_Combo
@@ -1038,7 +1041,7 @@ package body Vsearch is
       Add_To_History
         (Get_History (Vsearch_Module_Id.Kernel).all,
          Replace_Hist_Key,
-         VSS.Strings.Conversions.To_UTF_8_String (Replace_Text));
+         Replace_Text);
 
       return Ctxt;
    end Create_Context;
@@ -2155,7 +2158,10 @@ package body Vsearch is
          To_Combo => False);
 
       Add_To_History
-        (History, Replace_Hist_Key, Vsearch.Replace_Combo.Get_Active_Text);
+        (History,
+         Replace_Hist_Key,
+         VSS.Strings.Conversions.To_Virtual_String
+           (Vsearch.Replace_Combo.Get_Active_Text));
 
       --  The widgets in Context_Specific have a longer lifecycle than the
       --  dialog itself: make sure here that they are not destroyed when the
@@ -3562,7 +3568,7 @@ package body Vsearch is
       Add_To_History
         (Get_History (Handle).all,
          Last_Search_Module_Key,
-         Module.Get_Label);
+         VSS.Strings.Conversions.To_Virtual_String (Module.Get_Label));
    end Set_Last_Search_Module;
 
    -----------------------------

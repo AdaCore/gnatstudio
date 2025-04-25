@@ -1153,7 +1153,10 @@ package body GPS.Kernel is
       Key       : Histories.History_Key;
       New_Entry : String) is
    begin
-      Add_To_History (Handle.History.all, Key, New_Entry);
+      Add_To_History
+        (Handle.History.all,
+         Key,
+         VSS.Strings.Conversions.To_Virtual_String (New_Entry));
    end Add_To_History;
 
    -------------------

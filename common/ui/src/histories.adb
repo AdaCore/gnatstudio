@@ -493,7 +493,8 @@ package body Histories is
       Clear_Combo : Boolean := True;
       Prepend     : Boolean := False;
       Col         : Gint := 0;
-      Filter      : access function (Item : String) return Boolean := null)
+      Filter      : access
+        function (Item : VSS.Strings.Virtual_String) return Boolean := null)
    is
       List  : constant Gtk_List_Store := -Get_Model (Combo);
       Value : constant VSS.String_Vectors.Virtual_String_Vector :=
@@ -514,9 +515,7 @@ package body Histories is
             --  restore the contents of the entry, but shouldn't appear in the
             --  list.
             if not V.Is_Empty
-              and then (Filter = null
-                        or else Filter
-                                (VSS.Strings.Conversions.To_UTF_8_String (V)))
+              and then (Filter = null or else Filter (V))
             then
                --  Do not add the item directly, in case there was already a
                --  similar entry in the list if it wasn't cleared
@@ -549,7 +548,7 @@ package body Histories is
    procedure Add_To_History
      (Hist      : in out History_Record;
       Key       : History_Key;
-      New_Entry : String)
+      New_Entry : VSS.Strings.Virtual_String)
    is
       procedure Unchecked_Free is new Ada.Unchecked_Deallocation
         (String_List, String_List_Access);
@@ -564,7 +563,9 @@ package body Histories is
       if Value.List /= null then
          if not Value.Allow_Duplicates then
             for V in Value.List'Range loop
-               if Value.List (V).all = New_Entry then
+               if Value.List (V).all
+                    = VSS.Strings.Conversions.To_UTF_8_String (New_Entry)
+               then
                   Tmp := Value.List (V);
                   Value.List (Value.List'First + 1 .. V) :=
                     Value.List (Value.List'First .. V - 1);
@@ -574,7 +575,8 @@ package body Histories is
             end loop;
 
          elsif Value.Merge_First
-           and then Value.List (Value.List'First).all = New_Entry
+           and then Value.List (Value.List'First).all
+                      = VSS.Strings.Conversions.To_UTF_8_String (New_Entry)
          then
             return;
          end if;
@@ -590,13 +592,15 @@ package body Histories is
             Free (Value.List (Value.List'Last));
             Value.List (Value.List'First + 1 .. Value.List'Last) :=
               Value.List (Value.List'First .. Value.List'Last - 1);
-            Value.List (Value.List'First) := new String'(New_Entry);
+            Value.List (Value.List'First) :=
+              new String'(VSS.Strings.Conversions.To_UTF_8_String (New_Entry));
          else
             --  Insert the element in the table
             Tmp2 := new String_List (1 .. Value.List'Length + 1);
             Tmp2 (2 .. Tmp2'Last) := Value.List.all;
             Unchecked_Free (Value.List);
-            Tmp2 (Tmp2'First) := new String'(New_Entry);
+            Tmp2 (Tmp2'First) :=
+              new String'(VSS.Strings.Conversions.To_UTF_8_String (New_Entry));
             Value.List := Tmp2;
          end if;
 
@@ -605,7 +609,10 @@ package body Histories is
          end if;
 
       else
-         Value.List := new String_List'(1 => new String'(New_Entry));
+         Value.List :=
+           new String_List'
+             (1 => new String'
+                (VSS.Strings.Conversions.To_UTF_8_String (New_Entry)));
       end if;
    end Add_To_History;
 
@@ -616,7 +623,7 @@ package body Histories is
    procedure Remove_From_History
      (Hist            : in out History_Record;
       Key             : History_Key;
-      Entry_To_Remove : String)
+      Entry_To_Remove : VSS.Strings.Virtual_String)
    is
       procedure Unchecked_Free is new Ada.Unchecked_Deallocation
         (String_List, String_List_Access);
@@ -634,7 +641,9 @@ package body Histories is
          while J <= Value.List'Last loop
 
             --  Find the entry to remove
-            if Value.List (J).all = Entry_To_Remove then
+            if Value.List (J).all
+              = VSS.Strings.Conversions.To_UTF_8_String (Entry_To_Remove)
+            then
 
                --  Create a new list by appending the slices before and after
                --  the position of the entry to remove.
@@ -656,6 +665,7 @@ package body Histories is
          end loop;
       end;
    end Remove_From_History;
+
    -----------------
    -- Set_History --
    -----------------
@@ -785,9 +795,10 @@ package body Histories is
    -----------------
 
    function Most_Recent
-     (Hist : access History_Record;
-      Key  : History_Key;
-      Default : String := "") return String
+     (Hist    : access History_Record;
+      Key     : History_Key;
+      Default : VSS.Strings.Virtual_String := "")
+      return VSS.Strings.Virtual_String
    is
       Past : VSS.String_Vectors.Virtual_String_Vector;
 
@@ -800,7 +811,7 @@ package body Histories is
          return Default;
 
       else
-         return VSS.Strings.Conversions.To_UTF_8_String (Past.First_Element);
+         return Past.First_Element;
       end if;
    end Most_Recent;
 
@@ -811,10 +822,12 @@ package body Histories is
    procedure Save_Text
      (Self : access Gtk.GEntry.Gtk_Entry_Record'Class;
       Hist : access History_Record;
-      Key  : History_Key)
-   is
+      Key  : History_Key) is
    begin
-      Add_To_History (Hist.all, Key, Self.Get_Text);
+      Add_To_History
+        (Hist.all,
+         Key,
+         VSS.Strings.Conversions.To_Virtual_String (Self.Get_Text));
    end Save_Text;
 
 end Histories;

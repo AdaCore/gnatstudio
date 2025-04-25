@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                               GNAT Studio                                --
 --                                                                          --
---                     Copyright (C) 2013-2023, AdaCore                     --
+--                     Copyright (C) 2013-2025, AdaCore                     --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -16,6 +16,9 @@
 ------------------------------------------------------------------------------
 
 with Ada.Strings.Unbounded;          use Ada.Strings.Unbounded;
+
+with VSS.Strings.Conversions;
+
 with Ada_Semantic_Tree;              use Ada_Semantic_Tree;
 with GPS.Kernel;                     use GPS.Kernel;
 with GPS.Kernel.Preferences;         use GPS.Kernel.Preferences;
@@ -210,7 +213,9 @@ package body Completion.Search is
                      Short    => new String'
                        (Self.Pattern.Highlight_Match (Name, Context => C)),
                      Long     => L,
-                     Id       => new String'(Name & ":" & L.all),
+                     Id       =>
+                       VSS.Strings.Conversions.To_Virtual_String
+                         (Name & ":" & L.all),
                      Entity   => To_Entity_Persistent_Access (Entity));
 
                   --  Matches in runtime files should get a lower score, so

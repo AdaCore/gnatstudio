@@ -830,10 +830,13 @@ package body Interactive_Consoles is
             if UTF8 (UTF8'Last) = ASCII.LF then
                Histories.Add_To_History
                  (Console.History.all, History_Key (Console.Key.all),
-                  UTF8 (UTF8'First .. UTF8'Last - 1));
+                  VSS.Strings.Conversions.To_Virtual_String
+                    (UTF8 (UTF8'First .. UTF8'Last - 1)));
             else
                Histories.Add_To_History
-                 (Console.History.all, History_Key (Console.Key.all), UTF8);
+                 (Console.History.all,
+                  History_Key (Console.Key.all),
+                  VSS.Strings.Conversions.To_Virtual_String (UTF8));
             end if;
          end if;
 
@@ -2101,7 +2104,8 @@ package body Interactive_Consoles is
       if Command /= "" and then Console.History /= null then
          Add_To_History
            (Console.History.all,
-            History_Key (Console.Key.all), Command);
+            History_Key (Console.Key.all),
+            VSS.Strings.Conversions.To_Virtual_String (Command));
          Console.Current_Position := -1;
       end if;
 

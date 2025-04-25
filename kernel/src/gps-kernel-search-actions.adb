@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                               GNAT Studio                                --
 --                                                                          --
---                     Copyright (C) 2013-2023, AdaCore                     --
+--                     Copyright (C) 2013-2025, AdaCore                     --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -17,6 +17,9 @@
 
 with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
 with GNAT.Strings;        use GNAT.Strings;
+
+with VSS.Strings.Conversions;
+
 with GPS.Kernel.Actions;  use GPS.Kernel.Actions;
 with GPS.Search;          use GPS.Search;
 with Gtk.Enums;           use Gtk.Enums;
@@ -111,7 +114,8 @@ package body GPS.Kernel.Search.Actions is
                      Score    => C.Score,
                      Short    => S,
                      Long     => null,
-                     Id       => S,
+                     Id       =>
+                       VSS.Strings.Conversions.To_Virtual_String (S.all),
                      Name     => new String'(Name));
 
                   Self.Adjust_Score (Result);

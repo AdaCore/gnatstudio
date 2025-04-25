@@ -34,6 +34,8 @@ package body GPS.Kernel.Search is
      (Self   : not null access Kernel_Search_Provider;
       Result : not null access Search_Result'Class)
    is
+      use type VSS.Strings.Virtual_String;
+
       Key : constant History_Key :=
          "search-recent-"
          & History_Key (Search_Provider'Class (Self.all).Display_Name);
@@ -46,9 +48,7 @@ package body GPS.Kernel.Search is
       M := Integer'Min (Max_History_Items, Hist.Length);
 
       for H in 1 .. M loop
-         if Result.Id.all
-              = VSS.Strings.Conversions.To_UTF_8_String (Hist (H))
-         then
+         if Result.Id = Hist (H) then
             Result.Score := Result.Score + (M + 1 - H) * 20;
             exit;
          end if;
@@ -68,7 +68,8 @@ package body GPS.Kernel.Search is
          & History_Key (Search_Provider'Class (Self.all).Display_Name);
    begin
       Set_Max_Length (Self.Kernel.Get_History.all, Max_History_Items, Key);
-      Self.Kernel.Add_To_History (Key, Result.Id.all);
+      Self.Kernel.Add_To_History
+        (Key, VSS.Strings.Conversions.To_UTF_8_String (Result.Id));
    end On_Result_Executed;
 
    -------------------

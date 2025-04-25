@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                               GNAT Studio                                --
 --                                                                          --
---                     Copyright (C) 2016-2023, AdaCore                     --
+--                     Copyright (C) 2016-2025, AdaCore                     --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -14,6 +14,8 @@
 -- COPYING3.  If not, go to http://www.gnu.org/licenses for a complete copy --
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
+
+with VSS.Strings.Conversions;
 
 separate (GNAThub.Filters_Views)
 package body Search_Provider is
@@ -148,7 +150,7 @@ package body Search_Provider is
                          (Buffer  => Name,
                           Context => Context)),
                   Long     => new String'("severity - " & Name),
-                  Id       => new String'(Name),
+                  Id       => VSS.Strings.Conversions.To_Virtual_String (Name),
                   Severity => Severity);
 
                Self.Adjust_Score (Result);
@@ -202,7 +204,7 @@ package body Search_Provider is
                          (Buffer  => Name,
                           Context => Context)),
                   Long     => new String'("rule - " & Name),
-                  Id       => new String'(Name),
+                  Id       => VSS.Strings.Conversions.To_Virtual_String (Name),
                   Rule     => Rule);
 
                Self.Adjust_Score (Result);
