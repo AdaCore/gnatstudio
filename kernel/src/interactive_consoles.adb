@@ -20,18 +20,21 @@ with Ada.Strings.Fixed;        use Ada.Strings.Fixed;
 with Ada.Strings.Unbounded;    use Ada.Strings.Unbounded;
 with Ada.Unchecked_Conversion;
 with Ada.Unchecked_Deallocation;
-with GNATCOLL.Xref;
-with System;                   use System;
-
 with GNAT.Expect;              use GNAT.Expect;
 with GNAT.OS_Lib;              use GNAT.OS_Lib;
 with GNAT.Regpat;              use GNAT.Regpat;
+with System;                   use System;
+
+with VSS.String_Vectors;
+with VSS.Strings.Conversions;
+
 with GNATCOLL.Arg_Lists;       use GNATCOLL.Arg_Lists;
 with GNATCOLL.Iconv;           use GNATCOLL.Iconv;
 with GNATCOLL.Traces;          use GNATCOLL.Traces;
 with GNATCOLL.Scripts.Gtkada;  use GNATCOLL.Scripts, GNATCOLL.Scripts.Gtkada;
 with GNATCOLL.Utils;           use GNATCOLL.Utils;
 with GNATCOLL.VFS;             use GNATCOLL.VFS;
+with GNATCOLL.Xref;
 
 with Glib;                     use Glib;
 with Glib.Main;                use Glib.Main;
@@ -1233,13 +1236,16 @@ package body Interactive_Consoles is
             end if;
 
             declare
-               Hist : constant String_List_Access := Get_History
-                 (Console.History.all, History_Key (Console.Key.all));
+               Hist : constant VSS.String_Vectors.Virtual_String_Vector :=
+                 Get_History
+                   (Console.History.all, History_Key (Console.Key.all));
+
             begin
-               if Hist /= null then
+               if not Hist.Is_Empty then
                   if Key = GDK_Up
                     and then
-                    Console.Current_Position + Hist'First < Hist'Last
+                      Console.Current_Position + Hist.First_Index
+                        < Hist.Last_Index
                   then
                      Console.Current_Position := Console.Current_Position + 1;
 
@@ -1257,7 +1263,9 @@ package body Interactive_Consoles is
                   if Console.Current_Position /= -1 then
                      Insert
                        (Console.Buffer, Prompt_Iter,
-                        Hist (Hist'First + Console.Current_Position).all);
+                        VSS.Strings.Conversions.To_UTF_8_String
+                          (Hist
+                             (Hist.First_Index + Console.Current_Position)));
                   end if;
 
                   Get_End_Iter (Console.Buffer, Prompt_Iter);
@@ -1322,7 +1330,7 @@ package body Interactive_Consoles is
             declare
                Command : constant String :=
                            Get_Slice (Console.Buffer, Prompt_Iter, Last_Iter);
-               H       : String_List_Access;
+               H       : VSS.String_Vectors.Virtual_String_Vector;
             begin
                if Command = ""
                  and then Console.Empty_Equals_Repeat
@@ -1338,15 +1346,15 @@ package body Interactive_Consoles is
                   H := Get_History
                     (Console.History.all, History_Key (Console.Key.all));
 
-                  if H /= null
-                    and then H (H'First) /= null
-                  then
+                  if not H.Is_Empty then
                      Insert
                        (Console.Buffer, Last_Iter,
-                        H (H'First + Console.Current_Position + 1).all);
+                        VSS.Strings.Conversions.To_UTF_8_String
+                          (H (H.First_Index + Console.Current_Position + 1)));
                      Execute_Command
                        (Console,
-                        H (H'First + Console.Current_Position + 1).all);
+                        VSS.Strings.Conversions.To_UTF_8_String
+                          (H (H.First_Index + Console.Current_Position + 1)));
                      return True;
                   end if;
 

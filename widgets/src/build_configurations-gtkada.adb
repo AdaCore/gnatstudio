@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                               GNAT Studio                                --
 --                                                                          --
---                     Copyright (C) 2008-2023, AdaCore                     --
+--                     Copyright (C) 2008-2025, AdaCore                     --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -18,7 +18,9 @@
 with Ada.Exceptions;           use Ada.Exceptions;
 with Ada.Characters.Handling;  use Ada.Characters.Handling;
 
-with GNAT.Strings;
+with VSS.Strings.Conversions;
+with VSS.String_Vectors;
+
 with GNATCOLL.Arg_Lists;       use GNATCOLL.Arg_Lists;
 
 with Glib;                     use Glib;
@@ -1484,7 +1486,7 @@ package body Build_Configurations.Gtkada is
       Initial_Cmd_Line : Unbounded_String;
 
       function Exists
-        (List : GNAT.Strings.String_List_Access;
+        (List : VSS.String_Vectors.Virtual_String_Vector;
          Item : String) return Boolean;
       --  Return true if Item is found in List
 
@@ -1503,15 +1505,11 @@ package body Build_Configurations.Gtkada is
       ------------
 
       function Exists
-        (List : GNAT.Strings.String_List_Access;
+        (List : VSS.String_Vectors.Virtual_String_Vector;
          Item : String) return Boolean is
       begin
-         if List = null then
-            return False;
-         end if;
-
-         for J in List'Range loop
-            if List (J).all = Item then
+         for S of List loop
+            if VSS.Strings.Conversions.To_UTF_8_String (S) = Item then
                return True;
             end if;
          end loop;
@@ -1665,20 +1663,25 @@ package body Build_Configurations.Gtkada is
 
       if History /= null then
          declare
-            List    : constant GNAT.Strings.String_List_Access :=
+            List    : constant VSS.String_Vectors.Virtual_String_Vector :=
               Get_History (History.all, Target_To_Key (UI.Target_UI.Target));
             Default : constant String := Argument_List_To_String
               (UI.Target_UI.Target.Command_Line.To_String_List
                  (Expanded => False).all);
 
          begin
-            if List /= null
-              and then List'Length /= 0
-              and then List (List'First) /= null
+            if not List.First_Element.Is_Empty
               and then Exists (List, Default)
             then
-               Set_Text (Ent, List (List'First).all);
-               Set_Command_Line (UI.Target_UI.Editor, List (List'First).all);
+               Set_Text
+                 (Ent,
+                  VSS.Strings.Conversions.To_UTF_8_String
+                    (List.First_Element));
+               Set_Command_Line
+                 (UI.Target_UI.Editor,
+                  VSS.Strings.Conversions.To_UTF_8_String
+                    (List.First_Element));
+
             else
                --  If not already done, add the contents of the entry to the
                --  history. That way, the user can always find the original

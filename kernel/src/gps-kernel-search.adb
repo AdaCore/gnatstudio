@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                               GNAT Studio                                --
 --                                                                          --
---                     Copyright (C) 2013-2023, AdaCore                     --
+--                     Copyright (C) 2013-2025, AdaCore                     --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -15,7 +15,8 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with GNAT.Strings;         use GNAT.Strings;
+with VSS.Strings.Conversions;
+with VSS.String_Vectors;
 
 with GPS.Search;           use GPS.Search;
 with Histories;            use Histories;
@@ -30,28 +31,28 @@ package body GPS.Kernel.Search is
    ------------------
 
    procedure Adjust_Score
-      (Self   : not null access Kernel_Search_Provider;
-       Result : not null access Search_Result'Class)
+     (Self   : not null access Kernel_Search_Provider;
+      Result : not null access Search_Result'Class)
    is
       Key : constant History_Key :=
          "search-recent-"
          & History_Key (Search_Provider'Class (Self.all).Display_Name);
-      Hist : constant GNAT.Strings.String_List_Access := Get_History
-         (Self.Kernel.Get_History.all, Key);
-      M : Integer;
+      Hist : constant VSS.String_Vectors.Virtual_String_Vector :=
+        Get_History (Self.Kernel.Get_History.all, Key);
+      M    : Integer;
+
    begin
-      if Hist /= null then
-         --  in case too many items are stored in the history
-         M := Integer'Min (Hist'First + Max_History_Items, Hist'Last);
-         for H in Hist'First .. M loop
-            if Hist (H) /= null
-               and then Result.Id.all = Hist (H).all
-            then
-               Result.Score := Result.Score + (M + 1 - H) * 20;
-               exit;
-            end if;
-         end loop;
-      end if;
+      --  in case too many items are stored in the history
+      M := Integer'Min (Max_History_Items, Hist.Length);
+
+      for H in 1 .. M loop
+         if Result.Id.all
+              = VSS.Strings.Conversions.To_UTF_8_String (Hist (H))
+         then
+            Result.Score := Result.Score + (M + 1 - H) * 20;
+            exit;
+         end if;
+      end loop;
    end Adjust_Score;
 
    ------------------------

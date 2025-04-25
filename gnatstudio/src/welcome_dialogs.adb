@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                               GNAT Studio                                --
 --                                                                          --
---                     Copyright (C) 2001-2023, AdaCore                     --
+--                     Copyright (C) 2001-2025, AdaCore                     --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -15,10 +15,12 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with GNAT.Strings;           use GNAT.Strings;
+with VSS.String_Vectors;
+with VSS.Strings;
+
 with GNATCOLL.Traces;        use GNATCOLL.Traces;
-with GNATCOLL.Utils;
 with GNATCOLL.VFS;           use GNATCOLL.VFS;
+with GNATCOLL.VFS.VSS_Utils;
 
 with Glib.Object;
 with Gdk.Event;              use Gdk.Event;
@@ -46,9 +48,6 @@ with GUI_Utils;              use GUI_Utils;
 with Gtk.Info_Bar; use Gtk.Info_Bar;
 with Glib; use Glib;
 with Gtk.Dialog; use Gtk.Dialog;
-with VSS.String_Vectors;
-with VSS.Strings;
-with VSS.Strings.Conversions;
 
 package body Welcome_Dialogs is
 
@@ -212,8 +211,9 @@ package body Welcome_Dialogs is
       Response               : Welcome_Dialog_Response;
       Scrolled               : Gtk_Scrolled_Window;
       Recent_Projects_View   : Recent_Projects_List_Box;
-      Stored_Recent_Projects : constant String_List_Access :=
-        Get_History (Kernel.Get_History.all, Project_Files_History_Key);
+      Stored_Recent_Projects : constant
+        VSS.String_Vectors.Virtual_String_Vector :=
+          Get_History (Kernel.Get_History.all, Project_Files_History_Key);
       Recent_Projects        : VSS.String_Vectors.Virtual_String_Vector;
 
       procedure Filter_Recent_Projects;
@@ -235,18 +235,12 @@ package body Welcome_Dialogs is
 
       procedure Filter_Recent_Projects is
       begin
-         if Stored_Recent_Projects = null then
-            return;
-         end if;
-
-         for Item of Stored_Recent_Projects.all loop
-            if Create_From_UTF8 (Item.all).Is_Regular_File
+         for Item of Stored_Recent_Projects loop
+            if GNATCOLL.VFS.VSS_Utils.Create (Item).Is_Regular_File
               and then (Is_Alire_Available (Kernel)
-                        or else not GNATCOLL.Utils.Ends_With
-                                      (Item.all, "alire.toml"))
+                        or else not Item.Ends_With ("alire.toml"))
             then
-               Recent_Projects.Append
-                 (VSS.Strings.Conversions.To_Virtual_String (Item.all));
+               Recent_Projects.Append (Item);
             end if;
          end loop;
       end Filter_Recent_Projects;
@@ -262,8 +256,7 @@ package body Welcome_Dialogs is
          Box   : Gtk_Vbox;
       begin
          for Project_Path of Recent_Projects loop
-            File :=
-              Create (+VSS.Strings.Conversions.To_UTF_8_String (Project_Path));
+            File := GNATCOLL.VFS.VSS_Utils.Create (Project_Path);
 
             Item := new Recent_Project_Item_Box_Record;
             Gtk.Info_Bar.Initialize (Item);

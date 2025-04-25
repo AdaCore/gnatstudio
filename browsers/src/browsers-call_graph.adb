@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                               GNAT Studio                                --
 --                                                                          --
---                     Copyright (C) 2001-2024, AdaCore                     --
+--                     Copyright (C) 2001-2025, AdaCore                     --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -20,7 +20,6 @@ with Ada.Strings.Unbounded;         use Ada.Strings.Unbounded;
 with Basic_Types;                   use Basic_Types;
 with Browsers.Canvas;               use Browsers.Canvas;
 with Commands.Interactive;          use Commands, Commands.Interactive;
-with GNAT.Strings;                  use GNAT.Strings;
 with GNATCOLL.Projects;             use GNATCOLL.Projects;
 with GNATCOLL.Scripts;              use GNATCOLL.Scripts;
 with GNATCOLL.Traces;               use GNATCOLL.Traces;
@@ -760,7 +759,7 @@ package body Browsers.Call_Graph is
       Max_Items   : Natural := 100;
 
    begin
-      if Histories.Get_History (History.all, Key) = null then
+      if Histories.Get_History (History.all, Key).Is_Empty then
          Histories.Add_To_History (History.all, Key, "100");
       end if;
 
