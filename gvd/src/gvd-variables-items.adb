@@ -54,10 +54,16 @@ package body GVD.Variables.Items is
    is
       Result : Item_Info;
    begin
-      Result.Cmd_Name    := To_Unbounded_String ("<>");
-      Result.Cmd         := To_Unbounded_String (Cmd);
-      Result.Entity      := New_Debugger_Type (Cmd, Split_Lines);
-      Result.Split_Lines := Split_Lines;
+      Result.Cmd := To_Unbounded_String (Cmd);
+
+      if Cmd = Local_Variables_Name then
+         Result.Cmd_Name := To_Unbounded_String (Local_Variables_Name);
+         Result.Entity   := Empty_GVD_Type_Holder;
+      else
+         Result.Cmd_Name    := To_Unbounded_String ("<>");
+         Result.Entity      := New_Debugger_Type (Cmd, Split_Lines);
+         Result.Split_Lines := Split_Lines;
+      end if;
 
       return Result;
    end Wrap_Debugger_Command;
@@ -92,6 +98,10 @@ package body GVD.Variables.Items is
       Debuggee_Output : Ada.Strings.Unbounded.Unbounded_String;
       Results_Output  : Ada.Strings.Unbounded.Unbounded_String;
    begin
+      if Self.Cmd = Local_Variables_Name then
+         return;
+      end if;
+
       if Self.Varname /= ""
         and then Self.Entity = Empty_GVD_Type_Holder
       then

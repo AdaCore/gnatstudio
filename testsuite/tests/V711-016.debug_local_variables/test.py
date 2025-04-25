@@ -2,7 +2,7 @@
 from GPS import *
 from gs_utils.internal.utils import *
 
-expected_locals = ["", ["i = 0", "b = false"]]
+expected_locals = ["<b>Local variables</b>", ["<b>i</b>", "<b>b</b>"]]
 expected_args = ["", ["level - 0", "i = 0", "b = false"]]
 
 
@@ -26,7 +26,7 @@ def run_test():
 
     GPS.execute_action("debug tree display local variables")
     tree = get_widget_by_name("Variables Tree")
-    dump = dump_tree_model(tree.get_model(), 1)
+    dump = dump_tree_model(tree.get_model(), 0)
     gps_assert(dump, expected_locals)
     GPS.execute_action("debug tree clear")
     GPS.execute_action("debug continue")

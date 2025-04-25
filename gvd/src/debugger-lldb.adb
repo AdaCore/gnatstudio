@@ -702,11 +702,28 @@ package body Debugger.LLDB is
 
    overriding function Info_Locals
      (Debugger : access LLDB_Debugger)
-      return String
+      return VSS.String_Vectors.Virtual_String_Vector
    is
-      pragma Unreferenced (Debugger);
+      S : constant String := Debugger.Send_And_Get_Clean_Output
+        ("frame variable --no-args",
+         Mode => GVD.Types.Internal);
+
+      Pattern : constant Pattern_Matcher := Compile ("\)(?: )?([^ ])?");
+      From    : Integer := S'First;
+      Matched : Match_Array (0 .. 1);
+      Result  : VSS.String_Vectors.Virtual_String_Vector;
    begin
-      return "frame variable --no-args";
+      while From <= S'Last loop
+         Match (Pattern, S (From .. S'Last), Matched);
+         exit when Matched (0) = No_Match;
+         From := Matched (0).Last + 1;
+
+         Result.Append
+           (VSS.Strings.Conversions.To_Virtual_String
+              (S (Matched (1).First .. Matched (1).Last)));
+      end loop;
+
+      return Result;
    end Info_Locals;
 
    ---------------
