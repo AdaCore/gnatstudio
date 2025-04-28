@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                               GNAT Studio                                --
 --                                                                          --
---                     Copyright (C) 2002-2023, AdaCore                     --
+--                     Copyright (C) 2002-2025, AdaCore                     --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -21,8 +21,11 @@
 --  It also provides a way to save the current value for check buttons from one
 --  session of GNAT Studio to the other.
 
-with GNAT.Strings;
+private with GNAT.Strings;
 with GNATCOLL.VFS;
+
+with VSS.String_Vectors;
+with VSS.Strings;
 
 with Glib;
 with Gtk.Check_Menu_Item;
@@ -117,7 +120,7 @@ package Histories is
 
    function Get_History
      (Hist : History_Record; Key : History_Key)
-      return GNAT.Strings.String_List_Access;
+      return VSS.String_Vectors.Virtual_String_Vector;
    --  Return the list of strings stored as Key.
    --  The returned array mustn't be freed by the user, it references internal
    --  data.
@@ -130,7 +133,8 @@ package Histories is
       Clear_Combo : Boolean := True;
       Prepend     : Boolean := False;
       Col         : Glib.Gint := 0;
-      Filter      : access function (Item : String) return Boolean := null);
+      Filter      : access
+        function (Item : VSS.Strings.Virtual_String) return Boolean := null);
    --  Set the contents of the combo to the list of strings associated with
    --  Key.
    --  If Clear_Combo is False, then the previous contents of the combo is kept
@@ -139,7 +143,7 @@ package Histories is
    procedure Add_To_History
      (Hist      : in out History_Record;
       Key       : History_Key;
-      New_Entry : String);
+      New_Entry : VSS.Strings.Virtual_String);
    --  Store a new history string.
    --  If too many strings are stored, the oldest one is removed.
    --  If New_Entry is already in the history, it is not added a second time,
@@ -148,14 +152,15 @@ package Histories is
    procedure Remove_From_History
      (Hist            : in out History_Record;
       Key             : History_Key;
-      Entry_To_Remove : String);
+      Entry_To_Remove : VSS.Strings.Virtual_String);
    --  Remove the given entry from the history, if present.
    --  This works only if the history for this key does not allow duplicates.
 
    function Most_Recent
-     (Hist : access History_Record;
-      Key  : History_Key;
-      Default : String := "") return String;
+     (Hist    : access History_Record;
+      Key     : History_Key;
+      Default : VSS.Strings.Virtual_String := "")
+      return VSS.Strings.Virtual_String;
    --  Return the most recent history for this key, or Default if the key did
    --  not exist yet.
 

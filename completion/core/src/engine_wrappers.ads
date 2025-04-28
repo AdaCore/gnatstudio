@@ -86,7 +86,7 @@ package Engine_Wrappers is
 
    function Get_Custom_Icon_Name
      (Proposal : Root_Proposal)
-      return String is ("");
+      return String;
    --  If the proposal has a custom icon (not determined by the completion
    --  type), this function will return its name
 

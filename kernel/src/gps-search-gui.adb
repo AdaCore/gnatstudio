@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                               GNAT Studio                                --
 --                                                                          --
---                     Copyright (C) 2013-2023, AdaCore                     --
+--                     Copyright (C) 2013-2025, AdaCore                     --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -24,6 +24,8 @@ with GNATCOLL.Traces;               use GNATCOLL.Traces;
 with GNATCOLL.Utils;                use GNATCOLL.Utils;
 with System;
 with System.Address_Image;
+
+with VSS.Strings.Conversions;
 
 with Glib;                          use Glib;
 with Glib.Properties;               use Glib.Properties;
@@ -707,7 +709,7 @@ package body GPS.Search.GUI is
          Add_To_History
            (Get_History (S.Get_Kernel).all,
             Module.Current_Command.History.all,
-            S.Get_Text);
+            VSS.Strings.Conversions.To_Virtual_String (S.Get_Text));
       end if;
    end On_Entry_Changed;
 
@@ -722,7 +724,7 @@ package body GPS.Search.GUI is
          Add_To_History
             (Get_History (S.Get_Kernel).all,
              Module.Current_Command.History.all,
-             S.Get_Text);
+             VSS.Strings.Conversions.To_Virtual_String (S.Get_Text));
       end if;
 
       Reset;
@@ -749,7 +751,8 @@ package body GPS.Search.GUI is
 
       --  Fill initial contents based on history
       Module.Search.Set_Text
-         (Most_Recent (Get_History (Kernel), Self.History.all));
+        (VSS.Strings.Conversions.To_UTF_8_String
+           (Most_Recent (Get_History (Kernel), Self.History.all)));
 
       --  Force the display of the popup, even if empty, to help the user
       --  see where the focus is.
@@ -1195,7 +1198,7 @@ package body GPS.Search.GUI is
                Score    => 100,
                Short    => new String'(""),
                Long     => null,
-               Id       => new String'(""),
+               Id       => <>,
                Provider => null);
             --  Provider is set in the handler for "next", before returning
             --  the type to Ada.
@@ -1442,9 +1445,7 @@ package body GPS.Search.GUI is
             Result : constant Result_Property :=
               Get_Search_Result (Data, 1);
          begin
-            if Result.Result.Id /= Result.Result.Short
-              and then Result.Result.Short /= Result.Result.Long
-            then
+            if Result.Result.Short /= Result.Result.Long then
                Free (Result.Result.Short);
             end if;
 
@@ -1456,9 +1457,7 @@ package body GPS.Search.GUI is
             Result : constant Result_Property :=
               Get_Search_Result (Data, 1);
          begin
-            if Result.Result.Id /= Result.Result.Long
-              and then Result.Result.Short /= Result.Result.Long
-            then
+            if Result.Result.Short /= Result.Result.Long then
                Free (Result.Result.Long);
             end if;
 

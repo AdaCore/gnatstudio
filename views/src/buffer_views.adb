@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                               GNAT Studio                                --
 --                                                                          --
---                     Copyright (C) 2005-2023, AdaCore                     --
+--                     Copyright (C) 2005-2025, AdaCore                     --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -16,6 +16,8 @@
 ------------------------------------------------------------------------------
 
 with Ada.Strings.Unbounded;    use Ada.Strings.Unbounded;
+
+with VSS.Strings.Conversions;
 
 with Glib;                     use Glib;
 with Glib.Convert;
@@ -918,7 +920,9 @@ package body Buffer_Views is
                     (Self.Pattern.Highlight_Match (Short_Name, Context => C)),
                   Long     => new String'
                     (Glib.Convert.Escape_Text (Short_Name)),
-                  Id       => new String'(Child.Get_Title));
+                  Id       =>
+                    VSS.Strings.Conversions.To_Virtual_String
+                      (Child.Get_Title));
 
                Self.Adjust_Score (Result);
             end if;
@@ -991,7 +995,10 @@ package body Buffer_Views is
        Give_Focus : Boolean)
    is
       C : constant MDI_Child :=
-        Find_MDI_Child_By_Name (Get_MDI (Self.Kernel), Self.Id.all);
+        Find_MDI_Child_By_Name
+          (Get_MDI (Self.Kernel),
+           VSS.Strings.Conversions.To_UTF_8_String (Self.Id));
+
    begin
       if C /= null then
          Raise_Child (C, Give_Focus => Give_Focus);

@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                               GNAT Studio                                --
 --                                                                          --
---                     Copyright (C) 2001-2023, AdaCore                     --
+--                     Copyright (C) 2001-2025, AdaCore                     --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -16,11 +16,22 @@
 ------------------------------------------------------------------------------
 
 with Ada.Strings.Unbounded;  use Ada.Strings.Unbounded;
+
+with VSS.Strings.Conversions;
+with VSS.Strings.Formatters.Strings;
+with VSS.Strings.Templates;
+with VSS.String_Vectors;
+
+with GNATCOLL.Projects;      use GNATCOLL.Projects;
+with GNATCOLL.Tribooleans;
+with GNATCOLL.Utils;         use GNATCOLL.Utils;
+with GNATCOLL.VFS;           use GNATCOLL.VFS;
+with GNATCOLL.VFS.VSS_Utils;
+
 with Glib.Object;            use Glib.Object;
 with Glib.Types;             use Glib.Types;
 with Glib;                   use Glib;
 
-with GNATCOLL.Tribooleans;
 with Gtk.Editable;           use Gtk.Editable;
 with Gtk.Label;              use Gtk.Label;
 with Gtk.Text_View;          use Gtk.Text_View;
@@ -30,11 +41,6 @@ with Gtk.Window;             use Gtk.Window;
 with Gtkada.File_Selector;   use Gtkada.File_Selector;
 
 with Commands.Interactive;   use Commands, Commands.Interactive;
-with GNATCOLL.Projects;      use GNATCOLL.Projects;
-with GNATCOLL.Traces;        use GNATCOLL.Traces;
-with GNATCOLL.Utils;         use GNATCOLL.Utils;
-with GNATCOLL.VFS;           use GNATCOLL.VFS;
-with GNAT.Strings;           use GNAT.Strings;
 with GPS.Intl;               use GPS.Intl;
 
 with GPS.Kernel.Actions;     use GPS.Kernel.Actions;
@@ -50,11 +56,9 @@ with Histories;              use Histories;
 with File_Utils;             use File_Utils;
 with GUI_Utils;              use GUI_Utils;
 with Interactive_Consoles;
-with String_List_Utils;      use String_List_Utils;
 with Tooltips;               use Tooltips;
 
 package body GPS.Menu is
-   Me : constant Trace_Handle := Create ("GPS.MENU");
 
    type Menu_Module_Record is new Module_ID_Record with record
       Recent_Project_Actions : Action_Lists.List;
@@ -522,7 +526,7 @@ package body GPS.Menu is
    is
       Kernel          : constant Kernel_Handle := Command.Kernel;
       Hist            : constant History := Kernel.Get_History;
-      Name_List       : String_List_Access :=  --  Do not free
+      Name_List       : VSS.String_Vectors.Virtual_String_Vector :=
         Get_History (Kernel.Get_History.all, Project_Files_History_Key);
       Max_Length      : constant Integer :=
         Get_Max_Length (Hist.all, Project_Files_History_Key);
@@ -532,10 +536,11 @@ package body GPS.Menu is
            On => '/');
       Project_File    : constant Virtual_File :=
         Project_Path (Get_Project (Kernel));
-      Project_Path    : constant String := Project_File.Display_Full_Name;
+      Project_Path    : constant VSS.Strings.Virtual_String :=
+        GNATCOLL.VFS.VSS_Utils.Full_Name (Project_File);
       Is_Full         : Boolean := False;
 
-      function Action_Name (Name : String) return String;
+      function Action_Name (Name : VSS.Strings.Virtual_String) return String;
       --  Name formatting
 
       procedure Create_New_Menu
@@ -546,9 +551,14 @@ package body GPS.Menu is
       -- Action_Name --
       -----------------
 
-      function Action_Name (Name : String) return String is
+      function Action_Name (Name : VSS.Strings.Virtual_String) return String is
+         Template : VSS.Strings.Templates.Virtual_String_Template :=
+           "open recent project: {}";
+
       begin
-         return "open recent project: " & Name;
+         return
+           VSS.Strings.Conversions.To_UTF_8_String
+             (Template.Format (VSS.Strings.Formatters.Strings.Image (Name)));
       end Action_Name;
 
       ---------------------
@@ -558,7 +568,9 @@ package body GPS.Menu is
       procedure Create_New_Menu
         (File : Virtual_File; Prepend : Boolean := True)
       is
-         Name : constant String := File.Display_Full_Name;
+         Name : constant VSS.Strings.Virtual_String :=
+           GNATCOLL.VFS.VSS_Utils.Full_Name (File);
+
       begin
          --  Add new menus.
          --
@@ -589,8 +601,6 @@ package body GPS.Menu is
          end if;
       end Create_New_Menu;
 
-      Names_To_Remove : String_List_Utils.String_List.Vector;
-      --  List of names to remove from the project history
    begin
       if Menu_Module.Recent_Project_Actions.Is_Empty then
 
@@ -598,52 +608,42 @@ package body GPS.Menu is
          Name_List :=
            Get_History (Kernel.Get_History.all, Project_Files_History_Key);
 
-         if Name_List /= null then
-            for Idx in Name_List'First .. Name_List'Last loop
-               if Name_List (Idx) = null then
-                  --  defensive code
-                  Trace (Me, "Null project name in the history");
-                  Name_List (Idx) := new String'("");
+         for Name of Name_List loop
+            declare
+               File : constant Virtual_File :=
+                 GNATCOLL.VFS.VSS_Utils.Create (Name);
+
+            begin
+               --  Create a menu if the project actually exists. Remove
+               --  it from the history otherwise.
+
+               if File.Is_Regular_File then
+                  Create_New_Menu (File, Prepend => False);
 
                else
-                  --  Create a menu if the project actually exists. Remove
-                  --  it from the history otherwise.
-                  if Create_From_UTF8 (Name_List (Idx).all).Is_Regular_File
-                  then
-                     Create_New_Menu
-                       (Create (+Name_List (Idx).all), Prepend => False);
-                  else
-                     --  Mark the name for removal. We cannot do this while
-                     --  we're iterating on the list of names.
-                     Names_To_Remove.Append (Name_List (Idx).all);
-                  end if;
+                  Remove_From_History
+                    (Hist            => Kernel.Get_History.all,
+                     Key             => Project_Files_History_Key,
+                     Entry_To_Remove => Name);
                end if;
-            end loop;
-         end if;
-
-         for Name of Names_To_Remove loop
-            Remove_From_History
-              (Hist            => Kernel.Get_History.all,
-               Key             => Project_Files_History_Key,
-               Entry_To_Remove => Name);
+            end;
          end loop;
-      else
-         if Name_List /= null then
-            Is_Full := Name_List'Length = Max_Length;
 
-            if Menu_Module.Recent_Project_Actions.Contains
-                 (Action_Name (Project_Path))
-            then
-               --  The action already exist: do nothing
-               return Success;
-            end if;
+      else
+         Is_Full := Name_List.Length = Max_Length;
+
+         if Menu_Module.Recent_Project_Actions.Contains
+           (Action_Name (Project_Path))
+         then
+            --  The action already exist: do nothing
+            return Success;
          end if;
 
          --  If necessary pop the oldest item to make place
          if Is_Full then
             declare
                Name : constant String :=
-                 Action_Name (Name_List (Name_List'Last).all);
+                 Action_Name (Name_List.Last_Element);
                C    : Action_Lists.Cursor :=
                  Menu_Module.Recent_Project_Actions.Find (Name);
             begin

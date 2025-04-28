@@ -419,7 +419,9 @@ package body GPS.LSP_Client.Search.Entities is
                             (Short, Context => Context))
                      else new String'(Short)),
                   Long     => Long,
-                  Id       => new String'(Short & ":" & Long.all),
+                  Id       =>
+                    VSS.Strings.Conversions.To_Virtual_String
+                      (Short & ":" & Long.all),
                   Position => Info.location.span.first,
                   File     => File,
                   others   => <>);
@@ -524,7 +526,9 @@ package body GPS.LSP_Client.Search.Entities is
                                (Short, Context => Context))
                         else new String'(Short)),
                      Long     => Long,
-                     Id       => new String'(Short & ":" & Long.all),
+                     Id       =>
+                       VSS.Strings.Conversions.To_Virtual_String
+                         (Short & ":" & Long.all),
                      Position => Symbol.selectionRange.first,
                      File     => Self.File,
                      others   => <>);
@@ -575,7 +579,9 @@ package body GPS.LSP_Client.Search.Entities is
                             (Short, Context => Context))
                      else new String'(Short)),
                   Long     => Long,
-                  Id       => new String'(Short & ":" & Long.all),
+                  Id       =>
+                    VSS.Strings.Conversions.To_Virtual_String
+                      (Short & ":" & Long.all),
                   Position => Info.location.span.first,
                   File     => Self.File,
                   others   => <>);

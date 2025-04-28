@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                               GNAT Studio                                --
 --                                                                          --
---                     Copyright (C) 2013-2023, AdaCore                     --
+--                     Copyright (C) 2013-2025, AdaCore                     --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -19,9 +19,11 @@ with Ada.Calendar;              use Ada.Calendar;
 with Ada.Strings.Fixed;         use Ada.Strings.Fixed;
 with Ada.Strings.Unbounded;     use Ada.Strings.Unbounded;
 with Interfaces.C;              use Interfaces.C;
-
 with GNAT.Regpat;               use GNAT.Regpat;
 with GNAT.Strings;              use GNAT.Strings;
+
+with VSS.Strings.Conversions;
+
 with GNATCOLL.Traces;           use GNATCOLL.Traces;
 with GNATCOLL.Mmap;             use GNATCOLL.Mmap;
 with GNATCOLL.Projects;         use GNATCOLL.Projects;
@@ -520,7 +522,7 @@ package body GPS.Kernel.Search.Filenames is
                Score    => 100 * 100,
                Short    => new String'(+File.Base_Name),
                Long     => L,
-               Id       => L,
+               Id       => VSS.Strings.Conversions.To_Virtual_String (L.all),
                Line     => Self.Line,
                Column   => Self.Column,
                Project  => Project,
@@ -536,7 +538,7 @@ package body GPS.Kernel.Search.Filenames is
                Long     => new String'
                  (Self.Pattern.Highlight_Match
                       (Buffer => Text, Context => Context) & P_Name),
-               Id       => L,
+               Id       => VSS.Strings.Conversions.To_Virtual_String (L.all),
                Line     => Self.Line,
                Column   => Self.Column,
                Project  => Project,
@@ -551,7 +553,7 @@ package body GPS.Kernel.Search.Filenames is
                       (Self.Pattern.Highlight_Match
                            (Buffer => Text, Context => Context))),
                Long     => L,
-               Id       => L,
+               Id       => VSS.Strings.Conversions.To_Virtual_String (L.all),
                Line     => Self.Line,
                Column   => Self.Column,
                Project  => Project,

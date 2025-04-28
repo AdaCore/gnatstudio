@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                               GNAT Studio                                --
 --                                                                          --
---                     Copyright (C) 2000-2024, AdaCore                     --
+--                     Copyright (C) 2000-2025, AdaCore                     --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -17,6 +17,9 @@
 
 with Ada.Unchecked_Deallocation;
 with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
+
+with VSS.Strings.Conversions;
+
 with GNATCOLL.VFS;          use GNATCOLL.VFS;
 with Gdk.Event;             use Gdk.Event;
 with Glib.Object;           use Glib.Object;
@@ -30,7 +33,6 @@ with Gtkada.Stock_Labels;   use Gtkada.Stock_Labels;
 
 with GPS.Kernel.MDI;        use GPS.Kernel.MDI;
 with GPS.Main_Window;       use GPS.Main_Window;
-with VSS.Strings.Conversions;
 
 package body GPS.Dialogs is
 
@@ -206,8 +208,9 @@ package body GPS.Dialogs is
       LabelW               : Gtk_Label;
       Ent                  : Gtk_Entry;
       Button               : Browse_Button;
-      Default_History_Path : constant String :=
+      Default_History_Path : constant VSS.Strings.Virtual_String :=
         Most_Recent (Self.Kernel.Get_History, Key);
+
    begin
       Gtk_New_Hbox (Box, Homogeneous => False);
       Self.Get_Content_Area.Pack_Start (Box, Expand => False);
@@ -221,8 +224,11 @@ package body GPS.Dialogs is
       Gtk_New (Ent);
       Box.Pack_Start (Ent, Expand => True, Fill => True);
 
-      if Default_History_Path /= "" then
-         Ent.Set_Text (Text => Default_History_Path);
+      if not Default_History_Path.Is_Empty then
+         Ent.Set_Text
+           (Text =>
+              VSS.Strings.Conversions.To_UTF_8_String (Default_History_Path));
+
       else
          Ent.Set_Text
            (Create_From_Base
@@ -466,7 +472,11 @@ package body GPS.Dialogs is
    is
       S : constant String := Self.Get_Active_Text;
    begin
-      Add_To_History (Self.Kernel.Get_History.all, Self.Key.all, S);
+      Add_To_History
+        (Self.Kernel.Get_History.all,
+         Self.Key.all,
+         VSS.Strings.Conversions.To_Virtual_String (S));
+
       return S;
    end Get_Text;
 

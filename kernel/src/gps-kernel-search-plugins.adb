@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                               GNAT Studio                                --
 --                                                                          --
---                     Copyright (C) 2001-2023, AdaCore                     --
+--                     Copyright (C) 2001-2025, AdaCore                     --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -14,6 +14,8 @@
 -- COPYING3.  If not, go to http://www.gnu.org/licenses for a complete copy --
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
+
+with VSS.Strings.Conversions;
 
 with String_Utils;            use String_Utils;
 
@@ -179,7 +181,7 @@ package body GPS.Kernel.Search.Plugins is
          Score       => Score,
          Short       => Short,
          Long        => Long,
-         Id          => new String'(Long.all),
+         Id          => VSS.Strings.Conversions.To_Virtual_String (Long.all),
          Plugin_Page => Plugin_Page);
    end Create_Plugins_Search_Result;
 

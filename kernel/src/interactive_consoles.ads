@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                               GNAT Studio                                --
 --                                                                          --
---                     Copyright (C) 2001-2023, AdaCore                     --
+--                     Copyright (C) 2001-2025, AdaCore                     --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -272,11 +272,6 @@ package Interactive_Consoles is
    function Get_Chars
      (Console : access Interactive_Console_Record) return String;
    --  Return the contents of the console window
-
-   function Get_History
-     (Console : access Interactive_Console_Record)
-      return GNAT.Strings.String_List_Access;
-   --  Return the command history
 
    function Get_View
      (Console : access Interactive_Console_Record)

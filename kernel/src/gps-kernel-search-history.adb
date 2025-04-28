@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                               GNAT Studio                                --
 --                                                                          --
---                     Copyright (C) 2013-2023, AdaCore                     --
+--                     Copyright (C) 2013-2025, AdaCore                     --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -160,7 +160,7 @@ package body GPS.Kernel.Search.History is
                     (Buffer => (+H.File.Base_Name),
                      Context => Context)),
                Long     => L,
-               Id       => L,
+               Id       => VSS.Strings.Conversions.To_Virtual_String (L.all),
                Line     => H.Line,
                Column   => H.Column,
                Project  => H.Project,

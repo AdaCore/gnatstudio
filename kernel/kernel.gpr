@@ -24,4 +24,11 @@ project Kernel is
       for Implementation_Suffix ("Python") use ".py";
    end Naming;
 
+   package Coverage is
+      for Excluded_Units use (
+         --  eng/das/cov/gnatcoverage#408
+         "GPS.Kernel.Modules.UI"
+      );
+   end Coverage;
+
 end Kernel;

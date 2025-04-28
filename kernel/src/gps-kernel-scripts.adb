@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                               GNAT Studio                                --
 --                                                                          --
---                     Copyright (C) 2003-2023, AdaCore                     --
+--                     Copyright (C) 2003-2025, AdaCore                     --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -18,10 +18,11 @@
 with Ada.Containers.Ordered_Sets;
 with Ada.Unchecked_Conversion;
 with Ada.Exceptions;          use Ada.Exceptions;
-
-with System;                  use System;
 with GNAT.OS_Lib;             use GNAT.OS_Lib;
 with GNAT.Regpat;             use GNAT.Regpat;
+with System;                  use System;
+
+with VSS.String_Vectors;
 
 with GNATCOLL.Memory;
 with GNATCOLL.Projects;       use GNATCOLL.Projects;
@@ -29,6 +30,7 @@ with GNATCOLL.Python;         use GNATCOLL.Python;
 with GNATCOLL.Scripts.Files;
 with GNATCOLL.Scripts.Gtkada; use GNATCOLL.Scripts.Gtkada;
 with GNATCOLL.Scripts.Python; use GNATCOLL.Scripts.Python;
+with GNATCOLL.Scripts.VSS_Utils;
 with GNATCOLL.Traces;         use GNATCOLL.Traces;
 with GNATCOLL.Utils;          use GNATCOLL.Utils;
 with GNATCOLL.VFS;            use GNATCOLL.VFS;
@@ -1208,8 +1210,9 @@ package body GPS.Kernel.Scripts is
               and then PyString_Check (Item)
             then
                Add_To_History
-                 (Get_Kernel (Data).Get_History.all, Key,
-                  Nth_Arg (Data, 2));
+                 (Get_Kernel (Data).Get_History.all,
+                  Key,
+                  GNATCOLL.Scripts.VSS_Utils.Nth_Arg (Data, 2));
             else
                Set_History
                  (Get_Kernel (Data).Get_History.all, Key,
@@ -1227,22 +1230,22 @@ package body GPS.Kernel.Scripts is
             Key : constant History_Key :=
               History_Key (String'(Nth_Arg (Data, 1)));
             Most_Recent : constant Boolean := Nth_Arg (Data, 2, True);
-            Values      : GNAT.Strings.String_List_Access;
+            Values      : VSS.String_Vectors.Virtual_String_Vector;
+
          begin
             case Get_Type (History, Key) is
                when Strings =>
                   if Most_Recent then
-                     Data.Set_Return_Value
-                       (Histories.Most_Recent (History, Key));
+                     GNATCOLL.Scripts.VSS_Utils.Set_Return_Value
+                       (Data, Histories.Most_Recent (History, Key));
                   else
                      Values := Get_History (History.all, Key);
                      Data.Set_Return_Value_As_List;
 
-                     for Val of Values.all loop
-                        Data.Set_Return_Value (Val.all);
+                     for Value of Values loop
+                        GNATCOLL.Scripts.VSS_Utils.Set_Return_Value
+                          (Data, Value);
                      end loop;
-
-                     GNAT.Strings.Free (Values);
                   end if;
 
                when Booleans =>

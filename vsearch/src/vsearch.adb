@@ -23,6 +23,7 @@ with Ada.Unchecked_Deallocation;
 with GNAT.OS_Lib;               use GNAT.OS_Lib;
 with GNAT.Strings;
 
+with VSS.String_Vectors;
 with VSS.Strings;               use VSS.Strings;
 with VSS.Strings.Conversions;
 
@@ -741,7 +742,7 @@ package body Vsearch is
 
    procedure Add_History_To_Combo
      (Vsearch : not null access Vsearch_Record'Class;
-      Value   : String);
+      Value   : VSS.Strings.Virtual_String);
    --  Add a history entry to the combo box.
 
    -------------------------
@@ -903,31 +904,34 @@ package body Vsearch is
 
    procedure Add_History_To_Combo
      (Vsearch : not null access Vsearch_Record'Class;
-      Value   : String)
+      Value   : VSS.Strings.Virtual_String)
    is
       Model : constant Gtk_List_Store := -Get_Model (Vsearch.Pattern_Combo);
+      V     : constant String :=
+        VSS.Strings.Conversions.To_UTF_8_String (Value);
       Iter  : Gtk_Tree_Iter;
+
    begin
-      if Value /= "" then
-         if Value (Value'Last) = Character'Val (127)
-           and then Value'Length > 4
+      if not Value.Is_Empty then
+         if V (V'Last) = Character'Val (127)
+           and then V'Length > 4
          then
             Iter := Add_Unique_List_Entry
-              (Model, Value (Value'First .. Value'Last - 4),
+              (Model, V (V'First .. V'Last - 4),
                Prepend => True,
                Col     => Column_Text);
             Model.Set
-              (Iter, Column_Pattern, Value (Value'First .. Value'Last - 4));
+              (Iter, Column_Pattern, V (V'First .. V'Last - 4));
             Model.Set
-              (Iter, Column_Whole_Word, Value (Value'Last - 3) = '*');
+              (Iter, Column_Whole_Word, V (V'Last - 3) = '*');
             Model.Set
-              (Iter, Column_Is_Regexp, Value (Value'Last - 2) = '*');
+              (Iter, Column_Is_Regexp, V (V'Last - 2) = '*');
             Model.Set
-              (Iter, Column_Case_Sensitive, Value (Value'Last - 1) = '*');
+              (Iter, Column_Case_Sensitive, V (V'Last - 1) = '*');
          else
             Iter := Add_Unique_List_Entry
-              (Model, Value, Prepend => True, Col => Column_Text);
-            Model.Set (Iter, Column_Pattern, Value);
+              (Model, V, Prepend => True, Col => Column_Text);
+            Model.Set (Iter, Column_Pattern, V);
             Model.Set (Iter, Column_Case_Sensitive, False);
             Model.Set (Iter, Column_Is_Regexp, False);
             Model.Set (Iter, Column_Whole_Word, False);
@@ -957,9 +961,14 @@ package body Vsearch is
         & (if Case_Sensitive then '*' else ' ')
         & Character'Val (127);
    begin
-      Add_To_History (Get_History (Vsearch.Kernel).all, Pattern_Hist_Key, V);
+      Add_To_History
+        (Get_History (Vsearch.Kernel).all,
+         Pattern_Hist_Key,
+         VSS.Strings.Conversions.To_Virtual_String (V));
+
       if To_Combo then
-         Add_History_To_Combo (Vsearch, V);
+         Add_History_To_Combo
+           (Vsearch, VSS.Strings.Conversions.To_Virtual_String (V));
       end if;
    end Add_To_History_And_Combo;
 
@@ -1032,7 +1041,7 @@ package body Vsearch is
       Add_To_History
         (Get_History (Vsearch_Module_Id.Kernel).all,
          Replace_Hist_Key,
-         VSS.Strings.Conversions.To_UTF_8_String (Replace_Text));
+         Replace_Text);
 
       return Ctxt;
    end Create_Context;
@@ -2149,7 +2158,10 @@ package body Vsearch is
          To_Combo => False);
 
       Add_To_History
-        (History, Replace_Hist_Key, Vsearch.Replace_Combo.Get_Active_Text);
+        (History,
+         Replace_Hist_Key,
+         VSS.Strings.Conversions.To_Virtual_String
+           (Vsearch.Replace_Combo.Get_Active_Text));
 
       --  The widgets in Context_Specific have a longer lifecycle than the
       --  dialog itself: make sure here that they are not destroyed when the
@@ -2202,9 +2214,9 @@ package body Vsearch is
 
       procedure Initialize_From_History is
          History   : History_Record := Get_History (Self.Kernel).all;
-         Last_Mode : constant String_List_Access :=
+         Last_Mode : constant VSS.String_Vectors.Virtual_String_Vector :=
                        Get_History (History, Key => Mode_Hist_Key);
-         Patterns  : constant String_List_Access :=
+         Patterns  : constant VSS.String_Vectors.Virtual_String_Vector :=
                        Get_History (History, Pattern_Hist_Key);
       begin
          --  Create a new key in the history to save the replace patterns and
@@ -2240,9 +2252,9 @@ package body Vsearch is
             Num => Max_Nb_History_Entries,
             Key => Pattern_Hist_Key);
 
-         if Patterns /= null then
-            for I in reverse Patterns'Range loop
-               Add_History_To_Combo (Self, Patterns (I).all);
+         if not Patterns.Is_Empty then
+            for I in reverse Patterns.First_Index .. Patterns.Last_Index loop
+               Add_History_To_Combo (Self, Patterns (I));
             end loop;
 
             if Reuse_Last_Pattern.Get_Pref then
@@ -2278,10 +2290,14 @@ package body Vsearch is
             Num => 1,
             Key => Mode_Hist_Key);
 
-         if Last_Mode /= null and then Self.Mode = Unknown then
+         if not Last_Mode.Is_Empty and then Self.Mode = Unknown then
             Self.Set_Vsearch_Mode
-              (Mode => Vsearch_Mode'Value (Last_Mode (Last_Mode'Last).all));
+              (Mode =>
+                 Vsearch_Mode'Wide_Wide_Value
+                   (VSS.Strings.Conversions.To_Wide_Wide_String
+                      (Last_Mode.Last_Element)));
          end if;
+
          --  Create a key in the history to save the last used search module
          --  when the keep-previous-search-context preference is set.
          Create_New_Key_If_Necessary
@@ -3454,15 +3470,17 @@ package body Vsearch is
       ------------------------------------
 
       function Get_Search_Module_From_History return Search_Module is
-         Last_Selected : constant String_List_Access :=
+         Last_Selected : constant VSS.String_Vectors.Virtual_String_Vector :=
            Get_History
              (Get_History (Get_Kernel (Context)).all,
               Last_Search_Module_Key);
       begin
-         if Last_Selected /= null then
+         if not Last_Selected.Is_Empty then
             declare
                Module_Name : constant String :=
-                               Last_Selected (Last_Selected'First).all;
+                 VSS.Strings.Conversions.To_UTF_8_String
+                   (Last_Selected.First_Element);
+
             begin
                return Find_Module
                  (Kernel => Get_Kernel (Context),
@@ -3550,7 +3568,7 @@ package body Vsearch is
       Add_To_History
         (Get_History (Handle).all,
          Last_Search_Module_Key,
-         Module.Get_Label);
+         VSS.Strings.Conversions.To_Virtual_String (Module.Get_Label));
    end Set_Last_Search_Module;
 
    -----------------------------

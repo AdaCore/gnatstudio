@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                  GtkAda - Ada95 binding for Gtk+/Gnome                   --
 --                                                                          --
---                     Copyright (C) 2001-2024, AdaCore                     --
+--                     Copyright (C) 2001-2025, AdaCore                     --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -28,6 +28,8 @@ with VSS.Strings.Conversions;
 with GNATCOLL.VFS;              use GNATCOLL.VFS;
 with GNATCOLL.VFS.GtkAda;       use GNATCOLL.VFS.GtkAda;
 with GNATCOLL.VFS_Utils;        use GNATCOLL.VFS_Utils;
+with GNATCOLL.VFS.VSS_Utils;
+
 with Gtk.File_Chooser;
 with Gtk.File_Chooser_Dialog;   use Gtk.File_Chooser_Dialog;
 with Gtk.File_Filter;           use Gtk.File_Filter;
@@ -1282,8 +1284,10 @@ package body Gtkada.File_Selector is
             Set_Sensitive (Win.Forward_Button, False);
 
             if Win.History /= null and then Is_Local (Dir) then
-               Add_To_History (Win.History.all, "directories",
-                               +Full_Name (Dir, True));
+               Add_To_History
+                 (Win.History.all,
+                  "directories",
+                  GNATCOLL.VFS.VSS_Utils.Full_Name (Dir, True));
             end if;
          end if;
 

@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                               GNAT Studio                                --
 --                                                                          --
---                     Copyright (C) 2018-2023, AdaCore                     --
+--                     Copyright (C) 2018-2025, AdaCore                     --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -18,6 +18,9 @@
 with GNAT.Strings;             use GNAT.Strings;
 with Interfaces.C.Strings;
 with System;
+
+with VSS.String_Vectors;
+with VSS.Strings.Conversions;
 
 with Glib.Object;              use Glib.Object;
 with Glib.Values;
@@ -615,10 +618,10 @@ package body Filter_Panels is
      (Panel : not null access Filter_Panel_Record'Class;
       Add   : access Search_Pattern'Class := null)
    is
-      Key : constant History_Key :=
+      Key    : constant History_Key :=
         History_Key (Panel.History_Prefix.all & "-filter-recent");
-      Item : Recent_Entry_Item;
-      List : GNAT.Strings.String_List_Access;
+      Item   : Recent_Entry_Item;
+      List   : VSS.String_Vectors.Virtual_String_Vector;
       Prefix : Character;
 
       function Is_Recent_Entry
@@ -660,10 +663,11 @@ package body Filter_Panels is
            (Hist  => Panel.Kernel.Get_History.all,
             Key   => Key,
             New_Entry =>
-              Prefix
-              & (if Add.Get_Negate then '-' else '+')
-              & (if Add.Get_Whole_Word then 'w' else ' ')
-              & Add.Get_Text);
+              VSS.Strings.Conversions.To_Virtual_String
+                (Prefix
+                 & (if Add.Get_Negate then '-' else '+')
+                 & (if Add.Get_Whole_Word then 'w' else ' ')
+                 & Add.Get_Text));
       end if;
 
       if Panel.Pattern_Config_Menu = null then
@@ -673,15 +677,18 @@ package body Filter_Panels is
       --  Add menu entries for each previous search
 
       List := Get_History (Panel.Kernel.Get_History.all, Key);
-      if List /= null then
+
+      if not List.Is_Empty then
          --  Add a separator
          Item := new Recent_Entry_Item_Record;
          Gtk.Menu_Item.Initialize (Item);
          Panel.Pattern_Config_Menu.Append (Item);
 
-         for L in List'Range loop
+         for L of List loop
             declare
-               V : constant String := List (L).all;
+               V : constant String :=
+                 VSS.Strings.Conversions.To_UTF_8_String (L);
+
             begin
                Item := new Recent_Entry_Item_Record;
 

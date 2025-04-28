@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                               GNAT Studio                                --
 --                                                                          --
---                     Copyright (C) 2002-2024, AdaCore                     --
+--                     Copyright (C) 2002-2025, AdaCore                     --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -20,6 +20,8 @@ with Ada.Unchecked_Deallocation;
 with GNAT.OS_Lib;         use GNAT.OS_Lib;
 
 with GNATCOLL.VFS;        use GNATCOLL.VFS;
+
+with VSS.Strings.Conversions;
 
 with Glib;                use Glib;
 
@@ -463,12 +465,21 @@ package body Histories is
 
    function Get_History
      (Hist : History_Record; Key : History_Key)
-      return GNAT.Strings.String_List_Access
+      return VSS.String_Vectors.Virtual_String_Vector
    is
       Val : constant History_Key_Access :=
               Create_New_Key_If_Necessary (Hist, Key, Strings);
    begin
-      return Val.List;
+      return Result : VSS.String_Vectors.Virtual_String_Vector do
+         if Val.List /= null then
+            for Item of Val.List.all loop
+               Result.Append
+                 (if Item /= null
+                    then VSS.Strings.Conversions.To_Virtual_String (Item.all)
+                    else VSS.Strings.Empty_Virtual_String);
+            end loop;
+         end if;
+      end return;
    end Get_History;
 
    -----------------
@@ -482,10 +493,12 @@ package body Histories is
       Clear_Combo : Boolean := True;
       Prepend     : Boolean := False;
       Col         : Gint := 0;
-      Filter      : access function (Item : String) return Boolean := null)
+      Filter      : access
+        function (Item : VSS.Strings.Virtual_String) return Boolean := null)
    is
       List  : constant Gtk_List_Store := -Get_Model (Combo);
-      Value : constant String_List_Access := Get_History (Hist, Key);
+      Value : constant VSS.String_Vectors.Virtual_String_Vector :=
+        Get_History (Hist, Key);
       Iter  : Gtk_Tree_Iter;
 
    begin
@@ -493,33 +506,38 @@ package body Histories is
          List.Clear;
       end if;
 
-      if Value /= null then
-         for V in Value'Range loop
+      if Value.Is_Empty then
+         Set_Text (Gtk_Entry (Get_Child (Combo)), "");
+
+      else
+         for V of Value loop
             --  Do not add the empty item. It is stored internally to properly
             --  restore the contents of the entry, but shouldn't appear in the
             --  list.
-            if Value (V).all /= ""
-              and then (Filter = null or else Filter (Value (V).all))
+            if not V.Is_Empty
+              and then (Filter = null or else Filter (V))
             then
                --  Do not add the item directly, in case there was already a
                --  similar entry in the list if it wasn't cleared
                if Clear_Combo then
                   List.Append (Iter);
-                  List.Set (Iter, Col, Value (V).all);
+                  List.Set
+                    (Iter, Col, VSS.Strings.Conversions.To_UTF_8_String (V));
                else
-                  Iter := Add_Unique_List_Entry (List, Value (V).all, Prepend);
+                  Iter :=
+                    Add_Unique_List_Entry
+                      (List,
+                       VSS.Strings.Conversions.To_UTF_8_String (V),
+                       Prepend);
                end if;
             end if;
          end loop;
 
-         if Value (Value'First).all /= "" then
+         if not Value.First_Element.Is_Empty then
             --  select ony when combo had value last time
             Set_Active (Combo, 0);
             Select_Region (Gtk_Entry (Get_Child (Combo)), 0, -1);
          end if;
-
-      else
-         Set_Text (Gtk_Entry (Get_Child (Combo)), "");
       end if;
    end Get_History;
 
@@ -530,7 +548,7 @@ package body Histories is
    procedure Add_To_History
      (Hist      : in out History_Record;
       Key       : History_Key;
-      New_Entry : String)
+      New_Entry : VSS.Strings.Virtual_String)
    is
       procedure Unchecked_Free is new Ada.Unchecked_Deallocation
         (String_List, String_List_Access);
@@ -545,7 +563,9 @@ package body Histories is
       if Value.List /= null then
          if not Value.Allow_Duplicates then
             for V in Value.List'Range loop
-               if Value.List (V).all = New_Entry then
+               if Value.List (V).all
+                    = VSS.Strings.Conversions.To_UTF_8_String (New_Entry)
+               then
                   Tmp := Value.List (V);
                   Value.List (Value.List'First + 1 .. V) :=
                     Value.List (Value.List'First .. V - 1);
@@ -555,7 +575,8 @@ package body Histories is
             end loop;
 
          elsif Value.Merge_First
-           and then Value.List (Value.List'First).all = New_Entry
+           and then Value.List (Value.List'First).all
+                      = VSS.Strings.Conversions.To_UTF_8_String (New_Entry)
          then
             return;
          end if;
@@ -571,13 +592,15 @@ package body Histories is
             Free (Value.List (Value.List'Last));
             Value.List (Value.List'First + 1 .. Value.List'Last) :=
               Value.List (Value.List'First .. Value.List'Last - 1);
-            Value.List (Value.List'First) := new String'(New_Entry);
+            Value.List (Value.List'First) :=
+              new String'(VSS.Strings.Conversions.To_UTF_8_String (New_Entry));
          else
             --  Insert the element in the table
             Tmp2 := new String_List (1 .. Value.List'Length + 1);
             Tmp2 (2 .. Tmp2'Last) := Value.List.all;
             Unchecked_Free (Value.List);
-            Tmp2 (Tmp2'First) := new String'(New_Entry);
+            Tmp2 (Tmp2'First) :=
+              new String'(VSS.Strings.Conversions.To_UTF_8_String (New_Entry));
             Value.List := Tmp2;
          end if;
 
@@ -586,7 +609,10 @@ package body Histories is
          end if;
 
       else
-         Value.List := new String_List'(1 => new String'(New_Entry));
+         Value.List :=
+           new String_List'
+             (1 => new String'
+                (VSS.Strings.Conversions.To_UTF_8_String (New_Entry)));
       end if;
    end Add_To_History;
 
@@ -597,7 +623,7 @@ package body Histories is
    procedure Remove_From_History
      (Hist            : in out History_Record;
       Key             : History_Key;
-      Entry_To_Remove : String)
+      Entry_To_Remove : VSS.Strings.Virtual_String)
    is
       procedure Unchecked_Free is new Ada.Unchecked_Deallocation
         (String_List, String_List_Access);
@@ -615,7 +641,9 @@ package body Histories is
          while J <= Value.List'Last loop
 
             --  Find the entry to remove
-            if Value.List (J).all = Entry_To_Remove then
+            if Value.List (J).all
+              = VSS.Strings.Conversions.To_UTF_8_String (Entry_To_Remove)
+            then
 
                --  Create a new list by appending the slices before and after
                --  the position of the entry to remove.
@@ -637,6 +665,7 @@ package body Histories is
          end loop;
       end;
    end Remove_From_History;
+
    -----------------
    -- Set_History --
    -----------------
@@ -766,20 +795,24 @@ package body Histories is
    -----------------
 
    function Most_Recent
-     (Hist : access History_Record;
-      Key  : History_Key;
-      Default : String := "") return String
+     (Hist    : access History_Record;
+      Key     : History_Key;
+      Default : VSS.Strings.Virtual_String := "")
+      return VSS.Strings.Virtual_String
    is
-      Past : String_List_Access;
+      Past : VSS.String_Vectors.Virtual_String_Vector;
+
    begin
       Create_New_Key_If_Necessary (Hist.all, Key, Strings);
 
       Past := Get_History (Hist.all, Key);
-      if Past /= null then
-         return Past (Past'First).all;
-      end if;
 
-      return Default;
+      if Past.Is_Empty then
+         return Default;
+
+      else
+         return Past.First_Element;
+      end if;
    end Most_Recent;
 
    ---------------
@@ -789,10 +822,12 @@ package body Histories is
    procedure Save_Text
      (Self : access Gtk.GEntry.Gtk_Entry_Record'Class;
       Hist : access History_Record;
-      Key  : History_Key)
-   is
+      Key  : History_Key) is
    begin
-      Add_To_History (Hist.all, Key, Self.Get_Text);
+      Add_To_History
+        (Hist.all,
+         Key,
+         VSS.Strings.Conversions.To_Virtual_String (Self.Get_Text));
    end Save_Text;
 
 end Histories;

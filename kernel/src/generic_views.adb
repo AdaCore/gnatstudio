@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                               GNAT Studio                                --
 --                                                                          --
---                     Copyright (C) 2005-2023, AdaCore                     --
+--                     Copyright (C) 2005-2025, AdaCore                     --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -18,6 +18,9 @@
 with Ada.Calendar;              use Ada.Calendar;
 with Ada.Tags;                  use Ada.Tags;
 with GNAT.Regpat;               use GNAT.Regpat;
+
+with VSS.Strings.Conversions;
+with VSS.String_Vectors;
 
 with Glib.Object;               use Glib, Glib.Object;
 with XML_Utils;                 use XML_Utils;
@@ -43,7 +46,6 @@ with Gtkada.Handlers;           use Gtkada.Handlers;
 with Gtkada.MDI;                use Gtkada.MDI;
 
 with Commands.Interactive;      use Commands, Commands.Interactive;
-with GNAT.Strings;              use GNAT.Strings;
 with GNATCOLL.Traces;           use GNATCOLL.Traces;
 with GPS.Kernel;                use GPS.Kernel;
 with GPS.Kernel.Actions;        use GPS.Kernel.Actions;
@@ -470,10 +472,10 @@ package body Generic_Views is
          Position_Found : out Boolean;
          X, Y           : out Gint)
       is
-         Hist_X  : constant String_List_Access := Get_History
-           (Get_History (View.Kernel).all, Window_X_Hist_Key);
-         Hist_Y  : constant String_List_Access := Get_History
-           (Get_History (View.Kernel).all, Window_Y_Hist_Key);
+         Hist_X  : constant VSS.String_Vectors.Virtual_String_Vector :=
+           Get_History (Get_History (View.Kernel).all, Window_X_Hist_Key);
+         Hist_Y  : constant VSS.String_Vectors.Virtual_String_Vector :=
+           Get_History (Get_History (View.Kernel).all, Window_Y_Hist_Key);
 
          Monitor : Gdk.Monitor.Gdk_Monitor;
          Rect    : Gdk_Rectangle;
@@ -482,7 +484,7 @@ package body Generic_Views is
          X := Gint'First;
          Y := Gint'First;
 
-         if Hist_X = null or else Hist_Y = null then
+         if Hist_X.Is_Empty or else Hist_Y.Is_Empty then
             return;
          end if;
 
@@ -493,8 +495,14 @@ package body Generic_Views is
          --  any monitor. So we need to look at the specific monitor where
          --  the window will be shown.
 
-         X := Gint'Value (Hist_X (Hist_X'First).all);
-         Y := Gint'Value (Hist_Y (Hist_Y'First).all);
+         X :=
+           Gint'Wide_Wide_Value
+             (VSS.Strings.Conversions.To_Wide_Wide_String
+                (Hist_X.First_Element));
+         Y :=
+           Gint'Wide_Wide_Value
+             (VSS.Strings.Conversions.To_Wide_Wide_String
+                (Hist_Y.First_Element));
 
          Monitor := Gdk.Display.Get_Default.Get_Monitor_At_Point (X, Y);
          Monitor.Get_Geometry (Rect);
@@ -527,10 +535,10 @@ package body Generic_Views is
 
          Add_To_History
            (Get_History (View.Kernel).all, Window_X_Hist_Key,
-            Gint'Image (X));
+            VSS.Strings.To_Virtual_String (Gint'Wide_Wide_Image (X)));
          Add_To_History
            (Get_History (View.Kernel).all, Window_Y_Hist_Key,
-            Gint'Image (Y));
+            VSS.Strings.To_Virtual_String (Gint'Wide_Wide_Image (Y)));
       end Store_Position;
 
       -----------------------------

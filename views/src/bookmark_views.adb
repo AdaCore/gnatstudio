@@ -703,7 +703,9 @@ package body Bookmark_Views is
                           (Self.Pattern.Highlight_Match
                                (Get_Name (Self.Pos), C)),
                         Long     => new String'(Loc),
-                        Id       => new String'(Get_Name (Self.Pos)),
+                        Id       =>
+                          VSS.Strings.Conversions.To_Virtual_String
+                            (Get_Name (Self.Pos)),
                         Bookmark => Bookmark_Data_Access (Self.Pos));
                      Self.Adjust_Score (Result);
 
@@ -717,7 +719,9 @@ package body Bookmark_Views is
                            Short    => new String'(Get_Name (Self.Pos)),
                            Long     => new String'
                              (Self.Pattern.Highlight_Match (Loc, C)),
-                           Id       => new String'(Get_Name (Self.Pos)),
+                           Id       =>
+                             VSS.Strings.Conversions.To_Virtual_String
+                               (Get_Name (Self.Pos)),
                            Bookmark => Bookmark_Data_Access (Self.Pos));
                         Self.Adjust_Score (Result);
                      end if;
