@@ -15,16 +15,13 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with Ada.Containers.Indefinite_Ordered_Maps;
 with Ada.Exceptions;                use Ada.Exceptions;
-with Ada.Strings.Wide_Wide_Maps;    use Ada.Strings.Wide_Wide_Maps;
 with GNATCOLL.JSON;
 
 with GNATCOLL.Traces;               use GNATCOLL.Traces;
 with GNATCOLL.VFS;                  use GNATCOLL.VFS;
 
 with Language_Formatter;
-with Src_Editor_Buffer.Formatters;
 with VSS.Characters;
 with VSS.Strings.Character_Iterators;
 pragma Unreferenced (VSS.Strings.Character_Iterators);
@@ -35,7 +32,6 @@ with VSS.Strings.Conversions;
 with Gtkada.MDI;
 
 with GPS.Default_Styles;
-with GPS.Editors;                   use GPS.Editors;
 with GPS.Editors.Line_Information;  use GPS.Editors.Line_Information;
 with GPS.LSP_Client.Edit_Workspace;
 with GPS.LSP_Client.Utilities;
@@ -119,31 +115,6 @@ package body GPS.LSP_Client.Editors.Formatting is
    overriding procedure On_Result_Message
      (Self   : in out On_Type_Formatting_Request;
       Result : LSP.Messages.TextEdit_Vector);
-
-   -- LSP_Editor_Formatting_Provider --
-
-   package Triggers_Maps is
-     new Ada.Containers.Indefinite_Ordered_Maps
-       (String, Ada.Strings.Wide_Wide_Maps.Wide_Wide_Character_Set);
-
-   type LSP_Editor_Formatting_Provider is
-     new Src_Editor_Buffer.Formatters.Formatting_Provider with record
-      Kernel   : Kernel_Handle;
-      Triggers : Triggers_Maps.Map;
-   end record;
-
-   overriding function On_Range_Formatting
-     (Self        : in out LSP_Editor_Formatting_Provider;
-      From, To    : Editor_Location'Class;
-      Cursor_Line : Natural;
-      Cursor_Move : in out Integer)
-      return Boolean;
-
-   overriding function On_Type_Formatting
-     (Self        : in out LSP_Editor_Formatting_Provider;
-      From, To    : Editor_Location'Class;
-      Cursor_Line : Natural)
-      return Boolean;
 
    -- LSP_Formatting_Module_Id_Record --
 
@@ -475,8 +446,10 @@ package body GPS.LSP_Client.Editors.Formatting is
 
       Lang := Self.Kernel.Get_Language_Handler.Get_Language_From_File (File);
 
-      C := Self.Triggers.Find (Lang.Get_Name);
+      C := Self.Lang_To_Trigger_Chars.Find (Lang.Get_Name);
 
+      --  Retrieve the list of known trigger characters from the server
+      --  capabilities for Lang
       if not Has_Element (C) then
          declare
             use type GPS.LSP_Client.Language_Servers.Language_Server_Access;
@@ -505,6 +478,7 @@ package body GPS.LSP_Client.Editors.Formatting is
 
          begin
             Server := GPS.LSP_Module.Get_Language_Server (Lang);
+            --  No server for Lang, stop here
             if Server = null then
                return False;
             end if;
@@ -526,10 +500,11 @@ package body GPS.LSP_Client.Editors.Formatting is
                   end loop;
                end if;
             end if;
-            Self.Triggers.Insert (Lang.Get_Name, Set, C, Dummy);
+            Self.Lang_To_Trigger_Chars.Insert (Lang.Get_Name, Set, C, Dummy);
          end;
       end if;
 
+      --  No known trigger characters for Lang, stop here
       if Element (C) = Null_Set then
          return False;
       end if;
