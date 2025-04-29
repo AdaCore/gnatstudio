@@ -43,9 +43,12 @@ gps_and_cli: all
 
 include ../Makefile.gnat
 
-# NOTE: we need to build gnatcoll separately, since we cannot use
-# gnat.adc (No_Tasking restriction) on all gnatcoll sources.
-all: resources
+all: resources generate
+	$(GPRBUILD) $(GPRBUILD_FLAGS) -m -p -ws \
+	  $(GPRBUILD_BUILD_TYPE_FLAGS) -Pgps -largs `pkg-config gmodule-2.0 --libs`
+
+# Generate some sources
+generate:
 	cd ../kernel/src; ${PYTHON} hooks.py
 	cd ../kernel/generated; gnatcoll_db2ada \
           -api=GPS.Kernel.Properties.Database -adacreate -dbtype sqlite\
@@ -53,8 +56,6 @@ all: resources
 ifeq ($(OS),Windows_NT)
 	for f in ../kernel/generated/*; do cat $$f | tr -d '\015' > $$f-aux; mv -f $$f-aux $$f; done
 endif
-	$(GPRBUILD) $(GPRBUILD_FLAGS) -m -p -ws \
-	  $(GPRBUILD_BUILD_TYPE_FLAGS) -Pgps -largs `pkg-config gmodule-2.0 --libs`
 
 resources:
 ifeq ($(OS),Windows_NT)
