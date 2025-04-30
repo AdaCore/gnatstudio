@@ -22,6 +22,7 @@ with GNATCOLL.Traces;               use GNATCOLL.Traces;
 with GNATCOLL.VFS;                  use GNATCOLL.VFS;
 
 with Language_Formatter;
+with Src_Editor_Buffer.Formatters;
 with VSS.Characters;
 with VSS.Strings.Character_Iterators;
 pragma Unreferenced (VSS.Strings.Character_Iterators);

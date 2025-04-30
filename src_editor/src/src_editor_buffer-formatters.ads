@@ -15,39 +15,17 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
+with GPS.Editors;   use GPS.Editors;
 with GPS.Kernel;    use GPS.Kernel;
 with Gtk.Text_Iter; use Gtk.Text_Iter;
 
 package Src_Editor_Buffer.Formatters is
 
-   type Formatting_Provider is limited interface;
-   type Formatting_Provider_Access is access all Formatting_Provider'Class;
-
-   function On_Range_Formatting
-     (Self        : in out Formatting_Provider;
-      From, To    : Editor_Location'Class;
-      Cursor_Line : Natural;
-      Cursor_Move : in out Integer)
-      return Boolean is abstract;
-   --  Ask the provider to format between From and To.
-   --  Cursor_Line and Cursor_Move are the current location of the Cursor in
-   --  the editor. Cursor_Move should return the number of character the
-   --  Cursor should be moved after formatting. It can be negative to move
-   --  backward.
-
-   function On_Type_Formatting
-     (Self        : in out Formatting_Provider;
-      From, To    : Editor_Location'Class;
-      Cursor_Line : Natural)
-      return Boolean is abstract;
-   --  Ask the provider to format between From and To.
-   --  Cursor_Line is the current location of the Cursor in the Editor.
-
    type Known_Provider is (LSP, Construct, Disabled);
    --  List of Known Providers, it will be used to create the preferences
 
    procedure Add_Provider
-     (Name : Known_Provider; Provider : Formatting_Provider_Access);
+     (Name : Known_Provider; Provider : Editor_Formatting_Provider_Access);
    --  Activate the provider by adding its implementation
 
    procedure Delete_Provider (Name : Known_Provider);

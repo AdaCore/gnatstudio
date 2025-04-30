@@ -26,7 +26,7 @@ package body Src_Editor_Buffer.Formatters is
      Create ("GPS.Source_Editor.Buffer.FORMATTERS");
 
    type Providers_Array
-     is array (Known_Provider) of Formatting_Provider_Access;
+     is array (Known_Provider) of Editor_Formatting_Provider_Access;
 
    Providers : Providers_Array := (others => null);
 
@@ -75,7 +75,7 @@ package body Src_Editor_Buffer.Formatters is
 
                Selected : constant Known_Provider :=
            Range_Formatting_Provider_Pref.Get_Pref;
-         Provider : constant Formatting_Provider_Access :=
+         Provider : constant Editor_Formatting_Provider_Access :=
            Providers (Selected);
    begin
       if Provider = null then
@@ -176,7 +176,7 @@ package body Src_Editor_Buffer.Formatters is
       Start_Column, End_Column : Visible_Column_Type;
       Selected                 : constant Known_Provider :=
         On_Type_Formatting_Provider_Pref.Get_Pref;
-      Provider                 : constant Formatting_Provider_Access :=
+      Provider                 : constant Editor_Formatting_Provider_Access :=
         Providers (Selected);
    begin
       if Provider = null then
@@ -283,7 +283,7 @@ package body Src_Editor_Buffer.Formatters is
    ------------------
 
    procedure Add_Provider
-     (Name : Known_Provider; Provider : Formatting_Provider_Access) is
+     (Name : Known_Provider; Provider : Editor_Formatting_Provider_Access) is
    begin
       Providers (Name) := Provider;
    end Add_Provider;

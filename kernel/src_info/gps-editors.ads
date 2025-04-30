@@ -88,6 +88,10 @@ package GPS.Editors is
      access all Editor_Folding_Provider'Class;
    --  For folding blocks computation
 
+   type Editor_Formatting_Provider is limited interface;
+   type Editor_Formatting_Provider_Access is
+     access all Editor_Formatting_Provider'Class;
+
    Editor_Exception : exception;
    --  Exception raised by the subprograms below when the arguments are not
    --  expected (all kind of errors, the specific error is part of the
@@ -1045,6 +1049,30 @@ package GPS.Editors is
       File : Virtual_File) return Boolean is abstract;
    --  Called for folding blocks computation. Return False when provider
    --  can't provide information.
+
+   --------------------------------
+   -- Editor_Formatting_Provider --
+   --------------------------------
+
+   function On_Range_Formatting
+     (Self        : in out Editor_Formatting_Provider;
+      From, To    : Editor_Location'Class;
+      Cursor_Line : Natural;
+      Cursor_Move : in out Integer)
+      return Boolean is abstract;
+   --  Ask the provider to format between From and To.
+   --  Cursor_Line and Cursor_Move are the current location of the Cursor in
+   --  the editor. Cursor_Move should return the number of character the
+   --  Cursor should be moved after formatting. It can be negative to move
+   --  backward.
+
+   function On_Type_Formatting
+     (Self        : in out Editor_Formatting_Provider;
+      From, To    : Editor_Location'Class;
+      Cursor_Line : Natural)
+      return Boolean is abstract;
+   --  Ask the provider to format between From and To.
+   --  Cursor_Line is the current location of the Cursor in the Editor.
 
    ----------------------
    -- Location markers --

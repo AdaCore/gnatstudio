@@ -17,12 +17,11 @@
 
 with GPS.Kernel;  use GPS.Kernel;
 with GPS.Editors; use GPS.Editors;
-with Src_Editor_Buffer.Formatters;
 
 package Language_Formatter is
 
    type Language_Formatting_Provider is
-     new Src_Editor_Buffer.Formatters.Formatting_Provider
+     new GPS.Editors.Editor_Formatting_Provider
    with record
       Kernel : Kernel_Handle;
    end record;

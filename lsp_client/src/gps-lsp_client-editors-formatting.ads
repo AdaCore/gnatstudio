@@ -21,7 +21,6 @@ with Ada.Containers.Indefinite_Ordered_Maps;
 with Ada.Strings.Wide_Wide_Maps; use Ada.Strings.Wide_Wide_Maps;
 with GPS.Editors;                use GPS.Editors;
 with GPS.Kernel;                 use GPS.Kernel;
-with Src_Editor_Buffer.Formatters;
 
 package GPS.LSP_Client.Editors.Formatting is
 
@@ -29,7 +28,7 @@ package GPS.LSP_Client.Editors.Formatting is
    --  The support can be deactivated for Ada by setting For_Ada to False.
 
    type LSP_Editor_Formatting_Provider is
-     new Src_Editor_Buffer.Formatters.Formatting_Provider
+     new GPS.Editors.Editor_Formatting_Provider
    with private;
 
 private
@@ -41,7 +40,7 @@ private
    --  Map of language to trigger character set
 
    type LSP_Editor_Formatting_Provider is
-     new Src_Editor_Buffer.Formatters.Formatting_Provider
+     new GPS.Editors.Editor_Formatting_Provider
    with record
       Kernel                : Kernel_Handle;
       Lang_To_Trigger_Chars : Triggers_Maps.Map;
