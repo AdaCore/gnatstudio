@@ -2170,7 +2170,6 @@ package body Src_Editor_Module is
                   Character => Character,
                   Casing    => On_The_Fly);
             end if;
-
          elsif Character = Space then
             Get_View (Box).Reset_As_Is_Mode;
          end if;
@@ -2258,9 +2257,7 @@ package body Src_Editor_Module is
          Buffer := Get_Buffer
            (Get_Source_Box_From_MDI (Find_Editor (Kernel, File, No_Project)));
          Autocase_Text
-           (Buffer    => Buffer,
-            Character => Char,
-            Casing    => End_Of_Word);
+           (Buffer => Buffer, Character => Char, Casing => End_Of_Word);
       end if;
    end Execute;
 
