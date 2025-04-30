@@ -24,6 +24,9 @@ all default:
 	$(MAKE) -C cli BUILD=$(BUILD) $@
 	$(MAKE) -C testsuite BUILD=$(BUILD) $@
 
+generate:
+	$(MAKE) -C gnatstudio BUILD=$(BUILD) generate
+
 codepeer:
 	$(MAKE) -C gnatstudio scil
 	codepeer -all -lib gps.library -quiet -baseline -level 1 \
