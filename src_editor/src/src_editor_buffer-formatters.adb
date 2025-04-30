@@ -72,7 +72,18 @@ package body Src_Editor_Buffer.Formatters is
 
       From_Line : Editable_Line_Type;
       To_Line   : Editable_Line_Type;
+
+               Selected : constant Known_Provider :=
+           Range_Formatting_Provider_Pref.Get_Pref;
+         Provider : constant Formatting_Provider_Access :=
+           Providers (Selected);
    begin
+      if Provider = null then
+         Trace
+           (Me, "rangeFormatting Provider is not defined: " & Selected'Image);
+         return;
+      end if;
+
       Save_Cursor
         (Buffer        => Buffer,
          Mark          => Mark,
@@ -130,27 +141,15 @@ package body Src_Editor_Buffer.Formatters is
          end;
       end if;
 
-      declare
-         Selected : constant Known_Provider :=
-           Range_Formatting_Provider_Pref.Get_Pref;
-         Provider : constant Formatting_Provider_Access :=
-           Providers (Selected);
-      begin
-         if Provider /= null then
-            if not Provider.On_Range_Formatting
-                     (Buffer.Editor_Buffer.New_Location
-                        (Integer (From_Line), 1),
-                      Buffer.Editor_Buffer.New_Location
-                        (Integer (To_Line), To_Column),
-                      Cursor_Line => Natural (Cursor_Line) + 1,
-                      Cursor_Move => Integer (Cursor_Offset))
-            then
-               Trace (Me, "Formatting failed");
-            end if;
-         else
-            Trace (Me, "Provider is not defined: " & Selected'Image);
-         end if;
-      end;
+      if not Provider.On_Range_Formatting
+               (Buffer.Editor_Buffer.New_Location (Integer (From_Line), 1),
+                Buffer.Editor_Buffer.New_Location
+                  (Integer (To_Line), To_Column),
+                Cursor_Line => Natural (Cursor_Line) + 1,
+                Cursor_Move => Integer (Cursor_Offset))
+      then
+         Trace (Me, "Formatting failed");
+      end if;
 
       Place_Cursor
         (Buffer        => Buffer,
@@ -175,7 +174,17 @@ package body Src_Editor_Buffer.Formatters is
 
       Start_Line, End_Line     : Editable_Line_Type;
       Start_Column, End_Column : Visible_Column_Type;
+      Selected                 : constant Known_Provider :=
+        On_Type_Formatting_Provider_Pref.Get_Pref;
+      Provider                 : constant Formatting_Provider_Access :=
+        Providers (Selected);
    begin
+      if Provider = null then
+         Trace
+           (Me, "onTypeFormatting Provider is not defined: " & Selected'Image);
+         return;
+      end if;
+
       Save_Cursor
         (Buffer        => Buffer,
          Mark          => Mark,
@@ -185,26 +194,15 @@ package body Src_Editor_Buffer.Formatters is
       Get_Iter_Position (Buffer, From, Start_Line, Start_Column);
       Get_Iter_Position (Buffer, To, End_Line, End_Column);
 
-      declare
-         Selected : constant Known_Provider :=
-           On_Type_Formatting_Provider_Pref.Get_Pref;
-         Provider : constant Formatting_Provider_Access :=
-           Providers (Selected);
-      begin
-         if Provider /= null then
-            if not Provider.On_Type_Formatting
-                     (Buffer.Editor_Buffer.New_Location
-                        (Integer (Start_Line), Start_Column),
-                      Buffer.Editor_Buffer.New_Location
-                        (Integer (End_Line), End_Column),
-                      Cursor_Line => Natural (Cursor_Line) + 1)
-            then
-               Trace (Me, "Fails to format on new line");
-            end if;
-         else
-            Trace (Me, "Provider is not defined: " & Selected'Image);
-         end if;
-      end;
+      if not Provider.On_Type_Formatting
+               (Buffer.Editor_Buffer.New_Location
+                  (Integer (Start_Line), Start_Column),
+                Buffer.Editor_Buffer.New_Location
+                  (Integer (End_Line), End_Column),
+                Cursor_Line => Natural (Cursor_Line) + 1)
+      then
+         Trace (Me, "Fails to format on new line");
+      end if;
 
       Place_Cursor
         (Buffer        => Buffer,

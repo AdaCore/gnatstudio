@@ -43,7 +43,7 @@ package Src_Editor_Buffer.Formatters is
    --  Ask the provider to format between From and To.
    --  Cursor_Line is the current location of the Cursor in the Editor.
 
-   type Known_Provider is (LSP, Construct);
+   type Known_Provider is (LSP, Construct, Disabled);
    --  List of Known Providers, it will be used to create the preferences
 
    procedure Add_Provider
