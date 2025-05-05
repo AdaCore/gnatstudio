@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                               GNAT Studio                                --
 --                                                                          --
---                     Copyright (C) 2023, AdaCore                          --
+--                     Copyright (C) 2025, AdaCore                          --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -15,30 +15,30 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-package DAP.Modules.Variables.Items.Arguments is
+package DAP.Modules.Variables.Items.Locals is
 
-   type Arguments_Item_Info is new Item_Info with null record;
+   type Locals_Item_Info is new Item_Info with null record;
 
    overriding function Get_Special_Kind
-     (Info : Arguments_Item_Info) return Variable_Kind;
+     (Info : Locals_Item_Info) return Variable_Kind;
 
    overriding function Get_Name
-     (Self : Arguments_Item_Info) return Virtual_String;
+     (Self : Locals_Item_Info) return Virtual_String;
 
    overriding function Get_Full_Name
-     (Self : Arguments_Item_Info) return Virtual_String;
+     (Self : Locals_Item_Info) return Virtual_String;
 
    overriding procedure Find_DAP_Item
-     (Info  : Arguments_Item_Info;
+     (Info  : Locals_Item_Info;
       C     : in out DAP.Types.Variables_References_Trees.Cursor;
       Found : out Boolean);
 
    overriding procedure Store
-     (Info  : Arguments_Item_Info;
+     (Info  : Locals_Item_Info;
       Value : in out GNATCOLL.JSON.JSON_Value);
 
    function Load (Value : GNATCOLL.JSON.JSON_Value) return Item_Info'Class;
 
    function Create (Format : DAP.Tools.ValueFormat) return Item_Info'Class;
 
-end DAP.Modules.Variables.Items.Arguments;
+end DAP.Modules.Variables.Items.Locals;

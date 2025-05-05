@@ -146,6 +146,11 @@ package body DAP.Views.Variables is
      (Command : access Display_Arguments_Command;
       Context : Interactive_Command_Context) return Command_Return_Type;
 
+   type Display_Locals_Command is new Interactive_Command with null record;
+   overriding function Execute
+     (Command : access Display_Locals_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type;
+
    type Access_Variable_Filter is
      new Action_Filter_Record with null record;
    overriding function Filter_Matches_Primitive
@@ -841,7 +846,7 @@ package body DAP.Views.Variables is
             then Item.Get_Full_Name
             else Var.name)) &
            Var_Id'Img &
-           " " & Item.Is_Arguments'Img);
+           " " & Item.Get_Special_Kind'Img);
 
       if Parent /= Null_Iter then
          Self.Remove_Dummy_Child (Parent);
@@ -879,13 +884,13 @@ package body DAP.Views.Variables is
               (VSS.Strings.Conversions.To_UTF_8_String (Item_Full_Name))));
 
       if Cursor /= Variables_References_Trees.No_Element then
-         if Item.Is_Arguments then
+         if Item.Get_Special_Kind /= Non_Specified then
             pragma Assert (Cursor.Is_Root);
 
-            --  Fill `arguments` node
+            --  Fill `special` (arguments/locals) node
             C := Cursor.First_Child;
             while C.Has_Element loop
-               if Element (C).Kind = DAP.Types.Arguments then
+               if Element (C).Kind = Item.Get_Special_Kind then
                   Self.Add_Row
                     (Item => No_Item, Cursor => C, Parent => Row);
                end if;
@@ -1386,13 +1391,15 @@ package body DAP.Views.Variables is
      (Self : access DAP_Variables_View_Record'Class;
       Item : Item_Info'Class) is
    begin
-      if Item.Is_Arguments then
+      if Item.Get_Special_Kind /= Non_Specified then
          declare
             Curs : Item_Info_Vectors.Cursor;
          begin
             Curs := Self.Tree.Items.First;
             while Item_Info_Vectors.Has_Element (Curs) loop
-               if Item_Info_Vectors.Element (Curs).Is_Arguments then
+               if Item_Info_Vectors.Element (Curs).Get_Special_Kind =
+                 Item.Get_Special_Kind
+               then
                   Self.Tree.Items.Delete (Curs);
                   exit;
                end if;
@@ -1814,6 +1821,36 @@ package body DAP.Views.Variables is
             declare
                It : Item_Info'Class := DAP.Modules.Variables.Items.Create
                  (Arguments => True);
+            begin
+               View.Display (It);
+            end;
+         end if;
+      end if;
+
+      return Commands.Success;
+   end Execute;
+
+   -------------
+   -- Execute --
+   -------------
+
+   overriding function Execute
+     (Command : access Display_Locals_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type
+   is
+      pragma Unreferenced (Command);
+      use type DAP.Clients.DAP_Client_Access;
+
+      Client : constant DAP.Clients.DAP_Client_Access :=
+        DAP.Module.Get_Current_Debugger;
+      View   : DAP_Variables_View;
+   begin
+      if Client /= null then
+         View := Get_Or_Create_View (Client.Kernel, Client);
+         if View /= null then
+            declare
+               It : Item_Info'Class := DAP.Modules.Variables.Items.Create
+                 (Locals => True);
             begin
                View.Display (It);
             end;
@@ -2465,6 +2502,16 @@ package body DAP.Views.Variables is
          Filter      => Debugger_Stopped_Filter,
          Icon_Name   => "gps-debugger-arguments-symbolic",
          Category    => "Debug");
+
+      Register_Action
+        (Kernel, "debug tree display local variables",
+         Command => new Display_Locals_Command,
+         Description =>
+           "Display the local variables in the Variables view",
+         Filter      => Debugger_Stopped_Filter,
+         Icon_Name   => "gps-debugger-local-vars-symbolic",
+         Category    => "Debug");
+
    end Register_Module;
 
 end DAP.Views.Variables;
