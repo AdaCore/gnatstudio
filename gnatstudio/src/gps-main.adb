@@ -173,6 +173,7 @@ with Remote_Module;
 with Scenario_Views;
 with Shell_Script;
 with Socket_Module;
+with Src_Editor_Buffer.Formatters;
 with Src_Editor_Module;
 with Switches_Chooser.Scripts;
 with Toolchains_Editor;
@@ -1287,6 +1288,10 @@ procedure GPS.Main is
       --  Initialize LSP module
 
       GPS.LSP_Module.Register_Module (GPS_Main.Kernel);
+
+      --  Create the Formatter provider preferences
+
+      Src_Editor_Buffer.Formatters.Register_Module (GPS_Main.Kernel);
 
       --  Initialize the ada semantic tree module
 

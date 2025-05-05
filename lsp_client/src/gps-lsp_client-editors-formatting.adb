@@ -563,9 +563,9 @@ package body GPS.LSP_Client.Editors.Formatting is
       pragma Unreferenced (Module);
    begin
       Src_Editor_Buffer.Formatters.Delete_Provider
-        (Src_Editor_Buffer.Formatters.LSP);
+        ("LSP");
       Src_Editor_Buffer.Formatters.Delete_Provider
-        (Src_Editor_Buffer.Formatters.Construct);
+        ("Construct");
    end Destroy;
 
    -------------
@@ -646,10 +646,10 @@ package body GPS.LSP_Client.Editors.Formatting is
 
       LSP_Provider.Kernel := Kernel;
       Src_Editor_Buffer.Formatters.Add_Provider
-        (Src_Editor_Buffer.Formatters.LSP, LSP_Provider'Access);
+        ("LSP", LSP_Provider'Access);
       Old_Provider.Kernel := Kernel;
       Src_Editor_Buffer.Formatters.Add_Provider
-        (Src_Editor_Buffer.Formatters.Construct, Old_Provider'Access);
+        ("Construct", Old_Provider'Access);
    end Register_Module;
 
 end GPS.LSP_Client.Editors.Formatting;

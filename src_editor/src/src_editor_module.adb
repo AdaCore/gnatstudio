@@ -76,7 +76,6 @@ with Projects;                          use Projects;
 with Src_Contexts;                      use Src_Contexts;
 with Src_Editor_Box;                    use Src_Editor_Box;
 with Src_Editor_Buffer.Buffer_Commands; use Src_Editor_Buffer.Buffer_Commands;
-with Src_Editor_Buffer.Formatters;
 with Src_Editor_Buffer.Line_Information;
 use Src_Editor_Buffer.Line_Information;
 with Src_Editor_Buffer.Text_Handling;   use Src_Editor_Buffer.Text_Handling;
@@ -2977,8 +2976,6 @@ package body Src_Editor_Module is
       Line_Highlighting.Add_Category (Bookmark_Default_Style);
 
       Regenerate_Recent_Files_Menu (Kernel);
-
-      Src_Editor_Buffer.Formatters.Register_Module (Kernel);
    end Register_Module;
 
    -------------

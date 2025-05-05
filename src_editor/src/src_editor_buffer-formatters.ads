@@ -21,14 +21,11 @@ with Gtk.Text_Iter; use Gtk.Text_Iter;
 
 package Src_Editor_Buffer.Formatters is
 
-   type Known_Provider is (LSP, Construct, Disabled);
-   --  List of Known Providers, it will be used to create the preferences
-
    procedure Add_Provider
-     (Name : Known_Provider; Provider : Editor_Formatting_Provider_Access);
+     (Name : String; Provider : Editor_Formatting_Provider_Access);
    --  Activate the provider by adding its implementation
 
-   procedure Delete_Provider (Name : Known_Provider);
+   procedure Delete_Provider (Name : String);
    --  Deactivate the provider
 
    procedure Range_Formatting

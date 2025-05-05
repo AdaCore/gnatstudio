@@ -15,8 +15,11 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
+with Ada.Containers.Indefinite_Hashed_Maps;
+with Ada.Strings.Hash;
 with Default_Preferences.Enums;
 with Glib.Unicode;
+with GNAT.Strings;    use GNAT.Strings;
 with GNATCOLL.Traces; use GNATCOLL.Traces;
 with Src_Editor_Buffer.Line_Information;
 
@@ -25,10 +28,15 @@ package body Src_Editor_Buffer.Formatters is
    Me : constant Trace_Handle :=
      Create ("GPS.Source_Editor.Buffer.FORMATTERS");
 
-   type Providers_Array
-     is array (Known_Provider) of Editor_Formatting_Provider_Access;
+   package Providers_Maps is new
+     Ada.Containers.Indefinite_Hashed_Maps
+       (Key_Type        => String,
+        Element_Type    => Editor_Formatting_Provider_Access,
+        Hash            => Ada.Strings.Hash,
+        Equivalent_Keys => "=",
+        "="             => "=");
 
-   Providers : Providers_Array := (others => null);
+   Providers : Providers_Maps.Map := Providers_Maps.Empty_Map;
 
    procedure Save_Cursor
      (Buffer        : Source_Buffer;
@@ -44,11 +52,14 @@ package body Src_Editor_Buffer.Formatters is
       Cursor_Offset : Gint);
    --  Move the mark to the new location
 
-   package Formatter_Selector is new
-     Default_Preferences.Enums.Generics (Known_Provider);
+   function Create_Choices return String_List_Access;
+   --  Generate list of choices for the preferences.
+   --  It should not be freed because the preference is taking ownership.
 
-   Range_Formatting_Provider_Pref   : Formatter_Selector.Preference;
-   On_Type_Formatting_Provider_Pref : Formatter_Selector.Preference;
+   Range_Formatting_Provider_Pref   :
+     Default_Preferences.Enums.Choice_Preference;
+   On_Type_Formatting_Provider_Pref :
+     Default_Preferences.Enums.Choice_Preference;
    Move_Cursor_When_Formatting      : Default_Preferences.Boolean_Preference;
 
    ----------------------
@@ -73,10 +84,9 @@ package body Src_Editor_Buffer.Formatters is
       From_Line : Editable_Line_Type;
       To_Line   : Editable_Line_Type;
 
-               Selected : constant Known_Provider :=
-           Range_Formatting_Provider_Pref.Get_Pref;
-         Provider : constant Editor_Formatting_Provider_Access :=
-           Providers (Selected);
+      Selected : constant String := Range_Formatting_Provider_Pref.Get_Pref;
+      Provider : constant Editor_Formatting_Provider_Access :=
+        (if Providers.Contains (Selected) then Providers (Selected) else null);
    begin
       if Provider = null then
          Trace
@@ -174,10 +184,10 @@ package body Src_Editor_Buffer.Formatters is
 
       Start_Line, End_Line     : Editable_Line_Type;
       Start_Column, End_Column : Visible_Column_Type;
-      Selected                 : constant Known_Provider :=
+      Selected                 : constant String :=
         On_Type_Formatting_Provider_Pref.Get_Pref;
       Provider                 : constant Editor_Formatting_Provider_Access :=
-        Providers (Selected);
+        (if Providers.Contains (Selected) then Providers (Selected) else null);
    begin
       if Provider = null then
          Trace
@@ -283,19 +293,36 @@ package body Src_Editor_Buffer.Formatters is
    ------------------
 
    procedure Add_Provider
-     (Name : Known_Provider; Provider : Editor_Formatting_Provider_Access) is
+     (Name : String; Provider : Editor_Formatting_Provider_Access) is
    begin
-      Providers (Name) := Provider;
+      Providers.Include (Name, Provider);
    end Add_Provider;
 
    ---------------------
    -- Delete_Provider --
    ---------------------
 
-   procedure Delete_Provider (Name : Known_Provider) is
+   procedure Delete_Provider (Name : String) is
    begin
-      Providers (Name) := null;
+      Providers.Delete (Name);
    end Delete_Provider;
+
+   --------------------
+   -- Create_Choices --
+   --------------------
+
+   function Create_Choices return String_List_Access is
+      Choices : constant String_List_Access :=
+        new GNAT.Strings.String_List (1 .. Integer (Providers.Length));
+      Cpt       : Integer := 1;
+   begin
+      for Provider in Providers.Iterate loop
+         Choices (Cpt) := new String'(Provider.Key);
+         Cpt := Cpt + 1;
+      end loop;
+
+      return Choices;
+   end Create_Choices;
 
    ---------------------
    -- Register_Module --
@@ -304,21 +331,24 @@ package body Src_Editor_Buffer.Formatters is
    procedure Register_Module
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class) is
    begin
+      --  This is assuming all the providers were registered before
       Range_Formatting_Provider_Pref :=
-        Formatter_Selector.Create
+        Default_Preferences.Enums.Create
           (Manager => Kernel.Get_Preferences,
            Name    => "Editor-Range-Formatter",
-           Default => Construct,
+           Choices => Create_Choices,
+           Default => 0,
            Label   => "Formatter for range formatting",
            Doc     =>
              "Choose which formatter should be used when"
              & "formatting a range or a file.",
            Path    => "Editor:Formatting");
       On_Type_Formatting_Provider_Pref :=
-        Formatter_Selector.Create
+        Default_Preferences.Enums.Create
           (Manager => Kernel.Get_Preferences,
            Name    => "Editor-On-Type-Formatter",
-           Default => Construct,
+           Choices => Create_Choices,
+           Default => 0,
            Label   => "Formatter on enter",
            Doc     =>
              "Choose which formatter should be used when pressing enter.",
