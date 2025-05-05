@@ -72,6 +72,7 @@ with GPS.Kernel.Task_Manager;           use GPS.Kernel.Task_Manager;
 
 with GUI_Utils;                         use GUI_Utils;
 with Histories;                         use Histories;
+with Language_Formatter;
 with Projects;                          use Projects;
 with Src_Contexts;                      use Src_Contexts;
 with Src_Editor_Box;                    use Src_Editor_Box;
@@ -79,6 +80,7 @@ with Src_Editor_Buffer.Buffer_Commands; use Src_Editor_Buffer.Buffer_Commands;
 with Src_Editor_Buffer.Line_Information;
 use Src_Editor_Buffer.Line_Information;
 with Src_Editor_Buffer.Text_Handling;   use Src_Editor_Buffer.Text_Handling;
+with Src_Editor_Buffer.Formatters;
 with Src_Editor_Module.Line_Highlighting;
 with Src_Editor_Module.Editors;         use Src_Editor_Module.Editors;
 with Src_Editor_Module.Markers;         use Src_Editor_Module.Markers;
@@ -2965,6 +2967,12 @@ package body Src_Editor_Module is
       --  Register the message listener for editors
       Src_Editor_Module.Messages.Register (Kernel);
 
+      Source_Editor_Module (Src_Editor_Module_Id).Language_Formatter :=
+        new Language_Formatter.Language_Formatting_Provider'
+          (Kernel => Kernel_Handle (Kernel));
+      Src_Editor_Buffer.Formatters.Add_Provider
+        (Source_Editor_Module (Src_Editor_Module_Id).Language_Formatter);
+
       --  Create highlighting categories preemptively for builder styles, so
       --  that errors always have higher priority than warnings, etc..
 
@@ -3171,6 +3179,8 @@ package body Src_Editor_Module is
       Free (Id.Undo_Redo);
       Src_Editor_Module.Messages.Unregister (Get_Kernel (Id));
 
+      Src_Editor_Buffer.Formatters.Delete_Provider
+        (Source_Editor_Module (Src_Editor_Module_Id).Language_Formatter);
       Src_Editor_Module_Id := null;
    end Destroy;
 

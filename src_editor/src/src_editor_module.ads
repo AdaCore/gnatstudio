@@ -421,6 +421,9 @@ private
       Tooltip_Factory       : Editor_Tooltip_Handler_Factory_Access;
 
       Hyper_Mode_Click_Cb   : Hyper_Mode_Click_Callback_Type;
+
+      --  Add a free function
+      Language_Formatter    : GPS.Editors.Editor_Formatting_Provider_Access;
    end record;
    type Source_Editor_Module is access all Source_Editor_Module_Record'Class;
 

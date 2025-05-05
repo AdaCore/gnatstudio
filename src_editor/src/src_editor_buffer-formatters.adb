@@ -293,18 +293,23 @@ package body Src_Editor_Buffer.Formatters is
    ------------------
 
    procedure Add_Provider
-     (Name : String; Provider : Editor_Formatting_Provider_Access) is
+     (Provider : Editor_Formatting_Provider_Access) is
    begin
-      Providers.Include (Name, Provider);
+      if Provider /= null then
+         Providers.Include (Provider.Get_Name, Provider);
+      end if;
    end Add_Provider;
 
    ---------------------
    -- Delete_Provider --
    ---------------------
 
-   procedure Delete_Provider (Name : String) is
+   procedure Delete_Provider
+     (Provider : Editor_Formatting_Provider_Access) is
    begin
-      Providers.Delete (Name);
+      if Provider /= null then
+         Providers.Delete (Provider.Get_Name);
+      end if;
    end Delete_Provider;
 
    --------------------
@@ -320,6 +325,8 @@ package body Src_Editor_Buffer.Formatters is
          Choices (Cpt) := new String'(Provider.Key);
          Cpt := Cpt + 1;
       end loop;
+
+      --  Add an empty choice here
 
       return Choices;
    end Create_Choices;

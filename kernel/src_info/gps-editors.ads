@@ -1074,6 +1074,10 @@ package GPS.Editors is
    --  Ask the provider to format between From and To.
    --  Cursor_Line is the current location of the Cursor in the Editor.
 
+   function Get_Name (Self : Editor_Formatting_Provider) return String
+   is abstract;
+   --  The name of the provider
+
    ----------------------
    -- Location markers --
    ----------------------

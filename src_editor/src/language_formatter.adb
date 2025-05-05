@@ -168,4 +168,17 @@ package body Language_Formatter is
       return Self.On_Range_Formatting (From, To, Cursor_Line, Cursor_Offset);
    end On_Type_Formatting;
 
+   --------------
+   -- Get_Name --
+   --------------
+
+   overriding
+   function Get_Name
+     (Self : Language_Formatting_Provider) return String
+   is
+      pragma Unreferenced (Self);
+   begin
+      return "Construct";
+   end Get_Name;
+
 end Language_Formatter;

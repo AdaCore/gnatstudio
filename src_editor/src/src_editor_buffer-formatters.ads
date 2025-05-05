@@ -21,11 +21,10 @@ with Gtk.Text_Iter; use Gtk.Text_Iter;
 
 package Src_Editor_Buffer.Formatters is
 
-   procedure Add_Provider
-     (Name : String; Provider : Editor_Formatting_Provider_Access);
+   procedure Add_Provider (Provider : Editor_Formatting_Provider_Access);
    --  Activate the provider by adding its implementation
 
-   procedure Delete_Provider (Name : String);
+   procedure Delete_Provider (Provider : Editor_Formatting_Provider_Access);
    --  Deactivate the provider
 
    procedure Range_Formatting

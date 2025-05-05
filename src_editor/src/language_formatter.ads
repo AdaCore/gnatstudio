@@ -34,16 +34,15 @@ private
       From, To    : Editor_Location'Class;
       Cursor_Line : Natural;
       Cursor_Move : in out Integer) return Boolean;
-   --  Called for formatting code section. Return False when provider
-   --  can't be used on this editor.
-   --  Cursor_Line is the location of the cursor when rangeFormatting was asked
-   --  Cursor_Move indicates the number of characters that the cursor should
-   --  move (Negative numbers are allowed to move backward).
 
    overriding
    function On_Type_Formatting
      (Self        : in out Language_Formatting_Provider;
       From, To    : Editor_Location'Class;
       Cursor_Line : Natural) return Boolean;
+
+   overriding
+   function Get_Name
+     (Self : Language_Formatting_Provider) return String;
 
 end Language_Formatter;

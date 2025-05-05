@@ -59,4 +59,7 @@ private
       Cursor_Line : Natural)
       return Boolean;
 
+   overriding function Get_Name
+     (Self : LSP_Editor_Formatting_Provider) return String;
+
 end GPS.LSP_Client.Editors.Formatting;
