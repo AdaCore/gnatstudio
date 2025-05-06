@@ -22,6 +22,7 @@ with VSS.Strings.Conversions;
 with DAP.Modules.Variables.Items.Variables;
 with DAP.Modules.Variables.Items.Commands;
 with DAP.Modules.Variables.Items.Arguments;
+with DAP.Modules.Variables.Items.Locals;
 
 package body DAP.Modules.Variables.Items is
 
@@ -92,6 +93,7 @@ package body DAP.Modules.Variables.Items is
       Command     : VSS.Strings.Virtual_String := "";
       Split_Lines : Boolean := False;
       Arguments   : Boolean := False;
+      Locals      : Boolean := False;
       Format      : DAP.Tools.ValueFormat := Default_Format)
       return Item_Info'Class is
    begin
@@ -106,19 +108,22 @@ package body DAP.Modules.Variables.Items is
       elsif Arguments then
          return DAP.Modules.Variables.Items.Arguments.Create (Format);
 
+      elsif Locals then
+         return DAP.Modules.Variables.Items.Locals.Create (Format);
+
       else
          return No_Item;
       end if;
    end Create;
 
-   ------------------
-   -- Is_Arguments --
-   ------------------
+   ----------------------
+   -- Get_Special_Kind --
+   ----------------------
 
-   function Is_Arguments (Info : Item_Info) return Boolean is
+   function Get_Special_Kind (Info : Item_Info) return Variable_Kind is
    begin
-      return False;
-   end Is_Arguments;
+      return Non_Specified;
+   end Get_Special_Kind;
 
    ----------------
    -- Is_Command --

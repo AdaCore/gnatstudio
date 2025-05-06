@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                               GNAT Studio                                --
 --                                                                          --
---                     Copyright (C) 2023, AdaCore                          --
+--                     Copyright (C) 2025, AdaCore                          --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -15,16 +15,16 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-package body DAP.Modules.Variables.Items.Arguments is
+package body DAP.Modules.Variables.Items.Locals is
 
    ----------------------
    -- Get_Special_Kind --
    ----------------------
 
    overriding function Get_Special_Kind
-     (Info : Arguments_Item_Info) return Variable_Kind is
+     (Info : Locals_Item_Info) return Variable_Kind is
    begin
-      return DAP.Types.Arguments;
+      return DAP.Types.Locals;
    end Get_Special_Kind;
 
    --------------
@@ -32,9 +32,9 @@ package body DAP.Modules.Variables.Items.Arguments is
    --------------
 
    overriding function Get_Name
-     (Self : Arguments_Item_Info) return Virtual_String is
+     (Self : Locals_Item_Info) return Virtual_String is
    begin
-      return "Arguments";
+      return "Local variables";
    end Get_Name;
 
    -------------------
@@ -42,9 +42,9 @@ package body DAP.Modules.Variables.Items.Arguments is
    -------------------
 
    overriding function Get_Full_Name
-     (Self : Arguments_Item_Info) return Virtual_String is
+     (Self : Locals_Item_Info) return Virtual_String is
    begin
-      return "Arguments";
+      return "Local variables";
    end Get_Full_Name;
 
    -------------------
@@ -52,7 +52,7 @@ package body DAP.Modules.Variables.Items.Arguments is
    -------------------
 
    overriding procedure Find_DAP_Item
-     (Info  : Arguments_Item_Info;
+     (Info  : Locals_Item_Info;
       C     : in out DAP.Types.Variables_References_Trees.Cursor;
       Found : out Boolean) is
    begin
@@ -64,10 +64,10 @@ package body DAP.Modules.Variables.Items.Arguments is
    -----------
 
    overriding procedure Store
-     (Info  : Arguments_Item_Info;
+     (Info  : Locals_Item_Info;
       Value : in out GNATCOLL.JSON.JSON_Value) is
    begin
-      Value.Set_Field ("tag", "arguments");
+      Value.Set_Field ("tag", "local variables");
    end Store;
 
    ----------
@@ -90,9 +90,9 @@ package body DAP.Modules.Variables.Items.Arguments is
       return Item_Info'Class is
    begin
       return Item_Info'Class
-        (Arguments_Item_Info'
+        (Locals_Item_Info'
            (Format => Format,
             others => <>));
    end Create;
 
-end DAP.Modules.Variables.Items.Arguments;
+end DAP.Modules.Variables.Items.Locals;

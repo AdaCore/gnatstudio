@@ -72,9 +72,9 @@ package DAP.Modules.Variables.Items is
    function Is_Command (Info : Item_Info) return Boolean;
    --  Returns True if the item corresponds to a command
 
-   function Is_Arguments (Info : Item_Info) return Boolean;
-   --  Returns True if the item corresponds to "arguments" item that is used
-   --  for "display arguments" action
+   function Get_Special_Kind (Info : Item_Info) return Variable_Kind;
+   --  Returns Item special type if the item corresponds to "arguments/locals"
+   --  item that is used for "display arguments/locals" action
 
    function Is_No_Item (Info : Item_Info) return Boolean;
    --  Returns True if the item has no data and used to indicate that
@@ -101,6 +101,7 @@ package DAP.Modules.Variables.Items is
       Command     : VSS.Strings.Virtual_String := "";
       Split_Lines : Boolean := False;
       Arguments   : Boolean := False;
+      Locals      : Boolean := False;
       Format      : DAP.Tools.ValueFormat := Default_Format)
       return Item_Info'Class;
    --  Returns corresponding Item_Info
