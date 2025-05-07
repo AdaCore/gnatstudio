@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<component type="desktop-application">
+  <id>com.adacore.gnatstudio</id>
+
+  <releases>
+    <release version="25.1" type="development" date="2025-01-09" />
+  </releases>
+
+  <name>GNAT Studio</name>
+  <summary>GNAT Studio is a powerful and lightweight IDE for Ada and SPARK</summary>
+  <url type="homepage">https://www.adacore.com/gnatpro/toolsuite/gnatstudio</url>
+  <url type="bugtracker">https://github.com/AdaCore/gnatstudio/issues</url>
+
+  <metadata_license>MIT</metadata_license>
+  <project_license>GPL-3.0-or-later</project_license>
+
+  <description>
+    <p>
+      GNAT Studio is a complete integrated development environment that gives access to a wide range of tools and integrates them smoothly.
+    </p>
+  </description>
+
+  <launchable type="desktop-id">com.adacore.gnatstudio.desktop</launchable>
+  <screenshots>
+    <screenshot type="default">
+      <caption>The GNAT Studio main window.</caption>
+      <image>https://docs.adacore.com/live/wave/gps/html/gps_ug/_images/gps-main-window.png</image>
+    </screenshot>
+    <screenshot>
+      <caption>The Assembler View window.</caption>
+      <image>https://docs.adacore.com/live/wave/gps/html/gps_ug/_images/assembly.png</image>
+    </screenshot>
+    <screenshot>
+      <caption>The Project Wizard window.</caption>
+      <image>https://docs.adacore.com/live/wave/gps/html/gps_ug/_images/project-wizard.png</image>
+    </screenshot>
+  </screenshots>
+
+  <icon type="stock">com.adacore.gnatstudio</icon>
+
+  <categories>
+    <category>Development</category>
+    <category>IDE</category>
+  </categories>
+
+  <provides>
+    <binary>gnatstudio</binary>
+  </provides>
+
+  <developer id="com.adacore">
+    <name>AdaCode</name>
+  </developer>
+
+  <content_rating type="oars-1.1" />  
+</component>
