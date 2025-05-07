@@ -1165,6 +1165,9 @@ procedure GPS.Main is
       end Load_Sources;
 
    begin
+      --  Freeze the preferences to avoid overwriting preferences.xml too early
+      Freeze_Preferences (GPS_Main.Kernel);
+
       Update_Splash_Progress_Label ("Loading modules...");
 
       --  Register the Learn module and the associated view
@@ -1595,6 +1598,7 @@ procedure GPS.Main is
       GPS.Traces.Register_Module (GPS_Main.Kernel);
 
       Load_Preferences (GPS_Main.Kernel);
+      Thaw_Preferences (GPS_Main.Kernel);
 
       Update_Splash_Progress_Label ("Loading project...");
 

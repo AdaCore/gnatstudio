@@ -522,8 +522,27 @@ package body GPS.Kernel is
 
    procedure Load_Preferences (Handle : access Kernel_Handle_Record) is
    begin
-      Load_Preferences (Handle.Preferences, Handle.Preferences_File);
+      Load_Preferences
+        (Handle.Preferences, Handle.Preferences_File);
    end Load_Preferences;
+
+   ------------------------
+   -- Freeze_Preferences --
+   ------------------------
+
+   procedure Freeze_Preferences (Handle : access Kernel_Handle_Record) is
+   begin
+      Freeze (Handle.Preferences);
+   end Freeze_Preferences;
+
+   ----------------------
+   -- Thaw_Preferences --
+   ----------------------
+
+   procedure Thaw_Preferences (Handle : access Kernel_Handle_Record) is
+   begin
+      Thaw (Handle.Preferences);
+   end Thaw_Preferences;
 
    ---------------------
    -- Get_Preferences --

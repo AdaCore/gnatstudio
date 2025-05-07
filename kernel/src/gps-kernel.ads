@@ -115,6 +115,9 @@ package GPS.Kernel is
    procedure Load_Preferences (Handle : access Kernel_Handle_Record);
    --  Load the preferences from the user's file $HOME/.gnatstudio/preferences
 
+   procedure Freeze_Preferences (Handle : access Kernel_Handle_Record);
+   procedure Thaw_Preferences (Handle : access Kernel_Handle_Record);
+
    procedure Destroy (Handle : access Kernel_Handle_Record);
    --  Free the memory occupied by the kernel
 

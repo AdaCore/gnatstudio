@@ -25,7 +25,7 @@ with Src_Editor_Buffer.Line_Information;
 package body Src_Editor_Buffer.Formatters is
 
    Me : constant Trace_Handle :=
-     Create ("GPS.Source_Editor.Buffer.FORMATTERS", On);
+     Create ("GPS.Source_Editor.Buffer.FORMATTERS");
 
    package Providers_Maps is new
      Ada.Containers.Indefinite_Ordered_Maps
@@ -337,28 +337,29 @@ package body Src_Editor_Buffer.Formatters is
    procedure Register_Module
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class) is
    begin
-      --  This is assuming all the providers were registered before
+      --  This is assuming all the providers were registered before and
+      --  preferences.xml must be loaded after.
       Range_Formatting_Provider_Pref :=
         Default_Preferences.Enums.Create
-          (Manager => Kernel.Get_Preferences,
-           Name    => "Editor-Range-Formatter",
-           Choices => Create_Choices,
-           Default => 0,
-           Label   => "Formatter for range formatting",
-           Doc     =>
+          (Manager     => Kernel.Get_Preferences,
+           Name        => "Editor-Range-Formatter",
+           Choices     => Create_Choices,
+           Default     => 0,
+           Label       => "Formatter for range formatting",
+           Doc         =>
              "Choose which formatter should be used when"
              & "formatting a range or a file.",
-           Path    => "Editor:Formatting");
+           Path        => "Editor:Formatting");
       On_Type_Formatting_Provider_Pref :=
         Default_Preferences.Enums.Create
-          (Manager => Kernel.Get_Preferences,
-           Name    => "Editor-On-Type-Formatter",
-           Choices => Create_Choices,
-           Default => 0,
-           Label   => "Formatter on enter",
-           Doc     =>
+          (Manager     => Kernel.Get_Preferences,
+           Name        => "Editor-On-Type-Formatter",
+           Choices     => Create_Choices,
+           Default     => 0,
+           Label       => "Formatter on enter",
+           Doc         =>
              "Choose which formatter should be used when pressing enter.",
-           Path    => "Editor:Formatting");
+           Path        => "Editor:Formatting");
       Move_Cursor_When_Formatting :=
         Kernel.Get_Preferences.Create
           (Name    => "Editor-Move-Cursor-Formatter",
