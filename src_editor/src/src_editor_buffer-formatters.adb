@@ -15,8 +15,7 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with Ada.Containers.Indefinite_Hashed_Maps;
-with Ada.Strings.Hash;
+with Ada.Containers.Indefinite_Ordered_Maps;
 with Default_Preferences.Enums;
 with Glib.Unicode;
 with GNAT.Strings;    use GNAT.Strings;
@@ -26,15 +25,14 @@ with Src_Editor_Buffer.Line_Information;
 package body Src_Editor_Buffer.Formatters is
 
    Me : constant Trace_Handle :=
-     Create ("GPS.Source_Editor.Buffer.FORMATTERS");
+     Create ("GPS.Source_Editor.Buffer.FORMATTERS", On);
 
    package Providers_Maps is new
-     Ada.Containers.Indefinite_Hashed_Maps
-       (Key_Type        => String,
-        Element_Type    => Editor_Formatting_Provider_Access,
-        Hash            => Ada.Strings.Hash,
-        Equivalent_Keys => "=",
-        "="             => "=");
+     Ada.Containers.Indefinite_Ordered_Maps
+       (Key_Type     => String,
+        Element_Type => Editor_Formatting_Provider_Access,
+        "<"          => "<",
+        "="          => "=");
 
    Providers : Providers_Maps.Map := Providers_Maps.Empty_Map;
 
@@ -318,7 +316,7 @@ package body Src_Editor_Buffer.Formatters is
 
    function Create_Choices return String_List_Access is
       Choices : constant String_List_Access :=
-        new GNAT.Strings.String_List (1 .. Integer (Providers.Length));
+        new GNAT.Strings.String_List (1 .. Integer (Providers.Length) + 1);
       Cpt       : Integer := 1;
    begin
       for Provider in Providers.Iterate loop
@@ -327,6 +325,7 @@ package body Src_Editor_Buffer.Formatters is
       end loop;
 
       --  Add an empty choice here
+      Choices (Cpt) := new String'("Disabled");
 
       return Choices;
    end Create_Choices;
