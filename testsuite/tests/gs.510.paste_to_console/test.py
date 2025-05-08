@@ -23,3 +23,15 @@ def run_test():
         ">>> Put_Line",
         "Wrong Paste",
     )
+    
+    # test insert at the cursor location
+    send_key_event(GDK_LEFT)
+    yield wait_idle()
+    send_key_event(ord("v"), control=True)
+    yield wait_idle()
+    gps_assert(
+        GPS.Console("Python").get_text(),
+        ">>> Put_LinPut_Linee",
+        "Wrong Paste",
+    )
+
