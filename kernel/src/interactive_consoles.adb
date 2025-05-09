@@ -2034,7 +2034,13 @@ package body Interactive_Consoles is
          --  We also execute empty commands, since they might be relevant
          --  in some contexts (python for instance)
          if Command /= null and then Command.all /= "" then
-            Get_End_Iter (Console.Buffer, Last_Iter);
+            Get_Iter_At_Mark
+              (Console.Buffer, Last_Iter, Get_Insert (Console.Buffer));
+
+            if Last_Iter = Null_Text_Iter then
+               Get_End_Iter (Console.Buffer, Last_Iter);
+            end if;
+
             Insert (Console.Buffer, Last_Iter, Command.all);
 
             --  Execute only if Command ends with a Line Feed.
