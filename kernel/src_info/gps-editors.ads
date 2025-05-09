@@ -1062,9 +1062,9 @@ package GPS.Editors is
       return Boolean is abstract;
    --  Ask the provider to format between From and To.
    --  Cursor_Line and Cursor_Move are the current location of the Cursor in
-   --  the editor. Cursor_Move should return the number of character the
+   --  the editor. Cursor_Move should return the number of characters the
    --  Cursor should be moved after formatting. It can be negative to move
-   --  backward.
+   --  backwards.
 
    function On_Type_Formatting
      (Self        : in out Editor_Formatting_Provider;

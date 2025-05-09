@@ -16,6 +16,7 @@
 ------------------------------------------------------------------------------
 
 with Ada.Containers.Doubly_Linked_Lists;
+with Ada.Containers.Indefinite_Doubly_Linked_Lists;
 with Ada.Containers.Indefinite_Hashed_Maps;
 with Ada.Unchecked_Deallocation;
 
@@ -28,7 +29,7 @@ with GNATCOLL.Projects;
 with GNATCOLL.Scripts;            use GNATCOLL.Scripts;
 with GNATCOLL.VFS;                use GNATCOLL.VFS;
 with GPS.Customizable_Modules;    use GPS.Customizable_Modules;
-with GPS.Editors;
+with GPS.Editors;                 use GPS.Editors;
 with GPS.Kernel.Preferences;      use GPS.Kernel.Preferences;
 with GPS.Kernel.Style_Manager;    use GPS.Kernel.Style_Manager;
 with GPS.Kernel.MDI;              use GPS.Kernel.MDI;
@@ -76,6 +77,12 @@ package Src_Editor_Module is
    procedure Register_Module
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class);
    --  Register the module in the list
+
+   procedure Create_Preferences
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class);
+   --  Create the preferences related to this module.
+   --  This is assuming all the formatting providers were registered before
+   --  and preferences.xml must be loaded after.
 
    function Find_Current_Editor
      (Kernel          : access GPS.Kernel.Kernel_Handle_Record'Class;
@@ -306,6 +313,18 @@ package Src_Editor_Module is
    --  Return the project associated with the Child, which should be a
    --  source editor view. Return No_Project if no project was found.
 
+   procedure Register_Formatter (Provider : Editor_Formatting_Provider_Access);
+   --  Register a formatting provider
+
+   function Get_Range_Formatting_Provider
+     return Editor_Formatting_Provider_Access;
+   --  Get the currently active Range Formatter Provider
+
+   function Get_On_Type_Formatting_Provider
+     return Editor_Formatting_Provider_Access;
+   --  Get the currently active OnType Formatter Provider
+
+   function Get_Move_Cursor_When_Formatting return Boolean;
 private
 
    ------------------------
@@ -371,6 +390,15 @@ private
    procedure Unchecked_Free is new Ada.Unchecked_Deallocation
       (Highlighting_Category_Array, Highlighting_Category_Array_Access);
 
+   ---------------------------
+   --  Formatting Providers --
+   ---------------------------
+
+   package Formatting_Providers_Lists is new
+     Ada.Containers.Indefinite_Doubly_Linked_Lists
+       (Element_Type => Editor_Formatting_Provider_Access,
+        "="          => "=");
+
    --------------------------
    -- Source_Editor_Module --
    --------------------------
@@ -422,8 +450,8 @@ private
 
       Hyper_Mode_Click_Cb   : Hyper_Mode_Click_Callback_Type;
 
-      --  Add a free function
-      Language_Formatter    : GPS.Editors.Editor_Formatting_Provider_Access;
+      Formatting_Providers  : Formatting_Providers_Lists.List :=
+        Formatting_Providers_Lists.Empty_List;
    end record;
    type Source_Editor_Module is access all Source_Editor_Module_Record'Class;
 

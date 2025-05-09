@@ -15,34 +15,12 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with GPS.Editors;   use GPS.Editors;
-with GPS.Kernel;    use GPS.Kernel;
-with Gtk.Text_Iter; use Gtk.Text_Iter;
+--  Package declaring GNAT Studio own formatter which is based on constructs.
 
-package Src_Editor_Buffer.Formatters is
+with GPS.Kernel;  use GPS.Kernel;
 
-   procedure Add_Provider (Provider : Editor_Formatting_Provider_Access);
-   --  Activate the provider by adding its implementation
+package Src_Editor_Module.Construct_Formatter is
 
-   procedure Delete_Provider (Provider : Editor_Formatting_Provider_Access);
-   --  Deactivate the provider
+   procedure Register_Module (Kernel : Kernel_Handle);
 
-   procedure Range_Formatting
-     (Buffer   : Source_Buffer;
-      Mark     : Gtk_Text_Mark;
-      From, To : Gtk_Text_Iter;
-      Force    : Boolean := False);
-   --  Execute provider selected in the preferences to do range formatting
-
-   procedure On_Type_Formatting
-     (Buffer   : Source_Buffer;
-      Mark     : Gtk_Text_Mark;
-      From, To : Gtk_Text_Iter;
-      Force    : Boolean := False);
-   --  Execute provider selected in the preferences to do formatting on enter
-
-   procedure Register_Module
-     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class);
-   --  Create the preferences
-
-end Src_Editor_Buffer.Formatters;
+end Src_Editor_Module.Construct_Formatter;

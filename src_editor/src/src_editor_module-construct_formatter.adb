@@ -16,17 +16,43 @@
 ------------------------------------------------------------------------------
 
 with Basic_Types;                  use Basic_Types;
+with Commands;                     use Commands;
 with Casing_Exceptions;
 with Case_Handling;                use Case_Handling;
-with GNATCOLL.VFS;                 use GNATCOLL.VFS;
 with Language;                     use Language;
+with GNATCOLL.VFS;                 use GNATCOLL.VFS;
+with GPS.Editors;                  use GPS.Editors;
 with Refactoring.Services;
 with VSS.Characters.Latin;
 with VSS.Strings;                  use VSS.Strings;
 with VSS.Strings.Conversions;      use VSS.Strings.Conversions;
-with Commands;                     use Commands;
 
-package body Language_Formatter is
+package body Src_Editor_Module.Construct_Formatter is
+
+   type Language_Formatting_Provider is
+     new GPS.Editors.Editor_Formatting_Provider
+   with record
+      Kernel : Kernel_Handle;
+   end record;
+
+   overriding
+   function On_Range_Formatting
+     (Self        : in out Language_Formatting_Provider;
+      From, To    : Editor_Location'Class;
+      Cursor_Line : Natural;
+      Cursor_Move : in out Integer) return Boolean;
+
+   overriding
+   function On_Type_Formatting
+     (Self        : in out Language_Formatting_Provider;
+      From, To    : Editor_Location'Class;
+      Cursor_Line : Natural) return Boolean;
+
+   overriding
+   function Get_Name
+     (Self : Language_Formatting_Provider) return String;
+
+   Construct_Provider : aliased Language_Formatting_Provider;
 
    -------------------------
    -- On_Range_Formatting --
@@ -181,4 +207,14 @@ package body Language_Formatter is
       return "Construct";
    end Get_Name;
 
-end Language_Formatter;
+   ---------------------
+   -- Register_Module --
+   ---------------------
+
+   procedure Register_Module (Kernel : Kernel_Handle) is
+   begin
+      Construct_Provider.Kernel := Kernel;
+      Src_Editor_Module.Register_Formatter (Construct_Provider'Access);
+   end Register_Module;
+
+end Src_Editor_Module.Construct_Formatter;
