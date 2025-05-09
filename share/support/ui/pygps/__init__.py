@@ -291,6 +291,7 @@ try:
     def get_window_by_title(title, list=None):
         """Search the whole hierarchy given by list (see WidgetTree) the
         first window with given title.
+        Return None when there is no window with the given title.
         """
 
         result = [
@@ -301,7 +302,7 @@ try:
         if result:
             return result[0]
         else:
-            return result
+            return None
 
     def get_window_by_prefix(prefix, list=None):
         """Search the whole hierarchy given by list (see WidgetTree) the

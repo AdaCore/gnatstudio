@@ -3,6 +3,7 @@
 """
 from gs_utils.internal.utils import (
     run_test_driver,
+    wait_language_server,
     wait_tasks,
     hook,
     gps_assert,
@@ -22,9 +23,7 @@ def driver():
 
     # First verify that the navigation does *not* work
     GPS.execute_action("goto declaration")
-    # At this point "language_server_response_processed" shouldn't work,
-    # timeout instead
-    yield timeout(500)
+    yield wait_language_server("textDocument/declaration")
     current_buf = GPS.EditorBuffer.get()
     gps_assert(
         current_buf.file(),
@@ -45,8 +44,8 @@ def driver():
     b.current_view().goto(b.at(4, 7))
     yield wait_idle()
     GPS.execute_action("goto declaration")
-    # using this hook to be sure that declaration is found by ALS
-    yield hook("language_server_response_processed")
+    yield wait_language_server("textDocument/declaration")
+
     gps_assert(
         GPS.EditorBuffer.get().file(),
         GPS.File("foo.ads"),
@@ -58,8 +57,8 @@ def driver():
     b.current_view().goto(b.at(6, 26))
     yield wait_tasks()
     GPS.execute_action("goto declaration")
-    yield hook("language_server_response_processed")
-    yield wait_idle()
+    yield wait_language_server("textDocument/declaration")
+
     gps_assert(
         b.current_view().cursor().line(),
         4,
@@ -72,9 +71,8 @@ def driver():
     b.current_view().goto(b.at(6, 26))
     yield wait_idle()
     GPS.execute_action("goto declaration")
-    yield hook("language_server_response_processed")
-    yield wait_idle()
-    yield timeout(300)
+    yield wait_language_server("textDocument/declaration")
+
     gps_assert(
         b.current_view().cursor().line(),
         4,
