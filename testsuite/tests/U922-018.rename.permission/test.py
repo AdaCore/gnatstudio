@@ -26,13 +26,11 @@ def run_test():
     check = get_button_from_label("Make files writable", dialog)
     check.set_active(False)
     get_stock_button(dialog, STOCK_OK).clicked()
-    yield timeout(500)
+    ERROR_DIALOG_TITLE = "Refactoring - rename Hello to Bye raises errors"
+    yield wait_until_true(lambda: get_window_by_title(ERROR_DIALOG_TITLE) is not None)
 
     # A dialog reporting an error should be opened, reply no to it
-    error_dialog = get_window_by_title(
-        "Refactoring - rename Hello to Bye raises errors"
-    )
-    GPS.Console().write(str(error_dialog))
+    error_dialog = get_window_by_title(ERROR_DIALOG_TITLE)
     get_button_from_label("Undo", error_dialog).clicked()
     yield wait_idle()
 
