@@ -1,0 +1,11 @@
+[Desktop Entry]
+Name=GNAT Studio
+Exec=gnatstudio
+Icon=com.adacore.gnatstudio
+Type=Application
+Categories=Development
+
+X-AppImage-Name=GNAT Studio
+X-AppImage-Version=25.1
+X-AppImage-Arch=x86_64
+

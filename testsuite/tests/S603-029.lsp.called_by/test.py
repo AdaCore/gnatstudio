@@ -3,6 +3,7 @@ from gs_utils.internal.utils import (
     get_widget_by_name,
     dump_tree_model,
     gps_assert,
+    wait_language_server,
 )
 from gs_utils import hook
 from pygps import double_click_events
@@ -19,8 +20,8 @@ def driver():
     yield wait_idle()
 
     GPS.execute_action("Entity called by")
-    yield hook("language_server_response_processed")
-    yield timeout(500)
+    yield wait_language_server("callHierarchy/incomingCalls")
+    yield wait_idle()
 
     call_tree = get_widget_by_name("Call Graph Tree")
     selection = call_tree.get_selection()
@@ -29,8 +30,8 @@ def driver():
     selection.select_iter(model.iter_nth_child(model.get_iter_first(), 0))
 
     GPS.execute_action("calltree expand selected")
-    yield hook("language_server_response_processed")
-    yield timeout(500)
+    yield wait_language_server("callHierarchy/incomingCalls")
+    yield wait_idle()
 
     expected = [
         "Foo is called by ",
