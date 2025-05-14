@@ -63,6 +63,18 @@ package body DAP.Modules.Preferences is
          Doc       => "Open a separate window to show output of debuggee.",
          Default   => Support_Execution_Window);
 
+      Auto_Start_Debuggee := Debuggee_Start_Preferences.Create
+        (Manager   => Prefs,
+         Name      => "Debugger-Launch-Setup-Command",
+         Label     => "Auto-start debuggee",
+         Path      => "Debugger:General",
+         Doc       => "How to start/continue the debuggee process when the" &
+           " debugger is initialized. 'Run' will start the debuggee" &
+           " immediately while 'Run with dialog' will display a dialog " &
+           " to specify arguments and options. 'Continue' will continue" &
+           " the debuggee execution on a board instead of stop it.",
+         Default   => None);
+
       Frames_Limit := Create
         (Manager  => Prefs,
          Name     => "debugger-frames-limit",

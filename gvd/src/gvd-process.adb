@@ -47,6 +47,7 @@ with Debugger.Base_Gdb.Gdb_CLI;  use Debugger.Base_Gdb.Gdb_CLI;
 with Debugger.Base_Gdb.Gdb_MI;   use Debugger.Base_Gdb.Gdb_MI;
 with Debugger.LLDB;              use Debugger.LLDB;
 with Default_Preferences;        use Default_Preferences;
+with Interactive_Consoles;
 with GPS.Intl;                   use GPS.Intl;
 with GPS.Core_Kernels;
 with GPS.Kernel.Hooks;           use GPS.Kernel.Hooks;
@@ -1370,9 +1371,25 @@ package body GVD.Process is
         (Obj   => new On_Before_Exit'(Hook_Function with Process => Process),
          Watch => Process);
 
-      Debugger_State_Changed_Hook.Run
-        (Process.Kernel, Process, Debug_Available);
-      Debugger_Started_Hook.Run (Process.Kernel, Process);
+      if Debuggee_Start_Type'(Auto_Start_Debuggee.Get_Pref) = None then
+         declare
+            use Interactive_Consoles;
+            Console : constant Interactive_Console :=
+                GVD.Consoles.Get_Debugger_Interactive_Console (Process);
+         begin
+            if Console /= null then
+               Console.Insert
+                 ("Debugger is initialized: you can now start the debuggee "
+                  & "by clicking on the 'Debug Run' toolbar button.",
+                  Add_LF => True);
+
+               --  Add prompt after the message
+               Console.Set_Prompt ("(gdb) ");
+               Console.Display_Prompt;
+               Console.Set_Prompt ("");
+            end if;
+         end;
+      end if;
 
       --  Give the focus to the Debugger Console
       Console_Child := Find_MDI_Child
@@ -1381,6 +1398,10 @@ package body GVD.Process is
       if Console_Child /= null then
          Raise_Child (Console_Child);
       end if;
+
+      Debugger_State_Changed_Hook.Run
+        (Process.Kernel, Process, Debug_Available);
+      Debugger_Started_Hook.Run (Process.Kernel, Process);
 
       Process.Store_History := False;
       Process.Interactions_History.Clear;

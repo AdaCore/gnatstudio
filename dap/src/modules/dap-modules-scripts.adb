@@ -587,6 +587,12 @@ package body DAP.Modules.Scripts is
                & Visual.Client.Get_Status'Img);
          end if;
 
+      elsif Command = "continue_execution" then
+         Inst   := Nth_Arg (Data, 1, New_Class (Kernel, "Debugger"));
+         Visual := DAP_Visual_Debugger_Access
+           (Glib.Object.GObject'(Get_Data (Inst)));
+         Visual.Client.Continue_Execution;
+
       elsif Command = "send" then
          Inst   := Nth_Arg (Data, 1, New_Class (Kernel, "Debugger"));
          Visual := DAP_Visual_Debugger_Access
@@ -831,6 +837,10 @@ package body DAP.Modules.Scripts is
          Class        => Class);
       Kernel.Scripts.Register_Command
         ("start",
+         Handler      => Shell_Handler'Access,
+         Class        => Class);
+      Kernel.Scripts.Register_Command
+        ("continue_execution",
          Handler      => Shell_Handler'Access,
          Class        => Class);
       Kernel.Scripts.Register_Command

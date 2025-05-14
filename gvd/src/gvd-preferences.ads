@@ -29,6 +29,9 @@ package GVD.Preferences is
    package Debugger_Kind_Preferences is new
      Default_Preferences.Enums.Generics (GVD.Types.Debugger_Type);
 
+   package Debuggee_Start_Preferences is new
+     Default_Preferences.Enums.Generics (GVD.Types.Debuggee_Start_Type);
+
    -----------------------
    -- List of constants --
    -----------------------
@@ -43,6 +46,7 @@ package GVD.Preferences is
    Execution_Window              : Boolean_Preference;
    Preserve_State_On_Exit        : Boolean_Preference;
    Pending_Breakpoints           : Boolean_Preference;
+   Auto_Start_Debuggee           : Debuggee_Start_Preferences.Preference;
 
    -- Source Window --
    Continue_To_Line_Buttons      : Boolean_Preference;

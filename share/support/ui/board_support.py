@@ -712,8 +712,11 @@ class BoardLoader(Module):
         # Reset the board
         yield debugger_promise.wait_and_send(cmd="monitor reset halt", block=True)
 
-        # Not busy anymore
-        self.__is_busy = False
+        if GPS.Preference("Debugger-Launch-Setup-Command").get().lower() == "continue":
+            yield debugger_promise.get().continue_execution()
+        else:
+            # Not busy anymore
+            self.__is_busy = False
 
     def setup(self):
         """

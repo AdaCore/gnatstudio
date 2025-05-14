@@ -772,6 +772,15 @@ class Debug_Run_Dialog(Dialog):
         yield self._open_and_yield("/Debug/Run...")
         yield wait_idle()
 
+    def open_with_action(self, action):
+        """
+        Compatible with run_test_driver, to be used in a yield statement
+            dialog = Debug_Run_Dialog()
+            yield dialog.open_with_action("/Debug/Initialize/main")
+        """
+        yield self._open_and_yield(action)
+        yield wait_idle()
+
     def set_use_exec_dir(self, value):
         """
         Check or uncheck "Use exec dir"

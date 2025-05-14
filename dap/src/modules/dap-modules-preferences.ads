@@ -15,9 +15,14 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with Default_Preferences;      use Default_Preferences;
+with DAP.Types;                 use DAP.Types;
+with Default_Preferences;       use Default_Preferences;
+with Default_Preferences.Enums; use Default_Preferences.Enums;
 
 package DAP.Modules.Preferences is
+
+   package Debuggee_Start_Preferences is new
+     Default_Preferences.Enums.Generics (DAP.Types.Debuggee_Start_Type);
 
    procedure Register_Default_Preferences
      (Prefs : access Preferences_Manager_Record'Class);
@@ -30,6 +35,7 @@ package DAP.Modules.Preferences is
    Break_On_Exception            : Boolean_Preference;
    Preserve_State_On_Exit        : Boolean_Preference;
    Execution_Window              : Boolean_Preference;
+   Auto_Start_Debuggee           : Debuggee_Start_Preferences.Preference;
 
    -- Source Window --
    Continue_To_Line_Buttons      : Boolean_Preference;
