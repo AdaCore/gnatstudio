@@ -21,7 +21,7 @@ def test():
     GPS.Preference("Ada-Casing-Policy").set("On_The_Fly")
     buf.current_view().goto(buf.at(LINE, 15))
     send_key_event(ord("\""), window=text.get_window(Gtk.TextWindowType.TEXT))
-    yield wait_idle()
+    yield timeout(1000)
     gps_assert(
         buf.get_chars(buf.at(LINE, 1), buf.at(LINE, 1).end_of_line()),
         EXPECTED,
@@ -30,7 +30,7 @@ def test():
     GPS.Preference("Ada-Casing-Policy").set("End_Of_Line")
     buf.current_view().goto(buf.at(LINE, 1).end_of_line())
     send_key_event(GDK_RETURN, window=text.get_window(Gtk.TextWindowType.TEXT))
-    yield wait_idle()
+    yield timeout(1000)
     gps_assert(
         buf.get_chars(buf.at(LINE, 1), buf.at(LINE, 1).end_of_line()),
         EXPECTED,
