@@ -1,14 +1,14 @@
-"""Contextual menu for Explorer
+"""Contextual menu: 'Open in system file explorer'
 
-This script provides a contextual menu for
-file or directory to open
-explorer in this directory.
+This plugin adds a contextual menu on files and directories in
+the Project View and File View, to reveal the object in the system
+file explorer.
 
 """
 
 import os
+import sys
 import GPS
-import os_utils
 from gs_utils import interactive
 import subprocess
 
@@ -21,17 +21,17 @@ def can_execute(context):
 
 
 @interactive(
-    name="Locate in Explorer",
+    name="Open in system file explorer",
     contextual="Open explorer",
     filter=can_execute
 )
 def on_activate():
     gps = os.environ.copy()
-    sys = os.environ.copy()
+    restored = os.environ.copy()
     for k in gps.keys():
         if k.startswith("GPS_STARTUP_"):
             if gps[k] != "_ABSENT_VARIABLE_":
-                sys[k[12:]] = gps[k]
+                restored[k[12:]] = gps[k]
 
     path = GPS.current_context().directory()
 
@@ -41,13 +41,13 @@ def on_activate():
         else:
             path = '.'
 
-    if os.name == "nt":
+    if sys.platform == "win32":
         e = 'explorer.exe'
         path = '"' + path + '"'
     else:
         e = 'xdg-open'
 
     try:
-        subprocess.call([e, path], env=sys)
+        subprocess.run([e, path], env=restored)
     except Exception as ex:
-        GPS.Console().write(print (ex))
+        GPS.Console().write(str(ex))
