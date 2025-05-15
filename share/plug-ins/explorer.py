@@ -22,15 +22,19 @@ def can_execute(context):
 
 @interactive(
     name="Open in system file explorer",
-    contextual="Open explorer",
+    contextual="Open in system file explorer",
     filter=can_execute
 )
 def on_activate():
     restored = os.environ.copy()
-    for k in os.environ.keys():
+    for k in os.environ:
         if k.startswith("GPS_STARTUP_"):
-            if gps[k] != "_ABSENT_VARIABLE_":
-                restored[k[12:]] = os.environ[k]
+            old = k[12:]
+            if os.environ[k] == "_ABSENT_VARIABLE_":
+                if old in restored.keys():
+                    restored.pop(old)
+            else:
+                restored[old] = os.environ[k]
 
     path = GPS.current_context().directory()
 
