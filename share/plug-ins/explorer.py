@@ -26,12 +26,11 @@ def can_execute(context):
     filter=can_execute
 )
 def on_activate():
-    gps = os.environ.copy()
     restored = os.environ.copy()
-    for k in gps.keys():
+    for k in os.environ.keys():
         if k.startswith("GPS_STARTUP_"):
             if gps[k] != "_ABSENT_VARIABLE_":
-                restored[k[12:]] = gps[k]
+                restored[k[12:]] = os.environ[k]
 
     path = GPS.current_context().directory()
 
