@@ -107,7 +107,7 @@ from functools import reduce
 
 def try_indent(buffer, top, bottom):
     """Ident text in given buffer between top and bottom position.
-    Ignore exceptions raised when ident setting is None"""
+    Ignore exceptions raised when indent setting is None"""
     try:
         buffer.indent(top, bottom)
     except Exception:

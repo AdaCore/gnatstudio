@@ -20,7 +20,7 @@ end File2;
 
 EXPECTED3 = r"""procedure File3 is
 begin
-   null
+null
    ;
 end File3;
 """
@@ -28,6 +28,8 @@ end File3;
 
 @run_test_driver
 def on_gps_started():
+    GPS.Preference("Editor-On-Type-Formatter").set("LSP")
+    GPS.Preference("Editor-Range-Formatter").set("LSP")
     Preference("Ada-Casing-Policy").set("On_The_Fly")
     buf1 = EditorBuffer.get(File("file1.adb"))
 
@@ -48,5 +50,5 @@ def on_gps_started():
 
     buf3.current_view().goto(buf3.at(3, 5))
     send_key_event(GDK_RETURN)
-    yield wait_idle()
+    yield wait_language_server("textDocument/onTypeFormatting")
     gps_assert(buf3.get_chars(), EXPECTED3, "Issue for casing end_of_line")

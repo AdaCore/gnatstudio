@@ -16,7 +16,6 @@
 ------------------------------------------------------------------------------
 
 with GNAT.Strings;
-
 with VSS.Strings;
 
 with GNATCOLL.Projects;
@@ -57,10 +56,12 @@ package body GPS.LSP_Client.Configurations.ALS is
 
    begin
       declare
-         Build_Tree : constant String := +GPS.Kernel.Project.Get_Registry
-           (Self.Kernel).Environment.Build_Tree_Dir;
-         Root_Dir   : constant String := +GPS.Kernel.Project.Get_Registry
-           (Self.Kernel).Environment.Root_Dir;
+         Build_Tree : constant String :=
+           +GPS.Kernel.Project.Get_Registry (Self.Kernel)
+              .Environment
+              .Build_Tree_Dir;
+         Root_Dir   : constant String :=
+           +GPS.Kernel.Project.Get_Registry (Self.Kernel).Environment.Root_Dir;
       begin
          if Build_Tree /= "" then
             Ada_Settings.Set_Field ("relocateBuildTree", Build_Tree);
@@ -71,8 +72,8 @@ package body GPS.LSP_Client.Configurations.ALS is
          end if;
       end;
 
-      if GPS.Kernel.Project.Get_Registry
-        (Self.Kernel).Tree.Status = From_Executable
+      if GPS.Kernel.Project.Get_Registry (Self.Kernel).Tree.Status
+        = From_Executable
       then
          --  we are debugging executable so should create a "dummy"
          --  project on the disk
@@ -87,9 +88,11 @@ package body GPS.LSP_Client.Configurations.ALS is
                for Index in Dirs'Range loop
                   Write
                     (F,
-                     (if Index = Dirs'First then "" else ",") &
-                       ASCII.LF &
-                       "     """ & Dirs (Index).Display_Full_Name & """");
+                     (if Index = Dirs'First then "" else ",")
+                     & ASCII.LF
+                     & "     """
+                     & Dirs (Index).Display_Full_Name
+                     & """");
                end loop;
             end;
             Write (F, ");" & ASCII.LF);
@@ -103,8 +106,10 @@ package body GPS.LSP_Client.Configurations.ALS is
                   for Index in Lang'Range loop
                      Write
                        (F,
-                        (if Index = Lang'First then "" else ",") &
-                          """" & Lang (Index).all & """");
+                        (if Index = Lang'First then "" else ",")
+                        & """"
+                        & Lang (Index).all
+                        & """");
                      GNAT.Strings.Free (Lang (Index));
                   end loop;
                   Write (F, ");" & ASCII.LF);
@@ -121,8 +126,9 @@ package body GPS.LSP_Client.Configurations.ALS is
 
       declare
          Conf : constant GNATCOLL.VFS.Virtual_File :=
-           GPS.Kernel.Project.Get_Registry
-             (Self.Kernel).Environment.Get_Config_File;
+           GPS.Kernel.Project.Get_Registry (Self.Kernel)
+             .Environment
+             .Get_Config_File;
       begin
          if Conf /= No_File then
             Ada_Settings.Set_Field
@@ -133,8 +139,8 @@ package body GPS.LSP_Client.Configurations.ALS is
       --  Set the scenario variables
       for Variable of GPS.Kernel.Project.Scenario_Variables (Self.Kernel) loop
          declare
-            External : constant String := GNATCOLL.Projects.External_Name
-              (Variable);
+            External : constant String :=
+              GNATCOLL.Projects.External_Name (Variable);
          begin
             if External /= "" then
                Scenarios.Set_Field
@@ -144,8 +150,8 @@ package body GPS.LSP_Client.Configurations.ALS is
       end loop;
       for Variable of GPS.Kernel.Project.Untyped_Variables (Self.Kernel) loop
          declare
-            External : constant String := GNATCOLL.Projects.External_Name
-              (Variable);
+            External : constant String :=
+              GNATCOLL.Projects.External_Name (Variable);
          begin
             if External /= "" then
                Scenarios.Set_Field
@@ -170,8 +176,8 @@ package body GPS.LSP_Client.Configurations.ALS is
 
       Ada_Settings.Set_Field
         ("projectDiagnostics",
-         Boolean'(
-           GPS.Kernel.Preferences.LSP_Ada_Project_Diagnostics.Get_Pref));
+         Boolean'
+           (GPS.Kernel.Preferences.LSP_Ada_Project_Diagnostics.Get_Pref));
 
       Ada_Settings.Set_Field
         ("gprFileDiagnostics",
@@ -179,8 +185,7 @@ package body GPS.LSP_Client.Configurations.ALS is
 
       Ada_Settings.Set_Field
         ("alireDiagnostics",
-         Boolean'(
-           GPS.Kernel.Preferences.LSP_Alire_Diagnostics.Get_Pref));
+         Boolean'(GPS.Kernel.Preferences.LSP_Alire_Diagnostics.Get_Pref));
 
       Ada_Settings.Set_Field
         ("followSymlinks", not GPS.Kernel.Preferences.Trusted_Mode.Get_Pref);
@@ -192,15 +197,26 @@ package body GPS.LSP_Client.Configurations.ALS is
 
       Ada_Settings.Set_Field
         ("useGnatformat",
-         Boolean'
-           (GPS.Kernel.Preferences.LSP_Ada_Use_GNATformat.Get_Pref));
+         Boolean'(GPS.Kernel.Preferences.LSP_Ada_Use_GNATformat.Get_Pref));
+
+      declare
+         On_Type_Formatting : constant GNATCOLL.JSON.JSON_Value :=
+           GNATCOLL.JSON.Create_Object;
+      begin
+         On_Type_Formatting.Set_Field
+           ("indentOnly",
+            Boolean'(
+              GPS.Kernel.Preferences.LSP_Ada_On_Type_Formatting.Get_Pref));
+         Ada_Settings.Set_Field ("onTypeFormatting", On_Type_Formatting);
+      end;
 
       --  Documentation options
 
       Ada_Settings.Set_Field
         ("documentationStyle",
          (if GPS.Kernel.Preferences.Doc_Search_Before_First.Get_Pref
-          then "leading" else "gnat"));
+          then "leading"
+          else "gnat"));
 
       Ada_Settings.Set_Field
         ("namedNotationThreshold",

@@ -913,7 +913,7 @@ package body Src_Editor_Module.Shell is
                Box := Source_Editor_Box (Get_Widget (Child));
 
                if not Get_Editable (Get_View (Box))
-                 or else not Do_Indentation
+                 or else not On_Indent_Action
                    (Get_Buffer (Box), Current_Line_Only)
                then
                   Set_Error_Msg (Data, -"Could not indent selection");
@@ -954,7 +954,7 @@ package body Src_Editor_Module.Shell is
                Get_End_Iter (Buffer, To);
 
                if not Get_Editable (Get_View (Box))
-                 or else not Do_Indentation
+                 or else not On_Indent_Action
                    (Get_Buffer (Box), From, To)
                then
                   Set_Error_Msg (Data, -"Could not indent buffer");

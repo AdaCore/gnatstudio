@@ -308,6 +308,7 @@ package body GPS.LSP_Client.Edit_Workspace is
 
       --  Iterate over the results and create the new edit changes.
       declare
+         use VSS.Strings;
          Result    : constant List_Instance'Class := Return_Value (Data);
          Total_Arg : constant Integer := Number_Of_Arguments (Result);
       begin
@@ -320,11 +321,15 @@ package body GPS.LSP_Client.Edit_Workspace is
                  To_Diff_Operation (Item.Nth_Arg (1));
                V_Str     : constant VSS.Strings.Virtual_String :=
                  Nth_Arg (Item, 2);
-               Safe_Str  : constant VSS.Strings.Virtual_String :=
-                 V_Str.Split_Lines.Join_Lines
-                   (Terminator     => VSS.Strings.LF,
-                    Terminate_Last => V_Str.At_Line
-                      (V_Str.At_Last_Character).Has_Line_Terminator);
+               Safe_Str : constant VSS.Strings.Virtual_String :=
+                 (if V_Str /= Empty_Virtual_String
+                  then
+                    V_Str.Split_Lines.Join_Lines
+                      (Terminator     => VSS.Strings.LF,
+                       Terminate_Last =>
+                         V_Str.At_Line (V_Str.At_Last_Character)
+                           .Has_Line_Terminator)
+                  else V_Str);
                --  Fancy way to remove all CR characters which could corrupt
                --  the offset.
             begin
@@ -577,7 +582,10 @@ package body GPS.LSP_Client.Edit_Workspace is
             Editor.Set_Read_Only (False);
          end if;
 
-         Writable := File.Is_Writable;
+         --  In case the file is not created yet on the disk yet and is
+         --  opened in a buffer then consider it as writable, we have
+         --  sole ownership of it.
+         Writable := not File.Is_Regular_File or else File.Is_Writable;
 
          --  Avoid moving the cursor when applying edit changes if asked.
          Editor.Set_Avoid_Cursor_Move_On_Changes (Command.Avoid_Cursor_Move);

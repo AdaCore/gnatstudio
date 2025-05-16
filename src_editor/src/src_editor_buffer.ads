@@ -596,11 +596,10 @@ package Src_Editor_Buffer is
    procedure Redo (Buffer : access Source_Buffer_Record);
    --  Redo last undone command
 
-   function Do_Indentation
+   function On_Indent_Action
      (Buffer     : Source_Buffer;
       From, To   : Gtk.Text_Iter.Gtk_Text_Iter;
-      Force      : Boolean := False;
-      Formatting : Boolean := True) return Boolean;
+      Force      : Boolean := False) return Boolean;
    --  Reindent a specific range of lines (the ones containing From to To).
    --  Indentation depend on the language and the setup the user has chosen
    --  (either simple or extended indentation).
@@ -608,16 +607,13 @@ package Src_Editor_Buffer is
    --  Return whether the current range could be indented correctly.
    --  If Force, perform indentation in Extended mode, even if auto
    --  indentation is disabled.
-   --  Formatting parameter controls whether we should do format or indent.
 
-   function Do_Indentation
+   function On_Indent_Action
      (Buffer            : Source_Buffer;
       Current_Line_Only : Boolean := False;
-      Force             : Boolean := False;
-      Formatting        : Boolean := True) return Boolean;
+      Force             : Boolean := False) return Boolean;
    --  Same as above, but for the current line (or current selection if there
    --  is one and Current_Line_Only is False).
-   --  Formatting parameter controls whether we should do format or indent.
 
    function Do_Refill (Buffer : Source_Buffer) return Boolean;
    --  Refill selected text or the current paragraph if no selection is active.
@@ -793,9 +789,6 @@ package Src_Editor_Buffer is
 
    procedure Set_Folding_Provider
      (Provider : Editor_Folding_Provider_Access);
-
-   procedure Set_Formatting_Provider
-     (Provider : Editor_Formatting_Provider_Access);
 
    ---------------------
    -- Automatic saves --
@@ -1279,15 +1272,6 @@ package Src_Editor_Buffer is
    --  where Group_Block is valid, editor commands will go to a new
    --  undo group, separate from the previous one and the following one.
 
-   package Listener_Factory_Lists is
-     new Ada.Containers.Doubly_Linked_Lists (Editor_Listener_Factory_Access);
-
-   Listener_Factories : Listener_Factory_Lists.List;
-
-   Folding_Provider : Editor_Folding_Provider_Access;
-
-   Formatting_Provider : Editor_Formatting_Provider_Access;
-
    type Editor_Buffer_Access is access all GPS.Editors.Editor_Buffer'Class;
 
    function Get_Editor_Buffer
@@ -1371,11 +1355,19 @@ package Src_Editor_Buffer is
 
 private
 
+   package Listener_Factory_Lists is new
+     Ada.Containers.Doubly_Linked_Lists (Editor_Listener_Factory_Access);
+
+   --  Not really pretty...
+   Listener_Factories : Listener_Factory_Lists.List;
+
+   Folding_Provider : Editor_Folding_Provider_Access;
+
    procedure Set_Cursor_Position
-     (Buffer    : access Source_Buffer_Record;
-      Line      : Gint;
-      Column    : Gint;
-      Internal  : Boolean;
+     (Buffer           : access Source_Buffer_Record;
+      Line             : Gint;
+      Column           : Gint;
+      Internal         : Boolean;
       Extend_Selection : Boolean := False);
    --  Move the insert cursor to the given position.
    --
@@ -1394,8 +1386,8 @@ private
    --  bound to the given position.
 
    procedure Find_Current_Comment_Paragraph
-     (Buffer : not null access Source_Buffer_Record;
-      Line   : Editable_Line_Type;
+     (Buffer               : not null access Source_Buffer_Record;
+      Line                 : Editable_Line_Type;
       Start_Line, End_Line : out Editable_Line_Type);
    --  Find the bounds of the current comment paragraph that includes Line.
    --  * If Line is not a comment, returns the bounds for that line.
@@ -1424,8 +1416,7 @@ private
    --  signal.
 
    procedure Delete_Autosaved_File
-     (Buffer : access Source_Buffer_Record;
-      File   : GNATCOLL.VFS.Virtual_File);
+     (Buffer : access Source_Buffer_Record; File : GNATCOLL.VFS.Virtual_File);
    --  Deletes autosaved backup file
 
    ---------------
@@ -1444,7 +1435,7 @@ private
       --  For simplicity, the range of this array should match the range of
       --  the array of categories in the cache.
 
-      Active  : Natural;
+      Active : Natural;
       --  This is the category to use for highlighting
    end record;
 
@@ -1456,17 +1447,17 @@ private
       --  The array corresponding to information to be displayed in columns,
       --  indexed on columns.
 
-      Editable_Line  : Editable_Line_Type;
+      Editable_Line : Editable_Line_Type;
       --  The line in the real buffer
 
-      Line_Mark      : Gtk.Text_Mark.Gtk_Text_Mark;
+      Line_Mark : Gtk.Text_Mark.Gtk_Text_Mark;
       --  The mark used for referencing special lines, for example.
       --  -1 if there is no marker for this line.
 
-      Style          : Style_Access;
+      Style : Style_Access;
       --  The style used to display the line.
 
-      Highlighting   : Highlighting_Data_Array;
+      Highlighting : Highlighting_Data_Array;
       --  Highlighting information.
 
       Has_Aspect : Boolean := False;
@@ -1477,30 +1468,35 @@ private
    -- Line highlighting --
    -----------------------
 
-   procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-     (Boolean_Array, Boolean_Array_Access);
+   procedure Unchecked_Free is new
+     Ada.Unchecked_Deallocation (Boolean_Array, Boolean_Array_Access);
 
    New_Block : constant Block_Record :=
-     (0, 0, 0, 0, 0, GNATCOLL.Symbols.No_Symbol, Language.Cat_Unknown,
+     (0,
+      0,
+      0,
+      0,
+      0,
+      GNATCOLL.Symbols.No_Symbol,
+      Language.Cat_Unknown,
       Gdk.RGBA.Null_RGBA);
 
    procedure Create_Side_Info
-     (Buffer : access Source_Buffer_Record;
-      Line   : Buffer_Line_Type);
+     (Buffer : access Source_Buffer_Record; Line : Buffer_Line_Type);
    --  Create blank Side_Info_Data
 
    New_Line_Data : constant Line_Data_Record :=
      (null, 0, null, null, (others => (null, 0)), False);
 
-   type Line_Data_Array is array (Buffer_Line_Type range <>) of
-     Line_Data_Record;
+   type Line_Data_Array is
+     array (Buffer_Line_Type range <>) of Line_Data_Record;
    type Line_Data_Array_Access is access Line_Data_Array;
 
    procedure Reset_Blocks_Info (Buffer : access Source_Buffer_Record'Class);
    --  Reset block information used by Data
 
-   procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-     (Line_Data_Array, Line_Data_Array_Access);
+   procedure Unchecked_Free is new
+     Ada.Unchecked_Deallocation (Line_Data_Array, Line_Data_Array_Access);
 
    type Line_Terminator_Style is (Unknown, LF, CR, CR_LF);
    --  The line terminator style of the given buffer
@@ -1520,28 +1516,30 @@ private
      (Buffer : access Source_Buffer_Record'Class) return Boolean;
    --  Return True if we are inserting internally
 
-   procedure Start_Inserting
-     (Buffer : access Source_Buffer_Record'Class);
+   procedure Start_Inserting (Buffer : access Source_Buffer_Record'Class);
    --  Call this to notify the buffer that we are starting to insert internally
 
-   procedure End_Inserting
-     (Buffer : access Source_Buffer_Record'Class);
+   procedure End_Inserting (Buffer : access Source_Buffer_Record'Class);
    --  Call this to notify the buffer that we have stopped inserting internally
 
    --------------------
    -- Editable lines --
    --------------------
 
-   type Editable_Line_Array is array (Editable_Line_Type range <>) of
-     Buffer_Line_Type;
+   type Editable_Line_Array is
+     array (Editable_Line_Type range <>) of Buffer_Line_Type;
    type Editable_Line_Array_Access is access Editable_Line_Array;
 
-   procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-     (Editable_Line_Array, Editable_Line_Array_Access);
+   procedure Unchecked_Free is new
+     Ada.Unchecked_Deallocation
+       (Editable_Line_Array,
+        Editable_Line_Array_Access);
 
    type Columns_Config_Access is access Line_Info_Display_Array_Access;
-   procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-     (Line_Info_Display_Array_Access, Columns_Config_Access);
+   procedure Unchecked_Free is new
+     Ada.Unchecked_Deallocation
+       (Line_Info_Display_Array_Access,
+        Columns_Config_Access);
 
    Max_Typed_Chars : constant := 100;
    --  100 is the maximum length of the identifier that will be handled by the
@@ -1557,12 +1555,12 @@ private
    ------------------
 
    type Slave_Cursor is record
-      Id                       : Integer := -1;
-      Mark                     : Gtk.Text_Mark.Gtk_Text_Mark;
-      Sel_Mark                 : Gtk.Text_Mark.Gtk_Text_Mark;
-      Current_Command          : Command_Access;
-      Column_Memory            : Gint := 0;
-      Clipboard                : Ada.Strings.Unbounded.Unbounded_String :=
+      Id              : Integer := -1;
+      Mark            : Gtk.Text_Mark.Gtk_Text_Mark;
+      Sel_Mark        : Gtk.Text_Mark.Gtk_Text_Mark;
+      Current_Command : Command_Access;
+      Column_Memory   : Gint := 0;
+      Clipboard       : Ada.Strings.Unbounded.Unbounded_String :=
         Ada.Strings.Unbounded.To_Unbounded_String ("");
    end record;
    --  Represents the information we have to store about each multi-cursor
@@ -1571,18 +1569,21 @@ private
    --  that we can perform command aggregation (see multiple insertions as one
    --  for example)
 
-   package Slave_Cursors_Lists is new Ada.Containers.Doubly_Linked_Lists
-     (Slave_Cursor);
+   package Slave_Cursors_Lists is new
+     Ada.Containers.Doubly_Linked_Lists (Slave_Cursor);
 
    type Cursors_Sync_Type (Mode : Cursor_Sync_Mode_Type := Auto) is record
       case Mode is
-         when Manual_Slave => MC : Slave_Cursor_Access;
-         when others => null;
+         when Manual_Slave =>
+            MC : Slave_Cursor_Access;
+
+         when others =>
+            null;
       end case;
    end record;
 
-   package Listener_Lists is
-     new Ada.Containers.Doubly_Linked_Lists (Editor_Listener_Access);
+   package Listener_Lists is new
+     Ada.Containers.Doubly_Linked_Lists (Editor_Listener_Access);
 
    type Line_Position_Kind is (At_Begin, At_End, Other);
    --  In what place of line is text inserted or deleted
@@ -1591,10 +1592,11 @@ private
       Start_Mark : GPS.Editors.Editor_Mark_Holders.Holder;
       Nb_Lines   : Editable_Line_Type;
    end record;
-   package Folded_Block_Info_Vectors is new Ada.Containers.Vectors
-     (Index_Type   => Positive,
-      Element_Type => Folded_Block_Info_Type,
-      "="          => "=");
+   package Folded_Block_Info_Vectors is new
+     Ada.Containers.Vectors
+       (Index_Type   => Positive,
+        Element_Type => Folded_Block_Info_Type,
+        "="          => "=");
    --  Types used to store information about folded blocks
 
    --------------------------
@@ -1620,14 +1622,14 @@ private
       File_Identifier : GNATCOLL.VFS.Virtual_File;
       --  This identifier is used to identify buffers for untitled files
 
-      Initial_Dir     : GNATCOLL.VFS.Virtual_File;
+      Initial_Dir : GNATCOLL.VFS.Virtual_File;
       --  Where to save the file initially, for editors for empty files
 
-      Forced_Title  : GNAT.Strings.String_Access;
+      Forced_Title : GNAT.Strings.String_Access;
       --  If set, this title is used for the window, instead of the file name
 
-      Lang          : Language.Language_Access;
-      Highlighter   : Source_Highlighter;
+      Lang        : Language.Language_Access;
+      Highlighter : Source_Highlighter;
 
       LSP_Highlighting : GPS.Kernel.Preferences.External_Highlighting :=
         GPS.Kernel.Preferences.None;
@@ -1646,7 +1648,7 @@ private
       --  Whether we are performing a drag n drop. Used to group the insertion
       --  and deletion commands that belong to the drag n drop user action.
 
-      Insert_Mark      : Gtk.Text_Mark.Gtk_Text_Mark;
+      Insert_Mark : Gtk.Text_Mark.Gtk_Text_Mark;
       --  This is a copy of the "insert" mark.
       --  This could be easily looked-up when needed, but having a copy is
       --  helping performance-wise, since a  lot of subprograms use it.
@@ -1669,16 +1671,16 @@ private
       --  "cursor_position_changed" signal when we know we are going to
       --  move the cursor a lot.
 
-      Queue           : Command_Queue;
+      Queue : Command_Queue;
       --  Contains the queue of editor commands for this editor
 
-      Saved_Position  : Integer := 0;
+      Saved_Position : Integer := 0;
       --  The saved position in the command queue
 
       Current_Command : Command_Access := null;
       --  The current editor command. Belongs to Queue, defined above
 
-      Current_Status  : GPS.Kernel.File_Status := GPS.Kernel.Unmodified;
+      Current_Status : GPS.Kernel.File_Status := GPS.Kernel.Unmodified;
       --  The current buffer status
 
       Number_Of_Views : Integer := 0;
@@ -1779,7 +1781,7 @@ private
 
       Folding_Provider : Editor_Folding_Provider_Access;
 
-      Auto_Folded      : Boolean := False;
+      Auto_Folded : Boolean := False;
       --  Used to check whether auto folding is already done.
 
       Modifying_Real_Lines : Boolean := False;
@@ -1813,74 +1815,72 @@ private
       --  Whether the buffer should monitor every text inserted and strip it
       --  of potential CRs.
 
-      In_Completion        : Boolean := False;
+      In_Completion : Boolean := False;
       --  Whether we are in an autocompletion loop
 
-      Last_User_Action     : Action_Type := No_Action;
+      Last_User_Action : Action_Type := No_Action;
 
-      Typed_Chars          : Last_Typed_Chars;
-      Typed_Char_Index     : Natural := 0;
+      Typed_Chars      : Last_Typed_Chars;
+      Typed_Char_Index : Natural := 0;
       --  Records last typed chars to help auto-casing restore as much as
       --  possible the user's original casing.
 
-      Hyper_Mode                            : Boolean := False;
+      Hyper_Mode : Boolean := False;
       --  Whether we are currently in Hyper mode
 
-      Hyper_Mode_Tag                        : Gtk.Text_Tag.Gtk_Text_Tag;
+      Hyper_Mode_Tag : Gtk.Text_Tag.Gtk_Text_Tag;
       --  The tag used for highlighting hyper mode items
 
-      Hyper_Mode_Has_Highlight              : Boolean := False;
+      Hyper_Mode_Has_Highlight : Boolean := False;
       --  Whether Hyper Mode is currently highlighting a section of the text
 
-      Hyper_Mode_Current_Action             : Subprogram_Type := null;
+      Hyper_Mode_Current_Action : Subprogram_Type := null;
       --  Indicates the current primary action for the highlighted text
 
-      Hyper_Mode_Current_Alternate          : Subprogram_Type := null;
+      Hyper_Mode_Current_Alternate : Subprogram_Type := null;
       --  Indicates the current alternate action for the highlighted text
 
-      Hyper_Mode_Highlight_Begin            : Gtk.Text_Mark.Gtk_Text_Mark;
-      Hyper_Mode_Highlight_End              : Gtk.Text_Mark.Gtk_Text_Mark;
+      Hyper_Mode_Highlight_Begin : Gtk.Text_Mark.Gtk_Text_Mark;
+      Hyper_Mode_Highlight_End   : Gtk.Text_Mark.Gtk_Text_Mark;
       --  The begin and end of the highlighted section
 
-      Has_MC_Clipboard                      : Boolean := False;
+      Has_MC_Clipboard : Boolean := False;
       --  Has there been a cut/copy with multi cursors active ?
 
-      Slave_Cursors_List                    : Slave_Cursors_Lists.List;
+      Slave_Cursors_List : Slave_Cursors_Lists.List;
       --  The list of all active multi cursors
 
-      Cursors_Delete_Offset                 : Gint := 0;
+      Cursors_Delete_Offset : Gint := 0;
       --  Internal field used between before and after delete events handlers
       --  Represents a simple deletion. +5 means delete 5 chars forward.
       --  -5 means delete 5 chars backward. 0 means do nothing.
 
-      Cursors_Sync                          : Cursors_Sync_Type;
+      Cursors_Sync : Cursors_Sync_Type;
       --  The sync mode of the buffer. The operating mode is detailed precisely
       --  in the public procedures related to sync, in
       --  Src_Editor_Buffer.Cursors.
 
-      Cursor_Column_Memory                  : Gint := 0;
+      Cursor_Column_Memory : Gint := 0;
       --  Memory for the horizontal of the cursor when moving from line to line
 
       Editor_Buffer : Editor_Buffer_Access;
-      Listeners : Listener_Lists.List;
+      Listeners     : Listener_Lists.List;
 
-      Version              : Integer := -1;
+      Version : Integer := -1;
 
-      Context_Frozen       : Integer := 0;
+      Context_Frozen : Integer := 0;
       --  GNAT Studio context is refreshed every time the cursor position
       --  changes and this variable is set to 0. See Freeze_Context and
       --  Thaw_Context.
 
       Hightlight_Messages_Idle : Glib.Main.G_Source_Id :=
-                                   Glib.Main.No_Source_Id;
+        Glib.Main.No_Source_Id;
       --  Idle handler to rehightlight messages.
 
-      LSP_Opened  : Boolean := False;  -- Is opened on the LSP server side
+      LSP_Opened : Boolean := False;  -- Is opened on the LSP server side
    end record;
 
-   procedure Emit_By_Name
-     (Object : System.Address;
-      Name   : Signal_Name);
+   procedure Emit_By_Name (Object : System.Address; Name : Signal_Name);
    pragma Import (C, Emit_By_Name, "ada_g_signal_emit_by_name");
 
    Default_Column : constant String := "Block Information";
@@ -1890,45 +1890,46 @@ private
    -- Highlighter_Record --
    ------------------------
 
-   type Source_Highlighter_Record
-     (Buffer : Src_Editor_Buffer.Source_Buffer) is
-     new Ada.Finalization.Controlled with
-      record
-         Auto_Highlight_Enabled : Boolean := True;
-         --  Enable/Disable immediate highlighting after each insert/delete
+   type Source_Highlighter_Record (Buffer : Src_Editor_Buffer.Source_Buffer) is
+     new Ada.Finalization.Controlled
+   with record
+      Auto_Highlight_Enabled : Boolean := True;
+      --  Enable/Disable immediate highlighting after each insert/delete
 
-         Highlight_Needed : Boolean := False;
-         --  Whether the text should be re-highlighted
+      Highlight_Needed : Boolean := False;
+      --  Whether the text should be re-highlighted
 
-         Call_Clear_Highlighting : Boolean := False;
-         --  Call Clear_Highlighting_Hook to clean up applied styles
+      Call_Clear_Highlighting : Boolean := False;
+      --  Call Clear_Highlighting_Hook to clean up applied styles
 
-         Syntax_Tags : Src_Highlighting.Highlighting_Tags;
+      Syntax_Tags : Src_Highlighting.Highlighting_Tags;
 
-         First_Highlight_Mark : Gtk.Text_Mark.Gtk_Text_Mark;
-         Last_Highlight_Mark  : Gtk.Text_Mark.Gtk_Text_Mark;
-         --  Those marks indicate the minimum area that need to be highlighted.
-         --  They must be valid marks at all times.
+      First_Highlight_Mark : Gtk.Text_Mark.Gtk_Text_Mark;
+      Last_Highlight_Mark  : Gtk.Text_Mark.Gtk_Text_Mark;
+      --  Those marks indicate the minimum area that need to be highlighted.
+      --  They must be valid marks at all times.
 
-         Use_Highlighting_Hook : Boolean := False;
-         --  Use hook to implement text highlight
+      Use_Highlighting_Hook : Boolean := False;
+      --  Use hook to implement text highlight
 
-         Highlight_Delimiters : Boolean := False;
-         --  Cache corresponding preference
+      Highlight_Delimiters : Boolean := False;
+      --  Cache corresponding preference
 
-         Delimiter_Tag : Gtk.Text_Tag.Gtk_Text_Tag;
-         --  A tag used when highlighting delimiters (e.g. parens)
+      Delimiter_Tag : Gtk.Text_Tag.Gtk_Text_Tag;
+      --  A tag used when highlighting delimiters (e.g. parens)
 
-         Has_Delimiters_Highlight   : Boolean := False;
-         --  Whether delimiters are currently highlighted
+      Has_Delimiters_Highlight : Boolean := False;
+      --  Whether delimiters are currently highlighted
 
-         Start_Delimiters_Highlight : Gtk.Text_Mark.Gtk_Text_Mark;
-         End_Delimiters_Highlight   : Gtk.Text_Mark.Gtk_Text_Mark;
-         --  Bounds for the parenthesis highlighting
-      end record;
+      Start_Delimiters_Highlight : Gtk.Text_Mark.Gtk_Text_Mark;
+      End_Delimiters_Highlight   : Gtk.Text_Mark.Gtk_Text_Mark;
+      --  Bounds for the parenthesis highlighting
+   end record;
 
-   overriding procedure Initialize (Self : in out Source_Highlighter_Record);
-   overriding procedure Finalize   (Self : in out Source_Highlighter_Record);
+   overriding
+   procedure Initialize (Self : in out Source_Highlighter_Record);
+   overriding
+   procedure Finalize (Self : in out Source_Highlighter_Record);
 
    procedure Set_Line_Highlighting
      (Self         : access Source_Highlighter_Record;
@@ -1970,12 +1971,10 @@ private
       Iter : Gtk.Text_Iter.Gtk_Text_Iter);
    --  Update the region to be highlighted in the next highlighting timeout
 
-   procedure Highlight_Region
-     (Self : access Source_Highlighter_Record);
+   procedure Highlight_Region (Self : access Source_Highlighter_Record);
    --  Highlight the region marked by the highlight marks in the editor
 
-   procedure On_Load_File
-     (Self : access Source_Highlighter_Record);
+   procedure On_Load_File (Self : access Source_Highlighter_Record);
    --  Called when load a file
 
    procedure On_Set_Language
@@ -1992,8 +1991,7 @@ private
 
    function Is_Comment_Tag
      (Self : access Source_Highlighter_Record;
-      Pos  : Gtk.Text_Iter.Gtk_Text_Iter)
-      return Boolean;
+      Pos  : Gtk.Text_Iter.Gtk_Text_Iter) return Boolean;
    --  Whether the comment tag is applied in the position
 
    procedure Highlight_Parenthesis (Self : access Source_Highlighter_Record);

@@ -27,6 +27,7 @@ def driver():
     # Use GNATFormat LSP backend
     GPS.Preference("Ada-Use-Tabs").set(True)
     GPS.Preference("LSP-Ada-Use-GNATformat").set(True)
+    GPS.Preference("Editor-Range-Formatter").set("LSP")
     b = GPS.EditorBuffer.get(GPS.File("t.adb"))
     yield wait_idle()
 

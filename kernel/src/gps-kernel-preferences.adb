@@ -24,8 +24,9 @@ with GNATCOLL.Python.State;
 with GNATCOLL.Scripts;           use GNATCOLL.Scripts;
 with GNATCOLL.Scripts.Python;    use GNATCOLL.Scripts.Python;
 with GNATCOLL.Traces;            use GNATCOLL.Traces;
-with GNAT.Strings;               use GNAT.Strings;
-
+with VSS.Strings;
+with VSS.Strings.Conversions;
+with VSS.String_Vectors;
 with XML_Utils;                  use XML_Utils;
 
 with Pango.Font;                 use Pango.Font;
@@ -281,6 +282,7 @@ package body GPS.Kernel.Preferences is
               or else Pref.all in Style_Preference_Record'Class
               or else Pref.all in Enum_Preference_Record'Class
               or else Pref.all in Theme_Preference_Record'Class
+              or else Pref.all in Choice_Preference_Record'Class
             then
                Set_Return_Value (Data, Get_Pref (Pref));
 
@@ -316,6 +318,7 @@ package body GPS.Kernel.Preferences is
               or else Pref.all in Style_Preference_Record'Class
               or else Pref.all in Enum_Preference_Record'Class
               or else Pref.all in Theme_Preference_Record'Class
+              or else Pref.all in Choice_Preference_Record'Class
             then
                Set_Pref (Pref, Kernel.Preferences, String'(Nth_Arg (Data, 2)));
 
@@ -451,14 +454,20 @@ package body GPS.Kernel.Preferences is
 
             elsif Typ = "enum" then
                declare
-                  Val : constant String_List_Access :=
-                    new GNAT.Strings.String_List
-                      (1 .. Number_Of_Arguments (Data) - (Doc_Param_Idx  + 1));
+                  Nb_Choices : constant Natural :=
+                    Number_Of_Arguments (Data) - (Doc_Param_Idx  + 1);
+                  Choices    : VSS.String_Vectors.Virtual_String_Vector;
                   --  Freed when the preference is destroyed
                begin
-                  for V in Val'Range loop
-                     Val (V) :=
-                       new String'(Nth_Arg (Data, Doc_Param_Idx + 1 + V));
+                  for V in 1 .. Nb_Choices loop
+                     declare
+                        Str    : constant String :=
+                          Nth_Arg (Data, Doc_Param_Idx + 1 + V);
+                        Choice : constant VSS.Strings.Virtual_String :=
+                          VSS.Strings.Conversions.To_Virtual_String (Str);
+                     begin
+                        Choices.Append (Choice);
+                     end;
                   end loop;
 
                   Pref := Preference (Choice_Preference'(Create
@@ -467,8 +476,11 @@ package body GPS.Kernel.Preferences is
                      Name    => Path,
                      Label   => Label,
                      Doc     => Doc,
-                     Choices => Val,
-                     Default => Nth_Arg (Data, Doc_Param_Idx + 1))));
+                     Choices => Choices,
+                     Default =>
+                       Choices.Element
+                         (Nth_Arg (Data, Doc_Param_Idx + 1)
+                          + Choices.First_Index))));
                end;
 
             else
@@ -1803,6 +1815,17 @@ package body GPS.Kernel.Preferences is
              & "used instead.",
            Path    => "Editor/Ada:Formatting");
 
+      LSP_Ada_On_Type_Formatting :=
+        Kernel.Get_Preferences.Create
+          (Name    => "LSP-Ada-On-Type-Formatting",
+           Default => True,
+           Label   => "Action on new line",
+           Doc     =>
+             -"Decide if GNAT Studio should just indent when adding"
+             & " a new line or if it should also format the current"
+             & " block of code.",
+           Path    => "Editor/Ada:Formatting");
+
       LSP_Use_Snippets := Kernel.Get_Preferences.Create
         (Name    => "LSP-Completion-Use-Snippets",
          Default => False,
@@ -2096,22 +2119,27 @@ package body GPS.Kernel.Preferences is
                end loop;
 
                declare
-                  Val : constant String_List_Access :=
-                    new GNAT.Strings.String_List (1 .. Child_Count);
+                  Choices    : VSS.String_Vectors.Virtual_String_Vector;
                   --  Freed when the preference is destroyed
+                  Def_Choice : VSS.Strings.Virtual_String;
                begin
                   Child := Node.Child;
-                  Child_Count := 1;
                   while Child /= null loop
-                     Val (Child_Count) := new String'(Child.Value.all);
-                     Child_Count := Child_Count + 1;
-                     Child := Child.Next;
+                     declare
+                        Choice : constant VSS.Strings.Virtual_String :=
+                          VSS.Strings.Conversions.To_Virtual_String
+                            (Child.Value.all);
+                     begin
+                        Choices.Append (Choice);
+                        Child := Child.Next;
+                     end;
                   end loop;
 
                   if Default = "" then
-                     Def := 1;
+                     Def_Choice := Choices.First_Element;
                   else
-                     Def := Integer'Value (Default);
+                     Def_Choice := Choices.Element
+                       (Integer'Value (Default) + Choices.First_Index);
                   end if;
 
                   Pref := Preference (Choice_Preference'(Create
@@ -2120,8 +2148,8 @@ package body GPS.Kernel.Preferences is
                      Label     => Label,
                      Path      => Path,
                      Doc       => Tooltip,
-                     Choices   => Val,
-                     Default   => Def)));
+                     Choices   => Choices,
+                     Default   => Def_Choice)));
                end;
 
             else

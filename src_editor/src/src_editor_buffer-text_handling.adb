@@ -442,7 +442,7 @@ package body Src_Editor_Buffer.Text_Handling is
 
          Get_Indentation_Parameters (Lang, Indent_Params, Indent_Kind);
 
-         if Indent_Params.Casing_Policy not in End_Of_Word .. On_The_Fly
+         if Indent_Params.Casing_Policy not in End_Of_Line .. On_The_Fly
            or else (Indent_Params.Reserved_Casing = Unchanged
                       and then Indent_Params.Identifier_Casing = Unchanged)
            or else (In_Completion (Source_Buffer (Buffer))

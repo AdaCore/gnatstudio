@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                               GNAT Studio                                --
 --                                                                          --
---                     Copyright (C) 2002-2023, AdaCore                     --
+--                     Copyright (C) 2025, AdaCore                          --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -15,30 +15,12 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with GPS.Kernel;
-with GPS.Kernel.Preferences;     use GPS.Kernel.Preferences;
-with Default_Preferences;        use Default_Preferences;
+--  Package declaring GNAT Studio own formatter which is based on constructs.
 
-package Cpp_Module is
+with GPS.Kernel;  use GPS.Kernel;
 
-   procedure Register_Module
-     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class);
-   --  Register the C/C++ parsers in GNAT Studio.
-   --  If the external source navigator executables are not found on the path,
-   --  an error is displayed in the console and the C/C++ browsing will not be
-   --  available.
+package Src_Editor_Module.Construct_Formatter is
 
-   C_Automatic_Indentation : Indentation_Kind_Preferences.Preference;
-   C_Use_Tabs              : Boolean_Preference;
-   --  Use tabulations when indenting.
+   procedure Register_Module (Kernel : Kernel_Handle);
 
-   C_Comment_Two_Slashes   : Boolean_Preference;
-   --  Whether to indent C with // rather than with /* */
-
-   C_Indentation_Level     : Integer_Preference;
-   --  Number of spaces for the default indentation.
-
-   C_Indent_Extra          : Boolean_Preference;
-   C_Indent_Comments       : Boolean_Preference;
-
-end Cpp_Module;
+end Src_Editor_Module.Construct_Formatter;

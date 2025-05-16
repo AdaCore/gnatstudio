@@ -21,6 +21,7 @@ expected = """procedure t is
 
 @run_test_driver
 def driver():
+    GPS.Preference("Editor-Range-Formatter").set("LSP")
     # Use GNATpp LSP backend
     GPS.Preference("LSP-Ada-Use-GNATformat").set(False)
     # Set the conditional continuation pref to a ridiculous amount
