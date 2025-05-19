@@ -483,8 +483,7 @@ package body Src_Editor_View.Commands is
          return Failure;
       end if;
 
-      Result := Do_Indentation
-        (Buffer, Force => True, Formatting => not Command.Indent);
+      Result := On_Indent_Action (Buffer, Force => True);
 
       if Result then
          Grab_Toplevel_Focus
@@ -692,11 +691,10 @@ package body Src_Editor_View.Commands is
         (Line => Line + 1, Column => Cursor_Position, Internal => True);
 
       --  Indent added text
-      Dummy := Do_Indentation
+      Dummy := On_Indent_Action
         (Buffer,
          Current_Line_Only => True,
-         Force             => True,
-         Formatting        => False);
+         Force             => True);
 
       Grab_Toplevel_Focus
         (MDI     => Get_MDI (Kernel),

@@ -16,10 +16,10 @@
 ------------------------------------------------------------------------------
 
 with Ada.Containers.Indefinite_Ordered_Maps;
-with Ada.Exceptions;                use Ada.Exceptions;
-with Ada.Strings.Wide_Wide_Maps;    use Ada.Strings.Wide_Wide_Maps;
-with GNATCOLL.JSON;
+with Ada.Exceptions;               use Ada.Exceptions;
+with Ada.Strings.Wide_Wide_Maps;   use Ada.Strings.Wide_Wide_Maps;
 
+with GNATCOLL.JSON;
 with GNATCOLL.Traces;               use GNATCOLL.Traces;
 with GNATCOLL.VFS;                  use GNATCOLL.VFS;
 
@@ -46,7 +46,6 @@ with GPS.Kernel.Messages.Tools_Output;
 
 with GUI_Utils;
 with Language;                      use Language;
-with Language.Ada;                  use Language.Ada;
 with Src_Editor_Box;                use Src_Editor_Box;
 with Src_Editor_Buffer;             use Src_Editor_Buffer;
 with Src_Editor_Module;
@@ -65,6 +64,35 @@ package body GPS.LSP_Client.Editors.Formatting is
 
    Me : constant Trace_Handle := Create ("GPS.LSP.FORMATTING.ADVANCED", Off);
    --  Logging trace
+
+   package LSP_Trigger_Characters_Maps is new
+     Ada.Containers.Indefinite_Ordered_Maps
+       (String,
+        Ada.Strings.Wide_Wide_Maps.Wide_Wide_Character_Set);
+   --  Map of language to trigger character set
+
+   type LSP_Editor_Formatting_Provider is
+     new GPS.Editors.Editor_Formatting_Provider
+   with record
+      Kernel                : Kernel_Handle;
+      Lang_To_Trigger_Chars : LSP_Trigger_Characters_Maps.Map;
+   end record;
+
+   overriding function On_Range_Formatting
+     (Self        : in out LSP_Editor_Formatting_Provider;
+      From, To    : Editor_Location'Class;
+      Cursor_Line : Natural;
+      Cursor_Move : in out Integer)
+      return Boolean;
+
+   overriding function On_Type_Formatting
+     (Self        : in out LSP_Editor_Formatting_Provider;
+      From, To    : Editor_Location'Class;
+      Cursor_Line : Natural)
+      return Boolean;
+
+   overriding function Get_Name
+     (Self : LSP_Editor_Formatting_Provider) return String;
 
    -- Document_Formatting_Request --
 
@@ -119,29 +147,6 @@ package body GPS.LSP_Client.Editors.Formatting is
      (Self   : in out On_Type_Formatting_Request;
       Result : LSP.Messages.TextEdit_Vector);
 
-   -- LSP_Editor_Formatting_Provider --
-
-   package Triggers_Maps is
-     new Ada.Containers.Indefinite_Ordered_Maps
-       (String, Ada.Strings.Wide_Wide_Maps.Wide_Wide_Character_Set);
-
-   type LSP_Editor_Formatting_Provider is
-     new GPS.Editors.Editor_Formatting_Provider with record
-      Kernel   : Kernel_Handle;
-      Triggers : Triggers_Maps.Map;
-   end record;
-
-   overriding function Format_Section
-     (Self     : in out LSP_Editor_Formatting_Provider;
-      From, To : Editor_Location'Class;
-      Force    : Boolean := False)
-      return Boolean;
-
-   overriding function On_Type_Formatting
-     (Self     : in out LSP_Editor_Formatting_Provider;
-      From, To : Editor_Location'Class)
-      return Boolean;
-
    -- LSP_Formatting_Module_Id_Record --
 
    type LSP_Formatting_Module_Id_Record is
@@ -149,16 +154,13 @@ package body GPS.LSP_Client.Editors.Formatting is
    type LSP_Formatting_Module_Id_Access is
      access all LSP_Formatting_Module_Id_Record'Class;
 
-   overriding procedure Destroy
-     (Module : in out LSP_Formatting_Module_Id_Record);
-
    type Indentation_File_Command is new Interactive_Command with null record;
    overriding function Execute
      (Command : access Indentation_File_Command;
       Context : Interactive_Command_Context) return Command_Return_Type;
 
-   Module_Id : LSP_Formatting_Module_Id_Access;
-   Provider  : aliased LSP_Editor_Formatting_Provider;
+   Module_Id    : LSP_Formatting_Module_Id_Access;
+   LSP_Provider : aliased LSP_Editor_Formatting_Provider;
 
    -----------------------
    -- On_Result_Message --
@@ -403,16 +405,18 @@ package body GPS.LSP_Client.Editors.Formatting is
          Trace (Me, E);
    end On_Result_Message;
 
-   --------------------
-   -- Format_Section --
-   --------------------
+   -------------------------
+   -- On_Range_Formatting --
+   -------------------------
 
-   overriding function Format_Section
-     (Self     : in out LSP_Editor_Formatting_Provider;
-      From, To : Editor_Location'Class;
-      Force    : Boolean := False)
+   overriding function On_Range_Formatting
+     (Self        : in out LSP_Editor_Formatting_Provider;
+      From, To    : Editor_Location'Class;
+      Cursor_Line : Natural;
+      Cursor_Move : in out Integer)
       return Boolean
    is
+      pragma Unreferenced (Cursor_Line, Cursor_Move);
       File    : constant Virtual_File := From.Buffer.File;
       Lang    : Language.Language_Access;
       Request : Range_Formatting_Request_Access;
@@ -420,19 +424,11 @@ package body GPS.LSP_Client.Editors.Formatting is
    begin
       Lang := Self.Kernel.Get_Language_Handler.Get_Language_From_File (File);
 
-      if Lang = Ada_Lang
-        and then not GPS.LSP_Module.LSP_Ada_Formatting_Is_Active
-      then
-         return False;
-      end if;
-
-      Lang := Self.Kernel.Get_Language_Handler.Get_Language_From_File (File);
-
       Request := new Range_Formatting_Request'
         (GPS.LSP_Client.Requests.LSP_Request with
            Kernel          => Self.Kernel,
-           File            => File,
-           Span            =>
+         File            => File,
+         Span            =>
            (first => GPS.LSP_Client.Utilities.Location_To_LSP_Position (From),
             last  => GPS.LSP_Client.Utilities.Location_To_LSP_Position (To)),
          Document_Version  => From.Buffer.Version);
@@ -444,25 +440,27 @@ package body GPS.LSP_Client.Editors.Formatting is
       when E : others =>
          Trace (Me, E);
          return False;
-   end Format_Section;
+   end On_Range_Formatting;
 
    ------------------------
    -- On_Type_Formatting --
    ------------------------
 
-   overriding function On_Type_Formatting
-     (Self     : in out LSP_Editor_Formatting_Provider;
-      From, To : Editor_Location'Class)
-      return Boolean
+   overriding
+   function On_Type_Formatting
+     (Self        : in out LSP_Editor_Formatting_Provider;
+      From, To    : Editor_Location'Class;
+      Cursor_Line : Natural) return Boolean
    is
-      use Triggers_Maps;
+      pragma Unreferenced (Cursor_Line);
+      use LSP_Trigger_Characters_Maps;
 
       Buffer       : constant Editor_Buffer'Class := From.Buffer;
       Loc          : Editor_Location'Class :=
         New_Location (Buffer, Line (From), Column (From));
       File         : constant Virtual_File := Buffer.File;
       Lang         : Language.Language_Access;
-      C            : Triggers_Maps.Cursor;
+      C            : LSP_Trigger_Characters_Maps.Cursor;
       Params       : Indent_Parameters;
       Indent_Style : Indentation_Kind;
       Request      : On_Type_Formatting_Request_Access;
@@ -475,14 +473,10 @@ package body GPS.LSP_Client.Editors.Formatting is
 
       Lang := Self.Kernel.Get_Language_Handler.Get_Language_From_File (File);
 
-      if Lang = Ada_Lang
-        and then not GPS.LSP_Module.LSP_Ada_Formatting_Is_Active
-      then
-         return False;
-      end if;
+      C := Self.Lang_To_Trigger_Chars.Find (Lang.Get_Name);
 
-      C    := Self.Triggers.Find (Lang.Get_Name);
-
+      --  Retrieve the list of known trigger characters from the server
+      --  capabilities for Lang
       if not Has_Element (C) then
          declare
             use type GPS.LSP_Client.Language_Servers.Language_Server_Access;
@@ -511,31 +505,37 @@ package body GPS.LSP_Client.Editors.Formatting is
 
          begin
             Server := GPS.LSP_Module.Get_Language_Server (Lang);
+            --  No server for Lang, stop here
             if Server = null then
                return False;
             end if;
 
-            Options := Server.Get_Client.Capabilities.
-              documentOnTypeFormattingProvider;
+            Options :=
+              Server.Get_Client.Capabilities.documentOnTypeFormattingProvider;
 
             if Options.Is_Set then
-               Set := Set or To_Set
-                 (First_Character (Options.Value.firstTriggerCharacter));
+               Set :=
+                 Set
+                 or To_Set
+                   (First_Character (Options.Value.firstTriggerCharacter));
                if Options.Value.moreTriggerCharacter.Is_Set then
-                  for Index in 1
-                        .. Options.Value.moreTriggerCharacter.Value.Length
+                  for Index
+                  in 1 .. Options.Value.moreTriggerCharacter.Value.Length
                   loop
-                     Set := Set or To_Set
-                       (First_Character
-                          (Options.Value.moreTriggerCharacter
-                             .Value.Element (Index)));
+                     Set :=
+                       Set
+                       or To_Set
+                         (First_Character
+                            (Options.Value.moreTriggerCharacter.Value.Element
+                               (Index)));
                   end loop;
                end if;
             end if;
-            Self.Triggers.Insert (Lang.Get_Name, Set, C, Dummy);
+            Self.Lang_To_Trigger_Chars.Insert (Lang.Get_Name, Set, C, Dummy);
          end;
       end if;
 
+      --  No known trigger characters for Lang, stop here
       if Element (C) = Null_Set then
          return False;
       end if;
@@ -554,17 +554,20 @@ package body GPS.LSP_Client.Editors.Formatting is
                Get_Indentation_Parameters (Lang, Params, Indent_Style);
                Text.Append (Ch);
 
-               Request := new On_Type_Formatting_Request'
-                 (GPS.LSP_Client.Requests.LSP_Request with
-                  Kernel            => Self.Kernel,
-                  File              => File,
-                  Position          =>
-                    GPS.LSP_Client.Utilities.Location_To_LSP_Position (Loc),
-                  Text              => Text,
-                  Document_Version  => Buffer.Version);
+               Request :=
+                 new On_Type_Formatting_Request'
+                   (GPS.LSP_Client.Requests.LSP_Request
+                    with
+                    Kernel           => Self.Kernel,
+                    File             => File,
+                    Position         =>
+                      GPS.LSP_Client.Utilities.Location_To_LSP_Position (Loc),
+                    Text             => Text,
+                    Document_Version => Buffer.Version);
 
-               return GPS.LSP_Client.Requests.Execute
-                 (Lang, GPS.LSP_Client.Requests.Request_Access (Request));
+               return
+                 GPS.LSP_Client.Requests.Execute
+                   (Lang, GPS.LSP_Client.Requests.Request_Access (Request));
             end if;
 
          exception
@@ -583,17 +586,17 @@ package body GPS.LSP_Client.Editors.Formatting is
          return False;
    end On_Type_Formatting;
 
-   -------------
-   -- Destroy --
-   -------------
+   --------------
+   -- Get_Name --
+   --------------
 
-   overriding procedure Destroy
-     (Module : in out LSP_Formatting_Module_Id_Record)
+   overriding function Get_Name
+     (Self : LSP_Editor_Formatting_Provider) return String
    is
-      pragma Unreferenced (Module);
+      pragma Unreferenced (Self);
    begin
-      Src_Editor_Buffer.Set_Formatting_Provider (null);
-   end Destroy;
+      return "LSP";
+   end Get_Name;
 
    -------------
    -- Execute --
@@ -629,9 +632,9 @@ package body GPS.LSP_Client.Editors.Formatting is
       Request := new Document_Formatting_Request'
         (GPS.LSP_Client.Requests.LSP_Request with
            Kernel            => Kernel,
-           File              => File,
-           Editor            => Editor,
-           Document_Version  => Buffer.Get_Editor_Buffer.Version);
+         File              => File,
+         Editor            => Editor,
+         Document_Version  => Buffer.Get_Editor_Buffer.Version);
 
       if GPS.LSP_Client.Requests.Execute
         (Lang, GPS.LSP_Client.Requests.Request_Access (Request))
@@ -660,19 +663,19 @@ package body GPS.LSP_Client.Editors.Formatting is
          Module_Name => "LSP_Formatting",
          Priority    => Default_Priority);
 
-      Provider.Kernel := Kernel;
-      Src_Editor_Buffer.Set_Formatting_Provider (Provider'Access);
-
       GPS.Kernel.Actions.Register_Action
-        (Kernel       => Kernel,
-         Name         =>  "format file",
-         Command      => new Indentation_File_Command,
-         Description  => "Format the current file",
-         Category     => "Editor",
-         Filter       =>
-           Lookup_Filter (Kernel, "Writable source editor") and
-             Lookup_Filter (Kernel, "Is not Makefile"),
-         Icon_Name    => "gps-case-sensitive-symbolic");
+        (Kernel      => Kernel,
+         Name        => "format file",
+         Command     => new Indentation_File_Command,
+         Description => "Format the current file",
+         Category    => "Editor",
+         Filter      =>
+           Lookup_Filter (Kernel, "Writable source editor")
+         and Lookup_Filter (Kernel, "Is not Makefile"),
+         Icon_Name   => "gps-case-sensitive-symbolic");
+
+      LSP_Provider.Kernel := Kernel;
+      Src_Editor_Module.Register_Formatter (LSP_Provider'Access);
    end Register_Module;
 
 end GPS.LSP_Client.Editors.Formatting;

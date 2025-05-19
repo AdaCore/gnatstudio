@@ -17,7 +17,7 @@
 
 --  Integration with GNAT Studio's source editor formatting
 
-with GPS.Kernel;        use GPS.Kernel;
+with GPS.Kernel; use GPS.Kernel;
 
 package GPS.LSP_Client.Editors.Formatting is
 

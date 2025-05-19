@@ -91,7 +91,6 @@ package GPS.Editors is
    type Editor_Formatting_Provider is limited interface;
    type Editor_Formatting_Provider_Access is
      access all Editor_Formatting_Provider'Class;
-   --  For folding blocks computation
 
    Editor_Exception : exception;
    --  Exception raised by the subprograms below when the arguments are not
@@ -1055,22 +1054,29 @@ package GPS.Editors is
    -- Editor_Formatting_Provider --
    --------------------------------
 
-   procedure Finalize (Self : in out Editor_Formatting_Provider) is null;
-   --  Called before deallocation of the listener.
-
-   function Format_Section
-     (Self     : in out Editor_Formatting_Provider;
-      From, To : Editor_Location'Class;
-      Force    : Boolean := False)
+   function On_Range_Formatting
+     (Self        : in out Editor_Formatting_Provider;
+      From, To    : Editor_Location'Class;
+      Cursor_Line : Natural;
+      Cursor_Move : in out Integer)
       return Boolean is abstract;
-   --  Called for formatting code section. Return False when provider
-   --  can't be used on this editor.
+   --  Ask the provider to format between From and To.
+   --  Cursor_Line and Cursor_Move are the current location of the Cursor in
+   --  the editor. Cursor_Move should return the number of characters the
+   --  Cursor should be moved after formatting. It can be negative to move
+   --  backwards.
 
    function On_Type_Formatting
-     (Self     : in out Editor_Formatting_Provider;
-      From, To : Editor_Location'Class)
+     (Self        : in out Editor_Formatting_Provider;
+      From, To    : Editor_Location'Class;
+      Cursor_Line : Natural)
       return Boolean is abstract;
-   --  Called for formatting code on typing.
+   --  Ask the provider to format between From and To.
+   --  Cursor_Line is the current location of the Cursor in the Editor.
+
+   function Get_Name (Self : Editor_Formatting_Provider) return String
+   is abstract;
+   --  The name of the provider
 
    ----------------------
    -- Location markers --

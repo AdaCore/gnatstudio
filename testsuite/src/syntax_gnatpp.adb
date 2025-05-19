@@ -82,8 +82,22 @@ begin
       Analyze_C_Source
         (Buffer.all, Symbols,
          Indent_Params =>
-           (2, 2, 2, 0, 2, Automatic, End_Of_Line, Unchanged, Unchanged,
-            False, True, True, True, False, True, False, Format),
+           (Indent_Level        => 2,
+            Indent_Continue     => 2,
+            Indent_Decl         => 2,
+            Indent_Conditional  => 0,
+            Indent_Record       => 2,
+            Indent_Case_Extra   => Automatic,
+            Casing_Policy       => End_Of_Line,
+            Reserved_Casing     => Unchanged,
+            Identifier_Casing   => Unchanged,
+            Format_Operators    => False,
+            Use_Tabs            => True,
+            Align_On_Colons     => True,
+            Align_On_Arrows     => True,
+            Align_Decl_On_Colon => False,
+            Indent_Comments     => True,
+            Stick_Comments      => False),
          Replace => Replace_Cb'Unrestricted_Access);
 
    else
@@ -105,8 +119,7 @@ begin
             Align_On_Arrows     => True,
             Align_Decl_On_Colon => True,
             Indent_Comments     => True,
-            Stick_Comments      => False,
-            On_New_Line         => Format),
+            Stick_Comments      => False),
          Replace => Replace_Cb'Unrestricted_Access);
    end if;
 

@@ -332,7 +332,6 @@ package Language is
 
       Indent_Comments     : Boolean;
       Stick_Comments      : Boolean;
-      On_New_Line         : Action_On_New_Line := Format;
    end record;
    --  Define all parameters to indent a source code.
    --  Note that some of these parameters will be ignored, depending on the
@@ -379,8 +378,7 @@ package Language is
       Align_On_Arrows     => False,
       Align_Decl_On_Colon => False,
       Indent_Comments     => True,
-      Stick_Comments      => False,
-      On_New_Line         => Format);
+      Stick_Comments      => False);
 
    type Indentation_Kind is (None, Simple, Extended);
    --  Indentation kinds:

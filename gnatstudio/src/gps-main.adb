@@ -174,6 +174,7 @@ with Scenario_Views;
 with Shell_Script;
 with Socket_Module;
 with Src_Editor_Module;
+with Src_Editor_Module.Construct_Formatter;
 with Switches_Chooser.Scripts;
 with Toolchains_Editor;
 with VCS2.Module;
@@ -1164,6 +1165,9 @@ procedure GPS.Main is
       end Load_Sources;
 
    begin
+      --  Freeze the preferences to avoid overwriting preferences.xml too early
+      Freeze_Preferences (GPS_Main.Kernel);
+
       Update_Splash_Progress_Label ("Loading modules...");
 
       --  Register the Learn module and the associated view
@@ -1271,6 +1275,7 @@ procedure GPS.Main is
       --  to access marks that are handled by this module.
 
       Src_Editor_Module.Register_Module (GPS_Main.Kernel);
+      Src_Editor_Module.Construct_Formatter.Register_Module (GPS_Main.Kernel);
 
       --  Initialize the outline view
 
@@ -1287,6 +1292,10 @@ procedure GPS.Main is
       --  Initialize LSP module
 
       GPS.LSP_Module.Register_Module (GPS_Main.Kernel);
+
+      --  Create the Formatter provider preferences
+
+      Src_Editor_Module.Create_Preferences (GPS_Main.Kernel);
 
       --  Initialize the ada semantic tree module
 
@@ -1590,6 +1599,7 @@ procedure GPS.Main is
       GPS.Traces.Register_Module (GPS_Main.Kernel);
 
       Load_Preferences (GPS_Main.Kernel);
+      Thaw_Preferences (GPS_Main.Kernel);
 
       Update_Splash_Progress_Label ("Loading project...");
 

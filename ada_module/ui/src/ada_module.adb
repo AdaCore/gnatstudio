@@ -27,7 +27,6 @@ with GPS.Kernel.Hooks;          use GPS.Kernel.Hooks;
 with GPS.Kernel.Preferences;    use GPS.Kernel.Preferences;
 with GPS.Kernel.Project;        use GPS.Kernel.Project;
 with GPS.Intl;                  use GPS.Intl;
-with GPS.LSP_Module;
 
 with Language.Ada;              use Language.Ada;
 with Ada_Semantic_Tree.Lang;    use Ada_Semantic_Tree.Lang;
@@ -138,8 +137,7 @@ package body Ada_Module is
             Align_On_Arrows     => Ada_Align_On_Arrows.Get_Pref,
             Align_Decl_On_Colon => Ada_Align_Decl_On_Colon.Get_Pref,
             Indent_Comments     => Ada_Indent_Comments.Get_Pref,
-            Stick_Comments      => Ada_Stick_Comments.Get_Pref,
-            On_New_Line         => Indent));
+            Stick_Comments      => Ada_Stick_Comments.Get_Pref));
    end Execute;
 
    ------------------------------
@@ -265,9 +263,7 @@ package body Ada_Module is
       Shared_Pref_Indent_Path  : constant Preference_Path :=
         -"Editor/Ada:Indentation";
       Non_LSP_Pref_Indent_Path : constant Preference_Path :=
-        (if GPS.LSP_Module.LSP_Ada_Formatting_Is_Active
-         then ":" & Shared_Pref_Indent_Path
-         else Shared_Pref_Indent_Path);
+        -"Editor/Ada:Indentation (Old)";
       --  If LSP is activated then hide the preferences
       Pref_Casing_Path         : constant Preference_Path :=
         -"Editor/Ada:Casing";
@@ -285,33 +281,23 @@ package body Ada_Module is
       --  from other GNAT Studio parts.
 
       Register_Filter
-        (Kernel,
-         Filter => Is_Ada_Body_Filter,
-         Name   => "Is_Ada_Body");
+        (Kernel, Filter => Is_Ada_Body_Filter, Name => "Is_Ada_Body");
       Register_Filter
-        (Kernel,
-         Filter => Is_Ada_Spec_Filter,
-         Name   => "Is_Ada_Spec");
+        (Kernel, Filter => Is_Ada_Spec_Filter, Name => "Is_Ada_Spec");
       Register_Filter
         (Kernel,
          Filter => Has_Other_File_Filter,
          Name   => "Has_Other_File_On_Disk");
       Register_Filter
-        (Kernel,
-         Filter => Body_Has_Spec_Filter,
-         Name   => "Body_Has_Spec");
+        (Kernel, Filter => Body_Has_Spec_Filter, Name => "Body_Has_Spec");
+      Register_Filter
+        (Kernel, Filter => Spec_Has_Body_Filter, Name => "Spec_Has_Body");
       Register_Filter
         (Kernel,
-         Filter => Spec_Has_Body_Filter,
-         Name   => "Spec_Has_Body");
+         Filter => Body_Has_No_Spec_Filter, Name => "Body_Has_No_Spec");
       Register_Filter
         (Kernel,
-         Filter => Body_Has_No_Spec_Filter,
-         Name   => "Body_Has_No_Spec");
-      Register_Filter
-        (Kernel,
-         Filter => Spec_Has_No_Body_Filter,
-         Name   => "Spec_Has_No_Body");
+         Filter => Spec_Has_No_Body_Filter, Name => "Spec_Has_No_Body");
 
       --  Register the default language extensions for Ada
 
@@ -324,163 +310,199 @@ package body Ada_Module is
 
       --  Register the default Ada-related preferences
 
-      Ada_Indentation_Level := Create
-        (Manager,
-         Path    => Shared_Pref_Indent_Path,
-         Name    => "Ada-Indent-Level",
-         Minimum => 1,
-         Maximum => 9,
-         Default => 3,
-         Doc     => -"Number of spaces for the default Ada indentation.",
-         Label   => -"Default indentation");
+      Ada_Indentation_Level :=
+        Create
+          (Manager,
+           Path    => Shared_Pref_Indent_Path,
+           Name    => "Ada-Indent-Level",
+           Minimum => 1,
+           Maximum => 9,
+           Default => 3,
+           Doc     => -"Number of spaces for the default Ada indentation.",
+           Label   => -"Default indentation");
 
-      Ada_Use_Tabs := Create
-        (Manager,
-         Path     => Shared_Pref_Indent_Path,
-         Name    => "Ada-Use-Tabs",
-         Default => False,
-         Doc     =>
-         -"Use tabulations when indenting.",
-         Label    => -"Use tabulations");
+      Ada_Use_Tabs :=
+        Create
+          (Manager,
+           Path    => Shared_Pref_Indent_Path,
+           Name    => "Ada-Use-Tabs",
+           Default => False,
+           Doc     => -"Use tabulations when indenting.",
+           Label   => -"Use tabulations");
 
-      Ada_Continuation_Level := Create
-        (Manager,
-         Path    => Shared_Pref_Indent_Path,
-         Name    => "Ada-Continuation-Level",
-         Minimum => 0,
-         Maximum => 9,
-         Default => 2,
-         Doc     => -"Number of extra spaces for continuation lines.",
-         Label   => -"Continuation lines");
+      Ada_Continuation_Level :=
+        Create
+          (Manager,
+           Path    => Shared_Pref_Indent_Path,
+           Name    => "Ada-Continuation-Level",
+           Minimum => 0,
+           Maximum => 9,
+           Default => 2,
+           Doc     => -"Number of extra spaces for continuation lines.",
+           Label   => -"Continuation lines");
 
-      Ada_Automatic_Indentation := Indentation_Kind_Preferences.Create
-        (Manager,
-         Path    => Non_LSP_Pref_Indent_Path,
-         Name    => "Ada-Auto-Indentation",
-         Default => Extended,
-         Doc     => -"Enable auto-indentation for Ada sources.",
-         Label   => -"Auto indentation");
+      Ada_Automatic_Indentation :=
+        Indentation_Kind_Preferences.Create
+          (Manager,
+           Path    => Non_LSP_Pref_Indent_Path,
+           Name    => "Ada-Auto-Indentation",
+           Default => Extended,
+           Doc     =>
+             -"Enable auto-indentation for Ada sources."
+             & "(Not compatible with GNATFormat)",
+           Label   => -"Auto indentation");
 
-      Ada_Declaration_Level := Create
-        (Manager,
-         Path    => Non_LSP_Pref_Indent_Path,
-         Name    => "Ada-Declaration-Level:Indentation",
-         Minimum => 0,
-         Maximum => 9,
-         Default => 0,
-         Doc     => -"Number of extra spaces for multi line declarations.",
-         Label   => -"Declaration lines");
+      Ada_Declaration_Level :=
+        Create
+          (Manager,
+           Path    => Non_LSP_Pref_Indent_Path,
+           Name    => "Ada-Declaration-Level:Indentation",
+           Minimum => 0,
+           Maximum => 9,
+           Default => 0,
+           Doc     =>
+             -"Number of extra spaces for multi line declarations."
+             & "(Not compatible with GNATFormat)",
+           Label   => -"Declaration lines");
 
-      Ada_Conditional_Level := Create
-        (Manager,
-         Path    => Non_LSP_Pref_Indent_Path,
-         Name    => "Ada-Conditional-Level",
-         Minimum => 0,
-         Maximum => 9,
-         Default => 1,
-         Doc     => -"Number of extra spaces for multiple line conditionals.",
-         Label   => -"Conditional continuation lines");
+      Ada_Conditional_Level :=
+        Create
+          (Manager,
+           Path    => Non_LSP_Pref_Indent_Path,
+           Name    => "Ada-Conditional-Level",
+           Minimum => 0,
+           Maximum => 9,
+           Default => 1,
+           Doc     =>
+             -"Number of extra spaces for multiple line conditionals."
+             & "(Not compatible with GNATFormat)",
+           Label   => -"Conditional continuation lines");
 
-      Ada_Record_Level := Create
-        (Manager,
-         Path    => Non_LSP_Pref_Indent_Path,
-         Name    => "Ada-Record-Level",
-         Minimum => 0,
-         Maximum => 9,
-         Default => 3,
-         Doc     => -"Number of extra spaces for multiple line record types.",
-         Label   => -"Record indentation");
+      Ada_Record_Level :=
+        Create
+          (Manager,
+           Path    => Non_LSP_Pref_Indent_Path,
+           Name    => "Ada-Record-Level",
+           Minimum => 0,
+           Maximum => 9,
+           Default => 3,
+           Doc     =>
+             -"Number of extra spaces for multiple line record types."
+             & "(Not compatible with GNATFormat)",
+           Label   => -"Record indentation");
 
-      Ada_Indent_Case_Extra := Indent_Preferences.Create
-        (Manager,
-         Path    => Non_LSP_Pref_Indent_Path,
-         Name    => "Ada-Indent-Case-Style",
-         Default => Automatic,
-         Doc     => -"Indent case statement with an extra level.",
-         Label   => -"Case indentation");
+      Ada_Indent_Case_Extra :=
+        Indent_Preferences.Create
+          (Manager,
+           Path    => Non_LSP_Pref_Indent_Path,
+           Name    => "Ada-Indent-Case-Style",
+           Default => Automatic,
+           Doc     =>
+             -"Indent case statement with an extra level."
+             & "(Not compatible with GNATFormat)",
+           Label   => -"Case indentation");
 
-      Ada_Format_Operators := Create
-        (Manager,
-         Path    => Non_LSP_Pref_Indent_Path,
-         Name    => "Ada-Format-Operators",
-         Default => False,
-         Doc     => -"Add spaces around operators and delimiters.",
-         Label   => -"Format operators/delimiters");
+      Ada_Format_Operators :=
+        Create
+          (Manager,
+           Path    => Non_LSP_Pref_Indent_Path,
+           Name    => "Ada-Format-Operators",
+           Default => False,
+           Doc     =>
+             -"Add spaces around operators and delimiters."
+             & "(Not compatible with GNATFormat)",
+           Label   => -"Format operators/delimiters");
 
-      Ada_Align_On_Colons := Create
-        (Manager,
-         Path    => Non_LSP_Pref_Indent_Path,
-         Name    => "Ada-Align-On-Colons",
-         Default => False,
-         Doc     => -"Align colons in declaration statements.",
-         Label   => -"Align colons in declarations");
+      Ada_Align_On_Colons :=
+        Create
+          (Manager,
+           Path    => Non_LSP_Pref_Indent_Path,
+           Name    => "Ada-Align-On-Colons",
+           Default => False,
+           Doc     =>
+             -"Align colons in declaration statements."
+             & "(Not compatible with GNATFormat)",
+           Label   => -"Align colons in declarations");
 
-      Ada_Align_On_Arrows := Create
-        (Manager,
-         Path    => Non_LSP_Pref_Indent_Path,
-         Name    => "Ada-Align-On-Arrows",
-         Default => False,
-         Doc     => -"Align associations on arrow delimiters.",
-         Label   => -"Align associations on arrows");
+      Ada_Align_On_Arrows :=
+        Create
+          (Manager,
+           Path    => Non_LSP_Pref_Indent_Path,
+           Name    => "Ada-Align-On-Arrows",
+           Default => False,
+           Doc     =>
+             -"Align associations on arrow delimiters."
+             & "(Not compatible with GNATFormat)",
+           Label   => -"Align associations on arrows");
 
-      Ada_Align_Decl_On_Colon := Create
-        (Manager,
-         Path    => Non_LSP_Pref_Indent_Path,
-         Name    => "Ada-Align-Decl-On_Colon",
-         Default => False,
-         Doc     =>
-         -("Align continuation lines after a declaration " &
-           "based on the colon character."),
-         Label   => -"Align declarations after colon");
+      Ada_Align_Decl_On_Colon :=
+        Create
+          (Manager,
+           Path    => Non_LSP_Pref_Indent_Path,
+           Name    => "Ada-Align-Decl-On_Colon",
+           Default => False,
+           Doc     =>
+             -("Align continuation lines after a declaration "
+               & "based on the colon character."
+               & "(Not compatible with GNATFormat)"),
+           Label   => -"Align declarations after colon");
 
-      Ada_Indent_Comments := Create
-        (Manager,
-         Path    => Non_LSP_Pref_Indent_Path,
-         Name    => "Ada-Indent-Comments",
-         Default => True,
-         Doc     => -"Indent lines with only comments.",
-         Label   => -"Indent comments");
+      Ada_Indent_Comments :=
+        Create
+          (Manager,
+           Path    => Non_LSP_Pref_Indent_Path,
+           Name    => "Ada-Indent-Comments",
+           Default => True,
+           Doc     =>
+             -"Indent lines with only comments."
+             & "(Not compatible with GNATFormat)",
+           Label   => -"Indent comments");
 
-      Ada_Stick_Comments := Create
-        (Manager,
-         Path    => Non_LSP_Pref_Indent_Path,
-         Name    => "Ada-Stick-Comments",
-         Default => False,
-         Doc     =>
-         -("Align comment lines following 'record' and " &
-           "'is' keywords immediately with no extra space"),
-         Label   => -"Align comments on keywords");
+      Ada_Stick_Comments :=
+        Create
+          (Manager,
+           Path    => Non_LSP_Pref_Indent_Path,
+           Name    => "Ada-Stick-Comments",
+           Default => False,
+           Doc     =>
+             -("Align comment lines following 'record' and "
+               & "'is' keywords immediately with no extra space"
+               & "(Not compatible with GNATFormat)"),
+           Label   => -"Align comments on keywords");
 
-      Ada_Casing_Policy := Casing_Policy_Preferences.Create
-        (Manager,
-         Path    => Pref_Casing_Path,
-         Name    => "Ada-Casing-Policy",
-         Label   => -"Keywords and Identifiers casing",
-         Doc     => "",
-         Default => Disabled);
+      Ada_Casing_Policy :=
+        Casing_Policy_Preferences.Create
+          (Manager,
+           Path    => Pref_Casing_Path,
+           Name    => "Ada-Casing-Policy",
+           Label   => -"Keywords and Identifiers casing",
+           Doc     => "",
+           Default => Disabled);
 
-      Ada_Reserved_Casing := Casing_Preferences.Create
-        (Manager,
-         Path    => Pref_Casing_Path,
-         Name    => "Ada-Reserved-Casing",
-         Default => Lower,
-         Doc     => "",
-         Label   => -"Reserved word casing");
+      Ada_Reserved_Casing :=
+        Casing_Preferences.Create
+          (Manager,
+           Path    => Pref_Casing_Path,
+           Name    => "Ada-Reserved-Casing",
+           Default => Lower,
+           Doc     => "",
+           Label   => -"Reserved word casing");
 
-      Ada_Identifier_Casing := Casing_Preferences.Create
-        (Manager,
-         Path    => Pref_Casing_Path,
-         Name    => "Ada-Ident-Casing",
-         Default => Smart_Mixed,
-         Doc     => "",
-         Label   => -"Identifier casing");
+      Ada_Identifier_Casing :=
+        Casing_Preferences.Create
+          (Manager,
+           Path    => Pref_Casing_Path,
+           Name    => "Ada-Ident-Casing",
+           Default => Smart_Mixed,
+           Doc     => "",
+           Label   => -"Identifier casing");
 
       --  Register some of the Ada casing preferences in the 'General' page of
       --  the preferences assistant too.
 
-      Page := Kernel.Get_Preferences.Get_Registered_Page
-        (Name             => "Preferences Assistant General",
-         Create_If_Needed => False);
+      Page :=
+        Kernel.Get_Preferences.Get_Registered_Page
+          (Name => "Preferences Assistant General", Create_If_Needed => False);
 
       Group := new Preferences_Group_Record;
       Page.Register_Group
@@ -489,14 +511,11 @@ package body Ada_Module is
          Priority         => -2,
          Replace_If_Exist => False);
       Group.Add_Pref
-        (Manager => Manager,
-         Pref    => Preference (Ada_Casing_Policy));
+        (Manager => Manager, Pref => Preference (Ada_Casing_Policy));
       Group.Add_Pref
-        (Manager => Manager,
-         Pref    => Preference (Ada_Reserved_Casing));
+        (Manager => Manager, Pref => Preference (Ada_Reserved_Casing));
       Group.Add_Pref
-        (Manager => Manager,
-         Pref    => Preference (Ada_Identifier_Casing));
+        (Manager => Manager, Pref => Preference (Ada_Identifier_Casing));
 
       Preferences_Changed_Hook.Add (new On_Pref_Changed);
 

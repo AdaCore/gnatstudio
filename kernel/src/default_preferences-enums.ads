@@ -15,25 +15,28 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with GNAT.Strings;
 with Ada.Containers.Ordered_Sets;
+with VSS.Strings;             use VSS.Strings;
+with VSS.String_Vectors;
+with VSS.Transformers.Casing; use VSS.Transformers.Casing;
 
 package Default_Preferences.Enums is
 
-   type Choice_Preference_Record is new Enum_Preference_Record with private;
+   type Choice_Preference_Record is new Preference_Record with private;
    type Choice_Preference is access all Choice_Preference_Record'Class;
 
    function Create
      (Manager                   : access Preferences_Manager_Record'Class;
       Path                      : Preference_Path;
       Name, Label, Doc          : String;
-      Choices                   : GNAT.Strings.String_List_Access;
-      Default                   : Integer;
-      Priority                  : Integer := -1)
+      Choices                   : VSS.String_Vectors.Virtual_String_Vector;
+      Default                   : VSS.Strings.Virtual_String;
+      Priority                  : Integer := -1;
+      Combo_Threshold           : Integer := 3)
       return Choice_Preference;
    --  Create a new preference whose values are among Choices.
-   --  Choices will be freed when the preference itself is destroyed, and must
-   --  not be destroyed by the caller
+   --  Combo_Threshold can be set to -1 to force a combobox and not use radio
+   --  buttons.
 
    function Enum_Value_To_Label (Value : String) return String;
    --  Return a suitable label for UI representation of a given enum value (the
@@ -89,8 +92,11 @@ package Default_Preferences.Enums is
    end Generics;
 
 private
-   type Choice_Preference_Record is new Enum_Preference_Record with record
-      Choices : GNAT.Strings.String_List_Access;
+   type Choice_Preference_Record is new Preference_Record with record
+      Current_Choice  : VSS.Strings.Virtual_String;
+      Default_Choice  : VSS.Strings.Virtual_String;
+      Choices         : VSS.String_Vectors.Virtual_String_Vector;
+      Combo_Threshold : Integer;
    end record;
    overriding function Edit
      (Pref               : access Choice_Preference_Record;
@@ -102,6 +108,10 @@ private
      (Pref    : access Choice_Preference_Record;
       Manager : access Preferences_Manager_Record'Class;
       Value   : String);
+   overriding function Is_Default
+     (Self : not null access Choice_Preference_Record) return Boolean
+   is (To_Lowercase.Transform (Self.Current_Choice)
+       = To_Lowercase.Transform (Self.Default_Choice));
    overriding procedure Free (Pref : in out Choice_Preference_Record);
    overriding procedure Update_On_Pref_Changed
      (Pref   : access Choice_Preference_Record;

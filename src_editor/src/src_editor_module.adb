@@ -19,6 +19,7 @@ with Ada.Containers.Vectors;
 with Ada.Characters.Handling;           use Ada.Characters.Handling;
 with Ada.IO_Exceptions;                 use Ada.IO_Exceptions;
 with Ada.Strings.Unbounded;             use Ada.Strings.Unbounded;
+with Default_Preferences.Enums;
 with GNAT.OS_Lib;                       use GNAT.OS_Lib;
 with GNAT.Regpat;
 
@@ -59,7 +60,6 @@ with Find_Utils;                        use Find_Utils;
 with File_Utils;                        use File_Utils;
 with GPS.Default_Styles;                use GPS.Default_Styles;
 with GPS.Intl;                          use GPS.Intl;
-with GPS.Editors;                       use GPS.Editors;
 with GPS.Editors.Line_Information;      use GPS.Editors.Line_Information;
 with GPS.Kernel.Actions;                use GPS.Kernel.Actions;
 with GPS.Kernel.Contexts;               use GPS.Kernel.Contexts;
@@ -90,6 +90,9 @@ with Src_Editor_View.Commands;          use Src_Editor_View.Commands;
 with Src_Editor_View;                   use Src_Editor_View;
 with String_Utils;                      use String_Utils;
 with Vsearch;                           use Vsearch;
+with VSS.Strings;                       use VSS.Strings;
+with VSS.Strings.Conversions;           use VSS.Strings.Conversions;
+with VSS.Transformers.Casing;           use VSS.Transformers.Casing;
 with Xref;                              use Xref;
 
 package body Src_Editor_Module is
@@ -387,6 +390,12 @@ package body Src_Editor_Module is
      (Kernel : access Kernel_Handle_Record'Class);
    --  Regenerate the "Open Recent Files" menu, based on the contents of the
    --  history key.
+
+   Range_Formatting_Provider_Pref   :
+     Default_Preferences.Enums.Choice_Preference;
+   On_Type_Formatting_Provider_Pref :
+     Default_Preferences.Enums.Choice_Preference;
+   Move_Cursor_When_Formatting      : Default_Preferences.Boolean_Preference;
 
    ------------------------------
    -- Filter_Matches_Primitive --
@@ -908,7 +917,7 @@ package body Src_Editor_Module is
       if E /= No_Element then
          --  Monitor the new filename now that the file has been renamed.
          Monitor_File (GPS_MDI_Child (E.Child), Renamed);
-         Id.Editors.Insert (Renamed, E);
+         Id.Editors.Include (Renamed, E);
       end if;
    end Execute;
 
@@ -2169,7 +2178,6 @@ package body Src_Editor_Module is
                   Character => Character,
                   Casing    => On_The_Fly);
             end if;
-
          elsif Character = Space then
             Get_View (Box).Reset_As_Is_Mode;
          end if;
@@ -2257,9 +2265,7 @@ package body Src_Editor_Module is
          Buffer := Get_Buffer
            (Get_Source_Box_From_MDI (Find_Editor (Kernel, File, No_Project)));
          Autocase_Text
-           (Buffer    => Buffer,
-            Character => Char,
-            Casing    => End_Of_Word);
+           (Buffer => Buffer, Character => Char, Casing => End_Of_Word);
       end if;
    end Execute;
 
@@ -2407,6 +2413,69 @@ package body Src_Editor_Module is
            (Ctxt).Get_Language_Handler.Get_Language_From_File
              (File_Information (Ctxt)).Get_Name) = "ada";
    end Filter_Matches_Primitive;
+
+   -----------------------------------
+   -- Get_Range_Formatting_Provider --
+   -----------------------------------
+
+   function Get_Range_Formatting_Provider
+     return Editor_Formatting_Provider_Access
+   is
+      Id       : constant Source_Editor_Module :=
+        Source_Editor_Module (Src_Editor_Module_Id);
+      Selected : constant String := Range_Formatting_Provider_Pref.Get_Pref;
+      Value    : constant Virtual_String :=
+        To_Lowercase.Transform (To_Virtual_String (Selected));
+   begin
+      for Provider of Id.Formatting_Providers loop
+         declare
+            Name : constant Virtual_String :=
+              To_Lowercase.Transform (To_Virtual_String (Provider.Get_Name));
+         begin
+            if Name = Value then
+               return Provider;
+            end if;
+         end;
+      end loop;
+
+      return null;
+   end Get_Range_Formatting_Provider;
+
+   -------------------------------------
+   -- Get_On_Type_Formatting_Provider --
+   -------------------------------------
+
+   function Get_On_Type_Formatting_Provider
+     return Editor_Formatting_Provider_Access
+   is
+      Id       : constant Source_Editor_Module :=
+        Source_Editor_Module (Src_Editor_Module_Id);
+      Selected : constant String := On_Type_Formatting_Provider_Pref.Get_Pref;
+      Value    : constant Virtual_String :=
+        To_Lowercase.Transform (To_Virtual_String (Selected));
+   begin
+      for Provider of Id.Formatting_Providers loop
+         declare
+            Name : constant Virtual_String :=
+              To_Lowercase.Transform (To_Virtual_String (Provider.Get_Name));
+         begin
+            if Name = Value then
+               return Provider;
+            end if;
+         end;
+      end loop;
+
+      return null;
+   end Get_On_Type_Formatting_Provider;
+
+   -------------------------------------
+   -- Get_Move_Cursor_When_Formatting --
+   -------------------------------------
+
+   function Get_Move_Cursor_When_Formatting return Boolean is
+   begin
+      return Move_Cursor_When_Formatting.Get_Pref;
+   end Get_Move_Cursor_When_Formatting;
 
    ---------------------
    -- Register_Module --
@@ -2981,6 +3050,59 @@ package body Src_Editor_Module is
       Regenerate_Recent_Files_Menu (Kernel);
    end Register_Module;
 
+   ------------------------
+   -- Create_Preferences --
+   ------------------------
+
+   procedure Create_Preferences
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
+   is
+      Id      : constant Source_Editor_Module :=
+        Source_Editor_Module (Src_Editor_Module_Id);
+      Choices : VSS.String_Vectors.Virtual_String_Vector;
+   begin
+      for Provider of Id.Formatting_Providers loop
+         declare
+            Choice : constant VSS.Strings.Virtual_String :=
+              VSS.Strings.Conversions.To_Virtual_String (Provider.Get_Name);
+         begin
+            Choices.Append (Choice);
+         end;
+      end loop;
+      --  Add an empty choice
+      Choices.Append ("Disabled");
+
+      Range_Formatting_Provider_Pref :=
+        Default_Preferences.Enums.Create
+          (Manager     => Kernel.Get_Preferences,
+           Name        => "Editor-Range-Formatter",
+           Choices     => Choices,
+           Default     => "LSP",
+           Label       => "Formatter for range formatting",
+           Doc         =>
+             "Choose which formatter should be used when "
+             & "formatting a range or a file.",
+           Path        => "Editor:Formatting");
+      On_Type_Formatting_Provider_Pref :=
+        Default_Preferences.Enums.Create
+          (Manager     => Kernel.Get_Preferences,
+           Name        => "Editor-On-Type-Formatter",
+           Choices     => Choices,
+           Default     => "Construct",
+           Label       => "Formatter on enter",
+           Doc         =>
+             "Choose which formatter should be used when pressing enter.",
+           Path        => "Editor:Formatting");
+      Move_Cursor_When_Formatting :=
+        Kernel.Get_Preferences.Create
+          (Name    => "Editor-Move-Cursor-Formatter",
+           Default => True,
+           Label   => "Move cursor when formatting",
+           Doc     =>
+             "Should the cursor move to the end of the formatting edit.",
+           Path    => "Editor:Formatting");
+   end Create_Preferences;
+
    -------------
    -- Execute --
    -------------
@@ -3487,6 +3609,20 @@ package body Src_Editor_Module is
          Cursor := Next (Cursor);
       end loop;
    end Unregister_Highlighter;
+
+   ------------------------
+   -- Register_Formatter --
+   ------------------------
+
+   procedure Register_Formatter (Provider : Editor_Formatting_Provider_Access)
+   is
+      Id : constant Source_Editor_Module :=
+        Source_Editor_Module (Src_Editor_Module_Id);
+   begin
+      if Provider /= null then
+         Id.Formatting_Providers.Append (Provider);
+      end if;
+   end Register_Formatter;
 
    -----------------------------------
    -- Set_Hyper_Mode_Click_Callback --
