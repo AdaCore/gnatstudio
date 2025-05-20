@@ -19,8 +19,8 @@ with Ada.Command_Line;
 with Ada.Exceptions;                   use Ada.Exceptions;
 with Ada.Strings.Unbounded;            use Ada.Strings.Unbounded;
 with Ada.Text_IO;                      use Ada.Text_IO;
-
 with GNAT.OS_Lib;                      use GNAT.OS_Lib;
+
 with GNATCOLL.Arg_Lists;               use GNATCOLL.Arg_Lists;
 with GNATCOLL.Scripts;                 use GNATCOLL.Scripts;
 with GNATCOLL.Memory;
@@ -30,6 +30,7 @@ with GNATCOLL.Traces;                  use GNATCOLL.Traces;
 with GNATCOLL.VFS;                     use GNATCOLL.VFS;
 with GNATCOLL.VFS_Utils;               use GNATCOLL.VFS_Utils;
 
+with VSS.Application;
 with VSS.Characters.Latin;           use VSS.Characters.Latin;
 with VSS.Command_Line;
 with VSS.Strings.Conversions;
@@ -60,7 +61,9 @@ with Gtk.Widget;                       use Gtk.Widget;
 with Gdk.Window;
 with Gtk.Window;                       use Gtk.Window;
 
+with Cairo;
 with Fontconfig;                       use Fontconfig;
+with Pango.Cairo;
 
 with Gtkada.Application;               use Gtkada.Application;
 with Gtkada.Dialogs;                   use Gtkada.Dialogs;
@@ -533,6 +536,15 @@ procedure GPS.Main is
          return 0;
       end if;
 
+      --  When PANGOCAIRO_BACKEND environment variable is not set, select
+      --  "fontconfig" backend to improve font rendenring on Windows.
+
+      if not VSS.Application.System_Environment.Contains
+          ("PANGOCAIRO_BACKEND")
+      then
+         Pango.Cairo.Set_Default_Font_Type (Cairo.Cairo_Font_Type_Ft);
+      end if;
+
       Gtk_New
         (Handle           => App.Kernel,
          Application      => App,
@@ -567,7 +579,7 @@ procedure GPS.Main is
       Set_Project_Name;
 
       if Is_Regular_File
-        (Create_From_Dir (Prefix_Dir, "share/gnatstudio/gps-pro.txt"))
+           (Create_From_Dir (Prefix_Dir, "share/gnatstudio/gps-pro.txt"))
       then
          GPS_Main.Public_Version := False;
       end if;
@@ -576,8 +588,10 @@ procedure GPS.Main is
       GPS.Menu.Register_Common_Menus (App.Kernel);
 
       Kernel_Callback.Connect
-        (Get_MDI (App.Kernel), Signal_Child_Title_Changed,
-         Title_Changed'Access, App.Kernel);
+        (Get_MDI (App.Kernel),
+         Signal_Child_Title_Changed,
+         Title_Changed'Access,
+         App.Kernel);
 
       --  Load CSS must be loaded *after* the call to GPS.Main_Window.Gtk_New
       --  above, since that call loads the theme (Adwaita) and the CSS file
@@ -2145,6 +2159,8 @@ begin
         or else Bus_Addr.all = ""
       then
          Setenv ("DBUS_SESSION_BUS_ADDRESS", "null");
+         --  Note, on Windows this doesn't change set of environment variables
+         --  visible by Glib.
       end if;
       Free (Bus_Addr);
    end;
