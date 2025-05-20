@@ -21,6 +21,13 @@ from modules import Module
 #        the new menu
 #
 _DOC_ENTRIES = {
+    # gnatdoc
+    "gnatdoc": {
+        "GNATdoc User's Guide": (
+            "gnatdoc/html/users_guide/index.html",
+            "Tools/"
+        )
+    },
     # GPRbuild
     "gprbuild": {"GPR Tools User's Guide": ("gprbuild/html/gprbuild_ug.html", "GPR/")},
     "gnatls": {

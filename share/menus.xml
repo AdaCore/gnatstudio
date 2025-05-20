@@ -540,6 +540,7 @@
          <menu label='SPARK'/>
          <menu label='CodePeer'/>
          <menu label='GNATSAS'/>
+         <menu label='Tools'/>
          <separator />
          <menu label='Create Bug Report'                  action='Create bug report'/>
          <menu label='Open GNAT Studio Log File'          action='Open GNAT Studio log file' optional='true'/>

@@ -36,13 +36,6 @@
    </documentation_file>
 
    <documentation_file>
-      <name>html/gnatdoc/index.html</name>
-      <descr>GNATdoc User's Guide</descr>
-      <category>GNAT Studio</category>
-      <menu>/Help/GNAT Studio/GNATdoc User's Guide</menu>
-   </documentation_file>
-
-   <documentation_file>
       <name>html/users_guide/GPS.html</name>
       <descr>GNAT Studio extensions for Python</descr>
       <menu>/Help/GNAT Studio/Python extensions</menu>
