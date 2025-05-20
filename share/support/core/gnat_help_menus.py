@@ -29,19 +29,25 @@ _DOC_ENTRIES = {
         )
     },
     # GPRbuild
-    "gprbuild": {"GPR Tools User's Guide": ("gprbuild/html/gprbuild_ug.html", "GPR/")},
+    "gprbuild": {
+        "GPRbuild and GPR Companion Tools User's Guide": (
+            "gprbuild/html/gprbuild_ug.html",
+            "Tools/"
+        )
+    },
     "gnatls": {
         # Ada RMs
+        "Ada 2022 Reference Manual": ("gnat/html/arm22.html", "Ada/"),
         "Ada 2012 Reference Manual": ("gnat/html/arm12.html", "Ada/"),
         "Ada 2005 Reference Manual": ("gnat/html/arm05.html", "Ada/"),
         "Ada 95 Reference Manual": ("gnat/html/arm95.html", "Ada/"),
         # GNU toolchain
-        "Using AS": ("gnat/html/as.html", "GNU Tools/"),
-        "GNU Binary Utilities": ("gnat/html/binutils.html", "GNU Tools/"),
-        "Using GCC": ("gnat/html/gcc.html", "GNU Tools/"),
-        "Using the GNU Debugger": ("gnat/html/gdb.html", "GNU Tools/"),
-        "GNU gprof": ("gnat/html/gprof.html", "GNU Tools/"),
-        "GNU ld": ("gnat/html/ld.html", "GNU Tools/"),
+        "Using AS": ("gnat/html/as.html", "Tools/GNU Tools/"),
+        "GNU Binary Utilities": ("gnat/html/binutils.html", "Tools/GNU Tools/"),
+        "Using GCC": ("gnat/html/gcc.html", "Tools/GNU Tools/"),
+        "Using the GNU Debugger": ("gnat/html/gdb.html", "Tools/GNU Tools/"),
+        "GNU gprof": ("gnat/html/gprof.html", "Tools/GNU Tools/"),
+        "GNU ld": ("gnat/html/ld.html", "Tools/GNU Tools/"),
         # GNAT Native
         "GNAT Reference Manual": ("gnat/html/gnat_rm/gnat_rm.html", "GNAT/"),
         "GNAT User's Guide for Native Platforms": (
@@ -58,6 +64,19 @@ _DOC_ENTRIES = {
             "gnat-cross/html/gnathie_ug/gnathie_ug.html",
             "GNAT/",
         ),
+        # Libraries that come with GNAT Pro
+        "AUnit Cookbook": (
+            "aunit/html/aunit_cb/aunit_cb.html",
+            "Tools/",
+        ),
+        "GNATColl Core Components": (
+            "gnatcoll/html/index.html",
+            "Tools/",
+        ),
+        "XMLAda: the XML Library for Ada": (
+            "xmlada/html/index.html",
+            "Tools/",
+        ),
     },
     # GNATcheck
     "gnatcheck": {
@@ -71,12 +90,22 @@ _DOC_ENTRIES = {
         "GNATmetrics User's Guide": ("gnatsas/gnatmetrics/html/index.html", "GNATSAS/")
     },
     # GNATstack
-    "gnatstack": {"GNATstack Reference Manual": ("gnatstack/html/index.html", "GNAT/")},
+    "gnatstack": {
+        "GNATstack User's Guide": ("gnatstack/html/index.html", "Tools/")
+    },
     # Spark2c
     "c-gcc": {
         "SPARK to C User's Guide Supplement": (
             "gnat/html/spark2c/spark2c.html",
             "GNAT/",
+        )
+    },
+    # AWS
+    "awsres": {"AWS: The Ada Web Server": ("aws/index.html", "Tools/")},
+    "templates2ada": {
+        "Templates Parser: A template engine": (
+            "templates_parser/index.html",
+            "Tools/"
         )
     },
 }

@@ -523,20 +523,15 @@
       <menu label='Help'>
          <menu label='Welcome'      action='open welcome'/>
          <menu label='_Contents'    action='display help contents'/>
+         <menu label='Ada'/>
          <menu label='GNAT Studio'/>
          <menu label='GNAT Runtime'>
             <menu label='Standard'  action='display standard.ads'/>
          </menu>
          <menu label='GNAT'/>
-         <menu label='GPR'/>
-         <menu label='GNU Tools'/>
-         <menu label='Gprbuild'/>
-         <menu label='XMLAda'/>
-         <menu label='Ada'/>
          <menu label='Python'>
             <menu label='Python Library' action='display python library help' optional='true'/>
          </menu>
-         <menu label='AWS'/>
          <menu label='SPARK'/>
          <menu label='CodePeer'/>
          <menu label='GNATSAS'/>
