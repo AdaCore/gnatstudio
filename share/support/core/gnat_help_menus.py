@@ -1,4 +1,6 @@
-"""Generates the help menus for a number of tools found on the PATH"""
+"""Generates the help menus for a number of tools found on the PATH
+or libraries found on the GPR_PROJECT_PATH
+"""
 
 import os
 import os_utils
@@ -110,6 +112,16 @@ _DOC_ENTRIES = {
     },
 }
 
+_GPR_DOC_ENTRIES = {
+    # libadalang
+    "libadalang.gpr": {
+        "Libadalang User Manual": (
+            "libadalang/html/index.html",
+            "Tools/"
+        )
+    },
+}
+
 
 class HTMLAction(GPS.Action):
     def __init__(self, description, file, menu_path):
@@ -156,6 +168,36 @@ class GNATMenus(Module):
                         path = os.path.realpath(
                             os.path.join(
                                 os.path.dirname(ex), "..", "share", "doc", file
+                            )
+                        )
+                        if os.path.isfile(path):
+                            action = HTMLAction(
+                                action_descr, path, "/Help/{}".format(menu_path)
+                            )
+                            help_actions.append(action)
+                            break
+
+        for gpr in list(_GPR_DOC_ENTRIES.keys()):
+            ex = os_utils.locate_file(gpr, os.getenv("GPR_PROJECT_PATH"))
+            if ex:
+                for descr, tup in _GPR_DOC_ENTRIES[gpr].items():
+                    html_files, menu_base = tup
+                    menu_path = menu_base + "/" + descr
+                    action_descr = "display documentation {}".format(descr)
+
+                    # Do not create a menu if the action already exists
+                    if GPS.Action(action_descr).exists():
+                        continue
+
+                    # As a convenience, html_files can either be a string or a
+                    # list of strings. Deal with this here.
+                    if type(html_files) != list:
+                        html_files = [html_files]
+
+                    for file in html_files:
+                        path = os.path.realpath(
+                            os.path.join(
+                                os.path.dirname(ex), "..", "doc", file
                             )
                         )
                         if os.path.isfile(path):
