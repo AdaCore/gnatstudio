@@ -13,7 +13,8 @@ def run_test():
     yield wait_tasks()
 
     gps_assert(
-        "process exited with status" in GPS.Console("Run: foo" + dot_exe).get_text(),
+        "Could not locate executable" in GPS.Console().get_text(),
         True,
-        "Missing message in the Messages view",
+        "We should have a message warning that the executable could "
+        + "not be found in the Messages view",
     )

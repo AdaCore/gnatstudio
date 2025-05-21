@@ -36,7 +36,10 @@ with Commands;
 
 package body GPS.Kernel.Spawns is
 
-   Me : constant Trace_Handle := Create ("GPS.KERNEL.SPAWN");
+   Me : constant Trace_Handle := Create ("GPS.KERNEL.SPAWN", Off);
+   --  Disable Spawn as the default API to launch external processes
+   --  until we solve the remaining issues (#538 and #495).
+
    Me_IO : constant Trace_Handle := Create
      ("GPS.KERNEL.SPAWN_IO", Off);
 
@@ -424,7 +427,7 @@ package body GPS.Kernel.Spawns is
       end if;
 
       if Console /= null then
-         Trace (Me, "Connect the command_handler to the console");
+         Trace (Me_IO, "Connect the command_handler to the console");
          Console.Set_Command_Handler (Input_Handler'Access, Obj.all'Address);
 
          Obj.Console := Console;
@@ -447,7 +450,7 @@ package body GPS.Kernel.Spawns is
         (Spawn.Process_Listeners.Process_Listener_Access (Obj));
 
       Trace
-        (Me, "Spawning " & GNATCOLL.Arg_Lists.To_Display_String (Arg_List));
+        (Me_IO, "Spawning " & GNATCOLL.Arg_Lists.To_Display_String (Arg_List));
 
       Obj.Ref;  --  Keep command alive until process finishes
       Obj.Process.Start;
