@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                               GNAT Studio                                --
 --                                                                          --
---                     Copyright (C) 2024, AdaCore                          --
+--                     Copyright (C) 2024-2025, AdaCore                     --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -255,7 +255,8 @@ package body GPS.Initialization is
       begin
          if Edition_File.Is_Readable then
             Content := Edition_File.Read_File;
-            Config.Version := To_Unbounded_String (Content.all);
+            Config.Version :=
+              VSS.Strings.Conversions.To_Virtual_String (Content.all);
 
             --  In Community, GCov should be enabled
             if Starts_With (Content.all, "Community") then
@@ -520,8 +521,14 @@ package body GPS.Initialization is
          Stack_Trace_Depth => Memory_Stack_Depth,
          Disable_Free      => False);
 
-      Trace (Main_Trace, "GNAT Studio " & To_String (Config.Version) & " ("
-             & Config.Source_Date & ") hosted on " & Config.Target);
+      Trace
+        (Main_Trace,
+         "GNAT Studio "
+         & VSS.Strings.Conversions.To_UTF_8_String (Config.Version)
+         & " ("
+         & VSS.Strings.Conversions.To_UTF_8_String (Config.Source_Date)
+         & ") hosted on "
+         & VSS.Strings.Conversions.To_UTF_8_String (Config.Target));
       Trace (Main_Trace, "Gtk+ static version: "
              & String_Utils.Image (Integer (Gtk.Major_Version)) & '.'
              & String_Utils.Image (Integer (Gtk.Minor_Version)) & '.'
@@ -935,11 +942,16 @@ package body GPS.Initialization is
             --  Get_Help (True) will only print options from the main
             --  group
             Help : constant String :=
-              "GNAT Studio " & To_String (Config.Version) & " ("
-              & Config.Source_Date & ") hosted on "
-              & Config.Target & ASCII.LF & ASCII.LF
+              "GNAT Studio "
+              & VSS.Strings.Conversions.To_UTF_8_String (Config.Version)
+              & " ("
+              & VSS.Strings.Conversions.To_UTF_8_String (Config.Source_Date)
+              & ") hosted on "
+              & VSS.Strings.Conversions.To_UTF_8_String (Config.Target)
+              & ASCII.LF
+              & ASCII.LF
               & GPS_Command_Line.Context.Get_Help
-              (Switch /= "--help-all", null);
+                  (Switch /= "--help-all", null);
          begin
             Put_Line (Help);
          end;

@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                               GNAT Studio                                --
 --                                                                          --
---                     Copyright (C) 2001-2023, AdaCore                     --
+--                     Copyright (C) 2001-2025, AdaCore                     --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -1701,14 +1701,14 @@ procedure GPS.Main is
          end if;
          GPS_Main.Kernel.Insert
            (-"Welcome to GNAT Studio "
-            & To_String (Config.Version)
+            & VSS.Strings.Conversions.To_UTF_8_String (Config.Version)
             & " ("
-            & Config.Source_Date
+            & VSS.Strings.Conversions.To_UTF_8_String (Config.Source_Date)
             & (-") hosted on ")
-            & Config.Target
+            & VSS.Strings.Conversions.To_UTF_8_String (Config.Target)
             & ASCII.LF
             & "(c) 2001-"
-            & Config.Current_Year
+            & VSS.Strings.Conversions.To_UTF_8_String (Config.Current_Year)
             & " AdaCore"
             & ASCII.LF);
          Free (About_Contents);
@@ -2112,9 +2112,12 @@ begin
       then
          declare
             Version : constant String :=
-              "GNAT Studio " & To_String (Config.Version) & " ("
-              & Config.Source_Date & ") hosted on "
-              & Config.Target;
+              "GNAT Studio "
+              & VSS.Strings.Conversions.To_UTF_8_String (Config.Version)
+              & " ("
+              & VSS.Strings.Conversions.To_UTF_8_String (Config.Source_Date)
+              & ") hosted on "
+              & VSS.Strings.Conversions.To_UTF_8_String (Config.Target);
          begin
             Put_Line (Version);
          end;

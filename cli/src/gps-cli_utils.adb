@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                               GNAT Studio                                --
 --                                                                          --
---                        Copyright (C) 2013-2023, AdaCore                  --
+--                        Copyright (C) 2013-2025, AdaCore                  --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -14,6 +14,16 @@
 -- COPYING3.  If not, go to http://www.gnu.org/licenses for a complete copy --
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
+
+with Ada.Strings.Fixed;                        use Ada.Strings.Fixed;
+with GNAT.IO;                                  use GNAT.IO;
+with GNAT.OS_Lib;
+
+with VSS.Strings.Conversions;
+
+with GNATCOLL.Scripts.Projects;
+with GNATCOLL.VFS_Utils;
+with GNATCOLL.Utils;
 
 with GPS.CLI_Target_Loaders;
 with GPS.CLI_Scripts;
@@ -38,14 +48,6 @@ with Language.Tree.Database;                   use Language.Tree.Database;
 with Language.Ada;
 with Language.C;
 with Language.Cpp;
-
-with GNAT.IO;                                  use GNAT.IO;
-with Ada.Strings.Fixed;                        use Ada.Strings.Fixed;
-with Ada.Strings.Unbounded;
-with GNATCOLL.Scripts.Projects;
-with GNATCOLL.VFS_Utils;
-with GNATCOLL.Utils;
-with GNAT.OS_Lib;
 
 package body GPS.CLI_Utils is
 
@@ -261,9 +263,11 @@ package body GPS.CLI_Utils is
          elsif Switch = "--version" or else Switch = "-v" then
             Put_Line
               ("GNAT Studio version "
-               & Ada.Strings.Unbounded.To_String (Config.Version) & " ("
-               & Config.Source_Date & ") hosted on "
-               & Config.Target);
+               & VSS.Strings.Conversions.To_UTF_8_String (Config.Version)
+               & " ("
+               & VSS.Strings.Conversions.To_UTF_8_String (Config.Source_Date)
+               & ") hosted on "
+               & VSS.Strings.Conversions.To_UTF_8_String (Config.Target));
             GNAT.OS_Lib.OS_Exit (0);
          end if;
 
