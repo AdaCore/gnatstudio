@@ -29,7 +29,11 @@ with GNATCOLL.Scripts.Python;
 with GNATCOLL.Traces;                  use GNATCOLL.Traces;
 with GNATCOLL.VFS;                     use GNATCOLL.VFS;
 with GNATCOLL.VFS_Utils;               use GNATCOLL.VFS_Utils;
+
+with VSS.Command_Line;
 with VSS.Strings.Conversions;
+with VSS.Strings.Formatters.Strings; use VSS.Strings.Formatters.Strings;
+with VSS.Strings.Templates;          use VSS.Strings.Templates;
 
 with Glib;
 with Glib.Application;                 use Glib.Application;
@@ -2111,18 +2115,18 @@ begin
         or else Ada.Command_Line.Argument (J) = "-v"
       then
          declare
-            Version : constant String :=
-              "GNAT Studio "
-              & VSS.Strings.Conversions.To_UTF_8_String (Config.Version)
-              & " ("
-              & VSS.Strings.Conversions.To_UTF_8_String (Config.Source_Date)
-              & ") hosted on "
-              & VSS.Strings.Conversions.To_UTF_8_String (Config.Target);
-         begin
-            Put_Line (Version);
-         end;
+            Template : constant Virtual_String_Template :=
+              "GNAT Studio {} ({}) hosted on {}";
 
-         GPS_Command_Line.Do_Exit := True;
+         begin
+            GPS_Command_Line.Do_Exit := True;
+
+            VSS.Command_Line.Report_Message
+              (Template.Format
+                 (VSS.Strings.Formatters.Strings.Image (Config.Version),
+                  VSS.Strings.Formatters.Strings.Image (Config.Source_Date),
+                  VSS.Strings.Formatters.Strings.Image (Config.Target)));
+         end;
       end if;
    end loop;
 
