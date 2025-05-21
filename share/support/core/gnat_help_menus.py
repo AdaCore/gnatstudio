@@ -110,6 +110,13 @@ _DOC_ENTRIES = {
             "Tools/"
         )
     },
+    # AJIS
+    "ada2java": {
+        "GNAT Ada-Java Interfacing Suite User's Guide": (
+            "html/ajis_ug.html",
+            "Tools/"
+        )
+    },
 }
 
 _GPR_DOC_ENTRIES = {
