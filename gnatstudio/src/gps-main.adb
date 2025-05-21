@@ -30,6 +30,7 @@ with GNATCOLL.Traces;                  use GNATCOLL.Traces;
 with GNATCOLL.VFS;                     use GNATCOLL.VFS;
 with GNATCOLL.VFS_Utils;               use GNATCOLL.VFS_Utils;
 
+with VSS.Characters.Latin;           use VSS.Characters.Latin;
 with VSS.Command_Line;
 with VSS.Strings.Conversions;
 with VSS.Strings.Formatters.Strings; use VSS.Strings.Formatters.Strings;
@@ -1695,27 +1696,23 @@ procedure GPS.Main is
       --  messages, so that these are visible
 
       declare
-         About_File     : constant Virtual_File :=
-           Create_From_Dir (Prefix_Dir, "share/gnatstudio/about.txt");
-         About_Contents : GPS.Globals.String_Access :=
-           (if About_File.Is_Regular_File then About_File.Read_File else null);
+         use type VSS.Strings.Virtual_String;
+
+         Template : constant Virtual_String_Template :=
+           -("Welcome to GNAT Studio {} ({}) hosted on {}"
+             & Line_Feed
+             & "(c) 2001-{} AdaCore"
+             & Line_Feed);
+
       begin
-         if About_Contents = null then
-            About_Contents := new String'("");
-         end if;
          GPS_Main.Kernel.Insert
-           (-"Welcome to GNAT Studio "
-            & VSS.Strings.Conversions.To_UTF_8_String (Config.Version)
-            & " ("
-            & VSS.Strings.Conversions.To_UTF_8_String (Config.Source_Date)
-            & (-") hosted on ")
-            & VSS.Strings.Conversions.To_UTF_8_String (Config.Target)
-            & ASCII.LF
-            & "(c) 2001-"
-            & VSS.Strings.Conversions.To_UTF_8_String (Config.Current_Year)
-            & " AdaCore"
-            & ASCII.LF);
-         Free (About_Contents);
+           (VSS.Strings.Conversions.To_UTF_8_String
+              (Template.Format
+                 (VSS.Strings.Formatters.Strings.Image (Config.Version),
+                  VSS.Strings.Formatters.Strings.Image (Config.Source_Date),
+                  VSS.Strings.Formatters.Strings.Image (Config.Target),
+                  VSS.Strings.Formatters.Strings.Image
+                    (Config.Current_Year))));
       end;
 
       --  Apply the preferences to the MDI. In particular, we want to set the
