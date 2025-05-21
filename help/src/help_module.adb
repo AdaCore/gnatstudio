@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                               GNAT Studio                                --
 --                                                                          --
---                     Copyright (C) 2001-2024, AdaCore                     --
+--                     Copyright (C) 2001-2025, AdaCore                     --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -31,7 +31,10 @@ with GNATCOLL.Utils;             use GNATCOLL.Utils;
 with GNATCOLL.VFS;               use GNATCOLL.VFS;
 with GNATCOLL.VFS_Utils;         use GNATCOLL.VFS_Utils;
 
+with VSS.Characters.Latin;           use VSS.Characters.Latin;
 with VSS.Strings.Conversions;
+with VSS.Strings.Formatters.Strings; use VSS.Strings.Formatters.Strings;
+with VSS.Strings.Templates;          use VSS.Strings.Templates;
 
 with Glib;                       use Glib;
 with XML_Utils;                  use XML_Utils;
@@ -883,7 +886,7 @@ package body Help_Module is
       About_File          : constant Virtual_File := Create_From_Dir
         (Get_System_Dir (Kernel), "/share/gnatstudio/about.txt");
       Contents            : GNAT.Strings.String_Access;
-      About_Text          : Unbounded_String;
+      About_Text          : VSS.Strings.Virtual_String;
       Tc                  : Toolchains.Toolchain;
 
       function Get_Output
@@ -941,21 +944,40 @@ package body Help_Module is
       --  Try to find the compiler's target too (this only works with GCC).
 
       declare
-         Compiler_Target : constant String := To_String
-           (Get_Output
-              (Exe  => Compiler_Exe,
-               Args => (1 => Compiler_Target_Arg'Unrestricted_Access)));
+         use type VSS.Strings.Virtual_String;
+
+         Compiler_Target : constant VSS.Strings.Virtual_String :=
+           VSS.Strings.Conversions.To_Virtual_String
+             (Get_Output
+                (Exe  => Compiler_Exe,
+                 Args => (1 => Compiler_Target_Arg'Unrestricted_Access)));
+         Simple_Template : constant Virtual_String_Template :=
+           -("GNAT Studio {} ({}) hosted on {}"
+             & Line_Feed
+             & "GNAT {}");
+         Target_Template : constant Virtual_String_Template :=
+           -("GNAT Studio {} ({}) hosted on {}"
+             & Line_Feed
+             & "GNAT {} targeting {}");
+
       begin
-         Set_Unbounded_String
-           (About_Text,
-            "GNAT Studio " & To_String (Config.Version)
-            & " (" & Config.Source_Date
-            & (-") hosted on ") & Config.Target & LF
-            & (-"GNAT ") & GNAT_Version (Kernel)
-            & (if Compiler_Target /= "" then
-                  " targeting " & Compiler_Target
-               else
-                  ""));
+         if Compiler_Target.Is_Empty then
+            About_Text :=
+              Simple_Template.Format
+                (Image (Config.Version),
+                 Image (Config.Source_Date),
+                 Image (Config.Target),
+                 Image (Kernel.GNAT_Version));
+
+         else
+            About_Text :=
+              Target_Template.Format
+                (Image (Config.Version),
+                 Image (Config.Source_Date),
+                 Image (Config.Target),
+                 Image (Kernel.GNAT_Version),
+                 Image (Compiler_Target));
+         end if;
       end;
 
       --  Display the version used by CodePeer and SPARK, if found in the
@@ -968,9 +990,9 @@ package body Help_Module is
                Args => (1 => Version_Arg'Unrestricted_Access));
          begin
             if Output /= Null_Unbounded_String then
-               About_Text := About_Text & LF & Get_Output
-                 (Exe  => Tool_Exe,
-                  Args => (1 => Version_Arg'Unrestricted_Access));
+               About_Text.Append (Line_Feed);
+               About_Text.Append
+                 (VSS.Strings.Conversions.To_Virtual_String (Output));
             end if;
          end;
       end loop;
@@ -982,22 +1004,53 @@ package body Help_Module is
         (Kernel.Get_Toolchains_Manager, Kernel.Get_Project_Tree.Root_Project);
 
       if not Is_Native (Tc) then
-         Append
-           (About_Text, LF & "Active toolchain: " & Get_Name (Tc) & LF);
+         declare
+            Template : constant Virtual_String_Template :=
+              -"Active toolchain: {}";
+
+         begin
+            About_Text.Append (Line_Feed);
+            About_Text.Append
+              (Template.Format
+                 (Image
+                    (VSS.Strings.Conversions.To_Virtual_String
+                       (Get_Name (Tc)))));
+
+            About_Text.Append (Line_Feed);
+         end;
       end if;
 
       --  Display the About dialog
 
-      Ignore := GPS_Message_Dialog
-        (To_String (About_Text)
-         & LF & LF
-         & (-"GNAT Studio")
-         & LF
-         & (if Contents.all /= "" then Contents.all & LF else "")
-         & "(c) 2001-" & Config.Current_Year & " AdaCore",
-         Buttons => Gtkada.Dialogs.Button_OK,
-         Title   => -"About...",
-         Parent  => GPS.Kernel.MDI.Get_Current_Window (Kernel));
+      declare
+         use type VSS.Strings.Virtual_String;
+
+         Template : constant Virtual_String_Template :=
+           -("{}"
+             & Line_Feed
+             & Line_Feed
+             & "GNAT Studio"
+             & Line_Feed
+             & "{}(c) 2001-{} AdaCore");
+
+      begin
+         Ignore :=
+           GPS_Message_Dialog
+             (VSS.Strings.Conversions.To_UTF_8_String
+                (Template.Format
+                   (Image (About_Text),
+                    Image
+                      (VSS.Strings.Conversions.To_Virtual_String
+                         (if Contents.all /= ""
+                          then Contents.all & LF
+                          else "")),
+                    Image
+                      (Config.Current_Year))),
+              Buttons => Gtkada.Dialogs.Button_OK,
+              Title   => -"About...",
+              Parent  => GPS.Kernel.MDI.Get_Current_Window (Kernel));
+      end;
+
       Free (Contents);
 
       return Commands.Success;

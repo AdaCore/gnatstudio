@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                               GNAT Studio                                --
 --                                                                          --
---                     Copyright (C) 2001-2023, AdaCore                     --
+--                     Copyright (C) 2001-2025, AdaCore                     --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -16,80 +16,81 @@
 ------------------------------------------------------------------------------
 
 with Ada.Command_Line;
-with Ada.Strings.Unbounded;     use Ada.Strings.Unbounded;
-
+with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
 with GNAT.OS_Lib;
+with GNAT.Strings;          use GNAT.Strings;
 
 with GNATCOLL.JSON;
-with GNATCOLL.Scripts.Gtkada;   use GNATCOLL.Scripts.Gtkada;
-with GNATCOLL.Templates;        use GNATCOLL.Templates;
-with GNATCOLL.Traces;           use GNATCOLL.Traces;
-with GNATCOLL.Utils;            use GNATCOLL.Utils;
-with GNATCOLL.VFS;              use GNATCOLL.VFS;
-with GNAT.Strings;              use GNAT.Strings;
+with GNATCOLL.Scripts.Gtkada;    use GNATCOLL.Scripts.Gtkada;
+with GNATCOLL.Scripts.VSS_Utils; use GNATCOLL.Scripts.VSS_Utils;
+with GNATCOLL.Templates;         use GNATCOLL.Templates;
+with GNATCOLL.Traces;            use GNATCOLL.Traces;
+with GNATCOLL.Utils;             use GNATCOLL.Utils;
+with GNATCOLL.VFS;               use GNATCOLL.VFS;
 
-with Cairo;                     use Cairo;
-with Gdk.Display;               use Gdk.Display;
-with Gdk.Dnd;                   use Gdk.Dnd;
-with Gdk.Screen;                use Gdk.Screen;
-with Gdk.Window;                use Gdk.Window;
+with Cairo;       use Cairo;
+with Gdk.Display; use Gdk.Display;
+with Gdk.Dnd;     use Gdk.Dnd;
+with Gdk.Screen;  use Gdk.Screen;
+with Gdk.Window;  use Gdk.Window;
 
 with Glib.Main;
-with Glib.Error;                use Glib.Error;
-with Glib.Object;               use Glib.Object;
+with Glib.Error;  use Glib.Error;
+with Glib.Object; use Glib.Object;
 with Glib.Properties;
-with Glib.Values;               use Glib.Values;
+with Glib.Values; use Glib.Values;
 
-with Gtk.Check_Button;          use Gtk.Check_Button;
-with Gtk.Combo_Box_Text;        use Gtk.Combo_Box_Text;
-with Gtk.Dialog;                use Gtk.Dialog;
-with Gtk.Dnd;                   use Gtk.Dnd;
-with Gtk.Enums;                 use Gtk.Enums;
-with Gtk.GEntry;                use Gtk.GEntry;
+with Gtk.Check_Button;   use Gtk.Check_Button;
+with Gtk.Combo_Box_Text; use Gtk.Combo_Box_Text;
+with Gtk.Dialog;         use Gtk.Dialog;
+with Gtk.Dnd;            use Gtk.Dnd;
+with Gtk.Enums;          use Gtk.Enums;
+with Gtk.GEntry;         use Gtk.GEntry;
 with Gtk.Handlers;
-with Gtk.Menu_Item;             use Gtk.Menu_Item;
-with Gtk.Notebook;              use Gtk.Notebook;
+with Gtk.Menu_Item;      use Gtk.Menu_Item;
+with Gtk.Notebook;       use Gtk.Notebook;
 with Gtk.Settings;
-with Gtk.Style_Context;         use Gtk.Style_Context;
+with Gtk.Style_Context;  use Gtk.Style_Context;
 with Gtk.Style_Provider;
-with Gtk.Widget;                use Gtk.Widget;
-with Gtk.Css_Provider;          use Gtk.Css_Provider;
+with Gtk.Widget;         use Gtk.Widget;
+with Gtk.Css_Provider;   use Gtk.Css_Provider;
 
-with Gtkada.Dialogs;            use Gtkada.Dialogs;
-with Gtkada.File_Selector;      use Gtkada.File_Selector;
-with Gtkada.Handlers;           use Gtkada.Handlers;
-with Gtkada.Multiline_Entry;    use Gtkada.Multiline_Entry;
+with Gtkada.Dialogs;         use Gtkada.Dialogs;
+with Gtkada.File_Selector;   use Gtkada.File_Selector;
+with Gtkada.Handlers;        use Gtkada.Handlers;
+with Gtkada.Multiline_Entry; use Gtkada.Multiline_Entry;
 with Gtkada.Style;
-with Gtkada.Stock_Labels;       use Gtkada.Stock_Labels;
+with Gtkada.Stock_Labels;    use Gtkada.Stock_Labels;
 
-with Pango.Enums;               use Pango.Enums;
-with Pango.Font;                use Pango.Font;
+with Pango.Enums; use Pango.Enums;
+with Pango.Font;  use Pango.Font;
 
 with Spawn.Environments;
 
 with Config;
-with Commands.Interactive;      use Commands, Commands.Interactive;
-with Default_Preferences;       use Default_Preferences;
-with Dialog_Utils;              use Dialog_Utils;
-with Generic_Views;             use Generic_Views;
-with GPS.Intl;                  use GPS.Intl;
-with GPS.Kernel.Actions;        use GPS.Kernel.Actions;
-with GPS.Kernel.Hooks;          use GPS.Kernel.Hooks;
-with GPS.Kernel.Macros;         use GPS.Kernel.Macros;
-with GPS.Kernel.MDI;            use GPS.Kernel.MDI;
-with GPS.Kernel.Modules;        use GPS.Kernel.Modules;
-with GPS.Kernel.Modules.UI;     use GPS.Kernel.Modules.UI;
-with GPS.Kernel.Preferences;    use GPS.Kernel.Preferences;
-with GPS.Kernel.Properties;     use GPS.Kernel.Properties;
-with GPS.Kernel.Scripts;        use GPS.Kernel.Scripts;
-with GPS.Kernel.Task_Manager;   use GPS.Kernel.Task_Manager;
-with GPS.Kernel;                use GPS.Kernel;
-with GPS.Stock_Icons;           use GPS.Stock_Icons;
-with GPS.VCS;                   use GPS.VCS;
-with GPS.Properties;            use GPS.Properties;
-with GUI_Utils;                 use GUI_Utils;
-with Informational_Popups;      use Informational_Popups;
-with Task_Manager;              use Task_Manager;
+with Commands.Interactive;
+use Commands, Commands.Interactive;
+with Default_Preferences;     use Default_Preferences;
+with Dialog_Utils;            use Dialog_Utils;
+with Generic_Views;           use Generic_Views;
+with GPS.Intl;                use GPS.Intl;
+with GPS.Kernel.Actions;      use GPS.Kernel.Actions;
+with GPS.Kernel.Hooks;        use GPS.Kernel.Hooks;
+with GPS.Kernel.Macros;       use GPS.Kernel.Macros;
+with GPS.Kernel.MDI;          use GPS.Kernel.MDI;
+with GPS.Kernel.Modules;      use GPS.Kernel.Modules;
+with GPS.Kernel.Modules.UI;   use GPS.Kernel.Modules.UI;
+with GPS.Kernel.Preferences;  use GPS.Kernel.Preferences;
+with GPS.Kernel.Properties;   use GPS.Kernel.Properties;
+with GPS.Kernel.Scripts;      use GPS.Kernel.Scripts;
+with GPS.Kernel.Task_Manager; use GPS.Kernel.Task_Manager;
+with GPS.Kernel;              use GPS.Kernel;
+with GPS.Stock_Icons;         use GPS.Stock_Icons;
+with GPS.VCS;                 use GPS.VCS;
+with GPS.Properties;          use GPS.Properties;
+with GUI_Utils;               use GUI_Utils;
+with Informational_Popups;    use Informational_Popups;
+with Task_Manager;            use Task_Manager;
 with User_Interface_Tools;
 
 package body GPS.Main_Window is
@@ -1594,7 +1595,7 @@ package body GPS.Main_Window is
                Status => Nth_Arg (Data, 2, 0));
 
       elsif Command = "version" then
-         Set_Return_Value (Data, To_String (Config.Version));
+         Set_Return_Value (Data, Config.Version);
 
       elsif Command = "save_all" then
          Name_Parameters (Data, Save_Windows_Parameters);

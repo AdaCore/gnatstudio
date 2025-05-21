@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                               GNAT Studio                                --
 --                                                                          --
---                     Copyright (C) 2001-2024, AdaCore                     --
+--                     Copyright (C) 2001-2025, AdaCore                     --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -20,18 +20,18 @@ with Ada.Containers.Indefinite_Hashed_Maps;
 with Ada.Strings.Hash;
 with Ada.Strings.Fixed;
 with Ada.Unchecked_Deallocation;
+with GNAT.OS_Lib;                      use GNAT.OS_Lib;
+pragma Warnings (Off, ".*is an internal GNAT unit");
+with GNAT.Expect.TTY.Remote;           use GNAT.Expect.TTY.Remote;
+pragma Warnings (On, ".*is an internal GNAT unit");
 
-with VSS.Strings;
+with VSS.Strings.Conversions;
 
 with GNATCOLL.JSON;
 with GNATCOLL.Projects;                use GNATCOLL.Projects;
 with GNATCOLL.Traces;                  use GNATCOLL.Traces;
 with GNATCOLL.Utils;                   use GNATCOLL.Utils;
 with GNATCOLL.VFS;                     use GNATCOLL.VFS;
-with GNAT.OS_Lib;                      use GNAT.OS_Lib;
-pragma Warnings (Off, ".*is an internal GNAT unit");
-with GNAT.Expect.TTY.Remote;           use GNAT.Expect.TTY.Remote;
-pragma Warnings (On, ".*is an internal GNAT unit");
 
 with Projects;                         use Projects;
 with Remote;                           use Remote;
@@ -280,7 +280,8 @@ package body GPS.Kernel.Project is
      (Self    : in out GPS_Project_Environment;
       Version : String) is
    begin
-      Self.Kernel.GNAT_Version := To_Unbounded_String (Version);
+      Self.Kernel.GNAT_Version_Cache :=
+        VSS.Strings.Conversions.To_Virtual_String (Version);
    end Set_GNAT_Version;
 
    ------------------

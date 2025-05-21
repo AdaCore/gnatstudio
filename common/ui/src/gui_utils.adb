@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                               GNAT Studio                                --
 --                                                                          --
---                     Copyright (C) 2000-2024, AdaCore                     --
+--                     Copyright (C) 2000-2025, AdaCore                     --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -15,87 +15,89 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with Ada.Calendar;              use Ada.Calendar;
+with Ada.Calendar; use Ada.Calendar;
 with Ada.Strings.Fixed;
-with Ada.Strings.Equal_Case_Insensitive; use Ada.Strings;
+with Ada.Strings.Equal_Case_Insensitive;
+use Ada.Strings;
 with Ada.Unchecked_Conversion;
 with Ada.Unchecked_Deallocation;
-
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 with GNAT.OS_Lib;               use GNAT.OS_Lib;
 with GNATCOLL.Utils;            use GNATCOLL.Utils;
+with Interfaces.C;
 
-with VSS.Strings;               use VSS.Strings;
-with VSS.Strings.Conversions;   use VSS.Strings.Conversions;
-
-with Glib.Convert;              use Glib.Convert;
-with Glib.Object;               use Glib.Object;
-with Glib.Properties;           use Glib.Properties;
-with Glib.Menu_Model;           use Glib.Menu_Model;
-with Glib.Values;               use Glib.Values;
-with Glib.Variant;              use Glib.Variant;
-
-with Gdk;                       use Gdk;
-with Gdk.Cursor;                use Gdk.Cursor;
-with Gdk.Device;                use Gdk.Device;
-with Gdk.Event;                 use Gdk.Event;
-with Gdk.Keyval;                use Gdk.Keyval;
-with Gdk.Main;
-with Gdk.Pixbuf;
-with Gdk.RGBA;                  use Gdk.RGBA;
-with Gdk.Types.Keysyms;         use Gdk.Types.Keysyms;
-with Gdk.Types;                 use Gdk.Types;
-with Gdk.Window;                use Gdk.Window;
-
-with Gtk.Adjustment;            use Gtk.Adjustment;
-with Gtk.Alignment;             use Gtk.Alignment;
-with Gtk.Bin;                   use Gtk.Bin;
-with Gtk.Box;                   use Gtk.Box;
-with Gtk.Button;                use Gtk.Button;
-with Gtk.Cell_Renderer;         use Gtk.Cell_Renderer;
-with Gtk.Cell_Renderer_Pixbuf;  use Gtk.Cell_Renderer_Pixbuf;
-with Gtk.Check_Button;          use Gtk.Check_Button;
-with Gtk.Container;             use Gtk.Container;
-with Gtk.Dialog;                use Gtk.Dialog;
-with Gtk.Enums;                 use Gtk.Enums;
-with Gtk.Event_Box;             use Gtk.Event_Box;
-with Gtk.Frame;                 use Gtk.Frame;
-with Gtk.GEntry;                use Gtk.GEntry;
-with Gtk.Handlers;              use Gtk.Handlers;
-with Gtk.Image;                 use Gtk.Image;
-with Gtk.Label;                 use Gtk.Label;
-with Gtk.List_Store;            use Gtk.List_Store;
-with Gtk.Menu;                  use Gtk.Menu;
-with Gtk.Menu_Bar;              use Gtk.Menu_Bar;
-with Gtk.Menu_Item;             use Gtk.Menu_Item;
-with Gtk.Menu_Shell;            use Gtk.Menu_Shell;
-with Gtk.Separator_Menu_Item;   use Gtk.Separator_Menu_Item;
-with Gtk.Style_Context;         use Gtk.Style_Context;
-with Gtk.Text_Iter;             use Gtk.Text_Iter;
-with Gtk.Text_Mark;             use Gtk.Text_Mark;
-with Gtk.Text_Tag;              use Gtk.Text_Tag;
-with Gtk.Text_View;             use Gtk.Text_View;
-with Gtk.Tree_Selection;        use Gtk.Tree_Selection;
-with Gtk.Tree_Store;            use Gtk.Tree_Store;
-with Gtk.Tree_View;             use Gtk.Tree_View;
-with Gtk.Tree_View_Column;      use Gtk.Tree_View_Column;
-with Gtk.Widget;                use Gtk.Widget;
-with Gtkada.Types;
-
-with Pango.Enums;               use Pango.Enums;
-
-with Gtkada.Handlers;           use Gtkada.Handlers;
-with Gtkada.MDI;                use Gtkada.MDI;
+with GNATCOLL.Traces;   use GNATCOLL.Traces;
 
 with VSS.Application;
+with VSS.Strings;                    use VSS.Strings;
+with VSS.Strings.Conversions;
+with VSS.Strings.Formatters.Strings; use VSS.Strings.Formatters.Strings;
+with VSS.Strings.Templates;          use VSS.Strings.Templates;
 
-with Basic_Types;               use Basic_Types;
-with Config;                    use Config;
-with Interfaces.C;
-with String_List_Utils;         use String_List_Utils;
-with String_Utils;              use String_Utils;
-with Glib_String_Utils;         use Glib_String_Utils;
-with GNATCOLL.Traces;           use GNATCOLL.Traces;
+with Glib.Convert;    use Glib.Convert;
+with Glib.Object;     use Glib.Object;
+with Glib.Properties; use Glib.Properties;
+with Glib.Menu_Model; use Glib.Menu_Model;
+with Glib.Values;     use Glib.Values;
+with Glib.Variant;    use Glib.Variant;
+
+with Gdk;               use Gdk;
+with Gdk.Cursor;        use Gdk.Cursor;
+with Gdk.Device;        use Gdk.Device;
+with Gdk.Event;         use Gdk.Event;
+with Gdk.Keyval;        use Gdk.Keyval;
+with Gdk.Main;
+with Gdk.Pixbuf;
+with Gdk.RGBA;          use Gdk.RGBA;
+with Gdk.Types.Keysyms; use Gdk.Types.Keysyms;
+with Gdk.Types;         use Gdk.Types;
+with Gdk.Window;        use Gdk.Window;
+
+with Gtk.Adjustment;           use Gtk.Adjustment;
+with Gtk.Alignment;            use Gtk.Alignment;
+with Gtk.Bin;                  use Gtk.Bin;
+with Gtk.Box;                  use Gtk.Box;
+with Gtk.Button;               use Gtk.Button;
+with Gtk.Cell_Renderer;        use Gtk.Cell_Renderer;
+with Gtk.Cell_Renderer_Pixbuf; use Gtk.Cell_Renderer_Pixbuf;
+with Gtk.Check_Button;         use Gtk.Check_Button;
+with Gtk.Container;            use Gtk.Container;
+with Gtk.Dialog;               use Gtk.Dialog;
+with Gtk.Enums;                use Gtk.Enums;
+with Gtk.Event_Box;            use Gtk.Event_Box;
+with Gtk.Frame;                use Gtk.Frame;
+with Gtk.GEntry;               use Gtk.GEntry;
+with Gtk.Handlers;             use Gtk.Handlers;
+with Gtk.Image;                use Gtk.Image;
+with Gtk.Label;                use Gtk.Label;
+with Gtk.List_Store;           use Gtk.List_Store;
+with Gtk.Menu;                 use Gtk.Menu;
+with Gtk.Menu_Bar;             use Gtk.Menu_Bar;
+with Gtk.Menu_Item;            use Gtk.Menu_Item;
+with Gtk.Menu_Shell;           use Gtk.Menu_Shell;
+with Gtk.Separator_Menu_Item;  use Gtk.Separator_Menu_Item;
+with Gtk.Style_Context;        use Gtk.Style_Context;
+with Gtk.Text_Iter;            use Gtk.Text_Iter;
+with Gtk.Text_Mark;            use Gtk.Text_Mark;
+with Gtk.Text_Tag;             use Gtk.Text_Tag;
+with Gtk.Text_View;            use Gtk.Text_View;
+with Gtk.Tree_Selection;       use Gtk.Tree_Selection;
+with Gtk.Tree_Store;           use Gtk.Tree_Store;
+with Gtk.Tree_View;            use Gtk.Tree_View;
+with Gtk.Tree_View_Column;     use Gtk.Tree_View_Column;
+with Gtk.Widget;               use Gtk.Widget;
+with Gtkada.Types;
+
+with Pango.Enums; use Pango.Enums;
+
+with Gtkada.Handlers; use Gtkada.Handlers;
+with Gtkada.MDI;      use Gtkada.MDI;
+
+with Basic_Types;       use Basic_Types;
+with Config;            use Config;
+with String_List_Utils; use String_List_Utils;
+with String_Utils;      use String_Utils;
+with Glib_String_Utils; use Glib_String_Utils;
 
 package body GUI_Utils is
 
@@ -259,12 +261,17 @@ package body GUI_Utils is
       while Iter /= Null_Iter loop
          declare
             Str : Virtual_String
-              renames To_Virtual_String (Model.Get_String (Iter, Col));
+              renames VSS.Strings.Conversions.To_Virtual_String
+                        (Model.Get_String (Iter, Col));
          begin
-            exit when Str = Text
+            exit when
+              Str = Text
               or else (not Case_Sensitive
                        and then Equal_Case_Insensitive
-                         (To_UTF_8_String (Text), To_UTF_8_String (Str)));
+                                  (VSS.Strings.Conversions.To_UTF_8_String
+                                     (Text),
+                                   VSS.Strings.Conversions.To_UTF_8_String
+                                     (Str)));
          end;
 
          Model.Next (Iter);
@@ -277,7 +284,7 @@ package body GUI_Utils is
             Gtk.List_Store.Append (Model, Iter);
          end if;
 
-         Model.Set (Iter, Col, To_UTF_8_String (Text));
+         Model.Set (Iter, Col, VSS.Strings.Conversions.To_UTF_8_String (Text));
       end if;
 
       if Select_Text then
@@ -3046,11 +3053,13 @@ package body GUI_Utils is
    function Create_Logo_And_Title_Area
      (Is_Dark_Theme : Boolean) return Gtk_Widget
    is
-      Frame  : Gtk_Frame;
-      Vbox   : Gtk_Box;
-      Logo   : Gtk_Image;
-      Label  : Gtk_Label;
-      Suffix : constant String := (if Is_Dark_Theme then "-dark" else "");
+      Frame    : Gtk_Frame;
+      Vbox     : Gtk_Box;
+      Logo     : Gtk_Image;
+      Label    : Gtk_Label;
+      Suffix   : constant String := (if Is_Dark_Theme then "-dark" else "");
+      Template : VSS.Strings.Templates.Virtual_String_Template := "Version {}";
+
    begin
       Gtk_New (Frame);
       Get_Style_Context (Frame).Add_Class ("gps-welcome-dialog-logo-area");
@@ -3065,7 +3074,10 @@ package body GUI_Utils is
          Size      => Icon_Size_Dialog);
       Vbox.Pack_Start (Logo, Expand => False);
 
-      Gtk_New (Label, "Version " & To_String (Config.Version));
+      Gtk_New
+        (Label,
+         VSS.Strings.Conversions.To_UTF_8_String
+           (Template.Format (Image (Config.Version))));
       Label.Set_Alignment (0.75, 0.5);
       Get_Style_Context (Label).Add_Class ("gps-welcome-dialog-version");
       Vbox.Pack_Start (Label, Expand => False, Padding => 10);

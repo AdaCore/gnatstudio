@@ -289,13 +289,12 @@ package body GPS.Kernel is
    ------------------
 
    function GNAT_Version
-     (Handle : access Kernel_Handle_Record) return String is
+     (Handle : access Kernel_Handle_Record)
+      return VSS.Strings.Virtual_String is
    begin
-      if Handle.GNAT_Version = Null_Unbounded_String then
-         return -"<unknown version>";
-      else
-         return To_String (Handle.GNAT_Version);
-      end if;
+      return
+        (if Handle.GNAT_Version_Cache.Is_Empty
+         then -"<unknown version>" else Handle.GNAT_Version_Cache);
    end GNAT_Version;
 
    -----------------------
@@ -306,7 +305,8 @@ package body GPS.Kernel is
      (Handle : access Kernel_Handle_Record;
       Date   : Date_Type) return Boolean
    is
-      Version       : constant String := GNAT_Version (Handle);
+      Version       : constant String :=
+        VSS.Strings.Conversions.To_UTF_8_String (Handle.GNAT_Version_Cache);
       Open_Index    : constant Natural := Index (Version, "(");
       Close_Index   : Natural;
       Compiler_Date : Date_Type;
