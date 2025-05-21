@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                               GNAT Studio                                --
 --                                                                          --
---                     Copyright (C) 2001-2023, AdaCore                     --
+--                     Copyright (C) 2001-2025, AdaCore                     --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -26,16 +26,18 @@ with Ada.Strings.Hash;
 with Ada.Strings.Hash_Case_Insensitive;
 with Ada.Strings.Unbounded;           use Ada.Strings.Unbounded;
 with Ada.Unchecked_Deallocation;
+with GNAT.Regpat;
+with GNAT.Strings;
 with System;
 
-with GNAT.Strings;
 with GNATCOLL.Projects;
-with GNAT.Regpat;
 with GNATCOLL.Refcount;
 with GNATCOLL.Scripts;
 with GNATCOLL.Traces;
 with GNATCOLL.Tribooleans;
 with GNATCOLL.VFS;                    use GNATCOLL.VFS;
+
+with VSS.Strings;
 
 with Glib.Main;
 with Glib;                            use Glib;
@@ -227,7 +229,7 @@ package GPS.Kernel is
    --  Return the language handler used by this kernel
 
    function GNAT_Version
-     (Handle : access Kernel_Handle_Record) return String;
+     (Handle : access Kernel_Handle_Record) return VSS.Strings.Virtual_String;
    --  Return a string containing the GNAT version number.
    --  The string has the form "Pro 6.4.0w (20100727-43)"
    --  See also Require_GNAT_Date below.
@@ -1240,7 +1242,7 @@ private
       --  but this gets invalid early when GNAT Studio exists, and we no
       --  longer have access to the main window while destroying its children
 
-      GNAT_Version : Unbounded_String;
+      GNAT_Version_Cache : VSS.Strings.Virtual_String;
       --  Full GNAT Version, if relevant
 
       Preferences : Default_Preferences.Preferences_Manager;

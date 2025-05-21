@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                               GNAT Studio                                --
 --                                                                          --
---                     Copyright (C) 2001-2024, AdaCore                     --
+--                     Copyright (C) 2001-2025, AdaCore                     --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -948,14 +948,18 @@ package body Help_Module is
       begin
          Set_Unbounded_String
            (About_Text,
-            "GNAT Studio " & To_String (Config.Version)
-            & " (" & Config.Source_Date
-            & (-") hosted on ") & Config.Target & LF
-            & (-"GNAT ") & GNAT_Version (Kernel)
-            & (if Compiler_Target /= "" then
-                  " targeting " & Compiler_Target
-               else
-                  ""));
+            "GNAT Studio "
+            & To_String (Config.Version)
+            & " ("
+            & Config.Source_Date
+            & (-") hosted on ")
+            & Config.Target
+            & LF
+            & (-"GNAT ")
+            & VSS.Strings.Conversions.To_UTF_8_String (Kernel.GNAT_Version)
+            & (if Compiler_Target /= ""
+               then " targeting " & Compiler_Target
+               else ""));
       end;
 
       --  Display the version used by CodePeer and SPARK, if found in the
