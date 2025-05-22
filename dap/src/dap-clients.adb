@@ -484,6 +484,7 @@ package body DAP.Clients is
 
             --  Raise the debugger console to make it focused
             DAP.Views.Consoles.Raise_Debugger_Console (Self.This);
+            Self.Display_Prompt_If_Needed;
 
          when Stopped =>
             --  Inform that the debugger has stopped
@@ -493,6 +494,8 @@ package body DAP.Clients is
             --  Inform that the debugger's location has changed
             GPS.Kernel.Hooks.Debugger_Location_Changed_Hook.Run
               (Self.Kernel, Self.Visual);
+
+            Self.Display_Prompt_If_Needed;
 
          when Terminating =>
             if Old in Initialized .. Running then
@@ -516,6 +519,25 @@ package body DAP.Clients is
 
       Self.Kernel.Refresh_Context;
    end Set_Status;
+
+   ------------------------------
+   -- Display_Prompt_If_Needed --
+   ------------------------------
+
+   procedure Display_Prompt_If_Needed (Self : in out DAP_Client)
+   is
+      Console : constant Interactive_Console :=
+        DAP.Views.Consoles.Get_Debugger_Interactive_Console (Self);
+
+   begin
+      if Self.Should_Display_Prompt
+        and then Console /= null
+      then
+         Console.Display_Prompt;
+      end if;
+
+      Self.Should_Display_Prompt := False;
+   end Display_Prompt_If_Needed;
 
    -------------
    -- Enqueue --
@@ -1490,11 +1512,15 @@ package body DAP.Clients is
                Text             : constant String :=
                  To_UTF8 (output.a_body.output);
             begin
+               Self.Should_Display_Prompt := Output_Console = Debugger_Console
+                 and then Self.Status not in Initialized .. Stopped;
+
                if Output_Console /= null then
                   Output_Console.Insert
-                    (Text    => Text,
-                     Mode    => Mode,
-                     Add_LF  => False);
+                    (Text        => Text,
+                     Mode        => Mode,
+                     Add_LF      => False,
+                     Show_Prompt => not Self.Should_Display_Prompt);
                end if;
             end;
          end;
@@ -2011,14 +2037,21 @@ package body DAP.Clients is
 
    begin
       if Console /= null then
+         Self.Should_Display_Prompt :=
+           Self.Status not in Initialized .. Stopped;
+
          if Is_Command then
             Console.Insert
               (To_UTF_8_String (Msg),
                Add_LF         => True,
                Mode           => GPS.Kernel.Verbose,
-               Add_To_History => True);
+               Add_To_History => True,
+               Show_Prompt    => not Self.Should_Display_Prompt);
          else
-            Console.Insert (To_UTF_8_String (Msg), Add_LF => True);
+            Console.Insert
+              (To_UTF_8_String (Msg),
+               Add_LF      => True,
+               Show_Prompt => not Self.Should_Display_Prompt);
          end if;
 
          Console_Child := Find_MDI_Child
@@ -2241,9 +2274,6 @@ package body DAP.Clients is
             On_Console_Destroy'Access,
             After       => True,
             User_Data   => Self.Id);
-
-         DAP.Views.Consoles.
-           Get_Debugger_Interactive_Console (Self).Display_Prompt;
       end if;
 
       Self.Set_Arguments (Node_Args);

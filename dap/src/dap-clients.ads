@@ -414,9 +414,13 @@ private
 
       Command_History  : aliased String_History.History_List;
 
-      Debugger_Console : Generic_Views.Abstract_View_Access := null;
-      Debuggee_Console : Generic_Views.Abstract_View_Access := null;
-      Debuggee_TTY     : GNAT.TTY.TTY_Handle;
+      Debugger_Console      : Generic_Views.Abstract_View_Access := null;
+      Debuggee_Console      : Generic_Views.Abstract_View_Access := null;
+      Debuggee_TTY          : GNAT.TTY.TTY_Handle;
+      Should_Display_Prompt : Boolean := False;
+      --  Should we display prompt in the debugger console after stop.
+      --  It is True when we displayed some gdb output during debuggee
+      --  execution that masked the previous prompt.
    end record;
 
    overriding function Error_Message
@@ -480,5 +484,8 @@ private
 
    procedure On_Initialized (Self : in out DAP_Client);
    --  Called when we have `initialize` response
+
+   procedure Display_Prompt_If_Needed (Self : in out DAP_Client);
+   --  Display a prompt in the debugger console when needed
 
 end DAP.Clients;
