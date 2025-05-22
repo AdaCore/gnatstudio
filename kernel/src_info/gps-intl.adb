@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                               GNAT Studio                                --
 --                                                                          --
---                     Copyright (C) 2001-2024, AdaCore                     --
+--                     Copyright (C) 2001-2025, AdaCore                     --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -17,6 +17,8 @@
 
 --  ??? Should use a callback to avoid direct dependency on GtkAda.Intl
 --  with Gtkada.Intl; use Gtkada.Intl;
+
+with VSS.Strings.Conversions;
 
 package body GPS.Intl is
 
@@ -40,6 +42,19 @@ package body GPS.Intl is
      (Msg : VSS.Strings.Virtual_String) return VSS.Strings.Virtual_String is
    begin
       return Msg;
+   end "-";
+
+   ---------
+   -- "-" --
+   ---------
+
+   function "-"
+     (Msg : VSS.Strings.Virtual_String)
+      return VSS.Strings.Templates.Virtual_String_Template is
+   begin
+      return
+        VSS.Strings.Templates.To_Virtual_String_Template
+          (VSS.Strings.Conversions.To_Wide_Wide_String (Msg));
    end "-";
 
 end GPS.Intl;

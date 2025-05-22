@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                               GNAT Studio                                --
 --                                                                          --
---                     Copyright (C) 2001-2024, AdaCore                     --
+--                     Copyright (C) 2001-2025, AdaCore                     --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -15,7 +15,7 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with VSS.Strings;
+with VSS.Strings.Templates;
 
 package GPS.Intl is
 
@@ -24,6 +24,9 @@ package GPS.Intl is
 
    function "-"
      (Msg : VSS.Strings.Virtual_String) return VSS.Strings.Virtual_String;
+   function "-"
+     (Msg : VSS.Strings.Virtual_String)
+      return VSS.Strings.Templates.Virtual_String_Template;
    --  Convenient shortcut to the Gettext function.
 
 end GPS.Intl;

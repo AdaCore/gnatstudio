@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                               GNAT Studio                                --
 --                                                                          --
---                     Copyright (C) 2024, AdaCore                          --
+--                     Copyright (C) 2024-2025, AdaCore                     --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -15,42 +15,50 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with Ada.Strings.Fixed;                use Ada.Strings.Fixed;
-with Ada.Strings.Unbounded;            use Ada.Strings.Unbounded;
-with Ada.Text_IO;                      use Ada.Text_IO;
-with Config;                           use Config;
-with Interfaces.C;                     use Interfaces.C;
-with Glib;                             use Glib;
-with Glib.Application;                 use Glib.Application;
-with Glib.Error;                       use Glib.Error;
-with Glib.Messages;                    use Glib.Messages;
+with Ada.Strings.Fixed;         use Ada.Strings.Fixed;
+with Ada.Strings.Unbounded;     use Ada.Strings.Unbounded;
+with Ada.Text_IO;               use Ada.Text_IO;
+with GNAT.Command_Line;         use GNAT.Command_Line;
+with GNAT.Directory_Operations; use GNAT.Directory_Operations;
+with GNAT.OS_Lib;               use GNAT.OS_Lib;
+with Interfaces.C;              use Interfaces.C;
+
+with VSS.Characters.Latin;           use VSS.Characters.Latin;
+with VSS.Command_Line;
+with VSS.Standard_Paths;
+with VSS.Strings;                    use VSS.Strings;
+with VSS.Strings.Conversions;
+with VSS.Strings.Formatters.Strings; use VSS.Strings.Formatters.Strings;
+with VSS.Strings.Templates;          use VSS.Strings.Templates;
+
+with GNATCOLL.Memory;
+with GNATCOLL.Traces;        use GNATCOLL.Traces;
+with GNATCOLL.Utils;         use GNATCOLL.Utils;
+with GNATCOLL.VFS;           use GNATCOLL.VFS;
+with GNATCOLL.VFS.VSS_Utils; use GNATCOLL.VFS.VSS_Utils;
+
+with Glib;             use Glib;
+with Glib.Application; use Glib.Application;
+with Glib.Error;       use Glib.Error;
+with Glib.Messages;    use Glib.Messages;
 with Glib.Option;
 with Glib.Utils;
-with GNAT.Command_Line;                use GNAT.Command_Line;
-with GNAT.Directory_Operations;        use GNAT.Directory_Operations;
-with GNAT.OS_Lib;                      use GNAT.OS_Lib;
-with GNATCOLL.Memory;
-with GNATCOLL.Traces;                  use GNATCOLL.Traces;
-with GNATCOLL.Utils;                   use GNATCOLL.Utils;
-with GNATCOLL.VFS;                     use GNATCOLL.VFS;
-with GNATCOLL.VFS.VSS_Utils;           use GNATCOLL.VFS.VSS_Utils;
-with GPS.Callbacks;                    use GPS.Callbacks;
-with GPS.Globals;                      use GPS.Globals;
-with GPS.Intl;                         use GPS.Intl;
-with GPS.Kernel;                       use GPS.Kernel;
-with GPS.Traces;
 with Gtk;
-with Gtk_Utils;                        use Gtk_Utils;
-with Gtkada.Dialogs;                   use Gtkada.Dialogs;
+with Gtk_Utils;        use Gtk_Utils;
+with Gtkada.Dialogs;   use Gtkada.Dialogs;
 with Gtkada.Intl;
-with Gtkada.Types;                     use Gtkada.Types;
-with GUI_Utils;                        use GUI_Utils;
+with Gtkada.Types;     use Gtkada.Types;
+
+with Config;         use Config;
+with GPS.Callbacks;  use GPS.Callbacks;
+with GPS.Globals;    use GPS.Globals;
+with GPS.Intl;       use GPS.Intl;
+with GPS.Kernel;     use GPS.Kernel;
+with GPS.Traces;
+with GUI_Utils;      use GUI_Utils;
 with Remote_Module;
-with Src_Editor_Box;                   use Src_Editor_Box;
+with Src_Editor_Box; use Src_Editor_Box;
 with String_Utils;
-with VSS.Standard_Paths;
-with VSS.Strings;
-with VSS.Strings.Conversions;
 
 package body GPS.Initialization is
 
@@ -173,7 +181,7 @@ package body GPS.Initialization is
       Setenv ("TERM", "dumb");
 
       declare
-         Home : constant VSS.Strings.Virtual_String :=
+         Home : constant Virtual_String :=
            Getenv_With_Fallback ("GNATSTUDIO_HOME", "GPS_HOME");
 
       begin
@@ -255,7 +263,8 @@ package body GPS.Initialization is
       begin
          if Edition_File.Is_Readable then
             Content := Edition_File.Read_File;
-            Config.Version := To_Unbounded_String (Content.all);
+            Config.Version :=
+              VSS.Strings.Conversions.To_Virtual_String (Content.all);
 
             --  In Community, GCov should be enabled
             if Starts_With (Content.all, "Community") then
@@ -520,8 +529,14 @@ package body GPS.Initialization is
          Stack_Trace_Depth => Memory_Stack_Depth,
          Disable_Free      => False);
 
-      Trace (Main_Trace, "GNAT Studio " & To_String (Config.Version) & " ("
-             & Config.Source_Date & ") hosted on " & Config.Target);
+      Trace
+        (Main_Trace,
+         "GNAT Studio "
+         & VSS.Strings.Conversions.To_UTF_8_String (Config.Version)
+         & " ("
+         & VSS.Strings.Conversions.To_UTF_8_String (Config.Source_Date)
+         & ") hosted on "
+         & VSS.Strings.Conversions.To_UTF_8_String (Config.Target));
       Trace (Main_Trace, "Gtk+ static version: "
              & String_Utils.Image (Integer (Gtk.Major_Version)) & '.'
              & String_Utils.Image (Integer (Gtk.Minor_Version)) & '.'
@@ -934,17 +949,26 @@ package body GPS.Initialization is
             --  in the main group (such as Gtk+ options)
             --  Get_Help (True) will only print options from the main
             --  group
-            Help : constant String :=
-              "GNAT Studio " & To_String (Config.Version) & " ("
-              & Config.Source_Date & ") hosted on "
-              & Config.Target & ASCII.LF & ASCII.LF
-              & GPS_Command_Line.Context.Get_Help
-              (Switch /= "--help-all", null);
-         begin
-            Put_Line (Help);
-         end;
 
-         GPS_Command_Line.Do_Exit := True;
+            Template : constant Virtual_String_Template :=
+              -("GNAT Studio {} ({}) hosted on {}"
+                & Line_Feed
+                & Line_Feed
+                & "{}");
+
+         begin
+            GPS_Command_Line.Do_Exit := True;
+
+            VSS.Command_Line.Report_Message
+              (Template.Format
+                 (Image (Config.Version),
+                  Image (Config.Source_Date),
+                  Image (Config.Target),
+                  Image
+                    (VSS.Strings.Conversions.To_Virtual_String
+                       (GPS_Command_Line.Context.Get_Help
+                          (Switch /= "--help-all", null)))));
+         end;
 
       elsif Switch = "-X" then
          Handle_X_Switch (ICS.Value (Value));
@@ -977,6 +1001,7 @@ package body GPS.Initialization is
             & ASCII.LF
             & "For now, you can still access this feature by enabling "
             & "the GPS.INTERNAL.MODULE_REMOTE trace.";
+
          begin
             Put_Line (Standard_Error, Obsolete_Msg);
 
@@ -1064,8 +1089,7 @@ package body GPS.Initialization is
            (Filename => Create_From_Base (+ICS.Value (Value)));
 
       elsif Switch = "--tracelist" then
-         GNATCOLL.Traces.Show_Configuration
-           (Ada.Text_IO.Put_Line'Access);
+         GNATCOLL.Traces.Show_Configuration (Put_Line'Access);
          GPS_Command_Line.Do_Exit := True;
 
       elsif Switch = "--pwd" then

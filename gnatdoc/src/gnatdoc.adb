@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                               GNAT Studio                                --
 --                                                                          --
---                     Copyright (C) 2007-2023, AdaCore                     --
+--                     Copyright (C) 2007-2025, AdaCore                     --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -20,6 +20,8 @@ with Ada.Characters.Latin_1;  use Ada.Characters.Latin_1;
 with Ada.Command_Line;
 with Ada.Text_IO;
 with Ada.Unchecked_Deallocation;
+
+with VSS.Strings.Conversions;
 
 with Config;
 with GNATCOLL.Iconv;
@@ -1443,9 +1445,14 @@ package body GNATdoc is
             & GNATdoc.Project_Environments.GNATdoc_Project_Environment'Class
               (Kernel.Registry.Environment.all).Get_GNAT_Version);
          Write_Line
-           (" GNATdoc version: " & To_String (Config.Version)
-            &  " (" & Config.Source_Date & ")");
-         Write_Line ("            Host: " & Config.Target);
+           (" GNATdoc version: "
+            & VSS.Strings.Conversions.To_UTF_8_String (Config.Version)
+            & " ("
+            & VSS.Strings.Conversions.To_UTF_8_String (Config.Source_Date)
+            & ")");
+         Write_Line
+           ("            Host: "
+            & VSS.Strings.Conversions.To_UTF_8_String (Config.Target));
 
          Write_Line;
 

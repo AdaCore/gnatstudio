@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                               GNAT Studio                                --
 --                                                                          --
---                     Copyright (C) 2013-2023, AdaCore                     --
+--                     Copyright (C) 2013-2025, AdaCore                     --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -20,6 +20,8 @@
 with Ada.Command_Line;
 with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
 with Ada.Text_IO;           use Ada.Text_IO;
+
+with VSS.Strings.Conversions;
 
 with GNAT.Command_Line;     use GNAT.Command_Line;
 with GNAT.OS_Lib;
@@ -415,10 +417,12 @@ begin
    if Show_Version then
       declare
          Version : constant String :=
-                     "GNATdoc "
-                       & To_String (Config.Version) & " ("
-                       & Config.Source_Date & ") hosted on "
-                       & Config.Target;
+           "GNATdoc "
+           & VSS.Strings.Conversions.To_UTF_8_String (Config.Version)
+           & " ("
+           & VSS.Strings.Conversions.To_UTF_8_String (Config.Source_Date)
+           & ") hosted on "
+           & VSS.Strings.Conversions.To_UTF_8_String (Config.Target);
       begin
          Put_Line (Version);
          return;
