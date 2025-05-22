@@ -14,7 +14,7 @@ def different_lines(s1, s2):
 
 MAIN_EXPECTED = """int main ()
 {
-     return 0;
+  return 0;
    }
 """
 
@@ -22,14 +22,14 @@ FOO_EXPECTED = """int foo ()
 {
   int a;
   int b;
-    return a + b;
+  return a + b;
   }
 """
 
 
 @run_test_driver
 def run_test():
-    GPS.Preference("LSP-Limit-Formatting").set(True)
+    GPS.Preference("Limit-LSP-Formatting-c++").set(True)
     buf = GPS.EditorBuffer.get(GPS.File("main.cpp"))
     yield wait_tasks(other_than=known_tasks)
     init_buf = buf.get_chars(include_hidden_chars=False)
@@ -38,7 +38,7 @@ def run_test():
     yield timeout(500)
     gps_assert(
         different_lines(buf.get_chars(include_hidden_chars=False), init_buf),
-        1,
+        2,
         "Too many different lines without selection",
     )
     gps_assert(
@@ -54,7 +54,7 @@ def run_test():
     yield timeout(500)
     gps_assert(
         different_lines(buf.get_chars(include_hidden_chars=False), init_buf),
-        3,
+        4,
         "Too many different lines with selection",
     )
     gps_assert(

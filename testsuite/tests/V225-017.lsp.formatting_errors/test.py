@@ -8,7 +8,6 @@ from gs_utils.internal.utils import *
 
 @run_test_driver
 def driver():
-    GPS.Preference("LSP-Ada-Use-GNATformat").set(False)
     b = GPS.EditorBuffer.get(GPS.File("main.adb"))
     GPS.execute_action("format file")
     yield wait_language_server("textDocument/formatting", "Ada")

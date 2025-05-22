@@ -53,7 +53,8 @@ package Default_Preferences.Enums is
          Path                      : Preference_Path;
          Name, Label, Doc          : String;
          Default                   : Enumeration;
-         Priority                  : Integer := -1)
+         Priority                  : Integer := -1;
+         Combo_Threshold           : Integer := 3)
          return Preference;
       --  Create a new preference whose possibles values are given by
       --  Enumeration

@@ -113,6 +113,13 @@ package body Src_Editor_Module is
    File_Properties_Contextual_Group : constant Integer := Integer'Last;
    --  Always keep the "Properties..." contextual menu at the last position
 
+   Range_Format_Name_Prefix   : constant String := "Editor-Range-Formatter-";
+   On_Type_Format_Name_Prefix : constant String := "Editor-On-Type-Formatter-";
+   Move_Cursor_Format_Prefix  : constant String :=
+     "Editor-Move-Cursor-Formatter-";
+   Limit_LSP_Format_Prefix    : constant String := "Limit-LSP-Formatting-";
+   Disabled_Pref_Choice       : constant String := "Disabled";
+
    type Editor_Child_Record is new GPS_MDI_Child_Record with null record;
 
    overriding procedure Tab_Contextual
@@ -391,11 +398,8 @@ package body Src_Editor_Module is
    --  Regenerate the "Open Recent Files" menu, based on the contents of the
    --  history key.
 
-   Range_Formatting_Provider_Pref   :
-     Default_Preferences.Enums.Choice_Preference;
-   On_Type_Formatting_Provider_Pref :
-     Default_Preferences.Enums.Choice_Preference;
-   Move_Cursor_When_Formatting      : Default_Preferences.Boolean_Preference;
+   function Get_Lang_Formatter_Pref
+     (Lang : Language.Language_Access; Prefix : String) return Preference;
 
    ------------------------------
    -- Filter_Matches_Primitive --
@@ -2414,16 +2418,44 @@ package body Src_Editor_Module is
              (File_Information (Ctxt)).Get_Name) = "ada";
    end Filter_Matches_Primitive;
 
+   -----------------------------
+   -- Get_Lang_Formatter_Pref --
+   -----------------------------
+
+   function Get_Lang_Formatter_Pref
+     (Lang : Language.Language_Access; Prefix : String)
+      return Preference
+   is
+      Id          : constant Source_Editor_Module :=
+        Source_Editor_Module (Src_Editor_Module_Id);
+      Lang_Name   : constant String := To_Lower (Lang.Get_Name);
+      Pref_Suffix : constant String :=
+        (if Lang_Name = "c" or else Lang_Name = "c++" or else Lang_Name = "cpp"
+         --  Merge C and C++ together
+         then "c++"
+         else Lang_Name);
+   begin
+      return Id.Get_Kernel.Get_Preferences.Get_Pref_From_Name
+           (Name                => Prefix & Pref_Suffix,
+            Create_If_Necessary => False);
+   end Get_Lang_Formatter_Pref;
+
    -----------------------------------
    -- Get_Range_Formatting_Provider --
    -----------------------------------
 
    function Get_Range_Formatting_Provider
-     return Editor_Formatting_Provider_Access
+     (Lang : Language.Language_Access)
+      return Editor_Formatting_Provider_Access
    is
       Id       : constant Source_Editor_Module :=
         Source_Editor_Module (Src_Editor_Module_Id);
-      Selected : constant String := Range_Formatting_Provider_Pref.Get_Pref;
+      Pref     : constant Preference :=
+        Get_Lang_Formatter_Pref (Lang, Range_Format_Name_Prefix);
+      Selected : constant String :=
+        (if Pref = null
+         then Id.Formatting_Providers.First_Element.Get_Name
+         else Pref.Get_Pref);
       Value    : constant Virtual_String :=
         To_Lowercase.Transform (To_Virtual_String (Selected));
    begin
@@ -2446,11 +2478,17 @@ package body Src_Editor_Module is
    -------------------------------------
 
    function Get_On_Type_Formatting_Provider
+     (Lang : Language.Language_Access)
      return Editor_Formatting_Provider_Access
    is
       Id       : constant Source_Editor_Module :=
         Source_Editor_Module (Src_Editor_Module_Id);
-      Selected : constant String := On_Type_Formatting_Provider_Pref.Get_Pref;
+      Pref     : constant Preference :=
+        Get_Lang_Formatter_Pref (Lang, On_Type_Format_Name_Prefix);
+      Selected : constant String :=
+        (if Pref = null
+         then Id.Formatting_Providers.First_Element.Get_Name
+         else Pref.Get_Pref);
       Value    : constant Virtual_String :=
         To_Lowercase.Transform (To_Virtual_String (Selected));
    begin
@@ -2472,10 +2510,35 @@ package body Src_Editor_Module is
    -- Get_Move_Cursor_When_Formatting --
    -------------------------------------
 
-   function Get_Move_Cursor_When_Formatting return Boolean is
+   function Get_Move_Cursor_When_Formatting
+     (Lang : Language.Language_Access) return Boolean
+   is
+      Pref : constant Preference :=
+        Get_Lang_Formatter_Pref (Lang, Move_Cursor_Format_Prefix);
    begin
-      return Move_Cursor_When_Formatting.Get_Pref;
+      if Pref /= null then
+         return Boolean_Preference (Pref).Get_Pref;
+      else
+         return False;
+      end if;
    end Get_Move_Cursor_When_Formatting;
+
+   ------------------------------
+   -- Get_Limit_LSP_Formatting --
+   ------------------------------
+
+   function Get_Limit_LSP_Formatting
+     (Lang : Language.Language_Access) return Boolean
+   is
+      Pref : constant Preference :=
+        Get_Lang_Formatter_Pref (Lang, Limit_LSP_Format_Prefix);
+   begin
+      if Pref /= null then
+         return Boolean_Preference (Pref).Get_Pref;
+      else
+         return False;
+      end if;
+   end Get_Limit_LSP_Formatting;
 
    ---------------------
    -- Register_Module --
@@ -3060,6 +3123,8 @@ package body Src_Editor_Module is
       Id      : constant Source_Editor_Module :=
         Source_Editor_Module (Src_Editor_Module_Id);
       Choices : VSS.String_Vectors.Virtual_String_Vector;
+      Langs   : constant VSS.String_Vectors.Virtual_String_Vector :=
+        ["Ada", "C++"];
    begin
       for Provider of Id.Formatting_Providers loop
          declare
@@ -3070,37 +3135,76 @@ package body Src_Editor_Module is
          end;
       end loop;
       --  Add an empty choice
-      Choices.Append ("Disabled");
+      Choices.Append
+        (VSS.Strings.Conversions.To_Virtual_String (Disabled_Pref_Choice));
 
-      Range_Formatting_Provider_Pref :=
-        Default_Preferences.Enums.Create
-          (Manager     => Kernel.Get_Preferences,
-           Name        => "Editor-Range-Formatter",
-           Choices     => Choices,
-           Default     => "LSP",
-           Label       => "Formatter for range formatting",
-           Doc         =>
-             "Choose which formatter should be used when "
-             & "formatting a range or a file.",
-           Path        => "Editor:Formatting");
-      On_Type_Formatting_Provider_Pref :=
-        Default_Preferences.Enums.Create
-          (Manager     => Kernel.Get_Preferences,
-           Name        => "Editor-On-Type-Formatter",
-           Choices     => Choices,
-           Default     => "Construct",
-           Label       => "Formatter on enter",
-           Doc         =>
-             "Choose which formatter should be used when pressing enter.",
-           Path        => "Editor:Formatting");
-      Move_Cursor_When_Formatting :=
-        Kernel.Get_Preferences.Create
-          (Name    => "Editor-Move-Cursor-Formatter",
-           Default => True,
-           Label   => "Move cursor when formatting",
-           Doc     =>
-             "Should the cursor move to the end of the formatting edit.",
-           Path    => "Editor:Formatting");
+      for Lang of Langs loop
+         declare
+            Menu_Name : constant String :=
+              (if Lang = "C++"
+               then "C & C++"
+               else VSS.Strings.Conversions.To_UTF_8_String (Lang));
+            Suffix_Name : constant String :=
+              To_Lower (VSS.Strings.Conversions.To_UTF_8_String (Lang));
+            --  Use lower case for consistency
+            Path        : constant String :=
+              "Editor/" & Menu_Name & ":Formatting";
+            Default     : constant VSS.Strings.Virtual_String :=
+              (if Lang = "Ada"
+               then VSS.Strings.Conversions.To_Virtual_String
+                 (Legacy_Formatter_Value)
+               else VSS.Strings.Conversions.To_Virtual_String
+                 (LSP_Formatter_Value));
+            Dummy       : Default_Preferences.Enums.Choice_Preference;
+            Ignore      : Default_Preferences.Boolean_Preference;
+         begin
+            Dummy :=
+              Default_Preferences.Enums.Create
+                (Manager         => Kernel.Get_Preferences,
+                 Name            => Range_Format_Name_Prefix & Suffix_Name,
+                 Choices         => Choices,
+                 Default         => Default,
+                 Label           => "Formatter for range formatting",
+                 Doc             =>
+                   "Choose which formatter should be used when "
+                   & "formatting a range. Legacy is GNAT Studio's own "
+                   & "formatter which will be baselined in favor of the "
+                   & "LSP formatter.",
+                 Path            => Path,
+                 Combo_Threshold => 1);
+            Dummy :=
+              Default_Preferences.Enums.Create
+                (Manager         => Kernel.Get_Preferences,
+                 Name            => On_Type_Format_Name_Prefix & Suffix_Name,
+                 Choices         => Choices,
+                 Default         => Default,
+                 Label           => "Formatter on enter",
+                 Doc             =>
+                   "Choose which formatter should be used when pressing "
+                   & "enter. Legacy is GNAT Studio's own formatter "
+                   & "which will be baselined in favor of the LSP formatter.",
+                 Path            => Path,
+                 Combo_Threshold => 1);
+            Ignore :=
+              Kernel.Get_Preferences.Create
+                (Name    => Move_Cursor_Format_Prefix & Suffix_Name,
+                 Default => True,
+                 Label   => "Move cursor when formatting",
+                 Doc     =>
+                   "Should the cursor move to the end of the formatting edit.",
+                 Path    => Path);
+            Ignore :=
+              Kernel.Get_Preferences.Create
+                (Name    => Limit_LSP_Format_Prefix & Suffix_Name,
+                 Default => False,
+                 Label   => "Limit LSP formatting",
+                 Doc     =>
+                   "Limit LSP formatting request to the current selection: "
+                 & "it prevents overzealous formatting affecting unselected"
+                 & "lines.",
+                 Path    => Path);
+         end;
+      end loop;
    end Create_Preferences;
 
    -------------

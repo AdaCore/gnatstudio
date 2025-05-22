@@ -1803,18 +1803,6 @@ package body GPS.Kernel.Preferences is
                & "default value"),
            Default => False);
 
-      LSP_Ada_Use_GNATformat :=
-        Kernel.Get_Preferences.Create
-          (Name    => "LSP-Ada-Use-GNATformat",
-           Default => True,
-           Label   => "Use GNATformat",
-           Doc     =>
-             "Enable GNATformat as the LSP "
-             & "formatting provider for Ada source files. "
-             & "When disabled, the deprecated GNATpp engine will be "
-             & "used instead.",
-           Path    => "Editor/Ada:Formatting");
-
       LSP_Ada_On_Type_Formatting :=
         Kernel.Get_Preferences.Create
           (Name    => "LSP-Ada-On-Type-Formatting",
@@ -1845,14 +1833,6 @@ package body GPS.Kernel.Preferences is
          Doc     => "Control whether the signature help window is displayed "
          & "in the editors.",
          Path    => "LSP:Completion");
-
-      LSP_Limit_Formatting := Kernel.Get_Preferences.Create
-        (Name    => "LSP-Limit-Formatting",
-         Default => False,
-         Label   => "Limit LSP formatting",
-         Doc     => "Limit LSP formatting request to the current selection: "
-         & "it prevents overzealous formatting affecting unselected lines.",
-         Path    => "LSP:Formatting");
 
       LSP_Ada_Insert_With_Clauses := Kernel.Get_Preferences.Create
           (Name    => "LSP-Ada-Insert-With-Clauses",

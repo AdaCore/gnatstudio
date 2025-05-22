@@ -28,8 +28,8 @@ end File3;
 
 @run_test_driver
 def on_gps_started():
-    GPS.Preference("Editor-On-Type-Formatter").set("LSP")
-    GPS.Preference("Editor-Range-Formatter").set("LSP")
+    GPS.Preference("Editor-On-Type-Formatter-ada").set("LSP")
+    GPS.Preference("Editor-Range-Formatter-ada").set("LSP")
     Preference("Ada-Casing-Policy").set("On_The_Fly")
     buf1 = EditorBuffer.get(File("file1.adb"))
 

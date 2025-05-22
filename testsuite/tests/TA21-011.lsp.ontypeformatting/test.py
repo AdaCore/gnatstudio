@@ -7,7 +7,7 @@ from gs_utils.internal.utils import *
 
 @run_test_driver
 def test_driver():
-    GPS.Preference("Editor-On-Type-Formatter").set("LSP")
+    GPS.Preference("Editor-On-Type-Formatter-c++").set("LSP")
     buf = GPS.EditorBuffer.get(GPS.File("main.cpp"))
     yield wait_tasks()
     start = buf.get_chars(include_hidden_chars=False)

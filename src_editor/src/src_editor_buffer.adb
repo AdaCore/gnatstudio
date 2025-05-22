@@ -6346,7 +6346,9 @@ package body Src_Editor_Buffer is
       Iter        : Gtk_Text_Iter;
    begin
       --  Can't move the cursor if the mark was deleted
-      if Get_Move_Cursor_When_Formatting and then Mark.Get_Deleted then
+      if not Get_Move_Cursor_When_Formatting (Buffer.Get_Language)
+        or else Mark.Get_Deleted
+      then
          return;
       end if;
 
@@ -6403,7 +6405,7 @@ package body Src_Editor_Buffer is
       To_Line   : Editable_Line_Type;
 
       Provider : constant Editor_Formatting_Provider_Access :=
-        Src_Editor_Module.Get_Range_Formatting_Provider;
+        Src_Editor_Module.Get_Range_Formatting_Provider (Buffer.Get_Language);
    begin
       if Provider = null then
          Trace
@@ -6512,7 +6514,8 @@ package body Src_Editor_Buffer is
       Start_Column, End_Column : Visible_Column_Type;
 
       Provider : constant Editor_Formatting_Provider_Access :=
-        Src_Editor_Module.Get_On_Type_Formatting_Provider;
+        Src_Editor_Module.Get_On_Type_Formatting_Provider
+          (Buffer.Get_Language);
    begin
       if Provider = null then
          Trace

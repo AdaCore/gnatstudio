@@ -15,21 +15,20 @@ from gs_utils.internal.utils import (
 expected = """procedure t is
    function F (A : Boolean; B : Boolean) return Boolean is (True);
 
-   function F2 return Boolean is (F (A => True, B => False));
+   function F2 return Boolean
+   is (F (A => True, B => False));
 """
 
 
 @run_test_driver
 def driver():
-    GPS.Preference("Editor-Range-Formatter").set("LSP")
-    # Use GNATpp LSP backend
-    GPS.Preference("LSP-Ada-Use-GNATformat").set(False)
+    GPS.Preference("Editor-Range-Formatter-ada").set("LSP")
     # Set the conditional continuation pref to a ridiculous amount
     GPS.Preference("Ada-Conditional-Level").set(120)
     b = GPS.EditorBuffer.get(GPS.File("t.adb"))
     yield wait_idle()
 
-    b.current_view().goto(b.at(6, 16))
+    b.select(b.at(4, 1), b.at(6, 1).end_of_line())
 
     # Retrieve the character next to the cursor's location
     cursor_loc = b.main_cursor().location()
@@ -42,7 +41,7 @@ def driver():
 
     # Verify that the proper indentation is produced
     gps_assert(
-        b.get_chars(b.at(1, 1), b.at(4, 1).end_of_line()),
+        b.get_chars(b.at(1, 1), b.at(5, 1).end_of_line()),
         expected,
         "Wrong format for aggregate in expression function",
     )

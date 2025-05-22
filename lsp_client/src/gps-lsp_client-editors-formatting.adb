@@ -39,7 +39,6 @@ with GPS.LSP_Client.Edit_Workspace;
 with GPS.LSP_Client.Utilities;
 with GPS.Kernel.Actions;
 with GPS.Kernel.MDI;
-with GPS.Kernel.Preferences;
 with GPS.Kernel.Modules;            use GPS.Kernel.Modules;
 with GPS.Kernel.Messages;
 with GPS.Kernel.Messages.Tools_Output;
@@ -302,7 +301,8 @@ package body GPS.LSP_Client.Editors.Formatting is
             Allow_File_Renaming      => False,
             Locations_Message_Markup => "",
             Limit_Span               =>
-              (if GPS.Kernel.Preferences.LSP_Limit_Formatting.Get_Pref
+              (if Src_Editor_Module.Get_Limit_LSP_Formatting
+                   (Editor.Get_Language)
                then Self.Span
                else LSP.Messages.Empty_Span),
             Compute_Minimal_Edits    =>  True,
@@ -595,7 +595,7 @@ package body GPS.LSP_Client.Editors.Formatting is
    is
       pragma Unreferenced (Self);
    begin
-      return "LSP";
+      return Src_Editor_Module.LSP_Formatter_Value;
    end Get_Name;
 
    -------------
