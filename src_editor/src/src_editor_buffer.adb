@@ -6446,30 +6446,34 @@ package body Src_Editor_Buffer is
             --  Start_Line and End_Line.
 
             --  Search upward for the first editable line
-            Search_Line := Start_Line;
-            while From_Line = 0 and then Search_Line < End_Line loop
-               Search_Line := Search_Line + 1;
-               --  Gint and Buffer_Line_Type are off by 1
+            --  We have tested Start_Line + 1, the next one is Start_Line + 2
+            Search_Line := Start_Line + 2;
+            while From_Line = 0 and then Search_Line <= End_Line loop
                From_Line :=
                  Get_Editable_Line
-                   (Buffer, Buffer_Line_Type (Search_Line + 1));
+                   (Buffer, Buffer_Line_Type (Search_Line));
+               Search_Line := Search_Line + 1;
             end loop;
 
             --  Search downward for the last editable line
+            --  We have tested End_Line + 1, the previous one is End_Line
             Search_Line := End_Line;
-            while To_Line = 0 and then Search_Line > Start_Line loop
-               Search_Line := Search_Line - 1;
-               --  Gint and Buffer_Line_Type are off by 1
+            while To_Line = 0 and then Search_Line >= Start_Line loop
                To_Line :=
                  Get_Editable_Line
-                   (Buffer, Buffer_Line_Type (Search_Line + 1));
+                   (Buffer, Buffer_Line_Type (Search_Line));
+               Search_Line := Search_Line - 1;
             end loop;
+
+            Trace (Me, "End_Line: " & End_Line'Image);
+            Trace (Me, "Search_Line: " & Search_Line'Image);
+            Trace (Me, "To_Line: " & To_Line'Image);
 
             --  Include all characters from the last line
             To_Column :=
-              Buffer.Editor_Buffer.New_Location (Integer (To_Line))
-                .End_Of_Line
-                .Column;
+              Buffer.Editor_Buffer.New_Location
+                (Line   => Integer (To_Line),
+                 Column => 1).End_Of_Line.Column;
          end;
       end if;
 
@@ -6619,11 +6623,13 @@ package body Src_Editor_Buffer is
       Indent_Params : Indent_Parameters;
    begin
       if not Buffer.Writable then
+         Trace (Me, "Buffer not writable");
          End_Action (Buffer);
          return False;
       end if;
 
       if not Get_Language_Context (Lang).Can_Indent then
+         Trace (Me, "Language Can't Indent");
          return False;
       end if;
 
