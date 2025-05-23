@@ -29,7 +29,7 @@ class MemoryUsageProvider(GPS.MemoryUsageProvider):
 
     def is_enabled(self):
         """
-        Return True if the gievn memory usage provider is currently enabled,
+        Return True if the given memory usage provider is currently enabled,
         False otherwise.
         """
 
