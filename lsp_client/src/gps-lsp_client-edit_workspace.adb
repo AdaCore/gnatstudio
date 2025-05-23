@@ -180,19 +180,19 @@ package body GPS.LSP_Client.Edit_Workspace is
             To         : constant GPS.Editors.Editor_Location'Class :=
               GPS.LSP_Client.Utilities.LSP_Position_To_Location
                 (Editor, Span.last);
-            Span_Text  : constant VSS.Strings.Virtual_String :=
-              Editor.Get_Text
-                (From                 => From,
-                 To                   => To,
-                 Include_Hidden_Chars => False);
+            --  We are using Get_Text below which includes the character after
+            --  To. TextEdits should ignore this character so move To backward
+            --  now to compensate.
+            --  Also handle the special case where From = To, we should not
+            --  move To backward or we will get the characters between From - 1
+            --  and To + 1.
             Old_Text   : constant VSS.Strings.Virtual_String :=
-              Span_Text.Head_Before (Span_Text.At_Last_Character);
-            --  XXX It is not clear why last character is ignored here. There
-            --  are two incorrect things might be here:
-            --   - remove LF character (CRLF must be handled too)
-            --   - conversion of LSP range is not equivalent to conversion of
-            --     two LSP positions
-            --  Need to be investigated!
+              (if From = To
+               then VSS.Strings.Empty_Virtual_String
+               else Editor.Get_Text
+                (From                 => From,
+                 To                   => To.Forward_Char (-1),
+                 Include_Hidden_Chars => False));
             New_Text   : constant VSS.Strings.Virtual_String :=
               Vectors.Element (C).Text;
 
