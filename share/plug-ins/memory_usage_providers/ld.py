@@ -109,7 +109,9 @@ class LD(core.MemoryUsageProvider):
         # been invoked (e.g: when building a library). Return imediately in
         # that case.
         if not os.path.isfile(map_file_name):
-            GPS.Logger("MEMORY_USAGE_VIEWS.LD").log("map file not found. Skipping.")
+            GPS.Logger("MEMORY_USAGE_VIEWS.LD").log(
+                f"map file not found at '{map_file_name}'. Skipping."
+            )
             visitor.on_memory_usage_data_fetched([], [], [])
             return
 

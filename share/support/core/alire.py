@@ -51,9 +51,10 @@ ALIRE_MODELS_XML = """
           <arg>%X</arg>
        </command-line>
        <iconname>gps-build-all-symbolic</iconname>
-       <switches command="%(tool_name)s" columns="1" lines="1" sections="--">
+       <switches command="%(tool_name)s" columns="1" lines="2" sections="-- -largs">
          <title column="1" line="1" >Profiles</title>
-            <radio
+         <title column="1" line="2" >Misc</title>
+         <radio
             line="1"
             label="Build Profiles"
             tip="A build profile can be selected with the appropriate switch.
@@ -65,7 +66,12 @@ in release mode.">
             switch="--release"/>
             <radio-entry label="Validation"
             switch="--validation"/>
-            </radio>
+         </radio>
+         <check label="Display memory usage" switch="-Wl,-Map=map.txt"
+            section="-largs"
+            tip="Display the memory usage in the Memory usage view"
+            filter="ld_supports_map_file"
+            line="2"/>
        </switches>
        <output-parsers>
          output_chopper
@@ -181,7 +187,7 @@ ALIRE_TARGETS_XML = """
        <in-toolbar>FALSE</in-toolbar>
        <in-menu>FALSE</in-menu>
        <iconname>gps-build-all-symbolic</iconname>
-       <launch-mode>MANUALLY</launch-mode>
+       <launch-mode>MANUALLY_WITH_DIALOG</launch-mode>
        <read-only>TRUE</read-only>
        <command-line>
           <arg>alr</arg>
@@ -200,7 +206,7 @@ ALIRE_TARGETS_XML = """
        <in-toolbar>FALSE</in-toolbar>
        <in-menu>FALSE</in-menu>
        <iconname>gps-build-main-symbolic</iconname>
-       <launch-mode>MANUALLY</launch-mode>
+       <launch-mode>MANUALLY_WITH_NO_DIALOG</launch-mode>
        <read-only>TRUE</read-only>
        <target-type>main</target-type>
        <command-line>
