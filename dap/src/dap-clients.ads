@@ -418,9 +418,11 @@ private
       Debuggee_Console      : Generic_Views.Abstract_View_Access := null;
       Debuggee_TTY          : GNAT.TTY.TTY_Handle;
       Should_Display_Prompt : Boolean := False;
-      --  Should we display prompt in the debugger console after stop.
-      --  It is True when we displayed some gdb output during debuggee
-      --  execution that masked the previous prompt.
+      --  Whether we should display a prompt when the DAP server
+      --  gets available again.
+      --  Set to True when the server displayed some debuggee output:
+      --  in this case we want to display a new prompt at the end of the
+      --  Debugger Console.
    end record;
 
    overriding function Error_Message
