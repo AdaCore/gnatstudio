@@ -15,26 +15,15 @@ FG_COLOR_COLUMN_ID = 5
 def test_driver():
     yield wait_tasks()
 
-    # Set a breakpoint in my_print.adb
-    buf = GPS.EditorBuffer.get(GPS.File("my_print.adb"))
-    buf.current_view().goto(buf.at(5, 1))
-    yield wait_idle()
-    yield wait_until_true(
-        lambda: GPS.Action("debug set line breakpoint").can_execute() == False
-    )
-    GPS.execute_action("debug set line breakpoint")
-    yield wait_idle()
-
     # Launch the debugger
     GPS.execute_action("Build & Debug Number 1")
     yield wait_for_mdi_child("Debugger Console")
 
-    # Substitute the path for my_print.adb, so that its location
-    # does not exist anymore on the disk
+    # Set a breakpoint in write - this will be called by the call to Put_Line
+    # in my_print.adb
     debug = GPS.Debugger.get()
-    yield wait_until_not_busy(debug)
-    debug.send("set substitute-path %s unknown.adb" % GPS.File("my_print.adb").path)
-    yield timeout(1000)
+    debug.send("break write")
+    yield wait_idle()
 
     # Continue the execution until we reach the breakpoint
     debug.send("run")
@@ -42,7 +31,7 @@ def test_driver():
 
     # We have reached the breakpoint, but it does not refer to an existing
     # file after the path substitution: verify that the frame for my_main.adb
-    # gets selected instead (frame 1, since it starts from 0).
+    # gets selected.
     win = GPS.MDI.get("Call Stack").pywidget()
     tree = get_widgets_by_type(Gtk.TreeView, win)[0]
     selection = tree.get_selection()
