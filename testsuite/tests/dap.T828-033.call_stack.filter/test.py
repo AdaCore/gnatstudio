@@ -21,7 +21,7 @@ def test_driver():
         yield wait_until_not_busy(d)
         yield p.send_promise(s)
 
-    yield wait_until_not_busy(d)
+    yield wait_DAP_server('stackTrace')
 
     win = GPS.MDI.get("Call Stack").pywidget()
     tree = get_widgets_by_type(Gtk.TreeView, win)[0]
