@@ -20,6 +20,7 @@ def test_driver():
 
     # select `test` executable
     tree_view = get_widgets_by_type(Gtk.TreeView, dialog)[0]
+    yield timeout(100)
     model = tree_view.get_model()
     itr = model.get_iter_first()
     while itr != None and model.get_value(itr, 0) != "test":
