@@ -13,8 +13,6 @@ EXPECTED = "   Put_Line (f\"The name is {Name} and the sum is {X + Y}.\");\n"
 
 @run_test_driver
 def test():
-    # Use GNATformat because it is not changing the casing compare to gnatpp
-    GPS.Preference("LSP-Ada-Use-GNATformat").set(True)
     buf = GPS.EditorBuffer.get(GPS.File("foo.adb"))
     text = get_widgets_by_type(Gtk.TextView, buf.current_view().pywidget())[0]
 

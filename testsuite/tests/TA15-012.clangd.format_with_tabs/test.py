@@ -33,7 +33,7 @@ EXPECTED = """.........
 
 @run_test_driver
 def driver():
-    GPS.Preference("Editor-Range-Formatter").set("LSP")
+    GPS.Preference("Editor-Range-Formatter-ada").set("LSP")
     b = GPS.EditorBuffer.get(GPS.File("hello.cpp"))
     # Select from the start to the end => it will put the insert mark
     # at the start

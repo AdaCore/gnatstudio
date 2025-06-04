@@ -195,9 +195,8 @@ package body GPS.LSP_Client.Configurations.ALS is
          Boolean'
            (GPS.Kernel.Preferences.LSP_Ada_Insert_With_Clauses.Get_Pref));
 
-      Ada_Settings.Set_Field
-        ("useGnatformat",
-         Boolean'(GPS.Kernel.Preferences.LSP_Ada_Use_GNATformat.Get_Pref));
+      --  Force gnatFormat, gnatpp should not be enabled by GS
+      Ada_Settings.Set_Field ("useGnatformat", True);
 
       declare
          On_Type_Formatting : constant GNATCOLL.JSON.JSON_Value :=

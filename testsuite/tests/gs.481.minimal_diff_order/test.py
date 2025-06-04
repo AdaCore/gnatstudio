@@ -18,9 +18,7 @@ expected = """   function F2 return Boolean
 
 @run_test_driver
 def driver():
-    GPS.Preference("Editor-Range-Formatter").set("LSP")
-    # Use GNATFormat LSP backend
-    GPS.Preference("LSP-Ada-Use-GNATformat").set(True)
+    GPS.Preference("Editor-Range-Formatter-ada").set("LSP")
     b = GPS.EditorBuffer.get(GPS.File("t.adb"))
     yield wait_idle()
 

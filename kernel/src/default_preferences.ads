@@ -1070,8 +1070,9 @@ private
       Widget : access GObject_Record'Class);
 
    type Enum_Preference_Record is abstract new Preference_Record with record
-      Enum_Value    : Integer;
-      Default       : Integer := -1;
+      Enum_Value      : Integer;
+      Default         : Integer := -1;
+      Combo_Threshold : Integer := 3;
    end record;
    overriding function Get_Pref
      (Pref : access Enum_Preference_Record) return String;

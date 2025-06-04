@@ -263,8 +263,8 @@ package body Ada_Module is
       Shared_Pref_Indent_Path  : constant Preference_Path :=
         -"Editor/Ada:Indentation";
       Non_LSP_Pref_Indent_Path : constant Preference_Path :=
-        -"Editor/Ada:Indentation (Old)";
-      --  If LSP is activated then hide the preferences
+        -":Old Engine Ada Formatter";
+      --  These preferences are not used by LSP and are hidden.
       Pref_Casing_Path         : constant Preference_Path :=
         -"Editor/Ada:Casing";
 
@@ -344,13 +344,14 @@ package body Ada_Module is
       Ada_Automatic_Indentation :=
         Indentation_Kind_Preferences.Create
           (Manager,
-           Path    => Non_LSP_Pref_Indent_Path,
-           Name    => "Ada-Auto-Indentation",
-           Default => Extended,
-           Doc     =>
+           Path            => Non_LSP_Pref_Indent_Path,
+           Name            => "Ada-Auto-Indentation",
+           Default         => Extended,
+           Doc             =>
              -"Enable auto-indentation for Ada sources."
-             & "(Not compatible with GNATFormat)",
-           Label   => -"Auto indentation");
+             & " (Not compatible with LSP Ada Formatter)",
+           Label           => -"Auto indentation",
+           Combo_Threshold => -1);
 
       Ada_Declaration_Level :=
         Create
@@ -362,7 +363,7 @@ package body Ada_Module is
            Default => 0,
            Doc     =>
              -"Number of extra spaces for multi line declarations."
-             & "(Not compatible with GNATFormat)",
+             & " (Not compatible with LSP Ada Formatter)",
            Label   => -"Declaration lines");
 
       Ada_Conditional_Level :=
@@ -375,7 +376,7 @@ package body Ada_Module is
            Default => 1,
            Doc     =>
              -"Number of extra spaces for multiple line conditionals."
-             & "(Not compatible with GNATFormat)",
+             & " (Not compatible with LSP Ada Formatter)",
            Label   => -"Conditional continuation lines");
 
       Ada_Record_Level :=
@@ -388,7 +389,7 @@ package body Ada_Module is
            Default => 3,
            Doc     =>
              -"Number of extra spaces for multiple line record types."
-             & "(Not compatible with GNATFormat)",
+             & " (Not compatible with LSP Ada Formatter)",
            Label   => -"Record indentation");
 
       Ada_Indent_Case_Extra :=
@@ -399,7 +400,7 @@ package body Ada_Module is
            Default => Automatic,
            Doc     =>
              -"Indent case statement with an extra level."
-             & "(Not compatible with GNATFormat)",
+             & " (Not compatible with LSP Ada Formatter)",
            Label   => -"Case indentation");
 
       Ada_Format_Operators :=
@@ -410,7 +411,7 @@ package body Ada_Module is
            Default => False,
            Doc     =>
              -"Add spaces around operators and delimiters."
-             & "(Not compatible with GNATFormat)",
+             & " (Not compatible with LSP Ada Formatter)",
            Label   => -"Format operators/delimiters");
 
       Ada_Align_On_Colons :=
@@ -421,7 +422,7 @@ package body Ada_Module is
            Default => False,
            Doc     =>
              -"Align colons in declaration statements."
-             & "(Not compatible with GNATFormat)",
+             & " (Not compatible with LSP Ada Formatter)",
            Label   => -"Align colons in declarations");
 
       Ada_Align_On_Arrows :=
@@ -432,7 +433,7 @@ package body Ada_Module is
            Default => False,
            Doc     =>
              -"Align associations on arrow delimiters."
-             & "(Not compatible with GNATFormat)",
+             & " (Not compatible with LSP Ada Formatter)",
            Label   => -"Align associations on arrows");
 
       Ada_Align_Decl_On_Colon :=
@@ -444,7 +445,7 @@ package body Ada_Module is
            Doc     =>
              -("Align continuation lines after a declaration "
                & "based on the colon character."
-               & "(Not compatible with GNATFormat)"),
+               & " (Not compatible with LSP Ada Formatter)"),
            Label   => -"Align declarations after colon");
 
       Ada_Indent_Comments :=
@@ -455,7 +456,7 @@ package body Ada_Module is
            Default => True,
            Doc     =>
              -"Indent lines with only comments."
-             & "(Not compatible with GNATFormat)",
+             & " (Not compatible with LSP Ada Formatter)",
            Label   => -"Indent comments");
 
       Ada_Stick_Comments :=
@@ -466,8 +467,8 @@ package body Ada_Module is
            Default => False,
            Doc     =>
              -("Align comment lines following 'record' and "
-               & "'is' keywords immediately with no extra space"
-               & "(Not compatible with GNATFormat)"),
+               & "'is' keywords immediately with no extra space."
+               & " (Not compatible with LSP Ada Formatter)"),
            Label   => -"Align comments on keywords");
 
       Ada_Casing_Policy :=

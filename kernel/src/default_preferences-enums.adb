@@ -35,10 +35,6 @@ with VSS.String_Vectors;      use VSS.String_Vectors;
 
 package body Default_Preferences.Enums is
 
-   Needs_Combo_Threshold : constant := 3;
-   --  Number of choices from which enum preferences are displayed using
-   --  combo boxes instead of radio buttons.
-
    type Enum_Radio_Button_Record is new Gtk_Radio_Button_Record with record
       Enum_Value : Integer;
       --  The enumeration value associated with this radio button
@@ -358,9 +354,7 @@ package body Default_Preferences.Enums is
 
       --  If the preference should be displayed with radio buttons, place them
       --  in a group named using the preference's label.
-      if Combo_Threshold /= -1
-        and then Choices.Length > Result.Combo_Threshold
-      then
+      if Choices.Length > Result.Combo_Threshold then
          Manager.Register
            (Name     => Name,
             Path     => Path,
@@ -499,7 +493,8 @@ package body Default_Preferences.Enums is
          Path                      : Preference_Path;
          Name, Label, Doc          : String;
          Default                   : Enumeration;
-         Priority                  : Integer := -1)
+         Priority                  : Integer := -1;
+         Combo_Threshold           : Integer := 3)
          return Preference
       is
          P      : constant Default_Preferences.Preference :=
@@ -522,6 +517,7 @@ package body Default_Preferences.Enums is
                     Enumeration'Pos (Default);
             end;
 
+            Enum_Preference (Result).Combo_Threshold := Combo_Threshold;
          else
             Enum_Preference (Result).Enum_Value := Enumeration'Pos (Default);
          end if;
@@ -530,7 +526,7 @@ package body Default_Preferences.Enums is
 
          --  If the preference should be displayed with radio buttons, place
          --  them in a group named using the preference's label.
-         if Enumeration'Range_Length > Needs_Combo_Threshold then
+         if Enumeration'Range_Length > Combo_Threshold then
             Manager.Register
               (Path     => Path,
                Name     => Name,
@@ -625,7 +621,8 @@ package body Default_Preferences.Enums is
       begin
          Build_Choices;
 
-         if Enumeration_Choices'Last > Needs_Combo_Threshold then
+         if Enumeration_Choices'Last > Enum_Preference (Pref).Combo_Threshold
+         then
             Widget := Gtk_Widget
               (Create_Enum_Combo_Box (Pref    => Pref,
                                  Manager => Manager,
@@ -705,7 +702,7 @@ package body Default_Preferences.Enums is
       overriding function Editor_Needs_Label
         (Pref : not null access Preference_Record) return Boolean
       is
-        (Enumeration'Range_Length > Needs_Combo_Threshold);
+        (Enumeration'Range_Length > Enum_Preference (Pref).Combo_Threshold);
 
    end Generics;
 

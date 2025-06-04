@@ -8,7 +8,7 @@ from gs_utils.internal.utils import *
 
 @run_test_driver
 def run_test():
-    GPS.Preference("Editor-Range-Formatter").set("LSP")
+    GPS.Preference("Editor-Range-Formatter-ada").set("LSP")
     buf = GPS.EditorBuffer.get(GPS.File("main.cpp"))
     GPS.execute_action("format selection")
     yield wait_language_server("textDocument/rangeFormatting", "C++")

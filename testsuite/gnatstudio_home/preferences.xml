@@ -11,6 +11,8 @@
   <pref name="General/Display-Tip-Of-The-Day">FALSE</pref>
   <pref name="Documentation:GNATdoc/Doc-Spawn-Browser" >FALSE</pref>
   <pref name="debugger-console-in-out" >FALSE</pref>
-  <pref name="Editor-Range-Formatter" >Construct</pref>
-  <pref name="Editor-On-Type-Formatter" >Construct</pref>
+  <pref name="Editor-Range-Formatter-ada" >Legacy</pref>
+  <pref name="Editor-On-Type-Formatter-ada" >Legacy</pref>
+  <pref name="Editor-Range-Formatter-c++" >LSP</pref>
+  <pref name="Editor-On-Type-Formatter-c++">LSP</pref>
 </GPS>
