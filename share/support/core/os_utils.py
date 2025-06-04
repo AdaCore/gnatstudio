@@ -27,6 +27,16 @@ def locate_exec_on_path(prog):
     return ""
 
 
+def locate_file(file, path=os.getenv("GPR_PROJECT_PATH")):
+    """Utility function to locate a file on a path."""
+
+    alldirs = str.split(path, os.pathsep)
+    for item in [os.path.join(dir, file) for dir in alldirs]:
+        if os.path.isfile(item):
+            return item
+    return ""
+
+
 def display_name(filename):
     if os.name == "nt" and os.getenv("GNAT_CODE_PAGE") == "CP_ACP":
         return str(filename, "ISO-8859-1").encode("UTF-8")

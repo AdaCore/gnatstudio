@@ -1281,11 +1281,20 @@ XML = (
     </command-line>
   </target>
 
+  <doc_path>{prefix}/share/doc/</doc_path>
+
+  <documentation_file>
+    <name>gnatdas/html/gnattest/gnattest_part.html</name>
+    <descr>GNATtest User's Guide</descr>
+    <category>Tools</category>
+    <menu>/Help/Tools/GNATtest User's Guide</menu>
+  </documentation_file>
 </gnattest>
 """
 )
 
-GPS.parse_xml(XML)
+bin_dir = os.path.dirname(locate_exec_on_path("gnattest"))
+GPS.parse_xml(XML.format(prefix=os.path.dirname(bin_dir)))
 
 # We create the Build Targets related to GNATtest when GNAT Studio is launched.
 # Afterwards we only update the visibility of the affected Build Targets

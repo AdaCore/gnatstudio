@@ -606,7 +606,7 @@ class GNATcovPlugin(Module):
             X("descr").children("GNATcoverage User's Guide"),
             X("category").children("GNATcoverage"),
             X("menu", before="About").children(
-                "/Help/GNATcoverage/GNATcoverage User's Guide"
+                "/Help/Tools/GNATcoverage User's Guide"
             ),
         ),
     ]
@@ -618,7 +618,7 @@ class GNATcovPlugin(Module):
             X("descr").children("GNATemulator Documentation"),
             X("category").children("GNATcoverage"),
             X("menu", before="About").children(
-                "/Help/GNATcoverage/GNATemulator Documentation"
+                "/Help/Tools/GNATemulator Documentation"
             ),
         ),
     ]

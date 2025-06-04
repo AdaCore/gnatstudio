@@ -254,6 +254,21 @@ class GNATfuzzPlugin(Module):
         ),
     ]
 
+    gnatfuzz_doc_path = os.path.join(gnatfuzz_install_dir, "share/doc")\
+        if gnatfuzz_install_dir else None
+
+    GNATFUZZ_DOCUMENTATION = [
+        X("doc_path").children(gnatfuzz_doc_path),
+        X("documentation_file").children(
+            X("name").children("gnatdas/html/gnatfuzz/gnatfuzz_part.html"),
+            X("descr").children("GNATfuzz User's Guide"),
+            X("category").children("Tools"),
+            X("menu", before="About").children(
+                "/Help/Tools/GNATfuzz User's Guide"
+            ),
+        ),
+    ]
+
     def setup(self):
         # This plugin makes sense only if GNATfuzz is available:
         # return immediately if not.
@@ -266,6 +281,10 @@ class GNATfuzzPlugin(Module):
 
         # Create the build targets
         GPS.parse_xml(list_to_xml(self.BUILD_TARGETS))
+
+        # Create documentation menu item
+        if gnatfuzz_doc_path:
+            GPS.parse_xml(list_to_xml(self.GNATFUZZ_DOCUMENTATION))
 
         ref_menu = "Analyze"
 
