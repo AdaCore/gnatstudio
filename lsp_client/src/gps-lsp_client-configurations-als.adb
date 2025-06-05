@@ -201,11 +201,13 @@ package body GPS.LSP_Client.Configurations.ALS is
       declare
          On_Type_Formatting : constant GNATCOLL.JSON.JSON_Value :=
            GNATCOLL.JSON.Create_Object;
+         use GPS.Kernel.Preferences;
       begin
          On_Type_Formatting.Set_Field
            ("indentOnly",
-            Boolean'(
-              GPS.Kernel.Preferences.LSP_Ada_On_Type_Formatting.Get_Pref));
+            LSP_Ada_On_Type_Formatting.Get_Pref
+            = VSS.Strings.Conversions.To_UTF_8_String
+              (GPS.Kernel.Preferences.Indent_Choice));
          Ada_Settings.Set_Field ("onTypeFormatting", On_Type_Formatting);
       end;
 

@@ -377,11 +377,14 @@ package GPS.Kernel.Preferences is
    LSP_GPR_File_Diagnostics        : Boolean_Preference;
    LSP_Alire_Diagnostics           : Boolean_Preference;
    LSP_Ada_Insert_With_Clauses     : Boolean_Preference;
-   LSP_Ada_On_Type_Formatting      : Boolean_Preference;
    LSP_Ada_Param_Threshold         : Integer_Preference;
    LSP_Ada_Rename_In_Comment       : Boolean_Preference;
    LSP_Diagnostics_Display         :
      LSP_Diagnostics_Display_Policy_Prefs.Preference;
+
+   Indent_Choice : constant VSS.Strings.Virtual_String := "Indent";
+   Format_Choice : constant VSS.Strings.Virtual_String := "Format";
+   LSP_Ada_On_Type_Formatting : Default_Preferences.Enums.Choice_Preference;
 
    -- LSP semantic styles --
    Use_External_Highlighting : External_Highlighting_Preferences.Preference;
