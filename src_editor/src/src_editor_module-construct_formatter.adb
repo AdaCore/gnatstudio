@@ -204,7 +204,7 @@ package body Src_Editor_Module.Construct_Formatter is
    is
       pragma Unreferenced (Self);
    begin
-      return "Construct";
+      return Legacy_Formatter_Value;
    end Get_Name;
 
    ---------------------

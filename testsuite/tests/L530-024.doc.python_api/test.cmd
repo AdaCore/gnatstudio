@@ -29,6 +29,6 @@ PATH=.:$PATH gnatstudio --load=python:$doc_prefix/generate.py --traceoff=TESTSUI
 for file in GPS GPS.Browsers menus ; do
 
    tr -d '\r' < $file.rst > $file.rst.stripped
-   diff $doc_prefix/$file.rst $file.rst.stripped
+   diff -u $doc_prefix/$file.rst $file.rst.stripped
 
 done

@@ -24,10 +24,8 @@ expected_spaces = """   function F2 return Boolean
 
 @run_test_driver
 def driver():
-    # Use GNATFormat LSP backend
     GPS.Preference("Ada-Use-Tabs").set(True)
-    GPS.Preference("LSP-Ada-Use-GNATformat").set(True)
-    GPS.Preference("Editor-Range-Formatter").set("LSP")
+    GPS.Preference("Editor-Range-Formatter-ada").set("LSP")
     b = GPS.EditorBuffer.get(GPS.File("t.adb"))
     yield wait_idle()
 

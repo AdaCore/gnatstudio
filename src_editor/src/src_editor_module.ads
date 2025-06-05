@@ -42,6 +42,7 @@ with Gtk.Text_Buffer;             use Gtk.Text_Buffer;
 with Gtk.Text_View;               use Gtk.Text_View;
 with Gtk.Widget;                  use Gtk.Widget;
 with Gtkada.MDI;                  use Gtkada.MDI;
+with Language;
 with Src_Contexts;
 with Src_Editor_Box;
 with Src_Editor_Box.Tooltips;     use Src_Editor_Box.Tooltips;
@@ -56,6 +57,9 @@ package Src_Editor_Module is
    Src_Editor_Module_Name : constant String := "Source_Editor";
 
    Search_Result_Highlighting : constant String := "Search Results";
+
+   Legacy_Formatter_Value : constant String := "Legacy";
+   LSP_Formatter_Value    : constant String := "LSP";
 
    ---------------------------------------
    -- Module-specific graphical objects --
@@ -317,14 +321,23 @@ package Src_Editor_Module is
    --  Register a formatting provider
 
    function Get_Range_Formatting_Provider
-     return Editor_Formatting_Provider_Access;
-   --  Get the currently active Range Formatter Provider
+     (Lang : Language.Language_Access)
+      return Editor_Formatting_Provider_Access;
+   --  Get the currently active Range Formatter Provider for Lang
 
    function Get_On_Type_Formatting_Provider
-     return Editor_Formatting_Provider_Access;
-   --  Get the currently active OnType Formatter Provider
+     (Lang : Language.Language_Access)
+      return Editor_Formatting_Provider_Access;
+   --  Get the currently active OnType Formatter Provider for Lang
 
-   function Get_Move_Cursor_When_Formatting return Boolean;
+   function Get_Move_Cursor_When_Formatting
+     (Lang : Language.Language_Access) return Boolean;
+   --  Return True if the cursor should be moved when formatting for Lang
+
+   function Get_Limit_LSP_Formatting
+     (Lang : Language.Language_Access) return Boolean;
+   --  Return True if the language should limit LSP formatting for Lang
+
 private
 
    ------------------------

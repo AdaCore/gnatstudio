@@ -34,7 +34,7 @@ public:
 
 @run_test_driver
 def test_driver():
-    GPS.Preference("Editor-On-Type-Formatter").set("LSP")
+    GPS.Preference("Editor-On-Type-Formatter-c++").set("LSP")
     GPS.Preference("clangd-BasedOnStyle").set("LLVM")
     f = GPS.File("my_class.hh")
     b = GPS.EditorBuffer.get(f)

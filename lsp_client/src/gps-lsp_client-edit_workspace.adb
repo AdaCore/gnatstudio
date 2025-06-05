@@ -483,6 +483,40 @@ package body GPS.LSP_Client.Edit_Workspace is
          Editor : GPS.Editors.Editor_Buffer'Class;
          Vector : Vectors.Vector);
 
+      function Get_Limited_Changes
+        (Changes : Vectors.Vector) return Vectors.Vector;
+      --  Limit the changes to the initial span if required
+
+      -------------------------
+      -- Get_Limited_Changes --
+      -------------------------
+
+      function Get_Limited_Changes
+        (Changes : Vectors.Vector) return Vectors.Vector
+      is
+         use type LSP.Messages.Span;
+         Result : Vectors.Vector;
+         C      : Vectors.Cursor;
+      begin
+         if Command.Limit_Span = LSP.Messages.Empty_Span then
+            return Changes;
+         else
+            C := Changes.First;
+
+            while Vectors.Has_Element (C) loop
+               if Edit_Affect_Span
+                 (Vectors.Element (C).Span.first,
+                  Vectors.Element (C).Span.last)
+               then
+                  Result.Append (Vectors.Element (C));
+               end if;
+               C.Next;
+            end loop;
+
+            return Result;
+         end if;
+      end Get_Limited_Changes;
+
       ----------------------
       -- Edit_Affect_Span --
       ----------------------
@@ -499,18 +533,21 @@ package body GPS.LSP_Client.Edit_Workspace is
          if Command.Limit_Span = LSP.Messages.Empty_Span then
             return True;
          else
-            Trace (Me,
-                   "From.line: " & Line_Number'Image (From.line)
-                   & ASCII.LF
-                   & "To.line: " & Line_Number'Image (To.line)
-                   & ASCII.LF
-                   );
+            if Me.Is_Active then
+               Trace (Me,
+                      "From.line: " & Line_Number'Image (From.line)
+                      & ASCII.LF
+                      & "To.line: " & Line_Number'Image (To.line)
+                      & ASCII.LF
+                     );
+            end if;
+            --  Check if Limit_Span is partially include in the textEdit
             return
-              (Command.Limit_Span.first.line < From.line
-               and then From.line < Command.Limit_Span.last.line)
+              (From.line <= Command.Limit_Span.first.line
+               and then Command.Limit_Span.first.line <= To.line)
               or else
-                (Command.Limit_Span.first.line <= To.line
-                 and then To.line <= Command.Limit_Span.last.line);
+                (From.line <= Command.Limit_Span.last.line
+                 and then Command.Limit_Span.last.line <= To.line);
          end if;
       end Edit_Affect_Span;
 
@@ -565,16 +602,18 @@ package body GPS.LSP_Client.Edit_Workspace is
          Editor : GPS.Editors.Editor_Buffer'Class;
          Vector : Vectors.Vector)
       is
-         G        : constant Group_Block := Editor.New_Undo_Group;
-         C        : Vectors.Cursor;
-         Writable : Boolean := False;
-         Ignored  : GPS.Kernel.Messages.Markup.Markup_Message_Access;
-         URI      : constant LSP.Messages.DocumentUri :=
+         G               : constant Group_Block := Editor.New_Undo_Group;
+         C               : Vectors.Cursor;
+         Writable        : Boolean := False;
+         Ignored         : GPS.Kernel.Messages.Markup.Markup_Message_Access;
+         URI             : constant LSP.Messages.DocumentUri :=
            GPS.LSP_Client.Utilities.To_URI (File);
-         Changes  : constant Vectors.Vector :=
+         Limited_Changes : constant Vectors.Vector :=
+           Get_Limited_Changes (Vector);
+         Changes         : constant Vectors.Vector :=
            (if Command.Compute_Minimal_Edits then
-               Get_Minimal_Changes (Kernel, Editor, Vector)
-            else Vector);
+               Get_Minimal_Changes (Kernel, Editor, Limited_Changes)
+            else Limited_Changes);
       begin
          if Command.Make_Writable
            and then Editor.Is_Read_Only
@@ -610,13 +649,7 @@ package body GPS.LSP_Client.Edit_Workspace is
                Rev_To_Column   : Visible_Column_Type;
                Rev_Text        : Ada.Strings.Unbounded.Unbounded_String;
             begin
-               if not Edit_Affect_Span
-                 (Vectors.Element (C).Span.first,
-                  Vectors.Element (C).Span.last)
-               then
-                  --  This edit is silently ignored
-                  Rev_To_Line := -1;
-               elsif not Writable then
+               if not Writable then
                   GPS.Kernel.Messages.Simple.Create_Simple_Message
                     (Container  => Get_Messages_Container (Command.Kernel),
                      Category   => Command.Title,

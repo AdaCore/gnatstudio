@@ -15,7 +15,7 @@ int main()
 
 @run_test_driver
 def test_driver():
-    GPS.Preference("Editor-On-Type-Formatter").set("LSP")
+    GPS.Preference("Editor-On-Type-Formatter-c++").set("LSP")
     buf = GPS.EditorBuffer.get(GPS.File("main.c"))
     yield wait_tasks()
     buf.current_view().goto(buf.at(4, 16))

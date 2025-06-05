@@ -1456,6 +1456,12 @@ The Help Menu
 
    Display a HTML page with a pointer to all documentation known to GNAT Studio
 
+.. index:: menu; help --> ada
+
+* :menuselection:`Help --> Ada`
+
+   This menu contains pointers to the Ada reference manuals.
+
 .. index:: menu; help --> gnat studio --> welcome
 
 * :menuselection:`Help --> GNAT Studio --> Welcome`
@@ -1494,24 +1500,6 @@ The Help Menu
    This menu is generated automatically, and provides documentation
    for the compiler and accompanying tools, along with examples.
 
-.. index:: menu; help --> gpr --> gpr tools user's guide
-
-* :menuselection:`Help --> GPR --> GPR Tools User's Guide`
-
-   display documentation GPR Tools User's Guide
-
-.. index:: menu; help --> gnu tools
-
-* :menuselection:`Help --> GNU Tools`
-
-   Manuals for the GNU Tools that come with your compiler.
-
-.. index:: menu; help --> ada
-
-* :menuselection:`Help --> Ada`
-
-   This menu contains pointers to the Ada reference manuals.
-
 .. index:: menu; help --> python --> python tutorial
 
 * :menuselection:`Help --> Python --> Python Tutorial`
@@ -1537,6 +1525,90 @@ The Help Menu
    This menu is available if the GNATSAS toolset is installed on your
    system and available on your PATH. See your GNATSAS documentation for
    more details.
+
+.. index:: menu; help --> tools --> aunit cookbook
+
+* :menuselection:`Help --> Tools --> AUnit Cookbook`
+
+   display documentation AUnit Cookbook
+
+.. index:: menu; help --> tools --> aws: the ada web server
+
+* :menuselection:`Help --> Tools --> AWS: The Ada Web Server`
+
+   display documentation AWS: The Ada Web Server
+
+.. index:: menu; help --> tools --> gnatcoll core components
+
+* :menuselection:`Help --> Tools --> GNATColl Core Components`
+
+   display documentation GNATColl Core Components
+
+.. index:: menu; help --> tools --> gnatdoc user's guide
+
+* :menuselection:`Help --> Tools --> GNATdoc User's Guide`
+
+   display documentation GNATdoc User's Guide
+
+.. index:: menu; help --> tools --> gnatstack user's guide
+
+* :menuselection:`Help --> Tools --> GNATstack User's Guide`
+
+   display documentation GNATstack User's Guide
+
+.. index:: menu; help --> tools --> gprbuild and gpr companion tools user's guide
+
+* :menuselection:`Help --> Tools --> GPRbuild and GPR Companion Tools User's Guide`
+
+   display documentation GPRbuild and GPR Companion Tools User's Guide
+
+.. index:: menu; help --> tools --> templates parser: a template engine
+
+* :menuselection:`Help --> Tools --> Templates Parser: A template engine`
+
+   display documentation Templates Parser: A template engine
+
+.. index:: menu; help --> tools --> xmlada: the xml library for ada
+
+* :menuselection:`Help --> Tools --> XMLAda: the XML Library for Ada`
+
+   display documentation XMLAda: the XML Library for Ada
+
+.. index:: menu; help --> tools --> gnu tools --> gnu binary utilities
+
+* :menuselection:`Help --> Tools --> GNU Tools --> GNU Binary Utilities`
+
+   display documentation GNU Binary Utilities
+
+.. index:: menu; help --> tools --> gnu tools --> gnu gprof
+
+* :menuselection:`Help --> Tools --> GNU Tools --> GNU gprof`
+
+   display documentation GNU gprof
+
+.. index:: menu; help --> tools --> gnu tools --> gnu ld
+
+* :menuselection:`Help --> Tools --> GNU Tools --> GNU ld`
+
+   display documentation GNU ld
+
+.. index:: menu; help --> tools --> gnu tools --> using as
+
+* :menuselection:`Help --> Tools --> GNU Tools --> Using AS`
+
+   display documentation Using AS
+
+.. index:: menu; help --> tools --> gnu tools --> using gcc
+
+* :menuselection:`Help --> Tools --> GNU Tools --> Using GCC`
+
+   display documentation Using GCC
+
+.. index:: menu; help --> tools --> gnu tools --> using the gnu debugger
+
+* :menuselection:`Help --> Tools --> GNU Tools --> Using the GNU Debugger`
+
+   display documentation Using the GNU Debugger
 
 .. index:: menu; help --> create bug report
 
