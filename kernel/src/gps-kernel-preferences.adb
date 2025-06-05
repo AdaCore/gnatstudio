@@ -1813,8 +1813,8 @@ package body GPS.Kernel.Preferences is
            Doc             =>
              -"Decide if GNAT Studio should just indent when adding "
              & "a new line or if it should also format the current "
-             & "block of code. Formatter on enter must be set to LSP for "
-             & "this setting to apply.",
+             & "block of code. This setting only applies when 'Formatter on enter' "
+             & "is set to 'LSP'.",
            Combo_Threshold => -1,
            Path            => "Editor/Ada:Formatting");
 
