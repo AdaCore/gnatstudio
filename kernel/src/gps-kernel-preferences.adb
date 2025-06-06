@@ -1804,15 +1804,19 @@ package body GPS.Kernel.Preferences is
            Default => False);
 
       LSP_Ada_On_Type_Formatting :=
-        Kernel.Get_Preferences.Create
-          (Name    => "LSP-Ada-On-Type-Formatting",
-           Default => True,
-           Label   => "Action on new line",
-           Doc     =>
-             -"Decide if GNAT Studio should just indent when adding"
-             & " a new line or if it should also format the current"
-             & " block of code.",
-           Path    => "Editor/Ada:Formatting");
+        Default_Preferences.Enums.Create
+          (Manager         => Manager,
+           Name            => "LSP-Ada-On-Type-Formatting",
+           Choices         => [Indent_Choice, Format_Choice],
+           Default         => Format_Choice,
+           Label           => "Action on new line",
+           Doc             =>
+             -"Decide if GNAT Studio should just indent when adding "
+             & "a new line or if it should also format the current "
+             & "block of code. This setting only applies when 'Formatter on enter' "
+             & "is set to 'LSP'.",
+           Combo_Threshold => -1,
+           Path            => "Editor/Ada:Formatting");
 
       LSP_Use_Snippets := Kernel.Get_Preferences.Create
         (Name    => "LSP-Completion-Use-Snippets",
