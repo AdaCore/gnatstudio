@@ -27,10 +27,13 @@ def locate_exec_on_path(prog):
     return ""
 
 
-def locate_file(file, path=os.getenv("GPR_PROJECT_PATH")):
+def locate_file(file, path=None):
     """Utility function to locate a file on a path."""
 
-    alldirs = str.split(path, os.pathsep) if path else []
+    if path is None:
+        path = os.getenv("GPR_PROJECT_PATH", "")
+
+    alldirs = path.split(os.pathsep) if path != "" else []
     for item in [os.path.join(dir, file) for dir in alldirs]:
         if os.path.isfile(item):
             return item

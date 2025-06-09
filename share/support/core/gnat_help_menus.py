@@ -185,7 +185,7 @@ class GNATMenus(Module):
                             break
 
         for gpr in list(_GPR_DOC_ENTRIES.keys()):
-            ex = os_utils.locate_file(gpr, os.getenv("GPR_PROJECT_PATH"))
+            ex = os_utils.locate_file(gpr, os.getenv("GPR_PROJECT_PATH", ""))
             if ex:
                 for descr, tup in _GPR_DOC_ENTRIES[gpr].items():
                     html_files, menu_base = tup
