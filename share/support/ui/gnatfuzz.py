@@ -283,7 +283,7 @@ class GNATfuzzPlugin(Module):
         GPS.parse_xml(list_to_xml(self.BUILD_TARGETS))
 
         # Create documentation menu item
-        if gnatfuzz_doc_path:
+        if self.gnatfuzz_doc_path:
             GPS.parse_xml(list_to_xml(self.GNATFUZZ_DOCUMENTATION))
 
         ref_menu = "Analyze"

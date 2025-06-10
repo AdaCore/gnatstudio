@@ -81,6 +81,7 @@ with DAP.Views.Variables;
 with DAP.Types;
 with DAP.Utils;
 with String_Utils;
+with Xref;
 
 package body DAP.Module is
 
@@ -536,7 +537,9 @@ package body DAP.Module is
       end if;
 
       --  Return immediately if we are not hovering on an entity
-      if not Has_Entity_Name_Information (Context) then
+      if not Has_Entity_Name_Information (Context)
+        or else Xref.Is_Subprogram (Get_Entity (Context))
+      then
          return null;
       end if;
 
