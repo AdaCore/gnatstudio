@@ -261,17 +261,6 @@ package body VSS.Implementation.Text_Handlers.UTF8.Python is
       return VSS.Implementation.Python3.PyBytes_Size (Self.Bytes) = 0;
    end Is_Empty;
 
-   ------------
-   -- Length --
-   ------------
-
-   overriding function Length
-     (Self : Python_UTF8_Text)
-      return VSS.Implementation.Strings.Character_Count is
-   begin
-      return Self.Length;
-   end Length;
-
    ---------------
    -- Reference --
    ---------------
@@ -359,23 +348,6 @@ package body VSS.Implementation.Text_Handlers.UTF8.Python is
       end;
    end To_UTF_8_String;
 
-   ------------------------------------
-   -- UTF8_Constant_Storage_And_Size --
-   ------------------------------------
-
-   overriding procedure UTF8_Constant_Storage_And_Size
-     (Self    : Python_UTF8_Text;
-      Pointer : out
-        VSS.Implementation.Interfaces_C.UTF8_Code_Unit_Constant_Access;
-      Size    : out VSS.Unicode.UTF8_Code_Unit_Count) is
-   begin
-      Pointer :=
-        VSS.Implementation.Python3.PyBytes_AsString (Self.Bytes);
-      Size :=
-        VSS.Unicode.UTF8_Code_Unit_Offset
-          (VSS.Implementation.Python3.PyBytes_Size (Self.Bytes));
-   end UTF8_Constant_Storage_And_Size;
-
    ----------------------------------
    -- UTF8_Constant_Storage_Poiner --
    ----------------------------------
@@ -387,18 +359,6 @@ package body VSS.Implementation.Text_Handlers.UTF8.Python is
    begin
       return VSS.Implementation.Python3.PyBytes_AsString (Self.Bytes);
    end UTF8_Constant_Storage_Poiner;
-
-   ---------------
-   -- UTF8_Size --
-   ---------------
-
-   overriding function UTF8_Size
-     (Self : Python_UTF8_Text) return VSS.Unicode.UTF8_Code_Unit_Count is
-   begin
-      return
-        VSS.Unicode.UTF8_Code_Unit_Offset
-          (VSS.Implementation.Python3.PyBytes_Size (Self.Bytes));
-   end UTF8_Size;
 
    -----------------
    -- Unreference --
@@ -494,10 +454,14 @@ package body VSS.Implementation.Text_Handlers.UTF8.Python is
 
       declare
          Overlay : Python_UTF8_Text :=
-           (Bytes   => Bytes,
+           (Size    =>
+              VSS.Unicode.UTF8_Code_Unit_Offset
+                (VSS.Implementation.Python3.PyBytes_Size (Bytes)),
             Length  =>
               VSS.Implementation.Strings.Character_Count
-                (VSS.Implementation.Python3.PyUnicode_GetLength (Object)))
+                (VSS.Implementation.Python3.PyUnicode_GetLength (Object)),
+            Storage => VSS.Implementation.Python3.PyBytes_AsString (Bytes),
+            Bytes   => Bytes)
            with Address => Data'Address;
 
       begin
