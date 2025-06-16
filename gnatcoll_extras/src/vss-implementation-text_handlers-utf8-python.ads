@@ -22,9 +22,10 @@ package VSS.Implementation.Text_Handlers.UTF8.Python is
 private
 
    type Python_UTF8_Text is new Abstract_UTF8_Text with record
-      Bytes  : GNATCOLL.Python.PyObject;
-      Length : VSS.Implementation.Strings.Character_Count;
-   end record with Object_Size => 192;
+      Storage :
+        VSS.Implementation.Interfaces_C.UTF8_Code_Unit_Constant_Access;
+      Bytes   : GNATCOLL.Python.PyObject;
+   end record with Object_Size => 256;
 
    overriding procedure Reference (Self : in out Python_UTF8_Text);
 
@@ -37,10 +38,6 @@ private
    --     Generator : in out VSS.Implementation.FNV_Hash.FNV_1a_Generator);
    --  --  Compute hash value of the string as little-endian UTF-32 encoded
    --  --  character sequence.
-
-   overriding function Length
-     (Self : Python_UTF8_Text)
-      return VSS.Implementation.Strings.Character_Count;
 
    overriding function Element
      (Self     : Python_UTF8_Text;
@@ -101,18 +98,9 @@ private
       Lines           : in out
         VSS.Implementation.String_Vectors.String_Vector_Data_Access);
 
-   overriding function UTF8_Size
-     (Self : Python_UTF8_Text) return VSS.Unicode.UTF8_Code_Unit_Count;
-
    overriding function UTF8_Constant_Storage_Poiner
      (Self : Python_UTF8_Text)
       return not null
         VSS.Implementation.Interfaces_C.UTF8_Code_Unit_Constant_Access;
-
-   overriding procedure UTF8_Constant_Storage_And_Size
-     (Self    : Python_UTF8_Text;
-      Pointer : out
-        VSS.Implementation.Interfaces_C.UTF8_Code_Unit_Constant_Access;
-      Size    : out VSS.Unicode.UTF8_Code_Unit_Count);
 
 end VSS.Implementation.Text_Handlers.UTF8.Python;
