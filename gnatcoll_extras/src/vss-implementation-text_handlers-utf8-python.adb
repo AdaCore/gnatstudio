@@ -348,18 +348,6 @@ package body VSS.Implementation.Text_Handlers.UTF8.Python is
       end;
    end To_UTF_8_String;
 
-   ----------------------------------
-   -- UTF8_Constant_Storage_Poiner --
-   ----------------------------------
-
-   overriding function UTF8_Constant_Storage_Poiner
-     (Self : Python_UTF8_Text)
-      return not null
-        VSS.Implementation.Interfaces_C.UTF8_Code_Unit_Constant_Access is
-   begin
-      return VSS.Implementation.Python3.PyBytes_AsString (Self.Bytes);
-   end UTF8_Constant_Storage_Poiner;
-
    -----------------
    -- Unreference --
    -----------------
