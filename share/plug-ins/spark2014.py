@@ -98,63 +98,67 @@ def print_error(message):
 
 # getters for proof target depending on user profile
 
+def is_basic_mode():
+    # Do a safe insensitive string check
+    return GPS.Preference(User_Profile_Pref_Name).get().lower() == "basic"
+
 
 def prove_all():
-    if GPS.Preference(User_Profile_Pref_Name).get() == "Basic":
+    if is_basic_mode():
         return basic_prove_all
-    elif GPS.Preference(User_Profile_Pref_Name).get() == "Advanced":
+    else:
         return advanced_prove_all
 
 
 def prove_root_project():
-    if GPS.Preference(User_Profile_Pref_Name).get() == "Basic":
+    if is_basic_mode():
         return basic_prove_root_project
-    elif GPS.Preference(User_Profile_Pref_Name).get() == "Advanced":
+    else:
         return advanced_prove_root_project
 
 
 def prove_file():
-    if GPS.Preference(User_Profile_Pref_Name).get() == "Basic":
+    if is_basic_mode():
         return basic_prove_file
-    elif GPS.Preference(User_Profile_Pref_Name).get() == "Advanced":
+    else:
         return advanced_prove_file
 
 
 def prove_subp():
-    if GPS.Preference(User_Profile_Pref_Name).get() == "Basic":
+    if is_basic_mode():
         return basic_prove_subp
-    elif GPS.Preference(User_Profile_Pref_Name).get() == "Advanced":
+    else:
         return advanced_prove_subp
 
 
 def prove_line():
-    if GPS.Preference(User_Profile_Pref_Name).get() == "Basic":
+    if is_basic_mode():
         return basic_prove_line
-    elif GPS.Preference(User_Profile_Pref_Name).get() == "Advanced":
+    else:
         return advanced_prove_line
 
 
 def prove_region():
-    if GPS.Preference(User_Profile_Pref_Name).get() == "Basic":
+    if is_basic_mode():
         return basic_prove_region
-    elif GPS.Preference(User_Profile_Pref_Name).get() == "Advanced":
+    else:
         return advanced_prove_region
 
 
 # used to launch Prove Line from Location View
 def prove_line_loc():
-    if GPS.Preference(User_Profile_Pref_Name).get() == "Basic":
+    if is_basic_mode():
         return basic_prove_line_loc
-    elif GPS.Preference(User_Profile_Pref_Name).get() == "Advanced":
+    else:
         return advanced_prove_line_loc
 
 
 # in case of manual provers, prove_check is
 # the only one allowed to open editors
 def prove_check():
-    if GPS.Preference(User_Profile_Pref_Name).get() == "Basic":
+    if is_basic_mode():
         return basic_prove_check
-    elif GPS.Preference(User_Profile_Pref_Name).get() == "Advanced":
+    else:
         return advanced_prove_check
 
 
