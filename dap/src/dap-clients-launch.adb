@@ -42,9 +42,9 @@ package body DAP.Clients.Launch is
      (Self        : in out Launch_Request;
       Client      : not null access DAP.Clients.DAP_Client'Class;
       Result      : DAP.Tools.LaunchResponse;
-      New_Request : in out DAP_Request_Access) is null;
+      New_Request : in out DAP_Request_Access);
    --  gdb 17.x send the answer after the configurationDone request when the
-   --  executable has been started so we don't have what to do here.
+   --  executable has been started.
 
    overriding procedure On_Error_Message
      (Self    : in out Launch_Request;
@@ -111,7 +111,21 @@ package body DAP.Clients.Launch is
 
       --  gdb 17.x does not send the answer until configurationDone request
       --  is sent. Move this code to On_Result when it is changed.
-      Client.On_Launched (Start_Method => DAP.Types.Launched);
+      Client.On_Launched_Sent (Start_Method => DAP.Types.Launched);
    end Send_Launch_Request;
+
+   -----------------------
+   -- On_Result_Message --
+   -----------------------
+
+   overriding procedure On_Result_Message
+     (Self        : in out Launch_Request;
+      Client      : not null access DAP.Clients.DAP_Client'Class;
+      Result      : DAP.Tools.LaunchResponse;
+      New_Request : in out DAP_Request_Access) is
+   begin
+      New_Request := null;
+      Client.Set_Status (Running);
+   end On_Result_Message;
 
 end DAP.Clients.Launch;
