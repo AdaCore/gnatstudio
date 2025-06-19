@@ -17,19 +17,19 @@ def test_driver():
     debug = GPS.Debugger.get()
     debug.send("run")
     yield wait_until_not_busy(debug)
+    yield wait_idle()
+    gps_assert(debug.is_busy(), False, "debugger should not be busy")
 
     # At this stage, the debuggee process has been terminated
     # Adding a breakpoint to ensure that the process is really restarted
-    view = Breakpoints_View()
-    ed = view.create()
-    yield ed.open_and_yield()
-    ed.filename.set_text("main.adb")
-    ed.line.set_text("5")
-    yield ed.ok()
+    debug.break_at_location(GPS.File("main.adb"), 5)
     yield wait_until_not_busy(debug)
+    yield wait_idle()
 
     debug.send("run")
     yield wait_DAP_server("stackTrace")
+    yield wait_until_not_busy(debug)
+    yield wait_idle()
 
     # check that we set the cursor on the breakpoint line
     # which means that we stopped on the breakpoint
