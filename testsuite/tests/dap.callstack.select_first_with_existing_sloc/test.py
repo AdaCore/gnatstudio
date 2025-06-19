@@ -8,7 +8,6 @@ from gs_utils.internal.utils import *
 from gi.repository import Gdk
 
 LOCATION_COLUMN_ID = 2
-FG_COLOR_COLUMN_ID = 5
 
 
 @run_test_driver
@@ -23,11 +22,14 @@ def test_driver():
     # in my_print.adb
     debug = GPS.Debugger.get()
     debug.send("break write")
+    yield wait_until_not_busy(debug)
     yield wait_idle()
 
     # Continue the execution until we reach the breakpoint
     debug.send("run")
     yield wait_DAP_server("stackTrace")
+    yield wait_until_not_busy(debug)
+    yield wait_idle()
 
     # We have reached the breakpoint, but it does not refer to an existing
     # file after the path substitution: verify that the frame for my_main.adb
