@@ -133,7 +133,7 @@ package body GNATCOLL.Scripts.VSS_Utils is
             return
               VSS.Implementation.Python3.PyUnicode_FromStringAndSize
                 (S.UTF8_Constant_Storage_Poiner,
-                 VSS.Implementation.Python3.Py_ssize_t (S.UTF8_Size));
+                 VSS.Implementation.Python3.Py_ssize_t (S.Size));
          end;
 
       else
