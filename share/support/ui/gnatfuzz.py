@@ -68,6 +68,12 @@ class GNATfuzzPlugin(Module):
                 )
             ),
         ),
+        X("target-model", name="gnatfuzz-corpus-gen-model", category="").children(
+            X("description").children("Launch gnatfuzz corpus-gen"),
+            X("command-line").children(),
+            X("iconname").children("gps-build-all-symbolic"),
+            X("switches", command="gnatfuzz", columns="0", lines="0"),
+        ),
         X("target-model", name="gnatfuzz-fuzz-model", category="").children(
             X("description").children("Launch gnatfuzz fuzz"),
             X("command-line").children(),
@@ -161,6 +167,29 @@ class GNATfuzzPlugin(Module):
                 X("arg").children("%X"),
                 X("arg").children("-S"),
                 X("arg").children("%F"),
+            ),
+        ),
+        X(
+            "target",
+            model="gnatfuzz-corpus-gen-model",
+            category="_GNATfuzz_",
+            name="gnatfuzz corpus-gen",
+            menu="",
+        ).children(
+            X("target-type").children(""),
+            X("in-toolbar").children("FALSE"),
+            X("in-menu").children("FALSE"),
+            X("read-only").children("TRUE"),
+            X("output-parsers").children(
+                "output_chopper utf_converter console_writer end_of_build"
+            ),
+            X("iconname").children("gps-build-all-symbolic"),
+            X("launch-mode").children("MANUALLY"),
+            X("command-line").children(
+                X("arg").children("gnatfuzz"),
+                X("arg").children("corpus-gen"),
+                X("arg").children("-P%PP"),
+                X("arg").children("%subdirsarg"),
             ),
         ),
         X(
@@ -570,6 +599,16 @@ class GNATfuzzPlugin(Module):
         """Action to launch the 'gnatfuzz generate' workflow"""
         workflows.task_workflow("gnatfuzz generate", self.gnatfuzz_generate_workflow)
 
+    ##############
+    # Corpus-Gen #
+    ##############
+
+    def gnatfuzz_corpus_gen_workflow(self, task):
+        """The 'gnatfuzz corpus-gen' workflow"""
+        p = promises.TargetWrapper("gnatfuzz corpus-gen")
+        r = yield p.wait_on_execute()
+        return r
+
     ########
     # Fuzz #
     ########
@@ -603,6 +642,13 @@ class GNATfuzzPlugin(Module):
             # to gnatfuzz.
             if not (variable.startswith("GNATFUZZ") or variable == "AFL_MODE"):
                 args.append(f"-X{variable}={value}")
+
+        corpus_gen_result = yield self.gnatfuzz_corpus_gen_workflow(task)
+        if corpus_gen_result != 0:
+            GPS.Console("Messages").write(
+                "gnatfuzz corpus-gen returned nonzero", mode="error"
+            )
+            return
 
         GPS.BuildTarget("gnatfuzz fuzz").execute(
             extra_args=args,
