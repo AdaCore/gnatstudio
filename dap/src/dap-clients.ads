@@ -128,12 +128,11 @@ package DAP.Clients is
    --  Quit the current debugging session, sending the DAP 'disconnect' request
    --  if a debuggee has been launched by the debugger.
 
-   procedure On_Launched
+   procedure On_Launched_Sent
      (Self         : in out DAP_Client;
       Start_Method : Debuggee_Start_Method_Kind);
-   --  Inform the debugger that the debuggee has been started, we are now ready
-   --  for debugging.
-   --  Start_Method should specify which method was used to start the debuggee.
+   --  Launched request has been sent. Start_Method should specify which
+   --  method was used to start the debuggee.
 
    procedure On_Breakpoints_Initialized (Self : in out DAP_Client);
    --  Called when all the initial breakpoints have been set on the server

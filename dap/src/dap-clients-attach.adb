@@ -104,7 +104,7 @@ package body DAP.Clients.Attach is
 
       --  gdb 17.x does not send the answer until configurationDone request
       --  is sent. Move this code to On_Result when it is changed.
-      Client.On_Launched (Start_Method => DAP.Types.Attached);
+      Client.On_Launched_Sent (Start_Method => DAP.Types.Attached);
    end Send_Attach_Request;
 
 end DAP.Clients.Attach;
