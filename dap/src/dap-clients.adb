@@ -774,7 +774,8 @@ package body DAP.Clients is
    begin
       Self.Source_Files := Source_Files;
 
-      --  Now we have sources list, create a project if needed.
+      --  Now that we have the list of sources, create a project if
+      --  needed.
       Self.Load_Project_From_Executable;
    end Set_Source_Files;
 
