@@ -57,7 +57,6 @@ package body DAP.Clients.LoadedSources is
       end loop;
 
       Client.Set_Source_Files (Source_Files);
-      Client.On_Launched (Start_Method => DAP.Types.Launched);
    end On_Result_Message;
 
    -----------------

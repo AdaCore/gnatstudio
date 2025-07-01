@@ -486,6 +486,14 @@ package body DAP.Clients is
             DAP.Views.Consoles.Raise_Debugger_Console (Self.This);
             Self.Display_Prompt_If_Needed;
 
+         when Running =>
+            --  Trigger Debuggee_Started_Hook if we did not trigger it before
+            if not Self.Is_Debuggee_Started_Called then
+               Self.Is_Debuggee_Started_Called := True;
+               GPS.Kernel.Hooks.Debuggee_Started_Hook.Run
+                 (Self.Kernel, Self.Visual);
+            end if;
+
          when Stopped =>
             --  Inform that the debugger has stopped
             GPS.Kernel.Hooks.Debugger_Process_Stopped_Hook.Run
@@ -765,6 +773,10 @@ package body DAP.Clients is
       Source_Files : VSS.String_Vectors.Virtual_String_Vector) is
    begin
       Self.Source_Files := Source_Files;
+
+      --  Now that we have the list of sources, create a project if
+      --  needed.
+      Self.Load_Project_From_Executable;
    end Set_Source_Files;
 
    --------------------
@@ -1163,25 +1175,19 @@ package body DAP.Clients is
       Self.Project := Project;
    end Load_Project_From_Executable;
 
-   -----------------
-   -- On_Launched --
-   -----------------
+   ----------------------
+   -- On_Launched_Sent --
+   ----------------------
 
-   procedure On_Launched
+   procedure On_Launched_Sent
      (Self         : in out DAP_Client;
       Start_Method : Debuggee_Start_Method_Kind) is
    begin
       Self.Start_Method := Start_Method;
 
-      --  The debuggee is now laucnhed: ask for its source files if we do not
-      --  have any loaded project.
-      if not Self.Source_Files.Is_Empty then
-         Self.Load_Project_From_Executable;
-      end if;
-
       Self.Create_Debuggee_Console;
       Self.Initialize_Breakpoints;
-   end On_Launched;
+   end On_Launched_Sent;
 
    -------------------
    -- On_Configured --
@@ -1588,24 +1594,26 @@ package body DAP.Clients is
                Self.Is_Debuggee_Started_Called := True;
                GPS.Kernel.Hooks.Debuggee_Started_Hook.Run
                  (Self.Kernel, Self.Visual);
+            end if;
 
-               --  The debuggee has been stopped for the first time and we
-               --  still have no project associated to the running debugger:
-               --  send the 'loadedSources' DAP request to create one from
-               --  the debuggee's loaded sources.
-               if Self.Get_Project = No_Project
-                 and then
-                   (not Self.Get_Capabilities.Is_Set
-                    or else Self.Get_Capabilities.
-                      Value.supportsLoadedSourcesRequest)
-               then
-                  --  Debugging has been started directly on a pre-built
-                  --  executable, not from a project: send the DAP
-                  --  'loadedSources' request to retrieve its source files.
-                  New_Request := DAP.Requests.DAP_Request_Access
-                    (DAP.Clients.LoadedSources.Create (Self.Kernel));
-                  Self.Enqueue (New_Request);
-               end if;
+            --  If the debuggee has been stopped and we still have no
+            --  project associated to the running debugger:
+            --  send the 'loadedSources' DAP request to create one from
+            --  the debuggee's loaded sources.
+            if Self.Get_Project = No_Project
+              and then
+                (not Self.Get_Capabilities.Is_Set
+                 or else Self.Get_Capabilities.
+                   Value.supportsLoadedSourcesRequest)
+            then
+               --  Debugging has been started directly on a pre-built
+               --  executable, not from a project: send the DAP
+               --  'loadedSources' request to retrieve its source files.
+               New_Request := DAP.Requests.DAP_Request_Access
+                 (DAP.Clients.LoadedSources.Create (Self.Kernel));
+
+               --  Status `Stoped` is not set yet, so Force is needed
+               Self.Enqueue (New_Request, Force => True);
             end if;
          end;
 
