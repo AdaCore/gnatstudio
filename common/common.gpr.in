@@ -36,6 +36,7 @@ project Common is
    end Linker;
 
    package Coverage is
+      --  See gnatcoverage#432
       for Excluded_Units use ("System.Memory");
    end Coverage;
 

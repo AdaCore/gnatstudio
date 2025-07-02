@@ -2,6 +2,7 @@ stages:
   - build
   - test
   - check
+  - collect
 
 include:
 # Issue check and pre-commit
@@ -15,8 +16,10 @@ include:
     inputs:
       anod-args: run build_$ACI_TRACK --latest
       cpus: 16
+      disk: 100
       image: systemgtk
       save-component: true
+      artifacts: [coverage-traces]
 
 # Testing
   - component: $CI_SERVER_FQDN/eng/gitlab-templates/test@~latest
@@ -28,6 +31,7 @@ include:
       anod-args: run test_$ACI_TRACK
       image: systemgtk
       generic-anod-ci-args: --add-dep eng/ide/gnatstudio-internal
+      artifacts: [coverage-traces]
 
 # Integration testsuite
   - component: $CI_SERVER_FQDN/eng/gitlab-templates/test@~latest
@@ -39,8 +43,89 @@ include:
       anod-args: run test_integration_testsuite
       image: systemgtk
       cpus: 8
-      disk: 80
+      disk: 100
+      artifacts: [coverage-traces]
       rules:
       # Does not work on edge
       - if: $CI_PIPELINE_SOURCE == 'merge_request_event' && $CI_TARGET_BRANCH_NAME != 'edge'
         allow_failure: true
+
+# Collect the coverage results
+  - component: $CI_SERVER_FQDN/eng/gitlab-templates/build@~latest
+    inputs:
+      job-name: collect-coverage
+      stage: collect
+      cpus: 8
+      image: systemgtk
+      anod-args: run collect_coverage_$ACI_TRACK --latest
+      needs: [gs:linux, integration-testsuite:linux]
+
+
+# Augment the Linux jobs to pass the variable to set up the coverage traces directory
+build:linux:
+  variables:
+     ANOD_GNATCOV_GPS_TRACES_DIR: $CI_PROJECT_DIR/coverage-traces
+
+gs:linux:
+  variables:
+     ANOD_GNATCOV_GPS_TRACES_DIR: $CI_PROJECT_DIR/coverage-traces
+
+integration-testsuite:linux:
+  variables:
+     ANOD_GNATCOV_GPS_TRACES_DIR: $CI_PROJECT_DIR/coverage-traces
+
+collect-coverage:linux:
+  variables:
+     ANOD_GNATCOV_GPS_TRACES_DIR: $CI_PROJECT_DIR/coverage-traces
+     RUNNER_AFTER_SCRIPT_TIMEOUT: 1h
+
+  rules:
+    # Always run the collect-coverage job, even if the previous jobs failed.
+    # This is necessary to ensure that the coverage report is always generated,
+    # even if the tests fail.
+    - if: $CI_PIPELINE_SOURCE == 'merge_request_event'
+      when: always
+
+  after_script:
+
+    # Source the env prepared by generic_anod_ci
+    - cat /tmp/ci_env.sh
+    - . /tmp/ci_env.sh
+    - BS=$(anod info gps -Q coverage_report $ACI_TRACK_QUALIFIER --show working_dir)
+
+    # Publish the html version to GitLab Pages
+    - |
+      if [[ $CI_PIPELINE_SOURCE = "merge_request_event" ]]; then
+        target_subdir=MRs/$CI_MERGE_REQUEST_IID
+      else
+        target_subdir=$CI_COMMIT_BRANCH
+      fi
+    - target_subdir=$target_subdir/ts-coverage
+
+    # publish-pages takes too long (see eng/devenv/ci-fragments#79)...
+    # - publish-pages $BS/install/html/ --target-subdir $target_subdir --expires 30
+    # Instead, upload the report as an artefact
+    - (cd $BS/install/ ; tar -czf $CI_PROJECT_DIR/coverage-traces/html.tar.gz html/)
+
+    # Grab the coverage report artefact
+    - if [ -d "$BS" ]; then
+        echo "Collecting coverage traces from $BS" ;
+        mkdir -p $CI_PROJECT_DIR/coverage-traces ;
+        cp $BS/install/cobertura/cobertura.xml $CI_PROJECT_DIR/coverage-traces/ ;
+      else
+        echo "No coverage traces found in $BS";
+      fi
+
+    # Compute the line coverage
+    - print-global-coverage $CI_PROJECT_DIR/coverage-traces/cobertura.xml
+
+  coverage: '/^Line Coverage:\s+(\d+\.\d+)$/'
+  artifacts:
+    when: always #  Upload on errors too
+    reports:
+      coverage_report:
+        coverage_format: cobertura
+        path: coverage-traces/cobertura.xml
+    paths:
+      - coverage-traces/cobertura.xml
+      - coverage-traces/html.tar.gz
