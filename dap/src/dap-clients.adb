@@ -2228,10 +2228,7 @@ package body DAP.Clients is
             Debugger_Cmd : constant String := Get_Command
               (Tc, Toolchains.Debugger);
          begin
-            --  The DAP debugger needs to be launched with "--readnow",
-            --  as a workaround to support setting breakpoints for programs
-            --  compiled with gprbuild2. See eng/gpr/gpr-issues#603
-            return Debugger_Cmd & " --readnow";
+            return Debugger_Cmd;
          end;
       end Get_Debug_Adapter_Command;
 
