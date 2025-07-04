@@ -35,4 +35,8 @@ project Common is
         @TARGET_LFLAGS@;
    end Linker;
 
+   package Coverage is
+      for Excluded_Units use ("System.Memory");
+   end Coverage;
+
 end Common;
