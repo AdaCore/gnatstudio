@@ -8,6 +8,7 @@ from gs_utils.internal.utils import *
 @run_test_driver
 def test_driver():
     buf = GPS.EditorBuffer.get(GPS.File("main.adb"))
+    yield wait_tasks()
 
     GPS.execute_action("Build & Debug Number 1")
     yield hook("debugger_started")
