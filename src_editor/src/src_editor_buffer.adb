@@ -879,8 +879,10 @@ package body Src_Editor_Buffer is
    is
       pragma Unreferenced (Kernel, File, Line, Column, Project);
    begin
-      --  Highlight the cursor delimiters
-      Self.Buffer.Highlighter.Highlight_Parenthesis;
+      if Self.Buffer.Highlighter /= null then
+         --  Highlight the cursor delimiters
+         Self.Buffer.Highlighter.Highlight_Parenthesis;
+      end if;
    end Execute;
 
    ----------------------
