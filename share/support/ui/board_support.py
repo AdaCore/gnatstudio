@@ -126,7 +126,7 @@ class BoardLoader(Module):
         "x86_64-elf",
     ]
 
-    # The tool's console
+    # The connection tool's console
     __console = None
 
     # The DebuggerWrapper holds the started GPS.Debugger
