@@ -129,9 +129,6 @@ class BoardLoader(Module):
     # The connection tool's console
     __console = None
 
-    # The DebuggerWrapper holds the started GPS.Debugger
-    __debugger_promise = None
-
     def __is_target_supported(self, prj):
         """
         Used to know if the project's target is supported or not.
@@ -155,8 +152,7 @@ class BoardLoader(Module):
             self.__console.write(out)
 
     def __on_input(self, console, input):
-        if self.__connection:
-            if self.__connection.process:
+        if self.__connection and self.__connection.process:
                 self.__connection.process.send(input)
 
     def __error_exit(self, msg=""):
@@ -431,7 +427,6 @@ class BoardLoader(Module):
             self.__connection.terminate()
             self.__connection = None
             self.__console = None
-            self.__debugger_promise = None
 
             # Kill the task attached to the connection tool if it still there
             for i in GPS.Task.list():
@@ -706,7 +701,7 @@ class BoardLoader(Module):
         # Spawn the debugger on the executable and load it
         self.__display_message("Launching debugger.")
         exe = GPS.File(main_name).executable_path
-        self.__debugger_promise = promises.DebuggerWrapper(
+        debugger_promise = promises.DebuggerWrapper(
             exe,
             remote_target=self.__remote_target,
             remote_protocol=self.__remote_protocol,
@@ -715,10 +710,10 @@ class BoardLoader(Module):
         GPS.Preference("Debugger-Execution-Window").set(pref)
 
         # Load the executable
-        yield self.__debugger_promise.wait_and_send(cmd='load "%s"' % (exe), block=True)
+        yield debugger_promise.wait_and_send(cmd='load "%s"' % (exe), block=True)
 
         # Reset the board
-        yield self.__debugger_promise.wait_and_send(cmd="monitor reset halt", block=True)
+        yield debugger_promise.wait_and_send(cmd="monitor reset halt", block=True)
 
         # Not busy anymore
         self.__is_busy = False
@@ -750,6 +745,5 @@ class BoardLoader(Module):
         Called when the console is being destroyed.
         Terminate the debugger.
         """
-        if self.__debugger_promise:
-            if self.__debugger_promise.get():
-                self.__debugger_promise.get().close()
+        if GPS.Debugger.get():
+            GPS.Debugger.get().close()
