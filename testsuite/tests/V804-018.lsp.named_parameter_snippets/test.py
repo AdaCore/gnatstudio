@@ -7,14 +7,8 @@ import GPS
 from gs_utils.internal.utils import *
 
 
-EXPECTED_SNIPPET = """  Obj.Do_Nothing
-     (A => Integer,
-      B => Integer,
-      C => Integer)"""
-EXPECTED_RESULT = """  Obj.Do_Nothing
-     (A => 1,
-      B => 2,
-      C => 3)"""
+EXPECTED_SNIPPET = "  Obj.Do_Nothing (A => Integer, B => Integer, C => Integer)"
+EXPECTED_RESULT = "  Obj.Do_Nothing (A => 1, B => 2, C => 3)"
 
 
 @run_test_driver
@@ -33,13 +27,15 @@ def run_test():
     yield wait_until_true(lambda: get_widget_by_name("completion-view") != None)
     pop_tree = get_widget_by_name("completion-view")
     model = pop_tree.get_model()
-    yield wait_until_true(lambda: pop_tree.get_realized())
+    yield wait_until_true(
+        lambda: model.get_value(model.get_iter_first(), 0) != "Computing..."
+    )
 
     click_in_tree(pop_tree, path="0", events=double_click_events)
     yield wait_idle()
 
     # Verify that it has been correctly parsed by the aliases plugin
-    line = buf.get_chars(buf.at(7, 1), buf.at(10, 1).end_of_line())
+    line = buf.get_chars(buf.at(7, 1), buf.at(7, 1).end_of_line())
     GPS.Console().write(line.strip())
     gps_assert(
         line.strip(),
@@ -59,7 +55,7 @@ def run_test():
         yield wait_idle()
 
     # Verify that the snippet parameters have been inserted properly
-    line = buf.get_chars(buf.at(7, 1), buf.at(10, 1).end_of_line())
+    line = buf.get_chars(buf.at(7, 1), buf.at(7, 1).end_of_line())
     gps_assert(
         line.strip(),
         EXPECTED_RESULT.strip(),
@@ -69,6 +65,6 @@ def run_test():
     # Verify that we jumped to the final tab stop
     gps_assert(
         view.cursor(),
-        buf.at(10, 1).end_of_line(),
+        buf.at(7, 1).end_of_line(),
         "last TAB did not jump to the snippet final tab stop",
     )
