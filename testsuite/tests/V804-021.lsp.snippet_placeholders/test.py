@@ -32,7 +32,9 @@ def run_test():
     yield wait_until_true(lambda: get_widget_by_name("completion-view") is not None)
     pop_tree = get_widget_by_name("completion-view")
     model = pop_tree.get_model()
-    yield wait_until_true(lambda: pop_tree.get_realized())
+    yield wait_until_true(
+        lambda: model.get_value(model.get_iter_first(), 0) != "Computing..."
+    )
 
     click_in_tree(pop_tree, path="0", events=double_click_events)
     yield wait_idle()

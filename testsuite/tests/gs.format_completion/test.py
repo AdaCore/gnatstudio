@@ -11,10 +11,7 @@ procedure Hello is
      new Ada.Text_IO.Float_IO (Lat_Long_Degrees_Float_Type);
 begin
    Lat_Long_Degrees_Text_IO.Put
-     (To   => String,
-      Item => Num,
-      Aft  => Field,
-      Exp  => Field)
+     (To => String, Item => Num, Aft => Field, Exp => Field)
 end Hello;
 """
 
