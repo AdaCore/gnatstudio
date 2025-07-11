@@ -7,6 +7,8 @@ include:
 # Issue check and pre-commit
   - component: $CI_SERVER_FQDN/eng/gitlab-templates/check-issue@~latest
   - component: $CI_SERVER_FQDN/eng/gitlab-templates/pre-commit@~latest
+    inputs:
+      on-diff: true
 
 # Build
   - component: $CI_SERVER_FQDN/eng/gitlab-templates/build@~latest
