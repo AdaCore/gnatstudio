@@ -126,6 +126,9 @@ class BoardLoader(Module):
         "x86_64-elf",
     ]
 
+    # The connection tool's console
+    __console = None
+
     def __is_target_supported(self, prj):
         """
         Used to know if the project's target is supported or not.
@@ -143,6 +146,14 @@ class BoardLoader(Module):
         """
 
         GPS.Console("Messages").write(msg + "\n", mode=mode)
+
+    def __display_output(self, out):
+        if self.__console:
+            self.__console.write(out)
+
+    def __on_input(self, console, input):
+        if self.__connection and self.__connection.process:
+                self.__connection.process.send(input)
 
     def __error_exit(self, msg=""):
         """
@@ -415,6 +426,7 @@ class BoardLoader(Module):
             # Close the connection
             self.__connection.terminate()
             self.__connection = None
+            self.__console = None
 
             # Kill the task attached to the connection tool if it still there
             for i in GPS.Task.list():
@@ -659,8 +671,18 @@ class BoardLoader(Module):
             cmd = self.__connector.get_command_line()
             self.__display_message("Launching: %s" % (" ".join(cmd)))
             try:
+                self.__console = GPS.Console(
+                    name=self.__connection_tool,
+                    accept_input=True,
+                    on_input=self.__on_input,
+                    on_destroy=self.__on_console_destroy,
+                    toolbar_name=self.__connection_tool + "_toolbar",
+                    give_focus_on_create=False,
+                )
+
                 self.__connection = promises.ProcessWrapper(cmd)
-                self.__connection.lines.subscribe(self.__display_message)
+                self.__connection.stream.subscribe(self.__display_output)
+
                 output = yield self.__connection.wait_until_match(
                     self.__get_connection_detection_regexp(), 120000
                 )
@@ -671,6 +693,11 @@ class BoardLoader(Module):
                 self.__error_exit("Could not connect to the board.")
                 return
 
+        # Disable the Debuggee Excution console because GDB can't attach to the
+        # debuggee directly and redirect stdin/out to tty
+        pref = GPS.Preference("Debugger-Execution-Window").get()
+        GPS.Preference("Debugger-Execution-Window").set(False)
+
         # Spawn the debugger on the executable and load it
         self.__display_message("Launching debugger.")
         exe = GPS.File(main_name).executable_path
@@ -679,6 +706,8 @@ class BoardLoader(Module):
             remote_target=self.__remote_target,
             remote_protocol=self.__remote_protocol,
         )
+
+        GPS.Preference("Debugger-Execution-Window").set(pref)
 
         # Load the executable
         yield debugger_promise.wait_and_send(cmd='load "%s"' % (exe), block=True)
@@ -710,3 +739,11 @@ class BoardLoader(Module):
         """
 
         self.__reset_all()
+
+    def __on_console_destroy(self, console):
+        """
+        Called when the console is being destroyed.
+        Terminate the debugger.
+        """
+        if GPS.Debugger.get():
+            GPS.Debugger.get().close()

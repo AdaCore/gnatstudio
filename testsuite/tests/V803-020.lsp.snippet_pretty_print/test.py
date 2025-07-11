@@ -6,10 +6,7 @@ import GPS
 from gs_utils.internal.utils import *
 
 
-EXPECTED = """   Obj.Do_Nothing
-     (AAAAAAAAAAAAA => Integer,
-      BBBBBBB       => Float,
-      D             => String)
+EXPECTED = """   Obj.Do_Nothing (AAAAAAAAAAAAA => Integer, BBBBBBB => Float, D => String)
 end Main;
 """
 

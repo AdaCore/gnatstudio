@@ -765,6 +765,13 @@ class ProcessWrapper(object):
         return p
 
     @property
+    def process(self):
+        """
+        Return the internal GPS.Process instance.
+        """
+        return self.__process
+
+    @property
     def stream(self):
         """
         Return the internal stream of output.
