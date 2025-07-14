@@ -2,9 +2,8 @@
 Provides support for building through make or ant make using the GPS
 Build Manager.
 
-This script defines the following new project attributes in the "make"
-package of a .gpr file. They can be edited graphically through
-the project properties editor.
+This script defines the following new project attributes in the "Make"
+package of a .gpr file:
     "make.makefile": name of the Makefile to use. This can be an absolute
                  name, or a name relative to the directory containing the
                  root project file (ie the one loaded in GPS). This
@@ -45,7 +44,6 @@ A similar behavior is applied for build.xml files for ant, where the
 When you select one of the new menus, GPS will run ant or make, and parse
 error messages to display them in the locations window as usual.
 """
-
 
 import traceback
 import re

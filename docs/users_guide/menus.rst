@@ -305,12 +305,6 @@ The Edit Menu
    Decrease the size of fonts in the source editors. This impacts the corresponding preferences.
 
    Shortcut: Ctrl+-
-.. index:: menu; edit --> project properties...
-
-* :menuselection:`Edit --> Project Properties...`
-
-   Open the project properties editor
-
 .. index:: menu; edit --> preferences...
 
 * :menuselection:`Edit --> Preferences...`
@@ -639,12 +633,6 @@ The View Menu
 * :menuselection:`View --> Cross Platforms --> Serial ports`
 
    Open (or reuse if it already exists) the 'Serial Ports' view
-
-.. index:: menu; view --> file switches
-
-* :menuselection:`View --> File Switches`
-
-   Open (or reuse if it already exists) the 'Switches editor' view
 
 .. index:: menu; view --> learn
 

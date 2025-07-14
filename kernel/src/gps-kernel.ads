@@ -1088,8 +1088,7 @@ private
      (Tool_Properties);
    --  Tools are stored in a list (we expect only a limited number of tools in
    --  any case), so that we also preserve the order in which they were
-   --  registered. This is important when displaying the project properties
-   --  dialog for instance.
+   --  registered.
 
    ------------------------------------
    -- Abstract type defining a table --

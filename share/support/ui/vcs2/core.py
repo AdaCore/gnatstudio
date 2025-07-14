@@ -33,14 +33,8 @@ GPS.VCS2.Status = gs_utils.enum(
 # Valid statuses for files (they can be combined)
 
 GPS.VCS2.Actions = gs_utils.enum(
-    DOUBLE_CLICK=0,
-    TOOLTIP=1,
-    ADD=2,
-    REMOVE=3,
-    RENAME=4,
-    STASH=5,
-    COMMIT=6,
-    MERGE=7)
+    DOUBLE_CLICK=0, TOOLTIP=1, ADD=2, REMOVE=3, RENAME=4, STASH=5, COMMIT=6, MERGE=7
+)
 
 Traverse_Limit_Pref = GPS.Preference(":VCS/Traverse-Limit")
 Traverse_Limit_Pref.create(
@@ -694,7 +688,7 @@ class File_Based_VCS(VCS):
 class register_vcs:
     """
     A decorator to register a new VCS engine
-    :param str name: the name of the engine, as used in project properties
+    :param str name: the name of the engine, as used in project attributes.
     :param default_status: the VCS status to use for files not specifically
        set from "status". See `set_status_for_all_files`. This is also the
        status applied by GPS for files not in the cache yet. This value has

@@ -807,6 +807,7 @@ in Python plugins.
 
 .. list-table:: Accessibility of macros
    :header-rows: 1
+
    * - Macro
      - Shell
      - Build Targets
@@ -2797,6 +2798,10 @@ and reloaded automatically when GNAT Studio reloads the project.
 Declaring the new attributes
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+**NOTE**: The method described here for declaring project attributes is deprecated.
+The `Project Properties` editor has been removed; project attributes should now be edited directly
+within the project files.
+
 You can declare new project attributes in two ways: either using the
 advanced XML tags below or the :file:`<tool>` tag (see
 :ref:`Defining_tool_switches`).
@@ -2810,11 +2815,6 @@ Each project attributes has a type typed and can either have a single value
 or have a set of values (a list). Each value can be a free-form string, a
 file name, a directory name, or a value extracted from a list of preset
 values.
-
-Attributes declared in these customization files are also graphically
-editable through the project properties dialog or the project wizard. When
-you define an attribute, you need to specify how it is presented to the
-GNAT Studio user.
 
 The :file:`<project_attribute>` tag accepts the following attributes:
 
@@ -3771,9 +3771,8 @@ child tags:
 Customizing Toolchains
 ----------------------
 
-You can customize the list of toolchains and their values presented in the
-project editor (see :ref:`The_Project_Wizard`) with the XML configuration
-files.  GNAT Studio's default list is contained in :file:`toolchains.xml`.
+You can customize the list of toolchains with the XML configuration
+files. GNAT Studio's default list is contained in :file:`toolchains.xml`.
 You can add your own toolchain by providing an XML description with the
 following tags:
 
@@ -3940,24 +3939,16 @@ Defining tool switches
 
 .. index:: <switches>
 
-The user must be able to specify which switches are passed to the tool.  If
-the tool is only called through custom menus, you can hard-code some or all
-of the switches. However, it is usually better to use the project properties
-editor so the user can specify project-specific switches.
+The user must be able to specify which switches are passed to the tool.
 
 This is what GNAT Studio does by default for Ada, C, and C++. Look at the
 GNAT Studio installation directory to see how the switches for these languages
 are defined in an XML file. These provide extended examples of the use of
 customization files.
 
-The switches editor in the project properties editor provides a powerful
-interface to the command line, allowing the user to edit the command line
-both as text and through GUI widgets.
-
 In customization files, the switches are declared with the
-:file:`<switches>` tag, which must be a child of a :file:`<tool>` tag
-as described above.  Use this tag to produce the needed GUI widgets to
-allow a user to specify the desired switch value.
+:file:`<switches>` tag. You can declare switches using this tag when
+defining build targets to spawn the tool (see :ref:`Customizing_build_Targets_and_Models`).
 
 This tag accepts the following attributes:
 
@@ -4666,8 +4657,7 @@ only a short example, since Ada, C, and C++ support themselves are provided
 through such a file, available in the GNAT Studio installation.
 
 This example adds support for the :program:`find` Unix utility, with a few
-switches. All the switches are editable through the project properties
-editor.  It also adds a new action and menu. The action associated with
+switches. It also adds a new action and menu. The action associated with
 this menu gets the default switches from the currently selected project,
 and asks the user interactively for the name of the file to search::
 

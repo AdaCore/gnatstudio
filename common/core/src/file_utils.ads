@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                               GNAT Studio                                --
 --                                                                          --
---                     Copyright (C) 2001-2023, AdaCore                     --
+--                     Copyright (C) 2001-2025, AdaCore                     --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -21,11 +21,6 @@ with Basic_Types;  use Basic_Types;
 with GNATCOLL.VFS; use GNATCOLL.VFS;
 
 package File_Utils is
-
-   function To_File_Name (Name : Filesystem_String) return Filesystem_String;
-   --  Returns a file name from an ada subprogram/package name (ie converts '.'
-   --  and '-' to the appropriate characters).
-   --  ??? Note: this should be modified to use the naming schemes, if needed.
 
    function URL_List_To_Files (URL_List : String) return File_Array_Access;
    --  Convert list of URLs in form "file:///path/file" to file array.

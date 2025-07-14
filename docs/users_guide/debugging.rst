@@ -24,7 +24,7 @@ debugging.
 To start a debug session, click on the :guilabel:`Debug` button in the main
 toolbar or go to the :menuselection:`Debug --> Initialize`
 menu and choose either the name of your executable, if you specified the
-name of your main program(s) in the project properties, or start an empty
+name of your main program(s) in your project file, or start an empty
 debug session using the :menuselection:`<no main file>` menu.  You can then
 load any file to debug, by using the :menuselection:`Debug --> Debug -->
 Load File...` menu.

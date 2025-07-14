@@ -392,10 +392,10 @@ def modal_dialog(action_fn, msecs=300):
     """
     This primitive executes a blocking function in the context of a workflow.
     This should rarely be used, but is sometimes needed for some modal dialogs
-    that block GPS without executing the python script.
+    that block GNAT Studio without executing the python script.
     Example:
         yield modal_dialog(
-            300, lambda: GPS.execute_action('open project properties'))
+            300, lambda: GPS.execute_action('rename entity'))
     """
     p = Promise()
 

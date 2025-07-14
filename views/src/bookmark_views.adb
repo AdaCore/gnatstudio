@@ -237,7 +237,7 @@ package body Bookmark_Views is
 
    function Clone (Data : Bookmark_Data_Access) return Bookmark_Data_Access;
    --  Makes a copy of the Data for storing in project properties,
-   --   result should be freed by caller
+   --  result should be freed by caller
 
    package Bookmark_Proxies is new Script_Proxies
       (Bookmark_Data_Access, Bookmark_Proxy);

@@ -174,7 +174,6 @@ def enum(name, **enums):
 
 
 class GUI(object):
-
     """
     This is an abstract class (ie no instances of it can be created from your
     code, which represents a graphical element of the GNAT Studio interface.
@@ -608,7 +607,6 @@ class AnalysisTool(object):
 
 
 class Context(object):
-
     """
     Represents a context in GNAT Studio. Depending on the currently selected
     window, an instance of one of the derived classes will be used.
@@ -888,7 +886,6 @@ class Bookmark(object):
 
 
 class BuildTarget(object):
-
     """
     This class provides an interface to the GNAT Studio build targets. Build
     targets can be configured through XML or through the Target Configuration
@@ -1047,7 +1044,6 @@ class BuildTarget(object):
 
 
 class Clipboard(object):
-
     """
     This class provides an interface to the GNAT Studio clipboard. This
     clipboard contains the previous selections that were copied or cut from a
@@ -1115,7 +1111,6 @@ class Clipboard(object):
 
 
 class CodeAnalysis(object):
-
     """
     This class is a toolset that allows handling :class:`CodeAnalysis`
     instances.
@@ -1318,7 +1313,6 @@ class CodeAnalysis(object):
 
 
 class Codefix(object):
-
     """
     This class gives access to GNAT Studio's features for automatically fixing
     compilation errors.
@@ -1425,7 +1419,6 @@ class Codefix(object):
 
 
 class CodefixError(object):
-
     """
     This class represents a fixable error in the compilation output.
 
@@ -1507,7 +1500,6 @@ class CodefixError(object):
 
 
 class Command(object):
-
     """
     Interface to GNAT Studio command. This class is abstract, and can be
     subclassed.
@@ -1574,7 +1566,6 @@ class Command(object):
 
 
 class CommandWindow(GUI):
-
     """
     This class gives access to a command-line window that pops up on the
     screen. This window is short-lived (in fact there can be only one such
@@ -1719,7 +1710,6 @@ class CommandWindow(GUI):
 
 
 class Console(GUI):
-
     """
     This class is used to create and interact with the interactive consoles in
     GNAT Studio. It can be used to redirect the output of scripts to various
@@ -2185,7 +2175,6 @@ class Console(GUI):
 
 
 class Contextual(object):
-
     """
     This class is a general interface to the contextual menus in GNAT Studio.
     It gives you control over which menus should be displayed when the user
@@ -2383,7 +2372,6 @@ class Contextual(object):
 
 
 class Debugger(object):
-
     """
     Interface to debugger related commands. This class allows you to start a
     debugger and send commands to it.  By connection to the various debugger_*
@@ -2887,7 +2875,6 @@ class DebuggerVariable(object):
 
 
 class Docgen(object):
-
     """
     Interface for handling customized documentation generation. This class is
     used in conjunction with GPS.DocgenTagHandler. You cannot directly create
@@ -2976,7 +2963,6 @@ class Docgen(object):
 
 
 class DocgenTagHandler(object):
-
     """
     This class is used to handle user-defined documentation tags. This allows
     custom handling of comments such as ::
@@ -3082,7 +3068,6 @@ class DocgenTagHandler(object):
 
 
 class Editor(object):
-
     """
     Deprecated interface to all editor-related commands.
     """
@@ -3737,7 +3722,6 @@ class Editor(object):
 
 
 class EditorBuffer(object):
-
     """
     This class represents the physical contents of a file. It is always
     associated with at least one view (a :class:`GPS.EditorView instance`),
@@ -4530,7 +4514,6 @@ class EditorBuffer(object):
 
 
 class EditorHighlighter(object):
-
     """
     This class can be used to transform source editor text into hyperlinks when
     the Control key is pressed.  Two actions can then be associated with this
@@ -4592,7 +4575,6 @@ class EditorHighlighter(object):
 
 
 class EditorLocation(object):
-
     """
     This class represents a location in a specific editor buffer. This location
     is not updated when the buffer changes, but will keep pointing to the same
@@ -5016,7 +4998,6 @@ class EditorLocation(object):
 
 
 class EditorMark(object):
-
     """
     This class represents a specific location in an open editor. As opposed
     to the :class:`GPS.EditorLocation` class, the exact location is updated
@@ -5127,7 +5108,6 @@ class EditorMark(object):
 
 
 class EditorOverlay(object):
-
     """
     This class represents properties that can be applied to one or more ranges
     of text. This can be used to change the display properties of the text
@@ -5275,7 +5255,6 @@ class EditorOverlay(object):
 
 
 class EditorView(GUI):
-
     """
     One view of an editor, i.e., the visible part through which users can
     modify text files. A given :class:`GPS.EditorBuffer` can be associated
@@ -5399,7 +5378,6 @@ class EditorView(GUI):
 
 
 class Entity(object):
-
     """
     Obsolescent interface to source code entities. This class can only be used
     after disabling the GPS.LSP.ADA_SUPPORT trace.
@@ -6098,7 +6076,6 @@ class Entity(object):
 
 
 class Exception(builtins.Exception):
-
     """
     One of the exceptions that can be raised by GNAT Studio. It is a general
     error message, and its semantic depends on what subprogram raised the
@@ -6114,7 +6091,6 @@ class Exception(builtins.Exception):
 
 
 class File(object):
-
     """
     Represents a source file of your application.
 
@@ -6578,7 +6554,6 @@ class File(object):
 
 
 class FileLocation(object):
-
     """
     Represents a location in a file.
 
@@ -6684,7 +6659,6 @@ class FileLocation(object):
 
 
 class FileTemplate(object):
-
     """
     This class allows the user to create file templates from
     registered aliases.
@@ -6778,7 +6752,6 @@ class FileTemplate(object):
 
 
 class HTML(object):
-
     """
     This class gives access to the help system of GNAT Studio as well as the
     integrated browser.
@@ -6839,7 +6812,6 @@ class HTML(object):
 
 
 class Help(object):
-
     """
     This class gives access to the external documentation for shell
     commands. This external documentation is stored in the file
@@ -6931,7 +6903,6 @@ class Help(object):
 
 
 class Hook(object):
-
     """
     General interface to hooks. Hooks are commands executed when some specific
     events occur in GNAT Studio, and allow you to customize some of the aspects
@@ -7107,7 +7078,6 @@ class Hook(object):
 
 
 class Invalid_Argument(Exception):
-
     """
     An exception raised by GNAT Studio. Raised when calling a subprogram from
     the GNAT Studio module with an invalid argument type (passing an integer
@@ -7123,7 +7093,6 @@ class Invalid_Argument(Exception):
 
 
 class Logger(object):
-
     """
     This class provides an interface to the GNAT Studio logging mechanism. This
     can be used when debugging scripts, or even be left in production scripts
@@ -7201,7 +7170,6 @@ class Logger(object):
 
 
 class MDI(object):
-
     """
     Represents GNAT Studio's Multiple Document Interface. This gives access to
     general graphical commands for GNAT Studio, as well as control over the
@@ -7591,7 +7559,6 @@ class MDI(object):
 
 
 class MDIWindow(GUI):
-
     """
     This class represents one of the windows currently displayed in GNAT
     Studio. This includes both the windows currently visible to the user, and
@@ -7739,7 +7706,6 @@ class MDIWindow(GUI):
 
 
 class Menu(object):
-
     """
     This class is a general interface to the menu system in GNAT Studio. It
     gives you control over such things as which menus should be active and what
@@ -7791,7 +7757,6 @@ class Menu(object):
 
 
 class MemoryUsageProvider(object):
-
     """
     General interface used to populate the GNAT Studio Memory Usage View.
 
@@ -7819,7 +7784,6 @@ class MemoryUsageProvider(object):
 
 
 class MemoryUsageProviderVisitor(object):
-
     """
     This class is used to notify GNAT Studio of events that occur during a
     memory usage provider task (e.g: when a memory usage provider has finished
@@ -7860,7 +7824,6 @@ class MemoryUsageProviderVisitor(object):
 
 
 class Message(object):
-
     """
     This class is used to manipulate GNAT Studio messages: build errors, editor
     annotations, etc.
@@ -8330,7 +8293,6 @@ class Locations(object):
 
 
 class Missing_Arguments(Exception):
-
     """
     An exception raised by GNAT Studio. Raised when calling a subprogram from
     the GNAT Studio module with missing arguments.
@@ -8345,7 +8307,6 @@ class Missing_Arguments(Exception):
 
 
 class Cursor(object):
-
     """
     Interface to a cursor in :class:`GPS.EditorBuffer`. Only gives access to
     the insertion mark and to the selection mark of the cursor.
@@ -8404,7 +8365,6 @@ class Cursor(object):
 # Preference
 ###########################################################
 class Preference(object):
-
     """
     Interface to the GNAT Studio preferences, as set in the
     :menuselection:`Edit --> Preferences...` dialog. New preferences are
@@ -8920,7 +8880,6 @@ class Process(Command):
 
 
 class Project(object):
-
     """
      Represents a project file. Also see the GNAT Studio documentation on how
      to create new project attributes.
@@ -9354,31 +9313,6 @@ class Project(object):
            :func:`GPS.Project.get_attribute_as_list`
 
            :func:`GPS.Project.get_tool_switches_as_string`
-
-        .. code-block:: python
-
-           # If GNAT Studio has loaded a customization file that contains the
-           # following tags:
-           #
-           #    <?xml version="1.0" ?>
-           #    <toolexample>
-           #       <tool name="Find">
-           #          <switches>
-           #             <check label="Follow links" switch="-follow" />
-           #          </switches>
-           #       </tool>
-           #    </toolexample>
-
-           # The user will as a result be able to edit the switches for Find
-           # in the standard Project Properties editor.
-
-           # Then the Python command
-
-           GPS.Project("default").get_tool_switches_as_list("Find")
-
-           # will return the list of switches that were set by the user in the
-           # Project Properties editor.
-
         """
         pass  # implemented in Ada
 
@@ -9827,7 +9761,6 @@ class Project(object):
 
 
 class ProjectTemplate(object):
-
     """
     This class is used to manipulate GNAT Studio Project Templates.
     """
@@ -9851,7 +9784,6 @@ class ProjectTemplate(object):
 
 
 class ProjectViewFilters(object):
-
     """
     This class is used to add extra filters for the Project View
     """
@@ -9900,7 +9832,6 @@ class ProjectViewFilters(object):
 
 
 class ReferencesCommand(Command):
-
     """
     This is the type of the commands returned by the references extractor.
 
@@ -9928,7 +9859,6 @@ class ReferencesCommand(Command):
 
 
 class Revision(object):
-
     """
     General interface to the revision browser.
     """
@@ -9986,7 +9916,6 @@ class Revision(object):
 
 
 class Search(object):
-
     """
     This class provides an interface to the search facilities used for the
     GNAT Studio omni-search. In particular, this allows you to search file
@@ -10181,7 +10110,6 @@ class Search(object):
 
 
 class Search_Result(object):
-
     """
     A class that represents the results found by :class:`GPS.Search`.
     """
@@ -10242,7 +10170,6 @@ class SemanticTree(object):
 
 
 class Style(object):
-
     """
     This class is used to manipulate GNAT Studio Styles, which are used, for example,
     to represent graphical attributes given to Messages.
@@ -10368,7 +10295,6 @@ class Style(object):
 
 
 class SwitchesChooser(GUI):
-
     """
     This class represents a GTK widget that can be used to edit a tool's
     command line.
@@ -10407,7 +10333,6 @@ class SwitchesChooser(GUI):
 
 
 class Task(object):
-
     """
     This class provides an interface to the background tasks being handled by
     GNAT Studio, such as the build commands, the query of cross references,
@@ -10546,7 +10471,6 @@ class Task(object):
 
 
 class Timeout(object):
-
     """
     This class gives access to actions that must be executed regularly at
     specific intervals.
@@ -10596,7 +10520,6 @@ class Timeout(object):
 
 
 class Unexpected_Exception(Exception):
-
     """
     An exception raised by GNAT Studio. It indicates an internal error in GNAT
     Studio, raised by the Ada code itself. This exception is unexpected and
@@ -10716,7 +10639,7 @@ class VCS2(object):
         vcs/__init__.py plugin.
 
         :param str name: the name of the system, as it should be set in
-           the project properties IDE.VCS_Kind attribute.
+           the project file via the IDE.VCS_Kind attribute.
         :param construct: a function that takes a GPS.File (the working
            directory location) and returns an instance of GPS.VCS.
         :param int default_status: the default status for files not in the
@@ -10956,7 +10879,6 @@ class VCS2_Task_Visitor(object):
 
 
 class Vdiff(object):
-
     """
     This class provides access to the graphical comparison between two or
     three files or two versions of the same file within GNAT Studio. A visual
@@ -11077,7 +10999,6 @@ class Vdiff(object):
 
 
 class XMLViewer(object):
-
     """
     This class represents Tree-based views for XML files.
 
@@ -11199,7 +11120,6 @@ class XMLViewer(object):
 
 
 class Alias(object):
-
     """
     This class represents a GNAT Studio Alias, a code template to be expanded
     in an editor. This class allows you to manipulate them programmatically.
@@ -11237,7 +11157,6 @@ class Alias(object):
 
 
 class Completion(object):
-
     """
     This class is used to handle editor completion.
     See the documentation in the :file:`completion.py` plugin.
@@ -11257,7 +11176,6 @@ class Completion(object):
 
 
 class OutputParserWrapper(object):
-
     """
     This class is used to handle user-defined tool output parsers.  Parsers
     are organized in chains. Output of one parser is passed as input to next

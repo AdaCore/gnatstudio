@@ -1,8 +1,0 @@
-project Default is
-
-   package Compiler is
-      for Default_Switches ("ada") use ("-gnatw.eel.Y", "-gnaty3aABcefhiIklprStux");
-   end Compiler;
-
-end Default;
-

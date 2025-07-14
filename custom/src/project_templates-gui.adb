@@ -774,8 +774,8 @@ package body Project_Templates.GUI is
 
       Gtk_New
         (Bottom_Label,
-         "You can modify all the project properties "
-         & "later via the Project/Properties... menu.");
+         "You can modify your project later "
+         & "by directly editing the project file.");
       Bottom_Label.Set_Alignment (0.0, 0.5);
       Page_Box.Pack_Start (Bottom_Label, Expand => False, Padding => 5);
 

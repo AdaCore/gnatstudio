@@ -1,7 +1,6 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 import GPS
-import inspect
 import os
 import imp
 import sys
@@ -10,8 +9,6 @@ import pygps.tree
 from pygps.tree import *
 import pygps.notebook
 from pygps.notebook import *
-from pygps.project import *
-import traceback
 import platform
 import workflows
 from workflows.promises import Promise, timeout, known_tasks
