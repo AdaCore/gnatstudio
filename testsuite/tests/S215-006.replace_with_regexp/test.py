@@ -24,7 +24,7 @@ def test_driver():
     gps_assert(
         buf.get_chars(buf.at(5, 4), buf.at(5, 86)),
         "package P_MC2_CMS_Sub_Sub_Step_V is new "
-        + "Generic_Heap_Vector (Mc2_Cms_Sub_Sub_Step);",
+        + "Generic_Heap_Vector (MC2_CMS_Sub_Sub_Step);",
         "Replace does not work",
     )
     buf.undo()
