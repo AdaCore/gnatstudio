@@ -327,93 +327,27 @@ package body GPS.Search.Replaces is
       Keywords : GNAT.Expect.Pattern_Matcher_Access)
       return Casing_Type
    is
-      use GNAT.Regpat;
-      use GNAT.Expect;
+      Result : Casing_Type := Unchanged;
+      Count  : Natural := 0;
 
-      Index_1      : Integer := S'First;
-      Index_2      : Integer;
-      Char         : Gunichar;
-      Matched      : Match_Array (0 .. 1);
-
-      procedure Skip_Spaces;
-
-      -----------------
-      -- Skip_Spaces --
-      -----------------
-
-      procedure Skip_Spaces is
-      begin
-         loop
-            exit when Index_1 > S'Last;
-            Index_2 := UTF8_Next_Char (S, Index_1);
-            exit when not Is_Space
-              (UTF8_Get_Char (S (Index_1 .. Index_2 - 1)));
-
-            Index_1 := Index_2;
-         end loop;
-      end Skip_Spaces;
-
+      Lower_S : constant String :=
+        (if S'Length < 1_000_000 then UTF8_Strdown (S) else "");
+      --  Don't guess casing in string is too long to avoid stack overflow
    begin
       if S = "" then
-         return Lower;
-      end if;
-
-      Skip_Spaces;
-      if Index_1 > S'Last then
-         --  S contains only spaces
          return Unchanged;
       end if;
 
-      if not Is_Alpha (UTF8_Get_Char (S (Index_1 .. Index_2 - 1))) then
-         return Unchanged;
-      end if;
+      --  Try each casing type
+      for Kind in Lower .. Smart_Mixed loop
+         if S = To_Casing (Lower_S, Kind, Keywords) then
+            Result := Kind;
+            Count := Count + 1;
+         end if;
+      end loop;
 
-      --  Skip keywords
-      if Keywords /= null then
-         loop
-            Match (Keywords.all, S (Index_1 .. S'Last), Matched);
-            if Matched (0) = GNAT.Regpat.No_Match then
-               exit;
-            else
-               Index_1 := Matched (0).Last + 1;
-
-               Skip_Spaces;
-               if Index_1 > S'Last then
-                  --  S contains only keywords
-                  return Lower;
-               end if;
-            end if;
-         end loop;
-      end if;
-
-      Index_2 := UTF8_Next_Char (S, Index_1);
-      Char    := UTF8_Get_Char (S (Index_1 .. Index_2 - 1));
-
-      if not Is_Alpha (Char) then
-         return Unchanged;
-      end if;
-
-      --  First character is lower: this string is Lower
-      if Is_Lower (Char) then
-         return Lower;
-      end if;
-
-      --  There is only one character: this string is Upper
-      if Index_2 > S'Last then
-         return Upper;
-      end if;
-
-      Index_1 := Index_2;
-      Index_2 := UTF8_Next_Char (S, Index_1);
-
-      --  The first character is not lower and the second character is:
-      --  this string is Smart_Mixed
-      if Is_Lower (UTF8_Get_Char (S (Index_1 .. Index_2 - 1))) then
-         return Smart_Mixed;
-      end if;
-
-      --  The first two characters are upper: this string is Upper
-      return Upper;
+      --  Return found casing type if only one matches
+      return (if Count = 1 then Result else Unchanged);
    end Guess_Casing;
 
    ----------------
@@ -567,10 +501,15 @@ package body GPS.Search.Replaces is
          if Pattern.Case_Preserving then
             Current_Casing := Guess_Casing (Matched_Text, Keywords);
 
-            return To_Casing
-              (UTF8_Strdown (To_String (Regexp_Result)),
-               Current_Casing,
-               Keywords);
+            if Current_Casing = Unchanged then
+               return To_String (Regexp_Result);
+
+            else
+               return To_Casing
+                 (UTF8_Strdown (To_String (Regexp_Result)),
+                  Current_Casing,
+                  Keywords);
+            end if;
          end if;
 
          return To_String (Regexp_Result);
