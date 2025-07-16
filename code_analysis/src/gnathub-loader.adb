@@ -74,7 +74,10 @@ package body GNAThub.Loader is
    -- Remove_Messages --
    ---------------------
 
-   procedure Remove_Messages (Self : in out Loader_Type) is
+   procedure Remove_Messages
+     (Self : in out Loader_Type; Force : Boolean := False)
+   is
+      pragma Unreferenced (Force);
       M_Ref   : Message_Reference;
       Message : GNAThub_Message_Access;
    begin

@@ -118,6 +118,8 @@ package body GNAThub.Module.Shell is
                end loop;
             end if;
          end;
+      elsif Command = "clean" then
+         GNAThub.Module.Module.Clean_External;
       end if;
    end Analysis_Commands_Handler;
 
@@ -177,6 +179,7 @@ package body GNAThub.Module.Shell is
                 (Tool       => Tool,
                  Name       => To_Unbounded_String ("unknown"),
                  Identifier => Rule_ID);
+            Look_For_Secondary : constant Boolean := Data.Nth_Arg (9, True);
             Message    : constant GNAThub_Message_Access :=
               new GNAThub_Message;
          begin
@@ -192,6 +195,7 @@ package body GNAThub.Module.Shell is
                Line                     => Line,
                Column                   => Visible_Column_Type (Column),
                Category                 => Category,
+               Look_For_Secondary       => Look_For_Secondary,
                Allow_Auto_Jump_To_First => True);
 
             GNAThub_Module.Ext_Loader.all.Add_External_Message (Message);
@@ -221,6 +225,12 @@ package body GNAThub.Module.Shell is
          Static_Method => True);
 
       Kernel.Scripts.Register_Command
+        (Command       => "clean",
+         Handler       => Analysis_Commands_Handler'Access,
+         Class         => Analysis_Class,
+         Static_Method => True);
+
+      Kernel.Scripts.Register_Command
         (Command       => Constructor_Method,
          Handler       => Analysis_Tool_Commands_Handler'Access,
          Class         => Analysis_Tool_Class,
@@ -243,7 +253,9 @@ package body GNAThub.Module.Shell is
                            4 => Param ("column"),
                            5 => Param ("text"),
                            6 => Param ("importance"),
-                           7 => Param ("rule_id")));
+                           7 => Param ("rule_id"),
+                           8 =>
+                             Param ("look_for_secondary", Optional => True)));
    end Register_Commands;
 
 end GNAThub.Module.Shell;

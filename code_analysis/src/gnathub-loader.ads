@@ -43,7 +43,8 @@ package GNAThub.Loader is
    --  will be called once the loader finish to load all its data or if
    --  the loader has not any data to load.
 
-   procedure Remove_Messages (Self : in out Loader_Type);
+   procedure Remove_Messages
+     (Self : in out Loader_Type; Force : Boolean := False);
    --  Remove the messages loaded by the given loader.
 
    procedure Cleanup (Self : in out Loader_Type);

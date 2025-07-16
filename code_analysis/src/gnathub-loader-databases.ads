@@ -32,7 +32,8 @@ package GNAThub.Loader.Databases is
 
    overriding procedure Cleanup (Self : in out Database_Loader_Type);
 
-   procedure Remove_Database (Self : in out Database_Loader_Type);
+   procedure Remove_Database
+     (Self : in out Database_Loader_Type; Force : Boolean := False);
    --  Remove the GNAThub database.
 
 private

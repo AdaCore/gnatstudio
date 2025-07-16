@@ -479,8 +479,10 @@ package body GNAThub.Loader.Databases is
    -- Remove_Database --
    ---------------------
 
-   procedure Remove_Database (Self : in out Database_Loader_Type)
+   procedure Remove_Database
+     (Self : in out Database_Loader_Type; Force : Boolean := False)
    is
+      pragma Unreferenced (Force);
       Database : constant GNATCOLL.VFS.Virtual_File :=
         Self.Get_Database;
       Success  : Boolean;
