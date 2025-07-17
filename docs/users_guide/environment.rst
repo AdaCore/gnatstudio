@@ -164,17 +164,16 @@ Files
 
 .. _log_file:
 
-* :file:`$HOME/.gnatstudio/log.txt`
+* :file:`$HOME/.gnatstudio/log/log.<timestamp>.txt``
 
   .. index:: log file
 
   Log file automatically created by GNAT Studio.  When GNAT Studio is running,
-  it creates a file :file:`log.<pid>`, where :file:`<pid>` is the GNAT Studio
-  process id, so multiple GNAT Studio sessions do not clobber each other's log.
-  In case of a successful session, this file is renamed to :file:`log` when
-  exiting; in case of an unexpected exit (when bug box is displayed) the log
-  file retains its original name.  The name of the log file is configured by
-  the :file:`traces.cfg` file.
+  it creates a file :file:`log.<timestamp>.txt` in the `$HOME/.gnatstudio/log/` directory
+  (`%USERPROFILE%\.gnatstudio\log` directory on Windows), where :file:`<timestamp>`
+  is the GNAT Studio process timestamp, so multiple GNAT Studio sessions do not clobber each
+  other's log.
+  The name of the log file is configured by the :file:`traces.cfg` file.
 
 
 * :file:`$HOME/.gnatstudio/aliases`
@@ -259,7 +258,7 @@ Files
 
   Default configuration for system traces. These traces are used to analyze
   problems with GNAT Studio.  By default, they are sent to the file
-  :file:`$HOME/.gnatstudio/log.<pid>.txt`.
+  :file:`$HOME/.gnatstudio/log/log.<timestamp>.txt`.
 
   This file is created automatically when the :file:`$HOME/.gnatstudio/` directory
   is created. If you remove it manually, it is not recreated the next time
@@ -526,7 +525,7 @@ installing GNAT Studio.
 
 *GNAT Studio crashes on some GNU/Linux distributions at start up*
 
-  Look at the :file:`~/.gnatstudio/log.<pid>.txt` file and if there is a message that
+  Look at the :file:`$HOME/.gnatstudio/log.<timestamp>.txt` file and if there is a message that
   looks like:
 
     [GPS.MAIN_WINDOW] 1/16 loading gps-animation.png
