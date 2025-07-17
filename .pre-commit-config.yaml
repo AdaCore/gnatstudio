@@ -1,1 +1,6 @@
-repos: []
+repos:
+  - repo: https://github.com/ambv/black
+    rev: 24.2.0
+    hooks:
+    - id: black
+      exclude: docs/users_guide/GPS/generated_hooks.py
