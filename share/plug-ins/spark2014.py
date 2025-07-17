@@ -17,6 +17,9 @@ from functools import reduce
 
 import libadalang as lal
 
+import testgen
+import test2prove
+
 # We create the actions and menus in XML instead of python to share the same
 # source for GPS and GNATbench (which only understands the XML input for now).
 
@@ -33,6 +36,8 @@ cur_exec_path = os.path.dirname(os.path.abspath(__file__))
 # The xml information are under spark2014
 spark2014_dir = os.path.join(cur_exec_path, "spark2014")
 gnatprove_menus_file = os.path.join(spark2014_dir, "gnatprove_menus.xml")
+gnatprove_menus_with_gnattest_file = os.path.join(spark2014_dir, "gnatprove_menus_with_gnattest.xml")
+gnatprove_menus_with_gnatfuzz_file = os.path.join(spark2014_dir, "gnatprove_menus_with_gnatfuzz.xml")
 gnatprove_file = os.path.join(spark2014_dir, "gnatprove.xml")
 
 OUTPUT_PARSERS = """
@@ -46,6 +51,12 @@ OUTPUT_PARSERS = """
 
 with open(gnatprove_menus_file, "r") as input_file:
     xml_gnatprove_menus = input_file.read()
+
+with open(gnatprove_menus_with_gnattest_file, "r") as input_file:
+    xml_gnatprove_menus_with_gnattest = input_file.read()
+
+with open(gnatprove_menus_with_gnatfuzz_file, "r") as input_file:
+    xml_gnatprove_menus_with_gnatfuzz = input_file.read()
 
 with open(gnatprove_file, "r") as input_file2:
     xml_gnatprove = input_file2.read()
@@ -88,6 +99,10 @@ advanced_prove_region = "Prove Selected Region"
 
 # Name of the messages console
 MESSAGES = "Messages"
+
+# Check for external tools
+gnattest = os_utils.locate_exec_on_path("gnattest")
+gnatfuzz = os_utils.locate_exec_on_path("gnatfuzz")
 
 
 def print_error(message):
@@ -1020,6 +1035,39 @@ def on_prove_region(self):
     generic_on_analyze(target, args=args)
 
 
+def on_generate_executable_test(context, force=False, opt_args=[]):
+    msg = context._loc_msg
+    vc_kind = get_vc_kind(msg)
+    subp = context.location()
+    spec = current_subprogram (context).p_previous_part_for_decl().gps_location()
+
+    package = subp.file().unit()
+
+    testgen.run (str(spec), str(subp), vc_kind, package)
+
+
+def on_generate_counter_example_with_gnattest(context, force=False, opt_args=[]):
+    msg = context._loc_msg
+    vc_kind = get_vc_kind(msg)
+    subp = context.location()
+    spec = current_subprogram (context).p_previous_part_for_decl().gps_location()
+
+    package = subp.file().unit()
+ 
+    test2prove.run (str(spec), str(subp), vc_kind, package, 100)
+
+
+def on_generate_counter_example_with_gnatfuzz(context, force=False, opt_args=[]):
+    msg = context._loc_msg
+    vc_kind = get_vc_kind(msg)
+    subp = context.location()
+    spec = current_subprogram (context).p_previous_part_for_decl().gps_location()
+
+    package = subp.file().unit()
+ 
+    test2prove.run (str(spec), str(subp), vc_kind, package, 1, gnatfuzz_mode=True)
+
+
 def on_show_report(self):
     gnatprove_plug.show_report()
 
@@ -1225,6 +1273,11 @@ class GNATProve_Plugin:
             xml_gnatprove.format(help=help_msg, output_parsers=OUTPUT_PARSERS)
         )
         GPS.parse_xml(xml_gnatprove_menus % {"prefix": prefix})
+        if gnattest:
+            GPS.parse_xml(xml_gnatprove_menus_with_gnattest % {"prefix": prefix})
+            if gnatfuzz:
+                GPS.parse_xml(xml_gnatprove_menus_with_gnatfuzz % {"prefix": prefix})
+
         add_lemma_menu()
 
     def show_report(self):
@@ -1436,6 +1489,14 @@ if gnatprove:
     xml_gnatprove_menus = xml_gnatprove_menus.format(
         root=get_root(), example=get_example_root()
     )
+    if gnattest:
+        xml_gnatprove_menus_gnattest = xml_gnatprove_menus_with_gnattest.format(
+            root=get_root(), example=get_example_root()
+        )
+        if gnatfuzz:
+            xml_gnatprove_menus_gnatfuzz = xml_gnatprove_menus_with_gnatfuzz.format(
+                root=get_root(), example=get_example_root()
+            )
 
     gnatprove_plug = GNATProve_Plugin()
 
@@ -1471,3 +1532,4 @@ def load_example_gnatprove_by_example():
     example_root = os.path.join(get_example_root(), "gnatprove_by_example")
     os.environ["SPARKLIB_OBJECT_DIR"] = "."
     GPS.Project.load(os.path.join(example_root, "gnatprove_by_example.gpr"))
+    
