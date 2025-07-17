@@ -4984,8 +4984,8 @@ line::
   PYTHON.OUT=yes
 
 This include the Python traces as part of the general traces available in
-the file :file:`$HOME/.gnatstudio/log`. Note that this may slow down
-GNAT Studio if there is a lot of output to process.
+the :file:`$HOME/.gnatstudio/log.<timestamp>.txt` log files. Note that
+this may slow down GNAT Studio if there is a lot of output to process.
 
 .. _Subprogram_parameters:
 
