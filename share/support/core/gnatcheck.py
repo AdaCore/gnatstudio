@@ -23,6 +23,15 @@ from gs_utils.gnatcheck_rules_editor import rulesEditor, get_supported_rules
 
 gnatsas = os_utils.locate_exec_on_path("gnatsas")
 
+default_category = "Coding Standard violations"
+category_map = {
+    "error": "GNATcheck: Errors",
+    "warning": "GNATcheck: Warnings",
+    "info": "GNATcheck: Info",
+    "rule violation": default_category,
+    "rule violation (exempted)": default_category,
+}
+
 
 class RuleFileKind(Enum):
     """
@@ -269,27 +278,29 @@ class GnatcheckProc:
         # let's reformat those here:
         # expecting "file.ext:nnn:nnn: msg"
         # receiving "file.ext:nnn:nnn msg"
-        res = re.split("^([^:]*[:][0-9]+:[0-9]+)([^:0-9].*)$", msg)
-        if len(res) > 3:
-            msg = res[1] + ":" + res[2]
+        category = default_category
+        res = re.split("^([^:]*:[0-9]+:[0-9]+): ([^:]+): (.*)$", msg)
+        if len(res) > 4:
+            category = category_map.get(res[2], default_category)
+        else:
+            # Detect unknown rules by gnatcheck.
+            # Expected format example: gnatcheck: unknown rule : Abort_Statement,
+            # ignored (/path/to/coding_standard.rules:1:1)
+            res = re.split(r"unknown rule: (\w*), ignored \((.+)[:]([0-9]+):([0-9]+)", msg)
+            if len(res) > 3:
+                category = category_map['error']
+                GPS.Message(
+                    category=category,
+                    file=GPS.File(res[2]),
+                    line=int(res[3]),
+                    column=int(res[4]),  # index in python starts at 0
+                    text="Unknown rule: " + res[1],
+                    show_on_editor_side=True,
+                    show_in_locations=True,
+                    importance=GPS.Message.Importance.MEDIUM,
+                )
 
-        # Detect unknown rules by gnatcheck.
-        # Expected format example: gnatcheck: unknown rule : Abort_Statement,
-        # ignored (/home/leo/Workspace/LKQL/coding_standard.rules:1:1)
-        res = re.split(r"unknown rule: (\w*), ignored \((.+)[:]([0-9]+):([0-9]+)", msg)
-        if len(res) > 3:
-            GPS.Message(
-                category="Coding Standard Rules",
-                file=GPS.File(res[2]),
-                line=int(res[3]),
-                column=int(res[4]),  # index in python starts at 0
-                text="Unknown rule: " + res[1],
-                show_on_editor_side=True,
-                show_in_locations=True,
-                importance=GPS.Message.Importance.MEDIUM,
-            )
-
-        GPS.Locations.parse(msg, self.locations_string)
+        GPS.Locations.parse(msg, category)
 
         # Aggregate output in self.full_output: CodeFix needs to be looking at
         # the whole output in one go.
@@ -305,7 +316,6 @@ class GnatcheckProc:
     def on_exit(self, process, status, remaining_output):
         if self.msg != "":
             GPS.Console("Messages").write(self.msg)
-            GPS.Locations.parse(self.msg, self.locations_string)
             self.parse_output(self.msg)
             self.msg = ""
 
