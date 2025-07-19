@@ -25,27 +25,27 @@
 
 with GNATCOLL.Python;
 
-package VSS.Implementation.Storage_Managers.Python is
+package VSS.Implementation.Text_Storages.Python is
 
-   type Python_Storage_Manager is
-     new Abstract_Storage_Manager with null record;
+   type Python_Text_Storage is
+     new Abstract_Text_Storage with null record;
 
    procedure Initialize
-     (Self            : in out Python_Storage_Manager'Class;
+     (Self            : in out Python_Text_Storage'Class;
       Storage_Address : out System.Address;
       Bytes           : GNATCOLL.Python.PyObject);
 
    overriding function Capacity
-     (Self : in out Python_Storage_Manager)
+     (Self : in out Python_Text_Storage)
       return VSS.Unicode.UTF8_Code_Unit_Count;
 
-   overriding procedure Reference (Self : in out Python_Storage_Manager);
+   overriding procedure Reference (Self : in out Python_Text_Storage);
 
-   overriding procedure Unreference (Self : in out Python_Storage_Manager);
+   overriding procedure Unreference (Self : in out Python_Text_Storage);
 
    overriding procedure Mutate
-     (Self            : in out Python_Storage_Manager;
+     (Self            : in out Python_Text_Storage;
       Storage_Address : in out System.Address;
       Capacity        : VSS.Unicode.UTF8_Code_Unit_Count);
 
-end VSS.Implementation.Storage_Managers.Python;
+end VSS.Implementation.Text_Storages.Python;
