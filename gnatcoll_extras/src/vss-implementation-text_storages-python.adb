@@ -9,16 +9,16 @@ with System.Address_To_Access_Conversions;
 
 with VSS.Implementation.Interfaces_C;
 with VSS.Implementation.Python3;
-with VSS.Implementation.Storage_Managers.Heap;
+with VSS.Implementation.Text_Storages.Heap;
 with VSS.Implementation.UTF8_Encoding;
 
-package body VSS.Implementation.Storage_Managers.Python is
+package body VSS.Implementation.Text_Storages.Python is
 
    function Get_Bytes
-     (Self : Python_Storage_Manager'Class) return GNATCOLL.Python.PyObject;
+     (Self : Python_Text_Storage'Class) return GNATCOLL.Python.PyObject;
 
    procedure Set_Bytes
-     (Self  : in out Python_Storage_Manager'Class;
+     (Self  : in out Python_Text_Storage'Class;
       Bytes : GNATCOLL.Python.PyObject);
 
    --------------
@@ -26,7 +26,7 @@ package body VSS.Implementation.Storage_Managers.Python is
    --------------
 
    overriding function Capacity
-     (Self : in out Python_Storage_Manager)
+     (Self : in out Python_Text_Storage)
       return VSS.Unicode.UTF8_Code_Unit_Count is
    begin
       return 0;
@@ -37,7 +37,7 @@ package body VSS.Implementation.Storage_Managers.Python is
    ---------------
 
    function Get_Bytes
-     (Self : Python_Storage_Manager'Class) return GNATCOLL.Python.PyObject
+     (Self : Python_Text_Storage'Class) return GNATCOLL.Python.PyObject
    is
       package Conversions is
         new System.Address_To_Access_Conversions
@@ -52,7 +52,7 @@ package body VSS.Implementation.Storage_Managers.Python is
    ----------------
 
    procedure Initialize
-     (Self            : in out Python_Storage_Manager'Class;
+     (Self            : in out Python_Text_Storage'Class;
       Storage_Address : out System.Address;
       Bytes           : GNATCOLL.Python.PyObject)
    is
@@ -72,7 +72,7 @@ package body VSS.Implementation.Storage_Managers.Python is
    ------------
 
    overriding procedure Mutate
-     (Self            : in out Python_Storage_Manager;
+     (Self            : in out Python_Text_Storage;
       Storage_Address : in out System.Address;
       Capacity        : VSS.Unicode.UTF8_Code_Unit_Count)
    is
@@ -86,9 +86,8 @@ package body VSS.Implementation.Storage_Managers.Python is
         (0 .. Size - 1)
         with Import, Address => Storage_Address;
 
-      Manager :
-        VSS.Implementation.Storage_Managers.Heap.Heap_Storage_Manager :=
-          (others => <>)
+      Manager : VSS.Implementation.Text_Storages.Heap.Heap_Storage :=
+        (others => <>)
         with Address => Self'Address;
 
    begin
@@ -103,7 +102,7 @@ package body VSS.Implementation.Storage_Managers.Python is
    -- Reference --
    ---------------
 
-   overriding procedure Reference (Self : in out Python_Storage_Manager) is
+   overriding procedure Reference (Self : in out Python_Text_Storage) is
       use type GNATCOLL.Python.PyObject;
 
       Bytes : constant GNATCOLL.Python.PyObject := Self.Get_Bytes;
@@ -119,7 +118,7 @@ package body VSS.Implementation.Storage_Managers.Python is
    ---------------
 
    procedure Set_Bytes
-     (Self  : in out Python_Storage_Manager'Class;
+     (Self  : in out Python_Text_Storage'Class;
       Bytes : GNATCOLL.Python.PyObject)
    is
       package Conversions is
@@ -135,7 +134,7 @@ package body VSS.Implementation.Storage_Managers.Python is
    -- Unreference --
    -----------------
 
-   overriding procedure Unreference (Self : in out Python_Storage_Manager) is
+   overriding procedure Unreference (Self : in out Python_Text_Storage) is
       use type GNATCOLL.Python.PyObject;
 
       Bytes : constant GNATCOLL.Python.PyObject := Self.Get_Bytes;
@@ -147,4 +146,4 @@ package body VSS.Implementation.Storage_Managers.Python is
       end if;
    end Unreference;
 
-end VSS.Implementation.Storage_Managers.Python;
+end VSS.Implementation.Text_Storages.Python;
