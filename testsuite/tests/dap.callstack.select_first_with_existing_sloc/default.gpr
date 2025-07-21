@@ -2,9 +2,6 @@ project Default is
 
    package Compiler is
       for Switches ("Ada") use ("-g");
-      --  For this test we want my_print.adb to be compiled
-      --  without debug info.
-      for Switches ("my_print.adb") use ("");
    end Compiler;
 
    for Main use ("my_main.adb");
