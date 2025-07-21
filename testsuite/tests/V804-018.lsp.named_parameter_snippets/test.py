@@ -26,6 +26,7 @@ def run_test():
 
     yield wait_until_true(lambda: get_widget_by_name("completion-view") != None)
     pop_tree = get_widget_by_name("completion-view")
+    yield wait_until_true(lambda: pop_tree.get_model() != None)
     model = pop_tree.get_model()
     yield wait_until_true(
         lambda: model.get_value(model.get_iter_first(), 0) != "Computing..."
