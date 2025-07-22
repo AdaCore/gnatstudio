@@ -15,7 +15,10 @@ def run_test():
         send_key_event(ord(ch))
         yield timeout(300)
 
+    yield wait_until_true(lambda: get_widget_by_name("completion-view") != None)
     pop_tree = get_widget_by_name("completion-view")
+    yield wait_until_true(lambda: pop_tree.get_model() != None)
+
     gps_assert(
         dump_tree_model(pop_tree.get_model(), 6)[0],
         " cout",
@@ -23,13 +26,17 @@ def run_test():
     )
     GPS.execute_action("undo")
 
-    for ch in "std::fa":
+    for ch in "std::ab":
         send_key_event(ord(ch))
         yield timeout(300)
+
+    yield wait_until_true(lambda: get_widget_by_name("completion-view") != None)
     pop_tree = get_widget_by_name("completion-view")
+    yield wait_until_true(lambda: pop_tree.get_model() != None)
+
     first_proposal = dump_tree_model(pop_tree.get_model(), 6)[0]
     gps_assert(
         first_proposal,
-        "•fabs(…)",
+        "•abs(…)",
         "Wrong first completion proposal",
     )
