@@ -22,7 +22,7 @@ def run_test():
     buf = GPS.EditorBuffer.get(GPS.File("main.adb"))
     view = buf.current_view()
     view.goto(buf.at(7, 18))
-    yield wait_idle()
+    yield wait_tasks()
 
     # Trigger the parameter completion
     for c in " (":
