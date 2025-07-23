@@ -74,16 +74,17 @@ package body VSS.Implementation.Text_Storages.Python is
    overriding procedure Mutate
      (Self            : in out Python_Text_Storage;
       Storage_Address : in out System.Address;
+      Size            : VSS.Unicode.UTF8_Code_Unit_Count;
       Capacity        : VSS.Unicode.UTF8_Code_Unit_Count)
    is
       use type VSS.Unicode.UTF8_Code_Unit_Offset;
 
-      Bytes   : constant GNATCOLL.Python.PyObject := Self.Get_Bytes;
-      Size    : constant VSS.Unicode.UTF8_Code_Unit_Count :=
+      Bytes      : constant GNATCOLL.Python.PyObject := Self.Get_Bytes;
+      Bytes_Size : constant VSS.Unicode.UTF8_Code_Unit_Count :=
         VSS.Unicode.UTF8_Code_Unit_Count
           (VSS.Implementation.Python3.PyBytes_Size (Bytes));
       Storage : constant VSS.Implementation.UTF8_Encoding.UTF8_Code_Unit_Array
-        (0 .. Size - 1)
+        (0 .. Bytes_Size - 1)
         with Import, Address => Storage_Address;
 
       Manager : VSS.Implementation.Text_Storages.Heap.Heap_Storage :=
@@ -91,10 +92,12 @@ package body VSS.Implementation.Text_Storages.Python is
         with Address => Self'Address;
 
    begin
+      pragma Assert (Bytes_Size = Size);
+
       Manager.Initialize
         (Storage_Address,
          Storage,
-         Size);
+         Bytes_Size);
       GNATCOLL.Python.Py_DECREF (Bytes);
    end Mutate;
 

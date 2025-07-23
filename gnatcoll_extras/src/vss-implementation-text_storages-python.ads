@@ -46,6 +46,7 @@ package VSS.Implementation.Text_Storages.Python is
    overriding procedure Mutate
      (Self            : in out Python_Text_Storage;
       Storage_Address : in out System.Address;
+      Size            : VSS.Unicode.UTF8_Code_Unit_Count;
       Capacity        : VSS.Unicode.UTF8_Code_Unit_Count);
 
 end VSS.Implementation.Text_Storages.Python;
