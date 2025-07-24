@@ -15,9 +15,17 @@ def run_test():
         send_key_event(ord(ch))
         yield timeout(300)
 
-    yield wait_until_true(lambda: get_widget_by_name("completion-view") != None)
+    yield wait_until_true(
+        lambda: get_widget_by_name("completion-view") is not None,
+        timeout=1000,
+        error_msg="Completion popup did not appear",
+    )
     pop_tree = get_widget_by_name("completion-view")
-    yield wait_until_true(lambda: pop_tree.get_model() != None)
+    yield wait_until_true(
+        lambda: pop_tree.get_model() is not None,
+        timeout=1000,
+        error_msg="Completion model not ready yet",
+    )
 
     gps_assert(
         dump_tree_model(pop_tree.get_model(), 6)[0],
@@ -30,10 +38,17 @@ def run_test():
         send_key_event(ord(ch))
         yield timeout(300)
 
-    yield wait_until_true(lambda: get_widget_by_name("completion-view") != None)
+    yield wait_until_true(
+        lambda: get_widget_by_name("completion-view") is not None,
+        timeout=1000,
+        error_msg="Completion popup did not appear",
+    )
     pop_tree = get_widget_by_name("completion-view")
-    yield wait_until_true(lambda: pop_tree.get_model() != None)
-
+    yield wait_until_true(
+        lambda: pop_tree.get_model() is not None,
+        timeout=1000,
+        error_msg="Completion model not ready yet",
+    )
     first_proposal = dump_tree_model(pop_tree.get_model(), 6)[0]
     gps_assert(
         first_proposal,
