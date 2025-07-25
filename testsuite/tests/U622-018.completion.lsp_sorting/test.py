@@ -23,9 +23,17 @@ def run_test():
         yield timeout(100)
 
     # Verify that the completion window is there
+
+    yield wait_until_true(
+        lambda: get_widget_by_name("completion-view") is not None,
+        timeout=1000,
+        error_msg="Completion popup did not appear",
+    )
     pop_tree = get_widget_by_name("completion-view")
-    gps_assert(
-        pop_tree is not None, True, "The completion window should be open at that point"
+    yield wait_until_true(
+        lambda: pop_tree.get_model() is not None,
+        timeout=1000,
+        error_msg="Completion model not ready yet",
     )
 
     # Verify that completion items' order: 'Do_Something' (the visible one)
