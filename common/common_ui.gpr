@@ -1,4 +1,6 @@
 
+with "vss_os.gpr";
+
 with "common";
 with "../gnatcoll_extras/gnatcoll_extras";
 with "../shared";
