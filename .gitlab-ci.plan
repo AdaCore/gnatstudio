@@ -1,14 +1,15 @@
 def build_(qualifier={}):
-    with defaults(qualifier=qualifier):
-        anod_build("gps")
-        anod_build("gps_testsuite_drivers")
+    anod_build("gps", qualifier={**qualifier, "coverage": True})
+    anod_build("gps_testsuite_drivers", qualifier={**qualifier, "coverage": True})
 
 
 def test_(qualifier={}):
-    with defaults(qualifier=qualifier):
-        anod_install("gps")
-        anod_install("gps_testsuite_drivers")
-        anod_test("gps", qualifier={**qualifier, "gdb-head": False})
+    anod_install("gps", qualifier={**qualifier, "coverage": True})
+    anod_install("gps_testsuite_drivers", qualifier={**qualifier, "coverage": True})
+    anod_test("gps", qualifier={**qualifier, "coverage": True, "gdb-head": False})
+
+def collect_coverage_(qualifier={}):
+    anod_build("gps", qualifier={**qualifier, "coverage_report": True})
 
 # Edge
 
@@ -20,10 +21,12 @@ def build_edge():
 def test_edge():
     test_(edge_qualifier)
 
+def collect_coverage_edge():
+    collect_traces_(edge_qualifier)
 
 # Integration testsuite (no edge version)
 
 def test_integration_testsuite():
-    anod_install("gps")
+    anod_install("gps", qualifier={"coverage": True})
     # Testing per se
-    anod_test("integration-testsuite")
+    anod_test("integration-testsuite", qualifier={"gs_coverage": True})
