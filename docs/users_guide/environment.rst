@@ -617,23 +617,6 @@ signature help window on some window managers.
   routines of packages.  Debug these in the usual manner, just as if you
   were debugging code in your application.
 
-*How can I debug the Ada run-time library?*
-
-  The run time distributed in binary versions of GNAT has not been compiled
-  with debug information, so it needs to be recompiled before you can debug
-  it.
-
-  The simplest way is to recompile your application and add the switches
-  :command:`-a` and :command:`-f` to the :program:`gnatmake` command
-  line. This extra step is only required to be done once assuming you keep
-  the generated object and :file:`ali` files corresponding to the GNAT run
-  time available.
-
-  Another possibility on Unix systems is to use the file
-  :file:`Makefile.adalib`, which is found in the :file:`adalib` directory
-  of your GNAT installation, and specify e.g :command:`-g -O2` for the
-  :command:`CFLAGS` switches.
-
 *The GNAT Studio main window is not displayed*
 
   If, when launching GNAT Studio, nothing happens, try to rename the
