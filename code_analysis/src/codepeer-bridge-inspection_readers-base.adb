@@ -14,6 +14,7 @@
 -- COPYING3.  If not, go to http://www.gnu.org/licenses for a complete copy --
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
+
 with GNAT.Strings;
 
 with GNATCOLL.Projects;  use GNATCOLL.Projects;
@@ -579,11 +580,42 @@ package body CodePeer.Bridge.Inspection_Readers.Base is
              (Get_Registry (Self.Kernel).Tree.Info_Set (File_Name)
               .First_Element);
       begin
-         Project_Node :=
-           Code_Analysis.Get_Or_Create
-             (Self.Projects,
-              Projects.Views.Create_Project_View_Reference
-                (Self.Kernel, F_Info.Project));
+         if F_Info.Project = No_Project
+           and then GNATCOLL.Utils.Starts_With (+File_Name.Base_Name, "b__")
+         then
+            declare
+               Base : constant String := (+File_Name.Base_Name);
+               File : GNATCOLL.VFS.Virtual_File := Create_From_Base
+                 (+Base (Base'First + 3 .. Base'Last), File_Name.Dir_Name);
+
+            begin
+               Relocated_Name := Self.Kernel.Create_From_Base (File.Base_Name);
+               if Relocated_Name.Is_Regular_File then
+                  File := Relocated_Name;
+               end if;
+
+               declare
+                  Info : constant GNATCOLL.Projects.File_Info'Class :=
+                    GNATCOLL.Projects.File_Info'Class
+                      (Get_Registry (Self.Kernel).Tree.Info_Set (File)
+                       .First_Element);
+               begin
+                  if Info.Project /= No_Project then
+                     Project_Node := Code_Analysis.Get_Or_Create
+                       (Self.Projects,
+                        Projects.Views.Create_Project_View_Reference
+                          (Self.Kernel, Info.Project));
+                  end if;
+               end;
+            end;
+         end if;
+
+         if Project_Node = null then
+            Project_Node := Code_Analysis.Get_Or_Create
+              (Self.Projects,
+               Projects.Views.Create_Project_View_Reference
+                 (Self.Kernel, F_Info.Project));
+         end if;
       end;
 
       Self.File_Node :=
@@ -794,7 +826,7 @@ package body CodePeer.Bridge.Inspection_Readers.Base is
            From_Column => From_Column,
            Checks      => Checks,
            CWEs        => CWEs,
-           GNATSAS_Id      => GNATSAS_Id);
+           GNATSAS_Id  => GNATSAS_Id);
 
       if Self.Messages.Contains (Self.Current_Message.Id) then
          Self.Kernel.Insert
