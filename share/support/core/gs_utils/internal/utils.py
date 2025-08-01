@@ -259,16 +259,53 @@ def wait_language_server(method="", language="Ada"):
 
 
 @workflows.run_as_workflow
-def wait_DAP_server(method=""):
+def wait_DAP_server(method="", timeout=3000, error_msg=None):
     """
-    Wait for the DAP server to have processed a response for the
+    Wait for the DAP server to have processed the response for the
     given method.
+    if `timeout` is specified, wait at most timeout (milliseconds).
+    If `error_msg` is specified, exit GS with a fatal error once the
+    timeout is exceeded.
     """
-    while True:
-        (m) = yield hook("DAP_response_processed")
+    time = 0  # Time elapsed since the start of the wait
+    increment = 100  # How often to check for the DAP response
 
-        if m == method:
-            break
+    p = Promise()
+
+    def dap_hook_handler(hook, m):
+        """
+        Hook handler for the DAP server response.
+        Resolve the promise if the method matches the one we are waiting for.
+        """
+        if method == m:
+            GPS.Hook("DAP_response_processed").remove(dap_hook_handler)
+            p.resolve()
+            t.remove()
+            return False  # Stop listening to this hook
+
+    def timeout_handler(t):
+        """
+        Timeout handler for the DAP server response.
+        If the timeout is exceeded, we resolve the returned promise.
+        If an error_msg is specified, we exit GS with a fatal error.
+        """
+        nonlocal time
+        time += increment
+
+        if time >= timeout:
+            t.remove()
+            if error_msg:
+                gps_fatal_error(
+                    "'wait_DAP_server' for method '%s' timeout exceeded: %s"
+                    % (method, error_msg)
+                )
+            p.resolve()
+            return False  # Stop listening to this hook
+
+    GPS.Hook("DAP_response_processed").add(dap_hook_handler)
+    t = GPS.Timeout(increment, timeout_handler)
+
+    return p
 
 
 @workflows.run_as_workflow
