@@ -206,7 +206,7 @@ def run(spec, subp, check_type, package_name, nb_tests, gnatfuzz_mode=False):
                         f"and can be found at {CE_values_path}")
 
     GPS.Message("default",
-                GPS.File("subp_file"),
+                GPS.File(subp_file),
                 subp_line,
                 subp_col,
                 f"Counterexample file available at {CE_values_path}");

@@ -12,18 +12,14 @@ import subprocess
 
 import GPS
 
+generate_hollow_harness = "Generate Hollow Harness"
+gnattest_command = "Run GNATtest"
+
 
 # Generate a hollow test harness for a subprogram
 def run_gnattest(project_name, filename, line):
-    return GPS.Process(
-        [
-            "gnattest",
-            f"-P{project_name}",
-            filename,
-            f"--gen-test-subprograms={filename}:{str(line)}",
-            "--gen-test-vectors",
-            "--gen-test-num=1",
-        ]
+    GPS.BuildTarget(generate_hollow_harness).execute(
+        extra_args=[f"--gen-test-subprograms={filename}:{str(line)}"]
     )
 
 
@@ -119,13 +115,9 @@ def replace_values(JSON_file, subp_hash, values):
 
 
 # Generate complete test harness from a .json file
-def generate_tests(project_name, filename, line):
-    return GPS.Process(
-        [
-            "gnattest",
-            f"-P{project_name}",
-            f"--gen-test-subprograms={filename}:{str(line)}",
-        ]
+def generate_tests(filename, line):
+    GPS.BuildTarget(gnattest_command).execute(
+        extra_args=[f"--gen-test-subprograms={filename}:{str(line)}"]
     )
 
 
@@ -187,18 +179,21 @@ def run(spec, subp, check_type, package_name):
 
     hash_value = get_hash(project_name, os.path.join("src", spec_file), spec_line)
 
-    proc = run_gnattest(project_name, spec_file, spec_line)
+    run_gnattest(project_name, spec_file, spec_line)
 
-    proc.wait()
+    json_file = os.path.join(
+        artifacts,
+        "gnattest",
+        "tests",
+        "JSON_Tests",
+        f"{package_name}.json",
+    )
+
+    if not os.path.isfile(json_file):
+        return
 
     r = replace_values(
-        os.path.join(
-            artifacts,
-            "gnattest",
-            "tests",
-            "JSON_Tests",
-            f"{package_name}.json",
-        ),
+        json_file,
         hash_value,
         ce_values,
     )
@@ -208,9 +203,7 @@ def run(spec, subp, check_type, package_name):
                             "test harness failed. Aborting.")
         return
 
-    proc = generate_tests(project_name, spec_file, spec_line)
-
-    proc.wait()
+    generate_tests(spec_file, spec_line)
 
     harness_path = os.path.join(
         artifacts,
@@ -221,7 +214,7 @@ def run(spec, subp, check_type, package_name):
     GPS.Console().write(f"Test harness has been generated and can be found at {harness_path}")
 
     GPS.Message("default",
-                GPS.File("subp_file"),
+                GPS.File(subp_file),
                 subp_line,
                 subp_col,
                 f"Executable test case for counterexample available at {harness_path}");

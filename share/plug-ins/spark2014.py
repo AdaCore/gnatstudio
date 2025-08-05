@@ -39,6 +39,7 @@ gnatprove_menus_file = os.path.join(spark2014_dir, "gnatprove_menus.xml")
 gnatprove_menus_with_gnattest_file = os.path.join(spark2014_dir, "gnatprove_menus_with_gnattest.xml")
 gnatprove_menus_with_gnatfuzz_file = os.path.join(spark2014_dir, "gnatprove_menus_with_gnatfuzz.xml")
 gnatprove_file = os.path.join(spark2014_dir, "gnatprove.xml")
+gnattest_file = os.path.join(spark2014_dir, "gnattest.xml")
 
 OUTPUT_PARSERS = """
     output_chopper
@@ -60,6 +61,9 @@ with open(gnatprove_menus_with_gnatfuzz_file, "r") as input_file:
 
 with open(gnatprove_file, "r") as input_file2:
     xml_gnatprove = input_file2.read()
+
+with open(gnattest_file, "r") as input_file3:
+    xml_gnattest = input_file3.read()
 
 # constants that are required by the plugin
 
@@ -1274,6 +1278,11 @@ class GNATProve_Plugin:
         )
         GPS.parse_xml(xml_gnatprove_menus % {"prefix": prefix})
         if gnattest:
+            process = GPS.Process("gnattest --help")
+            help_msg = process.get_result()
+            GPS.parse_xml(
+                xml_gnattest.format(help=help_msg, output_parsers=OUTPUT_PARSERS)
+            )
             GPS.parse_xml(xml_gnatprove_menus_with_gnattest % {"prefix": prefix})
             if gnatfuzz:
                 GPS.parse_xml(xml_gnatprove_menus_with_gnatfuzz % {"prefix": prefix})

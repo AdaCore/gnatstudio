@@ -1,0 +1,45 @@
+<?xml version="1.0"?>
+<GNATPROVE>
+
+  <target-model name="gnattest for SPARK">
+    <description>Target model for GNATtest used by SPARK
+    </description>
+    <iconname>GNATtest</iconname>
+    <command-help>{help}</command-help>
+    <switches command="gnattest">
+    </switches>
+    <persistent-history>False</persistent-history>
+  </target-model>
+
+  <target model="gnattest for SPARK" name="Generate Hollow Harness" category="GNATprove">
+    <in-menu>FALSE</in-menu>
+    <iconname>Generate Hollow Harness</iconname>
+    <launch-mode>MANUALLY_WITH_DIALOG</launch-mode>
+    <read-only>TRUE</read-only>
+    <command-line>
+      <arg>gnattest</arg>
+      <arg>-P%PP</arg>
+      <arg>%X</arg>
+      <arg>--gen-test-vectors</arg>
+      <arg>--gen-test-num=1</arg>
+    </command-line>
+    <output-parsers>
+      {output_parsers}
+    </output-parsers>
+  </target>
+
+  <target model="gnattest for SPARK" name="Run GNATtest" category="GNATprove">
+    <in-menu>FALSE</in-menu>
+    <iconname>Run GNATtest</iconname>
+    <launch-mode>MANUALLY_WITH_DIALOG</launch-mode>
+    <read-only>TRUE</read-only>
+    <command-line>
+      <arg>gnattest</arg>
+      <arg>-P%PP</arg>
+    </command-line>
+    <output-parsers>
+      {output_parsers}
+    </output-parsers>
+  </target>
+
+</GNATPROVE>
