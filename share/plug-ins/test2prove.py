@@ -12,18 +12,14 @@ import subprocess
 
 import GPS
 
+generate_values = "Generate Values"
+fuzz_counterexamples = "Fuzz CE"
 
 # Generate test values with gnattest
-def run_gnattest(project_name, filename, line, nb_cases):
-    return GPS.Process(
-        [
-            "gnattest",
-            f"-P{project_name}",
-            filename,
-            f"--gen-test-subprograms={filename}:{str(line)}",
-            "--gen-test-vectors",
-            f"--gen-test-num={nb_cases}",
-        ]
+def run_gnattest(filename, line, force, gnatfuzz_mode):
+    GPS.BuildTarget(generate_values).execute(
+        extra_args=[f"--gen-test-subprograms={filename}:{str(line)}"],
+        force = force
     )
 
 
@@ -39,12 +35,11 @@ def gnatfuzz(subcommand, subsubcommand, project_name, args):
 
 
 # Generate 'better' test values with gnatfuzz
-def run_gnatfuzz(project_name, sub_id):
-    return gnatfuzz(
-        "fuzz-everything",
-        "test",
-        project_name,
-        [f"--subprogram-ids-to-test={sub_id}"],
+def run_gnatfuzz(sub_id, force):
+    GPS.BuildTarget(fuzz_counterexamples).execute(
+        extra_args=[f"--subprogram-ids-to-test={sub_id}",
+                    "--disable-styled-output"],
+        force = force,
     )
 
 
@@ -128,7 +123,7 @@ def parse_subp(s):
 
 
 # peform the entire pipeline
-def run(spec, subp, check_type, package_name, nb_tests, gnatfuzz_mode=False):
+def run(spec, subp, check_type, package_name, gnatfuzz_mode, force=False):
     spec_file, spec_line, spec_col = parse_subp(spec)
 
     subp_file, subp_line, subp_col = parse_subp(subp)
@@ -159,9 +154,7 @@ def run(spec, subp, check_type, package_name, nb_tests, gnatfuzz_mode=False):
         os.chdir(current_working_dir)
         return
     
-    proc = run_gnattest(project_name, spec_file, spec_line, nb_tests)
-
-    proc.wait()
+    run_gnattest(spec_file, spec_line, force, gnatfuzz_mode)
 
     if gnatfuzz_mode:
         subp_id = get_subprogram_id(project_name, spec_file, spec_line, artifacts)
@@ -173,9 +166,7 @@ def run(spec, subp, check_type, package_name, nb_tests, gnatfuzz_mode=False):
             )
             return
 
-        proc = run_gnatfuzz(project_name, subp_id)
-
-        proc.wait()
+        run_gnatfuzz(subp_id, force)
 
     gnattest_json_path = os.path.join(
         artifacts,
@@ -189,7 +180,7 @@ def run(spec, subp, check_type, package_name, nb_tests, gnatfuzz_mode=False):
 
     if not test_values:
         GPS.Console().write(
-            "Warning: No test values found for"
+            "Warning: No test values found for "
             + f"{spec_file}:{spec_line}."
         )
         return

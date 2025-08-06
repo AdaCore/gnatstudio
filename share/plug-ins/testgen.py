@@ -17,10 +17,12 @@ gnattest_command = "Run GNATtest"
 
 
 # Generate a hollow test harness for a subprogram
-def run_gnattest(project_name, filename, line):
+def run_gnattest(project_name, filename, line, force):
     GPS.BuildTarget(generate_hollow_harness).execute(
-        extra_args=[f"--gen-test-subprograms={filename}:{str(line)}"]
+        extra_args=[f"--gen-test-subprograms={filename}:{str(line)}"],
+        force = force
     )
+
 
 
 # Retreive the hash16 that gnattest uses to refer to a subprogram
@@ -115,9 +117,10 @@ def replace_values(JSON_file, subp_hash, values):
 
 
 # Generate complete test harness from a .json file
-def generate_tests(filename, line):
+def generate_tests(filename, line, force):
     GPS.BuildTarget(gnattest_command).execute(
-        extra_args=[f"--gen-test-subprograms={filename}:{str(line)}"]
+        extra_args=[f"--gen-test-subprograms={filename}:{str(line)}"],
+        force = force
     )
 
 
@@ -130,7 +133,7 @@ def parse_subp(s):
 
 
 # Performs the testgen pipeline
-def run(spec, subp, check_type, package_name):
+def run(spec, subp, check_type, package_name, force=False):
 
     spec_file, spec_line, spec_col = parse_subp(spec)
 
@@ -179,7 +182,7 @@ def run(spec, subp, check_type, package_name):
 
     hash_value = get_hash(project_name, os.path.join("src", spec_file), spec_line)
 
-    run_gnattest(project_name, spec_file, spec_line)
+    run_gnattest(project_name, spec_file, spec_line, force)
 
     json_file = os.path.join(
         artifacts,
@@ -190,6 +193,7 @@ def run(spec, subp, check_type, package_name):
     )
 
     if not os.path.isfile(json_file):
+        GPS.Console().write("Could not generate harness. Aborting.")
         return
 
     r = replace_values(
@@ -203,7 +207,7 @@ def run(spec, subp, check_type, package_name):
                             "test harness failed. Aborting.")
         return
 
-    generate_tests(spec_file, spec_line)
+    generate_tests(spec_file, spec_line, force)
 
     harness_path = os.path.join(
         artifacts,

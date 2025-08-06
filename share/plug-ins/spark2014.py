@@ -40,6 +40,7 @@ gnatprove_menus_with_gnattest_file = os.path.join(spark2014_dir, "gnatprove_menu
 gnatprove_menus_with_gnatfuzz_file = os.path.join(spark2014_dir, "gnatprove_menus_with_gnatfuzz.xml")
 gnatprove_file = os.path.join(spark2014_dir, "gnatprove.xml")
 gnattest_file = os.path.join(spark2014_dir, "gnattest.xml")
+gnatfuzz_file = os.path.join(spark2014_dir, "gnatfuzz.xml")
 
 OUTPUT_PARSERS = """
     output_chopper
@@ -64,6 +65,9 @@ with open(gnatprove_file, "r") as input_file2:
 
 with open(gnattest_file, "r") as input_file3:
     xml_gnattest = input_file3.read()
+
+with open(gnatfuzz_file, "r") as input_file4:
+    xml_gnatfuzz = input_file4.read()
 
 # constants that are required by the plugin
 
@@ -1047,7 +1051,16 @@ def on_generate_executable_test(context, force=False, opt_args=[]):
 
     package = subp.file().unit()
 
-    testgen.run (str(spec), str(subp), vc_kind, package)
+    # TGen run through BuildTarget requires LIBRARY_TYPE to be static
+    library_type = os.getenv("LIBRARY_TYPE")
+    os.environ["LIBRARY_TYPE"] = "static"
+
+    testgen.run (str(spec), str(subp), vc_kind, package, force)
+
+    if library_type is None:
+        del os.environ["LIBRARY_TYPE"]
+    else:
+        os.environ["LIBRARY_TYPE"] = library_type
 
 
 def on_generate_counter_example_with_gnattest(context, force=False, opt_args=[]):
@@ -1057,8 +1070,17 @@ def on_generate_counter_example_with_gnattest(context, force=False, opt_args=[])
     spec = current_subprogram (context).p_previous_part_for_decl().gps_location()
 
     package = subp.file().unit()
+
+    # TGen run through BuildTarget requires LIBRARY_TYPE to be static
+    library_type = os.getenv("LIBRARY_TYPE")
+    os.environ["LIBRARY_TYPE"] = "static"
  
-    test2prove.run (str(spec), str(subp), vc_kind, package, 100)
+    test2prove.run (str(spec), str(subp), vc_kind, package, False, force)
+
+    if library_type is None:
+        del os.environ["LIBRARY_TYPE"]
+    else:
+        os.environ["LIBRARY_TYPE"] = library_type
 
 
 def on_generate_counter_example_with_gnatfuzz(context, force=False, opt_args=[]):
@@ -1068,8 +1090,17 @@ def on_generate_counter_example_with_gnatfuzz(context, force=False, opt_args=[])
     spec = current_subprogram (context).p_previous_part_for_decl().gps_location()
 
     package = subp.file().unit()
+
+    # TGen run through BuildTarget requires LIBRARY_TYPE to be static
+    library_type = os.getenv("LIBRARY_TYPE")
+    os.environ["LIBRARY_TYPE"] = "static"
  
-    test2prove.run (str(spec), str(subp), vc_kind, package, 1, gnatfuzz_mode=True)
+    test2prove.run (str(spec), str(subp), vc_kind, package, True, force)
+
+    if library_type is None:
+        del os.environ["LIBRARY_TYPE"]
+    else:
+        os.environ["LIBRARY_TYPE"] = library_type
 
 
 def on_show_report(self):
@@ -1285,6 +1316,11 @@ class GNATProve_Plugin:
             )
             GPS.parse_xml(xml_gnatprove_menus_with_gnattest % {"prefix": prefix})
             if gnatfuzz:
+                process = GPS.Process("gnatfuzz --help")
+                help_msg = process.get_result()
+                GPS.parse_xml(
+                    xml_gnatfuzz.format(help="TODO: fix gnatfuzz output", output_parsers=OUTPUT_PARSERS)
+                )
                 GPS.parse_xml(xml_gnatprove_menus_with_gnatfuzz % {"prefix": prefix})
 
         add_lemma_menu()

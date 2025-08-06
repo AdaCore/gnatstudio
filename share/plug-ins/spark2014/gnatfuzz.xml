@@ -1,0 +1,30 @@
+<?xml version="1.0"?>
+<GNATPROVE>
+
+  <target-model name="gnatfuzz for SPARK">
+    <description>Target model for GNATfuzz used by SPARK
+    </description>
+    <iconname>GNATfuzz</iconname>
+    <command-help>{help}</command-help>
+    <switches command="gnatfuzz">
+    </switches>
+    <persistent-history>False</persistent-history>
+  </target-model>
+
+  <target model="gnatfuzz for SPARK" name="Fuzz CE" category="GNATprove">
+    <in-menu>FALSE</in-menu>
+    <iconname>Fuzz counterexamples</iconname>
+    <launch-mode>MANUALLY_WITH_DIALOG</launch-mode>
+    <read-only>TRUE</read-only>
+    <command-line>
+      <arg>gnatfuzz</arg>
+      <arg>fuzz-everything</arg>
+      <arg>test</arg>
+      <arg>-P%PP</arg>
+    </command-line>
+    <output-parsers>
+      {output_parsers}
+    </output-parsers>
+  </target>
+
+</GNATPROVE>

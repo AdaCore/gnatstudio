@@ -42,4 +42,21 @@
     </output-parsers>
   </target>
 
+  <target model="gnattest for SPARK" name="Generate Values" category="GNATprove">
+    <in-menu>FALSE</in-menu>
+    <iconname>Run GNATtest</iconname>
+    <launch-mode>MANUALLY_WITH_DIALOG</launch-mode>
+    <read-only>TRUE</read-only>
+    <command-line>
+      <arg>gnattest</arg>
+      <arg>-P%PP</arg>
+      <arg>%X</arg>
+      <arg>--gen-test-vectors</arg>
+      <arg>--gen-test-num=100</arg>
+    </command-line>
+    <output-parsers>
+      {output_parsers}
+    </output-parsers>
+  </target>
+
 </GNATPROVE>
