@@ -9,20 +9,20 @@ from gs_utils.internal.utils import *
 
 @run_test_driver
 def run_test():
+    # Open the C++ header file and wait for clangd to index
+    # the project.
     buf = GPS.EditorBuffer.get(GPS.File("hello.h"))
-    yield wait_idle()
+    yield wait_tasks()
 
+    # Go to the declaration of 'DoSomething' in 'hello.h'
     buf.current_view().goto(buf.at(12, 13))
     yield hook("location_changed", debounced=True)
-    yield timeout(1000)
 
     # Verify that navigation from 'hello.h' works fine and that
     # it correctly jumps to the corresponding c++ implementation
     # file.
-
     GPS.execute_action("goto declaration")
     yield wait_language_server("textDocument/declaration", "C")
-    yield timeout(1000)
 
     current_buf = GPS.EditorBuffer.get()
     current_loc = current_buf.current_view().cursor()
@@ -35,19 +35,17 @@ def run_test():
     gps_assert(
         current_loc.column(), 24, "'goto declaration' did not got the right column"
     )
-
+    # Now, open the C header file, on the 'DoSomething' function
+    # declaration, and verify that navigation works fine.
     buf = GPS.EditorBuffer.get(GPS.File("hi.h"))
     buf.current_view().goto(buf.at(3, 8))
     yield hook("location_changed", debounced=True)
-    yield timeout(1000)
 
     # Verify that navigation from 'hi.h' works fine and that
     # it correctly jumps to the corresponding C implementation
     # file.
-
     GPS.execute_action("goto declaration")
     yield wait_language_server("textDocument/declaration", "C")
-    yield timeout(1000)
 
     current_buf = GPS.EditorBuffer.get()
     current_loc = current_buf.current_view().cursor()

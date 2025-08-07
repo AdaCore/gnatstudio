@@ -17,7 +17,7 @@ def run_test():
     buf = GPS.EditorBuffer.get(GPS.File("main.adb"))
     view = buf.current_view()
     view.goto(buf.at(8, 1).end_of_line())
-    yield wait_idle()
+    yield wait_tasks()
 
     # Insert a completion snippet received from clangd
 
@@ -32,7 +32,7 @@ def run_test():
 
     # Trigger the completion window by typing "Var"
     send_key_event(ord("V"))
-    yield hook("language_server_response_processed")
+    yield wait_language_server("textDocument/completion")
     yield wait_idle()
     line = buf.get_chars(buf.at(8, 1), buf.at(8, 1).end_of_line())
     gps_assert(
