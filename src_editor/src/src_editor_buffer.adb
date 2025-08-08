@@ -582,14 +582,16 @@ package body Src_Editor_Buffer is
      (Buffer        : Source_Buffer;
       Mark          : Gtk_Text_Mark;
       Cursor_Line   : out Gint;
-      Cursor_Offset : out Gint);
+      Cursor_Offset : out Gint;
+      Do_Not_Move   : out Boolean);
    --  Save the location of the Mark
 
    procedure Place_Cursor
      (Buffer        : Source_Buffer;
       Mark          : Gtk_Text_Mark;
       Cursor_Line   : Gint;
-      Cursor_Offset : Gint);
+      Cursor_Offset : Gint;
+      Do_Not_Move   : Boolean);
    --  Move the mark to the new location
 
    procedure Range_Formatting
@@ -6322,10 +6324,13 @@ package body Src_Editor_Buffer is
      (Buffer        : Source_Buffer;
       Mark          : Gtk_Text_Mark;
       Cursor_Line   : out Gint;
-      Cursor_Offset : out Gint)
+      Cursor_Offset : out Gint;
+      Do_Not_Move   : out Boolean)
    is
       Cursor_Iter : Gtk_Text_Iter;
    begin
+      --  Save Do_Not_Move_Cursor value for later and force it to True
+      Do_Not_Move := Buffer.Do_Not_Move_Cursor;
       Buffer.Do_Not_Move_Cursor := True;
       Get_Iter_At_Mark (Buffer, Cursor_Iter, Mark);
       Cursor_Line := Get_Line (Cursor_Iter);
@@ -6340,13 +6345,16 @@ package body Src_Editor_Buffer is
      (Buffer        : Source_Buffer;
       Mark          : Gtk_Text_Mark;
       Cursor_Line   : Gint;
-      Cursor_Offset : Gint)
+      Cursor_Offset : Gint;
+      Do_Not_Move   : Boolean)
    is
       Cursor_Move : Gint := Cursor_Offset;
       Result      : Boolean := True;
       Offset      : Gint := 0;
       Iter        : Gtk_Text_Iter;
    begin
+      --  Restore the previous value of Do_Not_Move_Cursor
+      Buffer.Do_Not_Move_Cursor := Do_Not_Move;
       --  Can't move the cursor if the mark was deleted
       if not Get_Move_Cursor_When_Formatting (Buffer.Get_Language)
         or else Mark.Get_Deleted
@@ -6374,7 +6382,6 @@ package body Src_Editor_Buffer is
          Forward_Chars (Iter, Cursor_Move, Result);
       end if;
 
-      Buffer.Do_Not_Move_Cursor := False;
       if Buffer.Insert_Mark = Mark then
          --  Move the main cursor
          Place_Cursor (Buffer, Iter);
@@ -6399,6 +6406,7 @@ package body Src_Editor_Buffer is
 
       Cursor_Line   : Gint;
       Cursor_Offset : Gint;
+      Do_Not_Move   : Boolean;
 
       From_Column : Visible_Column_Type;
       To_Column   : Visible_Column_Type;
@@ -6424,7 +6432,8 @@ package body Src_Editor_Buffer is
         (Buffer        => Buffer,
          Mark          => Mark,
          Cursor_Line   => Cursor_Line,
-         Cursor_Offset => Cursor_Offset);
+         Cursor_Offset => Cursor_Offset,
+         Do_Not_Move   => Do_Not_Move);
 
       if Src_Editor_Buffer.Line_Information.Lines_Are_Real (Buffer) then
          Get_Iter_Position (Buffer, From, From_Line, From_Column);
@@ -6495,7 +6504,8 @@ package body Src_Editor_Buffer is
         (Buffer        => Buffer,
          Mark          => Mark,
          Cursor_Line   => Cursor_Line,
-         Cursor_Offset => Cursor_Offset);
+         Cursor_Offset => Cursor_Offset,
+         Do_Not_Move   => Do_Not_Move);
    end Range_Formatting;
 
    ------------------------
@@ -6509,8 +6519,10 @@ package body Src_Editor_Buffer is
       Force    : Boolean := False)
    is
       pragma Unreferenced (Force);
+
       Cursor_Line   : Gint;
       Cursor_Offset : Gint;
+      Do_Not_Move   : Boolean;
 
       Start_Line, End_Line     : Editable_Line_Type;
       Start_Column, End_Column : Visible_Column_Type;
@@ -6534,7 +6546,8 @@ package body Src_Editor_Buffer is
         (Buffer        => Buffer,
          Mark          => Mark,
          Cursor_Line   => Cursor_Line,
-         Cursor_Offset => Cursor_Offset);
+         Cursor_Offset => Cursor_Offset,
+         Do_Not_Move   => Do_Not_Move);
 
       Get_Iter_Position (Buffer, From, Start_Line, Start_Column);
       Get_Iter_Position (Buffer, To, End_Line, End_Column);
@@ -6553,7 +6566,8 @@ package body Src_Editor_Buffer is
         (Buffer        => Buffer,
          Mark          => Mark,
          Cursor_Line   => Cursor_Line,
-         Cursor_Offset => Cursor_Offset);
+         Cursor_Offset => Cursor_Offset,
+         Do_Not_Move   => Do_Not_Move);
    end On_Type_Formatting;
 
    -------------------

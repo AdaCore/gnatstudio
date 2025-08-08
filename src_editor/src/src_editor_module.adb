@@ -2519,7 +2519,7 @@ package body Src_Editor_Module is
       if Pref /= null then
          return Boolean_Preference (Pref).Get_Pref;
       else
-         return False;
+         return True;
       end if;
    end Get_Move_Cursor_When_Formatting;
 
