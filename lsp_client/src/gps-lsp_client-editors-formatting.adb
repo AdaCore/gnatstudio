@@ -23,6 +23,7 @@ with GNATCOLL.JSON;
 with GNATCOLL.Traces;               use GNATCOLL.Traces;
 with GNATCOLL.VFS;                  use GNATCOLL.VFS;
 
+with GPS.Editors.GtkAda;
 with VSS.Characters;
 with VSS.Strings.Character_Iterators;
 pragma Unreferenced (VSS.Strings.Character_Iterators);
@@ -55,6 +56,7 @@ with Commands.Interactive;          use Commands.Interactive;
 with GPS.LSP_Client.Language_Servers;
 with GPS.LSP_Module;
 
+with GPS.LSP_Client.Requests;
 with GPS.LSP_Client.Requests.Document_Formatting;
 with GPS.LSP_Client.Requests.Range_Formatting;
 with GPS.LSP_Client.Requests.On_Type_Formatting;
@@ -115,6 +117,10 @@ package body GPS.LSP_Client.Editors.Formatting is
       Message : VSS.Strings.Virtual_String;
       Data    : GNATCOLL.JSON.JSON_Value);
 
+   overriding procedure On_Rejected
+     (Self   : in out Document_Formatting_Request;
+      Reason : GPS.LSP_Client.Requests.Reject_Reason);
+
    -- Range_Formatting_Request --
 
    type Range_Formatting_Request is
@@ -132,6 +138,10 @@ package body GPS.LSP_Client.Editors.Formatting is
       Code    : LSP.Messages.ErrorCodes;
       Message : VSS.Strings.Virtual_String;
       Data    : GNATCOLL.JSON.JSON_Value);
+
+   overriding procedure On_Rejected
+     (Self   : in out Range_Formatting_Request;
+      Reason : GPS.LSP_Client.Requests.Reject_Reason);
 
    -- On_Type_Formatting_Request --
 
@@ -171,9 +181,7 @@ package body GPS.LSP_Client.Editors.Formatting is
    is
       Buffer : constant Editor_Buffer'Class :=
         Self.Kernel.Get_Buffer_Factory.Get
-          (File      => Self.File,
-           Open_View => False,
-           Focus     => False);
+          (File => Self.File, Open_View => False, Focus => False);
       Map    : LSP.Messages.TextDocumentEdit_Maps.Map;
       Dummy  : Boolean;
    begin
@@ -183,12 +191,18 @@ package body GPS.LSP_Client.Editors.Formatting is
          return;
       end if;
 
+      --  Cancel the activity progress bar when formatting succeeds.
+      Src_Editor_Module.Cancel_Activity_Bar (Self.Kernel, Self.File);
+
       if Buffer.Version /= Self.Document_Version then
          Trace
            (Me,
-            "Document_Formatting canceled for " & (+Base_Name (Buffer.File)) &
-              " ver." & Integer'Image (Buffer.Version) & ", data ver." &
-              Integer'Image (Self.Document_Version));
+            "Document_Formatting canceled for "
+            & (+Base_Name (Buffer.File))
+            & " ver."
+            & Integer'Image (Buffer.Version)
+            & ", data ver."
+            & Integer'Image (Self.Document_Version));
          return;
       end if;
 
@@ -196,10 +210,9 @@ package body GPS.LSP_Client.Editors.Formatting is
 
       GPS.LSP_Client.Edit_Workspace.Edit
         (Kernel                   => Self.Kernel,
-         Workspace_Edit           => LSP.Messages.WorkspaceEdit'
-           (changes           => Map,
-            documentChanges   => <>,
-            changeAnnotations => <>),
+         Workspace_Edit           =>
+           LSP.Messages.WorkspaceEdit'
+             (changes => Map, documentChanges => <>, changeAnnotations => <>),
          Title                    => "Formatting",
          Make_Writable            => False,
          Auto_Save                => False,
@@ -217,6 +230,23 @@ package body GPS.LSP_Client.Editors.Formatting is
          Trace (Me, E);
    end On_Result_Message;
 
+   -----------------
+   -- On_Rejected --
+   -----------------
+
+   overriding procedure On_Rejected
+     (Self   : in out Document_Formatting_Request;
+      Reason : GPS.LSP_Client.Requests.Reject_Reason) is
+   begin
+      Trace
+        (Me,
+         "Document_Formatting rejected: "
+         & GPS.LSP_Client.Requests.Reject_Reason'Image (Reason));
+
+      --  Cancel the activity bar when formatting failed.
+      Src_Editor_Module.Cancel_Activity_Bar (Self.Kernel, Self.File);
+   end On_Rejected;
+
    ----------------------
    -- On_Error_Message --
    ----------------------
@@ -227,6 +257,9 @@ package body GPS.LSP_Client.Editors.Formatting is
       Message : VSS.Strings.Virtual_String;
       Data    : GNATCOLL.JSON.JSON_Value) is
    begin
+      --  Cancel the activity bar when formatting failed.
+      Src_Editor_Module.Cancel_Activity_Bar (Self.Kernel, Self.File);
+
       --  Try to parse the formatter's output, in case the format is recognized
       --  (which is the case for the ALS).
       GPS.Kernel.Messages.Tools_Output.Parse_File_Locations
@@ -272,6 +305,9 @@ package body GPS.LSP_Client.Editors.Formatting is
          --  Buffer can be closed
          return;
       end if;
+
+      --  Cancel the activity bar when range formatting succeeds.
+      Src_Editor_Module.Cancel_Activity_Bar (Self.Kernel, Self.File);
 
       if Editor.Version /= Self.Document_Version then
          Trace
@@ -324,6 +360,9 @@ package body GPS.LSP_Client.Editors.Formatting is
       Message : VSS.Strings.Virtual_String;
       Data    : GNATCOLL.JSON.JSON_Value) is
    begin
+      --  Cancel the activity bar when range formatting fails.
+      Src_Editor_Module.Cancel_Activity_Bar (Self.Kernel, Self.File);
+
       --  Try to parse the formatter's output, in case the format is recognized
       --  (which is the case for the ALS).
       GPS.Kernel.Messages.Tools_Output.Parse_File_Locations
@@ -336,8 +375,7 @@ package body GPS.LSP_Client.Editors.Formatting is
          Show_In_Locations => True);
 
       --  Display the message in the Messages view
-      Self.Kernel.Insert
-        (VSS.Strings.Conversions.To_UTF_8_String (Message));
+      Self.Kernel.Insert (VSS.Strings.Conversions.To_UTF_8_String (Message));
 
    exception
       when E : others =>
@@ -347,6 +385,24 @@ package body GPS.LSP_Client.Editors.Formatting is
             & VSS.Strings.Conversions.To_UTF_8_String (Message));
          Trace (Me, Exception_Message (E));
    end On_Error_Message;
+
+   -----------------
+   -- On_Rejected --
+   -----------------
+
+   overriding procedure On_Rejected
+     (Self   : in out Range_Formatting_Request;
+      Reason : GPS.LSP_Client.Requests.Reject_Reason) is
+   begin
+      Trace
+        (Me,
+         "Range_Formatting rejected: "
+         & GPS.LSP_Client.Requests.Reject_Reason'Image (Reason));
+
+      --  Cancel the activity bar when range formatting request gets
+      --  rejected.
+      Src_Editor_Module.Cancel_Activity_Bar (Self.Kernel, Self.File);
+   end On_Rejected;
 
    -----------------------
    -- On_Result_Message --
@@ -420,9 +476,16 @@ package body GPS.LSP_Client.Editors.Formatting is
       File    : constant Virtual_File := From.Buffer.File;
       Lang    : Language.Language_Access;
       Request : Range_Formatting_Request_Access;
+      Editor  : Gtkada.MDI.MDI_Child;
+      Box     : Source_Editor_Box;
 
    begin
+      Editor := GPS.Editors.GtkAda.Get_MDI_Child
+        (From.Buffer.Current_View);
+      Box := Src_Editor_Module.Get_Source_Box_From_MDI (Editor);
       Lang := Self.Kernel.Get_Language_Handler.Get_Language_From_File (File);
+
+      Box.Set_Activity_Progress_Bar_Visibility (True);
 
       Request := new Range_Formatting_Request'
         (GPS.LSP_Client.Requests.LSP_Request with
@@ -639,6 +702,7 @@ package body GPS.LSP_Client.Editors.Formatting is
       if GPS.LSP_Client.Requests.Execute
         (Lang, GPS.LSP_Client.Requests.Request_Access (Request))
       then
+         Box.Set_Activity_Progress_Bar_Visibility (True);
          return Success;
       else
          return Failure;

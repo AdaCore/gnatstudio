@@ -831,6 +831,28 @@ package body Src_Editor_Module is
       end loop;
    end For_All_Views;
 
+   -------------------------
+   -- Cancel_Activity_Bar --
+   -------------------------
+
+   procedure Cancel_Activity_Bar
+     (Kernel : Kernel_Handle; File : Virtual_File)
+   is
+      Project : constant Project_Type := Get_Project_For_File
+        (Kernel.Get_Project_Tree, File =>  File);
+      Editor  : constant Source_Editor_Box :=
+                  Get_Source_Box_From_MDI
+                    (Find_Editor
+                       (Kernel,
+                        File    => File,
+                        Project => Project,
+                        Unlocked_Only => False));
+   begin
+      if Editor /= null then
+         Editor.Set_Activity_Progress_Bar_Visibility (False);
+      end if;
+   end Cancel_Activity_Bar;
+
    -------------
    -- Execute --
    -------------

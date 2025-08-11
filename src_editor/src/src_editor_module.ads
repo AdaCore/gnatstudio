@@ -104,6 +104,11 @@ package Src_Editor_Module is
    --  For all mdi children corresponding to an editor showing File
    --  (if File is No_File, returns all source editors).
 
+   procedure Cancel_Activity_Bar
+     (Kernel : Kernel_Handle; File : Virtual_File);
+   --  Remove the activity bar for the editor opened for the given file,
+   --  if any.
+
    function Find_Editor
      (Kernel        : access GPS.Kernel.Kernel_Handle_Record'Class;
       File          : GNATCOLL.VFS.Virtual_File;
