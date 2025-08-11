@@ -19,6 +19,12 @@ def run_test():
 
     windows = Gtk.Window.list_toplevels()
     click_in_tree(outline, button=3)
+    yield wait_until_true(
+        lambda: outline.get_selection().get_selected_rows() != [],
+        timeout=1000,
+        error_msg="No selected iter after clicking on the Outline",
+    )
+
     activate_contextual(windows, "Go To Declaration")
     yield wait_language_server("textDocument/declaration")
 
