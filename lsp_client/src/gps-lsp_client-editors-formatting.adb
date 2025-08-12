@@ -107,6 +107,11 @@ package body GPS.LSP_Client.Editors.Formatting is
      access all Document_Formatting_Request;
    --  Used for communicate with LSP
 
+   overriding function Get_Task_Label
+     (Self : Document_Formatting_Request) return String
+   is
+     ("format file");
+
    overriding procedure On_Result_Message
      (Self   : in out Document_Formatting_Request;
       Result : LSP.Messages.TextEdit_Vector);
@@ -128,6 +133,11 @@ package body GPS.LSP_Client.Editors.Formatting is
        Abstract_Range_Formatting_Request with null record;
    type Range_Formatting_Request_Access is access all Range_Formatting_Request;
    --  Corresponding LSP request
+
+   overriding function Get_Task_Label
+     (Self : Range_Formatting_Request) return String
+   is
+     ("format range");
 
    overriding procedure On_Result_Message
      (Self   : in out Range_Formatting_Request;
