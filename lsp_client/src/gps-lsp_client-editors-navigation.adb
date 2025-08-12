@@ -151,10 +151,6 @@ package body GPS.LSP_Client.Editors.Navigation is
    end record;
    --  Type used to represent an entity.
 
-   procedure Cancel_Activity_Bar
-     (Kernel : Kernel_Handle; File : Virtual_File);
-   --  Remove the activity bar for the editor for the given file, if any
-
    package Entity_Info_Vectors is new Ada.Containers.Vectors
      (Index_Type   => Positive,
       Element_Type => Entity_Info_Type,
@@ -555,28 +551,6 @@ package body GPS.LSP_Client.Editors.Navigation is
       end if;
    end LSP_Hyper_Mode_Click_Callback;
 
-   -------------------------
-   -- Cancel_Activity_Bar --
-   -------------------------
-
-   procedure Cancel_Activity_Bar
-     (Kernel : Kernel_Handle; File : Virtual_File)
-   is
-      Project : constant Project_Type := Get_Project_For_File
-        (Kernel.Get_Project_Tree, File =>  File);
-      Editor  : constant Source_Editor_Box :=
-                  Get_Source_Box_From_MDI
-                    (Find_Editor
-                       (Kernel,
-                        File    => File,
-                        Project => Project,
-                        Unlocked_Only => False));
-   begin
-      if Editor /= null then
-         Editor.Set_Activity_Progress_Bar_Visibility (False);
-      end if;
-   end Cancel_Activity_Bar;
-
    -----------------------
    -- On_Result_Message --
    -----------------------
@@ -630,7 +604,7 @@ package body GPS.LSP_Client.Editors.Navigation is
    begin
       Trace (Me_Advanced, "Result received");
 
-      Cancel_Activity_Bar (Self.Kernel, Self.File);
+      Src_Editor_Module.Cancel_Activity_Bar (Self.Kernel, Self.File);
 
       if Result.Kind = LSP.Messages.Empty_Vector_Kind then
          Trace (Me_Advanced, "No locations found");
@@ -757,7 +731,7 @@ package body GPS.LSP_Client.Editors.Navigation is
       Message : VSS.Strings.Virtual_String;
       Data    : GNATCOLL.JSON.JSON_Value) is
    begin
-      Cancel_Activity_Bar (Self.Kernel, Self.File);
+      Src_Editor_Module.Cancel_Activity_Bar (Self.Kernel, Self.File);
       Trace
         (Me,
          "Error received after sending "
@@ -773,7 +747,7 @@ package body GPS.LSP_Client.Editors.Navigation is
    is
       pragma Unreferenced (Reason);
    begin
-      Cancel_Activity_Bar (Self.Kernel, Self.File);
+      Src_Editor_Module.Cancel_Activity_Bar (Self.Kernel, Self.File);
       Trace
         (Me_Advanced,
          VSS.Strings.Conversions.To_UTF_8_String (Self.Method)
