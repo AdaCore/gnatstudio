@@ -11,4 +11,5 @@ import gs_utils
 
 @gs_utils.hook("file_saved")
 def on_file_saved(file):
+    # TODO: we should run the appropriate Build Target instead
     gnatpp.gnatpp(file)
