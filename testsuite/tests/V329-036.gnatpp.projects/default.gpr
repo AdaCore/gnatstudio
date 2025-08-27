@@ -2,9 +2,5 @@ with "imported.gpr";
 
 project Default is
 
-   package Pretty_Printer is
-      for Default_Switches ("ada") use ("-kU", "--verbose");
-   end Pretty_Printer;
-
 end Default;
 

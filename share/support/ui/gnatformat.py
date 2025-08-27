@@ -100,7 +100,7 @@ XML = """<?xml version="1.0" ?>
     </target>
 
     <target model="gnatformat" category="_Project"
-    name="Format project and subprojects">
+    name="Format current project and subprojects">
         <in-toolbar>FALSE</in-toolbar>
         <in-menu>FALSE</in-menu>
         <launch-mode>MANUALLY_WITH_DIALOG</launch-mode>
