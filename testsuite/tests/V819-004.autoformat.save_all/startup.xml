@@ -1,4 +1,4 @@
 <?xml version="1.0"?>
 <GNAT_Studio>
-  <startup file="autognatpp.py" load="TRUE"  />
+  <startup file="autoformat.py" load="TRUE"  />
 </GNAT_Studio>

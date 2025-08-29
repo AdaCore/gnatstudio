@@ -1,27 +1,32 @@
 """
-This test checks that gnatpp actions and project and subprojects
+This test checks that gnatformat actions on project and subprojects
 work correctly.
 """
+
 import GPS
 from workflows import run_as_workflow
 from gs_utils.internal.utils import *
 
 
 @run_as_workflow
-def run_gnatpp(unit_to_check, subprojects=False, excluded_unit=None):
-    action_name = "run gnatpp on project"
-
+def run_gnatformat(unit_to_check, subprojects=False, excluded_unit=None):
+    action_name = "run gnatformat on project"
+    dialog_name = "Format current project"
     if subprojects:
         action_name += " and subprojects"
+        dialog_name += " and subprojects"
 
     yield idle_modal_dialog(lambda: GPS.execute_action(action_name))
-    dialog = get_window_by_title("Pretty Print current project")
+    dialog = get_window_by_title(dialog_name)
     get_button_from_label("Execute", dialog).clicked()
+    buttons = get_widgets_by_type(Gtk.CheckButton, dialog)
+    verbose_button = [b for b in buttons if b.get_label() == "Verbose output"][0]
+    verbose_button.set_active(True)
     yield wait_tasks()
 
     text = GPS.Console().get_text()
     gps_assert(
-        "gnatpp" in text and unit_to_check in text,
+        "gnatformat" in text and unit_to_check in text,
         True,
         unit_to_check + " should be pretty printed",
     )
@@ -40,10 +45,10 @@ def test_driver():
     prj_view.select_by_name(column=1, value="Default")
     yield wait_idle()
 
-    # Run gnatpp on the root project only
-    yield run_gnatpp(
+    # Run gnatformat on the root project only
+    yield run_gnatformat(
         unit_to_check="unit.adb", subprojects=False, excluded_unit="main.adb"
     )
 
-    # Run gnatpp on the root project and subprojects
-    yield run_gnatpp(unit_to_check="main.adb", subprojects=True)
+    # Run gnatformat on the root project and subprojects
+    yield run_gnatformat(unit_to_check="main.adb", subprojects=True)
