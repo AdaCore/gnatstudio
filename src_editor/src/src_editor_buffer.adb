@@ -865,6 +865,10 @@ package body Src_Editor_Buffer is
       elsif Edited /= GNATCOLL.VFS.No_File and then Edited = File then
          Self.Buffer.Filename := Renamed;
          Self.Buffer.Filename_Changed;
+
+         if Editors_Factory /= null then
+            Editors_Factory.File_Renamed (File, Renamed);
+         end if;
       end if;
    end Execute;
 

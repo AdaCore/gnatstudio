@@ -1081,8 +1081,7 @@ package body Src_Editor_Module.Editors is
    function Get_Pure_Buffer
      (This : Src_Editor_Buffer_Factory'Class;
       File : GNATCOLL.VFS.Virtual_File)
-      return Source_Buffer
-   is
+      return Source_Buffer is
    begin
       if This.Pure_Buffers.Contains (File) then
          return This.Pure_Buffers.all (File).Buf;
@@ -1090,6 +1089,26 @@ package body Src_Editor_Module.Editors is
          return null;
       end if;
    end Get_Pure_Buffer;
+
+   ------------------
+   -- File_Renamed --
+   ------------------
+
+   overriding procedure File_Renamed
+     (This     : Src_Editor_Buffer_Factory;
+      Old_File : GNATCOLL.VFS.Virtual_File;
+      New_File : GNATCOLL.VFS.Virtual_File)
+   is
+      Buf : Source_Buffer;
+   begin
+      if This.Pure_Buffers.Contains (Old_File)
+        and then not This.Pure_Buffers.Contains (New_File)
+      then
+         Buf := This.Pure_Buffers.all (Old_File).Buf;
+         This.Pure_Buffers.Insert (New_File, (Buf => Buf));
+         This.Pure_Buffers.Delete (Old_File);
+      end if;
+   end File_Renamed;
 
    --------------
    -- New_Mark --

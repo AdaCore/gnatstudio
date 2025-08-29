@@ -686,6 +686,10 @@ package body GPS.Kernel is
       end if;
 
       Kernel.Open_Files.Include (File2);
+
+      if Kernel.Editor_Factory /= null then
+         Kernel.Editor_Factory.File_Renamed (File, File2);
+      end if;
    end Execute;
 
    -------------
