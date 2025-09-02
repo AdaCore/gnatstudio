@@ -991,6 +991,12 @@ package GPS.Editors is
    --  Get buffer from class instance or raise exception if no object is
    --  stored in the instance.
 
+   procedure File_Renamed
+     (This     : Editor_Buffer_Factory;
+      Old_File : GNATCOLL.VFS.Virtual_File;
+      New_File : GNATCOLL.VFS.Virtual_File) is null;
+   --  Called to inform that the file has been renamed
+
    ---------------------
    -- Editor_Listener --
    ---------------------
