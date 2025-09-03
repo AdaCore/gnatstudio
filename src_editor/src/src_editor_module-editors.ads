@@ -54,6 +54,11 @@ package Src_Editor_Module.Editors is
       Line    : Editable_Line_Type;
       Column  : Visible_Column_Type;
       Length  : Natural := 0) return Location_Marker;
+   overriding procedure File_Renamed
+     (This     : Src_Editor_Buffer_Factory;
+      Old_File : GNATCOLL.VFS.Virtual_File;
+      New_File : GNATCOLL.VFS.Virtual_File);
+   --  Called to inform that the file has been renamed
 
    function Get
      (This   : Src_Editor_Buffer_Factory'Class;
