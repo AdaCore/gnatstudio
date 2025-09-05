@@ -554,13 +554,6 @@ package body Completion_Module is
                Get_Iter_At_Mark (D.Buffer, Last, D.End_Mark);
                Delete_Mark (D.Buffer, D.End_Mark);
                D.End_Mark := null;
-
-               --  If we did complete on multiple lines, indent the resulting
-               --  lines using the user preferences.
-
-               if Get_Line (First) < Get_Line (Last) then
-                  Dummy := On_Indent_Action (D.Buffer, First, Last, False);
-               end if;
             end if;
          end if;
       end if;
