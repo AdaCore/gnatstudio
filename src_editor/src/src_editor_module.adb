@@ -3172,11 +3172,8 @@ package body Src_Editor_Module is
             Path        : constant String :=
               "Editor/" & Menu_Name & ":Formatting";
             Default     : constant VSS.Strings.Virtual_String :=
-              (if Lang = "Ada"
-               then VSS.Strings.Conversions.To_Virtual_String
-                 (Legacy_Formatter_Value)
-               else VSS.Strings.Conversions.To_Virtual_String
-                 (LSP_Formatter_Value));
+              VSS.Strings.Conversions.To_Virtual_String
+                (LSP_Formatter_Value);
             Dummy       : Default_Preferences.Enums.Choice_Preference;
             Ignore      : Default_Preferences.Boolean_Preference;
          begin
