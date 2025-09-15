@@ -253,9 +253,9 @@ package GPS.Kernel is
      (Handle    : access Kernel_Handle_Record;
       Filename  : Virtual_File;
       Is_Saving : Boolean := True);
-     --  Print out an error message in messages window, or display a dialog
-     --  if GNAT Studio is exiting. Is_Saving controls whether we try to save
-     --  or load the file.
+   --  Print out an error message in messages window, or display a dialog
+   --  if GNAT Studio is exiting. Is_Saving controls whether we try to save
+   --  or load the file.
 
    function Get_Contextual_Menu_Open
      (Handle : access Kernel_Handle_Record) return Boolean;
