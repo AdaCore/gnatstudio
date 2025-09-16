@@ -1722,9 +1722,12 @@ package body Src_Editor_View is
    procedure Compute_Pango_Tabs (View : access Source_View_Record'Class)
    is
       P            : Pango.Tabs.Pango_Tab_Array;
+      Lang         : constant Language_Access :=
+        Source_Buffer (Get_Buffer (View)).Get_Language;
       Indent_Level : constant Natural :=
-        Source_Buffer (Get_Buffer (View)).Get_Language.Get_Indentation_Level;
+        (if Lang /= null then Lang.Get_Indentation_Level else 3);
    begin
+
       if View.Get_Tabs /= Null_Pango_Tab_Array then
          Pango.Tabs.Free (View.Get_Tabs);
       end if;
