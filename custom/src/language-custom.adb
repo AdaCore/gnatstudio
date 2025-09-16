@@ -15,39 +15,42 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with Ada.Characters.Handling; use Ada.Characters.Handling;
-with Ada.Strings.Maps;        use Ada.Strings.Maps;
-with Ada.Strings.Unbounded;   use Ada.Strings.Unbounded;
+with Ada.Characters.Handling;                    use Ada.Characters.Handling;
+with Ada.Strings.Maps;                           use Ada.Strings.Maps;
+with Ada.Strings.Unbounded;                      use Ada.Strings.Unbounded;
 with Ada.Unchecked_Deallocation;
 with Ada.Strings.UTF_Encoding.Wide_Wide_Strings;
 use Ada.Strings.UTF_Encoding.Wide_Wide_Strings;
 
-with GNAT.Expect;             use GNAT.Expect;
-with GNAT.Regpat;             use GNAT.Regpat;
-with GNATCOLL.Projects;       use GNATCOLL.Projects;
-with GNATCOLL.Symbols;        use GNATCOLL.Symbols;
-with GNATCOLL.VFS;            use GNATCOLL.VFS;
+with GNAT.Expect;       use GNAT.Expect;
+with GNAT.Regpat;       use GNAT.Regpat;
+with GNATCOLL.Projects; use GNATCOLL.Projects;
+with GNATCOLL.Symbols;  use GNATCOLL.Symbols;
+with GNATCOLL.VFS;      use GNATCOLL.VFS;
 
 with Glib;
-with Glib.Module;             use Glib.Module;
-with GNATCOLL.Traces;                  use GNATCOLL.Traces;
+with Glib.Module;     use Glib.Module;
+with GNATCOLL.Traces; use GNATCOLL.Traces;
 
 --  ??? Would be nice if languages registered themselves somewhere instead
 --  of having a static knowledge of all the language defined.
+pragma Warnings
+  (Off, "child unit * hides compilation unit with the same name");
 with Language.Ada;
+pragma Warnings (On, "child unit * hides compilation unit with the same name");
 with Language.C;
 with Language.Cpp;
 with Language.Java;
 with Basic_Types;
-with Language_Handlers;         use Language_Handlers;
-with Custom_Naming_Editors;     use Custom_Naming_Editors;
-with GPS.Kernel;                use GPS.Kernel;
-with GPS.Intl;                  use GPS.Intl;
-with Project_Viewers;           use Project_Viewers;
-with Projects;                  use Projects;
-with GPS.Kernel.Project;        use GPS.Kernel.Project;
-with String_Utils;              use String_Utils;
-with XML_Utils;                 use XML_Utils;
+with Language_Handlers;     use Language_Handlers;
+with Custom_Naming_Editors; use Custom_Naming_Editors;
+with GPS.Kernel;            use GPS.Kernel;
+with GPS.Intl;              use GPS.Intl;
+with Project_Viewers;       use Project_Viewers;
+with Projects;              use Projects;
+with GPS.Kernel.Project;    use GPS.Kernel.Project;
+with String_Utils;          use String_Utils;
+with XML_Utils;             use XML_Utils;
 
 package body Language.Custom is
 
