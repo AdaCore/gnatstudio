@@ -294,8 +294,16 @@ package body GPS.LSP_Client.Editors.Semantic_Tokens is
       begin
          for Index in SemanticTokenModifiers'Range loop
             if Modifiers (Index) then
-               M.Append
-                 ("-" & Correct_Name (SemanticTokenModifiers'Image (Index)));
+               if Index = localVariable
+                 or else Index = globalVariable
+               then
+                  M := "-" & Correct_Name
+                    (SemanticTokenModifiers'Image (Index)) & M;
+               else
+                  M.Append
+                    ("-" & Correct_Name
+                       (SemanticTokenModifiers'Image (Index)));
+               end if;
             end if;
          end loop;
 
@@ -318,7 +326,10 @@ package body GPS.LSP_Client.Editors.Semantic_Tokens is
             M : Modifiers_Array := Modifiers;
          begin
             for Index in reverse SemanticTokenModifiers'Range loop
-               if M (Index) then
+               if M (Index)
+                 and then Index /= localVariable
+                 and then Index /= globalVariable
+               then
                   M (Index) := False;
 
                   declare
