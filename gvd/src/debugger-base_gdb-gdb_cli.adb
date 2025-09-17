@@ -34,7 +34,10 @@ with GNATCOLL.Utils;            use GNATCOLL.Utils;
 with GNATCOLL.VFS;              use GNATCOLL.VFS;
 
 with Config;                    use Config;
+pragma Warnings
+  (Off, "child unit * hides compilation unit with the same name");
 with Debugger.Base_Gdb.Ada;     use Debugger.Base_Gdb.Ada;
+pragma Warnings (On, "child unit * hides compilation unit with the same name");
 with Default_Preferences;       use Default_Preferences;
 with GVD.Preferences;           use GVD.Preferences;
 with GVD.Trace;                 use GVD.Trace;

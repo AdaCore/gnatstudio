@@ -39,7 +39,10 @@ with GVD.Consoles;
 with GVD.Dialogs;                         use GVD.Dialogs;
 with GVD.Trace;                           use GVD.Trace;
 
+pragma Warnings
+  (Off, "child unit * hides compilation unit with the same name");
 with Debugger.Base_Gdb.Ada;               use Debugger.Base_Gdb.Ada;
+pragma Warnings (On, "child unit * hides compilation unit with the same name");
 with Debugger.Base_Gdb.C;                 use Debugger.Base_Gdb.C;
 with Debugger.Base_Gdb.Cpp;               use Debugger.Base_Gdb.Cpp;
 with GNATCOLL.Traces;                     use GNATCOLL.Traces;
