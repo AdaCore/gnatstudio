@@ -44,7 +44,10 @@ with String_Utils;              use String_Utils;
 
 with Language;                  use Language;
 with Language.Debugger;         use Language.Debugger;
+pragma Warnings
+  (Off, "child unit * hides compilation unit with the same name");
 with Debugger.Base_Gdb.Ada;     use Debugger.Base_Gdb.Ada;
+pragma Warnings (On, "child unit * hides compilation unit with the same name");
 with GNATCOLL.Traces;           use GNATCOLL.Traces;
 
 package body Debugger.Base_Gdb.Gdb_MI is
