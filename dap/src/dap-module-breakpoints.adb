@@ -1234,8 +1234,7 @@ package body DAP.Module.Breakpoints is
    procedure Register_Module
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
    is
-      No_Debugger_Or_Available : Action_Filter;
-      In_Source_Editor         : Action_Filter;
+      In_Source_Editor : Action_Filter;
    begin
       --  Connect to project' hooks
       Project_Changing_Hook.Add (new On_Project_Changing);
@@ -1251,8 +1250,6 @@ package body DAP.Module.Breakpoints is
       Debugger_Breakpoint_Deleted_Hook.Add
         (new On_Breakpoint_Event (Deleted));
 
-      No_Debugger_Or_Available := Kernel.Lookup_Filter
-        ("No debugger or available");
       In_Source_Editor := Kernel.Lookup_Filter ("Source editor");
 
       --  Register all the breakpoint-related actions
@@ -1260,7 +1257,7 @@ package body DAP.Module.Breakpoints is
         (Kernel, "debug set line breakpoint",
          Command     => new Set_Breakpoint_Command_Context (On_Line),
          Description => "Set a breakpoint on line",
-         Filter      => No_Debugger_Or_Available and In_Source_Editor and
+         Filter      => In_Source_Editor and
            Kernel.Lookup_Filter ("Debugger breakable source"),
          Category    => "Debug");
       GPS.Kernel.Modules.UI.Register_Contextual_Menu
@@ -1278,8 +1275,7 @@ package body DAP.Module.Breakpoints is
         (Kernel, "debug set subprogram breakpoint",
          Command     => new Set_Breakpoint_Command_Context (Entity),
          Description => "Set a breakpoint on subprogram",
-         Filter      => No_Debugger_Or_Available and
-             Kernel.Lookup_Filter ("Debugger entity name"),
+         Filter      => Kernel.Lookup_Filter ("Debugger entity name"),
          Category    => "Debug");
       GPS.Kernel.Modules.UI.Register_Contextual_Menu
         (Kernel => Kernel,
