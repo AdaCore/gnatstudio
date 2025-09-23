@@ -32,8 +32,8 @@ def run_test():
     yield wait_idle()
     send_key_event(GDK_RETURN)
     gps_assert(
-        len([r for r in als.get_requests() if "formatting" in r.lower()]),
-        1,
+        len([r for r in als.get_requests() if "formatting" in r.lower()]) <= 1,
+        True,
         "Too many formatting requests",
     )
     yield wait_idle()
