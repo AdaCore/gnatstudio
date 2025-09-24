@@ -24,12 +24,14 @@
 with GNATCOLL.Python;
 with GNATCOLL.Scripts.Python;
 
+with VSS.Implementation.Interfaces_C;
 with VSS.Implementation.Python3;
+with VSS.Implementation.Text_Storages.Python;
 with VSS.Implementation.Strings;
-with VSS.Implementation.Text_Handlers.UTF8;
-with VSS.Implementation.Text_Handlers.UTF8.Python;
+with VSS.Implementation.UTF8_Strings;
 with VSS.Strings.Conversions;
 with VSS.Strings.Internals;
+with VSS.Unicode;
 
 package body GNATCOLL.Scripts.VSS_Utils is
 
@@ -40,6 +42,59 @@ package body GNATCOLL.Scripts.VSS_Utils is
      (Data    : GNATCOLL.Scripts.Python.Python_Callback_Data'Class;
       N       : Positive;
       Success : aliased out Boolean) return VSS.Strings.Virtual_String;
+
+   procedure Initialize
+     (Text   : in out VSS.Implementation.UTF8_Strings.UTF8_String_Data;
+      Object : GNATCOLL.Python.PyObject);
+
+   procedure Initialize
+     (Text   : in out VSS.Implementation.UTF8_Strings.UTF8_String_Data;
+      Object : GNATCOLL.Python.PyObject)
+   is
+      use type GNATCOLL.Python.PyObject;
+
+      Bytes   : GNATCOLL.Python.PyObject;
+      Pointer : VSS.Implementation.Interfaces_C.UTF8_Code_Unit_Constant_Access;
+      Size    : VSS.Implementation.Python3.Py_ssize_t;
+
+   begin
+      if not GNATCOLL.Python.PyUnicode_Check (Object) then
+         Text := (others => <>);
+
+         return;
+      end if;
+
+      Bytes := VSS.Implementation.Python3.PyUnicode_AsUTF8String (Object);
+
+      if Bytes = null then
+         Text := (others => <>);
+
+         return;
+      end if;
+
+      if VSS.Implementation.Python3.PyBytes_AsStringAndSize
+        (Bytes, Pointer, Size) /= 0
+      then
+         raise Program_Error;
+         --  Should never happen
+      end if;
+
+      declare
+         Manager :
+           VSS.Implementation.Text_Storages.Python.Python_Text_Storage :=
+             (others => <>)
+           with Address => Text.Manager'Address;
+      begin
+         Manager.Initialize (Text.Storage_Address, Bytes);
+         Text.Size   :=
+           VSS.Unicode.UTF8_Code_Unit_Offset
+             (VSS.Implementation.Python3.PyBytes_Size (Bytes));
+         Text.Length :=
+           VSS.Implementation.Strings.Character_Count
+             (VSS.Implementation.Python3.PyUnicode_GetLength (Object));
+         Text.Flags  := 1;
+      end;
+   end Initialize;
 
    -------------
    -- Nth_Arg --
@@ -62,8 +117,9 @@ package body GNATCOLL.Scripts.VSS_Utils is
 
       if GNATCOLL.Python.PyUnicode_Check (Item) then
          return Result : VSS.Strings.Virtual_String do
-            VSS.Implementation.Text_Handlers.UTF8.Python.Unsafe_Initialize
-              (VSS.Strings.Internals.Data_Access_Variable (Result).all, Item);
+            Initialize
+              (VSS.Strings.Internals.Data_Access_Variable (Result).all,
+               Item);
          end return;
 
       else
@@ -109,37 +165,25 @@ package body GNATCOLL.Scripts.VSS_Utils is
    function PyUnicode_FromStringAndSize
      (Str : VSS.Strings.Virtual_String) return GNATCOLL.Python.PyObject
    is
-      Data : constant not null
-        VSS.Strings.Internals.String_Data_Constant_Access :=
-          VSS.Strings.Internals.Data_Access_Constant (Str);
-      Text : constant not null
-        VSS.Implementation.Strings.Constant_Text_Handler_Access :=
-          VSS.Implementation.Strings.Constant_Handler (Data.all);
+      Text : VSS.Implementation.UTF8_Strings.UTF8_String_Data
+        renames VSS.Strings.Internals.Data_Access_Constant (Str).all;
 
    begin
-      if Text.Is_Empty then
+      if VSS.Implementation.UTF8_Strings.Is_Empty (Text) then
          return
            VSS.Implementation.Python3.PyUnicode_FromStringAndSize (null, 0);
 
-      elsif Text.all
-        in VSS.Implementation.Text_Handlers.UTF8.Abstract_UTF8_Text'Class
-      then
+      else
          declare
-            S : VSS.Implementation.Text_Handlers.UTF8.Abstract_UTF8_Text'Class
-              renames VSS.Implementation.Text_Handlers.UTF8
-                        .Abstract_UTF8_Text'Class (Text.all);
+            D : VSS.Implementation.Interfaces_C.UTF8_Code_Unit_Constant_Access
+              with Import, Address => Text.Storage_Address'Address;
 
          begin
             return
               VSS.Implementation.Python3.PyUnicode_FromStringAndSize
-                (S.UTF8_Constant_Storage_Poiner,
-                 VSS.Implementation.Python3.Py_ssize_t (S.Size));
+                (D,
+                 VSS.Implementation.Python3.Py_ssize_t (Text.Size));
          end;
-
-      else
-         return
-           GNATCOLL.Python.PyString_FromString
-             (VSS.Strings.Conversions.To_UTF_8_String (Str));
       end if;
    end PyUnicode_FromStringAndSize;
 
