@@ -1987,8 +1987,7 @@ package body DAP.Views.Breakpoints is
       Selection_Filter   : constant Action_Filter :=
         new Breakpoint_Single_Selection;
 
-      No_Or_Available_Filter : Action_Filter;
-      Dummy                  : Action_Filter;
+      Dummy : Action_Filter;
    begin
       Simple_Views.Register_Module (Kernel);
       Simple_Views.Register_Open_View_Action
@@ -1996,25 +1995,20 @@ package body DAP.Views.Breakpoints is
          Action_Name => "open breakpoints editor",
          Description => "Open the Breakpoints Editor for the debugger");
 
-      No_Or_Available_Filter := Kernel.Lookup_Filter
-        ("No debugger or available");
-
       GPS.Kernel.Actions.Register_Action
         (Kernel,
          "debug delete breakpoint", new Remove_Breakpoint_Command,
          "Delete the selected breakpoints"
            & " (from the Breakpoints view)",
          Icon_Name => "gps-remove-symbolic",
-         Category  => "Debug",
-         Filter    => No_Or_Available_Filter);
+         Category  => "Debug");
 
       GPS.Kernel.Actions.Register_Action
         (Kernel,
          "debug clear breakpoints", new Clear_Breakpoints_Command,
          "Delete all existing breakpoints",
          Icon_Name => "gps-clear-symbolic",
-         Category  => "Debug",
-         Filter    => No_Or_Available_Filter);
+         Category  => "Debug");
 
       GPS.Kernel.Actions.Register_Action
         (Kernel,
@@ -2022,8 +2016,7 @@ package body DAP.Views.Breakpoints is
          new Set_Breakpoints_State_Command (True),
          "Enable the selected breakpoints",
          Icon_Name => "gps-syntax-check-symbolic",
-         Category  => "Debug",
-         Filter    => No_Or_Available_Filter);
+         Category  => "Debug");
 
       GPS.Kernel.Actions.Register_Action
         (Kernel,
@@ -2031,16 +2024,14 @@ package body DAP.Views.Breakpoints is
          new Set_Breakpoints_State_Command (False),
          "Disable the selected breakpoints",
          Icon_Name => "gps-stop-symbolic",
-         Category  => "Debug",
-         Filter    => No_Or_Available_Filter);
+         Category  => "Debug");
 
       GPS.Kernel.Actions.Register_Action
         (Kernel,
          "debug create breakpoint", new Add_Command,
          "Create a new breakpoint, from the Breakpoints view",
          Icon_Name => "gps-add-symbolic",
-         Category  => "Debug",
-         Filter    => No_Or_Available_Filter);
+         Category  => "Debug");
 
       GPS.Kernel.Actions.Register_Action
         (Kernel,
@@ -2050,7 +2041,7 @@ package body DAP.Views.Breakpoints is
            & " (from the Breakpoints view)",
          Icon_Name => "gps-settings-symbolic",
          Category  => "Debug",
-         Filter    => No_Or_Available_Filter and Selection_Filter);
+         Filter    => Selection_Filter);
 
       GPS.Kernel.Actions.Register_Action
         (Kernel,

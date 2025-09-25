@@ -694,7 +694,7 @@ package body DAP.Clients.Breakpoint_Managers is
             Request := Self.Create_Address_Breakpoints_Request (Indexes);
       end case;
 
-      Self.Client.Enqueue (Request);
+      Self.Client.Enqueue (Request, True);
    end Send_Breakpoint_Request;
 
    -------------------------------------------
