@@ -379,6 +379,7 @@ package GPS.Kernel.Preferences is
    LSP_Ada_Insert_With_Clauses     : Boolean_Preference;
    LSP_Ada_Param_Threshold         : Integer_Preference;
    LSP_Ada_Rename_In_Comment       : Boolean_Preference;
+   LSP_Ada_Formatting_Fallback     : Boolean_Preference;
    LSP_Diagnostics_Display         :
      LSP_Diagnostics_Display_Policy_Prefs.Preference;
 

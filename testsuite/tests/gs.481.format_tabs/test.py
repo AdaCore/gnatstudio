@@ -37,7 +37,7 @@ def driver():
     yield wait_idle()
 
     gps_assert(
-        b.get_chars(b.at(4, 1), b.at(6, 1)), expected_tabs, "Wrong formatting with tabs"
+        b.get_chars(b.at(5, 1), b.at(7, 1)), expected_tabs, "Wrong formatting with tabs"
     )
 
     GPS.Preference("Ada-Use-Tabs").set(False)
@@ -49,7 +49,7 @@ def driver():
     yield wait_idle()
 
     gps_assert(
-        b.get_chars(b.at(4, 1), b.at(6, 1)),
+        b.get_chars(b.at(5, 1), b.at(7, 1)),
         expected_spaces,
         "Wrong formatting with spaces",
     )
