@@ -45,7 +45,6 @@ with VSS.Strings.Conversions;
 with VSS.Strings;
 with VSS.String_Vectors;
 
-with Config;                    use Config;
 with GS_Text_Streams;
 with Toolchains;                use Toolchains;
 with Remote;
@@ -614,7 +613,6 @@ package body GPS.LSP_Client.Configurations.Clangd is
       -------------------
 
       procedure Process_Files (P : Project_Type) is
-         Target     : constant String := P.Get_Target;
          Dirs       : constant GNATCOLL.VFS.File_Array := P.Source_Dirs;
          Files      : GNATCOLL.VFS.File_Array_Access   := P.Source_Files;
          Switches   : GNAT.Strings.String_List_Access;
@@ -711,13 +709,6 @@ package body GPS.LSP_Client.Configurations.Clangd is
                         end if;
                      end loop;
                      Free (Switches);
-
-                     --  If we are on a native Windows host, specify the target
-                     --  to clang: otherwise it will try to use MSVC by
-                     --  default.
-                     if Target = "" and then Config.Host = Windows then
-                        Append (Command, "--target=x86_64-pc-windows-gnu ");
-                     end if;
 
                      Writer.Key_Name
                        (VSS.Strings.To_Virtual_String ("command"));
