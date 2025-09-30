@@ -52,6 +52,8 @@ XML = r"""<?xml version="1.0" ?>
 
   <toolchain name="aarch64-linux-gnu"/>
 
+  <toolchain name="aarch64-lynx-lynxos178"/>
+
   <toolchain name="aarch64-nto-qnx">
     <debugger>ntoaarch64-gdb</debugger>
   </toolchain>
