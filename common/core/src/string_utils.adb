@@ -1413,8 +1413,10 @@ package body String_Utils is
    begin
       while Cur <= S'Last loop
          if S (Cur) = '_' then
-            Number := 1;
-            while S (Cur + Number) = '_' loop
+            Number := 0;
+
+            for Char of S (Cur .. S'Last) loop
+               exit when Char /= '_';
                Number := Number + 1;
             end loop;
 
