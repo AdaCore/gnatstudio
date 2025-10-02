@@ -1,6 +1,7 @@
 """
 Check basic text document operations and editing.
 """
+
 import GPS
 from gs_utils.internal.utils import *
 
@@ -20,6 +21,7 @@ def test_driver():
     # Open ADB file, do modifications, check for diagnostics.
 
     adb_buffer = GPS.EditorBuffer.get(adb_file)
+    yield wait_tasks()
 
     location = GPS.EditorLocation(adb_buffer, 3, 16)
     adb_buffer.insert(location, " ")
@@ -38,6 +40,7 @@ def test_driver():
     # Reopen ADB file and check for diagnostics
 
     adb_buffer = GPS.EditorBuffer.get(adb_file)
+    yield wait_tasks()
 
     yield timeout(diagnosticTimeout)
     if diagnosticOnDidOpen:
