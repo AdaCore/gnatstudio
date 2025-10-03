@@ -175,7 +175,9 @@ package body GPS.LSP_Client.Editors.Tooltips is
    is
       pragma Unreferenced (Widget, Params);
    begin
-      User_Data.Tooltip_Hbox := null;
+      if User_Data /= null then
+         User_Data.Tooltip_Hbox := null;
+      end if;
    end On_Tooltip_Destroyed;
 
    ------------------------------
@@ -468,10 +470,15 @@ package body GPS.LSP_Client.Editors.Tooltips is
      (Self    : in out GPS_LSP_Hover_Request;
       Code    : LSP.Messages.ErrorCodes;
       Message : VSS.Strings.Virtual_String;
-      Data    : GNATCOLL.JSON.JSON_Value)
-   is
-      pragma Unreferenced (Code, Self);
+      Data    : GNATCOLL.JSON.JSON_Value) is
    begin
+      --  Disconnect the callback on the tooltip's destruction now that we
+      --  received an error response.
+      if Self.Tooltip_Hbox /= null then
+         Disconnect
+           (Object => Self.Tooltip_Hbox,
+            Id     => Self.Tooltip_Destroyed_Handler_ID);
+      end if;
       Trace
         (Me,
          "Error received on hover request: "
@@ -484,11 +491,20 @@ package body GPS.LSP_Client.Editors.Tooltips is
    -----------------
 
    overriding procedure On_Rejected
-     (Self : in out GPS_LSP_Hover_Request; Reason : Reject_Reason)
-   is
-      pragma Unreferenced (Self, Reason);
+     (Self : in out GPS_LSP_Hover_Request; Reason : Reject_Reason) is
    begin
-      Trace (Me, "The hover request has been rejected");
+      --  Disconnect the callback on the tooltip's destruction now that we
+      --  got rejected
+      if Self.Tooltip_Hbox /= null then
+         Disconnect
+           (Object => Self.Tooltip_Hbox,
+            Id     => Self.Tooltip_Destroyed_Handler_ID);
+      end if;
+
+      Trace
+        (Me,
+         "The hover request has been rejected with reason: "
+         & Reject_Reason'Image (Reason));
    end On_Rejected;
 
    ----------------------------------------------
