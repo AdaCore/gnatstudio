@@ -231,6 +231,9 @@ package GPS.Editors is
    function Forward_Char
      (This  : Editor_Location;
       Count : Integer) return Editor_Location'Class is abstract;
+   procedure Forward_Character
+     (This  : in out Editor_Location;
+      Count : Integer := 1) is abstract;
    --  Return a new location located count characters after self (which might
    --  be several bytes). If count is negative, the location is moved backward
    --  instead
@@ -1236,6 +1239,9 @@ private
    overriding function Forward_Char
      (This : Dummy_Editor_Location;
       Count : Integer) return Editor_Location'Class;
+   overriding procedure Forward_Character
+     (This  : in out Dummy_Editor_Location;
+      Count : Integer) is null;
    overriding function Forward_Word
      (This  : Dummy_Editor_Location;
       Count : Integer) return Editor_Location'Class;
