@@ -29,6 +29,12 @@ with VSS.Unicode;
 
 package body GPS.LSP_Client.Utilities is
 
+   function UTF16_Encoded_Length
+     (Item : VSS.Characters.Virtual_Character)
+      return VSS.Unicode.UTF16_Code_Unit_Count;
+   --  Returns length of the given Unicode character in UTF-16 encoding form
+   --  in UTF-16 code units.
+
    ------------
    -- To_URI --
    ------------
@@ -68,7 +74,6 @@ package body GPS.LSP_Client.Utilities is
       return GPS.Editors.Editor_Location'Class
    is
       use type LSP.Types.Line_Number;
-      use type VSS.Unicode.Code_Point;
       use type VSS.Unicode.UTF16_Code_Unit_Offset;
 
       U16 : VSS.Unicode.UTF16_Code_Unit_Count := 0;
@@ -82,12 +87,8 @@ package body GPS.LSP_Client.Utilities is
             exit when U16 >= Position.character;
 
             C := Result.Get_Char;
-            Result.Forward_Character (1);
-            U16 :=
-              @ + (if VSS.Characters.Virtual_Character'Pos (C)
-                   <= VSS.Unicode.Code_Point
-                     (VSS.Unicode.UTF16_Code_Unit'Last)
-                   then 1 else 2);
+            Result.Forward_Character;
+            U16 := @ + UTF16_Encoded_Length (C);
          end loop;
       end return;
    end LSP_Position_To_Location;
@@ -98,15 +99,35 @@ package body GPS.LSP_Client.Utilities is
 
    function Location_To_LSP_Position
      (Location : GPS.Editors.Editor_Location'Class)
-      return LSP.Messages.Position is
+      return LSP.Messages.Position
+   is
+      use type VSS.Unicode.UTF16_Code_Unit_Offset;
+
    begin
       if Location.Line = 0 then
          raise Program_Error
            with "Special lines can't be converted to LSP.Messages.Position";
       else
-         return
-           (line      => LSP.Types.Line_Number (Location.Line - 1),
-            character => LSP.Types.UTF_16_Index (Location.Line_Offset));
+         declare
+            U16 : VSS.Unicode.UTF16_Code_Unit_Count := 0;
+            C   : VSS.Characters.Virtual_Character'Base;
+            Aux : GPS.Editors.Editor_Location'Class :=
+              Location.Buffer.New_Location_At_Line
+                (Natural (Location.Line));
+
+         begin
+            loop
+               exit when Aux.Line_Offset = Location.Line_Offset;
+
+               C := Aux.Get_Char;
+               Aux.Forward_Character;
+               U16 := @ + UTF16_Encoded_Length (C);
+            end loop;
+
+            return
+              (line      => LSP.Types.Line_Number (Location.Line - 1),
+               character => LSP.Types.UTF_16_Index (U16));
+         end;
       end if;
    end Location_To_LSP_Position;
 
@@ -191,5 +212,22 @@ package body GPS.LSP_Client.Utilities is
            (Is_Set => True,
             Value  => LSP.Types.LSP_Number (Params.Indent_Continue)));
    end Get_Formatting_Options;
+
+   --------------------------
+   -- UTF16_Encoded_Length --
+   --------------------------
+
+   function UTF16_Encoded_Length
+     (Item : VSS.Characters.Virtual_Character)
+      return VSS.Unicode.UTF16_Code_Unit_Count
+   is
+      use type VSS.Unicode.Code_Point;
+
+   begin
+      return
+        (if VSS.Characters.Virtual_Character'Pos (Item)
+              <= VSS.Unicode.Code_Point (VSS.Unicode.UTF16_Code_Unit'Last)
+         then 1 else 2);
+   end UTF16_Encoded_Length;
 
 end GPS.LSP_Client.Utilities;
