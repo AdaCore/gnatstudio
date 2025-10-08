@@ -1039,7 +1039,8 @@ package body Refactoring.Subprograms is
          Item      : constant Separate_Context_Item_Access :=
            Separate_Context_Item_Access
              (Get_Refactoring_Variable (Context.Context));
-         XEntity   : constant Root_Entity'Class := Get_Entity (Context.Context);
+         XEntity   : constant Root_Entity'Class :=
+           Get_Entity (Context.Context);
          Entity    : constant Language.Tree.Database.Entity_Access :=
            Get_Entity_Access (Kernel.Refactoring_Context, XEntity);
          Editor    : constant Editor_Buffer'Class :=
