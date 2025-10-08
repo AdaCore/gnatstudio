@@ -850,7 +850,7 @@ package body Vdiff2_Module.Utils is
         (Buf : Editor_Buffer'Class; Line : Integer) return String
       is
          Start : constant Editor_Location'Class :=
-           Buf.New_Location_At_Line (Line);
+           Buf.New_Location_At_Line (Editable_Line_Type (Line));
          The_End : constant Editor_Location'Class := Start.End_Of_Line;
       begin
          return Buf.Get_Chars_S (Start, The_End);

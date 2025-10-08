@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                               GNAT Studio                                --
 --                                                                          --
---                     Copyright (C) 2002-2024, AdaCore                     --
+--                     Copyright (C) 2002-2025, AdaCore                     --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -20,8 +20,8 @@ with Ada.Containers.Hashed_Maps;
 with Ada.Containers.Doubly_Linked_Lists;
 with Ada.Calendar;               use Ada.Calendar;
 with Ada.Strings.Unbounded;      use Ada.Strings.Unbounded;
-with Commands.Interactive;       use Commands, Commands.Interactive;
 with GNAT.Strings;               use GNAT.Strings;
+
 with GNATCOLL.Arg_Lists;         use GNATCOLL.Arg_Lists;
 with GNATCOLL.JSON;              use GNATCOLL.JSON;
 with GNATCOLL.Projects;          use GNATCOLL.Projects;
@@ -31,6 +31,8 @@ with GNATCOLL.Traces;            use GNATCOLL.Traces;
 with GNATCOLL.Utils;             use GNATCOLL.Utils;
 with GNATCOLL.VFS;               use GNATCOLL.VFS;
 
+with Basic_Types;
+with Commands.Interactive;       use Commands, Commands.Interactive;
 with GPS.Editors;                use GPS.Editors;
 with GPS.Intl;                   use GPS.Intl;
 with GPS.Kernel.Actions;         use GPS.Kernel.Actions;
@@ -705,9 +707,9 @@ package body Navigation_Module is
       Center : Boolean := False)
    is
       Editor   : constant Editor_Buffer'Class :=
-                   Kernel.Get_Buffer_Factory.Get (File);
+        Kernel.Get_Buffer_Factory.Get (File);
       Location : constant Editor_Location'Class :=
-                   New_Location_At_Line (Editor, Line);
+        New_Location_At_Line (Editor, Basic_Types.Editable_Line_Type (Line));
       Centering : Centering_Type := With_Margin;
    begin
       if Center then
@@ -748,8 +750,8 @@ package body Navigation_Module is
    is
       Editor : constant Editor_Buffer'Class :=
                  Kernel.Get_Buffer_Factory.Get (File);
-      Loc : constant Editor_Location'Class :=
-         Editor.New_Location_At_Line (Line);
+      Loc    : constant Editor_Location'Class :=
+         Editor.New_Location_At_Line (Basic_Types.Editable_Line_Type (Line));
    begin
       return Loc.Block_End.Line;
    exception
@@ -768,8 +770,8 @@ package body Navigation_Module is
    is
       Editor : constant Editor_Buffer'Class :=
         Kernel.Get_Buffer_Factory.Get (File);
-      Loc : constant Editor_Location'Class :=
-        Editor.New_Location_At_Line (Line);
+      Loc    : constant Editor_Location'Class :=
+        Editor.New_Location_At_Line (Basic_Types.Editable_Line_Type (Line));
    begin
       return Loc.Block_Start (Update_Tree => False).Line;
    exception
@@ -788,8 +790,8 @@ package body Navigation_Module is
    is
       Editor : constant Editor_Buffer'Class :=
         Kernel.Get_Buffer_Factory.Get (File);
-      Loc : constant Editor_Location'Class :=
-        Editor.New_Location_At_Line (Line);
+      Loc    : constant Editor_Location'Class :=
+        Editor.New_Location_At_Line (Basic_Types.Editable_Line_Type (Line));
    begin
       return Loc.Block_Type (Update_Tree => False);
    exception

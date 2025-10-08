@@ -1021,7 +1021,8 @@ package body GPS.LSP_Client.References is
                             (Buffer.Editor, Loc.span.last);
 
                         Start_Loc  : constant GPS.Editors.Editor_Location'Class
-                          := Buffer.Editor.New_Location_At_Line (From.Line);
+                          := Buffer.Editor.New_Location_At_Line
+                            (Editable_Line_Type (From.Line));
                         End_Loc    : constant GPS.Editors.Editor_Location'Class
                           := Start_Loc.End_Of_Line;
                         Whole_Line : constant String :=

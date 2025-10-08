@@ -130,7 +130,7 @@ package body Codefix.GPS_Io is
            Open_View   => False,
            Open_Buffer => True);
       Loc_Start : constant Editor_Location'CLass :=
-        Editor.New_Location_At_Line (Cursor.Get_Line);
+        Editor.New_Location_At_Line (Editable_Line_Type (Cursor.Get_Line));
       Loc_End   : constant Editor_Location'CLass := Loc_Start.End_Of_Line;
 
       Line : constant String := Editor.Get_Chars_S (Loc_Start, Loc_End);
@@ -301,7 +301,7 @@ package body Codefix.GPS_Io is
       Editor : constant Editor_Buffer'Class :=
         This.Kernel.Get_Buffer_Factory.Get (Get_File_Name (This));
       Loc_Start : constant Editor_Location'Class :=
-        Editor.New_Location_At_Line (Cursor.Get_Line);
+        Editor.New_Location_At_Line (Editable_Line_Type (Cursor.Get_Line));
       Loc_End : constant Editor_Location'Class := Loc_Start.End_Of_Line;
    begin
       Editor.Delete (Loc_Start, Loc_End);
@@ -319,7 +319,7 @@ package body Codefix.GPS_Io is
       Editor : constant Editor_Buffer'Class :=
         This.Kernel.Get_Buffer_Factory.Get (Get_File_Name (This));
       Loc : constant Editor_Location'Class :=
-        Editor.New_Location_At_Line (Cursor.Get_Line);
+        Editor.New_Location_At_Line (Editable_Line_Type (Cursor.Get_Line));
    begin
       Editor.Indent (Loc, Loc);
       Text_Has_Changed (This);
@@ -365,7 +365,7 @@ package body Codefix.GPS_Io is
            Open_View   => False,
            Open_Buffer => True);
    begin
-      return Editor.Lines_Count;
+      return Natural (Editor.Lines_Count);
    end Line_Max;
 
    ---------------

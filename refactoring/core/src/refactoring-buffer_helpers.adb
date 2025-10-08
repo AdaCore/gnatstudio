@@ -68,7 +68,8 @@ package body Refactoring.Buffer_Helpers is
       Editor : constant Editor_Buffer'Class :=
         Context.Buffer_Factory.Get (Get_File_Path (Get_File (Location)));
       Loc_Start : constant Editor_Location'Class :=
-        Editor.New_Location_At_Line (Get_Line (Location));
+        Editor.New_Location_At_Line
+          (Editable_Line_Type (Get_Line (Location)));
       Loc_End   : constant Editor_Location'Class := Loc_Start.End_Of_Line;
 
       Line : constant String := Editor.Get_Chars_S (Loc_Start, Loc_End);
@@ -314,7 +315,7 @@ package body Refactoring.Buffer_Helpers is
       Editor : constant Editor_Buffer'Class :=
         Context.Buffer_Factory.Get (Get_File_Path (Get_File (Location)));
       Loc : constant Editor_Location'Class :=
-        Editor.New_Location_At_Line (Get_Line (Location));
+        Editor.New_Location_At_Line (Editable_Line_Type (Get_Line (Location)));
    begin
       Editor.Indent (Loc, Loc);
 
@@ -335,7 +336,7 @@ package body Refactoring.Buffer_Helpers is
       Editor : constant Editor_Buffer'Class :=
         Context.Buffer_Factory.Get (Get_File_Path (Get_File (Location)));
       Loc_Start : constant Editor_Location'Class :=
-        Editor.New_Location_At_Line (Get_Line (Location));
+        Editor.New_Location_At_Line (Editable_Line_Type (Get_Line (Location)));
       Loc_End : constant Editor_Location'Class := Loc_Start.End_Of_Line;
    begin
       Editor.Delete (Loc_Start, Loc_End);

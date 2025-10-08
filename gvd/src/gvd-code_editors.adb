@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                               GNAT Studio                                --
 --                                                                          --
---                     Copyright (C) 2000-2024, AdaCore                     --
+--                     Copyright (C) 2000-2025, AdaCore                     --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -21,6 +21,7 @@ with VSS.Strings;
 
 with Gtkada.MDI;                   use Gtkada.MDI;
 
+with Basic_Types;
 with Debugger_Pixmaps;             use Debugger_Pixmaps;
 with GNATCOLL.VFS;                 use GNATCOLL.VFS;
 with GPS.Editors.Line_Information; use GPS.Editors.Line_Information;
@@ -125,7 +126,9 @@ package body GVD.Code_Editors is
                  Unlocked_Only => True);
          begin
             Buffer.Current_View.Cursor_Goto
-              (Location   => Buffer.New_Location_At_Line (Line),
+              (Location   =>
+                 Buffer.New_Location_At_Line
+                   (Basic_Types.Editable_Line_Type (Line)),
                Raise_View => Focus);
 
             if not Focus then
@@ -163,7 +166,9 @@ package body GVD.Code_Editors is
           (P.Current_File, Unlocked_Only => True);
    begin
       Buffer.Current_View.Cursor_Goto
-        (Location   => Buffer.New_Location_At_Line (P.Current_Line),
+        (Location   =>
+           Buffer.New_Location_At_Line
+             (Basic_Types.Editable_Line_Type (P.Current_Line)),
          Raise_View => True);
    end Goto_Current_Line;
 

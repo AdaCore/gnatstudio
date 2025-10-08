@@ -1858,7 +1858,7 @@ package body Src_Editor_Module.Shell is
          Set_Return_Value (Data, Get_Buffer (Data, 1).Characters_Count);
 
       elsif Command = "lines_count" then
-         Set_Return_Value (Data, Get_Buffer (Data, 1).Lines_Count);
+         Set_Return_Value (Data, Natural (Get_Buffer (Data, 1).Lines_Count));
 
       elsif Command = "select" then
          Name_Parameters (Data, (1 => Start_Cst'Access,

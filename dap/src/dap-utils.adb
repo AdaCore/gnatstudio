@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                               GNAT Studio                                --
 --                                                                          --
---                     Copyright (C) 2022-2024, AdaCore                     --
+--                     Copyright (C) 2022-2025, AdaCore                     --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -16,8 +16,10 @@
 ------------------------------------------------------------------------------
 
 with Ada.Strings.Unbounded;
+
 with Gtkada.MDI;                   use Gtkada.MDI;
 
+with Basic_Types;
 with GPS.Default_Styles;
 with GPS.Editors;                  use GPS.Editors;
 with GPS.Editors.GtkAda;
@@ -96,7 +98,8 @@ package body DAP.Utils is
            Unlocked_Only => True);
    begin
       Buffer.Current_View.Cursor_Goto
-        (Location   => Buffer.New_Location_At_Line (Line),
+        (Location   =>
+           Buffer.New_Location_At_Line (Basic_Types.Editable_Line_Type (Line)),
          Raise_View => False);
 
       --  raise the source editor without giving a focus
