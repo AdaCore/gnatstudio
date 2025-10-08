@@ -377,7 +377,7 @@ package body Src_Editor_Module.Editors is
 
    overriding function New_Location
      (This   : Src_Editor_Buffer;
-      Offset : Natural) return Editor_Location'Class;
+      Offset : VSS.Strings.Character_Count) return Editor_Location'Class;
 
    overriding function New_View
      (This : Src_Editor_Buffer) return Editor_View'Class;
@@ -2021,7 +2021,7 @@ package body Src_Editor_Module.Editors is
 
    overriding function New_Location
      (This   : Src_Editor_Buffer;
-      Offset : Natural) return Editor_Location'Class
+      Offset : VSS.Strings.Character_Count) return Editor_Location'Class
    is
       Iter : Gtk_Text_Iter;
       Result : Src_Editor_Location;

@@ -514,8 +514,9 @@ package GPS.Editors is
       Line   : Basic_Types.Editable_Line_Type) return Editor_Location'Class;
 
    function New_Location
-     (This : Editor_Buffer;
-      Offset : Natural) return Editor_Location'Class is abstract;
+     (This   : Editor_Buffer;
+      Offset : VSS.Strings.Character_Count)
+      return Editor_Location'Class is abstract;
 
    function New_View
      (This : Editor_Buffer) return Editor_View'Class is abstract;
@@ -1366,7 +1367,7 @@ private
 
    overriding function New_Location
      (This         : Dummy_Editor_Buffer;
-      Dummy_Offset : Natural) return Editor_Location'Class
+      Dummy_Offset : VSS.Strings.Character_Count) return Editor_Location'Class
    is (Nil_Editor_Location);
 
    overriding function New_View
