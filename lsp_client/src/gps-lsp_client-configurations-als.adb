@@ -15,6 +15,7 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
+with Ada.Characters.Handling; use Ada.Characters.Handling;
 with GNAT.Strings;
 with VSS.Strings;
 
@@ -39,20 +40,21 @@ package body GPS.LSP_Client.Configurations.ALS is
    -- Configuration_Settings --
    ----------------------------
 
-   overriding function Configuration_Settings
+   overriding
+   function Configuration_Settings
      (Self : ALS_Configuration) return GNATCOLL.JSON.JSON_Value
    is
       use GNATCOLL.Projects;
 
       Settings     : constant GNATCOLL.JSON.JSON_Value :=
-                       GNATCOLL.JSON.Create_Object;
+        GNATCOLL.JSON.Create_Object;
       Ada_Settings : constant GNATCOLL.JSON.JSON_Value :=
-                       GNATCOLL.JSON.Create_Object;
+        GNATCOLL.JSON.Create_Object;
       Scenarios    : constant GNATCOLL.JSON.JSON_Value :=
-                       GNATCOLL.JSON.Create_Object;
+        GNATCOLL.JSON.Create_Object;
 
-      Project      : constant Project_Type := GPS.Kernel.Project.Get_Project
-        (Self.Kernel);
+      Project : constant Project_Type :=
+        GPS.Kernel.Project.Get_Project (Self.Kernel);
 
    begin
       declare
@@ -198,6 +200,11 @@ package body GPS.LSP_Client.Configurations.ALS is
       --  Force gnatFormat, gnatpp should not be enabled by GS
       Ada_Settings.Set_Field ("useGnatformat", True);
 
+      Ada_Settings.Set_Field
+        ("rangeFormattingFallback",
+         Boolean'
+           (GPS.Kernel.Preferences.LSP_Ada_Formatting_Fallback.Get_Pref));
+
       declare
          On_Type_Formatting : constant GNATCOLL.JSON.JSON_Value :=
            GNATCOLL.JSON.Create_Object;
@@ -205,9 +212,9 @@ package body GPS.LSP_Client.Configurations.ALS is
       begin
          On_Type_Formatting.Set_Field
            ("indentOnly",
-            LSP_Ada_On_Type_Formatting.Get_Pref
-            = VSS.Strings.Conversions.To_UTF_8_String
-              (GPS.Kernel.Preferences.Indent_Choice));
+            To_Lower (LSP_Ada_On_Type_Formatting.Get_Pref)
+            = To_Lower (VSS.Strings.Conversions.To_UTF_8_String
+              (GPS.Kernel.Preferences.Indent_Choice)));
          Ada_Settings.Set_Field ("onTypeFormatting", On_Type_Formatting);
       end;
 
@@ -237,10 +244,9 @@ package body GPS.LSP_Client.Configurations.ALS is
    -- Is_Configuration_Supported --
    --------------------------------
 
-   overriding function Is_Configuration_Supported
-     (Self    : ALS_Configuration;
-      Setting : Setting_Kind)
-      return Boolean is
+   overriding
+   function Is_Configuration_Supported
+     (Self : ALS_Configuration; Setting : Setting_Kind) return Boolean is
    begin
       return Supported_Settings (Setting);
    end Is_Configuration_Supported;

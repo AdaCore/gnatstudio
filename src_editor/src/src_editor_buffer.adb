@@ -2700,10 +2700,14 @@ package body Src_Editor_Buffer is
             Listener.Before_Delete_Range
               (Buffer.Editor_Buffer.New_Location
                  (Integer (Editable_Line_Start),
-                  Visible_Column_Type (Column_Start + 1)),
+                  Buffer.Expand_Tabs
+                    (Editable_Line_Start,
+                     Character_Offset_Type (Column_Start + 1))),
                Buffer.Editor_Buffer.New_Location
                  (Integer (Editable_Line_End),
-                  Visible_Column_Type (Column_End + 1)),
+                  Buffer.Expand_Tabs
+                    (Editable_Line_End,
+                     Character_Offset_Type (Column_End + 1))),
                not Buffer.Inserting);
          end loop;
       end if;
@@ -4786,6 +4790,8 @@ package body Src_Editor_Buffer is
            (Buffer, Iter,
             Gint (Buffer_Line - 1),
             Column);
+      elsif Line >= Buffer.Last_Editable_Line then
+         Get_End_Iter (Buffer, Iter);
       else
          Get_Iter_At_Line_Offset (Buffer, Iter, 0, 0);
       end if;
@@ -4806,6 +4812,8 @@ package body Src_Editor_Buffer is
            (Buffer, Iter,
             Gint (Buffer_Line - 1),
             Gint (Column - 1));
+      elsif Line >= Buffer.Last_Editable_Line then
+         Get_End_Iter (Buffer, Iter);
       else
          Get_Iter_At_Line_Offset (Buffer, Iter, 0, 0);
       end if;

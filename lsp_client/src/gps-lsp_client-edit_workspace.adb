@@ -543,11 +543,11 @@ package body GPS.LSP_Client.Edit_Workspace is
             end if;
             --  Check if Limit_Span is partially include in the textEdit
             return
-              (From.line <= Command.Limit_Span.first.line
-               and then Command.Limit_Span.first.line <= To.line)
+              (Command.Limit_Span.first.line <= From.line
+               and then From.line <= Command.Limit_Span.last.line)
               or else
-                (From.line <= Command.Limit_Span.last.line
-                 and then Command.Limit_Span.last.line <= To.line);
+                (Command.Limit_Span.first.line <= To.line
+               and then To.line <= Command.Limit_Span.last.line);
          end if;
       end Edit_Affect_Span;
 
