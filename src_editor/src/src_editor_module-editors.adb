@@ -284,6 +284,9 @@ package body Src_Editor_Module.Editors is
    overriding function Forward_Char
      (This  : Src_Editor_Location;
       Count : Integer) return Editor_Location'Class;
+   overriding procedure Forward_Character
+     (This  : in out Src_Editor_Location;
+      Count : Integer);
    overriding function Forward_Word
      (This  : Src_Editor_Location;
       Count : Integer) return Editor_Location'Class;
@@ -1560,6 +1563,42 @@ package body Src_Editor_Module.Editors is
 
       return Create_Editor_Location (This.Buffer, End_Line, End_Col);
    end Forward_Char;
+
+   -----------------------
+   -- Forward_Character --
+   -----------------------
+
+   overriding procedure Forward_Character
+     (This  : in out Src_Editor_Location;
+      Count : Integer)
+   is
+      Begin_Col : Character_Offset_Type;
+
+      End_Line : Editable_Line_Type;
+      End_Col  : Character_Offset_Type;
+      Iter     : Gtk_Text_Iter;
+
+   begin
+      Begin_Col := Collapse_Tabs
+        (This.Buffer.Contents.Buffer, This.Line, This.Column);
+
+      Forward_Position
+        (Buffer       => This.Buffer.Contents.Buffer,
+         Start_Line   => This.Line,
+         Start_Column => Begin_Col,
+         Length       => Count,
+         End_Line     => End_Line,
+         End_Column   => End_Col);
+
+      Ensure_Valid_Position
+        (This.Buffer.Contents.Buffer, End_Line, End_Col);
+      Get_Iter_At_Screen_Position
+        (This.Buffer.Contents.Buffer, Iter, End_Line, End_Col);
+
+      Get_Iter_Position
+        (This.Buffer.Contents.Buffer, Iter, This.Line, This.Column);
+      This.Offset := Integer (Get_Offset (Iter));
+   end Forward_Character;
 
    ------------------
    -- Forward_Word --
