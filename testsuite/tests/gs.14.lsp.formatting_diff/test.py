@@ -13,7 +13,8 @@ from gs_utils.internal.utils import (
 )
 
 expected = """procedure t is
-   function F (A : Boolean; B : Boolean) return Boolean is (True);
+   function F (A : Boolean; B : Boolean) return Boolean
+   is (True);
 
    function F2 return Boolean
    is (F (A => True, B => False));
@@ -41,7 +42,7 @@ def driver():
 
     # Verify that the proper indentation is produced
     gps_assert(
-        b.get_chars(b.at(1, 1), b.at(5, 1).end_of_line()),
+        b.get_chars(b.at(1, 1), b.at(6, 1).end_of_line()),
         expected,
         "Wrong format for aggregate in expression function",
     )

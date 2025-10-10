@@ -19,7 +19,8 @@ end Main;"""
 EXPECTED_TEXT = """procedure Main is
 begin
    null;
-end Main;"""
+end Main;
+"""
 
 
 @run_test_driver
@@ -36,6 +37,4 @@ def driver():
     yield wait_language_server("textDocument/rangeFormatting")
     yield wait_idle()
 
-    gps_assert(
-        b.get_chars(), EXPECTED_TEXT, "Wrong formatting"
-    )
+    gps_assert(b.get_chars(), EXPECTED_TEXT, "Wrong formatting")

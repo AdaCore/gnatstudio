@@ -33,7 +33,7 @@ def driver():
     yield wait_language_server("textDocument/rangeFormatting")
     yield wait_idle()
 
-    gps_assert(b.get_chars(b.at(4, 1), b.at(6, 1)), expected, "Wrong formatting")
+    gps_assert(b.get_chars(b.at(5, 1), b.at(7, 1)), expected, "Wrong formatting")
 
     # Verify that the cursor is still on the same character, despite
     # that lines have been rearranged when formatting

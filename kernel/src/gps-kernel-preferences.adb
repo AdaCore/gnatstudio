@@ -1907,6 +1907,14 @@ package body GPS.Kernel.Preferences is
          & "to avoid false positive.",
          Path    => "Editor/Ada:Renaming");
 
+      LSP_Ada_Formatting_Fallback := Kernel.Get_Preferences.Create
+        (Name    => "LSP-Ada-Formatting-Fallback",
+         Default => True,
+         Label   => -"Ada fallback formatter",
+         Doc     => -"Enable fallback formatter in case the code is not"
+         & " syntactically correct.",
+         Path    => "Editor/Ada:Formatting");
+
       Use_External_Highlighting := External_Highlighting_Preferences.Create
         (Manager  => Manager,
          Path     => "LSP:Highlight",
