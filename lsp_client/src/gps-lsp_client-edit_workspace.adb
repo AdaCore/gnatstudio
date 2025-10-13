@@ -53,6 +53,7 @@ with VFS_Module;
 with VSS.Strings.Cursors;
 with VSS.Strings.Cursors.Iterators;
 with VSS.Strings.Cursors.Iterators.Lines;
+with VSS.Unicode;
 
 package body GPS.LSP_Client.Edit_Workspace is
 
@@ -66,6 +67,10 @@ package body GPS.LSP_Client.Edit_Workspace is
 
    package Vectors is new Ada.Containers.Indefinite_Vectors
      (Natural, Text_Edit);
+
+   function "<" (L, R : Text_Edit) return Boolean;
+
+   package Ascending is new Vectors.Generic_Sorting ("<");
 
    procedure Insert_Change
      (Vector : in out Vectors.Vector;
@@ -150,6 +155,25 @@ package body GPS.LSP_Client.Edit_Workspace is
       Context : Interactive_Command_Context) return Command_Return_Type;
    overriding function Undo
      (Command : access Edit_Workspace_Command) return Boolean;
+
+   ---------
+   -- "<" --
+   ---------
+
+   function "<" (L, R : Text_Edit) return Boolean
+   is
+      use LSP.Messages;
+      use type VSS.Unicode.UTF16_Code_Unit_Offset;
+   begin
+      --  According to the documentation textEdit range should not overlap so
+      --  we only need to compare the first location. Also we need to preserve
+      --  the order of textEdit which are inserting at the exact same span:
+      --  they are reversed later so reverse them here also.
+      return L.Span.first = R.Span.first
+        or else L.Span.first.line < R.Span.first.line
+        or else (L.Span.first.line = R.Span.first.line
+                  and then L.Span.first.character < R.Span.first.character);
+   end "<";
 
    -------------------------
    -- Get_Minimal_Changes --
@@ -765,6 +789,9 @@ package body GPS.LSP_Client.Edit_Workspace is
                Insert_Change (Vector, Change.span, Change.newText);
             end loop;
 
+            --  Guarantee the order of textEdit
+            Ascending.Sort (Vector);
+
             Process_File
               (GPS.LSP_Client.Utilities.To_Virtual_File (Key (C)),
                Vector);
@@ -790,6 +817,9 @@ package body GPS.LSP_Client.Edit_Workspace is
                      for Change of Item.Text_Document_Edit.edits loop
                         Insert_Change (Vector, Change.span, Change.newText);
                      end loop;
+
+                     --  Guarantee the order of textEdit
+                     Ascending.Sort (Vector);
 
                      Process_File
                        (GPS.LSP_Client.Utilities.To_Virtual_File
