@@ -1808,7 +1808,7 @@ package body GPS.Kernel.Preferences is
           (Manager         => Manager,
            Name            => "LSP-Ada-On-Type-Formatting",
            Choices         => [Indent_Choice, Format_Choice],
-           Default         => Format_Choice,
+           Default         => Indent_Choice,
            Label           => "Action on new line",
            Doc             =>
              -"Decide if GNAT Studio should just indent when adding "
