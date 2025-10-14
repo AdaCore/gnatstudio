@@ -24,7 +24,7 @@ EXPECTED_2 = """procedure T is
      (True);
 
    function F2 (A : Boolean; B : Boolean) return Boolean
-   is (False);
+      is (False);
 begin
    null;
 end T;

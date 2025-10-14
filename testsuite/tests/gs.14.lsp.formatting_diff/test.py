@@ -29,7 +29,7 @@ def driver():
     b = GPS.EditorBuffer.get(GPS.File("t.adb"))
     yield wait_idle()
 
-    b.select(b.at(4, 1), b.at(6, 1).end_of_line())
+    b.select(b.at(2, 1), b.at(6, 1).end_of_line())
 
     # Retrieve the character next to the cursor's location
     cursor_loc = b.main_cursor().location()
