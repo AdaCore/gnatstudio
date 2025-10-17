@@ -117,7 +117,7 @@ package body Coverage_GUI is
       if File_Time_Stamp (Src_File) > File_Time_Stamp (Cov_File) then
          Kernel.Insert
            (Display_Base_Name (Src_File) &
-            (-" has been modified since GCOV information were generated.") &
+            (-" has been modified since coverage information was generated.") &
             (-" Skipped."),
             Mode => GPS.Kernel.Error);
          Set_Error (File_Node, File_Out_Of_Date);
