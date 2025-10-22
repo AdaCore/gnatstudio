@@ -2,7 +2,6 @@
 This plugin implements the "Tasks" view.
 """
 
-
 import GPS
 from modules import Module
 from gi.repository import Gtk, Gdk, GLib, Pango
@@ -21,7 +20,6 @@ MAX_INT = sys.maxsize // 2
 
 
 class HUD_Widget:
-
     """A widget representing the GPS HUD"""
 
     def __init__(self):
@@ -179,7 +177,6 @@ class HUD_Widget:
 
 
 class Tasks_View_Widget:
-
     """A widget containing a task view"""
 
     def _set_progress(self, column, cell, model, iter, user_data):
@@ -415,7 +412,7 @@ class Tasks_View(Module):
         )
 
         label = Gtk.Label(
-            "The following tasks are running, do you want to quit GPS?\n"
+            "The following tasks are running, do you want to quit GNAT Studio?\n"
             "Warning: Quitting will kill all running tasks"
         )
         label.set_alignment(0.0, 0.0)
