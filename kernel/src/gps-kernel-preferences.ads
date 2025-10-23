@@ -390,21 +390,23 @@ package GPS.Kernel.Preferences is
    -- LSP semantic styles --
    Use_External_Highlighting : External_Highlighting_Preferences.Preference;
 
-   LSP_Namespace_Style     : Variant_Preference;
-   LSP_Interface_Style     : Variant_Preference;
-   LSP_Class_Style         : Variant_Preference;
-   LSP_Function_Style      : Variant_Preference;
-   LSP_Struct_Style        : Variant_Preference;
-   LSP_Property_Style      : Variant_Preference;
-   LSP_Enum_Style          : Variant_Preference;
-   LSP_EnumMember_Style    : Variant_Preference;
-   LSP_TypeParameter_Style : Variant_Preference;
-   LSP_Parameter_Style     : Variant_Preference;
-   LSP_Variable_Style      : Variant_Preference;
-   LSP_Modifier_Style      : Variant_Preference;
-   LSP_Operator_Style      : Variant_Preference;
-   LSP_Deprecated_Style    : Variant_Preference;
-   LSP_Readonly_Bg         : Color_Preference;
+   LSP_Namespace_Style       : Variant_Preference;
+   LSP_Interface_Style       : Variant_Preference;
+   LSP_Class_Style           : Variant_Preference;
+   LSP_Function_Style        : Variant_Preference;
+   LSP_Struct_Style          : Variant_Preference;
+   LSP_Property_Style        : Variant_Preference;
+   LSP_Enum_Style            : Variant_Preference;
+   LSP_EnumMember_Style      : Variant_Preference;
+   LSP_TypeParameter_Style   : Variant_Preference;
+   LSP_Parameter_Style       : Variant_Preference;
+   LSP_Variable_Style        : Variant_Preference;
+   LSP_Local_Variable_Style  : Variant_Preference;
+   LSP_Global_Variable_Style : Variant_Preference;
+   LSP_Modifier_Style        : Variant_Preference;
+   LSP_Operator_Style        : Variant_Preference;
+   LSP_Deprecated_Style      : Variant_Preference;
+   LSP_Readonly_Bg           : Color_Preference;
 
    -----------
    -- Utils --

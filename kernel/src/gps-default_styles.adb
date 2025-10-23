@@ -134,6 +134,9 @@ package body GPS.Default_Styles is
       LSP_Semantic_Styles : array (LSP_Styles'Range) of Style_Access;
       pragma Unreferenced (LSP_Semantic_Styles);
 
+      LSP_Semantic_Variables_Styles : array (1 .. 2) of Style_Access;
+      pragma Unreferenced (LSP_Semantic_Variables_Styles);
+
    begin
       All_Styles :=
         ((To_Unbounded_String ("namespace"),     LSP_Namespace_Style),
@@ -308,6 +311,16 @@ package body GPS.Default_Styles is
             Shade_Or_Lighten_Amount => 0.0);
          LSP_Semantic_Defaultlibrary_Styles (Index).Set_Variant (Bold_Italic);
       end loop;
+
+      LSP_Semantic_Variables_Styles (1) := M.Create_From_Preferences
+        (Key     => "variable-localvariable",
+         Style   => Default_Style,
+         Variant => LSP_Local_Variable_Style);
+
+      LSP_Semantic_Variables_Styles (2) := M.Create_From_Preferences
+        (Key     => "variable-globalvariable",
+         Style   => Default_Style,
+         Variant => LSP_Global_Variable_Style);
 
       ------------
       -- Search --
