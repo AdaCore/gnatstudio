@@ -653,7 +653,6 @@ textview.view.readonly text {
    border: 1pt solid @popup_border_color;
 }
 
-
 /**********************************
  * Demos
  **********************************/
@@ -661,4 +660,26 @@ textview.view.readonly text {
  .gps-demo-menu-highlighted {
    background-color: @theme_selected_bg_color;
    color: @theme_selected_fg_color;
+ }
+
+
+/**********************************
+ * Task Manager
+ **********************************/
+
+/* There does not seem to be a way of controlling the color
+   of the progress bar itself:
+   https://gitlab.gnome.org/GNOME/gtk/-/blob/gtk-3-24/gtk/gtkcellrendererprogress.c#L646
+
+   So we fix the foreground to the text color and the background to
+   the gutter color.
+*/
+
+ .task_view_tree .progressbar,GtkTreeView {
+   color: @editor_fg_color;
+   background-color:red;
+ }
+
+ .task_view_tree *:selected {
+   background-color: @gutter_color;
  }
