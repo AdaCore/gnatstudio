@@ -650,19 +650,6 @@ try:
 
         open_menu("/Edit/Key Shortcuts...", on_open, [], args, kwargs)
 
-    def open_file_switches(on_open, *args, **kwargs):
-        """Open the file-specific switches editor, and call
-        on_open (mdichild, tree, *args, **kwargs)"""
-
-        def on_timeout(timeout):
-            timeout.remove()
-            mdi = GPS.MDI.get("Project Switches")
-            tree = get_widgets_by_type(Gtk.TreeView, mdi.get_child().pywidget())[0]
-            on_open(*(mdi, tree) + args, **kwargs)
-
-        GPS.Timeout(1000, on_timeout)
-        GPS.Menu.get("/Project/Edit File Switches...").action.execute_if_possible()
-
     def open_breakpoint_editor(on_open, *args, **kwargs):
         """Open the breakpoint editor dialog and call
         on_open (MDIWindow, *args, **kwargs)"""

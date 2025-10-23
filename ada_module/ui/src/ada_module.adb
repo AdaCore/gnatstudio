@@ -32,12 +32,13 @@ with Language.Ada;              use Language.Ada;
 with Ada_Semantic_Tree.Lang;    use Ada_Semantic_Tree.Lang;
 with Language_Handlers;         use Language_Handlers;
 with Language;                  use Language;
-with Project_Viewers;           use Project_Viewers;
-with Ada_Naming_Editors;        use Ada_Naming_Editors;
 with Projects;                  use Projects;
 with Case_Handling;             use Case_Handling;
 
 package body Ada_Module is
+
+   Default_Gnat_Body_Suffix : constant String := ".adb";
+   Default_Gnat_Spec_Suffix : constant String := ".ads";
 
    -----------------
    -- Preferences --
@@ -80,12 +81,6 @@ package body Ada_Module is
       Kernel : not null access Kernel_Handle_Record'Class;
       Pref   : Default_Preferences.Preference);
    --  Called when the preferences have changed
-
-   function Naming_Scheme_Editor
-     (Dummy_Kernel : not null access Kernel_Handle_Record'Class;
-      Dummy_Lang   : String) return not null Project_Editor_Page is
-      (new Ada_Naming_Editor_Record);
-   --  Create the naming scheme editor page
 
    -------------
    -- Filters --
@@ -519,9 +514,6 @@ package body Ada_Module is
         (Manager => Manager, Pref => Preference (Ada_Identifier_Casing));
 
       Preferences_Changed_Hook.Add (new On_Pref_Changed);
-
-      Register_Naming_Scheme_Editor
-        (Kernel, "Ada", Naming_Scheme_Editor'Access);
    end Register_Module;
 
 end Ada_Module;
