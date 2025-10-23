@@ -510,12 +510,13 @@ package GPS.Editors is
       Column : Character_Offset_Type) return Editor_Location'Class is abstract;
 
    function New_Location_At_Line
-     (This   : Editor_Buffer;
-      Line   : Integer) return Editor_Location'Class;
+     (This   : Editor_Buffer'Class;
+      Line   : Basic_Types.Editable_Line_Type) return Editor_Location'Class;
 
    function New_Location
-     (This : Editor_Buffer;
-      Offset : Natural) return Editor_Location'Class is abstract;
+     (This   : Editor_Buffer;
+      Offset : VSS.Strings.Character_Count)
+      return Editor_Location'Class is abstract;
 
    function New_View
      (This : Editor_Buffer) return Editor_View'Class is abstract;
@@ -549,7 +550,8 @@ package GPS.Editors is
    --  always at least one such view. When the last view is destroyed, the
    --  buffer itself is destroyed
 
-   function Lines_Count (This : Editor_Buffer) return Integer is abstract;
+   function Lines_Count
+     (This : Editor_Buffer) return Editable_Line_Type is abstract;
    --  Returns the total number of lines in the buffer
 
    function Characters_Count (This : Editor_Buffer) return Natural is abstract;
@@ -1365,7 +1367,7 @@ private
 
    overriding function New_Location
      (This         : Dummy_Editor_Buffer;
-      Dummy_Offset : Natural) return Editor_Location'Class
+      Dummy_Offset : VSS.Strings.Character_Count) return Editor_Location'Class
    is (Nil_Editor_Location);
 
    overriding function New_View
@@ -1377,7 +1379,8 @@ private
    overriding function Current_View
      (This : Dummy_Editor_Buffer) return Editor_View'Class;
 
-   overriding function Lines_Count (This : Dummy_Editor_Buffer) return Integer;
+   overriding function Lines_Count
+     (This : Dummy_Editor_Buffer) return Editable_Line_Type;
    overriding function Characters_Count
      (This : Dummy_Editor_Buffer) return Natural;
 

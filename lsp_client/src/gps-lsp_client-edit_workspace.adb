@@ -319,7 +319,7 @@ package body GPS.LSP_Client.Edit_Workspace is
          Offset   : constant Integer := Integer (Iterator.First_UTF8_Offset);
          New_Loc  : constant GPS.Editors.Editor_Location'Class :=
            Editor.New_Location
-             (Offset => Cur_Loc.Offset - Offset);
+             (Offset => VSS.Strings.Character_Count (Cur_Loc.Offset - Offset));
       begin
          return Location_To_LSP_Position (New_Loc);
       end Compute_New_Cursor;

@@ -2414,9 +2414,9 @@ package body Bookmark_Views is
 
          Holder  : constant Controlled_Editor_Buffer_Holder :=
            Kernel.Get_Buffer_Factory.Get_Holder (Get_File (Marker));
-         Current : Integer := Integer (Get_Line (Marker));
-         Min     : Integer := Current;
-         Max     : Integer := Current;
+         Current : Editable_Line_Type := Get_Line (Marker);
+         Min     : Editable_Line_Type := Current;
+         Max     : Editable_Line_Type := Current;
          Forward : Boolean := True;
       begin
          if Text = "no-line-text"
@@ -2474,7 +2474,7 @@ package body Bookmark_Views is
                   --  The line is found
                   Marker := Kernel.Get_Buffer_Factory.Create_Marker
                     (File   => Get_File (Marker),
-                     Line   => Editable_Line_Type (Current),
+                     Line   => Current,
                      Column => Get_Column (Marker));
                   return;
                end if;
@@ -2882,7 +2882,7 @@ package body Bookmark_Views is
                               declare
                                  Line : constant Editor_Location'Class :=
                                    Holder.Editor.New_Location_At_Line
-                                     (Integer (Get_Line (Tmp.Marker)));
+                                     (Get_Line (Tmp.Marker));
                               begin
                                  Set_Attribute_S
                                    (Child,
@@ -3010,7 +3010,7 @@ package body Bookmark_Views is
                                  declare
                                     Line : constant Editor_Location'Class :=
                                       Holder.Editor.New_Location_At_Line
-                                        (Integer (Get_Line (Tmp.Marker)));
+                                        (Get_Line (Tmp.Marker));
                                  begin
                                     B.Line_Text :=
                                       (False,

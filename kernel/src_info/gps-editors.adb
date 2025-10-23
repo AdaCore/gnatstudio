@@ -167,7 +167,7 @@ package body GPS.Editors is
    end Current_View;
 
    overriding function Lines_Count
-     (This : Dummy_Editor_Buffer) return Integer
+     (This : Dummy_Editor_Buffer) return Editable_Line_Type
    is
       pragma Unreferenced (This);
    begin
@@ -684,12 +684,11 @@ package body GPS.Editors is
    --------------------------
 
    function New_Location_At_Line
-     (This   : Editor_Buffer;
-      Line   : Integer) return Editor_Location'Class
+     (This   : Editor_Buffer'Class;
+      Line   : Basic_Types.Editable_Line_Type) return Editor_Location'Class
    is
    begin
-      return Editor_Buffer'Class
-        (This).New_Location (Line, Visible_Column_Type'(1));
+      return This.New_Location (Integer (Line), Visible_Column_Type'(1));
    end New_Location_At_Line;
 
    ------------------------

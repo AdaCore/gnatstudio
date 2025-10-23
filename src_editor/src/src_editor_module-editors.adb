@@ -77,8 +77,8 @@ package body Src_Editor_Module.Editors is
    end record;
    type Buffer_Reference_Access is access all Buffer_Reference;
 
-   type
-    Src_Editor_Buffer is new GPS.Editors.Line_Information.GPS_Editor_Buffer
+   type Src_Editor_Buffer is
+     new GPS.Editors.Line_Information.GPS_Editor_Buffer
    with record
       Contents : Buffer_Reference_Access;  --  null only when not initialized
    end record;
@@ -377,7 +377,7 @@ package body Src_Editor_Module.Editors is
 
    overriding function New_Location
      (This   : Src_Editor_Buffer;
-      Offset : Natural) return Editor_Location'Class;
+      Offset : VSS.Strings.Character_Count) return Editor_Location'Class;
 
    overriding function New_View
      (This : Src_Editor_Buffer) return Editor_View'Class;
@@ -473,7 +473,8 @@ package body Src_Editor_Module.Editors is
      is (This.Contents.Buffer.Get_Version);
    overriding function Views
      (This : Src_Editor_Buffer) return View_Lists.List;
-   overriding function Lines_Count (This : Src_Editor_Buffer) return Integer;
+   overriding function Lines_Count
+     (This : Src_Editor_Buffer) return Editable_Line_Type;
    overriding function Characters_Count
      (This : Src_Editor_Buffer) return Natural;
    overriding function Is_Modified (This : Src_Editor_Buffer) return Boolean;
@@ -2020,7 +2021,7 @@ package body Src_Editor_Module.Editors is
 
    overriding function New_Location
      (This   : Src_Editor_Buffer;
-      Offset : Natural) return Editor_Location'Class
+      Offset : VSS.Strings.Character_Count) return Editor_Location'Class
    is
       Iter : Gtk_Text_Iter;
       Result : Src_Editor_Location;
@@ -2382,7 +2383,9 @@ package body Src_Editor_Module.Editors is
    -- Lines_Count --
    -----------------
 
-   overriding function Lines_Count (This : Src_Editor_Buffer) return Integer is
+   overriding function Lines_Count
+     (This : Src_Editor_Buffer) return Editable_Line_Type
+   is
       Iter : Gtk_Text_Iter;
    begin
       if This.Contents.Buffer /= null then
@@ -2394,7 +2397,7 @@ package body Src_Editor_Module.Editors is
          begin
             Get_Iter_Position (This.Contents.Buffer, Iter, Line, Column);
 
-            return Integer (Line);
+            return Line;
          end;
       else
          --  ??? Should we check in the file on the disk

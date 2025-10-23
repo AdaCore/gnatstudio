@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                               GNAT Studio                                --
 --                                                                          --
---                     Copyright (C) 2005-2024, AdaCore                     --
+--                     Copyright (C) 2005-2025, AdaCore                     --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -682,8 +682,7 @@ package body Src_Editor_Module.Markers is
       begin
          if Holder.Editor /= Nil_Editor_Buffer then
             return Holder.Editor.Get_Subprogram_Name
-              (Holder.Editor.New_Location_At_Line
-                 (Integer (Get_Line (Marker))));
+              (Holder.Editor.New_Location_At_Line (Get_Line (Marker)));
 
          else
             return "";
