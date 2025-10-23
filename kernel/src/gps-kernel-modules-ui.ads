@@ -33,8 +33,6 @@
 --      - Adding new predefined regular expressions in the search dialog
 --      - Changing the way the current desktop is saved to disk and restored
 --      - Changing what is displayed in tooltips in the editors
---      - Adding new attributes to projects, and the corresponding pages in the
---        project creation wizard or the project properties dialog.
 --      - Adding new user-modifiable preferences (see gps-preferences.ads)
 --      - Adding new supported languages (see language_handlers-gps.ads)
 --        and the corresponding cross-referencing subprograms (same file)

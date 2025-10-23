@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                               GNAT Studio                                --
 --                                                                          --
---                     Copyright (C) 2016-2023, AdaCore                     --
+--                     Copyright (C) 2016-2025, AdaCore                     --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -15,25 +15,21 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with Interactive_Consoles;   use Interactive_Consoles;
 with GNATCOLL.Traces;        use GNATCOLL.Traces;
 
 with GPS.Kernel.Hooks;       use GPS.Kernel.Hooks;
 with GPS.Kernel.Preferences; use GPS.Kernel.Preferences;
-with GPS.Kernel.Project;     use GPS.Kernel.Project;
 with GPS.Intl;               use GPS.Intl;
 with Glib.Object;            use Glib.Object;
 with Gtkada.MDI;             use Gtkada.MDI;
 with Gtk.Box;                use Gtk.Box;
 with Gtk.Enums;              use Gtk.Enums;
-with Gtk.Link_Button;        use Gtk.Link_Button;
 with Gtk.Label;              use Gtk.Label;
 with Gtk.Style_Context;      use Gtk.Style_Context;
 with Gtk.Widget;             use Gtk.Widget;
 with Gtkada.Style;           use Gtkada.Style;
 with Histories;              use Histories;
 with Pango.Layout;           use Pango.Layout;
-with Project_Properties;
 
 package body VCS2.Views is
    Me : constant Trace_Handle := Create ("GPS.VCS.VIEWS");
@@ -47,20 +43,8 @@ package body VCS2.Views is
       Pref   : Preference);
    --  Called when the preferences have changed
 
-   type Open_VCS_Page is new Hyper_Link_Callback_Record with record
-      Kernel : Kernel_Handle;
-   end record;
-   overriding procedure On_Click (Link : access Open_VCS_Page; Text : String);
-   --  Callback opening the Project Properties to the VCS page
-
    procedure On_Selection_Changed (Self : access GObject_Record'Class);
    --  Called when the selection changes in the tree
-
-   procedure On_Project_Properties_Link_Clicked
-     (Self : access GObject_Record'Class);
-   --  Called when the link button to the VCS page of the Project Properties
-   --  has been clicked. This link is displayed when no VCS repo has been
-   --  found.
 
    procedure No_VCS_Help (Self : not null access Base_VCS_View_Record'Class);
    --  If no VCS engine was found when creating the view, inform the user
@@ -203,18 +187,6 @@ package body VCS2.Views is
       Self.View.On_Preferences_Changed (Pref);
    end Execute;
 
-   --------------
-   -- On_Click --
-   --------------
-
-   overriding procedure On_Click (Link : access Open_VCS_Page; Text : String)
-   is
-      pragma Unreferenced (Text);
-   begin
-      Project_Properties.Edit_Properties
-        (Get_Project (Link.Kernel), Link.Kernel, Name => "Version Control");
-   end On_Click;
-
    --------------------------
    -- On_Selection_Changed --
    --------------------------
@@ -232,34 +204,19 @@ package body VCS2.Views is
       end if;
    end On_Selection_Changed;
 
-   ----------------------------------------
-   -- On_Project_Properties_Link_Clicked --
-   ----------------------------------------
-
-   procedure On_Project_Properties_Link_Clicked
-     (Self : access GObject_Record'Class)
-   is
-      View   : constant Base_VCS_View := Base_VCS_View (Self);
-      Kernel : constant Kernel_Handle := View.Kernel;
-   begin
-      Project_Properties.Edit_Properties
-        (Get_Project (Kernel), Kernel, Name => "Version Control");
-   end On_Project_Properties_Link_Clicked;
-
    -----------------
    -- No_VCS_Help --
    -----------------
 
    procedure No_VCS_Help (Self : not null access Base_VCS_View_Record'Class)
    is
-      Label       : Gtk_Label;
-      Vbox        : Gtk_Vbox;
-      Link_Button : Gtk_Link_Button;
+      Label : Gtk_Label;
+      Vbox  : Gtk_Vbox;
+
    begin
 
       --  Display a label to warn the user that no VCS has been
-      --  found for the current project, with a link button to the VCS
-      --  page of the Project Properties.
+      --  found for the current project.
 
       Gtk_New (Self.No_VCS_Help);
       Self.No_VCS_Help.Set_Policy (Policy_Automatic, Policy_Automatic);
@@ -267,20 +224,13 @@ package body VCS2.Views is
       Self.No_VCS_Help.Add (Vbox);
       Self.Pack_Start (Self.No_VCS_Help);
 
-      Gtk_New (Label, "No VCS repository found: you can set one via the ");
+      Gtk_New
+        (Label,
+         "No VCS repository found: set the IDE'VCS_Repository "
+         & "project attribute to specify a valid VCS root directory.");
       Label.Set_Selectable (True);
       Vbox.Pack_Start (Label);
-      Label.Set_Alignment (0.5, 1.0);
 
-      Gtk_New_With_Label
-        (Link_Button,
-         "Project Properties",
-         "Project Properties");
-      Link_Button.On_Clicked
-        (On_Project_Properties_Link_Clicked'Access,
-         Slot => Self);
-      Link_Button.Set_Alignment (0.5, 0.0);
-      Vbox.Pack_Start (Link_Button);
       Self.No_VCS_Help.Set_No_Show_All (True);
    end No_VCS_Help;
 

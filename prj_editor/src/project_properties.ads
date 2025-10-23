@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                               GNAT Studio                                --
 --                                                                          --
---                     Copyright (C) 2002-2023, AdaCore                     --
+--                     Copyright (C) 2002-2025, AdaCore                     --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -22,34 +22,14 @@
 --  </description>
 
 with Gtk.Box;
-with Gtk.GEntry;
 with GNATCOLL.Projects;   use GNATCOLL.Projects;
 with GPS.Kernel;
 with GNAT.Strings;
-with Commands.Interactive;
-with Project_Viewers;     use Project_Viewers;
 
 package Project_Properties is
 
-   procedure Edit_Properties
-     (Project : Project_Type;
-      Kernel  : access GPS.Kernel.Kernel_Handle_Record'Class;
-      Name    : String := "");
-   --  Edit the properties for Project_View.
-   --  If Name is set and a corresponding Page exists then select it.
-
    function Paths_Are_Relative (Project : Project_Type) return Boolean;
    --  Return True if the paths in the project should be relative paths
-
-   type Project_Properties_Editor_Command
-     is new Commands.Interactive.Interactive_Command with null record;
-   overriding function Execute
-     (Command : access Project_Properties_Editor_Command;
-      Context : Commands.Interactive.Interactive_Command_Context)
-      return Commands.Command_Return_Type;
-   --  Edit the properties of the project in Context. This is meant to be used
-   --  as a callback for a contextual menu.
-   --  Context.Context must be of type File_Selection_Context
 
    procedure Register_Module_Reader
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class);
@@ -58,37 +38,6 @@ package Project_Properties is
    procedure Register_Module_Writer
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class);
    --  Register the project properties module
-
-   -----------------------
-   -- Attribute editors --
-   -----------------------
-
-   procedure For_Each_Project_Editor_Page
-     (Kernel    : not null access GPS.Kernel.Kernel_Handle_Record'Class;
-      Project   : Project_Type;
-      Path      : not null access Gtk.GEntry.Gtk_Entry_Record'Class;
-      Context   : String := "properties";
-      Read_Only : Boolean;
-      Callback  : not null access procedure
-        (Title : String;
-         Page  : not null access Project_Editor_Page_Record'Class));
-   --  For each project editor page.
-   --  Path is the widget used to edit the project's path, which is used to
-   --  resolve relative names.
-   --  The Page has already been initialized via a call to Create.
-   --  Context explains where the page is used, and impacts which attributes
-   --  are displayed.
-
-   function Get_Current_Value
-     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
-      Pkg    : String;
-      Name   : String;
-      Index  : String := "")
-      return GNAT.Strings.String_List_Access;
-   --  Return the value of the attribute as currently edited.
-   --  The returned value must be freed by the caller.
-   --  ??? Relies on global variables, would be nice to eliminate through the
-   --  use of the Project_Wizard_Page.
 
 private
    type Root_Attribute_Editor_Record is abstract new Gtk.Box.Gtk_Box_Record

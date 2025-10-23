@@ -125,7 +125,6 @@
          <menu label='Increase Text Size'   action='increase text size' optional='true'/>
          <menu label='Decrease Text Size'   action='decrease text size' optional='true'/>
          <separator />  <!--  Below this: general dialogs -->
-         <menu label='Project Properties...'    action='open project properties'/>
          <menu label='_Preferences...'           action='open preferences'/>
       </menu>
 
@@ -486,8 +485,6 @@
              <menu label="Memory Usage"               action="open memory usage" />
              <menu label="Serial ports"               action="open serial ports"/>
          </menu>
-         <menu label="File Sw_itches"             action="open switches editor"
-               optional='true'  hide='true' />
          <menu label="Learn"                      action="open Learn"/>
          <menu label="_Remote"                    action="open remote"
                optional='true'                    hide='true'/>
@@ -574,7 +571,7 @@
 
    <toolbar id='Project'>
       <button action='reload project'/>
-      <button action='open project properties' hide='true'/>
+      <button action='edit project source file' hide='true'/>
       <button action='Project view: expand all projects'/>
       <button action='Project view: collapse all projects'/>
    </toolbar>

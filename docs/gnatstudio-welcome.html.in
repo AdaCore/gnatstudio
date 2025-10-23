@@ -57,18 +57,6 @@ GNAT Studio provides the following features:
       <LI>A Project/Directory/Source/Entity view
       <LI>A File system/Directory/Source/Entity view
       </UL>
-   <LI>Project wizard (to create projects easily)
-   <LI>Project properties dialog with:
-      <UL>
-      <LI>Name, Languages, Tools
-      <LI>VCS configuration
-      <LI>Add/Remove source directories
-      <LI>Set/Change object & exec directories
-      <LI>Add/Remove main files
-      <LI>Switch editor (per project or per file)
-      <LI>Naming scheme
-      </UL>
-   <LI>Add/Remove project dependencies
    <LI>Creation/Use of configuration variables. Any project property can be
        configured using variables.
    <LI>Project hierarchy browser

@@ -59,7 +59,7 @@ XML_BASE = (
     </output-parsers>
   </target>
 
-  <!--  Support for GNATStack's switches in Project Properties Editor  -->
+  <!--  Support for GNATStack's switches -->
 
   <tool name="GNATstack" package="Stack" attribute="switches" index="">
     <language>Ada</language>

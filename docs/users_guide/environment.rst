@@ -647,9 +647,8 @@ signature help window on some window managers.
 
     Here, you define various scenarios in your project (for example
     compiling in "debug" mode or "production" mode) and change source
-    directories depending on the scenario.  Such projects can be edited
-    directly from GNAT Studio (in the project properties editor, on the right
-    part of the window, as described in this documentation). On top of the
+    directories depending on the scenario. Such projects can be edited
+    directly from GNAT Studio, by directly modifying the project file. On top of the
     :guilabel:`Project` view (left part of the GNAT Studio main window), a combo
     box is displayed for each variable, allowing you to switch between
     scenarios depending on what you want to build.

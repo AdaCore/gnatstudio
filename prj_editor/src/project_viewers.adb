@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                               GNAT Studio                                --
 --                                                                          --
---                     Copyright (C) 2001-2023, AdaCore                     --
+--                     Copyright (C) 2001-2025, AdaCore                     --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -64,7 +64,6 @@ with GPS.Kernel.Project;           use GPS.Kernel.Project;
 with GPS.Kernel.Scripts;           use GPS.Kernel.Scripts;
 with GUI_Utils;                    use GUI_Utils;
 with Language_Handlers;            use Language_Handlers;
-with Project_Properties;           use Project_Properties;
 with Projects;                     use Projects;
 with Remote;                       use Remote;
 with Switches_Editors;             use Switches_Editors;
@@ -1226,22 +1225,6 @@ package body Project_Viewers is
       Filter2 := Lookup_Filter (Kernel, "Project only")
         and Lookup_Filter (Kernel, "Editable Project");
 
-      --  These two commands are doing the same work, but the second can be
-      --  used in contextual menu since it is filtered.
-      Register_Action
-        (Kernel, "open Project Properties",
-         Command     => new Project_Properties_Editor_Command,
-         Description => "Open the project properties editor",
-         Icon_Name   => "gps-edit-symbolic",
-         Category    => -"Views");
-      Register_Action
-        (Kernel, "edit project properties",
-         Command     => new Project_Properties_Editor_Command,
-         Description => "Open the project properties editor",
-         Icon_Name   => "gps-edit-symbolic",
-         Filter      => Filter2,  --  editable project
-         Category    => -"Views");
-
       Register_Action
         (Kernel, "save all projects",
          Command     => new Save_All_Command,
@@ -1259,11 +1242,6 @@ package body Project_Viewers is
          Filter => Filter,
          Group  => Project_Contextual_Group);
 
-      Register_Contextual_Menu
-        (Kernel,
-         Label  => "Project/Properties",
-         Action => "edit project properties");
-
       Register_Action
         (Kernel, "save project",
          Command     => new Save_Project_Command,
@@ -1280,6 +1258,7 @@ package body Project_Viewers is
          Command     => new Edit_Project_Source_Command,
          Description =>
            -"Open an editor for the .gpr file of the current project",
+         Icon_Name   => "gps-edit-symbolic",
          Filter      => Filter,
          Category    => -"Projects");
       Register_Contextual_Menu

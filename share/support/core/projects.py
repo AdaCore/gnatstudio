@@ -3,12 +3,10 @@ Defines the standard project attributes.
 
 THIS PLUGIN MUST BE LOADED.
 
-This plugin defines the standard project attributes, and how they should
-be edited graphically in the project properties editor. If you do not
-load this script, GPS will display a number of warnings in its Messages
-window when a project is loaded
+This plugin defines the standard project attributes.
+If you do not load this script, GNAT Studio will display a
+number of warnings in its Messages window when a project is loaded
 """
-
 
 import GPS
 import extensions

@@ -1796,7 +1796,7 @@ procedure GPS.Main is
 
       if Program_Args /= null then
          --  --debug has been specified
-         --  Load project, and set debugger-related project properties
+         --  Load project, and set debugger-related project attributes
 
          Setup_Debug (Empty_Project => Empty_Project);
 

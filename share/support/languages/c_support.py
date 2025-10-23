@@ -1,8 +1,7 @@
 """
 This file provides enhanced support for C and C++ files.
 
-It declares a number of project attributes (and how they should be
-edited graphically in the project properties editor),
+It declares a number of project attributes.
 It also adds a number of predefined search patterns to match
 function or class declarations,...
 
