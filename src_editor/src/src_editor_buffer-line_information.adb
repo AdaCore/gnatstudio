@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                               GNAT Studio                                --
 --                                                                          --
---                     Copyright (C) 2003-2024, AdaCore                     --
+--                     Copyright (C) 2003-2025, AdaCore                     --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -2731,12 +2731,11 @@ package body Src_Editor_Buffer.Line_Information is
       Command              : Unhide_Editable_Lines_Command;
       Start_Iter, End_Iter : Gtk_Text_Iter;
       Line_Start           : constant Editable_Line_Type :=
-                               Get_Editable_Line (Buffer, Line);
+        Get_Editable_Line (Buffer, Line);
       Line_End             : constant Editable_Line_Type :=
-                               Line_Start + Number;
+        Line_Start + Number;
       Start_Loc            : constant Editor_Location'Class :=
-                               Buffer.Get_Editor_Buffer.New_Location_At_Line
-                                 (Line => Integer (Line_Start));
+        Buffer.Get_Editor_Buffer.New_Location_At_Line (Line_Start);
       Cursor_Move          : constant Boolean := Buffer.Do_Not_Move_Cursor;
       Folded_Block_Info    : Folded_Block_Info_Type;
    begin

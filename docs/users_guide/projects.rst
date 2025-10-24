@@ -35,9 +35,7 @@ supported by GNAT Studio's graphical interface.
 You can edit project files manually: GNAT Studio provides completion, tooltips, outline
 and other common IDE features for project files through LSP and the
 `Ada Language Server <https://github.com/AdaCore/ada_language_server>`_, helping you
-to customize your project more easily. You can also
-edit it through a dedicated UI using the properties editor (see
--:ref:`The_Project_Properties_Editor`).
+to customize your project more easily.
 
 .. index:: project; normalization
 
@@ -272,9 +270,8 @@ GNAT Studio although you can still open any file through the :menuselection:`Fil
 --> Open File` menu.
 
 If your project includes :file:`README` files, or other text files, you
-should add "txt" as a language (the name is arbitrary) and ensure these
-files are associated with that language in the :menuselection:`Edit -->
-Project Properties...`.
+should add `txt` as a language (the name is arbitrary) in the `Languages`
+project attribute of your project file.
 
 
 .. index:: project; scenario variable
@@ -307,8 +304,7 @@ software).  In that scenario, most of the attributes (such as source
 directories and tools) remain the same, but compilation switches differ.
 You could also maintain a completely separate hierarchy of projects, but
 it is much more efficient to create a new configuration variable and edit
-the switches for the appropriate scenario (see
-:ref:`The_Project_Properties_Editor`).
+the switches for the appropriate scenario.
 
 There is one limitation on what GNAT Studio can do with scenario variables:
 although :program:`gnatmake` and :program:`gprbuild` can use scenario
@@ -569,118 +565,3 @@ possible solution is to hide the corresponding project editing menus and
 contextual menus.  You could do this by enabling the
 :file:`prevent_project_edition.py` plugin via the
 :menuselection:`Edit --> Preferences...` menu.
-
-
-.. index:: ! project; wizard
-.. _The_Project_Wizard:
-
-The Project Wizard
-==================
-
-The project wizard lets you create a new project file in a few steps.
-It contains a number of project templates, making it easy to create
-projects that rely on a particular technology (e.g: GtkAda).
-
-You normally access this wizard through the :menuselection:`File -->
-New Project...` menu.
-
-The first page of the wizard lists the various project templates. Selecting one
-of them and clicking on the :guilabel:`Next` button will show a page allowing
-you to modify the project template settings. Once modified, click on
-:guilabel:`Apply` to actually create your project.
-
-.. image:: project-wizard.png
-
-.. index:: project; editing
-.. index:: menu; edit --> project properties
-.. _The_Project_Properties_Editor:
-
-The Project Properties Editor
-=============================
-
-Use the :guilabel:`Project Properties` editor at any time to access the
-properties of your project through the :menuselection:`Edit -->
-Project Properties...` menu or the contextual menu :menuselection:`Properties`
-on any project item, e.g. from the :guilabel:`Project`
-views or the :guilabel:`Project` browser.
-
-In some cases, GNAT Studio cannot edit your project graphically. It will still
-display a read-only version of the :guilabel:`Project Properties` dialog.
-This is the case, among others, when:
-
-  - the project loaded with errors, such as invalid syntax or missing
-    directories;
-  - you are editing an aggregate project;
-  - the project was written manually before and uses advanced features
-    like variables (:samp:`Var := ...`).
-
-.. image:: project-properties.png
-
-The :guilabel:`Project Properties` editor is divided into three parts:
-
-*The attributes editor*
-
-  The contents of this editor are very similar to that of the project
-  wizard (see :ref:`The_Project_Wizard`). In fact, all pages but the
-  :guilabel:`General` page are exactly the same; read their description in
-  the project wizard section.
-
-  See also :ref:`Working_in_a_Cross_Environment` for more info on the
-  :guilabel:`Cross environment` attributes.
-
-*The project selector*
-
-  This area, the top-right corner of the properties editor, displays a list
-  of all projects in the hierarchy. The value in the attributes editor is
-  applied to all the selected projects in this selector. You cannot unselect
-  the project for which you activated the contextual menu.
-
-  Clicking on the right title bar (:guilabel:`Project`) of this selector
-  sorts the projects in ascending or descending order.  Clicking on the
-  left title bar (untitled) selects or unselects all the projects.
-
-  This selector has two different possible presentations, chosen by the
-  toggle button on top: either a sorted list of all the projects, each
-  appearing only once, or the same project hierarchy displayed in the
-  :guilabel:`Project` view.
-
-*The scenario selector*
-
-  This area, the bottom-right corner of the properties editor, displays all
-  scenario variables declared in the project hierarchy. By selecting some
-  or all of their values, you can choose to which scenario the modifications
-  in the attributes editor apply.
-
-  Clicking on the left title bar (untitled, on the left of the
-  :guilabel:`Scenario` label) selects or unselects all values of all
-  variables.
-
-  To select all values of a given variable, click on the corresponding
-  check button.
-
-.. _The_Switches_Editor:
-
-The Switches Editor
-===================
-
-The switches editor, available through the :menuselection:`Edit -->
-Project Properties...` menu, displays all source files associated with the
-selected project.
-
-For each file, it lists the compiler switches for that file. These switches
-are displayed in gray if they are the default switches defined at the
-project level (see :ref:`The_Project_Properties_Editor`) and in black if
-they are specific to that file.
-
-Edit the switches for the file by double-clicking in the switches column.
-You can edit the switches for multiple files at the same time by selecting
-them before displaying the contextual menu :menuselection:`Edit switches
-for all selected files`.
-
-When you double-click in one of the columns containing switches, GNAT Studio
-opens a new dialog allowing you to edit the switches specific to the selected
-files.  This dialog has a button titled :guilabel:`Revert`, which cancels
-any file-specific switch and reverts to the default switches defined at the
-project level.
-
-.. image:: switch-editor-revert.png

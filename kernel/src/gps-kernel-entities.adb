@@ -19,6 +19,9 @@ with Ada.Containers.Indefinite_Doubly_Linked_Lists;
 with Ada.Unchecked_Deallocation;
 
 with VSS.Strings.Conversions;
+with VSS.Strings.Formatters.Integers;
+with VSS.Strings.Formatters.Strings;
+with VSS.Strings.Templates;
 
 with Basic_Types;
 with Commands.Generic_Asynchronous; use Commands;
@@ -40,6 +43,7 @@ with GNATCOLL.Scripts;              use GNATCOLL.Scripts;
 with GNATCOLL.Projects;             use GNATCOLL.Projects;
 with GNATCOLL.Traces;               use GNATCOLL.Traces;
 with GNATCOLL.Utils;
+with GNATCOLL.VFS.VSS_Utils.Formatters;
 with GNATCOLL.Xref;                 use GNATCOLL.Xref;
 
 with GPS.Default_Styles;            use GPS.Default_Styles;
@@ -57,7 +61,6 @@ with GPS.Intl;                      use GPS.Intl;
 with Histories;                     use Histories;
 with Language;                      use Language;
 with Language.Ada;                  use Language.Ada;
-with String_Utils;                  use String_Utils;
 with UTF8_Utils;
 with Xref;                          use Xref;
 
@@ -749,32 +752,40 @@ package body GPS.Kernel.Entities is
       All_From_Same_File : Boolean) return VSS.Strings.Virtual_String
    is
       pragma Unreferenced (Kernel);
-      Decl : constant General_Location := Get_Declaration (Entity).Loc;
+
+      Decl  : constant General_Location := Get_Declaration (Entity).Loc;
+      Same  : constant VSS.Strings.Templates.Virtual_String_Template :=
+        -"Entities imported from {:base} into {:base}";
+      Local : constant VSS.Strings.Templates.Virtual_String_Template :=
+        -"Local references for {} ({:base}:{}) in {:base}";
+      Other : constant VSS.Strings.Templates.Virtual_String_Template :=
+        -"References for {} ({:base}:{})";
+
    begin
       if All_From_Same_File then
          return
-           VSS.Strings.Conversions.To_Virtual_String
-             (-"Entities imported from "
-              & (+Decl.File.Base_Name)
-              & (-" into ")
-              & (+Local_File.Base_Name));
+           Same.Format
+             (GNATCOLL.VFS.VSS_Utils.Formatters.Image (Decl.File),
+              GNATCOLL.VFS.VSS_Utils.Formatters.Image (Local_File));
 
       elsif Local_Only then
          return
-           VSS.Strings.Conversions.To_Virtual_String
-             (-"Local references for "
-              & Get_Name (Entity)
-              & " ("  & (+Decl.File.Base_Name)
-              & ":" & Image (Decl.Line) & ") " & (-"in ")
-              & (+Local_File.Base_Name));
+           Local.Format
+             (VSS.Strings.Formatters.Strings.Image
+                (VSS.Strings.Conversions.To_Virtual_String
+                   (Get_Name (Entity))),
+              GNATCOLL.VFS.VSS_Utils.Formatters.Image (Decl.File),
+              VSS.Strings.Formatters.Integers.Image (Decl.Line),
+              GNATCOLL.VFS.VSS_Utils.Formatters.Image (Local_File));
 
       else
          return
-           VSS.Strings.Conversions.To_Virtual_String
-             (-"References for "
-              & Get_Name (Entity)
-              & " ("  & (+Decl.File.Base_Name)
-              & ":" & Image (Decl.Line) & ")");
+           Other.Format
+             (VSS.Strings.Formatters.Strings.Image
+                (VSS.Strings.Conversions.To_Virtual_String
+                   (Get_Name (Entity))),
+              GNATCOLL.VFS.VSS_Utils.Formatters.Image (Decl.File),
+              VSS.Strings.Formatters.Integers.Image (Decl.Line));
       end if;
    end All_Refs_Category;
 

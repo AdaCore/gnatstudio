@@ -774,14 +774,6 @@ reload the project.  Use this when you have created or removed source files
 from other applications and want to let GNAT Studio know there might have been
 changes on the file system that impact the contents of the current project.
 
-.. index:: menu;project --> edit project properties
-
-It also includes a button to graphically edit the attributes of the
-selected project, such as the tool switches or the naming schemes. It
-behaves similarly to the :menuselection:`Edit --> Project
-Properties...` menu. See :ref:`The_Project_Properties_Editor` for more
-information.
-
 If you right click a project node, a contextual menu appears which
 contains, among others, the following entries that you can use to
 understand or modify your project:
@@ -793,23 +785,16 @@ understand or modify your project:
   graphically the relationships between each project in the hierarchy (see
   :ref:`The_Project_Browser`).
 
-* :menuselection:`Project --> Properties`
-
-  :index:`Opens <single: menu; project --> edit project properties>`
-  a new dialog to interactively edit the attributes of the project
-  (such as tool switches and naming schemes) and is similar to the local
-  toolbar button.
-
 * :menuselection:`Project --> Edit source file`
 
-  Loads the project file into an editor so you can edit it.  Use this
-  if you need to access some features of the project files that are not
-  accessible graphically (such as rename statements and variables).
+  Loads the project file into an editor so you can edit it.  Note that GNAT Studio provides
+  completion, tooltips, outline and other common IDE features for project files through
+  LSP and the `Ada Language Server <https://github.com/AdaCore/ada_language_server>`_,
+  helping you to customize your project more easily.
 
 * :menuselection:`Project --> Dependencies`
 
-  Opens the dependencies editor for the selected project
-  (see :ref:`The_Project_Properties_Editor`).
+  Opens the dependencies editor for the selected project.
 
 * :menuselection:`Project --> Add scenario variable`
 

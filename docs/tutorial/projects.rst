@@ -20,21 +20,11 @@ the location of your project will appear. This page may also list project
 template-specific options.
 
 Once completed, click on `Apply` to actually create the project. Note that you
-can still can customize your newly created project after is creation using the
-:ref:`Project_properties` editor.
-
-.. _Project_properties:
-
-Project properties
-==================
-
-In the project view, on the project *sdc*, use the contextual menu
-`Project->Properties...`.  All the properties set in the project wizard can
-be found here as well.  You can switch between pages by clicking on the tabs
-located along the left side of the window.
-
-Once you're done exploring the property pages, click on the `Cancel`
-button to close the properties window.
+can still customize your newly created project after is creation by directly
+modifying the project file: GNAT Studio provides completion, tooltips, outline
+and other common IDE features for project files through LSP and the
+`Ada Language Server <https://github.com/AdaCore/ada_language_server>`_, helping you
+to customize your project more easily.
 
 .. _Variable_editor:
 
@@ -97,13 +87,21 @@ Click on the right arrow of :file:`tokens.ads` to display the files that
 Project dependencies
 ====================
 
-Click on the `Edit->Project Properties...` menu and select the
-`Sources->Dependencies` page: then click on the `+` button of the
-`Dependencies` right pane. In the opened dialog, select the file
-`prj1.gpr` and click on `OK`.  Click on `Save` to validate the change.
+Open the :file:`sdc.gpr` GPR project file and add a dependency on the
+:file:`prj1.gpr` located under the :file:`projects` directory by adding
+the following line at the top of the project file::
+
+    with "./projects/prj1.gpr";
+
+Save the project file and click on the :guilabel:`Reload Project` button (refresh icon)
+of the :guilabel:`Project View` to take into account the modifications.
 
 You can see the new dependency added in the project view, as a list (or tree,
-if 'Show flat view' is enabled in local configuration menu) of projects. In
+<<<<<<< Updated upstream
+if `Show flat view`` is enabled in local configuration menu) of projects. In
+=======
+if :guilabel:`Show flat view` is enabled in local configuration menu) of projects. In
+>>>>>>> Stashed changes
 particular, project dependencies are duplicated when tree view is used: if you
 open the `prj1` icon by clicking on the triangle, and then similarly open the
 `prj2` icon, you will notice that the project `prj4` is displayed twice: once

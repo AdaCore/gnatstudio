@@ -14,10 +14,6 @@ this build mode are generated in a subdirectory "gnatcov"
 in all object and executable directories specified
 the project hierarchy.
 
-We expose a way to specify the coverage level of all commands
-via the Project Properties, using GNATcoverage's Coverage project
-package.
-
 To use GNATcoverage with binary traces, click on the
 Analyze/Coverage/GNATcoverage Binary Traces/Run all actions menu.
 The following steps will be performed:
@@ -61,7 +57,6 @@ import xml.sax.saxutils
 import GPS
 from extensions.private.xml import X
 from gs_utils import interactive
-from gs_utils.internal.dialogs import Project_Properties_Editor
 from modules import Module
 import os_utils
 import workflows.promises as promises
@@ -605,9 +600,7 @@ class GNATcovPlugin(Module):
             X("name").children(gnatcov_doc_index),
             X("descr").children("GNATcoverage User's Guide"),
             X("category").children("GNATcoverage"),
-            X("menu", before="About").children(
-                "/Help/Tools/GNATcoverage User's Guide"
-            ),
+            X("menu", before="About").children("/Help/Tools/GNATcoverage User's Guide"),
         ),
     ]
 
@@ -850,17 +843,6 @@ class GNATcovPlugin(Module):
             else GPS.Project.root()
         )
 
-        @workflows.run_as_workflow
-        def open_gnatcoverage_project_properties(text):
-            """
-            Open the Project Properties editor and go to the page
-            defining the GNATcoverage settings.
-            """
-
-            editor = Project_Properties_Editor()
-            yield editor.open_and_yield(wait_scan=False)
-            yield editor.select("Build/Switches/GNATcoverage")
-
         # Check if the level is specified for all commands first (via the "*" index)
         if "--level" in project.get_attribute_as_string(
             "switches", package="coverage", index="*"
@@ -875,8 +857,8 @@ class GNATcovPlugin(Module):
             ):
                 missing_cmds.append(cmd)
 
-        # If we are missing the level, display a message in th Messsages view with
-        # an hyperlink to open the GNATcoverage Project Properties page.
+        # If we are missing the level, display a message in the Messages view with
+        # an hyperlink to edit the Coverage'Switches project attribute.
         if missing_cmds:
             console = GPS.Console()
             console.write(
@@ -885,11 +867,14 @@ class GNATcovPlugin(Module):
                     % (missing_cmds)
                 )
             )
-            console.write("Please specify the coverage level via the ")
+            console.write("Please ")
             console.insert_link(
-                "Coverage'Switches", open_gnatcoverage_project_properties
+                "edit the project",
+                lambda _: GPS.EditorBuffer.get(GPS.Project.root().file()),
             )
-            console.write(" project attribute\n")
+            console.write(
+                " to specify the coverage level via the Coverage'Switches project attribute\n"
+            )
 
     def run_gnatcov_wf(self, main_name):
         # Check if the level is specified for the commands executed by the wf

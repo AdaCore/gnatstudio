@@ -551,8 +551,10 @@ package body Refactoring.Subprograms is
         Context.Code.Context.Buffer_Factory.Get (Context.Code.File);
       Code    : constant String :=
         Editor.Get_Chars_S
-          (Editor.New_Location_At_Line (Context.Code.From_Line),
-           Editor.New_Location_At_Line (Context.Code.To_Line).End_Of_Line);
+          (Editor.New_Location_At_Line
+             (Editable_Line_Type (Context.Code.From_Line)),
+           Editor.New_Location_At_Line
+             (Editable_Line_Type (Context.Code.To_Line)).End_Of_Line);
 
       Params               : Parameters;
       Code_Start, Code_End : Integer;
@@ -728,9 +730,10 @@ package body Refactoring.Subprograms is
             declare
                Line_Start : Editor_Mark'Class :=
                  Buffer.New_Location_At_Line
-                   (Context.Code.From_Line).Create_Mark;
+                   (Editable_Line_Type (Context.Code.From_Line)).Create_Mark;
                Line_End : Editor_Mark'Class :=
-                 Buffer.New_Location_At_Line (Context.Code.To_Line)
+                 Buffer.New_Location_At_Line
+                   (Editable_Line_Type (Context.Code.To_Line))
                  .End_Of_Line.Create_Mark;
             begin
                Iter := Local_Vars.First;
@@ -1032,20 +1035,22 @@ package body Refactoring.Subprograms is
       end if;
 
       declare
-         Kernel  : constant Kernel_Handle := Get_Kernel (Context.Context);
-         Item : constant Separate_Context_Item_Access :=
+         Kernel    : constant Kernel_Handle := Get_Kernel (Context.Context);
+         Item      : constant Separate_Context_Item_Access :=
            Separate_Context_Item_Access
              (Get_Refactoring_Variable (Context.Context));
-         XEntity : constant Root_Entity'Class := Get_Entity (Context.Context);
-         Entity  : constant Language.Tree.Database.Entity_Access :=
+         XEntity   : constant Root_Entity'Class :=
+           Get_Entity (Context.Context);
+         Entity    : constant Language.Tree.Database.Entity_Access :=
            Get_Entity_Access (Kernel.Refactoring_Context, XEntity);
-         Editor : constant Editor_Buffer'Class :=
+         Editor    : constant Editor_Buffer'Class :=
            Get_Buffer_Factory
              (Kernel).Get (File_Information (Context.Context));
          Loc_Start : constant Editor_Location'Class :=
-           Editor.New_Location_At_Line (Item.From);
+           Editor.New_Location_At_Line (Editable_Line_Type (Item.From));
          Loc_End   : constant Editor_Location'Class :=
-           Editor.New_Location_At_Line (Item.To).End_Of_Line;
+           Editor.New_Location_At_Line
+             (Editable_Line_Type (Item.To)).End_Of_Line;
 
          Struct : Structured_File_Access;
          Spec   : Ada.Strings.Unbounded.Unbounded_String;

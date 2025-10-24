@@ -261,12 +261,6 @@ menu for source files of test cases or setup and teardown code has a
 :menuselection:`GNATtest --> Go to <routine>` menu to go to the code being
 tested.
 
-Project Properties
-------------------
-
-You configure GNATtest's behavior through the GNATtest page in
-:ref:`The_Project_Properties_Editor`.
-
 .. _Metrics:
 
 Metrics
@@ -346,11 +340,8 @@ attribute of the :samp:`Stack` package of your root project.  For example::
   end P;
 
 
-You can also specify this information by using the :guilabel:`GNATStack`
-page of the :guilabel:`Switches` section in the
-:ref:`The_Project_Properties_Editor`.  Use :ref:`The Stack Usage Editor
-<The_Stack_Usage_Editor>` to edit stack usage information for undefined
-subprograms.
+You can also use :ref:`The Stack Usage Editor <The_Stack_Usage_Editor>` to edit
+stack usage information for undefined subprograms.
 
 The Stack Analysis Menu
 -----------------------

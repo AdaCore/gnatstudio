@@ -1465,7 +1465,8 @@ package body Refactoring.Services is
             Editor.Indent
               (Loc_Start,
                Editor.New_Location_At_Line
-                 (Line + Lines_Count (Text) - 1).End_Of_Line);
+                 (Editable_Line_Type (Line + Lines_Count (Text) - 1))
+               .End_Of_Line);
          end if;
       end;
 

@@ -1113,6 +1113,26 @@ package body GPS.Kernel.Preferences is
          Path            =>
          -"Editor/Fonts & Colors:LSP Semantic Highlighting");
 
+      LSP_Local_Variable_Style := Manager.Create
+        (Name         => "Src-Editor-LSP-Semantic-Variable-Local",
+         Label        => -"Local Variable",
+         Base            => Default_Style,
+         Doc             => "",
+         Default_Variant => Default,
+         Default_Fg   => "#c93c00",
+         Path            =>
+         -"Editor/Fonts & Colors:LSP Semantic Highlighting");
+
+      LSP_Global_Variable_Style  := Manager.Create
+        (Name         => "Src-Editor-LSP-Semantic-Variable-Global",
+         Label        => -"Global Variable",
+         Base            => Default_Style,
+         Doc             => "",
+         Default_Variant => Default,
+         Default_Fg   => "#c93c00",
+         Path            =>
+         -"Editor/Fonts & Colors:LSP Semantic Highlighting");
+
       LSP_Modifier_Style := Manager.Create
         (Name         => "Src-Editor-LSP-Semantic-Modifier",
          Label        => -"Modifier",

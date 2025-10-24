@@ -1,15 +1,11 @@
 """
-Adds support for editing .gpr files (GPS project files)
+Adds support for editing .gpr files.
 
 This file provides syntax highlighting when editing .gpr files.
-Generally, such files are best edited through the menu
-  /Project/Edit Project Properties
-but it is sometimes more convenient to edit them by hand.
 
 You need to reload your project file (/Project/Reload Project) to
-force GPS to take into account your changes.
+force GNAT Studio to take into account your changes.
 """
-
 
 import GPS
 

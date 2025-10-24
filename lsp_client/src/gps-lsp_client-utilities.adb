@@ -20,6 +20,7 @@ with VSS.Strings.Conversions;
 with URIs;
 with GPS.Kernel.Preferences;
 
+with Basic_Types;
 with Language;     use Language;
 with LSP.Messages; use LSP.Messages;
 with LSP.Types;
@@ -81,7 +82,8 @@ package body GPS.LSP_Client.Utilities is
 
    begin
       return Result : GPS.Editors.Editor_Location'Class :=
-        Editor.New_Location_At_Line (Natural (Position.line + 1))
+        Editor.New_Location_At_Line
+          (Basic_Types.Editable_Line_Type (Position.line + 1))
       do
          loop
             exit when U16 >= Position.character;
@@ -113,7 +115,7 @@ package body GPS.LSP_Client.Utilities is
             C   : VSS.Characters.Virtual_Character'Base;
             Aux : GPS.Editors.Editor_Location'Class :=
               Location.Buffer.New_Location_At_Line
-                (Natural (Location.Line));
+                (Basic_Types.Editable_Line_Type (Location.Line));
 
          begin
             loop

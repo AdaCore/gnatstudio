@@ -1,8 +1,7 @@
 """GNAT support for GNAT Studio
 
-This file provides support for Ada and GNAT:
-This includes switches in the project properties editor.
-This also includes predefined search patterns.
+This file provides support for Ada and GNAT.
+This includes predefined search patterns.
 And finally a number of predefined text aliases are defined.
 """
 
@@ -130,7 +129,6 @@ def Style(switch, defaulttip, defaultstate, before=False):
 
 
 class gnatMakeProc:
-
     """This class controls the gnatmake execution"""
 
     def __init__(self):

@@ -55,19 +55,17 @@ a specific board:
 import GPS
 from modules import Module
 from target_connector import TargetConnector
-from gs_utils.internal.dialogs import Project_Properties_Editor
 import workflows
 import workflows.promises as promises
 
 
-connect_under_reset = GPS.Preference(
-    "Debugger:ST Util/connect_under_reset"
-)
+connect_under_reset = GPS.Preference("Debugger:ST Util/connect_under_reset")
 
 
 connect_under_reset.create(
-    "Use 'connect under reset'", "boolean",
-    "Pass --connect-under-reset to st-util/st-flash"
+    "Use 'connect under reset'",
+    "boolean",
+    "Pass --connect-under-reset to st-util/st-flash",
 )
 
 
@@ -153,7 +151,7 @@ class BoardLoader(Module):
 
     def __on_input(self, console, input):
         if self.__connection and self.__connection.process:
-                self.__connection.process.send(input)
+            self.__connection.process.send(input)
 
     def __error_exit(self, msg=""):
         """
@@ -194,17 +192,6 @@ class BoardLoader(Module):
             for target in self.__flash_build_targets:
                 target.hide()
 
-    @workflows.run_as_workflow
-    def __open_remote_project_properties(self, text):
-        """
-        Open the Project Properties editor and go to the page
-        defining the remote settings used to debug on a board.
-        """
-
-        editor = Project_Properties_Editor()
-        yield editor.open_and_yield(wait_scan=False)
-        yield editor.select("Embedded")
-
     def __verify_settings(self, for_debug=False):
         """
         Verify that the settings have correctly been set in order to flash,
@@ -221,42 +208,41 @@ class BoardLoader(Module):
         result = True
 
         if self.__connection_tool == "openocd" and not self.__config_file:
-            console.write(
-                (
-                    "%s no configuration file specified. "
-                    "Please set the " % (message_header)
-                ),
-                mode="error",
+            self.display_no_attribute_set_error_msg(
+                console,
+                message_header + " no configuration file specified.",
+                "IDE'Connection_Config_File",
             )
-            console.insert_link(
-                "IDE'Connection_Config_File", self.__open_remote_project_properties
-            )
-            console.write(" project attribute\n", mode="error")
             result = False
 
         if for_debug and not self.__remote_target:
-            console.write(
-                ("%s no remote target specified. Please set the " % (message_header)),
-                mode="error",
+            self.display_no_attribute_set_error_msg(
+                console,
+                message_header + " no remote target specified.",
+                "IDE'Protocol_Host",
             )
-            console.insert_link(
-                "IDE'Protocol_Host", self.__open_remote_project_properties
-            )
-            console.write(" project attribute\n", mode="error")
             result = False
 
         if for_debug and not self.__remote_protocol:
-            console.write(
-                ("%s no remote protocol specified. Please set the " % (message_header)),
-                mode="error",
+            self.display_no_attribute_set_error_msg(
+                console,
+                message_header + " no remote protocol specified.",
+                "IDE'Communication_Protocol",
             )
-            console.insert_link(
-                "IDE'Communication_Protocol", self.__open_remote_project_properties
-            )
-            console.write(" project attribute\n", mode="error")
             result = False
 
         return result
+
+    def display_no_attribute_set_error_msg(self, console, message, attribute):
+        """
+        Display an error message indicating that a required project attribute is not set.
+        """
+        console.write(f"{message}. Please ")
+        console.insert_link(
+            "edit the project",
+            lambda _: GPS.EditorBuffer.get(GPS.Project.root().file()),
+        )
+        console.write(f" to specify the required {attribute} project attribute\n")
 
     def __get_flashing_command_line(self, binary):
         """

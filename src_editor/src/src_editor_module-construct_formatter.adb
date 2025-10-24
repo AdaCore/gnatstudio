@@ -100,10 +100,12 @@ package body Src_Editor_Module.Construct_Formatter is
          Line_Offset   : constant Natural :=
            Buffer.New_Location (Line => Line, Column => 0).Offset;
          Replace_From  : constant Editor_Location'Class :=
-           Buffer.New_Location (Offset => Line_Offset + First - 1);
+           Buffer.New_Location
+             (Offset => VSS.Strings.Character_Count (Line_Offset + First - 1));
          --  Last offset is not included
          Replace_To : constant Editor_Location'Class :=
-           Buffer.New_Location (Offset => Line_Offset + Last - 1);
+           Buffer.New_Location
+             (Offset => VSS.Strings.Character_Count (Line_Offset + Last - 1));
 
          Previous_Text : constant String :=
            VSS.Strings.Conversions.To_UTF_8_String

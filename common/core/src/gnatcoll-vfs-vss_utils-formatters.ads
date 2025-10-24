@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                               GNAT Studio                                --
 --                                                                          --
---                     Copyright (C) 2001-2025, AdaCore                     --
+--                       Copyright (C) 2025, AdaCore                        --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -15,24 +15,39 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
---  This package should eventually be merged with GNAT.OS_Lib
+--  Formatter of `Virtual_File`
+--
+--  By default, full path name of the file is substituted. To substitute base
+--  file name `base` format option can be used.
 
-with Basic_Types;  use Basic_Types;
-with GNATCOLL.VFS; use GNATCOLL.VFS;
+with VSS.Strings.Formatters;
 
-package File_Utils is
+package GNATCOLL.VFS.VSS_Utils.Formatters is
 
-   function URL_List_To_Files (URL_List : String) return File_Array_Access;
-   --  Convert list of URLs in form "file:///path/file" to file array.
-   --  Files in list are separated by CR/LF characters.
+   type Formatter is
+     new VSS.Strings.Formatters.Abstract_Formatter with private;
 
-   function UTF8_Full_Name (File : Virtual_File) return UTF8_String;
-   --  Try to convert file name to utf-8 string
+   function Image
+     (Item : GNATCOLL.VFS.Virtual_File) return Formatter;
+
+   function Image
+     (Name : VSS.Strings.Virtual_String;
+      Item : GNATCOLL.VFS.Virtual_File) return Formatter;
 
 private
 
-   type Path_Iterator is record
-      First, Last : Natural;
+   type Formatter is
+     new VSS.Strings.Formatters.Abstract_Formatter with record
+      Name  : VSS.Strings.Virtual_String;
+      Value : GNATCOLL.VFS.Virtual_File;
    end record;
 
-end File_Utils;
+   overriding function Name
+     (Self : Formatter) return VSS.Strings.Virtual_String;
+
+   overriding function Format
+     (Self   : Formatter;
+      Format : VSS.Strings.Formatters.Format_Information)
+      return VSS.Strings.Virtual_String;
+
+end GNATCOLL.VFS.VSS_Utils.Formatters;

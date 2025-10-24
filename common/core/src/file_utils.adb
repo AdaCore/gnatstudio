@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                               GNAT Studio                                --
 --                                                                          --
---                     Copyright (C) 2001-2023, AdaCore                     --
+--                     Copyright (C) 2001-2025, AdaCore                     --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -15,29 +15,12 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with Ada.Characters.Handling;   use Ada.Characters.Handling;
 with GNATCOLL.Utils;            use GNATCOLL.Utils;
 with String_Utils;              use String_Utils;
 with GNAT.OS_Lib;
 with UTF8_Utils;                use UTF8_Utils;
 
 package body File_Utils is
-
-   ------------------
-   -- To_File_Name --
-   ------------------
-
-   function To_File_Name (Name : Filesystem_String) return Filesystem_String is
-      Result : String (1 .. Name'Length) := To_Lower (+Name);
-   begin
-      for J in Result'First .. Result'Last loop
-         if Result (J) = '.' then
-            Result (J) := '-';
-         end if;
-      end loop;
-
-      return +Result;
-   end To_File_Name;
 
    -----------------------
    -- URL_List_To_Files --
