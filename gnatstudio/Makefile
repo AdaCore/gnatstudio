@@ -1,3 +1,6 @@
+# CPU limit
+PROCESSORS ?= 0
+
 SYS := $(shell gcc -dumpmachine)
 ifeq ($(OS),Windows_NT)
 	OS := Windows_NT
@@ -17,9 +20,9 @@ endif
 
 GPRBUILD=gprbuild
 ifeq ($(BUILD),Coverage)
-  GPRBUILD_FLAGS=-j0 -m2 -p --src-subdirs=gnatcov-instr --implicit-with=gnatcov_rts.gpr
+  GPRBUILD_FLAGS=-j$(PROCESSORS) -m2 -p --src-subdirs=gnatcov-instr --implicit-with=gnatcov_rts.gpr
 else
-  GPRBUILD_FLAGS=-j0
+  GPRBUILD_FLAGS=-j$(PROCESSORS)
 endif
 
 PYTHON=python
