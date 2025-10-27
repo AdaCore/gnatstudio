@@ -135,6 +135,18 @@ XML = r"""<?xml version="1.0" ?>
    </project_attribute>
 
    <project_attribute
+      name="connection_config_files"
+      package="IDE"
+      editor_page="Embedded"
+      editor_section="Tools"
+      list="true"
+      description="List of files used to configure the IDE'Connection_Tool. Used only when OpenOCD is set and connection_config_file is not set."
+      hide_in="wizard library_wizard"
+      label="Connection configuration files">
+      <string type="file"/>
+   </project_attribute>
+
+   <project_attribute
        name="program_host"
        package="IDE"
        editor_page="Embedded"

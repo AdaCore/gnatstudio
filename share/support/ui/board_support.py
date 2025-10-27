@@ -36,7 +36,9 @@ a specific board:
    set of default configuration files that can generally be found in
    the '/usr/local/share/openocd/scripts/board' directory. Set the
    IDE'Configuration_File project attribute to choose the configuration file
-   to use with OpenOCD for your project.
+   to use with OpenOCD for your project. IDE'Configuration_Files project
+   attribute can be used in case several configuration files should be set.
+   IDE'Configuration_File has higher priority.
 
 . pyOCD (using CMSIS-DAP)
 
@@ -84,10 +86,10 @@ class BoardLoader(Module):
     # Retrieved from the IDE'Communication_Tool project attribute.
     __connection_tool = None
 
-    # The optional configuration file used to configure the connection
+    # The optional configuration files used to configure the connection
     # tool.
-    # Retrieved from the IDE'Communication_Config_File project attribute.
-    __config_file = None
+    # Retrieved from the IDE'Communication_Config_Files project attribute.
+    __config_files = []
 
     # The build target associated with the connection tool
     __connector = None
@@ -207,11 +209,11 @@ class BoardLoader(Module):
         )
         result = True
 
-        if self.__connection_tool == "openocd" and not self.__config_file:
+        if self.__connection_tool == "openocd" and len(self.__config_files) == 0:
             self.display_no_attribute_set_error_msg(
                 console,
                 message_header + " no configuration file specified.",
-                "IDE'Connection_Config_File",
+                "IDE'Connection_Config_File or IDE'Connection_Config_Files",
             )
             result = False
 
@@ -258,12 +260,14 @@ class BoardLoader(Module):
             # Replace backslashes by forward slashes.
             # This is used to support OpenOCD on Windows.
             binary = binary.replace("\\", "/")
-            args = [
-                "-f",
-                self.__config_file,
-                "-c",
-                "program %s verify reset exit %s" % (binary, self.__load_address),
-            ]
+            for file in self.__config_files:
+                args.append("-f")
+                args.append(file)
+
+            args.append("-c")
+            args.append(
+                "program %s verify reset exit %s" % (binary, self.__load_address)
+            )
 
         elif self.__flashing_tool == "st-flash":
 
@@ -321,18 +325,24 @@ class BoardLoader(Module):
         # set the flashing tool according to the connection tool.
         if self.__connection_tool == "openocd":
             self.__flashing_tool = "openocd"
-            self.__config_file = project.get_attribute_as_string(
+            s = project.get_attribute_as_string(
                 package="IDE", attribute="Connection_Config_File"
             )
+            if len(s) > 0:
+                self.__config_files.append(s)
+            else:
+                self.__config_files = project.get_attribute_as_list(
+                    package="IDE", attribute="Connection_Config_Files"
+                )
         elif self.__connection_tool == "st-util":
             self.__flashing_tool = "st-flash"
-            self.__config_file = ""
+            self.__config_files = []
         elif self.__connection_tool == "pyocd":
             self.__flashing_tool = "pyocd"
-            self.__config_file = ""
+            self.__config_files = []
         else:
             self.__flashing_tool = self.__connection_tool
-            self.__config_file = ""
+            self.__config_files = []
 
     def __get_connection_command_line(self):
         """
@@ -350,14 +360,15 @@ class BoardLoader(Module):
 
         if self.__connection_tool == "openocd":
             # Semihosting command can only be used after the `init` command.
-            args = [
-                "-f",
-                self.__config_file,
-                "-c",
-                "gdb_port %s" % (gdb_port),
-                "-c init",
-                "-c arm semihosting enable",
-            ]
+            for file in self.__config_files:
+                args.append("-f")
+                args.append(file)
+
+            args.append("-c")
+            args.append("gdb_port %s" % (gdb_port))
+            args.append("-c init")
+            args.append("-c arm semihosting enable")
+
         elif self.__connection_tool == "st-util":
             has_semihosting = False
             semihosting_switch = "--semihosting"
