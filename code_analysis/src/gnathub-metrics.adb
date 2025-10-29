@@ -116,7 +116,7 @@ package body GNAThub.Metrics is
    procedure Register_Listener
      (Listener : not null access Metrics_Listener_Interface'Class) is
    begin
-      Module.Listeners.Append (Listener);
+      Module.Listeners.Append (Metrics_Listener (Listener));
    end Register_Listener;
 
    -------------------------
@@ -127,7 +127,7 @@ package body GNAThub.Metrics is
      (Listener : not null access Metrics_Listener_Interface'Class)
    is
       Position : Metrics_Listener_Vectors.Cursor := Module.Listeners.Find
-        (Listener);
+        (Metrics_Listener (Listener));
    begin
       if Metrics_Listener_Vectors.Has_Element (Position) then
          Module.Listeners.Delete (Position);
