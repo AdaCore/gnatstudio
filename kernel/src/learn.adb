@@ -113,7 +113,7 @@ package body Learn is
      (Listener : not null access Learn_Listener_Type'Class)
    is
       Position : Learn_Listener_Vectors.Cursor :=
-                   Learn_Module.Listeners.Find (Listener);
+                   Learn_Module.Listeners.Find (Learn_Listener (Listener));
    begin
       if Learn_Listener_Vectors.Has_Element (Position) then
          Learn_Module.Listeners.Delete (Position);
