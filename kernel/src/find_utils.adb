@@ -392,7 +392,7 @@ package body Find_Utils is
       In_Selection : Boolean := False) is
    begin
       Module.Label := To_Unbounded_String (Label);
-      Module.Selector := Selector;
+      Module.Selector := Scope_Selector (Selector);
       Module.Id := Module_ID (Id);
       Module.Mask := Mask;
       Module.In_Selection := In_Selection;

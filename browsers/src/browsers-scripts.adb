@@ -408,7 +408,9 @@ package body Browsers.Scripts is
             Data.Set_Nth_Arg
                (1,
                 Item_Proxies.Get_Or_Create_Instance
-                   (Self.Inst_List.all, Self, Script));
+                   (Self   => Self.Inst_List.all,
+                    Obj    => Abstract_Item (Self),
+                    Script => Script));
             Data.Set_Nth_Arg (2, Old_Text);
             Dummy := Self.On_Edited.Execute (Data);
             Free (Data);
@@ -545,7 +547,9 @@ package body Browsers.Scripts is
                   P := Python_Item_Access (Child);
                   Data.Set_Return_Value
                     (Item_Proxies.Get_Or_Create_Instance
-                       (P.Inst_List.all, Child, Data.Get_Script));
+                       (Self   => P.Inst_List.all,
+                        Obj    => Abstract_Item (Child),
+                        Script => Data.Get_Script));
                end if;
             end Add_Child;
          begin
@@ -565,7 +569,9 @@ package body Browsers.Scripts is
                   P := Python_Item_Access (Child);
                   Data.Set_Return_Value
                     (Item_Proxies.Get_Or_Create_Instance
-                       (P.Inst_List.all, Child, Data.Get_Script));
+                       (Self   => P.Inst_List.all,
+                        Obj    => Abstract_Item (Child),
+                        Script => Data.Get_Script));
                end if;
             end Add_Child;
          begin
@@ -586,7 +592,9 @@ package body Browsers.Scripts is
                   P := Python_Item_Access (Item);
                   Data.Set_Return_Value
                     (Item_Proxies.Get_Or_Create_Instance
-                       (P.Inst_List.all, Item, Data.Get_Script));
+                       (Self   => P.Inst_List.all,
+                        Obj    => Abstract_Item (Item),
+                        Script => Data.Get_Script));
                end if;
             end On_Link;
 
@@ -1097,8 +1105,9 @@ package body Browsers.Scripts is
                if Child.all in Python_Item'Class then
                   Data.Set_Return_Value
                     (Item_Proxies.Get_Or_Create_Instance
-                       (Python_Item_Access (Child).Inst_List.all,
-                        Child, Data.Get_Script));
+                       (Self   => Python_Item_Access (Child).Inst_List.all,
+                        Obj    => Abstract_Item (Child),
+                        Script => Data.Get_Script));
                end if;
             end Add_Child;
 

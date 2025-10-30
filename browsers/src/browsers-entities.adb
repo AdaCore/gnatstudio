@@ -959,8 +959,8 @@ package body Browsers.Entities is
          E2 := Gtk_New_Entity (B, Typ, Prefix);
          Rect.Add_Child (E2);
          Item.Add_Attrs (Rect);
-         Item.Attrs.Col1.Append (E1);
-         Item.Attrs.Col2.Append (E2);
+         Item.Attrs.Col1.Append (Abstract_Item (E1));
+         Item.Attrs.Col2.Append (Abstract_Item (E2));
       end if;
    end Add_Type;
 

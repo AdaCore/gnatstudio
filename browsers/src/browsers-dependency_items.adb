@@ -1080,7 +1080,8 @@ package body Browsers.Dependency_Items is
      (Provider : not null access Dependency_Browser_Provider_Interface'Class)
    is
    begin
-      Dependency_Browser_Provider := Provider;
+      Dependency_Browser_Provider :=
+        Dependency_Browser_Provider_Access (Provider);
    end Set_Dependency_Browser_Provider;
 
    --------------

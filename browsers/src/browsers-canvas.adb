@@ -333,7 +333,7 @@ package body Browsers.Canvas is
             Selected_Out := Outline_None;
          end if;
 
-         S.Include (Item);
+         S.Include (Abstract_Item (Item));
          Self.Model.For_Each_Link (On_Link'Access, From_Or_To => S);
       end if;
    end Highlight_Related_Items;
