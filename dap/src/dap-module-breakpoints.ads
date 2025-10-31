@@ -113,18 +113,19 @@ package DAP.Module.Breakpoints is
    --  Add a breakpoint for the given subprogram.
 
    procedure Break_Exception
-     (Kernel    : not null access Kernel_Handle_Record'Class;
-      Name      : String;
-      Unhandled : Boolean := False;
-      Temporary : Boolean := False);
+     (Kernel         : not null access Kernel_Handle_Record'Class;
+      Name           : String;
+      Unhandled_Only : Boolean := False;
+      Temporary      : Boolean := False);
    --  Add a breakpoint for the given exception name.
 
    procedure Break_On_All_Exceptions
-     (Kernel    : not null access Kernel_Handle_Record'Class;
-      Unhandled : Boolean := False);
+     (Kernel         : not null access Kernel_Handle_Record'Class;
+      Unhandled_Only : Boolean := False);
    --  Break on all exception kinds.
-   --  When Unhandled is True, it will only break on unhandled exceptions. When
-   --  False, it will also break on handled ones.
+   --  When Unhandled_Only is True, it will only break on unhandled
+   --  exceptions.
+   --  When False, it will also break on handled ones.
 
    procedure Break_Address
      (Kernel    : not null access Kernel_Handle_Record'Class;

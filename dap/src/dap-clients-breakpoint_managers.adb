@@ -18,7 +18,6 @@
 with GNATCOLL.Traces;
 with VSS.Characters;
 with VSS.Characters.Latin;
-with VSS.String_Vectors;
 with VSS.Strings.Conversions;
 with VSS.Strings.Cursors;
 with VSS.Strings.Cursors.Iterators.Characters;
@@ -322,7 +321,7 @@ package body DAP.Clients.Breakpoint_Managers is
                Num            => 0,
                Exception_Name =>
                  DAP.Module.Breakpoints.All_Exceptions_Filter,
-               Unhandled      => False,
+               Unhandled_Only => False,
                Disposition    => Keep,
                others         => <>);
          begin
@@ -406,18 +405,19 @@ package body DAP.Clients.Breakpoint_Managers is
    ---------------------
 
    procedure Break_Exception
-     (Self      : not null access Breakpoint_Manager_Type;
-      Name      : String;
-      Unhandled : Boolean := False;
-      Temporary : Boolean := False)
+     (Self           : not null access Breakpoint_Manager_Type;
+      Name           : String;
+      Unhandled_Only : Boolean := False;
+      Temporary      : Boolean := False)
    is
-      Data    : constant Breakpoint_Data := Breakpoint_Data'
-        (Kind        => On_Exception,
-         Num         => 0,
-         Exception_Name      => To_Virtual_String (Name),
-         Unhandled   => Unhandled,
-         Disposition => (if Temporary then Delete else Keep),
-         others      => <>);
+      Data : constant Breakpoint_Data :=
+        Breakpoint_Data'
+          (Kind           => On_Exception,
+           Num            => 0,
+           Exception_Name => To_Virtual_String (Name),
+           Unhandled_Only => Unhandled_Only,
+           Disposition    => (if Temporary then Delete else Keep),
+           others         => <>);
    begin
       Self.Break (Data);
    end Break_Exception;
@@ -742,20 +742,31 @@ package body DAP.Clients.Breakpoint_Managers is
       Req.Breakpoints := Indexes;
 
       for Data of Self.Holder.Get_Breakpoints (Indexes => Indexes) loop
-         Req.Parameters.arguments.filters.Append (Data.Exception_Name);
-         declare
-            Option : DAP.Tools.ExceptionOptions;
-            Names  : VSS.String_Vectors.Virtual_String_Vector;
-         begin
-            Names.Append (Data.Exception_Name);
-            Option.path.Append ((negate => False, names => Names));
-            if Data.Unhandled then
-               Option.breakMode := DAP.Tools.Enum.unhandled;
-            else
-               Option.breakMode := DAP.Tools.Enum.always;
-            end if;
-            Req.Parameters.arguments.exceptionOptions.Append (Option);
-         end;
+         --  Set the filter options for this exception breakpoint, specifying
+         --  the exception name in the 'condition' field.
+         Req.Parameters.arguments.filterOptions.Append
+           (DAP.Tools.ExceptionFilterOptions'
+              (filterId  => VSS.Strings.To_Virtual_String ("exception"),
+               condition => Data.Exception_Name));
+
+         --  Set the exception's break mode (option) according to the
+         --  'unhandled' field of the breakpoint data if the DAP server
+         --  supports it.
+         if Self.Client.Get_Capabilities.Is_Set
+           and then Self.Client.Get_Capabilities.Value.supportsExceptionOptions
+         then
+            declare
+               Options : DAP.Tools.ExceptionOptions;
+            begin
+               if Data.Unhandled_Only then
+                  Options.breakMode := DAP.Tools.Enum.unhandled;
+               else
+                  Options.breakMode := DAP.Tools.Enum.always;
+               end if;
+
+               Req.Parameters.arguments.exceptionOptions.Append (Options);
+            end;
+         end if;
       end loop;
 
       return DAP_Request_Access (Req);

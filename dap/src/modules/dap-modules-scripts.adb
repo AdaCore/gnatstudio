@@ -644,8 +644,7 @@ package body DAP.Modules.Scripts is
       elsif Command = "break_at_exception" then
          Inst := Nth_Arg (Data, 1, New_Class (Kernel, "Debugger"));
          DAP.Module.Breakpoints.Break_On_All_Exceptions
-           (Kernel    => Kernel,
-            Unhandled => Nth_Arg (Data, 2));
+           (Kernel => Kernel, Unhandled_Only => Nth_Arg (Data, 2));
 
       elsif Command = "unbreak_at_location" then
          Inst := Nth_Arg (Data, 1, New_Class (Kernel, "Debugger"));

@@ -289,8 +289,8 @@ package body DAP.Views.Breakpoints is
       Conditions_Box       : Dialog_Group_Widget;
       Commands_Box         : Dialog_Group_Widget;
 
-      Stop_Always_Exception      : Gtk_Radio_Button;
-      Stop_Not_Handled_Exception : Gtk_Radio_Button;
+      Stop_Always_Exception : Gtk_Radio_Button;
+      Stop_On_Handled_Only  : Gtk_Radio_Button;
 
       Breakpoint_Type      : Gtk_Combo_Box_Text;
 
@@ -488,8 +488,8 @@ package body DAP.Views.Breakpoints is
                       Commands       => Commands,
                       Verified       => False,
                       Exception_Name => Exception_Name,
-                      Unhandled      =>
-                        Get_Active (Self.Stop_Not_Handled_Exception));
+                      Unhandled_Only =>
+                        Get_Active (Self.Stop_On_Handled_Only));
             end;
 
          when On_Instruction =>
@@ -844,14 +844,13 @@ package body DAP.Views.Breakpoints is
       Gtk_New_Hbox (Hbox, Homogeneous => False);
 
       Gtk_New (Self.Stop_Always_Exception, Label => "Always stop");
-      Self.Stop_Always_Exception.Set_Active (True);
       Hbox.Pack_Start (Self.Stop_Always_Exception, False);
 
       Gtk_New
-        (Self.Stop_Not_Handled_Exception,
+        (Self.Stop_On_Handled_Only,
          Group => Self.Stop_Always_Exception,
          Label => "Stop if not handled");
-      Hbox.Pack_Start (Self.Stop_Not_Handled_Exception, False);
+      Hbox.Pack_Start (Self.Stop_On_Handled_Only, False);
 
       Self.Exception_Box.Create_Child
         (Widget       => Hbox,
@@ -1890,29 +1889,20 @@ package body DAP.Views.Breakpoints is
       Br   : Breakpoint_Data)
    is
       use VSS.Strings;
-      All_Text       : constant Virtual_String := "all";
-      Unhandled_Text : constant Virtual_String := "unhandled";
 
       Start, The_End : Gtk_Text_Iter;
       Buffer         : Gtk_Text_Buffer;
    begin
       if Br.Kind = On_Exception then
          Self.Breakpoint_Type.Set_Active (Breakpoint_Kind'Pos (On_Exception));
-         Set_Active (Self.Stop_Always_Exception, True);
 
-         if Br.Exception_Name = All_Text then
-            Set_Active_Text (Self.Exception_Name, "All Ada exceptions");
-         elsif Br.Exception_Name = Unhandled_Text then
-            Set_Active_Text (Self.Exception_Name, "All Ada exceptions");
-            Set_Active (Self.Stop_Not_Handled_Exception, True);
-         else
-            Add_Unique_Combo_Entry
-              (Self.Exception_Name,
-               Br.Exception_Name,
-               Select_Text => True);
-         end if;
+         Add_Unique_Combo_Entry
+           (Combo       => Self.Exception_Name,
+            Text        => Br.Exception_Name,
+            Select_Text => True);
 
          Set_Active (Self.Temporary, Br.Disposition /= Keep);
+         Set_Active (Self.Stop_On_Handled_Only, Br.Unhandled_Only);
 
       elsif Br.Kind = On_Subprogram then
          Self.Breakpoint_Type.Set_Active (Breakpoint_Kind'Pos (On_Subprogram));
