@@ -194,7 +194,8 @@ package body GPS.LSP_Client.Utilities is
         Kernel.Get_Language_Handler.Get_Language_From_File (File);
       Params       : Indent_Parameters;
       Indent_Style : Indentation_Kind;
-      Max_Line     : constant Integer := Highlight_Column.Get_Pref;
+      --  Max line include the last character for GNATformat thus the -1
+      Max_Line     : constant Integer := Highlight_Column.Get_Pref - 1;
    begin
       Get_Indentation_Parameters (Lang, Params, Indent_Style);
       return LSP.Messages.FormattingOptions'
