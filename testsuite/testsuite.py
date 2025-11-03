@@ -1,10 +1,12 @@
 #!/usr/bin/env python
-from drivers.basic import BasicTestDriver, Xvfbs
+import os
+import sys
 from distutils.spawn import find_executable
+
+from drivers.basic import BasicTestDriver, Xvfbs
+from e3.env import Env
 from e3.testsuite import Testsuite
 from e3.testsuite.testcase_finder import YAMLTestFinder
-from e3.env import Env
-import os
 
 DEFAULT_XVFB_DISPLAY = 1001
 # Where to launch Xvfb if nothing is otherwise specified
@@ -131,3 +133,7 @@ class GSPublicTestsuite(Testsuite):
         if name == "Z999-999":
             return "regressions.Z999-999"
         return name
+
+
+if __name__ == "__main__":
+    sys.exit(GSPublicTestsuite().testsuite_main())
