@@ -10,6 +10,13 @@ project Builder_Core is
    for Source_Dirs use ("core/src");
    for Object_Dir use Shared'Object_Dir;
 
+   --  Exclude files that depend on Python (deleted)
+   for Excluded_Source_Files use (
+      "custom_tools_output.ads", "custom_tools_output.adb",
+      "commands-builder-scripts.ads", "commands-builder-scripts.adb",
+      "build_command_utils.ads", "build_command_utils.adb"
+   );
+
    package Compiler renames Shared.Compiler;
 
 end Builder_Core;

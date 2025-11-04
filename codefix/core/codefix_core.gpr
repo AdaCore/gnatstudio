@@ -1,7 +1,8 @@
-with "../../kernel/kernel";
+with "../../kernel/kernel_core";
 with "../../common/common";
 with "../../ada_module/core/ada_module_core";
 with "../../language/language";
+with "../../refactoring/core/refactoring_core";
 with "../../shared";
 
 project Codefix_Core is
@@ -9,6 +10,12 @@ project Codefix_Core is
    for Source_Dirs use ("src");
    for Languages use ("Ada");
    for Object_Dir use Shared'Object_Dir;
+
+   --  Exclude files that need GPS.Kernel (full kernel, not kernel_core)
+   --  These are specific parsers that integrate with GPS UI
+   for Excluded_Source_Files use (
+      "codefix-gnat_parser.ads", "codefix-gnat_parser.adb"
+   );
 
    package Compiler renames Shared.Compiler;
 

@@ -1,6 +1,5 @@
--- Removed per PLAN.md - LSP replaces these
--- with "gnatcoll_sqlite.gpr";
--- with "gnatcoll_xref.gpr";
+with "gnatcoll_sqlite";
+with "gnatcoll_xref";
 with "../shared";
 with "vss_text";
 with "xmlada_sax";

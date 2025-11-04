@@ -3,9 +3,8 @@
 
 with "../common/common";
 with "../shared";
--- Removed per PLAN.md - LSP replaces these
--- with "gnatcoll_sqlite";
--- with "gnatcoll_xref";
+with "gnatcoll_sqlite";
+with "gnatcoll_xref";
 
 project Language is
 

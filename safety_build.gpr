@@ -1,0 +1,48 @@
+------------------------------------------------------------------------------
+-- Safety Build - Tier 2: Build & Project Support
+--
+-- Purpose: Validates ALL core modules needed for PLAN.md Phases 2-6
+--          (TUI bootstrap through project/build support)
+--
+-- Modules tested:
+--   Tier 1 (Foundation):
+--   - common          - Core utilities
+--   - language        - Language infrastructure
+--   - toolchains_core - Toolchain management
+--   - kernel_core     - Core kernel
+--
+--   Tier 2 (Build & Project):
+--   - vfs             - Virtual file system
+--   - prj_core        - Project operations
+--   - builder_core    - Build orchestration
+--   - ada_module_core - Ada language support
+--   - refactoring_core - Refactoring engine
+--   - codefix_core    - Code fix engine
+--
+-- If this compiles: Safe to delete GUI code from ALL these modules
+-- If this fails: We deleted something critical
+--
+-- Build: alr exec -- gprbuild -P safety_build.gpr
+------------------------------------------------------------------------------
+
+with "common/common";
+with "language/language";
+with "toolchains_editor/core/toolchains_core";
+with "kernel/kernel_core";
+with "vfs/vfs";
+with "prj_editor/prj_core";
+with "builder/builder_core";
+with "ada_module/core/ada_module_core";
+with "refactoring/core/refactoring_core";
+with "codefix/core/codefix_core";
+
+project Safety_Build is
+
+   for Languages use ("Ada");
+
+   --  No sources - just dependency validation
+   for Source_Dirs use ();
+
+   for Object_Dir use "obj/safety";
+
+end Safety_Build;

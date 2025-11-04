@@ -1,0 +1,36 @@
+------------------------------------------------------------------------------
+-- Safety Build - Minimal Viable Core
+--
+-- Purpose: Validates the minimal set of modules that DON'T depend on xref
+--
+-- This tests modules that are truly headless and xref-free:
+--   - vfs                - Virtual file system (after kernel fix)
+--   - toolchains_core    - Toolchain detection
+--   - ada_module_core    - Ada language support
+--   - refactoring_core   - Refactoring engine
+--   - codefix_core       - Code fix engine
+--
+-- Note: Skips kernel_core, language, common due to deep xref dependencies
+--       These will need stub xref types or major refactoring
+--
+-- If this compiles: These specific modules are safe from GUI deletion
+--
+-- Build: alr exec -- gprbuild -P safety_minimal.gpr
+------------------------------------------------------------------------------
+
+with "vfs/vfs";
+with "toolchains_editor/core/toolchains_core";
+with "ada_module/core/ada_module_core";
+with "refactoring/core/refactoring_core";
+with "codefix/core/codefix_core";
+
+project Safety_Minimal is
+
+   for Languages use ("Ada");
+
+   --  No sources - just dependency validation
+   for Source_Dirs use ();
+
+   for Object_Dir use "obj/safety";
+
+end Safety_Minimal;

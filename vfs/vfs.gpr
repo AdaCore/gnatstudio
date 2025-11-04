@@ -1,10 +1,15 @@
-with "../kernel/kernel";
+with "../kernel/kernel_core";
 with "../shared";
 
 project VFS is
 
    for Source_Dirs use ("src");
    for Object_Dir use Shared'Object_Dir;
+
+   --  Exclude GPS module registration (needs GPS.Kernel)
+   for Excluded_Source_Files use (
+      "vfs_module.ads", "vfs_module.adb"
+   );
 
    package Compiler renames Shared.Compiler;
 
