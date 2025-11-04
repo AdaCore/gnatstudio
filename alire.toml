@@ -3,7 +3,7 @@ description = "GNAT Studio - A lightweight, extensible IDE for Ada, SPARK, C, an
 version = "25.0.0-dev"
 
 authors = ["AdaCore"]
-maintainers = ["rebecca@berkeleynerd"]
+maintainers = ["rebecca@berkeleynerd.com"]
 maintainers-logins = ["berkeleynerd"]
 
 licenses = "GPL-3.0-or-later"
@@ -23,8 +23,10 @@ gnatcoll_sqlite = "~25.0"
 [[depends-on]]
 gnatcoll_xref = "~25.0"
 
-[[depends-on]]
-gnatcoll_python3 = "~23.0"
+# Note: gnatcoll_python3 not available on macOS
+# Python support will be removed per PLAN.md anyway
+# [[depends-on]]
+# gnatcoll_python3 = "~23.0"
 
 [[depends-on]]
 gtkada = "~25.0"
@@ -50,13 +52,3 @@ LIBRARY_TYPE = "static"
 # Ensure Python bindings are available from Homebrew
 PATH.prepend = "/opt/homebrew/bin"
 PKG_CONFIG_PATH.prepend = "/opt/homebrew/lib/pkgconfig"
-
-[build-switches]
-"*".ada_compiler_switches = [
-    "-gnatwa",  # Enable all warnings
-    "-gnatyg",  # GNAT style checks
-]
-
-[origin]
-commit = "bf92c34419"
-url = "https://github.com/berkeleynerd/gnatstudio.git"
