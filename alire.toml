@@ -17,18 +17,24 @@ project-files = ["cli/cli.gpr"]
 [[depends-on]]
 gnatcoll = "~25.0"
 
-[[depends-on]]
-gnatcoll_sqlite = "~25.0"
+# Removed per PLAN.md - LSP replaces database-backed xrefs
+# [[depends-on]]
+# gnatcoll_sqlite = "~25.0"
 
-[[depends-on]]
-gnatcoll_xref = "~25.0"
+# Removed per PLAN.md - LSP provides all cross-reference functionality
+# [[depends-on]]
+# gnatcoll_xref = "~25.0"
 
-# Note: gnatcoll_python3 not available on macOS
-# Python support will be removed per PLAN.md anyway
+# Removed - C code won't compile with Alire GCC broken headers on macOS 26
+# Not needed per PLAN.md (UTF-8 only, no conversion)
+# [[depends-on]]
+# gnatcoll_iconv = "~25.0"
+
+# Removed - not available on macOS, will be removed per PLAN.md anyway
 # [[depends-on]]
 # gnatcoll_python3 = "~23.0"
 
-# Note: Temporarily commented out - gtkada post-fetch configure failing on macOS
+# Removed - gtkada post-fetch configure failing on macOS
 # Will be removed permanently per PLAN.md (TUI conversion)
 # [[depends-on]]
 # gtkada = "~25.0"

@@ -1,14 +1,19 @@
 with "../common/common";
 with "../shared";
 with "gnatcoll";
-with "gnatcoll_sqlite";
-with "gnatcoll_xref";
+-- Removed per PLAN.md - LSP replaces these
+-- with "gnatcoll_sqlite";
+-- with "gnatcoll_xref";
 with "../language/language";
 with "../toolchains_editor/core/toolchains_core";
 
 project Kernel_Core is
 
    for Source_Dirs use ("src_info");
+
+   --  Exclude xref.* - uses GNATCOLL.SQL/Xref which are removed per PLAN.md
+   --  LSP will replace this functionality
+   for Excluded_Source_Files use ("xref.ads", "xref.adb");
 
    for Object_Dir use Shared'Object_Dir;
 
