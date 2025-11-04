@@ -28,8 +28,10 @@ gnatcoll_xref = "~25.0"
 # [[depends-on]]
 # gnatcoll_python3 = "~23.0"
 
-[[depends-on]]
-gtkada = "~25.0"
+# Note: Temporarily commented out - gtkada post-fetch configure failing on macOS
+# Will be removed permanently per PLAN.md (TUI conversion)
+# [[depends-on]]
+# gtkada = "~25.0"
 
 [[depends-on]]
 xmlada = "~25.0"

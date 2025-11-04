@@ -17,9 +17,9 @@ fi
 
 YEAR=` date +%Y `
 
-# Forces gtk+ 3.0
-CONFIGURE_SWITCH_WITH_GTK=3.0
-export CONFIGURE_SWITCH_WITH_GTK
+# GTK removed per PLAN.md - building headless TUI version
+# CONFIGURE_SWITCH_WITH_GTK=3.0
+# export CONFIGURE_SWITCH_WITH_GTK
 
 STRIP_CR=False
 CAN_OUTPUT=True
@@ -65,13 +65,12 @@ fi
 ######## Location of GNATcoll
 AM_PATH_GNATCOLL
 
-######## Check GtkAda
-
-AC_MSG_CHECKING(for gtkada.gpr)
-AM_HAS_GNAT_PROJECT(gtkada)
-if test x"${HAVE_GNAT_PROJECT_gtkada}" != x"yes" ; then
-   AC_MSG_ERROR(GTKADA project required but not found)
-fi
+######## Check GtkAda - REMOVED for TUI version
+# AC_MSG_CHECKING(for gtkada.gpr)
+# AM_HAS_GNAT_PROJECT(gtkada)
+# if test x"${HAVE_GNAT_PROJECT_gtkada}" != x"yes" ; then
+#    AC_MSG_ERROR(GTKADA project required but not found)
+# fi
 
 ######## checking for local tools ###
 AC_PROG_CC
@@ -94,20 +93,20 @@ AC_CHECK_PROGS(DVIPS, dvips)
 AC_CHECK_PROGS(MAKEINFO, makeinfo)
 AC_CHECK_PROGS(TEXI2DVI, texi2dvi)
 
-######### checking for gtk
-AM_PATH_GTK
-AM_PATH_GTKADA(17.0,,AC_MSG_ERROR(Test for GtkAda failed. See the file 'INSTALL' for help.))
-AM_TO_GPR($GTK_GCC_FLAGS,   GTK_GCC_FLAGS_GPR)
+######### checking for gtk - REMOVED for TUI version
+# AM_PATH_GTK
+# AM_PATH_GTKADA(17.0,,AC_MSG_ERROR(Test for GtkAda failed. See the file 'INSTALL' for help.))
+# AM_TO_GPR($GTK_GCC_FLAGS,   GTK_GCC_FLAGS_GPR)
 
-######### checking for python
-AM_PATH_PYTHON
-AX_PYTHON_DEVEL
-AM_TO_GPR($PYTHON_CPPFLAGS, PYTHON_CFLAGS_GPR)
-AM_TO_GPR("$PYTHON_LIBS $PYTHON_EXTRA_LIBS $PYTHON_EXTRA_LDFLAGS", PYTHON_SHARED_LIBS_GPR)
+######### checking for python - REMOVED per PLAN.md
+# AM_PATH_PYTHON
+# AX_PYTHON_DEVEL
+# AM_TO_GPR($PYTHON_CPPFLAGS, PYTHON_CFLAGS_GPR)
+# AM_TO_GPR("$PYTHON_LIBS $PYTHON_EXTRA_LIBS $PYTHON_EXTRA_LDFLAGS", PYTHON_SHARED_LIBS_GPR)
 
-######### checking for pygobject
-AM_PATH_PYGOBJECT
-AM_TO_GPR($PYGOBJECT_INCLUDE, PYGOBJECT_INCLUDE_GPR)
+######### checking for pygobject - REMOVED per PLAN.md
+# AM_PATH_PYGOBJECT
+# AM_TO_GPR($PYGOBJECT_INCLUDE, PYGOBJECT_INCLUDE_GPR)
 
 ######## GNU regex checking
 AC_CHECK_FUNC(re_compile_pattern, AC_DEFINE(HAVE_GNU_REGEX))
