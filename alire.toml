@@ -10,9 +10,9 @@ licenses = "GPL-3.0-or-later"
 website = "https://github.com/AdaCore/gnatstudio"
 tags = ["ide", "ada", "spark", "editor", "development"]
 
-executables = ["gnatstudio_cli"]
+executables = ["test_pure_ada"]
 
-project-files = ["cli/cli.gpr"]
+project-files = ["test_headless/test_pure_ada.gpr"]
 
 [[depends-on]]
 gnatcoll = "~25.0"

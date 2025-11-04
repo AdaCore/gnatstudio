@@ -1,0 +1,21 @@
+with "../shared";
+with "../vfs/vfs";
+with "gnatcoll";
+with "vss_text";
+with "xmlada_sax";
+
+project Test_Headless is
+
+   for Languages use ("Ada");
+   for Source_Dirs use ("src");
+   for Main use ("test_headless.adb");
+   for Object_Dir use "obj";
+   for Exec_Dir use "bin";
+
+   package Builder is
+      for Executable ("test_headless.adb") use "test_headless";
+   end Builder;
+
+   package Compiler renames Shared.Compiler;
+
+end Test_Headless;

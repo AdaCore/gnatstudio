@@ -1,0 +1,21 @@
+with "../shared";
+with "gnatcoll";
+with "vss_text";
+
+project Test_Minimal is
+
+   for Languages use ("Ada");
+   for Source_Dirs use ("src");
+   for Main use ("test_minimal.adb");
+   for Object_Dir use "obj";
+   for Exec_Dir use "bin";
+
+   package Builder is
+      for Executable ("test_minimal.adb") use "test_minimal";
+   end Builder;
+
+   package Compiler is
+      for Switches ("Ada") use ("-g", "-gnat2022", "-gnatwa");
+   end Compiler;
+
+end Test_Minimal;
