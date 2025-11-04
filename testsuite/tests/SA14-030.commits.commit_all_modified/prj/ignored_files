@@ -1,4 +1,0 @@
-# Ignored everything ...
-*
-# ... except .adb files
-!*.adb

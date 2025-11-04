@@ -1,7 +1,0 @@
-project Default is
-
-   for Target use "arm-eabi";
-   for Runtime ("ada") use "ravenscar-sfp-stm32f4";
-
-end Default;
-

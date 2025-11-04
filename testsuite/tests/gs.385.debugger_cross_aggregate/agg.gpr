@@ -1,9 +1,0 @@
-
-aggregate project Agg is
-
-   for Target use "x86-lynx178elf";
-   for Runtime ("Ada") use "zfp";
-
-   for Project_Files use ("main/main.gpr");
-
-end Agg;

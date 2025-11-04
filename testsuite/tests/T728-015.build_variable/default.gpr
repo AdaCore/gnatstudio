@@ -1,7 +1,0 @@
-project Default is
-
-   Foo := external ("FOO", "undefined");
-   for Main use ("main.adb");
-
-end Default;
-

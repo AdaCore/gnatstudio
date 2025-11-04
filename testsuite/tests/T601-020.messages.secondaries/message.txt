@@ -1,7 +1,0 @@
-foo.adb:7:15: no candidate interpretations match the actuals:
-foo.adb:7:15: missing argument for parameter "Item" in call to "Put" declared at a-textio.ads:459
-foo.adb:7:15: missing argument for parameter "Item" in call to "Put" declared at a-textio.ads:386
-foo.adb:7:21: expected type "Standard.String"
-foo.adb:7:21: found private type "Ada.Strings.Unbounded.Unbounded_String"
-foo.adb:7:21:   ==> in call to "Put" at a-textio.ads:465
-foo.adb:7:21:   ==> in call to "Put" at a-textio.ads:392

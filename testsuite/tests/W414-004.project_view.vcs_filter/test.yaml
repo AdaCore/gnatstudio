@@ -1,4 +1,0 @@
-title: 'W414-004.project_view.vcs_filter'
-#  the test fails due to a harmless Pango warning on Windows
-skip:
-    - ['SKIP', 'env.build.os.name == "windows"']

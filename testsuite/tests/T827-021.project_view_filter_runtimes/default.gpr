@@ -1,6 +1,0 @@
-project Default is
-
-   for Source_Dirs use (".");
-   for Main use ("main.adb");
-
-end Default;

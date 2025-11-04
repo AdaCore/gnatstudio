@@ -1,3 +1,0 @@
-title: 'L530-024.doc.python_api'
-skip:
-    - ['SKIP', 'env.build.os.name == "windows"']

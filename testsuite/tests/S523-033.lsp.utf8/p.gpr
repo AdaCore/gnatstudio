@@ -1,7 +1,0 @@
-project P is
-
-   package Compiler is
-      for Switches ("ada") use ("-gnatW8");
-   end Compiler;
-
-end P;

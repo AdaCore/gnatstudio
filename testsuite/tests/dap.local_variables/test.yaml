@@ -1,3 +1,0 @@
-title: 'dap.local_variables'
-skip:
-    - [SKIP, 'env.valgrind_cmd != []']

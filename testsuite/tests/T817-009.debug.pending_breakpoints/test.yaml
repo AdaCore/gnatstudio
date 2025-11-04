@@ -1,3 +1,0 @@
-title: 'T817-009.debug.pending_breakpoints'
-skip:
-    - [SKIP, 'env.valgrind_cmd != []']

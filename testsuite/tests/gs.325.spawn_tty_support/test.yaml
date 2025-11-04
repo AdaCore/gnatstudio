@@ -1,5 +1,0 @@
-title: 'testsuite/tests/gs.325.spawn_tty_support'
-
-# This test uses "isatty" which is not supported on Windows.
-skip:
-    - ['SKIP', 'env.build.os.name == "windows"']

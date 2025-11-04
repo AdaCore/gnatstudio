@@ -1,3 +1,0 @@
-title: 'U707-023.console.paste_clipboard'
-skip:
-    - ['SKIP', 'env.build.os.name == "windows"']

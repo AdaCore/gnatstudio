@@ -1,3 +1,0 @@
-title: 'U830-027.clearcase.autodetect'
-skip:
-    - ['SKIP', 'env.build.os.name == "windows"']

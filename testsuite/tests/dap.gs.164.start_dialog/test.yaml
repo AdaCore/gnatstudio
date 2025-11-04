@@ -1,3 +1,0 @@
-title: 'dap.gs.154.start_dialog'
-skip:
-    - ['SKIP', 'env.build.os.name == "windows"']

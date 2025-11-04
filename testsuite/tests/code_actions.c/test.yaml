@@ -1,5 +1,0 @@
-title: 'code_actions.c'
-skip:
-    # Test is unreliable (clandg issues), to be investigated
-    - [SKIP, 'True']
-

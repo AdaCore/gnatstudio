@@ -1,8 +1,0 @@
-project Default is
-
-   Src_Dir := external ("PROJECT_SOURCE_DIR", ".");
-
-   for Source_Dirs use (Src_Dir);
-   for Main use ("main.adb");
-
-end Default;

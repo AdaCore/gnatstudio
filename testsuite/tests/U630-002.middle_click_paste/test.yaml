@@ -1,5 +1,0 @@
-title: 'U630-002.middle_click_paste'
-
-# this tests middle-click paste
-skip:
-    - ['SKIP', 'env.build.os.name == "windows"']

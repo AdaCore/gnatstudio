@@ -1,4 +1,0 @@
-project Default is
-    for Main use ("main.cpp");
-    for Languages use ("C++");
-end Default;

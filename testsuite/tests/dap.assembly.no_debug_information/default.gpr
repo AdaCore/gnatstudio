@@ -1,7 +1,0 @@
-project Default is
-
-   --  No debug switch => this is expected
-   for Main use ("main.adb");
-
-end Default;
-

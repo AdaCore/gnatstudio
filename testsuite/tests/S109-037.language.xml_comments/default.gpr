@@ -1,3 +1,0 @@
-project Default is
-   for Languages use ("XML");
-end Default;

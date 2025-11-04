@@ -1,3 +1,0 @@
-project default is
-   for Exec_Dir use "obj_" & Project'Target;
-end default;

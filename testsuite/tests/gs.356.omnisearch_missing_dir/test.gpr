@@ -1,3 +1,0 @@
-project Test is
-   for Source_Dirs use (".", "src", "non_existant_dir");
-end Test;

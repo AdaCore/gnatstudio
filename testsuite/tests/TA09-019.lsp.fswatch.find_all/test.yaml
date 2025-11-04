@@ -1,3 +1,0 @@
-title: 'TA09-019.lsp.fswatch.find_all'
-skip:
-    - [SKIP, 'env.valgrind_cmd != []']

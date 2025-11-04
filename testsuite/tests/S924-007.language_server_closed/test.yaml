@@ -1,3 +1,0 @@
-title: 'S924-007.language_server_closed'
-skip:
-    - ['SKIP', 'env.build.os.name == "windows" or env.valgrind_cmd != []']

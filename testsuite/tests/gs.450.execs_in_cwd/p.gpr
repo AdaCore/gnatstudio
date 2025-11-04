@@ -1,8 +1,0 @@
-project p is
-
-   for main use ("main.adb");
-   package IDE is
-     for VCS use "git";
-   end IDE;
-
-end p;

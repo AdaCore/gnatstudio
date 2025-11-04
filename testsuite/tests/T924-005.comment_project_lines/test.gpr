@@ -1,8 +1,0 @@
-project Test is
-   for Main use ("main.adb");
-
-   package Builder is
-      for Switches ("ada") use ("-g");
-   end Builder;
-
-end Test;

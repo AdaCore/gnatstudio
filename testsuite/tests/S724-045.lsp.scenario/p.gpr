@@ -1,4 +1,0 @@
-project P is
-   Thing := External ("THE_THING");
-end P;
-

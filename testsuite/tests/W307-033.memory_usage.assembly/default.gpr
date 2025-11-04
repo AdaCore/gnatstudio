@@ -1,8 +1,0 @@
-project Default is
-
-   for Languages use ("ada", "asm");
-   for Main use ("main.adb");
-   for Target use "aarch64-elf";
-   for Runtime ("ada") use "embedded-zynqmp";
-
-end Default;

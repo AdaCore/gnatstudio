@@ -1,3 +1,0 @@
-title: W117-008.process_before_kill_params
-skip:
-  - ['SKIP', 'env.build.os.name == "windows"']

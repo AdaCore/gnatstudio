@@ -1,4 +1,0 @@
-title: 'cli.adareducer'
-#  the test fails nightly on Windows while working locally
-skip:
-    - ['SKIP', 'env.build.os.name == "windows"']

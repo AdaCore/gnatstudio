@@ -1,6 +1,0 @@
-
-aggregate project whole is
-
-for Project_Files use ("basic_goto.gpr", "array_viewing.gpr");
-
-end whole;

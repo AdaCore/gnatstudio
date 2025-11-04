@@ -1,5 +1,0 @@
-project Foo is
-
-   for Main use ("hello.adb");
-
-end Foo;

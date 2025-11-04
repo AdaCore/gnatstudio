@@ -1,4 +1,0 @@
-title: 'S530-024.macros.completion'
-#  the test fails with pynput
-skip:
-    - ['SKIP', 'env.build.os.name == "windows"']

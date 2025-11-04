@@ -1,7 +1,0 @@
-project p is
-   for Main use ("bla.adb");
-   package Compiler is
-	   for Switches ("Ada") use ("-g", "-O0");
-   end Compiler;
-end p;
-

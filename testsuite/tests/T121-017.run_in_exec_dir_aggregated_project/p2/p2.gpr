@@ -1,7 +1,0 @@
-
-project P2 is
-
-   for Main use ("main2.adb");
-   for Object_Dir use "obj";
-
-end P2;

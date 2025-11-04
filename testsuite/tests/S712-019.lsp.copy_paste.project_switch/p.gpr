@@ -1,3 +1,0 @@
-project P is
-  for source_dirs use ("p_src");
-end P;

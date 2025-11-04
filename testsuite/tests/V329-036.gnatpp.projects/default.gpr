@@ -1,6 +1,0 @@
-with "imported.gpr";
-
-project Default is
-
-end Default;
-

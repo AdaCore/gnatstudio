@@ -1,7 +1,0 @@
-project p is
-   for languages use ("C");
-   for main use ("t.c");
-   package compiler is
-      for switches ("C") use ("-g", "-O0");
-   end compiler;
-end p;

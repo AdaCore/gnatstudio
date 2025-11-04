@@ -1,7 +1,0 @@
-project Default is
-
-   package Compiler is
-      for Default_Switches ("Ada") use ("-g", "-O2");
-   end Compiler;
-
-end Default;

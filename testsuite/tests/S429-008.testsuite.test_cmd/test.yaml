@@ -1,4 +1,0 @@
-title: 'S429-008.testsuite.test_cmd'
-# On windows the --version output is not shown in stdout, so skip the test
-skip:
-    - ['SKIP', 'env.build.os.name == "windows"']

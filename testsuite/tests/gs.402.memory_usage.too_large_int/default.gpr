@@ -1,6 +1,0 @@
-project Default is
-
-   for Target use "riscv32-elf";
-   for Runtime ("ada") use "light-hifive1";
-
-end Default;

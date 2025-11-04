@@ -1,3 +1,0 @@
-project Default is
-   for Main use ("foo.adb");
-end Default;

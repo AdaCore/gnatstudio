@@ -1,3 +1,0 @@
-project p is
-   for main use ("main");
-end p;

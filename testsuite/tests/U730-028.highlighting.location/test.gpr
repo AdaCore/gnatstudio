@@ -1,3 +1,0 @@
-project Test is
-   for Main use ("foo.adb");
-end Test;

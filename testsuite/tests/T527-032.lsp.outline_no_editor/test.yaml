@@ -1,3 +1,0 @@
-title: 'T527-032.lsp.outline_no_editor'
-skip:
-    - [SKIP, 'env.valgrind_cmd != []']

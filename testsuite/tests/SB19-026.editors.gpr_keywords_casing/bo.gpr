@@ -1,4 +1,0 @@
-bo.gpr:
-project Bo is
-   for Languages use ();
-end Bo;

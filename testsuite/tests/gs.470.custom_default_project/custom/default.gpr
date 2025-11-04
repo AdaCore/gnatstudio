@@ -1,7 +1,0 @@
-project Default is
-
-   package Compiler is
-      for Switches ("Ada") use ("-g", "-Og", "-gnatwa", "-gnatyy");
-   end Compiler;
-
-end Default;

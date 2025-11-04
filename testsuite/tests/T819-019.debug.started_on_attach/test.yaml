@@ -1,3 +1,0 @@
-title: 'T819-019.debug.started_on_attach'
-skip:
-    - ['SKIP', 'env.build.os.name == "windows"']

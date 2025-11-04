@@ -1,5 +1,0 @@
-project Prj3 is
-
-   for Source_Dirs use ("prj3");
-
-end Prj3;

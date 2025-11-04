@@ -1,3 +1,0 @@
-project p is
-   for Languages use ("C");
-end p;

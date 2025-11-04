@@ -1,3 +1,0 @@
-title: 'SA17-019.debug.attach.gdb_mi'
-skip:
-    - ['SKIP', 'env.build.os.name == "windows"']

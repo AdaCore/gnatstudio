@@ -1,6 +1,0 @@
-title: 'debug.parsing.ada'
-
-# U713-019: This test fails due to changes made in both GNAT and
-# GDB regarding due to changes done in minimal encodings
-skip:
-    - ['SKIP', 'True']

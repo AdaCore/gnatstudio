@@ -1,8 +1,0 @@
-project Default is
-
-   package Compiler is
-      for Switches ("ada") use ("-gnat2022");
-   end Compiler;
-
-end Default;
-

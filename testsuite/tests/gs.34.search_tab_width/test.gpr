@@ -1,5 +1,0 @@
-project Test is
-
-   for Languages use ("C", "Ada");
-
-end Test;

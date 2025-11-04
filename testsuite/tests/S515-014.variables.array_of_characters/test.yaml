@@ -1,3 +1,0 @@
-title: 'S515-014.variables.array_of_characters'
-skip:
-    - [SKIP, 'env.valgrind_cmd != []']

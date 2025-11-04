@@ -1,5 +1,0 @@
-project Test is
-   package Builder is
-      for Switches ("Ada") use ("-gnatwu");
-   end Builder;
-end Test;

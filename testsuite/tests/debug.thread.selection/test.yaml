@@ -1,3 +1,0 @@
-title: 'debug.thread.selection'
-skip:
-    - ['SKIP', 'env.build.os.name == "windows"']

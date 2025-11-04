@@ -1,5 +1,0 @@
-project Default is
-
-   for Main use ("hello.adb");
-
-end Default;

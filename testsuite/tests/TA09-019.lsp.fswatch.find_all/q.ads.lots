@@ -1,5 +1,0 @@
-with P; use P;
-package Q is
-   Other   : Integer := Foo + Foo + Foo;
-   Other_2 : Integer := Foo;
-end Q;

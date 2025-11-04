@@ -1,3 +1,0 @@
-with "subp";
-project p is
-end p;

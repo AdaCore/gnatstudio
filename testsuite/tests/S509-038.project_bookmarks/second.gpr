@@ -1,3 +1,0 @@
-project Second is
-  for Source_Dirs use (".", "b");
-end Second;

@@ -1,3 +1,0 @@
-title: 'S724-019.lsp.symlinks'
-skip:
-    - ['SKIP', 'env.build.os.name == "windows"']

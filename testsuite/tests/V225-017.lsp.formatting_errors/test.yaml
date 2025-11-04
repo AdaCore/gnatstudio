@@ -1,4 +1,0 @@
-title: 'V225-017.lsp.formatting_errors'
-skip:
-    # This was a gnatpp test, need to be rewritten for gnatformat
-    - ['XFAIL', 'True']

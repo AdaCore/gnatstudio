@@ -1,5 +1,0 @@
-project Imported is
-
-   for Source_Dirs use ("src");
-
-end Imported;

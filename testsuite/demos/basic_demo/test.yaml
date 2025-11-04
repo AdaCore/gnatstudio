@@ -1,3 +1,0 @@
-title: 'basic_demo'
-skip:
-    - ['SKIP', 'env.build.os.name == "windows"']

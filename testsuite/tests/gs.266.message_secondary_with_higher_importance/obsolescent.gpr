@@ -1,8 +1,0 @@
-project Obsolescent is
-
-   for Source_Dirs use ("src");
-
-   package Builder is
-      for Default_Switches ("Ada") use ("-gnatwj", "-f");
-   end Builder;
-end Obsolescent;
