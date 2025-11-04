@@ -1,7 +1,0 @@
-pragma Restrictions (No_Dependence => Ada.Asynchronous_Task_Control);
-pragma Restrictions (Max_Asynchronous_Select_Nesting => 0);
-pragma Restrictions (No_Abort_Statements);
---  pragma Restrictions (No_Streams);
---  pragma Initialize_Scalars;
-
-pragma Suppress (Accessibility_Check);  --  See U224-008
