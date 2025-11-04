@@ -25,22 +25,35 @@
 */*/obj/codepeer/*
 !gps/obj/gps-gdb.py
 .#*
-./Makefile
+# Old Makefile/configure infrastructure removed - using pure Alire build
+# ./Makefile (deleted)
+# Makefile.common (deleted)
+# /Makefile (deleted)
+# shared.gpr (NOW STATIC - in git)
+# common/common.gpr (NOW STATIC - in git)
+# common/expect/Makefile (deleted)
+# common/core/src/config.ads (NOW STATIC - in git)
+
+# Alire workspace (managed by alr)
+/alire/
+/config/
+
+# Build artifacts and generated files
+Makefile
+configure~
+/bin/
+test_headless/bin/
+tests/bin/
+
 .gpsrcs
 .gpssnprj
 .clang-format
 !testsuite/tests/V107-003.clangd.format_files/src/.clang-format
-Makefile.common
 autom4te.cache
 b~*
 b__*
 *.d
 *.cgpr
-/Makefile
-shared.gpr
-common/common.gpr
-common/expect/Makefile
-common/core/src/config.ads
 common/core/obj/*
 gnatinspect.db*
 *-msg.xml
