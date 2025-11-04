@@ -10,9 +10,9 @@ licenses = "GPL-3.0-or-later"
 website = "https://github.com/AdaCore/gnatstudio"
 tags = ["ide", "ada", "spark", "editor", "development"]
 
-executables = ["gnatstudio", "gnatstudio_cli", "gnatdoc3"]
+executables = ["gnatstudio_cli", "gnatdoc3"]
 
-project-files = ["gps_aggregated.gpr"]
+project-files = ["cli/cli.gpr"]
 
 [[depends-on]]
 gnatcoll = "~25.0"
@@ -41,6 +41,9 @@ vss = "~25.0"
 
 [[depends-on]]
 libgpr = "~25.0"
+
+[[depends-on]]
+templates_parser = "~25.0"
 
 [gpr-externals]
 BUILD = ["Debug", "Production", "AddressSanitizer", "Coverage"]
