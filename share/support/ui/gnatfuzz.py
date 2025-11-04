@@ -664,6 +664,17 @@ class GNATfuzzPlugin(Module):
         GPS.execute_action("open GNATfuzz fuzz crashes view")
         GPS.execute_action("open GNATfuzz test cases view")
 
+        # Wait for the fuzz session directory to be created
+        while not os.path.exists(fuzz_session_dir):
+            yield promises.timeout(FUZZ_MONITOR_TIMEOUT)
+            # Check if the fuzz process is still running
+            tasks = [t for t in GPS.Task.list() if t.name() == "gnatfuzz fuzz"]
+            if len(tasks) == 0:
+                self.error(
+                    "gnatfuzz fuzz process terminated before creating session directory"
+                )
+                return
+
         # Monitor the disk for the presence of xcov files
 
         while True:
