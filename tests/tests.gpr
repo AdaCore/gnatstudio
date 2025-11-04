@@ -1,0 +1,21 @@
+with "aunit";
+with "vss_text";
+
+project Tests is
+
+   for Languages use ("Ada");
+   for Source_Dirs use ("src");
+   for Main use ("test_runner.adb");
+   for Object_Dir use "obj";
+   for Exec_Dir use "bin";
+
+   package Builder is
+      for Executable ("test_runner.adb") use "test_runner";
+      for Switches ("Ada") use ("-g");
+   end Builder;
+
+   package Compiler is
+      for Switches ("Ada") use ("-gnat2022", "-g", "-gnatwa", "-gnata");
+   end Compiler;
+
+end Tests;

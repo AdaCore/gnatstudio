@@ -48,6 +48,9 @@ vss = "~25.0"
 [[depends-on]]
 libgpr = "~25.0"
 
+[[depends-on]]
+aunit = "~25.0"
+
 # templates_parser removed - only needed for gnatdoc (temporarily disabled)
 # [[depends-on]]
 # templates_parser = "~25.0"
