@@ -1,0 +1,62 @@
+name = "gnatstudio"
+description = "GNAT Studio - A lightweight, extensible IDE for Ada, SPARK, C, and C++"
+version = "25.0.0-dev"
+
+authors = ["AdaCore"]
+maintainers = ["rebecca@berkeleynerd"]
+maintainers-logins = ["berkeleynerd"]
+
+licenses = "GPL-3.0-or-later"
+website = "https://github.com/AdaCore/gnatstudio"
+tags = ["ide", "ada", "spark", "editor", "development"]
+
+executables = ["gnatstudio", "gnatstudio_cli", "gnatdoc3"]
+
+project-files = ["gps_aggregated.gpr"]
+
+[[depends-on]]
+gnatcoll = "~25.0"
+
+[[depends-on]]
+gnatcoll_sqlite = "~25.0"
+
+[[depends-on]]
+gnatcoll_xref = "~25.0"
+
+[[depends-on]]
+gnatcoll_python3 = "~23.0"
+
+[[depends-on]]
+gtkada = "~25.0"
+
+[[depends-on]]
+xmlada = "~25.0"
+
+[[depends-on]]
+vss = "~25.0"
+
+[[depends-on]]
+libgpr = "~25.0"
+
+[gpr-externals]
+BUILD = ["Debug", "Production", "AddressSanitizer", "Coverage"]
+LIBRARY_TYPE = ["static", "relocatable", "static-pic"]
+
+[gpr-set-externals]
+BUILD = "Debug"
+LIBRARY_TYPE = "static"
+
+[environment]
+# Ensure Python bindings are available from Homebrew
+PATH.prepend = "/opt/homebrew/bin"
+PKG_CONFIG_PATH.prepend = "/opt/homebrew/lib/pkgconfig"
+
+[build-switches]
+"*".ada_compiler_switches = [
+    "-gnatwa",  # Enable all warnings
+    "-gnatyg",  # GNAT style checks
+]
+
+[origin]
+commit = "bf92c34419"
+url = "https://github.com/berkeleynerd/gnatstudio.git"
