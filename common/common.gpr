@@ -1,5 +1,6 @@
-with "gnatcoll_sqlite.gpr";
-with "gnatcoll_xref.gpr";
+-- Removed per PLAN.md - LSP replaces these
+-- with "gnatcoll_sqlite.gpr";
+-- with "gnatcoll_xref.gpr";
 with "../shared";
 with "vss_text";
 with "xmlada_sax";
@@ -11,6 +12,7 @@ project Common is
    for Object_Dir use Shared'Object_Dir;
 
    package Compiler is
+      for Driver ("C") use "/usr/bin/clang";
       for Switches ("Ada") use Shared.Compiler'Switches ("Ada");
       for Switches ("C") use Shared.Compiler'Switches ("C");
       for Switches ("test_htables.adb") use ("-g", "-O2", "-gnatwue");
@@ -32,7 +34,7 @@ project Common is
 
    package Linker extends Shared.Linker is
       for Linker_Options use Shared.Linker'Linker_Options &
-        @TARGET_LFLAGS@;
+        () & ("-lutil");
    end Linker;
 
    package Coverage is
