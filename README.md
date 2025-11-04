@@ -28,12 +28,18 @@ See `PLAN.md` for detailed roadmap.
 # Prerequisites: Alire package manager
 # Install from https://alire.ada.dev
 
+# CRITICAL: Fix GNAT toolchain headers (macOS 26 only)
+./fix_toolchain.sh
+
 # Build
 alr build
 
 # Run test
 ./test_headless/bin/test_pure_ada
 ```
+
+**⚠️ macOS 26 Users:** You MUST run `./fix_toolchain.sh` before building.
+See `TOOLCHAIN_FIX.md` for complete technical details.
 
 ### Requirements
 

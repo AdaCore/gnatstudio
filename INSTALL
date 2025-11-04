@@ -33,6 +33,33 @@ Prerequisites
    sudo ln -s MacOSX15.5.sdk /Library/Developer/CommandLineTools/SDKs/MacOSX14.sdk
    ```
 
+4. **CRITICAL: Fix GNAT Toolchain Headers (macOS 26)**
+
+   **REQUIRED for macOS 26 (Darwin 25.0.0):**
+
+   The Alire GNAT 15.1.2 toolchain has broken include-fixed headers
+   that prevent C code compilation. Run the fix script:
+
+   ```bash
+   ./fix_toolchain.sh
+   ```
+
+   This removes broken headers and allows GCC to use correct system headers.
+
+   **⚠️  IMPORTANT:** This fix is TEMPORARY
+   - Stored in ~/.local/share/alire/toolchains/ (outside git)
+   - Will be lost if Alire reinstalls the toolchain
+   - Must be re-applied after toolchain updates
+   - Required for all developers on macOS 26
+
+   Without this fix, you'll see errors like:
+   ```
+   error: unknown type name 'FILE'
+   note: 'FILE' is defined in header '<stdio.h>'
+   ```
+
+   See `fix_toolchain.sh` for technical details.
+
 Building
 ========
 
