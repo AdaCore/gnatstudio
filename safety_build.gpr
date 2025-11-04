@@ -29,12 +29,14 @@ with "common/common";
 with "language/language";
 with "toolchains_editor/core/toolchains_core";
 with "kernel/kernel_core";
-with "vfs/vfs";
 with "prj_editor/prj_core";
 with "builder/builder_core";
 with "ada_module/core/ada_module_core";
 with "refactoring/core/refactoring_core";
 with "codefix/core/codefix_core";
+
+-- vfs/ module completely deleted - was only 2-file GPS wrapper
+-- Actual VFS functionality comes from GNATCOLL.VFS library (imported by kernel_core)
 
 project Safety_Build is
 

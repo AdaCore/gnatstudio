@@ -11,11 +11,8 @@ project Codefix_Core is
    for Languages use ("Ada");
    for Object_Dir use Shared'Object_Dir;
 
-   --  Exclude files that need GPS.Kernel (full kernel, not kernel_core)
-   --  These are specific parsers that integrate with GPS UI
-   for Excluded_Source_Files use (
-      "codefix-gnat_parser.ads", "codefix-gnat_parser.adb"
-   );
+   --  GPS.Kernel-dependent parser deleted - was only for GUI integration
+   --  No exclusions needed
 
    package Compiler renames Shared.Compiler;
 
