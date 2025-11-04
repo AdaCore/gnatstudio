@@ -10,7 +10,7 @@ licenses = "GPL-3.0-or-later"
 website = "https://github.com/AdaCore/gnatstudio"
 tags = ["ide", "ada", "spark", "editor", "development"]
 
-executables = ["gnatstudio_cli", "gnatdoc3"]
+executables = ["gnatstudio_cli"]
 
 project-files = ["cli/cli.gpr"]
 
@@ -42,15 +42,17 @@ vss = "~25.0"
 [[depends-on]]
 libgpr = "~25.0"
 
-[[depends-on]]
-templates_parser = "~25.0"
+# templates_parser removed - only needed for gnatdoc (temporarily disabled)
+# [[depends-on]]
+# templates_parser = "~25.0"
 
 [gpr-externals]
 BUILD = ["Debug", "Production", "AddressSanitizer", "Coverage"]
 LIBRARY_TYPE = ["static", "relocatable", "static-pic"]
 
 [gpr-set-externals]
-BUILD = "Debug"
+# Don't set BUILD - let dependencies use their own defaults
+# BUILD = "Debug"
 LIBRARY_TYPE = "static"
 
 [environment]

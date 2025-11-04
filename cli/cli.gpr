@@ -5,14 +5,17 @@ with "../kernel/kernel_core";
 -- with "../python/python_core";
 with "../builder/builder_core";
 with "../ada_module/core/ada_module_core";
-with "../gnatdoc/gnatdoc";
+-- gnatdoc removed temporarily - templates_parser Alire package issue
+-- with "../gnatdoc/gnatdoc";
 with "../prj_editor/prj_core";
-with "../lal/lal_core";
+-- lal removed temporarily - requires libadalang and gnatcoll_python
+-- with "../lal/lal_core";
 
 project CLI is
 
    for Languages use ("Ada");
-   for Main use ("gps-cli.adb", "gnatdoc_main.adb");
+   -- Removed gnatdoc_main.adb - gnatdoc temporarily disabled
+   for Main use ("gps-cli.adb");
 
    for Source_Dirs use ("src");
    for Object_Dir use Shared'Object_Dir;
