@@ -49,6 +49,9 @@ aunit = "~25.0"
 spawn = "~25.0"
 
 [[depends-on]]
+spawn_glib = "~25.0"
+
+[[depends-on]]
 ada_language_server = "~25.0"
 
 # templates_parser removed - only needed for gnatdoc (temporarily disabled)
