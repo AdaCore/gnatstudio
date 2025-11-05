@@ -66,17 +66,17 @@ with LSP.JSON_Streams;
 with LSP.Messages;
 with LSP.Types;
 
-with GPS.Kernel;           use GPS.Kernel;
+with GPS.LSP_Client.Callbacks;
 limited private with GPS.LSP_Client.Language_Servers;
 with Language;             use Language;
 
 package GPS.LSP_Client.Requests is
 
    type LSP_Request
-     (Kernel : GPS.Kernel.Kernel_Handle) is
+     (Callbacks : GPS.LSP_Client.Callbacks.LSP_Callback_Access := null) is
      abstract tagged limited private;
-   --  Do not fill Kernel if an answer on request should not be skipped
-   --  when Kernel is destroying
+   --  Callbacks is optional - allows request processing without IDE integration
+   --  when Callbacks is null, request should not access IDE features
 
    type Request_Access is access all LSP_Request'Class;
 
@@ -221,7 +221,7 @@ private
    overriding procedure Adjust (Self : in out Abstract_Reference);
    overriding procedure Finalize (Self : in out Abstract_Reference);
 
-   type LSP_Request (Kernel : GPS.Kernel.Kernel_Handle) is
+   type LSP_Request (Callbacks : GPS.LSP_Client.Callbacks.LSP_Callback_Access := null) is
      abstract tagged limited record
       Id         : LSP.Types.LSP_Number_Or_String;
       --  Identifier of the processing request.

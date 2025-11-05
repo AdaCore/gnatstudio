@@ -1,0 +1,46 @@
+------------------------------------------------------------------------------
+-- LSP Client Core - Protocol Layer Only
+--
+-- Purpose: Pure LSP client protocol implementation (no GUI)
+-- Used by: PLAN.md Phase 5 (LSP support in TUI)
+--
+-- Dependencies:
+--   External: vss, spawn, ada_language_server (for LSP.* packages)
+--   Internal: kernel_core, language, shared
+--
+-- What's Included:
+--   - LSP client lifecycle (start/stop/restart)
+--   - All LSP request types (hover, completion, references, etc.)
+--   - LSP response handling
+--   - Text document synchronization
+--   - Server configuration (ALS, clangd)
+--
+-- What's Excluded:
+--   - GUI integration (moved to deleted_gui/)
+--   - Editor buffer conversions
+--   - GTK widgets, popups, views
+--   - Python shell bindings
+--   - GPS module registration
+--
+-- Build: alr exec -- gprbuild -P lsp_client/core/lsp_client_core.gpr
+------------------------------------------------------------------------------
+
+with "vss_text";
+with "spawn";
+
+-- From ada_language_server package
+-- Provides LSP.Clients, LSP.Messages, LSP.Types packages
+with "lsp_client";
+
+with "../../kernel/kernel_core";
+with "../../language/language";
+with "../../shared";
+
+project LSP_Client_Core is
+
+   for Source_Dirs use ("src");
+   for Object_Dir use Shared'Object_Dir;
+
+   package Compiler renames Shared.Compiler;
+
+end LSP_Client_Core;

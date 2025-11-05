@@ -28,7 +28,7 @@ private with VSS.Strings;
 
 with Glib.Main;
 
-with GPS.Kernel;
+with GPS.LSP_Client.Callbacks;
 with GPS.LSP_Client.Requests;
 with GPS.LSP_Client.Text_Documents;
 
@@ -89,9 +89,9 @@ package GPS.LSP_Clients is
    ----------------
 
    type LSP_Client
-     (Kernel   : not null access GPS.Kernel.Kernel_Handle_Record'Class;
-      Listener : not null access LSP_Client_Listener'Class;
-      Language : not null access Language_Root'Class)
+     (Callbacks : not null access GPS.LSP_Client.Callbacks.LSP_Callback_Interface'Class;
+      Listener  : not null access LSP_Client_Listener'Class;
+      Language  : not null access Language_Root'Class)
    is limited new LSP.Clients.Client
      and GPS.LSP_Client.Text_Documents.Text_Document_Server_Proxy
    with private;
@@ -253,9 +253,9 @@ private
      (Ada.Calendar.Time);
 
    type LSP_Client
-     (Kernel   : not null access GPS.Kernel.Kernel_Handle_Record'Class;
-      Listener : not null access LSP_Client_Listener'Class;
-      Language : not null access Language_Root'Class) is
+     (Callbacks : not null access GPS.LSP_Client.Callbacks.LSP_Callback_Interface'Class;
+      Listener  : not null access LSP_Client_Listener'Class;
+      Language  : not null access Language_Root'Class) is
    limited new LSP.Clients.Client
      and GPS.LSP_Client.Text_Documents.Text_Document_Server_Proxy
    with record
