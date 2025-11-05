@@ -22,12 +22,12 @@ with GNATCOLL.VFS; use GNATCOLL.VFS;
 with GNATCOLL.JSON;
 with Spawn.String_Vectors;
 
-with GPS.Kernel;
+with GPS.LSP_Client.Callbacks;
 
 package GPS.LSP_Client.Configurations is
 
    type Server_Configuration
-     (Kernel : not null access GPS.Kernel.Kernel_Handle_Record'Class)
+     (Callbacks : not null access GPS.LSP_Client.Callbacks.LSP_Callback_Interface'Class)
    is tagged limited record
       Server_Program    : Virtual_File;
       --  The executable to launch for this server

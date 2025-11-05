@@ -26,8 +26,6 @@ with GNATCOLL.VFS; use GNATCOLL.VFS;
 
 private with VSS.Strings;
 
-with Glib.Main;
-
 with GPS.LSP_Client.Callbacks;
 with GPS.LSP_Client.Requests;
 with GPS.LSP_Client.Text_Documents;
@@ -307,8 +305,8 @@ private
       Errors_Writable_File : GNATCOLL.VFS.Writable_File;
       --  For redirecting standard errors to the file
 
-      Restart_Timer                  : Glib.Main.G_Source_Id :=
-                                         Glib.Main.No_Source_Id;
+      Restart_Timer                  : GPS.LSP_Client.Callbacks.Timer_Id :=
+                                         GPS.LSP_Client.Callbacks.No_Timer;
       --  Timer to postpone restart of the language server to allow to process
       --  all notifications for currently shutting down language server
       --  process.
@@ -357,7 +355,7 @@ private
      (Self : LSP_Client) return VSS.Strings.Virtual_String;
    --  Return unique prefix to generate request id.
 
-   overriding function Server_Language
+   function Server_Language
      (Self : LSP_Client) return VSS.Strings.Virtual_String;
 
    -------------------------------------------

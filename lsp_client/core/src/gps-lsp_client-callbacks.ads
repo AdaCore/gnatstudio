@@ -82,6 +82,34 @@ package GPS.LSP_Client.Callbacks is
    -- Null Implementation (for testing and minimal use)
    ------------------------------
 
+   ---------------------
+   -- Event Loop / Timers
+   ---------------------
+
+   type Timer_Id is new Natural;
+   No_Timer : constant Timer_Id := 0;
+   --  Abstract timer identifier (replaces Glib.Main.G_Source_Id)
+
+   type Timer_Callback is access procedure;
+   --  Callback procedure for timer expiration
+
+   procedure Schedule_Timer
+     (Self     : LSP_Callback_Interface;
+      Interval : Natural;
+      Callback : Timer_Callback;
+      Timer    : out Timer_Id) is abstract;
+   --  Schedule a timer to call Callback after Interval milliseconds
+   --  Returns Timer identifier for later cancellation
+
+   procedure Cancel_Timer
+     (Self  : LSP_Callback_Interface;
+      Timer : in out Timer_Id) is abstract;
+   --  Cancel a previously scheduled timer
+
+   ------------------------------
+   -- Null Implementation (for testing and minimal use)
+   ------------------------------
+
    type Null_Callback is new LSP_Callback_Interface with null record;
    --  Minimal implementation that does nothing
    --  Useful for testing or when IDE features not needed
@@ -106,5 +134,17 @@ package GPS.LSP_Client.Callbacks is
    overriding function Get_Project_Path
      (Self : Null_Callback)
       return GNATCOLL.VFS.Virtual_File is (GNATCOLL.VFS.No_File);
+
+   overriding procedure Schedule_Timer
+     (Self     : Null_Callback;
+      Interval : Natural;
+      Callback : Timer_Callback;
+      Timer    : out Timer_Id);
+   --  No-op implementation: timers disabled
+
+   overriding procedure Cancel_Timer
+     (Self  : Null_Callback;
+      Timer : in out Timer_Id);
+   --  No-op implementation
 
 end GPS.LSP_Client.Callbacks;

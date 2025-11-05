@@ -19,7 +19,7 @@ with Ada.Strings.Unbounded;
 
 with LSP.Types;
 
-with GPS.Kernel;
+with GPS.LSP_Client.Callbacks;
 with GPS.LSP_Client.Configurations;
 limited with GPS.LSP_Client.Language_Servers.Interceptors;
 with GPS.LSP_Clients;
@@ -29,8 +29,8 @@ with Language; use Language;
 package GPS.LSP_Client.Language_Servers.Real is
 
    type Real_Language_Server
-     (Kernel              : not null access
-        GPS.Kernel.Kernel_Handle_Record'Class;
+     (Callbacks           : not null access
+        GPS.LSP_Client.Callbacks.LSP_Callback_Interface'Class;
       Configuration       : not null access
         GPS.LSP_Client.Configurations.Server_Configuration'Class;
       Server_Interceptor  : not null access
@@ -43,7 +43,7 @@ package GPS.LSP_Client.Language_Servers.Real is
      and GPS.LSP_Clients.LSP_Client_Listener with
    record
       Client    : aliased GPS.LSP_Clients.LSP_Client
-        (Kernel, Real_Language_Server'Unchecked_Access, Language);
+        (Callbacks, Real_Language_Server'Unchecked_Access, Language);
       Destroyed : Boolean := False;
       --  Set when module was destroyed.
    end record;

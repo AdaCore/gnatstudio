@@ -41,6 +41,22 @@ project LSP_Client_Core is
    for Source_Dirs use ("src");
    for Object_Dir use Shared'Object_Dir;
 
+   --  Exclude files that need GUI integration or formatting callback
+   --  Most protocol requests compile with minimal utilities (pure conversions only)
+   for Excluded_Source_Files use (
+      --  Needs deleted_gui dialog
+      "gps-lsp_client-requests-check_syntax.ads",
+      "gps-lsp_client-requests-check_syntax.adb",
+
+      --  Formatting requests need Get_Formatting_Options callback (add in Phase 5)
+      "gps-lsp_client-requests-document_formatting.ads",
+      "gps-lsp_client-requests-document_formatting.adb",
+      "gps-lsp_client-requests-range_formatting.ads",
+      "gps-lsp_client-requests-range_formatting.adb",
+      "gps-lsp_client-requests-on_type_formatting.ads",
+      "gps-lsp_client-requests-on_type_formatting.adb"
+   );
+
    package Compiler renames Shared.Compiler;
 
 end LSP_Client_Core;

@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                               GNAT Studio                                --
 --                                                                          --
---                       Copyright (C) 2020-2023, AdaCore                   --
+--                        Copyright (C) 2025, AdaCore                       --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -15,31 +15,37 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with LSP.Messages;
+package body GPS.LSP_Client.Callbacks is
 
-with GPS.LSP_Client.Callbacks;
-with GPS.LSP_Clients;
+   ---------------------
+   -- Schedule_Timer --
+   ---------------------
 
-package GPS.LSP_Client.Configurations.Clangd is
+   overriding procedure Schedule_Timer
+     (Self     : Null_Callback;
+      Interval : Natural;
+      Callback : Timer_Callback;
+      Timer    : out Timer_Id)
+   is
+      pragma Unreferenced (Self, Interval, Callback);
+   begin
+      Timer := No_Timer;
+      --  Null implementation: timers are disabled
+      --  Server auto-restart will not work, but manual restart is fine
+   end Schedule_Timer;
 
-   type Clangd_Configuration is new Server_Configuration with private;
+   -------------------
+   -- Cancel_Timer --
+   -------------------
 
-   overriding procedure Prepare_Configuration_Settings
-     (Self : in out Clangd_Configuration);
+   overriding procedure Cancel_Timer
+     (Self  : Null_Callback;
+      Timer : in out Timer_Id)
+   is
+      pragma Unreferenced (Self);
+   begin
+      Timer := No_Timer;
+      --  Null implementation: nothing to cancel
+   end Cancel_Timer;
 
-   procedure On_Server_Capabilities
-     (Capabilities : in out LSP.Messages.ServerCapabilities);
-
-   procedure Set_Standard_Errors_File
-     (Callbacks : not null access GPS.LSP_Client.Callbacks.LSP_Callback_Interface'Class;
-      Client    : in out GPS.LSP_Clients.LSP_Client);
-   --  clangd uses stderr for outputing logging messages, so define log file
-   --  for this output.
-
-   --  Register procedure removed - was GPS module registration (GUI only)
-
-private
-
-   type Clangd_Configuration is new Server_Configuration with null record;
-
-end GPS.LSP_Client.Configurations.Clangd;
+end GPS.LSP_Client.Callbacks;
