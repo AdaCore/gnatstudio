@@ -37,7 +37,9 @@ package body DAP.Clients.Stack_Trace.StackTrace is
       return StackTrace_Request_Access
    is
       Self : constant StackTrace_Request_Access :=
-        new StackTrace_Request (GPS.Kernel.Kernel_Handle (Client.Kernel));
+        new StackTrace_Request
+          (Kernel    => GPS.Kernel.Kernel_Handle (Client.Kernel),
+           Callbacks => Client.Callbacks);
    begin
       Self.Parameters.arguments.threadId := Client.Get_Current_Thread;
       if Limit /= 0 then
