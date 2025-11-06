@@ -37,7 +37,7 @@ For each group below, migrate spec/body into `dap/core/src` (using the new
 callback base), update GUI helpers to rely on the adapter, and remove the GUI
 copy once validated.
 
-1. Stack Trace
+1. Stack Trace *(see `dap/STACKTRACE_CALLBACK_DESIGN.md` for callback details)*
    - [ ] `dap-requests-stacktrace.*`
    - [ ] `dap-clients-stack_trace-stacktrace.*`
 2. Continue / Step / Pause
