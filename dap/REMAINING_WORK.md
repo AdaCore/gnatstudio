@@ -16,6 +16,8 @@ callback mechanisms.
   `dap/core/src` to begin the core split.
 - Core build succeeds (`alr exec -- gprbuild -P dap/core/dap_core.gpr -p`) and
   the guardrail now includes `dap_core` via `safety_build.gpr`.
+- Introduced `GPS.DAP_Client.Callbacks` (with `Null_Callback`) as the headless
+  facade that will replace direct `GPS.Kernel` usage inside protocol units.
 
 ## Current State (Problems)
 
