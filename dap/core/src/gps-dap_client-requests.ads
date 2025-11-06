@@ -13,8 +13,6 @@ with VSS.Strings;
 
 package GPS.DAP_Client.Requests is
 
-   pragma Preelaborate;
-
    type Request
      (Callbacks : not null access
         GPS.DAP_Client.Callbacks.DAP_Callback_Interface'Class)

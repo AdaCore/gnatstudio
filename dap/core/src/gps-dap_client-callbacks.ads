@@ -6,9 +6,9 @@
 --  layer stays decoupled from GPS.Kernel/GtkAda.                           --
 ------------------------------------------------------------------------------
 
-package GPS.DAP_Client.Callbacks is
+with DAP.Tools;
 
-   pragma Preelaborate;
+package GPS.DAP_Client.Callbacks is
 
    type Trace_Mode is (Trace_Error, Trace_Warning, Trace_Info, Trace_Debug);
 
@@ -37,6 +37,28 @@ package GPS.DAP_Client.Callbacks is
       Message : String) is abstract;
    --  Hook invoked when a DAP response is flagged as an error.
 
+   procedure On_Stacktrace_Frames
+     (Self        : DAP_Callback_Interface;
+      Thread_Id   : Integer;
+      Start_Frame : Natural;
+      Response    : DAP.Tools.StackTraceResponse;
+      Append_More : out Boolean) is abstract;
+   --  Merge frames into the host cache. Set Append_More=False to stop paging.
+
+   procedure On_Stacktrace_Selected
+     (Self      : DAP_Callback_Interface;
+      Thread_Id : Integer;
+      Frame_Id  : Integer) is abstract;
+   --  Notify host that a frame has been selected for display.
+
+   procedure On_Stacktrace_Fetch_Complete
+     (Self          : DAP_Callback_Interface;
+      Thread_Id     : Integer;
+      Success       : Boolean;
+      Initial_Fetch : Boolean) is abstract;
+   --  Inform host that the fetch cycle finished (initial vs incremental).
+   --  Hook invoked when a DAP response is flagged as an error.
+
    type Null_Callback is new DAP_Callback_Interface with null record;
    --  No-op implementation used by guard rails and tests.
 
@@ -56,5 +78,23 @@ package GPS.DAP_Client.Callbacks is
      (Self    : Null_Callback;
       Method  : String;
       Message : String);
+
+   overriding procedure On_Stacktrace_Frames
+     (Self        : Null_Callback;
+      Thread_Id   : Integer;
+      Start_Frame : Natural;
+      Response    : DAP.Tools.StackTraceResponse;
+      Append_More : out Boolean);
+
+   overriding procedure On_Stacktrace_Selected
+     (Self      : Null_Callback;
+      Thread_Id : Integer;
+      Frame_Id  : Integer);
+
+   overriding procedure On_Stacktrace_Fetch_Complete
+     (Self          : Null_Callback;
+      Thread_Id     : Integer;
+      Success       : Boolean;
+      Initial_Fetch : Boolean);
 
 end GPS.DAP_Client.Callbacks;

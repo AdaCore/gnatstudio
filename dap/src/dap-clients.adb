@@ -333,7 +333,7 @@ package body DAP.Clients is
       Self.Variables   := DAP.Clients.Variables.Variables_Holder_Access'
         (new DAP.Clients.Variables.Variables_Holder (Self.This));
       Self.Callbacks := GPS.DAP_Client.Callbacks.Kernel_Adapter.Create
-        (Self.Kernel);
+        (Self.Kernel, Self.This);
    end Initialize_Client;
 
    ---------------

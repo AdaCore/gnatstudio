@@ -37,4 +37,34 @@ package body GPS.DAP_Client.Callbacks is
       null;
    end On_Request_Error;
 
+   overriding procedure On_Stacktrace_Frames
+     (Self        : Null_Callback;
+      Thread_Id   : Integer;
+      Start_Frame : Natural;
+      Response    : DAP.Tools.StackTraceResponse;
+      Append_More : out Boolean) is
+      pragma Unreferenced (Self, Thread_Id, Start_Frame, Response);
+   begin
+      Append_More := False;
+   end On_Stacktrace_Frames;
+
+   overriding procedure On_Stacktrace_Selected
+     (Self      : Null_Callback;
+      Thread_Id : Integer;
+      Frame_Id  : Integer) is
+      pragma Unreferenced (Self, Thread_Id, Frame_Id);
+   begin
+      null;
+   end On_Stacktrace_Selected;
+
+   overriding procedure On_Stacktrace_Fetch_Complete
+     (Self          : Null_Callback;
+      Thread_Id     : Integer;
+      Success       : Boolean;
+      Initial_Fetch : Boolean) is
+      pragma Unreferenced (Self, Thread_Id, Success, Initial_Fetch);
+   begin
+      null;
+   end On_Stacktrace_Fetch_Complete;
+
 end GPS.DAP_Client.Callbacks;
