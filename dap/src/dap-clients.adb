@@ -46,6 +46,8 @@ with VSS.Strings.Conversions;
 with VSS.Text_Streams.Memory_UTF8_Input;
 with VSS.Text_Streams.Memory_UTF8_Output;
 
+with GPS.DAP_Client.Callbacks.Kernel_Adapter;
+
 with GPS.Editors;                use GPS.Editors;
 with GPS.Editors.Line_Information;
 with GPS.Kernel;                 use GPS.Kernel;
@@ -169,6 +171,9 @@ package body DAP.Clients is
    procedure Clear (Self : in out DAP_Client'Class);
    --  Clear the given DAP client, freeing the managers for breakpoints and
    --  stack traces.
+
+   procedure Free_Callback (Self : in out DAP_Client);
+   --  Release callback adapter instance, if any.
 
    procedure Log
      (Self               : in out DAP_Client'Class;
@@ -326,6 +331,8 @@ package body DAP.Clients is
         (new DAP.Clients.Stack_Trace.Stack_Trace);
       Self.Variables   := DAP.Clients.Variables.Variables_Holder_Access'
         (new DAP.Clients.Variables.Variables_Holder (Self.This));
+      Self.Callbacks := GPS.DAP_Client.Callbacks.Kernel_Adapter.Create
+        (Self.Kernel);
    end Initialize_Client;
 
    ---------------
@@ -1396,41 +1403,80 @@ package body DAP.Clients is
                  or else Request.all in
                    DAP.Requests.Disconnect.Disconnect_DAP_Request'Class
                then
-                  if R_Success.Is_Set
-                    and then not R_Success.Value
-                  then
-                     begin
-                        Request.On_Error_Message (Self'Access, Message);
-                     exception
-                        when E : others =>
-                           Trace (Me, E);
-                     end;
+                  declare
+                     Processing_Allowed : constant Boolean :=
+                       (Self.Callbacks = null
+                        or else Self.Callbacks.Allow_Request_Processing)
+                       and then
+                         (Request.Kernel = null
+                          or else not Request.Kernel.Is_In_Destruction);
+                     Method_Name : constant String := Request.Method;
+                  begin
+                     if R_Success.Is_Set
+                       and then not R_Success.Value
+                     then
+                        declare
+                           UTF8 : constant String :=
+                             VSS.Strings.Conversions.To_UTF_8_String
+                               (Message);
+                        begin
+                           if Self.Callbacks /= null then
+                              Self.Callbacks.On_Request_Error
+                                (Method  => Method_Name,
+                                 Message => UTF8);
+                           end if;
 
-                  else
-                     declare
-                        Parsed : Boolean := True;
-                     begin
-                        if Request.Kernel = null
-                          or else not Request.Kernel.Is_In_Destruction
-                        then
-                           Request.On_Result_Message
-                             (Self'Access, Reader, Parsed, New_Request);
+                           begin
+                              Request.On_Error_Message
+                                (Self'Access, Message);
+                           exception
+                              when E : others =>
+                                 Trace (Me, E);
+                           end;
+                        end;
+
+                     elsif Processing_Allowed then
+                        declare
+                           Parsed : Boolean := True;
+                        begin
+                           declare
+                           begin
+                              Request.On_Result_Message
+                                (Self'Access, Reader, Parsed, New_Request);
+                           exception
+                              when E : others =>
+                                 Trace (Me, E);
+                                 Parsed := False;
+                           end;
 
                            if not Parsed then
+                              if Self.Callbacks /= null then
+                                 Self.Callbacks.On_Request_Error
+                                   (Method  => Method_Name,
+                                    Message => "Can't parse response");
+                              end if;
+
                               Request.On_Error_Message
                                 (Self'Access, "Can't parse response");
                            end if;
+                        end;
+
+                        if Self.Callbacks /= null then
+                           Self.Callbacks.On_Response_Processed (Method_Name);
+                        else
+                           GPS.Kernel.Hooks.Dap_Response_Processed_Hook.Run
+                             (Kernel => Request.Kernel,
+                              Method => Method_Name);
                         end if;
 
-                     exception
-                        when E : others =>
-                           Trace (Me, E);
-                     end;
-                  end if;
-
-                  GPS.Kernel.Hooks.Dap_Response_Processed_Hook.Run
-                    (Kernel => Request.Kernel,
-                     Method => Request.Method);
+                     else
+                        if Self.Callbacks /= null then
+                           Self.Callbacks.On_Request_Error
+                             (Method  => Method_Name,
+                              Message => "Request ignored (shutdown)");
+                        end if;
+                     end if;
+                  end;
                end if;
 
                DAP.Requests.Destroy (Request);
@@ -2328,6 +2374,16 @@ package body DAP.Clients is
       end if;
    end Clear;
 
+   procedure Free_Callback (Self : in out DAP_Client) is
+      procedure Free is new Ada.Unchecked_Deallocation
+        (GPS.DAP_Client.Callbacks.DAP_Callback_Interface'Class,
+         GPS.DAP_Client.Callbacks.DAP_Callback_Access);
+   begin
+      if Self.Callbacks /= null then
+         Free (Self.Callbacks);
+      end if;
+   end Free_Callback;
+
    ---------
    -- Log --
    ---------
@@ -2432,6 +2488,7 @@ package body DAP.Clients is
          Self.Reject_All_Requests;
          Self.Stop;
       end if;
+      Free_Callback (Self);
    end On_Destroy;
 
    ------------------------

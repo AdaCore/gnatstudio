@@ -38,6 +38,8 @@ with GPS.Debuggers;
 with LSP.Raw_Clients;
 
 with DAP.Modules.Histories;
+with GPS.DAP_Client.Callbacks;
+with GPS.DAP_Client.Callbacks.Kernel_Adapter;
 with DAP.Requests;
 with DAP.Types;                  use DAP.Types;
 with DAP.Tools;
@@ -396,6 +398,8 @@ private
 
       Request_Id     : Integer := 1;
       Error_Msg      : VSS.Strings.Virtual_String;
+
+      Callbacks      : GPS.DAP_Client.Callbacks.DAP_Callback_Access := null;
 
       --  to monitoring stoped threads
       Stopped_Threads     : Integer_Sets.Set;
