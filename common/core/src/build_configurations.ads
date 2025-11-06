@@ -411,9 +411,6 @@ package Build_Configurations is
    function Uses_Shell (Target : Target_Access) return Boolean;
    --  Return True if the target uses the $SHELL -cmd "command" to build
 
-   function Uses_Python (Target : Target_Access) return Boolean;
-   --  Return True if the target should be interpreted as a Python line
-
    function Is_Run (Target : Target_Access) return Boolean;
    --  Return True if the target belong to a "run" model
 
@@ -635,9 +632,6 @@ package Build_Configurations is
    function Uses_Shell (Target_Model : Target_Model_Access) return Boolean;
    --  return target model Uses_Shell field
 
-   function Uses_Python (Target_Model : Target_Model_Access) return Boolean;
-   --  whether the target should be interpreted as a Python function
-
    package Model_Map is new Ada.Containers.Ordered_Maps
      (Key_Type     => Unbounded_String,
       Element_Type => Target_Model_Access);
@@ -707,10 +701,6 @@ private
 
       Server               : Server_Type      := Build_Server;
       --  The server used for executing this target
-
-      Uses_Python          : Boolean := False;
-      --  Whether this target should be interpreted as Python code.
-      --  Valid only of GNAT Studio build targets.
 
       Uses_Shell           : Boolean := False;
       --  If True, the commands inheriting from this model need to be launched

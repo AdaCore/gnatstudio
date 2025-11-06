@@ -19,8 +19,6 @@ with GNATCOLL.Projects;                use GNATCOLL.Projects;
 with GNATCOLL.Symbols;                 use GNATCOLL.Symbols;
 with GNATCOLL.VFS_Utils;               use GNATCOLL.VFS_Utils;
 
-with GPS.Scripts;
-
 with Language_Handlers;                use Language_Handlers;
 with Language.Unknown;                 use Language.Unknown;
 with Remote;
@@ -79,9 +77,12 @@ package body GPS.Core_Kernels is
    procedure Create_Scripts_Repository
      (Self   : not null access Core_Kernel_Record;
       Result : out GNATCOLL.Scripts.Scripts_Repository) is
+      pragma Unreferenced (Self);
    begin
-      Result := new GPS.Scripts.Kernel_Scripts_Repository'
-        (GPS.Scripts.Create (Core_Kernel (Self)));
+      --  Python scripting has been removed from the headless build.
+      --  Return a null repository so callers never attempt to dispatch
+      --  into GNATCOLL scripting backends.
+      Result := null;
    end Create_Scripts_Repository;
 
    ---------------
@@ -101,8 +102,6 @@ package body GPS.Core_Kernels is
 
    procedure Destroy (Self : not null access Core_Kernel_Record'Class) is
    begin
-      GNATCOLL.Scripts.Destroy (Self.Scripts);
-
       --  Destroy the entities database after we have finalized the
       --  scripting languages, in case some class instances were still
       --  owning references to entities

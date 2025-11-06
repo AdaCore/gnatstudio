@@ -246,14 +246,6 @@ package body Build_Configurations is
    end Uses_Shell;
 
    -----------------
-   -- Uses_Python --
-   -----------------
-
-   function Uses_Python (Target_Model : Target_Model_Access) return Boolean is
-   begin
-      return Target_Model.Uses_Python;
-   end Uses_Python;
-
    ---------
    -- Log --
    ---------
@@ -340,9 +332,6 @@ package body Build_Configurations is
 
             elsif Child.Tag.all = "uses-shell" then
                Model.Uses_Shell := Boolean'Value (Child.Value.all);
-
-            elsif Child.Tag.all = "uses-python" then
-               Model.Uses_Python := Boolean'Value (Child.Value.all);
 
             elsif Child.Tag.all = "persistent-history" then
                Model.Persistent_History := Boolean'Value (Child.Value.all);
@@ -1899,14 +1888,6 @@ package body Build_Configurations is
    end Uses_Shell;
 
    -----------------
-   -- Uses_Python --
-   -----------------
-
-   function Uses_Python (Target : Target_Access) return Boolean is
-   begin
-      return Target.Model.Uses_Python;
-   end Uses_Python;
-
    ------------
    -- Is_Run --
    ------------

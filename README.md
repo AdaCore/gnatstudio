@@ -24,6 +24,10 @@ GNAT Studio TUI is a terminal user interface (TUI) editor for **Ada** and **SPAR
 > instantiations remain available in headless builds. We removed the legacy
 > `dap/src` GtkAda layer entirely; future debugger work will be implemented in
 > the TUI, backed solely by `gps-dap_client-requests.*`.
+>
+> **Note:** Python scripting has been disabled. `GPS.Core_Kernels.Create_Scripts_Repository`
+> now returns `null`, so no GNATCOLL scripting backends are ever instantiated in
+> headless builds.
 
 See `PLAN.md` for detailed roadmap.
 

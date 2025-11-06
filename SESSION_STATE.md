@@ -174,6 +174,8 @@ Decision: Finish when we naturally reach Phase 5
 - Every protocol unit (`gps-lsp_client-requests*.adb`, `gps-lsp_clients.adb`, `gps-lsp_client-configurations*.adb`, `gps-lsp_client-language_servers-*.adb`) was rewritten to call the callback interface. All direct `GPS.Kernel`, Glib, or GPS editor dependencies are gone.
 - GUI-only request sources (formatting dialogs, check_syntax) remain excluded in `lsp_client/core/lsp_client_core.gpr`; everything else builds headless.
 - `safety_build.gpr` now depends on `lsp_client/core/lsp_client_core`, extending the guardrail build to cover the protocol layer.
+- The kernel scripting repository now returns `null`, fully disabling the legacy
+  GNATCOLL Python bridge in headless builds.
 
 ### Validation
 
