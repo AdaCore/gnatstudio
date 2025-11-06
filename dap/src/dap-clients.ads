@@ -38,6 +38,7 @@ with GPS.Debuggers;
 with LSP.Raw_Clients;
 
 with DAP.Modules.Histories;
+with GPS.DAP_Client.Requests;
 with GPS.DAP_Client.Callbacks;
 with GPS.DAP_Client.Callbacks.Kernel_Adapter;
 with DAP.Requests;

@@ -76,6 +76,7 @@ with DAP.Clients.Stack_Trace;
 with DAP.Clients.Pause;
 with DAP.Clients.Cancel;
 with DAP.Clients.Variables;
+with GPS.DAP_Client.Requests;
 
 with DAP.Requests.Disconnect;
 with DAP.Types.Breakpoints;      use DAP.Types.Breakpoints;
@@ -1367,8 +1368,8 @@ package body DAP.Clients is
       Event       : VSS.Strings.Virtual_String;
 
       Position    : Requests_Maps.Cursor;
-      Request     : GPS.DAP_Client.Requests.Request_Access;
-      New_Request : GPS.DAP_Client.Requests.Request_Access := null;
+      Request_Base : GPS.DAP_Client.Requests.Request_Access;
+      New_Request_Dap : DAP.Requests.DAP_Request_Access := null;
 
    begin
       if DAP_Log.Is_Active then
@@ -1396,99 +1397,86 @@ package body DAP.Clients is
             Position := Self.Sent.Find (Request_Seq);
 
             if Requests_Maps.Has_Element (Position) then
-               Request := Requests_Maps.Element (Position);
+               Request_Base := Requests_Maps.Element (Position);
                Self.Sent.Delete (Position);
 
-               if Self.Status /= Terminating
-                 or else DAP.Requests.DAP_Request'Class (Request.all) in
-                   DAP.Requests.Disconnect.Disconnect_DAP_Request'Class
-               then
-                  declare
-                     Processing_Allowed : constant Boolean :=
-                       (Self.Callbacks = null
-                        or else Self.Callbacks.Allow_Request_Processing)
-                       and then
-                         (DAP.Requests.DAP_Request'Class (Request.all).Kernel = null
-                          or else not DAP.Requests.DAP_Request'Class (Request.all)
-                            .Kernel.Is_In_Destruction);
-                     Method_Name : constant String :=
-                       DAP.Requests.DAP_Request'Class (Request.all).Method;
-                  begin
-                     if R_Success.Is_Set
-                       and then not R_Success.Value
-                     then
-                        declare
-                           UTF8 : constant String :=
-                             VSS.Strings.Conversions.To_UTF_8_String
-                               (Message);
-                        begin
-                           if Self.Callbacks /= null then
-                              Self.Callbacks.On_Request_Error
-                                (Method  => Method_Name,
-                                 Message => UTF8);
-                           end if;
+               declare
+                  Request_Dap   : constant DAP.Requests.DAP_Request_Access :=
+                    DAP.Requests.DAP_Request_Access (Request_Base);
+                  Request_View : DAP.Requests.DAP_Request'Class renames
+                    Request_Dap.all;
+                  Callback     : constant GPS.DAP_Client.Callbacks
+                    .DAP_Callback_Access := Request_View.Callbacks;
+                  Method_Name  : constant String := Request_View.Method;
+                  Processing_Allowed : constant Boolean :=
+                    Callback.Allow_Request_Processing;
+                  Accept_Request : constant Boolean :=
+                    Self.Status /= Terminating
+                    or else Request_View in
+                      DAP.Requests.Disconnect.Disconnect_DAP_Request'Class;
+               begin
+                  if not Accept_Request then
+                     Callback.On_Request_Error
+                       (Method  => Method_Name,
+                        Message => "Request ignored (terminating)");
 
-                           begin
-                              DAP.Requests.DAP_Request'Class (Request.all)
-                                .On_Error_Message (Self'Access, Message);
-                           exception
-                              when E : others =>
-                                 Trace (Me, E);
-                           end;
+                  elsif R_Success.Is_Set
+                    and then not R_Success.Value
+                  then
+                     declare
+                        UTF8 : constant String :=
+                          VSS.Strings.Conversions.To_UTF_8_String (Message);
+                     begin
+                        Callback.On_Request_Error
+                          (Method  => Method_Name,
+                           Message => UTF8);
+
+                        begin
+                           Request_View.On_Error_Message (Self'Access, Message);
+                        exception
+                           when E : others =>
+                              Trace (Me, E);
+                        end;
+                     end;
+
+                  elsif Processing_Allowed then
+                     declare
+                        Parsed : Boolean := True;
+                     begin
+                        begin
+                           Request_View.On_Result_Message
+                             (Self'Access, Reader, Parsed, New_Request_Dap);
+                        exception
+                           when E : others =>
+                              Trace (Me, E);
+                              Parsed := False;
                         end;
 
-                     elsif Processing_Allowed then
-                        declare
-                           Parsed : Boolean := True;
-                        begin
-                           declare
-                           begin
-                              DAP.Requests.DAP_Request'Class (Request.all)
-                                .On_Result_Message
-                                  (Self'Access, Reader, Parsed, New_Request);
-                           exception
-                              when E : others =>
-                                 Trace (Me, E);
-                                 Parsed := False;
-                           end;
-
-                           if not Parsed then
-                              if Self.Callbacks /= null then
-                                 Self.Callbacks.On_Request_Error
-                                   (Method  => Method_Name,
-                                    Message => "Can't parse response");
-                              end if;
-
-                              DAP.Requests.DAP_Request'Class (Request.all)
-                                .On_Error_Message
-                                  (Self'Access, "Can't parse response");
-                           end if;
-                        end;
-
-                        if Self.Callbacks /= null then
-                           Self.Callbacks.On_Response_Processed (Method_Name);
-                        else
-                           GPS.Kernel.Hooks.Dap_Response_Processed_Hook.Run
-                             (Kernel => DAP.Requests.DAP_Request'Class (Request.all).Kernel,
-                              Method => Method_Name);
-                        end if;
-
-                     else
-                        if Self.Callbacks /= null then
-                           Self.Callbacks.On_Request_Error
+                        if not Parsed then
+                           Callback.On_Request_Error
                              (Method  => Method_Name,
-                              Message => "Request ignored (shutdown)");
+                              Message => "Can't parse response");
+                           Request_View.On_Error_Message
+                             (Self'Access, "Can't parse response");
                         end if;
-                     end if;
-                  end;
-               end if;
+                     end;
 
-               GPS.DAP_Client.Requests.Destroy (Request);
+                     Callback.On_Response_Processed (Method_Name);
+
+                  else
+                     Callback.On_Request_Error
+                       (Method  => Method_Name,
+                        Message => "Request ignored (shutdown)");
+                  end if;
+               end;
+
+               GPS.DAP_Client.Requests.Destroy (Request_Base);
             end if;
          end if;
 
-         if New_Request /= null then
-            Self.Process (New_Request);
+         if New_Request_Dap /= null then
+            Self.Process (New_Request_Dap);
+            New_Request_Dap := null;
          end if;
 
       elsif A_Type = "event" then
@@ -2201,7 +2189,7 @@ package body DAP.Clients is
 
          --  Add request to the map
 
-         Self.Sent.Insert (Id, Request);
+      Self.Sent.Insert (Id, GPS.DAP_Client.Requests.Request_Access (Request));
 
       else
          Request.On_Rejected (Self'Access);
@@ -2214,18 +2202,20 @@ package body DAP.Clients is
    -------------------------
 
    procedure Reject_All_Requests (Self : in out DAP_Client) is
-      C       : Requests_Maps.Cursor;
-      Request : DAP.Requests.DAP_Request_Access;
+      C            : Requests_Maps.Cursor;
+      Request_Base : GPS.DAP_Client.Requests.Request_Access;
+      Request_Dap  : DAP.Requests.DAP_Request_Access;
    begin
       --  Reject all queued requests. Clean commands queue.
 
       while not Self.Sent.Is_Empty loop
          C := Self.Sent.First;
-         Request := Requests_Maps.Element (C);
+         Request_Base := Requests_Maps.Element (C);
          Self.Sent.Delete (C);
 
-         Request.On_Rejected (Self'Access);
-         DAP.Requests.Destroy (Request);
+         Request_Dap := DAP.Requests.DAP_Request_Access (Request_Base);
+         Request_Dap.On_Rejected (Self'Access);
+         GPS.DAP_Client.Requests.Destroy (Request_Base);
       end loop;
    end Reject_All_Requests;
 
