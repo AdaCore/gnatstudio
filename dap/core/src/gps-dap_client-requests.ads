@@ -6,11 +6,10 @@
 --  protocol layer can live outside GPS.Kernel/GtkAda.                      --
 ------------------------------------------------------------------------------
 
+with GPS.DAP_Client.Callbacks;
 with VSS.JSON.Content_Handlers;
 with VSS.JSON.Pull_Readers;
 with VSS.Strings;
-
-with GPS.DAP_Client.Callbacks;
 
 package GPS.DAP_Client.Requests is
 
