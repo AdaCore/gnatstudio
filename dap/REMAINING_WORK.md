@@ -18,6 +18,8 @@ callback mechanisms.
   the guardrail now includes `dap_core` via `safety_build.gpr`.
 - Introduced `GPS.DAP_Client.Callbacks` (with `Null_Callback`) as the headless
   facade that will replace direct `GPS.Kernel` usage inside protocol units.
+- Added `GPS.DAP_Client.Requests` as the callback-backed base class for future
+  protocol refactors without touching the existing GUI-bound `DAP.Requests`.
 
 ## Current State (Problems)
 
