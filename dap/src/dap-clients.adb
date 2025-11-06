@@ -936,7 +936,11 @@ package body DAP.Clients is
 
    procedure On_Continue (Self : in out DAP_Client) is
    begin
-      Self.Set_Status (Running);
+      if Self.Callbacks /= null then
+         Self.Callbacks.On_Debugger_Resumed (Self.Get_Current_Thread);
+      else
+         Self.Set_Status (Running);
+      end if;
    end On_Continue;
 
    -----------------

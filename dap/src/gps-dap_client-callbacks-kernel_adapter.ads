@@ -30,6 +30,10 @@ package GPS.DAP_Client.Callbacks.Kernel_Adapter is
      (Self   : Kernel_Callback;
       Method : String);
 
+   overriding procedure On_Debugger_Resumed
+     (Self      : Kernel_Callback;
+      Thread_Id : Integer);
+
    overriding procedure On_Request_Error
      (Self    : Kernel_Callback;
       Method  : String;

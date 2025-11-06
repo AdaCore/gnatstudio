@@ -28,6 +28,14 @@ package body GPS.DAP_Client.Callbacks is
       null;
    end On_Response_Processed;
 
+   overriding procedure On_Debugger_Resumed
+     (Self      : Null_Callback;
+      Thread_Id : Integer) is
+      pragma Unreferenced (Self, Thread_Id);
+   begin
+      null;
+   end On_Debugger_Resumed;
+
    overriding procedure On_Request_Error
      (Self    : Null_Callback;
       Method  : String;

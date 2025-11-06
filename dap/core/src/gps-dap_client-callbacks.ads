@@ -31,6 +31,11 @@ package GPS.DAP_Client.Callbacks is
       Method : String) is abstract;
    --  Hook invoked after a DAP response has been parsed and dispatched.
 
+   procedure On_Debugger_Resumed
+     (Self      : DAP_Callback_Interface;
+      Thread_Id : Integer) is abstract;
+   --  Execution resumed (continue/step/next acknowledged).
+
    procedure On_Request_Error
      (Self    : DAP_Callback_Interface;
       Method  : String;
@@ -73,6 +78,10 @@ package GPS.DAP_Client.Callbacks is
    overriding procedure On_Response_Processed
      (Self   : Null_Callback;
       Method : String);
+
+   overriding procedure On_Debugger_Resumed
+     (Self      : Null_Callback;
+      Thread_Id : Integer);
 
    overriding procedure On_Request_Error
      (Self    : Null_Callback;

@@ -50,11 +50,21 @@ package body GPS.DAP_Client.Callbacks.Kernel_Adapter is
       Method : String) is
    begin
       if Self.Kernel /= null then
-         GPS.Kernel.Hooks.Dap_Response_Processed_Hook.Run
-           (Kernel => GPS.Kernel.Kernel_Handle (Self.Kernel),
-            Method => Method);
+        GPS.Kernel.Hooks.Dap_Response_Processed_Hook.Run
+          (Kernel => GPS.Kernel.Kernel_Handle (Self.Kernel),
+           Method => Method);
       end if;
    end On_Response_Processed;
+
+   overriding procedure On_Debugger_Resumed
+     (Self      : Kernel_Callback;
+      Thread_Id : Integer) is
+      pragma Unreferenced (Thread_Id);
+   begin
+      if Self.Client /= null then
+         Self.Client.Set_Status (Running);
+      end if;
+   end On_Debugger_Resumed;
 
    overriding procedure On_Request_Error
      (Self    : Kernel_Callback;
