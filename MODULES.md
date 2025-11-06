@@ -22,7 +22,6 @@ This document categorizes GNATstudio modules for the TUI conversion per PLAN.md.
 
 - **completion_core** (`completion/core/completion_core.gpr`) - Code completion engine
 
-- **codefix_core** (`codefix/core/codefix_core.gpr`) - Code fix engine
 
 ### Standalone Headless Modules
 - **vfs** (`vfs/vfs.gpr`) - Virtual file system abstraction
@@ -44,7 +43,6 @@ This document categorizes GNATstudio modules for the TUI conversion per PLAN.md.
 ### UI Module Variants (_ui.gpr)
 - **ada_module_ui** - Ada module with GUI
 - **completion_ui** - Completion with GUI
-- **codefix_ui** - Code fix with GUI
 - **refactoring_ui** - Refactoring with GUI
 - **language_ui** - Language support with GUI
 
@@ -64,7 +62,8 @@ This document categorizes GNATstudio modules for the TUI conversion per PLAN.md.
 - **keymanager** - GUI key bindings
 - **aliases** - GUI aliases
 - **custom** - GUI customization
-- **python** - Python scripting engine (remove per PLAN.md)
+- **python** - (removed) legacy scripting engine; repo no longer ships Python
+  code or runtime hooks.
 - **remote** - GUI remote features
 - **socket** - GUI socket features
 - **shell** - GUI shell
@@ -112,7 +111,7 @@ cli.gpr
 1. Verify each dependency above is GTK-free
 2. If common.gpr has GTK, split into common_core
 3. Update any that depend on kernel to use kernel_core
-4. Remove python/python.gpr dependency from CLI
+4. Remove python/python.gpr dependency from CLI _(done)_
 
 ## Notes
 

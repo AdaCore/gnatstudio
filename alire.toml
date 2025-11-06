@@ -27,7 +27,6 @@ gnatcoll_xref = "~25.0"
 
 # Not available on macOS, will be removed per PLAN.md anyway
 # [[depends-on]]
-# gnatcoll_python3 = "~23.0"
 
 # Will be removed permanently per PLAN.md (TUI conversion)
 # [[depends-on]]

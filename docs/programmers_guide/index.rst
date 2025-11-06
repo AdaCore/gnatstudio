@@ -12,5 +12,3 @@ GNAT Studio Programmer's Guide
    intermodule_communication
    documenting
    debugging
-   python_wheels
-

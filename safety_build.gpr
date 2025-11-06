@@ -17,7 +17,6 @@
 --   - builder_core    - Build orchestration
 --   - ada_module_core - Ada language support
 --   - refactoring_core - Refactoring engine
---   - codefix_core    - Code fix engine
 --   - lsp_client_core - LSP protocol layer (headless)
 --   - dap_core        - Debug protocol core (headless guardrail)
 --
@@ -35,7 +34,6 @@ with "prj_editor/prj_core";
 with "builder/builder_core";
 with "ada_module/core/ada_module_core";
 with "refactoring/core/refactoring_core";
-with "codefix/core/codefix_core";
 with "lsp_client/core/lsp_client_core";
 with "dap/core/dap_core";
 

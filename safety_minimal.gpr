@@ -8,7 +8,6 @@
 --   - toolchains_core    - Toolchain detection
 --   - ada_module_core    - Ada language support
 --   - refactoring_core   - Refactoring engine
---   - codefix_core       - Code fix engine
 --
 -- Note: Skips kernel_core, language, common due to deep xref dependencies
 --       These will need stub xref types or major refactoring
@@ -22,7 +21,6 @@ with "vfs/vfs";
 with "toolchains_editor/core/toolchains_core";
 with "ada_module/core/ada_module_core";
 with "refactoring/core/refactoring_core";
-with "codefix/core/codefix_core";
 
 project Safety_Minimal is
 

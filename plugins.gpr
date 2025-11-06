@@ -7,16 +7,13 @@ project Plugins is
      ("share", "share/plug-ins/**", "share/support/**", "share/library/**");
 
    package Naming is
-      for Implementation_Suffix ("Python") use ".py";
       for Implementation_Suffix ("XML") use ".xml";
       for Implementation_Suffix ("CSS") use ".css";
    end Naming;
 
    package Compiler is
-      for Driver ("Python") use "";
       for Driver ("XML") use "";
       for Driver ("CSS") use "";
-      for Object_File_Suffix ("python") use ".pyc";
       for Object_File_Suffix ("xml") use "-";
       for Object_File_Suffix ("css") use "-";
    end Compiler;

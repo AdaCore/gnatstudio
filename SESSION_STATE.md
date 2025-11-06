@@ -77,7 +77,6 @@ with "prj_editor/prj_core";
 with "builder/builder_core";
 with "ada_module/core/ada_module_core";
 with "refactoring/core/refactoring_core";
-with "codefix/core/codefix_core";
 with "lsp_client/core/lsp_client_core";
 with "dap/core/dap_core";
 ```
@@ -255,7 +254,6 @@ Both commands complete (clang still emits the known macOS deployment-version war
 ```
 ada_module/core/        - Ada language support (clean)
 builder/core/           - Build orchestration (clean, 4 files excluded)
-codefix/core/           - Code fix engine (clean, 2 files excluded)
 common/core/            - Core utilities (clean)
 dap/                    - Debug protocol (117 files, defer to Phase 10)
 docs/                   - Documentation (9.9 MB, keep for reference)

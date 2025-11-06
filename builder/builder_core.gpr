@@ -1,9 +1,6 @@
 with "../kernel/kernel_core";
--- Python removed per PLAN.md - gnatcoll_python not available on macOS
--- with "../python/python_core";
 with "../toolchains_editor/core/toolchains_core";
 with "../shared";
--- with "gnatcoll_python";
 
 project Builder_Core is
 
