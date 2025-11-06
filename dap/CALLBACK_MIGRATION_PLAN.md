@@ -24,7 +24,7 @@ after **each** numbered step:
 
 ## Phase 2 – Request Base Swap
 
-- [ ] Refactor `DAP.Requests` spec/body to use `GPS.DAP_Client.Requests.Request`
+- [x] Refactor `DAP.Requests` spec/body to use `GPS.DAP_Client.Requests.Request`
       while preserving the existing API surface for GUI callers.
 - [ ] Update `DAP.Clients` request queue (`Requests_Maps`) to use the core
       `Request_Access` type.
