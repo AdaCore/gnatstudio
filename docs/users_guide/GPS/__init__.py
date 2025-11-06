@@ -2627,7 +2627,7 @@ class Debugger(object):
 
     def continue_execution(self):
         """
-        Continue the execution of the executable after stop.
+        Continue the execution of the debuggee after stop.
         """
         pass  # implemented in Ada
 
