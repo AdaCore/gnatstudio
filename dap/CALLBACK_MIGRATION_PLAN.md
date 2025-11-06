@@ -28,7 +28,7 @@ after **each** numbered step:
       while preserving the existing API surface for GUI callers.
 - [x] Update `DAP.Clients` request queue (`Requests_Maps`) to use the core
       `Request_Access` type.
-- [ ] Adjust hook invocations to source method names from callbacks rather than
+- [x] Adjust hook invocations to source method names from callbacks rather than
       `GPS.Kernel` handles.
 
 ## Phase 3 – Migrate Request Families
