@@ -22,14 +22,23 @@ with VSS.JSON.Content_Handlers;
 with VSS.JSON.Pull_Readers;
 
 with GPS.Kernel;
+with GPS.DAP_Client.Callbacks;
+with GPS.DAP_Client.Requests;
 
 limited with DAP.Clients;
 
 package DAP.Requests is
 
+   --  No additional private components
+   Default_Callback_Access   : constant GPS.DAP_Client.Callbacks.DAP_Callback_Access :=
+     Default_Callback_Instance'Access;
+
    type DAP_Request
-     (Kernel : GPS.Kernel.Kernel_Handle) is
-     abstract tagged limited private;
+     (Kernel    : GPS.Kernel.Kernel_Handle;
+      Callbacks : not null access
+        GPS.DAP_Client.Callbacks.DAP_Callback_Interface'Class :=
+          Default_Callback_Access)
+     is abstract limited private;
 
    type DAP_Request_Access is access all DAP_Request'Class;
 
@@ -78,7 +87,12 @@ package DAP.Requests is
 private
 
    type DAP_Request
-     (Kernel : GPS.Kernel.Kernel_Handle) is abstract
-     tagged limited null record;
+     (Kernel    : GPS.Kernel.Kernel_Handle;
+      Callbacks : not null access
+        GPS.DAP_Client.Callbacks.DAP_Callback_Interface'Class)
+     is abstract new
+       GPS.DAP_Client.Requests.Request (Callbacks) with null record;
+
+   Default_Callback_Instance : aliased GPS.DAP_Client.Callbacks.Null_Callback;
 
 end DAP.Requests;

@@ -15,28 +15,19 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with Ada.Unchecked_Deallocation;
-with GNATCOLL.Traces;              use GNATCOLL.Traces;
-with VSS.Strings.Conversions;
+with GPS.DAP_Client.Requests;
 
 package body DAP.Requests is
-
-   Me : constant Trace_Handle := Create ("GPS.DEBUGGING.DAP_REQUESTS", Off);
 
    -------------
    -- Destroy --
    -------------
 
    procedure Destroy (Item : in out DAP_Request_Access) is
-      procedure Free is
-        new Ada.Unchecked_Deallocation (DAP_Request'Class, DAP_Request_Access);
-
    begin
-      if Item /= null then
-         Item.Finalize;
-         Free (Item);
-         Item := null;
-      end if;
+      GPS.DAP_Client.Requests.Destroy
+        (GPS.DAP_Client.Requests.Request_Access (Item));
+      Item := null;
    end Destroy;
 
    -----------------
@@ -47,7 +38,8 @@ package body DAP.Requests is
      (Self   : in out DAP_Request;
       Client : not null access DAP.Clients.DAP_Client'Class) is
    begin
-      Trace (Me, "Rejected:" & DAP_Request'Class (Self).Method);
+      GPS.DAP_Client.Requests.On_Rejected
+        (GPS.DAP_Client.Requests.Request'Class (Self));
    end On_Rejected;
 
    ----------------------
@@ -59,8 +51,8 @@ package body DAP.Requests is
       Client  : not null access DAP.Clients.DAP_Client'Class;
       Message : VSS.Strings.Virtual_String) is
    begin
-      Trace (Me, "Error:" & DAP_Request'Class (Self).Method & ". "
-             & VSS.Strings.Conversions.To_UTF_8_String (Message));
+      GPS.DAP_Client.Requests.On_Error_Message
+        (GPS.DAP_Client.Requests.Request'Class (Self), Message);
    end On_Error_Message;
 
 end DAP.Requests;
