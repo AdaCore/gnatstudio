@@ -30,15 +30,11 @@ with GNATCOLL.JSON;             use GNATCOLL.JSON;
 with GNATCOLL.Projects;         use GNATCOLL.Projects;
 with GNATCOLL.Traces;           use GNATCOLL.Traces;
 
-with Gtkada.Dialogs;            use Gtkada.Dialogs;
-with Gtk.Enums;                 use Gtk.Enums;
-
 with GPS.Kernel.Hooks;
 with GPS.Kernel.MDI;            use GPS.Kernel.MDI;
 with Default_Preferences;       use Default_Preferences;
 with Default_Preferences.Enums;
 with GPS.Kernel.Preferences;    use GPS.Kernel.Preferences;
-with GUI_Utils;                 use GUI_Utils;
 
 with VSS.JSON.Push_Writers;
 with VSS.Strings.Conversions;
@@ -469,34 +465,18 @@ package body GPS.LSP_Client.Configurations.Clangd is
       end if;
 
       if Changed then
-         declare
-            Response : Message_Dialog_Buttons;
-         begin
-
-            if Me_Avoid_Dialog.Is_Active then
-               Write_Clang_Format_Files (Kernel);
-            else
-               --  If some formatting preferences have been modified, ask the
-               --  user if he wants to override the corresponding .clang-format
-               --  settings for his project.
-               Response := GPS_Message_Dialog
-                 (Msg            =>
-                    "Some C/C++ formatting settings have been changed. "
-                  & ASCII.LF
-                  & "Do you want to change this setting in the project's "
-                  & ".clang-format file too?",
-                  Dialog_Type    => Confirmation,
-                  Buttons        => Button_Yes or Button_No,
-                  Default_Button => Button_Yes,
-                  Title          => "C/C++ formatting settings",
-                  Justification  => Justify_Center,
-                  Parent         => Get_Current_Window (Kernel));
-
-               if Response = Button_Yes then
-                  Write_Clang_Format_Files (Kernel);
-               end if;
-            end if;
-         end;
+         if Me_Avoid_Dialog.Is_Active then
+            Me.Trace
+              ("Formatting preferences changed; write suppressed because " &
+               "GPS.LSP.CLANGD_SUPPORT.AVOID_DIALOG_ON_PREF_CHANGED trace " &
+               "is active.");
+         else
+            Me.Trace
+              ("Formatting preferences changed; updating .clang-format " &
+               "automatically (set GPS.LSP.CLANGD_SUPPORT.AVOID_DIALOG_" &
+               "ON_PREF_CHANGED trace to skip this write).");
+            Write_Clang_Format_Files (Kernel);
+         end if;
       end if;
    end Execute;
 
