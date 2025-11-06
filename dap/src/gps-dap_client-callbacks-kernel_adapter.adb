@@ -1,9 +1,16 @@
 with GNATCOLL.Traces;          use GNATCOLL.Traces;
+with GNATCOLL.VFS;
 with GPS.Kernel.Hooks;
 with DAP.Tools;
+with DAP.Types;                use DAP.Types;
 with DAP.Clients;
+with DAP.Clients.Stack_Trace;
+with DAP.Views.Call_Stack;
+with VSS.Strings.Conversions;
 
 package body GPS.DAP_Client.Callbacks.Kernel_Adapter is
+
+   package Stack_Traces renames DAP.Clients.Stack_Trace;
 
    Me : constant Trace_Handle := Create ("GPS.DAP.Callbacks", Off);
 
@@ -65,25 +72,58 @@ package body GPS.DAP_Client.Callbacks.Kernel_Adapter is
       Start_Frame : Natural;
       Response    : DAP.Tools.StackTraceResponse;
       Append_More : out Boolean) is
+      pragma Unreferenced (Thread_Id);
+      Trace     : constant Stack_Traces.Stack_Trace_Access :=
+        (if Self.Client /= null then Self.Client.Get_Stack_Trace else null);
+      Selected  : Natural := 0;
    begin
-      Append_More := False;
+      if Trace = null then
+         Append_More := False;
+         return;
+      end if;
+
+      Trace.Merge_Response
+        (Client      => Self.Client,
+         Start_Frame => Start_Frame,
+         Response    => Response,
+         Append_More => Append_More,
+         Selected_Id => Selected);
+
+      if Selected /= 0 then
+         Trace.Select_Frame (Id => Selected, Client => Self.Client);
+      end if;
    end On_Stacktrace_Frames;
 
    overriding procedure On_Stacktrace_Selected
      (Self      : Kernel_Callback;
       Thread_Id : Integer;
       Frame_Id  : Integer) is
+      pragma Unreferenced (Thread_Id);
+      Trace : constant Stack_Traces.Stack_Trace_Access :=
+        (if Self.Client /= null then Self.Client.Get_Stack_Trace else null);
    begin
-      null;
+      if Trace /= null then
+         Trace.Select_Frame (Id => Frame_Id, Client => Self.Client);
+      end if;
    end On_Stacktrace_Selected;
 
-    overriding procedure On_Stacktrace_Fetch_Complete
+   overriding procedure On_Stacktrace_Fetch_Complete
      (Self          : Kernel_Callback;
       Thread_Id     : Integer;
       Success       : Boolean;
       Initial_Fetch : Boolean) is
+      pragma Unreferenced (Thread_Id);
    begin
-      null;
+      if Self.Client = null then
+         return;
+      end if;
+
+      if Initial_Fetch then
+         Self.Client.Set_Status (Stopped);
+      elsif Success then
+         DAP.Views.Call_Stack.Update (Self.Client.Kernel, Self.Client);
+         Self.Client.Kernel.Context_Changed (GPS.Kernel.No_Context);
+      end if;
    end On_Stacktrace_Fetch_Complete;
 
 end GPS.DAP_Client.Callbacks.Kernel_Adapter;

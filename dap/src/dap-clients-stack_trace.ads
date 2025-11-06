@@ -90,6 +90,16 @@ package DAP.Clients.Stack_Trace is
    procedure Clear (Self : Stack_Trace_Access);
    --  Clear the information about backtraces
 
+   procedure Merge_Response
+     (Self          : Stack_Trace_Access;
+      Client        : access DAP.Clients.DAP_Client'Class;
+      Start_Frame   : Natural;
+      Response       : DAP.Tools.StackTraceResponse;
+      Append_More    : out Boolean;
+      Selected_Index : out Natural);
+   --  Merge frames from a DAP stackTrace response. `Selected_Id` is set to the
+   --  first location-bearing frame or -1 when none were added.
+
    procedure Register_Module;
    --  Register the functions needed to work properly
 

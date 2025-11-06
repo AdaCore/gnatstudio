@@ -55,9 +55,4 @@ private
    type StackTrace_Request is
      new DAP.Requests.StackTrace.StackTrace_DAP_Request with null record;
 
-   procedure On_Response
-     (Self       : in out StackTrace_Request;
-      Client     : not null access DAP.Clients.DAP_Client'Class;
-      Has_Result : Boolean);
-
 end DAP.Clients.Stack_Trace.StackTrace;

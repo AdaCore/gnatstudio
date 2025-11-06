@@ -58,68 +58,34 @@ package body DAP.Clients.Stack_Trace.StackTrace is
       Result      : in out DAP.Tools.StackTraceResponse;
       New_Request : in out DAP.Requests.DAP_Request_Access)
    is
-      use GNATCOLL.VFS;
-      use DAP.Tools;
-
-      Stack_Trace : constant Stack_Trace_Access := Client.Get_Stack_Trace;
-      Frames      : Frames_Vectors.Vector renames Stack_Trace.Frames;
+      pragma Unreferenced (Client);
+      Start_Frame : constant Natural :=
+        (if Self.Parameters.arguments.startFrame.Is_Set then
+            Self.Parameters.arguments.startFrame.Value
+         else 0);
+      Thread_Id : constant Integer := Self.Parameters.arguments.threadId;
+      Append    : Boolean := False;
    begin
       New_Request := null;
 
-      if Result.a_body.totalFrames.Is_Set then
-         Stack_Trace.Total_Count :=
-           Result.a_body.totalFrames.Value;
+      Self.Callbacks.On_Stacktrace_Frames
+        (Thread_Id   => Thread_Id,
+         Start_Frame => Start_Frame,
+         Response    => Result,
+         Append_More => Append);
 
-      elsif Length (Result.a_body.stackFrames) = 0 then
-         --  We do not have more frames, set Total_Count > 0 to
-         --  disable sending more requests.
-         Stack_Trace.Total_Count := 1;
-      end if;
-
-      for Index in 1 .. Length (Result.a_body.stackFrames) loop
-         declare
-            Frame_Ref : constant StackFrame_Variable_Reference :=
-              Get_StackFrame_Variable_Reference
-                (Result.a_body.stackFrames, Index);
-            Frame     : Frame_Record;
-         begin
-            Frame.Id   := Frame_Ref.id;
-            Frame.Name := Frame_Ref.name;
-
-            if not Frame_Ref.instructionPointerReference.Is_Empty then
-               Frame.Address := String_To_Address
-                 (To_UTF8 (Frame_Ref.instructionPointerReference));
-            end if;
-
-            if Frame_Ref.source.Is_Set then
-               Frame.File := To_File (Frame_Ref.source.Value.path);
-               Frame.Line := Frame_Ref.line;
-               Frame.Location_Exists := Frame.File.Is_Regular_File;
-            end if;
-
-            Frames.Append (Frame);
-         end;
-      end loop;
-
-      --  Select the first Frame_Ref that has an existing location, showing it
-      --  to the user.
-      for Id in Integer (Frames.First_Index) ..
-        Integer (Frames.Last_Index)
-      loop
-         if Frames (Id).Location_Exists then
-            Stack_Trace.Select_Frame
-              (Frame  => Frames (Id),
-               Client => Client);
-            exit;
-         end if;
-      end loop;
-
-      Self.On_Response (Client, True);
+      Self.Callbacks.On_Stacktrace_Fetch_Complete
+        (Thread_Id     => Thread_Id,
+         Success       => True,
+         Initial_Fetch => Start_Frame = 0);
 
    exception
       when E : others =>
          Trace (Me, E);
-         Self.On_Response (Client, True);
+         Self.Callbacks.On_Stacktrace_Fetch_Complete
+           (Thread_Id     => Thread_Id,
+            Success       => False,
+            Initial_Fetch => Start_Frame = 0);
    end On_Result_Message;
 
    ----------------------
@@ -134,7 +100,11 @@ package body DAP.Clients.Stack_Trace.StackTrace is
       DAP.Requests.StackTrace.StackTrace_DAP_Request
         (Self).On_Error_Message (Client, Message);
 
-      Self.On_Response (Client, False);
+      Self.Callbacks.On_Stacktrace_Fetch_Complete
+        (Thread_Id     => Self.Parameters.arguments.threadId,
+         Success       => False,
+         Initial_Fetch => not Self.Parameters.arguments.startFrame.Is_Set
+           or else Self.Parameters.arguments.startFrame.Value = 0);
    end On_Error_Message;
 
    -----------------
@@ -148,34 +118,11 @@ package body DAP.Clients.Stack_Trace.StackTrace is
       DAP.Requests.StackTrace.StackTrace_DAP_Request
         (Self).On_Rejected (Client);
 
-      Self.On_Response (Client, False);
+      Self.Callbacks.On_Stacktrace_Fetch_Complete
+        (Thread_Id     => Self.Parameters.arguments.threadId,
+         Success       => False,
+         Initial_Fetch => not Self.Parameters.arguments.startFrame.Is_Set
+           or else Self.Parameters.arguments.startFrame.Value = 0);
    end On_Rejected;
-
-   -----------------
-   -- On_Response --
-   -----------------
-
-   procedure On_Response
-     (Self       : in out StackTrace_Request;
-      Client     : not null access DAP.Clients.DAP_Client'Class;
-      Has_Result : Boolean) is
-   begin
-      if not Self.Parameters.arguments.startFrame.Is_Set
-        or else Self.Parameters.arguments.startFrame.Value = 0
-      then
-         --  We uploaded the frames after the debugee has been stopped so set
-         --  the corresponding status to initiate views updating.
-         Client.Set_Status (Stopped);
-
-      elsif Has_Result then
-         --  We uploaded the next part of the frames, and the debuggee is
-         --  still stopped, update the view.
-         DAP.Views.Call_Stack.Update (Self.Kernel, Client);
-
-         --  Update context to refresh actions' availability,
-         --  mostly for "debug callstack fetch"
-         Self.Kernel.Context_Changed (GPS.Kernel.No_Context);
-      end if;
-   end On_Response;
 
 end DAP.Clients.Stack_Trace.StackTrace;

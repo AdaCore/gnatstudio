@@ -22,6 +22,7 @@ with DAP.Clients.Stack_Trace.StackTrace;
 with DAP.Modules.Preferences;
 with DAP.Requests;
 with DAP.Utils;
+with VSS.Strings.Conversions; use VSS.Strings.Conversions;
 
 package body DAP.Clients.Stack_Trace is
 
@@ -291,6 +292,77 @@ package body DAP.Clients.Stack_Trace is
       Self.Selected_Frame := No_Frame;
       Self.Total_Count := 0;
    end Clear;
+
+   procedure Merge_Response
+     (Self          : Stack_Trace_Access;
+      Client        : access DAP.Clients.DAP_Client'Class;
+      Start_Frame   : Natural;
+      Response      : DAP.Tools.StackTraceResponse;
+      Append_More   : out Boolean;
+      Selected_Index : out Natural)
+   is
+      use GNATCOLL.VFS;
+      use DAP.Tools;
+      Frames_Count : constant Natural :=
+        Natural (Length (Response.a_body.stackFrames));
+   begin
+      Append_More := False;
+      Selected_Index := 0;
+
+      if Self = null then
+        return;
+      end if;
+
+      if Start_Frame = 0 then
+         Self.Clear;
+      end if;
+
+      for Index in 1 .. Frames_Count loop
+         declare
+            Frame_Ref : constant StackFrame_Variable_Reference :=
+              Get_StackFrame_Variable_Reference
+                (Response.a_body.stackFrames, Index);
+            Location   : GNATCOLL.VFS.Virtual_File := GNATCOLL.VFS.No_File;
+            Frame      : Frame_Record;
+            App_Index  : Natural;
+         begin
+            if Frame_Ref.source.Is_Set then
+               Location := To_File (Frame_Ref.source.Value.path);
+            end if;
+
+            Frame :=
+              (Id              => Frame_Ref.id,
+               Name            => Frame_Ref.name,
+               File            => Location,
+               Line            => Frame_Ref.line,
+               Address         => Invalid_Address,
+               Location_Exists => Location.Is_Regular_File);
+
+            if not Frame_Ref.instructionPointerReference.Is_Empty then
+               Frame.Address :=
+                 DAP.Types.String_To_Address
+                   (To_UTF8 (Frame_Ref.instructionPointerReference));
+            end if;
+
+            Self.Frames.Append (Frame);
+            App_Index := Natural (Self.Frames.Last_Index);
+
+            if Selected_Index = 0 and then Frame.Location_Exists then
+               Selected_Index := App_Index;
+            end if;
+         end;
+      end loop;
+
+      if Response.a_body.totalFrames.Is_Set then
+         Self.Total_Count := Response.a_body.totalFrames.Value;
+      elsif Frames_Count = 0 and then Self.Total_Count = 0 then
+         Self.Total_Count := 1;
+      end if;
+
+      Append_More := Self.Can_Upload (Client);
+
+      null;
+   end Merge_Response;
 
    ------------------
    -- Send_Request --
