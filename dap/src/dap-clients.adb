@@ -889,7 +889,7 @@ package body DAP.Clients is
                Column                   => 1,
                Text                     => "",
                Importance               => GPS.Kernel.Messages.Unspecified,
-               Flags                    => Continue_To_Line_Messages_Flags,
+               Flags                    => DAP.Module.Continue_To_Line_Flags,
                Allow_Auto_Jump_To_First => False);
 
             Action := new GPS.Editors.Line_Information.Line_Information_Record'

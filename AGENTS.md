@@ -1,36 +1,33 @@
 # Repository Guidelines
 
 ## Project Structure & Module Organization
-- `gnatstudio/`, `kernel/`, and `src_editor/` host the core Ada code that drives the IDE back-end, language services, and editors.
-- `python/`, `share/`, and `plugins.gpr` bundle Python helpers, UI resources, and project files for extending GNAT Studio.
-- `testsuite/` contains the end-to-end harness (`run.sh`, `testsuite.py`) plus individual scenario folders under `testsuite/tests/`.
-- `docs/` and `examples/` provide user guides and sample projects; align new documentation with these layouts.
+- Core Ada sources live in feature folders such as `kernel/`, `builder/`, `language/`, `refactoring/`, `vfs/`, and `lsp_client/`, with specs in `.ads` and bodies in `.adb`.
+- `test_headless/` hosts the default TUI build target (`test_pure_ada.gpr`) and installs binaries under `bin/`; additional sample executables follow the same layout.
+- Unit suites reside in `tests/`, using `tests/tests.gpr` with `*_tests.adb` drivers and `*_suite` registries; docs and planning aids live under `docs/`, `MODULES.md`, and `PLAN.md`.
+- DAP sources rely on the `Minimal_Perfect_Hash` helper exported by the ALS
+  `lsp_base` library; `dap/core/dap_core.gpr` already `with`s that project so
+  the generated schema keeps compiling headless.
+- Build and dependency metadata stay in `alire.toml`, project files (`*.gpr`), and support scripts such as `fix_toolchain.sh`.
 
 ## Build, Test, and Development Commands
-- `./configure --prefix=$PWD/_install` — configure GNAT Studio against local GtkAda, GNATcoll, and Python installs.
-- `make -j$(nproc)` — build the full toolchain; use `make install` to stage into `_install/`.
-- `gprbuild -p -P gps_aggregated.gpr` — rapid rebuild for specific Ada aggregates when iterating on core code.
-- `testsuite/run.sh [tests/minimal/]` — run the full test matrix or focus on one test directory.
-- `pre-commit run --all-files` — format Python sources with Black before pushing changes.
+- Run `./fix_toolchain.sh` once on macOS Sonoma/Ventura toolchains before any build to patch the GNAT headers.
+- `alr build` compiles `test_headless/test_pure_ada.gpr`; append `-- -XBUILD=Production` for optimized builds or `-- -j8` for parallel jobs.
+- `alr clean` removes derived objects; pair with `alr build` after large refactors to verify a clean configuration.
+- Execute `./test_headless/bin/test_pure_ada` to confirm the headless Ada pipeline and VSS dependency remain intact.
+- Build and run the AUnit suites with `alr exec -- gprbuild -P tests/tests.gpr` followed by `alr exec -- ./tests/bin/test_runner`.
 
 ## Coding Style & Naming Conventions
-- Ada files (`.adb/.ads`) rely on `gnatformat`; keep identifiers in `Mixed_Case` and prefer one unit per file.
-- Python follows Black defaults (88-char lines, double quotes). Use `snake_case` for functions and modules, `PascalCase` for classes.
-- C/C++ helpers mirror existing `*.cxx` files: four-space indents, brace-on-same-line as shown in `cpp_module/`.
-- Keep plugin names and resource files lower-case with hyphens (e.g., `share/support/ui/gnatformat.py`).
+- Ada code targets Ada 2022 (`-gnat2022 -gnatwa -gnata`) with three-space indentation, no tabs, and `Package_Name.Child` casing; keep `_core` modules GUI-free and quarantine any `_ui` remnants.
+- Align declarations and `is`/`begin` continuations as seen in existing files to preserve Ada column-style formatting.
+- Any remaining Python utilities must pass `black` (`pre-commit run black`) before committing.
 
 ## Testing Guidelines
-- Organize new tests under `testsuite/tests/<ticket-id>-<slug>/` with `test.py` (logic) and `test.yaml` (metadata).
-- Reuse `gps_utils.internal.utils.gps_assert` for assertions; prefer descriptive messages to aid triage.
-- Run `testsuite/run.sh` locally before opening a PR; capture `testsuite/out/summary.txt` for debugging failures.
-- Add targeted tests when touching `gnatformat` or LSP integrations to maintain coverage of regressions.
+- Prefer AUnit for package-level coverage: implement `<feature>_tests.adb`, register the suite in a `<feature>_suite`, and expose it through `test_runner`.
+- Keep tests pure Ada—no C shims—to maintain the headless guarantee and keep builds portable across toolchains.
+- Use `alr build -- -XBUILD=Coverage` when you need coverage data locally; do not check generated reports into the repository.
 
 ## Commit & Pull Request Guidelines
-- Follow the repository history: short, imperative subjects (`Fix crash in outline view`), optionally prefixed by the subsystem.
-- Reference tracking issues or merge-request topics in the body (`Topic: V329-036`) and list noteworthy side effects.
-- Squash noisy fixups before submission; leave TODOs documented in PR notes instead of commits.
-- Pull requests should describe the change, mention impacted modules, link relevant tests, and include screenshots for UI updates.
-
-## Environment Setup Notes
-- Ensure recent GNAT (24 or newer), Gtk+ 3.24, GtkAda, GNATcoll (with project + Python support), and Python with PyGObject/Pycairo as described in `INSTALL`.
-- Export `GPR_PROJECT_PATH`, `PATH`, and `LD_LIBRARY_PATH` so `configure` locates the Ada dependencies; document any non-default paths in your PR.
+- Follow the prevailing format `type: concise summary` (`docs: refresh session state`) and split unrelated changes into separate commits.
+- Reference the relevant roadmap item (e.g., a `PLAN.md` phase) or issue ID in the commit body when applicable.
+- PR descriptions should list validation commands (`alr build`, `./test_headless/bin/test_pure_ada`, test suite) and call out any CLI/TUI output diffs with screenshots where meaningful.
+- Request the CODEOWNERS listed for GNATSAS components whenever touching `gnatsas*` or `codepeer*` paths to keep reviews compliant.

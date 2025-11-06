@@ -67,7 +67,7 @@ Note: gtkada NOT added (would defeat TUI purpose)
 
 ### C. Module Status
 
-**safety_build.gpr (Compiling & Validated) - 9 modules:**
+**safety_build.gpr (Compiling & Validated) - 11 modules:**
 ```ada
 with "common/common";
 with "language/language";
@@ -78,27 +78,29 @@ with "builder/builder_core";
 with "ada_module/core/ada_module_core";
 with "refactoring/core/refactoring_core";
 with "codefix/core/codefix_core";
+with "lsp_client/core/lsp_client_core";
+with "dap/core/dap_core";
 ```
 
 **Purpose:** Validates we haven't deleted critical code for Phases 2-6
 
-**Coverage:** PLAN.md Phases 2-6 (TUI bootstrap through project/build)
+**Coverage:** PLAN.md Phases 2-6 (TUI bootstrap through project/build), Phase 5 guardrail (headless LSP), and DAP headless core readiness.
 
-**lsp_client_core (90% Complete) - NOT in safety_build yet:**
+**lsp_client_core (Headless Guardrail) - Included in safety_build:**
 ```
 Location: lsp_client/core/
 Files: 78 (was 124 total, 48 moved to deleted_gui/)
-Status: Compiles partially (~70 files), needs body work
-Blocker: ~36 GPS.Kernel→Callbacks conversions in body files
-Decision: DEFER to Phase 5
+Status: Callback rewrite complete; builds headless via lsp_client_core.gpr
+Remaining: GUI-only formatting/check_syntax units stay excluded (see lsp_client/core/REMAINING_WORK.md)
+Decision: Implement TUI callbacks during PLAN.md Phase 5
 ```
 
 **dap (Deferred to Phase 10):**
 ```
 Location: dap/
 Files: 117 (67% salvageable)
-Status: Not split yet, depends on lsp_client
-Decision: Handle in Phase 10 (debugging)
+Status: Headless refactor plan captured in dap/REMAINING_WORK.md; `dap/core/dap_core.gpr` builds cleanly (project now `with`s ALS `lsp_base` for `Minimal_Perfect_Hash`). Guard added to `safety_build.gpr`.
+Decision: Execute documented plan before wiring DAP into safety builds (Phase 10)
 ```
 
 ### D. Critical Fixes Applied
@@ -165,137 +167,23 @@ Decision: Finish when we naturally reach Phase 5
 
 ---
 
-## III. LSP CLIENT SPLIT - DETAILED STATUS
+## III. LSP CLIENT CORE - CURRENT STATUS
 
-### What We Accomplished (90%)
+### What changed
 
-**File Reorganization:**
+- `GPS.LSP_Client.Callbacks` now owns the full integration surface: environment setup, language-server lookup, document lifecycle hooks, workspace edits, and timer scheduling/cancellation. `Null_Callback` keeps headless builds working with safe defaults.
+- Every protocol unit (`gps-lsp_client-requests*.adb`, `gps-lsp_clients.adb`, `gps-lsp_client-configurations*.adb`, `gps-lsp_client-language_servers-*.adb`) was rewritten to call the callback interface. All direct `GPS.Kernel`, Glib, or GPS editor dependencies are gone.
+- GUI-only request sources (formatting dialogs, check_syntax) remain excluded in `lsp_client/core/lsp_client_core.gpr`; everything else builds headless.
+- `safety_build.gpr` now depends on `lsp_client/core/lsp_client_core`, extending the guardrail build to cover the protocol layer.
+
+### Validation
+
 ```
-lsp_client/
-├── core/                       (78 files, 472K)
-│   ├── lsp_client_core.gpr
-│   ├── REMAINING_WORK.md       (documents final 10%)
-│   └── src/
-│       ├── gps-lsp_client-callbacks.ads/adb  (NEW - interface)
-│       ├── gps-lsp_client-utilities.ads/adb  (NEW - minimal, 4 functions)
-│       ├── gps-lsp_clients.ads/adb           (Kernel→Callbacks in spec)
-│       ├── gps-lsp_client-requests*.ads/adb  (27 request types)
-│       ├── gps-lsp_client-configurations*.ads/adb
-│       └── gps-lsp_client-language_servers*.ads/adb
-│
-└── deleted_gui/                (48 files, 724K)
-    ├── README.md               (documents what was deleted)
-    ├── gps-lsp_module.ads/adb  (GPS registration)
-    ├── gps-lsp_client-editors*.ads/adb  (20 files)
-    ├── gps-lsp_client-completion.ads/adb
-    ├── gps-lsp_client-outline.ads/adb
-    └── ... (GUI views, refactoring UI, search UI)
+ALR_INDEX_AUTO_UPDATE=0 alr exec -- gprbuild -P lsp_client/core/lsp_client_core.gpr -p
+ALR_INDEX_AUTO_UPDATE=0 alr exec -- gprbuild -P safety_build.gpr
 ```
 
-**Callback Interface Created:**
-```ada
--- GPS.LSP_Client.Callbacks (no GPS.Kernel, no Glib.Main!)
-type LSP_Callback_Interface is limited interface;
-
--- Methods:
-procedure Trace (Message : String; Mode : Trace_Mode) is abstract;
-function Get_Tab_Width (File : Virtual_File) return Natural is abstract;
-function Get_Insert_Spaces (File : Virtual_File) return Boolean is abstract;
-function Get_Project_File return Virtual_File is abstract;
-function Get_Project_Path return Virtual_File is abstract;
-procedure Schedule_Timer (Interval, Callback, Timer) is abstract;
-procedure Cancel_Timer (Timer) is abstract;
-
--- Null_Callback provided for testing
-```
-
-**Minimal Utilities (NO GPS.Editors!):**
-```ada
--- Only 4 pure functions (100 LoC total):
-function To_URI (Virtual_File) return DocumentUri;
-function To_Virtual_File (DocumentUri) return Virtual_File;
-function To_Language_Category (SymbolKind) return Language_Category;
-function To_Construct_Visibility (Als_Visibility) return Construct_Visibility;
-
--- Excluded (GPS.Editors-dependent):
--- - LSP_Position_To_Location (unused by core)
--- - Location_To_LSP_Position (unused by core)
--- - Get_Formatting_Options (needs Preferences callback)
-```
-
-**Spec Files Fixed:**
-```
-✅ gps-lsp_clients.ads: Kernel→Callbacks discriminant
-✅ gps-lsp_client-requests.ads: Kernel→Callbacks discriminant
-✅ gps-lsp_client-configurations.ads: Kernel→Callbacks discriminant
-✅ gps-lsp_client-configurations-clangd.ads: Callbacks
-✅ gps-lsp_client-language_servers-real.ads: Kernel→Callbacks
-✅ Glib.Main removed from specs
-```
-
-**Exclusions (8 files, justified):**
-```
-1. gps-lsp_client-requests-check_syntax.* - Needs deleted_gui dialog
-2-7. gps-lsp_client-requests-*_formatting.* (6 files) - Need Preferences callback
-```
-
-**Files Compiling:** ~70 out of 78 (90%)
-
-### What Remains (10%, ~2-3 hours)
-
-**Body File Conversions (~36 references):**
-```
-gps-lsp_clients.adb: 4 Kernel. calls
-  - Self.Kernel.Insert → Comment out or abstract
-  - Self.Kernel.Get_Buffer_Factory → Comment out (GUI-specific)
-  - Self.Kernel.Get_Original_Environment → Abstract or hardcode
-
-gps-lsp_client-configurations*.adb: 31 Kernel. calls
-  - GPS.Kernel.Preferences.* → Callbacks.Get_*
-  - GPS.Kernel.Project.* → Callbacks.Get_Project_*
-  - GPS.Kernel.Hooks.* → Comment out or abstract
-
-gps-lsp_client-language_servers-real.adb: 1 Kernel. call
-  - Downcast → Change to Callbacks type
-```
-
-**Glib.Main References (~10):**
-```
-gps-lsp_clients.adb:
-  - Glib.Main.Generic_Sources instantiation → Abstract
-  - Glib.Main.Remove (timer) → Callbacks.Cancel_Timer
-  - Timer type → Callbacks.Timer_Id (already done in spec)
-```
-
-**Compilation Validation:**
-```bash
-alr exec -- gprbuild -P lsp_client/core/lsp_client_core.gpr -p
-# Expected after fixes: Success
-```
-
-**Add to safety_build.gpr:**
-```ada
-with "lsp_client/core/lsp_client_core";
-```
-
-### Why We're Pausing at 90%
-
-**Technical Reason:**
-- Remaining work needs TUI context (event loop, preferences, project model)
-- Would be guessing at Callback implementations
-- Likely rework when TUI design emerges
-
-**Strategic Reason:**
-- PLAN.md sequence says Phase 2 before Phase 5
-- TUI is the goal, LSP is infrastructure
-- Better to design Callbacks with TUI in hand
-
-**Practical Reason:**
-- Token budget approaching limit
-- Natural pause point (structural work complete)
-- Body conversions are mechanical (resume anytime)
-
----
+Both commands complete (clang still emits the known macOS deployment-version warnings). The only protocol sources still excluded are the GUI formatting and check_syntax helpers archived in `lsp_client/deleted_gui/`.
 
 ## IV. CRITICAL DECISIONS MADE
 

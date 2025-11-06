@@ -18,6 +18,11 @@ GNAT Studio TUI is a terminal user interface (TUI) editor for **Ada** and **SPAR
 
 **Status:** Phase 1 complete (headless build verified). Phase 2 in progress (TUI bootstrap).
 
+> **Note:** The DAP schema still instantiates `Minimal_Perfect_Hash`, but the
+> helper now lives in AdaCore’s `lsp_base` library (part of the ALS toolchain).
+> `dap/core/dap_core.gpr` therefore `with`s `lsp_base` so those generated
+> instantiations remain available in headless builds.
+
 See `PLAN.md` for detailed roadmap.
 
 ## Building

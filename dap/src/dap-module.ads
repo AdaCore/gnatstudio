@@ -19,6 +19,7 @@ with GNATCOLL.Projects; use GNATCOLL.Projects;
 with GNATCOLL.VFS;      use GNATCOLL.VFS;
 
 with GPS.Kernel;        use GPS.Kernel;
+with GPS.Kernel.Messages;
 
 with DAP.Clients;
 
@@ -85,5 +86,9 @@ package DAP.Module is
    procedure Remove_Continue_To_Line_Messages
      (Kernel : not null access Kernel_Handle_Record'Class);
    --  Remove the message associated with the "Continue to line" action
+
+   function Continue_To_Line_Flags
+     return GPS.Kernel.Messages.Message_Flags;
+   --  Message flags used for "Continue to line" annotations
 
 end DAP.Module;

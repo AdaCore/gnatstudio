@@ -18,6 +18,8 @@
 --   - ada_module_core - Ada language support
 --   - refactoring_core - Refactoring engine
 --   - codefix_core    - Code fix engine
+--   - lsp_client_core - LSP protocol layer (headless)
+--   - dap_core        - Debug protocol core (headless guardrail)
 --
 -- If this compiles: Safe to delete GUI code from ALL these modules
 -- If this fails: We deleted something critical
@@ -34,6 +36,8 @@ with "builder/builder_core";
 with "ada_module/core/ada_module_core";
 with "refactoring/core/refactoring_core";
 with "codefix/core/codefix_core";
+with "lsp_client/core/lsp_client_core";
+with "dap/core/dap_core";
 
 -- vfs/ module completely deleted - was only 2-file GPS wrapper
 -- Actual VFS functionality comes from GNATCOLL.VFS library (imported by kernel_core)

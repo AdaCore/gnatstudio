@@ -21,6 +21,7 @@
 --  DON'T EDIT THIS FILE! It was generated from JSON Schema.
 
 pragma Ada_2022;
+with VSS.JSON;
 with Minimal_Perfect_Hash;
 
 package body DAP.Tools.Inputs is

@@ -58,6 +58,9 @@ Note: start single-cursor if necessary; wire the cursor set early so multi-curso
 
 ## **4) LSP (Ada Language Server) Integration**
 
+- The protocol layer now compiles headless; the future TUI must implement the
+  callback interface (environment, timers, document lifecycle, workspace edits,
+  language-server lookup).
 - Launch ALS per workspace; JSON-RPC over pipes.
 - Wire **didOpen/didChange** with debounce and incremental sync.
 - Implement:
@@ -87,6 +90,8 @@ Note: start single-cursor if necessary; wire the cursor set early so multi-curso
 - TUI layout: source pane + stacks/locals/watch panes.
 - Keys: continue/step/next/finish; toggle breakpoints (gutter mark), breakpoint list panel.
 - Open source at stop locations; highlight current line; show inline value hovers (popup).
+- Follow the headless refactor steps recorded in `dap/REMAINING_WORK.md` before wiring the debugger into safety builds.
+- Guardrail builds: keep `dap/core/dap_core.gpr` compiling headless (project now `with`s ALS `lsp_base` for the `Minimal_Perfect_Hash` generic) and leave it referenced by `safety_build.gpr` before reintroducing the UI shell.
 
 ------
 

@@ -27,6 +27,8 @@ with GNATCOLL.Traces;              use GNATCOLL.Traces;
 with VSS.Characters.Latin;
 with VSS.Strings.Conversions;
 
+with GPS.Kernel.Messages;
+
 with Glib;                         use Glib;
 with Glib.Main;                    use Glib.Main;
 with Glib.Object;                  use Glib.Object;
@@ -1865,8 +1867,20 @@ package body DAP.Module is
    begin
       Get_Messages_Container (Kernel).Remove_Category
         (DAP.Types.Messages_Category_Continue_To_Line,
-         DAP.Types.Continue_To_Line_Messages_Flags);
+         Continue_To_Line_Flags);
    end Remove_Continue_To_Line_Messages;
+
+   ---------------------------
+   -- Continue_To_Line_Flags --
+   ---------------------------
+
+   function Continue_To_Line_Flags
+     return GPS.Kernel.Messages.Message_Flags is
+   begin
+      return (Editor_Line => True,
+              Locations   => False,
+              Editor_Side => False);
+   end Continue_To_Line_Flags;
 
    ---------------------
    -- Register_Module --
