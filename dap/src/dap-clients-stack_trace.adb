@@ -360,8 +360,6 @@ package body DAP.Clients.Stack_Trace is
       end if;
 
       Append_More := Self.Can_Upload (Client);
-
-      null;
    end Merge_Response;
 
    ------------------
