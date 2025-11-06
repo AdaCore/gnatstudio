@@ -45,13 +45,13 @@ Design considerations:
 ## Migration Plan
 
 1. Extend `GPS.DAP_Client.Callbacks` with the three callbacks above and provide
-   no-op implementations in `Null_Callback`.
+   no-op implementations in `Null_Callback`. *(Done — commit 00979012bf)*
 2. Implement a concrete adapter in `DAP.Clients` that forwards these callbacks
    to the existing stack-cache/view helpers (`Client.Get_Stack_Trace`,
-   `Call_Stack.Update`, `Set_Status`, etc.).
-3. Refactor `DAP.Requests.StackTrace` (and the associated client helper) to call
-   the new callbacks instead of touching `GPS.Kernel` directly, then move the
-   request implementation into `dap/core/src`.
+   `Call_Stack.Update`, `Set_Status`, etc.). *(Done — commit 14426bec1a)*
+3. Refactor the stack-trace request family to call the new callbacks instead of
+   touching `GPS.Kernel` directly and host it under `dap/core/src`. *(Done — this
+   session)*
 
 Once the adapter and callbacks are in place, the stack-trace request family can
 be migrated without any GUI dependencies.

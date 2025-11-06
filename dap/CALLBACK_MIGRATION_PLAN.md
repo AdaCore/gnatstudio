@@ -38,8 +38,8 @@ callback base), update GUI helpers to rely on the adapter, and remove the GUI
 copy once validated.
 
 1. Stack Trace *(see `dap/STACKTRACE_CALLBACK_DESIGN.md` for callback details)*
-   - [ ] `dap-requests-stacktrace.*`
-   - [ ] `dap-clients-stack_trace-stacktrace.*`
+   - [x] `dap-requests-stacktrace.*`
+   - [x] `dap-clients-stack_trace-stacktrace.*`
 2. Continue / Step / Pause
    - [ ] `dap-requests-continue.*`
    - [ ] `dap-requests-stepin.*`

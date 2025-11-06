@@ -15,20 +15,13 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with GNATCOLL.Traces;         use GNATCOLL.Traces;
-
 with GPS.Kernel;
-with DAP.Views.Call_Stack;
-with DAP.Utils;               use DAP.Utils;
 
 package body DAP.Clients.Stack_Trace.StackTrace is
 
-   Me : constant Trace_Handle := Create
-     ("GPS.DAP.STACKTRACE_REQUEST_IMPL", On);
-
-   ------------
+   -------------
    -- Create --
-   ------------
+   -------------
 
    function Create
      (Client : access DAP.Clients.DAP_Client'Class;
@@ -42,6 +35,7 @@ package body DAP.Clients.Stack_Trace.StackTrace is
            Callbacks => Client.Callbacks);
    begin
       Self.Parameters.arguments.threadId := Client.Get_Current_Thread;
+
       if Limit /= 0 then
          Self.Parameters.arguments.startFrame := (True, From);
          Self.Parameters.arguments.levels     := (True, Limit);
@@ -49,82 +43,5 @@ package body DAP.Clients.Stack_Trace.StackTrace is
 
       return Self;
    end Create;
-
-   -----------------------
-   -- On_Result_Message --
-   -----------------------
-
-   overriding procedure On_Result_Message
-     (Self        : in out StackTrace_Request;
-      Client      : not null access DAP.Clients.DAP_Client'Class;
-      Result      : in out DAP.Tools.StackTraceResponse;
-      New_Request : in out DAP.Requests.DAP_Request_Access)
-   is
-      pragma Unreferenced (Client);
-      Start_Frame : constant Natural :=
-        (if Self.Parameters.arguments.startFrame.Is_Set then
-            Self.Parameters.arguments.startFrame.Value
-         else 0);
-      Thread_Id : constant Integer := Self.Parameters.arguments.threadId;
-      Append    : Boolean := False;
-   begin
-      New_Request := null;
-
-      Self.Callbacks.On_Stacktrace_Frames
-        (Thread_Id   => Thread_Id,
-         Start_Frame => Start_Frame,
-         Response    => Result,
-         Append_More => Append);
-
-      Self.Callbacks.On_Stacktrace_Fetch_Complete
-        (Thread_Id     => Thread_Id,
-         Success       => True,
-         Initial_Fetch => Start_Frame = 0);
-
-   exception
-      when E : others =>
-         Trace (Me, E);
-         Self.Callbacks.On_Stacktrace_Fetch_Complete
-           (Thread_Id     => Thread_Id,
-            Success       => False,
-            Initial_Fetch => Start_Frame = 0);
-   end On_Result_Message;
-
-   ----------------------
-   -- On_Error_Message --
-   ----------------------
-
-   overriding procedure On_Error_Message
-     (Self    : in out StackTrace_Request;
-      Client  : not null access DAP.Clients.DAP_Client'Class;
-      Message : VSS.Strings.Virtual_String) is
-   begin
-      DAP.Requests.StackTrace.StackTrace_DAP_Request
-        (Self).On_Error_Message (Client, Message);
-
-      Self.Callbacks.On_Stacktrace_Fetch_Complete
-        (Thread_Id     => Self.Parameters.arguments.threadId,
-         Success       => False,
-         Initial_Fetch => not Self.Parameters.arguments.startFrame.Is_Set
-           or else Self.Parameters.arguments.startFrame.Value = 0);
-   end On_Error_Message;
-
-   -----------------
-   -- On_Rejected --
-   -----------------
-
-   overriding procedure On_Rejected
-     (Self   : in out StackTrace_Request;
-      Client : not null access DAP.Clients.DAP_Client'Class) is
-   begin
-      DAP.Requests.StackTrace.StackTrace_DAP_Request
-        (Self).On_Rejected (Client);
-
-      Self.Callbacks.On_Stacktrace_Fetch_Complete
-        (Thread_Id     => Self.Parameters.arguments.threadId,
-         Success       => False,
-         Initial_Fetch => not Self.Parameters.arguments.startFrame.Is_Set
-           or else Self.Parameters.arguments.startFrame.Value = 0);
-   end On_Rejected;
 
 end DAP.Clients.Stack_Trace.StackTrace;

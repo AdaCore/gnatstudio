@@ -16,13 +16,34 @@ package body GPS.DAP_Client.Requests.Stacktrace is
       Success     : in out Boolean;
       New_Request : in out Request_Access)
    is
-      Response : DAP.Tools.StackTraceResponse;
+      Response   : DAP.Tools.StackTraceResponse;
+      Append     : Boolean := False;
+      Start_Frame : constant Natural :=
+        (if Self.Parameters.arguments.startFrame.Is_Set then
+            Self.Parameters.arguments.startFrame.Value
+         else 0);
+      Thread_Id  : constant Integer := Self.Parameters.arguments.threadId;
    begin
+      New_Request := null;
+
       DAP.Tools.Inputs.Input_StackTraceResponse (Stream, Response, Success);
 
       if Success then
-         Stacktrace_Request'Class
-           (Self).On_Result_Message (Response, New_Request);
+         Self.Callbacks.On_Stacktrace_Frames
+           (Thread_Id   => Thread_Id,
+            Start_Frame => Start_Frame,
+            Response    => Response,
+            Append_More => Append);
+
+         Self.Callbacks.On_Stacktrace_Fetch_Complete
+           (Thread_Id     => Thread_Id,
+            Success       => True,
+            Initial_Fetch => Start_Frame = 0);
+      else
+         Self.Callbacks.On_Stacktrace_Fetch_Complete
+           (Thread_Id     => Thread_Id,
+            Success       => False,
+            Initial_Fetch => Start_Frame = 0);
       end if;
    end On_Result_Message;
 

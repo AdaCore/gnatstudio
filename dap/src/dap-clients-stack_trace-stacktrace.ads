@@ -17,14 +17,14 @@
 
 --  Concrete implementation of the DAP 'stackTrace' request
 
-with VSS.Strings;         use VSS.Strings;
-with DAP.Requests;        use DAP.Requests;
-with DAP.Requests.StackTrace;
+with GPS.Kernel;
+with GPS.DAP_Client.Requests.Stacktrace;
+with DAP.Clients;
 
 package DAP.Clients.Stack_Trace.StackTrace is
 
    type StackTrace_Request (<>) is
-     new DAP.Requests.StackTrace.StackTrace_DAP_Request with private;
+     new GPS.DAP_Client.Requests.Stacktrace.Stacktrace_Request with private;
    type StackTrace_Request_Access is access all StackTrace_Request'Class;
 
    function Create
@@ -33,26 +33,10 @@ package DAP.Clients.Stack_Trace.StackTrace is
       Limit  : Integer := 0)
       return StackTrace_Request_Access;
    --  Create a new DAP 'stackTrace' request.
-   --  Get traces `From` the Id and up to `Limit` count if not 0
-
-   overriding procedure On_Result_Message
-     (Self        : in out StackTrace_Request;
-      Client      : not null access DAP.Clients.DAP_Client'Class;
-      Result      : in out DAP.Tools.StackTraceResponse;
-      New_Request : in out DAP.Requests.DAP_Request_Access);
-
-   overriding procedure On_Error_Message
-     (Self    : in out StackTrace_Request;
-      Client  : not null access DAP.Clients.DAP_Client'Class;
-      Message : VSS.Strings.Virtual_String);
-
-   overriding procedure On_Rejected
-     (Self   : in out StackTrace_Request;
-      Client : not null access DAP.Clients.DAP_Client'Class);
 
 private
 
    type StackTrace_Request is
-     new DAP.Requests.StackTrace.StackTrace_DAP_Request with null record;
+     new GPS.DAP_Client.Requests.Stacktrace.Stacktrace_Request with null record;
 
 end DAP.Clients.Stack_Trace.StackTrace;

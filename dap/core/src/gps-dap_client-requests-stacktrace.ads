@@ -1,8 +1,10 @@
+with VSS.JSON.Content_Handlers;
+with VSS.JSON.Pull_Readers;
 with DAP.Tools;
 
 package GPS.DAP_Client.Requests.Stacktrace is
 
-   type Stacktrace_Request is abstract new Request with record
+   type Stacktrace_Request is new Request with record
       Parameters : aliased DAP.Tools.StackTraceRequest :=
         DAP.Tools.StackTraceRequest'
           (seq       => 0,
@@ -18,11 +20,6 @@ package GPS.DAP_Client.Requests.Stacktrace is
       Stream      : in out VSS.JSON.Pull_Readers.JSON_Pull_Reader'Class;
       Success     : in out Boolean;
       New_Request : in out Request_Access);
-
-   procedure On_Result_Message
-     (Self        : in out Stacktrace_Request;
-      Result      : in out DAP.Tools.StackTraceResponse;
-      New_Request : in out Request_Access) is abstract;
 
    overriding procedure Set_Seq
      (Self : in out Stacktrace_Request;
