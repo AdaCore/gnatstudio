@@ -1367,8 +1367,8 @@ package body DAP.Clients is
       Event       : VSS.Strings.Virtual_String;
 
       Position    : Requests_Maps.Cursor;
-      Request     : DAP.Requests.DAP_Request_Access;
-      New_Request : DAP.Requests.DAP_Request_Access := null;
+      Request     : GPS.DAP_Client.Requests.Request_Access;
+      New_Request : GPS.DAP_Client.Requests.Request_Access := null;
 
    begin
       if DAP_Log.Is_Active then
@@ -1400,7 +1400,7 @@ package body DAP.Clients is
                Self.Sent.Delete (Position);
 
                if Self.Status /= Terminating
-                 or else Request.all in
+                 or else DAP.Requests.DAP_Request'Class (Request.all) in
                    DAP.Requests.Disconnect.Disconnect_DAP_Request'Class
                then
                   declare
@@ -1408,9 +1408,11 @@ package body DAP.Clients is
                        (Self.Callbacks = null
                         or else Self.Callbacks.Allow_Request_Processing)
                        and then
-                         (Request.Kernel = null
-                          or else not Request.Kernel.Is_In_Destruction);
-                     Method_Name : constant String := Request.Method;
+                         (DAP.Requests.DAP_Request'Class (Request.all).Kernel = null
+                          or else not DAP.Requests.DAP_Request'Class (Request.all)
+                            .Kernel.Is_In_Destruction);
+                     Method_Name : constant String :=
+                       DAP.Requests.DAP_Request'Class (Request.all).Method;
                   begin
                      if R_Success.Is_Set
                        and then not R_Success.Value
@@ -1427,8 +1429,8 @@ package body DAP.Clients is
                            end if;
 
                            begin
-                              Request.On_Error_Message
-                                (Self'Access, Message);
+                              DAP.Requests.DAP_Request'Class (Request.all)
+                                .On_Error_Message (Self'Access, Message);
                            exception
                               when E : others =>
                                  Trace (Me, E);
@@ -1441,8 +1443,9 @@ package body DAP.Clients is
                         begin
                            declare
                            begin
-                              Request.On_Result_Message
-                                (Self'Access, Reader, Parsed, New_Request);
+                              DAP.Requests.DAP_Request'Class (Request.all)
+                                .On_Result_Message
+                                  (Self'Access, Reader, Parsed, New_Request);
                            exception
                               when E : others =>
                                  Trace (Me, E);
@@ -1456,8 +1459,9 @@ package body DAP.Clients is
                                     Message => "Can't parse response");
                               end if;
 
-                              Request.On_Error_Message
-                                (Self'Access, "Can't parse response");
+                              DAP.Requests.DAP_Request'Class (Request.all)
+                                .On_Error_Message
+                                  (Self'Access, "Can't parse response");
                            end if;
                         end;
 
@@ -1465,7 +1469,7 @@ package body DAP.Clients is
                            Self.Callbacks.On_Response_Processed (Method_Name);
                         else
                            GPS.Kernel.Hooks.Dap_Response_Processed_Hook.Run
-                             (Kernel => Request.Kernel,
+                             (Kernel => DAP.Requests.DAP_Request'Class (Request.all).Kernel,
                               Method => Method_Name);
                         end if;
 
@@ -1479,7 +1483,7 @@ package body DAP.Clients is
                   end;
                end if;
 
-               DAP.Requests.Destroy (Request);
+               GPS.DAP_Client.Requests.Destroy (Request);
             end if;
          end if;
 

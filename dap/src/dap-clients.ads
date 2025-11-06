@@ -363,10 +363,10 @@ private
 
    package Requests_Maps is new Ada.Containers.Hashed_Maps
      (Key_Type        => Integer,
-      Element_Type    => DAP.Requests.DAP_Request_Access,
+      Element_Type    => GPS.DAP_Client.Requests.Request_Access,
       Hash            => Hash,
       Equivalent_Keys => "=",
-      "="             => DAP.Requests."=");
+      "="             => GPS.DAP_Client.Requests."=");
 
    package Integer_Sets is new Ada.Containers.Hashed_Sets
      (Element_Type        => Integer,
