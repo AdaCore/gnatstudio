@@ -87,7 +87,8 @@ package GPS.LSP_Clients is
    ----------------
 
    type LSP_Client
-     (Callbacks : not null access GPS.LSP_Client.Callbacks.LSP_Callback_Interface'Class;
+     (Callbacks : not null access
+        GPS.LSP_Client.Callbacks.LSP_Callback_Interface'Class;
       Listener  : not null access LSP_Client_Listener'Class;
       Language  : not null access Language_Root'Class)
    is limited new LSP.Clients.Client
@@ -251,7 +252,8 @@ private
      (Ada.Calendar.Time);
 
    type LSP_Client
-     (Callbacks : not null access GPS.LSP_Client.Callbacks.LSP_Callback_Interface'Class;
+     (Callbacks : not null access
+        GPS.LSP_Client.Callbacks.LSP_Callback_Interface'Class;
       Listener  : not null access LSP_Client_Listener'Class;
       Language  : not null access Language_Root'Class) is
    limited new LSP.Clients.Client

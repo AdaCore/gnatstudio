@@ -17,10 +17,8 @@
 
 with Ada.Unchecked_Deallocation;
 
-with GPS.Editors;
 with GPS.LSP_Client.Language_Servers;
 with GPS.LSP_Clients;
-with GPS.LSP_Module;
 with GNATCOLL.Traces; use GNATCOLL.Traces;
 
 package body GPS.LSP_Client.Requests is
@@ -140,6 +138,7 @@ package body GPS.LSP_Client.Requests is
      (Language : not null Standard.Language.Language_Access;
       Request  : in out Request_Access) return Reference
    is
+      use type GPS.LSP_Client.Callbacks.LSP_Callback_Access;
       use type GPS.LSP_Client.Language_Servers.Language_Server_Access;
 
       Server : GPS.LSP_Client.Language_Servers.Language_Server_Access;
@@ -154,15 +153,12 @@ package body GPS.LSP_Client.Requests is
             return;
          end if;
 
-         if Request.Kernel /= null
-           and then Request.Kernel.Is_In_Destruction
-         then
-            --  exiting GNAT Studio
+         if Request.Callbacks = null then
             On_Checks_Passed := False;
          end if;
 
          if On_Checks_Passed then
-            Server := GPS.LSP_Module.Get_Language_Server (Language);
+            Server := Request.Callbacks.Get_Language_Server (Language);
 
             if Server = null then
                --  Reject the request when there is no language server
@@ -182,30 +178,8 @@ package body GPS.LSP_Client.Requests is
             end if;
          end if;
 
-         if On_Checks_Passed
-           and then Request.Text_Document /= GNATCOLL.VFS.No_File
-         then
-            declare
-               use GPS.Editors;
-
-               Buffer : constant GPS.Editors.Editor_Buffer'Class :=
-                 Request.Kernel.Get_Buffer_Factory.Get
-                   (File        => Request.Text_Document,
-                    Open_Buffer => False,
-                    Open_View   => False);
-
-            begin
-               if Buffer /= Nil_Editor_Buffer
-                 and then not Buffer.Is_Opened_On_LSP_Server
-               then
-                  --  Not opened on the server side yet
-                  On_Checks_Passed := False;
-               end if;
-            end;
-         end if;
-
          if On_Checks_Passed then
-            Result.Initialize (Request, Server);
+            GPS.LSP_Client.Requests.Initialize (Result, Request, Server);
             Server.Execute (Request);
 
          else

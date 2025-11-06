@@ -59,8 +59,8 @@ package GPS.LSP_Client.Language_Servers.Real is
       return Boolean;
 
    function Create
-     (Kernel              : not null access
-        GPS.Kernel.Kernel_Handle_Record'Class;
+     (Callbacks           : not null access
+        GPS.LSP_Client.Callbacks.LSP_Callback_Interface'Class;
       Configuration       : not null access
         GPS.LSP_Client.Configurations.Server_Configuration'Class;
       Server_Interceptor  : not null access

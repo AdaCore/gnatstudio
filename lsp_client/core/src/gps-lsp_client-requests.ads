@@ -75,8 +75,8 @@ package GPS.LSP_Client.Requests is
    type LSP_Request
      (Callbacks : GPS.LSP_Client.Callbacks.LSP_Callback_Access := null) is
      abstract tagged limited private;
-   --  Callbacks is optional - allows request processing without IDE integration
-   --  when Callbacks is null, request should not access IDE features
+   --  Callbacks may be null. In that case the request must avoid invoking
+   --  IDE-dependent features and should rely on default behaviour only.
 
    type Request_Access is access all LSP_Request'Class;
 
@@ -221,7 +221,8 @@ private
    overriding procedure Adjust (Self : in out Abstract_Reference);
    overriding procedure Finalize (Self : in out Abstract_Reference);
 
-   type LSP_Request (Callbacks : GPS.LSP_Client.Callbacks.LSP_Callback_Access := null) is
+   type LSP_Request
+     (Callbacks : GPS.LSP_Client.Callbacks.LSP_Callback_Access := null) is
      abstract tagged limited record
       Id         : LSP.Types.LSP_Number_Or_String;
       --  Identifier of the processing request.

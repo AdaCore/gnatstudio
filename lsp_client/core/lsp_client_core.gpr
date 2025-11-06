@@ -54,7 +54,9 @@ project LSP_Client_Core is
       "gps-lsp_client-requests-range_formatting.ads",
       "gps-lsp_client-requests-range_formatting.adb",
       "gps-lsp_client-requests-on_type_formatting.ads",
-      "gps-lsp_client-requests-on_type_formatting.adb"
+      "gps-lsp_client-requests-on_type_formatting.adb",
+      "gps-lsp_client-configurations-clangd.ads",
+      "gps-lsp_client-configurations-clangd.adb"
    );
 
    package Compiler renames Shared.Compiler;

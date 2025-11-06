@@ -35,11 +35,6 @@ with GNATCOLL.Traces;    use GNATCOLL.Traces;
 with LSP.JSON_Streams;
 with LSP.Messages;
 
-with GPS.Editors;
-with GPS.Kernel.Preferences; use GPS.Kernel.Preferences;
-with GPS.Kernel.Project;
-with GPS.LSP_Client.Editors.Semantic_Tokens;
-with GPS.LSP_Client.Edit_Workspace;
 with GPS.LSP_Client.Partial_Results;
 with GPS.LSP_Client.Utilities;
 with GPS.LSP_Clients.Shutdowns;
@@ -79,11 +74,8 @@ package body GPS.LSP_Clients is
       File : Virtual_File);
    --  Remove any pending change request for the given file
 
-   package LSP_Client_Sources is
-     new Glib.Main.Generic_Sources (LSP_Client_Access);
-
-   function On_Restart_Timer (Self : LSP_Client_Access) return Boolean;
-   --  Process restart timer event: do startup of new language server process
+   procedure Handle_Restart_Timer (Self : not null access LSP_Client);
+   --  Process restart timer expiration and decide whether to relaunch.
 
    ------------
    -- Cancel --
@@ -388,18 +380,15 @@ package body GPS.LSP_Clients is
       Params  : LSP.Messages.ApplyWorkspaceEditParams)
    is
       On_Error : Boolean;
+      Label_String : constant String :=
+        (if Params.label.Is_Set
+         then To_UTF_8_String (Params.label.Value)
+         else "Apply Workspace Edit");
    begin
-      GPS.LSP_Client.Edit_Workspace.Edit
-        (Kernel                   => GPS.Kernel.Kernel_Handle
-           (Self.Client.Kernel),
-         Workspace_Edit           => Params.edit,
-         Title                    => "Apply Workspace Edit",
-         Make_Writable            => False,
-         Auto_Save                => False,
-         Allow_File_Renaming      => False,
-         Locations_Message_Markup =>
-           (if Params.label.Is_Set then Params.label.Value else ""),
-         Error                    => On_Error);
+      Self.Client.Callbacks.Apply_Workspace_Edit
+        (Edit  => Params.edit,
+         Title => Label_String,
+         Error => On_Error);
 
       declare
          Failure : LSP.Types.Optional_Virtual_String (Is_Set => On_Error);
@@ -493,9 +482,7 @@ package body GPS.LSP_Clients is
       --  The underlying process has died. If this wasn't intentional,
       --  let's relaunch it.
       if not Self.Shutdown_Intentionally_Requested then
-         Self.Restart_Timer :=
-           LSP_Client_Sources.Timeout_Add
-             (400, On_Restart_Timer'Access, Self'Unchecked_Access);
+         Handle_Restart_Timer (Self'Unchecked_Access);
       end if;
 
       --  If we reach here, it means the shutdown is final, no
@@ -767,14 +754,8 @@ package body GPS.LSP_Clients is
 
                Stream.R.Read_Next;
 
-               declare
-                  use type GPS.Kernel.Kernel_Handle;
                begin
-                  if Request.Kernel = null
-                    or else not Request.Kernel.Is_In_Destruction
-                  then
-                     Request.On_Result_Message (Stream'Access);
-                  end if;
+                  Request.On_Result_Message (Stream'Access);
 
                exception
                   when E : others =>
@@ -844,18 +825,11 @@ package body GPS.LSP_Clients is
 
                Stream.R.Read_Next;
 
-               declare
-                  use type GPS.Kernel.Kernel_Handle;
-
                begin
-                  if Request.Kernel = null
-                    or else not Request.Kernel.Is_In_Destruction
-                  then
-                     GPS.LSP_Client.Partial_Results
-                       .LSP_Request_Partial_Result'Class
-                          (Request.all).On_Partial_Result_Message
-                             (Stream'Access);
-                  end if;
+                  GPS.LSP_Client.Partial_Results
+                    .LSP_Request_Partial_Result'Class
+                       (Request.all).On_Partial_Result_Message
+                          (Stream'Access);
 
                exception
                   when E : others =>
@@ -922,49 +896,44 @@ package body GPS.LSP_Clients is
          VSS.Strings.Conversions.To_Unbounded_UTF_8_String (Req_Method));
    end On_Raw_Message;
 
-   ----------------------
-   -- On_Restart_Timer --
-   ----------------------
+   ---------------------------
+   -- Handle_Restart_Timer --
+   ---------------------------
 
-   function On_Restart_Timer (Self : LSP_Client_Access) return Boolean is
-      Now   : Time;
+   procedure Handle_Restart_Timer (Self : not null access LSP_Client) is
+      Now   : constant Time := Clock;
       Count : Natural := 0;
-
    begin
-      Now := Clock;
-
-      --  Count the number of launches that have occurred within the
-      --  last throttle period
-
       for Launch_Time of Self.Launches loop
          exit when Now - Launch_Time > Throttle_Period;
          Count := Count + 1;
       end loop;
 
-      --  If we haven't restarted too many times, relaunch now.
       if Count <= Throttle_Max then
          Me.Trace ("Restarting");
          Self.Launches.Prepend (Clock);
-
          Self.Start;
 
       else
-         Self.Kernel.Insert
-           ("The language server for " & Self.Language.Get_Name
-            & " had to be restarted more than" & Throttle_Max'Img
-            & " times in the past" & Integer (Throttle_Period)'Img
-            & " seconds - aborting. Please report this.",
-            Mode => GPS.Kernel.Error);
+         declare
+            Message : constant String :=
+              "The language server for " & Self.Language.Get_Name
+              & " had to be restarted more than" & Throttle_Max'Img
+              & " times in the past" & Integer (Throttle_Period)'Img
+              & " seconds - aborting. Please report this.";
+         begin
+            Self.Callbacks.Trace
+              (Message, GPS.LSP_Client.Callbacks.Trace_Error);
+         end;
+
          Me.Trace ("Restarted too many times, aborting");
 
          --  Prevent further restart attempts
          Self.Shutdown_Intentionally_Requested := True;
       end if;
 
-      Self.Restart_Timer := Glib.Main.No_Source_Id;
-
-      return False;
-   end On_Restart_Timer;
+      Self.Restart_Timer := GPS.LSP_Client.Callbacks.No_Timer;
+   end Handle_Restart_Timer;
 
    ------------------
    -- On_Exception --
@@ -1079,7 +1048,9 @@ package body GPS.LSP_Clients is
       end Get_Supported_CodeActionKinds;
 
       Root   : constant GNATCOLL.VFS.Virtual_File :=
-        GPS.Kernel.Project.Get_Project (Self.Kernel).Project_Path.Dir;
+        (if Self.Callbacks.Get_Project_Path /= GNATCOLL.VFS.No_File
+         then Self.Callbacks.Get_Project_Path
+         else GNATCOLL.VFS.No_File);
       --  ??? Root directory of the project is directoy where
       --  project file is stored.
       --  ??? Must be synchronized with ada.projectFile passed in
@@ -1136,7 +1107,7 @@ package body GPS.LSP_Clients is
                     (Is_Set => True,
                      Value  =>
                        (snippetSupport      =>
-                          (Is_Set => True, Value => LSP_Use_Snippets.Get_Pref),
+                          (Is_Set => True, Value => False),
                         documentationFormat =>
                           Get_Completion_Documentation_Formats,
                         resolveSupport      =>
@@ -1169,7 +1140,7 @@ package body GPS.LSP_Clients is
                  (Is_Set => True,
                   Value  => (dynamicRegistration => LSP.Types.False)),
                semanticTokens     =>
-                 GPS.LSP_Client.Editors.Semantic_Tokens.Get_Supported_Options,
+                 (Is_Set => False),
                others             => <>),
             window       => (Is_Set => False),
             general      => (Is_Set => False),
@@ -1225,22 +1196,11 @@ package body GPS.LSP_Clients is
       ------------------------
 
       procedure Process_Close_File is
-         use GPS.Editors;
-
          Value : constant LSP.Messages.DidCloseTextDocumentParams :=
                    (textDocument =>
-                      (uri        =>
-                         GPS.LSP_Client.Utilities.To_URI (Item.File)));
-
-         Buffer  : constant GPS.Editors.Editor_Buffer'Class :=
-           Self.Kernel.Get_Buffer_Factory.Get
-             (File        => Item.File,
-              Open_Buffer => False,
-              Open_View   => False);
+                      (uri => GPS.LSP_Client.Utilities.To_URI (Item.File)));
       begin
-         if Buffer /= Nil_Editor_Buffer then
-            Buffer.Set_Opened_On_LSP_Server (False);
-         end if;
+         Self.Callbacks.On_Document_Closed (Item.File);
          Self.On_DidCloseTextDocument_Notification (Value);
       end Process_Close_File;
 
@@ -1249,28 +1209,10 @@ package body GPS.LSP_Clients is
       -----------------------
 
       procedure Process_Open_File is
-         Factory : constant GPS.Editors.Editor_Buffer_Factory_Access :=
-                     Self.Kernel.Get_Buffer_Factory;
-         Buffer  : constant GPS.Editors.Editor_Buffer'Class := Factory.Get
-           (File        => Item.File,
-            Open_Buffer => True,
-            Open_View   => False);
-         Lang    : constant not null Language.Language_Access :=
-                     Buffer.Get_Language;
-         Value   : constant LSP.Messages.DidOpenTextDocumentParams :=
-                     (textDocument =>
-                        (uri        =>
-                           GPS.LSP_Client.Utilities.To_URI
-                             (Item.File),
-                         languageId =>
-                           VSS.Strings.Conversions.To_Virtual_String
-                             (Lang.Get_Name),
-                         version    => 0,
-                         text       => Buffer.Get_Text));
-
+         Params : constant LSP.Messages.DidOpenTextDocumentParams :=
+           Self.Callbacks.Build_Did_Open_Params (Item.File);
       begin
-         Self.On_DidOpenTextDocument_Notification (Value);
-         Buffer.Set_Opened_On_LSP_Server (True);
+         Self.On_DidOpenTextDocument_Notification (Params);
       end Process_Open_File;
 
       -------------------------
@@ -1494,7 +1436,7 @@ package body GPS.LSP_Clients is
    -- Server_Language --
    ---------------------
 
-   overriding function Server_Language
+   function Server_Language
      (Self : LSP_Client) return VSS.Strings.Virtual_String is
    begin
       return
@@ -1664,7 +1606,7 @@ package body GPS.LSP_Clients is
 
       Self.Set_Program (Executable);
       Self.Set_Arguments (Arguments);
-      Self.Set_Environment (Self.Kernel.Get_Original_Environment);
+      Self.Set_Environment (Self.Callbacks.Get_Server_Environment);
       Self.Initialization_Options := Initialization_Options;
 
       --  TODO: Self.Set_Working_Directory
@@ -1687,17 +1629,16 @@ package body GPS.LSP_Clients is
      (Self               : in out LSP_Client'Class;
       Reject_Immediately : Boolean)
    is
-      use type Glib.Main.G_Source_Id;
-
+      use type GPS.LSP_Client.Callbacks.Timer_Id;
       Request : GPS.LSP_Client.Requests.Request_Access :=
                   new GPS.LSP_Clients.Shutdowns.Shutdown_Request
                     (Client => Self'Unchecked_Access);
 
    begin
-      if Self.Restart_Timer /= Glib.Main.No_Source_Id then
-         Glib.Main.Remove (Self.Restart_Timer);
-         Self.Restart_Timer := Glib.Main.No_Source_Id;
+      if Self.Restart_Timer /= GPS.LSP_Client.Callbacks.No_Timer then
+         Self.Callbacks.Cancel_Timer (Self.Restart_Timer);
       end if;
+      Self.Restart_Timer := GPS.LSP_Client.Callbacks.No_Timer;
 
       Self.Shutdown_Intentionally_Requested := True;
       Self.Enqueue (Request);

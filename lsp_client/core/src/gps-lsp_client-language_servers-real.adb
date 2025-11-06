@@ -66,8 +66,8 @@ package body GPS.LSP_Client.Language_Servers.Real is
    ------------
 
    function Create
-     (Kernel              : not null access
-        GPS.Kernel.Kernel_Handle_Record'Class;
+     (Callbacks           : not null access
+        GPS.LSP_Client.Callbacks.LSP_Callback_Interface'Class;
       Configuration       : not null access
         GPS.LSP_Client.Configurations.Server_Configuration'Class;
       Server_Interceptor  : not null access
@@ -79,7 +79,7 @@ package body GPS.LSP_Client.Language_Servers.Real is
    begin
       return Result : constant not null Language_Server_Access :=
         new Real_Language_Server
-          (Kernel              => Kernel,
+          (Callbacks           => Callbacks,
            Configuration       => Configuration,
            Server_Interceptor  => Server_Interceptor,
            Request_Interceptor => Request_Interceptor,

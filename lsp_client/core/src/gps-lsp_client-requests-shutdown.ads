@@ -19,7 +19,7 @@
 package GPS.LSP_Client.Requests.Shutdown is
 
    type Abstract_Shutdown_Request is
-     abstract new LSP_Request (Kernel => null) with null record;
+     abstract new LSP_Request (Callbacks => null) with null record;
 
    procedure On_Result_Message
      (Self : in out Abstract_Shutdown_Request) is abstract;

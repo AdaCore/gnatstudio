@@ -27,7 +27,8 @@ with GPS.LSP_Client.Callbacks;
 package GPS.LSP_Client.Configurations is
 
    type Server_Configuration
-     (Callbacks : not null access GPS.LSP_Client.Callbacks.LSP_Callback_Interface'Class)
+     (Callbacks : not null access
+        GPS.LSP_Client.Callbacks.LSP_Callback_Interface'Class)
    is tagged limited record
       Server_Program    : Virtual_File;
       --  The executable to launch for this server

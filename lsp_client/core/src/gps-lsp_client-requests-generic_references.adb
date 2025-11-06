@@ -13,7 +13,8 @@
 -- General  Public  License  distributed  with  this  software;   see  file --
 -- COPYING3.  If not, go to http://www.gnu.org/licenses for a complete copy --
 -- of the license.                                                          --
-------------------------------------------------------------------------------
+
+with GPS.LSP_Client.Language_Servers;
 
 package body GPS.LSP_Client.Requests.Generic_References is
 
@@ -26,7 +27,10 @@ package body GPS.LSP_Client.Requests.Generic_References is
       Request  : in out Request_Access) return Reference is
    begin
       return Result : Reference do
-         Result.Initialize (GPS.LSP_Client.Requests.Request_Access (Request));
+         GPS.LSP_Client.Requests.Initialize
+           (Result,
+            GPS.LSP_Client.Requests.Request_Access (Request),
+            GPS.LSP_Client.Language_Servers.Language_Server_Access'(null));
          Execute (Language, GPS.LSP_Client.Requests.Request_Access (Request));
       end return;
    end Execute;
@@ -64,7 +68,10 @@ package body GPS.LSP_Client.Requests.Generic_References is
      (Self : Reference) return GPS.LSP_Client.Requests.Reference is
    begin
       return Result : GPS.LSP_Client.Requests.Reference do
-         Result.Initialize (Self.Request);
+         GPS.LSP_Client.Requests.Initialize
+           (Result,
+            Self.Request,
+            GPS.LSP_Client.Language_Servers.Language_Server_Access'(null));
       end return;
    end To_Reference;
 
@@ -82,7 +89,10 @@ package body GPS.LSP_Client.Requests.Generic_References is
             --  Initialize reference when request has compatible type. In cases
             --  of incompatible type "null" reference will be returned.
 
-            Result.Initialize (Self.Request);
+            GPS.LSP_Client.Requests.Initialize
+              (Result,
+               Self.Request,
+               GPS.LSP_Client.Language_Servers.Language_Server_Access'(null));
          end if;
       end return;
    end To_Reference;
