@@ -1,5 +1,6 @@
 with GNATCOLL.Traces;          use GNATCOLL.Traces;
 with GNATCOLL.VFS;
+with GPS.Kernel;
 with GPS.Kernel.Hooks;
 with DAP.Tools;
 with DAP.Types;                use DAP.Types;
@@ -75,7 +76,8 @@ package body GPS.DAP_Client.Callbacks.Kernel_Adapter is
       pragma Unreferenced (Thread_Id);
       Trace     : constant Stack_Traces.Stack_Trace_Access :=
         (if Self.Client /= null then Self.Client.Get_Stack_Trace else null);
-      Selected  : Natural := 0;
+      Local_Append : Boolean := False;
+      Selected     : Natural := 0;
    begin
       if Trace = null then
          Append_More := False;
@@ -83,11 +85,13 @@ package body GPS.DAP_Client.Callbacks.Kernel_Adapter is
       end if;
 
       Trace.Merge_Response
-        (Client      => Self.Client,
-         Start_Frame => Start_Frame,
-         Response    => Response,
-         Append_More => Append_More,
-         Selected_Id => Selected);
+        (Client         => Self.Client,
+         Start_Frame    => Start_Frame,
+         Response       => Response,
+         Append_More    => Local_Append,
+         Selected_Index => Selected);
+
+      Append_More := Local_Append;
 
       if Selected /= 0 then
          Trace.Select_Frame (Id => Selected, Client => Self.Client);
@@ -118,9 +122,11 @@ package body GPS.DAP_Client.Callbacks.Kernel_Adapter is
          return;
       end if;
 
-      if Initial_Fetch then
-         Self.Client.Set_Status (Stopped);
-      elsif Success then
+      if Success then
+         if Initial_Fetch then
+            Self.Client.Set_Status (Stopped);
+         end if;
+
          DAP.Views.Call_Stack.Update (Self.Client.Kernel, Self.Client);
          Self.Client.Kernel.Context_Changed (GPS.Kernel.No_Context);
       end if;
