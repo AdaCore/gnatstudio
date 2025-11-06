@@ -25,6 +25,15 @@ callback mechanisms.
   sits in the same tree as view/controller code under `dap/src/modules`.
 - Utilities (`DAP.Utils`) hard-code `GPS.Kernel` navigation helpers.
 - Guardrail builds do not touch the DAP code, so GUI deletions risk breakage.
+- Kernel entanglement hotspots (pre-audit):
+  - `dap/src/dap-clients*.{ads,adb}`: heavy use of `GPS.Kernel`, hooks,
+    messages window, MDI, and markers.
+  - `dap/src/dap-utils.*`, `dap/src/dap-contexts.*`,
+    `dap/src/dap-module*.{ads,adb}`: relies on kernel context helpers.
+  - `dap/src/modules/dap-views*/**`: GtkAda + kernel modules (UI layer).
+  - Safer protocol-only candidates (no Gtk/GPS usage): `dap-requests*/**`,
+    generated `dap-tools*`, `dap-types-breakpoints.*`, plus most files already
+    moved under `dap/core/src`.
 
 ## Refactor Plan
 
