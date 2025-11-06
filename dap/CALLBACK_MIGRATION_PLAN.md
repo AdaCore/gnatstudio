@@ -11,15 +11,16 @@ after **each** numbered step:
 ## Preparation
 
 - [x] Create working branch `dap-callback-refactor`.
-- [ ] Capture baseline `git status` (clean) and record latest guard build run.
+- [x] Capture baseline `git status` (clean) and record latest guard build run
+      (2025-11-06 `dap/core` + `safety_build`).
 
 ## Phase 1 – Adapter Scaffolding
 
-- [ ] Design a `GPS.DAP_Client.Callbacks.Kernel_Adapter` that wraps
+- [x] Design a `GPS.DAP_Client.Callbacks.Kernel_Adapter` that wraps
       `GPS.Kernel` services used by the GUI (hooks, trace, shutdown checks).
-- [ ] Integrate the adapter into `DAP.Clients` (instantiate once, pass to
+- [x] Integrate the adapter into `DAP.Clients` (instantiate once, pass to
       requests and queue entries).
-- [ ] Update logging to flow through callbacks instead of ad-hoc traces.
+- [x] Update logging to flow through callbacks instead of ad-hoc traces.
 
 ## Phase 2 – Request Base Swap
 
