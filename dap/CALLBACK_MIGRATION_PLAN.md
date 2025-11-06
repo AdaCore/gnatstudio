@@ -26,7 +26,7 @@ after **each** numbered step:
 
 - [x] Refactor `DAP.Requests` spec/body to use `GPS.DAP_Client.Requests.Request`
       while preserving the existing API surface for GUI callers.
-- [ ] Update `DAP.Clients` request queue (`Requests_Maps`) to use the core
+- [x] Update `DAP.Clients` request queue (`Requests_Maps`) to use the core
       `Request_Access` type.
 - [ ] Adjust hook invocations to source method names from callbacks rather than
       `GPS.Kernel` handles.
