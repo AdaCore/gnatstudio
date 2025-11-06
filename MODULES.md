@@ -25,7 +25,7 @@ This document categorizes GNATstudio modules for the TUI conversion per PLAN.md.
 
 ### Standalone Headless Modules
 - **vfs** (`vfs/vfs.gpr`) - Virtual file system abstraction
-- **lsp_client** (`lsp_client/gps_lsp_client.gpr`) - Language Server Protocol client
+- **lsp_client** (`lsp_client/core/lsp_client_core.gpr`) - Language Server Protocol client (headless)
 - **gnatcoll_extras** (`gnatcoll_extras/gnatcoll_extras.gpr`) - GNATCOLL extensions
 - **language** (`language/language.gpr`) - Language support infrastructure
 - **toolchains_core** (`toolchains_editor/core/toolchains_core.gpr`) - Toolchain management
@@ -34,17 +34,13 @@ This document categorizes GNATstudio modules for the TUI conversion per PLAN.md.
 
 ## GUI Modules (Require GTK - Must Remove or Stub)
 
-### Kernel with GTK
-- **kernel** (`kernel/kernel.gpr`) - Full kernel with GTK integration
-  - Dependencies: kernel_core + gtkada + widgets + spawn_glib
-  - Source: `kernel/src/` (includes GUI code)
-  - **Strategy:** All modules should use kernel_core instead
+### Kernel with GTK (Removed)
+- **kernel** (`kernel/kernel.gpr`) - Deleted. All consumers must depend on
+  `kernel_core` to stay headless; GtkAda/spawn_glib were dropped from the tree.
 
-### UI Module Variants (_ui.gpr)
-- **ada_module_ui** - Ada module with GUI
-- **completion_ui** - Completion with GUI
-- **refactoring_ui** - Refactoring with GUI
-- **language_ui** - Language support with GUI
+### UI Module Variants (_ui.gpr, removed)
+- **ada_module_ui**, **completion_ui**, **refactoring_ui**, **language_ui**  
+  These GtkAda builds have been deleted; only the `_core` projects remain.
 
 ### GUI-Only Modules (Delete Later)
 - **gnatstudio/gps.gpr** - Main GUI application

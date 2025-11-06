@@ -54,7 +54,7 @@ Core:
 - aunit
 
 LSP (Phase 5 prep):
-- spawn, spawn_glib
+- spawn
 - ada_language_server
 
 Note: gtkada NOT added (would defeat TUI purpose)
@@ -88,7 +88,7 @@ with "dap/core/dap_core";
 **lsp_client_core (Headless Guardrail) - Included in safety_build:**
 ```
 Location: lsp_client/core/
-Files: 78 (was 124 total, 48 moved to deleted_gui/)
+Files: 78 (legacy GtkAda layer deleted)
 Status: Callback rewrite complete; builds headless via lsp_client_core.gpr
 Remaining: GUI-only formatting/check_syntax units stay excluded (see lsp_client/core/REMAINING_WORK.md)
 Decision: Implement TUI callbacks during PLAN.md Phase 5
@@ -182,7 +182,7 @@ ALR_INDEX_AUTO_UPDATE=0 alr exec -- gprbuild -P lsp_client/core/lsp_client_core.
 ALR_INDEX_AUTO_UPDATE=0 alr exec -- gprbuild -P safety_build.gpr
 ```
 
-Both commands complete (clang still emits the known macOS deployment-version warnings). The only protocol sources still excluded are the GUI formatting and check_syntax helpers archived in `lsp_client/deleted_gui/`.
+Both commands complete (clang still emits the known macOS deployment-version warnings). The only protocol sources still excluded are the GUI formatting and check_syntax helpers awaiting TUI replacements.
 
 ## IV. CRITICAL DECISIONS MADE
 
@@ -272,74 +272,59 @@ toolchains_editor/core/ - Toolchain management (clean)
 
 ```
 lsp_client/
-├── gps_lsp_client.gpr          (OLD, references deleted src/)
-│
-├── core/                        ⭐ NEW STRUCTURE
-│   ├── lsp_client_core.gpr     Protocol-only project
-│   ├── REMAINING_WORK.md       Documents final 10%
-│   └── src/ (78 files)
-│       ├── Callbacks           Interface files (NEW)
-│       │   ├── gps-lsp_client-callbacks.ads (interface definition)
-│       │   └── gps-lsp_client-callbacks.adb (Null_Callback impl)
-│       │
-│       ├── Client Core         Main client (Kernel→Callbacks in spec)
-│       │   ├── gps-lsp_clients.ads ✅ (Callbacks discriminant)
-│       │   ├── gps-lsp_clients.adb ⚠️ (4 Kernel. calls remain)
-│       │   └── gps-lsp_clients-shutdowns.ads/adb
-│       │
-│       ├── Configurations      Server configs (Kernel→Callbacks in specs)
-│       │   ├── gps-lsp_client-configurations.ads ✅
-│       │   ├── gps-lsp_client-configurations.adb ⚠️ (31 Kernel. calls)
-│       │   ├── gps-lsp_client-configurations-als.ads/adb
-│       │   └── gps-lsp_client-configurations-clangd.ads/adb
-│       │
-│       ├── Language Servers    Server lifecycle
-│       │   ├── gps-lsp_client-language_servers.ads/adb
-│       │   ├── gps-lsp_client-language_servers-real.ads ✅
-│       │   ├── gps-lsp_client-language_servers-real.adb ⚠️ (1 Kernel. call)
-│       │   ├── gps-lsp_client-language_servers-stub.ads
-│       │   └── gps-lsp_client-language_servers-interceptors.ads
-│       │
-│       ├── Requests (27 types)  Protocol requests
-│       │   ├── gps-lsp_client-requests.ads ✅ (Callbacks discriminant)
-│       │   ├── gps-lsp_client-requests.adb
-│       │   ├── gps-lsp_client-requests-base.ads/adb
-│       │   ├── gps-lsp_client-requests-*.ads/adb (26 request types)
-│       │   │   Most compile ✅
-│       │   │   Excluded (8):
-│       │   │     - check_syntax (needs deleted_gui dialog)
-│       │   │     - 3 formatting requests (need Preferences callback)
-│       │   │     - execute_command-named_parameters (uses old utilities)
-│       │   └── gps-lsp_client-requests-internals.ads/adb
-│       │
-│       ├── Utilities           Minimal conversions (NEW)
-│       │   ├── gps-lsp_client-utilities.ads ✅ (4 functions, NO GPS.Editors!)
-│       │   ├── gps-lsp_client-utilities.adb ✅ (pure VFS↔LSP conversions)
-│       │   └── To_URI, To_Virtual_File, To_Language_Category, To_Construct_Visibility
-│       │
-│       └── Other
-│           ├── gps-lsp_client.ads (package root)
-│           ├── gps-lsp_client-text_documents.ads (doc sync)
-│           └── gps-lsp_client-partial_results.ads
-│
-└── deleted_gui/ (48 files)      ⭐ ARCHIVED GUI LAYER
-    ├── README.md                Documents what was deleted and why
-    ├── gps-lsp_module.ads/adb   GPS module registration
-    ├── gps-lsp_client-editors*.ads/adb (20 files) - Editor integration
-    ├── gps-lsp_client-completion.ads/adb - GTK completion popup
-    ├── gps-lsp_client-outline.ads/adb - GTK outline view
-    ├── gps-lsp_client-references.ads/adb - Find refs view
-    ├── gps-lsp_client-call_tree.ads/adb - Call hierarchy
-    ├── gps-lsp_client-refactoring*.ads/adb (8 files) - Refactoring UI
-    ├── gps-lsp_client-search*.ads/adb (4 files) - Search integration
-    ├── gps-lsp_client-shell.ads/adb - Python bindings
-    └── gps-lsp_client-tasks.ads/adb - Background tasks UI
+└── core/
+    ├── lsp_client_core.gpr     Protocol-only project
+    ├── REMAINING_WORK.md       Documents final 10%
+    └── src/ (78 files)
+        ├── Callbacks           Interface files (NEW)
+        │   ├── gps-lsp_client-callbacks.ads (interface definition)
+        │   └── gps-lsp_client-callbacks.adb (Null_Callback impl)
+        │
+        ├── Client Core         Main client (Kernel→Callbacks in spec)
+        │   ├── gps-lsp_clients.ads ✅ (Callbacks discriminant)
+        │   ├── gps-lsp_clients.adb ⚠️ (4 Kernel. calls remain)
+        │   └── gps-lsp_clients-shutdowns.ads/adb
+        │
+        ├── Configurations      Server configs (Kernel→Callbacks in specs)
+        │   ├── gps-lsp_client-configurations.ads ✅
+        │   ├── gps-lsp_client-configurations.adb ⚠️ (31 Kernel. calls)
+        │   ├── gps-lsp_client-configurations-als.ads/adb
+        │   └── gps-lsp_client-configurations-clangd.ads/adb
+        │
+        ├── Language Servers    Server lifecycle
+        │   ├── gps-lsp_client-language_servers.ads/adb
+        │   ├── gps-lsp_client-language_servers-real.ads ✅
+        │   ├── gps-lsp_client-language_servers-real.adb ⚠️ (1 Kernel. call)
+        │   ├── gps-lsp_client-language_servers-stub.ads
+        │   └── gps-lsp_client-language_servers-interceptors.ads
+        │
+        ├── Requests (27 types)  Protocol requests
+        │   ├── gps-lsp_client-requests.ads ✅ (Callbacks discriminant)
+        │   ├── gps-lsp_client-requests.adb
+        │   ├── gps-lsp_client-requests-base.ads/adb
+        │   ├── gps-lsp_client-requests-*.ads/adb (26 request types)
+        │   │   Most compile ✅
+        │   │   Excluded (8):
+        │   │     - check_syntax (needs future TUI dialog)
+        │   │     - 3 formatting requests (need Preferences callback)
+        │   │     - execute_command-named_parameters (uses old utilities)
+        │   └── gps-lsp_client-requests-internals.ads/adb
+        │
+        ├── Utilities           Minimal conversions (NEW)
+        │   ├── gps-lsp_client-utilities.ads ✅ (4 functions, NO GPS.Editors!)
+        │   ├── gps-lsp_client-utilities.adb ✅ (pure VFS↔LSP conversions)
+        │   └── To_URI, To_Virtual_File, To_Language_Category, To_Construct_Visibility
+        │
+        └── Other
+            ├── gps-lsp_client.ads (package root)
+            ├── gps-lsp_client-text_documents.ads (doc sync)
+            └── gps-lsp_client-partial_results.ads
 ```
 
 ### Compilation Status
 
 **Currently excluded (8 files):**
-1. check_syntax - Needs GPS.LSP_Client.Editors.Code_Actions.Dialog (in deleted_gui)
+1. check_syntax - Needs GPS.LSP_Client.Editors.Code_Actions.Dialog replacement (TUI)
 2-7. Formatting requests (6 files) - Need Get_Formatting_Options callback
 
 **Currently compile (~70 files):**
@@ -500,8 +485,7 @@ tui/
 **For Architecture:**
 1. `MODULES.md` (module organization)
 2. `DEPENDENCIES.md` (dependency info)
-3. `lsp_client/deleted_gui/README.md` (what was deleted)
-4. `lsp_client/core/src/gps-lsp_client-callbacks.ads` (interface design)
+3. `lsp_client/core/src/gps-lsp_client-callbacks.ads` (interface design)
 
 ---
 
@@ -530,7 +514,7 @@ tui/
 - All validated by safety_build.gpr
 
 **Commits 26-29: LSP Client Split**
-- 78 files → core/, 48 → deleted_gui/
+- Core-only structure finalized (78 protocol files remain)
 - Callback interface created
 - Minimal utilities (no mocking!)
 - 90% complete

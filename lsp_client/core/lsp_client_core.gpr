@@ -16,7 +16,7 @@
 --   - Server configuration (ALS, clangd)
 --
 -- What's Excluded:
---   - GUI integration (moved to deleted_gui/)
+--   - GUI integration (legacy GtkAda layer removed)
 --   - Editor buffer conversions
 --   - GTK widgets, popups, views
 --   - Python shell bindings
@@ -44,7 +44,7 @@ project LSP_Client_Core is
    --  Exclude files that need GUI integration or formatting callback
    --  Most protocol requests compile with minimal utilities (pure conversions only)
    for Excluded_Source_Files use (
-      --  Needs deleted_gui dialog
+      --  Needs a future TUI dialog
       "gps-lsp_client-requests-check_syntax.ads",
       "gps-lsp_client-requests-check_syntax.adb",
 
