@@ -12,7 +12,9 @@ package body GPS.DAP_Client.Callbacks.Kernel_Adapter is
       Client : DAP.Clients.DAP_Client_Access)
       return Kernel_Callback_Access is
    begin
-      return new Kernel_Callback'(Kernel => Kernel, Client => Client);
+      return new Kernel_Callback'
+        (Kernel => Kernel,
+         Client => Client);
    end Create;
 
    overriding procedure Trace
@@ -63,7 +65,6 @@ package body GPS.DAP_Client.Callbacks.Kernel_Adapter is
       Start_Frame : Natural;
       Response    : DAP.Tools.StackTraceResponse;
       Append_More : out Boolean) is
-      pragma Unreferenced (Self, Thread_Id, Start_Frame, Response);
    begin
       Append_More := False;
    end On_Stacktrace_Frames;
@@ -72,7 +73,6 @@ package body GPS.DAP_Client.Callbacks.Kernel_Adapter is
      (Self      : Kernel_Callback;
       Thread_Id : Integer;
       Frame_Id  : Integer) is
-      pragma Unreferenced (Self, Thread_Id, Frame_Id);
    begin
       null;
    end On_Stacktrace_Selected;
@@ -82,7 +82,6 @@ package body GPS.DAP_Client.Callbacks.Kernel_Adapter is
       Thread_Id     : Integer;
       Success       : Boolean;
       Initial_Fetch : Boolean) is
-      pragma Unreferenced (Self, Thread_Id, Success, Initial_Fetch);
    begin
       null;
    end On_Stacktrace_Fetch_Complete;
