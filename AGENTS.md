@@ -4,9 +4,11 @@
 - Core Ada sources live in feature folders such as `kernel/`, `builder/`, `language/`, `refactoring/`, `vfs/`, and `lsp_client/`, with specs in `.ads` and bodies in `.adb`.
 - `test_headless/` hosts the default TUI build target (`test_pure_ada.gpr`) and installs binaries under `bin/`; additional sample executables follow the same layout.
 - Unit suites reside in `tests/`, using `tests/tests.gpr` with `*_tests.adb` drivers and `*_suite` registries; docs and planning aids live under `docs/`, `MODULES.md`, and `PLAN.md`.
-- DAP sources rely on the `Minimal_Perfect_Hash` helper exported by the ALS
+- DAP still relies on the `Minimal_Perfect_Hash` helper exported by the ALS
   `lsp_base` library; `dap/core/dap_core.gpr` already `with`s that project so
-  the generated schema keeps compiling headless.
+  the generated schema keeps compiling headless. The former GtkAda UI under
+  `dap/src` has been deleted; the remaining DAP client lives entirely in
+  `gps-dap_client-requests.*` until a TUI front end is built.
 - Build and dependency metadata stay in `alire.toml`, project files (`*.gpr`), and support scripts such as `fix_toolchain.sh`.
 
 ## Build, Test, and Development Commands

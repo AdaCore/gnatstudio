@@ -41,40 +41,40 @@ copy once validated.
    - [x] `dap-requests-stacktrace.*`
    - [x] `dap-clients-stack_trace-stacktrace.*`
 2. Continue / Step / Pause
-   - [ ] `dap-requests-continue.*`
-   - [ ] `dap-requests-stepin.*`
-   - [ ] `dap-requests-next.*`
-   - [ ] `dap-requests-pause.*`
+   - [x] `dap-requests-continue.*`
+   - [x] `dap-requests-stepin.*`
+   - [x] `dap-requests-next.*`
+   - [x] `dap-requests-pause.*`
 3. Breakpoints
-   - [ ] `dap-requests-setbreakpoints.*`
-   - [ ] `dap-requests-setfunctionbreakpoints.*`
-   - [ ] `dap-requests-setexceptionbreakpoints.*`
-   - [ ] `dap-requests-setinstructionbreakpoints.*`
+   - [x] `dap-requests-setbreakpoints.*`
+   - [x] `dap-requests-setfunctionbreakpoints.*`
+   - [x] `dap-requests-setexceptionbreakpoints.*`
+   - [x] `dap-requests-setinstructionbreakpoints.*`
 4. Variables / Scopes / Evaluate
-   - [ ] `dap-requests-variables.*`
-   - [ ] `dap-requests-scopes.*`
-   - [ ] `dap-requests-evaluate.*`
-   - [ ] `dap-requests-setvariable.*`
-   - [ ] `dap-requests-setexpression.*`
+   - [x] `dap-requests-variables.*`
+   - [x] `dap-requests-scopes.*`
+   - [x] `dap-requests-evaluate.*`
+   - [x] `dap-requests-setvariable.*`
+   - [x] `dap-requests-setexpression.*`
 5. Lifecycle / Control
-   - [ ] `dap-requests-initialize.*`
-   - [ ] `dap-requests-launch.*`
-   - [ ] `dap-requests-attach.*`
-   - [ ] `dap-requests-disconnect.*`
-   - [ ] `dap-requests-cancel.*`
-   - [ ] `dap-requests-configurationdone.*`
-   - [ ] `dap-requests-loadedsources.*`
-   - [ ] `dap-requests-readmemory.*`
-   - [ ] `dap-requests-writememory.*`
+   - [x] `dap-requests-initialize.*`
+   - [x] `dap-requests-launch.*`
+   - [x] `dap-requests-attach.*`
+   - [x] `dap-requests-disconnect.*`
+   - [x] `dap-requests-cancel.*`
+   - [x] `dap-requests-configurationdone.*`
+   - [x] `dap-requests-loadedsources.*`
+   - [x] `dap-requests-readmemory.*`
+   - [x] `dap-requests-writememory.*`
 
 ## Phase 4 – Clean-Up
 
-- [ ] Remove legacy `dap/src/dap-requests*` files once all migrations are in
+- [x] Remove legacy `dap/src/dap-requests*` files once all migrations are in
       `dap/core/src`.
-- [ ] Drop redundant kernel/glib includes from `DAP.Clients` and related units.
-- [ ] Update documentation (`README.md`, `AGENTS.md`, `SESSION_STATE.md`,
+- [x] Drop redundant kernel/glib includes from `DAP.Clients` and related units.
+- [x] Update documentation (`README.md`, `AGENTS.md`, `SESSION_STATE.md`,
       `dap/REMAINING_WORK.md`) to reflect the new callback architecture.
-- [ ] Run full validation matrix (unit tests, headless smoke tests, guard build)
+- [x] Run full validation matrix (unit tests, headless smoke tests, guard build)
       and capture the results in the commit message / session log.
 
 ---

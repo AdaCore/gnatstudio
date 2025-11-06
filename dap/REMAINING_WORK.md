@@ -5,7 +5,7 @@
 Carve the Debug Adapter Protocol stack into a GUI-free core so we can keep
 `safety_build.gpr` compiling after deleting GtkAda front-end code. The target
 is a `dap_core.gpr` that only depends on kernel primitives, VFS, and the LSP
-callback mechanisms.
+callback mechanisms, while a future TUI debugger consumes the callback layer.
 
 ## Progress
 
@@ -17,82 +17,45 @@ callback mechanisms.
 - Core build succeeds (`alr exec -- gprbuild -P dap/core/dap_core.gpr -p`) and
   the guardrail now includes `dap_core` via `safety_build.gpr`.
 - Introduced `GPS.DAP_Client.Callbacks` (with `Null_Callback`) as the headless
-  facade that will replace direct `GPS.Kernel` usage inside protocol units.
+  facade that replaces direct `GPS.Kernel` usage inside protocol units.
 - Added `GPS.DAP_Client.Requests` as the callback-backed base class for future
-  protocol refactors without touching the existing GUI-bound `DAP.Requests`.
+  protocol refactors.
+- Migrated every request family (continue/step/pause, breakpoints, variables,
+  evaluate, lifecycle/control) to the callback core and removed the legacy
+  `dap-requests-*` units.
+- Rewired registers, threads, assembly, and breakpoint helpers to allocate
+  callback-based requests prior to deleting their GtkAda hosts.
+- Deleted the entire GtkAda debugger shell (`dap/src`, `dap/dap.gpr`), leaving
+  only the headless core guarded by `dap/core/dap_core.gpr`.
 
-## Current State (Problems)
+## Current Status
 
-- `dap.gpr` `with`s GUI projects (`views`, `browsers`, `gvd`, `refactoring/ui`)
-  and drags GtkAda into every unit.
-- Protocol logic (`dap-clients-*.adb`, `dap-requests-*.adb`, `dap-types.*`)
-  sits in the same tree as view/controller code under `dap/src/modules`.
-- Utilities (`DAP.Utils`) hard-code `GPS.Kernel` navigation helpers.
-- Guardrail builds do not touch the DAP code, so GUI deletions risk breakage.
-- Kernel entanglement hotspots (pre-audit):
-  - `dap/src/dap-clients*.{ads,adb}`: heavy use of `GPS.Kernel`, hooks,
-    messages window, MDI, and markers.
-  - `dap/src/dap-utils.*`, `dap/src/dap-contexts.*`,
-    `dap/src/dap-module*.{ads,adb}`: relies on kernel context helpers.
-  - `dap/src/modules/dap-views*/**`: GtkAda + kernel modules (UI layer).
-  - Safer protocol-only candidates (no Gtk/GPS usage): `dap-requests*/**`,
-    generated `dap-tools*`, `dap-types-breakpoints.*`, plus most files already
-    moved under `dap/core/src`.
+- The repository now ships only the callback-based DAP core (`dap/core`,
+  `generated/`, and helper scripts). There is no debugger UI.
+- `dap/core/dap_core.gpr` remains in `safety_build.gpr`, so callback regressions
+  are still caught by the guard build.
+- Any future debugger experience must be implemented in the new TUI (see
+  PLAN.md Phase 10).
 
-## Refactor Plan
+## Next Steps (TUI work)
 
-1. **Inventory & Tag Dependencies**  
-   Use `rg "with Gtk"`/`rg "with GPS."` under `dap/src` to list UI-bound units.
-   Mark which packages are safe protocol core (requests, types, contexts).
-
-   - **GUI-tied namespaces** (Gtk/GPS.Debuggers/Generic_Views):  
-     `dap-clients*.{adb,ads}`, `dap-module*.{adb,ads}`, `dap-utils.*`, every unit
-     under `dap/src/modules/`, and the generated view helpers. These stay in the
-     GUI/TUI layer.
-
-   - **Headless-ready protocol units** (no Gtk references):  
-     `dap.ads`, `dap-types*.{adb,ads}`, `dap-requests*.{adb,ads}`,
-     `dap-contexts*.{adb,ads}`, `dap-module-breakpoints*.{adb,ads}`,
-     the generated protocol schema in `generated/dap-tools*.{adb,ads}`, plus
-     any `dap-clients-*` request helpers that only marshal JSON (verify against
-     Gtk before moving).
-
-2. **Define Callback Boundary**  
-   Introduce `GPS.DAP_Client.Callbacks` (mirrors the LSP design) exposing the
-   services the debugger needs: editor navigation, breakpoint persistence,
-   console I/O, telemetry. Add a `Null_Callback` implementation that no-ops.
-
-3. **Split Source Layout**  
-   Move protocol-only units to `dap/core/src`. Keep GUI controllers/views in
-   `dap/gui/src` (excluded from safety builds). Update relative `with` paths.
-
-4. **Isolate Build Projects**  
-   Create `dap/core/dap_core.gpr` referencing the new core sources. Re-home the
-   existing `dap.gpr` as the GUI wrapper project that `with`s both the core and
-   TUI/GUI layers.
-
-5. **Cut GUI Dependencies**  
-   Refactor `DAP.Utils` and any kernel helpers to depend on the callback
-   interface rather than `GPS.Kernel` or Gtk widgets. Drop Gtk types from spec
-   files so the core builds headless.
-
-6. **Wire Into Safety Builds**  
-   Add `with "dap/core/dap_core.gpr";` to `safety_build.gpr` and document guard
-   commands:
-   ```
-   ALR_INDEX_AUTO_UPDATE=0 alr exec -- gprbuild -P dap/core/dap_core.gpr -p
-   ALR_INDEX_AUTO_UPDATE=0 alr exec -- gprbuild -P safety_build.gpr
-   ```
-
-7. **Update Docs & Session Notes**  
-   Refresh `PLAN.md` Phase 6+ checkpoints and `SESSION_STATE.md` to note the DAP
-   headless boundary and new guardrail builds once the split lands.
+1. **Design TUI panes** – Decide how stack, variables, memory, and breakpoint
+   views should render inside the Ncurses/Malef UI, and map every panel to the
+   existing callback interfaces (`gps-dap_client-requests.*`).
+2. **Integrate debugger commands** – Recreate continue/step/next/pause, toggle
+   breakpoints, and display diagnostics/exception filters via the TUI
+   keymap/palette so the callback layer processes real traffic again.
+3. **Document guardrails** – Keep `dap/core/dap_core.gpr` wired into
+   `safety_build.gpr` and note in PLAN/SESSION_STATE that debugging is
+   headless-only until the TUI implementation lands.
 
 ## Risks & Mitigations
 
-- **Hidden GUI Coupling:** Some protocol units may call Gtk helpers indirectly.
-  Mitigate by compiling `dap_core.gpr` early to expose missing callbacks.
-- **Breakpoint Persistence:** If persistence relies on GUI settings, move the
-  storage to kernel services or stub it until the TUI owns the UI.
-- **Command Surface:** Ensure callback API covers all operations before moving
-  files; otherwise refactors will churn.
+- **Missing UI coverage:** With GtkAda gone, it's easy to forget the debugger
+  entirely. Track the TUI work in PLAN.md Phase 10 and treat the guard build as
+  mandatory before deleting more code.
+- **Callback drift:** The new TUI must stick to `GPS.DAP_Client.Callbacks`.
+  Avoid reintroducing direct `GPS.Kernel` or GtkAda dependencies.
+- **Toolchain churn:** `dap/core/dap_core.gpr` still depends on ALS's
+  `lsp_base`; keep that project up to date so generated schema builds stay
+  reproducible.

@@ -84,7 +84,7 @@ with "dap/core/dap_core";
 
 **Purpose:** Validates we haven't deleted critical code for Phases 2-6
 
-**Coverage:** PLAN.md Phases 2-6 (TUI bootstrap through project/build), Phase 5 guardrail (headless LSP), and DAP headless core readiness.
+**Coverage:** PLAN.md Phases 2-6 (TUI bootstrap through project/build), Phase 5 guardrail (headless LSP), and the DAP callback core (safety build now withs `dap_core`).
 
 **lsp_client_core (Headless Guardrail) - Included in safety_build:**
 ```
@@ -95,12 +95,12 @@ Remaining: GUI-only formatting/check_syntax units stay excluded (see lsp_client/
 Decision: Implement TUI callbacks during PLAN.md Phase 5
 ```
 
-**dap (Deferred to Phase 10):**
+**dap (core ready, TUI UI deferred to Phase 10):**
 ```
 Location: dap/
-Files: 117 (67% salvageable)
-Status: Headless refactor plan captured in dap/REMAINING_WORK.md; `dap/core/dap_core.gpr` builds cleanly (project now `with`s ALS `lsp_base` for `Minimal_Perfect_Hash`). Guard added to `safety_build.gpr`.
-Decision: Execute documented plan before wiring DAP into safety builds (Phase 10)
+Files: `core/`, `generated/`, `script/` (GtkAda sources removed)
+Status: `dap/src` was deleted entirely. All surviving logic lives in `gps-dap_client-requests.*`, built via `dap/core/dap_core.gpr`, which still `with`s ALS `lsp_base` for `Minimal_Perfect_Hash`. Guardrail remains in `safety_build.gpr`.
+Decision: Rebuild debugger views in the TUI during PLAN.md Phase 10; until then, only the callback core ships.
 ```
 
 ### D. Critical Fixes Applied
