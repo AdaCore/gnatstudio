@@ -111,13 +111,13 @@ collect-coverage:linux:
     - if [ -d "$BS" ]; then
         echo "Collecting coverage traces from $BS" ;
         mkdir -p $CI_PROJECT_DIR/coverage-traces ;
-        cp $BS/install/cobertura/cobertura.xml $CI_PROJECT_DIR/coverage-traces/ ;
+        prep-cobertura $BS/install/cobertura/cobertura.xml $CI_PROJECT_DIR/coverage-traces/ --relocate-source $BS/src ;
       else
         echo "No coverage traces found in $BS";
       fi
 
     # Compute the line coverage
-    - print-global-coverage $CI_PROJECT_DIR/coverage-traces/cobertura.xml
+    - print-global-coverage $BS/install/cobertura/cobertura.xml
 
   coverage: '/^Line Coverage:\s+(\d+\.\d+)$/'
   artifacts:
@@ -125,7 +125,7 @@ collect-coverage:linux:
     reports:
       coverage_report:
         coverage_format: cobertura
-        path: coverage-traces/cobertura.xml
+        path: coverage-traces/coverage_*.xml
     paths:
-      - coverage-traces/cobertura.xml
+      - coverage-traces/coverage_*.xml
       - coverage-traces/html.tar.gz
