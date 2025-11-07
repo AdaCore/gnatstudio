@@ -198,6 +198,30 @@ Ship after step 7–8; debugging can follow.
 
 - **TUI lib**: Ada ncurses binding now; wrap it cleanly to swap later if needed.
 - **Editing UX**: **Micro-style modeless** from day one (no Helix/Vim modes).
+
+------
+
+## **14) Future Alire Crate Extraction**
+
+Once the TUI baseline is feature-complete, we should publish the headless
+modules as standalone Alire crates so other Ada tools can reuse them. Target
+packages (each already has a clean `.gpr` and limited dependencies):
+
+- `common/core` → **common_core**: VFS helpers, XML utilities, logging.
+- `language/` → **language_core**: language metadata and symbol services built
+  on GNATCOLL/XmlAda.
+- `toolchains_editor/core` → **toolchains_core**: toolchain discovery APIs.
+- `builder/core` → **builder_core**: target registry and build orchestration.
+- `prj_editor/core` → **prj_core**: `.gpr` parsing/editing utilities.
+- `ada_module/core` → **ada_module_core**: Ada/SPARK language assistance.
+- `refactoring/core` → **refactoring_core**: rename/extract engines.
+- `lsp_client/core` → **lsp_client_core**: callback-driven LSP client.
+- `dap/core` → **dap_core**: callback-driven Debug Adapter client.
+- `common/core/xml_utils*` → **xml_utils**: GtkAda-free XML tree helpers.
+
+Each crate should live in its own repo (or well-documented subdirectory), ship
+with tests, and avoid GNAT Studio–specific hooks so the broader Ada ecosystem
+can consume them directly.
 - **Intelligence**: ALS for everything smart; semantic tokens for color; GNATfmt via LSP.
 - **Builds**: gprbuild in a pane; pipe errors into diagnostics.
 - **Debugging**: keep DAP client; wire UI when core is stable.
