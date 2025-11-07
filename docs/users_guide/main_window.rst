@@ -288,8 +288,7 @@ welcome dialog, giving you the following choices:
 * :guilabel:`Create new project`
 
   Clicking on this button launches an assistant to create a project using one
-  of the predefined project templates. This makes it easy to create GtkAda-based
-  applications, or applications using the Ada Web Server, for example.
+  of the predefined project templates.
 
 .. index:: project; load existing project
 

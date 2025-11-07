@@ -100,8 +100,8 @@ settings in GNAT Studio:
 
   .. index:: GNATSTUDIO_CUSTOM_PATH
 
-  Contains a list of directories to search for custom files. See
-  :ref:`Customizing_through_XML_and_Python_files` for more details.
+  Contains a list of directories to search for custom files (XML-based
+  customisations).
 
   Can be used to redefine the default project created via
   `Start with default project` startup menu entry, by adding a directory
@@ -124,15 +124,6 @@ settings in GNAT Studio:
   default is :samp:`CP_UTF8` (to support more languages).  If file or
   directory names are using accents, it may be necessary to set this
   variable to :samp:`CP_ACP` which is the default Windows ANSI code page.
-
-* :file:`GPS_MEMORY_MONITOR`
-
-  .. index:: GPS_MEMORY_MONITOR
-
-  If set, GPS adds special code on every allocation and deallocation
-  to make it possible to check where the largest amount of memory is
-  allocated using the :command:`GPS.debug_memory_usage` Python
-  command.  Setting this variable will slow GPS down.
 
 * :file:`GPR_CONFIG`
 
@@ -185,11 +176,10 @@ Files
 * :file:`$HOME/.gnatstudio/plug-ins`
 
   Directory containing files with user-defined plugins.  GNAT Studio loads all
-  XML and Python files found under this directory during start up.  Create or
-  edit these files to add your own menu and/or tool-bar entries in GNAT Studio
-  or to define support for new languages.  See
-  :ref:`Customizing_through_XML_and_Python_files` and
-  :ref:`Adding_support_for_new_languages`.
+  XML files found under this directory during start up.  Create or edit these
+  files to add your own menu and/or tool-bar entries in GNAT Studio or to define
+  support for new languages.  See :ref:`Customizing_through_XML_and_Python_files`
+  and :ref:`Adding_support_for_new_languages`.
 
 * :file:`$HOME/.gnatstudio/key_themes/`
 
@@ -318,13 +308,13 @@ Files
 
 * :file:`prefix/share/gnatstudio/plug-ins`
 
-  Directory containing files with system-wide plugins (XML and Python
-  files) that are loaded automatically at start-up.
+  Directory containing files with system-wide plugins (XML files) that are
+  loaded automatically at start-up.
 
 * :file:`prefix/share/gnatstudio/library`
 
-  Directory containing files with system-wide plugins (XML and Python files)
-  that are not loaded automatically at startup but can be selected in the
+  Directory containing files with system-wide plugins (XML files) that are not
+  loaded automatically at startup but can be selected in the
   :guilabel:`Plugins` section of the preferences editor dialog.
 
 * :file:`prefix/share/gnatstudio/key_themes`

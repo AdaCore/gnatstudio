@@ -15,7 +15,6 @@ document includes:
 * Flexible multiple document interface
 * Code coverage
 * Coding standard verification
-* Extensive customization through Python
 
 For more information, please see the *GNAT Studio User's Guide* or the
 GNAT Studio `Learn` view, which displays the common actions available from

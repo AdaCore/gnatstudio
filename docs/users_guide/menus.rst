@@ -676,12 +676,6 @@ The View Menu
 
    Open (or reuse if it already exists) the 'Branches' view
 
-.. index:: menu; view --> python console
-
-* :menuselection:`View --> Python Console`
-
-   Open (or reuse if it already exists) the 'Python' view
-
 .. index:: menu; view --> os shell
 
 * :menuselection:`View --> OS Shell`
@@ -1468,12 +1462,6 @@ The Help Menu
 
    Load the documentation for 'GNAT Studio User's Guide' into an external web browser
 
-.. index:: menu; help --> gnat studio --> python extensions
-
-* :menuselection:`Help --> GNAT Studio --> Python extensions`
-
-   Load the documentation for 'GNAT Studio extensions for Python' into an external web browser
-
 .. index:: menu; help --> gnat runtime
 
 * :menuselection:`Help --> GNAT Runtime`
@@ -1487,24 +1475,6 @@ The Help Menu
 
    This menu is generated automatically, and provides documentation
    for the compiler and accompanying tools, along with examples.
-
-.. index:: menu; help --> python --> python tutorial
-
-* :menuselection:`Help --> Python --> Python Tutorial`
-
-   Load the documentation for 'Python tutorial' into an external web browser
-
-.. index:: menu; help --> python --> pygtk tutorial
-
-* :menuselection:`Help --> Python --> PyGTK Tutorial`
-
-   Load the documentation for 'PyGTK tutorial' into an external web browser
-
-.. index:: menu; help --> python --> pygtk reference manual
-
-* :menuselection:`Help --> Python --> PyGTK Reference Manual`
-
-   Load the documentation for 'PyGTK Reference Manual' into an external web browser
 
 .. index:: menu; help --> gnatsas
 
@@ -1615,4 +1585,3 @@ The Help Menu
 * :menuselection:`Help --> About`
 
    Display the About dialog
-

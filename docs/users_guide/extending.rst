@@ -8,8 +8,9 @@ Customizing and Extending GNAT Studio
 .. index:: customization
 
 GNAT Studio provides several levels of customization, from simple preference
-dialogs to powerful scripting capability through the Python language.  This
-chapters describes each of these capabilities.
+dialogs to callback-based Ada modules. The legacy Python scripting layer has
+been removed from the headless build; any references to Python in this chapter
+are kept only for historical context and do not apply to the TUI effort.
 
 
 Color Themes

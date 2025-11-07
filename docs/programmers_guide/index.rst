@@ -6,9 +6,7 @@ GNAT Studio Programmer's Guide
    :maxdepth: 3
 
    intro
-   setup
    modules
    hello_world
-   intermodule_communication
    documenting
    debugging

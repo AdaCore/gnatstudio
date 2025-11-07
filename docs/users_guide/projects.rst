@@ -556,12 +556,5 @@ GNAT Studio with these switches.  Use the following command line::
    gnatstudio --traceoff=GPS.INTERNAL.MODULE.PROJECT_VIEWER --traceoff=GPS.INTERNAL.MODULE.PROJECT_PROPERTIES
 
 
-.. highlight:: python
-
 This prevents the loading of the two GNAT Studio modules responsible for
-editing project files. However, this also has an impact on the Python functions
-that are exported by GNAT Studio and thus could break some plugins. Another
-possible solution is to hide the corresponding project editing menus and
-contextual menus.  You could do this by enabling the
-:file:`prevent_project_edition.py` plugin via the
-:menuselection:`Edit --> Preferences...` menu.
+editing project files.

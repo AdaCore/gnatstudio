@@ -5,7 +5,7 @@ Welcome to GNAT Studio
 GNAT Studio is a complete integrated development environment.  It integrates
 with a wide range of tools, providing easy access to each. It integrates
 especially well with AdaCore's tools but can easily be extended to work
-with other tools by writing small plugins in Python.
+with other tools by writing small plugins in Ada.
 
 Here is a summary of the features of GNAT Studio:
 
@@ -76,7 +76,7 @@ Here is a summary of the features of GNAT Studio:
 
 * Fully customizable (:ref:`Customizing_and_Extending_GNAT_Studio`)
 
-  GNAT Studio provides an extensive Python API, allowing you to customize
-  existing features or easily develop your own new plugins.  Simpler
+  The headless build can be extended via Ada modules and XML plugins that hook
+  into the callback interfaces exposed by the core kernel.  Simpler
   customization can be done through the numerous preferences and local
   settings.

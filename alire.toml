@@ -62,8 +62,3 @@ LIBRARY_TYPE = ["static", "relocatable", "static-pic"]
 # Don't set BUILD - let dependencies use their own defaults
 # BUILD = "Debug"
 LIBRARY_TYPE = "static"
-
-[environment]
-# Ensure Python bindings are available from Homebrew
-PATH.prepend = "/opt/homebrew/bin"
-PKG_CONFIG_PATH.prepend = "/opt/homebrew/lib/pkgconfig"

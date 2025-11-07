@@ -60,8 +60,6 @@
   <key action="Move block left">primary-alt-less</key>
   <key action="tab selection">Tab</key>
   <key action="smart escape">Escape</key>
-  <key action="Python Auto Indentation">Return</key>
-
   <key action="increase text size">primary-plus</key>
   <key action="decrease text size">primary-minus</key>
 

@@ -45,29 +45,7 @@ Custom Scripts and Plugins
 GPS.Entity removal
 ------------------
 
-The :class:`GPS.Entity` is now obsolete and has been removed. If your custom
-plugins were making use of this class, you should now use use the libadalang
-Python API (available in the GNAT Studio Python interpreter) instead to get
-information about entities present in your source code.
-
-More information about libadalang and its Python API can be found
-`here <http://docs.adacore.com/live/wave/libadalang/html/libadalang_ug/>`_.
-
-Here is an example that shows how to retrieve the enclosing subprogram
-of a given location.
-
-.. code-block:: python
-
-   import libadalang as lal
-
-
-   def current_subprogram(self):
-      # Return the LAL node corresponding to the subprogram enclosing the
-      # current context, or None
-      curloc = self.location()
-      buf = GPS.EditorBuffer.get(curloc.file(), open=False)
-      if not buf:
-         return False
-      unit = buf.get_analysis_unit()
-      node = unit.root.lookup(lal.Sloc(curloc.line(), curloc.column()))
-      return get_enclosing_subprogram(node)
+The :class:`GPS.Entity` API (and the associated Python plugin layer) has been
+removed entirely in this branch. Customization now happens through Ada modules
+and XML configuration only; there is no embedded Python interpreter or hook
+surface.

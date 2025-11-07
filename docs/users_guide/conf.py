@@ -11,25 +11,10 @@
 # All configuration values have a default; values that are commented out
 # serve to show the default.
 
-import sys, os, time
+import os, time
 
-# If extensions (or modules to document with autodoc) are in another directory,
-# add these directories to sys.path here. If the directory is relative to the
-# documentation root, use os.path.abspath to make it absolute, like shown here.
-# sys.path.insert(0, os.path.abspath('.'))
-
-sys.path.insert(0, os.path.abspath("../../share/library"))
-sys.path.insert(0, os.path.abspath("../../share/plug-ins"))
-sys.path.insert(0, os.path.abspath("../../share/support/ui"))
-sys.path.insert(0, os.path.abspath("../../share/support/core"))
-sys.path.insert(0, os.path.abspath("../../share/support/languages"))
-sys.path.insert(0, os.path.abspath("."))  # access to GPS.py
-
-import GPS
-import GPS.generated_hooks  # use the automatic doc for hooks
-import extensions
-import gs_utils
-import search
+# Documentation no longer imports the legacy GPS Python runtime; keep the
+# configuration self-contained so it can be executed in headless environments.
 
 
 # -- General configuration -----------------------------------------------------
