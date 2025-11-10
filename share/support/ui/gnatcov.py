@@ -1031,7 +1031,8 @@ class GNATcovPlugin(Module):
             dump_channel = "base64-stdout"
 
         # TODO: suppress code below in GS 24.0.
-        dump_trigger = None
+        auto_dump_trigger = None
+        manual_dump_active = False
 
         if self.is_gnatcov_setup_supported():
             # In that case, we use the gnatcov-instr.json file that gnatcov
@@ -1042,9 +1043,14 @@ class GNATcovPlugin(Module):
             with open(params_file) as f:
                 params = json.load(f)
                 dump_channel = params["dump-channel"]
-                dump_trigger = params["dump-trigger"]
+                if self.gnatcov_version() and (self.gnatcov_version() >= 27):
+                    auto_dump_trigger = params["auto-dump-trigger"]
+                    manual_dump_active = params["manual-dump-trigger"]
+                else:
+                    auto_dump_trigger = params["dump-trigger"]
+                    manual_dump_active = auto_dump_trigger != "manual"
 
-        if dump_trigger == "manual":
+        if manual_dump_active:
             GPS.Console("Messages").write(
                 "\nManual dump trigger is not supported in the GNAT Studio"
                 " workflow. Please compute the coverage report manually and use"
