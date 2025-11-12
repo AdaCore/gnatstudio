@@ -174,6 +174,9 @@ package GVD.Types is
    type Debugger_Type is (Gdb, Gdb_MI, DAP, LLDB);
    --  Type of debugger handled.
 
+   type Debuggee_Start_Type is (Run, Run_With_Dialog, Continue, None);
+   --  Type of how debuggee will be started
+
    type Program_Descriptor is record
       Program       : GNATCOLL.VFS.Virtual_File;
       Debugger      : Debugger_Type;

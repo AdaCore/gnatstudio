@@ -334,6 +334,11 @@ package body GVD.Scripts is
          Process := Visual_Debugger (GObject'(Get_Data (Inst)));
          Process.Debugger.Start;
 
+      elsif Command = "continue_execution" then
+         Inst := Nth_Arg (Data, 1, New_Class (Kernel, "Debugger"));
+         Process := Visual_Debugger (GObject'(Get_Data (Inst)));
+         Process.Debugger.Continue;
+
       elsif Command = "send" then
          declare
             On_Result : Subprogram_Type;
@@ -807,6 +812,10 @@ package body GVD.Scripts is
          Static_Method => True);
       Kernel.Scripts.Register_Command
         ("start",
+         Handler      => Shell_Handler'Access,
+         Class        => Class);
+      Kernel.Scripts.Register_Command
+        ("continue_execution",
          Handler      => Shell_Handler'Access,
          Class        => Class);
       Kernel.Scripts.Register_Command

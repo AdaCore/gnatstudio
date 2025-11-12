@@ -112,6 +112,11 @@ package body GVD_Module is
       Context : Selection_Context) return Gtk_Widget;
    --  See inherited documentation
 
+   procedure Process_Auto_Start
+     (Kernel  : Kernel_Handle;
+      Process : Visual_Debugger);
+   --  Process Auto_Start_Debuggee preferense
+
    GVD_Module_Name : constant String := "Debugger";
    GVD_Module_ID   : GVD_Module;
 
@@ -642,19 +647,25 @@ package body GVD_Module is
      (Command : access Attach_Command;
       Context : Interactive_Command_Context) return Command_Return_Type
    is
-      Kernel : constant Kernel_Handle := Get_Kernel (Context.Context);
-      Process      : constant Visual_Debugger :=
-        Visual_Debugger (Get_Current_Debugger (Kernel));
-      List         : Process_List;
-      Dummy       : Message_Dialog_Buttons;
       pragma Unreferenced (Command);
 
+      Kernel   : constant Kernel_Handle := Get_Kernel (Context.Context);
+      Process  : constant Visual_Debugger :=
+        Visual_Debugger (Get_Current_Debugger (Kernel));
+      Debugger : Debugger_Access;
+      List     : Process_List;
+      Dummy    : Message_Dialog_Buttons;
+
    begin
-      if Process = null or else Process.Debugger = null then
+      if Process = null
+        or else Process.Debugger = null
+      then
          return Commands.Failure;
       end if;
 
-      if Command_In_Process (Get_Process (Process.Debugger)) then
+      Debugger := Process.Debugger;
+
+      if Command_In_Process (Get_Process (Debugger)) then
          Dummy := GPS_Message_Dialog
            ((-"Cannot attach to a task/process while the") & ASCII.LF &
             (-"underlying debugger is busy.") & ASCII.LF &
@@ -674,7 +685,9 @@ package body GVD_Module is
 
          if Argument /= "" then
             Attach_Process
-              (Process.Debugger, Argument, Mode => GVD.Types.Visible);
+              (Debugger => Debugger,
+               Process  => Argument,
+               Mode     => GVD.Types.Visible);
          end if;
       end;
 
@@ -1048,7 +1061,9 @@ package body GVD_Module is
             --  Try to connect only if the remote target and a protocol have
             --  been specified.
 
-            if Remote_Target /= "" and then Remote_Protocol /= "" then
+            if Remote_Target /= ""
+              and then Remote_Protocol /= ""
+            then
                Connect_To_Target
                  (Process.Debugger,
                   Target   => Remote_Target,
@@ -1061,6 +1076,42 @@ package body GVD_Module is
 
       return Commands.Success;
    end Execute;
+
+   ------------------------
+   -- Process_Auto_Start --
+   ------------------------
+
+   procedure Process_Auto_Start
+     (Kernel  : Kernel_Handle;
+      Process : Visual_Debugger)
+   is
+      Dummy : Boolean;
+   begin
+      if Process = null
+        or else Process.Debugger = null
+      then
+         return;
+      end if;
+
+      case Debuggee_Start_Type'(Auto_Start_Debuggee.Get_Pref) is
+         when Run =>
+            Process.Debugger.Run ("", Mode => GVD.Types.Visible);
+
+         when Run_With_Dialog =>
+            Dummy := GPS.Kernel.Actions.Execute_Action
+              (Kernel, "debug run dialog");
+
+         when Continue =>
+               --  The action is for boards support so should be handled in
+               --  board_support.py and gnatemulator.py plugins.
+            null;
+
+         when None =>
+            --  GVD.Process.Spawn shows message in the debugger console
+            --  so nothing to do here.
+            null;
+      end case;
+   end Process_Auto_Start;
 
    -------------
    -- Execute --
@@ -1623,17 +1674,23 @@ package body GVD_Module is
       File    : GNATCOLL.VFS.Virtual_File;
       Args    : String)
    is
-      Ignore : Visual_Debugger;
-      pragma Unreferenced (Ignore);
+      Process : Visual_Debugger;
    begin
-      Ignore := Spawn
+      Process := Spawn
          (Kernel          => Kernel,
           Prefered_Kind   => Debugger_Kind.Get_Pref,
           File            => File,
           Project         => Project,
           Args            => Args,
           Load_Executable => Load_Executable_On_Init.Get_Pref);
+
       Kernel.Refresh_Context;
+
+      if Process /= null
+        and then File /= No_File
+      then
+         Process_Auto_Start (Kernel, Process);
+      end if;
    end Debug_Init;
 
    -------------

@@ -860,7 +860,9 @@ package body DAP.Module is
    procedure Start_Executable
      (Kernel               : not null Kernel_Handle;
       Client               : not null DAP.Clients.DAP_Client_Access;
-      Display_Start_Dialog : Boolean := False)
+      Display_Start_Dialog : Boolean := False;
+      Stop_At_Beginning    : Boolean := True)
+
    is
       use type DAP.Types.Debugger_Status_Kind;
       Ignore  : Gtkada.Dialogs.Message_Dialog_Buttons;
@@ -907,9 +909,9 @@ package body DAP.Module is
          Response := Dialog.Run;
 
          declare
-            Stop_At_Beginning : constant Boolean :=
+            Stop : constant Boolean :=
                Stop_At_Beginning_Button.Get_Active;
-            Args              : constant String :=
+            Args : constant String :=
                String_Utils.Strip_Ending_Linebreaks
                  (Args_Combo.Get_Text);
          begin
@@ -922,7 +924,7 @@ package body DAP.Module is
                        (Args).Split
                        (Separator           => VSS.Characters.Latin.Space,
                         Keep_Empty_Segments => False),
-                   Stop_At_Beginning => Stop_At_Beginning);
+                   Stop_At_Beginning => Stop);
             end if;
          end;
       end Display_Dialog;
@@ -942,7 +944,7 @@ package body DAP.Module is
          Client.Launch_Executable
            (Executable        => Client.Get_Executable,
             Executable_Args   => Client.Get_Executable_Args,
-            Stop_At_Beginning => True);
+            Stop_At_Beginning => Stop_At_Beginning);
       end if;
    end Start_Executable;
 

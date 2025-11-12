@@ -2625,6 +2625,12 @@ class Debugger(object):
         """
         pass  # implemented in Ada
 
+    def continue_execution(self):
+        """
+        Continue the execution of the debuggee after stop.
+        """
+        pass  # implemented in Ada
+
     def value_of(self, expression):
         """
         Compute the value of expression in the current context.
