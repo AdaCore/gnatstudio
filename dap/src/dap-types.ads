@@ -47,6 +47,10 @@ package DAP.Types is
 
    type Endian_Type is (Unknown_Endian, Little_Endian, Big_Endian);
 
+   type Debuggee_Start_Type is (Run, Run_With_Dialog, Continue, None);
+   --  Type describing the behavior of the debuggee when starting the
+   --  debugger.
+
    package Strings_Vectors is
      new Ada.Containers.Indefinite_Vectors (Positive, String);
 

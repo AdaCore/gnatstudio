@@ -75,6 +75,18 @@ package body GVD.Preferences is
          Doc        => -("Open the main unit when initializing a debugger."),
          Default    => True);
 
+      Auto_Start_Debuggee := Debuggee_Start_Preferences.Create
+        (Manager => Prefs,
+         Name    => "Debugger-Launch-Setup-Command",
+         Label   => -"Auto-start debuggee",
+         Path    => -"Debugger:General",
+         Doc     => -("How to start/continue the debuggee process when the" &
+             " debugger is initialized. 'Run' will start the debuggee" &
+             " immediately while 'Run with dialog' will display a dialog " &
+             " to specify arguments and options. 'Continue' will continue" &
+             " the debuggee execution on a board instead of stop it."),
+         Default    => GVD.Types.None);
+
       Execution_Window := Create
         (Manager   => Prefs,
          Name      => "Debugger-Execution-Window",

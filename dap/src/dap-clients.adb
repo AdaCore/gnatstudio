@@ -49,6 +49,7 @@ with VSS.Text_Streams.Memory_UTF8_Output;
 with GPS.Editors;                use GPS.Editors;
 with GPS.Editors.Line_Information;
 with GPS.Kernel;                 use GPS.Kernel;
+with GPS.Kernel.Actions;
 with GPS.Kernel.Contexts;
 with GPS.Kernel.MDI;             use GPS.Kernel.MDI;
 with GPS.Kernel.Messages.Simple;
@@ -457,7 +458,10 @@ package body DAP.Clients is
      (Self   : in out DAP_Client'Class;
       Status : Debugger_Status_Kind)
    is
-      Old : constant Debugger_Status_Kind := Self.Status;
+      use GNATCOLL.VFS;
+
+      Old   : constant Debugger_Status_Kind := Self.Status;
+      Dummy : Boolean;
    begin
       if Self.Status = Status
         or else Self.Status = Terminating
@@ -484,6 +488,24 @@ package body DAP.Clients is
 
             --  Raise the debugger console to make it focused
             DAP.Views.Consoles.Raise_Debugger_Console (Self.This);
+
+            if Debuggee_Start_Type'
+              (DAP.Modules.Preferences.Auto_Start_Debuggee.Get_Pref) = None
+            then
+               declare
+                  Console : constant Interactive_Consoles.
+                    Interactive_Console := DAP.Views.Consoles.
+                      Get_Debugger_Interactive_Console (Self);
+               begin
+                  if Console /= null then
+                     Console.Insert
+                       ("Debugger is initialized: you can now start the" &
+                          " debuggee by clicking on the 'Debug Run' toolbar" &
+                          " button.");
+                  end if;
+               end;
+            end if;
+
             Self.Display_Prompt_If_Needed;
 
          when Running =>
@@ -526,6 +548,33 @@ package body DAP.Clients is
                GPS.Debuggers.Debug_Busy));
 
       Self.Kernel.Refresh_Context;
+
+      if Status = Initialized
+        and then Self.Executable /= No_File
+      then
+         case Debuggee_Start_Type'
+           (DAP.Modules.Preferences.Auto_Start_Debuggee.Get_Pref) is
+            when Run =>
+               DAP.Module.Start_Executable
+                 (Kernel               => Self.Kernel,
+                  Client               => Self.This,
+                  Display_Start_Dialog => False,
+                  Stop_At_Beginning    => False);
+
+            when Run_With_Dialog =>
+               Dummy := GPS.Kernel.Actions.Execute_Action
+                 (Self.Kernel, "debug run dialog");
+
+            when DAP.Types.Continue =>
+               --  The action is for boards support so should be handled in
+               --  board_support.py and gnatemulator.py plugins.
+               null;
+
+            when None =>
+               --  A message has been shown already.
+               null;
+         end case;
+      end if;
    end Set_Status;
 
    ------------------------------
@@ -727,7 +776,7 @@ package body DAP.Clients is
    is
       use GNATCOLL.VFS;
    begin
-      DAP_Log.Trace ("Set executable:" & (+Base_Name (File)));
+      Me.Trace ("Set executable:" & (+Base_Name (File)));
       Self.Executable := File;
    end Set_Executable;
 

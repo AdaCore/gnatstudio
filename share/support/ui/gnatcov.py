@@ -1048,7 +1048,7 @@ class GNATcovPlugin(Module):
                     manual_dump_active = params["manual-dump-trigger"]
                 else:
                     auto_dump_trigger = params["dump-trigger"]
-                    manual_dump_active = auto_dump_trigger != "manual"
+                    manual_dump_active = auto_dump_trigger == "manual"
 
         if manual_dump_active:
             GPS.Console("Messages").write(

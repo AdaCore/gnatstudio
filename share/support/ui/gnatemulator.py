@@ -307,6 +307,9 @@ class GNATemulator(Module):
 
         log("... done.")
 
+        if GPS.Preference("Debugger-Launch-Setup-Command").get().lower() == "continue":
+            yield debugger_promise.get().continue_execution()
+
     def setup(self):
         self.__create_targets_lazily()
 
