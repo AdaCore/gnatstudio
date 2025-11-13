@@ -302,11 +302,9 @@ package body GPS.LSP_Client.Editors.Formatting is
      (Self   : in out Range_Formatting_Request;
       Result : LSP.Messages.TextEdit_Vector)
    is
-      Editor : Editor_Buffer'Class :=
+      Editor : constant Editor_Buffer'Class :=
         Self.Kernel.Get_Buffer_Factory.Get
-          (File      => Self.File,
-           Open_View => False,
-           Focus     => False);
+          (File => Self.File, Open_View => False, Focus => False);
       Map    : LSP.Messages.TextDocumentEdit_Maps.Map;
       Dummy  : Boolean;
    begin
@@ -322,38 +320,33 @@ package body GPS.LSP_Client.Editors.Formatting is
       if Editor.Version /= Self.Document_Version then
          Trace
            (Me,
-            "Range_Formatting canceled for " & (+Base_Name (Editor.File)) &
-              " ver." & Integer'Image (Editor.Version) & ", data ver." &
-              Integer'Image (Self.Document_Version));
+            "Range_Formatting canceled for "
+            & (+Base_Name (Editor.File))
+            & " ver."
+            & Integer'Image (Editor.Version)
+            & ", data ver."
+            & Integer'Image (Self.Document_Version));
          return;
       end if;
 
-      declare
-         Controller : constant Cursor_Movement_Controller'Class :=
-           GPS_Editor_Buffer'Class (Editor).Freeze_Cursor;
-         pragma Unreferenced (Controller);
-      begin
-         Map.Include (GPS.LSP_Client.Utilities.To_URI (Self.File), Result);
+      Map.Include (GPS.LSP_Client.Utilities.To_URI (Self.File), Result);
 
-         GPS.LSP_Client.Edit_Workspace.Edit
-           (Kernel                   => Self.Kernel,
-            Workspace_Edit           => LSP.Messages.WorkspaceEdit'
-              (changes           => Map,
-               documentChanges   => <>,
-               changeAnnotations => <>),
-            Title                    => "Formatting",
-            Make_Writable            => False,
-            Auto_Save                => False,
-            Allow_File_Renaming      => False,
-            Locations_Message_Markup => "",
-            Limit_Span               =>
-              (if Src_Editor_Module.Get_Limit_LSP_Formatting
-                   (Editor.Get_Language)
-               then Self.Span
-               else LSP.Messages.Empty_Span),
-            Compute_Minimal_Edits    =>  True,
-            Error                    => Dummy);
-      end;
+      GPS.LSP_Client.Edit_Workspace.Edit
+        (Kernel                   => Self.Kernel,
+         Workspace_Edit           =>
+           LSP.Messages.WorkspaceEdit'
+             (changes => Map, documentChanges => <>, changeAnnotations => <>),
+         Title                    => "Formatting",
+         Make_Writable            => False,
+         Auto_Save                => False,
+         Allow_File_Renaming      => False,
+         Locations_Message_Markup => "",
+         Limit_Span               =>
+           (if Src_Editor_Module.Get_Limit_LSP_Formatting (Editor.Get_Language)
+            then Self.Span
+            else LSP.Messages.Empty_Span),
+         Compute_Minimal_Edits    => True,
+         Error                    => Dummy);
 
    exception
       when E : others =>

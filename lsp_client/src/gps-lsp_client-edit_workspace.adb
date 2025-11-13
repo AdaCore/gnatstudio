@@ -54,6 +54,7 @@ with VSS.Strings.Cursors;
 with VSS.Strings.Cursors.Iterators;
 with VSS.Strings.Cursors.Iterators.Lines;
 with VSS.Unicode;
+with GPS.Editors.Line_Information; use GPS.Editors.Line_Information;
 
 package body GPS.LSP_Client.Edit_Workspace is
 
@@ -112,6 +113,11 @@ package body GPS.LSP_Client.Edit_Workspace is
       Changes       : out Vectors.Vector);
    --  Compute the diff between Old_Text and New_Text using a Python
    --  implementation of the Myers diff algorithm.
+
+   function Has_Cursor
+     (Editor : GPS.Editors.Editor_Buffer'Class;
+      Edit   : Text_Edit) return Boolean;
+   --  Return True if Edit is affecting a cursor inside Editor
 
    type Edit_Workspace_Command is new Interactive_Command with
       record
@@ -195,50 +201,59 @@ package body GPS.LSP_Client.Edit_Workspace is
         (Editor => Editor, Msg => "Original edits:", Changes => Changes);
 
       while Vectors.Has_Element (C) loop
-         declare
-            Span       : constant LSP.Messages.Span :=
-              Vectors.Element (C).Span;
-            From       : constant GPS.Editors.Editor_Location'Class :=
-              GPS.LSP_Client.Utilities.LSP_Position_To_Location
-                (Editor, Span.first);
-            To         : constant GPS.Editors.Editor_Location'Class :=
-              GPS.LSP_Client.Utilities.LSP_Position_To_Location
-                (Editor, Span.last);
-            --  We are using Get_Text below which includes the character after
-            --  To. TextEdits should ignore this character so move To backward
-            --  now to compensate.
-            --  Also handle the special case where From = To, we should not
-            --  move To backward or we will get the characters between From - 1
-            --  and To + 1.
-            Old_Text   : constant VSS.Strings.Virtual_String :=
-              (if From = To
-               then VSS.Strings.Empty_Virtual_String
-               else Editor.Get_Text
-                (From                 => From,
-                 To                   => To.Forward_Char (-1),
-                 Include_Hidden_Chars => False));
-            New_Text   : constant VSS.Strings.Virtual_String :=
-              Vectors.Element (C).Text;
+         if Has_Cursor (Editor, Vectors.Element (C)) then
+            declare
+               Span     : constant LSP.Messages.Span :=
+                 Vectors.Element (C).Span;
+               From     : constant GPS.Editors.Editor_Location'Class :=
+                 GPS.LSP_Client.Utilities.LSP_Position_To_Location
+                   (Editor, Span.first);
+               To       : constant GPS.Editors.Editor_Location'Class :=
+                 GPS.LSP_Client.Utilities.LSP_Position_To_Location
+                   (Editor, Span.last);
+               --  We are using Get_Text below which includes the character
+               --  after To. TextEdits should ignore this character so move
+               --  To backward now to compensate.
+               --  Also handle the special case where From = To, we should not
+               --  move To backward or we will get the characters between
+               --  From - 1 and To + 1.
+               Old_Text : constant VSS.Strings.Virtual_String :=
+                 (if From = To
+                  then VSS.Strings.Empty_Virtual_String
+                  else
+                    Editor.Get_Text
+                      (From                 => From,
+                       To                   => To.Forward_Char (-1),
+                       Include_Hidden_Chars => False));
+               New_Text : constant VSS.Strings.Virtual_String :=
+                 Vectors.Element (C).Text;
+               Index    : Integer := 1;
+            begin
 
-            Cur_Change : Vectors.Vector;
-            Index      : Integer := 1;
-         begin
+               if Me.Is_Active then
+                  declare
+                     Cur_Change : Vectors.Vector;
+                  begin
+                     Cur_Change.Append (Vectors.Element (C));
+                     Debug_Print_Changes
+                       (Editor  => Editor,
+                        Msg     => "Computing minimal diff:",
+                        Changes => Cur_Change);
+                  end;
+               end if;
 
-            Cur_Change.Append (Vectors.Element (C));
-            Debug_Print_Changes
-              (Editor  => Editor,
-               Msg     => "Computing minimal diff:",
-               Changes => Cur_Change);
-            Get_Diff_Changes
-              (Kernel        => Kernel,
-               Editor        => Editor,
-               Original_Span => Span,
-               Index         => Index,
-               Old_Text      => Old_Text,
-               New_Text      => New_Text,
-               Changes       => New_Changes);
-
-         end;
+               Get_Diff_Changes
+                 (Kernel        => Kernel,
+                  Editor        => Editor,
+                  Original_Span => Span,
+                  Index         => Index,
+                  Old_Text      => Old_Text,
+                  New_Text      => New_Text,
+                  Changes       => New_Changes);
+            end;
+         else
+            New_Changes.Prepend (Vectors.Element (C));
+         end if;
          Vectors.Previous (C);
       end loop;
 
@@ -394,6 +409,29 @@ package body GPS.LSP_Client.Edit_Workspace is
       end;
    end Get_Diff_Changes;
 
+   ----------------
+   -- Has_Cursor --
+   ----------------
+
+   function Has_Cursor
+     (Editor : GPS.Editors.Editor_Buffer'Class; Edit : Text_Edit)
+      return Boolean is
+   begin
+      for Cursor of Editor.Get_Cursors loop
+         declare
+            Cursor_Line : constant Integer := Cursor.Get_Insert_Mark.Line;
+         begin
+            --  Only compare the line, the column are too fine grain
+            if Integer (Edit.Span.first.line) <= Cursor_Line
+              and then Cursor_Line <= Integer (Edit.Span.last.line)
+            then
+               return True;
+            end if;
+         end;
+      end loop;
+      return False;
+   end Has_Cursor;
+
    -------------------
    -- Insert_Change --
    -------------------
@@ -504,7 +542,7 @@ package body GPS.LSP_Client.Edit_Workspace is
 
       procedure Internal_Process_File
         (File   : Virtual_File;
-         Editor : GPS.Editors.Editor_Buffer'Class;
+         Editor : in out GPS.Editors.Editor_Buffer'Class;
          Vector : Vectors.Vector);
 
       function Get_Limited_Changes
@@ -585,9 +623,9 @@ package body GPS.LSP_Client.Edit_Workspace is
       begin
          if Command.Auto_Save then
             declare
-               Holder : constant GPS.Editors.
-                 Controlled_Editor_Buffer_Holder :=
-                   Buffer_Factory.Get_Holder (File);
+               Holder : constant GPS.Editors.Controlled_Editor_Buffer_Holder :=
+                 Buffer_Factory.Get_Holder (File);
+               Editor : GPS.Editors.Editor_Buffer'Class := Holder.Editor;
                Server : constant Language_Server_Access :=
                  Get_Language_Server
                    (Command.Kernel.Get_Language_Handler.
@@ -602,11 +640,11 @@ package body GPS.LSP_Client.Edit_Workspace is
                   Holder.Editor.Set_Opened_On_LSP_Server (True);
                end if;
 
-               Internal_Process_File (File, Holder.Editor, Vector);
+               Internal_Process_File (File, Editor, Vector);
             end;
          else
             declare
-               Editor : constant GPS.Editors.Editor_Buffer'Class :=
+               Editor : GPS.Editors.Editor_Buffer'Class :=
                  Buffer_Factory.Get
                    (File,
                     Open_View   => True,
@@ -623,9 +661,12 @@ package body GPS.LSP_Client.Edit_Workspace is
 
       procedure Internal_Process_File
         (File   : Virtual_File;
-         Editor : GPS.Editors.Editor_Buffer'Class;
+         Editor : in out GPS.Editors.Editor_Buffer'Class;
          Vector : Vectors.Vector)
       is
+         Controller : constant Cursor_Movement_Controller'Class :=
+           GPS_Editor_Buffer'Class (Editor).Freeze_Cursor;
+         pragma Unreferenced (Controller);
          G               : constant Group_Block := Editor.New_Undo_Group;
          C               : Vectors.Cursor;
          Writable        : Boolean := False;
@@ -649,9 +690,6 @@ package body GPS.LSP_Client.Edit_Workspace is
          --  opened in a buffer then consider it as writable, we have
          --  sole ownership of it.
          Writable := not File.Is_Regular_File or else File.Is_Writable;
-
-         --  Avoid moving the cursor when applying edit changes if asked.
-         Editor.Set_Avoid_Cursor_Move_On_Changes (Command.Avoid_Cursor_Move);
 
          --  Sort changes for applying them in reverse direction
          --  from the last to the first line
@@ -763,8 +801,6 @@ package body GPS.LSP_Client.Edit_Workspace is
          if Command.Auto_Save then
             Editor.Save (Interactive => False);
          end if;
-
-         Editor.Set_Avoid_Cursor_Move_On_Changes (False);
       end Internal_Process_File;
 
    begin
@@ -965,7 +1001,7 @@ package body GPS.LSP_Client.Edit_Workspace is
 
       procedure Internal_Process_File
         (File   : Virtual_File;
-         Editor : GPS.Editors.Editor_Buffer'Class;
+         Editor : in out GPS.Editors.Editor_Buffer'Class;
          Vector : Vectors.Vector);
 
       ------------------
@@ -981,12 +1017,13 @@ package body GPS.LSP_Client.Edit_Workspace is
                Holder : constant GPS.Editors.
                  Controlled_Editor_Buffer_Holder :=
                    Buffer_Factory.Get_Holder (File);
+               Editor : GPS.Editors.Editor_Buffer'Class := Holder.Editor;
             begin
-               Internal_Process_File (File, Holder.Editor, Vector);
+               Internal_Process_File (File, Editor, Vector);
             end;
          else
             declare
-               Editor : constant GPS.Editors.Editor_Buffer'Class :=
+               Editor : GPS.Editors.Editor_Buffer'Class :=
                  Buffer_Factory.Get
                    (File,
                     Open_View   => True,
@@ -1003,8 +1040,12 @@ package body GPS.LSP_Client.Edit_Workspace is
 
       procedure Internal_Process_File
         (File   : Virtual_File;
-         Editor : GPS.Editors.Editor_Buffer'Class;
-         Vector : Vectors.Vector) is
+         Editor : in out GPS.Editors.Editor_Buffer'Class;
+         Vector : Vectors.Vector)
+      is
+         Controller : constant Cursor_Movement_Controller'Class :=
+           GPS_Editor_Buffer'Class (Editor).Freeze_Cursor;
+         pragma Unreferenced (Controller);
       begin
          if Editor.Can_Undo then
             --  At this point we are focused on an Editor for File with an
@@ -1187,7 +1228,6 @@ package body GPS.LSP_Client.Edit_Workspace is
          Locations_Message_Markup => Locations_Message_Markup,
          Compute_Minimal_Edits    => Compute_Minimal_Edits,
          Avoid_Cursor_Move        => Avoid_Cursor_Move);
-
    begin
       Src_Editor_Module.Set_Global_Command (Command);
       --  Give up the local ownership of this command, it will be

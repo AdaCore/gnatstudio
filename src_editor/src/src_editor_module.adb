@@ -702,13 +702,13 @@ package body Src_Editor_Module is
          --  Avoid moving the cursor around when reloading the file: we will
          --  replace the cursor at its original position right after anyway.
 
-         Set_Avoid_Cursor_Move_On_Changes (Buffer, True);
+         Freeze_Cursor (Buffer, True);
          Load_File
            (Buffer,
             Filename        => File,
             Lang_Autodetect => True,
             Success         => Success);
-         Set_Avoid_Cursor_Move_On_Changes (Buffer, False);
+         Freeze_Cursor (Buffer, False);
 
          --  Replace the cursor to its original position. Don't perform
          --  synchronous scrolling since the editor may need to be refreshed

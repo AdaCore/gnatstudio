@@ -761,16 +761,13 @@ package Src_Editor_Buffer is
      (Buffer : access Source_Buffer_Record; Add : Boolean);
    --  Register or Unregister a view for the buffer
 
-   function Avoid_Cursor_Move_On_Changes
+   function Is_Cursor_Frozen
      (Buffer : access Source_Buffer_Record) return Boolean;
-   --  When this return true, moving the text cursor should be avoided when
-   --  doing e.g. insert and delete operations. This is particulary usefull
-   --  when batching changes, e.g. doing a replace all.
+   --  When this return true, the cursor will be frozen and never moved
 
-   procedure Set_Avoid_Cursor_Move_On_Changes
+   procedure Freeze_Cursor
      (Buffer : access Source_Buffer_Record; Value : Boolean);
-   --  Set wether we should avoid to do cursor modifications in case of
-   --  additions / deletions.
+   --  Set whether the cursor is allowed to move
 
    type Source_Buffer_Array is array (Natural range <>) of Source_Buffer;
    function Buffer_List
