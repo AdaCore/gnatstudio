@@ -1261,17 +1261,18 @@ class GNATcovPlugin(Module):
             # generated with a simple name, in the object directory.
             elif target_name == COVERAGE_INSTR_TRAGET:
                 trace_regexp = (
-                    os.path.abspath(GPS.Project.root().object_dirs()[0])
+                    re.escape(os.path.abspath(GPS.Project.root().object_dirs()[0]))
                     + r".*\.srctrace"
                 )
+                trace_pat = re.compile(trace_regexp)
 
                 # Can't help the user if the trace file passed on the command
                 # line is not in the default location.
-                if all([re.search(trace_regexp, arg) is None for arg in cmd]):
+                if all([re.search(trace_pat, arg) is None for arg in cmd]):
                     return
 
-                error_msg = "cannot open " + trace_regexp
-                if any([re.search(error_msg, msg) for msg in messages]):
+                error_pat = re.compile("cannot open " + trace_regexp)
+                if any([re.search(error_pat, msg) for msg in messages]):
                     GPS.Console("Messages").write("\n" + COVERAGE_HINT)
             return
 
