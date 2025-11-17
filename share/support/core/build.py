@@ -2,7 +2,9 @@
 This file provides default build modes and targets (gnatmake and gprbuild) for
 GPS
 """
+
 import GPS
+import os
 
 XML = r"""<?xml version="1.0" ?>
 <GNAT_Studio>
@@ -95,23 +97,6 @@ XML = r"""<?xml version="1.0" ?>
      <arg section="-cargs">-ftest-coverage</arg>
      <arg section="-cargs">-fpreserve-control-flow</arg>
      <arg section="-largs">--coverage</arg>
-  </extra-args>
- </builder-mode>
-
- <builder-mode name="gprof">
-  <description>Build with gprof support</description>
-  <subdir>gprof</subdir>
-  <supported-model>builder</supported-model>
-  <supported-model>gnatmake</supported-model>
-  <supported-model>gprbuild</supported-model>
-  <supported-model filter="--subdirs=">gprclean</supported-model>
-  <supported-model
-    filter="--subdirs=">GNATtest execution mode</supported-model>
-  <extra-args sections="-cargs -largs">
-     <arg>--subdirs=%subdir</arg>
-     <arg section="-cargs">-g</arg>
-     <arg section="-cargs">-pg</arg>
-     <arg section="-largs">-pg</arg>
   </extra-args>
  </builder-mode>
 
@@ -601,4 +586,28 @@ name="U_pdate file XRef in background">
 </GNAT_Studio>
 """
 
+gprof_xml = r"""<?xml version="1.0" ?>
+<GNAT_Studio>
+ <builder-mode name="gprof">
+  <description>Build with gprof support</description>
+  <subdir>gprof</subdir>
+  <supported-model>builder</supported-model>
+  <supported-model>gnatmake</supported-model>
+  <supported-model>gprbuild</supported-model>
+  <supported-model filter="--subdirs=">gprclean</supported-model>
+  <supported-model
+    filter="--subdirs=">GNATtest execution mode</supported-model>
+  <extra-args sections="-cargs -largs">
+     <arg>--subdirs=%subdir</arg>
+     <arg section="-cargs">-g</arg>
+     <arg section="-cargs">-pg</arg>
+     <arg section="-largs">-pg</arg>{0}
+  </extra-args>
+ </builder-mode>
+</GNAT_Studio>
+"""
+
 GPS.parse_xml(XML)
+# Windows requires `-no-pie` linker switch to make gprof work
+no_pie = "<arg section='-largs'>-no-pie</arg>" if os.name == "nt" else ""
+GPS.parse_xml(gprof_xml.format(no_pie))
