@@ -17,6 +17,7 @@ alr = os_utils.locate_exec_on_path("alr")
 saved_env: dict[str, str] = {}  # all changed env variables and their values
 project_to_reload = None  # The project we should reload after finding an Alire manifest
 alire_manifest = None  # The alire.toml file we are trying to load
+alire_project_files = []  # GPR project files listed in the known Alire manifest
 
 ALIRE_MODELS_XML = """
     <target-model name="Alire" category="">
@@ -384,7 +385,15 @@ def on_project_changing(hook, file):
     global saved_env, project_to_reload, alire_manifest
 
     if project_to_reload:
+        GPS.Logger("ALIRE").log(f"Loading Alire project through: {file.path}")
         project_to_reload = None
+        return
+
+    if file.path in alire_project_files:
+        GPS.Logger("ALIRE").log(
+            f"{file.path} already known as Alire project file, "
+            + "skipping Alire detection and synchronization."
+        )
         return
 
     # restore saved environment
@@ -410,8 +419,7 @@ def on_project_changing(hook, file):
         # to <base_name>.gpr by default
         project_to_reload = (file.path, root)
         alire_manifest = os.path.join(root, "alire.toml")
-        GPS.Logger("ALIRE").log(
-            "Alire manifest detected: %s" % alire_manifest)
+        GPS.Logger("ALIRE").log("Alire manifest detected: %s" % alire_manifest)
         GPS.Logger("ALIRE").log("Performing minimal Alire sync...")
         GPS.BuildTarget("Alire Sync").execute(directory=root, synchronous=True)
         GPS.Logger("ALIRE").log("Synchronization done")
@@ -422,19 +430,21 @@ def on_project_changing(hook, file):
 
 class Alire_Parser(tool_output.OutputParser):
     """
-    Parse the Alire output in oder to set the needed environment,
+    Parse the Alire output in order to set the needed environment,
     saving the original environment in order to restore it if needed.
     """
 
     def __init__(self, child=None):
+        global alire_project_files
         GPS.Logger("ALIRE").log("Initializing alire output parser...")
         tool_output.OutputParser.__init__(self, child)
         self.export_var_regexp = re.compile(r"export (\S+)=(.*)")
         self.project_file_regexp = re.compile(r" +Project_File: ([^\n]+)")
         self.crate_name_regexp = re.compile(r" +Name: (\S+)")
+        alire_project_files = []
 
     def on_stdout(self, text, command):
-        global saved_env, project_to_reload, alire_manifest
+        global saved_env, project_to_reload, alire_manifest, alire_project_files
 
         for line in text.splitlines():
             m = self.export_var_regexp.fullmatch(line)
@@ -472,16 +482,26 @@ class Alire_Parser(tool_output.OutputParser):
                         )
                         root = os.path.dirname(alire_manifest)
 
-                        if os.path.isabs(project_file_path):
-                            project_to_reload = (
-                                project_file_path,
-                                root
-                            )
-                        else:
-                            project_to_reload = (
-                                os.path.join(root, project_file_path),
-                                root,
-                            )
+                        # Get the absolute path of the project file, if not already
+                        # absolute
+                        projet_file_abs_path = (
+                            os.path.join(root, project_file_path)
+                            if not os.path.isabs(project_file_path)
+                            else project_file_path
+                        )
+
+                        # Append the project file to the list of Alire manifest project
+                        # files.
+                        # This is needed in case the user wants to load a different
+                        # project file from the same Alire manifest: we don't want to
+                        # re-run Alire in that case.
+                        alire_project_files.append(projet_file_abs_path)
+
+                        # Set it as the project to reload
+                        project_to_reload = (
+                            projet_file_abs_path,
+                            root,
+                        )
 
 
 if alr:
