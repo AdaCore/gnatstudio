@@ -66,7 +66,6 @@ with GUI_Utils;                    use GUI_Utils;
 with Language_Handlers;            use Language_Handlers;
 with Projects;                     use Projects;
 with Remote;                       use Remote;
-with Switches_Editors;             use Switches_Editors;
 with System;
 with Variable_Editors;             use Variable_Editors;
 
@@ -208,12 +207,6 @@ package body Project_Viewers is
       Context : Interactive_Command_Context) return Command_Return_Type;
    --  Save the project associated with the kernel, and all its imported
    --  projects.
-
-   type Edit_File_Switches is new Interactive_Command with null record;
-   overriding function Execute
-     (Command : access Edit_File_Switches;
-      Context : Interactive_Command_Context) return Command_Return_Type;
-   --  Edit the switches for all the files selected in Viewer
 
    procedure Project_Command_Handler
      (Data : in out Callback_Data'Class; Command : String);
@@ -800,73 +793,6 @@ package body Project_Viewers is
       return Context;
    end Build_Context;
 
-   -------------
-   -- Execute --
-   -------------
-
-   overriding function Execute
-     (Command : access Edit_File_Switches;
-      Context : Interactive_Command_Context) return Command_Return_Type
-   is
-      pragma Unreferenced (Command);
-      V         : constant Project_Viewer :=
-        File_Views.Retrieve_View (Get_Kernel (Context.Context));
-      Selection : Gtk_Tree_Selection;
-      Length    : Natural := 0;
-      Iter      : Gtk_Tree_Iter;
-
-   begin
-      if V = null then
-         return Commands.Failure;
-      end if;
-
-      Selection := V.Tree.Get_Selection;
-      Iter := V.Model.Get_Iter_First;
-
-      while Iter /= Null_Iter loop
-         if Iter_Is_Selected (Selection, Iter) then
-            Length := Length + 1;
-         end if;
-
-         Next (V.Model, Iter);
-      end loop;
-
-      declare
-         Names : File_Array (1 .. Length);
-         N     : Natural := Names'First;
-      begin
-         Iter := Get_Iter_First (V.Model);
-
-         while Iter /= Null_Iter loop
-            if Iter_Is_Selected (Selection, Iter) then
-               Names (N) := Get_File (V.Model, Iter, File_Column);
-               N := N + 1;
-            end if;
-
-            Next (V.Model, Iter);
-         end loop;
-
-         if Edit_Switches_For_Files (V.Kernel, V.Current_Project, Names) then
-            --  Temporarily block the handlers so that the editor is not
-            --  cleared, or we would lose the selection
-            V.View_Changed_Blocked := True;
-            Recompute_View (V.Kernel);
-            V.View_Changed_Blocked := False;
-
-            Iter := Get_Iter_First (V.Model);
-
-            while Iter /= Null_Iter loop
-               if Iter_Is_Selected (Selection, Iter) then
-                  Project_Viewers_Set (V, Iter);
-               end if;
-
-               Next (V.Model, Iter);
-            end loop;
-         end if;
-      end;
-      return Commands.Success;
-   end Execute;
-
    ------------------------------------
    -- Project_Static_Command_Handler --
    ------------------------------------
@@ -1231,11 +1157,6 @@ package body Project_Viewers is
          Category    => -"Projects",
          Description => -"Save all modified projects to disk");
 
-      Register_Action
-        (Kernel, "edit switches for file", new Edit_File_Switches,
-         -"Edit the switches for the selected files",
-         Icon_Name => "gps-edit-symbolic");
-
       Register_Contextual_Submenu
         (Kernel,
          Name   => "Project",
@@ -1304,17 +1225,6 @@ package body Project_Viewers is
          Action => Action_Add_Scenario_Variable,
          Filter => Create (Module => Explorer_Module_Name) and Filter2,
          Label  => "Project/Add scenario variable");
-
-      Register_Action
-        (Kernel, "edit file switches",
-         Command     => new Edit_Switches_Command,
-         Description => "Edit the compilation switches for the source files",
-         Filter      =>  Lookup_Filter (Kernel, "Project and file"),
-         Category    => -"Projects");
-      Register_Contextual_Menu
-        (Kernel,
-         Action => "edit file switches",
-         Label  => "Edit switches for %f");
 
       Extending_Projects_Editors.Register_Contextual_Menus (Kernel);
 

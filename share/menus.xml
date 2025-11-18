@@ -612,10 +612,6 @@
       <button action='bookmark edit note'/>
    </toolbar>
 
-   <toolbar id='Switches editor'>
-      <button action='edit switches for file'/>
-   </toolbar>
-
    <toolbar id='Outline'>
       <button action='outline expand all'/>
       <button action='outline collapse all'/>

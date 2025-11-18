@@ -19,7 +19,6 @@ with GNATCOLL.Projects;
 with GNATCOLL.Traces;            use GNATCOLL.Traces;
 
 with Case_Handling;              use Case_Handling;
-with Foreign_Naming_Editors;     use Foreign_Naming_Editors;
 with GPS.Intl;                   use GPS.Intl;
 with GPS.Kernel;                 use GPS.Kernel;
 with GPS.Kernel.Hooks;           use GPS.Kernel.Hooks;
@@ -28,7 +27,6 @@ with Language;                   use Language;
 with Language.C;                 use Language.C;
 with Language.Cpp;               use Language.Cpp;
 with Language_Handlers;          use Language_Handlers;
-with Project_Viewers;            use Project_Viewers;
 with Projects;                   use Projects;
 
 package body Cpp_Module is
@@ -170,11 +168,6 @@ package body Cpp_Module is
       Hook := new On_Pref_Changed;
       Preferences_Changed_Hook.Add (Hook);
       Hook.Execute (Kernel, null);
-
-      Register_Naming_Scheme_Editor
-        (Kernel, "c", Naming_Editor_Factory'Access);
-      Register_Naming_Scheme_Editor
-        (Kernel, "c++", Naming_Editor_Factory'Access);
 
    exception
       when E : others => Trace (Me, E);
