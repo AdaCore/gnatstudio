@@ -110,6 +110,13 @@ def get_focused_widget():
 
 def filter_text_actions(*args):
     f = get_focused_widget()
+
+    if f and f.get_name() == "Console":
+        # This prevents the GNAT Studio from intercepting Home/End key
+        # presses in the console, so that the presses are passed on to
+        # the process (such as bash) and processed correctly.
+        return False
+
     return isinstance(f, Gtk.TextView) or isinstance(f, Gtk.Entry)
 
 
@@ -566,7 +573,6 @@ def execute_for_all_cursors(ed, mark_fn, extend_selection=False):
 
 
 class Chainmap(DictMixin):
-
     """Combine multiple mappings for sequential lookup.
 
     For example, to emulate Python's normal lookup sequence:

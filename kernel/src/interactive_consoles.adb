@@ -1680,6 +1680,7 @@ package body Interactive_Consoles is
       end if;
 
       Gtk_New (Console.View, Console.Buffer);
+      Set_Name (Console.View, "Console");
       Set_Editable (Console.View, Manage_Prompt);
       Set_Wrap_Mode (Console, Wrap_Mode);
 
