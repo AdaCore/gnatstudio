@@ -43,10 +43,8 @@ with Language.Cpp;
 with Language.Java;
 with Basic_Types;
 with Language_Handlers;     use Language_Handlers;
-with Custom_Naming_Editors; use Custom_Naming_Editors;
 with GPS.Kernel;            use GPS.Kernel;
 with GPS.Intl;              use GPS.Intl;
-with Project_Viewers;       use Project_Viewers;
 with Projects;              use Projects;
 with GPS.Kernel.Project;    use GPS.Kernel.Project;
 with String_Utils;          use String_Utils;
@@ -371,9 +369,6 @@ package body Language.Custom is
          Default_Body_Suffix =>
            Get_String (Get_Field (Top, "Body_Suffix")),
          Obj_Suffix => Get_String (Get_Field (Top, "Obj_Suffix")));
-
-      Project_Viewers.Register_Naming_Scheme_Editor
-        (Kernel, Get_Name (Lang), Custom_Naming_Editor_Factory'Access);
 
       Node := Top.Child;
       while Node /= null loop
