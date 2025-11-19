@@ -6,11 +6,29 @@ import re
 mode = "Mode:" + GPS.Preference("GPS6-Debugger-Debugger-Kind").get()
 
 
-def check_simple(debug, name, type, value, description, pattern=False, var=None):
+def check_simple(
+    debug, name, allowed_types, value, description, pattern=False, var=None
+):
+    """
+    Check that a simple variable has the expected type and value.
+
+    :param debug: The debugger instance
+    :param name: The name of the variable to check
+    :param allowed_types: The expected type name or list of type names
+    :param value: The expected value (or regex pattern if pattern=True)
+    :param description: The expected type description
+    :param pattern: Whether to treat value as a regex pattern
+    :param var: Optional variable instance to check instead of looking it up by name
+    """
     if var is None:
         var = debug.get_variable_by_name(name)
 
-    gps_assert(var.type_name, type, mode + " Invalid type name of " + name)
+    if isinstance(allowed_types, list):
+        gps_assert(
+            var.type_name in allowed_types, True, mode + " Invalid type name of " + name
+        )
+    else:
+        gps_assert(var.type_name, allowed_types, mode + " Invalid type name of " + name)
 
     if pattern:
         val = var.simple_value
@@ -478,16 +496,27 @@ def test_driver():
     )
 
     check_simple(
-        debug, "main::as", "void (*)()", r"^0x[0-9a-f]+ \<foo\>", "Access", True
+        debug,
+        "main::as",
+        ["void (*)()", "void (*)(void)"],
+        r"^0x[0-9a-f]+ \<foo\>",
+        "Access",
+        True,
     )
 
-    var = check_simple(debug, "main::asa", "void (*[2])()", "", "Array ( 0 ..  1)")
+    var = check_simple(
+        debug,
+        "main::asa",
+        ["void (*[2])()", "void (*[2])(void)"],
+        "",
+        "Array ( 0 ..  1)",
+    )
     children_list = var.children()
     gps_assert(len(children_list), 2, mode + " Invalid count of asa children")
     check_simple(
         debug,
         "[0]",
-        "void (*)()",
+        ["void (*)()", "void (*)(void)"],
         r"^0x[0-9a-f]+ \<foo\>",
         "Access",
         True,
@@ -496,7 +525,7 @@ def test_driver():
     check_simple(
         debug,
         "[1]",
-        "void (*)()",
+        ["void (*)()", "void (*)(void)"],
         r"^0x[0-9a-f]+ \<foo\>",
         "Access",
         True,
