@@ -131,7 +131,6 @@ try:
     # The following classes and functions are used to traverse the tree of
     # widgets displayed on the screen, or access specific widgets
     class WidgetTreeIterator:
-
         """
         An iterator for WidgetTree (see the class WidgetTree for examples)
         """
@@ -156,7 +155,6 @@ try:
             return w
 
     class WidgetTree(object):
-
         """Virtual container that represents the widget hierarchy.
         You can traverse it with
            for w in WidgetTree(): ...
@@ -179,7 +177,6 @@ try:
             return WidgetTreeIterator(self.list)
 
     class MenuIterator(object):
-
         """An iterator for MenuTree (see the class MenuTree for examples)"""
 
         def __init__(self, menu, accel_path_prefix):
@@ -246,7 +243,6 @@ try:
             raise StopIteration
 
     class MenuTree(object):
-
         """Iterates over a menu and all its submenus. For each item, return
         a tuple (menu, label, accel, level), where menu is the
         Gtk.MenuItem widget.
@@ -445,6 +441,7 @@ try:
         GDK_F4 = Gdk.KEY_F4
         GDK_F5 = Gdk.KEY_F5
         GDK_DELETE = Gdk.KEY_Delete
+        GDK_HOME = Gdk.KEY_Home
     else:
         GDK_BACKSPACE = Key.backspace
         GDK_TAB = Key.tab
@@ -459,6 +456,7 @@ try:
         GDK_F4 = Key.f4
         GDK_F5 = Key.f5
         GDK_DELETE = Key.delete
+        GDK_LEFT = Key.home
 
     def send_key_event(
         keyval,

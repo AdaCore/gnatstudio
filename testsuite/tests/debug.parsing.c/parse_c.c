@@ -177,7 +177,7 @@ main () {
   struct My_Record_With_Subprogram Mrws = {foo, 1};
 
   struct My_Record_With_Subprogram2 {
-    void (*field1 [2]) (int a);
+    void (*field1 [2]) ();
     int field2;
   };
   struct My_Record_With_Subprogram2 Mrws2 = {{foo, foo}, 1};

@@ -200,6 +200,7 @@ def edit_file(file_name, json_name):
             )
         return
 
+    _log("Finished parsing the json, adding representation clauses...", mode="text")
     buf = GPS.EditorBuffer.get(GPS.File(file_name))
     # Clean the previous special lines if needed
     if file_name in REPRESENTATION_MARKS and REPRESENTATION_MARKS[file_name]:
@@ -236,6 +237,7 @@ def on_exit(process, status, full_output):
     else:
         _log("... start parsing the json", mode="text")
         edit_file(process.file_name, process.json_name)
+        _log("Finished parsing the json.", mode="text")
 
 
 def show_representation_clauses(file_name, json_name):

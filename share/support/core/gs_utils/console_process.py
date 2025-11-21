@@ -18,10 +18,11 @@ Key_Up = 65362
 Key_Right = 65363
 Key_Down = 65364
 Key_Escape = 65307
+Key_Home = 65360
+Key_End = 65367
 
 
 class Console_Process(GPS.Console, GPS.Process):
-
     """This class provides a way to spawn an interactive process and
     do its input/output in a dedicated console in GPS.
     The process is created so that it does not appear in the task
@@ -220,7 +221,6 @@ class Console_Process(GPS.Console, GPS.Process):
 
 
 class ANSI_Console_Process(Console_Process):
-
     """This class has a purpose similar to Console_Process.
     However, this class does not attempt to do any of the high-level
     processing of prompt and input that Console_Process does, and instead
@@ -265,6 +265,10 @@ class ANSI_Console_Process(Console_Process):
             return "\033[A"
         elif keycode == Key_Down:
             return "\033[B"
+        elif keycode == Key_Home:
+            return "\033[H"
+        elif keycode == Key_End:
+            return "\033[F"
         else:
             GPS.Logger("CONSOLE").log("keycode=%s key=%s" % (keycode, key))
             return ""

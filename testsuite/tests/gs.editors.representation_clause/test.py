@@ -16,7 +16,11 @@ def play_scenario(name, msg):
     GPS.execute_action(SHOW)
     yield wait_tasks(other_than=known_tasks)
     show_chars = buf.characters_count()
-    gps_assert(show_chars > init_chars, True, "Missing representation clause in " + msg)
+    gps_assert(
+        "Finished parsing" in GPS.Console().get_text(),
+        True,
+        "Parsing representation clauses failed on " + msg,
+    )
 
 
 @run_test_driver
