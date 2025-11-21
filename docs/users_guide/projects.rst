@@ -306,101 +306,18 @@ You could also maintain a completely separate hierarchy of projects, but
 it is much more efficient to create a new configuration variable and edit
 the switches for the appropriate scenario.
 
+To configure scenario variables in your project, just edit the GPR files directly:
+GNAT Studio provides completion, tooltips, outline and other common IDE features for project files through
+LSP and the `Ada Language Server <https://github.com/AdaCore/ada_language_server>`_,
+helping you to customize your project more easily.
+For more details on scenario variables, see the `dedicated section in the GPRbuild User's Guide <http://127.0.0.1:3000/docs/users_guide/_build/html/projects.html#scenarios-and-configuration-variables`_.
+
 There is one limitation on what GNAT Studio can do with scenario variables:
 although :program:`gnatmake` and :program:`gprbuild` can use scenario
 variables whose default value is something other than static string (for
 example, a concatenation or the value of another scenario variable), GNAT Studio
 cannot edit such a project graphically, though such projects load
 correctly.
-
-.. index:: project; creating scenario variables
-
-Creating new scenario variables
--------------------------------
-
-Create a new scenario variable through the contextual menu (right-click) in
-the :guilabel:`Project` or :guilabel:`Scenario` views themselves. Select
-the :menuselection:`Project --> Add Scenario Variable` menu, which
-opens the following dialog:
-
-.. image:: scenarios.png
-
-There are two main areas in this dialog.  You specify the name of the
-variable in the top line. This name is used for two purposes:
-
-* It is displayed in the :guilabel:`Scenario` view
-
-* It is the name of the environment variable from which the initial value is
-  read. When GNAT Studio starts, all configuration variables are initialized
-  from the host computer environment, although you can later change their
-  values inside GNAT Studio.  Selecting a new value for the scenario variable
-  does not change the value of the environment variable, which is only used to
-  get the default initial value of the scenario variable.
-
-  When you spawn external tools like :program:`gnatmake` you can also
-  specify the value they should use for the scenario variable by using a
-  command line switch, typically :command:`-X`.
-
-Click on the arrow on the right of the name area to display the list of all
-currently-defined environment variables. However, you can choose any
-variable; the environment variable need not exist when you start GNAT Studio.
-
-The second area in this dialog is the list of possible values for this
-variable.  GNAT Studio generates an error and will not load the project if you
-specify any other value.  One of these values is the default (the one whose
-button in the :guilabel:`Default` column is selected). If the environment
-variable is not defined when GNAT Studio starts, it behaves as if it had this
-default value.
-
-You can edit the list of possible values by right-clicking on the name of
-the variable and selecting either :guilabel:`Edit properties` or
-:guilabel:`Delete variable`.
-
-
-.. index:: project; editing scenario variable
-
-Editing existing scenario variables
------------------------------------
-
-If at least one configuration variable is defined in your project, the
-:guilabel:`Scenario` view contains something similar to:
-
-.. image:: views-scenario.png
-
-You can change the current value of any of these variables by clicking on
-one, which displays a pop-up window with the list of possible values, from
-which you select the one you want to use.
-
-Just click on the :guilabel:`Apply` button (i.e: with the *check* icon, on
-the left-side vertical toolbar) to apply your changes: GNAT Studio
-will recompute the :guilabel:`Project` view (in case source directories, object
-directories or list of source files have changed). GNAT Studio will also update
-other items such as the list of
-executables in the :guilabel:`Compile`, :guilabel:`Run`, and
-:guilabel:`Debug` menus.
-
-.. index:: browsers
-.. index:: call graph
-
-Because it can be time consuming and costly of system resources, GNAT Studio
-does not recompute the contents of the various browsers, such as the call graph
-and dependencies, for this updated project. You must explicitly request that
-they be updated if you want them recomputed.
-
-Change the list of possible values for a configuration variable at any time
-by clicking on the :guilabel:`edit` button in the local toolbar. This pops
-up the same dialog used to create new variables, and also allows you to
-change the name of the scenario variable (the same name as the
-environment variable used to set the initial value of the scenario
-variable).
-
-.. index:: removing variable
-
-To remove a variable, select it and click the :guilabel:`remove` button in
-the local toolbar. GNAT Studio displays a confirmation dialog.  When the
-variable is removed, GNAT Studio acts as if the variable always had the value
-it had when it was removed.
-
 
 
 .. index:: project; extending
@@ -537,31 +454,11 @@ Disabling Editing of the Project File
 =====================================
 
 You should generally consider project files part of the sources and put
-them under the control of a version control system.  This will prevent
+them under the control of a version control system. This will prevent
 accidental editing of the project files, either by you or someone else
 using the same GNAT Studio installation.
 
 One way to prevent such accidents is to change the write permissions of the
 project files themselves. On Unix systems, you could also change the owner
 of the file. When GNAT Studio cannot write a project file, it reports an error
-to the user.  However, the above does not prevent a user from trying to make
-changes at the GUI level, since the error message only occurs when trying
-to save the project (this is by design, so that temporary modification can
-be done in memory).
-
-You can disable all the project editing related menus in GNAT Studio by adding
-a special startup switch, typically by creating a short script that spawns
-GNAT Studio with these switches.  Use the following command line::
-
-   gnatstudio --traceoff=GPS.INTERNAL.MODULE.PROJECT_VIEWER --traceoff=GPS.INTERNAL.MODULE.PROJECT_PROPERTIES
-
-
-.. highlight:: python
-
-This prevents the loading of the two GNAT Studio modules responsible for
-editing project files. However, this also has an impact on the Python functions
-that are exported by GNAT Studio and thus could break some plugins. Another
-possible solution is to hide the corresponding project editing menus and
-contextual menus.  You could do this by enabling the
-:file:`prevent_project_edition.py` plugin via the
-:menuselection:`Edit --> Preferences...` menu.
+to the user.
