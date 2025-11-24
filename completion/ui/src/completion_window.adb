@@ -1144,22 +1144,19 @@ package body Completion_Window is
       Window.Explorer.Pattern := new String'
         (Get_Text (Window.Buffer, Beg, Iter));
 
-      if Window.Explorer.Pattern.all = "" then
-         Delete (Window);
-
-      --  If the character we just inserted is not in the set of identifier
-      --  characters, we know that we won't find the result in the list of
-      --  stored items, so return immediately.
-      elsif Window.Explorer.Pattern.all /= ""
-        and then not Is_In (Wide_Wide_Character'Val
-                            (Character'Pos
-                               (Window.Explorer.Pattern
-                                    (Window.Explorer.Pattern'Last))),
-                            Window.Lang.Word_Character_Set)
+      if Window.Explorer.Pattern.all = ""
+        --  If the character we just inserted is not in the set of identifier
+        --  characters, we know that we won't find the result in the list of
+        --  stored items, so return immediately.
+        or not Is_In
+                 (Wide_Wide_Character'Val
+                    (Character'Pos
+                       (Window.Explorer.Pattern
+                          (Window.Explorer.Pattern'Last))),
+                  Window.Lang.Word_Character_Set)
       then
          Delete (Window);
-      elsif not Window.In_Destruction
-        and then Window.Explorer.Iter /= null
+      elsif not Window.In_Destruction and then Window.Explorer.Iter /= null
       then
          Adjust_Selected (Window);
       end if;

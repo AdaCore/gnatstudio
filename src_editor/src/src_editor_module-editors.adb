@@ -95,9 +95,7 @@ package body Src_Editor_Module.Editors is
 
    type Frozen_Cursor_Controller
      (Editor : Src_Editor_Buffer_Access) is
-     new Cursor_Movement_Controller with record
-      On_Initialize_Value : Boolean;
-   end record;
+     new Cursor_Movement_Controller with null record;
 
    overriding procedure Initialize
      (Object : in out Frozen_Cursor_Controller);
@@ -4715,9 +4713,7 @@ package body Src_Editor_Module.Editors is
    begin
       if Object.Editor.Contents.Buffer /= null then
          Object.Editor.Contents.Buffer.Freeze_Context;
-         Object.On_Initialize_Value :=
-           Object.Editor.Contents.Buffer.Is_Cursor_Frozen;
-         Object.Editor.Contents.Buffer.Freeze_Cursor (True);
+         Object.Editor.Contents.Buffer.Freeze_Cursor;
       end if;
    end Initialize;
 
@@ -4730,9 +4726,10 @@ package body Src_Editor_Module.Editors is
    begin
       Object.Editor.Unselect;
       if Object.Editor.Contents.Buffer /= null then
-         Object.Editor.Contents.Buffer.Freeze_Cursor
-           (Object.On_Initialize_Value);
+         Object.Editor.Contents.Buffer.Thaw_Cursor;
          Object.Editor.Contents.Buffer.Thaw_Context;
+         --  The context was frozen so manually refresh it now to update
+         --  all the actions filters and the GUI
          Object.Editor.Contents.Kernel.Refresh_Context;
       end if;
    end Finalize;

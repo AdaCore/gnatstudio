@@ -763,11 +763,16 @@ package Src_Editor_Buffer is
 
    function Is_Cursor_Frozen
      (Buffer : access Source_Buffer_Record) return Boolean;
-   --  When this return true, the cursor will be frozen and never moved
+   --  When this return true, the cursor can still be moved but no
+   --  notifcation will be emitted.
 
-   procedure Freeze_Cursor
-     (Buffer : access Source_Buffer_Record; Value : Boolean);
-   --  Set whether the cursor is allowed to move
+   procedure Freeze_Cursor (Buffer : access Source_Buffer_Record);
+   --  Freeze the cursor movements notifications. Must be paired
+   --  with a call to Thaw_Cursor.
+
+   procedure Thaw_Cursor (Buffer : access Source_Buffer_Record);
+   --  Allow cursor movements notifcation. Freeze_Cursor must be called
+   --  before.
 
    type Source_Buffer_Array is array (Natural range <>) of Source_Buffer;
    function Buffer_List
@@ -1663,10 +1668,10 @@ private
       --  When this is true, we'll avoid moving the cursor when performing
       --  changes (e.g. addition or deletions).
 
-      Do_Not_Move_Cursor : Boolean := False;
+      Do_Not_Move_Cursor : Integer := 0;
       --  Used to disable functions moving the cursor or emit the
       --  "cursor_position_changed" signal when we know we are going to
-      --  move the cursor a lot.
+      --  move the cursor a lot. When "> 0" the cursor is considered frozen.
 
       Queue : Command_Queue;
       --  Contains the queue of editor commands for this editor

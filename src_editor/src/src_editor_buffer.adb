@@ -582,16 +582,14 @@ package body Src_Editor_Buffer is
      (Buffer        : Source_Buffer;
       Mark          : Gtk_Text_Mark;
       Cursor_Line   : out Gint;
-      Cursor_Offset : out Gint;
-      Do_Not_Move   : out Boolean);
+      Cursor_Offset : out Gint);
    --  Save the location of the Mark
 
    procedure Place_Cursor
      (Buffer        : Source_Buffer;
       Mark          : Gtk_Text_Mark;
       Cursor_Line   : Gint;
-      Cursor_Offset : Gint;
-      Do_Not_Move   : Boolean);
+      Cursor_Offset : Gint);
    --  Move the mark to the new location
 
    procedure Range_Formatting
@@ -2917,7 +2915,7 @@ package body Src_Editor_Buffer is
 
       L, C : Gint;
    begin
-      if Buffer.Do_Not_Move_Cursor then
+      if Buffer.Is_Cursor_Frozen then
          return;
       end if;
 
@@ -4717,7 +4715,7 @@ package body Src_Editor_Buffer is
    is
       Buffer_Line : Buffer_Line_Type;
    begin
-      if Buffer.Do_Not_Move_Cursor then
+      if Buffer.Is_Cursor_Frozen then
          return;
       end if;
 
@@ -6007,19 +6005,26 @@ package body Src_Editor_Buffer is
      (Buffer : access Source_Buffer_Record) return Boolean
    is
    begin
-      return Buffer.Do_Not_Move_Cursor;
+      return Buffer.Do_Not_Move_Cursor > 0;
    end Is_Cursor_Frozen;
 
    -------------------
    -- Freeze_Cursor --
    -------------------
 
-   procedure Freeze_Cursor
-     (Buffer : access Source_Buffer_Record; Value : Boolean)
-   is
+   procedure Freeze_Cursor (Buffer : access Source_Buffer_Record) is
    begin
-      Buffer.Do_Not_Move_Cursor := Value;
+      Buffer.Do_Not_Move_Cursor := Buffer.Do_Not_Move_Cursor + 1;
    end Freeze_Cursor;
+
+   -----------------
+   -- Thaw_Cursor --
+   -----------------
+
+   procedure Thaw_Cursor (Buffer : access Source_Buffer_Record) is
+   begin
+      Buffer.Do_Not_Move_Cursor := Buffer.Do_Not_Move_Cursor - 1;
+   end Thaw_Cursor;
 
    ------------------
    -- Add_Controls --
@@ -6336,14 +6341,11 @@ package body Src_Editor_Buffer is
      (Buffer        : Source_Buffer;
       Mark          : Gtk_Text_Mark;
       Cursor_Line   : out Gint;
-      Cursor_Offset : out Gint;
-      Do_Not_Move   : out Boolean)
+      Cursor_Offset : out Gint)
    is
       Cursor_Iter : Gtk_Text_Iter;
    begin
-      --  Save Do_Not_Move_Cursor value for later and force it to True
-      Do_Not_Move := Buffer.Do_Not_Move_Cursor;
-      Buffer.Do_Not_Move_Cursor := True;
+      Buffer.Freeze_Cursor;
       Get_Iter_At_Mark (Buffer, Cursor_Iter, Mark);
       Cursor_Line := Get_Line (Cursor_Iter);
       Cursor_Offset := Get_Line_Offset (Cursor_Iter);
@@ -6357,20 +6359,16 @@ package body Src_Editor_Buffer is
      (Buffer        : Source_Buffer;
       Mark          : Gtk_Text_Mark;
       Cursor_Line   : Gint;
-      Cursor_Offset : Gint;
-      Do_Not_Move   : Boolean)
+      Cursor_Offset : Gint)
    is
       Cursor_Move : Gint := Cursor_Offset;
       Result      : Boolean := True;
       Offset      : Gint := 0;
       Iter        : Gtk_Text_Iter;
    begin
-      --  Restore the previous value of Do_Not_Move_Cursor
-      Buffer.Do_Not_Move_Cursor := Do_Not_Move;
+      Buffer.Thaw_Cursor;
       --  Can't move the cursor if the mark was deleted
-      if not Get_Move_Cursor_When_Formatting (Buffer.Get_Language)
-        or else Mark.Get_Deleted
-      then
+      if Mark.Get_Deleted then
          return;
       end if;
 
@@ -6418,7 +6416,6 @@ package body Src_Editor_Buffer is
 
       Cursor_Line   : Gint;
       Cursor_Offset : Gint;
-      Do_Not_Move   : Boolean;
 
       From_Column : Visible_Column_Type;
       To_Column   : Visible_Column_Type;
@@ -6444,8 +6441,7 @@ package body Src_Editor_Buffer is
         (Buffer        => Buffer,
          Mark          => Mark,
          Cursor_Line   => Cursor_Line,
-         Cursor_Offset => Cursor_Offset,
-         Do_Not_Move   => Do_Not_Move);
+         Cursor_Offset => Cursor_Offset);
 
       if Src_Editor_Buffer.Line_Information.Lines_Are_Real (Buffer) then
          Get_Iter_Position (Buffer, From, From_Line, From_Column);
@@ -6516,8 +6512,7 @@ package body Src_Editor_Buffer is
         (Buffer        => Buffer,
          Mark          => Mark,
          Cursor_Line   => Cursor_Line,
-         Cursor_Offset => Cursor_Offset,
-         Do_Not_Move   => Do_Not_Move);
+         Cursor_Offset => Cursor_Offset);
    end Range_Formatting;
 
    ------------------------
@@ -6534,7 +6529,6 @@ package body Src_Editor_Buffer is
 
       Cursor_Line   : Gint;
       Cursor_Offset : Gint;
-      Do_Not_Move   : Boolean;
 
       Start_Line, End_Line     : Editable_Line_Type;
       Start_Column, End_Column : Visible_Column_Type;
@@ -6558,8 +6552,7 @@ package body Src_Editor_Buffer is
         (Buffer        => Buffer,
          Mark          => Mark,
          Cursor_Line   => Cursor_Line,
-         Cursor_Offset => Cursor_Offset,
-         Do_Not_Move   => Do_Not_Move);
+         Cursor_Offset => Cursor_Offset);
 
       Get_Iter_Position (Buffer, From, Start_Line, Start_Column);
       Get_Iter_Position (Buffer, To, End_Line, End_Column);
@@ -6578,8 +6571,7 @@ package body Src_Editor_Buffer is
         (Buffer        => Buffer,
          Mark          => Mark,
          Cursor_Line   => Cursor_Line,
-         Cursor_Offset => Cursor_Offset,
-         Do_Not_Move   => Do_Not_Move);
+         Cursor_Offset => Cursor_Offset);
    end On_Type_Formatting;
 
    -------------------
@@ -6698,8 +6690,6 @@ package body Src_Editor_Buffer is
       when E : others =>
          --  Stop propagation of exception, since doing nothing
          --  in this callback is harmless.
-
-         Buffer.Do_Not_Move_Cursor := False;
 
          Trace (Me, E);
          return False;

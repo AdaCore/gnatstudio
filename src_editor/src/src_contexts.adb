@@ -2410,7 +2410,7 @@ package body Src_Contexts is
       --  Replace starting from the end, so as to preserve lines and
       --  columns
 
-      Freeze_Cursor (Buffer, True);
+      Freeze_Cursor (Buffer);
 
       declare
          G : Group_Block := Buffer.New_Undo_Group;
@@ -2449,7 +2449,7 @@ package body Src_Contexts is
          Buffer.Get_Highlighter.Enable_Highlighting;
       end;
 
-      Freeze_Cursor (Buffer, False);
+      Thaw_Cursor (Buffer);
 
       Buffer.Get_Kernel.Get_Construct_Database.Update_Contents
         (Buffer.Get_Filename, Purge => Matches.Length > 50);

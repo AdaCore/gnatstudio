@@ -115,8 +115,6 @@ package body Src_Editor_Module is
 
    Range_Format_Name_Prefix   : constant String := "Editor-Range-Formatter-";
    On_Type_Format_Name_Prefix : constant String := "Editor-On-Type-Formatter-";
-   Move_Cursor_Format_Prefix  : constant String :=
-     "Editor-Move-Cursor-Formatter-";
    Limit_LSP_Format_Prefix    : constant String := "Limit-LSP-Formatting-";
    Disabled_Pref_Choice       : constant String := "Disabled";
 
@@ -702,13 +700,13 @@ package body Src_Editor_Module is
          --  Avoid moving the cursor around when reloading the file: we will
          --  replace the cursor at its original position right after anyway.
 
-         Freeze_Cursor (Buffer, True);
+         Freeze_Cursor (Buffer);
          Load_File
            (Buffer,
             Filename        => File,
             Lang_Autodetect => True,
             Success         => Success);
-         Freeze_Cursor (Buffer, False);
+         Thaw_Cursor (Buffer);
 
          --  Replace the cursor to its original position. Don't perform
          --  synchronous scrolling since the editor may need to be refreshed
@@ -2528,23 +2526,6 @@ package body Src_Editor_Module is
       return null;
    end Get_On_Type_Formatting_Provider;
 
-   -------------------------------------
-   -- Get_Move_Cursor_When_Formatting --
-   -------------------------------------
-
-   function Get_Move_Cursor_When_Formatting
-     (Lang : Language.Language_Access) return Boolean
-   is
-      Pref : constant Preference :=
-        Get_Lang_Formatter_Pref (Lang, Move_Cursor_Format_Prefix);
-   begin
-      if Pref /= null then
-         return Boolean_Preference (Pref).Get_Pref;
-      else
-         return True;
-      end if;
-   end Get_Move_Cursor_When_Formatting;
-
    ------------------------------
    -- Get_Limit_LSP_Formatting --
    ------------------------------
@@ -3207,14 +3188,6 @@ package body Src_Editor_Module is
                    & "which will be baselined in favor of the LSP formatter.",
                  Path            => Path,
                  Combo_Threshold => 1);
-            Ignore :=
-              Kernel.Get_Preferences.Create
-                (Name    => Move_Cursor_Format_Prefix & Suffix_Name,
-                 Default => True,
-                 Label   => "Move cursor when formatting",
-                 Doc     =>
-                   "Should the cursor move to the end of the formatting edit.",
-                 Path    => Path);
             Ignore :=
               Kernel.Get_Preferences.Create
                 (Name    => Limit_LSP_Format_Prefix & Suffix_Name,
