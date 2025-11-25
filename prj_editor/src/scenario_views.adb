@@ -39,7 +39,6 @@ with Glib.Values;
 with Gtk.Box;                  use Gtk.Box;
 with Gtk.Button;               use Gtk.Button;
 with Gtk.Combo_Box_Text;       use Gtk.Combo_Box_Text;
-with Gtk.Dialog;               use Gtk.Dialog;
 with Gtk.Editable;
 with Gtk.Enums;                use Gtk.Enums;
 with Gtk.Flow_Box_Child;       use Gtk.Flow_Box_Child;
@@ -68,7 +67,6 @@ with GPS.Kernel.Project;       use GPS.Kernel.Project;
 with GPS.Kernel;               use GPS.Kernel;
 with GUI_Utils;                use GUI_Utils;
 with Projects;                 use Projects;
-with Variable_Editors;         use Variable_Editors;
 with XML_Utils;                use XML_Utils;
 with Gtk.Tooltip;              use Gtk.Tooltip;
 
@@ -192,11 +190,6 @@ package body Scenario_Views is
    use Scenario_Views;
    subtype Scenario_View is Scenario_Views.View_Access;
 
-   function Selected_Variable
-     (View : access Scenario_View_Record'Class)
-      return Scenario_Variable;
-   --  Returns the currently selected variable
-
    type On_Refresh is new Simple_Hooks_Function with record
       View : access Scenario_View_Record'Class;
    end record;
@@ -244,18 +237,6 @@ package body Scenario_Views is
    package Variable_Combo_Callbacks is new Gtk.Handlers.User_Callback
      (Widget_Type => Variable_Combo_Box_Record,
       User_Type   => Scenario_View);
-
-   procedure Command_Add_Variable
-     (View : access Glib.Object.GObject_Record'Class);
-   --  Add a new variable
-
-   procedure Command_Delete_Variable
-     (View : access Glib.Object.GObject_Record'Class);
-   --  Delete selected variable
-
-   procedure Command_Edit_Variable
-     (View : access Glib.Object.GObject_Record'Class);
-   --  Edit the selected variable
 
    function Sort_Scenario_By_Name
      (C1 : not null access Gtk.Flow_Box_Child.Gtk_Flow_Box_Child_Record'Class;
@@ -590,33 +571,7 @@ package body Scenario_Views is
       Get_Style_Context (View.Scenar_View).Add_Class
         ("scenario-variables-view");
 
-      --  Create buttons: add/suppress/edit/apply/discard
-      Gtk_New_From_Icon_Name
-        (Button,
-         Icon_Name => "gps-add-symbolic",
-         Size      => Icon_Size_Small_Toolbar);
-      Button.Set_Tooltip_Text ("Add new variable");
-      Button.Set_Relief (Relief_None);
-      Button.On_Clicked (Command_Add_Variable'Access, Slot => View);
-      View.Scenar_View.Append_Button (Button);
-
-      Gtk_New_From_Icon_Name
-        (Button,
-         Icon_Name => "gps-remove-symbolic",
-         Size      => Icon_Size_Small_Toolbar);
-      Button.Set_Tooltip_Text ("Remove the variable");
-      Button.Set_Relief (Relief_None);
-      Button.On_Clicked (Command_Delete_Variable'Access, Slot => View);
-      View.Scenar_View.Append_Button (Button);
-
-      Gtk_New_From_Icon_Name
-        (Button,
-         Icon_Name => "gps-edit-symbolic",
-         Size      => Icon_Size_Small_Toolbar);
-      Button.Set_Tooltip_Text ("Edit the variable");
-      Button.Set_Relief (Relief_None);
-      Button.On_Clicked (Command_Edit_Variable'Access, Slot => View);
-      View.Scenar_View.Append_Button (Button);
+      --  Create buttons: apply/discard
 
       Gtk_New_From_Icon_Name
         (Button,
@@ -675,41 +630,6 @@ package body Scenario_Views is
       return Gtk_Widget (View.View);
    end Initialize;
 
-   -----------------------
-   -- Selected_Variable --
-   -----------------------
-
-   function Selected_Variable
-     (View : access Scenario_View_Record'Class)
-      return Scenario_Variable
-   is
-      List : constant Gtk.Widget.Widget_List.Glist
-        := View.Scenar_Group.Get_Selected_Children;
-   begin
-      if not Gtk.Widget.Widget_List."="
-        (List, Gtk.Widget.Widget_List.Null_List)
-      then
-         declare
-            --  Selection_Single was used to create the flow box,
-            --  the list is not empty so get the only elem and retrieve its
-            --  name.
-            Child_Flow_Box : constant Gtk_Flow_Box_Child
-              := Gtk_Flow_Box_Child (Gtk.Widget.Widget_List.Get_Data (List));
-            Variable_Name  : constant String
-              := Child_Flow_Box.Get_Name;
-            Scenar         : constant Scenario_Variable_Array
-              := Scenario_Variables (View.Kernel);
-         begin
-            for J in Scenar'Range loop
-               if External_Name (Scenar (J)) = Variable_Name then
-                  return Scenar (J);
-               end if;
-            end loop;
-         end;
-      end if;
-      return No_Variable;
-   end Selected_Variable;
-
    -------------
    -- Execute --
    -------------
@@ -744,7 +664,8 @@ package body Scenario_Views is
    -- Execute --
    -------------
 
-   overriding function Execute
+   overriding
+   function Execute
      (Self    : access Command_Revert_Modification;
       Context : Commands.Interactive.Interactive_Command_Context)
       return Commands.Command_Return_Type
@@ -763,107 +684,6 @@ package body Scenario_Views is
 
       return Commands.Success;
    end Execute;
-
-   --------------------------
-   -- Command_Add_Variable --
-   --------------------------
-
-   procedure Command_Add_Variable
-     (View : access Glib.Object.GObject_Record'Class)
-   is
-      V        : constant Scenario_View := Scenario_View (View);
-      Edit     : New_Var_Edit;
-   begin
-      Gtk_New (Edit, V.Kernel,
-               Title => -"Creating a new variable");
-      Show_All (Edit);
-
-      while Run (Edit) = Gtk_Response_OK
-        and then not Update_Variable (Edit)
-      loop
-         null;
-      end loop;
-
-      Destroy (Edit);
-   end Command_Add_Variable;
-
-   -----------------------------
-   -- Command_Delete_Variable --
-   -----------------------------
-
-   procedure Command_Delete_Variable
-     (View : access Glib.Object.GObject_Record'Class)
-   is
-      V        : constant Scenario_View := Scenario_View (View);
-      Var      : constant Scenario_Variable := Selected_Variable (V);
-      Message  : constant String :=
-        "Doing so will remove all the configurations associated with"
-        & ASCII.LF
-        & "that variable, except for the currently selected value";
-
-      Response : Message_Dialog_Buttons;
-      Success  : Boolean;
-   begin
-      if Var /= No_Variable then
-         Response := GPS_Message_Dialog
-           (Msg           => (-"Are you sure you want to remove the variable ")
-            & '"' & External_Name (Var)
-            & """?" & ASCII.LF & (-Message),
-            Dialog_Type   => Confirmation,
-            Buttons       => Button_OK or Button_Cancel,
-            Title         => -"Deleting a variable",
-            Justification => Justify_Left,
-            Parent        => Get_Current_Window (V.Kernel));
-
-         if Response = Button_OK then
-            Trace (Me, "Delete_Variable: " & External_Name (Var));
-
-            Get_Registry (V.Kernel).Tree.Delete_Scenario_Variable
-              (External_Name            => External_Name (Var),
-               Keep_Choice              => Value (Var),
-               Delete_Direct_References => False);
-
-            V.Kernel.Get_Project_Tree.Recompute_View;
-
-            Success := Save_Project
-              (Kernel    => V.Kernel,
-               Project   => V.Kernel.Get_Project_Tree.Root_Project,
-               Recursive => False);
-            Variable_Changed_Hook.Run (V.Kernel);
-
-            if not Success then
-               Trace
-                 (Me, "Failed to save the project after deleting "
-                  & "variable:" & External_Name (Var));
-            end if;
-         end if;
-      end if;
-   end Command_Delete_Variable;
-
-   ---------------------------
-   -- Command_Edit_Variable --
-   ---------------------------
-
-   procedure Command_Edit_Variable
-     (View : access Glib.Object.GObject_Record'Class)
-   is
-      V        : constant Scenario_View := Scenario_View (View);
-      Variable : constant Scenario_Variable := Selected_Variable (V);
-      Edit     : New_Var_Edit;
-   begin
-      if Variable /= No_Variable then
-         Gtk_New (Edit, V.Kernel, Variable, -"Editing a variable");
-         Show_All (Edit);
-         while Run (Edit) = Gtk_Response_OK
-           and then not Update_Variable (Edit)
-         loop
-            null;
-         end loop;
-         Destroy (Edit);
-      else
-         Trace (Me, "No selected variable");
-      end if;
-   end Command_Edit_Variable;
 
    ---------------------------
    -- Sort_Scenario_By_Name --

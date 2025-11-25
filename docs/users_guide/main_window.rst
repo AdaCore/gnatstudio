@@ -796,12 +796,6 @@ understand or modify your project:
 
   Opens the dependencies editor for the selected project.
 
-* :menuselection:`Project --> Add scenario variable`
-
-  Adds new scenario variables to the project (see
-  :ref:`Scenarios_And_Configuration_Variables`). However, you may find it
-  more convenient to use the :guilabel:`Scenario` view for this purpose.
-
 .. highlight:: python
 
 All the entries in the local settings menu can be manipulated via python
@@ -894,20 +888,12 @@ decreasing order of priority:
 * from the default set in the project file;
 * or else defaults to the first valid value for this variable
 
-Whenever you change the value of any variable, GNAT Studio automatically
-recomputes the project and dynamically changes the list of source files and
-directories to reflect the new status of the project. Starting a new
-compilation at that point uses the new switches, and all aspects of GNAT Studio
-are immediately changed to reflect the new setup.
-
-Create new scenario variables by selecting the :guilabel:`+` icon in the
-local toolbar of the :guilabel:`Scenario` view.  Edit the list of possible
-values for a variable by clicking on the :guilabel:`edit` button in that
-toolbar.  Delete a variable by clicking on the :guilabel:`-` button.
-
-Each of these changes impacts the actual project file (:file:`.gpr`), so
-you might not want to make them if you wrote the project file manually
-since the impact can be significant.
+When you modify a variable's value and click the :guilabel:`Apply` button
+(i.e: the check icon button), GNAT Studio automatically recomputes the project
+and updates the list of source files and directories to match the project's new
+configuration.
+Any subsequent compilation uses the new switches, and all GNAT Studio features
+immediately adapt to the updated setup.
 
 .. index:: build; build modes
 
