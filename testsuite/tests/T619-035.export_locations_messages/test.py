@@ -10,7 +10,7 @@ from gs_utils.internal.utils import *
 def test_driver():
     GPS.Preference("locations-auto-jump-to-first").set(False)
     buf = GPS.EditorBuffer.get(GPS.File("main.adb"))
-    yield wait_idle()
+    yield wait_tasks()
 
     buf.current_view().goto(buf.at(7, 21))
     GPS.execute_action("Find All References")

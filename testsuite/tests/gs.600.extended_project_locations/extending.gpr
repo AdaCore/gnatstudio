@@ -1,0 +1,8 @@
+project Extending extends "extended.gpr" is
+   
+   for Languages use ("Ada");
+   for Source_Dirs use ("extending");
+   for Object_Dir use "extending";
+   for Main use ("hello.adb");
+
+end Extending;
