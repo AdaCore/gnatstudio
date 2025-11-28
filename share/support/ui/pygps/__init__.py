@@ -456,7 +456,7 @@ try:
         GDK_F4 = Key.f4
         GDK_F5 = Key.f5
         GDK_DELETE = Key.delete
-        GDK_LEFT = Key.home
+        GDK_HOME = Key.home
 
     def send_key_event(
         keyval,
