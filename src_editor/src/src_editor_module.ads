@@ -335,10 +335,6 @@ package Src_Editor_Module is
       return Editor_Formatting_Provider_Access;
    --  Get the currently active OnType Formatter Provider for Lang
 
-   function Get_Move_Cursor_When_Formatting
-     (Lang : Language.Language_Access) return Boolean;
-   --  Return True if the cursor should be moved when formatting for Lang
-
    function Get_Limit_LSP_Formatting
      (Lang : Language.Language_Access) return Boolean;
    --  Return True if the language should limit LSP formatting for Lang

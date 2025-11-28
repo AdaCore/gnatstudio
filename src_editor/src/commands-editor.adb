@@ -136,7 +136,7 @@ package body Commands.Editor is
      (Command : access Editor_Command_Type) return Boolean
    is
    begin
-      return Command.Buffer.Avoid_Cursor_Move_On_Changes;
+      return Command.Buffer.Is_Cursor_Frozen;
    end Avoid_Move_Cursor;
 
    --------------
