@@ -1930,10 +1930,10 @@ package body GPS.Kernel.Preferences is
       LSP_Ada_Formatting_Fallback := Kernel.Get_Preferences.Create
         (Name    => "LSP-Ada-Formatting-Fallback",
          Default => True,
-         Label   => -"Ada fallback formatter",
-         Doc     => -"Enable fallback formatter in case the code is not"
-         & " syntactically correct.",
-         Path    => "Editor/Ada:Formatting");
+         Label   => -"Fallback to best-effort indenter ",
+         Doc     => -"Enable fallback indenter in case the code is not"
+         & " syntactically correct for the ALS.",
+         Path    => ":Ada Formatting");
 
       Use_External_Highlighting := External_Highlighting_Preferences.Create
         (Manager  => Manager,
