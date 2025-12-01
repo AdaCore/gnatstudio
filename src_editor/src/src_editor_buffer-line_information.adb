@@ -2736,9 +2736,9 @@ package body Src_Editor_Buffer.Line_Information is
         Line_Start + Number;
       Start_Loc            : constant Editor_Location'Class :=
         Buffer.Get_Editor_Buffer.New_Location_At_Line (Line_Start);
-      Cursor_Move          : constant Boolean := Buffer.Do_Not_Move_Cursor;
       Folded_Block_Info    : Folded_Block_Info_Type;
    begin
+      Buffer.Freeze_Cursor;
       Buffer.Modifying_Real_Lines := True;
 
       --  Hide lines
@@ -2778,7 +2778,7 @@ package body Src_Editor_Buffer.Line_Information is
 
       --  Re-enable moving the cursor, and reemit the cursor position
 
-      Buffer.Do_Not_Move_Cursor := Cursor_Move;
+      Buffer.Thaw_Cursor;
       Emit_New_Cursor_Position (Buffer);
 
       --  Emit the "source_lines_folded" hook
@@ -2799,7 +2799,6 @@ package body Src_Editor_Buffer.Line_Information is
       Line_Start           : Buffer_Line_Type;
       Line_End             : Buffer_Line_Type;
       Command              : Hide_Editable_Lines_Command;
-      Cursor_Move          : constant Boolean := Buffer.Do_Not_Move_Cursor;
       Nested_Folded_Blocks : Folded_Block_Info_Vectors.Vector;
 
       procedure Refold_Nested_Folded_Blocks;
@@ -2841,7 +2840,7 @@ package body Src_Editor_Buffer.Line_Information is
 
       --  Disable emitting new cursor positions while we hide lines
 
-      Buffer.Do_Not_Move_Cursor := True;
+      Buffer.Freeze_Cursor;
 
       --  Show lines
 
@@ -2907,7 +2906,7 @@ package body Src_Editor_Buffer.Line_Information is
 
       --  Re-enable moving the cursor, and reemit the cursor position
 
-      Buffer.Do_Not_Move_Cursor := Cursor_Move;
+      Buffer.Thaw_Cursor;
       Emit_New_Cursor_Position (Buffer);
 
       --  Emit the "source_lines_unfolded" hook
@@ -2927,7 +2926,6 @@ package body Src_Editor_Buffer.Line_Information is
       Ignore       : Command_Return_Type;
       pragma Unreferenced (Ignore);
 
-      Cursor_Move : constant Boolean := Buffer.Do_Not_Move_Cursor;
       Line        : Editable_Line_Type;
       Category    : constant Language_Category :=
         Buffer.Get_Current_Block.Block_Type;
@@ -2951,7 +2949,7 @@ package body Src_Editor_Buffer.Line_Information is
          return;
       end if;
 
-      Buffer.Do_Not_Move_Cursor := True;
+      Buffer.Freeze_Cursor;
 
       Line := 1;
 
@@ -2997,7 +2995,7 @@ package body Src_Editor_Buffer.Line_Information is
          Line := Line + 1;
       end loop;
 
-      Buffer.Do_Not_Move_Cursor := Cursor_Move;
+      Buffer.Thaw_Cursor;
       Emit_New_Cursor_Position (Buffer);
    end Fold_All;
 
@@ -3012,7 +3010,6 @@ package body Src_Editor_Buffer.Line_Information is
       Result       : Command_Return_Type;
       pragma Unreferenced (Result);
 
-      Cursor_Move        : constant Boolean := Buffer.Do_Not_Move_Cursor;
       Line               : Editable_Line_Type;
       Folded_Blocks_Copy : Folded_Block_Info_Vectors.Vector :=
         Buffer.Folded_Blocks.Copy;
@@ -3025,7 +3022,7 @@ package body Src_Editor_Buffer.Line_Information is
          return;
       end if;
 
-      Buffer.Do_Not_Move_Cursor := True;
+      Buffer.Freeze_Cursor;
 
       --  We use a copy here to avoid tampering checks, since unfolding a block
       --  removes it from the buffer's folded blocks' vector.
@@ -3041,7 +3038,7 @@ package body Src_Editor_Buffer.Line_Information is
 
       Folded_Blocks_Copy.Clear;
 
-      Buffer.Do_Not_Move_Cursor := Cursor_Move;
+      Buffer.Thaw_Cursor;
       Emit_New_Cursor_Position (Buffer);
 
       --  Scroll back to the cursor's position after unfolding all blocks

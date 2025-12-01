@@ -761,16 +761,18 @@ package Src_Editor_Buffer is
      (Buffer : access Source_Buffer_Record; Add : Boolean);
    --  Register or Unregister a view for the buffer
 
-   function Avoid_Cursor_Move_On_Changes
+   function Is_Cursor_Frozen
      (Buffer : access Source_Buffer_Record) return Boolean;
-   --  When this return true, moving the text cursor should be avoided when
-   --  doing e.g. insert and delete operations. This is particulary usefull
-   --  when batching changes, e.g. doing a replace all.
+   --  When this return true, the cursor can still be moved but no
+   --  notifcation will be emitted.
 
-   procedure Set_Avoid_Cursor_Move_On_Changes
-     (Buffer : access Source_Buffer_Record; Value : Boolean);
-   --  Set wether we should avoid to do cursor modifications in case of
-   --  additions / deletions.
+   procedure Freeze_Cursor (Buffer : access Source_Buffer_Record);
+   --  Freeze the cursor movements notifications. Must be paired
+   --  with a call to Thaw_Cursor.
+
+   procedure Thaw_Cursor (Buffer : access Source_Buffer_Record);
+   --  Allow cursor movements notifcation. Freeze_Cursor must be called
+   --  before.
 
    type Source_Buffer_Array is array (Natural range <>) of Source_Buffer;
    function Buffer_List
@@ -1666,10 +1668,10 @@ private
       --  When this is true, we'll avoid moving the cursor when performing
       --  changes (e.g. addition or deletions).
 
-      Do_Not_Move_Cursor : Boolean := False;
+      Do_Not_Move_Cursor : Integer := 0;
       --  Used to disable functions moving the cursor or emit the
       --  "cursor_position_changed" signal when we know we are going to
-      --  move the cursor a lot.
+      --  move the cursor a lot. When "> 0" the cursor is considered frozen.
 
       Queue : Command_Queue;
       --  Contains the queue of editor commands for this editor

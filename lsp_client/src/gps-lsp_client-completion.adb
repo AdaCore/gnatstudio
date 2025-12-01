@@ -930,7 +930,7 @@ package body GPS.LSP_Client.Completion is
       Request        : LSP_Completion_Request_Access := new
         LSP_Completion_Request'
           (GPS.LSP_Client.Requests.LSP_Request with
-           Kernel        => Resolver.Kernel,
+           Kernel        => Kernel,
            Resolver      => Resolver,
            File          => File,
            Result        => Initial_List,

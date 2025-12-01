@@ -695,11 +695,6 @@ package GPS.Editors is
       Column : Character_Offset_Type) return Visible_Column_Type is abstract;
    --  Returns the visible column corresponding to the character position.
 
-   procedure Set_Avoid_Cursor_Move_On_Changes
-     (This : Editor_Buffer; Value : Boolean) is abstract;
-   --  Set wether we should avoid to do cursor modifications in case of
-   --  additions / deletions.
-
    -------------------------
    --  Undo/Redo handling --
    -------------------------
@@ -1588,9 +1583,6 @@ private
    overriding function Has_Blocks_Information
      (This : Dummy_Editor_Buffer)
       return Boolean is (False);
-
-   overriding procedure Set_Avoid_Cursor_Move_On_Changes
-     (This : Dummy_Editor_Buffer; Value : Boolean) is null;
 
    Nil_Editor_Buffer : constant Editor_Buffer'Class :=
      Dummy_Editor_Buffer'(Controlled with null record);

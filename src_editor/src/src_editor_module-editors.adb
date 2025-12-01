@@ -89,20 +89,18 @@ package body Src_Editor_Module.Editors is
 
    type Src_Editor_Buffer_Access is access all Src_Editor_Buffer'Class;
 
-   ---------------------------------------
-   -- Editor_Cursor_Movement_Controller --
-   ---------------------------------------
+   ------------------------------
+   -- Frozen_Cursor_Controller --
+   ------------------------------
 
-   type Editor_Cursor_Movement_Controller
+   type Frozen_Cursor_Controller
      (Editor : Src_Editor_Buffer_Access) is
-     new Cursor_Movement_Controller with record
-      On_Initialize_Value : Boolean;
-   end record;
+     new Cursor_Movement_Controller with null record;
 
    overriding procedure Initialize
-     (Object : in out Editor_Cursor_Movement_Controller);
+     (Object : in out Frozen_Cursor_Controller);
    overriding procedure Finalize
-     (Object : in out Editor_Cursor_Movement_Controller);
+     (Object : in out Frozen_Cursor_Controller);
 
    type Src_Editor_Location is new GPS.Editors.Editor_Location with record
       Buffer : Src_Editor_Buffer;
@@ -624,9 +622,6 @@ package body Src_Editor_Module.Editors is
      (This   : Src_Editor_Buffer;
       Line   : Editable_Line_Type;
       Column : Character_Offset_Type) return Visible_Column_Type;
-
-   overriding procedure Set_Avoid_Cursor_Move_On_Changes
-     (This : Src_Editor_Buffer; Value : Boolean);
 
    function Convert is new Ada.Unchecked_Conversion
      (Buffer_Reference_Access, System.Address);
@@ -2468,18 +2463,6 @@ package body Src_Editor_Module.Editors is
          return 0;
       end if;
    end Expand_Tabs;
-
-   --------------------------------------
-   -- Set_Avoid_Cursor_Move_On_Changes --
-   --------------------------------------
-
-   overriding procedure Set_Avoid_Cursor_Move_On_Changes
-     (This : Src_Editor_Buffer; Value : Boolean) is
-   begin
-      if This.Contents.Buffer /= null then
-         This.Contents.Buffer.Set_Avoid_Cursor_Move_On_Changes (Value);
-      end if;
-   end Set_Avoid_Cursor_Move_On_Changes;
 
    ---------------------
    -- Selection_Start --
@@ -4716,7 +4699,7 @@ package body Src_Editor_Module.Editors is
       Pointer : constant Src_Editor_Buffer_Access :=
         This'Unchecked_Access;
    begin
-      return Dummy : Editor_Cursor_Movement_Controller (Pointer) do
+      return Dummy : Frozen_Cursor_Controller (Pointer) do
          null;
       end return;
    end Freeze_Cursor;
@@ -4726,12 +4709,11 @@ package body Src_Editor_Module.Editors is
    ----------------
 
    overriding procedure Initialize
-     (Object : in out Editor_Cursor_Movement_Controller) is
+     (Object : in out Frozen_Cursor_Controller) is
    begin
       if Object.Editor.Contents.Buffer /= null then
-         Object.On_Initialize_Value :=
-           Object.Editor.Contents.Buffer.Avoid_Cursor_Move_On_Changes;
-         Object.Editor.Contents.Buffer.Set_Avoid_Cursor_Move_On_Changes (True);
+         Object.Editor.Contents.Buffer.Freeze_Context;
+         Object.Editor.Contents.Buffer.Freeze_Cursor;
       end if;
    end Initialize;
 
@@ -4740,12 +4722,15 @@ package body Src_Editor_Module.Editors is
    --------------
 
    overriding procedure Finalize
-     (Object : in out Editor_Cursor_Movement_Controller) is
+     (Object : in out Frozen_Cursor_Controller) is
    begin
       Object.Editor.Unselect;
       if Object.Editor.Contents.Buffer /= null then
-         Object.Editor.Contents.Buffer.Set_Avoid_Cursor_Move_On_Changes
-           (Object.On_Initialize_Value);
+         Object.Editor.Contents.Buffer.Thaw_Cursor;
+         Object.Editor.Contents.Buffer.Thaw_Context;
+         --  The context was frozen so manually refresh it now to update
+         --  all the actions filters and the GUI
+         Object.Editor.Contents.Kernel.Refresh_Context;
       end if;
    end Finalize;
 
