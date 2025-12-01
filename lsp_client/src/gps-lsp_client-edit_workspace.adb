@@ -596,20 +596,25 @@ package body GPS.LSP_Client.Edit_Workspace is
             return True;
          else
             if Me.Is_Active then
-               Trace (Me,
-                      "From.line: " & Line_Number'Image (From.line)
-                      & ASCII.LF
-                      & "To.line: " & Line_Number'Image (To.line)
-                      & ASCII.LF
-                     );
+               Trace
+                 (Me,
+                  "From.line: "
+                  & Line_Number'Image (From.line)
+                  & ASCII.LF
+                  & "To.line: "
+                  & Line_Number'Image (To.line)
+                  & ASCII.LF);
             end if;
-            --  Check if Limit_Span is partially include in the textEdit
+            --  Check if Limit_Span is partially include in the textEdit.
             return
               (Command.Limit_Span.first.line <= From.line
                and then From.line <= Command.Limit_Span.last.line)
-              or else
-                (Command.Limit_Span.first.line <= To.line
-               and then To.line <= Command.Limit_Span.last.line);
+              or else (Command.Limit_Span.first.line <= To.line
+                       and then To.line <= Command.Limit_Span.last.line)
+              or else (From.line <= Command.Limit_Span.first.line
+                       and then Command.Limit_Span.first.line <= To.line)
+              or else (From.line <= Command.Limit_Span.last.line
+                       and then Command.Limit_Span.last.line <= To.line);
          end if;
       end Edit_Affect_Span;
 

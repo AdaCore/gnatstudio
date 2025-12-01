@@ -3191,7 +3191,7 @@ package body Src_Editor_Module is
             Ignore :=
               Kernel.Get_Preferences.Create
                 (Name    => Limit_LSP_Format_Prefix & Suffix_Name,
-                 Default => False,
+                 Default => True,
                  Label   => "Limit LSP formatting",
                  Doc     =>
                    "Limit LSP formatting request to the current selection: "
