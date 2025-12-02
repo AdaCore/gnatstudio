@@ -1,0 +1,5 @@
+project Config is
+
+    for Source_Dirs use ("conf");
+
+end Config;

@@ -1,0 +1,5 @@
+<?xml version="1.0"?>
+<Prefs>
+  <pref name="explorer-show-flat-view" >TRUE</pref>
+  <pref name="explorer-preserve-nodes-state" >TRUE</pref>
+</Prefs>
