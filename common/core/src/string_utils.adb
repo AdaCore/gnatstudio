@@ -1206,7 +1206,7 @@ package body String_Utils is
    function Is_Operator_Letter (Char : Wide_Wide_Character) return Boolean is
    begin
       case Char is
-         when '<' | '=' | '>' | '+' | '-' | '*' | '/' =>
+         when '<' | '=' | '>' | '+' | '-' | '*' | '/' | '&' =>
             return True;
 
          when others =>
