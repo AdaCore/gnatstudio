@@ -27,16 +27,6 @@ package body LAL.Switching_Tree_Providers is
       File    : GNATCOLL.VFS.Virtual_File)
       return Semantic_Tree'Class is
    begin
-      if (Self.Config (Use_LAL_In_Editor) and then Context = "EDIT") or else
-        (Self.Config (Use_LAL_In_Outline) and then Context = "OUTLINE") or else
-        (Self.Config (Use_LAL_In_Shell) and then Context = "SHELL") or else
-        (Self.Config (Use_LAL_In_Info) and then Context = "INFO") or else
-        (Self.Config (Use_LAL_In_COV) and then Context = "COV") or else
-        (Self.Config (Use_LAL_In_GNATHUB) and then Context = "GNATHUB")
-      then
-         return Self.Nested.Get_Tree_For_File (Context, File);
-      end if;
-
       return Self.Nested.Kernel.Default_Language_Tree_Provider.
         Get_Tree_For_File (Context, File);
    end Get_Tree_For_File;

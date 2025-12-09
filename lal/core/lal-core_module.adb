@@ -91,8 +91,6 @@ package body LAL.Core_Module is
 
    procedure Register_Module
      (Kernel   : access GPS.Core_Kernels.Core_Kernel_Record'Class;
-      Config   : Use_LAL_Configuration;
-      Legacy   : Language.Tree.Database.Tree_Language_Access;
       Charset  : String;
       Formater : LAL.Semantic_Trees.Profile_Formater_Factory;
       Result   : out LAL_Module_Id)
@@ -111,15 +109,9 @@ package body LAL.Core_Module is
          Class   => Editor_Buffer_Class,
          Handler => Get_Analysis_Unit_Shell'Access);
 
-      if Config (Use_LAL_In_Indent) then
-         Module.Lang.Initialize (Module.Kernel, Module.Context);
-         Kernel.Lang_Handler.Register_Language (Module.Lang'Access, Legacy);
-      end if;
-
       Kernel.Register_Tree_Provider
         (Language.Ada.Ada_Lang,
-         new Provider'(Config => Config,
-                       Nested => (Module.Kernel,
+         new Provider'(Nested => (Module.Kernel,
                                   Module.Context,
                                   Formater)));
 

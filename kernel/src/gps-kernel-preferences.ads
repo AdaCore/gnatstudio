@@ -132,7 +132,7 @@ package GPS.Kernel.Preferences is
      Default_Preferences.Enums.Generics (Toolbar_Icons_Size);
    --  The list of styles/sizes for GNAT Studio icons.
 
-   type External_Highlighting is (None, LSP, LAL);
+   type External_Highlighting is (None, LSP);
    package External_Highlighting_Preferences is new
      Default_Preferences.Enums.Generics (External_Highlighting);
    --  The list of external providers for highlighting.
@@ -359,14 +359,6 @@ package GPS.Kernel.Preferences is
    --  comments before (and fallback to the comments after), or the opposite
 
    --  Debugger preferences are registered in GVD.Preferences
-
-   -- LibAdaLang --
-   Use_LAL_In_Outline : Boolean_Preference;
-   Use_LAL_In_Shell   : Boolean_Preference;
-   Use_LAL_In_Info    : Boolean_Preference;
-   Use_LAL_In_GNATHUB : Boolean_Preference;
-   Use_LAL_In_COV     : Boolean_Preference;
-   Use_LAL_In_Indent  : Boolean_Preference;
 
    --  LSP
    LSP_Use_Snippets                : Boolean_Preference;
