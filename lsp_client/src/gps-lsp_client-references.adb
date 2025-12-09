@@ -268,7 +268,7 @@ package body GPS.LSP_Client.References is
          return
            VSS.Strings.Conversions.To_Virtual_String
              ("Local references for "
-              & Entity
+              & Escape_Text (Entity)
               & " ("  & Local_File.Display_Base_Name
               & ":" & String_Utils.Image (Line) & ") " & "in "
               & (Local_File.Display_Base_Name));
@@ -276,7 +276,8 @@ package body GPS.LSP_Client.References is
       else
          return
            VSS.Strings.Conversions.To_Virtual_String
-             ("References for " & Entity
+             ("References for "
+              & Escape_Text (Entity)
               & " (" & Local_File.Display_Base_Name
               & ":" & String_Utils.Image (Line) & ")");
       end if;
