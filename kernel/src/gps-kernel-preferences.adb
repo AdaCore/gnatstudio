@@ -1890,13 +1890,16 @@ package body GPS.Kernel.Preferences is
          & " syntactically correct for the ALS.",
          Path    => ":Ada Formatting");
 
-      Use_External_Highlighting := External_Highlighting_Preferences.Create
-        (Manager  => Manager,
-         Path     => "LSP:Highlight",
-         Name     => "use-external-highlighting",
-         Label    => -"Use LAL/LSP to highlight",
-         Doc      => -("Enable usage of libadalang or LSP to highlight code."),
-         Default  => None);
+      LSP_Semantic_Highlighting :=
+        Manager.Create
+          (Path    => "LSP:Highlighting",
+           Name    => "LSP-Semantic-Highlighting",
+           Label   => -"Semantic highlighting",
+           Doc     =>
+             -("Controls whether semantic highlighting is shown for the "
+               & "languages that support it through LSP. "
+               & "If disabled, only the syntax highlighting is used."),
+           Default => False);
 
       LSP_Diagnostics_Display := LSP_Diagnostics_Display_Policy_Prefs.Create
         (Manager  => Kernel.Get_Preferences,

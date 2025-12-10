@@ -3495,7 +3495,7 @@ package body Src_Editor_Buffer is
       pragma Unreferenced (Kernel, Pref);
       B                 : constant Source_Buffer := Self.Buffer;
       Prev              : Boolean;
-      Prev_Highlighting : GPS.Kernel.Preferences.External_Highlighting;
+      Has_Semantic_Highlighting : Boolean;
       Prev_Folding      : Folding_Preferences_Values;
 
    begin
@@ -3510,9 +3510,9 @@ package body Src_Editor_Buffer is
          Register_Edit_Timeout (B);
       end if;
 
-      Prev_Highlighting := B.LSP_Highlighting;
-      B.LSP_Highlighting := Use_External_Highlighting.Get_Pref;
-      if Prev_Highlighting /= B.LSP_Highlighting then
+      Has_Semantic_Highlighting := B.Use_Semantic_Highlighting;
+      B.Use_Semantic_Highlighting := LSP_Semantic_Highlighting.Get_Pref;
+      if Has_Semantic_Highlighting /= B.Use_Semantic_Highlighting then
          Register_Edit_Timeout (B);
       end if;
 
@@ -8411,7 +8411,7 @@ package body Src_Editor_Buffer is
       Self.Use_Highlighting_Hook :=
         Self.Buffer.Lang /= null
           and then Self.Buffer.Lang.Get_Name = "Ada"
-          and then Use_External_Highlighting.Get_Pref /= None;
+          and then LSP_Semantic_Highlighting.Get_Pref;
 
       if Prev /= Self.Use_Highlighting_Hook
         and then Prev

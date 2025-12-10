@@ -132,11 +132,6 @@ package GPS.Kernel.Preferences is
      Default_Preferences.Enums.Generics (Toolbar_Icons_Size);
    --  The list of styles/sizes for GNAT Studio icons.
 
-   type External_Highlighting is (None, LSP);
-   package External_Highlighting_Preferences is new
-     Default_Preferences.Enums.Generics (External_Highlighting);
-   --  The list of external providers for highlighting.
-
    package Indentation_Kind_Preferences is new
      Default_Preferences.Enums.Generics (Language.Indentation_Kind);
 
@@ -380,7 +375,7 @@ package GPS.Kernel.Preferences is
    LSP_Ada_On_Type_Formatting : Default_Preferences.Enums.Choice_Preference;
 
    -- LSP semantic styles --
-   Use_External_Highlighting : External_Highlighting_Preferences.Preference;
+   LSP_Semantic_Highlighting : Boolean_Preference;
 
    LSP_Namespace_Style       : Variant_Preference;
    LSP_Interface_Style       : Variant_Preference;
