@@ -2163,13 +2163,13 @@ class Console(GUI):
            import re
 
            def open_editor(text):
-              matched = re.match(r"([\w.-]+):(\d+)", text)
+              matched = re.match(r"([\\w.-]+):(\\d+)", text)
               buffer = GPS.EditorBuffer.get(GPS.File (matched.group(1)))
               buffer.current_view().goto(
                  buffer.at(int(matched.group(2)), 1))
 
            console = GPS.Console("myconsole")
-           console.create_link(r"(([\w.-]+):(\d+))", open_editor)
+           console.create_link(r"(([\\w.-]+):(\\d+))", open_editor)
            console.write_with_links("a file.adb:12 location in a file")
 
         """
@@ -4588,7 +4588,7 @@ class EditorHighlighter(object):
            #  this URL middle-clicking will call "wget" to get the
            #  source of this URL and open the output in a new editor
 
-           h=GPS.EditorHighlighter ("http(s)?://[^\s:,]*", view_html,
+           h=GPS.EditorHighlighter ("http(s)?://[^\\s:,]*", view_html,
                                     0, wget_url)
 
            # Remove the highlighter
@@ -7386,7 +7386,7 @@ class MDI(object):
         Displays a modal file selector. The user selected file is returned,
         or a file with an empty name if :guilabel:`Cancel` is pressed.
 
-        A file filter can be defined (such as "\*.ads") to show only a
+        A file filter can be defined (such as "\\*.ads") to show only a
         category of files.
 
         A base directory can be specified in order to start the dialog from it.
@@ -11128,7 +11128,7 @@ class XMLViewer(object):
 
             def parser(node_name, attrs, value):
                attr = dict()
-               for a in re.findall('''(\\w+)=['"](.*?)['"]\B''', attrs):
+               for a in re.findall(r'''(\\w+)=['"](.*?)['"]\\B''', attrs):
                   attr[a[0]] = a[1]
 
                if node_name == "project":
