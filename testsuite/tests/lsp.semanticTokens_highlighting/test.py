@@ -1,6 +1,6 @@
 """
 Check that textDocument/semanticTokens works correctly.
-Also that use-external-highlighting preference works.
+Also that the 'LSP-Semantic-Highlighting' preference works.
 """
 
 import GPS
@@ -67,7 +67,7 @@ def test_driver():
     editor_view = buf.current_view()
     yield wait_idle()
 
-    GPS.Preference("use-external-highlighting").set("LSP")
+    GPS.Preference("LSP-Semantic-Highlighting").set(True)
     yield wait_tasks()
     buf = GPS.EditorBuffer.get(GPS.File("foo.adb"))
     editor_view = buf.current_view()
@@ -79,7 +79,7 @@ def test_driver():
 
     gps_assert(tags_list, expected_tags, "The highlighting is not correct")
 
-    GPS.Preference("use-external-highlighting").set("NONE")
+    GPS.Preference("LSP-Semantic-Highlighting").set(False)
     yield hook("clear_highlighting")
     yield wait_idle()
 

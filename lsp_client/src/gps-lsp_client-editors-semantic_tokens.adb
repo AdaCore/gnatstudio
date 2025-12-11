@@ -371,7 +371,7 @@ package body GPS.LSP_Client.Editors.Semantic_Tokens is
    is
       use GPS.Kernel.Preferences;
    begin
-      if Use_External_Highlighting.Get_Pref = GPS.Kernel.Preferences.LSP then
+      if LSP_Semantic_Highlighting.Get_Pref then
          if not Send_Request (Kernel, (File, 0, 0)) then
             Store_Request ((File, 0, 0));
          end if;
@@ -393,7 +393,7 @@ package body GPS.LSP_Client.Editors.Semantic_Tokens is
       use GPS.Kernel.Preferences;
 
    begin
-      if Use_External_Highlighting.Get_Pref = GPS.Kernel.Preferences.LSP then
+      if LSP_Semantic_Highlighting.Get_Pref then
          if not Send_Request (Kernel, (File, From_Line, To_Line)) then
             Store_Request ((File, From_Line, To_Line));
          end if;

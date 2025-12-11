@@ -232,9 +232,7 @@ package body LAL.Module is
    ---------------------
 
    procedure Register_Module
-     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
-      Config : Use_LAL_Configuration;
-      Legacy : Language.Tree.Database.Tree_Language_Access)
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
    is
       Default_Charset : constant String := GPS.Kernel.Charsets.Get_File_Charset
         (GNATCOLL.VFS.No_File);
@@ -242,17 +240,10 @@ package body LAL.Module is
       Module := new LAL_UI_Module_Id_Record;
 
       LAL.Core_Module.Register_Module
-        (Kernel     => Kernel,
-         Config     => Config,
-         Legacy     => Legacy,
-         Charset    => Default_Charset,
-         Formater   => GPS.Kernel.Xref.Get_HTML_Profile_Formater'Access,
-         Result     => Module.Core);
-
-      if Config (Use_LAL_In_Highlight) then
-         Highlight_Range_Hook.Add (Module.Hook'Access);
-         File_Edited_Hook.Add (new On_File_Edited);
-      end if;
+        (Kernel   => Kernel,
+         Charset  => Default_Charset,
+         Formater => GPS.Kernel.Xref.Get_HTML_Profile_Formater'Access,
+         Result   => Module.Core);
    end Register_Module;
 
    -------------------------

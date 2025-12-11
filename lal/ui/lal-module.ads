@@ -17,15 +17,12 @@
 --  Main entry point for libAdaLang integration module
 
 with GPS.Kernel;
-with Language.Tree.Database;
 with LAL.Core_Module;
 
 package LAL.Module is
 
    procedure Register_Module
-     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
-      Config : Use_LAL_Configuration;
-      Legacy : Language.Tree.Database.Tree_Language_Access);
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class);
    --  Register module
 
    function Get_LAL_Core_Module return LAL.Core_Module.LAL_Module_Id;

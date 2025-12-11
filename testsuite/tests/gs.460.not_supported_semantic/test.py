@@ -1,6 +1,6 @@
 """
 This checks that opening the project file does not
-causes an infinite loop, due to unsupported 
+causes an infinite loop, due to unsupported
 textDocument/semanticTokens/full request by the ALS
 server for GPR files.
 """
@@ -11,7 +11,7 @@ from gs_utils.internal.utils import *
 
 @run_test_driver
 def run_test():
-    GPS.Preference("use-external-highlighting").set("LSP")
+    GPS.Preference("LSP-Semantic-Highlighting").set(True)
     yield wait_tasks()
     # Open the project file
     p = GPS.EditorBuffer.get(GPS.File("default.gpr"))
