@@ -1921,8 +1921,6 @@ package body Project_Explorers is
             Found    : Boolean;
 
          begin
-            Expand (T.Tree.Model.Get_Iter_First);
-
             Get_Property
               (Property,
                Get_Project (T.Kernel),
@@ -1933,6 +1931,11 @@ package body Project_Explorers is
                for Item of Property.Paths loop
                   Expand (T.Tree.Model.Get_Iter_From_String (Item));
                end loop;
+
+            elsif not Show_Flat_View.Get_Pref
+              or else not Preserve_Nodes_State.Get_Pref
+            then
+               Expand (T.Tree.Model.Get_Iter_First);
             end if;
          end;
       end if;
