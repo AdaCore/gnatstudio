@@ -1,0 +1,7 @@
+project Extended is
+   
+   for Languages use ("Ada");
+   for Source_Dirs use ("extended");
+   for Object_Dir use "extended";
+
+end Extended;

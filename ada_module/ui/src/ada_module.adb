@@ -268,9 +268,7 @@ package body Ada_Module is
       Page                    : Preferences_Page;
       Group                   : Preferences_Group;
    begin
-      if not Use_LAL_In_Indent.Get_Pref then
-         Register_Language (Handler, Ada_Lang, Ada_Tree_Lang);
-      end if;
+      Register_Language (Handler, Ada_Lang, Ada_Tree_Lang);
 
       --  Register some general Ada-related filters so that they can be used
       --  from other GNAT Studio parts.

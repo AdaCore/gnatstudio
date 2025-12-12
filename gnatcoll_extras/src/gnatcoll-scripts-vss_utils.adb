@@ -41,7 +41,7 @@ package body GNATCOLL.Scripts.VSS_Utils is
    function Nth_Arg
      (Data    : GNATCOLL.Scripts.Python.Python_Callback_Data'Class;
       N       : Positive;
-      Success : aliased out Boolean) return VSS.Strings.Virtual_String;
+      Success : out Boolean) return VSS.Strings.Virtual_String;
 
    procedure Initialize
      (Text   : in out VSS.Implementation.UTF8_Strings.UTF8_String_Data;
@@ -102,7 +102,7 @@ package body GNATCOLL.Scripts.VSS_Utils is
 
    function Nth_Arg
      (Data : GNATCOLL.Scripts.Python.Python_Callback_Data'Class;
-      N    : Positive; Success : aliased out Boolean)
+      N    : Positive; Success : out Boolean)
       return VSS.Strings.Virtual_String
    is
       Item : GNATCOLL.Python.PyObject;
@@ -136,7 +136,7 @@ package body GNATCOLL.Scripts.VSS_Utils is
      (Data : Callback_Data'Class;
       N    : Positive) return VSS.Strings.Virtual_String
    is
-      Success : aliased Boolean;
+      Success : Boolean;
 
    begin
       if Data in GNATCOLL.Scripts.Python.Python_Callback_Data'Class then

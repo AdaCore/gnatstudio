@@ -21,7 +21,6 @@ with Libadalang.Analysis;
 with LAL.Unit_Providers;
 with LAL.Ada_Languages;
 with LAL.Semantic_Trees;
-with Language.Tree.Database;
 
 package LAL.Core_Module is
 
@@ -47,8 +46,6 @@ package LAL.Core_Module is
 
    procedure Register_Module
      (Kernel   : access GPS.Core_Kernels.Core_Kernel_Record'Class;
-      Config   : Use_LAL_Configuration;
-      Legacy   : Language.Tree.Database.Tree_Language_Access;
       Charset  : String;
       Formater : LAL.Semantic_Trees.Profile_Formater_Factory;
       Result   : out LAL_Module_Id);
