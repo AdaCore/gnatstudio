@@ -23,17 +23,19 @@ def test_driver():
     # in my_print.adb
     debug = GPS.Debugger.get()
     debug.send("break fwrite")
-    yield wait_until_not_busy(debug)
+    yield wait_DAP_server("setBreakpoints")
     yield wait_idle()
 
     # Send a 'start' command to load the symbols table, making the DAP
     # GDB server to recognize the breakpoint on the 'frwite' function.
     debug.send("start")
     yield wait_DAP_server("stackTrace")
+    yield wait_idle()
 
     # Continue the execution until we reach the breakpoint
     debug.send("run")
     yield wait_DAP_server("stackTrace")
+    yield wait_idle()
 
     # We have reached the breakpoint, but it does not refer to an existing
     # file in the disk: verify that the frame for my_print.adb gets selected.
