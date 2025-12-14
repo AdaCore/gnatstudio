@@ -11,9 +11,11 @@
     <persistent-history>False</persistent-history>
   </target-model>
 
-  <target model="gnatfuzz for SPARK" name="Fuzz CE" category="GNATprove">
+  <target model="gnatfuzz for SPARK"
+          name="(Step 2/2) Run GNATFuzz to find counterexamples"
+          category="GNATprove">
     <in-menu>FALSE</in-menu>
-    <iconname>Fuzz counterexamples</iconname>
+    <iconname>gps-build-all-symbolic</iconname>
     <launch-mode>MANUALLY_WITH_DIALOG</launch-mode>
     <read-only>TRUE</read-only>
     <command-line>

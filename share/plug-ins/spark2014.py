@@ -12,13 +12,20 @@ import os.path
 import tool_output
 import json
 import re
-from lal_utils import get_enclosing_subprogram
 from functools import reduce
 
 import libadalang as lal
 
-import testgen
-import test2prove
+from gnatprove import (
+    MESSAGES_CATEGORY,
+    current_subprogram,
+    logger,
+    print_error,
+    spec_location,
+)
+
+import spark_testgen
+import spark_test2prove
 
 # We create the actions and menus in XML instead of python to share the same
 # source for GPS and GNATbench (which only understands the XML input for now).
@@ -27,8 +34,8 @@ import test2prove
 # because GPS.contextual_context does not work when clicking on the right of a
 # line of code (see OB05-033).
 
-# This plugin now depends on gnatprove_menus.xml and gnatprove_file.xml which
-# are located in spark2014/.
+# This plugin depends additionally on the XML files (gnatprove.xml,
+# gnatprove_menus.xml and others) located in the spark2014 subfolder.
 
 # Path to this executable
 cur_exec_path = os.path.dirname(os.path.abspath(__file__))
@@ -36,8 +43,12 @@ cur_exec_path = os.path.dirname(os.path.abspath(__file__))
 # The xml information are under spark2014
 spark2014_dir = os.path.join(cur_exec_path, "spark2014")
 gnatprove_menus_file = os.path.join(spark2014_dir, "gnatprove_menus.xml")
-gnatprove_menus_with_gnattest_file = os.path.join(spark2014_dir, "gnatprove_menus_with_gnattest.xml")
-gnatprove_menus_with_gnatfuzz_file = os.path.join(spark2014_dir, "gnatprove_menus_with_gnatfuzz.xml")
+gnatprove_menus_with_gnattest_file = os.path.join(
+    spark2014_dir, "gnatprove_menus_with_gnattest.xml"
+)
+gnatprove_menus_with_gnatfuzz_file = os.path.join(
+    spark2014_dir, "gnatprove_menus_with_gnatfuzz.xml"
+)
 gnatprove_file = os.path.join(spark2014_dir, "gnatprove.xml")
 gnattest_file = os.path.join(spark2014_dir, "gnattest.xml")
 gnatfuzz_file = os.path.join(spark2014_dir, "gnatfuzz.xml")
@@ -72,7 +83,6 @@ with open(gnatfuzz_file, "r") as input_file4:
 # constants that are required by the plugin
 
 toolname = "gnatprove"
-messages_category = "GNATprove"
 obj_subdir_name = toolname
 report_file_name = toolname + ".out"
 prefix = "SPARK"
@@ -105,18 +115,9 @@ advanced_prove_line_loc = "Prove Line Location"
 advanced_prove_check = "Prove Check"
 advanced_prove_region = "Prove Selected Region"
 
-# Name of the messages console
-MESSAGES = "Messages"
-
 # Check for external tools
 gnattest = os_utils.locate_exec_on_path("gnattest")
 gnatfuzz = os_utils.locate_exec_on_path("gnatfuzz")
-
-
-def print_error(message):
-    """print errors on the messages console"""
-    console = GPS.Console(MESSAGES)
-    console.write(message + "\n", mode="error")
 
 
 # getters for proof target depending on user profile
@@ -596,7 +597,7 @@ class GNATprove_Parser(tool_output.OutputParser):
 
         # Create a GPS.AnalysisTool instance to collect the messages that will
         # be shown in the report.
-        self.analysis_tool = GPS.AnalysisTool(messages_category)
+        self.analysis_tool = GPS.AnalysisTool(MESSAGES_CATEGORY)
 
         # create rules for all the messages not related with SPARK itself
         # (e.g: GNAT warnings etc.).
@@ -784,7 +785,7 @@ class GNATprove_Parser(tool_output.OutputParser):
 
         # Check for codefixes in non-spark messages, if any
         if self.non_spark_output:
-            GPS.Codefix.parse(messages_category, self.non_spark_output)
+            GPS.Codefix.parse(MESSAGES_CATEGORY, self.non_spark_output)
             self.non_spark_output = ""
 
     def split_in_secondary_messages(self, fn, line, column, output, importance, extra):
@@ -813,7 +814,7 @@ class GNATprove_Parser(tool_output.OutputParser):
 
         message_text = list_secondaries[0]
         msg = self.analysis_tool.create_message(
-            messages_category,
+            MESSAGES_CATEGORY,
             fn,
             line,
             column,
@@ -827,7 +828,7 @@ class GNATprove_Parser(tool_output.OutputParser):
             elif text.startswith(" (") or text.startswith(" ["):
                 text = text[2:-1]
             GPS.Locations.add(
-                messages_category,
+                MESSAGES_CATEGORY,
                 fn,
                 line,
                 column,
@@ -863,7 +864,7 @@ class GNATprove_Parser(tool_output.OutputParser):
         # Remove the previous GNATprove messages first
         if not self.previous_messages_removed:
             GPS.Locations.remove_category(
-                messages_category, GPS.Message.Flags.INVISIBLE
+                MESSAGES_CATEGORY, GPS.Message.Flags.INVISIBLE
             )
             self.previous_messages_removed = True
 
@@ -921,7 +922,7 @@ class GNATprove_Parser(tool_output.OutputParser):
                 else:
                     # Let the "location parser" handle non-spark messages
                     GPS.Locations.add(
-                        messages_category,
+                        MESSAGES_CATEGORY,
                         fn,
                         lineno,
                         column,
@@ -1043,64 +1044,44 @@ def on_prove_region(self):
     generic_on_analyze(target, args=args)
 
 
-def on_generate_executable_test(context, force=False, opt_args=[]):
+def on_generate_executable_test(context, force=False):
+    logger.log("on_generate_executable_test starting ...")
+
     msg = context._loc_msg
     vc_kind = get_vc_kind(msg)
-    subp = context.location()
-    spec = current_subprogram (context).p_previous_part_for_decl().gps_location()
 
-    package = subp.file().unit()
+    check_loc = context.location()
 
-    # TGen run through BuildTarget requires LIBRARY_TYPE to be static
-    library_type = os.getenv("LIBRARY_TYPE")
-    os.environ["LIBRARY_TYPE"] = "static"
+    spec_loc = spec_location(context)
+    if not spec_loc:
+        print_error("Unsupported context. Expecting a subprogram.")
+        return
 
-    testgen.run (str(spec), str(subp), vc_kind, package, force)
-
-    if library_type is None:
-        del os.environ["LIBRARY_TYPE"]
-    else:
-        os.environ["LIBRARY_TYPE"] = library_type
+    spark_testgen.run(str(spec_loc), str(check_loc), vc_kind, force)
 
 
-def on_generate_counter_example_with_gnattest(context, force=False, opt_args=[]):
-    msg = context._loc_msg
-    vc_kind = get_vc_kind(msg)
-    subp = context.location()
-    spec = current_subprogram (context).p_previous_part_for_decl().gps_location()
+def _generate_counter_example_with_gnattest(context, use_fuzzer, force):
 
-    package = subp.file().unit()
+    check_loc = context.location()
 
-    # TGen run through BuildTarget requires LIBRARY_TYPE to be static
-    library_type = os.getenv("LIBRARY_TYPE")
-    os.environ["LIBRARY_TYPE"] = "static"
- 
-    test2prove.run (str(spec), str(subp), vc_kind, package, False, force)
+    spec_loc = spec_location(context)
+    if not spec_loc:
+        print_error("Unsupported context. Expecting a subprogram.")
+        return
 
-    if library_type is None:
-        del os.environ["LIBRARY_TYPE"]
-    else:
-        os.environ["LIBRARY_TYPE"] = library_type
+    spark_test2prove.run(str(spec_loc), str(check_loc), use_fuzzer, force)
 
 
-def on_generate_counter_example_with_gnatfuzz(context, force=False, opt_args=[]):
-    msg = context._loc_msg
-    vc_kind = get_vc_kind(msg)
-    subp = context.location()
-    spec = current_subprogram (context).p_previous_part_for_decl().gps_location()
+def on_generate_counter_example_with_gnattest(context, force=False):
+    logger.log("on_generate_counter_example_with_gnattest starting ...")
 
-    package = subp.file().unit()
+    _generate_counter_example_with_gnattest(context, use_fuzzer=False, force=force)
 
-    # TGen run through BuildTarget requires LIBRARY_TYPE to be static
-    library_type = os.getenv("LIBRARY_TYPE")
-    os.environ["LIBRARY_TYPE"] = "static"
- 
-    test2prove.run (str(spec), str(subp), vc_kind, package, True, force)
 
-    if library_type is None:
-        del os.environ["LIBRARY_TYPE"]
-    else:
-        os.environ["LIBRARY_TYPE"] = library_type
+def on_generate_counter_example_with_gnatfuzz(context, force=False):
+    logger.log("on_generate_counter_example_with_gnatfuzz starting ...")
+
+    _generate_counter_example_with_gnattest(context, use_fuzzer=True, force=force)
 
 
 def on_show_report(self):
@@ -1138,18 +1119,6 @@ def mk_loc_string(sloc):
 
     locstring = os.path.basename(sloc.file().path) + ":" + str(sloc.line())
     return locstring
-
-
-def current_subprogram(self):
-    """Return the LAL node corresponding to the subprogram enclosing the
-    current context, or None"""
-    curloc = self.location()
-    buf = GPS.EditorBuffer.get(curloc.file(), open=False)
-    if not buf:
-        return False
-    unit = buf.get_analysis_unit()
-    node = unit.root.lookup(lal.Sloc(curloc.line(), curloc.column()))
-    return get_enclosing_subprogram(node)
 
 
 def build_limit_subp_string(self):
@@ -1319,7 +1288,7 @@ class GNATProve_Plugin:
                 process = GPS.Process("gnatfuzz --help")
                 help_msg = process.get_result()
                 GPS.parse_xml(
-                    xml_gnatfuzz.format(help="TODO: fix gnatfuzz output", output_parsers=OUTPUT_PARSERS)
+                    xml_gnatfuzz.format(help=help_msg, output_parsers=OUTPUT_PARSERS)
                 )
                 GPS.parse_xml(xml_gnatprove_menus_with_gnatfuzz % {"prefix": prefix})
 
@@ -1470,7 +1439,7 @@ def prove_check_context(context):
 
 def can_show_report():
     return (
-        len(GPS.Message.list(category=messages_category)) > 0
+        len(GPS.Message.list(category=MESSAGES_CATEGORY)) > 0
         and gnatprove_plug.output_parser is not None
     )
 
@@ -1577,4 +1546,3 @@ def load_example_gnatprove_by_example():
     example_root = os.path.join(get_example_root(), "gnatprove_by_example")
     os.environ["SPARKLIB_OBJECT_DIR"] = "."
     GPS.Project.load(os.path.join(example_root, "gnatprove_by_example.gpr"))
-    

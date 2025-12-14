@@ -1,29 +1,27 @@
 <?xml version="1.0"?>
   <GNATPROVE>
-    <filter name="Inside Subprogram Context" language="Ada" shell_lang="python"
-        shell_cmd="spark2014.inside_subp_context(GPS.current_context())" />
-    <filter name="Region Selected" language="Ada" shell_lang="python"
-        shell_cmd="spark2014.region_selected(GPS.current_context())" />
     <filter name="Not Source Editor" language="Ada" shell_lang="python"
-        shell_cmd="spark2014.not_triggered_from_source(GPS.current_context())" />
+        shell_cmd="spark2014.not_triggered_from_source(GPS.current_context())"/>
+    <filter name="Prove Check Context" language="Ada" shell_lang="python"
+        shell_cmd="spark2014.prove_check_context(GPS.current_context())"/>
 
     <action name="Generate Executable Test Action" category="GNATprove" output="none">
       <filter_and>
-        <filter id="Not Source Editor" />
-        <filter language="Ada" shell_lang="python" />
+        <filter id="Not Source Editor"/>
+        <filter id="Prove Check Context"/>
       </filter_and>
-       <shell
-         lang="python">spark2014.on_generate_executable_test(GPS.current_context())
-       </shell>
-    </action>
-    <action name="Generate Counterexamples" category="GNATprove" output="none">
+      <shell
+      lang="python">spark2014.on_generate_executable_test(GPS.current_context())
+    </shell>
+  </action>
+  <action name="Generate Counterexamples" category="GNATprove" output="none">
       <filter_and>
-        <filter id="Not Source Editor" />
-        <filter language="Ada" shell_lang="python" />
+        <filter id="Not Source Editor"/>
+        <filter id="Prove Check Context"/>
       </filter_and>
-       <shell
-         lang="python">spark2014.on_generate_counter_example_with_gnattest(GPS.current_context())
-       </shell>
+      <shell
+        lang="python">spark2014.on_generate_counter_example_with_gnattest(GPS.current_context())
+      </shell>
     </action>
 
     <contextual action="Generate Executable Test Action">
