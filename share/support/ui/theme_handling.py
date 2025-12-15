@@ -108,7 +108,7 @@ rgb_prefs = {
     "diff_side_remove": "Diff-Side-Remove-Color",
     "diff_side_append": "Diff-Side-Append-Color",
     "bookmarks": "Src-Editor-Bookmarks",
-    "semantic_readonly": "LSP-Semantic-Readonly",
+    "semantic_readonly": "Src-Editor-LSP-Semantic-Readonly",
 }
 # These keys are interpreted as rgb preferences
 # Keys: our internal easy-to-remember key; values: current names of GPS prefs
@@ -392,7 +392,7 @@ common_dark = {
     "modifiers": ("DEFAULT", Color("#569cd6"), transparent),
     "operators": ("DEFAULT", Color("#C586C0"), transparent),
     "deprecateds": ("DEFAULT", Color("#ff0000"), transparent),
-    "semantic_readonly": Rgba(62, 62, 62),
+    "semantic_readonly": Rgba(70, 70, 70, 178),
 }
 
 
@@ -573,14 +573,16 @@ class Theme(object):
             val = self.d[key]
             process_dict[key] = "<span {} {} {}>".format(
                 'color="{}"'.format(val[1].to_hex6_string()) if val[1].a != 0.0 else "",
-                'background="{}"'.format(val[2].to_hex6_string())
-                if val[2].a != 0.0
-                else "",
-                'font-weight="BOLD"'
-                if "BOLD" in val[0]
-                else "" + ' font-style="ITALIC"'
-                if "ITALIC" in val[0]
-                else "",
+                (
+                    'background="{}"'.format(val[2].to_hex6_string())
+                    if val[2].a != 0.0
+                    else ""
+                ),
+                (
+                    'font-weight="BOLD"'
+                    if "BOLD" in val[0]
+                    else "" + ' font-style="ITALIC"' if "ITALIC" in val[0] else ""
+                ),
             )
 
         label.set_markup(label_markup.format(**process_dict))
