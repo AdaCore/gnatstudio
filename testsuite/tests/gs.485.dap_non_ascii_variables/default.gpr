@@ -1,0 +1,19 @@
+project Default is
+
+   for Source_Dirs use (".");
+   for Main use ("main.adb");
+
+   package Builder is
+      for Switches ("ada") use ("-g");
+   end Builder;
+
+   package Compiler is
+      for Switches ("ada") use ("-g", "-gnatW8");
+   end Compiler;
+
+   package Linker is
+      for Switches ("ada") use ("-g");
+   end Linker;
+
+end Default;
+
