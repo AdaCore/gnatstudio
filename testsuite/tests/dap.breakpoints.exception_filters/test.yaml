@@ -1,0 +1,3 @@
+title: 'dap.breakpoints.exception_filters'
+skip:
+    - [SKIP, 'env.valgrind_cmd != []']

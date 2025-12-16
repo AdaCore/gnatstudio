@@ -83,10 +83,10 @@ package DAP.Clients.Breakpoint_Managers is
    --  Add breakpoint for the subprogram
 
    procedure Break_Exception
-     (Self      : not null access Breakpoint_Manager_Type;
-      Name      : String;
-      Unhandled : Boolean := False;
-      Temporary : Boolean := False);
+     (Self           : not null access Breakpoint_Manager_Type;
+      Name           : String;
+      Unhandled_Only : Boolean := False;
+      Temporary      : Boolean := False);
    --  Add breakpoint for the exception
 
    procedure Break_Address

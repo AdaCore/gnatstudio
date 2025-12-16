@@ -1881,7 +1881,7 @@ package body DAP.Clients is
             if Matched.Has_Match then
                Self.Breakpoints.Break_Exception
                  (Name      => To_UTF8 (Matched.Captured (2)),
-                  Unhandled => False,
+                  Unhandled_Only => False,
                   Temporary => Matched.Captured (1) = "tcatch");
 
                VSS_Cmd.Clear;

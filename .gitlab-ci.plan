@@ -6,6 +6,8 @@ def build_(qualifier={}):
 def test_(qualifier={}):
     anod_install("gps", qualifier={**qualifier, "coverage": True})
     anod_install("gps_testsuite_drivers", qualifier={**qualifier, "coverage": True})
+    # Anod install GDB separately to avoid GDB coming from 'gnatall' while testing
+    anod_install("gdb")
     anod_test("gps", qualifier={**qualifier, "coverage": True, "gdb-head": False})
 
 def collect_coverage_(qualifier={}):

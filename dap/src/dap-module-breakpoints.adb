@@ -632,7 +632,7 @@ package body DAP.Module.Breakpoints is
             when On_Exception =>
                Value.Set_Field
                  ("exception", To_UTF_8_String (B.Exception_Name));
-               Value.Set_Field ("unhandled", B.Unhandled);
+               Value.Set_Field ("unhandled-only", B.Unhandled_Only);
          end case;
 
          Append (Values, Value);
@@ -746,7 +746,7 @@ package body DAP.Module.Breakpoints is
                      Enabled         => True,
                      Exception_Name  => To_Virtual_String
                        (Item.Get ("exception")),
-                     Unhandled       => Item.Get ("unhandled"),
+                     Unhandled_Only  => Item.Get ("unhandled-only"),
                      Ignore          => Item.Get ("ignore"),
                      Condition       => Condition,
                      Commands        => Commands,
@@ -935,18 +935,19 @@ package body DAP.Module.Breakpoints is
    ---------------------
 
    procedure Break_Exception
-     (Kernel    : not null access Kernel_Handle_Record'Class;
-      Name      : String;
-      Unhandled : Boolean := False;
-      Temporary : Boolean := False)
+     (Kernel         : not null access Kernel_Handle_Record'Class;
+      Name           : String;
+      Unhandled_Only : Boolean := False;
+      Temporary      : Boolean := False)
    is
-      B : Breakpoint_Data := Breakpoint_Data'
-        (Kind           => On_Exception,
-         Num            => No_Breakpoint,
-         Exception_Name => To_Virtual_String (Name),
-         Unhandled      => Unhandled,
-         Disposition    => (if Temporary then Delete else Keep),
-         others         => <>);
+      B : Breakpoint_Data :=
+        Breakpoint_Data'
+          (Kind           => On_Exception,
+           Num            => No_Breakpoint,
+           Exception_Name => To_Virtual_String (Name),
+           Unhandled_Only => Unhandled_Only,
+           Disposition    => (if Temporary then Delete else Keep),
+           others         => <>);
    begin
       Break (Kernel, B);
    end Break_Exception;
@@ -956,16 +957,17 @@ package body DAP.Module.Breakpoints is
    -----------------------------
 
    procedure Break_On_All_Exceptions
-     (Kernel    : not null access Kernel_Handle_Record'Class;
-      Unhandled : Boolean := False)
+     (Kernel         : not null access Kernel_Handle_Record'Class;
+      Unhandled_Only : Boolean := False)
    is
-      B : Breakpoint_Data := Breakpoint_Data'
-        (Kind           => On_Exception,
-         Num            => No_Breakpoint,
-         Exception_Name => All_Exceptions_Filter,
-         Unhandled      => Unhandled,
-         Disposition    => Keep,
-         others         => <>);
+      B : Breakpoint_Data :=
+        Breakpoint_Data'
+          (Kind           => On_Exception,
+           Num            => No_Breakpoint,
+           Exception_Name => All_Exceptions_Filter,
+           Unhandled_Only => Unhandled_Only,
+           Disposition    => Keep,
+           others         => <>);
    begin
       Break (Kernel, B);
    end Break_On_All_Exceptions;
