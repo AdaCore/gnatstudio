@@ -712,6 +712,10 @@ class Search(Dialog):
 
 
 class _Breakpoints_Editor(Dialog):
+    EXCEPTION_BREAKPOINT_TYPE_ID = 3
+    # ID for exception breakpoints in the breakpoint editor's
+    # type combo box
+
     def __init__(self, action_name):
         self.action_name = action_name
 
@@ -721,6 +725,27 @@ class _Breakpoints_Editor(Dialog):
         self.filename = fields[0]
         self.line = fields[1]
         self.command_text_view = get_widgets_by_type(Gtk.TextView, self.dialogs)[0]
+        self.breakpoint_type_combo = get_widget_by_name(
+            "breakpoint-type-combo", self.dialogs
+        )
+
+    def create_exception_breakpoint(self, exception_name=""):
+        """
+        Configure the dialog to create an exception breakpoint,
+        with the given exception name filter.
+        If no filter is given, the exception breakpoint will catch
+        all exceptions.
+        """
+        self.breakpoint_type_combo.set_active(
+            _Breakpoints_Editor.EXCEPTION_BREAKPOINT_TYPE_ID
+        )
+        exception_name_combo = get_widget_by_name(
+            "breakpoint-exception-name", self.dialogs
+        )
+        if exception_name:
+            exception_name_entry = exception_name_combo.get_child()
+            exception_name_entry.set_text(exception_name)
+        yield self.ok()
 
 
 class Breakpoints_View:
