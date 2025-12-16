@@ -281,33 +281,33 @@ package body DAP.Views.Breakpoints is
    -- Properties_Editor --
 
    type Properties_Editor_Record is new Gtk_Dialog_Record with record
-      Kernel               : access Kernel_Handle_Record'Class;
+      Kernel : access Kernel_Handle_Record'Class;
 
-      View                 : Dialog_View;
+      View : Dialog_View;
 
-      Location_Box         : Dialog_Group_Widget;
-      Subprogram_Box       : Dialog_Group_Widget;
-      Address_Box          : Dialog_Group_Widget;
-      Exception_Box        : Dialog_Group_Widget;
-      Conditions_Box       : Dialog_Group_Widget;
-      Commands_Box         : Dialog_Group_Widget;
+      Location_Box   : Dialog_Group_Widget;
+      Subprogram_Box : Dialog_Group_Widget;
+      Address_Box    : Dialog_Group_Widget;
+      Exception_Box  : Dialog_Group_Widget;
+      Conditions_Box : Dialog_Group_Widget;
+      Commands_Box   : Dialog_Group_Widget;
 
-      Stop_Always_Exception : Gtk_Radio_Button;
-      Stop_On_Handled_Only  : Gtk_Radio_Button;
+      Stop_Always_Exception  : Gtk_Radio_Button;
+      Stop_On_Unhandled_Only : Gtk_Radio_Button;
 
-      Breakpoint_Type      : Gtk_Combo_Box_Text;
+      Breakpoint_Type : Gtk_Combo_Box_Text;
 
-      Exception_Name       : Gtk_Combo_Box_Text;
+      Exception_Name : Gtk_Combo_Box_Text;
 
-      File_Name            : Gtk_Entry;
-      Line_Spin            : Gtk_Spin_Button;
-      Address_Combo        : Gtk_Combo_Box_Text;
-      Subprogram_Combo     : Gtk_Combo_Box_Text;
+      File_Name        : Gtk_Entry;
+      Line_Spin        : Gtk_Spin_Button;
+      Address_Combo    : Gtk_Combo_Box_Text;
+      Subprogram_Combo : Gtk_Combo_Box_Text;
 
-      Temporary            : Gtk_Check_Button;
-      Condition_Combo      : Gtk_Combo_Box_Text;
-      Ignore_Count_Combo   : Gtk_Spin_Button;
-      Command_Descr        : Gtkada_Multiline_Entry;
+      Temporary          : Gtk_Check_Button;
+      Condition_Combo    : Gtk_Combo_Box_Text;
+      Ignore_Count_Combo : Gtk_Spin_Button;
+      Command_Descr      : Gtkada_Multiline_Entry;
    end record;
    type Properties_Editor is access all Properties_Editor_Record'Class;
 
@@ -477,7 +477,7 @@ package body DAP.Views.Breakpoints is
                   Commands       => Commands,
                   Verified       => False,
                   Exception_Name => Exception_Name,
-                  Unhandled_Only => Get_Active (Self.Stop_On_Handled_Only));
+                  Unhandled_Only => Get_Active (Self.Stop_On_Unhandled_Only));
             end;
 
          when On_Instruction =>
@@ -836,10 +836,10 @@ package body DAP.Views.Breakpoints is
       Hbox.Pack_Start (Self.Stop_Always_Exception, False);
 
       Gtk_New
-        (Self.Stop_On_Handled_Only,
+        (Self.Stop_On_Unhandled_Only,
          Group => Self.Stop_Always_Exception,
          Label => "Stop if not handled");
-      Hbox.Pack_Start (Self.Stop_On_Handled_Only, False);
+      Hbox.Pack_Start (Self.Stop_On_Unhandled_Only, False);
 
       Self.Exception_Box.Create_Child
         (Widget       => Hbox,
@@ -1835,7 +1835,7 @@ package body DAP.Views.Breakpoints is
             Select_Text => True);
 
          Set_Active (Self.Temporary, Br.Disposition /= Keep);
-         Set_Active (Self.Stop_On_Handled_Only, Br.Unhandled_Only);
+         Set_Active (Self.Stop_On_Unhandled_Only, Br.Unhandled_Only);
 
       elsif Br.Kind = On_Subprogram then
          Self.Breakpoint_Type.Set_Active (Breakpoint_Kind'Pos (On_Subprogram));
