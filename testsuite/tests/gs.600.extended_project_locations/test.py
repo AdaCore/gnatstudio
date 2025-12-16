@@ -5,7 +5,7 @@ from GPS import *
 from gs_utils.internal.utils import *
 
 expected = [
-    "References for Kind in original project (hello.adb:8) (8 items in 6 files)",
+    "References for Kind in current project (hello.adb:8) (8 items in 6 files)",
     [
         "decl.ads (1 item)",
         ["<b>3:9</b>       [reference] type <b>Kind</b> is (One, Two);"],
@@ -26,7 +26,7 @@ expected = [
         "hello.adb (1 item)",
         ["<b>8:13</b>      [reference] T : Decl.<b>Kind</b> := Decl.A.Do_Get;"],
     ],
-    "References for Kind in extending projects (hello.adb:8) (6 items in 4 files)",
+    "References for Kind in extended projects (hello.adb:8) (6 items in 4 files)",
     [
         "decl-a.ads (2 items)",
         [

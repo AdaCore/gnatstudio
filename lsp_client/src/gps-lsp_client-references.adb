@@ -256,8 +256,8 @@ package body GPS.LSP_Client.References is
       Command : Command_Access;
       Result  : out Command_Return_Type);
 
-   Original_Projects_Idx  : constant Integer := 2;
-   Extending_Projects_Idx : constant Integer := 3;
+   Extended_Projects_Idx : constant Integer := 2;
+   Current_Project_Idx   : constant Integer := 3;
 
    -----------------------
    -- All_Refs_Category --
@@ -293,14 +293,14 @@ package body GPS.LSP_Client.References is
            (VSS.Strings.Conversions.To_Virtual_String
               ("References for "
                & Escape_Text (Entity)
-               & " in original project (" & Local_File.Display_Base_Name
+               & " in extended projects (" & Local_File.Display_Base_Name
                & ":" & String_Utils.Image (Line) & ")"));
 
          Result.Append
            (VSS.Strings.Conversions.To_Virtual_String
               ("References for "
                & Escape_Text (Entity)
-               & " in extending projects (" & Local_File.Display_Base_Name
+               & " in current project (" & Local_File.Display_Base_Name
                & ":" & String_Utils.Image (Line) & ")"));
       end if;
 
@@ -1137,11 +1137,11 @@ package body GPS.LSP_Client.References is
                              and then Loc.hidden.Value
                            then
                               Category := Data.Titles.Element
-                                (Extending_Projects_Idx);
+                                (Extended_Projects_Idx);
 
                            elsif Data.Has_Hidden then
                               Category := Data.Titles.Element
-                                (Original_Projects_Idx);
+                                (Current_Project_Idx);
 
                            else
                               Category := Data.Titles.First_Element;
@@ -1202,7 +1202,7 @@ package body GPS.LSP_Client.References is
                     (Self       => View,
                      Category   =>
                        (if Data.Has_Hidden
-                        then Data.Titles.Element (Original_Projects_Idx)
+                        then Data.Titles.Element (Current_Project_Idx)
                         else Data.Titles.First_Element),
                      Goto_First => True);
                end if;
