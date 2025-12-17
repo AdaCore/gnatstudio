@@ -283,18 +283,18 @@ class GNATfuzzPlugin(Module):
         ),
     ]
 
-    gnatfuzz_doc_path = os.path.join(gnatfuzz_install_dir, "share/doc")\
-        if gnatfuzz_install_dir else None
-
+    gnatfuzz_doc_path = (
+        os.path.join(gnatfuzz_install_dir, "share/doc")
+        if gnatfuzz_install_dir
+        else None
+    )
     GNATFUZZ_DOCUMENTATION = [
         X("doc_path").children(gnatfuzz_doc_path),
         X("documentation_file").children(
             X("name").children("gnatdas/html/gnatfuzz/gnatfuzz_part.html"),
             X("descr").children("GNATfuzz User's Guide"),
             X("category").children("Tools"),
-            X("menu", before="About").children(
-                "/Help/Tools/GNATfuzz User's Guide"
-            ),
+            X("menu", before="About").children("/Help/Tools/GNATfuzz User's Guide"),
         ),
     ]
 
