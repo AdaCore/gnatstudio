@@ -1,0 +1,11 @@
+project Test is
+
+   for Source_Dirs use (".");  -- Source
+   for Object_Dir use "obj"; -- Object
+   for Main use ("main.adb"); -- Main
+
+   package Compiler is
+      for Switches ("Ada") use ("-g");
+   end Compiler;
+
+end Test;

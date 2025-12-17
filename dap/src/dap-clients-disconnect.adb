@@ -34,6 +34,15 @@ package body DAP.Clients.Disconnect is
    --  when the debugger is disconnected if supported. If unspecified, the
    --  debug adapter is free to do whatever it thinks is best.
 
+   overriding procedure On_Rejected
+     (Self   : in out Disconnect_Request;
+      Client : not null access DAP.Clients.DAP_Client'Class);
+
+   overriding procedure On_Error_Message
+     (Self    : in out Disconnect_Request;
+      Client  : not null access DAP.Clients.DAP_Client'Class;
+      Message : VSS.Strings.Virtual_String);
+
    overriding procedure On_Result_Message
      (Self        : in out Disconnect_Request;
       Client      : not null access DAP.Clients.DAP_Client'Class;
@@ -81,6 +90,37 @@ package body DAP.Clients.Disconnect is
          Client.Stop;
       end if;
    end On_Result_Message;
+
+   -----------------
+   -- On_Rejected --
+   -----------------
+
+   overriding procedure On_Rejected
+     (Self   : in out Disconnect_Request;
+      Client : not null access DAP.Clients.DAP_Client'Class) is
+   begin
+      DAP.Requests.Disconnect.Disconnect_DAP_Request
+        (Self).On_Rejected (Client);
+
+      --  Something is wrong, but we still have to stop the client
+      Client.Stop;
+   end On_Rejected;
+
+   ----------------------
+   -- On_Error_Message --
+   ----------------------
+
+   overriding procedure On_Error_Message
+     (Self    : in out Disconnect_Request;
+      Client  : not null access DAP.Clients.DAP_Client'Class;
+      Message : VSS.Strings.Virtual_String) is
+   begin
+      DAP.Requests.Disconnect.Disconnect_DAP_Request
+        (Self).On_Error_Message (Client, Message);
+
+      --  Stop client even on error, because the debugger should be shot down
+      Client.Stop;
+   end On_Error_Message;
 
    -----------------------------
    -- Send_Disconnect_Request --
