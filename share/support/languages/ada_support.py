@@ -12,6 +12,7 @@ editing of Ada files.
 import GPS
 import gs_utils.gnat_rules
 from gs_utils import hook
+from workflows import run_as_workflow
 
 
 @hook("project_editor")
@@ -207,22 +208,177 @@ end;</text>
 GPS.parse_xml(XML)
 
 
+@run_as_workflow
 def __add_to_main_units(project, file):
     """
     Ask the user if he wants to add the newly created main unit to the
     project's main units.
     """
 
+    def find_main_attribute(symbols):
+        """
+        Find the Main attribute location in the LSP document symbols tree.
+        """
+
+        def search_children(items):
+            """
+            Recursively search for Main attribute in LSP document
+            symbols tree
+            """
+            for item in items:
+                if item.get("name") == "Main":
+                    return item.get("range", {})
+                children = item.get("children", [])
+                if children:
+                    found = search_children(children)
+                    if found:
+                        return found
+            return None
+
+        main_range = search_children(symbols)
+        if main_range:
+            return {
+                "line": main_range.get("start", {}).get("line", 0),
+                "character": main_range.get("start", {}).get("character", 0),
+            }
+        return None
+
+    def add_to_existing_main_list(buffer, location, main_unit_name):
+        """
+        Add main unit to an existing Main attribute list.
+        Returns the location range of the inserted text.
+        """
+        loc = buffer.at(location["line"] + 1, location["character"] + 1)
+
+        # Find the Main attribute list boundaries
+        open_paren_loc, _ = loc.search(r"\(", regexp=True)
+        close_paren_loc, _ = open_paren_loc.forward_char().search(r"\)", regexp=True)
+
+        # Check if list is empty
+        content = buffer.get_chars(
+            open_paren_loc.forward_char(), close_paren_loc
+        ).strip()
+
+        # Create marks at the insertion point - marks track their position automatically
+        insert_mark = close_paren_loc.create_mark()
+
+        # Insert with appropriate separator
+        separator = ", " if content else ""
+        main_text = f'{separator}"{main_unit_name}"'
+
+        buffer.insert(insert_mark.location(), main_text)
+
+        # Select only the main unit name (without quotes)
+        # Skip separator and opening quote
+        select_start = insert_mark.location().forward_char(len(separator) + 1)
+        select_end = select_start.forward_char(len(main_unit_name))
+
+        insert_mark.delete()
+
+        return select_start, select_end
+
+    def create_new_main_attribute(buffer, main_unit_name):
+        """
+        Create a new Main attribute in the project file.
+        Returns the location range of the inserted main unit name.
+        """
+        loc = buffer.beginning_of_buffer()
+
+        # Find the project declaration
+        _, end_loc = loc.search(
+            r"\bproject\s+\w+\s+is\b", regexp=True, case_sensitive=False
+        )
+
+        # Insert after "project ... is" line
+        insert_loc = end_loc.end_of_line().forward_char()
+
+        # Create marks to track positions during insertion
+        start_mark = insert_loc.create_mark()
+
+        # Insert the entire attribute line
+        text_before = "\n   for Main use ("
+        main_text = f'"{main_unit_name}"'
+        text_after = ");\n"
+        full_text = text_before + main_text + text_after
+
+        buffer.insert(start_mark.location(), full_text)
+
+        # Select only the main unit name (without quotes)
+        # Skip text_before and opening quote
+        select_start = start_mark.location().forward_char(len(text_before) + 1)
+        select_end = select_start.forward_char(len(main_unit_name))
+
+        start_mark.delete()
+
+        return select_start, select_end
+
+    def show_error(message):
+        """
+        Display error message to user.
+        """
+        GPS.Console().write(f"{message}\n", mode="error")
+
+    # Main workflow
     unit = file.unit()
-    dialog_msg = "Do you want to add '%s' to the main units of " "project '%s'?" % (
+    dialog_msg = "Do you want to add '%s' to the main units of project '%s'?" % (
         unit,
         project.name(),
     )
 
-    if GPS.MDI.yes_no_dialog(dialog_msg):
-        project.add_main_unit(file.base_name())
-        project.save()
-        project.recompute()
+    if not GPS.MDI.yes_no_dialog(dialog_msg):
+        return True
+
+    main_unit_name = file.base_name()
+    project_file = project.file()
+
+    # Get the GPR language server
+    gpr_ls = GPS.LanguageServer.get_by_language_name("project file")
+    if gpr_ls is None:
+        show_error(
+            "GPR language server not available. " "Please add the main unit manually."
+        )
+        return False
+
+    # Query document symbols
+    params = {"textDocument": {"uri": project_file.uri}}
+    result = yield gpr_ls.request_promise("textDocument/documentSymbol", params)
+
+    if not result.is_valid or result.is_error:
+        show_error(
+            "Could not get document symbols from GPR language server. "
+            "Please add the main unit manually."
+        )
+        return False
+
+    # Find Main attribute location
+    symbols = result.data if isinstance(result.data, list) else []
+    main_attr_location = find_main_attribute(symbols)
+
+    # Open the project file
+    buffer = GPS.EditorBuffer.get(project_file)
+
+    # Split the view if not already done
+    GPS.MDIWindow.split(
+        GPS.MDI.get_by_child(buffer.current_view()), vertically=False, reuse=True
+    )
+
+    with buffer.new_undo_group():
+        if main_attr_location:
+            select_start, select_end = add_to_existing_main_list(
+                buffer, main_attr_location, main_unit_name
+            )
+        else:
+            select_start, select_end = create_new_main_attribute(buffer, main_unit_name)
+
+    # Select the newly added main unit
+    buffer.select(select_start, select_end)
+
+    # Give focus to the .gpr file
+    GPS.MDI.get_by_child(buffer.current_view()).raise_window()
+
+    # Save and reload
+    buffer.save()
+    GPS.execute_action("reload project")
 
     return True
 
