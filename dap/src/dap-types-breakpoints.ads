@@ -128,8 +128,8 @@ package DAP.Types.Breakpoints is
             Exception_Name : VSS.Strings.Virtual_String;
             --  The exception's name.
 
-            Unhandled : Boolean := False;
-            --  Whether we should break on unhandled ones.
+            Unhandled_Only : Boolean := False;
+            --  Whether we should only break on unhandled ones.
       end case;
    end record;
 
