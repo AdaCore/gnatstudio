@@ -283,18 +283,18 @@ class GNATfuzzPlugin(Module):
         ),
     ]
 
-    gnatfuzz_doc_path = os.path.join(gnatfuzz_install_dir, "share/doc")\
-        if gnatfuzz_install_dir else None
-
+    gnatfuzz_doc_path = (
+        os.path.join(gnatfuzz_install_dir, "share/doc")
+        if gnatfuzz_install_dir
+        else None
+    )
     GNATFUZZ_DOCUMENTATION = [
         X("doc_path").children(gnatfuzz_doc_path),
         X("documentation_file").children(
             X("name").children("gnatdas/html/gnatfuzz/gnatfuzz_part.html"),
             X("descr").children("GNATfuzz User's Guide"),
             X("category").children("Tools"),
-            X("menu", before="About").children(
-                "/Help/Tools/GNATfuzz User's Guide"
-            ),
+            X("menu", before="About").children("/Help/Tools/GNATfuzz User's Guide"),
         ),
     ]
 
@@ -663,6 +663,17 @@ class GNATfuzzPlugin(Module):
         # Launch the GNATfuzz views
         GPS.execute_action("open GNATfuzz fuzz crashes view")
         GPS.execute_action("open GNATfuzz test cases view")
+
+        # Wait for the fuzz session directory to be created
+        while not os.path.exists(fuzz_session_dir):
+            yield promises.timeout(FUZZ_MONITOR_TIMEOUT)
+            # Check if the fuzz process is still running
+            tasks = [t for t in GPS.Task.list() if t.name() == "gnatfuzz fuzz"]
+            if len(tasks) == 0:
+                self.error(
+                    "gnatfuzz fuzz process terminated before creating session directory"
+                )
+                return
 
         # Monitor the disk for the presence of xcov files
 
