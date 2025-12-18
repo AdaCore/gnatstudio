@@ -539,22 +539,13 @@ package body Language_Handlers.Assistants is
             Script : constant Scripting_Language :=
                        Command.File_Template.Post_Action.Get_Script;
             Data   : Callback_Data'Class := Script.Create (2);
-            Result : Boolean;
+            Dummy : Boolean;
          begin
             Data.Set_Nth_Arg (1, Create_Project (Script, Project));
             Data.Set_Nth_Arg (2, Create_File (Script, File));
 
-            Result := Command.File_Template.Post_Action.Execute (Data);
+            Dummy := Command.File_Template.Post_Action.Execute (Data);
             Free (Data);
-
-            if not Result then
-               Kernel.Insert
-                 ("Failed to execute post action '"
-                  & Command.File_Template.Post_Action.Get_Name
-                  & "' of '"
-                  & To_String (Command.File_Template.Label)
-                  & "' file template.");
-            end if;
          end;
       end Execute_Post_Action;
 
