@@ -1408,7 +1408,7 @@ package body DAP.Views.Breakpoints is
 
    begin
       if Debugger /= null
-        and then Positive (Debugger.Get_Num) /=
+        and then Client_Id_Type (Debugger.Get_Num) /=
         DAP.Module.Get_Current_Debugger.Id
       then
          return;

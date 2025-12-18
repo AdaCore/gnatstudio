@@ -2330,7 +2330,7 @@ package body DAP.Clients is
             Gtk.Widget.Signal_Destroy,
             On_Console_Destroy'Access,
             After       => True,
-            User_Data   => Self.Id);
+            User_Data   => Integer (Self.Id));
       end if;
 
       Self.Set_Arguments (Node_Args);
@@ -2348,10 +2348,12 @@ package body DAP.Clients is
       pragma Unreferenced (Console);
 
       Client : constant DAP.Clients.DAP_Client_Access :=
-        DAP.Module.Get_Debugger (Id);
+        DAP.Module.Get_Debugger (Client_Id_Type (Id));
    begin
       if Client /= null then
          Client.Set_Debugger_Console (null);
+         Client.Set_Debuggee_Console (null);
+
          Client.Quit;
       end if;
    end On_Console_Destroy;
@@ -2460,6 +2462,7 @@ package body DAP.Clients is
             Terminate_Debuggee => True);
 
          Self.Clear;
+
       else
          Self.Clear;
          Self.Stop;
