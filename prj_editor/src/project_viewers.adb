@@ -15,13 +15,10 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with Ada.Characters.Handling;      use Ada.Characters.Handling;
-with Ada.Strings.Equal_Case_Insensitive;  use Ada.Strings;
-with Ada.Unchecked_Deallocation;
 with Generic_Views;
+with GNAT.Strings;                 use GNAT.Strings;
 with GNATCOLL.Arg_Lists;           use GNATCOLL.Arg_Lists;
 with GNATCOLL.Scripts;             use GNATCOLL.Scripts;
-with GNATCOLL.Traces;              use GNATCOLL.Traces;
 with GNATCOLL.Utils;               use GNATCOLL.Utils;
 with GNATCOLL.VFS;                 use GNATCOLL.VFS;
 with GNATCOLL.VFS.GtkAda;          use GNATCOLL.VFS.GtkAda;
@@ -38,7 +35,6 @@ with Glib_Values_Utils;            use Glib_Values_Utils;
 with Gtk.Box;
 with Gtk.Cell_Renderer_Text;       use Gtk.Cell_Renderer_Text;
 with Gtk.Enums;                    use Gtk.Enums;
-with Gtk.Label;                    use Gtk.Label;
 with Gtk.Scrolled_Window;          use Gtk.Scrolled_Window;
 with Gtk.Tree_Model;               use Gtk.Tree_Model;
 with Gtk.Tree_Selection;           use Gtk.Tree_Selection;
@@ -67,23 +63,10 @@ with Language_Handlers;            use Language_Handlers;
 with Projects;                     use Projects;
 with Remote;                       use Remote;
 with System;
-with Variable_Editors;             use Variable_Editors;
 
 package body Project_Viewers is
 
-   Me : constant Trace_Handle := Create ("GPS.PRJ_EDITOR.VIEWERS");
-
-   type Naming_Page is record
-      Language : GNAT.Strings.String_Access;
-      Creator  : Naming_Scheme_Editor_Creator;
-   end record;
-
-   type Naming_Pages_Array is array (Natural range <>) of Naming_Page;
-   type Naming_Pages_Array_Access is access Naming_Pages_Array;
-
-   type Prj_Editor_Module_Id_Record is new Module_ID_Record with record
-      Naming_Pages         : Naming_Pages_Array_Access;
-   end record;
+   type Prj_Editor_Module_Id_Record is new Module_ID_Record with null record;
    type Prj_Editor_Module_Id_Access is access all
      Prj_Editor_Module_Id_Record'Class;
 
@@ -1046,88 +1029,6 @@ package body Project_Viewers is
       end if;
    end Project_Command_Handler;
 
-   -----------------------------------
-   -- Register_Naming_Scheme_Editor --
-   -----------------------------------
-
-   procedure Register_Naming_Scheme_Editor
-     (Kernel   : access GPS.Kernel.Kernel_Handle_Record'Class;
-      Language : String;
-      Creator  : Naming_Scheme_Editor_Creator)
-   is
-      pragma Unreferenced (Kernel);
-      procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-        (Naming_Pages_Array, Naming_Pages_Array_Access);
-      Tmp  : Naming_Pages_Array_Access;
-      Lang : constant String := To_Lower (Language);
-   begin
-      if Prj_Editor_Module_ID /= null then
-         if Prj_Editor_Module_ID.Naming_Pages = null then
-            Prj_Editor_Module_ID.Naming_Pages :=
-              new Naming_Pages_Array'(1 => (new String'(Lang), Creator));
-
-         else
-            Tmp := Prj_Editor_Module_ID.Naming_Pages;
-            Prj_Editor_Module_ID.Naming_Pages := new Naming_Pages_Array'
-              (Tmp.all & Naming_Page'(new String'(Lang), Creator));
-            Unchecked_Free (Tmp);
-         end if;
-      else
-         Trace (Me, "Register_Naming_Scheme_Editor: module not registered");
-      end if;
-   end Register_Naming_Scheme_Editor;
-
-   ----------------------------
-   -- Get_Naming_Scheme_Page --
-   ----------------------------
-
-   function Get_Naming_Scheme_Page
-     (Kernel   : access GPS.Kernel.Kernel_Handle_Record'Class;
-      Language : String) return Project_Editor_Page
-   is
-      Lang : constant String := To_Lower (Language);
-   begin
-      if Prj_Editor_Module_ID.Naming_Pages /= null then
-         for Num in Prj_Editor_Module_ID.Naming_Pages'Range loop
-            if Prj_Editor_Module_ID.Naming_Pages (Num).Language.all = Lang then
-               return Prj_Editor_Module_ID.Naming_Pages (Num).Creator
-                 (Kernel, Language);
-            end if;
-         end loop;
-      end if;
-      return null;
-   end Get_Naming_Scheme_Page;
-
-   --------------------------------
-   -- Get_All_Naming_Scheme_Page --
-   --------------------------------
-
-   function Get_All_Naming_Scheme_Page
-     (Kernel   : access GPS.Kernel.Kernel_Handle_Record'Class)
-      return Project_Editor_Page
-   is
-      Languages : GNAT.Strings.String_List :=
-        Known_Languages (Get_Language_Handler (Kernel));
-      Page      : Project_Editor_Page;
-      Result    : Project_Editor_Page;
-
-   begin
-      Result := new Project_Editor_Multi_Page_Record;
-
-      for L in Languages'Range loop
-         Page := Get_Naming_Scheme_Page (Kernel, Languages (L).all);
-
-         if Page /= null then
-            Project_Editor_Multi_Page_Record'Class (Result.all).Add_Page
-              (Page, To_Unbounded_String (Languages (L).all));
-         end if;
-      end loop;
-
-      Free (Languages);
-
-      return Result;
-   end Get_All_Naming_Scheme_Page;
-
    ---------------------
    -- Register_Module --
    ---------------------
@@ -1147,12 +1048,14 @@ package body Project_Viewers is
 
       File_Views.Register_Module (Kernel);
 
-      Filter  := Lookup_Filter (Kernel, "Project only");
-      Filter2 := Lookup_Filter (Kernel, "Project only")
+      Filter := Lookup_Filter (Kernel, "Project only");
+      Filter2 :=
+        Lookup_Filter (Kernel, "Project only")
         and Lookup_Filter (Kernel, "Editable Project");
 
       Register_Action
-        (Kernel, "save all projects",
+        (Kernel,
+         "save all projects",
          Command     => new Save_All_Command,
          Category    => -"Projects",
          Description => -"Save all modified projects to disk");
@@ -1164,18 +1067,18 @@ package body Project_Viewers is
          Group  => Project_Contextual_Group);
 
       Register_Action
-        (Kernel, "save project",
+        (Kernel,
+         "save project",
          Command     => new Save_Project_Command,
          Description => -"Save the selected project",
          Filter      => Filter2,
          Category    => -"Projects");
       Register_Contextual_Menu
-        (Kernel,
-         Action => "save project",
-         Label  => "Project/Save project %p");
+        (Kernel, Action => "save project", Label => "Project/Save project %p");
 
       Register_Action
-        (Kernel, "Edit project source file",
+        (Kernel,
+         "Edit project source file",
          Command     => new Edit_Project_Source_Command,
          Description =>
            -"Open an editor for the .gpr file of the current project",
@@ -1188,11 +1091,12 @@ package body Project_Viewers is
          Action => "Edit project source file");
 
       Register_Action
-        (Kernel, "Edit local configuration file",
+        (Kernel,
+         "Edit local configuration file",
          Command     => new Edit_Configuration_File (Global => False),
          Description =>
            -("Open an editor for the local configuration file"
-           & " of the current project"),
+             & " of the current project"),
          Filter      => Filter,
          Category    => -"Projects");
       Register_Contextual_Menu
@@ -1201,30 +1105,18 @@ package body Project_Viewers is
          Action => "Edit local configuration file");
 
       Register_Action
-        (Kernel, "Edit global configuration file",
+        (Kernel,
+         "Edit global configuration file",
          Command     => new Edit_Configuration_File (Global => True),
          Description =>
            -("Open an editor for the global configuration file"
-           & " of the current project"),
+             & " of the current project"),
          Filter      => Filter,
          Category    => -"Projects");
       Register_Contextual_Menu
         (Kernel,
          Name   => "Project/Edit global configuration pragmas",
          Action => "Edit global configuration file");
-
-      Register_Action
-        (Kernel, Action_Add_Scenario_Variable,
-         Command     => new Add_Variable_Command,
-         Icon_Name   => "gps-add-symbolic",
-         Description => -"Add a new scenario variable to the selected project",
-         Category => -"Projects");
-      Register_Contextual_Menu
-        (Kernel,
-         Name   => "Add scenario variable",
-         Action => Action_Add_Scenario_Variable,
-         Filter => Create (Module => Explorer_Module_Name) and Filter2,
-         Label  => "Project/Add scenario variable");
 
       Extending_Projects_Editors.Register_Contextual_Menus (Kernel);
 
@@ -1254,10 +1146,10 @@ package body Project_Viewers is
          Handler      => Project_Command_Handler'Access);
       Kernel.Scripts.Register_Command
         ("add_predefined_paths",
-         Maximum_Args => 2,
-         Class        => Get_Project_Class (Kernel),
+         Maximum_Args  => 2,
+         Class         => Get_Project_Class (Kernel),
          Static_Method => True,
-         Handler      => Project_Static_Command_Handler'Access);
+         Handler       => Project_Static_Command_Handler'Access);
       Kernel.Scripts.Register_Command
         ("add_source_dir",
          Minimum_Args => Add_Source_Dir_Cmd_Parameters'Length,
@@ -1271,130 +1163,5 @@ package body Project_Viewers is
          Class        => Get_Project_Class (Kernel),
          Handler      => Project_Command_Handler'Access);
    end Register_Module;
-
-   -------------------
-   -- For_Each_Page --
-   -------------------
-
-   procedure For_Each_Page
-     (Self     : not null access Project_Editor_Multi_Page_Record;
-      Callback : Page_Iterator_Callback) is
-   begin
-      for Descr of Self.Pages loop
-         Callback (Descr.Page);
-      end loop;
-   end For_Each_Page;
-
-   -------------
-   -- Destroy --
-   -------------
-
-   overriding procedure Destroy
-     (Self : in out Project_Editor_Multi_Page_Record) is
-   begin
-      for Descr of Self.Pages loop
-         Project_Viewers.Destroy (Descr.Page.all);
-      end loop;
-   end Destroy;
-
-   -------------
-   -- In_List --
-   -------------
-
-   function In_List
-     (Lang : String; List : GNAT.Strings.String_List) return Boolean
-   is
-   begin
-      for L of List loop
-         if Equal_Case_Insensitive (Lang, L.all) then
-            return True;
-         end if;
-      end loop;
-      return False;
-   end In_List;
-
-   --------------
-   -- Add_Page --
-   --------------
-
-   procedure Add_Page
-     (Self  : not null access Project_Editor_Multi_Page_Record;
-      Page  : not null access Project_Editor_Page_Record'Class;
-      Title : Unbounded_String) is
-   begin
-      Self.Pages.Append
-        ((Title => Title,
-          Page  => Project_Editor_Page (Page)));
-   end Add_Page;
-
-   ----------------
-   -- Initialize --
-   ----------------
-
-   overriding procedure Initialize
-     (Self         : not null access Project_Editor_Multi_Page_Record;
-      Kernel       : not null access Kernel_Handle_Record'Class;
-      Read_Only    : Boolean;
-      Project      : Project_Type := No_Project)
-   is
-      Label    : Gtk_Label;
-   begin
-      Dialog_Utils.Initialize (Self);
-
-      Gtk_New (Self.Notebook);
-      Self.Append (Self.Notebook, Fill => True, Expand => True);
-
-      for Descr of Self.Pages loop
-         Gtk_New (Label, To_String (Descr.Title));
-         Descr.Page.Initialize (Kernel, Read_Only, Project);
-         Self.Notebook.Append_Page (Descr.Page, Label);
-      end loop;
-   end Initialize;
-
-   ------------------
-   -- Edit_Project --
-   ------------------
-
-   overriding function Edit_Project
-     (Self               : not null access Project_Editor_Multi_Page_Record;
-      Project            : Project_Type;
-      Kernel             : not null access Kernel_Handle_Record'Class;
-      Languages          : GNAT.Strings.String_List;
-      Scenario_Variables : Scenario_Variable_Array) return Boolean
-   is
-      Changed : Boolean := False;
-   begin
-      for Descr of Self.Pages loop
-         if Descr.Page.Is_Visible then
-            Changed := Changed or
-              Descr.Page.Edit_Project
-                (Project, Kernel, Languages, Scenario_Variables);
-         end if;
-      end loop;
-      return Changed;
-   end Edit_Project;
-
-   ----------------
-   -- Is_Visible --
-   ----------------
-
-   overriding function Is_Visible
-     (Self         : not null access Project_Editor_Multi_Page_Record;
-      Languages    : GNAT.Strings.String_List) return Boolean
-   is
-      Count : constant Gint := Self.Notebook.Get_N_Pages;
-      Page  : Project_Editor_Page;
-      Visible : Boolean := False;
-   begin
-      for P in 0 .. Count - 1 loop
-         Page := Project_Editor_Page (Self.Notebook.Get_Nth_Page (P));
-         if not Page.Is_Visible (Languages) then
-            Page.Hide;
-         else
-            Visible := True;
-         end if;
-      end loop;
-      return Visible;  --  If at least one page is visible
-   end Is_Visible;
 
 end Project_Viewers;
