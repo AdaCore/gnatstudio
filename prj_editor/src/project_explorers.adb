@@ -290,8 +290,8 @@ package body Project_Explorers is
 
    function Find_Project_Node
      (Self    : not null access Project_Explorer_Record'Class;
-      Project : Project_Type) return Gtk_Tree_Iter;
-   --  Find the first node matching the project
+      Project : Virtual_File) return Gtk_Tree_Iter;
+   --  Find the first node matching the project file path
 
    type On_Pref_Changed is new Preferences_Hooks_Function with record
       Explorer : Project_Explorer;
@@ -1956,7 +1956,7 @@ package body Project_Explorers is
 
    function Find_Project_Node
      (Self    : not null access Project_Explorer_Record'Class;
-      Project : Project_Type) return Gtk_Tree_Iter
+      Project : Virtual_File) return Gtk_Tree_Iter
    is
       Flat_View : constant Boolean := Self.Tree.User_Filter.Config.Flat_View;
       Node      : Gtk_Tree_Iter;
@@ -2071,7 +2071,7 @@ package body Project_Explorers is
       end Build_Way;
 
    begin
-      if Project = No_Project then
+      if Project = No_File then
          return Null_Iter;
       end if;
 
@@ -2079,7 +2079,7 @@ package body Project_Explorers is
          Node := Self.Tree.Model.Get_Iter_First;
          while Node /= Null_Iter loop
             P := Self.Tree.Get_Project_From_Node (Node, Importing => False);
-            if P = Project then
+            if P.Project_Path = Project then
                return Node;
             end if;
 
@@ -2092,7 +2092,9 @@ package body Project_Explorers is
          --  The Way begins with the Root project
          Way.Append (Self.Kernel.Get_Project_Tree.Root_Project);
          Build_Way
-           (Self.Kernel.Get_Project_Tree.Root_Project, Project, Way, Found);
+           (Self.Kernel.Get_Project_Tree.Root_Project,
+            Self.Kernel.Get_Project_Tree.Project_From_Path (Project),
+            Way, Found);
 
          if Found then
             --  Way contains projects chain,
@@ -2569,7 +2571,7 @@ package body Project_Explorers is
 
       S := Get_Registry (Kernel).Tree.Info_Set (File);
       Node := Find_Project_Node
-        (View, File_Info (S.First_Element).Project);
+        (View, File_Info (S.First_Element).Project.Project_Path);
 
       --  Flat View need to expand the project node to compute its files
       Path := View.Tree.Model.Get_Path (Node);
@@ -2599,7 +2601,8 @@ package body Project_Explorers is
         Explorer_Views.Get_Or_Create_View (Kernel, Focus => True);
       Node     : Gtk_Tree_Iter;
    begin
-      Node := Find_Project_Node (View, Project_Information (Context.Context));
+      Node := Find_Project_Node
+        (View, Project_Information (Context.Context).Project_Path);
       if Node /= Null_Iter then
          Jump_To_Node (View, Node);
       end if;
