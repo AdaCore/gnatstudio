@@ -623,7 +623,8 @@ package body GPS.Kernel.Project is
                Flags    => Empty_Message_Flags);
 
             Kernel.Registry.Tree.Reload_If_Needed
-              (Reloaded, Errors => Report_Error'Unrestricted_Access,
+              (Reloaded,
+               Errors         => Report_Error'Unrestricted_Access,
                Recompute_View => Recompute_View);
          end if;
       exception

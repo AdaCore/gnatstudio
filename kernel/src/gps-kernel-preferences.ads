@@ -320,6 +320,7 @@ package GPS.Kernel.Preferences is
    Variable_Ref_Background         : Color_Preference;
    Invalid_Variable_Ref_Background : Color_Preference;
    Generate_Relative_Paths         : Boolean_Preference;
+   Auto_Project_Reload             : Boolean_Preference;
    Trusted_Mode                    : Boolean_Preference;
 
    Automatic_Xrefs_Load : Boolean_Preference;
