@@ -53,7 +53,8 @@ def driver():
             fraction < progress_bar.get_fraction(),
             True,
             "The searching was postponed while another app is active."
-            " Progress bar did not advance: %s -> %s" % (fraction, progress_bar.get_fraction())
+            " Progress bar did not advance: "
+            "%s -> %s" % (fraction, progress_bar.get_fraction()),
         )
 
     # Check whether omnisearch is not visible when another GNAT Studio widget
