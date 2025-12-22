@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                               GNAT Studio                                --
 --                                                                          --
---                     Copyright (C) 2001-2024, AdaCore                     --
+--                     Copyright (C) 2001-2025, AdaCore                     --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -48,7 +48,6 @@ with GPS.Kernel.Modules.UI;     use GPS.Kernel.Modules.UI;
 with GPS.Kernel.Scripts;        use GPS.Kernel.Scripts;
 with GUI_Utils;                 use GUI_Utils;
 with Language.Custom;           use Language.Custom;
-with Language;                  use Language;
 with Language_Handlers;         use Language_Handlers;
 with String_Utils;              use String_Utils;
 with Switches_Chooser;          use Switches_Chooser;

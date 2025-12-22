@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                               GNAT Studio                                --
 --                                                                          --
---                     Copyright (C) 2002-2023, AdaCore                     --
+--                     Copyright (C) 2002-2025, AdaCore                     --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -25,10 +25,9 @@ with GNATCOLL.Projects;
 
 with Case_Handling;             use Case_Handling;
 with GPS.Properties;            use GPS.Properties;
-with Language.Unknown;          use Language.Unknown;
 with Language;                  use Language;
-with Language.Tree;             use Language.Tree;
 with Language.Tree.Database;    use Language.Tree.Database;
+with Language.Unknown;          use Language.Unknown;
 with Projects;                  use Projects;
 with GNATCOLL.Traces;                    use GNATCOLL.Traces;
 with GNATCOLL.VFS;              use GNATCOLL.VFS;

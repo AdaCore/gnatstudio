@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                               GNAT Studio                                --
 --                                                                          --
---                     Copyright (C) 2001-2023, AdaCore                     --
+--                     Copyright (C) 2001-2025, AdaCore                     --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -21,11 +21,10 @@ with GNATCOLL.Utils;      use GNATCOLL.Utils;
 with GPS.Intl;            use GPS.Intl;
 with GPS.Kernel.Contexts; use GPS.Kernel.Contexts;
 with GPS.Kernel.Scripts;  use GPS.Kernel.Scripts;
-with GNATCOLL.Traces;              use GNATCOLL.Traces;
-with GNATCOLL.Arg_Lists;       use GNATCOLL.Arg_Lists;
-with GNATCOLL.VFS;                 use GNATCOLL.VFS;
+with GNATCOLL.Traces;     use GNATCOLL.Traces;
+with GNATCOLL.Arg_Lists;  use GNATCOLL.Arg_Lists;
+with GNATCOLL.VFS;        use GNATCOLL.VFS;
 with Vdiff2_Module.Utils; use Vdiff2_Module.Utils;
-with Vdiff2_Module;       use Vdiff2_Module;
 
 package body Vdiff2_Command_Block is
 

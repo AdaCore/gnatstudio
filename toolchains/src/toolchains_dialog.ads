@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                               GNAT Studio                                --
 --                                                                          --
---                     Copyright (C) 2008-2023, AdaCore                     --
+--                     Copyright (C) 2008-2025, AdaCore                     --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -21,7 +21,7 @@ with Gtk.GEntry;  use Gtk.GEntry;
 
 with GNATCOLL.VFS; use GNATCOLL.VFS;
 
-with GPS.Kernel;      use GPS.Kernel;
+with GPS.Kernel;
 with GPS.Dialogs;     use GPS.Dialogs;
 
 package Toolchains_Dialog is
