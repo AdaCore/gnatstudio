@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                               GNAT Studio                                --
 --                                                                          --
---                     Copyright (C) 2007-2023, AdaCore                     --
+--                     Copyright (C) 2007-2025, AdaCore                     --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -32,7 +32,6 @@ with GPS.Kernel.Charsets;          use GPS.Kernel.Charsets;
 with Language.Tree.Database;       use Language.Tree.Database;
 with Ada_Semantic_Tree.Assistants;
 with Gtkada.MDI;                   use Gtkada.MDI;
-with Gtkada;                       use Gtkada;
 with Src_Editor_Module;            use Src_Editor_Module;
 with Src_Editor_Buffer;            use Src_Editor_Buffer;
 with Src_Editor_Box;               use Src_Editor_Box;

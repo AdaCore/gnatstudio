@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                               GNAT Studio                                --
 --                                                                          --
---                     Copyright (C) 2001-2023, AdaCore                     --
+--                     Copyright (C) 2001-2025, AdaCore                     --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -16,7 +16,6 @@
 ------------------------------------------------------------------------------
 
 with Glib;                           use Glib;
-with Gtk;                            use Gtk;
 with Gtk.Enums;                      use Gtk.Enums;
 with Gtk.Image;                      use Gtk.Image;
 with Gtkada.Handlers;                use Gtkada.Handlers;

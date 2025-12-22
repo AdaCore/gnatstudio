@@ -44,7 +44,7 @@ with Glib.Object;              use Glib.Object;
 with Glib.Properties;          use Glib.Properties;
 with Glib.Unicode;             use Glib.Unicode;
 with Gdk.Keyval;               use Gdk.Keyval;
-with Gdk.Types;                use Gdk, Gdk.Types;
+with Gdk.Types;                use Gdk.Types;
 with Gdk.Types.Keysyms;        use Gdk.Types.Keysyms;
 with Gdk.Event;                use Gdk.Event;
 with Gdk.RGBA;                 use Gdk.RGBA;
