@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                     XML/Ada - An XML suite for Ada95                     --
 --                                                                          --
---                     Copyright (C) 2004-2023, AdaCore                     --
+--                     Copyright (C) 2004-2025, AdaCore                     --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -17,7 +17,6 @@
 
 with Sax.Attributes;        use Sax.Attributes;
 with Sax.Locators;          use Sax.Locators;
-with Unicode;               use Unicode;
 with Unicode.CES;           use Unicode.CES;
 with Unicode.CES.Utf8;      use Unicode.CES.Utf8;
 with Ada.Exceptions;        use Ada.Exceptions;

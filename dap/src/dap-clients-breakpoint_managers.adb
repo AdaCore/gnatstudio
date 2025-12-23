@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                               GNAT Studio                                --
 --                                                                          --
---                        Copyright (C) 2022-2024, AdaCore                  --
+--                        Copyright (C) 2022-2025, AdaCore                  --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -1142,7 +1142,6 @@ package body DAP.Clients.Breakpoint_Managers is
      (Self  : not null access Breakpoint_Manager_Type;
       Event : DAP.Tools.BreakpointEvent_body)
    is
-      use DAP.Tools;
       use DAP.Tools.Enum;
 
       function Convert return Breakpoint_Data;

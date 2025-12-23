@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                               GNAT Studio                                --
 --                                                                          --
---                     Copyright (C) 2000-2024, AdaCore                     --
+--                     Copyright (C) 2000-2025, AdaCore                     --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -33,7 +33,6 @@ with Gtk.Window;                 use Gtk.Window;
 with Gtkada.Dialogs;             use Gtkada.Dialogs;
 
 with Config;                     use Config;
-with GVD;                        use GVD;
 with GVD.Code_Editors;           use GVD.Code_Editors;
 with GVD.Preferences;            use GVD.Preferences;
 with GVD.Process;                use GVD.Process;

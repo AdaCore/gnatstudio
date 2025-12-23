@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                               GNAT Studio                                --
 --                                                                          --
---                     Copyright (C) 2000-2024, AdaCore                     --
+--                     Copyright (C) 2000-2025, AdaCore                     --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -701,7 +701,6 @@ package body Debugger.Base_Gdb.Gdb_CLI is
       Ignored : Version_Number;
       pragma Unreferenced (Ignored);
 
-      use GVD;
    begin
       Debugger.Initializing := True;
 

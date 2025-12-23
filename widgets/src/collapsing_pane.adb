@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                               GNAT Studio                                --
 --                                                                          --
---                     Copyright (C) 2006-2023, AdaCore                     --
+--                     Copyright (C) 2006-2025, AdaCore                     --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -19,7 +19,6 @@ with Interfaces.C.Strings; use Interfaces.C.Strings;
 
 with Glib.Object;          use Glib.Object;
 
-with Gdk;                  use Gdk;
 with Gdk.Event;            use Gdk.Event;
 
 with Gtk.Arrow;            use Gtk.Arrow;

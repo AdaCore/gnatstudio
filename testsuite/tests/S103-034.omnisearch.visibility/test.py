@@ -35,6 +35,8 @@ def driver():
         "The ommniseach popup should not be visible when"
         + " GNAT Studio has not the focus",
     )
+    # Wait a bit to ensure that the search progress is still advancing
+    yield timeout(300)
     new_w.close()
     w.get_toplevel().grab_focus()
 
@@ -50,7 +52,9 @@ def driver():
         gps_assert(
             fraction < progress_bar.get_fraction(),
             True,
-            "The searching was postponed while another app is active",
+            "The searching was postponed while another app is active."
+            " Progress bar did not advance: "
+            "%s -> %s" % (fraction, progress_bar.get_fraction()),
         )
 
     # Check whether omnisearch is not visible when another GNAT Studio widget
