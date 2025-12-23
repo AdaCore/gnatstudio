@@ -61,7 +61,7 @@ package DAP.Module is
    --  to be passed to the executable will be displayed. Stop debuggee at the
    --  first line if Stop_At_Beginning is True and the dialog is not used.
 
-   procedure Finished (Id : Positive);
+   procedure Finished (Id : Valid_Client_Id_Type);
    --  Called when some debugger is finished
 
    function Get_Current_Debugger return DAP.Clients.DAP_Client_Access;
@@ -70,7 +70,9 @@ package DAP.Module is
    procedure Set_Current_Debugger (Current : DAP.Clients.DAP_Client_Access);
    --  Set the current debugger.
 
-   function Get_Debugger (Id : Integer) return DAP.Clients.DAP_Client_Access;
+   function Get_Debugger
+     (Id : Client_Id_Type)
+      return DAP.Clients.DAP_Client_Access;
    --  Return the debugger associated with the given Id.
 
    function Count_Running_Debuggers return Natural;
