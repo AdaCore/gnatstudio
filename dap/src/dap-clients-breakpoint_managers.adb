@@ -1106,9 +1106,10 @@ package body DAP.Clients.Breakpoint_Managers is
 
    procedure Finalize (Self : not null access Breakpoint_Manager_Type) is
       use Breakpoint_Vectors;
+      Exec : constant GNATCOLL.VFS.Virtual_File := Self.Client.Get_Executable;
    begin
       --  Do not store breakpoints when we started debugging with no_executable
-      if Self.Client.Get_Executable /= No_File then
+      if Exec /= No_File then
          --  Store breakpoints in the persistent storage
          if DAP.Modules.Preferences.Break_On_Exception.Get_Pref then
             declare
@@ -1124,12 +1125,11 @@ package body DAP.Clients.Breakpoint_Managers is
                   end if;
                end loop;
 
-               DAP.Module.Breakpoints.Store_As_Persistent
-                 (Self.Client.Get_Executable, List);
+               DAP.Module.Breakpoints.Store_As_Persistent (Exec, List);
             end;
          else
             DAP.Module.Breakpoints.Store_As_Persistent
-              (Self.Client.Get_Executable, Self.Holder.Get_Breakpoints);
+              (Exec, Self.Holder.Get_Breakpoints);
          end if;
       end if;
    end Finalize;

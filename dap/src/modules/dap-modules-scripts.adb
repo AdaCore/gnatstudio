@@ -490,7 +490,7 @@ package body DAP.Modules.Scripts is
 
             procedure Process_By_Id (Dbg : DAP.Clients.DAP_Client_Access) is
             begin
-               if Dbg.Id = Id then
+               if Natural (Dbg.Id) = Id then
                   Client := Dbg;
                end if;
             end Process_By_Id;
@@ -754,6 +754,22 @@ package body DAP.Modules.Scripts is
             end if;
          end;
 
+      elsif Command = "get_debuggee_console" then
+         Inst := Nth_Arg (Data, 1, New_Class (Kernel, "Debugger"));
+         Visual := DAP_Visual_Debugger_Access
+           (Glib.Object.GObject'(Get_Data (Inst)));
+
+         declare
+            Console : constant Interactive_Console :=
+              DAP.Views.Consoles.Get_Debuggee_Interactive_Console
+                (Visual.Client.all);
+         begin
+            if Console /= null then
+               Data.Set_Return_Value
+                 (Get_Or_Create_Instance (Data.Get_Script, Console));
+            end if;
+         end;
+
       elsif Command = "interrupt" then
          Inst := Nth_Arg (Data, 1, New_Class (Kernel, "Debugger"));
          Visual := DAP_Visual_Debugger_Access
@@ -916,6 +932,10 @@ package body DAP.Modules.Scripts is
          Class        => Class);
       Kernel.Scripts.Register_Command
         ("get_console",
+         Handler      => Shell_Handler'Access,
+         Class        => Class);
+      Kernel.Scripts.Register_Command
+        ("get_debuggee_console",
          Handler      => Shell_Handler'Access,
          Class        => Class);
       Kernel.Scripts.Register_Command

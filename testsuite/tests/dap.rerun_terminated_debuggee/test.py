@@ -24,11 +24,13 @@ def test_driver():
     # At this stage, the debuggee process has been terminated
     # Adding a breakpoint to ensure that the process is really restarted
     debug.break_at_location(GPS.File("main.adb"), 5)
+    yield wait_DAP_server("setBreakpoints")
     yield wait_idle()
 
     # Re-run the debugger after it has been terminated
     debug.send("run")
     yield wait_DAP_server("stackTrace")
+    yield wait_idle()
 
     # Check that we reach the previously set breakpoint
     yield wait_until_true(

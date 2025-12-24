@@ -314,15 +314,21 @@ package body DAP.Views.Consoles is
 
    procedure Close_TTY (Console : access Debuggee_Console_Record'Class) is
    begin
-      if Console.TTY_Initialized then
-         if Console.Debuggee_Id /= 0 then
-            Glib.Main.Remove (Console.Debuggee_Id);
-            Console.Debuggee_Id := 0;
-         end if;
-
-         Close_Pseudo_Descriptor (Console.Debuggee_Descriptor);
-         Console.TTY_Initialized := False;
+      --  Unregister GTK timeout callback if any
+      if Console.Debuggee_Id /= 0 then
+         Glib.Main.Remove (Console.Debuggee_Id);
+         Console.Debuggee_Id := 0;
       end if;
+
+      --  Close the descriptor if any
+      if Console.TTY_Initialized then
+         Console.TTY_Initialized := False;
+         Close_Pseudo_Descriptor (Console.Debuggee_Descriptor);
+      end if;
+
+   exception
+      when E : others =>
+         Me.Trace (E);
    end Close_TTY;
 
    ---------------
@@ -417,9 +423,14 @@ package body DAP.Views.Consoles is
    ------------
 
    function TTY_Cb (Console : Debuggee_Console) return Boolean is
-      Match : Expect_Match;
+      Match  : Expect_Match;
+      Client : DAP.Clients.DAP_Client_Access;
    begin
-      if Console.Get_Client /= null then
+      if Console /= null then
+         Client := Console.Get_Client;
+      end if;
+
+      if Client /= null then
          Expect (Console.Debuggee_Descriptor, Match, Regexp_Any, Timeout => 1);
 
          if Match /= Expect_Timeout then
@@ -440,8 +451,10 @@ package body DAP.Views.Consoles is
 
          --  Reset the TTY linking with the debugger and the console
          Console.Close_TTY;
-         if Console.Get_Client.Get_Debuggee_TTY /= Null_TTY then
-            Console.Get_Client.Close_TTY;
+         if Client /= null
+           and then Client.Get_Debuggee_TTY /= Null_TTY
+         then
+            Client.Close_TTY;
          end if;
          Console.Allocate_TTY;
 
@@ -519,11 +532,12 @@ package body DAP.Views.Consoles is
 
    overriding procedure On_Attach
      (Console : access Debuggee_Console_Record;
-      Client  : not null access DAP_Client'Class)
-   is
-      pragma Unreferenced (Client);
+      Client  : not null access DAP_Client'Class) is
    begin
       Console.Allocate_TTY;
+
+      Client.Set_Debuggee_Console
+        (Generic_Views.Abstract_View_Access (Console));
    end On_Attach;
 
    ------------------------------------
@@ -536,11 +550,9 @@ package body DAP.Views.Consoles is
    is
       use DAP.Types;
 
-      Quit : Boolean := False;
-   begin
-      Quit := Client /= null
+      Quit : constant Boolean := Client /= null
         and then Client.Get_Status /= Terminating;
-
+   begin
       Self.Close_TTY;
 
       if Quit then
@@ -615,7 +627,7 @@ package body DAP.Views.Consoles is
       Attach_To_Debuggee_Console
         (Client,
          Client.Kernel,
-         Name => " " & (+Base_Name (Client.Get_Executable)),
+         Name                => " " & (+Base_Name (Client.Get_Executable)),
          Update_On_Attach    => True,
          Create_If_Necessary =>
            DAP.Modules.Preferences.Execution_Window.Get_Pref

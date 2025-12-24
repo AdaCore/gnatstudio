@@ -114,10 +114,10 @@ package body DAP.Module is
       Deallocate_Id          : G_Source_Id := No_Source_Id;
       --  Signal to deallocate clients
 
-      Current_Debuger_ID    : Integer := 0;
+      Current_Debuger_ID    : Client_Id_Type := No_Client;
       --  Client that is used as a current active debugger
 
-      Client_ID             : Positive := 1;
+      Client_ID             : Valid_Client_Id_Type := 1;
       --  Counter to numerate started debuggers
    end record;
 
@@ -131,7 +131,7 @@ package body DAP.Module is
 
    function Get_Debugger
      (Id  : DAP_Module;
-      Num : Integer)
+      Num : Client_Id_Type)
       return DAP.Clients.DAP_Client_Access;
 
    overriding function Tooltip_Handler
@@ -419,10 +419,10 @@ package body DAP.Module is
 
       DAP_Module_ID.Current_Debuger_ID := DAP_Module_ID.Client_ID;
 
-      if DAP_Module_ID.Client_ID < Positive'Last then
+      if DAP_Module_ID.Client_ID < Valid_Client_Id_Type'Last then
          DAP_Module_ID.Client_ID := DAP_Module_ID.Client_ID + 1;
       else
-         DAP_Module_ID.Client_ID := 1;
+         DAP_Module_ID.Client_ID := Valid_Client_Id_Type'First;
       end if;
 
       if DAP_Module_ID.Clients.Is_Empty then
@@ -489,14 +489,14 @@ package body DAP.Module is
    -------------
 
    function On_Idle return Boolean is
-      Id : Integer;
+      Id : Valid_Client_Id_Type;
    begin
       DAP_Module_ID.Deallocate_Id := No_Source_Id;
 
       for Client of DAP_Module_ID.Clients_To_Deallocate loop
          Id := Client.Id;
          Free (Client);
-         Dap_Debugger_Unloaded_Hook.Run (DAP_Module_ID.Kernel, Id);
+         Dap_Debugger_Unloaded_Hook.Run (DAP_Module_ID.Kernel, Integer (Id));
       end loop;
       DAP_Module_ID.Clients_To_Deallocate.Clear;
 
@@ -1619,7 +1619,9 @@ package body DAP.Module is
    -- Get_Debugger --
    ------------------
 
-   function Get_Debugger (Id : Integer) return DAP.Clients.DAP_Client_Access is
+   function Get_Debugger
+     (Id : Client_Id_Type)
+      return DAP.Clients.DAP_Client_Access is
    begin
       return Get_Debugger (DAP_Module_ID, Id);
    end Get_Debugger;
@@ -1651,10 +1653,10 @@ package body DAP.Module is
 
    function Get_Debugger
      (Id  : DAP_Module;
-      Num : Integer)
+      Num : Client_Id_Type)
       return DAP.Clients.DAP_Client_Access is
    begin
-      if Id = null then
+      if Id = null or else Num = No_Client then
          return null;
       end if;
 
@@ -1712,7 +1714,7 @@ package body DAP.Module is
    -- Finished --
    --------------
 
-   procedure Finished (Id : Positive) is
+   procedure Finished (Id : Valid_Client_Id_Type) is
       use DAP_Client_Vectors;
       use type DAP.Clients.DAP_Client_Access;
 
@@ -1818,7 +1820,7 @@ package body DAP.Module is
          return True;
       end Set_Current_Debugger;
 
-      Old : constant Integer := DAP_Module_ID.Current_Debuger_ID;
+      Old : constant Client_Id_Type := DAP_Module_ID.Current_Debuger_ID;
 
    begin
       if Set_Current_Debugger (DAP_Module_ID, Current)
@@ -1829,10 +1831,14 @@ package body DAP.Module is
       end if;
 
       if DAP.Modules.Preferences.Continue_To_Line_Buttons.Get_Pref then
-         if Old = 0 and then DAP_Module_ID.Current_Debuger_ID /= 0 then
+         if Old = No_Client
+           and then DAP_Module_ID.Current_Debuger_ID /= No_Client
+         then
             Enable_Continue_To_Line_On_Editors (DAP_Module_ID.Kernel);
 
-         elsif Old /= 0 and then DAP_Module_ID.Current_Debuger_ID = 0 then
+         elsif Old /= No_Client
+           and then DAP_Module_ID.Current_Debuger_ID = No_Client
+         then
             Disable_Continue_To_Line_On_Editors (DAP_Module_ID.Kernel);
          end if;
       end if;

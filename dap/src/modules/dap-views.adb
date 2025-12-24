@@ -38,7 +38,7 @@ package body DAP.Views is
 
    overriding procedure Set_Client
      (Self : not null access View_Record;
-      Id   : Integer) is
+      Id   : Client_Id_Type) is
    begin
       Self.Client_Id := Id;
    end Set_Client;
@@ -232,7 +232,7 @@ package body DAP.Views is
 
          if V /= null and then V.Get_Client /= null then
             V.On_Detach (V.Get_Client);
-            V.Set_Client (-1);
+            V.Set_Client (No_Client);
          end if;
       end Execute;
 
@@ -264,12 +264,13 @@ package body DAP.Views is
       is
          use DAP.Clients;
 
-         V : constant Formal_Views.View_Access :=
+         V      : constant Formal_Views.View_Access :=
            Formal_Views.View_Access (View);
+         Client : constant DAP.Clients.DAP_Client_Access := Get_Client (V);
       begin
-         if Get_Client (V) /= null then
-            V.On_Detach (Get_Client (V));
-            V.Set_Client (-1);
+         if Client /= null then
+            V.On_Detach (Client);
+            V.Set_Client (No_Client);
          end if;
       end On_Destroy;
 

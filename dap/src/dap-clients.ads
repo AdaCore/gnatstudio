@@ -70,7 +70,8 @@ package DAP.Clients is
 
    type DAP_Client
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
-      Id     : Positive) is new LSP.Raw_Clients.Raw_Client with private;
+      Id     : Valid_Client_Id_Type) is
+     new LSP.Raw_Clients.Raw_Client with private;
    --  The client to communicate with DAP adapter
 
    type DAP_Client_Access is access all DAP_Client'Class;
@@ -373,7 +374,7 @@ private
 
    type DAP_Client
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
-      Id     : Positive) is new LSP.Raw_Clients.Raw_Client
+      Id     : Valid_Client_Id_Type) is new LSP.Raw_Clients.Raw_Client
    with record
       This            : DAP_Client_Access := DAP_Client'Unchecked_Access;
       Visual          : DAP_Visual_Debugger_Access;

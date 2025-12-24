@@ -290,6 +290,7 @@ def wait_DAP_server(method="", timeout=3000, error_msg=None):
         time += increment
 
         if time >= timeout:
+            GPS.Hook("DAP_response_processed").remove(dap_hook_handler)
             t.remove()
             if error_msg:
                 gps_fatal_error(
