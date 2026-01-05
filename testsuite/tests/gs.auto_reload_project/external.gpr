@@ -1,0 +1,4 @@
+project External is
+   for Source_Dirs use ("external_src");
+   for Object_Dir use "external_obj";
+end External;

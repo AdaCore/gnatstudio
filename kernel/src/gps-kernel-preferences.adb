@@ -1620,12 +1620,23 @@ package body GPS.Kernel.Preferences is
          Label   => -"Invalid references color",
          Path    => ":Scenario editor");
 
-      Generate_Relative_Paths := Manager.Create
-        (Name    => "Prj-Editor-Generate-Relative-Paths",
-         Default => True,
-         Doc     => -"Save relative paths in projects, not absolute paths.",
-         Label   => -"Relative project paths",
-         Path    => -"Project:General");
+      Generate_Relative_Paths :=
+        Manager.Create
+          (Name    => "Prj-Editor-Generate-Relative-Paths",
+           Default => True,
+           Doc     => -"Save relative paths in projects, not absolute paths.",
+           Label   => -"Relative project paths",
+           Path    => -"Project:General");
+
+      Auto_Project_Reload :=
+        Manager.Create
+          (Name    => "Prj-Editor-Auto-Reload-Project",
+           Default => True,
+           Doc     =>
+             -"Automatically reload the project tree when a"
+             & " loaded project file is modified by the user.",
+           Label   => -"Auto project reload",
+           Path    => -"Project:General");
 
       Trusted_Mode := Manager.Create
         (Name    => "Prj-Editor-Trusted-Mode",
