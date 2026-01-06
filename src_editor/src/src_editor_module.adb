@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                               GNAT Studio                                --
 --                                                                          --
---                     Copyright (C) 2001-2025, AdaCore                     --
+--                     Copyright (C) 2001-2026, AdaCore                     --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -965,10 +965,26 @@ package body Src_Editor_Module is
    begin
       --  Insert the saved file in the Recent menu
 
-      if File /= GNATCOLL.VFS.No_File
-        and then not Is_Auto_Save (File)
-      then
+      if File /= GNATCOLL.VFS.No_File and then not Is_Auto_Save (File) then
          Add_To_Recent_Menu (Kernel, File);
+      end if;
+
+      if Auto_Project_Reload.Get_Pref then
+         --  Reload the project if the saved file is a project file
+         --  belonging to the currently loaded project tree.
+         declare
+            Project : constant Project_Type :=
+              Lookup_Project (Self => Kernel, File => File);
+         begin
+            if Project /= No_Project then
+               Reload_Project_If_Needed
+                 (Kernel => Kernel, Recompute_View => True);
+               Kernel.Insert
+                 (Text   =>
+                    "Reloaded project tree following project file save",
+                  Add_LF => True);
+            end if;
+         end;
       end if;
 
       For_All_Views (Kernel, File, On_View'Access);

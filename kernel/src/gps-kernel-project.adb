@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                               GNAT Studio                                --
 --                                                                          --
---                     Copyright (C) 2001-2025, AdaCore                     --
+--                     Copyright (C) 2001-2026, AdaCore                     --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -623,7 +623,8 @@ package body GPS.Kernel.Project is
                Flags    => Empty_Message_Flags);
 
             Kernel.Registry.Tree.Reload_If_Needed
-              (Reloaded, Errors => Report_Error'Unrestricted_Access,
+              (Reloaded,
+               Errors         => Report_Error'Unrestricted_Access,
                Recompute_View => Recompute_View);
          end if;
       exception
