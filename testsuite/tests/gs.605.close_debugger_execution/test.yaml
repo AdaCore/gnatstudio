@@ -1,1 +1,4 @@
 title: 'gs.605.close_debugger_execution'
+# we don't have execution console inside GS on Windows
+skip:
+    - ['SKIP', 'env.build.os.name == "windows"']
