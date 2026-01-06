@@ -130,6 +130,8 @@ package DAP.Types.Breakpoints is
 
             Unhandled_Only : Boolean := False;
             --  Whether we should only break on unhandled ones.
+            --  Only taken into account if the DAP server supports it
+            --  through the 'exceptionOptions' capability.
       end case;
    end record;
 

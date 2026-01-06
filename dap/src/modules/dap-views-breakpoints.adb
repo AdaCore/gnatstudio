@@ -1825,14 +1825,23 @@ package body DAP.Views.Breakpoints is
 
       Start, The_End : Gtk_Text_Iter;
       Buffer         : Gtk_Text_Buffer;
+      Model          : constant Gtk_List_Store :=
+        -Self.Exception_Name.Get_Model;
+      Iter           : Gtk_Tree_Iter;
    begin
       if Br.Kind = On_Exception then
          Self.Breakpoint_Type.Set_Active (Breakpoint_Kind'Pos (On_Exception));
 
-         Add_Unique_Combo_Entry
-           (Combo       => Self.Exception_Name,
-            Text        => Br.Exception_Name,
-            Select_Text => True);
+         --  Try to select the exception in the combo box if it already exists.
+         --  Otherwise, add it to the list.
+         Iter :=
+           Add_Unique_List_Entry
+             (List    => Model,
+              Text    =>
+                VSS.Strings.Conversions.To_UTF_8_String (Br.Exception_Name),
+              Prepend => False,
+              Col     => Col_Exception_Name);
+         Self.Exception_Name.Set_Active_Iter (Iter);
 
          Set_Active (Self.Temporary, Br.Disposition /= Keep);
          Set_Active (Self.Stop_On_Unhandled_Only, Br.Unhandled_Only);
