@@ -370,15 +370,19 @@ def __add_to_main_units(project, file):
         else:
             select_start, select_end = create_new_main_attribute(buffer, main_unit_name)
 
-    # Select the newly added main unit
-    buffer.select(select_start, select_end)
-
     # Give focus to the .gpr file
     GPS.MDI.get_by_child(buffer.current_view()).raise_window()
 
-    # Save and reload
-    buffer.save()
-    GPS.execute_action("reload project")
+    # Save the .gpr project file
+    buffer.save(interactive=False)
+
+    # Reload the project if auto-reload is disabled
+    if not GPS.Preference("Prj-Editor-Auto-Reload-Project").get():
+        GPS.execute_action("reload project")
+
+    # Select the newly added main unit, and center the editor on it
+    buffer.select(select_start, select_end)
+    buffer.current_view().center()
 
     return True
 
