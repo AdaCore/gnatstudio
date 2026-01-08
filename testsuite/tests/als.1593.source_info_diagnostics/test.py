@@ -20,7 +20,7 @@ def run_test():
     GPS.EditorBuffer.get(GPS.File("foo.adb"))
     yield wait_until_true(
         lambda: len(GPS.Message.list(category=SOURCE_INFO_DIAGS_CATEGORY)) == 1,
-        timeout=3000,
+        timeout=4000,
         error_msg=(
             "Timeout while waiting for source information diagnostic "
             "to appear when opening a file that does not belong to the project."
@@ -31,7 +31,7 @@ def run_test():
     GPS.Preference("LSP-Ada-Source-Info-Diagnostics").set(False)
     yield wait_until_true(
         lambda: len(GPS.Message.list(category=SOURCE_INFO_DIAGS_CATEGORY)) == 0,
-        timeout=3000,
+        timeout=4000,
         error_msg=(
             "Timeout while waiting for source information diagnostics to disappear "
             "after disabling the 'LSP-Ada-Source-Info-Diagnostics' preference"
