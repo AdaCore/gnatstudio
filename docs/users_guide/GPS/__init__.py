@@ -964,6 +964,8 @@ class BuildTarget(object):
            finishes executing. This subprogram takes as parameter an integer,
            representing the exit code of the command. For instance:
 
+        .. code-block:: python
+
            GPS.BuildTarget("Custom...").execute(
                synchronous=True,
                on_exit=lambda status: GPS.MDI.dialog("status is %s" % status))
