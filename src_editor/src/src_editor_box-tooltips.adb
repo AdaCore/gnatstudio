@@ -169,27 +169,33 @@ package body Src_Editor_Box.Tooltips is
    is
       pragma Unreferenced (Widget);
 
-      Box           : constant Source_Editor_Box := Tooltip.Box;
-      View          : constant Source_View       := Get_View (Tooltip.Box);
-      Line, Col     : Gint;
-      Win_X, Win_Y  : Gint;
-      Start_Iter    : Gtk_Text_Iter;
-      End_Iter      : Gtk_Text_Iter;
-      Location      : Gdk_Rectangle;
-      Out_Of_Bounds : Boolean;
-      Window        : Gdk.Gdk_Window;
-      Window_Width  : Gint;
-      Window_Height : Gint;
-      Line_Info     : Line_Info_Width_Array_Access;
-      Vbox          : Gtk_Box;
-      Label         : Gtk_Label;
-      Area          : Gdk_Rectangle;
-      HBox          : Gtk_Box;
-      LX, LY        : Gint;
+      Box            : constant Source_Editor_Box := Tooltip.Box;
+      View           : constant Source_View       := Get_View (Tooltip.Box);
+      Line, Col      : Gint;
+      Win_X, Win_Y   : Gint;
+      Start_Iter     : Gtk_Text_Iter;
+      End_Iter       : Gtk_Text_Iter;
+      Location       : Gdk_Rectangle;
+      Out_Of_Bounds  : Boolean;
+      Window         : Gdk.Gdk_Window;
+      Window_Width   : Gint;
+      Window_Height  : Gint;
+      Line_Info      : Line_Info_Width_Array_Access;
+      Vbox           : Gtk_Box;
+      Label          : Gtk_Label;
+      Area           : Gdk_Rectangle;
+      HBox           : Gtk_Box;
+      Box_X, Box_Y   : Gint;
+      View_X, View_Y : Gint;
+      LX, LY         : Gint;
       --  The coordinates relative to the view, not the box
 
-      In_Side_Area  : Boolean;
-      Text          : Unbounded_String;
+      In_Side_Area   : Boolean;
+      Text           : Unbounded_String;
+
+      procedure Get_Line_Area;
+      --  Calculates coordinates based on Line/Column and fill Area as
+      --  the start coordinates and Win_X, Win_Y as the end coordinates.
 
       ---------------------
       -- Process_Message --
@@ -231,6 +237,24 @@ package body Src_Editor_Box.Tooltips is
          end if;
       end Process_Message;
 
+      -------------------
+      -- Get_Line_Area --
+      -------------------
+
+      procedure Get_Line_Area is
+      begin
+         Get_Iter_At_Line_Offset (Box.Source_Buffer, Start_Iter, Line, Col);
+         Search_Entity_Bounds (Start_Iter, End_Iter);
+         Get_Screen_Position (Box.Source_Buffer, Start_Iter, Line, Col);
+
+         Get_Iter_Location (View, Start_Iter, Location);
+         Buffer_To_Window_Coords
+           (View, Text_Window_Text, Location.X, Location.Y, Area.X, Area.Y);
+         Get_Iter_Location (View, End_Iter, Location);
+         Buffer_To_Window_Coords
+           (View, Text_Window_Text, Location.X, Location.Y, Win_X, Win_Y);
+      end Get_Line_Area;
+
    begin
       if not Display_Tooltip.Get_Pref then
          return null;
@@ -244,8 +268,6 @@ package body Src_Editor_Box.Tooltips is
       declare
          Box_Win  : constant Gdk_Window := Box.Get_Window;
          View_Win : constant Gdk_Window := View.Get_Window;
-         Box_X, Box_Y : Gint;
-         View_X, View_Y : Gint;
       begin
          Get_Origin (Box_Win, Box_X, Box_Y);
          Get_Origin (View_Win, View_X, View_Y);
@@ -339,6 +361,18 @@ package body Src_Editor_Box.Tooltips is
                Create_Tooltip_Label (Label, To_String (Content));
                Label.Override_Font (View_Fixed_Font.Get_Pref);
 
+               Get_Line_Area;
+
+               --  Compute the area surrounding the line side area, relative
+               --  to the pointer coordinates and set the area where the
+               --  cursor may move without the necessity to redraw the tooltip.
+               Area.Width  := View_X - Box_X;
+               Area.Height := Win_Y - Area.Y + Location.Height;
+               Area.X      := 1;
+               Area.Y      := Area.Y + Y - LY;
+
+               Tooltip.Set_Tip_Area (Area);
+
                if Image = null then
                   return Gtk_Widget (Label);
                else
@@ -370,20 +404,10 @@ package body Src_Editor_Box.Tooltips is
         (Box.Source_Buffer,
          Buffer_Line_Type (Line + 1));
 
-      Get_Iter_At_Line_Offset (Box.Source_Buffer, Start_Iter, Line, Col);
-      Search_Entity_Bounds (Start_Iter, End_Iter);
-      Get_Screen_Position (Box.Source_Buffer, Start_Iter, Line, Col);
+      Get_Line_Area;
 
       --  Compute the area surrounding the entity, relative to the pointer
       --  coordinates.
-
-      Get_Iter_Location (View, Start_Iter, Location);
-      Buffer_To_Window_Coords
-        (View, Text_Window_Text, Location.X, Location.Y, Area.X, Area.Y);
-      Get_Iter_Location (View, End_Iter, Location);
-      Buffer_To_Window_Coords
-        (View, Text_Window_Text, Location.X, Location.Y, Win_X, Win_Y);
-
       Area.Width  := Win_X - Area.X + Location.Width;
       Area.Height := Win_Y - Area.Y + Location.Height;
       Area.X := Area.X + X - LX;
