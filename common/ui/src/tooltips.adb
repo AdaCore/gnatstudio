@@ -533,7 +533,7 @@ package body Tooltips is
       --  Return True if (X, Y) is located in the tooltip itself.
 
    begin
-      --  If the tooltip is not mapped of if no area is set for the hovered
+      --  If the tooltip is not mapped or if no area is set for the hovered
       --  widget, return False.
 
       if not (Global_Tooltip.Get_Mapped
@@ -577,8 +577,10 @@ package body Tooltips is
       if In_Tip_Area then
          --  If the tooltip Y coordinate is in the tip area, return True.
          return True;
+
       elsif not Global_Tooltip.Is_Aligned then
          return False;
+
       else
          --  The cursor is not in the tip area: check if it's within the
          --  tooltip itself.
