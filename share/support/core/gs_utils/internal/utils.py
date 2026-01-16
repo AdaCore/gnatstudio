@@ -368,14 +368,46 @@ def wait_for_idle(cb, *args, **kwargs):
     GLib.idle_add(internal_on_idle)
 
 
-def wait_outline(filename):
+@workflows.run_as_workflow
+def wait_outline(filename, timeout=3000):
     """
-    Wait for the next idle after the Outline has finished loading filename.
+    Wait for the Outline loading filename.
+    If `timeout` is specified, wait at most timeout (milliseconds).
     """
-    name = None
-    while name != filename:
-        file = yield hook("outline_loaded")
-        name = file.base_name()
+    time = 0  # Time elapsed since the start of the wait
+    increment = 100  # How often to check for the outline response
+
+    p = Promise()
+
+    def outline_hook_handler(hook, file):
+        """
+        Hook handler for the outline_loaded hook.
+        Resolve the promise if the file matches the one we are waiting for.
+        """
+        if file.base_name() == filename:
+            GPS.Hook("outline_loaded").remove(outline_hook_handler)
+            p.resolve()
+            t.remove()
+            return False  # Stop listening to this hook
+
+    def timeout_handler(t):
+        """
+        Timeout handler for the outline_loaded hook.
+        If the timeout is exceeded, we resolve the returned promise.
+        """
+        nonlocal time
+        time += increment
+
+        if time >= timeout:
+            GPS.Hook("outline_loaded").remove(outline_hook_handler)
+            t.remove()
+            p.resolve()
+            return False  # Stop listening to this hook
+
+    GPS.Hook("outline_loaded").add(outline_hook_handler)
+    t = GPS.Timeout(increment, timeout_handler)
+
+    return p
 
 
 def record_time(t):

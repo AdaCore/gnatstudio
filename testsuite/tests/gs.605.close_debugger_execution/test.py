@@ -19,16 +19,17 @@ def driver():
     debug = p.get()
     yield wait_until_not_busy(debug)
 
-    yield p.send_promise("break main.adb:5")
+    debug.send("break main.adb:5")
     yield wait_DAP_server("setBreakpoints")
     yield wait_idle()
 
-    yield p.send_promise("run")
-    yield hook("debugger_location_changed")
-    yield wait_idle()
+    yield debug.send("run")
+    yield wait_DAP_server("stackTrace")
 
     GPS.MDI.get("Debugger Execution main" + dot_exe).close()
 
     # Check that we closed debugger session properly
-    yield wait_until_true(lambda: GPS.MDI.current_perspective() != "Debug")
+    yield wait_until_true(
+        lambda: GPS.MDI.current_perspective() != "Debug", timeout=2000
+    )
     gps_assert(GPS.MDI.current_perspective() != "Debug", True, "Wrong perspective")

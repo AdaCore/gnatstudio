@@ -1,6 +1,7 @@
 """
 This test checks expanded status of files view after refresh
 """
+
 import GPS
 from gs_utils.internal.utils import (
     gps_assert,
@@ -62,8 +63,7 @@ def run_test():
     gps_assert(d, expected, "Wrong contents of the files view")
 
     GPS.execute_action("refresh files view")
-    yield wait_idle()
-    yield timeout(100)
+    yield timeout(1000)
 
     d = dump_expanded(fview, 1)
     gps_assert(d, expected, "Wrong contents of the files view")
