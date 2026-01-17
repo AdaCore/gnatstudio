@@ -1288,9 +1288,6 @@ private
       Starts            : out Dummy_Editor_Location;
       Ends              : out Dummy_Editor_Location);
 
-   Nil_Editor_Location : constant Editor_Location'Class :=
-     Dummy_Editor_Location'(Controlled with null record);
-
    ---------------------
    -- Nil_Editor_Mark --
    ---------------------
@@ -1325,6 +1322,9 @@ private
 
    Nil_Editor_Mark : constant Editor_Mark'Class :=
      Dummy_Editor_Mark'(Controlled with null record);
+
+   Nil_Editor_Location : constant Editor_Location'Class :=
+     Dummy_Editor_Location'(Controlled with null record);
 
    -----------------------
    -- Nil_Editor_Buffer --
@@ -1584,9 +1584,6 @@ private
      (This : Dummy_Editor_Buffer)
       return Boolean is (False);
 
-   Nil_Editor_Buffer : constant Editor_Buffer'Class :=
-     Dummy_Editor_Buffer'(Controlled with null record);
-
    ---------------------
    -- Nil_Editor_View --
    ---------------------
@@ -1669,8 +1666,11 @@ private
    overriding procedure Set_Manual_Sync
      (This : Dummy_Editor_Cursor) is null;
 
-   Nil_Editor_Cursor : constant Editor_Cursor'Class
-     := Dummy_Editor_Cursor'(Controlled with null record);
+   Nil_Editor_Cursor : constant Editor_Cursor'Class :=
+     Dummy_Editor_Cursor'(Controlled with null record);
+
+   Nil_Editor_Buffer : constant Editor_Buffer'Class :=
+     Dummy_Editor_Buffer'(Controlled with null record);
 
    -------------------------------------
    -- Controlled_Editor_Buffer_Holder --
