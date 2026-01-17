@@ -353,7 +353,7 @@ package Language.Abstract_Language_Tree is
 
    No_Semantic_Node : constant Semantic_Node'Class;
    No_Semantic_Tree : constant Semantic_Tree'Class;
-   No_Semantic_Node_Array : constant Semantic_Node_Array'Class;
+   function No_Semantic_Node_Array    return Semantic_Node_Array'Class;
    function No_Semantic_Tree_Iterator return Semantic_Tree_Iterator'Class;
 
 private
@@ -506,7 +506,7 @@ private
    No_Semantic_Tree : constant Semantic_Tree'Class :=
      Dummy_Semantic_Tree'(null record);
 
-   No_Semantic_Node_Array : constant Semantic_Node_Array'Class :=
-     Dummy_Semantic_Node_Array'(null record);
+   function No_Semantic_Node_Array return Semantic_Node_Array'Class is
+     (Dummy_Semantic_Node_Array'(null record));
 
 end Language.Abstract_Language_Tree;

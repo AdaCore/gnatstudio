@@ -102,8 +102,7 @@ package Xref is
    --  If Include_Renames is true, then this subprogram follows the "renames"
    --  statement and returns the references to the renamed entities as well.
 
-   function Id_Eq (L, R : Root_Entity_Access) return Boolean is
-     (L.all = R.all);
+   function Id_Eq (L, R : Root_Entity_Access) return Boolean;
 
    package Entity_Arrays is new Array_Utils (Root_Entity_Access, Id_Eq);
    subtype Entity_Array is Entity_Arrays.Array_Type;
@@ -945,6 +944,9 @@ package Xref is
      is Root_Reference_Iterator_Refs.Holder;
 
 private
+
+   function Id_Eq (L, R : Root_Entity_Access) return Boolean is
+     (L.all = R.all);
 
    type Extended_Xref_Database is new GNATCOLL.Xref.Xref_Database with
       null record;
