@@ -1910,7 +1910,7 @@ package body GPS.Kernel.Preferences is
              -("Controls whether semantic highlighting is shown for the "
                & "languages that support it through LSP. "
                & "If disabled, only the syntax highlighting is used."),
-           Default => False);
+           Default => True);
 
       LSP_Diagnostics_Display := LSP_Diagnostics_Display_Policy_Prefs.Create
         (Manager  => Kernel.Get_Preferences,
