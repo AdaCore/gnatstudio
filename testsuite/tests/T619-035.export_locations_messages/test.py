@@ -14,13 +14,11 @@ def test_driver():
 
     buf.current_view().goto(buf.at(7, 21))
     GPS.execute_action("Find All References")
-    yield hook("language_server_response_processed")
+    yield wait_language_server("textDocument/references", "ada")
     yield wait_idle()
 
-    entry = get_widget_by_name("Locations View Filter")
-    entry.set_text("")
-    entry.grab_focus()
-    yield timeout(500)
+    GPS.MDI.get("Locations").raise_window()
+    yield wait_idle()
 
     # export all messages and check them
     GPS.execute_action("export locations to editor")
