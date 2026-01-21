@@ -170,7 +170,7 @@ package body Src_Editor_Box.Tooltips is
       pragma Unreferenced (Widget);
 
       Box            : constant Source_Editor_Box := Tooltip.Box;
-      View           : constant Source_View       := Get_View (Tooltip.Box);
+      View           : constant Source_View := Get_View (Tooltip.Box);
       Line, Col      : Gint;
       Win_X, Win_Y   : Gint;
       Start_Iter     : Gtk_Text_Iter;
@@ -190,8 +190,7 @@ package body Src_Editor_Box.Tooltips is
       LX, LY         : Gint;
       --  The coordinates relative to the view, not the box
 
-      In_Side_Area   : Boolean;
-      Text           : Unbounded_String;
+      In_Side_Area : Boolean;
 
       procedure Get_Line_Area;
       --  Calculates coordinates based on Line/Column and fill Area as
@@ -201,36 +200,43 @@ package body Src_Editor_Box.Tooltips is
       -- Process_Message --
       ---------------------
 
-      procedure Process_Message (Message : Message_Access);
-      procedure Process_Message (Message : Message_Access) is
+      procedure Process_Message
+        (Message : Message_Access; Tooltip_Text : in out Unbounded_String);
+      --  Process a message to extract tooltip markup if relevant,
+      --  appending it to Tooltip_Text if so.
+
+      procedure Process_Message
+        (Message : Message_Access; Tooltip_Text : in out Unbounded_String) is
       begin
          if Message /= null then
             declare
                Highlighting_Length : constant Highlight_Length :=
                  Message.Get_Highlighting_Length;
-
-               Mark_Column : constant Gint :=
+               Mark_Column         : constant Gint :=
                  Gint (Message.Get_Editor_Mark.Column);
-               Markup : Unbounded_String;
+               Markup              : Unbounded_String;
             begin
                if (Highlighting_Length = Highlight_Whole_Line
                    and then Message.Get_Flags /= Sides_Only)
-                 or else Col + 1 in Mark_Column ..
-               --  Highlight_Whole_Line is max int so adding
-               --  to it will do an overflow
-                 (if Highlighting_Length = Highlight_Whole_Line
-                  then Gint (Highlight_Whole_Line)
-                  else Mark_Column + Gint (Highlighting_Length))
+                 or else
+                   Col + 1
+                   in Mark_Column
+                    ..
+                      --  Highlight_Whole_Line is max int so adding
+                      --  to it will do an overflow
+                      (if Highlighting_Length = Highlight_Whole_Line
+                       then Gint (Highlight_Whole_Line)
+                       else Mark_Column + Gint (Highlighting_Length))
                then
                   Markup := Message.Get_Tooltip_Markup;
 
                   if Markup /= Null_Unbounded_String then
                      --  message is not empty
-                     if Text /= Null_Unbounded_String then
-                        Text := Text & ASCII.LF;
+                     if Tooltip_Text /= Null_Unbounded_String then
+                        Tooltip_Text := Tooltip_Text & ASCII.LF;
                      end if;
 
-                     Text := Text & Markup;
+                     Tooltip_Text := Tooltip_Text & Markup;
                   end if;
                end if;
             end;
@@ -443,25 +449,27 @@ package body Src_Editor_Box.Tooltips is
          if Line_Info /= null then
             for J in Line_Info'Range loop
                declare
-                  C       : Message_Reference_List.Cursor;
-                  Message : Message_Access;
-                  Image   : Gtk_Image;
+                  C            : Message_Reference_List.Cursor;
+                  Message      : Message_Access;
+                  Image        : Gtk_Image;
+                  Tooltip_Text : Unbounded_String;
                begin
                   C := Line_Info (J).Messages.Last;
 
                   while Message_Reference_List.Has_Element (C) loop
                      Message := Message_Reference_List.Element (C).Message;
 
-                     Process_Message (Message);
+                     Process_Message
+                       (Message => Message, Tooltip_Text => Tooltip_Text);
 
                      Message_Reference_List.Previous (C);
                   end loop;
 
-                  if Text /= Null_Unbounded_String then
+                  if Tooltip_Text /= Null_Unbounded_String then
                      if Message /= null
                        and then Message.Get_Action /= null
-                       and then Message.Get_Action.Image /=
-                         Null_Unbounded_String
+                       and then
+                         Message.Get_Action.Image /= Null_Unbounded_String
                      then
                         Gtk_New_From_Icon_Name
                           (Image,
@@ -474,8 +482,7 @@ package body Src_Editor_Box.Tooltips is
                      end if;
 
                      if Image = null then
-                        Create_Tooltip_Label
-                          (Label, To_String (Text));
+                        Create_Tooltip_Label (Label, To_String (Tooltip_Text));
                         Label.Override_Font (View_Fixed_Font.Get_Pref);
                         Vbox.Pack_Start (Label, Expand => False, Fill => True);
                      else
@@ -483,8 +490,7 @@ package body Src_Editor_Box.Tooltips is
                         Vbox.Pack_Start (HBox, Expand => False, Fill => True);
                         HBox.Pack_Start
                           (Image, Expand => False, Fill => False);
-                        Create_Tooltip_Label
-                          (Label, To_String (Text));
+                        Create_Tooltip_Label (Label, To_String (Tooltip_Text));
                         Label.Override_Font (View_Fixed_Font.Get_Pref);
                         HBox.Pack_Start (Label, Expand => True, Fill => True);
                      end if;

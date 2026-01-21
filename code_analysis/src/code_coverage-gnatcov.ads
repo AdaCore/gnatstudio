@@ -60,9 +60,15 @@ package Code_Coverage.GNATcov is
                                  others                          =>
                                     Low);
 
+   package Secondary_Message_Vectors is new Ada.Containers.Indefinite_Vectors
+     (Index_Type   => Positive,
+      Element_Type => String);
+
    type GNATcov_Item_Coverage is record
-      Column  : Basic_Types.Visible_Column_Type;
-      Message : Ada.Strings.Unbounded.Unbounded_String;
+      Column             : Basic_Types.Visible_Column_Type;
+      Message            : Ada.Strings.Unbounded.Unbounded_String;
+      Secondary_Messages : Secondary_Message_Vectors.Vector;
+      --  Optional secondary messages (e.g., MCDC evaluation vectors)
    end record;
    --  One line can contain multiple coverage items, and each coverage item can
    --  have independant coverage issues.

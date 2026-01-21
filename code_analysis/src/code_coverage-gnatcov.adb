@@ -259,9 +259,9 @@ package body Code_Coverage.GNATcov is
             Column        : Basic_Types.Visible_Column_Type;
          begin
             while Details_First <= File_Contents'Last
-              and then
-                (File_Contents (Details_First) /= ' '
-                 and then File_Contents (Details_First) not in '0' .. '9')
+              and then File_Contents (Details_First) /= ' '
+              and then File_Contents (Details_First) not in '0' .. '9'
+              and then File_Contents (Details_First) /= ASCII.LF
             loop
                Details_Last := Index
                  (File_Contents.all, (1 => ASCII.LF), Details_First);
@@ -289,11 +289,56 @@ package body Code_Coverage.GNATcov is
                         .. Location_Matches (2).Last));
                end if;
 
-               Line_Coverage.Items.Append
-                 (GNATcov_Item_Coverage'
-                    (Column  => Column,
-                     Message => To_Unbounded_String
-                       (File_Contents (Details_First .. Details_Last))));
+               declare
+                  Item : GNATcov_Item_Coverage :=
+                    (Column             => Column,
+                     Message            =>
+                       To_Unbounded_String
+                         (File_Contents (Details_First .. Details_Last)),
+                     Secondary_Messages =>
+                       Secondary_Message_Vectors.Empty_Vector);
+               begin
+                  --  Check if this is "Evaluation vectors found:" message
+                  --  If so, collect following indented lines as
+                  --  secondary messages.
+                  if Index
+                    (File_Contents (Details_First .. Details_Last),
+                     "Evaluation vectors found:") > 0
+                  then
+                     --  Collect all indented lines following this message
+                     Details_First := Current;
+                     while Details_First <= File_Contents'Last
+                       and then Details_First < File_Contents'Last
+                       and then File_Contents (Details_First) = ' '
+                     loop
+                        declare
+                           Secondary_Last : constant Natural :=
+                             Index
+                               (Source  => File_Contents.all,
+                                Pattern => (1 => ASCII.LF),
+                                From    => Details_First);
+                           Line_Text      : String renames File_Contents
+                             (Details_First ..
+                                (if Secondary_Last = 0
+                                 then File_Contents'Last
+                                 else Secondary_Last - 1));
+                        begin
+                           Current := (if Secondary_Last = 0
+                                       then File_Contents'Last + 1
+                                       else Secondary_Last + 1);
+
+                           --  Only add non-whitespace-only lines
+                           if Trim (Line_Text, Both) /= "" then
+                              Item.Secondary_Messages.Append (Line_Text);
+                           end if;
+
+                           Details_First := Current;
+                        end;
+                     end loop;
+                  end if;
+
+                  Line_Coverage.Items.Append (Item);
+               end;
                Details_First := Current;
             end loop;
          end;
@@ -331,7 +376,10 @@ package body Code_Coverage.GNATcov is
 
       if Empty then
          Process
-           ((0, To_Unbounded_String (Coverage_Verbose_Message (Coverage))));
+           ((Column             => 0,
+             Message            =>
+               To_Unbounded_String (Coverage_Verbose_Message (Coverage)),
+             Secondary_Messages => Secondary_Message_Vectors.Empty_Vector));
       end if;
    end Process_Detailed_Messages;
 
@@ -355,18 +403,39 @@ package body Code_Coverage.GNATcov is
       procedure Process (Item : GNATcov_Item_Coverage);
       --  Helper to add a message in the location window for the current line
 
+      -------------
+      -- Process --
+      -------------
+
       procedure Process (Item : GNATcov_Item_Coverage) is
+         Primary_Msg : Message_Access;
       begin
-         Create_Simple_Message
-           (Kernel.Get_Messages_Container,
-            Coverage_Category,
-            File,
-            Line_Number,
-            Item.Column,
-            VSS.Strings.Conversions.To_Virtual_String (Item.Message),
-            GNATcov_Msg_Importances (Coverage.Status),
-            Coverage_Message_Flags,
-            Allow_Auto_Jump_To_First => Allow_Auto_Jump_To_First);
+         Primary_Msg :=
+           Message_Access
+             (Create_Simple_Message
+                (Container                => Kernel.Get_Messages_Container,
+                 Category                 => Coverage_Category,
+                 File                     => File,
+                 Line                     => Line_Number,
+                 Column                   => Item.Column,
+                 Text                     =>
+                   VSS.Strings.Conversions.To_Virtual_String (Item.Message),
+                 Importance               =>
+                   GNATcov_Msg_Importances (Coverage.Status),
+                 Flags                    => Coverage_Message_Flags,
+                 Allow_Auto_Jump_To_First => Allow_Auto_Jump_To_First));
+
+         --  Create secondary messages if any
+         for Secondary_Msg of Item.Secondary_Messages loop
+            Create_Simple_Message
+              (Parent => Primary_Msg,
+               File   => File,
+               Line   => Line_Number,
+               Column => Item.Column,
+               Text   =>
+                 VSS.Strings.Conversions.To_Virtual_String (Secondary_Msg),
+               Flags  => Coverage_Message_Flags);
+         end loop;
       end Process;
 
    begin
