@@ -17,4 +17,13 @@ project GVD is
 
    package Binder renames Shared.Binder;
 
+   package Coverage is
+      for Excluded_Units use (
+         --  The LLDB integration has not been fully implemented
+         --  and probably should not be considered for coverage at
+         --  this time.
+         "Debugger.LLDB"
+      );
+   end Coverage;
+
 end GVD;
