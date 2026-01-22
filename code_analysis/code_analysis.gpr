@@ -17,4 +17,11 @@ project Code_Analysis is
 
    package Compiler renames Shared.Compiler;
 
+   package Coverage is
+      --  The following are generated, should not be considered
+      --  for coverage
+      for Excluded_Units use
+        ("Database", "Database.Orm", "Database.Names");
+   end Coverage;
+
 end Code_Analysis;
