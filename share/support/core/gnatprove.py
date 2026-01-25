@@ -16,8 +16,17 @@ import libadalang as lal
 # Name of the default console
 MESSAGES = "Messages"
 
-# Category of messages in GNAT Studio
-MESSAGES_CATEGORY = "GNATprove"
+# Message categories for GNAT Studio
+
+# Messages related to running gnatprove itself
+GNATPROVE_MAIN_CATEGORY = "GNATprove"
+
+# Messages related to generating an executable test from a failed check
+GNATPROVE_TEST_GEN_CATEGORY = "GNATprove Harness Generation"
+
+# Messages related to generating counterexamples via an external tool such as
+# gnattest and/or gnatfuzz
+GNATPROVE_CE_GEN_CATEGORY = "GNATprove Counterexample Generation"
 
 # Name of the trace used for logging SPARK diagnostics from GNAT Studio. Can be
 # activated e.g. by the user or the testsuite.

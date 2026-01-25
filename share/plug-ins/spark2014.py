@@ -17,7 +17,7 @@ from functools import reduce
 import libadalang as lal
 
 from gnatprove import (
-    MESSAGES_CATEGORY,
+    GNATPROVE_MAIN_CATEGORY,
     current_subprogram,
     logger,
     print_error,
@@ -53,12 +53,27 @@ gnatprove_file = os.path.join(spark2014_dir, "gnatprove.xml")
 gnattest_file = os.path.join(spark2014_dir, "gnattest.xml")
 gnatfuzz_file = os.path.join(spark2014_dir, "gnatfuzz.xml")
 
-OUTPUT_PARSERS = """
+# Output parsers to use for GNATprove runs
+OUTPUT_PARSERS_GNATPROVE = """
     output_chopper
     utf8_converter
     progress_parser
     job_recorder
     gnatprove_parser
+    console_writer
+    end_of_build"""
+
+# Output parsers to use for optional activities on failed checks using GNATtest
+# and/or GNATfuzz. These parsers just dump the output of the executed processes
+# to the Console view. This is generally sufficient since for those activities
+# gnattest and gnatfuzz are launched in the background. After the initial
+# generation of the test harness the user can use dedicated GNATtest and
+# GNATfuzz menus to perform further actions independently from the current
+# plug-in.
+OUTPUT_PARSERS_GNATTEST_CE = """
+    output_chopper
+    utf8_converter
+    progress_parser
     console_writer
     end_of_build"""
 
@@ -594,7 +609,7 @@ class GNATprove_Parser(tool_output.OutputParser):
 
         # Create a GPS.AnalysisTool instance to collect the messages that will
         # be shown in the report.
-        self.analysis_tool = GPS.AnalysisTool(MESSAGES_CATEGORY)
+        self.analysis_tool = GPS.AnalysisTool(GNATPROVE_MAIN_CATEGORY)
 
         # create rules for all the messages not related with SPARK itself
         # (e.g: GNAT warnings etc.).
@@ -782,7 +797,7 @@ class GNATprove_Parser(tool_output.OutputParser):
 
         # Check for codefixes in non-spark messages, if any
         if self.non_spark_output:
-            GPS.Codefix.parse(MESSAGES_CATEGORY, self.non_spark_output)
+            GPS.Codefix.parse(GNATPROVE_MAIN_CATEGORY, self.non_spark_output)
             self.non_spark_output = ""
 
     def split_in_secondary_messages(self, fn, line, column, output, importance, extra):
@@ -811,7 +826,7 @@ class GNATprove_Parser(tool_output.OutputParser):
 
         message_text = list_secondaries[0]
         msg = self.analysis_tool.create_message(
-            MESSAGES_CATEGORY,
+            GNATPROVE_MAIN_CATEGORY,
             fn,
             line,
             column,
@@ -825,7 +840,7 @@ class GNATprove_Parser(tool_output.OutputParser):
             elif text.startswith(" (") or text.startswith(" ["):
                 text = text[2:-1]
             GPS.Locations.add(
-                MESSAGES_CATEGORY,
+                GNATPROVE_MAIN_CATEGORY,
                 fn,
                 line,
                 column,
@@ -861,7 +876,7 @@ class GNATprove_Parser(tool_output.OutputParser):
         # Remove the previous GNATprove messages first
         if not self.previous_messages_removed:
             GPS.Locations.remove_category(
-                MESSAGES_CATEGORY, GPS.Message.Flags.INVISIBLE
+                GNATPROVE_MAIN_CATEGORY, GPS.Message.Flags.INVISIBLE
             )
             self.previous_messages_removed = True
 
@@ -919,7 +934,7 @@ class GNATprove_Parser(tool_output.OutputParser):
                 else:
                     # Let the "location parser" handle non-spark messages
                     GPS.Locations.add(
-                        MESSAGES_CATEGORY,
+                        GNATPROVE_MAIN_CATEGORY,
                         fn,
                         lineno,
                         column,
@@ -1271,21 +1286,25 @@ class GNATProve_Plugin:
         process = GPS.Process("gnatprove -h")
         help_msg = process.get_result()
         GPS.parse_xml(
-            xml_gnatprove.format(help=help_msg, output_parsers=OUTPUT_PARSERS)
+            xml_gnatprove.format(help=help_msg, output_parsers=OUTPUT_PARSERS_GNATPROVE)
         )
         GPS.parse_xml(xml_gnatprove_menus % {"prefix": prefix})
         if gnattest:
             process = GPS.Process("gnattest --help")
             help_msg = process.get_result()
             GPS.parse_xml(
-                xml_gnattest.format(help=help_msg, output_parsers=OUTPUT_PARSERS)
+                xml_gnattest.format(
+                    help=help_msg, output_parsers=OUTPUT_PARSERS_GNATTEST_CE
+                )
             )
             GPS.parse_xml(xml_gnatprove_menus_with_gnattest % {"prefix": prefix})
             if gnatfuzz:
                 process = GPS.Process("gnatfuzz --help")
                 help_msg = process.get_result()
                 GPS.parse_xml(
-                    xml_gnatfuzz.format(help=help_msg, output_parsers=OUTPUT_PARSERS)
+                    xml_gnatfuzz.format(
+                        help=help_msg, output_parsers=OUTPUT_PARSERS_GNATTEST_CE
+                    )
                 )
                 GPS.parse_xml(xml_gnatprove_menus_with_gnatfuzz % {"prefix": prefix})
 
@@ -1436,7 +1455,7 @@ def prove_check_context(context):
 
 def can_show_report():
     return (
-        len(GPS.Message.list(category=MESSAGES_CATEGORY)) > 0
+        len(GPS.Message.list(category=GNATPROVE_MAIN_CATEGORY)) > 0
         and gnatprove_plug.output_parser is not None
     )
 

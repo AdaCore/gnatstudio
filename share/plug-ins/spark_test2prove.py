@@ -14,7 +14,7 @@ import os
 
 import GPS
 from gnatprove import (
-    MESSAGES_CATEGORY,
+    GNATPROVE_CE_GEN_CATEGORY,
     logger,
     UserAbort,
     ExternalProcessError,
@@ -85,7 +85,7 @@ def _extract_ce_candidates(config: Config):
     )
 
     GPS.Message(
-        MESSAGES_CATEGORY,
+        GNATPROVE_CE_GEN_CATEGORY,
         GPS.File(config.check_file),
         config.check_line,
         config.check_col,
@@ -244,6 +244,9 @@ def run(
     :param force: Flag passed to GPS.BuildTarget. If True, all dialogs are
         suppressed and the processes are launched directly.
     """
+
+    # Remove any previous messages related to test generation
+    GPS.Locations.remove_category(GNATPROVE_CE_GEN_CATEGORY)
 
     print_info("test2prove starting..." + os.linesep)
 

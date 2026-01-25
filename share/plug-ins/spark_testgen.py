@@ -13,7 +13,7 @@ import re
 
 import GPS
 from gnatprove import (
-    MESSAGES_CATEGORY,
+    GNATPROVE_TEST_GEN_CATEGORY,
     logger,
     UserAbort,
     ExternalProcessError,
@@ -257,6 +257,9 @@ def run(spec_loc, check_loc, vc_kind, force=False):
         are suppressed and the processes are launched directly.
     """
 
+    # Remove any previous messages related to test generation
+    GPS.Locations.remove_category(GNATPROVE_TEST_GEN_CATEGORY)
+
     print_info("testgen starting...\n")
 
     # Find the .spark file for the Ada unit that defines the enclosing subprogram
@@ -395,7 +398,7 @@ def run(spec_loc, check_loc, vc_kind, force=False):
     print_info(f"Test harness has been generated and can be found at {harness_path}")
 
     GPS.Message(
-        MESSAGES_CATEGORY,
+        GNATPROVE_TEST_GEN_CATEGORY,
         GPS.File(check_file),
         check_line,
         check_col,
