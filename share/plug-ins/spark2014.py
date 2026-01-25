@@ -13,6 +13,7 @@ import tool_output
 import json
 import re
 from functools import reduce
+from pathlib import Path
 
 import libadalang as lal
 
@@ -62,23 +63,13 @@ OUTPUT_PARSERS = """
     console_writer
     end_of_build"""
 
-with open(gnatprove_menus_file, "r") as input_file:
-    xml_gnatprove_menus = input_file.read()
+xml_gnatprove_menus = Path(gnatprove_menus_file).read_text()
+xml_gnatprove_menus_with_gnattest = Path(gnatprove_menus_with_gnattest_file).read_text()
+xml_gnatprove_menus_with_gnatfuzz = Path(gnatprove_menus_with_gnatfuzz_file).read_text()
 
-with open(gnatprove_menus_with_gnattest_file, "r") as input_file:
-    xml_gnatprove_menus_with_gnattest = input_file.read()
-
-with open(gnatprove_menus_with_gnatfuzz_file, "r") as input_file:
-    xml_gnatprove_menus_with_gnatfuzz = input_file.read()
-
-with open(gnatprove_file, "r") as input_file2:
-    xml_gnatprove = input_file2.read()
-
-with open(gnattest_file, "r") as input_file3:
-    xml_gnattest = input_file3.read()
-
-with open(gnatfuzz_file, "r") as input_file4:
-    xml_gnatfuzz = input_file4.read()
+xml_gnatprove = Path(gnatprove_file).read_text()
+xml_gnattest = Path(gnattest_file).read_text()
+xml_gnatfuzz = Path(gnatfuzz_file).read_text()
 
 # constants that are required by the plugin
 
