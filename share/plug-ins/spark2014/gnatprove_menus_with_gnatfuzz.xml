@@ -16,7 +16,7 @@
     </action>
 
     <contextual action="Fuzz Counterexamples">
-      <Title>%(prefix)s/Generate and Fuzz Counterexamples</Title>
+      <Title>%(prefix)s/Generate Counterexamples with GNATfuzz</Title>
     </contextual>
 
   </GNATPROVE>

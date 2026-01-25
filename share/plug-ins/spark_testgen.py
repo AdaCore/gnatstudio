@@ -15,12 +15,12 @@ import GPS
 from gnatprove import (
     GNATPROVE_TEST_GEN_CATEGORY,
     logger,
-    UserAbort,
     ExternalProcessError,
     print_error,
     print_info,
     print_warning,
 )
+from workflows.promises import ProcessWrapper, TargetWrapper
 
 # The following target names must be unique. See similar constants in
 # spark_test2prove.py.
@@ -156,7 +156,7 @@ def split_location(s):
 
 def get_gnattest_hash(project_name, filename, line):
     """
-    Retrieve the hash16 that GNATtest uses to refer to the subprogram enclosing
+    Retrieve the hash that GNATtest uses to refer to the subprogram enclosing
     the given source location. The call to GNATtest occurs in the background.
     Parameters cannot be tweaked by the user.
 
@@ -173,16 +173,17 @@ def get_gnattest_hash(project_name, filename, line):
     ]
     logger.log(f"Calling gnattest to generate hash: {' '.join(command)}")
 
-    proc = GPS.Process(command, capture_output=True, text=True)
+    proc = ProcessWrapper(command)
 
-    status = proc.wait()
+    status, output = yield proc.wait_until_terminate(show_if_error=True)
+    logger.log(f"gnattest output: {output}")
     logger.log(f"gnattest finished with result: {status}")
 
-    if status:
-        print_error(proc.get_result())
+    if status != 0:
+        print_error(output)
         raise ExternalProcessError(f"Call to gnattest failed with exit code {status}")
 
-    hash_value = proc.get_result().strip()
+    hash_value = output.strip()
     logger.log(f"Obtained hash value '{hash_value}'")
 
     # Check that the hash value is a non-empty word. This catches the following
@@ -199,7 +200,7 @@ def get_gnattest_hash(project_name, filename, line):
             " supported by GNATtest."
         )
 
-    return hash_value
+    yield hash_value
 
 
 def run_gnattest(filename, line, target, force):
@@ -213,26 +214,16 @@ def run_gnattest(filename, line, target, force):
     :param force: If True, the dialog is suppressed and the command is launched
         directly.
 
-    Exits with UserAbort when the user aborts the dialog, ExternalProcessError
-    when the call to gnattest fails.
+    Exits with ExternalProcessError when the call to gnattest fails.
     """
 
-    # Define a mutable holder to use in the callback
-    status_holder: list[int] = [None]
-
-    def store_status(s):
-        status_holder[0] = s
-
-    GPS.BuildTarget(target).execute(
-        extra_args=[f"--gen-test-subprograms={filename}:{str(line)}"],
-        on_exit=store_status,
-        force=force,
+    runner = TargetWrapper(target)
+    status = yield runner.wait_on_execute(
+        extra_args=[f"--gen-test-subprograms={filename}:{str(line)}"], force=force
     )
-    status = status_holder[0]
+    logger.log(f"run_gnattest: finished with status={status}")
 
-    if status is None:
-        raise UserAbort
-    elif status:
+    if status != 0:
         raise ExternalProcessError(f"Call to gnattest failed with exit code {status}")
 
 
@@ -250,6 +241,8 @@ def run(spec_loc, check_loc, vc_kind, force=False):
         5. Call gnattest again to update the test data in the Ada test cases
            based on the updated JSON file.
 
+    Note: This function needs to be called as a GNAT Studio workflow.
+
     :param spec_loc: Source code location of the spec.
     :param check_loc: Source code location of the given GNATprove check.
     :param vc_kind: VC kind of the given GNATprove check.
@@ -258,18 +251,17 @@ def run(spec_loc, check_loc, vc_kind, force=False):
     """
 
     # Remove any previous messages related to test generation
+
     GPS.Locations.remove_category(GNATPROVE_TEST_GEN_CATEGORY)
 
-    print_info("testgen starting...\n")
+    print_info("Starting to generate executable test...")
 
     # Find the .spark file for the Ada unit that defines the enclosing subprogram
 
     spec_file, spec_line, spec_col = split_location(spec_loc)
-
     check_file, check_line, check_col = split_location(check_loc)
 
     project_name = str.lower(GPS.Project.root().name())
-
     unit_name = os.path.splitext(os.path.basename(spec_file))[0]
 
     logger.log(f"testgen.run: spec={spec_loc}")
@@ -325,7 +317,7 @@ def run(spec_loc, check_loc, vc_kind, force=False):
     # Get the hash that GNATtest will use for the enclosing subprogram
 
     try:
-        hash_value = get_gnattest_hash(
+        hash_value = yield get_gnattest_hash(
             project_name, os.path.join("src", spec_file), spec_line
         )
     except (ExternalProcessError, ValueError) as e:
@@ -337,15 +329,10 @@ def run(spec_loc, check_loc, vc_kind, force=False):
     print_info("Calling gnattest to generate harness and initial test cases ...")
 
     try:
-        run_gnattest(spec_file, spec_line, GNATTEST_TARGET1, force)
-    except UserAbort:
-        print_info("Aborted by the user")
-        return
+        yield run_gnattest(spec_file, spec_line, GNATTEST_TARGET1, force)
     except ExternalProcessError as e:
         print_error(f"{e}")
         return
-
-    logger.log("Harness and initial tests generated.")
 
     json_file = os.path.join(
         artifacts_dir,
@@ -385,10 +372,7 @@ def run(spec_loc, check_loc, vc_kind, force=False):
     print_info("Calling gnattest to update test case with counterexample values ...")
 
     try:
-        run_gnattest(spec_file, spec_line, GNATTEST_TARGET2, force)
-    except UserAbort:
-        print_info("Aborted by the user")
-        return
+        yield run_gnattest(spec_file, spec_line, GNATTEST_TARGET2, force)
     except ExternalProcessError as e:
         print_error(f"{e}")
         return

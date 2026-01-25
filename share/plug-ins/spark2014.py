@@ -26,6 +26,7 @@ from gnatprove import (
 
 import spark_testgen
 import spark_test2prove
+import workflows
 
 # We create the actions and menus in XML instead of python to share the same
 # source for GPS and GNATbench (which only understands the XML input for now).
@@ -1056,6 +1057,7 @@ def on_prove_region(self):
     generic_on_analyze(target, args=args)
 
 
+@workflows.run_as_workflow
 def on_generate_executable_test(context, force=False):
     logger.log("on_generate_executable_test starting ...")
 
@@ -1069,7 +1071,7 @@ def on_generate_executable_test(context, force=False):
         print_error("Unsupported context. Expecting a subprogram.")
         return
 
-    spark_testgen.run(str(spec_loc), str(check_loc), vc_kind, force)
+    yield spark_testgen.run(str(spec_loc), str(check_loc), vc_kind, force)
 
 
 def _generate_counter_example_with_gnattest(context, use_fuzzer, force):
@@ -1081,19 +1083,23 @@ def _generate_counter_example_with_gnattest(context, use_fuzzer, force):
         print_error("Unsupported context. Expecting a subprogram.")
         return
 
-    spark_test2prove.run(str(spec_loc), str(check_loc), use_fuzzer, force)
+    yield spark_test2prove.run(str(spec_loc), str(check_loc), use_fuzzer, force)
 
 
+@workflows.run_as_workflow
 def on_generate_counter_example_with_gnattest(context, force=False):
     logger.log("on_generate_counter_example_with_gnattest starting ...")
 
-    _generate_counter_example_with_gnattest(context, use_fuzzer=False, force=force)
+    yield _generate_counter_example_with_gnattest(
+        context, use_fuzzer=False, force=force
+    )
 
 
+@workflows.run_as_workflow
 def on_generate_counter_example_with_gnatfuzz(context, force=False):
     logger.log("on_generate_counter_example_with_gnatfuzz starting ...")
 
-    _generate_counter_example_with_gnattest(context, use_fuzzer=True, force=force)
+    yield _generate_counter_example_with_gnattest(context, use_fuzzer=True, force=force)
 
 
 def on_show_report(self):

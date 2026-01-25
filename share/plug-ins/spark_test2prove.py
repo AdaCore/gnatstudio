@@ -1,8 +1,8 @@
 """
-This plugin provides the functionality to call GNATtest to generate test cases
-that can be supplied as counterexamples candidates to GNATprove. The test case
-generation can use optionally either GNATfuzz or GNATtest's internal
-heuristics.
+This plugin provides the functionality to call either GNATtest of GNATfuzz to
+generate test cases that can be supplied as counterexample candidates to
+GNATprove. Both test case generation workflows require GNATtest being available
+since they use the shared JSON format for test cases.
 
 A prerequisite is an unproven, i.e., potentially failing, SPARK check found by
 GNATprove.
@@ -16,7 +16,6 @@ import GPS
 from gnatprove import (
     GNATPROVE_CE_GEN_CATEGORY,
     logger,
-    UserAbort,
     ExternalProcessError,
     print_error,
     print_info,
@@ -24,15 +23,15 @@ from gnatprove import (
     print_warning,
 )
 from spark_testgen import split_location, get_gnattest_hash, run_gnattest
+from workflows.promises import ProcessWrapper, TargetWrapper
 
 # The following target names must be unique. See similar constants in
 # spark_testgen.py.
 
 # GNATtest target to use when use_fuzzing=False
-GNATTEST_TARGET1 = "Generate harness and test cases"
+GNATTEST_TARGET = "Run GNATtest to find counterexample candidates"
 # GNATtest target to use when use_fuzzing=True
-GNATTEST_TARGET2 = "(Step 1/2) Generate harness and initial test cases"
-GNATFUZZ_TARGET = "(Step 2/2) Run GNATFuzz to find counterexamples"
+GNATFUZZ_TARGET = "Run GNATfuzz to find counterexample candidates"
 
 
 @dataclass
@@ -94,22 +93,7 @@ def _extract_ce_candidates(config: Config):
     )
 
 
-def _on_fuzzing_exit(config: Config, status: int):
-    """
-    Callback function executed when the GNATfuzz process exits.
-    It checks the status and then extracts the candidates.
-    """
-    logger.log(f"Fuzzing call completed with status {status}")
-
-    # TODO: eng/spark/spark2014#1140 - Also check the issues.log
-    if status:
-        print_error(f"Call to gnatfuzz failed with exit code {status}")
-        return
-
-    _extract_ce_candidates(config)
-
-
-def _fuzz_and_continue(config: Config, sub_id: int, force: bool) -> None:
+def _fuzz(config: Config, sub_id: int, force: bool):
     """
     Open a dialog to call GNATfuzz for generating 'better' test values for the
     given subprogram.
@@ -120,17 +104,17 @@ def _fuzz_and_continue(config: Config, sub_id: int, force: bool) -> None:
     :param sub_id: GNATfuzz ID for the subprogram to fuzz.
     :param force: If True, the dialog is suppressed and the command is launched
         directly.
-
-    Exits with UserAbort when the user aborts the dialog, ExternalProcessError
-    when the call to gnatfuzz fails.
     """
 
-    GPS.BuildTarget(GNATFUZZ_TARGET).execute(
+    runner = TargetWrapper(GNATFUZZ_TARGET)
+    status = yield runner.wait_on_execute(
         extra_args=[f"--subprogram-ids-to-test={sub_id}", "--disable-styled-output"],
-        on_exit=lambda status: _on_fuzzing_exit(config, status),
         force=force,
-        synchronous=False,
     )
+    logger.log(f"_fuzz: finished with status={status}")
+
+    if status != 0:
+        raise ExternalProcessError(f"Call to gnatfuzz failed with exit code {status}")
 
 
 def _get_gnatfuzz_subprogram_id(config: Config):
@@ -162,18 +146,22 @@ def _get_gnatfuzz_subprogram_id(config: Config):
     ]
     logger.log(f"Calling gnatfuzz to get subprogram id: {' '.join(command)}")
 
-    proc = GPS.Process(command)
+    proc = ProcessWrapper(command)
 
-    status = proc.wait()
+    status, output = yield proc.wait_until_terminate(show_if_error=True)
+    logger.log(f"gnatfuzz output: {output}")
     logger.log(f"gnatfuzz finished with result: {status}")
 
-    # TODO: eng/spark/spark2014#1140 - Also check the issues.log
-    if status:
-        print_error(proc.get_result())
+    if status != 0:
+        print_error(output)
         raise ExternalProcessError(f"Call to gnatfuzz failed with exit code {status}")
+
+    # TODO: eng/spark/spark2014#1140 - Also check the issues.log.
+    # This is not yet possible (cf. eng/das/fuzz/gnatfuzz#1120).
 
     json_path = os.path.join(artifacts_dir, "gnatfuzz", "analyze.json")
 
+    id = None
     with open(json_path, "r") as f:
         data = json.load(f)
 
@@ -184,19 +172,24 @@ def _get_gnatfuzz_subprogram_id(config: Config):
 
             if str(start_line) == str(line) and filename in source_filename:
                 id = sub.get("id", {})
-                logger.log(f"Obtained id: {id}")
-                return id
+                break
 
-    # The given subprogram was not found among the fuzzable subprograms.
-    # TODO If this is a nested subprogram, we could go one level up and see
-    # if the parent can be fuzzed etc.
+    if id is not None:
+        logger.log(f"Found id for the given subprogram: {id} ")
+        yield id
+    else:
+        logger.log("Id for the given subprogram not found")
 
-    raise ValueNotFoundError(
-        f"Subprogram defined at {filename}:{line} is not"
-        " among the subprograms fuzzable by GNATfuzz."
-        "\n"
-        f"Full results of GNATfuzz analysis are in: {json_path}"
-    )
+        # The given subprogram was not found among the fuzzable subprograms.
+        # TODO If this is a nested subprogram, we could go one level up and see
+        # if the parent can be fuzzed etc.
+
+        raise ValueNotFoundError(
+            f"Subprogram defined at {filename}:{line} is not"
+            " among the subprograms fuzzable by GNATfuzz."
+            "\n"
+            f"Full results of GNATfuzz analysis are in: {json_path}"
+        )
 
 
 def _get_test_case_from_gnattest_json(gnattest_dir, unit_name, subp_hash):
@@ -234,8 +227,10 @@ def run(
     force: bool = False,
 ):
     """
-    Generate candidate counterexamples for the given subprogram using GNATtest
-    and optionally GNATfuzz
+    Generate candidate counterexamples for the given subprogram using either
+    GNATtest or GNATfuzz
+
+    Note: This function needs to be called as a GNAT Studio workflow.
 
     :param spec_loc: Source code location of the spec.
     :param check_loc: Source code location of the given GNATprove check.
@@ -246,15 +241,16 @@ def run(
     """
 
     # Remove any previous messages related to test generation
+
     GPS.Locations.remove_category(GNATPROVE_CE_GEN_CATEGORY)
 
-    print_info("test2prove starting..." + os.linesep)
+    print_info("Starting to generate counterexamples...")
 
     # Extract location details
+
     spec_file, spec_line, spec_col = split_location(spec_loc)
     check_file, check_line, check_col = split_location(check_loc)
 
-    # Get project and unit names
     project_name = str.lower(GPS.Project.root().name())
     unit_name = os.path.splitext(os.path.basename(spec_file))[0]
 
@@ -263,9 +259,10 @@ def run(
     logger.log(f"test2prove.run: project_name={project_name}")
     logger.log(f"test2prove.run: unit_name={unit_name}")
 
-    # Get the hash that GNATtest will use
+    # Get the hash that GNATtest will use for the enclosing subprogram
+
     try:
-        hash_value = get_gnattest_hash(
+        hash_value = yield get_gnattest_hash(
             project_name,
             os.path.join("src", spec_file),
             spec_line,
@@ -274,7 +271,8 @@ def run(
         print_error(f"{e}")
         return
 
-    # Find the artifacts directory
+    # Find the artifacts directory (the parent of 'gnattest' directory)
+
     found = False
     for f in GPS.Project.root().object_dirs(recursive=False):
         if os.path.isdir(os.path.join(f, "gnattest")):
@@ -298,42 +296,38 @@ def run(
         check_col=check_col,
     )
 
-    # Generate test harness and initial test cases for the enclosing subprogram.
-
-    print_info("Calling gnattest to generate harness and initial test cases ...")
-
-    try:
-        run_gnattest(
-            config.spec_file,
-            config.spec_line,
-            GNATTEST_TARGET2 if use_fuzzer else GNATTEST_TARGET1,
-            force,
-        )
-    except UserAbort:
-        print_info("Aborted by the user")
-        return
-    except ExternalProcessError as e:
-        print_error(f"{e}")
-        return
-
     if use_fuzzer:
+        # Use the fuzzer to generate some potentially interesting test cases
+        print_info("Calling gnatfuzz to find potential counterexamples ...")
         try:
-            subp_id = _get_gnatfuzz_subprogram_id(config)
+            subp_id = yield _get_gnatfuzz_subprogram_id(config)
 
             print_newline()
             print_info("Calling gnatfuzz to find counterexample values ...")
 
-            # Make a call to gnatfuzz and perform the followup asynchronously.
+            yield _fuzz(config, subp_id, force)
 
-            _fuzz_and_continue(config, subp_id, force)
+            print_info("Fuzzing completed")
 
-            # _extract_ce_candidates will be called asynchronously in
-            # _on_fuzzing_exit, so we just return here.
-
-            return
         except Exception as e:
             print_error(f"{e}")
             return
+    else:
+        # Use the gnattest's heuristics to generate some test cases
+        print_info("Calling gnattest to generate test cases ...")
+        try:
+            yield run_gnattest(
+                config.spec_file,
+                config.spec_line,
+                GNATTEST_TARGET,
+                force,
+            )
 
-    # If not using fuzzer, extract candidates synchronously
+            print_info("Test case generation completed")
+
+        except ExternalProcessError as e:
+            print_error(f"{e}")
+            return
+
+    # Extract counterexample candidates
     _extract_ce_candidates(config)

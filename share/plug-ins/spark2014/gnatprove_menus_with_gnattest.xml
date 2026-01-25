@@ -15,20 +15,20 @@
     </shell>
   </action>
   <action name="Generate Counterexamples" category="GNATprove" output="none">
-      <filter_and>
-        <filter id="Not Source Editor"/>
-        <filter id="Prove Check Context"/>
-      </filter_and>
-      <shell
-        lang="python">spark2014.on_generate_counter_example_with_gnattest(GPS.current_context())
-      </shell>
-    </action>
+    <filter_and>
+      <filter id="Not Source Editor"/>
+      <filter id="Prove Check Context"/>
+    </filter_and>
+    <shell
+      lang="python">spark2014.on_generate_counter_example_with_gnattest(GPS.current_context())
+    </shell>
+  </action>
 
-    <contextual action="Generate Executable Test Action">
-      <Title>%(prefix)s/Generate Executable Test</Title>
-    </contextual>
-    <contextual action="Generate Counterexamples">
-      <Title>%(prefix)s/Generate Counterexamples</Title>
-    </contextual>
+  <contextual action="Generate Executable Test Action">
+    <Title>%(prefix)s/Generate Executable Test</Title>
+  </contextual>
+  <contextual action="Generate Counterexamples">
+    <Title>%(prefix)s/Generate Counterexamples with GNATtest</Title>
+  </contextual>
 
-  </GNATPROVE>
+</GNATPROVE>

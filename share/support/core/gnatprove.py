@@ -36,10 +36,6 @@ SPARK_GS_TRACE = "PYTHON.SPARK"
 logger = GPS.Logger(SPARK_GS_TRACE)
 
 
-class UserAbort(Exception):
-    pass
-
-
 class ExternalProcessError(RuntimeError):
     def __init__(self, message):
         super().__init__(message)
