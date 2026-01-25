@@ -13,7 +13,6 @@ import tool_output
 import json
 import re
 from functools import reduce
-from pathlib import Path
 
 import libadalang as lal
 
@@ -63,13 +62,20 @@ OUTPUT_PARSERS = """
     console_writer
     end_of_build"""
 
-xml_gnatprove_menus = Path(gnatprove_menus_file).read_text()
-xml_gnatprove_menus_with_gnattest = Path(gnatprove_menus_with_gnattest_file).read_text()
-xml_gnatprove_menus_with_gnatfuzz = Path(gnatprove_menus_with_gnatfuzz_file).read_text()
 
-xml_gnatprove = Path(gnatprove_file).read_text()
-xml_gnattest = Path(gnattest_file).read_text()
-xml_gnatfuzz = Path(gnatfuzz_file).read_text()
+def read_text(filepath):
+    """Helper to read text files"""
+    with open(filepath, "r") as f:
+        return f.read()
+
+
+xml_gnatprove_menus = read_text(gnatprove_menus_file)
+xml_gnatprove_menus_with_gnattest = read_text(gnatprove_menus_with_gnattest_file)
+xml_gnatprove_menus_with_gnatfuzz = read_text(gnatprove_menus_with_gnatfuzz_file)
+
+xml_gnatprove = read_text(gnatprove_file)
+xml_gnattest = read_text(gnattest_file)
+xml_gnatfuzz = read_text(gnatfuzz_file)
 
 # constants that are required by the plugin
 

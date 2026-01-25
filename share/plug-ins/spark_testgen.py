@@ -9,7 +9,6 @@ counterexample.
 import glob
 import json
 import os
-from pathlib import Path
 import re
 
 import GPS
@@ -268,7 +267,7 @@ def run(spec_loc, check_loc, vc_kind, force=False):
 
     project_name = str.lower(GPS.Project.root().name())
 
-    unit_name = Path(spec_file).stem
+    unit_name = os.path.splitext(os.path.basename(spec_file))[0]
 
     logger.log(f"testgen.run: spec={spec_loc}")
     logger.log(f"testgen.run: subp={check_loc}")
@@ -299,7 +298,7 @@ def run(spec_loc, check_loc, vc_kind, force=False):
         return
 
     spark_filename = spark_filenames[0]
-    artifacts_dir = Path(spark_filename).parent.parent
+    artifacts_dir = os.path.dirname(os.path.dirname(spark_filename))
 
     logger.log(f"Found .spark file {spark_filename}")
 
@@ -391,7 +390,7 @@ def run(spec_loc, check_loc, vc_kind, force=False):
         print_error(f"{e}")
         return
 
-    harness_path = artifacts_dir / "gnattest" / "harness" / "test_driver.gpr"
+    harness_path = os.path.join(artifacts_dir, "gnattest", "harness", "test_driver.gpr")
 
     print_info(f"Test harness has been generated and can be found at {harness_path}")
 

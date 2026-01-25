@@ -11,7 +11,6 @@ GNATprove.
 from dataclasses import dataclass
 import json
 import os
-from pathlib import Path
 
 import GPS
 from gnatprove import (
@@ -254,7 +253,7 @@ def run(
 
     # Get project and unit names
     project_name = str.lower(GPS.Project.root().name())
-    unit_name = Path(spec_file).stem
+    unit_name = os.path.splitext(os.path.basename(spec_file))[0]
 
     logger.log(f"test2prove.run: spec={spec_loc}")
     logger.log(f"test2prove.run: spec_file={spec_file}, spec_line={spec_line}")
