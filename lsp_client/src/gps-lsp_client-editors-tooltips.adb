@@ -20,17 +20,18 @@ with Ada.Strings.Unbounded;
 with GNATCOLL.JSON;
 with GNATCOLL.Traces;               use GNATCOLL.Traces;
 
+with GPS.LSP_Client.Editors.Semantic_Tokens;
 with VSS.Strings.Formatters.Strings;
 with VSS.Strings.Templates;
 
 with Glib;                          use Glib;
 with Glib.Convert.VSS_Utils;        use Glib.Convert.VSS_Utils;
-with Glib.Object; use Glib.Object;
+with Glib.Object;                   use Glib.Object;
 with Glib.Values;
 
-with Gdk.Event; use Gdk.Event;
+with Gdk.Event;                     use Gdk.Event;
 with Gtk.Box;                       use Gtk.Box;
-with Gtk.Event_Box; use Gtk.Event_Box;
+with Gtk.Event_Box;                 use Gtk.Event_Box;
 with Gtk.Handlers;                  use Gtk.Handlers;
 with Gtk.Label;                     use Gtk.Label;
 with Gtk.Separator;                 use Gtk.Separator;
@@ -80,7 +81,7 @@ package body GPS.LSP_Client.Editors.Tooltips is
    --  Type representing LSP-based tooltip handlers.
 
    type GPS_LSP_Hover_Request is new Abstract_Hover_Request with record
-      Tooltip_Hbox                 : Gtk_Hbox;
+      Tooltip_Vbox                 : Gtk_Vbox;
       --  The box containing the tooltip text blocks
 
       Tooltip_Destroyed_Handler_ID : Handler_Id;
@@ -176,7 +177,7 @@ package body GPS.LSP_Client.Editors.Tooltips is
       pragma Unreferenced (Widget, Params);
    begin
       if User_Data /= null then
-         User_Data.Tooltip_Hbox := null;
+         User_Data.Tooltip_Vbox := null;
       end if;
    end On_Tooltip_Destroyed;
 
@@ -228,7 +229,7 @@ package body GPS.LSP_Client.Editors.Tooltips is
       return Gtk_Widget
    is
       Request            : GPS_LSP_Hover_Request_Access;
-      Tooltip_Hbox       : Gtk_Hbox;
+      Tooltip_Vbox       : Gtk_Vbox;
       Lang               : constant Language.Language_Access :=
         Get_Language_From_File
           (Kernel.Get_Language_Handler,
@@ -246,7 +247,7 @@ package body GPS.LSP_Client.Editors.Tooltips is
 
       Show_Tooltip_After_Query := False;
 
-      Gtk_New_Hbox (Tooltip_Hbox, Homogeneous => False);
+      Gtk_New_Vbox (Tooltip_Vbox, Homogeneous => False);
 
       Request := new GPS_LSP_Hover_Request'
         (LSP_Request with
@@ -254,7 +255,7 @@ package body GPS.LSP_Client.Editors.Tooltips is
          File                         => File,
          Position                     =>
            GPS.LSP_Client.Utilities.Location_To_LSP_Position (Location),
-         Tooltip_Hbox                 => Tooltip_Hbox,
+         Tooltip_Vbox                 => Tooltip_Vbox,
          Tooltip_Destroyed_Handler_ID => <>,
          For_Global_Tooltips          => For_Global_Tooltips,
          Xalign                       => Xalign,
@@ -265,9 +266,9 @@ package body GPS.LSP_Client.Editors.Tooltips is
 
       Request.Tooltip_Destroyed_Handler_ID :=
         Tooltip_Destroyed_Callback.Object_Connect
-          (Tooltip_Hbox, Signal_Destroy,
+          (Tooltip_Vbox, Signal_Destroy,
            On_Tooltip_Destroyed'Access,
-           Slot_Object => Tooltip_Hbox,
+           Slot_Object => Tooltip_Vbox,
            User_Data   => Request);
 
       Trace
@@ -276,7 +277,14 @@ package body GPS.LSP_Client.Editors.Tooltips is
       if GPS.LSP_Client.Requests.Execute
         (Lang, Request_Access (Request))
       then
-         return Gtk_Widget (Tooltip_Hbox);
+         --  Hower request is sent, call for semantic information
+         GPS.LSP_Client.Editors.Semantic_Tokens.Create_Semantic_Token_Tooltip
+           (Tooltip_Hbox => Tooltip_Vbox,
+            File         => File,
+            Line         => Line,
+            Column       => Column);
+
+         return Gtk_Widget (Tooltip_Vbox);
       else
          return null;
       end if;
@@ -339,24 +347,22 @@ package body GPS.LSP_Client.Editors.Tooltips is
    begin
       --  If the tooltip has been destroyed before the response, return
       --  directly.
-      if Self.Tooltip_Hbox = null then
+      if Self.Tooltip_Vbox = null then
          return;
       end if;
 
       --  Disconnect the callback on the tooltip's destruction now that we
       --  received the response.
       Disconnect
-        (Object => Self.Tooltip_Hbox,
+        (Object => Self.Tooltip_Vbox,
          Id     => Self.Tooltip_Destroyed_Handler_ID);
 
       --  Append the contents to the tooltip or "No data available" when empty
 
-      Remove_All_Children (Self.Tooltip_Hbox);
-
       if Result.Is_Set and then Result.Value.contents.Is_MarkupContent then
          if Result.Value.contents.MarkupContent.kind = plaintext then
             Gtk_New_Vbox (Vbox, Homogeneous => False);
-            Self.Tooltip_Hbox.Pack_Start (Vbox);
+            Self.Tooltip_Vbox.Pack_Start (Vbox);
 
             New_Tooltip_Block_Label;
 
@@ -378,7 +384,7 @@ package body GPS.LSP_Client.Editors.Tooltips is
          Trace (Me, "Non-empty response received on hover request");
 
          Gtk_New_Vbox (Vbox, Homogeneous => False);
-         Self.Tooltip_Hbox.Pack_Start (Vbox);
+         Self.Tooltip_Vbox.Pack_Start (Vbox);
 
          for Tooltip_Block of Result.Value.contents.Vector loop
             New_Tooltip_Block_Label;
@@ -454,8 +460,8 @@ package body GPS.LSP_Client.Editors.Tooltips is
       if Self.For_Global_Tooltips then
          Show_Finalized_Tooltip;
       else
-         if Self.Tooltip_Hbox /= null then
-            Self.Tooltip_Hbox.Show_All;
+         if Self.Tooltip_Vbox /= null then
+            Self.Tooltip_Vbox.Show_All;
          end if;
       end if;
 
@@ -474,9 +480,9 @@ package body GPS.LSP_Client.Editors.Tooltips is
    begin
       --  Disconnect the callback on the tooltip's destruction now that we
       --  received an error response.
-      if Self.Tooltip_Hbox /= null then
+      if Self.Tooltip_Vbox /= null then
          Disconnect
-           (Object => Self.Tooltip_Hbox,
+           (Object => Self.Tooltip_Vbox,
             Id     => Self.Tooltip_Destroyed_Handler_ID);
       end if;
       Trace
@@ -495,9 +501,9 @@ package body GPS.LSP_Client.Editors.Tooltips is
    begin
       --  Disconnect the callback on the tooltip's destruction now that we
       --  got rejected
-      if Self.Tooltip_Hbox /= null then
+      if Self.Tooltip_Vbox /= null then
          Disconnect
-           (Object => Self.Tooltip_Hbox,
+           (Object => Self.Tooltip_Vbox,
             Id     => Self.Tooltip_Destroyed_Handler_ID);
       end if;
 
