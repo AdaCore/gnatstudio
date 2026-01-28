@@ -889,7 +889,7 @@ package body GPS.LSP_Client.Editors.Semantic_Tokens is
                      UInt := Interfaces.Unsigned_32
                        (Result.data.Element (Index + 4));
 
-                     --  Test if we have modifiers
+                     --  Check if we have modifiers
                      if UInt /= 0 then
                         Txt.Append ("Modifiers:");
 
