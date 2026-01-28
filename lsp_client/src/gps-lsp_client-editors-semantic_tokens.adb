@@ -174,7 +174,7 @@ package body GPS.LSP_Client.Editors.Semantic_Tokens is
       Vbox_Destroyed_Handler_ID : Gtk.Handlers.Handler_Id;
       --  Handler ID waiting for tooltip's box destruction
       Vbox                      : Gtk_Vbox;
-      --  Vbox in tooltip to display semantic information
+      --  Vbox in tooltip that displays semantic information
       Column                    : Basic_Types.Visible_Column_Type := 0;
       --  Column in editor where tooltip is triggered
    end record;
