@@ -853,7 +853,7 @@ package body GPS.LSP_Client.Editors.Semantic_Tokens is
               semanticTokensProvider.Value.legend;
 
             while Index < Natural (Result.data.Length) loop
-               --  iterate over responce lines to find the line we need
+               --  iterate over response lines to find the line we need
                --   (line for which the tooltip is triggered)
 
                Line := Prev_Line + Natural (Result.data.Element (Index));
