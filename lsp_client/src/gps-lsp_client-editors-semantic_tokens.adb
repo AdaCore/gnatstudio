@@ -871,8 +871,8 @@ package body GPS.LSP_Client.Editors.Semantic_Tokens is
                        (Result.data.Element (Index + 1) + 1);
                   end if;
 
-                  --  Check that the current tocken is for needed position
-                  --  e.g. starts before the needed column and snds after
+                  --  Find the token for the tooltip's queried location
+                  --  e.g. starts before the needed column and end after
                   if Char <= Self.Column
                     and then Char + Visible_Column_Type
                       (Result.data.Element (Index + 2) - 1) >= Self.Column
