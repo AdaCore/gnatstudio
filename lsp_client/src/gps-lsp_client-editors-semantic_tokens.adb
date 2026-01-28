@@ -859,8 +859,8 @@ package body GPS.LSP_Client.Editors.Semantic_Tokens is
                Line := Prev_Line + Natural (Result.data.Element (Index));
 
                if Line = Self.From + 1 then
-                  --  We find the needed line. Lines start from 0 so
-                  --   Self.From + 1 restores the initial line for the request
+                  --  Tooltip's line has been found: add +1 since 
+                  --  LSP lines are 0-based.
 
                   if Line = Prev_Line then
                      --  relative char position
