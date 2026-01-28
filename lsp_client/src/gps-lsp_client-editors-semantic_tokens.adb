@@ -172,7 +172,7 @@ package body GPS.LSP_Client.Editors.Semantic_Tokens is
        Abstract_SemanticTokens_Range_Request
    with record
       Vbox_Destroyed_Handler_ID : Gtk.Handlers.Handler_Id;
-      --  Handler ID that wait for Vbox destroing
+      --  Handler ID waiting for tooltip's box destruction
       Vbox                      : Gtk_Vbox;
       --  Vbox in tooltip to display semantic information
       Column                    : Basic_Types.Visible_Column_Type := 0;
