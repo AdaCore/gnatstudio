@@ -877,7 +877,7 @@ package body GPS.LSP_Client.Editors.Semantic_Tokens is
                     and then Char + Visible_Column_Type
                       (Result.data.Element (Index + 2) - 1) >= Self.Column
                   then
-                     --  Found the corresponding to the location tocken
+                     --  Found a token for the queried tooltip's location
 
                      --  Add Semantic type information
                      Txt.Append
