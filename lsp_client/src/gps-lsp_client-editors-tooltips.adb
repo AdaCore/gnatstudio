@@ -277,7 +277,9 @@ package body GPS.LSP_Client.Editors.Tooltips is
       if GPS.LSP_Client.Requests.Execute
         (Lang, Request_Access (Request))
       then
-         --  Hower request is sent, call for semantic information
+         --  Hover request is being sent: create the tooltip area
+         --  for the semantic token information if the preference
+         --  is enabled.
          GPS.LSP_Client.Editors.Semantic_Tokens.Create_Semantic_Token_Tooltip
            (Tooltip_Hbox => Tooltip_Vbox,
             File         => File,
