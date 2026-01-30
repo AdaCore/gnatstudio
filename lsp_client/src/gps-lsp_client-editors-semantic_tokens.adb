@@ -946,7 +946,8 @@ package body GPS.LSP_Client.Editors.Semantic_Tokens is
 
    begin
       if Self.Column = 0 then
-         --  Column is 0 so it is highlight request
+         --  Column is 0 so it is regular (not for tooltip) request
+         --  to highlight source code
 
          Module.Data.Append
            (Result_Type'((Self.File, Self.From, Self.To), Result.data));
