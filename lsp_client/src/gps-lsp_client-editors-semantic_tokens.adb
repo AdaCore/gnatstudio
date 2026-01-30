@@ -958,7 +958,7 @@ package body GPS.LSP_Client.Editors.Semantic_Tokens is
 
       elsif Self.Vbox /= null then
          --  Column is not 0 so it is semantic tooltip request and we still
-         --  have Vbox (tooltip was not closed)
+         --  have the Vbox (i.e: tooltip was not destroyed)
 
          Gtk.Handlers.Disconnect
            (Object => Self.Vbox,
