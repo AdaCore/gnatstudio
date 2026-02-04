@@ -1919,7 +1919,7 @@ package body GPS.Kernel.Preferences is
            Label   => -"Show semantic tokens in tooltip",
            Doc     =>
              -("Controls whether semantic tokens are shown in "
-               & "the entity tooltip."),
+               & "entity tooltips."),
            Default => True);
 
       LSP_Diagnostics_Display := LSP_Diagnostics_Display_Policy_Prefs.Create
