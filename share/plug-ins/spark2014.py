@@ -51,8 +51,8 @@ gnatprove_menus_with_gnatfuzz_file = os.path.join(
     spark2014_dir, "gnatprove_menus_with_gnatfuzz.xml"
 )
 gnatprove_file = os.path.join(spark2014_dir, "gnatprove.xml")
-gnattest_file = os.path.join(spark2014_dir, "gnattest.xml")
-gnatfuzz_file = os.path.join(spark2014_dir, "gnatfuzz.xml")
+gnattest_file = os.path.join(spark2014_dir, "gnatprove_gnattest.xml")
+gnatfuzz_file = os.path.join(spark2014_dir, "gnatprove_gnatfuzz.xml")
 
 # Output parsers to use for GNATprove runs
 OUTPUT_PARSERS_GNATPROVE = """
@@ -1296,21 +1296,13 @@ class GNATProve_Plugin:
         )
         GPS.parse_xml(xml_gnatprove_menus % {"prefix": prefix})
         if gnattest:
-            process = GPS.Process("gnattest --help")
-            help_msg = process.get_result()
             GPS.parse_xml(
-                xml_gnattest.format(
-                    help=help_msg, output_parsers=OUTPUT_PARSERS_GNATTEST_CE
-                )
+                xml_gnattest.format(output_parsers=OUTPUT_PARSERS_GNATTEST_CE)
             )
             GPS.parse_xml(xml_gnatprove_menus_with_gnattest % {"prefix": prefix})
             if gnatfuzz:
-                process = GPS.Process("gnatfuzz --help")
-                help_msg = process.get_result()
                 GPS.parse_xml(
-                    xml_gnatfuzz.format(
-                        help=help_msg, output_parsers=OUTPUT_PARSERS_GNATTEST_CE
-                    )
+                    xml_gnatfuzz.format(output_parsers=OUTPUT_PARSERS_GNATTEST_CE)
                 )
                 GPS.parse_xml(xml_gnatprove_menus_with_gnatfuzz % {"prefix": prefix})
 

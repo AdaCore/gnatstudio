@@ -1,18 +1,8 @@
 <?xml version="1.0"?>
 <GNATPROVE>
 
-  <target-model name="gnattest for SPARK">
-    <description>Target model for GNATtest used by SPARK
-    </description>
-    <iconname>GNATtest</iconname>
-    <command-help>{help}</command-help>
-    <switches command="gnattest">
-    </switches>
-    <persistent-history>False</persistent-history>
-  </target-model>
-
-  <target model="gnattest for SPARK"
-          name="(Step 1/2) Generate harness and initial test case(s)"
+  <target model="gnattest"
+          name="Generate harness and initial test case(s)"
           category="GNATprove">
     <in-menu>FALSE</in-menu>
     <iconname>gps-build-all-symbolic</iconname>
@@ -30,8 +20,8 @@
     </output-parsers>
   </target>
 
-  <target model="gnattest for SPARK"
-          name="(Step 2/2) Update test case(s)"
+  <target model="gnattest"
+          name="Update test case(s)"
           category="GNATprove">
     <in-menu>FALSE</in-menu>
     <iconname>gps-build-all-symbolic</iconname>
@@ -40,13 +30,14 @@
     <command-line>
       <arg>gnattest</arg>
       <arg>-P%PP</arg>
+      <arg>%X</arg>
     </command-line>
     <output-parsers>
       {output_parsers}
     </output-parsers>
   </target>
 
-  <target model="gnattest for SPARK"
+  <target model="gnattest"
           name="Run GNATtest to find counterexample candidates"
           category="GNATprove">
     <in-menu>FALSE</in-menu>

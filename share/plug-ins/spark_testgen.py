@@ -28,19 +28,19 @@ from workflows.promises import ProcessWrapper, TargetWrapper
 # Note: Pluralization is intentionally in parentheses because we need one test
 # case with JSON data for the counterexample, but GNATtest also generates the
 # default test case. Also, the user can amend the number in the command.
-GNATTEST_TARGET1 = "(Step 1/2) Generate harness and initial test case(s)"
-GNATTEST_TARGET2 = "(Step 2/2) Update test case(s)"
+GNATTEST_TARGET1 = "Generate harness and initial test case(s)"
+GNATTEST_TARGET2 = "Update test case(s)"
 
 
 def _get_values_from_spark_json(
-    JSON_file, source_file, source_line, source_col, vc_kind
+    JSON_file, source_file, source_line, source_col, message
 ):
     """Retrieve counterexample values from a .spark file."""
 
     source_file = os.path.basename(source_file)
 
     logger.log(
-        f"Searching for counterexample for {vc_kind!r}"
+        f"Searching for counterexample for {message!r}"
         f" at {source_file}:{str(source_line)}:{str(source_col)}"
         f" in {JSON_file!r}"
     )
@@ -52,16 +52,16 @@ def _get_values_from_spark_json(
             proofs = data.get("proof", {})
             for proof in proofs:
 
-                json_check_file = proof.get("check_file")
-                json_check_line = proof.get("check_line")
-                json_check_col = proof.get("check_col")
-                json_rule = proof.get("rule")
+                json_check_file = proof["check_file"]
+                json_check_line = proof["check_line"]
+                json_check_col = proof["check_col"]
+                json_message_text = proof["message"]["text"]
 
                 if (
                     json_check_file == source_file
                     and str(json_check_line) == str(source_line)
                     and str(json_check_col) == str(source_col)
-                    and str(json_rule) == str(vc_kind)
+                    and str(json_message) == str(message)
                 ):
 
                     logger.log("Proof entry for the given check found")
@@ -227,7 +227,7 @@ def run_gnattest(filename, line, target, force):
         raise ExternalProcessError(f"Call to gnattest failed with exit code {status}")
 
 
-def run(spec_loc, check_loc, vc_kind, force=False):
+def run(spec_loc, check_loc, check_message, force=False):
     """
     Generate an executable harness for the given check location
 
@@ -304,13 +304,13 @@ def run(spec_loc, check_loc, vc_kind, force=False):
         check_file,
         check_line,
         check_col,
-        vc_kind,
+        check_message,
     )
 
     if ce_values is None:
         print_warning(
-            f"Couldn't get counterexample for {vc_kind} at {check_file}:{check_line}."
-            " Aborting"
+            f"Couldn't get counterexample for {check_message} at"
+            f" {check_file}:{check_line}. Aborting"
         )
         return
 
