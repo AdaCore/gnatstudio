@@ -459,4 +459,5 @@ GPS.PreferencesPage.create(
 @hook("gps_started")
 def on_started():
     picker.no_theme_fallback()
+    get_current_theme().apply_styles()
     GPS.Hook("preferences_changed").add_debounce(picker.on_pref_changed)

@@ -1243,7 +1243,7 @@ package body Src_Editor_Buffer is
    ---------------------
 
    function Edition_Timeout (Buffer : Source_Buffer) return Boolean is
-      CL : Arg_List;
+      CL         : Arg_List;
       Start_Iter : Gtk_Text_Iter;
       End_Iter   : Gtk_Text_Iter;
 

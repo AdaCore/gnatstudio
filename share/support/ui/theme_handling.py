@@ -108,12 +108,48 @@ rgb_prefs = {
     "diff_side_remove": "Diff-Side-Remove-Color",
     "diff_side_append": "Diff-Side-Append-Color",
     "bookmarks": "Src-Editor-Bookmarks",
-    "semantic_readonly": "Src-Editor-LSP-Semantic-Readonly",
 }
 # These keys are interpreted as rgb preferences
 # Keys: our internal easy-to-remember key; values: current names of GPS prefs
 
-# colors that map to css attributes
+styles_tokens = [
+    "namespace",
+    "type",
+    "class",
+    "enum",
+    "interface",
+    "struct",
+    "typeparameter",
+    "parameter",
+    "variable",
+    "property",
+    "enummember",
+    "function",
+    "keyword",
+    "modifier",
+    "comment",
+    "string",
+    "number",
+    "operator",
+]
+# These are semantic tokens
+
+styles_modifiers = [
+    "declaration",
+    "definition",
+    "readonly",
+    "static",
+    "deprecated",
+    "abstract",
+    "async",
+    "modification",
+    "documentation",
+    "defaultLibrary",
+    "globalvariable",
+    "localvariable",
+]
+# These are semantic modifiers
+max_modifiers_bits = pow(2, len(styles_modifiers))
 
 
 def c(x):
@@ -261,12 +297,7 @@ common_light = {
     "aspects": ("DEFAULT", Rgba(96, 97, 95), transparent),
     "annotations": ("DEFAULT", transparent, Rgba(224, 224, 224)),
     "hyperlinks": ("DEFAULT", Rgba(0, 0, 255), transparent),
-    "strings": ("DEFAULT", Rgba(206, 123, 0), transparent),
-    "numbers": ("DEFAULT", Rgba(128, 0, 212), transparent),
     "annotated_comments": ("DEFAULT", Rgba(96, 97, 95), transparent),
-    "comments": ("DEFAULT", Rgba(150, 150, 150), transparent),
-    "keywords": ("DEFAULT", Rgba(0, 0, 230), transparent),
-    "types": ("DEFAULT", Rgba(0, 153, 0), transparent),
     "blocks": ("DEFAULT", Rgba(96, 97, 95), transparent),
     "ephemeral_smart": ("DEFAULT", transparent, Rgba(252, 172, 79, 102)),
     "ephemeral_simple": ("DEFAULT", transparent, Rgba(134, 134, 134, 90)),
@@ -304,22 +335,164 @@ common_light = {
     "bookmarks": Rgba(205, 0, 255, 77),
     "blocks_in_aspects": ("DEFAULT", Color("#60615F"), transparent),
     "types_in_aspects": ("DEFAULT", Color("#009900"), transparent),
-    "namespaces": ("DEFAULT", Color("#310142"), transparent),
-    "classes": ("DEFAULT", Color("#550073"), transparent),
-    "enums": ("DEFAULT", Color("#a38a27"), transparent),
-    "interfaces": ("DEFAULT", Color("#8900ba"), transparent),
+    #
+    # used in LSP
+    #
+    # class
+    "classes": ("DEFAULT", Color("#267F99"), transparent),
+    "class.deprecated": (
+        "DEFAULT",
+        Color("#267F99"),
+        transparent,
+        [],
+        ["TRUE", Color("#ff0000")],
+    ),
+    # comment
+    "comments": ("DEFAULT", Color("#969696"), transparent),
+    # enum
+    "enums": ("DEFAULT", Color("#267F99"), transparent),
+    "enum.deprecated": (
+        "DEFAULT",
+        Color("#267F99"),
+        transparent,
+        [],
+        ["TRUE", Color("#ff0000")],
+    ),
+    # enummember
+    "enummembers": ("DEFAULT", Color("#0070C1"), transparent),
+    "enummember.deprecated": (
+        "DEFAULT",
+        Color("#0070C1"),
+        transparent,
+        [],
+        ["TRUE", Color("#ff0000")],
+    ),
+    # function
+    "functions": ("DEFAULT", Color("#795E26"), transparent),
+    "function.deprecated": (
+        "DEFAULT",
+        Color("#795E26"),
+        transparent,
+        [],
+        ["TRUE", Color("#ff0000")],
+    ),
+    # interface
+    "interfaces": ("DEFAULT", Color("#267F99"), transparent),
+    "interface.deprecated": (
+        "DEFAULT",
+        Color("#267F99"),
+        transparent,
+        [],
+        ["TRUE", Color("#ff0000")],
+    ),
+    # keyword
+    "keywords": ("DEFAULT", Color("#0000e6"), transparent),
+    "keyword.deprecated": (
+        "DEFAULT",
+        Color("#0000e6"),
+        transparent,
+        [],
+        ["TRUE", Color("#ff0000")],
+    ),
+    # modifier
+    "modifiers": ("DEFAULT", Color("#1f7f9c"), transparent),
+    "modifier.deprecated": (
+        "DEFAULT",
+        Color("#1f7f9c"),
+        transparent,
+        [],
+        ["TRUE", Color("#ff0000")],
+    ),
+    # namespace
+    "namespaces": ("DEFAULT", Color("#000000"), transparent),
+    "namespace.deprecated": (
+        "DEFAULT",
+        Color("#000000"),
+        transparent,
+        [],
+        ["TRUE", Color("#ff0000")],
+    ),
+    # number
+    "numbers": ("DEFAULT", Color("#8000d4"), transparent),
+    # operator
+    "operators": ("DEFAULT", Color("#000000"), transparent),
+    "operator.deprecated": (
+        "DEFAULT",
+        Color("#000000"),
+        transparent,
+        [],
+        ["TRUE", Color("#ff0000")],
+    ),
+    # parameter
+    "parameters": ("DEFAULT", Color("#001080"), transparent),
+    "parameter.readonly": ("DEFAULT", Color("#0070C1"), transparent),
+    "parameter.deprecated": (
+        "DEFAULT",
+        Color("#001080"),
+        transparent,
+        [],
+        ["TRUE", Color("#ff0000")],
+    ),
+    # property
+    "propertys": ("DEFAULT", Color("#001080"), transparent),
+    "property.deprecated": (
+        "DEFAULT",
+        Color("#001080"),
+        transparent,
+        [],
+        ["TRUE", Color("#ff0000")],
+    ),
+    # type
+    "types": ("DEFAULT", Color("#009900"), transparent),
+    "type.deprecated": (
+        "DEFAULT",
+        Color("#009900"),
+        transparent,
+        [],
+        ["TRUE", Color("#ff0000")],
+    ),
+    # typeparameter
+    "typeparameters": ("DEFAULT", Color("#04116b"), transparent),
+    "typeparameter.deprecated": (
+        "DEFAULT",
+        Color("#04116b"),
+        transparent,
+        [],
+        ["TRUE", Color("#ff0000")],
+    ),
+    # string
+    "strings": ("DEFAULT", Color("#ce7b00"), transparent),
+    # struct
     "structs": ("DEFAULT", Color("#015878"), transparent),
-    "typeparameters": ("DEFAULT", Color("#590034"), transparent),
-    "parameters": ("DEFAULT", Color("#008cbf"), transparent),
-    "variables": ("DEFAULT", Color("#c93c00"), transparent),
-    "propertys": ("DEFAULT", Color("#bf0270"), transparent),
-    "enummembers": ("DEFAULT", Color("#c4a321"), transparent),
-    "functions": ("DEFAULT", Color("#b500f5"), transparent),
-    "modifiers": ("DEFAULT", Color("#00873f"), transparent),
-    "operators": ("DEFAULT", Color("#005427"), transparent),
+    "struct.deprecated": (
+        "DEFAULT",
+        Color("#015878"),
+        transparent,
+        [],
+        ["TRUE", Color("#ff0000")],
+    ),
+    # variable
+    "variables": ("DEFAULT", Color("#001080"), transparent),
+    "variable.readonly": ("DEFAULT", Color("#0070C1"), transparent),
+    "variable.deprecated": (
+        "DEFAULT",
+        Color("#001080"),
+        transparent,
+        [],
+        ["TRUE", Color("#ff0000")],
+    ),
+    "variable.localvariable": ("DEFAULT", Color("#02A322"), transparent),
+    "variable.globalvariable": ("DEFAULT", Color("#C92002"), transparent),
+    #
     "deprecateds": ("DEFAULT", Color("#ff0000"), transparent),
-    "semantic_readonly": Rgba(242, 255, 237),
 }
+# composit values like `operator.deprecated` are styles and have the
+# following format:
+#  "NAME": ("FONT_VARIANT", FONT_COLOR, BACKGROUND_COLOR,
+#           ["UNDERLINE", UNDERLINE_COLOR],
+#           ["STRIKETHROUGH", STRIKETHROUGH_COLOR]),
+# where UNDERLINE: NONE, SINGLE, DOUBLE, ERROR
+#   STRIKETHROUGH: TRUE, FALSE
 
 common_dark = {
     "base_theme": "Adwaita (Dark)",
@@ -335,12 +508,7 @@ common_dark = {
     "aspects": ("DEFAULT", Rgba(114, 159, 207), transparent),
     "annotations": ("DEFAULT", transparent, Rgba(96, 96, 96)),
     "hyperlinks": ("DEFAULT", Rgba(114, 159, 207), transparent),
-    "strings": ("DEFAULT", Rgba(242, 212, 44), transparent),
-    "numbers": ("DEFAULT", Rgba(66, 180, 0), transparent),
     "annotated_comments": ("DEFAULT", Rgba(96, 97, 95), transparent),
-    "comments": ("DEFAULT", Rgba(114, 159, 207), transparent),
-    "keywords": ("DEFAULT", Rgba(240, 141, 36), transparent),
-    "types": ("DEFAULT", Rgba(142, 105, 201), transparent),
     "blocks": ("DEFAULT", Rgba(104, 194, 68), transparent),
     "ephemeral_smart": ("DEFAULT", transparent, Rgba(128, 236, 255, 90)),
     "ephemeral_simple": ("DEFAULT", transparent, Rgba(180, 180, 180, 128)),
@@ -378,21 +546,156 @@ common_dark = {
     "bookmarks": Rgba(205, 0, 255, 77),
     "blocks_in_aspects": ("DEFAULT", Color("#E6E6E6"), transparent),
     "types_in_aspects": ("DEFAULT", Color("#CCFFCC"), transparent),
-    "namespaces": ("DEFAULT", Color("#C8C8C8"), transparent),
-    "classes": ("DEFAULT", Color("#4CD5E0"), transparent),
-    "enums": ("DEFAULT", Color("#4CE099"), transparent),
-    "interfaces": ("ITALIC", Rgba(186, 186, 186), Color("#4CD5E0")),
-    "structs": ("DEFAULT", Color("#49D66A"), transparent),
-    "typeparameters": ("ITALIC", Rgba(186, 186, 186), Color("#3E52EB")),
-    "parameters": ("ITALIC", Rgba(186, 186, 186), Color("#241f31")),
-    "variables": ("DEFAULT", Color("#9CDCFE"), transparent),
-    "propertys": ("DEFAULT", Color("#8F9DFF"), transparent),
-    "enummembers": ("DEFAULT", Color("#93E6BE"), transparent),
+    #
+    # used in LSP
+    #
+    # class
+    "classes": ("DEFAULT", Color("#4EC9B0"), transparent),
+    "class.deprecated": (
+        "DEFAULT",
+        Color("#4EC9B0"),
+        transparent,
+        [],
+        ["TRUE", Color("#ff0000")],
+    ),
+    # comment
+    "comments": ("DEFAULT", Color("#729fcf"), transparent),
+    # enum
+    "enums": ("DEFAULT", Color("#4EC9B0"), transparent),
+    "enum.deprecated": (
+        "DEFAULT",
+        Color("#4EC9B0"),
+        transparent,
+        [],
+        ["TRUE", Color("#ff0000")],
+    ),
+    # enummember
+    "enummembers": ("DEFAULT", Color("#4FC1FF"), transparent),
+    "enummember.deprecated": (
+        "DEFAULT",
+        Color("#4FC1FF"),
+        transparent,
+        [],
+        ["TRUE", Color("#ff0000")],
+    ),
+    # function
     "functions": ("DEFAULT", Color("#DCDCAA"), transparent),
-    "modifiers": ("DEFAULT", Color("#569cd6"), transparent),
-    "operators": ("DEFAULT", Color("#C586C0"), transparent),
+    "function.deprecated": (
+        "DEFAULT",
+        Color("#DCDCAA"),
+        transparent,
+        [],
+        ["TRUE", Color("#ff0000")],
+    ),
+    # interface
+    "interfaces": ("DEFAULT", Color("#4EC9B0"), transparent),
+    "interface.deprecated": (
+        "DEFAULT",
+        Color("#4EC9B0"),
+        transparent,
+        [],
+        ["TRUE", Color("#ff0000")],
+    ),
+    # keyword
+    "keywords": ("DEFAULT", Color("#f08d24"), transparent),
+    "keyword.deprecated": (
+        "DEFAULT",
+        Color("#f08d24"),
+        transparent,
+        [],
+        ["TRUE", Color("#ff0000")],
+    ),
+    # modifier
+    "modifiers": ("DEFAULT", Color("#1f7f9c"), transparent),
+    "modifier.deprecated": (
+        "DEFAULT",
+        Color("#1f7f9c"),
+        transparent,
+        [],
+        ["TRUE", Color("#ff0000")],
+    ),
+    # namespace
+    "namespaces": ("DEFAULT", Color("#C8C8C8"), transparent),
+    "namespace.deprecated": (
+        "DEFAULT",
+        Color("#C8C8C8"),
+        transparent,
+        [],
+        ["TRUE", Color("#ff0000")],
+    ),
+    # number
+    "numbers": ("DEFAULT", Color("#42b400"), transparent),
+    # operator
+    "operators": ("DEFAULT", Color("#C8C8C8"), transparent),
+    "operator.deprecated": (
+        "DEFAULT",
+        Color("#C8C8C8"),
+        transparent,
+        [],
+        ["TRUE", Color("#ff0000")],
+    ),
+    # parameter
+    "parameters": ("DEFAULT", Color("#9CDCFE"), transparent),
+    "parameter.readonly": ("DEFAULT", Color("#4FC1FF"), transparent),
+    "parameter.deprecated": (
+        "DEFAULT",
+        Color("#9CDCFE"),
+        transparent,
+        [],
+        ["TRUE", Color("#ff0000")],
+    ),
+    # property
+    "propertys": ("DEFAULT", Color("#9CDCFE"), transparent),
+    "property.deprecated": (
+        "DEFAULT",
+        Color("#9CDCFE"),
+        transparent,
+        [],
+        ["TRUE", Color("#ff0000")],
+    ),
+    # type
+    "types": ("DEFAULT", Color("#8e69c9"), transparent),
+    "type.deprecated": (
+        "DEFAULT",
+        Color("#8e69c9"),
+        transparent,
+        [],
+        ["TRUE", Color("#ff0000")],
+    ),
+    # typeparameter
+    "typeparameters": ("DEFAULT", Color("#9CDCFE"), transparent),
+    "typeparameter.deprecated": (
+        "DEFAULT",
+        Color("#9CDCFE"),
+        transparent,
+        [],
+        ["TRUE", Color("#ff0000")],
+    ),
+    # string
+    "strings": ("DEFAULT", Color("#f2d42c"), transparent),
+    # struct
+    "structs": ("DEFAULT", Color("#4EC9B0"), transparent),
+    "struct.deprecated": (
+        "DEFAULT",
+        Color("#4EC9B0"),
+        transparent,
+        [],
+        ["TRUE", Color("#ff0000")],
+    ),
+    # variable
+    "variables": ("DEFAULT", Color("#9CDCFE"), transparent),
+    "variable.readonly": ("DEFAULT", Color("#0070C1"), transparent),
+    "variable.deprecated": (
+        "DEFAULT",
+        Color("#9CDCFE"),
+        transparent,
+        [],
+        ["TRUE", Color("#ff0000")],
+    ),
+    "variable.localvariable": ("DEFAULT", Color("#02A322"), transparent),
+    "variable.globalvariable": ("DEFAULT", Color("#C92002"), transparent),
+    #
     "deprecateds": ("DEFAULT", Color("#ff0000"), transparent),
-    "semantic_readonly": Rgba(70, 70, 70, 178),
 }
 
 
@@ -504,10 +807,93 @@ class Theme(object):
             for key in rgb_prefs:
                 pref_set(rgb_prefs[key], self.d[key].to_rgba_string())
 
+            self.apply_styles()
+
         # Apply the CSS preference
         css = self.generate_css(refresh=False)
         # load_from_data expect a bytestring
         provider.load_from_data(css.encode())
+
+    def apply_styles(self):
+        """Set styles from the theme"""
+
+        if not GPS.Preference("LSP-Semantic-Highlighting").get:
+            # do not create styles if LSP highlighting is off
+            return
+
+        for t in styles_tokens:
+            current = 1  # used as a bitmask for recombination
+
+            while current < max_modifiers_bits:
+                key = t  # used as a combined name
+                parent = t  # used as a style `base` name
+
+                for index in range(0, len(styles_modifiers)):
+                    if (
+                        current & 1 << index
+                    ):  # bit is set, add modifier to the full name
+                        key += "." + styles_modifiers[index]
+
+                current += 1  # remove one modificator for the next iteration
+
+                # now key contains combined name,
+                # check whether we have a style with such name in the theme
+                try:
+                    if key in self.d:
+                        # check that we have all `parents` styles:
+                        # for `variable.deprecated.readonly` it is
+                        # `variable.deprecated`
+                        p = key.find(".")  # first dot after `variable`
+                        while True:
+                            p = key.find(".", p + 1)  #  `variable.deprecated`
+                            if p == -1:
+                                break
+                            if GPS.Style(key[: p - 1], False) is None:
+                                # `variable.deprecated` does not exsist,
+                                #  create it with `variable` as a parent
+                                GPS.Style.create_from_style(
+                                    key[: p - 1].replace(".", "-"),
+                                    parent.replace(".", "-"),
+                                )
+
+                            # parent will be `variable.deprecated`
+                            parent = key[: p - 1]
+
+                        # create `variable.deprecated.readonly` based on
+                        # `variable.deprecated`
+                        s = GPS.Style.create_from_style(
+                            key.replace(".", "-"), parent.replace(".", "-")
+                        )
+
+                        if self.d[key][0] != "NONE":
+                            s.set_font_variant(self.d[key][0])
+
+                        if self.d[key][1] != transparent:
+                            s.set_foreground(self.d[key][1].to_rgba_string())
+
+                        if self.d[key][2] != transparent:
+                            s.set_background(self.d[key][2].to_rgba_string())
+
+                        if len(self.d[key]) > 3 and len(self.d[key][3]) > 0:
+                            if self.d[key][3][0] != "_NONE":
+                                s.set_underline(self.d[key][3][0])
+
+                            if len(self.d[key][3]) > 1:
+                                s.set_underline_color(
+                                    self.d[key][3][1].to_rgba_string()
+                                )
+
+                        if len(self.d[key]) > 4 and len(self.d[key][4]) > 0:
+                            if self.d[key][4][0] != "NONE":
+                                s.set_strikethrough(self.d[key][4][0] == "TRUE")
+
+                            if len(self.d[key][4]) > 1:
+                                s.set_strikethrough_color(
+                                    self.d[key][4][1].to_rgba_string()
+                                )
+
+                except GPS.Exception:
+                    pass
 
     def generate_example_label(self):
         """Generate an example Gtk.Label demoing this theme"""

@@ -395,10 +395,36 @@ package Default_Preferences is
    type Variant_Enum is (Default, Normal, Italic, Bold, Bold_Italic);
    --  Auxiliary type to list text variants offered in Variant_Preferences
 
+   type Optional_Variant_Enum (Is_Set : Boolean := False) is record
+      case Is_Set is
+         when True =>
+            Variant : Variant_Enum;
+         when False =>
+            null;
+      end case;
+   end record;
+
    function To_String (V : Variant_Enum) return String;
    function From_String (S : String) return Variant_Enum;
    --  Conversion between a Variant_Enum and a pretty string for displaying in
    --  the dialog.
+
+   type Underline_Enum is (None, Single, Double, Error);
+   --  Auxiliary type to list text underlining
+
+   type Optional_Underline_Enum (Is_Set : Boolean := False) is record
+      case Is_Set is
+         when True =>
+            Underline : Underline_Enum;
+         when False =>
+            null;
+      end case;
+   end record;
+
+   function To_String (V : Underline_Enum) return String;
+   function From_String (S : String) return Underline_Enum;
+   --  Conversion between a Underline_Enum and a pretty string for displaying
+   --  in the dialog.
 
    procedure Free (Pref : in out Preference_Record) is null;
    --  Free the memory associated with Pref

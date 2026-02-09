@@ -10190,12 +10190,13 @@ class Style(object):
 
     """
 
-    def __init__(self, name, create):
+    def __init__(self, name, create=True):
         """
         Creates a style.
 
         :param name: A String indicating the name of the style
-        :param create: A :class:`File` indicating the file
+        :param create: A Boolean indicating whether the style should be created
+        :return: a :class:`GPS.Style` or null if does not exsist and Create=False
 
         .. code-block:: python
 
@@ -10218,6 +10219,7 @@ class Style(object):
 
         :param name: A string indicating the name of the style
         :param pref: A string indicating the name of the preference.
+        :return: a :class:`GPS.Style`
         """
         pass
 
@@ -10231,6 +10233,18 @@ class Style(object):
            preference. Set to "" if not needed.
         :param bg_pref: A string indicating the name of the background
            preference. Set to "" if not needed.
+        """
+        pass
+
+    @staticmethod
+    def create_from_style(name, base, shade_or_lighten=0.0):
+        """
+        Creates a style based on an another style.
+
+        :param name: A string indicating the name of the style
+        :param base: A string indicating the name of the base style.
+        :param shade_or_lighten float between 0 and 1
+        :return: a :class:`GPS.Style`
         """
         pass
 
@@ -10270,20 +10284,64 @@ class Style(object):
         """
         pass  # implemented in Ada
 
-    def set_background(self, noname):
+    def set_background(self, color):
         """
         Sets the background of style to the given color.
 
-        :param noname: A string representing a color, for instance "blue" or
+        :param color: A string representing a color, for instance "blue" or
            "#0000ff"
         """
         pass  # implemented in Ada
 
-    def set_foreground(self, noname):
+    def set_foreground(self, color):
         """
         Sets the foreground of style to the given color.
 
-        :param noname: A string representing a color, for instance "blue" or
+        :param color: A string representing a color, for instance "blue" or
+           "#0000ff"
+        """
+        pass  # implemented in Ada
+
+    def set_font_variant(self, variant):
+        """
+        Sets the font variant.
+
+        :param variant: A string representing a font variant, for instance
+           "DEFAULT" or "ITALIC"
+        """
+        pass  # implemented in Ada
+
+    def set_underline(self, underline):
+        """
+        Sets the underline.
+
+        :param underline: A string representing a font underline, for instance
+           "NORNAL" or "SINGLE"
+        """
+        pass  # implemented in Ada
+
+    def set_underline_color(self, color):
+        """
+        Sets the underline color.
+
+        :param color: A string representing a color, for instance "blue" or
+           "#0000ff"
+        """
+        pass  # implemented in Ada
+
+    def set_strikethrough(self, boolean):
+        """
+        Sets the strikethrough.
+
+        :param boolean: Boolean
+        """
+        pass  # implemented in Ada
+
+    def set_set_strikethrough_color(self, color):
+        """
+        Sets the strikethrough color.
+
+        :param color: A string representing a color, for instance "blue" or
            "#0000ff"
         """
         pass  # implemented in Ada

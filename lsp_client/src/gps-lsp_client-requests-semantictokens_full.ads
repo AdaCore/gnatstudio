@@ -20,8 +20,10 @@ with GPS.LSP_Client.Requests.Base;
 package GPS.LSP_Client.Requests.SemanticTokens_Full is
 
    type Abstract_SemanticTokens_Full_Request is
-     abstract new GPS.LSP_Client.Requests.Base.Text_Document_Request with
-       null record;
+     abstract new GPS.LSP_Client.Requests.Base.Text_Document_Request
+   with record
+      Version : Integer := 0;
+   end record;
 
    function Params
      (Self : Abstract_SemanticTokens_Full_Request)

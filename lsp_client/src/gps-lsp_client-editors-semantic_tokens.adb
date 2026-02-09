@@ -230,12 +230,12 @@ package body GPS.LSP_Client.Editors.Semantic_Tokens is
    --  Convert Token_Type to the style name. Returns empty string if
    --  corresponding style name does not exist.
 
-   type Modifiers_Array is array (SemanticTokenModifiers) of Boolean;
-   Empty_Modifiers_Array : constant Modifiers_Array := (others => False);
+   type Modifiers_Array is array (Natural range <>) of SemanticTokenModifiers;
+   Empty_Modifiers_Array : Modifiers_Array (1 .. 0);
 
    function Check_Style_Name
      (Name      : String;
-      Modifiers : Modifiers_Array := Empty_Modifiers_Array)
+      Modifiers : Modifiers_Array)
       return String;
    --  Returns empty string if style name does not exist.
 
@@ -278,14 +278,20 @@ package body GPS.LSP_Client.Editors.Semantic_Tokens is
 
    function Check_Style_Name
      (Name      : String;
-      Modifiers : Modifiers_Array := Empty_Modifiers_Array)
+      Modifiers : Modifiers_Array)
       return String
    is
+      use Interfaces;
       use GPS.Kernel.Style_Manager;
 
-      function Correct_Name (Value : String) return String;
+      function Mask_Name (Value : String) return String;
+      --  mask reserved Ada names
+
       function Check (Value : String) return String;
+      --  checks if we have such style
+
       function Get_Modifiers (Modifiers : Modifiers_Array) return String;
+      --  convert modificators to style suffix
 
       Manager : constant Style_Manager_Access :=
         Get_Style_Manager (Module.Get_Kernel);
@@ -303,11 +309,11 @@ package body GPS.LSP_Client.Editors.Semantic_Tokens is
          end if;
       end Check;
 
-      ------------------
-      -- Correct_Name --
-      ------------------
+      ---------------
+      -- Mask_Name --
+      ---------------
 
-      function Correct_Name (Value : String) return String is
+      function Mask_Name (Value : String) return String is
          N : constant String := Ada.Characters.Handling.To_Lower (Value);
       begin
          if N'Length > 2
@@ -323,7 +329,7 @@ package body GPS.LSP_Client.Editors.Semantic_Tokens is
          else
             return N;
          end if;
-      end Correct_Name;
+      end Mask_Name;
 
       -------------------
       -- Get_Modifiers --
@@ -335,61 +341,104 @@ package body GPS.LSP_Client.Editors.Semantic_Tokens is
 
          M : Unbounded_String;
       begin
-         for Index in SemanticTokenModifiers'Range loop
-            if Modifiers (Index) then
-               if Index = localVariable
-                 or else Index = globalVariable
-               then
-                  M := "-" & Correct_Name
-                    (SemanticTokenModifiers'Image (Index)) & M;
-               else
-                  M.Append
-                    ("-" & Correct_Name
-                       (SemanticTokenModifiers'Image (Index)));
-               end if;
-            end if;
+         for Index in Modifiers'Range loop
+            M.Append
+              ("-" & Mask_Name
+                 (SemanticTokenModifiers'Image (Modifiers (Index))));
          end loop;
 
          return To_String (M);
       end Get_Modifiers;
 
-      Type_Name           : constant String := Correct_Name (Name);
+      Type_Name           : constant String := Mask_Name (Name);
       Type_Modifiers_Name : constant String :=
         Type_Name & Get_Modifiers (Modifiers);
 
+      Arr     : Modifiers_Array
+        (1 .. SemanticTokenModifiers'Pos (SemanticTokenModifiers'Last) + 1);
+      Last    : Natural := 0;
+      Mask    : Unsigned_128;
+      Current : SemanticTokenModifiers;
    begin
       if Check (Type_Modifiers_Name) /= "" then
-         --  style has been found
+         --  style with all modificators has been found
          return Type_Modifiers_Name;
 
-      else
-         --  we don't have type style with modificators,
-         --  try to reduce modificators that are used
-         declare
-            M : Modifiers_Array := Modifiers;
-         begin
-            for Index in reverse SemanticTokenModifiers'Range loop
-               if M (Index)
-                 and then Index /= localVariable
-                 and then Index /= globalVariable
-               then
-                  M (Index) := False;
+      elsif Modifiers'Length > 1 then
+         --  we don't have type style with all modificators,
+         --  and have more than 1 modificator, try to recombine them
 
-                  declare
-                     Curr : constant String :=
-                       Type_Name & Get_Modifiers (M);
+         Mask := 2 ** (Modifiers'Length) - 1;
+         --  bitmask for recombination
 
-                  begin
-                     if Check (Curr) /= "" then
-                        return Curr;
-                     end if;
-                  end;
+         while Mask > 0 loop
+            --  iterate over all possible variants
+            Last := 0;
+
+            --  iterate over all modificators
+            for Index in 0 .. Modifiers'Length - 1 loop
+               Current := Modifiers (Index + 1);
+
+               if (Mask and Interfaces.Shift_Left (1, Index)) > 0 then
+                  --  Modificator present in the style modificators
+                  --  and allowed by the bitmask, add to the resulting array
+                  Last := Last + 1;
+                  Arr (Last) := Current;
                end if;
             end loop;
-         end;
 
-         return Check (Type_Name);
+            --  do not process one modificator to force `TYPE.deprecated`
+            --  case later
+            if Last > 1 then
+               declare
+                  Style_Name : constant String :=
+                    Type_Name & Get_Modifiers (Arr (1 .. Last));
+               begin
+                  if Check (Style_Name) /= "" then
+                     return Style_Name;  --  the style has been found
+                  end if;
+               end;
+            end if;
+
+            Mask := Mask - 1;  --  remove one modifier from the bitmask
+         end loop;
       end if;
+
+      --  we did not find a style with several modificators, try to find
+      --  a style with one modificator
+      if Modifiers'Length > 0 then
+         for Index in reverse Modifiers'Range loop
+            --  special case to force show deprecated modificator
+            if Modifiers (Index) = deprecated then
+               declare
+                  Style_Name : constant String := Type_Name &
+                    Get_Modifiers (Modifiers_Array'(1 => deprecated));
+               begin
+                  if Check (Style_Name) /= "" then
+                     return Style_Name;  --  the style has been found
+                  else
+                     --  return "fallback" depricated when no other style
+                     --  has been found
+                     return LSP_Deprecated_Style_Name;
+                  end if;
+               end;
+            end if;
+         end loop;
+
+         for Index in reverse Modifiers'Range loop
+            declare
+               Style_Name : constant String := Type_Name &
+                 Get_Modifiers (Modifiers_Array'(1 => Modifiers (Index)));
+            begin
+               if Check (Style_Name) /= "" then
+                  return Style_Name;  --  the style has been found
+               end if;
+            end;
+         end loop;
+      end if;
+
+      --  return style for token itself if exist
+      return Check (Type_Name);
    end Check_Style_Name;
 
    -------------------
@@ -561,7 +610,8 @@ package body GPS.LSP_Client.Editors.Semantic_Tokens is
    function Get_Style_Name (T : LSP.Messages.SemanticTokenTypes) return String
    is
    begin
-      return Check_Style_Name (LSP.Messages.SemanticTokenTypes'Image (T));
+      return Check_Style_Name
+        (LSP.Messages.SemanticTokenTypes'Image (T), Empty_Modifiers_Array);
    end Get_Style_Name;
 
    ---------------
@@ -576,7 +626,9 @@ package body GPS.LSP_Client.Editors.Semantic_Tokens is
    is
       use Interfaces;
 
-      Modifiers : Modifiers_Array := Empty_Modifiers_Array;
+      Modifiers : Modifiers_Array
+        (1 .. SemanticTokenModifiers'Pos (SemanticTokenModifiers'Last) + 1);
+      Last      : Natural := 0;
       UInt      : Unsigned_32 := Unsigned_32 (Token_Modifiers);
       Index     : Positive := 1;
    begin
@@ -588,9 +640,11 @@ package body GPS.LSP_Client.Editors.Semantic_Tokens is
                    (Legend.tokenModifiers.Element (Index));
             begin
                if N = "abstract" then
-                  Modifiers (an_abstract) := True;
+                  Last := Last + 1;
+                  Modifiers (Last) := an_abstract;
                else
-                  Modifiers (SemanticTokenModifiers'Value (N)) := True;
+                  Last := Last + 1;
+                  Modifiers (Last) := SemanticTokenModifiers'Value (N);
                end if;
             end;
          end if;
@@ -599,15 +653,10 @@ package body GPS.LSP_Client.Editors.Semantic_Tokens is
          Index := Index + 1;
       end loop;
 
-      if Modifiers (deprecated) then
-         return LSP_Deprecated_Style_Name;
-
-      else
-         return Check_Style_Name
-           (VSS.Strings.Conversions.To_UTF_8_String
-              (Legend.tokenTypes.Element (Natural (Token_Type) + 1)),
-            Modifiers);
-      end if;
+      return Check_Style_Name
+        (VSS.Strings.Conversions.To_UTF_8_String
+           (Legend.tokenTypes.Element (Natural (Token_Type) + 1)),
+         Modifiers (1 .. Last));
    end Get_Style;
 
    -------------
@@ -774,7 +823,9 @@ package body GPS.LSP_Client.Editors.Semantic_Tokens is
       Result : LSP.Messages.SemanticTokens)
    is
       use Result_Vectors;
-      Idx : Positive := 1;
+      Idx     : Positive := 1;
+      Request : GPS.LSP_Client.Requests.Request_Access;
+      Dummy   : Boolean;
    begin
       --  delete previouse results for the same file
       while Idx <= Natural (Module.Data.Length) loop
@@ -788,13 +839,28 @@ package body GPS.LSP_Client.Editors.Semantic_Tokens is
          end if;
       end loop;
 
-      --  store new result
-      Module.Data.Append (Result_Type'((Self.File, 0, 0), Result.data));
+      declare
+         Buffer : constant Editor_Buffer'Class :=
+           Module.Get_Kernel.Get_Buffer_Factory.Get
+             (Self.File, Open_Buffer => False, Open_View => False);
+      begin
+         if Buffer = Nil_Editor_Buffer then
+            return;
 
-      if Module.Idle_ID = Glib.Main.No_Source_Id then
-         --  register Idle
-         Module.Idle_ID := Glib.Main.Idle_Add (On_Idle'Access);
-      end if;
+         elsif Self.Version = Buffer.Version then
+            --  store new result
+            Module.Data.Append (Result_Type'((Self.File, 0, 0), Result.data));
+
+            if Module.Idle_ID = Glib.Main.No_Source_Id then
+               --  register Idle
+               Module.Idle_ID := Glib.Main.Idle_Add (On_Idle'Access);
+            end if;
+
+         else
+            Send_Request
+              (Module.Get_Kernel, (Self.File, 0, 0), Request, Dummy);
+         end if;
+      end;
    end On_Result_Message;
 
    -----------------------
@@ -859,7 +925,7 @@ package body GPS.LSP_Client.Editors.Semantic_Tokens is
                Line := Prev_Line + Natural (Result.data.Element (Index));
 
                if Line = Self.From + 1 then
-                  --  Tooltip's line has been found: add +1 since 
+                  --  Tooltip's line has been found: add +1 since
                   --  LSP lines are 0-based.
 
                   if Line = Prev_Line then
@@ -944,17 +1010,34 @@ package body GPS.LSP_Client.Editors.Semantic_Tokens is
          end if;
       end Fill_Semantic_Tooltip;
 
+      Buffer  : constant Editor_Buffer'Class :=
+        Module.Get_Kernel.Get_Buffer_Factory.Get
+          (Self.File, Open_Buffer => False, Open_View => False);
+      Request : GPS.LSP_Client.Requests.Request_Access;
+      Dummy   : Boolean;
    begin
       if Self.Column = 0 then
          --  Column is 0 so it is regular (not for tooltip) request
          --  to highlight source code
 
-         Module.Data.Append
-           (Result_Type'((Self.File, Self.From, Self.To), Result.data));
+         if Buffer = Nil_Editor_Buffer then
+            return;
 
-         if Module.Idle_ID = Glib.Main.No_Source_Id then
-            --  register Idle
-            Module.Idle_ID := Glib.Main.Idle_Add (On_Idle'Access);
+         elsif Self.Version = Buffer.Version then
+            Module.Data.Append
+              (Result_Type'((Self.File, Self.From, Self.To), Result.data));
+
+            if Module.Idle_ID = Glib.Main.No_Source_Id then
+               --  register Idle
+               Module.Idle_ID := Glib.Main.Idle_Add (On_Idle'Access);
+            end if;
+
+         else
+            Send_Request
+              (Kernel  => Module.Get_Kernel,
+               Data    => (Self.File, Self.From, Self.To),
+               Request => Request,
+               Is_Sent => Dummy);
          end if;
 
       elsif Self.Vbox /= null then
@@ -1097,7 +1180,8 @@ package body GPS.LSP_Client.Editors.Semantic_Tokens is
    is
       use type GPS.LSP_Client.Language_Servers.Language_Server_Access;
 
-      Server : GPS.LSP_Client.Language_Servers.Language_Server_Access;
+      Server  : GPS.LSP_Client.Language_Servers.Language_Server_Access;
+      Version : Integer := 0;
 
       function Send_Full_Request
         (Kernel : not null access Kernel_Handle_Record'Class;
@@ -1125,7 +1209,8 @@ package body GPS.LSP_Client.Editors.Semantic_Tokens is
          Request := new SemanticTokens_Full_Request'
            (LSP_Request with
               Kernel => Kernel_Handle (Kernel),
-            File   => File);
+            File     => File,
+            Version  => Version);
 
          if Request.Is_Request_Supported (Server.Get_Client.Capabilities) then
             return GPS.LSP_Client.Requests.Execute
@@ -1151,10 +1236,11 @@ package body GPS.LSP_Client.Editors.Semantic_Tokens is
          Request := new SemanticTokens_Range_Request'
            (LSP_Request with
               Kernel => Kernel_Handle (Kernel),
-            File   => File,
-            From   => From_Line,
-            To     => To_Line,
-            others => <>);
+            File     => File,
+            From     => From_Line,
+            To       => To_Line,
+            Version  => Version,
+            others   => <>);
 
          if Request.Is_Request_Supported (Server.Get_Client.Capabilities) then
             return GPS.LSP_Client.Requests.Execute
@@ -1173,7 +1259,23 @@ package body GPS.LSP_Client.Editors.Semantic_Tokens is
         (Module.Get_Kernel.Get_Language_Handler.
            Get_Language_From_File (Data.File));
 
-      if Server /= null then
+      if Server = null then
+         Is_Sent := True;
+
+      else
+         declare
+            Buffer : constant Editor_Buffer'Class :=
+              Module.Get_Kernel.Get_Buffer_Factory.Get
+                (Data.File, Open_Buffer => False, Open_View => False);
+         begin
+            if Buffer = Nil_Editor_Buffer then
+               Is_Sent := True;
+               return;
+            else
+               Version := Buffer.Version;
+            end if;
+         end;
+
          if Server.Get_Client.Is_Ready then
             if Data.From = 0 then
                Is_Sent := Send_Full_Request (Kernel, Data.File);
@@ -1185,9 +1287,6 @@ package body GPS.LSP_Client.Editors.Semantic_Tokens is
          else
             Is_Sent := False;
          end if;
-
-      else
-         Is_Sent := True;
       end if;
    end Send_Request;
 
@@ -1220,7 +1319,7 @@ package body GPS.LSP_Client.Editors.Semantic_Tokens is
       if GPS.Kernel.Preferences.LSP_Show_Semantic_Tooltip.Get_Pref then
          Send_Request
            (Kernel  => Module.Get_Kernel,
-            Data    => (File, Line - 1, Line - 1),
+            Data    => (File, Line - 1, Line),
             Request => Request,
             Is_Sent => Result);
 

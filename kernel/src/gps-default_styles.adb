@@ -18,12 +18,18 @@
 with Ada.Characters.Handling;   use Ada.Characters.Handling;
 with Ada.Strings.Unbounded;     use Ada.Strings.Unbounded;
 
+with GNATCOLL.Traces;           use GNATCOLL.Traces;
+
+with Gdk.RGBA;
+
 with GPS.Intl;                  use GPS.Intl;
 with Default_Preferences;       use Default_Preferences;
 with GPS.Kernel.Preferences;    use GPS.Kernel.Preferences;
 with GPS.Kernel.Hooks;          use GPS.Kernel.Hooks;
 
 package body GPS.Default_Styles is
+
+   Me : constant Trace_Handle := Create ("GPS.Default_Styles", Off);
 
    type Entity_To_Pref_Array is array
      (Standout_Language_Entity) of Variant_Preference;
@@ -49,17 +55,11 @@ package body GPS.Default_Styles is
    --  Exclusive LSP styles for semantic highlighting that are not used
    --  anywhere else.
 
-   --  Styles' arrays for semantic tokens + modifiers, for example
-   --  Variable + Read_only
-   type LSP_Synthetic_Pref_Array is array (All_Styles'Range) of Style_Access;
+   LSP_Semantic_Styles : array (LSP_Styles'Range) of Style_Access;
+   pragma Unreferenced (LSP_Semantic_Styles);
 
-   LSP_Semantic_Readonly_Styles       : LSP_Synthetic_Pref_Array;
-   LSP_Semantic_Abstract_Styles       : LSP_Synthetic_Pref_Array;
-   LSP_Semantic_Declaration_Styles    : LSP_Synthetic_Pref_Array;
-   LSP_Semantic_Definition_Styles     : LSP_Synthetic_Pref_Array;
-   LSP_Semantic_Static_Styles         : LSP_Synthetic_Pref_Array;
-   LSP_Semantic_Documentation_Styles  : LSP_Synthetic_Pref_Array;
-   LSP_Semantic_Defaultlibrary_Styles : LSP_Synthetic_Pref_Array;
+   procedure Trace (Style : Style_Access);
+   --  Trace style information
 
    -------------------------------
    -- Initialize_Default_Styles --
@@ -130,12 +130,6 @@ package body GPS.Default_Styles is
 
       Aspect_Styles : array (1 .. 4) of Style_Access;
       pragma Unreferenced (Aspect_Styles);
-
-      LSP_Semantic_Styles : array (LSP_Styles'Range) of Style_Access;
-      pragma Unreferenced (LSP_Semantic_Styles);
-
-      LSP_Semantic_Variables_Styles : array (1 .. 2) of Style_Access;
-      pragma Unreferenced (LSP_Semantic_Variables_Styles);
 
    begin
       All_Styles :=
@@ -248,80 +242,6 @@ package body GPS.Default_Styles is
             Variant => LSP_Styles (Index).Pref);
       end loop;
 
-      --  *-declaration
-      for Index in All_Styles'Range loop
-         LSP_Semantic_Declaration_Styles (Index) := M.Create_From_Style
-           (Key     => To_String (All_Styles (Index).Name) & "-declaration",
-            Style   => To_String (All_Styles (Index).Name),
-            Shade_Or_Lighten_Amount => 0.0);
-         LSP_Semantic_Declaration_Styles (Index).Set_Variant (Italic);
-      end loop;
-
-      --  *-definition
-      for Index in All_Styles'Range loop
-         LSP_Semantic_Definition_Styles (Index) := M.Create_From_Style
-           (Key     => To_String (All_Styles (Index).Name) & "-definition",
-            Style   => To_String (All_Styles (Index).Name),
-            Shade_Or_Lighten_Amount => 0.0);
-         LSP_Semantic_Definition_Styles (Index).Set_Variant (Bold);
-      end loop;
-
-      --  *-readonly
-      for Index in All_Styles'Range loop
-         LSP_Semantic_Readonly_Styles (Index) := M.Create_From_Style
-           (Key     => To_String (All_Styles (Index).Name) & "-readonly",
-            Style   => To_String (All_Styles (Index).Name),
-            Shade_Or_Lighten_Amount => 0.0);
-         LSP_Semantic_Readonly_Styles (Index).Set_Background
-           (LSP_Readonly_Bg.Get_Pref);
-      end loop;
-
-      --  *-abstract
-      for Index in All_Styles'Range loop
-         LSP_Semantic_Abstract_Styles (Index) := M.Create_From_Style
-           (Key     => To_String (All_Styles (Index).Name) & "-abstract",
-            Style   => To_String (All_Styles (Index).Name),
-            Shade_Or_Lighten_Amount => 0.0);
-         LSP_Semantic_Abstract_Styles (Index).Set_Variant (Italic);
-      end loop;
-
-      --  *-static
-      for Index in All_Styles'Range loop
-         LSP_Semantic_Static_Styles (Index) := M.Create_From_Style
-           (Key     => To_String (All_Styles (Index).Name) & "-static",
-            Style   => To_String (All_Styles (Index).Name),
-            Shade_Or_Lighten_Amount => 0.0);
-         LSP_Semantic_Static_Styles (Index).Set_Variant (Bold_Italic);
-      end loop;
-
-      --  *-documentation
-      for Index in All_Styles'Range loop
-         LSP_Semantic_Documentation_Styles (Index) := M.Create_From_Style
-           (Key     => To_String (All_Styles (Index).Name) & "-documentation",
-            Style   => To_String (All_Styles (Index).Name),
-            Shade_Or_Lighten_Amount => 0.0);
-         LSP_Semantic_Documentation_Styles (Index).Set_Variant (Bold);
-      end loop;
-
-      --  *-defaultlibrary
-      for Index in All_Styles'Range loop
-         LSP_Semantic_Defaultlibrary_Styles (Index) := M.Create_From_Style
-           (Key     => To_String (All_Styles (Index).Name) & "-defaultlibrary",
-            Style   => To_String (All_Styles (Index).Name),
-            Shade_Or_Lighten_Amount => 0.0);
-         LSP_Semantic_Defaultlibrary_Styles (Index).Set_Variant (Bold_Italic);
-      end loop;
-
-      LSP_Semantic_Variables_Styles (1) := M.Create_From_Preferences
-        (Key     => "variable-localvariable",
-         Style   => Default_Style,
-         Variant => LSP_Local_Variable_Style);
-
-      LSP_Semantic_Variables_Styles (2) := M.Create_From_Preferences
-        (Key     => "variable-globalvariable",
-         Style   => Default_Style,
-         Variant => LSP_Global_Variable_Style);
-
       ------------
       -- Search --
       ------------
@@ -411,80 +331,50 @@ package body GPS.Default_Styles is
       Kernel : not null access Kernel_Handle_Record'Class;
       Pref   : Default_Preferences.Preference)
    is
-      M     : constant Style_Manager_Access := Get_Style_Manager
-        (Kernel_Handle (Kernel));
-      Style : Style_Access;
-
-      procedure Update_Prefs (Arr : LSP_Synthetic_Pref_Array);
-      --  Update preferences based on the changed one
-
-      ------------------
-      -- Update_Prefs --
-      ------------------
-
-      procedure Update_Prefs (Arr : LSP_Synthetic_Pref_Array) is
-      begin
-         for Index in All_Styles'Range loop
-            Style := M.Get (Style_Key (To_String (All_Styles (Index).Name)));
-            Arr (Index).Set_Foreground (Style.Foreground);
-            Arr (Index).Set_Background (Style.Background);
-         end loop;
-      end Update_Prefs;
+      M : constant Style_Manager_Access :=
+        Get_Style_Manager (Kernel_Handle (Kernel));
+      S : Style_Access;
 
    begin
       if Pref = null then
-         Update_Prefs (LSP_Semantic_Declaration_Styles);
-         Update_Prefs (LSP_Semantic_Definition_Styles);
-         Update_Prefs (LSP_Semantic_Abstract_Styles);
-         Update_Prefs (LSP_Semantic_Static_Styles);
-         Update_Prefs (LSP_Semantic_Documentation_Styles);
-         Update_Prefs (LSP_Semantic_Defaultlibrary_Styles);
-
          for Index in All_Styles'Range loop
-            Style := M.Get (Style_Key (To_String (All_Styles (Index).Name)));
-            LSP_Semantic_Readonly_Styles (Index).Set_Foreground
-              (Style.Foreground);
-            LSP_Semantic_Readonly_Styles (Index).Set_Background
-              (LSP_Readonly_Bg.Get_Pref);
+            S := M.Get (Style_Key (To_String (All_Styles (Index).Name)));
+            S.Refresh_Values;
+
+            Trace (S);
          end loop;
 
       else
          for Index in All_Styles'Range loop
             if Pref = Preference (All_Styles (Index).Pref) then
-               declare
-                  ------------
-                  -- Update --
-                  ------------
+               S := M.Get (Style_Key (To_String (All_Styles (Index).Name)));
+               S.Refresh_Values;
 
-                  procedure Update (Arr : LSP_Synthetic_Pref_Array);
-                  procedure Update (Arr : LSP_Synthetic_Pref_Array) is
-                  begin
-                     Arr (Index).Set_Foreground (Style.Foreground);
-                     Arr (Index).Set_Background (Style.Background);
-                  end Update;
+               Trace (S);
 
-               begin
-                  Style := M.Get
-                    (Style_Key (To_String (All_Styles (Index).Name)));
-
-                  Update (LSP_Semantic_Declaration_Styles);
-                  Update (LSP_Semantic_Definition_Styles);
-                  Update (LSP_Semantic_Abstract_Styles);
-                  Update (LSP_Semantic_Static_Styles);
-                  Update (LSP_Semantic_Documentation_Styles);
-                  Update (LSP_Semantic_Defaultlibrary_Styles);
-               end;
                exit;
             end if;
          end loop;
-
-         if Pref = Preference (LSP_Readonly_Bg) then
-            for Index in LSP_Semantic_Readonly_Styles'Range loop
-               LSP_Semantic_Readonly_Styles (Index).Set_Background
-                 (LSP_Readonly_Bg.Get_Pref);
-            end loop;
-         end if;
       end if;
    end Execute;
+
+   -----------
+   -- Trace --
+   -----------
+
+   procedure Trace (Style : Style_Access) is
+   begin
+      Trace
+        (Me, Style.Get_Name &
+           " font:" & Style.Get_Variant'Img &
+           " foreground:" & Gdk.RGBA.To_String (Style.Get_Foreground) &
+           " background:" & Gdk.RGBA.To_String (Style.Get_Background) &
+           " underline:" & Style.Get_Underline'Img &
+           " underline color:" & Gdk.RGBA.To_String
+           (Style.Get_Underline_Color) &
+           " strikethrough: " & Style.Get_Strikethrough'Img &
+           " strikethrough color: " & Gdk.RGBA.To_String
+           (Style.Get_Strikethrough_Color));
+   end Trace;
 
 end GPS.Default_Styles;

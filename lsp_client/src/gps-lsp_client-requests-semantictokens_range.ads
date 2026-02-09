@@ -22,8 +22,9 @@ package GPS.LSP_Client.Requests.SemanticTokens_Range is
    type Abstract_SemanticTokens_Range_Request is
      abstract new GPS.LSP_Client.Requests.Base.Text_Document_Request with
       record
-         From : Integer;
-         To   : Integer;
+         Version : Integer := 0;
+         From    : Integer;
+         To      : Integer;
       end record;
 
    function Params
