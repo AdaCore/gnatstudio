@@ -1910,6 +1910,16 @@ package body GPS.Kernel.Preferences is
              -("Controls whether semantic highlighting is shown for the "
                & "languages that support it through LSP. "
                & "If disabled, only the syntax highlighting is used."),
+           Default => False);
+
+      LSP_Show_Semantic_Tooltip :=
+        Manager.Create
+          (Path    => "LSP:Highlighting",
+           Name    => "LSP-Semantic-Highlighting-Tooltip",
+           Label   => -"Show semantic tokens in tooltips",
+           Doc     =>
+             -("Controls whether semantic tokens are shown in "
+               & "entity tooltips."),
            Default => True);
 
       LSP_Diagnostics_Display := LSP_Diagnostics_Display_Policy_Prefs.Create
