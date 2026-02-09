@@ -25,7 +25,7 @@
   </action>
 
   <contextual action="Generate Executable Test Action">
-    <Title>%(prefix)s/Generate Executable Test</Title>
+    <Title>%(prefix)s/Generate Executable Test with Counterexample</Title>
   </contextual>
   <contextual action="Generate Counterexamples">
     <Title>%(prefix)s/Generate Counterexamples with GNATtest</Title>

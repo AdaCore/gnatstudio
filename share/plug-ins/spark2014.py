@@ -1061,9 +1061,6 @@ def on_prove_region(self):
 def on_generate_executable_test(context, force=False):
     logger.log("on_generate_executable_test starting ...")
 
-    msg = context._loc_msg
-    vc_kind = get_vc_kind(msg)
-
     check_loc = context.location()
 
     spec_loc = spec_location(context)
@@ -1071,7 +1068,12 @@ def on_generate_executable_test(context, force=False):
         print_error("Unsupported context. Expecting a subprogram.")
         return
 
-    yield spark_testgen.run(str(spec_loc), str(check_loc), vc_kind, force)
+    yield spark_testgen.run(
+        str(spec_loc),
+        str(check_loc),
+        drop_severity_prefix(context._loc_msg.get_text()),
+        force,
+    )
 
 
 def _generate_counter_example_with_gnattest(context, use_fuzzer, force):
@@ -1458,13 +1460,23 @@ def can_show_report():
     )
 
 
+def drop_severity_prefix(text):
+    """
+    Remove severity prefixes (medium, low, high) from the text
+
+    However, 'warning' and 'error' are preserved since those are not considered
+    checks.
+    """
+    return re.sub(r"^(medium\: |low\: |high\: )", "", text)
+
+
 def get_vc_kind(msg):
     """Return the kind of the failing VC according to dictionnary
     vc_fail_msg_dict."""
     # get rid of "medium: ", "low: " and "high: "
     # We assume that "warning: ", "severity: " and "error: " are not checks
     # (ie: something we run provers on).
-    clean_msg = re.sub(r"^(medium\: |low\: |high\: )", "", msg.get_text())
+    clean_msg = drop_severity_prefix(msg.get_text())
 
     def best_match(acc, elem):
         if clean_msg.startswith(elem):

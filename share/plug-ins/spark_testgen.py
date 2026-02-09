@@ -61,7 +61,7 @@ def _get_values_from_spark_json(
                     json_check_file == source_file
                     and str(json_check_line) == str(source_line)
                     and str(json_check_col) == str(source_col)
-                    and str(json_message) == str(message)
+                    and str(json_message_text).startswith(str(message))
                 ):
 
                     logger.log("Proof entry for the given check found")
@@ -245,7 +245,9 @@ def run(spec_loc, check_loc, check_message, force=False):
 
     :param spec_loc: Source code location of the spec.
     :param check_loc: Source code location of the given GNATprove check.
-    :param vc_kind: VC kind of the given GNATprove check.
+    :param check_message: The top-level part of the GNATprove's check message.
+        It is used to match the entry in the .spark file with the right check
+        when there are multiple checks for the same line and column.
     :param force: Boolean flag passed to GPS.BuildTarget. If True, all dialogs
         are suppressed and the processes are launched directly.
     """
@@ -266,6 +268,7 @@ def run(spec_loc, check_loc, check_message, force=False):
 
     logger.log(f"testgen.run: spec={spec_loc}")
     logger.log(f"testgen.run: subp={check_loc}")
+    logger.log(f"testgen.run: message={check_message}")
     logger.log(f"testgen.run: spec_file={spec_file}, spec_line={spec_line}")
     logger.log(
         f"testgen.run: check_file={check_file}, check_line={check_line}"
@@ -307,9 +310,9 @@ def run(spec_loc, check_loc, check_message, force=False):
         check_message,
     )
 
-    if ce_values is None:
+    if not ce_values:
         print_warning(
-            f"Couldn't get counterexample for {check_message} at"
+            f"No counterexample found for {check_message!r} at"
             f" {check_file}:{check_line}. Aborting"
         )
         return
