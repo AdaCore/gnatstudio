@@ -60,6 +60,30 @@ color_prefs = {
     "meta.bookmark": "bookmarks",  # Lines with a bookmark
 }
 
+text_style_prefs = {
+    "entity.other.namespace": "namespace",
+    "entity.name.type": "type",
+    "entity.name.type.class": "type",
+    "entity.name.type.class.semantic": "class",
+    "entity.name.enum": "enum",
+    "entity.name.interface": "interface",
+    "entity.name.struct": "struct",
+    "entity.name.typeparameter": "typeparameter",
+    "entity.name.parameter": "parameter",
+    "entity.name.variable": "variable",
+    "entity.name.property": "property",
+    "entity.name.enum.member": "enummember",
+    "entity.other.function": "function",
+    "keyword": "keyword",
+    "entity.name.modifier": "modifier",
+    "comment": "comment",
+    "constant.character": "string",
+    "string": "string",
+    "constant.numeric": "number",
+    "entity.name.operator": "operators",
+}
+# dictionary to convert textmate prefixes to LSP style name prefixes
+
 
 def to_GPS_prefs(d):
     """Considering a dictionary d representing prefs in the theme plist,
@@ -96,6 +120,7 @@ def to_GPS_prefs(d):
                     style = "DEFAULT"
 
             prefs.append((text_variant_prefs[scope], (style, fg, bg)))
+            continue
 
         if scope in color_prefs:
             s = d["settings"]
@@ -105,6 +130,75 @@ def to_GPS_prefs(d):
                 fg = Color(s["foreground"])
 
             prefs.append((color_prefs[scope], fg))
+            continue
+
+        for typ in text_style_prefs:
+            if scope.startswith(typ):
+                s = d["settings"]
+                (
+                    fg,
+                    bg,
+                    style,
+                ) = (
+                    transparent,
+                    transparent,
+                    "NONE",
+                )
+                underline, underline_color = "_NONE", transparent
+                # NONE is the value of the underline, so use _NONE as an
+                # uninitialized value
+
+                strikethrough, strikethrough_color = "NONE", transparent
+
+                if "foreground" in s:
+                    fg = Color(s["foreground"])
+                if "background" in s:
+                    bg = Color(s["background"])
+                if "fontStyle" in s:
+                    theme_style = s["fontStyle"]
+                    if "bold" in theme_style and "italic" in theme_style:
+                        style = "BOLD_ITALIC"
+                    elif "bold" in theme_style:
+                        style = "BOLD"
+                    elif "italic" in theme_style:
+                        style = "ITALIC"
+                    elif "normal" in theme_style:
+                        style = "DEFAULT"
+
+                if "underline" in s:
+                    theme_underline = s["underline"]
+                    if "none" in theme_style:
+                        underline = "NONE"
+                    elif "single" in theme_style:
+                        underline = "SINGLE"
+                    elif "double" in theme_style:
+                        underline = "DOUBLE"
+                    elif "error" in theme_style:
+                        underline = "ERROR"
+                if "underline_color" in s:
+                    underline_color = Color(s["underline_color"])
+
+                if "strikethrough" in s:
+                    theme_strikethrough = s["strikethrough"]
+                    if "true" in theme_strikethrough:
+                        strikethrough = "TRUE"
+                    elif "false" in theme_style:
+                        strikethrough = "FALSE"
+                if "strikethrough_color" in s:
+                    strikethrough_color = Color(s["strikethrough_color"])
+
+                prefs.append(
+                    (
+                        scope.replace(typ, text_style_prefs[typ]),
+                        (
+                            style,
+                            fg,
+                            bg,
+                            [underline, underline_color],
+                            [strikethrough, strikethrough_color],
+                        ),
+                    )
+                )
 
     return prefs
 

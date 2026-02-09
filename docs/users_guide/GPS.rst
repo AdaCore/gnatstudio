@@ -2056,6 +2056,8 @@ Classes
 
    .. automethod:: GPS.Style.create_from_preferences
 
+   .. automethod:: GPS.Style.create_from_style
+
    .. automethod:: GPS.Style.get_background
 
    .. automethod:: GPS.Style.get_foreground
@@ -2068,9 +2070,19 @@ Classes
 
    .. automethod:: GPS.Style.set_background
 
+   .. automethod:: GPS.Style.set_font_variant
+
    .. automethod:: GPS.Style.set_foreground
 
    .. automethod:: GPS.Style.set_in_speedbar
+
+   .. automethod:: GPS.Style.set_strikethrough
+
+   .. automethod:: GPS.Style.set_strikethrough_color
+
+   .. automethod:: GPS.Style.set_underline
+
+   .. automethod:: GPS.Style.set_underline_color
 
 :class:`GPS.SwitchesChooser`
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^

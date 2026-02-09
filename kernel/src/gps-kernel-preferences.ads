@@ -393,12 +393,9 @@ package GPS.Kernel.Preferences is
    LSP_TypeParameter_Style   : Variant_Preference;
    LSP_Parameter_Style       : Variant_Preference;
    LSP_Variable_Style        : Variant_Preference;
-   LSP_Local_Variable_Style  : Variant_Preference;
-   LSP_Global_Variable_Style : Variant_Preference;
    LSP_Modifier_Style        : Variant_Preference;
    LSP_Operator_Style        : Variant_Preference;
    LSP_Deprecated_Style      : Variant_Preference;
-   LSP_Readonly_Bg           : Color_Preference;
 
    -----------
    -- Utils --

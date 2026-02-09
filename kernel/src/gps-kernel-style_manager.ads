@@ -137,6 +137,10 @@ package GPS.Kernel.Style_Manager is
    function Get_Foreground (Style : Style_Access) return Gdk_RGBA;
    function Get_Background (Style : Style_Access) return Gdk_RGBA;
    function Get_Variant (Style : Style_Access) return Variant_Enum;
+   function Get_Underline (Style : Style_Access) return Underline_Enum;
+   function Get_Underline_Color (Style : Style_Access) return Gdk_RGBA;
+   function Get_Strikethrough (Style : Style_Access) return Boolean;
+   function Get_Strikethrough_Color (Style : Style_Access) return Gdk_RGBA;
    function Get_In_Speedbar (Style : Style_Access) return Boolean;
    function Get_Icon (Style : Style_Access) return String;
    --  Return the Foreground, Background, Variant for the given key.
@@ -159,11 +163,30 @@ package GPS.Kernel.Style_Manager is
    procedure Set_Foreground (Style : Style_Access; Color : Gdk_RGBA);
    procedure Set_Background (Style : Style_Access; Color : Gdk_RGBA);
    procedure Set_Variant (Style : Style_Access; Variant : Variant_Enum);
+   procedure Set_Underline (Style : Style_Access; Underline : Underline_Enum);
+   procedure Set_Underline_Color (Style : Style_Access; Color : Gdk_RGBA);
+   procedure Set_Strikethrough (Style : Style_Access; Value : Boolean);
+   procedure Set_Strikethrough_Color (Style : Style_Access; Color : Gdk_RGBA);
 
    --  These subprograms change the behavior of the style but do not
    --  mark the style as being "overridden".
    procedure Set_In_Speedbar (Style : Style_Access; In_Speedbar : Boolean);
    procedure Set_Icon (Style : Style_Access; Icon : String);
+
+   function Is_Foreground_Inherited (Style : Style_Record) return Boolean;
+   function Is_Background_Inherited (Style : Style_Record) return Boolean;
+   function Is_Variant_Inherited (Style : Style_Record) return Boolean;
+   function Is_Underline_Inherited (Style : Style_Record) return Boolean;
+   function Is_Underline_Color_Inherited (Style : Style_Record) return Boolean;
+   function Is_Strikethrough_Inherited (Style : Style_Record) return Boolean;
+   function Is_Strikethrough_Color_Inherited
+     (Style : Style_Record) return Boolean;
+
+   --  Is current value of Foreground/Background/Variant was inherited form
+   --  the base stule or was set explicitly by Set_* method
+
+   procedure Refresh_Values (V : Style_Access);
+   --  Refresh the values of V from its source
 
    ------------------------------------------
    -- Entering values in the color manager --
@@ -268,9 +291,13 @@ private
    --  Return True IFF the source is a derivative of Pref.
 
    procedure Apply
-     (Source  : Root_Source;
-      Style   : in out Style_Record) is abstract;
-   --  Apply the effects of Source to Style.
+     (Source : Root_Source;
+      Style  : in out Style_Record) is abstract;
+   --  Apply the effects of Source to Style
+
+   function Parent_Style
+     (Source : Root_Source) return Style_Access is abstract;
+   --  Get current parent style or null
 
    ------------
    -- Styles --
@@ -294,15 +321,45 @@ private
       --  No cycle detection is done on this
 
       --  Values cached
-      Foreground : Gdk_RGBA := Null_RGBA;
-      Background : Gdk_RGBA := Null_RGBA;
-      Variant    : Variant_Enum := Default;
+      Foreground      : Gdk_RGBA := Null_RGBA;
+      Self_Foreground : Gdk_RGBA := Null_RGBA;
+      --  Foreground that is set explicitly for the style
+
+      Background      : Gdk_RGBA := Null_RGBA;
+      Self_Background : Gdk_RGBA := Null_RGBA;
+      --  Background that is set explicitly for the style
+
+      Variant         : Variant_Enum := Default;
+      Self_Variant    : Default_Preferences.Optional_Variant_Enum :=
+        (Is_Set => False);
+      --  Variant that is set explicitly for the style
+
+      Underline       : Underline_Enum := None;
+      Self_Underline  : Default_Preferences.Optional_Underline_Enum :=
+        (Is_Set => False);
+      --  Underline that is set explicitly for the style
+
+      Underline_Color      : Gdk_RGBA := Null_RGBA;
+      Self_Underline_Color : Gdk_RGBA := Null_RGBA;
+      --  Underline_Color is set explicitly for the style
+
+      Strikethrough         : Boolean := False;
+      Self_Strikethrough    : GNATCOLL.Tribooleans.Triboolean :=
+        GNATCOLL.Tribooleans.Indeterminate;
+      --  Strikethrough that is set explicitly for the style
+
+      Strikethrough_Color      : Gdk_RGBA := Null_RGBA;
+      Self_Strikethrough_Color : Gdk_RGBA := Null_RGBA;
+      --  Strikethrough_Color is set explicitly for the style
 
       Priority   : Natural := Priority_None;
 
       Icon        : Key_Access := null;
       In_Speedbar : Boolean := False;
    end record;
+
+   procedure Override_Source (Style : Style_Access);
+   --  Override source when self properties are changed explicitly
 
    package Style_Map is new Ada.Containers.Indefinite_Hashed_Maps
      (Key_Type        => Style_Key,
@@ -319,15 +376,26 @@ private
    end record;
 
    No_Style : constant Style_Access := new Style_Record'
-     (Name        => new String'(""),
-      Source      => null,
-      Tags        => <>,
-      Children    => <>,
-      Foreground  => Null_RGBA,
-      Background  => Null_RGBA,
-      Variant     => Default,
-      Priority    => Priority_None,
-      Icon        => null,
-      In_Speedbar => False);
+     (Name                     => new String'(""),
+      Source                   => null,
+      Tags                     => <>,
+      Children                 => <>,
+      Foreground               => Null_RGBA,
+      Self_Foreground          => Null_RGBA,
+      Background               => Null_RGBA,
+      Self_Background          => Null_RGBA,
+      Variant                  => Default,
+      Self_Variant             => (Is_Set => False),
+      Underline                => None,
+      Self_Underline           => (Is_Set => False),
+      Underline_Color          => Null_RGBA,
+      Self_Underline_Color     => Null_RGBA,
+      Strikethrough            => False,
+      Self_Strikethrough       => GNATCOLL.Tribooleans.Indeterminate,
+      Strikethrough_Color      => Null_RGBA,
+      Self_Strikethrough_Color => Null_RGBA,
+      Priority                 => Priority_None,
+      Icon                     => null,
+      In_Speedbar              => False);
 
 end GPS.Kernel.Style_Manager;
