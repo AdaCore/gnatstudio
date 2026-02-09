@@ -24,8 +24,8 @@ from gnatprove import (
     spec_location,
 )
 
-import spark_testgen
-import spark_test2prove
+import spark_ce2test
+import spark_cegen
 import workflows
 
 # We create the actions and menus in XML instead of python to share the same
@@ -1068,7 +1068,7 @@ def on_generate_executable_test(context, force=False):
         print_error("Unsupported context. Expecting a subprogram.")
         return
 
-    yield spark_testgen.run(
+    yield spark_ce2test.run(
         str(spec_loc),
         str(check_loc),
         drop_severity_prefix(context._loc_msg.get_text()),
@@ -1085,7 +1085,7 @@ def _generate_counter_example_with_gnattest(context, use_fuzzer, force):
         print_error("Unsupported context. Expecting a subprogram.")
         return
 
-    yield spark_test2prove.run(str(spec_loc), str(check_loc), use_fuzzer, force)
+    yield spark_cegen.run(str(spec_loc), str(check_loc), use_fuzzer, force)
 
 
 @workflows.run_as_workflow

@@ -22,11 +22,11 @@ from gnatprove import (
     print_newline,
     print_warning,
 )
-from spark_testgen import split_location, get_gnattest_hash, run_gnattest
+from spark_ce2test import split_location, get_gnattest_hash, run_gnattest
 from workflows.promises import ProcessWrapper, TargetWrapper
 
 # The following target names must be unique. See similar constants in
-# spark_testgen.py.
+# spark_ce2test.py.
 
 # GNATtest target to use when use_fuzzing=False
 GNATTEST_TARGET = "Run GNATtest to find counterexample candidates"
@@ -254,10 +254,10 @@ def run(
     project_name = str.lower(GPS.Project.root().name())
     unit_name = os.path.splitext(os.path.basename(spec_file))[0]
 
-    logger.log(f"test2prove.run: spec={spec_loc}")
-    logger.log(f"test2prove.run: spec_file={spec_file}, spec_line={spec_line}")
-    logger.log(f"test2prove.run: project_name={project_name}")
-    logger.log(f"test2prove.run: unit_name={unit_name}")
+    logger.log(f"cegen.run: spec={spec_loc}")
+    logger.log(f"cegen.run: spec_file={spec_file}, spec_line={spec_line}")
+    logger.log(f"cegen.run: project_name={project_name}")
+    logger.log(f"cegen.run: unit_name={unit_name}")
 
     # Get the hash that GNATtest will use for the enclosing subprogram
 

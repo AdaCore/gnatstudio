@@ -1,6 +1,6 @@
 """
 This plugin provides the functionality to generate a test harness with GNATtest
-using counterexamples values from GNATprove for a chosen SPARK check.
+using counterexample values provided by GNATprove for a chosen SPARK check.
 
 A prerequisite is a failed check for which GNATprove has found a
 counterexample.
@@ -23,7 +23,7 @@ from gnatprove import (
 from workflows.promises import ProcessWrapper, TargetWrapper
 
 # The following target names must be unique. See similar constants in
-# spark_test2prove.py.
+# spark_cegen.py.
 
 # Note: Pluralization is intentionally in parentheses because we need one test
 # case with JSON data for the counterexample, but GNATtest also generates the
@@ -266,16 +266,16 @@ def run(spec_loc, check_loc, check_message, force=False):
     project_name = str.lower(GPS.Project.root().name())
     unit_name = os.path.splitext(os.path.basename(spec_file))[0]
 
-    logger.log(f"testgen.run: spec={spec_loc}")
-    logger.log(f"testgen.run: subp={check_loc}")
-    logger.log(f"testgen.run: message={check_message}")
-    logger.log(f"testgen.run: spec_file={spec_file}, spec_line={spec_line}")
+    logger.log(f"ce2test.run: spec={spec_loc}")
+    logger.log(f"ce2test.run: subp={check_loc}")
+    logger.log(f"ce2test.run: message={check_message}")
+    logger.log(f"ce2test.run: spec_file={spec_file}, spec_line={spec_line}")
     logger.log(
-        f"testgen.run: check_file={check_file}, check_line={check_line}"
+        f"ce2test.run: check_file={check_file}, check_line={check_line}"
         f", check_col={check_col}"
     )
-    logger.log(f"testgen.run: project_name={project_name}")
-    logger.log(f"testgen.run: unit_name={unit_name}")
+    logger.log(f"ce2test.run: project_name={project_name}")
+    logger.log(f"ce2test.run: unit_name={unit_name}")
 
     spark_filenames = []
     for base_dir in GPS.Project.root().object_dirs(recursive=False):
