@@ -2675,6 +2675,15 @@ package body Default_Preferences is
       return R;
    end To_String;
 
+   ---------------
+   -- To_String --
+   ---------------
+
+   function To_String (V : Underline_Enum) return String is
+   begin
+      return V'Img;
+   end To_String;
+
    -----------------
    -- From_String --
    -----------------
@@ -2688,6 +2697,15 @@ package body Default_Preferences is
          end if;
       end loop;
       return Variant_Enum'Value (R);
+   end From_String;
+
+   -----------------
+   -- From_String --
+   -----------------
+
+   function From_String (S : String) return Underline_Enum is
+   begin
+      return Underline_Enum'Value (S);
    end From_String;
 
    ----------------------------

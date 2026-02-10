@@ -15,10 +15,14 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
+with GNATCOLL.Traces;          use GNATCOLL.Traces;
 with Gdk.RGBA;                 use Gdk.RGBA;
 with GPS.Kernel.Scripts;       use GPS.Kernel.Scripts;
 
 package body GPS.Kernel.Style_Manager.Shell is
+
+   Me : constant Trace_Handle :=
+     Create ("GPS.Kernel.Style_Manager.Shell", Off);
 
    Class       : constant String := "Style";
    Style_Class : Class_Type;
@@ -158,6 +162,27 @@ package body GPS.Kernel.Style_Manager.Shell is
             Set_Return_Value (Data, Style_Inst);
          end;
 
+      elsif Command = "create_from_style" then
+         declare
+            Style_Name       : constant String := Nth_Arg (Data, 1);
+            Base_Style       : constant String := Nth_Arg (Data, 2);
+            Shade_Or_Lighten : constant Gdouble :=
+              Gdouble (Float'(Nth_Arg (Data, 3, 0.0)));
+            Style      : GPS.Kernel.Style_Manager.Style_Access;
+         begin
+            Trace
+              (Me, "create_from_style (" & Style_Name & ", " & Base_Style &
+                 "," & Shade_Or_Lighten'Img & ")");
+
+            Style :=
+              Get_Style_Manager (Kernel).Create_From_Style
+              (Style_Name, Base_Style, Shade_Or_Lighten);
+
+            Style_Inst := New_Instance (Get_Script (Data), Style_Class);
+            Set_Data (Style_Inst, Style);
+            Set_Return_Value (Data, Style_Inst);
+         end;
+
       elsif Command = "list" then
          Set_Return_Value_As_List (Data);
 
@@ -188,16 +213,41 @@ package body GPS.Kernel.Style_Manager.Shell is
    begin
       if Command = "set_foreground" then
          Set_Foreground (Style, Parse_Color (Nth_Arg (Data, 2)));
+
       elsif Command = "set_background" then
          Set_Background (Style, Parse_Color (Nth_Arg (Data, 2)));
+
+      elsif Command = "set_font_variant" then
+         Set_Variant
+           (Style,
+            Default_Preferences.From_String (Nth_Arg (Data, 2)));
+
+      elsif Command = "set_underline" then
+         Set_Underline
+           (Style,
+            Default_Preferences.From_String (Nth_Arg (Data, 2)));
+
+      elsif Command = "set_underline_color" then
+         Set_Underline_Color (Style, Parse_Color (Nth_Arg (Data, 2)));
+
+      elsif Command = "set_strikethrough" then
+         Set_Strikethrough (Style, (Nth_Arg (Data, 2)));
+
+      elsif Command = "set_strikethrough_color" then
+         Set_Strikethrough_Color (Style, Parse_Color (Nth_Arg (Data, 2)));
+
       elsif Command = "set_in_speedbar" then
          Set_In_Speedbar (Style, Nth_Arg (Data, 2));
+
       elsif Command = "get_name" then
          Set_Return_Value (Data, Get_Name (Style));
+
       elsif Command = "get_foreground" then
          Set_Return_Value (Data, To_String (Get_Foreground (Style)));
+
       elsif Command = "get_background" then
          Set_Return_Value (Data, To_String (Get_Background (Style)));
+
       elsif Command = "get_in_speedbar" then
          Set_Return_Value (Data, Get_In_Speedbar (Style));
       end if;
@@ -225,6 +275,9 @@ package body GPS.Kernel.Style_Manager.Shell is
       Register_Command
         (Kernel, "create_from_preferences", 3, 3, Style_Command_Handler'Access,
          Style_Class, True);
+      Register_Command
+        (Kernel, "create_from_style", 2, 3, Style_Command_Handler'Access,
+         Style_Class, True);
 
       Register_Command
         (Kernel, "get_foreground", 0, 0, Accessors'Access, Style_Class);
@@ -238,6 +291,17 @@ package body GPS.Kernel.Style_Manager.Shell is
         (Kernel, "set_foreground", 1, 1, Accessors'Access, Style_Class);
       Register_Command
         (Kernel, "set_background", 1, 1, Accessors'Access, Style_Class);
+      Register_Command
+        (Kernel, "set_font_variant", 1, 1, Accessors'Access, Style_Class);
+      Register_Command
+        (Kernel, "set_underline", 1, 1, Accessors'Access, Style_Class);
+      Register_Command
+        (Kernel, "set_underline_color", 1, 1, Accessors'Access, Style_Class);
+      Register_Command
+        (Kernel, "set_strikethrough", 1, 1, Accessors'Access, Style_Class);
+      Register_Command
+        (Kernel, "set_strikethrough_color",
+         1, 1, Accessors'Access, Style_Class);
       Register_Command
         (Kernel, "set_in_speedbar", 1, 1, Accessors'Access, Style_Class);
    end Register_Commands;

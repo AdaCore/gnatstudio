@@ -32,7 +32,7 @@ package body GPS.LSP_Client.Requests.SemanticTokens_Range is
       pragma Unreferenced (Self);
 
    begin
-      return "textDocument/semanticTokens/full";
+      return "textDocument/semanticTokens/range";
    end Method;
 
    -----------------------

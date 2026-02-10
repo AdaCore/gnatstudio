@@ -168,6 +168,7 @@ API Documentation
 -----------------
 
 """
+
 from functools import partial
 import GPS
 import re
@@ -362,6 +363,7 @@ def new_style(
             Color(foreground_colors[0]),
             light_bg_color,
         )
+
         pref.tag = None
         HighlighterModule.preferences[style_id] = (pref, pref.get())
         return Style(style_id, prio, pref)

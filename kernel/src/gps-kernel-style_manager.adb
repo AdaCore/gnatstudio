@@ -16,11 +16,12 @@
 ------------------------------------------------------------------------------
 
 with Ada.Unchecked_Conversion;
-with Glib.Object; use Glib.Object;
+with Glib.Object;               use Glib.Object;
+with Glib.Properties;
 with Pango.Enums;               use Pango.Enums;
 with Pango.Font;                use Pango.Font;
-with Gtkada.Style; use Gtkada.Style;
-with GNATCOLL.Traces; use GNATCOLL.Traces;
+with Gtkada.Style;              use Gtkada.Style;
+with GNATCOLL.Traces;           use GNATCOLL.Traces;
 
 with GPS.Kernel.Hooks;          use GPS.Kernel.Hooks;
 
@@ -38,9 +39,6 @@ package body GPS.Kernel.Style_Manager is
 
    procedure Unchecked_Free is new Ada.Unchecked_Deallocation
      (Root_Source'Class, Source_Access);
-
-   procedure Refresh_Values (V : Style_Access);
-   --  Refresh the values of V from its source.
 
    procedure Free (X : in out Style_Record);
    --  Free memory associated to X
@@ -82,6 +80,9 @@ package body GPS.Kernel.Style_Manager is
    overriding procedure Apply
      (Source : Source_From_Style_And_Variant_Prefs;
       Style  : in out Style_Record);
+   overriding function Parent_Style
+     (Source : Source_From_Style_And_Variant_Prefs)
+      return Style_Access is (null);
 
    type Source_From_Fg_Bg_Prefs is new Root_Source with record
       Fg_Pref, Bg_Pref : Color_Preference;
@@ -92,6 +93,9 @@ package body GPS.Kernel.Style_Manager is
    overriding procedure Apply
      (Source : Source_From_Fg_Bg_Prefs;
       Style  : in out Style_Record);
+   overriding function Parent_Style
+     (Source : Source_From_Fg_Bg_Prefs)
+      return Style_Access is (null);
 
    --  Styles based on another style
 
@@ -108,6 +112,9 @@ package body GPS.Kernel.Style_Manager is
    overriding procedure Apply
      (Source : Source_Shade_Or_Lighten;
       Style  : in out Style_Record);
+   overriding function Parent_Style
+     (Source : Source_Shade_Or_Lighten)
+      return Style_Access;
 
    --  Styles overridden by code
 
@@ -118,6 +125,9 @@ package body GPS.Kernel.Style_Manager is
    overriding procedure Apply
      (Source : Source_Override;
       Style  : in out Style_Record) is null;
+   overriding function Parent_Style
+     (Source : Source_Override)
+      return Style_Access is (null);
 
    -----------
    -- Apply --
@@ -125,14 +135,68 @@ package body GPS.Kernel.Style_Manager is
 
    overriding procedure Apply
      (Source : Source_Shade_Or_Lighten;
-      Style  : in out Style_Record) is
+      Style  : in out Style_Record)
+   is
+      C : Gdk_RGBA;
    begin
-      Style.Foreground := Shade_Or_Lighten
-        (Source.Source_Style.Foreground, Source.Shade_Amount);
-      Style.Background := Shade_Or_Lighten
-        (Source.Source_Style.Background, Source.Shade_Amount);
-      Style.Variant := Source.Source_Style.Variant;
+      if Style.Is_Foreground_Inherited then
+         C := Source.Source_Style.Foreground;
+      else
+         C := Style.Self_Foreground;
+      end if;
+      Style.Foreground := Shade_Or_Lighten (C, Source.Shade_Amount);
+
+      if Style.Is_Background_Inherited then
+         C := Source.Source_Style.Background;
+      else
+         C := Style.Self_Background;
+      end if;
+      Style.Background := Shade_Or_Lighten (C, Source.Shade_Amount);
+
+      if Style.Is_Variant_Inherited then
+         Style.Variant := Source.Source_Style.Variant;
+      else
+         Style.Variant := Style.Self_Variant.Variant;
+      end if;
+
+      if Style.Is_Underline_Inherited then
+         Style.Underline := Source.Source_Style.Underline;
+      else
+         Style.Underline := Style.Self_Underline.Underline;
+      end if;
+
+      if Style.Is_Underline_Color_Inherited then
+         C := Source.Source_Style.Underline_Color;
+      else
+         C := Style.Self_Underline_Color;
+      end if;
+      Style.Underline_Color := Shade_Or_Lighten (C, Source.Shade_Amount);
+
+      if Style.Is_Strikethrough_Inherited then
+         Style.Strikethrough := Source.Source_Style.Strikethrough;
+      else
+         Style.Strikethrough := GNATCOLL.Tribooleans.To_Boolean
+           (Style.Self_Strikethrough);
+      end if;
+
+      if Style.Is_Strikethrough_Color_Inherited then
+         C := Source.Source_Style.Strikethrough_Color;
+      else
+         C := Style.Self_Strikethrough_Color;
+      end if;
+      Style.Strikethrough_Color := Shade_Or_Lighten (C, Source.Shade_Amount);
    end Apply;
+
+   ------------------
+   -- Parent_Style --
+   ------------------
+
+   overriding function Parent_Style
+     (Source : Source_Shade_Or_Lighten)
+      return Style_Access is
+   begin
+      return Source.Source_Style;
+   end Parent_Style;
 
    ---------------------
    -- Depends_On_Pref --
@@ -305,16 +369,36 @@ package body GPS.Kernel.Style_Manager is
       Style  : Style_Key;
       Shade_Or_Lighten_Amount : Gdouble) return Style_Access
    is
+      use type Style_Vector.Cursor;
+
       V : Style_Access;
       O : Style_Access;
+      P : Style_Access;
+      C : Style_Vector.Cursor;
    begin
       O := Self.Get (Style);
       V := Self.Get_Or_Create (Key);
+
+      P := V.Source.Parent_Style;
+      if P /= null then
+         --  remove from the previous parent
+         C := P.Children.Find (V);
+         if C /= Style_Vector.No_Element then
+            P.Children.Delete (C);
+         end if;
+      end if;
 
       --  Inform about the existing dependency.
       O.Children.Append (V);
 
       Unchecked_Free (V.Source);
+      V.Self_Foreground          := Null_RGBA;
+      V.Self_Background          := Null_RGBA;
+      V.Self_Variant             := (Is_Set => False);
+      V.Self_Underline           := (Is_Set => False);
+      V.Self_Strikethrough       := GNATCOLL.Tribooleans.Indeterminate;
+      V.Self_Strikethrough_Color := Null_RGBA;
+
       V.Source := new Source_Shade_Or_Lighten'
         (Source_Style => O,
          Shade_Amount => Shade_Or_Lighten_Amount);
@@ -330,11 +414,13 @@ package body GPS.Kernel.Style_Manager is
    Refresh_Stack_Count : Natural := 0;
    Circular_Dependency : exception;
 
-   procedure Refresh_Values (V : Style_Access) is
+   procedure Refresh_Values (V : Style_Access)
+   is
       use Default_Preferences;
 
       W : Weight := Pango_Weight_Normal;
       S : Pango.Enums.Style := Pango_Style_Normal;
+      U : Pango.Enums.Underline := Pango_Underline_None;
    begin
       Refresh_Stack_Count := Refresh_Stack_Count + 1;
 
@@ -373,6 +459,20 @@ package body GPS.Kernel.Style_Manager is
                S := Pango_Style_Italic;
          end case;
 
+         case V.Underline is
+            when None =>
+               null;
+
+            when Single =>
+               U := Pango.Enums.Pango_Underline_Single;
+
+            when Double =>
+               U := Pango.Enums.Pango_Underline_Double;
+
+            when Error =>
+               U := Pango.Enums.Pango_Underline_Error;
+         end case;
+
          for J in 1 .. Natural (V.Tags.Length) loop
             Set_Property (V.Tags (J),
                           Foreground_Rgba_Property, V.Foreground);
@@ -380,6 +480,29 @@ package body GPS.Kernel.Style_Manager is
                           Background_Rgba_Property, V.Background);
             Set_Property (V.Tags (J), Weight_Property, W);
             Set_Property (V.Tags (J), Style_Property, S);
+            Set_Property (V.Tags (J), Underline_Property, U);
+
+            if V.Underline_Color = Null_RGBA then
+               Set_Property
+                 (V.Tags (J), Underline_Rgba_Property, V.Foreground);
+            else
+               Set_Property
+                 (V.Tags (J), Underline_Rgba_Property, V.Underline_Color);
+            end if;
+
+            Glib.Properties.Set_Property
+              (V.Tags (J), Strikethrough_Property, V.Strikethrough);
+
+            if V.Strikethrough then
+               if V.Self_Strikethrough_Color = Null_RGBA then
+                  Set_Property
+                    (V.Tags (J), Strikethrough_Rgba_Property, V.Foreground);
+               else
+                  Set_Property
+                    (V.Tags (J), Strikethrough_Rgba_Property,
+                     V.Self_Strikethrough_Color);
+               end if;
+            end if;
          end loop;
       end if;
 
@@ -576,6 +699,42 @@ package body GPS.Kernel.Style_Manager is
       return Style.Variant;
    end Get_Variant;
 
+   -------------------
+   -- Get_Underline --
+   -------------------
+
+   function Get_Underline (Style : Style_Access) return Underline_Enum is
+   begin
+      return Style.Underline;
+   end Get_Underline;
+
+   -------------------------
+   -- Get_Underline_Color --
+   -------------------------
+
+   function Get_Underline_Color (Style : Style_Access) return Gdk_RGBA is
+   begin
+      return Style.Underline_Color;
+   end Get_Underline_Color;
+
+   -----------------------
+   -- Get_Strikethrough --
+   -----------------------
+
+   function Get_Strikethrough (Style : Style_Access) return Boolean is
+   begin
+      return Style.Strikethrough;
+   end Get_Strikethrough;
+
+   -----------------------------
+   -- Get_Strikethrough_Color --
+   -----------------------------
+
+   function Get_Strikethrough_Color (Style : Style_Access) return Gdk_RGBA is
+   begin
+      return Style.Strikethrough_Color;
+   end Get_Strikethrough_Color;
+
    ----------------------
    -- On_Tag_Destroyed --
    ----------------------
@@ -600,6 +759,7 @@ package body GPS.Kernel.Style_Manager is
       Tag : Gtk_Text_Tag;
       W   : Weight := Pango_Weight_Normal;
       S   : Pango.Enums.Style := Pango_Style_Normal;
+      U   : Pango.Enums.Underline := Pango_Underline_None;
    begin
       Gtk_New (Tag, Style.Name.all);
 
@@ -626,10 +786,47 @@ package body GPS.Kernel.Style_Manager is
             S := Pango_Style_Italic;
       end case;
 
+      case Style.Underline is
+         when None =>
+            null;
+
+         when Single =>
+            U := Pango.Enums.Pango_Underline_Single;
+
+         when Double =>
+            U := Pango.Enums.Pango_Underline_Double;
+
+         when Error =>
+            U := Pango.Enums.Pango_Underline_Error;
+      end case;
+
       Set_Property (Tag, Foreground_Rgba_Property, Style.Foreground);
       Set_Property (Tag, Background_Rgba_Property, Style.Background);
       Set_Property (Tag, Weight_Property, W);
       Set_Property (Tag, Style_Property, S);
+      Set_Property (Tag, Underline_Property, U);
+
+      if Style.Underline_Color = Null_RGBA then
+         Set_Property
+           (Tag, Underline_Rgba_Property, Style.Foreground);
+      else
+         Set_Property
+           (Tag, Underline_Rgba_Property, Style.Underline_Color);
+      end if;
+
+      Glib.Properties.Set_Property
+        (Tag, Strikethrough_Property, Style.Strikethrough);
+
+      if Style.Strikethrough then
+         if Style.Self_Strikethrough_Color = Null_RGBA then
+            Set_Property
+              (Tag, Strikethrough_Rgba_Property, Style.Foreground);
+         else
+            Set_Property
+              (Tag, Strikethrough_Rgba_Property,
+               Style.Self_Strikethrough_Color);
+         end if;
+      end if;
 
       return Tag;
    end Get_Tag;
@@ -776,16 +973,31 @@ package body GPS.Kernel.Style_Manager is
       end if;
    end Get_Color_Preference;
 
+   ---------------------
+   -- Override_Source --
+   ---------------------
+
+   procedure Override_Source (Style : Style_Access) is
+   begin
+      --  preserve parent to have hierarchy for Source_Shade_Or_Lighten
+      if Style.Source.all not in Source_Shade_Or_Lighten'Class then
+         Unchecked_Free (Style.Source);
+         Style.Source := new Source_Override;
+      end if;
+   end Override_Source;
+
    --------------------
    -- Set_Foreground --
    --------------------
 
    procedure Set_Foreground (Style : Style_Access; Color : Gdk_RGBA) is
    begin
+      Style.Self_Foreground := Color;
+
       if Style.Foreground /= Color then
-         Unchecked_Free (Style.Source);
-         Style.Source := new Source_Override;
+         Style.Override_Source;
          Style.Foreground := Color;
+
          --  Update the existing tags
          Refresh_Values (Style);
       end if;
@@ -797,10 +1009,12 @@ package body GPS.Kernel.Style_Manager is
 
    procedure Set_Background (Style : Style_Access; Color : Gdk_RGBA) is
    begin
+      Style.Self_Background := Color;
+
       if Style.Background /= Color then
-         Unchecked_Free (Style.Source);
-         Style.Source := new Source_Override;
+         Style.Override_Source;
          Style.Background := Color;
+
          --  Update the existing tags
          Refresh_Values (Style);
       end if;
@@ -812,14 +1026,153 @@ package body GPS.Kernel.Style_Manager is
 
    procedure Set_Variant (Style : Style_Access; Variant : Variant_Enum) is
    begin
+      Style.Self_Variant := (Is_Set => True, Variant => Variant);
+
       if Style.Variant /= Variant then
-         Unchecked_Free (Style.Source);
-         Style.Source := new Source_Override;
+         Style.Override_Source;
          Style.Variant := Variant;
+
          --  Update the existing tags
          Refresh_Values (Style);
       end if;
    end Set_Variant;
+
+   -------------------
+   -- Set_Underline --
+   -------------------
+
+   procedure Set_Underline
+     (Style : Style_Access; Underline : Underline_Enum) is
+   begin
+      Style.Self_Underline := (Is_Set => True, Underline => Underline);
+
+      if Style.Underline /= Underline then
+         Style.Override_Source;
+         Style.Underline := Underline;
+
+         --  Update the existing tags
+         Refresh_Values (Style);
+      end if;
+   end Set_Underline;
+
+   -------------------------
+   -- Set_Underline_Color --
+   -------------------------
+
+   procedure Set_Underline_Color (Style : Style_Access; Color : Gdk_RGBA) is
+   begin
+      Style.Self_Underline_Color := Color;
+
+      if Style.Underline_Color /= Color then
+         Style.Override_Source;
+         Style.Underline_Color := Color;
+
+         --  Update the existing tags
+         Refresh_Values (Style);
+      end if;
+   end Set_Underline_Color;
+
+   -----------------------
+   -- Set_Strikethrough --
+   -----------------------
+
+   procedure Set_Strikethrough (Style : Style_Access; Value : Boolean) is
+   begin
+      Style.Self_Strikethrough := GNATCOLL.Tribooleans.To_TriBoolean (Value);
+
+      if Style.Strikethrough /= Value then
+         Style.Override_Source;
+         Style.Strikethrough := Value;
+
+         --  Update the existing tags
+         Refresh_Values (Style);
+      end if;
+   end Set_Strikethrough;
+
+   -----------------------------
+   -- Set_Strikethrough_Color --
+   -----------------------------
+
+   procedure Set_Strikethrough_Color
+     (Style : Style_Access; Color : Gdk_RGBA) is
+   begin
+      Style.Self_Strikethrough_Color := Color;
+
+      if Style.Strikethrough_Color /= Color then
+         Style.Override_Source;
+         Style.Underline_Color := Color;
+
+         --  Update the existing tags
+         Refresh_Values (Style);
+      end if;
+   end Set_Strikethrough_Color;
+
+   -----------------------------
+   -- Is_Foreground_Inherited --
+   -----------------------------
+
+   function Is_Foreground_Inherited (Style : Style_Record) return Boolean is
+   begin
+      return Style.Self_Foreground = Null_RGBA;
+   end Is_Foreground_Inherited;
+
+   -----------------------------
+   -- Is_Background_Inherited --
+   -----------------------------
+
+   function Is_Background_Inherited (Style : Style_Record) return Boolean is
+   begin
+      return Style.Self_Background = Null_RGBA;
+   end Is_Background_Inherited;
+
+   --------------------------
+   -- Is_Variant_Inherited --
+   --------------------------
+
+   function Is_Variant_Inherited (Style : Style_Record) return Boolean is
+   begin
+      return not Style.Self_Variant.Is_Set;
+   end Is_Variant_Inherited;
+
+   ----------------------------
+   -- Is_Underline_Inherited --
+   ----------------------------
+
+   function Is_Underline_Inherited (Style : Style_Record) return Boolean is
+   begin
+      return not Style.Self_Underline.Is_Set;
+   end Is_Underline_Inherited;
+
+   ----------------------------------
+   -- Is_Underline_Color_Inherited --
+   ----------------------------------
+
+   function Is_Underline_Color_Inherited
+     (Style : Style_Record) return Boolean is
+   begin
+      return Style.Self_Underline_Color = Null_RGBA;
+   end Is_Underline_Color_Inherited;
+
+   --------------------------------
+   -- Is_Strikethrough_Inherited --
+   --------------------------------
+
+   function Is_Strikethrough_Inherited (Style : Style_Record) return Boolean
+   is
+      use GNATCOLL.Tribooleans;
+   begin
+      return Style.Self_Strikethrough = GNATCOLL.Tribooleans.Indeterminate;
+   end Is_Strikethrough_Inherited;
+
+   --------------------------------------
+   -- Is_Strikethrough_Color_Inherited --
+   --------------------------------------
+
+   function Is_Strikethrough_Color_Inherited
+     (Style : Style_Record) return Boolean is
+   begin
+      return Style.Self_Strikethrough_Color = Null_RGBA;
+   end Is_Strikethrough_Color_Inherited;
 
    ---------------------
    -- Set_In_Speedbar --

@@ -18,6 +18,11 @@
 --  Integration of LSP semantic tokens capabilities with GNAT Studio's source
 --  editor.
 
+with Gtk.Widget;               use Gtk.Widget;
+with Gtk.Box;                  use Gtk.Box;
+with GNATCOLL.VFS;             use GNATCOLL.VFS;
+with Basic_Types;              use Basic_Types;
+
 with GPS.Kernel;               use GPS.Kernel;
 with LSP.Messages;             use LSP.Messages;
 
@@ -29,5 +34,12 @@ package GPS.LSP_Client.Editors.Semantic_Tokens is
    function Get_Supported_Options
      return LSP.Messages.Optional_SemanticTokensClientCapabilities;
    --  Returns supported by client options
+
+   procedure Create_Semantic_Token_Tooltip
+     (Tooltip_Hbox : Gtk_Hbox;
+      File         : GNATCOLL.VFS.Virtual_File;
+      Line         : Integer;
+      Column       : Visible_Column_Type);
+   --  Initiate showing semantic tokens in tooltip
 
 end GPS.LSP_Client.Editors.Semantic_Tokens;

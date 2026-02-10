@@ -18,24 +18,32 @@
 with Ada.Characters;
 with Ada.Characters.Handling;
 with Ada.Containers.Indefinite_Vectors;
-
 with Ada.Strings.Unbounded;
-with GNATCOLL.Utils;
-with Interfaces;
-with VSS.Strings.Conversions;
 
-with Glib.Main;               use Glib.Main;
+with Interfaces;
 
 with GNATCOLL.Traces;         use GNATCOLL.Traces;
-with GNATCOLL.VFS;            use GNATCOLL.VFS;
+with GNATCOLL.JSON;
 with GNATCOLL.Xref;
+with GNATCOLL.Utils;
 
-with Basic_Types;
+with Glib.Main;               use Glib.Main;
+with Glib.Values;
+
+with Gtk.Handlers;
+with Gtk.Label;
+with Gtk.Separator;
+
+with VSS.String_Vectors;
+with VSS.Strings.Conversions;
+
 with GPS.Kernel.Hooks;        use GPS.Kernel.Hooks;
 with GPS.Kernel.Modules;      use GPS.Kernel.Modules;
 with GPS.Kernel.Preferences;
 with GPS.Kernel.Style_Manager;
 with GPS.Editors;             use GPS.Editors;
+
+with LSP.Types;
 
 with GPS.LSP_Module;
 with GPS.LSP_Client.Language_Servers;
@@ -44,14 +52,15 @@ with GPS.LSP_Client.Requests; use GPS.LSP_Client.Requests;
 with GPS.LSP_Client.Requests.SemanticTokens_Full;
 with GPS.LSP_Client.Requests.SemanticTokens_Range;
 
-with LSP.Types;
-
 package body GPS.LSP_Client.Editors.Semantic_Tokens is
 
    Me : constant Trace_Handle := Create ("GPS.LSP.SEMANTIC_TOKENS", On);
 
    LSP_Deprecated_Style_Name : constant String := "deprecated";
    --  Used as a depricated style name
+
+   Semantic_Tooltip_Box_Name : constant String := "Semantic_Box_Tooltip";
+   --  Used as a name for semantic box in tooltip
 
    --------------------
    -- Hooks_Function --
@@ -160,11 +169,42 @@ package body GPS.LSP_Client.Editors.Semantic_Tokens is
 
    type SemanticTokens_Range_Request is
      new GPS.LSP_Client.Requests.SemanticTokens_Range.
-       Abstract_SemanticTokens_Range_Request with null record;
+       Abstract_SemanticTokens_Range_Request
+   with record
+      Vbox_Destroyed_Handler_ID : Gtk.Handlers.Handler_Id;
+      --  Handler ID waiting for tooltip's box destruction
+      Vbox                      : Gtk_Vbox;
+      --  Vbox in tooltip that displays semantic information
+      Column                    : Basic_Types.Visible_Column_Type := 0;
+      --  Column in editor where tooltip is triggered
+   end record;
+   type SemanticTokens_Range_Request_Access is
+     access all SemanticTokens_Range_Request'Class;
 
    overriding procedure On_Result_Message
      (Self   : in out SemanticTokens_Range_Request;
       Result : LSP.Messages.SemanticTokens);
+
+   overriding procedure On_Error_Message
+     (Self    : in out SemanticTokens_Range_Request;
+      Code    : LSP.Messages.ErrorCodes;
+      Message : VSS.Strings.Virtual_String;
+      Data    : GNATCOLL.JSON.JSON_Value);
+
+   overriding procedure On_Rejected
+     (Self : in out SemanticTokens_Range_Request; Reason : Reject_Reason);
+
+   package Tooltip_Destroyed_Callback is new Gtk.Handlers.User_Callback
+     (Widget_Type  => Gtk_Widget_Record,
+      User_Type    => SemanticTokens_Range_Request_Access);
+
+   procedure On_Tooltip_Destroyed
+     (Widget    : access Gtk_Widget_Record'Class;
+      Params    : Glib.Values.GValues;
+      User_Data : SemanticTokens_Range_Request_Access);
+   pragma Warnings (Off, On_Tooltip_Destroyed);
+   --  Called when the tooltip that shows the current semantic token gets
+   --  detroyed while waiting for the request result.
 
    procedure Clear_Indexes;
    --  Clear module indexes to start parsing results from the beginning
@@ -190,20 +230,23 @@ package body GPS.LSP_Client.Editors.Semantic_Tokens is
    --  Convert Token_Type to the style name. Returns empty string if
    --  corresponding style name does not exist.
 
-   type Modifiers_Array is array (SemanticTokenModifiers) of Boolean;
-   Empty_Modifiers_Array : constant Modifiers_Array := (others => False);
+   type Modifiers_Array is array (Natural range <>) of SemanticTokenModifiers;
+   Empty_Modifiers_Array : Modifiers_Array (1 .. 0);
 
    function Check_Style_Name
      (Name      : String;
-      Modifiers : Modifiers_Array := Empty_Modifiers_Array)
+      Modifiers : Modifiers_Array)
       return String;
    --  Returns empty string if style name does not exist.
 
-   function Send_Request
-     (Kernel : not null access Kernel_Handle_Record'Class;
-      Data   : Request_Data)
-      return Boolean;
+   procedure Send_Request
+     (Kernel  : not null access Kernel_Handle_Record'Class;
+      Data    : Request_Data;
+      Request : out GPS.LSP_Client.Requests.Request_Access;
+      Is_Sent : out Boolean);
    --  Send full or range request based on the Data
+   --  Is_Sent set to true when the request is successfully sent
+   --  Request is the created request when Is_Set=True
 
    procedure Store_Request (Data : Request_Data);
    --  Store postponed request for resending in future
@@ -235,14 +278,20 @@ package body GPS.LSP_Client.Editors.Semantic_Tokens is
 
    function Check_Style_Name
      (Name      : String;
-      Modifiers : Modifiers_Array := Empty_Modifiers_Array)
+      Modifiers : Modifiers_Array)
       return String
    is
+      use Interfaces;
       use GPS.Kernel.Style_Manager;
 
-      function Correct_Name (Value : String) return String;
+      function Mask_Name (Value : String) return String;
+      --  mask reserved Ada names
+
       function Check (Value : String) return String;
+      --  checks if we have such style
+
       function Get_Modifiers (Modifiers : Modifiers_Array) return String;
+      --  convert modificators to style suffix
 
       Manager : constant Style_Manager_Access :=
         Get_Style_Manager (Module.Get_Kernel);
@@ -260,11 +309,11 @@ package body GPS.LSP_Client.Editors.Semantic_Tokens is
          end if;
       end Check;
 
-      ------------------
-      -- Correct_Name --
-      ------------------
+      ---------------
+      -- Mask_Name --
+      ---------------
 
-      function Correct_Name (Value : String) return String is
+      function Mask_Name (Value : String) return String is
          N : constant String := Ada.Characters.Handling.To_Lower (Value);
       begin
          if N'Length > 2
@@ -280,7 +329,7 @@ package body GPS.LSP_Client.Editors.Semantic_Tokens is
          else
             return N;
          end if;
-      end Correct_Name;
+      end Mask_Name;
 
       -------------------
       -- Get_Modifiers --
@@ -292,61 +341,104 @@ package body GPS.LSP_Client.Editors.Semantic_Tokens is
 
          M : Unbounded_String;
       begin
-         for Index in SemanticTokenModifiers'Range loop
-            if Modifiers (Index) then
-               if Index = localVariable
-                 or else Index = globalVariable
-               then
-                  M := "-" & Correct_Name
-                    (SemanticTokenModifiers'Image (Index)) & M;
-               else
-                  M.Append
-                    ("-" & Correct_Name
-                       (SemanticTokenModifiers'Image (Index)));
-               end if;
-            end if;
+         for Index in Modifiers'Range loop
+            M.Append
+              ("-" & Mask_Name
+                 (SemanticTokenModifiers'Image (Modifiers (Index))));
          end loop;
 
          return To_String (M);
       end Get_Modifiers;
 
-      Type_Name           : constant String := Correct_Name (Name);
+      Type_Name           : constant String := Mask_Name (Name);
       Type_Modifiers_Name : constant String :=
         Type_Name & Get_Modifiers (Modifiers);
 
+      Arr     : Modifiers_Array
+        (1 .. SemanticTokenModifiers'Pos (SemanticTokenModifiers'Last) + 1);
+      Last    : Natural := 0;
+      Mask    : Unsigned_128;
+      Current : SemanticTokenModifiers;
    begin
       if Check (Type_Modifiers_Name) /= "" then
-         --  style has been found
+         --  style with all modificators has been found
          return Type_Modifiers_Name;
 
-      else
-         --  we don't have type style with modificators,
-         --  try to reduce modificators that are used
-         declare
-            M : Modifiers_Array := Modifiers;
-         begin
-            for Index in reverse SemanticTokenModifiers'Range loop
-               if M (Index)
-                 and then Index /= localVariable
-                 and then Index /= globalVariable
-               then
-                  M (Index) := False;
+      elsif Modifiers'Length > 1 then
+         --  we don't have type style with all modificators,
+         --  and have more than 1 modificator, try to recombine them
 
-                  declare
-                     Curr : constant String :=
-                       Type_Name & Get_Modifiers (M);
+         Mask := 2 ** (Modifiers'Length) - 1;
+         --  bitmask for recombination
 
-                  begin
-                     if Check (Curr) /= "" then
-                        return Curr;
-                     end if;
-                  end;
+         while Mask > 0 loop
+            --  iterate over all possible variants
+            Last := 0;
+
+            --  iterate over all modificators
+            for Index in 0 .. Modifiers'Length - 1 loop
+               Current := Modifiers (Index + 1);
+
+               if (Mask and Interfaces.Shift_Left (1, Index)) > 0 then
+                  --  Modificator present in the style modificators
+                  --  and allowed by the bitmask, add to the resulting array
+                  Last := Last + 1;
+                  Arr (Last) := Current;
                end if;
             end loop;
-         end;
 
-         return Check (Type_Name);
+            --  do not process one modificator to force `TYPE.deprecated`
+            --  case later
+            if Last > 1 then
+               declare
+                  Style_Name : constant String :=
+                    Type_Name & Get_Modifiers (Arr (1 .. Last));
+               begin
+                  if Check (Style_Name) /= "" then
+                     return Style_Name;  --  the style has been found
+                  end if;
+               end;
+            end if;
+
+            Mask := Mask - 1;  --  remove one modifier from the bitmask
+         end loop;
       end if;
+
+      --  we did not find a style with several modificators, try to find
+      --  a style with one modificator
+      if Modifiers'Length > 0 then
+         for Index in reverse Modifiers'Range loop
+            --  special case to force show deprecated modificator
+            if Modifiers (Index) = deprecated then
+               declare
+                  Style_Name : constant String := Type_Name &
+                    Get_Modifiers (Modifiers_Array'(1 => deprecated));
+               begin
+                  if Check (Style_Name) /= "" then
+                     return Style_Name;  --  the style has been found
+                  else
+                     --  return "fallback" depricated when no other style
+                     --  has been found
+                     return LSP_Deprecated_Style_Name;
+                  end if;
+               end;
+            end if;
+         end loop;
+
+         for Index in reverse Modifiers'Range loop
+            declare
+               Style_Name : constant String := Type_Name &
+                 Get_Modifiers (Modifiers_Array'(1 => Modifiers (Index)));
+            begin
+               if Check (Style_Name) /= "" then
+                  return Style_Name;  --  the style has been found
+               end if;
+            end;
+         end loop;
+      end if;
+
+      --  return style for token itself if exist
+      return Check (Type_Name);
    end Check_Style_Name;
 
    -------------------
@@ -370,9 +462,17 @@ package body GPS.LSP_Client.Editors.Semantic_Tokens is
       File   : Virtual_File)
    is
       use GPS.Kernel.Preferences;
+      Request : GPS.LSP_Client.Requests.Request_Access;
+      Result  : Boolean;
    begin
       if LSP_Semantic_Highlighting.Get_Pref then
-         if not Send_Request (Kernel, (File, 0, 0)) then
+         Send_Request
+           (Kernel  => Kernel,
+            Data    => (File, 0, 0),
+            Request => Request,
+            Is_Sent => Result);
+
+         if not Result then
             Store_Request ((File, 0, 0));
          end if;
       end if;
@@ -392,9 +492,13 @@ package body GPS.LSP_Client.Editors.Semantic_Tokens is
       pragma Unreferenced (Self);
       use GPS.Kernel.Preferences;
 
+      Request : GPS.LSP_Client.Requests.Request_Access;
+      Result  : Boolean;
+
    begin
       if LSP_Semantic_Highlighting.Get_Pref then
-         if not Send_Request (Kernel, (File, From_Line, To_Line)) then
+         Send_Request (Kernel, (File, From_Line, To_Line), Request, Result);
+         if not Result then
             Store_Request ((File, From_Line, To_Line));
          end if;
       end if;
@@ -506,7 +610,8 @@ package body GPS.LSP_Client.Editors.Semantic_Tokens is
    function Get_Style_Name (T : LSP.Messages.SemanticTokenTypes) return String
    is
    begin
-      return Check_Style_Name (LSP.Messages.SemanticTokenTypes'Image (T));
+      return Check_Style_Name
+        (LSP.Messages.SemanticTokenTypes'Image (T), Empty_Modifiers_Array);
    end Get_Style_Name;
 
    ---------------
@@ -521,7 +626,9 @@ package body GPS.LSP_Client.Editors.Semantic_Tokens is
    is
       use Interfaces;
 
-      Modifiers : Modifiers_Array := Empty_Modifiers_Array;
+      Modifiers : Modifiers_Array
+        (1 .. SemanticTokenModifiers'Pos (SemanticTokenModifiers'Last) + 1);
+      Last      : Natural := 0;
       UInt      : Unsigned_32 := Unsigned_32 (Token_Modifiers);
       Index     : Positive := 1;
    begin
@@ -533,9 +640,11 @@ package body GPS.LSP_Client.Editors.Semantic_Tokens is
                    (Legend.tokenModifiers.Element (Index));
             begin
                if N = "abstract" then
-                  Modifiers (an_abstract) := True;
+                  Last := Last + 1;
+                  Modifiers (Last) := an_abstract;
                else
-                  Modifiers (SemanticTokenModifiers'Value (N)) := True;
+                  Last := Last + 1;
+                  Modifiers (Last) := SemanticTokenModifiers'Value (N);
                end if;
             end;
          end if;
@@ -544,15 +653,10 @@ package body GPS.LSP_Client.Editors.Semantic_Tokens is
          Index := Index + 1;
       end loop;
 
-      if Modifiers (deprecated) then
-         return LSP_Deprecated_Style_Name;
-
-      else
-         return Check_Style_Name
-           (VSS.Strings.Conversions.To_UTF_8_String
-              (Legend.tokenTypes.Element (Natural (Token_Type) + 1)),
-            Modifiers);
-      end if;
+      return Check_Style_Name
+        (VSS.Strings.Conversions.To_UTF_8_String
+           (Legend.tokenTypes.Element (Natural (Token_Type) + 1)),
+         Modifiers (1 .. Last));
    end Get_Style;
 
    -------------
@@ -566,10 +670,12 @@ package body GPS.LSP_Client.Editors.Semantic_Tokens is
       use Result_Vectors;
       use type GPS.LSP_Client.Language_Servers.Language_Server_Access;
 
-      Server : GPS.LSP_Client.Language_Servers.Language_Server_Access;
-      Max    : Positive;
-      R      : Result_Type;
-      Legend : SemanticTokensLegend;
+      Server  : GPS.LSP_Client.Language_Servers.Language_Server_Access;
+      Max     : Positive;
+      R       : Result_Type;
+      Legend  : SemanticTokensLegend;
+      Request : GPS.LSP_Client.Requests.Request_Access;
+      Result  : Boolean;
 
    begin
       if Module.Get_Kernel.Is_In_Destruction then
@@ -578,9 +684,13 @@ package body GPS.LSP_Client.Editors.Semantic_Tokens is
       end if;
 
       while not Module.Postponed.Is_Empty loop
-         if not Send_Request
-           (Module.Get_Kernel, Module.Postponed.First_Element)
-         then
+         Send_Request
+           (Kernel  => Module.Get_Kernel,
+            Data    => Module.Postponed.First_Element,
+            Request => Request,
+            Is_Sent => Result);
+
+         if not Result then
             return True;
          else
             Module.Postponed.Delete_First;
@@ -713,7 +823,9 @@ package body GPS.LSP_Client.Editors.Semantic_Tokens is
       Result : LSP.Messages.SemanticTokens)
    is
       use Result_Vectors;
-      Idx : Positive := 1;
+      Idx     : Positive := 1;
+      Request : GPS.LSP_Client.Requests.Request_Access;
+      Dummy   : Boolean;
    begin
       --  delete previouse results for the same file
       while Idx <= Natural (Module.Data.Length) loop
@@ -727,13 +839,28 @@ package body GPS.LSP_Client.Editors.Semantic_Tokens is
          end if;
       end loop;
 
-      --  store new result
-      Module.Data.Append (Result_Type'((Self.File, 0, 0), Result.data));
+      declare
+         Buffer : constant Editor_Buffer'Class :=
+           Module.Get_Kernel.Get_Buffer_Factory.Get
+             (Self.File, Open_Buffer => False, Open_View => False);
+      begin
+         if Buffer = Nil_Editor_Buffer then
+            return;
 
-      if Module.Idle_ID = Glib.Main.No_Source_Id then
-         --  register Idle
-         Module.Idle_ID := Glib.Main.Idle_Add (On_Idle'Access);
-      end if;
+         elsif Self.Version = Buffer.Version then
+            --  store new result
+            Module.Data.Append (Result_Type'((Self.File, 0, 0), Result.data));
+
+            if Module.Idle_ID = Glib.Main.No_Source_Id then
+               --  register Idle
+               Module.Idle_ID := Glib.Main.Idle_Add (On_Idle'Access);
+            end if;
+
+         else
+            Send_Request
+              (Module.Get_Kernel, (Self.File, 0, 0), Request, Dummy);
+         end if;
+      end;
    end On_Result_Message;
 
    -----------------------
@@ -742,16 +869,231 @@ package body GPS.LSP_Client.Editors.Semantic_Tokens is
 
    overriding procedure On_Result_Message
      (Self   : in out SemanticTokens_Range_Request;
-      Result : LSP.Messages.SemanticTokens) is
-   begin
-      Module.Data.Append
-        (Result_Type'((Self.File, Self.From, Self.To), Result.data));
+      Result : LSP.Messages.SemanticTokens)
+   is
+      use type Basic_Types.Visible_Column_Type;
 
-      if Module.Idle_ID = Glib.Main.No_Source_Id then
-         --  register Idle
-         Module.Idle_ID := Glib.Main.Idle_Add (On_Idle'Access);
+      procedure Fill_Semantic_Tooltip;
+      --  Fills semantic tooltip with data
+
+      ---------------------------
+      -- Fill_Semantic_Tooltip --
+      ---------------------------
+
+      procedure Fill_Semantic_Tooltip
+      is
+         use VSS.Strings;
+
+         use type GPS.LSP_Client.Language_Servers.Language_Server_Access;
+         use type uinteger;
+         use type Interfaces.Unsigned_32;
+         use type Gtk.Label.Gtk_Label;
+
+         Server          : GPS.LSP_Client.Language_Servers.
+           Language_Server_Access;
+         Legend          : SemanticTokensLegend;
+         Index, M_Index  : Integer  := 1;
+         Line, Prev_Line : Positive := 1;
+         Char, Prev_Char : Basic_Types.Visible_Column_Type := 1;
+         UInt            : Interfaces.Unsigned_32;
+         Txt             : VSS.String_Vectors.Virtual_String_Vector;
+      begin
+         Server := GPS.LSP_Module.Get_Language_Server
+           (Module.Get_Kernel.Get_Language_Handler.
+              Get_Language_From_File (Self.File));
+
+         if Server = null then
+            return;
+         end if;
+
+         declare
+            Buffer : constant Editor_Buffer'Class :=
+              Module.Get_Kernel.Get_Buffer_Factory.Get
+                (Self.File, Open_Buffer => False, Open_View => False);
+         begin
+            if Buffer = Nil_Editor_Buffer then
+               return;
+            end if;
+
+            Legend := Server.Get_Client.Capabilities.
+              semanticTokensProvider.Value.legend;
+
+            while Index < Natural (Result.data.Length) loop
+               --  iterate over response lines to find the line we need
+               --   (line for which the tooltip is triggered)
+
+               Line := Prev_Line + Natural (Result.data.Element (Index));
+
+               if Line = Self.From + 1 then
+                  --  Tooltip's line has been found: add +1 since
+                  --  LSP lines are 0-based.
+
+                  if Line = Prev_Line then
+                     --  relative char position
+                     Char := Prev_Char + Visible_Column_Type
+                       (Result.data.Element (Index + 1));
+                  else
+                     Char := Visible_Column_Type
+                       (Result.data.Element (Index + 1) + 1);
+                  end if;
+
+                  --  Find the token for the tooltip's queried location
+                  --  e.g. starts before the needed column and end after
+                  if Char <= Self.Column
+                    and then Char + Visible_Column_Type
+                      (Result.data.Element (Index + 2) - 1) >= Self.Column
+                  then
+                     --  Found a token for the queried tooltip's location
+
+                     --  Add Semantic type information
+                     Txt.Append
+                       (VSS.Strings.Conversions.To_Virtual_String
+                          ("Semantic type: ") &
+                          Legend.tokenTypes.Element
+                          (Natural (Result.data.Element (Index + 3)) + 1));
+
+                     UInt := Interfaces.Unsigned_32
+                       (Result.data.Element (Index + 4));
+
+                     --  Check if we have modifiers
+                     if UInt /= 0 then
+                        Txt.Append ("Modifiers:");
+
+                        --  Iterate over modifiers
+                        while UInt /= 0 loop
+                           if (UInt and 1) = 1 then
+                              --  Modifier bit is set, add information about
+                              --  this modifier
+                              Txt.Append
+                                (VSS.Strings.Conversions.To_Virtual_String
+                                   ("          ") &
+                                   Legend.tokenModifiers.Element (M_Index));
+                           end if;
+
+                           --  shift (discard) current bit to handle next one
+                           UInt := Interfaces.Shift_Right (UInt, 1);
+                           exit when UInt = 0; --  no more modifiers
+
+                           M_Index := M_Index + 1;
+                        end loop;
+                     end if;
+                  end if;
+               end if;
+
+               exit when Line > Self.From + 1; --  we passsed over the line
+
+               Prev_Line := Line;
+               Prev_Char := Char;
+               Index     := Index + 5;
+            end loop;
+         end;
+
+         if not Txt.Is_Empty then
+            --  We collect some information, add it to the tooltip box
+            declare
+               L    : Gtk.Label.Gtk_Label;
+               Hsep : Gtk.Separator.Gtk_Hseparator;
+            begin
+               Gtk.Label.Gtk_New (L);
+               L.Set_Use_Markup (False);
+               L.Set_Alignment (0.0, 0.0);
+               L.Set_Single_Line_Mode (False);
+               L.Set_Text
+                 (VSS.Strings.Conversions.To_UTF_8_String
+                    (Txt.Join_Lines (CR, False)));
+               Self.Vbox.Pack_Start (L, False, False);
+
+               Gtk.Separator.Gtk_New_Hseparator (Hsep);
+               Self.Vbox.Pack_End (Hsep, False, False);
+               Self.Vbox.Show_All;
+            end;
+         end if;
+      end Fill_Semantic_Tooltip;
+
+      Buffer  : constant Editor_Buffer'Class :=
+        Module.Get_Kernel.Get_Buffer_Factory.Get
+          (Self.File, Open_Buffer => False, Open_View => False);
+      Request : GPS.LSP_Client.Requests.Request_Access;
+      Dummy   : Boolean;
+   begin
+      if Self.Column = 0 then
+         --  Column is 0 so it is regular (not for tooltip) request
+         --  to highlight source code
+
+         if Buffer = Nil_Editor_Buffer then
+            return;
+
+         elsif Self.Version = Buffer.Version then
+            Module.Data.Append
+              (Result_Type'((Self.File, Self.From, Self.To), Result.data));
+
+            if Module.Idle_ID = Glib.Main.No_Source_Id then
+               --  register Idle
+               Module.Idle_ID := Glib.Main.Idle_Add (On_Idle'Access);
+            end if;
+
+         else
+            Send_Request
+              (Kernel  => Module.Get_Kernel,
+               Data    => (Self.File, Self.From, Self.To),
+               Request => Request,
+               Is_Sent => Dummy);
+         end if;
+
+      elsif Self.Vbox /= null then
+         --  Column is not 0 so it is semantic tooltip request and we still
+         --  have the Vbox (i.e: tooltip was not destroyed)
+
+         Gtk.Handlers.Disconnect
+           (Object => Self.Vbox,
+            Id     => Self.Vbox_Destroyed_Handler_ID);
+
+         Fill_Semantic_Tooltip;
       end if;
    end On_Result_Message;
+
+   ----------------------
+   -- On_Error_Message --
+   ----------------------
+
+   overriding procedure On_Error_Message
+     (Self    : in out SemanticTokens_Range_Request;
+      Code    : LSP.Messages.ErrorCodes;
+      Message : VSS.Strings.Virtual_String;
+      Data    : GNATCOLL.JSON.JSON_Value) is
+   begin
+      if Self.Vbox /= null then
+         Gtk.Handlers.Disconnect
+           (Object => Self.Vbox,
+            Id     => Self.Vbox_Destroyed_Handler_ID);
+      end if;
+
+      GPS.LSP_Client.Requests.SemanticTokens_Range.On_Error_Message
+        (Self    => GPS.LSP_Client.Requests.SemanticTokens_Range.
+           Abstract_SemanticTokens_Range_Request (Self),
+         Code    => Code,
+         Message => Message,
+         Data    => Data);
+   end On_Error_Message;
+
+   -----------------
+   -- On_Rejected --
+   -----------------
+
+   overriding procedure On_Rejected
+     (Self : in out SemanticTokens_Range_Request; Reason : Reject_Reason) is
+   begin
+      if Self.Vbox /= null then
+         Gtk.Handlers.Disconnect
+           (Object => Self.Vbox,
+            Id     => Self.Vbox_Destroyed_Handler_ID);
+      end if;
+
+      GPS.LSP_Client.Requests.SemanticTokens_Range.On_Rejected
+        (Self   => GPS.LSP_Client.Requests.SemanticTokens_Range.
+           Abstract_SemanticTokens_Range_Request (Self),
+         Reason => Reason);
+   end On_Rejected;
 
    ----------------------------------
    -- Remove_Highlighting_On_Lines --
@@ -830,14 +1172,16 @@ package body GPS.LSP_Client.Editors.Semantic_Tokens is
    -- Send_Request --
    ------------------
 
-   function Send_Request
-     (Kernel : not null access Kernel_Handle_Record'Class;
-      Data   : Request_Data)
-      return Boolean
+   procedure Send_Request
+     (Kernel  : not null access Kernel_Handle_Record'Class;
+      Data    : Request_Data;
+      Request : out GPS.LSP_Client.Requests.Request_Access;
+      Is_Sent : out Boolean)
    is
       use type GPS.LSP_Client.Language_Servers.Language_Server_Access;
 
-      Server : GPS.LSP_Client.Language_Servers.Language_Server_Access;
+      Server  : GPS.LSP_Client.Language_Servers.Language_Server_Access;
+      Version : Integer := 0;
 
       function Send_Full_Request
         (Kernel : not null access Kernel_Handle_Record'Class;
@@ -860,14 +1204,14 @@ package body GPS.LSP_Client.Editors.Semantic_Tokens is
       function Send_Full_Request
         (Kernel : not null access Kernel_Handle_Record'Class;
          File   : Virtual_File)
-         return Boolean
-      is
-         Request : GPS.LSP_Client.Requests.Request_Access :=
-           new SemanticTokens_Full_Request'
-             (LSP_Request with
-              Kernel => Kernel_Handle (Kernel),
-              File   => File);
+         return Boolean is
       begin
+         Request := new SemanticTokens_Full_Request'
+           (LSP_Request with
+              Kernel => Kernel_Handle (Kernel),
+            File     => File,
+            Version  => Version);
+
          if Request.Is_Request_Supported (Server.Get_Client.Capabilities) then
             return GPS.LSP_Client.Requests.Execute
               (Kernel.Get_Language_Handler.Get_Language_From_File (File),
@@ -887,16 +1231,17 @@ package body GPS.LSP_Client.Editors.Semantic_Tokens is
          File      : Virtual_File;
          From_Line : Integer;
          To_Line   : Integer)
-         return Boolean
-      is
-         Request : GPS.LSP_Client.Requests.Request_Access :=
-           new SemanticTokens_Range_Request'
-             (LSP_Request with
-              Kernel => Kernel_Handle (Kernel),
-              File   => File,
-              From   => From_Line,
-              To     => To_Line);
+         return Boolean is
       begin
+         Request := new SemanticTokens_Range_Request'
+           (LSP_Request with
+              Kernel => Kernel_Handle (Kernel),
+            File     => File,
+            From     => From_Line,
+            To       => To_Line,
+            Version  => Version,
+            others   => <>);
+
          if Request.Is_Request_Supported (Server.Get_Client.Capabilities) then
             return GPS.LSP_Client.Requests.Execute
               (Kernel.Get_Language_Handler.Get_Language_From_File (File),
@@ -908,25 +1253,40 @@ package body GPS.LSP_Client.Editors.Semantic_Tokens is
       end Send_Range_Request;
 
    begin
-      Server := GPS.LSP_Module.Get_Language_Server
+      Request := null;
+      Is_Sent := False;
+      Server  := GPS.LSP_Module.Get_Language_Server
         (Module.Get_Kernel.Get_Language_Handler.
            Get_Language_From_File (Data.File));
 
-      if Server /= null then
+      if Server = null then
+         Is_Sent := True;
+
+      else
+         declare
+            Buffer : constant Editor_Buffer'Class :=
+              Module.Get_Kernel.Get_Buffer_Factory.Get
+                (Data.File, Open_Buffer => False, Open_View => False);
+         begin
+            if Buffer = Nil_Editor_Buffer then
+               Is_Sent := True;
+               return;
+            else
+               Version := Buffer.Version;
+            end if;
+         end;
+
          if Server.Get_Client.Is_Ready then
             if Data.From = 0 then
-               return Send_Full_Request (Kernel, Data.File);
+               Is_Sent := Send_Full_Request (Kernel, Data.File);
             else
-               return Send_Range_Request
+               Is_Sent := Send_Range_Request
                  (Kernel, Data.File, Data.From, Data.To);
             end if;
 
          else
-            return False;
+            Is_Sent := False;
          end if;
-
-      else
-         return True;
       end if;
    end Send_Request;
 
@@ -942,6 +1302,70 @@ package body GPS.LSP_Client.Editors.Semantic_Tokens is
          Module.Idle_ID := Glib.Main.Idle_Add (On_Idle'Access);
       end if;
    end Store_Request;
+
+   -----------------------------------
+   -- Create_Semantic_Token_Tooltip --
+   -----------------------------------
+
+   procedure Create_Semantic_Token_Tooltip
+     (Tooltip_Hbox : Gtk_Hbox;
+      File         : GNATCOLL.VFS.Virtual_File;
+      Line         : Integer;
+      Column       : Visible_Column_Type)
+   is
+      Request : GPS.LSP_Client.Requests.Request_Access;
+      Result  : Boolean;
+   begin
+      if GPS.Kernel.Preferences.LSP_Show_Semantic_Tooltip.Get_Pref then
+         Send_Request
+           (Kernel  => Module.Get_Kernel,
+            Data    => (File, Line - 1, Line),
+            Request => Request,
+            Is_Sent => Result);
+
+         if Result
+           and then Request /= null
+         then
+            declare
+               R : constant SemanticTokens_Range_Request_Access :=
+                 SemanticTokens_Range_Request_Access (Request);
+            begin
+               R.Column := Column;
+
+               Gtk_New_Vbox (R.Vbox, Homogeneous => False);
+               R.Vbox.Set_Name (Semantic_Tooltip_Box_Name);
+               R.Vbox.Set_Hexpand (False);
+               R.Vbox.Set_Spacing (0);
+
+               Tooltip_Hbox.Pack_Start (R.Vbox, False, False);
+
+               R.Vbox_Destroyed_Handler_ID :=
+                 Tooltip_Destroyed_Callback.Object_Connect
+                   (Widget      => R.Vbox,
+                    Name        => Signal_Destroy,
+                    Cb          => On_Tooltip_Destroyed'Access,
+                    Slot_Object => R.Vbox,
+                    User_Data   => R);
+            end;
+         end if;
+      end if;
+   end Create_Semantic_Token_Tooltip;
+
+   --------------------------
+   -- On_Tooltip_Destroyed --
+   --------------------------
+
+   procedure On_Tooltip_Destroyed
+     (Widget    : access Gtk_Widget_Record'Class;
+      Params    : Glib.Values.GValues;
+      User_Data : SemanticTokens_Range_Request_Access)
+   is
+      pragma Unreferenced (Widget, Params);
+   begin
+      if User_Data /= null then
+         User_Data.Vbox := null;
+      end if;
+   end On_Tooltip_Destroyed;
 
    --------------
    -- Register --

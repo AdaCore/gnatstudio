@@ -1068,26 +1068,6 @@ package body GPS.Kernel.Preferences is
          Path            =>
          -"Editor/Fonts & Colors:LSP Semantic Highlighting");
 
-      LSP_Local_Variable_Style := Manager.Create
-        (Name         => "Src-Editor-LSP-Semantic-Variable-Local",
-         Label        => -"Local Variable",
-         Base            => Default_Style,
-         Doc             => "",
-         Default_Variant => Default,
-         Default_Fg   => "#c93c00",
-         Path            =>
-         -"Editor/Fonts & Colors:LSP Semantic Highlighting");
-
-      LSP_Global_Variable_Style  := Manager.Create
-        (Name         => "Src-Editor-LSP-Semantic-Variable-Global",
-         Label        => -"Global Variable",
-         Base            => Default_Style,
-         Doc             => "",
-         Default_Variant => Default,
-         Default_Fg   => "#c93c00",
-         Path            =>
-         -"Editor/Fonts & Colors:LSP Semantic Highlighting");
-
       LSP_Modifier_Style := Manager.Create
         (Name         => "Src-Editor-LSP-Semantic-Modifier",
          Label        => -"Modifier",
@@ -1117,14 +1097,6 @@ package body GPS.Kernel.Preferences is
          Default_Fg   => "red",
          Path            =>
           -"Editor/Fonts & Colors:LSP Semantic Highlighting");
-
-      LSP_Readonly_Bg := Manager.Create
-        (Name     => "Src-Editor-LSP-Semantic-Readonly",
-         Default  => "#f2ffed",
-         Label    => -"Background for readonly",
-         Doc      => "",
-         Path     =>
-         -"Editor/Fonts & Colors:LSP Semantic Highlighting");
 
       Current_Block_Color := Manager.Create
         (Name     => "Src-Editor-Current-Block-Color",
@@ -1910,6 +1882,16 @@ package body GPS.Kernel.Preferences is
              -("Controls whether semantic highlighting is shown for the "
                & "languages that support it through LSP. "
                & "If disabled, only the syntax highlighting is used."),
+           Default => False);
+
+      LSP_Show_Semantic_Tooltip :=
+        Manager.Create
+          (Path    => "LSP:Highlighting",
+           Name    => "LSP-Semantic-Highlighting-Tooltip",
+           Label   => -"Show semantic tokens in tooltips",
+           Doc     =>
+             -("Controls whether semantic tokens are shown in "
+               & "entity tooltips."),
            Default => True);
 
       LSP_Diagnostics_Display := LSP_Diagnostics_Display_Policy_Prefs.Create

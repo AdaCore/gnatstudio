@@ -376,7 +376,11 @@ package GPS.Kernel.Preferences is
    LSP_Ada_On_Type_Formatting : Default_Preferences.Enums.Choice_Preference;
 
    -- LSP semantic styles --
+
    LSP_Semantic_Highlighting : Boolean_Preference;
+
+   LSP_Show_Semantic_Tooltip : Boolean_Preference;
+   --  Show tokens information in entity tooltip
 
    LSP_Namespace_Style       : Variant_Preference;
    LSP_Interface_Style       : Variant_Preference;
@@ -389,12 +393,9 @@ package GPS.Kernel.Preferences is
    LSP_TypeParameter_Style   : Variant_Preference;
    LSP_Parameter_Style       : Variant_Preference;
    LSP_Variable_Style        : Variant_Preference;
-   LSP_Local_Variable_Style  : Variant_Preference;
-   LSP_Global_Variable_Style : Variant_Preference;
    LSP_Modifier_Style        : Variant_Preference;
    LSP_Operator_Style        : Variant_Preference;
    LSP_Deprecated_Style      : Variant_Preference;
-   LSP_Readonly_Bg           : Color_Preference;
 
    -----------
    -- Utils --
