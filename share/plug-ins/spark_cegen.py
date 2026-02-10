@@ -9,6 +9,7 @@ GNATprove.
 """
 
 from dataclasses import dataclass
+from glob import glob
 import json
 import os
 
@@ -210,10 +211,21 @@ def _get_test_case_from_gnattest_json(gnattest_dir, unit_name, subp_hash):
             return json.load(f).get(subp_hash, {}).get("test_vectors", {})
 
     except FileNotFoundError:
-        print_error(f"Filename  {json_file}  not found.")
+        print_error(f"Filename {json_file!r} not found.")
+
+        # Dump the list of any other existing JSON_Tests file to the log for
+        # debugging. But exit with an error nonetheless.
+        path_pattern = os.path.join(gnattest_dir, "**", "JSON_Tests", "**", "*.json")
+        candidates = glob(path_pattern, recursive=True)
+        if candidates:
+            file_list_str = "\n".join(candidates)
+            logger.log(f"Other JSON_Tests files found:\n{file_list_str}")
+
+        return None
+
         return None
     except json.JSONDecodeError:
-        print_error(f"Invalid JSON format in {json_file}.")
+        print_error(f"Invalid JSON format in {json_file!r}.")
         return None
     except Exception as e:
         print_error(f"An unexpected error occurred: {e}")
