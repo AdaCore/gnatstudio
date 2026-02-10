@@ -15,6 +15,7 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
+with Ada.Exceptions;
 with Ada.Strings.Unbounded;     use Ada.Strings.Unbounded;
 with Ada.Unchecked_Conversion;
 pragma Warnings (Off, ".*is an internal GNAT unit");
@@ -134,8 +135,7 @@ package body VFS_Module is
    --------------------------
 
    procedure VFS_Command_Handler
-     (Data    : in out Callback_Data'Class;
-      Command : String)
+     (Data : in out Callback_Data'Class; Command : String)
    is
       Success : Boolean;
 
@@ -168,28 +168,35 @@ package body VFS_Module is
          if Is_Directory (Pattern) then
             Directory := new Filesystem_String'(Name_As_Directory (Pattern));
             File_Regexp :=
-              Compile ("*", Glob => True,
-                       Case_Sensitive =>
-                         Is_Case_Sensitive (Get_Nickname (Build_Server)));
+              Compile
+                ("*",
+                 Glob           => True,
+                 Case_Sensitive =>
+                   Is_Case_Sensitive (Get_Nickname (Build_Server)));
          else
             Directory := new Filesystem_String'(Directory_Name);
 
             if Base'Length = 0 then
                File_Regexp :=
-                 Compile ("*", Glob => True,
-                          Case_Sensitive =>
-                            Is_Case_Sensitive (Get_Nickname (Build_Server)));
+                 Compile
+                   ("*",
+                    Glob           => True,
+                    Case_Sensitive =>
+                      Is_Case_Sensitive (Get_Nickname (Build_Server)));
             else
                File_Regexp :=
-                 Compile (+Base, Glob => True,
-                          Case_Sensitive =>
-                            Is_Case_Sensitive (Get_Nickname (Build_Server)));
+                 Compile
+                   (+Base,
+                    Glob           => True,
+                    Case_Sensitive =>
+                      Is_Case_Sensitive (Get_Nickname (Build_Server)));
             end if;
          end if;
 
-         Is_Cur_Dir := Equal
-           (Normalize_Pathname (Directory.all, Resolve_Links => False),
-            Get_Current_Dir);
+         Is_Cur_Dir :=
+           Equal
+             (Normalize_Pathname (Directory.all, Resolve_Links => False),
+              Get_Current_Dir);
          Open (Dir, Directory.all);
 
          loop
@@ -201,8 +208,7 @@ package body VFS_Module is
                if Is_Cur_Dir then
                   Set_Return_Value (Data, Buffer (1 .. Last));
                else
-                  Set_Return_Value
-                    (Data, +Directory.all & Buffer (1 .. Last));
+                  Set_Return_Value (Data, +Directory.all & Buffer (1 .. Last));
                end if;
             end if;
          end loop;
@@ -220,15 +226,16 @@ package body VFS_Module is
       -- Write --
       -----------
 
-      procedure Write
-        (File : in out Writable_File; N : Positive; LF : Boolean)
+      procedure Write (File : in out Writable_File; N : Positive; LF : Boolean)
       is
          Local     : GNAT.OS_Lib.String_Access;
          Res       : Gtkada.Types.Chars_Ptr;
          B_Read    : aliased Natural;
          B_Written : aliased Natural;
-         function Convert is new Ada.Unchecked_Conversion
-           (Gtkada.Types.Chars_Ptr, Interfaces.C.Strings.chars_ptr);
+         function Convert is new
+           Ada.Unchecked_Conversion
+             (Gtkada.Types.Chars_Ptr,
+              Interfaces.C.Strings.chars_ptr);
       begin
          declare
             Content : Unbounded_String := Nth_Arg (Data, N);
@@ -309,8 +316,7 @@ package body VFS_Module is
             List_Files (Nth_Arg (Data, 1, Default => "*"));
          exception
             when Error_In_Regexp =>
-               Set_Error_Msg
-                 (Data, -"error in regexp: " & Nth_Arg (Data, 1));
+               Set_Error_Msg (Data, -"error in regexp: " & Nth_Arg (Data, 1));
                return;
          end;
 
@@ -321,7 +327,7 @@ package body VFS_Module is
          begin
             Writable := Write_File (Temp_File);
             Write
-               (Writable, N => 1, LF => Nth_Arg (Data, 2, Default => False));
+              (Writable, N => 1, LF => Nth_Arg (Data, 2, Default => False));
             Close (Writable);
             Set_Return_Value (Data, Temp_File.Full_Name);
          end;
@@ -339,7 +345,7 @@ package body VFS_Module is
 
             Writable := Write_File (File, Append => True);
             Write
-               (Writable, N => 1, LF => Nth_Arg (Data, 3, Default => False));
+              (Writable, N => 1, LF => Nth_Arg (Data, 3, Default => False));
             Close (Writable);
             Set_Return_Value (Data, File.Full_Name);
          end;
@@ -361,6 +367,59 @@ package body VFS_Module is
          end;
       end if;
    end VFS_Command_Handler;
+
+   -----------------
+   -- Create_File --
+   -----------------
+
+   procedure Create_File
+     (Kernel   : not null access Kernel_Handle_Record'Class;
+      Filename : String;
+      Dir      : GNATCOLL.VFS.Virtual_File := GNATCOLL.VFS.No_File;
+      Success  : out Boolean)
+   is
+      W_File : GNATCOLL.VFS.Writable_File;
+      File   : GNATCOLL.VFS.Virtual_File;
+   begin
+      if Dir /= GNATCOLL.VFS.No_File then
+         File := Create_From_Dir (Dir, +Filename);
+      else
+         File := Create (+Filename);
+      end if;
+
+      W_File := GNATCOLL.VFS.Write_File (File);
+      GNATCOLL.VFS.Close (W_File);
+      Success := True;
+
+   exception
+      when E : others =>
+         Me.Trace (Ada.Exceptions.Exception_Message (E));
+         Kernel.Insert ((-"Cannot create file: ") & Filename, Mode => Error);
+         Success := False;
+   end Create_File;
+
+   -----------------
+   -- Delete_File --
+   -----------------
+
+   procedure Delete_File
+     (Kernel  : not null access Kernel_Handle_Record'Class;
+      File    : GNATCOLL.VFS.Virtual_File;
+      Success : out Boolean) is
+   begin
+      File_Deleting_Hook.Run (Kernel, File);
+
+      Delete (File, Success);
+
+      if not Success then
+         Kernel.Insert
+           ((-"Cannot remove file: ") & Display_Full_Name (File),
+            Mode => Error);
+      else
+         Vcs_Refresh_Hook.Run (Kernel, Is_File_Saved => False);
+         File_Deleted_Hook.Run (Kernel, File);
+      end if;
+   end Delete_File;
 
    -------------
    -- Execute --
@@ -395,19 +454,8 @@ package body VFS_Module is
 
             if Res = Gtkada.Dialogs.Button_Yes then
                --  inform before deleting
-               File_Deleting_Hook.Run (Get_Kernel (Context.Context), File);
-
-               Delete (File, Local_Success);
-
-               if not Local_Success then
-                  Get_Kernel (Context.Context).Insert
-                    ((-"Cannot remove file: ") &
-                       Display_Full_Name (File),
-                     Mode => Error);
-               else
-                  Vcs_Refresh_Hook.Run (Kernel, Is_File_Saved => False);
-                  File_Deleted_Hook.Run (Get_Kernel (Context.Context), File);
-               end if;
+               Delete_File
+                 (Kernel => Kernel, File => File, Success => Success);
             else
                Local_Success := False;
             end if;
@@ -805,7 +853,7 @@ package body VFS_Module is
    -----------------
 
    procedure Rename_File
-     (Kernel                  : access GPS.Kernel.Kernel_Handle_Record'Class;
+     (Kernel                  : not null access Kernel_Handle_Record'Class;
       File                    : GNATCOLL.VFS.Virtual_File;
       New_File                : GNATCOLL.VFS.Virtual_File;
       Success                 : out Boolean;

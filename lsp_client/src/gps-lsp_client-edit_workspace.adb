@@ -16,10 +16,15 @@
 ------------------------------------------------------------------------------
 
 with Ada.Containers.Indefinite_Vectors;
+with Ada.Containers.Vectors;
 with Ada.Strings.Unbounded;
 
 with GNAT.Strings;
 
+with GPS.Editors.GtkAda;
+with GPS.Kernel.MDI;
+with Gtk.Enums;
+with Gtkada.MDI;
 with Gtkada.Stock_Labels;
 
 with GNATCOLL.Traces;                 use GNATCOLL.Traces;
@@ -60,6 +65,9 @@ package body GPS.LSP_Client.Edit_Workspace is
 
    Me : constant Trace_Handle :=
      Create ("GPS.LSP_Client.Edit_Workspace.Debug", Off);
+
+   package File_Vectors is new Ada.Containers.Vectors
+     (Positive, Virtual_File);
 
    type Text_Edit is record
       Span  : LSP.Messages.Span;
@@ -161,6 +169,16 @@ package body GPS.LSP_Client.Edit_Workspace is
       Context : Interactive_Command_Context) return Command_Return_Type;
    overriding function Undo
      (Command : access Edit_Workspace_Command) return Boolean;
+
+   procedure Process_File_Document_Change
+     (Command              : not null access Edit_Workspace_Command'Class;
+      Item                 : LSP.Messages.Document_Change;
+      Need_Project_Refresh : in out Boolean;
+      Create_Reverse_Edits : Boolean := False);
+   --  Process a single file DocumentChange item
+   --  (i.e: file creation, deletion, renaming).
+   --  If Create_Reverse_Edits is True, append the corresponding reverse
+   --  file document changes to Command.Reverse_Document_Changes.
 
    ---------
    -- "<" --
@@ -276,7 +294,6 @@ package body GPS.LSP_Client.Edit_Workspace is
       New_Text      : VSS.Strings.Virtual_String;
       Changes       : out Vectors.Vector)
    is
-      use LSP.Types;
       use VSS.Strings.Cursors.Iterators.Lines;
 
       Script : constant GNATCOLL.Scripts.Scripting_Language :=
@@ -513,6 +530,269 @@ package body GPS.LSP_Client.Edit_Workspace is
          end;
       end loop;
    end Debug_Print_Changes;
+
+   ----------------------------------
+   -- Process_File_Document_Change --
+   ----------------------------------
+
+   procedure Process_File_Document_Change
+     (Command              : not null access Edit_Workspace_Command'Class;
+      Item                 : LSP.Messages.Document_Change;
+      Need_Project_Refresh : in out Boolean;
+      Create_Reverse_Edits : Boolean := False)
+   is
+
+      procedure Handle_Create_File (URI : LSP.Messages.DocumentUri);
+      procedure Handle_Delete_File (URI : LSP.Messages.DocumentUri);
+      procedure Handle_Rename_File
+        (Old_URI : LSP.Messages.DocumentUri;
+         New_URI : LSP.Messages.DocumentUri);
+
+      ------------------------
+      -- Handle_Create_File --
+      ------------------------
+
+      procedure Handle_Create_File
+        (URI : LSP.Messages.DocumentUri)
+      is
+         Buffer_Factory : constant Editor_Buffer_Factory_Access :=
+           Get_Buffer_Factory (Command.Kernel);
+         File           : constant Virtual_File :=
+           GPS.LSP_Client.Utilities.To_Virtual_File (URI);
+         Success        : Boolean;
+      begin
+         VFS_Module.Create_File
+           (Kernel   => Command.Kernel,
+            Filename => File.Display_Full_Name,
+            Success  => Success);
+
+         if Success then
+            Need_Project_Refresh := True;
+
+            --  Now open an editor in split mode for the newly created file,
+            --  without giving it the focus.
+            declare
+               Editor              :
+                 constant GPS.Editors.Editor_Buffer'Class :=
+                   Buffer_Factory.Get
+                     (File        => File,
+                      Open_View   => True,
+                      Open_Buffer => True,
+                      Focus       => False);
+               MDI                 : constant Gtkada.MDI.MDI_Window :=
+                 GPS.Kernel.MDI.Get_MDI (Command.Kernel);
+               Current_Focus_Child : constant Gtkada.MDI.MDI_Child :=
+                 MDI.Get_Focus_Child;
+               Editor_MDI_Child    : constant Gtkada.MDI.MDI_Child :=
+                 GPS.Editors.GtkAda.Get_MDI_Child (Editor.Current_View);
+            begin
+               Gtkada.MDI.Split
+                 (MDI         => MDI,
+                  Child       => Editor_MDI_Child,
+                  Orientation => Gtk.Enums.Orientation_Horizontal,
+                  Mode        => Gtkada.MDI.After);
+               --  Restore the focus to the previous MDI child
+               --  TODO: the Split function should have a Focus parameter
+               --  to avoid giving focus to the splitted child.
+               MDI.Set_Focus_Child (Current_Focus_Child);
+            end;
+         end if;
+      end Handle_Create_File;
+
+      ------------------------
+      -- Handle_Delete_File --
+      ------------------------
+
+      procedure Handle_Delete_File (URI : LSP.Messages.DocumentUri) is
+         use GPS.Editors;
+         File    : constant Virtual_File :=
+           GPS.LSP_Client.Utilities.To_Virtual_File (URI);
+         Success : Boolean;
+         Editor  : constant GPS.Editors.Editor_Buffer'Class :=
+           Get_Buffer_Factory (Command.Kernel).Get
+             (File, Open_View => False, Open_Buffer => False);
+      begin
+         --  Close the editor buffer for the file to delete
+         --  if there is one opened.
+         if Editor /= GPS.Editors.Nil_Editor_Buffer then
+            Editor.Close (Force => True);
+         end if;
+
+         --  Delete the file from the filesystem
+         VFS_Module.Delete_File
+           (Kernel => Command.Kernel, File => File, Success => Success);
+
+         --  If the file was successfully deleted, notify the language server
+         --  about it.
+         if Success then
+            Need_Project_Refresh := True;
+
+            --  Now send a 'didClose' notification to the server
+            declare
+               Server : constant Language_Server_Access :=
+                 Get_Language_Server
+                   (Command.Kernel.Get_Language_Handler.Get_Language_From_File
+                      (File));
+            begin
+               if Server /= null then
+                  Server.Get_Client.Send_Text_Document_Did_Close (File);
+               end if;
+            end;
+         end if;
+      end Handle_Delete_File;
+
+      ------------------------
+      -- Handle_Rename_File --
+      ------------------------
+
+      procedure Handle_Rename_File
+        (Old_URI : LSP.Messages.DocumentUri;
+         New_URI : LSP.Messages.DocumentUri)
+      is
+         File        : constant Virtual_File :=
+           GPS.LSP_Client.Utilities.To_Virtual_File (Old_URI);
+         New_File    : constant Virtual_File :=
+           GPS.LSP_Client.Utilities.To_Virtual_File (New_URI);
+         Success     : Boolean;
+         Prj_Changed : Boolean;
+      begin
+
+         --  Return immediately if the user did not allow file
+         --  renaming.
+         if not Command.Allow_File_Renaming then
+            return;
+         end if;
+
+         VFS_Module.Rename_File
+           (Kernel                  => Command.Kernel,
+            File                    => File,
+            New_File                => New_File,
+            Success                 => Success,
+            Prj_Changed             => Prj_Changed,
+            Display_Confirm_Dialogs => False);
+
+         Need_Project_Refresh := Need_Project_Refresh or else Prj_Changed;
+
+         --  Now send a 'didClose' notification for the old file
+         --  and a 'didOpen' one for the new file
+         declare
+            Server : constant Language_Server_Access :=
+              Get_Language_Server
+                (Command.Kernel.Get_Language_Handler.
+                   Get_Language_From_File (File));
+         begin
+            if Server /= null then
+               --  See LSP documentation:
+               --  Document renames should be signaled to a server sending
+               --  a document close notification with the document's old name
+               --  followed by an open notification using the document's new
+               --  name. Major reason is that besides the name other
+               --  attributes can change as well like the language that is
+               --  associated with the document. In addition the new document
+               --  could not be of interest for the server anymore.
+               Server.Get_Client.Send_Text_Document_Did_Close (File);
+               Server.Get_Client.Send_Text_Document_Did_Open (New_File);
+               Server.Get_Client.Send_Did_Rename_File (File, New_File);
+            end if;
+         end;
+      end Handle_Rename_File;
+
+   begin
+      case Item.Kind is
+         when LSP.Messages.Create_File =>
+            Handle_Create_File (Item.Create_File.uri);
+
+            if Create_Reverse_Edits then
+               --  Append a reverse deleteFile in case the user
+               --  wants to undo the last workspaceEdit command.
+               Command.Reverse_Document_Changes.Append
+                 (LSP.Messages.Document_Change'
+                    (Kind        => LSP.Messages.Delete_File,
+                     Delete_File =>
+                       LSP.Messages.DeleteFile'
+                         (kind    => LSP.Messages.delete,
+                          uri     => Item.Create_File.uri,
+                          others  => <>)));
+            end if;
+
+         when LSP.Messages.Delete_File =>
+            declare
+               use GNAT.Strings;
+               File     : constant Virtual_File :=
+                 GPS.LSP_Client.Utilities.To_Virtual_File
+                   (Item.Delete_File.uri);
+               Contents : GNAT.Strings.String_Access := null;
+            begin
+               Handle_Delete_File (Item.Delete_File.uri);
+
+               if Create_Reverse_Edits then
+                  Contents := File.Read_File;
+
+                  --  Append a reverse createFile in case the user
+                  --  wants to undo the last workspaceEdit command.
+                  Command.Reverse_Document_Changes.Append
+                    (LSP.Messages.Document_Change'
+                       (Kind        => LSP.Messages.Create_File,
+                        Create_File =>
+                          LSP.Messages.CreateFile'
+                            (kind   => LSP.Messages.create,
+                             uri    => Item.Delete_File.uri,
+                             others => <>)));
+
+                  --  Also append a textEdit to recreate the file contents.
+                  if Contents /= null then
+                     declare
+                        Reverse_Item : LSP.Messages.Document_Change :=
+                          LSP.Messages.Document_Change'
+                            (Kind               =>
+                               LSP.Messages.Text_Document_Edit,
+                             Text_Document_Edit =>
+                               LSP.Messages.TextDocumentEdit'
+                                 (textDocument =>
+                                    (uri    => Item.Delete_File.uri,
+                                     others => <>),
+                                  edits        => <>));
+                     begin
+                        --  Insert a textEdit to recreate the file contents.
+                        Reverse_Item.Text_Document_Edit.edits.Append
+                          (LSP.Messages.AnnotatedTextEdit'
+                             (span    =>
+                                (first => (line => 0, character => 0),
+                                 last  => (line => 0, character => 0)),
+                              newText =>
+                                VSS.Strings.Conversions.To_Virtual_String
+                                  (Contents.all),
+                              others  => <>));
+                        Command.Reverse_Document_Changes.Append
+                          (Reverse_Item);
+                     end;
+                  end if;
+
+                  GNAT.Strings.Free (Contents);
+               end if;
+            end;
+
+         when LSP.Messages.Rename_File =>
+            Handle_Rename_File
+              (Item.Rename_File.oldUri, Item.Rename_File.newUri);
+
+            if Create_Reverse_Edits then
+               --  Append a reverse renameFile in case the user wants
+               --  to undo the last workspaceEdit command.
+               declare
+                  Reverse_Item : LSP.Messages.Document_Change := Item;
+               begin
+                  Reverse_Item.Rename_File.newUri := Item.Rename_File.oldUri;
+                  Reverse_Item.Rename_File.oldUri := Item.Rename_File.newUri;
+                  Command.Reverse_Document_Changes.Append (Reverse_Item);
+               end;
+            end if;
+
+         when LSP.Messages.Text_Document_Edit =>
+            --  Text edits are handled separately
+            null;
+      end case;
+   end Process_File_Document_Change;
 
    -------------
    -- Execute --
@@ -867,82 +1147,14 @@ package body GPS.LSP_Client.Edit_Workspace is
                           (Item.Text_Document_Edit.textDocument.uri),
                         Vector);
 
-                  when LSP.Messages.Create_File =>
-                     Error := True;
-                     exit;
-
-                  when LSP.Messages.Delete_File =>
-                     Error := True;
-                     exit;
-
-                  when LSP.Messages.Rename_File =>
-
-                     --  Return immediately if the user did not allow file
-                     --  renaming.
-                     if not Command.Allow_File_Renaming then
-                        exit;
-                     end if;
-
-                     declare
-                        Success     : Boolean;
-                        Prj_Changed : Boolean;
-                        File        : constant Virtual_File :=
-                          GPS.LSP_Client.Utilities.To_Virtual_File
-                            (Item.Rename_File.oldUri);
-                        New_File    : constant Virtual_File :=
-                          GPS.LSP_Client.Utilities.To_Virtual_File
-                            (Item.Rename_File.newUri);
-                        Reverse_Item : LSP.Messages.Document_Change :=
-                          Item;
-                     begin
-                        --  Rename the file
-                        VFS_Module.Rename_File
-                          (Kernel                  => Command.Kernel,
-                           File                    => File,
-                           New_File                => New_File,
-                           Success                 => Success,
-                           Prj_Changed             => Prj_Changed,
-                           Display_Confirm_Dialogs => False);
-
-                        Need_Project_Refresh :=
-                          Need_Project_Refresh or else Prj_Changed;
-
-                        --  Now send a 'didClose' notification for the old file
-                        --  and a 'didOpen' one for the new file
-                        declare
-                           Server : constant Language_Server_Access :=
-                             Get_Language_Server
-                               (Command.Kernel.Get_Language_Handler.
-                                  Get_Language_From_File (File));
-                        begin
-                           if Server /= null then
-                              --  See LSP documentation:
-                              --  Document renames should be signaled to a
-                              --  server sending a document close notification
-                              --  with the document's old name followed by an
-                              --  open notification using the document's new
-                              --  name. Major reason is that besides the name
-                              --  other attributes can change as well like the
-                              --  language that is associated with the
-                              --  document. In addition the new document could
-                              --  not be of interest for the server anymore.
-                              Server.Get_Client.Send_Text_Document_Did_Close
-                                (File);
-                              Server.Get_Client.Send_Text_Document_Did_Open
-                                (New_File);
-                              Server.Get_Client.Send_Did_Rename_File
-                                (File, New_File);
-                           end if;
-                        end;
-
-                        --  Append a reverse renameFile in case the user wants
-                        --  to undo the last workspaceEdit command.
-                        Reverse_Item.Rename_File.newUri :=
-                          Item.Rename_File.oldUri;
-                        Reverse_Item.Rename_File.oldUri :=
-                          Item.Rename_File.newUri;
-                        Command.Reverse_Document_Changes.Append (Reverse_Item);
-                     end;
+                  when LSP.Messages.Create_File
+                     | LSP.Messages.Rename_File
+                     | LSP.Messages.Delete_File =>
+                     Process_File_Document_Change
+                       (Command              => Command,
+                        Item                 => Item,
+                        Need_Project_Refresh => Need_Project_Refresh,
+                        Create_Reverse_Edits => True);
                end case;
             end;
 
@@ -998,10 +1210,9 @@ package body GPS.LSP_Client.Edit_Workspace is
       Buffer_Factory       : constant Editor_Buffer_Factory_Access :=
         Get_Buffer_Factory (Command.Kernel);
       Need_Project_Refresh : Boolean := False;
+      Deleted_Files        : File_Vectors.Vector;
 
-      procedure Process_File
-        (File   : Virtual_File;
-         Vector : Vectors.Vector);
+      procedure Process_File (File : Virtual_File; Vector : Vectors.Vector);
       --  Apply changes in the Vector to the file
 
       procedure Internal_Process_File
@@ -1013,15 +1224,12 @@ package body GPS.LSP_Client.Edit_Workspace is
       -- Process_File --
       ------------------
 
-      procedure Process_File
-        (File   : Virtual_File;
-         Vector : Vectors.Vector) is
+      procedure Process_File (File : Virtual_File; Vector : Vectors.Vector) is
       begin
          if Command.Auto_Save then
             declare
-               Holder : constant GPS.Editors.
-                 Controlled_Editor_Buffer_Holder :=
-                   Buffer_Factory.Get_Holder (File);
+               Holder : constant GPS.Editors.Controlled_Editor_Buffer_Holder :=
+                 Buffer_Factory.Get_Holder (File);
                Editor : GPS.Editors.Editor_Buffer'Class := Holder.Editor;
             begin
                Internal_Process_File (File, Editor, Vector);
@@ -1030,9 +1238,7 @@ package body GPS.LSP_Client.Edit_Workspace is
             declare
                Editor : GPS.Editors.Editor_Buffer'Class :=
                  Buffer_Factory.Get
-                   (File,
-                    Open_View   => True,
-                    Open_Buffer => True);
+                   (File, Open_View => True, Open_Buffer => True);
             begin
                Internal_Process_File (File, Editor, Vector);
             end;
@@ -1094,76 +1300,39 @@ package body GPS.LSP_Client.Edit_Workspace is
       end Internal_Process_File;
 
    begin
-
-      --  Undo all the documentChanges firts.
-      --  We only support file renamings currently.
+      --  Undo all the documentChanges first.
       declare
          use LSP.Messages.Document_Change_Vectors.Element_Vectors;
+         use LSP.Messages;
 
-         C : LSP.Messages.Document_Change_Vectors.Element_Vectors.Cursor :=
+         C    : LSP.Messages.Document_Change_Vectors.Element_Vectors.Cursor :=
            Command.Reverse_Document_Changes.First;
+         Item : LSP.Messages.Document_Change;
       begin
          while Has_Element (C) loop
-            declare
-               Item : constant LSP.Messages.Document_Change := Element (C);
-            begin
-               case Item.Kind is
-                  when LSP.Messages.Rename_File =>
-                     declare
-                        Success     : Boolean;
-                        Prj_Changed : Boolean;
-                        File        : constant Virtual_File :=
-                          GPS.LSP_Client.Utilities.To_Virtual_File
-                            (Item.Rename_File.oldUri);
-                        New_File    : constant Virtual_File :=
-                          GPS.LSP_Client.Utilities.To_Virtual_File
-                            (Item.Rename_File.newUri);
-                     begin
-                        VFS_Module.Rename_File
-                          (Kernel                  => Command.Kernel,
-                           File                    => File,
-                           New_File                => New_File,
-                           Success                 => Success,
-                           Prj_Changed             => Prj_Changed,
-                           Display_Confirm_Dialogs => False);
+            Item := Element (C);
 
-                        Need_Project_Refresh :=
-                          Need_Project_Refresh or else Prj_Changed;
+            case Item.Kind is
+               when LSP.Messages.Create_File
+                  | LSP.Messages.Rename_File
+                  | LSP.Messages.Delete_File =>
+                  Process_File_Document_Change
+                    (Command              => Command,
+                     Item                 => Item,
+                     Need_Project_Refresh => Need_Project_Refresh);
 
-                        --  Now send a 'didClose' notification for the old file
-                        --  and a 'didOpen' one for the new file
-                        declare
-                           Server : constant Language_Server_Access :=
-                             Get_Language_Server
-                               (Command.Kernel.Get_Language_Handler.
-                                  Get_Language_From_File (File));
-                        begin
-                           if Server /= null then
-                              --  See LSP documentation:
-                              --  Document renames should be signaled to a
-                              --  server sending a document close notification
-                              --  with the document's old name followed by an
-                              --  open notification using the document's new
-                              --  name. Major reason is that besides the name
-                              --  other attributes can change as well like the
-                              --  language that is associated with the
-                              --  document. In addition the new document could
-                              --  not be of interest for the server anymore.
-                              Server.Get_Client.Send_Text_Document_Did_Close
-                                (File);
-                              Server.Get_Client.Send_Text_Document_Did_Open
-                                (New_File);
-                              Server.Get_Client.Send_Did_Rename_File
-                                (File, New_File);
-                           end if;
-                        end;
-                     end;
+                  --  Keep track of deleted files to avoid applying
+                  --  reverse textEdits on them.
+                  if Item.Kind = LSP.Messages.Delete_File then
+                     Deleted_Files.Append
+                       (GPS.LSP_Client.Utilities.To_Virtual_File
+                          (Item.Delete_File.uri));
+                  end if;
 
-                  when others =>
-                     --  Not supported yet
-                     null;
-               end case;
-            end;
+               when others                   =>
+                  --  Text document edits are handled later
+                  null;
+            end case;
 
             Next (C);
          end loop;
@@ -1174,26 +1343,31 @@ package body GPS.LSP_Client.Edit_Workspace is
          GPS.Kernel.Project.Recompute_View (Command.Kernel);
       end if;
 
-      --  Remove the messages related to the worskspaceEdit being undone
+      --  Remove the messages related to the workspaceEdit being undone
       Get_Messages_Container (Command.Kernel).Remove_Category
         (Command.Title, GPS.Kernel.Messages.Side_And_Locations);
 
-      --  Loop through the generated edit to undo WorkspaceEdit
+      --  Loop through the reverse document textEdits and apply them
       declare
          use LSP.Messages.TextDocumentEdit_Maps;
 
          Vector : Vectors.Vector;
          C      : LSP.Messages.TextDocumentEdit_Maps.Cursor :=
            Command.Reverse_Edit.First;
+         File   : Virtual_File;
       begin
          while Has_Element (C) loop
             for Change of Element (C) loop
                Insert_Change (Vector, Change.span, Change.newText);
             end loop;
 
-            Process_File
-              (GPS.LSP_Client.Utilities.To_Virtual_File (Key (C)),
-               Vector);
+            File := GPS.LSP_Client.Utilities.To_Virtual_File (Key (C));
+
+            --  Only process the file if it was not deleted before
+            --  when processing file documentChanges.
+            if not Deleted_Files.Contains (File) then
+               Process_File (File, Vector);
+            end if;
 
             Vector.Clear;
             Next (C);

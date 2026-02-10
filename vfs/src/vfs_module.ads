@@ -22,8 +22,30 @@ with GNATCOLL.VFS;
 
 package VFS_Module is
 
+   procedure Create_File
+     (Kernel   : not null access Kernel_Handle_Record'Class;
+      Filename : String;
+      Dir      : GNATCOLL.VFS.Virtual_File := GNATCOLL.VFS.No_File;
+      Success  : out Boolean);
+   --  Create an empty file with the given Filename.
+   --  If Dir is provided, the file is created in that directory, using
+   --  Filename as a relative name. Otherwise, Filename is considered as
+   --  an absolute path.
+   --  Success is set to True when the file has been created successfully,
+   --  False otherwise.
+   --  In case of error, an appropriate message will be displayed in the
+   --  Messages view.
+
+   procedure Delete_File
+     (Kernel  : not null access Kernel_Handle_Record'Class;
+      File    : GNATCOLL.VFS.Virtual_File;
+      Success : out Boolean);
+   --  Delete File, setting Success to True when succeeding.
+   --  This procedure will display error and warning dialogs when needed
+   --  (e.g: if the file to delete is a directory mentioned in the project).
+
    procedure Rename_File
-     (Kernel                  : access GPS.Kernel.Kernel_Handle_Record'Class;
+     (Kernel                  : not null access Kernel_Handle_Record'Class;
       File                    : GNATCOLL.VFS.Virtual_File;
       New_File                : GNATCOLL.VFS.Virtual_File;
       Success                 : out Boolean;
@@ -38,7 +60,7 @@ package VFS_Module is
    --  displayed when the renamed file (or directory) belongs to the project.
 
    procedure Register_Module
-     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class);
+     (Kernel : access Kernel_Handle_Record'Class);
    --  Register the VFS module in the list
 
 end VFS_Module;
