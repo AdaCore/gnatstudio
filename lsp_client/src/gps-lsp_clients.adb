@@ -1057,7 +1057,11 @@ package body GPS.LSP_Clients is
          Result : LSP.Messages.ResourceOperationKindSets.Set;
       begin
          LSP.Messages.ResourceOperationKindSets.Include
+           (Result, LSP.Messages.ResourceOperationKind'(LSP.Messages.create));
+         LSP.Messages.ResourceOperationKindSets.Include
            (Result, LSP.Messages.ResourceOperationKind'(LSP.Messages.rename));
+         LSP.Messages.ResourceOperationKindSets.Include
+           (Result, LSP.Messages.ResourceOperationKind'(LSP.Messages.delete));
 
          return LSP.Messages.ResourceOperationKindSet (Result);
       end Get_Supported_ResourceOperations;
