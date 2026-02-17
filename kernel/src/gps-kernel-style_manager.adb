@@ -29,6 +29,15 @@ package body GPS.Kernel.Style_Manager is
 
    Me : constant Trace_Handle := Create ("GPS.KERNEL.Style_Manager");
 
+   No_GdkRGBA : constant Trace_Handle :=
+     Create ("GPS.KERNEL.Style_Manager.No_GdkRGBA", Off);
+   --  GTK's internal rich text serializer is an older system that was
+   --  designed before GdkRGBA became the standard way to handle colors.
+   --  While it can handle basic data types, it does not know how to convert
+   --  a complex GdkRGBA object into a byte stream.
+   --  So for style tests we need to turn this trace on to have possibility to
+   --  call Gtk.TextBuffer.serialize()
+
    use Style_Map;
 
    function To_Style_Manager_Access is new Ada.Unchecked_Conversion
@@ -474,26 +483,51 @@ package body GPS.Kernel.Style_Manager is
          end case;
 
          for J in 1 .. Natural (V.Tags.Length) loop
-            Set_Property (V.Tags (J),
-                          Foreground_Rgba_Property, V.Foreground);
-            Set_Property (V.Tags (J),
-                          Background_Rgba_Property, V.Background);
+            if No_GdkRGBA.Active then
+               --  GTK's internal rich text serializer is an older system
+               --  that was designed before GdkRGBA became the standard way
+               --  to handle colors. While it can handle basic data types, it
+               --  does not know how to convert a complex GdkRGBA object into
+               --  a byte stream.
+               --  Needed for tests.
+
+               Glib.Properties.Set_Property
+                 (V.Tags (J),
+                  Foreground_Property, Gdk.RGBA.To_String (V.Foreground));
+
+               Glib.Properties.Set_Property
+                 (V.Tags (J),
+                  Background_Property, Gdk.RGBA.To_String (V.Background));
+
+            else
+               Set_Property (V.Tags (J),
+                             Foreground_Rgba_Property, V.Foreground);
+               Set_Property (V.Tags (J),
+                             Background_Rgba_Property, V.Background);
+            end if;
+
             Set_Property (V.Tags (J), Weight_Property, W);
             Set_Property (V.Tags (J), Style_Property, S);
             Set_Property (V.Tags (J), Underline_Property, U);
 
-            if V.Underline_Color = Null_RGBA then
-               Set_Property
-                 (V.Tags (J), Underline_Rgba_Property, V.Foreground);
-            else
-               Set_Property
-                 (V.Tags (J), Underline_Rgba_Property, V.Underline_Color);
+            if U /= Pango_Underline_None
+              and then not No_GdkRGBA.Active
+            then
+               if V.Underline_Color = Null_RGBA then
+                  Set_Property
+                    (V.Tags (J), Underline_Rgba_Property, V.Foreground);
+               else
+                  Set_Property
+                    (V.Tags (J), Underline_Rgba_Property, V.Underline_Color);
+               end if;
             end if;
 
             Glib.Properties.Set_Property
               (V.Tags (J), Strikethrough_Property, V.Strikethrough);
 
-            if V.Strikethrough then
+            if V.Strikethrough
+              and then not No_GdkRGBA.Active
+            then
                if V.Self_Strikethrough_Color = Null_RGBA then
                   Set_Property
                     (V.Tags (J), Strikethrough_Rgba_Property, V.Foreground);
@@ -760,6 +794,7 @@ package body GPS.Kernel.Style_Manager is
       W   : Weight := Pango_Weight_Normal;
       S   : Pango.Enums.Style := Pango_Style_Normal;
       U   : Pango.Enums.Underline := Pango_Underline_None;
+      C   : Gdk_RGBA;
    begin
       Gtk_New (Tag, Style.Name.all);
 
@@ -800,32 +835,53 @@ package body GPS.Kernel.Style_Manager is
             U := Pango.Enums.Pango_Underline_Error;
       end case;
 
-      Set_Property (Tag, Foreground_Rgba_Property, Style.Foreground);
-      Set_Property (Tag, Background_Rgba_Property, Style.Background);
+      if No_GdkRGBA.Active then
+         --  GTK's internal rich text serializer is an older system that was
+         --  designed before GdkRGBA became the standard way to handle colors.
+         --  While it can handle basic data types, it does not know how to
+         --  convert a complex GdkRGBA object into a byte stream.
+         --  Needed for tests.
+
+         Glib.Properties.Set_Property
+           (Tag, Foreground_Property, Gdk.RGBA.To_String (Style.Foreground));
+         Glib.Properties.Set_Property
+           (Tag, Background_Property, Gdk.RGBA.To_String (Style.Background));
+      else
+         Set_Property (Tag, Foreground_Rgba_Property, Style.Foreground);
+         Set_Property (Tag, Background_Rgba_Property, Style.Background);
+      end if;
+
       Set_Property (Tag, Weight_Property, W);
       Set_Property (Tag, Style_Property, S);
       Set_Property (Tag, Underline_Property, U);
 
-      if Style.Underline_Color = Null_RGBA then
-         Set_Property
-           (Tag, Underline_Rgba_Property, Style.Foreground);
-      else
-         Set_Property
-           (Tag, Underline_Rgba_Property, Style.Underline_Color);
+      if U /= Pango_Underline_None
+        and then not No_GdkRGBA.Active
+      then
+         if Style.Underline_Color = Null_RGBA then
+            C := Style.Foreground;
+         else
+            C := Style.Underline_Color;
+         end if;
+
+         Set_Property (Tag, Underline_Rgba_Property, C);
       end if;
 
       Glib.Properties.Set_Property
         (Tag, Strikethrough_Property, Style.Strikethrough);
 
-      if Style.Strikethrough then
+      if Style.Strikethrough
+        and then not No_GdkRGBA.Active
+      then
          if Style.Self_Strikethrough_Color = Null_RGBA then
+            C := Style.Foreground;
             Set_Property
               (Tag, Strikethrough_Rgba_Property, Style.Foreground);
          else
-            Set_Property
-              (Tag, Strikethrough_Rgba_Property,
-               Style.Self_Strikethrough_Color);
+            C := Style.Self_Strikethrough_Color;
          end if;
+
+         Set_Property (Tag, Strikethrough_Rgba_Property, C);
       end if;
 
       return Tag;
