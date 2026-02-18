@@ -62,6 +62,7 @@ package GPS.LSP_Client.Requests.Shell is
      (Self : in out Shell_Request; Reason : Reject_Reason);
 
    overriding function Auto_Cancel
-     (Self : in out Shell_Request) return Boolean is (Self.Auto_Canceled);
+     (Self         : in out Shell_Request;
+      Next_Request : Request_Access) return Boolean is (Self.Auto_Canceled);
 
 end GPS.LSP_Client.Requests.Shell;

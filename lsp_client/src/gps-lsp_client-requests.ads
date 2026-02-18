@@ -98,9 +98,14 @@ package GPS.LSP_Client.Requests is
      (Self : LSP_Request) return VSS.Strings.Virtual_String is abstract;
    --  Name of the RPC method to be called.
 
-   function Auto_Cancel (Self : in out LSP_Request) return Boolean is (False);
+   function Auto_Cancel
+     (Self         : in out LSP_Request;
+      Next_Request : Request_Access) return Boolean is (False);
    --  When True, creating a new request for the same method will cancel the
    --  previous one.
+   --  Next_Request is the new request, so we can decide whether we need to
+   --  cancel the previous request, for example, when Next_Request is for the
+   --  same file.
 
    function Id (Self : LSP_Request) return LSP.Types.LSP_Number_Or_String;
    --  Return the Id of the request

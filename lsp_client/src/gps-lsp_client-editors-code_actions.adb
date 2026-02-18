@@ -15,16 +15,16 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with Glib.Convert; use Glib.Convert;
+with Glib.Convert;                        use Glib.Convert;
 
-with Basic_Types;  use Basic_Types;
-with Commands;     use Commands;
+with Basic_Types;                         use Basic_Types;
+with Commands;                            use Commands;
 
-with Language;                      use Language;
-with Language_Handlers;             use Language_Handlers;
-with GPS.Editors; use GPS.Editors;
+with Language;                            use Language;
+with Language_Handlers;                   use Language_Handlers;
+with GPS.Editors;                         use GPS.Editors;
 with GPS.LSP_Client.Requests.Code_Action;
-with GPS.LSP_Client.Utilities;      use GPS.LSP_Client.Utilities;
+with GPS.LSP_Client.Utilities;            use GPS.LSP_Client.Utilities;
 
 with Refactoring.Code_Actions;
 with GPS.LSP_Client.Editors.Code_Actions.Dialog;
@@ -57,7 +57,8 @@ package body GPS.LSP_Client.Editors.Code_Actions is
       Result : LSP.Messages.CodeAction_Vector);
 
    overriding function Auto_Cancel
-     (Self : in out Code_Action_Request) return Boolean is (True);
+     (Self         : in out Code_Action_Request;
+      Next_Request : Request_Access) return Boolean is (True);
 
    -------------------------
    -- Code_Action_Command --
