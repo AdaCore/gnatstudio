@@ -52,7 +52,9 @@ package body GPS.LSP_Client.Editors.Folding is
       Result : LSP.Messages.FoldingRange_Vector);
 
    overriding function Auto_Cancel
-     (Self : in out Folding_Request) return Boolean is (True);
+     (Self         : in out Folding_Request;
+      Next_Request : GPS.LSP_Client.Requests.Request_Access)
+      return Boolean;
 
    -- LSP_Editor_Folding_Provider --
 
@@ -75,6 +77,25 @@ package body GPS.LSP_Client.Editors.Folding is
 
    Module_Id : LSP_Folding_Module_Id_Access;
    Provider  : aliased LSP_Editor_Folding_Provider;
+
+   -----------------
+   -- Auto_Cancel --
+   -----------------
+
+   overriding function Auto_Cancel
+     (Self         : in out Folding_Request;
+      Next_Request : GPS.LSP_Client.Requests.Request_Access) return Boolean
+   is
+      use type GPS.LSP_Client.Requests.Request_Access;
+   begin
+      if Next_Request /= null
+        and then Next_Request.all in Folding_Request'Class
+      then
+         return Self.File = Folding_Request_Access (Next_Request).File;
+      else
+         return False;
+      end if;
+   end Auto_Cancel;
 
    -----------------------
    -- On_Result_Message --

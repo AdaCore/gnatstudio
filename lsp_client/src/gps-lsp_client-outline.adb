@@ -119,7 +119,8 @@ package body GPS.LSP_Client.Outline is
       Data    : GNATCOLL.JSON.JSON_Value);
 
    overriding function Auto_Cancel
-     (Self : in out GPS_LSP_Outline_Request) return Boolean is (True);
+     (Self         : in out GPS_LSP_Outline_Request;
+      Next_Request : Request_Access) return Boolean;
 
    overriding procedure On_Rejected
      (Self : in out GPS_LSP_Outline_Request; Reason : Reject_Reason);
@@ -128,6 +129,23 @@ package body GPS.LSP_Client.Outline is
 
    function Get_Optional_Visibility
      (V : Optional_Als_Visibility) return Construct_Visibility;
+
+   -----------------
+   -- Auto_Cancel --
+   -----------------
+
+   overriding function Auto_Cancel
+     (Self         : in out GPS_LSP_Outline_Request;
+      Next_Request : Request_Access) return Boolean is
+   begin
+      if Next_Request /= null
+        and then Next_Request.all in GPS_LSP_Outline_Request'Class
+      then
+         return Self.File = GPS_LSP_Outline_Request_Access (Next_Request).File;
+      else
+         return False;
+      end if;
+   end Auto_Cancel;
 
    ----------------
    -- Async Load --
