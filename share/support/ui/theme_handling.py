@@ -481,8 +481,10 @@ common_light = {
         [],
         ["TRUE", Color("#ff0000")],
     ),
+    "variable.declaration": ("DEFAULT", Color("#02A322"), transparent),
     "variable.localvariable": ("DEFAULT", Color("#02A322"), transparent),
     "variable.globalvariable": ("DEFAULT", Color("#C92002"), transparent),
+    "variable.declaration.globalvariable": ("DEFAULT", Color("#C92002"), transparent),
     #
     "deprecateds": ("DEFAULT", Color("#ff0000"), transparent),
 }
@@ -848,21 +850,23 @@ class Theme(object):
                             p = key.find(".", p + 1)  #  `variable.deprecated`
                             if p == -1:
                                 break
-                            if GPS.Style(key[: p - 1], False) is None:
+                            current_style = key[:p].replace(".", "-")
+                            if GPS.Style(current_style, False) is None:
                                 # `variable.deprecated` does not exsist,
                                 #  create it with `variable` as a parent
                                 GPS.Style.create_from_style(
-                                    key[: p - 1].replace(".", "-"),
-                                    parent.replace(".", "-"),
+                                    current_style,
+                                    parent,
                                 )
 
                             # parent will be `variable.deprecated`
-                            parent = key[: p - 1]
+                            parent = current_style
 
                         # create `variable.deprecated.readonly` based on
                         # `variable.deprecated`
                         s = GPS.Style.create_from_style(
-                            key.replace(".", "-"), parent.replace(".", "-")
+                            key.replace(".", "-"),
+                            parent,
                         )
 
                         if self.d[key][0] != "NONE":
