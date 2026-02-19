@@ -125,7 +125,8 @@ package body GPS.LSP_Client.Editors.Navigation is
       Data    : GNATCOLL.JSON.JSON_Value);
 
    overriding function Auto_Cancel
-     (Self : in out GPS_LSP_Simple_Request) return Boolean is (True);
+     (Self         : in out GPS_LSP_Simple_Request;
+      Next_Request : Request_Access) return Boolean is (True);
 
    overriding procedure On_Rejected
      (Self : in out GPS_LSP_Simple_Request; Reason : Reject_Reason);

@@ -71,8 +71,9 @@ package body GPS.LSP_Clients is
 
    procedure Auto_Cancel_Requests
      (Self    : in out LSP_Client'Class;
-      Method  : VSS.Strings.Virtual_String);
-   --  Invalidate all the requests queued for Method
+      Request : GPS.LSP_Client.Requests.Request_Access);
+   --  Invalidate all the queued requests and cancel the requests for which
+   --  Queued.Auto_Cancel (Request) returns True
 
    procedure Clear_Change_Requests
      (Self : in out LSP_Client'Class;
@@ -264,8 +265,12 @@ package body GPS.LSP_Clients is
       use GPS.LSP_Client.Requests;
       Item : Command;
    begin
-      if Request.Auto_Cancel then
-         Self.Auto_Cancel_Requests (Request.Method);
+      if Request = null then
+         return;
+      end if;
+
+      if Request.Auto_Cancel (Request) then
+         Self.Auto_Cancel_Requests (Request);
       end if;
 
       Item := (Kind => GPS_Request, Request => Request);
@@ -1457,9 +1462,11 @@ package body GPS.LSP_Clients is
 
    procedure Auto_Cancel_Requests
      (Self    : in out LSP_Client'Class;
-      Method  : VSS.Strings.Virtual_String)
+      Request : GPS.LSP_Client.Requests.Request_Access)
    is
       use GPS.LSP_Client.Requests.Requests_Lists;
+      use type GPS.LSP_Client.Requests.Request_Access;
+
       --  Keep a copy of the requests list because we are tampering with the
       --  real list.
       Requests : constant GPS.LSP_Client.Requests.Requests_Lists.List :=
@@ -1467,19 +1474,21 @@ package body GPS.LSP_Clients is
       Cursor   : GPS.LSP_Client.Requests.Requests_Lists.Cursor :=
         First (Requests);
    begin
-      while Has_Element (Cursor) loop
-         if Element (Cursor).Method = Method
-           and then Element (Cursor).Auto_Cancel
-         then
-            declare
-               Request : GPS.LSP_Client.Requests.Request_Access :=
-                 Element (Cursor);
-            begin
-               Self.Cancel (Request);
-            end;
-         end if;
-         Next (Cursor);
-      end loop;
+      if Request /= null then
+         while Has_Element (Cursor) loop
+            if Element (Cursor).Method = Request.Method
+              and then Element (Cursor).Auto_Cancel (Request)
+            then
+               declare
+                  Request : GPS.LSP_Client.Requests.Request_Access :=
+                    Element (Cursor);
+               begin
+                  Self.Cancel (Request);
+               end;
+            end if;
+            Next (Cursor);
+         end loop;
+      end if;
    end Auto_Cancel_Requests;
 
    -----------------------

@@ -237,7 +237,8 @@ package body GPS.LSP_Client.Search.Entities is
    overriding procedure On_Rejected
      (Self : in out Document_Request; Reason : Reject_Reason);
    overriding function Auto_Cancel
-     (Self : in out Document_Request) return Boolean is (True);
+     (Self         : in out Document_Request;
+      Next_Request : Request_Access) return Boolean is (True);
 
    -------------------
    -- Documentation --

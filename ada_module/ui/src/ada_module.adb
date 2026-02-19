@@ -24,7 +24,6 @@ with Default_Preferences.Enums;
 with GPS.Kernel;                use GPS.Kernel;
 with GPS.Kernel.Contexts;       use GPS.Kernel.Contexts;
 with GPS.Kernel.Hooks;          use GPS.Kernel.Hooks;
-with GPS.Kernel.Preferences;    use GPS.Kernel.Preferences;
 with GPS.Kernel.Project;        use GPS.Kernel.Project;
 with GPS.Intl;                  use GPS.Intl;
 
@@ -53,7 +52,6 @@ package body Ada_Module is
    package Indent_Preferences is new
      Default_Preferences.Enums.Generics (Indent_Style);
 
-   Ada_Automatic_Indentation : Indentation_Kind_Preferences.Preference;
    Ada_Indentation_Level     : Integer_Preference;
    --  Number of spaces for the default Ada indentation.
 
@@ -115,7 +113,7 @@ package body Ada_Module is
    begin
       Set_Indentation_Parameters
         (Ada_Lang,
-         Indent_Style => Indentation_Kind'(Ada_Automatic_Indentation.Get_Pref),
+         Indent_Style => Extended,
          Params       =>
            (Indent_Level        => Ada_Indentation_Level.Get_Pref,
             Indent_Continue     => Ada_Continuation_Level.Get_Pref,
@@ -333,18 +331,6 @@ package body Ada_Module is
            Default => 2,
            Doc     => -"Number of extra spaces for continuation lines.",
            Label   => -"Continuation lines");
-
-      Ada_Automatic_Indentation :=
-        Indentation_Kind_Preferences.Create
-          (Manager,
-           Path            => Non_LSP_Pref_Indent_Path,
-           Name            => "Ada-Auto-Indentation",
-           Default         => Extended,
-           Doc             =>
-             -"Enable auto-indentation for Ada sources."
-             & " (Not compatible with LSP Ada Formatter)",
-           Label           => -"Auto indentation",
-           Combo_Threshold => -1);
 
       Ada_Declaration_Level :=
         Create

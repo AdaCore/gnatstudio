@@ -1,0 +1,52 @@
+<?xml version="1.0"?>
+<GPS>
+ <perspectives>
+  <perspective name="Default">
+    <Pane Orientation="ORIENTATION_HORIZONTAL" >
+      <Notebook Height=" 611" Width=" 258" >
+        <Child Raised="True" Position=" 3" State="NORMAL" >
+          <Project_Explorer_Project />
+        </Child>
+        <Child Position=" 3" State="NORMAL" >
+          <Outline_View />
+        </Child>
+      </Notebook>
+      <Pane Orientation="ORIENTATION_VERTICAL" >
+        <central/>
+        <Notebook Height=" 175" Width=" 544" >
+          <Child Position=" 1" State="NORMAL" >
+            <Message_Window />
+          </Child>
+          <Child Position=" 1" State="NORMAL" >
+            <Shell_Console />
+          </Child>
+          <Child Raised="True" Position=" 1" State="NORMAL" >
+            <Python_Console />
+          </Child>
+        </Notebook>
+      </Pane>
+    </Pane>
+  </perspective>
+ </perspectives>
+
+ <desktops>
+  <desktop perspective='Default' project="" >
+    <Child Focus="False" Position=" 1" State="NORMAL" >
+      <Source_Editor>
+        <Column_End>1</Column_End>
+        <Column>1</Column>
+        <Line>1</Line>
+        <vfs_File>a.adb</vfs_File>
+      </Source_Editor>
+    </Child>
+    <Child Focus="True" Position=" 1" State="NORMAL" >
+      <Source_Editor>
+        <Column_End>1</Column_End>
+        <Column>1</Column>
+        <Line>1</Line>
+        <vfs_File>foo.adb</vfs_File>
+      </Source_Editor>
+    </Child>
+  </desktop>
+ </desktops>
+</GPS>
