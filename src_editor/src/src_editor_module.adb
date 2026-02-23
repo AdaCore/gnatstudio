@@ -152,12 +152,6 @@ package body Src_Editor_Module is
       is (True) with Inline;
    --  See inherited documentation
 
-   procedure Update_Editor_Tabs_Status
-     (Kernel : not null access Kernel_Handle_Record'Class;
-      Files  : Basic_Types.File_Sets.Set);
-   --  Update the the tab status of the editor views opened for the given
-   --  files.
-
    type On_Open_File is new Open_File_Hooks_Function with null record;
    overriding function Execute
      (Self             : On_Open_File;
@@ -1620,6 +1614,58 @@ package body Src_Editor_Module is
       Create_New_Recent_Menu (Kernel, File, Prepend => True);
    end Add_To_Recent_Menu;
 
+   -----------------------------------
+   -- Apply_Error_Warning_Tab_Style --
+   -----------------------------------
+
+   procedure Apply_Error_Warning_Tab_Style
+     (Kernel : not null access Kernel_Handle_Record'Class;
+      File   : GNATCOLL.VFS.Virtual_File;
+      Style  : Tab_Style_Kind)
+   is
+
+      procedure For_Child
+        (Child : not null access GPS_MDI_Child_Record'Class);
+
+      ---------------
+      -- For_Child --
+      ---------------
+
+      procedure For_Child
+        (Child : not null access GPS_MDI_Child_Record'Class)
+      is
+         use Gtk.Label;
+         use Gtk.Style_Context;
+
+         Tab_Label : constant Gtk_Label := Child.Get_Tab_Label;
+      begin
+         --  Return immediately if there is no tab label (floating editors).
+         if Tab_Label = null then
+            return;
+         end if;
+
+         case Style is
+            when Error =>
+               Get_Style_Context (Tab_Label).Add_Class ("mdi-errors-tab");
+               Get_Style_Context (Tab_Label).Remove_Class ("mdi-warnings-tab");
+
+            when Warning =>
+               Get_Style_Context (Tab_Label).Remove_Class ("mdi-errors-tab");
+               Get_Style_Context (Tab_Label).Add_Class ("mdi-warnings-tab");
+
+            when None =>
+               Get_Style_Context (Tab_Label).Remove_Class ("mdi-warnings-tab");
+               Get_Style_Context (Tab_Label).Remove_Class ("mdi-errors-tab");
+         end case;
+      end For_Child;
+
+   begin
+      For_All_Views
+        (Kernel   => Kernel,
+         File     => File,
+         Callback => For_Child'Unrestricted_Access);
+   end Apply_Error_Warning_Tab_Style;
+
    -------------
    -- Execute --
    -------------
@@ -2233,16 +2279,26 @@ package body Src_Editor_Module is
       Files  : Basic_Types.File_Sets.Set)
    is
 
-      procedure Set_Belongs_To_Project
+      procedure Set_Styles
         (Child : not null access GPS_MDI_Child_Record'Class);
-      --  Set/unset the CSS class specifying if the editor's file belongs
-      --  to the project or not.
+      --  Set/unset the CSS class specifying:
+      --    if the editor's file belongs to the project or not
+      --    if code has errors/warnings
 
-      ----------------------------
-      -- Set_Belongs_To_Project --
-      ----------------------------
+      Has_Errors   : Boolean := False;
+      Has_Warnings : Boolean := False;
 
-      procedure Set_Belongs_To_Project
+      function Check_Messages
+        (Message : not null access Abstract_Message'Class)
+         return Boolean;
+      --  Check wether the message is error or warning and store result in
+      --  Has_Errors & Has_Warnings
+
+      ----------------
+      -- Set_Styles --
+      ----------------
+
+      procedure Set_Styles
         (Child : not null access GPS_MDI_Child_Record'Class)
       is
          Src_Box : constant Source_Editor_Box :=
@@ -2258,20 +2314,52 @@ package body Src_Editor_Module is
          end if;
 
          if Project /= No_Project then
-            Get_Style_Context (Child.Get_Tab_Label).Remove_Class
-              ("not-from-project");
+            Get_Style_Context (Tab_Label).Remove_Class ("not-from-project");
+
          else
-            Get_Style_Context (Child.Get_Tab_Label).Add_Class
-              ("not-from-project");
+            Get_Style_Context (Tab_Label).Add_Class ("not-from-project");
          end if;
-      end Set_Belongs_To_Project;
+      end Set_Styles;
+
+      --------------------
+      -- Check_Messages --
+      --------------------
+
+      function Check_Messages
+        (Message : not null access Abstract_Message'Class)
+         return Boolean is
+      begin
+         if Message.Get_Importance = High then
+            Has_Errors := True;
+            return False;
+
+         elsif Message.Get_Importance = Medium then
+            Has_Warnings := True;
+         end if;
+
+         return True;
+      end Check_Messages;
 
    begin
       for File of Files loop
          For_All_Views
            (Kernel   => Kernel,
             File     => File,
-            Callback => Set_Belongs_To_Project'Unrestricted_Access);
+            Callback => Set_Styles'Unrestricted_Access);
+
+         --  Check whether we need tab label highligting on errors/warnings
+         Has_Errors   := False;
+         Has_Warnings := False;
+
+         Kernel.Get_Messages_Container.For_All_Messages
+           (File, Check_Messages'Unrestricted_Access);
+
+         if Has_Errors then
+            Apply_Error_Warning_Tab_Style (Kernel, File, Error);
+
+         elsif Has_Warnings then
+            Apply_Error_Warning_Tab_Style (Kernel, File, Warning);
+         end if;
       end loop;
    end Update_Editor_Tabs_Status;
 

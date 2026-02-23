@@ -420,6 +420,15 @@ package GPS.Kernel.Messages is
    --  Returns list of messages for the specified file in the specified
    --  category. Returns empty list when there is no file or category.
 
+   procedure For_All_Messages
+     (Self     : not null access constant Messages_Container'Class;
+      File     : GNATCOLL.VFS.Virtual_File;
+      Callback : not null access function
+        (Message : not null access Abstract_Message'Class)
+      return Boolean);
+   --  Calls Callback for all messages for the given File. Stops when Callback
+   --  returns False.
+
    function Get_First_Message
      (Self     : not null access constant Messages_Container'Class;
       File     : GNATCOLL.VFS.Virtual_File;

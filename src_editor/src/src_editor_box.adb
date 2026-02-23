@@ -29,6 +29,9 @@ with GNATCOLL.VFS;                   use GNATCOLL.VFS;
 
 with Gdk;                            use Gdk;
 with Gdk.Event;                      use Gdk.Event;
+with Gdk.Screen;                     use Gdk.Screen;
+with Gdk.Rectangle;                  use Gdk.Rectangle;
+with Gdk.Window;                     use Gdk.Window;
 
 with Glib.Object;                    use Glib.Object;
 with Glib.Values;                    use Glib.Values;
@@ -41,6 +44,7 @@ with Gtk.Enums;                      use Gtk.Enums;
 with Gtk.Event_Box;                  use Gtk.Event_Box;
 with Gtk.Frame;                      use Gtk.Frame;
 with Gtk.Handlers;                   use Gtk.Handlers;
+with Gtk.Style_Context;              use Gtk.Style_Context;
 with Gtk.Text_Iter;                  use Gtk.Text_Iter;
 with Gtk.Text_Mark;                  use Gtk.Text_Mark;
 with Gtk.Widget;                     use Gtk.Widget;
@@ -50,7 +54,6 @@ with Gtkada.File_Selector;           use Gtkada.File_Selector;
 with Gtkada.Handlers;
 with Gtkada.MDI;                     use Gtkada.MDI;
 
-with Find_Utils;                     use Find_Utils;
 with GPS.Dialogs;                    use GPS.Dialogs;
 with GPS.Editors.Line_Information;   use GPS.Editors.Line_Information;
 with GPS.Intl;                       use GPS.Intl;
@@ -63,6 +66,7 @@ with GPS.Kernel.Preferences;         use GPS.Kernel.Preferences;
 with GPS.Kernel.Project;             use GPS.Kernel.Project;
 
 with Completion_Module;
+with Find_Utils;                     use Find_Utils;
 with Language;                       use Language;
 with Language.Ada;                   use Language.Ada;
 with Language_Handlers;              use Language_Handlers;
@@ -77,10 +81,6 @@ with Src_Editor_View;                use Src_Editor_View;
 with String_Utils;
 with Tooltips;                       use Tooltips;
 with Xref;                           use Xref;
-with Gtk.Style_Context; use Gtk.Style_Context;
-with Gdk.Screen; use Gdk.Screen;
-with Gdk.Rectangle; use Gdk.Rectangle;
-with Gdk.Window; use Gdk.Window;
 
 package body Src_Editor_Box is
 

@@ -43,6 +43,34 @@ package body Src_Editor_Module.Messages is
    --  Callback for the "file_edited" hook. Redirects call to highlighting
    --  manager.
 
+   Errors_Count   : Natural := 0;
+   Warnings_Count : Natural := 0;
+
+   function Calc_Errors_And_Warnings
+     (Message : not null access Abstract_Message'Class)
+      return Boolean;
+   --  Calculate errors and warnings messages up to two of each and store
+   --  result in Errors_Count & Warnings_Count
+
+   ------------------------------
+   -- Calc_Errors_And_Warnings --
+   ------------------------------
+
+   function Calc_Errors_And_Warnings
+     (Message : not null access Abstract_Message'Class)
+      return Boolean is
+   begin
+      if Message.Get_Importance = High then
+         Errors_Count := @ + 1;
+
+      elsif Message.Get_Importance = Medium then
+         Warnings_Count := @ + 1;
+      end if;
+
+      --  we only need to know that we have more then 1 error/warning
+      return Errors_Count < 2 and then Warnings_Count < 2;
+   end Calc_Errors_And_Warnings;
+
    -------------
    -- Execute --
    -------------
@@ -180,6 +208,26 @@ package body Src_Editor_Module.Messages is
    is
       B : Source_Buffer;
 
+      function Calc_Errors
+        (Message : not null access Abstract_Message'Class)
+         return Boolean;
+
+      -----------------
+      -- Calc_Errors --
+      -----------------
+
+      function Calc_Errors
+        (Message : not null access Abstract_Message'Class)
+         return Boolean is
+      begin
+         if Message.Get_Importance = High then
+            Errors_Count := @ + 1;
+         end if;
+
+         --  we only need to know that we have more then 1 error
+         return Errors_Count < 2;
+      end Calc_Errors;
+
    begin
       B := Get (Self.Kernel, Message.Get_File);
 
@@ -188,6 +236,31 @@ package body Src_Editor_Module.Messages is
            (B,
             VSS.Strings.Conversions.To_UTF_8_String (Message.Get_Category),
             (1 => Message_Access (Message)));
+
+         --  Highlight tab name on errors/warnings
+         Errors_Count   := 0;
+         Warnings_Count := 0;
+
+         if Message.Get_Importance = High then
+            Self.Kernel.Get_Messages_Container.For_All_Messages
+              (Message.Get_File, Calc_Errors'Unrestricted_Access);
+
+            if Errors_Count = 1 then --  the first error message
+               Apply_Error_Warning_Tab_Style
+                 (Self.Kernel, Message.Get_File, Error);
+            end if;
+
+         elsif Message.Get_Importance = Medium then
+            Self.Kernel.Get_Messages_Container.For_All_Messages
+              (Message.Get_File, Calc_Errors_And_Warnings'Access);
+
+            if Warnings_Count = 1 --  the first warning message
+              and then Errors_Count = 0 --  and no error message
+            then
+               Apply_Error_Warning_Tab_Style
+                 (Self.Kernel, Message.Get_File, Warning);
+            end if;
+         end if;
       end if;
    end Message_Added;
 
@@ -228,7 +301,7 @@ package body Src_Editor_Module.Messages is
      (Self    : not null access Highlighting_Manager;
       Message : not null access Abstract_Message'Class)
    is
-      B      : Source_Buffer;
+      B : Source_Buffer;
 
    begin
       B := Get (Self.Kernel, Message.Get_File);
@@ -237,6 +310,37 @@ package body Src_Editor_Module.Messages is
          Remove_Message
            (B, GPS.Kernel.Messages.References.Create
               (Message_Access (Message)));
+
+         --  Unhighlight tab name on errors/warnings
+         if Message.Get_Importance in Medium .. High then
+            Errors_Count   := 0;
+            Warnings_Count := 0;
+
+            Self.Kernel.Get_Messages_Container.For_All_Messages
+              (Message.Get_File, Calc_Errors_And_Warnings'Access);
+
+            if Message.Get_Importance = High then
+               if Errors_Count = 1 then --  the last Error message
+                  if Warnings_Count = 0 then
+                     --  no Warnings
+                     Apply_Error_Warning_Tab_Style
+                       (Self.Kernel, Message.Get_File, None);
+                  else
+                     --  has Warnings
+                     Apply_Error_Warning_Tab_Style
+                       (Self.Kernel, Message.Get_File, Warning);
+                  end if;
+               end if;
+
+            elsif Message.Get_Importance = Medium
+              and then Warnings_Count = 1 --  the last Warning message
+              and then Errors_Count = 0 --  and no errors
+            then
+               Apply_Error_Warning_Tab_Style
+                 (Self.Kernel, Message.Get_File, None);
+            end if;
+         end if;
+
       else
          --  It is possible that B = null, for instance if a container decides
          --  to remove the messages in reaction to a "file_closed" event.
