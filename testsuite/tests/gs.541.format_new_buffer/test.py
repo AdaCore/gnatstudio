@@ -19,7 +19,8 @@ end Main;"""
 EXPECTED_TEXT = """procedure Main is
 begin
    null;
-end Main;"""
+end Main;
+"""
 
 
 @run_test_driver
