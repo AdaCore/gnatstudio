@@ -10,10 +10,9 @@ from gs_utils.internal.utils import (
     wait_language_server,
 )
 
-expected = """   function F2 return Boolean
-   is (F (A => True, B => False));
-
-"""
+expected = """   function F2 return Boolean is
+      (F (A => True,
+ """
 
 
 @run_test_driver

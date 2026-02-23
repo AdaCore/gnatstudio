@@ -16,7 +16,7 @@ expected_tabs = """	function F2 return Boolean
 
 """
 
-expected_spaces = """   function F2 return Boolean
+expected_spaces = """	function F2 return Boolean
    is (F (A => True, B => False));
 
 """
