@@ -197,9 +197,6 @@ package body GPS.LSP_Client.Configurations.ALS is
          Boolean'
            (GPS.Kernel.Preferences.LSP_Ada_Insert_With_Clauses.Get_Pref));
 
-      --  Force gnatFormat, gnatpp should not be enabled by GS
-      Ada_Settings.Set_Field ("useGnatformat", True);
-
       Ada_Settings.Set_Field
         ("rangeFormattingFallback",
          Boolean'
