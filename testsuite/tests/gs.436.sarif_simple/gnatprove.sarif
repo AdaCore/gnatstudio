@@ -1,0 +1,1520 @@
+{
+    "version": "2.1.0",
+    "runs": [
+        {
+            "tool": {
+                "driver": {
+                    "name": "GNATProve",
+                    "organization": "AdaCore",
+                    "version": "SPARK Pro 27.0w (20260202)",
+                    "rules": [
+                        {
+                            "id": "CRITICAL_GLOBAL_MISSING",
+                            "shortDescription": {
+                                "text": "critically incomplete Global or Initializes contract"
+                            },
+                            "fullDescription": {
+                                "text": "A Global or Initializes contract fails to mention some objects."
+                            }
+                        },
+                        {
+                            "id": "NON_VOLATILE_FUNCTION_WITH_VOLATILE_EFFECTS",
+                            "shortDescription": {
+                                "text": "volatile function wrongly declared as non-volatile"
+                            },
+                            "fullDescription": {
+                                "text": "A volatile function wrongly declared as non-volatile."
+                            }
+                        },
+                        {
+                            "id": "SIDE_EFFECTS",
+                            "shortDescription": {
+                                "text": "function with side effects"
+                            },
+                            "fullDescription": {
+                                "text": "A function with side effects."
+                            }
+                        },
+                        {
+                            "id": "ALIASING",
+                            "shortDescription": {
+                                "text": "aliasing between subprogram parameters"
+                            },
+                            "fullDescription": {
+                                "text": "Aliasing between formal parameters or global objects."
+                            }
+                        },
+                        {
+                            "id": "CALL_IN_TYPE_INVARIANT",
+                            "shortDescription": {
+                                "text": "invalid call in type invariant"
+                            },
+                            "fullDescription": {
+                                "text": "A type invariant calls a boundary subprogram for the type."
+                            }
+                        },
+                        {
+                            "id": "CALL_TO_CURRENT_TASK",
+                            "shortDescription": {
+                                "text": "invalid context for call to Current_Task"
+                            },
+                            "fullDescription": {
+                                "text": "Current_Task is called from an invalid context."
+                            }
+                        },
+                        {
+                            "id": "CONCURRENT_ACCESS",
+                            "shortDescription": {
+                                "text": "race condition"
+                            },
+                            "fullDescription": {
+                                "text": "An unsynchronized global object is accessed concurrently."
+                            }
+                        },
+                        {
+                            "id": "DEFAULT_INITIALIZATION_MISMATCH",
+                            "shortDescription": {
+                                "text": "wrong Default_Initial_Condition aspect"
+                            },
+                            "fullDescription": {
+                                "text": "A type is wrongly declared as initialized by default."
+                            }
+                        },
+                        {
+                            "id": "DEPENDS_MISSING",
+                            "shortDescription": {
+                                "text": "input item missing from the dependency clause"
+                            },
+                            "fullDescription": {
+                                "text": "An input is missing from the dependency clause."
+                            }
+                        },
+                        {
+                            "id": "DEPENDS_MISSING_CLAUSE",
+                            "shortDescription": {
+                                "text": "output item missing from the dependency clause"
+                            },
+                            "fullDescription": {
+                                "text": "An output item is missing from the dependency clause."
+                            }
+                        },
+                        {
+                            "id": "DEPENDS_NULL",
+                            "shortDescription": {
+                                "text": "input item missing from the null dependency clause"
+                            },
+                            "fullDescription": {
+                                "text": "An input item is missing from the null dependency clause."
+                            }
+                        },
+                        {
+                            "id": "DEPENDS_WRONG",
+                            "shortDescription": {
+                                "text": "extra input item in the dependency clause"
+                            },
+                            "fullDescription": {
+                                "text": "Extra input item in the dependency clause."
+                            }
+                        },
+                        {
+                            "id": "EXPORT_DEPENDS_ON_PROOF_IN",
+                            "shortDescription": {
+                                "text": "subprogram output depends on a Proof_In global"
+                            },
+                            "fullDescription": {
+                                "text": "Subprogram output depends on a Proof_In global."
+                            }
+                        },
+                        {
+                            "id": "GHOST_WRONG",
+                            "shortDescription": {
+                                "text": "non-ghost output of ghost subprogram"
+                            },
+                            "fullDescription": {
+                                "text": "A ghost subprogram has a non-ghost global output."
+                            }
+                        },
+                        {
+                            "id": "GLOBAL_MISSING",
+                            "shortDescription": {
+                                "text": "incomplete Global or Initializes contract"
+                            },
+                            "fullDescription": {
+                                "text": "A Global or Initializes contract fails to mention some objects."
+                            }
+                        },
+                        {
+                            "id": "GLOBAL_WRONG",
+                            "shortDescription": {
+                                "text": "an extra item in the Global or Initializes contract"
+                            },
+                            "fullDescription": {
+                                "text": "A Global or Initializes contract wrongly mentions some objects."
+                            }
+                        },
+                        {
+                            "id": "HIDDEN_UNEXPOSED_STATE",
+                            "shortDescription": {
+                                "text": "constants with variable inputs that is not a state constituent"
+                            },
+                            "fullDescription": {
+                                "text": "Constants with variable inputs that are not state constituents."
+                            }
+                        },
+                        {
+                            "id": "ILLEGAL_UPDATE",
+                            "shortDescription": {
+                                "text": "illegal write of a global input"
+                            },
+                            "fullDescription": {
+                                "text": "Illegal write of a global input."
+                            }
+                        },
+                        {
+                            "id": "INITIALIZES_WRONG",
+                            "shortDescription": {
+                                "text": "an extra item in the Initializes contract"
+                            },
+                            "fullDescription": {
+                                "text": "An object that shall not appear in the Initializes contract."
+                            }
+                        },
+                        {
+                            "id": "MISSING_RETURN",
+                            "shortDescription": {
+                                "text": "all execution paths raise exceptions or do not return"
+                            },
+                            "fullDescription": {
+                                "text": "All execution paths raise exceptions or do not return."
+                            }
+                        },
+                        {
+                            "id": "NOT_CONSTANT_AFTER_ELABORATION",
+                            "shortDescription": {
+                                "text": "illegal write of an object declared as constant after elaboration"
+                            },
+                            "fullDescription": {
+                                "text": "Illegal write of an object declared as constant after elaboration."
+                            }
+                        },
+                        {
+                            "id": "POTENTIALLY_BLOCKING_IN_PROTECTED",
+                            "shortDescription": {
+                                "text": "protected operation blocks"
+                            },
+                            "fullDescription": {
+                                "text": "A protected operation may block."
+                            }
+                        },
+                        {
+                            "id": "REFERENCE_TO_NON_CAE_VARIABLE",
+                            "shortDescription": {
+                                "text": "illegal reference to a global object in precondition of a protected operation"
+                            },
+                            "fullDescription": {
+                                "text": "An illegal reference to global in precondition of a protected operation."
+                            }
+                        },
+                        {
+                            "id": "REFINED_STATE_WRONG",
+                            "shortDescription": {
+                                "text": "constant with no variable inputs as an abstract state's constituent"
+                            },
+                            "fullDescription": {
+                                "text": "Constant with no variable inputs as an abstract state's constituent."
+                            }
+                        },
+                        {
+                            "id": "SUBPROGRAM_TERMINATION",
+                            "shortDescription": {
+                                "text": "subprogram with aspect Always_Terminates may not terminate"
+                            },
+                            "fullDescription": {
+                                "text": "A subprogram with aspect Always_Terminates may not terminate."
+                            }
+                        },
+                        {
+                            "id": "UNINITIALIZED",
+                            "shortDescription": {
+                                "text": "use of an uninitialized variable"
+                            },
+                            "fullDescription": {
+                                "text": "Flow analysis has detected the use of an uninitialized variable."
+                            }
+                        },
+                        {
+                            "id": "UNUSED_GLOBAL",
+                            "shortDescription": {
+                                "text": "global object is not used"
+                            },
+                            "fullDescription": {
+                                "text": "A global object is never used."
+                            }
+                        },
+                        {
+                            "id": "DEAD_CODE",
+                            "shortDescription": {
+                                "text": "dead code"
+                            },
+                            "fullDescription": {
+                                "text": "A statement is never executed."
+                            }
+                        },
+                        {
+                            "id": "IMPOSSIBLE_TO_INITIALIZE_STATE",
+                            "shortDescription": {
+                                "text": "a state abstraction that is impossible to initialize"
+                            },
+                            "fullDescription": {
+                                "text": "A state abstraction that is impossible to initialize."
+                            }
+                        },
+                        {
+                            "id": "INEFFECTIVE",
+                            "shortDescription": {
+                                "text": "a statement with no effect on subprogram's outputs"
+                            },
+                            "fullDescription": {
+                                "text": "A statement with no effect on subprogram's outputs."
+                            }
+                        },
+                        {
+                            "id": "INOUT_ONLY_READ",
+                            "shortDescription": {
+                                "text": "an IN OUT parameter or an In_Out global that is not written"
+                            },
+                            "fullDescription": {
+                                "text": "An IN OUT parameter or an In_Out global that is not written."
+                            }
+                        },
+                        {
+                            "id": "STABLE",
+                            "shortDescription": {
+                                "text": "loop with stable statement"
+                            },
+                            "fullDescription": {
+                                "text": "A loop with stable statement."
+                            }
+                        },
+                        {
+                            "id": "UNUSED_VARIABLE",
+                            "shortDescription": {
+                                "text": "object is not used"
+                            },
+                            "fullDescription": {
+                                "text": "A parameter or locally declared object is never used."
+                            }
+                        },
+                        {
+                            "id": "UNUSED_INITIAL_VALUE",
+                            "shortDescription": {
+                                "text": "initial value of an object is not used"
+                            },
+                            "fullDescription": {
+                                "text": "The initial value of an object is not used."
+                            }
+                        },
+                        {
+                            "id": "VOLATILE_FUNCTION_WITHOUT_VOLATILE_EFFECTS",
+                            "shortDescription": {
+                                "text": "non-volatile function wrongly declared as volatile"
+                            },
+                            "fullDescription": {
+                                "text": "A non-volatile function wrongly declared as volatile."
+                            }
+                        },
+                        {
+                            "id": "VC_DIVISION_CHECK",
+                            "shortDescription": {
+                                "text": "divide by zero"
+                            },
+                            "fullDescription": {
+                                "text": "Check that the second operand of the division, mod or rem operation is different from zero."
+                            }
+                        },
+                        {
+                            "id": "VC_INDEX_CHECK",
+                            "shortDescription": {
+                                "text": "index check"
+                            },
+                            "fullDescription": {
+                                "text": "Check that the given index is within the bounds of the array."
+                            }
+                        },
+                        {
+                            "id": "VC_OVERFLOW_CHECK",
+                            "shortDescription": {
+                                "text": "overflow check"
+                            },
+                            "fullDescription": {
+                                "text": "Check that the result of the given integer arithmetic operation is within the bounds of the base type."
+                            }
+                        },
+                        {
+                            "id": "VC_FP_OVERFLOW_CHECK",
+                            "shortDescription": {
+                                "text": "fp_overflow check"
+                            },
+                            "fullDescription": {
+                                "text": "Check that the result of the given floating point operation is within the bounds of the base type."
+                            }
+                        },
+                        {
+                            "id": "VC_RANGE_CHECK",
+                            "shortDescription": {
+                                "text": "range check"
+                            },
+                            "fullDescription": {
+                                "text": "Check that the given value is within the bounds of the expected scalar subtype."
+                            }
+                        },
+                        {
+                            "id": "VC_PREDICATE_CHECK",
+                            "shortDescription": {
+                                "text": "predicate check"
+                            },
+                            "fullDescription": {
+                                "text": "Check that the given value respects the applicable type predicate."
+                            }
+                        },
+                        {
+                            "id": "VC_PREDICATE_CHECK_ON_DEFAULT_VALUE",
+                            "shortDescription": {
+                                "text": "predicate check on default value"
+                            },
+                            "fullDescription": {
+                                "text": "Check that the default value for the type respects the applicable type predicate."
+                            }
+                        },
+                        {
+                            "id": "VC_NULL_POINTER_DEREFERENCE",
+                            "shortDescription": {
+                                "text": "null pointer dereference"
+                            },
+                            "fullDescription": {
+                                "text": "Check that the given pointer is not null so that it can be dereferenced."
+                            }
+                        },
+                        {
+                            "id": "VC_NULL_EXCLUSION",
+                            "shortDescription": {
+                                "text": "null exclusion"
+                            },
+                            "fullDescription": {
+                                "text": "Check that the subtype_indication of the allocator does not specify a null_exclusion"
+                            }
+                        },
+                        {
+                            "id": "VC_DYNAMIC_ACCESSIBILITY_CHECK",
+                            "shortDescription": {
+                                "text": "dynamic accessibility check"
+                            },
+                            "fullDescription": {
+                                "text": "Check that the accessibility level of the result of a traversal function call is not deeper than the accessibility level of its traversed parameter."
+                            }
+                        },
+                        {
+                            "id": "VC_RESOURCE_LEAK",
+                            "shortDescription": {
+                                "text": "resource or memory leak"
+                            },
+                            "fullDescription": {
+                                "text": "Check that the assignment does not lead to a resource or memory leak"
+                            }
+                        },
+                        {
+                            "id": "VC_RESOURCE_LEAK_AT_END_OF_SCOPE",
+                            "shortDescription": {
+                                "text": "resource or memory leak at end of scope"
+                            },
+                            "fullDescription": {
+                                "text": "Check that the declaration does not lead to a resource or memory leak"
+                            }
+                        },
+                        {
+                            "id": "VC_UNCHECKED_UNION_RESTRICTION",
+                            "shortDescription": {
+                                "text": "unchecked union restriction"
+                            },
+                            "fullDescription": {
+                                "text": "Check restrictions imposed on expressions of an unchecked union type"
+                            }
+                        },
+                        {
+                            "id": "VC_LENGTH_CHECK",
+                            "shortDescription": {
+                                "text": "length check"
+                            },
+                            "fullDescription": {
+                                "text": "Check that the given array is of the length of the expected array subtype."
+                            }
+                        },
+                        {
+                            "id": "VC_DISCRIMINANT_CHECK",
+                            "shortDescription": {
+                                "text": "discriminant check"
+                            },
+                            "fullDescription": {
+                                "text": "Check that the discriminant of the given discriminated record has the expected value. For variant records, this can happen for a simple access to a record field. But there are other cases where a fixed value of the discriminant is required."
+                            }
+                        },
+                        {
+                            "id": "VC_TAG_CHECK",
+                            "shortDescription": {
+                                "text": "tag check"
+                            },
+                            "fullDescription": {
+                                "text": "Check that the tag of the given tagged object has the expected value."
+                            }
+                        },
+                        {
+                            "id": "VC_CEILING_INTERRUPT",
+                            "shortDescription": {
+                                "text": "ceiling priority in Interrupt_Priority"
+                            },
+                            "fullDescription": {
+                                "text": "Check that the ceiling priority specified for a protected object containing a procedure with an aspect Attach_Handler is in Interrupt_Priority."
+                            }
+                        },
+                        {
+                            "id": "VC_INITIALIZATION_CHECK",
+                            "shortDescription": {
+                                "text": "use of an uninitialized variable"
+                            },
+                            "fullDescription": {
+                                "text": "Check that a variable is initialized"
+                            }
+                        },
+                        {
+                            "id": "VC_VALIDITY_CHECK",
+                            "shortDescription": {
+                                "text": "validity check"
+                            },
+                            "fullDescription": {
+                                "text": "Check that no invalid value is read"
+                            }
+                        },
+                        {
+                            "id": "VC_INTERRUPT_RESERVED",
+                            "shortDescription": {
+                                "text": "interrupt is reserved"
+                            },
+                            "fullDescription": {
+                                "text": "Check that the interrupt specified by Attach_Handler is not reserved."
+                            }
+                        },
+                        {
+                            "id": "VC_INVARIANT_CHECK",
+                            "shortDescription": {
+                                "text": "invariant check"
+                            },
+                            "fullDescription": {
+                                "text": "Check that the given value respects the applicable type invariant."
+                            }
+                        },
+                        {
+                            "id": "VC_INVARIANT_CHECK_ON_DEFAULT_VALUE",
+                            "shortDescription": {
+                                "text": "invariant check on default value"
+                            },
+                            "fullDescription": {
+                                "text": "Check that the default value for the type respects the applicable type invariant."
+                            }
+                        },
+                        {
+                            "id": "VC_CEILING_PRIORITY_PROTOCOL",
+                            "shortDescription": {
+                                "text": "ceiling priority protocol"
+                            },
+                            "fullDescription": {
+                                "text": "Check that the ceiling priority protocol is respected, i.e., when a task calls a protected operation, the active priority of the task is not higher than the priority of the protected object (Ada RM Annex D.3)."
+                            }
+                        },
+                        {
+                            "id": "VC_TASK_TERMINATION",
+                            "shortDescription": {
+                                "text": "task termination"
+                            },
+                            "fullDescription": {
+                                "text": "Check that the task does not terminate, as required by Ravenscar."
+                            }
+                        },
+                        {
+                            "id": "VC_INITIAL_CONDITION",
+                            "shortDescription": {
+                                "text": "initial condition"
+                            },
+                            "fullDescription": {
+                                "text": "Check that the initial condition of a package is true after elaboration."
+                            }
+                        },
+                        {
+                            "id": "VC_DEFAULT_INITIAL_CONDITION",
+                            "shortDescription": {
+                                "text": "default initial condition"
+                            },
+                            "fullDescription": {
+                                "text": "Check that the default initial condition of a type is true after default initialization of an object of the type."
+                            }
+                        },
+                        {
+                            "id": "VC_PRECONDITION",
+                            "shortDescription": {
+                                "text": "precondition"
+                            },
+                            "fullDescription": {
+                                "text": "Check that the precondition aspect of the given call evaluates to True."
+                            }
+                        },
+                        {
+                            "id": "VC_PRECONDITION_MAIN",
+                            "shortDescription": {
+                                "text": "precondition of main"
+                            },
+                            "fullDescription": {
+                                "text": "Check that the precondition aspect of the given main procedure evaluates to True after elaboration."
+                            }
+                        },
+                        {
+                            "id": "VC_POSTCONDITION",
+                            "shortDescription": {
+                                "text": "postcondition"
+                            },
+                            "fullDescription": {
+                                "text": "Check that the postcondition aspect of the subprogram evaluates to True."
+                            }
+                        },
+                        {
+                            "id": "VC_REFINED_POST",
+                            "shortDescription": {
+                                "text": "refined postcondition"
+                            },
+                            "fullDescription": {
+                                "text": "Check that the refined postcondition aspect of the subprogram evaluates to True."
+                            }
+                        },
+                        {
+                            "id": "VC_CONTRACT_CASE",
+                            "shortDescription": {
+                                "text": "contract case"
+                            },
+                            "fullDescription": {
+                                "text": "Check that all cases of the contract case evaluate to true at the end of the subprogram."
+                            }
+                        },
+                        {
+                            "id": "VC_DISJOINT_CASES",
+                            "shortDescription": {
+                                "text": "disjoint contract or exit cases"
+                            },
+                            "fullDescription": {
+                                "text": "Check that the cases of the contract or exit cases aspect are all mutually disjoint."
+                            }
+                        },
+                        {
+                            "id": "VC_COMPLETE_CASES",
+                            "shortDescription": {
+                                "text": "complete contract cases"
+                            },
+                            "fullDescription": {
+                                "text": "Check that the cases of the contract cases aspect cover the state space that is allowed by the precondition aspect."
+                            }
+                        },
+                        {
+                            "id": "VC_EXCEPTIONAL_CASE",
+                            "shortDescription": {
+                                "text": "exceptional case"
+                            },
+                            "fullDescription": {
+                                "text": "Check that all cases of the exceptional cases evaluate to true on exceptional exits."
+                            }
+                        },
+                        {
+                            "id": "VC_EXIT_CASE",
+                            "shortDescription": {
+                                "text": "exit case"
+                            },
+                            "fullDescription": {
+                                "text": "Check that, for all cases of the exit cases, the exit happens as specified."
+                            }
+                        },
+                        {
+                            "id": "VC_LOOP_INVARIANT",
+                            "shortDescription": {
+                                "text": "loop invariant"
+                            },
+                            "fullDescription": {
+                                "text": "Check that the loop invariant evaluates to True on all iterations of the loop."
+                            }
+                        },
+                        {
+                            "id": "VC_LOOP_INVARIANT_INIT",
+                            "shortDescription": {
+                                "text": "loop invariant in first iteration"
+                            },
+                            "fullDescription": {
+                                "text": "Check that the loop invariant evaluates to True on the first iteration of the loop."
+                            }
+                        },
+                        {
+                            "id": "VC_LOOP_INVARIANT_PRESERV",
+                            "shortDescription": {
+                                "text": "loop invariant after first iteration"
+                            },
+                            "fullDescription": {
+                                "text": "Check that the loop invariant evaluates to True at each further iteration of the loop."
+                            }
+                        },
+                        {
+                            "id": "VC_LOOP_VARIANT",
+                            "shortDescription": {
+                                "text": "loop variant"
+                            },
+                            "fullDescription": {
+                                "text": "Check that the given loop variant decreases/increases as specified during each iteration of the loop. This implies termination of the loop."
+                            }
+                        },
+                        {
+                            "id": "VC_PROGRAM_EXIT_POST",
+                            "shortDescription": {
+                                "text": "program exit postcondition"
+                            },
+                            "fullDescription": {
+                                "text": "Check that the program exit postcondition evaluates to true when the program is exited."
+                            }
+                        },
+                        {
+                            "id": "VC_SUBPROGRAM_VARIANT",
+                            "shortDescription": {
+                                "text": "subprogram variant"
+                            },
+                            "fullDescription": {
+                                "text": "Check that the given subprogram variant decreases/increases as specified during each recursive call. This implies there will be no infinite recursion."
+                            }
+                        },
+                        {
+                            "id": "VC_ASSERT",
+                            "shortDescription": {
+                                "text": "assertion"
+                            },
+                            "fullDescription": {
+                                "text": "Check that the given assertion evaluates to True."
+                            }
+                        },
+                        {
+                            "id": "VC_ASSERT_STEP",
+                            "shortDescription": {
+                                "text": "assertion step"
+                            },
+                            "fullDescription": {
+                                "text": "Check that the side-condition of a cut operation evaluates to True."
+                            }
+                        },
+                        {
+                            "id": "VC_ASSERT_PREMISE",
+                            "shortDescription": {
+                                "text": "assertion premise"
+                            },
+                            "fullDescription": {
+                                "text": "Check that the premise of an assertion with cut operations evaluates to True."
+                            }
+                        },
+                        {
+                            "id": "VC_RAISE",
+                            "shortDescription": {
+                                "text": "raised exception"
+                            },
+                            "fullDescription": {
+                                "text": "Check that raise expressions can never be reached and that all exceptions raised by raise statement and procedure calls are expected."
+                            }
+                        },
+                        {
+                            "id": "VC_UNEXPECTED_PROGRAM_EXIT",
+                            "shortDescription": {
+                                "text": "unexpected program exit"
+                            },
+                            "fullDescription": {
+                                "text": "Check that a subprogram call cannot exit the whole program."
+                            }
+                        },
+                        {
+                            "id": "VC_FEASIBLE_POST",
+                            "shortDescription": {
+                                "text": "feasible function"
+                            },
+                            "fullDescription": {
+                                "text": "Check that an abstract function or access-to-function type is feasible."
+                            }
+                        },
+                        {
+                            "id": "VC_INLINE_CHECK",
+                            "shortDescription": {
+                                "text": "Inline_For_Proof or Logical_Equal annotation"
+                            },
+                            "fullDescription": {
+                                "text": "Check that an Annotate pragma with the Inline_For_Proof or Logical_Equal identifier is correct."
+                            }
+                        },
+                        {
+                            "id": "VC_CONTAINER_AGGR_CHECK",
+                            "shortDescription": {
+                                "text": "Container_Aggregates annotation"
+                            },
+                            "fullDescription": {
+                                "text": "Check the invariants used to translate container aggregates using the primitives provided by the Aggregate aspect and the Container_Aggregates annotation."
+                            }
+                        },
+                        {
+                            "id": "VC_RECLAMATION_CHECK",
+                            "shortDescription": {
+                                "text": "reclamation annotation"
+                            },
+                            "fullDescription": {
+                                "text": "Check that confirming annotations on hidden types which need reclamation are consistent with their full view."
+                            }
+                        },
+                        {
+                            "id": "VC_TERMINATION_CHECK",
+                            "shortDescription": {
+                                "text": "termination check"
+                            },
+                            "fullDescription": {
+                                "text": "Check the termination of subprograms annotated with an Always_Terminates aspect whose value is not known at compile time and of calls to such subprograms."
+                            }
+                        },
+                        {
+                            "id": "VC_UC_SOURCE",
+                            "shortDescription": {
+                                "text": "unchecked conversion source check"
+                            },
+                            "fullDescription": {
+                                "text": "Check that a source type in an unchecked conversion can safely be used for such conversions. This means that the memory occupied by objects of this type is fully used by the object."
+                            }
+                        },
+                        {
+                            "id": "VC_UC_TARGET",
+                            "shortDescription": {
+                                "text": "unchecked conversion target check"
+                            },
+                            "fullDescription": {
+                                "text": "Check that a target type in an unchecked conversion can safely be used for such conversions. This means that the memory occupied by objects of this type is fully used by the object, and no invalid bitpatterns occur."
+                            }
+                        },
+                        {
+                            "id": "VC_UC_SAME_SIZE",
+                            "shortDescription": {
+                                "text": "unchecked conversion size check"
+                            },
+                            "fullDescription": {
+                                "text": "Check that the two types in an unchecked conversion instance are of the same size."
+                            }
+                        },
+                        {
+                            "id": "VC_UC_ALIGN_OVERLAY",
+                            "shortDescription": {
+                                "text": "address alignment check"
+                            },
+                            "fullDescription": {
+                                "text": "Check that the address within address clause is a multiple of the object's alignment."
+                            }
+                        },
+                        {
+                            "id": "VC_UC_ALIGN_UC",
+                            "shortDescription": {
+                                "text": "unchecked conversion alignment check"
+                            },
+                            "fullDescription": {
+                                "text": "Check that the alignment of the source of the unchecked conversion is a multiple of the alignment of the target."
+                            }
+                        },
+                        {
+                            "id": "VC_UC_VOLATILE",
+                            "shortDescription": {
+                                "text": "volatile overlay check"
+                            },
+                            "fullDescription": {
+                                "text": "Check that, if an object has an address clause that is not simply the address of another object, it is volatile"
+                            }
+                        },
+                        {
+                            "id": "VC_WEAKER_PRE",
+                            "shortDescription": {
+                                "text": "precondition weaker than class-wide precondition"
+                            },
+                            "fullDescription": {
+                                "text": "Check that the precondition aspect of the subprogram is weaker than its class-wide precondition."
+                            }
+                        },
+                        {
+                            "id": "VC_TRIVIAL_WEAKER_PRE",
+                            "shortDescription": {
+                                "text": "precondition not True while class-wide precondition is True"
+                            },
+                            "fullDescription": {
+                                "text": "Check that the precondition aspect of the subprogram is True if its class-wide precondition is True."
+                            }
+                        },
+                        {
+                            "id": "VC_STRONGER_POST",
+                            "shortDescription": {
+                                "text": "postcondition stronger than class-wide postcondition"
+                            },
+                            "fullDescription": {
+                                "text": "Check that the postcondition aspect of the subprogram is stronger than its class-wide postcondition."
+                            }
+                        },
+                        {
+                            "id": "VC_WEAKER_CLASSWIDE_PRE",
+                            "shortDescription": {
+                                "text": "class-wide precondition weaker than overridden one"
+                            },
+                            "fullDescription": {
+                                "text": "Check that the class-wide precondition aspect of the subprogram is weaker than its overridden class-wide precondition."
+                            }
+                        },
+                        {
+                            "id": "VC_STRONGER_CLASSWIDE_POST",
+                            "shortDescription": {
+                                "text": "class-wide postcondition stronger than overridden one"
+                            },
+                            "fullDescription": {
+                                "text": "Check that the class-wide postcondition aspect of the subprogram is stronger than its overridden class-wide postcondition."
+                            }
+                        },
+                        {
+                            "id": "VC_WEAKER_PRE_ACCESS",
+                            "shortDescription": {
+                                "text": "precondition of the source weaker than precondition of the target"
+                            },
+                            "fullDescription": {
+                                "text": "Check that the precondition aspect of the access-to-subprogram type used as the target of a conversion implies the precondition of the source."
+                            }
+                        },
+                        {
+                            "id": "VC_STRONGER_POST_ACCESS",
+                            "shortDescription": {
+                                "text": "postcondition of the source stronger than postcondition of the target"
+                            },
+                            "fullDescription": {
+                                "text": "Check that the postcondition aspect of the access-to-subprogram type used as the target of a conversion is implied by the postcondition of the source."
+                            }
+                        },
+                        {
+                            "id": "VC_INCONSISTENT_PRE",
+                            "shortDescription": {
+                                "text": "precondition always False"
+                            },
+                            "fullDescription": {
+                                "text": "Warn if precondition is found to be always False"
+                            }
+                        },
+                        {
+                            "id": "VC_INCONSISTENT_POST",
+                            "shortDescription": {
+                                "text": "postcondition always False"
+                            },
+                            "fullDescription": {
+                                "text": "Warn if postcondition is found to be always False"
+                            }
+                        },
+                        {
+                            "id": "VC_INCONSISTENT_ASSUME",
+                            "shortDescription": {
+                                "text": "pragma Assume always False"
+                            },
+                            "fullDescription": {
+                                "text": "Warn if pragma Assume is found to be always False"
+                            }
+                        },
+                        {
+                            "id": "VC_UNREACHABLE_BRANCH",
+                            "shortDescription": {
+                                "text": "unreachable branch"
+                            },
+                            "fullDescription": {
+                                "text": "Warn if branch is found to be unreachable"
+                            }
+                        },
+                        {
+                            "id": "VC_DEAD_CODE",
+                            "shortDescription": {
+                                "text": "unreachable code"
+                            },
+                            "fullDescription": {
+                                "text": "Warn if code is found to be unreachable"
+                            }
+                        },
+                        {
+                            "id": "address-to-access-conversion",
+                            "fullDescription": {
+                                "text": "call to conversion function is assumed to return a valid access designating a valid value"
+                            }
+                        },
+                        {
+                            "id": "alias-volatile-atomic-mismatch",
+                            "fullDescription": {
+                                "text": "aliased objects should both be volatile or non-volatile, and both be atomic or non-atomic"
+                            }
+                        },
+                        {
+                            "id": "alias-volatile-prop-mismatch",
+                            "fullDescription": {
+                                "text": "aliased objects should have the same volatile properties"
+                            }
+                        },
+                        {
+                            "id": "attribute-valid-always-true",
+                            "fullDescription": {
+                                "text": "attribute Valid or Valid_Scalars is assumed to return True"
+                            }
+                        },
+                        {
+                            "id": "auto-lemma-calls",
+                            "fullDescription": {
+                                "text": "the automatically instantiated lemma contains calls which cannot be arbitrarily specialized"
+                            }
+                        },
+                        {
+                            "id": "auto-lemma-different",
+                            "fullDescription": {
+                                "text": "the automatically instantiated lemma contains calls to its associated function with different specializations"
+                            }
+                        },
+                        {
+                            "id": "auto-lemma-higher-order",
+                            "fullDescription": {
+                                "text": "the automatically instantiated lemma is not annotated with Higher_Order_Specialization"
+                            }
+                        },
+                        {
+                            "id": "auto-lemma-specializable",
+                            "fullDescription": {
+                                "text": "the automatically instantiated lemma does not contain any specializable calls to its associated function"
+                            }
+                        },
+                        {
+                            "id": "initialization-to-alias",
+                            "fullDescription": {
+                                "text": "initialization of object is assumed to have no effects on other non-volatile objects"
+                            }
+                        },
+                        {
+                            "id": "is-valid-returns-true",
+                            "fullDescription": {
+                                "text": "function Is_Valid is assumed to return True"
+                            }
+                        },
+                        {
+                            "id": "generic-not-analyzed",
+                            "fullDescription": {
+                                "text": "GNATprove doesn't analyze generics, only instances"
+                            }
+                        },
+                        {
+                            "id": "no-possible-termination",
+                            "fullDescription": {
+                                "text": "procedure which does not return normally nor raises an exception cannot always terminate"
+                            }
+                        },
+                        {
+                            "id": "potentially-invalid-read",
+                            "fullDescription": {
+                                "text": "invalid data might be read in the contract of a subprogram without an analyzed body; the fact that the read data is valid is not checked by SPARK"
+                            }
+                        },
+                        {
+                            "id": "no-check-message-justified",
+                            "fullDescription": {
+                                "text": "no check message justified by this pragma"
+                            }
+                        },
+                        {
+                            "id": "proved-check-justified",
+                            "fullDescription": {
+                                "text": "only proved check messages justified by this pragma"
+                            }
+                        },
+                        {
+                            "id": "deprecated-terminating",
+                            "fullDescription": {
+                                "text": "Terminating, Always_Return, and Might_Not_Return annotations are ignored"
+                            }
+                        },
+                        {
+                            "id": "deprecated-external-axiomatization",
+                            "fullDescription": {
+                                "text": "External Axiomatizations are not supported anymore, ignored"
+                            }
+                        },
+                        {
+                            "id": "ignored-pragma",
+                            "fullDescription": {
+                                "text": "pragma is ignored (it is not yet supported)"
+                            }
+                        },
+                        {
+                            "id": "overflow-mode-ignored",
+                            "fullDescription": {
+                                "text": "pragma Overflow_Mode in code is ignored"
+                            }
+                        },
+                        {
+                            "id": "precondition-statically-false",
+                            "fullDescription": {
+                                "text": "precondition is statically False"
+                            }
+                        },
+                        {
+                            "id": "restriction-ignored",
+                            "fullDescription": {
+                                "text": "restriction is ignored (it is not yet supported)"
+                            }
+                        },
+                        {
+                            "id": "unreferenced-function",
+                            "fullDescription": {
+                                "text": "analyzing unreferenced function"
+                            }
+                        },
+                        {
+                            "id": "unreferenced-procedure",
+                            "fullDescription": {
+                                "text": "analyzing unreferenced procedure"
+                            }
+                        },
+                        {
+                            "id": "useless-potentially-invalid-func-result",
+                            "fullDescription": {
+                                "text": "function result annotated with Potentially_Invalid cannot have invalid values"
+                            }
+                        },
+                        {
+                            "id": "useless-potentially-invalid-object",
+                            "fullDescription": {
+                                "text": "object annotated with Potentially_Invalid cannot have invalid values"
+                            }
+                        },
+                        {
+                            "id": "useless-relaxed-init-func-result",
+                            "fullDescription": {
+                                "text": "function result annotated with Relaxed_Initialization cannot be partially initialized"
+                            }
+                        },
+                        {
+                            "id": "useless-relaxed-init-object",
+                            "fullDescription": {
+                                "text": "object annotated with Relaxed_Initialization cannot be partially initialized"
+                            }
+                        },
+                        {
+                            "id": "variant-no-recursion",
+                            "fullDescription": {
+                                "text": "no recursive call visible on subprogram with Subprogram_Variant"
+                            }
+                        },
+                        {
+                            "id": "assumed-always-terminates",
+                            "fullDescription": {
+                                "text": "no Always_Terminates aspect available for subprogram, subprogram is assumed to always terminate"
+                            }
+                        },
+                        {
+                            "id": "assumed-global-null",
+                            "fullDescription": {
+                                "text": "no Global contract available for subprogram, null is assumed"
+                            }
+                        },
+                        {
+                            "id": "imprecise-address-specification",
+                            "fullDescription": {
+                                "text": "object with an imprecisely supported address specification: non-atomic objects should not be accessed concurrently, volatile properties should be correct, indirect writes to object to and through potential aliases are ignored, and reads should be valid"
+                            }
+                        },
+                        {
+                            "id": "image-attribute-length",
+                            "fullDescription": {
+                                "text": "string attribute has an implementation-defined length"
+                            }
+                        },
+                        {
+                            "id": "operator-reassociation",
+                            "fullDescription": {
+                                "text": "possible operator reassociation due to missing parentheses"
+                            }
+                        },
+                        {
+                            "id": "representation-attribute-value",
+                            "fullDescription": {
+                                "text": "representation attribute has an implementation-defined value"
+                            }
+                        },
+                        {
+                            "id": "component-relaxed-init",
+                            "fullDescription": {
+                                "text": "If all components of a given type are annotated with  Relaxed_Initialization, the containing type is treated as if it had the same annotation"
+                            }
+                        },
+                        {
+                            "id": "full-view-visible",
+                            "fullDescription": {
+                                "text": "The full view of an incomplete type deferred to the body of a withed unit might be visible by GNATprove"
+                            }
+                        },
+                        {
+                            "id": "alias-array",
+                            "fullDescription": {
+                                "text": "Aliasing checks might be spurious for actual parameters that are array components"
+                            }
+                        },
+                        {
+                            "id": "imprecise-global-generation",
+                            "fullDescription": {
+                                "text": "Global generation might wrongly classify an Output item as an In_Out for subprograms that call other subprograms with no Global contract"
+                            }
+                        },
+                        {
+                            "id": "array-initialization",
+                            "fullDescription": {
+                                "text": "Initialization of arrays inside FOR loops is only recognized when assignments to array element are directly indexed by the loopparameter"
+                            }
+                        },
+                        {
+                            "id": "multidimensional-array-init",
+                            "fullDescription": {
+                                "text": "Initialization of multi-dimensional array inside FOR loops is only recognized when array bounds are static"
+                            }
+                        },
+                        {
+                            "id": "tagged-assignment",
+                            "fullDescription": {
+                                "text": "Assignments to record objects might cause spurious data dependencies in some components of the assigned object"
+                            }
+                        },
+                        {
+                            "id": "contracts-recursive",
+                            "fullDescription": {
+                                "text": "Explicit and implicit postconditions of a recursive subprogram cannot be used on (mutually) recursive calls occurring inside assertions and contracts, but will still be available in regular code"
+                            }
+                        },
+                        {
+                            "id": "dic-ignored",
+                            "fullDescription": {
+                                "text": "The Default_Initial_Condition of a type won't be assumed on subcomponents initialized by default inside assertions and contracts, but will still be available in regular code"
+                            }
+                        },
+                        {
+                            "id": "imprecise-address",
+                            "fullDescription": {
+                                "text": "The adress of objects is not precisely known if it is not supplied through an address clause"
+                            }
+                        },
+                        {
+                            "id": "imprecise-align",
+                            "fullDescription": {
+                                "text": "The alignment of an object might not be known for proof if it is not supplied through an attribute definition clause"
+                            }
+                        },
+                        {
+                            "id": "imprecise-call",
+                            "fullDescription": {
+                                "text": "The behavior of a call might not be known by SPARK and handled in an imprecise way; its precondition might be impossible to prove and nothing will be known about its result"
+                            }
+                        },
+                        {
+                            "id": "imprecise-string-literal",
+                            "fullDescription": {
+                                "text": "The value of string literal containing wide characters or constructed through the External_Initialization aspect is not precisely known"
+                            }
+                        },
+                        {
+                            "id": "imprecise-component-size",
+                            "fullDescription": {
+                                "text": "the value of attribute Component_Size might not be known for proof if it is not supplied through an attribute definition clause"
+                            }
+                        },
+                        {
+                            "id": "imprecise-record-component-attribute",
+                            "fullDescription": {
+                                "text": "the value of attributes First_Bit, Last_Bit, and Position on record components are handled in an imprecise way if the record does not have a record representation clause"
+                            }
+                        },
+                        {
+                            "id": "imprecise-size",
+                            "fullDescription": {
+                                "text": "The attributes Size, Object_Size or Value_Size might not be handled precisely, nothing will be known about their evaluation"
+                            }
+                        },
+                        {
+                            "id": "imprecise-overlay",
+                            "fullDescription": {
+                                "text": "Overlay might not be handled precisely by SPARK, the value of other overlaid objects will be unknown after an object is updated"
+                            }
+                        },
+                        {
+                            "id": "imprecise-unchecked-conversion",
+                            "fullDescription": {
+                                "text": "Unchecked conversion might not be handled precisely by SPARK, nothing will be known about their result"
+                            }
+                        },
+                        {
+                            "id": "imprecise-value",
+                            "fullDescription": {
+                                "text": "References to the attribute Value are handled in an imprecise way; its precondition is impossible to prove and nothing will be known about the evaluation of the attribute reference"
+                            }
+                        },
+                        {
+                            "id": "imprecise-image",
+                            "fullDescription": {
+                                "text": "References to the attributes Image and Img are handled in an imprecise way; nothing will be known about the evaluation of the attribute reference apart from a bound on its length"
+                            }
+                        },
+                        {
+                            "id": "constants-in-loops",
+                            "fullDescription": {
+                                "text": "The initial value of constants declared before the loop invariant is not visible after the invariant; it shall be restated in the invariant if necessary"
+                            }
+                        },
+                        {
+                            "id": "no-reclamation-function",
+                            "fullDescription": {
+                                "text": "No reclamation function or reclaimed value was found for an ownership type, which may make it impossible to prove that values of this type are reclaimed"
+                            }
+                        },
+                        {
+                            "id": "numeric-variant",
+                            "fullDescription": {
+                                "text": "For recursive expression functions with a numeric (not structural) Subprogram_Variant, the definition of the expression function might not be available for recursive calls occurring inside assertions and contracts, but will still be available in regular code"
+                            }
+                        },
+                        {
+                            "id": "relaxed-mutable-discriminants",
+                            "fullDescription": {
+                                "text": "The tool enforces that mutable discriminants of standalone objects and parameters with relaxed initialization are always initialized"
+                            }
+                        },
+                        {
+                            "id": "map-length-aggregates",
+                            "fullDescription": {
+                                "text": "A type with predefined map aggregates doesn't have a Length function; the length of aggregates will not be known for this type"
+                            }
+                        },
+                        {
+                            "id": "set-length-aggregates",
+                            "fullDescription": {
+                                "text": "A type with predefined set aggregates doesn't have a Length function; the length of aggregates will not be known for this type"
+                            }
+                        },
+                        {
+                            "id": "predefined-equality-null",
+                            "fullDescription": {
+                                "text": "A type is annotated with Only_Null as value for the Predefined_Equality annotation, but no constant annotated with Null_Value is found; this will result in all calls to the predefined equality being rejected"
+                            }
+                        },
+                        {
+                            "id": "init-cond-ignored",
+                            "fullDescription": {
+                                "text": "The initial condition of a withed package might be ignored if it is not known to be true, due to elaboration order"
+                            }
+                        },
+                        {
+                            "id": "unit-not-spark",
+                            "fullDescription": {
+                                "text": "A unit whose analysis has been requested on the command-line is not annotated with SPARK_Mode Pragma"
+                            }
+                        },
+                        {
+                            "id": "info-unrolling-inlining",
+                            "fullDescription": {
+                                "text": "These messages are issued when the tool is unrolling loops or inlining subprograms, or unable to do so"
+                            }
+                        }
+                    ]
+                }
+            },
+            "results": [
+                {
+                    "ruleId": "INOUT_ONLY_READ",
+                    "kind": "open",
+                    "level": "warning",
+                    "message": {
+                        "text": "\"X\" is not modified, parameter type could be rewritten as 'access constant Integer'"
+                    },
+                    "locations": [
+                        {
+                            "physicalLocation": {
+                                "artifactLocation": {
+                                    "uri": "foo.adb"
+                                },
+                                "region": {
+                                    "startLine": 8,
+                                    "startColumn": 19
+                                }
+                            },
+                            "logicalLocations": [
+                                {
+                                    "name": "Foo.Bar"
+                                }
+                            ]
+                        }
+                    ]
+                },
+                {
+                    "ruleId": "UNUSED_VARIABLE",
+                    "kind": "open",
+                    "level": "warning",
+                    "message": {
+                        "text": "unused variable \"X\""
+                    },
+                    "locations": [
+                        {
+                            "physicalLocation": {
+                                "artifactLocation": {
+                                    "uri": "foo.adb"
+                                },
+                                "region": {
+                                    "startLine": 8,
+                                    "startColumn": 19
+                                }
+                            },
+                            "logicalLocations": [
+                                {
+                                    "name": "Foo.Bar"
+                                }
+                            ]
+                        }
+                    ]
+                },
+                {
+                    "ruleId": "INEFFECTIVE",
+                    "kind": "open",
+                    "level": "warning",
+                    "message": {
+                        "text": "statement has no effect"
+                    },
+                    "locations": [
+                        {
+                            "physicalLocation": {
+                                "artifactLocation": {
+                                    "uri": "foo.adb"
+                                },
+                                "region": {
+                                    "startLine": 16,
+                                    "startColumn": 7
+                                }
+                            },
+                            "logicalLocations": [
+                                {
+                                    "name": "Foo.Bar"
+                                }
+                            ]
+                        }
+                    ]
+                },
+                {
+                    "ruleId": "DEAD_CODE",
+                    "kind": "open",
+                    "level": "warning",
+                    "message": {
+                        "text": "this statement is never reached"
+                    },
+                    "locations": [
+                        {
+                            "physicalLocation": {
+                                "artifactLocation": {
+                                    "uri": "foo.adb"
+                                },
+                                "region": {
+                                    "startLine": 17,
+                                    "startColumn": 21
+                                }
+                            },
+                            "logicalLocations": [
+                                {
+                                    "name": "Foo.Bar"
+                                }
+                            ]
+                        }
+                    ]
+                },
+                {
+                    "ruleId": "VC_DEAD_CODE",
+                    "kind": "open",
+                    "level": "warning",
+                    "message": {
+                        "text": "unreachable code (CVC5: 1 VC)"
+                    },
+                    "locations": [
+                        {
+                            "physicalLocation": {
+                                "artifactLocation": {
+                                    "uri": "foo.adb"
+                                },
+                                "region": {
+                                    "startLine": 17,
+                                    "startColumn": 21
+                                }
+                            },
+                            "logicalLocations": [
+                                {
+                                    "name": "Foo.Bar"
+                                }
+                            ]
+                        }
+                    ]
+                },
+                {
+                    "ruleId": "VC_NULL_EXCLUSION",
+                    "kind": "pass",
+                    "level": "none",
+                    "message": {
+                        "text": "null exclusion check proved (Z3: 1 VC)"
+                    },
+                    "locations": [
+                        {
+                            "physicalLocation": {
+                                "artifactLocation": {
+                                    "uri": "foo.adb"
+                                },
+                                "region": {
+                                    "startLine": 23,
+                                    "startColumn": 9
+                                }
+                            },
+                            "logicalLocations": [
+                                {
+                                    "name": "Foo"
+                                }
+                            ]
+                        }
+                    ]
+                },
+                {
+                    "ruleId": "VC_RESOURCE_LEAK_AT_END_OF_SCOPE",
+                    "kind": "open",
+                    "level": "none",
+                    "message": {
+                        "text": "resource or memory leak might occur at end of scope"
+                    },
+                    "locations": [
+                        {
+                            "physicalLocation": {
+                                "artifactLocation": {
+                                    "uri": "foo.adb"
+                                },
+                                "region": {
+                                    "startLine": 21,
+                                    "startColumn": 4
+                                }
+                            },
+                            "logicalLocations": [
+                                {
+                                    "name": "Foo"
+                                }
+                            ]
+                        }
+                    ]
+                }
+            ]
+        }
+    ]
+}

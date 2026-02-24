@@ -1,0 +1,7 @@
+project Test is
+
+   package Prove is
+      for Proof_Switches ("Ada") use ("--report=fail");
+   end Prove;
+
+end Test;

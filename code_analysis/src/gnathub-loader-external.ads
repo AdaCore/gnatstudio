@@ -22,7 +22,7 @@ package GNAThub.Loader.External is
    type External_Loader_Type is new Loader_Type with private;
 
    overriding procedure Remove_Messages
-     (Self : in out External_Loader_Type);
+     (Self : in out External_Loader_Type; Force : Boolean := False);
 
    overriding procedure Prepare_Loading
      (Self : in out External_Loader_Type);

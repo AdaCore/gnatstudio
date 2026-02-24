@@ -164,6 +164,7 @@ package body GNAThub.Messages is
       Entity                   : Entity_Data := No_Entity_Data;
       Category                 : VSS.Strings.Virtual_String :=
         VSS.Strings.Empty_Virtual_String;
+      Look_For_Secondary       : Boolean := True;
       Allow_Auto_Jump_To_First : Boolean := False) is
    begin
       Self.Rule     := Rule;
@@ -189,7 +190,7 @@ package body GNAThub.Messages is
          Importance               => Severity.Ranking,
          Highlight_Category       => null,
          Length                   => 0,
-         Look_For_Secondary       => True,
+         Look_For_Secondary       => Look_For_Secondary,
          Show_In_Locations        => True,
          Allow_Auto_Jump_To_First => Allow_Auto_Jump_To_First);
    end Initialize;

@@ -840,12 +840,16 @@ class Gtk_File_Chooser_Dialog(Dialog):
         """
         yield self._open_and_yield(action)
         self.dialog = self.dialogs[0]
+        self.entry = get_widget_by_name("file_selector_window.selection_entry")
 
     def select_file(self, name):
         """
         Select given file in dialog
         """
-        self.dialog.select_uri(self.dialog.get_current_folder_uri() + "/" + name)
+        if self.entry:
+            self.entry.set_text(name)
+        else:
+            self.dialog.select_uri(self.dialog.get_current_folder_uri() + "/" + name)
 
     def cancel(self):
         """

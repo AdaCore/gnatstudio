@@ -78,7 +78,8 @@ package body GNAThub.Module is
    -- Clean --
    -----------
 
-   procedure Clean (Self : in out GNAThub_Module_Id_Record'Class) is
+   procedure Clean
+     (Self  : in out GNAThub_Module_Id_Record'Class) is
    begin
       Trace (Me, "Cleaning the GNAThub module");
 
@@ -120,6 +121,17 @@ package body GNAThub.Module is
       Self.Db_Loader.Remove_Messages;
       Self.Ext_Loader.Remove_Messages;
    end Clean;
+
+   --------------------
+   -- Clean_External --
+   --------------------
+
+   procedure Clean_External
+     (Self  : in out GNAThub_Module_Id_Record'Class) is
+   begin
+      Self.Ext_Loader.Cleanup;
+      Self.Ext_Loader.Remove_Messages (Force => True);
+   end Clean_External;
 
    ---------------------
    -- Remove_Database --

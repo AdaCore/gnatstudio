@@ -1117,6 +1117,30 @@ The Analyze Menu
 
 * :menuselection:`Analyze --> Automatic code reducer --> Launch Automatic Reducer`
 
+.. index:: menu; analyze --> sarif --> load sarif file
+
+* :menuselection:`Analyze --> SARIF --> Load SARIF File`
+
+   Select and load a SARIF file
+
+.. index:: menu; analyze --> sarif --> load multiple sarif files
+
+* :menuselection:`Analyze --> SARIF --> Load Multiple SARIF Files`
+
+   Select and load multiple SARIF files
+
+.. index:: menu; analyze --> sarif --> load and add sarif file
+
+* :menuselection:`Analyze --> SARIF --> Load and Add SARIF File`
+
+   Select and add a SARIF file to the current report
+
+.. index:: menu; analyze --> sarif --> clean messages
+
+* :menuselection:`Analyze --> SARIF --> Clean Messages`
+
+   Clean messages loaded from SARIF files
+
 .. index:: debug
 
 .. _The_Debug_Menu:

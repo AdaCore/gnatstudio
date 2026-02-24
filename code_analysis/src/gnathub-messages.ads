@@ -47,6 +47,7 @@ package GNAThub.Messages is
       Entity                   : Entity_Data := No_Entity_Data;
       Category                 : VSS.Strings.Virtual_String :=
         VSS.Strings.Empty_Virtual_String;
+      Look_For_Secondary       : Boolean := True;
       Allow_Auto_Jump_To_First : Boolean := False);
    --  Initialize instance of GNAThub's message.
 

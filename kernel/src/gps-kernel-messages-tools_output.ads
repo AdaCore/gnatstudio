@@ -108,11 +108,12 @@ package GPS.Kernel.Messages.Tools_Output is
       Show_In_Locations  : Boolean;
       Allow_Auto_Jump_To_First : Boolean := True) return Message_Access;
    --  Looking for same message in the messages container and add it into the
-   --  container when it is not exists. It will be added as a secondary message
-   --  if a primary message already exist at the same location.
-   --  If secondary locations is detected in
-   --  the message when add messages for all detected locations.
-   --  If we have added messages, return the primary message inserted.
+   --  container when it does not exists.
+   --  It will be added as a secondary message if a primary message already
+   --  exists at the same location.
+   --  If Look_For_Secondary, tries to find secondaries messages in Text and
+   --  create them.
+   --  If we have added messages, returns the primary message inserted.
 
    procedure Create_Tool_Message
      (Self               : not null access Abstract_Message'Class;
@@ -128,7 +129,8 @@ package GPS.Kernel.Messages.Tools_Output is
       Look_For_Secondary : Boolean;
       Show_In_Locations  : Boolean;
       Allow_Auto_Jump_To_First : Boolean := True);
-   --  Create a new primary message. If secondary locations are detected in
-   --  the message then add messages for all detected locations.
+   --  Create a new primary message.
+   --  If Look_For_Secondary, tries to find secondaries messages in Text and
+   --  create them.
 
 end GPS.Kernel.Messages.Tools_Output;

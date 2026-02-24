@@ -1,0 +1,212 @@
+{
+  "version": "2.1.0",
+  "$schema": "https://schemastore.azurewebsites.net/schemas/json/sarif-2.1.0.json",
+  "runs": [
+    {
+      "tool": {
+        "driver": {
+          "name": "GNATSAS",
+          "organization": "AdaCore",
+          "product": "GNAT Static Analysis Suite",
+          "version": "27.0w (20260218)",
+          "downloadUri": "https://www.adacore.com/static-analysis/codepeer",
+          "informationUri": "https://www.adacore.com/documentation#GNAT-SAS",
+          "rules": [
+            {
+              "id": "memory leak",
+              "name": "Infer - memory leak",
+              "shortDescription": {
+                "text": "a variable is dynamically allocated with new and not deallocated with an instance of Ada.Unchecked_Deallocation"
+              }
+            }
+          ],
+          "isComprehensive": false
+        },
+        "extensions": [
+          {
+            "name": "Inspector",
+            "properties": {
+              "commandLine": "inspector --subdirs=gnatsas/test.inspector -P test.gpr -gnatwn -gnatws"
+            }
+          },
+          {
+            "name": "GNAT",
+            "properties": {
+              "commandLine": "codepeer-gprbuild -P test.gpr -ws -k -s --unchecked-shared-lib-imports --complete-output --no-object-check --restricted-to-languages=Ada --subdirs=gnatsas/test.gnat/obj -c -gnatc -gnatd.M -gnatef -gnatw.d -gnatj10000 -gnatw.ab.bxwq.r.ir.m.pvm -gnatwn -cargs -fdiagnostics-format=json"
+            }
+          },
+          {
+            "name": "Infer",
+            "properties": {
+              "commandLine": "infer --reactive --incremental-analysis --quiet --scheduler=components --no-default-checkers --value --pulse --force-delete-results-dir --results-dir gnatsas/test.infer/infer.out --report-force-relative-path --project-root ./ --backtrack-level=1000 --value-taint --value-taint-config gnatsas/test.gnatsas/taint_spec.yaml --value-taint-config /home/boulanger/adacore/ancr/wave/x86_64-linux/gnatsas/install/share/gnatsas/taint --changed-files-index gnatsas/test.gnatsas/sources.txt --report-changed-files-only --progress-bar-style plain -- gprbuild -P test.gpr --files-from gnatsas/test.infer/capture_sources.txt"
+            }
+          },
+          {
+            "name": "GNATcheck",
+            "properties": {
+              "commandLine": "gnatcheck -P test.gpr -m0 -q -l -o /home/boulanger/adacore/ancr/src/gnatstudio/testsuite/tests/gs.436.sarif_navigation/gnatsas/test.gnatcheck/gnatcheck.out -ox /home/boulanger/adacore/ancr/src/gnatstudio/testsuite/tests/gs.436.sarif_navigation/gnatsas/test.gnatcheck/gnatcheck.xml --subdirs=gnatsas/test.gnatcheck -files=gnatsas/test.gnatsas/sources.txt -r duplicate_branches -r same_logic -r same_operands -r same_tests -r suspicious_equalities"
+            }
+          }
+        ]
+      },
+      "invocations": [
+        {
+          "commandLine": "gnatsas analyze -P test.gpr",
+          "arguments": [ "analyze", "-P", "test.gpr" ],
+          "executionSuccessful": true,
+          "workingDirectory": {
+            "uri": "file:///home/boulanger/adacore/ancr/src/gnatstudio/testsuite/tests/gs.436.sarif_navigation"
+          },
+          "startTimeUtc": "2026-02-19T10:24:08Z"
+        }
+      ],
+      "originalUriBaseIds": {
+        "URI_BASE_DIR": {
+          "uri": "file:///home/boulanger/adacore/ancr/src/gnatstudio/testsuite/tests/gs.436.sarif_navigation/",
+          "description": {
+            "text": "The absolute path to the directory specified with '--root DIR', or to the project directory otherwise."
+          }
+        }
+      },
+      "results": [
+        {
+          "ruleId": "memory leak",
+          "level": "warning",
+          "message": {
+            "text": "Memory dynamically allocated by `new` on line 21 is not freed after the last access at line 23, column 4",
+            "markdown": "Memory dynamically allocated by `new` on line 21 is not freed after the last access at line 23, column 4"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "foo.adb",
+                  "uriBaseId": "URI_BASE_DIR"
+                },
+                "region": {
+                  "startLine": 23,
+                  "startColumn": 4,
+                  "sourceLanguage": "Ada"
+                }
+              },
+              "logicalLocations": [
+                { "fullyQualifiedName": "foo", "kind": "function" }
+              ]
+            }
+          ],
+          "fingerprints": { "checksum": "bfadc2eab0f7fd4b83d284fc994b957c" },
+          "codeFlows": [
+            {
+              "message": {
+                "text": "Memory dynamically allocated by `new` on line 21 is not freed after the last access at line 23, column 4",
+                "markdown": "Memory dynamically allocated by `new` on line 21 is not freed after the last access at line 23, column 4"
+              },
+              "threadFlows": [
+                {
+                  "message": {
+                    "text": "Memory dynamically allocated by `new` on line 21 is not freed after the last access at line 23, column 4",
+                    "markdown": "Memory dynamically allocated by `new` on line 21 is not freed after the last access at line 23, column 4"
+                  },
+                  "locations": [
+                    {
+                      "location": {
+                        "physicalLocation": {
+                          "artifactLocation": {
+                            "uri": "foo.adb",
+                            "uriBaseId": "URI_BASE_DIR"
+                          },
+                          "region": {
+                            "startLine": 21,
+                            "startColumn": 26,
+                            "sourceLanguage": "Ada"
+                          }
+                        },
+                        "message": {
+                          "text": "allocation part of the trace starts here"
+                        }
+                      },
+                      "module": "foo.adb",
+                      "nestingLevel": 0
+                    },
+                    {
+                      "location": {
+                        "physicalLocation": {
+                          "artifactLocation": {
+                            "uri": "foo.adb",
+                            "uriBaseId": "URI_BASE_DIR"
+                          },
+                          "region": {
+                            "startLine": 21,
+                            "startColumn": 26,
+                            "sourceLanguage": "Ada"
+                          }
+                        },
+                        "message": {
+                          "text": "allocated by `new` here",
+                          "markdown": "allocated by `new` here"
+                        }
+                      },
+                      "module": "foo.adb",
+                      "nestingLevel": 1
+                    },
+                    {
+                      "location": {
+                        "physicalLocation": {
+                          "artifactLocation": {
+                            "uri": "foo.adb",
+                            "uriBaseId": "URI_BASE_DIR"
+                          },
+                          "region": {
+                            "startLine": 23,
+                            "startColumn": 4,
+                            "sourceLanguage": "Ada"
+                          }
+                        },
+                        "message": {
+                          "text": "memory becomes unreachable here"
+                        }
+                      },
+                      "module": "foo.adb",
+                      "nestingLevel": 0
+                    }
+                  ]
+                }
+              ]
+            }
+          ],
+          "baselineState": "unchanged",
+          "properties": { "engine": "Infer" }
+        },
+        {
+          "ruleId": "memory leak",
+          "level": "warning",
+          "message": {
+            "text": "Memory dynamically allocated by `new` on line 21 is not freed after the last access at line 23, column 4",
+            "markdown": "Memory dynamically allocated by `new` on line 21 is not freed after the last access at line 23, column 4"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "does_not_exist.adb",
+                  "uriBaseId": "URI_BASE_DIR"
+                },
+                "region": {
+                  "startLine": 23,
+                  "startColumn": 4,
+                  "sourceLanguage": "Ada"
+                }
+              },
+              "logicalLocations": [
+                { "fullyQualifiedName": "foo", "kind": "function" }
+              ]
+            }
+          ],
+          "fingerprints": { "checksum": "bfadc2eab0f7fd4b83d284fc994b957c" },
+          "baselineState": "unchanged",
+          "properties": { "engine": "Infer" }
+        }
+      ]
+    }
+  ]
+}
