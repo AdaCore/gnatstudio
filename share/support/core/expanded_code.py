@@ -5,7 +5,7 @@ GNAT (-gnatGL switch).
 
 
 import os
-import distutils.dep_util
+import setuptools.modified
 import GPS
 from gs_utils import in_ada_file, interactive
 
@@ -197,7 +197,7 @@ def show_gnatdg(for_subprogram=False, in_external_editor=False):
 
     dg = os.path.join(objdir, os.path.basename(local_file)) + ".dg"
 
-    if distutils.dep_util.newer(local_file, dg):
+    if setuptools.modified.newer(local_file, dg):
         file_name = '"""%s"""' % file
         scenario = GPS.Project.root().scenario_variables_cmd_line("-X")
         cmd = "gprbuild -q %s -f -c -u -gnatcdx -gnatws -gnatGL" % prj
