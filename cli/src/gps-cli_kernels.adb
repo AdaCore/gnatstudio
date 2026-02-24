@@ -18,6 +18,8 @@
 with GNATCOLL.Projects;
 with GNATCOLL.Utils;
 
+with Ada.Environment_Variables;
+
 package body GPS.CLI_Kernels is
 
    ---------------------
@@ -59,11 +61,14 @@ package body GPS.CLI_Kernels is
       return GNATCOLL.VFS.Virtual_File
    is
       pragma Unreferenced (Self);
+      use Ada.Environment_Variables;
 
       Dir : GNATCOLL.VFS.Virtual_File :=
         Create (+GNATCOLL.Utils.Executable_Location);
    begin
-      if Dir.Base_Dir_Name = "obj" then
+      if Exists ("GPS_ROOT") then
+         Dir := Create (+(Value ("GPS_ROOT")) & "/share/gnatstudio/");
+      elsif Dir.Base_Dir_Name = "obj" then
          Dir := Create_From_Dir (Dir.Get_Parent.Get_Parent, "share/");
       else
          Dir := Create_From_Dir (Dir, "share/gnatstudio/");
