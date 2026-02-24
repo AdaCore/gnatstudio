@@ -3148,7 +3148,7 @@ package body Src_Editor_Buffer is
 
       --  Create the Hyper Mode Tag
 
-      Gtk_New (Buffer.Hyper_Mode_Tag);
+      Gtk_New (Buffer.Hyper_Mode_Tag, "hyper-mode");
       Set_Property
         (Buffer.Hyper_Mode_Tag,
          Gtk.Text_Tag.Underline_Property,
@@ -3163,7 +3163,7 @@ package body Src_Editor_Buffer is
 
       --  Create the Non Editable Tag
 
-      Gtk_New (Buffer.Non_Editable_Tag);
+      Gtk_New (Buffer.Non_Editable_Tag, "non-editable");
       Set_Property
         (Buffer.Non_Editable_Tag, Gtk.Text_Tag.Editable_Property, False);
 
@@ -8632,6 +8632,7 @@ package body Src_Editor_Buffer is
       Add (Tags, Self.Buffer.Hyper_Mode_Tag);
       Add (Tags, Self.Buffer.Non_Editable_Tag);
       Add (Tags, Self.Buffer.Hidden_Text_Tag);
+      Self.Special_Tags_Count := 4;
    end Initialize;
 
    --------------
@@ -8957,11 +8958,13 @@ package body Src_Editor_Buffer is
       End_Iter   : Gtk_Text_Iter;
       Remove     : Boolean := False)
    is
-      Tag : Gtk_Text_Tag;
+      Table : constant Gtk_Text_Tag_Table := Get_Tag_Table (Self.Buffer);
+      Tag   : Gtk_Text_Tag;
+
    begin
       --  Get the text tag, create it if necessary
 
-      Tag := Lookup (Get_Tag_Table (Self.Buffer), Get_Name (Style));
+      Tag := Lookup (Table, Get_Name (Style));
 
       if Tag = null then
          if Remove then
@@ -8969,7 +8972,10 @@ package body Src_Editor_Buffer is
          else
             --  Create the tag from the style
             Tag := Get_Tag (Style);
-            Add (Get_Tag_Table (Self.Buffer), Tag);
+            Add (Table, Tag);
+
+            --  Set priority before the special tags like hyper-mode etc.
+            Tag.Set_Priority (Table.Get_Size - Self.Special_Tags_Count - 1);
          end if;
       end if;
 
