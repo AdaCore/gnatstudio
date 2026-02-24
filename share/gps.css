@@ -555,6 +555,14 @@ notebook.mdi header tab:checked {
    color: @theme_fg_color;
 }
 
+notebook.mdi header .mdi-errors-tab {
+   color: @error-color;
+}
+
+notebook.mdi header .mdi-warnings-tab {
+   color: @warning-color;
+}
+
 notebook.mdi header.top tab {
    border-top: 2pt solid @notebook_background;
 }

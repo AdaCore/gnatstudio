@@ -519,4 +519,20 @@ private
    --  Title can be specified to override the default title of the editor. It
    --  only applies when opening a new editor.
 
+   procedure Update_Editor_Tabs_Status
+     (Kernel : not null access Kernel_Handle_Record'Class;
+      Files  : Basic_Types.File_Sets.Set);
+   --  Update the the tab status of the editor views opened for the given
+   --  files.
+
+   type Tab_Style_Kind is (Error, Warning, None);
+   --  Style applied to editor tabs when the displayed file
+   --  has warnings and/or errors.
+
+   procedure Apply_Error_Warning_Tab_Style
+     (Kernel : not null access Kernel_Handle_Record'Class;
+      File   : GNATCOLL.VFS.Virtual_File;
+      Style  : Tab_Style_Kind);
+   --  Apply CSS style for source editor tabs for the file.
+
 end Src_Editor_Module;

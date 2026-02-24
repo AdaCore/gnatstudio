@@ -869,6 +869,43 @@ package body GPS.Kernel.Messages is
    end Get_First_Message;
 
    ----------------------
+   -- For_All_Messages --
+   ----------------------
+
+   procedure For_All_Messages
+     (Self     : not null access constant Messages_Container'Class;
+      File     : GNATCOLL.VFS.Virtual_File;
+      Callback : not null access function
+        (Message : not null access Abstract_Message'Class)
+      return Boolean)
+   is
+      Category_Position : Category_Maps.Cursor := Self.Category_Map.First;
+      Category_Node     : Node_Access;
+      File_Position     : File_Maps.Cursor;
+      File_Node         : Node_Access;
+
+   begin
+      while Has_Element (Category_Position) loop
+         Category_Node := Element (Category_Position);
+         File_Position := Category_Node.File_Map.Find (File);
+
+         if Has_Element (File_Position) then
+            File_Node := Element (File_Position);
+
+            for J in 1 .. Natural (File_Node.Children.Length) loop
+               if not Callback
+                 (Message_Access (File_Node.Children.Element (J)))
+               then
+                  return;
+               end if;
+            end loop;
+         end if;
+
+         Next (Category_Position);
+      end loop;
+   end For_All_Messages;
+
+   ----------------------
    -- Get_Message_File --
    ----------------------
 
