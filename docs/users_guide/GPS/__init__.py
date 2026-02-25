@@ -588,7 +588,17 @@ class AnalysisTool(object):
         """
         pass  # implemented in Ada
 
-    def create_message(self, category, file, line, column, text, importance, rule_id):
+    def create_message(
+        self,
+        category,
+        file,
+        line,
+        column,
+        text,
+        importance,
+        rule_id,
+        look_for_secondary=True,
+    ):
         """
         Create a new message and add it to the list of messages that will be
         displayed in the GNAT Studio Analysis Report. The message will be
@@ -597,6 +607,8 @@ class AnalysisTool(object):
 
         :param :class:`GPS.Message` msg: The message.
         :param string rule_id: The id of the rule associated to the message.
+        :param bool look_for_secondary: When True, search for locations in
+            text and create secondary messages.
         """
         pass  # implemented in Ada
 

@@ -28,12 +28,12 @@ package body GNAThub.Loader.External is
    ---------------------
 
    overriding procedure Remove_Messages
-     (Self : in out External_Loader_Type) is
+     (Self : in out External_Loader_Type; Force : Boolean := False) is
    begin
       --  Don't remove the messages if there is no new data to load: this
       --  allows to display the previously loaded data when displaying the
       --  Analysis Report.
-      if Self.Has_Data_To_Load then
+      if Force or else Self.Has_Data_To_Load then
          Loader_Type (Self).Remove_Messages;
       end if;
    end Remove_Messages;

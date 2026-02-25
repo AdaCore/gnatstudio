@@ -1924,6 +1924,12 @@ private
       Start_Delimiters_Highlight : Gtk.Text_Mark.Gtk_Text_Mark;
       End_Delimiters_Highlight   : Gtk.Text_Mark.Gtk_Text_Mark;
       --  Bounds for the parenthesis highlighting
+
+      Special_Tags_Count : Glib.Gint := 0;
+      --  Count of special tags added to each source buffer by default
+      --  (e.g: tag for hidden text, hyper mode tag...).
+      --  Used to set a lower priority for the style tags which
+      --  are created later by the highlighter.
    end record;
 
    overriding

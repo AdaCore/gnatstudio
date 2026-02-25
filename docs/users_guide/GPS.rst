@@ -117,6 +117,8 @@ Classes
 
 
 
+   .. automethod:: GPS.Analysis.clean
+
    .. automethod:: GPS.Analysis.display_report
 
 :class:`GPS.AnalysisTool`
