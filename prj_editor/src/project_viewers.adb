@@ -47,7 +47,6 @@ with Gtkada.MDI;                   use Gtkada.MDI;
 
 with Commands.Interactive;         use Commands, Commands.Interactive;
 with Default_Preferences;          use Default_Preferences;
-with Extending_Projects_Editors;
 with GPS.Intl;                     use GPS.Intl;
 with GPS.Kernel.Actions;           use GPS.Kernel.Actions;
 with GPS.Kernel.Contexts;          use GPS.Kernel.Contexts;
@@ -1117,8 +1116,6 @@ package body Project_Viewers is
         (Kernel,
          Name   => "Project/Edit global configuration pragmas",
          Action => "Edit global configuration file");
-
-      Extending_Projects_Editors.Register_Contextual_Menus (Kernel);
 
       Kernel.Scripts.Register_Command
         ("add_main_unit",
