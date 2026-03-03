@@ -1,0 +1,4 @@
+title: 'clearcase.filter_external_files'
+description: 'Test that ClearCase does not query status for files outside working dir'
+skip:
+    - ['SKIP', 'env.build.os.name == "windows"']
