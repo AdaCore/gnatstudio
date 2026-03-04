@@ -2,6 +2,7 @@ import GPS
 import gs_utils
 import os
 import os_utils
+from pathlib import Path
 from . import core
 from . import core_staging
 from workflows.promises import ProcessWrapper
@@ -223,7 +224,20 @@ class Clearcase(core_staging.Emulate_Staging, core.VCS):
         index = self.set_status_index
         self.set_status_index += 1
 
-        cmd_line = ["ls", "-short"] + [file.path for file in files]
+        # Filter out files that are not under the ClearCase working directory
+        # to avoid querying status for system directories or other VOBs.
+        # Use Path.resolve() to handle symlinks properly.
+        working_dir_path = str(Path(self.working_dir.path).resolve())
+        filtered_files = [
+            file
+            for file in files
+            if str(Path(file.path).resolve()).startswith(working_dir_path)
+        ]
+
+        if not filtered_files:
+            return
+
+        cmd_line = ["ls", "-short"] + [file.path for file in filtered_files]
         yield self._set_clearcase_status(cmd_line, index)
 
     @core.run_in_background

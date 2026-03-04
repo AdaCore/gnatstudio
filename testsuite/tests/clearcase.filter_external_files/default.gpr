@@ -1,0 +1,3 @@
+project Default is
+  for Source_Dirs use ("my_tag");
+end Default;

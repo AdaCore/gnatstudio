@@ -1,0 +1,33 @@
+#!/bin/bash
+
+# Mock cleartool script for testing ClearCase integration.
+# Logs all 'ls' commands to a file for verification.
+
+# Get the test directory (where this script lives)
+TEST_DIR="$(dirname "$(readlink -f "$0")")"
+LOG_FILE="$TEST_DIR/cleartool_calls.log"
+
+if [ "$1" == "pwd" ]; then
+    echo "my_tag@@"
+elif [ "$1" == "lsview" ]; then
+    # Output inspired from the cleartool lsview doc example
+    echo "Tag: my_tag"
+    echo "Global path: $TEST_DIR/my_tag.vws"
+    echo "Server host: pluto"
+    echo "Region: main_headqtrs"
+    echo "Active: YES"
+    echo "View tag uuid:a9c1ba4d.853e11cc.a96b.08:00:69:06:05:d8"
+    echo "View on host: pluto"
+    echo "View server access path: /views/my_tag.vws"
+    echo "View uuid: a9c1ba4d.853e11cc.a96b.08:00:69:06:05:d8"
+elif [ "$1" == "ls" ]; then
+    # Log the ls command and its arguments for verification
+    echo "ls $@" >> "$LOG_FILE"
+    # Return empty output (no special status)
+    shift  # Remove 'ls'
+    shift  # Remove '-short'
+    for arg in "$@"; do
+        # Just echo the file path without version info (untracked)
+        echo "$arg"
+    done
+fi
