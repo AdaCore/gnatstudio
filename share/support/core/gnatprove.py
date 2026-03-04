@@ -79,6 +79,13 @@ def current_subprogram(self):
     if not buf:
         return False
     unit = buf.get_analysis_unit()
+    if not unit.root:
+        logger.log(f"failed to load unit {buf.file().name()!r}")
+        if unit.diagnostics:
+            logger.log(
+                "unit diagnostics:\n" + "\n".join([str(d) for d in unit.diagnostics])
+            )
+        return None
     node = unit.root.lookup(lal.Sloc(curloc.line(), curloc.column()))
     return get_enclosing_subprogram(node)
 
