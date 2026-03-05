@@ -456,6 +456,14 @@ package body Src_Editor_Buffer.Text_Handling is
               Iter                => W_End,
               Added_Character     => Character,
               Check_Interpolation => True)
+           or else Is_In_String (Source_Buffer (Buffer), W_End)
+           --  The two Is_In_String checks are complementary. The first
+           --  (with Added_Character) handles most cases, including typing a
+           --  character inside a string and the interpolated-string opening
+           --  quote (e.g. f"). The second (without Added_Character) catches
+           --  the closing-quote case: when Character is the string delimiter,
+           --  the first check counts it as an extra quote that cancels the
+           --  opening one and incorrectly returns False.
          then
             --  On-the-fly casing not activated, the language is case sensitive
             --  or we are in a comment or a string. We also disable on-the-fly
