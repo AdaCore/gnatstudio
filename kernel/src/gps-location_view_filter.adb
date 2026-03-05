@@ -257,7 +257,7 @@ package body GPS.Location_View_Filter is
 
       else
          --  Messages rows are displayed when they match filter (or when their
-         --  location does).
+         --  location does), or when they have visible secondary messages.
 
          declare
             Text  : constant String := Get_String
@@ -265,16 +265,32 @@ package body GPS.Location_View_Filter is
             File : constant Virtual_File :=
               Get_File
                 (Child_Model, Iter, -File_Column);
+            Found : Boolean;
          begin
             if Self.Pattern = null then
                return True;
             elsif Self.Pattern.Get_Negate then
-               return Self.Pattern.Start (Text) /= No_Match;
+               Found := Self.Pattern.Start (Text) /= No_Match;
             else
-               return Self.Pattern.Start (Text) /= No_Match
+               Found := Self.Pattern.Start (Text) /= No_Match
                  or else Self.Pattern.Start (File.Display_Base_Name) /=
                     No_Match;
             end if;
+
+            if Found then
+               return True;
+            end if;
+
+            --  Check if any secondary messages (children) match the filter
+            Child := Children (Child_Model, Iter);
+            while Child /= Null_Iter loop
+               if Is_Visible (Child_Model, Child, Self) then
+                  return True;
+               end if;
+               Next (Child_Model, Child);
+            end loop;
+
+            return False;
          end;
       end if;
    end Is_Visible;
