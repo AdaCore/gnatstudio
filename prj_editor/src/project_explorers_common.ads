@@ -122,12 +122,6 @@ package Project_Explorers_Common is
    --  and returns it. If not, creates a new node, where Name is set for the
    --  Display_Name_Column.
 
-   function Create_Or_Reuse_File
-     (Self : not null access Base_Explorer_Tree_Record'Class;
-      Dir  : Gtk_Tree_Iter;
-      File : Virtual_File) return Gtk_Tree_Iter;
-   --  Create a new file node, or reuse one if it already exists
-
    function Create_Node
      (Self      : not null access Base_Explorer_Tree_Record'Class;
       Parent    : Gtk_Tree_Iter;

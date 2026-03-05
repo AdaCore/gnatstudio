@@ -385,23 +385,6 @@ package body Project_Explorers_Common is
       return Create_Node (Self, Parent, Kind, Name, File);
    end Create_Or_Reuse_Node;
 
-   --------------------------
-   -- Create_Or_Reuse_File --
-   --------------------------
-
-   function Create_Or_Reuse_File
-     (Self   : not null access Base_Explorer_Tree_Record'Class;
-      Dir    : Gtk_Tree_Iter;
-      File   : Virtual_File) return Gtk_Tree_Iter
-   is
-   begin
-      return Self.Create_Or_Reuse_Node
-        (Parent => Dir,
-         Kind   => Self.Get_File_Node_Type (File),
-         File   => File,
-         Name   => File.Display_Base_Name);
-   end Create_Or_Reuse_File;
-
    -----------------
    -- Create_File --
    -----------------
