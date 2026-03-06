@@ -106,6 +106,9 @@ package DAP.Clients is
    function Is_Available (Self : DAP_Client) return Boolean;
    --  Debugger can accept new command. Debugging can be not started yet.
 
+   function Is_Attached (Self : DAP_Client) return Boolean;
+   --  Return True if the client is already attached
+
    procedure Enqueue
      (Self    : in out DAP_Client;
       Request : in out DAP.Requests.DAP_Request_Access;
@@ -351,7 +354,14 @@ package DAP.Clients is
    --  Close TTY that is used for debuggee
 
    procedure Continue_Execution (Self : in out DAP_Client);
-   --  Sends the corresponding request to continue debuggee execution.
+   --  Send the corresponding request to continue debuggee execution.
+
+   procedure Connect_To_Target
+     (Self   : in out DAP_Client;
+      PID    : Integer := -1;
+      Target : VSS.Strings.Virtual_String :=
+        VSS.Strings.Empty_Virtual_String);
+   --  Send the attach request for PID or Target. They are mutually exclusive.
 
 private
 
@@ -490,4 +500,6 @@ private
    procedure Display_Prompt_If_Needed (Self : in out DAP_Client);
    --  Display a prompt in the debugger console when needed
 
+   function Is_Attached (Self : DAP_Client)
+   return Boolean is (Self.Is_Attached);
 end DAP.Clients;

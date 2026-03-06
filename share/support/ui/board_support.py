@@ -706,6 +706,9 @@ class BoardLoader(Module):
 
         GPS.Preference("Debugger-Execution-Window").set(pref)
 
+        # Attach to the target
+        debugger_promise.get().connect_to_target()
+
         # Load the executable
         yield debugger_promise.wait_and_send(cmd='load "%s"' % (exe), block=True)
 
@@ -745,5 +748,8 @@ class BoardLoader(Module):
         Called when the console is being destroyed.
         Terminate the debugger.
         """
-        if GPS.Debugger.get():
-            GPS.Debugger.get().close()
+        try:
+            if GPS.Debugger.get():
+                GPS.Debugger.get().close()
+        except Exception:
+            pass

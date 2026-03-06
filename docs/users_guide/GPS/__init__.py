@@ -2639,6 +2639,16 @@ class Debugger(object):
         """
         pass  # implemented in Ada
 
+    def connect_to_target(self, target="", pid=-1, protocol="", force=False):
+        """
+        Attach to the target. Do nothing if already connected to another.
+        By default, it will use the project configuration.
+        :param target: The name of the target. If set pid will be ignored.
+        :param pid: The pid of the target.
+        :protocol: The name of the protocol used to connect.
+        """
+        pass  # implemented in Ada
+
     def continue_execution(self):
         """
         Continue the execution of the debuggee after stop.

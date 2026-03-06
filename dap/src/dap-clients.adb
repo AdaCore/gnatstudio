@@ -2513,4 +2513,32 @@ package body DAP.Clients is
       end if;
    end Continue_Execution;
 
+   ------------------------
+   --  Connect_To_Target --
+   ------------------------
+
+   procedure Connect_To_Target
+     (Self   : in out DAP_Client;
+      PID    : Integer := -1;
+      Target : VSS.Strings.Virtual_String :=
+        VSS.Strings.Empty_Virtual_String) is
+   begin
+      if not Target.Is_Empty then
+         DAP.Clients.Attach.Send_Attach_Request
+           (Client     => Self,
+            Executable => Self.Get_Executable,
+            Target     => Target);
+      elsif PID /= -1 then
+         DAP.Clients.Attach.Send_Attach_Request
+           (Client     => Self,
+            Executable => Self.Get_Executable,
+            PID        => PID);
+      else
+         DAP.Clients.Attach.Send_Attach_Request
+           (Client     => Self,
+            Executable => Self.Get_Executable,
+            Target     => Self.Get_Remote_Target);
+      end if;
+   end Connect_To_Target;
+
 end DAP.Clients;
