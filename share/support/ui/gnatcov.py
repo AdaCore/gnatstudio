@@ -1243,11 +1243,14 @@ class GNATcovPlugin(Module):
                 if self.get_runtime_project_arg() not in cmd:
                     return
 
+                # The actual error message depends on the LibGPR2 version
+                # involved: support all formats known so far.
                 expected_rts = self.get_installed_coverage_runtime_project_path()
-                error_msg = (
-                    f'gnatcov_rts.gpr: error: project file "{expected_rts}" not found'
-                )
-                if any([msg == error_msg for msg in messages]):
+                error_msgs = [
+                    f'gnatcov_rts.gpr: error: project file "{expected_rts}" not found',
+                    f'error: project file "{expected_rts}" not found',
+                ]
+                if any([msg in error_msgs for msg in messages]):
                     GPS.Console("Messages").write("\n" + INSTRUMENT_HINT)
 
             # The only assumption for the build build target would be that the
