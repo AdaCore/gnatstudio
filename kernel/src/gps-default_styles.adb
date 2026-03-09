@@ -26,6 +26,7 @@ with GPS.Intl;                  use GPS.Intl;
 with Default_Preferences;       use Default_Preferences;
 with GPS.Kernel.Preferences;    use GPS.Kernel.Preferences;
 with GPS.Kernel.Hooks;          use GPS.Kernel.Hooks;
+with LSP.Messages;              use LSP.Messages;
 
 package body GPS.Default_Styles is
 
@@ -128,8 +129,7 @@ package body GPS.Default_Styles is
          Character_Text         => Strings_Style,
          String_Text            => Strings_Style);
 
-      Aspect_Styles : array (1 .. 4) of Style_Access;
-      pragma Unreferenced (Aspect_Styles);
+      Dummy : Style_Access;
 
    begin
       All_Styles :=
@@ -168,22 +168,22 @@ package body GPS.Default_Styles is
          (To_Unbounded_String ("operator"),      LSP_Operator_Style),
          (To_Unbounded_String ("deprecated"),    LSP_Deprecated_Style));
 
-      Aspect_Styles (1) := M.Create_From_Preferences
+      Dummy := M.Create_From_Preferences
         (Key     => "aspect_block",
          Style   => Default_Style,
          Variant => Aspects_Blocks_Style);
 
-      Aspect_Styles (2) := M.Create_From_Preferences
+      Dummy := M.Create_From_Preferences
         (Key     => "aspect_type",
          Style   => Default_Style,
          Variant => Aspects_Types_Style);
 
-      Aspect_Styles (3) := M.Create_From_Preferences
+      Dummy := M.Create_From_Preferences
         (Key     => "aspect_string",
          Style   => Default_Style,
          Variant => Aspects_Strings_Style);
 
-      Aspect_Styles (4) := M.Create_From_Preferences
+      Dummy := M.Create_From_Preferences
         (Key     => "aspect_number",
          Style   => Default_Style,
          Variant => Aspects_Numbers_Style);
@@ -241,6 +241,67 @@ package body GPS.Default_Styles is
             Style   => Default_Style,
             Variant => LSP_Styles (Index).Pref);
       end loop;
+
+      --  LSP aspect styles
+      for T in SemanticTokenTypes'Range loop
+         case T is
+            when keyword =>
+               Dummy := M.Create_From_Preferences
+                 (Key     => "keyword-documentation",
+                  Style   => Default_Style,
+                  Variant => Aspects_Keywords_Style);
+
+            when comment =>
+               Dummy := M.Create_From_Preferences
+                 (Key     => "comment-documentation",
+                  Style   => Default_Style,
+                  Variant => Aspects_Comments_Style);
+
+            when a_type =>
+               Dummy := M.Create_From_Preferences
+                 (Key     => "type-documentation",
+                  Style   => Default_Style,
+                  Variant => Aspects_Types_Style);
+
+            when a_string =>
+               Dummy := M.Create_From_Preferences
+                 (Key     => "string-documentation",
+                  Style   => Default_Style,
+                  Variant => Aspects_Strings_Style);
+
+            when number =>
+               Dummy := M.Create_From_Preferences
+                 (Key     => "number-documentation",
+                  Style   => Default_Style,
+                  Variant => Aspects_Numbers_Style);
+
+            when a_function =>
+               Dummy := M.Create_From_Preferences
+                 (Key     => "function-documentation",
+                  Style   => Default_Style,
+                  Variant => Aspects_Style);
+
+            when an_interface =>
+               Dummy := M.Create_From_Preferences
+                 (Key     => "interface-documentation",
+                  Style   => Default_Style,
+                  Variant => Aspects_Style);
+
+            --  Use Aspects_Style preference for all others semantic tokens
+            --  to create `token-documentation` style to highlight aspects.
+            when others =>
+               Dummy := M.Create_From_Preferences
+                 (Key     => Ada.Characters.Handling.To_Lower (T'Img) &
+                    "-documentation",
+                  Style   => Default_Style,
+                  Variant => Aspects_Style);
+         end case;
+      end loop;
+
+      Dummy := M.Create_From_Preferences
+        (Key     => "variable-declaration-documentation",
+         Style   => Default_Style,
+         Variant => Aspects_Style);
 
       ------------
       -- Search --
