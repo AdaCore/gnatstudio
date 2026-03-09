@@ -341,8 +341,8 @@ common_light = {
     # class
     "classes": ("DEFAULT", Color("#267F99"), transparent),
     "class.deprecated": (
-        "NONE",
-        transparent,
+        "DEFAULT",
+        Color("#267F99"),
         transparent,
         [],
         ["TRUE", Color("#ff0000")],
@@ -352,8 +352,8 @@ common_light = {
     # enum
     "enums": ("DEFAULT", Color("#267F99"), transparent),
     "enum.deprecated": (
-        "NONE",
-        transparent,
+        "DEFAULT",
+        Color("#267F99"),
         transparent,
         [],
         ["TRUE", Color("#ff0000")],
@@ -361,8 +361,8 @@ common_light = {
     # enummember
     "enummembers": ("DEFAULT", Color("#0070C1"), transparent),
     "enummember.deprecated": (
-        "NONE",
-        transparent,
+        "DEFAULT",
+        Color("#0070C1"),
         transparent,
         [],
         ["TRUE", Color("#ff0000")],
@@ -370,8 +370,8 @@ common_light = {
     # function
     "functions": ("DEFAULT", Color("#795E26"), transparent),
     "function.deprecated": (
-        "NONE",
-        transparent,
+        "DEFAULT",
+        Color("#795E26"),
         transparent,
         [],
         ["TRUE", Color("#ff0000")],
@@ -379,8 +379,8 @@ common_light = {
     # interface
     "interfaces": ("DEFAULT", Color("#267F99"), transparent),
     "interface.deprecated": (
-        "NONE",
-        transparent,
+        "DEFAULT",
+        Color("#267F99"),
         transparent,
         [],
         ["TRUE", Color("#ff0000")],
@@ -388,8 +388,8 @@ common_light = {
     # keyword
     "keywords": ("DEFAULT", Color("#0000e6"), transparent),
     "keyword.deprecated": (
-        "NONE",
-        transparent,
+        "DEFAULT",
+        Color("#0000e6"),
         transparent,
         [],
         ["TRUE", Color("#ff0000")],
@@ -397,8 +397,8 @@ common_light = {
     # modifier
     "modifiers": ("DEFAULT", Color("#1f7f9c"), transparent),
     "modifier.deprecated": (
-        "NONE",
-        transparent,
+        "DEFAULT",
+        Color("#1f7f9c"),
         transparent,
         [],
         ["TRUE", Color("#ff0000")],
@@ -406,8 +406,8 @@ common_light = {
     # namespace
     "namespaces": ("DEFAULT", Color("#000000"), transparent),
     "namespace.deprecated": (
-        "NONE",
-        transparent,
+        "DEFAULT",
+        Color("#000000"),
         transparent,
         [],
         ["TRUE", Color("#ff0000")],
@@ -417,8 +417,8 @@ common_light = {
     # operator
     "operators": ("DEFAULT", Color("#000000"), transparent),
     "operator.deprecated": (
-        "NONE",
-        transparent,
+        "DEFAULT",
+        Color("#000000"),
         transparent,
         [],
         ["TRUE", Color("#ff0000")],
@@ -427,8 +427,8 @@ common_light = {
     "parameters": ("DEFAULT", Color("#001080"), transparent),
     "parameter.readonly": ("DEFAULT", Color("#0070C1"), transparent),
     "parameter.deprecated": (
-        "NONE",
-        transparent,
+        "DEFAULT",
+        Color("#001080"),
         transparent,
         [],
         ["TRUE", Color("#ff0000")],
@@ -436,8 +436,8 @@ common_light = {
     # property
     "propertys": ("DEFAULT", Color("#001080"), transparent),
     "property.deprecated": (
-        "NONE",
-        transparent,
+        "DEFAULT",
+        Color("#001080"),
         transparent,
         [],
         ["TRUE", Color("#ff0000")],
@@ -445,8 +445,8 @@ common_light = {
     # type
     "types": ("DEFAULT", Color("#009900"), transparent),
     "type.deprecated": (
-        "NONE",
-        transparent,
+        "DEFAULT",
+        Color("#009900"),
         transparent,
         [],
         ["TRUE", Color("#ff0000")],
@@ -454,8 +454,8 @@ common_light = {
     # typeparameter
     "typeparameters": ("DEFAULT", Color("#04116b"), transparent),
     "typeparameter.deprecated": (
-        "NONE",
-        transparent,
+        "DEFAULT",
+        Color("#04116b"),
         transparent,
         [],
         ["TRUE", Color("#ff0000")],
@@ -465,8 +465,8 @@ common_light = {
     # struct
     "structs": ("DEFAULT", Color("#015878"), transparent),
     "struct.deprecated": (
-        "NONE",
-        transparent,
+        "DEFAULT",
+        Color("#015878"),
         transparent,
         [],
         ["TRUE", Color("#ff0000")],
@@ -475,8 +475,8 @@ common_light = {
     "variables": ("DEFAULT", Color("#001080"), transparent),
     "variable.readonly": ("DEFAULT", Color("#0070C1"), transparent),
     "variable.deprecated": (
-        "NONE",
-        transparent,
+        "DEFAULT",
+        Color("#001080"),
         transparent,
         [],
         ["TRUE", Color("#ff0000")],
@@ -554,8 +554,8 @@ common_dark = {
     # class
     "classes": ("DEFAULT", Color("#4EC9B0"), transparent),
     "class.deprecated": (
-        "NONE",
-        transparent,
+        "DEFAULT",
+        Color("#4EC9B0"),
         transparent,
         [],
         ["TRUE", Color("#ff0000")],
@@ -565,8 +565,8 @@ common_dark = {
     # enum
     "enums": ("DEFAULT", Color("#4EC9B0"), transparent),
     "enum.deprecated": (
-        "NONE",
-        transparent,
+        "DEFAULT",
+        Color("#4EC9B0"),
         transparent,
         [],
         ["TRUE", Color("#ff0000")],
@@ -574,8 +574,8 @@ common_dark = {
     # enummember
     "enummembers": ("DEFAULT", Color("#4FC1FF"), transparent),
     "enummember.deprecated": (
-        "NONE",
-        transparent,
+        "DEFAULT",
+        Color("#4FC1FF"),
         transparent,
         [],
         ["TRUE", Color("#ff0000")],
@@ -583,8 +583,8 @@ common_dark = {
     # function
     "functions": ("DEFAULT", Color("#DCDCAA"), transparent),
     "function.deprecated": (
-        "NONE",
-        transparent,
+        "DEFAULT",
+        Color("#DCDCAA"),
         transparent,
         [],
         ["TRUE", Color("#ff0000")],
@@ -592,8 +592,8 @@ common_dark = {
     # interface
     "interfaces": ("DEFAULT", Color("#4EC9B0"), transparent),
     "interface.deprecated": (
-        "NONE",
-        transparent,
+        "DEFAULT",
+        Color("#4EC9B0"),
         transparent,
         [],
         ["TRUE", Color("#ff0000")],
@@ -601,8 +601,8 @@ common_dark = {
     # keyword
     "keywords": ("DEFAULT", Color("#f08d24"), transparent),
     "keyword.deprecated": (
-        "NONE",
-        transparent,
+        "DEFAULT",
+        Color("#f08d24"),
         transparent,
         [],
         ["TRUE", Color("#ff0000")],
@@ -610,8 +610,8 @@ common_dark = {
     # modifier
     "modifiers": ("DEFAULT", Color("#1f7f9c"), transparent),
     "modifier.deprecated": (
-        "NONE",
-        transparent,
+        "DEFAULT",
+        Color("#1f7f9c"),
         transparent,
         [],
         ["TRUE", Color("#ff0000")],
@@ -619,8 +619,8 @@ common_dark = {
     # namespace
     "namespaces": ("DEFAULT", Color("#C8C8C8"), transparent),
     "namespace.deprecated": (
-        "NONE",
-        transparent,
+        "DEFAULT",
+        Color("#C8C8C8"),
         transparent,
         [],
         ["TRUE", Color("#ff0000")],
@@ -630,8 +630,8 @@ common_dark = {
     # operator
     "operators": ("DEFAULT", Color("#C8C8C8"), transparent),
     "operator.deprecated": (
-        "NONE",
-        transparent,
+        "DEFAULT",
+        Color("#C8C8C8"),
         transparent,
         [],
         ["TRUE", Color("#ff0000")],
@@ -640,8 +640,8 @@ common_dark = {
     "parameters": ("DEFAULT", Color("#9CDCFE"), transparent),
     "parameter.readonly": ("DEFAULT", Color("#4FC1FF"), transparent),
     "parameter.deprecated": (
-        "NONE",
-        transparent,
+        "DEFAULT",
+        Color("#9CDCFE"),
         transparent,
         [],
         ["TRUE", Color("#ff0000")],
@@ -649,8 +649,8 @@ common_dark = {
     # property
     "propertys": ("DEFAULT", Color("#9CDCFE"), transparent),
     "property.deprecated": (
-        "NONE",
-        transparent,
+        "DEFAULT",
+        Color("#9CDCFE"),
         transparent,
         [],
         ["TRUE", Color("#ff0000")],
@@ -658,8 +658,8 @@ common_dark = {
     # type
     "types": ("DEFAULT", Color("#8e69c9"), transparent),
     "type.deprecated": (
-        "NONE",
-        transparent,
+        "DEFAULT",
+        Color("#8e69c9"),
         transparent,
         [],
         ["TRUE", Color("#ff0000")],
@@ -667,8 +667,8 @@ common_dark = {
     # typeparameter
     "typeparameters": ("DEFAULT", Color("#9CDCFE"), transparent),
     "typeparameter.deprecated": (
-        "NONE",
-        transparent,
+        "DEFAULT",
+        Color("#9CDCFE"),
         transparent,
         [],
         ["TRUE", Color("#ff0000")],
@@ -678,8 +678,8 @@ common_dark = {
     # struct
     "structs": ("DEFAULT", Color("#4EC9B0"), transparent),
     "struct.deprecated": (
-        "NONE",
-        transparent,
+        "DEFAULT",
+        Color("#4EC9B0"),
         transparent,
         [],
         ["TRUE", Color("#ff0000")],
@@ -688,8 +688,8 @@ common_dark = {
     "variables": ("DEFAULT", Color("#9CDCFE"), transparent),
     "variable.readonly": ("DEFAULT", Color("#0070C1"), transparent),
     "variable.deprecated": (
-        "NONE",
-        transparent,
+        "DEFAULT",
+        Color("#9CDCFE"),
         transparent,
         [],
         ["TRUE", Color("#ff0000")],
