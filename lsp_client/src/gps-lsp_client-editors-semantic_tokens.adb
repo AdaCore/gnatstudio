@@ -90,14 +90,6 @@ package body GPS.LSP_Client.Editors.Semantic_Tokens is
       File   : GNATCOLL.VFS.Virtual_File);
    --  Clear highlighting styles for the given file
 
-   Modifiers_Priorities : constant array
-     (SemanticTokenModifiers) of Natural :=
-     (documentation  => 2,
-      globalVariable => 1,
-      localVariable  => 1,
-      others         => 0);
-   --  Define priorities for the semantic tokens modifiers
-
    --------------------------------------
    -- Semantic_Tokens_Module_ID_Record --
    --------------------------------------
@@ -289,7 +281,6 @@ package body GPS.LSP_Client.Editors.Semantic_Tokens is
       Modifiers : Modifiers_Array)
       return String
    is
-      use Ada.Strings.Unbounded;
       use Interfaces;
       use GPS.Kernel.Style_Manager;
 
@@ -368,46 +359,14 @@ package body GPS.LSP_Client.Editors.Semantic_Tokens is
       Last    : Natural := 0;
       Mask    : Unsigned_128;
       Current : SemanticTokenModifiers;
-
-      Selected_Style          : Ada.Strings.Unbounded.Unbounded_String;
-      Selected_Style_Priority : Natural := 0;
-
-      procedure Check_Style_Priority
-        (Name      : String;
-         Modifiers : Modifiers_Array);
-      --  Select one style from several possible based on the style
-      --  priorities, for example aspect style should override others
-
-      --------------------------
-      -- Check_Style_Priority --
-      --------------------------
-
-      procedure Check_Style_Priority
-        (Name      : String;
-         Modifiers : Modifiers_Array)
-      is
-         Current : Natural := 0;
-      begin
-         for M of Modifiers loop
-            Current := Current + Modifiers_Priorities (M);
-         end loop;
-
-         if Selected_Style = ""
-           or else Selected_Style_Priority < Current
-         then
-            Selected_Style_Priority := Current;
-            Selected_Style := To_Unbounded_String (Name);
-         end if;
-      end Check_Style_Priority;
-
    begin
       if Check (Type_Modifiers_Name) /= "" then
          --  style with all modificators has been found
          return Type_Modifiers_Name;
 
-      elsif Modifiers'Length > 2 then
+      elsif Modifiers'Length > 1 then
          --  we don't have type style with all modificators,
-         --  and have more than 2 modificator, try to recombine them
+         --  and have more than 1 modificator, try to recombine them
 
          Mask := 2 ** (Modifiers'Length) - 1;
          --  bitmask for recombination
@@ -436,7 +395,7 @@ package body GPS.LSP_Client.Editors.Semantic_Tokens is
                     Type_Name & Get_Modifiers (Arr (1 .. Last));
                begin
                   if Check (Style_Name) /= "" then
-                     Check_Style_Priority (Style_Name, Arr (1 .. Last));
+                     return Style_Name;  --  the style has been found
                   end if;
                end;
             end if;
@@ -445,16 +404,12 @@ package body GPS.LSP_Client.Editors.Semantic_Tokens is
          end loop;
       end if;
 
-      if Selected_Style /= "" then
-         return To_String (Selected_Style);
-      end if;
-
       --  we did not find a style with several modificators, try to find
       --  a style with one modificator
       if Modifiers'Length > 0 then
-         for M of Modifiers loop
+         for Index in reverse Modifiers'Range loop
             --  special case to force show deprecated modificator
-            if M = deprecated then
+            if Modifiers (Index) = deprecated then
                declare
                   Style_Name : constant String := Type_Name &
                     Get_Modifiers (Modifiers_Array'(1 => deprecated));
@@ -470,26 +425,20 @@ package body GPS.LSP_Client.Editors.Semantic_Tokens is
             end if;
          end loop;
 
-         for M of Modifiers loop
+         for Index in reverse Modifiers'Range loop
             declare
                Style_Name : constant String := Type_Name &
-                 Get_Modifiers (Modifiers_Array'(1 => M));
+                 Get_Modifiers (Modifiers_Array'(1 => Modifiers (Index)));
             begin
                if Check (Style_Name) /= "" then
-                  --  the style has been found, check priority
-                  Check_Style_Priority (Style_Name, Modifiers_Array'(1 => M));
+                  return Style_Name;  --  the style has been found
                end if;
             end;
          end loop;
       end if;
 
-      if Selected_Style /= "" then
-         --  return priotirized style
-         return To_String (Selected_Style);
-      else
-         --  return style for token itself if exist
-         return Check (Type_Name);
-      end if;
+      --  return style for token itself if exist
+      return Check (Type_Name);
    end Check_Style_Name;
 
    -------------------
