@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                               GNAT Studio                                --
 --                                                                          --
---                       Copyright (C) 2022-2026, AdaCore                   --
+--                       Copyright (C) 2026, AdaCore                        --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -15,31 +15,18 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
+--  Various GtkLabel operations using `Virtual_String` type
+
 with VSS.Strings;
 
-package GNATCOLL.VFS.VSS_Utils is
+package Gtk.Label.VSS_Utils is
 
-   function Create
-     (Full_Filename : VSS.Strings.Virtual_String;
-      Host          : String  := Local_Host;
-      Normalize     : Boolean := False) return Virtual_File;
-   --  Equivalent of `Create_From_UTF8`
+   procedure Gtk_New
+     (Label : out Gtk_Label;
+      Text  : VSS.Strings.Virtual_String);
 
-   function Full_Name
-     (File      : Virtual_File;
-      Normalize : Boolean := False) return VSS.Strings.Virtual_String;
-   --  Equivalent of `Display_Full_Name`
+   procedure Set_Markup
+      (Label : not null access Gtk_Label_Record'Class;
+       Text  : VSS.Strings.Virtual_String);
 
-   function Base_Name
-     (File   : Virtual_File;
-      Suffix : VSS.Strings.Virtual_String := VSS.Strings.Empty_Virtual_String)
-      return VSS.Strings.Virtual_String;
-   --  Equivalent of `Display_Base_Name`
-
-   function Relative_Path
-     (File : Virtual_File;
-      From : Virtual_File) return VSS.Strings.Virtual_String;
-   --  Return the path of File relative to From. Return the full_name in case
-   --  From and File are not on the same drive.
-
-end GNATCOLL.VFS.VSS_Utils;
+end Gtk.Label.VSS_Utils;

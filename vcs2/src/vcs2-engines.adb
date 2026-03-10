@@ -21,9 +21,13 @@ with Ada.Containers.Doubly_Linked_Lists;
 with Ada.Strings.Hash;
 with Ada.Unchecked_Deallocation;
 
-with Basic_Types;
+with VSS.Characters.Latin;
+with VSS.Strings.Conversions;
+
 with GNATCOLL.Python.State;
 with GNATCOLL.Traces;             use GNATCOLL.Traces;
+
+with Basic_Types;
 with GPS.Kernel.Hooks;            use GPS.Kernel.Hooks;
 with GPS.Kernel.Project;          use GPS.Kernel.Project;
 with Gtkada.Combo_Tool_Button;    use Gtkada.Combo_Tool_Button;
@@ -1571,25 +1575,32 @@ package body VCS2.Engines is
 
    overriding function Get_Tooltip_For_File
      (VCS     : not null access VCS_Engine;
-      File    : GNATCOLL.VFS.Virtual_File)
-     return String
+      File    : GNATCOLL.VFS.Virtual_File) return VSS.Strings.Virtual_String
    is
-      V : constant VCS_Engine_Access := VCS_Engine_Access (VCS);
+      use type VSS.Strings.Virtual_String;
+
+      LF : VSS.Characters.Virtual_Character renames
+        VSS.Characters.Latin.Line_Feed;
+
+      V     : constant VCS_Engine_Access := VCS_Engine_Access (VCS);
       Props : constant VCS_File_Properties :=
          VCS.File_Properties_From_Cache (File);
    begin
       if Props.Status /= Status_Untracked
         and then Props.Status /= Status_No_VCS
       then
-         return "<b>" & V.Name & " status</b>: "
-           & To_String (V.Get_Display (Props.Status).Label)
+         return "<b>" & VSS.Strings.Conversions.To_Virtual_String (V.Name)
+           & " status</b>: "
+           & VSS.Strings.Conversions.To_Virtual_String
+               (V.Get_Display (Props.Status).Label)
            & (if Props.Version /= ""
-              then ASCII.LF & "<b>" & V.Label_Version & "</b>: "
-                 & To_String (Props.Version)
+              then LF & "<b>" & V.Label_Version & "</b>: "
+                 & VSS.Strings.Conversions.To_Virtual_String (Props.Version)
               else "")
            & (if Props.Repo_Version /= ""
-              then ASCII.LF & "<b>" & V.Label_Repo_Version & "</b>: "
-                 & To_String (Props.Repo_Version)
+              then LF & "<b>" & V.Label_Repo_Version & "</b>: "
+                & VSS.Strings.Conversions.To_Virtual_String
+                    (Props.Repo_Version)
               else "");
       else
          return "";
