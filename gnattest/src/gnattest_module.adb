@@ -54,6 +54,7 @@ with Gtk.Enums;                         use Gtk.Enums;
 with Gtk.Gesture_Multi_Press;           use Gtk.Gesture_Multi_Press;
 with Gtk.Handlers;
 with Gtk.Label;                         use Gtk.Label;
+with Gtk.Label.VSS_Utils;
 with Gtk.Menu;
 with Gtk.Menu_Item;
 with Gtk.Tree_Model;                    use Gtk.Tree_Model;
@@ -427,21 +428,21 @@ package body GNATTest_Module is
             declare
                Label : Gtk_Label;
             begin
-               Gtk_New
-                 (Label, Get_Tooltip_For_File
-                    (Tooltip.View.Kernel, Src.Source_File));
+               Gtk.Label.VSS_Utils.Gtk_New
+                 (Label,
+                  Get_Tooltip_For_File (Tooltip.View.Kernel, Src.Source_File));
 
                Label.Set_Use_Markup (True);
 
                return Gtk_Widget (Label);
             end;
-         else
 
-               return Entities_Tooltips.Draw_Tooltip
-                 (Kernel      => Tooltip.View.Kernel,
-                  Entity      => Entity,
-                  Ref         => Ref.Element,
-                  Draw_Border => True);
+         else
+            return Entities_Tooltips.Draw_Tooltip
+              (Kernel      => Tooltip.View.Kernel,
+               Entity      => Entity,
+               Ref         => Ref.Element,
+               Draw_Border => True);
          end if;
       end;
    end Create_Contents;

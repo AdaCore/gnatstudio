@@ -17,15 +17,19 @@
 
 with Ada.Strings.Unbounded;           use Ada.Strings.Unbounded;
 with Ada.Unchecked_Deallocation;
-with Glib.Convert;
-with Glib.Object;                     use Glib.Object;
-with Glib.Values;
-with Glib;                            use Glib;
 with GNAT.Strings;                    use GNAT.Strings;
+
+with VSS.Strings.Conversions;
+
 with GNATCOLL.Projects;               use GNATCOLL.Projects;
 with GNATCOLL.Symbols;                use GNATCOLL.Symbols;
 with GNATCOLL.Utils;                  use GNATCOLL.Utils;
 with GNATCOLL.VFS;                    use GNATCOLL.VFS;
+
+with Glib.Convert;
+with Glib.Object;                     use Glib.Object;
+with Glib.Values;
+with Glib;                            use Glib;
 
 with GPS.Intl;                        use GPS.Intl;
 with GPS.Kernel.Actions;              use GPS.Kernel.Actions;
@@ -451,7 +455,8 @@ package body Src_Editor_Status_Bar is
 
             Bar.VCS_Status.Set_Icon_Name (To_String (D.Icon_Name));
             Bar.VCS_Status.Set_Tooltip_Markup
-               (Vcs.Get_Tooltip_For_File (Bar.Buffer.Get_Filename));
+              (VSS.Strings.Conversions.To_UTF_8_String
+                 (Vcs.Get_Tooltip_For_File (Bar.Buffer.Get_Filename)));
          end;
       end if;
    end Execute;

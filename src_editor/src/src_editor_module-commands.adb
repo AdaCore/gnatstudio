@@ -40,6 +40,7 @@ with Gtk.Combo_Box_Text;          use Gtk.Combo_Box_Text;
 with Gtk.Dialog;                  use Gtk.Dialog;
 with Gtk.Enums;                   use Gtk.Enums;
 with Gtk.Label;                   use Gtk.Label;
+with Gtk.Label.VSS_Utils;
 with Gtk.Main;                    use Gtk.Main;
 with Gtk.Size_Group;              use Gtk.Size_Group;
 with Gtk.Tree_Model;
@@ -927,10 +928,10 @@ package body Src_Editor_Module.Commands is
       Add_Widget (Size, Label);
       Pack_Start (Box, Label, Expand => False);
       Gtk_New (Label);
-      Label.Set_Markup
-        (Unknown_To_UTF8
-           (Kernel.VCS.Guess_VCS_For_Directory
-                (File.Dir).Get_Tooltip_For_File (File)));
+      Gtk.Label.VSS_Utils.Set_Markup
+        (Label,
+         Kernel.VCS.Guess_VCS_For_Directory
+           (File.Dir).Get_Tooltip_For_File (File));
       Label.Set_Selectable (True);
       Set_Alignment (Label, 0.0, 0.5);
       Pack_Start (Box, Label, Expand => False);

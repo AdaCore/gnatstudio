@@ -20,14 +20,19 @@
 with Ada.Containers.Hashed_Maps;
 with Ada.Containers.Vectors;
 with Ada.Strings.Unbounded;      use Ada.Strings.Unbounded;
-with Glib.Main;                  use Glib.Main;
+with GNAT.Strings;               use GNAT.Strings;
+
+with VSS.Strings;
+
 with GNATCOLL.Projects;          use GNATCOLL.Projects;
 with GNATCOLL.VFS;               use GNATCOLL.VFS;
-with GNAT.Strings;               use GNAT.Strings;
+
+with Glib.Main;                  use Glib.Main;
+with Gtk.Widget;                 use Gtk.Widget;
+
 with GPS.Kernel;                 use GPS.Kernel;
 with GPS.VCS;                    use GPS.VCS;
 with GPS_Unbounded_String_Vectors;
-with Gtk.Widget;                 use Gtk.Widget;
 
 package VCS2.Engines is
 
@@ -328,8 +333,7 @@ package VCS2.Engines is
       Props   : VCS_File_Properties);
    overriding function Get_Tooltip_For_File
      (VCS     : not null access VCS_Engine;
-      File    : GNATCOLL.VFS.Virtual_File)
-      return String;
+      File    : GNATCOLL.VFS.Virtual_File) return VSS.Strings.Virtual_String;
    overriding function Get_VCS_File_Status
      (VCS  : not null access VCS_Engine;
       File : GNATCOLL.VFS.Virtual_File)
@@ -371,10 +375,10 @@ package VCS2.Engines is
    --  (the possible combinations depend on Self).
 
    function Label_Version
-     (Self : not null access VCS_Engine) return String
+     (Self : not null access VCS_Engine) return VSS.Strings.Virtual_String
      is ("Revision");
    function Label_Repo_Version
-     (Self : not null access VCS_Engine) return String
+     (Self : not null access VCS_Engine) return VSS.Strings.Virtual_String
      is ("Repository Revision");
    --  Labels to use when displaying versions in the GUI
 
