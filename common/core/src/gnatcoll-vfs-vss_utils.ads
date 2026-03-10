@@ -30,4 +30,16 @@ package GNATCOLL.VFS.VSS_Utils is
       Normalize : Boolean := False) return VSS.Strings.Virtual_String;
    --  Equivalent of `Display_Full_Name`
 
+   function Base_Name
+     (File   : Virtual_File;
+      Suffix : VSS.Strings.Virtual_String := VSS.Strings.Empty_Virtual_String)
+      return VSS.Strings.Virtual_String;
+   --  Equivalent of `Display_Base_Name`
+
+   function Relative_Path
+     (File : Virtual_File;
+      From : Virtual_File) return VSS.Strings.Virtual_String;
+   --  Return the path of File relative to From. Return the full_name in case
+   --  From and File are not on the same drive.
+
 end GNATCOLL.VFS.VSS_Utils;

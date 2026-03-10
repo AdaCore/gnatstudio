@@ -36,6 +36,21 @@ package body GNATCOLL.VFS.VSS_Utils is
    end Create;
 
    ---------------
+   -- Base_Name --
+   ---------------
+
+   function Base_Name
+     (File   : Virtual_File;
+      Suffix : VSS.Strings.Virtual_String := VSS.Strings.Empty_Virtual_String)
+      return VSS.Strings.Virtual_String is
+   begin
+      return
+        VSS.Strings.Conversions.To_Virtual_String
+          (File.Display_Base_Name
+             (+VSS.Strings.Conversions.To_UTF_8_String (Suffix)));
+   end Base_Name;
+
+   ---------------
    -- Full_Name --
    ---------------
 
@@ -47,5 +62,17 @@ package body GNATCOLL.VFS.VSS_Utils is
         VSS.Strings.Conversions.To_Virtual_String
           (File.Display_Full_Name (Normalize));
    end Full_Name;
+
+   -------------------
+   -- Relative_Path --
+   -------------------
+
+   function Relative_Path
+     (File : Virtual_File;
+      From : Virtual_File) return VSS.Strings.Virtual_String is
+   begin
+      return
+        VSS.Strings.Conversions.To_Virtual_String (+File.Relative_Path (From));
+   end Relative_Path;
 
 end GNATCOLL.VFS.VSS_Utils;
