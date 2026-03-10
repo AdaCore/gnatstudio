@@ -77,6 +77,46 @@ package GVD.Breakpoints_List is
    --  one is started. If one or more debuggers are running, they all break
    --  on that subprogram.
 
+   function Break_Exception
+     (Kernel    : not null access Kernel_Handle_Record'Class;
+      Name      : String;
+      Unhandled : Boolean := False;
+      Temporary : Boolean := False)
+      return Breakpoint_Identifier;
+   --  Set a breakpoint on the given exception.
+   --  If no debugger is currently running, the breakpoint will be applied when
+   --  one is started. If one or more debuggers are running, the current
+   --  debugger will have that breakpoint.
+
+   function Catch_Assertions
+     (Kernel    : not null access Kernel_Handle_Record'Class;
+      Temporary : Boolean := False)
+      return Breakpoint_Identifier;
+   --  Set an assertions  breakpoint.
+   --  If no debugger is currently running, the breakpoint will be applied when
+   --  one is started. If one or more debuggers are running, the current
+   --  debugger will have that breakpoint.
+
+   function Break_Regexp
+     (Kernel     : not null access Kernel_Handle_Record'Class;
+      Expression : String;
+      Temporary  : Boolean := False)
+      return Breakpoint_Identifier;
+   --  Set a breakpoint on Regexp.
+   --  If no debugger is currently running, the breakpoint will be applied when
+   --  one is started. If one or more debuggers are running, the current
+   --  debugger will have that breakpoint.
+
+   function Break_At_Address
+     (Kernel    : not null access Kernel_Handle_Record'Class;
+      Address   : GVD.Types.Address_Type;
+      Temporary : Boolean := False)
+      return Breakpoint_Identifier;
+   --  Set a breakpoint on the address.
+   --  If no debugger is currently running, the breakpoint will be applied when
+   --  one is started. If one or more debuggers are running, the current
+   --  debugger will have that breakpoint.
+
    procedure Break_At_Exception
      (Kernel    : not null access Kernel_Handle_Record'Class;
       Unhandled : Boolean := False);
@@ -128,6 +168,12 @@ package GVD.Breakpoints_List is
 
       Except      : Unbounded_String;
       --  Name of the exception on which we break
+
+      Unhandled   : Boolean := False;
+      --  Unhandled exception only
+
+      Assertion   : Boolean := False;
+      --  catch assertion
 
       Subprogram  : Unbounded_String;
       --  Name of the subprogram we stop in.

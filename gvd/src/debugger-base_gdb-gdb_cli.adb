@@ -1147,7 +1147,8 @@ package body Debugger.Base_Gdb.Gdb_CLI is
 
       if Get_Pref (Break_On_Exception) then
          declare
-            Cmd : constant String := Break_Or_Catch (Debugger) & " exception";
+            Cmd : constant String :=
+              Break_Or_Catch (Debugger) & " exception";
             S   : constant String := Send_And_Get_Clean_Output
               (Debugger, Cmd);
 
