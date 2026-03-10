@@ -111,6 +111,9 @@ package Language is
    --  All the entities that have a special meaning. Used for syntax
    --  highlighting for example.
 
+   subtype Aspect_Entity is Language_Entity
+     range Aspect_Keyword_Text .. Aspect_Text;
+
    procedure Looking_At
      (Lang      : access Language_Root;
       Buffer    : String;

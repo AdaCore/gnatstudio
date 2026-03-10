@@ -525,6 +525,9 @@ package body Src_Editor_Buffer is
       return Visible_Column_Type;
    --  Return the first column with a non-whitespace character
 
+   procedure Run_Highlight_Range_Hook (Buffer : Source_Buffer);
+   --  Trigger Highlight_Range hook
+
    -----------
    -- Hooks --
    -----------
@@ -1238,48 +1241,50 @@ package body Src_Editor_Buffer is
       return Index;
    end Get_Byte_Index;
 
+   ------------------------------
+   -- Run_Highlight_Range_Hook --
+   ------------------------------
+
+   procedure Run_Highlight_Range_Hook (Buffer : Source_Buffer)
+   is
+      Start_Iter : Gtk_Text_Iter;
+      End_Iter   : Gtk_Text_Iter;
+   begin
+      if not Buffer.Highlighter.Highlight_Needed then
+         return;
+      end if;
+
+      --  to highlight keywords etc.
+      Buffer.Highlighter.Highlight_Region;
+
+      Get_Iter_At_Mark
+        (Buffer, Start_Iter, Buffer.Highlighter.First_Highlight_Mark);
+      Get_Iter_At_Mark
+        (Buffer, End_Iter, Buffer.Highlighter.Last_Highlight_Mark);
+
+      Highlight_Range_Hook.Run
+        (Kernel    => Buffer.Kernel,
+         File      => Buffer.Filename,
+         From_Line => Natural (Get_Line (Start_Iter) + 1),
+         To_Line   => Natural (Get_Line (End_Iter) + 1));
+
+      Buffer.Highlighter.Highlight_Needed := False;
+   end Run_Highlight_Range_Hook;
+
    ---------------------
    -- Edition_Timeout --
    ---------------------
 
    function Edition_Timeout (Buffer : Source_Buffer) return Boolean is
-      CL         : Arg_List;
-      Start_Iter : Gtk_Text_Iter;
-      End_Iter   : Gtk_Text_Iter;
-
-      ------------------------------
-      -- Run_Highlight_Range_Hook --
-      ------------------------------
-
-      procedure Run_Highlight_Range_Hook;
-
-      procedure Run_Highlight_Range_Hook is
-      begin
-         Get_Iter_At_Mark
-           (Buffer, Start_Iter, Buffer.Highlighter.First_Highlight_Mark);
-         Get_Iter_At_Mark
-           (Buffer, End_Iter, Buffer.Highlighter.Last_Highlight_Mark);
-         Highlight_Range_Hook.Run
-           (Kernel    => Buffer.Kernel,
-            File      => Buffer.Filename,
-            From_Line => Natural (Get_Line (Start_Iter) + 1),
-            To_Line   => Natural (Get_Line (End_Iter) + 1));
-      end Run_Highlight_Range_Hook;
+      CL : Arg_List;
 
    begin
       if Buffer.In_Destruction
         or else Clock < Buffer.Blocks_Request_Timestamp +
           Buffer_Recompute_Delay
+        or else Buffer.Inserting --  wait until the end of inserting
       then
          return True;
-      end if;
-
-      --  Re-highlight the highlight region if needed
-      if Buffer.Highlighter.Use_Highlighting_Hook then
-         Run_Highlight_Range_Hook;
-
-      else
-         Buffer.Highlighter.Highlight_Region;
       end if;
 
       --  Perform on-the-fly style check
@@ -1297,6 +1302,14 @@ package body Src_Editor_Buffer is
       --  Emit the Buffer_Modifed hook
       if Buffer.Get_Version > 0 then
          Buffer_Modified (Buffer);
+      end if;
+
+      --  Re-highlight the region if needed after we sent the modified buffer
+      --  to the LSP server
+      if Buffer.Highlighter.Use_Highlighting_Hook then
+         Run_Highlight_Range_Hook (Buffer);
+      else
+         Buffer.Highlighter.Highlight_Region;
       end if;
 
       --  Request an asynchronous update of the semantic tree
@@ -2216,6 +2229,11 @@ package body Src_Editor_Buffer is
       Cursor_Previously_Held : Boolean;
 
    begin
+      Get_Text_Iter (Nth (Params, 1), Pos);
+
+      --  Update highlight region for Pos
+      Buffer.Highlighter.Update_Highlight_Region (Pos);
+
       if Buffer.Inserting_Count > 0 then
          --  Setting Insertion_Position by default (old behavior),
          --  in other words do not use settings from previous
@@ -2230,7 +2248,6 @@ package body Src_Editor_Buffer is
          Sel_Mark := Buffer.Cursors_Sync.MC.Sel_Mark;
       end if;
 
-      Get_Text_Iter (Nth (Params, 1), Pos);
       Line := Get_Editable_Line
         (Buffer, Buffer_Line_Type (Get_Line (Pos) + 1));
 
@@ -2243,9 +2260,6 @@ package body Src_Editor_Buffer is
       else
          Buffer.Inserting_Position := Other;
       end if;
-
-      --  Move mark of start of re-highlight area into insertion position
-      Move_Mark (Buffer, Buffer.Highlighter.First_Highlight_Mark, Pos);
 
       if Line = 0 then
          --  In a special line: we simply stop propagation
@@ -2403,9 +2417,8 @@ package body Src_Editor_Buffer is
       Get_Text_Iter (Nth (Params, 1), Start_Iter);
       Get_Text_Iter (Nth (Params, 2), End_Iter);
 
-      --  Move mark of start of re-highlight area into insertion position
-
-      Move_Mark (Buffer, Buffer.Highlighter.First_Highlight_Mark, Start_Iter);
+      --  Update highlight region
+      Buffer.Highlighter.Update_Highlight_Region (Start_Iter);
 
       declare
          C : constant Editor_Command := Get_Current_Command (Buffer);
@@ -8613,6 +8626,7 @@ package body Src_Editor_Buffer is
    overriding procedure Initialize (Self : in out Source_Highlighter_Record)
    is
       Tags : Gtk_Text_Tag_Table;
+
    begin
       --  Save the newly created highlighting tags into the source buffer
       --  tag table.
@@ -8632,7 +8646,7 @@ package body Src_Editor_Buffer is
       Add (Tags, Self.Buffer.Hyper_Mode_Tag);
       Add (Tags, Self.Buffer.Non_Editable_Tag);
       Add (Tags, Self.Buffer.Hidden_Text_Tag);
-      Self.Special_Tags_Count := 4;
+      Self.Special_Tags_Count := Self.Special_Tags_Count + 4;
    end Initialize;
 
    --------------
@@ -9163,7 +9177,7 @@ package body Src_Editor_Buffer is
             end if;
          end if;
 
-         if Entity in Aspect_Keyword_Text .. Aspect_Text then
+         if Entity in Aspect_Entity then
             --  We have an aspect here, store information about this for
             --  lines
             declare
@@ -9182,7 +9196,10 @@ package body Src_Editor_Buffer is
          end if;
 
          Apply_Tag
-           (Self.Buffer, Self.Syntax_Tags (Entity), Entity_Start, Entity_End);
+           (Buffer  => Self.Buffer,
+            Tag     => Self.Syntax_Tags (Entity),
+            Start   => Entity_Start,
+            The_End => Entity_End);
 
          return False;
       end Highlight_Cb;
@@ -9207,8 +9224,13 @@ package body Src_Editor_Buffer is
          Slice_Offset_Column := Get_Line_Index (Entity_Start);
 
          --  First, un-apply all the style tags...
-
          Self.Kill_Highlighting (Entity_Start, Entity_End);
+
+         if Self.Use_Highlighting_Hook then
+            --  Update range for highlighter called over hook
+            Move_Mark (Self.Buffer, Self.First_Highlight_Mark, Entity_Start);
+            Move_Mark (Self.Buffer, Self.Last_Highlight_Mark, Entity_End);
+         end if;
 
          --  Now re-highlight the text...
 
@@ -9380,6 +9402,7 @@ package body Src_Editor_Buffer is
    begin
       if not Self.Highlight_Needed then
          Self.Highlight_Needed := True;
+         Move_Mark (Self.Buffer, Self.First_Highlight_Mark, Iter);
          Move_Mark (Self.Buffer, Self.Last_Highlight_Mark, Iter);
 
       else
@@ -9430,7 +9453,7 @@ package body Src_Editor_Buffer is
       Get_Iter_At_Mark (Self.Buffer, End_Iter, Self.Last_Highlight_Mark);
       Self.Highlight_Slice (Start_Iter, End_Iter);
 
-      Self.Highlight_Needed := False;
+      Self.Highlight_Needed := Self.Use_Highlighting_Hook;
    end Highlight_Region;
 
    ------------------
