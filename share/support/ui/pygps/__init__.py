@@ -25,27 +25,10 @@ depends on it should use the statement:
 import GPS
 import sys
 
-# Use pynput for generating Keyboard/Mouse events on Windows and RHEL 10
+# Use pynput for generating Keyboard/Mouse events on Windows
 import os
 
-try:
-    import distro
-except ImportError:
-    distro = None
-
-
-def is_rhel_10():
-    """
-    Return True if the current OS is RHEL 10.
-    """
-    if distro is None:
-        return False
-    name = distro.id()
-    version = distro.major_version()
-    return name == "rhel" and version == "10"
-
-
-if os.name == "nt" or ("linux" in sys.platform and is_rhel_10()):
+if os.name == "nt":
     from pynput.keyboard import Key, Controller
 
 global last_sent_event
@@ -444,7 +427,7 @@ try:
     # it is better to directly call the appropriate GPS action or menu
     # rather than rely on these functions
 
-    if "linux" in sys.platform and not is_rhel_10():
+    if "linux" in sys.platform:
         GDK_BACKSPACE = 65288
         GDK_TAB = 65289
         GDK_RETURN = Gdk.KEY_Return
@@ -483,7 +466,7 @@ try:
         control=0,
         window=None,
         process_events="linux" in sys.platform,
-        bypass_keymanager=is_rhel_10() or "linux" not in sys.platform,
+        bypass_keymanager="linux" not in sys.platform,
     ):
         """Emit a key event on GPS, simulating the given key. This event is
         sent asynchronously.
