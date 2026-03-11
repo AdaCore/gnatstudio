@@ -2641,11 +2641,18 @@ class Debugger(object):
 
     def connect_to_target(self, target="", pid=-1, protocol="", force=False):
         """
-        Attach to the target. Do nothing if already connected to another.
-        By default, it will use the project configuration.
-        :param target: The name of the target. If set pid will be ignored.
-        :param pid: The pid of the target.
-        :protocol: The name of the protocol used to connect.
+        Connect to a target. The target may be a running 
+        executable (when a PID is provided) or a remote board/server
+        (when a target name is specified).
+
+        If no parameters are given, the function falls back to the
+        project configuration
+        (e.g., the "IDE.Program_Host" and "IDE.Communication_Protocol" 
+        project attributes for remote debugging).
+
+       :param target: Name of the target to connect to. If provided, `pid` is ignored.
+       :param pid: Process ID of the executable to attach to.
+       :param protocol: Name of the protocol used for the connection.
         """
         pass  # implemented in Ada
 
