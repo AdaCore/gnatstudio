@@ -9,6 +9,9 @@ various SPARK menus in GNAT Studio.
 # No user customization below this line
 ############################################################################
 
+from dataclasses import dataclass
+import os
+
 import GPS
 from lal_utils import get_enclosing_subprogram
 import libadalang as lal
@@ -36,9 +39,80 @@ SPARK_GS_TRACE = "PYTHON.SPARK"
 logger = GPS.Logger(SPARK_GS_TRACE)
 
 
+@dataclass
+class ContextData:
+    """Various information about the context of the check"""
+
+    check_file: str
+    check_line: int
+    check_col: int
+    spec_file: str
+    spec_line: int
+    project_name: str
+    project_path: str
+    unit_name: str
+    artifacts_dir: str
+
+
 class ExternalProcessError(RuntimeError):
     def __init__(self, message):
         super().__init__(message)
+
+
+def get_context_data(context):
+    """
+    Extract and populate a ContextData record with various information about
+    the context of the check.
+
+    :param context: GPS context for the check..
+    """
+    check_loc = str(context.location())
+    logger.log(f"get_context_data: check_loc={check_loc}")
+
+    logger.log("get_context_data: trying to get gps_project ...")
+    gps_project = context.project()
+    logger.log(f"get_context_data: gps_project={gps_project}")
+
+    # Look up the GPS project.
+    # Note: In aggregate projects it is important to stay within the GPS
+    # project of the given source file (and not go up to the root project) as
+    # this matches the the behavior or GNATprove and GNATtest in the use cases
+    # that are relevant here.
+    project_name = str.lower(gps_project.name())
+    project_path = gps_project.file().path
+    logger.log(
+        f"get_context_data: project_name={project_name}, project_path={project_path}"
+    )
+
+    # Determine the GPS location of the spec.
+    gps_spec_loc = spec_location(context)
+    if not gps_spec_loc:
+        print_error("Unsupported context. Expecting a subprogram.")
+        return
+
+    spec_loc = str(gps_spec_loc)
+    logger.log(f"get_context_data: spec_loc={spec_loc}")
+
+    spec_file, spec_line, spec_col = split_location(spec_loc)
+    check_file, check_line, check_col = split_location(check_loc)
+
+    unit_name = os.path.splitext(os.path.basename(spec_file))[0]
+
+    artifacts_dir = gps_project.artifacts_dir()
+
+    config = ContextData(
+        check_file=check_file,
+        check_line=check_line,
+        check_col=check_col,
+        spec_file=spec_file,
+        spec_line=spec_line,
+        project_name=project_name,
+        project_path=project_path,
+        unit_name=unit_name,
+        artifacts_dir=artifacts_dir,
+    )
+
+    return config
 
 
 def print_error(message) -> None:
@@ -129,3 +203,12 @@ def spec_location(context) -> GPS.EditorLocation | None:
     else:
         # Unsupported context. Enclosing subprogram not found.
         return None
+
+
+def split_location(s):
+    """Split location to (file, line, col)."""
+
+    parts = s.split(":")
+    if len(parts) == 3 and parts[1].isdigit() and parts[2].isdigit():
+        return parts[0], int(parts[1]), int(parts[2])
+    return None, None, None

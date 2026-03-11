@@ -14,12 +14,12 @@ import re
 import GPS
 from gnatprove import (
     GNATPROVE_TEST_GEN_CATEGORY,
+    get_context_data,
     logger,
     ExternalProcessError,
     print_error,
     print_info,
     print_warning,
-    spec_location,
 )
 from workflows.promises import ProcessWrapper, TargetWrapper
 
@@ -146,15 +146,6 @@ def _replace_values_in_gnattest_json(json_file, subp_hash, new_values):
         return False
 
 
-def split_location(s):
-    """Split location to (file, line, col)."""
-
-    parts = s.split(":")
-    if len(parts) == 3 and parts[1].isdigit() and parts[2].isdigit():
-        return parts[0], int(parts[1]), int(parts[2])
-    return None, None, None
-
-
 def get_gnattest_hash(project_path, filename, line):
     """
     Retrieve the hash that GNATtest uses to refer to the subprogram enclosing
@@ -245,8 +236,6 @@ def run(context, check_message, force=False):
     Note: This function needs to be called as a GNAT Studio workflow.
 
     :param context: GPS context for the check.
-        Note: The 'context' object passed into this function cannot be reliably
-        used after calling this function.
     :param check_message: The top-level part of the GNATprove's check message.
         It is used to match the entry in the .spark file with the right check
         when there are multiple checks for the same line and column.
@@ -260,53 +249,15 @@ def run(context, check_message, force=False):
 
     print_info("Starting to generate executable test...")
 
+    # Extract check details
+
+    config = get_context_data(context)
+
     # Find the .spark file for the Ada unit that defines the enclosing subprogram
 
-    check_loc = str(context.location())
-    logger.log(f"ce2test.run check_loc={check_loc}")
-
-    logger.log("ce2test.run trying to get gps_project ...")
-    gps_project = context.project()
-    logger.log(f"ce2test.run gps_project={gps_project}")
-
-    # Look up the GPS project.
-    # Note: In aggregate projects it is important to stay within the GPS
-    # project of the given source file (and not go up to the root project) as
-    # this matches the the behavior or GNATprove and GNATtest in the use cases
-    # that are relevant here.
-    project_name = str.lower(gps_project.name())
-    project_path = gps_project.file().path
-    logger.log(f"ce2test.run: project_name={project_name}, project_path={project_path}")
-
-    artifacts_dir = gps_project.artifacts_dir()
-
-    # Determine the GPS location of the spec.
-    # Note: 'context' becomes stale and must not be accessed any more.
-    gps_spec_loc = spec_location(context)
-    if not gps_spec_loc:
-        print_error("Unsupported context. Expecting a subprogram.")
-        return
-
-    spec_loc = str(gps_spec_loc)
-    logger.log(f"ce2test.run spec_loc={spec_loc}")
-
-    spec_file, spec_line, spec_col = split_location(spec_loc)
-    check_file, check_line, check_col = split_location(check_loc)
-
-    unit_name = os.path.splitext(os.path.basename(spec_file))[0]
-
-    logger.log(f"ce2test.run: unit_name={unit_name}")
-
-    logger.log(f"ce2test.run: spec={spec_loc}")
-    logger.log(f"ce2test.run: subp={check_loc}")
-    logger.log(f"ce2test.run: message={check_message}")
-    logger.log(f"ce2test.run: spec_file={spec_file}, spec_line={spec_line}")
-    logger.log(
-        f"ce2test.run: check_file={check_file}, check_line={check_line}"
-        f", check_col={check_col}"
+    spark_filename = os.path.join(
+        config.artifacts_dir, "gnatprove", f"{config.unit_name}.spark"
     )
-
-    spark_filename = os.path.join(artifacts_dir, "gnatprove", f"{unit_name}.spark")
     if not os.path.exists(spark_filename):
         print_error(f"File '{spark_filename}' not found")
         return
@@ -316,16 +267,16 @@ def run(context, check_message, force=False):
 
     ce_values = _get_values_from_spark_json(
         spark_filename,
-        check_file,
-        check_line,
-        check_col,
+        config.check_file,
+        config.check_line,
+        config.check_col,
         check_message,
     )
 
     if not ce_values:
         print_warning(
             f"No counterexample found for {check_message!r} at"
-            f" {check_file}:{check_line}. Aborting"
+            f" {config.check_file}:{config.check_line}. Aborting"
         )
         return
 
@@ -333,28 +284,30 @@ def run(context, check_message, force=False):
 
     try:
         hash_value = yield get_gnattest_hash(
-            project_path, os.path.join("src", spec_file), spec_line
+            config.project_path,
+            os.path.join("src", config.spec_file),
+            config.spec_line,
         )
     except (ExternalProcessError, ValueError) as e:
         print_error(f"{e}")
         return
 
-    #  Generate test harness and initial test cases for the enclosing subprogram.
+    # Generate test harness and initial test cases for the enclosing subprogram.
 
     print_info("Calling gnattest to generate harness and initial test cases ...")
 
     try:
-        yield run_gnattest(spec_file, spec_line, GNATTEST_TARGET1, force)
+        yield run_gnattest(config.spec_file, config.spec_line, GNATTEST_TARGET1, force)
     except ExternalProcessError as e:
         print_error(f"{e}")
         return
 
     json_file = os.path.join(
-        artifacts_dir,
+        config.artifacts_dir,
         "gnattest",
         "tests",
         "JSON_Tests",
-        f"{unit_name}.json",
+        f"{config.unit_name}.json",
     )
 
     # Update the test values in the GNATtest JSON file with the GNATprove
@@ -363,7 +316,7 @@ def run(context, check_message, force=False):
     if not os.path.isfile(json_file):
         print_error(f"GNATtest generated JSON file not found: {json_file}")
         json_files = glob.glob(
-            os.path.join(artifacts_dir, "**", "*.json"), recursive=True
+            os.path.join(config.artifacts_dir, "**", "*.json"), recursive=True
         )
         logger.log("Found .json files in object directories:\n" + "\n".join(json_files))
         print_error("Aborting")
@@ -385,19 +338,21 @@ def run(context, check_message, force=False):
     print_info("Calling gnattest to update test case with counterexample values ...")
 
     try:
-        yield run_gnattest(spec_file, spec_line, GNATTEST_TARGET2, force)
+        yield run_gnattest(config.spec_file, config.spec_line, GNATTEST_TARGET2, force)
     except ExternalProcessError as e:
         print_error(f"{e}")
         return
 
-    harness_path = os.path.join(artifacts_dir, "gnattest", "harness", "test_driver.gpr")
+    harness_path = os.path.join(
+        config.artifacts_dir, "gnattest", "harness", "test_driver.gpr"
+    )
 
     print_info(f"Test harness has been generated and can be found at {harness_path}")
 
     GPS.Message(
         GNATPROVE_TEST_GEN_CATEGORY,
-        GPS.File(check_file),
-        check_line,
-        check_col,
+        GPS.File(config.check_file),
+        config.check_line,
+        config.check_col,
         f"Test harness has been generated and can be found at {harness_path}",
     )

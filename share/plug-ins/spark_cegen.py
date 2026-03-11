@@ -8,7 +8,6 @@ A prerequisite is an unproven, i.e., potentially failing, SPARK check found by
 GNATprove.
 """
 
-from dataclasses import dataclass
 from glob import glob
 import json
 import os
@@ -16,15 +15,16 @@ import os
 import GPS
 from gnatprove import (
     GNATPROVE_CE_GEN_CATEGORY,
+    ContextData,
+    get_context_data,
     logger,
     ExternalProcessError,
     print_error,
     print_info,
     print_newline,
     print_warning,
-    spec_location,
 )
-from spark_ce2test import split_location, get_gnattest_hash, run_gnattest
+from spark_ce2test import get_gnattest_hash, run_gnattest
 from workflows.promises import ProcessWrapper, TargetWrapper
 
 # The following target names must be unique. See similar constants in
@@ -36,34 +36,18 @@ GNATTEST_TARGET = "Run GNATtest to find counterexample candidates"
 GNATFUZZ_TARGET = "Run GNATfuzz to find counterexample candidates"
 
 
-@dataclass
-class Config:
-    """A configuration record holding parameters for test generation."""
-
-    artifacts_dir: str
-    project_name: str
-    project_path: str
-    unit_name: str
-    hash_value: str
-    spec_file: str
-    spec_line: str
-    check_file: str
-    check_line: str
-    check_col: str
-
-
 class ValueNotFoundError(RuntimeError):
     def __init__(self, message):
         super().__init__(message)
 
 
-def _extract_ce_candidates(config: Config):
+def _extract_ce_candidates(config: ContextData, hash_value: str):
     """
     Extracts counterexample candidates from the GNATtest JSON output
     and writes them to a .ce file.
     """
     test_values = _get_test_case_from_gnattest_json(
-        config.artifacts_dir, config.unit_name, config.hash_value
+        config.artifacts_dir, config.unit_name, hash_value
     )
 
     if not test_values:
@@ -119,7 +103,7 @@ def _fuzz(sub_id: int, force: bool):
         raise ExternalProcessError(f"Call to gnatfuzz failed with exit code {status}")
 
 
-def _get_gnatfuzz_subprogram_id(config: Config):
+def _get_gnatfuzz_subprogram_id(config: ContextData):
     """
     Retrieve the subprogram's ID that GNATfuzz uses to refer to the subprogram
 
@@ -134,10 +118,6 @@ def _get_gnatfuzz_subprogram_id(config: Config):
         * ValueNotFoundError when the given subprogram is not found among the
             fuzzable subprograms in the analysis result.
     """
-    # FIXME These local vars can be inlined ?
-    filename = config.spec_file
-    line = config.spec_line
-    artifacts_dir = config.artifacts_dir
 
     command = [
         "gnatfuzz",
@@ -161,7 +141,7 @@ def _get_gnatfuzz_subprogram_id(config: Config):
     # TODO: eng/spark/spark2014#1140 - Also check the issues.log.
     # This is not yet possible (cf. eng/das/fuzz/gnatfuzz#1120).
 
-    json_path = os.path.join(artifacts_dir, "gnatfuzz", "analyze.json")
+    json_path = os.path.join(config.artifacts_dir, "gnatfuzz", "analyze.json")
 
     id = None
     with open(json_path, "r") as f:
@@ -172,7 +152,10 @@ def _get_gnatfuzz_subprogram_id(config: Config):
             start_line = sub.get("start_line", {})
             source_filename = sub.get("source_filename", {})
 
-            if str(start_line) == str(line) and filename in source_filename:
+            if (
+                str(start_line) == str(config.spec_line)
+                and config.spec_file in source_filename
+            ):
                 id = sub.get("id", {})
                 break
 
@@ -187,18 +170,18 @@ def _get_gnatfuzz_subprogram_id(config: Config):
         # if the parent can be fuzzed etc.
 
         raise ValueNotFoundError(
-            f"Subprogram defined at {filename}:{line} is not"
+            f"Subprogram defined at {config.spec_file}:{config.spec_line} is not"
             " among the subprograms fuzzable by GNATfuzz."
             "\n"
             f"Full results of GNATfuzz analysis are in: {json_path}"
         )
 
 
-def _get_test_case_from_gnattest_json(gnattest_dir, unit_name, subp_hash):
+def _get_test_case_from_gnattest_json(artifacts_dir, unit_name, subp_hash):
     """Extract test vectors for the given subprogram from GNATtest JSON file"""
 
     json_file = os.path.join(
-        gnattest_dir,
+        artifacts_dir,
         "gnattest",
         "tests",
         "JSON_Tests",
@@ -216,7 +199,7 @@ def _get_test_case_from_gnattest_json(gnattest_dir, unit_name, subp_hash):
 
         # Dump the list of any other existing JSON_Tests file to the log for
         # debugging. But exit with an error nonetheless.
-        path_pattern = os.path.join(gnattest_dir, "**", "JSON_Tests", "**", "*.json")
+        path_pattern = os.path.join(artifacts_dir, "**", "JSON_Tests", "**", "*.json")
         candidates = glob(path_pattern, recursive=True)
         if candidates:
             file_list_str = "\n".join(candidates)
@@ -245,8 +228,6 @@ def run(
     Note: This function needs to be called as a GNAT Studio workflow.
 
     :param context: GPS context for the check.
-        Note: The 'context' object passed into this function cannot be reliably
-        used after calling this function.
     :param use_fuzzer: If True, use GNATfuzz for finding the test cases,
         otherwise use GNATtest's internal heuristics.
     :param force: Flag passed to GPS.BuildTarget. If True, all dialogs are
@@ -259,65 +240,19 @@ def run(
 
     print_info("Starting to generate counterexamples...")
 
-    # Extract location details
+    # Extract check details
 
-    check_loc = str(context.location())
-    logger.log(f"cegen.run check_loc={check_loc}")
-
-    logger.log("cegen.run trying to get gps_project ...")
-    gps_project = context.project()
-    logger.log(f"cegen.run gps_project={gps_project}")
-
-    # Look up the GPS project.
-    # Note: In aggregate projects it is important to stay within the GPS
-    # project of the given source file (and not go up to the root project) as
-    # this matches the the behavior or GNATprove and GNATtest in the use cases
-    # that are relevant here.
-    project_name = str.lower(gps_project.name())
-    project_path = gps_project.file().path
-    logger.log(f"cegen.run: project_name={project_name}, project_path={project_path}")
-
-    artifacts_dir = gps_project.artifacts_dir()
-
-    # Determine the GPS location of the spec.
-    # Note: 'context' becomes stale and must not be accessed any more.
-    gps_spec_loc = spec_location(context)
-    if not gps_spec_loc:
-        print_error("Unsupported context. Expecting a subprogram.")
-        return
-
-    spec_loc = str(gps_spec_loc)
-    logger.log(f"cegen.run spec_loc={spec_loc}")
-
-    spec_file, spec_line, spec_col = split_location(spec_loc)
-    check_file, check_line, check_col = split_location(check_loc)
-
-    unit_name = os.path.splitext(os.path.basename(spec_file))[0]
-
-    # Get the hash that GNATtest will use for the enclosing subprogram
+    config = get_context_data(context)
 
     try:
         hash_value = yield get_gnattest_hash(
-            project_path,
-            os.path.join("src", spec_file),
-            spec_line,
+            config.project_path,
+            os.path.join("src", config.spec_file),
+            config.spec_line,
         )
     except (ExternalProcessError, ValueError) as e:
         print_error(f"{e}")
         return
-
-    config = Config(
-        artifacts_dir=artifacts_dir,
-        project_name=project_name,
-        project_path=project_path,
-        unit_name=unit_name,
-        hash_value=hash_value,
-        spec_file=spec_file,
-        spec_line=spec_line,
-        check_file=check_file,
-        check_line=check_line,
-        check_col=check_col,
-    )
 
     if use_fuzzer:
         # Use the fuzzer to generate some potentially interesting test cases
@@ -353,4 +288,4 @@ def run(
             return
 
     # Extract counterexample candidates
-    _extract_ce_candidates(config)
+    _extract_ce_candidates(config, hash_value)
