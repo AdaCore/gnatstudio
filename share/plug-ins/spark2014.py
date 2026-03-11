@@ -20,8 +20,6 @@ from gnatprove import (
     GNATPROVE_MAIN_CATEGORY,
     current_subprogram,
     logger,
-    print_error,
-    spec_location,
 )
 
 import spark_ce2test
@@ -1061,47 +1059,25 @@ def on_prove_region(self):
 def on_generate_executable_test(context, force=False):
     logger.log("on_generate_executable_test starting ...")
 
-    check_loc = context.location()
-
-    spec_loc = spec_location(context)
-    if not spec_loc:
-        print_error("Unsupported context. Expecting a subprogram.")
-        return
-
     yield spark_ce2test.run(
-        str(spec_loc),
-        str(check_loc),
+        context,
         drop_severity_prefix(context._loc_msg.get_text()),
         force,
     )
-
-
-def _generate_counter_example_with_gnattest(context, use_fuzzer, force):
-
-    check_loc = context.location()
-
-    spec_loc = spec_location(context)
-    if not spec_loc:
-        print_error("Unsupported context. Expecting a subprogram.")
-        return
-
-    yield spark_cegen.run(str(spec_loc), str(check_loc), use_fuzzer, force)
 
 
 @workflows.run_as_workflow
 def on_generate_counter_example_with_gnattest(context, force=False):
     logger.log("on_generate_counter_example_with_gnattest starting ...")
 
-    yield _generate_counter_example_with_gnattest(
-        context, use_fuzzer=False, force=force
-    )
+    yield spark_cegen.run(context, use_fuzzer=False, force=force)
 
 
 @workflows.run_as_workflow
 def on_generate_counter_example_with_gnatfuzz(context, force=False):
     logger.log("on_generate_counter_example_with_gnatfuzz starting ...")
 
-    yield _generate_counter_example_with_gnattest(context, use_fuzzer=True, force=force)
+    yield spark_cegen.run(context, use_fuzzer=True, force=force)
 
 
 def on_show_report(self):

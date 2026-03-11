@@ -10,7 +10,7 @@
     <read-only>TRUE</read-only>
     <command-line>
       <arg>gnattest</arg>
-      <arg>-P%PP</arg>
+      <arg>-P%pp</arg>
       <arg>%X</arg>
       <arg>--gen-test-vectors</arg>
       <arg>--gen-test-num=1</arg>
@@ -29,8 +29,9 @@
     <read-only>TRUE</read-only>
     <command-line>
       <arg>gnattest</arg>
-      <arg>-P%PP</arg>
+      <arg>-P%pp</arg>
       <arg>%X</arg>
+      <arg>--gen-test-vectors</arg>
     </command-line>
     <output-parsers>
       {output_parsers}
@@ -46,7 +47,7 @@
     <read-only>TRUE</read-only>
     <command-line>
       <arg>gnattest</arg>
-      <arg>-P%PP</arg>
+      <arg>-P%pp</arg>
       <arg>%X</arg>
       <arg>--gen-test-vectors</arg>
       <arg>--gen-test-num=100</arg>

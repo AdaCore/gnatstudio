@@ -68,40 +68,60 @@ def print_newline() -> None:
     GPS.Console(MESSAGES).write("\n")
 
 
-def current_subprogram(self):
+def current_subprogram(context):
     """
     Return the LAL node corresponding to the subprogram enclosing the current
     context, or None
     """
 
-    curloc = self.location()
-    buf = GPS.EditorBuffer.get(curloc.file(), open=False)
-    if not buf:
-        return False
-    unit = buf.get_analysis_unit()
+    curloc = context.location()
+
+    # Return None when called from non-editor context
+    if not GPS.EditorBuffer.get(curloc.file(), open=False):
+        return None
+
+    # Handle to the project associated with the current context and source file.
+    # Note: In aggregate projects this isn't necessarily the root project
+    # that is loaded to GNAT Studio.
+    gps_project = context.project()
+
+    # In aggregate projects the unit provider that is associated with the
+    # editor buffer cannot reliably resolve the subprogram's declaration.
+    # Hence, a dedicated unit provider that is aware of both both projects is
+    # created and used next.
+    unit_provider = lal.UnitProvider.for_project(
+        GPS.Project.root().file().path, project=gps_project.file().path
+    )
+    analysis_context = lal.AnalysisContext(unit_provider=unit_provider)
+
+    # Get the analysis unit for the current source file
+    unit = analysis_context.get_from_file(curloc.file().path)
     if not unit.root:
-        logger.log(f"failed to load unit {buf.file().name()!r}")
+        logger.log(f"failed to load unit {curloc.file().path()!r}")
         if unit.diagnostics:
             logger.log(
                 "unit diagnostics:\n" + "\n".join([str(d) for d in unit.diagnostics])
             )
         return None
     node = unit.root.lookup(lal.Sloc(curloc.line(), curloc.column()))
+
     return get_enclosing_subprogram(node)
 
 
 def spec_location(context) -> GPS.EditorLocation | None:
     """
-    Return GPS.EditorLocation for the spec of the subprogram enclosing the context node,
-    or None when the context is not enclosed in a subprogram
+    Return GPS.EditorLocation for the spec of the subprogram enclosing the
+    context node, or None when the context is not enclosed in a subprogram
     """
 
     subprogram_node = current_subprogram(context)
+    logger.log(f"spec_location: Current subprogram_node {subprogram_node}")
     if subprogram_node:
-        previous_part = subprogram_node.p_previous_part_for_decl()
-        if previous_part:
+        decl_part = subprogram_node.p_decl_part()
+        logger.log(f"spec_location: Current decl_part {decl_part}")
+        if decl_part:
             # The original context was in the subprogram body
-            return previous_part.gps_location()
+            return decl_part.gps_location()
         else:
             # The original context was in the subprogram spec, e.g., expression
             # function. Return the location of the current subprogram.

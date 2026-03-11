@@ -19,6 +19,7 @@ from gnatprove import (
     print_error,
     print_info,
     print_warning,
+    spec_location,
 )
 from workflows.promises import ProcessWrapper, TargetWrapper
 
@@ -154,7 +155,7 @@ def split_location(s):
     return None, None, None
 
 
-def get_gnattest_hash(project_name, filename, line):
+def get_gnattest_hash(project_path, filename, line):
     """
     Retrieve the hash that GNATtest uses to refer to the subprogram enclosing
     the given source location. The call to GNATtest occurs in the background.
@@ -167,7 +168,7 @@ def get_gnattest_hash(project_name, filename, line):
 
     command = [
         "gnattest",
-        f"-P{project_name}.gpr",
+        f"-P{project_path}",
         f"--dump-subp-hash={filename}:{line}",
         "--quiet",
     ]
@@ -227,7 +228,7 @@ def run_gnattest(filename, line, target, force):
         raise ExternalProcessError(f"Call to gnattest failed with exit code {status}")
 
 
-def run(spec_loc, check_loc, check_message, force=False):
+def run(context, check_message, force=False):
     """
     Generate an executable harness for the given check location
 
@@ -243,8 +244,9 @@ def run(spec_loc, check_loc, check_message, force=False):
 
     Note: This function needs to be called as a GNAT Studio workflow.
 
-    :param spec_loc: Source code location of the spec.
-    :param check_loc: Source code location of the given GNATprove check.
+    :param context: GPS context for the check.
+        Note: The 'context' object passed into this function cannot be reliably
+        used after calling this function.
     :param check_message: The top-level part of the GNATprove's check message.
         It is used to match the entry in the .spark file with the right check
         when there are multiple checks for the same line and column.
@@ -260,11 +262,40 @@ def run(spec_loc, check_loc, check_message, force=False):
 
     # Find the .spark file for the Ada unit that defines the enclosing subprogram
 
+    check_loc = str(context.location())
+    logger.log(f"ce2test.run check_loc={check_loc}")
+
+    logger.log("ce2test.run trying to get gps_project ...")
+    gps_project = context.project()
+    logger.log(f"ce2test.run gps_project={gps_project}")
+
+    # Look up the GPS project.
+    # Note: In aggregate projects it is important to stay within the GPS
+    # project of the given source file (and not go up to the root project) as
+    # this matches the the behavior or GNATprove and GNATtest in the use cases
+    # that are relevant here.
+    project_name = str.lower(gps_project.name())
+    project_path = gps_project.file().path
+    logger.log(f"ce2test.run: project_name={project_name}, project_path={project_path}")
+
+    object_dirs = gps_project.object_dirs(recursive=False)
+
+    # Determine the GPS location of the spec.
+    # Note: 'context' becomes stale and must not be accessed any more.
+    gps_spec_loc = spec_location(context)
+    if not gps_spec_loc:
+        print_error("Unsupported context. Expecting a subprogram.")
+        return
+
+    spec_loc = str(gps_spec_loc)
+    logger.log(f"ce2test.run spec_loc={spec_loc}")
+
     spec_file, spec_line, spec_col = split_location(spec_loc)
     check_file, check_line, check_col = split_location(check_loc)
 
-    project_name = str.lower(GPS.Project.root().name())
     unit_name = os.path.splitext(os.path.basename(spec_file))[0]
+
+    logger.log(f"ce2test.run: unit_name={unit_name}")
 
     logger.log(f"ce2test.run: spec={spec_loc}")
     logger.log(f"ce2test.run: subp={check_loc}")
@@ -274,11 +305,10 @@ def run(spec_loc, check_loc, check_message, force=False):
         f"ce2test.run: check_file={check_file}, check_line={check_line}"
         f", check_col={check_col}"
     )
-    logger.log(f"ce2test.run: project_name={project_name}")
-    logger.log(f"ce2test.run: unit_name={unit_name}")
 
     spark_filenames = []
-    for base_dir in GPS.Project.root().object_dirs(recursive=False):
+    # Look in the object dir of the *current* gps project.
+    for base_dir in object_dirs:
         spark_filenames.extend(
             glob.glob(os.path.join(base_dir, "gnatprove", f"{unit_name}.spark"))
         )
@@ -321,7 +351,7 @@ def run(spec_loc, check_loc, check_message, force=False):
 
     try:
         hash_value = yield get_gnattest_hash(
-            project_name, os.path.join("src", spec_file), spec_line
+            project_path, os.path.join("src", spec_file), spec_line
         )
     except (ExternalProcessError, ValueError) as e:
         print_error(f"{e}")
@@ -351,7 +381,8 @@ def run(spec_loc, check_loc, check_message, force=False):
     if not os.path.isfile(json_file):
         print_error(f"GNATtest generated JSON file not found: {json_file}")
         json_files = []
-        for base_dir in GPS.Project.root().object_dirs(recursive=False):
+        # Look in the object dir of the *current* gps project.
+        for base_dir in object_dirs:
             json_files.extend(
                 glob.glob(os.path.join(base_dir, "**", "*.json"), recursive=True)
             )

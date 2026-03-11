@@ -12,7 +12,7 @@
       <arg>gnatfuzz</arg>
       <arg>fuzz-everything</arg>
       <arg>test</arg>
-      <arg>-P%PP</arg>
+      <arg>-P%pp</arg>
     </command-line>
     <output-parsers>
       {output_parsers}
