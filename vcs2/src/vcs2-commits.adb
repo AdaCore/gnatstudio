@@ -18,6 +18,8 @@
 with Ada.Strings.Unbounded;       use Ada.Strings.Unbounded;
 with GNAT.Strings;                use GNAT.Strings;
 
+with VSS.Strings;
+
 with Glib.Object;                 use Glib.Object;
 with Glib.Values;                 use Glib.Values;
 with Glib_Values_Utils;           use Glib_Values_Utils;
@@ -39,6 +41,7 @@ with Gtk.Enums;                   use Gtk.Enums;
 with Gtk.Gesture_Long_Press;      use Gtk.Gesture_Long_Press;
 with Gtk.Gesture_Multi_Press;     use Gtk.Gesture_Multi_Press;
 with Gtk.Label;                   use Gtk.Label;
+with Gtk.Label.VSS_Utils;
 with Gtk.Menu;                    use Gtk.Menu;
 with Gtk.Scrolled_Window;         use Gtk.Scrolled_Window;
 with Gtk.Text_Tag;                use Gtk.Text_Tag;
@@ -356,6 +359,8 @@ package body VCS2.Commits is
       Widget   : not null access Gtk.Widget.Gtk_Widget_Record'Class;
       X, Y     : Glib.Gint) return Gtk.Widget.Gtk_Widget
    is
+      use type VSS.Strings.Virtual_String;
+
       pragma Unreferenced (Widget);
       Filter_Iter : Gtk_Tree_Iter;
       Iter        : Gtk_Tree_Iter;
@@ -369,7 +374,7 @@ package body VCS2.Commits is
          File := Get_File_From_Node (Self.View.Tree, Iter);
          if File /= No_File then
             Self.Set_Tip_Area (Area);
-            Gtk_New
+            Gtk.Label.VSS_Utils.Gtk_New
               (Label,
                -("Click on the checkbox to stage the file, so that it is part"
                  & " of the next commit")

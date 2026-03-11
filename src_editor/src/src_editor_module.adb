@@ -124,7 +124,8 @@ package body Src_Editor_Module is
      (Child : access Editor_Child_Record;
       Menu  : access Gtk.Menu.Gtk_Menu_Record'Class);
    overriding function Get_Tooltip
-     (Self  : not null access Editor_Child_Record) return String;
+     (Self : not null access Editor_Child_Record)
+      return VSS.Strings.Virtual_String;
    overriding function Get_Tooltip_Is_Markup
      (Self  : not null access Editor_Child_Record) return Boolean is (True);
    overriding function Get_Command_Queue
@@ -3749,7 +3750,8 @@ package body Src_Editor_Module is
    -----------------
 
    overriding function Get_Tooltip
-     (Self  : not null access Editor_Child_Record) return String is
+     (Self : not null access Editor_Child_Record)
+      return VSS.Strings.Virtual_String is
    begin
       return Get_Tooltip_For_File
         (Kernel    => Self.Kernel,

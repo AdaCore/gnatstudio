@@ -177,6 +177,10 @@ package GPS.Kernel.MDI is
       Areas               : Allowed_Areas := Both);
    --  Internal version of Gtk_New
 
+   function Get_Tooltip
+     (Self : not null access GPS_MDI_Child_Record)
+      return VSS.Strings.Virtual_String is (VSS.Strings.Empty_Virtual_String);
+
    overriding function Save_Desktop
      (Self : not null access GPS_MDI_Child_Record)
       return Glib.Xml_Int.Node_Ptr;
@@ -365,11 +369,11 @@ package GPS.Kernel.MDI is
    --  manipulated by GNAT Studio:
 
    function Get_Tooltip_For_File
-     (Kernel  : not null access Kernel_Handle_Record'Class;
-      File    : GNATCOLL.VFS.Virtual_File;
-      Project : GNATCOLL.Projects.Project_Type := GNATCOLL.Projects.No_Project;
-      With_VCS : Boolean := True)
-      return String;
+     (Kernel   : not null access Kernel_Handle_Record'Class;
+      File     : GNATCOLL.VFS.Virtual_File;
+      Project  : GNATCOLL.Projects.Project_Type :=
+        GNATCOLL.Projects.No_Project;
+      With_VCS : Boolean := True) return VSS.Strings.Virtual_String;
    --  Return the tooltip text for a file (which belongs to a specific
    --  project, possibly looked up dynamically if unspecified and
    --  unambiguous).
@@ -377,10 +381,10 @@ package GPS.Kernel.MDI is
    --  This is markup text (including <b> special markup)
 
    function Get_Tooltip_For_Directory
-     (Kernel  : not null access Kernel_Handle_Record'Class;
+     (Kernel    : not null access Kernel_Handle_Record'Class;
       Directory : GNATCOLL.VFS.Virtual_File;
-      Project : GNATCOLL.Projects.Project_Type := GNATCOLL.Projects.No_Project)
-      return String;
+      Project   : GNATCOLL.Projects.Project_Type :=
+        GNATCOLL.Projects.No_Project) return VSS.Strings.Virtual_String;
    --  Return the tooltip text for a directory.
    --  This is markup text (including <b> special markup)
 
@@ -590,6 +594,9 @@ private
 
       File_Monitored      : Monitored_File := No_Monitored_File;
    end record;
+
+   overriding function Get_Tooltip
+     (Self : not null access GPS_MDI_Child_Record) return String;
 
    type MDI_Location_Marker_Data is new Location_Marker_Data with record
       Title  : Unbounded_String;

@@ -16,6 +16,7 @@
 ------------------------------------------------------------------------------
 
 with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
+
 with GNATCOLL.Symbols;      use GNATCOLL.Symbols;
 with GNATCOLL.Traces;       use GNATCOLL.Traces;
 with GNATCOLL.Utils;        use GNATCOLL.Utils;
@@ -28,6 +29,7 @@ with Glib.Convert;          use Glib.Convert;
 with Gdk.Dnd;               use Gdk.Dnd;
 with Gtk.Dnd;               use Gtk.Dnd;
 with Gtk.Label;             use Gtk.Label;
+with Gtk.Label.VSS_Utils;
 with Gtk.Selection_Data;    use Gtk.Selection_Data;
 with Gtk.Target_List;
 with Gtk.Tree_Selection;    use Gtk.Tree_Selection;
@@ -1030,7 +1032,7 @@ package body Project_Explorers_Common is
                Gtk_New (Label, File.Display_Full_Name);
 
             when Directory_Node_Types =>
-               Gtk_New
+               Gtk.Label.VSS_Utils.Gtk_New
                  (Label,
                   Get_Tooltip_For_Directory
                     (Kernel    => Self.Tree.Kernel,
@@ -1041,7 +1043,7 @@ package body Project_Explorers_Common is
                Label.Set_Use_Markup (True);
 
             when File_Node_Types =>
-               Gtk_New
+               Gtk.Label.VSS_Utils.Gtk_New
                  (Label,
                   Get_Tooltip_For_File
                     (Kernel    => Self.Tree.Kernel,

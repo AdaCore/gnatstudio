@@ -20,9 +20,13 @@
 --  do not force a whole recompilation of the project.
 
 with Ada.Strings.Unbounded;    use Ada.Strings.Unbounded;
+
+with VSS.Strings;
+
 with GNATCOLL.Projects;        use GNATCOLL.Projects;
 with GNATCOLL.Scripts;         use GNATCOLL.Scripts;
 with GNATCOLL.VFS;             use GNATCOLL.VFS;
+
 with GPS.Scripts;              use GPS.Scripts;
 with Gtk.Widget;               use Gtk.Widget;
 
@@ -209,7 +213,7 @@ package GPS.VCS is
    function Get_Tooltip_For_File
      (VCS        : not null access Abstract_VCS_Engine;
       Dummy_File : GNATCOLL.VFS.Virtual_File)
-      return String is ("");
+      return VSS.Strings.Virtual_String is (VSS.Strings.Empty_Virtual_String);
    --  Return a description of the file's properties, suitable for display
    --  in tooltips.
 

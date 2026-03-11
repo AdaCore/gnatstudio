@@ -20,14 +20,16 @@ with Ada.Containers.Doubly_Linked_Lists;
 with Ada.Containers.Vectors;
 with Ada.Tags;
 with Ada.Unchecked_Conversion;
-
-with Informational_Popups;      use Informational_Popups;
 with GNAT.Strings;              use GNAT.Strings;
+
+with VSS.Characters.Latin;
+with VSS.Strings.Conversions;
 
 with GNATCOLL.Projects;         use GNATCOLL.Projects;
 with GNATCOLL.Scripts;          use GNATCOLL.Scripts;
 with GNATCOLL.Traces;           use GNATCOLL.Traces;
 with GNATCOLL.VFS;              use GNATCOLL.VFS;
+with GNATCOLL.VFS.VSS_Utils;
 
 with Glib.Main;                 use Glib.Main;
 with Glib.Object;               use Glib.Object;
@@ -70,6 +72,7 @@ with Basic_Types;               use Basic_Types;
 with Commands.Interactive;      use Commands, Commands.Interactive;
 with Default_Preferences;       use Default_Preferences;
 with Default_Preferences.Enums; use Default_Preferences.Enums;
+with Informational_Popups;      use Informational_Popups;
 
 with GPS.Intl;                  use GPS.Intl;
 with GPS.Kernel.Actions;        use GPS.Kernel.Actions;
@@ -265,6 +268,16 @@ package body GPS.Kernel.MDI is
 
       return Get_Main_Window (Handle);
    end Get_Current_Window;
+
+   -----------------
+   -- Get_Tooltip --
+   -----------------
+
+   overriding function Get_Tooltip
+     (Self : not null access GPS_MDI_Child_Record) return String is
+   begin
+      return VSS.Strings.Conversions.To_UTF_8_String (Self.Get_Tooltip);
+   end Get_Tooltip;
 
    -------------
    -- Gtk_New --
@@ -2928,24 +2941,61 @@ package body GPS.Kernel.MDI is
       return Child.Toolbar;
    end Get_Toolbar;
 
+   -------------------------------
+   -- Get_Tooltip_For_Directory --
+   -------------------------------
+
+   function Get_Tooltip_For_Directory
+     (Kernel    : not null access Kernel_Handle_Record'Class;
+      Directory : GNATCOLL.VFS.Virtual_File;
+      Project   : GNATCOLL.Projects.Project_Type :=
+        GNATCOLL.Projects.No_Project) return VSS.Strings.Virtual_String
+   is
+      use type VSS.Strings.Virtual_String;
+
+      LF : VSS.Characters.Virtual_Character renames
+        VSS.Characters.Latin.Line_Feed;
+
+   begin
+      return "<b>Absolute directory:</b>" & LF
+        & GNATCOLL.VFS.VSS_Utils.Full_Name (Directory) & LF
+        & "<b>Relative to root:</b>" & LF
+        & GNATCOLL.VFS.VSS_Utils.Relative_Path
+           (Directory, Get_Project (Kernel).Project_Path.Dir) & LF
+        & (if Project = No_Project
+           then ""
+           else "<b>In project:</b> "
+             & VSS.Strings.Conversions.To_Virtual_String (Project.Name));
+   end Get_Tooltip_For_Directory;
+
    --------------------------
    -- Get_Tooltip_For_File --
    --------------------------
 
    function Get_Tooltip_For_File
-     (Kernel  : not null access Kernel_Handle_Record'Class;
-      File    : GNATCOLL.VFS.Virtual_File;
-      Project : GNATCOLL.Projects.Project_Type := GNATCOLL.Projects.No_Project;
-      With_VCS : Boolean := True)
-      return String
+     (Kernel   : not null access Kernel_Handle_Record'Class;
+      File     : GNATCOLL.VFS.Virtual_File;
+      Project  : GNATCOLL.Projects.Project_Type :=
+        GNATCOLL.Projects.No_Project;
+      With_VCS : Boolean := True) return VSS.Strings.Virtual_String
    is
-      function Get_VCS return String;
-      function Get_VCS return String is
+      use type VSS.Strings.Virtual_String;
+
+      LF : VSS.Characters.Virtual_Character renames
+        VSS.Characters.Latin.Line_Feed;
+
+      function Get_VCS return VSS.Strings.Virtual_String;
+
+      -------------
+      -- Get_VCS --
+      -------------
+
+      function Get_VCS return VSS.Strings.Virtual_String is
          VCS        : constant Abstract_VCS_System_Access := Kernel.VCS;
          VCS_Engine : Abstract_VCS_Engine_Access;
       begin
          if VCS = null then
-            return "";
+            return VSS.Strings.Empty_Virtual_String;
          end if;
 
          if Project = No_Project then
@@ -2955,7 +3005,7 @@ package body GPS.Kernel.MDI is
          end if;
 
          if VCS_Engine = null then
-            return "";
+            return VSS.Strings.Empty_Virtual_String;
          else
             return VCS_Engine.Get_Tooltip_For_File (File);
          end if;
@@ -2967,41 +3017,23 @@ package body GPS.Kernel.MDI is
       end if;
 
       declare
-         V : constant String := (if With_VCS then Get_VCS else "");
+         V : constant VSS.Strings.Virtual_String :=
+           (if With_VCS then Get_VCS else VSS.Strings.Empty_Virtual_String);
+
       begin
          return
-           File.Display_Base_Name & ASCII.LF
-           & "<b>Absolute:</b>" & ASCII.LF
-           & "  " & File.Dir.Display_Full_Name & ASCII.LF
-           & "<b>Relative to root:</b>" & ASCII.LF
-           & "  " & (+File.Dir.Relative_Path
-              (Get_Project (Kernel).Project_Path.Dir))
+           GNATCOLL.VFS.VSS_Utils.Base_Name (File) & LF
+           & "<b>Absolute:</b>" & LF
+           & "  " & GNATCOLL.VFS.VSS_Utils.Full_Name (File.Dir) & LF
+           & "<b>Relative to root:</b>" & LF
+           & "  " & GNATCOLL.VFS.VSS_Utils.Relative_Path
+             (File.Dir, Get_Project (Kernel).Project_Path.Dir)
            & (if Project = No_Project
-              then ASCII.LF & "<b>Not part of any loaded project</b>"
-              else ASCII.LF & "<b>In project:</b> " & Project.Name)
-           & (if V = "" then "" else ASCII.LF & V);
+              then LF & "<b>Not part of any loaded project</b>"
+              else LF & "<b>In project:</b> "
+                & VSS.Strings.Conversions.To_Virtual_String (Project.Name))
+           & (if V.Is_Empty then VSS.Strings.Empty_Virtual_String else LF & V);
       end;
    end Get_Tooltip_For_File;
-
-   -------------------------------
-   -- Get_Tooltip_For_Directory --
-   -------------------------------
-
-   function Get_Tooltip_For_Directory
-     (Kernel    : not null access Kernel_Handle_Record'Class;
-      Directory : GNATCOLL.VFS.Virtual_File;
-      Project : GNATCOLL.Projects.Project_Type := GNATCOLL.Projects.No_Project)
-      return String
-   is
-   begin
-      return "<b>Absolute directory:</b>" & ASCII.LF
-        & Directory.Display_Full_Name & ASCII.LF
-        & "<b>Relative to root:</b>" & ASCII.LF
-        & (+Directory.Relative_Path
-           (Get_Project (Kernel).Project_Path.Dir)) & ASCII.LF
-        & (if Project = No_Project
-           then ""
-           else "<b>In project:</b> " & Project.Name);
-   end Get_Tooltip_For_Directory;
 
 end GPS.Kernel.MDI;

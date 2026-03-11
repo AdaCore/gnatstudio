@@ -11,22 +11,45 @@ import gs_utils.internal.dialogs as dialogs
 
 @run_test_driver
 def test_driver():
-    yield wait_tasks()
     GPS.Preference("LSP-Semantic-Highlighting").set(True)
     yield wait_tasks()
-    buf = GPS.EditorBuffer.get(GPS.File("foo.adb"))
-    editor_view = buf.current_view()
+
+    buf = GPS.EditorBuffer.get(GPS.File("p.adb"))
     yield wait_language_server("textDocument/semanticTokens/full")
     yield wait_idle()
+    gps_assert(
+        get_all_tags(buf).count("variable-globalvariable"),
+        2,
+        "The highlighting is not correct",
+    )
 
-    tags = get_all_tags(buf)
-    tags_list = tags.split("\n")
+    # check that we have semantic highlighting after `undo`
+    buf.delete(buf.at(4, 1), buf.at(6, 1))
+    yield wait_idle()
+    yield wait_language_server("textDocument/semanticTokens/range")
+    yield wait_idle()
+    gps_assert(
+        get_all_tags(buf).count("variable-globalvariable"),
+        0,
+        "The highlighting is not correct",
+    )
 
-    gps_assert(len(tags_list), 48, "The highlighting is not correct")
+    GPS.execute_action("undo")
+    yield wait_idle()
+    yield wait_language_server("textDocument/semanticTokens/range")
+    yield wait_idle()
+    gps_assert(
+        get_all_tags(buf).count("variable-globalvariable"),
+        2,
+        "The highlighting is not correct",
+    )
 
+    # check that the preference works
     GPS.Preference("LSP-Semantic-Highlighting").set(False)
     yield hook("clear_highlighting")
     yield wait_idle()
-
-    changed = tags != get_all_tags(buf)
-    gps_assert(changed, True, "Semantic highlighting should be off")
+    gps_assert(
+        get_all_tags(buf).count("variable-globalvariable"),
+        0,
+        "Semantic highlighting should be off",
+    )
