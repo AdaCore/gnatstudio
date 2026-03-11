@@ -277,7 +277,7 @@ def run(
     project_path = gps_project.file().path
     logger.log(f"cegen.run: project_name={project_name}, project_path={project_path}")
 
-    object_dirs = gps_project.object_dirs(recursive=False)
+    artifacts_dir = gps_project.artifacts_dir()
 
     # Determine the GPS location of the spec.
     # Note: 'context' becomes stale and must not be accessed any more.
@@ -304,18 +304,6 @@ def run(
         )
     except (ExternalProcessError, ValueError) as e:
         print_error(f"{e}")
-        return
-
-    # Find the artifacts directory (the parent of 'gnattest' directory)
-
-    artifacts_dir = None
-    for base_dir in object_dirs:
-        if os.path.isdir(os.path.join(base_dir, "gnattest")):
-            artifacts_dir = base_dir
-            break
-
-    if not artifacts_dir:
-        print_error("Could not find 'gnattest' dir.")
         return
 
     config = Config(

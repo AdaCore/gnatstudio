@@ -278,7 +278,7 @@ def run(context, check_message, force=False):
     project_path = gps_project.file().path
     logger.log(f"ce2test.run: project_name={project_name}, project_path={project_path}")
 
-    object_dirs = gps_project.object_dirs(recursive=False)
+    artifacts_dir = gps_project.artifacts_dir()
 
     # Determine the GPS location of the spec.
     # Note: 'context' becomes stale and must not be accessed any more.
@@ -306,28 +306,10 @@ def run(context, check_message, force=False):
         f", check_col={check_col}"
     )
 
-    spark_filenames = []
-    # Look in the object dir of the *current* gps project.
-    for base_dir in object_dirs:
-        spark_filenames.extend(
-            glob.glob(os.path.join(base_dir, "gnatprove", f"{unit_name}.spark"))
-        )
-
-    if not spark_filenames:
-        print_error(f"Could not find generated .spark file for unit {unit_name}.")
+    spark_filename = os.path.join(artifacts_dir, "gnatprove", f"{unit_name}.spark")
+    if not os.path.exists(spark_filename):
+        print_error(f"File '{spark_filename}' not found")
         return
-    elif len(spark_filenames) > 1:
-        print_error(
-            f"Multiple .spark files found for the unit '{unit_name}':"
-            + "\n"
-            + "\n".join(spark_filenames)
-            + "\nPlease clean the object directories and try again."
-        )
-        return
-
-    spark_filename = spark_filenames[0]
-    artifacts_dir = os.path.dirname(os.path.dirname(spark_filename))
-
     logger.log(f"Found .spark file {spark_filename}")
 
     # Retrieve the relevant counterexample from the .spark file
@@ -380,12 +362,9 @@ def run(context, check_message, force=False):
 
     if not os.path.isfile(json_file):
         print_error(f"GNATtest generated JSON file not found: {json_file}")
-        json_files = []
-        # Look in the object dir of the *current* gps project.
-        for base_dir in object_dirs:
-            json_files.extend(
-                glob.glob(os.path.join(base_dir, "**", "*.json"), recursive=True)
-            )
+        json_files = glob.glob(
+            os.path.join(artifacts_dir, "**", "*.json"), recursive=True
+        )
         logger.log("Found .json files in object directories:\n" + "\n".join(json_files))
         print_error("Aborting")
         return
