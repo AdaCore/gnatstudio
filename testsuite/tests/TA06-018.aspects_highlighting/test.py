@@ -18,7 +18,7 @@ def run_test():
 
     buf.current_view().goto(buf.at(13, 53))
     send_key_event(GDK_RETURN)
-    yield wait_language_server("textDocument/semanticTokens/range")
+    yield wait_language_server("textDocument/semanticTokens/full")
     yield wait_idle()
 
     gps_assert(

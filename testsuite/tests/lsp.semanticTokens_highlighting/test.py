@@ -26,7 +26,7 @@ def test_driver():
     # check that we have semantic highlighting after `undo`
     buf.delete(buf.at(4, 1), buf.at(6, 1))
     yield wait_idle()
-    yield wait_language_server("textDocument/semanticTokens/range")
+    yield wait_language_server("textDocument/semanticTokens/full")
     yield wait_idle()
     gps_assert(
         get_all_tags(buf).count("variable-globalvariable"),

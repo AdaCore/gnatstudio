@@ -1249,6 +1249,9 @@ package body Src_Editor_Buffer is
    is
       Start_Iter : Gtk_Text_Iter;
       End_Iter   : Gtk_Text_Iter;
+      First_Line : Glib.Gint;
+      Last_Line  : Glib.Gint;
+      Whole_File : Boolean;
    begin
       if not Buffer.Highlighter.Highlight_Needed then
          return;
@@ -1257,15 +1260,25 @@ package body Src_Editor_Buffer is
       --  to highlight keywords etc.
       Buffer.Highlighter.Highlight_Region;
 
+      Get_Bounds (Buffer, Start_Iter, End_Iter);
+      First_Line := Get_Line (Start_Iter);
+      Last_Line := Get_Line (End_Iter);
+
       Get_Iter_At_Mark
         (Buffer, Start_Iter, Buffer.Highlighter.First_Highlight_Mark);
       Get_Iter_At_Mark
         (Buffer, End_Iter, Buffer.Highlighter.Last_Highlight_Mark);
 
+      Whole_File := Get_Line (Start_Iter) = First_Line
+        and then Get_Line (End_Iter) = Last_Line;
+
+      --  If we are going to highlight whole file then set From+Line = 0, so
+      --  LSP semantic highlighter could use "full" request.
       Highlight_Range_Hook.Run
         (Kernel    => Buffer.Kernel,
          File      => Buffer.Filename,
-         From_Line => Natural (Get_Line (Start_Iter) + 1),
+         From_Line =>
+           (if Whole_File then 0 else Natural (Get_Line (Start_Iter) + 1)),
          To_Line   => Natural (Get_Line (End_Iter) + 1));
 
       Buffer.Highlighter.Highlight_Needed := False;
