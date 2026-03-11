@@ -587,6 +587,27 @@ package body DAP.Modules.Scripts is
                & Visual.Client.Get_Status'Img);
          end if;
 
+      elsif Command = "connect_to_target" then
+         Inst   := Nth_Arg (Data, 1, New_Class (Kernel, "Debugger"));
+         Visual := DAP_Visual_Debugger_Access
+           (Glib.Object.GObject'(Get_Data (Inst)));
+
+         declare
+            Target   : constant String  := Nth_Arg (Data, 2, "");
+            Pid      : constant Integer := Nth_Arg (Data, 3, -1);
+            --  Nth_Arg (Data, 4) which is "Protocol" is ignored for DAP
+            Force    : constant Boolean := Nth_Arg (Data, 5, False);
+         begin
+            if not Force and then Visual.Client.Is_Stopped then
+               Set_Error_Msg
+                 (Data, "Already connected to a target.");
+               return;
+            end if;
+            Visual.Client.Connect_To_Target
+              (Target => VSS.Strings.Conversions.To_Virtual_String (Target),
+               PID    => Pid);
+         end;
+
       elsif Command = "continue_execution" then
          Inst   := Nth_Arg (Data, 1, New_Class (Kernel, "Debugger"));
          Visual := DAP_Visual_Debugger_Access
@@ -852,6 +873,15 @@ package body DAP.Modules.Scripts is
          Class        => Class);
       Kernel.Scripts.Register_Command
         ("start",
+         Handler      => Shell_Handler'Access,
+         Class        => Class);
+      Kernel.Scripts.Register_Command
+        ("connect_to_target",
+         Params        =>
+           (1 => Param ("target", Optional => True),
+            2 => Param ("pid", Optional => True),
+            3 => Param ("protocol", Optional => True),
+            4 => Param ("force", Optional => True)),
          Handler      => Shell_Handler'Access,
          Class        => Class);
       Kernel.Scripts.Register_Command

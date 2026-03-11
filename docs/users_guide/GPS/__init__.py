@@ -2639,6 +2639,23 @@ class Debugger(object):
         """
         pass  # implemented in Ada
 
+    def connect_to_target(self, target="", pid=-1, protocol="", force=False):
+        """
+        Connect to a target. The target may be a running 
+        executable (when a PID is provided) or a remote board/server
+        (when a target name is specified).
+
+        If no parameters are given, the function falls back to the
+        project configuration
+        (e.g., the "IDE.Program_Host" and "IDE.Communication_Protocol" 
+        project attributes for remote debugging).
+
+       :param target: Name of the target to connect to. If provided, `pid` is ignored.
+       :param pid: Process ID of the executable to attach to.
+       :param protocol: Name of the protocol used for the connection.
+        """
+        pass  # implemented in Ada
+
     def continue_execution(self):
         """
         Continue the execution of the debuggee after stop.
