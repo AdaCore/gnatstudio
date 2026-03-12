@@ -76,7 +76,7 @@ private
       Debuggee_Pid            : Integer         := 0;
 
       Target_Connected        : Boolean         := False;
-      --  Whether we have connected to a target.
+      --  Whether we are connected to a target.
 
       Remote_Mode             : Remote_GDB_Mode := Native;
       Has_Wtx_Add_Symbol_File : GNATCOLL.Tribooleans.Triboolean :=

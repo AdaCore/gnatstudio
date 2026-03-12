@@ -334,6 +334,37 @@ package body GVD.Scripts is
          Process := Visual_Debugger (GObject'(Get_Data (Inst)));
          Process.Debugger.Start;
 
+      elsif Command = "connect_to_target" then
+         Inst := Nth_Arg (Data, 1, New_Class (Kernel, "Debugger"));
+         Process := Visual_Debugger (GObject'(Get_Data (Inst)));
+
+         declare
+            Target   : constant String  := Nth_Arg (Data, 2, "");
+            Pid      : constant Integer := Nth_Arg (Data, 3, -1);
+            Protocol : constant String  :=
+              Nth_Arg (Data, 4, Process.Debugger.Get_Remote_Protocol);
+            Force    : constant Boolean := Nth_Arg (Data, 5, False);
+         begin
+            if not Force and then Process.Debugger.Is_Connected_To_Target then
+               Set_Error_Msg
+                 (Data, "Already connected to a target.");
+               return;
+            end if;
+
+            --  Target and Pid are mutually exclusive.
+            if Target /= "" then
+               Process.Debugger.Connect_To_Target (Target, Protocol);
+            elsif Pid /= -1 then
+               Set_Error_Msg
+                 (Data, "PID not supported for GVD, please use DAP.");
+               return;
+            else
+               Process.Debugger.Connect_To_Target
+                 (Process.Debugger.Get_Remote_Target,
+                  Protocol);
+            end if;
+         end;
+
       elsif Command = "continue_execution" then
          Inst := Nth_Arg (Data, 1, New_Class (Kernel, "Debugger"));
          Process := Visual_Debugger (GObject'(Get_Data (Inst)));
@@ -812,6 +843,15 @@ package body GVD.Scripts is
          Static_Method => True);
       Kernel.Scripts.Register_Command
         ("start",
+         Handler      => Shell_Handler'Access,
+         Class        => Class);
+      Kernel.Scripts.Register_Command
+        ("connect_to_target",
+         Params        =>
+           (1 => Param ("target", Optional => True),
+            2 => Param ("pid", Optional => True),
+            3 => Param ("protocol", Optional => True),
+            4 => Param ("force", Optional => True)),
          Handler      => Shell_Handler'Access,
          Class        => Class);
       Kernel.Scripts.Register_Command

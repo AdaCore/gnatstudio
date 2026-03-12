@@ -537,6 +537,8 @@ Classes
 
    .. automethod:: GPS.Debugger.command
 
+   .. automethod:: GPS.Debugger.connect_to_target
+
    .. automethod:: GPS.Debugger.continue_execution
 
    .. automethod:: GPS.Debugger.current_frame
