@@ -2,6 +2,7 @@
 This test checks that editors for files that do not belong
 to the project have their tab labels displayed in italic.
 """
+
 import GPS
 from gs_utils.internal.utils import run_test_driver, gps_assert, get_widgets_by_type
 from gi.repository import Gtk
@@ -36,7 +37,11 @@ def driver():
 
     # Add test.ads directory to the project's source dirs and check that
     # the 'not-from-project' style class gets removed
-    GPS.Project.root().add_source_dir(".")
+    prj = GPS.EditorBuffer.get(GPS.File("default.gpr"))
+    prj.insert(prj.at(2, 30), ', "."')
+    prj.save()
+    prj.close()
+
     GPS.Project.root().recompute()
     gps_assert(
         tab_label.get_style_context().has_class("not-from-project"),
