@@ -551,9 +551,14 @@ package body Builder_Facility_Module is
 
    overriding procedure Destroy (Module : in out Builder_Module_ID_Record) is
    begin
-      Clear_All_Actions_Menus_And_Toolbars;
-      Module.Builder.Destroy;
-      Free (Module.Registry);
+      if Builder_Module_ID /= null
+        and then not Module.Get_Kernel.Is_In_Destruction
+      then
+         Clear_All_Actions_Menus_And_Toolbars;
+         Module.Builder.Destroy;
+         Free (Module.Registry);
+         Builder_Module_ID := null;
+      end if;
    end Destroy;
 
    ------------------------------------
