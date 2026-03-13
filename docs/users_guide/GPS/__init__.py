@@ -9070,28 +9070,6 @@ class Project(object):
         """
         pass  # implemented in Ada
 
-    def add_source_dir(self, directory):
-        """
-        Adds a new source directory to the project. The new directory is
-        added in front of the source path. You should call
-        :func:`GPS.Project.recompute` after calling this method to recompute
-        the list of source files. The directory is added for the current
-        value of the scenario variables only. Note that if the current source
-        directory for the project is not specified explicitly in the .gpr
-        file), it is overriden by the new directory you are adding. If the
-        directory is already part of the source directories for the project,
-        it is not added a second time.
-
-        :param directory: A string
-
-        .. seealso::
-
-           :func:`GPS.Project.source_dirs`
-
-           :func:`GPS.Project.remove_source_dir`
-        """
-        pass  # implemented in Ada
-
     def ancestor_deps(self):
         """
         Returns the list of projects that might contain sources that depend
@@ -9573,8 +9551,6 @@ class Project(object):
         value of the scenario variables.
 
         :param directory: A string
-
-        .. seealso:: :func:`GPS.Project.add_source_dir`
         """
         pass  # implemented in Ada
 
@@ -9761,8 +9737,6 @@ class Project(object):
 
         :param recursive: A boolean
         :return: A list of strings
-
-        .. seealso:: :func:`GPS.Project.add_source_dir`
         """
         pass  # implemented in Ada
 

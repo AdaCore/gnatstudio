@@ -1796,8 +1796,6 @@ Classes
 
    .. automethod:: GPS.Project.add_predefined_paths
 
-   .. automethod:: GPS.Project.add_source_dir
-
    .. automethod:: GPS.Project.ancestor_deps
 
    .. automethod:: GPS.Project.artifacts_dir
