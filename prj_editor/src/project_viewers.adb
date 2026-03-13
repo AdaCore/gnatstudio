@@ -949,33 +949,6 @@ package body Project_Viewers is
             end if;
          end;
 
-      elsif Command = "add_source_dir" then
-         Name_Parameters (Data, Add_Source_Dir_Cmd_Parameters);
-         declare
-            Dir     : constant Virtual_File :=
-              Create
-                (Normalize_Pathname
-                     (Nth_Arg (Data, 2),
-                      Directory =>
-                        Full_Name (Project_Directory (Project)),
-                    Resolve_Links => False));
-            Success : Boolean := False;
-
-         begin
-            Add_Source_Dir
-              (Project            => Project,
-               Dir                => Dir,
-               Success            => Success,
-               Use_Relative_Paths => Generate_Relative_Paths.Get_Pref);
-
-            if not Success then
-               Data.Set_Error_Msg
-                 ("Could not add "
-                  & Dir.Display_Base_Name
-                  & " to the project's source directories");
-            end if;
-         end;
-
       elsif Command = "remove_source_dir" then
          Name_Parameters (Data, Add_Source_Dir_Cmd_Parameters);
          declare
@@ -1147,12 +1120,6 @@ package body Project_Viewers is
          Class         => Get_Project_Class (Kernel),
          Static_Method => True,
          Handler       => Project_Static_Command_Handler'Access);
-      Kernel.Scripts.Register_Command
-        ("add_source_dir",
-         Minimum_Args => Add_Source_Dir_Cmd_Parameters'Length,
-         Maximum_Args => Add_Source_Dir_Cmd_Parameters'Length,
-         Class        => Get_Project_Class (Kernel),
-         Handler      => Project_Command_Handler'Access);
       Kernel.Scripts.Register_Command
         ("remove_source_dir",
          Minimum_Args => Add_Source_Dir_Cmd_Parameters'Length,

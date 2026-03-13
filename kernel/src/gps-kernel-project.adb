@@ -30,7 +30,6 @@ with VSS.Strings.Conversions;
 with GNATCOLL.JSON;
 with GNATCOLL.Projects;                use GNATCOLL.Projects;
 with GNATCOLL.Traces;                  use GNATCOLL.Traces;
-with GNATCOLL.Utils;                   use GNATCOLL.Utils;
 with GNATCOLL.VFS;                     use GNATCOLL.VFS;
 
 with Projects;                         use Projects;
@@ -1162,54 +1161,6 @@ package body GPS.Kernel.Project is
          return Cmd;
       end;
    end Get_Switches;
-
-   --------------------
-   -- Add_Source_Dir --
-   --------------------
-
-   procedure Add_Source_Dir
-     (Project            : GNATCOLL.Projects.Project_Type;
-      Dir                : Virtual_File;
-      Success            : out Boolean;
-      Use_Relative_Paths : Boolean := False)
-   is
-      Dirs    : GNAT.Strings.String_List (1 .. 1);
-      Sources : constant File_Array :=
-        Project.Source_Dirs (Recursive => False);
-      Found   : Boolean := False;
-   begin
-      Success := True;
-
-      Ensure_Directory (Dir);
-      if Use_Relative_Paths then
-         Dirs (1) :=
-           new String'(+Dir.Relative_Path (Project.Project_Path.Dir));
-      else
-         Dirs (1) := new String'(+Dir.Full_Name);
-      end if;
-
-      if not Is_Editable (Project) then
-         Success := False;
-         return;
-      else
-         for S in Sources'Range loop
-            if Sources (S) = Dir then
-               Found := True;
-               exit;
-            end if;
-         end loop;
-
-         if not Found then
-            Project.Set_Attribute
-              (Attribute => Source_Dirs_Attribute,
-               Values    => Dirs,
-               Index     => "",
-               Prepend   => True);
-         end if;
-
-         Free (Dirs);
-      end if;
-   end Add_Source_Dir;
 
    ------------------------
    -- Is_Alire_Available --
