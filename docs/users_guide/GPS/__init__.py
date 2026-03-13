@@ -2641,18 +2641,18 @@ class Debugger(object):
 
     def connect_to_target(self, target="", pid=-1, protocol="", force=False):
         """
-        Connect to a target. The target may be a running 
-        executable (when a PID is provided) or a remote board/server
-        (when a target name is specified).
+         Connect to a target. The target may be a running
+         executable (when a PID is provided) or a remote board/server
+         (when a target name is specified).
 
-        If no parameters are given, the function falls back to the
-        project configuration
-        (e.g., the "IDE.Program_Host" and "IDE.Communication_Protocol" 
-        project attributes for remote debugging).
+         If no parameters are given, the function falls back to the
+         project configuration
+         (e.g., the "IDE.Program_Host" and "IDE.Communication_Protocol"
+         project attributes for remote debugging).
 
-       :param target: Name of the target to connect to. If provided, `pid` is ignored.
-       :param pid: Process ID of the executable to attach to.
-       :param protocol: Name of the protocol used for the connection.
+        :param target: Name of the target to connect to. If provided, `pid` is ignored.
+        :param pid: Process ID of the executable to attach to.
+        :param protocol: Name of the protocol used for the connection.
         """
         pass  # implemented in Ada
 
@@ -9070,28 +9070,6 @@ class Project(object):
         """
         pass  # implemented in Ada
 
-    def add_source_dir(self, directory):
-        """
-        Adds a new source directory to the project. The new directory is
-        added in front of the source path. You should call
-        :func:`GPS.Project.recompute` after calling this method to recompute
-        the list of source files. The directory is added for the current
-        value of the scenario variables only. Note that if the current source
-        directory for the project is not specified explicitly in the .gpr
-        file), it is overriden by the new directory you are adding. If the
-        directory is already part of the source directories for the project,
-        it is not added a second time.
-
-        :param directory: A string
-
-        .. seealso::
-
-           :func:`GPS.Project.source_dirs`
-
-           :func:`GPS.Project.remove_source_dir`
-        """
-        pass  # implemented in Ada
-
     def ancestor_deps(self):
         """
         Returns the list of projects that might contain sources that depend
@@ -9573,8 +9551,6 @@ class Project(object):
         value of the scenario variables.
 
         :param directory: A string
-
-        .. seealso:: :func:`GPS.Project.add_source_dir`
         """
         pass  # implemented in Ada
 
@@ -9761,8 +9737,6 @@ class Project(object):
 
         :param recursive: A boolean
         :return: A list of strings
-
-        .. seealso:: :func:`GPS.Project.add_source_dir`
         """
         pass  # implemented in Ada
 
