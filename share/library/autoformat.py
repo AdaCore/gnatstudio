@@ -24,8 +24,8 @@ def on_file_saved(hook, file):
     else:
         mark = view.cursor().create_mark()
 
-    # Reformat the buffer
-    buf.indent()
+    # Reformat the file being saved
+    GPS.execute_action("format file", file.path)
 
     if mark:
         # Restore the cursor location
