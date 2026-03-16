@@ -665,55 +665,20 @@ package body VFS_Module is
    begin
       if Command.Create_Dir then
          declare
-            Options : Query_User_Option_Array_Type (1 .. 1) :=
-              (1 => Query_User_Option_Type'
-                 (Label    =>
-                      To_Unbounded_String ("Add to source directories"),
-                  Value    =>
-                    True,
-                  Hist_Key =>
-                    To_Unbounded_String ("add-to-source-dirs")));
-            Res     : constant String :=
+            Res : constant String :=
               GUI_Utils.Query_User
                 (Kernel.Get_Main_Window,
                  (-"Please enter the new directory's name:"),
                  Password_Mode => False,
                  Urgent        => False,
                  Default       => "",
-                 Options       => Options'Unrestricted_Access,
                  History_Acc   => Kernel.Get_History);
          begin
             if Res /= "" then
                File := Create_From_Dir (Dir, +Res);
                Make_Dir (File);
-
-               --  if the 'Add to source directories' option is checked, add
-               --  the new directory to the project's source directories.
-
-               if Options (Options'First).Value then
-                  declare
-                     Success : Boolean := False;
-                  begin
-                     Project := Get_Project_For_File
-                       (Get_Registry (Kernel).Tree,
-                        Dir);
-                     GPS.Kernel.Project.Add_Source_Dir
-                       (Project            => Project,
-                        Dir                => File,
-                        Success            => Success,
-                        Use_Relative_Paths =>
-                          Generate_Relative_Paths.Get_Pref);
-
-                     if not Success then
-                        Kernel.Insert
-                          ("Cannot add '"
-                           & File.Display_Base_Name
-                           & "' to the project's source directories",
-                          Mode => Error);
-                     end if;
-                  end;
-               end if;
             end if;
+
          exception
             when Directory_Error =>
                Kernel.Insert
@@ -722,6 +687,7 @@ package body VFS_Module is
                   Mode => Error);
                return Commands.Failure;
          end;
+
       else
          declare
             Res : constant String :=
