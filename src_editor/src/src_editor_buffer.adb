@@ -4170,8 +4170,21 @@ package body Src_Editor_Buffer is
       End_Action (Buffer);
 
       if not Internal then
-         --  Run the "before_file_saved" hook
-         Before_File_Saved_Hook.Run (Buffer.Kernel, Filename);
+         --  Run the "before_file_saved" hook, unless a save is already
+         --  in progress (i.e., we are re-entering from Complete_Deferred_Save
+         --  after async formatting completed).
+         if not Buffer.Save_In_Progress then
+            Buffer.Save_In_Progress := True;
+            Buffer.Deferred_Save_File := Filename;
+            Before_File_Saved_Hook.Run (Buffer.Kernel, Filename);
+
+            --  Check if async formatting was triggered and deferred the save
+            if Buffer.Save_Deferred then
+               Trace (Me, "Save deferred pending async operation");
+               return;
+            end if;
+            Buffer.Save_In_Progress := False;
+         end if;
       end if;
 
       declare
@@ -4423,6 +4436,78 @@ package body Src_Editor_Buffer is
          end if;
    end Internal_Save_To_File;
 
+   -------------------------
+   -- Is_Save_In_Progress --
+   -------------------------
+
+   function Is_Save_In_Progress
+     (Buffer : access Source_Buffer_Record) return Boolean is
+   begin
+      return Buffer.Save_In_Progress;
+   end Is_Save_In_Progress;
+
+   -----------------------------
+   -- Set_Save_Deferred --
+   ------------------------
+
+   procedure Set_Save_Deferred
+     (Buffer : access Source_Buffer_Record) is
+   begin
+      Buffer.Save_Deferred := True;
+      Trace (Me, "Save deferred for "
+             & Buffer.Deferred_Save_File.Display_Full_Name);
+   end Set_Save_Deferred;
+
+   ---------------------------
+   -- Complete_Deferred_Save --
+   ---------------------------
+
+   procedure Complete_Deferred_Save
+     (Buffer  : access Source_Buffer_Record;
+      Success : out Boolean)
+   is
+      Deferred_File : constant GNATCOLL.VFS.Virtual_File :=
+        Buffer.Deferred_Save_File;
+   begin
+      if not Buffer.Save_Deferred then
+         Success := True;
+         return;
+      end if;
+
+      Trace (Me, "Completing deferred save for "
+             & Deferred_File.Display_Full_Name);
+
+      --  Clear the deferred state before saving
+      Buffer.Save_Deferred := False;
+      Buffer.Deferred_Save_File := GNATCOLL.VFS.No_File;
+
+      --  Save_In_Progress is still True from the original save, so
+      --  Internal_Save_To_File will skip the before_file_saved hook.
+      Save_To_File
+        (Buffer,
+         Deferred_File,
+         Success,
+         Internal => False,
+         Force    => False);
+
+      Buffer.Save_In_Progress := False;
+   end Complete_Deferred_Save;
+
+   --------------------------
+   -- Cancel_Deferred_Save --
+   --------------------------
+
+   procedure Cancel_Deferred_Save (Buffer : access Source_Buffer_Record) is
+   begin
+      if Buffer.Save_Deferred then
+         Trace (Me, "Canceling deferred save for "
+                & Buffer.Deferred_Save_File.Display_Full_Name);
+         Buffer.Save_Deferred := False;
+         Buffer.Deferred_Save_File := GNATCOLL.VFS.No_File;
+         Buffer.Save_In_Progress := False;
+      end if;
+   end Cancel_Deferred_Save;
+
    ------------------
    -- Save_To_File --
    ------------------
@@ -4450,6 +4535,13 @@ package body Src_Editor_Buffer is
       Internal_Save_To_File
         (Source_Buffer (Buffer), Filename, Internal, Success,
          Force => Force);
+
+      --  If the save was deferred (async formatting in progress), return
+      --  early without running post-save cleanup. The cleanup will be done
+      --  when Complete_Deferred_Save is called after formatting completes.
+      if Buffer.Save_Deferred then
+         return;
+      end if;
 
       if Success and then not Internal then
          if Name_Changed then

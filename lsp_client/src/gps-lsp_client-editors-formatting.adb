@@ -20,8 +20,10 @@ with Ada.Exceptions;               use Ada.Exceptions;
 with Ada.Strings.Wide_Wide_Maps;   use Ada.Strings.Wide_Wide_Maps;
 
 with GNATCOLL.JSON;
+with GNATCOLL.Projects;
 with GNATCOLL.Traces;               use GNATCOLL.Traces;
 with GNATCOLL.VFS;                  use GNATCOLL.VFS;
+with GNAT.Strings;
 
 with GPS.Editors.GtkAda;
 with VSS.Characters;
@@ -197,7 +199,8 @@ package body GPS.LSP_Client.Editors.Formatting is
    begin
 
       if Buffer = Nil_Editor_Buffer then
-         --  Buffer can be closed
+         --  Buffer can be closed, cancel any pending deferred save
+         Src_Editor_Module.Cancel_Deferred_Save (Self.Kernel, Self.File);
          return;
       end if;
 
@@ -213,6 +216,8 @@ package body GPS.LSP_Client.Editors.Formatting is
             & Integer'Image (Buffer.Version)
             & ", data ver."
             & Integer'Image (Self.Document_Version));
+         --  Version mismatch, cancel any pending deferred save
+         Src_Editor_Module.Cancel_Deferred_Save (Self.Kernel, Self.File);
          return;
       end if;
 
@@ -235,6 +240,9 @@ package body GPS.LSP_Client.Editors.Formatting is
          Widget  => Self.Editor,
          Present => True);
 
+      --  Complete any pending deferred save now that formatting is done
+      Src_Editor_Module.Complete_Deferred_Save (Self.Kernel, Self.File);
+
    exception
       when E : others =>
          Trace (Me, E);
@@ -255,6 +263,9 @@ package body GPS.LSP_Client.Editors.Formatting is
 
       --  Cancel the activity bar when formatting failed.
       Src_Editor_Module.Cancel_Activity_Bar (Self.Kernel, Self.File);
+
+      --  Cancel any pending deferred save
+      Src_Editor_Module.Cancel_Deferred_Save (Self.Kernel, Self.File);
    end On_Rejected;
 
    ----------------------
@@ -269,7 +280,8 @@ package body GPS.LSP_Client.Editors.Formatting is
    begin
       --  Cancel the activity bar when formatting failed.
       Src_Editor_Module.Cancel_Activity_Bar (Self.Kernel, Self.File);
-
+      --  Cancel any pending deferred save
+      Src_Editor_Module.Cancel_Deferred_Save (Self.Kernel, Self.File);
       --  Try to parse the formatter's output, in case the format is recognized
       --  (which is the case for the ALS).
       GPS.Kernel.Messages.Tools_Output.Parse_File_Locations
@@ -672,18 +684,34 @@ package body GPS.LSP_Client.Editors.Formatting is
      (Command : access Indentation_File_Command;
       Context : Interactive_Command_Context) return Command_Return_Type
    is
-      Kernel       : constant Kernel_Handle := Get_Kernel (Context.Context);
-      Editor       : Gtkada.MDI.MDI_Child;
-      Box          : Source_Editor_Box;
-      View         : Source_View;
-      Buffer       : Source_Buffer;
-      File         : Virtual_File;
+      use GNAT.Strings;
+      use GNATCOLL.VFS;
 
-      Lang         : Language.Language_Access;
-      Request      : Document_Formatting_Request_Access;
+      Kernel   : constant Kernel_Handle := Get_Kernel (Context.Context);
+      Editor   : Gtkada.MDI.MDI_Child;
+      Box      : Source_Editor_Box;
+      View     : Source_View;
+      Buffer   : Source_Buffer;
+      File_Arg : constant String :=
+        (if Context.Args /= null and then Context.Args'Length > 0
+         then Context.Args (Context.Args'First).all
+         else "");
+      File     : Virtual_File :=
+        (if File_Arg /= ""
+         then GNATCOLL.VFS.Create (Filesystem_String (File_Arg))
+         else No_File);
 
+      Lang    : Language.Language_Access;
+      Request : Document_Formatting_Request_Access;
    begin
-      Editor := Src_Editor_Module.Find_Current_Editor (Kernel);
+      --  If a file argument is provided, format that file, otherwise format
+      --  the current file in the active editor.
+      Editor :=
+        (if File /= No_File
+         then
+           Src_Editor_Module.Find_Editor
+             (Kernel, File, GNATCOLL.Projects.No_Project)
+         else Src_Editor_Module.Find_Current_Editor (Kernel));
       Box    := Src_Editor_Module.Get_Source_Box_From_MDI (Editor);
       View   := Get_View (Box);
       Buffer := Get_Buffer (Box);
@@ -702,6 +730,12 @@ package body GPS.LSP_Client.Editors.Formatting is
          Editor            => Editor,
          Document_Version  => Buffer.Get_Editor_Buffer.Version);
 
+      --  If we're formatting during a save operation, defer the save until
+      --  the formatting response arrives
+      if Is_Save_In_Progress (Buffer) then
+         Set_Save_Deferred (Buffer);
+      end if;
+
       if GPS.LSP_Client.Requests.Execute
         (Lang, GPS.LSP_Client.Requests.Request_Access (Request))
       then
@@ -714,6 +748,8 @@ package body GPS.LSP_Client.Editors.Formatting is
    exception
       when E : others =>
          Trace (Me, E);
+         --  If the save was deferred, cancel it so the save isn't stuck
+         Cancel_Deferred_Save (Buffer);
          return Failure;
    end Execute;
 
