@@ -2406,7 +2406,9 @@ package body Interactive_Consoles is
 
          Match (Link.Pattern.all, Fixed, Matches, Data_First => Index);
 
-         if Matches (0) = No_Match then
+         if Matches (0) = No_Match
+           or else Matches (0).First > Matches (0).Last
+         then
             Locs (L) := (Link  => Link,
                          First => Integer'Last,
                          Last  => Integer'Last);
