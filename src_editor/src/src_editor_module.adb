@@ -846,6 +846,35 @@ package body Src_Editor_Module is
       end if;
    end Cancel_Activity_Bar;
 
+   ----------------------------
+   -- Complete_Deferred_Save --
+   ----------------------------
+
+   procedure Complete_Deferred_Save
+     (Kernel : Kernel_Handle; File : Virtual_File)
+   is
+      Buffer  : constant Source_Buffer := Get (Kernel, File);
+      Success : Boolean;
+   begin
+      if Buffer /= null then
+         Complete_Deferred_Save (Buffer, Success);
+      end if;
+   end Complete_Deferred_Save;
+
+   --------------------------
+   -- Cancel_Deferred_Save --
+   --------------------------
+
+   procedure Cancel_Deferred_Save
+     (Kernel : Kernel_Handle; File : Virtual_File)
+   is
+      Buffer : constant Source_Buffer := Get (Kernel, File);
+   begin
+      if Buffer /= null then
+         Cancel_Deferred_Save (Buffer);
+      end if;
+   end Cancel_Deferred_Save;
+
    -------------
    -- Execute --
    -------------

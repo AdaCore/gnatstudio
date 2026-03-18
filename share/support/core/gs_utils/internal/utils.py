@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 import GPS
 import os
-import imp
+import importlib
 import sys
 from pygps import *
 import pygps.tree
@@ -605,9 +605,9 @@ try:
         except KeyError:
             pass
 
-        (fp, pathname, description) = imp.find_module(name)
+        (fp, pathname, description) = importlib.find_module(name)
         try:
-            module = imp.load_module(name, fp, pathname, description)
+            module = importlib.load_module(name, fp, pathname, description)
             # Special to GPS: if the module has a on_gps_started function,
             # execute it
             module.on_gps_started("gps_started")

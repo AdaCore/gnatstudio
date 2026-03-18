@@ -109,6 +109,16 @@ package Src_Editor_Module is
    --  Remove the activity bar for the editor opened for the given file,
    --  if any.
 
+   procedure Complete_Deferred_Save
+     (Kernel : Kernel_Handle; File : Virtual_File);
+   --  Complete a pending deferred save for the given file
+   --  (e.g, after async formatting has completed successfully).
+
+   procedure Cancel_Deferred_Save
+     (Kernel : Kernel_Handle; File : Virtual_File);
+   --  Cancel a pending deferred save for the given file
+   --  (e.g., when async formatting fails or is rejected).
+
    function Find_Editor
      (Kernel        : access GPS.Kernel.Kernel_Handle_Record'Class;
       File          : GNATCOLL.VFS.Virtual_File;

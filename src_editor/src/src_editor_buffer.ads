@@ -188,6 +188,27 @@ package Src_Editor_Buffer is
    --  If Internal is True, save the file to disk but do not modify the buffer
    --  status.
 
+   function Is_Save_In_Progress
+     (Buffer : access Source_Buffer_Record) return Boolean;
+   --  Return True if a save operation is in progress (either executing
+   --  the before_file_saved hook or waiting for async formatting).
+
+   procedure Set_Save_Deferred
+     (Buffer : access Source_Buffer_Record);
+   --  Called during a save operation when an async action (e.g. formatting)
+   --  needs to complete before the file can be written. This defers the
+   --  actual file write until the action completes.
+
+   procedure Complete_Deferred_Save
+     (Buffer  : access Source_Buffer_Record;
+      Success : out Boolean);
+   --  Called when async formatting completes successfully. Performs the
+   --  actual file save that was deferred.
+
+   procedure Cancel_Deferred_Save (Buffer : access Source_Buffer_Record);
+   --  Called when async formatting fails. Clears the deferred save state
+   --  without saving.
+
    procedure Mark_Buffer_Writable
      (Buffer   : not null access Source_Buffer_Record;
       Writable : Boolean);
@@ -1877,7 +1898,20 @@ private
         Glib.Main.No_Source_Id;
       --  Idle handler to rehightlight messages.
 
-      LSP_Opened : Boolean := False;  -- Is opened on the LSP server side
+      LSP_Opened : Boolean := False;
+      --  True when the buffer is opened on the LSP server side
+
+      Save_In_Progress     : Boolean := False;
+      --  True from when a save starts running the 'before_file_saved' hook
+      --  until the save completes (or is cancelled). Used both to signal
+      --  formatting providers and to skip the hook on re-entry.
+
+      Save_Deferred         : Boolean := False;
+      --  True if the save has been deferred pending an async operation
+
+      Deferred_Save_File   : GNATCOLL.VFS.Virtual_File;
+      --  Target file for deferred save. This is needed to support
+      --  "Save As" operations that require user input for the file name.
    end record;
 
    procedure Emit_By_Name (Object : System.Address; Name : Signal_Name);
