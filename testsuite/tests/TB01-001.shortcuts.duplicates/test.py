@@ -15,8 +15,7 @@ expected = {
         "delete file",
     ],
     "Tab": ["tab selection", "toggle to next alias field"],
-    "Ctrl+V": ["paste to console"],
-    "Shift+Insert": ["paste to console"],
+    "Ctrl+V or Shift+Insert": ["paste from clipboard", "paste to console"],
 }
 
 if os_utils.locate_exec_on_path("qgenc"):
@@ -41,9 +40,27 @@ def driver():
         if len(x[j]) > 1:
             dups[j] = x[j]
 
-    # This is why we don't try to compare 2 dicts
+    # Compare actual vs expected duplicates and report differences
+    actual_keys = set(dups.keys())
+    expected_keys = set(expected.keys())
+
+    for key in sorted(actual_keys - expected_keys):
+        GPS.Console().write(
+            "Extra shortcut not in expected: %s -> %s\n" % (key, dups[key])
+        )
+    for key in sorted(expected_keys - actual_keys):
+        GPS.Console().write("Shortcut in expected but not found: %s\n" % key)
+    for key in sorted(actual_keys & expected_keys):
+        actual_actions = sorted(dups[key])
+        expected_actions = sorted(expected[key])
+        if actual_actions != expected_actions:
+            GPS.Console().write(
+                "Mismatch for %s: actual=%s expected=%s\n"
+                % (key, actual_actions, expected_actions)
+            )
+
     gps_assert(
-        len(str(collections.OrderedDict(sorted(dups.items())))),
-        len(str(collections.OrderedDict(sorted(expected.items())))),
+        collections.OrderedDict((k, sorted(v)) for k, v in sorted(dups.items())),
+        collections.OrderedDict((k, sorted(v)) for k, v in sorted(expected.items())),
         "Unexpected duplicated shortcuts",
     )
