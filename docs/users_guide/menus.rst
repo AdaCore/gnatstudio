@@ -787,8 +787,8 @@ The Code Menu
 * :menuselection:`Code --> Selection --> Move Right`
 
    Move the current selection chars characters to the right. If chars is
-       negative, moves to the left. If there is no selection, indent the current
-       line.
+   negative, moves to the left. If there is no selection, indent the current
+   line.
 
    Shortcut: Ctrl+Alt+>
 .. index:: menu; code --> selection --> move left
@@ -801,17 +801,17 @@ The Code Menu
 * :menuselection:`Code --> Selection --> Untabify`
 
    Replace tab characters in the current selection (or the whole buffer) with
-       the correct amount of spaces. The tab stops are every n columns where n is
-       specified by a preference in the Preferences dialog.
+   the correct amount of spaces. The tab stops are every n columns where n is
+   specified by a preference in the Preferences dialog.
 
 .. index:: menu; code --> selection --> comment box
 
 * :menuselection:`Code --> Selection --> Comment box`
 
    Search backward for the first subprogram or package declaration. Before
-       the start of this declaration, insert a comment box containing the name of
-       the subprogram. This provides helpful separations between subprograms, and
-       is similar to the style used in the GNAT compiler or GPS themselves
+   the start of this declaration, insert a comment box containing the name of
+   the subprogram. This provides helpful separations between subprograms, and
+   is similar to the style used in the GNAT compiler or GPS themselves
 
    Shortcut: Ctrl+H
 .. index:: menu; code --> smart completion
@@ -826,7 +826,7 @@ The Code Menu
 * :menuselection:`Code --> More Completion --> Expand Alias`
 
    Action to expand the alias under cursor
-       the editor
+   the editor
 
    Shortcut: Ctrl+O
 .. index:: menu; code --> more completion --> complete identifier
