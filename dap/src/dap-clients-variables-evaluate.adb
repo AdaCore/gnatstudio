@@ -57,16 +57,25 @@ package body DAP.Clients.Variables.Evaluate is
       New_Request := null;
 
       if Result.success then
-         Variable.Data.a_type           := Result.a_body.a_type;
-         Variable.Data.name             := Self.Params.Item.Info.Get_Name;
-         Variable.Data.indexedVariables := Result.a_body.indexedVariables;
-         Variable.Data.memoryReference  := Result.a_body.memoryReference;
-         Variable.Data.namedVariables   := Result.a_body.namedVariables;
-         Variable.Data.presentationHint := Result.a_body.presentationHint;
-         Variable.Data.value            := Result.a_body.result;
+         if Self.Params.Kind /= Python_API then
+            --  Add the variable to the internal storage if the request is not
+            --  from the Python API
+            Variable.Data.a_type           := Result.a_body.a_type;
+            Variable.Data.name             := Self.Params.Item.Info.Get_Name;
+            Variable.Data.indexedVariables := Result.a_body.indexedVariables;
+            Variable.Data.memoryReference  := Result.a_body.memoryReference;
+            Variable.Data.namedVariables   := Result.a_body.namedVariables;
+            Variable.Data.presentationHint := Result.a_body.presentationHint;
+            Variable.Data.value            := Result.a_body.result;
 
-         Holder.Scopes.Append_Child (Holder.Scopes.Root, Variable);
-         Holder.On_Variables_Response (Self.Params);
+            --  Store variable
+            Holder.Scopes.Append_Child (Holder.Scopes.Root, Variable);
+            Holder.On_Variables_Response (Self.Params);
+
+         else
+            --  Expression from Python API, just send responce
+            Holder.On_Expression_Response (Self.Params, Result.a_body.result);
+         end if;
 
       else
          Self.Kernel.Get_Messages_Window.Insert_Error

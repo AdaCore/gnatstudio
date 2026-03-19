@@ -58,9 +58,14 @@ package DAP.Modules.Scripts is
    --  Calls callback with No_Class_Instance parameter when variable
    --  is not found.
 
-   procedure Create_Debugger_Variable_Rejected_For_Callback
+   procedure Call_Rejected_Callback
      (Params : DAP.Clients.Variables.Request_Parameters);
-   --  Calls callback with No_Class_Instance parameter when the request
-   --  was rejected.
+   --  Calls Rejected callback (or Result with No_Class_Instance parameter
+   --  if Rejected is not set) when the request was rejected.
+
+   procedure Call_With_String
+     (Callback : not null GNATCOLL.Scripts.Subprogram_Type;
+      Value    : String);
+   --  Calls callback with String as a parameter.
 
 end DAP.Modules.Scripts;

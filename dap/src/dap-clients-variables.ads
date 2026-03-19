@@ -88,7 +88,18 @@ package DAP.Clients.Variables is
    procedure Set_Variable
      (Self   : in out Variables_Holder;
       Params : Request_Parameters);
-   --  Set variable's valuie and update the view
+   --  Set variable's value and update the view
+
+   procedure Set_Variable
+     (Self  : in out Variables_Holder;
+      Name  : String;
+      Value : String);
+   --  Set variable's value
+
+   procedure Value_Of
+     (Self   : in out Variables_Holder;
+      Params : in out Request_Parameters);
+   --  Get expression value
 
    -- Utils --
 
@@ -156,7 +167,13 @@ private
    procedure On_Variables_Response
      (Self   : in out Variables_Holder;
       Params : in out Request_Parameters);
-   --  Callback when the `variables` response has arrived
+   --  Callback when the `variables` response has arrived.
+
+   procedure On_Expression_Response
+     (Self   : in out Variables_Holder;
+      Params : in out Request_Parameters;
+      Value  : VSS.Strings.Virtual_String);
+   --  Callback when the `expression` response has arrived.
 
    procedure On_Variable_Set
      (Self     : in out Variables_Holder;

@@ -767,14 +767,14 @@ package body GVD.Scripts is
          Getter       => Shell_Handler'Access);
       Kernel.Scripts.Register_Command
         ("get",
-         Params       => (1 => Param ("id", Optional => True)),
-         Handler      => Shell_Handler'Access,
-         Class        => Class,
+         Params        => (1 => Param ("id", Optional => True)),
+         Handler       => Shell_Handler'Access,
+         Class         => Class,
          Static_Method => True);
       Kernel.Scripts.Register_Command
         ("list",
-         Handler      => Shell_Handler'Access,
-         Class        => Class,
+         Handler       => Shell_Handler'Access,
+         Class         => Class,
          Static_Method => True);
       Kernel.Scripts.Register_Command
         ("send",

@@ -48,3 +48,8 @@ def test_driver():
     # Check that we still have 2 breakpoints in the view
     breakpoints = debug.breakpoints
     gps_assert(len(breakpoints), 2, "Should have 2 breakpoints")
+
+    debug.unbreak_at_location(GPS.File("main.adb"), 11)
+    yield wait_until_not_busy(debug)
+    breakpoints = debug.breakpoints
+    gps_assert(len(breakpoints), 1, "Should have 1 breakpoints")

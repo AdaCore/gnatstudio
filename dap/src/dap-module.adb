@@ -377,7 +377,9 @@ package body DAP.Module is
       Project         : Project_Type;
       File            : GNATCOLL.VFS.Virtual_File;
       Executable_Args : String;
-      Remote_Target   : String)
+      Remote_Target   : String := "";
+      Remote_Protocol : String := "";
+      Load_Executable : Boolean := False)
       return DAP.Clients.DAP_Client_Access;
    --  Initialize the debugger with the executable refered by File/Project.
    --  Executable_Args contain the extra arguments that will be passed to the
@@ -405,7 +407,9 @@ package body DAP.Module is
       Project         : Project_Type;
       File            : GNATCOLL.VFS.Virtual_File;
       Executable_Args : String;
-      Remote_Target   : String)
+      Remote_Target   : String := "";
+      Remote_Protocol : String := "";
+      Load_Executable : Boolean := False)
       return DAP.Clients.DAP_Client_Access
    is
       Client : DAP.Clients.DAP_Client_Access;
@@ -447,7 +451,9 @@ package body DAP.Module is
         (Project         => Project,
          Executable      => File,
          Executable_Args => Executable_Args,
-         Remote_Target   => Remote_Target);
+         Remote_Target   => Remote_Target,
+         Remote_Protocol => Remote_Protocol,
+         Load_Executable => Load_Executable);
 
       Set_Current_Debugger (Client);
 
@@ -1678,7 +1684,9 @@ package body DAP.Module is
       File            : GNATCOLL.VFS.Virtual_File := No_File;
       Project         : Project_Type := No_Project;
       Executable_Args : String := "";
-      Remote_Target   : String := "")
+      Remote_Target   : String := "";
+      Remote_Protocol : String := "";
+      Load_Executable : Boolean := False)
    is
       Dummy : DAP.Clients.DAP_Client_Access;
    begin
@@ -1687,7 +1695,9 @@ package body DAP.Module is
          File            => File,
          Project         => Project,
          Executable_Args => Executable_Args,
-         Remote_Target   => Remote_Target);
+         Remote_Target   => Remote_Target,
+         Remote_Protocol => Remote_Protocol,
+         Load_Executable => Load_Executable);
    end Initialize_Debugger;
 
    -------------------------
@@ -1699,7 +1709,9 @@ package body DAP.Module is
       File            : GNATCOLL.VFS.Virtual_File := No_File;
       Project         : Project_Type := No_Project;
       Executable_Args : String := "";
-      Remote_Target   : String := "")
+      Remote_Target   : String := "";
+      Remote_Protocol : String := "";
+      Load_Executable : Boolean := False)
       return DAP.Clients.DAP_Client_Access is
    begin
       return Debug_Init
@@ -1707,7 +1719,9 @@ package body DAP.Module is
          Project         => Project,
          File            => File,
          Executable_Args => Executable_Args,
-         Remote_Target   => Remote_Target);
+         Remote_Target   => Remote_Target,
+         Remote_Protocol => Remote_Protocol,
+         Load_Executable => Load_Executable);
    end Initialize_Debugger;
 
    --------------

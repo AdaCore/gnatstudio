@@ -35,13 +35,17 @@ package DAP.Module is
       File            : GNATCOLL.VFS.Virtual_File := No_File;
       Project         : Project_Type := No_Project;
       Executable_Args : String := "";
-      Remote_Target   : String := "");
+      Remote_Target   : String := "";
+      Remote_Protocol : String := "";
+      Load_Executable : Boolean := False);
    function Initialize_Debugger
      (Kernel          : access GPS.Kernel.Kernel_Handle_Record'Class;
       File            : GNATCOLL.VFS.Virtual_File := No_File;
       Project         : Project_Type := No_Project;
       Executable_Args : String := "";
-      Remote_Target   : String := "")
+      Remote_Target   : String := "";
+      Remote_Protocol : String := "";
+      Load_Executable : Boolean := False)
       return DAP.Clients.DAP_Client_Access;
    --  Initialize a DAP debugging session.
    --  File and Project are used to refer to the executable we want to debug.

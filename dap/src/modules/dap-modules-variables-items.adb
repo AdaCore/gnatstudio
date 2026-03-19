@@ -31,9 +31,10 @@ package body DAP.Modules.Variables.Items is
    ------------
 
    overriding procedure Adjust (Object : in out Item_Holder) is
-      I : constant Item_Info_Access := new Item_Info'Class'(Object.Info.all);
    begin
-      Object.Info := I;
+      if Object.Info /= null then
+         Object.Info := new Item_Info'Class'(Object.Info.all);
+      end if;
    end Adjust;
 
    --------------

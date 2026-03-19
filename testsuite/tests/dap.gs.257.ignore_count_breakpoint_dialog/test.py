@@ -1,6 +1,7 @@
 """
 Test the "ignore breakpoint" the Breakpoints view dialog's setting.
 """
+
 import GPS
 from gs_utils.internal.utils import *
 
@@ -45,7 +46,7 @@ def test_driver():
     gps_assert(dump_tree_model(model, VALUE_COLUMN), ["0"], "Wrong value after run")
 
     # Continuing should increase the value by 1
-    debug.send("continue")
+    debug.continue_execution()
     yield wait_DAP_server("variables")
     gps_assert(
         dump_tree_model(model, VALUE_COLUMN),
