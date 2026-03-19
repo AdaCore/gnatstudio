@@ -773,8 +773,8 @@ package body GPS.LSP_Client.Editors.Formatting is
          Description => "Format the current file",
          Category    => "Editor",
          Filter      =>
-           Lookup_Filter (Kernel, "Writable source editor")
-         and Lookup_Filter (Kernel, "Is not Makefile"),
+           Lookup_Filter (Kernel, "Has writable editor")
+           and Lookup_Filter (Kernel, "Is not Makefile"),
          Icon_Name   => "gps-case-sensitive-symbolic");
 
       LSP_Provider.Kernel := Kernel;
