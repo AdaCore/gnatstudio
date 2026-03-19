@@ -38,7 +38,9 @@ package body DAP.Clients.Variables.SetExpression is
       Req.Parameters.arguments.value      := Params.Value;
       Req.Parameters.arguments.frameId    :=
         Client.Get_Stack_Trace.Get_Current_Frame_Id;
-      if Params.Item.Info.Format /= Default_Format then
+      if Params.Item.Info /= null
+        and then Params.Item.Info.Format /= Default_Format
+      then
          Req.Parameters.arguments.format :=
            (Is_Set => True, Value => Params.Item.Info.Format);
       end if;

@@ -97,7 +97,9 @@ package DAP.Clients is
       Project         : GNATCOLL.Projects.Project_Type;
       Executable      : GNATCOLL.VFS.Virtual_File;
       Executable_Args : String;
-      Remote_Target   : String);
+      Remote_Target   : String;
+      Remote_Protocol : String := "";
+      Load_Executable : Boolean := False);
    --  Start the debugger.
 
    function Is_Stopped (Self : DAP_Client) return Boolean;
@@ -337,6 +339,41 @@ package DAP.Clients is
      (Visual : not null access DAP_Visual_Debugger)
       return Natural;
 
+   function Is_Connected_To_Target
+     (Visual : not null access DAP_Visual_Debugger) return Boolean;
+   --  Return True if the debugger is already connected to a target, False
+   --  otherwise.
+
+   function Remote_Target
+     (Visual : not null access DAP_Visual_Debugger) return String;
+   --  Return the debugger's current remote target.
+   --  If no remote target has been specified yet, return an empty string.
+
+   function Remote_Protocol
+     (Visual : not null access DAP_Visual_Debugger) return String;
+   --  Return the debugger's current remote protocol.
+   --  If no remote protocol has been specified yet, return an empty string.
+
+   function Command
+     (Visual : not null access DAP_Visual_Debugger) return String;
+   --  Returns the command being executed in the debugger or empty string.
+
+   function Is_Break_Command
+     (Visual : not null access DAP_Visual_Debugger) return Boolean;
+   --  Returns true if the command executed in the debugger is likely to modify
+   --  the list of breakpoints after it finishes executing.
+
+   function Is_Context_Command
+     (Visual : not null access DAP_Visual_Debugger) return Boolean;
+   --  Returns true if the command executed in the debugger is likely to modify
+   --  the current context (e.g., current task or thread) after it finishes
+   --  executing.
+
+   function Is_Exec_Command
+     (Visual : not null access DAP_Visual_Debugger) return Boolean;
+   --  Returns true if the command executed in the debugger is likely to modify
+   --  the stack trace in the debugger (e.g., "next" or "cont").
+
    procedure Set_Executable
      (Self : in out DAP_Client;
       File : GNATCOLL.VFS.Virtual_File);
@@ -392,7 +429,10 @@ private
       Project         : GNATCOLL.Projects.Project_Type;
       Executable      : GNATCOLL.VFS.Virtual_File;
       Executable_Args : VSS.String_Vectors.Virtual_String_Vector;
-      Remote_Target   : VSS.Strings.Virtual_String;
+
+      Target_Connected : Boolean := False;
+      Remote_Target    : VSS.Strings.Virtual_String;
+      Remote_Protocol  : VSS.Strings.Virtual_String;
 
       Source_Files    : VSS.String_Vectors.Virtual_String_Vector;
 

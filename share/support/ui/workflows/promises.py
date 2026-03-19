@@ -1175,11 +1175,11 @@ class DebuggerWrapper(object):
         return p
 
     def get_variable_by_name(self, name):
-        """Get variable value as a promise.
+        """Get variable as a promise.
 
         The way to use this is in a workflow, in the following way:
 
-            # Retrieve the language server
+            # Retrieve the debugger
             gdb = DebuggerWrapper(GPS.File("foo"))
 
             # call this with a yield
@@ -1187,7 +1187,8 @@ class DebuggerWrapper(object):
 
             # result is a DAPResponse object: typically DebuggerVariable
             # inspect result.is_valid, result.is_error, result.is_reject,
-            # and process result.data if result.is_valid.
+            # and process result.data if result.is_valid. result.data contains
+            # GPS.DebuggerVariable instance
         """
         p = Promise()
         result = DAPResponse()
@@ -1207,6 +1208,42 @@ class DebuggerWrapper(object):
             p.resolve(result)
 
         self.__debugger.get_variable_by_name(name, on_result, on_error, on_reject)
+        return p
+
+    def value_of(self, name):
+        """Get variable value as a promise.
+
+        You can use this in a workflow in the following way:
+
+            # Retrieve the debugger
+            gdb = DebuggerWrapper(GPS.File("foo"))
+
+            # call this with a yield
+            result = yield gdb.value_of("variable")
+
+            # result is a DAPResponse object: typically DebuggerVariable
+            # inspect result.is_valid, result.is_error, result.is_reject,
+            # and process result.data if result.is_valid. result.data contains
+            # a string.
+        """
+        p = Promise()
+        result = DAPResponse()
+
+        def on_error(message):
+            result.is_error = True
+            result.error_message = message
+            p.resolve(result)
+
+        def on_result(value):
+            result.is_valid = True
+            result.data = value
+            p.resolve(result)
+
+        def on_reject():
+            result.is_reject = True
+            p.resolve(result)
+
+        self.__debugger.value_of(name, on_result, on_error, on_reject)
         return p
 
 
