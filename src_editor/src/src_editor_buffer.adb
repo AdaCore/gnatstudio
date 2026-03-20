@@ -7976,6 +7976,27 @@ package body Src_Editor_Buffer is
    ------------------------------
 
    overriding function Filter_Matches_Primitive
+     (Context : access Has_Writable_Editor_Action_Context;
+      Ctxt    : GPS.Kernel.Selection_Context) return Boolean
+   is
+      pragma Unreferenced (Context);
+      Buffers : constant Source_Buffer_Array :=
+        Buffer_List (Get_Kernel (Ctxt));
+   begin
+      for Buffer of Buffers loop
+         if Buffer.Get_Writable then
+            return True;
+         end if;
+      end loop;
+
+      return False;
+   end Filter_Matches_Primitive;
+
+   ------------------------------
+   -- Filter_Matches_Primitive --
+   ------------------------------
+
+   overriding function Filter_Matches_Primitive
      (Context : access Last_Editor_Action_Context;
       Ctxt    : GPS.Kernel.Selection_Context) return Boolean
    is
