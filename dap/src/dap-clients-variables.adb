@@ -212,6 +212,22 @@ package body DAP.Clients.Variables is
       end if;
    end Get_Variable;
 
+   --------------
+   -- Value_Of --
+   --------------
+
+   procedure Value_Of
+     (Self   : in out Variables_Holder;
+      Params : in out Request_Parameters) is
+   begin
+      if Self.Client.Is_Stopped then
+         DAP.Clients.Variables.Evaluate.Send_Evaluate_Request
+           (Self.Client, Params);
+      else
+         Self.On_Variable_Not_Found (Params);
+      end if;
+   end Value_Of;
+
    ------------------
    -- Set_Variable --
    ------------------
@@ -223,17 +239,6 @@ package body DAP.Clients.Variables is
       Cursor : Variables_References_Trees.Cursor := Self.Scopes.Root;
       Found  : Boolean;
 
-      ----------------------
-      -- Has_EvaluateName --
-      ----------------------
-
-      function Has_EvaluateName return Boolean;
-      function Has_EvaluateName return Boolean is
-      begin
-         return Cursor /= Variables_References_Trees.No_Element
-           and then not Element (Cursor).Data.evaluateName.Is_Empty;
-      end Has_EvaluateName;
-
    begin
       if not Self.Client.Get_Capabilities.Is_Set then
          return;
@@ -244,8 +249,10 @@ package body DAP.Clients.Variables is
       if Self.Client.Get_Capabilities.Value.supportsSetExpression
         and then
           (not Self.Client.Get_Capabilities.Value.supportsSetVariable
-           or else Has_EvaluateName)
+           or else not Found)
       then
+         --  The server supports SetExpression request and the variable
+         --  is not found in the internal list so use variable name as is.
          DAP.Clients.Variables.SetExpression.Send_Set_Expression_Request
            (Self.Client, Params);
 
@@ -273,6 +280,26 @@ package body DAP.Clients.Variables is
             end;
          end if;
       end if;
+   end Set_Variable;
+
+   ------------------
+   -- Set_Variable --
+   ------------------
+
+   procedure Set_Variable
+     (Self  : in out Variables_Holder;
+      Name  : String;
+      Value : String)
+   is
+      Empty_Holder : DAP.Modules.Variables.Items.Item_Holder;
+   begin
+      Self.Set_Variable
+        ((Kind     => Set_Variable,
+          Item     => Empty_Holder,
+          Children => False,
+          Name     => VSS.Strings.Conversions.To_Virtual_String (Name),
+          Value    => VSS.Strings.Conversions.To_Virtual_String (Value),
+          Set_Path => Null_Gtk_Tree_Path));
    end Set_Variable;
 
    ----------------------
@@ -646,6 +673,27 @@ package body DAP.Clients.Variables is
       end if;
    end On_Variables_Response;
 
+   ----------------------------
+   -- On_Expression_Response --
+   ----------------------------
+
+   procedure On_Expression_Response
+     (Self   : in out Variables_Holder;
+      Params : in out Request_Parameters;
+      Value  : VSS.Strings.Virtual_String)
+   is
+      use type GNATCOLL.Scripts.Subprogram_Type;
+   begin
+      if Params.On_Result /= null then
+         DAP.Modules.Scripts.Call_With_String
+           (Callback => Params.On_Result,
+            Value    => VSS.Strings.Conversions.To_UTF_8_String (Value));
+      end if;
+
+      --  we are done with the variables, free the parameters
+      Free (Params);
+   end On_Expression_Response;
+
    ---------------------------
    -- On_Variable_Not_Found --
    ---------------------------
@@ -681,8 +729,7 @@ package body DAP.Clients.Variables is
    begin
       if Params.Kind = Python_API then
          --  inform the Python side
-         DAP.Modules.Scripts.Create_Debugger_Variable_Rejected_For_Callback
-           (Params);
+         DAP.Modules.Scripts.Call_Rejected_Callback (Params);
       end if;
 
       Free (Params);

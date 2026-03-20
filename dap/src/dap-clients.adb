@@ -77,6 +77,16 @@ with DAP.Clients.Cancel;
 with DAP.Clients.Variables;
 
 with DAP.Requests.Disconnect;
+with DAP.Requests.SetBreakpoints;
+with DAP.Requests.SetExceptionBreakpoints;
+with DAP.Requests.SetFunctionBreakpoints;
+with DAP.Requests.SetInstructionBreakpoints;
+with DAP.Requests.Attach;
+with DAP.Requests.StepIn;
+with DAP.Requests.Next;
+with DAP.Requests.Continue;
+with DAP.Requests.Launch;
+
 with DAP.Types.Breakpoints;      use DAP.Types.Breakpoints;
 
 with DAP.Views.Consoles;
@@ -898,6 +908,120 @@ package body DAP.Clients is
    begin
       return Visual.Client.Get_Stack_Trace.Get_Current_Line;
    end Current_Line;
+
+   ----------------------------
+   -- Is_Connected_To_Target --
+   ----------------------------
+
+   function Is_Connected_To_Target
+     (Visual : not null access DAP_Visual_Debugger) return Boolean is
+   begin
+      return Visual.Client.Target_Connected;
+   end Is_Connected_To_Target;
+
+   -------------------
+   -- Remote_Target --
+   -------------------
+
+   function Remote_Target
+     (Visual : not null access DAP_Visual_Debugger) return String is
+   begin
+      return VSS.Strings.Conversions.To_UTF_8_String
+        (Visual.Client.Remote_Target);
+   end Remote_Target;
+
+   ---------------------
+   -- Remote_Protocol --
+   ---------------------
+
+   function Remote_Protocol
+     (Visual : not null access DAP_Visual_Debugger) return String is
+   begin
+      return VSS.Strings.Conversions.To_UTF_8_String
+        (Visual.Client.Remote_Protocol);
+   end Remote_Protocol;
+
+   -------------
+   -- Command --
+   -------------
+
+   function Command
+     (Visual : not null access DAP_Visual_Debugger) return String is
+   begin
+      if Visual.Client.Sent.Is_Empty then
+         return "";
+      else
+         return Requests_Maps.Element (Visual.Client.Sent.First).Method;
+      end if;
+   end Command;
+
+   ----------------------
+   -- Is_Break_Command --
+   ----------------------
+
+   function Is_Break_Command
+     (Visual : not null access DAP_Visual_Debugger) return Boolean
+   is
+      use DAP.Requests;
+      Request : DAP.Requests.DAP_Request_Access;
+   begin
+      if Visual.Client.Sent.Is_Empty then
+         return False;
+      else
+         Request := Requests_Maps.Element (Visual.Client.Sent.First);
+
+         return Request.all in SetBreakpoints.Breakpoint_DAP_Request'Class
+           or else Request.all in
+             SetExceptionBreakpoints.Exception_Breakpoints_DAP_Request'Class
+             or else Request.all in
+               SetFunctionBreakpoints.Function_Breakpoint_DAP_Request'Class
+               or else Request.all in
+                 SetInstructionBreakpoints.
+                   Instruction_Breakpoint_DAP_Request'Class;
+      end if;
+   end Is_Break_Command;
+
+   ------------------------
+   -- Is_Context_Command --
+   ------------------------
+
+   function Is_Context_Command
+     (Visual : not null access DAP_Visual_Debugger) return Boolean
+   is
+      Request : DAP.Requests.DAP_Request_Access;
+   begin
+      if Visual.Client.Sent.Is_Empty then
+         return False;
+      else
+         Request := Requests_Maps.Element (Visual.Client.Sent.First);
+
+         return Request.all in DAP.Requests.Attach.Attach_DAP_Request'Class;
+      end if;
+   end Is_Context_Command;
+
+   ---------------------
+   -- Is_Exec_Command --
+   ---------------------
+
+   function Is_Exec_Command
+     (Visual : not null access DAP_Visual_Debugger) return Boolean
+   is
+      use DAP.Requests;
+      Request : DAP.Requests.DAP_Request_Access;
+   begin
+      if Visual.Client.Sent.Is_Empty then
+         return False;
+      else
+         Request := Requests_Maps.Element (Visual.Client.Sent.First);
+
+         return Request.all in DAP.Requests.Attach.Attach_DAP_Request'Class
+           or else Request.all in StepIn.Step_In_DAP_Request'Class
+           or else Request.all in DAP.Requests.Next.Next_DAP_Request'Class
+           or else Request.all in
+             DAP.Requests.Continue.Continue_DAP_Request'Class
+           or else Request.all in DAP.Requests.Launch.Launch_DAP_Request'Class;
+      end if;
+   end Is_Exec_Command;
 
    ------------------------------------
    -- Display_Continue_To_Line_Icons --
@@ -2237,7 +2361,9 @@ package body DAP.Clients is
       Project         : GNATCOLL.Projects.Project_Type;
       Executable      : GNATCOLL.VFS.Virtual_File;
       Executable_Args : String;
-      Remote_Target   : String)
+      Remote_Target   : String;
+      Remote_Protocol : String := "";
+      Load_Executable : Boolean := False)
    is
       use GNATCOLL.VFS;
       use type Generic_Views.Abstract_View_Access;
@@ -2289,6 +2415,8 @@ package body DAP.Clients is
       Self.Executable_Args.Clear;
       Self.Remote_Target := VSS.Strings.Conversions.To_Virtual_String
         (Remote_Target);
+      Self.Remote_Protocol := VSS.Strings.Conversions.To_Virtual_String
+        (Remote_Protocol);
 
       --  Split the command line arguments on blankspaces
       for Arg of GNATCOLL.Utils.Split (Executable_Args, On => ' ') loop

@@ -39,3 +39,21 @@ def on_gps_started():
     debug.send("continue")
     yield hook("debugger_process_terminated")
     gps_assert(debug.current_line, 0, "The program did not terminate as expected")
+
+    debug.send("delete")
+    debug.close()
+    yield wait_tasks()
+
+    # Tests that break_at_exception works
+    GPS.execute_action("Build & Debug Number 1")
+    yield hook("debugger_started")
+
+    debug = GPS.Debugger.get()
+    debug.break_at_exception(False)
+    debug.send("run")
+    yield hook("debugger_location_changed")
+    gps_assert(
+        debug.current_line,
+        9,
+        "The Constraint_Error exception breakpoint was not hit as expected",
+    )
