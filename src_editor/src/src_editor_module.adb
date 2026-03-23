@@ -2545,12 +2545,18 @@ package body Src_Editor_Module is
       pragma Unreferenced (Context);
       File : Virtual_File;
    begin
+      --  If the context doesn't have file information, we consider
+      --  that we are not in a Makefile context: thus we return
+      --  True since the filter is "Is_Not_Makefile_Context".
       if not Has_File_Information (Ctxt) then
-         return False;
+         return True;
       end if;
 
       File := File_Information (Ctxt);
 
+      --  If the filename starts with "makefile" (case insensitive),
+      --  we consider that we are in a Makefile context,
+      --  so we return False since the filter is "Is_Not_Makefile_Context".
       return not Starts_With (To_Lower (+File.Base_Name), "makefile");
    end Filter_Matches_Primitive;
 
@@ -2705,6 +2711,8 @@ package body Src_Editor_Module is
                                          (Is_Line_Movement => True);
       Writable_Src_Action_Context : constant Action_Filter :=
                                       new Writable_Src_Editor_Action_Context;
+      Has_Writable_Editor_Context : constant Action_Filter :=
+                                      new Has_Writable_Editor_Action_Context;
       Is_Not_Makefile             : constant Action_Filter :=
                                       new Is_Not_Makefile_Context;
       Last_Editor_Context         : constant Action_Filter :=
@@ -2736,6 +2744,9 @@ package body Src_Editor_Module is
 
       Register_Filter
         (Kernel, Writable_Src_Action_Context, "Writable source editor");
+
+      Register_Filter
+        (Kernel, Has_Writable_Editor_Context, "Has writable editor");
 
       Register_Filter
         (Kernel, Is_Not_Makefile, "Is not Makefile");
