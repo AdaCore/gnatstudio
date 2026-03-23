@@ -16,6 +16,8 @@
 ------------------------------------------------------------------------------
 
 with Ada.Characters.Handling;   use Ada.Characters.Handling;
+with Ada.Containers;
+with Ada.Containers.Vectors;
 with Ada.Strings.Unbounded;     use Ada.Strings.Unbounded;
 with GNAT.Strings;              use GNAT.Strings;
 
@@ -124,6 +126,9 @@ package body GVD.Breakpoints is
       Break_On_Exception);
    --  The various types of breakpoints
 
+   package Breakpoint_Type_Vectors is
+     new Ada.Containers.Vectors (Natural, Breakpoint_Type);
+
    type Breakpoint_Editor_Record is new Process_View_Record with
       record
          Breakpoint_List      : Gtk_Tree_View;
@@ -161,6 +166,7 @@ package body GVD.Breakpoints is
       Stop_Not_Handled_Exception : Gtk_Radio_Button;
 
       Breakpoint_Type      : Gtk_Combo_Box_Text;
+      BP_Types_In_Combo    : Breakpoint_Type_Vectors.Vector;
 
       Exception_Name       : Gtk_Combo_Box_Text;
 
@@ -521,6 +527,13 @@ package body GVD.Breakpoints is
               (Values (Last), Escape_Text (To_String (Br.Except)));
          end if;
 
+         if Br.Assertion then
+            Last := Last + 1;
+            Columns (Last) := Col_Exception;
+            Glib.Values.Init_Set_String
+              (Values (Last), Escape_Text ("assertions"));
+         end if;
+
          if Br.Subprogram /= "" then
             Last := Last + 1;
             Columns (Last) := Col_Subprogs;
@@ -727,6 +740,7 @@ package body GVD.Breakpoints is
       Adj        : Gtk_Adjustment;
       M          : Gtk_List_Store;
       Dummy      : Gtk_Widget;
+      Type_Added : Boolean;
    begin
       Gtk.Dialog.Initialize
         (Self,
@@ -745,7 +759,9 @@ package body GVD.Breakpoints is
       ------------
 
       Gtk_New (Self.Breakpoint_Type);
+      Self.BP_Types_In_Combo.Clear;
       for T in Breakpoint_Type loop
+         Type_Added := True;
          case T is
             when Break_On_Source_Loc =>
                Self.Breakpoint_Type.Append_Text (-"break on source location");
@@ -757,14 +773,25 @@ package body GVD.Breakpoints is
                Self.Breakpoint_Type.Append_Text
                  (-"break on regular expression");
             when Break_On_Variable =>
-               Self.Breakpoint_Type.Append_Text (-"watch changes on variable");
+               if Self.Process = null then
+                  Type_Added := False;
+               else
+                  --  show when gdb is started because we can create such BP
+                  --  only when the variable is in scope
+                  Self.Breakpoint_Type.Append_Text
+                    (-"watch changes on variable");
+               end if;
             when Break_On_Exception =>
                Self.Breakpoint_Type.Append_Text (-"break on exception");
          end case;
+
+         if Type_Added then
+            Self.BP_Types_In_Combo.Append (T);
+         end if;
       end loop;
 
       Self.Breakpoint_Type.Set_Active
-        (Breakpoint_Type'Pos (Break_On_Source_Loc));
+        (Gint (Self.BP_Types_In_Combo.Find_Index (Break_On_Source_Loc)));
 
       Self.Breakpoint_Type.On_Changed (On_Type_Changed'Access, Self);
 
@@ -866,6 +893,7 @@ package body GVD.Breakpoints is
       Size.Add_Widget (Label);
 
       Gtk_New (Self.Watchpoint_Name);
+      Self.Watchpoint_Name.Set_Name ("breakpoint-watchpoint-name");
       Hbox.Pack_Start (Self.Watchpoint_Name, True, True);
 
       Gtk_New_Hbox (Hbox, Spacing => 15);
@@ -905,6 +933,7 @@ package body GVD.Breakpoints is
       Self.Exception_Box.Pack_Start (Hbox, False, True, 0);
 
       Gtk_New_With_Entry (Self.Exception_Name);
+      Self.Exception_Name.Set_Name ("breakpoint-exception-name");
       Self.Exception_Name.Append_Text ("All Ada exceptions");
       Self.Exception_Name.Set_Active (0);
       Hbox.Pack_Start (Self.Exception_Name, True, True, 0);
@@ -952,6 +981,7 @@ package body GVD.Breakpoints is
       Vbox9.Pack_Start (Label, False);
 
       Gtk_New_With_Entry (Self.Condition_Combo);
+      Self.Condition_Combo.Set_Name ("breakpoint-condition");
       Vbox9.Pack_Start (Self.Condition_Combo, False, False, 0);
 
       --------------
@@ -970,6 +1000,7 @@ package body GVD.Breakpoints is
 
       Gtk_New (Adj, 0.0, 0.0, 100_000.0, 1.0, 10.0);
       Gtk_New (Self.Ignore_Count_Combo, Adj, 1.0, 0);
+      Self.Ignore_Count_Combo.Set_Name ("breakpoint-ignore");
       Self.Ignore_Count_Combo.Set_Numeric (False);
       Self.Ignore_Count_Combo.Set_Snap_To_Ticks (True);
       Self.Ignore_Count_Combo.Set_Update_Policy (Update_Always);
@@ -1200,29 +1231,31 @@ package body GVD.Breakpoints is
    begin
       --  Fill the information
 
-      if Br.Except /= "" then
+      if Br.Except /= ""
+        or else Br.Assertion
+      then
          Self.Breakpoint_Type.Set_Active
-           (Breakpoint_Type'Pos (Break_On_Exception));
+           (Gint (Self.BP_Types_In_Combo.Find_Index (Break_On_Exception)));
          Set_Active (Self.Stop_Always_Exception, True);
 
          if Br.Except = "all" then
             Set_Active_Text (Self.Exception_Name, -"All Ada exceptions");
-         elsif Br.Except = "unhandled" then
-            Set_Active_Text (Self.Exception_Name, -"All Ada exceptions");
-            Set_Active (Self.Stop_Not_Handled_Exception, True);
+         elsif Br.Assertion then
+            Set_Active_Text (Self.Exception_Name, -"Ada assertions");
          else
             Add_Unique_Combo_Entry
               (Self.Exception_Name,
                To_Virtual_String (Br.Except), Select_Text => True);
          end if;
 
+         Set_Active (Self.Stop_Not_Handled_Exception, Br.Unhandled);
          Set_Active (Self.Temporary, Br.Disposition /= Keep);
 
       elsif Br.Location /= No_Marker
         or else Br.Num = 0   --  a new breakpoint
       then
          Self.Breakpoint_Type.Set_Active
-           (Breakpoint_Type'Pos (Break_On_Source_Loc));
+           (Gint (Self.BP_Types_In_Combo.Find_Index (Break_On_Source_Loc)));
 
          Set_Text (Self.File_Name, +Base_Name (Get_File (Br.Location)));
          --  ??? What if the filesystem path is non-UTF8?
@@ -1235,7 +1268,7 @@ package body GVD.Breakpoints is
 
       else
          Self.Breakpoint_Type.Set_Active
-           (Breakpoint_Type'Pos (Break_At_Address));
+           (Gint (Self.BP_Types_In_Combo.Find_Index (Break_At_Address)));
 
          Add_Unique_Combo_Entry
            (Self.Address_Combo,
@@ -1410,7 +1443,8 @@ package body GVD.Breakpoints is
       Scope_Value    : Scope_Type := No_Scope;
       Action_Value   : Action_Type := No_Action;
       T              : constant Breakpoint_Type :=
-        Breakpoint_Type'Val (Get_Active (Self.Breakpoint_Type));
+        Self.BP_Types_In_Combo.Element
+          (Natural (Get_Active (Self.Breakpoint_Type)));
       Temporary      : constant Boolean := Self.Temporary.Get_Active;
       Num            : Breakpoint_Identifier := Br.Num;
    begin
@@ -1438,23 +1472,50 @@ package body GVD.Breakpoints is
                Temporary  => Temporary);
 
          when Break_At_Address =>
-            if Self.Process /= null then
-               Num := Break_Address
-                 (Self.Process.Debugger,
-                  Address   =>
-                    String_To_Address (Self.Address_Combo.Get_Active_Text),
-                  Temporary => Temporary,
-                  Mode      => GVD.Types.Visible);
-            end if;
+            Num := Break_At_Address
+              (Self.Kernel,
+               Address   => String_To_Address
+                 (Self.Address_Combo.Get_Active_Text),
+               Temporary => Temporary);
 
          when Break_On_Regexp =>
-            if Self.Process /= null then
-               Num := Break_Regexp
-                 (Self.Process.Debugger,
-                  Regexp    => Self.Regexp_Combo.Get_Active_Text,
-                  Temporary => Temporary,
-                  Mode      => GVD.Types.Visible);
-            end if;
+            Num := Break_Regexp
+              (Self.Kernel,
+               Expression => Self.Regexp_Combo.Get_Active_Text,
+               Temporary  => Temporary);
+
+         when Break_On_Exception =>
+            declare
+               Name      : constant String :=
+                 Get_Text (Gtk_Entry (Self.Exception_Name.Get_Child));
+               Unhandled : constant Boolean :=
+                 Get_Active (Self.Stop_Not_Handled_Exception);
+            begin
+               --  Some of the strings below deal with the GUI, and thus should
+               --  be translated for internationalization. Others come from
+               --  gdb, and should not be translated. This explains why some
+               --  are preceded by '-'.
+
+               if Name = -"All Ada exceptions" then
+                  Num := Break_Exception
+                    (Self.Kernel,
+                     Name      => "all",
+                     Unhandled => Unhandled,
+                     Temporary => Temporary);
+
+               elsif Name = -"Ada assertions" then
+                  Num := Catch_Assertions
+                    (Self.Kernel,
+                     Temporary => Temporary);
+
+               else
+                  Num := Break_Exception
+                    (Self.Kernel,
+                     Name      => Name,
+                     Unhandled => Unhandled,
+                     Temporary => Temporary);
+               end if;
+            end;
 
          when Break_On_Variable =>
             declare
@@ -1471,50 +1532,13 @@ package body GVD.Breakpoints is
                   else GVD.Types.Write);
             begin
                if Self.Process /= null then
+                  --  gdb don't set wachpoint when variable is not in the scope
+                  --  so it is not possible to pre-set such breakpoint
                   Num := Watch
                     (Self.Process.Debugger,
                      Name      => Watchpoint_Name,
                      Trigger   => Trigger,
                      Condition => Watchpoint_Cond,
-                     Mode      => GVD.Types.Visible);
-               end if;
-            end;
-
-         when Break_On_Exception =>
-            declare
-               Name      : constant String :=
-                 Get_Text (Gtk_Entry (Self.Exception_Name.Get_Child));
-               Unhandled : constant Boolean :=
-                 Get_Active (Self.Stop_Not_Handled_Exception);
-            begin
-               --  Some of the strings below deal with the GUI, and thus should
-               --  be translated for internationalization. Others come from
-               --  gdb, and should not be translated. This explains why some
-               --  are preceded by '-'.
-
-               if Self.Process = null then
-                  null;
-
-               elsif Name = -"All Ada exceptions" then
-                  Num := Break_Exception
-                    (Self.Process.Debugger,
-                     Name      => "",
-                     Unhandled => Unhandled,
-                     Temporary => Temporary,
-                     Mode      => GVD.Types.Visible);
-
-               elsif Name = -"Ada assertions" then
-                  Num := Catch_Assertions
-                    (Self.Process.Debugger,
-                     Temporary => Temporary,
-                     Mode      => GVD.Types.Visible);
-
-               else
-                  Num := Break_Exception
-                    (Self.Process.Debugger,
-                     Name      => Name,
-                     Unhandled => Unhandled,
-                     Temporary => Temporary,
                      Mode      => GVD.Types.Visible);
                end if;
             end;
@@ -1527,6 +1551,7 @@ package body GVD.Breakpoints is
 
       if Self.Condition_Frame.Get_Visible
         and then Self.Process /= null
+        and then Self.Process.Debugger /= null
       then
          declare
             S : constant String := Self.Condition_Combo.Get_Active_Text;
@@ -1541,6 +1566,7 @@ package body GVD.Breakpoints is
 
       if Self.Command_Frame.Get_Visible
         and then Self.Process /= null
+        and then Self.Process.Debugger /= null
       then
          Get_Bounds (Get_Buffer (Self.Command_Descr), Start, The_End);
          declare
@@ -1557,6 +1583,7 @@ package body GVD.Breakpoints is
 
       if Self.Ignore_Frame.Get_Visible
         and then Self.Process /= null
+        and then Self.Process.Debugger /= null
       then
          C := Integer (Get_Value_As_Int (Self.Ignore_Count_Combo));
          if C /= 0 or else Br.Ignore /= 0 then
@@ -1931,7 +1958,8 @@ package body GVD.Breakpoints is
    procedure On_Type_Changed (W : access GObject_Record'Class) is
       Self : constant Properties_Editor := Properties_Editor (W);
       T    : constant Breakpoint_Type :=
-        Breakpoint_Type'Val (Get_Active (Self.Breakpoint_Type));
+        Self.BP_Types_In_Combo.Element
+          (Natural (Get_Active (Self.Breakpoint_Type)));
    begin
       Self.Location_Box.Set_Sensitive (T = Break_On_Source_Loc);
       Self.Location_Box.Set_Visible (T = Break_On_Source_Loc);

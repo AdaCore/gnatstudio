@@ -211,9 +211,12 @@ package body Debugger.Base_Gdb.Gdb_MI is
    --  Typically caleld before sending a new command to the debugger.
 
    function Find_Identifier
-     (C : Token_Lists.Cursor; Value : String) return Token_Lists.Cursor;
+     (C        : Token_Lists.Cursor;
+      Value    : String;
+      In_Scope : Boolean := False)
+      return Token_Lists.Cursor;
    --  Helper function to find the first Udentifier token starting from C
-   --  named Value.
+   --  named Value. Take `}` in account if In_Scope = True
 
    function Is_Identifier
      (C : Token_Lists.Cursor; Value : String) return Boolean;
@@ -253,12 +256,16 @@ package body Debugger.Base_Gdb.Gdb_MI is
    ---------------------
 
    function Find_Identifier
-     (C : Token_Lists.Cursor; Value : String) return Token_Lists.Cursor
+     (C        : Token_Lists.Cursor;
+      Value    : String;
+      In_Scope : Boolean := False)
+      return Token_Lists.Cursor
    is
       use Token_Lists;
 
-      Cur  : Token_Lists.Cursor := C;
-      Elem : MI.Lexer.Token_Type;
+      Cur           : Token_Lists.Cursor := C;
+      Elem          : MI.Lexer.Token_Type;
+      L_Brace_Count : Natural := 0;
 
    begin
       while Has_Element (Cur) loop
@@ -269,6 +276,19 @@ package body Debugger.Base_Gdb.Gdb_MI is
            and then Elem.Text.all = Value
          then
             return Cur;
+
+         elsif In_Scope and then Elem.Code = L_Brace then
+            --  inner scope
+            L_Brace_Count := L_Brace_Count + 1;
+
+         elsif In_Scope and then Elem.Code = R_Brace then
+            if L_Brace_Count > 0 then
+               --  left inner scope
+               L_Brace_Count := L_Brace_Count - 1;
+            else
+               --  out of the scope
+               return No_Element;
+            end if;
          end if;
 
          Next (Cur);
@@ -1135,7 +1155,6 @@ package body Debugger.Base_Gdb.Gdb_MI is
 
       if Debugger.Executable /= GNATCOLL.VFS.No_File then
          Debugger.Set_Executable (Debugger.Executable);
-         Debugger.Catch_Exception;
       else
          --  Connect to the target, if needed. This is normally done by
          --  Set_Executable, but GNAT Studio should also connect immediately
@@ -3863,7 +3882,7 @@ package body Debugger.Base_Gdb.Gdb_MI is
          --  for instance (e.g: "catch exception Program_Error" -> there will
          --  be no address in this case).
 
-         Tmp := Find_Identifier (C, "addr");
+         Tmp := Find_Identifier (C => C, Value => "addr", In_Scope => True);
          if Tmp /= No_Element then
             C := Tmp;
             Next (C, 2);
