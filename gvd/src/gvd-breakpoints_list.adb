@@ -538,6 +538,151 @@ package body GVD.Breakpoints_List is
       end if;
    end Break_Subprogram;
 
+   ---------------------
+   -- Break_Exception --
+   ---------------------
+
+   function Break_Exception
+     (Kernel    : not null access Kernel_Handle_Record'Class;
+      Name      : String;
+      Unhandled : Boolean := False;
+      Temporary : Boolean := False)
+      return Breakpoint_Identifier
+   is
+      Process : constant Visual_Debugger :=
+        Visual_Debugger (Get_Current_Debugger (Kernel));
+
+   begin
+      if Process = null then
+         Module.Breakpoints.List.Append
+           (Breakpoint_Data'
+              (The_Type    => Catchpoint,
+               Except      => To_Unbounded_String (Name),
+               Num         =>
+                 Breakpoint_Identifier (Module.Breakpoints.List.Length) + 1,
+               Unhandled   => Unhandled,
+               Disposition => (if Temporary then Delete else Keep),
+               others      => <>));
+         Debugger_Breakpoints_Changed_Hook.Run (Kernel, null);
+         return 0;
+
+      else
+         --  Set a breakpoint in the current debugger
+         return Break_Exception
+           (Process.Debugger,
+            Name      => Name,
+            Unhandled => Unhandled,
+            Temporary => Temporary,
+            Mode      => GVD.Types.Visible);
+      end if;
+   end Break_Exception;
+
+   ------------------
+   -- Break_Regexp --
+   ------------------
+
+   function Break_Regexp
+     (Kernel     : not null access Kernel_Handle_Record'Class;
+      Expression : String;
+      Temporary  : Boolean := False)
+      return Breakpoint_Identifier
+   is
+      Process : constant Visual_Debugger :=
+        Visual_Debugger (Get_Current_Debugger (Kernel));
+
+   begin
+      if Process = null then
+         Module.Breakpoints.List.Append
+           (Breakpoint_Data'
+              (The_Type    => Breakpoint,
+               Expression  => To_Unbounded_String (Expression),
+               Num         =>
+                 Breakpoint_Identifier (Module.Breakpoints.List.Length) + 1,
+               Disposition => (if Temporary then Delete else Keep),
+               others      => <>));
+         Debugger_Breakpoints_Changed_Hook.Run (Kernel, null);
+         return 0;
+
+      else
+         --  Set a breakpoint in the current debugger
+         return Break_Regexp
+           (Process.Debugger,
+            Regexp    => Expression,
+            Temporary => Temporary,
+            Mode      => GVD.Types.Visible);
+      end if;
+   end Break_Regexp;
+
+   ----------------------
+   -- Break_At_Address --
+   ----------------------
+
+   function Break_At_Address
+     (Kernel    : not null access Kernel_Handle_Record'Class;
+      Address   : GVD.Types.Address_Type;
+      Temporary : Boolean := False)
+      return Breakpoint_Identifier
+   is
+      Process : constant Visual_Debugger :=
+        Visual_Debugger (Get_Current_Debugger (Kernel));
+
+   begin
+      if Process = null then
+         Module.Breakpoints.List.Append
+           (Breakpoint_Data'
+              (The_Type    => Breakpoint,
+               Address     => Address,
+               Num         =>
+                 Breakpoint_Identifier (Module.Breakpoints.List.Length) + 1,
+               Disposition => (if Temporary then Delete else Keep),
+               others      => <>));
+         Debugger_Breakpoints_Changed_Hook.Run (Kernel, null);
+         return 0;
+
+      else
+         --  Set a breakpoint in the current debugger
+         return Break_Address
+           (Process.Debugger,
+            Address   => Address,
+            Temporary => Temporary,
+            Mode      => GVD.Types.Visible);
+      end if;
+   end Break_At_Address;
+
+   ----------------------
+   -- Catch_Assertions --
+   ----------------------
+
+   function Catch_Assertions
+     (Kernel    : not null access Kernel_Handle_Record'Class;
+      Temporary : Boolean := False)
+      return Breakpoint_Identifier
+   is
+      Process : constant Visual_Debugger :=
+        Visual_Debugger (Get_Current_Debugger (Kernel));
+
+   begin
+      if Process = null then
+         Module.Breakpoints.List.Append
+           (Breakpoint_Data'
+              (The_Type    => Catchpoint,
+               Assertion   => True,
+               Num         =>
+                 Breakpoint_Identifier (Module.Breakpoints.List.Length) + 1,
+               Disposition => (if Temporary then Delete else Keep),
+               others      => <>));
+         Debugger_Breakpoints_Changed_Hook.Run (Kernel, null);
+         return 0;
+
+      else
+         --  Set a breakpoint in the current debugger
+         return Catch_Assertions
+           (Process.Debugger,
+            Temporary => Temporary,
+            Mode      => GVD.Types.Visible);
+      end if;
+   end Catch_Assertions;
+
    ------------------------
    -- Break_At_Exception --
    ------------------------
@@ -800,6 +945,8 @@ package body GVD.Breakpoints_List is
                  ("line", Editable_Line_Type'Image (Get_Line (B.Location)));
             end if;
             Value.Set_Field ("exception", To_String (B.Except));
+            Value.Set_Field ("unhandled", B.Unhandled);
+            Value.Set_Field ("assertion", B.Assertion);
             Value.Set_Field ("subprogram", To_String (B.Subprogram));
             if B.Address /= Invalid_Address then
                Value.Set_Field ("address", Address_To_String (B.Address));
@@ -866,6 +1013,8 @@ package body GVD.Breakpoints_List is
                Enabled       => Item.Get ("enabled"),
                Expression    => Item.Get ("expression"),
                Except        => Item.Get ("exception"),
+               Unhandled     => Item.Get ("unhandled"),
+               Assertion     => Item.Get ("assertion"),
                Subprogram    => Item.Get ("subprogram"),
                Location      => Loc,
                Address       => String_To_Address (Item.Get ("address")),
@@ -978,15 +1127,16 @@ package body GVD.Breakpoints_List is
       --  synchronize the global list of breakpoints.
       Module.Breakpoints.List.Clear;
 
-      if Break_On_Exception.Get_Pref then
-         for B of Process.Breakpoints.List loop
+      for B of Process.Breakpoints.List loop
+         if Break_On_Exception.Get_Pref then
             if B.Except = "" or else B.Except /= "all" then
                Module.Breakpoints.List.Append (B);
             end if;
-         end loop;
-      else
-         Module.Breakpoints := Process.Breakpoints;
-      end if;
+
+         else
+            Module.Breakpoints.List.Append (B);
+         end if;
+      end loop;
 
       --  Put back the unrecognized breakpoints in the list
       if not Process.Imaginary_Breakpoints.Is_Empty then
@@ -1066,7 +1216,7 @@ package body GVD.Breakpoints_List is
             Id := Process.Debugger.Break_Exception
               (To_String (B.Except),
                Temporary => B.Disposition /= Keep, Mode => Internal,
-               Unhandled => False);
+               Unhandled => B.Unhandled);
          elsif B.Location /= No_Marker then
             Id := Process.Debugger.Break_Source
               (Get_File (B.Location),
@@ -1080,6 +1230,14 @@ package body GVD.Breakpoints_List is
             Id := Process.Debugger.Break_Address
               (B.Address,
                Temporary => B.Disposition /= Keep, Mode => Internal);
+         elsif B.Assertion then
+            Id := Process.Debugger.Catch_Assertions
+              (Temporary => B.Disposition /= Keep, Mode => Internal);
+         elsif B.Expression /= "" then
+            Id := Process.Debugger.Break_Regexp
+              (Regexp    => To_String (B.Expression),
+               Temporary => B.Disposition /= Keep, Mode => Internal);
+
          else
             Id := GVD.Types.No_Breakpoint;
          end if;
@@ -1439,6 +1597,8 @@ package body GVD.Breakpoints_List is
         and then B1.Trigger     = B2.Trigger
         and then B1.Expression  = B2.Expression
         and then B1.Except      = B2.Except
+        and then B1.Unhandled   = B2.Unhandled
+        and then B1.Assertion   = B2.Assertion
         and then B1.Subprogram  = B2.Subprogram
         and then Similar (B1.Location, B2.Location)
         and then B1.Condition   = B2.Condition
