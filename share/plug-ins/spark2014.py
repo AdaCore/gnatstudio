@@ -98,6 +98,7 @@ def print_error(message):
 
 # getters for proof target depending on user profile
 
+
 def is_basic_mode():
     # Do a safe insensitive string check
     return GPS.Preference(User_Profile_Pref_Name).get().lower() == "basic"
@@ -507,7 +508,6 @@ def get_compunit_for_message(text, fn):
 
 
 class GNATprove_Parser(tool_output.OutputParser):
-
     """Class that parses messages of the gnatprove tool, and creates
     decorates the messages coming from GNATprove with actions (showing
     traces) when needed.
@@ -1112,8 +1112,16 @@ def inside_generic_unit_context(self):
         )
 
     try:
-        # Look at immediate enclosing subprogram decl/body
-        node = current_subprogram(self)
+        # Look up the current location once and reuse the LAL node, to avoid
+        # calling self.location() multiple times (the GPS context can be
+        # invalidated by intermediate calls).
+        curloc = self.location()
+        buf = GPS.EditorBuffer.get(curloc.file(), open=False)
+        if not buf:
+            return False
+        unit = buf.get_analysis_unit()
+        node = unit.root.lookup(lal.Sloc(curloc.line(), curloc.column()))
+
         while node is not None:
             # Stop at the first enclosing generic parent node
             if is_generic_node(node):
@@ -1205,7 +1213,6 @@ def add_lemma_menu():
 
 
 class GNATProve_Plugin:
-
     """Class to contain the main functionality of the GNATProve_Plugin"""
 
     output_parser = None
