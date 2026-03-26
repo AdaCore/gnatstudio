@@ -64,6 +64,7 @@ with VSS.Strings.Conversions;
 with Basic_Types;                use Basic_Types;
 
 with Dialog_Utils;               use Dialog_Utils;
+with GPS.Core_Kernels;
 with GPS.Debuggers;              use GPS.Debuggers;
 with GPS.Default_Styles;
 with GPS.Editors;                use GPS.Editors;
@@ -427,14 +428,16 @@ package body DAP.Views.Breakpoints is
                Commands       => Commands,
                Verified       => False,
                Location       =>
-                 DAP.Types.Breakpoints.Breakpoint_Location_Type'
-                   (Marker  =>
-                      Self.Kernel.Get_Buffer_Factory.Create_Marker
-                        (File   => Create (+Get_Text (Self.File_Name)),
-                         Line   =>
-                           Editable_Line_Type'Value (Self.Line_Spin.Get_Text),
-                         Column => 1),
-                    Address => Invalid_Address));
+                  DAP.Types.Breakpoints.Breakpoint_Location_Type'
+                 (Marker  =>
+                       Self.Kernel.Get_Buffer_Factory.Create_Marker
+                    (File   =>
+                          GPS.Core_Kernels.To_File
+                       (Self.Kernel, Get_Text (Self.File_Name)),
+                     Line   =>
+                        Editable_Line_Type'Value (Self.Line_Spin.Get_Text),
+                     Column => 1),
+                  Address => Invalid_Address));
 
          when On_Subprogram  =>
             Br :=
