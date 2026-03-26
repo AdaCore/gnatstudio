@@ -124,12 +124,6 @@ The File Menu
 
    Save all modified files and projects
 
-.. index:: menu; file --> save more --> projects
-
-* :menuselection:`File --> Save More --> Projects`
-
-   Save all modified projects to disk
-
 .. index:: menu; file --> save more --> desktop
 
 * :menuselection:`File --> Save More --> Desktop`
