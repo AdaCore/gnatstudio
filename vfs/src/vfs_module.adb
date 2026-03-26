@@ -120,16 +120,6 @@ package body VFS_Module is
      (Context : access Dir_Filter_Record;
       Ctxt    : GPS.Kernel.Selection_Context) return Boolean;
 
-   -----------
-   -- Utils --
-   -----------
-
-   procedure Rename_In_Prj
-     (Kernel : not null access Kernel_Handle_Record'Class;
-      File_In, File_Out : Virtual_File;
-      Success           : out Boolean);
-   --  Rename the path in the projects
-
    --------------------------
    -- VFS_Command_Handler --
    --------------------------
@@ -517,40 +507,6 @@ package body VFS_Module is
       return Commands.Success;
    end Execute;
 
-   -------------------
-   -- Rename_In_Prj --
-   -------------------
-
-   procedure Rename_In_Prj
-     (Kernel : not null access Kernel_Handle_Record'Class;
-      File_In, File_Out : Virtual_File;
-      Success           : out Boolean)
-   is
-      Project  : constant Project_Type :=
-        Get_Project (Kernel);
-      Relative : Boolean;
-      Iter     : Project_Iterator :=
-        Start (Project, Include_Extended => False);
-      Prj      : Project_Type;
-   begin
-      Success     := False;
-
-      loop
-         Prj := Current (Iter);
-
-         exit when Prj = No_Project;
-
-         Next (Iter);
-         Relative :=
-           Get_Paths_Type (Prj) = Projects.Relative
-           or else (Get_Paths_Type (Prj) = From_Pref
-                    and then Generate_Relative_Paths.Get_Pref);
-
-         Success := Success or else Rename_Path
-           (Prj, File_In, File_Out, Relative);
-      end loop;
-   end Rename_In_Prj;
-
    -------------
    -- Execute --
    -------------
@@ -827,7 +783,7 @@ package body VFS_Module is
       Display_Confirm_Dialogs : Boolean := True)
    is
       Project : Project_Type;
-      Button  : Gtkada.Dialogs.Message_Dialog_Buttons;
+      Button  : Gtkada.Dialogs.Message_Dialog_Buttons with Unreferenced;
    begin
       if New_File = File or else New_File = No_File then
          Success := True;
@@ -860,40 +816,19 @@ package body VFS_Module is
         (Get_Registry (Kernel).Tree, File);
 
       if Project /= No_Project then
-         if Is_Directory (File) then
-            --  We need to change the paths defined in the projects
-
-            if Display_Confirm_Dialogs then
-               Button := GPS_Message_Dialog
-                 (-("The directory is referenced in the project ")
-                  & Project.Name & ASCII.LF &
-                  (-("Do you want GNAT Studio to modify these projects to " &
-                       "reference its new name ?")),
-                  Gtkada.Dialogs.Confirmation,
-                  Button_Yes or Button_No,
-                  Parent => Kernel.Get_Main_Window);
-            end if;
-
-            if not Display_Confirm_Dialogs or else Button = Button_Yes then
-               Rename_In_Prj
-                 (Kernel   => Kernel,
-                  File_In  => File,
-                  File_Out => New_File,
-                  Success  => Prj_Changed);
-            end if;
-
-         else
-            if Display_Confirm_Dialogs then
-               Button := GPS_Message_Dialog
-                 (-("The file is referenced in the project ") &
-                    Project.Name & ASCII.LF &
-                  (-"The project(s) might require manual modifications."),
-                  Gtkada.Dialogs.Warning,
-                  Button_OK,
-                  Parent => Kernel.Get_Main_Window);
-            end if;
-            Prj_Changed := True;
+         if Display_Confirm_Dialogs then
+            Button := GPS_Message_Dialog
+              ((if File.Is_Directory
+                then -("The directory is referenced in the project ")
+                else -("The file is referenced in the project "))
+               & Project.Name & ASCII.LF &
+               (-"The project(s) might require manual modifications."),
+               Gtkada.Dialogs.Warning,
+               Button_OK,
+               Parent => Kernel.Get_Main_Window);
          end if;
+
+         Prj_Changed := True;
       end if;
    end Rename_File;
 
