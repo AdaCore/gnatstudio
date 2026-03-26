@@ -819,10 +819,10 @@ package body VFS_Module is
          if Display_Confirm_Dialogs then
             Button := GPS_Message_Dialog
               ((if File.Is_Directory
-                then -("The directory is referenced in the project ")
-                else -("The file is referenced in the project "))
+                then -("The directory is referenced in the loaded project: ")
+                else -("The file is referenced in the loaded project: "))
                & Project.Name & ASCII.LF &
-               (-"The project(s) might require manual modifications."),
+               (-"the project files might require manual modifications."),
                Gtkada.Dialogs.Warning,
                Button_OK,
                Parent => Kernel.Get_Main_Window);
