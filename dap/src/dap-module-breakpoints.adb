@@ -1123,6 +1123,9 @@ package body DAP.Module.Breakpoints is
          Persistent_Breakpoints.Set_Breakpoints_State (Indexes, State);
          GPS.Kernel.Hooks.Debugger_Breakpoints_Changed_Hook.Run
            (Kernel, null);
+         Show_Breakpoints_In_All_Editors
+           (Kernel, Persistent_Breakpoints.Get_Breakpoints);
+
       else
          DAP.Module.Get_Current_Debugger.Get_Breakpoints_Manager.
            Set_Breakpoints_State (Indexes, State);
