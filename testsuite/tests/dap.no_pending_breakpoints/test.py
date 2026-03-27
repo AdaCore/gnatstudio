@@ -56,7 +56,7 @@ def test_driver():
     # Run the executable and wait for the 'debugger_breakpoints_changed' hook
     debug = GPS.Debugger.get()
     debug.send("run")
-    yield hook('debugger_breakpoints_changed')
+    yield hook("debugger_breakpoints_changed")
 
     # Check that pending breakpoints have been grayed out, by checking
     # that the foreground color is not white (default fg color)
