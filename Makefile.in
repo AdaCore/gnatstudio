@@ -55,10 +55,6 @@ install-common:
 	$(RMDIR) $(sharedir)/gnatstudio/templates
 
 	(cd share; tar cf - plug-ins/*) | (cd $(sharedir)/gnatstudio; tar xf -)
-
-# Regenerate predefined_ada.xml before we install it
-	-${PYTHON} testsuite/internal/scripts/update_predefined_ada.py
-
 	(cd share; tar cf - library/*.py) | (cd $(sharedir)/gnatstudio; tar xf -)
 	(cd share; tar cf - support/) | (cd $(sharedir)/gnatstudio; tar xf -)
 	-${PYTHON} distrib/gnat_switches.py > $(sharedir)/gnatstudio/support/core/gnat_switches.py
