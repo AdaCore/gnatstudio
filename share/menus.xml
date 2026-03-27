@@ -51,7 +51,6 @@
          <menu label='Save _As...'                   action='save as'/>
          <menu label='Save _More'>
             <menu label='_All'                       action='save files and projects'/>
-            <menu label='_Projects'                  action='save all projects'/>
             <menu label='_Desktop'                   action='save desktop'/>
          </menu>
          <separator />

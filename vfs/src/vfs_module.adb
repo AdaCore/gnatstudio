@@ -612,12 +612,11 @@ package body VFS_Module is
      (Command : access Create_Command;
       Context : Interactive_Command_Context) return Command_Return_Type
    is
-      Kernel        : constant Kernel_Handle := Get_Kernel (Context.Context);
-      Dir           : constant Virtual_File :=
+      Kernel  : constant Kernel_Handle := Get_Kernel (Context.Context);
+      Dir     : constant Virtual_File :=
         Directory_Information (Context.Context);
-      File          : GNATCOLL.VFS.Virtual_File;
-      Project       : Project_Type;
-      Project_Saved : Boolean := False;
+      File    : GNATCOLL.VFS.Virtual_File;
+      Project : Project_Type;
    begin
       if Command.Create_Dir then
          declare
@@ -677,12 +676,6 @@ package body VFS_Module is
 
       if Project /= No_Project then
          Recompute_View (Kernel);
-         Project_Saved := Save_Project (Kernel, Project);
-
-         if not Project_Saved then
-            Kernel.Insert
-              ("Could not save properly the project", Mode => Error);
-         end if;
       end if;
 
       --  Now that we have recomputed the view, we can open the file, which

@@ -183,13 +183,6 @@ package body Project_Viewers is
       Context : Selection_Context);
    --  Same as above, but work directly on a context
 
-   type Save_All_Command is new Interactive_Command with null record;
-   overriding function Execute
-     (Command : access Save_All_Command;
-      Context : Interactive_Command_Context) return Command_Return_Type;
-   --  Save the project associated with the kernel, and all its imported
-   --  projects.
-
    procedure Project_Command_Handler
      (Data : in out Callback_Data'Class; Command : String);
    --  Handle the interactive commands related to the project editor
@@ -230,12 +223,6 @@ package body Project_Viewers is
    ----------------------
    -- Contextual menus --
    ----------------------
-
-   type Save_Project_Command
-     is new Interactive_Command with null record;
-   overriding function Execute
-     (Command : access Save_Project_Command;
-      Context : Interactive_Command_Context) return Command_Return_Type;
 
    type Edit_Project_Source_Command
      is new Interactive_Command with null record;
@@ -633,43 +620,6 @@ package body Project_Viewers is
    -------------
 
    overriding function Execute
-     (Command : access Save_All_Command;
-      Context : Interactive_Command_Context) return Command_Return_Type
-   is
-      Tmp : Boolean;
-      Kernel : constant Kernel_Handle := Get_Kernel (Context.Context);
-      pragma Unreferenced (Command, Tmp);
-   begin
-      Tmp := Save_Project (Kernel, Get_Project (Kernel), Recursive => True);
-      return Commands.Success;
-   end Execute;
-
-   -------------
-   -- Execute --
-   -------------
-
-   overriding function Execute
-     (Command : access Save_Project_Command;
-      Context : Interactive_Command_Context) return Command_Return_Type
-   is
-      pragma Unreferenced (Command);
-
-      Kernel  : constant Kernel_Handle := Get_Kernel (Context.Context);
-      Project : constant Project_Type := Project_Information (Context.Context);
-
-   begin
-      if Save_Project (Kernel, Project) then
-         return Success;
-      else
-         return Failure;
-      end if;
-   end Execute;
-
-   -------------
-   -- Execute --
-   -------------
-
-   overriding function Execute
      (Command : access Edit_Project_Source_Command;
       Context : Interactive_Command_Context) return Command_Return_Type
    is
@@ -1008,8 +958,7 @@ package body Project_Viewers is
    procedure Register_Module
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
    is
-      Filter  : Action_Filter;
-      Filter2 : Action_Filter;
+      Filter : Action_Filter;
    begin
       Prj_Editor_Module_ID := new Prj_Editor_Module_Id_Record;
       Register_Module
@@ -1021,32 +970,12 @@ package body Project_Viewers is
       File_Views.Register_Module (Kernel);
 
       Filter := Lookup_Filter (Kernel, "Project only");
-      Filter2 :=
-        Lookup_Filter (Kernel, "Project only")
-        and Lookup_Filter (Kernel, "Editable Project");
-
-      Register_Action
-        (Kernel,
-         "save all projects",
-         Command     => new Save_All_Command,
-         Category    => -"Projects",
-         Description => -"Save all modified projects to disk");
 
       Register_Contextual_Submenu
         (Kernel,
          Name   => "Project",
          Filter => Filter,
          Group  => Project_Contextual_Group);
-
-      Register_Action
-        (Kernel,
-         "save project",
-         Command     => new Save_Project_Command,
-         Description => -"Save the selected project",
-         Filter      => Filter2,
-         Category    => -"Projects");
-      Register_Contextual_Menu
-        (Kernel, Action => "save project", Label => "Project/Save project %p");
 
       Register_Action
         (Kernel,
