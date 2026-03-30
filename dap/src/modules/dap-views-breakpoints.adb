@@ -16,6 +16,8 @@
 ------------------------------------------------------------------------------
 
 with Ada.Characters.Handling;    use Ada.Characters.Handling;
+with Ada.Containers.Vectors;
+with Ada.Strings.Unbounded;
 with GNAT.Strings;               use GNAT.Strings;
 
 with GNATCOLL.Traces;            use GNATCOLL.Traces;
@@ -64,6 +66,7 @@ with VSS.Strings.Conversions;
 with Basic_Types;                use Basic_Types;
 
 with Dialog_Utils;               use Dialog_Utils;
+with GPS.Core_Kernels;
 with GPS.Debuggers;              use GPS.Debuggers;
 with GPS.Default_Styles;
 with GPS.Editors;                use GPS.Editors;
@@ -129,6 +132,12 @@ package body DAP.Views.Breakpoints is
    Break_Mode_Child_Key : constant String := "breakpoint-exception-break-mode";
    --  Widget child key for the exception break mode widgets.
 
+   package Row_Path_Vectors is
+     new Ada.Containers.Vectors
+       (Positive,
+        Ada.Strings.Unbounded.Unbounded_String,
+        Ada.Strings.Unbounded."=");
+
    type Breakpoint_View_Record is new View_Record with
       record
          List                 : Gtk_Tree_View;
@@ -136,6 +145,10 @@ package body DAP.Views.Breakpoints is
          Longpress            : Gtk_Gesture_Long_Press;
          Activatable          : Boolean := True;
          Prevent_Bp_Selection : Boolean := False;
+
+         Selected_Rows        : Row_Path_Vectors.Vector;
+         --  List of selected rows. It is used to restore selection when
+         --  some breakpoints get enabled or disabled.
       end record;
    type Breakpoint_View is access all Breakpoint_View_Record'Class;
 
@@ -427,14 +440,16 @@ package body DAP.Views.Breakpoints is
                Commands       => Commands,
                Verified       => False,
                Location       =>
-                 DAP.Types.Breakpoints.Breakpoint_Location_Type'
-                   (Marker  =>
-                      Self.Kernel.Get_Buffer_Factory.Create_Marker
-                        (File   => Create (+Get_Text (Self.File_Name)),
-                         Line   =>
-                           Editable_Line_Type'Value (Self.Line_Spin.Get_Text),
-                         Column => 1),
-                    Address => Invalid_Address));
+                  DAP.Types.Breakpoints.Breakpoint_Location_Type'
+                 (Marker  =>
+                       Self.Kernel.Get_Buffer_Factory.Create_Marker
+                    (File   =>
+                          GPS.Core_Kernels.To_File
+                       (Self.Kernel, Get_Text (Self.File_Name)),
+                     Line   =>
+                        Editable_Line_Type'Value (Self.Line_Spin.Get_Text),
+                     Column => 1),
+                  Address => Invalid_Address));
 
          when On_Subprogram  =>
             Br :=
@@ -1012,12 +1027,31 @@ package body DAP.Views.Breakpoints is
      (Self : access Glib.Object.GObject_Record'Class;
       Path : Glib.UTF8_String)
    is
+      use Gtk_Tree_Path_List;
+
       View    : constant Breakpoint_View := Breakpoint_View (Self);
       Model   : constant Gtk_Tree_Store  := -Get_Model (View.List);
       Iter    : constant Gtk_Tree_Iter   := Model.Get_Iter_From_String (Path);
       Indexes : Breakpoint_Index_Lists.List;
+
+      List    : Gtk_Tree_Path_List.Glist;
+      G_Iter  : Gtk_Tree_Path_List.Glist;
+      M       : Gtk_Tree_Model;
+
    begin
       if Iter /= Null_Iter then
+         --  Store selection
+         View.List.Get_Selection.Get_Selected_Rows (M, List);
+         G_Iter := Gtk_Tree_Path_List.First (List);
+         while G_Iter /= Gtk_Tree_Path_List.Null_List loop
+            View.Selected_Rows.Append
+              (Ada.Strings.Unbounded.To_Unbounded_String
+                 (Gtk_Tree_Path
+                      (Gtk_Tree_Path_List.Get_Data (G_Iter)).To_String));
+            G_Iter := Gtk_Tree_Path_List.Next (G_Iter);
+         end loop;
+         Free_Path_List (List);
+
          Indexes.Append
            (Integer (View.Get_Index_For_Iter (Iter)));
          Set_Breakpoints_State
@@ -1242,16 +1276,16 @@ package body DAP.Views.Breakpoints is
          end if;
       end if;
 
-      Columns (1 .. 5) :=
+      Last_Column_Idx := 5;
+      Columns (1 .. Last_Column_Idx) :=
         (Col_Enb, Col_Activatable, Col_Type, Col_Disp, Col_Num);
-      Values  (1 .. 5) :=
+      Values  (1 .. Last_Column_Idx) :=
         (1 => As_Boolean (Data.Enabled),
          2 => As_Boolean (Self.Activatable),
          3 => As_String (String'("break")),
          4 => As_String (To_Lower (Data.Disposition'Img)),
          5 => As_String (if Data.Num = No_Breakpoint then ""
            else Breakpoint_Identifier'Image (Data.Num)));
-      Last_Column_Idx := 5;
 
       case Data.Kind is
          when On_Line | On_Instruction =>
@@ -1368,7 +1402,19 @@ package body DAP.Views.Breakpoints is
             View.Update_Breakpoint (Data);
          end loop;
 
-         View.On_Location_Changed;
+         if View.Selected_Rows.Is_Empty then
+            View.On_Location_Changed;
+
+         else
+            --  Restore selection
+            for Path of View.Selected_Rows loop
+               View.List.Get_Selection.Select_Iter
+                 (Model.Get_Iter_From_String
+                    (Ada.Strings.Unbounded.To_String (Path)));
+            end loop;
+
+            View.Selected_Rows.Clear;
+         end if;
       end if;
    end Update;
 
@@ -1705,6 +1751,7 @@ package body DAP.Views.Breakpoints is
 
       if Selection /= Empty_Breakpoint_Data
         and then Selection.Kind = On_Line
+        and then Selection.Location.Marker /= No_Marker
       then
          View.Prevent_Bp_Selection := True;
          DAP.Utils.Goto_Location

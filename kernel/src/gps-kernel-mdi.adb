@@ -607,27 +607,25 @@ package body GPS.Kernel.MDI is
       Children : Gtkada.MDI.MDI_Child_Array := Gtkada.MDI.No_Children;
       Force    : Boolean := False) return Boolean
    is
-      Column_Types        : constant GType_Array :=
-                              (GType_Boolean, GType_String);
-      MDI                 : constant MDI_Window := Get_MDI (Handle);
-      Project_Description : constant String := -"Project";
-      Iter                : Child_Iterator;
-      Child               : MDI_Child;
-      Num_Unsaved         : Natural := 0;
-      Model               : Gtk_Tree_Store;
-      Dialog              : GPS_Dialog;
-      It                  : Gtk_Tree_Iter := Null_Iter;
-      Renderer            : Gtk_Cell_Renderer_Text;
-      Toggle_Renderer     : Gtk_Cell_Renderer_Toggle;
-      Scrolled            : Gtk_Scrolled_Window;
-      View                : Gtk_Tree_View;
-      Col                 : Gtk_Tree_View_Column;
-      Ignore              : Gint;
-      Ignore_Widget       : Gtk_Widget;
+      Column_Types    : constant GType_Array := (GType_Boolean, GType_String);
+      MDI             : constant MDI_Window  := Get_MDI (Handle);
+      Iter            : Child_Iterator;
+      Child           : MDI_Child;
+      Num_Unsaved     : Natural := 0;
+      Model           : Gtk_Tree_Store;
+      Dialog          : GPS_Dialog;
+      It              : Gtk_Tree_Iter := Null_Iter;
+      Renderer        : Gtk_Cell_Renderer_Text;
+      Toggle_Renderer : Gtk_Cell_Renderer_Toggle;
+      Scrolled        : Gtk_Scrolled_Window;
+      View            : Gtk_Tree_View;
+      Col             : Gtk_Tree_View_Column;
+      Ignore          : Gint;
+      Ignore_Widget   : Gtk_Widget;
       pragma Unreferenced (Ignore, Ignore_Widget);
-      Label               : Gtk_Label;
-      Button              : Gtk_Widget;
-      Response            : Gtk_Response_Type;
+      Label           : Gtk_Label;
+      Button          : Gtk_Widget;
+      Response        : Gtk_Response_Type;
 
       procedure Add_Child_If_Needed (Child : MDI_Child);
       --  Add the child to the model if we should ask for its saving
@@ -689,13 +687,6 @@ package body GPS.Kernel.MDI is
       pragma Unreferenced (Tmp, Tmp2);
    begin
       if Force then
-         if Get_Project (Handle).Modified (Recursive => True) then
-            Tmp := Save_Project
-              (Kernel    => Handle,
-               Project   => Get_Project (Handle),
-               Recursive => True);
-         end if;
-
          if Children /= No_Children then
             for C in Children'Range loop
                if Children (C) /= null then
@@ -725,15 +716,6 @@ package body GPS.Kernel.MDI is
          end loop;
 
       else
-         if Get_Project (Handle).Modified (Recursive => True) then
-            Num_Unsaved := Num_Unsaved + 1;
-            Append (Model, It, Null_Iter);
-            Set_And_Clear
-              (Model, It,
-               (0 => As_Boolean (True),
-                1 => As_String  (Project_Description)));
-         end if;
-
          Iter := First_Child (MDI);
 
          loop
@@ -837,31 +819,15 @@ package body GPS.Kernel.MDI is
                   declare
                      Name : constant String := Get_String (Model, It, 1);
                   begin
-                     if Name = Project_Description then
-                        if not Save_Project
-                          (Kernel    => Handle,
-                           Project   => Get_Project (Handle),
-                           Recursive => True)
-                        then
-                           Destroy (Dialog);
-                           Tmp2 := GPS_Message_Dialog
-                             (Msg     => -"Couldn't save the project",
-                              Buttons => Button_OK,
-                              Parent  => Get_Current_Window (Handle));
-                           return False;
-                        end if;
+                     Child := Find_MDI_Child_By_Name (Get_MDI (Handle), Name);
 
-                     else
-                        Child := Find_MDI_Child_By_Name
-                          (Get_MDI (Handle), Name);
-                        if not Save_Child (Child) then
-                           Destroy (Dialog);
-                           Tmp2 := GPS_Message_Dialog
-                             (Msg     => -"Couldn't save " & Name,
-                              Buttons => Button_OK,
-                              Parent  => Get_Current_Window (Handle));
-                           return False;
-                        end if;
+                     if not Save_Child (Child) then
+                        Destroy (Dialog);
+                        Tmp2 := GPS_Message_Dialog
+                          (Msg     => -"Couldn't save " & Name,
+                           Buttons => Button_OK,
+                           Parent  => Get_Current_Window (Handle));
+                        return False;
                      end if;
                   end;
                end if;

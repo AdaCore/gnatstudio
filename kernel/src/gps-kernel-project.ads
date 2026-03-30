@@ -113,19 +113,6 @@ package GPS.Kernel.Project is
    --  If any of the project files on the disk have been modified, reload the
    --  project. This doesn't recompute the view, though.
 
-   function Save_Project
-     (Kernel    : access Kernel_Handle_Record'Class;
-      Project   : GNATCOLL.Projects.Project_Type;
-      Recursive : Boolean := False) return Boolean;
-   --  Save Project to a file. If Recursive is True, all the imported projects
-   --  are saved at the same time.
-   --  The kernel registers that it is no longer using the default project.
-   --
-   --  There must be a project_view associated with the project
-   --
-   --  Return False if at least one of the projects couldn't be saved
-   --  successfully.
-
    function Save_Single_Project
      (Kernel  : access Kernel_Handle_Record'Class;
       Project : GNATCOLL.Projects.Project_Type) return Boolean;
