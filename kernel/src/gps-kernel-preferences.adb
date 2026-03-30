@@ -1882,7 +1882,7 @@ package body GPS.Kernel.Preferences is
              -("Controls whether semantic highlighting is shown for the "
                & "languages that support it through LSP. "
                & "If disabled, only the syntax highlighting is used."),
-           Default => True);
+           Default => False);
 
       LSP_Show_Semantic_Tooltip :=
         Manager.Create
