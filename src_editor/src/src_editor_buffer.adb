@@ -494,7 +494,6 @@ package body Src_Editor_Buffer is
 
    function Source_Lines_Context
      (Buffer     : access Source_Buffer_Record;
-      Project    : GNATCOLL.Projects.Project_Type;
       Start_Line : Editable_Line_Type;
       End_Line   : Editable_Line_Type) return Selection_Context;
    --  Create a selection context for the given lines
@@ -6013,7 +6012,7 @@ package body Src_Editor_Buffer is
       End_Line   : Editable_Line_Type)
    is
       Context : constant Selection_Context := Source_Lines_Context
-        (Buffer, No_Project, Start_Line, End_Line);
+        (Buffer, Start_Line, End_Line);
    begin
       Source_Lines_Folded_Hook.Run
         (Buffer.Kernel, Context,
@@ -6031,7 +6030,7 @@ package body Src_Editor_Buffer is
       End_Line   : Editable_Line_Type)
    is
       Context : constant Selection_Context := Source_Lines_Context
-        (Buffer, No_Project, Start_Line, End_Line);
+        (Buffer, Start_Line, End_Line);
    begin
       Source_Lines_Unfolded_Hook.Run
         (Buffer.Kernel, Context,
@@ -6045,40 +6044,40 @@ package body Src_Editor_Buffer is
 
    function Source_Lines_Context
      (Buffer     : access Source_Buffer_Record;
-      Project    : GNATCOLL.Projects.Project_Type;
       Start_Line : Editable_Line_Type;
       End_Line   : Editable_Line_Type) return Selection_Context
    is
-      Context     : Selection_Context :=
+      Context : Selection_Context :=
         New_Context (Buffer.Kernel, Src_Editor_Module_Id);
-      The_Project : Project_Type;
-   begin
-      if Project = No_Project then
-         declare
-            Child : MDI_Child;
-         begin
-            Child := Find_Editor (Kernel  => Buffer.Kernel,
-                                  File    => Buffer.Filename,
-                                  Project => No_Project);
+      Project : Project_Type;
 
-            if Child /= null then
-               The_Project := Src_Editor_Module.Get_Project (Child);
-            end if;
-         end;
-      end if;
+   begin
+      declare
+         Child : MDI_Child;
+      begin
+         Child :=
+           Find_Editor
+             (Kernel  => Buffer.Kernel,
+              File    => Buffer.Filename,
+              Project => No_Project);
+
+         if Child /= null then
+            Project := Src_Editor_Module.Get_Project (Child);
+         end if;
+      end;
 
       if Buffer.Filename /= GNATCOLL.VFS.No_File then
          Set_File_Information
            (Context,
             Files           => (1 => Buffer.Filename),
-            Project         => The_Project,
+            Project         => Project,
             Publish_Project => False);
 
       elsif Buffer.File_Identifier /= GNATCOLL.VFS.No_File then
          Set_File_Information
            (Context,
             Files           => (1 => Buffer.File_Identifier),
-            Project         => The_Project,
+            Project         => Project,
             Publish_Project => False);
       end if;
 
