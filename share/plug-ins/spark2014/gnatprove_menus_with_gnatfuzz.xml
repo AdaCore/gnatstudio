@@ -1,0 +1,22 @@
+<?xml version="1.0"?>
+  <GNATPROVE>
+    <filter name="Not Source Editor" language="Ada" shell_lang="python"
+        shell_cmd="spark2014.not_triggered_from_source(GPS.current_context())"/>
+    <filter name="Prove Check Context" language="Ada" shell_lang="python"
+        shell_cmd="spark2014.prove_check_context(GPS.current_context())"/>
+
+    <action name="Fuzz Counterexamples" category="GNATprove" output="none">
+      <filter_and>
+        <filter id="Not Source Editor"/>
+        <filter id="Prove Check Context"/>
+      </filter_and>
+      <shell
+        lang="python">spark2014.on_generate_counter_example_with_gnatfuzz(GPS.current_context())
+      </shell>
+    </action>
+
+    <contextual action="Fuzz Counterexamples">
+      <Title>%(prefix)s/Generate Counterexamples with GNATfuzz</Title>
+    </contextual>
+
+  </GNATPROVE>

@@ -12,10 +12,19 @@ import os.path
 import tool_output
 import json
 import re
-from lal_utils import get_enclosing_subprogram
 from functools import reduce
 
 import libadalang as lal
+
+from gnatprove import (
+    GNATPROVE_MAIN_CATEGORY,
+    current_subprogram,
+    logger,
+)
+
+import spark_ce2test
+import spark_cegen
+import workflows
 
 # We create the actions and menus in XML instead of python to share the same
 # source for GPS and GNATbench (which only understands the XML input for now).
@@ -24,8 +33,8 @@ import libadalang as lal
 # because GPS.contextual_context does not work when clicking on the right of a
 # line of code (see OB05-033).
 
-# This plugin now depends on gnatprove_menus.xml and gnatprove_file.xml which
-# are located in spark2014/.
+# This plugin depends additionally on the XML files (gnatprove.xml,
+# gnatprove_menus.xml and others) located in the spark2014 subfolder.
 
 # Path to this executable
 cur_exec_path = os.path.dirname(os.path.abspath(__file__))
@@ -33,9 +42,18 @@ cur_exec_path = os.path.dirname(os.path.abspath(__file__))
 # The xml information are under spark2014
 spark2014_dir = os.path.join(cur_exec_path, "spark2014")
 gnatprove_menus_file = os.path.join(spark2014_dir, "gnatprove_menus.xml")
+gnatprove_menus_with_gnattest_file = os.path.join(
+    spark2014_dir, "gnatprove_menus_with_gnattest.xml"
+)
+gnatprove_menus_with_gnatfuzz_file = os.path.join(
+    spark2014_dir, "gnatprove_menus_with_gnatfuzz.xml"
+)
 gnatprove_file = os.path.join(spark2014_dir, "gnatprove.xml")
+gnattest_file = os.path.join(spark2014_dir, "gnatprove_gnattest.xml")
+gnatfuzz_file = os.path.join(spark2014_dir, "gnatprove_gnatfuzz.xml")
 
-OUTPUT_PARSERS = """
+# Output parsers to use for GNATprove runs
+OUTPUT_PARSERS_GNATPROVE = """
     output_chopper
     utf8_converter
     progress_parser
@@ -44,16 +62,38 @@ OUTPUT_PARSERS = """
     console_writer
     end_of_build"""
 
-with open(gnatprove_menus_file, "r") as input_file:
-    xml_gnatprove_menus = input_file.read()
+# Output parsers to use for optional activities on failed checks using GNATtest
+# and/or GNATfuzz. These parsers just dump the output of the executed processes
+# to the Console view. This is generally sufficient since for those activities
+# gnattest and gnatfuzz are launched in the background. After the initial
+# generation of the test harness the user can use dedicated GNATtest and
+# GNATfuzz menus to perform further actions independently from the current
+# plug-in.
+OUTPUT_PARSERS_GNATTEST_CE = """
+    output_chopper
+    utf8_converter
+    progress_parser
+    console_writer
+    end_of_build"""
 
-with open(gnatprove_file, "r") as input_file2:
-    xml_gnatprove = input_file2.read()
+
+def read_text(filepath):
+    """Helper to read text files"""
+    with open(filepath, "r") as f:
+        return f.read()
+
+
+xml_gnatprove_menus = read_text(gnatprove_menus_file)
+xml_gnatprove_menus_with_gnattest = read_text(gnatprove_menus_with_gnattest_file)
+xml_gnatprove_menus_with_gnatfuzz = read_text(gnatprove_menus_with_gnatfuzz_file)
+
+xml_gnatprove = read_text(gnatprove_file)
+xml_gnattest = read_text(gnattest_file)
+xml_gnatfuzz = read_text(gnatfuzz_file)
 
 # constants that are required by the plugin
 
 toolname = "gnatprove"
-messages_category = "GNATprove"
 obj_subdir_name = toolname
 report_file_name = toolname + ".out"
 prefix = "SPARK"
@@ -86,14 +126,9 @@ advanced_prove_line_loc = "Prove Line Location"
 advanced_prove_check = "Prove Check"
 advanced_prove_region = "Prove Selected Region"
 
-# Name of the messages console
-MESSAGES = "Messages"
-
-
-def print_error(message):
-    """print errors on the messages console"""
-    console = GPS.Console(MESSAGES)
-    console.write(message + "\n", mode="error")
+# Check for external tools
+gnattest = os_utils.locate_exec_on_path("gnattest")
+gnatfuzz = os_utils.locate_exec_on_path("gnatfuzz")
 
 
 # getters for proof target depending on user profile
@@ -573,7 +608,7 @@ class GNATprove_Parser(tool_output.OutputParser):
 
         # Create a GPS.AnalysisTool instance to collect the messages that will
         # be shown in the report.
-        self.analysis_tool = GPS.AnalysisTool(messages_category)
+        self.analysis_tool = GPS.AnalysisTool(GNATPROVE_MAIN_CATEGORY)
 
         # create rules for all the messages not related with SPARK itself
         # (e.g: GNAT warnings etc.).
@@ -761,7 +796,7 @@ class GNATprove_Parser(tool_output.OutputParser):
 
         # Check for codefixes in non-spark messages, if any
         if self.non_spark_output:
-            GPS.Codefix.parse(messages_category, self.non_spark_output)
+            GPS.Codefix.parse(GNATPROVE_MAIN_CATEGORY, self.non_spark_output)
             self.non_spark_output = ""
 
     def split_in_secondary_messages(self, fn, line, column, output, importance, extra):
@@ -790,7 +825,7 @@ class GNATprove_Parser(tool_output.OutputParser):
 
         message_text = list_secondaries[0]
         msg = self.analysis_tool.create_message(
-            messages_category,
+            GNATPROVE_MAIN_CATEGORY,
             fn,
             line,
             column,
@@ -804,7 +839,7 @@ class GNATprove_Parser(tool_output.OutputParser):
             elif text.startswith(" (") or text.startswith(" ["):
                 text = text[2:-1]
             GPS.Locations.add(
-                messages_category,
+                GNATPROVE_MAIN_CATEGORY,
                 fn,
                 line,
                 column,
@@ -840,7 +875,7 @@ class GNATprove_Parser(tool_output.OutputParser):
         # Remove the previous GNATprove messages first
         if not self.previous_messages_removed:
             GPS.Locations.remove_category(
-                messages_category, GPS.Message.Flags.INVISIBLE
+                GNATPROVE_MAIN_CATEGORY, GPS.Message.Flags.INVISIBLE
             )
             self.previous_messages_removed = True
 
@@ -898,7 +933,7 @@ class GNATprove_Parser(tool_output.OutputParser):
                 else:
                     # Let the "location parser" handle non-spark messages
                     GPS.Locations.add(
-                        messages_category,
+                        GNATPROVE_MAIN_CATEGORY,
                         fn,
                         lineno,
                         column,
@@ -1020,6 +1055,31 @@ def on_prove_region(self):
     generic_on_analyze(target, args=args)
 
 
+@workflows.run_as_workflow
+def on_generate_executable_test(context, force=False):
+    logger.log("on_generate_executable_test starting ...")
+
+    yield spark_ce2test.run(
+        context,
+        drop_severity_prefix(context._loc_msg.get_text()),
+        force,
+    )
+
+
+@workflows.run_as_workflow
+def on_generate_counter_example_with_gnattest(context, force=False):
+    logger.log("on_generate_counter_example_with_gnattest starting ...")
+
+    yield spark_cegen.run(context, use_fuzzer=False, force=force)
+
+
+@workflows.run_as_workflow
+def on_generate_counter_example_with_gnatfuzz(context, force=False):
+    logger.log("on_generate_counter_example_with_gnatfuzz starting ...")
+
+    yield spark_cegen.run(context, use_fuzzer=True, force=force)
+
+
 def on_show_report(self):
     gnatprove_plug.show_report()
 
@@ -1055,18 +1115,6 @@ def mk_loc_string(sloc):
 
     locstring = os.path.basename(sloc.file().path) + ":" + str(sloc.line())
     return locstring
-
-
-def current_subprogram(self):
-    """Return the LAL node corresponding to the subprogram enclosing the
-    current context, or None"""
-    curloc = self.location()
-    buf = GPS.EditorBuffer.get(curloc.file(), open=False)
-    if not buf:
-        return False
-    unit = buf.get_analysis_unit()
-    node = unit.root.lookup(lal.Sloc(curloc.line(), curloc.column()))
-    return get_enclosing_subprogram(node)
 
 
 def build_limit_subp_string(self):
@@ -1222,9 +1270,20 @@ class GNATProve_Plugin:
         process = GPS.Process("gnatprove -h")
         help_msg = process.get_result()
         GPS.parse_xml(
-            xml_gnatprove.format(help=help_msg, output_parsers=OUTPUT_PARSERS)
+            xml_gnatprove.format(help=help_msg, output_parsers=OUTPUT_PARSERS_GNATPROVE)
         )
         GPS.parse_xml(xml_gnatprove_menus % {"prefix": prefix})
+        if gnattest:
+            GPS.parse_xml(
+                xml_gnattest.format(output_parsers=OUTPUT_PARSERS_GNATTEST_CE)
+            )
+            GPS.parse_xml(xml_gnatprove_menus_with_gnattest % {"prefix": prefix})
+            if gnatfuzz:
+                GPS.parse_xml(
+                    xml_gnatfuzz.format(output_parsers=OUTPUT_PARSERS_GNATTEST_CE)
+                )
+                GPS.parse_xml(xml_gnatprove_menus_with_gnatfuzz % {"prefix": prefix})
+
         add_lemma_menu()
 
     def show_report(self):
@@ -1372,9 +1431,19 @@ def prove_check_context(context):
 
 def can_show_report():
     return (
-        len(GPS.Message.list(category=messages_category)) > 0
+        len(GPS.Message.list(category=GNATPROVE_MAIN_CATEGORY)) > 0
         and gnatprove_plug.output_parser is not None
     )
+
+
+def drop_severity_prefix(text):
+    """
+    Remove severity prefixes (medium, low, high) from the text
+
+    However, 'warning' and 'error' are preserved since those are not considered
+    checks.
+    """
+    return re.sub(r"^(medium\: |low\: |high\: )", "", text)
 
 
 def get_vc_kind(msg):
@@ -1383,7 +1452,7 @@ def get_vc_kind(msg):
     # get rid of "medium: ", "low: " and "high: "
     # We assume that "warning: ", "severity: " and "error: " are not checks
     # (ie: something we run provers on).
-    clean_msg = re.sub(r"^(medium\: |low\: |high\: )", "", msg.get_text())
+    clean_msg = drop_severity_prefix(msg.get_text())
 
     def best_match(acc, elem):
         if clean_msg.startswith(elem):
@@ -1436,6 +1505,14 @@ if gnatprove:
     xml_gnatprove_menus = xml_gnatprove_menus.format(
         root=get_root(), example=get_example_root()
     )
+    if gnattest:
+        xml_gnatprove_menus_gnattest = xml_gnatprove_menus_with_gnattest.format(
+            root=get_root(), example=get_example_root()
+        )
+        if gnatfuzz:
+            xml_gnatprove_menus_gnatfuzz = xml_gnatprove_menus_with_gnatfuzz.format(
+                root=get_root(), example=get_example_root()
+            )
 
     gnatprove_plug = GNATProve_Plugin()
 
