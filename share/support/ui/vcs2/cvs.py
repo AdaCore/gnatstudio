@@ -29,10 +29,10 @@ class CVS(core_staging.Emulate_Staging, core.File_Based_VCS):
     __re_status = re.compile(
         "^(?:"
         + "(?:cvs status: Examining (?P<dir>.+))|"
-        + "(?:File: (?P<deleted>no file )?(?P<file>\S+)\s+"
+        + r"(?:File: (?P<deleted>no file )?(?P<file>\S+)\s+"
         + "Status: (?P<status>.+))|"
-        + "(?:\s+Working revision:\s*(?P<rev>[\d.]+).*)|"
-        + "(?:\s+Repository revision:\s*(?P<rrev>[\d.]+).*)"
+        + r"(?:\s+Working revision:\s*(?P<rev>[\d.]+).*)|"
+        + r"(?:\s+Repository revision:\s*(?P<rrev>[\d.]+).*)"
         + ")$"
     )
 
@@ -155,7 +155,7 @@ class CVS(core_staging.Emulate_Staging, core.File_Based_VCS):
                 self.current = None
                 self.names = []
                 self.__re_log = re.compile(
-                    "^date: (?P<date>[^;]+);\s+author: (?P<author>[^;]+)"
+                    r"^date: (?P<date>[^;]+);\s+author: (?P<author>[^;]+)"
                 )
 
             def emit_previous(self, out_stream):
@@ -278,7 +278,7 @@ class CVS(core_staging.Emulate_Staging, core.File_Based_VCS):
     @core.run_in_background
     def async_annotations(self, visitor, file):
         r = re.compile(
-            "^(?P<rev>\d+\.\d+)" "\s+\(" "(?P<author>\S+)" "\s+" "(?P<date>[^)]+)"
+            r"^(?P<rev>\d+\.\d+)" r"\s+\(" r"(?P<author>\S+)" r"\s+" r"(?P<date>[^)]+)"
         )
         lines = []
         ids = []

@@ -18,14 +18,14 @@ class GNAThub_Parser(tool_output.OutputParser):
         self.open_report = False
         if NEED_INIT:
             GPS.Console().create_link(
-                "\[PASSED\]",
+                r"\[PASSED\]",
                 lambda x: None,
                 foreground="green",
                 background="",
                 underline=False,
             )
             GPS.Console().create_link(
-                "\[FAILED\]",
+                r"\[FAILED\]",
                 lambda x: None,
                 foreground="red",
                 background="",
