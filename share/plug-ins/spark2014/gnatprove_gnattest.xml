@@ -1,0 +1,60 @@
+<?xml version="1.0"?>
+<GNATPROVE>
+
+  <target model="gnattest"
+          name="Generate harness and initial test case(s)"
+          category="GNATprove">
+    <in-menu>FALSE</in-menu>
+    <iconname>gps-build-all-symbolic</iconname>
+    <launch-mode>MANUALLY_WITH_DIALOG</launch-mode>
+    <read-only>TRUE</read-only>
+    <command-line>
+      <arg>gnattest</arg>
+      <arg>-P%pp</arg>
+      <arg>%X</arg>
+      <arg>--gen-test-vectors</arg>
+      <arg>--gen-test-num=1</arg>
+    </command-line>
+    <output-parsers>
+      {output_parsers}
+    </output-parsers>
+  </target>
+
+  <target model="gnattest"
+          name="Update test case(s)"
+          category="GNATprove">
+    <in-menu>FALSE</in-menu>
+    <iconname>gps-build-all-symbolic</iconname>
+    <launch-mode>MANUALLY_WITH_DIALOG</launch-mode>
+    <read-only>TRUE</read-only>
+    <command-line>
+      <arg>gnattest</arg>
+      <arg>-P%pp</arg>
+      <arg>%X</arg>
+      <arg>--gen-test-vectors</arg>
+    </command-line>
+    <output-parsers>
+      {output_parsers}
+    </output-parsers>
+  </target>
+
+  <target model="gnattest"
+          name="Run GNATtest to find counterexample candidates"
+          category="GNATprove">
+    <in-menu>FALSE</in-menu>
+    <iconname>gps-build-all-symbolic</iconname>
+    <launch-mode>MANUALLY_WITH_DIALOG</launch-mode>
+    <read-only>TRUE</read-only>
+    <command-line>
+      <arg>gnattest</arg>
+      <arg>-P%pp</arg>
+      <arg>%X</arg>
+      <arg>--gen-test-vectors</arg>
+      <arg>--gen-test-num=100</arg>
+    </command-line>
+    <output-parsers>
+      {output_parsers}
+    </output-parsers>
+  </target>
+
+</GNATPROVE>

@@ -392,6 +392,11 @@ Otherwise, use default according to the level.">
             label="on"
             value="on"/>
       </combo>
+      <field
+          label="Counterexample candidates"
+          switch="--gnattest-values="
+          column="1"
+          tip="Absolute path to a .ce files containing counter example candidates for current check" />
       <check
           label="Force re-analysis"
           switch="-f"
@@ -896,4 +901,5 @@ Level 4 is equivalent to --prover=cvc4,z3,altergo --timeout=60 --memlimit=2000 -
       {output_parsers}
     </output-parsers>
   </target>
+
 </GNATPROVE>
