@@ -639,10 +639,10 @@ class Highlighter(object):
         Generate the pango markup representation of text by Highlighter.
         :param allow_nested_tag: When True, insert markup for each tags.
         Otherwise skip nested tags.
-        For example the '"Str\!"' in C will return with allow_nested_tag:
-           <span foreground="#1">"Str<span foreground="#2">\!"</span></span>";
+        For example the '"Str\\!"' in C will return with allow_nested_tag:
+           <span foreground="#1">"Str<span foreground="#2">\\!"</span></span>";
         and without:
-           <span foreground="#1">"Str\!"</span>;
+           <span foreground="#1">"Str\\!"</span>;
         (#1 and #2 will be rgba hexadecimal colors matching the theme)
         """
         text_ed = StringTextBuffer(text)

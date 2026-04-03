@@ -16,7 +16,6 @@ except Exception:
 
 
 class OverlayStyle(object):
-
     """
     Description for a style to apply to a section of an editor. In practice,
     this could be implemented as an editor overlay, or a message, depending
@@ -184,7 +183,6 @@ class OverlayStyle(object):
 
 
 class Background_Highlighter(object):
-
     """
     An abstract class that provides facilities for highlighting parts of an
     editor. If possible, this highlighting is done in the background so that it
@@ -499,7 +497,6 @@ class Background_Highlighter(object):
 
 
 class On_The_Fly_Highlighter(Background_Highlighter):
-
     """
     This abstract class provides a way to easily highlight text in an editor.
     When possible, the highlighting is done in the background, in
@@ -672,8 +669,7 @@ class Location_Highlighter(Background_Highlighter):
 
 
 class Regexp_Highlighter(On_The_Fly_Highlighter):
-
-    """
+    r"""
     The Regexp_Highlighter is a concrete implementation to highlight
     editors based on regular expressions. One example is for instance
     to highlight tabs or trailing spaces on lines, when this is considered
@@ -730,7 +726,6 @@ class Regexp_Highlighter(On_The_Fly_Highlighter):
 
 
 class Text_Highlighter(On_The_Fly_Highlighter):
-
     """
     Similar to Regexp_Highlighter, but highlights constant text instead of
     a regular expression.

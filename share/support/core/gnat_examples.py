@@ -72,7 +72,7 @@ class GNATExamples(Module):
         """
 
         actions = []
-        title_regexp = re.compile("<title>GNAT \&prefix;(.+)</title>")
+        title_regexp = re.compile(r"<title>GNAT \&prefix;(.+)</title>")
 
         for subdir in glob.glob(os.path.join(example_directory, "*")) + glob.glob(
             os.path.join(example_directory, "*", "*")
