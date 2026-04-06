@@ -183,7 +183,7 @@ class Makefile(Builder):
         # The list of targets at the beginning of a line. Ignore
         # special characters like #.= that are used by GNU make.
         # The list of targets is stored in the 'target' capturing group.
-        targets = "^(?P<targets>[^#.=%\t][^#=\(\)%]*?)"
+        targets = r"^(?P<targets>[^#.=%\t][^#=\(\)%]*?)"
 
         # The dependencies for these targets
         deps = "[^#=:]*"

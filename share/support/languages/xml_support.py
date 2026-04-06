@@ -170,7 +170,7 @@ parse_xml(
   <Language>
     <Name>XML</Name>
     <Body_Suffix>.xml</Body_Suffix>
-    <Keywords>(&lt;/?\w+&gt;?)|(/?&gt;)</Keywords>
+    <Keywords>(&lt;/?\\w+&gt;?)|(/?&gt;)</Keywords>
     <Wordchars>&lt;&gt;/</Wordchars>
     <Context>
       <Comment_Start>&lt;!--</Comment_Start>
