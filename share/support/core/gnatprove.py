@@ -59,12 +59,19 @@ class ExternalProcessError(RuntimeError):
         super().__init__(message)
 
 
+class ContextError(RuntimeError):
+    def __init__(self, message):
+        super().__init__(message)
+
+
 def get_context_data(context):
     """
     Extract and populate a ContextData record with various information about
     the context of the check.
 
-    :param context: GPS context for the check..
+    :param context: GPS context for the check.
+
+    :raises ContextError: If the context is not supported.
     """
     check_loc = str(context.location())
     logger.log(f"get_context_data: check_loc={check_loc}")
@@ -87,8 +94,7 @@ def get_context_data(context):
     # Determine the GPS location of the spec.
     gps_spec_loc = spec_location(context)
     if not gps_spec_loc:
-        print_error("Unsupported context. Expecting a subprogram.")
-        return
+        raise ContextError("Unsupported context. Expecting a subprogram.")
 
     spec_loc = str(gps_spec_loc)
     logger.log(f"get_context_data: spec_loc={spec_loc}")
@@ -205,10 +211,39 @@ def spec_location(context) -> GPS.EditorLocation | None:
         return None
 
 
-def split_location(s):
-    """Split location to (file, line, col)."""
+def split_location(location: str) -> tuple[str, int, int]:
+    """
+    Split location to (file, line, col)
 
-    parts = s.split(":")
-    if len(parts) == 3 and parts[1].isdigit() and parts[2].isdigit():
-        return parts[0], int(parts[1]), int(parts[2])
-    return None, None, None
+    :param location: Location string. E.g.:
+        * 'xyz.ads:3:4'
+        * '/home/me\\xyz.ads:3:4'
+        * 'C:\\Users\\Me\\src\\xyz.ads:3:4'
+
+    :raises ContextError: If the context is not supported.
+    """
+    if not location:
+        raise ContextError("Location string cannot be empty.")
+
+    # Split from the right exactly 2 times to isolate line and col
+    parts = location.rsplit(":", 2)
+
+    if len(parts) != 3:
+        raise ContextError(
+            f"Unsupported location context: '{location}'. Expected 'file:line:col'."
+        )
+
+    file_path, line_str, col_str = parts
+
+    if not file_path:
+        raise ContextError("File path cannot be empty.")
+
+    try:
+        line = int(line_str)
+        col = int(col_str)
+    except ValueError:
+        raise ContextError(
+            f"Line and column must be integers. Got line: '{line_str}', col: '{col_str}'."
+        )
+
+    return file_path, line, col
