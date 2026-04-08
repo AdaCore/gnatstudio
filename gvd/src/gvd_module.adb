@@ -676,7 +676,8 @@ package body GVD_Module is
          return Commands.Failure;
       end if;
 
-      Gtk_New (List, Process);
+      Gtk_New (List, Process.Kernel);
+      Fill_Pids (List, Process);
 
       declare
          Argument : constant String := List.Get_Selection;

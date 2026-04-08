@@ -18,7 +18,9 @@
 --  This package provides system specific utilities to get information about
 --  processes.
 
+with Ada.Containers.Indefinite_Doubly_Linked_Lists;
 with GPS.Kernel; use GPS.Kernel;
+with VSS.Strings; use VSS.Strings;
 
 package GVD.Proc_Utils is
 
@@ -42,6 +44,13 @@ package GVD.Proc_Utils is
    --  Initialize a connection to the debug machine in order to retrieve
    --  process information.
 
+   type Process_Info is record
+      Id : Virtual_String;
+      Name : Virtual_String;
+   end record;
+   --  Type representing a running process.
+   --  Id refers to the process identifier (PID).
+
    procedure Next_Process
      (Handle  : Process_Handle;
       Info    : out Process_Info;
@@ -51,6 +60,19 @@ package GVD.Proc_Utils is
 
    procedure Close_Processes (Handle : in out Process_Handle);
    --  Close the connection established in handle.
+
+   type Py_Process_Info is record
+      Id : Virtual_String;
+      Name : Virtual_String;
+   end record;
+
+   package Py_Process_List is new
+     Ada.Containers.Indefinite_Doubly_Linked_Lists (Py_Process_Info, "=");
+
+   function Py_PSUtils
+     (Kernel : Kernel_Handle)
+      return Py_Process_List.List;
+   --  Return the list of processes using the psutils python package.
 
 private
 

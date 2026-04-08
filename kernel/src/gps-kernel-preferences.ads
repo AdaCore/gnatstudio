@@ -308,11 +308,12 @@ package GPS.Kernel.Preferences is
    Explicit_Default_Value : Boolean_Preference;
 
    -- External Commands --
-   List_Processes    : String_Preference;
-   Html_Browser      : String_Preference;
-   Execute_Command   : String_Preference;
-   Print_Command     : String_Preference;
-   Max_Output_Length : Integer_Preference;
+   List_Processes        : String_Preference;
+   Use_Py_List_Processes : Boolean_Preference;
+   Html_Browser          : String_Preference;
+   Execute_Command       : String_Preference;
+   Print_Command         : String_Preference;
+   Max_Output_Length     : Integer_Preference;
 
    -- Project Editor --
    Default_Switches_Color          : Color_Preference;

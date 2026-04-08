@@ -17,6 +17,7 @@
 
 --  Shows a list of processes that can be attached to
 
+with GPS.Kernel;
 with GVD.Process;         use GVD.Process;
 with Gtk.Dialog;          use Gtk.Dialog;
 with Gtk.Tree_View;       use Gtk.Tree_View;
@@ -29,9 +30,18 @@ package GVD.Process_Lists is
    type Process_List is access all Process_List_Record'Class;
 
    procedure Gtk_New
-     (Self    : out Process_List;
-      Process : not null access Visual_Debugger_Record'Class);
+     (Self   : out Process_List;
+      Kernel : GPS.Kernel.Kernel_Handle);
    --  Create a new dialog
+
+   procedure Fill_Pids
+     (Self    : Process_List;
+      Process : not null access Visual_Debugger_Record'Class);
+   --  Add list of pids
+
+   procedure Fill_Pids
+     (Self   : Process_List;
+      Kernel : GPS.Kernel.Kernel_Handle);
 
    function Get_Selection
      (Self  : not null access Process_List_Record)

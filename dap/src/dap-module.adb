@@ -57,6 +57,7 @@ with GPS.Kernel.Modules.UI;
 with GPS.Kernel.Preferences;
 with GPS.Kernel.Project;
 with GUI_Utils;
+with GVD.Process_Lists;            use GVD.Process_Lists;
 
 with Basic_Types;
 
@@ -1078,18 +1079,25 @@ package body DAP.Module is
 
       Kernel : constant Kernel_Handle :=
         GPS.Kernel.Get_Kernel (Context.Context);
-      PID    : constant String :=
-        GUI_Utils.Query_User
-          (Parent        => Kernel.Get_Main_Window,
-           Prompt        => "Enter the PID of the process to attach to",
-           Password_Mode => False);
       Client : constant DAP.Clients.DAP_Client_Access :=
         Get_Current_Debugger;
+      List   : Process_List;
    begin
       if Client /= null then
-         DAP.Clients.Attach.Send_Attach_Request
-           (Client => Client.all,
-            PID    => Integer'Value (PID));
+         Gtk_New (List, Kernel);
+         Fill_Pids (List, Kernel);
+
+         declare
+            PID : constant String := List.Get_Selection;
+         begin
+            List.Destroy;
+            --  Defensive code when the user clicked on the CANCEL button
+            if PID /= "" then
+               DAP.Clients.Attach.Send_Attach_Request
+                 (Client => Client.all,
+                  PID    => Integer'Value (PID));
+            end if;
+         end;
 
          return Commands.Success;
       else
