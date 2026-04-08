@@ -14,6 +14,7 @@ import re
 import GPS
 from gnatprove import (
     GNATPROVE_TEST_GEN_CATEGORY,
+    ContextError,
     get_context_data,
     logger,
     ExternalProcessError,
@@ -251,7 +252,11 @@ def run(context, check_message, force=False):
 
     # Extract check details
 
-    config = get_context_data(context)
+    try:
+        config = get_context_data(context)
+    except ContextError as e:
+        print_error(f"{e}")
+        return
 
     # Find the .spark file for the Ada unit that defines the enclosing subprogram
 

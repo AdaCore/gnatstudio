@@ -16,6 +16,7 @@ import GPS
 from gnatprove import (
     GNATPROVE_CE_GEN_CATEGORY,
     ContextData,
+    ContextError,
     get_context_data,
     logger,
     ExternalProcessError,
@@ -242,7 +243,11 @@ def run(
 
     # Extract check details
 
-    config = get_context_data(context)
+    try:
+        config = get_context_data(context)
+    except ContextError as e:
+        print_error(f"{e}")
+        return
 
     try:
         hash_value = yield get_gnattest_hash(
