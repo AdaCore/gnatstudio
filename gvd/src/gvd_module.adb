@@ -653,7 +653,7 @@ package body GVD_Module is
       Process  : constant Visual_Debugger :=
         Visual_Debugger (Get_Current_Debugger (Kernel));
       Debugger : Debugger_Access;
-      List     : Process_List;
+      List     : Gtk_Process_List;
       Dummy    : Message_Dialog_Buttons;
 
    begin

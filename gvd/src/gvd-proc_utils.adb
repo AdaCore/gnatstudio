@@ -72,6 +72,7 @@ package body GVD.Proc_Utils is
 
       if Match = 1 then
          declare
+            use VSS.Strings.Conversions;
             S     : constant String :=
                       Strip_CR (Expect_Out (Handle.Descriptor.all));
             Index : Integer := S'First;
@@ -81,27 +82,19 @@ package body GVD.Proc_Utils is
 
             if Handle.Index /= 0 then
                Info :=
-                 (Id_Len   => Index - S'First + 1,
-                  Info_Len => S'Last - Handle.Index,
-                  Id       => S (S'First .. Index),
-                  Info     => S (Handle.Index .. S'Last - 1));
+                 (Id   => To_Virtual_String (S (S'First .. Index)),
+                  Name => To_Virtual_String (S (Handle.Index .. S'Last - 1)));
             else
                Info :=
-                 (Id_Len   => Index - S'First + 1,
-                  Info_Len => S'Last - Index - 1,
-                  Id       => S (S'First .. Index),
-                  Info     => S (Index + 1 .. S'Last - 1));
+                 (Id   => To_Virtual_String (S (S'First .. Index)),
+                  Name => To_Virtual_String (S (Index + 1 .. S'Last - 1)));
             end if;
 
          exception
             when Constraint_Error =>
                --  Parsing failed due to an unexpected ouput.
                --  Return a null string instead.
-               Info :=
-                 (Id_Len   => 0,
-                  Info_Len => 0,
-                  Id       => "",
-                  Info     => "");
+               Info := (Id => "", Name => "");
          end;
 
          Success := True;
@@ -163,14 +156,14 @@ package body GVD.Proc_Utils is
 
    function Py_PSUtils
      (Kernel : Kernel_Handle)
-      return Py_Process_List.List
+      return Process_Info_List.List
    is
       Script    : constant GNATCOLL.Scripts.Scripting_Language :=
         Kernel.Scripts.Lookup_Scripting_Language (Python_Name);
       Py_Import : PyObject;
       Py_List   : PyObject;
       Errors    : aliased Boolean;
-      Res       : Py_Process_List.List;
+      Res       : Process_Info_List.List;
    begin
       Py_Import := Run_Command
         (Python_Scripting (Script),
@@ -204,7 +197,7 @@ package body GVD.Proc_Utils is
             --  All these PyObjects are borrowed and should not be decrefed
          begin
             Res.Append
-              (Py_Process_Info'(
+              (Process_Info'(
                Id   => To_Virtual_String (PyInt_AsLong (Id)'Image),
                Name => To_Virtual_String (PyString_AsString (Name))));
          end;

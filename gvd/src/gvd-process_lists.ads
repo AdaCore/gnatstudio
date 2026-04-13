@@ -27,20 +27,20 @@ with Gtk.GEntry;          use Gtk.GEntry;
 package GVD.Process_Lists is
 
    type Process_List_Record is new Gtk_Dialog_Record with private;
-   type Process_List is access all Process_List_Record'Class;
+   type Gtk_Process_List is access all Process_List_Record'Class;
 
    procedure Gtk_New
-     (Self   : out Process_List;
+     (Self   : out Gtk_Process_List;
       Kernel : GPS.Kernel.Kernel_Handle);
    --  Create a new dialog
 
    procedure Fill_Pids
-     (Self    : Process_List;
+     (Self    : Gtk_Process_List;
       Process : not null access Visual_Debugger_Record'Class);
    --  Add list of pids
 
    procedure Fill_Pids
-     (Self   : Process_List;
+     (Self   : Gtk_Process_List;
       Kernel : GPS.Kernel.Kernel_Handle);
 
    function Get_Selection

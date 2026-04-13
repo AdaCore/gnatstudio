@@ -30,15 +30,6 @@ package GVD.Proc_Utils is
    subtype Info_Len_Range is Natural range 0 .. 4095;
    --  Range of a process information.
 
-   type Process_Info
-     (Id_Len   : Info_Len_Range := Info_Len_Range'First;
-      Info_Len : Info_Len_Range := Info_Len_Range'First) is
-   record
-      Id   : String (1 .. Id_Len);
-      Info : String (1 .. Info_Len);
-   end record;
-   --  Individual information concerning a process.
-
    procedure Open_Processes (Handle : out Process_Handle;
                              Kernel : Kernel_Handle);
    --  Initialize a connection to the debug machine in order to retrieve
@@ -48,8 +39,6 @@ package GVD.Proc_Utils is
       Id : Virtual_String;
       Name : Virtual_String;
    end record;
-   --  Type representing a running process.
-   --  Id refers to the process identifier (PID).
 
    procedure Next_Process
      (Handle  : Process_Handle;
@@ -61,17 +50,12 @@ package GVD.Proc_Utils is
    procedure Close_Processes (Handle : in out Process_Handle);
    --  Close the connection established in handle.
 
-   type Py_Process_Info is record
-      Id : Virtual_String;
-      Name : Virtual_String;
-   end record;
-
-   package Py_Process_List is new
-     Ada.Containers.Indefinite_Doubly_Linked_Lists (Py_Process_Info, "=");
+   package Process_Info_List is new
+     Ada.Containers.Indefinite_Doubly_Linked_Lists (Process_Info, "=");
 
    function Py_PSUtils
      (Kernel : Kernel_Handle)
-      return Py_Process_List.List;
+      return Process_Info_List.List;
    --  Return the list of processes using the psutils python package.
 
 private

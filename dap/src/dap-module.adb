@@ -1081,7 +1081,7 @@ package body DAP.Module is
         GPS.Kernel.Get_Kernel (Context.Context);
       Client : constant DAP.Clients.DAP_Client_Access :=
         Get_Current_Debugger;
-      List   : Process_List;
+      List   : Gtk_Process_List;
    begin
       if Client /= null then
          Gtk_New (List, Kernel);

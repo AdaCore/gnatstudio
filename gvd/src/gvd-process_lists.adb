@@ -62,7 +62,7 @@ package body GVD.Process_Lists is
    -------------
 
    procedure Gtk_New
-     (Self   : out Process_List;
+     (Self   : out Gtk_Process_List;
       Kernel : GPS.Kernel.Kernel_Handle)
    is
       Hbox           : Gtk_Hbox;
@@ -142,11 +142,11 @@ package body GVD.Process_Lists is
    ---------------
 
    procedure Fill_Pids
-     (Self   : Process_List;
+     (Self   : Gtk_Process_List;
       Kernel : GPS.Kernel.Kernel_Handle)
    is
       use VSS.Strings.Conversions;
-      Py_Processes : constant Py_Process_List.List :=
+      Py_Processes : constant Process_Info_List.List :=
         Py_PSUtils (Kernel);
       Iter         : Gtk_Tree_Iter;
    begin
@@ -166,9 +166,10 @@ package body GVD.Process_Lists is
    ---------------
 
    procedure Fill_Pids
-     (Self    : Process_List;
+     (Self    : Gtk_Process_List;
       Process : not null access Visual_Debugger_Record'Class)
    is
+      use VSS.Strings.Conversions;
       Iter    : Gtk_Tree_Iter;
       Info    : Process_Info;
       Success : Boolean;
@@ -185,8 +186,8 @@ package body GVD.Process_Lists is
             Self.Tree_Model.Append (Iter, Null_Iter);
             Set_And_Clear
               (Self.Tree_Model, Iter,
-               (Column_Pid     => As_String (Info.Id),
-                Column_Command => As_String (Info.Info)));
+               (Column_Pid     => As_String (To_UTF_8_String (Info.Id)),
+                Column_Command => As_String (To_UTF_8_String (Info.Name))));
          end loop;
          Process.Debugger.Close_Processes;
          Self.Tree_View.Columns_Autosize;
@@ -216,7 +217,7 @@ package body GVD.Process_Lists is
    -------------------
 
    procedure On_Select_Row (List : access GObject_Record'Class) is
-      Self  : constant Process_List := Process_List (List);
+      Self  : constant Gtk_Process_List := Gtk_Process_List (List);
       Model : Gtk_Tree_Model;
       Iter  : Gtk_Tree_Iter;
    begin
@@ -238,7 +239,7 @@ package body GVD.Process_Lists is
    is
       pragma Unreferenced (Path, Column);
 
-      Dialog : constant Process_List := Process_List (Self);
+      Dialog : constant Gtk_Process_List := Gtk_Process_List (Self);
    begin
       Dialog.Response (Gtk_Response_OK);
    end On_Row_Activated;

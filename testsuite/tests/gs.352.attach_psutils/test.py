@@ -43,8 +43,6 @@ def test_driver():
             break
 
     gps_assert(pid is not None, True, "Could not find the pid")
-    # Press the 'Enter' key and check that we have attached to
-    # the running process.
     entry.set_text(str(pid))
     ok_button.clicked()
     yield timeout(1000)

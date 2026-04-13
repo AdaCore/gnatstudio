@@ -45,7 +45,7 @@ def test_driver():
     gps_assert(pid is not None, True, "Could not find the pid")
     entry.set_text(str(pid))
     ok_button.clicked()
-    yield wait_DAP_server("attach")
+    yield hook("debugger_location_changed")
     yield wait_idle()
 
     gps_assert(
