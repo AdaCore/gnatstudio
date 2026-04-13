@@ -1660,6 +1660,15 @@ package body GPS.Kernel.Preferences is
          Default  => Config.Default_Ps,
          Path     => -"External Commands:General");
 
+      Use_Py_List_Processes := Manager.Create
+        (Name    => "Helpers-Py-List-Processes",
+         Default => True,
+         Doc     => -"Use the 'psutil' Python package to list processes. "
+                     & "When enabled, the 'List processes' command preference "
+                     & "gets ignored.",
+         Label   => -"Use psutil to list processes",
+         Path    => -"External Commands:General");
+
       Execute_Command := Manager.Create
         (Name    => "Helpers-Execute-Command",
          Label   => -"Execute command",

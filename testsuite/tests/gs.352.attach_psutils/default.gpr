@@ -1,0 +1,14 @@
+project Default is
+
+   for Main use ("main_t819_019.adb");
+
+   package Builder is
+      for Switches ("ada") use ("-g");
+   end Builder;
+
+   package Compiler is
+      for Switches ("ada") use ("-g");
+   end Compiler;
+
+end Default;
+
