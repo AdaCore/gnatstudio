@@ -4148,6 +4148,7 @@ package body Debugger.Base_Gdb.Gdb_CLI is
       Info     : out GVD.Proc_Utils.Process_Info;
       Success  : out Boolean)
    is
+      use VSS.Strings.Conversions;
       First : Natural;
       Blank : Natural;
 
@@ -4169,11 +4170,11 @@ package body Debugger.Base_Gdb.Gdb_CLI is
             Skip_To_Blank (Debugger.WTX_List.all, Debugger.WTX_Index);
 
             Info :=
-              (Id_Len   => Blank - First,
-               Info_Len => Debugger.WTX_Index - Blank - 1,
-               Id       => Debugger.WTX_List (First .. Blank - 1),
-               Info     =>
-                 Debugger.WTX_List (Blank + 1 .. Debugger.WTX_Index - 1));
+              (Id   =>
+                 To_Virtual_String (Debugger.WTX_List (First .. Blank - 1)),
+               Name =>
+                 To_Virtual_String
+                   (Debugger.WTX_List (Blank + 1 .. Debugger.WTX_Index - 1)));
             Debugger.WTX_Index := Debugger.WTX_Index + 1;
             Success := True;
          end if;

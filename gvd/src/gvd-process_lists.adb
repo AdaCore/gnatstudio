@@ -20,6 +20,7 @@ with Glib.Object;               use Glib.Object;
 with Glib;                      use Glib;
 with Glib_Values_Utils;         use Glib_Values_Utils;
 with GPS.Intl;                  use GPS.Intl;
+with GPS.Kernel.Preferences;    use GPS.Kernel.Preferences;
 with GPS.Main_Window;           use GPS.Main_Window;
 with Gtk.Box;                   use Gtk.Box;
 with Gtk.Cell_Renderer_Text;    use Gtk.Cell_Renderer_Text;
@@ -32,6 +33,8 @@ with Gtk.Widget;                use Gtk.Widget;
 with Gtk;                       use Gtk;
 with Gtkada.Stock_Labels;       use Gtkada.Stock_Labels;
 with GVD.Proc_Utils;            use GVD.Proc_Utils;
+with String_Utils;              use String_Utils;
+with VSS.Strings.Conversions;
 
 package body GVD.Process_Lists is
 
@@ -48,33 +51,35 @@ package body GVD.Process_Lists is
    --  Called when pressing Enter or when double-clicking on row.
    --  Activates the dialog's default response ('OK' in this case).
 
+   function Pid_Sort
+     (Model : Gtk_Tree_Model;
+      A     : Gtk.Tree_Model.Gtk_Tree_Iter;
+      B     : Gtk.Tree_Model.Gtk_Tree_Iter) return Gint;
+   --  Smart sort for the pids
+
    -------------
    -- Gtk_New --
    -------------
 
    procedure Gtk_New
-     (Self    : out Process_List;
-      Process : not null access Visual_Debugger_Record'Class)
+     (Self   : out Gtk_Process_List;
+      Kernel : GPS.Kernel.Kernel_Handle)
    is
-      Success        : Boolean;
-      Info           : Process_Info;
       Hbox           : Gtk_Hbox;
       Scrolled       : Gtk_Scrolled_Window;
       T              : Gtk_Cell_Renderer_Text;
       C              : Gtk_Tree_View_Column;
       Dummy          : Gint;
       Dummy_Button   : Gtk_Widget;
-      Iter           : Gtk_Tree_Iter;
-
    begin
       Self := new Process_List_Record;
       Gtk.Dialog.Initialize
         (Self,
          Title         => -"Select the process to attach to",
-         Parent        => Process.Kernel.Get_Main_Window,
+         Parent        => Kernel.Get_Main_Window,
          Flags         => Modal or Destroy_With_Parent);
       Set_Default_Size_From_History
-        (Self, "gvd-processes", Process.Kernel, 500, 250);
+        (Self, "gvd-processes", Kernel, 500, 250);
 
       Gtk_New_Hbox (Hbox, False);
       Self.Get_Content_Area.Pack_Start (Hbox, True, True);
@@ -89,6 +94,7 @@ package body GVD.Process_Lists is
                (Column_Pid     => GType_String,
                 Column_Command => GType_String));
       Gtk_New (Self.Tree_View, Self.Tree_Model);
+      Self.Tree_Model.Set_Sort_Func (Column_Pid, Pid_Sort'Access);
       Self.Tree_Model.Unref;   --  owned by the tree view
 
       Scrolled.Add (Self.Tree_View);
@@ -129,24 +135,64 @@ package body GVD.Process_Lists is
 
       Self.Set_Default_Response (Gtk_Response_OK);
       Set_Activates_Default (Self.Ent, True);
+   end Gtk_New;
 
-      --  Show the list of processes
+   ---------------
+   -- Fill_Pids --
+   ---------------
 
-      Process.Debugger.Open_Processes;
-      loop
-         Process.Debugger.Next_Process (Info, Success);
-         exit when not Success;
-
+   procedure Fill_Pids
+     (Self   : Gtk_Process_List;
+      Kernel : GPS.Kernel.Kernel_Handle)
+   is
+      use VSS.Strings.Conversions;
+      Py_Processes : constant Process_Info_List.List :=
+        Py_PSUtils (Kernel);
+      Iter         : Gtk_Tree_Iter;
+   begin
+      for Py_Info of Py_Processes loop
          Self.Tree_Model.Append (Iter, Null_Iter);
          Set_And_Clear
            (Self.Tree_Model, Iter,
-            (Column_Pid     => As_String (Info.Id),
-             Column_Command => As_String (Info.Info)));
+            (Column_Pid     => As_String (To_UTF_8_String (Py_Info.Id)),
+             Column_Command => As_String (To_UTF_8_String (Py_Info.Name))
+            ));
       end loop;
-      Process.Debugger.Close_Processes;
-
       Self.Tree_View.Columns_Autosize;
-   end Gtk_New;
+   end Fill_Pids;
+
+   ---------------
+   -- Fill_Pids --
+   ---------------
+
+   procedure Fill_Pids
+     (Self    : Gtk_Process_List;
+      Process : not null access Visual_Debugger_Record'Class)
+   is
+      use VSS.Strings.Conversions;
+      Iter    : Gtk_Tree_Iter;
+      Info    : Process_Info;
+      Success : Boolean;
+   begin
+      --  Add the list of processes
+      if Use_Py_List_Processes.Get_Pref then
+         Fill_Pids (Self, Process.Kernel);
+      else
+         Process.Debugger.Open_Processes;
+         loop
+            Process.Debugger.Next_Process (Info, Success);
+            exit when not Success;
+
+            Self.Tree_Model.Append (Iter, Null_Iter);
+            Set_And_Clear
+              (Self.Tree_Model, Iter,
+               (Column_Pid     => As_String (To_UTF_8_String (Info.Id)),
+                Column_Command => As_String (To_UTF_8_String (Info.Name))));
+         end loop;
+         Process.Debugger.Close_Processes;
+         Self.Tree_View.Columns_Autosize;
+      end if;
+   end Fill_Pids;
 
    -------------------
    -- Get_Selection --
@@ -171,7 +217,7 @@ package body GVD.Process_Lists is
    -------------------
 
    procedure On_Select_Row (List : access GObject_Record'Class) is
-      Self  : constant Process_List := Process_List (List);
+      Self  : constant Gtk_Process_List := Gtk_Process_List (List);
       Model : Gtk_Tree_Model;
       Iter  : Gtk_Tree_Iter;
    begin
@@ -193,9 +239,28 @@ package body GVD.Process_Lists is
    is
       pragma Unreferenced (Path, Column);
 
-      Dialog : constant Process_List := Process_List (Self);
+      Dialog : constant Gtk_Process_List := Gtk_Process_List (Self);
    begin
       Dialog.Response (Gtk_Response_OK);
    end On_Row_Activated;
+
+   --------------
+   -- Pid_Sort --
+   --------------
+
+   function Pid_Sort
+     (Model : Gtk_Tree_Model;
+      A     : Gtk.Tree_Model.Gtk_Tree_Iter;
+      B     : Gtk.Tree_Model.Gtk_Tree_Iter) return Gint
+   is
+      S_A : constant String := Get_String (Model, A, Column_Pid);
+      S_B : constant String := Get_String (Model, B, Column_Pid);
+   begin
+      if Smart_Sort (S_A, S_B) then
+         return 1;
+      else
+         return -1;
+      end if;
+   end Pid_Sort;
 
 end GVD.Process_Lists;

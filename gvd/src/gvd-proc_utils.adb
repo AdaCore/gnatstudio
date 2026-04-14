@@ -16,16 +16,20 @@
 ------------------------------------------------------------------------------
 
 with Ada.Unchecked_Deallocation;
-with Ada.Strings.Fixed;      use Ada.Strings.Fixed;
-with GNAT.Expect;            use GNAT.Expect;
+with Ada.Strings.Fixed;       use Ada.Strings.Fixed;
+with GNAT.Expect;             use GNAT.Expect;
 
-with GNATCOLL.Arg_Lists;     use GNATCOLL.Arg_Lists;
-with GNATCOLL.Utils;         use GNATCOLL.Utils;
+with GNATCOLL.Arg_Lists;      use GNATCOLL.Arg_Lists;
+with GNATCOLL.Python;         use GNATCOLL.Python;
+with GNATCOLL.Scripts;
+with GNATCOLL.Utils;          use GNATCOLL.Utils;
+with GNATCOLL.Scripts.Python; use GNATCOLL.Scripts.Python;
 
-with GPS.Kernel.Preferences; use GPS.Kernel.Preferences;
-with GPS.Kernel.Remote;      use GPS.Kernel.Remote;
-with Remote;                 use Remote;
-with String_Utils;           use String_Utils;
+with GPS.Kernel.Preferences;  use GPS.Kernel.Preferences;
+with GPS.Kernel.Remote;       use GPS.Kernel.Remote;
+with Remote;                  use Remote;
+with String_Utils;            use String_Utils;
+with VSS.Strings.Conversions;
 
 package body GVD.Proc_Utils is
 
@@ -68,6 +72,7 @@ package body GVD.Proc_Utils is
 
       if Match = 1 then
          declare
+            use VSS.Strings.Conversions;
             S     : constant String :=
                       Strip_CR (Expect_Out (Handle.Descriptor.all));
             Index : Integer := S'First;
@@ -77,27 +82,19 @@ package body GVD.Proc_Utils is
 
             if Handle.Index /= 0 then
                Info :=
-                 (Id_Len   => Index - S'First + 1,
-                  Info_Len => S'Last - Handle.Index,
-                  Id       => S (S'First .. Index),
-                  Info     => S (Handle.Index .. S'Last - 1));
+                 (Id   => To_Virtual_String (S (S'First .. Index)),
+                  Name => To_Virtual_String (S (Handle.Index .. S'Last - 1)));
             else
                Info :=
-                 (Id_Len   => Index - S'First + 1,
-                  Info_Len => S'Last - Index - 1,
-                  Id       => S (S'First .. Index),
-                  Info     => S (Index + 1 .. S'Last - 1));
+                 (Id   => To_Virtual_String (S (S'First .. Index)),
+                  Name => To_Virtual_String (S (Index + 1 .. S'Last - 1)));
             end if;
 
          exception
             when Constraint_Error =>
                --  Parsing failed due to an unexpected ouput.
                --  Return a null string instead.
-               Info :=
-                 (Id_Len   => 0,
-                  Info_Len => 0,
-                  Id       => "",
-                  Info     => "");
+               Info := (Id => "", Name => "");
          end;
 
          Success := True;
@@ -152,5 +149,65 @@ package body GVD.Proc_Utils is
    exception
       when Process_Died => null;
    end Open_Processes;
+
+   ----------------
+   -- Py_PSUtils --
+   ----------------
+
+   function Py_PSUtils
+     (Kernel : Kernel_Handle)
+      return Process_Info_List.List
+   is
+      Script    : constant GNATCOLL.Scripts.Scripting_Language :=
+        Kernel.Scripts.Lookup_Scripting_Language (Python_Name);
+      Py_Import : PyObject;
+      Py_List   : PyObject;
+      Errors    : aliased Boolean;
+      Res       : Process_Info_List.List;
+   begin
+      Py_Import := Run_Command
+        (Python_Scripting (Script),
+         "import psutil",
+         Need_Output     => False,
+         Console         => null,
+         Show_Command    => False,
+         Hide_Output     => True,
+         Hide_Exceptions => False,
+         Errors          => Errors'Unchecked_Access);
+
+      Py_List := Run_Command
+        (Python_Scripting (Script),
+         "[p.info for p in psutil.process_iter(['pid', 'name'])]",
+         Need_Output     => True,
+         Console         => null,
+         Show_Command    => False,
+         Hide_Output     => True,
+         Hide_Exceptions => False,
+         Errors          => Errors'Unchecked_Access);
+
+      for I in 0 .. PyObject_Size (Py_List) - 1 loop
+         --  Element of the list are dictionnaries indexed by "pid" and "name"
+         declare
+            use VSS.Strings.Conversions;
+            Py_Process : constant PyObject := PyObject_GetItem (Py_List, I);
+            Id         : constant PyObject :=
+              PyDict_GetItemString (Py_Process, "pid");
+            Name       : constant PyObject :=
+              PyDict_GetItemString (Py_Process, "name");
+            --  All these PyObjects are borrowed and should not be decrefed
+         begin
+            Res.Append
+              (Process_Info'(
+               Id   => To_Virtual_String (PyInt_AsLong (Id)'Image),
+               Name => To_Virtual_String (PyString_AsString (Name))));
+         end;
+      end loop;
+
+      --  We have the list of ID/Name, free the memory used by python now
+      Py_XDECREF (Py_Import);
+      Py_XDECREF (Py_List);
+
+      return Res;
+   end Py_PSUtils;
 
 end GVD.Proc_Utils;
