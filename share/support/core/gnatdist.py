@@ -7,7 +7,6 @@ This package provides syntax highlighting for partition configuration
 language, and allows to run tool from GPS.
 """
 
-
 import os_utils
 import GPS
 
@@ -22,7 +21,7 @@ if gnatdist_tool == "":
 
 if gnatdist_tool != "":
     GPS.parse_xml(
-        """
+        r"""
   <Language>
     <Name>gnatdist</Name>
     <Parent>Ada</Parent>
