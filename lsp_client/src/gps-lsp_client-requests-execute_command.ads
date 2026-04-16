@@ -15,6 +15,9 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
+with GNATCOLL.JSON;
+with VSS.Strings;
+
 package GPS.LSP_Client.Requests.Execute_Command is
 
    type Abstract_Execute_Command_Request is
@@ -33,6 +36,12 @@ package GPS.LSP_Client.Requests.Execute_Command is
    procedure On_Result_Message
      (Self : in out Abstract_Execute_Command_Request) is abstract;
    --  Called when a result response is received from the server.
+
+   overriding procedure On_Error_Message
+     (Self    : in out Abstract_Execute_Command_Request;
+      Code    : LSP.Messages.ErrorCodes;
+      Message : VSS.Strings.Virtual_String;
+      Data    : GNATCOLL.JSON.JSON_Value);
 
    overriding function Method
      (Self : Abstract_Execute_Command_Request)

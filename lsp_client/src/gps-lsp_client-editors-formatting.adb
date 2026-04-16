@@ -168,6 +168,12 @@ package body GPS.LSP_Client.Editors.Formatting is
      (Self   : in out On_Type_Formatting_Request;
       Result : LSP.Messages.TextEdit_Vector);
 
+   overriding procedure On_Error_Message
+     (Self    : in out On_Type_Formatting_Request;
+      Code    : LSP.Messages.ErrorCodes;
+      Message : VSS.Strings.Virtual_String;
+      Data    : GNATCOLL.JSON.JSON_Value);
+
    -- LSP_Formatting_Module_Id_Record --
 
    type LSP_Formatting_Module_Id_Record is
@@ -475,6 +481,40 @@ package body GPS.LSP_Client.Editors.Formatting is
       when E : others =>
          Trace (Me, E);
    end On_Result_Message;
+
+   ----------------------
+   -- On_Error_Message --
+   ----------------------
+
+   overriding procedure On_Error_Message
+     (Self    : in out On_Type_Formatting_Request;
+      Code    : LSP.Messages.ErrorCodes;
+      Message : VSS.Strings.Virtual_String;
+      Data    : GNATCOLL.JSON.JSON_Value)
+   is
+      pragma Unreferenced (Code, Data);
+      Editor : constant Editor_Buffer'Class :=
+        Self.Kernel.Get_Buffer_Factory.Get
+          (File      => Self.Text_Document,
+           Open_View => False,
+           Focus     => False);
+   begin
+      if Editor = Nil_Editor_Buffer then
+         --  Buffer can have been closed since the request was queued
+         return;
+      end if;
+
+      Trace
+        (Me,
+         "On_Type_Formatting failed for "
+         & (+Base_Name (Editor.File))
+         & " ver."
+         & Integer'Image (Editor.Version)
+         & ", data ver."
+         & Integer'Image (Self.Document_Version)
+         & " with: "
+         & VSS.Strings.Conversions.To_UTF_8_String (Message));
+   end On_Error_Message;
 
    -------------------------
    -- On_Range_Formatting --

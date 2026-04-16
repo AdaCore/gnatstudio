@@ -16,6 +16,7 @@
 ------------------------------------------------------------------------------
 
 with LSP.JSON_Streams;
+with VSS.Strings.Conversions;
 
 package body GPS.LSP_Client.Requests.Execute_Command is
 
@@ -46,6 +47,22 @@ package body GPS.LSP_Client.Requests.Execute_Command is
    begin
       Abstract_Execute_Command_Request'Class (Self).On_Result_Message;
    end On_Result_Message;
+
+   ----------------------
+   -- On_Error_Message --
+   ----------------------
+
+   overriding procedure On_Error_Message
+     (Self    : in out Abstract_Execute_Command_Request;
+      Code    : LSP.Messages.ErrorCodes;
+      Message : VSS.Strings.Virtual_String;
+      Data    : GNATCOLL.JSON.JSON_Value)
+   is
+   begin
+      Self.Kernel.Get_Messages_Window.Insert_Error
+        ("Failed to execute command: "
+         & VSS.Strings.Conversions.To_UTF_8_String (Message));
+   end On_Error_Message;
 
    ------------
    -- Params --

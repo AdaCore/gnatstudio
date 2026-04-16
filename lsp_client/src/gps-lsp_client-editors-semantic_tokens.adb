@@ -171,6 +171,12 @@ package body GPS.LSP_Client.Editors.Semantic_Tokens is
      (Self   : in out SemanticTokens_Full_Request;
       Result : LSP.Messages.SemanticTokens);
 
+   overriding procedure On_Error_Message
+     (Self    : in out SemanticTokens_Full_Request;
+      Code    : LSP.Messages.ErrorCodes;
+      Message : VSS.Strings.Virtual_String;
+      Data    : GNATCOLL.JSON.JSON_Value);
+
    ----------------------------------
    -- SemanticTokens_Range_Request --
    ----------------------------------
@@ -878,7 +884,7 @@ package body GPS.LSP_Client.Editors.Semantic_Tokens is
       Request : GPS.LSP_Client.Requests.Request_Access;
       Dummy   : Boolean;
    begin
-      --  delete previouse results for the same file
+      --  delete previous results for the same file
       while Idx <= Natural (Module.Data.Length) loop
          if Module.Data.Element (Idx).Request.File = Self.File then
             Module.Data.Delete (Idx);
@@ -913,6 +919,32 @@ package body GPS.LSP_Client.Editors.Semantic_Tokens is
          end if;
       end;
    end On_Result_Message;
+
+   ----------------------
+   -- On_Error_Message --
+   ----------------------
+
+   overriding procedure On_Error_Message
+     (Self    : in out SemanticTokens_Full_Request;
+      Code    : LSP.Messages.ErrorCodes;
+      Message : VSS.Strings.Virtual_String;
+      Data    : GNATCOLL.JSON.JSON_Value)
+   is
+      pragma Unreferenced (Code, Message, Data);
+      Idx : Positive := 1;
+   begin
+      --  delete previous results for the same file
+      while Idx <= Natural (Module.Data.Length) loop
+         if Module.Data.Element (Idx).Request.File = Self.File then
+            Module.Data.Delete (Idx);
+            if Idx = 1 then
+               Clear_Indexes;
+            end if;
+         else
+            Idx := Idx + 1;
+         end if;
+      end loop;
+   end On_Error_Message;
 
    -----------------------
    -- On_Result_Message --
@@ -1111,7 +1143,9 @@ package body GPS.LSP_Client.Editors.Semantic_Tokens is
      (Self    : in out SemanticTokens_Range_Request;
       Code    : LSP.Messages.ErrorCodes;
       Message : VSS.Strings.Virtual_String;
-      Data    : GNATCOLL.JSON.JSON_Value) is
+      Data    : GNATCOLL.JSON.JSON_Value)
+   is
+      use GPS.LSP_Client.Requests.SemanticTokens_Range;
    begin
       if Self.Vbox /= null then
          Gtk.Handlers.Disconnect
@@ -1119,10 +1153,8 @@ package body GPS.LSP_Client.Editors.Semantic_Tokens is
             Id     => Self.Vbox_Destroyed_Handler_ID);
       end if;
 
-      GPS.LSP_Client.Requests.SemanticTokens_Range.On_Error_Message
-        (Self    => GPS.LSP_Client.Requests.SemanticTokens_Range.
-           Abstract_SemanticTokens_Range_Request (Self),
-         Code    => Code,
+      Abstract_SemanticTokens_Range_Request'Class (Self).On_Error_Message
+        (Code    => Code,
          Message => Message,
          Data    => Data);
    end On_Error_Message;

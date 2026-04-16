@@ -19,6 +19,7 @@
 
 with VSS.Strings.Conversions;
 
+with GNATCOLL.JSON;
 with GNATCOLL.VFS;  use GNATCOLL.VFS;
 with GPS.Kernel;    use GPS.Kernel;
 
@@ -55,6 +56,12 @@ package GPS.LSP_Client.Editors.Code_Actions is
 
    overriding procedure On_Result_Message
      (Self : in out Execute_Command_Request) is null;
+
+   overriding procedure On_Error_Message
+     (Self    : in out Execute_Command_Request;
+      Code    : LSP.Messages.ErrorCodes;
+      Message : VSS.Strings.Virtual_String;
+      Data    : GNATCOLL.JSON.JSON_Value) is null;
 
    overriding function Get_Task_Label
      (Self : Execute_Command_Request) return String

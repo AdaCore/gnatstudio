@@ -15,6 +15,7 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
+with GNATCOLL.JSON;
 with GNATCOLL.Traces;                     use GNATCOLL.Traces;
 with GNATCOLL.VFS;                        use GNATCOLL.VFS;
 
@@ -50,6 +51,12 @@ package body GPS.LSP_Client.Editors.Folding is
    overriding procedure On_Result_Message
      (Self   : in out Folding_Request;
       Result : LSP.Messages.FoldingRange_Vector);
+
+   overriding procedure On_Error_Message
+     (Self    : in out Folding_Request;
+      Code    : LSP.Messages.ErrorCodes;
+      Message : VSS.Strings.Virtual_String;
+      Data    : GNATCOLL.JSON.JSON_Value);
 
    overriding function Auto_Cancel
      (Self         : in out Folding_Request;
@@ -165,6 +172,38 @@ package body GPS.LSP_Client.Editors.Folding is
       when E : others =>
          Trace (Me, E);
    end On_Result_Message;
+
+   ----------------------
+   -- On_Error_Message --
+   ----------------------
+
+   overriding procedure On_Error_Message
+     (Self    : in out Folding_Request;
+      Code    : LSP.Messages.ErrorCodes;
+      Message : VSS.Strings.Virtual_String;
+      Data    : GNATCOLL.JSON.JSON_Value)
+   is
+      pragma Unreferenced (Code, Message, Data);
+      Buffer : Source_Buffer;
+   begin
+      declare
+         Bufs : constant Source_Buffer_Array := Buffer_List (Self.Kernel);
+      begin
+         for Idx in Bufs'Range loop
+            if Bufs (Idx).Get_Filename = Self.File then
+               Buffer := Bufs (Idx);
+               exit;
+            end if;
+         end loop;
+      end;
+
+      if Buffer = null then
+         --  Buffer can have been closed since the request was queued.
+         return;
+      else
+         Set_Blocks (Buffer, Blocks_Vector.Empty_Vector);
+      end if;
+   end On_Error_Message;
 
    --------------------
    -- Compute_Blocks --
