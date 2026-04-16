@@ -640,6 +640,8 @@
       <separator/>
       <button action='locations export to text file'/>
       <button action='locations copy to clipboard'/>
+      <separator/>
+      <button action='locations errors only'/>
    </toolbar>
 
    <toolbar id='Messages'>
