@@ -469,14 +469,34 @@ package body GPS.LSP_Client.Outline is
                "On_Idle_Load_Tree Nb_Added_Rows:" & Nb_Added_Rows'Img);
 
             Self.Tree_Cursor := Tree_Iter.Next (Self.Tree_Cursor);
+            if not Visible then
+               --  skip invisible nested nodes
+               while Has_Element (Self.Tree_Cursor)
+                 and then Integer (Depth (Self.Tree_Cursor)) > Prev_Depth
+               loop
+                  Self.Tree_Cursor := Tree_Iter.Next (Self.Tree_Cursor);
+               end loop;
+            end if;
+
+            --  When not visible we didn't add the last row so the current
+            --  depth is one above Tree_Cursor
             Cur_Depth := Integer (Depth (Self.Tree_Cursor));
 
             Trace
               (Me_Debug,
                "On_Idle_Load_Tree set visibility, Cur_Depth:" &
                  Cur_Depth'Img & " Prev_Depth:" & Prev_Depth'Img);
+
             if Visible then
+               --  We finished adding nodes for this branch so go back to the
+               --  parent node at Prev_Depth and fill a new branch/sibling
                for I in Cur_Depth .. Prev_Depth loop
+                  Outline_View.Move_Cursor (Self.Model, Outline_View.Up);
+               end loop;
+
+            else
+               --  we did not add a row so the steps should be less by 1
+               for I in Cur_Depth .. Prev_Depth - 1 loop
                   Outline_View.Move_Cursor (Self.Model, Outline_View.Up);
                end loop;
             end if;
