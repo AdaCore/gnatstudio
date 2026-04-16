@@ -3,6 +3,7 @@
   <pref name="LSP-Completion-Use-Snippets" >TRUE</pref>
   <pref name="LSP-Diagnostics-Display" >Editor_Only</pref>
   <pref name="LSP-Ada-File-Diagnostics" >False</pref>
+  <pref name="LSP-Ada-Semantic-Diagnostics" >False</pref>
   <pref name="LSP-Ada-Project-Diagnostics" >False</pref>
   <pref name="LSP-Alire-Diagnostics" >False</pref>
   <pref name="General-Splash-Screen">False</pref>
