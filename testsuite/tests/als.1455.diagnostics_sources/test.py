@@ -4,14 +4,30 @@ Test all the preferences controlling the diagnostics together.
 
 import collections
 import GPS
-from gs_utils.internal.utils import *
+from gs_utils.internal.utils import (
+    wait_tasks,
+    wait_until_true,
+    gps_assert,
+    dump_locations_tree,
+    run_test_driver,
+)
+from workflows import run_as_workflow
 
 
+# Diagnostics coming from Libadalang.
+# Contains both syntax and semantic diagnostics.
 LAL = [
-    "Diagnostics: libadalang (1 item in 1 file)",
-    ["foo.adb (1 item)", ["<b>4:1</b>       Missing &apos;;&apos;"]],
+    "Diagnostics: libadalang (2 items in 1 file)",
+    [
+        "foo.adb (2 items)",
+        [
+            "<b>2:19</b>      expected Integer, got Boolean",
+            "<b>5:1</b>       Missing &apos;;&apos;",
+        ],
+    ],
 ]
 
+# Diagnostics related to project loading.
 LOADING = [
     "Diagnostics: ada.project (1 item in 1 file)",
     [
@@ -25,6 +41,7 @@ LOADING = [
     ],
 ]
 
+# Diagnostics emitted by the ALS instance for GPR files.
 GPR = [
     "Diagnostics: gpr.project (1 item in 1 file)",
     [
@@ -56,12 +73,17 @@ def custom_sort(locations):
     return res
 
 
+@run_as_workflow
 def match(expected, message=""):
     global CPT
 
-    while len(dump_locations_tree()) != len(expected):
-        # GLS is particularly slow so actively wait for it
-        yield timeout(100)
+    yield wait_until_true(
+        lambda: len(dump_locations_tree()) == len(expected),
+        timeout=10000,
+        error_msg=message
+        + "\n\nExpected:\n %s\n\nGot:\n %s" % (expected, dump_locations_tree()),
+    )
+
     current = dump_locations_tree()
     # The order is relative to time, we don't want to hardcode all the
     # combinaison so sort the list before comparing.
@@ -81,46 +103,51 @@ def run_test():
     GPS.execute_action("locations clear")
 
     # Open Ada file with Lal diagnotics
-    buf = GPS.EditorBuffer.get(GPS.File("foo.adb"))
+    GPS.EditorBuffer.get(GPS.File("foo.adb"))
     yield wait_tasks()
 
     # Open GPR file with diagnostics
-    buf = GPS.EditorBuffer.get(GPS.File("test.gpr"))
+    GPS.EditorBuffer.get(GPS.File("test.gpr"))
     yield wait_tasks()
 
     # Enable all diagnostics and show them in the Location views
     GPS.Preference("LSP-Diagnostics-Display").set("Editor_And_Locations")
     GPS.Preference("LSP-Ada-File-Diagnostics").set(True)
+    GPS.Preference("LSP-Ada-Semantic-Diagnostics").set(True)
     GPS.Preference("LSP-Ada-Project-Diagnostics").set(True)
     GPS.Preference("LSP-GPR-File-Diagnostics").set(True)
     yield match(LAL + GPR + LOADING, "all diagnostics at initial state")
 
     GPS.Preference("LSP-Ada-Project-Diagnostics").set(False)
-    yield match(LAL + GPR)
+    yield match(LAL + GPR, "disable project diagnostics")
 
     GPS.Preference("LSP-Ada-Project-Diagnostics").set(True)
-    yield match(LAL + GPR + LOADING)
+    yield match(LAL + GPR + LOADING, "re-enable project diagnostics")
 
     GPS.Preference("LSP-GPR-File-Diagnostics").set(False)
-    yield match(LAL + LOADING)
+    yield match(LAL + LOADING, "disable GPR file diagnostics")
 
     GPS.Preference("LSP-Ada-Project-Diagnostics").set(False)
-    yield match(LAL)
+    yield match(LAL, "disable project diagnostics")
 
     GPS.Preference("LSP-Ada-File-Diagnostics").set(False)
-    yield match([])
+    GPS.Preference("LSP-Ada-Semantic-Diagnostics").set(False)
+    yield match([], "disable Ada syntax and semantic diagnostics")
 
     GPS.Preference("LSP-Ada-Project-Diagnostics").set(True)
-    yield match(LOADING)
+    yield match(LOADING, "enable project diagnostics only")
 
     GPS.Preference("LSP-Ada-File-Diagnostics").set(True)
-    yield match(LOADING + LAL)
+    GPS.Preference("LSP-Ada-Semantic-Diagnostics").set(True)
+    yield match(LOADING + LAL, "enable Ada syntax and semantic diagnostics")
 
     GPS.Preference("LSP-Ada-File-Diagnostics").set(False)
-    yield match(LOADING)
+    GPS.Preference("LSP-Ada-Semantic-Diagnostics").set(False)
+    yield match(LOADING, "disable Ada syntax and semantic diagnostics")
 
     GPS.Preference("LSP-GPR-File-Diagnostics").set(True)
-    yield match(LOADING + GPR)
+    yield match(LOADING + GPR, "re-enable GPR file diagnostics")
 
     GPS.Preference("LSP-Ada-File-Diagnostics").set(True)
-    yield match(LOADING + GPR + LAL)
+    GPS.Preference("LSP-Ada-Semantic-Diagnostics").set(True)
+    yield match(LOADING + GPR + LAL, "re-enable Ada syntax and semantic diagnostics")

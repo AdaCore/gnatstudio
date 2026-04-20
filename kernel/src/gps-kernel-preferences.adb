@@ -1816,9 +1816,8 @@ package body GPS.Kernel.Preferences is
       LSP_Ada_File_Diagnostics := Kernel.Get_Preferences.Create
         (Name    => "LSP-Ada-File-Diagnostics",
          Default => True,
-         Label   => "Enable Ada File diagnostics",
-         Doc     => "Enable live diagnostics when editing Ada code "
-         & "(e.g: syntax errors).",
+         Label   => "Enable Syntax diagnostics",
+         Doc     => "Enable diagnostics for syntax errors in Ada files.",
          Path    => "Editor/Ada:Diagnostics");
 
       LSP_Ada_Source_Info_Diagnostics :=
@@ -1831,6 +1830,13 @@ package body GPS.Kernel.Preferences is
              & "(e.g: for opened files that do not belong "
              & "to the loaded project tree)",
            Path    => "Editor/Ada:Diagnostics");
+
+      LSP_Ada_Semantic_Diagnostics := Kernel.Get_Preferences.Create
+        (Name    => "LSP-Ada-Semantic-Diagnostics",
+         Default => True,
+         Label   => "Enable Semantic diagnostics",
+         Doc     => "Enable diagnostics for semantic errors in Ada files.",
+         Path    => "Editor/Ada:Diagnostics");
 
       LSP_Ada_Project_Diagnostics := Kernel.Get_Preferences.Create
         (Name    => "LSP-Ada-Project-Diagnostics",
