@@ -235,6 +235,13 @@ package body GPS.Location_View is
       return Commands.Command_Return_Type;
    --  Collapse or Expand the selected files
 
+   type Show_Only_Errors_Command is new Interactive_Command with null record;
+   overriding function Execute
+     (Self    : access Show_Only_Errors_Command;
+      Context : Commands.Interactive.Interactive_Command_Context)
+      return Commands.Command_Return_Type;
+   --  Show only error messages
+
    --------------
    -- Messages --
    --------------
@@ -1080,6 +1087,24 @@ package body GPS.Location_View is
       return Commands.Success;
    end Execute;
 
+   -------------
+   -- Execute --
+   -------------
+
+   overriding function Execute
+     (Self    : access Show_Only_Errors_Command;
+      Context : Commands.Interactive.Interactive_Command_Context)
+      return Commands.Command_Return_Type
+   is
+      pragma Unreferenced (Self);
+      K : constant Kernel_Handle := Get_Kernel (Context.Context);
+   begin
+      Set_Pref
+        (Location_Only_High_Messages,
+         K.Get_Preferences, not Location_Only_High_Messages.Get_Pref);
+      return Commands.Success;
+   end Execute;
+
    --------------------
    -- On_Change_Sort --
    --------------------
@@ -1550,7 +1575,6 @@ package body GPS.Location_View is
       Append_Menu (Menu, K, Auto_Close);
       Append_Menu (Menu, K, Locations_Save_In_Desktop);
       Append_Menu (Menu, K, Preserve_Messages);
-      Append_Menu (Menu, K, Location_Only_High_Messages);
    end Create_Menu;
 
    ----------------------------
@@ -1650,6 +1674,13 @@ package body GPS.Location_View is
          new Clear_Locations_Command,
          -"Remove all the messages",
          Icon_Name => "gps-clear-symbolic",
+         Category => -"Locations");
+
+      Register_Action
+        (Kernel, "locations errors only",
+         new Show_Only_Errors_Command,
+         -"Show only errors",
+         Icon_Name => "gps-errors-only-symbolic",
          Category => -"Locations");
 
       Register_Action
