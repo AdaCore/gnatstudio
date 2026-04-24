@@ -954,150 +954,6 @@ package body GPS.Kernel.Preferences is
          Doc             => "",
          Path            => -"Editor/Fonts & Colors:General");
 
-      -------------------------------
-      -- LSP Semantic Highlighting --
-      -------------------------------
-
-      LSP_Namespace_Style := Manager.Create
-        (Name         => "Src-Editor-LSP-Semantic-Namespace",
-         Label        => -"Namespace",
-         Base            => Default_Style,
-         Doc             => "",
-         Default_Variant => Default,
-         Default_Fg   => "#310142",
-         Path            =>
-         -"Editor/Fonts & Colors:LSP Semantic Highlighting");
-
-      LSP_Interface_Style := Manager.Create
-        (Name         => "Src-Editor-LSP-Semantic-Interface",
-         Label        => -"Interface",
-         Base            => Default_Style,
-         Doc             => "",
-         Default_Variant => Default,
-         Default_Fg   => "#8900ba",
-         Path            =>
-         -"Editor/Fonts & Colors:LSP Semantic Highlighting");
-
-      LSP_Class_Style := Manager.Create
-        (Name         => "Src-Editor-LSP-Semantic-Class",
-         Label        => -"Class",
-         Base            => Default_Style,
-         Doc             => "",
-         Default_Variant => Default,
-         Default_Fg   => "#550073",
-         Path            =>
-         -"Editor/Fonts & Colors:LSP Semantic Highlighting");
-
-      LSP_Function_Style := Manager.Create
-        (Name         => "Src-Editor-LSP-Semantic-Function",
-         Label        => -"Subprogram",
-         Base            => Default_Style,
-         Doc             => "",
-         Default_Variant => Default,
-         Default_Fg   => "#b500f5",
-         Path            =>
-          -"Editor/Fonts & Colors:LSP Semantic Highlighting");
-
-      LSP_Struct_Style := Manager.Create
-        (Name         => "Src-Editor-LSP-Semantic-Struct",
-         Label        => -"Structure",
-         Base            => Default_Style,
-         Doc             => "",
-         Default_Variant => Default,
-         Default_Fg   => "#015878",
-         Path            =>
-         -"Editor/Fonts & Colors:LSP Semantic Highlighting");
-
-      LSP_TypeParameter_Style := Manager.Create
-        (Name         => "Src-Editor-LSP-Semantic-TypeParameter",
-         Label        => -"TypeParameter",
-         Base            => Default_Style,
-         Doc             => "",
-         Default_Variant => Default,
-         Default_Fg   => "#590034",
-         Path            =>
-         -"Editor/Fonts & Colors:LSP Semantic Highlighting");
-
-      LSP_Property_Style := Manager.Create
-        (Name         => "Src-Editor-LSP-Semantic-Property",
-         Label        => -"Property",
-         Base            => Default_Style,
-         Doc             => "",
-         Default_Variant => Default,
-         Default_Fg   => "#bf0270",
-         Path            =>
-         -"Editor/Fonts & Colors:LSP Semantic Highlighting");
-
-      LSP_Enum_Style := Manager.Create
-        (Name         => "Src-Editor-LSP-Semantic-Enum",
-         Label        => -"Enum",
-         Base            => Default_Style,
-         Doc             => "",
-         Default_Variant => Default,
-         Default_Fg   => "#a38a27",
-         Path            =>
-         -"Editor/Fonts & Colors:LSP Semantic Highlighting");
-
-      LSP_EnumMember_Style := Manager.Create
-        (Name         => "Src-Editor-LSP-Semantic-EnumMember",
-         Label        => -"EnumMember",
-         Base            => Default_Style,
-         Doc             => "",
-         Default_Variant => Default,
-         Default_Fg   => "#c4a321",
-         Path            =>
-         -"Editor/Fonts & Colors:LSP Semantic Highlighting");
-
-      LSP_Parameter_Style := Manager.Create
-        (Name         => "Src-Editor-LSP-Semantic-Parameter",
-         Label        => -"Parameter",
-         Base            => Default_Style,
-         Doc             => "",
-         Default_Variant => Default,
-         Default_Fg   => "#008cbf",
-         Path            =>
-         -"Editor/Fonts & Colors:LSP Semantic Highlighting");
-
-      LSP_Variable_Style := Manager.Create
-        (Name         => "Src-Editor-LSP-Semantic-Variable",
-         Label        => -"Variable",
-         Base            => Default_Style,
-         Doc             => "",
-         Default_Variant => Default,
-         Default_Fg   => "#c93c00",
-         Path            =>
-         -"Editor/Fonts & Colors:LSP Semantic Highlighting");
-
-      LSP_Modifier_Style := Manager.Create
-        (Name         => "Src-Editor-LSP-Semantic-Modifier",
-         Label        => -"Modifier",
-         Base            => Default_Style,
-         Doc             => "",
-         Default_Variant => Default,
-         Default_Fg   => "#00873f",
-         Path            =>
-         -"Editor/Fonts & Colors:LSP Semantic Highlighting");
-
-      LSP_Operator_Style := Manager.Create
-        (Name         => "Src-Editor-LSP-Semantic-Operator",
-         Label        => -"Operator",
-         Base            => Default_Style,
-         Doc             => "",
-         Default_Variant => Default,
-         Default_Fg   => "#005427",
-         Path            =>
-          -"Editor/Fonts & Colors:LSP Semantic Highlighting");
-
-      LSP_Deprecated_Style := Manager.Create
-        (Name         => "Src-Editor-LSP-Semantic-Deprecated",
-         Label        => -"Deprecated",
-         Base            => Default_Style,
-         Doc             => "",
-         Default_Variant => Default,
-         Default_Fg   => "red",
-         Path            =>
-          -"Editor/Fonts & Colors:LSP Semantic Highlighting");
-
       Current_Block_Color := Manager.Create
         (Name     => "Src-Editor-Current-Block-Color",
          Default  => "#9C9CFF",
@@ -1896,7 +1752,10 @@ package body GPS.Kernel.Preferences is
            Doc     =>
              -("Controls whether semantic highlighting is shown for the "
                & "languages that support it through LSP. "
-               & "If disabled, only the syntax highlighting is used."),
+               & "If disabled, only the syntax highlighting is used. "
+               & "Semantic highlighting colors are defined by the active "
+               & "color theme. To customize them, use a TextMate theme "
+               & "(<b>Color Theme</b> preferences page)."),
            Default => False);
 
       LSP_Show_Semantic_Tooltip :=

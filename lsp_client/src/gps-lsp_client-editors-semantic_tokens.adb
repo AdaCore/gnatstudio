@@ -57,7 +57,7 @@ package body GPS.LSP_Client.Editors.Semantic_Tokens is
    Me : constant Trace_Handle := Create ("GPS.LSP.SEMANTIC_TOKENS", On);
 
    LSP_Deprecated_Style_Name : constant String := "deprecated";
-   --  Used as a depricated style name
+   --  Used as a deprecated style name
 
    Semantic_Tooltip_Box_Name : constant String := "Semantic_Box_Tooltip";
    --  Used as a name for semantic box in tooltip
@@ -212,7 +212,7 @@ package body GPS.LSP_Client.Editors.Semantic_Tokens is
       User_Data : SemanticTokens_Range_Request_Access);
    pragma Warnings (Off, On_Tooltip_Destroyed);
    --  Called when the tooltip that shows the current semantic token gets
-   --  detroyed while waiting for the request result.
+   --  destroyed while waiting for the request result.
 
    procedure Clear_Indexes;
    --  Clear module indexes to start parsing results from the beginning
@@ -462,7 +462,7 @@ package body GPS.LSP_Client.Editors.Semantic_Tokens is
                   if Check (Style_Name) /= "" then
                      return Style_Name;  --  the style has been found
                   else
-                     --  return "fallback" depricated when no other style
+                     --  return "fallback" deprecated when no other style
                      --  has been found
                      return LSP_Deprecated_Style_Name;
                   end if;

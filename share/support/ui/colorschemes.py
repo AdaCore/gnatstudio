@@ -7,6 +7,8 @@ These themes are inspired from:
 """
 
 import GPS
+import glob
+import os
 from gs_utils import hook
 from theme_handling import Theme, Rgba, transparent, Color, prefs_to_color_keys
 import textmate
@@ -38,7 +40,11 @@ default = Theme(
 )
 
 darkside = Theme(
-    "Darkside", False, {"ephemeral_simple": ("DEFAULT", transparent, Rgba(69, 74, 69))}
+    "Darkside",
+    False,
+    {
+        "ephemeral_simple": ("DEFAULT", transparent, Rgba(69, 74, 69)),
+    },
 )
 
 color_theme_pref = GPS.Preference("/Color-Theme").create(
@@ -180,7 +186,26 @@ class ColorThemeSwitcher(object):
         (with special-case support for CSS-defined values, see above.)
         """
         if theme:
-            theme.apply_preferences(self.provider)
+            # Merge user style overrides from ~/.gnatstudio/style_overrides/
+            # before applying, so users can customise semantic highlighting
+            # on top of any selected theme.
+            overrides_dir = os.path.join(GPS.get_home_dir(), "style_overrides")
+            override_entries = {}
+            for f in sorted(glob.glob(os.path.join(overrides_dir, "*.tmTheme"))):
+                try:
+                    override_entries.update(textmate.parse_style_overrides(f))
+                except Exception as e:
+                    logger.log("Error loading style override '%s': %s" % (f, e))
+
+            if override_entries:
+                saved_d = theme.d
+                theme.d = saved_d.copy()
+                theme.d.update(override_entries)
+                theme.apply_preferences(self.provider)
+                theme.d = saved_d
+            else:
+                theme.apply_preferences(self.provider)
+
             color_theme_pref.set(theme.name)
 
 
@@ -285,7 +310,16 @@ class ColorSchemePicker(object):
         self.doc_label.set_markup(
             "You can add your own themes in the TextMate "
             "format (.tmTheme) by adding them in the "
-            "<b>GNATSTUDIO_HOME/.gnatstudio/themes/</b> directory."
+            "<b>GNATSTUDIO_HOME/.gnatstudio/themes/</b> directory.\n"
+            "Semantic highlighting colors (subprograms, variables, types…) "
+            "are also controlled by the active theme via TextMate scopes "
+            "(e.g. <tt>entity.other.function</tt>, "
+            "<tt>entity.name.variable.readonly</tt>). "
+            "See the <tt>textmate.py</tt> plugin for the full scope reference.\n"
+            "To customise semantic styles without replacing your theme, "
+            "place <tt>.tmTheme</tt> files in "
+            "<b>GNATSTUDIO_HOME/.gnatstudio/style_overrides/</b>. "
+            "Entries in those files are merged on top of the active theme."
         )
         self.doc_label.get_style_context().add_class("dialog-views-doc-labels")
         self.doc_label_hbox.pack_start(self.doc_label, False, False, PADDING)
