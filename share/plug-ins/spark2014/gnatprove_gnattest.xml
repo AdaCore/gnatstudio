@@ -32,6 +32,7 @@
       <arg>-P%pp</arg>
       <arg>%X</arg>
       <arg>--gen-test-vectors</arg>
+      <arg>--gen-test-num=1</arg>
     </command-line>
     <output-parsers>
       {output_parsers}
