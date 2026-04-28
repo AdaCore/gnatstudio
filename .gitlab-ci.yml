@@ -58,6 +58,7 @@ include:
       cpus: 8
       image: systemgtk
       anod-args: run collect_coverage_$ACI_TRACK --latest
+      save-anod-logs: true
       needs: [gs:linux, integration-testsuite:linux]
 
 
@@ -129,3 +130,5 @@ collect-coverage:linux:
     paths:
       - coverage-traces/coverage_*.xml
       - coverage-traces/html.tar.gz
+      - anod-logs/*.log
+      - anod-logs/collect-coverage-linux/*.log
