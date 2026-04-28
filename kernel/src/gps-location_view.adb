@@ -1680,7 +1680,7 @@ package body GPS.Location_View is
         (Kernel, "locations errors only",
          new Show_Only_Errors_Command,
          -"Show only errors",
-         Icon_Name => "gps-errors-only-symbolic",
+         Icon_Name => "gps-show-errors-only-symbolic",
          Category => -"Locations");
 
       Register_Action
