@@ -399,16 +399,24 @@ procedure GPS.Main is
      E      : Ada.Exceptions.Exception_Occurrence)
    is
       PBT : constant String := GNATCOLL.Scripts.Python.Python_Backtrace;
+      Shutdown_Phase : constant String := Python_Module.Last_Shutdown_Phase;
+      Shutdown_Info  : constant String :=
+        (if Shutdown_Phase /= "" then ASCII.LF & Shutdown_Phase else "");
+      --  Python shutdown details stay silent during normal testsuite runs and
+      --  are appended only when we are already reporting an unexpected
+      --  exception.
 
    begin
       if PBT /= "" then
          Trace
            (Handle,
             E,
-            "Unexpected exception: Python backtrace: " & ASCII.LF & PBT);
+            "Unexpected exception: Python backtrace: "
+            & ASCII.LF & PBT
+            & Shutdown_Info);
 
       else
-         Trace (Handle, E, "Unexpected exception: ");
+         Trace (Handle, E, "Unexpected exception: " & Shutdown_Info);
       end if;
    end Trace_With_Python_Backtrace;
 
