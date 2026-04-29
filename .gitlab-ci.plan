@@ -11,6 +11,7 @@ def test_(qualifier={}):
     anod_test("gps", qualifier={**qualifier, "coverage": True, "gdb-head": False})
 
 def collect_coverage_(qualifier={}):
+    anod_install("gps", qualifier={**qualifier, "coverage": True})
     anod_build("gps", qualifier={**qualifier, "coverage_report": True})
 
 # Edge

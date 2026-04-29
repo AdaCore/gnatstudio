@@ -57,9 +57,12 @@ include:
       stage: collect
       cpus: 8
       image: systemgtk
-      anod-args: run collect_coverage_$ACI_TRACK --latest
+      # --latest should not be used here because it causes Anod to re-download
+      # components from Cathod instead of using the ones built in this pipeline
+      # by the build job.
+      anod-args: run collect_coverage_$ACI_TRACK
       save-anod-logs: true
-      needs: [gs:linux, integration-testsuite:linux]
+      needs: [build:linux, gs:linux, integration-testsuite:linux]
 
 
 # Augment the Linux jobs to pass the variable to set up the coverage traces directory
@@ -92,7 +95,8 @@ collect-coverage:linux:
     # Source the env prepared by generic_anod_ci
     - cat /tmp/ci_env.sh
     - . /tmp/ci_env.sh
-    - BS=$(anod info gps -Q coverage_report $ACI_TRACK_QUALIFIER --show working_dir)
+    - BUILD_BS=$(anod info gps -Q coverage $ACI_TRACK_QUALIFIER --show working_dir)
+    - REPORT_BS=$(anod info gps -Q coverage_report $ACI_TRACK_QUALIFIER --show working_dir)
 
     # Publish the html version to GitLab Pages
     - |
@@ -104,21 +108,21 @@ collect-coverage:linux:
     - target_subdir=$target_subdir/ts-coverage
 
     # publish-pages takes too long (see eng/devenv/ci-fragments#79)...
-    # - publish-pages $BS/install/html/ --target-subdir $target_subdir --expires 30
+    # - publish-pages $REPORT_BS/install/html/ --target-subdir $target_subdir --expires 30
     # Instead, upload the report as an artefact
-    - (cd $BS/install/ ; tar -czf $CI_PROJECT_DIR/coverage-traces/html.tar.gz html/)
+    - (cd $REPORT_BS/install/ ; tar -czf $CI_PROJECT_DIR/coverage-traces/html.tar.gz html/)
 
     # Grab the coverage report artefact
-    - if [ -d "$BS" ]; then
-        echo "Collecting coverage traces from $BS" ;
+    - if [ -d "$REPORT_BS" ]; then
+        echo "Collecting coverage traces from $REPORT_BS" ;
         mkdir -p $CI_PROJECT_DIR/coverage-traces ;
-        prep-cobertura $BS/install/cobertura/cobertura.xml $CI_PROJECT_DIR/coverage-traces/ --relocate-source $BS/src ;
+        prep-cobertura $REPORT_BS/install/cobertura/cobertura.xml $CI_PROJECT_DIR/coverage-traces/ --relocate-source $BUILD_BS/src ;
       else
-        echo "No coverage traces found in $BS";
+        echo "No coverage traces found in $REPORT_BS";
       fi
 
     # Compute the line coverage
-    - print-global-coverage $BS/install/cobertura/cobertura.xml
+    - print-global-coverage $REPORT_BS/install/cobertura/cobertura.xml
 
   coverage: '/^Line Coverage:\s+(\d+\.\d+)$/'
   artifacts:
