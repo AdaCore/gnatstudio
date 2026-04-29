@@ -19,6 +19,12 @@ with GPS.Kernel;
 
 package Python_Module is
 
+   function Last_Shutdown_Phase return String;
+  --  Return a short description of the last observed Python shutdown phase.
+  --  Returns the empty string when no shutdown is in progress or no phase
+  --  has been recorded. This is used to enrich unexpected exception reports
+  --  without enabling additional testsuite traces.
+
    procedure Register_Module
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class);
    --  Register the module into the list
