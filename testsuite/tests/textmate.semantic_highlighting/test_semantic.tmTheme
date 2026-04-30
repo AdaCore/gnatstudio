@@ -1,0 +1,131 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple Computer//DTD PLIST 1.0//EN"
+  "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>name</key>
+    <string>Test Semantic Theme</string>
+    <key>settings</key>
+    <array>
+        <!-- General settings -->
+        <dict>
+            <key>settings</key>
+            <dict>
+                <key>background</key>
+                <string>#1E1E1E</string>
+                <key>foreground</key>
+                <string>#D4D4D4</string>
+                <key>caret</key>
+                <string>#FFFFFF</string>
+            </dict>
+        </dict>
+
+        <!-- Keywords (traditional syntax highlighting) -->
+        <dict>
+            <key>scope</key>
+            <string>keyword</string>
+            <key>settings</key>
+            <dict>
+                <key>foreground</key>
+                <string>#569CD6</string>
+            </dict>
+        </dict>
+
+        <!-- Comments (traditional syntax highlighting) -->
+        <dict>
+            <key>scope</key>
+            <string>comment</string>
+            <key>settings</key>
+            <dict>
+                <key>foreground</key>
+                <string>#6A9955</string>
+            </dict>
+        </dict>
+
+        <!-- Strings (traditional syntax highlighting) -->
+        <dict>
+            <key>scope</key>
+            <string>string</string>
+            <key>settings</key>
+            <dict>
+                <key>foreground</key>
+                <string>#CE9178</string>
+            </dict>
+        </dict>
+
+        <!-- Types (traditional syntax highlighting) -->
+        <dict>
+            <key>scope</key>
+            <string>entity.name.type</string>
+            <key>settings</key>
+            <dict>
+                <key>foreground</key>
+                <string>#4EC9B0</string>
+            </dict>
+        </dict>
+
+        <!-- Functions (semantic token style) -->
+        <dict>
+            <key>scope</key>
+            <string>entity.other.function</string>
+            <key>settings</key>
+            <dict>
+                <key>foreground</key>
+                <string>#DCDCAA</string>
+                <key>fontStyle</key>
+                <string>bold</string>
+            </dict>
+        </dict>
+
+        <!-- Variables (semantic token style) -->
+        <dict>
+            <key>scope</key>
+            <string>entity.name.variable</string>
+            <key>settings</key>
+            <dict>
+                <key>foreground</key>
+                <string>#9CDCFE</string>
+            </dict>
+        </dict>
+
+        <!-- Readonly variables (semantic modifier variant) -->
+        <dict>
+            <key>scope</key>
+            <string>entity.name.variable.readonly</string>
+            <key>settings</key>
+            <dict>
+                <key>foreground</key>
+                <string>#4FC1FF</string>
+                <key>fontStyle</key>
+                <string>italic</string>
+            </dict>
+        </dict>
+
+        <!-- Global variables (semantic modifier variant) -->
+        <dict>
+            <key>scope</key>
+            <string>entity.name.variable.globalvariable</string>
+            <key>settings</key>
+            <dict>
+                <key>foreground</key>
+                <string>#FF8800</string>
+                <key>fontStyle</key>
+                <string>bold</string>
+            </dict>
+        </dict>
+
+        <!-- Namespaces (NO default style exists for this token type;
+             this entry tests that TextMate themes can add new semantic
+             styles for constructs that are not highlighted by default) -->
+        <dict>
+            <key>scope</key>
+            <string>entity.other.namespace</string>
+            <key>settings</key>
+            <dict>
+                <key>foreground</key>
+                <string>#00CED1</string>
+            </dict>
+        </dict>
+    </array>
+</dict>
+</plist>

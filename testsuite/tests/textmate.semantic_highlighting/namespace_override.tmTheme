@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple Computer//DTD PLIST 1.0//EN"
+  "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>name</key>
+    <string>Namespace Override</string>
+    <key>settings</key>
+    <array>
+        <!-- General settings (required by plist format but unused here) -->
+        <dict>
+            <key>settings</key>
+            <dict/>
+        </dict>
+
+        <!-- Add namespace highlighting on top of any active theme -->
+        <dict>
+            <key>scope</key>
+            <string>entity.other.namespace</string>
+            <key>settings</key>
+            <dict>
+                <key>foreground</key>
+                <string>#00CED1</string>
+            </dict>
+        </dict>
+    </array>
+</dict>
+</plist>

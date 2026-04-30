@@ -1,5 +1,63 @@
-""" This is a utility package for importing TextMate .tmTheme definition
-    files.
+"""
+This is a utility package for importing TextMate .tmTheme definition
+files.
+
+Dictionary mapping TextMate scope prefixes to semantic token style name
+prefixes.  A scope is matched by prefix: any suffix appended after the
+base scope name becomes a modifier suffix on the style name.  For example,
+the scope "entity.name.variable.readonly" matches the prefix
+"entity.name.variable" and produces the style "variable.readonly".
+
+To add custom styles for specific token/modifier combinations in a
+.tmTheme file, use the following scope naming convention:
+
+  Base token scopes (one style per token type):
+    entity.other.namespace        -> namespace
+    entity.name.type              -> type
+    entity.name.type.class.semantic -> class
+    entity.name.enum              -> enum
+    entity.name.interface         -> interface
+    entity.name.struct            -> struct
+    entity.name.typeparameter     -> typeparameter
+    entity.name.parameter         -> parameter
+    entity.name.variable          -> variable
+    entity.name.property          -> property
+    entity.name.enum.member       -> enummember
+    entity.other.function         -> function
+    keyword                       -> keyword
+    entity.name.modifier          -> modifier
+    comment                       -> comment
+    string / constant.character   -> string
+    constant.numeric              -> number
+    entity.name.operator          -> operator
+
+  Modifier variants (append modifier to base scope):
+    entity.name.variable.readonly           -> variable.readonly
+    entity.name.variable.globalvariable     -> variable.globalvariable
+    entity.name.variable.localvariable      -> variable.localvariable
+    entity.name.variable.declaration        -> variable.declaration
+    entity.name.variable.deprecated         -> variable.deprecated
+    entity.name.parameter.readonly          -> parameter.readonly
+    entity.name.parameter.deprecated        -> parameter.deprecated
+    entity.other.function.deprecated        -> function.deprecated
+    entity.name.type.deprecated             -> type.deprecated
+    entity.name.enum.deprecated             -> enum.deprecated
+    entity.name.type.class.semantic.deprecated -> class.deprecated
+    (and so on for any other token + modifier combination)
+
+  The "deprecated" style (fallback when no type-specific variant exists):
+    entity.name.deprecated                  -> deprecated
+
+Example .tmTheme entry to highlight global variables in bold red:
+  <dict>
+    <key>scope</key>
+    <string>entity.name.variable.globalvariable</string>
+    <key>settings</key>
+    <dict>
+      <key>foreground</key><string>#CC0000</string>
+      <key>fontStyle</key><string>bold</string>
+    </dict>
+  </dict>
 """
 
 import glob
@@ -28,36 +86,27 @@ text_variant_prefs = {
     "constant.ephemeral": "ephemeral_simple",  # Ephemeral highlighting (simple)
     "entity.name.type": "types",  # Types
     "entity.name.type.class": "types",  # Types
-    "entity.name.type.class.semantic": "classes",  # Class
     "entity.name.type.aspect": "types_in_aspects",  # Types in ghost
     "entity.name.aspect": "blocks_in_aspects",  # Ghost names
-    "entity.name.function": "functions",  # Block Higghlighting
-    "entity.name.enum": "enums",  # Enum
-    "entity.name.enum.member": "enummembers",  # EnumMember
-    "entity.name.interface": "interfaces",  # Interface
-    "entity.name.struct": "structs",  # Structure
-    "entity.name.typeparameter": "typeparameters",  # TypeParameter
-    "entity.name.parameter": "parameters",  # Parameter
-    "entity.name.variable": "variables",  # Variable
-    "entity.name.property": "propertys",  # Property
-    "entity.name.modifier": "modifiers",  # Modifier
-    "entity.name.operator": "operators",  # Operator
-    "entity.name.deprecated": "deprecateds",  # Deprecated
+    "entity.name.function": "blocks",  # Block highlighting
     "entity.other.ephemeral": "ephemeral_smart",  # Ephemeral highlighting (smart)
-    "entity.other.namespace": "namespaces",  # Namespace
     "string": "strings",  # Strings
     "string.aspect": "strings_in_aspects",  # Strings in aspect
     "string.other.link": "hyperlinks",  # Hyper links
     "meta.preprocessor": "preprocessor",  # Preprocessor
-    "meta.multicursor_selection": "multicursor_selection",  # Multi cursor selection
     "meta.annotations": "annotations",  # Code annotations
-    "meta.block": "blocks",  # Block Higghlighting
+    "meta.block": "blocks",  # Block highlighting
 }
+# Maps TextMate scopes to variant preference keys (traditional syntax
+# highlighting).  Scopes for semantic token types (entity.name.variable,
+# entity.name.parameter, etc.) are NOT listed here: they are handled
+# exclusively by text_style_prefs below and consumed by apply_styles().
 
 color_prefs = {
     "meta.block.current": "current_block",  # Current block color
     "meta.readonly": "readonly",  # Read-only code
     "meta.bookmark": "bookmarks",  # Lines with a bookmark
+    "meta.multicursor_selection": "multicursor_selection",  # Multi cursor selection
 }
 
 text_style_prefs = {
@@ -74,15 +123,16 @@ text_style_prefs = {
     "entity.name.property": "property",
     "entity.name.enum.member": "enummember",
     "entity.other.function": "function",
+    "entity.name.function": "function",
     "keyword": "keyword",
     "entity.name.modifier": "modifier",
     "comment": "comment",
     "constant.character": "string",
     "string": "string",
     "constant.numeric": "number",
-    "entity.name.operator": "operators",
+    "entity.name.operator": "operator",
+    "entity.name.deprecated": "deprecated",
 }
-# dictionary to convert textmate prefixes to LSP style name prefixes
 
 
 def to_GPS_prefs(d):
@@ -102,8 +152,11 @@ def to_GPS_prefs(d):
     prefs = []
 
     for scope in scopes:
+        s = d["settings"]
+
+        # Variant preferences (traditional syntax highlighting).
+        # No 'continue': the scope may also match a semantic style below.
         if scope in text_variant_prefs:
-            s = d["settings"]
             fg, bg, style = transparent, transparent, "DEFAULT"
 
             if "foreground" in s:
@@ -117,13 +170,12 @@ def to_GPS_prefs(d):
                 elif "bold" in theme_style:
                     style = "BOLD"
                 elif "italic" in theme_style:
-                    style = "DEFAULT"
+                    style = "ITALIC"
 
             prefs.append((text_variant_prefs[scope], (style, fg, bg)))
-            continue
 
+        # Color preferences
         if scope in color_prefs:
-            s = d["settings"]
             fg = transparent
 
             if "foreground" in s:
@@ -132,80 +184,78 @@ def to_GPS_prefs(d):
             prefs.append((color_prefs[scope], fg))
             continue
 
+        # Semantic token styles — use longest matching prefix so that
+        # e.g. "entity.name.type.class.semantic" matches the full key
+        # rather than the shorter "entity.name.type" prefix.
+        best_prefix = ""
         for typ in text_style_prefs:
-            if scope.startswith(typ):
-                s = d["settings"]
+            if scope.startswith(typ) and len(typ) > len(best_prefix):
+                best_prefix = typ
+
+        if best_prefix:
+            fg, bg, style = transparent, transparent, "NONE"
+            underline, underline_color = "_NONE", transparent
+            # NONE is the value of the underline, so use _NONE as an
+            # uninitialized value
+            strikethrough, strikethrough_color = "NONE", transparent
+
+            if "foreground" in s:
+                fg = Color(s["foreground"])
+            if "background" in s:
+                bg = Color(s["background"])
+            if "fontStyle" in s:
+                theme_style = s["fontStyle"]
+                if "bold" in theme_style and "italic" in theme_style:
+                    style = "BOLD_ITALIC"
+                elif "bold" in theme_style:
+                    style = "BOLD"
+                elif "italic" in theme_style:
+                    style = "ITALIC"
+                elif "normal" in theme_style:
+                    style = "DEFAULT"
+
+            if "underline" in s:
+                theme_underline = s["underline"]
+                if "none" in theme_underline:
+                    underline = "NONE"
+                elif "single" in theme_underline:
+                    underline = "SINGLE"
+                elif "double" in theme_underline:
+                    underline = "DOUBLE"
+                elif "error" in theme_underline:
+                    underline = "ERROR"
+            if "underline_color" in s:
+                underline_color = Color(s["underline_color"])
+
+            if "strikethrough" in s:
+                theme_strikethrough = s["strikethrough"]
+                if "true" in theme_strikethrough:
+                    strikethrough = "TRUE"
+                elif "false" in theme_strikethrough:
+                    strikethrough = "FALSE"
+            if "strikethrough_color" in s:
+                strikethrough_color = Color(s["strikethrough_color"])
+
+            style_name = scope.replace(best_prefix, text_style_prefs[best_prefix])
+            prefs.append(
                 (
-                    fg,
-                    bg,
-                    style,
-                ) = (
-                    transparent,
-                    transparent,
-                    "NONE",
-                )
-                underline, underline_color = "_NONE", transparent
-                # NONE is the value of the underline, so use _NONE as an
-                # uninitialized value
-
-                strikethrough, strikethrough_color = "NONE", transparent
-
-                if "foreground" in s:
-                    fg = Color(s["foreground"])
-                if "background" in s:
-                    bg = Color(s["background"])
-                if "fontStyle" in s:
-                    theme_style = s["fontStyle"]
-                    if "bold" in theme_style and "italic" in theme_style:
-                        style = "BOLD_ITALIC"
-                    elif "bold" in theme_style:
-                        style = "BOLD"
-                    elif "italic" in theme_style:
-                        style = "ITALIC"
-                    elif "normal" in theme_style:
-                        style = "DEFAULT"
-
-                if "underline" in s:
-                    theme_underline = s["underline"]
-                    if "none" in theme_style:
-                        underline = "NONE"
-                    elif "single" in theme_style:
-                        underline = "SINGLE"
-                    elif "double" in theme_style:
-                        underline = "DOUBLE"
-                    elif "error" in theme_style:
-                        underline = "ERROR"
-                if "underline_color" in s:
-                    underline_color = Color(s["underline_color"])
-
-                if "strikethrough" in s:
-                    theme_strikethrough = s["strikethrough"]
-                    if "true" in theme_strikethrough:
-                        strikethrough = "TRUE"
-                    elif "false" in theme_style:
-                        strikethrough = "FALSE"
-                if "strikethrough_color" in s:
-                    strikethrough_color = Color(s["strikethrough_color"])
-
-                prefs.append(
+                    style_name,
                     (
-                        scope.replace(typ, text_style_prefs[typ]),
-                        (
-                            style,
-                            fg,
-                            bg,
-                            [underline, underline_color],
-                            [strikethrough, strikethrough_color],
-                        ),
-                    )
+                        style,
+                        fg,
+                        bg,
+                        [underline, underline_color],
+                        [strikethrough, strikethrough_color],
+                    ),
                 )
+            )
 
     return prefs
 
 
 class TextmateTheme(object):
     def __init__(self, filename):
-        """Load filename as a color scheme file in GPS.
+        """Load filename as a color scheme file in GS.
         The file should be in TextMate (.tmTheme) format.
         """
 
@@ -362,3 +412,22 @@ def textmate_themes():
             )
 
     return results
+
+
+def parse_style_overrides(filename):
+    """Parse a .tmTheme file and return a dict of style overrides.
+
+    Unlike TextmateTheme.theme(), this does NOT build a full Theme object:
+    it only extracts the scope-to-preference mappings.  The result can be
+    merged directly into an existing Theme.d dictionary, allowing users to
+    customise semantic highlighting on top of any selected theme.
+    """
+    overrides = {}
+    with open(filename, "rb") as f:
+        o = plistlib.load(f)
+
+    for entry in o.get("settings", [])[1:]:
+        for key, val in to_GPS_prefs(entry):
+            overrides[key] = val
+
+    return overrides
