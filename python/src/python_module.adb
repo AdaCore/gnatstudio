@@ -65,6 +65,23 @@ package body Python_Module is
    Me  : constant Trace_Handle := Create ("GPS.OTHERS.Python_Module");
    GS_PYTHON_COVERAGE : constant String := "GNATSTUDIO_PYTHON_COV";
 
+   type Shutdown_Phase_Kind is
+     (No_Shutdown_Phase,
+      Destroy_Begin,
+      Saving_Coverage,
+      Coverage_Saved,
+      Freeing_Coverage_Env,
+      Running_Atexit_Handlers,
+      Atexit_Handlers_Done,
+      Unregister_Begin,
+      Unregister_Done,
+      Destroy_Failed);
+
+   Shutdown_Phase : Shutdown_Phase_Kind := No_Shutdown_Phase;
+   --  Keep the last reached Python shutdown step in memory so that fatal
+   --  shutdown-time exceptions can report where teardown stopped, without
+   --  writing anything during successful tests.
+
    type Hash_Index is range 0 .. 100000;
    function Hash is new String_Utils.Hash (Hash_Index);
 
@@ -1137,18 +1154,28 @@ package body Python_Module is
         GNAT.OS_Lib.Getenv (GS_PYTHON_COVERAGE);
 
    begin
+      --  Record progress through teardown just before each potentially
+      --  failure-prone step. The value is only emitted if shutdown later
+      --  reports an unexpected exception.
+      Shutdown_Phase := Destroy_Begin;
+
       --  Importing jedi (versions 0.9, 0.12) raises "Error in sys.exitfunc"
       --  in console if future 0.16 is installed because of some exception
       --  when python is finalizing. Following code prevent this.
 
       if Cov_Name.all /= "" then
+         Shutdown_Phase := Saving_Coverage;
          Script.Execute_Command
            (CL           => Create ("gs_cov.stop(); gs_cov.save()"),
             Hide_Output  => True,
             Errors       => Errors);
+         Shutdown_Phase := Coverage_Saved;
       end if;
+
+      Shutdown_Phase := Freeing_Coverage_Env;
       GNAT.OS_Lib.Free (Cov_Name);
 
+      Shutdown_Phase := Running_Atexit_Handlers;
       Result := Run_Command
         (Python_Scripting (Script),
          "import atexit ; atexit._run_exitfuncs()",
@@ -1157,9 +1184,52 @@ package body Python_Module is
          Hide_Output     => True,
          Hide_Exceptions => True,
          Errors          => Errors'Unchecked_Access);
+      Shutdown_Phase := Atexit_Handlers_Done;
+
       Py_XDECREF (Result);
 
+      Shutdown_Phase := Unregister_Begin;
       Unregister_Python_Scripting (Get_Kernel (Module).Scripts);
+      Shutdown_Phase := Unregister_Done;
+
+      Shutdown_Phase := No_Shutdown_Phase;
+
+   exception
+      when E : others =>
+         Shutdown_Phase := Destroy_Failed;
+         Trace (Me, E, "Python module destroy failed");
+         raise;
    end Destroy;
+
+   -------------------------
+   -- Last_Shutdown_Phase --
+   -------------------------
+
+   function Last_Shutdown_Phase return String is
+   begin
+      --  Return a user-facing string ready to be appended to exception logs.
+      case Shutdown_Phase is
+         when No_Shutdown_Phase =>
+            return "";
+         when Destroy_Begin =>
+            return "python shutdown phase: destroy begin";
+         when Saving_Coverage =>
+            return "python shutdown phase: saving coverage data";
+         when Coverage_Saved =>
+            return "python shutdown phase: coverage save done";
+         when Freeing_Coverage_Env =>
+            return "python shutdown phase: freeing coverage env";
+         when Running_Atexit_Handlers =>
+            return "python shutdown phase: running atexit handlers";
+         when Atexit_Handlers_Done =>
+            return "python shutdown phase: atexit handlers done";
+         when Unregister_Begin =>
+            return "python shutdown phase: unregister begin";
+         when Unregister_Done =>
+            return "python shutdown phase: unregister done";
+         when Destroy_Failed =>
+            return "python shutdown phase: destroy failed";
+      end case;
+   end Last_Shutdown_Phase;
 
 end Python_Module;
