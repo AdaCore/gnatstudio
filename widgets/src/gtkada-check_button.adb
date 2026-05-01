@@ -92,10 +92,7 @@ package body Gtkada.Check_Button is
 
    procedure Set_Default
      (Check : access Gtkada_Check_Button_Record;
-      State : Boolean)
-   is
-      Send_Signal : Boolean := False;
-
+      State : Boolean) is
    begin
       if State = Check.Default then
          return;
@@ -111,28 +108,24 @@ package body Gtkada.Check_Button is
                Check.State := State_Checked_Default;
             end if;
 
-            --  Force the toggled signal to be sent anyway as the user might
-            --  want to be aware that the button is now in its default state.
-            Send_Signal := True;
-
          when State_Checked_Default =>
             Check.State := State_Unchecked;
-            Send_Signal := True;
 
          when State_Checked =>
-            --  Special case: the checked state indicates that the button is
-            --  forced (not Checked_Default). So we don't send signals in this
-            --  case.
-            null;
-
+            if Check.Default then
+               Check.State := State_Checked_Default;
+            else
+               Check.State := State_Unchecked;
+            end if;
       end case;
 
-      if Send_Signal then
-         --  Set Internal so that On_Clicked won't change the state.
-         Check.Internal := True;
-         Clicked (Check);
-         Check.Internal := False;
-      end if;
+      --  Force the toggled signal to be sent anyway as the user might
+      --  want to be aware that the button is now in its default state.
+
+      --  Set Internal so that On_Clicked won't change the state.
+      Check.Internal := True;
+      Clicked (Check);
+      Check.Internal := False;
    end Set_Default;
 
    -----------------
@@ -165,6 +158,8 @@ package body Gtkada.Check_Button is
       else
          Check.State := State_Unchecked;
       end if;
+
+      Check.Default := False; -- Not default anymore
 
       --  Set Internal so that On_Clicked won't change the state.
       Check.Internal := True;
