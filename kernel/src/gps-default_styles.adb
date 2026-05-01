@@ -49,15 +49,9 @@ package body GPS.Default_Styles is
       Pref : Variant_Preference;
    end record;
 
-   All_Styles : array (1 .. 18) of LSP_Styles_Data;
-   --  All styles that used by semantic highlihgting
-
-   LSP_Styles : array (1 .. 14) of LSP_Styles_Data;
-   --  Exclusive LSP styles for semantic highlighting that are not used
-   --  anywhere else.
-
-   LSP_Semantic_Styles : array (LSP_Styles'Range) of Style_Access;
-   pragma Unreferenced (LSP_Semantic_Styles);
+   All_Styles : array (1 .. 5) of LSP_Styles_Data;
+   --  Shared styles used by both language highlighting and semantic
+   --  highlighting that need refreshing when preferences change.
 
    procedure Trace (Style : Style_Access);
    --  Trace style information
@@ -133,40 +127,11 @@ package body GPS.Default_Styles is
 
    begin
       All_Styles :=
-        ((To_Unbounded_String ("namespace"),     LSP_Namespace_Style),
-         (To_Unbounded_String ("type"),          Types_Style),
-         (To_Unbounded_String ("class"),         LSP_Class_Style),
-         (To_Unbounded_String ("enum"),          LSP_Enum_Style),
-         (To_Unbounded_String ("interface"),     LSP_Interface_Style),
-         (To_Unbounded_String ("struct"),        LSP_Struct_Style),
-         (To_Unbounded_String ("typeparameter"), LSP_TypeParameter_Style),
-         (To_Unbounded_String ("parameter"),     LSP_Parameter_Style),
-         (To_Unbounded_String ("variable"),      LSP_Variable_Style),
-         (To_Unbounded_String ("property"),      LSP_Property_Style),
-         (To_Unbounded_String ("enummember"),    LSP_EnumMember_Style),
-         (To_Unbounded_String ("function"),      LSP_Function_Style),
-         (To_Unbounded_String ("keyword"),       Keywords_Style),
-         (To_Unbounded_String ("modifier"),      LSP_Modifier_Style),
-         (To_Unbounded_String ("comment"),       Comments_Style),
-         (To_Unbounded_String ("string"),        Strings_Style),
-         (To_Unbounded_String ("number"),        Numbers_Style),
-         (To_Unbounded_String ("operator"),      LSP_Operator_Style));
-
-      LSP_Styles :=
-        ((To_Unbounded_String ("namespace"),     LSP_Namespace_Style),
-         (To_Unbounded_String ("class"),         LSP_Class_Style),
-         (To_Unbounded_String ("enum"),          LSP_Enum_Style),
-         (To_Unbounded_String ("interface"),     LSP_Interface_Style),
-         (To_Unbounded_String ("struct"),        LSP_Struct_Style),
-         (To_Unbounded_String ("typeparameter"), LSP_TypeParameter_Style),
-         (To_Unbounded_String ("parameter"),     LSP_Parameter_Style),
-         (To_Unbounded_String ("variable"),      LSP_Variable_Style),
-         (To_Unbounded_String ("property"),      LSP_Property_Style),
-         (To_Unbounded_String ("enummember"),    LSP_EnumMember_Style),
-         (To_Unbounded_String ("function"),      LSP_Function_Style),
-         (To_Unbounded_String ("modifier"),      LSP_Modifier_Style),
-         (To_Unbounded_String ("operator"),      LSP_Operator_Style),
-         (To_Unbounded_String ("deprecated"),    LSP_Deprecated_Style));
+        ((To_Unbounded_String ("type"),    Types_Style),
+         (To_Unbounded_String ("keyword"), Keywords_Style),
+         (To_Unbounded_String ("comment"), Comments_Style),
+         (To_Unbounded_String ("string"),  Strings_Style),
+         (To_Unbounded_String ("number"),  Numbers_Style));
 
       Dummy := M.Create_From_Preferences
         (Key     => "aspect_block",
@@ -230,17 +195,6 @@ package body GPS.Default_Styles is
             Icon_Name => "gps-goto-symbolic",
             Bg        => Bookmark_Color,
             Speedbar  => True);
-
-      ---------
-      -- LSP --
-      ---------
-
-      for Index in LSP_Styles'Range loop
-         LSP_Semantic_Styles (Index) := M.Create_From_Preferences
-           (Key     => To_String (LSP_Styles (Index).Name),
-            Style   => Default_Style,
-            Variant => LSP_Styles (Index).Pref);
-      end loop;
 
       --  LSP aspect styles
       for T in SemanticTokenTypes'Range loop

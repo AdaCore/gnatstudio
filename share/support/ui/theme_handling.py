@@ -64,23 +64,9 @@ variant_prefs = {
     "diff_patch_append": "Diff-Patch-Append-Variant",
     "blocks_in_aspects": "Src-Editor-Aspects-Block-Variant",
     "types_in_aspects": "Src-Editor-Aspects-Type-Variant",
-    "namespaces": "Src-Editor-LSP-Semantic-Namespace",
-    "classes": "Src-Editor-LSP-Semantic-Class",
-    "enums": "Src-Editor-LSP-Semantic-Enum",
-    "interfaces": "Src-Editor-LSP-Semantic-Interface",
-    "structs": "Src-Editor-LSP-Semantic-Struct",
-    "typeparameters": "Src-Editor-LSP-Semantic-TypeParameter",
-    "parameters": "Src-Editor-LSP-Semantic-Parameter",
-    "variables": "Src-Editor-LSP-Semantic-Variable",
-    "propertys": "Src-Editor-LSP-Semantic-Property",
-    "enummembers": "Src-Editor-LSP-Semantic-EnumMember",
-    "functions": "Src-Editor-LSP-Semantic-Function",
-    "modifiers": "Src-Editor-LSP-Semantic-Modifier",
-    "operators": "Src-Editor-LSP-Semantic-Operator",
-    "deprecateds": "Src-Editor-LSP-Semantic-Deprecated",
 }
 # These keys are interpreted as variant preferences
-# Keys: our internal easy-to-remember key; values: current names of GPS prefs
+# Keys: our internal easy-to-remember key; values: current names of GS prefs
 
 rgb_prefs = {
     "command_window": "Command-Windows-Background-Color",
@@ -110,7 +96,7 @@ rgb_prefs = {
     "bookmarks": "Src-Editor-Bookmarks",
 }
 # These keys are interpreted as rgb preferences
-# Keys: our internal easy-to-remember key; values: current names of GPS prefs
+# Keys: our internal easy-to-remember key; values: current names of GS prefs
 
 styles_tokens = [
     "namespace",
@@ -335,158 +321,38 @@ common_light = {
     "bookmarks": Rgba(205, 0, 255, 77),
     "blocks_in_aspects": ("DEFAULT", Color("#60615F"), transparent),
     "types_in_aspects": ("DEFAULT", Color("#009900"), transparent),
-    #
-    # used in LSP
-    #
-    # class
-    "classes": ("DEFAULT", Color("#267F99"), transparent),
-    "class.deprecated": (
-        "NONE",
-        transparent,
-        transparent,
-        [],
-        ["TRUE", Color("#ff0000")],
-    ),
-    # comment
+    # Language highlighting (also used by generate_example_label)
+    "keywords": ("DEFAULT", Color("#0000e6"), transparent),
     "comments": ("DEFAULT", Color("#969696"), transparent),
-    # enum
-    "enums": ("DEFAULT", Color("#267F99"), transparent),
-    "enum.deprecated": (
-        "NONE",
-        transparent,
-        transparent,
-        [],
-        ["TRUE", Color("#ff0000")],
-    ),
-    # enummember
-    "enummembers": ("DEFAULT", Color("#0070C1"), transparent),
-    "enummember.deprecated": (
-        "NONE",
-        transparent,
-        transparent,
-        [],
-        ["TRUE", Color("#ff0000")],
-    ),
-    # function
-    "functions": ("DEFAULT", Color("#795E26"), transparent),
+    "types": ("DEFAULT", Color("#009900"), transparent),
+    "strings": ("DEFAULT", Color("#ce7b00"), transparent),
+    "numbers": ("DEFAULT", Color("#FF3333"), transparent),
+    #
+    # LSP semantic highlighting: special constructs only.
+    # All other token types inherit the editor default foreground.
+    # TextMate themes can override any of these (see textmate.py).
+    #
+    # Subprogram/function calls
+    "function": ("BOLD", Color("#795E26"), transparent),
+    # function.deprecated inherits function's color; other TYPE.deprecated
+    # variants fall back to the generic "deprecated" style (editor default fg).
     "function.deprecated": (
         "NONE",
         transparent,
         transparent,
         [],
-        ["TRUE", Color("#ff0000")],
+        ["TRUE", Color("#808080")],
     ),
-    # interface
-    "interfaces": ("DEFAULT", Color("#267F99"), transparent),
-    "interface.deprecated": (
-        "NONE",
-        transparent,
-        transparent,
-        [],
-        ["TRUE", Color("#ff0000")],
-    ),
-    # keyword
-    "keywords": ("DEFAULT", Color("#0000e6"), transparent),
-    "keyword.deprecated": (
-        "NONE",
-        transparent,
-        transparent,
-        [],
-        ["TRUE", Color("#ff0000")],
-    ),
-    # modifier
-    "modifiers": ("DEFAULT", Color("#1f7f9c"), transparent),
-    "modifier.deprecated": (
-        "NONE",
-        transparent,
-        transparent,
-        [],
-        ["TRUE", Color("#ff0000")],
-    ),
-    # namespace
-    "namespaces": ("DEFAULT", Color("#000000"), transparent),
-    "namespace.deprecated": (
-        "NONE",
-        transparent,
-        transparent,
-        [],
-        ["TRUE", Color("#ff0000")],
-    ),
-    # number
-    "numbers": ("DEFAULT", Color("#8000d4"), transparent),
-    # operator
-    "operators": ("DEFAULT", Color("#000000"), transparent),
-    "operator.deprecated": (
-        "NONE",
-        transparent,
-        transparent,
-        [],
-        ["TRUE", Color("#ff0000")],
-    ),
-    # parameter
-    "parameters": ("DEFAULT", Color("#001080"), transparent),
-    "parameter.readonly": ("DEFAULT", Color("#0070C1"), transparent),
-    "parameter.deprecated": (
-        "NONE",
-        transparent,
-        transparent,
-        [],
-        ["TRUE", Color("#ff0000")],
-    ),
-    # property
-    "propertys": ("DEFAULT", Color("#001080"), transparent),
-    "property.deprecated": (
-        "NONE",
-        transparent,
-        transparent,
-        [],
-        ["TRUE", Color("#ff0000")],
-    ),
-    # type
-    "types": ("DEFAULT", Color("#009900"), transparent),
-    "type.deprecated": (
-        "NONE",
-        transparent,
-        transparent,
-        [],
-        ["TRUE", Color("#ff0000")],
-    ),
-    # typeparameter
-    "typeparameters": ("DEFAULT", Color("#04116b"), transparent),
-    "typeparameter.deprecated": (
-        "NONE",
-        transparent,
-        transparent,
-        [],
-        ["TRUE", Color("#ff0000")],
-    ),
-    # string
-    "strings": ("DEFAULT", Color("#ce7b00"), transparent),
-    # struct
-    "structs": ("DEFAULT", Color("#015878"), transparent),
-    "struct.deprecated": (
-        "NONE",
-        transparent,
-        transparent,
-        [],
-        ["TRUE", Color("#ff0000")],
-    ),
-    # variable
-    "variables": ("DEFAULT", Color("#001080"), transparent),
-    "variable.readonly": ("DEFAULT", Color("#0070C1"), transparent),
-    "variable.deprecated": (
-        "NONE",
-        transparent,
-        transparent,
-        [],
-        ["TRUE", Color("#ff0000")],
-    ),
-    "variable.declaration": ("DEFAULT", Color("#02A322"), transparent),
-    "variable.localvariable": ("DEFAULT", Color("#02A322"), transparent),
-    "variable.globalvariable": ("DEFAULT", Color("#C92002"), transparent),
-    "variable.declaration.globalvariable": ("DEFAULT", Color("#C92002"), transparent),
-    #
-    "deprecateds": ("DEFAULT", Color("#ff0000"), transparent),
+    # Variables and parameters
+    "variable": ("DEFAULT", Color("#005CC5"), transparent),
+    "parameter": ("DEFAULT", Color("#267F99"), transparent),
+    # Read-only (non-writable) entities — italic variant, color inherited from base
+    "variable.readonly": ("ITALIC", transparent, transparent),
+    "parameter.readonly": ("ITALIC", transparent, transparent),
+    # Global variables
+    "variable.globalvariable": ("BOLD", transparent, transparent),
+    # Deprecated: gray strikethrough fallback (used by semantic_tokens.adb)
+    "deprecated": ("NONE", transparent, transparent, [], ["TRUE", Color("#808080")]),
 }
 # composit values like `operator.deprecated` are styles and have the
 # following format:
@@ -548,156 +414,38 @@ common_dark = {
     "bookmarks": Rgba(205, 0, 255, 77),
     "blocks_in_aspects": ("DEFAULT", Color("#E6E6E6"), transparent),
     "types_in_aspects": ("DEFAULT", Color("#CCFFCC"), transparent),
-    #
-    # used in LSP
-    #
-    # class
-    "classes": ("DEFAULT", Color("#4EC9B0"), transparent),
-    "class.deprecated": (
-        "NONE",
-        transparent,
-        transparent,
-        [],
-        ["TRUE", Color("#ff0000")],
-    ),
-    # comment
+    # Language highlighting (also used by generate_example_label)
+    "keywords": ("DEFAULT", Color("#f08d24"), transparent),
     "comments": ("DEFAULT", Color("#729fcf"), transparent),
-    # enum
-    "enums": ("DEFAULT", Color("#4EC9B0"), transparent),
-    "enum.deprecated": (
-        "NONE",
-        transparent,
-        transparent,
-        [],
-        ["TRUE", Color("#ff0000")],
-    ),
-    # enummember
-    "enummembers": ("DEFAULT", Color("#4FC1FF"), transparent),
-    "enummember.deprecated": (
-        "NONE",
-        transparent,
-        transparent,
-        [],
-        ["TRUE", Color("#ff0000")],
-    ),
-    # function
-    "functions": ("DEFAULT", Color("#DCDCAA"), transparent),
+    "types": ("DEFAULT", Color("#8e69c9"), transparent),
+    "strings": ("DEFAULT", Color("#f2d42c"), transparent),
+    "numbers": ("DEFAULT", Color("#42b400"), transparent),
+    #
+    # LSP semantic highlighting: special constructs only.
+    # All other token types inherit the editor default foreground.
+    # TextMate themes can override any of these (see textmate.py).
+    #
+    # Subprogram/function calls
+    "function": ("BOLD", Color("#DCDCAA"), transparent),
+    # function.deprecated inherits function's color; other TYPE.deprecated
+    # variants fall back to the generic "deprecated" style (editor default fg).
     "function.deprecated": (
         "NONE",
         transparent,
         transparent,
         [],
-        ["TRUE", Color("#ff0000")],
+        ["TRUE", Color("#808080")],
     ),
-    # interface
-    "interfaces": ("DEFAULT", Color("#4EC9B0"), transparent),
-    "interface.deprecated": (
-        "NONE",
-        transparent,
-        transparent,
-        [],
-        ["TRUE", Color("#ff0000")],
-    ),
-    # keyword
-    "keywords": ("DEFAULT", Color("#f08d24"), transparent),
-    "keyword.deprecated": (
-        "NONE",
-        transparent,
-        transparent,
-        [],
-        ["TRUE", Color("#ff0000")],
-    ),
-    # modifier
-    "modifiers": ("DEFAULT", Color("#1f7f9c"), transparent),
-    "modifier.deprecated": (
-        "NONE",
-        transparent,
-        transparent,
-        [],
-        ["TRUE", Color("#ff0000")],
-    ),
-    # namespace
-    "namespaces": ("DEFAULT", Color("#C8C8C8"), transparent),
-    "namespace.deprecated": (
-        "NONE",
-        transparent,
-        transparent,
-        [],
-        ["TRUE", Color("#ff0000")],
-    ),
-    # number
-    "numbers": ("DEFAULT", Color("#42b400"), transparent),
-    # operator
-    "operators": ("DEFAULT", Color("#C8C8C8"), transparent),
-    "operator.deprecated": (
-        "NONE",
-        transparent,
-        transparent,
-        [],
-        ["TRUE", Color("#ff0000")],
-    ),
-    # parameter
-    "parameters": ("DEFAULT", Color("#9CDCFE"), transparent),
-    "parameter.readonly": ("DEFAULT", Color("#4FC1FF"), transparent),
-    "parameter.deprecated": (
-        "NONE",
-        transparent,
-        transparent,
-        [],
-        ["TRUE", Color("#ff0000")],
-    ),
-    # property
-    "propertys": ("DEFAULT", Color("#9CDCFE"), transparent),
-    "property.deprecated": (
-        "NONE",
-        transparent,
-        transparent,
-        [],
-        ["TRUE", Color("#ff0000")],
-    ),
-    # type
-    "types": ("DEFAULT", Color("#8e69c9"), transparent),
-    "type.deprecated": (
-        "NONE",
-        transparent,
-        transparent,
-        [],
-        ["TRUE", Color("#ff0000")],
-    ),
-    # typeparameter
-    "typeparameters": ("DEFAULT", Color("#9CDCFE"), transparent),
-    "typeparameter.deprecated": (
-        "NONE",
-        transparent,
-        transparent,
-        [],
-        ["TRUE", Color("#ff0000")],
-    ),
-    # string
-    "strings": ("DEFAULT", Color("#f2d42c"), transparent),
-    # struct
-    "structs": ("DEFAULT", Color("#4EC9B0"), transparent),
-    "struct.deprecated": (
-        "NONE",
-        transparent,
-        transparent,
-        [],
-        ["TRUE", Color("#ff0000")],
-    ),
-    # variable
-    "variables": ("DEFAULT", Color("#9CDCFE"), transparent),
-    "variable.readonly": ("DEFAULT", Color("#0070C1"), transparent),
-    "variable.deprecated": (
-        "NONE",
-        transparent,
-        transparent,
-        [],
-        ["TRUE", Color("#ff0000")],
-    ),
-    "variable.localvariable": ("DEFAULT", Color("#02A322"), transparent),
-    "variable.globalvariable": ("DEFAULT", Color("#C92002"), transparent),
-    #
-    "deprecateds": ("DEFAULT", Color("#ff0000"), transparent),
+    # Variables and parameters
+    "variable": ("DEFAULT", Color("#4FC1FF"), transparent),
+    "parameter": ("DEFAULT", Color("#9CDCFE"), transparent),
+    # Read-only (non-writable) entities — italic variant, color inherited from base
+    "variable.readonly": ("ITALIC", transparent, transparent),
+    "parameter.readonly": ("ITALIC", transparent, transparent),
+    # Global variables
+    "variable.globalvariable": ("BOLD", transparent, transparent),
+    # Deprecated: gray strikethrough fallback (used by semantic_tokens.adb)
+    "deprecated": ("NONE", transparent, transparent, [], ["TRUE", Color("#808080")]),
 }
 
 
@@ -823,12 +571,70 @@ class Theme(object):
             # do not create styles if LSP highlighting is off
             return
 
+        # Track which styles we have already created in this pass
+        created_styles = set()
+
+        def ensure_style(name, parent):
+            """Create style `name` based on `parent` if not yet created.
+            Returns the GPS.Style object, or None on failure.
+            """
+            if name in created_styles:
+                return None
+            try:
+                s = GPS.Style.create_from_style(name, parent)
+                created_styles.add(name)
+                return s
+            except Exception:
+                created_styles.add(name)  # don't retry
+                return None
+
+        def apply_val(s, val):
+            """Apply a theme value tuple to a GPS.Style."""
+            if s is None:
+                return
+            try:
+                if val[0] != "NONE":
+                    s.set_font_variant(val[0])
+                if val[1] != transparent:
+                    s.set_foreground(val[1].to_rgba_string())
+                if val[2] != transparent:
+                    s.set_background(val[2].to_rgba_string())
+                if len(val) > 3 and len(val[3]) > 0:
+                    if val[3][0] != "_NONE":
+                        s.set_underline(val[3][0])
+                    if len(val[3]) > 1:
+                        s.set_underline_color(val[3][1].to_rgba_string())
+                if len(val) > 4 and len(val[4]) > 0:
+                    if val[4][0] != "NONE":
+                        s.set_strikethrough(val[4][0] == "TRUE")
+                    if len(val[4]) > 1:
+                        s.set_strikethrough_color(val[4][1].to_rgba_string())
+            except Exception:
+                pass
+
+        # Create base styles only for token types that have an explicit
+        # color in the theme. Tokens without an entry must not get a style
+        # object to avoid overriding syntax default styles.
+        for t in styles_tokens:
+            if t in self.d:
+                apply_val(ensure_style(t, "Editor default"), self.d[t])
+
+        # Create the "deprecated" fallback style used when a token has the
+        # deprecated modifier but no type-specific deprecated variant exists.
+        if "deprecated" in self.d:
+            apply_val(
+                ensure_style("deprecated", "Editor default"), self.d["deprecated"]
+            )
+
         for t in styles_tokens:
             current = 1  # used as a bitmask for recombination
 
             while current < max_modifiers_bits:
                 key = t  # used as a combined name
-                parent = t  # used as a style `base` name
+                # Use the token's GS style as parent if one was created,
+                # otherwise fall back to "Editor default" so that modifier
+                # variants (e.g. "parameter-readonly") are still reachable.
+                parent = t if t in self.d else "Editor default"
 
                 for index in range(0, len(styles_modifiers)):
                     if (
@@ -840,63 +646,26 @@ class Theme(object):
 
                 # now key contains combined name,
                 # check whether we have a style with such name in the theme
+                if key not in self.d:
+                    continue
+
                 try:
-                    if key in self.d:
-                        # check that we have all `parents` styles:
-                        # for `variable.deprecated.readonly` it is
-                        # `variable.deprecated`
-                        p = key.find(".")  # first dot after `variable`
-                        while True:
-                            p = key.find(".", p + 1)  #  `variable.deprecated`
-                            if p == -1:
-                                break
-                            current_style = key[:p].replace(".", "-")
-                            if GPS.Style(current_style, False) is None:
-                                # `variable.deprecated` does not exsist,
-                                #  create it with `variable` as a parent
-                                GPS.Style.create_from_style(
-                                    current_style,
-                                    parent,
-                                )
+                    # ensure all intermediate parent styles exist:
+                    # for `variable.deprecated.readonly` ensure
+                    # `variable-deprecated` exists first.
+                    p = key.find(".")  # first dot after token name
+                    while True:
+                        p = key.find(".", p + 1)
+                        if p == -1:
+                            break
+                        intermediate = key[:p].replace(".", "-")
+                        ensure_style(intermediate, parent)
+                        parent = intermediate
 
-                            # parent will be `variable.deprecated`
-                            parent = current_style
+                    s = ensure_style(key.replace(".", "-"), parent)
+                    apply_val(s, self.d[key])
 
-                        # create `variable.deprecated.readonly` based on
-                        # `variable.deprecated`
-                        s = GPS.Style.create_from_style(
-                            key.replace(".", "-"),
-                            parent,
-                        )
-
-                        if self.d[key][0] != "NONE":
-                            s.set_font_variant(self.d[key][0])
-
-                        if self.d[key][1] != transparent:
-                            s.set_foreground(self.d[key][1].to_rgba_string())
-
-                        if self.d[key][2] != transparent:
-                            s.set_background(self.d[key][2].to_rgba_string())
-
-                        if len(self.d[key]) > 3 and len(self.d[key][3]) > 0:
-                            if self.d[key][3][0] != "_NONE":
-                                s.set_underline(self.d[key][3][0])
-
-                            if len(self.d[key][3]) > 1:
-                                s.set_underline_color(
-                                    self.d[key][3][1].to_rgba_string()
-                                )
-
-                        if len(self.d[key]) > 4 and len(self.d[key][4]) > 0:
-                            if self.d[key][4][0] != "NONE":
-                                s.set_strikethrough(self.d[key][4][0] == "TRUE")
-
-                            if len(self.d[key][4]) > 1:
-                                s.set_strikethrough_color(
-                                    self.d[key][4][1].to_rgba_string()
-                                )
-
-                except GPS.Exception:
+                except Exception:
                     pass
 
     def generate_example_label(self):
