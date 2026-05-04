@@ -14,6 +14,10 @@ import GPS
 from gs_utils.internal.utils import *
 import colorschemes
 
+# Timeout for semantic highlighting to be
+# fully applied  after opening the file
+SEMANTIC_HIGHLIGHT_TIMEOUT = 1000
+
 
 @run_test_driver
 def test_driver():
@@ -48,8 +52,7 @@ def test_driver():
     yield wait_tasks()
 
     buf = GPS.EditorBuffer.get(GPS.File("p.adb"))
-    yield wait_language_server("textDocument/semanticTokens/full")
-    yield wait_idle()
+    yield timeout(SEMANTIC_HIGHLIGHT_TIMEOUT)
 
     tags = get_all_tags(buf)
 
@@ -84,8 +87,7 @@ def test_driver():
 
     # The override file should still produce the namespace overlay
     buf = GPS.EditorBuffer.get(GPS.File("p.adb"))
-    yield wait_language_server("textDocument/semanticTokens/full")
-    yield wait_idle()
+    yield timeout(SEMANTIC_HIGHLIGHT_TIMEOUT)
 
     tags = get_all_tags(buf)
     gps_assert(
