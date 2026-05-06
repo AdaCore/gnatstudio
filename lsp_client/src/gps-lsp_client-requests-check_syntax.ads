@@ -39,6 +39,12 @@ package GPS.LSP_Client.Requests.Check_Syntax is
      (Self   : in out Check_Syntax_Request;
       Stream : not null access LSP.JSON_Streams.JSON_Stream'Class);
 
+   overriding procedure On_Error_Message
+     (Self    : in out Check_Syntax_Request;
+      Code    : LSP.Messages.ErrorCodes;
+      Message : VSS.Strings.Virtual_String;
+      Data    : GNATCOLL.JSON.JSON_Value) is null;
+
    overriding function Is_Request_Supported
      (Self    : Check_Syntax_Request;
       Options : LSP.Messages.ServerCapabilities) return Boolean is (True);

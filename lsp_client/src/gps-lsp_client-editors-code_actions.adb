@@ -41,9 +41,9 @@ package body GPS.LSP_Client.Editors.Code_Actions is
 
    type Code_Action_Request is
      new GPS.LSP_Client.Requests.Code_Action.Abstract_Code_Action_Request with
-    record
-       Lang : Language_Access;
-    end record;
+      record
+         Lang : Language_Access;
+      end record;
 
    type Code_Action_Request_Access is access all Code_Action_Request'Class;
 
@@ -55,6 +55,12 @@ package body GPS.LSP_Client.Editors.Code_Actions is
    overriding procedure On_Result_Message
      (Self   : in out Code_Action_Request;
       Result : LSP.Messages.CodeAction_Vector);
+
+   overriding procedure On_Error_Message
+     (Self    : in out Code_Action_Request;
+      Code    : LSP.Messages.ErrorCodes;
+      Message : VSS.Strings.Virtual_String;
+      Data    : GNATCOLL.JSON.JSON_Value);
 
    overriding function Auto_Cancel
      (Self         : in out Code_Action_Request;
@@ -168,6 +174,23 @@ package body GPS.LSP_Client.Editors.Code_Actions is
       end loop;
 
    end On_Result_Message;
+
+   ----------------------
+   -- On_Error_Message --
+   ----------------------
+
+   overriding procedure On_Error_Message
+     (Self    : in out Code_Action_Request;
+      Code    : LSP.Messages.ErrorCodes;
+      Message : VSS.Strings.Virtual_String;
+      Data    : GNATCOLL.JSON.JSON_Value)
+   is
+      pragma Unreferenced (Code, Data);
+   begin
+      Self.Kernel.Get_Messages_Window.Insert_Error
+        ("Failed to compute code actions: "
+         & VSS.Strings.Conversions.To_UTF_8_String (Message));
+   end On_Error_Message;
 
    -------------------------
    -- Request_Code_Action --

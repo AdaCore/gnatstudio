@@ -139,7 +139,7 @@ package GPS.LSP_Client.Requests is
      (Self    : in out LSP_Request;
       Code    : LSP.Messages.ErrorCodes;
       Message : VSS.Strings.Virtual_String;
-      Data    : GNATCOLL.JSON.JSON_Value) is null;
+      Data    : GNATCOLL.JSON.JSON_Value) is abstract;
    --  Called when an "error" response is received from the server.
 
    type Reject_Reason is (Server_Not_Ready, Canceled, Server_Died);

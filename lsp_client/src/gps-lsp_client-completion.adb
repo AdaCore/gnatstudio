@@ -136,6 +136,12 @@ package body GPS.LSP_Client.Completion is
      (Self   : in out LSP_CompletionItem_Resolve_Request;
       Result : LSP.Messages.CompletionItem);
 
+   overriding procedure On_Error_Message
+     (Self    : in out LSP_CompletionItem_Resolve_Request;
+      Code    : LSP.Messages.ErrorCodes;
+      Message : VSS.Strings.Virtual_String;
+      Data    : GNATCOLL.JSON.JSON_Value) is null;
+
    ----------------------
    -- Lazy Computation --
    ----------------------

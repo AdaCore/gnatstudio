@@ -15,6 +15,8 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
+with VSS.Strings.Conversions;
+
 package body GPS.LSP_Clients.Shutdowns is
 
    -----------------------
@@ -25,5 +27,22 @@ package body GPS.LSP_Clients.Shutdowns is
    begin
       Self.Client.On_Exit_Notification;
    end On_Result_Message;
+
+   ----------------------
+   -- On_Error_Message --
+   ----------------------
+
+   overriding procedure On_Error_Message
+     (Self    : in out Shutdown_Request;
+      Code    : LSP.Messages.ErrorCodes;
+      Message : VSS.Strings.Virtual_String;
+      Data    : GNATCOLL.JSON.JSON_Value)
+   is
+      pragma Unreferenced (Code, Data);
+   begin
+      Self.Client.On_Error
+        (VSS.Strings.Conversions.To_UTF_8_String (Message));
+      Self.Client.On_Exit_Notification;
+   end On_Error_Message;
 
 end GPS.LSP_Clients.Shutdowns;
