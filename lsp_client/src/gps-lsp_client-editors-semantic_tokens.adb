@@ -90,12 +90,12 @@ package body GPS.LSP_Client.Editors.Semantic_Tokens is
       File   : GNATCOLL.VFS.Virtual_File);
    --  Clear highlighting styles for the given file
 
-   Modifiers_Priorities : constant array
-     (SemanticTokenModifiers) of Natural :=
-     (documentation  => 2,
-      globalVariable => 1,
-      localVariable  => 1,
-      others         => 0);
+   Modifiers_Priorities : constant array (SemanticTokenModifiers) of Natural :=
+     (documentation   => 2,
+      globalVariable  => 1,
+      localVariable   => 1,
+      dispatchingCall => 1,
+      others          => 0);
    --  Define priorities for the semantic tokens modifiers
 
    --------------------------------------
