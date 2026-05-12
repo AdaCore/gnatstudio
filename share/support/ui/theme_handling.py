@@ -133,6 +133,7 @@ styles_modifiers = [
     "defaultLibrary",
     "globalvariable",
     "localvariable",
+    "dispatchingcall",
 ]
 # These are semantic modifiers
 max_modifiers_bits = pow(2, len(styles_modifiers))
@@ -353,6 +354,8 @@ common_light = {
     "variable.globalvariable": ("BOLD", transparent, transparent),
     # Deprecated: gray strikethrough fallback (used by semantic_tokens.adb)
     "deprecated": ("NONE", transparent, transparent, [], ["TRUE", Color("#808080")]),
+    # Dispatching calls
+    "function.dispatchingcall": ("BOLD_ITALIC", Color("#795E26"), transparent),
 }
 # composit values like `operator.deprecated` are styles and have the
 # following format:
@@ -446,6 +449,8 @@ common_dark = {
     "variable.globalvariable": ("BOLD", transparent, transparent),
     # Deprecated: gray strikethrough fallback (used by semantic_tokens.adb)
     "deprecated": ("NONE", transparent, transparent, [], ["TRUE", Color("#808080")]),
+    # Dispatching calls
+    "function.dispatchingcall": ("BOLD_ITALIC", Color("#DCDCAA"), transparent),
 }
 
 
