@@ -334,7 +334,7 @@ common_light = {
     # TextMate themes can override any of these (see textmate.py).
     #
     # Subprogram/function calls
-    "function": ("BOLD", Color("#795E26"), transparent),
+    "function": ("DEFAULT", Color("#795E26"), transparent),
     # function.deprecated inherits function's color; other TYPE.deprecated
     # variants fall back to the generic "deprecated" style (editor default fg).
     "function.deprecated": (
@@ -345,17 +345,14 @@ common_light = {
         ["TRUE", Color("#808080")],
     ),
     # Variables and parameters
-    "variable": ("DEFAULT", Color("#005CC5"), transparent),
-    "parameter": ("DEFAULT", Color("#267F99"), transparent),
-    # Read-only (non-writable) entities — italic variant, color inherited from base
-    "variable.readonly": ("ITALIC", transparent, transparent),
-    "parameter.readonly": ("ITALIC", transparent, transparent),
-    # Global variables
-    "variable.globalvariable": ("BOLD", transparent, transparent),
+    "variable": ("DEFAULT", Color("#267F99"), transparent),
+    "parameter": ("ITALIC", Color("#267F99"), transparent),
+    # Read-only (non-writable) variables — bold variant, color inherited from base
+    "variable.readonly": ("BOLD", transparent, transparent),
     # Deprecated: gray strikethrough fallback (used by semantic_tokens.adb)
     "deprecated": ("NONE", transparent, transparent, [], ["TRUE", Color("#808080")]),
     # Dispatching calls
-    "function.dispatchingcall": ("BOLD_ITALIC", Color("#795E26"), transparent),
+    "function.dispatchingcall": ("ITALIC", Color("#795E26"), transparent),
 }
 # composit values like `operator.deprecated` are styles and have the
 # following format:
@@ -429,7 +426,7 @@ common_dark = {
     # TextMate themes can override any of these (see textmate.py).
     #
     # Subprogram/function calls
-    "function": ("BOLD", Color("#DCDCAA"), transparent),
+    "function": ("DEFAULT", Color("#DCDCAA"), transparent),
     # function.deprecated inherits function's color; other TYPE.deprecated
     # variants fall back to the generic "deprecated" style (editor default fg).
     "function.deprecated": (
@@ -440,17 +437,14 @@ common_dark = {
         ["TRUE", Color("#808080")],
     ),
     # Variables and parameters
-    "variable": ("DEFAULT", Color("#4FC1FF"), transparent),
-    "parameter": ("DEFAULT", Color("#9CDCFE"), transparent),
-    # Read-only (non-writable) entities — italic variant, color inherited from base
-    "variable.readonly": ("ITALIC", transparent, transparent),
-    "parameter.readonly": ("ITALIC", transparent, transparent),
-    # Global variables
-    "variable.globalvariable": ("BOLD", transparent, transparent),
+    "variable": ("DEFAULT", Color("#9CDCFE"), transparent),
+    "parameter": ("ITALIC", Color("#9CDCFE"), transparent),
+    # Read-only (non-writable) variables — bold variant, color inherited from base
+    "variable.readonly": ("BOLD", transparent, transparent),
     # Deprecated: gray strikethrough fallback (used by semantic_tokens.adb)
     "deprecated": ("NONE", transparent, transparent, [], ["TRUE", Color("#808080")]),
     # Dispatching calls
-    "function.dispatchingcall": ("BOLD_ITALIC", Color("#DCDCAA"), transparent),
+    "function.dispatchingcall": ("ITALIC", Color("#DCDCAA"), transparent),
 }
 
 
