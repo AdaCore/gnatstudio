@@ -18,7 +18,7 @@ def test_driver():
     yield wait_language_server("textDocument/semanticTokens/full")
     yield wait_idle()
     gps_assert(
-        get_all_tags(buf).count("variable-globalvariable"),
+        get_all_tags(buf).count("variable"),
         2,
         "The highlighting is not correct",
     )
@@ -29,7 +29,7 @@ def test_driver():
     yield wait_language_server("textDocument/semanticTokens/full")
     yield wait_idle()
     gps_assert(
-        get_all_tags(buf).count("variable-globalvariable"),
+        get_all_tags(buf).count("variable"),
         0,
         "The highlighting is not correct",
     )
@@ -39,7 +39,7 @@ def test_driver():
     yield wait_language_server("textDocument/semanticTokens/range")
     yield wait_idle()
     gps_assert(
-        get_all_tags(buf).count("variable-globalvariable"),
+        get_all_tags(buf).count("variable"),
         2,
         "The highlighting is not correct",
     )
@@ -49,7 +49,7 @@ def test_driver():
     yield hook("clear_highlighting")
     yield wait_idle()
     gps_assert(
-        get_all_tags(buf).count("variable-globalvariable"),
+        get_all_tags(buf).count("variable"),
         0,
         "Semantic highlighting should be off",
     )
