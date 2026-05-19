@@ -1,4 +1,4 @@
-""" This plugin adds support for GNATfuzz.
+"""This plugin adds support for GNATfuzz.
 
 This is activated when "gnatfuzz" is found on the PATH.
 
@@ -9,7 +9,9 @@ This adds
        - analyze a project to identify fuzzing closures
        - generate a fuzzing harness from a subprogram
          and switch to the fuzzing harness project
-       - launch a fuzzing session on
+       - build, generate (and minimize) the starting corpus, and
+         launch a fuzzing session on a generated harness project,
+         monitoring crashes, test cases, and live coverage.
 """
 
 import os.path
@@ -68,29 +70,23 @@ class GNATfuzzPlugin(Module):
                 )
             ),
         ),
-        X("target-model", name="gnatfuzz-corpus-gen-model", category="").children(
-            X("description").children("Launch gnatfuzz corpus-gen"),
+        X("target-model", name="gnatfuzz-generate-corpus-model", category="").children(
+            X("description").children("Launch gnatfuzz generate-corpus"),
             X("command-line").children(),
             X("iconname").children("gps-build-all-symbolic"),
             X("switches", command="gnatfuzz", columns="0", lines="0"),
         ),
-        X("target-model", name="gnatfuzz-fuzz-model", category="").children(
-            X("description").children("Launch gnatfuzz fuzz"),
+        X("target-model", name="gnatfuzz-minimize-corpus-model", category="").children(
+            X("description").children("Launch gnatfuzz minimize-corpus"),
             X("command-line").children(),
             X("iconname").children("gps-build-all-symbolic"),
-            X("switches", command="gnatfuzz", columns="2", lines="1").children(
-                X(
-                    "spin",
-                    line="1",
-                    column="2",
-                    label="Fuzzing cores",
-                    separator="=",
-                    switch="--cores",
-                    default="0",
-                    min="0",
-                    max="32",
-                    tip="The number of cores to use. Use 0 for automatic.",
-                ),
+            X("switches", command="gnatfuzz", columns="0", lines="0"),
+        ),
+        X("target-model", name="gnatfuzz-build-model", category="").children(
+            X("description").children("Launch gnatfuzz build"),
+            X("command-line").children(),
+            X("iconname").children("gps-build-all-symbolic"),
+            X("switches", command="gnatfuzz", columns="2", lines="2").children(
                 X(
                     "combo",
                     line="1",
@@ -101,8 +97,8 @@ class GNATfuzzPlugin(Module):
                     default="PERSIST",
                     tip="The AFL run mode. See the AFL++ documentation.",
                 ).children(
-                    X("combo-entry", label="PLAIN", value="afl_plain"),
                     X("combo-entry", label="PERSIST", value="afl_persist"),
+                    X("combo-entry", label="PLAIN", value="afl_plain"),
                     X("combo-entry", label="DEFER", value="afl_defer"),
                     X(
                         "combo-entry",
@@ -111,13 +107,107 @@ class GNATfuzzPlugin(Module):
                     ),
                 ),
                 X(
+                    "field",
+                    line="1",
+                    column="2",
+                    label="Engines",
+                    separator="=",
+                    switch="--engines",
+                    tip=(
+                        "Comma-separated set of fuzzing engines to enable. "
+                        "Choose from: afl, cmplog, libfuzzer, symcc."
+                    ),
+                ),
+                X(
                     "check",
+                    line="2",
+                    column="1",
+                    label="Disable GNATcoverage",
+                    switch="--no-GNATcov",
+                    default="off",
+                    tip=(
+                        "Do not use the (near) real-time dynamic coverage "
+                        "analysis using GNATcoverage."
+                    ),
+                ),
+                X(
+                    "spin",
+                    line="2",
+                    column="2",
+                    label="Build jobs",
+                    separator="=",
+                    switch="--jobs",
+                    default="0",
+                    min="0",
+                    max="64",
+                    tip=(
+                        "Maximum number of parallel jobs to build the fuzzing "
+                        "harness. 0 means auto."
+                    ),
+                ),
+            ),
+        ),
+        X("target-model", name="gnatfuzz-fuzz-model", category="").children(
+            X("description").children("Launch gnatfuzz fuzz"),
+            X("command-line").children(),
+            X("iconname").children("gps-build-all-symbolic"),
+            X("switches", command="gnatfuzz", columns="2", lines="3").children(
+                X(
+                    "spin",
                     line="1",
                     column="1",
-                    label="Disable CMPLOG (aka RedQueen)",
-                    switch="--no-cmplog",
+                    label="Fuzzing cores",
+                    separator="=",
+                    switch="--cores",
+                    default="0",
+                    min="0",
+                    max="256",
+                    tip="The number of cores to use. Use 0 for automatic.",
+                ),
+                X(
+                    "field",
+                    line="1",
+                    column="2",
+                    label="Seed",
+                    separator="=",
+                    switch="--seed",
+                    tip=(
+                        "Fixed seed for the AFL random number generator "
+                        "to enable deterministic benchmarking."
+                    ),
+                ),
+                X(
+                    "check",
+                    line="2",
+                    column="1",
+                    label="Skip deterministic phase",
+                    switch="--no-deterministic-phase",
                     default="off",
-                    tip="Use this to deactivate the CMPLOG feature",
+                    tip=(
+                        "Do not run the deterministic (sequential bit flip) "
+                        "mutation phase."
+                    ),
+                ),
+                X(
+                    "check",
+                    line="2",
+                    column="2",
+                    label="Ignore stop criteria",
+                    switch="--ignore-stop-criteria",
+                    default="off",
+                    tip="Ignore stop criteria rules (fuzzer must be manually stopped).",
+                ),
+                X(
+                    "check",
+                    line="3",
+                    column="1",
+                    label="Disable GNATcoverage",
+                    switch="--no-GNATcov",
+                    default="off",
+                    tip=(
+                        "Do not use the (near) real-time dynamic coverage "
+                        "analysis using GNATcoverage."
+                    ),
                 ),
             ),
         ),
@@ -171,9 +261,9 @@ class GNATfuzzPlugin(Module):
         ),
         X(
             "target",
-            model="gnatfuzz-corpus-gen-model",
+            model="gnatfuzz-generate-corpus-model",
             category="_GNATfuzz_",
-            name="gnatfuzz corpus-gen",
+            name="gnatfuzz generate-corpus",
             menu="",
         ).children(
             X("target-type").children(""),
@@ -187,7 +277,53 @@ class GNATfuzzPlugin(Module):
             X("launch-mode").children("MANUALLY"),
             X("command-line").children(
                 X("arg").children("gnatfuzz"),
-                X("arg").children("corpus-gen"),
+                X("arg").children("generate-corpus"),
+                X("arg").children("-P%PP"),
+                X("arg").children("%subdirsarg"),
+            ),
+        ),
+        X(
+            "target",
+            model="gnatfuzz-minimize-corpus-model",
+            category="_GNATfuzz_",
+            name="gnatfuzz minimize-corpus",
+            menu="",
+        ).children(
+            X("target-type").children(""),
+            X("in-toolbar").children("FALSE"),
+            X("in-menu").children("FALSE"),
+            X("read-only").children("TRUE"),
+            X("output-parsers").children(
+                "output_chopper utf_converter console_writer end_of_build"
+            ),
+            X("iconname").children("gps-build-all-symbolic"),
+            X("launch-mode").children("MANUALLY"),
+            X("command-line").children(
+                X("arg").children("gnatfuzz"),
+                X("arg").children("minimize-corpus"),
+                X("arg").children("-P%PP"),
+                X("arg").children("%subdirsarg"),
+            ),
+        ),
+        X(
+            "target",
+            model="gnatfuzz-build-model",
+            category="_GNATfuzz_",
+            name="gnatfuzz build",
+            menu="",
+        ).children(
+            X("target-type").children(""),
+            X("in-toolbar").children("FALSE"),
+            X("in-menu").children("FALSE"),
+            X("read-only").children("TRUE"),
+            X("output-parsers").children(
+                "output_chopper utf_converter console_writer end_of_build"
+            ),
+            X("iconname").children("gps-build-all-symbolic"),
+            X("launch-mode").children("MANUALLY_WITH_DIALOG"),
+            X("command-line").children(
+                X("arg").children("gnatfuzz"),
+                X("arg").children("build"),
                 X("arg").children("-P%PP"),
                 X("arg").children("%subdirsarg"),
             ),
@@ -212,6 +348,47 @@ class GNATfuzzPlugin(Module):
                 X("arg").children("gnatfuzz"),
                 X("arg").children("fuzz"),
                 X("arg").children("-P%PP"),
+                X("arg").children("%subdirsarg"),
+            ),
+        ),
+        X(
+            "target",
+            model="gnatfuzz-build-model",
+            category="_GNATfuzz_",
+            name="gnattest build",
+            menu="",
+        ).children(
+            X("target-type").children(""),
+            X("in-toolbar").children("FALSE"),
+            X("in-menu").children("FALSE"),
+            X("read-only").children("TRUE"),
+            X("iconname").children("gps-build-all-symbolic"),
+            X("launch-mode").children("MANUALLY_WITH_DIALOG"),
+            X("command-line").children(
+                X("arg").children("gnatfuzz"),
+                X("arg").children("build"),
+                X("arg").children("%subdirsarg"),
+            ),
+        ),
+        X(
+            "target",
+            model="gnatfuzz-generate-corpus-model",
+            category="_GNATfuzz_",
+            name="gnattest generate-corpus",
+            menu="",
+        ).children(
+            X("target-type").children(""),
+            X("in-toolbar").children("FALSE"),
+            X("in-menu").children("FALSE"),
+            X("read-only").children("TRUE"),
+            X("output-parsers").children(
+                "output_chopper utf_converter console_writer end_of_build"
+            ),
+            X("iconname").children("gps-build-all-symbolic"),
+            X("launch-mode").children("MANUALLY"),
+            X("command-line").children(
+                X("arg").children("gnatfuzz"),
+                X("arg").children("generate-corpus"),
                 X("arg").children("%subdirsarg"),
             ),
         ),
@@ -386,12 +563,34 @@ class GNATfuzzPlugin(Module):
             # Read the contents of the config field
             with open(config_file, "r") as f:
                 decoded = json.load(f)
-            self.user_project = decoded["user_project"]
-            self.output_dir = decoded["output_directory"]
+
+            # Resolve any relative paths against the harness project
+            # directory (where fuzz_config.json lives). Without this,
+            # GPS.Project.load(self.user_project) and the workflow's
+            # session_dir computation would resolve relative paths
+            # against GS Studio's CWD, which is unstable and ends up
+            # polluting the recent-projects list with paths like
+            # session/coverage_output/user_project.gpr.
+            self.user_project = self._resolve_under(
+                project_dir, decoded["user_project"]
+            )
+            self.output_dir = self._resolve_under(
+                project_dir, decoded["output_directory"]
+            )
         else:
             # This is not a harness project
             self.user_project = None
             self.output_dir = None
+
+    @staticmethod
+    def _resolve_under(base_dir, path):
+        """Return ``path`` as an absolute, normalized path.
+
+        Relative paths are resolved against ``base_dir``.
+        """
+        if os.path.isabs(path):
+            return os.path.normpath(path)
+        return os.path.normpath(os.path.join(base_dir, path))
 
     def error(self, msg):
         """Convenience function to log an error in the Messages"""
@@ -577,8 +776,8 @@ class GNATfuzzPlugin(Module):
         )
 
     def gnatfuzz_analyze_file(self):
-        self.clear_analyze_messages()
         """Action to launch the 'gnatfuzz analyze' workflow on a file"""
+        self.clear_analyze_messages()
         workflows.task_workflow("gnatfuzz analyze", self.gnatfuzz_analyze_file_workflow)
 
     ############
@@ -599,13 +798,33 @@ class GNATfuzzPlugin(Module):
         """Action to launch the 'gnatfuzz generate' workflow"""
         workflows.task_workflow("gnatfuzz generate", self.gnatfuzz_generate_workflow)
 
-    ##############
-    # Corpus-Gen #
-    ##############
+    #########
+    # Build #
+    #########
 
-    def gnatfuzz_corpus_gen_workflow(self, task):
-        """The 'gnatfuzz corpus-gen' workflow"""
-        p = promises.TargetWrapper("gnatfuzz corpus-gen")
+    def gnatfuzz_build_workflow(self, task):
+        """The 'gnatfuzz build' workflow"""
+        p = promises.TargetWrapper("gnatfuzz build")
+        r = yield p.wait_on_execute()
+        return r
+
+    ##################
+    # Generate-Corpus #
+    ##################
+
+    def gnatfuzz_generate_corpus_workflow(self, task):
+        """The 'gnatfuzz generate-corpus' workflow"""
+        p = promises.TargetWrapper("gnatfuzz generate-corpus")
+        r = yield p.wait_on_execute()
+        return r
+
+    ##################
+    # Minimize-Corpus #
+    ##################
+
+    def gnatfuzz_minimize_corpus_workflow(self, task):
+        """The 'gnatfuzz minimize-corpus' workflow"""
+        p = promises.TargetWrapper("gnatfuzz minimize-corpus")
         r = yield p.wait_on_execute()
         return r
 
@@ -629,26 +848,54 @@ class GNATfuzzPlugin(Module):
         GPS.execute_action("clear GNATfuzz fuzz crashes view")
         GPS.execute_action("clear GNATfuzz test cases view")
 
-        # Move away the previous fuzzing session dir
+        # Snapshot existing session* directories. The new GNATfuzz CLI
+        # auto-renames the session directory to session_1, session_2, ...
+        # if "session" already exists (preserving prior runs), so we
+        # cannot assume the new run lands in "session". We diff against
+        # this snapshot below to discover the live session directory.
+        fuzz_testing_dir = os.path.join(self.output_dir, "fuzz_testing")
+        existing_session_dirs = self._snapshot_session_dirs(fuzz_testing_dir)
 
-        fuzz_session_dir = os.path.join(self.output_dir, "fuzz_testing", "session")
-        if os.path.exists(fuzz_session_dir):
-            shutil.rmtree(fuzz_session_dir)
+        # Forward all scenario variables as -X switches.
+        # GPS.Project.scenario_variables() returns None (not an empty
+        # dict) when the project has no scenario variables, so guard
+        # against that.
+        scenario_vars = GPS.Project.scenario_variables() or {}
+        args = [f"-X{variable}={value}" for variable, value in scenario_vars.items()]
 
-        # Generate the -X switches
-        args = []
-        for variable, value in GPS.Project.scenario_variables().items():
-            # We pass all -X switches except the ones that are internal
-            # to gnatfuzz.
-            if not (variable.startswith("GNATFUZZ") or variable == "AFL_MODE"):
-                args.append(f"-X{variable}={value}")
-
-        corpus_gen_result = yield self.gnatfuzz_corpus_gen_workflow(task)
-        if corpus_gen_result != 0:
+        build_result = yield self.gnatfuzz_build_workflow(task)
+        if build_result != 0:
             GPS.Console("Messages").write(
-                "gnatfuzz corpus-gen returned nonzero", mode="error"
+                "gnatfuzz build returned nonzero", mode="error"
             )
             return
+
+        generate_corpus_result = yield self.gnatfuzz_generate_corpus_workflow(task)
+        if generate_corpus_result != 0:
+            GPS.Console("Messages").write(
+                "gnatfuzz generate-corpus returned nonzero", mode="error"
+            )
+            return
+
+        # afl-cmin refuses to write into a non-empty output directory, so
+        # remove any leftover minimized_corpus from a previous run before
+        # invoking minimize-corpus.
+        minimized_corpus_dir = os.path.join(
+            self.output_dir, "fuzz_testing", "minimized_corpus"
+        )
+        if os.path.exists(minimized_corpus_dir):
+            shutil.rmtree(minimized_corpus_dir)
+
+        minimize_corpus_result = yield self.gnatfuzz_minimize_corpus_workflow(task)
+        if minimize_corpus_result != 0:
+            GPS.Console("Messages").write(
+                "gnatfuzz minimize-corpus returned nonzero", mode="error"
+            )
+            return
+
+        # gnatfuzz fuzz defaults to the generated_corpus directory. Point it
+        # at the minimized corpus we just produced.
+        args.append(f"--corpus-path={minimized_corpus_dir}")
 
         GPS.BuildTarget("gnatfuzz fuzz").execute(
             extra_args=args,
@@ -664,9 +911,29 @@ class GNATfuzzPlugin(Module):
         GPS.execute_action("open GNATfuzz fuzz crashes view")
         GPS.execute_action("open GNATfuzz test cases view")
 
-        # Wait for the fuzz session directory to be created
-        while not os.path.exists(fuzz_session_dir):
+        # Wait for a new session* directory to appear (the CLI picks
+        # "session", "session_1", "session_2", ... depending on what
+        # already exists). The first directory not present in our
+        # pre-launch snapshot is the live one.
+        fuzz_session_dir = None
+        while fuzz_session_dir is None:
             yield promises.timeout(FUZZ_MONITOR_TIMEOUT)
+            new_sessions = (
+                self._snapshot_session_dirs(fuzz_testing_dir) - existing_session_dirs
+            )
+            if new_sessions:
+                # Pick deterministically if more than one appeared
+                # in the same poll window.
+                fuzz_session_dir = sorted(new_sessions)[0]
+                # Share the discovered path with the views so their
+                # refresh() looks at the right session.
+                view = get_gnatfuzz_view()
+                if view is not None:
+                    view.session_dir = fuzz_session_dir
+                test_case_view = get_gnatfuzz_test_case_view()
+                if test_case_view is not None:
+                    test_case_view.session_dir = fuzz_session_dir
+                break
             # Check if the fuzz process is still running
             tasks = [t for t in GPS.Task.list() if t.name() == "gnatfuzz fuzz"]
             if len(tasks) == 0:
@@ -721,6 +988,22 @@ class GNATfuzzPlugin(Module):
                 break
 
         return
+
+    @staticmethod
+    def _snapshot_session_dirs(fuzz_testing_dir):
+        """Return the set of existing session-like directories.
+
+        Matches "session" and "session_N" entries directly under
+        ``fuzz_testing_dir``. Used by the fuzz workflow to discover the
+        directory the GNATfuzz CLI picks for the new run.
+        """
+        if not os.path.isdir(fuzz_testing_dir):
+            return set()
+        return {
+            os.path.join(fuzz_testing_dir, entry)
+            for entry in os.listdir(fuzz_testing_dir)
+            if entry == "session" or entry.startswith("session_")
+        }
 
     def is_fuzz_running(self):
         """Return True if "gnatfuzz fuzz" is running"""

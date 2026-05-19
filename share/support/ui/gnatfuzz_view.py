@@ -5,7 +5,7 @@ from modules import Module
 from gs_utils import make_interactive
 import pygps
 import workflows
-from workflows.promises import ProcessWrapper, TargetWrapper
+from workflows.promises import ProcessWrapper
 
 import os
 import json
@@ -38,15 +38,13 @@ EXC_INFO = "Exception_Information"
 
 def fuzz_executable(is_verbose):
     """Utility function, returns the executable instrumented for fuzzing"""
-    # We don't know if the AFL_PLAIN or the AFL_PERSIST object was generated.
+    # We don't know which AFL mode was built (PLAIN, PERSIST, DEFER,
+    # DEFER_AND_PERSIST). They should be equivalent for the purposes of
+    # the GNAT Studio integration: try each in turn.
 
-    # They should be the same for the purposes of the GNAT Studio integration:
-    # try one, then the other.
-
-    for mode in ("AFL_PLAIN", "AFL_PERSIST", "AFL_DEFER", "AFL_DEFER_AND_PERSIST"):
+    for mode in ("AFL_PERSIST", "AFL_PLAIN", "AFL_DEFER", "AFL_DEFER_AND_PERSIST"):
         candidate = os.path.join(
             os.path.dirname(GPS.Project.root().file().name()),
-            "session",
             "build",
             f"obj-{mode}",
             "gnatfuzz-test_harness." + ("verbose" if is_verbose else "afl_fuzz"),
@@ -123,9 +121,17 @@ class FuzzCrashList(object):
 
     def debug_candidate(self, task):
         """Workflow to launch a debugger session on the given crash"""
-        t = TargetWrapper("Build Main")
-        yield t.wait_on_execute(main_name="gnatfuzz-fuzz_test_harness.adb")
+        # No build step: the harness is already built by "gnatfuzz build"
+        # as part of the Start Fuzzing workflow, with the scenario
+        # variables and runtime library that plain gprbuild can't set up.
         exec = fuzz_executable(False)
+        if exec is None:
+            GPS.Console("Messages").write(
+                "Cannot find a built AFL harness to debug. "
+                "Run 'Start Fuzzing Session' first.\n",
+                mode="error",
+            )
+            return
         d = GPS.Debugger.spawn(executable=GPS.File(exec))
         d.send("delete")
         d.send(f"start {self.target_candidate}")
@@ -139,6 +145,9 @@ class FuzzCrashList(object):
 
         # ... then show the current frame
         d.send("frame", show_in_console=True)
+        # Yield once so this remains a valid workflow generator.
+        if False:
+            yield None
 
     def _on_view_button_press(self, _, event):
         """React to a click on a row in the list"""
@@ -190,6 +199,11 @@ class GNATfuzzView(Module):
         global counter
         counter = 1
         self.crashes.clear()
+        # Mark the view as awaiting a new fuzzing session. Refresh()
+        # treats the empty string as "skip disk read", so a refresh
+        # that races with the workflow (e.g. a re-open) cannot pull
+        # results from the previous run's session_dir back in.
+        self.session_dir = ""
         t = pygps.get_widget_by_name("fuzz_crash_list_view")
         if t is not None:
             t.get_model().clear()
@@ -328,24 +342,26 @@ class GNATfuzzView(Module):
         """Refresh the view"""
         self.project_dir = os.path.dirname(GPS.Project.root().file().name())
         self.candidate_crash_files = []
-        self.fuzzer_ouput_path = os.path.join(
-            self.project_dir,
-            "session",
-            "fuzzer_output",
-        )
 
-        # Captures all crashes and hangs found under "cmplog_results",
-        # "symcc_results", and any "gnatfuzz_[#]_[master/slave]" directories
+        # The fuzz workflow sets self.session_dir to the live session_N
+        # directory once it's discovered. The empty string means the view
+        # was just cleared and is waiting for a new session: skip the
+        # disk read so we do not surface results from the previous run.
+        # None means standalone use (no workflow running); fall back to
+        # the default "session" layout for backward compatibility.
+        session_dir = getattr(self, "session_dir", None)
+        if session_dir == "":
+            return
+        if session_dir is None:
+            session_dir = os.path.join(self.project_dir, "session")
+
+        # Read crashes and hangs from the consolidated results layout
+        # populated by the GNATfuzz campaign-sync task. This unifies AFL,
+        # CMPLOG, libfuzzer and SymCC findings into a single location.
+        results_path = os.path.join(session_dir, "results")
         for issue_type in ("crashes", "hangs"):
             self.candidate_crash_files.extend(
-                glob.glob(
-                    os.path.join(
-                        self.fuzzer_ouput_path,
-                        "*",
-                        issue_type,
-                        "id*",
-                    )
-                )
+                glob.glob(os.path.join(results_path, issue_type, "*"))
             )
 
         # Process the candidate crash files
