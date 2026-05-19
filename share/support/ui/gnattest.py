@@ -266,6 +266,15 @@ def __on_compilation_finished(category, target_name, mode_name, status, cmd):
     hd = [arg[14:] for arg in cmd if arg.startswith("--harness-dir=")]
     last_gnattest["harness_dir"] = hd[0] if hd else ""
 
+    # last_gnattest["project"] is only populated by run() (the standard
+    # GNATtest "for root project" path). The fuzz_subp_workflow path
+    # doesn't go through run(), so the project may be None here -- in
+    # which case there's no user-driven request to switch into a
+    # harness project. Skip the switch silently rather than crashing
+    # inside open_harness_project.
+    if last_gnattest["project"] is None:
+        return
+
     open_harness_project(last_gnattest["project"])
 
 
@@ -476,13 +485,39 @@ def start_fuzz(task, corpus_dir, fuzz_dir, subp_sloc, force=False):
     if os.path.exists(fuzz_session_dir):
         shutil.rmtree(fuzz_session_dir)
 
+    harness_gpr = os.path.join(fuzz_dir, "fuzz_testing", "fuzz_test.gpr")
+    console = GPS.Console("GNATtest")
+
+    # If gnattest's test_runner produced no test vectors for this
+    # subprogram, the corpus directory is empty and "gnatfuzz fuzz"
+    # would refuse to start. Fall back to "gnatfuzz generate-corpus"
+    # to synthesize a starting corpus from the harness itself.
+    if not any(os.scandir(corpus_dir)):
+        console.write(
+            "No GNATtest test vectors are available to seed the fuzzing "
+            "campaign. Falling back to 'gnatfuzz generate-corpus' to "
+            "produce a starting corpus.\n"
+        )
+        p = TargetWrapper("gnattest generate-corpus")
+        r = yield p.wait_on_execute(
+            extra_args=["-P", harness_gpr],
+            force=force,
+        )
+        if r != 0:
+            console.write(
+                "'gnatfuzz generate-corpus' failed to produce a starting corpus.\n",
+                mode="error",
+            )
+            return
+        # gnatfuzz generate-corpus writes to fuzz_testing/generated_corpus/
+        corpus_dir = os.path.join(fuzz_dir, "fuzz_testing", "generated_corpus")
+
     # TODO! account for scenario variables as done in the gnatfuzz plugin
     args = [
         "-P",
-        os.path.join(fuzz_dir, "fuzz_testing", "fuzz_test.gpr"),
+        harness_gpr,
         f"--corpus-path={corpus_dir}",
-        f"--stop-criteria={fuzz_dir}"
-        "/fuzz_testing/user_configuration/stop_criteria.xml",
+        f"--stop-criteria={fuzz_dir}/fuzz_testing/user_configuration/stop_criteria.xml",
         "--tgen-gnattest-test-generator",
     ]
 
@@ -786,6 +821,20 @@ def fuzz_subp_workflow():
     )
     if r != 0:
         GPS.Console("Messages").write('"fuzz generate" execution failed', mode="error")
+        return
+
+    # The new gnatfuzz CLI requires a "build" step between "generate" and
+    # "fuzz": the build configuration it writes into fuzz_config.json is
+    # what "fuzz" reads to know which harnesses to run. Without this,
+    # "gnatfuzz fuzz" exits with "No build configuration found".
+    harness_gpr = os.path.join(fuzz_dir, "fuzz_testing", "fuzz_test.gpr")
+    p = TargetWrapper("gnattest build")
+    r = yield p.wait_on_execute(
+        extra_args=["-P", harness_gpr],
+        force=force,
+    )
+    if r != 0:
+        GPS.Console("Messages").write('"gnattest build" execution failed', mode="error")
         return
 
     # Now onto fuzzing: execute the GNATfuzz fuzz workflow. Run it in a
