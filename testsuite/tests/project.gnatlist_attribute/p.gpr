@@ -1,0 +1,5 @@
+project p is
+   package IDE is
+      for gnatlist use "./fake_gnatlist";
+   end IDE;
+end p;

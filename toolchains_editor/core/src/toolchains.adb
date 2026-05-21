@@ -1451,8 +1451,6 @@ package body Toolchains is
                         Attribute_Value (Project, Target_Attribute);
       Runtime_Str   : aliased constant String :=
                         Attribute_Value (Project, Runtime_Attribute, "ada");
-      GNAT_List_Str : aliased constant String :=
-                        Attribute_Value (Project, Gnatlist_Attribute);
       GNAT_Str      : aliased constant String :=
                         Attribute_Value (Project, GNAT_Attribute);
       Debugger_Str  : aliased constant String :=
@@ -1490,9 +1488,6 @@ package body Toolchains is
          if ((Target_Name /= "" and then Target_Name = Get_Target_Name (TC))
                or else (Target_Name = "" and then Target_Str = "")
                or else Target_Str = Get_Target_Name (TC))
-           and then
-             (GNAT_List_Str = ""
-                or else GNAT_List_Str = Get_Command (TC, GNAT_List))
            and then
              (GNAT_Str = ""
                 or else GNAT_Str = Get_Command (TC, GNAT_Driver))
@@ -1532,13 +1527,12 @@ package body Toolchains is
       is
          type S_Access is access constant String;
 
-         Strings : constant array (1 .. 4) of S_Access :=
+         Strings : constant array (1 .. 3) of S_Access :=
            --  The order of those is important, it will determine which
            --  toolchain definition will take priority. We want Gnatmake_Str
            --  to be considered before Debugger_Str, because we want the
            --  compiler's name to take precedence over the debugger's. NA29-046
            (GNAT_Str'Access,
-            GNAT_List_Str'Access,
             Gnatmake_Str'Access,
             Debugger_Str'Access);
       begin
@@ -1641,7 +1635,6 @@ package body Toolchains is
       Is_Empty : constant Boolean :=
         Project.Get_Target (Default_To_Host => False) = ""
           and then Target_Str = ""
-          and then GNAT_List_Str = ""
           and then GNAT_Str = ""
           and then Gnatmake_Str = ""
           and then Debugger_Str = "";
@@ -1742,20 +1735,6 @@ package body Toolchains is
       --  At this stage, we have either a toolchain created from a known
       --  configuration and that we potentially need to adjust, or a new one
       --  created for the occasion for which we need to fill the values.
-
-      if GNAT_List_Str /= Get_Command (Ret, GNAT_List)
-        and then GNAT_List_Str /= ""
-      then
-         if not Modified then
-            Ret := Copy (Ret);
-            Modified := True;
-         end if;
-
-         Set_Command (Ret, GNAT_List, GNAT_List_Str, From_Project, False);
-
-         --  Reset the library as gnatls changed
-         Ret.Library := null;
-      end if;
 
       if GNAT_Str /= Get_Command (Ret, GNAT_Driver)
         and then GNAT_Str /= ""
