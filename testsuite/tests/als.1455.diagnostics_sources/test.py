@@ -21,7 +21,7 @@ LAL = [
     [
         "foo.adb (2 items)",
         [
-            "<b>2:19</b>      expected Integer, got Boolean",
+            "<b>2:19</b>      expected &apos;Integer&apos;, got &apos;Boolean&apos;",
             "<b>5:1</b>       Missing &apos;;&apos;",
         ],
     ],
