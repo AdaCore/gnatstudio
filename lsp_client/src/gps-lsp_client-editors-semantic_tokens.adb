@@ -700,8 +700,17 @@ package body GPS.LSP_Client.Editors.Semantic_Tokens is
                   Last := Last + 1;
                   Modifiers (Last) := an_abstract;
                else
-                  Last := Last + 1;
-                  Modifiers (Last) := SemanticTokenModifiers'Value (N);
+                  begin
+                     Modifiers (Last + 1) := SemanticTokenModifiers'Value (N);
+                     Last := Last + 1;
+                  exception
+                     when Constraint_Error =>
+                        --  clangd includes custom non-standard modifiers
+                        --  (e.g: 'globalScope', 'classScope') in its
+                        --  SemanticTokensLegend, which aren't part of the
+                        --  SemanticTokenModifiers enum.
+                        null;
+                  end;
                end if;
             end;
          end if;
