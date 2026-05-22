@@ -470,7 +470,7 @@ package body GPS.LSP_Client.Editors.Semantic_Tokens is
                   else
                      --  return "fallback" deprecated when no other style
                      --  has been found
-                     return LSP_Deprecated_Style_Name;
+                     return Check (LSP_Deprecated_Style_Name);
                   end if;
                end;
             end if;
@@ -1196,6 +1196,8 @@ package body GPS.LSP_Client.Editors.Semantic_Tokens is
       From   : Integer;
       To     : Integer)
    is
+      use type GPS.Kernel.Style_Manager.Style_Access;
+
       function In_Clear (Token : SemanticTokenTypes) return Boolean;
       --  SemanticTokenType is in the Styles_To_Clear list, so we should
       --  clear the buffer from this style
@@ -1235,12 +1237,16 @@ package body GPS.LSP_Client.Editors.Semantic_Tokens is
          end if;
       end Remove;
 
+      Style_Manager : constant GPS.Kernel.Style_Manager.Style_Manager_Access :=
+        GPS.Kernel.Style_Manager.Get_Style_Manager (Module.Get_Kernel);
       Styles : constant GPS.Kernel.Style_Manager.Style_Vector.Vector :=
-        GPS.Kernel.Style_Manager.Get_Style_Manager
-          (Module.Get_Kernel).List_Styles;
-
+        Style_Manager.List_Styles;
+      Deprecated_Style : constant GPS.Kernel.Style_Manager.Style_Access :=
+        Style_Manager.Get (LSP_Deprecated_Style_Name, True);
    begin
-      Remove (LSP_Deprecated_Style_Name);
+      if Deprecated_Style /= null then
+         Remove (LSP_Deprecated_Style_Name);
+      end if;
 
       for J in SemanticTokenTypes'Range loop
          declare
