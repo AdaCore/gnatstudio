@@ -1756,7 +1756,7 @@ package body GPS.Kernel.Preferences is
                & "Semantic highlighting colors are defined by the active "
                & "color theme. To customize them, use a TextMate theme "
                & "(<b>Color Theme</b> preferences page)."),
-           Default => False);
+           Default => True);
 
       LSP_Show_Semantic_Tooltip :=
         Manager.Create

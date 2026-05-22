@@ -244,6 +244,12 @@ package body GPS.LSP_Client.Editors.Semantic_Tokens is
    --  Convert Token_Type to the style name. Returns empty string if
    --  corresponding style name does not exist.
 
+   function Get_SemanticTokens_Legend
+     (Server : GPS.LSP_Client.Language_Servers.Language_Server_Access)
+      return SemanticTokensLegend;
+   --  Return SemanticTokensLegend for the given language server, or empty
+   --  legend if server is null or does not support semantic tokens.
+
    type Modifiers_Array is array (Natural range <>) of SemanticTokenModifiers;
    Empty_Modifiers_Array : Modifiers_Array (1 .. 0);
 
@@ -470,7 +476,7 @@ package body GPS.LSP_Client.Editors.Semantic_Tokens is
                   else
                      --  return "fallback" deprecated when no other style
                      --  has been found
-                     return LSP_Deprecated_Style_Name;
+                     return Check (LSP_Deprecated_Style_Name);
                   end if;
                end;
             end if;
@@ -700,8 +706,17 @@ package body GPS.LSP_Client.Editors.Semantic_Tokens is
                   Last := Last + 1;
                   Modifiers (Last) := an_abstract;
                else
-                  Last := Last + 1;
-                  Modifiers (Last) := SemanticTokenModifiers'Value (N);
+                  begin
+                     Modifiers (Last + 1) := SemanticTokenModifiers'Value (N);
+                     Last := Last + 1;
+                  exception
+                     when Constraint_Error =>
+                        --  clangd includes custom non-standard modifiers
+                        --  (e.g: 'globalScope', 'classScope') in its
+                        --  SemanticTokensLegend, which aren't part of the
+                        --  SemanticTokenModifiers enum.
+                        null;
+                  end;
                end if;
             end;
          end if;
@@ -715,6 +730,25 @@ package body GPS.LSP_Client.Editors.Semantic_Tokens is
            (Legend.tokenTypes.Element (Natural (Token_Type) + 1)),
          Modifiers (1 .. Last));
    end Get_Style;
+
+   -------------------------------
+   -- Get_SemanticTokens_Legend --
+   -------------------------------
+
+   function Get_SemanticTokens_Legend
+     (Server : GPS.LSP_Client.Language_Servers.Language_Server_Access)
+      return SemanticTokensLegend
+   is
+      use type GPS.LSP_Client.Language_Servers.Language_Server_Access;
+   begin
+      return
+        (if Server /= null
+           and then
+             Server.Get_Client.Capabilities.semanticTokensProvider.Is_Set
+         then
+           Server.Get_Client.Capabilities.semanticTokensProvider.Value.legend
+         else (others => <>));
+   end Get_SemanticTokens_Legend;
 
    -------------
    -- On_Idle --
@@ -733,7 +767,6 @@ package body GPS.LSP_Client.Editors.Semantic_Tokens is
       Legend  : SemanticTokensLegend;
       Request : GPS.LSP_Client.Requests.Request_Access;
       Result  : Boolean;
-
    begin
       if Module.Get_Kernel.Is_In_Destruction then
          Module.Idle_ID := Glib.Main.No_Source_Id;
@@ -774,8 +807,7 @@ package body GPS.LSP_Client.Editors.Semantic_Tokens is
          return False;
       end if;
 
-      Legend := Server.Get_Client.Capabilities.
-        semanticTokensProvider.Value.legend;
+      Legend := Get_SemanticTokens_Legend (Server);
 
       declare
          Buffer : constant Editor_Buffer'Class :=
@@ -998,8 +1030,7 @@ package body GPS.LSP_Client.Editors.Semantic_Tokens is
                return;
             end if;
 
-            Legend := Server.Get_Client.Capabilities.
-              semanticTokensProvider.Value.legend;
+            Legend := Get_SemanticTokens_Legend (Server);
 
             while Index < Natural (Result.data.Length) loop
                --  iterate over response lines to find the line we need
@@ -1187,6 +1218,8 @@ package body GPS.LSP_Client.Editors.Semantic_Tokens is
       From   : Integer;
       To     : Integer)
    is
+      use type GPS.Kernel.Style_Manager.Style_Access;
+
       function In_Clear (Token : SemanticTokenTypes) return Boolean;
       --  SemanticTokenType is in the Styles_To_Clear list, so we should
       --  clear the buffer from this style
@@ -1226,12 +1259,16 @@ package body GPS.LSP_Client.Editors.Semantic_Tokens is
          end if;
       end Remove;
 
+      Style_Manager : constant GPS.Kernel.Style_Manager.Style_Manager_Access :=
+        GPS.Kernel.Style_Manager.Get_Style_Manager (Module.Get_Kernel);
       Styles : constant GPS.Kernel.Style_Manager.Style_Vector.Vector :=
-        GPS.Kernel.Style_Manager.Get_Style_Manager
-          (Module.Get_Kernel).List_Styles;
-
+        Style_Manager.List_Styles;
+      Deprecated_Style : constant GPS.Kernel.Style_Manager.Style_Access :=
+        Style_Manager.Get (LSP_Deprecated_Style_Name, True);
    begin
-      Remove (LSP_Deprecated_Style_Name);
+      if Deprecated_Style /= null then
+         Remove (LSP_Deprecated_Style_Name);
+      end if;
 
       for J in SemanticTokenTypes'Range loop
          declare

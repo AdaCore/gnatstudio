@@ -566,10 +566,6 @@ class Theme(object):
     def apply_styles(self):
         """Set styles from the theme"""
 
-        if not GPS.Preference("LSP-Semantic-Highlighting").get:
-            # do not create styles if LSP highlighting is off
-            return
-
         # Track which styles we have already created in this pass
         created_styles = set()
 
