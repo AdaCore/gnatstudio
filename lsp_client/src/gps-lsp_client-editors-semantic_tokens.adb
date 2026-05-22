@@ -244,6 +244,12 @@ package body GPS.LSP_Client.Editors.Semantic_Tokens is
    --  Convert Token_Type to the style name. Returns empty string if
    --  corresponding style name does not exist.
 
+   function Get_SemanticTokens_Legend
+     (Server : GPS.LSP_Client.Language_Servers.Language_Server_Access)
+      return SemanticTokensLegend;
+   --  Return SemanticTokensLegend for the given language server, or empty
+   --  legend if server is null or does not support semantic tokens.
+
    type Modifiers_Array is array (Natural range <>) of SemanticTokenModifiers;
    Empty_Modifiers_Array : Modifiers_Array (1 .. 0);
 
@@ -725,6 +731,25 @@ package body GPS.LSP_Client.Editors.Semantic_Tokens is
          Modifiers (1 .. Last));
    end Get_Style;
 
+   -------------------------------
+   -- Get_SemanticTokens_Legend --
+   -------------------------------
+
+   function Get_SemanticTokens_Legend
+     (Server : GPS.LSP_Client.Language_Servers.Language_Server_Access)
+      return SemanticTokensLegend
+   is
+      use type GPS.LSP_Client.Language_Servers.Language_Server_Access;
+   begin
+      return
+        (if Server /= null
+           and then
+             Server.Get_Client.Capabilities.semanticTokensProvider.Is_Set
+         then
+           Server.Get_Client.Capabilities.semanticTokensProvider.Value.legend
+         else (others => <>));
+   end Get_SemanticTokens_Legend;
+
    -------------
    -- On_Idle --
    -------------
@@ -742,7 +767,6 @@ package body GPS.LSP_Client.Editors.Semantic_Tokens is
       Legend  : SemanticTokensLegend;
       Request : GPS.LSP_Client.Requests.Request_Access;
       Result  : Boolean;
-
    begin
       if Module.Get_Kernel.Is_In_Destruction then
          Module.Idle_ID := Glib.Main.No_Source_Id;
@@ -783,8 +807,7 @@ package body GPS.LSP_Client.Editors.Semantic_Tokens is
          return False;
       end if;
 
-      Legend := Server.Get_Client.Capabilities.
-        semanticTokensProvider.Value.legend;
+      Legend := Get_SemanticTokens_Legend (Server);
 
       declare
          Buffer : constant Editor_Buffer'Class :=
@@ -1007,8 +1030,7 @@ package body GPS.LSP_Client.Editors.Semantic_Tokens is
                return;
             end if;
 
-            Legend := Server.Get_Client.Capabilities.
-              semanticTokensProvider.Value.legend;
+            Legend := Get_SemanticTokens_Legend (Server);
 
             while Index < Natural (Result.data.Length) loop
                --  iterate over response lines to find the line we need
