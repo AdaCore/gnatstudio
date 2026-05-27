@@ -199,18 +199,6 @@ XML = r"""<?xml version="1.0" ?>
    </project_attribute>
 
    <project_attribute
-       name="gnatlist"
-       package="IDE"
-       editor_page=""
-       editor_section="Tools"
-       description="The gnatls command used to find where the Ada run time files are installed (including optional arguments, e.g. gnatls --RTS=sjlj)."
-       hide_in="all"
-       label="Gnatls">
-       <choice default="true" >gnatls</choice>
-       <string />
-   </project_attribute>
-
-   <project_attribute
        name="gnat"
        package="IDE"
        editor_page=""
