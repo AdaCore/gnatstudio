@@ -7,7 +7,9 @@ Debugger-Auto-Start = Run.
 import GPS
 from gs_utils.internal.utils import *
 
-expect = "Debugger is initialized: you can now start the debuggee by clicking on the 'Debug Run' toolbar button."
+expect = (
+    "The debugger is ready. Start the debuggee using the " "'Debug Run' toolbar button."
+)
 
 
 @run_test_driver

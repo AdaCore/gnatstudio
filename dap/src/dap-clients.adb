@@ -507,11 +507,10 @@ package body DAP.Clients is
                     Interactive_Console := DAP.Views.Consoles.
                       Get_Debugger_Interactive_Console (Self);
                begin
-                  if Console /= null then
+                  if Console /= null and then Self.Remote_Target = "" then
                      Console.Insert
-                       ("Debugger is initialized: you can now start the" &
-                          " debuggee by clicking on the 'Debug Run' toolbar" &
-                          " button.");
+                       ("The debugger is ready. Start the debuggee using the "
+                        & "'Debug Run' toolbar button.");
                   end if;
                end;
             end if;
