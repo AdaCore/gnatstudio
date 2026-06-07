@@ -1377,10 +1377,11 @@ package body GVD.Process is
             Console : constant Interactive_Console :=
                 GVD.Consoles.Get_Debugger_Interactive_Console (Process);
          begin
-            if Console /= null then
+            if Console /= null and then Process.Debugger.Get_Remote_Target = ""
+            then
                Console.Insert
-                 ("Debugger is initialized: you can now start the debuggee "
-                  & "by clicking on the 'Debug Run' toolbar button.",
+                 ("The debugger is ready. Start the debuggee using the "
+                  & "'Debug Run' toolbar button.",
                   Add_LF => True);
 
                --  Add prompt after the message
