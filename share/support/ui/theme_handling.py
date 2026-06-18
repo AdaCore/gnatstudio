@@ -344,11 +344,13 @@ common_light = {
         [],
         ["TRUE", Color("#808080")],
     ),
-    # Variables and parameters
+    # Variables, parameters and enums
     "variable": ("DEFAULT", Color("#267F99"), transparent),
+    "enummember": ("DEFAULT", Color("#267F99"), transparent),
     "parameter": ("ITALIC", Color("#267F99"), transparent),
     # Read-only (non-writable) variables — bold variant, color inherited from base
     "variable.readonly": ("BOLD", transparent, transparent),
+    "enummember.static": ("BOLD", transparent, transparent),
     # Deprecated: gray strikethrough fallback (used by semantic_tokens.adb)
     "deprecated": ("NONE", transparent, transparent, [], ["TRUE", Color("#808080")]),
     # Dispatching calls
@@ -436,11 +438,13 @@ common_dark = {
         [],
         ["TRUE", Color("#808080")],
     ),
-    # Variables and parameters
+    # Variables, parameters and enums
     "variable": ("DEFAULT", Color("#9CDCFE"), transparent),
+    "enummember": ("DEFAULT", Color("#9CDCFE"), transparent),
     "parameter": ("ITALIC", Color("#9CDCFE"), transparent),
     # Read-only (non-writable) variables — bold variant, color inherited from base
     "variable.readonly": ("BOLD", transparent, transparent),
+    "enummember.static": ("BOLD", transparent, transparent),
     # Deprecated: gray strikethrough fallback (used by semantic_tokens.adb)
     "deprecated": ("NONE", transparent, transparent, [], ["TRUE", Color("#808080")]),
     # Dispatching calls

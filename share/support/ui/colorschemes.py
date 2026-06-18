@@ -306,6 +306,7 @@ class ColorSchemePicker(object):
         self.vbox.pack_start(self.doc_label_hbox, False, False, PADDING)
 
         self.doc_label = Gtk.Label()
+        self.doc_label.set_line_wrap(True)
         self.doc_label.set_alignment(0.0, 0.5)
         self.doc_label.set_markup(
             "You can add your own themes in the TextMate "
