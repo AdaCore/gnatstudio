@@ -4,7 +4,7 @@ by GNAT (-gnateG switch).
 """
 
 import os
-import distutils.dep_util
+import setuptools.modified
 import GPS
 from gs_utils import in_ada_file, interactive, hook
 
@@ -102,7 +102,7 @@ def show_inactive_code(file_name, prep_name, for_subprogram=False):
             mode="error",
         )
     # Do nothing is the .prep file is too old
-    elif distutils.dep_util.newer(file_name, prep_name):
+    elif setuptools.modified.newer(file_name, prep_name):
         GPS.Console("Messages").write(
             "The .prep file is too old," + " please recompile the ada file.\n",
             mode="error",
