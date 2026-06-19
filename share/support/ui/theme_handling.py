@@ -333,6 +333,8 @@ common_light = {
     # All other token types inherit the editor default foreground.
     # TextMate themes can override any of these (see textmate.py).
     #
+    # Namespaces / packages
+    "namespace": ("DEFAULT", Color("#267F99"), transparent),
     # Subprogram/function calls
     "function": ("DEFAULT", Color("#795E26"), transparent),
     # function.deprecated inherits function's color; other TYPE.deprecated
@@ -427,6 +429,8 @@ common_dark = {
     # All other token types inherit the editor default foreground.
     # TextMate themes can override any of these (see textmate.py).
     #
+    # Namespaces / packages
+    "namespace": ("DEFAULT", Color("#4EC9B0"), transparent),
     # Subprogram/function calls
     "function": ("DEFAULT", Color("#DCDCAA"), transparent),
     # function.deprecated inherits function's color; other TYPE.deprecated

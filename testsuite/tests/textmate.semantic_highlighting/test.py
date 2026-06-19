@@ -75,13 +75,14 @@ def test_driver():
             break
     gps_assert(darkside is not None, True, "Darkside theme not found")
 
+    darkside_d_before = darkside.d.copy()
     colorschemes.the_theme_switcher.apply_theme(darkside)
     yield wait_tasks()
 
     # Overrides must not permanently modify the theme dict
     gps_assert(
-        "namespace" not in darkside.d,
-        True,
+        darkside.d,
+        darkside_d_before,
         "Darkside.d must stay pristine after apply_theme",
     )
 
