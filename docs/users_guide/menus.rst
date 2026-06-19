@@ -303,7 +303,7 @@ The Edit Menu
 
 * :menuselection:`Edit --> Project`
 
-   Open an editor for the .gpr file of the current project
+   Open an editor for the .gpr file of the root project
 
 .. index:: menu; edit --> preferences...
 
