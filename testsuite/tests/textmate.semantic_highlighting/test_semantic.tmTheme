@@ -114,9 +114,8 @@
             </dict>
         </dict>
 
-        <!-- Namespaces (NO default style exists for this token type;
-             this entry tests that TextMate themes can add new semantic
-             styles for constructs that are not highlighted by default) -->
+        <!-- Namespaces (tests that TextMate themes can override
+             the default semantic style for this token type) -->
         <dict>
             <key>scope</key>
             <string>entity.other.namespace</string>
