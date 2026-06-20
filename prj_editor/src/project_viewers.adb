@@ -993,6 +993,15 @@ package body Project_Viewers is
 
       Register_Action
         (Kernel,
+         "Edit root project source file",
+         Command     => new Edit_Project_Source_Command,
+         Description =>
+           -"Open an editor for the .gpr file of the root project",
+         Icon_Name   => "gps-edit-symbolic",
+         Category    => -"Projects");
+
+      Register_Action
+        (Kernel,
          "Edit local configuration file",
          Command     => new Edit_Configuration_File (Global => False),
          Description =>

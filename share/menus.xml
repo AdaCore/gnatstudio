@@ -124,6 +124,7 @@
          <menu label='Increase Text Size'   action='increase text size' optional='true'/>
          <menu label='Decrease Text Size'   action='decrease text size' optional='true'/>
          <separator />  <!--  Below this: general dialogs -->
+         <menu label='_Project'                  action='edit root project source file'/>
          <menu label='_Preferences...'           action='open preferences'/>
       </menu>
 

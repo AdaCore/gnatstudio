@@ -299,6 +299,12 @@ The Edit Menu
    Decrease the size of fonts in the source editors. This impacts the corresponding preferences.
 
    Shortcut: Ctrl+-
+.. index:: menu; edit --> project
+
+* :menuselection:`Edit --> Project`
+
+   Open an editor for the .gpr file of the root project
+
 .. index:: menu; edit --> preferences...
 
 * :menuselection:`Edit --> Preferences...`
