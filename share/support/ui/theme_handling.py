@@ -346,11 +346,16 @@ common_light = {
         [],
         ["TRUE", Color("#808080")],
     ),
+    # The syntax highlighting is only highlighting the basic "types",
+    # they are much more of them under the "class" tag coming from the
+    # semanticToken request, use the same value which is coming
+    # from default["types"] defined in colorschemes.py
+    "class": ("DEFAULT", Rgba(0, 153, 0), transparent),
     # Variables, parameters and enums
     "variable": ("DEFAULT", Color("#267F99"), transparent),
     "enummember": ("DEFAULT", Color("#267F99"), transparent),
     "parameter": ("ITALIC", Color("#267F99"), transparent),
-    # Read-only (non-writable) variables — bold variant, color inherited from base
+    # Read-only (non-writable) variables => bold variant, color inherited from base
     "variable.readonly": ("BOLD", transparent, transparent),
     "enummember.static": ("BOLD", transparent, transparent),
     # Deprecated: gray strikethrough fallback (used by semantic_tokens.adb)
@@ -442,11 +447,16 @@ common_dark = {
         [],
         ["TRUE", Color("#808080")],
     ),
+    # The syntax highlighting is only highlighting the basic "types",
+    # they are much more of them under the "class" tag coming from the
+    # semanticToken request, use the same value which is coming
+    # from darkside["types"] defined in colorschemes.py
+    "class": ("DEFAULT", Rgba(142, 105, 201), transparent),
     # Variables, parameters and enums
     "variable": ("DEFAULT", Color("#9CDCFE"), transparent),
     "enummember": ("DEFAULT", Color("#9CDCFE"), transparent),
     "parameter": ("ITALIC", Color("#9CDCFE"), transparent),
-    # Read-only (non-writable) variables — bold variant, color inherited from base
+    # Read-only (non-writable) variables => bold variant, color inherited from base
     "variable.readonly": ("BOLD", transparent, transparent),
     "enummember.static": ("BOLD", transparent, transparent),
     # Deprecated: gray strikethrough fallback (used by semantic_tokens.adb)
