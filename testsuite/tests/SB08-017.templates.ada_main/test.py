@@ -31,8 +31,9 @@ def create_ada_main(unit_name):
 
     # Confirm that we want to add this new unit as a main
     dialog = get_window_by_title("Confirmation")
+    prj_view_changed = hook("project_view_changed")
     get_stock_button(dialog, STOCK_YES).clicked()
-    yield hook("project_view_changed")
+    yield prj_view_changed
 
 
 @run_test_driver
