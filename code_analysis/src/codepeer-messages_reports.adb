@@ -1067,10 +1067,17 @@ package body CodePeer.Messages_Reports is
    is
       pragma Unreferenced (Object);
 
+      Saved_Model : constant Gtk_Tree_Model := Self.Analysis_View.Get_Model;
    begin
+      --  Detach tree view model before bulk update to avoid invalidating
+      --  live GtkTreeIters held by the view.
+      Self.Analysis_View.Set_Model (Null_Gtk_Tree_Model);
+
       Self.Analysis_Model.Set_Visible_Message_Categories
         (Self.Warning_Categories_Editor.Get_Visible_Items.Union
            (Self.Check_Categories_Editor.Get_Visible_Items));
+
+      Self.Analysis_View.Set_Model (Saved_Model);
 
       Emit_By_Name (Self.Get_Object, Signal_Criteria_Changed & ASCII.NUL);
    end On_Categories_Criteria_Changed;
@@ -1086,9 +1093,16 @@ package body CodePeer.Messages_Reports is
    is
       pragma Unreferenced (Object);
 
+      Saved_Model : constant Gtk_Tree_Model := Self.Analysis_View.Get_Model;
    begin
+      --  Detach tree view model before bulk update to avoid invalidating
+      --  live GtkTreeIters held by the view.
+      Self.Analysis_View.Set_Model (Null_Gtk_Tree_Model);
+
       Self.Analysis_Model.Set_Visible_CWE_Categories
         (Self.CWE_Editor.Get_Visible_Items);
+
+      Self.Analysis_View.Set_Model (Saved_Model);
 
       Emit_By_Name (Self.Get_Object, Signal_Criteria_Changed & ASCII.NUL);
    end On_CWE_Criteria_Changed;
@@ -1115,8 +1129,11 @@ package body CodePeer.Messages_Reports is
    is
       P : constant GPS.Search.Search_Pattern_Access :=
         Self.Filter.Get_Filter_Pattern;
+      Saved_Model : constant Gtk_Tree_Model := Self.Analysis_View.Get_Model;
    begin
+      Self.Analysis_View.Set_Model (Null_Gtk_Tree_Model);
       Self.Analysis_Model.Set_Pattern (P);
+      Self.Analysis_View.Set_Model (Saved_Model);
    end On_Filter_Changed;
 
    ---------------------------------
@@ -1131,9 +1148,16 @@ package body CodePeer.Messages_Reports is
    is
       pragma Unreferenced (Object);
 
+      Saved_Model : constant Gtk_Tree_Model := Self.Analysis_View.Get_Model;
    begin
+      --  Detach tree view model before bulk update to avoid invalidating
+      --  live GtkTreeIters held by the view.
+      Self.Analysis_View.Set_Model (Null_Gtk_Tree_Model);
+
       Self.Analysis_Model.Set_Visible_Message_Lifeages
         (To_Lifeage_Kinds_Flags (Self.Lifeage_Editor.Get_Visible_Items));
+
+      Self.Analysis_View.Set_Model (Saved_Model);
 
       --  Emit 'criteria-changed' signal.
 
@@ -1170,8 +1194,15 @@ package body CodePeer.Messages_Reports is
    is
       pragma Unreferenced (Object);
 
+      Saved_Model : constant Gtk_Tree_Model := Self.Analysis_View.Get_Model;
    begin
+      --  Detach tree view model before bulk update to avoid invalidating
+      --  live GtkTreeIters held by the view.
+      Self.Analysis_View.Set_Model (Null_Gtk_Tree_Model);
+
       Self.Set_Visible_Ranking_Categories;
+
+      Self.Analysis_View.Set_Model (Saved_Model);
 
       --  Emit 'criteria-changed' signal.
 
@@ -1216,8 +1247,15 @@ package body CodePeer.Messages_Reports is
    is
       pragma Unreferenced (Object);
 
+      Saved_Model : constant Gtk_Tree_Model := Self.Analysis_View.Get_Model;
    begin
+      --  Detach tree view model before bulk update to avoid invalidating
+      --  live GtkTreeIters held by the view.
+      Self.Analysis_View.Set_Model (Null_Gtk_Tree_Model);
+
       Self.Set_Visible_Message_Status;
+
+      Self.Analysis_View.Set_Model (Saved_Model);
 
       Emit_By_Name (Self.Get_Object, Signal_Criteria_Changed & ASCII.NUL);
    end On_Audit_Statuses_Changed;
@@ -1227,8 +1265,11 @@ package body CodePeer.Messages_Reports is
    ------------
 
    procedure Update (Self : access Messages_Report_Record'Class) is
+      Saved_Model : constant Gtk_Tree_Model := Self.Analysis_View.Get_Model;
    begin
+      Self.Analysis_View.Set_Model (Null_Gtk_Tree_Model);
       Self.Analysis_Model.Reconstruct;
+      Self.Analysis_View.Set_Model (Saved_Model);
    end Update;
 
    ---------------------
