@@ -1038,9 +1038,7 @@ package body GPS.LSP_Client.Editors.Semantic_Tokens is
 
                Line := Prev_Line + Natural (Result.data.Element (Index));
 
-               if Line = Self.From + 1 then
-                  --  Tooltip's line has been found: add +1 since
-                  --  LSP lines are 0-based.
+               if Line = Self.From then
 
                   if Line = Prev_Line then
                      --  relative char position
@@ -1094,7 +1092,7 @@ package body GPS.LSP_Client.Editors.Semantic_Tokens is
                   end if;
                end if;
 
-               exit when Line > Self.From + 1; --  we passsed over the line
+               exit when Line > Self.From; --  we passsed over the line
 
                Prev_Line := Line;
                Prev_Char := Char;
@@ -1439,7 +1437,7 @@ package body GPS.LSP_Client.Editors.Semantic_Tokens is
       if GPS.Kernel.Preferences.LSP_Show_Semantic_Tooltip.Get_Pref then
          Send_Request
            (Kernel  => Module.Get_Kernel,
-            Data    => (File, Line - 1, Line),
+            Data    => (File, Line, Line + 1),
             Request => Request,
             Is_Sent => Result);
 
