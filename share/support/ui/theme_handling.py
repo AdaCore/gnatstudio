@@ -346,11 +346,6 @@ common_light = {
         [],
         ["TRUE", Color("#808080")],
     ),
-    # The syntax highlighting is only highlighting the basic "types",
-    # they are much more of them under the "class" tag coming from the
-    # semanticToken request, use the same value which is coming
-    # from default["types"] defined in colorschemes.py
-    "class": ("DEFAULT", Rgba(0, 153, 0), transparent),
     # Variables, parameters and enums
     "variable": ("DEFAULT", Color("#267F99"), transparent),
     "enummember": ("DEFAULT", Color("#267F99"), transparent),
@@ -447,11 +442,6 @@ common_dark = {
         [],
         ["TRUE", Color("#808080")],
     ),
-    # The syntax highlighting is only highlighting the basic "types",
-    # they are much more of them under the "class" tag coming from the
-    # semanticToken request, use the same value which is coming
-    # from darkside["types"] defined in colorschemes.py
-    "class": ("DEFAULT", Rgba(142, 105, 201), transparent),
     # Variables, parameters and enums
     "variable": ("DEFAULT", Color("#9CDCFE"), transparent),
     "enummember": ("DEFAULT", Color("#9CDCFE"), transparent),
@@ -631,6 +621,12 @@ class Theme(object):
         for t in styles_tokens:
             if t in self.d:
                 apply_val(ensure_style(t, "Editor default"), self.d[t])
+
+        # The "class" semantic token reuses the color of the
+        # user-configurable "Types" preference so that types and classes
+        # are highlighted identically.
+        if "class" not in self.d and "types" in self.d:
+            apply_val(ensure_style("class", "Editor default"), self.d["types"])
 
         # Create the "deprecated" fallback style used when a token has the
         # deprecated modifier but no type-specific deprecated variant exists.
