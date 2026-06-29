@@ -1246,11 +1246,13 @@ package body Src_Editor_Buffer is
 
    procedure Run_Highlight_Range_Hook (Buffer : Source_Buffer)
    is
-      Start_Iter : Gtk_Text_Iter;
-      End_Iter   : Gtk_Text_Iter;
-      First_Line : Glib.Gint;
-      Last_Line  : Glib.Gint;
-      Whole_File : Boolean;
+      Start_Iter    : Gtk_Text_Iter;
+      End_Iter      : Gtk_Text_Iter;
+      First_Line    : Glib.Gint;
+      Last_Line     : Glib.Gint;
+      Whole_File    : Boolean;
+      From_Editable : Editable_Line_Type;
+      To_Editable   : Editable_Line_Type;
    begin
       if not Buffer.Highlighter.Highlight_Needed then
          return;
@@ -1271,14 +1273,32 @@ package body Src_Editor_Buffer is
       Whole_File := Get_Line (Start_Iter) = First_Line
         and then Get_Line (End_Iter) = Last_Line;
 
-      --  If we are going to highlight whole file then set From+Line = 0, so
+      --  Convert buffer lines to editable lines. The buffer may contain
+      --  special (non-file) lines (e.g. inline annotations from GNATSAS),
+      --  so raw buffer line numbers can exceed the actual file line count.
+      --  The LSP semantic highlighter works on file lines only.
+
+      From_Editable := Get_Editable_Line
+        (Buffer, Buffer_Line_Type (Get_Line (Start_Iter) + 1));
+      To_Editable := Get_Editable_Line
+        (Buffer, Buffer_Line_Type (Get_Line (End_Iter) + 1));
+
+      --  If marks point to special lines, fall back to safe defaults
+      if From_Editable = 0 then
+         From_Editable := 1;
+      end if;
+      if To_Editable = 0 then
+         To_Editable := Buffer.Last_Editable_Line;
+      end if;
+
+      --  If we are going to highlight whole file then set From_Line = 0, so
       --  LSP semantic highlighter could use "full" request.
       Highlight_Range_Hook.Run
         (Kernel    => Buffer.Kernel,
          File      => Buffer.Filename,
          From_Line =>
-           (if Whole_File then 0 else Natural (Get_Line (Start_Iter) + 1)),
-         To_Line   => Natural (Get_Line (End_Iter) + 1));
+           (if Whole_File then 0 else Natural (From_Editable)),
+         To_Line   => Natural (To_Editable));
 
       Buffer.Highlighter.Highlight_Needed := False;
    end Run_Highlight_Range_Hook;
