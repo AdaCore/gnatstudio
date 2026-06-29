@@ -1298,8 +1298,9 @@ package body GPS.LSP_Client.Editors.Semantic_Tokens is
    is
       use type GPS.LSP_Client.Language_Servers.Language_Server_Access;
 
-      Server  : GPS.LSP_Client.Language_Servers.Language_Server_Access;
-      Version : Integer := 0;
+      Server     : GPS.LSP_Client.Language_Servers.Language_Server_Access;
+      Version    : Integer := 0;
+      Line_Count : Natural := 0;
 
       function Send_Full_Request
         (Kernel : not null access Kernel_Handle_Record'Class;
@@ -1390,7 +1391,8 @@ package body GPS.LSP_Client.Editors.Semantic_Tokens is
                Is_Sent := True;
                return;
             else
-               Version := Buffer.Version;
+               Version    := Buffer.Version;
+               Line_Count := Natural (Buffer.Lines_Count);
             end if;
          end;
 
@@ -1399,7 +1401,8 @@ package body GPS.LSP_Client.Editors.Semantic_Tokens is
                Is_Sent := Send_Full_Request (Kernel, Data.File);
             else
                Is_Sent := Send_Range_Request
-                 (Kernel, Data.File, Data.From, Data.To);
+                 (Kernel, Data.File, Data.From,
+                  Integer'Min (Data.To, Line_Count));
             end if;
 
          else
