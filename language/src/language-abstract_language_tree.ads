@@ -353,7 +353,7 @@ package Language.Abstract_Language_Tree is
 
    No_Semantic_Node : constant Semantic_Node'Class;
    No_Semantic_Tree : constant Semantic_Tree'Class;
-   function No_Semantic_Node_Array    return Semantic_Node_Array'Class;
+   No_Semantic_Node_Array : constant Semantic_Node_Array'Class;
    function No_Semantic_Tree_Iterator return Semantic_Tree_Iterator'Class;
 
 private
@@ -366,8 +366,7 @@ private
 
    overriding function Get
      (Self        : Dummy_Semantic_Node_Array;
-      Dummy_Index : Positive) return Semantic_Node'Class
-   is (No_Semantic_Node);
+      Dummy_Index : Positive) return Semantic_Node'Class;
 
    overriding function Length
      (Self : Dummy_Semantic_Node_Array) return Natural
@@ -385,8 +384,7 @@ private
    type Dummy_Semantic_Node is new Semantic_Node with null record;
 
    overriding function First_Child
-     (Self : Dummy_Semantic_Node) return Semantic_Node'Class
-   is (No_Semantic_Node);
+     (Self : Dummy_Semantic_Node) return Semantic_Node'Class;
 
    overriding function Sloc_Def
      (Self : Dummy_Semantic_Node) return Sloc_T is (0, 0, 0);
@@ -408,12 +406,10 @@ private
      (Self : Dummy_Semantic_Node) return Boolean is (False);
 
    overriding function Children
-     (Self : Dummy_Semantic_Node) return Semantic_Node_Array'Class
-   is (No_Semantic_Node_Array);
+     (Self : Dummy_Semantic_Node) return Semantic_Node_Array'Class;
 
    overriding function Parent
-     (Self : Dummy_Semantic_Node) return Semantic_Node'Class
-   is (No_Semantic_Node);
+     (Self : Dummy_Semantic_Node) return Semantic_Node'Class;
 
    overriding function Name
      (Self : Dummy_Semantic_Node) return GNATCOLL.Symbols.Symbol
@@ -433,8 +429,7 @@ private
      is (GNATCOLL.Symbols.Empty_String);
 
    overriding function Definition
-     (Self : Dummy_Semantic_Node) return Semantic_Node'Class is
-      (No_Semantic_Node);
+     (Self : Dummy_Semantic_Node) return Semantic_Node'Class;
 
    overriding function Get_Hash
      (Self : Dummy_Semantic_Node) return Hash_Type is (0);
@@ -458,8 +453,7 @@ private
      (It : in out Dummy_Semantic_Tree_Iterator) is null;
 
    overriding function Element
-     (It : Dummy_Semantic_Tree_Iterator) return Semantic_Node'Class
-   is (No_Semantic_Node);
+     (It : Dummy_Semantic_Tree_Iterator) return Semantic_Node'Class;
 
    overriding function Has_Element
      (It : Dummy_Semantic_Tree_Iterator) return Boolean is (False);
@@ -475,14 +469,13 @@ private
       (No_Semantic_Tree_Iterator);
 
    overriding function Root_Nodes
-     (Self : Dummy_Semantic_Tree) return Semantic_Node_Array'Class
-      is (No_Semantic_Node_Array);
+     (Self : Dummy_Semantic_Tree) return Semantic_Node_Array'Class;
 
    overriding function Node_At
      (Self                  : Dummy_Semantic_Tree;
       Dummy_Sloc            : Sloc_T;
       Dummy_Category_Filter : Category_Array := Null_Category_Array)
-      return Semantic_Node'Class is (No_Semantic_Node);
+      return Semantic_Node'Class;
 
    overriding function File
      (Self : Dummy_Semantic_Tree) return GNATCOLL.VFS.Virtual_File is
@@ -503,10 +496,45 @@ private
    No_Semantic_Node : constant Semantic_Node'Class :=
      Dummy_Semantic_Node'(null record);
 
+   overriding function Get
+     (Self        : Dummy_Semantic_Node_Array;
+      Dummy_Index : Positive) return Semantic_Node'Class
+   is (No_Semantic_Node);
+
+   overriding function First_Child
+     (Self : Dummy_Semantic_Node) return Semantic_Node'Class
+   is (No_Semantic_Node);
+
+   overriding function Parent
+     (Self : Dummy_Semantic_Node) return Semantic_Node'Class
+   is (No_Semantic_Node);
+
+   overriding function Definition
+     (Self : Dummy_Semantic_Node) return Semantic_Node'Class is
+      (No_Semantic_Node);
+
+   overriding function Element
+     (It : Dummy_Semantic_Tree_Iterator) return Semantic_Node'Class
+   is (No_Semantic_Node);
+
+   overriding function Node_At
+      (Self                  : Dummy_Semantic_Tree;
+       Dummy_Sloc            : Sloc_T;
+       Dummy_Category_Filter : Category_Array := Null_Category_Array)
+      return Semantic_Node'Class is (No_Semantic_Node);
+
    No_Semantic_Tree : constant Semantic_Tree'Class :=
      Dummy_Semantic_Tree'(null record);
 
-   function No_Semantic_Node_Array return Semantic_Node_Array'Class is
-     (Dummy_Semantic_Node_Array'(null record));
+   No_Semantic_Node_Array : constant Semantic_Node_Array'Class :=
+     Dummy_Semantic_Node_Array'(null record);
+
+   overriding function Children
+     (Self : Dummy_Semantic_Node) return Semantic_Node_Array'Class
+   is (No_Semantic_Node_Array);
+
+   overriding function Root_Nodes
+     (Self : Dummy_Semantic_Tree) return Semantic_Node_Array'Class
+      is (No_Semantic_Node_Array);
 
 end Language.Abstract_Language_Tree;
