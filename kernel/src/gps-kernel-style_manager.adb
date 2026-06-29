@@ -156,11 +156,13 @@ package body GPS.Kernel.Style_Manager is
       Style.Foreground := Shade_Or_Lighten (C, Source.Shade_Amount);
 
       if Style.Is_Background_Inherited then
-         C := Source.Source_Style.Background;
+         --  Explicit background conflict with the line highlighting,
+         --  it's better to set it to a transparent background.
+         Style.Background := Null_RGBA;
       else
          C := Style.Self_Background;
+         Style.Background := Shade_Or_Lighten (C, Source.Shade_Amount);
       end if;
-      Style.Background := Shade_Or_Lighten (C, Source.Shade_Amount);
 
       if Style.Is_Variant_Inherited then
          Style.Variant := Source.Source_Style.Variant;
