@@ -285,7 +285,7 @@ package body Task_Manager is
          for J in Manager.Queues'Range loop
             if Manager.Queues (J).Status = Completed then
                GPS.Kernel.Hooks.Task_Finished_Hook.Run (Manager.Kernel);
-               Free (Command_Lists.List (Manager.Queues (J).Queue));
+               Free (Manager.Queues (J).Queue);
             end if;
          end loop;
 
