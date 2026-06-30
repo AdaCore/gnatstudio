@@ -162,7 +162,7 @@ package body Vector_Tries is
          List.Name := Symbols.Find (Name);
          List.Data :=
            new Data_Vector.Lazy_Vector_Record;
-         Insert (Vector_Trie (Trie.all), List);
+         Insert (Trie.all, List);
       end if;
 
       return List;
