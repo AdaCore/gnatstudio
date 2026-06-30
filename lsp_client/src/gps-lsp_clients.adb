@@ -1002,6 +1002,9 @@ package body GPS.LSP_Clients is
       function Get_Supported_CodeActionKinds
         return LSP.Messages.CodeActionKindSet;
 
+      function Get_Supported_Symbols
+         return LSP.Messages.SymbolKindSet;
+
       function Get_Experimental_Features return LSP.Types.LSP_Any;
       --  Return the selection of experimental features that are supported
 
@@ -1087,6 +1090,22 @@ package body GPS.LSP_Clients is
          return LSP.Messages.CodeActionKindSet (Result);
       end Get_Supported_CodeActionKinds;
 
+      ---------------------------
+      -- Get_Supported_Symbols --
+      ---------------------------
+
+      function Get_Supported_Symbols
+         return LSP.Messages.SymbolKindSet
+      is
+         Result : LSP.Messages.SymbolKindSets.Set;
+      begin
+         for Kind in LSP.Messages.SymbolKind loop
+            LSP.Messages.SymbolKindSets.Include (Result, Kind);
+         end loop;
+
+         return LSP.Messages.SymbolKindSet (Result);
+      end Get_Supported_Symbols;
+
       Root   : constant GNATCOLL.VFS.Virtual_File :=
         GPS.Kernel.Project.Get_Project (Self.Kernel).Project_Path.Dir;
       --  ??? Root directory of the project is directoy where
@@ -1118,6 +1137,17 @@ package body GPS.LSP_Clients is
                fileOperations =>
                  (Is_Set => True,
                   Value  => (didRename => (True, True), others => <>)),
+               symbol =>
+                 (Is_Set => True,
+                  Value  =>
+                    (symbolKind =>
+                         (Is_Set => True,
+                          Value  =>
+                            (valueSet =>
+                               (Is_Set => True,
+                                Value  => Get_Supported_Symbols))
+                         ),
+                     others     => <>)),
                others         => <>),
             textDocument =>
               (hover              => (Is_Set => True, others => <>),
