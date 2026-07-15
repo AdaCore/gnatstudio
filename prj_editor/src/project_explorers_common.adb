@@ -1022,6 +1022,9 @@ package body Project_Explorers_Common is
       Iter := Self.Tree.Convert_To_Store_Iter (Filter_Iter);
 
       if Iter /= Null_Iter then
+         Area.X := 1; --  Set tooltip area from the line start
+         --               to cover the icon
+
          Self.Set_Tip_Area (Area);
          Node_Type := Self.Tree.Get_Node_Type (Iter);
 
