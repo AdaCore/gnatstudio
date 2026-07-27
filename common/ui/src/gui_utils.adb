@@ -984,9 +984,11 @@ package body GUI_Utils is
    procedure Search_Entity_Bounds
      (Start_Iter : in out Gtk.Text_Iter.Gtk_Text_Iter;
       End_Iter   : out Gtk.Text_Iter.Gtk_Text_Iter;
-      Maybe_File : Boolean := False)
+      Maybe_File : Boolean := False;
+      Extend     : Boolean := False)
    is
       Ignored : Boolean;
+      Current : Gunichar;
    begin
       --  Search forward the end of the entity...
       Copy (Source => Start_Iter, Dest => End_Iter);
@@ -1017,8 +1019,15 @@ package body GUI_Utils is
          while not Is_Start (Start_Iter) loop
             Backward_Char (Start_Iter, Ignored);
 
-            if not Is_Operator_Letter (Gunichar'(Get_Char (Start_Iter))) then
-               Forward_Char (Start_Iter, Ignored);
+            Current := Gunichar'(Get_Char (Start_Iter));
+            if not Is_Operator_Letter (Current) then
+               if not Extend or else
+                 (not Is_Dot (Current)
+                  and then not Is_Blank (Current))
+               then
+                  Forward_Char (Start_Iter, Ignored);
+               end if;
+
                exit;
             end if;
          end loop;
@@ -1033,8 +1042,15 @@ package body GUI_Utils is
          while not Is_Start (Start_Iter) loop
             Backward_Char (Start_Iter, Ignored);
 
-            if not Is_Entity_Letter (Gunichar'(Get_Char (Start_Iter))) then
-               Forward_Char (Start_Iter, Ignored);
+            Current := Gunichar'(Get_Char (Start_Iter));
+            if not Is_Entity_Letter (Current) then
+               if not Extend or else
+                 (not Is_Dot (Current)
+                  and then not Is_Blank (Current))
+               then
+                  Forward_Char (Start_Iter, Ignored);
+               end if;
+
                exit;
             end if;
          end loop;

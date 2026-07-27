@@ -16,6 +16,7 @@
 ------------------------------------------------------------------------------
 
 with Ada.Characters.Handling;           use Ada.Characters.Handling;
+with Ada.Characters.Wide_Wide_Latin_1;
 with Ada.Containers;                    use Ada.Containers;
 with Ada.Float_Text_IO;
 with Ada.Strings.Hash;
@@ -1198,6 +1199,25 @@ package body String_Utils is
    begin
       return Char = '_' or else Is_Alphanumeric (Char);
    end Is_Entity_Letter;
+
+   ------------
+   -- Is_Dot --
+   ------------
+
+   function Is_Dot (Char : Wide_Wide_Character) return Boolean is
+   begin
+      return Char = '.';
+   end Is_Dot;
+
+   --------------
+   -- Is_Blank --
+   --------------
+
+   function Is_Blank (Char : Wide_Wide_Character) return Boolean is
+   begin
+      return Char = Ada.Characters.Wide_Wide_Latin_1.Space
+        or else Char = Ada.Characters.Wide_Wide_Latin_1.HT;
+   end Is_Blank;
 
    ------------------------
    -- Is_Operator_Letter --

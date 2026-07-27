@@ -250,7 +250,7 @@ package body Src_Editor_Box.Tooltips is
       procedure Get_Line_Area is
       begin
          Get_Iter_At_Line_Offset (Box.Source_Buffer, Start_Iter, Line, Col);
-         Search_Entity_Bounds (Start_Iter, End_Iter);
+         Search_Entity_Bounds (Start_Iter, End_Iter, Extend => True);
          Get_Screen_Position (Box.Source_Buffer, Start_Iter, Line, Col);
 
          Get_Iter_Location (View, Start_Iter, Location);
