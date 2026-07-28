@@ -266,7 +266,7 @@ package String_Utils is
    --  Return True if the given char is a dot character
 
    function Is_Blank (Char : Wide_Wide_Character) return Boolean with Inline;
-   --  Return True if the given char is a dot character or HT
+   --  Return True if the given char is a space character or HT
 
    function Is_Operator_Letter (Char : Wide_Wide_Character) return Boolean;
    --  Return True if the given letter is a valid operator
