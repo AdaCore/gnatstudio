@@ -293,9 +293,9 @@ package GUI_Utils is
    --  Find the position of the begining and the end of the entity pointed to
    --  by Start_Iter.
    --  If Maybe_File is True, consider that the entity may be a filename.
-   --  If Extend is True, include dot symbol or space before the entity
-   --  or operator. Need for tooltips not to redraw it on the dot or space
-   --  before the entity.
+   --  If Extend is True, include dots or spaces before the entity
+   --  or the operator. Needed to avoid redrawing tooltips when hovering
+   --  on dots/spaces just before the entity.
 
    type Completion_Handler is access function
      (Input     : String;
