@@ -135,7 +135,7 @@ package String_Utils is
    function Is_Blank
      (C                 : Character;
       Include_New_Lines : Boolean := True)
-      return Boolean;
+      return Boolean with Inline;
    --  Return True if C is a blank character: HT or ' '
    --  If Include_New_Lines then also return True for CR, LF
 
@@ -262,6 +262,12 @@ package String_Utils is
    --  Return True if the given letter is a valid letter for an entity name
    --  (ie if the letter is either alphanumeric or an '_').
 
+   function Is_Dot (Char : Wide_Wide_Character) return Boolean with Inline;
+   --  Return True if the given char is a dot character
+
+   function Is_Blank (Char : Wide_Wide_Character) return Boolean with Inline;
+   --  Return True if the given char is a space character or HT
+
    function Is_Operator_Letter (Char : Wide_Wide_Character) return Boolean;
    --  Return True if the given letter is a valid operator
 
@@ -353,7 +359,6 @@ package String_Utils is
    --  A generic hashing function working on String keys
 
 private
-   pragma Inline (Is_Blank);
    pragma Inline (Looking_At);
    pragma Inline (Skip_To_Char);
    pragma Inline (Compare);

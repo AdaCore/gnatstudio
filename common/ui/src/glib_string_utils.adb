@@ -42,6 +42,24 @@ package body Glib_String_Utils is
       return Is_Entity_Letter (Wide_Wide_Character'Val (Char));
    end Is_Entity_Letter;
 
+   ------------
+   -- Is_Dot --
+   ------------
+
+   function Is_Dot (Char : Glib.Gunichar) return Boolean is
+   begin
+      return Is_Dot (Wide_Wide_Character'Val (Char));
+   end Is_Dot;
+
+   --------------
+   -- Is_Blank --
+   --------------
+
+   function Is_Blank (Char : Glib.Gunichar) return Boolean is
+   begin
+      return Is_Blank (Wide_Wide_Character'Val (Char));
+   end Is_Blank;
+
    --------------------
    -- Is_File_Letter --
    --------------------

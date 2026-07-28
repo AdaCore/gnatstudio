@@ -30,6 +30,12 @@ package Glib_String_Utils is
    --  Return True if the given letter is a valid letter for an entity name
    --  (ie if the letter is either alphanumeric or an '_').
 
+   function Is_Dot (Char : Glib.Gunichar) return Boolean with Inline;
+   --  Return True if the given char is a dot character
+
+   function Is_Blank (Char : Glib.Gunichar) return Boolean with Inline;
+   --  Return True if the given char is a space character or HT
+
    function Is_File_Letter (Char : Glib.Gunichar) return Boolean;
    pragma Inline (Is_File_Letter);
    --  Return True if the given letter is a valid letter for a file name.
