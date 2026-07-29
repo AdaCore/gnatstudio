@@ -2104,10 +2104,8 @@ procedure GPS.Main is
 
    end Error_Message;
 
-   Registered  : Boolean;
    Status      : Glib.Gint;
    Application : GPS_Application;
-   pragma Unreferenced (Registered);
 
 begin
    --  Process the "--version" command line switch separately to make it
@@ -2205,7 +2203,9 @@ begin
    Application.On_Open (File_Open_Callback'Unrestricted_Access);
    Application.On_Shutdown (Shutdown_Callback'Unrestricted_Access);
 
-   Registered := Application.Register (Cancellable => null);
+   --  Do not call Application.Register here: registration must happen after
+   --  Local_Command_Line (during Application.Run) so that it can adjust the
+   --  Non_Unique flag on Windows before the uniqueness check occurs.
 
    Status := Application.Run;
 
