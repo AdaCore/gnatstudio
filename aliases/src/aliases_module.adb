@@ -1867,9 +1867,6 @@ package body Aliases_Module is
       Widget_Callback.Object_Connect
         (Button, Gtk.Button.Signal_Clicked, Alias_Deleted'Access, Editor);
 
-      Gtk_New_Vseparator (Sep);
-      Pack_Start (Get_Action_Area (Editor), Sep, Expand => False);
-
       W := Add_Button (Editor, Stock_Ok, Gtk_Response_OK);
       W := Add_Button (Editor, Stock_Cancel, Gtk_Response_Cancel);
 
