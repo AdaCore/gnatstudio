@@ -4099,7 +4099,7 @@ package body Src_Editor_Buffer is
          Check_Auto_Saved_File;
       end if;
 
-      Buffer.Highlighter.On_Load_File;
+      Buffer.Highlighter.Highlight_File;
 
       Buffer.Modified_Auto := False;
 
@@ -4642,18 +4642,6 @@ package body Src_Editor_Buffer is
       Buffer_Start_Iter : Gtk_Text_Iter;
       Buffer_End_Iter   : Gtk_Text_Iter;
    begin
-      if Buffer.Lang /= Lang then
-         Buffer.Lang := Lang;
-         Get_Bounds (Buffer, Buffer_Start_Iter, Buffer_End_Iter);
-
-         Buffer.Highlighter.On_Set_Language
-           (Buffer_Start_Iter, Buffer_End_Iter);
-
-         Register_Edit_Timeout (Buffer);
-
-         Buffer_Information_Changed (Buffer);
-      end if;
-
       if Buffer.Filename /= GNATCOLL.VFS.No_File then
          if Lang /= Get_Language_From_File
            (Get_Language_Handler (Buffer.Kernel), Buffer.Filename)
@@ -4674,6 +4662,19 @@ package body Src_Editor_Buffer is
             end if;
          end if;
       end if;
+
+      if Buffer.Lang /= Lang then
+         Buffer.Lang := Lang;
+         Get_Bounds (Buffer, Buffer_Start_Iter, Buffer_End_Iter);
+
+         Buffer.Highlighter.On_Set_Language
+           (Buffer_Start_Iter, Buffer_End_Iter);
+
+         Register_Edit_Timeout (Buffer);
+
+         Buffer_Information_Changed (Buffer);
+      end if;
+
       Buffer.Adjust_Tab_Width;
    end Set_Language;
 
@@ -9601,11 +9602,11 @@ package body Src_Editor_Buffer is
       Self.Highlight_Needed := Self.Use_Highlighting_Hook;
    end Highlight_Region;
 
-   ------------------
-   -- On_Load_File --
-   ------------------
+   --------------------
+   -- Highlight_File --
+   --------------------
 
-   procedure On_Load_File
+   procedure Highlight_File
      (Self : access Source_Highlighter_Record)
    is
       F, L : Gtk_Text_Iter;
@@ -9623,7 +9624,7 @@ package body Src_Editor_Buffer is
       Move_Mark (Self.Buffer, Self.First_Highlight_Mark, F);
       Move_Mark (Self.Buffer, Self.Last_Highlight_Mark, L);
       Self.Highlight_Region;
-   end On_Load_File;
+   end Highlight_File;
 
    ---------------------
    -- On_Set_Language --
@@ -9634,6 +9635,7 @@ package body Src_Editor_Buffer is
       Start_Iter : Gtk_Text_Iter;
       End_Iter   : Gtk_Text_Iter) is
    begin
+      Self.Highlight_File;
       Self.Update_Use_Highlighting_Hook;
 
       --  Do not try to highlight an empty buffer

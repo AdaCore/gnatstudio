@@ -851,10 +851,13 @@ package body Src_Editor_Module.Commands is
       Ignore      : Gtk_Widget;
       pragma Unreferenced (Ignore);
 
+      Child : constant Gtkada.MDI.MDI_Child :=
+        Get_Focus_Child (Get_MDI (Kernel));
    begin
-      Buffer :=
-        Get_Buffer
-          (Get_Source_Box_From_MDI (Get_Focus_Child (Get_MDI (Kernel))));
+      if Is_Source_Box (Child) then
+         Buffer := Get_Buffer (Get_Source_Box_From_MDI (Child));
+      end if;
+
       if Buffer = null then
          return Failure;
       end if;

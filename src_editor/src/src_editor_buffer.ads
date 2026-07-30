@@ -2022,8 +2022,8 @@ private
    procedure Highlight_Region (Self : access Source_Highlighter_Record);
    --  Highlight the region marked by the highlight marks in the editor
 
-   procedure On_Load_File (Self : access Source_Highlighter_Record);
-   --  Called when load a file
+   procedure Highlight_File (Self : access Source_Highlighter_Record);
+   --  Highlight whole file if needed
 
    procedure On_Set_Language
      (Self       : access Source_Highlighter_Record;
