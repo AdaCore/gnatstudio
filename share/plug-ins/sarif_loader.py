@@ -42,11 +42,11 @@ class LoadedData:
 
     def add_file(self, sarif_file):
         if sarif_file.path in [f.path for f in self.files]:
-            GPS.Console("Message").write(
-                "%s has already been loaded into the Analysis view" % str(path)
+            GPS.Console("Messages").write(
+                f"{sarif_file.path} has already been loaded into the Analysis view\n"
             )
         else:
-            self.files[path] = sarif_file
+            self.files.append(sarif_file)
 
 
 class PreparedReplacement:
@@ -85,8 +85,7 @@ current_data = LoadedData()
 def log_exception(file, e):
     if file:
         GPS.Console("Messages").write(
-            "Failed to load SARIF file '%s'. Check GNAT Studio's log file for more information.\n"
-            % str(file),
+            f"Failed to load SARIF file '{file}'. Check GNAT Studio's log file for more information.\n",
             mode="error",
         )
     GPS.Logger("SARIF").log(str(e))
