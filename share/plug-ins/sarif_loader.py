@@ -1,12 +1,3 @@
-import GPS
-import json
-import os.path
-from urllib.parse import urlparse, unquote
-from gi.repository import Gdk, GLib, Gtk
-from gs_utils import interactive
-from pygps import place_window_under_cursor
-from theme_handling import Color
-
 """
 This Sarif plugin creates several actions to load Sarif files in the Analysis
 view.
@@ -14,6 +5,16 @@ view.
 You can access the action via the menu "Analyze > Load SARIF"
 Or the contextual menu "Load current SARIF file"
 """
+
+import json
+import os.path
+from urllib.parse import urlparse, unquote
+
+import GPS
+from gi.repository import Gdk, GLib, Gtk
+from gs_utils import interactive
+from pygps import place_window_under_cursor
+from theme_handling import Color
 
 MENU_PATH = "Analyze/SARIF/"
 
