@@ -828,13 +828,15 @@ def fuzz_subp_workflow():
     # what "fuzz" reads to know which harnesses to run. Without this,
     # "gnatfuzz fuzz" exits with "No build configuration found".
     harness_gpr = os.path.join(fuzz_dir, "fuzz_testing", "fuzz_test.gpr")
-    p = TargetWrapper("gnattest build")
+    p = TargetWrapper("gnattest gnatfuzz build")
     r = yield p.wait_on_execute(
         extra_args=["-P", harness_gpr],
         force=force,
     )
     if r != 0:
-        GPS.Console("Messages").write('"gnattest build" execution failed', mode="error")
+        GPS.Console("Messages").write(
+            '"gnattest gnatfuzz build" execution failed', mode="error"
+        )
         return
 
     # Now onto fuzzing: execute the GNATfuzz fuzz workflow. Run it in a

@@ -355,7 +355,7 @@ class GNATfuzzPlugin(Module):
             "target",
             model="gnatfuzz-build-model",
             category="_GNATfuzz_",
-            name="gnattest build",
+            name="gnattest gnatfuzz build",
             menu="",
         ).children(
             X("target-type").children(""),
