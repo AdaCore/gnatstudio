@@ -6,8 +6,10 @@ You can access the action via the menu "Analyze > Load SARIF"
 Or the contextual menu "Load current SARIF file"
 """
 
+from dataclasses import dataclass
 import json
 import os.path
+from typing import Any
 from urllib.parse import urlparse, unquote
 
 import GPS
@@ -26,6 +28,24 @@ class SarifFile:
 
     def get_runs(self):
         return self.data.get("runs", [])
+
+
+@dataclass
+class RuleReference:
+    """
+    Data class used to designate an enabled rule in a SARIF report, either by
+    its identifier or its index.
+    """
+
+    id: str | None
+    """
+    Identifier of the designated rule, may be null.
+    """
+
+    index: int | None
+    """
+    Index of the designated rule in the driver "rules" array field.
+    """
 
 
 class LoadedData:
@@ -91,7 +111,7 @@ def log_exception(file, e):
     GPS.Logger("SARIF").log(str(e))
 
 
-def get_severity(result):
+def get_severity(run, rule, rule_index, result):
     """
     This section is copied from sarif-tools and is following
     https://docs.oasis-open.org/sarif/sarif/v2.1.0/sarif-v2.1.0.html#_Toc141790898
@@ -106,41 +126,30 @@ def get_severity(result):
     if kind and kind != "fail":
         return "none"
 
-    # If kind has the value "fail" and level is absent, then...
-    rule, ruleIndex = read_result_rule(result, run)
-    if rule:
-        # Honor the invocation's configuration override if present...
-        invocation = read_result_invocation(result, run)
-        if invocation:
-            ruleConfigurationOverrides = invocation.get(
-                "ruleConfigurationOverrides", []
-            )
-            override = next(
-                (
-                    override
-                    for override in ruleConfigurationOverrides
-                    if (
-                        override.get("descriptor", {}).get("id") == rule.get("id")
-                        or override.get("descriptor", {}).get("index") == ruleIndex
-                    )
-                ),
-                None,
-            )
+    # If kind has the value "fail" and level is absent, then honor the
+    # invocation's configuration override if present.
+    invocation = get_result_invocation(run, result)
+    if invocation:
+        ruleConfigurationOverrides = invocation.get("ruleConfigurationOverrides", [])
+        override = next(
+            (
+                override
+                for override in ruleConfigurationOverrides
+                if (
+                    override.get("descriptor", {}).get("id") == rule.get("id")
+                    or override.get("descriptor", {}).get("index") == rule_index
+                )
+            ),
+            {},
+        )
 
-            if override:
-                overrideLevel = override.get("configuration", {}).get("level")
-                if overrideLevel:
-                    return overrideLevel
+        overrideLevel = override.get("configuration", {}).get("level")
+        if overrideLevel:
+            return overrideLevel
 
-        # Otherwise, use the rule's default configuraiton if present...
-        defaultConfiguration = rule.get("defaultConfiguration")
-        if defaultConfiguration:
-            severity = defaultConfiguration.get("level")
-            if severity:
-                return severity
-
-    # Otherwise, fall back to warning
-    return "warning"
+    # Otherwise, look in the rule descriptor for the level and if there isn't,
+    # return "warning" that is the default result level.
+    return rule.get("defaultConfiguration", {}).get("level", "warning")
 
 
 def severity_to_importance(severity):
@@ -263,14 +272,68 @@ def get_tool_name(run, result):
     return run.get("tool", {}).get("driver", {}).get("name", "Sarif Loader")
 
 
-def get_rule(result):
+def get_result_rule_reference(result: dict[str, Any]) -> RuleReference:
     """
-    Return the rule for message
+    Return the reference object representing the rule the provided `result`
+    refers to.
+    """
+    sarif_desc = result.get("rule", {})
+    sarif_desc["id"] = result.get("ruleId", sarif_desc.get("id"))
+    sarif_desc["index"] = result.get("ruleIndex", sarif_desc.get("index"))
+    return RuleReference(sarif_desc["id"], sarif_desc["index"])
 
-    :type location: Dict
-    :param location: json data loaded from a sarif file
+
+def get_result_invocation(
+    run: dict[str, Any],
+    result: dict[str, Any],
+) -> dict[str, Any] | None:
     """
-    return result.get("ruleId", "")
+    Return the invocation object related to the provided `result` declared in
+    the specified `run`.
+    This function may return `None` if there is no invocation related to the
+    result.
+    """
+    all_invocations = run.get("invocations", [])
+    invocation_index = result.get("provenance", {}).get("invocationIndex", 0)
+    if invocation_index >= 0 and invocation_index < len(all_invocations):
+        return all_invocations[invocation_index]
+    return None
+
+
+def get_rule_by_reference(
+    run: dict[str, Any],
+    rule_reference: RuleReference,
+) -> tuple[int, dict[str, Any]] | None:
+    """
+    Get the reporting descriptor object pointed by the provided
+    `rule_reference` and its index in the rule array.
+    If there is no rule corresponding to it, this function returns `None`.
+    """
+    all_rules = run.get("tool", {}).get("driver", {}).get("rules", [])
+
+    # If the reference contains the identifier of the referenced rule, get it
+    # directly from this identifier.
+    if rule_reference.id is not None:
+        return next(
+            (
+                (i, rule)
+                for i, rule in enumerate(all_rules)
+                if rule.get("id") == rule_reference.id
+            ),
+            None,
+        )
+    # Otherwise, if the reference contains the index of the referenced rule,
+    # get the corresponding descriptor in the array of all rules.
+    elif rule_reference.index is not None:
+        rule_index = rule_reference.index
+        return (
+            (rule_index, all_rules[rule_index])
+            if rule_index >= 0 and rule_index < len(all_rules)
+            else None
+        )
+
+    # The reference is empty, return nothing
+    return None
 
 
 def normalize_file_uri(uri):
@@ -659,15 +722,17 @@ def show_fix_proposals_menu(msg, prepared_fixes):
     GPS.Hook("mdi_child_selected").add(on_child_selected)
 
 
-def create_message(tool, run, rule_id, result):
+def create_message(tool, run, rule, rule_index: int, result):
     """
     Create a message for result.
 
     :type tool: GPS.AnalysisTool
     :param tool: Tool which has generated the report
 
-    :type rule_id: str
-    :param rule_id: The name of the rule for result
+    :type rule: Dict
+    :param rule: Rule descriptor related to the result
+
+    :param rule_index: Index of the rule in the rule array.
 
     :type result: Dict
     :param result: json data loaded from a sarif file
@@ -680,8 +745,8 @@ def create_message(tool, run, rule_id, result):
         line=line,
         column=column,
         text=get_message(result),
-        importance=severity_to_importance(get_severity(result)),
-        rule_id=rule_id,
+        importance=severity_to_importance(get_severity(run, rule, rule_index, result)),
+        rule_id=rule["id"],
         # We only want messages from create_secondary_messages
         look_for_secondary=False,
     )
@@ -768,7 +833,23 @@ def load_messages(file_set):
             results = run["results"]
 
             for result in results:
-                rule_id = get_rule(result)
+                # First, get the rule descriptor associated to the result
+                # object.
+                rule_ref = get_result_rule_reference(result)
+                rule_desc = get_rule_by_reference(run, rule_ref)
+
+                # Check that this descriptor exists
+                if rule_desc is None:
+                    GPS.Console("Messages").write(
+                        f"No existing rule associated to this SARIF result: {result}\n",
+                        mode="error",
+                    )
+                    continue
+
+                # If the rule descriptor is valid, continue by registering the
+                # result as a `GPS.Message` instance.
+                rule_index, rule = rule_desc
+                rule_id = rule["id"]
                 tool_name = get_tool_name(run, result)
                 if tool_name not in current_data.tools.keys():
                     tool = GPS.AnalysisTool(name=tool_name)
@@ -776,7 +857,9 @@ def load_messages(file_set):
                 if rule_id not in current_data.rules:
                     current_data.tools[tool_name].add_rule(rule_id, rule_id)
                     current_data.rules.append(rule_id)
-                create_message(current_data.tools[tool_name], run, rule_id, result)
+                create_message(
+                    current_data.tools[tool_name], run, rule, rule_index, result
+                )
 
     if current_data.tools:
         # Don't set a tool here, we want to show all of them
