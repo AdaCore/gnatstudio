@@ -149,14 +149,15 @@ def severity_to_importance(severity):
     if include_none or if there are any records with severity "none",
     otherwise ["error", "warning", "note"]
     """
-    if severity.lower() == "error":
-        return GPS.Message.Importance.HIGH
-    elif severity.lower() == "warning":
-        return GPS.Message.Importance.MEDIUM
-    elif severity.lower() == "note":
-        return GPS.Message.Importance.INFORMATIONAL
-    else:
-        return GPS.Message.Importance.UNSPECIFIED
+    match severity.lower():
+        case "error":
+            return GPS.Message.Importance.HIGH
+        case "warning":
+            return GPS.Message.Importance.MEDIUM
+        case "note":
+            return GPS.Message.Importance.INFORMATIONAL
+        case _:
+            return GPS.Message.Importance.UNSPECIFIED
 
 
 def load_files(filename_list):
@@ -233,12 +234,7 @@ def get_message(result):
     :param result: a sarif result extracted by sarif-tools
     """
     message_data = result["message"]
-    if "text" in message_data:
-        return message_data["text"]
-    elif "id" in message_data:
-        return message_data["id"]
-    else:
-        return ""
+    return message_data.get("text", message_data.get("id", ""))
 
 
 def get_secondary_message(result):
@@ -249,10 +245,8 @@ def get_secondary_message(result):
     :param location: a location in the threadFlows
     """
     text = get_message(result["location"])
-    nesting_level = result.get("nestingLevel", None)
-    if nesting_level:
-        text = "%s%s" % ("   " * nesting_level, text)
-    return text
+    nesting_level = result.get("nestingLevel", 0)
+    return f"{'   ' * nesting_level}{text}"
 
 
 def get_tool_name(run, result):
@@ -262,18 +256,11 @@ def get_tool_name(run, result):
     :type location: Dict
     :param location: json data loaded from a sarif file
     """
-    properties = result.get("properties", [])
-    if properties:
-        engine = properties.get("engine", "")
-        if engine:
-            return engine
+    engine = result.get("properties", {}).get("engine", None)
+    if engine is not None:
+        return engine
 
-    try:
-        return run["tool"]["driver"]["name"]
-    except Exception:
-        pass
-
-    return "Sarif Loader"
+    return run.get("tool", {}).get("driver", {}).get("name", "Sarif Loader")
 
 
 def get_rule(result):
