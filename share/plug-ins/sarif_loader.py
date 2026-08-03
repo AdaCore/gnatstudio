@@ -175,7 +175,7 @@ def load_files(filename_list):
                 with open(filename, encoding="utf-8-sig") as f:
                     data = json.load(f)
                 sarif_f = SarifFile(filename, data)
-                current_data.files.append(sarif_f)
+                current_data.add_file(sarif_f)
             except Exception as e:
                 log_exception(filename, e)
         return current_data.files
