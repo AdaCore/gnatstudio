@@ -1,11 +1,18 @@
-# GNATstudio - Claude Context
+# GNAT Studio
 
-GNATstudio is an IDE for Ada/SPARK development (with C/C++ support), written in Ada with GTK+/GtkAda UI and Python scripting. Copyright AdaCore.
+GNAT Studio is an IDE for Ada/SPARK development (with C/C++ support), written in Ada with GTK+/GtkAda UI and Python scripting. Copyright AdaCore.
 
 ## Build Commands
 
+A clean checkout ships `Makefile.in`, not `Makefile`: `./configure` must be run
+once first. It generates `Makefile`, `shared.gpr` and `common/common.gpr` from
+their `.in` templates. See `INSTALL` for the list of prerequisites (GNAT,
+GtkAda, XML/Ada, Python) and how to make them visible via `GPR_PROJECT_PATH`.
+
 ```bash
+./configure --prefix=<prefix>     # once per checkout
 make                              # full build (Debug by default)
+make BUILD=Production             # optimised build
 ```
 
 ## Test Commands
@@ -13,7 +20,7 @@ make                              # full build (Debug by default)
 ```bash
 cd testsuite
 ./run.sh                  # run entire testsuite (done by the CI: do not run this)
-./run.sh tests/minimal/   # run the test found in the corresponding directory)
+./run.sh tests/minimal/   # run the test found in the corresponding directory
 ```
 
 Tests are in `testsuite/tests/`, one subdirectory per test. Each test has `test.py` (GPS scripting API) and `test.yaml` (metadata). Results go to `testsuite/out/`.
@@ -22,7 +29,7 @@ You need a X11/Xvfb display to run most tests.
 
 ## Architecture
 
-GPS uses a **plugin/kernel model**: the kernel (`kernel/`) is the mandatory core; everything else is an optional module registered at startup.
+GNAT Studio uses a **plugin/kernel model**: the kernel (`kernel/`) is the mandatory core; everything else is an optional module registered at startup.
 
 ### Module Pattern
 
@@ -32,10 +39,15 @@ Each module lives in its own directory with:
 - `src/` - Ada source files
 - `obj/` - object files
 
-Modules are registered in `gnatstudio/src/gps-main.adb`:
+Adding a new module takes three steps:
 
-1. Add `with Module_Package;` at the top
-2. Call `Module_Package.Register_Module (Kernel)` in the body
+1. Add `with "../module_name/module_name";` to `gnatstudio/gps.gpr`. That
+   project explicitly enumerates every module project and its `Source_Dirs`
+   do not cover sibling module directories, so without this the new package
+   is simply invisible to the build. (`gps_aggregated.gpr` needs no change:
+   it aggregates `gnatstudio/gps.gpr`, not the individual modules.)
+2. Add `with Module_Package;` at the top of `gnatstudio/src/gps-main.adb`
+3. Call `Module_Package.Register_Module (Kernel)` in its body
 
 ### Module Registration (Ada pattern)
 
@@ -50,16 +62,29 @@ end Module_Name;
 -- module_name.adb
 with GPS.Kernel.Modules; use GPS.Kernel, GPS.Kernel.Modules;
 package body Module_Name is
+   Module : Module_ID;
+
    procedure Register_Module
       (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
    is
-      Module : Module_ID;
    begin
+      Module := new Module_ID_Record;
       GPS.Kernel.Modules.Register_Module
          (Module, Kernel, Module_Name => "module_name");
    end Register_Module;
 end Module_Name;
 ```
+
+The allocation is mandatory: `Register_Module` writes the name, priority and
+kernel into the record it is handed, so passing a null `Module_ID` raises
+`Constraint_Error` (the comment in `gps-kernel-modules.ads` claiming a null
+module creates a fresh id is stale). Keep the `Module_ID` at library level
+rather than in `Register_Module`'s declarative part, since the kernel holds on
+to it for the whole session.
+
+To attach per-module state, derive from `Module_ID_Record` and allocate that
+instead — `type My_Module_Record is new Module_ID_Record with record ... end
+record;` — as `navigation/src/navigation_module.adb` does.
 
 ### Intermodule Communication
 
