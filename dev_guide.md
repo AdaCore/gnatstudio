@@ -2,15 +2,15 @@
 
 GNAT Studio is an IDE for Ada/SPARK development (with C/C++ support), written in Ada with GTK+/GtkAda UI and Python scripting. Copyright AdaCore.
 
+**Maintaining this file:** keep it terse. It is a map, not a manual: it says
+where to look, not what the sources already say. Never restate information
+that lives in the source comments, `INSTALL` or the user documentation — give
+a pointer to it instead, and prefer one line to a paragraph.
+
 ## Build Commands
 
-A clean checkout ships `Makefile.in`, not `Makefile`: `./configure` must be run
-once first. It generates `Makefile`, `shared.gpr` and `common/common.gpr` from
-their `.in` templates. See `INSTALL` for the list of prerequisites (GNAT,
-GtkAda, XML/Ada, Python) and how to make them visible via `GPR_PROJECT_PATH`.
-
 ```bash
-./configure --prefix=<prefix>     # once per checkout
+./configure --prefix=<prefix>     # once per checkout; prerequisites in INSTALL
 make                              # full build (Debug by default)
 make BUILD=Production             # optimised build
 ```
@@ -74,17 +74,6 @@ package body Module_Name is
    end Register_Module;
 end Module_Name;
 ```
-
-The allocation is mandatory: `Register_Module` writes the name, priority and
-kernel into the record it is handed, so passing a null `Module_ID` raises
-`Constraint_Error` (the comment in `gps-kernel-modules.ads` claiming a null
-module creates a fresh id is stale). Keep the `Module_ID` at library level
-rather than in `Register_Module`'s declarative part, since the kernel holds on
-to it for the whole session.
-
-To attach per-module state, derive from `Module_ID_Record` and allocate that
-instead — `type My_Module_Record is new Module_ID_Record with record ... end
-record;` — as `navigation/src/navigation_module.adb` does.
 
 ### Intermodule Communication
 
