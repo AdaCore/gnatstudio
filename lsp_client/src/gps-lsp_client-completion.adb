@@ -557,9 +557,10 @@ package body GPS.LSP_Client.Completion is
             Args.Execute_Command ("aliases.expand_lsp_snippet");
             Free (Args);
          end;
+      end if;
 
       --  The proposal has an attached LSP command: execute it.
-      elsif Proposal.Command.Is_Set then
+      if Proposal.Command.Is_Set then
          declare
             use GPS.LSP_Client.Editors;
 
