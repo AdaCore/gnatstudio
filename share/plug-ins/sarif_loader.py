@@ -1,7 +1,8 @@
 import GPS
 import json
 import os.path
-from gi.repository import Gtk
+from urllib.parse import urlparse, unquote
+from gi.repository import Gdk, Gtk
 from gs_utils import interactive
 
 """
@@ -43,6 +44,36 @@ class LoadedData:
             )
         else:
             self.files[path] = sarif_file
+
+
+class PreparedReplacement:
+    """A single text replacement tracked by EditorMarks."""
+
+    def __init__(
+        self, start_mark, end_mark, inserted_text, is_insertion_point, original_text
+    ):
+        self.start_mark = start_mark
+        self.end_mark = end_mark
+        self.inserted_text = inserted_text
+        self.is_insertion_point = is_insertion_point
+        self.original_text = original_text
+
+
+class PreparedChange:
+    """Set of replacements targeting a single file."""
+
+    def __init__(self, file_path, replacements):
+        self.file_path = file_path
+        self.replacements = replacements
+
+
+class PreparedFix:
+    """A SARIF fix with EditorMarks tracking replacement positions."""
+
+    def __init__(self, description, preview, changes):
+        self.description = description
+        self.preview = preview
+        self.changes = changes
 
 
 current_data = LoadedData()
@@ -189,7 +220,7 @@ def get_location(result):
             # for some errors
             file_path = logical_locations[0].get("fullyQualifiedName", None)
 
-    return (file_path, line, column)
+    return (normalize_file_uri(file_path), line, column)
 
 
 def get_message(result):
@@ -253,6 +284,285 @@ def get_rule(result):
     return result.get("ruleId", "")
 
 
+def normalize_file_uri(uri):
+    """Convert a URI to a local file path.
+
+    Handles file:// scheme and percent-encoded characters.
+    Non-file URIs and relative paths are returned as-is.
+    """
+    if not uri:
+        return uri
+    parsed = urlparse(uri)
+    if parsed.scheme == "file":
+        return unquote(parsed.path)
+    if parsed.scheme == "":
+        # Relative path or plain filename
+        return unquote(uri)
+    return uri
+
+
+def get_fixes(result):
+    """Return the list of fix objects from a SARIF result."""
+    return result.get("fixes", [])
+
+
+def get_fix_description(fix):
+    """Return the description text of a fix, or a generated default."""
+    desc = fix.get("description", {}).get("text", "")
+    if desc:
+        return desc
+    changes = fix.get("artifactChanges", [])
+    if changes:
+        files = [
+            os.path.basename(c.get("artifactLocation", {}).get("uri", ""))
+            for c in changes
+        ]
+        return "Apply changes to %s" % ", ".join(files)
+    return "Apply fix"
+
+
+def get_fix_preview_text(fix):
+    """Generate a human-readable preview of the changes in a fix."""
+    lines = []
+    desc = fix.get("description", {}).get("text", "")
+    if desc:
+        lines.append(desc)
+        lines.append("")
+
+    for change in fix.get("artifactChanges", []):
+        uri = change.get("artifactLocation", {}).get("uri", "")
+        lines.append("File: %s" % os.path.basename(uri))
+
+        for repl in change.get("replacements", []):
+            region = repl.get("deletedRegion", {})
+            sl = region.get("startLine", 0)
+            sc = region.get("startColumn", 0)
+            el = region.get("endLine", sl)
+            ec = region.get("endColumn", sc)
+            text = repl.get("insertedContent", {}).get("text", "")
+            is_insert = sl == el and sc == ec
+
+            if not is_insert and text:
+                lines.append(
+                    "  Replace L%d:%d-L%d:%d with '%s'"
+                    % (sl, sc, el, ec, text.replace("\n", "\\n"))
+                )
+            elif not is_insert:
+                lines.append("  Delete L%d:%d-L%d:%d" % (sl, sc, el, ec))
+            elif text:
+                lines.append(
+                    "  Insert '%s' at L%d:%d" % (text.replace("\n", "\\n"), sl, sc)
+                )
+        lines.append("")
+
+    return "\n".join(lines)
+
+
+def prepare_fix(fix):
+    """
+    Create EditorMarks for a fix's replacement positions.
+
+    Marks track buffer modifications automatically, so fixes can be
+    applied sequentially without coordinates becoming stale.
+    """
+    prepared_changes = []
+    for change in fix.get("artifactChanges", []):
+        uri = change.get("artifactLocation", {}).get("uri", "")
+        file_path = normalize_file_uri(uri)
+
+        try:
+            buf = GPS.EditorBuffer.get(GPS.File(file_path))
+        except Exception as e:
+            log_exception(file_path, e)
+            continue
+
+        prepared_repls = []
+        for repl in change.get("replacements", []):
+            region = repl.get("deletedRegion", {})
+            start_line = region.get("startLine", 1)
+            start_col = region.get("startColumn", 1)
+            end_line = region.get("endLine", start_line)
+            end_col = region.get("endColumn", start_col)
+            inserted = repl.get("insertedContent", {}).get("text", "")
+            is_insertion_point = start_line == end_line and start_col == end_col
+
+            start_mark = buf.at(start_line, start_col).create_mark(left_gravity=True)
+            end_mark = None
+            if not is_insertion_point:
+                # SARIF endColumn is exclusive; mark the last char to delete
+                end_mark = (buf.at(end_line, end_col) - 1).create_mark(
+                    left_gravity=False
+                )
+
+            # Snapshot the original text for later corruption check
+            if not is_insertion_point:
+                original_text = buf.get_chars(
+                    buf.at(start_line, start_col), buf.at(end_line, end_col) - 1
+                )
+            else:
+                original_text = ""
+
+            prepared_repls.append(
+                PreparedReplacement(
+                    start_mark, end_mark, inserted, is_insertion_point, original_text
+                )
+            )
+
+        prepared_changes.append(PreparedChange(file_path, prepared_repls))
+
+    return PreparedFix(
+        description=get_fix_description(fix),
+        preview=get_fix_preview_text(fix),
+        changes=prepared_changes,
+    )
+
+
+def apply_prepared_fix(prepared_fix):
+    """
+    Apply a fix using pre-created EditorMarks.
+
+    Marks automatically track buffer modifications, so this works
+    correctly even after other fixes have already been applied.
+    Refuses to apply if the code at any replacement region has been
+    manually modified since the fix was loaded.
+
+    Returns True if the fix was applied, False otherwise.
+    """
+    for change in prepared_fix.changes:
+        try:
+            buf = GPS.EditorBuffer.get(GPS.File(change.file_path))
+        except Exception as e:
+            log_exception(change.file_path, e)
+            return False
+
+        # Check that none of the regions have been manually edited
+        for repl in change.replacements:
+            if not repl.is_insertion_point:
+                current_text = buf.get_chars(
+                    repl.start_mark.location(), repl.end_mark.location()
+                )
+                if current_text != repl.original_text:
+                    GPS.Console("Messages").write(
+                        "Cannot apply fix: code has been modified since "
+                        "the fix was loaded.\n",
+                        mode="error",
+                    )
+                    return False
+
+        for repl in reversed(change.replacements):
+            if not repl.is_insertion_point:
+                buf.delete(repl.start_mark.location(), repl.end_mark.location())
+
+            if repl.inserted_text:
+                buf._insert_at_location(repl.start_mark.location(), repl.inserted_text)
+
+    return True
+
+
+def show_fix_proposals_menu(msg, prepared_fixes):
+    """
+    Display a popup menu listing fix proposals, similar to the entity
+    proposals menu used for navigation.
+    """
+    NOTES_WIDTH = 400
+    NOTES_HEIGHT = 150
+
+    menu_win = Gtk.Window(type=Gtk.WindowType.TOPLEVEL)
+    menu_win.set_type_hint(Gdk.WindowTypeHint.POPUP_MENU)
+    menu_win.set_decorated(False)
+    menu_win.set_resizable(False)
+    menu_win.set_skip_taskbar_hint(True)
+    menu_win.set_skip_pager_hint(True)
+    menu_win.set_name("fix-proposals-menu")
+    menu_win.get_style_context().add_class("menu")
+    menu_win.set_position(Gtk.WindowPosition.MOUSE)
+
+    hbox = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=0)
+    menu_win.add(hbox)
+
+    # Left: scrolled tree view with fix descriptions
+    scrolled = Gtk.ScrolledWindow()
+    scrolled.set_policy(Gtk.PolicyType.NEVER, Gtk.PolicyType.AUTOMATIC)
+    hbox.pack_start(scrolled, False, False, 0)
+
+    store = Gtk.ListStore(str, int)
+    for i, pf in enumerate(prepared_fixes):
+        store.append([pf.description, i])
+
+    tree = Gtk.TreeView(model=store)
+    renderer = Gtk.CellRendererText()
+    col = Gtk.TreeViewColumn("Fix", renderer, text=0)
+    tree.append_column(col)
+    tree.set_headers_visible(False)
+    tree.set_activate_on_single_click(True)
+    tree.set_hover_selection(True)
+    scrolled.add(tree)
+
+    # Separator
+    sep = Gtk.Separator(orientation=Gtk.Orientation.VERTICAL)
+    hbox.pack_start(sep, False, False, 0)
+
+    # Right: preview/notes area
+    notes_win = Gtk.ScrolledWindow()
+    notes_win.set_policy(Gtk.PolicyType.AUTOMATIC, Gtk.PolicyType.AUTOMATIC)
+    notes_win.set_size_request(NOTES_WIDTH, NOTES_HEIGHT)
+    notes_win.get_style_context().add_class("notes")
+    hbox.pack_start(notes_win, False, False, 0)
+
+    def close_menu():
+        try:
+            GPS.Hook("mdi_child_selected").remove(on_child_selected)
+        except Exception:
+            pass
+        menu_win.destroy()
+
+    def on_row_activated(treeview, path, column):
+        it = store.get_iter(path)
+        idx = store.get_value(it, 1)
+        close_menu()
+        try:
+            if apply_prepared_fix(prepared_fixes[idx]):
+                msg.cancel_subprogram()
+        except Exception as e:
+            log_exception(None, e)
+
+    def on_selection_changed(selection):
+        model, it = selection.get_selected()
+        if it is None:
+            return
+        idx = model.get_value(it, 1)
+        for child in notes_win.get_children():
+            notes_win.remove(child)
+        label = Gtk.Label()
+        label.set_text(prepared_fixes[idx].preview)
+        label.set_line_wrap(True)
+        label.set_xalign(0)
+        label.set_yalign(0)
+        label.set_margin_start(5)
+        label.set_margin_top(5)
+        notes_win.add(label)
+        notes_win.show_all()
+
+    def on_key_press(widget, event):
+        if event.keyval == Gdk.KEY_Escape:
+            close_menu()
+            return True
+        return False
+
+    def on_child_selected(hook_name, child):
+        close_menu()
+
+    tree.connect("row-activated", on_row_activated)
+    tree.get_selection().connect("changed", on_selection_changed)
+    menu_win.connect("key-press-event", on_key_press)
+
+    menu_win.show_all()
+    tree.grab_focus()
+
+    # Close menu when MDI focus changes (user clicks elsewhere)
+    GPS.Hook("mdi_child_selected").add(on_child_selected)
+
+
 def create_message(tool, run, rule_id, result):
     """
     Create a message for result.
@@ -280,6 +590,31 @@ def create_message(tool, run, rule_id, result):
         look_for_secondary=False,
     )
     create_secondary_messages(tool, result, msg)
+
+    fixes = get_fixes(result)
+    if fixes:
+        prepared = [prepare_fix(f) for f in fixes]
+
+        def on_fix_applied(m, f):
+            if apply_prepared_fix(f):
+                m.cancel_subprogram()
+
+        def on_fix_menu(m, f):
+            show_fix_proposals_menu(m, f)
+
+        if len(prepared) == 1:
+            pf = prepared[0]
+            msg.set_subprogram(
+                lambda m, f=pf: on_fix_applied(m, f),
+                "gps-codefix",
+                pf.description,
+            )
+        else:
+            msg.set_subprogram(
+                lambda m, f=prepared: on_fix_menu(m, f),
+                "gps-codefix",
+                "Apply fix (%d available)" % len(prepared),
+            )
 
 
 def create_secondary_messages(tool, result, primary):
