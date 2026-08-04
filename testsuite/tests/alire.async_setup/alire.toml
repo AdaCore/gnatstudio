@@ -1,0 +1,3 @@
+name = "hello"
+description = "Crate used to test GNAT Studio's Alire integration"
+version = "0.1.0"

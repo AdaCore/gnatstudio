@@ -9679,6 +9679,22 @@ class Project(object):
         """
         pass  # implemented in Ada
 
+    @staticmethod
+    def set_ignore_load_errors(ignore):
+        """
+        Controls whether the errors raised while loading a project should be
+        discarded instead of being reported in the :guilabel:`Messages` and
+        :guilabel:`Locations` views.
+
+        This is meant for the case where the project being loaded is known to
+        be an intermediate one, superseded by another load right after: the
+        Alire plugin uses it while it sets up the crate's environment, since
+        the project can't be loaded successfully before that.
+
+        :param ignore: A boolean
+        """
+        pass  # implemented in Ada
+
     def set_property(self, name, value, persistent=False):
         """
         Associates a string property with the project. This property is

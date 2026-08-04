@@ -171,6 +171,20 @@ package GPS.Kernel is
    --  Getter/Setter to ignore the saved values of the scenario variables in
    --  .gnatstudio when loading a project.
 
+   procedure Set_Ignore_Project_Load_Errors
+     (Self   : not null access Kernel_Handle_Record;
+      Status : Boolean);
+   function Get_Ignore_Project_Load_Errors
+     (Self : not null access Kernel_Handle_Record)
+      return Boolean;
+   --  Getter/Setter to discard the errors raised while loading a project,
+   --  instead of reporting them in the Messages and Locations views.
+   --
+   --  This is meant for the case where the project being loaded is known to
+   --  be an intermediate one, superseded by another load right after: the
+   --  Alire plugin uses it while it sets up the crate's environment, since
+   --  the project can't be loaded successfully before that.
+
    procedure Add_To_History
      (Handle    : access Kernel_Handle_Record;
       Key       : Histories.History_Key;
@@ -1368,6 +1382,10 @@ private
 
       Ignore_Saved_Scenario_Values : Boolean := False;
       --  Should we ignore the scenario variables values saved in .gnatstudio
+
+      Ignore_Project_Load_Errors : Boolean := False;
+      --  Should we discard the errors raised while loading a project instead
+      --  of reporting them to the user
 
       Last_Invalid_Project : Virtual_File := No_File;
       --  Set when a project was invalid and an empty project was loaded.

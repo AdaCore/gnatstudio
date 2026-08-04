@@ -1,0 +1,42 @@
+#!/bin/bash
+# Fake 'alr' executable: the real one needs the network and a toolchain.
+#
+# 'build' does not return until the test driver creates the 'sync_may_finish'
+# file, which can only happen if GNAT Studio's main loop keeps running while
+# Alire is synchronizing the crate. That is precisely what this test checks.
+
+for arg in "$@"; do
+    case "$arg" in
+        -*|=*) ;;
+        *) cmd="$arg"; break ;;
+    esac
+done
+
+case "$cmd" in
+    build)
+        echo "Synchronizing the crate..."
+        touch sync_started
+
+        # Give up after 30 seconds rather than hang the testsuite: the test
+        # then fails with a proper report instead of timing out.
+        for _ in $(seq 300); do
+            if [ -f sync_may_finish ]; then
+                echo "Build finished successfully."
+                exit 0
+            fi
+            sleep 0.1
+        done
+
+        echo "Timed out waiting for the test driver."
+        exit 1
+        ;;
+
+    show)
+        echo "  Name: hello"
+        echo "  Project_File: hello.gpr"
+        ;;
+
+    printenv)
+        echo "export ALIRE_TEST_ENV=\"alire_was_here\""
+        ;;
+esac

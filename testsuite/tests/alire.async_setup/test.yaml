@@ -1,0 +1,4 @@
+title: 'alire.async_setup'
+description: 'Test that setting up an Alire crate does not block the UI'
+skip:
+    - ['SKIP', 'env.build.os.name == "windows"']

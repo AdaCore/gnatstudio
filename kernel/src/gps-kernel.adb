@@ -577,6 +577,28 @@ package body GPS.Kernel is
       return Self.Ignore_Saved_Scenario_Values;
    end Get_Ignore_Saved_Scenario_Values;
 
+   ------------------------------------
+   -- Set_Ignore_Project_Load_Errors --
+   ------------------------------------
+
+   procedure Set_Ignore_Project_Load_Errors
+     (Self   : not null access Kernel_Handle_Record;
+      Status : Boolean) is
+   begin
+      Self.Ignore_Project_Load_Errors := Status;
+   end Set_Ignore_Project_Load_Errors;
+
+   ------------------------------------
+   -- Get_Ignore_Project_Load_Errors --
+   ------------------------------------
+
+   function Get_Ignore_Project_Load_Errors
+     (Self : not null access Kernel_Handle_Record)
+      return Boolean is
+   begin
+      return Self.Ignore_Project_Load_Errors;
+   end Get_Ignore_Project_Load_Errors;
+
    -------------
    -- Set_VCS --
    -------------

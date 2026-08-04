@@ -425,6 +425,9 @@ package body GPS.Kernel.Scripts is
       elsif Command = "recompute" then
          Recompute_View (Get_Kernel (Data));
 
+      elsif Command = "set_ignore_load_errors" then
+         Kernel.Set_Ignore_Project_Load_Errors (Nth_Arg (Data, 1));
+
       elsif Command = "get_main_units" then
          declare
             Iter : Project_Iterator :=
@@ -1563,6 +1566,13 @@ package body GPS.Kernel.Scripts is
         ("load",
          Minimum_Args  => 1,
          Maximum_Args  => 3,
+         Class         => Get_Project_Class (Kernel),
+         Static_Method => True,
+         Handler       => Create_Project_Command_Handler'Access);
+      Kernel.Scripts.Register_Command
+        ("set_ignore_load_errors",
+         Minimum_Args  => 1,
+         Maximum_Args  => 1,
          Class         => Get_Project_Class (Kernel),
          Static_Method => True,
          Handler       => Create_Project_Command_Handler'Access);

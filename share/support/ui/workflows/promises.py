@@ -1312,11 +1312,20 @@ class TargetWrapper:
         self.__promise = None
 
     def wait_on_execute(
-        self, main_name="", file=None, extra_args=None, quiet=False, force=False
+        self,
+        main_name="",
+        file=None,
+        extra_args=None,
+        quiet=False,
+        force=False,
+        directory="",
     ):
         """
         Called by the user. Will execute the target and return a promise.
         Promises made here will be answered with: exit status of the build.
+
+        :param directory: the directory the target should be run in. When
+           empty, GNAT Studio's current directory is used.
         """
 
         self.__promise = Promise()
@@ -1328,6 +1337,7 @@ class TargetWrapper:
             quiet=quiet,
             on_exit=self.__on_exit,
             force=force,
+            directory=directory,
         )
         return self.__promise
 

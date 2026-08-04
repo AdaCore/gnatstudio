@@ -1876,6 +1876,8 @@ Classes
 
    .. automethod:: GPS.Project.set_attribute_as_string
 
+   .. automethod:: GPS.Project.set_ignore_load_errors
+
    .. automethod:: GPS.Project.set_property
 
    .. automethod:: GPS.Project.set_scenario_variable
