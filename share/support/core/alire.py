@@ -298,6 +298,26 @@ def update_aliases_for_alire_targets(is_alire_project):
         GPS.BuildTarget(target).set_as_alias(alias if is_alire_project else "")
 
 
+def _restore_saved_env():
+    """
+    Restore the environment variables we have overridden for the sake of an
+    Alire crate, giving them back the value they had beforehand.
+    """
+    global saved_env
+
+    for name, value in saved_env.items():
+        GPS.setenv(name, value)
+
+        if value:
+            os.environ[name] = value
+        else:
+            # The variable might never have been in Python's own environment:
+            # 'GPS.setenv' does not propagate to 'os.environ'.
+            os.environ.pop(name, None)
+
+    saved_env = {}
+
+
 def _start_setup_feedback():
     """
     Tell the user that Alire is setting up the crate. This can take several
@@ -359,8 +379,11 @@ def _report_setup_failure(target, status):
     )
 
     # We are not going to reload the project after all: report the errors of
-    # the next project load normally.
+    # the next project load normally, and give the environment back the values
+    # it had before we started (in particular ALIRE, and whatever a partially
+    # executed 'alr printenv' has already applied).
     GPS.Project.set_ignore_load_errors(False)
+    _restore_saved_env()
     alire_state = None
 
 
@@ -464,7 +487,7 @@ def on_project_changing(hook, file):
     loading it: the project is then reloaded once the needed environment is
     set.
     """
-    global saved_env, project_to_reload, alire_manifest, alire_project_files
+    global project_to_reload, alire_manifest, alire_project_files
     global alire_state, alire_generation
 
     if alire_state == ALIRE_STATE_RELOADING:
@@ -490,17 +513,7 @@ def on_project_changing(hook, file):
     alire_state = None
     project_to_reload = None
 
-    # restore saved environment
-    for name in saved_env:
-        value = saved_env[name]
-        GPS.setenv(name, value)
-
-        if value:
-            os.environ[name] = value
-        else:
-            del os.environ[name]
-
-    saved_env = {}
+    _restore_saved_env()
 
     root = (
         os.path.dirname(file.path)
@@ -526,6 +539,9 @@ def on_project_changing(hook, file):
         # Set the ALIRE env variable right away: this keeps the language
         # server from launching its own 'alr', which would contend with ours
         # for the crate's lock for as long as the synchronization lasts.
+        # Remember its previous value along with the ones set by 'alr printenv'
+        # so that it is restored when we are done with this crate.
+        saved_env["ALIRE"] = GPS.getenv("ALIRE")
         GPS.setenv("ALIRE", "True")
 
         # The project about to be loaded is an intermediate one: it can't be

@@ -3,7 +3,10 @@
 #
 # 'build' does not return until the test driver creates the 'sync_may_finish'
 # file, which can only happen if GNAT Studio's main loop keeps running while
-# Alire is synchronizing the crate. That is precisely what this test checks.
+# Alire is synchronizing the crate. That is precisely what this test checks:
+# should the launch ever become synchronous again, nobody creates that file, so
+# we leave a 'sync_gave_up' witness behind and the test reports the blocked main
+# loop rather than merely failing on something else.
 
 for arg in "$@"; do
     case "$arg" in
@@ -17,17 +20,18 @@ case "$cmd" in
         echo "Synchronizing the crate..."
         touch sync_started
 
-        # Give up after 30 seconds rather than hang the testsuite: the test
-        # then fails with a proper report instead of timing out.
+        # Give up after 30 seconds rather than hang the testsuite.
         for _ in $(seq 300); do
             if [ -f sync_may_finish ]; then
                 echo "Build finished successfully."
+                touch sync_finished
                 exit 0
             fi
             sleep 0.1
         done
 
         echo "Timed out waiting for the test driver."
+        touch sync_gave_up
         exit 1
         ;;
 
