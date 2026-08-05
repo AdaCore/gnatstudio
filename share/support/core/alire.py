@@ -42,6 +42,13 @@ ALIRE_STATE_RELOADING = "reloading"
 # and 'Alire Printenv' gives us the environment needed to load it.
 ALIRE_SETUP_TARGETS = ("Alire Sync", "Alire Show", "Alire Printenv")
 
+# The whole sequence is monitored by a single task under this name, rather than
+# being merely driven in the background: it then appears as one interruptible
+# entry in the Task Manager, and anything waiting for GNAT Studio's tasks (the
+# testsuites in particular) waits for the setup as a whole instead of for the
+# individual 'alr' runs, between which no task is running.
+ALIRE_SETUP_TASK_NAME = "setting up the Alire crate"
+
 ALIRE_SETUP_MESSAGE = """Alire crate detected: fetching the toolchain and the \
 dependencies. This may take several minutes the first time. The project will be \
 reloaded automatically once Alire is done."""
@@ -198,7 +205,7 @@ ALIRE_TARGETS_XML = """
           <arg>alr</arg>
           <arg>--non-interactive</arg>
           <arg>build</arg>
-          <arg>=--stop-after=generation</arg>
+          <arg>--stop-after=generation</arg>
        </command-line>
       <output-parsers>
          output_chopper
@@ -354,17 +361,29 @@ def _stop_setup_feedback():
         locations.set_activity_progress_bar_visibility(False)
 
 
+def _abandon_setup():
+    """
+    Give up on the pending Alire setup: the intermediate project stays loaded
+    and nothing is retried behind the user's back, so report the errors of the
+    next project load normally and give the environment back the values it had
+    before we entered the crate (in particular ALIRE, and whatever a partially
+    executed 'alr printenv' has already applied).
+    """
+    global alire_state
+
+    GPS.Project.set_ignore_load_errors(False)
+    _restore_saved_env()
+    alire_state = None
+
+
 def _report_setup_failure(target, status):
     """
     Report that the Alire setup sequence failed while running `target`,
     pointing the user at the Messages view for the command's output.
 
-    This also covers the case where the user interrupted the task from the
-    Task Manager: the intermediate project stays loaded and nothing is
-    retried behind the user's back.
+    This also covers the case where the user interrupted `target` from the
+    Task Manager.
     """
-    global alire_state
-
     file, _ = project_to_reload
     GPS.Logger("ALIRE").log("'%s' failed with status %s" % (target, status))
 
@@ -378,13 +397,7 @@ def _report_setup_failure(target, status):
         importance=GPS.Message.Importance.HIGH,
     )
 
-    # We are not going to reload the project after all: report the errors of
-    # the next project load normally, and give the environment back the values
-    # it had before we started (in particular ALIRE, and whatever a partially
-    # executed 'alr printenv' has already applied).
-    GPS.Project.set_ignore_load_errors(False)
-    _restore_saved_env()
-    alire_state = None
+    _abandon_setup()
 
 
 def _load_alire_project():
@@ -422,11 +435,13 @@ def _load_alire_project():
     GPS.Logger("ALIRE").log("Current directory is now: %s" % GPS.pwd())
 
 
-def _setup_alire_crate(root, generation):
+def _setup_alire_crate(task, root, generation):
     """
     Run the Alire setup sequence asynchronously: synchronize the crate,
     determine which GPR project should be loaded and set the crate's
     environment, then reload that project.
+
+    `task` is the task monitoring this sequence, used to report progress.
 
     `generation` is the value of `alire_generation` when the manifest that
     started this sequence was detected: it allows abandoning the sequence when
@@ -439,10 +454,12 @@ def _setup_alire_crate(root, generation):
     from workflows.promises import TargetWrapper
 
     _start_setup_feedback()
+    completed = False
 
     try:
-        for target in ALIRE_SETUP_TARGETS:
+        for index, target in enumerate(ALIRE_SETUP_TARGETS):
             alire_state = target
+            task.set_progress(index, len(ALIRE_SETUP_TARGETS))
             GPS.Logger("ALIRE").log("Running '%s'..." % target)
             status = yield TargetWrapper(target).wait_on_execute(directory=root)
 
@@ -455,12 +472,20 @@ def _setup_alire_crate(root, generation):
             if status != 0:
                 _report_setup_failure(target, status)
                 return
+
+        _load_alire_project()
+        completed = True
     finally:
         # When a newer sequence has taken over, it owns the feedback now.
         if generation == alire_generation:
             _stop_setup_feedback()
 
-    _load_alire_project()
+            if not completed and alire_state is not None:
+                # The sequence did not run to completion and no step reported a
+                # failure: the task itself has been interrupted from the Task
+                # Manager.
+                GPS.Logger("ALIRE").log("The Alire setup has been interrupted")
+                _abandon_setup()
 
 
 def on_project_recomputed(hook):
@@ -469,9 +494,14 @@ def on_project_recomputed(hook):
     if alire_state == ALIRE_STATE_DETECTED:
         # Now that GNAT Studio has finished loading the intermediate project,
         # start the Alire setup sequence in the background.
-        import workflows
+        from workflows import task_workflow
 
-        workflows.driver(_setup_alire_crate(project_to_reload[1], alire_generation))
+        task_workflow(
+            ALIRE_SETUP_TASK_NAME,
+            _setup_alire_crate,
+            root=project_to_reload[1],
+            generation=alire_generation,
+        )
 
     elif not GPS.getenv("ALIRE"):
         # We are not loading an Alire project: unset the aliases

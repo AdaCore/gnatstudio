@@ -1,0 +1,44 @@
+#!/bin/bash
+# Fake 'alr' executable: the real one needs the network and a toolchain. Unlike
+# the one in 'alire.async_setup' it returns straight away, since this test is
+# about the sequence as a whole rather than about it not blocking.
+#
+# Like the real 'alr' it refuses to run when handed an argument it does not know
+# about; the offending command line is then left behind in 'bad_command_line'
+# for the driver to report.
+#
+# Every accepted invocation is appended to 'alr_runs', so that the driver can
+# check both the order of the sequence and that it is not run again for a
+# project of a manifest already known.
+
+cmd=""
+
+for arg in "$@"; do
+    case "$arg" in
+        --non-interactive|--no-color|--no-tty|-q|--stop-after=generation) ;;
+        build|show|printenv) cmd="$arg" ;;
+        *)
+            echo "unexpected argument: $arg" >&2
+            printf 'alr %s\n' "$*" > bad_command_line
+            exit 1
+            ;;
+    esac
+done
+
+echo "$cmd" >> alr_runs
+
+case "$cmd" in
+    build)
+        echo "Synchronizing the crate..."
+        ;;
+
+    show)
+        echo "  Name: hello"
+        echo "  Project_File: bye.gpr"
+        echo "  Project_File: hello.gpr"
+        ;;
+
+    printenv)
+        echo "export ALIRE_TEST_ENV=\"alire_was_here\""
+        ;;
+esac

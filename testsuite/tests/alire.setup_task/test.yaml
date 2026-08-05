@@ -1,0 +1,4 @@
+title: 'alire.setup_task'
+description: 'Test that waiting for the tasks waits for the whole Alire setup'
+skip:
+    - ['SKIP', 'env.build.os.name == "windows"']

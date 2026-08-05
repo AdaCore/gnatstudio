@@ -1,6 +1,11 @@
 #!/bin/bash
 # Fake 'alr' executable: the real one needs the network and a toolchain.
 #
+# Like the real 'alr' it refuses to run when handed an argument it does not know
+# about, so that a malformed build target command line fails the test rather
+# than going unnoticed. The offending command line is left behind in
+# 'bad_command_line' for the driver to report.
+#
 # 'build' does not return until the test driver creates the 'sync_may_finish'
 # file, which can only happen if GNAT Studio's main loop keeps running while
 # Alire is synchronizing the crate. That is precisely what this test checks:
@@ -8,10 +13,17 @@
 # we leave a 'sync_gave_up' witness behind and the test reports the blocked main
 # loop rather than merely failing on something else.
 
+cmd=""
+
 for arg in "$@"; do
     case "$arg" in
-        -*|=*) ;;
-        *) cmd="$arg"; break ;;
+        --non-interactive|--no-color|--no-tty|-q|--stop-after=generation) ;;
+        build|show|printenv) cmd="$arg" ;;
+        *)
+            echo "unexpected argument: $arg" >&2
+            printf 'alr %s\n' "$*" > bad_command_line
+            exit 1
+            ;;
     esac
 done
 
