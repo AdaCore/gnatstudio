@@ -375,7 +375,9 @@ package GPS.Kernel.Preferences is
 
    Indent_Choice : constant VSS.Strings.Virtual_String := "Indent";
    Format_Choice : constant VSS.Strings.Virtual_String := "Format";
-   LSP_Ada_On_Type_Formatting : Default_Preferences.Enums.Choice_Preference;
+   Narrow_Choice : constant VSS.Strings.Virtual_String := "Narrow";
+   LSP_Ada_On_Type_Formatting  : Default_Preferences.Enums.Choice_Preference;
+   LSP_Ada_On_Range_Formatting : Default_Preferences.Enums.Choice_Preference;
 
    -- LSP semantic styles --
 

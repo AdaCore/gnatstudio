@@ -1641,6 +1641,22 @@ package body GPS.Kernel.Preferences is
            Combo_Threshold => -1,
            Path            => "Editor/Ada:Formatting");
 
+      LSP_Ada_On_Range_Formatting :=
+        Default_Preferences.Enums.Create
+          (Manager         => Manager,
+           Name            => "LSP-Ada-On-Range-Formatting",
+           Choices         => [Indent_Choice, Narrow_Choice, Format_Choice],
+           Default         => Format_Choice,
+           Label           => "Action on range formatting",
+           Doc             =>
+             -"Decide if GNAT Studio should indent when pressing "
+             & "tab, limit the formatting to the selected lines or "
+             & "if it should also format the current block of code. "
+             & "This setting only applies when "
+             & "'Formatter on range formatting' is set to 'LSP'.",
+           Combo_Threshold => -1,
+           Path            => "Editor/Ada:Formatting");
+
       LSP_Use_Snippets := Kernel.Get_Preferences.Create
         (Name    => "LSP-Completion-Use-Snippets",
          Default => False,

@@ -220,6 +220,17 @@ package body GPS.LSP_Client.Configurations.ALS is
          Ada_Settings.Set_Field ("onTypeFormatting", On_Type_Formatting);
       end;
 
+      declare
+         On_Range_Formatting : constant GNATCOLL.JSON.JSON_Value :=
+           GNATCOLL.JSON.Create_Object;
+         use GPS.Kernel.Preferences;
+      begin
+         On_Range_Formatting.Set_Field
+           ("indentOnly",
+            To_Lower (LSP_Ada_On_Range_Formatting.Get_Pref));
+         Ada_Settings.Set_Field ("rangeFormatting", On_Range_Formatting);
+      end;
+
       --  Documentation options
 
       Ada_Settings.Set_Field
