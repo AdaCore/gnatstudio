@@ -928,6 +928,7 @@ package body GPS.Initialization is
       --  GNAT Studio is invoked with some switches: it might bother advanced
       --  users.
 
+      Has_GPS_Options := True;
       Show_Preferences_Assistant := False;
 
       if Switch = "--project" or else Switch = "-P" then
@@ -1167,7 +1168,6 @@ package body GPS.Initialization is
        Arguments   : access chars_ptr_array_access;
        Exit_Status : access Glib.Gint) return Glib.Gboolean
    is
-      pragma Unreferenced (Self);
       Err     : Glib.Error.GError;
       Success : Boolean;
       A       : size_t := 0;
@@ -1202,10 +1202,12 @@ package body GPS.Initialization is
                if Val (Val'First + 1) = 'P' then
                   Passed_Project_Name :=
                      new String'(Val (Val'First + 2 .. Val'Last));
+                  Has_GPS_Options := True;
                   Handled := True;
 
                elsif Val (Val'First + 1) = 'X' then
                   Handle_X_Switch (Val (Val'First + 2 .. Val'Last));
+                  Has_GPS_Options := True;
                   Handled := True;
                end if;
             end if;
@@ -1241,6 +1243,33 @@ package body GPS.Initialization is
          --  Instead, we test the same flag again in Command_Line_Callback
          --  and exit at that point.
          null;
+      end if;
+
+      --  On Windows, when the command line contains only file arguments (no
+      --  GPS-specific switches like --project, --load, --eval, --host, etc.),
+      --  clear the Non_Unique flag so that GApplication forwards the files to
+      --  an already running instance via the ::open signal instead of spawning
+      --  a new window. This handles the Explorer file-association case.
+      --  When switches are present, we keep Non_Unique so that a new session
+      --  is started (e.g. opening a different project).
+
+      if Host = Windows
+        and then not GPS_Command_Line.Do_Exit
+        and then not Has_GPS_Options
+        and then not Files_To_Open.Is_Empty
+      then
+         declare
+            procedure Set_Flags
+              (App : System.Address; Flags : GApplication_Flags);
+            pragma Import (C, Set_Flags, "g_application_set_flags");
+
+            function Get_Flags
+              (App : System.Address) return GApplication_Flags;
+            pragma Import (C, Get_Flags, "g_application_get_flags");
+         begin
+            Set_Flags
+              (Self, Get_Flags (Self) and not G_Application_Non_Unique);
+         end;
       end if;
 
       return 0;
