@@ -1,0 +1,97 @@
+{
+  "version": "2.1.0",
+  "runs": [
+    {
+      "tool": {
+        "driver": {
+          "name": "TestChecker",
+          "version": "1.0",
+          "rules": [
+            {
+              "id": "style_issue",
+              "name": "style_issue",
+              "shortDescription": {
+                "text": "style issue"
+              }
+            }
+          ]
+        }
+      },
+      "invocations": [
+        {
+          "executionSuccessful": true
+        }
+      ],
+      "results": [
+        {
+          "ruleId": "style_issue",
+          "level": "warning",
+          "message": {
+            "text": "redundant null statements"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "foo.adb"
+                },
+                "region": {
+                  "startLine": 7,
+                  "startColumn": 4,
+                  "endLine": 8,
+                  "endColumn": 9
+                }
+              }
+            }
+          ],
+          "fixes": [
+            {
+              "description": {
+                "text": "Remove first null statement"
+              },
+              "artifactChanges": [
+                {
+                  "artifactLocation": {
+                    "uri": "foo.adb"
+                  },
+                  "replacements": [
+                    {
+                      "deletedRegion": {
+                        "startLine": 7,
+                        "startColumn": 1,
+                        "endLine": 8,
+                        "endColumn": 1
+                      }
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "description": {
+                "text": "Remove second null statement"
+              },
+              "artifactChanges": [
+                {
+                  "artifactLocation": {
+                    "uri": "foo.adb"
+                  },
+                  "replacements": [
+                    {
+                      "deletedRegion": {
+                        "startLine": 8,
+                        "startColumn": 1,
+                        "endLine": 9,
+                        "endColumn": 1
+                      }
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
