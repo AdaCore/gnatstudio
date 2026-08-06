@@ -1,4 +1,0 @@
-name = "other"
-description = "Second crate, used to check what happens when crates are switched"
-version = "0.1.0"
-project-files = ["other.gpr"]

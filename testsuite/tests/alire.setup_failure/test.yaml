@@ -1,6 +1,0 @@
-title: 'alire.setup_failure'
-description: 'Test that a failed Alire setup is given up on and retried'
-skip:
-    # The fake 'alr' is a shell script, which GNAT Studio cannot spawn on
-    # Windows: 'alire.state_machine' covers the same ground there.
-    - ['SKIP', 'env.build.os.name == "windows"']

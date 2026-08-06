@@ -343,10 +343,6 @@ def _run_setup_target(target, root):
     """
     Run one of the ALIRE_SETUP_TARGETS in `root` and return a promise resolving
     to its exit status.
-
-    Kept out of '_setup_alire_crate' so that 'alire.state_machine' can exercise
-    the sequence with no 'alr' to run, which is the only way to test it where the
-    testsuite cannot provide a fake one.
     """
     # share/support/ui is added to sys.path after share/support/core.
     from workflows.promises import TargetWrapper
