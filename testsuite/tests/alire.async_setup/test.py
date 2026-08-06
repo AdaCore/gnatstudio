@@ -55,7 +55,10 @@ def test_driver():
     # monitored by a task of its own, which is what makes waiting for GNAT
     # Studio's tasks a way of waiting for the setup as a whole.
     gps_assert(
-        alire.ALIRE_SETUP_TASK_NAME in [task.name() for task in GPS.Task.list()],
+        any(
+            task.name().startswith(alire.ALIRE_SETUP_TASK_NAME)
+            for task in GPS.Task.list()
+        ),
         True,
         "The Alire setup should be monitored by a task while it runs",
     )

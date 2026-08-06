@@ -1,0 +1,6 @@
+title: 'alire.setup_interrupted'
+description: 'Test that interrupting the Alire setup stops it and cleans up'
+skip:
+    # The fake 'alr' is a shell script, which GNAT Studio cannot spawn on
+    # Windows: 'alire.state_machine' covers the same ground there.
+    - ['SKIP', 'env.build.os.name == "windows"']

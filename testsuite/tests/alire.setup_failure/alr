@@ -1,0 +1,50 @@
+#!/bin/bash
+# Fake 'alr' executable: the real one needs the network and a toolchain.
+#
+# Like the real 'alr' it refuses to run when handed an argument it does not know
+# about; the offending command line is then left behind in 'bad_command_line'
+# for the driver to report. Every accepted invocation is appended to 'alr_runs',
+# so that the driver can tell whether Alire has been run again.
+#
+# 'printenv' fails, after having printed part of its output, for as long as the
+# 'fail_printenv' file is there: that is how the driver checks what becomes of a
+# setup whose last step fails.
+
+cmd=""
+
+for arg in "$@"; do
+    case "$arg" in
+        --non-interactive|--no-color|--no-tty|-q|--stop-after=generation) ;;
+        build|show|printenv) cmd="$arg" ;;
+        *)
+            echo "unexpected argument: $arg" >&2
+            printf 'alr %s\n' "$*" > bad_command_line
+            exit 1
+            ;;
+    esac
+done
+
+echo "$cmd" >> alr_runs
+
+case "$cmd" in
+    build)
+        echo "Synchronizing the crate..."
+        ;;
+
+    show)
+        echo "  Name: hello"
+        echo "  Project_File: bye.gpr"
+        echo "  Project_File: hello.gpr"
+        ;;
+
+    printenv)
+        # Print one variable before failing: a setup that gives up half way
+        # through must undo what it has already applied.
+        echo "export ALIRE_TEST_ENV=\"alire_was_here\""
+
+        if [ -f fail_printenv ]; then
+            echo "ERROR: cannot generate the environment" >&2
+            exit 1
+        fi
+        ;;
+esac

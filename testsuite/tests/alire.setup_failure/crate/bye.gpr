@@ -1,0 +1,4 @@
+project Bye is
+   for Source_Dirs use ("src");
+   for Main use ("bye.adb");
+end Bye;

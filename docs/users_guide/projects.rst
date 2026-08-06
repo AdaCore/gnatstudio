@@ -238,6 +238,10 @@ the :guilabel:`Messages` view, and the corresponding task can be monitored (and
 interrupted) from the :guilabel:`Task Manager`. The project is reloaded
 automatically once the crate is ready.
 
+Interrupting that task, like a failure of one of the Alire commands, stops Alire
+and leaves the project that was loaded beforehand, with the environment it had:
+loading one of the crate's projects again starts the setup afresh.
+
 Moreover, when working with an Alire crate, GNAT Studio build-related actions
 will use standard Alire commands.
 For example, the :guilabel:`Build All` menu and toolbar button will call
