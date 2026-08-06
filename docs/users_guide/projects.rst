@@ -233,8 +233,9 @@ and to enter an environment providing access to the crate's dependencies.
 
 This is done in the background, so GNAT Studio stays responsive throughout: the
 first load of a crate makes Alire fetch the toolchain and the crate's
-dependencies, which can take several minutes. Alire's progress is displayed in
-the :guilabel:`Messages` view, and the corresponding task can be monitored (and
+dependencies, which can take several minutes. A note saying so is added to the
+:guilabel:`Locations` view, Alire's progress is displayed in the
+:guilabel:`Messages` view, and the corresponding task can be monitored (and
 interrupted) from the :guilabel:`Task Manager`. The project is reloaded
 automatically once the crate is ready.
 
