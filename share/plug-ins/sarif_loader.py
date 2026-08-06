@@ -2,7 +2,7 @@ import GPS
 import json
 import os.path
 from urllib.parse import urlparse, unquote
-from gi.repository import Gdk, Gtk
+from gi.repository import Gdk, GLib, Gtk
 from gs_utils import interactive
 
 """
@@ -321,41 +321,141 @@ def get_fix_description(fix):
     return "Apply fix"
 
 
-def get_fix_preview_text(fix):
-    """Generate a human-readable preview of the changes in a fix."""
-    lines = []
-    desc = fix.get("description", {}).get("text", "")
-    if desc:
-        lines.append(desc)
-        lines.append("")
+def get_fix_preview_markup(prepared_fix):
+    """Generate a Pango markup preview showing the code after applying the fix.
 
-    for change in fix.get("artifactChanges", []):
-        uri = change.get("artifactLocation", {}).get("uri", "")
-        lines.append("File: %s" % os.path.basename(uri))
+    Deleted text is shown in red with strikethrough, inserted text in green bold.
+    Surrounding context lines are shown in normal style.
+    """
+    CONTEXT_LINES = 1
+    parts = []
 
-        for repl in change.get("replacements", []):
-            region = repl.get("deletedRegion", {})
-            sl = region.get("startLine", 0)
-            sc = region.get("startColumn", 0)
-            el = region.get("endLine", sl)
-            ec = region.get("endColumn", sc)
-            text = repl.get("insertedContent", {}).get("text", "")
-            is_insert = sl == el and sc == ec
+    for change in prepared_fix.changes:
+        try:
+            buf = GPS.EditorBuffer.get(GPS.File(change.file_path))
+        except Exception:
+            parts.append(GLib.markup_escape_text(change.file_path))
+            continue
 
-            if not is_insert and text:
-                lines.append(
-                    "  Replace L%d:%d-L%d:%d with '%s'"
-                    % (sl, sc, el, ec, text.replace("\n", "\\n"))
+        if len(prepared_fix.changes) > 1:
+            parts.append(
+                "<b>%s</b>"
+                % GLib.markup_escape_text(os.path.basename(change.file_path))
+            )
+
+        # Determine the range of lines affected by all replacements
+        min_line = None
+        max_line = None
+        for repl in change.replacements:
+            sl = repl.start_mark.location().line()
+            if repl.end_mark:
+                el = repl.end_mark.location().line()
+            else:
+                el = sl
+            if min_line is None or sl < min_line:
+                min_line = sl
+            if max_line is None or el > max_line:
+                max_line = el
+
+        if min_line is None:
+            continue
+
+        # Add context lines
+        first_line = max(1, min_line - CONTEXT_LINES)
+        last_line = min(buf.lines_count(), max_line + CONTEXT_LINES)
+
+        # Get the source text for the affected range
+        source = buf.get_chars(
+            buf.at(first_line, 1), buf.at(last_line, 1).end_of_line()
+        )
+        source_lines = source.split("\n")
+
+        # Build a list of (line_number, column_edits) for in-line markup.
+        # Each edit: (start_col, end_col, inserted_text, is_insertion_point)
+        # Columns are 1-based, end_col is exclusive (SARIF convention).
+        line_edits = {}
+        for repl in change.replacements:
+            sl = repl.start_mark.location().line()
+            sc = repl.start_mark.location().column()
+            if repl.end_mark:
+                el = repl.end_mark.location().line()
+                ec = repl.end_mark.location().column() + 1  # make exclusive
+            else:
+                el = sl
+                ec = sc
+
+            # Handle single-line replacements inline,
+            # multi-line ones as delete+insert blocks.
+            if sl == el:
+                edits = line_edits.setdefault(sl, [])
+                edits.append((sc, ec, repl.inserted_text, repl.is_insertion_point))
+            else:
+                # Multi-line: mark first line from sc to end, middle lines
+                # fully, last line from start to ec.
+                edits = line_edits.setdefault(sl, [])
+                edits.append((sc, None, "", False))  # None = to end of line
+                for mid in range(sl + 1, el):
+                    edits_mid = line_edits.setdefault(mid, [])
+                    edits_mid.append((1, None, "", False))
+                edits_last = line_edits.setdefault(el, [])
+                edits_last.append((1, ec, "", False))
+                if repl.inserted_text:
+                    first_edits = line_edits.setdefault(sl, [])
+                    first_edits.append((sc, sc, repl.inserted_text, True))
+
+        # Render each line with markup
+        for i, line_text in enumerate(source_lines):
+            line_num = first_line + i
+            if line_num not in line_edits:
+                parts.append(
+                    '<span foreground="grey">%3d</span> %s'
+                    % (line_num, GLib.markup_escape_text(line_text))
                 )
-            elif not is_insert:
-                lines.append("  Delete L%d:%d-L%d:%d" % (sl, sc, el, ec))
-            elif text:
-                lines.append(
-                    "  Insert '%s' at L%d:%d" % (text.replace("\n", "\\n"), sl, sc)
-                )
-        lines.append("")
+            else:
+                edits = sorted(line_edits[line_num], key=lambda e: e[0])
+                markup = '<span foreground="grey">%3d</span> ' % line_num
+                pos = 1  # 1-based column position
+                for sc_e, ec_e, ins_text, is_ins in edits:
+                    # Text before this edit
+                    if sc_e > pos:
+                        markup += GLib.markup_escape_text(line_text[pos - 1 : sc_e - 1])
+                    # Deleted text (strikethrough red)
+                    if not is_ins and ec_e is not None and ec_e > sc_e:
+                        deleted = line_text[sc_e - 1 : ec_e - 1]
+                        markup += (
+                            '<span strikethrough="true" foreground="#c0392b">%s</span>'
+                            % GLib.markup_escape_text(deleted)
+                        )
+                        pos = ec_e
+                    elif not is_ins and ec_e is None:
+                        # Delete to end of line
+                        deleted = line_text[sc_e - 1 :]
+                        markup += (
+                            '<span strikethrough="true" foreground="#c0392b">%s</span>'
+                            % GLib.markup_escape_text(deleted)
+                        )
+                        pos = len(line_text) + 1
+                    else:
+                        pos = sc_e
+                    # Inserted text (bold green)
+                    if ins_text:
+                        escaped = GLib.markup_escape_text(
+                            ins_text.replace("\n", "\u21b5\n")
+                        )
+                        markup += (
+                            '<span foreground="#27ae60"><b>%s</b></span>' % escaped
+                        )
+                # Remaining text after all edits
+                if pos - 1 < len(line_text):
+                    markup += GLib.markup_escape_text(line_text[pos - 1 :])
+                parts.append(markup)
 
-    return "\n".join(lines)
+    font = GPS.Preference("Src-Editor-Reference-Style").get().split("@")[0]
+    return (
+        '<span font_desc="%s">' % GLib.markup_escape_text(font)
+        + "\n".join(parts)
+        + "</span>"
+    )
 
 
 def prepare_fix(fix):
@@ -410,11 +510,13 @@ def prepare_fix(fix):
 
         prepared_changes.append(PreparedChange(file_path, prepared_repls))
 
-    return PreparedFix(
+    pf = PreparedFix(
         description=get_fix_description(fix),
-        preview=get_fix_preview_text(fix),
+        preview="",
         changes=prepared_changes,
     )
+    pf.preview = get_fix_preview_markup(pf)
+    return pf
 
 
 def apply_prepared_fix(prepared_fix):
@@ -534,8 +636,8 @@ def show_fix_proposals_menu(msg, prepared_fixes):
         for child in notes_win.get_children():
             notes_win.remove(child)
         label = Gtk.Label()
-        label.set_text(prepared_fixes[idx].preview)
-        label.set_line_wrap(True)
+        label.set_markup(prepared_fixes[idx].preview)
+        label.set_line_wrap(False)
         label.set_xalign(0)
         label.set_yalign(0)
         label.set_margin_start(5)
