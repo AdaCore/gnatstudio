@@ -1,17 +1,12 @@
 #!/bin/bash
-# Fake 'alr' executable: the real one needs the network and a toolchain.
+# Fake 'alr' executable: the real one needs the network and a toolchain. Like
+# it, this one refuses arguments it does not know about, leaving the offending
+# command line in 'bad_command_line' for the driver to report.
 #
-# Like the real 'alr' it refuses to run when handed an argument it does not know
-# about, so that a malformed build target command line fails the test rather
-# than going unnoticed. The offending command line is left behind in
-# 'bad_command_line' for the driver to report.
-#
-# 'build' does not return until the test driver creates the 'sync_may_finish'
-# file, which can only happen if GNAT Studio's main loop keeps running while
-# Alire is synchronizing the crate. That is precisely what this test checks:
-# should the launch ever become synchronous again, nobody creates that file, so
-# we leave a 'sync_gave_up' witness behind and the test reports the blocked main
-# loop rather than merely failing on something else.
+# 'build' does not return until the driver creates 'sync_may_finish', which can
+# only happen if the main loop keeps running. Should the launch become
+# synchronous again, nobody creates that file and 'sync_gave_up' is left behind,
+# so the test reports the blocked main loop rather than something incidental.
 
 cmd=""
 
@@ -53,6 +48,9 @@ case "$cmd" in
         ;;
 
     printenv)
+        # The real 'alr printenv' exports ALIRE itself, on top of the crate's
+        # own variables.
+        echo "export ALIRE=\"True\""
         echo "export ALIRE_TEST_ENV=\"alire_was_here\""
         ;;
 esac

@@ -5,9 +5,9 @@ The fake 'alr build' used here does not return until this driver creates the
 'sync_may_finish' file: reaching that point at all proves that the main loop
 kept running while Alire was synchronizing the crate.
 
-The second half of the test checks that the environment entered for the crate
-(including the ALIRE variable) is restored once a project outside the crate is
-loaded.
+The second half checks that what was entered for the crate is undone once a
+project outside it is loaded: the environment (including the ALIRE variable that
+'alr printenv' exports too) and the aliases on the default build targets.
 """
 
 import os
@@ -27,6 +27,13 @@ def test_driver():
 
     def in_crate(name):
         return os.path.join(crate_root, name)
+
+    def builds_with_alire():
+        """
+        Whether 'Build All' is aliased to its Alire counterpart, which is how
+        building a crate goes through 'alr' rather than through gprbuild.
+        """
+        return GPS.BuildTarget("Build All").get_command_line()[0] == "alr"
 
     def rejected_command_line():
         """
@@ -99,6 +106,11 @@ def test_driver():
         "True",
         "ALIRE should be set while an Alire crate is loaded",
     )
+    gps_assert(
+        builds_with_alire(),
+        True,
+        "The default build targets should go through Alire in a crate",
+    )
 
     # Loading a project that has nothing to do with the crate should give the
     # environment back the values it had before we entered the crate.
@@ -121,4 +133,9 @@ def test_driver():
         GPS.getenv("ALIRE_TEST_ENV"),
         "",
         "The crate's environment should have been restored",
+    )
+    gps_assert(
+        builds_with_alire(),
+        False,
+        "The default build targets should not go through Alire anymore",
     )

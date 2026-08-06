@@ -1,15 +1,12 @@
 """
 Test the Alire setup state machine with no 'alr' to run.
 
-The other 'alire.*' tests drive the plugin through a fake 'alr' on the PATH,
-which cannot be done on Windows: GNAT Studio spawns the setup targets itself, and
-a shell script is not something it can spawn there. This test stands in for the
-setup targets instead of for 'alr'. That costs the coverage of the build targets
-themselves, but it exercises the state machine on every platform, including the
-paths a process can hardly be made to take: a step that fails, a final project
-load that does not happen, a crate switched while Alire is still running, the
-output of an abandoned 'alr' arriving late, and an interruption from the Task
-Manager.
+The other 'alire.*' tests use a fake 'alr' on the PATH, which cannot be done on
+Windows, where GNAT Studio cannot spawn a shell script. This one stands in for
+the setup targets instead: it loses the coverage of the build targets themselves,
+but it runs everywhere, and it reaches the paths a process can hardly be made to
+take -- a failing step, a final load that does not happen, a crate switched while
+Alire is still running, an abandoned 'alr' answering late, an interruption.
 """
 
 import collections
@@ -85,12 +82,24 @@ class FakeAlire:
                 None,
             )
         elif run.target == "Alire Printenv":
-            run.parser.on_stdout('export ALIRE_TEST_ENV="alire_was_here"\n', None)
+            # The real 'alr printenv' exports ALIRE itself, on top of the crate's
+            # own variables.
+            run.parser.on_stdout(
+                'export ALIRE="True"\nexport ALIRE_TEST_ENV="alire_was_here"\n', None
+            )
 
         if status is None:
             status = 1 if run.target == self.failing else 0
 
         run.promise.resolve(status)
+
+
+def builds_with_alire():
+    """
+    Whether 'Build All' is aliased to its Alire counterpart, which is how
+    building a crate goes through 'alr' rather than through gprbuild.
+    """
+    return GPS.BuildTarget("Build All").get_command_line()[0] == "alr"
 
 
 def setup_tasks():
@@ -163,6 +172,11 @@ def test_driver():
         ["hello.gpr"],
         "The project files reported by 'alr show' should be known now",
     )
+    gps_assert(
+        builds_with_alire(),
+        True,
+        "The default build targets should go through Alire in a crate",
+    )
 
     # 2. Loading a project of a crate that is set up needs no Alire run.
     fake.forget()
@@ -194,6 +208,11 @@ def test_driver():
         alire.alire_project_files,
         [],
         "Leaving the crate should invalidate its known project files",
+    )
+    gps_assert(
+        builds_with_alire(),
+        False,
+        "The default build targets should not go through Alire anymore",
     )
 
     # 4. A step that fails: the setup is given up on, and the environment it had

@@ -18,56 +18,46 @@ saved_env: dict[str, str] = {}  # all changed env variables and their values
 project_to_reload = None  # The project we should reload after finding an Alire manifest
 alire_manifest = None  # The alire.toml file we are trying to load
 
-# GPR project files listed in the manifest of the crate we have set up:
-# loading one of them needs no Alire run of its own. The list is only filled
-# once a sequence has completed successfully, for that is when the crate's
-# environment is actually in place: 'alr show' reports the project files well
-# before that, and a setup that fails, is interrupted or is abandoned puts the
-# environment back as it was.
+# GPR project files of the crate that is set up: loading one of them needs no
+# Alire run. Only filled once a sequence has succeeded, since that is when the
+# crate's environment is actually in place.
 alire_project_files = []
 
-# The project files 'alr show' has reported for the sequence under way. They
-# become 'alire_project_files' once that sequence has completed.
+# What 'alr show' has reported for the sequence under way.
 alire_pending_project_files = []
 
-# Setting up an Alire crate is done asynchronously, so that GNAT Studio stays
-# responsive while Alire fetches the toolchain and the dependencies (which can
-# take several minutes the first time). 'alire_state' tells the hooks where we
-# are in that sequence: it is None when no setup is pending,
-# ALIRE_STATE_DETECTED between the detection of a manifest and the start of the
-# sequence, the name of the running build target while the sequence progresses,
-# and ALIRE_STATE_RELOADING while we perform the final project load.
+# Where we are in the setup sequence, which runs asynchronously so that GNAT
+# Studio stays responsive while Alire fetches the toolchain and the
+# dependencies: None when no setup is pending, ALIRE_STATE_DETECTED between the
+# detection of a manifest and the start of the sequence, the name of the running
+# build target while it progresses, ALIRE_STATE_RELOADING during the final load.
 alire_state = None
 
-# Incremented each time an Alire manifest is detected. A setup sequence
-# captures its value when it starts and gives up as soon as it does not match
-# anymore, which happens when the user loads another project meanwhile. The
-# output parsers capture it too, so that the output of an 'alr' we have given up
-# on cannot end up in the state of the sequence that superseded it.
+# Incremented each time a manifest is detected. A sequence and its output
+# parsers capture it and give up as soon as it changes, which happens when the
+# user loads another project meanwhile.
 alire_generation = 0
 
-# The generation of the last setup sequence started, so that a second
+# Generation of the last sequence started, so that a second
 # 'project_view_changed' for the same manifest does not start it twice.
 alire_started_generation = None
 
 ALIRE_STATE_DETECTED = "detected"
 ALIRE_STATE_RELOADING = "reloading"
 
-# The build targets to run, in order, to set up an Alire crate:
-# 'Alire Sync' ('alr build --stop-after=generation') fetches the toolchain and
-# the dependencies, 'Alire Show' tells us which GPR project should be loaded
-# and 'Alire Printenv' gives us the environment needed to load it.
+# The build targets to run, in order, to set up a crate: 'alr build
+# --stop-after=generation' fetches the toolchain and the dependencies, 'alr show'
+# tells us which GPR project to load and 'alr printenv' the environment to load
+# it with.
 ALIRE_SETUP_TARGETS = ("Alire Sync", "Alire Show", "Alire Printenv")
 
-# The whole sequence is monitored by a single task named after this, rather than
-# being merely driven in the background: it then appears as one interruptible
-# entry in the Task Manager, and anything waiting for GNAT Studio's tasks (the
-# testsuites in particular) waits for the setup as a whole instead of for the
+# Name of the single task monitoring the whole sequence: the setup is then one
+# interruptible entry in the Task Manager, and waiting for GNAT Studio's tasks
+# (as the testsuites do) waits for the setup as a whole rather than for the
 # individual 'alr' runs, between which no task is running.
 ALIRE_SETUP_TASK_NAME = "setting up the Alire crate"
 
-# How often, in milliseconds, we check that the task monitoring a setup sequence
-# is still there. See '_watch_for_interruption'.
+# How often, in ms, we check that the task monitoring a sequence is still there.
 ALIRE_INTERRUPTION_CHECK_PERIOD = 200
 
 ALIRE_SETUP_MESSAGE = """Alire crate detected: fetching the toolchain and the \
@@ -330,19 +320,18 @@ def _setup_task_name(generation):
     """
     Return the name of the task monitoring the setup sequence of `generation`.
 
-    Two sequences must not share a task name: a GPS.Task is identified by its
-    name, so a second task of the same name lands in the queue of the first one
-    (and thus never runs while it is waiting for 'alr'), and worse, takes its
-    place as the instance both of them are executed through.
+    Two sequences must not share a task name: a GPS.Task is identified by it, so
+    the second one would land in the first one's queue and, worse, take its place
+    as the instance both are executed through.
     """
     return "%s (%d)" % (ALIRE_SETUP_TASK_NAME, generation)
 
 
 def _interrupt_task(name):
     """
-    Interrupt the task called `name`, if it is still running. Build targets are
-    named after their target in the Task Manager, followed by the build mode
-    when it is not the default one.
+    Interrupt the task called `name`, if it is still running. Build target tasks
+    are named after their target, followed by the build mode when it is not the
+    default one.
     """
     for task in GPS.Task.list():
         if task.name() == name or task.name().startswith(name + " ("):
@@ -355,12 +344,11 @@ def _run_setup_target(target, root):
     Run one of the ALIRE_SETUP_TARGETS in `root` and return a promise resolving
     to its exit status.
 
-    Kept out of '_setup_alire_crate' so that the state machine can be exercised
-    without an 'alr' to run, which is the only way to test it on platforms where
-    the testsuite cannot provide a fake one.
+    Kept out of '_setup_alire_crate' so that 'alire.state_machine' can exercise
+    the sequence with no 'alr' to run, which is the only way to test it where the
+    testsuite cannot provide a fake one.
     """
-    # 'workflows' lives in share/support/ui, which is added to sys.path after
-    # share/support/core: import it here rather than at module level.
+    # share/support/ui is added to sys.path after share/support/core.
     from workflows.promises import TargetWrapper
 
     return TargetWrapper(target).wait_on_execute(directory=root)
@@ -368,8 +356,7 @@ def _run_setup_target(target, root):
 
 def _restore_saved_env():
     """
-    Restore the environment variables we have overridden for the sake of an
-    Alire crate, giving them back the value they had beforehand.
+    Give the environment variables we overrode for a crate their former values.
     """
     global saved_env
 
@@ -379,8 +366,8 @@ def _restore_saved_env():
         if value:
             os.environ[name] = value
         else:
-            # The variable might never have been in Python's own environment:
-            # 'GPS.setenv' does not propagate to 'os.environ'.
+            # 'GPS.setenv' does not propagate to 'os.environ', so the variable
+            # might never have been there.
             os.environ.pop(name, None)
 
     saved_env = {}
@@ -388,9 +375,8 @@ def _restore_saved_env():
 
 def _start_setup_feedback():
     """
-    Tell the user that Alire is setting up the crate. This can take several
-    minutes the first time, so say so plainly rather than leave GNAT Studio
-    looking idle.
+    Tell the user that Alire is setting up the crate, which can take several
+    minutes the first time, rather than leave GNAT Studio looking idle.
     """
     file, _ = project_to_reload
 
@@ -403,8 +389,7 @@ def _start_setup_feedback():
         importance=GPS.Message.Importance.MEDIUM,
     )
 
-    # The Locations view might not be present at all (e.g. in a perspective
-    # that does not display it): the message above is still recorded.
+    # The Locations view might not be in the current perspective.
     locations = GPS.MDI.get("Locations")
     if locations:
         locations.raise_window()
@@ -424,16 +409,13 @@ def _stop_setup_feedback():
 
 def _abandon_setup():
     """
-    Give up on the pending Alire setup: the intermediate project stays loaded
-    and nothing is retried behind the user's back, so report the errors of the
-    next project load normally and give the environment back the values it had
-    before we entered the crate (in particular ALIRE, and whatever a partially
-    executed 'alr printenv' has already applied).
+    Give up on the pending Alire setup: report the next project load's errors
+    again and give the environment back the values it had before we entered the
+    crate (ALIRE, and whatever 'alr printenv' had already applied).
 
-    Forget what Alire has told us about the crate as well: were the project
-    files reported by 'alr show' remembered, loading one of them would take the
-    shortcut meant for a crate that is set up, and the setup would thus never be
-    retried for the rest of the session, even though its environment is gone.
+    Forget what Alire told us about the crate too: keeping the project files
+    reported by 'alr show' would make loading one of them take the shortcut meant
+    for a crate that is set up, so the setup would never be retried.
     """
     global alire_state, alire_manifest
     global alire_project_files, alire_pending_project_files
@@ -466,11 +448,8 @@ def _report_setup_problem(message):
 
 def _report_setup_failure(target, status):
     """
-    Report that the Alire setup sequence failed while running `target`,
-    pointing the user at the Messages view for the command's output.
-
-    This also covers the case where the user interrupted `target` from the
-    Task Manager.
+    Report that the setup failed while running `target` and give up on it. This
+    also covers `target` being interrupted from the Task Manager.
     """
     GPS.Logger("ALIRE").log("'%s' failed with status %s" % (target, status))
 
@@ -489,22 +468,18 @@ def _watch_for_interruption(generation):
 
     An interrupted task is simply never given control again: the generator
     driving the sequence is neither resumed nor closed, so it cannot notice by
-    itself, and its cleanup code would never run. Nothing would then stop the
-    'alr' in progress, and the crate's environment, the silencing of project
-    load errors and the state machine itself would all stay as they are.
+    itself and its cleanup code would never run.
     """
     task_name = _setup_task_name(generation)
 
     def check_task(timeout):
         if generation != alire_generation or alire_state is None:
-            # The sequence is over, or a newer one has superseded it: either
-            # way, there is nothing left for us to watch.
+            # The sequence is over, or a newer one has superseded it.
             timeout.remove()
             return
 
         if alire_state == ALIRE_STATE_RELOADING:
-            # The final project load is under way: it is not interruptible, and
-            # the task is about to be done with.
+            # The final project load is not interruptible.
             return
 
         if task_name in [task.name() for task in GPS.Task.list()]:
@@ -514,9 +489,9 @@ def _watch_for_interruption(generation):
         GPS.Logger("ALIRE").log("The Alire setup has been interrupted")
 
         if alire_state != ALIRE_STATE_DETECTED:
-            # 'alire_state' is then the name of the target still running: 'alr'
-            # should not go on fetching a toolchain for a setup we have given up
-            # on, nor should its output be parsed into a later sequence.
+            # 'alire_state' is then the name of the target still running, which
+            # should neither go on fetching a toolchain nor have its output
+            # parsed into a later sequence.
             _interrupt_task(alire_state)
 
         _stop_setup_feedback()
@@ -530,13 +505,11 @@ def _watch_for_interruption(generation):
 
 def _load_alire_project(generation):
     """
-    Reload the project once Alire has been run to setup the environment.
-
-    Return whether it has actually been reloaded: 'GPS.Project.load' can return
-    without loading anything, for instance when the user cancels the saving of
-    modified editors or when the project file Alire reported is not there. The
-    'project_changing' hook is then not run, so the caller must clean up rather
-    than leave the plugin waiting for a load that will never happen.
+    Reload the project once Alire has set the environment, returning whether the
+    reload actually happened: 'GPS.Project.load' can return without loading
+    anything (a cancelled save of modified editors, a project file that is not
+    there), in which case the 'project_changing' hook is not run and the caller
+    must clean up rather than wait for a load that will never come.
     """
     global alire_state, alire_project_files
 
@@ -552,15 +525,13 @@ def _load_alire_project(generation):
 
     if generation != alire_generation:
         # Loading a project runs the main loop, so another project may have been
-        # asked for meanwhile: that newer request owns the state now, and none of
-        # what follows applies to the crate it is about.
+        # asked for meanwhile: it owns the state now.
         GPS.Logger("ALIRE").log("Another project has been loaded during the reload")
         return False
 
     if alire_state == ALIRE_STATE_RELOADING:
         # 'on_project_changing' would have cleared the state: the load did not
-        # happen. Give up rather than stay in a state in which the next project
-        # load is taken for ours.
+        # happen, so give up rather than have the next one taken for ours.
         GPS.Logger("ALIRE").log("%s has not been loaded after all" % str(file))
         _report_setup_problem(
             "Alire setup failed: %s could not be loaded. "
@@ -569,8 +540,8 @@ def _load_alire_project(generation):
         _abandon_setup()
         return False
 
-    # The crate is set up: loading another project of the same manifest from now
-    # on does not need Alire to be run again.
+    # The crate is set up: loading another project of the same manifest does not
+    # need Alire to be run again.
     alire_project_files = list(alire_pending_project_files)
 
     # Warn the user that everything is now setup
@@ -596,21 +567,18 @@ def _load_alire_project(generation):
 
 def _setup_alire_crate(task, root, generation):
     """
-    Run the Alire setup sequence asynchronously: synchronize the crate,
-    determine which GPR project should be loaded and set the crate's
-    environment, then reload that project.
+    Run the Alire setup sequence asynchronously: synchronize the crate, determine
+    which GPR project should be loaded and set the crate's environment, then
+    reload that project.
 
-    `task` is the task monitoring this sequence, used to report progress.
-
-    `generation` is the value of `alire_generation` when the manifest that
-    started this sequence was detected: it allows abandoning the sequence when
-    the user loads another project while Alire is still running.
+    `task` monitors this sequence and reports its progress. `generation` is the
+    value of `alire_generation` when the manifest was detected, which is how the
+    sequence is abandoned when the user loads another project meanwhile.
     """
     global alire_state
 
     if generation != alire_generation:
-        # Another project has been loaded between the detection of the manifest
-        # and the moment the task manager gave us a chance to start.
+        # The task manager can give us our first slice well after the detection.
         GPS.Logger("ALIRE").log(
             "Another project has been loaded: nothing left to set up"
         )
@@ -643,10 +611,9 @@ def _setup_alire_crate(task, root, generation):
             _stop_setup_feedback()
 
             if not completed and alire_state is not None:
-                # The sequence neither completed nor reported a failure of its
-                # own: clean up after it. An interruption from the Task Manager
-                # is dealt with by '_watch_for_interruption' rather than here,
-                # since it never lets us run again.
+                # Neither completed nor already reported as failed. An
+                # interruption from the Task Manager never gets here, which is
+                # what '_watch_for_interruption' is for.
                 GPS.Logger("ALIRE").log("The Alire setup has been abandoned")
                 _abandon_setup()
 
@@ -660,11 +627,9 @@ def on_project_recomputed(hook):
         alire_state == ALIRE_STATE_DETECTED
         and alire_started_generation != alire_generation
     ):
-        # Now that GNAT Studio has finished loading the intermediate project,
-        # start the Alire setup sequence in the background. Only once: the
-        # project view can be recomputed again before the sequence has had a
-        # chance to run, and two sequences for one manifest would fight over
-        # the same task.
+        # The intermediate project is loaded: start the sequence in the
+        # background, and only once, since the project view can be recomputed
+        # again before the sequence has had a chance to run.
         from workflows import task_workflow
 
         generation = alire_generation
@@ -685,11 +650,9 @@ def on_project_recomputed(hook):
 
 def on_project_changing(hook, file):
     """
-    Detect if we are dealing with an Alire project.
-    If yes, save the project we are trying to load so that the Alire setup
-    sequence can be started by on_project_recomputed, once GNAT Studio is done
-    loading it: the project is then reloaded once the needed environment is
-    set.
+    Detect whether we are dealing with an Alire project. If so, remember it so
+    that 'on_project_recomputed' can start the setup sequence once GNAT Studio is
+    done loading it; the project is reloaded once the environment is set.
     """
     global project_to_reload, alire_manifest
     global alire_project_files, alire_pending_project_files
@@ -712,10 +675,9 @@ def on_project_changing(hook, file):
         )
         return
 
-    # Any setup sequence still running is for a project we are not loading
-    # anymore: bumping the generation below turns it into a no-op, and the 'alr'
-    # it is waiting for is of use to nobody now. Interrupting it also keeps its
-    # output out of the state of the sequence that supersedes it.
+    # A sequence still running is for a project we are not loading anymore:
+    # bumping the generation below turns it into a no-op, and interrupting the
+    # 'alr' it waits on keeps its output out of the sequence superseding it.
     if alire_state not in (None, ALIRE_STATE_DETECTED):
         _interrupt_task(alire_state)
 
@@ -725,14 +687,11 @@ def on_project_changing(hook, file):
 
     _restore_saved_env()
 
-    # The environment of the crate we were in, if any, has just been given back
-    # its former values: the shortcut above must not apply to that crate's
-    # project files anymore, since loading one of them now does need Alire.
-    #
-    # 'alr show' fills the list again for the manifest detected below, if any.
-    # That can't be done in 'Alire_Parser.__init__': a fresh parser is created
-    # for each build target launch, so the 'Alire Printenv' one would wipe what
-    # the 'Alire Show' one has just gathered.
+    # The crate we were in has just had its environment restored, so loading one
+    # of its project files does need Alire again. 'alr show' fills the list back
+    # for the manifest detected below. This can't be done in
+    # 'Alire_Parser.__init__': a parser is created per target launch, so the
+    # 'Alire Printenv' one would wipe what the 'Alire Show' one gathered.
     alire_project_files = []
     alire_pending_project_files = []
 
@@ -749,18 +708,16 @@ def on_project_changing(hook, file):
         alire_manifest = os.path.join(root, "alire.toml")
         alire_state = ALIRE_STATE_DETECTED
 
-        # Set the ALIRE env variable right away: this keeps the language
-        # server from launching its own 'alr', which would contend with ours
-        # for the crate's lock for as long as the synchronization lasts.
-        # Remember its previous value along with the ones set by 'alr printenv'
-        # so that it is restored when we are done with this crate.
+        # Set ALIRE right away, so that the language server does not launch its
+        # own 'alr' and contend with ours for the crate's lock. Its former value
+        # is remembered next to the ones 'alr printenv' sets, and restored with
+        # them when we are done with this crate.
         saved_env["ALIRE"] = GPS.getenv("ALIRE")
         GPS.setenv("ALIRE", "True")
 
-        # The project about to be loaded is an intermediate one: it can't be
-        # loaded successfully before Alire has set the environment, and we
-        # reload it ourselves once that's done, so don't bother the user with
-        # its errors.
+        # The project about to be loaded is an intermediate one, which can't load
+        # successfully before Alire has set the environment: don't report its
+        # errors, we reload it ourselves once that is done.
         GPS.Project.set_ignore_load_errors(True)
 
         GPS.Logger("ALIRE").log("Alire manifest detected: %s" % alire_manifest)
@@ -779,10 +736,9 @@ class Alire_Parser(tool_output.OutputParser):
         self.project_file_regexp = re.compile(r" +Project_File: ([^\n]+)")
         self.crate_name_regexp = re.compile(r" +Name: (\S+)")
 
-        # The setup sequence this parser belongs to. An 'alr' we have given up
-        # on is interrupted, but its last output can still reach us afterwards:
-        # were it parsed, it could send the sequence that superseded it to the
-        # wrong project or apply the wrong environment.
+        # The sequence this parser belongs to: an 'alr' we have given up on can
+        # still deliver output afterwards, which must not reach the sequence that
+        # superseded it.
         self.generation = alire_generation
 
     def on_stdout(self, text, command):
@@ -797,13 +753,18 @@ class Alire_Parser(tool_output.OutputParser):
             m = self.export_var_regexp.fullmatch(line)
 
             if m:
-                # Parse the output of 'alr printenv'.
-                # The paths might be quoted (e.g: export PATH="/home/something"): we use
-                # shlex.split to make sure we unquote them if needed.
+                # Output of 'alr printenv'. Values might be quoted (e.g. export
+                # PATH="/home/something"), hence 'shlex.split'.
                 name = m.group(1)
                 value = shlex.split(m.group(2))[0]
                 GPS.Logger("ALIRE").log("%s=%s" % (name, value))
-                saved_env[name] = GPS.getenv(name)
+
+                # Only record the value the variable had before *we* touched it:
+                # 'alr printenv' exports ALIRE itself, which we have already
+                # overridden above, and restoring "True" would leave the crate's
+                # environment behind for the rest of the session.
+                saved_env.setdefault(name, GPS.getenv(name))
+
                 GPS.setenv(name, value)
                 os.environ[name] = value
             else:
@@ -828,24 +789,17 @@ class Alire_Parser(tool_output.OutputParser):
                             % project_file_path
                         )
                         root = os.path.dirname(alire_manifest)
-
-                        # Get the absolute path of the project file, if not already
-                        # absolute
                         projet_file_abs_path = (
                             os.path.join(root, project_file_path)
                             if not os.path.isabs(project_file_path)
                             else project_file_path
                         )
 
-                        # Append the project file to the list of Alire manifest project
-                        # files.
-                        # This is needed in case the user wants to load a different
-                        # project file from the same Alire manifest: we don't want to
-                        # re-run Alire in that case. The list only becomes the one
+                        # Remembered so that loading another project of the same
+                        # manifest does not re-run Alire. Only becomes the list
                         # consulted for that once the setup has succeeded.
                         alire_pending_project_files.append(projet_file_abs_path)
 
-                        # Set it as the project to reload
                         project_to_reload = (
                             projet_file_abs_path,
                             root,
@@ -856,7 +810,7 @@ def register_hooks():
     """
     Connect to the hooks driving the Alire integration.
 
-    Done at load time when 'alr' is on the PATH; a test that stands in for Alire
+    Done at load time when 'alr' is on the PATH; a test standing in for Alire
     itself has no 'alr' to find and calls this explicitly.
     """
     GPS.Hook("project_changing").add(on_project_changing)

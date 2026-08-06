@@ -1,14 +1,11 @@
 #!/bin/bash
-# Fake 'alr' executable: the real one needs the network and a toolchain.
+# Fake 'alr' executable. Like the real one it refuses arguments it does not know
+# about, leaving the offending command line in 'bad_command_line'; every accepted
+# invocation is appended to 'alr_runs'.
 #
-# Like the real 'alr' it refuses to run when handed an argument it does not know
-# about; the offending command line is then left behind in 'bad_command_line'
-# for the driver to report. Every accepted invocation is appended to 'alr_runs',
-# so that the driver can tell whether Alire has been run again.
-#
-# 'printenv' fails, after having printed part of its output, for as long as the
-# 'fail_printenv' file is there: that is how the driver checks what becomes of a
-# setup whose last step fails.
+# 'printenv' fails, after printing part of its output, for as long as the
+# 'fail_printenv' file is there: that is how the driver exercises a setup whose
+# last step fails.
 
 cmd=""
 
@@ -38,8 +35,10 @@ case "$cmd" in
         ;;
 
     printenv)
-        # Print one variable before failing: a setup that gives up half way
-        # through must undo what it has already applied.
+        # Print some of the environment before failing: a setup that gives up
+        # half way through must undo what it has already applied. ALIRE is
+        # exported by the real 'alr printenv' too.
+        echo "export ALIRE=\"True\""
         echo "export ALIRE_TEST_ENV=\"alire_was_here\""
 
         if [ -f fail_printenv ]; then

@@ -1,12 +1,12 @@
 """
 Test that interrupting the Alire setup from the Task Manager really stops it.
 
-The task monitoring the sequence is never resumed once interrupted, so the
-sequence cannot notice by itself: nothing would stop the 'alr' in progress, and
-the crate's environment would stay installed for a crate that is not set up.
+An interrupted task is never resumed, so the sequence cannot notice by itself:
+nothing would stop the 'alr' in progress, and the crate's environment would stay
+installed for a crate that is not set up.
 
-The last part checks that a session in which the setup has been interrupted is
-none the worse for it: loading the crate's project again sets it up.
+The last part checks that the session is none the worse for it: loading the
+crate's project again sets it up.
 """
 
 import os

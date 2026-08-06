@@ -1,10 +1,9 @@
 """
 Test that waiting for GNAT Studio's tasks waits for the whole Alire crate setup.
 
-This is how the integration testsuite loads an Alire crate: load the crate's
-project, wait for the tasks, then expect the crate to be set up. A sequence that
-leaves the task manager empty between two 'alr' runs would be taken for finished
-while Alire is still working.
+This is how the integration testsuite loads a crate: load its project, wait for
+the tasks, expect the crate to be set up. A sequence leaving the task manager
+empty between two 'alr' runs would be taken for finished while Alire works on.
 
 The second half loads the other project of the same manifest, which must neither
 re-run Alire nor fail to resolve: its path is relative to the crate's root, where

@@ -1,14 +1,12 @@
 """
 Test what becomes of an Alire crate whose setup fails.
 
-The setup must be given up on rather than half applied: the environment goes
-back to the values it had before the crate was entered, and Alire is run again
-the next time one of the crate's projects is loaded, instead of the crate being
-taken for set up for the rest of the session.
+The setup must be given up on rather than half applied: the environment goes back
+to its former values, and Alire runs again the next time one of the crate's
+projects is loaded rather than the crate being taken for set up.
 
-The last part checks the same thing after simply leaving the crate: the shortcut
-that skips Alire for a project of a known manifest only holds for as long as the
-crate's environment is in place.
+The last part checks the same after simply leaving the crate: the shortcut that
+skips Alire holds only while the crate's environment is in place.
 """
 
 import os

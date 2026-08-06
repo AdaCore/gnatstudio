@@ -1,15 +1,12 @@
 #!/bin/bash
-# Fake 'alr' executable: the real one needs the network and a toolchain.
+# Fake 'alr' executable. Like the real one it refuses arguments it does not know
+# about, leaving the offending command line in 'bad_command_line'; every accepted
+# invocation is appended to 'alr_runs'.
 #
-# Like the real 'alr' it refuses to run when handed an argument it does not know
-# about; the offending command line is then left behind in 'bad_command_line'
-# for the driver to report. Every accepted invocation is appended to 'alr_runs'.
-#
-# 'build' stands for the long synchronization of a fresh crate: it does not
-# return until the test driver creates the 'sync_may_finish' file. The driver
-# interrupts the setup while it is waiting, which must terminate this script:
-# 'sync_interrupted' is then left behind, whereas 'sync_gave_up' says that we
-# were left running and gave up on our own after 30 seconds.
+# 'build' stands for the long synchronization of a fresh crate: it waits for the
+# driver to create 'sync_may_finish'. The driver interrupts the setup meanwhile,
+# which must terminate this script: 'sync_interrupted' is then left behind,
+# whereas 'sync_gave_up' says we were left running and gave up on our own.
 
 cmd=""
 
@@ -55,6 +52,9 @@ case "$cmd" in
         ;;
 
     printenv)
+        # The real 'alr printenv' exports ALIRE itself, on top of the crate's
+        # own variables.
+        echo "export ALIRE=\"True\""
         echo "export ALIRE_TEST_ENV=\"alire_was_here\""
         ;;
 esac
