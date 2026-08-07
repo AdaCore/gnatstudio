@@ -4,6 +4,8 @@ import os.path
 from urllib.parse import urlparse, unquote
 from gi.repository import Gdk, GLib, Gtk
 from gs_utils import interactive
+from pygps import place_window_under_cursor
+from theme_handling import Color
 
 """
 This Sarif plugin creates several actions to load Sarif files in the Analysis
@@ -328,6 +330,12 @@ def get_fix_preview_markup(prepared_fix):
     Surrounding context lines are shown in normal style.
     """
     CONTEXT_LINES = 1
+    del_color = Color(
+        from_pref=GPS.Preference("Diff-Side-Remove-Color").get()
+    ).to_hex6_string()
+    ins_color = Color(
+        from_pref=GPS.Preference("Diff-Side-Append-Color").get()
+    ).to_hex6_string()
     parts = []
 
     for change in prepared_fix.changes:
@@ -393,15 +401,12 @@ def get_fix_preview_markup(prepared_fix):
                 # Multi-line: mark first line from sc to end, middle lines
                 # fully, last line from start to ec.
                 edits = line_edits.setdefault(sl, [])
-                edits.append((sc, None, "", False))  # None = to end of line
+                edits.append((sc, None, repl.inserted_text, False))
                 for mid in range(sl + 1, el):
                     edits_mid = line_edits.setdefault(mid, [])
                     edits_mid.append((1, None, "", False))
                 edits_last = line_edits.setdefault(el, [])
                 edits_last.append((1, ec, "", False))
-                if repl.inserted_text:
-                    first_edits = line_edits.setdefault(sl, [])
-                    first_edits.append((sc, sc, repl.inserted_text, True))
 
         # Render each line with markup
         for i, line_text in enumerate(source_lines):
@@ -423,27 +428,28 @@ def get_fix_preview_markup(prepared_fix):
                     if not is_ins and ec_e is not None and ec_e > sc_e:
                         deleted = line_text[sc_e - 1 : ec_e - 1]
                         markup += (
-                            '<span strikethrough="true" foreground="#c0392b">%s</span>'
-                            % GLib.markup_escape_text(deleted)
+                            '<span strikethrough="true" foreground="%s">%s</span>'
+                            % (del_color, GLib.markup_escape_text(deleted))
                         )
                         pos = ec_e
                     elif not is_ins and ec_e is None:
                         # Delete to end of line
                         deleted = line_text[sc_e - 1 :]
                         markup += (
-                            '<span strikethrough="true" foreground="#c0392b">%s</span>'
-                            % GLib.markup_escape_text(deleted)
+                            '<span strikethrough="true" foreground="%s">%s</span>'
+                            % (del_color, GLib.markup_escape_text(deleted))
                         )
                         pos = len(line_text) + 1
                     else:
                         pos = sc_e
-                    # Inserted text (bold green)
+                    # Inserted text
                     if ins_text:
                         escaped = GLib.markup_escape_text(
                             ins_text.replace("\n", "\u21b5\n")
                         )
-                        markup += (
-                            '<span foreground="#27ae60"><b>%s</b></span>' % escaped
+                        markup += '<span foreground="%s"><b>%s</b></span>' % (
+                            ins_color,
+                            escaped,
                         )
                 # Remaining text after all edits
                 if pos - 1 < len(line_text):
@@ -577,7 +583,6 @@ def show_fix_proposals_menu(msg, prepared_fixes):
     menu_win.set_skip_pager_hint(True)
     menu_win.set_name("fix-proposals-menu")
     menu_win.get_style_context().add_class("menu")
-    menu_win.set_position(Gtk.WindowPosition.MOUSE)
 
     hbox = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=0)
     menu_win.add(hbox)
@@ -659,6 +664,8 @@ def show_fix_proposals_menu(msg, prepared_fixes):
     menu_win.connect("key-press-event", on_key_press)
 
     menu_win.show_all()
+    place_window_under_cursor(menu_win, flip_widget=notes_win)
+
     tree.grab_focus()
 
     # Close menu when MDI focus changes (user clicks elsewhere)

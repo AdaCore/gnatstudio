@@ -277,6 +277,46 @@ try:
 
         return [x for x in WidgetTree(list) if isinstance(x, type)]
 
+    def place_window_under_cursor(window, flip_widget=None):
+        """Position a popup window at the current mouse pointer location.
+
+        The window expands to the bottom-right by default. If it would go
+        off-screen, it flips horizontally (and reorders flip_widget to the
+        front of its parent box) or vertically as needed.
+
+        :param window: A realized Gtk.Window to position.
+        :param flip_widget: Optional widget to reorder to position 0 in its
+            parent when flipping horizontally (e.g., a notes pane).
+        """
+        try:
+            display = Gdk.Display.get_default()
+            seat = display.get_default_seat()
+            pointer = seat.get_pointer()
+            _, ptr_x, ptr_y = pointer.get_position()
+
+            screen = display.get_default_screen()
+            monitor_num = screen.get_monitor_at_point(ptr_x, ptr_y)
+            monitor_geom = screen.get_monitor_geometry(monitor_num)
+
+            alloc = window.get_allocation()
+            popup_w = alloc.width
+            popup_h = alloc.height
+
+            x = ptr_x
+            y = ptr_y
+
+            if x + popup_w > monitor_geom.x + monitor_geom.width:
+                x = max(monitor_geom.x, ptr_x - popup_w)
+                if flip_widget is not None:
+                    flip_widget.get_parent().reorder_child(flip_widget, 0)
+
+            if y + popup_h > monitor_geom.y + monitor_geom.height:
+                y = max(monitor_geom.y, ptr_y - popup_h)
+
+            window.move(x, y)
+        except Exception:
+            window.set_position(Gtk.WindowPosition.MOUSE)
+
     def get_gtk_buffer(ed_buf):
         """
         @type ed_buf: GPS.EditorBuffer

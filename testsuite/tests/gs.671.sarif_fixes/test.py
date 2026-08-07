@@ -10,6 +10,7 @@ applied one after another on the same file without resetting.
 
 from GPS import *
 from gs_utils.internal.utils import *
+from pygps import get_widget_by_name, get_widgets_by_type
 import gs_utils.internal.dialogs as dialogs
 
 # The original foo.adb content
@@ -197,3 +198,36 @@ def run_test():
     msg.execute_action()
     yield wait_idle()
     gps_assert(buf.get_chars(), AFTER_DELETION, "fix not applied after undo")
+
+    # --- Test: multi-fix menu is displayed with correct proposals ---
+    GPS.Analysis.clean()
+    buf.delete(buf.beginning_of_buffer(), buf.end_of_buffer())
+    buf._insert_at_location(buf.beginning_of_buffer(), ORIGINAL)
+    yield wait_idle()
+
+    yield load_sarif("multi_fixes.sarif")
+
+    msg = find_message_at_line(7)
+    gps_assert(msg is not None, True, "no message for multi-fix test")
+    msg.execute_action()
+    yield wait_idle()
+
+    # Wait for the fix proposals menu to appear
+    yield wait_until_true(lambda: get_widget_by_name("fix-proposals-menu") is not None)
+    menu = get_widget_by_name("fix-proposals-menu")
+    gps_assert(menu is not None, True, "fix proposals menu not displayed")
+
+    # Verify the menu lists the two fix alternatives
+    tree = get_widgets_by_type(Gtk.TreeView, menu)[0]
+    proposals = dump_tree_model(tree.get_model(), 0)
+    gps_assert(
+        proposals,
+        ["Remove first null statement", "Remove second null statement"],
+        "wrong fix proposals in menu",
+    )
+
+    # Click the first proposal and verify it's applied
+    click_in_tree(tree, Gtk.TreePath((0)), column=0)
+    yield wait_idle()
+
+    gps_assert(buf.get_chars(), AFTER_DELETION, "multi-fix not applied")
