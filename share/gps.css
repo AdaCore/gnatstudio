@@ -482,11 +482,13 @@ tooltip label {
  * Entity Proposals Menu
  **********************************/
 
-#entity-proposals-menu .notes {
+#entity-proposals-menu .notes,
+#fix-proposals-menu .notes {
    background-color: @theme_base_color;
 }
 
-#entity-proposals-menu .notes label {
+#entity-proposals-menu .notes label,
+#fix-proposals-menu .notes label {
    padding: 8pt;
 }
 
