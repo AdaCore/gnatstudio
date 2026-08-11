@@ -27,12 +27,12 @@ alire_project_files = []
 # What 'alr show' has reported for the sequence under way.
 alire_pending_project_files = []
 
-# Where we are in the setup sequence, which runs asynchronously so that GNAT
-# Studio stays responsive while Alire fetches the toolchain and the
-# dependencies: None when no setup is pending, AlireState.DETECTED between the
-# detection of a manifest and the start of the sequence, the name of the running
-# build target while it progresses, AlireState.RELOADING during the final load.
+# Where we are in the setup sequence, as an AlireState, or None when no setup is
+# pending.
 alire_state = None
+
+# The setup target running while 'alire_state' is AlireState.RUNNING.
+alire_running_target = None
 
 # Incremented each time a manifest is detected. A sequence and its output
 # parsers capture it and give up as soon as it changes, which happens when the
@@ -51,7 +51,18 @@ alire_feedback_generation = None
 
 
 class AlireState(Enum):
+    """
+    Stage of the setup sequence, which runs asynchronously so that GNAT Studio
+    stays responsive while Alire fetches the toolchain and the dependencies.
+    """
+
+    # Between the detection of a manifest and the start of the sequence.
     DETECTED = "detected"
+
+    # While one of the ALIRE_SETUP_TARGETS runs, named by 'alire_running_target'.
+    RUNNING = "running"
+
+    # During the final project load.
     RELOADING = "reloading"
 
 
@@ -454,12 +465,13 @@ def _abandon_setup():
     reported by 'alr show' would make loading one of them take the shortcut meant
     for a crate that is set up, so the setup would never be retried.
     """
-    global alire_state, alire_manifest
+    global alire_state, alire_running_target, alire_manifest
     global alire_project_files, alire_pending_project_files
 
     GPS.Project.set_ignore_load_errors(False)
     _restore_saved_env()
     alire_state = None
+    alire_running_target = None
     alire_manifest = None
     alire_project_files = []
     alire_pending_project_files = []
@@ -525,11 +537,10 @@ def _watch_for_interruption(generation):
         timeout.remove()
         GPS.Logger("ALIRE").log("The Alire setup has been interrupted")
 
-        if alire_state != AlireState.DETECTED:
-            # 'alire_state' is then the name of the target still running, which
-            # should neither go on fetching a toolchain nor have its output
-            # parsed into a later sequence.
-            _interrupt_task(alire_state)
+        if alire_state == AlireState.RUNNING:
+            # The target still running should neither go on fetching a toolchain
+            # nor have its output parsed into a later sequence.
+            _interrupt_task(alire_running_target)
 
         _stop_setup_feedback(generation)
         _report_setup_problem(
@@ -612,7 +623,7 @@ def _setup_alire_crate(task, root, generation):
     value of `alire_generation` when the manifest was detected, which is how the
     sequence is abandoned when the user loads another project meanwhile.
     """
-    global alire_state
+    global alire_state, alire_running_target
 
     if generation != alire_generation:
         # The task manager can give us our first slice well after the detection.
@@ -626,7 +637,8 @@ def _setup_alire_crate(task, root, generation):
 
     try:
         for index, target in enumerate(ALIRE_SETUP_TARGETS):
-            alire_state = target
+            alire_state = AlireState.RUNNING
+            alire_running_target = target
             task.set_progress(index, len(ALIRE_SETUP_TARGETS))
             GPS.Logger("ALIRE").log("Running '%s'..." % target)
             status = yield _run_setup_target(target, root)
@@ -692,7 +704,7 @@ def on_project_changing(hook, file):
     """
     global project_to_reload, alire_manifest
     global alire_project_files, alire_pending_project_files
-    global alire_state, alire_generation
+    global alire_state, alire_running_target, alire_generation
 
     if alire_state == AlireState.RELOADING:
         GPS.Logger("ALIRE").log(f"Loading Alire project through: {file.path}")
@@ -714,11 +726,12 @@ def on_project_changing(hook, file):
     # A sequence still running is for a project we are not loading anymore:
     # bumping the generation below turns it into a no-op, and interrupting the
     # 'alr' it waits on keeps its output out of the sequence superseding it.
-    if alire_state not in (None, AlireState.DETECTED):
-        _interrupt_task(alire_state)
+    if alire_state == AlireState.RUNNING:
+        _interrupt_task(alire_running_target)
 
     alire_generation += 1
     alire_state = None
+    alire_running_target = None
     project_to_reload = None
 
     _restore_saved_env()
