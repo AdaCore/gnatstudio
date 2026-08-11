@@ -395,6 +395,11 @@ package body GPS.Kernel.Project is
       procedure Report_Error (S : String) is
       begin
          Has_Error := True;
+
+         if Handle.Get_Ignore_Project_Load_Errors then
+            return;
+         end if;
+
          Handle.Insert (S, Mode => Error, Add_LF => False);
          Parse_File_Locations (Handle, S, Location_Category);
       end Report_Error;
@@ -674,6 +679,11 @@ package body GPS.Kernel.Project is
          --  was also saved in the desktop. If that is the case, the project
          --  would be open several times otherwise
          Has_Error := True;
+
+         if Kernel.Get_Ignore_Project_Load_Errors then
+            return;
+         end if;
+
          Kernel.Insert (S, Mode => Error, Add_LF => False);
          Parse_File_Locations
            (Kernel, S, Location_Category, Allow_Auto_Jump_To_First => False);
@@ -909,7 +919,10 @@ package body GPS.Kernel.Project is
          Xref.Project_Changed (Kernel.Databases);
       end if;
 
-      if Is_Regular_File (Project) and then Has_Error then
+      if Is_Regular_File (Project)
+        and then Has_Error
+        and then not Kernel.Get_Ignore_Project_Load_Errors
+      then
          Open_File_Action_Hook.Run
            (Kernel  => Kernel,
             File    => Local_Project,
