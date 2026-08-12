@@ -2,7 +2,7 @@
 This test loads a simple SARIF file in the Analysis Report via the
 action "Load Sarif File".
 
-It ensure that the severity level is of loaded messages is correctly handled
+It ensure that the severity level of loaded messages is correctly handled
 and that overrides are correctly resolved.
 """
 
