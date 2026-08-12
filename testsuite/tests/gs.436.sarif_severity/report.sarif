@@ -1,0 +1,169 @@
+{
+  "version": "2.1.0",
+  "runs": [
+    {
+      "tool": {
+        "driver": {
+          "name": "Example tool",
+          "rules": [
+            {
+              "id": "with_severity_in_message",
+              "shortDescription": {
+                "text": "Demonstrate severity fetching from message instances"
+              }
+            },
+            {
+              "id": "with_severity_in_rule",
+              "shortDescription": {
+                "text": "Demonstrate severity fetching from rule declaration"
+              },
+              "defaultConfiguration": {
+                "level": "note"
+              }
+            },
+            {
+              "id": "with_severity_in_override",
+              "shortDescription": {
+                "text": "Demonstrate severity fetching from rule configuration override"
+              }
+            }
+          ]
+        }
+      },
+      "invocations": [
+        {
+          "executionSuccessful": true,
+          "ruleConfigurationOverrides": [
+            {
+              "descriptor": {
+                "id": "with_severity_in_override"
+              },
+              "configuration": {
+                "level": "note"
+              }
+            }
+          ]
+        }
+      ],
+      "results": [
+        {
+          "ruleId": "with_severity_in_message",
+          "message": {
+            "text": "Message with default severity"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "file:///whatever/foo.adb"
+                },
+                "region": {
+                  "startLine": 3,
+                  "startColumn": 4
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "with_severity_in_message",
+          "level": "note",
+          "message": {
+            "text": "Message with severity in instance"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "file:///whatever/foo.adb"
+                },
+                "region": {
+                  "startLine": 3,
+                  "startColumn": 4
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleIndex": 0,
+          "level": "note",
+          "message": {
+            "text": "Message with severity in instance and referencing the rule by index"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "file:///whatever/foo.adb"
+                },
+                "region": {
+                  "startLine": 3,
+                  "startColumn": 4
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "with_severity_in_rule",
+          "message": {
+            "text": "Message with severity in rule descriptor"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "file:///whatever/foo.adb"
+                },
+                "region": {
+                  "startLine": 3,
+                  "startColumn": 4
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "with_severity_in_rule",
+          "level": "error",
+          "message": {
+            "text": "Message with severity in rule descriptor and in the instance"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "file:///whatever/foo.adb"
+                },
+                "region": {
+                  "startLine": 3,
+                  "startColumn": 4
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "with_severity_in_override",
+          "message": {
+            "text": "Message with severity in configuration override"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "file:///whatever/foo.adb"
+                },
+                "region": {
+                  "startLine": 3,
+                  "startColumn": 4
+                }
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
