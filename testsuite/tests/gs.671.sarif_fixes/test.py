@@ -197,7 +197,11 @@ def run_test():
     yield wait_idle()
     msg.execute_action()
     yield wait_idle()
-    gps_assert(buf.get_chars(), AFTER_DELETION, "fix not applied after undo")
+    gps_assert(
+        buf.get_chars().replace("\r\n", "\n"),
+        AFTER_DELETION,
+        "fix not applied after undo",
+    )
 
     # --- Test: multi-fix menu is displayed with correct proposals ---
     GPS.Analysis.clean()
