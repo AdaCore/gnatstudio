@@ -1046,7 +1046,8 @@ package body Completion_Module is
             Copy (Cursor_Iter, Prefix_Iter);
 
             if Prefix'Length /= 0 then
-               Backward_Chars (Prefix_Iter, Gint (Prefix'Length), Movement);
+               Backward_Chars
+                 (Prefix_Iter, Gint (UTF8_Strlen (Prefix)), Movement);
             end if;
 
             --  Get the previous char iter, to check if it's within a comment
