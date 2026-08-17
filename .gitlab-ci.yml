@@ -5,6 +5,7 @@ stages:
   - collect
 
 include:
+  - component: $CI_SERVER_FQDN/it/gitlab-templates/gitleaks@~latest
 # Issue check and pre-commit
   - component: $CI_SERVER_FQDN/eng/gitlab-templates/check-issue@~latest
   - component: $CI_SERVER_FQDN/eng/gitlab-templates/pre-commit@~latest
