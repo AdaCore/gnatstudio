@@ -45,7 +45,6 @@ install-common:
 	$(MKDIR) $(sharedir)
 	$(MKDIR) $(examplesdir)
 	$(MKDIR) $(sharedir)/gnatstudio
-	$(MKDIR) $(sharedir)/gnatstudio/gnatdoc
 	$(RM) -rf $(sharedir)/gnatstudio/color_themes/
 	$(RM) -rf $(sharedir)/gnatstudio/library/
 	$(RM) -rf $(sharedir)/gnatstudio/plug-ins/
@@ -69,8 +68,6 @@ install-common:
 	(cd share; tar cf - templates/)  | (cd $(sharedir)/gnatstudio; tar xf -)
 	(cd share; tar cf - key_themes/)  | (cd $(sharedir)/gnatstudio; tar xf -)
 	(cd share; tar cf - *.*)  | (cd $(sharedir)/gnatstudio; tar xf -)
-	(cd gnatdoc/resources; tar cf - * ) \
-		| (cd $(sharedir)/gnatstudio/gnatdoc; tar xf -)
 	$(MAKE) -C docs install
 	(cd examples; tar cf - --exclude .svn . ) | (cd $(examplesdir); tar xf -)
 # Install the gnatcoll plugin(s)
@@ -82,7 +79,6 @@ endif
 install: install-common
 ifeq ($(OS),Windows_NT)
 	$(INSTALL_PROGRAM) gnatstudio/obj/gnatstudio.exe $(bindir)
-	$(INSTALL_PROGRAM) cli/obj/gnatdoc3.exe $(bindir)
 	$(INSTALL_PROGRAM) cli/obj/gnatstudio_cli.exe $(bindir)
 ifneq ($(GNATCOLL_INSTALL),)
 ifneq ($(GNATCOLL_INSTALL)/bin, $(bindir))
@@ -91,7 +87,6 @@ endif
 endif
 else
 	$(INSTALL_PROGRAM) gnatstudio/obj/gnatstudio $(bindir)
-	$(INSTALL_PROGRAM) cli/obj/gnatdoc3 $(bindir)
 	$(INSTALL_PROGRAM) cli/obj/gnatstudio_cli $(bindir)
 ifneq ($(GNATCOLL_INSTALL),)
 ifneq ($(GNATCOLL_INSTALL)/bin, $(bindir))
@@ -103,7 +98,6 @@ endif
 install-strip: install-common
 ifeq ($(OS),Windows_NT)
 	$(INSTALL_PROGRAM) -s gnatstudio/obj/gnatstudio.exe $(bindir)
-	$(INSTALL_PROGRAM) -s cli/obj/gnatdoc3.exe $(bindir)
 	$(INSTALL_PROGRAM) -s cli/obj/gnatstudio_cli.exe $(bindir)
 ifneq ($(GNATCOLL_INSTALL),)
 ifneq ($(GNATCOLL_INSTALL)/bin, $(bindir))
@@ -114,7 +108,6 @@ endif
 else
 ifneq (, $(findstring darwin, $(SYS)))
 	$(INSTALL_PROGRAM) gnatstudio/obj/gnatstudio $(bindir)/gnatstudio_exe
-	$(INSTALL_PROGRAM) cli/obj/gnatdoc3 $(bindir)
 	$(INSTALL_PROGRAM) cli/obj/gnatstudio_cli $(bindir)
 ifneq ($(GNATCOLL_INSTALL),)
 ifneq ($(GNATCOLL_INSTALL)/bin, $(bindir))
@@ -124,7 +117,6 @@ endif
 	$(INSTALL_PROGRAM) distrib/gps_wrapper $(bindir)/gnatstudio
 else
 	$(INSTALL_PROGRAM) -s gnatstudio/obj/gnatstudio $(bindir)/gnatstudio_exe
-	$(INSTALL_PROGRAM) -s cli/obj/gnatdoc3 $(bindir)
 	$(INSTALL_PROGRAM) -s cli/obj/gnatstudio_cli $(bindir)
 ifneq ($(GNATCOLL_INSTALL),)
 ifneq ($(GNATCOLL_INSTALL)/bin, $(bindir))
