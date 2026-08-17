@@ -554,7 +554,7 @@ def prepare_fix(fix):
             if not is_insertion_point:
                 original_text = buf.get_chars(
                     buf.at(start_line, start_col), buf.at(end_line, end_col) - 1
-                )
+                ).replace("\r\n", "\n")
             else:
                 original_text = ""
 
@@ -598,7 +598,7 @@ def apply_prepared_fix(prepared_fix):
             if not repl.is_insertion_point:
                 current_text = buf.get_chars(
                     repl.start_mark.location(), repl.end_mark.location()
-                )
+                ).replace("\r\n", "\n")
                 if current_text != repl.original_text:
                     GPS.Console("Messages").write(
                         "Cannot apply fix: code has been modified since "
