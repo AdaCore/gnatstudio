@@ -1,4 +1,3 @@
-[GPS.OTHERS.GTK+] GLib-MISC: unsetenv() is not thread-safe and should not be used after threads are created
 [GPS.OTHERS.GTK+] GdkPixbuf-MISC: gdk_pixbuf_from_pixdata() called on:
 [GPS.OTHERS.GTK+] GdkPixbuf-MISC: 	Encoding raw
 [GPS.OTHERS.GTK+] GdkPixbuf-MISC: 	Dimensions: 14 x 14
