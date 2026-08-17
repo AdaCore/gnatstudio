@@ -87,7 +87,6 @@ package GPS.Globals is
    Root_Dir                   : Virtual_File := No_File;
    Files_To_Open              : File_To_Open_Vectors.Vector;
 
-   Has_GPS_Options            : Boolean := False;
    Ignore_Saved_Values        : Boolean := False;
    Hide_GPS                   : Boolean := False;
    Memory_Monitor             : Boolean := False;
