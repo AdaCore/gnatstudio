@@ -18,7 +18,7 @@
 
 @define-color tooltip-text-color @editor_fg_color;
 
-@define-color error-color mix(@theme_base_color, red, 0.5);
+@define-color error-color mix(@theme_base_color, red, 0.9);
 @define-color warning-color mix(@theme_base_color, darkorange, 0.9);
 
 @define-color entry_color_two @editor_bg_color;
