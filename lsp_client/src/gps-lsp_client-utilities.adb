@@ -15,17 +15,17 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with VSS.Strings.Conversions;
-
-with URIs;
 with GPS.Kernel.Preferences;
 
 with Basic_Types;
+with Case_Handling;
 with Language;     use Language;
 with LSP.Messages; use LSP.Messages;
 with LSP.Types;
+with URIs;
 
 with VSS.Characters;
+with VSS.Strings.Conversions;
 with VSS.Unicode;
 
 package body GPS.LSP_Client.Utilities is
@@ -35,6 +35,14 @@ package body GPS.LSP_Client.Utilities is
       return VSS.Unicode.UTF16_Code_Unit_Count;
    --  Returns length of the given Unicode character in UTF-16 encoding form
    --  in UTF-16 code units.
+
+   function To_LSP_Keyword_Casing
+     (Casing : Case_Handling.Casing_Type) return KeywordCasingKind;
+   --  Convert GS casing preference into LSP keyword casing capability
+
+   function To_LSP_Identifier_Casing
+     (Casing : Case_Handling.Casing_Type) return IdentifierCasingKind;
+   --  Convert GS casing preference into LSP identifier casing capability
 
    ------------
    -- To_URI --
@@ -56,9 +64,10 @@ package body GPS.LSP_Client.Utilities is
    function To_Virtual_File
      (Item : LSP.Messages.DocumentUri) return GNATCOLL.VFS.Virtual_File
    is
-      File : constant String := URIs.Conversions.To_File
-        (LSP.Types.To_UTF_8_String (Item),
-         Normalize => not GPS.Kernel.Preferences.Trusted_Mode.Get_Pref);
+      File : constant String :=
+        URIs.Conversions.To_File
+          (LSP.Types.To_UTF_8_String (Item),
+           Normalize => not GPS.Kernel.Preferences.Trusted_Mode.Get_Pref);
    begin
       --  Call Create_From_UTF8 to guess the proper filesystem encoding
       --  from the UTF8 string returned by the protocol.
@@ -81,9 +90,10 @@ package body GPS.LSP_Client.Utilities is
       C   : VSS.Characters.Virtual_Character'Base;
 
    begin
-      return Result : GPS.Editors.Editor_Location'Class :=
-        Editor.New_Location_At_Line
-          (Basic_Types.Editable_Line_Type (Position.line + 1))
+      return
+         Result : GPS.Editors.Editor_Location'Class :=
+           Editor.New_Location_At_Line
+             (Basic_Types.Editable_Line_Type (Position.line + 1))
       do
          loop
             exit when U16 >= Position.character;
@@ -138,29 +148,49 @@ package body GPS.LSP_Client.Utilities is
    --------------------------
 
    function To_Language_Category
-     (K            : LSP.Messages.SymbolKind;
-      Is_Procedure : Boolean := False)
-      return Language.Language_Category
-   is
+     (K : LSP.Messages.SymbolKind; Is_Procedure : Boolean := False)
+      return Language.Language_Category is
 
    begin
       case K is
-         when Module                        => return Cat_Package;
-         when Namespace                     => return Cat_With;
-         when A_Package                     => return Cat_Package;
-         when Class | Enum | An_Interface   => return Cat_Type;
-         when Struct                        => return Cat_Structure;
-         when Method                        => return Cat_Function;
-         when A_Function                    => return (if Is_Procedure
-                                                       then Cat_Procedure
-                                                       else Cat_Function);
-         when Property                      => return Cat_Pragma;
-         when Field                         => return Cat_Field;
-         when Constructor                   => return Cat_Constructor;
-         when A_Constant                    => return Cat_Constant;
-         when Variable |
-              LSP.Messages.String .. Object => return Cat_Variable;
-         when others                        => return Cat_Unknown;
+         when Module                                   =>
+            return Cat_Package;
+
+         when Namespace                                =>
+            return Cat_With;
+
+         when A_Package                                =>
+            return Cat_Package;
+
+         when Class | Enum | An_Interface              =>
+            return Cat_Type;
+
+         when Struct                                   =>
+            return Cat_Structure;
+
+         when Method                                   =>
+            return Cat_Function;
+
+         when A_Function                               =>
+            return (if Is_Procedure then Cat_Procedure else Cat_Function);
+
+         when Property                                 =>
+            return Cat_Pragma;
+
+         when Field                                    =>
+            return Cat_Field;
+
+         when Constructor                              =>
+            return Cat_Constructor;
+
+         when A_Constant                               =>
+            return Cat_Constant;
+
+         when Variable | LSP.Messages.String .. Object =>
+            return Cat_Variable;
+
+         when others                                   =>
+            return Cat_Unknown;
       end case;
    end To_Language_Category;
 
@@ -169,14 +199,17 @@ package body GPS.LSP_Client.Utilities is
    -----------------------------
 
    function To_Construct_Visibility
-     (V : LSP.Messages.Als_Visibility)
-      return Language.Construct_Visibility
-   is
+     (V : LSP.Messages.Als_Visibility) return Language.Construct_Visibility is
    begin
       case V is
-         when Als_Public    => return Visibility_Public;
-         when Als_Protected => return Visibility_Protected;
-         when Als_Private   => return Visibility_Private;
+         when Als_Public    =>
+            return Visibility_Public;
+
+         when Als_Protected =>
+            return Visibility_Protected;
+
+         when Als_Private   =>
+            return Visibility_Private;
       end case;
    end To_Construct_Visibility;
 
@@ -185,8 +218,7 @@ package body GPS.LSP_Client.Utilities is
    ----------------------------
 
    function Get_Formatting_Options
-     (Kernel : GPS.Kernel.Kernel_Handle;
-      File   : GNATCOLL.VFS.Virtual_File)
+     (Kernel : GPS.Kernel.Kernel_Handle; File : GNATCOLL.VFS.Virtual_File)
       return LSP.Messages.FormattingOptions
    is
       use GPS.Kernel.Preferences;
@@ -198,22 +230,28 @@ package body GPS.LSP_Client.Utilities is
       Max_Line     : constant Integer := Highlight_Column.Get_Pref - 1;
    begin
       Get_Indentation_Parameters (Lang, Params, Indent_Style);
-      return LSP.Messages.FormattingOptions'
-        (tabSize                          =>
-           LSP.Types.LSP_Number (Params.Indent_Level),
-         insertSpaces                     =>  not Params.Use_Tabs,
-         trimTrailingWhitespace           =>
-           (Is_Set => True, Value => Strip_Blanks.Get_Pref /= Never),
-         insertFinalNewline               =>
-           (Is_Set => True, Value => False),
-         trimFinalNewlines                =>
-           (Is_Set => True, Value => Strip_Lines.Get_Pref /= Never),
-         gnatFormatMaxSize                =>
-           (Is_Set => True,
-            Value  => LSP.Types.LSP_Number (Max_Line)),
-         gnatFormatContinuationLineIndent =>
-           (Is_Set => True,
-            Value  => LSP.Types.LSP_Number (Params.Indent_Continue)));
+      return
+        LSP.Messages.FormattingOptions'
+          (tabSize                          =>
+             LSP.Types.LSP_Number (Params.Indent_Level),
+           insertSpaces                     => not Params.Use_Tabs,
+           trimTrailingWhitespace           =>
+             (Is_Set => True, Value => Strip_Blanks.Get_Pref /= Never),
+           insertFinalNewline               =>
+             (Is_Set => True, Value => False),
+           trimFinalNewlines                =>
+             (Is_Set => True, Value => Strip_Lines.Get_Pref /= Never),
+           gnatKeywordCasing                =>
+             (Is_Set => True,
+              Value  => To_LSP_Keyword_Casing (Params.Reserved_Casing)),
+           gnatIdentifierCasing             =>
+             (Is_Set => True,
+              Value  => To_LSP_Identifier_Casing (Params.Identifier_Casing)),
+           gnatFormatMaxSize                =>
+             (Is_Set => True, Value => LSP.Types.LSP_Number (Max_Line)),
+           gnatFormatContinuationLineIndent =>
+             (Is_Set => True,
+              Value  => LSP.Types.LSP_Number (Params.Indent_Continue)));
    end Get_Formatting_Options;
 
    --------------------------
@@ -229,8 +267,50 @@ package body GPS.LSP_Client.Utilities is
    begin
       return
         (if VSS.Characters.Virtual_Character'Pos (Item)
-              <= VSS.Unicode.Code_Point (VSS.Unicode.UTF16_Code_Unit'Last)
-         then 1 else 2);
+           <= VSS.Unicode.Code_Point (VSS.Unicode.UTF16_Code_Unit'Last)
+         then 1
+         else 2);
    end UTF16_Encoded_Length;
+
+   ---------------------------
+   -- To_LSP_Keyword_Casing --
+   ---------------------------
+
+   function To_LSP_Keyword_Casing
+     (Casing : Case_Handling.Casing_Type) return KeywordCasingKind is
+   begin
+      case Casing is
+         when Case_Handling.Upper =>
+            return LSP.Messages.Upper;
+
+         when Case_Handling.Lower =>
+            return LSP.Messages.Lower;
+
+         when others              =>
+            return LSP.Messages.Keep;
+      end case;
+   end To_LSP_Keyword_Casing;
+
+   ------------------------------
+   -- To_LSP_Identifier_Casing --
+   ------------------------------
+
+   function To_LSP_Identifier_Casing
+     (Casing : Case_Handling.Casing_Type) return IdentifierCasingKind is
+   begin
+      case Casing is
+         when Case_Handling.Upper =>
+            return LSP.Messages.Upper;
+
+         when Case_Handling.Lower =>
+            return LSP.Messages.Lower;
+
+         when Case_Handling.Mixed =>
+            return LSP.Messages.Mixed;
+
+         when others              =>
+            return LSP.Messages.Keep;
+      end case;
+   end To_LSP_Identifier_Casing;
 
 end GPS.LSP_Client.Utilities;
